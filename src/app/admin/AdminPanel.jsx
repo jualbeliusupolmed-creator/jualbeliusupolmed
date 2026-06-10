@@ -121,6 +121,7 @@ export default function AdminPanel({
   const openReports = reports.filter((r) => r.status === "open");
   const activeWanted = wanted.filter((w) => w.status === "active");
   const totalViews = listings.reduce((s, l) => s + (l.views || 0), 0);
+  const pendingVerif = []; // reserved for future verification queue
   const avgRating =
     ratings.length > 0
       ? (ratings.reduce((s, r) => s + (r.rating || 0), 0) / ratings.length).toFixed(1)
