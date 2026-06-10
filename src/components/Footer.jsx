@@ -26,20 +26,25 @@ export default async function Footer() {
             <li><Link href="/jual" className="hover:text-primary">Jual Barang</Link></li>
             <li><Link href="/cara-bergabung" className="hover:text-primary">Cara Bergabung</Link></li>
             <li><Link href="/daftar-harga" className="hover:text-primary">Daftar Harga &amp; Kebijakan</Link></li>
+            <li><Link href="/syarat-ketentuan" className="hover:text-primary">Syarat &amp; Ketentuan</Link></li>
             <li><Link href="/dashboard" className="hover:text-primary">Dashboard</Link></li>
           </ul>
         </div>
         <div>
-          <h4 className="mb-3 text-sm font-semibold text-gray-900">Komunitas</h4>
+          <h4 className="mb-3 text-sm font-semibold text-gray-900">Kontak &amp; Komunitas</h4>
+          <div className="text-xs text-gray-500 mb-3 space-y-1">
+            <p>📧 admin@jualbeliusupolmed.web.id</p>
+            <p>💬 WA: +62 895-4291-26232</p>
+            <p>📍 Jl. Dr. T. Mansur No. 9, Medan 20155</p>
+          </div>
           <a
             href={waGroupLink}
             target="_blank"
             rel="noreferrer"
-            className="btn-wa"
+            className="btn-wa w-full text-center"
           >
             Gabung Grup WhatsApp
           </a>
-          <p className="mt-3 text-sm text-gray-500">bit.ly/jualbeliusupolmed</p>
         </div>
       </div>
       <div className="border-t border-gray-100 py-4 text-center text-xs text-gray-400">
