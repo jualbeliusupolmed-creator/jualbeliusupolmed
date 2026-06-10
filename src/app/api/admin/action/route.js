@@ -21,7 +21,11 @@ const LISTING_FIELDS = [
   "bumped_at",
   "expires_at",
   "views",
+  "campus",
+  "area",
 ];
+
+const PERIOD_MS = 14 * 864e5; // masa tayang 14 hari
 
 const LISTING_STATUSES = ["pending", "active", "expired", "sold", "suspended"];
 
@@ -46,7 +50,14 @@ export async function POST(req) {
     switch (action) {
       // ── Listing: aksi cepat ────────────────────────────────────────────
       case "activate":
-        await supa.from("listings").update({ status: "active" }).eq("id", id);
+        // Aktifkan + perpanjang masa tayang supaya tidak langsung di-expired cron
+        await supa
+          .from("listings")
+          .update({
+            status: "active",
+            expires_at: new Date(Date.now() + PERIOD_MS).toISOString(),
+          })
+          .eq("id", id);
         break;
       case "suspend":
         await supa.from("listings").update({ status: "suspended" }).eq("id", id);
@@ -54,6 +65,30 @@ export async function POST(req) {
       case "delete":
         await supa.from("listings").delete().eq("id", id);
         break;
+
+      // ── Listing: aksi massal (bulk) ─────────────────────────────────────
+      case "bulk": {
+        const ids = Array.isArray(body.ids) ? body.ids : [];
+        if (ids.length === 0) {
+          return NextResponse.json({ error: "Tidak ada item dipilih" }, { status: 400 });
+        }
+        if (body.op === "activate") {
+          await supa
+            .from("listings")
+            .update({
+              status: "active",
+              expires_at: new Date(Date.now() + PERIOD_MS).toISOString(),
+            })
+            .in("id", ids);
+        } else if (body.op === "suspend") {
+          await supa.from("listings").update({ status: "suspended" }).in("id", ids);
+        } else if (body.op === "delete") {
+          await supa.from("listings").delete().in("id", ids);
+        } else {
+          return NextResponse.json({ error: "Operasi bulk tidak dikenal" }, { status: 400 });
+        }
+        break;
+      }
       case "feature": {
         const days = Math.max(1, Number(body.days) || 7);
         await supa
@@ -92,11 +127,17 @@ export async function POST(req) {
             if (LISTING_STATUSES.includes(body[key])) updates[key] = body[key];
           } else updates[key] = body[key] === "" ? null : body[key];
         }
-        if (Object.keys(updates).length === 0) {
+        if (Object.keys(updates).length === 0 && !Array.isArray(body.images)) {
           return NextResponse.json({ error: "Tidak ada perubahan" }, { status: 400 });
         }
-        const { error } = await supa.from("listings").update(updates).eq("id", id);
-        if (error) throw new Error(error.message);
+        if (Object.keys(updates).length > 0) {
+          const { error } = await supa.from("listings").update(updates).eq("id", id);
+          if (error) throw new Error(error.message);
+        }
+        // Galeri (kolom `images`) — non-fatal bila kolom belum ada
+        if (Array.isArray(body.images)) {
+          await supa.from("listings").update({ images: body.images }).eq("id", id);
+        }
         break;
       }
 
@@ -123,6 +164,14 @@ export async function POST(req) {
       // ── Rating ─────────────────────────────────────────────────────────
       case "delete_rating":
         await supa.from("seller_ratings").delete().eq("id", id);
+        break;
+
+      // ── wanted_listings ────────────────────────────────────────────────
+      case "resolve_wanted":
+        await supa.from("wanted_listings").update({ status: "resolved" }).eq("id", id);
+        break;
+      case "delete_wanted":
+        await supa.from("wanted_listings").delete().eq("id", id);
         break;
 
       // ── Transaksi / payment ────────────────────────────────────────────

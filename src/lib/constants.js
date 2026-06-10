@@ -13,3 +13,26 @@ export const WA_GROUP_LINK =
 
 export const MARKETPLACE_WA =
   process.env.NEXT_PUBLIC_MARKETPLACE_WA || "62895429126232";
+
+export const POPULAR_AREAS = [
+  "Dr. Mansyur",
+  "Pintu 1 USU",
+  "Pintu 2 USU",
+  "Pintu 3 USU",
+  "Perpustakaan USU",
+  "Pendopo USU",
+  "Lapangan FK USU",
+  "Polmed Gedung Z",
+  "Polmed Cafetaria"
+];
+
+export function formatWa(num) {
+  if (!num) return "";
+  let cleaned = num.replace(/\D/g, "");
+  if (cleaned.startsWith("0")) {
+    cleaned = "62" + cleaned.slice(1);
+  } else if (cleaned.startsWith("8")) {
+    cleaned = "62" + cleaned;
+  }
+  return cleaned;
+}

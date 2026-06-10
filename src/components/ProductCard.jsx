@@ -37,19 +37,29 @@ export default function ProductCard({ listing }) {
           )}
         </div>
         <div className="p-3">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500">
-            {listing.category}
-          </span>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500">
+              {listing.category}
+            </span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 font-medium max-w-[140px] truncate">
+              📍 {listing.campus === "Semua" ? "USU/POLMED" : listing.campus}
+              {listing.area ? ` (${listing.area})` : ""}
+            </span>
+          </div>
           <h3 className="mt-1 line-clamp-2 text-sm font-medium leading-snug text-gray-900 dark:text-slate-200 group-hover:text-primary dark:group-hover:text-white transition-colors">
             {listing.title}
           </h3>
           <p className="mt-1.5 text-[15px] font-bold tracking-tight text-gray-900 dark:text-white">
             {rupiah(listing.price)}
           </p>
-          <p className="mt-0.5 truncate text-xs text-gray-400 dark:text-slate-500">
-            {listing.stock != null ? `Stok ${listing.stock} · ` : ""}
-            {listing.seller_name}
-          </p>
+          <div className="mt-1.5 flex items-center justify-between text-[11px] text-gray-450 dark:text-slate-400">
+            <p className="truncate flex items-center gap-1">
+              <span>{listing.stock != null ? `Stok ${listing.stock} · ` : ""}{listing.seller_name}</span>
+            </p>
+            <span className="shrink-0 flex items-center gap-0.5 text-gray-400 dark:text-slate-500 font-medium">
+              👁️ {listing.views || 0}
+            </span>
+          </div>
         </div>
       </Link>
     </div>

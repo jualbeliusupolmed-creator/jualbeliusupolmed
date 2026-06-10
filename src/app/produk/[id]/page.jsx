@@ -122,14 +122,22 @@ export default async function ProdukPage({ params }) {
         <div>
           {/* Badges */}
           <div className="flex flex-wrap items-center gap-2">
-            <span className="badge bg-gray-100 text-gray-700">
+            <span className="badge bg-gray-100 text-gray-700 dark:bg-slate-900 dark:text-slate-350">
               {listing.category}
             </span>
+            <span className="badge bg-primary/5 text-primary dark:bg-white/10 dark:text-white font-medium">
+              📍 {listing.campus === "Semua" ? "USU / POLMED" : listing.campus}
+            </span>
+            {listing.area && (
+              <span className="badge bg-primary/5 text-primary dark:bg-white/10 dark:text-white font-medium">
+                📍 {listing.area}
+              </span>
+            )}
             {listing.featured && (
-              <span className="badge bg-gray-900 text-white">Unggulan</span>
+              <span className="badge bg-gray-900 text-white dark:bg-slate-100 dark:text-slate-900">Unggulan</span>
             )}
             {sold && (
-              <span className="badge border border-gray-200 text-gray-500">
+              <span className="badge border border-gray-200 text-gray-500 dark:border-slate-800 dark:text-slate-500">
                 Terjual
               </span>
             )}
@@ -152,14 +160,16 @@ export default async function ProdukPage({ params }) {
           {/* Card penjual — link ke halaman profil */}
           <Link
             href={`/penjual/${sellerWaEncoded}`}
-            className="card mt-4 flex items-center gap-3 p-3 hover:border-primary/30 hover:shadow-md transition-shadow"
+            className="card mt-4 flex items-center gap-3 p-3 hover:border-primary/30 hover:shadow-md transition-shadow dark:border-slate-800 dark:bg-slate-900/40"
           >
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/10 font-bold text-primary">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/10 font-bold text-primary dark:bg-white/10 dark:text-white">
               {listing.seller_name?.[0]?.toUpperCase() || "?"}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold">{listing.seller_name}</p>
-              <p className="text-xs text-gray-400">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <p className="text-sm font-semibold dark:text-white">{listing.seller_name}</p>
+              </div>
+              <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
                 Lihat semua iklan penjual →
               </p>
             </div>

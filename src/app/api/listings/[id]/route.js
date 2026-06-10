@@ -45,6 +45,8 @@ export async function PATCH(req, { params }) {
       if (body.seller_name !== undefined)
         updates.seller_name = String(body.seller_name).trim();
       if (body.image_url !== undefined) updates.image_url = body.image_url || null;
+      if (body.campus !== undefined) updates.campus = body.campus;
+      if (body.area !== undefined) updates.area = String(body.area || "").trim();
 
       if (Object.keys(updates).length === 0) {
         return NextResponse.json({ error: "Tidak ada perubahan" }, { status: 400 });

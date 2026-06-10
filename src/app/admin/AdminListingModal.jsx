@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import MediaUploader from "@/components/MediaUploader";
+import { uploadMedia } from "@/lib/upload";
 
 const STATUSES = ["pending", "active", "expired", "sold", "suspended"];
+const CAMPUS = ["Semua", "USU", "POLMED"];
 
 // Modal edit penuh sebuah listing dari admin.
 export default function AdminListingModal({ listing, categories, onSave, onClose }) {
@@ -15,12 +18,21 @@ export default function AdminListingModal({ listing, categories, onSave, onClose
     category: listing.category || "",
     type: listing.type || "barang",
     status: listing.status || "pending",
+    campus: listing.campus || "Semua",
+    area: listing.area || "",
     featured: !!listing.featured,
     views: listing.views ?? 0,
     description: listing.description || "",
-    image_url: listing.image_url || "",
   });
+  const initialImages = listing.images?.length
+    ? listing.images
+    : listing.image_url
+    ? [listing.image_url]
+    : [];
+  const [media, setMedia] = useState(initialImages.map((url) => ({ url, preview: url })));
+  const [fileError, setFileError] = useState("");
   const [busy, setBusy] = useState(false);
+
   const set = (k) => (e) =>
     setF((s) => ({
       ...s,
@@ -30,8 +42,20 @@ export default function AdminListingModal({ listing, categories, onSave, onClose
   async function save() {
     setBusy(true);
     try {
-      await onSave({ action: "update_listing", id: listing.id, ...f });
+      const images = await uploadMedia(media);
+      await onSave(
+        {
+          action: "update_listing",
+          id: listing.id,
+          ...f,
+          image_url: images[0] || null,
+          images,
+        },
+        "Listing diperbarui"
+      );
       onClose();
+    } catch (e) {
+      setFileError(e.message);
     } finally {
       setBusy(false);
     }
@@ -43,18 +67,33 @@ export default function AdminListingModal({ listing, categories, onSave, onClose
 
   return (
     <div
-      className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
+      className="fixed inset-0 z-50 grid place-items-center bg-gray-900/60 p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="max-h-[90vh] w-full max-w-2xl overflow-auto rounded-2xl bg-white p-5"
+        className="max-h-[90vh] w-full max-w-2xl overflow-auto rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl dark:border-slate-800 dark:bg-slate-900"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold">Edit Listing</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-700">
+          <h3 className="text-lg font-bold dark:text-white">Edit Listing</h3>
+          <button
+            onClick={onClose}
+            className="grid h-8 w-8 place-items-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-slate-800"
+          >
             ✕
           </button>
+        </div>
+
+        {/* Galeri */}
+        <div className="mt-4">
+          <label className="label">Foto (galeri)</label>
+          <MediaUploader
+            media={media}
+            setMedia={setMedia}
+            max={5}
+            error={fileError}
+            setError={setFileError}
+          />
         </div>
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -117,9 +156,24 @@ export default function AdminListingModal({ listing, categories, onSave, onClose
             <input type="number" min="0" className="input" value={f.views} onChange={set("views")} />
           </div>
 
+          <div>
+            <label className="label">Kampus</label>
+            <select className="input" value={f.campus} onChange={set("campus")}>
+              {CAMPUS.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="label">Area</label>
+            <input className="input" value={f.area} onChange={set("area")} placeholder="Sekitar Kampus" />
+          </div>
+
           <label className="flex items-center gap-2 sm:col-span-2">
             <input type="checkbox" checked={f.featured} onChange={set("featured")} />
-            <span className="text-sm font-medium">⭐ Featured (tampil di banner)</span>
+            <span className="text-sm font-medium dark:text-slate-200">Featured (tampil di banner)</span>
           </label>
 
           <div className="sm:col-span-2">
@@ -130,24 +184,11 @@ export default function AdminListingModal({ listing, categories, onSave, onClose
               onChange={set("description")}
             />
           </div>
-
-          <div className="sm:col-span-2">
-            <label className="label">URL Gambar</label>
-            <input className="input" value={f.image_url} onChange={set("image_url")} />
-            {f.image_url && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={f.image_url}
-                alt=""
-                className="mt-2 h-32 w-32 rounded-lg object-cover"
-              />
-            )}
-          </div>
         </div>
 
         <div className="mt-5 flex gap-2">
           <button onClick={save} disabled={busy} className="btn-primary flex-1">
-            {busy ? "Menyimpan…" : "💾 Simpan"}
+            {busy ? "Menyimpan…" : "Simpan"}
           </button>
           <button onClick={onClose} className="btn-outline">
             Batal

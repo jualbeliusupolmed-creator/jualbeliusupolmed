@@ -17,7 +17,7 @@ async function safe(promise, fallback) {
 
 async function getStats() {
   const supa = getAdminClient();
-  const [listings, payments, blacklist, reports, ratings, categories, settings] =
+  const [listings, payments, blacklist, reports, ratings, categories, settings, wanted] =
     await Promise.all([
       safe(
         supa.from("listings").select("*").order("created_at", { ascending: false }).limit(500),
@@ -53,9 +53,13 @@ async function getStats() {
         []
       ),
       getSettings(),
+      safe(
+        supa.from("wanted_listings").select("*").order("created_at", { ascending: false }).limit(200),
+        []
+      ),
     ]);
 
-  return { listings, payments, blacklist, reports, ratings, categories, settings };
+  return { listings, payments, blacklist, reports, ratings, categories, settings, wanted };
 }
 
 export default async function AdminPage() {
@@ -70,6 +74,7 @@ export default async function AdminPage() {
     ratings: [],
     categories: [],
     settings: DEFAULT_SETTINGS,
+    wanted: [],
   };
   try {
     data = await getStats();

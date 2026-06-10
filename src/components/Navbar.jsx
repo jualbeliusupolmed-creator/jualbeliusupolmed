@@ -7,6 +7,7 @@ import Logo from "@/components/Logo";
 
 const links = [
   { href: "/", label: "Beranda" },
+  { href: "/dicari", label: "Dicari" },
   { href: "/jual", label: "Jual" },
   { href: "/favorit", label: "Favorit" },
   { href: "/cara-bergabung", label: "Cara Bergabung" },
@@ -17,10 +18,29 @@ export default function Navbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [dark, setDark] = useState(false);
+  const [session, setSession] = useState({ name: "", wa: "" });
 
   useEffect(() => {
     setDark(document.documentElement.classList.contains("dark"));
+
+    // Register service worker for PWA
+    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker
+          .register("/sw.js")
+          .then((reg) => console.log("SW registered:", reg.scope))
+          .catch((err) => console.error("SW registration failed:", err));
+      });
+    }
   }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const wa = localStorage.getItem("seller_wa") || "";
+      const name = localStorage.getItem("seller_name") || "";
+      setSession({ name, wa });
+    }
+  }, [pathname]);
 
   const toggleTheme = () => {
     const isDark = !dark;
@@ -79,6 +99,28 @@ export default function Navbar() {
             )}
           </button>
 
+          {session.wa && (
+            <div className="flex items-center gap-1.5 ml-2 border border-gray-200 dark:border-slate-800 rounded-lg py-1 px-2.5 text-xs font-semibold text-gray-700 bg-gray-50/50 dark:text-slate-350 dark:bg-slate-900/40">
+              <span className="truncate max-w-[90px]" title={session.name || session.wa}>
+                👤 {session.name || session.wa}
+              </span>
+              <button
+                onClick={() => {
+                  if (confirm("Log out dari nomor seller ini?")) {
+                    localStorage.removeItem("seller_wa");
+                    localStorage.removeItem("seller_name");
+                    setSession({ name: "", wa: "" });
+                    window.location.reload();
+                  }
+                }}
+                className="text-gray-400 hover:text-rose-500 font-bold ml-1 transition-colors"
+                title="Keluar / Ganti Akun"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
           <Link href="/jual" className="btn-primary ml-2 px-4 py-2">
             Pasang Iklan
           </Link>
@@ -120,12 +162,32 @@ export default function Navbar() {
 
       {open && (
         <nav className="border-t border-gray-100 bg-white px-4 py-2 dark:border-slate-900 dark:bg-slate-950 md:hidden">
+          {session.wa && (
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-slate-900 pb-2.5 mb-2 text-xs font-semibold text-gray-700 dark:text-slate-300">
+              <span className="flex items-center gap-1.5 truncate max-w-[200px]">
+                👤 Seller: {session.name || session.wa}
+              </span>
+              <button
+                onClick={() => {
+                  if (confirm("Log out dari nomor seller ini?")) {
+                    localStorage.removeItem("seller_wa");
+                    localStorage.removeItem("seller_name");
+                    setSession({ name: "", wa: "" });
+                    window.location.reload();
+                  }
+                }}
+                className="text-rose-500 font-bold px-2 py-1 bg-rose-50 dark:bg-rose-950/20 rounded-md shrink-0"
+              >
+                Log Out
+              </button>
+            </div>
+          )}
           {links.map((l) => (
             <Link
               key={l.href}
               href={l.href}
               onClick={() => setOpen(false)}
-              className="block rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-900"
+              className="block rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-slate-350 dark:hover:bg-slate-900"
             >
               {l.label}
             </Link>

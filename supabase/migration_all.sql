@@ -1,9 +1,10 @@
 -- =====================================================================
--- Jual Beli USU Polmed — SEMUA MIGRATION (gabungan)
+-- Jual Beli USU Polmed — SEMUA MIGRATION (gabungan lengkap)
 -- ---------------------------------------------------------------------
 -- Jalankan SETELAH schema.sql, sekali paste di Supabase SQL Editor.
 -- Aman dijalankan berulang (idempotent): pakai IF NOT EXISTS / ON CONFLICT.
--- Menggabungkan: ratings, reports, views, admin (settings+kategori), gallery.
+-- Mencakup: ratings, reports, views, admin (settings+kategori), gallery,
+--           wanted_listings, filter kampus/area.
 -- =====================================================================
 
 
@@ -118,5 +119,47 @@ update public.listings
 
 
 -- =====================================================================
--- Selesai. Cek: select key from public.settings;  (harus ada 3 baris)
+-- 6) Papan Dicari / Wanted Listings
+-- =====================================================================
+create table if not exists public.wanted_listings (
+  id           uuid primary key default gen_random_uuid(),
+  buyer_name   text not null,
+  buyer_wa     text not null,
+  title        text not null,
+  description  text,
+  budget       bigint not null default 0,
+  category     text not null,
+  campus       text not null default 'Semua' check (campus in ('USU', 'POLMED', 'Semua')),
+  area         text not null default 'Sekitar Kampus',
+  status       text not null default 'active' check (status in ('active', 'resolved', 'expired')),
+  created_at   timestamptz not null default now()
+);
+
+create index if not exists wanted_listings_status_idx on public.wanted_listings (status);
+create index if not exists wanted_listings_campus_idx on public.wanted_listings (campus);
+create index if not exists wanted_listings_buyer_idx  on public.wanted_listings (buyer_wa);
+
+alter table public.wanted_listings enable row level security;
+
+drop policy if exists "public read active wanted" on public.wanted_listings;
+create policy "public read active wanted"
+  on public.wanted_listings for select
+  using (status = 'active');
+
+
+-- =====================================================================
+-- 7) Kolom campus & area di listings (filter kampus)
+-- =====================================================================
+alter table public.listings
+  add column if not exists campus text default 'Semua'
+    check (campus in ('USU', 'POLMED', 'Semua')),
+  add column if not exists area text default 'Sekitar Kampus';
+
+create index if not exists listings_campus_idx on public.listings (campus);
+
+
+-- =====================================================================
+-- Selesai!
+-- Cek: select key from public.settings;           → harus ada 3 baris
+--      select count(*) from public.wanted_listings; → tabel ada
 -- =====================================================================

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { CATEGORIES } from "@/lib/constants";
+import { CATEGORIES, POPULAR_AREAS } from "@/lib/constants";
 import { rupiah } from "@/lib/fees";
 import { uploadMedia } from "@/lib/upload";
 import MediaUploader from "@/components/MediaUploader";
@@ -17,6 +17,7 @@ export default function EditPage() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(true);
+  const [areaOption, setAreaOption] = useState("");
   const [fileError, setFileError] = useState("");
   const [cats, setCats] = useState(CATEGORIES);
 
@@ -48,7 +49,18 @@ export default function EditPage() {
           price: l.price || "",
           stock: l.stock || 1,
           category: l.category || CATEGORIES[0].name,
+          campus: l.campus || "Semua",
+          area: l.area || "",
         });
+        if (l.area) {
+          if (POPULAR_AREAS.includes(l.area)) {
+            setAreaOption(l.area);
+          } else {
+            setAreaOption("Lainnya");
+          }
+        } else {
+          setAreaOption("");
+        }
         const existing = l.images?.length
           ? l.images
           : l.image_url
@@ -65,6 +77,14 @@ export default function EditPage() {
   }, [id]);
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  const handleAreaOptionChange = (e) => {
+    const val = e.target.value;
+    setAreaOption(val);
+    if (val !== "Lainnya") {
+      setForm((f) => ({ ...f, area: val }));
+    }
+  };
 
   async function submit(e) {
     e.preventDefault();
@@ -88,6 +108,8 @@ export default function EditPage() {
           price: Number(form.price),
           stock: Number(form.stock),
           category: form.category,
+          campus: form.campus,
+          area: form.area,
           image_url,
           images,
         }),
@@ -152,6 +174,41 @@ export default function EditPage() {
                 ))}
               </select>
             </div>
+            <div>
+              <label className="label">Target Kampus</label>
+              <select className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.campus} onChange={set("campus")}>
+                <option value="Semua">Semua (USU &amp; POLMED)</option>
+                <option value="USU">USU</option>
+                <option value="POLMED">POLMED</option>
+              </select>
+            </div>
+            <div>
+              <label className="label">Lokasi COD Kampus</label>
+              <select
+                className="input focus:ring-4 focus:ring-accent/10 focus:border-accent"
+                value={areaOption}
+                onChange={handleAreaOptionChange}
+              >
+                <option value="">Pilih Lokasi COD</option>
+                {POPULAR_AREAS.map((a) => (
+                  <option key={a} value={a}>{a}</option>
+                ))}
+                <option value="Lainnya">Lainnya (Ketik Manual)</option>
+              </select>
+            </div>
+            {areaOption === "Lainnya" && (
+              <div className="floating-group mt-5">
+                <input
+                  id="edit-area"
+                  className="floating-input peer"
+                  value={form.area}
+                  onChange={set("area")}
+                  placeholder=" "
+                  required
+                />
+                <label htmlFor="edit-area" className="floating-label">Ketik Manual Lokasi COD (misal: Fasilkom, Gedung C)</label>
+              </div>
+            )}
             
             <div className="floating-group">
               <input
@@ -191,11 +248,13 @@ export default function EditPage() {
             <div className="floating-group">
               <input
                 id="edit-price"
-                type="number"
-                min="0"
+                type="text"
                 className="floating-input peer"
-                value={form.price}
-                onChange={set("price")}
+                value={form.price ? Number(form.price).toLocaleString("id-ID") : ""}
+                onChange={(e) => {
+                  const cleaned = e.target.value.replace(/\D/g, "");
+                  setForm((f) => ({ ...f, price: cleaned }));
+                }}
                 placeholder=" "
                 required
               />

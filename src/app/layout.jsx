@@ -7,6 +7,7 @@ export const metadata = {
   title: "Jual Beli USU Polmed — Marketplace Mahasiswa",
   description:
     "Tempat jual-beli barang warga USU & POLMED: laptop, HP, buku, fashion, makanan, kos, dan jasa.",
+  manifest: "/manifest.json",
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
   ),
@@ -27,6 +28,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="id">
       <head>
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"

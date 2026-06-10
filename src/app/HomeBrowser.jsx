@@ -10,6 +10,7 @@ import { rupiah } from "@/lib/fees";
 const SORT_OPTIONS = [
   { value: "bumped", label: "Paling Relevan" },
   { value: "newest", label: "Terbaru" },
+  { value: "views", label: "Paling Populer" },
   { value: "price_asc", label: "Harga Terendah" },
   { value: "price_desc", label: "Harga Tertinggi" },
 ];
@@ -34,6 +35,7 @@ export default function HomeBrowser({
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [showPriceFilter, setShowPriceFilter] = useState(false);
+  const [campusFilter, setCampusFilter] = useState("Semua");
 
   // Pagination state
   const [listings, setListings] = useState(initialListings || []);
@@ -52,6 +54,7 @@ export default function HomeBrowser({
       newSort = sort,
       newMin = minPrice,
       newMax = maxPrice,
+      newCampus = campusFilter,
     } = {}) => {
       setSearching(true);
       setPage(1);
@@ -61,6 +64,7 @@ export default function HomeBrowser({
         if (newQ) params.set("q", newQ);
         if (newMin) params.set("minPrice", newMin);
         if (newMax) params.set("maxPrice", newMax);
+        if (newCampus && newCampus !== "Semua") params.set("campus", newCampus);
 
         const res = await fetch(`/api/listings/browse?${params}`);
         const data = await res.json();
@@ -72,8 +76,13 @@ export default function HomeBrowser({
         setSearching(false);
       }
     },
-    [cat, q, sort, minPrice, maxPrice]
+    [cat, q, sort, minPrice, maxPrice, campusFilter]
   );
+
+  function handleCampus(newCampus) {
+    setCampusFilter(newCampus);
+    applyFilters({ newCampus });
+  }
 
   // Debounce search
   const handleSearch = useCallback((val) => {
@@ -113,6 +122,7 @@ export default function HomeBrowser({
       if (q) params.set("q", q);
       if (minPrice) params.set("minPrice", minPrice);
       if (maxPrice) params.set("maxPrice", maxPrice);
+      if (campusFilter && campusFilter !== "Semua") params.set("campus", campusFilter);
 
       const res = await fetch(`/api/listings/browse?${params}`);
       const data = await res.json();
@@ -127,7 +137,7 @@ export default function HomeBrowser({
 
   const hasMore = listings.length < total;
   const hasActiveFilter =
-    cat !== "all" || q || sort !== "bumped" || minPrice || maxPrice;
+    cat !== "all" || q || sort !== "bumped" || minPrice || maxPrice || campusFilter !== "Semua";
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
@@ -154,6 +164,9 @@ export default function HomeBrowser({
           <div className="mt-3 flex flex-wrap gap-2.5 sm:mt-3.5">
             <Link href="/jual" className="btn-primary px-3 py-1.5 text-xs sm:px-4 sm:py-2">
               Pasang Iklan
+            </Link>
+            <Link href="/dicari" className="btn-outline px-3 py-1.5 text-xs sm:px-4 sm:py-2">
+              🔎 Papan Dicari
             </Link>
             <Link href="/cara-bergabung" className="btn-outline px-3 py-1.5 text-xs sm:px-4 sm:py-2">
               Cara Bergabung
@@ -260,8 +273,8 @@ export default function HomeBrowser({
         </select>
       </div>
 
-      {/* Filter Harga */}
-      <div className="mt-2">
+      {/* Filter Harga & Kampus */}
+      <div className="mt-2 flex flex-wrap items-center gap-2">
         <button
           type="button"
           onClick={() => setShowPriceFilter((v) => !v)}
@@ -278,6 +291,25 @@ export default function HomeBrowser({
             </span>
           )}
         </button>
+
+        {/* Campus Filter Segment */}
+        <div className="flex bg-gray-100 dark:bg-slate-900 p-0.5 rounded-lg text-xs font-medium">
+          {["Semua", "USU", "POLMED"].map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => handleCampus(c)}
+              className={`px-3 py-1 rounded-md transition-all ${
+                campusFilter === c
+                  ? "bg-white text-gray-900 shadow-sm dark:bg-slate-800 dark:text-white"
+                  : "text-gray-500 hover:text-gray-950 dark:text-slate-400 dark:hover:text-slate-200"
+              }`}
+            >
+              📍 {c === "Semua" ? "Semua" : c}
+            </button>
+          ))}
+        </div>
+      </div>
 
         {showPriceFilter && (
           <div className="mt-2 card p-4 flex flex-wrap items-end gap-3">
@@ -316,7 +348,6 @@ export default function HomeBrowser({
             )}
           </div>
         )}
-      </div>
 
       {/* Categories */}
       <div className="mt-4">
@@ -337,8 +368,9 @@ export default function HomeBrowser({
                 setSort("bumped");
                 setMinPrice("");
                 setMaxPrice("");
+                setCampusFilter("Semua");
                 setShowPriceFilter(false);
-                applyFilters({ newCat: "all", newQ: "", newSort: "bumped", newMin: "", newMax: "" });
+                applyFilters({ newCat: "all", newQ: "", newSort: "bumped", newMin: "", newMax: "", newCampus: "Semua" });
               }}
               className="text-xs text-primary underline"
             >

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Script from "next/script";
 import { useRouter } from "next/navigation";
-import { CATEGORIES, MARKETPLACE_WA } from "@/lib/constants";
+import { CATEGORIES, MARKETPLACE_WA, formatWa, POPULAR_AREAS } from "@/lib/constants";
 import { adFee, rupiah } from "@/lib/fees";
 import { uploadMedia } from "@/lib/upload";
 import MediaUploader from "@/components/MediaUploader";
@@ -19,6 +19,8 @@ export default function JualPage() {
     stock: 1,
     category: CATEGORIES[0].name,
     type: "barang",
+    campus: "Semua",
+    area: "",
   });
   const [media, setMedia] = useState([]);
   const [busy, setBusy] = useState(false);
@@ -28,9 +30,24 @@ export default function JualPage() {
   const [paymentMethod, setPaymentMethod] = useState("otomatis");
   const [createdListing, setCreatedListing] = useState(null);
   const [showQRISModal, setShowQRISModal] = useState(false);
+  const [areaOption, setAreaOption] = useState("");
 
   const [cfg, setCfg] = useState(null);
+  
+  // Auto-fill from localStorage on mount
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedWa = localStorage.getItem("seller_wa") || "";
+      const savedName = localStorage.getItem("seller_name") || "";
+      if (savedWa || savedName) {
+        setForm((f) => ({
+          ...f,
+          seller_wa: savedWa || f.seller_wa,
+          seller_name: savedName || f.seller_name,
+        }));
+      }
+    }
+    
     fetch("/api/config")
       .then((r) => r.json())
       .then((d) => setCfg(d))
@@ -48,10 +65,19 @@ export default function JualPage() {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const fee = adFeeFor(form.type);
 
+  const handleAreaOptionChange = (e) => {
+    const val = e.target.value;
+    setAreaOption(val);
+    if (val !== "Lainnya") {
+      setForm((f) => ({ ...f, area: val }));
+    }
+  };
+
   async function submit(e) {
     e.preventDefault();
     setMsg("");
-    if (!form.seller_name || !form.seller_wa || !form.title || !form.price) {
+    const formattedWa = formatWa(form.seller_wa);
+    if (!form.seller_name || !formattedWa || !form.title || !form.price) {
       setMsg("Lengkapi nama, WA, judul, dan harga.");
       return;
     }
@@ -62,13 +88,14 @@ export default function JualPage() {
       const res = await fetch("/api/listings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, image_url, images }),
+        body: JSON.stringify({ ...form, seller_wa: formattedWa, image_url, images }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal membuat listing");
 
-      const waParam = encodeURIComponent(form.seller_wa || "");
-      localStorage.setItem("seller_wa", form.seller_wa);
+      const waParam = encodeURIComponent(formattedWa);
+      localStorage.setItem("seller_wa", formattedWa);
+      localStorage.setItem("seller_name", form.seller_name);
 
       if (paymentMethod === "otomatis") {
         // Buka Midtrans Snap
@@ -145,6 +172,41 @@ export default function JualPage() {
                 ))}
               </select>
             </div>
+            <div>
+              <label className="label">Target Kampus</label>
+              <select className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.campus} onChange={set("campus")}>
+                <option value="Semua">Semua (USU &amp; POLMED)</option>
+                <option value="USU">USU</option>
+                <option value="POLMED">POLMED</option>
+              </select>
+            </div>
+            <div>
+              <label className="label">Lokasi COD Kampus</label>
+              <select
+                className="input focus:ring-4 focus:ring-accent/10 focus:border-accent"
+                value={areaOption}
+                onChange={handleAreaOptionChange}
+              >
+                <option value="">Pilih Lokasi COD</option>
+                {POPULAR_AREAS.map((a) => (
+                  <option key={a} value={a}>{a}</option>
+                ))}
+                <option value="Lainnya">Lainnya (Ketik Manual)</option>
+              </select>
+            </div>
+            {areaOption === "Lainnya" && (
+              <div className="floating-group mt-5">
+                <input 
+                  id="form-area"
+                  className="floating-input peer" 
+                  value={form.area} 
+                  onChange={set("area")} 
+                  placeholder=" "
+                  required
+                />
+                <label htmlFor="form-area" className="floating-label">Ketik Manual Lokasi COD (misal: Fasilkom, Gedung C)</label>
+              </div>
+            )}
             
             {/* Floating Input Groups */}
             <div className="sm:col-span-2 floating-group">
@@ -173,11 +235,13 @@ export default function JualPage() {
             <div className="floating-group">
               <input 
                 id="form-price"
-                type="number" 
-                min="0" 
+                type="text" 
                 className="floating-input peer" 
-                value={form.price} 
-                onChange={set("price")} 
+                value={form.price ? Number(form.price).toLocaleString("id-ID") : ""} 
+                onChange={(e) => {
+                  const cleaned = e.target.value.replace(/\D/g, "");
+                  setForm((f) => ({ ...f, price: cleaned }));
+                }} 
                 placeholder=" "
                 required
               />

@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { rupiah, soldFee } from "@/lib/fees";
 import ConfirmModal from "@/components/ConfirmModal";
 import InputModal from "@/components/InputModal";
+import { formatWa } from "@/lib/constants";
 
 function statusBadge(s) {
   const map = {
@@ -27,22 +28,26 @@ function DashboardInner() {
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
 
+  const [wantedItems, setWantedItems] = useState([]);
+  const [activeTab, setActiveTab] = useState("jual");
+
   // Modal state
-  const [soldModal, setSoldModal] = useState(null);      // item yang mau di-mark sold
-  const [soldPriceModal, setSoldPriceModal] = useState(null); // setelah input harga
-  const [stockModal, setStockModal] = useState(null);    // item yang mau update stok
-  const [featuredModal, setFeaturedModal] = useState(null); // item featured (input hari)
-  const [featuredConfirm, setFeaturedConfirm] = useState(null); // konfirmasi bayar featured
+  const [soldModal, setSoldModal] = useState(null);
+  const [soldPriceModal, setSoldPriceModal] = useState(null);
+  const [stockModal, setStockModal] = useState(null);
+  const [featuredModal, setFeaturedModal] = useState(null);
+  const [featuredConfirm, setFeaturedConfirm] = useState(null);
+  const [qrisModalItem, setQrisModalItem] = useState(null);
 
   useEffect(() => {
     const urlWa = params.get("wa");
     const saved = localStorage.getItem("seller_wa");
-    const waToLoad = urlWa || saved;
+    const waToLoad = formatWa(urlWa || saved || "");
     if (waToLoad) {
       setWa(waToLoad);
       load(waToLoad);
       if (urlWa) {
-        localStorage.setItem("seller_wa", urlWa);
+        localStorage.setItem("seller_wa", waToLoad);
       }
     }
     if (params.get("paid")) setNote("✅ Pembayaran sukses! Iklan tayang sebentar lagi.");
@@ -52,15 +57,59 @@ function DashboardInner() {
   }, [params]);
 
   async function load(num) {
-    const n = (num ?? wa).trim();
-    if (!n) return;
+    let raw = (num ?? wa).trim();
+    if (!raw) return;
+    const n = formatWa(raw);
+    setWa(n);
     setBusy(true);
     try {
-      const res = await fetch(`/api/listings?seller_wa=${encodeURIComponent(n)}`);
-      const data = await res.json();
-      setItems(data.listings || []);
+      const [resListings, resWanted] = await Promise.all([
+        fetch(`/api/listings?seller_wa=${encodeURIComponent(n)}`),
+        fetch(`/api/wanted?buyer_wa=${encodeURIComponent(n)}`),
+      ]);
+      const dataListings = await resListings.json();
+      const dataWanted = await resWanted.json();
+
+      setItems(dataListings.listings || []);
+      setWantedItems(dataWanted.listings || []);
+
       setLoaded(true);
       localStorage.setItem("seller_wa", n);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function resolveWanted(id) {
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/wanted/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "resolve" }),
+      });
+      if (!res.ok) throw new Error("Gagal menyelesaikan postingan");
+      load();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function deleteWanted(id) {
+    if (!confirm("Hapus postingan dicari ini?")) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/wanted/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Gagal menghapus postingan");
+      load();
+    } catch (err) {
+      alert(err.message);
     } finally {
       setBusy(false);
     }
@@ -156,6 +205,8 @@ function DashboardInner() {
 
   const active = items.filter((i) => i.status === "active");
   const soldItems = items.filter((i) => i.status === "sold");
+  const pendingItems = items.filter((i) => i.status === "pending");
+  const otherItems = items.filter((i) => i.status === "expired" || i.status === "suspended");
   const totalFee = soldItems.reduce((s, i) => s + (i.sold_fee || 0), 0);
 
   const snapUrl =
@@ -287,88 +338,308 @@ function DashboardInner() {
 
       {loaded && (
         <>
-          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Stat label="Iklan aktif" value={active.length} />
-            <Stat label="Terjual" value={soldItems.length} />
-            <Stat label="Total iklan" value={items.length} />
-            <Stat label="Fee dibayar" value={rupiah(totalFee)} />
+          {/* Tab Selection */}
+          <div className="mt-8 flex gap-2 border-b dark:border-slate-800">
+            <button
+              onClick={() => setActiveTab("jual")}
+              className={`pb-2.5 px-4 text-sm font-bold border-b-2 transition-all ${
+                activeTab === "jual"
+                  ? "border-primary text-gray-900 dark:border-white dark:text-white"
+                  : "border-transparent text-gray-400 hover:text-gray-900 dark:hover:text-slate-200"
+              }`}
+            >
+              📦 Iklan Jual ({items.length})
+            </button>
+            <button
+              onClick={() => setActiveTab("dicari")}
+              className={`pb-2.5 px-4 text-sm font-bold border-b-2 transition-all ${
+                activeTab === "dicari"
+                  ? "border-primary text-gray-900 dark:border-white dark:text-white"
+                  : "border-transparent text-gray-400 hover:text-gray-900 dark:hover:text-slate-200"
+              }`}
+            >
+              🔍 Kebutuhan Dicari ({wantedItems.length})
+            </button>
           </div>
 
-          <h2 className="mt-8 text-lg font-bold">Iklan Aktif</h2>
-          {active.length === 0 ? (
-            <p className="mt-3 text-sm text-gray-400">
-              Belum ada iklan aktif.{" "}
-              <Link href="/jual" className="text-primary underline">
-                Pasang sekarang
-              </Link>
-            </p>
-          ) : (
-            <div className="mt-3 space-y-3">
-              {active.map((i) => (
-                <div
-                  key={i.id}
-                  className="card flex flex-col gap-3 p-3 sm:flex-row sm:items-center"
-                >
-                  <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-gray-100">
-                    {i.image_url && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={i.image_url} alt="" className="h-full w-full object-cover" />
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className={`badge ${statusBadge(i.status)}`}>{i.status}</span>
-                      <span className="badge bg-primary/10 text-primary">{i.category}</span>
-                    </div>
-                    <p className="mt-1 truncate font-semibold">{i.title}</p>
-                    <p className="text-sm text-gray-500">
-                      {rupiah(i.price)} · stok {i.stock}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <button onClick={() => bump(i)} className="btn-outline text-xs">
-                      ⬆️ Sundul 1k
-                    </button>
-                    <button onClick={() => openFeatured(i)} className="btn-outline text-xs">
-                      ⭐ Featured
-                    </button>
-                    <button onClick={() => openUpdateStock(i)} className="btn-outline text-xs">
-                      📦 Stok
-                    </button>
-                    <Link
-                      href={`/edit/${i.id}`}
-                      className="btn-outline text-xs"
-                    >
-                      ✏️ Edit
-                    </Link>
-                    <button onClick={() => openMarkSold(i)} className="btn-primary text-xs">
-                      ✅ Mark Sold
-                    </button>
+          {activeTab === "jual" ? (
+            <div className="space-y-6">
+              <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <Stat label="Iklan aktif" value={active.length} />
+                <Stat label="Terjual" value={soldItems.length} />
+                <Stat label="Total iklan" value={items.length} />
+                <Stat label="Fee dibayar" value={rupiah(totalFee)} />
+              </div>
+
+              {/* Iklan Pending / Menunggu Pembayaran */}
+              {pendingItems.length > 0 && (
+                <div className="card p-4 border border-amber-200 bg-amber-500/5 dark:border-amber-950/40 dark:bg-amber-950/5 space-y-3">
+                  <h2 className="text-base font-bold text-amber-700 dark:text-amber-400">
+                    ⚠️ Iklan Menunggu Pembayaran ({pendingItems.length})
+                  </h2>
+                  <p className="text-xs text-amber-600 dark:text-amber-500">
+                    Iklan Anda belum aktif di marketplace. Silakan selesaikan pembayaran agar iklan dapat ditayangkan.
+                  </p>
+                  <div className="space-y-3 mt-2">
+                    {pendingItems.map((i) => (
+                      <div
+                        key={i.id}
+                        className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center justify-between border border-amber-200/50 bg-white dark:bg-slate-900 rounded-xl dark:border-slate-800"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-slate-950">
+                            {i.image_url && (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={i.image_url} alt="" className="h-full w-full object-cover" />
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-sm truncate max-w-[200px] dark:text-white">{i.title}</p>
+                            <p className="text-xs text-gray-500 dark:text-slate-400">{rupiah(i.price)}</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setQrisModalItem(i)}
+                            className="btn-primary py-1.5 px-3 text-xs flex items-center gap-1 shadow-sm"
+                          >
+                            📸 Bayar / Konfirmasi WA
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))}
+              )}
+
+              <div>
+                <h2 className="text-base font-bold dark:text-white">Iklan Aktif</h2>
+                {active.length === 0 ? (
+                  <p className="mt-3 text-sm text-gray-400">
+                    Belum ada iklan aktif.{" "}
+                    <Link href="/jual" className="text-primary underline">
+                      Pasang sekarang
+                    </Link>
+                  </p>
+                ) : (
+                  <div className="mt-3 space-y-3">
+                    {active.map((i) => (
+                      <div
+                        key={i.id}
+                        className="card flex flex-col gap-3 p-3 sm:flex-row sm:items-center dark:border-slate-800"
+                      >
+                        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-slate-950">
+                          {i.image_url && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={i.image_url} alt="" className="h-full w-full object-cover" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className={`badge ${statusBadge(i.status)}`}>{i.status}</span>
+                            <span className="badge bg-primary/10 text-primary">{i.category}</span>
+                            <span className="badge bg-gray-150 text-gray-700 dark:bg-slate-800 dark:text-slate-350">📍 {i.campus}</span>
+                          </div>
+                          <p className="mt-1 truncate font-semibold">{i.title}</p>
+                          <p className="text-sm text-gray-500">
+                            {rupiah(i.price)} · stok {i.stock}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <button onClick={() => bump(i)} className="btn-outline text-xs">
+                            ⬆️ Sundul 1k
+                          </button>
+                          <button onClick={() => openFeatured(i)} className="btn-outline text-xs">
+                            ⭐ Featured
+                          </button>
+                          <button onClick={() => openUpdateStock(i)} className="btn-outline text-xs">
+                            📦 Stok
+                          </button>
+                          <Link
+                            href={`/edit/${i.id}`}
+                            className="btn-outline text-xs"
+                          >
+                            ✏️ Edit
+                          </Link>
+                          <button onClick={() => openMarkSold(i)} className="btn-primary text-xs">
+                            ✅ Mark Sold
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {soldItems.length > 0 && (
+                <div>
+                  <h2 className="text-base font-bold dark:text-white">Riwayat Terjual</h2>
+                  <div className="mt-3 space-y-2">
+                    {soldItems.map((i) => (
+                      <div
+                        key={i.id}
+                        className="card flex items-center justify-between p-3 text-sm dark:border-slate-800"
+                      >
+                        <span className="truncate font-medium">{i.title}</span>
+                        <span className="text-gray-500">
+                          {rupiah(i.sold_price || i.price)} · fee {rupiah(i.sold_fee || 0)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Iklan Tidak Aktif (Expired / Suspended) */}
+              {otherItems.length > 0 && (
+                <div className="space-y-3 mt-6">
+                  <h2 className="text-base font-bold text-gray-500 dark:text-slate-400">Iklan Tidak Aktif (Expired / Suspended)</h2>
+                  <div className="space-y-3">
+                    {otherItems.map((i) => (
+                      <div
+                        key={i.id}
+                        className="card flex flex-col gap-3 p-3 sm:flex-row sm:items-center justify-between dark:border-slate-800 opacity-60 hover:opacity-100 transition-opacity"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-slate-950">
+                            {i.image_url && (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={i.image_url} alt="" className="h-full w-full object-cover" />
+                            )}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className={`badge ${statusBadge(i.status)}`}>{i.status}</span>
+                              <span className="badge bg-gray-105 text-gray-500 dark:bg-slate-800 dark:text-slate-400">{i.category}</span>
+                            </div>
+                            <p className="font-semibold text-sm mt-0.5 dark:text-white">{i.title}</p>
+                          </div>
+                        </div>
+                        <div className="text-xs text-gray-400 font-medium">
+                          {i.status === "expired" ? "Masa aktif iklan habis" : "Ditangguhkan oleh admin"}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="mt-6 space-y-4">
+              <h2 className="text-base font-bold dark:text-white">Postingan Kebutuhan Dicari</h2>
+              {wantedItems.length === 0 ? (
+                <p className="text-sm text-gray-400">
+                  Belum ada postingan dicari.{" "}
+                  <Link href="/dicari" className="text-primary underline">
+                    Pasang kebutuhan baru
+                  </Link>
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {wantedItems.map((wi) => (
+                    <div
+                      key={wi.id}
+                      className="card flex flex-col gap-3 p-4 sm:flex-row sm:items-center justify-between dark:border-slate-800"
+                    >
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className={`badge ${wi.status === "active" ? "bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-400" : "bg-gray-200 text-gray-700 dark:bg-slate-800 dark:text-slate-400"}`}>
+                            {wi.status}
+                          </span>
+                          <span className="badge bg-primary/10 text-primary">{wi.category}</span>
+                          <span className="badge bg-gray-150 text-gray-700 dark:bg-slate-800 dark:text-slate-350">📍 {wi.campus}</span>
+                        </div>
+                        <p className="mt-1.5 font-bold text-gray-900 dark:text-white">{wi.title}</p>
+                        <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+                          Budget: {wi.budget > 0 ? rupiah(wi.budget) : "Nego"} · Area: {wi.area || "Sekitar Kampus"}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        {wi.status === "active" && (
+                          <button
+                            onClick={() => resolveWanted(wi.id)}
+                            className="btn-primary text-xs"
+                          >
+                            ✅ Tandai Terpenuhi
+                          </button>
+                        )}
+                        <button
+                          onClick={() => deleteWanted(wi.id)}
+                          className="btn-outline text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20"
+                        >
+                          🗑️ Hapus
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
-
-          {soldItems.length > 0 && (
-            <>
-              <h2 className="mt-8 text-lg font-bold">Riwayat Terjual</h2>
-              <div className="mt-3 space-y-2">
-                {soldItems.map((i) => (
-                  <div
-                    key={i.id}
-                    className="card flex items-center justify-between p-3 text-sm"
-                  >
-                    <span className="truncate font-medium">{i.title}</span>
-                    <span className="text-gray-500">
-                      {rupiah(i.sold_price || i.price)} · fee {rupiah(i.sold_fee || 0)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
         </>
+      )}
+
+      {/* Modal QRIS Manual */}
+      {qrisModalItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="card w-full max-w-md bg-white p-6 shadow-2xl dark:bg-slate-900/95 dark:border-slate-800 animate-fade-in">
+            <div className="text-center relative">
+              <button
+                type="button"
+                onClick={() => setQrisModalItem(null)}
+                className="absolute -right-2 -top-2 text-gray-400 hover:text-gray-650 text-lg p-1"
+              >
+                ✕
+              </button>
+              <h2 className="text-xl font-extrabold text-gray-900 dark:text-white flex items-center justify-center gap-2">
+                📸 QRIS Pembayaran Manual
+              </h2>
+              <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
+                Lakukan pembayaran manual dengan scan QRIS berikut:
+              </p>
+              
+              <div className="mt-4 bg-white p-3 rounded-2xl inline-block border border-gray-100 shadow-sm mx-auto">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img 
+                  src="/qris.png" 
+                  alt="QRIS Jual Beli USU Polmed" 
+                  className="max-h-[240px] object-contain"
+                />
+              </div>
+
+              <div className="mt-3 p-3 rounded-xl bg-gray-50 dark:bg-slate-950 border border-gray-150/40 dark:border-slate-850">
+                <p className="text-xs text-gray-400 dark:text-slate-500 uppercase tracking-wider font-semibold">Nominal Transfer</p>
+                <p className="text-2xl font-black text-primary dark:text-white mt-0.5">
+                  {rupiah(qrisModalItem.type === "poster" ? 10000 : 5000)}
+                </p>
+              </div>
+
+              <p className="mt-4 text-xs text-gray-500 dark:text-slate-400 text-left leading-relaxed bg-accent/5 p-3 rounded-xl border border-accent/20">
+                👉 Setelah transfer, klik tombol di bawah untuk mengirimkan bukti transfer ke admin agar iklan Anda langsung aktif.
+              </p>
+
+              <div className="mt-5 space-y-2">
+                <a
+                  href={`https://wa.me/62895429126232?text=${encodeURIComponent(
+                    `Halo Admin, saya sudah membayar biaya pendaftaran iklan manual sebesar ${rupiah(qrisModalItem.type === "poster" ? 10000 : 5000)} untuk produk "${qrisModalItem.title}".\n\nDetail Iklan:\n- ID: ${qrisModalItem.id}\n- Penjual: ${qrisModalItem.seller_name}\n- WA: ${qrisModalItem.seller_wa}\n\nMohon bantuannya untuk mengaktifkan iklan saya. Terima kasih!`
+                  )}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn-wa w-full text-center py-3 text-sm font-bold shadow-md hover:shadow-lg transition active:scale-95 flex items-center justify-center gap-2"
+                >
+                  💬 Konfirmasi via WhatsApp
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setQrisModalItem(null)}
+                  className="btn-outline w-full text-center py-2.5 text-xs text-gray-600 dark:text-slate-350 hover:bg-gray-100 dark:hover:bg-slate-800"
+                >
+                  Tutup
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

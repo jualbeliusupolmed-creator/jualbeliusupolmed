@@ -43,6 +43,8 @@ export async function POST(req) {
       type,
       image_url,
       images,
+      campus,
+      area,
     } = body;
 
     if (!seller_name || !seller_wa || !title || price == null) {
@@ -77,6 +79,8 @@ export async function POST(req) {
         type: type === "poster" ? "poster" : "barang",
         image_url: image_url || null,
         status: "pending",
+        campus: campus || "Semua",
+        area: area || "Sekitar Kampus",
         bumped_at: new Date().toISOString(),
         expires_at: new Date(Date.now() + 14 * 864e5).toISOString(),
       })

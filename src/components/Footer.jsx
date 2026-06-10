@@ -24,9 +24,11 @@ export default async function Footer() {
           <ul className="space-y-2 text-sm text-gray-600 dark:text-slate-400">
             <li><Link href="/" className="hover:text-primary dark:hover:text-white">Beranda</Link></li>
             <li><Link href="/jual" className="hover:text-primary dark:hover:text-white">Jual Barang</Link></li>
+            <li><Link href="/dicari" className="hover:text-primary dark:hover:text-white">Papan Dicari</Link></li>
             <li><Link href="/cara-bergabung" className="hover:text-primary dark:hover:text-white">Cara Bergabung</Link></li>
             <li><Link href="/daftar-harga" className="hover:text-primary dark:hover:text-white">Daftar Harga &amp; Kebijakan</Link></li>
             <li><Link href="/syarat-ketentuan" className="hover:text-primary dark:hover:text-white">Syarat &amp; Ketentuan</Link></li>
+            <li><Link href="/kebijakan-privasi" className="hover:text-primary dark:hover:text-white">Kebijakan Privasi</Link></li>
             <li><Link href="/dashboard" className="hover:text-primary dark:hover:text-white">Dashboard</Link></li>
           </ul>
         </div>

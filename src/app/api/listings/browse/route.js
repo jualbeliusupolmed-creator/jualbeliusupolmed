@@ -24,6 +24,7 @@ export async function GET(req) {
     const minPrice = sp.get("minPrice") ? Number(sp.get("minPrice")) : null;
     const maxPrice = sp.get("maxPrice") ? Number(sp.get("maxPrice")) : null;
     const sort = sp.get("sort") || "bumped";
+    const campus = sp.get("campus") || "";
 
     const from = (page - 1) * limit;
     const to = from + limit - 1;
@@ -35,6 +36,7 @@ export async function GET(req) {
       .eq("status", "active");
 
     if (cat) query = query.eq("category", cat);
+    if (campus && campus !== "Semua") query = query.eq("campus", campus);
     if (q) query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%`);
     if (minPrice !== null) query = query.gte("price", minPrice);
     if (maxPrice !== null) query = query.lte("price", maxPrice);
@@ -43,6 +45,9 @@ export async function GET(req) {
     switch (sort) {
       case "newest":
         query = query.order("created_at", { ascending: false });
+        break;
+      case "views":
+        query = query.order("views", { ascending: false });
         break;
       case "price_asc":
         query = query.order("price", { ascending: true });

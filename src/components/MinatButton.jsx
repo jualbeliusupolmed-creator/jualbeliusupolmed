@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MARKETPLACE_WA } from "@/lib/constants";
+import { MARKETPLACE_WA, formatWa } from "@/lib/constants";
 
 // Tombol "Minat": kirim notif ke penjual (Fonnte) + buka WhatsApp penjual.
 export default function MinatButton({ listing }) {
@@ -18,7 +18,7 @@ export default function MinatButton({ listing }) {
       }).catch(() => {});
     } finally {
       setBusy(false);
-      const wa = (listing.seller_wa || MARKETPLACE_WA).replace(/\D/g, "");
+      const wa = formatWa(listing.seller_wa || MARKETPLACE_WA);
       const text = encodeURIComponent(
         `Halo, saya minat dengan "${listing.title}" (Rp${Number(
           listing.price
