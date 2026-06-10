@@ -61,7 +61,7 @@ export default function AdminPanel({
   const router = useRouter();
   const VALID_TABS = ["overview","listings","transaksi","rating","reports","dicari","kategori","pengaturan","blacklist"];
   const tab = VALID_TABS.includes(initialTab) ? initialTab : "overview";
-  function goTab(key) { router.push(`/admin?tab=${key}`); }
+  function goTab(key) { router.push(`/admin/${key}`); }
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState(null);
   const [confirmState, setConfirmState] = useState(null);
