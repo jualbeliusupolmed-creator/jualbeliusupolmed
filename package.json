@@ -1,0 +1,27 @@
+{
+  "name": "jual-beli-usu-polmed",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Marketplace mahasiswa USU & POLMED",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "@vercel/analytics": "^2.0.1",
+    "html2canvas": "^1.4.1",
+    "midtrans-client": "^1.4.2",
+    "next": "14.2.35",
+    "qrcode": "^1.5.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.13"
+  }
+}

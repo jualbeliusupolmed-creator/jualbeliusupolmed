@@ -1,0 +1,43 @@
+import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+
+export const metadata = {
+  title: "Jual Beli USU Polmed — Marketplace Mahasiswa",
+  description:
+    "Tempat jual-beli barang warga USU & POLMED: laptop, HP, buku, fashion, makanan, kos, dan jasa.",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
+  ),
+  openGraph: {
+    title: "Jual Beli USU Polmed",
+    description: "Marketplace mahasiswa USU & POLMED",
+    type: "website",
+  },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#6D28D9",
+};
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="id">
+      <head>
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-1">{children}</main>
+        <Footer />
+        <Analytics />
+      </body>
+    </html>
+  );
+}

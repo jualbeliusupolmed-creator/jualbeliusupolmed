@@ -1,0 +1,188 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { getAdminClient } from "@/lib/supabaseAdmin";
+import { rupiah } from "@/lib/fees";
+import ProductCard from "@/components/ProductCard";
+
+export const dynamic = "force-dynamic";
+
+async function getSellerData(wa) {
+  try {
+    const decodedWa = decodeURIComponent(wa);
+    const supa = getAdminClient();
+
+    // Ambil semua iklan aktif penjual
+    const { data: listings } = await supa
+      .from("listings")
+      .select("*")
+      .eq("seller_wa", decodedWa)
+      .eq("status", "active")
+      .order("bumped_at", { ascending: false });
+
+    if (!listings || listings.length === 0) {
+      // Cek apakah penjual punya iklan dalam status lain
+      const { data: any } = await supa
+        .from("listings")
+        .select("seller_name, seller_wa")
+        .eq("seller_wa", decodedWa)
+        .limit(1)
+        .maybeSingle();
+      if (!any) return null;
+      return { seller: any, listings: [], ratings: [] };
+    }
+
+    // Ambil rating penjual
+    const { data: ratings } = await supa
+      .from("seller_ratings")
+      .select("*")
+      .eq("seller_wa", decodedWa)
+      .order("created_at", { ascending: false });
+
+    return {
+      seller: { seller_name: listings[0].seller_name, seller_wa: decodedWa },
+      listings: listings || [],
+      ratings: ratings || [],
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function generateMetadata({ params }) {
+  const data = await getSellerData(params.wa);
+  if (!data) return { title: "Penjual tidak ditemukan" };
+  const name = data.seller.seller_name;
+  return {
+    title: `${name} — Profil Penjual | Jual Beli USU Polmed`,
+    description: `Lihat ${data.listings.length} iklan aktif dari ${name} di marketplace mahasiswa USU & POLMED.`,
+  };
+}
+
+function StarDisplay({ value }) {
+  return (
+    <div className="flex gap-0.5">
+      {[1, 2, 3, 4, 5].map((s) => (
+        <svg
+          key={s}
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          className={`w-4 h-4 ${s <= Math.round(value) ? "text-amber-400" : "text-gray-200"}`}
+        >
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+        </svg>
+      ))}
+    </div>
+  );
+}
+
+export default async function SellerProfilePage({ params }) {
+  const data = await getSellerData(params.wa);
+  if (!data) notFound();
+
+  const { seller, listings, ratings } = data;
+  const avgRating =
+    ratings.length > 0
+      ? ratings.reduce((s, r) => s + r.rating, 0) / ratings.length
+      : null;
+
+  return (
+    <div className="mx-auto max-w-5xl px-4 py-6">
+      {/* Breadcrumb */}
+      <nav className="text-sm text-gray-400">
+        <Link href="/" className="hover:text-primary">
+          Beranda
+        </Link>{" "}
+        / Profil Penjual
+      </nav>
+
+      {/* Header Penjual */}
+      <div className="card mt-4 p-6 flex flex-col sm:flex-row sm:items-center gap-5">
+        <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-primary to-primary-dark text-2xl font-extrabold text-white shadow-lg">
+          {seller.seller_name?.[0]?.toUpperCase() || "?"}
+        </div>
+        <div className="flex-1">
+          <h1 className="text-2xl font-extrabold">{seller.seller_name}</h1>
+          <p className="mt-0.5 text-sm text-gray-400">Penjual di USU &amp; POLMED Marketplace</p>
+          {avgRating !== null && (
+            <div className="mt-2 flex items-center gap-2">
+              <StarDisplay value={avgRating} />
+              <span className="text-sm font-semibold text-amber-500">
+                {avgRating.toFixed(1)} / 5
+              </span>
+              <span className="text-xs text-gray-400">
+                ({ratings.length} ulasan)
+              </span>
+            </div>
+          )}
+          <a
+            href={`https://wa.me/${(seller.seller_wa || "").replace(/\D/g, "")}?text=${encodeURIComponent(
+              `Halo Kak ${seller.seller_name}, saya lihat profil Kakak di Jual Beli USU Polmed.`
+            )}`}
+            target="_blank"
+            rel="noreferrer"
+            className="btn-wa mt-3.5 py-2 px-4 text-xs rounded-xl"
+          >
+            💬 Hubungi Penjual via WA
+          </a>
+        </div>
+        <div className="flex flex-col gap-2 text-center sm:text-right">
+          <span className="text-3xl font-extrabold text-primary">{listings.length}</span>
+          <span className="text-xs text-gray-400">Iklan Aktif</span>
+        </div>
+      </div>
+
+      {/* Grid Iklan */}
+      <h2 className="mt-8 text-lg font-bold">
+        Iklan Aktif <span className="text-gray-400 font-normal text-base">({listings.length})</span>
+      </h2>
+
+      {listings.length === 0 ? (
+        <div className="card mt-4 grid place-items-center py-16 text-center text-gray-400">
+          <p className="text-4xl">🪹</p>
+          <p className="mt-2">Penjual ini belum punya iklan aktif.</p>
+          <Link href="/" className="btn-outline mt-4">
+            Jelajahi Marketplace
+          </Link>
+        </div>
+      ) : (
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {listings.map((l) => (
+            <ProductCard key={l.id} listing={l} />
+          ))}
+        </div>
+      )}
+
+      {/* Ulasan */}
+      {ratings.length > 0 && (
+        <section className="mt-10">
+          <h2 className="text-lg font-bold">
+            Ulasan Pembeli{" "}
+            <span className="text-gray-400 font-normal text-base">({ratings.length})</span>
+          </h2>
+          <div className="mt-4 space-y-3">
+            {ratings.map((r) => (
+              <div key={r.id} className="card p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <StarDisplay value={r.rating} />
+                    <span className="text-sm font-semibold text-amber-500">
+                      {r.rating}/5
+                    </span>
+                  </div>
+                  {r.buyer_name && (
+                    <span className="text-xs text-gray-400">— {r.buyer_name}</span>
+                  )}
+                </div>
+                {r.comment && (
+                  <p className="mt-2 text-sm text-gray-600 italic">
+                    &ldquo;{r.comment}&rdquo;
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
