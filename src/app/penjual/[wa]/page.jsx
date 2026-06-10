@@ -19,8 +19,14 @@ async function getSellerData(wa) {
       .eq("status", "active")
       .order("bumped_at", { ascending: false });
 
-    if (!listings || listings.length === 0) {
-      // Cek apakah penjual punya iklan dalam status lain
+    // Ambil total terjual + views dari semua iklan
+    const { data: allListings } = await supa
+      .from("listings")
+      .select("status, views, created_at")
+      .eq("seller_wa", decodedWa)
+      .order("created_at", { ascending: true });
+
+    if (!listings && (!allListings || allListings.length === 0)) {
       const { data: any } = await supa
         .from("listings")
         .select("seller_name, seller_wa")
@@ -28,8 +34,12 @@ async function getSellerData(wa) {
         .limit(1)
         .maybeSingle();
       if (!any) return null;
-      return { seller: any, listings: [], ratings: [] };
+      return { seller: any, listings: [], ratings: [], soldCount: 0, totalViews: 0, memberSince: null };
     }
+
+    const soldCount = (allListings || []).filter((l) => l.status === "sold").length;
+    const totalViews = (allListings || []).reduce((s, l) => s + (l.views || 0), 0);
+    const memberSince = allListings?.[0]?.created_at || null;
 
     // Ambil rating penjual
     const { data: ratings } = await supa
@@ -38,10 +48,17 @@ async function getSellerData(wa) {
       .eq("seller_wa", decodedWa)
       .order("created_at", { ascending: false });
 
+    const sellerName = listings?.[0]?.seller_name ||
+      allListings?.[0]?.seller_name ||
+      decodedWa;
+
     return {
-      seller: { seller_name: listings[0].seller_name, seller_wa: decodedWa },
+      seller: { seller_name: sellerName, seller_wa: decodedWa },
       listings: listings || [],
       ratings: ratings || [],
+      soldCount,
+      totalViews,
+      memberSince,
     };
   } catch {
     return null;
@@ -79,7 +96,7 @@ export default async function SellerProfilePage({ params }) {
   const data = await getSellerData(params.wa);
   if (!data) notFound();
 
-  const { seller, listings, ratings } = data;
+  const { seller, listings, ratings, soldCount, totalViews, memberSince } = data;
   const avgRating =
     ratings.length > 0
       ? ratings.reduce((s, r) => s + r.rating, 0) / ratings.length
@@ -96,13 +113,20 @@ export default async function SellerProfilePage({ params }) {
       </nav>
 
       {/* Header Penjual */}
-      <div className="card mt-4 p-6 flex flex-col sm:flex-row sm:items-center gap-5">
+      <div className="card mt-4 p-6 flex flex-col sm:flex-row sm:items-start gap-5">
         <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-primary to-primary-dark text-2xl font-extrabold text-white shadow-lg">
           {seller.seller_name?.[0]?.toUpperCase() || "?"}
         </div>
         <div className="flex-1">
           <h1 className="text-2xl font-extrabold">{seller.seller_name}</h1>
-          <p className="mt-0.5 text-sm text-gray-400">Penjual di USU &amp; POLMED Marketplace</p>
+          <p className="mt-0.5 text-sm text-gray-400">
+            Penjual di USU &amp; POLMED Marketplace
+            {memberSince && (
+              <span className="ml-2 text-gray-300 dark:text-slate-600">
+                · Bergabung {new Date(memberSince).toLocaleDateString("id-ID", { month: "long", year: "numeric" })}
+              </span>
+            )}
+          </p>
           {avgRating !== null && (
             <div className="mt-2 flex items-center gap-2">
               <StarDisplay value={avgRating} />
@@ -120,14 +144,39 @@ export default async function SellerProfilePage({ params }) {
             )}`}
             target="_blank"
             rel="noreferrer"
-            className="btn-wa mt-3.5 py-2 px-4 text-xs rounded-xl"
+            className="btn-wa mt-3.5 py-2 px-4 text-xs rounded-xl inline-block"
           >
             💬 Hubungi Penjual via WA
           </a>
         </div>
-        <div className="flex flex-col gap-2 text-center sm:text-right">
-          <span className="text-3xl font-extrabold text-primary">{listings.length}</span>
-          <span className="text-xs text-gray-400">Iklan Aktif</span>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="card p-4 text-center">
+          <p className="text-2xl font-extrabold text-primary">{listings.length}</p>
+          <p className="text-xs text-gray-400 mt-0.5">Iklan Aktif</p>
+        </div>
+        <div className="card p-4 text-center">
+          <p className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">{soldCount}</p>
+          <p className="text-xs text-gray-400 mt-0.5">Terjual</p>
+        </div>
+        <div className="card p-4 text-center">
+          <p className="text-2xl font-extrabold text-gray-800 dark:text-slate-200">{totalViews.toLocaleString("id-ID")}</p>
+          <p className="text-xs text-gray-400 mt-0.5">Total Dilihat</p>
+        </div>
+        <div className="card p-4 text-center">
+          {avgRating !== null ? (
+            <>
+              <p className="text-2xl font-extrabold text-amber-500">{avgRating.toFixed(1)}</p>
+              <p className="text-xs text-gray-400 mt-0.5">Rating ({ratings.length})</p>
+            </>
+          ) : (
+            <>
+              <p className="text-2xl font-extrabold text-gray-300 dark:text-slate-700">—</p>
+              <p className="text-xs text-gray-400 mt-0.5">Belum ada rating</p>
+            </>
+          )}
         </div>
       </div>
 

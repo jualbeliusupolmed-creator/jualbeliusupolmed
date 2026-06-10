@@ -192,7 +192,7 @@ export default function HomeBrowser({
                 <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-slate-950">
                   {f.image_url && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={f.image_url} alt="" className="h-full w-full object-cover" />
+                    <img src={f.image_url} alt="" loading="lazy" className="h-full w-full object-cover" />
                   )}
                 </div>
                 <div className="min-w-0">
@@ -205,38 +205,7 @@ export default function HomeBrowser({
         </section>
       )}
 
-      {/* 🔥 Paling Dilihat — disembunyikan saat sedang memfilter */}
-      {!hasActiveFilter && trending.length > 0 && (
-        <section className="mt-4">
-          <h2 className="mb-2 text-xs font-semibold text-gray-900 dark:text-slate-100 sm:text-sm">Paling Dilihat</h2>
-          <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {trending.map((t, i) => (
-              <Link
-                key={t.id}
-                href={`/produk/${t.id}`}
-                className="card flex w-40 shrink-0 flex-col overflow-hidden transition-all hover:border-gray-305"
-              >
-                <div className="relative aspect-square bg-gray-100 dark:bg-slate-950">
-                  {t.image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={t.image_url} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="grid h-full w-full place-items-center text-3xl">📦</div>
-                  )}
-                  <span className="absolute left-1.5 top-1.5 rounded-full bg-black/70 px-2 py-0.5 text-[10px] font-bold text-white">
-                    #{i + 1}
-                  </span>
-                </div>
-                <div className="p-2">
-                  <p className="truncate text-xs font-semibold dark:text-slate-200">{t.title}</p>
-                  <p className="text-xs font-bold text-accent dark:text-accent-light">{rupiah(t.price)}</p>
-                  <p className="text-[10px] text-gray-400 dark:text-slate-500">👁️ {t.views}× dilihat</p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
+
 
       {/* Search + Sort Bar */}
       <div className="mt-4 flex gap-2">
@@ -432,6 +401,39 @@ export default function HomeBrowser({
             </div>
           )}
         </>
+      )}
+
+      {/* 🔥 Paling Dilihat — di bawah listing utama */}
+      {!hasActiveFilter && trending.length > 0 && (
+        <section className="mt-8">
+          <h2 className="mb-3 text-xs font-semibold text-gray-900 dark:text-slate-100 sm:text-sm">🔥 Paling Dilihat</h2>
+          <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {trending.map((t, i) => (
+              <Link
+                key={t.id}
+                href={`/produk/${t.id}`}
+                className="card flex w-40 shrink-0 flex-col overflow-hidden transition-all hover:border-gray-305"
+              >
+                <div className="relative aspect-square bg-gray-100 dark:bg-slate-950">
+                  {t.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={t.image_url} alt="" loading="lazy" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="grid h-full w-full place-items-center text-3xl">📦</div>
+                  )}
+                  <span className="absolute left-1.5 top-1.5 rounded-full bg-black/70 px-2 py-0.5 text-[10px] font-bold text-white">
+                    #{i + 1}
+                  </span>
+                </div>
+                <div className="p-2">
+                  <p className="truncate text-xs font-semibold dark:text-slate-200">{t.title}</p>
+                  <p className="text-xs font-bold text-accent dark:text-accent-light">{rupiah(t.price)}</p>
+                  <p className="text-[10px] text-gray-400 dark:text-slate-500">👁️ {t.views}× dilihat</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
       )}
     </div>
   );

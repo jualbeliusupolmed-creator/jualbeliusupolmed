@@ -20,6 +20,16 @@ function statusBadge(s) {
   return map[s] || "bg-gray-100 text-gray-600";
 }
 
+// Countdown: berapa hari tersisa hingga expired_at
+function daysLeft(expiredAt) {
+  if (!expiredAt) return null;
+  const diff = new Date(expiredAt) - new Date();
+  const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+  if (days <= 0) return { label: "⏰ Berakhir hari ini!", cls: "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400" };
+  if (days <= 3) return { label: `⏰ ${days} hari lagi`, cls: "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400" };
+  return { label: `✅ Aktif ${days} hari lagi`, cls: "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400" };
+}
+
 function DashboardInner() {
   const params = useSearchParams();
   const [wa, setWa] = useState("");
@@ -390,7 +400,7 @@ function DashboardInner() {
                           <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-slate-950">
                             {i.image_url && (
                               // eslint-disable-next-line @next/next/no-img-element
-                              <img src={i.image_url} alt="" className="h-full w-full object-cover" />
+                              <img src={i.image_url} alt="" loading="lazy" className="h-full w-full object-cover" />
                             )}
                           </div>
                           <div className="min-w-0">
@@ -431,14 +441,19 @@ function DashboardInner() {
                         <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-slate-950">
                           {i.image_url && (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={i.image_url} alt="" className="h-full w-full object-cover" />
+                            <img src={i.image_url} alt="" loading="lazy" className="h-full w-full object-cover" />
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className={`badge ${statusBadge(i.status)}`}>{i.status}</span>
                             <span className="badge bg-primary/10 text-primary">{i.category}</span>
                             <span className="badge bg-gray-150 text-gray-700 dark:bg-slate-800 dark:text-slate-350">📍 {i.campus}</span>
+                            {daysLeft(i.expired_at) && (
+                              <span className={`badge text-[10px] ${daysLeft(i.expired_at).cls}`}>
+                                {daysLeft(i.expired_at).label}
+                              </span>
+                            )}
                           </div>
                           <p className="mt-1 truncate font-semibold">{i.title}</p>
                           <p className="text-sm text-gray-500">

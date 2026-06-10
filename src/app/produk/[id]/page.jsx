@@ -6,6 +6,7 @@ import MinatButton from "@/components/MinatButton";
 import IGShareButton from "@/components/IGShareButton";
 import ShareWAButton from "@/components/ShareWAButton";
 import QRButton from "@/components/QRButton";
+import CopyLinkButton from "@/components/CopyLinkButton";
 import ProductGallery from "@/components/ProductGallery";
 import ProductCard from "@/components/ProductCard";
 import RatingWidget from "@/components/RatingWidget";
@@ -178,8 +179,9 @@ export default async function ProdukPage({ params }) {
           {/* Aksi */}
           <div className="mt-4 space-y-2">
             {!sold && <MinatButton listing={listing} />}
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <ShareWAButton listing={listing} />
+              <CopyLinkButton listing={listing} />
               <IGShareButton listing={listing} />
               <QRButton listing={listing} />
             </div>

@@ -4,6 +4,12 @@ import FavoriteButton from "@/components/FavoriteButton";
 
 export default function ProductCard({ listing }) {
   const sold = listing.status === "sold";
+  const isNew = listing.created_at &&
+    (Date.now() - new Date(listing.created_at).getTime()) < 24 * 60 * 60 * 1000;
+  const isLowStock = listing.stock === 1;
+  const isNego = listing.is_negotiable ||
+    String(listing.description || "").toLowerCase().includes("nego") ||
+    String(listing.title || "").toLowerCase().includes("nego");
   return (
     <div className="card group relative overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:border-gray-350 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/30 dark:hover:border-slate-700/60 dark:hover:bg-slate-900/50">
       <FavoriteButton listing={listing} className="absolute right-2 top-2 z-10" />
@@ -14,6 +20,7 @@ export default function ProductCard({ listing }) {
             <img
               src={listing.image_url}
               alt={listing.title}
+              loading="lazy"
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
             />
           ) : (
@@ -26,6 +33,16 @@ export default function ProductCard({ listing }) {
           {listing.featured && (
             <span className="absolute left-2 top-2 rounded-md bg-white/95 px-2 py-0.5 text-[11px] font-semibold text-gray-900 shadow-soft dark:bg-slate-900 dark:text-slate-100">
               Unggulan
+            </span>
+          )}
+          {!listing.featured && isNew && !sold && (
+            <span className="absolute left-2 top-2 rounded-md bg-emerald-500 px-2 py-0.5 text-[11px] font-bold text-white shadow-sm">
+              BARU ✨
+            </span>
+          )}
+          {isLowStock && !sold && (
+            <span className="absolute bottom-2 left-2 rounded-md bg-amber-500/90 px-1.5 py-0.5 text-[10px] font-bold text-white">
+              Stok Tipis!
             </span>
           )}
           {sold && (
@@ -56,9 +73,16 @@ export default function ProductCard({ listing }) {
             <p className="truncate flex items-center gap-1">
               <span>{listing.stock != null ? `Stok ${listing.stock} · ` : ""}{listing.seller_name}</span>
             </p>
-            <span className="shrink-0 flex items-center gap-0.5 text-gray-400 dark:text-slate-500 font-medium">
-              👁️ {listing.views || 0}
-            </span>
+            <div className="shrink-0 flex items-center gap-1.5">
+              {isNego && (
+                <span className="rounded bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide">
+                  Nego
+                </span>
+              )}
+              <span className="flex items-center gap-0.5 text-gray-400 dark:text-slate-500 font-medium">
+                👁️ {listing.views || 0}
+              </span>
+            </div>
           </div>
         </div>
       </Link>
