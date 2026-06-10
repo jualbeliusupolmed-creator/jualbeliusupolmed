@@ -65,7 +65,7 @@ cp .env.example .env.local
 | `ADMIN_PASSWORD` | password `/admin` (default `bismillah`) |
 | `MARKETPLACE_WA` / `NEXT_PUBLIC_MARKETPLACE_WA` | nomor admin (mis. `62895429126232`) |
 | `NEXT_PUBLIC_BASE_URL` | URL situs (link di notif WA) |
-| `NEXT_PUBLIC_WA_GROUP_LINK` | link grup (bit.ly/jualbeliusupolmed) |
+| `NEXT_PUBLIC_WA_GROUP_LINK` | link grup (chat.whatsapp.com/DQMZK2qSgq2D0WvH7BlBSA) |
 | `CRON_SECRET` | opsional, proteksi cron |
 
 ### 6. Jalankan
@@ -124,4 +124,4 @@ vercel.json                   Cron config
 
 ---
 
-Dibuat untuk komunitas **Jual Beli USU Polmed** · bit.ly/jualbeliusupolmed
+Dibuat untuk komunitas **Jual Beli USU Polmed** · chat.whatsapp.com/DQMZK2qSgq2D0WvH7BlBSA

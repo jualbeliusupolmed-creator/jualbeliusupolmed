@@ -88,7 +88,7 @@ alter table public.settings enable row level security;
 
 insert into public.settings (key, value) values
   ('pricing', '{"adBarang":2000,"adPoster":10000,"bump":1000,"featuredPerDay":5000,"featuredMaxPerDay":10000,"soldTiers":[{"upto":50000,"flat":2000},{"upto":100000,"pct":10},{"upto":null,"pct":5}]}'::jsonb),
-  ('contact', '{"marketplaceWa":"62895429126232","waGroupLink":"https://bit.ly/jualbeliusupolmed"}'::jsonb),
+  ('contact', '{"marketplaceWa":"62895429126232","waGroupLink":"https://chat.whatsapp.com/DQMZK2qSgq2D0WvH7BlBSA"}'::jsonb),
   ('site', '{"heroTitle":"Marketplace Mahasiswa USU & POLMED","heroSubtitle":"Jual-beli laptop, HP, buku, fashion, makanan, kos, hingga jasa. Aman, cepat, dibantu admin.","footerTagline":"Marketplace mahasiswa USU & POLMED. Jual-beli aman, dibantu admin."}'::jsonb)
 on conflict (key) do nothing;
 

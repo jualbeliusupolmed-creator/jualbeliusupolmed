@@ -7,8 +7,8 @@ import Logo from "@/components/Logo";
 
 const links = [
   { href: "/", label: "Beranda" },
-  { href: "/jual", label: "Jual Barang" },
-  { href: "/favorit", label: "❤️ Favorit" },
+  { href: "/jual", label: "Jual" },
+  { href: "/favorit", label: "Favorit" },
   { href: "/cara-bergabung", label: "Cara Bergabung" },
   { href: "/dashboard", label: "Dashboard" },
 ];
@@ -18,19 +18,16 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/90 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-gray-200 bg-white/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-        <Link href="/" className="flex items-center gap-2 font-extrabold">
-          <Logo className="h-9 w-9" />
-          <span className="leading-tight">
-            <span className="block text-sm text-primary">Jual Beli</span>
-            <span className="block text-[11px] font-semibold text-gray-500">
-              USU · POLMED
-            </span>
+        <Link href="/" className="flex items-center gap-2.5">
+          <Logo className="h-8 w-8" />
+          <span className="text-[15px] font-extrabold tracking-tight text-gray-900">
+            jualbeli<span className="text-gray-400">.usupolmed</span>
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-0.5 md:flex">
           {links.map((l) => {
             const active =
               l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
@@ -38,18 +35,18 @@ export default function Navbar() {
               <Link
                 key={l.href}
                 href={l.href}
-                className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
+                className={`rounded-lg px-3 py-2 text-sm transition-colors ${
                   active
-                    ? "bg-primary/10 text-primary"
-                    : "text-gray-600 hover:bg-gray-100"
+                    ? "font-semibold text-gray-900"
+                    : "font-medium text-gray-500 hover:text-gray-900"
                 }`}
               >
                 {l.label}
               </Link>
             );
           })}
-          <Link href="/jual" className="btn-primary ml-2">
-            + Pasang Iklan
+          <Link href="/jual" className="btn-primary ml-2 px-4 py-2">
+            Pasang Iklan
           </Link>
         </nav>
 

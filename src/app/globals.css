@@ -3,7 +3,8 @@
 @tailwind utilities;
 
 :root {
-  --primary: #6d28d9;
+  --primary: #111111;
+  --accent: #059669;
   --wa: #25d366;
 }
 
@@ -12,32 +13,40 @@ html {
 }
 
 body {
-  @apply bg-gray-50 text-gray-900 antialiased;
+  @apply bg-white text-gray-900 antialiased;
+  font-feature-settings: "cv11", "ss01";
+}
+
+::selection {
+  @apply bg-gray-900 text-white;
 }
 
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition active:scale-[.98] disabled:opacity-60 disabled:pointer-events-none;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors active:scale-[.99] disabled:opacity-50 disabled:pointer-events-none;
   }
   .btn-primary {
-    @apply btn bg-primary text-white hover:bg-primary-dark;
+    @apply btn bg-gray-900 text-white hover:bg-gray-700;
+  }
+  .btn-accent {
+    @apply btn bg-accent text-white hover:bg-accent-dark;
   }
   .btn-wa {
     @apply btn bg-wa text-white hover:bg-wa-dark;
   }
   .btn-outline {
-    @apply btn border border-gray-300 bg-white text-gray-700 hover:bg-gray-50;
+    @apply btn border border-gray-200 bg-white text-gray-800 hover:bg-gray-50;
   }
   .card {
-    @apply rounded-2xl border border-gray-100 bg-white shadow-sm;
+    @apply rounded-xl border border-gray-200 bg-white;
   }
   .input {
-    @apply w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20;
+    @apply w-full rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-900 focus:ring-4 focus:ring-gray-900/5;
   }
   .label {
-    @apply mb-1.5 block text-sm font-medium text-gray-700;
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500;
   }
   .badge {
-    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+    @apply inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium;
   }
 }

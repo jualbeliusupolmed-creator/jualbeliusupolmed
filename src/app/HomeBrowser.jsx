@@ -131,64 +131,68 @@ export default function HomeBrowser({
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
-      {/* Featured banner */}
-      <section className="overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-primary-dark p-6 text-white sm:p-10">
-        <h1 className="text-2xl font-extrabold sm:text-4xl">
+      {/* Hero */}
+      <section className="py-8 sm:py-14">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400">
+          Marketplace Kampus · USU &amp; POLMED
+        </p>
+        <h1 className="mt-3 max-w-3xl text-[2.25rem] font-extrabold leading-[1.05] tracking-tightest text-gray-900 sm:text-6xl">
           {heroTitle || "Marketplace Mahasiswa USU & POLMED"}
         </h1>
-        <p className="mt-2 max-w-xl text-white/80">
+        <p className="mt-4 max-w-xl text-base leading-relaxed text-gray-500 sm:text-lg">
           {heroSubtitle ||
             "Jual-beli laptop, HP, buku, fashion, makanan, kos, hingga jasa. Aman, cepat, dibantu admin."}
         </p>
-        <div className="mt-5 flex flex-wrap gap-3">
-          <Link href="/jual" className="btn bg-white text-primary hover:bg-white/90">
-            + Pasang Iklan
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link href="/jual" className="btn-primary">
+            Pasang Iklan
           </Link>
-          <Link
-            href="/cara-bergabung"
-            className="btn bg-white/15 text-white hover:bg-white/25"
-          >
+          <Link href="/cara-bergabung" className="btn-outline">
             Cara Bergabung
           </Link>
         </div>
-
-        {featured?.length > 0 && (
-          <div className="mt-6">
-            <p className="mb-2 text-sm font-semibold text-white/80">⭐ Iklan Unggulan</p>
-            <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {featured.map((f) => (
-                <Link
-                  key={f.id}
-                  href={`/produk/${f.id}`}
-                  className="flex w-44 shrink-0 gap-2 rounded-xl bg-white/10 p-2 hover:bg-white/20"
-                >
-                  <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-white/20">
-                    {f.image_url && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={f.image_url} alt="" className="h-full w-full object-cover" />
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-xs font-semibold">{f.title}</p>
-                    <p className="text-xs text-white/80">{rupiah(f.price)}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
       </section>
+
+      {/* Featured */}
+      {featured?.length > 0 && (
+        <section className="border-t border-gray-100 pt-6">
+          <div className="flex items-baseline justify-between">
+            <h2 className="text-sm font-semibold text-gray-900">Iklan Unggulan</h2>
+            <span className="text-xs text-gray-400">Dipromosikan</span>
+          </div>
+          <div className="mt-3 flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {featured.map((f) => (
+              <Link
+                key={f.id}
+                href={`/produk/${f.id}`}
+                className="flex w-60 shrink-0 items-center gap-3 rounded-xl border border-gray-200 p-2.5 transition-colors hover:border-gray-300"
+              >
+                <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-gray-100">
+                  {f.image_url && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={f.image_url} alt="" className="h-full w-full object-cover" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-gray-900">{f.title}</p>
+                  <p className="text-sm font-bold text-gray-900">{rupiah(f.price)}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* 🔥 Paling Dilihat — disembunyikan saat sedang memfilter */}
       {!hasActiveFilter && trending.length > 0 && (
         <section className="mt-6">
-          <h2 className="mb-3 text-lg font-bold">🔥 Paling Dilihat</h2>
+          <h2 className="mb-3 text-sm font-semibold text-gray-900">Paling Dilihat</h2>
           <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {trending.map((t, i) => (
               <Link
                 key={t.id}
                 href={`/produk/${t.id}`}
-                className="card flex w-40 shrink-0 flex-col overflow-hidden hover:border-primary/30 hover:shadow-md transition"
+                className="card flex w-40 shrink-0 flex-col overflow-hidden transition-colors hover:border-gray-300"
               >
                 <div className="relative aspect-square bg-gray-100">
                   {t.image_url ? (
@@ -215,12 +219,22 @@ export default function HomeBrowser({
       {/* Search + Sort Bar */}
       <div className="mt-6 flex gap-2">
         <div className="relative flex-1">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+          <svg
+            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
           <input
             value={q}
             onChange={(e) => handleSearch(e.target.value)}
-            placeholder="Cari barang… (laptop, buku, kos)"
-            className="input pl-9"
+            placeholder="Cari barang… laptop, buku, kos"
+            className="input pl-10"
           />
         </div>
         <select

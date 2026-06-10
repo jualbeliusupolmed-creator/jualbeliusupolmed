@@ -7,10 +7,17 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Ink — warna aksi utama (near-black), kesan modern & clean
         primary: {
-          DEFAULT: "#6D28D9",
-          dark: "#5b21b6",
-          light: "#8b5cf6",
+          DEFAULT: "#111111",
+          dark: "#000000",
+          light: "#3f3f46",
+        },
+        // Aksen tipis untuk highlight (harga, status aktif)
+        accent: {
+          DEFAULT: "#059669",
+          dark: "#047857",
+          light: "#10b981",
         },
         wa: {
           DEFAULT: "#25D366",
@@ -18,7 +25,13 @@ module.exports = {
         },
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
+        sans: ['"Plus Jakarta Sans"', "system-ui", "sans-serif"],
+      },
+      letterSpacing: {
+        tightest: "-0.04em",
+      },
+      boxShadow: {
+        soft: "0 1px 2px 0 rgb(0 0 0 / 0.04), 0 1px 3px 0 rgb(0 0 0 / 0.06)",
       },
     },
   },

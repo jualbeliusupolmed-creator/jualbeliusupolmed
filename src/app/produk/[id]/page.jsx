@@ -122,16 +122,16 @@ export default async function ProdukPage({ params }) {
         <div>
           {/* Badges */}
           <div className="flex flex-wrap items-center gap-2">
-            <span className="badge bg-primary/10 text-primary">
+            <span className="badge bg-gray-100 text-gray-700">
               {listing.category}
             </span>
             {listing.featured && (
-              <span className="badge bg-amber-100 text-amber-700">
-                ⭐ Featured
-              </span>
+              <span className="badge bg-gray-900 text-white">Unggulan</span>
             )}
             {sold && (
-              <span className="badge bg-gray-900 text-white">Terjual</span>
+              <span className="badge border border-gray-200 text-gray-500">
+                Terjual
+              </span>
             )}
           </div>
 
@@ -139,7 +139,7 @@ export default async function ProdukPage({ params }) {
             <h1 className="text-2xl font-extrabold">{listing.title}</h1>
             <FavoriteButton listing={listing} size="lg" className="shrink-0" />
           </div>
-          <p className="mt-2 text-3xl font-extrabold text-primary">
+          <p className="mt-2 text-3xl font-extrabold tracking-tight text-gray-900">
             {rupiah(listing.price)}
           </p>
           <p className="mt-1 text-sm text-gray-400">

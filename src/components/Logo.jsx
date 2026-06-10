@@ -8,8 +8,8 @@ export default function Logo({ className = "h-9 w-9" }) {
     >
       <defs>
         <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#8b5cf6" />
-          <stop offset="100%" stopColor="#6d28d9" />
+          <stop offset="0%" stopColor="#27272a" />
+          <stop offset="100%" stopColor="#000000" />
         </linearGradient>
       </defs>
       {/* Background card */}

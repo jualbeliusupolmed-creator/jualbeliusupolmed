@@ -74,7 +74,7 @@ export default function IGShareButton({ listing }) {
                   {rupiah(listing.price)}
                 </p>
                 <p className="mt-3 inline-block rounded-full bg-white px-4 py-1.5 text-xs font-bold text-primary">
-                  bit.ly/jualbeliusupolmed
+                  jualbeliusupolmed.web.id
                 </p>
               </div>
             </div>

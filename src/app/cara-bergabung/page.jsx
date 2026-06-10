@@ -44,7 +44,7 @@ export default function CaraBergabungPage() {
         <a href={WA_GROUP_LINK} target="_blank" rel="noreferrer" className="btn mt-5 bg-white text-primary hover:bg-white/90">
           🟢 Gabung Grup WhatsApp
         </a>
-        <p className="mt-2 text-sm text-white/70">bit.ly/jualbeliusupolmed</p>
+        <p className="mt-2 text-sm text-white/70">chat.whatsapp.com/DQMZK2qSgq2D0WvH7BlBSA</p>
       </div>
 
       <div className="mt-8 grid gap-6 md:grid-cols-2">

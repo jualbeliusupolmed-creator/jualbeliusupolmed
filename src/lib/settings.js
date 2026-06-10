@@ -19,7 +19,7 @@ export const DEFAULT_SETTINGS = {
   contact: {
     marketplaceWa: process.env.NEXT_PUBLIC_MARKETPLACE_WA || "62895429126232",
     waGroupLink:
-      process.env.NEXT_PUBLIC_WA_GROUP_LINK || "https://bit.ly/jualbeliusupolmed",
+      process.env.NEXT_PUBLIC_WA_GROUP_LINK || "https://chat.whatsapp.com/DQMZK2qSgq2D0WvH7BlBSA",
   },
   site: {
     heroTitle: "Marketplace Mahasiswa USU & POLMED",
