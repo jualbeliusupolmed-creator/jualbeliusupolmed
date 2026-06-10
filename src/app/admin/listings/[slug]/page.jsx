@@ -2,8 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { isAdmin } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { getShortIdFromSlug, isUUID, buildSlug } from "@/lib/slug";
-import { rupiah } from "@/lib/fees";
+import { getShortIdFromSlug, isUUID } from "@/lib/slug";
 import AdminLogin from "../../AdminLogin";
 import AdminListingDetail from "./AdminListingDetail";
 
