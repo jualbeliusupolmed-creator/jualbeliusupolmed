@@ -25,6 +25,7 @@ export default async function Footer() {
             <li><Link href="/" className="hover:text-primary">Beranda</Link></li>
             <li><Link href="/jual" className="hover:text-primary">Jual Barang</Link></li>
             <li><Link href="/cara-bergabung" className="hover:text-primary">Cara Bergabung</Link></li>
+            <li><Link href="/daftar-harga" className="hover:text-primary">Daftar Harga &amp; Kebijakan</Link></li>
             <li><Link href="/dashboard" className="hover:text-primary">Dashboard</Link></li>
           </ul>
         </div>
