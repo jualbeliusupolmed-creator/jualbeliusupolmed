@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Script from "next/script";
 import { useRouter } from "next/navigation";
-import { CATEGORIES } from "@/lib/constants";
+import { CATEGORIES, MARKETPLACE_WA } from "@/lib/constants";
 import { adFee, rupiah } from "@/lib/fees";
 import { uploadMedia } from "@/lib/upload";
 import MediaUploader from "@/components/MediaUploader";
@@ -24,6 +24,10 @@ export default function JualPage() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
   const [fileError, setFileError] = useState("");
+  
+  const [paymentMethod, setPaymentMethod] = useState("otomatis");
+  const [createdListing, setCreatedListing] = useState(null);
+  const [showQRISModal, setShowQRISModal] = useState(false);
 
   const [cfg, setCfg] = useState(null);
   useEffect(() => {
@@ -63,21 +67,28 @@ export default function JualPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal membuat listing");
 
-      // Buka Midtrans Snap
-      if (window.snap && data.snapToken) {
-        const waParam = encodeURIComponent(form.seller_wa || "");
-        localStorage.setItem("seller_wa", form.seller_wa);
-        window.snap.pay(data.snapToken, {
-          onSuccess: () => router.push(`/dashboard?paid=1&wa=${waParam}`),
-          onPending: () => router.push(`/dashboard?pending=1&wa=${waParam}`),
-          onError: () => setMsg("Pembayaran gagal, coba lagi."),
-          onClose: () => {
-            setMsg("Pembayaran dibatalkan. Iklan tersimpan sebagai pending.");
-            router.push(`/dashboard?pending=1&wa=${waParam}`);
-          },
-        });
+      const waParam = encodeURIComponent(form.seller_wa || "");
+      localStorage.setItem("seller_wa", form.seller_wa);
+
+      if (paymentMethod === "otomatis") {
+        // Buka Midtrans Snap
+        if (window.snap && data.snapToken) {
+          window.snap.pay(data.snapToken, {
+            onSuccess: () => router.push(`/dashboard?paid=1&wa=${waParam}`),
+            onPending: () => router.push(`/dashboard?pending=1&wa=${waParam}`),
+            onError: () => setMsg("Pembayaran gagal, coba lagi."),
+            onClose: () => {
+              setMsg("Pembayaran dibatalkan. Iklan tersimpan sebagai pending.");
+              router.push(`/dashboard?pending=1&wa=${waParam}`);
+            },
+          });
+        } else {
+          setMsg("Metode otomatis gagal (mode sandbox/test). Silakan gunakan QRIS Manual di atas.");
+        }
       } else {
-        setMsg("Listing dibuat. Snap tidak tersedia — cek konfigurasi Midtrans.");
+        // Metode manual
+        setCreatedListing(data.listing);
+        setShowQRISModal(true);
       }
     } catch (err) {
       setMsg(err.message);
@@ -211,6 +222,52 @@ export default function JualPage() {
               <label htmlFor="form-seller-wa" className="floating-label">Nomor WhatsApp</label>
             </div>
           </div>
+
+          {/* Metode Pembayaran */}
+          <div className="card p-5 space-y-4">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400">Pilih Metode Pembayaran</h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("otomatis")}
+                className={`flex flex-col text-left p-4 rounded-xl border-2 transition-all active:scale-[0.99] ${
+                  paymentMethod === "otomatis"
+                    ? "border-primary bg-primary/5 dark:border-white dark:bg-white/5"
+                    : "border-gray-200 bg-white hover:border-gray-300 dark:border-slate-800 dark:bg-slate-900/10 dark:hover:border-slate-700"
+                }`}
+              >
+                <span className="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-1.5">
+                  ⚡ Pembayaran Otomatis
+                </span>
+                <span className="text-xs text-gray-500 dark:text-slate-400 mt-1.5 leading-relaxed">
+                  QRIS Instan, Virtual Account, & E-wallet.
+                </span>
+                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold mt-2.5 bg-amber-50 dark:bg-amber-950/40 px-2 py-1 rounded-md">
+                  ⚠️ Belum lengkap (Sandbox/Test)
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("manual")}
+                className={`flex flex-col text-left p-4 rounded-xl border-2 transition-all active:scale-[0.99] ${
+                  paymentMethod === "manual"
+                    ? "border-primary bg-primary/5 dark:border-white dark:bg-white/5"
+                    : "border-gray-200 bg-white hover:border-gray-300 dark:border-slate-800 dark:bg-slate-900/10 dark:hover:border-slate-700"
+                }`}
+              >
+                <span className="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-1.5">
+                  📸 QRIS Manual (Scan)
+                </span>
+                <span className="text-xs text-gray-500 dark:text-slate-400 mt-1.5 leading-relaxed">
+                  Scan QRIS manual & kirim bukti transfer ke WhatsApp.
+                </span>
+                <span className="text-[10px] text-green-600 dark:text-green-400 font-semibold mt-2.5 bg-green-50 dark:bg-green-950/40 px-2 py-1 rounded-md">
+                  ✅ QRIS manual aktif siap pakai
+                </span>
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Summary */}
@@ -223,6 +280,10 @@ export default function JualPage() {
                 <dd className="font-medium capitalize dark:text-white">{form.type}</dd>
               </div>
               <div className="flex justify-between">
+                <dt className="text-gray-500 dark:text-slate-400">Metode</dt>
+                <dd className="font-medium capitalize dark:text-white">{paymentMethod}</dd>
+              </div>
+              <div className="flex justify-between">
                 <dt className="text-gray-500 dark:text-slate-400">Biaya iklan</dt>
                 <dd className="font-medium dark:text-white">{rupiah(fee)}</dd>
               </div>
@@ -233,7 +294,7 @@ export default function JualPage() {
               </div>
             </dl>
             <button type="submit" disabled={busy || !!fileError} className="btn-primary mt-4 w-full">
-              {busy ? "Memproses…" : `Bayar ${rupiah(fee)}`}
+              {busy ? "Memproses…" : paymentMethod === "manual" ? `Dapatkan QRIS Manual` : `Bayar ${rupiah(fee)}`}
             </button>
             {msg && <p className="mt-3 text-sm text-rose-600">{msg}</p>}
           </div>
@@ -248,6 +309,64 @@ export default function JualPage() {
           </div>
         </div>
       </form>
+
+      {/* Modal QRIS Manual */}
+      {showQRISModal && createdListing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="card w-full max-w-md bg-white p-6 shadow-2xl dark:bg-slate-900/95 dark:border-slate-800 animate-fade-in">
+            <div className="text-center">
+              <h2 className="text-xl font-extrabold text-gray-900 dark:text-white flex items-center justify-center gap-2">
+                📸 QRIS Pembayaran Manual
+              </h2>
+              <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
+                Lakukan pembayaran manual dengan scan QRIS berikut:
+              </p>
+              
+              <div className="mt-4 bg-white p-3 rounded-2xl inline-block border border-gray-100 shadow-sm mx-auto">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img 
+                  src="/qris.png" 
+                  alt="QRIS Jual Beli USU Polmed" 
+                  className="max-h-[260px] object-contain"
+                />
+              </div>
+
+              <div className="mt-3 p-3 rounded-xl bg-gray-50 dark:bg-slate-950 border border-gray-150/40 dark:border-slate-850">
+                <p className="text-xs text-gray-400 dark:text-slate-500 uppercase tracking-wider font-semibold">Nominal Transfer</p>
+                <p className="text-2xl font-black text-primary dark:text-white mt-0.5">{rupiah(fee)}</p>
+              </div>
+
+              <p className="mt-4 text-xs text-gray-500 dark:text-slate-400 text-left leading-relaxed bg-accent/5 p-3 rounded-xl border border-accent/20">
+                👉 <strong>Langkah selanjutnya:</strong> Setelah scan dan bayar, klik tombol <strong>Konfirmasi via WhatsApp</strong> di bawah untuk mengirimkan bukti transfer ke admin agar iklan Anda langsung tayang.
+              </p>
+
+              <div className="mt-5 space-y-2.5">
+                <a
+                  href={`https://wa.me/${cfg?.contact?.marketplaceWa || MARKETPLACE_WA}?text=${encodeURIComponent(
+                    `Halo Admin, saya sudah membayar biaya pendaftaran iklan manual sebesar ${rupiah(fee)} untuk produk "${createdListing.title}".\n\nDetail Iklan:\n- ID: ${createdListing.id}\n- Penjual: ${createdListing.seller_name}\n- WA: ${createdListing.seller_wa}\n\nMohon bantuannya untuk mengaktifkan iklan saya. Terima kasih!`
+                  )}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn-wa w-full text-center py-3 text-sm font-bold shadow-md hover:shadow-lg transition active:scale-95 flex items-center justify-center gap-2"
+                >
+                  💬 Konfirmasi via WhatsApp
+                </a>
+                
+                <button
+                  type="button"
+                  onClick={() => {
+                    const waParam = encodeURIComponent(form.seller_wa || "");
+                    router.push(`/dashboard?pending=1&wa=${waParam}`);
+                  }}
+                  className="btn-outline w-full text-center py-2.5 text-xs text-gray-600 dark:text-slate-350 hover:bg-gray-100 dark:hover:bg-slate-800"
+                >
+                  Buka Dashboard Saya
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
