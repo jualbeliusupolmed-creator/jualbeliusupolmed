@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import Logo from "@/components/Logo";
+import { Icon } from "@/components/Icons";
 
 const links = [
   { href: "/", label: "Beranda" },
@@ -101,8 +102,8 @@ export default function Navbar() {
 
           {session.wa && (
             <div className="flex items-center gap-1.5 ml-2 border border-gray-200 dark:border-slate-800 rounded-lg py-1 px-2.5 text-xs font-semibold text-gray-700 bg-gray-50/50 dark:text-slate-350 dark:bg-slate-900/40">
-              <span className="truncate max-w-[90px]" title={session.name || session.wa}>
-                👤 {session.name || session.wa}
+              <span className="truncate max-w-[90px] flex items-center gap-1" title={session.name || session.wa}>
+                <Icon.User className="h-3 w-3" /> {session.name || session.wa}
               </span>
               <button
                 onClick={() => {
@@ -165,7 +166,7 @@ export default function Navbar() {
           {session.wa && (
             <div className="flex items-center justify-between border-b border-gray-100 dark:border-slate-900 pb-2.5 mb-2 text-xs font-semibold text-gray-700 dark:text-slate-300">
               <span className="flex items-center gap-1.5 truncate max-w-[200px]">
-                👤 Seller: {session.name || session.wa}
+                <Icon.User className="h-3.5 w-3.5" /> Seller: {session.name || session.wa}
               </span>
               <button
                 onClick={() => {

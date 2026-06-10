@@ -6,6 +6,7 @@ import ProductCard from "@/components/ProductCard";
 import CategoryFilter from "@/components/CategoryFilter";
 import { CATEGORIES as DEFAULT_CATEGORIES } from "@/lib/constants";
 import { rupiah } from "@/lib/fees";
+import { Icon } from "@/components/Icons";
 
 const SORT_OPTIONS = [
   { value: "bumped", label: "Paling Relevan" },
@@ -255,7 +256,7 @@ export default function HomeBrowser({
               : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
           }`}
         >
-          💰 Filter Harga
+          <Icon.DollarSign className="h-4 w-4" /> Filter Harga
           {(minPrice || maxPrice) && (
             <span className="rounded-full bg-primary text-white px-1.5 py-0.5 text-[10px]">
               aktif
@@ -276,7 +277,7 @@ export default function HomeBrowser({
                   : "text-gray-500 hover:text-gray-950 dark:text-slate-400 dark:hover:text-slate-200"
               }`}
             >
-              📍 {c === "Semua" ? "Semua" : c}
+              <Icon.MapPin className="h-3 w-3 inline mr-1" /> {c === "Semua" ? "Semua" : c}
             </button>
           ))}
         </div>
@@ -312,7 +313,7 @@ export default function HomeBrowser({
               : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
           }`}
         >
-          🤝 Nego
+          <Icon.Handshake className="h-4 w-4" /> Nego
           {negoFilter && (
             <span className="rounded-full bg-blue-600 text-white px-1.5 py-0.5 text-[10px]">
               aktif
@@ -408,7 +409,7 @@ export default function HomeBrowser({
         </div>
       ) : listings.length === 0 ? (
         <div className="card mt-4 grid place-items-center py-16 text-center text-gray-400">
-          <p className="text-4xl">🪹</p>
+          <Icon.Package className="h-12 w-12" />
           <p className="mt-2">Belum ada barang di kategori ini.</p>
           <Link href="/jual" className="btn-primary mt-4">
             Jadi yang pertama pasang iklan
@@ -447,7 +448,9 @@ export default function HomeBrowser({
       {/* 🔥 Paling Dilihat — di bawah listing utama */}
       {!hasActiveFilter && trending.length > 0 && (
         <section className="mt-8">
-          <h2 className="mb-3 text-xs font-semibold text-gray-900 dark:text-slate-100 sm:text-sm">🔥 Paling Dilihat</h2>
+          <h2 className="mb-3 text-xs font-semibold text-gray-900 dark:text-slate-100 sm:text-sm flex items-center gap-1.5">
+            <Icon.TrendingUp className="h-4 w-4 text-rose-500" /> Paling Dilihat
+          </h2>
           <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {trending.map((t, i) => (
               <Link
@@ -460,7 +463,9 @@ export default function HomeBrowser({
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={t.image_url} alt="" loading="lazy" className="h-full w-full object-cover" />
                   ) : (
-                    <div className="grid h-full w-full place-items-center text-3xl">📦</div>
+                    <div className="grid h-full w-full place-items-center text-gray-300 dark:text-slate-700">
+                      <Icon.Package className="h-8 w-8" />
+                    </div>
                   )}
                   <span className="absolute left-1.5 top-1.5 rounded-full bg-black/70 px-2 py-0.5 text-[10px] font-bold text-white">
                     #{i + 1}
@@ -469,7 +474,9 @@ export default function HomeBrowser({
                 <div className="p-2">
                   <p className="truncate text-xs font-semibold dark:text-slate-200">{t.title}</p>
                   <p className="text-xs font-bold text-accent dark:text-accent-light">{rupiah(t.price)}</p>
-                  <p className="text-[10px] text-gray-400 dark:text-slate-500">👁️ {t.views}× dilihat</p>
+                  <p className="text-[10px] text-gray-400 dark:text-slate-500 flex items-center gap-1">
+                    <Icon.Eye className="h-3 w-3" /> {t.views}× dilihat
+                  </p>
                 </div>
               </Link>
             ))}

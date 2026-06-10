@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { isFavorite, toggleFavorite } from "@/lib/favorites";
+import { Icon } from "@/components/Icons";
 
 // Tombol hati untuk menyimpan/melepas favorit. Sinkron antar-instance via event.
 export default function FavoriteButton({ listing, className = "", size = "md" }) {
@@ -29,7 +30,11 @@ export default function FavoriteButton({ listing, className = "", size = "md" })
         size === "lg" ? "h-10 w-10 text-xl" : "h-8 w-8 text-base"
       } ${className}`}
     >
-      <span>{fav ? "❤️" : "🤍"}</span>
+      {fav ? (
+        <Icon.HeartFilled className="h-5 w-5 text-rose-500" />
+      ) : (
+        <Icon.Heart className="h-5 w-5 text-gray-400" />
+      )}
     </button>
   );
 }

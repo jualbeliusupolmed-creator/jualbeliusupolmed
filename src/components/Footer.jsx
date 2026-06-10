@@ -2,6 +2,7 @@ import Link from "next/link";
 import { WA_GROUP_LINK } from "@/lib/constants";
 import { getSettings } from "@/lib/settings";
 import Logo from "@/components/Logo";
+import { Icon } from "@/components/Icons";
 
 export default async function Footer() {
   const settings = await getSettings();
@@ -34,10 +35,10 @@ export default async function Footer() {
         </div>
         <div>
           <h4 className="mb-3 text-sm font-semibold text-gray-900 dark:text-slate-200">Kontak &amp; Komunitas</h4>
-          <div className="text-xs text-gray-500 dark:text-slate-400 mb-3 space-y-1">
-            <p>📧 admin@jualbeliusupolmed.web.id</p>
-            <p>💬 WA: +62 895-4291-26232</p>
-            <p>📍 Jl. Dr. T. Mansur No. 9, Medan 20155</p>
+          <div className="text-xs text-gray-500 dark:text-slate-400 mb-3 space-y-2">
+            <p className="flex items-center gap-1.5"><Icon.Mail className="h-3.5 w-3.5" /> admin@jualbeliusupolmed.web.id</p>
+            <p className="flex items-center gap-1.5"><Icon.Phone className="h-3.5 w-3.5" /> +62 895-4291-26232</p>
+            <p className="flex items-start gap-1.5"><Icon.MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" /> Jl. Dr. T. Mansur No. 9, Medan 20155</p>
           </div>
           <a
             href={waGroupLink}

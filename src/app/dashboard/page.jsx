@@ -8,6 +8,7 @@ import { rupiah, soldFee } from "@/lib/fees";
 import ConfirmModal from "@/components/ConfirmModal";
 import InputModal from "@/components/InputModal";
 import { formatWa } from "@/lib/constants";
+import { Icon } from "@/components/Icons";
 
 function statusBadge(s) {
   const map = {
@@ -25,9 +26,9 @@ function daysLeft(expiredAt) {
   if (!expiredAt) return null;
   const diff = new Date(expiredAt) - new Date();
   const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-  if (days <= 0) return { label: "⏰ Berakhir hari ini!", cls: "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400" };
-  if (days <= 3) return { label: `⏰ ${days} hari lagi`, cls: "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400" };
-  return { label: `✅ Aktif ${days} hari lagi`, cls: "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400" };
+  if (days <= 0) return { label: <span className="flex items-center gap-1"><Icon.Info className="h-3.5 w-3.5" /> Berakhir hari ini!</span>, cls: "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400" };
+  if (days <= 3) return { label: <span className="flex items-center gap-1"><Icon.Info className="h-3.5 w-3.5" /> {days} hari lagi</span>, cls: "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400" };
+  return { label: <span className="flex items-center gap-1"><Icon.Check className="h-3.5 w-3.5" /> Aktif {days} hari lagi</span>, cls: "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400" };
 }
 
 function DashboardInner() {
@@ -60,9 +61,9 @@ function DashboardInner() {
         localStorage.setItem("seller_wa", waToLoad);
       }
     }
-    if (params.get("paid")) setNote("✅ Pembayaran sukses! Iklan tayang sebentar lagi.");
-    if (params.get("pending")) setNote("⏳ Pembayaran pending. Selesaikan ya.");
-    if (params.get("edited")) setNote("✅ Iklan berhasil diperbarui!");
+    if (params.get("paid")) setNote("Pembayaran sukses! Iklan tayang sebentar lagi.");
+    if (params.get("pending")) setNote("Pembayaran pending. Selesaikan ya.");
+    if (params.get("edited")) setNote("Iklan berhasil diperbarui!");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params]);
 
@@ -466,18 +467,19 @@ function DashboardInner() {
                           </button>
                           <button onClick={() => openFeatured(i)} className="btn-outline text-xs">
                             ⭐ Featured
+                            <Icon.Star className="h-3 w-3 inline mr-1" /> Featured
                           </button>
                           <button onClick={() => openUpdateStock(i)} className="btn-outline text-xs">
-                            📦 Stok
+                            <Icon.Package className="h-3 w-3 inline mr-1" /> Stok
                           </button>
                           <Link
                             href={`/edit/${i.id}`}
                             className="btn-outline text-xs"
                           >
-                            ✏️ Edit
+                            <Icon.Edit2 className="h-3 w-3 inline mr-1" /> Edit
                           </Link>
                           <button onClick={() => openMarkSold(i)} className="btn-primary text-xs">
-                            ✅ Mark Sold
+                            <Icon.CheckCircle className="h-3 w-3 inline mr-1" /> Mark Sold
                           </button>
                         </div>
                       </div>
@@ -537,7 +539,7 @@ function DashboardInner() {
                               href={`/edit/${i.id}`}
                               className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1"
                             >
-                              🔄 Pasang Ulang
+                              <Icon.RefreshCw className="h-3 w-3" /> Pasang Ulang
                             </Link>
                           )}
                           <span className="text-xs text-gray-400 font-medium">
@@ -573,7 +575,7 @@ function DashboardInner() {
                             {wi.status}
                           </span>
                           <span className="badge bg-primary/10 text-primary">{wi.category}</span>
-                          <span className="badge bg-gray-150 text-gray-700 dark:bg-slate-800 dark:text-slate-350">📍 {wi.campus}</span>
+                          <span className="badge bg-gray-150 text-gray-700 dark:bg-slate-800 dark:text-slate-350 flex items-center gap-1"><Icon.MapPin className="h-3 w-3 shrink-0" /> {wi.campus}</span>
                         </div>
                         <p className="mt-1.5 font-bold text-gray-900 dark:text-white">{wi.title}</p>
                         <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
@@ -586,14 +588,14 @@ function DashboardInner() {
                             onClick={() => resolveWanted(wi.id)}
                             className="btn-primary text-xs"
                           >
-                            ✅ Tandai Terpenuhi
+                            <Icon.Check className="h-3 w-3 inline mr-1" /> Tandai Terpenuhi
                           </button>
                         )}
                         <button
                           onClick={() => deleteWanted(wi.id)}
                           className="btn-outline text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20"
                         >
-                          🗑️ Hapus
+                          <Icon.X className="h-3 w-3 inline mr-1" /> Hapus
                         </button>
                       </div>
                     </div>

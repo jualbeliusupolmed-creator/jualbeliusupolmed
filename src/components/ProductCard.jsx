@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { rupiah } from "@/lib/fees";
 import FavoriteButton from "@/components/FavoriteButton";
+import { Icon } from "@/components/Icons";
 
 export default function ProductCard({ listing }) {
   const sold = listing.status === "sold";
@@ -36,8 +37,8 @@ export default function ProductCard({ listing }) {
             </span>
           )}
           {!listing.featured && isNew && !sold && (
-            <span className="absolute left-2 top-2 rounded-md bg-emerald-500 px-2 py-0.5 text-[11px] font-bold text-white shadow-sm">
-              BARU ✨
+            <span className="absolute left-2 top-2 rounded-md bg-emerald-500 px-2 py-0.5 text-[11px] font-bold text-white shadow-sm flex items-center gap-1">
+              <Icon.Star className="h-3 w-3" /> BARU
             </span>
           )}
           {isLowStock && !sold && (
@@ -58,9 +59,10 @@ export default function ProductCard({ listing }) {
             <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500">
               {listing.category}
             </span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 font-medium max-w-[140px] truncate">
-              📍 {listing.campus === "Semua" ? "USU/POLMED" : listing.campus}
-              {listing.area ? ` (${listing.area})` : ""}
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 font-medium max-w-[140px] truncate flex items-center gap-1">
+              <Icon.MapPin className="h-3 w-3 shrink-0" />
+              <span className="truncate">{listing.campus === "Semua" ? "USU/POLMED" : listing.campus}
+              {listing.area ? ` (${listing.area})` : ""}</span>
             </span>
           </div>
           <h3 className="mt-1 line-clamp-2 text-sm font-medium leading-snug text-gray-900 dark:text-slate-200 group-hover:text-primary dark:group-hover:text-white transition-colors">
@@ -79,8 +81,8 @@ export default function ProductCard({ listing }) {
                   Nego
                 </span>
               )}
-              <span className="flex items-center gap-0.5 text-gray-400 dark:text-slate-500 font-medium">
-                👁️ {listing.views || 0}
+              <span className="flex items-center gap-1 text-gray-400 dark:text-slate-500 font-medium">
+                <Icon.Eye className="h-3 w-3" /> {listing.views || 0}
               </span>
             </div>
           </div>
