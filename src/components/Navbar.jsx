@@ -65,7 +65,7 @@ export default function Navbar() {
           
           <button
             onClick={toggleTheme}
-            className="ml-2 rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors dark:text-slate-450 dark:hover:bg-slate-900 dark:hover:text-white"
+            className="ml-2 rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"
             aria-label="Toggle Theme"
           >
             {dark ? (
@@ -87,7 +87,7 @@ export default function Navbar() {
         <div className="flex items-center gap-1 md:hidden">
           <button
             onClick={toggleTheme}
-            className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors dark:text-slate-450 dark:hover:bg-slate-900 dark:hover:text-white"
+            className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"
             aria-label="Toggle Theme"
           >
             {dark ? (
@@ -104,7 +104,7 @@ export default function Navbar() {
           <button
             aria-label="menu"
             onClick={() => setOpen((v) => !v)}
-            className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 dark:text-slate-450 dark:hover:bg-slate-900"
+            className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-900"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path

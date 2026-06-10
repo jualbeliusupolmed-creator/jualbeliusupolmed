@@ -132,30 +132,30 @@ export default function HomeBrowser({
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
       {/* Hero */}
-      <section className="relative overflow-hidden rounded-3xl border border-gray-150/80 bg-gradient-to-br from-white via-white to-gray-50/50 px-6 py-10 sm:px-12 sm:py-16 dark:border-slate-900/60 dark:from-slate-900/30 dark:to-slate-950/20 dark:bg-slate-900/10">
+      <section className="relative overflow-hidden rounded-2xl border border-gray-150/80 bg-gradient-to-br from-white via-white to-gray-50/50 px-4 py-4.5 sm:px-8 sm:py-6 dark:border-slate-900/60 dark:from-slate-900/30 dark:to-slate-950/20 dark:bg-slate-900/10">
         {/* Glow Effects */}
-        <div className="absolute -right-10 -top-10 h-48 w-48 rounded-full bg-accent/10 blur-3xl dark:bg-accent/5" />
-        <div className="absolute -left-10 -bottom-10 h-48 w-48 rounded-full bg-gray-300/10 blur-3xl dark:bg-slate-200/5" />
+        <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-accent/5 blur-2xl dark:bg-accent/5" />
+        <div className="absolute -left-10 -bottom-10 h-32 w-32 rounded-full bg-gray-300/5 blur-2xl dark:bg-slate-200/5" />
         
         {/* Grid pattern */}
-        <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] dark:bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)]" />
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#80808006_1px,transparent_1px),linear-gradient(to_bottom,#80808006_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] dark:bg-[linear-gradient(to_right,#ffffff02_1px,transparent_1px),linear-gradient(to_bottom,#ffffff02_1px,transparent_1px)]" />
 
         <div className="relative z-10">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400 dark:text-slate-500">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-400 dark:text-slate-500 sm:text-xs">
             Marketplace Kampus · USU &amp; POLMED
           </p>
-          <h1 className="mt-3 max-w-3xl text-[2.25rem] font-extrabold leading-[1.05] tracking-tightest text-gray-900 dark:text-white sm:text-6xl">
+          <h1 className="mt-1 max-w-3xl text-xl font-extrabold leading-[1.1] tracking-tightest text-gray-900 dark:text-white sm:mt-1.5 sm:text-3xl">
             {heroTitle || "Marketplace Mahasiswa USU & POLMED"}
           </h1>
-          <p className="mt-4 max-w-xl text-base leading-relaxed text-gray-500 dark:text-slate-400 sm:text-lg">
+          <p className="mt-1.5 max-w-xl text-xs leading-relaxed text-gray-500 dark:text-slate-400 sm:mt-2 sm:text-sm">
             {heroSubtitle ||
               "Jual-beli laptop, HP, buku, fashion, makanan, kos, hingga jasa. Aman, cepat, dibantu admin."}
           </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link href="/jual" className="btn-primary">
+          <div className="mt-3 flex flex-wrap gap-2.5 sm:mt-3.5">
+            <Link href="/jual" className="btn-primary px-3 py-1.5 text-xs sm:px-4 sm:py-2">
               Pasang Iklan
             </Link>
-            <Link href="/cara-bergabung" className="btn-outline">
+            <Link href="/cara-bergabung" className="btn-outline px-3 py-1.5 text-xs sm:px-4 sm:py-2">
               Cara Bergabung
             </Link>
           </div>
@@ -164,27 +164,27 @@ export default function HomeBrowser({
 
       {/* Featured */}
       {featured?.length > 0 && (
-        <section className="border-t border-gray-100 pt-6">
+        <section className="mt-4 border-t border-gray-100 pt-4 dark:border-slate-900">
           <div className="flex items-baseline justify-between">
-            <h2 className="text-sm font-semibold text-gray-900">Iklan Unggulan</h2>
-            <span className="text-xs text-gray-400">Dipromosikan</span>
+            <h2 className="text-xs font-semibold text-gray-900 dark:text-slate-100 sm:text-sm">Iklan Unggulan</h2>
+            <span className="text-[10px] text-gray-400 dark:text-slate-500">Dipromosikan</span>
           </div>
-          <div className="mt-3 flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="mt-2.5 flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {featured.map((f) => (
               <Link
                 key={f.id}
                 href={`/produk/${f.id}`}
-                className="flex w-60 shrink-0 items-center gap-3 rounded-xl border border-gray-200 p-2.5 transition-colors hover:border-gray-300"
+                className="flex w-60 shrink-0 items-center gap-3 rounded-xl border border-gray-200 bg-white p-2.5 transition-all hover:border-gray-305 dark:border-slate-800 dark:bg-slate-900/30 dark:hover:border-slate-700"
               >
-                <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-gray-100">
+                <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-slate-950">
                   {f.image_url && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={f.image_url} alt="" className="h-full w-full object-cover" />
                   )}
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-gray-900">{f.title}</p>
-                  <p className="text-sm font-bold text-gray-900">{rupiah(f.price)}</p>
+                  <p className="truncate text-sm font-medium text-gray-900 dark:text-slate-200">{f.title}</p>
+                  <p className="text-sm font-bold text-gray-900 dark:text-white">{rupiah(f.price)}</p>
                 </div>
               </Link>
             ))}
@@ -194,16 +194,16 @@ export default function HomeBrowser({
 
       {/* 🔥 Paling Dilihat — disembunyikan saat sedang memfilter */}
       {!hasActiveFilter && trending.length > 0 && (
-        <section className="mt-6">
-          <h2 className="mb-3 text-sm font-semibold text-gray-900">Paling Dilihat</h2>
+        <section className="mt-4">
+          <h2 className="mb-2 text-xs font-semibold text-gray-900 dark:text-slate-100 sm:text-sm">Paling Dilihat</h2>
           <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {trending.map((t, i) => (
               <Link
                 key={t.id}
                 href={`/produk/${t.id}`}
-                className="card flex w-40 shrink-0 flex-col overflow-hidden transition-colors hover:border-gray-300"
+                className="card flex w-40 shrink-0 flex-col overflow-hidden transition-all hover:border-gray-305"
               >
-                <div className="relative aspect-square bg-gray-100">
+                <div className="relative aspect-square bg-gray-100 dark:bg-slate-950">
                   {t.image_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={t.image_url} alt="" className="h-full w-full object-cover" />
@@ -215,9 +215,9 @@ export default function HomeBrowser({
                   </span>
                 </div>
                 <div className="p-2">
-                  <p className="truncate text-xs font-semibold">{t.title}</p>
-                  <p className="text-xs font-bold text-primary">{rupiah(t.price)}</p>
-                  <p className="text-[10px] text-gray-400">👁️ {t.views}× dilihat</p>
+                  <p className="truncate text-xs font-semibold dark:text-slate-200">{t.title}</p>
+                  <p className="text-xs font-bold text-accent dark:text-accent-light">{rupiah(t.price)}</p>
+                  <p className="text-[10px] text-gray-400 dark:text-slate-500">👁️ {t.views}× dilihat</p>
                 </div>
               </Link>
             ))}
@@ -226,7 +226,7 @@ export default function HomeBrowser({
       )}
 
       {/* Search + Sort Bar */}
-      <div className="mt-6 flex gap-2">
+      <div className="mt-4 flex gap-2">
         <div className="relative flex-1">
           <svg
             className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
@@ -267,8 +267,8 @@ export default function HomeBrowser({
           onClick={() => setShowPriceFilter((v) => !v)}
           className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition ${
             showPriceFilter || minPrice || maxPrice
-              ? "bg-primary/10 text-primary"
-              : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+              ? "bg-primary/10 text-primary dark:bg-white/10 dark:text-white"
+              : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
           }`}
         >
           💰 Filter Harga
@@ -325,7 +325,7 @@ export default function HomeBrowser({
 
       {/* Header */}
       <div className="mt-4 flex items-center justify-between">
-        <h2 className="text-lg font-bold">
+        <h2 className="text-lg font-bold dark:text-white">
           {searching ? "Mencari…" : "Iklan Aktif"}
         </h2>
         <div className="flex items-center gap-2">

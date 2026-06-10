@@ -42,7 +42,7 @@ export default function RootLayout({ children }) {
             try {
               var d = document.documentElement;
               var c = localStorage.getItem('theme');
-              if (c === 'dark' || (!c && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+              if (c === 'dark') {
                 d.classList.add('dark');
               } else {
                 d.classList.remove('dark');
