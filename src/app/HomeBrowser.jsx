@@ -36,6 +36,7 @@ export default function HomeBrowser({
   const [maxPrice, setMaxPrice] = useState("");
   const [showPriceFilter, setShowPriceFilter] = useState(false);
   const [campusFilter, setCampusFilter] = useState("Semua");
+  const [negoFilter, setNegoFilter] = useState(false);
 
   // Pagination state
   const [listings, setListings] = useState(initialListings || []);
@@ -65,6 +66,7 @@ export default function HomeBrowser({
         if (newMin) params.set("minPrice", newMin);
         if (newMax) params.set("maxPrice", newMax);
         if (newCampus && newCampus !== "Semua") params.set("campus", newCampus);
+        if (negoFilter) params.set("nego", "1");
 
         const res = await fetch(`/api/listings/browse?${params}`);
         const data = await res.json();
@@ -137,7 +139,7 @@ export default function HomeBrowser({
 
   const hasMore = listings.length < total;
   const hasActiveFilter =
-    cat !== "all" || q || sort !== "bumped" || minPrice || maxPrice || campusFilter !== "Semua";
+    cat !== "all" || q || sort !== "bumped" || minPrice || maxPrice || campusFilter !== "Semua" || negoFilter;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
@@ -278,6 +280,45 @@ export default function HomeBrowser({
             </button>
           ))}
         </div>
+
+        {/* Nego filter toggle */}
+        <button
+          type="button"
+          onClick={() => {
+            const next = !negoFilter;
+            setNegoFilter(next);
+            applyFilters({});
+            // re-trigger with updated negoFilter via useEffect workaround
+            setTimeout(() => {
+              const params = new URLSearchParams({ page: 1, limit: PAGE_SIZE, sort });
+              if (cat !== "all") params.set("cat", catName(cat) || cat);
+              if (q) params.set("q", q);
+              if (minPrice) params.set("minPrice", minPrice);
+              if (maxPrice) params.set("maxPrice", maxPrice);
+              if (campusFilter && campusFilter !== "Semua") params.set("campus", campusFilter);
+              if (next) params.set("nego", "1");
+              fetch(`/api/listings/browse?${params}`)
+                .then((r) => r.json())
+                .then((data) => {
+                  setListings(data.listings || []);
+                  setTotal(data.total || 0);
+                })
+                .catch(() => {});
+            }, 0);
+          }}
+          className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+            negoFilter
+              ? "bg-blue-100 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400"
+              : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
+          }`}
+        >
+          🤝 Nego
+          {negoFilter && (
+            <span className="rounded-full bg-blue-600 text-white px-1.5 py-0.5 text-[10px]">
+              aktif
+            </span>
+          )}
+        </button>
       </div>
 
         {showPriceFilter && (

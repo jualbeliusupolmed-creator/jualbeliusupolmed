@@ -519,7 +519,7 @@ function DashboardInner() {
                           <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-slate-950">
                             {i.image_url && (
                               // eslint-disable-next-line @next/next/no-img-element
-                              <img src={i.image_url} alt="" className="h-full w-full object-cover" />
+                              <img src={i.image_url} alt="" loading="lazy" className="h-full w-full object-cover" />
                             )}
                           </div>
                           <div>
@@ -528,10 +528,21 @@ function DashboardInner() {
                               <span className="badge bg-gray-105 text-gray-500 dark:bg-slate-800 dark:text-slate-400">{i.category}</span>
                             </div>
                             <p className="font-semibold text-sm mt-0.5 dark:text-white">{i.title}</p>
+                            <p className="text-xs text-gray-400">{rupiah(i.price)}</p>
                           </div>
                         </div>
-                        <div className="text-xs text-gray-400 font-medium">
-                          {i.status === "expired" ? "Masa aktif iklan habis" : "Ditangguhkan oleh admin"}
+                        <div className="flex items-center gap-2">
+                          {i.status === "expired" && (
+                            <Link
+                              href={`/edit/${i.id}`}
+                              className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1"
+                            >
+                              🔄 Pasang Ulang
+                            </Link>
+                          )}
+                          <span className="text-xs text-gray-400 font-medium">
+                            {i.status === "expired" ? "Masa aktif habis" : "Ditangguhkan admin"}
+                          </span>
                         </div>
                       </div>
                     ))}
