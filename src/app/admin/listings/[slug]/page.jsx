@@ -21,9 +21,9 @@ async function getData(slug) {
     const { data } = await supa
       .from("listings")
       .select("*")
-      .ilike("id", `${shortId}%`)
+      .filter("id::text", "ilike", `${shortId}%`)
       .limit(1)
-      .single();
+      .maybeSingle();
     listing = data;
   }
 
