@@ -427,7 +427,9 @@ export default function AdminPanel({
                     <tr key={l.id} className="border-t align-top dark:border-slate-800">
                       <td className="p-3"><input type="checkbox" checked={selected.has(l.id)} onChange={() => toggleSel(l.id)} /></td>
                       <td className="max-w-[200px] p-3">
-                        <p className="truncate font-medium dark:text-white">{l.title}</p>
+                        <a href={`/admin/listings/${buildSlug(l.title, l.id)}`} className="block truncate font-medium hover:text-primary dark:text-white dark:hover:text-primary">
+                          {l.title}
+                        </a>
                         <p className="text-xs text-gray-400">{l.category}{l.featured ? " · ⭐" : ""}</p>
                       </td>
                       <td className="p-3 text-gray-500">{l.seller_name}<br /><span className="text-xs">{l.seller_wa}</span></td>
