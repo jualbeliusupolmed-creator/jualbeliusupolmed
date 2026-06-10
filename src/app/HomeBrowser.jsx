@@ -168,8 +168,8 @@ export default function HomeBrowser({
             <Link href="/jual" className="btn-primary px-3 py-1.5 text-xs sm:px-4 sm:py-2">
               Pasang Iklan
             </Link>
-            <Link href="/dicari" className="btn-outline px-3 py-1.5 text-xs sm:px-4 sm:py-2">
-              🔎 Papan Dicari
+            <Link href="/dicari" className="btn-outline px-3 py-1.5 text-xs sm:px-4 sm:py-2 flex items-center gap-1.5">
+              <Icon.Search className="h-3.5 w-3.5" /> Papan Dicari
             </Link>
             <Link href="/cara-bergabung" className="btn-outline px-3 py-1.5 text-xs sm:px-4 sm:py-2">
               Cara Bergabung

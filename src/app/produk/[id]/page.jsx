@@ -13,6 +13,7 @@ import RatingWidget from "@/components/RatingWidget";
 import ReportButton from "@/components/ReportButton";
 import ViewTracker from "@/components/ViewTracker";
 import FavoriteButton from "@/components/FavoriteButton";
+import { Icon } from "@/components/Icons";
 
 export const dynamic = "force-dynamic";
 
@@ -126,12 +127,12 @@ export default async function ProdukPage({ params }) {
             <span className="badge bg-gray-100 text-gray-700 dark:bg-slate-900 dark:text-slate-350">
               {listing.category}
             </span>
-            <span className="badge bg-primary/5 text-primary dark:bg-white/10 dark:text-white font-medium">
-              📍 {listing.campus === "Semua" ? "USU / POLMED" : listing.campus}
+            <span className="badge bg-primary/5 text-primary dark:bg-white/10 dark:text-white font-medium flex items-center gap-1">
+              <Icon.MapPin className="h-3 w-3" /> {listing.campus === "Semua" ? "USU / POLMED" : listing.campus}
             </span>
             {listing.area && (
-              <span className="badge bg-primary/5 text-primary dark:bg-white/10 dark:text-white font-medium">
-                📍 {listing.area}
+              <span className="badge bg-primary/5 text-primary dark:bg-white/10 dark:text-white font-medium flex items-center gap-1">
+                <Icon.MapPin className="h-3 w-3" /> {listing.area}
               </span>
             )}
             {listing.featured && (
@@ -154,7 +155,9 @@ export default async function ProdukPage({ params }) {
           <p className="mt-1 text-sm text-gray-400">
             Stok: {listing.stock}
             {listing.views > 0 && (
-              <span className="ml-2">· 👁️ Dilihat {listing.views}×</span>
+              <span className="ml-2 inline-flex items-center gap-1.5 align-middle">
+                · <Icon.Eye className="h-3.5 w-3.5" /> Dilihat {listing.views}×
+              </span>
             )}
           </p>
 

@@ -1,7 +1,7 @@
 // Centralized SVG icon library — clean, minimalist, stroke-based (Heroicons/Lucide style)
 // Usage: <Icon.Eye className="h-4 w-4" />
 
-const base = "fill-none stroke-currentColor";
+const base = "fill-none stroke-current";
 
 export const Icon = {
   // Navigation & UI

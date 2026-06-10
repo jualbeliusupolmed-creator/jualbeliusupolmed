@@ -449,7 +449,9 @@ function DashboardInner() {
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className={`badge ${statusBadge(i.status)}`}>{i.status}</span>
                             <span className="badge bg-primary/10 text-primary">{i.category}</span>
-                            <span className="badge bg-gray-150 text-gray-700 dark:bg-slate-800 dark:text-slate-350">📍 {i.campus}</span>
+                            <span className="badge bg-gray-150 text-gray-700 dark:bg-slate-800 dark:text-slate-350 flex items-center gap-1">
+                              <Icon.MapPin className="h-3 w-3" /> {i.campus}
+                            </span>
                             {daysLeft(i.expired_at) && (
                               <span className={`badge text-[10px] ${daysLeft(i.expired_at).cls}`}>
                                 {daysLeft(i.expired_at).label}
@@ -462,12 +464,11 @@ function DashboardInner() {
                           </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          <button onClick={() => bump(i)} className="btn-outline text-xs">
-                            ⬆️ Sundul 1k
+                          <button onClick={() => bump(i)} className="btn-outline text-xs flex items-center gap-1">
+                            <Icon.ArrowUp className="h-3 w-3" /> Sundul 1k
                           </button>
-                          <button onClick={() => openFeatured(i)} className="btn-outline text-xs">
-                            ⭐ Featured
-                            <Icon.Star className="h-3 w-3 inline mr-1" /> Featured
+                          <button onClick={() => openFeatured(i)} className="btn-outline text-xs flex items-center gap-1">
+                            <Icon.Star className="h-3 w-3" /> Featured
                           </button>
                           <button onClick={() => openUpdateStock(i)} className="btn-outline text-xs">
                             <Icon.Package className="h-3 w-3 inline mr-1" /> Stok

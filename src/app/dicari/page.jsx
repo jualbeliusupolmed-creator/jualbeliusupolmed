@@ -154,7 +154,7 @@ export default function DicariPage() {
               }}
               className="btn-primary w-full md:w-auto px-5 py-3 text-sm flex items-center justify-center gap-1.5 shadow-md hover:shadow-lg transition-all"
             >
-              🔎 Posting Kebutuhan
+              <Icon.Edit className="h-4 w-4" /> Posting Kebutuhan
             </button>
           </div>
         </div>
@@ -263,12 +263,12 @@ export default function DicariPage() {
 
                 {/* Campus/Area Badges */}
                 <div className="mt-2 flex flex-wrap gap-1.5 text-[11px]">
-                  <span className="badge bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-350">
-                    📍 {item.campus === "Semua" ? "USU / POLMED" : item.campus}
+                  <span className="badge bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-350 flex items-center gap-1">
+                    <Icon.MapPin className="h-3 w-3" /> {item.campus === "Semua" ? "USU / POLMED" : item.campus}
                   </span>
                   {item.area && (
-                    <span className="badge bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-350">
-                      📍 {item.area}
+                    <span className="badge bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-350 flex items-center gap-1">
+                      <Icon.MapPin className="h-3 w-3" /> {item.area}
                     </span>
                   )}
                 </div>
@@ -297,7 +297,7 @@ export default function DicariPage() {
                   rel="noreferrer"
                   className="btn-outline w-full py-2.5 text-center flex items-center justify-center gap-1.5 text-xs font-bold bg-gray-50/50 hover:bg-gray-100 dark:bg-slate-950 dark:hover:bg-slate-900 border-gray-200 dark:border-slate-850"
                 >
-                  💬 Tawarkan via WhatsApp
+                  <Icon.MessageCircle className="h-4 w-4 text-emerald-500" /> Tawarkan via WhatsApp
                 </a>
               </div>
             </div>
