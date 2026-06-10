@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CATEGORIES, POPULAR_AREAS, formatWa } from "@/lib/constants";
 import { rupiah } from "@/lib/fees";
+import { Icon } from "@/components/Icons";
 
 export default function DicariPage() {
   const [items, setItems] = useState([]);
@@ -188,9 +189,9 @@ export default function DicariPage() {
           onChange={(e) => setCampus(e.target.value)}
           className="input cursor-pointer"
         >
-          <option value="Semua">📍 Semua Kampus (USU &amp; POLMED)</option>
-          <option value="USU">📍 Universitas Sumatera Utara</option>
-          <option value="POLMED">📍 Politeknik Negeri Medan</option>
+          <option value="Semua">Semua Kampus (USU &amp; POLMED)</option>
+          <option value="USU">Universitas Sumatera Utara</option>
+          <option value="POLMED">Politeknik Negeri Medan</option>
         </select>
 
         {/* Category Filter */}
@@ -199,10 +200,10 @@ export default function DicariPage() {
           onChange={(e) => setCat(e.target.value)}
           className="input cursor-pointer"
         >
-          <option value="all">🏷️ Semua Kategori</option>
+          <option value="all">Semua Kategori</option>
           {cats.map((c) => (
             <option key={c.slug} value={c.name}>
-              {c.icon} {c.name}
+              {c.name}
             </option>
           ))}
         </select>
@@ -225,7 +226,7 @@ export default function DicariPage() {
         <div className="mt-8 text-center text-rose-500 py-10">{error}</div>
       ) : items.length === 0 ? (
         <div className="card mt-8 grid place-items-center py-16 text-center text-gray-400">
-          <p className="text-4xl">📭</p>
+          <Icon.Package className="h-12 w-12 text-gray-300 dark:text-slate-600 mb-2" />
           <p className="mt-2 text-sm">Belum ada mahasiswa yang memposting kebutuhan.</p>
           <button
             onClick={() => setShowModal(true)}
@@ -399,7 +400,7 @@ export default function DicariPage() {
                   >
                     {cats.map((c) => (
                       <option key={c.slug} value={c.name}>
-                        {c.icon} {c.name}
+                        {c.name}
                       </option>
                     ))}
                   </select>

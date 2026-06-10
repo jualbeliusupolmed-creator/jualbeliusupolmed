@@ -169,7 +169,7 @@ export default function EditPage() {
               <select className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.category} onChange={set("category")}>
                 {cats.map((c) => (
                   <option key={c.slug} value={c.name}>
-                    {c.icon} {c.name}
+                    {c.name}
                   </option>
                 ))}
               </select>

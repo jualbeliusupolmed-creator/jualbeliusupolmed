@@ -1,11 +1,11 @@
 export const CATEGORIES = [
-  { name: "Elektronik", slug: "elektronik", icon: "💻" },
-  { name: "Fashion", slug: "fashion", icon: "👕" },
-  { name: "Buku", slug: "buku", icon: "📚" },
-  { name: "Makanan", slug: "makanan", icon: "🍜" },
-  { name: "Kos", slug: "kos", icon: "🏠" },
-  { name: "Buku Kuliah", slug: "buku-kuliah", icon: "🎓" },
-  { name: "Jasa", slug: "jasa", icon: "🛠️" },
+  { name: "Elektronik", slug: "elektronik" },
+  { name: "Fashion", slug: "fashion" },
+  { name: "Buku", slug: "buku" },
+  { name: "Makanan", slug: "makanan" },
+  { name: "Kos", slug: "kos" },
+  { name: "Buku Kuliah", slug: "buku-kuliah" },
+  { name: "Jasa", slug: "jasa" },
 ];
 
 export const WA_GROUP_LINK =
