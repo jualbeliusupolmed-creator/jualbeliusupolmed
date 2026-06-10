@@ -62,10 +62,11 @@ async function getStats() {
   return { listings, payments, blacklist, reports, ratings, categories, settings, wanted };
 }
 
-export default async function AdminPage() {
+export default async function AdminPage({ searchParams }) {
   if (!isAdmin()) {
     return <AdminLogin />;
   }
+  const tab = searchParams?.tab || "overview";
   let data = {
     listings: [],
     payments: [],
@@ -85,5 +86,5 @@ export default async function AdminPage() {
       </div>
     );
   }
-  return <AdminPanel {...data} />;
+  return <AdminPanel {...data} initialTab={tab} />;
 }

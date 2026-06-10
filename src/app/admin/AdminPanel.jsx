@@ -56,9 +56,12 @@ export default function AdminPanel({
   categories = [],
   settings = {},
   wanted = [],
+  initialTab = "overview",
 }) {
   const router = useRouter();
-  const [tab, setTab] = useState("overview");
+  const VALID_TABS = ["overview","listings","transaksi","rating","reports","dicari","kategori","pengaturan","blacklist"];
+  const tab = VALID_TABS.includes(initialTab) ? initialTab : "overview";
+  function goTab(key) { router.push(`/admin?tab=${key}`); }
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState(null);
   const [confirmState, setConfirmState] = useState(null);
@@ -255,7 +258,7 @@ export default function AdminPanel({
             {NAV.map((n) => (
               <button
                 key={n.key}
-                onClick={() => setTab(n.key)}
+                onClick={() => goTab(n.key)}
                 className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                   tab === n.key
                     ? "bg-gray-900 text-white dark:bg-slate-100 dark:text-slate-900"
@@ -292,7 +295,7 @@ export default function AdminPanel({
           {NAV.map((n) => (
             <button
               key={n.key}
-              onClick={() => setTab(n.key)}
+              onClick={() => goTab(n.key)}
               className={`shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium ${
                 tab === n.key
                   ? "bg-gray-900 text-white dark:bg-slate-100 dark:text-slate-900"
