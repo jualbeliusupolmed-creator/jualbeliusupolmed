@@ -3,15 +3,19 @@
 import { CATEGORIES as DEFAULT_CATEGORIES } from "@/lib/constants";
 import { Icon } from "@/components/Icons";
 
-const iconMap = {
-  all: <Icon.Grid className="h-4 w-4" />,
-  elektronik: <Icon.Laptop className="h-4 w-4" />,
-  fashion: <Icon.Shirt className="h-4 w-4" />,
-  buku: <Icon.Book className="h-4 w-4" />,
-  makanan: <Icon.Coffee className="h-4 w-4" />,
-  kos: <Icon.Home className="h-4 w-4" />,
-  "buku-kuliah": <Icon.BookOpen className="h-4 w-4" />,
-  jasa: <Icon.Briefcase className="h-4 w-4" />,
+const getCategoryIcon = (slug) => {
+  const s = (slug || "").toLowerCase();
+  switch (s) {
+    case "all": return <Icon.Grid className="h-4 w-4" />;
+    case "elektronik": return <Icon.Laptop className="h-4 w-4" />;
+    case "fashion": return <Icon.Shirt className="h-4 w-4" />;
+    case "buku": return <Icon.Book className="h-4 w-4" />;
+    case "makanan": return <Icon.Coffee className="h-4 w-4" />;
+    case "kos": return <Icon.Home className="h-4 w-4" />;
+    case "buku-kuliah": return <Icon.BookOpen className="h-4 w-4" />;
+    case "jasa": return <Icon.Briefcase className="h-4 w-4" />;
+    default: return <Icon.Package className="h-4 w-4" />; // Fallback icon instead of emoji
+  }
 };
 
 export default function CategoryFilter({ active, onChange, categories }) {
@@ -29,7 +33,7 @@ export default function CategoryFilter({ active, onChange, categories }) {
               : "border-gray-200 bg-white text-gray-600 hover:border-primary/40 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-300 dark:hover:border-slate-700"
           }`}
         >
-          <span>{iconMap[c.slug] || c.icon}</span>
+          <span>{getCategoryIcon(c.slug)}</span>
           {c.name}
         </button>
       ))}
