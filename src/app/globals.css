@@ -13,20 +13,20 @@ html {
 }
 
 body {
-  @apply bg-white text-gray-900 antialiased;
+  @apply bg-white text-gray-900 antialiased transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100;
   font-feature-settings: "cv11", "ss01";
 }
 
 ::selection {
-  @apply bg-gray-900 text-white;
+  @apply bg-gray-900 text-white dark:bg-slate-100 dark:text-slate-900;
 }
 
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors active:scale-[.99] disabled:opacity-50 disabled:pointer-events-none;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-all active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none;
   }
   .btn-primary {
-    @apply btn bg-gray-900 text-white hover:bg-gray-700;
+    @apply btn bg-gray-900 text-white hover:bg-gray-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200;
   }
   .btn-accent {
     @apply btn bg-accent text-white hover:bg-accent-dark;
@@ -35,18 +35,38 @@ body {
     @apply btn bg-wa text-white hover:bg-wa-dark;
   }
   .btn-outline {
-    @apply btn border border-gray-200 bg-white text-gray-800 hover:bg-gray-50;
+    @apply btn border border-gray-200 bg-white text-gray-800 hover:bg-gray-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800;
   }
   .card {
-    @apply rounded-xl border border-gray-200 bg-white;
+    @apply rounded-xl border border-gray-200 bg-white transition-all dark:border-slate-800 dark:bg-slate-900/40 dark:backdrop-blur-md;
   }
   .input {
-    @apply w-full rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-900 focus:ring-4 focus:ring-gray-900/5;
+    @apply w-full rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-900 focus:ring-4 focus:ring-gray-900/5 dark:border-slate-800 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-white dark:focus:ring-white/5;
   }
   .label {
-    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500;
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400;
   }
   .badge {
     @apply inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium;
   }
+
+  /* Floating label styling for premium forms */
+  .floating-group {
+    @apply relative mt-1;
+  }
+  .floating-input {
+    @apply block w-full appearance-none rounded-lg border border-gray-200 bg-transparent px-3.5 pb-2.5 pt-6 text-sm text-gray-900 outline-none transition-all placeholder-transparent focus:border-gray-900 focus:ring-4 focus:ring-gray-900/5 dark:border-slate-800 dark:text-white dark:focus:border-white dark:focus:ring-white/5;
+  }
+  .floating-label {
+    @apply absolute left-3.5 top-4 z-10 origin-[0] -translate-y-2.5 scale-75 transform text-xs font-semibold uppercase tracking-wide text-gray-400 transition-all duration-200 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-2.5 peer-focus:scale-75 peer-focus:text-gray-900 dark:peer-focus:text-white;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(1.01); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

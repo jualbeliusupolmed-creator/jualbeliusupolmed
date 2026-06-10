@@ -37,6 +37,19 @@ export default function RootLayout({ children }) {
           href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
           rel="stylesheet"
         />
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function() {
+            try {
+              var d = document.documentElement;
+              var c = localStorage.getItem('theme');
+              if (c === 'dark' || (!c && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                d.classList.add('dark');
+              } else {
+                d.classList.remove('dark');
+              }
+            } catch (e) {}
+          })();
+        ` }} />
       </head>
       <body className="min-h-screen flex flex-col">
         <Navbar />

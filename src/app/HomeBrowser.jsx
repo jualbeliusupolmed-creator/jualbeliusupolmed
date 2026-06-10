@@ -132,24 +132,33 @@ export default function HomeBrowser({
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
       {/* Hero */}
-      <section className="py-8 sm:py-14">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400">
-          Marketplace Kampus · USU &amp; POLMED
-        </p>
-        <h1 className="mt-3 max-w-3xl text-[2.25rem] font-extrabold leading-[1.05] tracking-tightest text-gray-900 sm:text-6xl">
-          {heroTitle || "Marketplace Mahasiswa USU & POLMED"}
-        </h1>
-        <p className="mt-4 max-w-xl text-base leading-relaxed text-gray-500 sm:text-lg">
-          {heroSubtitle ||
-            "Jual-beli laptop, HP, buku, fashion, makanan, kos, hingga jasa. Aman, cepat, dibantu admin."}
-        </p>
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Link href="/jual" className="btn-primary">
-            Pasang Iklan
-          </Link>
-          <Link href="/cara-bergabung" className="btn-outline">
-            Cara Bergabung
-          </Link>
+      <section className="relative overflow-hidden rounded-3xl border border-gray-150/80 bg-gradient-to-br from-white via-white to-gray-50/50 px-6 py-10 sm:px-12 sm:py-16 dark:border-slate-900/60 dark:from-slate-900/30 dark:to-slate-950/20 dark:bg-slate-900/10">
+        {/* Glow Effects */}
+        <div className="absolute -right-10 -top-10 h-48 w-48 rounded-full bg-accent/10 blur-3xl dark:bg-accent/5" />
+        <div className="absolute -left-10 -bottom-10 h-48 w-48 rounded-full bg-gray-300/10 blur-3xl dark:bg-slate-200/5" />
+        
+        {/* Grid pattern */}
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] dark:bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)]" />
+
+        <div className="relative z-10">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400 dark:text-slate-500">
+            Marketplace Kampus · USU &amp; POLMED
+          </p>
+          <h1 className="mt-3 max-w-3xl text-[2.25rem] font-extrabold leading-[1.05] tracking-tightest text-gray-900 dark:text-white sm:text-6xl">
+            {heroTitle || "Marketplace Mahasiswa USU & POLMED"}
+          </h1>
+          <p className="mt-4 max-w-xl text-base leading-relaxed text-gray-500 dark:text-slate-400 sm:text-lg">
+            {heroSubtitle ||
+              "Jual-beli laptop, HP, buku, fashion, makanan, kos, hingga jasa. Aman, cepat, dibantu admin."}
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link href="/jual" className="btn-primary">
+              Pasang Iklan
+            </Link>
+            <Link href="/cara-bergabung" className="btn-outline">
+              Cara Bergabung
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -344,7 +353,15 @@ export default function HomeBrowser({
       {searching ? (
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="card animate-pulse aspect-[3/4] bg-gray-100" />
+            <div key={i} className="card animate-pulse overflow-hidden bg-white dark:border-slate-800 dark:bg-slate-900/30">
+              <div className="aspect-square w-full bg-gray-150 dark:bg-slate-950" />
+              <div className="p-3 space-y-2">
+                <div className="h-3 w-1/4 rounded bg-gray-150 dark:bg-slate-800" />
+                <div className="h-4 w-3/4 rounded bg-gray-150 dark:bg-slate-800" />
+                <div className="h-4.5 w-1/2 rounded bg-gray-200 dark:bg-slate-700" />
+                <div className="h-3 w-1/3 rounded bg-gray-150 dark:bg-slate-800" />
+              </div>
+            </div>
           ))}
         </div>
       ) : listings.length === 0 ? (
