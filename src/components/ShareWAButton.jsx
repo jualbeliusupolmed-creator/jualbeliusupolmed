@@ -1,6 +1,7 @@
 "use client";
 
 import { rupiah } from "@/lib/fees";
+import { buildSlug } from "@/lib/slug";
 
 // Bagikan produk via WhatsApp (atau native share di HP). Cocok untuk
 // menyebarkan ke teman/grup — kanal utama audiens kampus.
@@ -9,7 +10,7 @@ export default function ShareWAButton({ listing }) {
     const base =
       process.env.NEXT_PUBLIC_BASE_URL ||
       (typeof window !== "undefined" ? window.location.origin : "");
-    return `${base}/produk/${listing.id}`;
+    return `${base}/produk/${buildSlug(listing.title, listing.id)}`;
   }
 
   function shareText() {

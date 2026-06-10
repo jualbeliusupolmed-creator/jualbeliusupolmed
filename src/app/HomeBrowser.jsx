@@ -7,6 +7,7 @@ import CategoryFilter from "@/components/CategoryFilter";
 import { CATEGORIES as DEFAULT_CATEGORIES } from "@/lib/constants";
 import { rupiah } from "@/lib/fees";
 import { Icon } from "@/components/Icons";
+import { buildSlug } from "@/lib/slug";
 
 const SORT_OPTIONS = [
   { value: "bumped", label: "Paling Relevan" },
@@ -189,7 +190,7 @@ export default function HomeBrowser({
             {featured.map((f) => (
               <Link
                 key={f.id}
-                href={`/produk/${f.id}`}
+                href={`/produk/${buildSlug(f.title, f.id)}`}
                 className="flex w-60 shrink-0 items-center gap-3 rounded-xl border border-gray-200 bg-white p-2.5 transition-all hover:border-gray-305 dark:border-slate-800 dark:bg-slate-900/30 dark:hover:border-slate-700"
               >
                 <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-slate-950">
@@ -455,7 +456,7 @@ export default function HomeBrowser({
             {trending.map((t, i) => (
               <Link
                 key={t.id}
-                href={`/produk/${t.id}`}
+                href={`/produk/${buildSlug(t.title, t.id)}`}
                 className="card flex w-40 shrink-0 flex-col overflow-hidden transition-all hover:border-gray-305"
               >
                 <div className="relative aspect-square bg-gray-100 dark:bg-slate-950">

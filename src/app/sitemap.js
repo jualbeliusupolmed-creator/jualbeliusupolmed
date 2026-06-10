@@ -1,4 +1,5 @@
 import { getAdminClient } from "@/lib/supabaseAdmin";
+import { buildSlug } from "@/lib/slug";
 
 export const revalidate = 3600; // regen tiap 1 jam
 
@@ -21,7 +22,7 @@ export default async function sitemap() {
     const supa = getAdminClient();
     const { data } = await supa
       .from("listings")
-      .select("id, created_at")
+      .select("id, title, created_at")
       .in("status", ["active", "sold"])
       .order("created_at", { ascending: false })
       .limit(1000);
@@ -31,7 +32,7 @@ export default async function sitemap() {
   }
 
   const productRoutes = listings.map((l) => ({
-    url: `${base}/produk/${l.id}`,
+    url: `${base}/produk/${buildSlug(l.title, l.id)}`,
     lastModified: new Date(l.created_at),
     changeFrequency: "weekly",
     priority: 0.6,

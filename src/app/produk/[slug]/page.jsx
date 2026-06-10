@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rupiah } from "@/lib/fees";
+import { buildSlug, getShortIdFromSlug, isUUID } from "@/lib/slug";
 import MinatButton from "@/components/MinatButton";
 import IGShareButton from "@/components/IGShareButton";
 import ShareWAButton from "@/components/ShareWAButton";
@@ -17,22 +18,48 @@ import { Icon } from "@/components/Icons";
 
 export const dynamic = "force-dynamic";
 
-async function getData(id) {
+/**
+ * Resolve a slug or legacy UUID → listing row.
+ * Supports:
+ *   - New format:  "laptop-asus-vivobook-3f2a8c1e"  (extracts 8-char prefix)
+ *   - Legacy:      "3f2a8c1e-d9b4-4e7f-8b23-a1b2c3d4e5f6"  (full UUID)
+ */
+async function getData(slug) {
   try {
     const supa = getAdminClient();
-    const { data: listing } = await supa
-      .from("listings")
-      .select("*")
-      .eq("id", id)
-      .single();
+    let listing = null;
+
+    if (isUUID(slug)) {
+      // Legacy full-UUID link — query directly
+      const { data } = await supa
+        .from("listings")
+        .select("*")
+        .eq("id", slug)
+        .single();
+      listing = data;
+    } else {
+      // New slug format — extract the 8-char short ID suffix
+      const shortId = getShortIdFromSlug(slug);
+      if (!shortId) return { listing: null, related: [] };
+      const { data } = await supa
+        .from("listings")
+        .select("*")
+        .ilike("id", `${shortId}%`)
+        .limit(1)
+        .single();
+      listing = data;
+    }
+
     if (!listing) return { listing: null, related: [] };
+
     const { data: related } = await supa
       .from("listings")
       .select("*")
       .eq("status", "active")
       .eq("category", listing.category)
-      .neq("id", id)
+      .neq("id", listing.id)
       .limit(4);
+
     return { listing, related: related || [] };
   } catch {
     return { listing: null, related: [] };
@@ -41,52 +68,42 @@ async function getData(id) {
 
 // ── SEO: generateMetadata ────────────────────────────────────────────────────
 export async function generateMetadata({ params }) {
-  const { listing } = await getData(params.id);
+  const { listing } = await getData(params.slug);
   if (!listing) {
-    return {
-      title: "Produk tidak ditemukan — Jual Beli USU Polmed",
-    };
+    return { title: "Produk tidak ditemukan — Jual Beli USU Polmed" };
   }
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
   const title = `${listing.title} — Jual Beli USU Polmed`;
-  const description =
-    listing.description
-      ? listing.description.slice(0, 155)
-      : `${listing.title} dijual ${rupiah(listing.price)} oleh ${listing.seller_name} di marketplace mahasiswa USU & POLMED.`;
+  const description = listing.description
+    ? listing.description.slice(0, 155)
+    : `${listing.title} dijual ${rupiah(listing.price)} oleh ${listing.seller_name} di marketplace mahasiswa USU & POLMED.`;
   const imageUrl = listing.image_url || `${baseUrl}/og-default.png`;
-  const url = `${baseUrl}/produk/${listing.id}`;
+  const canonicalSlug = buildSlug(listing.title, listing.id);
+  const url = `${baseUrl}/produk/${canonicalSlug}`;
 
   return {
     title,
     description,
-    openGraph: {
-      title,
-      description,
-      url,
-      type: "website",
-      images: [{ url: imageUrl, width: 800, height: 800, alt: listing.title }],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: [imageUrl],
-    },
-    alternates: {
-      canonical: url,
-    },
+    openGraph: { title, description, url, type: "website", images: [{ url: imageUrl, width: 800, height: 800, alt: listing.title }] },
+    twitter: { card: "summary_large_image", title, description, images: [imageUrl] },
+    alternates: { canonical: url },
   };
 }
 // ────────────────────────────────────────────────────────────────────────────
 
 export default async function ProdukPage({ params }) {
-  const { listing, related } = await getData(params.id);
+  const { listing, related } = await getData(params.slug);
   if (!listing) notFound();
+
+  // If someone visits old UUID link, redirect to clean slug URL
+  if (isUUID(params.slug)) {
+    redirect(`/produk/${buildSlug(listing.title, listing.id)}`);
+  }
 
   const sold = listing.status === "sold";
   const sellerWaEncoded = encodeURIComponent(listing.seller_wa || "");
+
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">

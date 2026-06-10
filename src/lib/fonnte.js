@@ -1,6 +1,8 @@
 // Integrasi Fonnte (WhatsApp gateway). Semua fungsi aman-gagal:
 // jika token belum di-set / request error, hanya log, tidak melempar.
 
+import { buildSlug } from "@/lib/slug";
+
 const FONNTE_URL = "https://api.fonnte.com/send";
 
 async function send(target, message) {
@@ -39,7 +41,7 @@ export async function notifyAdminNewListing(listing) {
     `💰 ${rupiah(listing.price)} | stok ${listing.stock}\n` +
     `🏷️ ${listing.category} (${listing.type})\n` +
     `👤 ${listing.seller_name} — ${listing.seller_wa}\n` +
-    `🔗 ${baseUrl()}/produk/${listing.id}`;
+    `🔗 ${baseUrl()}/produk/${buildSlug(listing.title, listing.id)}`;
   return send(admin, msg);
 }
 
@@ -53,7 +55,7 @@ export async function postToGroup(listing) {
     `🏷️ ${listing.category}\n\n` +
     `${listing.description || ""}\n\n` +
     `👤 Penjual: ${listing.seller_name}\n` +
-    `📲 Minat? buka: ${baseUrl()}/produk/${listing.id}\n` +
+    `📲 Minat? buka: ${baseUrl()}/produk/${buildSlug(listing.title, listing.id)}\n` +
     `— Jual Beli USU Polmed`;
   return send(group, msg);
 }
@@ -78,7 +80,7 @@ export async function notifyAdminReport(listing, report) {
     `👤 Penjual: ${listing?.seller_wa || "-"}\n` +
     `⚠️ Alasan: ${report?.reason || "-"}\n` +
     (report?.detail ? `📝 ${report.detail}\n` : "") +
-    `🔗 ${baseUrl()}/produk/${listing?.id}\n` +
+    `🔗 ${baseUrl()}/produk/${buildSlug(listing?.title, listing?.id)}\n` +
     `Cek panel admin untuk menindak.`;
   return send(admin, msg);
 }

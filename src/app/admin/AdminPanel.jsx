@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { rupiah } from "@/lib/fees";
 import { downloadCSV } from "@/lib/csv";
+import { buildSlug } from "@/lib/slug";
 import AdminListingModal from "./AdminListingModal";
 import ConfirmModal from "@/components/ConfirmModal";
 
@@ -542,7 +543,7 @@ export default function AdminPanel({
                     {r.detail && <p className="mt-2 whitespace-pre-wrap text-sm text-gray-600 dark:text-slate-400">“{r.detail}”</p>}
                   </div>
                   <div className="flex shrink-0 flex-col gap-1">
-                    {r.listing_id && <a href={`/produk/${r.listing_id}`} target="_blank" rel="noreferrer" className="rounded-md bg-gray-100 px-2 py-1 text-center text-xs text-gray-600 dark:bg-slate-800 dark:text-slate-300">Lihat</a>}
+                    {r.listing_id && <a href={`/produk/${buildSlug(r.listings?.title, r.listing_id)}`} target="_blank" rel="noreferrer" className="rounded-md bg-gray-100 px-2 py-1 text-center text-xs text-gray-600 dark:bg-slate-800 dark:text-slate-300">Lihat</a>}
                     {r.listing_id && <button onClick={() => action({ action: "suspend", id: r.listing_id }, "Listing disuspend")} className="rounded-md bg-amber-100 px-2 py-1 text-xs text-amber-700">Suspend</button>}
                     {r.status !== "resolved" && <button onClick={() => action({ action: "resolve_report", id: r.id }, "Ditandai selesai")} className="rounded-md bg-green-100 px-2 py-1 text-xs text-green-700">Selesai</button>}
                     <button onClick={() => confirmThen({ title: "Hapus laporan", message: "Hapus laporan ini?", danger: true }, () => action({ action: "delete_report", id: r.id }, "Dihapus"))} className="rounded-md bg-rose-100 px-2 py-1 text-xs text-rose-700">Hapus</button>

@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { rupiah } from "@/lib/fees";
+import { buildSlug } from "@/lib/slug";
 
 // Membuat poster QR untuk satu iklan. Cocok dicetak & ditempel di kampus —
 // orang scan langsung ke halaman produk (offline → online).
@@ -15,7 +16,7 @@ export default function QRButton({ listing }) {
     const base =
       process.env.NEXT_PUBLIC_BASE_URL ||
       (typeof window !== "undefined" ? window.location.origin : "");
-    return `${base}/produk/${listing.id}`;
+    return `${base}/produk/${buildSlug(listing.title, listing.id)}`;
   }
 
   async function openModal() {

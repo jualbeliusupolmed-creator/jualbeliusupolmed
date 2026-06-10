@@ -2,6 +2,7 @@ import Link from "next/link";
 import { rupiah } from "@/lib/fees";
 import FavoriteButton from "@/components/FavoriteButton";
 import { Icon } from "@/components/Icons";
+import { buildSlug } from "@/lib/slug";
 
 export default function ProductCard({ listing }) {
   const sold = listing.status === "sold";
@@ -14,7 +15,7 @@ export default function ProductCard({ listing }) {
   return (
     <div className="card group relative overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:border-gray-350 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/30 dark:hover:border-slate-700/60 dark:hover:bg-slate-900/50">
       <FavoriteButton listing={listing} className="absolute right-2 top-2 z-10" />
-      <Link href={`/produk/${listing.id}`} className="block">
+      <Link href={`/produk/${buildSlug(listing.title, listing.id)}`} className="block">
         <div className="relative aspect-square overflow-hidden bg-gray-100 dark:bg-slate-950">
           {listing.image_url ? (
             // eslint-disable-next-line @next/next/no-img-element
