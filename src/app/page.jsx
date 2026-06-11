@@ -105,6 +105,7 @@ export default async function HomePage() {
       stats={stats}
       heroTitle={settings.site?.heroTitle}
       heroSubtitle={settings.site?.heroSubtitle}
+      layoutOrder={settings.site?.layoutOrder}
     />
   );
 }

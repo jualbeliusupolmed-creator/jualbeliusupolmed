@@ -28,6 +28,7 @@ export default function HomeBrowser({
   stats = null,
   heroTitle,
   heroSubtitle,
+  layoutOrder = ["hero", "featured", "main"],
 }) {
   const CATEGORIES =
     categories && categories.length ? categories : DEFAULT_CATEGORIES;
@@ -144,7 +145,7 @@ export default function HomeBrowser({
   const hasActiveFilter =
     cat !== "all" || q || sort !== "bumped" || minPrice || maxPrice || campusFilter !== "Semua" || negoFilter;
 
-  const layoutOrder = settings?.site?.layoutOrder || ["hero", "featured", "main"];
+  const order = layoutOrder && layoutOrder.length > 0 ? layoutOrder : ["hero", "featured", "main"];
 
   const renderSection = (key) => {
     switch (key) {
@@ -521,7 +522,7 @@ export default function HomeBrowser({
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-6">
-      {layoutOrder.map(renderSection)}
+      {order.map(renderSection)}
     </main>
   );
 }
