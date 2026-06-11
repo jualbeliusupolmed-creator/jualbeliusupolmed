@@ -21,7 +21,11 @@ export default function FavoritPage() {
     <div className="mx-auto max-w-6xl px-4 py-6">
       <h1 className="text-2xl font-extrabold"><span aria-hidden="true">❤️</span> Favorit Saya</h1>
       <p className="mt-1 text-gray-500">
-        Barang yang kamu simpan. Tersimpan di perangkat ini.
+        Barang yang kamu simpan. Tersimpan di perangkat ini, tanpa perlu login.
+      </p>
+      <p className="mt-1 text-xs text-gray-400 dark:text-slate-500">
+        Cara menyimpan: tekan ikon hati di pojok kartu produk atau di halaman
+        detail produk.
       </p>
 
       {loaded && items.length === 0 ? (

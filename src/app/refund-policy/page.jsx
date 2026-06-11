@@ -19,7 +19,7 @@ export default function RefundPolicyPage() {
 
       <div className="card mt-8 p-6 sm:p-8 space-y-6 text-sm text-gray-600 leading-relaxed">
         <p>
-          Kebijakan Pengembalian Dana (Refund Policy) ini mengatur prosedur pembatalan dan pengembalian dana untuk seluruh layanan berbayar (seperti pemasangan iklan, fitur auto-bump, dan featured ads) di platform <strong>Jual Beli USU Polmed</strong>.
+          Kebijakan Pengembalian Dana (Refund Policy) ini mengatur prosedur pembatalan dan pengembalian dana untuk seluruh layanan berbayar (seperti pemasangan iklan, fitur Sundul (Bump), Sundul Otomatis (Auto-Bump), dan iklan unggulan (featured)) di platform <strong>Jual Beli USU Polmed</strong>.
         </p>
 
         <div>
@@ -34,7 +34,7 @@ export default function RefundPolicyPage() {
           <h2 className="text-base font-bold text-gray-900 mb-2">2. Syarat Pengembalian Dana (Refund)</h2>
           <ul className="list-disc pl-5 space-y-1">
             <li>Dana yang telah dibayarkan bersifat <strong>final dan tidak dapat dikembalikan</strong> dalam kondisi normal.</li>
-            <li>Pengembalian dana <strong>hanya dapat diberikan</strong> apabila terjadi kesalahan teknis dari sistem kami, misalnya: Anda telah melakukan pembayaran yang berhasil terverifikasi oleh Midtrans, namun layanan (seperti fitur sundul atau penayangan iklan) gagal diaktifkan oleh sistem kami dalam waktu 1x24 jam.</li>
+            <li>Pengembalian dana <strong>hanya dapat diberikan</strong> apabila terjadi kesalahan teknis dari sistem kami, misalnya: Anda telah melakukan pembayaran yang berhasil terverifikasi oleh iPaymu, namun layanan (seperti fitur sundul atau penayangan iklan) gagal diaktifkan oleh sistem kami dalam waktu 1x24 jam.</li>
             <li>Pengembalian dana tidak berlaku jika iklan Anda diturunkan (take-down) secara paksa oleh administrator karena melanggar Syarat dan Ketentuan platform (misalnya menjual barang ilegal, penipuan, atau spam).</li>
           </ul>
         </div>
@@ -43,7 +43,7 @@ export default function RefundPolicyPage() {
           <h2 className="text-base font-bold text-gray-900 mb-2">3. Prosedur Klaim Pengembalian Dana</h2>
           <ul className="list-disc pl-5 space-y-1">
             <li>Klaim pengembalian dana harus diajukan maksimal <strong>3x24 jam</strong> sejak transaksi dilakukan.</li>
-            <li>Pengajuan klaim harus disertai dengan: <br/>- Bukti pembayaran sah (struk/screenshot dari Midtrans atau Bank)<br/>- Nomor WhatsApp yang terdaftar pada transaksi<br/>- Penjelasan detail mengenai kendala teknis yang dialami.</li>
+            <li>Pengajuan klaim harus disertai dengan: <br/>- Bukti pembayaran sah (struk/screenshot dari iPaymu atau Bank)<br/>- Nomor WhatsApp yang terdaftar pada transaksi<br/>- Penjelasan detail mengenai kendala teknis yang dialami.</li>
             <li>Silakan ajukan klaim dengan menghubungi Admin kami melalui WhatsApp ke nomor <strong>{waDisplay}</strong> atau email ke <strong>admin@jualbeliusupolmed.web.id</strong>.</li>
             <li>Proses investigasi dan pengembalian dana akan memakan waktu hingga <strong>7-14 hari kerja</strong>, dan dana akan dikembalikan melalui metode transfer bank.</li>
           </ul>

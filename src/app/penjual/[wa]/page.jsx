@@ -152,7 +152,14 @@ export default async function SellerProfilePage({ params }) {
           {seller.seller_name?.[0]?.toUpperCase() || "?"}
         </div>
         <div className="flex-1">
-          <h1 className="text-2xl font-extrabold">{seller.seller_name}</h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-2xl font-extrabold">{seller.seller_name}</h1>
+            {soldCount > 0 && (
+              <span className="badge bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 font-bold text-[11px]">
+                ✓ Terjual {soldCount}×
+              </span>
+            )}
+          </div>
           <p className="mt-0.5 text-sm text-gray-400">
             Penjual di USU &amp; POLMED Marketplace
             {memberSince && (

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import Logo from "@/components/Logo";
 import { Icon } from "@/components/Icons";
@@ -19,10 +19,19 @@ const links = [
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [dark, setDark] = useState(false);
   const [showOtp, setShowOtp] = useState(false);
   const [session, setSession] = useState({ name: "", wa: "" });
+  const [navQ, setNavQ] = useState("");
+
+  const submitSearch = (e) => {
+    e.preventDefault();
+    const term = navQ.trim();
+    setOpen(false);
+    router.push(term ? `/?q=${encodeURIComponent(term)}` : "/");
+  };
 
   useEffect(() => {
     setDark(document.documentElement.classList.contains("dark"));
@@ -69,6 +78,18 @@ export default function Navbar() {
         </Link>
 
         <nav className="hidden items-center gap-0.5 md:flex">
+          {/* Search mini — cari produk dari halaman mana pun */}
+          <form onSubmit={submitSearch} className="relative hidden lg:block mr-1">
+            <Icon.Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+            <input
+              value={navQ}
+              onChange={(e) => setNavQ(e.target.value)}
+              placeholder="Cari barang…"
+              aria-label="Cari barang"
+              className="w-36 rounded-lg border border-gray-200 bg-gray-50/50 py-1.5 pl-8 pr-2 text-xs text-gray-700 outline-none transition-all focus:w-48 focus:border-gray-300 focus:bg-white dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-300 dark:focus:border-slate-700 dark:focus:bg-slate-900"
+            />
+          </form>
+
           {links.map((l) => {
             const active =
               l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
@@ -176,6 +197,16 @@ export default function Navbar() {
 
       {open && (
         <nav className="border-t border-gray-100 bg-white px-4 py-2 dark:border-slate-900 dark:bg-slate-950 md:hidden">
+          <form onSubmit={submitSearch} className="relative mb-2 pb-2 border-b border-gray-100 dark:border-slate-900">
+            <Icon.Search className="pointer-events-none absolute left-3 top-[calc(50%-4px)] h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input
+              value={navQ}
+              onChange={(e) => setNavQ(e.target.value)}
+              placeholder="Cari barang… laptop, buku, kos"
+              aria-label="Cari barang"
+              className="input pl-10 text-sm"
+            />
+          </form>
           {session.wa && (
             <div className="flex items-center justify-between border-b border-gray-100 dark:border-slate-900 pb-2.5 mb-2 text-xs font-semibold text-gray-700 dark:text-slate-300">
               <span className="flex items-center gap-1.5 truncate max-w-[200px]">

@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
 import CategoryFilter from "@/components/CategoryFilter";
-import { CATEGORIES as DEFAULT_CATEGORIES } from "@/lib/constants";
+import { CATEGORIES as DEFAULT_CATEGORIES, POPULAR_AREAS } from "@/lib/constants";
 import { rupiah } from "@/lib/fees";
 import { Icon } from "@/components/Icons";
 import { buildSlug } from "@/lib/slug";
@@ -50,6 +51,25 @@ export default function HomeBrowser({
   const [searching, setSearching] = useState(false);
 
   const catName = (slug) => CATEGORIES.find((c) => c.slug === slug)?.name || null;
+
+  // Terapkan filter dari URL (?q= dari search navbar / SearchAction Google,
+  // ?cat= dari breadcrumb halaman produk) — juga saat URL berubah tanpa remount.
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    const urlQ = searchParams.get("q");
+    const urlCat = searchParams.get("cat");
+    const catSlug = urlCat
+      ? CATEGORIES.find((c) => c.name === urlCat || c.slug === urlCat)?.slug || null
+      : null;
+    if (urlQ === null && !catSlug) return;
+    if (urlQ !== null) setQ(urlQ);
+    if (catSlug) setCat(catSlug);
+    applyFilters({
+      ...(urlQ !== null ? { newQ: urlQ } : {}),
+      ...(catSlug ? { newCat: catSlug } : {}),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   // Saat filter berubah, fetch ulang dari page 1
   const applyFilters = useCallback(
@@ -190,6 +210,7 @@ export default function HomeBrowser({
               stats?.sellers > 1 && { v: stats.sellers, l: "penjual bergabung" },
               stats?.wanted > 0 && { v: stats.wanted, l: "kebutuhan dicari" },
               stats?.sold > 0 && { v: stats.sold, l: "transaksi selesai" },
+              { v: POPULAR_AREAS.length, l: "titik COD kampus" },
             ].filter(Boolean);
             if (proof.length === 0) return null;
             return (
