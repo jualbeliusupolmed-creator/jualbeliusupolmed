@@ -8,6 +8,7 @@ import { uploadMedia } from "@/lib/upload";
 import MediaUploader from "@/components/MediaUploader";
 import OTPModal from "@/components/OTPModal";
 import { CATEGORIES, MARKETPLACE_WA, POPULAR_AREAS, formatWa } from "@/lib/constants";
+import { buildSlug } from "@/lib/slug";
 import { toast } from "sonner";
 export default function JualPage() {
   const router = useRouter();
@@ -400,7 +401,7 @@ export default function JualPage() {
               <div className="mt-5 space-y-2.5">
                 <a
                   href={`https://wa.me/${cfg?.contact?.marketplaceWa || MARKETPLACE_WA}?text=${encodeURIComponent(
-                    `Halo Admin, saya sudah membayar biaya pendaftaran iklan manual sebesar ${rupiah(fee)} untuk produk "${createdListing.title}".\n\nDetail Iklan:\n- ID: ${createdListing.id}\n- Penjual: ${createdListing.seller_name}\n- WA: ${createdListing.seller_wa}\n\nMohon bantuannya untuk mengaktifkan iklan saya. Terima kasih!`
+                    `Halo Admin, saya sudah membayar biaya pendaftaran iklan manual sebesar ${rupiah(fee)} untuk produk "${createdListing.title}".\n\n🔗 *Cek langsung iklannya di sini:*\nhttps://www.jualbeliusupolmed.web.id/admin/listings/${buildSlug(createdListing.title, createdListing.id)}\n\nDetail Iklan:\n- Penjual: ${createdListing.seller_name}\n- WA: ${createdListing.seller_wa}\n\nMohon bantuannya untuk mengaktifkan iklan saya. Terima kasih!`
                   )}`}
                   target="_blank"
                   rel="noreferrer"

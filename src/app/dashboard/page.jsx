@@ -8,6 +8,7 @@ import { rupiah, soldFee } from "@/lib/fees";
 import ConfirmModal from "@/components/ConfirmModal";
 import InputModal from "@/components/InputModal";
 import { formatWa } from "@/lib/constants";
+import { buildSlug } from "@/lib/slug";
 import { Icon } from "@/components/Icons";
 import { toast } from "sonner";
 
@@ -759,7 +760,7 @@ function DashboardInner() {
               <div className="mt-5 space-y-2">
                 <a
                   href={`https://wa.me/62895429126232?text=${encodeURIComponent(
-                    `Halo Admin, saya sudah membayar biaya pendaftaran iklan manual sebesar ${rupiah(qrisModalItem.type === "poster" ? 10000 : 5000)} untuk produk "${qrisModalItem.title}".\n\nDetail Iklan:\n- ID: ${qrisModalItem.id}\n- Penjual: ${qrisModalItem.seller_name}\n- WA: ${qrisModalItem.seller_wa}\n\nMohon bantuannya untuk mengaktifkan iklan saya. Terima kasih!`
+                    `Halo Admin, saya sudah membayar biaya pendaftaran iklan manual sebesar ${rupiah(qrisModalItem.type === "poster" ? 10000 : 5000)} untuk produk "${qrisModalItem.title}".\n\n🔗 *Cek langsung iklannya di sini:*\nhttps://www.jualbeliusupolmed.web.id/admin/listings/${buildSlug(qrisModalItem.title, qrisModalItem.id)}\n\nDetail Iklan:\n- Penjual: ${qrisModalItem.seller_name}\n- WA: ${qrisModalItem.seller_wa}\n\nMohon bantuannya untuk mengaktifkan iklan saya. Terima kasih!`
                   )}`}
                   target="_blank"
                   rel="noreferrer"
