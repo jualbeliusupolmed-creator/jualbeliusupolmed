@@ -24,6 +24,23 @@ export async function POST(req) {
     const settings = await getSettings();
     const amount = settings.pricing.bump;
 
+    // Check for free bumps
+    const { data: profile } = await supa
+      .from("seller_profiles")
+      .select("wa, free_bumps")
+      .eq("wa", listing.seller_wa)
+      .maybeSingle();
+
+    if (profile && profile.free_bumps > 0) {
+      // Deduct free bump
+      await supa.from("seller_profiles").update({ free_bumps: profile.free_bumps - 1 }).eq("wa", listing.seller_wa);
+      
+      // Bump the listing
+      await supa.from("listings").update({ bumped_at: new Date().toISOString() }).eq("id", listing_id);
+      
+      return NextResponse.json({ success: true, freeBumpUsed: true });
+    }
+
     const orderId = `BUMP-${listing_id.slice(0, 8)}-${Date.now()}`;
     await supa.from("payments").insert({
       listing_id,

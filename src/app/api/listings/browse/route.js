@@ -45,7 +45,7 @@ export async function GET(req) {
       .from("listings")
       // SECURITY: Exclude seller_wa from public browse response to prevent bulk scraping
       .select(
-        "id, title, description, price, stock, category, type, campus, area, status, featured, bumped_at, created_at, views, image_url, images, seller_name",
+        "id, title, description, price, stock, category, type, campus, area, status, featured, bumped_at, created_at, views, image_url, images, seller_name, seller_profiles(trusted_seller)",
         { count: "exact" }
       )
       .eq("status", "active");

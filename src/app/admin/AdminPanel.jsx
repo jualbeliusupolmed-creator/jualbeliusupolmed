@@ -39,6 +39,8 @@ const ICONS = {
   kategori: "M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z",
   pengaturan: "M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-2.18-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-2.18 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 002.18.33h.08A1.65 1.65 0 009 3.09V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 2.18v.08a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z",
   blacklist: "M18.36 6.64A9 9 0 105.64 18.36 9 9 0 0018.36 6.64zM5.64 5.64l12.72 12.72",
+  penjual: "M17 20h5V4H2v16h5m10 0v2m-10-2v2M8 9h8",
+  blogs: "M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10l6 6v10a2 2 0 01-2 2zM14 4v6h6M9 13h6M9 17h6"
 };
 
 function NavIcon({ name }) {
@@ -59,6 +61,7 @@ export default function AdminPanel({
   settings = {},
   wanted = [],
   sellersList = [],
+  blogs = [],
   revenue = 0,
   pendingCount = 0,
   initialTab = "overview",
@@ -68,7 +71,7 @@ export default function AdminPanel({
   pageSize = 100,
 }) {
   const router = useRouter();
-  const VALID_TABS = ["overview","listings","transaksi","rating","reports","dicari","kategori","pengaturan","blacklist","penjual"];
+  const VALID_TABS = ["overview","listings","transaksi","rating","reports","dicari","kategori","pengaturan","blacklist","penjual","blogs"];
   const tab = VALID_TABS.includes(initialTab) ? initialTab : "overview";
   function goTab(key) { router.push(`/admin/${key}`); }
   const [busy, setBusy] = useState(false);
@@ -229,6 +232,7 @@ export default function AdminPanel({
     { key: "pengaturan", label: "Pengaturan" },
     { key: "blacklist", label: "Blacklist" },
     { key: "penjual", label: "Penjual" },
+    { key: "blogs", label: "Artikel Blog" },
   ];
   const activeLabel = NAV.find((n) => n.key === tab)?.label;
 
@@ -640,6 +644,7 @@ export default function AdminPanel({
                     <th className="p-3">Total Iklan</th>
                     <th className="p-3">Aktif</th>
                     <th className="p-3">Terjual</th>
+                    <th className="p-3">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="dark:text-slate-300">
@@ -647,18 +652,78 @@ export default function AdminPanel({
                     <tr key={s.seller_wa} className="border-t dark:border-slate-800">
                       <td className="p-3 font-medium dark:text-white">
                         {s.seller_name}
+                        {s.trusted_seller && <span className="ml-2 text-xs text-blue-500">☑</span>}
                         <a href={`/admin/penjual/${s.seller_wa.replace(/\D/g, "")}`} className="ml-2 text-xs text-primary hover:underline">Edit</a>
                       </td>
                       <td className="p-3 font-mono text-xs"><a href={`https://wa.me/${s.seller_wa.replace(/\D/g, "")}`} className="hover:text-primary" target="_blank" rel="noreferrer">{s.seller_wa}</a></td>
                       <td className="p-3">{s.total_iklan}</td>
                       <td className="p-3 text-green-600">{s.active_iklan}</td>
                       <td className="p-3 text-gray-500">{s.sold_iklan}</td>
+                      <td className="p-3">
+                        <button 
+                          onClick={() => action({ action: "update_seller_profile", wa: s.seller_wa, trusted_seller: !s.trusted_seller }, `Status trusted seller diperbarui`)} 
+                          className="rounded-md bg-blue-100 px-2 py-1 text-xs text-blue-700"
+                        >
+                          {s.trusted_seller ? "Cabut Badge" : "Beri Badge"}
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
 
+          </div>
+        )}
+
+        {/* BLOGS */}
+        {tab === "blogs" && (
+          <div className="max-w-4xl">
+            <div className="mb-4 flex items-center justify-between">
+              <p className="text-xs text-gray-400">{blogs.length} artikel</p>
+              <button 
+                onClick={() => router.push("/admin/blogs/new")} 
+                className="btn-primary"
+              >
+                Tulis Artikel Baru
+              </button>
+            </div>
+            <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-slate-800">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 text-left text-xs uppercase text-gray-400 dark:bg-slate-900">
+                  <tr>
+                    <th className="p-3">Judul</th>
+                    <th className="p-3">Status</th>
+                    <th className="p-3">Tanggal</th>
+                    <th className="p-3">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="dark:text-slate-300">
+                  {blogs.length === 0 && (
+                    <tr><td colSpan="4" className="p-4 text-center text-gray-500">Belum ada artikel.</td></tr>
+                  )}
+                  {blogs.map((b) => (
+                    <tr key={b.id} className="border-t dark:border-slate-800">
+                      <td className="p-3">
+                        <p className="font-medium dark:text-white">{b.title}</p>
+                        <p className="text-xs text-gray-400">/{b.slug}</p>
+                      </td>
+                      <td className="p-3">
+                        <span className={`badge ${b.status === "published" ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-600 dark:bg-slate-700 dark:text-gray-300"}`}>{b.status}</span>
+                      </td>
+                      <td className="p-3 text-xs text-gray-400">{new Date(b.created_at).toLocaleDateString("id-ID")}</td>
+                      <td className="p-3">
+                        <div className="flex gap-2">
+                          <a href={`/admin/blogs/${b.id}`} className="text-primary hover:underline">Edit</a>
+                          {b.status === "published" && <a href={`/blog/${b.slug}`} target="_blank" rel="noreferrer" className="text-gray-500 hover:text-gray-900 dark:hover:text-white">Lihat</a>}
+                          <button onClick={() => confirmThen({ title: "Hapus Artikel", message: `Hapus "${b.title}"?`, danger: true }, () => action({ action: "delete_blog", id: b.id }, "Artikel dihapus"))} className="text-rose-600 hover:underline">Hapus</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 

@@ -30,10 +30,9 @@ async function getData(slug) {
     let listing = null;
 
     if (isUUID(slug)) {
-      // Legacy full-UUID link — query directly
       const { data } = await supa
         .from("listings")
-        .select("*")
+        .select("*, seller_profiles(trusted_seller)")
         .eq("id", slug)
         .single();
       listing = data;
@@ -61,7 +60,7 @@ async function getData(slug) {
 
       const { data } = await supa
         .from("listings")
-        .select("*")
+        .select("*, seller_profiles(trusted_seller)")
         .eq("id", matchedId)
         .maybeSingle();
       listing = data;
@@ -71,7 +70,7 @@ async function getData(slug) {
 
     const { data: related } = await supa
       .from("listings")
-      .select("*")
+      .select("*, seller_profiles(trusted_seller)")
       .eq("status", "active")
       .eq("category", listing.category)
       .neq("id", listing.id)
@@ -257,6 +256,13 @@ export default async function ProdukPage({ params }) {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <p className="text-sm font-semibold dark:text-white">{listing.seller_name}</p>
+                {listing.seller_profiles?.trusted_seller && (
+                  <span className="inline-flex items-center justify-center rounded-full bg-blue-100 p-0.5 text-blue-500" title="Penjual Terpercaya">
+                    <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </span>
+                )}
               </div>
               <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
                 Lihat semua iklan penjual →

@@ -12,14 +12,21 @@ export async function GET(req) {
   const wa = formatWa(req.nextUrl.searchParams.get("seller_wa") || "");
   if (!wa) return NextResponse.json({ listings: [] });
   const supa = getAdminClient();
-  // Support kedua format: cari yang match normalized
+  // Fetch seller profile
+  const { data: profile } = await supa
+    .from("seller_profiles")
+    .select("*")
+    .eq("wa", wa)
+    .maybeSingle();
+
+  // Fetch listings
   const { data, error } = await supa
     .from("listings")
     .select("*")
     .eq("seller_wa", wa)
     .order("created_at", { ascending: false });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ listings: data || [] });
+  return NextResponse.json({ listings: data || [], profile });
 }
 
 // POST /api/listings -> buat listing (pending) + payment + snap token
@@ -80,18 +87,20 @@ export async function POST(req) {
       { wa: normalizedWa, name: seller_name },
       { onConflict: "wa", ignoreDuplicates: true }
     );
-    // 2. Ambil nama paten dari seller_profiles
+    // 2. Ambil nama paten dan status pro dari seller_profiles
     const { data: profile } = await supa
       .from("seller_profiles")
-      .select("name")
+      .select("name, subscription_tier, subscription_expires_at")
       .eq("wa", normalizedWa)
       .maybeSingle();
 
     const enforcedName = profile?.name || seller_name;
+    const isPro = profile?.subscription_tier === "pro" && new Date(profile?.subscription_expires_at) > new Date();
 
     // FIXED: Fetch settings BEFORE insert so expires_at uses configurable listingDays
     const settings = await getSettings();
     const expiresAt = listingExpiresAt(settings.pricing);
+    const initialStatus = isPro ? "active" : "pending";
 
     const { data: listing, error } = await supa
       .from("listings")
@@ -105,7 +114,7 @@ export async function POST(req) {
         category: category || "Elektronik",
         type: type === "poster" ? "poster" : "barang",
         image_url: image_url || null,
-        status: "pending",
+        status: initialStatus,
         campus: campus || "Semua",
         area: area || "Sekitar Kampus",
         bumped_at: new Date().toISOString(),
@@ -118,6 +127,10 @@ export async function POST(req) {
     // Simpan galeri (kolom `images`) — non-fatal jika migration belum dijalankan.
     if (Array.isArray(images) && images.length) {
       await supa.from("listings").update({ images }).eq("id", listing.id);
+    }
+
+    if (isPro) {
+      return NextResponse.json({ listing, paymentUrl: null, isPro: true });
     }
 
     const amount = adFeeFrom(settings.pricing, listing.type);

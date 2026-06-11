@@ -60,6 +60,34 @@ export async function postToGroup(listing) {
   return send(group, msg);
 }
 
+// Matching Engine: Notif ke pembeli yang mencari barang serupa
+import { getAdminClient } from "@/lib/supabaseAdmin";
+export async function notifyWantedBuyers(listing) {
+  try {
+    const supa = getAdminClient();
+    const { data: wantedList } = await supa
+      .from("wanted_listings")
+      .select("buyer_wa, title")
+      .eq("status", "active")
+      .eq("category", listing.category);
+      
+    if (!wantedList || wantedList.length === 0) return;
+
+    for (const w of wantedList) {
+      // Basic matching: if listing title contains some keywords from wanted title (optional)
+      // For now we match based on category
+      const msg = 
+        `👋 Halo! Barang yang mungkin Anda cari di kategori *${listing.category}* baru saja diposting!\n\n` +
+        `📦 *${listing.title}*\n💰 ${rupiah(listing.price)}\n\n` +
+        `Cek selengkapnya di sini:\n${baseUrl()}/produk/${buildSlug(listing.title, listing.id)}\n\n` +
+        `— Sistem Jual Beli USU Polmed`;
+      await send(w.buyer_wa, msg);
+    }
+  } catch (err) {
+    console.error("[MatchingEngine] failed:", err?.message);
+  }
+}
+
 // Notif ke penjual saat ada yang minat (Dinonaktifkan)
 export async function notifySellerInterest(listing, buyerWa) {
   return { ok: true, skipped: true };

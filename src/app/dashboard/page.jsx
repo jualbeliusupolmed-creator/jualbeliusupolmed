@@ -39,6 +39,7 @@ function DashboardInner() {
   const [wa, setWa] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [items, setItems] = useState([]);
+  const [sellerProfile, setSellerProfile] = useState(null);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
 
@@ -98,6 +99,7 @@ function DashboardInner() {
       const dataWanted = await resWanted.json();
 
       setItems(dataListings.listings || []);
+      setSellerProfile(dataListings.profile || null);
       setWantedItems(dataWanted.listings || []);
 
       setLoaded(true);
@@ -210,6 +212,12 @@ function DashboardInner() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal memproses pembayaran");
+
+      if (data.freeBumpUsed) {
+        toast.success("Berhasil disundul menggunakan Kuota Free Bump!");
+        load();
+        return;
+      }
 
       if (data.paymentUrl) {
         window.location.href = data.paymentUrl;
@@ -448,9 +456,108 @@ function DashboardInner() {
             >
               🔍 Kebutuhan Dicari ({wantedItems.length})
             </button>
+            <button
+              onClick={() => setActiveTab("referral")}
+              className={`pb-2.5 px-4 text-sm font-bold border-b-2 transition-all ${
+                activeTab === "referral"
+                  ? "border-primary text-gray-900 dark:border-white dark:text-white"
+                  : "border-transparent text-gray-400 hover:text-gray-900 dark:hover:text-slate-200"
+              }`}
+            >
+              🎁 Referral
+            </button>
+            <button
+              onClick={() => setActiveTab("pro")}
+              className={`pb-2.5 px-4 text-sm font-bold border-b-2 transition-all ${
+                activeTab === "pro"
+                  ? "border-amber-500 text-amber-600 dark:border-amber-400 dark:text-amber-400"
+                  : "border-transparent text-gray-400 hover:text-gray-900 dark:hover:text-slate-200"
+              }`}
+            >
+              🌟 Paket Pro
+            </button>
           </div>
 
-          {activeTab === "jual" ? (
+          {activeTab === "pro" ? (
+            <div className="space-y-6 mt-6">
+              <div className="card p-6 border-2 border-amber-200 bg-amber-50/30 dark:border-amber-900/30 dark:bg-amber-900/10">
+                <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start text-center sm:text-left">
+                  <div className="h-24 w-24 shrink-0 rounded-2xl bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center text-4xl">
+                    👑
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-xl font-extrabold text-amber-900 dark:text-amber-300">Langganan Penjual Pro</h2>
+                    <p className="mt-2 text-sm text-gray-600 dark:text-slate-400 leading-relaxed max-w-lg">
+                      Dengan Paket Pro, Anda bisa memasang iklan standar sepuasnya (0 Rp per iklan) selama 30 hari penuh. Sangat cocok untuk Anda yang memiliki toko atau sering berjualan!
+                    </p>
+
+                    {sellerProfile?.subscription_tier === "pro" && new Date(sellerProfile?.subscription_expires_at) > new Date() ? (
+                      <div className="mt-4 p-4 rounded-xl bg-green-50 border border-green-200 dark:bg-green-900/20 dark:border-green-900/50">
+                        <p className="text-sm font-bold text-green-700 dark:text-green-400">✅ Anda adalah Penjual Pro</p>
+                        <p className="text-xs text-green-600 dark:text-green-500 mt-1">
+                          Langganan aktif sampai dengan {new Date(sellerProfile.subscription_expires_at).toLocaleDateString("id-ID", { dateStyle: "long" })}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="mt-5">
+                        <button
+                          onClick={() => pay("/api/payments/subscribe", { seller_wa: wa }, "subscribe")}
+                          disabled={busy}
+                          className="btn-primary bg-amber-500 hover:bg-amber-600 border-amber-600 text-white shadow-lg shadow-amber-500/30 px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 w-full sm:w-auto justify-center disabled:opacity-50"
+                        >
+                          🌟 Beli Paket Pro (Rp 49.000 / 30 Hari)
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : activeTab === "referral" ? (
+            <div className="space-y-6 mt-6">
+              <div className="card p-6 border-2 border-indigo-100 bg-indigo-50/30 dark:border-indigo-900/30 dark:bg-indigo-900/10">
+                <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start text-center sm:text-left">
+                  <div className="h-24 w-24 shrink-0 rounded-2xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-4xl">
+                    🤝
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-xl font-extrabold text-indigo-900 dark:text-indigo-300">Program Ajak Teman</h2>
+                    <p className="mt-2 text-sm text-gray-600 dark:text-slate-400 leading-relaxed max-w-lg">
+                      Bagikan kode referral Anda ke teman-teman yang belum menggunakan Jual Beli USU Polmed. Setiap teman yang mendaftar menggunakan kode Anda, Anda berdua akan mendapatkan <strong className="text-indigo-600 dark:text-indigo-400">1x Kuota Bump Iklan Gratis!</strong>
+                    </p>
+                    
+                    {sellerProfile?.referral_code ? (
+                      <div className="mt-4 flex flex-col sm:flex-row gap-3 items-center">
+                        <div className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg">
+                          <span className="text-xs text-gray-500 font-semibold uppercase">Kode Anda:</span>
+                          <span className="font-mono text-lg font-bold tracking-wider text-gray-900 dark:text-white select-all">{sellerProfile.referral_code}</span>
+                        </div>
+                        <button 
+                          onClick={() => {
+                            navigator.clipboard.writeText(sellerProfile.referral_code);
+                            toast.success("Kode referral disalin!");
+                          }}
+                          className="btn-outline text-sm py-2 px-4"
+                        >
+                          📋 Salin Kode
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="mt-4 text-sm text-amber-600 font-medium">Buat iklan pertamamu untuk mendapatkan kode referral!</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="card p-5">
+                  <h3 className="text-gray-500 text-sm font-semibold mb-1">Kuota Free Bump Anda</h3>
+                  <div className="text-4xl font-black text-indigo-600 dark:text-indigo-400">{sellerProfile?.free_bumps || 0}</div>
+                  <p className="mt-2 text-xs text-gray-400">Gunakan kuota ini saat menaikkan iklan (sundul) agar gratis.</p>
+                </div>
+              </div>
+            </div>
+          ) : activeTab === "jual" ? (
             <div className="space-y-6">
               <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <Stat label="Iklan aktif" value={active.length} />

@@ -13,7 +13,7 @@ async function getInitialData() {
     const supa = getAdminClient();
     const { data, count } = await supa
       .from("listings")
-      .select("*", { count: "exact" })
+      .select("*, seller_profiles(trusted_seller)", { count: "exact" })
       .eq("status", "active")
       .order("featured", { ascending: false, nullsFirst: false })
       .order("bumped_at", { ascending: false, nullsFirst: false })
@@ -30,7 +30,7 @@ async function getFeatured() {
     const supa = getAdminClient();
     const { data } = await supa
       .from("listings")
-      .select("id,title,price,image_url")
+      .select("id,title,price,image_url,seller_profiles(trusted_seller)")
       .eq("status", "active")
       .eq("featured", true)
       .order("bumped_at", { ascending: false, nullsFirst: false })
@@ -46,7 +46,7 @@ async function getTrending() {
     const supa = getAdminClient();
     const { data } = await supa
       .from("listings")
-      .select("id,title,price,image_url,views")
+      .select("id,title,price,image_url,views,seller_profiles(trusted_seller)")
       .eq("status", "active")
       .gt("views", 0)
       .order("views", { ascending: false, nullsFirst: false })

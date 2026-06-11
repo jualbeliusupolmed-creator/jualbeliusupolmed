@@ -260,8 +260,13 @@ export async function POST(req) {
       case "update_seller_profile": {
         const normalizedWa = formatWa(wa);
         if (!normalizedWa) return NextResponse.json({ error: "WA wajib" }, { status: 400 });
+        const payload = { wa: normalizedWa, name: body.name || "Penjual", bio: body.bio || null };
+        if (body.trusted_seller !== undefined) {
+          payload.trusted_seller = !!body.trusted_seller;
+        }
+
         const { error } = await supa.from("seller_profiles").upsert(
-          { wa: normalizedWa, name: body.name || "Penjual", bio: body.bio || null },
+          payload,
           { onConflict: "wa" }
         );
         if (error) throw new Error(error.message);
@@ -272,6 +277,11 @@ export async function POST(req) {
         }
         break;
       }
+
+      // ── Blogs ───────────────────────────────────────────────────────────
+      case "delete_blog":
+        await supa.from("blogs").delete().eq("id", id);
+        break;
 
       default:
         return NextResponse.json({ error: "Aksi tidak dikenal" }, { status: 400 });

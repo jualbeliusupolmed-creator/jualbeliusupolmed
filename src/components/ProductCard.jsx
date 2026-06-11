@@ -75,6 +75,13 @@ export default function ProductCard({ listing }) {
           <div className="mt-1.5 flex items-center justify-between text-[11px] text-gray-450 dark:text-slate-400">
             <p className="truncate flex items-center gap-1">
               <span>{listing.stock != null ? `Stok ${listing.stock} · ` : ""}{listing.seller_name}</span>
+              {listing.seller_profiles?.trusted_seller && (
+                <span className="inline-flex items-center justify-center rounded-full bg-blue-100 p-0.5 text-blue-500" title="Penjual Terpercaya">
+                  <svg className="h-2.5 w-2.5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </span>
+              )}
             </p>
             <div className="shrink-0 flex items-center gap-1.5">
               {isNego && (

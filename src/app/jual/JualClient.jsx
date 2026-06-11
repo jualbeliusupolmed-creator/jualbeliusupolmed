@@ -107,6 +107,13 @@ export default function JualPage() {
       localStorage.setItem("seller_wa", formattedWa);
       localStorage.setItem("seller_name", form.seller_name);
 
+      if (data.isPro) {
+        toast.success("Iklan berhasil ditayangkan! (Gratis via Paket Pro)");
+        const waParam = encodeURIComponent(formattedWa);
+        router.push(`/dashboard?wa=${waParam}`);
+        return;
+      }
+
       if (paymentMethod === "otomatis") {
         if (data.paymentUrl) {
           window.location.href = data.paymentUrl;

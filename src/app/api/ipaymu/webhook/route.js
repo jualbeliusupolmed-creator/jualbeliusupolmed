@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { notifyAdminNewListing, postToGroup } from "@/lib/fonnte";
+import { notifyAdminNewListing, postToGroup, notifyWantedBuyers } from "@/lib/fonnte";
 import { verifyIpaymuTransaction } from "@/lib/ipaymu";
 
 export const dynamic = "force-dynamic";
@@ -73,9 +73,10 @@ export async function POST(req) {
           .single();
 
         if (listing && payment.type === "iklan") {
-          // notif admin + auto-post grup
+          // notif admin + auto-post grup + matching engine
           notifyAdminNewListing(listing).catch(() => {});
           postToGroup(listing).catch(() => {});
+          notifyWantedBuyers(listing).catch(() => {});
         }
       } else if (payment.type === "featured") {
         const days = payment.meta?.days || 1;
@@ -90,6 +91,18 @@ export async function POST(req) {
           .from("listings")
           .update({ auto_bump_until: until, bumped_at: new Date().toISOString() })
           .eq("id", payment.listing_id);
+      } else if (payment.type === "subscribe") {
+        const wa = payment.meta?.wa;
+        if (wa) {
+          const until = new Date(Date.now() + 30 * 864e5).toISOString(); // 30 Hari
+          await supa
+            .from("seller_profiles")
+            .update({ 
+              subscription_tier: "pro", 
+              subscription_expires_at: until 
+            })
+            .eq("wa", wa);
+        }
       }
     }
 

@@ -3,6 +3,7 @@ import { Icon } from "./Icons";
 
 export default function OTPModal({ isOpen, onClose, onSuccess }) {
   const [wa, setWa] = useState("");
+  const [referral, setReferral] = useState("");
   const [otp, setOtp] = useState("");
   const [step, setStep] = useState(1); // 1: input WA, 2: input OTP
   const [busy, setBusy] = useState(false);
@@ -63,7 +64,7 @@ export default function OTPModal({ isOpen, onClose, onSuccess }) {
       const res = await fetch("/api/auth/otp/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wa, otp }),
+        body: JSON.stringify({ wa, otp, referral }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal verifikasi OTP");
@@ -117,6 +118,19 @@ export default function OTPModal({ isOpen, onClose, onSuccess }) {
                 onChange={(e) => setWa(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 required
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300 flex justify-between">
+                <span>Kode Referral</span>
+                <span className="text-gray-400 text-xs font-normal">Opsional</span>
+              </label>
+              <input
+                type="text"
+                placeholder="Masukkan kode (jika ada)"
+                value={referral}
+                onChange={(e) => setReferral(e.target.value.toUpperCase())}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
             </div>
             <button

@@ -31,6 +31,7 @@ export const ADMIN_TABS = [
   "pengaturan",
   "blacklist",
   "penjual",
+  "blogs",
 ];
 
 export const DEFAULT_DATA = {
@@ -40,6 +41,7 @@ export const DEFAULT_DATA = {
   reports: [],
   ratings: [],
   categories: [],
+  blogs: [],
   settings: DEFAULT_SETTINGS,
   wanted: [],
   sellersList: [],
@@ -61,11 +63,11 @@ export async function getAdminStats(page = 1) {
   const to = from + PAGE_SIZE - 1;
 
   // PAGINATED: listings and payments now use range() instead of loading all at once
-  const [listingsRes, paymentsRes, blacklist, categories, settings, wanted] = await Promise.all([
+  const [listingsRes, paymentsRes, blacklist, categories, settings, wanted, blogs] = await Promise.all([
     safePaginated(
       supa
         .from("listings")
-        .select("*", { count: "exact" })
+        .select("*, seller_profiles(trusted_seller, subscription_tier)", { count: "exact" })
         .order("created_at", { ascending: false })
         .range(from, to),
       []
@@ -94,6 +96,14 @@ export async function getAdminStats(page = 1) {
         .select("*")
         .order("created_at", { ascending: false })
         .limit(200),
+      []
+    ),
+    safe(
+      supa
+        .from("blogs")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(100),
       []
     ),
   ]);
@@ -134,6 +144,8 @@ export async function getAdminStats(page = 1) {
         total_iklan: 0,
         active_iklan: 0,
         sold_iklan: 0,
+        trusted_seller: l.seller_profiles?.trusted_seller || false,
+        subscription_tier: l.seller_profiles?.subscription_tier || "free",
       });
     }
     const stat = sellerMap.get(l.seller_wa);
@@ -160,6 +172,7 @@ export async function getAdminStats(page = 1) {
     categories,
     settings,
     wanted,
+    blogs,
     sellersList,
     revenue,
     pendingCount,

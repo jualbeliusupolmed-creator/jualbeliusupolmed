@@ -17,7 +17,7 @@ async function getSellerData(wa) {
     // Ambil semua iklan aktif penjual
     const { data: listings } = await supa
       .from("listings")
-      .select("*")
+      .select("*, seller_profiles(trusted_seller)")
       .eq("seller_wa", decodedWa)
       .eq("status", "active")
       .order("bumped_at", { ascending: false });
@@ -79,14 +79,14 @@ async function getSellerData(wa) {
     // Ambil iklan terjual (sold)
     const { data: soldListings } = await supa
       .from("listings")
-      .select("*")
+      .select("*, seller_profiles(trusted_seller)")
       .eq("seller_wa", decodedWa)
       .eq("status", "sold")
       .order("bumped_at", { ascending: false })
       .limit(12); // Batasi 12 terbaru
 
     return {
-      seller: { seller_name: sellerName, seller_wa: decodedWa, bio: profile?.bio || null, topCategory: topCat },
+      seller: { seller_name: sellerName, seller_wa: decodedWa, bio: profile?.bio || null, topCategory: topCat, trusted_seller: profile?.trusted_seller || false },
       listings: listings || [],
       soldListings: soldListings || [],
       ratings: ratings || [],
@@ -153,7 +153,16 @@ export default async function SellerProfilePage({ params }) {
         </div>
         <div className="flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-extrabold">{seller.seller_name}</h1>
+            <h1 className="text-2xl font-extrabold flex items-center gap-2">
+              {seller.seller_name}
+              {seller.trusted_seller && (
+                <span className="inline-flex items-center justify-center rounded-full bg-blue-100 p-1 text-blue-500" title="Penjual Terpercaya">
+                  <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </span>
+              )}
+            </h1>
             {soldCount > 0 && (
               <span className="badge bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 font-bold text-[11px]">
                 ✓ Terjual {soldCount}×

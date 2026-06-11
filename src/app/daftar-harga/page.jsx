@@ -40,6 +40,14 @@ const advertisingServices = [
     features: ["Tampil di Banner Utama", "Prioritas Dilihat Pertama", "Meningkatkan Penjualan 3x Lipat"],
     popular: false,
   },
+  {
+    title: "Paket Penjual Pro (Bulanan)",
+    price: 49000,
+    unit: "per bulan",
+    desc: "Bebas pasang iklan standar sepuasnya tanpa bayar per postingan selama 30 hari penuh.",
+    features: ["Gratis Pasang Iklan Unlimited", "Badge Penjual Pro", "Lebih Hemat untuk Toko/Usaha"],
+    popular: true,
+  },
 ];
 
 const transactionFees = [

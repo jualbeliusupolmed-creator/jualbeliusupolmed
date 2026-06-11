@@ -16,7 +16,7 @@ export async function POST(req) {
       );
     }
 
-    const { wa, otp } = await req.json();
+    const { wa, otp, referral } = await req.json();
     const normalizedWa = formatWa(wa);
     if (!normalizedWa || !otp) {
       return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
@@ -54,6 +54,46 @@ export async function POST(req) {
 
     // OTP Correct! Delete record and set session
     await supa.from("otps").delete().eq("wa", normalizedWa);
+    
+    // Referral & Profile Logic
+    const { data: profile } = await supa.from("seller_profiles").select("wa, referral_code").eq("wa", normalizedWa).maybeSingle();
+    let isNewUser = !profile;
+
+    if (isNewUser) {
+      const newRefCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      let freeBumps = 0;
+      let referrerWa = null;
+
+      if (referral) {
+        const { data: referrer } = await supa.from("seller_profiles").select("wa, free_bumps").eq("referral_code", referral).maybeSingle();
+        if (referrer) {
+          referrerWa = referrer.wa;
+          freeBumps = 1; // Bonus new user
+          // Bonus referrer
+          await supa.from("seller_profiles").update({ free_bumps: (referrer.free_bumps || 0) + 1 }).eq("wa", referrerWa);
+        }
+      }
+
+      await supa.from("seller_profiles").insert({
+        wa: normalizedWa,
+        name: `User ${normalizedWa.slice(-4)}`,
+        referral_code: newRefCode,
+        free_bumps: freeBumps
+      });
+
+      if (referrerWa) {
+        await supa.from("referrals").insert({
+          referrer_wa: referrerWa,
+          referred_wa: normalizedWa,
+          status: "completed"
+        });
+      }
+    } else if (!profile.referral_code) {
+      // Generate referral code for existing user who doesn't have one
+      const newRefCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      await supa.from("seller_profiles").update({ referral_code: newRefCode }).eq("wa", normalizedWa);
+    }
+
     setSellerCookie(normalizedWa);
 
     return NextResponse.json({ success: true, message: "Login berhasil!" });

@@ -2,25 +2,39 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
-import { DUMMY_BLOGS } from "@/lib/dummyBlogs";
+import { getAdminClient } from "@/lib/supabaseAdmin";
 
-export function generateMetadata({ params }) {
-  const blog = DUMMY_BLOGS.find((b) => b.slug === params.slug);
+export const dynamic = "force-dynamic";
+
+export async function generateMetadata({ params }) {
+  const supa = getAdminClient();
+  const { data: blog } = await supa
+    .from("blogs")
+    .select("*")
+    .eq("slug", params.slug)
+    .maybeSingle();
+
   if (!blog) return { title: "Blog Not Found" };
 
   return {
     title: `${blog.title} - Jual Beli USU Polmed`,
-    description: blog.content.substring(0, 150) + "...",
+    description: blog.content_markdown?.substring(0, 150) + "...",
     openGraph: {
       title: blog.title,
-      images: [blog.image_url],
+      images: blog.image_url ? [blog.image_url] : [],
     },
   };
 }
 
-export default function BlogPost({ params }) {
-  const blog = DUMMY_BLOGS.find((b) => b.slug === params.slug);
-  if (!blog) notFound();
+export default async function BlogPost({ params }) {
+  const supa = getAdminClient();
+  const { data: blog } = await supa
+    .from("blogs")
+    .select("*")
+    .eq("slug", params.slug)
+    .maybeSingle();
+
+  if (!blog || blog.status !== "published") notFound();
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-8 pb-20">
@@ -38,12 +52,14 @@ export default function BlogPost({ params }) {
         <span>{new Date(blog.created_at).toLocaleDateString("id-ID", { year: 'numeric', month: 'long', day: 'numeric' })}</span>
       </div>
 
-      <div className="mb-10 overflow-hidden rounded-2xl bg-gray-100 shadow-md dark:bg-slate-800">
-        <Image src={blog.image_url} alt={blog.title} width={800} height={400} className="h-full w-full object-cover max-h-[400px]" />
-      </div>
+      {blog.image_url && (
+        <div className="mb-10 overflow-hidden rounded-2xl bg-gray-100 shadow-md dark:bg-slate-800">
+          <Image src={blog.image_url} alt={blog.title} width={800} height={400} className="h-full w-full object-cover max-h-[400px]" />
+        </div>
+      )}
 
       <div className="prose prose-lg dark:prose-invert prose-primary mx-auto max-w-none">
-        <ReactMarkdown>{blog.content}</ReactMarkdown>
+        <ReactMarkdown>{blog.content_markdown || ""}</ReactMarkdown>
       </div>
 
       <hr className="my-10 border-gray-200 dark:border-slate-800" />
