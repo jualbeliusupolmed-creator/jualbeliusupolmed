@@ -61,28 +61,33 @@ function DashboardInner() {
 
   const [qrisModalItem, setQrisModalItem] = useState(null);
 
+  const router = useRouter();
+
   useEffect(() => {
-    // FIXED: Load config from API for dynamic admin WA
     fetch("/api/config")
       .then((r) => r.json())
       .then((d) => setCfg(d))
       .catch(() => {});
 
-    const urlWa = params.get("wa");
     const saved = localStorage.getItem("seller_wa");
-    const waToLoad = formatWa(urlWa || saved || "");
+    
+    // Jika tidak ada session WA, lempar ke halaman login OTP
+    if (!saved) {
+      router.push("/dashboard/login");
+      return;
+    }
+
+    const waToLoad = formatWa(saved);
     if (waToLoad) {
       setWa(waToLoad);
       load(waToLoad);
-      if (urlWa) {
-        localStorage.setItem("seller_wa", waToLoad);
-      }
     }
+
     if (params.get("paid")) setNote("Pembayaran sukses! Iklan tayang sebentar lagi.");
     if (params.get("pending")) setNote("Pembayaran pending. Selesaikan ya.");
     if (params.get("edited")) setNote("Iklan berhasil diperbarui!");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params]);
+  }, [params, router]);
 
   async function load(num) {
     let raw = (num ?? wa).trim();
@@ -397,18 +402,7 @@ function DashboardInner() {
         </div>
       )}
 
-      <div className="card mt-4 flex flex-col gap-3 p-4 sm:flex-row">
-        <input
-          className="input"
-          value={wa}
-          onChange={(e) => setWa(e.target.value)}
-          placeholder="Masukkan no. WhatsApp kamu untuk lihat iklan"
-          onKeyDown={(e) => e.key === "Enter" && load()}
-        />
-        <button onClick={() => load()} disabled={busy} className="btn-primary shrink-0">
-          {busy ? "Memuat…" : "Lihat Iklan"}
-        </button>
-      </div>
+
 
       {busy && !loaded && (
         <div className="mt-8 space-y-6">
