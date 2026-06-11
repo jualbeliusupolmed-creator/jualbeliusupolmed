@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { formatWa } from "@/lib/constants";
-import { notifyListingActivated } from "@/lib/waNotif";
 import { getSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
@@ -56,7 +55,7 @@ export async function POST(req) {
         // Fetch listing info before updating for WA notification
         const { data: listingInfo } = await supa
           .from("listings")
-          .select("seller_wa, seller_name, title, id")
+          .select("seller_wa, seller_name, title, id, price, stock, category, description")
           .eq("id", id)
           .maybeSingle();
 
@@ -71,17 +70,10 @@ export async function POST(req) {
           })
           .eq("id", id);
 
-        // ADDED: Send WA notification to seller (non-blocking, non-fatal)
-        if (listingInfo?.seller_wa) {
-          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
-          const { buildSlug } = await import("@/lib/slug");
-          const slug = buildSlug(listingInfo.title, listingInfo.id);
-          notifyListingActivated({
-            sellerWa: listingInfo.seller_wa,
-            sellerName: listingInfo.seller_name,
-            listingTitle: listingInfo.title,
-            listingUrl: `${baseUrl}/produk/${slug}`,
-          }).catch((e) => console.warn("[activate] WA notif failed:", e?.message));
+        // Broadcast to WA Group when admin activates manually
+        if (listingInfo) {
+          const { postToGroup } = await import("@/lib/fonnte");
+          postToGroup(listingInfo).catch((e) => console.warn("[activate] Broadcast failed:", e?.message));
         }
         break;
       }
