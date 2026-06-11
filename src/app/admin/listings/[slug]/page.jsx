@@ -8,46 +8,94 @@ import AdminListingDetail from "./AdminListingDetail";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * UUID v4 format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
+ * Given shortId = "4357d5e0" (first 8 hex chars),
+ * we fetch ALL listings (capped 500) and find the one whose id starts with shortId.
+ * This is safe-reliable and avoids PostgREST cast issues.
+ */
 async function getData(slug) {
-  const supa = getAdminClient();
-  let listing = null;
+  try {
+    const supa = getAdminClient();
 
-  if (isUUID(slug)) {
-    const { data } = await supa.from("listings").select("*").eq("id", slug).single();
-    listing = data;
-  } else {
-    const shortId = getShortIdFromSlug(slug);
-    if (!shortId) return null;
-    const { data } = await supa
-      .from("listings")
-      .select("*")
-      .filter("id::text", "ilike", `${shortId}%`)
-      .limit(1)
-      .maybeSingle();
-    listing = data;
+    // 1. Find the listing
+    let listing = null;
+
+    if (isUUID(slug)) {
+      // Legacy: full UUID in URL
+      const { data } = await supa
+        .from("listings")
+        .select("*")
+        .eq("id", slug)
+        .maybeSingle();
+      listing = data;
+    } else {
+      const shortId = getShortIdFromSlug(slug);
+      if (!shortId || shortId.length < 4) return null;
+
+      // Fetch all IDs (lightweight) and find matching prefix in JS
+      const { data: rows } = await supa
+        .from("listings")
+        .select("id")
+        .order("created_at", { ascending: false })
+        .limit(500);
+
+      const matchedId = rows?.find((r) =>
+        r.id.replace(/-/g, "").startsWith(shortId.replace(/-/g, ""))
+      )?.id;
+
+      if (!matchedId) return null;
+
+      const { data } = await supa
+        .from("listings")
+        .select("*")
+        .eq("id", matchedId)
+        .maybeSingle();
+      listing = data;
+    }
+
+    if (!listing) return null;
+
+    // 2. Fetch related data in parallel
+    const [paymentsRes, reportsRes, ratingsRes, categoriesRes] =
+      await Promise.all([
+        supa
+          .from("payments")
+          .select("*")
+          .eq("listing_id", listing.id)
+          .order("created_at", { ascending: false }),
+        supa
+          .from("reports")
+          .select("*")
+          .eq("listing_id", listing.id)
+          .order("created_at", { ascending: false }),
+        supa
+          .from("seller_ratings")
+          .select("*")
+          .eq("listing_id", listing.id)
+          .order("created_at", { ascending: false }),
+        supa
+          .from("categories")
+          .select("id, name, slug")
+          .order("sort_order", { ascending: true }),
+      ]);
+
+    return {
+      listing,
+      payments: paymentsRes.data || [],
+      reports: reportsRes.data || [],
+      ratings: ratingsRes.data || [],
+      categories: categoriesRes.data || [],
+    };
+  } catch (err) {
+    console.error("[admin/listings/[slug]] getData error:", err?.message);
+    return null;
   }
-
-  if (!listing) return null;
-
-  const [paymentsRes, reportsRes, ratingsRes, categoriesRes] = await Promise.all([
-    supa.from("payments").select("*").eq("listing_id", listing.id).order("created_at", { ascending: false }),
-    supa.from("reports").select("*").eq("listing_id", listing.id).order("created_at", { ascending: false }),
-    supa.from("seller_ratings").select("*").eq("listing_id", listing.id).order("created_at", { ascending: false }),
-    supa.from("categories").select("id, name, slug").order("sort_order", { ascending: true }),
-  ]);
-
-  return {
-    listing,
-    payments: paymentsRes.data || [],
-    reports: reportsRes.data || [],
-    ratings: ratingsRes.data || [],
-    categories: categoriesRes.data || [],
-  };
 }
 
 export async function generateMetadata({ params }) {
   if (!isAdmin()) return { title: "Admin" };
-  const result = await getData(params.slug).catch(() => null);
+  const result = await getData(params.slug);
   const title = result?.listing?.title || "Listing";
   return { title: `${title} — Admin Jual Beli USU` };
 }
@@ -60,16 +108,21 @@ export default async function AdminListingPage({ params }) {
 
   const { listing, payments, reports, ratings, categories } = result;
 
-  // Canonical slug redirect handled client-side for admin — no redirect needed
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
       {/* Breadcrumb */}
       <nav className="mb-4 flex items-center gap-1.5 text-sm text-gray-400">
-        <Link href="/admin/overview" className="hover:text-gray-700 dark:hover:text-slate-200">Admin</Link>
+        <Link href="/admin/overview" className="hover:text-gray-700 dark:hover:text-slate-200">
+          Admin
+        </Link>
         <span>/</span>
-        <Link href="/admin/listings" className="hover:text-gray-700 dark:hover:text-slate-200">Listings</Link>
+        <Link href="/admin/listings" className="hover:text-gray-700 dark:hover:text-slate-200">
+          Listings
+        </Link>
         <span>/</span>
-        <span className="truncate text-gray-700 dark:text-slate-200">{listing.title}</span>
+        <span className="truncate text-gray-700 dark:text-slate-200">
+          {listing.title}
+        </span>
       </nav>
 
       <AdminListingDetail

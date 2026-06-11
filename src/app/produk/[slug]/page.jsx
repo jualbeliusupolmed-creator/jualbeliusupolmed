@@ -41,11 +41,24 @@ async function getData(slug) {
       // New slug format — extract the 8-char short ID suffix
       const shortId = getShortIdFromSlug(slug);
       if (!shortId) return { listing: null, related: [] };
+
+      // Fetch IDs, then find the one whose UUID starts with shortId
+      const { data: rows } = await supa
+        .from("listings")
+        .select("id")
+        .order("created_at", { ascending: false })
+        .limit(500);
+
+      const matchedId = rows?.find((r) =>
+        r.id.replace(/-/g, "").startsWith(shortId.replace(/-/g, ""))
+      )?.id;
+
+      if (!matchedId) return { listing: null, related: [] };
+
       const { data } = await supa
         .from("listings")
         .select("*")
-        .filter("id::text", "ilike", `${shortId}%`)
-        .limit(1)
+        .eq("id", matchedId)
         .maybeSingle();
       listing = data;
     }
