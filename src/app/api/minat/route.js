@@ -29,7 +29,7 @@ export async function POST(req) {
     if (!listing)
       return NextResponse.json({ error: "Listing tidak ada" }, { status: 404 });
 
-    notifySellerInterest(listing, buyer_wa).catch(() => {});
+    await notifySellerInterest(listing, buyer_wa).catch(() => {});
     return NextResponse.json({ ok: true });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });

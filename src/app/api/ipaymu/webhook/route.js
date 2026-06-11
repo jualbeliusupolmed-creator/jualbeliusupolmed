@@ -74,9 +74,11 @@ export async function POST(req) {
 
         if (listing && payment.type === "iklan") {
           // notif admin + auto-post grup + matching engine
-          notifyAdminNewListing(listing).catch(() => {});
-          postToGroup(listing).catch(() => {});
-          notifyWantedBuyers(listing).catch(() => {});
+          await Promise.allSettled([
+            notifyAdminNewListing(listing),
+            postToGroup(listing),
+            notifyWantedBuyers(listing)
+          ]);
         }
       } else if (payment.type === "featured") {
         const days = payment.meta?.days || 1;

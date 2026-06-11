@@ -32,7 +32,7 @@ export async function GET(req) {
     .select();
 
   for (const l of expired || []) {
-    notifySellerExpired(l).catch(() => {});
+    await notifySellerExpired(l).catch(() => {});
   }
 
   // Note: 2) reminder H-2 is disabled to save Fonnte quota

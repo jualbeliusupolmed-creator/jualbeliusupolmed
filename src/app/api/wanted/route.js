@@ -121,7 +121,7 @@ export async function POST(req) {
     if (error) throw new Error(error.message);
 
     // Broadcast ke grup WA
-    postWantedToGroup(listing).catch(() => {});
+    await postWantedToGroup(listing).catch(() => {});
 
     return NextResponse.json({ listing });
   } catch (e) {

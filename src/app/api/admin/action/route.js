@@ -73,7 +73,7 @@ export async function POST(req) {
         // Broadcast to WA Group when admin activates manually
         if (listingInfo) {
           const { postToGroup } = await import("@/lib/fonnte");
-          postToGroup(listingInfo).catch((e) => console.warn("[activate] Broadcast failed:", e?.message));
+          await postToGroup(listingInfo).catch((e) => console.warn("[activate] Broadcast failed:", e?.message));
         }
         break;
       }
