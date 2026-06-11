@@ -262,7 +262,7 @@ export async function POST(req) {
           { onConflict: "wa" }
         );
         if (error) throw new Error(error.message);
-        
+
         // update nama di seluruh iklan berjalan milik penjual ini
         if (body.name) {
           await supa.from("listings").update({ seller_name: body.name }).eq("seller_wa", normalizedWa);

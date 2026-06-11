@@ -235,12 +235,14 @@ export default function HomeBrowser({
               >
                 Papan Dicari
               </Link>
-              <Link
-                href="/cara-bergabung"
-                className="px-2 py-2 text-sm text-gray-400 transition hover:text-gray-700 dark:hover:text-slate-200"
+              <a
+                href="/app-jual-beli-usu-polmed.apk"
+                className="flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100 active:scale-95 dark:border-emerald-900/50 dark:bg-emerald-900/20 dark:text-emerald-400"
+                title="Download Aplikasi Android"
               >
-                Info
-              </Link>
+                <Icon.Download className="h-4 w-4" />
+                App
+              </a>
             </div>
 
             {/* Stats — clean number blocks */}
