@@ -7,9 +7,9 @@ import { buildSlug } from "@/lib/slug";
 // menyebarkan ke teman/grup — kanal utama audiens kampus.
 export default function ShareWAButton({ listing }) {
   function shareUrl() {
-    const base =
-      process.env.NEXT_PUBLIC_BASE_URL ||
-      (typeof window !== "undefined" ? window.location.origin : "");
+    // Di client-side, window.location.origin selalu mengembalikan URL yang benar
+    // (https://www.jualbeliusupolmed.web.id di production, localhost:3000 di dev)
+    const base = typeof window !== "undefined" ? window.location.origin : "https://www.jualbeliusupolmed.web.id";
     return `${base}/produk/${buildSlug(listing.title, listing.id)}`;
   }
 
