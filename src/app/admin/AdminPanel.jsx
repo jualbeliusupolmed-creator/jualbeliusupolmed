@@ -8,6 +8,7 @@ import { buildSlug } from "@/lib/slug";
 import { formatWa } from "@/lib/constants";
 import AdminListingModal from "./AdminListingModal";
 import ConfirmModal from "@/components/ConfirmModal";
+import { getSupabase } from "@/lib/supabase";
 
 const REPORT_LABELS = {
   penipuan: "Penipuan / scam",
@@ -754,13 +755,51 @@ function SettingsManager({ settings, action }) {
   const [contact, setContact] = useState(settings.contact || {});
   const [site, setSite] = useState(settings.site || {});
   const [saved, setSaved] = useState("");
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingFavicon, setUploadingFavicon] = useState(false);
+
   function flash(k) { setSaved(k); setTimeout(() => setSaved(""), 2000); }
   const numP = (k) => (e) => setPricing({ ...pricing, [k]: Math.max(0, Number(e.target.value) || 0) });
   const tiers = pricing.soldTiers || [];
   const setTiers = (t) => setPricing({ ...pricing, soldTiers: t });
 
+  async function handleFileUpload(e, type) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const isLogo = type === "logo";
+    if (isLogo) setUploadingLogo(true);
+    else setUploadingFavicon(true);
+
+    try {
+      const supabase = getSupabase();
+      const ext = file.name.split(".").pop() || "png";
+      const path = `site/${type}-${Date.now()}.${ext}`;
+      
+      const { error } = await supabase.storage
+        .from("listings")
+        .upload(path, file, { cacheControl: "31536000", upsert: false });
+
+      if (error) throw new Error(error.message);
+
+      const { data } = supabase.storage.from("listings").getPublicUrl(path);
+      const publicUrl = data.publicUrl;
+
+      const updatedSite = { ...site, [isLogo ? "logoUrl" : "faviconUrl"]: publicUrl };
+      setSite(updatedSite);
+      
+      await action({ action: "save_settings", key: "site", value: updatedSite }, `${isLogo ? "Logo" : "Favicon"} berhasil diperbarui`);
+    } catch (err) {
+      alert(`Gagal mengunggah ${type}: ` + err.message);
+    } finally {
+      if (isLogo) setUploadingLogo(false);
+      else setUploadingFavicon(false);
+    }
+  }
+
   return (
     <div className="grid gap-6 lg:grid-cols-2">
+      {/* HARGA & BIAYA */}
       <Card title="Harga & Biaya">
         <div className="grid grid-cols-2 gap-3">
           <Field label="Iklan barang"><input type="number" className="input" value={pricing.adBarang ?? ""} onChange={numP("adBarang")} /></Field>
@@ -787,24 +826,77 @@ function SettingsManager({ settings, action }) {
         <button onClick={() => { action({ action: "save_settings", key: "pricing", value: pricing }, "Harga disimpan"); flash("pricing"); }} className="btn-primary mt-4 w-full">{saved === "pricing" ? "✓ Tersimpan" : "Simpan Harga"}</button>
       </Card>
 
-      <Card title="Kontak">
+      {/* KONTAK DUKUNGAN */}
+      <Card title="Kontak & Dukungan">
         <div className="space-y-3">
-          <Field label="Nomor WA marketplace"><input className="input" value={contact.marketplaceWa ?? ""} onChange={(e) => setContact({ ...contact, marketplaceWa: e.target.value })} /></Field>
-          <Field label="Link grup WhatsApp"><input className="input" value={contact.waGroupLink ?? ""} onChange={(e) => setContact({ ...contact, waGroupLink: e.target.value })} /></Field>
+          <Field label="Nomor WA Marketplace"><input className="input" value={contact.marketplaceWa ?? ""} onChange={(e) => setContact({ ...contact, marketplaceWa: e.target.value })} /></Field>
+          <Field label="Link Grup WhatsApp"><input className="input" value={contact.waGroupLink ?? ""} onChange={(e) => setContact({ ...contact, waGroupLink: e.target.value })} /></Field>
+          <Field label="Email Dukungan"><input type="email" className="input" value={contact.supportEmail ?? ""} onChange={(e) => setContact({ ...contact, supportEmail: e.target.value })} /></Field>
+          <Field label="Nomor Telepon Dukungan"><input className="input" value={contact.supportPhone ?? ""} onChange={(e) => setContact({ ...contact, supportPhone: e.target.value })} /></Field>
+          <Field label="Alamat Kantor/Dukungan"><textarea className="input min-h-16" value={contact.supportAddress ?? ""} onChange={(e) => setContact({ ...contact, supportAddress: e.target.value })} /></Field>
         </div>
         <button onClick={() => { action({ action: "save_settings", key: "contact", value: contact }, "Kontak disimpan"); flash("contact"); }} className="btn-primary mt-4 w-full">{saved === "contact" ? "✓ Tersimpan" : "Simpan Kontak"}</button>
       </Card>
 
-      <Card title="Teks Situs" className="lg:col-span-2">
-        <div className="space-y-3">
-          <Field label="Judul banner beranda"><input className="input" value={site.heroTitle ?? ""} onChange={(e) => setSite({ ...site, heroTitle: e.target.value })} /></Field>
-          <Field label="Subjudul banner"><textarea className="input min-h-16" value={site.heroSubtitle ?? ""} onChange={(e) => setSite({ ...site, heroSubtitle: e.target.value })} /></Field>
-          <Field label="Tagline footer"><input className="input" value={site.footerTagline ?? ""} onChange={(e) => setSite({ ...site, footerTagline: e.target.value })} /></Field>
+      {/* BRANDING & IDENTITAS VISUAL */}
+      <Card title="Identitas Visual (Logo & Favicon)">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Logo Web</label>
+            <div className="flex items-center gap-4">
+              <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-50 p-1 dark:border-slate-800 dark:bg-slate-900 flex items-center justify-center">
+                {site.logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={site.logoUrl} alt="Logo Preview" className="h-full w-full object-contain" />
+                ) : (
+                  <span className="text-[10px] text-gray-400 text-center font-medium">Default SVG</span>
+                )}
+              </div>
+              <div className="flex-1">
+                <input type="file" accept="image/*" onChange={(e) => handleFileUpload(e, "logo")} disabled={uploadingLogo} className="hidden" id="logo-upload-input" />
+                <label htmlFor="logo-upload-input" className="btn-outline text-xs inline-block cursor-pointer px-4 py-2">
+                  {uploadingLogo ? "Mengunggah..." : "Unggah Logo Baru"}
+                </label>
+                {site.logoUrl && (
+                  <button onClick={() => { const u = { ...site, logoUrl: "" }; setSite(u); action({ action: "save_settings", key: "site", value: u }, "Logo dikembalikan ke default"); }} className="text-xs text-rose-600 block mt-1 hover:underline">
+                    Reset ke Default
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <hr className="border-gray-100 dark:border-slate-800" />
+
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Favicon Web</label>
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-50 p-2 dark:border-slate-800 dark:bg-slate-900 flex items-center justify-center">
+                {site.faviconUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={site.faviconUrl} alt="Favicon Preview" className="h-full w-full object-contain" />
+                ) : (
+                  <span className="text-[10px] text-gray-400 text-center font-medium">Default</span>
+                )}
+              </div>
+              <div className="flex-1">
+                <input type="file" accept="image/*" onChange={(e) => handleFileUpload(e, "favicon")} disabled={uploadingFavicon} className="hidden" id="favicon-upload-input" />
+                <label htmlFor="favicon-upload-input" className="btn-outline text-xs inline-block cursor-pointer px-4 py-2">
+                  {uploadingFavicon ? "Mengunggah..." : "Unggah Favicon Baru"}
+                </label>
+                {site.faviconUrl && (
+                  <button onClick={() => { const u = { ...site, faviconUrl: "" }; setSite(u); action({ action: "save_settings", key: "site", value: u }, "Favicon dikembalikan ke default"); }} className="text-xs text-rose-600 block mt-1 hover:underline">
+                    Reset ke Default
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
-        <button onClick={() => { action({ action: "save_settings", key: "site", value: site }, "Teks disimpan"); flash("site"); }} className="btn-primary mt-4 w-full sm:w-auto sm:px-10">{saved === "site" ? "✓ Tersimpan" : "Simpan Teks"}</button>
       </Card>
 
-      <Card title="Tata Letak (Urutan Beranda)" className="lg:col-span-2">
+      {/* TATA LETAK BERANDA */}
+      <Card title="Tata Letak Beranda">
         <div className="space-y-3">
           <p className="text-xs text-gray-500">
             Geser urutan atau hapus seksi yang tidak ingin ditampilkan. Tersedia: hero, featured, main.
@@ -836,6 +928,32 @@ function SettingsManager({ settings, action }) {
           </div>
         </div>
         <button onClick={() => { action({ action: "save_settings", key: "site", value: site }, "Tata Letak disimpan"); flash("layout"); }} className="btn-primary mt-4 w-full sm:w-auto sm:px-10">{saved === "layout" ? "✓ Tersimpan" : "Simpan Tata Letak"}</button>
+      </Card>
+
+      {/* TEKS & SEO SITUS */}
+      <Card title="Teks & SEO Situs" className="lg:col-span-2">
+        <div className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Tampilan Website</label>
+              <div className="space-y-3">
+                <Field label="Judul Banner Beranda"><input className="input" value={site.heroTitle ?? ""} onChange={(e) => setSite({ ...site, heroTitle: e.target.value })} /></Field>
+                <Field label="Subjudul Banner"><textarea className="input min-h-16" value={site.heroSubtitle ?? ""} onChange={(e) => setSite({ ...site, heroSubtitle: e.target.value })} /></Field>
+                <Field label="Tagline Footer"><input className="input" value={site.footerTagline ?? ""} onChange={(e) => setSite({ ...site, footerTagline: e.target.value })} /></Field>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Metadata SEO</label>
+              <div className="space-y-3">
+                <Field label="Meta Title (Judul Browser)"><input className="input" value={site.metaTitle ?? ""} onChange={(e) => setSite({ ...site, metaTitle: e.target.value })} /></Field>
+                <Field label="Meta Description"><textarea className="input min-h-16" value={site.metaDescription ?? ""} onChange={(e) => setSite({ ...site, metaDescription: e.target.value })} /></Field>
+                <Field label="Meta Keywords (Pisahkan dengan koma)"><textarea className="input min-h-16" value={site.metaKeywords ?? ""} onChange={(e) => setSite({ ...site, metaKeywords: e.target.value })} /></Field>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button onClick={() => { action({ action: "save_settings", key: "site", value: site }, "Teks & SEO disimpan"); flash("site"); }} className="btn-primary mt-4 w-full sm:w-auto sm:px-10">{saved === "site" ? "✓ Tersimpan" : "Simpan Teks & SEO"}</button>
       </Card>
     </div>
   );

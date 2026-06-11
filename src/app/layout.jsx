@@ -3,80 +3,62 @@ import { Analytics } from "@vercel/analytics/next";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import BackToTop from "@/components/BackToTop";
 import { Toaster } from "sonner";
+import { getSettings } from "@/lib/settings";
 
 const BASE_URL =
   (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
 
-export const metadata = {
-  title: {
-    default: "Jual Beli USU Polmed — Marketplace Mahasiswa Medan",
-    template: "%s — Jual Beli USU Polmed",
-  },
-  description:
-    "Marketplace jual-beli khusus mahasiswa USU & POLMED Medan: laptop bekas, HP, buku kuliah, fashion, makanan, kos, dan jasa. Transaksi aman & COD di kampus, dibantu admin.",
-  keywords: [
-    "jual beli USU",
-    "marketplace mahasiswa Medan",
-    "laptop bekas USU",
-    "barang bekas mahasiswa POLMED",
-    "kos dekat USU",
-    "COD kampus USU",
-    "preloved mahasiswa Medan",
-  ],
-  manifest: "/manifest.json",
-  metadataBase: new URL(BASE_URL),
-  alternates: { canonical: "/" },
-  openGraph: {
-    title: "Jual Beli USU Polmed — Marketplace Mahasiswa Medan",
-    description:
-      "Jual-beli laptop, HP, buku, fashion, makanan, kos, hingga jasa antar mahasiswa USU & POLMED. Aman, cepat, COD di kampus, dibantu admin.",
-    type: "website",
-    url: "/",
-    siteName: "Jual Beli USU Polmed",
-    locale: "id_ID",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Jual Beli USU Polmed — Marketplace Mahasiswa Medan",
-    description:
-      "Jual-beli barang & jasa antar mahasiswa USU & POLMED. Aman, cepat, COD di kampus.",
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: { index: true, follow: true, "max-image-preview": "large" },
-  },
-};
+export async function generateMetadata() {
+  const settings = await getSettings();
+  const site = settings.site || {};
+  
+  const baseTitle = site.metaTitle || "Jual Beli USU Polmed — Marketplace Mahasiswa Medan";
+  const baseDesc = site.metaDescription || "Marketplace jual-beli khusus mahasiswa USU & POLMED Medan: laptop bekas, HP, buku kuliah, fashion, makanan, kos, dan jasa. Transaksi aman & COD di kampus, dibantu admin.";
+  const keywordsString = site.metaKeywords || "jual beli USU, marketplace mahasiswa Medan, laptop bekas USU, barang bekas mahasiswa POLMED, kos dekat USU, COD kampus USU, preloved mahasiswa Medan";
+  const keywords = keywordsString.split(",").map(k => k.trim()).filter(Boolean);
 
-// JSON-LD: WebSite + SearchAction & Organization — membantu Google memahami
-// situs dan menampilkan sitelinks search box.
-const siteJsonLd = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "WebSite",
-      "@id": `${BASE_URL}/#website`,
-      url: BASE_URL,
-      name: "Jual Beli USU Polmed",
-      description:
-        "Marketplace jual-beli khusus mahasiswa USU & POLMED Medan.",
-      inLanguage: "id-ID",
-      potentialAction: {
-        "@type": "SearchAction",
-        target: { "@type": "EntryPoint", urlTemplate: `${BASE_URL}/?q={search_term_string}` },
-        "query-input": "required name=search_term_string",
-      },
+  const faviconUrl = site.faviconUrl;
+
+  const metadataObj = {
+    title: {
+      default: baseTitle,
+      template: `%s — ${baseTitle.split("—")[0].trim()}`,
     },
-    {
-      "@type": "Organization",
-      "@id": `${BASE_URL}/#organization`,
-      name: "Jual Beli USU Polmed",
-      url: BASE_URL,
-      logo: `${BASE_URL}/icons/icon-512x512.png`,
-      areaServed: "Medan, Sumatera Utara, Indonesia",
+    description: baseDesc,
+    keywords: keywords,
+    manifest: "/manifest.json",
+    metadataBase: new URL(BASE_URL),
+    alternates: { canonical: "/" },
+    openGraph: {
+      title: baseTitle,
+      description: baseDesc,
+      type: "website",
+      url: "/",
+      siteName: baseTitle.split("—")[0].trim(),
+      locale: "id_ID",
     },
-  ],
-};
+    twitter: {
+      card: "summary_large_image",
+      title: baseTitle,
+      description: baseDesc,
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: { index: true, follow: true, "max-image-preview": "large" },
+    },
+  };
+
+  if (faviconUrl) {
+    metadataObj.icons = {
+      icon: faviconUrl,
+      shortcut: faviconUrl,
+      apple: faviconUrl,
+    };
+  }
+
+  return metadataObj;
+}
 
 export const viewport = {
   width: "device-width",
@@ -84,7 +66,40 @@ export const viewport = {
   themeColor: "#111111",
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const settings = await getSettings();
+  const site = settings.site || {};
+  const baseTitle = site.metaTitle || "Jual Beli USU Polmed — Marketplace Mahasiswa Medan";
+  const siteName = baseTitle.split("—")[0].trim();
+  const logoUrl = site.logoUrl || `${BASE_URL}/icons/icon-512x512.png`;
+
+  const siteJsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": `${BASE_URL}/#website`,
+        url: BASE_URL,
+        name: siteName,
+        description: site.metaDescription || "Marketplace jual-beli khusus mahasiswa USU & POLMED Medan.",
+        inLanguage: "id-ID",
+        potentialAction: {
+          "@type": "SearchAction",
+          target: { "@type": "EntryPoint", urlTemplate: `${BASE_URL}/?q={search_term_string}` },
+          "query-input": "required name=search_term_string",
+        },
+      },
+      {
+        "@type": "Organization",
+        "@id": `${BASE_URL}/#organization`,
+        name: siteName,
+        url: BASE_URL,
+        logo: logoUrl,
+        areaServed: "Medan, Sumatera Utara, Indonesia",
+      },
+    ],
+  };
+
   return (
     <html lang="id">
       <head>

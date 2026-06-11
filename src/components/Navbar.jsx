@@ -17,7 +17,7 @@ const links = [
   { href: "/cara-bergabung", label: "Info" },
 ];
 
-export default function Navbar() {
+export default function Navbar({ config }) {
   const pathname = usePathname();
   const router = useRouter();
   const [dark, setDark] = useState(false);
@@ -71,7 +71,7 @@ export default function Navbar() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-2.5">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <Logo className="h-7 w-7" />
+            <Logo className="h-7 w-7" src={config?.site?.logoUrl} />
             <span className="text-[14px] font-extrabold tracking-tight text-gray-900 dark:text-white">
               jualbeli<span className="text-gray-400 font-medium">.usupolmed</span>
             </span>
