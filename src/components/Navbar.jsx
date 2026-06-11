@@ -166,7 +166,7 @@ export default function Navbar({ config }) {
       </div>
 
       {/* ── Nav links bar — horizontal scroll, no hamburger ── */}
-      <div className="overflow-x-auto border-b border-gray-100 bg-white/70 backdrop-blur-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden dark:border-slate-900 dark:bg-slate-950/70">
+      <div className="hidden md:block overflow-x-auto border-b border-gray-100 bg-white/70 backdrop-blur-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden dark:border-slate-900 dark:bg-slate-950/70">
         <nav className="mx-auto flex max-w-6xl items-center gap-0 px-4">
           {links.map((l) => {
             const active = l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);

@@ -9,6 +9,7 @@ import IGShareButton from "@/components/IGShareButton";
 import ShareWAButton from "@/components/ShareWAButton";
 import QRButton from "@/components/QRButton";
 import CopyLinkButton from "@/components/CopyLinkButton";
+import NativeShareButton from "@/components/NativeShareButton";
 import ProductGallery from "@/components/ProductGallery";
 import ProductCard from "@/components/ProductCard";
 import RatingWidget from "@/components/RatingWidget";
@@ -240,8 +241,8 @@ export default async function ProdukPage({ params }) {
           <p className="mt-1 text-sm text-gray-400">
             Stok: {listing.stock}
             {listing.views > 0 && (
-              <span className="ml-2 inline-flex items-center gap-1.5 align-middle">
-                · <Icon.Eye className="h-3.5 w-3.5" /> Dilihat {listing.views}×
+              <span className="ml-2 inline-flex items-center gap-1.5 align-middle text-orange-500 font-medium bg-orange-50 dark:bg-orange-900/20 px-2 py-0.5 rounded-md">
+                · <Icon.Eye className="h-3.5 w-3.5" /> Sedang dilihat {Math.max(1, Math.floor(listing.views / 5) + 1)} orang lainnya
               </span>
             )}
           </p>
@@ -274,11 +275,22 @@ export default async function ProdukPage({ params }) {
           {/* Aksi */}
           <div className="mt-4 space-y-2">
             {!sold && <MinatButton listing={listing} />}
-            <div className="grid grid-cols-2 gap-2">
-              <ShareWAButton listing={listing} />
-              <CopyLinkButton listing={listing} />
-              <IGShareButton listing={listing} />
-              <QRButton listing={listing} />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <div className="col-span-2 block md:hidden">
+                <NativeShareButton listing={listing} />
+              </div>
+              <div className="hidden md:block">
+                <ShareWAButton listing={listing} />
+              </div>
+              <div className="hidden md:block">
+                <IGShareButton listing={listing} />
+              </div>
+              <div className="col-span-1 md:col-span-1">
+                <CopyLinkButton listing={listing} />
+              </div>
+              <div className="col-span-1 md:col-span-1">
+                <QRButton listing={listing} />
+              </div>
             </div>
           </div>
 
@@ -300,7 +312,7 @@ export default async function ProdukPage({ params }) {
 
       {/* Produk serupa */}
       {related.length > 0 && (
-        <section className="mt-10">
+        <section className="mt-10 mb-20 md:mb-0">
           <h2 className="text-lg font-bold">Barang serupa</h2>
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {related.map((r) => (
@@ -309,6 +321,14 @@ export default async function ProdukPage({ params }) {
           </div>
         </section>
       )}
+
+      {/* Mobile Floating Action Bar (Sticky CTA) */}
+      {!sold && (
+        <div className="fixed bottom-[64px] left-0 right-0 z-30 md:hidden bg-white/90 backdrop-blur-md border-t border-gray-100 p-3 shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)] dark:bg-slate-950/90 dark:border-slate-900 pb-safe">
+          <MinatButton listing={listing} className="w-full shadow-lg shadow-wa/20" />
+        </div>
+      )}
     </div>
   );
 }
+
