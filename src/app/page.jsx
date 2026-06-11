@@ -7,6 +7,35 @@ import HomeBrowser from "./HomeBrowser";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+export const metadata = {
+  title: "Jual Beli USU Polmed — Marketplace Mahasiswa Medan",
+  description: "Temukan laptop bekas, buku kuliah, fashion, dan kos di sekitar USU & POLMED. Marketplace terpercaya khusus mahasiswa dengan transaksi aman dibantu admin.",
+  keywords: ["jual beli USU", "marketplace mahasiswa Medan", "laptop bekas USU", "barang bekas mahasiswa POLMED", "kos dekat USU", "jual beli polmed", "cod kampus"],
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: "Jual Beli USU Polmed — Marketplace Mahasiswa Medan",
+    description: "Temukan laptop bekas, buku kuliah, fashion, dan kos di sekitar USU & POLMED. Marketplace terpercaya khusus mahasiswa dengan transaksi aman dibantu admin.",
+    url: "/",
+    siteName: "Jual Beli USU Polmed",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Jual Beli USU Polmed",
+      },
+    ],
+    locale: "id_ID",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Jual Beli USU Polmed — Marketplace Mahasiswa Medan",
+    description: "Temukan laptop bekas, buku kuliah, fashion, dan kos di sekitar USU & POLMED. Marketplace terpercaya khusus mahasiswa dengan transaksi aman dibantu admin.",
+    images: ["/og-image.png"],
+  },
+};
+
 const PAGE_SIZE = 20;
 
 async function getInitialData() {

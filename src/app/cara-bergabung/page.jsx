@@ -2,14 +2,30 @@ import { WA_GROUP_LINK, MARKETPLACE_WA } from "@/lib/constants";
 
 export const metadata = {
   title: "Cara Bergabung — Gabung Komunitas Jual Beli Mahasiswa USU & POLMED",
-  description:
-    "Panduan lengkap bergabung di komunitas jual-beli mahasiswa USU & POLMED Medan: cara menjual, cara membeli, rincian fee admin yang transparan, dan aturan keamanan transaksi.",
+  description: "Panduan lengkap bergabung di komunitas jual-beli mahasiswa USU & POLMED Medan: cara menjual, cara membeli, rincian fee admin yang transparan, dan aturan keamanan transaksi.",
+  keywords: ["cara bergabung jual beli USU", "komunitas whatsapp USU", "marketplace mahasiswa medan", "aturan jual beli POLMED", "fee admin jual beli usu"],
   alternates: { canonical: "/cara-bergabung" },
   openGraph: {
     title: "Cara Bergabung — Jual Beli USU Polmed",
-    description:
-      "Gabung grup WhatsApp komunitas, pasang iklan, dan transaksi aman dibantu admin. Fee transparan mulai Rp 2.000.",
+    description: "Gabung grup WhatsApp komunitas, pasang iklan, dan transaksi aman dibantu admin. Fee transparan mulai Rp 2.000.",
     url: "/cara-bergabung",
+    siteName: "Jual Beli USU Polmed",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Cara Bergabung Jual Beli USU Polmed",
+      },
+    ],
+    locale: "id_ID",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Cara Bergabung — Jual Beli USU Polmed",
+    description: "Gabung grup WhatsApp komunitas, pasang iklan, dan transaksi aman dibantu admin. Fee transparan mulai Rp 2.000.",
+    images: ["/og-image.png"],
   },
 };
 
