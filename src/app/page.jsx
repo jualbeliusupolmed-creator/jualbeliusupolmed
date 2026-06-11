@@ -15,8 +15,8 @@ async function getInitialData() {
       .from("listings")
       .select("*", { count: "exact" })
       .eq("status", "active")
-      .order("featured", { ascending: false })
-      .order("bumped_at", { ascending: false })
+      .order("featured", { ascending: false, nullsFirst: false })
+      .order("bumped_at", { ascending: false, nullsFirst: false })
       .range(0, PAGE_SIZE - 1);
     return { listings: data || [], total: count || 0 };
   } catch (e) {
@@ -33,7 +33,7 @@ async function getFeatured() {
       .select("id,title,price,image_url")
       .eq("status", "active")
       .eq("featured", true)
-      .order("bumped_at", { ascending: false })
+      .order("bumped_at", { ascending: false, nullsFirst: false })
       .limit(6);
     return data || [];
   } catch {
@@ -49,7 +49,7 @@ async function getTrending() {
       .select("id,title,price,image_url,views")
       .eq("status", "active")
       .gt("views", 0)
-      .order("views", { ascending: false })
+      .order("views", { ascending: false, nullsFirst: false })
       .limit(8);
     return data || [];
   } catch {

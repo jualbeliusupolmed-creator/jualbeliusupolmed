@@ -1,5 +1,5 @@
 export default function robots() {
-  const base = (process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000").trim();
+  const base = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
   return {
     rules: [
       {

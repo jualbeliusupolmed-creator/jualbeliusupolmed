@@ -44,10 +44,10 @@ export async function GET(req) {
     // Sort
     switch (sort) {
       case "newest":
-        query = query.order("created_at", { ascending: false });
+        query = query.order("created_at", { ascending: false, nullsFirst: false });
         break;
       case "views":
-        query = query.order("views", { ascending: false });
+        query = query.order("views", { ascending: false, nullsFirst: false });
         break;
       case "price_asc":
         query = query.order("price", { ascending: true });
@@ -57,8 +57,8 @@ export async function GET(req) {
         break;
       default: // "bumped" — featured dulu, lalu bumped_at terbaru
         query = query
-          .order("featured", { ascending: false })
-          .order("bumped_at", { ascending: false });
+          .order("featured", { ascending: false, nullsFirst: false })
+          .order("bumped_at", { ascending: false, nullsFirst: false });
     }
 
     query = query.range(from, to);
