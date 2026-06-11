@@ -8,7 +8,8 @@ export default function OTPModal({ isOpen, onClose, onSuccess }) {
   const [wa, setWa] = useState("");
   const [referral, setReferral] = useState("");
   const [otp, setOtp] = useState("");
-  const [step, setStep] = useState(1); // 1: input WA, 2: input OTP
+  const [pin, setPin] = useState("");
+  const [step, setStep] = useState(1); // 1: WA, 2: OTP+Setup PIN, 3: Verify PIN
   
   // Email States
   const [email, setEmail] = useState("");
@@ -24,6 +25,7 @@ export default function OTPModal({ isOpen, onClose, onSuccess }) {
       setStep(1);
       setWa("");
       setOtp("");
+      setPin("");
       setEmail("");
       setPassword("");
       setError("");
@@ -41,7 +43,33 @@ export default function OTPModal({ isOpen, onClose, onSuccess }) {
 
   if (!isOpen) return null;
 
-  async function handleSendOTP(e) {
+  async function handleCheckWA(e) {
+    e.preventDefault();
+    setError("");
+    if (!wa.trim()) return setError("Nomor WA wajib diisi.");
+
+    setBusy(true);
+    try {
+      const res = await fetch("/api/auth/check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ wa }),
+      });
+      const data = await res.json();
+      
+      if (data.hasPin) {
+        setStep(3); // Masuk ke mode PIN
+      } else {
+        await handleSendOTP(null, true); // Belum ada PIN, daftar/reset
+      }
+    } catch (err) {
+      setError(err.message || "Gagal mengecek nomor WA.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleSendOTP(e, isSetup = false) {
     if (e) e.preventDefault();
     setError("");
     if (!wa.trim()) return setError("Nomor WA wajib diisi.");
@@ -57,6 +85,8 @@ export default function OTPModal({ isOpen, onClose, onSuccess }) {
       if (!res.ok) throw new Error(data.error || "Gagal mengirim OTP");
       
       setStep(2);
+      setOtp("");
+      if (!isSetup) setPin(""); // Kosongkan PIN jika ini reset
       setCountdown(60); // 60 seconds cooldown for resend
     } catch (err) {
       setError(err.message);
@@ -69,16 +99,41 @@ export default function OTPModal({ isOpen, onClose, onSuccess }) {
     e.preventDefault();
     setError("");
     if (!otp.trim()) return setError("Kode OTP wajib diisi.");
+    if (pin.length < 6) return setError("PIN harus 6 digit angka.");
     
     setBusy(true);
     try {
       const res = await fetch("/api/auth/otp/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wa, otp, referral }),
+        body: JSON.stringify({ wa, otp, referral, pin }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal verifikasi OTP");
+      
+      localStorage.setItem("seller_wa", wa);
+      onSuccess(wa);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleVerifyPIN(e) {
+    e.preventDefault();
+    setError("");
+    if (pin.length < 6) return setError("PIN harus 6 digit angka.");
+    
+    setBusy(true);
+    try {
+      const res = await fetch("/api/auth/pin/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ wa, pin }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "PIN salah.");
       
       localStorage.setItem("seller_wa", wa);
       onSuccess(wa);
@@ -202,7 +257,7 @@ export default function OTPModal({ isOpen, onClose, onSuccess }) {
         ) : (
           /* WA Mode */
           step === 1 ? (
-            <form onSubmit={handleSendOTP} className="space-y-4">
+            <form onSubmit={handleCheckWA} className="space-y-4">
               <div>
                 <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300">
                   Nomor WhatsApp
@@ -234,23 +289,23 @@ export default function OTPModal({ isOpen, onClose, onSuccess }) {
                 disabled={busy || !wa.trim()}
                 className="btn-primary w-full py-2.5 flex justify-center items-center gap-2"
               >
-                {busy ? "Mengirim..." : "Kirim Kode OTP"}
+                {busy ? "Memproses..." : "Lanjut"}
               </button>
             </form>
-          ) : (
-            <form onSubmit={handleVerifyOTP} className="space-y-4">
+          ) : step === 3 ? (
+            <form onSubmit={handleVerifyPIN} className="space-y-4">
               <p className="mb-2 text-sm text-gray-500 dark:text-slate-400">
-                Kode OTP telah dikirim ke WA {wa}
+                Selamat datang kembali! Silakan masukkan PIN 6 digit Anda.
               </p>
               <div>
                 <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300">
-                  Kode OTP (6 Digit)
+                  PIN Akses (6 Digit)
                 </label>
                 <input
-                  type="text"
-                  placeholder="Masukkan 6 digit angka"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
+                  type="password"
+                  placeholder="Masukkan 6 digit PIN"
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value)}
                   className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-center text-xl tracking-widest font-mono dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                   maxLength={6}
                   required
@@ -258,15 +313,75 @@ export default function OTPModal({ isOpen, onClose, onSuccess }) {
               </div>
               <button
                 type="submit"
-                disabled={busy || otp.length < 5}
+                disabled={busy || pin.length < 6}
                 className="btn-primary w-full py-2.5 flex justify-center items-center gap-2"
               >
-                {busy ? "Memverifikasi..." : "Verifikasi & Masuk"}
+                {busy ? "Memverifikasi..." : "Masuk"}
+              </button>
+              <div className="text-center mt-3 flex justify-center items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-300"
+                >
+                  Ganti Nomor
+                </button>
+                <span className="text-gray-300 mx-1">|</span>
+                <button
+                  type="button"
+                  onClick={() => handleSendOTP(null, false)}
+                  className="text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                >
+                  Lupa PIN?
+                </button>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={handleVerifyOTP} className="space-y-4">
+              <p className="mb-2 text-sm text-gray-500 dark:text-slate-400">
+                Kode OTP telah dikirim via WA ke {wa}. Silakan atur PIN baru Anda.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300">
+                    Kode OTP
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="OTP (6 digit)"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-center text-lg tracking-widest font-mono dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    maxLength={6}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300">
+                    Buat PIN Baru
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="PIN (6 angka)"
+                    value={pin}
+                    onChange={(e) => setPin(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-center text-lg tracking-widest font-mono dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    maxLength={6}
+                    required
+                  />
+                </div>
+              </div>
+              <button
+                type="submit"
+                disabled={busy || otp.length < 5 || pin.length < 6}
+                className="btn-primary w-full py-2.5 flex justify-center items-center gap-2"
+              >
+                {busy ? "Memverifikasi..." : "Simpan PIN & Masuk"}
               </button>
               <div className="text-center mt-3">
                 <button
                   type="button"
-                  onClick={handleSendOTP}
+                  onClick={(e) => handleSendOTP(e, true)}
                   disabled={busy || countdown > 0}
                   className="text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 disabled:opacity-50 disabled:cursor-not-allowed"
                 >

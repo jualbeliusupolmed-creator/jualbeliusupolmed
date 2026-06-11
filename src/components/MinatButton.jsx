@@ -15,25 +15,15 @@ export default function MinatButton({ listing }) {
   const [showPicker, setShowPicker] = useState(false);
   const [customMsg, setCustomMsg] = useState("");
 
-  async function sendMinat(text) {
+  function sendMinat(text) {
     setShowPicker(false);
-    setBusy(true);
-    try {
-      await fetch("/api/minat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ listing_id: listing.id }),
-      }).catch(() => {});
-    } finally {
-      setBusy(false);
-      const wa = formatWa(listing.seller_wa || MARKETPLACE_WA);
-      // wa.me requires country code without 0. Since formatWa returns 08..., we convert it to 628...
-      const waLink = wa.startsWith("0") ? "62" + wa.slice(1) : wa;
-      window.open(
-        `https://wa.me/${waLink}?text=${encodeURIComponent(text)}`,
-        "_blank"
-      );
-    }
+    const wa = formatWa(listing.seller_wa || MARKETPLACE_WA);
+    // wa.me requires country code without 0. Since formatWa returns 08..., we convert it to 628...
+    const waLink = wa.startsWith("0") ? "62" + wa.slice(1) : wa;
+    window.open(
+      `https://wa.me/${waLink}?text=${encodeURIComponent(text)}`,
+      "_blank"
+    );
   }
 
   return (

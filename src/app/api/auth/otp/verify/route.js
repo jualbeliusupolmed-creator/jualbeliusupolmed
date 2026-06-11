@@ -16,13 +16,17 @@ export async function POST(req) {
       );
     }
 
-    const { wa, otp, referral } = await req.json();
+    const { wa, otp, referral, pin } = await req.json();
     const normalizedWa = formatWa(wa);
-    if (!normalizedWa || !otp) {
+    if (!normalizedWa || !otp || !pin) {
       return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
     }
+    
+    if (pin.length < 6) {
+      return NextResponse.json({ error: "PIN harus minimal 6 karakter." }, { status: 400 });
+    }
 
-    // Backdoor akun testing untuk reviewer (Midtrans, dll)
+    // Backdoor akun testing
     if (normalizedWa === "6281234567890" && otp === "123456") {
       setSellerCookie(normalizedWa);
       return NextResponse.json({ success: true, message: "Login berhasil (Test Account)!" });
@@ -78,7 +82,8 @@ export async function POST(req) {
         wa: normalizedWa,
         name: `User ${normalizedWa.slice(-4)}`,
         referral_code: newRefCode,
-        free_bumps: freeBumps
+        free_bumps: freeBumps,
+        pin: pin
       });
 
       if (referrerWa) {
@@ -88,15 +93,18 @@ export async function POST(req) {
           status: "completed"
         });
       }
-    } else if (!profile.referral_code) {
-      // Generate referral code for existing user who doesn't have one
-      const newRefCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-      await supa.from("seller_profiles").update({ referral_code: newRefCode }).eq("wa", normalizedWa);
+    } else {
+      // Update PIN
+      const updatePayload = { pin };
+      if (!profile.referral_code) {
+        updatePayload.referral_code = Math.random().toString(36).substring(2, 8).toUpperCase();
+      }
+      await supa.from("seller_profiles").update(updatePayload).eq("wa", normalizedWa);
     }
 
     setSellerCookie(normalizedWa);
 
-    return NextResponse.json({ success: true, message: "Login berhasil!" });
+    return NextResponse.json({ success: true, message: "Login berhasil dan PIN telah diset!" });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }

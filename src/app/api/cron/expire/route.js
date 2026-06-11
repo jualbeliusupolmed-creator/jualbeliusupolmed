@@ -35,21 +35,10 @@ export async function GET(req) {
     notifySellerExpired(l).catch(() => {});
   }
 
-  // 2) reminder H-2
-  const soon = new Date(now.getTime() + 2 * 864e5);
-  const { data: expiring } = await supa
-    .from("listings")
-    .select("*")
-    .eq("status", "active")
-    .gte("expires_at", now.toISOString())
-    .lte("expires_at", soon.toISOString());
-
-  for (const l of expiring || []) {
-    notifySellerExpiring(l).catch(() => {});
-  }
+  // Note: 2) reminder H-2 is disabled to save Fonnte quota
 
   return NextResponse.json({
     expired: expired?.length || 0,
-    reminded: expiring?.length || 0,
+    reminded: 0,
   });
 }
