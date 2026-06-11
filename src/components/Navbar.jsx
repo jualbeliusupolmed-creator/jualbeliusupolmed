@@ -13,6 +13,7 @@ const links = [
   { href: "/jual", label: "Jual" },
   { href: "/favorit", label: "Favorit" },
   { href: "/cara-bergabung", label: "Cara Bergabung" },
+  { href: "/blog", label: "Blog" },
   { href: "/dashboard", label: "Dashboard" },
 ];
 

@@ -144,10 +144,14 @@ export default function HomeBrowser({
   const hasActiveFilter =
     cat !== "all" || q || sort !== "bumped" || minPrice || maxPrice || campusFilter !== "Semua" || negoFilter;
 
-  return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
-      {/* Hero */}
-      <section className="relative overflow-hidden rounded-2xl border border-gray-150/80 bg-gradient-to-br from-white via-white to-gray-50/50 px-4 py-4.5 sm:px-8 sm:py-6 dark:border-slate-900/60 dark:from-slate-900/30 dark:to-slate-950/20 dark:bg-slate-900/10">
+  const layoutOrder = settings?.site?.layoutOrder || ["hero", "featured", "main"];
+
+  const renderSection = (key) => {
+    switch (key) {
+      case "hero":
+        return (
+          <section key="hero" className="relative overflow-hidden rounded-2xl border border-gray-150/80 bg-gradient-to-br from-white via-white to-gray-50/50 px-4 py-4.5 sm:px-8 sm:py-6 dark:border-slate-900/60 dark:from-slate-900/30 dark:to-slate-950/20 dark:bg-slate-900/10 mb-4">
+
         {/* Glow Effects */}
         <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-accent/5 blur-2xl dark:bg-accent/5" />
         <div className="absolute -left-10 -bottom-10 h-32 w-32 rounded-full bg-gray-300/5 blur-2xl dark:bg-slate-200/5" />
@@ -202,10 +206,11 @@ export default function HomeBrowser({
           })()}
         </div>
       </section>
-
-      {/* Featured */}
-      {featured?.length > 0 && (
-        <section className="mt-4 border-t border-gray-100 pt-4 dark:border-slate-900">
+        );
+      case "featured":
+        if (!featured?.length) return null;
+        return (
+          <section key="featured" className="border-t border-gray-100 pt-4 dark:border-slate-900 mb-4">
           <div className="flex items-baseline justify-between">
             <h2 className="text-xs font-semibold text-gray-900 dark:text-slate-100 sm:text-sm">Iklan Unggulan</h2>
             <span className="text-[10px] text-gray-400 dark:text-slate-500">Dipromosikan</span>
@@ -231,12 +236,12 @@ export default function HomeBrowser({
             ))}
           </div>
         </section>
-      )}
-
-
-
-      {/* Search + Sort Bar */}
-      <div className="mt-4 flex gap-2">
+        );
+      case "main":
+        return (
+          <div key="main">
+            {/* Search + Sort Bar */}
+            <div className="flex gap-2">
         <div className="relative flex-1">
           <svg
             className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
@@ -508,6 +513,15 @@ export default function HomeBrowser({
           </div>
         </section>
       )}
-    </div>
+          </div>
+        );
+      default: return null;
+    }
+  };
+
+  return (
+    <main className="mx-auto max-w-6xl px-4 py-6">
+      {layoutOrder.map(renderSection)}
+    </main>
   );
 }

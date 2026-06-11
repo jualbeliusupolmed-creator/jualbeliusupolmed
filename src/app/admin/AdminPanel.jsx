@@ -803,6 +803,40 @@ function SettingsManager({ settings, action }) {
         </div>
         <button onClick={() => { action({ action: "save_settings", key: "site", value: site }, "Teks disimpan"); flash("site"); }} className="btn-primary mt-4 w-full sm:w-auto sm:px-10">{saved === "site" ? "✓ Tersimpan" : "Simpan Teks"}</button>
       </Card>
+
+      <Card title="Tata Letak (Urutan Beranda)" className="lg:col-span-2">
+        <div className="space-y-3">
+          <p className="text-xs text-gray-500">
+            Geser urutan atau hapus seksi yang tidak ingin ditampilkan. Tersedia: hero, featured, main.
+          </p>
+          <div className="flex gap-2">
+            {(site.layoutOrder || ["hero", "featured", "main"]).map((key, i) => (
+              <span key={i} className="badge bg-gray-100 text-gray-800 dark:bg-slate-800 dark:text-slate-200 p-2 flex items-center gap-2">
+                {key}
+                <button onClick={() => {
+                  const newLayout = [...(site.layoutOrder || ["hero", "featured", "main"])];
+                  newLayout.splice(i, 1);
+                  setSite({ ...site, layoutOrder: newLayout });
+                }} className="text-rose-500 font-bold hover:text-rose-700">✕</button>
+              </span>
+            ))}
+          </div>
+          <div className="flex gap-2 mt-2">
+            <select id="addLayout" className="input text-sm">
+              <option value="hero">hero (Banner)</option>
+              <option value="featured">featured (Iklan Unggulan)</option>
+              <option value="main">main (Daftar Iklan)</option>
+            </select>
+            <button onClick={() => {
+              const val = document.getElementById("addLayout").value;
+              const newLayout = [...(site.layoutOrder || ["hero", "featured", "main"])];
+              if (!newLayout.includes(val)) newLayout.push(val);
+              setSite({ ...site, layoutOrder: newLayout });
+            }} className="btn-outline text-sm">Tambah Seksi</button>
+          </div>
+        </div>
+        <button onClick={() => { action({ action: "save_settings", key: "site", value: site }, "Tata Letak disimpan"); flash("layout"); }} className="btn-primary mt-4 w-full sm:w-auto sm:px-10">{saved === "layout" ? "✓ Tersimpan" : "Simpan Tata Letak"}</button>
+      </Card>
     </div>
   );
 }
