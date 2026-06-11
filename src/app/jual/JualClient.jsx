@@ -457,7 +457,7 @@ export default function JualPage() {
                 <div className="aspect-video w-full bg-gray-100 dark:bg-slate-800 relative">
                   {/* For preview, we use objectURL of the first file if available */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={URL.createObjectURL(media[0])} alt="Preview" className="w-full h-full object-cover" />
+                  <img src={media[0].preview || media[0].url} alt="Preview" className="w-full h-full object-cover" />
                 </div>
               ) : (
                 <div className="aspect-video w-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center">
