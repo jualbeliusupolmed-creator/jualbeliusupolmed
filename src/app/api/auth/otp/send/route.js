@@ -45,8 +45,8 @@ export async function POST(req) {
     const msg = `*Jual Beli USU Polmed* 🔒\n\nKode OTP Anda adalah: *${otp}*\n\nKode ini berlaku selama 5 menit. Jangan bagikan kode ini kepada siapapun!`;
     const fonnteRes = await send(normalizedWa, msg);
 
-    if (!fonnteRes) {
-      return NextResponse.json({ error: "Gagal mengirim pesan WA. Pastikan nomor aktif." }, { status: 500 });
+    if (!fonnteRes || !fonnteRes.ok) {
+      return NextResponse.json({ error: "Gagal mengirim pesan WA. Pastikan nomor aktif / token dikonfigurasi." }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, message: "OTP terkirim ke WhatsApp." });
