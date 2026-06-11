@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
 import CategoryFilter from "@/components/CategoryFilter";
@@ -33,15 +33,23 @@ export default function HomeBrowser({
 }) {
   const CATEGORIES =
     categories && categories.length ? categories : DEFAULT_CATEGORIES;
-  // Filter state
-  const [cat, setCat] = useState("all");
-  const [q, setQ] = useState("");
-  const [sort, setSort] = useState("bumped");
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
+
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Initialize filter state from URL params for shareable links
+  const [cat, setCat] = useState(() => {
+    const urlCat = searchParams.get("cat");
+    return CATEGORIES.find((c) => c.name === urlCat || c.slug === urlCat)?.slug || "all";
+  });
+  const [q, setQ] = useState(() => searchParams.get("q") || "");
+  const [sort, setSort] = useState(() => searchParams.get("sort") || "bumped");
+  const [minPrice, setMinPrice] = useState(() => searchParams.get("minPrice") || "");
+  const [maxPrice, setMaxPrice] = useState(() => searchParams.get("maxPrice") || "");
   const [showPriceFilter, setShowPriceFilter] = useState(false);
-  const [campusFilter, setCampusFilter] = useState("Semua");
-  const [negoFilter, setNegoFilter] = useState(false);
+  const [campusFilter, setCampusFilter] = useState(() => searchParams.get("campus") || "Semua");
+  const [negoFilter, setNegoFilter] = useState(() => searchParams.get("nego") === "1");
 
   // Pagination state
   const [listings, setListings] = useState(initialListings || []);
@@ -52,9 +60,34 @@ export default function HomeBrowser({
 
   const catName = (slug) => CATEGORIES.find((c) => c.slug === slug)?.name || null;
 
+  // Sync filter state to URL for shareable links
+  function syncToUrl(overrides = {}) {
+    const params = new URLSearchParams();
+    const state = {
+      cat,
+      q,
+      sort,
+      minPrice,
+      maxPrice,
+      campusFilter,
+      negoFilter,
+      ...overrides,
+    };
+    if (state.q) params.set("q", state.q);
+    if (state.cat && state.cat !== "all") {
+      params.set("cat", catName(state.cat) || state.cat);
+    }
+    if (state.sort && state.sort !== "bumped") params.set("sort", state.sort);
+    if (state.minPrice) params.set("minPrice", state.minPrice);
+    if (state.maxPrice) params.set("maxPrice", state.maxPrice);
+    if (state.campusFilter && state.campusFilter !== "Semua") params.set("campus", state.campusFilter);
+    if (state.negoFilter) params.set("nego", "1");
+    const str = params.toString();
+    router.replace(`${pathname}${str ? `?${str}` : ""}`, { scroll: false });
+  }
+
   // Terapkan filter dari URL (?q= dari search navbar / SearchAction Google,
   // ?cat= dari breadcrumb halaman produk) — juga saat URL berubah tanpa remount.
-  const searchParams = useSearchParams();
   useEffect(() => {
     const urlQ = searchParams.get("q");
     const urlCat = searchParams.get("cat");
@@ -80,6 +113,7 @@ export default function HomeBrowser({
       newMin = minPrice,
       newMax = maxPrice,
       newCampus = campusFilter,
+      newNego = negoFilter, // FIXED: pass negoFilter as explicit param (was stale in closure)
     } = {}) => {
       setSearching(true);
       setPage(1);
@@ -90,7 +124,7 @@ export default function HomeBrowser({
         if (newMin) params.set("minPrice", newMin);
         if (newMax) params.set("maxPrice", newMax);
         if (newCampus && newCampus !== "Semua") params.set("campus", newCampus);
-        if (negoFilter) params.set("nego", "1");
+        if (newNego) params.set("nego", "1"); // FIXED: use newNego param, not stale closure
 
         const res = await fetch(`/api/listings/browse?${params}`);
         const data = await res.json();
@@ -102,7 +136,8 @@ export default function HomeBrowser({
         setSearching(false);
       }
     },
-    [cat, q, sort, minPrice, maxPrice, campusFilter]
+    // FIXED: added negoFilter to dependency array
+    [cat, q, sort, minPrice, maxPrice, campusFilter, negoFilter]
   );
 
   function handleCampus(newCampus) {
@@ -116,27 +151,32 @@ export default function HomeBrowser({
     clearTimeout(window._searchTimer);
     window._searchTimer = setTimeout(() => {
       applyFilters({ newQ: val });
+      syncToUrl({ q: val });
     }, 400);
   }, [applyFilters]);
 
   function handleCat(newCat) {
     setCat(newCat);
     applyFilters({ newCat });
+    syncToUrl({ cat: newCat });
   }
 
   function handleSort(newSort) {
     setSort(newSort);
     applyFilters({ newSort });
+    syncToUrl({ sort: newSort });
   }
 
   function handlePriceApply() {
     applyFilters({});
+    syncToUrl({});
   }
 
   function handlePriceClear() {
     setMinPrice("");
     setMaxPrice("");
     applyFilters({ newMin: "", newMax: "" });
+    syncToUrl({ minPrice: "", maxPrice: "" });
   }
 
   async function loadMore() {
@@ -149,6 +189,7 @@ export default function HomeBrowser({
       if (minPrice) params.set("minPrice", minPrice);
       if (maxPrice) params.set("maxPrice", maxPrice);
       if (campusFilter && campusFilter !== "Semua") params.set("campus", campusFilter);
+      if (negoFilter) params.set("nego", "1");
 
       const res = await fetch(`/api/listings/browse?${params}`);
       const data = await res.json();
@@ -301,11 +342,10 @@ export default function HomeBrowser({
               <button
                 type="button"
                 onClick={() => setShowPriceFilter((v) => !v)}
-                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
-                  showPriceFilter || minPrice || maxPrice
+                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${showPriceFilter || minPrice || maxPrice
                     ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
                     : "border border-gray-200 text-gray-600 hover:border-gray-300 dark:border-slate-800 dark:text-slate-300"
-                }`}
+                  }`}
               >
                 Harga{minPrice || maxPrice ? " ✓" : ""}
               </button>
@@ -316,11 +356,10 @@ export default function HomeBrowser({
                   key={c}
                   type="button"
                   onClick={() => handleCampus(c)}
-                  className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
-                    campusFilter === c
+                  className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${campusFilter === c
                       ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
                       : "border border-gray-200 text-gray-600 hover:border-gray-300 dark:border-slate-800 dark:text-slate-300"
-                  }`}
+                    }`}
                 >
                   {c}
                 </button>
@@ -332,28 +371,13 @@ export default function HomeBrowser({
                 onClick={() => {
                   const next = !negoFilter;
                   setNegoFilter(next);
-                  setTimeout(() => {
-                    const params = new URLSearchParams({ page: 1, limit: PAGE_SIZE, sort });
-                    if (cat !== "all") params.set("cat", catName(cat) || cat);
-                    if (q) params.set("q", q);
-                    if (minPrice) params.set("minPrice", minPrice);
-                    if (maxPrice) params.set("maxPrice", maxPrice);
-                    if (campusFilter && campusFilter !== "Semua") params.set("campus", campusFilter);
-                    if (next) params.set("nego", "1");
-                    fetch(`/api/listings/browse?${params}`)
-                      .then((r) => r.json())
-                      .then((data) => {
-                        setListings(data.listings || []);
-                        setTotal(data.total || 0);
-                      })
-                      .catch(() => {});
-                  }, 0);
+                  // FIXED: use applyFilters with explicit newNego param
+                  applyFilters({ newNego: next });
                 }}
-                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
-                  negoFilter
+                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${negoFilter
                     ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
                     : "border border-gray-200 text-gray-600 hover:border-gray-300 dark:border-slate-800 dark:text-slate-300"
-                }`}
+                  }`}
               >
                 Nego{negoFilter ? " ✓" : ""}
               </button>
@@ -362,6 +386,7 @@ export default function HomeBrowser({
               {hasActiveFilter && (
                 <button
                   type="button"
+                  aria-label="Reset semua filter"
                   onClick={() => {
                     setCat("all");
                     setQ("");
@@ -371,7 +396,8 @@ export default function HomeBrowser({
                     setCampusFilter("Semua");
                     setNegoFilter(false);
                     setShowPriceFilter(false);
-                    applyFilters({ newCat: "all", newQ: "", newSort: "bumped", newMin: "", newMax: "", newCampus: "Semua" });
+                    applyFilters({ newCat: "all", newQ: "", newSort: "bumped", newMin: "", newMax: "", newCampus: "Semua", newNego: false });
+                    syncToUrl({ cat: "all", q: "", sort: "bumped", minPrice: "", maxPrice: "", campusFilter: "Semua", negoFilter: false });
                   }}
                   className="shrink-0 px-2 py-1.5 text-xs text-gray-400 hover:text-gray-700 dark:hover:text-slate-200"
                 >

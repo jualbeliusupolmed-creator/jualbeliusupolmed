@@ -44,6 +44,9 @@ function DashboardInner() {
   const [wantedItems, setWantedItems] = useState([]);
   const [activeTab, setActiveTab] = useState("jual");
 
+  // Config from API (for dynamic admin WA number)
+  const [cfg, setCfg] = useState(null);
+
   // Modal state
   const [soldModal, setSoldModal] = useState(null);
   const [soldPriceModal, setSoldPriceModal] = useState(null);
@@ -57,6 +60,12 @@ function DashboardInner() {
   const [qrisModalItem, setQrisModalItem] = useState(null);
 
   useEffect(() => {
+    // FIXED: Load config from API for dynamic admin WA
+    fetch("/api/config")
+      .then((r) => r.json())
+      .then((d) => setCfg(d))
+      .catch(() => {});
+
     const urlWa = params.get("wa");
     const saved = localStorage.getItem("seller_wa");
     const waToLoad = formatWa(urlWa || saved || "");
@@ -644,18 +653,29 @@ function DashboardInner() {
                             <p className="text-xs text-gray-400">{rupiah(i.price)}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                           {i.status === "expired" && (
-                            <Link
-                              href={`/edit/${i.id}`}
-                              className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1"
-                            >
-                              <Icon.RefreshCw className="h-3 w-3" /> Pasang Ulang
-                            </Link>
+                            <div className="flex flex-col gap-1">
+                              <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                                ⏰ Masa aktif habis
+                              </span>
+                              <Link
+                                href={`/edit/${i.id}`}
+                                className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1 w-fit"
+                                aria-label={`Perpanjang iklan ${i.title}`}
+                              >
+                                🔄 Perpanjang Iklan
+                              </Link>
+                              <p className="text-[10px] text-gray-400 max-w-[180px]">
+                                Edit & pasang ulang iklan ini tanpa buat baru
+                              </p>
+                            </div>
                           )}
-                          <span className="text-xs text-gray-400 font-medium">
-                            {i.status === "expired" ? "Masa aktif habis" : "Ditangguhkan admin"}
-                          </span>
+                          {i.status === "suspended" && (
+                            <span className="text-xs text-rose-500 font-medium">
+                              🚫 Ditangguhkan admin
+                            </span>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -759,7 +779,7 @@ function DashboardInner() {
 
               <div className="mt-5 space-y-2">
                 <a
-                  href={`https://wa.me/62895429126232?text=${encodeURIComponent(
+                  href={`https://wa.me/${cfg?.contact?.marketplaceWa || "62895429126232"}?text=${encodeURIComponent(
                     `Halo Admin, saya sudah membayar biaya pendaftaran iklan manual sebesar ${rupiah(qrisModalItem.type === "poster" ? 10000 : 5000)} untuk produk "${qrisModalItem.title}".\n\n🔗 *Cek langsung iklannya di sini:*\nhttps://www.jualbeliusupolmed.web.id/admin/listings/${buildSlug(qrisModalItem.title, qrisModalItem.id)}\n\nDetail Iklan:\n- Penjual: ${qrisModalItem.seller_name}\n- WA: ${qrisModalItem.seller_wa}\n\nMohon bantuannya untuk mengaktifkan iklan saya. Terima kasih!`
                   )}`}
                   target="_blank"

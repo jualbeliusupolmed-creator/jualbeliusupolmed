@@ -42,13 +42,17 @@ async function getData(slug) {
       const shortId = getShortIdFromSlug(slug);
       if (!shortId) return { listing: null, related: [] };
 
-      // Fetch IDs, then find the one whose UUID starts with shortId
+      // FIXED: Use DB LIKE query instead of fetching all IDs into memory.
+      // The short ID is the first 8 hex chars of the UUID (no dashes).
+      // UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+      // First 8 chars before dash match the shortId prefix.
       const { data: rows } = await supa
         .from("listings")
-        .select("id")
-        .order("created_at", { ascending: false })
-        .limit(500);
+        .select("id, title, status")
+        .like("id", `${shortId.slice(0, 8)}%`)
+        .limit(5);
 
+      // Filter in JS for the exact match (LIKE catches all starting with prefix)
       const matchedId = rows?.find((r) =>
         r.id.replace(/-/g, "").startsWith(shortId.replace(/-/g, ""))
       )?.id;

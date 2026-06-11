@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
+import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,15 @@ export const dynamic = "force-dynamic";
  *   sort     : "bumped" | "newest" | "price_asc" | "price_desc" (default "bumped")
  */
 export async function GET(req) {
+  // ADDED: Rate limit to prevent bot scraping of seller phone numbers
+  const rl = rateLimit(`browse:${getClientIp(req)}`, { limit: 60, windowMs: 60_000 });
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: `Terlalu banyak permintaan. Coba lagi dalam ${rl.retryAfter} detik.` },
+      { status: 429 }
+    );
+  }
+
   try {
     const sp = req.nextUrl.searchParams;
     const page = Math.max(1, Number(sp.get("page") || 1));
@@ -25,6 +35,7 @@ export async function GET(req) {
     const maxPrice = sp.get("maxPrice") ? Number(sp.get("maxPrice")) : null;
     const sort = sp.get("sort") || "bumped";
     const campus = sp.get("campus") || "";
+    const nego = sp.get("nego") === "1";
 
     const from = (page - 1) * limit;
     const to = from + limit - 1;
@@ -32,7 +43,11 @@ export async function GET(req) {
     const supa = getAdminClient();
     let query = supa
       .from("listings")
-      .select("*", { count: "exact" })
+      // SECURITY: Exclude seller_wa from public browse response to prevent bulk scraping
+      .select(
+        "id, title, description, price, stock, category, type, campus, area, status, featured, bumped_at, created_at, views, image_url, images, seller_name",
+        { count: "exact" }
+      )
       .eq("status", "active");
 
     if (cat) query = query.eq("category", cat);
@@ -40,6 +55,7 @@ export async function GET(req) {
     if (q) query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%`);
     if (minPrice !== null) query = query.gte("price", minPrice);
     if (maxPrice !== null) query = query.lte("price", maxPrice);
+    if (nego) query = query.ilike("description", "%nego%");
 
     // Sort
     switch (sort) {

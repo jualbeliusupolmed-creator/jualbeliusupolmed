@@ -9,6 +9,7 @@ export const DEFAULT_SETTINGS = {
     bump: 1000,
     featuredPerDay: 5000,
     featuredMaxPerDay: 10000,
+    listingDays: 14, // ADDED: configurable ad duration in days (was hardcoded)
     // tier fee setelah barang terjual; dievaluasi berurutan, `upto` = batas atas (eksklusif)
     soldTiers: [
       { upto: 50000, flat: 2000 },
@@ -66,6 +67,12 @@ export async function getSettings() {
 // ── Helper perhitungan biaya (server-side, sumber kebenaran) ─────────────────
 export function adFeeFrom(pricing, type) {
   return type === "poster" ? pricing.adPoster : pricing.adBarang;
+}
+
+// Returns listing expiry date based on configurable duration from settings
+export function listingExpiresAt(pricing) {
+  const days = Math.max(1, Number(pricing?.listingDays) || 14);
+  return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 }
 
 export function soldFeeFrom(pricing, price) {

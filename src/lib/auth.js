@@ -4,7 +4,24 @@ import crypto from "crypto";
 const COOKIE = "admin_session";
 
 function secret() {
-  return process.env.ADMIN_PASSWORD || "bismillah";
+  const pw = process.env.ADMIN_PASSWORD;
+  if (!pw) {
+    // Fail loudly in production — a missing password is a security hole.
+    // In development, fall back to a hard-coded default with a loud warning.
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "ADMIN_PASSWORD environment variable is not set. " +
+          "This is a critical security issue. " +
+          "Please set ADMIN_PASSWORD in your environment variables."
+      );
+    }
+    console.warn(
+      "[SECURITY WARNING] ADMIN_PASSWORD is not set. Using insecure default. " +
+        "Set ADMIN_PASSWORD in your .env.local file!"
+    );
+    return "dev_only_insecure_password";
+  }
+  return pw;
 }
 
 function token() {

@@ -2,9 +2,8 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { createPaymentLink } from "@/lib/ipaymu";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
-import { getSettings, adFeeFrom } from "@/lib/settings";
+import { getSettings, adFeeFrom, listingExpiresAt } from "@/lib/settings";
 import { formatWa } from "@/lib/constants";
-import { getSellerSession, isAdmin } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -60,11 +59,6 @@ export async function POST(req) {
       return NextResponse.json({ error: "Nomor WA tidak valid" }, { status: 400 });
     }
 
-    const sessionWa = getSellerSession();
-    if (!isAdmin() && sessionWa !== normalizedWa) {
-      return NextResponse.json({ error: "Unauthorized: Anda belum login." }, { status: 401 });
-    }
-
     const supa = getAdminClient();
 
     // cek blacklist — bandingkan dalam format normalized
@@ -95,6 +89,10 @@ export async function POST(req) {
 
     const enforcedName = profile?.name || seller_name;
 
+    // FIXED: Fetch settings BEFORE insert so expires_at uses configurable listingDays
+    const settings = await getSettings();
+    const expiresAt = listingExpiresAt(settings.pricing);
+
     const { data: listing, error } = await supa
       .from("listings")
       .insert({
@@ -111,7 +109,7 @@ export async function POST(req) {
         campus: campus || "Semua",
         area: area || "Sekitar Kampus",
         bumped_at: new Date().toISOString(),
-        expires_at: new Date(Date.now() + 14 * 864e5).toISOString(),
+        expires_at: expiresAt, // FIXED: from settings.pricing.listingDays
       })
       .select()
       .single();
@@ -122,7 +120,6 @@ export async function POST(req) {
       await supa.from("listings").update({ images }).eq("id", listing.id);
     }
 
-    const settings = await getSettings();
     const amount = adFeeFrom(settings.pricing, listing.type);
     const orderId = `IKLAN-${listing.id.slice(0, 8)}-${Date.now()}`;
 

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { formatWa } from "@/lib/constants";
+import { notifyListingActivated } from "@/lib/waNotif";
+import { getSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -50,16 +52,39 @@ export async function POST(req) {
 
     switch (action) {
       // ── Listing: aksi cepat ────────────────────────────────────────────
-      case "activate":
-        // Aktifkan + perpanjang masa tayang supaya tidak langsung di-expired cron
+      case "activate": {
+        // Fetch listing info before updating for WA notification
+        const { data: listingInfo } = await supa
+          .from("listings")
+          .select("seller_wa, seller_name, title, id")
+          .eq("id", id)
+          .maybeSingle();
+
+        // Aktifkan + perpanjang masa tayang
+        const settings = await getSettings().catch(() => null);
+        const days = Math.max(1, Number(settings?.pricing?.listingDays) || 14);
         await supa
           .from("listings")
           .update({
             status: "active",
-            expires_at: new Date(Date.now() + PERIOD_MS).toISOString(),
+            expires_at: new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString(),
           })
           .eq("id", id);
+
+        // ADDED: Send WA notification to seller (non-blocking, non-fatal)
+        if (listingInfo?.seller_wa) {
+          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+          const { buildSlug } = await import("@/lib/slug");
+          const slug = buildSlug(listingInfo.title, listingInfo.id);
+          notifyListingActivated({
+            sellerWa: listingInfo.seller_wa,
+            sellerName: listingInfo.seller_name,
+            listingTitle: listingInfo.title,
+            listingUrl: `${baseUrl}/produk/${slug}`,
+          }).catch((e) => console.warn("[activate] WA notif failed:", e?.message));
+        }
         break;
+      }
       case "suspend":
         await supa.from("listings").update({ status: "suspended" }).eq("id", id);
         break;

@@ -62,6 +62,10 @@ export default function AdminPanel({
   revenue = 0,
   pendingCount = 0,
   initialTab = "overview",
+  listingsTotal = 0,
+  paymentsTotal = 0,
+  currentPage = 1,
+  pageSize = 100,
 }) {
   const router = useRouter();
   const VALID_TABS = ["overview","listings","transaksi","rating","reports","dicari","kategori","pengaturan","blacklist","penjual"];
@@ -807,6 +811,17 @@ function SettingsManager({ settings, action }) {
           <Field label="Bump / sundul"><input type="number" className="input" value={pricing.bump ?? ""} onChange={numP("bump")} /></Field>
           <Field label="Featured / hari"><input type="number" className="input" value={pricing.featuredPerDay ?? ""} onChange={numP("featuredPerDay")} /></Field>
           <Field label="Featured maks / hari"><input type="number" className="input" value={pricing.featuredMaxPerDay ?? ""} onChange={numP("featuredMaxPerDay")} /></Field>
+          <Field label="Durasi Iklan (hari)">
+            <input
+              type="number"
+              min="1"
+              max="365"
+              className="input"
+              value={pricing.listingDays ?? 14}
+              onChange={numP("listingDays")}
+            />
+            <p className="mt-1 text-xs text-gray-400">Iklan aktif selama berapa hari setelah pembayaran. Default: 14 hari.</p>
+          </Field>
         </div>
         <div className="mt-4 flex items-center justify-between">
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Fee setelah terjual</p>
