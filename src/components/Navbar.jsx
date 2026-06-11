@@ -112,6 +112,20 @@ export default function Navbar({ config }) {
               />
             </form>
 
+            {/* Download APK Button */}
+            <a
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                toast.info("Fitur APK sedang dalam tahap pengembangan!");
+              }}
+              className="flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-[11px] font-bold text-green-700 transition hover:bg-green-100 dark:bg-green-500/10 dark:text-green-400 dark:hover:bg-green-500/20 mr-1"
+            >
+              <Icon.Download className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Download APK</span>
+              <span className="sm:hidden">APK</span>
+            </a>
+
             {/* Session indicator */}
             {session.wa ? (
               <div className="flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50/60 px-2.5 py-1 text-xs font-semibold text-gray-700 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-300">
