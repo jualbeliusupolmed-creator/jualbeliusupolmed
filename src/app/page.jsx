@@ -1,6 +1,7 @@
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getSettings } from "@/lib/settings";
 import { getCategories } from "@/lib/categories";
+import { fetchListingsWithProfiles } from "@/lib/dbHelpers";
 import HomeBrowser from "./HomeBrowser";
 
 export const dynamic = "force-dynamic";
@@ -11,13 +12,15 @@ const PAGE_SIZE = 20;
 async function getInitialData() {
   try {
     const supa = getAdminClient();
-    const { data, count } = await supa
+    const query = supa
       .from("listings")
-      .select("*, seller_profiles(trusted_seller)", { count: "exact" })
+      .select("*, seller_wa", { count: "exact" })
       .eq("status", "active")
       .order("featured", { ascending: false, nullsFirst: false })
       .order("bumped_at", { ascending: false, nullsFirst: false })
       .range(0, PAGE_SIZE - 1);
+      
+    const { data, count } = await fetchListingsWithProfiles(query);
     return { listings: data || [], total: count || 0 };
   } catch (e) {
     console.error("getInitialData:", e?.message);
@@ -28,13 +31,15 @@ async function getInitialData() {
 async function getFeatured() {
   try {
     const supa = getAdminClient();
-    const { data } = await supa
+    const query = supa
       .from("listings")
-      .select("id,title,price,image_url,seller_profiles(trusted_seller)")
+      .select("id,title,price,image_url,seller_wa")
       .eq("status", "active")
       .eq("featured", true)
       .order("bumped_at", { ascending: false, nullsFirst: false })
       .limit(6);
+      
+    const { data } = await fetchListingsWithProfiles(query);
     return data || [];
   } catch {
     return [];
@@ -44,13 +49,15 @@ async function getFeatured() {
 async function getTrending() {
   try {
     const supa = getAdminClient();
-    const { data } = await supa
+    const query = supa
       .from("listings")
-      .select("id,title,price,image_url,views,seller_profiles(trusted_seller)")
+      .select("id,title,price,image_url,views,seller_wa")
       .eq("status", "active")
       .gt("views", 0)
       .order("views", { ascending: false, nullsFirst: false })
       .limit(8);
+      
+    const { data } = await fetchListingsWithProfiles(query);
     return data || [];
   } catch {
     // kolom views mungkin belum ada (migration belum dijalankan) — abaikan.

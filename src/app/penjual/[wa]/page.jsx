@@ -17,7 +17,7 @@ async function getSellerData(wa) {
     // Ambil semua iklan aktif penjual
     const { data: listings } = await supa
       .from("listings")
-      .select("*, seller_profiles(trusted_seller)")
+      .select("*, seller_wa")
       .eq("seller_wa", decodedWa)
       .eq("status", "active")
       .order("bumped_at", { ascending: false });
@@ -79,11 +79,19 @@ async function getSellerData(wa) {
     // Ambil iklan terjual (sold)
     const { data: soldListings } = await supa
       .from("listings")
-      .select("*, seller_profiles(trusted_seller)")
+      .select("*, seller_wa")
       .eq("seller_wa", decodedWa)
       .eq("status", "sold")
       .order("bumped_at", { ascending: false })
       .limit(12); // Batasi 12 terbaru
+
+    // Apply profiles manually
+    if (listings && listings.length > 0) {
+      listings.forEach(l => l.seller_profiles = profile || null);
+    }
+    if (soldListings && soldListings.length > 0) {
+      soldListings.forEach(l => l.seller_profiles = profile || null);
+    }
 
     return {
       seller: { seller_name: sellerName, seller_wa: decodedWa, bio: profile?.bio || null, topCategory: topCat, trusted_seller: profile?.trusted_seller || false },

@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rupiah } from "@/lib/fees";
 import { buildSlug, getShortIdFromSlug, isUUID } from "@/lib/slug";
+import { fetchSingleListingWithProfile, fetchListingsWithProfiles } from "@/lib/dbHelpers";
 import MinatButton from "@/components/MinatButton";
 import IGShareButton from "@/components/IGShareButton";
 import ShareWAButton from "@/components/ShareWAButton";
@@ -30,21 +31,18 @@ async function getData(slug) {
     let listing = null;
 
     if (isUUID(slug)) {
-      const { data } = await supa
+      const query = supa
         .from("listings")
-        .select("*, seller_profiles(trusted_seller)")
+        .select("*, seller_wa")
         .eq("id", slug)
         .single();
+      const { data } = await fetchSingleListingWithProfile(query);
       listing = data;
     } else {
       // New slug format — extract the 8-char short ID suffix
       const shortId = getShortIdFromSlug(slug);
       if (!shortId) return { listing: null, related: [] };
 
-      // FIXED: Use DB LIKE query instead of fetching all IDs into memory.
-      // The short ID is the first 8 hex chars of the UUID (no dashes).
-      // UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-      // First 8 chars before dash match the shortId prefix.
       const { data: rows } = await supa
         .from("listings")
         .select("id, title, status")
@@ -58,23 +56,26 @@ async function getData(slug) {
 
       if (!matchedId) return { listing: null, related: [] };
 
-      const { data } = await supa
+      const query = supa
         .from("listings")
-        .select("*, seller_profiles(trusted_seller)")
+        .select("*, seller_wa")
         .eq("id", matchedId)
         .maybeSingle();
+      const { data } = await fetchSingleListingWithProfile(query);
       listing = data;
     }
 
     if (!listing) return { listing: null, related: [] };
 
-    const { data: related } = await supa
+    const queryRelated = supa
       .from("listings")
-      .select("*, seller_profiles(trusted_seller)")
+      .select("*, seller_wa")
       .eq("status", "active")
       .eq("category", listing.category)
       .neq("id", listing.id)
       .limit(4);
+    
+    const { data: related } = await fetchListingsWithProfiles(queryRelated);
 
     return { listing, related: related || [] };
   } catch {
