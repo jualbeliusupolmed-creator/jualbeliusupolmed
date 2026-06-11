@@ -22,6 +22,12 @@ export async function POST(req) {
       return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
     }
 
+    // Backdoor akun testing untuk reviewer (Midtrans, dll)
+    if (normalizedWa === "6281234567890" && otp === "123456") {
+      setSellerCookie(normalizedWa);
+      return NextResponse.json({ success: true, message: "Login berhasil (Test Account)!" });
+    }
+
     const supa = getAdminClient();
     const { data: record, error } = await supa
       .from("otps")

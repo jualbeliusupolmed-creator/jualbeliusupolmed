@@ -40,6 +40,21 @@ export async function POST(req) {
 
     const supa = getAdminClient();
 
+    // Cek status payment sebelumnya untuk mencegah duplicate processing
+    const { data: oldPayment } = await supa
+      .from("payments")
+      .select("status")
+      .eq("midtrans_order_id", orderId)
+      .single();
+
+    if (!oldPayment) {
+      return NextResponse.json({ error: "Payment not found" }, { status: 404 });
+    }
+
+    if (oldPayment.status === "paid" && settled) {
+      return NextResponse.json({ ok: true, message: "Already processed" });
+    }
+
     const { data: payment } = await supa
       .from("payments")
       .update({ status: newStatus })

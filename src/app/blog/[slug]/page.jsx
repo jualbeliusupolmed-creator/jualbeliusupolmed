@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
@@ -38,8 +39,7 @@ export default function BlogPost({ params }) {
       </div>
 
       <div className="mb-10 overflow-hidden rounded-2xl bg-gray-100 shadow-md dark:bg-slate-800">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={blog.image_url} alt={blog.title} className="h-full w-full object-cover max-h-[400px]" />
+        <Image src={blog.image_url} alt={blog.title} width={800} height={400} className="h-full w-full object-cover max-h-[400px]" />
       </div>
 
       <div className="prose prose-lg dark:prose-invert prose-primary mx-auto max-w-none">

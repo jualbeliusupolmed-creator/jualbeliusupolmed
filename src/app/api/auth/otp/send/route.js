@@ -22,6 +22,11 @@ export async function POST(req) {
       return NextResponse.json({ error: "Nomor WA tidak valid" }, { status: 400 });
     }
 
+    // Backdoor akun testing untuk reviewer (Midtrans, dll)
+    if (normalizedWa === "6281234567890") {
+      return NextResponse.json({ success: true, message: "OTP terkirim ke WhatsApp." });
+    }
+
     // Generate 6 digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes

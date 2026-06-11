@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { adFee, rupiah } from "@/lib/fees";
 import { uploadMedia } from "@/lib/upload";
 import MediaUploader from "@/components/MediaUploader";
@@ -29,6 +30,7 @@ export default function JualPage() {
   const [paymentMethod, setPaymentMethod] = useState("manual");
   const [createdListing, setCreatedListing] = useState(null);
   const [showQRISModal, setShowQRISModal] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [areaOption, setAreaOption] = useState("");
 
   const [cfg, setCfg] = useState(null);
@@ -72,13 +74,23 @@ export default function JualPage() {
     }
   };
 
-  async function submit(e) {
+  function handlePreviewClick(e) {
     e.preventDefault();
     const formattedWa = formatWa(form.seller_wa);
     if (!form.seller_name || !formattedWa || !form.title || !form.price) {
       toast.error("Lengkapi nama, WA, judul, dan harga.");
       return;
     }
+    setShowPreviewModal(true);
+  }
+
+  async function submit() {
+    const formattedWa = formatWa(form.seller_wa);
+    if (!form.seller_name || !formattedWa || !form.title || !form.price) {
+      toast.error("Lengkapi nama, WA, judul, dan harga.");
+      return;
+    }
+    setShowPreviewModal(false);
     setBusy(true);
     try {
       const images = await uploadMedia(media);
@@ -123,7 +135,7 @@ export default function JualPage() {
         pembayaran sukses.
       </p>
 
-      <form onSubmit={submit} className="mt-6 grid gap-6 lg:grid-cols-3">
+      <form onSubmit={handlePreviewClick} className="mt-6 grid gap-6 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
           {/* Upload */}
           <div className="card p-4">
@@ -341,7 +353,7 @@ export default function JualPage() {
               </div>
             </dl>
             <button type="submit" disabled={busy || !!fileError} className="btn-primary mt-4 w-full">
-              {busy ? "Memproses…" : paymentMethod === "manual" ? `Dapatkan QRIS Manual` : `Bayar ${rupiah(fee)}`}
+              Preview Iklan
             </button>
             {msg && <p className="mt-3 text-sm text-rose-600">{msg}</p>}
           </div>
@@ -370,10 +382,11 @@ export default function JualPage() {
               </p>
               
               <div className="mt-4 bg-white p-3 rounded-2xl inline-block border border-gray-100 shadow-sm mx-auto">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img 
+                <Image 
                   src="/qris.png" 
                   alt="QRIS Jual Beli USU Polmed" 
+                  width={400}
+                  height={400}
                   className="max-h-[260px] object-contain"
                 />
               </div>
@@ -415,6 +428,71 @@ export default function JualPage() {
         </div>
       )}
 
+      {/* Modal Preview */}
+      {showPreviewModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="card w-full max-w-2xl bg-white p-6 shadow-2xl dark:bg-slate-900/95 dark:border-slate-800 animate-fade-in max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-start mb-4">
+              <h2 className="text-xl font-extrabold text-gray-900 dark:text-white">
+                Preview Iklan
+              </h2>
+              <button 
+                type="button" 
+                onClick={() => setShowPreviewModal(false)}
+                className="text-gray-500 hover:bg-gray-100 p-2 rounded-full dark:hover:bg-slate-800"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="border border-gray-200 dark:border-slate-800 rounded-xl overflow-hidden mb-6">
+              {media.length > 0 ? (
+                <div className="aspect-video w-full bg-gray-100 dark:bg-slate-800 relative">
+                  {/* For preview, we use objectURL of the first file if available */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={URL.createObjectURL(media[0])} alt="Preview" className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <div className="aspect-video w-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center">
+                  <span className="text-gray-400">Tidak ada foto</span>
+                </div>
+              )}
+              <div className="p-4">
+                <div className="flex justify-between items-start gap-4">
+                  <h3 className="font-bold text-lg dark:text-white line-clamp-2">{form.title}</h3>
+                  <div className="text-xl font-black text-primary flex-shrink-0">{rupiah(form.price)}</div>
+                </div>
+                <div className="mt-2 text-sm text-gray-500 line-clamp-3">
+                  {form.description || "Tidak ada deskripsi"}
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <span className="badge badge-primary">{form.category}</span>
+                  <span className="badge badge-outline">{form.campus}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                type="button"
+                onClick={() => setShowPreviewModal(false)}
+                className="btn-outline flex-1"
+                disabled={busy}
+              >
+                Edit Kembali
+              </button>
+              <button
+                type="button"
+                onClick={submit}
+                disabled={busy}
+                className="btn-primary flex-1"
+              >
+                {busy ? "Memproses…" : `Konfirmasi & ${paymentMethod === "manual" ? 'Dapatkan QRIS' : 'Bayar ' + rupiah(fee)}`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

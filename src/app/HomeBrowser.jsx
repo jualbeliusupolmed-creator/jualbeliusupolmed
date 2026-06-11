@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import ProductCard from "@/components/ProductCard";
 import CategoryFilter from "@/components/CategoryFilter";
 import { CATEGORIES as DEFAULT_CATEGORIES, POPULAR_AREAS } from "@/lib/constants";
@@ -286,8 +287,7 @@ export default function HomeBrowser({
                 >
                   <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-gray-200 dark:bg-slate-800">
                     {f.image_url && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={f.image_url} alt={f.title} loading="lazy" className="h-full w-full object-cover" />
+                      <Image src={f.image_url} alt={f.title} width={48} height={48} loading="lazy" className="h-full w-full object-cover" />
                     )}
                   </div>
                   <div className="min-w-0">
@@ -475,14 +475,28 @@ export default function HomeBrowser({
                 ))}
               </div>
             ) : listings.length === 0 ? (
-              <div className="mt-4 flex flex-col items-center justify-center py-16 text-center">
-                <Icon.Package className="h-10 w-10 text-gray-300 dark:text-slate-700" />
-                <p className="mt-2 text-sm text-gray-400">Belum ada barang di sini.</p>
+              <div className="mt-8 mb-12 flex flex-col items-center justify-center py-16 px-4 text-center bg-gray-50/50 dark:bg-slate-900/20 rounded-3xl border border-gray-100 dark:border-slate-800/60">
+                <div className="relative mb-6">
+                  <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full w-32 h-32 -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2"></div>
+                  <svg className="w-32 h-32 text-gray-300 dark:text-slate-700 relative z-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-extrabold text-gray-900 dark:text-white mb-2">Belum ada barang di kategori ini</h3>
+                <p className="max-w-md text-sm text-gray-500 dark:text-slate-400 mb-8 leading-relaxed">
+                  Jadilah yang pertama menawarkan produkmu di sini! Ribuan mahasiswa USU dan POLMED sedang mencari barang incaran mereka.
+                </p>
                 <Link
                   href="/jual"
-                  className="mt-4 rounded-full bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white dark:bg-white dark:text-gray-900"
+                  className="group relative inline-flex items-center justify-center overflow-hidden rounded-full p-4 px-8 font-bold text-white bg-primary hover:bg-primary-dark transition-all duration-300 active:scale-95 shadow-lg shadow-primary/30"
                 >
-                  Pasang Iklan Pertama
+                  <span className="absolute inset-0 w-full h-full -mt-1 rounded-lg opacity-30 bg-gradient-to-b from-transparent via-transparent to-black"></span>
+                  <span className="relative flex items-center gap-2">
+                    <svg className="w-5 h-5 transition-transform group-hover:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Pasang Iklan Sekarang
+                  </span>
                 </Link>
               </div>
             ) : (
@@ -529,8 +543,7 @@ export default function HomeBrowser({
                     >
                       <div className="relative aspect-square bg-gray-100 dark:bg-slate-950">
                         {t.image_url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={t.image_url} alt={t.title} loading="lazy" className="h-full w-full object-cover" />
+                          <Image src={t.image_url} alt={t.title} width={144} height={144} loading="lazy" className="h-full w-full object-cover" />
                         ) : (
                           <div className="grid h-full w-full place-items-center text-gray-300 dark:text-slate-700">
                             <Icon.Package className="h-8 w-8" />

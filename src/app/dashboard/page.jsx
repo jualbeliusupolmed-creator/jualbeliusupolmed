@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import Script from "next/script";
 import Link from "next/link";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { rupiah, soldFee } from "@/lib/fees";
 import ConfirmModal from "@/components/ConfirmModal";
@@ -476,8 +477,7 @@ function DashboardInner() {
                         <div className="flex items-center gap-3">
                           <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-slate-950">
                             {i.image_url && (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img src={i.image_url} alt="" loading="lazy" className="h-full w-full object-cover" />
+                              <Image src={i.image_url} alt="" width={48} height={48} loading="lazy" className="h-full w-full object-cover" />
                             )}
                           </div>
                           <div className="min-w-0">
@@ -529,12 +529,25 @@ function DashboardInner() {
               <div>
                 <h2 className="text-base font-bold dark:text-white">Iklan Aktif</h2>
                 {active.length === 0 ? (
-                  <p className="mt-3 text-sm text-gray-400">
-                    Belum ada iklan aktif.{" "}
-                    <Link href="/jual" className="text-primary underline">
-                      Pasang sekarang
+                  <div className="mt-6 flex flex-col items-center justify-center py-12 px-4 text-center bg-gray-50/50 dark:bg-slate-900/20 rounded-3xl border border-gray-100 dark:border-slate-800/60">
+                    <div className="relative mb-6">
+                      <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full w-24 h-24 -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2"></div>
+                      <Icon.Package className="w-24 h-24 text-gray-300 dark:text-slate-700 relative z-10" />
+                    </div>
+                    <h3 className="text-xl font-extrabold text-gray-900 dark:text-white mb-2">Belum ada iklan aktif</h3>
+                    <p className="max-w-md text-sm text-gray-500 dark:text-slate-400 mb-6 leading-relaxed">
+                      Barang tidak terpakai? Ubah jadi uang jajan! Pasang iklan pertamamu sekarang.
+                    </p>
+                    <Link
+                      href="/jual"
+                      className="group relative inline-flex items-center justify-center overflow-hidden rounded-full p-3 px-6 font-bold text-white bg-primary hover:bg-primary-dark transition-all duration-300 active:scale-95 shadow-lg shadow-primary/30"
+                    >
+                      <span className="absolute inset-0 w-full h-full -mt-1 rounded-lg opacity-30 bg-gradient-to-b from-transparent via-transparent to-black"></span>
+                      <span className="relative flex items-center gap-2">
+                        + Pasang Iklan Sekarang
+                      </span>
                     </Link>
-                  </p>
+                  </div>
                 ) : (
                   <div className="mt-3 space-y-3">
                     {active.map((i) => (
@@ -544,8 +557,7 @@ function DashboardInner() {
                       >
                         <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-slate-950">
                           {i.image_url && (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={i.image_url} alt="" loading="lazy" className="h-full w-full object-cover" />
+                            <Image src={i.image_url} alt="" width={64} height={64} loading="lazy" className="h-full w-full object-cover" />
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
@@ -640,8 +652,7 @@ function DashboardInner() {
                         <div className="flex items-center gap-3">
                           <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-slate-950">
                             {i.image_url && (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img src={i.image_url} alt="" loading="lazy" className="h-full w-full object-cover" />
+                              <Image src={i.image_url} alt="" width={48} height={48} loading="lazy" className="h-full w-full object-cover" />
                             )}
                           </div>
                           <div>
@@ -687,12 +698,24 @@ function DashboardInner() {
             <div className="mt-6 space-y-4">
               <h2 className="text-base font-bold dark:text-white">Postingan Kebutuhan Dicari</h2>
               {wantedItems.length === 0 ? (
-                <p className="text-sm text-gray-400">
-                  Belum ada postingan dicari.{" "}
-                  <Link href="/dicari" className="text-primary underline">
-                    Pasang kebutuhan baru
+                <div className="mt-6 flex flex-col items-center justify-center py-12 px-4 text-center bg-gray-50/50 dark:bg-slate-900/20 rounded-3xl border border-gray-100 dark:border-slate-800/60">
+                  <div className="relative mb-6">
+                    <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full w-24 h-24 -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2"></div>
+                    <Icon.Search className="w-24 h-24 text-gray-300 dark:text-slate-700 relative z-10" />
+                  </div>
+                  <h3 className="text-xl font-extrabold text-gray-900 dark:text-white mb-2">Belum ada postingan dicari</h3>
+                  <p className="max-w-md text-sm text-gray-500 dark:text-slate-400 mb-6 leading-relaxed">
+                    Sedang mencari barang spesifik? Buat postingan di Papan Dicari agar penjual yang punya barang bisa langsung menghubungi Anda.
+                  </p>
+                  <Link
+                    href="/dicari"
+                    className="group relative inline-flex items-center justify-center overflow-hidden rounded-full p-3 px-6 font-bold text-gray-700 bg-white border border-gray-200 hover:border-gray-300 transition-all duration-300 active:scale-95 shadow-sm dark:bg-transparent dark:border-slate-700 dark:text-slate-200"
+                  >
+                    <span className="relative flex items-center gap-2">
+                      <Icon.Edit2 className="w-4 h-4" /> Pasang Kebutuhan Baru
+                    </span>
                   </Link>
-                </p>
+                </div>
               ) : (
                 <div className="space-y-3">
                   {wantedItems.map((wi) => (
@@ -758,10 +781,11 @@ function DashboardInner() {
               </p>
               
               <div className="mt-4 bg-white p-3 rounded-2xl inline-block border border-gray-100 shadow-sm mx-auto">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img 
+                <Image 
                   src="/qris.png" 
                   alt="QRIS Jual Beli USU Polmed" 
+                  width={400}
+                  height={400}
                   className="max-h-[240px] object-contain"
                 />
               </div>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { rupiah } from "@/lib/fees";
 import { buildSlug } from "@/lib/slug";
 import AdminListingModal from "../../AdminListingModal";
@@ -182,9 +183,8 @@ export default function AdminListingDetail({ listing, payments, reports, ratings
               <h2 className="mb-3 font-bold dark:text-white">Foto</h2>
               <div className="flex flex-wrap gap-2">
                 {(listing.images?.length ? listing.images : [listing.image_url]).map((url, i) => (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <a key={i} href={url} target="_blank" rel="noreferrer">
-                    <img src={url} alt={`foto-${i}`} className="h-24 w-24 rounded-lg object-cover border dark:border-slate-800" />
+                    <Image src={url} alt={`foto-${i}`} width={96} height={96} className="h-24 w-24 rounded-lg object-cover border dark:border-slate-800" />
                   </a>
                 ))}
               </div>
