@@ -261,7 +261,7 @@ export default function HomeBrowser({
                   {proof.map((p) => (
                     <div key={p.l} className="shrink-0">
                       <div className="text-lg font-extrabold text-gray-900 dark:text-white">{p.v}</div>
-                      <div className="text-[10px] text-gray-400 dark:text-slate-500">{p.l}</div>
+                      <div className="text-[11px] text-gray-500 dark:text-slate-400">{p.l}</div>
                     </div>
                   ))}
                 </div>
@@ -456,7 +456,7 @@ export default function HomeBrowser({
             </div>
 
             {/* Count */}
-            <p className="mt-3 text-xs text-gray-400 dark:text-slate-500">
+            <p className="mt-3 text-xs text-gray-500 dark:text-slate-400">
               {searching ? "Mencari…" : `${total} iklan`}
             </p>
 

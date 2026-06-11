@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import Logo from "@/components/Logo";
 import { Icon } from "@/components/Icons";
 import OTPModal from "@/components/OTPModal";
+import { toast } from "sonner";
 
 const links = [
   { href: "/", label: "Beranda" },
@@ -44,13 +45,33 @@ export default function Navbar({ config }) {
     }
   }, []);
 
+  // Cookie server adalah satu-satunya sumber kebenaran sesi;
+  // localStorage hanya dipakai untuk nama tampilan.
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const wa = localStorage.getItem("seller_wa") || "";
-      const name = localStorage.getItem("seller_name") || "";
-      setSession({ name, wa });
-    }
+    let cancelled = false;
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((d) => {
+        if (cancelled) return;
+        if (d.loggedIn) {
+          setSession({ name: localStorage.getItem("seller_name") || "", wa: d.wa });
+        } else {
+          localStorage.removeItem("seller_wa");
+          setSession({ name: "", wa: "" });
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
   }, [pathname]);
+
+  const doLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    localStorage.removeItem("seller_wa");
+    localStorage.removeItem("seller_name");
+    setSession({ name: "", wa: "" });
+    toast.success("Berhasil keluar.");
+    router.refresh();
+  };
 
   const toggleTheme = () => {
     const isDark = !dark;
@@ -97,17 +118,15 @@ export default function Navbar({ config }) {
                 <Icon.User className="h-3 w-3 shrink-0" />
                 <span className="max-w-[72px] truncate">{session.name || session.wa}</span>
                 <button
-                  onClick={async () => {
-                    if (confirm("Log out dari nomor seller ini?")) {
-                      await fetch("/api/auth/logout", { method: "POST" });
-                      localStorage.removeItem("seller_wa");
-                      localStorage.removeItem("seller_name");
-                      setSession({ name: "", wa: "" });
-                      window.location.reload();
-                    }
+                  onClick={() => {
+                    toast("Keluar dari akun ini?", {
+                      action: { label: "Keluar", onClick: doLogout },
+                      cancel: { label: "Batal" },
+                    });
                   }}
                   className="ml-0.5 text-gray-400 hover:text-rose-500 transition-colors font-bold"
                   title="Keluar"
+                  aria-label="Keluar dari akun"
                 >
                   ✕
                 </button>
@@ -155,10 +174,10 @@ export default function Navbar({ config }) {
               <Link
                 key={l.href}
                 href={l.href}
-                className={`shrink-0 whitespace-nowrap px-3 py-2.5 text-[10px] font-bold uppercase tracking-[0.15em] transition-colors ${
+                className={`shrink-0 whitespace-nowrap px-3 py-2.5 text-[11px] font-bold uppercase tracking-[0.12em] transition-colors ${
                   active
                     ? "text-gray-900 border-b-2 border-gray-900 dark:text-white dark:border-white"
-                    : "text-gray-400 hover:text-gray-700 dark:text-slate-500 dark:hover:text-slate-300"
+                    : "text-gray-500 hover:text-gray-800 dark:text-slate-400 dark:hover:text-slate-200"
                 }`}
               >
                 {l.label}
@@ -174,7 +193,7 @@ export default function Navbar({ config }) {
         onSuccess={(wa) => {
           setShowOtp(false);
           setSession((s) => ({ ...s, wa }));
-          window.location.reload();
+          router.refresh();
         }}
       />
     </header>

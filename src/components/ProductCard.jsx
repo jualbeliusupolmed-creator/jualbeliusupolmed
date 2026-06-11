@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { rupiah } from "@/lib/fees";
 import FavoriteButton from "@/components/FavoriteButton";
 import { Icon } from "@/components/Icons";
@@ -13,17 +14,17 @@ export default function ProductCard({ listing }) {
     String(listing.description || "").toLowerCase().includes("nego") ||
     String(listing.title || "").toLowerCase().includes("nego");
   return (
-    <div className="card group relative overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:border-gray-350 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/30 dark:hover:border-slate-700/60 dark:hover:bg-slate-900/50">
+    <div className="card group relative overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/30 dark:hover:border-slate-700/60 dark:hover:bg-slate-900/50">
       <FavoriteButton listing={listing} className="absolute right-2 top-2 z-10" />
       <Link href={`/produk/${buildSlug(listing.title, listing.id)}`} className="block">
         <div className="relative aspect-square overflow-hidden bg-gray-100 dark:bg-slate-950">
           {listing.image_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={listing.image_url}
               alt={listing.title}
-              loading="lazy"
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
             />
           ) : (
             <div className="grid h-full w-full place-items-center text-gray-300 dark:text-slate-800">
@@ -57,7 +58,7 @@ export default function ProductCard({ listing }) {
         </div>
         <div className="p-3">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500">
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-500">
               {listing.category}
             </span>
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 font-medium max-w-[140px] truncate flex items-center gap-1">
@@ -72,7 +73,7 @@ export default function ProductCard({ listing }) {
           <p className="mt-1.5 text-[15px] font-bold tracking-tight text-gray-900 dark:text-white">
             {rupiah(listing.price)}
           </p>
-          <div className="mt-1.5 flex items-center justify-between text-[11px] text-gray-450 dark:text-slate-400">
+          <div className="mt-1.5 flex items-center justify-between text-[11px] text-gray-500 dark:text-slate-400">
             <p className="truncate flex items-center gap-1">
               <span>{listing.stock != null ? `Stok ${listing.stock} · ` : ""}{listing.seller_name}</span>
               {listing.seller_profiles?.trusted_seller && (
@@ -85,7 +86,7 @@ export default function ProductCard({ listing }) {
             </p>
             <div className="shrink-0 flex items-center gap-1.5">
               {isNego && (
-                <span className="rounded bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide">
+                <span className="rounded bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 px-1 py-0.5 text-[10px] font-bold uppercase tracking-wide">
                   Nego
                 </span>
               )}

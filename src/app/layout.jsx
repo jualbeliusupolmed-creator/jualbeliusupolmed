@@ -1,4 +1,5 @@
 import "./globals.css";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import BackToTop from "@/components/BackToTop";
@@ -7,6 +8,13 @@ import { getSettings } from "@/lib/settings";
 
 const BASE_URL =
   (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+
+const jakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+  variable: "--font-jakarta",
+});
 
 export async function generateMetadata() {
   const settings = await getSettings();
@@ -101,21 +109,11 @@ export default async function RootLayout({ children }) {
   };
 
   return (
-    <html lang="id">
+    <html lang="id" className={jakartaSans.variable}>
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
-          rel="stylesheet"
-        />
         <script dangerouslySetInnerHTML={{ __html: `
           (function() {
             try {

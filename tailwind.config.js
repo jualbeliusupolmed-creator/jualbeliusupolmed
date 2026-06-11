@@ -26,7 +26,7 @@ module.exports = {
         },
       },
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', "system-ui", "sans-serif"],
+        sans: ["var(--font-jakarta)", '"Plus Jakarta Sans"', "system-ui", "sans-serif"],
       },
       letterSpacing: {
         tightest: "-0.04em",

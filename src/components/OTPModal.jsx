@@ -174,13 +174,14 @@ export default function OTPModal({ isOpen, onClose, onSuccess }) {
       <div className="relative w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl dark:bg-slate-900 border border-gray-100 dark:border-slate-800 animate-in fade-in zoom-in duration-200">
         <button
           onClick={onClose}
+          aria-label="Tutup"
           className="absolute right-4 top-4 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
         >
           ✕
         </button>
         
         <h3 className="mb-1 text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-          <Icon.User className="h-5 w-5 text-indigo-500" />
+          <Icon.User className="h-5 w-5 text-gray-700 dark:text-slate-300" />
           Masuk / Daftar
         </h3>
         <p className="mb-4 text-sm text-gray-500 dark:text-slate-400">
@@ -193,7 +194,7 @@ export default function OTPModal({ isOpen, onClose, onSuccess }) {
             onClick={() => { setLoginMode("wa"); setError(""); }}
             className={`pb-2 text-sm font-bold border-b-2 flex-1 transition-colors ${
               loginMode === "wa" 
-                ? "border-indigo-500 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400" 
+                ? "border-gray-900 text-gray-900 dark:border-white dark:text-white"
                 : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             }`}
           >
@@ -203,7 +204,7 @@ export default function OTPModal({ isOpen, onClose, onSuccess }) {
             onClick={() => { setLoginMode("email"); setError(""); }}
             className={`pb-2 text-sm font-bold border-b-2 flex-1 transition-colors ${
               loginMode === "email" 
-                ? "border-indigo-500 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400" 
+                ? "border-gray-900 text-gray-900 dark:border-white dark:text-white"
                 : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             }`}
           >
@@ -229,7 +230,7 @@ export default function OTPModal({ isOpen, onClose, onSuccess }) {
                 placeholder="nama@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/5 dark:focus:border-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 required
               />
             </div>
@@ -242,7 +243,7 @@ export default function OTPModal({ isOpen, onClose, onSuccess }) {
                 placeholder="Masukkan password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/5 dark:focus:border-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 required
               />
             </div>
@@ -267,7 +268,7 @@ export default function OTPModal({ isOpen, onClose, onSuccess }) {
                   placeholder="Contoh: 081234567890"
                   value={wa}
                   onChange={(e) => setWa(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/5 dark:focus:border-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                   required
                 />
               </div>
@@ -281,7 +282,7 @@ export default function OTPModal({ isOpen, onClose, onSuccess }) {
                   placeholder="Masukkan kode (jika ada)"
                   value={referral}
                   onChange={(e) => setReferral(e.target.value.toUpperCase())}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/5 dark:focus:border-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 />
               </div>
               <button
@@ -303,10 +304,12 @@ export default function OTPModal({ isOpen, onClose, onSuccess }) {
                 </label>
                 <input
                   type="password"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   placeholder="Masukkan 6 digit PIN"
                   value={pin}
-                  onChange={(e) => setPin(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-center text-xl tracking-widest font-mono dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/5 dark:focus:border-slate-500 text-center text-xl tracking-widest font-mono dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                   maxLength={6}
                   required
                 />
@@ -330,7 +333,7 @@ export default function OTPModal({ isOpen, onClose, onSuccess }) {
                 <button
                   type="button"
                   onClick={() => handleSendOTP(null, false)}
-                  className="text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                  className="text-sm font-semibold text-gray-900 underline underline-offset-2 hover:text-gray-600 dark:text-white dark:hover:text-slate-300"
                 >
                   Lupa PIN?
                 </button>
@@ -341,17 +344,20 @@ export default function OTPModal({ isOpen, onClose, onSuccess }) {
               <p className="mb-2 text-sm text-gray-500 dark:text-slate-400">
                 Kode OTP telah dikirim via WA ke {wa}. Silakan atur PIN baru Anda.
               </p>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-4">
                 <div>
                   <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300">
                     Kode OTP
                   </label>
                   <input
                     type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    autoComplete="one-time-code"
                     placeholder="OTP (6 digit)"
                     value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-center text-lg tracking-widest font-mono dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/5 dark:focus:border-slate-500 text-center text-lg tracking-widest font-mono dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                     maxLength={6}
                     required
                   />
@@ -362,10 +368,12 @@ export default function OTPModal({ isOpen, onClose, onSuccess }) {
                   </label>
                   <input
                     type="password"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     placeholder="PIN (6 angka)"
                     value={pin}
-                    onChange={(e) => setPin(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-center text-lg tracking-widest font-mono dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/5 dark:focus:border-slate-500 text-center text-lg tracking-widest font-mono dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                     maxLength={6}
                     required
                   />
@@ -383,7 +391,7 @@ export default function OTPModal({ isOpen, onClose, onSuccess }) {
                   type="button"
                   onClick={(e) => handleSendOTP(e, true)}
                   disabled={busy || countdown > 0}
-                  className="text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="text-sm font-semibold text-gray-900 underline underline-offset-2 hover:text-gray-600 dark:text-white dark:hover:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:no-underline"
                 >
                   {countdown > 0 ? `Kirim ulang dalam ${countdown}s` : "Kirim Ulang OTP"}
                 </button>
