@@ -4,6 +4,7 @@ import { getCategories } from "@/lib/categories";
 import HomeBrowser from "./HomeBrowser";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 const PAGE_SIZE = 20;
 

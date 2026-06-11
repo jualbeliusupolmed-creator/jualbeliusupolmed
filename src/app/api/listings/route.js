@@ -80,10 +80,25 @@ export async function POST(req) {
       );
     }
 
+    // Enforce name from seller_profiles
+    // 1. Coba masukkan ke seller_profiles. Jika sudah ada (konflik WA), abaikan namanya (DO NOTHING).
+    await supa.from("seller_profiles").upsert(
+      { wa: normalizedWa, name: seller_name },
+      { onConflict: "wa", ignoreDuplicates: true }
+    );
+    // 2. Ambil nama paten dari seller_profiles
+    const { data: profile } = await supa
+      .from("seller_profiles")
+      .select("name")
+      .eq("wa", normalizedWa)
+      .maybeSingle();
+
+    const enforcedName = profile?.name || seller_name;
+
     const { data: listing, error } = await supa
       .from("listings")
       .insert({
-        seller_name,
+        seller_name: enforcedName,
         seller_wa: normalizedWa,
         title,
         description: description || "",

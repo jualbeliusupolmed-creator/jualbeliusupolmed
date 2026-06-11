@@ -231,6 +231,23 @@ export async function POST(req) {
         break;
       }
 
+      // ── Profil Penjual ──────────────────────────────────────────────────
+      case "update_seller_profile": {
+        const normalizedWa = formatWa(wa);
+        if (!normalizedWa) return NextResponse.json({ error: "WA wajib" }, { status: 400 });
+        const { error } = await supa.from("seller_profiles").upsert(
+          { wa: normalizedWa, name: body.name || "Penjual", bio: body.bio || null },
+          { onConflict: "wa" }
+        );
+        if (error) throw new Error(error.message);
+        
+        // update nama di seluruh iklan berjalan milik penjual ini
+        if (body.name) {
+          await supa.from("listings").update({ seller_name: body.name }).eq("seller_wa", normalizedWa);
+        }
+        break;
+      }
+
       default:
         return NextResponse.json({ error: "Aksi tidak dikenal" }, { status: 400 });
     }

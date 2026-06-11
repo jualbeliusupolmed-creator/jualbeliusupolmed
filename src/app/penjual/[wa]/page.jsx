@@ -50,13 +50,44 @@ async function getSellerData(wa) {
       .eq("seller_wa", decodedWa)
       .order("created_at", { ascending: false });
 
-    const sellerName = listings?.[0]?.seller_name ||
+    // Ambil bio dari seller_profiles (bisa null jika belum dimigrasi)
+    const { data: profile } = await supa
+      .from("seller_profiles")
+      .select("*")
+      .eq("wa", decodedWa)
+      .maybeSingle();
+
+    const sellerName = profile?.name || listings?.[0]?.seller_name ||
       allListings?.[0]?.seller_name ||
       decodedWa;
 
+    // Hitung top kategori
+    const catCounts = {};
+    let topCat = null;
+    let maxCat = 0;
+    (allListings || []).forEach(l => {
+      if(l.category) {
+        catCounts[l.category] = (catCounts[l.category] || 0) + 1;
+        if(catCounts[l.category] > maxCat) {
+          maxCat = catCounts[l.category];
+          topCat = l.category;
+        }
+      }
+    });
+
+    // Ambil iklan terjual (sold)
+    const { data: soldListings } = await supa
+      .from("listings")
+      .select("*")
+      .eq("seller_wa", decodedWa)
+      .eq("status", "sold")
+      .order("bumped_at", { ascending: false })
+      .limit(12); // Batasi 12 terbaru
+
     return {
-      seller: { seller_name: sellerName, seller_wa: decodedWa },
+      seller: { seller_name: sellerName, seller_wa: decodedWa, bio: profile?.bio || null, topCategory: topCat },
       listings: listings || [],
+      soldListings: soldListings || [],
       ratings: ratings || [],
       soldCount,
       totalViews,
@@ -98,7 +129,7 @@ export default async function SellerProfilePage({ params }) {
   const data = await getSellerData(params.wa);
   if (!data) notFound();
 
-  const { seller, listings, ratings, soldCount, totalViews, memberSince } = data;
+  const { seller, listings, soldListings, ratings, soldCount, totalViews, memberSince } = data;
   const avgRating =
     ratings.length > 0
       ? ratings.reduce((s, r) => s + r.rating, 0) / ratings.length
@@ -140,16 +171,39 @@ export default async function SellerProfilePage({ params }) {
               </span>
             </div>
           )}
-          <a
-            href={`https://wa.me/${(seller.seller_wa || "").replace(/\D/g, "")}?text=${encodeURIComponent(
-              `Halo Kak ${seller.seller_name}, saya lihat profil Kakak di Jual Beli USU Polmed.`
-            )}`}
-            target="_blank"
-            rel="noreferrer"
-            className="btn-wa mt-3.5 py-2 px-4 text-xs rounded-xl inline-block"
-          >
-            💬 Hubungi Penjual via WA
-          </a>
+          {seller.bio && (
+            <p className="mt-3 text-sm text-gray-700 dark:text-slate-300 italic border-l-2 border-primary pl-3">
+              "{seller.bio}"
+            </p>
+          )}
+          {seller.topCategory && (
+             <p className="mt-2 text-xs font-semibold text-primary">
+               🏅 Spesialis: {seller.topCategory}
+             </p>
+          )}
+          <div className="flex flex-wrap gap-2 mt-3.5">
+            <a
+              href={`https://wa.me/${(seller.seller_wa || "").replace(/\D/g, "")}?text=${encodeURIComponent(
+                `Halo Kak ${seller.seller_name}, saya lihat profil Kakak di Jual Beli USU Polmed.`
+              )}`}
+              target="_blank"
+              rel="noreferrer"
+              className="btn-wa py-2 px-4 text-xs rounded-xl"
+            >
+              💬 Hubungi via WA
+            </a>
+            <button
+              onClick={() => {
+                if (typeof navigator !== "undefined" && navigator.clipboard) {
+                  navigator.clipboard.writeText(window.location.href);
+                  alert("Link profil disalin!");
+                }
+              }}
+              className="btn-outline py-2 px-4 text-xs rounded-xl"
+            >
+              🔗 Bagikan Profil
+            </button>
+          </div>
         </div>
       </div>
 
@@ -201,6 +255,20 @@ export default async function SellerProfilePage({ params }) {
             <ProductCard key={l.id} listing={l} />
           ))}
         </div>
+      )}
+
+      {/* Grid Iklan Terjual */}
+      {soldListings.length > 0 && (
+        <>
+          <h2 className="mt-10 text-lg font-bold">
+            Riwayat Terjual <span className="text-gray-400 font-normal text-base">({soldCount})</span>
+          </h2>
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 opacity-75">
+            {soldListings.map((l) => (
+              <ProductCard key={l.id} listing={l} />
+            ))}
+          </div>
+        </>
       )}
 
       {/* Ulasan */}

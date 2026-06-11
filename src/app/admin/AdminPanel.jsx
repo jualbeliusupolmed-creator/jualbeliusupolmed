@@ -57,10 +57,13 @@ export default function AdminPanel({
   categories = [],
   settings = {},
   wanted = [],
+  sellersList = [],
+  revenue = 0,
+  pendingCount = 0,
   initialTab = "overview",
 }) {
   const router = useRouter();
-  const VALID_TABS = ["overview","listings","transaksi","rating","reports","dicari","kategori","pengaturan","blacklist"];
+  const VALID_TABS = ["overview","listings","transaksi","rating","reports","dicari","kategori","pengaturan","blacklist","penjual"];
   const tab = VALID_TABS.includes(initialTab) ? initialTab : "overview";
   function goTab(key) { router.push(`/admin/${key}`); }
   const [busy, setBusy] = useState(false);
@@ -80,6 +83,8 @@ export default function AdminPanel({
   const [ratingLimit, setRatingLimit] = useState(PAGE);
   const [reportLimit, setReportLimit] = useState(PAGE);
   const [newBl, setNewBl] = useState("");
+  const [editingSeller, setEditingSeller] = useState(null);
+  const [sellerForm, setSellerForm] = useState({ name: "", bio: "" });
 
   useEffect(() => {
     if (!toast) return;
@@ -122,7 +127,6 @@ export default function AdminPanel({
   const pending = listings.filter((l) => l.status === "pending");
   const paidPayments = payments.filter((p) => p.status === "paid");
   const pendingPayments = payments.filter((p) => p.status === "pending");
-  const totalRevenue = paidPayments.reduce((s, p) => s + (p.amount || 0), 0);
   const openReports = reports.filter((r) => r.status === "open");
   const activeWanted = wanted.filter((w) => w.status === "active");
   const totalViews = listings.reduce((s, l) => s + (l.views || 0), 0);
@@ -219,6 +223,7 @@ export default function AdminPanel({
     { key: "kategori", label: "Kategori" },
     { key: "pengaturan", label: "Pengaturan" },
     { key: "blacklist", label: "Blacklist" },
+    { key: "penjual", label: "Penjual" },
   ];
   const activeLabel = NAV.find((n) => n.key === tab)?.label;
 
@@ -318,7 +323,7 @@ export default function AdminPanel({
           <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
             <Kpi label="Iklan aktif" value={active.length} sub={`${listings.length} total`} />
             <Kpi label="Terjual" value={sold.length} sub={`${pending.length} pending`} />
-            <Kpi label="Revenue" value={rupiah(totalRevenue)} sub={`${pendingPayments.length} pending`} />
+            <Kpi label="Revenue" value={rupiah(revenue)} sub={`${pendingCount} pending`} />
             <Kpi label="Total views" value={totalViews} />
             <Kpi label="Rating rata-rata" value={avgRating} sub={`${ratings.length} ulasan`} />
             <Kpi label="Laporan terbuka" value={openReports.length} sub={`${pendingVerif.length} verifikasi`} />
@@ -443,7 +448,7 @@ export default function AdminPanel({
                       <td className="p-3 text-gray-500">{l.views || 0}</td>
                       <td className="p-3">
                         <div className="flex flex-wrap gap-1">
-                          <button onClick={() => setEditing(l)} className="rounded-md bg-gray-900 px-2 py-1 text-xs text-white dark:bg-slate-200 dark:text-slate-900">Edit</button>
+                          <a href={`/admin/listings/${buildSlug(l.title, l.id)}`} className="rounded-md bg-gray-900 px-2 py-1 text-xs text-white dark:bg-slate-200 dark:text-slate-900">Edit</a>
                           {l.status !== "active" && <button onClick={() => action({ action: "activate", id: l.id }, "Diaktifkan")} className="rounded-md bg-green-100 px-2 py-1 text-xs text-green-700">Aktifkan</button>}
                           {l.status !== "suspended" && <button onClick={() => action({ action: "suspend", id: l.id }, "Disuspend")} className="rounded-md bg-amber-100 px-2 py-1 text-xs text-amber-700">Suspend</button>}
                           {l.featured ? (
@@ -614,6 +619,63 @@ export default function AdminPanel({
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* PENJUAL */}
+        {tab === "penjual" && (
+          <div>
+            <p className="mb-2 text-xs text-gray-400">{sellersList.length} penjual</p>
+            <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-slate-800">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 text-left text-xs uppercase text-gray-400 dark:bg-slate-900">
+                  <tr>
+                    <th className="p-3">Nama Penjual</th>
+                    <th className="p-3">WhatsApp</th>
+                    <th className="p-3">Total Iklan</th>
+                    <th className="p-3">Aktif</th>
+                    <th className="p-3">Terjual</th>
+                  </tr>
+                </thead>
+                <tbody className="dark:text-slate-300">
+                  {sellersList.map((s) => (
+                    <tr key={s.seller_wa} className="border-t dark:border-slate-800">
+                      <td className="p-3 font-medium dark:text-white">
+                        {s.seller_name}
+                        <button onClick={() => { setEditingSeller(s.seller_wa); setSellerForm({ name: s.seller_name, bio: "" }); }} className="ml-2 text-xs text-primary hover:underline">Edit</button>
+                      </td>
+                      <td className="p-3 font-mono text-xs"><a href={`https://wa.me/${s.seller_wa.replace(/\D/g, "")}`} className="hover:text-primary" target="_blank" rel="noreferrer">{s.seller_wa}</a></td>
+                      <td className="p-3">{s.total_iklan}</td>
+                      <td className="p-3 text-green-600">{s.active_iklan}</td>
+                      <td className="p-3 text-gray-500">{s.sold_iklan}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {editingSeller && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/50 p-4 backdrop-blur-sm">
+                <div className="card w-full max-w-md p-6">
+                  <h3 className="mb-4 text-lg font-bold dark:text-white">Edit Profil Penjual</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="label">Nama Penjual</label>
+                      <input className="input" value={sellerForm.name} onChange={(e) => setSellerForm({ ...sellerForm, name: e.target.value })} placeholder="Nama Toko / Penjual" />
+                      <p className="mt-1 text-[11px] text-gray-400">Ini akan mengubah nama di semua iklan penjual ini.</p>
+                    </div>
+                    <div>
+                      <label className="label">Bio / Deskripsi</label>
+                      <textarea className="input min-h-24" value={sellerForm.bio} onChange={(e) => setSellerForm({ ...sellerForm, bio: e.target.value })} placeholder="Melayani COD sekitar pintu 1..." />
+                    </div>
+                  </div>
+                  <div className="mt-6 flex justify-end gap-2">
+                    <button onClick={() => setEditingSeller(null)} className="btn-outline">Batal</button>
+                    <button onClick={() => { action({ action: "update_seller_profile", wa: editingSeller, ...sellerForm }, "Profil Penjual disimpan"); setEditingSeller(null); }} className="btn-primary">Simpan</button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

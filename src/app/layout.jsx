@@ -1,12 +1,11 @@
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import LayoutWrapper from "@/components/LayoutWrapper";
 import BackToTop from "@/components/BackToTop";
 import { Toaster } from "sonner";
 
 const BASE_URL =
-  process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+  (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
 
 export const metadata = {
   title: {
@@ -121,9 +120,7 @@ export default function RootLayout({ children }) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }}
         />
-        <Navbar />
-        <main className="flex-1">{children}</main>
-        <Footer />
+        <LayoutWrapper>{children}</LayoutWrapper>
         <BackToTop />
         <Toaster position="top-center" theme="system" richColors closeButton />
         <Analytics />

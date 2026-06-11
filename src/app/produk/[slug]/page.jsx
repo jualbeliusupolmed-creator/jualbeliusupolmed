@@ -87,7 +87,7 @@ export async function generateMetadata({ params }) {
   }
 
   const baseUrl =
-    process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+    (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
   const title = `${listing.title} — ${rupiah(listing.price)}`;
   const description = listing.description
     ? listing.description.slice(0, 155)
@@ -121,7 +121,7 @@ export default async function ProdukPage({ params }) {
   // JSON-LD Product + BreadcrumbList — agar listing bisa muncul sebagai
   // rich result (harga, ketersediaan) di Google.
   const baseUrl =
-    process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+    (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
   const productUrl = `${baseUrl}/produk/${buildSlug(listing.title, listing.id)}`;
   const productJsonLd = {
     "@context": "https://schema.org",
