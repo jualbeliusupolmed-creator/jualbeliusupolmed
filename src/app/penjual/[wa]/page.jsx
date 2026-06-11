@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rupiah } from "@/lib/fees";
 import ProductCard from "@/components/ProductCard";
+import ShareProfileButton from "@/components/ShareProfileButton";
 import { formatWa } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
@@ -192,17 +193,7 @@ export default async function SellerProfilePage({ params }) {
             >
               💬 Hubungi via WA
             </a>
-            <button
-              onClick={() => {
-                if (typeof navigator !== "undefined" && navigator.clipboard) {
-                  navigator.clipboard.writeText(window.location.href);
-                  alert("Link profil disalin!");
-                }
-              }}
-              className="btn-outline py-2 px-4 text-xs rounded-xl"
-            >
-              🔗 Bagikan Profil
-            </button>
+            <ShareProfileButton />
           </div>
         </div>
       </div>
