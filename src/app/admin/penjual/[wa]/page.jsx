@@ -21,11 +21,31 @@ async function getSellerData(wa) {
 
     const { data: listings } = await supa
       .from("listings")
-      .select("seller_name")
+      .select("*")
       .eq("seller_wa", decodedWa)
-      .limit(1);
+      .order("created_at", { ascending: false });
 
-    return { profile, listings: listings || [], decodedWa };
+    // Hitung statistik
+    const activeListings = listings?.filter(l => l.status === "active") || [];
+    const soldListings = listings?.filter(l => l.status === "sold") || [];
+    const pendingListings = listings?.filter(l => l.status === "pending") || [];
+    
+    // Revenue = total harga barang yang sudah 'sold'
+    const totalRevenue = soldListings.reduce((sum, l) => sum + (l.price || 0), 0);
+    const totalViews = listings?.reduce((sum, l) => sum + (l.views || 0), 0) || 0;
+
+    return { 
+      profile, 
+      listings: listings || [], 
+      stats: {
+        activeCount: activeListings.length,
+        soldCount: soldListings.length,
+        pendingCount: pendingListings.length,
+        totalRevenue,
+        totalViews
+      },
+      decodedWa 
+    };
   } catch (err) {
     return null;
   }
@@ -45,7 +65,7 @@ export default async function AdminSellerPage({ params }) {
   // but we can still edit them and create the profile!
   if (!data) notFound();
 
-  const { profile, listings, decodedWa } = data;
+  const { profile, listings, stats, decodedWa } = data;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
@@ -64,7 +84,7 @@ export default async function AdminSellerPage({ params }) {
         </span>
       </nav>
 
-      <AdminSellerDetail profile={profile} listings={listings} wa={decodedWa} />
+      <AdminSellerDetail profile={profile} listings={listings} stats={stats} wa={decodedWa} />
     </div>
   );
 }
