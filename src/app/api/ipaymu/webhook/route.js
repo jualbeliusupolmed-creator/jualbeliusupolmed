@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { notifyAdminNewListing, postToGroup } from "@/lib/fonnte";
+import { verifyIpaymuTransaction } from "@/lib/ipaymu";
 
 export const dynamic = "force-dynamic";
 
@@ -15,16 +16,29 @@ export async function POST(req) {
     const txStatus = data.status; // "berhasil", "pending", "expired", "batal"
     const statusCode = data.status_code;
 
-    if (!orderId) {
-      return NextResponse.json({ error: "Missing reference_id" }, { status: 400 });
+    const trxId = data.trx_id;
+
+    if (!orderId || !trxId) {
+      return NextResponse.json({ error: "Missing reference_id or trx_id" }, { status: 400 });
     }
 
-    const supa = getAdminClient();
+    // Verifikasi transaksi ke server iPaymu untuk mencegah POST palsu
+    const verifiedData = await verifyIpaymuTransaction(trxId);
+    
+    // Pastikan reference_id dari API iPaymu cocok dengan yang dikirim webhook
+    if (verifiedData.Reference_Id !== orderId) {
+      return NextResponse.json({ error: "Reference ID mismatch" }, { status: 400 });
+    }
 
-    const settled = txStatus === "berhasil" || statusCode === "1" || txStatus === "sukses";
-    const failed = txStatus === "expired" || statusCode === "-1" || txStatus === "batal";
+    // Gunakan status dari API iPaymu yang terverifikasi (Status_Code)
+    // 1 = Berhasil, -1 = Gagal/Batal/Expired, 0 = Pending
+    const vStatusCode = String(verifiedData.Status_Code);
+    const settled = vStatusCode === "1";
+    const failed = vStatusCode === "-1";
 
     const newStatus = settled ? "paid" : failed ? "failed" : "pending";
+
+    const supa = getAdminClient();
 
     const { data: payment } = await supa
       .from("payments")

@@ -77,3 +77,32 @@ export async function createPaymentLink({
     orderId,
   };
 }
+
+export async function verifyIpaymuTransaction(transactionId) {
+  const { va, isProduction } = getIpaymuConfig();
+  const baseUrl = isProduction ? "https://my.ipaymu.com" : "https://sandbox.ipaymu.com";
+
+  const body = { transactionId };
+  const signature = generateIpaymuSignature(body, "POST");
+  const timestamp = new Date().toISOString().replace(/T/, '').replace(/\..+/, '').replace(/-/g, '').replace(/:/g, '');
+
+  const response = await fetch(`${baseUrl}/api/v2/transaction`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "signature": signature,
+      "va": va,
+      "timestamp": timestamp,
+    },
+    body: JSON.stringify(body),
+  });
+
+  const data = await response.json();
+  
+  if (data.Status !== 200) {
+    throw new Error(data.Message || "Gagal verifikasi transaksi iPaymu");
+  }
+
+  return data.Data; // { Status, Status_Code, Reference_Id, dll }
+}
+
