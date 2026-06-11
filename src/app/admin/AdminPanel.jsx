@@ -642,7 +642,7 @@ export default function AdminPanel({
                     <tr key={s.seller_wa} className="border-t dark:border-slate-800">
                       <td className="p-3 font-medium dark:text-white">
                         {s.seller_name}
-                        <button onClick={() => { setEditingSeller(s.seller_wa); setSellerForm({ name: s.seller_name, bio: "" }); }} className="ml-2 text-xs text-primary hover:underline">Edit</button>
+                        <a href={`/admin/penjual/${s.seller_wa.replace(/\D/g, "")}`} className="ml-2 text-xs text-primary hover:underline">Edit</a>
                       </td>
                       <td className="p-3 font-mono text-xs"><a href={`https://wa.me/${s.seller_wa.replace(/\D/g, "")}`} className="hover:text-primary" target="_blank" rel="noreferrer">{s.seller_wa}</a></td>
                       <td className="p-3">{s.total_iklan}</td>
@@ -654,28 +654,6 @@ export default function AdminPanel({
               </table>
             </div>
 
-            {editingSeller && (
-              <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/50 p-4 backdrop-blur-sm">
-                <div className="card w-full max-w-md p-6">
-                  <h3 className="mb-4 text-lg font-bold dark:text-white">Edit Profil Penjual</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="label">Nama Penjual</label>
-                      <input className="input" value={sellerForm.name} onChange={(e) => setSellerForm({ ...sellerForm, name: e.target.value })} placeholder="Nama Toko / Penjual" />
-                      <p className="mt-1 text-[11px] text-gray-400">Ini akan mengubah nama di semua iklan penjual ini.</p>
-                    </div>
-                    <div>
-                      <label className="label">Bio / Deskripsi</label>
-                      <textarea className="input min-h-24" value={sellerForm.bio} onChange={(e) => setSellerForm({ ...sellerForm, bio: e.target.value })} placeholder="Melayani COD sekitar pintu 1..." />
-                    </div>
-                  </div>
-                  <div className="mt-6 flex justify-end gap-2">
-                    <button onClick={() => setEditingSeller(null)} className="btn-outline">Batal</button>
-                    <button onClick={() => { action({ action: "update_seller_profile", wa: editingSeller, ...sellerForm }, "Profil Penjual disimpan"); setEditingSeller(null); }} className="btn-primary">Simpan</button>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         )}
 
