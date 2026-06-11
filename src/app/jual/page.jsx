@@ -104,19 +104,10 @@ export default function JualPage() {
       localStorage.setItem("seller_name", form.seller_name);
 
       if (paymentMethod === "otomatis") {
-        // Buka Midtrans Snap
-        if (window.snap && data.snapToken) {
-          window.snap.pay(data.snapToken, {
-            onSuccess: () => router.push(`/dashboard?paid=1&wa=${waParam}`),
-            onPending: () => router.push(`/dashboard?pending=1&wa=${waParam}`),
-            onError: () => toast.error("Pembayaran gagal, coba lagi."),
-            onClose: () => {
-              toast.info("Pembayaran dibatalkan. Iklan tersimpan sebagai pending.");
-              router.push(`/dashboard?pending=1&wa=${waParam}`);
-            },
-          });
+        if (data.paymentUrl) {
+          window.location.href = data.paymentUrl;
         } else {
-          toast.error("Metode otomatis gagal (mode sandbox/test). Silakan gunakan QRIS Manual di atas.");
+          toast.error("Metode otomatis gagal membuat link iPaymu. Silakan gunakan metode manual.");
         }
       } else {
         // Metode manual
@@ -132,15 +123,9 @@ export default function JualPage() {
     }
   }
 
-  const clientKey = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "";
-  const snapUrl =
-    process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true"
-      ? "https://app.midtrans.com/snap/snap.js"
-      : "https://app.sandbox.midtrans.com/snap/snap.js";
-
   return (
     <div className="mx-auto max-w-4xl px-4 py-6">
-      <Script src={snapUrl} data-client-key={clientKey} strategy="afterInteractive" />
+
 
       <h1 className="text-2xl font-extrabold">Pasang Iklan</h1>
       <p className="mt-1 text-gray-500">

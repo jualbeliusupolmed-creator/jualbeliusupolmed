@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { createSnapTransaction } from "@/lib/midtrans";
+import { createPaymentLink } from "@/lib/ipaymu";
 import { getSettings } from "@/lib/settings";
 import { FEES } from "@/lib/fees";
 
@@ -32,21 +32,21 @@ export async function POST(req) {
       midtrans_order_id: orderId,
     });
 
-    let snapToken = null;
+    let paymentUrl = null;
     try {
-      const tx = await createSnapTransaction({
+      const tx = await createPaymentLink({
         orderId,
         amount,
         customerName: listing.seller_name,
         customerWa: listing.seller_wa,
         itemName: `Auto-Bump 7 Hari: ${listing.title}`,
       });
-      snapToken = tx.token;
+      paymentUrl = tx.url;
     } catch (e) {
-      console.error("autobump charge:", e?.message);
+      console.error("autobump charge ipaymu:", e?.message);
     }
 
-    return NextResponse.json({ snapToken, orderId });
+    return NextResponse.json({ paymentUrl, orderId });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { createSnapTransaction } from "@/lib/midtrans";
+import { createPaymentLink } from "@/lib/ipaymu";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { getSettings, adFeeFrom } from "@/lib/settings";
 import { formatWa } from "@/lib/constants";
@@ -119,21 +119,21 @@ export async function POST(req) {
       midtrans_order_id: orderId,
     });
 
-    let snapToken = null;
+    let paymentUrl = null;
     try {
-      const tx = await createSnapTransaction({
+      const tx = await createPaymentLink({
         orderId,
         amount,
         customerName: seller_name,
-        customerWa: seller_wa,
+        customerWa: normalizedWa,
         itemName: `Iklan: ${title}`,
       });
-      snapToken = tx.token;
+      paymentUrl = tx.url;
     } catch (e) {
-      console.error("midtrans charge:", e?.message);
+      console.error("ipaymu charge error:", e?.message);
     }
 
-    return NextResponse.json({ listing, snapToken, orderId });
+    return NextResponse.json({ listing, paymentUrl, orderId });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }

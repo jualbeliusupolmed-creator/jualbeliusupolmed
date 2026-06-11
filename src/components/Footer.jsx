@@ -30,6 +30,8 @@ export default async function Footer() {
             <li><Link href="/daftar-harga" className="hover:text-primary dark:hover:text-white">Daftar Harga &amp; Kebijakan</Link></li>
             <li><Link href="/syarat-ketentuan" className="hover:text-primary dark:hover:text-white">Syarat &amp; Ketentuan</Link></li>
             <li><Link href="/kebijakan-privasi" className="hover:text-primary dark:hover:text-white">Kebijakan Privasi</Link></li>
+            <li><Link href="/refund-policy" className="hover:text-primary dark:hover:text-white">Refund Policy</Link></li>
+            <li><Link href="/faq" className="hover:text-primary dark:hover:text-white">FAQ / Bantuan</Link></li>
             <li><Link href="/dashboard" className="hover:text-primary dark:hover:text-white">Dashboard</Link></li>
           </ul>
         </div>

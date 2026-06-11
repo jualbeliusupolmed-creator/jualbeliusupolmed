@@ -200,10 +200,10 @@ function DashboardInner() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal memproses pembayaran");
 
-      if (data.snapToken && window.snap) {
-        window.snap.pay(data.snapToken, { onSuccess: () => load(), onClose: () => load() });
+      if (data.paymentUrl) {
+        window.location.href = data.paymentUrl;
       } else {
-        setNote(`Tidak bisa memproses ${label} — cek Midtrans.`);
+        setNote(`Tidak bisa memproses ${label} — link iPaymu tidak ditemukan.`);
       }
     } catch (e) {
       toast.error(e.message);
@@ -249,18 +249,8 @@ function DashboardInner() {
   const otherItems = items.filter((i) => i.status === "expired" || i.status === "suspended");
   const totalFee = soldItems.reduce((s, i) => s + (i.sold_fee || 0), 0);
 
-  const snapUrl =
-    process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true"
-      ? "https://app.midtrans.com/snap/snap.js"
-      : "https://app.sandbox.midtrans.com/snap/snap.js";
-
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
-      <Script
-        src={snapUrl}
-        data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || ""}
-        strategy="afterInteractive"
-      />
 
       {/* ===== Modals ===== */}
 
@@ -498,15 +488,10 @@ function DashboardInner() {
                                 const data = await res.json();
                                 if (!res.ok) throw new Error(data.error);
                                 
-                                if (window.snap && data.snapToken) {
-                                  window.snap.pay(data.snapToken, {
-                                    onSuccess: () => {
-                                      toast.success("Pembayaran berhasil!");
-                                      load();
-                                    },
-                                    onError: () => toast.error("Pembayaran gagal, coba lagi."),
-                                    onClose: () => toast.info("Pembayaran dibatalkan."),
-                                  });
+                                if (data.paymentUrl) {
+                                  window.location.href = data.paymentUrl;
+                                } else {
+                                  toast.error("Gagal mendapatkan link iPaymu.");
                                 }
                               } catch (e) {
                                 toast.error(e.message);
