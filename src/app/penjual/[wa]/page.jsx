@@ -3,12 +3,14 @@ import { notFound } from "next/navigation";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rupiah } from "@/lib/fees";
 import ProductCard from "@/components/ProductCard";
+import { formatWa } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
 async function getSellerData(wa) {
   try {
-    const decodedWa = decodeURIComponent(wa);
+    // Normalize to 628... so /penjual/08... and /penjual/628... resolve to same page
+    const decodedWa = formatWa(decodeURIComponent(wa)) || decodeURIComponent(wa);
     const supa = getAdminClient();
 
     // Ambil semua iklan aktif penjual

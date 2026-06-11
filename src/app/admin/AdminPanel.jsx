@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { rupiah } from "@/lib/fees";
 import { downloadCSV } from "@/lib/csv";
 import { buildSlug } from "@/lib/slug";
+import { formatWa } from "@/lib/constants";
 import AdminListingModal from "./AdminListingModal";
 import ConfirmModal from "@/components/ConfirmModal";
 
@@ -157,8 +158,12 @@ export default function AdminPanel({
     if (statusFilter !== "all" && l.status !== statusFilter) return false;
     if (!q) return true;
     const s = q.toLowerCase();
+    // Normalize kedua sisi agar 08... dan 628... keduanya match
+    const normalizedQ = formatWa(q) || q;
+    const normalizedWa = formatWa(l.seller_wa || "") || l.seller_wa || "";
     return (
       l.title?.toLowerCase().includes(s) ||
+      normalizedWa.includes(normalizedQ) ||
       l.seller_wa?.includes(q) ||
       l.seller_name?.toLowerCase().includes(s)
     );

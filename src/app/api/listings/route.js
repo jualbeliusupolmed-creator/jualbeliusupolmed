@@ -3,14 +3,16 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { createSnapTransaction } from "@/lib/midtrans";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { getSettings, adFeeFrom } from "@/lib/settings";
+import { formatWa } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
 // GET /api/listings?seller_wa=...  -> daftar iklan milik penjual
 export async function GET(req) {
-  const wa = req.nextUrl.searchParams.get("seller_wa");
+  const wa = formatWa(req.nextUrl.searchParams.get("seller_wa") || "");
   if (!wa) return NextResponse.json({ listings: [] });
   const supa = getAdminClient();
+  // Support kedua format: cari yang match normalized
   const { data, error } = await supa
     .from("listings")
     .select("*")
@@ -51,13 +53,19 @@ export async function POST(req) {
       return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
     }
 
+    // Normalisasi seller_wa → format 628... sebelum simpan
+    const normalizedWa = formatWa(seller_wa);
+    if (!normalizedWa) {
+      return NextResponse.json({ error: "Nomor WA tidak valid" }, { status: 400 });
+    }
+
     const supa = getAdminClient();
 
-    // cek blacklist
+    // cek blacklist — bandingkan dalam format normalized
     const { data: bl } = await supa
       .from("blacklist")
       .select("id")
-      .eq("wa", seller_wa)
+      .eq("wa", normalizedWa)
       .maybeSingle();
     if (bl) {
       return NextResponse.json(
@@ -70,7 +78,7 @@ export async function POST(req) {
       .from("listings")
       .insert({
         seller_name,
-        seller_wa,
+        seller_wa: normalizedWa,
         title,
         description: description || "",
         price: Math.round(Number(price)) || 0,

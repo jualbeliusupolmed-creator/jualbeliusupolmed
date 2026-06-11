@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { formatWa } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
@@ -17,10 +18,11 @@ export async function GET(req) {
     const supa = getAdminClient();
 
     if (buyer_wa) {
+      const normalizedWa = formatWa(buyer_wa);
       const { data, error } = await supa
         .from("wanted_listings")
         .select("*")
-        .eq("buyer_wa", buyer_wa)
+        .eq("buyer_wa", normalizedWa)
         .order("created_at", { ascending: false });
       if (error) throw new Error(error.message);
       return NextResponse.json({ listings: data || [] });
@@ -73,13 +75,18 @@ export async function POST(req) {
       return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
     }
 
+    const normalizedBuyerWa = formatWa(buyer_wa);
+    if (!normalizedBuyerWa) {
+      return NextResponse.json({ error: "Nomor WA tidak valid" }, { status: 400 });
+    }
+
     const supa = getAdminClient();
 
-    // Cek blacklist
+    // Cek blacklist — normalized
     const { data: bl } = await supa
       .from("blacklist")
       .select("id")
-      .eq("wa", buyer_wa)
+      .eq("wa", normalizedBuyerWa)
       .maybeSingle();
     if (bl) {
       return NextResponse.json(
@@ -92,7 +99,7 @@ export async function POST(req) {
       .from("wanted_listings")
       .insert({
         buyer_name,
-        buyer_wa,
+        buyer_wa: normalizedBuyerWa,
         title,
         description: description || "",
         budget: Math.round(Number(budget)) || 0,

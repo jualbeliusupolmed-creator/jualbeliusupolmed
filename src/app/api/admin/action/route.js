@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabaseAdmin";
+import { formatWa } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
@@ -142,13 +143,16 @@ export async function POST(req) {
       }
 
       // ── Blacklist ──────────────────────────────────────────────────────
-      case "blacklist":
+      case "blacklist": {
+        const normalizedWa = formatWa(wa);
         await supa.from("blacklist").upsert(
-          { wa, reason: body.reason || null },
+          { wa: normalizedWa, reason: body.reason || null },
           { onConflict: "wa" }
         );
-        await supa.from("listings").update({ status: "suspended" }).eq("seller_wa", wa);
+        // Suspend semua listing dari nomor ini (kedua format)
+        await supa.from("listings").update({ status: "suspended" }).eq("seller_wa", normalizedWa);
         break;
+      }
       case "unblacklist":
         await supa.from("blacklist").delete().eq("id", id);
         break;
