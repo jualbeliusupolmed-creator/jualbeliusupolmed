@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from "react";
 import Script from "next/script";
 import Link from "next/link";
 import Image from "next/image";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { rupiah, soldFee } from "@/lib/fees";
 import ConfirmModal from "@/components/ConfirmModal";
 import InputModal from "@/components/InputModal";
