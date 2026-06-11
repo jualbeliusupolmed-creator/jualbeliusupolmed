@@ -213,15 +213,12 @@ export default function HomeBrowser({
     switch (key) {
       case "hero":
         return (
-          <section key="hero" className="pb-6 pt-4">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-400 dark:text-slate-500">
+          <section key="hero" className="pb-5 pt-0">
+            <h1 className="text-sm font-extrabold uppercase tracking-[0.1em] text-gray-900 dark:text-white">
               Marketplace Kampus · USU &amp; POLMED
-            </p>
-            <h1 className="mt-2 text-[1.65rem] font-extrabold leading-[1.2] tracking-tight text-gray-900 dark:text-white">
-              {heroTitle || "Jual Beli Mahasiswa USU & POLMED"}
             </h1>
-            <p className="mt-2 max-w-xs text-sm leading-relaxed text-gray-500 dark:text-slate-400">
-              {heroSubtitle || "Laptop, buku, kos, fashion & lebih. Aman, cepat, dibantu admin."}
+            <p className="mt-1.5 text-xs text-gray-500 dark:text-slate-400 truncate">
+              Jual-beli laptop, buku, kos & jasa. Aman, cepat, dibantu admin.
             </p>
 
             {/* CTAs — single row, pill style */}
@@ -574,7 +571,7 @@ export default function HomeBrowser({
   };
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-6">
+    <main className="mx-auto max-w-6xl px-4 pt-3 pb-6">
       {order.map(renderSection)}
     </main>
   );
