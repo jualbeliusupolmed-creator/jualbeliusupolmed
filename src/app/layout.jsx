@@ -3,20 +3,80 @@ import { Analytics } from "@vercel/analytics/next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackToTop from "@/components/BackToTop";
+import { Toaster } from "sonner";
+
+const BASE_URL =
+  process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
 
 export const metadata = {
-  title: "Jual Beli USU Polmed — Marketplace Mahasiswa",
-  description:
-    "Tempat jual-beli barang warga USU & POLMED: laptop, HP, buku, fashion, makanan, kos, dan jasa.",
-  manifest: "/manifest.json",
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
-  ),
-  openGraph: {
-    title: "Jual Beli USU Polmed",
-    description: "Marketplace mahasiswa USU & POLMED",
-    type: "website",
+  title: {
+    default: "Jual Beli USU Polmed — Marketplace Mahasiswa Medan",
+    template: "%s — Jual Beli USU Polmed",
   },
+  description:
+    "Marketplace jual-beli khusus mahasiswa USU & POLMED Medan: laptop bekas, HP, buku kuliah, fashion, makanan, kos, dan jasa. Transaksi aman & COD di kampus, dibantu admin.",
+  keywords: [
+    "jual beli USU",
+    "marketplace mahasiswa Medan",
+    "laptop bekas USU",
+    "barang bekas mahasiswa POLMED",
+    "kos dekat USU",
+    "COD kampus USU",
+    "preloved mahasiswa Medan",
+  ],
+  manifest: "/manifest.json",
+  metadataBase: new URL(BASE_URL),
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: "Jual Beli USU Polmed — Marketplace Mahasiswa Medan",
+    description:
+      "Jual-beli laptop, HP, buku, fashion, makanan, kos, hingga jasa antar mahasiswa USU & POLMED. Aman, cepat, COD di kampus, dibantu admin.",
+    type: "website",
+    url: "/",
+    siteName: "Jual Beli USU Polmed",
+    locale: "id_ID",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Jual Beli USU Polmed — Marketplace Mahasiswa Medan",
+    description:
+      "Jual-beli barang & jasa antar mahasiswa USU & POLMED. Aman, cepat, COD di kampus.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large" },
+  },
+};
+
+// JSON-LD: WebSite + SearchAction & Organization — membantu Google memahami
+// situs dan menampilkan sitelinks search box.
+const siteJsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": `${BASE_URL}/#website`,
+      url: BASE_URL,
+      name: "Jual Beli USU Polmed",
+      description:
+        "Marketplace jual-beli khusus mahasiswa USU & POLMED Medan.",
+      inLanguage: "id-ID",
+      potentialAction: {
+        "@type": "SearchAction",
+        target: { "@type": "EntryPoint", urlTemplate: `${BASE_URL}/?q={search_term_string}` },
+        "query-input": "required name=search_term_string",
+      },
+    },
+    {
+      "@type": "Organization",
+      "@id": `${BASE_URL}/#organization`,
+      name: "Jual Beli USU Polmed",
+      url: BASE_URL,
+      logo: `${BASE_URL}/icons/icon-512x512.png`,
+      areaServed: "Medan, Sumatera Utara, Indonesia",
+    },
+  ],
 };
 
 export const viewport = {
@@ -57,10 +117,15 @@ export default function RootLayout({ children }) {
         ` }} />
       </head>
       <body className="min-h-screen flex flex-col">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }}
+        />
         <Navbar />
         <main className="flex-1">{children}</main>
         <Footer />
         <BackToTop />
+        <Toaster position="top-center" theme="system" richColors closeButton />
         <Analytics />
       </body>
     </html>

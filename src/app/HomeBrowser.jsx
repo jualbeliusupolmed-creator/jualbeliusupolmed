@@ -25,6 +25,7 @@ export default function HomeBrowser({
   featured,
   trending = [],
   categories,
+  stats = null,
   heroTitle,
   heroSubtitle,
 }) {
@@ -176,6 +177,29 @@ export default function HomeBrowser({
               Cara Bergabung
             </Link>
           </div>
+
+          {/* Social proof — hanya tampil jika angkanya meyakinkan */}
+          {(() => {
+            const proof = [
+              total > 0 && { v: total, l: "iklan aktif" },
+              stats?.sellers > 1 && { v: stats.sellers, l: "penjual bergabung" },
+              stats?.wanted > 0 && { v: stats.wanted, l: "kebutuhan dicari" },
+              stats?.sold > 0 && { v: stats.sold, l: "transaksi selesai" },
+            ].filter(Boolean);
+            if (proof.length === 0) return null;
+            return (
+              <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1.5 border-t border-gray-100 pt-3 dark:border-slate-900 sm:mt-5">
+                {proof.map((p) => (
+                  <p key={p.l} className="flex items-baseline gap-1.5 text-[11px] text-gray-400 dark:text-slate-500 sm:text-xs">
+                    <span className="text-sm font-extrabold text-gray-900 dark:text-white sm:text-base">
+                      {p.v}
+                    </span>
+                    {p.l}
+                  </p>
+                ))}
+              </div>
+            );
+          })()}
         </div>
       </section>
 
@@ -196,7 +220,7 @@ export default function HomeBrowser({
                 <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-slate-950">
                   {f.image_url && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={f.image_url} alt="" loading="lazy" className="h-full w-full object-cover" />
+                    <img src={f.image_url} alt={f.title} loading="lazy" className="h-full w-full object-cover" />
                   )}
                 </div>
                 <div className="min-w-0">
@@ -462,7 +486,7 @@ export default function HomeBrowser({
                 <div className="relative aspect-square bg-gray-100 dark:bg-slate-950">
                   {t.image_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={t.image_url} alt="" loading="lazy" className="h-full w-full object-cover" />
+                    <img src={t.image_url} alt={t.title} loading="lazy" className="h-full w-full object-cover" />
                   ) : (
                     <div className="grid h-full w-full place-items-center text-gray-300 dark:text-slate-700">
                       <Icon.Package className="h-8 w-8" />

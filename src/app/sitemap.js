@@ -1,42 +1,41 @@
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { buildSlug } from "@/lib/slug";
 
-export const revalidate = 3600; // regen tiap 1 jam
+export const revalidate = 3600; // Revalidate every hour
 
 export default async function sitemap() {
-  const base = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
 
+  // Static routes
   const staticRoutes = [
-    { path: "", priority: 1, freq: "daily" },
-    { path: "/jual", priority: 0.7, freq: "weekly" },
-    { path: "/cara-bergabung", priority: 0.5, freq: "monthly" },
-  ].map((r) => ({
-    url: `${base}${r.path}`,
-    lastModified: new Date(),
-    changeFrequency: r.freq,
-    priority: r.priority,
+    "",
+    "/jual",
+    "/dicari",
+    "/cara-bergabung",
+    "/daftar-harga",
+    "/syarat-ketentuan",
+    "/kebijakan-privasi",
+  ].map((route) => ({
+    url: `${baseUrl}${route}`,
+    lastModified: new Date().toISOString(),
+    changeFrequency: route === "" ? "always" : "daily",
+    priority: route === "" ? 1 : 0.8,
   }));
 
-  let listings = [];
-  try {
-    const supa = getAdminClient();
-    const { data } = await supa
-      .from("listings")
-      .select("id, title, created_at")
-      .in("status", ["active", "sold"])
-      .order("created_at", { ascending: false })
-      .limit(1000);
-    listings = data || [];
-  } catch {
-    // env Supabase belum ada saat build — sitemap tetap berisi rute statis.
-  }
+  // Fetch all active listings for dynamic routes
+  const supa = getAdminClient();
+  const { data: listings } = await supa
+    .from("listings")
+    .select("id, title, updated_at")
+    .eq("status", "active")
+    .order("updated_at", { ascending: false });
 
-  const productRoutes = listings.map((l) => ({
-    url: `${base}/produk/${buildSlug(l.title, l.id)}`,
-    lastModified: new Date(l.created_at),
+  const dynamicRoutes = (listings || []).map((listing) => ({
+    url: `${baseUrl}/produk/${buildSlug(listing.title, listing.id)}`,
+    lastModified: listing.updated_at || new Date().toISOString(),
     changeFrequency: "weekly",
     priority: 0.6,
   }));
 
-  return [...staticRoutes, ...productRoutes];
+  return [...staticRoutes, ...dynamicRoutes];
 }

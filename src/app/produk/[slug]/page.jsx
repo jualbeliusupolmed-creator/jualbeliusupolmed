@@ -83,22 +83,23 @@ async function getData(slug) {
 export async function generateMetadata({ params }) {
   const { listing } = await getData(params.slug);
   if (!listing) {
-    return { title: "Produk tidak ditemukan — Jual Beli USU Polmed" };
+    return { title: "Produk tidak ditemukan" };
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-  const title = `${listing.title} — Jual Beli USU Polmed`;
+  const baseUrl =
+    process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+  const title = `${listing.title} — ${rupiah(listing.price)}`;
   const description = listing.description
     ? listing.description.slice(0, 155)
-    : `${listing.title} dijual ${rupiah(listing.price)} oleh ${listing.seller_name} di marketplace mahasiswa USU & POLMED.`;
-  const imageUrl = listing.image_url || `${baseUrl}/og-default.png`;
+    : `${listing.title} dijual ${rupiah(listing.price)} oleh ${listing.seller_name} di marketplace mahasiswa USU & POLMED. COD di kampus, transaksi dibantu admin.`;
+  const imageUrl = listing.image_url || `${baseUrl}/icons/icon-512x512.png`;
   const canonicalSlug = buildSlug(listing.title, listing.id);
   const url = `${baseUrl}/produk/${canonicalSlug}`;
 
   return {
     title,
     description,
-    openGraph: { title, description, url, type: "website", images: [{ url: imageUrl, width: 800, height: 800, alt: listing.title }] },
+    openGraph: { title, description, url, type: "website", siteName: "Jual Beli USU Polmed", locale: "id_ID", images: [{ url: imageUrl, width: 800, height: 800, alt: listing.title }] },
     twitter: { card: "summary_large_image", title, description, images: [imageUrl] },
     alternates: { canonical: url },
   };
@@ -117,9 +118,59 @@ export default async function ProdukPage({ params }) {
   const sold = listing.status === "sold";
   const sellerWaEncoded = encodeURIComponent(listing.seller_wa || "");
 
+  // JSON-LD Product + BreadcrumbList — agar listing bisa muncul sebagai
+  // rich result (harga, ketersediaan) di Google.
+  const baseUrl =
+    process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+  const productUrl = `${baseUrl}/produk/${buildSlug(listing.title, listing.id)}`;
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: listing.title,
+    description: listing.description || listing.title,
+    image: listing.images?.length
+      ? listing.images
+      : listing.image_url
+      ? [listing.image_url]
+      : undefined,
+    category: listing.category,
+    offers: {
+      "@type": "Offer",
+      url: productUrl,
+      price: listing.price,
+      priceCurrency: "IDR",
+      itemCondition: "https://schema.org/UsedCondition",
+      availability: sold
+        ? "https://schema.org/SoldOut"
+        : "https://schema.org/InStock",
+      seller: { "@type": "Person", name: listing.seller_name },
+    },
+  };
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Beranda", item: baseUrl },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: listing.category,
+        item: `${baseUrl}/?cat=${encodeURIComponent(listing.category)}`,
+      },
+      { "@type": "ListItem", position: 3, name: listing.title, item: productUrl },
+    ],
+  };
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
       <ViewTracker listingId={listing.id} />
       {/* Breadcrumb */}
       <nav className="text-sm text-gray-400">

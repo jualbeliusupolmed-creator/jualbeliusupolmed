@@ -1,40 +1,67 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
+import useEmblaCarousel from "embla-carousel-react";
 
 export default function ProductGallery({ images = [], title }) {
   const imgs = images.filter(Boolean);
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
   const [active, setActive] = useState(0);
+
+  const handlePrev = useCallback(() => {
+    if (emblaApi) emblaApi.scrollPrev();
+  }, [emblaApi]);
+
+  const handleNext = useCallback(() => {
+    if (emblaApi) emblaApi.scrollNext();
+  }, [emblaApi]);
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setActive(emblaApi.selectedScrollSnap());
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    onSelect();
+    emblaApi.on("select", onSelect);
+  }, [emblaApi, onSelect]);
+
+  const scrollTo = useCallback(
+    (index) => {
+      if (emblaApi) emblaApi.scrollTo(index);
+    },
+    [emblaApi]
+  );
 
   if (imgs.length === 0) {
     return (
-      <div className="grid aspect-square w-full place-items-center bg-gray-100 text-6xl dark:bg-slate-950 dark:text-slate-800">
-        📦
+      <div
+        role="img"
+        aria-label={`Tidak ada foto untuk ${title || "produk ini"}`}
+        className="grid aspect-square w-full place-items-center bg-gray-100 text-6xl dark:bg-slate-950 dark:text-slate-800"
+      >
+        <span aria-hidden="true">📦</span>
       </div>
     );
   }
 
-  const handlePrev = () => {
-    setActive((prev) => (prev === 0 ? imgs.length - 1 : prev - 1));
-  };
-
-  const handleNext = () => {
-    setActive((prev) => (prev === imgs.length - 1 ? 0 : prev + 1));
-  };
-
   return (
     <div className="group relative">
       {/* Main Image View */}
-      <div className="relative aspect-square overflow-hidden bg-gray-100 dark:bg-slate-950">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          key={active}
-          src={imgs[active]}
-          alt={title}
-          className="h-full w-full object-cover transition-all duration-500 hover:scale-105 animate-fade-in"
-        />
-        
-        {/* Arrow Navigation */}
+      <div className="relative overflow-hidden bg-gray-100 dark:bg-slate-950 aspect-square" ref={emblaRef}>
+        <div className="flex h-full touch-pan-y">
+          {imgs.map((src, i) => (
+            <div className="relative min-w-0 flex-[0_0_100%] h-full" key={i}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={src}
+                alt={imgs.length > 1 ? `${title} — foto ${i + 1} dari ${imgs.length}` : title}
+                className="h-full w-full object-cover transition-all duration-500 hover:scale-105"
+              />
+            </div>
+          ))}
+        </div>
         {imgs.length > 1 && (
           <>
             <button
@@ -79,7 +106,8 @@ export default function ProductGallery({ images = [], title }) {
           {imgs.map((src, i) => (
             <button
               key={i}
-              onClick={() => setActive(i)}
+              onClick={() => scrollTo(i)}
+              aria-label={`Lihat foto ${i + 1}`}
               className={`h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
                 i === active
                   ? "border-primary dark:border-white scale-[0.98]"

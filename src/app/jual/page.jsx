@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import Script from "next/script";
 import { useRouter } from "next/navigation";
-import { CATEGORIES, MARKETPLACE_WA, formatWa, POPULAR_AREAS } from "@/lib/constants";
 import { adFee, rupiah } from "@/lib/fees";
 import { uploadMedia } from "@/lib/upload";
 import MediaUploader from "@/components/MediaUploader";
-
+import OTPModal from "@/components/OTPModal";
+import { CATEGORIES, MARKETPLACE_WA, POPULAR_AREAS, formatWa } from "@/lib/constants";
+import { toast } from "sonner";
 export default function JualPage() {
   const router = useRouter();
   const [form, setForm] = useState({
@@ -24,13 +25,13 @@ export default function JualPage() {
   });
   const [media, setMedia] = useState([]);
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState("");
   const [fileError, setFileError] = useState("");
-  
+  const [msg, setMsg] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("otomatis");
   const [createdListing, setCreatedListing] = useState(null);
   const [showQRISModal, setShowQRISModal] = useState(false);
   const [areaOption, setAreaOption] = useState("");
+  const [showOtp, setShowOtp] = useState(false);
 
   const [cfg, setCfg] = useState(null);
   
@@ -75,10 +76,9 @@ export default function JualPage() {
 
   async function submit(e) {
     e.preventDefault();
-    setMsg("");
     const formattedWa = formatWa(form.seller_wa);
     if (!form.seller_name || !formattedWa || !form.title || !form.price) {
-      setMsg("Lengkapi nama, WA, judul, dan harga.");
+      toast.error("Lengkapi nama, WA, judul, dan harga.");
       return;
     }
     setBusy(true);
@@ -91,6 +91,12 @@ export default function JualPage() {
         body: JSON.stringify({ ...form, seller_wa: formattedWa, image_url, images }),
       });
       const data = await res.json();
+      
+      if (res.status === 401) {
+        setShowOtp(true);
+        throw new Error("Anda harus memverifikasi nomor WA ini terlebih dahulu.");
+      }
+      
       if (!res.ok) throw new Error(data.error || "Gagal membuat listing");
 
       const waParam = encodeURIComponent(formattedWa);
@@ -103,14 +109,14 @@ export default function JualPage() {
           window.snap.pay(data.snapToken, {
             onSuccess: () => router.push(`/dashboard?paid=1&wa=${waParam}`),
             onPending: () => router.push(`/dashboard?pending=1&wa=${waParam}`),
-            onError: () => setMsg("Pembayaran gagal, coba lagi."),
+            onError: () => toast.error("Pembayaran gagal, coba lagi."),
             onClose: () => {
-              setMsg("Pembayaran dibatalkan. Iklan tersimpan sebagai pending.");
+              toast.info("Pembayaran dibatalkan. Iklan tersimpan sebagai pending.");
               router.push(`/dashboard?pending=1&wa=${waParam}`);
             },
           });
         } else {
-          setMsg("Metode otomatis gagal (mode sandbox/test). Silakan gunakan QRIS Manual di atas.");
+          toast.error("Metode otomatis gagal (mode sandbox/test). Silakan gunakan QRIS Manual di atas.");
         }
       } else {
         // Metode manual
@@ -118,7 +124,9 @@ export default function JualPage() {
         setShowQRISModal(true);
       }
     } catch (err) {
-      setMsg(err.message);
+      if (err.message !== "Anda harus memverifikasi nomor WA ini terlebih dahulu.") {
+        toast.error(err.message);
+      }
     } finally {
       setBusy(false);
     }
@@ -431,6 +439,17 @@ export default function JualPage() {
           </div>
         </div>
       )}
+
+      <OTPModal
+        isOpen={showOtp}
+        onClose={() => setShowOtp(false)}
+        onSuccess={(wa) => {
+          setShowOtp(false);
+          localStorage.setItem("seller_wa", wa);
+          setForm(f => ({ ...f, seller_wa: wa }));
+          toast.success("Nomor WA berhasil diverifikasi. Silakan klik Pasang Iklan lagi.");
+        }}
+      />
     </div>
   );
 }

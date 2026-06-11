@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { formatWa } from "@/lib/constants";
+import { getSellerSession, isAdmin } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -78,6 +79,11 @@ export async function POST(req) {
     const normalizedBuyerWa = formatWa(buyer_wa);
     if (!normalizedBuyerWa) {
       return NextResponse.json({ error: "Nomor WA tidak valid" }, { status: 400 });
+    }
+
+    const sessionWa = getSellerSession();
+    if (!isAdmin() && sessionWa !== normalizedBuyerWa) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const supa = getAdminClient();

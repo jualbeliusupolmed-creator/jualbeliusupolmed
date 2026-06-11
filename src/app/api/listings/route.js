@@ -4,6 +4,7 @@ import { createSnapTransaction } from "@/lib/midtrans";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { getSettings, adFeeFrom } from "@/lib/settings";
 import { formatWa } from "@/lib/constants";
+import { getSellerSession, isAdmin } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +58,11 @@ export async function POST(req) {
     const normalizedWa = formatWa(seller_wa);
     if (!normalizedWa) {
       return NextResponse.json({ error: "Nomor WA tidak valid" }, { status: 400 });
+    }
+
+    const sessionWa = getSellerSession();
+    if (!isAdmin() && sessionWa !== normalizedWa) {
+      return NextResponse.json({ error: "Unauthorized: Anda belum login." }, { status: 401 });
     }
 
     const supa = getAdminClient();

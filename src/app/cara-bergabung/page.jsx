@@ -1,6 +1,17 @@
 import { WA_GROUP_LINK, MARKETPLACE_WA } from "@/lib/constants";
 
-export const metadata = { title: "Cara Bergabung — Jual Beli USU Polmed" };
+export const metadata = {
+  title: "Cara Bergabung — Gabung Komunitas Jual Beli Mahasiswa USU & POLMED",
+  description:
+    "Panduan lengkap bergabung di komunitas jual-beli mahasiswa USU & POLMED Medan: cara menjual, cara membeli, rincian fee admin yang transparan, dan aturan keamanan transaksi.",
+  alternates: { canonical: "/cara-bergabung" },
+  openGraph: {
+    title: "Cara Bergabung — Jual Beli USU Polmed",
+    description:
+      "Gabung grup WhatsApp komunitas, pasang iklan, dan transaksi aman dibantu admin. Fee transparan mulai Rp 2.000.",
+    url: "/cara-bergabung",
+  },
+};
 
 const sellSteps = [
   "Masuk ke komunitas WhatsApp lewat link di bawah.",
@@ -42,14 +53,16 @@ export default function CaraBergabungPage() {
           Komunitas jual-beli khusus mahasiswa USU &amp; POLMED
         </p>
         <a href={WA_GROUP_LINK} target="_blank" rel="noreferrer" className="btn mt-5 bg-white text-primary hover:bg-white/90">
-          🟢 Gabung Grup WhatsApp
+          <span aria-hidden="true">🟢</span> Gabung Grup WhatsApp
         </a>
-        <p className="mt-2 text-sm text-white/70">chat.whatsapp.com/DQMZK2qSgq2D0WvH7BlBSA</p>
+        <p className="mt-2 text-sm text-white/70">
+          Gratis, langsung diterima — khusus mahasiswa &amp; warga kampus
+        </p>
       </div>
 
       <div className="mt-8 grid gap-6 md:grid-cols-2">
         <div className="card p-6">
-          <h2 className="text-lg font-bold">🛒 Cara Menjual</h2>
+          <h2 className="text-lg font-bold"><span aria-hidden="true">🛒</span> Cara Menjual</h2>
           <ol className="mt-4 space-y-3">
             {sellSteps.map((s, i) => (
               <li key={i} className="flex gap-3">
@@ -62,7 +75,7 @@ export default function CaraBergabungPage() {
           </ol>
         </div>
         <div className="card p-6">
-          <h2 className="text-lg font-bold">🛍️ Cara Membeli</h2>
+          <h2 className="text-lg font-bold"><span aria-hidden="true">🛍️</span> Cara Membeli</h2>
           <ol className="mt-4 space-y-3">
             {buySteps.map((s, i) => (
               <li key={i} className="flex gap-3">
@@ -78,7 +91,7 @@ export default function CaraBergabungPage() {
 
       <div className="mt-6 grid gap-6 md:grid-cols-2">
         <div className="card p-6">
-          <h2 className="text-lg font-bold">💰 Fee Admin</h2>
+          <h2 className="text-lg font-bold"><span aria-hidden="true">💰</span> Fee Admin</h2>
           <p className="mt-1 text-sm text-gray-500">Sebelum deal (biaya iklan)</p>
           <div className="mt-2 space-y-2">
             <Fee label="Up barang / iklan" value="Rp 2.000" />
@@ -93,7 +106,7 @@ export default function CaraBergabungPage() {
           </div>
         </div>
         <div className="card p-6">
-          <h2 className="text-lg font-bold">⚠️ Aturan &amp; Keamanan</h2>
+          <h2 className="text-lg font-bold"><span aria-hidden="true">⚠️</span> Aturan &amp; Keamanan</h2>
           <ul className="mt-4 space-y-3">
             {rules.map((r, i) => (
               <li key={i} className="flex gap-2 text-sm text-gray-600">

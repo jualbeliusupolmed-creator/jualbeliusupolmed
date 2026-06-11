@@ -2,8 +2,9 @@ import Link from "next/link";
 import { MARKETPLACE_WA } from "@/lib/constants";
 
 export const metadata = {
-  title: "Syarat & Ketentuan — Jual Beli USU Polmed",
+  title: "Syarat & Ketentuan",
   description: "Syarat dan ketentuan penggunaan platform serta kebijakan transaksi di Jual Beli USU Polmed.",
+  alternates: { canonical: "/syarat-ketentuan" },
 };
 
 export default function SyaratKetentuanPage() {

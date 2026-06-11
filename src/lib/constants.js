@@ -29,10 +29,10 @@ export const POPULAR_AREAS = [
 export function formatWa(num) {
   if (!num) return "";
   let cleaned = num.replace(/\D/g, "");
-  if (cleaned.startsWith("0")) {
-    cleaned = "62" + cleaned.slice(1);
+  if (cleaned.startsWith("62")) {
+    cleaned = "0" + cleaned.slice(2);
   } else if (cleaned.startsWith("8")) {
-    cleaned = "62" + cleaned;
+    cleaned = "0" + cleaned;
   }
   return cleaned;
 }

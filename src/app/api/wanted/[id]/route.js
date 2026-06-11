@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
+import { getSellerSession, isAdmin } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,14 @@ export async function PATCH(req, { params }) {
     const { action, status } = body;
 
     const supa = getAdminClient();
+
+    const { data: current, error: errCurrent } = await supa.from("wanted_listings").select("buyer_wa").eq("id", id).single();
+    if (errCurrent || !current) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    const sessionWa = getSellerSession();
+    if (!isAdmin() && sessionWa !== current.buyer_wa) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     if (action === "resolve" || status === "resolved") {
       const { data, error } = await supa
@@ -34,6 +43,15 @@ export async function DELETE(req, { params }) {
   try {
     const { id } = params;
     const supa = getAdminClient();
+    
+    const { data: current, error: errCurrent } = await supa.from("wanted_listings").select("buyer_wa").eq("id", id).single();
+    if (errCurrent || !current) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    const sessionWa = getSellerSession();
+    if (!isAdmin() && sessionWa !== current.buyer_wa) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { error } = await supa.from("wanted_listings").delete().eq("id", id);
     if (error) throw new Error(error.message);
     return NextResponse.json({ ok: true });

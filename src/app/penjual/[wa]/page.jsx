@@ -72,7 +72,7 @@ export async function generateMetadata({ params }) {
   if (!data) return { title: "Penjual tidak ditemukan" };
   const name = data.seller.seller_name;
   return {
-    title: `${name} — Profil Penjual | Jual Beli USU Polmed`,
+    title: `${name} — Profil Penjual`,
     description: `Lihat ${data.listings.length} iklan aktif dari ${name} di marketplace mahasiswa USU & POLMED.`,
   };
 }

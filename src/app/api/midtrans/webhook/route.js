@@ -66,6 +66,12 @@ export async function POST(req) {
           .from("listings")
           .update({ featured: true, featured_until: until, bumped_at: new Date().toISOString() })
           .eq("id", payment.listing_id);
+      } else if (payment.type === "autobump") {
+        const until = new Date(Date.now() + 7 * 864e5).toISOString(); // 7 Hari
+        await supa
+          .from("listings")
+          .update({ auto_bump_until: until, bumped_at: new Date().toISOString() })
+          .eq("id", payment.listing_id);
       }
     }
 

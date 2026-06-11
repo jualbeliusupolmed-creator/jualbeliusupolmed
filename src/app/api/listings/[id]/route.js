@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { createSnapTransaction } from "@/lib/midtrans";
 import { getSettings, soldFeeFrom } from "@/lib/settings";
+import { getSellerSession, isAdmin } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,24 @@ export async function PATCH(req, { params }) {
     const { id } = params;
     const body = await req.json();
     const supa = getAdminClient();
+
+    // -- Auth check -----------------------------------------------------------
+    const sessionWa = getSellerSession();
+    const isAd = isAdmin();
+
+    const { data: currentListing, error: currentError } = await supa
+      .from("listings")
+      .select("seller_wa, title, seller_name")
+      .eq("id", id)
+      .single();
+
+    if (currentError || !currentListing) {
+      return NextResponse.json({ error: "Listing tidak ditemukan" }, { status: 404 });
+    }
+
+    if (!isAd && sessionWa !== currentListing.seller_wa && body.seller_wa !== currentListing.seller_wa) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     // ── Edit iklan ─────────────────────────────────────────────────────────
     if (body.action === "edit") {
@@ -112,9 +131,9 @@ export async function PATCH(req, { params }) {
         const tx = await createSnapTransaction({
           orderId: `SOLDFEE-${id.slice(0, 8)}-${Date.now()}`,
           amount: fee,
-          customerName: listing.seller_name,
-          customerWa: listing.seller_wa,
-          itemName: `Fee terjual: ${listing.title}`,
+          customerName: currentListing.seller_name,
+          customerWa: currentListing.seller_wa,
+          itemName: `Fee terjual: ${currentListing.title}`,
         });
         snapToken = tx.token;
       } catch (e) {

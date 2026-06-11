@@ -6,6 +6,7 @@ export const FEES = {
   bump: 1000,
   featured_min: 5000,
   featured_max: 10000,
+  autobump_7_days: 15000,
 };
 
 // Biaya iklan saat submit (sebelum deal / biaya iklan)

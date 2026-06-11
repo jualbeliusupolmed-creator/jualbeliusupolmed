@@ -102,6 +102,7 @@ export default function EditPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "edit",
+          seller_wa: localStorage.getItem("seller_wa"),
           seller_name: form.seller_name,
           title: form.title,
           description: form.description,

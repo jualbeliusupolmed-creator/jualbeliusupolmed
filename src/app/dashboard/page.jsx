@@ -9,6 +9,7 @@ import ConfirmModal from "@/components/ConfirmModal";
 import InputModal from "@/components/InputModal";
 import { formatWa } from "@/lib/constants";
 import { Icon } from "@/components/Icons";
+import { toast } from "sonner";
 
 function statusBadge(s) {
   const map = {
@@ -46,8 +47,12 @@ function DashboardInner() {
   const [soldModal, setSoldModal] = useState(null);
   const [soldPriceModal, setSoldPriceModal] = useState(null);
   const [stockModal, setStockModal] = useState(null);
+
   const [featuredModal, setFeaturedModal] = useState(null);
   const [featuredConfirm, setFeaturedConfirm] = useState(null);
+
+  const [autobumpConfirm, setAutobumpConfirm] = useState(null);
+
   const [qrisModalItem, setQrisModalItem] = useState(null);
 
   useEffect(() => {
@@ -104,7 +109,7 @@ function DashboardInner() {
       if (!res.ok) throw new Error("Gagal menyelesaikan postingan");
       load();
     } catch (err) {
-      alert(err.message);
+      toast.error(err.message);
     } finally {
       setBusy(false);
     }
@@ -118,9 +123,10 @@ function DashboardInner() {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Gagal menghapus postingan");
+      toast.success("Postingan dicari berhasil dihapus");
       load();
     } catch (err) {
-      alert(err.message);
+      toast.error(err.message);
     } finally {
       setBusy(false);
     }
@@ -130,9 +136,11 @@ function DashboardInner() {
     const res = await fetch(`/api/listings/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ ...body, seller_wa: wa }),
     });
-    return res.json();
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Gagal menyimpan perubahan");
+    return data;
   }
 
   // Mark sold — step 1: input harga
@@ -153,8 +161,13 @@ function DashboardInner() {
     if (!soldPriceModal) return;
     const { item, price } = soldPriceModal;
     setSoldPriceModal(null);
-    await patch(item.id, { action: "mark_sold", sold_price: price });
-    load();
+    try {
+      await patch(item.id, { action: "mark_sold", sold_price: price });
+      toast.success("Berhasil ditandai terjual");
+      load();
+    } catch (e) {
+      toast.error(e.message);
+    }
   }
 
   // Update stok — step 1: input stok
@@ -167,8 +180,13 @@ function DashboardInner() {
     const stock = Number(stockStr);
     if (isNaN(stock)) return;
     setStockModal(null);
-    await patch(stockModal.id, { action: "update_stock", stock });
-    load();
+    try {
+      await patch(stockModal.id, { action: "update_stock", stock });
+      toast.success("Stok berhasil diperbarui");
+      load();
+    } catch (e) {
+      toast.error(e.message);
+    }
   }
 
   async function pay(url, body, label) {
@@ -180,11 +198,15 @@ function DashboardInner() {
         body: JSON.stringify(body),
       });
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal memproses pembayaran");
+
       if (data.snapToken && window.snap) {
         window.snap.pay(data.snapToken, { onSuccess: () => load(), onClose: () => load() });
       } else {
         setNote(`Tidak bisa memproses ${label} — cek Midtrans.`);
       }
+    } catch (e) {
+      toast.error(e.message);
     } finally {
       setBusy(false);
     }
@@ -212,6 +234,13 @@ function DashboardInner() {
     const { item, days } = featuredConfirm;
     setFeaturedConfirm(null);
     pay("/api/payments/featured", { listing_id: item.id, days, per_day: 5000 }, "featured");
+  }
+
+  // Autobump
+  function doAutobump() {
+    const { item } = autobumpConfirm;
+    setAutobumpConfirm(null);
+    pay("/api/payments/autobump", { listing_id: item.id }, "autobump");
   }
 
   const active = items.filter((i) => i.status === "active");
@@ -323,6 +352,31 @@ function DashboardInner() {
         onClose={() => setFeaturedConfirm(null)}
       />
 
+      {/* Konfirmasi bayar autobump */}
+      <ConfirmModal
+        open={!!autobumpConfirm}
+        title="Konfirmasi Auto-Bump"
+        message={
+          autobumpConfirm && (
+            <div>
+              <p>
+                Aktifkan Auto-Bump untuk <strong>{autobumpConfirm.item.title}</strong>?
+              </p>
+              <ul className="mt-2 list-inside list-disc text-sm text-gray-500 space-y-1">
+                <li>Iklan otomatis naik ke atas setiap jam 8 pagi.</li>
+                <li>Berlaku selama 7 hari berturut-turut.</li>
+              </ul>
+              <p className="mt-3 text-gray-500">
+                Total: <strong className="text-primary">{rupiah(15000)}</strong>
+              </p>
+            </div>
+          )
+        }
+        confirmLabel="Bayar Rp 15.000"
+        onConfirm={doAutobump}
+        onClose={() => setAutobumpConfirm(null)}
+      />
+
       {/* ===== UI ===== */}
 
       <h1 className="text-2xl font-extrabold">Dashboard Penjual</h1>
@@ -347,7 +401,29 @@ function DashboardInner() {
         </button>
       </div>
 
-      {loaded && (
+      {busy && !loaded && (
+        <div className="mt-8 space-y-6">
+          <div className="flex gap-2 border-b dark:border-slate-800">
+            <div className="h-8 w-32 animate-pulse bg-gray-200 dark:bg-slate-800 rounded-t-md"></div>
+            <div className="h-8 w-32 animate-pulse bg-gray-100 dark:bg-slate-900 rounded-t-md"></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-24 rounded-xl animate-pulse bg-white dark:bg-slate-900/30 border border-gray-100 dark:border-slate-800"></div>
+            ))}
+          </div>
+          <div className="space-y-4">
+            <div className="h-6 w-32 animate-pulse bg-gray-200 dark:bg-slate-800 rounded"></div>
+            <div className="flex flex-col gap-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-32 rounded-xl animate-pulse bg-white dark:bg-slate-900/30 border border-gray-100 dark:border-slate-800"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {loaded && !busy && (
         <>
           {/* Tab Selection */}
           <div className="mt-8 flex gap-2 border-b dark:border-slate-800">
@@ -409,12 +485,44 @@ function DashboardInner() {
                             <p className="text-xs text-gray-500 dark:text-slate-400">{rupiah(i.price)}</p>
                           </div>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <button
+                            onClick={async () => {
+                              try {
+                                setBusy(true);
+                                const res = await fetch("/api/payments/resume", {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ listing_id: i.id, seller_wa: wa }),
+                                });
+                                const data = await res.json();
+                                if (!res.ok) throw new Error(data.error);
+                                
+                                if (window.snap && data.snapToken) {
+                                  window.snap.pay(data.snapToken, {
+                                    onSuccess: () => {
+                                      toast.success("Pembayaran berhasil!");
+                                      load();
+                                    },
+                                    onError: () => toast.error("Pembayaran gagal, coba lagi."),
+                                    onClose: () => toast.info("Pembayaran dibatalkan."),
+                                  });
+                                }
+                              } catch (e) {
+                                toast.error(e.message);
+                              } finally {
+                                setBusy(false);
+                              }
+                            }}
+                            className="btn-primary py-1.5 px-3 text-xs flex items-center justify-center gap-1 shadow-sm"
+                          >
+                            💳 Lanjutkan Pembayaran
+                          </button>
                           <button
                             onClick={() => setQrisModalItem(i)}
-                            className="btn-primary py-1.5 px-3 text-xs flex items-center gap-1 shadow-sm"
+                            className="btn-outline py-1.5 px-3 text-xs flex items-center justify-center gap-1 shadow-sm"
                           >
-                            📸 Bayar / Konfirmasi WA
+                            📸 Bayar Manual
                           </button>
                         </div>
                       </div>
@@ -462,26 +570,42 @@ function DashboardInner() {
                           <p className="text-sm text-gray-500">
                             {rupiah(i.price)} · stok {i.stock}
                           </p>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          <button onClick={() => bump(i)} className="btn-outline text-xs flex items-center gap-1">
-                            <Icon.ArrowUp className="h-3 w-3" /> Sundul 1k
-                          </button>
-                          <button onClick={() => openFeatured(i)} className="btn-outline text-xs flex items-center gap-1">
-                            <Icon.Star className="h-3 w-3" /> Featured
-                          </button>
-                          <button onClick={() => openUpdateStock(i)} className="btn-outline text-xs">
-                            <Icon.Package className="h-3 w-3 inline mr-1" /> Stok
-                          </button>
-                          <Link
-                            href={`/edit/${i.id}`}
-                            className="btn-outline text-xs"
-                          >
-                            <Icon.Edit2 className="h-3 w-3 inline mr-1" /> Edit
-                          </Link>
-                          <button onClick={() => openMarkSold(i)} className="btn-primary text-xs">
-                            <Icon.CheckCircle className="h-3 w-3 inline mr-1" /> Mark Sold
-                          </button>
+                          
+                          {/* Tools Promosi */}
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            <button
+                              onClick={() => bump(i)}
+                              className="btn-outline border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900 dark:text-emerald-400 dark:hover:bg-emerald-900/30 flex-1 sm:flex-none text-xs px-3 py-1.5"
+                              title="Sundul iklan ke atas"
+                            >
+                              🚀 Sundul (Rp 1rb)
+                            </button>
+                            <button
+                              onClick={() => setAutobumpConfirm({ item: i })}
+                              className="btn-outline border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-900 dark:text-indigo-400 dark:hover:bg-indigo-900/30 flex-1 sm:flex-none text-xs px-3 py-1.5"
+                              title="Sundul otomatis setiap pagi selama 7 hari"
+                            >
+                              ⚡ Auto-Bump
+                            </button>
+                            <button
+                              onClick={() => openFeatured(i)}
+                              className="btn-outline border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-900 dark:text-amber-400 dark:hover:bg-amber-900/30 flex-1 sm:flex-none text-xs px-3 py-1.5"
+                            >
+                              ⭐️ Featured
+                            </button>
+                            <button onClick={() => openUpdateStock(i)} className="btn-outline text-xs">
+                              <Icon.Package className="h-3 w-3 inline mr-1" /> Stok
+                            </button>
+                            <Link
+                              href={`/edit/${i.id}`}
+                              className="btn-outline text-xs"
+                            >
+                              <Icon.Edit2 className="h-3 w-3 inline mr-1" /> Edit
+                            </Link>
+                            <button onClick={() => openMarkSold(i)} className="btn-primary text-xs">
+                              <Icon.CheckCircle className="h-3 w-3 inline mr-1" /> Mark Sold
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}

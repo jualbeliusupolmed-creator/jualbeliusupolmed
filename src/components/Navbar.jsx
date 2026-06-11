@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import Logo from "@/components/Logo";
 import { Icon } from "@/components/Icons";
+import OTPModal from "@/components/OTPModal";
 
 const links = [
   { href: "/", label: "Beranda" },
@@ -19,6 +20,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [dark, setDark] = useState(false);
+  const [showOtp, setShowOtp] = useState(false);
   const [session, setSession] = useState({ name: "", wa: "" });
 
   useEffect(() => {
@@ -106,8 +108,9 @@ export default function Navbar() {
                 <Icon.User className="h-3 w-3" /> {session.name || session.wa}
               </span>
               <button
-                onClick={() => {
+                onClick={async () => {
                   if (confirm("Log out dari nomor seller ini?")) {
+                    await fetch("/api/auth/logout", { method: "POST" });
                     localStorage.removeItem("seller_wa");
                     localStorage.removeItem("seller_name");
                     setSession({ name: "", wa: "" });
@@ -120,6 +123,15 @@ export default function Navbar() {
                 ✕
               </button>
             </div>
+          )}
+
+          {!session.wa && (
+            <button
+              onClick={() => setShowOtp(true)}
+              className="ml-2 rounded-lg px-3 py-2 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+            >
+              Masuk
+            </button>
           )}
 
           <Link href="/jual" className="btn-primary ml-2 px-4 py-2">
@@ -169,8 +181,9 @@ export default function Navbar() {
                 <Icon.User className="h-3.5 w-3.5" /> Seller: {session.name || session.wa}
               </span>
               <button
-                onClick={() => {
+                onClick={async () => {
                   if (confirm("Log out dari nomor seller ini?")) {
+                    await fetch("/api/auth/logout", { method: "POST" });
                     localStorage.removeItem("seller_wa");
                     localStorage.removeItem("seller_name");
                     setSession({ name: "", wa: "" });
@@ -180,6 +193,19 @@ export default function Navbar() {
                 className="text-rose-500 font-bold px-2 py-1 bg-rose-50 dark:bg-rose-950/20 rounded-md shrink-0"
               >
                 Log Out
+              </button>
+            </div>
+          )}
+          {!session.wa && (
+            <div className="border-b border-gray-100 dark:border-slate-900 pb-2 mb-2">
+              <button
+                onClick={() => {
+                  setOpen(false);
+                  setShowOtp(true);
+                }}
+                className="w-full text-left flex items-center gap-2 rounded-lg px-3 py-2.5 text-[15px] font-medium text-gray-700 hover:bg-gray-50 dark:text-slate-300 dark:hover:bg-slate-800/50"
+              >
+                <Icon.User className="h-5 w-5 text-gray-400" /> Masuk / Daftar
               </button>
             </div>
           )}
@@ -202,6 +228,16 @@ export default function Navbar() {
           </Link>
         </nav>
       )}
+
+      <OTPModal
+        isOpen={showOtp}
+        onClose={() => setShowOtp(false)}
+        onSuccess={(wa) => {
+          setShowOtp(false);
+          setSession((s) => ({ ...s, wa }));
+          window.location.reload();
+        }}
+      />
     </header>
   );
 }

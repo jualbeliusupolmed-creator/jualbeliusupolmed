@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { notifySellerExpiring } from "@/lib/fonnte";
+import { notifySellerExpiring, notifySellerExpired } from "@/lib/fonnte";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +27,10 @@ export async function GET(req) {
     .lt("expires_at", now.toISOString())
     .eq("status", "active")
     .select();
+
+  for (const l of expired || []) {
+    notifySellerExpired(l).catch(() => {});
+  }
 
   // 2) reminder H-2
   const soon = new Date(now.getTime() + 2 * 864e5);

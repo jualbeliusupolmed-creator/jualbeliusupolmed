@@ -57,14 +57,42 @@ async function getTrending() {
   }
 }
 
+async function getStats() {
+  try {
+    const supa = getAdminClient();
+    const [wantedRes, soldRes, sellersRes] = await Promise.all([
+      supa
+        .from("wanted_listings")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "active"),
+      supa
+        .from("listings")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "sold"),
+      supa.from("listings").select("seller_wa").limit(1000),
+    ]);
+    const sellerCount = new Set(
+      (sellersRes.data || []).map((r) => r.seller_wa).filter(Boolean)
+    ).size;
+    return {
+      wanted: wantedRes.count || 0,
+      sold: soldRes.count || 0,
+      sellers: sellerCount,
+    };
+  } catch {
+    return { wanted: 0, sold: 0, sellers: 0 };
+  }
+}
+
 export default async function HomePage() {
-  const [{ listings, total }, featured, trending, settings, categories] =
+  const [{ listings, total }, featured, trending, settings, categories, stats] =
     await Promise.all([
       getInitialData(),
       getFeatured(),
       getTrending(),
       getSettings(),
       getCategories(),
+      getStats(),
     ]);
   return (
     <HomeBrowser
@@ -73,6 +101,7 @@ export default async function HomePage() {
       featured={featured}
       trending={trending}
       categories={categories}
+      stats={stats}
       heroTitle={settings.site?.heroTitle}
       heroSubtitle={settings.site?.heroSubtitle}
     />

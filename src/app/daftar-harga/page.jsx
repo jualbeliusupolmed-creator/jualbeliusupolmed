@@ -2,8 +2,9 @@ import Link from "next/link";
 import { rupiah } from "@/lib/fees";
 
 export const metadata = {
-  title: "Daftar Harga Layanan & Kebijakan — Jual Beli USU Polmed",
+  title: "Daftar Harga Layanan & Kebijakan",
   description: "Daftar tarif iklan, biaya layanan transaksi, dan kebijakan pengembalian dana di Jual Beli USU Polmed.",
+  alternates: { canonical: "/daftar-harga" },
 };
 
 const advertisingServices = [

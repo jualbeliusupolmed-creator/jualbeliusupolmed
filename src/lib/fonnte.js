@@ -60,39 +60,24 @@ export async function postToGroup(listing) {
   return send(group, msg);
 }
 
-// Notif ke penjual saat ada yang minat
+// Notif ke penjual saat ada yang minat (Dinonaktifkan)
 export async function notifySellerInterest(listing, buyerWa) {
-  const msg =
-    `🔔 *Ada yang minat barangmu!*\n\n` +
-    `📦 ${listing.title}\n` +
-    `💰 ${rupiah(listing.price)}\n` +
-    `📲 Calon pembeli: ${buyerWa || "(via website)"}\n` +
-    `Segera balas ya 🙏\n— Jual Beli USU Polmed`;
-  return send(listing.seller_wa, msg);
+  return { ok: true, skipped: true };
 }
 
-// Notif ke admin saat ada laporan iklan masuk
+// Notif ke admin saat ada laporan iklan masuk (Dinonaktifkan)
 export async function notifyAdminReport(listing, report) {
-  const admin = process.env.MARKETPLACE_WA;
-  const msg =
-    `🚩 *Laporan iklan baru*\n\n` +
-    `📦 ${listing?.title || "(listing)"}\n` +
-    `👤 Penjual: ${listing?.seller_wa || "-"}\n` +
-    `⚠️ Alasan: ${report?.reason || "-"}\n` +
-    (report?.detail ? `📝 ${report.detail}\n` : "") +
-    `🔗 ${baseUrl()}/produk/${buildSlug(listing?.title, listing?.id)}\n` +
-    `Cek panel admin untuk menindak.`;
-  return send(admin, msg);
+  return { ok: true, skipped: true };
 }
 
-// Reminder perpanjang sebelum expired
+// Reminder perpanjang sebelum expired (Dinonaktifkan)
 export async function notifySellerExpiring(listing) {
-  const msg =
-    `⏰ *Iklanmu akan berakhir*\n\n` +
-    `📦 ${listing.title}\n` +
-    `Perpanjang (bump Rp1.000) di: ${baseUrl()}/dashboard\n` +
-    `— Jual Beli USU Polmed`;
-  return send(listing.seller_wa, msg);
+  return { ok: true, skipped: true };
+}
+
+// Notifikasi bahwa iklan telah kedaluwarsa (Dinonaktifkan)
+export async function notifySellerExpired(listing) {
+  return { ok: true, skipped: true };
 }
 
 export { send as sendWa };

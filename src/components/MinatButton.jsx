@@ -27,8 +27,10 @@ export default function MinatButton({ listing }) {
     } finally {
       setBusy(false);
       const wa = formatWa(listing.seller_wa || MARKETPLACE_WA);
+      // wa.me requires country code without 0. Since formatWa returns 08..., we convert it to 628...
+      const waLink = wa.startsWith("0") ? "62" + wa.slice(1) : wa;
       window.open(
-        `https://wa.me/${wa}?text=${encodeURIComponent(text)}`,
+        `https://wa.me/${waLink}?text=${encodeURIComponent(text)}`,
         "_blank"
       );
     }

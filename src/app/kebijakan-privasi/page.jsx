@@ -2,8 +2,9 @@ import Link from "next/link";
 import { MARKETPLACE_WA } from "@/lib/constants";
 
 export const metadata = {
-  title: "Kebijakan Privasi — Jual Beli USU Polmed",
+  title: "Kebijakan Privasi",
   description: "Kebijakan privasi perlindungan data pribadi dan privasi pengguna platform Jual Beli USU Polmed.",
+  alternates: { canonical: "/kebijakan-privasi" },
 };
 
 export default function KebijakanPrivasiPage() {

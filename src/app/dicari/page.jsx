@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CATEGORIES, POPULAR_AREAS, formatWa } from "@/lib/constants";
 import { rupiah } from "@/lib/fees";
 import { Icon } from "@/components/Icons";
+import { toast } from "sonner";
 
 export default function DicariPage() {
   const [items, setItems] = useState([]);
@@ -30,7 +31,6 @@ export default function DicariPage() {
     area: "",
   });
   const [submitting, setSubmitting] = useState(false);
-  const [formMsg, setFormMsg] = useState("");
 
   // Budget masking
   const [budgetRaw, setBudgetRaw] = useState("");
@@ -85,10 +85,9 @@ export default function DicariPage() {
 
   const submitWanted = async (e) => {
     e.preventDefault();
-    setFormMsg("");
     const formattedWa = formatWa(form.buyer_wa);
     if (!form.buyer_name || !formattedWa || !form.title || !form.category) {
-      setFormMsg("Lengkapi nama, WA, judul, dan kategori.");
+      toast.error("Lengkapi nama, WA, judul, dan kategori.");
       return;
     }
     setSubmitting(true);
@@ -117,10 +116,13 @@ export default function DicariPage() {
         campus: "Semua",
         area: "",
       });
+      toast.success("Postingan dicari berhasil ditambahkan!");
       setShowModal(false);
       fetchItems();
     } catch (err) {
-      setFormMsg(err.message);
+      if (err.message !== "Unauthorized") {
+        toast.error(err.message);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -136,14 +138,22 @@ export default function DicariPage() {
         <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400 sm:text-xs">
-              Reverse Marketplace
+              Gratis · Tinggal Tunggu Penawaran
             </p>
             <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white sm:text-3xl">
-              Papan "Dicari" Barang &amp; Jasa
+              Papan "Dicari" — Biar Penjual yang Datang ke Kamu
             </h1>
             <p className="mt-1.5 max-w-xl text-xs sm:text-sm text-gray-500 dark:text-slate-400 leading-relaxed">
-              Mahasiswa butuh sesuatu? Pasang iklan dicari di sini secara gratis! Penjual yang memiliki barang tersebut akan langsung menghubungi Anda.
+              Capek scroll nyari barang? Balik aja: tulis apa yang kamu butuhkan
+              (laptop bekas, buku kuliah, kos, jasa ketik, apa pun) — mahasiswa
+              lain yang punya barangnya langsung chat kamu via WhatsApp.
             </p>
+            {!loading && items.length > 0 && (
+              <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400">
+                <Icon.TrendingUp className="h-3.5 w-3.5" />
+                {items.length} kebutuhan sedang dicari sekarang
+              </p>
+            )}
           </div>
           <div>
             <button
@@ -159,6 +169,28 @@ export default function DicariPage() {
           </div>
         </div>
       </section>
+
+      {/* Cara kerja — 3 langkah */}
+      <div className="mt-4 grid gap-2 sm:grid-cols-3">
+        {[
+          { n: "1", t: "Tulis kebutuhanmu", d: "Nama barang, budget, dan lokasi COD. 1 menit selesai, gratis." },
+          { n: "2", t: "Penjual lihat postinganmu", d: "Mahasiswa USU & POLMED yang punya barangnya akan melihatnya di sini." },
+          { n: "3", t: "Terima tawaran di WA", d: "Nego langsung lewat WhatsApp, COD di titik aman sekitar kampus." },
+        ].map((s) => (
+          <div
+            key={s.n}
+            className="flex items-start gap-3 rounded-xl border border-gray-100 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900/30"
+          >
+            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-500/10 text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
+              {s.n}
+            </span>
+            <div>
+              <p className="text-xs font-bold text-gray-900 dark:text-white">{s.t}</p>
+              <p className="mt-0.5 text-[11px] leading-relaxed text-gray-500 dark:text-slate-400">{s.d}</p>
+            </div>
+          </div>
+        ))}
+      </div>
 
       {/* Filter Bar */}
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
@@ -225,15 +257,53 @@ export default function DicariPage() {
       ) : error ? (
         <div className="mt-8 text-center text-rose-500 py-10">{error}</div>
       ) : items.length === 0 ? (
-        <div className="card mt-8 grid place-items-center py-16 text-center text-gray-400">
-          <Icon.Package className="h-12 w-12 text-gray-300 dark:text-slate-600 mb-2" />
-          <p className="mt-2 text-sm">Belum ada mahasiswa yang memposting kebutuhan.</p>
-          <button
-            onClick={() => setShowModal(true)}
-            className="btn-primary mt-4 px-4 py-2 text-xs"
-          >
-            Ayo buat postingan pertama
-          </button>
+        <div className="mt-8">
+          <div className="card grid place-items-center py-12 text-center text-gray-400">
+            <Icon.Package className="h-12 w-12 text-gray-300 dark:text-slate-600 mb-2" />
+            <p className="mt-2 text-sm font-medium text-gray-600 dark:text-slate-300">
+              Belum ada yang memposting kebutuhan di filter ini.
+            </p>
+            <p className="mt-1 max-w-sm text-xs text-gray-400 dark:text-slate-500">
+              Jadi yang pertama — postinganmu bakal jadi paling atas dan dilihat
+              semua penjual yang buka halaman ini.
+            </p>
+            <button
+              onClick={() => {
+                const savedWa = localStorage.getItem("seller_wa") || "";
+                setForm((f) => ({ ...f, buyer_wa: savedWa }));
+                setShowModal(true);
+              }}
+              className="btn-primary mt-4 px-5 py-2.5 text-xs"
+            >
+              Posting Kebutuhan Pertama — Gratis
+            </button>
+          </div>
+
+          {/* Contoh posting — supaya user baru tahu bentuk kontennya */}
+          <p className="mt-6 mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500">
+            Contoh postingan yang biasa dicari mahasiswa
+          </p>
+          <div className="grid gap-3 sm:grid-cols-3 opacity-75">
+            {[
+              { cat: "Elektronik", t: "Laptop bekas buat ngoding, RAM 8GB", b: "Budget Rp 3.500.000" },
+              { cat: "Buku Kuliah", t: "Buku Kalkulus Purcell jilid 1", b: "Budget Rp 50.000" },
+              { cat: "Kos", t: "Kos putri dekat Pintu 1 USU", b: "Budget Rp 700.000/bln" },
+            ].map((c, i) => (
+              <div
+                key={i}
+                className="card p-4 border-dashed bg-gray-50/50 dark:bg-slate-900/20 dark:border-slate-800"
+              >
+                <div className="flex items-center justify-between text-[10px]">
+                  <span className="badge bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 font-medium">
+                    {c.cat}
+                  </span>
+                  <span className="text-gray-400 dark:text-slate-600">Contoh</span>
+                </div>
+                <p className="mt-2 text-xs font-bold text-gray-700 dark:text-slate-300">{c.t}</p>
+                <p className="mt-1 text-[11px] text-gray-400 dark:text-slate-500">{c.b}</p>
+              </div>
+            ))}
+          </div>
         </div>
       ) : (
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -311,11 +381,12 @@ export default function DicariPage() {
           <div className="card w-full max-w-lg bg-white p-6 shadow-2xl dark:bg-slate-900 animate-fade-in max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-slate-800">
               <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-                🔍 Posting Barang yang Dicari
+                <span aria-hidden="true">🔍</span> Posting Barang yang Dicari
               </h2>
               <button
                 type="button"
                 onClick={() => setShowModal(false)}
+                aria-label="Tutup formulir"
                 className="text-gray-400 hover:text-gray-650"
               >
                 ✕
@@ -470,8 +541,6 @@ export default function DicariPage() {
                   )}
                 </div>
               </div>
-
-              {formMsg && <p className="text-sm text-rose-500">{formMsg}</p>}
 
               <div className="pt-3 border-t border-gray-100 dark:border-slate-800 flex gap-2 justify-end">
                 <button
