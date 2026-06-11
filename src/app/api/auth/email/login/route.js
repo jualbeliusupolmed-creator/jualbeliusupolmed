@@ -17,7 +17,7 @@ export async function POST(req) {
     const { email, password } = await req.json();
     
     // Akun Testing khusus untuk keperluan review (Midtrans, dll)
-    if (email === "testing" && password === "testing123") {
+    if (email === "ridhorobipasi@gmail.com" && password === "testing123") {
       const backdoorWa = "6281234567890";
       setSellerCookie(backdoorWa);
       return NextResponse.json({ success: true, wa: backdoorWa, message: "Login berhasil (Test Account)!" });
