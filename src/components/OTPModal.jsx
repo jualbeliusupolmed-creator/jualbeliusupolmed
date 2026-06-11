@@ -2,19 +2,30 @@ import { useState, useEffect } from "react";
 import { Icon } from "./Icons";
 
 export default function OTPModal({ isOpen, onClose, onSuccess }) {
+  const [loginMode, setLoginMode] = useState("wa"); // "wa" | "email"
+  
+  // WA States
   const [wa, setWa] = useState("");
   const [referral, setReferral] = useState("");
   const [otp, setOtp] = useState("");
   const [step, setStep] = useState(1); // 1: input WA, 2: input OTP
+  
+  // Email States
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [countdown, setCountdown] = useState(0);
 
   useEffect(() => {
     if (isOpen) {
+      setLoginMode("wa");
       setStep(1);
       setWa("");
       setOtp("");
+      setEmail("");
+      setPassword("");
       setError("");
       setCountdown(0);
     }
@@ -69,9 +80,32 @@ export default function OTPModal({ isOpen, onClose, onSuccess }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal verifikasi OTP");
       
-      // Save local reference just in case
       localStorage.setItem("seller_wa", wa);
       onSuccess(wa);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleEmailLogin(e) {
+    e.preventDefault();
+    setError("");
+    if (!email.trim() || !password.trim()) return setError("Email dan password wajib diisi.");
+    
+    setBusy(true);
+    try {
+      const res = await fetch("/api/auth/email/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal login dengan email");
+      
+      localStorage.setItem("seller_wa", data.wa);
+      onSuccess(data.wa);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -94,9 +128,33 @@ export default function OTPModal({ isOpen, onClose, onSuccess }) {
           <Icon.User className="h-5 w-5 text-indigo-500" />
           Masuk / Daftar
         </h3>
-        <p className="mb-5 text-sm text-gray-500 dark:text-slate-400">
-          {step === 1 ? "Gunakan nomor WhatsApp Anda untuk masuk atau mendaftar." : `Kode OTP telah dikirim ke WA ${wa}`}
+        <p className="mb-4 text-sm text-gray-500 dark:text-slate-400">
+          Gunakan nomor WhatsApp atau Email.
         </p>
+
+        {/* Tab Toggle */}
+        <div className="mb-4 flex gap-2 border-b dark:border-slate-800">
+          <button
+            onClick={() => { setLoginMode("wa"); setError(""); }}
+            className={`pb-2 text-sm font-bold border-b-2 flex-1 transition-colors ${
+              loginMode === "wa" 
+                ? "border-indigo-500 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400" 
+                : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            }`}
+          >
+            WhatsApp
+          </button>
+          <button
+            onClick={() => { setLoginMode("email"); setError(""); }}
+            className={`pb-2 text-sm font-bold border-b-2 flex-1 transition-colors ${
+              loginMode === "email" 
+                ? "border-indigo-500 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400" 
+                : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            }`}
+          >
+            Email
+          </button>
+        </div>
 
         {error && (
           <div className="mb-4 rounded-lg bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 border border-rose-100 dark:border-rose-900/50 flex gap-2 items-start">
@@ -105,86 +163,129 @@ export default function OTPModal({ isOpen, onClose, onSuccess }) {
           </div>
         )}
 
-        {step === 1 ? (
-          <form onSubmit={handleSendOTP} className="space-y-4">
+        {loginMode === "email" ? (
+          <form onSubmit={handleEmailLogin} className="space-y-4">
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300">
-                Nomor WhatsApp
+                Alamat Email
               </label>
               <input
-                type="tel"
-                placeholder="Contoh: 081234567890"
-                value={wa}
-                onChange={(e) => setWa(e.target.value)}
+                type="email"
+                placeholder="nama@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 required
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300 flex justify-between">
-                <span>Kode Referral</span>
-                <span className="text-gray-400 text-xs font-normal">Opsional</span>
+              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300">
+                Password
               </label>
               <input
-                type="text"
-                placeholder="Masukkan kode (jika ada)"
-                value={referral}
-                onChange={(e) => setReferral(e.target.value.toUpperCase())}
+                type="password"
+                placeholder="Masukkan password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                required
               />
             </div>
             <button
               type="submit"
-              disabled={busy || !wa.trim()}
+              disabled={busy || !email.trim() || !password.trim()}
               className="btn-primary w-full py-2.5 flex justify-center items-center gap-2"
             >
-              {busy ? "Mengirim..." : "Kirim Kode OTP"}
+              {busy ? "Memproses..." : "Masuk via Email"}
             </button>
           </form>
         ) : (
-          <form onSubmit={handleVerifyOTP} className="space-y-4">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300">
-                Kode OTP (6 Digit)
-              </label>
-              <input
-                type="text"
-                placeholder="Masukkan 6 digit angka"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-center text-xl tracking-widest font-mono dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                maxLength={6}
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={busy || otp.length < 5}
-              className="btn-primary w-full py-2.5 flex justify-center items-center gap-2"
-            >
-              {busy ? "Memverifikasi..." : "Verifikasi & Masuk"}
-            </button>
-            <div className="text-center mt-3">
+          /* WA Mode */
+          step === 1 ? (
+            <form onSubmit={handleSendOTP} className="space-y-4">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300">
+                  Nomor WhatsApp
+                </label>
+                <input
+                  type="tel"
+                  placeholder="Contoh: 081234567890"
+                  value={wa}
+                  onChange={(e) => setWa(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  required
+                />
+              </div>
+              <div>
+                <label className="mb-1 flex justify-between text-sm font-medium text-gray-700 dark:text-slate-300">
+                  <span>Kode Referral</span>
+                  <span className="text-gray-400 text-xs font-normal">Opsional</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Masukkan kode (jika ada)"
+                  value={referral}
+                  onChange={(e) => setReferral(e.target.value.toUpperCase())}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              </div>
               <button
-                type="button"
-                onClick={handleSendOTP}
-                disabled={busy || countdown > 0}
-                className="text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                type="submit"
+                disabled={busy || !wa.trim()}
+                className="btn-primary w-full py-2.5 flex justify-center items-center gap-2"
               >
-                {countdown > 0 ? `Kirim ulang dalam ${countdown}s` : "Kirim Ulang OTP"}
+                {busy ? "Mengirim..." : "Kirim Kode OTP"}
               </button>
-              <span className="text-gray-300 mx-2">|</span>
+            </form>
+          ) : (
+            <form onSubmit={handleVerifyOTP} className="space-y-4">
+              <p className="mb-2 text-sm text-gray-500 dark:text-slate-400">
+                Kode OTP telah dikirim ke WA {wa}
+              </p>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300">
+                  Kode OTP (6 Digit)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Masukkan 6 digit angka"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-center text-xl tracking-widest font-mono dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  maxLength={6}
+                  required
+                />
+              </div>
               <button
-                type="button"
-                onClick={() => setStep(1)}
-                className="text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-300"
+                type="submit"
+                disabled={busy || otp.length < 5}
+                className="btn-primary w-full py-2.5 flex justify-center items-center gap-2"
               >
-                Ganti Nomor
+                {busy ? "Memverifikasi..." : "Verifikasi & Masuk"}
               </button>
-            </div>
-          </form>
+              <div className="text-center mt-3">
+                <button
+                  type="button"
+                  onClick={handleSendOTP}
+                  disabled={busy || countdown > 0}
+                  className="text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {countdown > 0 ? `Kirim ulang dalam ${countdown}s` : "Kirim Ulang OTP"}
+                </button>
+                <span className="text-gray-300 mx-2">|</span>
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-300"
+                >
+                  Ganti Nomor
+                </button>
+              </div>
+            </form>
+          )
         )}
       </div>
     </div>
   );
 }
+
