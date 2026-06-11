@@ -4,7 +4,6 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
-import BottomNav from "./BottomNav";
 import InstallPrompt from "./InstallPrompt";
 
 export default function LayoutWrapper({ children }) {
@@ -24,14 +23,11 @@ export default function LayoutWrapper({ children }) {
   return (
     <>
       {!isAdmin && <Navbar config={config} />}
-      <main className="flex-1 pb-16 md:pb-0">{children}</main>
+      <main className="flex-1">{children}</main>
       {!isAdmin && (
         <>
-          <BottomNav />
           <InstallPrompt />
-          <div className="pb-16 md:pb-0">
-            <Footer config={config} />
-          </div>
+          <Footer config={config} />
         </>
       )}
     </>
