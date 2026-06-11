@@ -27,7 +27,7 @@ export default function JualPage() {
   const [busy, setBusy] = useState(false);
   const [fileError, setFileError] = useState("");
   const [msg, setMsg] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("otomatis");
+  const [paymentMethod, setPaymentMethod] = useState("manual");
   const [createdListing, setCreatedListing] = useState(null);
   const [showQRISModal, setShowQRISModal] = useState(false);
   const [areaOption, setAreaOption] = useState("");
@@ -286,26 +286,6 @@ export default function JualPage() {
             <div className="grid gap-3 sm:grid-cols-2">
               <button
                 type="button"
-                onClick={() => setPaymentMethod("otomatis")}
-                className={`flex flex-col text-left p-4 rounded-xl border-2 transition-all active:scale-[0.99] ${
-                  paymentMethod === "otomatis"
-                    ? "border-primary bg-primary/5 dark:border-white dark:bg-white/5"
-                    : "border-gray-200 bg-white hover:border-gray-300 dark:border-slate-800 dark:bg-slate-900/10 dark:hover:border-slate-700"
-                }`}
-              >
-                <span className="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-1.5">
-                  ⚡ Pembayaran Otomatis
-                </span>
-                <span className="text-xs text-gray-500 dark:text-slate-400 mt-1.5 leading-relaxed">
-                  QRIS Instan, Virtual Account, & E-wallet.
-                </span>
-                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold mt-2.5 bg-amber-50 dark:bg-amber-950/40 px-2 py-1 rounded-md">
-                  ⚠️ Belum lengkap (Sandbox/Test)
-                </span>
-              </button>
-
-              <button
-                type="button"
                 onClick={() => setPaymentMethod("manual")}
                 className={`flex flex-col text-left p-4 rounded-xl border-2 transition-all active:scale-[0.99] ${
                   paymentMethod === "manual"
@@ -321,6 +301,26 @@ export default function JualPage() {
                 </span>
                 <span className="text-[10px] text-green-600 dark:text-green-400 font-semibold mt-2.5 bg-green-50 dark:bg-green-950/40 px-2 py-1 rounded-md">
                   ✅ QRIS manual aktif siap pakai
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("otomatis")}
+                className={`flex flex-col text-left p-4 rounded-xl border-2 transition-all active:scale-[0.99] ${
+                  paymentMethod === "otomatis"
+                    ? "border-primary bg-primary/5 dark:border-white dark:bg-white/5"
+                    : "border-gray-200 bg-white hover:border-gray-300 dark:border-slate-800 dark:bg-slate-900/10 dark:hover:border-slate-700"
+                }`}
+              >
+                <span className="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-1.5">
+                  ⚡ Pembayaran Otomatis
+                </span>
+                <span className="text-xs text-gray-500 dark:text-slate-400 mt-1.5 leading-relaxed">
+                  QRIS Instan, Virtual Account, & E-wallet.
+                </span>
+                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold mt-2.5 bg-amber-50 dark:bg-amber-950/40 px-2 py-1 rounded-md">
+                  ⚠️ Belum lengkap (Sandbox/Test)
                 </span>
               </button>
             </div>
