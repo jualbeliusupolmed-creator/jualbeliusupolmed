@@ -32,20 +32,14 @@ function rupiah(n) {
   return "Rp " + (Number(n) || 0).toLocaleString("id-ID");
 }
 
-// Notif ke admin saat ada listing baru tayang
-export async function notifyAdminNewListing(listing) {
-  const admin = process.env.MARKETPLACE_WA;
-  const msg =
-    `🆕 *Listing baru tayang!*\n\n` +
-    `📦 ${listing.title}\n` +
-    `💰 ${rupiah(listing.price)} | stok ${listing.stock}\n` +
-    `🏷️ ${listing.category} (${listing.type})\n` +
-    `👤 ${listing.seller_name} — ${listing.seller_wa}\n` +
-    `🔗 ${baseUrl()}/produk/${buildSlug(listing.title, listing.id)}`;
-  return send(admin, msg);
-}
+// ============================================================================
+// FITUR YANG AKTIF:
+// 1. sendWa (digunakan oleh OTP)
+// 2. postToGroup (broadcast jualan baru)
+// 3. postWantedToGroup (broadcast pencarian baru)
+// ============================================================================
 
-// Auto-post ke grup WA setelah bayar
+// Auto-post ke grup WA setelah bayar iklan jualan
 export async function postToGroup(listing) {
   const group = process.env.FONNTE_WA_GROUP_ID;
   const msg =
@@ -60,52 +54,30 @@ export async function postToGroup(listing) {
   return send(group, msg);
 }
 
-// Matching Engine: Notif ke pembeli yang mencari barang serupa
-import { getAdminClient } from "@/lib/supabaseAdmin";
-export async function notifyWantedBuyers(listing) {
-  try {
-    const supa = getAdminClient();
-    const { data: wantedList } = await supa
-      .from("wanted_listings")
-      .select("buyer_wa, title")
-      .eq("status", "active")
-      .eq("category", listing.category);
-      
-    if (!wantedList || wantedList.length === 0) return;
-
-    for (const w of wantedList) {
-      // Basic matching: if listing title contains some keywords from wanted title (optional)
-      // For now we match based on category
-      const msg = 
-        `👋 Halo! Barang yang mungkin Anda cari di kategori *${listing.category}* baru saja diposting!\n\n` +
-        `📦 *${listing.title}*\n💰 ${rupiah(listing.price)}\n\n` +
-        `Cek selengkapnya di sini:\n${baseUrl()}/produk/${buildSlug(listing.title, listing.id)}\n\n` +
-        `— Sistem Jual Beli USU Polmed`;
-      await send(w.buyer_wa, msg);
-    }
-  } catch (err) {
-    console.error("[MatchingEngine] failed:", err?.message);
-  }
-}
-
-// Notif ke penjual saat ada yang minat (Dinonaktifkan)
-export async function notifySellerInterest(listing, buyerWa) {
-  return { ok: true, skipped: true };
-}
-
-// Notif ke admin saat ada laporan iklan masuk (Dinonaktifkan)
-export async function notifyAdminReport(listing, report) {
-  return { ok: true, skipped: true };
-}
-
-// Reminder perpanjang sebelum expired (Dinonaktifkan)
-export async function notifySellerExpiring(listing) {
-  return { ok: true, skipped: true };
-}
-
-// Notifikasi bahwa iklan telah kedaluwarsa (Dinonaktifkan)
-export async function notifySellerExpired(listing) {
-  return { ok: true, skipped: true };
+// Auto-post ke grup WA ketika ada yang mencari barang (Papan Dicari)
+export async function postWantedToGroup(wanted) {
+  const group = process.env.FONNTE_WA_GROUP_ID;
+  const msg =
+    `🔍 *Ada yang mencari barang!*\n\n` +
+    `*Dicari:* ${wanted.title}\n` +
+    `*Kategori:* ${wanted.category}\n` +
+    `*Anggaran:* Maks ${rupiah(wanted.max_budget)}\n\n` +
+    `${wanted.description ? `*Detail:* ${wanted.description}\n\n` : ""}` +
+    `Punya barangnya? Tawarkan langsung lewat website kita ya!\n` +
+    `📲 Buka: ${baseUrl()}/dicari\n` +
+    `— Papan Dicari USU Polmed`;
+  return send(group, msg);
 }
 
 export { send as sendWa };
+
+// ============================================================================
+// FITUR YANG DINONAKTIFKAN (Untuk Hemat Kuota Fonnte)
+// ============================================================================
+
+export async function notifyAdminNewListing(listing) { return { ok: true, skipped: true }; }
+export async function notifyWantedBuyers(listing) { return { ok: true, skipped: true }; }
+export async function notifySellerInterest(listing, buyerWa) { return { ok: true, skipped: true }; }
+export async function notifyAdminReport(listing, report) { return { ok: true, skipped: true }; }
+export async function notifySellerExpiring(listing) { return { ok: true, skipped: true }; }
+export async function notifySellerExpired(listing) { return { ok: true, skipped: true }; }

@@ -3,6 +3,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { formatWa } from "@/lib/constants";
 import { getSellerSession, isAdmin } from "@/lib/auth";
+import { postWantedToGroup } from "@/lib/fonnte";
 
 export const dynamic = "force-dynamic";
 
@@ -118,6 +119,9 @@ export async function POST(req) {
       .single();
 
     if (error) throw new Error(error.message);
+
+    // Broadcast ke grup WA
+    postWantedToGroup(listing).catch(() => {});
 
     return NextResponse.json({ listing });
   } catch (e) {
