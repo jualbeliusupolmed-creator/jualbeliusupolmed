@@ -43,9 +43,9 @@ export async function GET(req) {
     const supa = getAdminClient();
     let query = supa
       .from("listings")
-      // SECURITY: Exclude seller_wa from public browse response to prevent bulk scraping
+      // SECURITY: We fetch seller_wa internally to map profiles, then delete it before returning
       .select(
-        "id, title, description, price, stock, category, type, campus, area, status, featured, bumped_at, created_at, views, image_url, images, seller_name, seller_profiles(trusted_seller)",
+        "id, title, description, price, stock, category, type, campus, area, status, featured, bumped_at, created_at, views, image_url, images, seller_name, seller_wa",
         { count: "exact" }
       )
       .eq("status", "active");
@@ -81,6 +81,21 @@ export async function GET(req) {
 
     const { data, error, count } = await query;
     if (error) throw new Error(error.message);
+
+    // FIX: Manual join for seller_profiles to avoid Foreign Key schema cache errors
+    const sellerWas = [...new Set((data || []).map((d) => d.seller_wa).filter(Boolean))];
+    if (sellerWas.length > 0) {
+      const { data: profiles } = await supa
+        .from("seller_profiles")
+        .select("wa, trusted_seller")
+        .in("wa", sellerWas);
+      
+      const profileMap = new Map((profiles || []).map((p) => [p.wa, p]));
+      data.forEach((d) => {
+        d.seller_profiles = profileMap.get(d.seller_wa) || null;
+        delete d.seller_wa; // SECURITY: Don't leak to public
+      });
+    }
 
     return NextResponse.json({
       listings: data || [],

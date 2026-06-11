@@ -67,11 +67,19 @@ export async function getAdminStats(page = 1) {
     safePaginated(
       supa
         .from("listings")
-        .select("*, seller_profiles(trusted_seller, subscription_tier)", { count: "exact" })
+        .select("*, seller_profiles!fk_ignore(trusted_seller, subscription_tier)", { count: "exact" })
         .order("created_at", { ascending: false })
         .range(from, to),
       []
-    ),
+    ).catch(() => safePaginated(
+      // Fallback if foreign key doesn't exist
+      supa
+        .from("listings")
+        .select("*", { count: "exact" })
+        .order("created_at", { ascending: false })
+        .range(from, to),
+      []
+    )),
     safePaginated(
       supa
         .from("payments")
@@ -108,10 +116,25 @@ export async function getAdminStats(page = 1) {
     ),
   ]);
 
-  const listings = listingsRes.data;
+  const listings = listingsRes.data || [];
   const listingsTotal = listingsRes.count;
-  const payments = paymentsRes.data;
+  const payments = paymentsRes.data || [];
   const paymentsTotal = paymentsRes.count;
+
+  // FIX: Manual join for seller_profiles if it failed earlier
+  if (listings.length > 0 && listings[0] && listings[0].seller_profiles === undefined) {
+    const sellerWas = [...new Set(listings.map((l) => l.seller_wa).filter(Boolean))];
+    if (sellerWas.length > 0) {
+      const { data: profiles } = await supa
+        .from("seller_profiles")
+        .select("wa, trusted_seller, subscription_tier")
+        .in("wa", sellerWas);
+      const profileMap = new Map((profiles || []).map((p) => [p.wa, p]));
+      listings.forEach((l) => {
+        l.seller_profiles = profileMap.get(l.seller_wa) || null;
+      });
+    }
+  }
 
   // Reports and ratings stay reasonable with explicit limits
   const [reports, ratings] = await Promise.all([
