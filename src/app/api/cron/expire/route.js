@@ -7,14 +7,17 @@ export const dynamic = "force-dynamic";
 // Dipanggil Vercel Cron harian. Mengubah listing kadaluarsa -> expired,
 // dan mengirim reminder perpanjang untuk yang H-2 sebelum expired.
 export async function GET(req) {
-  // proteksi sederhana via header (Vercel cron mengirim ini),
-  // atau ?key=ADMIN_PASSWORD untuk manual.
+  // Proteksi: jika CRON_SECRET di-set, wajib Bearer token (Vercel cron
+  // mengirimnya otomatis). Header x-vercel-cron hanya diterima sebagai
+  // fallback saat CRON_SECRET belum di-set, karena header itu bisa dipalsukan.
+  // ?key=ADMIN_PASSWORD tetap tersedia untuk pemanggilan manual.
   const auth = req.headers.get("authorization");
   const key = req.nextUrl.searchParams.get("key");
   const ok =
-    auth === `Bearer ${process.env.CRON_SECRET}` ||
-    key === process.env.ADMIN_PASSWORD ||
-    !!req.headers.get("x-vercel-cron");
+    (process.env.CRON_SECRET
+      ? auth === `Bearer ${process.env.CRON_SECRET}`
+      : !!req.headers.get("x-vercel-cron")) ||
+    (process.env.ADMIN_PASSWORD && key === process.env.ADMIN_PASSWORD);
   if (!ok) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const supa = getAdminClient();
