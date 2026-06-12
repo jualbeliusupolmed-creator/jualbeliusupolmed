@@ -108,6 +108,17 @@ export async function POST(req) {
       );
     }
 
+    // Cek jumlah wanted listing sebelumnya dari nomor WA pembeli ini
+    const { count: pastWantedCount, error: countError } = await supa
+      .from("wanted_listings")
+      .select("id", { count: "exact", head: true })
+      .eq("buyer_wa", normalizedBuyerWa);
+
+    if (countError) throw new Error(countError.message);
+
+    const isFree = (pastWantedCount || 0) < 3;
+    const status = isFree ? "active" : "pending";
+
     const { data: listing, error } = await supa
       .from("wanted_listings")
       .insert({
@@ -119,20 +130,31 @@ export async function POST(req) {
         category,
         campus: campus || "Semua",
         area: area || "Sekitar Kampus",
-        status: "pending",
+        status: status,
       })
       .select()
       .single();
 
     if (error) throw new Error(error.message);
 
-    // Buat tagihan iPaymu Rp 1.000 untuk postingan Cari Barang
+    // Jika gratis (di bawah 3 postingan pertama)
+    if (isFree) {
+      // Kirim notifikasi WhatsApp ke Grup secara background
+      try {
+        await postWantedToGroup(listing);
+      } catch (err) {
+        console.error("Fonnte wanted group notification error:", err?.message);
+      }
+      return NextResponse.json({ listing, isFree: true });
+    }
+
+    // Jika berbayar (postingan ke-4 dst)
     const amount = 1000;
     const orderId = `WNT-${listing.id.slice(0, 8)}-${Date.now()}`;
 
     await supa.from("payments").insert({
-      listing_id: null, // wanted listing tidak masuk ke listings foreign key
-      type: "iklan", // bypass check constraint
+      listing_id: null,
+      type: "iklan",
       amount,
       status: "pending",
       midtrans_order_id: orderId,
@@ -153,7 +175,7 @@ export async function POST(req) {
       console.error("wanted payment charge:", e?.message);
     }
 
-    return NextResponse.json({ listing, paymentUrl });
+    return NextResponse.json({ listing, paymentUrl, isFree: false });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }

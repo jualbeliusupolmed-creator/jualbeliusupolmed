@@ -115,7 +115,7 @@ export default function CaraBergabungPage() {
             <Fee label="Iklan Barang (< Rp 500.000)" value="Rp 5.000" />
             <Fee label="Iklan Barang (< Rp 1.000.000)" value="Rp 7.000" />
             <Fee label="Iklan Barang (≥ Rp 1.000.000)" value="1%" />
-            <Fee label="Pasang Wanted / Cari Barang" value="Rp 1.000" />
+            <Fee label="Pasang Wanted / Cari Barang" value="Gratis 3x (Lalu Rp 1.000)" />
             <Fee label="Penawaran Wanted (Unlock WA)" value="Rp 2.000 / Bagi Hasil" />
             <Fee label="Iklan Poster" value="Rp 10.000" />
             <Fee label="Bump ke atas" value="Rp 1.000" />

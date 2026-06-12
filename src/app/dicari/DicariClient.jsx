@@ -121,7 +121,11 @@ export default function DicariPage() {
         area: "",
         item_condition: "Bekas",
       });
-      toast.success("Postingan dicari berhasil dibuat! Silakan selesaikan pembayaran Rp 1.000 agar postingan aktif.");
+      if (data.isFree) {
+        toast.success("Postingan dicari berhasil ditayangkan! (Gratis via kuota 3 kali posting pertama)");
+      } else {
+        toast.success("Postingan dicari berhasil dibuat! Silakan selesaikan pembayaran Rp 1.000 agar postingan aktif.");
+      }
       setShowModal(false);
       if (data.paymentUrl) {
         window.location.href = data.paymentUrl;
