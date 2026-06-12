@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -58,6 +58,36 @@ export default function HomeBrowser({
   const [page, setPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
   const [searching, setSearching] = useState(false);
+
+  // PWA Install prompt state
+  const [pwaReady, setPwaReady] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    // Sudah ada prompt yang disimpan di InstallPrompt.jsx (mungkin sudah fired sebelumnya)
+    if (window.pwaDeferredPrompt) setPwaReady(true);
+
+    const onPrompt = () => setPwaReady(true);
+    const onInstalled = () => setPwaReady(false);
+    window.addEventListener("beforeinstallprompt", onPrompt);
+    window.addEventListener("appinstalled", onInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", onPrompt);
+      window.removeEventListener("appinstalled", onInstalled);
+    };
+  }, []);
+
+  async function handlePwaInstall(e) {
+    e.preventDefault();
+    const prompt = window.pwaDeferredPrompt;
+    if (!prompt) return;
+    prompt.prompt();
+    const { outcome } = await prompt.userChoice;
+    if (outcome === "accepted") {
+      window.pwaDeferredPrompt = null;
+      setPwaReady(false);
+    }
+  }
 
   const catName = (slug) => CATEGORIES.find((c) => c.slug === slug)?.name || null;
 
@@ -235,14 +265,16 @@ export default function HomeBrowser({
               >
                 Papan Dicari
               </Link>
-              <a
-                href="/app-jual-beli-usu-polmed.apk"
-                className="flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100 active:scale-95 dark:border-emerald-900/50 dark:bg-emerald-900/20 dark:text-emerald-400"
-                title="Download Aplikasi Android"
-              >
-                <Icon.Download className="h-4 w-4" />
-                App
-              </a>
+              {pwaReady && (
+                <button
+                  onClick={handlePwaInstall}
+                  className="flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100 active:scale-95 dark:border-emerald-900/50 dark:bg-emerald-900/20 dark:text-emerald-400"
+                  title="Install Aplikasi — Android & Desktop"
+                >
+                  <Icon.Download className="h-4 w-4" />
+                  Install App
+                </button>
+              )}
             </div>
 
             {/* Stats — clean number blocks */}

@@ -17,6 +17,7 @@ export default function InstallPrompt() {
       // Mencegah Chrome memunculkan mini-infobar bawaan
       e.preventDefault();
       // Simpan event agar bisa dipanggil nanti
+      window.pwaDeferredPrompt = e;
       setDeferredPrompt(e);
       // Tampilkan banner kustom kita
       setShowPrompt(true);
@@ -36,6 +37,7 @@ export default function InstallPrompt() {
     // Tunggu respon user
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === "accepted") {
+      window.pwaDeferredPrompt = null;
       setDeferredPrompt(null);
       setShowPrompt(false);
     }
