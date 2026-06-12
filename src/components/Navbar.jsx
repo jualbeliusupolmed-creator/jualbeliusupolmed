@@ -25,6 +25,7 @@ export default function Navbar({ config }) {
   const [showOtp, setShowOtp] = useState(false);
   const [session, setSession] = useState({ name: "", wa: "" });
   const [navQ, setNavQ] = useState("");
+  const [wantedCount, setWantedCount] = useState(0);
 
   const submitSearch = (e) => {
     e.preventDefault();
@@ -43,6 +44,12 @@ export default function Navbar({ config }) {
           .catch((err) => console.error("SW registration failed:", err));
       });
     }
+
+    // Fetch wanted count for badge
+    fetch("/api/wanted?limit=1")
+      .then((r) => r.json())
+      .then((d) => setWantedCount(d.total || d.listings?.length || 0))
+      .catch(() => {});
   }, []);
 
   // Cookie server adalah satu-satunya sumber kebenaran sesi;
@@ -183,6 +190,11 @@ export default function Navbar({ config }) {
                 }`}
               >
                 {l.label}
+                {l.href === "/dicari" && wantedCount > 0 && (
+                  <span className="ml-1 rounded-full bg-emerald-500 px-1.5 py-0.5 text-[9px] font-bold text-white leading-none">
+                    {wantedCount}
+                  </span>
+                )}
               </Link>
             );
           })}

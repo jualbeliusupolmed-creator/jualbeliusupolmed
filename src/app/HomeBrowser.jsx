@@ -59,6 +59,9 @@ export default function HomeBrowser({
   const [loadingMore, setLoadingMore] = useState(false);
   const [searching, setSearching] = useState(false);
 
+  // Wanted listings for homepage teaser
+  const [wantedTeaser, setWantedTeaser] = useState([]);
+
   // PWA Install prompt state
   const [pwaReady, setPwaReady] = useState(false);
 
@@ -75,6 +78,14 @@ export default function HomeBrowser({
       window.removeEventListener("beforeinstallprompt", onPrompt);
       window.removeEventListener("appinstalled", onInstalled);
     };
+  }, []);
+
+  // Fetch wanted teaser on mount
+  useEffect(() => {
+    fetch("/api/wanted?limit=4")
+      .then((r) => r.json())
+      .then((d) => setWantedTeaser(d.listings?.slice(0, 4) || []))
+      .catch(() => {});
   }, []);
 
   async function handlePwaInstall(e) {
@@ -237,7 +248,7 @@ export default function HomeBrowser({
   const hasActiveFilter =
     cat !== "all" || q || sort !== "bumped" || minPrice || maxPrice || campusFilter !== "Semua" || negoFilter;
 
-  const order = layoutOrder && layoutOrder.length > 0 ? layoutOrder : ["hero", "featured", "main"];
+  const order = layoutOrder && layoutOrder.length > 0 ? layoutOrder : ["hero", "featured", "wanted", "main"];
 
   const renderSection = (key) => {
     switch (key) {
@@ -326,6 +337,49 @@ export default function HomeBrowser({
                   </div>
                 </Link>
               ))}
+            </div>
+          </section>
+        );
+
+      case "wanted":
+        if (!wantedTeaser.length) return null;
+        return (
+          <section key="wanted" className="mb-5">
+            <div className="mb-2.5 flex items-center justify-between">
+              <h2 className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                Ada yang Butuh Ini
+              </h2>
+              <Link href="/dicari" className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">
+                Lihat semua →
+              </Link>
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {wantedTeaser.map((w) => (
+                <Link
+                  key={w.id}
+                  href="/dicari"
+                  className="flex w-44 shrink-0 flex-col justify-between gap-1.5 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-3 transition hover:border-emerald-200 hover:bg-emerald-50 dark:border-emerald-900/30 dark:bg-emerald-900/10 dark:hover:border-emerald-800/50"
+                >
+                  <div>
+                    <span className="inline-block rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 truncate max-w-full">
+                      {w.category}
+                    </span>
+                    <p className="mt-1.5 text-xs font-bold text-gray-800 dark:text-white line-clamp-2 leading-snug">{w.title}</p>
+                  </div>
+                  <p className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                    {w.budget > 0 ? rupiah(w.budget) : "Budget nego"}
+                  </p>
+                </Link>
+              ))}
+              {/* CTA card */}
+              <Link
+                href="/dicari"
+                className="flex w-36 shrink-0 flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-emerald-200 bg-transparent p-3 text-center transition hover:bg-emerald-50 dark:border-emerald-900/40 dark:hover:bg-emerald-900/10"
+              >
+                <span className="text-xl">🔍</span>
+                <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 leading-tight">Lihat semua yang dicari</span>
+              </Link>
             </div>
           </section>
         );
