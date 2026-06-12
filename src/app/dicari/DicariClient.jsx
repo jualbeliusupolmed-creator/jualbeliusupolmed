@@ -153,15 +153,15 @@ export default function DicariPage() {
       {/* Cara kerja — 3 langkah */}
 
       {/* Filter Bar */}
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
+      <div className="mt-3 flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {/* Search */}
-        <div className="relative">
+        <div className="relative min-w-[140px] flex-1">
           <svg
-            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+            className="absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth="2"
+            strokeWidth="2.5"
             strokeLinecap="round"
           >
             <circle cx="11" cy="11" r="7" />
@@ -171,7 +171,7 @@ export default function DicariPage() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Cari kebutuhan..."
-            className="input pl-10"
+            className="w-full rounded-full border border-gray-200 bg-white py-1.5 pl-9 pr-3 text-xs text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-400 focus:ring-2 focus:ring-gray-900/5 dark:border-slate-800 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500"
           />
         </div>
 
@@ -179,18 +179,18 @@ export default function DicariPage() {
         <select
           value={campus}
           onChange={(e) => setCampus(e.target.value)}
-          className="input cursor-pointer"
+          className="shrink-0 cursor-pointer rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-350"
         >
-          <option value="Semua">Semua Kampus (USU &amp; POLMED)</option>
-          <option value="USU">Universitas Sumatera Utara</option>
-          <option value="POLMED">Politeknik Negeri Medan</option>
+          <option value="Semua">Semua Kampus</option>
+          <option value="USU">USU</option>
+          <option value="POLMED">POLMED</option>
         </select>
 
         {/* Category Filter */}
         <select
           value={cat}
           onChange={(e) => setCat(e.target.value)}
-          className="input cursor-pointer"
+          className="shrink-0 cursor-pointer rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-350"
         >
           <option value="all">Semua Kategori</option>
           {cats.map((c) => (
