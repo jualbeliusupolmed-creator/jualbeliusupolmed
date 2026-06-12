@@ -53,8 +53,9 @@ export async function postToGroup(listing) {
 // Auto-post ke grup WA ketika ada yang mencari barang (Papan Dicari) — ringkas
 export async function postWantedToGroup(wanted) {
   const group = process.env.FONNTE_WA_GROUP_ID;
+  const budgetStr = wanted.budget && wanted.budget > 0 ? `maks ${rupiah(wanted.budget)}` : "Budget nego";
   const msg =
-    `🔍 *Dicari:* ${wanted.title} (maks ${rupiah(wanted.max_budget)})\n` +
+    `🔍 *Dicari:* ${wanted.title} (${budgetStr})\n` +
     `Punya barangnya? 👉 ${baseUrl()}/dicari`;
   return send(group, msg);
 }
