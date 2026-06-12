@@ -52,7 +52,7 @@ export default function Footer({ config }) {
               </li>
               <li>
                 <Link href="/dicari" className="text-gray-600 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white transition-colors">
-                  Papan Dicari
+                  Cari Barang
                 </Link>
               </li>
               <li>

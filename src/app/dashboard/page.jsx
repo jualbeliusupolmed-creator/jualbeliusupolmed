@@ -645,7 +645,7 @@ function DashboardInner() {
                     >
                       <span className="absolute inset-0 w-full h-full -mt-1 rounded-lg opacity-30 bg-gradient-to-b from-transparent via-transparent to-black"></span>
                       <span className="relative flex items-center gap-2">
-                        + Pasang Iklan Sekarang
+                        + Jual Barang Sekarang
                       </span>
                     </Link>
                   </div>
@@ -806,7 +806,7 @@ function DashboardInner() {
                   </div>
                   <h3 className="text-xl font-extrabold text-gray-900 dark:text-white mb-2">Belum ada postingan dicari</h3>
                   <p className="max-w-md text-sm text-gray-500 dark:text-slate-400 mb-6 leading-relaxed">
-                    Sedang mencari barang spesifik? Buat postingan di Papan Dicari agar penjual yang punya barang bisa langsung menghubungi Anda.
+                    Sedang mencari barang spesifik? Buat postingan di halaman Cari Barang agar penjual yang punya barang bisa langsung menghubungi Anda.
                   </p>
                   <Link
                     href="/dicari"

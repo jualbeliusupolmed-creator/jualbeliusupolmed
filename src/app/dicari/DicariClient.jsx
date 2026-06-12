@@ -141,7 +141,7 @@ export default function DicariPage() {
               Gratis · Tinggal Tunggu Penawaran
             </p>
             <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white sm:text-3xl">
-              Papan "Dicari" — Biar Penjual yang Datang ke Kamu
+              Cari Barang — Tulis Kebutuhanmu, Biar Penjual yang Datang
             </h1>
             <p className="mt-1.5 max-w-xl text-xs sm:text-sm text-gray-500 dark:text-slate-400 leading-relaxed">
               Capek scroll nyari barang? Balik aja: tulis apa yang kamu butuhkan
@@ -361,7 +361,7 @@ export default function DicariPage() {
                 {/* Action button */}
                 <a
                   href={`https://wa.me/${item.buyer_wa}?text=${encodeURIComponent(
-                    `Halo ${item.buyer_name}, saya melihat postingan Anda di Papan Dicari Jual Beli USU Polmed untuk: "${item.title}". Saya punya barangnya. Apakah masih dicari?`
+                    `Halo ${item.buyer_name}, saya melihat postingan Anda di halaman Cari Barang Jual Beli USU Polmed untuk: "${item.title}". Saya punya barangnya. Apakah masih dicari?`
                   )}`}
                   target="_blank"
                   rel="noreferrer"

@@ -136,9 +136,9 @@ export default function JualPage() {
     <div className="mx-auto max-w-4xl px-4 py-6">
 
 
-      <h1 className="text-2xl font-extrabold">Pasang Iklan</h1>
+      <h1 className="text-2xl font-extrabold">Jual Barang</h1>
       <p className="mt-1 text-gray-500">
-        Isi detail barang, bayar biaya iklan, iklan otomatis tayang setelah
+        Isi detail barang, bayar biaya tayang, barang langsung tampil ke pembeli setelah
         pembayaran sukses.
       </p>
 
@@ -161,7 +161,7 @@ export default function JualPage() {
               <label className="label">Tipe Iklan</label>
               <select className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.type} onChange={set("type")}>
                 <option value="barang">Barang — {rupiah(adFeeFor("barang"))}</option>
-                <option value="poster">Poster — {rupiah(adFeeFor("poster"))}</option>
+              <option value="poster">Poster — {rupiah(adFeeFor("poster"))}</option>
               </select>
             </div>
             <div>
@@ -220,7 +220,7 @@ export default function JualPage() {
                 placeholder=" "
                 required
               />
-              <label htmlFor="form-title" className="floating-label">Judul Iklan</label>
+              <label htmlFor="form-title" className="floating-label">Nama / Judul Barang</label>
             </div>
             
             <div className="sm:col-span-2 floating-group">
@@ -350,7 +350,7 @@ export default function JualPage() {
                 <dd className="font-medium capitalize dark:text-white">{paymentMethod}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-gray-500 dark:text-slate-400">Biaya iklan</dt>
+                <dt className="text-gray-500 dark:text-slate-400">Biaya tayang</dt>
                 <dd className="font-medium dark:text-white">{rupiah(fee)}</dd>
               </div>
               <div className="my-2 border-t dark:border-slate-800" />
@@ -360,7 +360,7 @@ export default function JualPage() {
               </div>
             </dl>
             <button type="submit" disabled={busy || !!fileError} className="btn-primary mt-4 w-full">
-              Preview Iklan
+              Preview Barang
             </button>
             {msg && <p className="mt-3 text-sm text-rose-600">{msg}</p>}
           </div>
@@ -441,7 +441,7 @@ export default function JualPage() {
           <div className="card w-full max-w-2xl bg-white p-6 shadow-2xl dark:bg-slate-900/95 dark:border-slate-800 animate-fade-in max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-start mb-4">
               <h2 className="text-xl font-extrabold text-gray-900 dark:text-white">
-                Preview Iklan
+                Preview Barang
               </h2>
               <button 
                 type="button" 

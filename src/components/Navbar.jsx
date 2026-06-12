@@ -10,8 +10,8 @@ import { toast } from "sonner";
 
 const links = [
   { href: "/", label: "Beranda" },
-  { href: "/jual", label: "Jual" },
-  { href: "/dicari", label: "Dicari" },
+  { href: "/jual", label: "Jual Barang" },
+  { href: "/dicari", label: "Cari Barang" },
   { href: "/favorit", label: "Favorit" },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/blog", label: "Blog" },
@@ -159,9 +159,9 @@ export default function Navbar({ config }) {
               )}
             </button>
 
-            {/* Pasang Iklan CTA — desktop only */}
+            {/* Jual Barang CTA — desktop only */}
             <Link href="/jual" className="hidden md:inline-flex rounded-full bg-gray-900 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-gray-700 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100">
-              + Pasang Iklan
+              + Jual Barang
             </Link>
           </div>
         </div>
