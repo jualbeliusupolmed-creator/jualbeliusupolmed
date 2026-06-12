@@ -53,19 +53,51 @@ export async function PATCH(req, { params }) {
     // ── Edit iklan ─────────────────────────────────────────────────────────
     if (body.action === "edit") {
       const updates = {};
-      if (body.title !== undefined) updates.title = String(body.title).trim();
+      let titleChangedToDigital = false;
+      let categoryChangedToDigital = false;
+
+      // Ambil detail listing sebelumnya untuk perbandingan jika perlu
+      const { data: oldListing } = await supa
+        .from("listings")
+        .select("category, title, status")
+        .eq("id", id)
+        .single();
+
+      const digitalKeywords = ["jasa", "digital", "akun", "voucher", "premium"];
+
+      if (body.title !== undefined) {
+        updates.title = String(body.title).trim();
+        const isNewTitleDigital = digitalKeywords.some(term => updates.title.toLowerCase().includes(term));
+        const isOldTitleDigital = oldListing?.title ? digitalKeywords.some(term => oldListing.title.toLowerCase().includes(term)) : false;
+        if (isNewTitleDigital && !isOldTitleDigital) {
+          titleChangedToDigital = true;
+        }
+      }
+      if (body.category !== undefined) {
+        updates.category = body.category;
+        const isNewCatDigital = digitalKeywords.some(term => updates.category.toLowerCase().includes(term));
+        const isOldCatDigital = oldListing?.category ? digitalKeywords.some(term => oldListing.category.toLowerCase().includes(term)) : false;
+        if (isNewCatDigital && !isOldCatDigital) {
+          categoryChangedToDigital = true;
+        }
+      }
+
       if (body.description !== undefined)
         updates.description = String(body.description || "").trim();
       if (body.price !== undefined)
         updates.price = Math.max(0, Math.round(Number(body.price) || 0));
       if (body.stock !== undefined)
         updates.stock = Math.max(0, Number(body.stock) || 0);
-      if (body.category !== undefined) updates.category = body.category;
       if (body.seller_name !== undefined)
         updates.seller_name = String(body.seller_name).trim();
       if (body.image_url !== undefined) updates.image_url = body.image_url || null;
       if (body.campus !== undefined) updates.campus = body.campus;
       if (body.area !== undefined) updates.area = String(body.area || "").trim();
+
+      // Jika terdeteksi diubah menjadi produk digital/jasa, ubah status menjadi pending untuk verifikasi ulang admin
+      if (titleChangedToDigital || categoryChangedToDigital) {
+        updates.status = "pending";
+      }
 
       if (Object.keys(updates).length === 0) {
         return NextResponse.json({ error: "Tidak ada perubahan" }, { status: 400 });
@@ -83,7 +115,7 @@ export async function PATCH(req, { params }) {
       if (Array.isArray(body.images)) {
         await supa.from("listings").update({ images: body.images }).eq("id", id);
       }
-      return NextResponse.json({ listing: data });
+      return NextResponse.json({ listing: data, reVerify: (titleChangedToDigital || categoryChangedToDigital) });
     }
 
     // ── Update stok ────────────────────────────────────────────────────────
