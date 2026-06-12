@@ -130,42 +130,24 @@ export default function DicariPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
-      {/* Hero Banner */}
-      <section className="relative overflow-hidden rounded-2xl border border-gray-150/80 bg-gradient-to-br from-white via-white to-gray-50/50 px-4 py-6 sm:px-8 sm:py-8 dark:border-slate-900/60 dark:from-slate-900/30 dark:to-slate-950/20 dark:bg-slate-900/10">
-        <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-emerald-500/5 blur-2xl dark:bg-emerald-500/5" />
-        <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#80808006_1px,transparent_1px),linear-gradient(to_bottom,#80808006_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] dark:bg-[linear-gradient(to_right,#ffffff02_1px,transparent_1px),linear-gradient(to_bottom,#ffffff02_1px,transparent_1px)]" />
-
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400 sm:text-xs">
-              Gratis · Tinggal Tunggu Penawaran
-            </p>
-            <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white sm:text-3xl">
-              Cari Barang — Gratis, Penjual Datang ke Kamu
-            </h1>
-            <p className="mt-1.5 max-w-xl text-xs sm:text-sm text-gray-500 dark:text-slate-400 leading-relaxed">
-              Tulis kebutuhan (laptop, buku, kos, jasa) — mahasiswa USU &amp; POLMED yang punya barangnya langsung chat via WhatsApp.
-            </p>
-            {!loading && items.length > 0 && (
-              <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400">
-                <Icon.TrendingUp className="h-3.5 w-3.5" />
-                {items.length} kebutuhan sedang dicari sekarang
-              </p>
-            )}
-          </div>
-          <div>
-            <button
-              onClick={() => {
-                const savedWa = localStorage.getItem("seller_wa") || "";
-                setForm((f) => ({ ...f, buyer_wa: savedWa }));
-                setShowModal(true);
-              }}
-              className="btn-primary w-full md:w-auto px-5 py-3 text-sm flex items-center justify-center gap-1.5 shadow-md hover:shadow-lg transition-all"
-            >
-              <Icon.Edit className="h-4 w-4" /> Posting Kebutuhan
-            </button>
-          </div>
+      {/* Hero compact */}
+      <section className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-gray-50/60 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/20">
+        <div>
+          <p className="text-[9px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Gratis · Penjual datang ke kamu</p>
+          <h1 className="mt-0.5 text-sm font-extrabold tracking-tight text-gray-900 dark:text-white">
+            Cari Barang{!loading && items.length > 0 && <span className="ml-1.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">· {items.length} aktif</span>}
+          </h1>
         </div>
+        <button
+          onClick={() => {
+            const savedWa = localStorage.getItem("seller_wa") || "";
+            setForm((f) => ({ ...f, buyer_wa: savedWa }));
+            setShowModal(true);
+          }}
+          className="shrink-0 whitespace-nowrap rounded-full bg-gray-900 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-gray-700 dark:bg-white dark:text-gray-900"
+        >
+          + Posting
+        </button>
       </section>
 
       {/* Cara kerja — 3 langkah */}
