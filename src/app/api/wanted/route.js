@@ -30,11 +30,15 @@ export async function GET(req) {
       return NextResponse.json({ listings: data || [] });
     }
 
-    // List active wanted
+    // List active/resolved wanted from last 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
     let query = supa
       .from("wanted_listings")
       .select("*")
-      .eq("status", "active")
+      .in("status", ["active", "resolved"])
+      .gte("created_at", thirtyDaysAgo.toISOString())
       .order("created_at", { ascending: false });
 
     if (campus && campus !== "Semua") {

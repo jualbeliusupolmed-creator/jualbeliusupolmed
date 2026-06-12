@@ -29,6 +29,7 @@ export default function DicariPage() {
     category: CATEGORIES[0].name,
     campus: "Semua",
     area: "",
+    item_condition: "Bekas",
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -92,10 +93,11 @@ export default function DicariPage() {
     }
     setSubmitting(true);
     try {
+      const finalDesc = `[Kondisi: ${form.item_condition}]\n${form.description || ""}`;
       const res = await fetch("/api/wanted", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, buyer_wa: formattedWa }),
+        body: JSON.stringify({ ...form, description: finalDesc, buyer_wa: formattedWa }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal mengirim postingan");
@@ -115,6 +117,7 @@ export default function DicariPage() {
         category: cats[0].name,
         campus: "Semua",
         area: "",
+        item_condition: "Bekas",
       });
       toast.success("Postingan dicari berhasil ditambahkan!");
       setShowModal(false);
@@ -267,68 +270,98 @@ export default function DicariPage() {
         </div>
       ) : (
         <div className="mt-4 grid grid-cols-2 gap-2 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {items.map((item) => (
-            <div
-              key={item.id}
-              className="card flex flex-col justify-between p-3 sm:p-5 bg-white hover:shadow-md transition-shadow dark:border-slate-800 dark:bg-slate-900/30"
-            >
-              <div>
-                {/* Meta details */}
-                <div className="flex flex-wrap items-center justify-between gap-1 text-[9px] sm:text-xs text-gray-400 dark:text-slate-550">
-                  <span className="badge bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 font-medium truncate max-w-[80px] sm:max-w-none">
-                    {item.category}
-                  </span>
-                  <span>
-                    {new Date(item.created_at).toLocaleDateString("id-ID", {
-                      day: "numeric",
-                      month: "short",
-                    })}
-                  </span>
+          {items.map((item) => {
+            const condMatch = item.description?.match(/^\[Kondisi:\s*(Baru|Bekas)\]\n?/i);
+            const itemCondition = condMatch ? condMatch[1] : null;
+            const cleanDesc = condMatch ? item.description.replace(condMatch[0], "") : item.description;
+
+            return (
+              <div
+                key={item.id}
+                className={`card flex flex-col justify-between p-3 sm:p-5 bg-white hover:shadow-md transition-shadow dark:border-slate-800 dark:bg-slate-900/30 ${
+                  item.status === "resolved" ? "opacity-60 grayscale-[30%]" : ""
+                }`}
+              >
+                <div>
+                  {/* Meta details */}
+                  <div className="flex flex-wrap items-center justify-between gap-1 text-[9px] sm:text-xs text-gray-400 dark:text-slate-550">
+                    <div className="flex items-center gap-1 flex-wrap">
+                      <span className="badge bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 font-medium truncate max-w-[80px] sm:max-w-none">
+                        {item.category}
+                      </span>
+                      {itemCondition && (
+                        <span className={`badge font-semibold ${
+                          itemCondition.toLowerCase() === "baru"
+                            ? "bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400"
+                            : "bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-350"
+                        }`}>
+                          {itemCondition}
+                        </span>
+                      )}
+                      {item.status === "resolved" && (
+                        <span className="badge bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400 font-bold">
+                          ✓ Terpenuhi
+                        </span>
+                      )}
+                    </div>
+                    <span>
+                      {new Date(item.created_at).toLocaleDateString("id-ID", {
+                        day: "numeric",
+                        month: "short",
+                      })}
+                    </span>
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="mt-1.5 sm:mt-2.5 font-bold text-gray-900 dark:text-white leading-snug text-xs sm:text-sm md:text-base line-clamp-2">
+                    {item.title}
+                  </h3>
+
+                  {/* Location */}
+                  <div className="mt-1.5 flex items-center gap-1 text-[10px] sm:text-xs text-gray-500 dark:text-slate-400">
+                    <Icon.MapPin className="h-3 w-3 shrink-0 text-gray-400 dark:text-slate-550" />
+                    <span className="truncate" title={`${item.campus === "Semua" ? "USU/POLMED" : item.campus}${item.area ? ` (${item.area})` : ""}`}>
+                      {item.campus === "Semua" ? "USU/POLMED" : item.campus}
+                      {item.area ? ` · ${item.area}` : ""}
+                    </span>
+                  </div>
+
+                  {/* Description */}
+                  <p className="mt-2 text-[10px] sm:text-xs text-gray-600 dark:text-slate-400 whitespace-pre-wrap leading-relaxed line-clamp-2 sm:line-clamp-4">
+                    {cleanDesc || "Tidak ada deskripsi detail."}
+                  </p>
                 </div>
 
-                {/* Title */}
-                <h3 className="mt-1.5 sm:mt-2.5 font-bold text-gray-900 dark:text-white leading-snug text-xs sm:text-sm md:text-base line-clamp-2">
-                  {item.title}
-                </h3>
+                <div className="mt-3 sm:mt-5 pt-2 sm:pt-3 border-t border-gray-100 dark:border-slate-800/80">
+                  {/* Budget */}
+                  <div className="flex items-center justify-between mb-2 sm:mb-3 text-[10px] sm:text-xs">
+                    <span className="text-gray-400 dark:text-slate-500">Budget</span>
+                    <span className="font-extrabold text-emerald-600 dark:text-emerald-400 truncate ml-1">
+                      {item.budget > 0 ? rupiah(item.budget) : "Nego"}
+                    </span>
+                  </div>
 
-                {/* Location */}
-                <div className="mt-1.5 flex items-center gap-1 text-[10px] sm:text-xs text-gray-500 dark:text-slate-400">
-                  <Icon.MapPin className="h-3 w-3 shrink-0 text-gray-400 dark:text-slate-500" />
-                  <span className="truncate" title={`${item.campus === "Semua" ? "USU/POLMED" : item.campus}${item.area ? ` (${item.area})` : ""}`}>
-                    {item.campus === "Semua" ? "USU/POLMED" : item.campus}
-                    {item.area ? ` · ${item.area}` : ""}
-                  </span>
+                  {/* Action button */}
+                  {item.status === "resolved" ? (
+                    <div className="w-full py-1.5 sm:py-2.5 text-center flex items-center justify-center gap-1 text-[10px] sm:text-xs font-semibold bg-gray-100 text-gray-400 dark:bg-slate-800 dark:text-slate-500 rounded-lg select-none">
+                      ✓ Sudah Terpenuhi
+                    </div>
+                  ) : (
+                    <a
+                      href={`https://wa.me/${item.buyer_wa}?text=${encodeURIComponent(
+                        `Halo ${item.buyer_name}, saya melihat postingan Anda di halaman Cari Barang Jual Beli USU Polmed untuk: "${item.title}". Saya punya barangnya. Apakah masih dicari?`
+                      )}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn-outline w-full py-1.5 sm:py-2.5 text-center flex items-center justify-center gap-1 text-[10px] sm:text-xs font-bold bg-gray-50/50 hover:bg-gray-100 dark:bg-slate-950 dark:hover:bg-slate-900 border-gray-200 dark:border-slate-850 rounded-lg"
+                    >
+                      <Icon.MessageCircle className="h-3.5 w-3.5 text-emerald-500 shrink-0" /> <span className="truncate">Tawarkan</span>
+                    </a>
+                  )}
                 </div>
-
-                {/* Description */}
-                <p className="mt-2 text-[10px] sm:text-xs text-gray-600 dark:text-slate-400 whitespace-pre-wrap leading-relaxed line-clamp-2 sm:line-clamp-4">
-                  {item.description || "Tidak ada deskripsi detail."}
-                </p>
               </div>
-
-              <div className="mt-3 sm:mt-5 pt-2 sm:pt-3 border-t border-gray-100 dark:border-slate-800/80">
-                {/* Budget */}
-                <div className="flex items-center justify-between mb-2 sm:mb-3 text-[10px] sm:text-xs">
-                  <span className="text-gray-400 dark:text-slate-500">Budget</span>
-                  <span className="font-extrabold text-emerald-600 dark:text-emerald-400 truncate ml-1">
-                    {item.budget > 0 ? rupiah(item.budget) : "Nego"}
-                  </span>
-                </div>
-
-                {/* Action button */}
-                <a
-                  href={`https://wa.me/${item.buyer_wa}?text=${encodeURIComponent(
-                    `Halo ${item.buyer_name}, saya melihat postingan Anda di halaman Cari Barang Jual Beli USU Polmed untuk: "${item.title}". Saya punya barangnya. Apakah masih dicari?`
-                  )}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn-outline w-full py-1.5 sm:py-2.5 text-center flex items-center justify-center gap-1 text-[10px] sm:text-xs font-bold bg-gray-50/50 hover:bg-gray-100 dark:bg-slate-950 dark:hover:bg-slate-900 border-gray-200 dark:border-slate-850 rounded-lg"
-                >
-                  <Icon.MessageCircle className="h-3.5 w-3.5 text-emerald-500 shrink-0" /> <span className="truncate">Tawarkan</span>
-                </a>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -435,7 +468,7 @@ export default function DicariPage() {
                 </div>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-3">
                 <div>
                   <label className="label">Target Kampus</label>
                   <select
@@ -446,6 +479,18 @@ export default function DicariPage() {
                     <option value="Semua">Semua (USU &amp; POLMED)</option>
                     <option value="USU">USU</option>
                     <option value="POLMED">POLMED</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="label">Kondisi Barang</label>
+                  <select
+                    className="input py-2.5 h-[53px]"
+                    value={form.item_condition}
+                    onChange={handleInputChange("item_condition")}
+                  >
+                    <option value="Bekas">Bekas (Second)</option>
+                    <option value="Baru">Baru (New)</option>
                   </select>
                 </div>
 
