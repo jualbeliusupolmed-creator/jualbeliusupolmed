@@ -2,6 +2,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getSettings } from "@/lib/settings";
 import { getCategories } from "@/lib/categories";
 import { fetchListingsWithProfiles } from "@/lib/dbHelpers";
+import { buildSlug } from "@/lib/slug";
 import HomeBrowser from "./HomeBrowser";
 
 export const dynamic = "force-dynamic";
@@ -17,14 +18,6 @@ export const metadata = {
     description: "Temukan laptop bekas, buku kuliah, fashion, dan kos di sekitar USU & POLMED. Marketplace terpercaya khusus mahasiswa dengan transaksi aman dibantu admin.",
     url: "/",
     siteName: "Jual Beli USU Polmed",
-    images: [
-      {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "Jual Beli USU Polmed",
-      },
-    ],
     locale: "id_ID",
     type: "website",
   },
@@ -32,7 +25,6 @@ export const metadata = {
     card: "summary_large_image",
     title: "Jual Beli USU Polmed — Marketplace Mahasiswa Medan",
     description: "Temukan laptop bekas, buku kuliah, fashion, dan kos di sekitar USU & POLMED. Marketplace terpercaya khusus mahasiswa dengan transaksi aman dibantu admin.",
-    images: ["/og-image.png"],
   },
 };
 
@@ -131,17 +123,34 @@ export default async function HomePage() {
       getCategories(),
       getStats(),
     ]);
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+  const itemListJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "itemListElement": listings.map((l, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "url": `${baseUrl}/produk/${buildSlug(l.title, l.id)}`
+    }))
+  };
+
   return (
-    <HomeBrowser
-      initialListings={listings}
-      initialTotal={total}
-      featured={featured}
-      trending={trending}
-      categories={categories}
-      stats={stats}
-      heroTitle={settings.site?.heroTitle}
-      heroSubtitle={settings.site?.heroSubtitle}
-      layoutOrder={settings.site?.layoutOrder}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
+      />
+      <HomeBrowser
+        initialListings={listings}
+        initialTotal={total}
+        featured={featured}
+        trending={trending}
+        categories={categories}
+        stats={stats}
+        heroTitle={settings.site?.heroTitle}
+        heroSubtitle={settings.site?.heroSubtitle}
+        layoutOrder={settings.site?.layoutOrder}
+      />
+    </>
   );
 }
