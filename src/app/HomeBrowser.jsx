@@ -70,7 +70,12 @@ export default function HomeBrowser({
     // Sudah ada prompt yang disimpan di InstallPrompt.jsx (mungkin sudah fired sebelumnya)
     if (window.pwaDeferredPrompt) setPwaReady(true);
 
-    const onPrompt = () => setPwaReady(true);
+    const onPrompt = (e) => {
+      e.preventDefault();
+      window.pwaDeferredPrompt = e;
+      setPwaReady(true);
+    };
+    
     const onInstalled = () => setPwaReady(false);
     window.addEventListener("beforeinstallprompt", onPrompt);
     window.addEventListener("appinstalled", onInstalled);
