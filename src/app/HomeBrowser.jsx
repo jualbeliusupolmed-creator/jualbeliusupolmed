@@ -252,26 +252,26 @@ export default function HomeBrowser({
             </p>
 
             {/* CTAs — single row, pill style */}
-            <div className="mt-4 flex items-center gap-2">
+            <div className="mt-3 flex items-center gap-2">
               <Link
                 href="/jual"
-                className="rounded-full bg-gray-900 px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-gray-700 active:scale-95 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100"
+                className="whitespace-nowrap rounded-full bg-gray-900 px-3.5 py-1 text-xs font-semibold text-white transition hover:bg-gray-700 active:scale-95 dark:bg-white dark:text-gray-900"
               >
                 + Pasang Iklan
               </Link>
               <Link
                 href="/dicari"
-                className="rounded-full border border-gray-200 px-4 py-1.5 text-sm font-medium text-gray-600 transition hover:border-gray-300 hover:bg-gray-50 active:scale-95 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-900"
+                className="whitespace-nowrap rounded-full border border-gray-200 px-3.5 py-1 text-xs font-medium text-gray-500 transition hover:bg-gray-50 active:scale-95 dark:border-slate-800 dark:text-slate-400"
               >
                 Papan Dicari
               </Link>
               {pwaReady && (
                 <button
                   onClick={handlePwaInstall}
-                  className="flex items-center gap-1 rounded-full border border-gray-200 px-4 py-1.5 text-sm font-medium text-gray-600 transition hover:border-gray-300 hover:bg-gray-50 active:scale-95 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-900"
-                  title="Install Aplikasi — Android & Desktop"
+                  className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-gray-200 px-3.5 py-1 text-xs font-medium text-gray-500 transition hover:bg-gray-50 active:scale-95 dark:border-slate-800 dark:text-slate-400"
+                  title="Install Aplikasi"
                 >
-                  <Icon.Download className="h-3.5 w-3.5" />
+                  <Icon.Download className="h-3 w-3" />
                   Install
                 </button>
               )}
