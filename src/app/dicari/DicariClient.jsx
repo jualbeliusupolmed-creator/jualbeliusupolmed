@@ -141,12 +141,10 @@ export default function DicariPage() {
               Gratis · Tinggal Tunggu Penawaran
             </p>
             <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white sm:text-3xl">
-              Cari Barang — Tulis Kebutuhanmu, Biar Penjual yang Datang
+              Cari Barang — Gratis, Penjual Datang ke Kamu
             </h1>
             <p className="mt-1.5 max-w-xl text-xs sm:text-sm text-gray-500 dark:text-slate-400 leading-relaxed">
-              Capek scroll nyari barang? Balik aja: tulis apa yang kamu butuhkan
-              (laptop bekas, buku kuliah, kos, jasa ketik, apa pun) — mahasiswa
-              lain yang punya barangnya langsung chat kamu via WhatsApp.
+              Tulis kebutuhan (laptop, buku, kos, jasa) — mahasiswa USU &amp; POLMED yang punya barangnya langsung chat via WhatsApp.
             </p>
             {!loading && items.length > 0 && (
               <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400">
