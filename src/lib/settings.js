@@ -12,7 +12,7 @@ export const DEFAULT_SETTINGS = {
     listingDays: 14, // ADDED: configurable ad duration in days (was hardcoded)
     // tier fee setelah barang terjual; dievaluasi berurutan, `upto` = batas atas (eksklusif)
     soldTiers: [
-      { upto: 50000, flat: 2000 },
+      { upto: 50000, flat: 0 },
       { upto: 100000, pct: 10 },
       { upto: null, pct: 5 },
     ],

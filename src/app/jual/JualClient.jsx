@@ -366,7 +366,7 @@ export default function JualPage() {
           <div className="card p-4 text-sm text-gray-500 dark:text-slate-400">
             <p className="font-semibold text-gray-700 dark:text-slate-300">ℹ️ Fee setelah deal</p>
             <ul className="mt-2 list-disc space-y-1 pl-4">
-              <li>&lt; Rp50.000 → Rp2.000</li>
+              <li>&lt; Rp50.000 → Gratis (Bebas Komisi)</li>
               <li>&lt; Rp100.000 → 10%</li>
               <li>≥ Rp100.000 → 5%</li>
             </ul>

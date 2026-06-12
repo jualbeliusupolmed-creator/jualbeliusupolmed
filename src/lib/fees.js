@@ -21,12 +21,12 @@ export function adFee(type, price = 0) {
 }
 
 // Fee admin setelah barang TERJUAL (after sold)
-//   < 50.000  => Rp 2.000
+//   < 50.000  => Rp 0 (Bebas komisi untuk barang murah)
 //   < 100.000 => 10%
 //   >= 100.000 => 5%
 export function soldFee(price) {
   const p = Number(price) || 0;
-  if (p < 50000) return 2000;
+  if (p < 50000) return 0;
   if (p < 100000) return Math.round(p * 0.1);
   return Math.round(p * 0.05);
 }
