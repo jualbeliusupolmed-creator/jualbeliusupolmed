@@ -247,8 +247,8 @@ export default function HomeBrowser({
             <h1 className="whitespace-nowrap text-xs font-extrabold uppercase tracking-widest text-gray-900 dark:text-white">
               Marketplace Kampus · USU &amp; POLMED
             </h1>
-            <p className="mt-1.5 text-xs text-gray-500 dark:text-slate-400 truncate">
-              Jual-beli laptop, buku, kos & jasa. Aman, cepat, dibantu admin.
+            <p className="mt-1 text-[11px] text-gray-400 dark:text-slate-500">
+              Jual-beli di kampus USU &amp; POLMED. Aman, dibantu admin.
             </p>
 
             {/* CTAs — single row, pill style */}
@@ -286,7 +286,7 @@ export default function HomeBrowser({
               ].filter(Boolean);
               if (!proof.length) return null;
               return (
-                <p className="mt-3 text-[11px] text-gray-400 dark:text-slate-500">
+                <p className="mt-2 text-[11px] text-gray-400 dark:text-slate-500">
                   {proof.map((p, i) => (
                     <span key={p.l}>
                       {i > 0 && <span className="mx-1.5">·</span>}

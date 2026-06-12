@@ -67,7 +67,7 @@ export default function ProductCard({ listing }) {
               {listing.area ? ` (${listing.area})` : ""}</span>
             </span>
           </div>
-          <h3 className="mt-1 line-clamp-2 text-sm font-medium leading-snug text-gray-900 dark:text-slate-200 group-hover:text-primary dark:group-hover:text-white transition-colors">
+          <h3 className="mt-1 line-clamp-1 text-sm font-medium leading-snug text-gray-900 dark:text-slate-200 group-hover:text-primary dark:group-hover:text-white transition-colors">
             {listing.title}
           </h3>
           <p className="mt-1.5 text-[15px] font-bold tracking-tight text-gray-900 dark:text-white">
