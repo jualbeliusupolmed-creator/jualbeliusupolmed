@@ -265,16 +265,14 @@ export default function HomeBrowser({
               >
                 Papan Dicari
               </Link>
-              {pwaReady && (
-                <button
-                  onClick={handlePwaInstall}
-                  className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-gray-200 px-3.5 py-1 text-xs font-medium text-gray-500 transition hover:bg-gray-50 active:scale-95 dark:border-slate-800 dark:text-slate-400"
-                  title="Install Aplikasi"
-                >
-                  <Icon.Download className="h-3 w-3" />
-                  Install
-                </button>
-              )}
+              <button
+                onClick={pwaReady ? handlePwaInstall : undefined}
+                className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-gray-200 px-3.5 py-1 text-xs font-medium text-gray-500 transition hover:bg-gray-50 active:scale-95 dark:border-slate-800 dark:text-slate-400"
+                title="Install Aplikasi"
+              >
+                <Icon.Download className="h-3 w-3" />
+                Install
+              </button>
             </div>
 
             {/* Stats — clean number blocks */}
