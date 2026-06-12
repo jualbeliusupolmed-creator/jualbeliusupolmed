@@ -275,7 +275,7 @@ export default function HomeBrowser({
               </button>
             </div>
 
-            {/* Stats — clean number blocks */}
+            {/* Stats — inline compact */}
             {(() => {
               const proof = [
                 total > 0 && { v: total, l: "iklan" },
@@ -286,14 +286,15 @@ export default function HomeBrowser({
               ].filter(Boolean);
               if (!proof.length) return null;
               return (
-                <div className="mt-5 flex gap-6 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {proof.map((p) => (
-                    <div key={p.l} className="shrink-0">
-                      <div className="text-lg font-extrabold text-gray-900 dark:text-white">{p.v}</div>
-                      <div className="text-[11px] text-gray-500 dark:text-slate-400">{p.l}</div>
-                    </div>
+                <p className="mt-3 text-[11px] text-gray-400 dark:text-slate-500">
+                  {proof.map((p, i) => (
+                    <span key={p.l}>
+                      {i > 0 && <span className="mx-1.5">·</span>}
+                      <span className="font-bold text-gray-600 dark:text-slate-300">{p.v}</span>
+                      {" "}{p.l}
+                    </span>
                   ))}
-                </div>
+                </p>
               );
             })()}
           </section>
