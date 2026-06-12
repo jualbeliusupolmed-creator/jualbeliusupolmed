@@ -26,7 +26,8 @@ async function send(target, message) {
   }
 }
 
-const baseUrl = () => process.env.NEXT_PUBLIC_BASE_URL || "";
+const baseUrl = () =>
+  (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
 
 function rupiah(n) {
   return "Rp " + (Number(n) || 0).toLocaleString("id-ID");
@@ -39,33 +40,22 @@ function rupiah(n) {
 // 3. postWantedToGroup (broadcast pencarian baru)
 // ============================================================================
 
-// Auto-post ke grup WA setelah bayar iklan jualan
+// Auto-post ke grup WA setelah bayar iklan jualan — ringkas agar tidak menyemak
 export async function postToGroup(listing) {
   const group = process.env.FONNTE_WA_GROUP_ID;
   const msg =
-    `🛒 *${listing.title}*\n` +
-    `💰 ${rupiah(listing.price)}\n` +
-    `📦 Stok: ${listing.stock}\n` +
-    `🏷️ ${listing.category}\n\n` +
-    `${listing.description || ""}\n\n` +
-    `👤 Penjual: ${listing.seller_name}\n` +
-    `📲 Minat? buka: ${baseUrl()}/produk/${buildSlug(listing.title, listing.id)}\n` +
-    `— Jual Beli USU Polmed`;
+    `🛒 *${listing.title}* — ${rupiah(listing.price)}\n` +
+    `🏷️ ${listing.category}\n` +
+    `👉 ${baseUrl()}/produk/${buildSlug(listing.title, listing.id)}`;
   return send(group, msg);
 }
 
-// Auto-post ke grup WA ketika ada yang mencari barang (Papan Dicari)
+// Auto-post ke grup WA ketika ada yang mencari barang (Papan Dicari) — ringkas
 export async function postWantedToGroup(wanted) {
   const group = process.env.FONNTE_WA_GROUP_ID;
   const msg =
-    `🔍 *Ada yang mencari barang!*\n\n` +
-    `*Dicari:* ${wanted.title}\n` +
-    `*Kategori:* ${wanted.category}\n` +
-    `*Anggaran:* Maks ${rupiah(wanted.max_budget)}\n\n` +
-    `${wanted.description ? `*Detail:* ${wanted.description}\n\n` : ""}` +
-    `Punya barangnya? Tawarkan langsung lewat website kita ya!\n` +
-    `📲 Buka: ${baseUrl()}/dicari\n` +
-    `— Papan Dicari USU Polmed`;
+    `🔍 *Dicari:* ${wanted.title} (maks ${rupiah(wanted.max_budget)})\n` +
+    `Punya barangnya? 👉 ${baseUrl()}/dicari`;
   return send(group, msg);
 }
 
