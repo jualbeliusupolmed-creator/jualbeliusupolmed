@@ -244,7 +244,7 @@ export default function HomeBrowser({
       case "hero":
         return (
           <section key="hero" className="pb-5 pt-0">
-            <h1 className="text-sm font-extrabold uppercase tracking-[0.1em] text-gray-900 dark:text-white">
+            <h1 className="whitespace-nowrap text-xs font-extrabold uppercase tracking-widest text-gray-900 dark:text-white">
               Marketplace Kampus · USU &amp; POLMED
             </h1>
             <p className="mt-1.5 text-xs text-gray-500 dark:text-slate-400 truncate">
