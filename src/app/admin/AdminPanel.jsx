@@ -446,11 +446,20 @@ export default function AdminPanel({
                   {filteredListings.map((l) => (
                     <tr key={l.id} className="border-t align-top dark:border-slate-800">
                       <td className="p-3"><input type="checkbox" checked={selected.has(l.id)} onChange={() => toggleSel(l.id)} /></td>
-                      <td className="max-w-[200px] p-3">
-                        <a href={`/admin/listings/${buildSlug(l.title, l.id)}`} className="block truncate font-medium hover:text-primary dark:text-white dark:hover:text-primary">
-                          {l.title}
-                        </a>
-                        <p className="text-xs text-gray-400">{l.category}{l.featured ? " · ⭐" : ""}</p>
+                      <td className="max-w-[250px] p-3 flex items-center gap-3">
+                        {l.image_url ? (
+                          <img src={l.image_url} alt="" className="h-10 w-10 shrink-0 rounded-md object-cover bg-gray-100 dark:bg-slate-800" loading="lazy" />
+                        ) : (
+                          <div className="h-10 w-10 shrink-0 rounded-md bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-gray-300">
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <a href={`/admin/listings/${buildSlug(l.title, l.id)}`} className="block truncate font-medium hover:text-primary dark:text-white dark:hover:text-primary" title={l.title}>
+                            {l.title}
+                          </a>
+                          <p className="text-xs text-gray-400">{l.category}{l.featured ? " · ⭐" : ""}</p>
+                        </div>
                       </td>
                       <td className="p-3 text-gray-500">{l.seller_name}<br /><span className="text-xs">{l.seller_wa}</span></td>
                       <td className="p-3">{rupiah(l.price)}</td>
