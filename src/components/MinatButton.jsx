@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { MARKETPLACE_WA, formatWa } from "@/lib/constants";
+import { rupiah } from "@/lib/fees";
 
 const TEMPLATES = [
   (title) => `Halo, apakah "${title}" masih tersedia?`,
@@ -17,11 +18,27 @@ export default function MinatButton({ listing }) {
 
   function sendMinat(text) {
     setShowPicker(false);
-    const wa = formatWa(listing.seller_wa || MARKETPLACE_WA);
+    
+    // Jika produk merupakan produk digital (berdasarkan kategori "Jasa" atau sejenisnya, atau kita cek lowercase)
+    // Mari buat pengecekan kategori produk digital secara fleksibel.
+    const isDigital = ["jasa", "digital", "akun", "voucher", "premium"].some(term => 
+      listing.category?.toLowerCase().includes(term) || 
+      listing.title?.toLowerCase().includes(term)
+    );
+
+    let targetWa = listing.seller_wa;
+    let finalMsg = text;
+
+    if (isDigital) {
+      targetWa = MARKETPLACE_WA;
+      finalMsg = `Halo Admin, saya tertarik dengan produk digital "${listing.title}" seharga ${rupiah(listing.price)} dari penjual ${listing.seller_name}.\n\nSaya ingin membeli produk ini melalui Rekber / Sistem Bagi Hasil Admin.\n\nPesan saya: "${text}"`;
+    }
+
+    const wa = formatWa(targetWa || MARKETPLACE_WA);
     // wa.me requires country code without 0. Since formatWa returns 08..., we convert it to 628...
     const waLink = wa.startsWith("0") ? "62" + wa.slice(1) : wa;
     window.open(
-      `https://wa.me/${waLink}?text=${encodeURIComponent(text)}`,
+      `https://wa.me/${waLink}?text=${encodeURIComponent(finalMsg)}`,
       "_blank"
     );
   }
