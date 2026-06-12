@@ -10,8 +10,14 @@ export const FEES = {
 };
 
 // Biaya iklan saat submit (sebelum deal / biaya iklan)
-export function adFee(type) {
-  return type === "poster" ? FEES.iklan_poster : FEES.iklan_barang;
+export function adFee(type, price = 0) {
+  if (type === "poster") return FEES.iklan_poster;
+  const p = Number(price) || 0;
+  if (p < 50000) return 2000;
+  if (p < 100000) return 3000;
+  if (p < 500000) return 5000;
+  if (p < 1000000) return 7000;
+  return Math.round(p * 0.01);
 }
 
 // Fee admin setelah barang TERJUAL (after sold)

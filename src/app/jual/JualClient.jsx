@@ -56,15 +56,13 @@ export default function JualPage() {
   }, []);
 
   const cats = cfg?.categories?.length ? cfg.categories : CATEGORIES;
-  const adFeeFor = (type) =>
-    cfg?.pricing
-      ? type === "poster"
-        ? cfg.pricing.adPoster
-        : cfg.pricing.adBarang
-      : adFee(type);
+  const adFeeFor = (type, price = 0) =>
+    type === "poster"
+      ? (cfg?.pricing?.adPoster || 10000)
+      : adFee(type, price);
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
-  const fee = adFeeFor(form.type);
+  const fee = adFeeFor(form.type, form.price);
 
   const handleAreaOptionChange = (e) => {
     const val = e.target.value;
@@ -160,8 +158,8 @@ export default function JualPage() {
             <div>
               <label className="label">Tipe Iklan</label>
               <select className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.type} onChange={set("type")}>
-                <option value="barang">Barang — {rupiah(adFeeFor("barang"))}</option>
-              <option value="poster">Poster — {rupiah(adFeeFor("poster"))}</option>
+                <option value="barang">Barang — {rupiah(adFeeFor("barang", form.price))}</option>
+                <option value="poster">Poster — {rupiah(adFeeFor("poster"))}</option>
               </select>
             </div>
             <div>

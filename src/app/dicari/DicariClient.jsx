@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { CATEGORIES, POPULAR_AREAS, formatWa } from "@/lib/constants";
+import { CATEGORIES, POPULAR_AREAS, formatWa, MARKETPLACE_WA } from "@/lib/constants";
 import { rupiah } from "@/lib/fees";
 import { Icon } from "@/components/Icons";
 import { toast } from "sonner";
@@ -119,9 +119,13 @@ export default function DicariPage() {
         area: "",
         item_condition: "Bekas",
       });
-      toast.success("Postingan dicari berhasil ditambahkan!");
+      toast.success("Postingan dicari berhasil dibuat! Silakan selesaikan pembayaran Rp 1.000 agar postingan aktif.");
       setShowModal(false);
-      fetchItems();
+      if (data.paymentUrl) {
+        window.location.href = data.paymentUrl;
+      } else {
+        fetchItems();
+      }
     } catch (err) {
       if (err.message !== "Unauthorized") {
         toast.error(err.message);
@@ -348,8 +352,8 @@ export default function DicariPage() {
                     </div>
                   ) : (
                     <a
-                      href={`https://wa.me/${item.buyer_wa}?text=${encodeURIComponent(
-                        `Halo ${item.buyer_name}, saya melihat postingan Anda di halaman Cari Barang Jual Beli USU Polmed untuk: "${item.title}". Saya punya barangnya. Apakah masih dicari?`
+                      href={`https://wa.me/${MARKETPLACE_WA}?text=${encodeURIComponent(
+                        `Halo Admin Jual Beli USU Polmed, saya melihat postingan di halaman Cari Barang untuk: "${item.title}". Saya punya barangnya dan ingin menawarkan. Bagaimana caranya?`
                       )}`}
                       target="_blank"
                       rel="noreferrer"

@@ -63,6 +63,8 @@ export async function GET(req) {
   }
 }
 
+import { createPaymentLink } from "@/lib/ipaymu";
+
 // POST /api/wanted -> create a wanted listing
 export async function POST(req) {
   try {
@@ -117,17 +119,41 @@ export async function POST(req) {
         category,
         campus: campus || "Semua",
         area: area || "Sekitar Kampus",
-        status: "active",
+        status: "pending",
       })
       .select()
       .single();
 
     if (error) throw new Error(error.message);
 
-    // Broadcast ke grup WA
-    await postWantedToGroup(listing).catch(() => {});
+    // Buat tagihan iPaymu Rp 1.000 untuk postingan Cari Barang
+    const amount = 1000;
+    const orderId = `WNT-${listing.id.slice(0, 8)}-${Date.now()}`;
 
-    return NextResponse.json({ listing });
+    await supa.from("payments").insert({
+      listing_id: null, // wanted listing tidak masuk ke listings foreign key
+      type: "iklan", // bypass check constraint
+      amount,
+      status: "pending",
+      midtrans_order_id: orderId,
+      meta: { wanted_id: listing.id }
+    });
+
+    let paymentUrl = null;
+    try {
+      const tx = await createPaymentLink({
+        orderId,
+        amount,
+        customerName: listing.buyer_name,
+        customerWa: listing.buyer_wa,
+        itemName: `Cari Barang: ${listing.title}`,
+      });
+      paymentUrl = tx.url;
+    } catch (e) {
+      console.error("wanted payment charge:", e?.message);
+    }
+
+    return NextResponse.json({ listing, paymentUrl });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }

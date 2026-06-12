@@ -65,8 +65,35 @@ export async function getSettings() {
 }
 
 // ── Helper perhitungan biaya (server-side, sumber kebenaran) ─────────────────
-export function adFeeFrom(pricing, type) {
-  return type === "poster" ? pricing.adPoster : pricing.adBarang;
+export function adFeeFrom(pricing, type, price = 0) {
+  if (type === "poster") return pricing.adPoster || 10000;
+  const p = Number(price) || 0;
+  if (p < 50000) return 2000;
+  if (p < 100000) return 3000;
+  if (p < 500000) return 5000;
+  if (p < 1000000) return 7000;
+  return Math.round(p * 0.01);
+}
+
+// Mengecek apakah penjual memiliki tagihan komisi penjualan (sold_fee) yang belum lunas
+export async function hasUnpaidSoldFees(supa, sellerWa) {
+  const { data: listings } = await supa
+    .from("listings")
+    .select("id")
+    .eq("seller_wa", sellerWa);
+  
+  if (!listings || listings.length === 0) return false;
+  
+  const listingIds = listings.map((l) => l.id);
+  
+  const { count } = await supa
+    .from("payments")
+    .select("id", { count: "exact", head: true })
+    .in("listing_id", listingIds)
+    .eq("type", "sold_fee")
+    .eq("status", "pending");
+    
+  return (count || 0) > 0;
 }
 
 // Returns listing expiry date based on configurable duration from settings

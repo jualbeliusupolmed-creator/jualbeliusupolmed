@@ -36,7 +36,7 @@ export async function POST(req) {
     }
 
     const settings = await getSettings();
-    const amount = adFeeFrom(settings.pricing, listing.type);
+    const amount = adFeeFrom(settings.pricing, listing.type, listing.price);
     const orderId = `IKLAN-${listing.id.slice(0, 8)}-${Date.now()}`;
 
     // Create new payment record

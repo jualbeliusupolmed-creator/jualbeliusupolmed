@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { createPaymentLink } from "@/lib/ipaymu";
-import { getSettings } from "@/lib/settings";
+import { getSettings, hasUnpaidSoldFees } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +20,15 @@ export async function POST(req) {
       .single();
     if (!listing)
       return NextResponse.json({ error: "Listing tidak ada" }, { status: 404 });
+
+    // Check if seller has unpaid sold fees (Account locked - Cara 2)
+    const locked = await hasUnpaidSoldFees(supa, listing.seller_wa);
+    if (locked) {
+      return NextResponse.json(
+        { error: "Akun Anda terkunci karena memiliki tagihan komisi (Sold Fee) yang belum dibayar. Silakan lunasi tagihan tersebut di Dashboard sebelum menyundul iklan." },
+        { status: 403 }
+      );
+    }
 
     const settings = await getSettings();
     const amount = settings.pricing.bump;

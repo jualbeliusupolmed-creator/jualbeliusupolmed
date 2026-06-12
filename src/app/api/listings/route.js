@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { createPaymentLink } from "@/lib/ipaymu";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
-import { getSettings, adFeeFrom, listingExpiresAt } from "@/lib/settings";
+import { getSettings, adFeeFrom, listingExpiresAt, hasUnpaidSoldFees } from "@/lib/settings";
 import { formatWa } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
@@ -60,13 +60,21 @@ export async function POST(req) {
       return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
     }
 
-    // Normalisasi seller_wa → format 628... sebelum simpan
     const normalizedWa = formatWa(seller_wa);
     if (!normalizedWa) {
       return NextResponse.json({ error: "Nomor WA tidak valid" }, { status: 400 });
     }
 
     const supa = getAdminClient();
+
+    // Check if seller has unpaid sold fees (Account locked - Cara 2)
+    const locked = await hasUnpaidSoldFees(supa, normalizedWa);
+    if (locked) {
+      return NextResponse.json(
+        { error: "Akun Anda terkunci karena memiliki tagihan komisi (Sold Fee) yang belum dibayar. Silakan lunasi tagihan tersebut di Dashboard." },
+        { status: 403 }
+      );
+    }
 
     // cek blacklist — bandingkan dalam format normalized
     const { data: bl } = await supa
@@ -133,7 +141,7 @@ export async function POST(req) {
       return NextResponse.json({ listing, paymentUrl: null, isPro: true });
     }
 
-    const amount = adFeeFrom(settings.pricing, listing.type);
+    const amount = adFeeFrom(settings.pricing, listing.type, listing.price);
     const orderId = `IKLAN-${listing.id.slice(0, 8)}-${Date.now()}`;
 
     await supa.from("payments").insert({

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { notifyAdminNewListing, postToGroup, notifyWantedBuyers } from "@/lib/fonnte";
+import { notifyAdminNewListing, postToGroup, notifyWantedBuyers, postWantedToGroup } from "@/lib/fonnte";
 import { verifyIpaymuTransaction } from "@/lib/ipaymu";
 
 export const dynamic = "force-dynamic";
@@ -8,44 +8,33 @@ export const dynamic = "force-dynamic";
 export async function POST(req) {
   try {
     // iPaymu mengirim data webhook dalam format x-www-form-urlencoded
-    const textBody = await req.text();
-    const params = new URLSearchParams(textBody);
+    const bodyText = await req.text();
+    const params = new URLSearchParams(bodyText);
     const data = Object.fromEntries(params.entries());
 
-    const orderId = data.reference_id;
-    const txStatus = data.status; // "berhasil", "pending", "expired", "batal"
-    const statusCode = data.status_code;
-
-    const trxId = data.trx_id;
-
-    if (!orderId || !trxId) {
-      return NextResponse.json({ error: "Missing reference_id or trx_id" }, { status: 400 });
+    // Validasi signature
+    const signature = req.headers.get("signature") || "";
+    const isValid = verifyIpaymuTransaction(data, signature);
+    if (!isValid) {
+      console.warn("[ipaymu webhook] signature tidak valid");
+      return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
     }
 
-    // Verifikasi transaksi ke server iPaymu untuk mencegah POST palsu
-    const verifiedData = await verifyIpaymuTransaction(trxId);
-    
-    // Pastikan reference_id dari API iPaymu cocok dengan yang dikirim webhook
-    if (verifiedData.Reference_Id !== orderId) {
-      return NextResponse.json({ error: "Reference ID mismatch" }, { status: 400 });
-    }
-
-    // Gunakan status dari API iPaymu yang terverifikasi (Status_Code)
-    // 1 = Berhasil, -1 = Gagal/Batal/Expired, 0 = Pending
-    const vStatusCode = String(verifiedData.Status_Code);
-    const settled = vStatusCode === "1";
-    const failed = vStatusCode === "-1";
+    const orderId = data.sid;
+    const status = data.status; // "berhasil", "pending", "expired", "batal"
+    const settled = status === "berhasil";
+    const failed = ["expired", "batal"].includes(status);
 
     const newStatus = settled ? "paid" : failed ? "failed" : "pending";
 
     const supa = getAdminClient();
 
-    // Cek status payment sebelumnya untuk mencegah duplicate processing
+    // Dapatkan data payment lama
     const { data: oldPayment } = await supa
       .from("payments")
-      .select("status")
-      .eq("midtrans_order_id", orderId)
-      .single();
+      .select("*")
+      .eq("midtrans_order_id", orderId) // tetap menggunakan kolom lama agar tidak perlu migrasi db
+      .maybeSingle();
 
     if (!oldPayment) {
       return NextResponse.json({ error: "Payment not found" }, { status: 404 });
@@ -62,48 +51,63 @@ export async function POST(req) {
       .select()
       .single();
 
-    if (payment && settled && payment.listing_id) {
-      // iklan / bump -> aktifkan & angkat ke atas
-      if (payment.type === "iklan" || payment.type === "bump") {
-        const { data: listing } = await supa
-          .from("listings")
-          .update({ status: "active", bumped_at: new Date().toISOString() })
-          .eq("id", payment.listing_id)
+    if (payment && settled) {
+      if (payment.meta?.wanted_id) {
+        // Aktifkan postingan Cari Barang
+        const { data: wanted } = await supa
+          .from("wanted_listings")
+          .update({ status: "active" })
+          .eq("id", payment.meta.wanted_id)
           .select()
           .single();
 
-        if (listing && payment.type === "iklan") {
-          // notif admin + auto-post grup + matching engine
-          await Promise.allSettled([
-            notifyAdminNewListing(listing),
-            postToGroup(listing),
-            notifyWantedBuyers(listing)
-          ]);
+        if (wanted) {
+          // Kirim notifikasi WA grup untuk Cari Barang
+          await postWantedToGroup(wanted).catch(() => {});
         }
-      } else if (payment.type === "featured") {
-        const days = payment.meta?.days || 1;
-        const until = new Date(Date.now() + days * 864e5).toISOString();
-        await supa
-          .from("listings")
-          .update({ featured: true, featured_until: until, bumped_at: new Date().toISOString() })
-          .eq("id", payment.listing_id);
-      } else if (payment.type === "autobump") {
-        const until = new Date(Date.now() + 7 * 864e5).toISOString(); // 7 Hari
-        await supa
-          .from("listings")
-          .update({ auto_bump_until: until, bumped_at: new Date().toISOString() })
-          .eq("id", payment.listing_id);
-      } else if (payment.type === "subscribe") {
-        const wa = payment.meta?.wa;
-        if (wa) {
-          const until = new Date(Date.now() + 30 * 864e5).toISOString(); // 30 Hari
+      } else if (payment.listing_id) {
+        // iklan / bump -> aktifkan & angkat ke atas
+        if (payment.type === "iklan" || payment.type === "bump") {
+          const { data: listing } = await supa
+            .from("listings")
+            .update({ status: "active", bumped_at: new Date().toISOString() })
+            .eq("id", payment.listing_id)
+            .select()
+            .single();
+
+          if (listing && payment.type === "iklan") {
+            // notif admin + auto-post grup + matching engine
+            await Promise.allSettled([
+              notifyAdminNewListing(listing),
+              postToGroup(listing),
+              notifyWantedBuyers(listing)
+            ]);
+          }
+        } else if (payment.type === "featured") {
+          const days = payment.meta?.days || 1;
+          const until = new Date(Date.now() + days * 864e5).toISOString();
           await supa
-            .from("seller_profiles")
-            .update({ 
-              subscription_tier: "pro", 
-              subscription_expires_at: until 
-            })
-            .eq("wa", wa);
+            .from("listings")
+            .update({ featured: true, featured_until: until, bumped_at: new Date().toISOString() })
+            .eq("id", payment.listing_id);
+        } else if (payment.type === "autobump") {
+          const until = new Date(Date.now() + 7 * 864e5).toISOString(); // 7 Hari
+          await supa
+            .from("listings")
+            .update({ auto_bump_until: until, bumped_at: new Date().toISOString() })
+            .eq("id", payment.listing_id);
+        } else if (payment.type === "subscribe") {
+          const wa = payment.meta?.wa;
+          if (wa) {
+            const until = new Date(Date.now() + 30 * 864e5).toISOString(); // 30 Hari
+            await supa
+              .from("seller_profiles")
+              .update({ 
+                subscription_tier: "pro", 
+                subscription_expires_at: until 
+              })
+              .eq("wa", wa);
+          }
         }
       }
     }

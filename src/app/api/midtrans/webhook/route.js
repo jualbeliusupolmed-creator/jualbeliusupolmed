@@ -1,32 +1,32 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { notifyAdminNewListing, postToGroup } from "@/lib/fonnte";
+import { notifyAdminNewListing, postToGroup, postWantedToGroup } from "@/lib/fonnte";
 
 export const dynamic = "force-dynamic";
 
 // Verifikasi signature Midtrans:
 // sha512(order_id + status_code + gross_amount + serverKey)
 function verify(body) {
-  const serverKey = process.env.MIDTRANS_SERVER_KEY || "";
-  const expected = crypto
+  const serverKey = process.env.MIDTRANS_SERVER_KEY;
+  if (!serverKey) return false;
+  const hash = crypto
     .createHash("sha512")
-    .update(
-      `${body.order_id}${body.status_code}${body.gross_amount}${serverKey}`
-    )
+    .update(body.order_id + body.status_code + body.gross_amount + serverKey)
     .digest("hex");
-  return expected === body.signature_key;
+  return hash === body.signature_key;
 }
 
 export async function POST(req) {
   try {
     const body = await req.json();
 
+    // Verifikasi signature
     if (!verify(body)) {
-      return NextResponse.json({ error: "Invalid signature" }, { status: 403 });
+      console.warn("[webhook] signature tidak valid");
+      return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
     }
 
-    const supa = getAdminClient();
     const orderId = body.order_id;
     const txStatus = body.transaction_status;
     const fraud = body.fraud_status;
@@ -37,6 +37,8 @@ export async function POST(req) {
 
     const newStatus = settled ? "paid" : failed ? "failed" : "pending";
 
+    const supa = getAdminClient();
+
     const { data: payment } = await supa
       .from("payments")
       .update({ status: newStatus })
@@ -44,36 +46,51 @@ export async function POST(req) {
       .select()
       .single();
 
-    if (payment && settled && payment.listing_id) {
-      // iklan / bump -> aktifkan & angkat ke atas
-      if (payment.type === "iklan" || payment.type === "bump") {
-        const { data: listing } = await supa
-          .from("listings")
-          .update({ status: "active", bumped_at: new Date().toISOString() })
-          .eq("id", payment.listing_id)
+    if (payment && settled) {
+      if (payment.meta?.wanted_id) {
+        // Aktifkan postingan Cari Barang
+        const { data: wanted } = await supa
+          .from("wanted_listings")
+          .update({ status: "active" })
+          .eq("id", payment.meta.wanted_id)
           .select()
           .single();
 
-        if (listing && payment.type === "iklan") {
-          // notif admin + auto-post grup (aman-gagal)
-          await Promise.allSettled([
-            notifyAdminNewListing(listing),
-            postToGroup(listing)
-          ]);
+        if (wanted) {
+          // Kirim notifikasi WA grup untuk Cari Barang
+          await postWantedToGroup(wanted).catch(() => {});
         }
-      } else if (payment.type === "featured") {
-        const days = payment.meta?.days || 1;
-        const until = new Date(Date.now() + days * 864e5).toISOString();
-        await supa
-          .from("listings")
-          .update({ featured: true, featured_until: until, bumped_at: new Date().toISOString() })
-          .eq("id", payment.listing_id);
-      } else if (payment.type === "autobump") {
-        const until = new Date(Date.now() + 7 * 864e5).toISOString(); // 7 Hari
-        await supa
-          .from("listings")
-          .update({ auto_bump_until: until, bumped_at: new Date().toISOString() })
-          .eq("id", payment.listing_id);
+      } else if (payment.listing_id) {
+        // iklan / bump -> aktifkan & angkat ke atas
+        if (payment.type === "iklan" || payment.type === "bump") {
+          const { data: listing } = await supa
+            .from("listings")
+            .update({ status: "active", bumped_at: new Date().toISOString() })
+            .eq("id", payment.listing_id)
+            .select()
+            .single();
+
+          if (listing && payment.type === "iklan") {
+            // notif admin + auto-post grup (aman-gagal)
+            await Promise.allSettled([
+              notifyAdminNewListing(listing),
+              postToGroup(listing)
+            ]);
+          }
+        } else if (payment.type === "featured") {
+          const days = payment.meta?.days || 1;
+          const until = new Date(Date.now() + days * 864e5).toISOString();
+          await supa
+            .from("listings")
+            .update({ featured: true, featured_until: until, bumped_at: new Date().toISOString() })
+            .eq("id", payment.listing_id);
+        } else if (payment.type === "autobump") {
+          const until = new Date(Date.now() + 7 * 864e5).toISOString(); // 7 Hari
+          await supa
+            .from("listings")
+            .update({ auto_bump_until: until, bumped_at: new Date().toISOString() })
+            .eq("id", payment.listing_id);
+        }
       }
     }
 
