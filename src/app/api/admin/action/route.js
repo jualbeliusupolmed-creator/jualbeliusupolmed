@@ -3,6 +3,7 @@ import { isAdmin } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { formatWa } from "@/lib/constants";
 import { getSettings } from "@/lib/settings";
+import { notifyAdminNewListing, postToGroup, notifyWantedBuyers } from "@/lib/fonnte";
 
 export const dynamic = "force-dynamic";
 
@@ -72,8 +73,10 @@ export async function POST(req) {
 
         // Broadcast to WA Group when admin activates manually
         if (listingInfo) {
-          const { postToGroup } = await import("@/lib/fonnte");
-          await postToGroup(listingInfo).catch((e) => console.warn("[activate] Broadcast failed:", e?.message));
+          await Promise.allSettled([
+            postToGroup(listingInfo),
+            notifyWantedBuyers(listingInfo)
+          ]).catch((e) => console.warn("[activate] Broadcast failed:", e?.message));
         }
         break;
       }
@@ -201,7 +204,51 @@ export async function POST(req) {
         if (!["pending", "paid", "failed", "expired"].includes(status)) {
           return NextResponse.json({ error: "Status tidak valid" }, { status: 400 });
         }
-        await supa.from("payments").update({ status }).eq("id", id);
+        const { data: payment } = await supa.from("payments").update({ status }).eq("id", id).select().single();
+        
+        // Auto-activate listing and send notifications if marked as paid
+        if (payment && status === "paid" && payment.listing_id) {
+          if (payment.type === "iklan" || payment.type === "bump") {
+            const { data: listing } = await supa
+              .from("listings")
+              .update({ status: "active", bumped_at: new Date().toISOString() })
+              .eq("id", payment.listing_id)
+              .select()
+              .single();
+
+            if (listing && payment.type === "iklan") {
+              await Promise.allSettled([
+                postToGroup(listing),
+                notifyWantedBuyers(listing)
+              ]);
+            }
+          } else if (payment.type === "featured") {
+            const days = payment.meta?.days || 1;
+            const until = new Date(Date.now() + days * 864e5).toISOString();
+            await supa
+              .from("listings")
+              .update({ featured: true, featured_until: until, bumped_at: new Date().toISOString() })
+              .eq("id", payment.listing_id);
+          } else if (payment.type === "autobump") {
+            const until = new Date(Date.now() + 7 * 864e5).toISOString();
+            await supa
+              .from("listings")
+              .update({ auto_bump_until: until, bumped_at: new Date().toISOString() })
+              .eq("id", payment.listing_id);
+          } else if (payment.type === "subscribe") {
+            const wa = payment.meta?.wa;
+            if (wa) {
+              const until = new Date(Date.now() + 30 * 864e5).toISOString();
+              await supa
+                .from("seller_profiles")
+                .update({ 
+                  subscription_tier: "pro", 
+                  subscription_expires_at: until 
+                })
+                .eq("wa", wa);
+            }
+          }
+        }
         break;
       }
       case "delete_payment":
