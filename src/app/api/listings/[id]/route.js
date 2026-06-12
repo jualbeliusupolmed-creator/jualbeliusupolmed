@@ -89,14 +89,53 @@ export async function PATCH(req, { params }) {
     // ── Update stok ────────────────────────────────────────────────────────
     if (body.action === "update_stock") {
       const stock = Math.max(0, Number(body.stock) || 0);
-      const { data, error } = await supa
+      const updates = { stock };
+      let fee = 0;
+      let snapToken = null;
+
+      if (stock === 0) {
+        updates.status = "sold";
+        updates.sold_price = currentListing.price || 0;
+        const settings = await getSettings();
+        fee = soldFeeFrom(settings.pricing, currentListing.price);
+        updates.sold_fee = fee;
+      } else {
+        updates.status = "active";
+      }
+
+      const { data: listing, error } = await supa
         .from("listings")
-        .update({ stock, status: stock === 0 ? "sold" : "active" })
+        .update(updates)
         .eq("id", id)
         .select()
         .single();
       if (error) throw new Error(error.message);
-      return NextResponse.json({ listing: data });
+
+      if (stock === 0 && fee > 0) {
+        // Catat fee sebagai payment pending
+        await supa.from("payments").insert({
+          listing_id: id,
+          type: "sold_fee",
+          amount: fee,
+          status: "pending",
+          midtrans_order_id: `SOLDFEE-${id.slice(0, 8)}-${Date.now()}`,
+        });
+
+        try {
+          const tx = await createSnapTransaction({
+            orderId: `SOLDFEE-${id.slice(0, 8)}-${Date.now()}`,
+            amount: fee,
+            customerName: currentListing.seller_name,
+            customerWa: currentListing.seller_wa,
+            itemName: `Fee terjual: ${currentListing.title}`,
+          });
+          snapToken = tx.token;
+        } catch (e) {
+          console.error("soldfee charge via stock update:", e?.message);
+        }
+      }
+
+      return NextResponse.json({ listing, fee, snapToken });
     }
 
     // ── Mark sold ──────────────────────────────────────────────────────────

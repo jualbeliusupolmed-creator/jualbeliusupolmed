@@ -199,8 +199,12 @@ function DashboardInner() {
     if (isNaN(stock)) return;
     setStockModal(null);
     try {
-      await patch(stockModal.id, { action: "update_stock", stock });
-      toast.success("Stok berhasil diperbarui");
+      const data = await patch(stockModal.id, { action: "update_stock", stock });
+      if (stock === 0 && data.fee > 0) {
+        toast.success("Barang ditandai terjual. Silakan lunasi komisi sukses di bagian Tagihan Pending.");
+      } else {
+        toast.success("Stok berhasil diperbarui");
+      }
       load();
     } catch (e) {
       toast.error(e.message);
