@@ -203,9 +203,9 @@ export default function DicariPage() {
 
       {/* Content Grid */}
       {loading ? (
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="card animate-pulse p-5 space-y-3 bg-white dark:border-slate-805 dark:bg-slate-900/30">
+            <div key={i} className="card animate-pulse p-3 sm:p-5 space-y-3 bg-white dark:border-slate-805 dark:bg-slate-900/30">
               <div className="h-4 w-1/4 rounded bg-gray-150 dark:bg-slate-800" />
               <div className="h-5 w-3/4 rounded bg-gray-150 dark:bg-slate-800" />
               <div className="h-3 w-5/6 rounded bg-gray-150 dark:bg-slate-800" />
@@ -243,39 +243,39 @@ export default function DicariPage() {
           <p className="mt-6 mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500">
             Contoh postingan yang biasa dicari mahasiswa
           </p>
-          <div className="grid gap-3 sm:grid-cols-3 opacity-75">
+          <div className="grid grid-cols-2 gap-2 sm:gap-4 sm:grid-cols-3 opacity-75">
             {[
               { cat: "Elektronik", t: "Laptop bekas buat ngoding, RAM 8GB", b: "Budget Rp 3.500.000" },
-              { cat: "Buku Kuliah", t: "Buku Kalkulus Purcell jilid 1", b: "Budget Rp 50.000" },
-              { cat: "Kos", t: "Kos putri dekat Pintu 1 USU", b: "Budget Rp 700.000/bln" },
+              { cat: "Buku Kuliah", t: "Buku Purcell jilid 1", b: "Budget Rp 50.000" },
+              { cat: "Kos", t: "Kos putri dekat Pintu 1", b: "Budget Rp 700.000/bln" },
             ].map((c, i) => (
               <div
                 key={i}
-                className="card p-4 border-dashed bg-gray-50/50 dark:bg-slate-900/20 dark:border-slate-800"
+                className="card p-3 sm:p-4 border-dashed bg-gray-50/50 dark:bg-slate-900/20 dark:border-slate-800"
               >
-                <div className="flex items-center justify-between text-[10px]">
+                <div className="flex items-center justify-between text-[9px] sm:text-[10px]">
                   <span className="badge bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 font-medium">
                     {c.cat}
                   </span>
-                  <span className="text-gray-400 dark:text-slate-600">Contoh</span>
+                  <span className="text-gray-400 dark:text-slate-600 hidden xs:inline">Contoh</span>
                 </div>
-                <p className="mt-2 text-xs font-bold text-gray-700 dark:text-slate-300">{c.t}</p>
-                <p className="mt-1 text-[11px] text-gray-400 dark:text-slate-500">{c.b}</p>
+                <p className="mt-2 text-xs font-bold text-gray-750 dark:text-slate-300 line-clamp-2">{c.t}</p>
+                <p className="mt-1 text-[10px] text-gray-400 dark:text-slate-550">{c.b}</p>
               </div>
             ))}
           </div>
         </div>
       ) : (
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => (
             <div
               key={item.id}
-              className="card flex flex-col justify-between p-5 bg-white hover:shadow-md transition-shadow dark:border-slate-800 dark:bg-slate-900/30"
+              className="card flex flex-col justify-between p-3 sm:p-5 bg-white hover:shadow-md transition-shadow dark:border-slate-800 dark:bg-slate-900/30"
             >
               <div>
                 {/* Meta details */}
-                <div className="flex flex-wrap items-center justify-between gap-1.5 text-xs text-gray-400 dark:text-slate-500">
-                  <span className="badge bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 font-medium">
+                <div className="flex flex-wrap items-center justify-between gap-1 text-[9px] sm:text-xs text-gray-400 dark:text-slate-550">
+                  <span className="badge bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 font-medium truncate max-w-[80px] sm:max-w-none">
                     {item.category}
                   </span>
                   <span>
@@ -287,34 +287,34 @@ export default function DicariPage() {
                 </div>
 
                 {/* Title */}
-                <h3 className="mt-2.5 font-bold text-gray-900 dark:text-white leading-snug">
+                <h3 className="mt-1.5 sm:mt-2.5 font-bold text-gray-900 dark:text-white leading-snug text-xs sm:text-sm md:text-base line-clamp-2">
                   {item.title}
                 </h3>
 
                 {/* Campus/Area Badges */}
-                <div className="mt-2 flex flex-wrap gap-1.5 text-[11px]">
-                  <span className="badge bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-350 flex items-center gap-1">
-                    <Icon.MapPin className="h-3 w-3" /> {item.campus === "Semua" ? "USU / POLMED" : item.campus}
+                <div className="mt-1.5 sm:mt-2 flex flex-wrap gap-1 text-[9px] sm:text-[11px]">
+                  <span className="badge bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-350 flex items-center gap-0.5 sm:gap-1 max-w-[80px] sm:max-w-none truncate">
+                    <Icon.MapPin className="h-2.5 w-2.5 shrink-0" /> {item.campus === "Semua" ? "USU/POLMED" : item.campus}
                   </span>
                   {item.area && (
-                    <span className="badge bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-350 flex items-center gap-1">
-                      <Icon.MapPin className="h-3 w-3" /> {item.area}
+                    <span className="badge bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-350 flex items-center gap-0.5 sm:gap-1 max-w-[80px] sm:max-w-none truncate" title={item.area}>
+                      <Icon.MapPin className="h-2.5 w-2.5 shrink-0" /> {item.area}
                     </span>
                   )}
                 </div>
 
                 {/* Description */}
-                <p className="mt-3 text-xs text-gray-600 dark:text-slate-400 whitespace-pre-wrap leading-relaxed line-clamp-4">
+                <p className="mt-2 text-[10px] sm:text-xs text-gray-600 dark:text-slate-400 whitespace-pre-wrap leading-relaxed line-clamp-2 sm:line-clamp-4">
                   {item.description || "Tidak ada deskripsi detail."}
                 </p>
               </div>
 
-              <div className="mt-5 pt-3 border-t border-gray-100 dark:border-slate-800/80">
+              <div className="mt-3 sm:mt-5 pt-2 sm:pt-3 border-t border-gray-100 dark:border-slate-800/80">
                 {/* Budget */}
-                <div className="flex items-center justify-between mb-3 text-xs">
+                <div className="flex items-center justify-between mb-2 sm:mb-3 text-[10px] sm:text-xs">
                   <span className="text-gray-400 dark:text-slate-500">Budget</span>
-                  <span className="font-extrabold text-emerald-600 dark:text-emerald-400">
-                    {item.budget > 0 ? rupiah(item.budget) : "Tanya Pembeli"}
+                  <span className="font-extrabold text-emerald-600 dark:text-emerald-400 truncate ml-1">
+                    {item.budget > 0 ? rupiah(item.budget) : "Nego"}
                   </span>
                 </div>
 
@@ -325,9 +325,9 @@ export default function DicariPage() {
                   )}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="btn-outline w-full py-2.5 text-center flex items-center justify-center gap-1.5 text-xs font-bold bg-gray-50/50 hover:bg-gray-100 dark:bg-slate-950 dark:hover:bg-slate-900 border-gray-200 dark:border-slate-850"
+                  className="btn-outline w-full py-1.5 sm:py-2.5 text-center flex items-center justify-center gap-1 text-[10px] sm:text-xs font-bold bg-gray-50/50 hover:bg-gray-100 dark:bg-slate-950 dark:hover:bg-slate-900 border-gray-200 dark:border-slate-850 rounded-lg"
                 >
-                  <Icon.MessageCircle className="h-4 w-4 text-emerald-500" /> Tawarkan via WhatsApp
+                  <Icon.MessageCircle className="h-3.5 w-3.5 text-emerald-500 shrink-0" /> <span className="truncate">Tawarkan</span>
                 </a>
               </div>
             </div>
