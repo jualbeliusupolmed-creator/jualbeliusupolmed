@@ -107,18 +107,25 @@ export default function CaraBergabungPage() {
 
       <div className="mt-6 grid gap-6 md:grid-cols-2">
         <div className="card p-6">
-          <h2 className="text-lg font-bold"><span aria-hidden="true">💰</span> Fee Admin</h2>
-          <p className="mt-1 text-sm text-gray-500">Sebelum deal (biaya iklan)</p>
+          <h2 className="text-lg font-bold"><span aria-hidden="true">💰</span> Biaya Layanan &amp; Komisi</h2>
+          <p className="mt-1 text-sm text-gray-500">Biaya Iklan (Di Awal)</p>
           <div className="mt-2 space-y-2">
-            <Fee label="Up barang / iklan" value="Rp 2.000" />
-            <Fee label="Iklan poster" value="Rp 10.000" />
+            <Fee label="Iklan Barang (< Rp 50.000)" value="Rp 2.000" />
+            <Fee label="Iklan Barang (< Rp 100.000)" value="Rp 3.000" />
+            <Fee label="Iklan Barang (< Rp 500.000)" value="Rp 5.000" />
+            <Fee label="Iklan Barang (< Rp 1.000.000)" value="Rp 7.000" />
+            <Fee label="Iklan Barang (≥ Rp 1.000.000)" value="1%" />
+            <Fee label="Pasang Wanted / Cari Barang" value="Rp 1.000" />
+            <Fee label="Penawaran Wanted (Unlock WA)" value="Rp 2.000 / Bagi Hasil" />
+            <Fee label="Iklan Poster" value="Rp 10.000" />
             <Fee label="Bump ke atas" value="Rp 1.000" />
           </div>
-          <p className="mt-4 text-sm text-gray-500">Setelah deal (terjual)</p>
+          <p className="mt-4 text-sm text-gray-500">Komisi Setelah Terjual (Sold Fee)</p>
           <div className="mt-2 space-y-2">
-            <Fee label="Di bawah Rp50.000" value="Rp 2.000" />
-            <Fee label="Di bawah Rp100.000" value="10%" />
-            <Fee label="Di atas Rp100.000" value="5%" />
+            <Fee label="Harga di bawah Rp 50.000" value="Gratis (Bebas Komisi)" />
+            <Fee label="Harga di bawah Rp 100.000" value="10%" />
+            <Fee label="Harga di atas Rp 100.000" value="5%" />
+            <Fee label="Produk Digital / Jasa" value="Wajib Rekber (Bagi Hasil)" />
           </div>
         </div>
         <div className="card p-6">
