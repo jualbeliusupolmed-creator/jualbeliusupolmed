@@ -169,26 +169,6 @@ export default function DicariPage() {
       </section>
 
       {/* Cara kerja — 3 langkah */}
-      <div className="mt-4 grid gap-2 sm:grid-cols-3">
-        {[
-          { n: "1", t: "Tulis kebutuhanmu", d: "Nama barang, budget, dan lokasi COD. 1 menit selesai, gratis." },
-          { n: "2", t: "Penjual lihat postinganmu", d: "Mahasiswa USU & POLMED yang punya barangnya akan melihatnya di sini." },
-          { n: "3", t: "Terima tawaran di WA", d: "Nego langsung lewat WhatsApp, COD di titik aman sekitar kampus." },
-        ].map((s) => (
-          <div
-            key={s.n}
-            className="flex items-start gap-3 rounded-xl border border-gray-100 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900/30"
-          >
-            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-500/10 text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
-              {s.n}
-            </span>
-            <div>
-              <p className="text-xs font-bold text-gray-900 dark:text-white">{s.t}</p>
-              <p className="mt-0.5 text-[11px] leading-relaxed text-gray-500 dark:text-slate-400">{s.d}</p>
-            </div>
-          </div>
-        ))}
-      </div>
 
       {/* Filter Bar */}
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
