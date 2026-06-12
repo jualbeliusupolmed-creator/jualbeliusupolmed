@@ -291,16 +291,13 @@ export default function DicariPage() {
                   {item.title}
                 </h3>
 
-                {/* Campus/Area Badges */}
-                <div className="mt-1.5 sm:mt-2 flex flex-wrap gap-1 text-[9px] sm:text-[11px]">
-                  <span className="badge bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-350 flex items-center gap-0.5 sm:gap-1 max-w-[80px] sm:max-w-none truncate">
-                    <Icon.MapPin className="h-2.5 w-2.5 shrink-0" /> {item.campus === "Semua" ? "USU/POLMED" : item.campus}
+                {/* Location */}
+                <div className="mt-1.5 flex items-center gap-1 text-[10px] sm:text-xs text-gray-500 dark:text-slate-400">
+                  <Icon.MapPin className="h-3 w-3 shrink-0 text-gray-400 dark:text-slate-500" />
+                  <span className="truncate" title={`${item.campus === "Semua" ? "USU/POLMED" : item.campus}${item.area ? ` (${item.area})` : ""}`}>
+                    {item.campus === "Semua" ? "USU/POLMED" : item.campus}
+                    {item.area ? ` · ${item.area}` : ""}
                   </span>
-                  {item.area && (
-                    <span className="badge bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-350 flex items-center gap-0.5 sm:gap-1 max-w-[80px] sm:max-w-none truncate" title={item.area}>
-                      <Icon.MapPin className="h-2.5 w-2.5 shrink-0" /> {item.area}
-                    </span>
-                  )}
                 </div>
 
                 {/* Description */}
