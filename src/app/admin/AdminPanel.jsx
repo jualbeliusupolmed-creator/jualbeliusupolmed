@@ -111,7 +111,8 @@ export default function AdminPanel({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Aksi gagal");
-      setToast({ type: "ok", msg: okMsg || "Berhasil" });
+      if (data.warning) setToast({ type: "err", msg: data.warning });
+      else setToast({ type: "ok", msg: okMsg || "Berhasil" });
       router.refresh();
       return true;
     } catch (e) {

@@ -49,6 +49,8 @@ export async function POST(req) {
     const body = await req.json();
     const { action, id, wa } = body;
     const supa = getAdminClient();
+    // Info tambahan (mis. peringatan broadcast gagal) yang ikut dikirim ke UI admin
+    let warning = null;
 
     switch (action) {
       // ── Listing: aksi cepat ────────────────────────────────────────────
@@ -73,10 +75,20 @@ export async function POST(req) {
 
         // Broadcast to WA Group when admin activates manually
         if (listingInfo) {
-          await Promise.allSettled([
+          const [groupRes] = await Promise.allSettled([
             postToGroup(listingInfo),
             notifyWantedBuyers(listingInfo)
-          ]).catch((e) => console.warn("[activate] Broadcast failed:", e?.message));
+          ]);
+          const broadcast =
+            groupRes.status === "fulfilled"
+              ? groupRes.value
+              : { ok: false, error: groupRes.reason?.message };
+          if (!broadcast?.ok) {
+            console.error("[activate] Broadcast grup gagal:", JSON.stringify(broadcast));
+            warning = broadcast?.skipped
+              ? "Iklan aktif, tapi broadcast grup TIDAK terkirim: FONNTE_TOKEN/FONNTE_WA_GROUP_ID belum di-set di server."
+              : `Iklan aktif, tapi broadcast grup gagal: ${broadcast?.error || broadcast?.data?.reason || "cek log server"}.`;
+          }
         }
         break;
       }
@@ -325,7 +337,7 @@ export async function POST(req) {
       default:
         return NextResponse.json({ error: "Aksi tidak dikenal" }, { status: 400 });
     }
-    return NextResponse.json({ ok: true });
+    return NextResponse.json(warning ? { ok: true, warning } : { ok: true });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }

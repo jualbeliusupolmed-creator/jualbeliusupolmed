@@ -56,7 +56,8 @@ export default function AdminListingDetail({ listing, payments, reports, ratings
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Aksi gagal");
-      showToast(okMsg || "Berhasil");
+      if (data.warning) showToast(data.warning, "err");
+      else showToast(okMsg || "Berhasil");
       router.refresh();
       return true;
     } catch (e) {

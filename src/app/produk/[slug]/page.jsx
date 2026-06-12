@@ -42,15 +42,16 @@ async function getData(slug) {
     } else {
       // New slug format — extract the 8-char short ID suffix
       const shortId = getShortIdFromSlug(slug);
-      if (!shortId) return { listing: null, related: [] };
+      if (!shortId || shortId.length < 4) return { listing: null, related: [] };
 
+      // LIKE/ILIKE tidak bisa langsung di kolom uuid (PostgREST cast error),
+      // jadi ambil daftar id lalu prefix-match di JS — sama seperti halaman admin.
       const { data: rows } = await supa
         .from("listings")
-        .select("id, title, status")
-        .like("id", `${shortId.slice(0, 8)}%`)
-        .limit(5);
+        .select("id")
+        .order("created_at", { ascending: false })
+        .limit(500);
 
-      // Filter in JS for the exact match (LIKE catches all starting with prefix)
       const matchedId = rows?.find((r) =>
         r.id.replace(/-/g, "").startsWith(shortId.replace(/-/g, ""))
       )?.id;
