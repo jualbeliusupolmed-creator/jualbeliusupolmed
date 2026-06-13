@@ -27,7 +27,31 @@ export async function GET(req) {
     .eq("seller_wa", wa)
     .order("created_at", { ascending: false });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ listings: data || [], profile });
+
+  const listings = data || [];
+  const pendingListings = listings.filter((l) => l.status === "pending");
+  if (pendingListings.length > 0) {
+    const { data: payments } = await supa
+      .from("payments")
+      .select("id, listing_id, midtrans_order_id")
+      .in("listing_id", pendingListings.map((l) => l.id))
+      .eq("status", "pending")
+      .order("created_at", { ascending: false });
+
+    if (payments) {
+      for (const listing of listings) {
+        if (listing.status === "pending") {
+          const latestPayment = payments.find((p) => p.listing_id === listing.id);
+          if (latestPayment) {
+            listing.pending_order_id = latestPayment.midtrans_order_id;
+            listing.pending_payment_id = latestPayment.id;
+          }
+        }
+      }
+    }
+  }
+
+  return NextResponse.json({ listings, profile });
 }
 
 // POST /api/listings -> buat listing (pending) + payment + snap token

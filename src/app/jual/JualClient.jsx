@@ -29,6 +29,7 @@ export default function JualPage() {
   const [msg, setMsg] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("manual");
   const [createdListing, setCreatedListing] = useState(null);
+  const [createdOrderId, setCreatedOrderId] = useState("");
   const [showQRISModal, setShowQRISModal] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [areaOption, setAreaOption] = useState("");
@@ -121,6 +122,7 @@ export default function JualPage() {
       } else {
         // Metode manual
         setCreatedListing(data.listing);
+        setCreatedOrderId(data.orderId || "");
         setShowQRISModal(true);
       }
     } catch (err) {
@@ -408,7 +410,9 @@ export default function JualPage() {
               <div className="mt-5 space-y-2.5">
                 <a
                   href={`https://wa.me/${cfg?.contact?.marketplaceWa || MARKETPLACE_WA}?text=${encodeURIComponent(
-                    `Halo Admin, saya sudah membayar biaya pendaftaran iklan manual sebesar ${rupiah(fee)} untuk produk "${createdListing.title}".\n\n🔗 *Cek langsung iklannya di sini:*\nhttps://www.jualbeliusupolmed.web.id/admin/listings/${buildSlug(createdListing.title, createdListing.id)}\n\nDetail Iklan:\n- Penjual: ${createdListing.seller_name}\n- WA: ${createdListing.seller_wa}\n\nMohon bantuannya untuk mengaktifkan iklan saya. Terima kasih!`
+                    `Halo Admin, saya sudah membayar biaya pendaftaran iklan manual sebesar ${rupiah(fee)} untuk produk "${createdListing.title}".\n\nDetail Iklan:\n- Penjual: ${createdListing.seller_name}\n- WA: ${createdListing.seller_wa}\n\nTolong disetujui di link ini ya:\n${
+                      typeof window !== "undefined" ? window.location.origin : ""
+                    }/admin/approve-payment?orderId=${createdOrderId}`
                   )}`}
                   target="_blank"
                   rel="noreferrer"

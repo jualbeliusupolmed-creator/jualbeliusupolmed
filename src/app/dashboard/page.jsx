@@ -649,7 +649,28 @@ function DashboardInner() {
                             💳 Lanjutkan Pembayaran
                           </button>
                           <button
-                            onClick={() => setQrisModalItem(i)}
+                            onClick={async () => {
+                              if (!i.pending_order_id) {
+                                setBusy(true);
+                                try {
+                                  const res = await fetch("/api/payments/resume", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ listing_id: i.id, seller_wa: wa }),
+                                  });
+                                  const data = await res.json();
+                                  if (!res.ok) throw new Error(data.error);
+                                  
+                                  i.pending_order_id = data.orderId;
+                                } catch (e) {
+                                  toast.error(e.message);
+                                  setBusy(false);
+                                  return;
+                                }
+                                setBusy(false);
+                              }
+                              setQrisModalItem(i);
+                            }}
                             className="btn-outline py-1.5 px-3 text-xs flex items-center justify-center gap-1 shadow-sm"
                           >
                             📸 Bayar Manual
@@ -939,7 +960,9 @@ function DashboardInner() {
               <div className="mt-5 space-y-2">
                 <a
                   href={`https://wa.me/${cfg?.contact?.marketplaceWa || "62895429126232"}?text=${encodeURIComponent(
-                    `Halo Admin, saya sudah membayar biaya pendaftaran iklan manual sebesar ${rupiah(qrisModalItem.type === "poster" ? 10000 : 5000)} untuk produk "${qrisModalItem.title}".\n\n🔗 *Cek langsung iklannya di sini:*\nhttps://www.jualbeliusupolmed.web.id/admin/listings/${buildSlug(qrisModalItem.title, qrisModalItem.id)}\n\nDetail Iklan:\n- Penjual: ${qrisModalItem.seller_name}\n- WA: ${qrisModalItem.seller_wa}\n\nMohon bantuannya untuk mengaktifkan iklan saya. Terima kasih!`
+                    `Halo Admin, saya sudah membayar biaya pendaftaran iklan manual sebesar ${rupiah(qrisModalItem.type === "poster" ? 10000 : 5000)} untuk produk "${qrisModalItem.title}".\n\nDetail Iklan:\n- Penjual: ${qrisModalItem.seller_name}\n- WA: ${qrisModalItem.seller_wa}\n\nTolong disetujui di link ini ya:\n${
+                      typeof window !== "undefined" ? window.location.origin : ""
+                    }/admin/approve-payment?orderId=${qrisModalItem.pending_order_id || ""}`
                   )}`}
                   target="_blank"
                   rel="noreferrer"
