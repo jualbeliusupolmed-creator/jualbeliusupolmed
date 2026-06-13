@@ -598,37 +598,50 @@ export default function DicariPage() {
                 <p className="mt-1 text-xs text-gray-500 dark:text-slate-400 leading-relaxed">
                   Buka nomor WhatsApp pembeli secara instan dan langsung tawarkan barang Anda sendiri.
                 </p>
-                <button
-                  onClick={async () => {
-                    setUnlockLoading(true);
-                    try {
-                      const res = await fetch("/api/payments/unlock-wanted", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ wanted_id: offerModal.id }),
-                      });
-                      const data = await res.json();
-                      if (!res.ok) throw new Error(data.error || "Gagal membuat invoice");
-                      if (data.paymentUrl) {
-                        window.location.href = data.paymentUrl;
-                      } else {
-                        toast.error("Gagal memproses link iPaymu");
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <button
+                    onClick={async () => {
+                      setUnlockLoading(true);
+                      try {
+                        const res = await fetch("/api/payments/unlock-wanted", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ wanted_id: offerModal.id }),
+                        });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.error || "Gagal membuat invoice");
+                        if (data.paymentUrl) {
+                          window.location.href = data.paymentUrl;
+                        } else {
+                          toast.error("Gagal memproses link iPaymu");
+                        }
+                      } catch (e) {
+                        toast.error(e.message);
+                      } finally {
+                        setUnlockLoading(false);
                       }
-                    } catch (e) {
-                      toast.error(e.message);
-                    } finally {
-                      setUnlockLoading(false);
-                    }
-                  }}
-                  disabled={unlockLoading}
-                  className="btn-primary w-full mt-3 py-2 text-xs bg-blue-600 hover:bg-blue-700 border-blue-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-1.5"
-                >
-                  {unlockLoading ? (
-                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  ) : (
-                    <span>💳 Bayar &amp; Hubungi Pembeli</span>
-                  )}
-                </button>
+                    }}
+                    disabled={unlockLoading}
+                    className="btn-primary py-2 text-[11px] bg-blue-600 hover:bg-blue-700 border-blue-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-1.5"
+                  >
+                    {unlockLoading ? (
+                      <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    ) : (
+                      <span>💳 Payment Gateway</span>
+                    )}
+                  </button>
+                  <a
+                    href={`https://wa.me/${MARKETPLACE_WA}?text=${encodeURIComponent(
+                      `Halo Admin, saya mau transfer manual Rp 2.000 untuk buka kontak pembeli di postingan Cari Barang: "${offerModal.title}". Minta nomor rekening/QRIS nya ya.`
+                    )}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={() => setOfferModal(null)}
+                    className="btn-outline py-2 text-[11px] text-blue-700 border-blue-200 bg-white hover:bg-blue-50 font-bold rounded-lg flex items-center justify-center gap-1.5"
+                  >
+                    <span>📱 Transfer Manual</span>
+                  </a>
+                </div>
               </div>
 
               {/* Opsi 2: Bagi Hasil */}
