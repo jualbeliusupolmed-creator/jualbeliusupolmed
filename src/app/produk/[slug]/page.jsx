@@ -45,12 +45,16 @@ async function getData(slug) {
       if (!shortId || shortId.length < 4) return { listing: null, related: [] };
 
       // LIKE/ILIKE tidak bisa langsung di kolom uuid (PostgREST cast error),
-      // jadi ambil daftar id lalu prefix-match di JS — sama seperti halaman admin.
+      // jadi kita gunakan pencarian range (gte & lte) pada UUID.
+      const minId = `${shortId.padEnd(8, '0')}-0000-0000-0000-000000000000`;
+      const maxId = `${shortId.padEnd(8, 'f')}-ffff-ffff-ffff-ffffffffffff`;
+
       const { data: rows } = await supa
         .from("listings")
         .select("id")
-        .order("created_at", { ascending: false })
-        .limit(500);
+        .gte("id", minId)
+        .lte("id", maxId)
+        .limit(10);
 
       const matchedId = rows?.find((r) =>
         r.id.replace(/-/g, "").startsWith(shortId.replace(/-/g, ""))
