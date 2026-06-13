@@ -39,8 +39,11 @@ export async function POST(req) {
     });
 
     // Buat returnUrl mengarah langsung ke WhatsApp pembeli asli dengan pesan terformat
+    // CATATAN: iPaymu sering gagal jika URL terlalu panjang atau memuat banyak karakter aneh,
+    // jadi kita buat pesan yang lebih ringkas.
+    const shortTitle = wanted.title.length > 30 ? wanted.title.substring(0, 30) + "..." : wanted.title;
     const returnUrl = `https://wa.me/${wanted.buyer_wa}?text=${encodeURIComponent(
-      `Halo ${wanted.buyer_name}, saya melihat postingan Anda di Cari Barang Jual Beli USU Polmed untuk: "${wanted.title}". Saya punya barangnya.`
+      `Halo ${wanted.buyer_name}, saya ada barang "${shortTitle}".`
     )}`;
 
     let paymentUrl = null;
@@ -49,8 +52,8 @@ export async function POST(req) {
         orderId,
         amount,
         customerName: "Penjual",
-        customerWa: "",
-        itemName: `Buka Kontak Pembeli: ${wanted.title}`,
+        customerWa: "081111111111", // WA Dummy karena kita tidak tahu siapa penjualnya (belum login)
+        itemName: `Buka Kontak: ${wanted.title}`.substring(0, 50),
         returnUrl,
       });
       paymentUrl = tx.url;
