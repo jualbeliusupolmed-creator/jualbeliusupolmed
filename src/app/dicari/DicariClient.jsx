@@ -684,7 +684,7 @@ export default function DicariPage() {
               <div className="rounded-xl border-4 border-emerald-100 p-2 dark:border-emerald-900/50">
                 {/* Gunakan placeholder gambar QRIS. Nanti bisa diganti dengan file QRIS asli di /public */}
                 <img
-                  src="https://placehold.co/300x300/e2e8f0/1e293b?text=QRIS+ADMIN\n(Ganti+dengan+QRIS+Asli)"
+                  src="/qris.png"
                   alt="QRIS Admin"
                   className="w-48 h-48 object-cover rounded-lg"
                 />
