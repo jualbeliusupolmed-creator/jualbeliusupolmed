@@ -3,7 +3,7 @@ import { isAdmin } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { formatWa } from "@/lib/constants";
 import { getSettings } from "@/lib/settings";
-import { notifyAdminNewListing, postToGroup, notifyWantedBuyers } from "@/lib/fonnte";
+import { notifyAdminNewListing, postToGroup, notifyWantedBuyers, sendWa } from "@/lib/fonnte";
 
 export const dynamic = "force-dynamic";
 
@@ -266,6 +266,76 @@ export async function POST(req) {
       case "delete_payment":
         await supa.from("payments").delete().eq("id", id);
         break;
+
+      case "approve_unlock_manual": {
+        const { payment_id } = body;
+        if (!payment_id) {
+          return NextResponse.json({ error: "payment_id wajib diisi" }, { status: 400 });
+        }
+        
+        // 1. Ambil data payment
+        const { data: payment, error: pErr } = await supa
+          .from("payments")
+          .select("*")
+          .eq("id", payment_id)
+          .single();
+          
+        if (pErr || !payment) {
+          return NextResponse.json({ error: "Transaksi pembayaran tidak ditemukan" }, { status: 404 });
+        }
+        
+        if (payment.status === "paid") {
+          return NextResponse.json({ error: "Transaksi sudah berstatus lunas sebelumnya" }, { status: 400 });
+        }
+        
+        const wantedId = payment.meta?.unlock_wanted_id;
+        const requesterWa = payment.meta?.requester_wa;
+        
+        if (!wantedId || !requesterWa) {
+          return NextResponse.json({ error: "Data pencarian atau nomor pemohon tidak lengkap di transaksi" }, { status: 400 });
+        }
+        
+        // 2. Ambil detail postingan Cari Barang (wanted_listings)
+        const { data: wanted, error: wErr } = await supa
+          .from("wanted_listings")
+          .select("*")
+          .eq("id", wantedId)
+          .single();
+          
+        if (wErr || !wanted) {
+          return NextResponse.json({ error: "Postingan Cari Barang tidak ditemukan" }, { status: 404 });
+        }
+        
+        // 3. Update status payment menjadi paid
+        const { error: uErr } = await supa
+          .from("payments")
+          .update({ status: "paid" })
+          .eq("id", payment_id);
+          
+        if (uErr) {
+          return NextResponse.json({ error: "Gagal memperbarui transaksi pembayaran" }, { status: 500 });
+        }
+        
+        // 4. Kirim WhatsApp berisi detail kontak pembeli ke pemohon menggunakan Fonnte
+        const msg = 
+          `✅ *PEMBAYARAN QRIS MANUAL DISETUJUI*\n\n` +
+          `Halo, permintaan buka kontak Anda untuk pencarian barang berikut telah disetujui:\n` +
+          `🔍 *Cari Barang:* ${wanted.title}\n\n` +
+          `Berikut adalah kontak pembeli yang mengajukan pencarian:\n` +
+          `👤 *Nama:* ${wanted.buyer_name}\n` +
+          `📱 *No. WhatsApp:* ${wanted.buyer_wa}\n\n` +
+          `Silakan langsung hubungi pembeli di atas melalui link berikut:\n` +
+          `👉 https://wa.me/${wanted.buyer_wa}?text=${encodeURIComponent(`Halo ${wanted.buyer_name}, saya melihat postingan Anda di Jual Beli USU Polmed mencari "${wanted.title}". Saya ada barangnya.`)}\n\n` +
+          `Terima kasih telah menggunakan Jual Beli USU Polmed!`;
+          
+        const fonnteRes = await sendWa(requesterWa, msg);
+        if (!fonnteRes?.ok) {
+          console.error("[approve_unlock_manual] Gagal kirim WA ke pemohon:", fonnteRes);
+          warning = `Pembayaran disetujui, namun gagal mengirim pesan WhatsApp ke pemohon: ${fonnteRes?.error || "cek log server"}`;
+        }
+        
+        break;
+      }
 
       // ── Kategori ───────────────────────────────────────────────────────
       case "category_upsert": {

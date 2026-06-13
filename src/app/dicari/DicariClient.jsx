@@ -35,6 +35,10 @@ export default function DicariPage() {
   const [offerModal, setOfferModal] = useState(null);
   const [unlockLoading, setUnlockLoading] = useState(false);
   const [qrisModal, setQrisModal] = useState(null);
+  const [manualWa, setManualWa] = useState("");
+  const [manualStep, setManualStep] = useState(1);
+  const [qrisPaymentId, setQrisPaymentId] = useState(null);
+  const [manualLoading, setManualLoading] = useState(false);
 
   // Budget masking
   const [budgetRaw, setBudgetRaw] = useState("");
@@ -633,6 +637,10 @@ export default function DicariPage() {
                   </button>
                   <button
                     onClick={() => {
+                      const savedWa = localStorage.getItem("seller_wa") || "";
+                      setManualWa(savedWa);
+                      setManualStep(1);
+                      setQrisPaymentId(null);
                       setQrisModal(offerModal);
                       setOfferModal(null);
                     }}
@@ -672,52 +680,132 @@ export default function DicariPage() {
       {/* QRIS Manual Modal */}
       {qrisModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="card w-full max-w-sm bg-white p-6 shadow-2xl dark:bg-slate-900 animate-fade-in text-center">
-            <h2 className="text-lg font-extrabold text-gray-900 dark:text-white">
-              Transfer via QRIS
-            </h2>
-            <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">
-              Silakan scan QR Code di bawah atau simpan gambar ke galeri untuk membayar melalui m-Banking/e-Wallet Anda.
-            </p>
-
-            <div className="mt-4 flex justify-center">
-              <div className="rounded-xl border-4 border-emerald-100 p-2 dark:border-emerald-900/50">
-                {/* Gunakan placeholder gambar QRIS. Nanti bisa diganti dengan file QRIS asli di /public */}
-                <img
-                  src="/qris.png"
-                  alt="QRIS Admin"
-                  className="w-48 h-48 object-cover rounded-lg"
-                />
-              </div>
-            </div>
-
-            <div className="mt-4 bg-gray-50 dark:bg-slate-800/50 p-3 rounded-xl border border-gray-100 dark:border-slate-800">
-              <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Total Pembayaran</p>
-              <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">Rp 2.000</p>
-            </div>
-
-            <div className="mt-5 space-y-2">
-              <a
-                href={`https://wa.me/${MARKETPLACE_WA}?text=${encodeURIComponent(
-                  `Halo Admin, saya sudah transfer manual Rp 2.000 via QRIS untuk buka kontak pembeli di postingan Cari Barang:\n\n*Judul:* ${qrisModal.title}\n*ID:* ${qrisModal.id}\n\nBerikut saya lampirkan bukti transfernya. Tolong kirimkan nomor WA pembelinya ya.`
-                )}`}
-                target="_blank"
-                rel="noreferrer"
-                onClick={() => setQrisModal(null)}
-                className="btn-primary w-full py-2.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-1.5"
-              >
-                <span>✅ Konfirmasi ke WhatsApp Admin</span>
-              </a>
+          <div className="card w-full max-w-sm bg-white p-6 shadow-2xl dark:bg-slate-900 animate-fade-in">
+            <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-slate-800">
+              <h2 className="text-base font-extrabold text-gray-900 dark:text-white">
+                Buka Kontak (Transfer Manual)
+              </h2>
               <button
-                onClick={() => {
-                  setOfferModal(qrisModal);
-                  setQrisModal(null);
-                }}
-                className="btn-outline w-full py-2.5 text-xs font-bold bg-white hover:bg-gray-50 dark:bg-slate-950 dark:hover:bg-slate-900 rounded-lg flex items-center justify-center gap-1.5"
+                type="button"
+                onClick={() => setQrisModal(null)}
+                className="text-gray-400 hover:text-gray-650"
               >
-                Kembali
+                ✕
               </button>
             </div>
+
+            {manualStep === 1 ? (
+              <div className="mt-4 space-y-4">
+                <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed">
+                  Masukkan nomor WhatsApp Anda. Kontak pembeli akan dikirimkan otomatis ke nomor ini setelah transfer disetujui admin.
+                </p>
+                <div className="floating-group">
+                  <input
+                    id="manual-wa"
+                    className="floating-input peer"
+                    value={manualWa}
+                    onChange={(e) => setManualWa(e.target.value)}
+                    placeholder=" "
+                    required
+                  />
+                  <label htmlFor="manual-wa" className="floating-label">No. WhatsApp Anda (e.g. 62812...)</label>
+                </div>
+                <div className="pt-2 flex gap-2 justify-end">
+                  <button
+                    onClick={() => {
+                      setOfferModal(qrisModal);
+                      setQrisModal(null);
+                    }}
+                    className="btn-outline px-4 py-2 text-xs"
+                  >
+                    Kembali
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!manualWa) {
+                        toast.error("Nomor WhatsApp wajib diisi");
+                        return;
+                      }
+                      setManualLoading(true);
+                      try {
+                        const res = await fetch("/api/payments/unlock-wanted", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            wanted_id: qrisModal.id,
+                            method: "manual",
+                            requester_wa: manualWa,
+                          }),
+                        });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.error || "Gagal mencatat transaksi");
+                        
+                        localStorage.setItem("seller_wa", manualWa);
+                        setQrisPaymentId(data.paymentId);
+                        setManualStep(2);
+                      } catch (e) {
+                        toast.error(e.message);
+                      } finally {
+                        setManualLoading(false);
+                      }
+                    }}
+                    disabled={manualLoading}
+                    className="btn-primary px-4 py-2 text-xs flex items-center justify-center gap-1.5"
+                  >
+                    {manualLoading ? (
+                      <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    ) : (
+                      "Lanjut ke QRIS"
+                    )}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-4 text-center">
+                <p className="text-xs text-gray-500 dark:text-slate-400">
+                  Silakan scan QR Code di bawah untuk membayar Rp 2.000 melalui m-Banking/e-Wallet Anda.
+                </p>
+
+                <div className="mt-4 flex justify-center">
+                  <div className="rounded-xl border-4 border-emerald-100 p-2 dark:border-emerald-900/50">
+                    <img
+                      src="/qris.png"
+                      alt="QRIS Admin"
+                      className="w-48 h-48 object-cover rounded-lg"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-4 bg-gray-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-gray-100 dark:border-slate-800">
+                  <p className="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-0.5">Total Pembayaran</p>
+                  <p className="text-xl font-black text-emerald-600 dark:text-emerald-400">Rp 2.000</p>
+                </div>
+
+                <div className="mt-5 space-y-2">
+                  <a
+                    href={`https://wa.me/${MARKETPLACE_WA}?text=${encodeURIComponent(
+                      `Halo Admin, saya sudah transfer manual Rp 2.000 via QRIS untuk buka kontak pembeli di postingan Cari Barang:\n\n*Judul:* ${
+                        qrisModal.title
+                      }\n*ID Transaksi:* ${qrisPaymentId}\n*WA Pemohon:* ${manualWa}\n\nBerikut saya lampirkan bukti transfernya. Tolong disetujui di link ini ya:\n${
+                        typeof window !== "undefined" ? window.location.origin : ""
+                      }/admin/approve-unlock?id=${qrisPaymentId}`
+                    )}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={() => setQrisModal(null)}
+                    className="btn-primary w-full py-2.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-1.5"
+                  >
+                    <span>✅ Kirim Bukti &amp; Link Approve ke Admin</span>
+                  </a>
+                  <button
+                    onClick={() => setManualStep(1)}
+                    className="btn-outline w-full py-2.5 text-xs font-bold bg-white hover:bg-gray-50 dark:bg-slate-950 dark:hover:bg-slate-900 rounded-lg flex items-center justify-center gap-1.5"
+                  >
+                    Kembali
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
