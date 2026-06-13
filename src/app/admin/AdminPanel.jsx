@@ -67,6 +67,7 @@ export default function AdminPanel({
   initialTab = "overview",
   listingsTotal = 0,
   paymentsTotal = 0,
+  pwaInstallsTotal = 0,
   currentPage = 1,
   pageSize = 100,
 }) {
@@ -330,13 +331,14 @@ export default function AdminPanel({
         <h1 className="mb-4 hidden text-2xl font-extrabold dark:text-white lg:block">{activeLabel}</h1>
 
         {tab !== "pengaturan" && (
-          <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+          <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-7">
             <Kpi label="Iklan aktif" value={active.length} sub={`${listings.length} total`} />
             <Kpi label="Terjual" value={sold.length} sub={`${pending.length} pending`} />
             <Kpi label="Revenue" value={rupiah(revenue)} sub={`${pendingCount} pending`} />
             <Kpi label="Total views" value={totalViews} />
-            <Kpi label="Rating rata-rata" value={avgRating} sub={`${ratings.length} ulasan`} />
-            <Kpi label="Laporan terbuka" value={openReports.length} sub={`${pendingVerif.length} verifikasi`} />
+            <Kpi label="Install PWA" value={pwaInstallsTotal} sub="Orang" />
+            <Kpi label="Rating" value={avgRating} sub={`${ratings.length} ulasan`} />
+            <Kpi label="Laporan" value={openReports.length} sub={`${pendingVerif.length} verifikasi`} />
           </div>
         )}
 

@@ -50,6 +50,7 @@ export const DEFAULT_DATA = {
   pendingCount: 0,
   listingsTotal: 0,
   paymentsTotal: 0,
+  pwaInstallsTotal: 0,
   currentPage: 1,
   pageSize: 100,
 };
@@ -64,7 +65,7 @@ export async function getAdminStats(page = 1) {
   const to = from + PAGE_SIZE - 1;
 
   // PAGINATED: listings and payments now use range() instead of loading all at once
-  const [listingsRes, paymentsRes, blacklist, categories, settings, wanted, blogs] = await Promise.all([
+  const [listingsRes, paymentsRes, blacklist, categories, settings, wanted, blogs, pwaInstallsRes] = await Promise.all([
     safePaginated(
       fetchListingsWithProfiles(
         supa
@@ -109,12 +110,19 @@ export async function getAdminStats(page = 1) {
         .limit(100),
       []
     ),
+    safePaginated(
+      supa
+        .from("pwa_installs")
+        .select("id", { count: "exact", head: true }),
+      []
+    ),
   ]);
 
   const listings = listingsRes.data || [];
   const listingsTotal = listingsRes.count;
   const payments = paymentsRes.data || [];
   const paymentsTotal = paymentsRes.count;
+  const pwaInstallsTotal = pwaInstallsRes.count;
 
   // Reports and ratings stay reasonable with explicit limits
   const [reports, ratings] = await Promise.all([
@@ -181,6 +189,7 @@ export async function getAdminStats(page = 1) {
     pendingCount,
     listingsTotal,
     paymentsTotal,
+    pwaInstallsTotal,
     currentPage: page,
     pageSize: PAGE_SIZE,
   };

@@ -76,7 +76,24 @@ export default function JasaBrowser({
       setPwaReady(true);
     };
     
-    const onInstalled = () => setPwaReady(false);
+    const onInstalled = () => {
+      setPwaReady(false);
+      
+      // 1. Send event to Google Analytics
+      if (typeof window !== "undefined" && typeof window.gtag === "function") {
+        window.gtag("event", "pwa_install", {
+          event_category: "PWA",
+          event_label: "Install App",
+        });
+      }
+
+      // 2. Send event to Supabase Backend
+      fetch("/api/analytics/pwa-install", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userAgent: navigator.userAgent }),
+      }).catch(console.error);
+    };
     window.addEventListener("beforeinstallprompt", onPrompt);
     window.addEventListener("appinstalled", onInstalled);
     return () => {

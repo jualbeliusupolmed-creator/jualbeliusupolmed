@@ -35,7 +35,7 @@ VALUES
 ('081210001002', 'Nabila Syafitri', 'iPhone 11 64GB Ex iBox Mulus', 'Kesehatan baterai 85%, belum pernah bongkar. Face ID aman.', 4200000, 'elektronik', 'active', 'barang', 'https://loremflickr.com/600/600/iphone'),
 ('081210001003', 'Kevin Adrian', 'TWS Baseus WM01 Hitam', 'Baru pakai 2 bulan, suara masih jernih, bass mantap.', 100000, 'elektronik', 'active', 'barang', 'https://loremflickr.com/600/600/earbuds'),
 ('081210001004', 'Dandi Saputra', 'Printer Epson L3110 Bekas Skripsi', 'Tinta masih penuh, print warna aman. Cocok untuk mahasiswa semester akhir.', 900000, 'elektronik', 'active', 'barang', 'https://loremflickr.com/600/600/printer'),
-('081210001005', 'Bobby Tarigan', 'Monitor LG 24 Inch IPS', 'Gambar jernih, tidak ada dead pixel. Dus masih lengkap buat nge-game atau coding.', 1100000, 'elektronik', 'active', 'barang', 'https://loremflickr.com/600/600/monitor'),
+('081210001005', 'Bobby Tarigan', 'Monitor LG 24 Incaah IPS', 'Gambar jernih, tidak ada dead pixel. Dus masih lengkap buat nge-game atau coding.', 1100000, 'elektronik', 'active', 'barang', 'https://loremflickr.com/600/600/monitor'),
 
 -- Fashion
 ('081210001006', 'Fadli Hidayat', 'Jaket Hoodie H&M Hitam Size L', 'Jarang pakai, warna masih pekat tidak pudar. Cocok bawa ke kampus.', 120000, 'fashion', 'active', 'barang', 'https://loremflickr.com/600/600/hoodie'),

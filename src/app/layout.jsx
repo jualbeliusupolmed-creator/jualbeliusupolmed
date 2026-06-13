@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import BackToTop from "@/components/BackToTop";
 import { Toaster } from "sonner";
+import Script from "next/script";
 import { getSettings } from "@/lib/settings";
 
 const BASE_URL =
@@ -129,6 +130,22 @@ export default async function RootLayout({ children }) {
         ` }} />
       </head>
       <body className="min-h-screen flex flex-col">
+        <Script
+          strategy="afterInteractive"
+          src="https://www.googletagmanager.com/gtag/js?id=G-SQFZJPXSW2"
+        />
+        <Script
+          id="gtag-init"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-SQFZJPXSW2');
+            `,
+          }}
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }}
