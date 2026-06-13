@@ -34,6 +34,7 @@ export default function DicariPage() {
   const [submitting, setSubmitting] = useState(false);
   const [offerModal, setOfferModal] = useState(null);
   const [unlockLoading, setUnlockLoading] = useState(false);
+  const [qrisModal, setQrisModal] = useState(null);
 
   // Budget masking
   const [budgetRaw, setBudgetRaw] = useState("");
@@ -630,17 +631,15 @@ export default function DicariPage() {
                       <span>💳 Payment Gateway</span>
                     )}
                   </button>
-                  <a
-                    href={`https://wa.me/${MARKETPLACE_WA}?text=${encodeURIComponent(
-                      `Halo Admin, saya mau transfer manual Rp 2.000 untuk buka kontak pembeli di postingan Cari Barang: "${offerModal.title}". Minta nomor rekening/QRIS nya ya.`
-                    )}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    onClick={() => setOfferModal(null)}
+                  <button
+                    onClick={() => {
+                      setQrisModal(offerModal);
+                      setOfferModal(null);
+                    }}
                     className="btn-outline py-2 text-[11px] text-blue-700 border-blue-200 bg-white hover:bg-blue-50 font-bold rounded-lg flex items-center justify-center gap-1.5"
                   >
                     <span>📱 Transfer Manual</span>
-                  </a>
+                  </button>
                 </div>
               </div>
 
@@ -665,6 +664,59 @@ export default function DicariPage() {
                   <span>💬 Hubungi Admin (Bagi Hasil)</span>
                 </a>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* QRIS Manual Modal */}
+      {qrisModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="card w-full max-w-sm bg-white p-6 shadow-2xl dark:bg-slate-900 animate-fade-in text-center">
+            <h2 className="text-lg font-extrabold text-gray-900 dark:text-white">
+              Transfer via QRIS
+            </h2>
+            <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">
+              Silakan scan QR Code di bawah atau simpan gambar ke galeri untuk membayar melalui m-Banking/e-Wallet Anda.
+            </p>
+
+            <div className="mt-4 flex justify-center">
+              <div className="rounded-xl border-4 border-emerald-100 p-2 dark:border-emerald-900/50">
+                {/* Gunakan placeholder gambar QRIS. Nanti bisa diganti dengan file QRIS asli di /public */}
+                <img
+                  src="https://placehold.co/300x300/e2e8f0/1e293b?text=QRIS+ADMIN\n(Ganti+dengan+QRIS+Asli)"
+                  alt="QRIS Admin"
+                  className="w-48 h-48 object-cover rounded-lg"
+                />
+              </div>
+            </div>
+
+            <div className="mt-4 bg-gray-50 dark:bg-slate-800/50 p-3 rounded-xl border border-gray-100 dark:border-slate-800">
+              <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Total Pembayaran</p>
+              <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">Rp 2.000</p>
+            </div>
+
+            <div className="mt-5 space-y-2">
+              <a
+                href={`https://wa.me/${MARKETPLACE_WA}?text=${encodeURIComponent(
+                  `Halo Admin, saya sudah transfer manual Rp 2.000 via QRIS untuk buka kontak pembeli di postingan Cari Barang:\n\n*Judul:* ${qrisModal.title}\n*ID:* ${qrisModal.id}\n\nBerikut saya lampirkan bukti transfernya. Tolong kirimkan nomor WA pembelinya ya.`
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => setQrisModal(null)}
+                className="btn-primary w-full py-2.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-1.5"
+              >
+                <span>✅ Konfirmasi ke WhatsApp Admin</span>
+              </a>
+              <button
+                onClick={() => {
+                  setOfferModal(qrisModal);
+                  setQrisModal(null);
+                }}
+                className="btn-outline w-full py-2.5 text-xs font-bold bg-white hover:bg-gray-50 dark:bg-slate-950 dark:hover:bg-slate-900 rounded-lg flex items-center justify-center gap-1.5"
+              >
+                Kembali
+              </button>
             </div>
           </div>
         </div>
