@@ -107,8 +107,28 @@ export async function POST(req) {
 
     // FIXED: Fetch settings BEFORE insert so expires_at uses configurable listingDays
     const settings = await getSettings();
-    const expiresAt = listingExpiresAt(settings.pricing);
-    const initialStatus = isPro ? "active" : "pending";
+    const isJasa = type === "jasa";
+    let isJasaFree = false;
+
+    if (isJasa) {
+      // Cek apakah dia pernah posting jasa sebelumnya
+      const { count } = await supa
+        .from("listings")
+        .select("*", { count: "exact", head: true })
+        .eq("seller_wa", normalizedWa)
+        .eq("type", "jasa");
+      
+      if (count === 0) {
+        isJasaFree = true;
+      }
+    }
+
+    let days = Math.max(1, Number(settings.pricing?.listingDays) || 14);
+    if (isJasaFree) days = 7;
+    else if (isJasa || type === "poster") days = 30; // Jasa berbayar dan poster dapat 30 hari
+
+    const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+    const initialStatus = (isPro || isJasaFree) ? "active" : "pending";
 
     const { data: listing, error } = await supa
       .from("listings")
@@ -120,7 +140,7 @@ export async function POST(req) {
         price: Math.round(Number(price)) || 0,
         stock: Math.max(1, Number(stock) || 1),
         category: category || "Elektronik",
-        type: type === "poster" ? "poster" : "barang",
+        type: type === "poster" ? "poster" : (type === "jasa" ? "jasa" : "barang"),
         image_url: image_url || null,
         status: initialStatus,
         campus: campus || "Semua",
@@ -137,8 +157,8 @@ export async function POST(req) {
       await supa.from("listings").update({ images }).eq("id", listing.id);
     }
 
-    if (isPro) {
-      return NextResponse.json({ listing, paymentUrl: null, isPro: true });
+    if (isPro || isJasaFree) {
+      return NextResponse.json({ listing, paymentUrl: null, isPro, isJasaFree });
     }
 
     const amount = adFeeFrom(settings.pricing, listing.type, listing.price);

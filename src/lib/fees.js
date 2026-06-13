@@ -11,7 +11,7 @@ export const FEES = {
 
 // Biaya iklan saat submit (sebelum deal / biaya iklan)
 export function adFee(type, price = 0) {
-  if (type === "poster") return FEES.iklan_poster;
+  if (type === "poster" || type === "jasa") return FEES.iklan_poster;
   const p = Number(price) || 0;
   if (p < 50000) return 2000;
   if (p < 100000) return 3000;

@@ -71,11 +71,14 @@ export default function ProductCard({ listing }) {
             {listing.title}
           </h3>
           <p className="mt-1.5 text-[15px] font-bold tracking-tight text-gray-900 dark:text-white">
+            {listing.type === "jasa" ? (
+              <span className="text-xs font-medium text-gray-500 dark:text-slate-400 font-normal">Mulai dari </span>
+            ) : ""}
             {rupiah(listing.price)}
           </p>
           <div className="mt-1.5 flex items-center justify-between text-[11px] text-gray-500 dark:text-slate-400">
             <p className="truncate flex items-center gap-1">
-              <span>{listing.stock != null ? `Stok ${listing.stock} · ` : ""}{listing.seller_name}</span>
+              <span>{listing.type !== "jasa" && listing.stock != null ? `Stok ${listing.stock} · ` : ""}{listing.seller_name}</span>
               {listing.seller_profiles?.trusted_seller && (
                 <span className="inline-flex items-center justify-center rounded-full bg-blue-100 p-0.5 text-blue-500" title="Penjual Terpercaya">
                   <svg className="h-2.5 w-2.5" viewBox="0 0 20 20" fill="currentColor">

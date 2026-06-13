@@ -36,6 +36,7 @@ export async function GET(req) {
     const sort = sp.get("sort") || "bumped";
     const campus = sp.get("campus") || "";
     const nego = sp.get("nego") === "1";
+    const typeStr = sp.get("type") || "";
 
     const from = (page - 1) * limit;
     const to = from + limit - 1;
@@ -49,6 +50,12 @@ export async function GET(req) {
         { count: "exact" }
       )
       .eq("status", "active");
+
+    if (typeStr && typeStr !== "all") {
+      query = query.in("type", typeStr.split(","));
+    } else if (typeStr !== "all") {
+      query = query.in("type", ["barang", "poster"]);
+    }
 
     if (cat) query = query.eq("category", cat);
     if (campus && campus !== "Semua") query = query.eq("campus", campus);

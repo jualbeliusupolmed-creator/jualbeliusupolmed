@@ -223,7 +223,7 @@ export default async function ProdukPage({ params }) {
             </span>
             {listing.area && (
               <span className="badge bg-primary/5 text-primary dark:bg-white/10 dark:text-white font-medium flex items-center gap-1">
-                <Icon.MapPin className="h-3 w-3" /> {listing.area}
+                <Icon.MapPin className="h-3 w-3" /> {listing.type === "jasa" ? listing.area : listing.area}
               </span>
             )}
             {listing.featured && (
@@ -241,10 +241,11 @@ export default async function ProdukPage({ params }) {
             <FavoriteButton listing={listing} size="lg" className="shrink-0" />
           </div>
           <p className="mt-2 text-3xl font-extrabold tracking-tight text-gray-900">
+            {listing.type === "jasa" && <span className="text-xl text-gray-500 font-medium">Mulai dari </span>}
             {rupiah(listing.price)}
           </p>
           <p className="mt-1 text-sm text-gray-400">
-            Stok: {listing.stock}
+            {listing.type !== "jasa" && <span>Stok: {listing.stock}</span>}
             {listing.views > 0 && (
               <span className="ml-2 inline-flex items-center gap-1.5 align-middle text-orange-500 font-medium bg-orange-50 dark:bg-orange-900/20 px-2 py-0.5 rounded-md">
                 · <Icon.Eye className="h-3.5 w-3.5" /> Sedang dilihat {Math.max(1, Math.floor(listing.views / 5) + 1)} orang lainnya
@@ -318,7 +319,7 @@ export default async function ProdukPage({ params }) {
       {/* Produk serupa */}
       {related.length > 0 && (
         <section className="mt-10 mb-20 md:mb-0">
-          <h2 className="text-lg font-bold">Barang serupa</h2>
+          <h2 className="text-lg font-bold">{listing.type === "jasa" ? "Jasa serupa" : "Barang serupa"}</h2>
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {related.map((r) => (
               <ProductCard key={r.id} listing={r} />

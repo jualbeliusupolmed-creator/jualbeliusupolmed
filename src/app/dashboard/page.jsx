@@ -58,6 +58,7 @@ function DashboardInner() {
   const [featuredConfirm, setFeaturedConfirm] = useState(null);
 
   const [autobumpConfirm, setAutobumpConfirm] = useState(null);
+  const [renewConfirm, setRenewConfirm] = useState(null);
 
   const [qrisModalItem, setQrisModalItem] = useState(null);
 
@@ -271,6 +272,13 @@ function DashboardInner() {
     pay("/api/payments/autobump", { listing_id: item.id }, "autobump");
   }
 
+  // Renew (Perpanjang)
+  function doRenew() {
+    const { item } = renewConfirm;
+    setRenewConfirm(null);
+    pay("/api/payments/renew", { listing_id: item.id, seller_wa: wa }, "renewal");
+  }
+
   const active = items.filter((i) => i.status === "active");
   const soldItems = items.filter((i) => i.status === "sold");
   const pendingItems = items.filter((i) => i.status === "pending");
@@ -393,6 +401,28 @@ function DashboardInner() {
         confirmLabel="Bayar Rp 15.000"
         onConfirm={doAutobump}
         onClose={() => setAutobumpConfirm(null)}
+      />
+
+      {/* Konfirmasi bayar perpanjang (renew) */}
+      <ConfirmModal
+        open={!!renewConfirm}
+        title="Konfirmasi Perpanjang Iklan"
+        message={
+          renewConfirm && (
+            <div>
+              <p>
+                Perpanjang masa tayang iklan <strong>{renewConfirm.item.title}</strong>?
+              </p>
+              <ul className="mt-2 list-inside list-disc text-sm text-gray-500 space-y-1">
+                <li>Iklan akan kembali aktif dan naik ke atas feed.</li>
+                <li>Masa tayang bertambah.</li>
+              </ul>
+            </div>
+          )
+        }
+        confirmLabel="Lanjut Pembayaran"
+        onConfirm={doRenew}
+        onClose={() => setRenewConfirm(null)}
       />
 
       {/* ===== UI ===== */}
@@ -775,15 +805,15 @@ function DashboardInner() {
                               <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">
                                 ⏰ Masa aktif habis
                               </span>
-                              <Link
-                                href={`/edit/${i.id}`}
+                              <button
+                                onClick={() => setRenewConfirm({ item: i })}
                                 className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1 w-fit"
                                 aria-label={`Perpanjang iklan ${i.title}`}
                               >
                                 🔄 Perpanjang Iklan
-                              </Link>
+                              </button>
                               <p className="text-[10px] text-gray-400 max-w-[180px]">
-                                Edit & pasang ulang iklan ini tanpa buat baru
+                                Aktifkan kembali iklan ini
                               </p>
                             </div>
                           )}

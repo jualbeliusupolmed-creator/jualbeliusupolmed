@@ -96,6 +96,23 @@ export async function POST(req) {
             .from("listings")
             .update({ auto_bump_until: until, bumped_at: new Date().toISOString() })
             .eq("id", payment.listing_id);
+        } else if (payment.type === "renewal") {
+          const { data: currentListing } = await supa
+            .from("listings")
+            .select("type")
+            .eq("id", payment.listing_id)
+            .single();
+            
+          let days = 14; // Default untuk barang biasa
+          if (currentListing?.type === "jasa" || currentListing?.type === "poster") {
+            days = 30; // 30 hari untuk jasa dan poster
+          }
+          
+          const until = new Date(Date.now() + days * 864e5).toISOString();
+          await supa
+            .from("listings")
+            .update({ status: "active", expires_at: until, bumped_at: new Date().toISOString() })
+            .eq("id", payment.listing_id);
         } else if (payment.type === "subscribe") {
           const wa = payment.meta?.wa;
           if (wa) {

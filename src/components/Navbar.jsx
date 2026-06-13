@@ -11,6 +11,7 @@ import { toast } from "sonner";
 const links = [
   { href: "/", label: "Beranda" },
   { href: "/jual", label: "Jual Barang" },
+  { href: "/jasa", label: "Jasa" },
   { href: "/dicari", label: "Cari Barang" },
   { href: "/favorit", label: "Favorit" },
   { href: "/dashboard", label: "Dashboard" },
