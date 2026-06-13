@@ -4,6 +4,7 @@ import { createPaymentLink } from "@/lib/ipaymu";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { getSettings, adFeeFrom, listingExpiresAt, hasUnpaidSoldFees } from "@/lib/settings";
 import { formatWa } from "@/lib/constants";
+import { postToGroup } from "@/lib/fonnte";
 
 export const dynamic = "force-dynamic";
 
@@ -158,6 +159,12 @@ export async function POST(req) {
     }
 
     if (isPro || isJasaFree) {
+      // Kirim notifikasi WA (berjalan di background tanpa await jika tidak mutlak diperlukan, tapi baiknya await)
+      try {
+        await postToGroup(listing);
+      } catch (err) {
+        console.error("Fonnte postToGroup error:", err?.message);
+      }
       return NextResponse.json({ listing, paymentUrl: null, isPro, isJasaFree });
     }
 
