@@ -88,10 +88,6 @@ export async function POST(req) {
       return NextResponse.json({ error: "Nomor WA tidak valid" }, { status: 400 });
     }
 
-    const sessionWa = getSellerSession();
-    if (!isAdmin() && sessionWa !== normalizedBuyerWa) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
     const supa = getAdminClient();
 
