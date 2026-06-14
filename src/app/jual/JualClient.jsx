@@ -9,6 +9,7 @@ import MediaUploader from "@/components/MediaUploader";
 import { CATEGORIES, MARKETPLACE_WA, POPULAR_AREAS, formatWa } from "@/lib/constants";
 import { buildSlug } from "@/lib/slug";
 import { toast } from "sonner";
+import OTPModal from "@/components/OTPModal";
 export default function JualPage() {
   const router = useRouter();
   const [form, setForm] = useState({
@@ -33,6 +34,7 @@ export default function JualPage() {
   const [showQRISModal, setShowQRISModal] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [areaOption, setAreaOption] = useState("");
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const [cfg, setCfg] = useState(null);
   
@@ -89,7 +91,20 @@ export default function JualPage() {
       toast.error("Lengkapi nama, WA, judul, dan harga.");
       return;
     }
+
+    // Cek apakah pengguna sudah login dengan nomor ini
+    const loggedInWa = localStorage.getItem("seller_wa");
+    if (loggedInWa !== formattedWa) {
+      setShowPreviewModal(false);
+      setShowAuthModal(true);
+      return;
+    }
+
     setShowPreviewModal(false);
+    await processListing(formattedWa);
+  }
+
+  async function processListing(formattedWa) {
     setBusy(true);
     try {
       const images = await uploadMedia(media);
@@ -502,6 +517,22 @@ export default function JualPage() {
           </div>
         </div>
       )}
+
+      {/* Modal Auth OTP */}
+      <OTPModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        initialWa={formatWa(form.seller_wa) || ""}
+        onSuccess={(verifiedWa) => {
+          setShowAuthModal(false);
+          // Auto-fill form jika WA berubah saat di modal
+          if (verifiedWa && formatWa(form.seller_wa) !== verifiedWa) {
+             setForm(f => ({ ...f, seller_wa: verifiedWa }));
+          }
+          // Setelah berhasil auth, lanjutkan proses listing
+          processListing(verifiedWa);
+        }}
+      />
     </div>
   );
 }

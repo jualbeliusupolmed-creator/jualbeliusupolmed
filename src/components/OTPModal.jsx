@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Icon } from "./Icons";
 
-export default function OTPModal({ isOpen, onClose, onSuccess }) {
+export default function OTPModal({ isOpen, onClose, onSuccess, initialWa = "" }) {
   const [loginMode, setLoginMode] = useState("wa"); // "wa" | "email"
   
   // WA States
@@ -23,7 +23,7 @@ export default function OTPModal({ isOpen, onClose, onSuccess }) {
     if (isOpen) {
       setLoginMode("wa");
       setStep(1);
-      setWa("");
+      setWa(initialWa || "");
       setOtp("");
       setPin("");
       setEmail("");
@@ -31,7 +31,7 @@ export default function OTPModal({ isOpen, onClose, onSuccess }) {
       setError("");
       setCountdown(0);
     }
-  }, [isOpen]);
+  }, [isOpen, initialWa]);
 
   useEffect(() => {
     let timer;
