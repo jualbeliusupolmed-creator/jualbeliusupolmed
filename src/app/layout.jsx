@@ -110,7 +110,7 @@ export default async function RootLayout({ children }) {
   };
 
   return (
-    <html lang="id" className={jakartaSans.variable}>
+    <html lang="id" className={jakartaSans.variable} suppressHydrationWarning>
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -143,6 +143,35 @@ export default async function RootLayout({ children }) {
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
               gtag('config', 'G-SQFZJPXSW2');
+            `,
+          }}
+        />
+        <Script
+          id="chunk-error-recovery"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.addEventListener('error', function(e) {
+                if (e && e.message && e.message.toLowerCase().includes('loading chunk')) {
+                  var key = 'chunk_reload_at';
+                  var last = parseInt(sessionStorage.getItem(key) || '0', 10);
+                  if (Date.now() - last > 10000) {
+                    sessionStorage.setItem(key, Date.now());
+                    window.location.reload(true);
+                  }
+                }
+              });
+              window.addEventListener('unhandledrejection', function(e) {
+                var msg = e && e.reason && (e.reason.message || e.reason.name || '');
+                if (msg && (msg.includes('ChunkLoadError') || msg.includes('Loading chunk'))) {
+                  var key = 'chunk_reload_at';
+                  var last = parseInt(sessionStorage.getItem(key) || '0', 10);
+                  if (Date.now() - last > 10000) {
+                    sessionStorage.setItem(key, Date.now());
+                    window.location.reload(true);
+                  }
+                }
+              });
             `,
           }}
         />
