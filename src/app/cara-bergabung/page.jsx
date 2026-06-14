@@ -125,7 +125,6 @@ export default function CaraBergabungPage() {
             <Fee label="Harga di bawah Rp 50.000" value="Gratis (Bebas Komisi)" />
             <Fee label="Harga di bawah Rp 100.000" value="10%" />
             <Fee label="Harga di atas Rp 100.000" value="5%" />
-            <Fee label="Produk Digital / Jasa" value="Wajib Rekber (Bagi Hasil)" />
           </div>
         </div>
         <div className="card p-6">

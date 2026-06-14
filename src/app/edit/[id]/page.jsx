@@ -167,7 +167,7 @@ export default function EditPage() {
           <div className="card grid gap-5 p-5 sm:grid-cols-2">
             <div>
               <label className="label">Kategori</label>
-              <select className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.category} onChange={set("category")}>
+              <select disabled={original?.status === "active"} className="input focus:ring-4 focus:ring-accent/10 focus:border-accent disabled:opacity-50 disabled:bg-gray-100 dark:disabled:bg-slate-800" value={form.category} onChange={set("category")}>
                 {cats.map((c) => (
                   <option key={c.slug} value={c.name}>
                     {c.name}
@@ -226,13 +226,17 @@ export default function EditPage() {
             <div className="sm:col-span-2 floating-group">
               <input
                 id="edit-title"
-                className="floating-input peer"
+                className="floating-input peer disabled:opacity-50 disabled:bg-gray-100 dark:disabled:bg-slate-800"
                 value={form.title}
                 onChange={set("title")}
                 placeholder=" "
                 required
+                disabled={original?.status === "active"}
               />
               <label htmlFor="edit-title" className="floating-label">Judul Iklan</label>
+              {original?.status === "active" && (
+                <p className="mt-1 text-[10px] text-rose-500">Judul & Kategori dikunci setelah iklan tayang untuk mencegah daur ulang.</p>
+              )}
             </div>
             
             <div className="sm:col-span-2 floating-group">

@@ -66,19 +66,23 @@ export async function PATCH(req, { params }) {
       const digitalKeywords = ["jasa", "digital", "akun", "voucher", "premium"];
 
       if (body.title !== undefined) {
-        updates.title = String(body.title).trim();
-        const isNewTitleDigital = digitalKeywords.some(term => updates.title.toLowerCase().includes(term));
-        const isOldTitleDigital = oldListing?.title ? digitalKeywords.some(term => oldListing.title.toLowerCase().includes(term)) : false;
-        if (isNewTitleDigital && !isOldTitleDigital) {
-          titleChangedToDigital = true;
+        if (oldListing?.status !== "active") {
+          updates.title = String(body.title).trim();
+          const isNewTitleDigital = digitalKeywords.some(term => updates.title.toLowerCase().includes(term));
+          const isOldTitleDigital = oldListing?.title ? digitalKeywords.some(term => oldListing.title.toLowerCase().includes(term)) : false;
+          if (isNewTitleDigital && !isOldTitleDigital) {
+            titleChangedToDigital = true;
+          }
         }
       }
       if (body.category !== undefined) {
-        updates.category = body.category;
-        const isNewCatDigital = digitalKeywords.some(term => updates.category.toLowerCase().includes(term));
-        const isOldCatDigital = oldListing?.category ? digitalKeywords.some(term => oldListing.category.toLowerCase().includes(term)) : false;
-        if (isNewCatDigital && !isOldCatDigital) {
-          categoryChangedToDigital = true;
+        if (oldListing?.status !== "active") {
+          updates.category = body.category;
+          const isNewCatDigital = digitalKeywords.some(term => updates.category.toLowerCase().includes(term));
+          const isOldCatDigital = oldListing?.category ? digitalKeywords.some(term => oldListing.category.toLowerCase().includes(term)) : false;
+          if (isNewCatDigital && !isOldCatDigital) {
+            categoryChangedToDigital = true;
+          }
         }
       }
 
@@ -126,7 +130,7 @@ export async function PATCH(req, { params }) {
       let snapToken = null;
 
       if (stock === 0) {
-        updates.status = "sold";
+        delete updates.stock;
         updates.sold_price = currentListing.price || 0;
         const settings = await getSettings();
         fee = soldFeeFrom(settings.pricing, currentListing.price);
@@ -178,10 +182,8 @@ export async function PATCH(req, { params }) {
       const { data: listing, error } = await supa
         .from("listings")
         .update({
-          status: "sold",
           sold_price: soldPrice,
           sold_fee: fee,
-          stock: 0,
         })
         .eq("id", id)
         .select()

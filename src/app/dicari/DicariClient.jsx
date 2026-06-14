@@ -594,12 +594,12 @@ export default function DicariPage() {
             </div>
 
             <div className="mt-4 space-y-4">
-              {/* Opsi 1: Bayar Rp 2.000 */}
+              {/* Opsi Pembayaran Otomatis */}
               <div className="rounded-xl border border-blue-100 bg-blue-50/20 p-4 dark:border-blue-900/30 dark:bg-blue-950/10">
                 <span className="inline-block rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-bold text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 uppercase">
                   Otomatis &amp; Instan
                 </span>
-                <h3 className="mt-1.5 text-sm font-bold text-gray-900 dark:text-white">Opsi A: Bayar Rp 2.000</h3>
+                <h3 className="mt-1.5 text-sm font-bold text-gray-900 dark:text-white">Bayar Rp 2.000</h3>
                 <p className="mt-1 text-xs text-gray-500 dark:text-slate-400 leading-relaxed">
                   Buka nomor WhatsApp pembeli secara instan dan langsung tawarkan barang Anda sendiri.
                 </p>
@@ -649,28 +649,6 @@ export default function DicariPage() {
                     <span>📱 Transfer Manual</span>
                   </button>
                 </div>
-              </div>
-
-              {/* Opsi 2: Bagi Hasil */}
-              <div className="rounded-xl border border-gray-150 bg-gray-50/30 p-4 dark:border-slate-800 dark:bg-slate-900/20">
-                <span className="inline-block rounded-full bg-gray-200 px-2.5 py-0.5 text-[10px] font-bold text-gray-700 dark:bg-slate-800 dark:text-slate-400 uppercase">
-                  Bagi Hasil (Nego)
-                </span>
-                <h3 className="mt-1.5 text-sm font-bold text-gray-900 dark:text-white">Opsi B: Hubungi via Admin</h3>
-                <p className="mt-1 text-xs text-gray-500 dark:text-slate-400 leading-relaxed">
-                  Tidak perlu membayar di depan. Hubungi admin untuk skema bagi hasil komisi 5-10% setelah barang laku.
-                </p>
-                <a
-                  href={`https://wa.me/${MARKETPLACE_WA}?text=${encodeURIComponent(
-                    `Halo Admin Jual Beli USU Polmed, saya tertarik menawarkan barang untuk postingan Cari Barang: "${offerModal.title}" dengan skema bagi hasil. Bagaimana caranya?`
-                  )}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  onClick={() => setOfferModal(null)}
-                  className="btn-outline w-full mt-3 py-2 text-center text-xs font-bold bg-white hover:bg-gray-50 dark:bg-slate-950 dark:hover:bg-slate-900 rounded-lg flex items-center justify-center gap-1.5"
-                >
-                  <span>💬 Hubungi Admin (Bagi Hasil)</span>
-                </a>
               </div>
             </div>
           </div>

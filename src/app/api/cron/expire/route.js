@@ -24,6 +24,8 @@ export async function GET(req) {
   const now = new Date();
 
   // 1) expire yang lewat
+  // DINONAKTIFKAN: Iklan tidak akan pernah expired agar penjual terpaksa menandai terjual
+  /*
   const { data: expired } = await supa
     .from("listings")
     .update({ status: "expired" })
@@ -34,6 +36,7 @@ export async function GET(req) {
   for (const l of expired || []) {
     await notifySellerExpired(l).catch(() => {});
   }
+  */
 
   // Note: 2) reminder H-2 is disabled to save Fonnte quota
 

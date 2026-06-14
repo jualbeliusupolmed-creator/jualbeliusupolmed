@@ -29,22 +29,29 @@ export async function GET(req) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   const listings = data || [];
-  const pendingListings = listings.filter((l) => l.status === "pending");
-  if (pendingListings.length > 0) {
+  if (listings.length > 0) {
     const { data: payments } = await supa
       .from("payments")
-      .select("id, listing_id, midtrans_order_id")
-      .in("listing_id", pendingListings.map((l) => l.id))
+      .select("id, listing_id, midtrans_order_id, type, amount")
+      .in("listing_id", listings.map((l) => l.id))
       .eq("status", "pending")
       .order("created_at", { ascending: false });
 
     if (payments) {
       for (const listing of listings) {
         if (listing.status === "pending") {
-          const latestPayment = payments.find((p) => p.listing_id === listing.id);
+          const latestPayment = payments.find((p) => p.listing_id === listing.id && p.type === "iklan");
           if (latestPayment) {
             listing.pending_order_id = latestPayment.midtrans_order_id;
             listing.pending_payment_id = latestPayment.id;
+            listing.pending_amount = latestPayment.amount;
+          }
+        } else if (listing.status === "active") {
+          const latestSoldFee = payments.find((p) => p.listing_id === listing.id && p.type === "sold_fee");
+          if (latestSoldFee) {
+            listing.pending_sold_fee_order_id = latestSoldFee.midtrans_order_id;
+            listing.pending_sold_fee_payment_id = latestSoldFee.id;
+            listing.pending_sold_fee_amount = latestSoldFee.amount;
           }
         }
       }

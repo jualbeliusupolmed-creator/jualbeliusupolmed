@@ -24,14 +24,9 @@ function statusBadge(s) {
   return map[s] || "bg-gray-100 text-gray-600";
 }
 
-// Countdown: berapa hari tersisa hingga expired_at
+// Countdown: dihapus agar tidak tampil masa aktif (iklan abadi sampai dihapus penjual)
 function daysLeft(expiredAt) {
-  if (!expiredAt) return null;
-  const diff = new Date(expiredAt) - new Date();
-  const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-  if (days <= 0) return { label: <span className="flex items-center gap-1"><Icon.Info className="h-3.5 w-3.5" /> Berakhir hari ini!</span>, cls: "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400" };
-  if (days <= 3) return { label: <span className="flex items-center gap-1"><Icon.Info className="h-3.5 w-3.5" /> {days} hari lagi</span>, cls: "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400" };
-  return { label: <span className="flex items-center gap-1"><Icon.Check className="h-3.5 w-3.5" /> Aktif {days} hari lagi</span>, cls: "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400" };
+  return null;
 }
 
 function DashboardInner() {
@@ -733,7 +728,59 @@ function DashboardInner() {
                           <p className="text-sm text-gray-500">
                             {rupiah(i.price)} · stok {i.stock}
                           </p>
-                          
+                          {/* Tagihan Sold Fee */}
+                          {i.pending_sold_fee_order_id && (
+                            <div className="mt-3 p-3 bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/50 rounded-xl">
+                              <p className="text-sm font-bold text-rose-700 dark:text-rose-400 mb-1">
+                                ⚠️ Tagihan Komisi Terjual Belum Lunas
+                              </p>
+                              <p className="text-xs text-rose-600 dark:text-rose-500 mb-3">
+                                Lunasi tagihan sebesar <strong className="font-bold">{rupiah(i.pending_sold_fee_amount)}</strong> agar iklan ini diturunkan dari beranda dan Anda tidak diganggu pembeli lagi.
+                              </p>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      setBusy(true);
+                                      const res = await fetch("/api/payments/resume", {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({ listing_id: i.id, seller_wa: wa, type: "sold_fee" }),
+                                      });
+                                      const data = await res.json();
+                                      if (!res.ok) throw new Error(data.error);
+                                      
+                                      if (data.snapToken) {
+                                        window.snap.pay(data.snapToken, {
+                                          onSuccess: function() { load(); },
+                                          onPending: function() { load(); },
+                                          onError: function() { toast.error("Pembayaran gagal!"); }
+                                        });
+                                      } else if (data.paymentUrl) {
+                                        window.location.href = data.paymentUrl;
+                                      } else {
+                                        toast.error("Gagal mendapatkan link pembayaran.");
+                                      }
+                                    } catch (e) {
+                                      toast.error(e.message);
+                                    } finally {
+                                      setBusy(false);
+                                    }
+                                  }}
+                                  className="btn-primary py-1.5 px-3 text-xs bg-rose-600 hover:bg-rose-700 border-rose-600 shadow-rose-500/20"
+                                >
+                                  💳 Bayar Online
+                                </button>
+                                <button
+                                  onClick={() => setQrisModalItem({ ...i, payment_type: "sold_fee" })}
+                                  className="btn-outline py-1.5 px-3 text-xs text-rose-700 border-rose-200 hover:bg-rose-100 dark:text-rose-400 dark:border-rose-900"
+                                >
+                                  📸 Bayar Manual (QRIS)
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
                           {/* Tools Promosi */}
                           <div className="flex flex-wrap gap-2 mt-3">
                             <button
@@ -949,20 +996,20 @@ function DashboardInner() {
               <div className="mt-3 p-3 rounded-xl bg-gray-50 dark:bg-slate-950 border border-gray-150/40 dark:border-slate-850">
                 <p className="text-xs text-gray-400 dark:text-slate-500 uppercase tracking-wider font-semibold">Nominal Transfer</p>
                 <p className="text-2xl font-black text-primary dark:text-white mt-0.5">
-                  {rupiah(qrisModalItem.type === "poster" ? 10000 : 5000)}
+                  {rupiah(qrisModalItem.payment_type === "sold_fee" ? qrisModalItem.pending_sold_fee_amount : (qrisModalItem.pending_amount || (qrisModalItem.type === "poster" ? 10000 : 5000)))}
                 </p>
               </div>
 
               <p className="mt-4 text-xs text-gray-500 dark:text-slate-400 text-left leading-relaxed bg-accent/5 p-3 rounded-xl border border-accent/20">
-                👉 Setelah transfer, klik tombol di bawah untuk mengirimkan bukti transfer ke admin agar iklan Anda langsung aktif.
+                👉 Setelah transfer, klik tombol di bawah untuk mengirimkan bukti transfer ke admin.
               </p>
 
               <div className="mt-5 space-y-2">
                 <a
                   href={`https://wa.me/${cfg?.contact?.marketplaceWa || "62895429126232"}?text=${encodeURIComponent(
-                    `Halo Admin, saya sudah membayar biaya pendaftaran iklan manual sebesar ${rupiah(qrisModalItem.type === "poster" ? 10000 : 5000)} untuk produk "${qrisModalItem.title}".\n\nDetail Iklan:\n- Penjual: ${qrisModalItem.seller_name}\n- WA: ${qrisModalItem.seller_wa}\n\nTolong disetujui di link ini ya:\n${
-                      typeof window !== "undefined" ? window.location.origin : ""
-                    }/admin/approve-payment?orderId=${qrisModalItem.pending_order_id || ""}`
+                    qrisModalItem.payment_type === "sold_fee"
+                      ? `Halo Admin, saya sudah melunasi Komisi Terjual sebesar ${rupiah(qrisModalItem.pending_sold_fee_amount)} untuk produk "${qrisModalItem.title}".\n\nDetail Iklan:\n- Penjual: ${qrisModalItem.seller_name}\n- WA: ${qrisModalItem.seller_wa}\n\nTolong disetujui agar iklan diturunkan:\n${typeof window !== "undefined" ? window.location.origin : ""}/admin/approve-payment?orderId=${qrisModalItem.pending_sold_fee_order_id || ""}`
+                      : `Halo Admin, saya sudah membayar biaya pendaftaran iklan manual sebesar ${rupiah(qrisModalItem.pending_amount || (qrisModalItem.type === "poster" ? 10000 : 5000))} untuk produk "${qrisModalItem.title}".\n\nDetail Iklan:\n- Penjual: ${qrisModalItem.seller_name}\n- WA: ${qrisModalItem.seller_wa}\n\nTolong disetujui di link ini ya:\n${typeof window !== "undefined" ? window.location.origin : ""}/admin/approve-payment?orderId=${qrisModalItem.pending_order_id || ""}`
                   )}`}
                   target="_blank"
                   rel="noreferrer"

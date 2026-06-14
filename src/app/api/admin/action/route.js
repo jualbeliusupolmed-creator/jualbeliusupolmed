@@ -259,6 +259,11 @@ export async function POST(req) {
                 })
                 .eq("wa", wa);
             }
+          } else if (payment.type === "sold_fee") {
+            await supa
+              .from("listings")
+              .update({ status: "sold", stock: 0 })
+              .eq("id", payment.listing_id);
           }
         }
         break;

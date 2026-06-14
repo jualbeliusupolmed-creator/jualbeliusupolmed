@@ -19,20 +19,8 @@ export default function MinatButton({ listing }) {
   function sendMinat(text) {
     setShowPicker(false);
     
-    // Jika produk merupakan produk digital (berdasarkan kategori "Jasa" atau sejenisnya, atau kita cek lowercase)
-    // Mari buat pengecekan kategori produk digital secara fleksibel.
-    const isDigital = ["jasa", "digital", "akun", "voucher", "premium"].some(term => 
-      listing.category?.toLowerCase().includes(term) || 
-      listing.title?.toLowerCase().includes(term)
-    );
-
     let targetWa = listing.seller_wa;
     let finalMsg = text;
-
-    if (isDigital) {
-      targetWa = MARKETPLACE_WA;
-      finalMsg = `Halo Admin, saya tertarik dengan produk digital "${listing.title}" seharga ${rupiah(listing.price)} dari penjual ${listing.seller_name}.\n\nSaya ingin membeli produk ini melalui Rekber / Sistem Bagi Hasil Admin.\n\nPesan saya: "${text}"`;
-    }
 
     const wa = formatWa(targetWa || MARKETPLACE_WA);
     // wa.me requires country code without 0. Since formatWa returns 08..., we convert it to 628...

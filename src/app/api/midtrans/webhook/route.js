@@ -90,6 +90,11 @@ export async function POST(req) {
             .from("listings")
             .update({ auto_bump_until: until, bumped_at: new Date().toISOString() })
             .eq("id", payment.listing_id);
+        } else if (payment.type === "sold_fee") {
+          await supa
+            .from("listings")
+            .update({ status: "sold", stock: 0 })
+            .eq("id", payment.listing_id);
         }
       }
     }
