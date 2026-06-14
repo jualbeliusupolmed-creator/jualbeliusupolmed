@@ -44,6 +44,15 @@ export default function Navbar({ config }) {
           .then((reg) => console.log("SW registered:", reg.scope))
           .catch((err) => console.error("SW registration failed:", err));
       });
+      // Saat SW baru aktif (skipWaiting + clientsClaim), reload supaya
+      // chunk yang lama tidak crash lagi
+      let swRefreshing = false;
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (!swRefreshing) {
+          swRefreshing = true;
+          window.location.reload();
+        }
+      });
     }
 
     // Fetch wanted count for badge
