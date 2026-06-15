@@ -131,6 +131,12 @@ export default async function RootLayout({ children }) {
       </head>
       <body className="min-h-screen flex flex-col">
         <Script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6730561722094443"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
+        <Script
           strategy="afterInteractive"
           src="https://www.googletagmanager.com/gtag/js?id=G-SQFZJPXSW2"
         />
