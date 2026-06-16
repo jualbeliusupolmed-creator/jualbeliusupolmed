@@ -227,7 +227,7 @@ function DashboardInner() {
       if (data.paymentUrl) {
         window.location.href = data.paymentUrl;
       } else {
-        setNote(`Tidak bisa memproses ${label} — link iPaymu tidak ditemukan.`);
+        setNote(`Tidak bisa memproses ${label} — link pembayaran tidak ditemukan.`);
       }
     } catch (e) {
       toast.error(e.message);
@@ -631,7 +631,7 @@ function DashboardInner() {
                                 if (data.paymentUrl) {
                                   window.location.href = data.paymentUrl;
                                 } else {
-                                  toast.error("Gagal mendapatkan link iPaymu.");
+                                  toast.error("Gagal mendapatkan link pembayaran.");
                                 }
                               } catch (e) {
                                 toast.error(e.message);

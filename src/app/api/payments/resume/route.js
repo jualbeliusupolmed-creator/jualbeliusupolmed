@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { createPaymentLink } from "@/lib/ipaymu";
+import { createSnapTransaction } from "@/lib/midtrans";
 import { getSettings, adFeeFrom } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
@@ -84,26 +84,15 @@ export async function POST(req) {
     let paymentUrl = null;
     let snapToken = null;
     try {
-      if (paymentType === "sold_fee") {
-        const { createSnapTransaction } = require("@/lib/midtrans");
-        const tx = await createSnapTransaction({
-          orderId,
-          amount,
-          customerName: listing.seller_name,
-          customerWa: listing.seller_wa,
-          itemName,
-        });
-        snapToken = tx.token;
-      } else {
-        const tx = await createPaymentLink({
-          orderId,
-          amount,
-          customerName: listing.seller_name,
-          customerWa: listing.seller_wa,
-          itemName,
-        });
-        paymentUrl = tx.url;
-      }
+      const tx = await createSnapTransaction({
+        orderId,
+        amount,
+        customerName: listing.seller_name,
+        customerWa: listing.seller_wa,
+        itemName,
+      });
+      snapToken = tx.token;
+      paymentUrl = tx.redirect_url;
     } catch (e) {
       console.error("resume charge error:", e?.message);
       return NextResponse.json({ error: "Gagal membuat transaksi" }, { status: 500 });

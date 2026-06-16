@@ -47,7 +47,18 @@ export async function POST(req) {
       .single();
 
     if (payment && settled) {
-      if (payment.meta?.wanted_id) {
+      if (payment.type === "subscribe") {
+        const until = new Date(Date.now() + 30 * 864e5).toISOString(); // 30 Hari
+        await supa
+          .from("seller_profiles")
+          .update({ subscription_tier: "pro", subscription_expires_at: until })
+          .eq("wa", payment.meta.wa);
+      } else if (payment.meta?.unlock_wanted_id) {
+        await supa.from("wanted_unlocks").insert({
+            wanted_id: payment.meta.unlock_wanted_id,
+            unlocked_by_wa: payment.meta.requester_wa || null
+        });
+      } else if (payment.meta?.wanted_id) {
         // Aktifkan postingan Cari Barang
         const { data: wanted } = await supa
           .from("wanted_listings")
@@ -83,6 +94,12 @@ export async function POST(req) {
           await supa
             .from("listings")
             .update({ featured: true, featured_until: until, bumped_at: new Date().toISOString() })
+            .eq("id", payment.listing_id);
+        } else if (payment.type === "renewal") {
+          const until = new Date(Date.now() + 30 * 864e5).toISOString(); // 30 Hari
+          await supa
+            .from("listings")
+            .update({ status: "active", expired_at: until, bumped_at: new Date().toISOString() })
             .eq("id", payment.listing_id);
         } else if (payment.type === "autobump") {
           const until = new Date(Date.now() + 7 * 864e5).toISOString(); // 7 Hari

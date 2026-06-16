@@ -141,7 +141,7 @@ export default function DaftarHargaPage() {
             Seluruh transaksi pembayaran untuk biaya pemasangan iklan standar, iklan poster, *bump*, dan *featured ads* bersifat final dan tidak dapat dikembalikan dana (*non-refundable*), kecuali terjadi kondisi kegagalan sistematis dari pihak kami yang menyebabkan layanan iklan sama sekali tidak tayang/aktif dalam waktu 24 jam setelah pembayaran sukses.
           </p>
           <p className="mt-2 text-sm text-gray-500 leading-relaxed">
-            Untuk klaim pengembalian dana akibat kesalahan teknis pembayaran, silakan hubungi admin melalui nomor WhatsApp resmi yang tertera pada platform dengan melampirkan bukti pembayaran iPaymu yang sah.
+            Untuk klaim pengembalian dana akibat kesalahan teknis pembayaran, silakan hubungi admin melalui nomor WhatsApp resmi yang tertera pada platform dengan melampirkan bukti pembayaran Midtrans yang sah.
           </p>
         </div>
       </section>

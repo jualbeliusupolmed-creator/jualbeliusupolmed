@@ -3,7 +3,7 @@ import Link from "next/link";
 export const metadata = {
   title: "Pertanyaan Umum (FAQ)",
   description:
-    "Jawaban pertanyaan seputar Jual Beli USU Polmed: cara pasang iklan, durasi tayang, fitur Sundul (Bump), pembayaran iPaymu, COD, favorit, dan refund.",
+    "Jawaban pertanyaan seputar Jual Beli USU Polmed: cara pasang iklan, durasi tayang, fitur Sundul (Bump), pembayaran, COD, favorit, dan refund.",
   alternates: { canonical: "/faq" },
 };
 
@@ -30,7 +30,7 @@ const faqs = [
   },
   {
     q: "Bagaimana cara melakukan pembayaran?",
-    a: "Transaksi pembayaran fitur berbayar (pasang iklan, sundul, iklan unggulan) diproses secara aman melalui gerbang pembayaran iPaymu. Kamu dapat membayar menggunakan QRIS, virtual account bank, dan metode pembayaran lain yang tersedia di halaman pembayaran.",
+    a: "Transaksi pembayaran fitur berbayar (pasang iklan, sundul, iklan unggulan) diproses secara aman melalui gerbang pembayaran Midtrans. Kamu dapat membayar menggunakan QRIS, virtual account bank, dan metode pembayaran lain yang tersedia di halaman pembayaran.",
   },
   {
     q: "Bagaimana penjual tahu kalau ada yang minat dengan barangnya?",

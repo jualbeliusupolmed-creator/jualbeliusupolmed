@@ -618,7 +618,7 @@ export default function DicariPage() {
                         if (data.paymentUrl) {
                           window.location.href = data.paymentUrl;
                         } else {
-                          toast.error("Gagal memproses link iPaymu");
+                          toast.error("Gagal memproses link pembayaran");
                         }
                       } catch (e) {
                         toast.error(e.message);

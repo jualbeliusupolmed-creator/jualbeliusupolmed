@@ -63,7 +63,7 @@ export async function GET(req) {
   }
 }
 
-import { createPaymentLink } from "@/lib/ipaymu";
+import { createSnapTransaction } from "@/lib/midtrans";
 
 // POST /api/wanted -> create a wanted listing
 export async function POST(req) {
@@ -159,16 +159,16 @@ export async function POST(req) {
 
     let paymentUrl = null;
     try {
-      const tx = await createPaymentLink({
+      const tx = await createSnapTransaction({
         orderId,
         amount,
         customerName: listing.buyer_name,
         customerWa: listing.buyer_wa,
         itemName: `Cari Barang: ${listing.title}`,
       });
-      paymentUrl = tx.url;
+      paymentUrl = tx.redirect_url;
     } catch (e) {
-      console.error("wanted payment charge:", e?.message);
+      console.error("wanted payment charge midtrans:", e?.message);
     }
 
     return NextResponse.json({ listing, paymentUrl, isFree: false });

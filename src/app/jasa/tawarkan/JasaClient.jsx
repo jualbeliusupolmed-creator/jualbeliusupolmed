@@ -131,7 +131,7 @@ export default function JasaClient() {
         if (data.paymentUrl) {
           window.location.href = data.paymentUrl;
         } else {
-          toast.error("Metode otomatis gagal membuat link iPaymu. Silakan gunakan metode manual.");
+          toast.error("Metode otomatis gagal membuat link pembayaran. Silakan gunakan metode manual.");
         }
       } else {
         // Metode manual

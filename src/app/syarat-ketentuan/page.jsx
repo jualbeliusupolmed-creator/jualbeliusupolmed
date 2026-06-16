@@ -45,7 +45,7 @@ export default function SyaratKetentuanPage() {
         <div>
           <h2 className="text-base font-bold text-gray-900 mb-2">3. Transaksi Pembayaran &amp; Biaya Layanan</h2>
           <ul className="list-disc pl-5 space-y-1">
-            <li>Layanan jasa periklanan (iklan barang, poster, *bump*, dan *featured ads*) pada platform kami diproses menggunakan sistem gateway pembayaran pihak ketiga yang aman (iPaymu).</li>
+            <li>Layanan jasa periklanan (iklan barang, poster, *bump*, dan *featured ads*) pada platform kami diproses menggunakan sistem gateway pembayaran pihak ketiga yang aman (Midtrans).</li>
             <li>Pembayaran biaya iklan dilakukan secara di muka (upfront) dan iklan otomatis ditayangkan setelah transaksi divalidasi oleh sistem pembayaran kami.</li>
             <li>Mata uang transaksi yang sah dan digunakan pada seluruh proses pembayaran di platform ini adalah Rupiah (IDR).</li>
           </ul>
@@ -62,7 +62,7 @@ export default function SyaratKetentuanPage() {
               <strong>Pengembalian Dana (Refund):</strong> Dana yang telah dibayarkan untuk seluruh layanan periklanan bersifat final dan tidak dapat dikembalikan, kecuali terdapat kendala sistem internal kami yang mengakibatkan iklan gagal ditayangkan selama 24 jam berturut-turut setelah konfirmasi pembayaran berhasil.
             </li>
             <li>
-              Untuk mengajukan klaim pengembalian akibat kegagalan transaksi teknis, pengguna dapat mengirimkan bukti transfer iPaymu yang sah ke layanan kontak pelanggan kami.
+              Untuk mengajukan klaim pengembalian akibat kegagalan transaksi teknis, pengguna dapat mengirimkan bukti transfer Midtrans yang sah ke layanan kontak pelanggan kami.
             </li>
           </ul>
         </div>

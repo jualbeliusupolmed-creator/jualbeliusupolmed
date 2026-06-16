@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { createPaymentLink } from "@/lib/ipaymu";
+import { createSnapTransaction } from "@/lib/midtrans";
 import { formatWa } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
-// POST /api/payments/unlock-wanted  { wanted_id, method, requester_wa } -> kembalikan link iPaymu Rp 2.000 atau buat invoice manual
+// POST /api/payments/unlock-wanted  { wanted_id, method, requester_wa } -> kembalikan link Midtrans Rp 2.000 atau buat invoice manual
 export async function POST(req) {
   try {
     const { wanted_id, method, requester_wa } = await req.json();
@@ -62,12 +62,10 @@ export async function POST(req) {
       amount,
       status: "pending",
       midtrans_order_id: orderId,
-      meta: { unlock_wanted_id: wanted.id }
+      meta: { unlock_wanted_id: wanted.id, requester_wa: formatWa(requester_wa) }
     });
 
-    // Buat returnUrl mengarah langsung ke WhatsApp pembeli asli dengan pesan terformat
-    // CATATAN: iPaymu sering gagal jika URL terlalu panjang atau memuat banyak karakter aneh,
-    // jadi kita buat pesan yang lebih ringkas.
+    // Buat pesan yang lebih ringkas.
     const shortTitle = wanted.title.length > 30 ? wanted.title.substring(0, 30) + "..." : wanted.title;
     const returnUrl = `https://wa.me/${wanted.buyer_wa}?text=${encodeURIComponent(
       `Halo ${wanted.buyer_name}, saya ada barang "${shortTitle}".`
@@ -75,15 +73,14 @@ export async function POST(req) {
 
     let paymentUrl = null;
     try {
-      const tx = await createPaymentLink({
+      const tx = await createSnapTransaction({
         orderId,
         amount,
         customerName: "Penjual",
         customerWa: "081111111111", // WA Dummy karena kita tidak tahu siapa penjualnya (belum login)
         itemName: `Buka Kontak: ${wanted.title}`.substring(0, 50),
-        returnUrl,
       });
-      paymentUrl = tx.url;
+      paymentUrl = tx.redirect_url;
     } catch (e) {
       console.error("unlock-wanted payment charge:", e?.message);
       return NextResponse.json({ error: "Gagal membuat gerbang pembayaran" }, { status: 500 });

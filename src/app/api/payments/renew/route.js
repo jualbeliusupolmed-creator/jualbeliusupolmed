@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { createPaymentLink } from "@/lib/ipaymu";
+import { createSnapTransaction } from "@/lib/midtrans";
 import { getSettings, adFeeFrom } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
@@ -50,16 +50,16 @@ export async function POST(req) {
 
     let paymentUrl = null;
     try {
-      const tx = await createPaymentLink({
+      const tx = await createSnapTransaction({
         orderId,
         amount,
         customerName: listing.seller_name,
         customerWa: listing.seller_wa,
         itemName: `Perpanjang Iklan: ${listing.title}`,
       });
-      paymentUrl = tx.url;
+      paymentUrl = tx.redirect_url;
     } catch (e) {
-      console.error("ipaymu renewal charge:", e?.message);
+      console.error("midtrans renewal charge:", e?.message);
       return NextResponse.json({ error: "Gagal membuat transaksi" }, { status: 500 });
     }
 
