@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { createSnapTransaction } from "@/lib/midtrans";
+import { createDokuTransaction } from "@/lib/doku";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { getSettings, adFeeFrom, listingExpiresAt, hasUnpaidSoldFees } from "@/lib/settings";
 import { formatWa } from "@/lib/constants";
@@ -212,16 +212,16 @@ export async function POST(req) {
 
     let paymentUrl = null;
     try {
-      const tx = await createSnapTransaction({
+      const tx = await createDokuTransaction({
         orderId,
         amount,
-        customerName: seller_name,
-        customerWa: normalizedWa,
-        itemName: `Iklan: ${title}`,
+        customerName: reqBody.seller_name,
+        customerWa: reqBody.seller_wa,
+        itemName: `Pasang Iklan: ${reqBody.title}`,
       });
       paymentUrl = tx.redirect_url;
     } catch (e) {
-      console.error("midtrans charge error:", e?.message);
+      console.error("doku charge error:", e?.message);
     }
 
     return NextResponse.json({ listing, paymentUrl, orderId });

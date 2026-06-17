@@ -1,4 +1,4 @@
--- Migration: pwa_installs tracking table
+p-- Migration: pwa_installs tracking table
 -- Run this in Supabase SQL Editor
 
 create table if not exists pwa_installs (

@@ -5,35 +5,61 @@ import { notifyAdminNewListing, postToGroup, postWantedToGroup } from "@/lib/fon
 
 export const dynamic = "force-dynamic";
 
-// Verifikasi signature Midtrans:
-// sha512(order_id + status_code + gross_amount + serverKey)
-function verify(body) {
-  const serverKey = process.env.MIDTRANS_SERVER_KEY;
-  if (!serverKey) return false;
-  const hash = crypto
-    .createHash("sha512")
-    .update(body.order_id + body.status_code + body.gross_amount + serverKey)
-    .digest("hex");
-  return hash === body.signature_key;
+function verifySignature(req, rawBodyText) {
+  const signatureHeader = req.headers.get("signature") || req.headers.get("Signature") || "";
+  const clientId = req.headers.get("client-id") || req.headers.get("Client-Id") || "";
+  const requestId = req.headers.get("request-id") || req.headers.get("Request-Id") || "";
+  const requestTimestamp = req.headers.get("request-timestamp") || req.headers.get("Request-Timestamp") || "";
+  
+  // Parse signature header. Format: "HMACSHA256=base64_signature"
+  const signatureParts = signatureHeader.split("=");
+  if (signatureParts.length < 2) return false;
+  const providedSignature = signatureParts[1];
+
+  const secret = process.env.DOKU_SECRET_KEY;
+  if (!secret) return false;
+
+  const url = new URL(req.url);
+  const requestTarget = url.pathname;
+
+  const digest = crypto.createHash("sha256").update(rawBodyText).digest("base64");
+
+  const component =
+    `Client-Id:${clientId}\n` +
+    `Request-Id:${requestId}\n` +
+    `Request-Timestamp:${requestTimestamp}\n` +
+    `Request-Target:${requestTarget}\n` +
+    `Digest:${digest}`;
+
+  const expectedSignature = crypto.createHmac("sha256", secret).update(component).digest("base64");
+
+  try {
+    return crypto.timingSafeEqual(Buffer.from(providedSignature), Buffer.from(expectedSignature));
+  } catch (e) {
+    return false;
+  }
 }
 
 export async function POST(req) {
   try {
-    const body = await req.json();
-
+    const rawBodyText = await req.text();
+    
     // Verifikasi signature
-    if (!verify(body)) {
-      console.warn("[webhook] signature tidak valid");
+    if (!verifySignature(req, rawBodyText)) {
+      console.warn("[webhook doku] signature tidak valid");
       return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
     }
 
-    const orderId = body.order_id;
-    const txStatus = body.transaction_status;
-    const fraud = body.fraud_status;
+    const body = JSON.parse(rawBodyText);
+    const orderId = body?.order?.invoice_number;
+    const txStatus = body?.transaction?.status; // e.g. "SUCCESS", "FAILED"
 
-    const settled =
-      (txStatus === "capture" && fraud === "accept") || txStatus === "settlement";
-    const failed = ["cancel", "deny", "expire", "failure"].includes(txStatus);
+    if (!orderId || !txStatus) {
+      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+    }
+
+    const settled = txStatus.toUpperCase() === "SUCCESS";
+    const failed = txStatus.toUpperCase() === "FAILED";
 
     const newStatus = settled ? "paid" : failed ? "failed" : "pending";
 
@@ -118,7 +144,7 @@ export async function POST(req) {
 
     return NextResponse.json({ ok: true });
   } catch (e) {
-    console.error("webhook:", e?.message);
+    console.error("webhook doku:", e?.message);
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }

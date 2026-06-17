@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { createSnapTransaction } from "@/lib/midtrans";
+import { createDokuTransaction } from "@/lib/doku";
 import { getSettings, soldFeeFrom } from "@/lib/settings";
 import { getSellerSession, isAdmin } from "@/lib/auth";
 
@@ -154,24 +154,24 @@ export async function PATCH(req, { params }) {
           type: "sold_fee",
           amount: fee,
           status: "pending",
-          midtrans_order_id: `SOLDFEE-${id.slice(0, 8)}-${Date.now()}`,
+          midtrans_order_id: orderId,
         });
 
         try {
-          const tx = await createSnapTransaction({
-            orderId: `SOLDFEE-${id.slice(0, 8)}-${Date.now()}`,
+          const tx = await createDokuTransaction({
+            orderId: orderId,
             amount: fee,
             customerName: currentListing.seller_name,
             customerWa: currentListing.seller_wa,
-            itemName: `Fee terjual: ${currentListing.title}`,
+            itemName: `Sold Fee: ${currentListing.title}`,
           });
-          snapToken = tx.token;
+          paymentUrl = tx.redirect_url;
         } catch (e) {
-          console.error("soldfee charge via stock update:", e?.message);
+          console.error("doku sold fee charge error:", e?.message);
         }
       }
 
-      return NextResponse.json({ listing, fee, snapToken });
+      return NextResponse.json({ listing, fee, paymentUrl });
     }
 
     // ── Mark sold ──────────────────────────────────────────────────────────

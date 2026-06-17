@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { createSnapTransaction } from "@/lib/midtrans";
+import { createDokuTransaction } from "@/lib/doku";
 import { formatWa } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
@@ -73,16 +73,16 @@ export async function POST(req) {
 
     let paymentUrl = null;
     try {
-      const tx = await createSnapTransaction({
+      const tx = await createDokuTransaction({
         orderId,
         amount,
-        customerName: "Penjual",
-        customerWa: "081111111111", // WA Dummy karena kita tidak tahu siapa penjualnya (belum login)
-        itemName: `Buka Kontak: ${wanted.title}`.substring(0, 50),
+        customerName: reqBody.requester_name || "Pengguna",
+        customerWa: reqBody.requester_wa,
+        itemName: `Buka Kontak Cari Barang: ${wanted.title}`,
       });
       paymentUrl = tx.redirect_url;
     } catch (e) {
-      console.error("unlock-wanted payment charge:", e?.message);
+      console.error("doku unlock-wanted charge:", e?.message);
       return NextResponse.json({ error: "Gagal membuat gerbang pembayaran" }, { status: 500 });
     }
 

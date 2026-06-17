@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { createSnapTransaction } from "@/lib/midtrans";
+import { createDokuTransaction } from "@/lib/doku";
 import { getSettings, featuredRateFrom } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
@@ -38,16 +38,16 @@ export async function POST(req) {
 
     let paymentUrl = null;
     try {
-      const tx = await createSnapTransaction({
+      const tx = await createDokuTransaction({
         orderId,
         amount,
         customerName: listing.seller_name,
         customerWa: listing.seller_wa,
-        itemName: `Featured ${d} hari: ${listing.title}`,
+        itemName: `Featured ${days} Hari: ${listing.title}`,
       });
       paymentUrl = tx.redirect_url;
     } catch (e) {
-      console.error("featured charge midtrans:", e?.message);
+      console.error("doku featured charge:", e?.message);
     }
 
     return NextResponse.json({ paymentUrl, orderId, amount });

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { createSnapTransaction } from "@/lib/midtrans";
+import { createDokuTransaction } from "@/lib/doku";
 
 export const dynamic = "force-dynamic";
 
@@ -34,16 +34,16 @@ export async function POST(req) {
 
     let paymentUrl = null;
     try {
-      const tx = await createSnapTransaction({
+      const tx = await createDokuTransaction({
         orderId,
         amount,
-        customerName: profile.name || "Penjual Pro",
-        customerWa: profile.wa,
-        itemName: `Berlangganan Paket Pro 30 Hari`,
+        customerName: body.seller_name || "Pengguna Pro",
+        customerWa: body.wa,
+        itemName: `Berlangganan PRO (30 Hari)`,
       });
       paymentUrl = tx.redirect_url;
     } catch (e) {
-      console.error("subscribe charge midtrans:", e?.message);
+      console.error("doku subscribe charge:", e?.message);
     }
 
     return NextResponse.json({ paymentUrl, orderId });

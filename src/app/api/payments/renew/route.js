@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { createSnapTransaction } from "@/lib/midtrans";
+import { createDokuTransaction } from "@/lib/doku";
 import { getSettings, adFeeFrom } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
@@ -50,7 +50,7 @@ export async function POST(req) {
 
     let paymentUrl = null;
     try {
-      const tx = await createSnapTransaction({
+      const tx = await createDokuTransaction({
         orderId,
         amount,
         customerName: listing.seller_name,
@@ -59,7 +59,7 @@ export async function POST(req) {
       });
       paymentUrl = tx.redirect_url;
     } catch (e) {
-      console.error("midtrans renewal charge:", e?.message);
+      console.error("doku renewal charge:", e?.message);
       return NextResponse.json({ error: "Gagal membuat transaksi" }, { status: 500 });
     }
 

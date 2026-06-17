@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { createSnapTransaction } from "@/lib/midtrans";
+import { createDokuTransaction } from "@/lib/doku";
 import { getSettings, adFeeFrom } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
@@ -84,17 +84,16 @@ export async function POST(req) {
     let paymentUrl = null;
     let snapToken = null;
     try {
-      const tx = await createSnapTransaction({
+      const tx = await createDokuTransaction({
         orderId,
         amount,
         customerName: listing.seller_name,
         customerWa: listing.seller_wa,
-        itemName,
+        itemName: `Resume Iklan (Sold Fee): ${listing.title}`,
       });
-      snapToken = tx.token;
       paymentUrl = tx.redirect_url;
     } catch (e) {
-      console.error("resume charge error:", e?.message);
+      console.error("doku resume charge:", e?.message);
       return NextResponse.json({ error: "Gagal membuat transaksi" }, { status: 500 });
     }
 

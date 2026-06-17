@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { createSnapTransaction } from "@/lib/midtrans";
+import { createDokuTransaction } from "@/lib/doku";
 import { getSettings } from "@/lib/settings";
 import { FEES } from "@/lib/fees";
 
@@ -34,16 +34,16 @@ export async function POST(req) {
 
     let paymentUrl = null;
     try {
-      const tx = await createSnapTransaction({
+      const tx = await createDokuTransaction({
         orderId,
         amount,
         customerName: listing.seller_name,
         customerWa: listing.seller_wa,
-        itemName: `Auto-Bump 7 Hari: ${listing.title}`,
+        itemName: `Auto Bump Iklan: ${listing.title}`,
       });
       paymentUrl = tx.redirect_url;
     } catch (e) {
-      console.error("autobump charge midtrans:", e?.message);
+      console.error("doku autobump charge:", e?.message);
     }
 
     return NextResponse.json({ paymentUrl, orderId });
