@@ -1,12 +1,6 @@
 import crypto from "crypto";
 
-const isProduction = process.env.DOKU_IS_PRODUCTION === "true";
-const BASE_URL = isProduction
-  ? "https://api.doku.com"
-  : "https://api-sandbox.doku.com";
 
-const CLIENT_ID = process.env.DOKU_CLIENT_ID;
-const SECRET_KEY = process.env.DOKU_SECRET_KEY;
 
 function generateSignature(clientId, requestId, requestTimestamp, requestTarget, digest, secret) {
   const component =
@@ -26,6 +20,12 @@ export async function createDokuTransaction({
   customerWa,
   itemName,
 }) {
+  const CLIENT_ID = process.env.DOKU_CLIENT_ID;
+  const SECRET_KEY = process.env.DOKU_SECRET_KEY;
+  const isProduction = process.env.DOKU_IS_PRODUCTION === "true";
+  const BASE_URL = isProduction
+    ? "https://api.doku.com"
+    : "https://api-sandbox.doku.com";
   const requestTarget = "/checkout/v1/payment";
   const url = `${BASE_URL}${requestTarget}`;
   const requestId = crypto.randomUUID();
