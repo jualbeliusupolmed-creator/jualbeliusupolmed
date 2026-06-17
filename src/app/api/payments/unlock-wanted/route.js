@@ -76,8 +76,8 @@ export async function POST(req) {
       const tx = await createDokuTransaction({
         orderId,
         amount,
-        customerName: reqBody.requester_name || "Pengguna",
-        customerWa: reqBody.requester_wa,
+        customerName: "Pengguna",
+        customerWa: formatWa(requester_wa),
         itemName: `Buka Kontak Cari Barang: ${wanted.title}`,
       });
       paymentUrl = tx.redirect_url;
