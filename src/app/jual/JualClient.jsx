@@ -359,62 +359,22 @@ export default function JualPage() {
       </form>
 
       {/* Modal QRIS */}
-      {showQRISModal && createdListing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="card w-full max-w-md bg-white p-6 shadow-2xl dark:bg-slate-900/95 dark:border-slate-800 animate-fade-in">
-            <div className="text-center">
-              <h2 className="text-xl font-extrabold text-gray-900 dark:text-white flex items-center justify-center gap-2">
-                ⚡ Pembayaran QRIS Otomatis
-              </h2>
-              <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
-                Scan QRIS berikut untuk menyelesaikan pembayaran:
-              </p>
-              
-              <div className="mt-4 bg-white p-3 rounded-2xl inline-block border border-gray-100 shadow-sm mx-auto">
-                {qrisUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={qrisUrl} alt="QRIS Dinamis" className="w-[300px] h-[300px] object-contain" />
-                ) : (
-                  <p className="py-10 text-gray-400">Sedang memuat QRIS...</p>
-                )}
-              </div>
-
-              <div className="mt-3 p-3 rounded-xl bg-gray-50 dark:bg-slate-950 border border-gray-150/40 dark:border-slate-850">
-                <p className="text-xs text-gray-400 dark:text-slate-500 uppercase tracking-wider font-semibold">Nominal Pembayaran</p>
-                <p className="text-2xl font-black text-primary dark:text-white mt-0.5">{rupiah(fee)}</p>
-              </div>
-
-              <p className="mt-4 text-xs text-gray-500 dark:text-slate-400 text-left leading-relaxed bg-accent/5 p-3 rounded-xl border border-accent/20">
-                👉 <strong>Langkah selanjutnya:</strong> Buka aplikasi m-banking atau e-wallet (GoPay, OVO, Dana, dll), scan gambar QRIS di atas, dan lakukan pembayaran sejumlah tagihan. Status akan otomatis lunas dalam hitungan detik.
-              </p>
-
-              <div className="mt-5 space-y-2.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const waParam = encodeURIComponent(form.seller_wa || "");
-                    router.push(`/dashboard?pending=1&wa=${waParam}`);
-                  }}
-                  className="btn-primary w-full text-center py-3 shadow-md transition active:scale-95 flex items-center justify-center gap-2"
-                >
-                  Sudah Bayar / Buka Dashboard
-                </button>
-
-                
-                <button
-                  type="button"
-                  onClick={() => {
-                    const waParam = encodeURIComponent(form.seller_wa || "");
-                    router.push(`/dashboard?pending=1&wa=${waParam}`);
-                  }}
-                  className="btn-outline w-full text-center py-2.5 text-xs text-gray-600 dark:text-slate-350 hover:bg-gray-100 dark:hover:bg-slate-800"
-                >
-                  Buka Dashboard Saya
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+      {showQRISModal && createdListing && qrisUrl && (
+        <QRISModal
+          qrisUrl={qrisUrl}
+          fee={fee}
+          transactionId={createdOrderId}
+          onClose={() => {
+            setShowQRISModal(false);
+            const waParam = encodeURIComponent(form.seller_wa || "");
+            router.push(`/dashboard?pending=1&wa=${waParam}`);
+          }}
+          onSuccess={() => {
+            setShowQRISModal(false);
+            const waParam = encodeURIComponent(form.seller_wa || "");
+            router.push(`/dashboard?paid=1&wa=${waParam}`);
+          }}
+        />
       )}
 
       {/* Modal Preview */}
