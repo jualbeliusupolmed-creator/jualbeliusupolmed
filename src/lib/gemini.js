@@ -1,7 +1,8 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Initialize the Gemini API with the API key from environment variables
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const apiKey = (process.env.GEMINI_API_KEY || "").replace(/^\uFEFF/, '').trim();
+const genAI = new GoogleGenerativeAI(apiKey);
 
 /**
  * Validates a receipt image using Gemini Vision AI.
