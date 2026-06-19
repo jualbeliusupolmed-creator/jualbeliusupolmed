@@ -12,11 +12,16 @@ const genAI = new GoogleGenerativeAI(apiKey);
  */
 export async function verifyReceiptImage(imageBuffer, mimeType, maxRetries = 3) {
   let attempt = 0;
+  const modelsToTry = [
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
+    "gemini-2.0-flash-lite"
+  ];
   
   while (attempt < maxRetries) {
     try {
-      // We use gemini-2.5-flash to ensure compatibility with all new API keys
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+      const modelName = modelsToTry[attempt] || modelsToTry[modelsToTry.length - 1];
+      const model = genAI.getGenerativeModel({ model: modelName });
 
       const prompt = `
         Anda adalah asisten validasi pembayaran yang cerdas.
@@ -53,18 +58,19 @@ export async function verifyReceiptImage(imageBuffer, mimeType, maxRetries = 3) 
       return JSON.parse(cleanJson);
       
     } catch (error) {
+      const modelFailed = modelsToTry[attempt] || modelsToTry[modelsToTry.length - 1];
       attempt++;
-      console.error(`Gemini AI Error (Attempt ${attempt}/${maxRetries}):`, error.message);
+      console.error(`Gemini AI Error (Attempt ${attempt}/${maxRetries} using ${modelFailed}):`, error.message);
       
       const isRateLimitOrOverload = error.message.includes("503") || error.message.includes("429");
       
       if (isRateLimitOrOverload && attempt < maxRetries) {
-        // Wait for 2 seconds before retrying
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        // Fallback to next lighter model immediately with 1s delay
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         continue;
       }
       
-      throw new Error("Gagal memproses struk dengan AI. " + (error?.message || ""));
+      throw new Error("Gagal memproses struk dengan AI. Server Google sedang penuh, silakan coba lagi dalam beberapa menit.");
     }
   }
 }
