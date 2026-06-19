@@ -15,8 +15,8 @@ export async function verifyReceiptImage(imageBuffer, mimeType, maxRetries = 3) 
   
   while (attempt < maxRetries) {
     try {
-      // We use gemini-flash-latest to ensure compatibility with all new API keys
-      const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+      // We use gemini-2.5-flash to ensure compatibility with all new API keys
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
       const prompt = `
         Anda adalah asisten validasi pembayaran yang cerdas.
