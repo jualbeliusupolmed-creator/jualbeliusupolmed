@@ -12,8 +12,8 @@ const genAI = new GoogleGenerativeAI(apiKey);
  */
 export async function verifyReceiptImage(imageBuffer, mimeType) {
   try {
-    // We use gemini-1.5-flash to ensure compatibility with all new API keys
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // We use gemini-flash-latest to ensure compatibility with all new API keys
+    const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
     const prompt = `
       Anda adalah asisten validasi pembayaran yang cerdas.
