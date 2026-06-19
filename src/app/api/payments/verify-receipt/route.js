@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { verifyReceiptImage } from "@/lib/gemini";
-import { sendWa } from "@/lib/fonnte";
+import { sendWa, notifyAdminNewListing, postToGroup, postWantedToGroup } from "@/lib/fonnte";
 
 export const dynamic = "force-dynamic";
 
@@ -73,16 +73,26 @@ export async function POST(req) {
             .single();
 
           if (wanted) {
-            // Kita bisa import postWantedToGroup dari lib/fonnte kalau butuh, 
-            // tapi kita skip auto-post di sini agar fokus ke notif personal.
+            // Kirim notifikasi WA grup untuk Cari Barang
+            postWantedToGroup(wanted).catch(console.error);
           }
         } else if (payment.listing_id) {
           // iklan / bump -> aktifkan & angkat ke atas
           if (payment.type === "iklan" || payment.type === "bump") {
-            await supa
+            const { data: listing } = await supa
               .from("listings")
               .update({ status: "active", bumped_at: new Date().toISOString() })
-              .eq("id", payment.listing_id);
+              .eq("id", payment.listing_id)
+              .select()
+              .single();
+              
+            if (listing && payment.type === "iklan") {
+              // notif admin + auto-post grup (aman-gagal)
+              Promise.allSettled([
+                notifyAdminNewListing(listing),
+                postToGroup(listing)
+              ]).catch(console.error);
+            }
           } else if (payment.type === "featured") {
             const days = payment.meta?.days || 1;
             const until = new Date(Date.now() + days * 864e5).toISOString();
@@ -111,7 +121,7 @@ export async function POST(req) {
           
           // 5. Kirim Notifikasi Sukses via WhatsApp (Fonnte) ke Penjual
           if (payment.listings?.seller_wa) {
-            const title = payment.listings.title || "Iklan Anda";
+            const title = payment.listings?.title || "Iklan Anda";
             const message = `🎉 *Halo! Pembayaran Sukses*\n\nSistem AI kami telah memvalidasi struk transfer sebesar *Rp ${payment.amount.toLocaleString("id-ID")}* untuk transaksi ${payment.type}.\n\nLayanan untuk *"${title}"* sudah diaktifkan otomatis! 🚀`;
             
             // Jangan await agar tidak menahan response ke client
