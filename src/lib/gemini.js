@@ -11,8 +11,8 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
  */
 export async function verifyReceiptImage(imageBuffer, mimeType) {
   try {
-    // We use gemini-flash-latest to ensure compatibility with all new API keys
-    const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+    // We use gemini-1.5-flash to ensure compatibility with all new API keys
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const prompt = `
       Anda adalah asisten validasi pembayaran yang cerdas.
@@ -49,6 +49,6 @@ export async function verifyReceiptImage(imageBuffer, mimeType) {
     return JSON.parse(cleanJson);
   } catch (error) {
     console.error("Gemini AI Error:", error);
-    throw new Error("Gagal memproses struk dengan AI.");
+    throw new Error("Gagal memproses struk dengan AI. " + (error?.message || ""));
   }
 }
