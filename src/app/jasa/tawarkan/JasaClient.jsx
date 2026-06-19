@@ -53,6 +53,7 @@ export default function JasaClient() {
   const [areaOption, setAreaOption] = useState("");
   const [activeQrisUrl, setActiveQrisUrl] = useState("");
   const [activeQrisFee, setActiveQrisFee] = useState(0);
+  const [activeQrisOrderId, setActiveQrisOrderId] = useState("");
 
   const [cfg, setCfg] = useState(null);
   
@@ -130,18 +131,12 @@ export default function JasaClient() {
         return;
       }
 
-      if (paymentMethod === "otomatis") {
-        if (data.paymentUrl) {
-          setActiveQrisUrl(data.paymentUrl);
-          setActiveQrisFee(fee);
-          setShowQRISModal(true);
-        } else {
-          toast.error("Metode otomatis gagal membuat link pembayaran. Silakan gunakan metode manual.");
-        }
+      if (data.paymentUrl) {
+        setActiveQrisUrl(data.paymentUrl);
+        setActiveQrisFee(data.amount || fee);
+        setActiveQrisOrderId(data.orderId || "");
       } else {
-        // Metode manual
-        setCreatedListing(data.listing);
-        setShowQRISModal(true);
+        toast.error("Gagal membuat link pembayaran.");
       }
     } catch (err) {
       toast.error(err.message);
@@ -153,15 +148,23 @@ export default function JasaClient() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-6">
 
-      <QRISModal 
-        qrisUrl={activeQrisUrl} 
-        fee={activeQrisFee} 
-        onClose={() => {
-          setActiveQrisUrl("");
-          const waParam = encodeURIComponent(form.seller_wa || "");
-          router.push(`/dashboard?pending=1&wa=${waParam}`);
-        }} 
-      />
+      {activeQrisUrl && (
+        <QRISModal 
+          qrisUrl={activeQrisUrl} 
+          fee={activeQrisFee} 
+          transactionId={activeQrisOrderId}
+          onClose={() => {
+            setActiveQrisUrl("");
+            const waParam = encodeURIComponent(form.seller_wa || "");
+            router.push(`/dashboard?pending=1&wa=${waParam}`);
+          }} 
+          onSuccess={() => {
+            setActiveQrisUrl("");
+            const waParam = encodeURIComponent(form.seller_wa || "");
+            router.push(`/dashboard?paid=1&wa=${waParam}`);
+          }}
+        />
+      )}
 
       <h1 className="text-2xl font-extrabold">Tawarkan Jasa</h1>
       <p className="mt-1 text-gray-500">
@@ -294,51 +297,7 @@ export default function JasaClient() {
             </div>
           </div>
 
-          {/* Metode Pembayaran */}
-          <div className="card p-5 space-y-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400">Pilih Metode Pembayaran</h3>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <button
-                type="button"
-                onClick={() => setPaymentMethod("manual")}
-                className={`flex flex-col text-left p-4 rounded-xl border-2 transition-all active:scale-[0.99] ${
-                  paymentMethod === "manual"
-                    ? "border-primary bg-primary/5 dark:border-white dark:bg-white/5"
-                    : "border-gray-200 bg-white hover:border-gray-300 dark:border-slate-800 dark:bg-slate-900/10 dark:hover:border-slate-700"
-                }`}
-              >
-                <span className="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-1.5">
-                  📸 QRIS Manual (Scan)
-                </span>
-                <span className="text-xs text-gray-500 dark:text-slate-400 mt-1.5 leading-relaxed">
-                  Scan QRIS manual & kirim bukti transfer ke WhatsApp.
-                </span>
-                <span className="text-[10px] text-green-600 dark:text-green-400 font-semibold mt-2.5 bg-green-50 dark:bg-green-950/40 px-2 py-1 rounded-md">
-                  ✅ QRIS manual aktif siap pakai
-                </span>
-              </button>
 
-              <button
-                type="button"
-                onClick={() => setPaymentMethod("otomatis")}
-                className={`flex flex-col text-left p-4 rounded-xl border-2 transition-all active:scale-[0.99] ${
-                  paymentMethod === "otomatis"
-                    ? "border-primary bg-primary/5 dark:border-white dark:bg-white/5"
-                    : "border-gray-200 bg-white hover:border-gray-300 dark:border-slate-800 dark:bg-slate-900/10 dark:hover:border-slate-700"
-                }`}
-              >
-                <span className="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-1.5">
-                  ⚡ Pembayaran Otomatis
-                </span>
-                <span className="text-xs text-gray-500 dark:text-slate-400 mt-1.5 leading-relaxed">
-                  QRIS Instan, Virtual Account, & E-wallet.
-                </span>
-                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold mt-2.5 bg-amber-50 dark:bg-amber-950/40 px-2 py-1 rounded-md">
-                  ⚠️ Belum lengkap (Sandbox/Test)
-                </span>
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Summary */}
@@ -382,64 +341,7 @@ export default function JasaClient() {
         </div>
       </form>
 
-      {/* Modal QRIS Manual */}
-      {showQRISModal && createdListing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="card w-full max-w-md bg-white p-6 shadow-2xl dark:bg-slate-900/95 dark:border-slate-800 animate-fade-in">
-            <div className="text-center">
-              <h2 className="text-xl font-extrabold text-gray-900 dark:text-white flex items-center justify-center gap-2">
-                📸 QRIS Pembayaran Manual
-              </h2>
-              <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
-                Lakukan pembayaran manual dengan scan QRIS berikut:
-              </p>
-              
-              <div className="mt-4 bg-white p-3 rounded-2xl inline-block border border-gray-100 shadow-sm mx-auto">
-                <Image 
-                  src="/qris.png" 
-                  alt="QRIS Jual Beli USU Polmed" 
-                  width={400}
-                  height={400}
-                  className="max-h-[260px] object-contain"
-                />
-              </div>
 
-              <div className="mt-3 p-3 rounded-xl bg-gray-50 dark:bg-slate-950 border border-gray-150/40 dark:border-slate-850">
-                <p className="text-xs text-gray-400 dark:text-slate-500 uppercase tracking-wider font-semibold">Nominal Transfer</p>
-                <p className="text-2xl font-black text-primary dark:text-white mt-0.5">{rupiah(fee)}</p>
-              </div>
-
-              <p className="mt-4 text-xs text-gray-500 dark:text-slate-400 text-left leading-relaxed bg-accent/5 p-3 rounded-xl border border-accent/20">
-                👉 <strong>Langkah selanjutnya:</strong> Setelah scan dan bayar, klik tombol <strong>Konfirmasi via WhatsApp</strong> di bawah untuk mengirimkan bukti transfer ke admin agar iklan Anda langsung tayang.
-              </p>
-
-              <div className="mt-5 space-y-2.5">
-                <a
-                  href={`https://wa.me/${cfg?.contact?.marketplaceWa || MARKETPLACE_WA}?text=${encodeURIComponent(
-                    `Halo Admin, saya sudah membayar biaya pendaftaran iklan manual sebesar ${rupiah(fee)} untuk produk "${createdListing.title}".\n\n🔗 *Cek langsung iklannya di sini:*\nhttps://www.jualbeliusupolmed.web.id/admin/listings/${buildSlug(createdListing.title, createdListing.id)}\n\nDetail Iklan:\n- Penjual: ${createdListing.seller_name}\n- WA: ${createdListing.seller_wa}\n\nMohon bantuannya untuk mengaktifkan iklan saya. Terima kasih!`
-                  )}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn-wa w-full text-center py-3 text-sm font-bold shadow-md hover:shadow-lg transition active:scale-95 flex items-center justify-center gap-2"
-                >
-                  💬 Konfirmasi via WhatsApp
-                </a>
-                
-                <button
-                  type="button"
-                  onClick={() => {
-                    const waParam = encodeURIComponent(form.seller_wa || "");
-                    router.push(`/dashboard?pending=1&wa=${waParam}`);
-                  }}
-                  className="btn-outline w-full text-center py-2.5 text-xs text-gray-600 dark:text-slate-350 hover:bg-gray-100 dark:hover:bg-slate-800"
-                >
-                  Buka Dashboard Saya
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Modal Preview */}
       {showPreviewModal && (
@@ -500,7 +402,7 @@ export default function JasaClient() {
                 disabled={busy}
                 className="btn-primary flex-1"
               >
-                {busy ? "Memproses…" : `Konfirmasi & ${paymentMethod === "manual" ? 'Dapatkan QRIS' : 'Bayar ' + rupiah(fee)}`}
+                {busy ? "Memproses…" : `Konfirmasi & Bayar ${rupiah(fee)}`}
               </button>
             </div>
           </div>

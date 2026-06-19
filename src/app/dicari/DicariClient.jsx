@@ -25,6 +25,7 @@ export default function DicariPage() {
   const [showModal, setShowModal] = useState(false);
   const [activeQrisUrl, setActiveQrisUrl] = useState("");
   const [activeQrisFee, setActiveQrisFee] = useState(0);
+  const [activeQrisOrderId, setActiveQrisOrderId] = useState("");
   const [form, setForm] = useState({
     buyer_name: "",
     buyer_wa: "",
@@ -139,7 +140,8 @@ export default function DicariPage() {
       setShowModal(false);
       if (data.paymentUrl) {
         setActiveQrisUrl(data.paymentUrl);
-        setActiveQrisFee(1000);
+        setActiveQrisFee(data.amount || 1000);
+        setActiveQrisOrderId(data.orderId || "");
       } else {
         fetchItems();
       }
@@ -322,7 +324,8 @@ export default function DicariPage() {
                       }).then(r => r.json()).then(data => {
                         if (data.paymentUrl) {
                           setActiveQrisUrl(data.paymentUrl);
-                          setActiveQrisFee(2000);
+                          setActiveQrisFee(data.amount || 2000);
+                          setActiveQrisOrderId(data.orderId || "");
                         }
                       }).finally(() => setUnlockLoading(false));
                     }}
@@ -373,10 +376,15 @@ export default function DicariPage() {
       <QRISModal 
         qrisUrl={activeQrisUrl} 
         fee={activeQrisFee} 
+        transactionId={activeQrisOrderId}
         onClose={() => {
           setActiveQrisUrl("");
-          router.push(`/dashboard?pending=1&wa=${encodeURIComponent(form.buyer_wa || "")}`);
+          router.push(`/dashboard?pending=1&wa=${encodeURIComponent(form.buyer_wa || localStorage.getItem("seller_wa") || "")}`);
         }} 
+        onSuccess={() => {
+          setActiveQrisUrl("");
+          router.push(`/dashboard?paid=1&wa=${encodeURIComponent(form.buyer_wa || localStorage.getItem("seller_wa") || "")}`);
+        }}
       />
     </div>
   );
