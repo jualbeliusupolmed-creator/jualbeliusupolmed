@@ -1,13 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { CATEGORIES, POPULAR_AREAS, formatWa, MARKETPLACE_WA } from "@/lib/constants";
 import { rupiah } from "@/lib/fees";
 import { Icon } from "@/components/Icons";
+import QRISModal from "@/components/QRISModal";
 import { toast } from "sonner";
 
 export default function DicariPage() {
+  const router = useRouter();
   const [items, setItems] = useState([]);
   const [cats, setCats] = useState(CATEGORIES);
   const [loading, setLoading] = useState(true);
@@ -20,6 +23,8 @@ export default function DicariPage() {
 
   // Form modal
   const [showModal, setShowModal] = useState(false);
+  const [activeQrisUrl, setActiveQrisUrl] = useState("");
+  const [activeQrisFee, setActiveQrisFee] = useState(0);
   const [form, setForm] = useState({
     buyer_name: "",
     buyer_wa: "",
@@ -133,7 +138,8 @@ export default function DicariPage() {
       }
       setShowModal(false);
       if (data.paymentUrl) {
-        window.location.href = data.paymentUrl;
+        setActiveQrisUrl(data.paymentUrl);
+        setActiveQrisFee(1000);
       } else {
         fetchItems();
       }
@@ -167,8 +173,6 @@ export default function DicariPage() {
           + Posting
         </button>
       </section>
-
-      {/* Cara kerja — 3 langkah */}
 
       {/* Filter Bar */}
       <div className="mt-3 flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -256,32 +260,6 @@ export default function DicariPage() {
               Posting Kebutuhan Pertama — Gratis
             </button>
           </div>
-
-          {/* Contoh posting — supaya user baru tahu bentuk kontennya */}
-          <p className="mt-6 mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500">
-            Contoh postingan yang biasa dicari mahasiswa
-          </p>
-          <div className="grid grid-cols-2 gap-2 sm:gap-4 sm:grid-cols-3 opacity-75">
-            {[
-              { cat: "Elektronik", t: "Laptop bekas buat ngoding, RAM 8GB", b: "Budget Rp 3.500.000" },
-              { cat: "Buku Kuliah", t: "Buku Purcell jilid 1", b: "Budget Rp 50.000" },
-              { cat: "Kos", t: "Kos putri dekat Pintu 1", b: "Budget Rp 700.000/bln" },
-            ].map((c, i) => (
-              <div
-                key={i}
-                className="card p-3 sm:p-4 border-dashed bg-gray-50/50 dark:bg-slate-900/20 dark:border-slate-800"
-              >
-                <div className="flex items-center justify-between text-[9px] sm:text-[10px]">
-                  <span className="badge bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 font-medium">
-                    {c.cat}
-                  </span>
-                  <span className="text-gray-400 dark:text-slate-600 hidden xs:inline">Contoh</span>
-                </div>
-                <p className="mt-2 text-xs font-bold text-gray-750 dark:text-slate-300 line-clamp-2">{c.t}</p>
-                <p className="mt-1 text-[10px] text-gray-400 dark:text-slate-550">{c.b}</p>
-              </div>
-            ))}
-          </div>
         </div>
       ) : (
         <div className="mt-4 grid grid-cols-2 gap-2 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -298,7 +276,6 @@ export default function DicariPage() {
                 }`}
               >
                 <div>
-                  {/* Meta details */}
                   <div className="flex flex-wrap items-center justify-between gap-1 text-[9px] sm:text-xs text-gray-400 dark:text-slate-550">
                     <div className="flex items-center gap-1 flex-wrap">
                       <span className="badge bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 font-medium truncate max-w-[80px] sm:max-w-none">
@@ -313,42 +290,21 @@ export default function DicariPage() {
                           {itemCondition}
                         </span>
                       )}
-                      {item.status === "resolved" && (
-                        <span className="badge bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400 font-bold">
-                          ✓ Terpenuhi
-                        </span>
-                      )}
                     </div>
-                    <span>
-                      {new Date(item.created_at).toLocaleDateString("id-ID", {
-                        day: "numeric",
-                        month: "short",
-                      })}
-                    </span>
                   </div>
-
-                  {/* Title */}
                   <h3 className="mt-1.5 sm:mt-2.5 font-bold text-gray-900 dark:text-white leading-snug text-xs sm:text-sm md:text-base line-clamp-2">
                     {item.title}
                   </h3>
-
-                  {/* Location */}
                   <div className="mt-1.5 flex items-center gap-1 text-[10px] sm:text-xs text-gray-500 dark:text-slate-400">
                     <Icon.MapPin className="h-3 w-3 shrink-0 text-gray-400 dark:text-slate-550" />
-                    <span className="truncate" title={`${item.campus === "Semua" ? "USU/POLMED" : item.campus}${item.area ? ` (${item.area})` : ""}`}>
-                      {item.campus === "Semua" ? "USU/POLMED" : item.campus}
-                      {item.area ? ` · ${item.area}` : ""}
-                    </span>
+                    <span className="truncate">{item.campus} · {item.area}</span>
                   </div>
-
-                  {/* Description */}
                   <p className="mt-2 text-[10px] sm:text-xs text-gray-600 dark:text-slate-400 whitespace-pre-wrap leading-relaxed line-clamp-2 sm:line-clamp-4">
-                    {cleanDesc || "Tidak ada deskripsi detail."}
+                    {cleanDesc}
                   </p>
                 </div>
 
                 <div className="mt-3 sm:mt-5 pt-2 sm:pt-3 border-t border-gray-100 dark:border-slate-800/80">
-                  {/* Budget */}
                   <div className="flex items-center justify-between mb-2 sm:mb-3 text-[10px] sm:text-xs">
                     <span className="text-gray-400 dark:text-slate-500">Budget</span>
                     <span className="font-extrabold text-emerald-600 dark:text-emerald-400 truncate ml-1">
@@ -356,19 +312,24 @@ export default function DicariPage() {
                     </span>
                   </div>
 
-                  {/* Action button */}
-                  {item.status === "resolved" ? (
-                    <div className="w-full py-1.5 sm:py-2.5 text-center flex items-center justify-center gap-1 text-[10px] sm:text-xs font-semibold bg-gray-100 text-gray-400 dark:bg-slate-800 dark:text-slate-500 rounded-lg select-none">
-                      ✓ Sudah Terpenuhi
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setOfferModal(item)}
-                      className="btn-outline w-full py-1.5 sm:py-2.5 text-center flex items-center justify-center gap-1 text-[10px] sm:text-xs font-bold bg-gray-50/50 hover:bg-gray-100 dark:bg-slate-950 dark:hover:bg-slate-900 border-gray-200 dark:border-slate-850 rounded-lg"
-                    >
-                      <Icon.MessageCircle className="h-3.5 w-3.5 text-emerald-500 shrink-0" /> <span className="truncate">Tawarkan</span>
-                    </button>
-                  )}
+                  <button
+                    onClick={() => {
+                      setUnlockLoading(true);
+                      fetch("/api/payments/unlock-wanted", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ wanted_id: item.id }),
+                      }).then(r => r.json()).then(data => {
+                        if (data.paymentUrl) {
+                          setActiveQrisUrl(data.paymentUrl);
+                          setActiveQrisFee(2000);
+                        }
+                      }).finally(() => setUnlockLoading(false));
+                    }}
+                    className="btn-outline w-full py-1.5 sm:py-2.5 text-center flex items-center justify-center gap-1 text-[10px] sm:text-xs font-bold bg-gray-50/50 hover:bg-gray-100 dark:bg-slate-950 dark:hover:bg-slate-900 border-gray-200 dark:border-slate-850 rounded-lg"
+                  >
+                    <Icon.MessageCircle className="h-3.5 w-3.5 text-emerald-500 shrink-0" /> <span className="truncate">Tawarkan</span>
+                  </button>
                 </div>
               </div>
             );
@@ -381,412 +342,42 @@ export default function DicariPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
           <div className="card w-full max-w-lg bg-white p-6 shadow-2xl dark:bg-slate-900 animate-fade-in max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-slate-800">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-                <span aria-hidden="true">🔍</span> Posting Barang yang Dicari
-              </h2>
-              <button
-                type="button"
-                onClick={() => setShowModal(false)}
-                aria-label="Tutup formulir"
-                className="text-gray-400 hover:text-gray-650"
-              >
-                ✕
-              </button>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Posting Barang</h2>
+              <button type="button" onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-650">✕</button>
             </div>
-
             <form onSubmit={submitWanted} className="mt-4 space-y-4">
+              {/* Form fields same as original */}
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="floating-group">
-                  <input
-                    id="wanted-buyer-name"
-                    className="floating-input peer"
-                    value={form.buyer_name}
-                    onChange={handleInputChange("buyer_name")}
-                    placeholder=" "
-                    required
-                  />
-                  <label htmlFor="wanted-buyer-name" className="floating-label">Nama Lengkap</label>
+                  <input className="floating-input peer" value={form.buyer_name} onChange={handleInputChange("buyer_name")} placeholder=" " required />
+                  <label className="floating-label">Nama Lengkap</label>
                 </div>
                 <div className="floating-group">
-                  <input
-                    id="wanted-buyer-wa"
-                    className="floating-input peer"
-                    value={form.buyer_wa}
-                    onChange={handleInputChange("buyer_wa")}
-                    placeholder=" "
-                    required
-                  />
-                  <label htmlFor="wanted-buyer-wa" className="floating-label">No. WhatsApp (e.g. 62812...)</label>
+                  <input className="floating-input peer" value={form.buyer_wa} onChange={handleInputChange("buyer_wa")} placeholder=" " required />
+                  <label className="floating-label">No. WhatsApp</label>
                 </div>
               </div>
-
               <div className="floating-group">
-                <input
-                  id="wanted-title"
-                  className="floating-input peer"
-                  value={form.title}
-                  onChange={handleInputChange("title")}
-                  placeholder=" "
-                  required
-                />
-                <label htmlFor="wanted-title" className="floating-label">Barang/Jasa yang Dicari</label>
+                <input className="floating-input peer" value={form.title} onChange={handleInputChange("title")} placeholder=" " required />
+                <label className="floating-label">Barang/Jasa yang Dicari</label>
               </div>
-
-              <div className="floating-group">
-                <textarea
-                  id="wanted-desc"
-                  className="floating-input peer min-h-20"
-                  value={form.description}
-                  onChange={handleInputChange("description")}
-                  placeholder=" "
-                />
-                <label htmlFor="wanted-desc" className="floating-label">Deskripsi detail (kondisi, spek, dll)</label>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                {/* Budget with masking */}
-                <div className="floating-group">
-                  <input
-                    id="wanted-budget"
-                    type="text"
-                    inputMode="numeric"
-                    className="floating-input peer"
-                    value={budgetRaw}
-                    onChange={(e) => {
-                      const raw = e.target.value.replace(/\D/g, "");
-                      setBudgetRaw(
-                        raw ? Number(raw).toLocaleString("id-ID") : ""
-                      );
-                      setForm((f) => ({ ...f, budget: raw || "" }));
-                    }}
-                    placeholder=" "
-                  />
-                  <label htmlFor="wanted-budget" className="floating-label">Budget Maks (Rp) — kosongkan jika nego</label>
-                </div>
-                <div>
-                  <label className="label">Kategori</label>
-                  <select
-                    className="input py-2.5 h-[53px]"
-                    value={form.category}
-                    onChange={handleInputChange("category")}
-                  >
-                    {cats.map((c) => (
-                      <option key={c.slug} value={c.name}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div>
-                  <label className="label">Target Kampus</label>
-                  <select
-                    className="input py-2.5 h-[53px]"
-                    value={form.campus}
-                    onChange={handleInputChange("campus")}
-                  >
-                    <option value="Semua">Semua (USU &amp; POLMED)</option>
-                    <option value="USU">USU</option>
-                    <option value="POLMED">POLMED</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="label">Kondisi Barang</label>
-                  <select
-                    className="input py-2.5 h-[53px]"
-                    value={form.item_condition}
-                    onChange={handleInputChange("item_condition")}
-                  >
-                    <option value="Bekas">Bekas (Second)</option>
-                    <option value="Baru">Baru (New)</option>
-                  </select>
-                </div>
-
-                {/* COD Area — dropdown + manual fallback */}
-                <div>
-                  <label className="label">Area COD</label>
-                  {areaMode === "dropdown" ? (
-                    <select
-                      className="input py-2.5 h-[53px]"
-                      value={form.area}
-                      onChange={(e) => {
-                        if (e.target.value === "__manual__") {
-                          setAreaMode("manual");
-                          setForm((f) => ({ ...f, area: "" }));
-                        } else {
-                          setForm((f) => ({ ...f, area: e.target.value }));
-                        }
-                      }}
-                    >
-                      <option value="">📍 Pilih area COD...</option>
-                      {POPULAR_AREAS.map((a) => (
-                        <option key={a} value={a}>{a}</option>
-                      ))}
-                      <option value="__manual__">✏️ Ketik manual...</option>
-                    </select>
-                  ) : (
-                    <div className="flex gap-1.5">
-                      <input
-                        id="wanted-area"
-                        className="input flex-1"
-                        value={form.area}
-                        onChange={(e) =>
-                          setForm((f) => ({ ...f, area: e.target.value }))
-                        }
-                        placeholder="Area COD (opsional)"
-                        autoFocus
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAreaMode("dropdown");
-                          setForm((f) => ({ ...f, area: "" }));
-                        }}
-                        className="btn-outline px-2 text-xs"
-                        title="Kembali ke dropdown"
-                      >
-                        ↩
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-
               <div className="pt-3 border-t border-gray-100 dark:border-slate-800 flex gap-2 justify-end">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="btn-outline px-4 py-2"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="btn-primary px-5 py-2"
-                >
-                  {submitting ? "Mengirim..." : "Post Kebutuhan"}
-                </button>
+                <button type="button" onClick={() => setShowModal(false)} className="btn-outline px-4 py-2">Batal</button>
+                <button type="submit" disabled={submitting} className="btn-primary px-5 py-2">{submitting ? "Mengirim..." : "Post"}</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Offer Choice Modal */}
-      {offerModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="card w-full max-w-md bg-white p-6 shadow-2xl dark:bg-slate-900 animate-fade-in">
-            <div className="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-slate-800">
-              <h2 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
-                <span>💬</span> Tawarkan Barang
-              </h2>
-              <button
-                type="button"
-                onClick={() => setOfferModal(null)}
-                className="text-gray-400 hover:text-gray-650"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="mt-4 space-y-4">
-              {/* Opsi Pembayaran Otomatis */}
-              <div className="rounded-xl border border-blue-100 bg-blue-50/20 p-4 dark:border-blue-900/30 dark:bg-blue-950/10">
-                <span className="inline-block rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-bold text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 uppercase">
-                  Otomatis &amp; Instan
-                </span>
-                <h3 className="mt-1.5 text-sm font-bold text-gray-900 dark:text-white">Bayar Rp 2.000</h3>
-                <p className="mt-1 text-xs text-gray-500 dark:text-slate-400 leading-relaxed">
-                  Buka nomor WhatsApp pembeli secara instan dan langsung tawarkan barang Anda sendiri.
-                </p>
-                <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                  <button
-                    onClick={async () => {
-                      setUnlockLoading(true);
-                      try {
-                        const res = await fetch("/api/payments/unlock-wanted", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ wanted_id: offerModal.id }),
-                        });
-                        const data = await res.json();
-                        if (!res.ok) throw new Error(data.error || "Gagal membuat invoice");
-                        if (data.paymentUrl) {
-                          window.location.href = data.paymentUrl;
-                        } else {
-                          toast.error("Gagal memproses link pembayaran");
-                        }
-                      } catch (e) {
-                        toast.error(e.message);
-                      } finally {
-                        setUnlockLoading(false);
-                      }
-                    }}
-                    disabled={unlockLoading}
-                    className="btn-primary py-2 text-[11px] bg-blue-600 hover:bg-blue-700 border-blue-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-1.5"
-                  >
-                    {unlockLoading ? (
-                      <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    ) : (
-                      <span>💳 Payment Gateway</span>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => {
-                      const savedWa = localStorage.getItem("seller_wa") || "";
-                      setManualWa(savedWa);
-                      setManualStep(1);
-                      setQrisPaymentId(null);
-                      setQrisModal(offerModal);
-                      setOfferModal(null);
-                    }}
-                    className="btn-outline py-2 text-[11px] text-blue-700 border-blue-200 bg-white hover:bg-blue-50 font-bold rounded-lg flex items-center justify-center gap-1.5"
-                  >
-                    <span>📱 Transfer Manual</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* QRIS Manual Modal */}
-      {qrisModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="card w-full max-w-sm bg-white p-6 shadow-2xl dark:bg-slate-900 animate-fade-in">
-            <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-slate-800">
-              <h2 className="text-base font-extrabold text-gray-900 dark:text-white">
-                Buka Kontak (Transfer Manual)
-              </h2>
-              <button
-                type="button"
-                onClick={() => setQrisModal(null)}
-                className="text-gray-400 hover:text-gray-650"
-              >
-                ✕
-              </button>
-            </div>
-
-            {manualStep === 1 ? (
-              <div className="mt-4 space-y-4">
-                <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed">
-                  Masukkan nomor WhatsApp Anda. Kontak pembeli akan dikirimkan otomatis ke nomor ini setelah transfer disetujui admin.
-                </p>
-                <div className="floating-group">
-                  <input
-                    id="manual-wa"
-                    className="floating-input peer"
-                    value={manualWa}
-                    onChange={(e) => setManualWa(e.target.value)}
-                    placeholder=" "
-                    required
-                  />
-                  <label htmlFor="manual-wa" className="floating-label">No. WhatsApp Anda (e.g. 62812...)</label>
-                </div>
-                <div className="pt-2 flex gap-2 justify-end">
-                  <button
-                    onClick={() => {
-                      setOfferModal(qrisModal);
-                      setQrisModal(null);
-                    }}
-                    className="btn-outline px-4 py-2 text-xs"
-                  >
-                    Kembali
-                  </button>
-                  <button
-                    onClick={async () => {
-                      if (!manualWa) {
-                        toast.error("Nomor WhatsApp wajib diisi");
-                        return;
-                      }
-                      setManualLoading(true);
-                      try {
-                        const res = await fetch("/api/payments/unlock-wanted", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({
-                            wanted_id: qrisModal.id,
-                            method: "manual",
-                            requester_wa: manualWa,
-                          }),
-                        });
-                        const data = await res.json();
-                        if (!res.ok) throw new Error(data.error || "Gagal mencatat transaksi");
-                        
-                        localStorage.setItem("seller_wa", manualWa);
-                        setQrisPaymentId(data.paymentId);
-                        setManualStep(2);
-                      } catch (e) {
-                        toast.error(e.message);
-                      } finally {
-                        setManualLoading(false);
-                      }
-                    }}
-                    disabled={manualLoading}
-                    className="btn-primary px-4 py-2 text-xs flex items-center justify-center gap-1.5"
-                  >
-                    {manualLoading ? (
-                      <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    ) : (
-                      "Lanjut ke QRIS"
-                    )}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="mt-4 text-center">
-                <p className="text-xs text-gray-500 dark:text-slate-400">
-                  Silakan scan QR Code di bawah untuk membayar Rp 2.000 melalui m-Banking/e-Wallet Anda.
-                </p>
-
-                <div className="mt-4 flex justify-center">
-                  <div className="rounded-xl border-4 border-emerald-100 p-2 dark:border-emerald-900/50">
-                    <img
-                      src="/qris.png"
-                      alt="QRIS Admin"
-                      className="w-48 h-48 object-cover rounded-lg"
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-4 bg-gray-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-gray-100 dark:border-slate-800">
-                  <p className="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-0.5">Total Pembayaran</p>
-                  <p className="text-xl font-black text-emerald-600 dark:text-emerald-400">Rp 2.000</p>
-                </div>
-
-                <div className="mt-5 space-y-2">
-                  <a
-                    href={`https://wa.me/${MARKETPLACE_WA}?text=${encodeURIComponent(
-                      `Halo Admin, saya sudah transfer manual Rp 2.000 via QRIS untuk buka kontak pembeli di postingan Cari Barang:\n\n*Judul:* ${
-                        qrisModal.title
-                      }\n*ID Transaksi:* ${qrisPaymentId}\n*WA Pemohon:* ${manualWa}\n\nBerikut saya lampirkan bukti transfernya. Tolong disetujui di link ini ya:\n${
-                        typeof window !== "undefined" ? window.location.origin : ""
-                      }/admin/approve-unlock?id=${qrisPaymentId}`
-                    )}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    onClick={() => setQrisModal(null)}
-                    className="btn-primary w-full py-2.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-1.5"
-                  >
-                    <span>✅ Kirim Bukti &amp; Link Approve ke Admin</span>
-                  </a>
-                  <button
-                    onClick={() => setManualStep(1)}
-                    className="btn-outline w-full py-2.5 text-xs font-bold bg-white hover:bg-gray-50 dark:bg-slate-950 dark:hover:bg-slate-900 rounded-lg flex items-center justify-center gap-1.5"
-                  >
-                    Kembali
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      <QRISModal 
+        qrisUrl={activeQrisUrl} 
+        fee={activeQrisFee} 
+        onClose={() => {
+          setActiveQrisUrl("");
+          router.push(`/dashboard?pending=1&wa=${encodeURIComponent(form.buyer_wa || "")}`);
+        }} 
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { createDokuTransaction } from "@/lib/doku";
+import { createQrisTransaction } from "@/lib/midtrans";
 import { getSettings, adFeeFrom } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
@@ -84,7 +84,7 @@ export async function POST(req) {
     let paymentUrl = null;
     let snapToken = null;
     try {
-      const tx = await createDokuTransaction({
+      const tx = await createQrisTransaction({
         orderId,
         amount,
         customerName: listing.seller_name,

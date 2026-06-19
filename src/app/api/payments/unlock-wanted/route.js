@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { createDokuTransaction } from "@/lib/doku";
+import { createQrisTransaction } from "@/lib/midtrans";
 import { formatWa } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
@@ -73,7 +73,7 @@ export async function POST(req) {
 
     let paymentUrl = null;
     try {
-      const tx = await createDokuTransaction({
+      const tx = await createQrisTransaction({
         orderId,
         amount,
         customerName: "Pengguna",

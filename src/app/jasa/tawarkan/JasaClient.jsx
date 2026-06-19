@@ -6,6 +6,7 @@ import Image from "next/image";
 import { adFee, rupiah } from "@/lib/fees";
 import { uploadMedia } from "@/lib/upload";
 import MediaUploader from "@/components/MediaUploader";
+import QRISModal from "@/components/QRISModal";
 import { CATEGORIES, MARKETPLACE_WA, POPULAR_AREAS, formatWa } from "@/lib/constants";
 import { buildSlug } from "@/lib/slug";
 import { toast } from "sonner";
@@ -50,6 +51,8 @@ export default function JasaClient() {
   const [showQRISModal, setShowQRISModal] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [areaOption, setAreaOption] = useState("");
+  const [activeQrisUrl, setActiveQrisUrl] = useState("");
+  const [activeQrisFee, setActiveQrisFee] = useState(0);
 
   const [cfg, setCfg] = useState(null);
   
@@ -129,7 +132,9 @@ export default function JasaClient() {
 
       if (paymentMethod === "otomatis") {
         if (data.paymentUrl) {
-          window.location.href = data.paymentUrl;
+          setActiveQrisUrl(data.paymentUrl);
+          setActiveQrisFee(fee);
+          setShowQRISModal(true);
         } else {
           toast.error("Metode otomatis gagal membuat link pembayaran. Silakan gunakan metode manual.");
         }
@@ -148,6 +153,15 @@ export default function JasaClient() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-6">
 
+      <QRISModal 
+        qrisUrl={activeQrisUrl} 
+        fee={activeQrisFee} 
+        onClose={() => {
+          setActiveQrisUrl("");
+          const waParam = encodeURIComponent(form.seller_wa || "");
+          router.push(`/dashboard?pending=1&wa=${waParam}`);
+        }} 
+      />
 
       <h1 className="text-2xl font-extrabold">Tawarkan Jasa</h1>
       <p className="mt-1 text-gray-500">

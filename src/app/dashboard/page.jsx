@@ -12,6 +12,7 @@ import { formatWa } from "@/lib/constants";
 import { buildSlug } from "@/lib/slug";
 import { Icon } from "@/components/Icons";
 import { toast } from "sonner";
+import QRISModal from "@/components/QRISModal";
 
 function statusBadge(s) {
   const map = {
@@ -56,6 +57,8 @@ function DashboardInner() {
   const [renewConfirm, setRenewConfirm] = useState(null);
 
   const [qrisModalItem, setQrisModalItem] = useState(null);
+  const [activeQrisUrl, setActiveQrisUrl] = useState("");
+  const [activeQrisFee, setActiveQrisFee] = useState(0);
 
   const router = useRouter();
 
@@ -225,7 +228,9 @@ function DashboardInner() {
       }
 
       if (data.paymentUrl) {
-        window.location.href = data.paymentUrl;
+        setActiveQrisUrl(data.paymentUrl);
+        // We might not have the fee here easily, but it's ok not to show it or we can pass it
+        setActiveQrisFee(0);
       } else {
         setNote(`Tidak bisa memproses ${label} — link pembayaran tidak ditemukan.`);
       }
@@ -418,6 +423,12 @@ function DashboardInner() {
         confirmLabel="Lanjut Pembayaran"
         onConfirm={doRenew}
         onClose={() => setRenewConfirm(null)}
+      />
+
+      <QRISModal 
+        qrisUrl={activeQrisUrl} 
+        fee={activeQrisFee} 
+        onClose={() => { setActiveQrisUrl(""); load(); }} 
       />
 
       {/* ===== UI ===== */}
@@ -629,7 +640,8 @@ function DashboardInner() {
                                 if (!res.ok) throw new Error(data.error);
                                 
                                 if (data.paymentUrl) {
-                                  window.location.href = data.paymentUrl;
+                                  setActiveQrisUrl(data.paymentUrl);
+                                  setActiveQrisFee(i.price ? adFee(i.type, i.price) : 0);
                                 } else {
                                   toast.error("Gagal mendapatkan link pembayaran.");
                                 }
@@ -757,7 +769,8 @@ function DashboardInner() {
                                           onError: function() { toast.error("Pembayaran gagal!"); }
                                         });
                                       } else if (data.paymentUrl) {
-                                        window.location.href = data.paymentUrl;
+                                        setActiveQrisUrl(data.paymentUrl);
+                                        setActiveQrisFee(i.pending_sold_fee_amount || 0);
                                       } else {
                                         toast.error("Gagal mendapatkan link pembayaran.");
                                       }

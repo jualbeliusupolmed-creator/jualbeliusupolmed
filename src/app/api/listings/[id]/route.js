@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { createDokuTransaction } from "@/lib/doku";
+import { createQrisTransaction } from "@/lib/midtrans";
 import { getSettings, soldFeeFrom } from "@/lib/settings";
 import { getSellerSession, isAdmin } from "@/lib/auth";
 
@@ -158,7 +158,7 @@ export async function PATCH(req, { params }) {
         });
 
         try {
-          const tx = await createDokuTransaction({
+          const tx = await createQrisTransaction({
             orderId: orderId,
             amount: fee,
             customerName: currentListing.seller_name,

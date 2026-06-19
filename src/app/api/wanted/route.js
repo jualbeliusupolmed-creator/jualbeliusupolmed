@@ -63,7 +63,7 @@ export async function GET(req) {
   }
 }
 
-import { createDokuTransaction } from "@/lib/doku";
+import { createQrisTransaction } from "@/lib/midtrans";
 
 // POST /api/wanted -> create a wanted listing
 export async function POST(req) {
@@ -159,7 +159,7 @@ export async function POST(req) {
 
     let paymentUrl = null;
     try {
-      const tx = await createDokuTransaction({
+      const tx = await createQrisTransaction({
         orderId,
         amount,
         customerName: buyer_name || "Pencari Barang",

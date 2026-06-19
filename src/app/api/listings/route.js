@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { createDokuTransaction } from "@/lib/doku";
+import { createQrisTransaction } from "@/lib/midtrans";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { getSettings, adFeeFrom, listingExpiresAt, hasUnpaidSoldFees } from "@/lib/settings";
 import { formatWa } from "@/lib/constants";
@@ -212,7 +212,7 @@ export async function POST(req) {
 
     let paymentUrl = null;
     try {
-      const tx = await createDokuTransaction({
+      const tx = await createQrisTransaction({
         orderId,
         amount,
         customerName: seller_name,
