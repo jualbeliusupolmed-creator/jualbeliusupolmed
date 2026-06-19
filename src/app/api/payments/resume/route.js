@@ -97,7 +97,7 @@ export async function POST(req) {
       return NextResponse.json({ error: "Gagal membuat transaksi" }, { status: 500 });
     }
 
-    return NextResponse.json({ paymentUrl, snapToken, orderId });
+    return NextResponse.json({ paymentUrl, orderId, amount });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }

@@ -224,7 +224,7 @@ export async function POST(req) {
       console.error("doku charge error:", e?.message);
     }
 
-    return NextResponse.json({ listing, paymentUrl, orderId });
+    return NextResponse.json({ listing, paymentUrl, orderId, amount });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }

@@ -59,6 +59,7 @@ function DashboardInner() {
   const [qrisModalItem, setQrisModalItem] = useState(null);
   const [activeQrisUrl, setActiveQrisUrl] = useState("");
   const [activeQrisFee, setActiveQrisFee] = useState(0);
+  const [activeQrisOrderId, setActiveQrisOrderId] = useState("");
 
   const router = useRouter();
 
@@ -229,8 +230,12 @@ function DashboardInner() {
 
       if (data.paymentUrl) {
         setActiveQrisUrl(data.paymentUrl);
-        // We might not have the fee here easily, but it's ok not to show it or we can pass it
-        setActiveQrisFee(0);
+        if (label === 'autobump') setActiveQrisFee(data.amount || 15000);
+        else if (label === 'bump') setActiveQrisFee(data.amount || 1000);
+        else if (label === 'featured') setActiveQrisFee(data.amount || body.total || body.days * 5000);
+        else if (label === 'renewal') setActiveQrisFee(data.amount || 10000);
+        else if (label === 'subscribe') setActiveQrisFee(data.amount || 49000);
+        setActiveQrisOrderId(data.orderId || "");
       } else {
         setNote(`Tidak bisa memproses ${label} — link pembayaran tidak ditemukan.`);
       }
@@ -428,6 +433,7 @@ function DashboardInner() {
       <QRISModal 
         qrisUrl={activeQrisUrl} 
         fee={activeQrisFee} 
+        transactionId={activeQrisOrderId}
         onClose={() => { setActiveQrisUrl(""); load(); }} 
       />
 
@@ -641,7 +647,8 @@ function DashboardInner() {
                                 
                                 if (data.paymentUrl) {
                                   setActiveQrisUrl(data.paymentUrl);
-                                  setActiveQrisFee(i.price ? adFee(i.type, i.price) : 0);
+                                  setActiveQrisFee(data.amount || (i.price ? adFee(i.type, i.price) : 0));
+                                  setActiveQrisOrderId(data.orderId || "");
                                 } else {
                                   toast.error("Gagal mendapatkan link pembayaran.");
                                 }
@@ -654,33 +661,6 @@ function DashboardInner() {
                             className="btn-primary py-1.5 px-3 text-xs flex items-center justify-center gap-1 shadow-sm"
                           >
                             💳 Lanjutkan Pembayaran
-                          </button>
-                          <button
-                            onClick={async () => {
-                              if (!i.pending_order_id) {
-                                setBusy(true);
-                                try {
-                                  const res = await fetch("/api/payments/resume", {
-                                    method: "POST",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ listing_id: i.id, seller_wa: wa }),
-                                  });
-                                  const data = await res.json();
-                                  if (!res.ok) throw new Error(data.error);
-                                  
-                                  i.pending_order_id = data.orderId;
-                                } catch (e) {
-                                  toast.error(e.message);
-                                  setBusy(false);
-                                  return;
-                                }
-                                setBusy(false);
-                              }
-                              setQrisModalItem(i);
-                            }}
-                            className="btn-outline py-1.5 px-3 text-xs flex items-center justify-center gap-1 shadow-sm"
-                          >
-                            📸 Bayar Manual
                           </button>
                         </div>
                       </div>
@@ -762,15 +742,10 @@ function DashboardInner() {
                                       const data = await res.json();
                                       if (!res.ok) throw new Error(data.error);
                                       
-                                      if (data.snapToken) {
-                                        window.snap.pay(data.snapToken, {
-                                          onSuccess: function() { load(); },
-                                          onPending: function() { load(); },
-                                          onError: function() { toast.error("Pembayaran gagal!"); }
-                                        });
-                                      } else if (data.paymentUrl) {
+                                      if (data.paymentUrl) {
                                         setActiveQrisUrl(data.paymentUrl);
-                                        setActiveQrisFee(i.pending_sold_fee_amount || 0);
+                                        setActiveQrisFee(data.amount || i.pending_sold_fee_amount || 0);
+                                        setActiveQrisOrderId(data.orderId || "");
                                       } else {
                                         toast.error("Gagal mendapatkan link pembayaran.");
                                       }
@@ -782,13 +757,7 @@ function DashboardInner() {
                                   }}
                                   className="btn-primary py-1.5 px-3 text-xs bg-rose-600 hover:bg-rose-700 border-rose-600 shadow-rose-500/20"
                                 >
-                                  💳 Bayar Online
-                                </button>
-                                <button
-                                  onClick={() => setQrisModalItem({ ...i, payment_type: "sold_fee" })}
-                                  className="btn-outline py-1.5 px-3 text-xs text-rose-700 border-rose-200 hover:bg-rose-100 dark:text-rose-400 dark:border-rose-900"
-                                >
-                                  📸 Bayar Manual (QRIS)
+                                  💳 Bayar Tagihan (QRIS + AI)
                                 </button>
                               </div>
                             </div>

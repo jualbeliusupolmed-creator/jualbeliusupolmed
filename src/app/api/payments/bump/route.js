@@ -73,7 +73,7 @@ export async function POST(req) {
       console.error("doku bump charge:", e?.message);
     }
 
-    return NextResponse.json({ paymentUrl, orderId });
+    return NextResponse.json({ paymentUrl, orderId, amount });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }

@@ -10,6 +10,7 @@ import { CATEGORIES, MARKETPLACE_WA, POPULAR_AREAS, formatWa } from "@/lib/const
 import { buildSlug } from "@/lib/slug";
 import { toast } from "sonner";
 import OTPModal from "@/components/OTPModal";
+import QRISModal from "@/components/QRISModal";
 export default function JualPage() {
   const router = useRouter();
   const [form, setForm] = useState({
