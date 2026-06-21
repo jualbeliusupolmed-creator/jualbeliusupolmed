@@ -137,8 +137,15 @@ export async function POST(req) {
 
     // Jika hanya kirim teks tanpa gambar
     if (message && !fileUrl) {
+       const msgLower = message.toLowerCase().trim();
+       
+       // Handle kasus di mana user kirim gambar/stiker tapi Fonnte tidak bisa mengirim URL-nya
+       if (msgLower === "non-text message") {
+         await sendWa(normalizedWa, "⚠️ Sistem mendeteksi Anda mengirim gambar/media tanpa teks, atau media tidak dapat diunduh.\n\nPastikan Anda mengirim *Foto Barang* dan *Teks Deskripsi* (harga, nama barang, dll) dalam **SATU GELEMBUNG PESAN** (ditulis di kolom caption gambar).");
+         return NextResponse.json({ ok: true, state: "new_listing_no_text" });
+       }
+
        // Cek niat user (heuristik sederhana, jika ada kata jual/wts/ready)
-       const msgLower = message.toLowerCase();
        if (msgLower.includes("jual") || msgLower.includes("wts") || msgLower.includes("ready")) {
           await sendWa(normalizedWa, "📸 Sepertinya Anda ingin memasang iklan. Silakan kirimkan *Foto Barang* beserta teks deskripsinya dalam 1 pesan.");
        }
