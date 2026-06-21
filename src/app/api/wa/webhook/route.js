@@ -70,7 +70,7 @@ export async function POST(req) {
           return NextResponse.json({ ok: true, state: "payment_cancelled" });
         }
 
-        const qrisUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "https://jualbelimedan.web.id"}/qris.png`;
+        const qrisUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id"}/qris.png`;
         const reminderMsg = `⚠️ Anda masih memiliki tagihan pembayaran iklan yang belum lunas untuk:\n\n*Judul:* ${pendingPayment.listings.title}\n*Nominal:* Rp ${pendingPayment.amount.toLocaleString("id-ID")}\n\nSilakan scan QRIS ini dan kirimkan *GAMBAR STRUK* transfer Anda agar sistem AI kami dapat memverifikasinya.\n\n_(Ketik *BATAL* jika Anda ingin membatalkan iklan tersebut)_`;
         await sendWa(normalizedWa, reminderMsg, qrisUrl);
         return NextResponse.json({ ok: true, state: "waiting_receipt_no_image" });
@@ -216,7 +216,7 @@ export async function POST(req) {
       });
 
       // 7. Kirim balasan QRIS
-      const qrisUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "https://jualbelimedan.web.id"}/qris.png`;
+      const qrisUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id"}/qris.png`;
       const replyMessage = `✅ *Iklan Diterima!*\n\nAI berhasil membaca barang Anda:\n*Judul:* ${newListing.title}\n*Kategori:* ${newListing.category}\n*Harga:* Rp ${newListing.price.toLocaleString("id-ID")}\n\nUntuk menayangkannya, silakan Scan QRIS ini dan transfer *TEPAT SEBESAR*:\n\n👉 *Rp ${totalAmount.toLocaleString("id-ID")}* 👈\n*(Jangan dibulatkan!)*\n\nSetelah berhasil transfer, balas pesan ini dengan *GAMBAR STRUK* Anda.`;
 
       await sendWa(normalizedWa, replyMessage, qrisUrl);
