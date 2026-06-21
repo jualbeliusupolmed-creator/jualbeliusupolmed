@@ -8,15 +8,15 @@ import { buildSlug } from "@/lib/slug";
 export default function ShareWAButton({ listing }) {
   function shareUrl() {
     // Di client-side, window.location.origin selalu mengembalikan URL yang benar
-    // (https://www.jualbeliusupolmed.web.id di production, url lokal di dev)
-    const base = typeof window !== "undefined" ? window.location.origin : "https://www.jualbeliusupolmed.web.id";
+    // (https://www.jualbelimedan.web.id di production, url lokal di dev)
+    const base = typeof window !== "undefined" ? window.location.origin : "https://www.jualbelimedan.web.id";
     return `${base}/produk/${buildSlug(listing.title, listing.id)}`;
   }
 
   function shareText() {
     return (
       `*${listing.title}* — ${rupiah(listing.price)}\n` +
-      `Lihat di Jual Beli USU Polmed:\n${shareUrl()}`
+      `Lihat di Jual Beli Medan:\n${shareUrl()}`
     );
   }
 

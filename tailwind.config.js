@@ -8,17 +8,42 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Ink — warna aksi utama (near-black), kesan modern & clean
+        border: "var(--border)",
+        input: "var(--input)",
+        ring: "var(--ring)",
+        background: "var(--background)",
+        foreground: "var(--foreground)",
         primary: {
-          DEFAULT: "#111111",
+          DEFAULT: "var(--primary)",
+          foreground: "var(--primary-foreground)",
           dark: "#000000",
           light: "#3f3f46",
         },
-        // Aksen tipis untuk highlight (harga, status aktif)
+        secondary: {
+          DEFAULT: "var(--secondary)",
+          foreground: "var(--secondary-foreground)",
+        },
+        destructive: {
+          DEFAULT: "var(--destructive)",
+          foreground: "var(--destructive-foreground)",
+        },
+        muted: {
+          DEFAULT: "var(--muted)",
+          foreground: "var(--muted-foreground)",
+        },
         accent: {
-          DEFAULT: "#059669",
+          DEFAULT: "var(--accent)",
+          foreground: "var(--accent-foreground)",
           dark: "#047857",
           light: "#10b981",
+        },
+        popover: {
+          DEFAULT: "var(--popover)",
+          foreground: "var(--popover-foreground)",
+        },
+        card: {
+          DEFAULT: "var(--card)",
+          foreground: "var(--card-foreground)",
         },
         wa: {
           DEFAULT: "#25D366",

@@ -3,7 +3,7 @@ import { MARKETPLACE_WA } from "@/lib/constants";
 
 export const metadata = {
   title: "Kebijakan Privasi",
-  description: "Kebijakan privasi perlindungan data pribadi dan privasi pengguna platform Jual Beli USU Polmed.",
+  description: "Kebijakan privasi perlindungan data pribadi dan privasi pengguna platform Jual Beli Medan.",
   alternates: { canonical: "/kebijakan-privasi" },
 };
 
@@ -19,7 +19,7 @@ export default function KebijakanPrivasiPage() {
 
       <div className="card mt-8 p-6 sm:p-8 space-y-6 text-sm text-gray-650 dark:text-slate-300 leading-relaxed">
         <p>
-          Di <strong>Jual Beli USU Polmed</strong>, kami sangat menghargai privasi Anda. Kebijakan Privasi ini menjelaskan bagaimana kami mengumpulkan, menggunakan, menyimpan, dan melindungi informasi pribadi Anda saat Anda menggunakan situs web dan platform kami.
+          Di <strong>Jual Beli Medan</strong>, kami sangat menghargai privasi Anda. Kebijakan Privasi ini menjelaskan bagaimana kami mengumpulkan, menggunakan, menyimpan, dan melindungi informasi pribadi Anda saat Anda menggunakan situs web dan platform kami.
         </p>
 
         {/* 1. Informasi yang Kami Kumpulkan */}
@@ -54,7 +54,7 @@ export default function KebijakanPrivasiPage() {
           <ul className="list-disc pl-5 space-y-1">
             <li><strong>Penyedia Layanan:</strong> Kami membagikan data transaksi dengan <strong>DOKU</strong> selaku gerbang pembayaran resmi untuk memproses transaksi secara aman.</li>
             <li><strong>Kepatuhan Hukum:</strong> Kami dapat mengungkapkan informasi Anda jika diwajibkan oleh undang-undang atau perintah pengadilan untuk memenuhi kepatuhan hukum Negara Kesatuan Republik Indonesia.</li>
-            <li><strong>Publik:</strong> Data iklan (judul, deskripsi, harga, foto, nama penjual, dan link WhatsApp) dipublikasikan di platform agar dapat diakses oleh calon pembeli mahasiswa.</li>
+            <li><strong>Publik:</strong> Data iklan (judul, deskripsi, harga, foto, nama penjual, dan link WhatsApp) dipublikasikan di platform agar dapat diakses oleh calon pembeli.</li>
           </ul>
         </div>
 
@@ -94,7 +94,7 @@ export default function KebijakanPrivasiPage() {
           <dl className="grid gap-2 sm:grid-cols-2 text-xs sm:text-sm">
             <div>
               <dt className="font-semibold text-gray-900 dark:text-white">Pengelola:</dt>
-              <dd>Tim Jual Beli USU Polmed</dd>
+              <dd>Tim Jual Beli Medan</dd>
             </div>
             <div>
               <dt className="font-semibold text-gray-900 dark:text-white">Kontak WhatsApp:</dt>
@@ -102,12 +102,12 @@ export default function KebijakanPrivasiPage() {
             </div>
             <div>
               <dt className="font-semibold text-gray-900 dark:text-white">Email Dukungan:</dt>
-              <dd>admin@jualbeliusupolmed.web.id</dd>
+              <dd>admin@jualbelimedan.web.id</dd>
             </div>
             <div>
               <dt className="font-semibold text-gray-900 dark:text-white">Alamat Kantor:</dt>
               <dd className="text-gray-500 dark:text-slate-400">
-                Kantor Pengelola Jual Beli USU Polmed,<br />
+                Kantor Pengelola Jual Beli Medan,<br />
                 Jl. Dr. T. Mansur No. 9, Padang Bulan, Kec. Medan Baru,<br />
                 Kota Medan, Sumatera Utara 20155
               </dd>

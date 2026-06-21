@@ -16,7 +16,7 @@ export default function CopyLinkButton({ listing }) {
         // Native share (mobile)
         await navigator.share({
           title: listing.title,
-          text: `Cek barang ini di Jual Beli USU Polmed: ${listing.title} — ${
+          text: `Cek barang ini di Jual Beli Medan: ${listing.title} — ${
             listing.price
               ? `Rp${Number(listing.price).toLocaleString("id-ID")}`
               : ""

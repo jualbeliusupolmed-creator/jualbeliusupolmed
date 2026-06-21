@@ -3,14 +3,14 @@ import Link from "next/link";
 export const metadata = {
   title: "Pertanyaan Umum (FAQ)",
   description:
-    "Jawaban pertanyaan seputar Jual Beli USU Polmed: cara pasang iklan, durasi tayang, fitur Sundul (Bump), pembayaran, COD, favorit, dan refund.",
+    "Jawaban pertanyaan seputar Jual Beli Medan: cara pasang iklan, durasi tayang, fitur Sundul (Bump), pembayaran, COD, favorit, dan refund.",
   alternates: { canonical: "/faq" },
 };
 
 const faqs = [
   {
-    q: "Apa itu Jual Beli USU Polmed?",
-    a: "Jual Beli USU Polmed adalah platform marketplace khusus untuk mahasiswa Universitas Sumatera Utara (USU) dan Politeknik Negeri Medan (POLMED) untuk melakukan transaksi jual beli barang bekas, buku kuliah, fashion, makanan, mencari kos, hingga menawarkan jasa.",
+    q: "Apa itu Jual Beli Medan?",
+    a: "Jual Beli Medan adalah platform marketplace khusus untuk warga Universitas Sumatera Utara (USU) dan Politeknik Negeri Medan (POLMED) untuk melakukan transaksi jual beli barang bekas, buku, fashion, makanan, mencari kos, hingga menawarkan jasa.",
   },
   {
     q: "Apakah harus gabung grup WhatsApp dulu untuk pasang iklan?",

@@ -8,15 +8,15 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata = {
-  title: "Jasa Mahasiswa USU Polmed — Joki, Desain, IT",
-  description: "Temukan jasa dari mahasiswa USU & POLMED. Mulai dari joki tugas, desain grafis, service laptop, hingga jasa angkut barang.",
-  keywords: ["jasa mahasiswa", "joki tugas usu", "service laptop polmed", "desain grafis medan", "jasa angkut medan", "freelance mahasiswa"],
+  title: "Jasa warga USU Polmed — Joki, Desain, IT",
+  description: "Temukan jasa dari warga Medan. Mulai dari pekerjaan lepas, desain grafis, service laptop, hingga jasa angkut barang.",
+  keywords: ["jasa warga", "pekerjaan lepas usu", "service laptop polmed", "desain grafis medan", "jasa angkut medan", "freelance warga"],
   alternates: { canonical: "/jasa" },
   openGraph: {
-    title: "Jasa Mahasiswa USU Polmed",
-    description: "Marketplace jasa khusus mahasiswa USU & POLMED.",
+    title: "Jasa warga USU Polmed",
+    description: "Marketplace jasa khusus warga Medan.",
     url: "/jasa",
-    siteName: "Jual Beli USU Polmed",
+    siteName: "Jual Beli Medan",
     locale: "id_ID",
     type: "website",
   },
@@ -102,7 +102,7 @@ export default async function JasaPage() {
       getSettings(),
     ]);
 
-  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbelimedan.web.id").trim();
   const itemListJsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
@@ -127,7 +127,7 @@ export default async function JasaPage() {
         categories={JASA_CATEGORIES}
         stats={null}
         heroTitle="Marketplace Jasa Kampus"
-        heroSubtitle="Temukan berbagai jasa mahasiswa"
+        heroSubtitle="Temukan berbagai jasa warga"
         layoutOrder={["hero", "featured", "main"]}
       />
     </>

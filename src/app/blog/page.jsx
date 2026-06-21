@@ -5,8 +5,8 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata = {
-  title: "Blog & Artikel - Jual Beli USU Polmed",
-  description: "Kumpulan artikel, tips, dan trik seputar perkuliahan dan mahasiswa USU & POLMED.",
+  title: "Blog & Artikel - Jual Beli Medan",
+  description: "Kumpulan artikel, tips, dan trik seputar perkuliahan dan warga Medan.",
 };
 
 export default async function BlogList() {
@@ -21,7 +21,7 @@ export default async function BlogList() {
     <div className="mx-auto max-w-5xl px-4 py-8">
       <h1 className="mb-2 text-3xl font-extrabold tracking-tight dark:text-white">Blog & Artikel</h1>
       <p className="mb-8 text-gray-500 dark:text-slate-400">
-        Tips, trik, dan informasi penting untuk mahasiswa USU dan POLMED.
+        Tips, trik, dan informasi penting untuk warga Medan.
       </p>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

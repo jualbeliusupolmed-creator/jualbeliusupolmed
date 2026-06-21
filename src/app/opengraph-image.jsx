@@ -4,7 +4,7 @@ import { ImageResponse } from "next/og";
 // saat path proyek mengandung spasi (fileURLToPath "Invalid URL").
 export const runtime = "edge";
 export const alt =
-  "Jual Beli USU Polmed — Marketplace Mahasiswa USU & POLMED Medan";
+  "Jual Beli Medan — Marketplace Kota Medan Medan";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -62,7 +62,7 @@ export default function OgImage() {
             textTransform: "uppercase",
           }}
         >
-          Marketplace Kampus · USU & POLMED
+          Marketplace Kota · Medan
         </div>
 
         <div
@@ -76,7 +76,7 @@ export default function OgImage() {
             letterSpacing: -2,
           }}
         >
-          Jual Beli USU Polmed
+          Jual Beli Medan
         </div>
 
         <div
@@ -89,11 +89,11 @@ export default function OgImage() {
             maxWidth: 900,
           }}
         >
-          Laptop, HP, buku kuliah, fashion, makanan, kos, hingga jasa.
+          Laptop, HP, buku, fashion, makanan, kos, hingga jasa.
         </div>
 
         <div style={{ display: "flex", marginTop: 48, gap: 16 }}>
-          {["Aman & dibantu admin", "COD di kampus", "Gratis pasang dicari"].map(
+          {["Aman & dibantu admin", "COD di area yang disepakati", "Gratis pasang dicari"].map(
             (t) => (
               <div
                 key={t}
@@ -125,7 +125,7 @@ export default function OgImage() {
             fontWeight: 600,
           }}
         >
-          jualbeliusupolmed.web.id
+          jualbelimedan.web.id
         </div>
       </div>
     ),

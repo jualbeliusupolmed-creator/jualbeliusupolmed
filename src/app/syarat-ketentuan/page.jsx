@@ -3,7 +3,7 @@ import { MARKETPLACE_WA } from "@/lib/constants";
 
 export const metadata = {
   title: "Syarat & Ketentuan",
-  description: "Syarat dan ketentuan penggunaan platform serta kebijakan transaksi di Jual Beli USU Polmed.",
+  description: "Syarat dan ketentuan penggunaan platform serta kebijakan transaksi di Jual Beli Medan.",
   alternates: { canonical: "/syarat-ketentuan" },
 };
 
@@ -19,14 +19,14 @@ export default function SyaratKetentuanPage() {
 
       <div className="card mt-8 p-6 sm:p-8 space-y-6 text-sm text-gray-600 leading-relaxed">
         <p>
-          Selamat datang di <strong>Jual Beli USU Polmed</strong>. Dengan mengakses, mendaftar, atau menggunakan platform kami, Anda setuju untuk terikat oleh Syarat dan Ketentuan berikut. Mohon baca dengan saksama sebelum menggunakan layanan kami.
+          Selamat datang di <strong>Jual Beli Medan</strong>. Dengan mengakses, mendaftar, atau menggunakan platform kami, Anda setuju untuk terikat oleh Syarat dan Ketentuan berikut. Mohon baca dengan saksama sebelum menggunakan layanan kami.
         </p>
 
         {/* 1. Ketentuan Umum */}
         <div>
           <h2 className="text-base font-bold text-gray-900 mb-2">1. Ketentuan Umum</h2>
           <ul className="list-disc pl-5 space-y-1">
-            <li>Platform ini merupakan wadah perantara jual-beli barang dan jasa khusus untuk kalangan mahasiswa Universitas Sumatera Utara (USU) dan Politeknik Negeri Medan (POLMED).</li>
+            <li>Platform ini merupakan wadah perantara jual-beli barang dan jasa khusus untuk masyarakat umum Universitas Sumatera Utara (USU) dan Politeknik Negeri Medan (POLMED).</li>
             <li>Pengguna wajib berusia minimal 17 tahun atau memiliki kapasitas hukum yang sah untuk melakukan transaksi jual-beli.</li>
           </ul>
         </div>
@@ -71,8 +71,8 @@ export default function SyaratKetentuanPage() {
         <div>
           <h2 className="text-base font-bold text-gray-900 mb-2">5. Batasan Tanggung Jawab</h2>
           <ul className="list-disc pl-5 space-y-1">
-            <li>Platform kami bertindak sebagai perantara iklan dan tidak bertanggung jawab atas kerugian, kerusakan, cacat produk, atau penipuan yang terjadi dalam transaksi COD (*Cash on Delivery*) langsung antara penjual dan pembeli mahasiswa.</li>
-            <li>Kami mengimbau keras agar transaksi serah terima barang dilakukan secara langsung di wilayah kampus USU atau POLMED demi keamanan bersama.</li>
+            <li>Platform kami bertindak sebagai perantara iklan dan tidak bertanggung jawab atas kerugian, kerusakan, cacat produk, atau penipuan yang terjadi dalam transaksi COD (*Cash on Delivery*) langsung antara penjual dan pembeli.</li>
+            <li>Kami mengimbau keras agar transaksi serah terima barang dilakukan secara langsung di area publik demi keamanan bersama.</li>
           </ul>
         </div>
 
@@ -85,7 +85,7 @@ export default function SyaratKetentuanPage() {
           <dl className="grid gap-2 sm:grid-cols-2 text-xs sm:text-sm">
             <div>
               <dt className="font-semibold text-gray-900">Nama Layanan:</dt>
-              <dd>Jual Beli USU Polmed</dd>
+              <dd>Jual Beli Medan</dd>
             </div>
             <div>
               <dt className="font-semibold text-gray-900">Kontak WhatsApp:</dt>
@@ -93,12 +93,12 @@ export default function SyaratKetentuanPage() {
             </div>
             <div>
               <dt className="font-semibold text-gray-900">Email Hubungan Pelanggan:</dt>
-              <dd>admin@jualbeliusupolmed.web.id</dd>
+              <dd>admin@jualbelimedan.web.id</dd>
             </div>
             <div>
               <dt className="font-semibold text-gray-900">Alamat Operasional:</dt>
               <dd>
-                Kantor Pengelola Jual Beli USU Polmed,<br />
+                Kantor Pengelola Jual Beli Medan,<br />
                 Jl. Dr. T. Mansur No. 9, Padang Bulan, Kec. Medan Baru,<br />
                 Kota Medan, Sumatera Utara 20155
               </dd>

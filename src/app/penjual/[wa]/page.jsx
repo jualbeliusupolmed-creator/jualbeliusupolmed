@@ -113,7 +113,7 @@ export async function generateMetadata({ params }) {
   const name = data.seller.seller_name;
   return {
     title: `${name} — Profil Penjual`,
-    description: `Lihat ${data.listings.length} iklan aktif dari ${name} di marketplace mahasiswa USU & POLMED.`,
+    description: `Lihat ${data.listings.length} iklan aktif dari ${name} di Marketplace Kota Medan.`,
   };
 }
 
@@ -178,7 +178,7 @@ export default async function SellerProfilePage({ params }) {
             )}
           </div>
           <p className="mt-0.5 text-sm text-gray-400">
-            Penjual di USU &amp; POLMED Marketplace
+            Penjual di Medan Marketplace
             {memberSince && (
               <span className="ml-2 text-gray-300 dark:text-slate-600">
                 · Bergabung {new Date(memberSince).toLocaleDateString("id-ID", { month: "long", year: "numeric" })}
@@ -209,7 +209,7 @@ export default async function SellerProfilePage({ params }) {
           <div className="flex flex-wrap gap-2 mt-3.5">
             <a
               href={`https://wa.me/${(seller.seller_wa || "").replace(/\D/g, "")}?text=${encodeURIComponent(
-                `Halo Kak ${seller.seller_name}, saya lihat profil Kakak di Jual Beli USU Polmed.`
+                `Halo Kak ${seller.seller_name}, saya lihat profil Kakak di Jual Beli Medan.`
               )}`}
               target="_blank"
               rel="noreferrer"

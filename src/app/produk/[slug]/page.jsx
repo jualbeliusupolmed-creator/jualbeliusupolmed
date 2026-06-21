@@ -97,11 +97,11 @@ export async function generateMetadata({ params }) {
   }
 
   const baseUrl =
-    (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+    (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbelimedan.web.id").trim();
   const title = `${listing.title} — ${rupiah(listing.price)}`;
   const description = listing.description
     ? listing.description.slice(0, 155)
-    : `${listing.title} dijual ${rupiah(listing.price)} oleh ${listing.seller_name} di marketplace mahasiswa USU & POLMED. COD di kampus, transaksi dibantu admin.`;
+    : `${listing.title} dijual ${rupiah(listing.price)} oleh ${listing.seller_name} di Marketplace Kota Medan. COD di area yang disepakati, transaksi dibantu admin.`;
   const imageUrl = listing.image_url || `${baseUrl}/icons/icon-512x512.png`;
   const canonicalSlug = buildSlug(listing.title, listing.id);
   const url = `${baseUrl}/produk/${canonicalSlug}`;
@@ -109,7 +109,7 @@ export async function generateMetadata({ params }) {
   return {
     title,
     description,
-    openGraph: { title, description, url, type: "website", siteName: "Jual Beli USU Polmed", locale: "id_ID", images: [{ url: imageUrl, width: 800, height: 800, alt: listing.title }] },
+    openGraph: { title, description, url, type: "website", siteName: "Jual Beli Medan", locale: "id_ID", images: [{ url: imageUrl, width: 800, height: 800, alt: listing.title }] },
     twitter: { card: "summary_large_image", title, description, images: [imageUrl] },
     alternates: { canonical: url },
   };
@@ -131,7 +131,7 @@ export default async function ProdukPage({ params }) {
   // JSON-LD Product + BreadcrumbList — agar listing bisa muncul sebagai
   // rich result (harga, ketersediaan) di Google.
   const baseUrl =
-    (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+    (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbelimedan.web.id").trim();
   const productUrl = `${baseUrl}/produk/${buildSlug(listing.title, listing.id)}`;
   const productJsonLd = {
     "@context": "https://schema.org",
@@ -219,7 +219,7 @@ export default async function ProdukPage({ params }) {
               {listing.category}
             </span>
             <span className="badge bg-primary/5 text-primary dark:bg-white/10 dark:text-white font-medium flex items-center gap-1">
-              <Icon.MapPin className="h-3 w-3" /> {listing.campus === "Semua" ? "USU / POLMED" : listing.campus}
+              <Icon.MapPin className="h-3 w-3" /> {listing.campus === "Semua" ? "Medan" : listing.campus}
             </span>
             {listing.area && (
               <span className="badge bg-primary/5 text-primary dark:bg-white/10 dark:text-white font-medium flex items-center gap-1">

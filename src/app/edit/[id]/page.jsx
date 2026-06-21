@@ -176,15 +176,15 @@ export default function EditPage() {
               </select>
             </div>
             <div>
-              <label className="label">Target Kampus</label>
+              <label className="label">Target Area</label>
               <select className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.campus} onChange={set("campus")}>
-                <option value="Semua">Semua (USU &amp; POLMED)</option>
+                <option value="Semua">Semua (Medan)</option>
                 <option value="USU">USU</option>
                 <option value="POLMED">POLMED</option>
               </select>
             </div>
             <div>
-              <label className="label">Lokasi COD Kampus</label>
+              <label className="label">Lokasi COD</label>
               <select
                 className="input focus:ring-4 focus:ring-accent/10 focus:border-accent"
                 value={areaOption}

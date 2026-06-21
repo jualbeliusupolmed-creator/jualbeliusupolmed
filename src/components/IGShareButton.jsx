@@ -51,7 +51,7 @@ export default function IGShareButton({ listing }) {
               className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary to-primary-dark text-white"
             >
               <div className="absolute inset-x-0 top-0 p-4 text-center text-sm font-extrabold tracking-wide">
-                JUAL BELI USU · POLMED
+                JUAL BELI Medan
               </div>
               <div className="absolute left-1/2 top-16 h-44 w-44 -translate-x-1/2 overflow-hidden rounded-xl bg-white/10">
                 {listing.image_url ? (
@@ -74,7 +74,7 @@ export default function IGShareButton({ listing }) {
                   {rupiah(listing.price)}
                 </p>
                 <p className="mt-3 inline-block rounded-full bg-white px-4 py-1.5 text-xs font-bold text-primary">
-                  jualbeliusupolmed.web.id
+                  jualbelimedan.web.id
                 </p>
               </div>
             </div>

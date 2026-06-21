@@ -330,8 +330,8 @@ export async function POST(req) {
           `👤 *Nama:* ${wanted.buyer_name}\n` +
           `📱 *No. WhatsApp:* ${wanted.buyer_wa}\n\n` +
           `Silakan langsung hubungi pembeli di atas melalui link berikut:\n` +
-          `👉 https://wa.me/${wanted.buyer_wa}?text=${encodeURIComponent(`Halo ${wanted.buyer_name}, saya melihat postingan Anda di Jual Beli USU Polmed mencari "${wanted.title}". Saya ada barangnya.`)}\n\n` +
-          `Terima kasih telah menggunakan Jual Beli USU Polmed!`;
+          `👉 https://wa.me/${wanted.buyer_wa}?text=${encodeURIComponent(`Halo ${wanted.buyer_name}, saya melihat postingan Anda di Jual Beli Medan mencari "${wanted.title}". Saya ada barangnya.`)}\n\n` +
+          `Terima kasih telah menggunakan Jual Beli Medan!`;
           
         const fonnteRes = await sendWa(requesterWa, msg);
         if (!fonnteRes?.ok) {

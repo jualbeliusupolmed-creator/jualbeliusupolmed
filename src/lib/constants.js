@@ -4,7 +4,7 @@ export const CATEGORIES = [
   { name: "Buku", slug: "buku" },
   { name: "Makanan", slug: "makanan" },
   { name: "Kos", slug: "kos" },
-  { name: "Buku Kuliah", slug: "buku-kuliah" },
+  { name: "buku", slug: "buku-kuliah" },
   { name: "Jasa", slug: "jasa" },
 ];
 
@@ -15,15 +15,14 @@ export const MARKETPLACE_WA =
   process.env.NEXT_PUBLIC_MARKETPLACE_WA || "62895429126232";
 
 export const POPULAR_AREAS = [
-  "Dr. Mansyur",
-  "Pintu 1 USU",
-  "Pintu 2 USU",
-  "Pintu 3 USU",
-  "Perpustakaan USU",
-  "Pendopo USU",
-  "Lapangan FK USU",
-  "Polmed Gedung Z",
-  "Polmed Cafetaria"
+  "Medan Baru",
+  "Medan Selayang",
+  "Medan Kota",
+  "Medan Petisah",
+  "Medan Sunggal",
+  "Medan Helvetia",
+  "Medan Johor",
+  "Medan Tembung"
 ];
 
 export function formatWa(num) {

@@ -6,9 +6,12 @@ import BackToTop from "@/components/BackToTop";
 import { Toaster } from "sonner";
 import Script from "next/script";
 import { getSettings } from "@/lib/settings";
+import { cn } from "@/lib/utils";
+
+
 
 const BASE_URL =
-  (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+  (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbelimedan.web.id").trim();
 
 const jakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -21,9 +24,9 @@ export async function generateMetadata() {
   const settings = await getSettings();
   const site = settings.site || {};
   
-  const baseTitle = site.metaTitle || "Jual Beli USU Polmed — Marketplace Mahasiswa Medan";
-  const baseDesc = site.metaDescription || "Marketplace jual-beli khusus mahasiswa USU & POLMED Medan: laptop bekas, HP, buku kuliah, fashion, makanan, kos, dan jasa. Transaksi aman & COD di kampus, dibantu admin.";
-  const keywordsString = site.metaKeywords || "jual beli USU, marketplace mahasiswa Medan, laptop bekas USU, barang bekas mahasiswa POLMED, kos dekat USU, COD kampus USU, preloved mahasiswa Medan";
+  const baseTitle = site.metaTitle || "Jual Beli Medan — Marketplace Kota Medan";
+  const baseDesc = site.metaDescription || "Marketplace jual-beli khusus warga Medan Medan: laptop bekas, HP, buku, fashion, makanan, kos, dan jasa. Transaksi aman & COD di area yang disepakati, dibantu admin.";
+  const keywordsString = site.metaKeywords || "jual beli USU, Marketplace Kota Medan, laptop bekas USU, barang bekas warga POLMED, kos dekat USU, COD USU, preloved warga Medan";
   const keywords = keywordsString.split(",").map(k => k.trim()).filter(Boolean);
 
   const faviconUrl = site.faviconUrl;
@@ -78,7 +81,7 @@ export const viewport = {
 export default async function RootLayout({ children }) {
   const settings = await getSettings();
   const site = settings.site || {};
-  const baseTitle = site.metaTitle || "Jual Beli USU Polmed — Marketplace Mahasiswa Medan";
+  const baseTitle = site.metaTitle || "Jual Beli Medan — Marketplace Kota Medan";
   const siteName = baseTitle.split("—")[0].trim();
   const logoUrl = site.logoUrl || `${BASE_URL}/icons/icon-512x512.png`;
 
@@ -90,7 +93,7 @@ export default async function RootLayout({ children }) {
         "@id": `${BASE_URL}/#website`,
         url: BASE_URL,
         name: siteName,
-        description: site.metaDescription || "Marketplace jual-beli khusus mahasiswa USU & POLMED Medan.",
+        description: site.metaDescription || "Marketplace jual-beli khusus warga Medan Medan.",
         inLanguage: "id-ID",
         potentialAction: {
           "@type": "SearchAction",
@@ -110,7 +113,7 @@ export default async function RootLayout({ children }) {
   };
 
   return (
-    <html lang="id" className={jakartaSans.variable} suppressHydrationWarning>
+    <html lang="id" className={cn("font-sans", jakartaSans.variable)} suppressHydrationWarning>
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

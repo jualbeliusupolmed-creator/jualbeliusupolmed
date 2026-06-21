@@ -197,9 +197,9 @@ export default function JasaClient() {
               </select>
             </div>
             <div>
-              <label className="label">Target Kampus</label>
+              <label className="label">Target Area</label>
               <select className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.campus} onChange={set("campus")}>
-                <option value="Semua">Semua (USU &amp; POLMED)</option>
+                <option value="Semua">Semua (Medan)</option>
                 <option value="USU">USU</option>
                 <option value="POLMED">POLMED</option>
               </select>

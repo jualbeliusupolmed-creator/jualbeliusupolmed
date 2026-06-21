@@ -1,4 +1,4 @@
-// Data dummy artikel blog untuk Jual Beli USU Polmed
+// Data dummy artikel blog untuk Jual Beli Medan
 export const DUMMY_BLOGS = [
   {
     id: "tips-cari-kos-murah",
@@ -15,8 +15,8 @@ Mencari kos di sekitar USU gampang-gampang susah. Kalau mau cari yang murah dan 
 ## 1. Tentukan Budget
 Pastikan budget Anda sesuai dengan kemampuan. Rata-rata kos di sekitar USU berkisar antara **Rp 500.000 hingga Rp 1.500.000 per bulan**. Ada rupa, ada harga. Kos dengan AC dan kamar mandi dalam tentu lebih mahal.
 
-## 2. Cari Info di Jual Beli USU Polmed
-Jangan membuang waktu berkeliling seharian panas-panasan. Anda bisa langsung mengecek berbagai iklan *Kos-kosan* di platform Jual Beli USU Polmed.
+## 2. Cari Info di Jual Beli Medan
+Jangan membuang waktu berkeliling seharian panas-panasan. Anda bisa langsung mengecek berbagai iklan *Kos-kosan* di platform Jual Beli Medan.
 
 ## 3. Gunakan Papan Dicari
 Atau, gunakan fitur **Papan Dicari** di website ini. Tulis budget dan spesifikasi kamar yang Anda mau, agar pemilik kos yang langsung menghubungi WhatsApp Anda! Sangat mudah, kan?
@@ -32,7 +32,7 @@ Atau, gunakan fitur **Papan Dicari** di website ini. Tulis budget dan spesifikas
     content: `
 # Laptop Bekas Buat Kuliah IT
 
-Untuk mahasiswa **Fasilkom-TI USU** atau **Teknik Komputer POLMED**, spesifikasi laptop yang mumpuni sangat dibutuhkan untuk menjalankan aplikasi seperti Android Studio atau VS Code. Berikut adalah kisaran harga laptop bekas yang cocok untuk coding:
+Untuk warga **Fasilkom-TI USU** atau **Teknik Komputer POLMED**, spesifikasi laptop yang mumpuni sangat dibutuhkan untuk menjalankan aplikasi seperti Android Studio atau VS Code. Berikut adalah kisaran harga laptop bekas yang cocok untuk coding:
 
 - **Lenovo Thinkpad T480 (Core i5 Gen 8, RAM 8GB)**: Rp 3.500.000 - Rp 4.200.000
 - **Asus Vivobook (Ryzen 3/5)**: Rp 4.000.000 - Rp 5.000.000
@@ -41,7 +41,7 @@ Untuk mahasiswa **Fasilkom-TI USU** atau **Teknik Komputer POLMED**, spesifikasi
 ## Tips Beli Bekas (COD)
 Selalu pastikan untuk mengecek kondisi baterai (wear level), keyboard tester, layar dead pixel, dan port USB sebelum melakukan transaksi *Cash on Delivery* (COD).
 
-Cek kategori **Laptop & PC** di beranda kita untuk menemukan penawaran terbaik dari mahasiswa lain yang mungkin baru saja lulus!
+Cek kategori **Laptop & PC** di beranda kita untuk menemukan penawaran terbaik dari pengguna lain yang mungkin baru saja lulus!
     `
   },
   {

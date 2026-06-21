@@ -1,21 +1,21 @@
 import { WA_GROUP_LINK, MARKETPLACE_WA } from "@/lib/constants";
 
 export const metadata = {
-  title: "Cara Bergabung — Gabung Komunitas Jual Beli Mahasiswa USU & POLMED",
-  description: "Panduan lengkap bergabung di komunitas jual-beli mahasiswa USU & POLMED Medan: cara menjual, cara membeli, rincian fee admin yang transparan, dan aturan keamanan transaksi.",
-  keywords: ["cara bergabung jual beli USU", "komunitas whatsapp USU", "marketplace mahasiswa medan", "aturan jual beli POLMED", "fee admin jual beli usu"],
+  title: "Cara Bergabung — Gabung Komunitas Jual Beli warga Medan",
+  description: "Panduan lengkap bergabung di komunitas jual-beli warga Medan Medan: cara menjual, cara membeli, rincian fee admin yang transparan, dan aturan keamanan transaksi.",
+  keywords: ["cara bergabung jual beli USU", "komunitas whatsapp USU", "Marketplace Kota Medan", "aturan jual beli POLMED", "fee admin jual beli usu"],
   alternates: { canonical: "/cara-bergabung" },
   openGraph: {
-    title: "Cara Bergabung — Jual Beli USU Polmed",
+    title: "Cara Bergabung — Jual Beli Medan",
     description: "Gabung grup WhatsApp komunitas, pasang iklan, dan transaksi aman dibantu admin. Fee transparan mulai Rp 2.000.",
     url: "/cara-bergabung",
-    siteName: "Jual Beli USU Polmed",
+    siteName: "Jual Beli Medan",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Cara Bergabung Jual Beli USU Polmed",
+        alt: "Cara Bergabung Jual Beli Medan",
       },
     ],
     locale: "id_ID",
@@ -23,7 +23,7 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Cara Bergabung — Jual Beli USU Polmed",
+    title: "Cara Bergabung — Jual Beli Medan",
     description: "Gabung grup WhatsApp komunitas, pasang iklan, dan transaksi aman dibantu admin. Fee transparan mulai Rp 2.000.",
     images: ["/og-image.png"],
   },
@@ -66,13 +66,13 @@ export default function CaraBergabungPage() {
       <div className="rounded-3xl bg-gradient-to-br from-primary to-primary-dark p-8 text-center text-white">
         <h1 className="text-3xl font-extrabold">Cara Bergabung</h1>
         <p className="mt-2 text-white/80">
-          Komunitas jual-beli khusus mahasiswa USU &amp; POLMED
+          Komunitas jual-beli khusus warga Medan
         </p>
         <a href={WA_GROUP_LINK} target="_blank" rel="noreferrer" className="btn mt-5 bg-white text-primary hover:bg-white/90">
           <span aria-hidden="true">🟢</span> Gabung Grup WhatsApp
         </a>
         <p className="mt-2 text-sm text-white/70">
-          Gratis, langsung diterima — khusus mahasiswa &amp; warga kampus
+          Gratis, langsung diterima — untuk umum &amp; warga kampus
         </p>
       </div>
 

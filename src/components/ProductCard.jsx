@@ -63,7 +63,7 @@ export default function ProductCard({ listing }) {
             </span>
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 font-medium max-w-[140px] truncate flex items-center gap-1">
               <Icon.MapPin className="h-3 w-3 shrink-0" />
-              <span className="truncate">{listing.campus === "Semua" ? "USU/POLMED" : listing.campus}
+              <span className="truncate">{listing.campus === "Semua" ? "Medan" : listing.campus}
               {listing.area ? ` (${listing.area})` : ""}</span>
             </span>
           </div>

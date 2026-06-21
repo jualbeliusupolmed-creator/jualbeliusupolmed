@@ -43,7 +43,7 @@ export async function createDokuTransaction({
     customer: {
       id: customerWa || "000",
       name: (customerName || "Pengguna").slice(0, 50),
-      email: "info@jualbeliusupolmed.web.id", // Optional default
+      email: "info@jualbelimedan.web.id", // Optional default
       phone: customerWa || "",
     },
   };

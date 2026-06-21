@@ -1,5 +1,5 @@
 // Rate limiter sederhana berbasis memory. Cukup sebagai lapisan pertahanan
-// pertama untuk skala marketplace mahasiswa.
+// pertama untuk skala Marketplace.
 //
 // Catatan: di serverless (Vercel) memory TIDAK dibagi antar-instance, jadi ini
 // bukan jaminan ketat — untuk batas keras gunakan Vercel Firewall / Upstash.

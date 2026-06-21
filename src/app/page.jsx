@@ -9,22 +9,22 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata = {
-  title: "Jual Beli USU Polmed — Marketplace Mahasiswa Medan",
-  description: "Temukan laptop bekas, buku kuliah, fashion, dan kos di sekitar USU & POLMED. Marketplace terpercaya khusus mahasiswa dengan transaksi aman dibantu admin.",
-  keywords: ["jual beli USU", "marketplace mahasiswa Medan", "laptop bekas USU", "barang bekas mahasiswa POLMED", "kos dekat USU", "jual beli polmed", "cod kampus"],
+  title: "Jual Beli Medan — Marketplace Kota Medan",
+  description: "Temukan laptop bekas, buku, fashion, dan kos di sekitar Medan. Marketplace terpercaya untuk umum dengan transaksi aman dibantu admin.",
+  keywords: ["jual beli USU", "Marketplace Kota Medan", "laptop bekas USU", "barang bekas warga POLMED", "kos dekat USU", "jual beli polmed", "COD"],
   alternates: { canonical: "/" },
   openGraph: {
-    title: "Jual Beli USU Polmed — Marketplace Mahasiswa Medan",
-    description: "Temukan laptop bekas, buku kuliah, fashion, dan kos di sekitar USU & POLMED. Marketplace terpercaya khusus mahasiswa dengan transaksi aman dibantu admin.",
+    title: "Jual Beli Medan — Marketplace Kota Medan",
+    description: "Temukan laptop bekas, buku, fashion, dan kos di sekitar Medan. Marketplace terpercaya untuk umum dengan transaksi aman dibantu admin.",
     url: "/",
-    siteName: "Jual Beli USU Polmed",
+    siteName: "Jual Beli Medan",
     locale: "id_ID",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Jual Beli USU Polmed — Marketplace Mahasiswa Medan",
-    description: "Temukan laptop bekas, buku kuliah, fashion, dan kos di sekitar USU & POLMED. Marketplace terpercaya khusus mahasiswa dengan transaksi aman dibantu admin.",
+    title: "Jual Beli Medan — Marketplace Kota Medan",
+    description: "Temukan laptop bekas, buku, fashion, dan kos di sekitar Medan. Marketplace terpercaya untuk umum dengan transaksi aman dibantu admin.",
   },
 };
 
@@ -126,7 +126,7 @@ export default async function HomePage() {
       getCategories(),
       getStats(),
     ]);
-  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbelimedan.web.id").trim();
   const itemListJsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",

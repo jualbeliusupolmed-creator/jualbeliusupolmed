@@ -5,14 +5,19 @@ import { buildSlug } from "@/lib/slug";
 
 const FONNTE_URL = "https://api.fonnte.com/send";
 
-async function send(target, message) {
+async function send(target, message, fileUrl = null) {
   const token = process.env.FONNTE_TOKEN;
   if (!token || !target) {
     console.warn("[fonnte] token/target kosong — skip kirim WA");
     return { ok: false, skipped: true };
   }
   try {
-    const body = new URLSearchParams({ target: String(target), message });
+    const params = { target: String(target), message };
+    if (fileUrl) {
+      params.url = fileUrl;
+    }
+    const body = new URLSearchParams(params);
+    
     const res = await fetch(FONNTE_URL, {
       method: "POST",
       headers: { Authorization: token },
@@ -27,7 +32,7 @@ async function send(target, message) {
 }
 
 const baseUrl = () =>
-  (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+  (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbelimedan.web.id").trim();
 
 function rupiah(n) {
   return "Rp " + (Number(n) || 0).toLocaleString("id-ID");

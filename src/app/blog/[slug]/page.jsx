@@ -17,7 +17,7 @@ export async function generateMetadata({ params }) {
   if (!blog) return { title: "Blog Not Found" };
 
   return {
-    title: `${blog.title} - Jual Beli USU Polmed`,
+    title: `${blog.title} - Jual Beli Medan`,
     description: blog.content_markdown?.substring(0, 150) + "...",
     openGraph: {
       title: blog.title,
@@ -68,7 +68,7 @@ export default async function BlogPost({ params }) {
       <div className="rounded-2xl bg-primary/10 p-6 text-center dark:bg-primary/5">
         <h3 className="mb-2 text-xl font-bold dark:text-white">Mau Cari Barang Lain?</h3>
         <p className="mb-4 text-gray-600 dark:text-slate-300">
-          Ribuan mahasiswa USU dan POLMED sudah bergabung. Temukan barang idamanmu sekarang!
+          Ribuan warga Medan sudah bergabung. Temukan barang idamanmu sekarang!
         </p>
         <Link href="/" className="btn-primary inline-flex px-8">
           Mulai Belanja

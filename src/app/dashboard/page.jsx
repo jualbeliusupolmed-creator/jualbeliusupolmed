@@ -563,7 +563,7 @@ function DashboardInner() {
                   <div className="flex-1">
                     <h2 className="text-xl font-extrabold text-indigo-900 dark:text-indigo-300">Program Ajak Teman</h2>
                     <p className="mt-2 text-sm text-gray-600 dark:text-slate-400 leading-relaxed max-w-lg">
-                      Bagikan kode referral Anda ke teman-teman yang belum menggunakan Jual Beli USU Polmed. Setiap teman yang mendaftar menggunakan kode Anda, Anda berdua akan mendapatkan <strong className="text-indigo-600 dark:text-indigo-400">1x Kuota Bump Iklan Gratis!</strong>
+                      Bagikan kode referral Anda ke teman-teman yang belum menggunakan Jual Beli Medan. Setiap teman yang mendaftar menggunakan kode Anda, Anda berdua akan mendapatkan <strong className="text-indigo-600 dark:text-indigo-400">1x Kuota Bump Iklan Gratis!</strong>
                     </p>
                     
                     {sellerProfile?.referral_code ? (
@@ -968,7 +968,7 @@ function DashboardInner() {
               <div className="mt-4 bg-white p-3 rounded-2xl inline-block border border-gray-100 shadow-sm mx-auto">
                 <Image 
                   src="/qris.png" 
-                  alt="QRIS Jual Beli USU Polmed" 
+                  alt="QRIS Jual Beli Medan" 
                   width={400}
                   height={400}
                   className="max-h-[240px] object-contain"

@@ -111,7 +111,7 @@ export default function Navbar({ config }) {
           <Link href="/" className="flex items-center gap-2">
             <Logo className="h-7 w-7" src={config?.site?.logoUrl} />
             <span className="text-[14px] font-extrabold tracking-tight text-gray-900 dark:text-white">
-              jualbeli<span className="text-gray-400 font-medium">.usupolmed</span>
+              jualbeli<span className="text-gray-400 font-medium">.medan</span>
             </span>
           </Link>
 

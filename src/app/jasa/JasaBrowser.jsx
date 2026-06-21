@@ -278,10 +278,10 @@ export default function JasaBrowser({
         return (
           <section key="hero" className="pb-5 pt-0">
             <h1 className="whitespace-nowrap text-xs font-extrabold uppercase tracking-widest text-gray-900 dark:text-white">
-              Marketplace Jasa · USU &amp; POLMED
+              Marketplace Jasa · Medan
             </h1>
             <p className="mt-1 text-[11px] text-gray-400 dark:text-slate-500">
-              Temukan berbagai jasa mahasiswa (Tugas, Desain, IT, dll).
+              Temukan berbagai jasa warga (Tugas, Desain, IT, dll).
             </p>
 
             {/* CTAs — single row, pill style */}

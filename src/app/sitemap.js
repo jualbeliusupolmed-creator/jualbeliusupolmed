@@ -4,7 +4,7 @@ import { buildSlug } from "@/lib/slug";
 export const revalidate = 3600; // Revalidate every hour
 
 export default async function sitemap() {
-  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbelimedan.web.id").trim();
 
   // Static routes
   const staticRoutes = [

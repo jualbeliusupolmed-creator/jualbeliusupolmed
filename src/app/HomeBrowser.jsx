@@ -278,10 +278,10 @@ export default function HomeBrowser({
         return (
           <section key="hero" className="pb-5 pt-0">
             <h1 className="whitespace-nowrap text-xs font-extrabold uppercase tracking-widest text-gray-900 dark:text-white">
-              Marketplace Kampus · USU &amp; POLMED
+              Marketplace Kota · Medan
             </h1>
             <p className="mt-1 text-[11px] text-gray-400 dark:text-slate-500">
-              Jual-beli di kampus USU &amp; POLMED. Aman, dibantu admin.
+              Jual-beli di area yang disepakati Medan. Aman, dibantu admin.
             </p>
 
             {/* CTAs — single row, pill style */}
@@ -590,7 +590,7 @@ export default function HomeBrowser({
                 </div>
                 <h3 className="text-xl font-extrabold text-gray-900 dark:text-white mb-2">Belum ada barang di kategori ini</h3>
                 <p className="max-w-md text-sm text-gray-500 dark:text-slate-400 mb-8 leading-relaxed">
-                  Jadilah yang pertama menawarkan produkmu di sini! Ribuan mahasiswa USU dan POLMED sedang mencari barang incaran mereka.
+                  Jadilah yang pertama menawarkan produkmu di sini! Ribuan warga Medan sedang mencari barang incaran mereka.
                 </p>
                 <Link
                   href="/jual"

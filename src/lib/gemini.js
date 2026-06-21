@@ -74,3 +74,64 @@ export async function verifyReceiptImage(imageBuffer, mimeType, maxRetries = 3) 
     }
   }
 }
+
+/**
+ * Parses raw text from a WhatsApp message into a structured JSON for a listing.
+ * @param {string} text - The raw text message from the user
+ * @returns {Promise<Object>} JSON object containing extracted data { title, price, description, category }
+ */
+export async function parseListingFromText(text, maxRetries = 3) {
+  let attempt = 0;
+  const modelsToTry = [
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
+    "gemini-2.0-flash-lite"
+  ];
+  
+  while (attempt < maxRetries) {
+    try {
+      const modelName = modelsToTry[attempt] || modelsToTry[modelsToTry.length - 1];
+      const model = genAI.getGenerativeModel({ model: modelName });
+
+      const prompt = `
+        Anda adalah asisten marketplace yang cerdas.
+        Tugas Anda adalah membaca pesan chat dari pengguna yang ingin mengiklankan barang dagangan mereka.
+        
+        Pesan pengguna:
+        """
+        ${text}
+        """
+        
+        Ekstrak informasi penting dari pesan di atas menjadi format JSON:
+        - "title": Nama atau judul barang (maks 50 karakter).
+        - "price": Harga barang dalam angka murni (contoh: 50000). Jika nego atau tidak jelas, tebak dari konteks atau isi 0.
+        - "description": Deksripsi lengkap barang. Jika ada informasi kontak, hapus informasi kontaknya.
+        - "category": Pilih salah satu kategori paling cocok dari list berikut: ["Elektronik", "Fashion", "Kendaraan", "Properti", "Buku", "Makanan", "Jasa", "Lainnya"]. Default: "Lainnya".
+        
+        Aturan ketat:
+        - Kembalikan jawaban Anda HANYA dalam format JSON MURNI tanpa markdown, tanpa teks lain.
+        - Contoh output: {"title": "iPhone 12 Mulus", "price": 5000000, "description": "Lecet pemakaian wajar, baterai aman", "category": "Elektronik"}
+      `;
+
+      const result = await model.generateContent(prompt);
+      const responseText = result.response.text();
+      
+      const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+      return JSON.parse(cleanJson);
+      
+    } catch (error) {
+      const modelFailed = modelsToTry[attempt] || modelsToTry[modelsToTry.length - 1];
+      attempt++;
+      console.error(`Gemini AI Text Error (Attempt ${attempt}/${maxRetries} using ${modelFailed}):`, error.message);
+      
+      const isRateLimitOrOverload = error.message.includes("503") || error.message.includes("429");
+      
+      if (isRateLimitOrOverload && attempt < maxRetries) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        continue;
+      }
+      
+      throw new Error("Gagal mengekstrak data iklan menggunakan AI. Silakan coba lagi nanti.");
+    }
+  }
+}

@@ -42,7 +42,7 @@ export async function POST(req) {
     }
 
     // Send via Fonnte
-    const msg = `*Jual Beli USU Polmed* 🔒\n\nKode OTP Anda adalah: *${otp}*\n\nKode ini berlaku selama 5 menit. Jangan bagikan kode ini kepada siapapun!`;
+    const msg = `*Jual Beli Medan* 🔒\n\nKode OTP Anda adalah: *${otp}*\n\nKode ini berlaku selama 5 menit. Jangan bagikan kode ini kepada siapapun!`;
     const fonnteRes = await send(normalizedWa, msg);
 
     if (!fonnteRes || !fonnteRes.ok) {

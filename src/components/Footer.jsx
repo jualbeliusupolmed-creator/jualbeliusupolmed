@@ -10,9 +10,9 @@ export default function Footer({ config }) {
   const site = config?.site || {};
 
   const waGroupLink = contact.waGroupLink || WA_GROUP_LINK;
-  const tagline = site.footerTagline || "Marketplace mahasiswa USU & POLMED. Jual-beli aman, dibantu admin.";
+  const tagline = site.footerTagline || "Marketplace Kota Medan. Jual-beli aman, dibantu admin.";
   
-  const supportEmail = contact.supportEmail || "admin@jualbeliusupolmed.web.id";
+  const supportEmail = contact.supportEmail || "admin@jualbelimedan.web.id";
   const supportPhone = contact.supportPhone || "+62 895-4291-26232";
   const supportAddress = contact.supportAddress || "Jl. Dr. T. Mansur No. 9, Medan 20155";
   const logoUrl = site.logoUrl;
@@ -26,7 +26,7 @@ export default function Footer({ config }) {
             <Link href="/" className="inline-flex items-center gap-2.5">
               <Logo className="h-8 w-8" src={logoUrl} />
               <span className="text-lg font-extrabold tracking-tight text-gray-900 dark:text-white">
-                jualbeli<span className="text-gray-400 font-medium">.usupolmed</span>
+                jualbeli<span className="text-gray-400 font-medium">.medan</span>
               </span>
             </Link>
             <p className="max-w-xs text-sm leading-relaxed text-gray-500 dark:text-slate-400">
@@ -129,7 +129,7 @@ export default function Footer({ config }) {
         {/* Bottom bar */}
         <div className="mt-12 border-t border-gray-100 pt-6 dark:border-slate-900">
           <p className="text-center text-xs text-gray-400 dark:text-slate-500">
-            © {new Date().getFullYear()} Jual Beli USU Polmed. Dibuat khusus untuk mahasiswa Universitas Sumatera Utara &amp; Politeknik Negeri Medan.
+            © {new Date().getFullYear()} Jual Beli Medan. Dibuat khusus untuk warga Kota Medan.
           </p>
         </div>
       </div>
