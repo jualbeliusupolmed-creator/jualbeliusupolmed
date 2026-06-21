@@ -62,7 +62,17 @@ export async function POST(req) {
     // ==========================================
     if (pendingPayment) {
       if (!fileUrl) {
-        await sendWa(normalizedWa, "⚠️ Anda masih memiliki tagihan pembayaran iklan yang belum lunas.\n\nSilakan kirimkan *GAMBAR STRUK* transfer Anda agar sistem AI kami dapat memverifikasinya.");
+        // Cek jika user ketik BATAL
+        if (message && message.toLowerCase().trim() === "batal") {
+          await supa.from("payments").delete().eq("id", pendingPayment.id);
+          await supa.from("listings").delete().eq("id", pendingPayment.listings.id);
+          await sendWa(normalizedWa, "🗑️ Tagihan iklan sebelumnya telah dibatalkan. Anda sekarang bisa mengirim iklan baru.");
+          return NextResponse.json({ ok: true, state: "payment_cancelled" });
+        }
+
+        const qrisUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "https://jualbelimedan.web.id"}/qris.png`;
+        const reminderMsg = `⚠️ Anda masih memiliki tagihan pembayaran iklan yang belum lunas untuk:\n\n*Judul:* ${pendingPayment.listings.title}\n*Nominal:* Rp ${pendingPayment.amount.toLocaleString("id-ID")}\n\nSilakan scan QRIS ini dan kirimkan *GAMBAR STRUK* transfer Anda agar sistem AI kami dapat memverifikasinya.\n\n_(Ketik *BATAL* jika Anda ingin membatalkan iklan tersebut)_`;
+        await sendWa(normalizedWa, reminderMsg, qrisUrl);
         return NextResponse.json({ ok: true, state: "waiting_receipt_no_image" });
       }
 
