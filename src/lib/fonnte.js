@@ -6,22 +6,48 @@ import { buildSlug } from "@/lib/slug";
 const FONNTE_URL = "https://api.fonnte.com/send";
 
 async function send(target, message, fileUrl = null) {
+  const baileysUrl = process.env.BAILEYS_API_URL;
+  const baileysToken = process.env.BAILEYS_API_TOKEN || "jualbeliusu_rahasia";
+
+  // Jika BAILEYS_API_URL diset di Vercel, kita tembak Baileys Railway
+  if (baileysUrl) {
+    const payload = {
+      target: target,
+      message: message,
+      url: fileUrl || undefined
+    };
+    
+    const res = await fetch(baileysUrl, {
+      method: "POST",
+      headers: {
+        "Authorization": baileysToken,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+    
+    const json = await res.json();
+    return { ok: res.ok, data: json };
+  }
+
+  // Fallback ke Fonnte (jika Baileys belum siap)
   const token = process.env.FONNTE_TOKEN;
   if (!token || !target) {
     console.warn("[fonnte] token/target kosong — skip kirim WA");
     return { ok: false, skipped: true };
   }
   try {
-    const params = { target: String(target), message };
+    const fd = new FormData();
+    fd.append("target", target);
+    fd.append("message", message);
     if (fileUrl) {
-      params.url = fileUrl;
+      fd.append("url", fileUrl);
     }
-    const body = new URLSearchParams(params);
-    
+
     const res = await fetch(FONNTE_URL, {
       method: "POST",
       headers: { Authorization: token },
-      body,
+      body: fd,
     });
     const data = await res.json().catch(() => ({}));
     return { ok: res.ok, data };
