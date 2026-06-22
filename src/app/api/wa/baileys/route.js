@@ -114,6 +114,8 @@ export async function POST(req) {
        const msgLower = message.toLowerCase().trim();
        if (msgLower.includes("jual") || msgLower.includes("wts") || msgLower.includes("ready")) {
           await sendWa(normalizedWa, "📸 Sepertinya Anda ingin memasang iklan. Silakan kirimkan *Foto Barang* beserta teks deskripsinya dalam 1 pesan.");
+       } else {
+          await sendWa(normalizedWa, "halo saya admin jual beli\nJika Anda ingin memasang iklan, silakan kirimkan Foto Barang yang ingin dijual beserta Teks Deskripsi & Harga dalam 1 pesan.");
        }
        return NextResponse.json({ ok: true, state: "new_listing_no_image" });
     }

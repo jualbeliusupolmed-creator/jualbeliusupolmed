@@ -11,13 +11,17 @@ async function send(target, message, fileUrl = null) {
 
   // Jika BAILEYS_API_URL diset di Vercel, kita tembak Baileys Railway
   if (baileysUrl) {
+    const trimmedUrl = baileysUrl.trim();
     const payload = {
       target: target,
       message: message,
       url: fileUrl || undefined
     };
     
-    const res = await fetch(baileysUrl, {
+    // Tambahkan "/send" di akhir URL
+    const finalUrl = trimmedUrl.endsWith('/send') ? trimmedUrl : `${trimmedUrl.replace(/\/$/, '')}/send`;
+
+    const res = await fetch(finalUrl, {
       method: "POST",
       headers: {
         "Authorization": baileysToken,
