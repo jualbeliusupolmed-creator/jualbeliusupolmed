@@ -27,6 +27,7 @@ export const POPULAR_AREAS = [
 
 export function formatWa(num) {
   if (!num) return "";
+  if (num.includes("@g.us")) return num;
   let cleaned = num.replace(/\D/g, "");
   if (cleaned.startsWith("62")) {
     cleaned = "0" + cleaned.slice(2);
