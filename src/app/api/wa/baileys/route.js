@@ -14,7 +14,7 @@ export async function POST(req) {
     const message = formData.get("message") || "";
     const file = formData.get("file"); // Ini berupa File/Blob (Buffer dari Baileys)
 
-    if (!sender || sender.includes("-") || sender === "status@broadcast") {
+    if (!sender || sender.includes("-") || sender.includes("@g.us") || sender === "status@broadcast") {
       return NextResponse.json({ ok: true, ignored: true });
     }
 
