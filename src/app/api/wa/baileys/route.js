@@ -10,15 +10,17 @@ export const dynamic = "force-dynamic";
 export async function POST(req) {
   try {
     const formData = await req.formData();
-    const sender = formData.get("sender");
+    // senderJid: full JID dari Railway (misal "6281234567890@s.whatsapp.net" atau "18318723407966@lid")
+    const senderJid = formData.get("sender");
     const message = formData.get("message") || "";
-    const file = formData.get("file"); // Ini berupa File/Blob (Buffer dari Baileys)
+    const file = formData.get("file");
 
-    if (!sender || sender.includes("-") || sender.includes("@g.us") || sender === "status@broadcast") {
+    if (!senderJid || senderJid.includes("-") || senderJid.includes("@g.us") || senderJid === "status@broadcast") {
       return NextResponse.json({ ok: true, ignored: true });
     }
 
-    const normalizedWa = formatWa(sender);
+    // normalizedWa: format lokal (08xxx atau ID asli) untuk query DB
+    const normalizedWa = formatWa(senderJid);
     if (!normalizedWa) {
       return NextResponse.json({ ok: true, ignored: true });
     }
@@ -41,21 +43,20 @@ export async function POST(req) {
     // ==========================================
     if (pendingPayment) {
       if (!file) {
-        // Cek jika user ketik BATAL
         if (message && message.toLowerCase().trim() === "batal") {
           await supa.from("payments").delete().eq("id", pendingPayment.id);
           await supa.from("listings").delete().eq("id", pendingPayment.listings.id);
-          await sendWa(normalizedWa, "🗑️ Tagihan iklan sebelumnya telah dibatalkan. Anda sekarang bisa mengirim iklan baru.");
+          await sendWa(senderJid, "🗑️ Tagihan iklan sebelumnya telah dibatalkan. Anda sekarang bisa mengirim iklan baru.");
           return NextResponse.json({ ok: true, state: "payment_cancelled" });
         }
 
         const qrisUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id"}/qris.png`;
         const reminderMsg = `⚠️ Anda masih memiliki tagihan pembayaran iklan yang belum lunas untuk:\n\n*Judul:* ${pendingPayment.listings.title}\n*Nominal:* Rp ${pendingPayment.amount.toLocaleString("id-ID")}\n\nSilakan scan QRIS ini dan kirimkan *GAMBAR STRUK* transfer Anda agar sistem AI kami dapat memverifikasinya.\n\n_(Ketik *BATAL* jika Anda ingin membatalkan iklan tersebut)_`;
-        await sendWa(normalizedWa, reminderMsg, qrisUrl);
+        await sendWa(senderJid, reminderMsg, qrisUrl);
         return NextResponse.json({ ok: true, state: "waiting_receipt_no_image" });
       }
 
-      await sendWa(normalizedWa, "⏳ Sedang memverifikasi struk Anda menggunakan AI...");
+      await sendWa(senderJid, "⏳ Sedang memverifikasi struk Anda menggunakan AI...");
 
       try {
         const arrayBuffer = await file.arrayBuffer();
@@ -64,18 +65,18 @@ export async function POST(req) {
         const extractedData = await verifyReceiptImage(buffer, mimeType);
 
         if (!extractedData.is_struk_valid) {
-          await sendWa(normalizedWa, "❌ *Gambar Ditolak*\n\nSistem AI mendeteksi bahwa gambar yang Anda kirim *bukan struk transfer yang sah*. Pastikan foto jelas dan terang.");
+          await sendWa(senderJid, "❌ *Gambar Ditolak*\n\nSistem AI mendeteksi bahwa gambar yang Anda kirim *bukan struk transfer yang sah*. Pastikan foto jelas dan terang.");
           return NextResponse.json({ ok: true, state: "invalid_receipt_image" });
         }
 
         if (Number(extractedData.nominal) !== Number(pendingPayment.amount)) {
-          await sendWa(normalizedWa, `❌ *Nominal Tidak Sesuai*\n\nNominal di struk (Rp ${extractedData.nominal?.toLocaleString("id-ID") || 0}) tidak sama dengan tagihan (Rp ${Number(pendingPayment.amount).toLocaleString("id-ID")}).\n\nSistem tidak dapat mengaktifkan iklan Anda.`);
+          await sendWa(senderJid, `❌ *Nominal Tidak Sesuai*\n\nNominal di struk (Rp ${extractedData.nominal?.toLocaleString("id-ID") || 0}) tidak sama dengan tagihan (Rp ${Number(pendingPayment.amount).toLocaleString("id-ID")}).\n\nSistem tidak dapat mengaktifkan iklan Anda.`);
           return NextResponse.json({ ok: true, state: "invalid_amount" });
         }
 
         // --- VERIFIKASI BERHASIL ---
         await supa.from("payments").update({ status: "paid" }).eq("id", pendingPayment.id);
-        
+
         const { data: updatedListing } = await supa
           .from("listings")
           .update({ status: "active", bumped_at: new Date().toISOString() })
@@ -84,7 +85,7 @@ export async function POST(req) {
           .single();
 
         const successMessage = `🎉 *PEMBAYARAN BERHASIL*\n\nStruk sebesar *Rp ${pendingPayment.amount.toLocaleString("id-ID")}* telah divalidasi oleh AI.\n\nIklan untuk *"${pendingPayment.listings.title}"* sudah tayang dan disebarkan ke Grup WhatsApp! 🚀\n\nCek di website: ${process.env.NEXT_PUBLIC_BASE_URL}`;
-        await sendWa(normalizedWa, successMessage);
+        await sendWa(senderJid, successMessage);
 
         if (updatedListing) {
           await postToGroup(updatedListing);
@@ -94,7 +95,7 @@ export async function POST(req) {
 
       } catch (err) {
         console.error("AI Receipt Error via Baileys:", err);
-        await sendWa(normalizedWa, "❌ Terjadi kendala saat membaca struk Anda. " + err.message);
+        await sendWa(senderJid, "❌ Terjadi kendala saat membaca struk Anda. " + err.message);
         return NextResponse.json({ ok: true, error: err.message });
       }
     }
@@ -106,26 +107,26 @@ export async function POST(req) {
     if (!message && !file) return NextResponse.json({ ok: true, ignored: true });
 
     if (file && !message) {
-      await sendWa(normalizedWa, "📝 Tolong sertakan deskripsi barangnya (Nama, Harga, Minus, dll) bersama dengan fotonya dalam 1 pesan agar bisa diproses AI.");
+      await sendWa(senderJid, "📝 Tolong sertakan deskripsi barangnya (Nama, Harga, Minus, dll) bersama dengan fotonya dalam 1 pesan agar bisa diproses AI.");
       return NextResponse.json({ ok: true, state: "new_listing_no_text" });
     }
 
     if (message && !file) {
        const msgLower = message.toLowerCase().trim();
        if (msgLower.includes("jual") || msgLower.includes("wts") || msgLower.includes("ready")) {
-          await sendWa(normalizedWa, "📸 Sepertinya Anda ingin memasang iklan. Silakan kirimkan *Foto Barang* beserta teks deskripsinya dalam 1 pesan.");
+          await sendWa(senderJid, "📸 Sepertinya Anda ingin memasang iklan. Silakan kirimkan *Foto Barang* beserta teks deskripsinya dalam 1 pesan.");
        } else {
-          await sendWa(normalizedWa, "halo saya admin jual beli\nJika Anda ingin memasang iklan, silakan kirimkan Foto Barang yang ingin dijual beserta Teks Deskripsi & Harga dalam 1 pesan.");
+          await sendWa(senderJid, "halo saya admin jual beli\nJika Anda ingin memasang iklan, silakan kirimkan Foto Barang yang ingin dijual beserta Teks Deskripsi & Harga dalam 1 pesan.");
        }
        return NextResponse.json({ ok: true, state: "new_listing_no_image" });
     }
 
     // Ada Teks + Gambar = Iklan Baru!
-    await sendWa(normalizedWa, "⏳ AI kami sedang membaca detail iklan Anda dari Baileys...");
+    await sendWa(senderJid, "⏳ AI kami sedang membaca detail iklan Anda dari Baileys...");
 
     try {
       const extracted = await parseListingFromText(message);
-      
+
       if (!extracted || !extracted.title) {
         throw new Error("AI gagal mengekstrak judul iklan dari pesan Anda. Coba tulis lebih jelas.");
       }
@@ -133,15 +134,15 @@ export async function POST(req) {
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
       const mimeType = file.type || "image/jpeg";
-      
+
       const ext = mimeType.split("/")[1] || "jpg";
       const fileName = `wa-${Date.now()}-${Math.floor(Math.random() * 1000)}.${ext}`;
       const { data: uploadData, error: uploadError } = await supa.storage
         .from("listings")
         .upload(fileName, buffer, { contentType: mimeType });
-        
+
       if (uploadError) throw new Error("Gagal mengunggah gambar ke server.");
-      
+
       const { data: publicUrlData } = supa.storage.from("listings").getPublicUrl(fileName);
       const publicUrl = publicUrlData.publicUrl;
 
@@ -188,13 +189,13 @@ export async function POST(req) {
       const qrisUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id"}/qris.png`;
       const replyMessage = `✅ *Iklan Diterima!*\n\nAI berhasil membaca barang Anda:\n*Judul:* ${newListing.title}\n*Kategori:* ${newListing.category}\n*Harga:* Rp ${newListing.price.toLocaleString("id-ID")}\n\nUntuk menayangkannya, silakan Scan QRIS ini dan transfer *TEPAT SEBESAR*:\n\n👉 *Rp ${totalAmount.toLocaleString("id-ID")}* 👈\n*(Jangan dibulatkan!)*\n\nSetelah berhasil transfer, balas pesan ini dengan *GAMBAR STRUK* Anda.`;
 
-      await sendWa(normalizedWa, replyMessage, qrisUrl);
+      await sendWa(senderJid, replyMessage, qrisUrl);
 
       return NextResponse.json({ ok: true, state: "listing_created_pending_payment" });
 
     } catch (err) {
       console.error("WA New Listing Error Baileys:", err);
-      await sendWa(normalizedWa, "❌ Terjadi kendala saat memproses iklan Anda: " + err.message);
+      await sendWa(senderJid, "❌ Terjadi kendala saat memproses iklan Anda: " + err.message);
       return NextResponse.json({ ok: true, error: err.message });
     }
 

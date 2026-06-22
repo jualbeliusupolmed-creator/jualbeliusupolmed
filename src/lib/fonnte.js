@@ -2,12 +2,13 @@
 // jika token belum di-set / request error, hanya log, tidak melempar.
 
 import { buildSlug } from "@/lib/slug";
+import { formatWaForBaileys } from "@/lib/constants";
 
 const FONNTE_URL = "https://api.fonnte.com/send";
 
 async function send(target, message, fileUrl = null) {
   const baileysUrl = process.env.BAILEYS_API_URL;
-  const baileysToken = process.env.BAILEYS_API_TOKEN || "jualbeliusu_rahasia";
+  const baileysToken = (process.env.BAILEYS_API_TOKEN || "jualbeliusu_rahasia").replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
 
   // Jika BAILEYS_API_URL diset di Vercel, kita tembak Baileys Railway
   if (baileysUrl) {
@@ -17,8 +18,12 @@ async function send(target, message, fileUrl = null) {
     // Tambahkan "/send" di akhir URL
     const finalUrl = cleanUrl.endsWith('/send') ? cleanUrl : `${cleanUrl.replace(/\/$/, '')}/send`;
 
+    // Jika target sudah full JID (ada @), teruskan apa adanya ke Railway.
+    // Railway /send sudah menangani: @s.whatsapp.net, @lid, @g.us.
+    const baileysTarget = target.includes('@') ? target : formatWaForBaileys(target);
+
     const payload = {
-      target: target,
+      target: baileysTarget,
       message: message,
       url: fileUrl || undefined
     };
