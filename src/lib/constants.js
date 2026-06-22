@@ -25,6 +25,7 @@ export const POPULAR_AREAS = [
   "Medan Tembung"
 ];
 
+// Normalisasi nomor ke format lokal (08xxx) untuk disimpan di DB
 export function formatWa(num) {
   if (!num) return "";
   let cleaned = num.replace(/\D/g, "");
@@ -33,5 +34,18 @@ export function formatWa(num) {
   } else if (cleaned.startsWith("8")) {
     cleaned = "0" + cleaned;
   }
+  return cleaned;
+}
+
+// Konversi nomor ke format internasional (628xxx) untuk dikirim ke Baileys API
+export function formatWaForBaileys(num) {
+  if (!num) return "";
+  let cleaned = num.replace(/\D/g, "");
+  if (cleaned.startsWith("0")) {
+    cleaned = "62" + cleaned.slice(1);
+  } else if (cleaned.startsWith("8")) {
+    cleaned = "62" + cleaned;
+  }
+  // Jika sudah 62xxx atau format internasional lain, kembalikan apa adanya
   return cleaned;
 }

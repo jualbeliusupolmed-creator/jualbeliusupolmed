@@ -717,8 +717,13 @@ function DashboardInner() {
                             )}
                           </div>
                           <p className="mt-1 truncate font-semibold">{i.title}</p>
-                          <p className="text-sm text-gray-500">
-                            {rupiah(i.price)} · stok {i.stock}
+                          <p className="text-sm text-gray-500 flex items-center gap-2">
+                            <span>{rupiah(i.price)} · stok {i.stock}</span>
+                            {i.views > 0 && (
+                              <span className="flex items-center gap-0.5 text-xs text-gray-400">
+                                <Icon.Eye className="h-3 w-3" /> {i.views}
+                              </span>
+                            )}
                           </p>
                           {/* Tagihan Sold Fee */}
                           {i.pending_sold_fee_order_id && (

@@ -33,6 +33,7 @@ export const ADMIN_TABS = [
   "blacklist",
   "penjual",
   "blogs",
+  "wabot",
 ];
 
 export const DEFAULT_DATA = {

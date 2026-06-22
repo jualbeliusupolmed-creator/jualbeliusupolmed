@@ -94,7 +94,7 @@ async function getSellerData(wa) {
     }
 
     return {
-      seller: { seller_name: sellerName, seller_wa: decodedWa, bio: profile?.bio || null, topCategory: topCat, trusted_seller: profile?.trusted_seller || false },
+      seller: { seller_name: sellerName, seller_wa: decodedWa, bio: profile?.bio || null, topCategory: topCat, trusted_seller: profile?.trusted_seller || false, subscription_tier: profile?.subscription_tier || null, subscription_expires_at: profile?.subscription_expires_at || null },
       listings: listings || [],
       soldListings: soldListings || [],
       ratings: ratings || [],
@@ -163,8 +163,13 @@ export default async function SellerProfilePage({ params }) {
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-extrabold flex items-center gap-2">
               {seller.seller_name}
+              {seller.subscription_tier === "pro" && new Date(seller.subscription_expires_at) > new Date() && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-xs font-bold text-amber-700 dark:text-amber-400" title="Penjual Pro">
+                  ⭐ PRO
+                </span>
+              )}
               {seller.trusted_seller && (
-                <span className="inline-flex items-center justify-center rounded-full bg-blue-100 p-1 text-blue-500" title="Penjual Terpercaya">
+                <span className="inline-flex items-center justify-center rounded-full bg-blue-100 p-1 text-blue-500 dark:bg-blue-900/40 dark:text-blue-400" title="Penjual Terpercaya">
                   <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>

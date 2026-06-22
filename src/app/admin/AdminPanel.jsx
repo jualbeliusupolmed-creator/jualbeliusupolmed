@@ -9,6 +9,7 @@ import { formatWa } from "@/lib/constants";
 import AdminListingModal from "./AdminListingModal";
 import ConfirmModal from "@/components/ConfirmModal";
 import { getSupabase } from "@/lib/supabase";
+import BaileysDashboard from "./baileys/BaileysDashboard";
 
 const REPORT_LABELS = {
   penipuan: "Penipuan / scam",
@@ -40,7 +41,8 @@ const ICONS = {
   pengaturan: "M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-2.18-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-2.18 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 002.18.33h.08A1.65 1.65 0 009 3.09V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 2.18v.08a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z",
   blacklist: "M18.36 6.64A9 9 0 105.64 18.36 9 9 0 0018.36 6.64zM5.64 5.64l12.72 12.72",
   penjual: "M17 20h5V4H2v16h5m10 0v2m-10-2v2M8 9h8",
-  blogs: "M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10l6 6v10a2 2 0 01-2 2zM14 4v6h6M9 13h6M9 17h6"
+  blogs: "M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10l6 6v10a2 2 0 01-2 2zM14 4v6h6M9 13h6M9 17h6",
+  wabot: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"
 };
 
 function NavIcon({ name }) {
@@ -72,9 +74,11 @@ export default function AdminPanel({
   pageSize = 100,
 }) {
   const router = useRouter();
-  const VALID_TABS = ["overview","listings","transaksi","rating","reports","dicari","kategori","pengaturan","blacklist","penjual","blogs"];
+  const VALID_TABS = ["overview","listings","transaksi","rating","reports","dicari","kategori","pengaturan","blacklist","penjual","blogs","wabot"];
   const tab = VALID_TABS.includes(initialTab) ? initialTab : "overview";
-  function goTab(key) { router.push(`/admin/${key}`); }
+  function goTab(key) {
+    router.push(`/admin/${key}`);
+  }
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState(null);
   const [confirmState, setConfirmState] = useState(null);
@@ -235,6 +239,7 @@ export default function AdminPanel({
     { key: "blacklist", label: "Blacklist" },
     { key: "penjual", label: "Penjual" },
     { key: "blogs", label: "Artikel Blog" },
+    { key: "wabot", label: "WhatsApp Bot" },
   ];
   const activeLabel = NAV.find((n) => n.key === tab)?.label;
 
@@ -736,6 +741,13 @@ export default function AdminPanel({
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {/* WHATSAPP BOT */}
+        {tab === "wabot" && (
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <BaileysDashboard />
           </div>
         )}
 

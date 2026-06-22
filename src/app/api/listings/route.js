@@ -137,6 +137,21 @@ export async function POST(req) {
     const enforcedName = profile?.name || seller_name;
     const isPro = profile?.subscription_tier === "pro" && new Date(profile?.subscription_expires_at) > new Date();
 
+    // Batas iklan aktif+pending untuk non-PRO
+    if (!isPro) {
+      const { count: activeCount } = await supa
+        .from("listings")
+        .select("id", { count: "exact", head: true })
+        .eq("seller_wa", normalizedWa)
+        .in("status", ["active", "pending"]);
+      if ((activeCount || 0) >= 15) {
+        return NextResponse.json(
+          { error: "Anda sudah memiliki 15 iklan aktif. Upgrade ke Paket Pro untuk iklan tak terbatas!" },
+          { status: 403 }
+        );
+      }
+    }
+
     // FIXED: Fetch settings BEFORE insert so expires_at uses configurable listingDays
     const settings = await getSettings();
     const isJasa = type === "jasa";

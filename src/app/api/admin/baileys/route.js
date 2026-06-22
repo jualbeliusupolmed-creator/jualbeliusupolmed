@@ -1,0 +1,49 @@
+import { NextResponse } from "next/server";
+import { isAdmin } from "@/lib/auth";
+
+const BAILEYS_URL = process.env.BAILEYS_API_URL;
+const BAILEYS_TOKEN = (process.env.BAILEYS_API_TOKEN || "jualbeliusu_rahasia").replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
+
+export async function GET(req) {
+  if (!isAdmin()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { searchParams } = new URL(req.url);
+  const endpoint = searchParams.get("endpoint") || "status";
+
+  if (!BAILEYS_URL) return NextResponse.json({ error: "BAILEYS_API_URL belum diset" }, { status: 503 });
+
+  const cleanUrl = BAILEYS_URL.replace(/[\u200B-\u200D\uFEFF]/g, "").trim().replace(/\/$/, "");
+
+  try {
+    const res = await fetch(`${cleanUrl}/${endpoint}`, {
+      headers: { Authorization: BAILEYS_TOKEN },
+      cache: "no-store",
+    });
+    const data = await res.json().catch(() => ({}));
+    return NextResponse.json(data, { status: res.status });
+  } catch (err) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
+
+export async function POST(req) {
+  if (!isAdmin()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { searchParams } = new URL(req.url);
+  const endpoint = searchParams.get("endpoint") || "send";
+  const body = await req.json().catch(() => ({}));
+
+  if (!BAILEYS_URL) return NextResponse.json({ error: "BAILEYS_API_URL belum diset" }, { status: 503 });
+
+  const cleanUrl = BAILEYS_URL.replace(/[\u200B-\u200D\uFEFF]/g, "").trim().replace(/\/$/, "");
+
+  try {
+    const res = await fetch(`${cleanUrl}/${endpoint}`, {
+      method: "POST",
+      headers: { Authorization: BAILEYS_TOKEN, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    return NextResponse.json(data, { status: res.status });
+  } catch (err) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}

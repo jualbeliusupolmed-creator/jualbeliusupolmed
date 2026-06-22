@@ -14,7 +14,7 @@ export async function fetchListingsWithProfiles(queryPromise) {
     const supa = getAdminClient();
     const { data: profiles } = await supa
       .from("seller_profiles")
-      .select("wa, trusted_seller, subscription_tier")
+      .select("wa, trusted_seller, subscription_tier, subscription_expires_at")
       .in("wa", sellerWas);
       
     const profileMap = new Map((profiles || []).map(p => [p.wa, p]));
@@ -35,7 +35,7 @@ export async function fetchSingleListingWithProfile(queryPromise) {
     const supa = getAdminClient();
     const { data: profile } = await supa
       .from("seller_profiles")
-      .select("wa, trusted_seller, subscription_tier")
+      .select("wa, trusted_seller, subscription_tier, subscription_expires_at")
       .eq("wa", data.seller_wa)
       .maybeSingle();
       
