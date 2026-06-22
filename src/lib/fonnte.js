@@ -107,6 +107,34 @@ export async function postWantedToGroup(wanted) {
 
 export { send as sendWa };
 
+// Notifikasi ke pembeli di wanted_listings bahwa ada iklan baru yang cocok
+export async function notifyWantedMatch(buyer_wa, buyer_name, listing) {
+  const url = `${baseUrl()}/produk/${buildSlug(listing.title, listing.id)}`;
+  const msg =
+    `🎉 *Hei ${buyer_name}!*\n\n` +
+    `Ada iklan baru yang mungkin cocok dengan yang kamu cari:\n\n` +
+    `📦 *${listing.title}*\n` +
+    `💰 ${rupiah(listing.price)}\n` +
+    `🏷️ ${listing.category}\n\n` +
+    `👉 Lihat sekarang: ${url}`;
+  return send(buyer_wa, msg).catch(() => ({ ok: false }));
+}
+
+// Notifikasi ke penjual bahwa langganan PRO-nya aktif
+export async function notifySellerProActivated(seller_wa, seller_name, expiresAt) {
+  const expStr = new Date(expiresAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+  const msg =
+    `🌟 *Selamat! Paket Pro Aktif!*\n\n` +
+    `Hei ${seller_name || "Penjual"},\n` +
+    `Langganan *Penjual Pro* kamu sudah aktif hingga *${expStr}*.\n\n` +
+    `Keuntungan Pro:\n` +
+    `✅ Iklan standar GRATIS (0 Rp)\n` +
+    `✅ Pasang iklan tanpa batas\n` +
+    `✅ Badge ⭐ PRO di profil & kartu iklan\n\n` +
+    `Selamat berjualan! 🚀`;
+  return send(seller_wa, msg).catch(() => ({ ok: false }));
+}
+
 // ============================================================================
 // FITUR YANG DINONAKTIFKAN (Untuk Hemat Kuota Fonnte)
 // ============================================================================

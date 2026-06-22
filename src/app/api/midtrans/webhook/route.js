@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { notifyAdminNewListing, postToGroup, postWantedToGroup } from "@/lib/fonnte";
+import { notifyAdminNewListing, postToGroup, postWantedToGroup, notifyWantedMatch, notifySellerProActivated } from "@/lib/fonnte";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +18,27 @@ function verifySignature(body) {
     .digest("hex");
 
   return hash === signatureKey;
+}
+
+// Cari wanted_listings yang cocok dengan listing baru, lalu notif buyer via WA
+async function notifyMatchingWanted(supa, listing) {
+  try {
+    const { data: matches } = await supa
+      .from("wanted_listings")
+      .select("id, buyer_wa, buyer_name, title")
+      .eq("category", listing.category)
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    if (!matches || matches.length === 0) return;
+
+    await Promise.allSettled(
+      matches.map((w) => notifyWantedMatch(w.buyer_wa, w.buyer_name, listing))
+    );
+  } catch (err) {
+    console.error("[wanted-match] error:", err?.message);
+  }
 }
 
 export async function POST(req) {
@@ -61,10 +82,14 @@ export async function POST(req) {
     if (payment && settled) {
       if (payment.type === "subscribe") {
         const until = new Date(Date.now() + 30 * 864e5).toISOString(); // 30 Hari
-        await supa
+        const { data: updatedProfile } = await supa
           .from("seller_profiles")
           .update({ subscription_tier: "pro", subscription_expires_at: until })
-          .eq("wa", payment.meta.wa);
+          .eq("wa", payment.meta.wa)
+          .select("name")
+          .single();
+        // Notif WA ke penjual bahwa PRO sudah aktif
+        notifySellerProActivated(payment.meta.wa, updatedProfile?.name, until).catch(() => {});
       } else if (payment.meta?.unlock_wanted_id) {
         await supa.from("wanted_unlocks").insert({
             wanted_id: payment.meta.unlock_wanted_id,
@@ -97,7 +122,8 @@ export async function POST(req) {
             // notif admin + auto-post grup (aman-gagal)
             await Promise.allSettled([
               notifyAdminNewListing(listing),
-              postToGroup(listing)
+              postToGroup(listing),
+              notifyMatchingWanted(supa, listing),
             ]);
           }
         } else if (payment.type === "featured") {

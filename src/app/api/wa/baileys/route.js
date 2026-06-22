@@ -1,11 +1,30 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { parseListingFromText, verifyReceiptImage } from "@/lib/gemini";
-import { sendWa, postToGroup } from "@/lib/fonnte";
+import { sendWa, postToGroup, notifyWantedMatch } from "@/lib/fonnte";
 import { formatWa } from "@/lib/constants";
 import { getSettings, adFeeFrom } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
+
+async function notifyMatchingWanted(supa, listing) {
+  try {
+    const { data: matches } = await supa
+      .from("wanted_listings")
+      .select("id, buyer_wa, buyer_name, title")
+      .eq("category", listing.category)
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    if (!matches || matches.length === 0) return;
+    await Promise.allSettled(
+      matches.map((w) => notifyWantedMatch(w.buyer_wa, w.buyer_name, listing))
+    );
+  } catch (err) {
+    console.error("[wanted-match-baileys] error:", err?.message);
+  }
+}
 
 export async function POST(req) {
   try {
@@ -89,6 +108,8 @@ export async function POST(req) {
 
         if (updatedListing) {
           await postToGroup(updatedListing);
+          // Notif buyer yang mencari barang dengan kategori sama
+          notifyMatchingWanted(supa, updatedListing).catch(() => {});
         }
 
         return NextResponse.json({ ok: true, state: "receipt_verified" });

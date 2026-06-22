@@ -5,7 +5,7 @@ import Script from "next/script";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams, useRouter } from "next/navigation";
-import { rupiah, soldFee } from "@/lib/fees";
+import { rupiah, soldFee, adFee } from "@/lib/fees";
 import ConfirmModal from "@/components/ConfirmModal";
 import InputModal from "@/components/InputModal";
 import { formatWa } from "@/lib/constants";
@@ -289,6 +289,8 @@ function DashboardInner() {
   const pendingItems = items.filter((i) => i.status === "pending");
   const otherItems = items.filter((i) => i.status === "expired" || i.status === "suspended");
   const totalFee = soldItems.reduce((s, i) => s + (i.sold_fee || 0), 0);
+  const totalViews = items.reduce((s, i) => s + (i.views || 0), 0);
+  const topViewed = [...items].filter((i) => i.status === "active" && (i.views || 0) > 0).sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 3);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
@@ -602,9 +604,33 @@ function DashboardInner() {
               <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <Stat label="Iklan aktif" value={active.length} />
                 <Stat label="Terjual" value={soldItems.length} />
-                <Stat label="Total iklan" value={items.length} />
+                <Stat label="Total dilihat" value={totalViews} />
                 <Stat label="Fee dibayar" value={rupiah(totalFee)} />
               </div>
+
+              {/* Top 3 Iklan Paling Dilihat */}
+              {topViewed.length > 0 && (
+                <div className="card p-4 border border-indigo-100 bg-indigo-50/30 dark:border-indigo-900/30 dark:bg-indigo-900/10 space-y-3">
+                  <h2 className="text-sm font-bold text-indigo-700 dark:text-indigo-400 flex items-center gap-1.5">
+                    <Icon.Eye className="h-4 w-4" /> Iklan Paling Banyak Dilihat
+                  </h2>
+                  <div className="space-y-2">
+                    {topViewed.map((i, idx) => (
+                      <Link key={i.id} href={`/produk/${buildSlug(i.title, i.id)}`} className="flex items-center gap-3 rounded-lg bg-white dark:bg-slate-900 border border-indigo-100 dark:border-slate-800 p-2.5 hover:border-indigo-300 transition-colors">
+                        <span className="text-lg font-black text-indigo-300 dark:text-indigo-700 w-5 shrink-0 text-center">{idx + 1}</span>
+                        {i.image_url && <Image src={i.image_url} alt="" width={36} height={36} className="h-9 w-9 rounded-lg object-cover shrink-0" />}
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold dark:text-white">{i.title}</p>
+                          <p className="text-xs text-gray-400">{rupiah(i.price)}</p>
+                        </div>
+                        <span className="flex items-center gap-1 text-xs font-bold text-indigo-600 dark:text-indigo-400 shrink-0">
+                          <Icon.Eye className="h-3.5 w-3.5" /> {i.views}×
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Iklan Pending / Menunggu Pembayaran */}
               {pendingItems.length > 0 && (
