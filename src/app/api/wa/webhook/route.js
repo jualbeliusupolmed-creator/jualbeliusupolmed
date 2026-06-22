@@ -145,9 +145,10 @@ export async function POST(req) {
          return NextResponse.json({ ok: true, state: "new_listing_no_text" });
        }
 
-       // Cek niat user (heuristik sederhana, jika ada kata jual/wts/ready)
        if (msgLower.includes("jual") || msgLower.includes("wts") || msgLower.includes("ready")) {
           await sendWa(normalizedWa, "📸 Sepertinya Anda ingin memasang iklan. Silakan kirimkan *Foto Barang* beserta teks deskripsinya dalam 1 pesan.");
+       } else {
+          await sendWa(normalizedWa, "Halo! Saya Bot Admin Jual Beli.\n\nJika Anda ingin memasang iklan, silakan kirimkan *Foto Barang* beserta *Teks Deskripsinya* (Nama Barang, Harga, dll) dalam 1 pesan yang sama.");
        }
        return NextResponse.json({ ok: true, state: "new_listing_no_image" });
     }
