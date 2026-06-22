@@ -11,15 +11,19 @@ async function send(target, message, fileUrl = null) {
 
   // Jika BAILEYS_API_URL diset di Vercel, kita tembak Baileys Railway
   if (baileysUrl) {
-    const trimmedUrl = baileysUrl.trim();
+    // Bersihkan karakter aneh seperti BOM (\uFEFF) atau zero-width space
+    const cleanUrl = baileysUrl.replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
+    
+    // Tambahkan "/send" di akhir URL
+    const finalUrl = cleanUrl.endsWith('/send') ? cleanUrl : `${cleanUrl.replace(/\/$/, '')}/send`;
+
     const payload = {
       target: target,
       message: message,
       url: fileUrl || undefined
     };
-    
-    // Tambahkan "/send" di akhir URL
-    const finalUrl = trimmedUrl.endsWith('/send') ? trimmedUrl : `${trimmedUrl.replace(/\/$/, '')}/send`;
+
+    console.log(`[sendWa] Sending to: ${finalUrl} | Target: ${target}`);
 
     const res = await fetch(finalUrl, {
       method: "POST",
@@ -31,6 +35,7 @@ async function send(target, message, fileUrl = null) {
     });
     
     const json = await res.json();
+    console.log(`[sendWa] Response: ${res.status} | Body: ${JSON.stringify(json)}`);
     return { ok: res.ok, data: json };
   }
 
