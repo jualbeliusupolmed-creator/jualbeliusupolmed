@@ -459,9 +459,14 @@ export async function POST(req) {
         const hasTrigger = triggerList.some(kw => msgLower.includes(kw));
 
         if (!hasTrigger && !hasNumber) {
-          const greetingMsg = kwConfig.greeting || "Halo! 👋 Ada yang bisa dibantu?";
-          await sendWa(senderJid, greetingMsg);
-          return NextResponse.json({ ok: true, state: "greeting_only", bot_reply: greetingMsg });
+          // Tidak ada keyword → bot diam, tidak balas sama sekali
+          // Kecuali jika greeting diaktifkan dari settings (greeting_enabled: true)
+          if (kwConfig.greeting_enabled) {
+            const greetingMsg = kwConfig.greeting || "Halo! 👋 Ada yang bisa dibantu?";
+            await sendWa(senderJid, greetingMsg);
+            return NextResponse.json({ ok: true, state: "greeting_only", bot_reply: greetingMsg });
+          }
+          return NextResponse.json({ ok: true, state: "ignored_no_keyword" });
         }
       }
 

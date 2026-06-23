@@ -12,6 +12,7 @@ export default function AIPanel({ settings, action }) {
 
   const [kwConfig, setKwConfig] = useState(settings.bot_keywords || {
     enabled: true,
+    greeting_enabled: false,
     greeting: "Halo! 👋\n\nKetik salah satu perintah berikut:\n• *JUAL* — Pasang iklan\n• *CARI [nama barang]* — Cari barang\n• *PERPANJANG* — Perpanjang iklan\n• *UPGRADE* — Upgrade iklan\n• *ADMIN* — Hubungi admin\n\nAtau langsung kirim *Foto + Deskripsi + Harga* untuk pasang iklan!",
     triggers: "jual,wts,wtb,cari,beli,admin,min,mimin,perpanjang,upgrade,dijual,ready",
     min_price_digits: 4,
@@ -114,8 +115,22 @@ export default function AIPanel({ settings, action }) {
             <p className="mt-1 text-xs text-gray-400">Angka ≥ N digit dianggap sebagai harga dan tetap diproses AI. Default 4 = Rp 1.000 ke atas.</p>
           </div>
 
-          <div className="md:col-span-2">
-            <label className="mb-1 block text-sm font-medium dark:text-gray-300">Pesan Sapaan (dikirim jika tidak ada keyword)</label>
+          <div className="md:col-span-2 flex items-center justify-between p-3 border rounded-xl dark:border-slate-700">
+            <div>
+              <p className="text-sm font-medium dark:text-gray-300">Balas dengan pesan sapaan jika tidak ada keyword</p>
+              <p className="text-xs text-gray-400 mt-0.5">Nonaktif = bot diam total. Aktif = bot kirim menu sapaan di bawah.</p>
+            </div>
+            <label className="flex items-center gap-2 cursor-pointer shrink-0">
+              <div className="relative">
+                <input type="checkbox" className="sr-only peer" checked={!!kwConfig.greeting_enabled} onChange={e => setKwConfig({ ...kwConfig, greeting_enabled: e.target.checked })} />
+                <div className="w-10 h-5 bg-gray-300 rounded-full peer peer-checked:bg-emerald-500 transition-colors" />
+                <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5" />
+              </div>
+            </label>
+          </div>
+
+          <div className={`md:col-span-2 transition-opacity ${kwConfig.greeting_enabled ? "" : "opacity-40 pointer-events-none"}`}>
+            <label className="mb-1 block text-sm font-medium dark:text-gray-300">Pesan Sapaan</label>
             <textarea
               className="input min-h-[130px] font-mono text-sm"
               value={kwConfig.greeting || ""}
