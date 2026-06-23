@@ -78,7 +78,7 @@ export default function AdminPanel({
   pageSize = 100,
 }) {
   const router = useRouter();
-  const VALID_TABS = ["overview","listings","transaksi","rating","reports","dicari","kategori","pengaturan","blacklist","penjual","blogs","wabot","ai"];
+  const VALID_TABS = ["overview","listings","transaksi","rating","reports","dicari","kategori","pengaturan","blacklist","penjual","blogs","wabot","ai","broadcast"];
   const tab = VALID_TABS.includes(initialTab) ? initialTab : "overview";
   function goTab(key) {
     router.push(`/admin/${key}`);

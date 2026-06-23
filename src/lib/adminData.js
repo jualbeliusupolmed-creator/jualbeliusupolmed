@@ -34,6 +34,8 @@ export const ADMIN_TABS = [
   "penjual",
   "blogs",
   "wabot",
+  "ai",
+  "broadcast",
 ];
 
 export const DEFAULT_DATA = {
