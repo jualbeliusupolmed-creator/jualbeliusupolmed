@@ -446,7 +446,25 @@ export async function POST(req) {
 
     if (message && !file) {
       const msgLower = message.toLowerCase().trim();
-      
+
+      // ── Keyword-first mode ──────────────────────────────────────────────────
+      // Hanya proses AI jika pesan mengandung kata kunci marketplace atau angka harga.
+      // Pesan sapaan biasa (tanpa keyword) → balas dengan menu singkat saja.
+      const kwConfig = settings.bot_keywords || {};
+      if (kwConfig.enabled !== false) {
+        const triggerList = (kwConfig.triggers || "jual,wts,wtb,cari,beli,admin,min,perpanjang,upgrade,dijual")
+          .split(",").map(t => t.trim().toLowerCase()).filter(Boolean);
+        const minDigits = Number(kwConfig.min_price_digits) || 4;
+        const hasNumber = new RegExp(`\\d{${minDigits},}`).test(message);
+        const hasTrigger = triggerList.some(kw => msgLower.includes(kw));
+
+        if (!hasTrigger && !hasNumber) {
+          const greetingMsg = kwConfig.greeting || "Halo! 👋 Ada yang bisa dibantu?";
+          await sendWa(senderJid, greetingMsg);
+          return NextResponse.json({ ok: true, state: "greeting_only", bot_reply: greetingMsg });
+        }
+      }
+
       // Jika instruksi standar untuk pasang iklan dari command khusus, tetap layani dengan cepat
       if (msgLower === "jual" || msgLower === "wts" || msgLower === "dijual" || msgLower === "ready") {
          await sendWa(senderJid, "📸 Sepertinya Anda ingin pasang iklan. Kirim *Foto Barang + Teks Deskripsi & Harga* dalam 1 pesan ya.");
@@ -455,7 +473,6 @@ export async function POST(req) {
 
       // --- DYNAMIC AI CHAT & SEARCH & HANDOFF ---
       try {
-        const settings = await getSettings();
         const aiConfig = settings.ai_config || {};
         const aiRes = await processGeneralChat(message, aiConfig, conversationHistory);
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";

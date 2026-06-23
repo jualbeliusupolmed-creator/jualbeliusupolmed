@@ -9,6 +9,15 @@ export default function AIPanel({ settings, action }) {
     personality: "Kamu adalah asisten marketplace yang profesional tapi santai. Gunakan bahasa Indonesia sehari-hari, sopan, sedikit gaul (seperti pakai kata 'Kak' atau 'Agan'). Selalu berikan semangat untuk cepat berjualan."
   });
   const [saved, setSaved] = useState("");
+
+  const [kwConfig, setKwConfig] = useState(settings.bot_keywords || {
+    enabled: true,
+    greeting: "Halo! 👋\n\nKetik salah satu perintah berikut:\n• *JUAL* — Pasang iklan\n• *CARI [nama barang]* — Cari barang\n• *PERPANJANG* — Perpanjang iklan\n• *UPGRADE* — Upgrade iklan\n• *ADMIN* — Hubungi admin\n\nAtau langsung kirim *Foto + Deskripsi + Harga* untuk pasang iklan!",
+    triggers: "jual,wts,wtb,cari,beli,admin,min,mimin,perpanjang,upgrade,dijual,ready",
+    min_price_digits: 4,
+  });
+  const [kwSaved, setKwSaved] = useState("");
+  function flashKw() { setKwSaved("ok"); setTimeout(() => setKwSaved(""), 2000); }
   const [testInput, setTestInput] = useState("");
   const [testOutput, setTestOutput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -62,6 +71,76 @@ export default function AIPanel({ settings, action }) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
+
+      {/* ── Keyword-first Mode ─────────────────────────────────────────────── */}
+      <div className="card p-5 col-span-1 lg:col-span-2">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-lg font-bold dark:text-white">Pengaturan Respon Bot WA</h2>
+            <p className="text-xs text-gray-400 mt-0.5">Atur kapan bot merespons otomatis. Aktifkan <em>Keyword Mode</em> agar bot hanya merespons jika ada kata kunci tertentu — chat biasa cukup mendapat menu sapaan.</p>
+          </div>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <span className="text-sm font-medium dark:text-gray-300">Keyword Mode</span>
+            <div className="relative">
+              <input type="checkbox" className="sr-only peer" checked={kwConfig.enabled !== false} onChange={e => setKwConfig({ ...kwConfig, enabled: e.target.checked })} />
+              <div className="w-10 h-5 bg-gray-300 rounded-full peer peer-checked:bg-emerald-500 transition-colors" />
+              <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5" />
+            </div>
+          </label>
+        </div>
+
+        <div className={`grid gap-4 md:grid-cols-2 transition-opacity ${kwConfig.enabled === false ? "opacity-40 pointer-events-none" : ""}`}>
+          <div>
+            <label className="mb-1 block text-sm font-medium dark:text-gray-300">Kata Kunci Trigger <span className="text-xs text-gray-400">(pisah dengan koma)</span></label>
+            <input
+              type="text"
+              className="input font-mono text-sm"
+              value={kwConfig.triggers || ""}
+              onChange={e => setKwConfig({ ...kwConfig, triggers: e.target.value })}
+              placeholder="jual,cari,beli,admin,min,perpanjang,upgrade"
+            />
+            <p className="mt-1 text-xs text-gray-400">Jika pesan mengandung salah satu kata ini → bot proses normal. Tanpa keyword → kirim sapaan saja.</p>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium dark:text-gray-300">Minimum Digit Angka (Harga)</label>
+            <input
+              type="number"
+              className="input"
+              min={1} max={10}
+              value={kwConfig.min_price_digits || 4}
+              onChange={e => setKwConfig({ ...kwConfig, min_price_digits: Number(e.target.value) })}
+            />
+            <p className="mt-1 text-xs text-gray-400">Angka ≥ N digit dianggap sebagai harga dan tetap diproses AI. Default 4 = Rp 1.000 ke atas.</p>
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="mb-1 block text-sm font-medium dark:text-gray-300">Pesan Sapaan (dikirim jika tidak ada keyword)</label>
+            <textarea
+              className="input min-h-[130px] font-mono text-sm"
+              value={kwConfig.greeting || ""}
+              onChange={e => setKwConfig({ ...kwConfig, greeting: e.target.value })}
+              placeholder="Halo! 👋 Ketik JUAL untuk pasang iklan atau CARI untuk cari barang."
+            />
+            <p className="mt-1 text-xs text-gray-400">Gunakan *teks tebal* dan _miring_ sesuai format WhatsApp.</p>
+          </div>
+        </div>
+
+        <div className="mt-4 flex items-center gap-3">
+          <button
+            onClick={() => { action({ action: "save_settings", key: "bot_keywords", value: kwConfig }, "Pengaturan keyword bot disimpan"); flashKw(); }}
+            className="btn-primary"
+          >
+            {kwSaved === "ok" ? "✓ Tersimpan" : "Simpan Pengaturan"}
+          </button>
+          <p className="text-xs text-gray-400">
+            {kwConfig.enabled !== false
+              ? "✅ Aktif — bot hanya proses AI jika ada keyword atau angka harga"
+              : "⭕ Nonaktif — semua pesan diproses AI (perilaku lama)"}
+          </p>
+        </div>
+      </div>
+
       <div className="card p-5">
         <h2 className="mb-4 text-lg font-bold dark:text-white">Pengaturan Memori & Kepribadian Bot</h2>
         <div className="space-y-4">
