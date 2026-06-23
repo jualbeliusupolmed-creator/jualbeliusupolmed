@@ -186,7 +186,7 @@ export async function processGeneralChat(text, aiConfig = {}, history = [], maxR
 
         Analisis pesan tersebut dan tentukan niat (intent) pengguna.
         Jika pengguna MENCARI barang (contoh: "cari motor", "ada kos kosong?", "jual laptop murah", "WTS/WTB"), intent adalah "search".
-        Jika pengguna INGIN BICARA DENGAN ADMIN/MANUSIA atau KOMPLAIN (contoh: "halo admin", "tolong panggil admin", "min kok iklan saya gak tayang", "ini bot ya", "saya mau lapor"), intent adalah "handoff".
+        Jika pengguna SECARA EKSPLISIT minta bicara dengan MANUSIA/ADMIN atau KOMPLAIN serius (contoh: "tolong panggil admin manusia", "saya mau komplain", "saya mau lapor", "minta tolong admin", "hubungi admin", "ada masalah dengan iklan saya"), intent adalah "handoff". JANGAN handoff hanya karena user menyapa dengan "admin", "min", atau "mimin" — itu hanya sapaan biasa ke bot.
         Jika pengguna HANYA NGOBROL biasa selain di atas (contoh: "halo", "selamat pagi", "cara pasang iklan gimana?"), intent adalah "chat".
 
         Ekstrak ke format JSON:
