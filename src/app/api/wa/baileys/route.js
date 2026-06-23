@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { parseListingFromText, verifyReceiptImage, processGeneralChat } from "@/lib/gemini";
+import { parseListingFromText, verifyReceiptImage, processGeneralChat, suggestPrice } from "@/lib/gemini";
 import { sendWa, postToGroup, notifyWantedMatch, notifyCategorySubscribers, notifyBuyerOfferResult } from "@/lib/fonnte";
 import { formatWa } from "@/lib/constants";
 import { getSettings, adFeeFrom } from "@/lib/settings";
 import { createQrisTransaction } from "@/lib/midtrans";
+import { buildSlug } from "@/lib/slug";
 import sharp from "sharp";
 
 export const dynamic = "force-dynamic";
@@ -60,6 +61,11 @@ export async function POST(req) {
     const senderJid = formData.get("sender");
     const message = formData.get("message") || "";
     const file = formData.get("file");
+    let conversationHistory = [];
+    try {
+      const rawContext = formData.get("context");
+      if (rawContext) conversationHistory = JSON.parse(rawContext);
+    } catch (_) {}
 
     if (!senderJid || senderJid.includes("-") || senderJid.includes("@g.us") || senderJid === "status@broadcast") {
       return NextResponse.json({ ok: true, ignored: true });
@@ -95,20 +101,27 @@ export async function POST(req) {
       if (!file) {
         if (message && message.toLowerCase().trim() === "batal") {
           await supa.from("payments").delete().eq("id", pendingPayment.id);
-          await supa.from("listings").delete().eq("id", pendingPayment.listings.id);
-          await sendWa(senderJid, "🗑️ Tagihan iklan sebelumnya telah dibatalkan. Anda sekarang bisa mengirim iklan baru.");
+          // Hapus listing hanya jika pembayaran untuk iklan baru (bukan renewal/upgrade)
+          if (pendingPayment.type === "iklan") {
+            await supa.from("listings").delete().eq("id", pendingPayment.listings.id);
+          }
+          await sendWa(senderJid, "🗑️ Tagihan sebelumnya telah dibatalkan. Anda sekarang bisa melanjutkan.");
           return NextResponse.json({ ok: true, state: "payment_cancelled" });
         }
 
         // Generate QRIS dinamis dengan nominal yang sudah terisi
         const qrisUrl = await getQrisUrl(supa, pendingPayment.midtrans_order_id, pendingPayment.amount);
+        const typeLabel = pendingPayment.type === "renewal" ? "Perpanjang Iklan"
+          : pendingPayment.type === "featured" ? "Featured Iklan"
+          : pendingPayment.type === "autobump" ? "AutoBump Iklan"
+          : "Biaya Tayang Iklan";
         const reminderMsg =
           `⚠️ *Tagihan Belum Lunas*\n\n` +
-          `Iklan: *${pendingPayment.listings.title}*\n` +
-          `Nominal: *Rp ${pendingPayment.amount.toLocaleString("id-ID")}*\n\n` +
+          `📌 ${typeLabel}: *${pendingPayment.listings.title}*\n` +
+          `💳 Nominal: *Rp ${pendingPayment.amount.toLocaleString("id-ID")}*\n\n` +
           `Scan QRIS di bawah ini — *nominal sudah terisi otomatis* saat di-scan.\n\n` +
           `Setelah transfer, kirim *screenshot struk* ke sini.\n\n` +
-          `_(Ketik *BATAL* untuk batalkan iklan)_`;
+          `_(Ketik *BATAL* untuk batalkan tagihan)_`;
         await sendWa(senderJid, reminderMsg, qrisUrl);
         return NextResponse.json({ ok: true, state: "waiting_receipt_no_image" });
       }
@@ -139,27 +152,69 @@ export async function POST(req) {
         // VERIFIKASI BERHASIL
         await supa.from("payments").update({ status: "paid" }).eq("id", pendingPayment.id);
 
-        const { data: updatedListing } = await supa
-          .from("listings")
-          .update({ status: "active", bumped_at: new Date().toISOString() })
-          .eq("id", pendingPayment.listings.id)
-          .select()
-          .single();
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
 
-        await sendWa(senderJid,
-          `🎉 *PEMBAYARAN BERHASIL!*\n\n` +
-          `Struk *Rp ${pendingPayment.amount.toLocaleString("id-ID")}* sudah divalidasi AI.\n\n` +
-          `Iklan *"${pendingPayment.listings.title}"* sudah tayang dan disebarkan ke Grup WA! 🚀\n\n` +
-          `Cek di: ${process.env.NEXT_PUBLIC_BASE_URL}`
-        );
+        // Handle berbeda tergantung tipe payment
+        if (pendingPayment.type === "renewal") {
+          const renewDays = pendingPayment.meta?.renew_days || 14;
+          const newExpiry = new Date(Date.now() + renewDays * 24 * 60 * 60 * 1000).toISOString();
+          await supa.from("listings")
+            .update({ status: "active", expires_at: newExpiry, bumped_at: new Date().toISOString() })
+            .eq("id", pendingPayment.listings.id);
+          const expDate = new Date(newExpiry).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+          await sendWa(senderJid,
+            `🎉 *Perpanjang Berhasil!*\n\n` +
+            `Iklan *"${pendingPayment.listings.title}"* sudah aktif kembali.\n` +
+            `📅 Aktif hingga: *${expDate}*\n\n` +
+            `Cek di: ${baseUrl}/dashboard`
+          );
+          return NextResponse.json({ ok: true, state: "renewal_verified" });
 
-        if (updatedListing) {
-          await postToGroup(updatedListing).catch(() => {});
-          notifyMatchingWanted(supa, updatedListing).catch(() => {});
-          notifyCategorySubscribers(supa, updatedListing).catch(() => {});
+        } else if (pendingPayment.type === "featured") {
+          const days = pendingPayment.meta?.days || 1;
+          const featuredUntil = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+          await supa.from("listings").update({ featured: true, featured_until: featuredUntil }).eq("id", pendingPayment.listings.id);
+          await sendWa(senderJid,
+            `⭐ *Featured Aktif!*\n\n` +
+            `Iklan *"${pendingPayment.listings.title}"* sekarang tampil sebagai Featured selama *${days} hari*.\n\n` +
+            `Cek di: ${baseUrl}/dashboard`
+          );
+          return NextResponse.json({ ok: true, state: "featured_activated" });
+
+        } else if (pendingPayment.type === "autobump") {
+          const days = pendingPayment.meta?.days || 7;
+          const autoBumpUntil = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+          await supa.from("listings").update({ auto_bump_until: autoBumpUntil }).eq("id", pendingPayment.listings.id);
+          await sendWa(senderJid,
+            `🔄 *AutoBump Aktif!*\n\n` +
+            `Iklan *"${pendingPayment.listings.title}"* akan otomatis disundul setiap hari selama *${days} hari*.\n\n` +
+            `Cek di: ${baseUrl}/dashboard`
+          );
+          return NextResponse.json({ ok: true, state: "autobump_activated" });
+
+        } else {
+          // Default: pembayaran iklan baru
+          const { data: updatedListing } = await supa
+            .from("listings")
+            .update({ status: "active", bumped_at: new Date().toISOString() })
+            .eq("id", pendingPayment.listings.id)
+            .select()
+            .single();
+
+          await sendWa(senderJid,
+            `🎉 *PEMBAYARAN BERHASIL!*\n\n` +
+            `Struk *Rp ${pendingPayment.amount.toLocaleString("id-ID")}* sudah divalidasi AI.\n\n` +
+            `Iklan *"${pendingPayment.listings.title}"* sudah tayang dan disebarkan ke Grup WA! 🚀\n\n` +
+            `Cek di: ${baseUrl}`
+          );
+
+          if (updatedListing) {
+            await postToGroup(updatedListing).catch(() => {});
+            notifyMatchingWanted(supa, updatedListing).catch(() => {});
+            notifyCategorySubscribers(supa, updatedListing).catch(() => {});
+          }
+          return NextResponse.json({ ok: true, state: "receipt_verified" });
         }
-
-        return NextResponse.json({ ok: true, state: "receipt_verified" });
 
       } catch (err) {
         console.error("AI Receipt Error via Baileys:", err);
@@ -215,13 +270,167 @@ export async function POST(req) {
           .from("category_subscriptions")
           .delete()
           .eq("buyer_wa", normalizedWa);
-        
+
         if (!error) {
           await sendWa(senderJid, "✅ Anda telah *berhasil berhenti berlangganan* dari semua notifikasi kategori.\nAnda tidak akan menerima pesan otomatis ini lagi.");
         } else {
           await sendWa(senderJid, "❌ Terjadi kesalahan saat memproses permintaan berhenti langganan Anda.");
         }
         return NextResponse.json({ ok: true, state: "unsubscribed" });
+
+      // ==========================================
+      // PERPANJANG — Perpanjang masa iklan via WA
+      // ==========================================
+      } else if (textMsg === "PERPANJANG") {
+        const { data: myListings } = await supa
+          .from("listings")
+          .select("id, title, status, expires_at")
+          .eq("seller_wa", normalizedWa)
+          .in("status", ["active", "expired"])
+          .order("expires_at", { ascending: true })
+          .limit(5);
+
+        if (!myListings || myListings.length === 0) {
+          await sendWa(senderJid, "📭 Anda tidak memiliki iklan aktif atau expired yang bisa diperpanjang.\n\nKirim foto + deskripsi barang untuk pasang iklan baru!");
+          return NextResponse.json({ ok: true, state: "perpanjang_no_listings" });
+        }
+
+        let listMsg = `📋 *Iklan Anda:*\n\n`;
+        myListings.forEach((l, i) => {
+          const exp = l.expires_at ? new Date(l.expires_at).toLocaleDateString("id-ID") : "—";
+          const statusLabel = l.status === "expired" ? "❌ Expired" : "✅ Aktif";
+          listMsg += `${i + 1}. *${l.title}*\n   ${statusLabel} | Berakhir: ${exp}\n   Kode: \`${l.id.slice(0, 8)}\`\n\n`;
+        });
+        listMsg += `Balas: *PERPANJANG [kode]* untuk perpanjang iklan.\nContoh: PERPANJANG ${myListings[0].id.slice(0, 8)}`;
+        await sendWa(senderJid, listMsg);
+        return NextResponse.json({ ok: true, state: "perpanjang_list_sent" });
+
+      } else if (textMsg.startsWith("PERPANJANG ") && textMsg.split(" ").length === 2) {
+        const shortId = textMsg.split(" ")[1];
+        const { data: listings } = await supa
+          .from("listings")
+          .select("id, title, expires_at, status")
+          .ilike("id", `${shortId.toLowerCase()}%`)
+          .eq("seller_wa", normalizedWa)
+          .in("status", ["active", "expired"]);
+
+        if (!listings || listings.length === 0) {
+          await sendWa(senderJid, `❌ Iklan dengan kode *${shortId}* tidak ditemukan atau bukan milik Anda.\n\nKetik *PERPANJANG* untuk lihat daftar iklan Anda.`);
+          return NextResponse.json({ ok: true, state: "perpanjang_not_found" });
+        }
+
+        const listing = listings[0];
+        const renewalSettings = await getSettings();
+        const renewDays = Number(renewalSettings.pricing?.listingDays) || 14;
+        const renewFee = Number(renewalSettings.pricing?.renewalFee) || 2000;
+        const uniqueCode = Math.floor(Math.random() * 99) + 1;
+        const totalAmount = renewFee + uniqueCode;
+        const orderId = `RENEW-${listing.id.slice(0, 8)}-${Date.now()}`;
+
+        await supa.from("payments").insert({
+          listing_id: listing.id,
+          type: "renewal",
+          amount: totalAmount,
+          status: "pending",
+          midtrans_order_id: orderId,
+          meta: { renew_days: renewDays },
+        });
+
+        const qrisUrl = await getQrisUrl(supa, orderId, totalAmount);
+        const renewMsg =
+          `🔄 *Perpanjang Iklan*\n\n` +
+          `📦 *${listing.title}*\n` +
+          `📅 Perpanjang +${renewDays} hari\n` +
+          `💳 Biaya: *Rp ${totalAmount.toLocaleString("id-ID")}*\n\n` +
+          `Scan QRIS di bawah, nominal sudah terisi otomatis.\n` +
+          `Setelah transfer, kirim *screenshot struk* ke sini.`;
+        await sendWa(senderJid, renewMsg, qrisUrl);
+        return NextResponse.json({ ok: true, state: "perpanjang_payment_created" });
+
+      // ==========================================
+      // UPGRADE — Upgrade iklan (featured/autobump)
+      // ==========================================
+      } else if (textMsg === "UPGRADE") {
+        const upgradeMenu =
+          `⭐ *Menu Upgrade Iklan*\n\n` +
+          `Pilih layanan upgrade:\n\n` +
+          `1️⃣ *FEATURED* (Rp 5.000/hari)\n   Iklan muncul di bagian atas & ditandai ⭐\n\n` +
+          `2️⃣ *AUTOBUMP* (Rp 15.000/7 hari)\n   Iklan otomatis disundul setiap hari\n\n` +
+          `Cara pakai: ketik *UPGRADE FEATURED* atau *UPGRADE AUTOBUMP*\n` +
+          `lalu ikuti instruksi selanjutnya.`;
+        await sendWa(senderJid, upgradeMenu);
+        return NextResponse.json({ ok: true, state: "upgrade_menu_sent" });
+
+      } else if (textMsg.startsWith("UPGRADE FEATURED") || textMsg.startsWith("UPGRADE AUTOBUMP")) {
+        const upgradeType = textMsg.startsWith("UPGRADE FEATURED") ? "featured" : "autobump";
+        const { data: myListings } = await supa
+          .from("listings")
+          .select("id, title")
+          .eq("seller_wa", normalizedWa)
+          .eq("status", "active")
+          .order("bumped_at", { ascending: false })
+          .limit(5);
+
+        if (!myListings || myListings.length === 0) {
+          await sendWa(senderJid, "📭 Anda tidak memiliki iklan aktif yang bisa di-upgrade.");
+          return NextResponse.json({ ok: true, state: "upgrade_no_listings" });
+        }
+
+        let listMsg = `⭐ *Pilih Iklan untuk di-${upgradeType === "featured" ? "Featured" : "AutoBump"}:*\n\n`;
+        myListings.forEach((l, i) => {
+          listMsg += `${i + 1}. *${l.title}*\n   Kode: \`${l.id.slice(0, 8)}\`\n\n`;
+        });
+        const exampleCmd = upgradeType === "featured" ? `UPGRADE FEATURED ${myListings[0].id.slice(0, 8)} 3` : `UPGRADE AUTOBUMP ${myListings[0].id.slice(0, 8)}`;
+        listMsg += upgradeType === "featured"
+          ? `Balas: *UPGRADE FEATURED [kode] [hari]*\nContoh: ${exampleCmd}`
+          : `Balas: *UPGRADE AUTOBUMP [kode]*\nContoh: ${exampleCmd}`;
+        await sendWa(senderJid, listMsg);
+        return NextResponse.json({ ok: true, state: "upgrade_list_sent" });
+
+      } else if (textMsg.match(/^UPGRADE FEATURED ([A-Z0-9]{8}) (\d+)$/i) || textMsg.match(/^UPGRADE AUTOBUMP ([A-Z0-9]{8})$/i)) {
+        const isFeatured = textMsg.startsWith("UPGRADE FEATURED");
+        const parts = textMsg.split(" ");
+        const shortId = parts[2];
+        const days = isFeatured ? Math.min(30, Math.max(1, parseInt(parts[3]) || 1)) : 7;
+
+        const { data: listings } = await supa
+          .from("listings")
+          .select("id, title")
+          .ilike("id", `${shortId.toLowerCase()}%`)
+          .eq("seller_wa", normalizedWa)
+          .eq("status", "active");
+
+        if (!listings || listings.length === 0) {
+          await sendWa(senderJid, `❌ Iklan dengan kode *${shortId}* tidak ditemukan.\n\nKetik *UPGRADE* untuk melihat menu upgrade.`);
+          return NextResponse.json({ ok: true, state: "upgrade_not_found" });
+        }
+
+        const listing = listings[0];
+        const upgradeSettings = await getSettings();
+        const feePerDay = isFeatured
+          ? (Number(upgradeSettings.pricing?.featuredPerDay) || 5000)
+          : (Number(upgradeSettings.pricing?.bump) * 7 || 15000);
+        const baseFee = isFeatured ? feePerDay * days : feePerDay;
+        const uniqueCode = Math.floor(Math.random() * 99) + 1;
+        const totalAmount = baseFee + uniqueCode;
+        const upgradeTypeKey = isFeatured ? "featured" : "autobump";
+        const orderId = `UPGRADE-${upgradeTypeKey.toUpperCase()}-${listing.id.slice(0, 8)}-${Date.now()}`;
+
+        await supa.from("payments").insert({
+          listing_id: listing.id,
+          type: upgradeTypeKey,
+          amount: totalAmount,
+          status: "pending",
+          midtrans_order_id: orderId,
+          meta: { days },
+        });
+
+        const qrisUrl = await getQrisUrl(supa, orderId, totalAmount);
+        const upgradeMsg = isFeatured
+          ? `⭐ *Featured ${days} Hari*\n\n📦 *${listing.title}*\n💳 Biaya: *Rp ${totalAmount.toLocaleString("id-ID")}*\n\nScan QRIS di bawah untuk bayar.\nSetelah transfer, kirim *screenshot struk* ke sini.`
+          : `🔄 *AutoBump 7 Hari*\n\n📦 *${listing.title}*\n💳 Biaya: *Rp ${totalAmount.toLocaleString("id-ID")}*\n\nScan QRIS di bawah untuk bayar.\nSetelah transfer, kirim *screenshot struk* ke sini.`;
+        await sendWa(senderJid, upgradeMsg, qrisUrl);
+        return NextResponse.json({ ok: true, state: "upgrade_payment_created" });
       }
     }
 
@@ -244,57 +453,89 @@ export async function POST(req) {
          return NextResponse.json({ ok: true, state: "new_listing_no_image" });
       }
 
-      // --- NEW LOGIC: DYNAMIC AI CHAT & SEARCH & HANDOFF ---
+      // --- DYNAMIC AI CHAT & SEARCH & HANDOFF ---
       try {
         const settings = await getSettings();
         const aiConfig = settings.ai_config || {};
-        const aiRes = await processGeneralChat(message, aiConfig);
+        const aiRes = await processGeneralChat(message, aiConfig, conversationHistory);
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
 
         if (aiRes.intent === "search" && aiRes.keywords) {
           await sendWa(senderJid, aiRes.reply_message || "🔍 Sedang mencari data...");
-          
-          // Lakukan pencarian ke Supabase
-          const { data: results } = await supa
+
+          // Query dengan title OR description, + filter kategori jika AI berhasil ekstrak
+          let query = supa
             .from("listings")
-            .select("id, title, price, seller_wa, sponsored_until")
+            .select("id, title, price, seller_wa, condition, campus, sponsored_until, bumped_at")
             .eq("status", "active")
-            .ilike("title", `%${aiRes.keywords}%`)
+            .or(`title.ilike.%${aiRes.keywords}%,description.ilike.%${aiRes.keywords}%`);
+
+          if (aiRes.category && aiRes.category !== "Lainnya") {
+            query = query.eq("category", aiRes.category);
+          }
+
+          const { data: results } = await query
             .order("sponsored_until", { ascending: false, nullsFirst: false })
-            .limit(3);
+            .order("bumped_at", { ascending: false, nullsFirst: false })
+            .limit(5);
 
           if (!results || results.length === 0) {
-            await sendWa(senderJid, `❌ Maaf, aku nggak nemuin barang dengan kata kunci "${aiRes.keywords}". Coba kata kunci lain ya!`);
-          } else {
-            let reply = `🔍 *Hasil Pencarian: ${aiRes.keywords}*\n\n`;
-            results.forEach((r, idx) => {
-               reply += `${idx + 1}. *${r.title}*\n`;
-               reply += `💰 Rp ${r.price.toLocaleString("id-ID")}\n`;
-               reply += `📲 wa.me/${r.seller_wa}\n`;
-               reply += `👉 Detail: ${process.env.NEXT_PUBLIC_BASE_URL}/produk/${r.id}\n\n`;
-            });
-            reply += `Itu dia hasil pencarian terbaik dari database kami! 🚀`;
-            await sendWa(senderJid, reply);
+            // Coba fallback pencarian lebih luas tanpa filter kategori
+            const { data: fallbackResults } = await supa
+              .from("listings")
+              .select("id, title, price, seller_wa, condition, campus, sponsored_until, bumped_at")
+              .eq("status", "active")
+              .or(`title.ilike.%${aiRes.keywords}%,description.ilike.%${aiRes.keywords}%`)
+              .order("bumped_at", { ascending: false, nullsFirst: false })
+              .limit(5);
+
+            if (!fallbackResults || fallbackResults.length === 0) {
+              const noResultReply = `❌ Maaf, aku nggak nemuin barang dengan kata kunci *"${aiRes.keywords}"*.\n\nCoba kata kunci lain atau ketik *JUAL* untuk pasang iklan sendiri ya!`;
+              await sendWa(senderJid, noResultReply);
+              return NextResponse.json({ ok: true, state: "search_no_results", bot_reply: noResultReply });
+            }
+
+            // Gunakan fallback results
+            results?.push(...(fallbackResults || []));
           }
+
+          let reply = `🔍 *Hasil Pencarian: ${aiRes.keywords}*\n\n`;
+          (results || []).forEach((r, idx) => {
+            const condLabel = r.condition === "new" ? "✨ Baru" : "Bekas";
+            const campusLabel = r.campus && r.campus !== "Semua" ? ` | ${r.campus}` : "";
+            const slug = buildSlug(r.title, r.id);
+            reply += `${idx + 1}. *${r.title}*\n`;
+            reply += `   💰 Rp ${Number(r.price).toLocaleString("id-ID")} · ${condLabel}${campusLabel}\n`;
+            reply += `   📲 wa.me/${r.seller_wa}\n`;
+            reply += `   👉 ${baseUrl}/produk/${slug}\n\n`;
+          });
+          reply += `Ketik nomor untuk tanya langsung ke penjual, atau cari lagi dengan kata kunci lain! 😊`;
+          await sendWa(senderJid, reply);
+          return NextResponse.json({ ok: true, state: "search_results_sent", bot_reply: reply });
+
         } else if (aiRes.intent === "handoff") {
-           // Tambahkan WA ke paused_users di tabel settings
-           const currentPaused = settings?.bot?.paused_users || [];
-           if (!currentPaused.includes(normalizedWa)) {
-              currentPaused.push(normalizedWa);
-              await supa.from("settings").update({ value: { paused_users: currentPaused } }).eq("key", "bot");
-           }
-           await sendWa(senderJid, aiRes.reply_message || "Pesan diteruskan ke Admin. Bot akan dihentikan sementara.");
+          const currentPaused = settings?.bot?.paused_users || [];
+          if (!currentPaused.includes(normalizedWa)) {
+            currentPaused.push(normalizedWa);
+            await supa.from("settings").update({ value: { paused_users: currentPaused } }).eq("key", "bot");
+          }
+          const handoffReply = aiRes.reply_message || "Baik kak, pesan diteruskan ke Admin. Bot diam dulu ya 🙏";
+          await sendWa(senderJid, handoffReply);
+          return NextResponse.json({ ok: true, state: "handoff", bot_reply: handoffReply });
+
         } else {
-          // Intent = chat
-          await sendWa(senderJid, aiRes.reply_message || "Halo! Ada yang bisa kubantu?");
+          const chatReply = aiRes.reply_message || "Halo! Ada yang bisa kubantu?";
+          await sendWa(senderJid, chatReply);
+          return NextResponse.json({ ok: true, state: "ai_general_chat", bot_reply: chatReply });
         }
       } catch (err) {
-         console.error("AI General Chat Error:", err);
-         await sendWa(senderJid, "Mohon maaf, sistem AI sedang sibuk. Silakan coba lagi nanti.");
+        console.error("AI General Chat Error:", err);
+        await sendWa(senderJid, "Mohon maaf, sistem AI sedang sibuk. Silakan coba lagi nanti.");
       }
       return NextResponse.json({ ok: true, state: "ai_general_chat" });
     }
 
-    // Ada Teks + Gambar = Iklan Baru!
+    // Ada Teks + Media (Gambar/Video/Dokumen) = Iklan Baru!
     await sendWa(senderJid, "⏳ AI kami sedang membaca detail iklan Anda...");
 
     try {
@@ -307,17 +548,31 @@ export async function POST(req) {
 
       const arrayBuffer = await file.arrayBuffer();
       const originalBuffer = Buffer.from(arrayBuffer);
-      
-      // Kompres ke WebP
-      const buffer = await sharp(originalBuffer).webp({ quality: 80 }).toBuffer();
-      const mimeType = "image/webp";
-      
-      const fileName = `wa-${Date.now()}-${Math.floor(Math.random() * 1000)}.webp`;
-      const { data: uploadData, error: uploadError } = await supa.storage
-        .from("listings")
-        .upload(fileName, buffer, { contentType: mimeType });
+      const fileMimeType = file.type || "application/octet-stream";
 
-      if (uploadError) throw new Error("Gagal mengunggah gambar ke server.");
+      let uploadBuffer = originalBuffer;
+      let uploadMimeType = fileMimeType;
+      let fileExt = "bin";
+
+      // Kompres hanya jika gambar, simpan apa adanya jika video/dokumen
+      if (fileMimeType.startsWith("image/")) {
+        uploadBuffer = await sharp(originalBuffer).webp({ quality: 80 }).toBuffer();
+        uploadMimeType = "image/webp";
+        fileExt = "webp";
+      } else if (fileMimeType.startsWith("video/")) {
+        fileExt = "mp4";
+      } else if (fileMimeType.includes("pdf")) {
+        fileExt = "pdf";
+      } else {
+        fileExt = fileMimeType.split("/")[1] || "bin";
+      }
+
+      const fileName = `wa-${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExt}`;
+      const { error: uploadError } = await supa.storage
+        .from("listings")
+        .upload(fileName, uploadBuffer, { contentType: uploadMimeType });
+
+      if (uploadError) throw new Error("Gagal mengunggah media ke server.");
 
       const { data: publicUrlData } = supa.storage.from("listings").getPublicUrl(fileName);
       const publicUrl = publicUrlData.publicUrl;
@@ -339,7 +594,8 @@ export async function POST(req) {
         category: extracted.category || "Lainnya",
         type: "barang",
         condition: extracted.condition === "new" ? "new" : "used",
-        image_url: publicUrl,
+        image_url: fileMimeType.startsWith("image/") ? publicUrl : null,
+        images: fileMimeType.startsWith("image/") ? [publicUrl] : [],
         status: "pending",
         expires_at: expiresAt,
         bumped_at: new Date().toISOString(),
@@ -348,7 +604,6 @@ export async function POST(req) {
       if (listingError) throw new Error("Gagal menyimpan data iklan: " + listingError.message);
 
       const baseFee = adFeeFrom(settings.pricing, "barang", newListing.price);
-      // Unique code agar nominal mudah diverifikasi AI (1-99)
       const uniqueCode = Math.floor(Math.random() * 99) + 1;
       const totalAmount = baseFee + uniqueCode;
       const orderId = `IKLAN-WA-${newListing.id.slice(0, 8)}-${Date.now()}`;
@@ -364,11 +619,30 @@ export async function POST(req) {
       // Generate QRIS dinamis dengan nominal yang sudah terisi otomatis
       const qrisUrl = await getQrisUrl(supa, orderId, totalAmount);
 
-      const conditionLabel = newListing.condition === "new" ? "✨ Baru" : "Bekas";
-      const fallbackReply = `✅ *Iklan Berhasil Dibaca AI!*\n\n📦 *${newListing.title}*\n🏷️ ${newListing.category} · ${conditionLabel}\n💰 Rp ${newListing.price.toLocaleString("id-ID")}\n\n`;
-      const aiReply = extracted.reply_message ? `${extracted.reply_message}\n\n` : fallbackReply;
+      // Ambil saran harga AI dari iklan serupa (non-blocking)
+      let priceSuggestion = "";
+      try {
+        const { data: similar } = await supa
+          .from("listings")
+          .select("price")
+          .eq("status", "active")
+          .eq("category", newListing.category)
+          .neq("id", newListing.id)
+          .limit(5);
+        if (similar && similar.length >= 2) {
+          const prices = similar.map(s => s.price);
+          const suggestion = await suggestPrice(newListing.title, newListing.category, prices);
+          if (suggestion) {
+            priceSuggestion = `\n💡 *Saran harga AI:* Rp ${Number(suggestion.suggested_price).toLocaleString("id-ID")} (${suggestion.note})\n`;
+          }
+        }
+      } catch (_) {}
 
-      const paymentInstructions = 
+      const conditionLabel = newListing.condition === "new" ? "✨ Baru" : "Bekas";
+      const fallbackReply = `✅ *Iklan Berhasil Dibaca AI!*\n\n📦 *${newListing.title}*\n🏷️ ${newListing.category} · ${conditionLabel}\n💰 Rp ${newListing.price.toLocaleString("id-ID")}\n${priceSuggestion}\n`;
+      const aiReply = extracted.reply_message ? `${extracted.reply_message}${priceSuggestion}\n\n` : fallbackReply;
+
+      const paymentInstructions =
         `Untuk tayangkan iklan, scan QRIS di bawah ini.\n` +
         `Nominal *sudah otomatis terisi* saat di-scan:\n\n` +
         `💳 *Rp ${totalAmount.toLocaleString("id-ID")}*\n\n` +

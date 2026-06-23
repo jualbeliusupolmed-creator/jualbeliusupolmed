@@ -13,6 +13,7 @@ import { buildSlug } from "@/lib/slug";
 import { Icon } from "@/components/Icons";
 import { toast } from "sonner";
 import QRISModal from "@/components/QRISModal";
+import PushNotificationButton from "@/components/PushNotificationButton";
 
 function statusBadge(s) {
   const map = {
@@ -47,6 +48,8 @@ function DashboardInner() {
   const [wantedItems, setWantedItems] = useState([]);
   const [offers, setOffers] = useState([]);
   const [activeTab, setActiveTab] = useState("jual");
+  const [analytics, setAnalytics] = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   const [sponsoredModal, setSponsoredModal] = useState(null);
   const [sponsoredConfirm, setSponsoredConfirm] = useState(null);
@@ -126,6 +129,20 @@ function DashboardInner() {
       console.error(e);
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function loadAnalytics(num) {
+    const n = formatWa(num ?? wa);
+    if (!n) return;
+    setAnalyticsLoading(true);
+    try {
+      const res = await fetch(`/api/analytics/seller?wa=${encodeURIComponent(n)}`);
+      const data = await res.json();
+      setAnalytics(data);
+    } catch (_) {
+    } finally {
+      setAnalyticsLoading(false);
     }
   }
 
@@ -505,8 +522,13 @@ function DashboardInner() {
 
       {/* ===== UI ===== */}
 
-      <h1 className="text-2xl font-extrabold">Dashboard Penjual</h1>
-      <p className="mt-1 text-gray-500">Kelola iklan, stok, dan status barangmu.</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-extrabold">Dashboard Penjual</h1>
+          <p className="mt-1 text-gray-500">Kelola iklan, stok, dan status barangmu.</p>
+        </div>
+        {wa && <PushNotificationButton wa={wa} />}
+      </div>
 
       {note && (
         <div className="mt-4 rounded-xl bg-primary/10 px-4 py-3 text-sm text-primary">
@@ -596,6 +618,16 @@ function DashboardInner() {
               }`}
             >
               🌟 Paket Pro
+            </button>
+            <button
+              onClick={() => { setActiveTab("statistik"); if (!analytics) loadAnalytics(); }}
+              className={`pb-2.5 px-4 text-sm font-bold border-b-2 transition-all ${
+                activeTab === "statistik"
+                  ? "border-sky-500 text-sky-600 dark:border-sky-400 dark:text-sky-400"
+                  : "border-transparent text-gray-400 hover:text-gray-900 dark:hover:text-slate-200"
+              }`}
+            >
+              📊 Statistik
             </button>
           </div>
 
@@ -1248,6 +1280,97 @@ function DashboardInner() {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+            </div>
+          ) : activeTab === "statistik" ? (
+            <div className="space-y-6 mt-6">
+              {analyticsLoading ? (
+                <div className="text-center py-12 text-gray-400">Memuat statistik...</div>
+              ) : analytics ? (
+                <>
+                  {/* Summary Cards */}
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {[
+                      { label: "Total Dilihat", value: (analytics.summary.totalViews || 0).toLocaleString("id-ID"), icon: "👁️", color: "sky" },
+                      { label: "Iklan Aktif", value: analytics.summary.totalActive, icon: "📦", color: "green" },
+                      { label: "Terjual", value: analytics.summary.totalSold, icon: "✅", color: "indigo" },
+                      { label: "Total Tawaran", value: analytics.summary.totalOffers, icon: "💰", color: "amber" },
+                    ].map((stat) => (
+                      <div key={stat.label} className="card p-4 text-center">
+                        <div className="text-2xl mb-1">{stat.icon}</div>
+                        <div className="text-2xl font-black dark:text-white">{stat.value}</div>
+                        <div className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{stat.label}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Conversion Rate */}
+                  <div className="card p-5 flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold dark:text-white">Konversi Penjualan</p>
+                      <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+                        {analytics.summary.totalSold} terjual dari {(analytics.summary.totalViews || 0).toLocaleString("id-ID")} total views
+                      </p>
+                    </div>
+                    <div className="text-3xl font-black text-primary dark:text-white">
+                      {analytics.summary.conversionRate}%
+                    </div>
+                  </div>
+
+                  {/* Top Listings */}
+                  {analytics.topListings?.length > 0 && (
+                    <div className="card p-5">
+                      <h3 className="font-bold text-sm mb-4 dark:text-white">📈 Iklan Paling Banyak Dilihat</h3>
+                      <div className="space-y-3">
+                        {analytics.topListings.map((l) => (
+                          <div key={l.id} className="flex items-center gap-3">
+                            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-slate-800">
+                              {l.image_url && <Image src={l.image_url} alt="" width={40} height={40} className="h-full w-full object-cover" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate dark:text-white">{l.title}</p>
+                              <p className="text-xs text-gray-500 dark:text-slate-400">{rupiah(l.price)} · {l.category}</p>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <p className="text-sm font-bold dark:text-white">{(l.views || 0).toLocaleString("id-ID")}x</p>
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${statusBadge(l.status)}`}>{l.status}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Recent Offers */}
+                  {analytics.recentOffers?.length > 0 && (
+                    <div className="card p-5">
+                      <h3 className="font-bold text-sm mb-4 dark:text-white">💰 Tawaran Terbaru</h3>
+                      <div className="space-y-3">
+                        {analytics.recentOffers.map((o) => (
+                          <div key={o.id} className="flex items-center justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium truncate dark:text-white">{o.listings?.title || "—"}</p>
+                              <p className="text-xs text-gray-500 dark:text-slate-400">{new Date(o.created_at).toLocaleDateString("id-ID")}</p>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <p className="text-sm font-bold dark:text-white">{rupiah(o.offer_price)}</p>
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${o.status === "accepted" ? "bg-green-100 text-green-700" : o.status === "rejected" ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"}`}>
+                                {o.status === "accepted" ? "Diterima" : o.status === "rejected" ? "Ditolak" : "Pending"}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <button onClick={() => loadAnalytics()} className="btn-outline w-full text-sm">🔄 Refresh Statistik</button>
+                </>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-gray-400 mb-4">Statistik belum dimuat</p>
+                  <button onClick={() => loadAnalytics()} className="btn-primary">Muat Statistik</button>
                 </div>
               )}
             </div>

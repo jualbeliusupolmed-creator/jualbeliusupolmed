@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { notifySellerExpiring } from "@/lib/fonnte";
+import { sendWa } from "@/lib/fonnte";
+import { formatWaForBaileys } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
@@ -31,10 +32,25 @@ export async function GET(req) {
     .gte("expires_at", now.toISOString())
     .lte("expires_at", in3days);
 
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
   let reminded = 0;
   for (const l of expiring || []) {
-    const res = await notifySellerExpiring(l).catch(() => ({ ok: false }));
-    if (res.ok) reminded++;
+    try {
+      const expDate = new Date(l.expires_at).toLocaleDateString("id-ID", { day: "numeric", month: "long" });
+      const shortId = l.id.slice(0, 8);
+      const msg =
+        `⚠️ *Iklan Mau Habis Masa Aktifnya!*\n\n` +
+        `Hei ${l.seller_name || "Penjual"},\n` +
+        `Iklanmu *"${l.title}"* akan berakhir pada *${expDate}*.\n\n` +
+        `Perpanjang sekarang agar iklan tetap tayang:\n` +
+        `💬 Ketik: *PERPANJANG ${shortId}*\n` +
+        `🌐 Atau via Dashboard: ${baseUrl}/dashboard\n\n` +
+        `_Jangan sampai iklanmu hilang dari pencarian!_`;
+      // Kirim ke Baileys (format 628xxx)
+      const waTarget = formatWaForBaileys(l.seller_wa);
+      const res = await sendWa(waTarget, msg).catch(() => ({ ok: false }));
+      if (res.ok) reminded++;
+    } catch (_) {}
   }
 
   return NextResponse.json({ reminded, checked: expiring?.length || 0 });

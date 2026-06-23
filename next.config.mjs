@@ -42,6 +42,7 @@ const withPWA = withPWAInit({
   disable: process.env.NODE_ENV === "development",
   register: true,
   skipWaiting: true,
+  customWorkerSrc: "worker",
 });
 
 export default withPWA(nextConfig);

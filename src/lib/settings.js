@@ -9,7 +9,8 @@ export const DEFAULT_SETTINGS = {
     bump: 1000,
     featuredPerDay: 5000,
     featuredMaxPerDay: 10000,
-    listingDays: 14, // ADDED: configurable ad duration in days (was hardcoded)
+    listingDays: 14,
+    renewalFee: 2000,
     // tier fee setelah barang terjual; dievaluasi berurutan, `upto` = batas atas (eksklusif)
     soldTiers: [
       { upto: 50000, flat: 0 },
