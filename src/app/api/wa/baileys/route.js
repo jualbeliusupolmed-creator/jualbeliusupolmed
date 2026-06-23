@@ -67,6 +67,35 @@ export async function POST(req) {
       if (rawContext) conversationHistory = JSON.parse(rawContext);
     } catch (_) {}
 
+    // ── Pesan dari grup marketplace → simpan ke group_posts, tidak balas ──
+    const source = formData.get("source");
+    const groupJid = formData.get("group_jid");
+    if (source === "group" && groupJid) {
+      const supa = getAdminClient();
+      const msgText = message?.trim();
+      if (msgText || file) {
+        let imageUrl = null;
+        if (file) {
+          try {
+            const arrayBuffer = await file.arrayBuffer();
+            const buffer = Buffer.from(arrayBuffer);
+            const ext = (file.type || "image/jpeg").includes("png") ? "png" : "jpg";
+            const fileName = `group/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+            await supa.storage.from("listings").upload(fileName, buffer, { contentType: file.type || "image/jpeg", upsert: false });
+            const { data: { publicUrl } } = supa.storage.from("listings").getPublicUrl(fileName);
+            imageUrl = publicUrl;
+          } catch (_) {}
+        }
+        await supa.from("group_posts").upsert({
+          sender_wa: formatWa(senderJid) || senderJid,
+          message: msgText || "",
+          image_url: imageUrl,
+          group_jid: groupJid,
+        }).catch(() => {});
+      }
+      return NextResponse.json({ ok: true, state: "group_post_indexed" });
+    }
+
     if (!senderJid || senderJid.includes("-") || senderJid.includes("@g.us") || senderJid === "status@broadcast") {
       return NextResponse.json({ ok: true, ignored: true });
     }
@@ -528,17 +557,48 @@ export async function POST(req) {
             results?.push(...(fallbackResults || []));
           }
 
+          // Cari juga dari postingan grup WA
+          const { data: groupResults } = await supa
+            .from("group_posts")
+            .select("id, sender_wa, message, image_url, created_at")
+            .ilike("message", `%${aiRes.keywords}%`)
+            .order("created_at", { ascending: false })
+            .limit(3);
+
           let reply = `🔍 *Hasil Pencarian: ${aiRes.keywords}*\n\n`;
-          (results || []).forEach((r, idx) => {
-            const condLabel = r.condition === "new" ? "✨ Baru" : "Bekas";
-            const campusLabel = r.campus && r.campus !== "Semua" ? ` | ${r.campus}` : "";
-            const slug = buildSlug(r.title, r.id);
-            reply += `${idx + 1}. *${r.title}*\n`;
-            reply += `   💰 Rp ${Number(r.price).toLocaleString("id-ID")} · ${condLabel}${campusLabel}\n`;
-            reply += `   📲 wa.me/${r.seller_wa}\n`;
-            reply += `   👉 ${baseUrl}/produk/${slug}\n\n`;
-          });
-          reply += `Ketik nomor untuk tanya langsung ke penjual, atau cari lagi dengan kata kunci lain! 😊`;
+          let count = 0;
+
+          if (results && results.length > 0) {
+            reply += `📌 *Dari Website:*\n`;
+            results.forEach((r) => {
+              count++;
+              const condLabel = r.condition === "new" ? "✨ Baru" : "Bekas";
+              const campusLabel = r.campus && r.campus !== "Semua" ? ` | ${r.campus}` : "";
+              const slug = buildSlug(r.title, r.id);
+              reply += `${count}. *${r.title}*\n`;
+              reply += `   💰 Rp ${Number(r.price).toLocaleString("id-ID")} · ${condLabel}${campusLabel}\n`;
+              reply += `   📲 wa.me/${r.seller_wa}\n`;
+              reply += `   👉 ${baseUrl}/produk/${slug}\n\n`;
+            });
+          }
+
+          if (groupResults && groupResults.length > 0) {
+            reply += `💬 *Dari Grup WA:*\n`;
+            groupResults.forEach((g) => {
+              count++;
+              const preview = (g.message || "").slice(0, 80);
+              reply += `${count}. ${preview}${g.message?.length > 80 ? "..." : ""}\n`;
+              reply += `   📲 wa.me/${g.sender_wa}\n\n`;
+            });
+          }
+
+          if (count === 0) {
+            const noResultReply = `❌ Maaf, aku nggak nemuin barang *"${aiRes.keywords}"* di web maupun grup.\n\nCoba kata kunci lain atau ketik *JUAL* untuk pasang iklan sendiri ya!`;
+            await sendWa(senderJid, noResultReply);
+            return NextResponse.json({ ok: true, state: "search_no_results", bot_reply: noResultReply });
+          }
+
+          reply += `Hubungi penjual langsung via WA di atas ya! 😊`;
           await sendWa(senderJid, reply);
           return NextResponse.json({ ok: true, state: "search_results_sent", bot_reply: reply });
 
