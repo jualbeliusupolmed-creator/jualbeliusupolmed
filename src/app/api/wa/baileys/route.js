@@ -619,8 +619,9 @@ export async function POST(req) {
             .order("bumped_at", { ascending: false, nullsFirst: false })
             .limit(5);
 
-          if (!results || results.length === 0) {
-            // Coba fallback pencarian lebih luas tanpa filter kategori
+          // Fallback tanpa filter kategori jika hasil kosong
+          let finalResults = results || [];
+          if (finalResults.length === 0) {
             const { data: fallbackResults } = await supa
               .from("listings")
               .select("id, title, price, seller_wa, condition, campus, sponsored_until, bumped_at")
@@ -628,15 +629,7 @@ export async function POST(req) {
               .or(`title.ilike.%${aiRes.keywords}%,description.ilike.%${aiRes.keywords}%`)
               .order("bumped_at", { ascending: false, nullsFirst: false })
               .limit(5);
-
-            if (!fallbackResults || fallbackResults.length === 0) {
-              const noResultReply = `❌ Maaf, aku nggak nemuin barang dengan kata kunci *"${aiRes.keywords}"*.\n\nCoba kata kunci lain atau ketik *JUAL* untuk pasang iklan sendiri ya!`;
-              await sendWa(senderJid, noResultReply);
-              return NextResponse.json({ ok: true, state: "search_no_results", bot_reply: noResultReply });
-            }
-
-            // Gunakan fallback results
-            results?.push(...(fallbackResults || []));
+            finalResults = fallbackResults || [];
           }
 
           // Cari juga dari postingan grup WA
@@ -659,9 +652,9 @@ export async function POST(req) {
           let reply = `🔍 *Hasil Pencarian: ${aiRes.keywords}*\n\n`;
           let count = 0;
 
-          if (results && results.length > 0) {
+          if (finalResults.length > 0) {
             reply += `🏪 *Dijual di Website:*\n`;
-            results.forEach((r) => {
+            finalResults.forEach((r) => {
               count++;
               const condLabel = r.condition === "new" ? "✨ Baru" : "Bekas";
               const campusLabel = r.campus && r.campus !== "Semua" ? ` | ${r.campus}` : "";
