@@ -1,11 +1,30 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { parseListingFromText, verifyReceiptImage } from "@/lib/gemini";
-import { sendWa, postToGroup, notifyWantedMatch } from "@/lib/fonnte";
+import { sendWa, postToGroup, notifyWantedMatch, notifyCategorySubscribers } from "@/lib/fonnte";
 import { formatWa } from "@/lib/constants";
 import { getSettings, adFeeFrom } from "@/lib/settings";
+import { createQrisTransaction } from "@/lib/midtrans";
 
 export const dynamic = "force-dynamic";
+
+// Generate QRIS dinamis dan upload ke Supabase Storage → return public URL.
+// Fallback ke QRIS statis jika gagal.
+async function getQrisUrl(supa, orderId, amount) {
+  try {
+    const tx = await createQrisTransaction({ orderId, amount, customerName: "Pembeli", customerWa: "", itemName: "Pembayaran" });
+    const base64 = tx.redirect_url.replace(/^data:image\/\w+;base64,/, "");
+    const buffer = Buffer.from(base64, "base64");
+    const fileName = `qris/qr-${orderId}.png`;
+    const { error } = await supa.storage.from("listings").upload(fileName, buffer, { contentType: "image/png", upsert: true });
+    if (error) throw error;
+    const { data: { publicUrl } } = supa.storage.from("listings").getPublicUrl(fileName);
+    return publicUrl;
+  } catch (e) {
+    console.error("[qris-gen] gagal generate dinamis, fallback statis:", e?.message);
+    return `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id"}/qris.png`;
+  }
+}
 
 async function notifyMatchingWanted(supa, listing) {
   try {
@@ -29,7 +48,6 @@ async function notifyMatchingWanted(supa, listing) {
 export async function POST(req) {
   try {
     const formData = await req.formData();
-    // senderJid: full JID dari Railway (misal "6281234567890@s.whatsapp.net" atau "18318723407966@lid")
     const senderJid = formData.get("sender");
     const message = formData.get("message") || "";
     const file = formData.get("file");
@@ -38,7 +56,6 @@ export async function POST(req) {
       return NextResponse.json({ ok: true, ignored: true });
     }
 
-    // normalizedWa: format lokal (08xxx atau ID asli) untuk query DB
     const normalizedWa = formatWa(senderJid);
     if (!normalizedWa) {
       return NextResponse.json({ ok: true, ignored: true });
@@ -69,8 +86,15 @@ export async function POST(req) {
           return NextResponse.json({ ok: true, state: "payment_cancelled" });
         }
 
-        const qrisUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id"}/qris.png`;
-        const reminderMsg = `⚠️ Anda masih memiliki tagihan pembayaran iklan yang belum lunas untuk:\n\n*Judul:* ${pendingPayment.listings.title}\n*Nominal:* Rp ${pendingPayment.amount.toLocaleString("id-ID")}\n\nSilakan scan QRIS ini dan kirimkan *GAMBAR STRUK* transfer Anda agar sistem AI kami dapat memverifikasinya.\n\n_(Ketik *BATAL* jika Anda ingin membatalkan iklan tersebut)_`;
+        // Generate QRIS dinamis dengan nominal yang sudah terisi
+        const qrisUrl = await getQrisUrl(supa, pendingPayment.midtrans_order_id, pendingPayment.amount);
+        const reminderMsg =
+          `⚠️ *Tagihan Belum Lunas*\n\n` +
+          `Iklan: *${pendingPayment.listings.title}*\n` +
+          `Nominal: *Rp ${pendingPayment.amount.toLocaleString("id-ID")}*\n\n` +
+          `Scan QRIS di bawah ini — *nominal sudah terisi otomatis* saat di-scan.\n\n` +
+          `Setelah transfer, kirim *screenshot struk* ke sini.\n\n` +
+          `_(Ketik *BATAL* untuk batalkan iklan)_`;
         await sendWa(senderJid, reminderMsg, qrisUrl);
         return NextResponse.json({ ok: true, state: "waiting_receipt_no_image" });
       }
@@ -89,11 +113,16 @@ export async function POST(req) {
         }
 
         if (Number(extractedData.nominal) !== Number(pendingPayment.amount)) {
-          await sendWa(senderJid, `❌ *Nominal Tidak Sesuai*\n\nNominal di struk (Rp ${extractedData.nominal?.toLocaleString("id-ID") || 0}) tidak sama dengan tagihan (Rp ${Number(pendingPayment.amount).toLocaleString("id-ID")}).\n\nSistem tidak dapat mengaktifkan iklan Anda.`);
+          await sendWa(senderJid,
+            `❌ *Nominal Tidak Sesuai*\n\n` +
+            `Nominal di struk: *Rp ${(extractedData.nominal || 0).toLocaleString("id-ID")}*\n` +
+            `Tagihan: *Rp ${Number(pendingPayment.amount).toLocaleString("id-ID")}*\n\n` +
+            `Tidak cocok. Mohon transfer ulang dengan nominal yang tepat, lalu kirim struk lagi.`
+          );
           return NextResponse.json({ ok: true, state: "invalid_amount" });
         }
 
-        // --- VERIFIKASI BERHASIL ---
+        // VERIFIKASI BERHASIL
         await supa.from("payments").update({ status: "paid" }).eq("id", pendingPayment.id);
 
         const { data: updatedListing } = await supa
@@ -103,24 +132,27 @@ export async function POST(req) {
           .select()
           .single();
 
-        const successMessage = `🎉 *PEMBAYARAN BERHASIL*\n\nStruk sebesar *Rp ${pendingPayment.amount.toLocaleString("id-ID")}* telah divalidasi oleh AI.\n\nIklan untuk *"${pendingPayment.listings.title}"* sudah tayang dan disebarkan ke Grup WhatsApp! 🚀\n\nCek di website: ${process.env.NEXT_PUBLIC_BASE_URL}`;
-        await sendWa(senderJid, successMessage);
+        await sendWa(senderJid,
+          `🎉 *PEMBAYARAN BERHASIL!*\n\n` +
+          `Struk *Rp ${pendingPayment.amount.toLocaleString("id-ID")}* sudah divalidasi AI.\n\n` +
+          `Iklan *"${pendingPayment.listings.title}"* sudah tayang dan disebarkan ke Grup WA! 🚀\n\n` +
+          `Cek di: ${process.env.NEXT_PUBLIC_BASE_URL}`
+        );
 
         if (updatedListing) {
-          await postToGroup(updatedListing);
-          // Notif buyer yang mencari barang dengan kategori sama
+          await postToGroup(updatedListing).catch(() => {});
           notifyMatchingWanted(supa, updatedListing).catch(() => {});
+          notifyCategorySubscribers(supa, updatedListing).catch(() => {});
         }
 
         return NextResponse.json({ ok: true, state: "receipt_verified" });
 
       } catch (err) {
         console.error("AI Receipt Error via Baileys:", err);
-        await sendWa(senderJid, "❌ Terjadi kendala saat membaca struk Anda. " + err.message);
+        await sendWa(senderJid, "❌ Terjadi kendala saat membaca struk: " + err.message);
         return NextResponse.json({ ok: true, error: err.message });
       }
     }
-
 
     // ==========================================
     // STATE 1: Iklan Baru
@@ -128,28 +160,32 @@ export async function POST(req) {
     if (!message && !file) return NextResponse.json({ ok: true, ignored: true });
 
     if (file && !message) {
-      await sendWa(senderJid, "📝 Tolong sertakan deskripsi barangnya (Nama, Harga, Minus, dll) bersama dengan fotonya dalam 1 pesan agar bisa diproses AI.");
+      await sendWa(senderJid, "📝 Tolong sertakan deskripsi barangnya (Nama, Harga, Kondisi, dll) bersama foto dalam 1 pesan agar AI bisa membacanya.");
       return NextResponse.json({ ok: true, state: "new_listing_no_text" });
     }
 
     if (message && !file) {
-       const msgLower = message.toLowerCase().trim();
-       if (msgLower.includes("jual") || msgLower.includes("wts") || msgLower.includes("ready")) {
-          await sendWa(senderJid, "📸 Sepertinya Anda ingin memasang iklan. Silakan kirimkan *Foto Barang* beserta teks deskripsinya dalam 1 pesan.");
-       } else {
-          await sendWa(senderJid, "halo saya admin jual beli\nJika Anda ingin memasang iklan, silakan kirimkan Foto Barang yang ingin dijual beserta Teks Deskripsi & Harga dalam 1 pesan.");
-       }
-       return NextResponse.json({ ok: true, state: "new_listing_no_image" });
+      const msgLower = message.toLowerCase().trim();
+      if (msgLower.includes("jual") || msgLower.includes("wts") || msgLower.includes("ready") || msgLower.includes("dijual")) {
+        await sendWa(senderJid, "📸 Sepertinya Anda ingin pasang iklan. Kirim *Foto Barang + Teks Deskripsi & Harga* dalam 1 pesan ya.");
+      } else {
+        await sendWa(senderJid,
+          `Halo! Saya bot Jual Beli USU/Polmed 👋\n\n` +
+          `Untuk pasang iklan, kirim *Foto + Deskripsi barang* (harga, kondisi, dll) dalam 1 pesan.\n\n` +
+          `Atau kunjungi: ${process.env.NEXT_PUBLIC_BASE_URL}`
+        );
+      }
+      return NextResponse.json({ ok: true, state: "new_listing_no_image" });
     }
 
     // Ada Teks + Gambar = Iklan Baru!
-    await sendWa(senderJid, "⏳ AI kami sedang membaca detail iklan Anda dari Baileys...");
+    await sendWa(senderJid, "⏳ AI kami sedang membaca detail iklan Anda...");
 
     try {
       const extracted = await parseListingFromText(message);
 
       if (!extracted || !extracted.title) {
-        throw new Error("AI gagal mengekstrak judul iklan dari pesan Anda. Coba tulis lebih jelas.");
+        throw new Error("AI gagal mengekstrak judul iklan. Coba tulis lebih jelas: nama barang, harga, dan kondisinya.");
       }
 
       const arrayBuffer = await file.arrayBuffer();
@@ -170,9 +206,7 @@ export async function POST(req) {
       let profileName = "Pengguna WA";
       const { data: profile } = await supa.from("seller_profiles").select("name").eq("wa", normalizedWa).maybeSingle();
       if (profile) profileName = profile.name;
-      else {
-        await supa.from("seller_profiles").insert({ wa: normalizedWa, name: profileName });
-      }
+      else await supa.from("seller_profiles").insert({ wa: normalizedWa, name: profileName });
 
       const settings = await getSettings();
       const listingDays = Number(settings.pricing?.listingDays) || 14;
@@ -186,15 +220,17 @@ export async function POST(req) {
         description: extracted.description || message,
         category: extracted.category || "Lainnya",
         type: "barang",
+        condition: extracted.condition === "new" ? "new" : "used",
         image_url: publicUrl,
         status: "pending",
         expires_at: expiresAt,
         bumped_at: new Date().toISOString(),
       }).select().single();
 
-      if (listingError) throw new Error("Gagal menyimpan data iklan. " + listingError.message);
+      if (listingError) throw new Error("Gagal menyimpan data iklan: " + listingError.message);
 
       const baseFee = adFeeFrom(settings.pricing, "barang", newListing.price);
+      // Unique code agar nominal mudah diverifikasi AI (1-99)
       const uniqueCode = Math.floor(Math.random() * 99) + 1;
       const totalAmount = baseFee + uniqueCode;
       const orderId = `IKLAN-WA-${newListing.id.slice(0, 8)}-${Date.now()}`;
@@ -207,10 +243,21 @@ export async function POST(req) {
         midtrans_order_id: orderId,
       });
 
-      const qrisUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id"}/qris.png`;
-      const replyMessage = `✅ *Iklan Diterima!*\n\nAI berhasil membaca barang Anda:\n*Judul:* ${newListing.title}\n*Kategori:* ${newListing.category}\n*Harga:* Rp ${newListing.price.toLocaleString("id-ID")}\n\nUntuk menayangkannya, silakan Scan QRIS ini dan transfer *TEPAT SEBESAR*:\n\n👉 *Rp ${totalAmount.toLocaleString("id-ID")}* 👈\n*(Jangan dibulatkan!)*\n\nSetelah berhasil transfer, balas pesan ini dengan *GAMBAR STRUK* Anda.`;
+      // Generate QRIS dinamis dengan nominal yang sudah terisi otomatis
+      const qrisUrl = await getQrisUrl(supa, orderId, totalAmount);
 
-      await sendWa(senderJid, replyMessage, qrisUrl);
+      const conditionLabel = newListing.condition === "new" ? "✨ Baru" : "Bekas";
+      await sendWa(senderJid,
+        `✅ *Iklan Berhasil Dibaca AI!*\n\n` +
+        `📦 *${newListing.title}*\n` +
+        `🏷️ ${newListing.category} · ${conditionLabel}\n` +
+        `💰 Rp ${newListing.price.toLocaleString("id-ID")}\n\n` +
+        `Untuk tayangkan iklan, scan QRIS di bawah ini.\n` +
+        `Nominal *sudah otomatis terisi* saat di-scan:\n\n` +
+        `💳 *Rp ${totalAmount.toLocaleString("id-ID")}*\n\n` +
+        `Setelah transfer, kirim *screenshot struk* ke sini.`,
+        qrisUrl
+      );
 
       return NextResponse.json({ ok: true, state: "listing_created_pending_payment" });
 
