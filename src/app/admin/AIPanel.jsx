@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function AIPanel({ settings, action }) {
   const [aiConfig, setAiConfig] = useState(settings.ai_config || {
@@ -13,7 +13,31 @@ export default function AIPanel({ settings, action }) {
   const [testOutput, setTestOutput] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Audit Logs states
+  const [logs, setLogs] = useState([]);
+  const [loadingLogs, setLoadingLogs] = useState(false);
+  const [logError, setLogError] = useState("");
+
   function flash() { setSaved("ok"); setTimeout(() => setSaved(""), 2000); }
+
+  async function fetchLogs() {
+    setLoadingLogs(true);
+    setLogError("");
+    try {
+      const res = await fetch("/api/admin/bot-logs");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal mengambil log");
+      setLogs(data.logs || []);
+    } catch (err) {
+      setLogError(err.message);
+    } finally {
+      setLoadingLogs(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchLogs();
+  }, []);
 
   async function handleTest() {
     if (!testInput.trim()) return;
@@ -89,6 +113,62 @@ export default function AIPanel({ settings, action }) {
             </pre>
           </div>
         )}
+      </div>
+      <div className="col-span-1 lg:col-span-2 card p-5 mt-4">
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h2 className="text-lg font-bold dark:text-white">Audit Log & Analisis Percakapan</h2>
+            <p className="text-xs text-gray-400">Menampilkan hingga 100 pesan WhatsApp terakhir yang ditangani oleh sistem (Real-time dari RAM Bot).</p>
+          </div>
+          <button onClick={fetchLogs} disabled={loadingLogs} className="btn-outline text-xs">
+            {loadingLogs ? "Memuat..." : "Refresh Log"}
+          </button>
+        </div>
+        
+        {logError && <div className="mb-4 text-xs text-rose-500">{logError}</div>}
+        
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-gray-50 text-gray-500 dark:bg-slate-800/50 dark:text-slate-400">
+              <tr>
+                <th className="p-3 font-medium">Waktu</th>
+                <th className="p-3 font-medium">Pengirim (No. WA)</th>
+                <th className="p-3 font-medium">Tipe</th>
+                <th className="p-3 font-medium">Isi Pesan</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
+              {logs.length === 0 ? (
+                <tr>
+                  <td colSpan="4" className="p-4 text-center text-gray-400">Belum ada log percakapan / Bot baru direstart</td>
+                </tr>
+              ) : (
+                logs.map((log, i) => (
+                  <tr key={i} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/20">
+                    <td className="p-3 text-xs whitespace-nowrap text-gray-500">
+                      {new Date(log.timestamp).toLocaleString("id-ID")}
+                    </td>
+                    <td className="p-3 text-xs font-mono">
+                      {log.sender.includes("me") ? (
+                        <span className="text-emerald-600 font-semibold">BOT (Keluar)</span>
+                      ) : (
+                        log.sender.split("@")[0]
+                      )}
+                    </td>
+                    <td className="p-3 text-xs">
+                      <span className="rounded-full bg-gray-100 px-2 py-1 text-[10px] uppercase dark:bg-slate-800">
+                        {log.type || "text"}
+                      </span>
+                    </td>
+                    <td className="p-3 text-xs text-gray-700 dark:text-gray-300 max-w-xs truncate" title={log.message}>
+                      {log.message || "-"}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

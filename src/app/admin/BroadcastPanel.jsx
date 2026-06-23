@@ -9,6 +9,31 @@ export default function BroadcastPanel({ sellers }) {
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // AI Generator states
+  const [aiInstruction, setAiInstruction] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [aiError, setAiError] = useState("");
+
+  async function handleAIGenerate() {
+    if (!aiInstruction.trim()) return;
+    setGenerating(true);
+    setAiError("");
+    try {
+      const res = await fetch("/api/admin/ai-generate-broadcast", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ instruction: aiInstruction })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal generate text");
+      setMessage(data.text);
+    } catch (err) {
+      setAiError(err.message);
+    } finally {
+      setGenerating(false);
+    }
+  }
+
   async function handleBroadcast() {
     if (!message.trim()) return alert("Pesan tidak boleh kosong!");
     if (!confirm(`Kirim pesan ini ke ${sellers.length} penjual?`)) return;
@@ -49,6 +74,28 @@ export default function BroadcastPanel({ sellers }) {
         </p>
 
         <div className="space-y-4">
+          <div>
+            <label className="mb-1 block text-sm font-medium dark:text-gray-300">Bantu dengan AI ✨</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                className="input"
+                placeholder="Contoh: Buatkan info promo bebas biaya bump hari ini..."
+                value={aiInstruction}
+                onChange={(e) => setAiInstruction(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAIGenerate()}
+              />
+              <button
+                onClick={handleAIGenerate}
+                disabled={generating || !aiInstruction.trim()}
+                className="btn-accent shrink-0"
+              >
+                {generating ? "Berpikir..." : "Generate"}
+              </button>
+            </div>
+            {aiError && <p className="mt-1 text-xs text-rose-500">{aiError}</p>}
+          </div>
+
           <div>
             <label className="mb-1 block text-sm font-medium dark:text-gray-300">Pesan Text</label>
             <textarea
