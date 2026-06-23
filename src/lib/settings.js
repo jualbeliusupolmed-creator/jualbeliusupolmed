@@ -50,6 +50,7 @@ export const DEFAULT_SETTINGS = {
   },
   bot_keywords: {
     enabled: true,
+    greeting_enabled: false,
     greeting: "Halo! 👋\n\nKetik salah satu perintah berikut:\n• *JUAL* — Pasang iklan\n• *CARI [nama barang]* — Cari barang\n• *PERPANJANG* — Perpanjang iklan\n• *UPGRADE* — Upgrade iklan\n• *ADMIN* — Hubungi admin\n\nAtau langsung kirim *Foto + Deskripsi + Harga* untuk pasang iklan!",
     triggers: "jual,wts,wtb,cari,beli,admin,min,mimin,perpanjang,upgrade,dijual,ready",
     min_price_digits: 4,
