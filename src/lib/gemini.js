@@ -228,6 +228,39 @@ export async function processGeneralChat(text, aiConfig = {}, history = [], maxR
 }
 
 /**
+ * Parse pesan "DICARI ..." dari WA menjadi data wanted listing terstruktur.
+ */
+export async function parseWantedFromText(text, maxRetries = 2) {
+  let attempt = 0;
+  const modelsToTry = ["gemini-2.5-flash-lite", "gemini-2.0-flash-lite"];
+  while (attempt < maxRetries) {
+    try {
+      const model = genAI.getGenerativeModel({ model: modelsToTry[attempt] || modelsToTry[0] });
+      const prompt = `
+        Ekstrak informasi dari pesan berikut yang berisi permintaan barang yang dicari:
+        """${text}"""
+
+        Kembalikan HANYA JSON MURNI (tanpa markdown):
+        {
+          "title": "nama/jenis barang yang dicari (singkat, maks 60 karakter)",
+          "description": "deskripsi lengkap kebutuhan jika ada",
+          "budget": <angka budget/harga maks dalam rupiah, 0 jika tidak disebutkan>,
+          "category": "salah satu dari: Elektronik, Fashion, Kendaraan, Properti, Buku, Makanan, Jasa, Lainnya",
+          "campus": "nama kampus/area jika disebutkan, kosongkan jika tidak ada"
+        }
+      `;
+      const result = await model.generateContent(prompt);
+      const clean = result.response.text().replace(/```json/g, "").replace(/```/g, "").trim();
+      return JSON.parse(clean);
+    } catch (err) {
+      attempt++;
+      if (attempt < maxRetries) await new Promise(r => setTimeout(r, 800));
+    }
+  }
+  return { title: text.slice(0, 60), description: "", budget: 0, category: "Lainnya", campus: "" };
+}
+
+/**
  * Suggest a fair price for a new listing based on similar active listings.
  * @param {string} title - Judul barang
  * @param {string} category - Kategori barang
