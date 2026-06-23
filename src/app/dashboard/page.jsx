@@ -25,8 +25,13 @@ function statusBadge(s) {
   return map[s] || "bg-gray-100 text-gray-600";
 }
 
-// Countdown: dihapus agar tidak tampil masa aktif (iklan abadi sampai dihapus penjual)
 function daysLeft(expiredAt) {
+  if (!expiredAt) return null;
+  const diff = new Date(expiredAt) - new Date();
+  if (diff <= 0) return { label: "Masa aktif habis", cls: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400" };
+  const days = Math.ceil(diff / 864e5);
+  if (days <= 3) return { label: `⚠️ Sisa ${days} hari`, cls: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400" };
+  if (days <= 7) return { label: `Sisa ${days} hari`, cls: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" };
   return null;
 }
 
@@ -188,8 +193,13 @@ function DashboardInner() {
     const { item, price } = soldPriceModal;
     setSoldPriceModal(null);
     try {
-      await patch(item.id, { action: "mark_sold", sold_price: price });
-      toast.success("Berhasil ditandai terjual");
+      const data = await patch(item.id, { action: "mark_sold", sold_price: price });
+      toast.success("Barang berhasil ditandai terjual! 🎉");
+      if (data.paymentUrl && data.fee > 0) {
+        setActiveQrisUrl(data.paymentUrl);
+        setActiveQrisFee(data.fee);
+        setActiveQrisOrderId(data.orderId || "");
+      }
       load();
     } catch (e) {
       toast.error(e.message);
@@ -244,6 +254,7 @@ function DashboardInner() {
         else if (label === 'renewal') setActiveQrisFee(data.amount || 10000);
         else if (label === 'subscribe') setActiveQrisFee(data.amount || 49000);
         else if (label === 'sponsored') setActiveQrisFee(data.amount || (body.days || 1) * 7000);
+        else if (label === 'sold_fee') setActiveQrisFee(data.fee || data.amount || 0);
         setActiveQrisOrderId(data.orderId || "");
       } else {
         setNote(`Tidak bisa memproses ${label} — link pembayaran tidak ditemukan.`);
@@ -326,18 +337,23 @@ function DashboardInner() {
         title="Konfirmasi Terjual"
         message={
           soldPriceModal && (
-            <div className="space-y-1">
+            <div className="space-y-2">
               <p>Tandai <strong>{soldPriceModal.item.title}</strong> sebagai terjual?</p>
-              <p className="mt-2 text-gray-500">
+              <p className="text-gray-500">
                 Harga jual: <strong>{rupiah(soldPriceModal.price)}</strong>
               </p>
-              <p className="text-gray-500">
-                Fee admin: <strong className="text-primary">{rupiah(soldPriceModal.fee)}</strong>
-              </p>
+              {soldPriceModal.fee > 0 && (
+                <div className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200 dark:bg-amber-900/20 dark:border-amber-900/50 text-sm">
+                  <p className="font-bold text-amber-800 dark:text-amber-300">💡 Iklan langsung diturunkan</p>
+                  <p className="text-amber-700 dark:text-amber-400 mt-1">
+                    Fee komisi <strong>{rupiah(soldPriceModal.fee)}</strong> akan muncul sebagai tagihan. Bayar via QRIS sekarang atau nanti.
+                  </p>
+                </div>
+              )}
             </div>
           )
         }
-        confirmLabel="Ya, Tandai Terjual"
+        confirmLabel="✅ Ya, Tandai Terjual"
         onConfirm={doMarkSold}
         onClose={() => setSoldPriceModal(null)}
       />
@@ -923,9 +939,24 @@ function DashboardInner() {
                             <span className="badge bg-gray-150 text-gray-700 dark:bg-slate-800 dark:text-slate-350 flex items-center gap-1">
                               <Icon.MapPin className="h-3 w-3" /> {i.campus}
                             </span>
-                            {daysLeft(i.expired_at) && (
-                              <span className={`badge text-[10px] ${daysLeft(i.expired_at).cls}`}>
-                                {daysLeft(i.expired_at).label}
+                            {i.auto_bump_until && new Date(i.auto_bump_until) > new Date() && (
+                              <span className="badge bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                                🔄 Auto-Bump aktif
+                              </span>
+                            )}
+                            {i.sponsored_until && new Date(i.sponsored_until) > new Date() && (
+                              <span className="badge bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">
+                                📢 Sponsor aktif
+                              </span>
+                            )}
+                            {i.featured && i.featured_until && new Date(i.featured_until) > new Date() && (
+                              <span className="badge bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                                ⭐ Featured aktif
+                              </span>
+                            )}
+                            {daysLeft(i.expires_at) && (
+                              <span className={`badge text-[10px] ${daysLeft(i.expires_at).cls}`}>
+                                {daysLeft(i.expires_at).label}
                               </span>
                             )}
                           </div>
@@ -1054,14 +1085,48 @@ function DashboardInner() {
                   <h2 className="text-base font-bold dark:text-white">Riwayat Terjual</h2>
                   <div className="mt-3 space-y-2">
                     {soldItems.map((i) => (
-                      <div
-                        key={i.id}
-                        className="card flex items-center justify-between p-3 text-sm dark:border-slate-800"
-                      >
-                        <span className="truncate font-medium">{i.title}</span>
-                        <span className="text-gray-500">
-                          {rupiah(i.sold_price || i.price)} · fee {rupiah(i.sold_fee || 0)}
-                        </span>
+                      <div key={i.id} className="card p-3 text-sm dark:border-slate-800 space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="truncate font-medium dark:text-white">{i.title}</span>
+                          <span className="shrink-0 text-gray-500 text-xs">
+                            {rupiah(i.sold_price || i.price)}
+                          </span>
+                        </div>
+                        {i.pending_sold_fee_order_id ? (
+                          <div className="p-3 bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/50 rounded-xl">
+                            <p className="text-sm font-bold text-rose-700 dark:text-rose-400 mb-1">
+                              ⚠️ Tagihan Komisi Belum Lunas
+                            </p>
+                            <p className="text-xs text-rose-600 dark:text-rose-500 mb-2">
+                              Bayar <strong>{rupiah(i.pending_sold_fee_amount)}</strong> agar akun tidak diblokir dari pasang iklan baru.
+                            </p>
+                            <button
+                              onClick={async () => {
+                                try {
+                                  setBusy(true);
+                                  const res = await fetch("/api/payments/resume", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ listing_id: i.id, seller_wa: wa, type: "sold_fee" }),
+                                  });
+                                  const data = await res.json();
+                                  if (!res.ok) throw new Error(data.error);
+                                  if (data.paymentUrl) {
+                                    setActiveQrisUrl(data.paymentUrl);
+                                    setActiveQrisFee(data.amount || i.pending_sold_fee_amount || 0);
+                                    setActiveQrisOrderId(data.orderId || "");
+                                  } else toast.error("Gagal mendapatkan link pembayaran.");
+                                } catch (e) { toast.error(e.message); }
+                                finally { setBusy(false); }
+                              }}
+                              className="btn-primary py-1.5 px-3 text-xs bg-rose-600 hover:bg-rose-700 border-rose-600"
+                            >
+                              💳 Bayar Tagihan (QRIS + AI)
+                            </button>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-green-600 dark:text-green-400">✅ Komisi lunas · {rupiah(i.sold_fee || 0)}</p>
+                        )}
                       </div>
                     ))}
                   </div>

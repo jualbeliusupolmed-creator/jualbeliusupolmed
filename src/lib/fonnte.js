@@ -209,5 +209,30 @@ export async function notifyAdminNewListing(listing) { return { ok: true, skippe
 export async function notifyWantedBuyers(listing) { return { ok: true, skipped: true }; }
 export async function notifySellerInterest(listing, buyerWa) { return { ok: true, skipped: true }; }
 export async function notifyAdminReport(listing, report) { return { ok: true, skipped: true }; }
-export async function notifySellerExpiring(listing) { return { ok: true, skipped: true }; }
-export async function notifySellerExpired(listing) { return { ok: true, skipped: true }; }
+
+// Notifikasi H-3 sebelum masa iklan berakhir
+export async function notifySellerExpiring(listing) {
+  if (!listing.seller_wa) return { ok: false };
+  const url = `${baseUrl()}/dashboard`;
+  const renewUrl = `${baseUrl()}/dashboard`;
+  const msg =
+    `⚠️ *Iklan mau habis masa aktifnya!*\n\n` +
+    `Hei ${listing.seller_name || "Penjual"},\n` +
+    `Iklanmu *"${listing.title}"* akan habis dalam *3 hari lagi*.\n\n` +
+    `Perpanjang sekarang agar iklan tetap tayang:\n` +
+    `👉 ${renewUrl}\n\n` +
+    `_Jangan sampai iklanmu hilang dari pencarian!_`;
+  return send(listing.seller_wa, msg).catch(() => ({ ok: false }));
+}
+
+// Notifikasi saat iklan sudah expired
+export async function notifySellerExpired(listing) {
+  if (!listing.seller_wa) return { ok: false };
+  const msg =
+    `❌ *Iklan kamu sudah tidak tayang*\n\n` +
+    `Hei ${listing.seller_name || "Penjual"},\n` +
+    `Iklan *"${listing.title}"* sudah tidak aktif.\n\n` +
+    `Perpanjang atau pasang iklan baru di:\n` +
+    `👉 ${baseUrl()}/dashboard`;
+  return send(listing.seller_wa, msg).catch(() => ({ ok: false }));
+}

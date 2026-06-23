@@ -38,7 +38,7 @@ export async function PATCH(req, { params }) {
 
     const { data: currentListing, error: currentError } = await supa
       .from("listings")
-      .select("seller_wa, title, seller_name")
+      .select("seller_wa, title, seller_name, price")
       .eq("id", id)
       .single();
 
@@ -56,7 +56,6 @@ export async function PATCH(req, { params }) {
       let titleChangedToDigital = false;
       let categoryChangedToDigital = false;
 
-      // Ambil detail listing sebelumnya untuk perbandingan jika perlu
       const { data: oldListing } = await supa
         .from("listings")
         .select("category, title, status")
@@ -70,9 +69,7 @@ export async function PATCH(req, { params }) {
           updates.title = String(body.title).trim();
           const isNewTitleDigital = digitalKeywords.some(term => updates.title.toLowerCase().includes(term));
           const isOldTitleDigital = oldListing?.title ? digitalKeywords.some(term => oldListing.title.toLowerCase().includes(term)) : false;
-          if (isNewTitleDigital && !isOldTitleDigital) {
-            titleChangedToDigital = true;
-          }
+          if (isNewTitleDigital && !isOldTitleDigital) titleChangedToDigital = true;
         }
       }
       if (body.category !== undefined) {
@@ -80,28 +77,19 @@ export async function PATCH(req, { params }) {
           updates.category = body.category;
           const isNewCatDigital = digitalKeywords.some(term => updates.category.toLowerCase().includes(term));
           const isOldCatDigital = oldListing?.category ? digitalKeywords.some(term => oldListing.category.toLowerCase().includes(term)) : false;
-          if (isNewCatDigital && !isOldCatDigital) {
-            categoryChangedToDigital = true;
-          }
+          if (isNewCatDigital && !isOldCatDigital) categoryChangedToDigital = true;
         }
       }
 
-      if (body.description !== undefined)
-        updates.description = String(body.description || "").trim();
-      if (body.price !== undefined)
-        updates.price = Math.max(0, Math.round(Number(body.price) || 0));
-      if (body.stock !== undefined)
-        updates.stock = Math.max(0, Number(body.stock) || 0);
-      if (body.seller_name !== undefined)
-        updates.seller_name = String(body.seller_name).trim();
+      if (body.description !== undefined) updates.description = String(body.description || "").trim();
+      if (body.price !== undefined) updates.price = Math.max(0, Math.round(Number(body.price) || 0));
+      if (body.stock !== undefined) updates.stock = Math.max(0, Number(body.stock) || 0);
+      if (body.seller_name !== undefined) updates.seller_name = String(body.seller_name).trim();
       if (body.image_url !== undefined) updates.image_url = body.image_url || null;
       if (body.campus !== undefined) updates.campus = body.campus;
       if (body.area !== undefined) updates.area = String(body.area || "").trim();
 
-      // Jika terdeteksi diubah menjadi produk digital/jasa, ubah status menjadi pending untuk verifikasi ulang admin
-      if (titleChangedToDigital || categoryChangedToDigital) {
-        updates.status = "pending";
-      }
+      if (titleChangedToDigital || categoryChangedToDigital) updates.status = "pending";
 
       if (Object.keys(updates).length === 0) {
         return NextResponse.json({ error: "Tidak ada perubahan" }, { status: 400 });
@@ -115,7 +103,6 @@ export async function PATCH(req, { params }) {
         .single();
       if (error) throw new Error(error.message);
 
-      // Galeri (kolom `images`) — non-fatal jika migration belum dijalankan.
       if (Array.isArray(body.images)) {
         await supa.from("listings").update({ images: body.images }).eq("id", id);
       }
@@ -127,13 +114,15 @@ export async function PATCH(req, { params }) {
       const stock = Math.max(0, Number(body.stock) || 0);
       const updates = { stock };
       let fee = 0;
-      let snapToken = null;
+      let paymentUrl = null;
 
       if (stock === 0) {
         delete updates.stock;
-        updates.sold_price = currentListing.price || 0;
+        const soldPrice = currentListing.price || 0;
+        updates.sold_price = soldPrice;
+        updates.status = "sold";
         const settings = await getSettings();
-        fee = soldFeeFrom(settings.pricing, currentListing.price);
+        fee = soldFeeFrom(settings.pricing, soldPrice);
         updates.sold_fee = fee;
       } else {
         updates.status = "active";
@@ -148,26 +137,28 @@ export async function PATCH(req, { params }) {
       if (error) throw new Error(error.message);
 
       if (stock === 0 && fee > 0) {
-        // Catat fee sebagai payment pending
+        const orderId = `SOLDFEE-${id.slice(0, 8)}-${Date.now()}`;
         await supa.from("payments").insert({
           listing_id: id,
           type: "sold_fee",
           amount: fee,
           status: "pending",
           midtrans_order_id: orderId,
+          meta: { seller_wa: currentListing.seller_wa },
         });
 
         try {
           const tx = await createQrisTransaction({
-            orderId: orderId,
+            orderId,
             amount: fee,
             customerName: currentListing.seller_name,
             customerWa: currentListing.seller_wa,
             itemName: `Sold Fee: ${currentListing.title}`,
           });
           paymentUrl = tx.redirect_url;
+          return NextResponse.json({ listing, fee, paymentUrl, orderId });
         } catch (e) {
-          console.error("doku sold fee charge error:", e?.message);
+          console.error("soldfee qris:", e?.message);
         }
       }
 
@@ -176,44 +167,53 @@ export async function PATCH(req, { params }) {
 
     // ── Mark sold ──────────────────────────────────────────────────────────
     if (body.action === "mark_sold") {
-      const soldPrice = Math.round(Number(body.sold_price) || 0);
+      const soldPrice = Math.round(Number(body.sold_price) || currentListing.price || 0);
       const settings = await getSettings();
       const fee = soldFeeFrom(settings.pricing, soldPrice);
+
+      // Langsung tandai sold — fee dibayar terpisah via tagihan di dashboard
       const { data: listing, error } = await supa
         .from("listings")
         .update({
+          status: "sold",
           sold_price: soldPrice,
           sold_fee: fee,
+          stock: 0,
         })
         .eq("id", id)
         .select()
         .single();
       if (error) throw new Error(error.message);
 
-      // Catat fee sebagai payment pending
-      await supa.from("payments").insert({
-        listing_id: id,
-        type: "sold_fee",
-        amount: fee,
-        status: "pending",
-        midtrans_order_id: `SOLDFEE-${id.slice(0, 8)}-${Date.now()}`,
-      });
+      let paymentUrl = null;
+      let orderId = null;
 
-      let snapToken = null;
-      try {
-        const tx = await createSnapTransaction({
-          orderId: `SOLDFEE-${id.slice(0, 8)}-${Date.now()}`,
+      if (fee > 0) {
+        orderId = `SOLDFEE-${id.slice(0, 8)}-${Date.now()}`;
+        await supa.from("payments").insert({
+          listing_id: id,
+          type: "sold_fee",
           amount: fee,
-          customerName: currentListing.seller_name,
-          customerWa: currentListing.seller_wa,
-          itemName: `Fee terjual: ${currentListing.title}`,
+          status: "pending",
+          midtrans_order_id: orderId,
+          meta: { seller_wa: currentListing.seller_wa },
         });
-        snapToken = tx.token;
-      } catch (e) {
-        console.error("soldfee charge:", e?.message);
+
+        try {
+          const tx = await createQrisTransaction({
+            orderId,
+            amount: fee,
+            customerName: currentListing.seller_name,
+            customerWa: currentListing.seller_wa,
+            itemName: `Fee Terjual: ${currentListing.title}`,
+          });
+          paymentUrl = tx.redirect_url;
+        } catch (e) {
+          console.error("soldfee qris:", e?.message);
+        }
       }
 
-      return NextResponse.json({ listing, fee, snapToken });
+      return NextResponse.json({ listing, fee, paymentUrl, orderId });
     }
 
     return NextResponse.json({ error: "Aksi tidak dikenal" }, { status: 400 });

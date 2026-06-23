@@ -1,16 +1,13 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { notifySellerExpiring, notifySellerExpired } from "@/lib/fonnte";
+import { notifySellerExpiring } from "@/lib/fonnte";
 
 export const dynamic = "force-dynamic";
 
-// Dipanggil Vercel Cron harian. Mengubah listing kadaluarsa -> expired,
-// dan mengirim reminder perpanjang untuk yang H-2 sebelum expired.
+// Dipanggil Vercel Cron harian.
+// - Iklan TIDAK di-expire otomatis (by design — tetap tayang sampai penjual hapus/sold).
+// - Kirim WA reminder H-3 sebelum expires_at agar penjual tahu dan bisa perpanjang.
 export async function GET(req) {
-  // Proteksi: jika CRON_SECRET di-set, wajib Bearer token (Vercel cron
-  // mengirimnya otomatis). Header x-vercel-cron hanya diterima sebagai
-  // fallback saat CRON_SECRET belum di-set, karena header itu bisa dipalsukan.
-  // ?key=ADMIN_PASSWORD tetap tersedia untuk pemanggilan manual.
   const auth = req.headers.get("authorization");
   const key = req.nextUrl.searchParams.get("key");
   const ok =
@@ -23,25 +20,22 @@ export async function GET(req) {
   const supa = getAdminClient();
   const now = new Date();
 
-  // 1) expire yang lewat
-  // DINONAKTIFKAN: Iklan tidak akan pernah expired agar penjual terpaksa menandai terjual
-  /*
-  const { data: expired } = await supa
+  // Reminder H-3: iklan yang expires_at antara sekarang dan 3 hari ke depan
+  const in3days = new Date(now.getTime() + 3 * 864e5).toISOString();
+  const in4days = new Date(now.getTime() + 4 * 864e5).toISOString();
+
+  const { data: expiring } = await supa
     .from("listings")
-    .update({ status: "expired" })
-    .lt("expires_at", now.toISOString())
+    .select("id, title, seller_wa, seller_name, expires_at")
     .eq("status", "active")
-    .select();
+    .gte("expires_at", now.toISOString())
+    .lte("expires_at", in3days);
 
-  for (const l of expired || []) {
-    await notifySellerExpired(l).catch(() => {});
+  let reminded = 0;
+  for (const l of expiring || []) {
+    const res = await notifySellerExpiring(l).catch(() => ({ ok: false }));
+    if (res.ok) reminded++;
   }
-  */
 
-  // Note: 2) reminder H-2 is disabled to save Fonnte quota
-
-  return NextResponse.json({
-    expired: expired?.length || 0,
-    reminded: 0,
-  });
+  return NextResponse.json({ reminded, checked: expiring?.length || 0 });
 }

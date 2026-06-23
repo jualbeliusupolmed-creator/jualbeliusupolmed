@@ -46,7 +46,7 @@ export async function GET(req) {
             listing.pending_payment_id = latestPayment.id;
             listing.pending_amount = latestPayment.amount;
           }
-        } else if (listing.status === "active") {
+        } else if (listing.status === "active" || listing.status === "sold") {
           const latestSoldFee = payments.find((p) => p.listing_id === listing.id && p.type === "sold_fee");
           if (latestSoldFee) {
             listing.pending_sold_fee_order_id = latestSoldFee.midtrans_order_id;
