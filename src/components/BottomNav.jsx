@@ -12,7 +12,7 @@ export default function BottomNav() {
     { href: "/", label: "Beranda", icon: Icon.Home },
     { href: "/favorit", label: "Favorit", icon: Icon.Heart },
     { href: "/jual", label: "Jual", icon: Icon.PlusCircle, primary: true },
-    { href: "/dicari", label: "Dicari", icon: Icon.Grid },
+    { href: "/dicari", label: "Dicari", icon: Icon.Search },
     { href: "/dashboard", label: "Profil", icon: Icon.User },
   ];
 

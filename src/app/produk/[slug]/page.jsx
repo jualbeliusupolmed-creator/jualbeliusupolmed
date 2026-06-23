@@ -15,6 +15,7 @@ import ProductCard from "@/components/ProductCard";
 import RatingWidget from "@/components/RatingWidget";
 import ReportButton from "@/components/ReportButton";
 import ViewTracker from "@/components/ViewTracker";
+import RecentlyViewedSaver from "@/components/RecentlyViewedSaver";
 import FavoriteButton from "@/components/FavoriteButton";
 import { Icon } from "@/components/Icons";
 
@@ -182,6 +183,7 @@ export default async function ProdukPage({ params }) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
       <ViewTracker listingId={listing.id} />
+      <RecentlyViewedSaver listing={listing} slug={params.slug} />
       {/* Breadcrumb */}
       <nav className="text-sm text-gray-400">
         <Link href="/" className="hover:text-primary">

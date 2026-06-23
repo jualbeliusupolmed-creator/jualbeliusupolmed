@@ -57,6 +57,7 @@ function DashboardInner() {
   const [renewConfirm, setRenewConfirm] = useState(null);
 
   const [qrisModalItem, setQrisModalItem] = useState(null);
+  const [openActionMenu, setOpenActionMenu] = useState(null);
   const [activeQrisUrl, setActiveQrisUrl] = useState("");
   const [activeQrisFee, setActiveQrisFee] = useState(0);
   const [activeQrisOrderId, setActiveQrisOrderId] = useState("");
@@ -600,8 +601,35 @@ function DashboardInner() {
               </div>
             </div>
           ) : activeTab === "jual" ? (
-            <div className="space-y-6">
-              <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="space-y-6 mt-6">
+              {/* Peringatan Batas PRO */}
+              {sellerProfile && (!sellerProfile.subscription_tier || sellerProfile.subscription_tier !== "pro" || new Date(sellerProfile.subscription_expires_at) < new Date()) && active.length >= 12 && (
+                <div className="rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 dark:from-amber-900/20 dark:to-orange-900/20 dark:border-amber-900/50 p-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 shrink-0 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center text-xl">
+                      ⚠️
+                    </div>
+                    <div>
+                      <p className="font-bold text-amber-900 dark:text-amber-300">
+                        {active.length >= 15 
+                          ? "Batas iklan gratis tercapai!" 
+                          : `Kamu sisa ${15 - active.length} slot iklan gratis.`}
+                      </p>
+                      <p className="text-sm text-amber-700 dark:text-amber-500 mt-0.5">
+                        Upgrade ke Paket PRO untuk pasang iklan tanpa batas.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab("pro")}
+                    className="btn-primary whitespace-nowrap bg-amber-500 hover:bg-amber-600 border-amber-600 text-white shadow-md shadow-amber-500/20 px-4 py-2 text-sm rounded-lg"
+                  >
+                    🚀 Upgrade PRO
+                  </button>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <Stat label="Iklan aktif" value={active.length} />
                 <Stat label="Terjual" value={soldItems.length} />
                 <Stat label="Total dilihat" value={totalViews} />
@@ -705,8 +733,28 @@ function DashboardInner() {
                     </div>
                     <h3 className="text-xl font-extrabold text-gray-900 dark:text-white mb-2">Belum ada iklan aktif</h3>
                     <p className="max-w-md text-sm text-gray-500 dark:text-slate-400 mb-6 leading-relaxed">
-                      Barang tidak terpakai? Ubah jadi uang jajan! Pasang iklan pertamamu sekarang.
+                      Barang tidak terpakai? Ubah jadi uang jajan! Ikuti 3 langkah mudah ini:
                     </p>
+
+                    {/* Step tracker */}
+                    <div className="flex items-center justify-center mb-7">
+                      {[
+                        { icon: "📷", label: "Foto & deskripsi" },
+                        { icon: "💰", label: "Harga & lokasi" },
+                        { icon: "🚀", label: "Bayar & tayang" },
+                      ].map((s, i, arr) => (
+                        <div key={i} className="flex items-center">
+                          <div className="flex flex-col items-center gap-1.5">
+                            <div className="h-10 w-10 rounded-full bg-primary/10 dark:bg-primary/20 border-2 border-primary/20 flex items-center justify-center text-lg">
+                              {s.icon}
+                            </div>
+                            <span className="text-[10px] text-gray-400 dark:text-slate-500 max-w-[60px] text-center leading-tight">{s.label}</span>
+                          </div>
+                          {i < arr.length - 1 && <div className="w-8 sm:w-12 h-px bg-gray-200 dark:bg-slate-800 mb-4 mx-1" />}
+                        </div>
+                      ))}
+                    </div>
+
                     <Link
                       href="/jual"
                       className="group relative inline-flex items-center justify-center overflow-hidden rounded-full p-3 px-6 font-bold text-white bg-primary hover:bg-primary-dark transition-all duration-300 active:scale-95 shadow-lg shadow-primary/30"
@@ -795,39 +843,59 @@ function DashboardInner() {
                           )}
 
                           {/* Tools Promosi */}
-                          <div className="flex flex-wrap gap-2 mt-3">
+                          <div className="flex items-center gap-2 mt-3">
                             <button
                               onClick={() => bump(i)}
-                              className="btn-outline border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900 dark:text-emerald-400 dark:hover:bg-emerald-900/30 flex-1 sm:flex-none text-xs px-3 py-1.5"
+                              className="btn-outline border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900 dark:text-emerald-400 dark:hover:bg-emerald-900/30 flex-1 text-xs px-3 py-1.5"
                               title="Sundul iklan ke atas"
                             >
-                              🚀 Sundul (Rp 1rb)
+                              🚀 Sundul
                             </button>
-                            <button
-                              onClick={() => setAutobumpConfirm({ item: i })}
-                              className="btn-outline border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-900 dark:text-indigo-400 dark:hover:bg-indigo-900/30 flex-1 sm:flex-none text-xs px-3 py-1.5"
-                              title="Sundul otomatis setiap pagi selama 7 hari"
-                            >
-                              ⚡ Auto-Bump
-                            </button>
-                            <button
-                              onClick={() => openFeatured(i)}
-                              className="btn-outline border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-900 dark:text-amber-400 dark:hover:bg-amber-900/30 flex-1 sm:flex-none text-xs px-3 py-1.5"
-                            >
-                              ⭐️ Featured
-                            </button>
-                            <button onClick={() => openUpdateStock(i)} className="btn-outline text-xs">
-                              <Icon.Package className="h-3 w-3 inline mr-1" /> Stok
-                            </button>
-                            <Link
-                              href={`/edit/${i.id}`}
-                              className="btn-outline text-xs"
-                            >
-                              <Icon.Edit2 className="h-3 w-3 inline mr-1" /> Edit
-                            </Link>
-                            <button onClick={() => openMarkSold(i)} className="btn-primary text-xs">
+                            <button onClick={() => openMarkSold(i)} className="btn-primary flex-1 text-xs px-3 py-1.5">
                               <Icon.CheckCircle className="h-3 w-3 inline mr-1" /> Mark Sold
                             </button>
+                            {/* More actions "..." */}
+                            <div className="relative">
+                              <button
+                                onClick={() => setOpenActionMenu(openActionMenu === i.id ? null : i.id)}
+                                className="btn-outline text-xs px-2.5 py-1.5 font-bold tracking-widest"
+                                title="Aksi lainnya"
+                              >
+                                •••
+                              </button>
+                              {openActionMenu === i.id && (
+                                <>
+                                  <div className="fixed inset-0 z-10" onClick={() => setOpenActionMenu(null)} />
+                                  <div className="absolute right-0 bottom-full mb-1 w-48 bg-white dark:bg-slate-900 rounded-xl border border-gray-100 dark:border-slate-800 shadow-xl z-20 overflow-hidden">
+                                    <button
+                                      onClick={() => { setAutobumpConfirm({ item: i }); setOpenActionMenu(null); }}
+                                      className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+                                    >
+                                      ⚡ Auto-Bump <span className="text-xs text-gray-400">(Rp 15rb/7hr)</span>
+                                    </button>
+                                    <button
+                                      onClick={() => { openFeatured(i); setOpenActionMenu(null); }}
+                                      className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+                                    >
+                                      ⭐ Featured <span className="text-xs text-gray-400">(Rp 5rb/hari)</span>
+                                    </button>
+                                    <button
+                                      onClick={() => { openUpdateStock(i); setOpenActionMenu(null); }}
+                                      className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+                                    >
+                                      📦 Update Stok
+                                    </button>
+                                    <Link
+                                      href={`/edit/${i.id}`}
+                                      onClick={() => setOpenActionMenu(null)}
+                                      className="block px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+                                    >
+                                      ✏️ Edit Iklan
+                                    </Link>
+                                  </div>
+                                </>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>

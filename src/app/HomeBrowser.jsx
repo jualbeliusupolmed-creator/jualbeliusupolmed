@@ -62,6 +62,9 @@ export default function HomeBrowser({
   // Wanted listings for homepage teaser
   const [wantedTeaser, setWantedTeaser] = useState([]);
 
+  // Recently viewed (localStorage)
+  const [recentlyViewed, setRecentlyViewed] = useState([]);
+
   // PWA Install prompt state
   const [pwaReady, setPwaReady] = useState(false);
 
@@ -100,6 +103,14 @@ export default function HomeBrowser({
       window.removeEventListener("beforeinstallprompt", onPrompt);
       window.removeEventListener("appinstalled", onInstalled);
     };
+  }, []);
+
+  // Load recently viewed from localStorage
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("recently_viewed");
+      if (raw) setRecentlyViewed(JSON.parse(raw));
+    } catch {}
   }, []);
 
   // Fetch wanted teaser on mount
@@ -270,7 +281,7 @@ export default function HomeBrowser({
   const hasActiveFilter =
     cat !== "all" || q || sort !== "bumped" || minPrice || maxPrice || campusFilter !== "Semua" || negoFilter;
 
-  const order = layoutOrder && layoutOrder.length > 0 ? layoutOrder : ["hero", "featured", "wanted", "main"];
+  const order = layoutOrder && layoutOrder.length > 0 ? layoutOrder : ["hero", "featured", "recently_viewed", "wanted", "main"];
 
   const renderSection = (key) => {
     switch (key) {
@@ -356,6 +367,51 @@ export default function HomeBrowser({
                   <div className="min-w-0">
                     <p className="truncate text-xs font-semibold text-gray-900 dark:text-slate-200">{f.title}</p>
                     <p className="mt-0.5 text-sm font-bold text-gray-900 dark:text-white">{rupiah(f.price)}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        );
+
+      case "recently_viewed":
+        if (!recentlyViewed.length) return null;
+        return (
+          <section key="recently_viewed" className="mb-5">
+            <div className="mb-2.5 flex items-center justify-between">
+              <h2 className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Icon.Eye className="h-3.5 w-3.5" />
+                Baru Dilihat
+              </h2>
+              <button
+                onClick={() => {
+                  try { localStorage.removeItem("recently_viewed"); } catch {}
+                  setRecentlyViewed([]);
+                }}
+                className="text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-slate-300"
+              >
+                Hapus
+              </button>
+            </div>
+            <div className="flex gap-2.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {recentlyViewed.map((item) => (
+                <Link
+                  key={item.id}
+                  href={`/produk/${item.slug}`}
+                  className="flex w-36 shrink-0 flex-col overflow-hidden rounded-2xl border border-gray-100 bg-gray-50/80 transition hover:border-gray-200 dark:border-slate-800/70 dark:bg-slate-900/40 dark:hover:border-slate-700"
+                >
+                  <div className="aspect-square bg-gray-100 dark:bg-slate-950 overflow-hidden">
+                    {item.image_url ? (
+                      <Image src={item.image_url} alt={item.title} width={144} height={144} loading="lazy" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="grid h-full w-full place-items-center text-gray-300 dark:text-slate-700">
+                        <Icon.Package className="h-8 w-8" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-2.5">
+                    <p className="truncate text-xs font-semibold dark:text-slate-200">{item.title}</p>
+                    <p className="text-xs font-bold text-accent dark:text-accent-light">{rupiah(item.price)}</p>
                   </div>
                 </Link>
               ))}
