@@ -560,8 +560,17 @@ export async function POST(req) {
           // Cari juga dari postingan grup WA
           const { data: groupResults } = await supa
             .from("group_posts")
-            .select("id, sender_wa, message, image_url, created_at")
+            .select("id, sender_wa, message, created_at")
             .ilike("message", `%${aiRes.keywords}%`)
+            .order("created_at", { ascending: false })
+            .limit(3);
+
+          // Cari dari halaman /dicari (wanted_listings) — orang yg lagi cari barang ini
+          const { data: wantedResults } = await supa
+            .from("wanted_listings")
+            .select("id, buyer_name, buyer_wa, title, budget, campus")
+            .eq("status", "active")
+            .or(`title.ilike.%${aiRes.keywords}%,description.ilike.%${aiRes.keywords}%`)
             .order("created_at", { ascending: false })
             .limit(3);
 
@@ -569,7 +578,7 @@ export async function POST(req) {
           let count = 0;
 
           if (results && results.length > 0) {
-            reply += `📌 *Dari Website:*\n`;
+            reply += `🏪 *Dijual di Website:*\n`;
             results.forEach((r) => {
               count++;
               const condLabel = r.condition === "new" ? "✨ Baru" : "Bekas";
@@ -583,7 +592,7 @@ export async function POST(req) {
           }
 
           if (groupResults && groupResults.length > 0) {
-            reply += `💬 *Dari Grup WA:*\n`;
+            reply += `💬 *Dijual di Grup WA:*\n`;
             groupResults.forEach((g) => {
               count++;
               const preview = (g.message || "").slice(0, 80);
@@ -592,13 +601,24 @@ export async function POST(req) {
             });
           }
 
+          if (wantedResults && wantedResults.length > 0) {
+            reply += `🛒 *Yang Lagi Cari ${aiRes.keywords}:*\n`;
+            wantedResults.forEach((w) => {
+              count++;
+              const budgetLabel = w.budget ? ` · Budget Rp ${Number(w.budget).toLocaleString("id-ID")}` : "";
+              const campusLabel = w.campus && w.campus !== "Semua" ? ` · ${w.campus}` : "";
+              reply += `${count}. *${w.buyer_name}* cari ${w.title}${budgetLabel}${campusLabel}\n`;
+              reply += `   📲 wa.me/${w.buyer_wa}\n\n`;
+            });
+          }
+
           if (count === 0) {
-            const noResultReply = `❌ Maaf, aku nggak nemuin barang *"${aiRes.keywords}"* di web maupun grup.\n\nCoba kata kunci lain atau ketik *JUAL* untuk pasang iklan sendiri ya!`;
+            const noResultReply = `❌ Maaf, aku nggak nemuin *"${aiRes.keywords}"* di web, grup, maupun halaman dicari.\n\nCoba kata kunci lain atau ketik *JUAL* untuk pasang iklan!`;
             await sendWa(senderJid, noResultReply);
             return NextResponse.json({ ok: true, state: "search_no_results", bot_reply: noResultReply });
           }
 
-          reply += `Hubungi penjual langsung via WA di atas ya! 😊`;
+          reply += `Hubungi langsung via WA di atas ya! 😊`;
           await sendWa(senderJid, reply);
           return NextResponse.json({ ok: true, state: "search_results_sent", bot_reply: reply });
 
