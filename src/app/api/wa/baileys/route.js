@@ -470,6 +470,13 @@ export async function POST(req) {
         }
       }
 
+      // "admin" / "min" / "mimin" → sapaan ke bot, balas dengan menu
+      if (msgLower === "admin" || msgLower === "min" || msgLower === "mimin" || msgLower === "halo admin" || msgLower === "hai min") {
+        const greetingMsg = kwConfig.greeting || "Halo! 👋 Ada yang bisa dibantu?\n\nKetik:\n• *JUAL* — Pasang iklan\n• *CARI [barang]* — Cari barang\n• *PERPANJANG* — Perpanjang iklan\n• *UPGRADE* — Upgrade iklan";
+        await sendWa(senderJid, greetingMsg);
+        return NextResponse.json({ ok: true, state: "admin_greeting", bot_reply: greetingMsg });
+      }
+
       // Jika instruksi standar untuk pasang iklan dari command khusus, tetap layani dengan cepat
       if (msgLower === "jual" || msgLower === "wts" || msgLower === "dijual" || msgLower === "ready") {
          await sendWa(senderJid, "📸 Sepertinya Anda ingin pasang iklan. Kirim *Foto Barang + Teks Deskripsi & Harga* dalam 1 pesan ya.");
