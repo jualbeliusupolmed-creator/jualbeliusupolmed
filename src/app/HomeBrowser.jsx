@@ -51,6 +51,12 @@ export default function HomeBrowser({
   const [showPriceFilter, setShowPriceFilter] = useState(false);
   const [campusFilter, setCampusFilter] = useState(() => searchParams.get("campus") || "Semua");
   const [negoFilter, setNegoFilter] = useState(() => searchParams.get("nego") === "1");
+  const [conditionFilter, setConditionFilter] = useState(() => searchParams.get("condition") || "all");
+
+  // Category subscribe state
+  const [showCatSubModal, setShowCatSubModal] = useState(false);
+  const [catSubForm, setCatSubForm] = useState({ name: "", wa: "" });
+  const [catSubBusy, setCatSubBusy] = useState(false);
 
   // Pagination state
   const [listings, setListings] = useState(initialListings || []);
@@ -188,7 +194,8 @@ export default function HomeBrowser({
       newMin = minPrice,
       newMax = maxPrice,
       newCampus = campusFilter,
-      newNego = negoFilter, // FIXED: pass negoFilter as explicit param (was stale in closure)
+      newNego = negoFilter,
+      newCondition = conditionFilter,
     } = {}) => {
       setSearching(true);
       setPage(1);
@@ -200,6 +207,7 @@ export default function HomeBrowser({
         if (newMax) params.set("maxPrice", newMax);
         if (newCampus && newCampus !== "Semua") params.set("campus", newCampus);
         if (newNego) params.set("nego", "1"); // FIXED: use newNego param, not stale closure
+        if (newCondition && newCondition !== "all") params.set("condition", newCondition);
 
         const res = await fetch(`/api/listings/browse?${params}`);
         const data = await res.json();
@@ -211,8 +219,7 @@ export default function HomeBrowser({
         setSearching(false);
       }
     },
-    // FIXED: added negoFilter to dependency array
-    [cat, q, sort, minPrice, maxPrice, campusFilter, negoFilter]
+    [cat, q, sort, minPrice, maxPrice, campusFilter, negoFilter, conditionFilter]
   );
 
   function handleCampus(newCampus) {
@@ -279,7 +286,7 @@ export default function HomeBrowser({
 
   const hasMore = listings.length < total;
   const hasActiveFilter =
-    cat !== "all" || q || sort !== "bumped" || minPrice || maxPrice || campusFilter !== "Semua" || negoFilter;
+    cat !== "all" || q || sort !== "bumped" || minPrice || maxPrice || campusFilter !== "Semua" || negoFilter || conditionFilter !== "all";
 
   const order = layoutOrder && layoutOrder.length > 0 ? layoutOrder : ["hero", "featured", "recently_viewed", "wanted", "main"];
 
@@ -533,7 +540,6 @@ export default function HomeBrowser({
                 onClick={() => {
                   const next = !negoFilter;
                   setNegoFilter(next);
-                  // FIXED: use applyFilters with explicit newNego param
                   applyFilters({ newNego: next });
                 }}
                 className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${negoFilter
@@ -543,6 +549,21 @@ export default function HomeBrowser({
               >
                 Nego{negoFilter ? " ✓" : ""}
               </button>
+
+              {/* Kondisi */}
+              {["all", "new", "used"].map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => { setConditionFilter(c); applyFilters({ newCondition: c }); }}
+                  className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${conditionFilter === c
+                    ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
+                    : "border border-gray-200 text-gray-600 hover:border-gray-300 dark:border-slate-800 dark:text-slate-300"
+                  }`}
+                >
+                  {c === "all" ? "Semua Kondisi" : c === "new" ? "✨ Baru" : "Bekas"}
+                </button>
+              ))}
 
               {/* Reset */}
               {hasActiveFilter && (
@@ -557,8 +578,9 @@ export default function HomeBrowser({
                     setMaxPrice("");
                     setCampusFilter("Semua");
                     setNegoFilter(false);
+                    setConditionFilter("all");
                     setShowPriceFilter(false);
-                    applyFilters({ newCat: "all", newQ: "", newSort: "bumped", newMin: "", newMax: "", newCampus: "Semua", newNego: false });
+                    applyFilters({ newCat: "all", newQ: "", newSort: "bumped", newMin: "", newMax: "", newCampus: "Semua", newNego: false, newCondition: "all" });
                     syncToUrl({ cat: "all", q: "", sort: "bumped", minPrice: "", maxPrice: "", campusFilter: "Semua", negoFilter: false });
                   }}
                   className="shrink-0 px-2 py-1.5 text-xs text-gray-400 hover:text-gray-700 dark:hover:text-slate-200"
@@ -616,6 +638,92 @@ export default function HomeBrowser({
             <div className="mt-3">
               <CategoryFilter active={cat} onChange={handleCat} categories={CATEGORIES} />
             </div>
+
+            {/* Category subscribe button — tampil saat kategori tertentu dipilih */}
+            {cat !== "all" && (
+              <div className="mt-2 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCatSubModal(true)}
+                  className="flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 dark:border-emerald-900/50 dark:bg-emerald-900/10 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/20 transition-colors"
+                >
+                  🔔 Notif saya kalau ada iklan baru di <strong>{catName(cat)}</strong>
+                </button>
+              </div>
+            )}
+
+            {/* Modal subscribe kategori */}
+            {showCatSubModal && (
+              <div
+                className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+                onClick={(e) => e.target === e.currentTarget && setShowCatSubModal(false)}
+              >
+                <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 shadow-2xl overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-slate-800">
+                    <p className="font-bold text-sm text-gray-900 dark:text-white">🔔 Notifikasi Kategori</p>
+                    <button onClick={() => setShowCatSubModal(false)} className="text-gray-400 hover:text-gray-600 text-lg">✕</button>
+                  </div>
+                  <div className="p-4 space-y-3">
+                    <p className="text-xs text-gray-500 dark:text-slate-400">
+                      Dapatkan notifikasi WA otomatis setiap ada iklan baru di kategori <strong className="text-gray-700 dark:text-slate-200">{catName(cat)}</strong>
+                    </p>
+                    <div>
+                      <label className="label text-xs">Namamu</label>
+                      <input
+                        type="text"
+                        value={catSubForm.name}
+                        onChange={(e) => setCatSubForm((f) => ({ ...f, name: e.target.value }))}
+                        placeholder="Nama Lengkap"
+                        className="input text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="label text-xs">Nomor WhatsApp</label>
+                      <input
+                        type="tel"
+                        value={catSubForm.wa}
+                        onChange={(e) => setCatSubForm((f) => ({ ...f, wa: e.target.value }))}
+                        placeholder="08xxxxxxxxxx"
+                        className="input text-sm"
+                      />
+                    </div>
+                    <button
+                      disabled={catSubBusy || !catSubForm.wa}
+                      onClick={async () => {
+                        if (!catSubForm.wa) return;
+                        setCatSubBusy(true);
+                        try {
+                          const { toast: t } = await import("sonner");
+                          const res = await fetch("/api/subscriptions/category", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              buyer_wa: catSubForm.wa,
+                              buyer_name: catSubForm.name || null,
+                              category: catName(cat),
+                              campus: campusFilter,
+                            }),
+                          });
+                          if (!res.ok) throw new Error((await res.json()).error);
+                          t.success("Berhasil! Kamu akan dapat notif WA kalau ada iklan baru.");
+                          setShowCatSubModal(false);
+                          setCatSubForm({ name: "", wa: "" });
+                        } catch (err) {
+                          const { toast: t } = await import("sonner");
+                          t.error(err.message);
+                        } finally {
+                          setCatSubBusy(false);
+                        }
+                      }}
+                      className="btn-primary w-full disabled:opacity-50"
+                    >
+                      {catSubBusy ? "Menyimpan…" : "🔔 Aktifkan Notifikasi"}
+                    </button>
+                    <p className="text-[10px] text-center text-gray-400">Balas STOP ke bot WA kami untuk berhenti langganan.</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Count */}
             <p className="mt-3 text-xs text-gray-500 dark:text-slate-400">

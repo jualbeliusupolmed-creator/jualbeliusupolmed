@@ -4,7 +4,7 @@ import { createQrisTransaction } from "@/lib/midtrans";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { getSettings, adFeeFrom, listingExpiresAt, hasUnpaidSoldFees } from "@/lib/settings";
 import { formatWa } from "@/lib/constants";
-import { postToGroup } from "@/lib/fonnte";
+import { postToGroup, notifyCategorySubscribers } from "@/lib/fonnte";
 
 export const dynamic = "force-dynamic";
 
@@ -86,6 +86,7 @@ export async function POST(req) {
       images,
       campus,
       area,
+      condition,
     } = body;
 
     if (!seller_name || !seller_wa || !title || price == null) {
@@ -192,6 +193,7 @@ export async function POST(req) {
         status: initialStatus,
         campus: campus || "Semua",
         area: area || "Sekitar Kampus",
+        condition: (type === "barang" && condition) ? condition : "used",
         bumped_at: new Date().toISOString(),
         expires_at: expiresAt, // FIXED: from settings.pricing.listingDays
       })
@@ -208,6 +210,7 @@ export async function POST(req) {
       // Kirim notifikasi WA (berjalan di background tanpa await jika tidak mutlak diperlukan, tapi baiknya await)
       try {
         await postToGroup(listing);
+        notifyCategorySubscribers(supa, listing).catch(() => {});
       } catch (err) {
         console.error("Fonnte postToGroup error:", err?.message);
       }

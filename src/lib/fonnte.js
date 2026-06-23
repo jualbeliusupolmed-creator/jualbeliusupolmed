@@ -135,6 +135,72 @@ export async function notifySellerProActivated(seller_wa, seller_name, expiresAt
   return send(seller_wa, msg).catch(() => ({ ok: false }));
 }
 
+// Notifikasi ke penjual: ada tawaran harga baru
+export async function notifySellerNewOffer(seller_wa, seller_name, listingWithOffer) {
+  const { title, offer } = listingWithOffer;
+  const url = `${baseUrl()}/dashboard`;
+  const waLink = offer.buyer_wa.startsWith("0") ? "62" + offer.buyer_wa.slice(1) : offer.buyer_wa;
+  const msg =
+    `💰 *Tawaran Harga Baru!*\n\n` +
+    `Hei ${seller_name || "Penjual"},\n` +
+    `*${offer.buyer_name}* menawar *${rupiah(offer.offer_price)}* untuk iklanmu:\n\n` +
+    `📦 _${title}_\n` +
+    (offer.message ? `💬 "${offer.message}"\n\n` : "\n") +
+    `📞 Hubungi pembeli: wa.me/${waLink}\n\n` +
+    `Terima atau tolak tawaran di Dashboard:\n${url}`;
+  return send(seller_wa, msg).catch(() => ({ ok: false }));
+}
+
+// Notifikasi ke pembeli: hasil tawaran (diterima/ditolak)
+export async function notifyBuyerOfferResult(buyer_wa, buyer_name, { listing_title, offer_price, seller_wa, accepted }) {
+  const sellerLink = seller_wa
+    ? `wa.me/${seller_wa.startsWith("0") ? "62" + seller_wa.slice(1) : seller_wa}`
+    : null;
+  const msg = accepted
+    ? `🎉 *Tawaran Diterima!*\n\n` +
+      `Hei ${buyer_name},\n` +
+      `Tawaranmu *${rupiah(offer_price)}* untuk:\n📦 _${listing_title}_\n\n` +
+      `*DITERIMA* oleh penjual! 🙌\n\n` +
+      (sellerLink ? `Hubungi penjual sekarang:\n${sellerLink}` : "")
+    : `😔 *Tawaran Ditolak*\n\n` +
+      `Hei ${buyer_name},\n` +
+      `Sayang sekali, tawaranmu *${rupiah(offer_price)}* untuk:\n📦 _${listing_title}_\n\n` +
+      `tidak bisa diterima penjual. Coba cari barang lain di ${baseUrl()}`;
+  return send(buyer_wa, msg).catch(() => ({ ok: false }));
+}
+
+// Notifikasi ke subscriber kategori: ada iklan baru
+export async function notifyCategorySubscribers(supa, listing) {
+  try {
+    const { data: subs } = await supa
+      .from("category_subscriptions")
+      .select("buyer_wa, buyer_name")
+      .eq("category", listing.category)
+      .or(`campus.eq.Semua,campus.eq.${listing.campus}`);
+
+    if (!subs?.length) return;
+
+    const url = `${baseUrl()}/produk/${(await import("@/lib/slug")).buildSlug(listing.title, listing.id)}`;
+    await Promise.allSettled(
+      subs.map((s) =>
+        send(
+          s.buyer_wa,
+          `🔔 *Iklan baru di kategori ${listing.category}!*\n\n` +
+          `Hei ${s.buyer_name || "kamu"},\n` +
+          `Ada iklan baru yang mungkin menarik:\n\n` +
+          `📦 *${listing.title}*\n` +
+          `💰 ${rupiah(listing.price)}\n` +
+          `📍 ${listing.campus === "Semua" ? "Medan" : listing.campus}\n\n` +
+          `👉 ${url}\n\n` +
+          `_Balas STOP untuk berhenti notifikasi._`
+        ).catch(() => {})
+      )
+    );
+  } catch (err) {
+    console.error("[category-notify] error:", err?.message);
+  }
+}
+
 // ============================================================================
 // FITUR YANG DINONAKTIFKAN (Untuk Hemat Kuota Fonnte)
 // ============================================================================

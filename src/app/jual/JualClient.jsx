@@ -24,6 +24,7 @@ export default function JualPage() {
     type: "barang",
     campus: "Semua",
     area: "",
+    condition: "used",
   });
   const [media, setMedia] = useState([]);
   const [busy, setBusy] = useState(false);
@@ -176,6 +177,27 @@ export default function JualPage() {
                 <option value="poster">Poster — {rupiah(adFeeFor("poster"))}</option>
               </select>
             </div>
+            {form.type === "barang" && (
+              <div>
+                <label className="label">Kondisi Barang</label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, condition: "used" }))}
+                    className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-all ${form.condition === "used" ? "bg-gray-900 text-white border-gray-900 dark:bg-white dark:text-gray-900 dark:border-white" : "border-gray-200 text-gray-500 hover:border-gray-400 dark:border-slate-700 dark:text-slate-400"}`}
+                  >
+                    Bekas
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, condition: "new" }))}
+                    className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-all ${form.condition === "new" ? "bg-sky-500 text-white border-sky-500" : "border-gray-200 text-gray-500 hover:border-sky-400 dark:border-slate-700 dark:text-slate-400"}`}
+                  >
+                    ✨ Baru (Belum Pernah Pakai)
+                  </button>
+                </div>
+              </div>
+            )}
             <div>
               <label className="label">Kategori</label>
               <select className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.category} onChange={set("category")}>

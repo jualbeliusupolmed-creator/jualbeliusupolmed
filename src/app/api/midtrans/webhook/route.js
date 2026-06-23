@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { notifyAdminNewListing, postToGroup, postWantedToGroup, notifyWantedMatch, notifySellerProActivated } from "@/lib/fonnte";
+import { notifyAdminNewListing, postToGroup, postWantedToGroup, notifyWantedMatch, notifySellerProActivated, notifyCategorySubscribers } from "@/lib/fonnte";
 
 export const dynamic = "force-dynamic";
 
@@ -124,6 +124,7 @@ export async function POST(req) {
               notifyAdminNewListing(listing),
               postToGroup(listing),
               notifyMatchingWanted(supa, listing),
+              notifyCategorySubscribers(supa, listing),
             ]);
           }
         } else if (payment.type === "featured") {
@@ -149,6 +150,13 @@ export async function POST(req) {
           await supa
             .from("listings")
             .update({ status: "sold", stock: 0 })
+            .eq("id", payment.listing_id);
+        } else if (payment.type === "sponsored") {
+          const days = payment.meta?.days || 1;
+          const until = new Date(Date.now() + days * 864e5).toISOString();
+          await supa
+            .from("listings")
+            .update({ sponsored_until: until, bumped_at: new Date().toISOString() })
             .eq("id", payment.listing_id);
         }
       }

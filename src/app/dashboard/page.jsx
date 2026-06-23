@@ -40,7 +40,11 @@ function DashboardInner() {
   const [note, setNote] = useState("");
 
   const [wantedItems, setWantedItems] = useState([]);
+  const [offers, setOffers] = useState([]);
   const [activeTab, setActiveTab] = useState("jual");
+
+  const [sponsoredModal, setSponsoredModal] = useState(null);
+  const [sponsoredConfirm, setSponsoredConfirm] = useState(null);
 
   // Config from API (for dynamic admin WA number)
   const [cfg, setCfg] = useState(null);
@@ -97,16 +101,19 @@ function DashboardInner() {
     setWa(n);
     setBusy(true);
     try {
-      const [resListings, resWanted] = await Promise.all([
+      const [resListings, resWanted, resOffers] = await Promise.all([
         fetch(`/api/listings?seller_wa=${encodeURIComponent(n)}`),
         fetch(`/api/wanted?buyer_wa=${encodeURIComponent(n)}`),
+        fetch(`/api/offers?seller_wa=${encodeURIComponent(n)}`),
       ]);
       const dataListings = await resListings.json();
       const dataWanted = await resWanted.json();
+      const dataOffers = await resOffers.json();
 
       setItems(dataListings.listings || []);
       setSellerProfile(dataListings.profile || null);
       setWantedItems(dataWanted.listings || []);
+      setOffers(dataOffers.offers || []);
 
       setLoaded(true);
       localStorage.setItem("seller_wa", n);
@@ -236,6 +243,7 @@ function DashboardInner() {
         else if (label === 'featured') setActiveQrisFee(data.amount || body.total || body.days * 5000);
         else if (label === 'renewal') setActiveQrisFee(data.amount || 10000);
         else if (label === 'subscribe') setActiveQrisFee(data.amount || 49000);
+        else if (label === 'sponsored') setActiveQrisFee(data.amount || (body.days || 1) * 7000);
         setActiveQrisOrderId(data.orderId || "");
       } else {
         setNote(`Tidak bisa memproses ${label} — link pembayaran tidak ditemukan.`);
@@ -386,6 +394,45 @@ function DashboardInner() {
         onClose={() => setFeaturedConfirm(null)}
       />
 
+      {/* Input hari sponsored */}
+      <InputModal
+        open={!!sponsoredModal}
+        title="Sponsored Iklan"
+        label="Berapa hari ingin disponsori?"
+        type="number"
+        min={1}
+        defaultValue="1"
+        placeholder="1"
+        confirmLabel="Lanjut"
+        onConfirm={(daysStr) => {
+          const days = Number(daysStr);
+          if (!days || isNaN(days) || days < 1) return;
+          setSponsoredModal(null);
+          setSponsoredConfirm({ item: sponsoredModal, days, total: days * 7000 });
+        }}
+        onClose={() => setSponsoredModal(null)}
+        hint="Rp7.000 / hari — iklan tampil paling atas dengan label '📢 Sponsor'"
+      />
+      <ConfirmModal
+        open={!!sponsoredConfirm}
+        title="Konfirmasi Sponsored"
+        message={
+          sponsoredConfirm && (
+            <div>
+              <p>Sponsor iklan <strong>{sponsoredConfirm.item.title}</strong> selama <strong>{sponsoredConfirm.days} hari</strong>?</p>
+              <p className="mt-2 text-gray-500">Total: <strong className="text-primary">{rupiah(sponsoredConfirm.total)}</strong></p>
+            </div>
+          )
+        }
+        confirmLabel="Bayar Sekarang"
+        onConfirm={() => {
+          const { item, days } = sponsoredConfirm;
+          setSponsoredConfirm(null);
+          pay("/api/payments/sponsored", { listing_id: item.id, days }, "sponsored");
+        }}
+        onClose={() => setSponsoredConfirm(null)}
+      />
+
       {/* Konfirmasi bayar autobump */}
       <ConfirmModal
         open={!!autobumpConfirm}
@@ -510,6 +557,21 @@ function DashboardInner() {
               🎁 Referral
             </button>
             <button
+              onClick={() => setActiveTab("tawaran")}
+              className={`pb-2.5 px-4 text-sm font-bold border-b-2 transition-all relative ${
+                activeTab === "tawaran"
+                  ? "border-indigo-500 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400"
+                  : "border-transparent text-gray-400 hover:text-gray-900 dark:hover:text-slate-200"
+              }`}
+            >
+              💰 Tawaran
+              {offers.filter((o) => o.status === "pending").length > 0 && (
+                <span className="absolute -top-0.5 -right-1 h-4 w-4 rounded-full bg-indigo-500 text-white text-[10px] font-bold flex items-center justify-center">
+                  {offers.filter((o) => o.status === "pending").length}
+                </span>
+              )}
+            </button>
+            <button
               onClick={() => setActiveTab("pro")}
               className={`pb-2.5 px-4 text-sm font-bold border-b-2 transition-all ${
                 activeTab === "pro"
@@ -521,7 +583,84 @@ function DashboardInner() {
             </button>
           </div>
 
-          {activeTab === "pro" ? (
+          {activeTab === "tawaran" ? (
+            <div className="space-y-4 mt-6">
+              <h2 className="text-base font-bold dark:text-white">Tawaran Harga Masuk</h2>
+              {offers.length === 0 ? (
+                <div className="mt-6 flex flex-col items-center justify-center py-12 px-4 text-center bg-gray-50/50 dark:bg-slate-900/20 rounded-3xl border border-gray-100 dark:border-slate-800/60">
+                  <div className="text-4xl mb-3">💰</div>
+                  <h3 className="text-lg font-extrabold text-gray-900 dark:text-white mb-1">Belum ada tawaran</h3>
+                  <p className="text-sm text-gray-500 dark:text-slate-400">Tawaran dari pembeli akan muncul di sini.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {["pending", "accepted", "rejected"].map((statusGroup) => {
+                    const grouped = offers.filter((o) => o.status === statusGroup);
+                    if (!grouped.length) return null;
+                    const label = statusGroup === "pending" ? "⏳ Menunggu" : statusGroup === "accepted" ? "✅ Diterima" : "❌ Ditolak";
+                    return (
+                      <div key={statusGroup}>
+                        <p className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-2">{label}</p>
+                        <div className="space-y-2">
+                          {grouped.map((offer) => (
+                            <div key={offer.id} className="card p-4 flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between dark:border-slate-800">
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs text-gray-400 dark:text-slate-500 truncate">{offer.listing_title}</p>
+                                <p className="font-bold text-gray-900 dark:text-white">{rupiah(offer.offer_price)}</p>
+                                <p className="text-sm text-gray-600 dark:text-slate-300">
+                                  {offer.buyer_name}
+                                  {offer.message && <span className="text-gray-400"> · "{offer.message}"</span>}
+                                </p>
+                              </div>
+                              <div className="flex gap-2 shrink-0">
+                                <a
+                                  href={`https://wa.me/${offer.buyer_wa.startsWith("0") ? "62" + offer.buyer_wa.slice(1) : offer.buyer_wa}`}
+                                  target="_blank" rel="noreferrer"
+                                  className="btn-wa text-xs py-1.5 px-3"
+                                >
+                                  💬 WA
+                                </a>
+                                {offer.status === "pending" && (
+                                  <>
+                                    <button
+                                      onClick={async () => {
+                                        try {
+                                          const res = await fetch(`/api/offers/${offer.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "accept" }) });
+                                          if (!res.ok) throw new Error((await res.json()).error);
+                                          toast.success("Tawaran diterima! Pembeli sudah dinotif via WA.");
+                                          load();
+                                        } catch (e) { toast.error(e.message); }
+                                      }}
+                                      className="btn-primary text-xs py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 border-emerald-600"
+                                    >
+                                      ✅ Terima
+                                    </button>
+                                    <button
+                                      onClick={async () => {
+                                        try {
+                                          const res = await fetch(`/api/offers/${offer.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "reject" }) });
+                                          if (!res.ok) throw new Error((await res.json()).error);
+                                          toast.success("Tawaran ditolak.");
+                                          load();
+                                        } catch (e) { toast.error(e.message); }
+                                      }}
+                                      className="btn-outline text-xs py-1.5 px-3 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20"
+                                    >
+                                      ❌ Tolak
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ) : activeTab === "pro" ? (
             <div className="space-y-6 mt-6">
               <div className="card p-6 border-2 border-amber-200 bg-amber-50/30 dark:border-amber-900/30 dark:bg-amber-900/10">
                 <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start text-center sm:text-left">
@@ -884,6 +1023,12 @@ function DashboardInner() {
                                       className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
                                     >
                                       📦 Update Stok
+                                    </button>
+                                    <button
+                                      onClick={() => { setSponsoredModal(i); setOpenActionMenu(null); }}
+                                      className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+                                    >
+                                      📢 Sponsor <span className="text-xs text-gray-400">(Rp 7rb/hari)</span>
                                     </button>
                                     <Link
                                       href={`/edit/${i.id}`}

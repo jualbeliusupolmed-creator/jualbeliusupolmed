@@ -10,6 +10,8 @@ export default function ProductCard({ listing }) {
   const isNew = listing.created_at &&
     (Date.now() - new Date(listing.created_at).getTime()) < 24 * 60 * 60 * 1000;
   const isLowStock = listing.stock === 1;
+  const isSponsored = listing.sponsored_until && new Date(listing.sponsored_until) > new Date();
+  const isConditionNew = listing.condition === "new";
   const isNego = listing.is_negotiable ||
     String(listing.description || "").toLowerCase().includes("nego") ||
     String(listing.title || "").toLowerCase().includes("nego");
@@ -33,14 +35,24 @@ export default function ProductCard({ listing }) {
               </svg>
             </div>
           )}
-          {listing.featured && (
+          {isSponsored && !sold && (
+            <span className="absolute left-2 top-2 rounded-md bg-indigo-600 px-2 py-0.5 text-[11px] font-bold text-white shadow-sm">
+              📢 Sponsor
+            </span>
+          )}
+          {!isSponsored && listing.featured && (
             <span className="absolute left-2 top-2 rounded-md bg-white/95 px-2 py-0.5 text-[11px] font-semibold text-gray-900 shadow-soft dark:bg-slate-900 dark:text-slate-100">
               Unggulan
             </span>
           )}
-          {!listing.featured && isNew && !sold && (
+          {!isSponsored && !listing.featured && isNew && !sold && (
             <span className="absolute left-2 top-2 rounded-md bg-emerald-500 px-2 py-0.5 text-[11px] font-bold text-white shadow-sm flex items-center gap-1">
               <Icon.Star className="h-3 w-3" /> BARU
+            </span>
+          )}
+          {!isSponsored && !listing.featured && isConditionNew && !isNew && !sold && (
+            <span className="absolute left-2 top-2 rounded-md bg-sky-500 px-2 py-0.5 text-[11px] font-bold text-white shadow-sm">
+              Baru
             </span>
           )}
           {isLowStock && !sold && (

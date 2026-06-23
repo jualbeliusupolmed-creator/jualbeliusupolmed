@@ -5,6 +5,7 @@ import { rupiah } from "@/lib/fees";
 import { buildSlug, getShortIdFromSlug, isUUID } from "@/lib/slug";
 import { fetchSingleListingWithProfile, fetchListingsWithProfiles } from "@/lib/dbHelpers";
 import MinatButton from "@/components/MinatButton";
+import OfferButton from "@/components/OfferButton";
 import IGShareButton from "@/components/IGShareButton";
 import ShareWAButton from "@/components/ShareWAButton";
 import QRButton from "@/components/QRButton";
@@ -283,6 +284,7 @@ export default async function ProdukPage({ params }) {
           {/* Aksi */}
           <div className="mt-4 space-y-2">
             {!sold && <MinatButton listing={listing} />}
+            {!sold && <OfferButton listing={listing} />}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               <div className="col-span-2 block md:hidden">
                 <NativeShareButton listing={listing} />

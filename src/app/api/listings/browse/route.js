@@ -37,6 +37,7 @@ export async function GET(req) {
     const campus = sp.get("campus") || "";
     const nego = sp.get("nego") === "1";
     const typeStr = sp.get("type") || "";
+    const condition = sp.get("condition") || "";
 
     const from = (page - 1) * limit;
     const to = from + limit - 1;
@@ -46,7 +47,7 @@ export async function GET(req) {
       .from("listings")
       // SECURITY: We fetch seller_wa internally to map profiles, then delete it before returning
       .select(
-        "id, title, description, price, stock, category, type, campus, area, status, featured, bumped_at, created_at, views, image_url, images, seller_name, seller_wa",
+        "id, title, description, price, stock, category, type, campus, area, status, featured, bumped_at, created_at, views, image_url, images, seller_name, seller_wa, condition, sponsored_until",
         { count: "exact" }
       )
       .eq("status", "active");
@@ -63,6 +64,7 @@ export async function GET(req) {
     if (minPrice !== null) query = query.gte("price", minPrice);
     if (maxPrice !== null) query = query.lte("price", maxPrice);
     if (nego) query = query.ilike("description", "%nego%");
+    if (condition && condition !== "all") query = query.eq("condition", condition);
 
     // Sort
     switch (sort) {
@@ -86,8 +88,17 @@ export async function GET(req) {
 
     query = query.range(from, to);
 
-    const { data, error, count } = await query;
+    const { data: rawData, error, count } = await query;
     if (error) throw new Error(error.message);
+
+    // Angkat sponsored aktif ke paling atas (dalam JS supaya pagination tetap benar untuk page 1)
+    const now = Date.now();
+    const data = page === 1
+      ? [
+          ...(rawData || []).filter((d) => d.sponsored_until && new Date(d.sponsored_until).getTime() > now),
+          ...(rawData || []).filter((d) => !d.sponsored_until || new Date(d.sponsored_until).getTime() <= now),
+        ]
+      : rawData || [];
 
     // FIX: Manual join for seller_profiles to avoid Foreign Key schema cache errors
     const sellerWas = [...new Set((data || []).map((d) => d.seller_wa).filter(Boolean))];
