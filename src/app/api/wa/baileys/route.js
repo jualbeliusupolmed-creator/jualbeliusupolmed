@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { parseListingFromText, verifyReceiptImage, processGeneralChat, suggestPrice } from "@/lib/gemini";
-import { sendWa, postToGroup, notifyWantedMatch, notifyCategorySubscribers, notifyBuyerOfferResult } from "@/lib/fonnte";
+import { parseListingFromText, verifyReceiptImage, processGeneralChat, suggestPrice, parseWantedFromText } from "@/lib/gemini";
+import { sendWa, postToGroup, notifyWantedMatch, notifyCategorySubscribers, notifyBuyerOfferResult, postWantedToGroup } from "@/lib/fonnte";
 import { formatWa } from "@/lib/constants";
 import { getSettings, adFeeFrom } from "@/lib/settings";
 import { createQrisTransaction } from "@/lib/midtrans";
@@ -510,6 +510,58 @@ export async function POST(req) {
       if (msgLower === "jual" || msgLower === "wts" || msgLower === "dijual" || msgLower === "ready") {
          await sendWa(senderJid, "📸 Sepertinya Anda ingin pasang iklan. Kirim *Foto Barang + Teks Deskripsi & Harga* dalam 1 pesan ya.");
          return NextResponse.json({ ok: true, state: "new_listing_no_image" });
+      }
+
+      // ── Command DICARI: post wanted listing ke web + grup dari WA ──────────
+      if (msgLower.startsWith("dicari ") || msgLower.startsWith("wtb ") || msgLower.startsWith("cari beli ")) {
+        const rawText = message.replace(/^(dicari|wtb|cari beli)\s+/i, "").trim();
+        if (!rawText) {
+          await sendWa(senderJid, "📝 Format: *DICARI [deskripsi barang yang dicari]*\n\nContoh:\n_DICARI laptop bekas budget 3jt area USU_");
+          return NextResponse.json({ ok: true, state: "dicari_help" });
+        }
+
+        await sendWa(senderJid, "⏳ Memproses permintaan Anda...");
+
+        const parsed = await parseWantedFromText(rawText).catch(() => null);
+        if (!parsed?.title) {
+          await sendWa(senderJid, "❌ Gagal membaca deskripsi. Coba tulis lebih jelas, contoh:\n_DICARI laptop bekas budget 3jt area USU_");
+          return NextResponse.json({ ok: true, state: "dicari_parse_failed" });
+        }
+
+        // Ambil nama dari seller_profile jika ada
+        const { data: sellerProfile } = await supa.from("seller_profiles").select("name").eq("wa", normalizedWa).maybeSingle();
+        const buyerName = sellerProfile?.name || `Pengguna WA`;
+
+        const { data: wanted, error: wErr } = await supa.from("wanted_listings").insert({
+          buyer_name: buyerName,
+          buyer_wa: normalizedWa,
+          title: parsed.title,
+          description: parsed.description || rawText,
+          budget: parsed.budget || 0,
+          category: parsed.category || "Lainnya",
+          campus: parsed.campus || "Semua",
+          area: "Sekitar Kampus",
+          status: "active",
+        }).select().single();
+
+        if (wErr) {
+          await sendWa(senderJid, "❌ Gagal menyimpan. Coba lagi nanti.");
+          return NextResponse.json({ ok: true, state: "dicari_db_error" });
+        }
+
+        // Post ke grup WA
+        await postWantedToGroup(wanted).catch(() => {});
+
+        const budgetStr = parsed.budget > 0 ? `\n💵 Budget: Rp ${Number(parsed.budget).toLocaleString("id-ID")}` : "";
+        const campusStr = parsed.campus ? `\n📍 Area: ${parsed.campus}` : "";
+        const confirmMsg =
+          `✅ *Permintaan Berhasil Dipost!*\n\n` +
+          `🔍 *${parsed.title}*\n` +
+          `🏷️ ${parsed.category}${budgetStr}${campusStr}\n\n` +
+          `Permintaanmu sudah tayang di:\n👉 ${process.env.NEXT_PUBLIC_BASE_URL}/dicari\n\n` +
+          `Dan sudah dibroadcast ke grup WA marketplace. Tunggu penjual hubungi kamu ya! 😊`;
+        await sendWa(senderJid, confirmMsg);
+        return NextResponse.json({ ok: true, state: "dicari_posted", bot_reply: confirmMsg });
       }
 
       // --- DYNAMIC AI CHAT & SEARCH & HANDOFF ---
