@@ -9,7 +9,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const botUrl = process.env.WA_BOT_URL || "https://wa-bot-usu.up.railway.app";
+    const botUrl = process.env.BAILEYS_API_URL || "https://wa-bot-usu-production.up.railway.app";
     const apiKey = (process.env.BAILEYS_API_TOKEN || "jualbeliusu_rahasia").replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
 
     const res = await fetch(`${botUrl}/logs`, {
