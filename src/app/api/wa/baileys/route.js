@@ -532,6 +532,13 @@ export async function POST(req) {
         const { data: sellerProfile } = await supa.from("seller_profiles").select("name").eq("wa", normalizedWa).maybeSingle();
         const buyerName = sellerProfile?.name || `Pengguna WA`;
 
+        // Cek jumlah posting sebelumnya (3 pertama gratis)
+        const { count: pastCount } = await supa
+          .from("wanted_listings")
+          .select("id", { count: "exact", head: true })
+          .eq("buyer_wa", normalizedWa);
+        const isFree = (pastCount || 0) < 3;
+
         const { data: wanted, error: wErr } = await supa.from("wanted_listings").insert({
           buyer_name: buyerName,
           buyer_wa: normalizedWa,
@@ -541,7 +548,7 @@ export async function POST(req) {
           category: parsed.category || "Lainnya",
           campus: parsed.campus || "Semua",
           area: "Sekitar Kampus",
-          status: "active",
+          status: isFree ? "active" : "pending",
         }).select().single();
 
         if (wErr) {
@@ -549,19 +556,42 @@ export async function POST(req) {
           return NextResponse.json({ ok: true, state: "dicari_db_error" });
         }
 
-        // Post ke grup WA
-        await postWantedToGroup(wanted).catch(() => {});
-
         const budgetStr = parsed.budget > 0 ? `\n💵 Budget: Rp ${Number(parsed.budget).toLocaleString("id-ID")}` : "";
         const campusStr = parsed.campus ? `\n📍 Area: ${parsed.campus}` : "";
-        const confirmMsg =
-          `✅ *Permintaan Berhasil Dipost!*\n\n` +
-          `🔍 *${parsed.title}*\n` +
-          `🏷️ ${parsed.category}${budgetStr}${campusStr}\n\n` +
-          `Permintaanmu sudah tayang di:\n👉 ${process.env.NEXT_PUBLIC_BASE_URL}/dicari\n\n` +
-          `Dan sudah dibroadcast ke grup WA marketplace. Tunggu penjual hubungi kamu ya! 😊`;
-        await sendWa(senderJid, confirmMsg);
-        return NextResponse.json({ ok: true, state: "dicari_posted", bot_reply: confirmMsg });
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+
+        if (isFree) {
+          await postWantedToGroup(wanted).catch(() => {});
+          const confirmMsg =
+            `✅ *Permintaan Berhasil Dipost!*\n\n` +
+            `🔍 *${parsed.title}*\n` +
+            `🏷️ ${parsed.category}${budgetStr}${campusStr}\n\n` +
+            `Sudah tayang di: ${baseUrl}/dicari\n` +
+            `Dan sudah dibroadcast ke grup WA. Tunggu penjual hubungi kamu ya! 😊\n\n` +
+            `_(Sisa gratis: ${2 - (pastCount || 0)} posting lagi)_`;
+          await sendWa(senderJid, confirmMsg);
+          return NextResponse.json({ ok: true, state: "dicari_posted", bot_reply: confirmMsg });
+        } else {
+          // Berbayar: generate QRIS
+          const orderId = `WNT-${wanted.id.slice(0, 8)}-${Date.now()}`;
+          await supa.from("payments").insert({
+            listing_id: null,
+            type: "iklan",
+            amount: 1000,
+            status: "pending",
+            midtrans_order_id: orderId,
+            meta: { wanted_id: wanted.id },
+          }).catch(() => {});
+          const qrisUrl = await getQrisUrl(supa, orderId, 1000);
+          const payMsg =
+            `📋 *Posting Dicari ke-${(pastCount || 0) + 1}*\n\n` +
+            `🔍 *${parsed.title}*\n` +
+            `🏷️ ${parsed.category}${budgetStr}${campusStr}\n\n` +
+            `Posting ke-4 dan seterusnya dikenakan biaya *Rp 1.000*.\n` +
+            `Scan QRIS di bawah untuk bayar, lalu kirim struk.`;
+          await sendWa(senderJid, payMsg, qrisUrl);
+          return NextResponse.json({ ok: true, state: "dicari_payment_required", bot_reply: payMsg });
+        }
       }
 
       // --- DYNAMIC AI CHAT & SEARCH & HANDOFF ---
