@@ -138,7 +138,13 @@ export default function AIPanel({ settings, action }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
-              {logs.length === 0 ? (
+              {loadingLogs ? (
+                <tr>
+                  <td colSpan="4" className="p-6 text-center text-gray-400">
+                    <span className="inline-block animate-pulse">Memuat log dari bot...</span>
+                  </td>
+                </tr>
+              ) : logs.length === 0 ? (
                 <tr>
                   <td colSpan="4" className="p-4 text-center text-gray-400">Belum ada log percakapan / Bot baru direstart</td>
                 </tr>
@@ -146,13 +152,13 @@ export default function AIPanel({ settings, action }) {
                 logs.map((log, i) => (
                   <tr key={i} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/20">
                     <td className="p-3 text-xs whitespace-nowrap text-gray-500">
-                      {new Date(log.timestamp).toLocaleString("id-ID")}
+                      {log.timestamp ? new Date(log.timestamp).toLocaleString("id-ID") : "-"}
                     </td>
                     <td className="p-3 text-xs font-mono">
-                      {log.sender.includes("me") ? (
+                      {log.sender?.includes("me") ? (
                         <span className="text-emerald-600 font-semibold">BOT (Keluar)</span>
                       ) : (
-                        log.sender.split("@")[0]
+                        log.sender?.split("@")[0] ?? "-"
                       )}
                     </td>
                     <td className="p-3 text-xs">

@@ -82,6 +82,7 @@ export default function BroadcastPanel({ sellers }) {
                 className="input"
                 placeholder="Contoh: Buatkan info promo bebas biaya bump hari ini..."
                 value={aiInstruction}
+                maxLength={300}
                 onChange={(e) => setAiInstruction(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleAIGenerate()}
               />
@@ -97,7 +98,12 @@ export default function BroadcastPanel({ sellers }) {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium dark:text-gray-300">Pesan Text</label>
+            <div className="mb-1 flex items-center justify-between">
+              <label className="text-sm font-medium dark:text-gray-300">Pesan Text</label>
+              <span className={`text-xs ${message.length > 900 ? "text-rose-500" : "text-gray-400"}`}>
+                {message.length} karakter
+              </span>
+            </div>
             <textarea
               className="input min-h-[150px]"
               placeholder="Ketik pesan promosi atau pengumuman di sini..."

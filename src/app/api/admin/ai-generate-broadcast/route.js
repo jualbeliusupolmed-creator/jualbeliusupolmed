@@ -12,8 +12,11 @@ export async function POST(req) {
     }
 
     const { instruction } = await req.json();
-    if (!instruction) {
+    if (!instruction?.trim()) {
       return NextResponse.json({ error: "Instruksi tidak boleh kosong" }, { status: 400 });
+    }
+    if (instruction.length > 300) {
+      return NextResponse.json({ error: "Instruksi terlalu panjang (maks 300 karakter)" }, { status: 400 });
     }
 
     const settings = await getSettings();
@@ -28,7 +31,7 @@ export async function POST(req) {
 
     const prompt = `Kamu adalah AI pembuat teks promosi (broadcast WhatsApp) untuk marketplace Jual Beli USU.
 Tugas kamu adalah membuat sebuah teks pesan broadcast WhatsApp berdasarkan instruksi admin berikut:
-"${instruction}"
+"${instruction.trim()}"
 
 Gunakan memori dan kepribadian berikut untuk menyesuaikan nada bicara kamu:
 Memori (Fakta): ${config.memory || ""}
