@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { parseListingFromText, verifyReceiptImage } from "@/lib/gemini";
-import { sendWa, postToGroup, notifyWantedMatch, notifyCategorySubscribers } from "@/lib/fonnte";
+import { parseListingFromText, verifyReceiptImage, processGeneralChat } from "@/lib/gemini";
+import { sendWa, postToGroup, notifyWantedMatch, notifyCategorySubscribers, notifyBuyerOfferResult } from "@/lib/fonnte";
 import { formatWa } from "@/lib/constants";
 import { getSettings, adFeeFrom } from "@/lib/settings";
 import { createQrisTransaction } from "@/lib/midtrans";
+import sharp from "sharp";
 
 export const dynamic = "force-dynamic";
 
@@ -37,9 +38,11 @@ async function notifyMatchingWanted(supa, listing) {
       .limit(10);
 
     if (!matches || matches.length === 0) return;
-    await Promise.allSettled(
-      matches.map((w) => notifyWantedMatch(w.buyer_wa, w.buyer_name, listing))
-    );
+    
+    for (const w of matches) {
+      await notifyWantedMatch(w.buyer_wa, w.buyer_name, listing).catch(() => {});
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
   } catch (err) {
     console.error("[wanted-match-baileys] error:", err?.message);
   }
@@ -47,6 +50,12 @@ async function notifyMatchingWanted(supa, listing) {
 
 export async function POST(req) {
   try {
+    const authHeader = (req.headers.get("authorization") || "").trim();
+    const expectedToken = (process.env.BAILEYS_API_TOKEN || "jualbeliusu_rahasia").replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
+    if (authHeader !== expectedToken) {
+      return NextResponse.json({ error: "Unauthorized webhook" }, { status: 401 });
+    }
+
     const formData = await req.formData();
     const senderJid = formData.get("sender");
     const message = formData.get("message") || "";
@@ -59,6 +68,11 @@ export async function POST(req) {
     const normalizedWa = formatWa(senderJid);
     if (!normalizedWa) {
       return NextResponse.json({ ok: true, ignored: true });
+    }
+
+    const settings = await getSettings();
+    if (settings?.bot?.paused_users?.includes(normalizedWa)) {
+      return NextResponse.json({ ok: true, ignored: true, reason: "human_handoff" });
     }
 
     const supa = getAdminClient();
@@ -155,6 +169,63 @@ export async function POST(req) {
     }
 
     // ==========================================
+    // STATE 3: TERIMA / TOLAK Nego In-App
+    // ==========================================
+    if (message && !file) {
+      const textMsg = message.toUpperCase().trim();
+      if (textMsg.startsWith("TERIMA ") || textMsg.startsWith("TOLAK ")) {
+        const parts = textMsg.split(" ");
+        const action = parts[0]; // TERIMA / TOLAK
+        const shortId = parts[1]; // short UUID
+
+        if (shortId && shortId.length >= 6) {
+          const { data: offers } = await supa
+            .from("price_offers")
+            .select("*, listings(title, seller_wa, seller_name)")
+            .ilike("id", `${shortId.toLowerCase()}%`)
+            .eq("status", "pending");
+
+          if (offers && offers.length > 0) {
+            const offer = offers[0];
+            // Pastikan penjual sesuai
+            if (offer.listings.seller_wa === normalizedWa) {
+              const newStatus = action === "TERIMA" ? "accepted" : "rejected";
+              await supa.from("price_offers").update({ status: newStatus }).eq("id", offer.id);
+
+              if (action === "TERIMA") {
+                await sendWa(senderJid, `✅ Anda telah *MENERIMA* tawaran Rp ${offer.offer_price.toLocaleString("id-ID")} untuk *${offer.listings.title}*.\n\n📞 Silakan hubungi pembeli untuk janjian COD:\nwa.me/${offer.buyer_wa}`);
+              } else {
+                await sendWa(senderJid, `❌ Anda telah *MENOLAK* tawaran Rp ${offer.offer_price.toLocaleString("id-ID")} untuk *${offer.listings.title}*.`);
+              }
+
+              // Notif ke pembeli
+              await notifyBuyerOfferResult(offer.buyer_wa, offer.buyer_name, {
+                listing_title: offer.listings.title,
+                offer_price: offer.offer_price,
+                seller_wa: action === "TERIMA" ? offer.listings.seller_wa : null,
+                accepted: action === "TERIMA"
+              });
+
+              return NextResponse.json({ ok: true, state: "offer_responded" });
+            }
+          }
+        }
+      } else if (textMsg === "STOP") {
+        const { error } = await supa
+          .from("category_subscriptions")
+          .delete()
+          .eq("buyer_wa", normalizedWa);
+        
+        if (!error) {
+          await sendWa(senderJid, "✅ Anda telah *berhasil berhenti berlangganan* dari semua notifikasi kategori.\nAnda tidak akan menerima pesan otomatis ini lagi.");
+        } else {
+          await sendWa(senderJid, "❌ Terjadi kesalahan saat memproses permintaan berhenti langganan Anda.");
+        }
+        return NextResponse.json({ ok: true, state: "unsubscribed" });
+      }
+    }
+
+    // ==========================================
     // STATE 1: Iklan Baru
     // ==========================================
     if (!message && !file) return NextResponse.json({ ok: true, ignored: true });
@@ -166,34 +237,82 @@ export async function POST(req) {
 
     if (message && !file) {
       const msgLower = message.toLowerCase().trim();
-      if (msgLower.includes("jual") || msgLower.includes("wts") || msgLower.includes("ready") || msgLower.includes("dijual")) {
-        await sendWa(senderJid, "📸 Sepertinya Anda ingin pasang iklan. Kirim *Foto Barang + Teks Deskripsi & Harga* dalam 1 pesan ya.");
-      } else {
-        await sendWa(senderJid,
-          `Halo! Saya bot Jual Beli USU/Polmed 👋\n\n` +
-          `Untuk pasang iklan, kirim *Foto + Deskripsi barang* (harga, kondisi, dll) dalam 1 pesan.\n\n` +
-          `Atau kunjungi: ${process.env.NEXT_PUBLIC_BASE_URL}`
-        );
+      
+      // Jika instruksi standar untuk pasang iklan dari command khusus, tetap layani dengan cepat
+      if (msgLower === "jual" || msgLower === "wts" || msgLower === "dijual" || msgLower === "ready") {
+         await sendWa(senderJid, "📸 Sepertinya Anda ingin pasang iklan. Kirim *Foto Barang + Teks Deskripsi & Harga* dalam 1 pesan ya.");
+         return NextResponse.json({ ok: true, state: "new_listing_no_image" });
       }
-      return NextResponse.json({ ok: true, state: "new_listing_no_image" });
+
+      // --- NEW LOGIC: DYNAMIC AI CHAT & SEARCH & HANDOFF ---
+      try {
+        const settings = await getSettings();
+        const aiConfig = settings.ai_config || {};
+        const aiRes = await processGeneralChat(message, aiConfig);
+
+        if (aiRes.intent === "search" && aiRes.keywords) {
+          await sendWa(senderJid, aiRes.reply_message || "🔍 Sedang mencari data...");
+          
+          // Lakukan pencarian ke Supabase
+          const { data: results } = await supa
+            .from("listings")
+            .select("id, title, price, seller_wa, sponsored_until")
+            .eq("status", "active")
+            .ilike("title", `%${aiRes.keywords}%`)
+            .order("sponsored_until", { ascending: false, nullsFirst: false })
+            .limit(3);
+
+          if (!results || results.length === 0) {
+            await sendWa(senderJid, `❌ Maaf, aku nggak nemuin barang dengan kata kunci "${aiRes.keywords}". Coba kata kunci lain ya!`);
+          } else {
+            let reply = `🔍 *Hasil Pencarian: ${aiRes.keywords}*\n\n`;
+            results.forEach((r, idx) => {
+               reply += `${idx + 1}. *${r.title}*\n`;
+               reply += `💰 Rp ${r.price.toLocaleString("id-ID")}\n`;
+               reply += `📲 wa.me/${r.seller_wa}\n`;
+               reply += `👉 Detail: ${process.env.NEXT_PUBLIC_BASE_URL}/produk/${r.id}\n\n`;
+            });
+            reply += `Itu dia hasil pencarian terbaik dari database kami! 🚀`;
+            await sendWa(senderJid, reply);
+          }
+        } else if (aiRes.intent === "handoff") {
+           // Tambahkan WA ke paused_users di tabel settings
+           const currentPaused = settings?.bot?.paused_users || [];
+           if (!currentPaused.includes(normalizedWa)) {
+              currentPaused.push(normalizedWa);
+              await supa.from("settings").update({ value: { paused_users: currentPaused } }).eq("key", "bot");
+           }
+           await sendWa(senderJid, aiRes.reply_message || "Pesan diteruskan ke Admin. Bot akan dihentikan sementara.");
+        } else {
+          // Intent = chat
+          await sendWa(senderJid, aiRes.reply_message || "Halo! Ada yang bisa kubantu?");
+        }
+      } catch (err) {
+         console.error("AI General Chat Error:", err);
+         await sendWa(senderJid, "Mohon maaf, sistem AI sedang sibuk. Silakan coba lagi nanti.");
+      }
+      return NextResponse.json({ ok: true, state: "ai_general_chat" });
     }
 
     // Ada Teks + Gambar = Iklan Baru!
     await sendWa(senderJid, "⏳ AI kami sedang membaca detail iklan Anda...");
 
     try {
-      const extracted = await parseListingFromText(message);
+      const settings = await getSettings();
+      const extracted = await parseListingFromText(message, settings.ai_config || {});
 
       if (!extracted || !extracted.title) {
         throw new Error("AI gagal mengekstrak judul iklan. Coba tulis lebih jelas: nama barang, harga, dan kondisinya.");
       }
 
       const arrayBuffer = await file.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      const mimeType = file.type || "image/jpeg";
-
-      const ext = mimeType.split("/")[1] || "jpg";
-      const fileName = `wa-${Date.now()}-${Math.floor(Math.random() * 1000)}.${ext}`;
+      const originalBuffer = Buffer.from(arrayBuffer);
+      
+      // Kompres ke WebP
+      const buffer = await sharp(originalBuffer).webp({ quality: 80 }).toBuffer();
+      const mimeType = "image/webp";
+      
+      const fileName = `wa-${Date.now()}-${Math.floor(Math.random() * 1000)}.webp`;
       const { data: uploadData, error: uploadError } = await supa.storage
         .from("listings")
         .upload(fileName, buffer, { contentType: mimeType });
@@ -208,7 +327,6 @@ export async function POST(req) {
       if (profile) profileName = profile.name;
       else await supa.from("seller_profiles").insert({ wa: normalizedWa, name: profileName });
 
-      const settings = await getSettings();
       const listingDays = Number(settings.pricing?.listingDays) || 14;
       const expiresAt = new Date(Date.now() + listingDays * 24 * 60 * 60 * 1000).toISOString();
 
@@ -247,17 +365,16 @@ export async function POST(req) {
       const qrisUrl = await getQrisUrl(supa, orderId, totalAmount);
 
       const conditionLabel = newListing.condition === "new" ? "✨ Baru" : "Bekas";
-      await sendWa(senderJid,
-        `✅ *Iklan Berhasil Dibaca AI!*\n\n` +
-        `📦 *${newListing.title}*\n` +
-        `🏷️ ${newListing.category} · ${conditionLabel}\n` +
-        `💰 Rp ${newListing.price.toLocaleString("id-ID")}\n\n` +
+      const fallbackReply = `✅ *Iklan Berhasil Dibaca AI!*\n\n📦 *${newListing.title}*\n🏷️ ${newListing.category} · ${conditionLabel}\n💰 Rp ${newListing.price.toLocaleString("id-ID")}\n\n`;
+      const aiReply = extracted.reply_message ? `${extracted.reply_message}\n\n` : fallbackReply;
+
+      const paymentInstructions = 
         `Untuk tayangkan iklan, scan QRIS di bawah ini.\n` +
         `Nominal *sudah otomatis terisi* saat di-scan:\n\n` +
         `💳 *Rp ${totalAmount.toLocaleString("id-ID")}*\n\n` +
-        `Setelah transfer, kirim *screenshot struk* ke sini.`,
-        qrisUrl
-      );
+        `Setelah transfer, kirim *screenshot struk* ke sini.`;
+
+      await sendWa(senderJid, aiReply + paymentInstructions, qrisUrl);
 
       return NextResponse.json({ ok: true, state: "listing_created_pending_payment" });
 

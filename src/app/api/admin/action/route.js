@@ -382,6 +382,20 @@ export async function POST(req) {
         break;
       }
 
+      case "unpause_bot": {
+        const normalizedWa = formatWa(wa);
+        if (!normalizedWa) return NextResponse.json({ error: "WA wajib" }, { status: 400 });
+        const settings = await getSettings().catch(() => null);
+        let currentPaused = settings?.bot?.paused_users || [];
+        if (currentPaused.includes(normalizedWa)) {
+          currentPaused = currentPaused.filter((p) => p !== normalizedWa);
+          await supa.from("settings").update({ value: { paused_users: currentPaused } }).eq("key", "bot");
+          // Beritahu user bot sudah aktif lagi
+          await sendWa(normalizedWa, "🤖 Bot telah diaktifkan kembali oleh Admin. Anda sekarang dapat menggunakan fitur otomatis bot lagi!");
+        }
+        break;
+      }
+
       // ── Profil Penjual ──────────────────────────────────────────────────
       case "update_seller_profile": {
         const normalizedWa = formatWa(wa);

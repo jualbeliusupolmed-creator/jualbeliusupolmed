@@ -10,6 +10,8 @@ import AdminListingModal from "./AdminListingModal";
 import ConfirmModal from "@/components/ConfirmModal";
 import { getSupabase } from "@/lib/supabase";
 import BaileysDashboard from "./baileys/BaileysDashboard";
+import AIPanel from "./AIPanel";
+import BroadcastPanel from "./BroadcastPanel";
 
 const REPORT_LABELS = {
   penipuan: "Penipuan / scam",
@@ -42,7 +44,9 @@ const ICONS = {
   blacklist: "M18.36 6.64A9 9 0 105.64 18.36 9 9 0 0018.36 6.64zM5.64 5.64l12.72 12.72",
   penjual: "M17 20h5V4H2v16h5m10 0v2m-10-2v2M8 9h8",
   blogs: "M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10l6 6v10a2 2 0 01-2 2zM14 4v6h6M9 13h6M9 17h6",
-  wabot: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"
+  wabot: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z",
+  ai: "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z",
+  broadcast: "M3 3h18v4H3zM3 17h18v4H3zM7 8h10v8H7z",
 };
 
 function NavIcon({ name }) {
@@ -74,7 +78,7 @@ export default function AdminPanel({
   pageSize = 100,
 }) {
   const router = useRouter();
-  const VALID_TABS = ["overview","listings","transaksi","rating","reports","dicari","kategori","pengaturan","blacklist","penjual","blogs","wabot"];
+  const VALID_TABS = ["overview","listings","transaksi","rating","reports","dicari","kategori","pengaturan","blacklist","penjual","blogs","wabot","ai"];
   const tab = VALID_TABS.includes(initialTab) ? initialTab : "overview";
   function goTab(key) {
     router.push(`/admin/${key}`);
@@ -240,6 +244,8 @@ export default function AdminPanel({
     { key: "penjual", label: "Penjual" },
     { key: "blogs", label: "Artikel Blog" },
     { key: "wabot", label: "WhatsApp Bot" },
+    { key: "broadcast", label: "Broadcast" },
+    { key: "ai", label: "AI & Memori" },
   ];
   const activeLabel = NAV.find((n) => n.key === tab)?.label;
 
@@ -683,6 +689,14 @@ export default function AdminPanel({
                         >
                           {s.trusted_seller ? "Cabut Badge" : "Beri Badge"}
                         </button>
+                        {settings?.bot?.paused_users?.includes(s.seller_wa) && (
+                          <button
+                            onClick={() => action({ action: "unpause_bot", wa: s.seller_wa }, `Bot diaktifkan kembali untuk ${s.seller_wa}`)}
+                            className="ml-2 rounded-md bg-green-100 px-2 py-1 text-xs text-green-700"
+                          >
+                            Unpause Bot
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -750,6 +764,12 @@ export default function AdminPanel({
             <BaileysDashboard />
           </div>
         )}
+
+        {/* BROADCAST */}
+        {tab === "broadcast" && <BroadcastPanel sellers={sellersList} />}
+
+        {/* AI PANEL */}
+        {tab === "ai" && <AIPanel settings={settings} action={action} />}
 
         {busy && <div className="fixed bottom-5 left-5 z-[60] rounded-lg bg-gray-900/80 px-3 py-1.5 text-xs text-white">Memproses…</div>}
       </main>

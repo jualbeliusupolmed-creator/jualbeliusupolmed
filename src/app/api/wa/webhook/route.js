@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { parseListingFromText, verifyReceiptImage } from "@/lib/gemini";
+import { parseListingFromText, verifyReceiptImage, processGeneralChat } from "@/lib/gemini";
 import { sendWa, postToGroup } from "@/lib/fonnte";
 import { formatWa } from "@/lib/constants";
 import { getSettings, adFeeFrom } from "@/lib/settings";
@@ -42,6 +42,11 @@ export async function POST(req) {
     const normalizedWa = formatWa(sender);
     if (!normalizedWa) {
       return NextResponse.json({ ok: true, ignored: true });
+    }
+
+    const settings = await getSettings();
+    if (settings?.bot?.paused_users?.includes(normalizedWa)) {
+      return NextResponse.json({ ok: true, ignored: true, reason: "human_handoff" });
     }
 
     const supa = getAdminClient();
@@ -145,12 +150,57 @@ export async function POST(req) {
          return NextResponse.json({ ok: true, state: "new_listing_no_text" });
        }
 
-       if (msgLower.includes("jual") || msgLower.includes("wts") || msgLower.includes("ready")) {
+       if (msgLower === "jual" || msgLower === "wts" || msgLower === "dijual" || msgLower === "ready") {
           await sendWa(normalizedWa, "📸 Sepertinya Anda ingin memasang iklan. Silakan kirimkan *Foto Barang* beserta teks deskripsinya dalam 1 pesan.");
-       } else {
-          await sendWa(normalizedWa, "Halo! Saya Bot Admin Jual Beli.\n\nJika Anda ingin memasang iklan, silakan kirimkan *Foto Barang* beserta *Teks Deskripsinya* (Nama Barang, Harga, dll) dalam 1 pesan yang sama.");
+          return NextResponse.json({ ok: true, state: "new_listing_no_image" });
        }
-       return NextResponse.json({ ok: true, state: "new_listing_no_image" });
+
+       // --- NEW LOGIC: DYNAMIC AI CHAT & SEARCH ---
+       try {
+         const settings = await getSettings();
+         const aiConfig = settings.ai_config || {};
+         const aiRes = await processGeneralChat(message, aiConfig);
+
+         if (aiRes.intent === "search" && aiRes.keywords) {
+           await sendWa(normalizedWa, aiRes.reply_message || "🔍 Sedang mencari data...");
+           
+           const { data: results } = await supa
+             .from("listings")
+             .select("id, title, price, seller_wa, sponsored_until")
+             .eq("status", "active")
+             .ilike("title", `%${aiRes.keywords}%`)
+             .order("sponsored_until", { ascending: false, nullsFirst: false })
+             .limit(3);
+
+           if (!results || results.length === 0) {
+             await sendWa(normalizedWa, `❌ Maaf, aku nggak nemuin barang dengan kata kunci "${aiRes.keywords}". Coba kata kunci lain ya!`);
+           } else {
+             let reply = `🔍 *Hasil Pencarian: ${aiRes.keywords}*\n\n`;
+             results.forEach((r, idx) => {
+                reply += `${idx + 1}. *${r.title}*\n`;
+                reply += `💰 Rp ${r.price.toLocaleString("id-ID")}\n`;
+                reply += `📲 wa.me/${r.seller_wa}\n`;
+                reply += `👉 Detail: ${process.env.NEXT_PUBLIC_BASE_URL}/produk/${r.id}\n\n`;
+             });
+             reply += `Itu dia hasil pencarian terbaik dari database kami! 🚀`;
+             await sendWa(normalizedWa, reply);
+           }
+         } else if (aiRes.intent === "handoff") {
+           const currentPaused = settings?.bot?.paused_users || [];
+           if (!currentPaused.includes(normalizedWa)) {
+              currentPaused.push(normalizedWa);
+              await supa.from("settings").update({ value: { paused_users: currentPaused } }).eq("key", "bot");
+           }
+           await sendWa(normalizedWa, aiRes.reply_message || "Pesan diteruskan ke Admin. Bot akan dihentikan sementara.");
+         } else {
+           // Intent = chat
+           await sendWa(normalizedWa, aiRes.reply_message || "Halo! Ada yang bisa kubantu?");
+         }
+       } catch (err) {
+          console.error("AI General Chat Error:", err);
+          await sendWa(normalizedWa, "Mohon maaf, sistem AI sedang sibuk. Silakan coba lagi nanti.");
+       }
+       return NextResponse.json({ ok: true, state: "ai_general_chat" });
     }
 
     // Ada Teks + Gambar = Iklan Baru!

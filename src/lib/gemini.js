@@ -80,14 +80,18 @@ export async function verifyReceiptImage(imageBuffer, mimeType, maxRetries = 3) 
  * @param {string} text - The raw text message from the user
  * @returns {Promise<Object>} JSON object containing extracted data { title, price, description, category }
  */
-export async function parseListingFromText(text, maxRetries = 3) {
+export async function parseListingFromText(text, aiConfig = {}, maxRetries = 3) {
   let attempt = 0;
+  const primaryModel = aiConfig.model || "gemini-2.5-flash";
   const modelsToTry = [
-    "gemini-2.5-flash",
+    primaryModel,
     "gemini-2.5-flash-lite",
     "gemini-2.0-flash-lite"
   ];
   
+  const memoryContext = aiConfig.memory ? `\nPengetahuan Sistem (Memory):\n${aiConfig.memory}\n` : "";
+  const personalityContext = aiConfig.personality ? `\nKepribadian & Gaya Bicara Anda:\n${aiConfig.personality}\n` : "";
+
   while (attempt < maxRetries) {
     try {
       const modelName = modelsToTry[attempt] || modelsToTry[modelsToTry.length - 1];
@@ -96,6 +100,8 @@ export async function parseListingFromText(text, maxRetries = 3) {
       const prompt = `
         Anda adalah asisten marketplace yang cerdas.
         Tugas Anda adalah membaca pesan chat dari pengguna yang ingin mengiklankan barang dagangan mereka.
+        ${memoryContext}
+        ${personalityContext}
         
         Pesan pengguna:
         """
@@ -107,10 +113,11 @@ export async function parseListingFromText(text, maxRetries = 3) {
         - "price": Harga barang dalam angka murni (contoh: 50000). Jika nego atau tidak jelas, tebak dari konteks atau isi 0.
         - "description": Deksripsi lengkap barang. Jika ada informasi kontak, hapus informasi kontaknya.
         - "category": Pilih salah satu kategori paling cocok dari list berikut: ["Elektronik", "Fashion", "Kendaraan", "Properti", "Buku", "Makanan", "Jasa", "Lainnya"]. Default: "Lainnya".
+        - "reply_message": Tuliskan pesan balasan yang ramah kepada pengguna untuk mengkonfirmasi bahwa detail iklannya (nama barang, harga) sudah dicatat. WAJIB patuhi Kepribadian & Gaya Bicara di atas! Jangan tulis instruksi bayar di teks ini (akan ditambahkan otomatis oleh sistem).
         
         Aturan ketat:
         - Kembalikan jawaban Anda HANYA dalam format JSON MURNI tanpa markdown, tanpa teks lain.
-        - Contoh output: {"title": "iPhone 12 Mulus", "price": 5000000, "description": "Lecet pemakaian wajar, baterai aman", "category": "Elektronik"}
+        - Contoh output: {"title": "iPhone 12 Mulus", "price": 5000000, "description": "Lecet pemakaian", "category": "Elektronik", "reply_message": "Siap kak! iPhone 12 mulus udah aku catat nih detailnya. Tunggu sebentar ya! 🚀"}
       `;
 
       const result = await model.generateContent(prompt);
@@ -132,6 +139,82 @@ export async function parseListingFromText(text, maxRetries = 3) {
       }
       
       throw new Error("Gagal mengekstrak data iklan menggunakan AI. Silakan coba lagi nanti.");
+    }
+  }
+}
+
+/**
+ * Parses raw text from a WhatsApp message to determine if it's a general chat or a search query.
+ * @param {string} text - The raw text message from the user
+ * @param {Object} aiConfig - AI configuration containing memory and personality
+ * @returns {Promise<Object>} JSON object containing extracted data { intent, keywords, reply_message }
+ */
+export async function processGeneralChat(text, aiConfig = {}, maxRetries = 3) {
+  let attempt = 0;
+  const primaryModel = aiConfig.model || "gemini-2.5-flash";
+  const modelsToTry = [
+    primaryModel,
+    "gemini-2.5-flash-lite",
+    "gemini-2.0-flash-lite"
+  ];
+  
+  const memoryContext = aiConfig.memory ? `\nPengetahuan Sistem (Memory):\n${aiConfig.memory}\n` : "";
+  const personalityContext = aiConfig.personality ? `\nKepribadian & Gaya Bicara Anda:\n${aiConfig.personality}\n` : "";
+
+  while (attempt < maxRetries) {
+    try {
+      const modelName = modelsToTry[attempt] || modelsToTry[modelsToTry.length - 1];
+      const model = genAI.getGenerativeModel({ model: modelName });
+
+      const prompt = `
+        Anda adalah asisten cerdas untuk marketplace kampus (Jual Beli USU/Polmed).
+        Tugas Anda adalah merespons chat dari pengguna WhatsApp.
+        ${memoryContext}
+        ${personalityContext}
+        
+        Pesan pengguna:
+        """
+        ${text}
+        """
+        
+        Analisis pesan tersebut dan tentukan niat (intent) pengguna.
+        Jika pengguna MENCARI barang (contoh: "cari motor", "ada kos kosong?", "jual laptop murah"), intent adalah "search".
+        Jika pengguna INGIN BICARA DENGAN ADMIN/MANUSIA atau KOMPLAIN (contoh: "halo admin", "tolong panggil admin", "min kok iklan saya gak tayang", "ini bot ya", "saya mau lapor"), intent adalah "handoff".
+        Jika pengguna HANYA NGOBROL biasa selain di atas (contoh: "halo", "selamat pagi", "cara pasang iklan gimana?"), intent adalah "chat".
+        
+        Ekstrak ke format JSON:
+        {
+          "intent": "search", "handoff", atau "chat",
+          "keywords": "kata kunci pencarian jika intent=search (kosongkan jika chat/handoff)",
+          "reply_message": "Balasan ramah sesuai Kepribadian Anda. Jika search, beri pengantar seperti 'Tunggu sebentar, aku carikan dulu ya!'. Jika handoff, balas 'Baik kak, pesan ini diteruskan ke Admin Manusia. Bot akan diam dulu ya sampai Admin membalas!'. Jika chat, jawab pertanyaan mereka dengan luwes."
+        }
+        
+        Aturan ketat:
+        - Kembalikan jawaban Anda HANYA dalam format JSON MURNI tanpa markdown, tanpa teks lain.
+        - Contoh output search: {"intent": "search", "keywords": "motor bekas", "reply_message": "Siap kak! Tunggu sebentar ya, aku carikan motor bekas yang lagi dijual."}
+        - Contoh output handoff: {"intent": "handoff", "keywords": "", "reply_message": "Baik kak, pesan ini diteruskan ke Admin Manusia. Bot akan diam dulu ya sampai Admin membalas!"}
+        - Contoh output chat: {"intent": "chat", "keywords": "", "reply_message": "Halo kak! Aku asisten Jual Beli USU/Polmed. Ada yang bisa aku bantu?"}
+      `;
+
+      const result = await model.generateContent(prompt);
+      const responseText = result.response.text();
+      
+      const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+      return JSON.parse(cleanJson);
+      
+    } catch (error) {
+      const modelFailed = modelsToTry[attempt] || modelsToTry[modelsToTry.length - 1];
+      attempt++;
+      console.error(`Gemini AI Chat Error (Attempt ${attempt}/${maxRetries} using ${modelFailed}):`, error.message);
+      
+      const isRateLimitOrOverload = error.message.includes("503") || error.message.includes("429");
+      
+      if (isRateLimitOrOverload && attempt < maxRetries) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        continue;
+      }
+      
+      throw new Error("Gagal merespons pesan menggunakan AI. Silakan coba lagi nanti.");
     }
   }
 }

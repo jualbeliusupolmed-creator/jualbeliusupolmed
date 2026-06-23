@@ -1,0 +1,90 @@
+"use client";
+
+import { useState } from "react";
+import { getSupabase } from "@/lib/supabase";
+
+export default function BroadcastPanel({ sellers }) {
+  const [message, setMessage] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleBroadcast() {
+    if (!message.trim()) return alert("Pesan tidak boleh kosong!");
+    if (!confirm(`Kirim pesan ini ke ${sellers.length} penjual?`)) return;
+
+    setLoading(true);
+    setStatus("Sedang mengirim...");
+    try {
+      const res = await fetch("/api/admin/broadcast", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: message.trim(),
+          imageUrl: imageUrl.trim() || null,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal broadcast");
+      
+      setStatus(`✅ Berhasil mengirim ke ${data.successCount} pengguna. Gagal: ${data.failCount}`);
+      setMessage("");
+      setImageUrl("");
+    } catch (err) {
+      console.error(err);
+      setStatus(`❌ Error: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="max-w-2xl">
+      <div className="card p-6">
+        <h2 className="mb-4 text-lg font-bold dark:text-white">Broadcast WhatsApp</h2>
+        <p className="mb-4 text-sm text-gray-500">
+          Kirim pesan massal ke seluruh pengguna ({sellers.length} penjual terdaftar). 
+          Gunakan fitur ini dengan bijak untuk menghindari pemblokiran nomor WhatsApp oleh Meta.
+        </p>
+
+        <div className="space-y-4">
+          <div>
+            <label className="mb-1 block text-sm font-medium dark:text-gray-300">Pesan Text</label>
+            <textarea
+              className="input min-h-[150px]"
+              placeholder="Ketik pesan promosi atau pengumuman di sini..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium dark:text-gray-300">URL Gambar (Opsional)</label>
+            <input
+              type="url"
+              className="input"
+              placeholder="https://example.com/promo.jpg"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+            />
+          </div>
+
+          {status && (
+            <div className={`rounded-md p-3 text-sm ${status.includes("Error") ? "bg-rose-100 text-rose-700" : "bg-blue-50 text-blue-700"}`}>
+              {status}
+            </div>
+          )}
+
+          <button
+            onClick={handleBroadcast}
+            disabled={loading || !message.trim()}
+            className="btn-primary w-full"
+          >
+            {loading ? "Mengirim..." : `Kirim Broadcast ke ${sellers.length} Pengguna`}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -140,6 +140,8 @@ export async function notifySellerNewOffer(seller_wa, seller_name, listingWithOf
   const { title, offer } = listingWithOffer;
   const url = `${baseUrl()}/dashboard`;
   const waLink = offer.buyer_wa.startsWith("0") ? "62" + offer.buyer_wa.slice(1) : offer.buyer_wa;
+  const shortId = offer.id.split('-')[0]; // Ambil 8 karakter pertama UUID
+
   const msg =
     `💰 *Tawaran Harga Baru!*\n\n` +
     `Hei ${seller_name || "Penjual"},\n` +
@@ -147,7 +149,10 @@ export async function notifySellerNewOffer(seller_wa, seller_name, listingWithOf
     `📦 _${title}_\n` +
     (offer.message ? `💬 "${offer.message}"\n\n` : "\n") +
     `📞 Hubungi pembeli: wa.me/${waLink}\n\n` +
-    `Terima atau tolak tawaran di Dashboard:\n${url}`;
+    `*CARA MENJAWAB:*\n` +
+    `Balas pesan ini dengan perintah:\n` +
+    `✅ *TERIMA ${shortId}*\n` +
+    `❌ *TOLAK ${shortId}*`;
   return send(seller_wa, msg).catch(() => ({ ok: false }));
 }
 
@@ -181,21 +186,23 @@ export async function notifyCategorySubscribers(supa, listing) {
     if (!subs?.length) return;
 
     const url = `${baseUrl()}/produk/${(await import("@/lib/slug")).buildSlug(listing.title, listing.id)}`;
-    await Promise.allSettled(
-      subs.map((s) =>
-        send(
-          s.buyer_wa,
-          `🔔 *Iklan baru di kategori ${listing.category}!*\n\n` +
-          `Hei ${s.buyer_name || "kamu"},\n` +
-          `Ada iklan baru yang mungkin menarik:\n\n` +
-          `📦 *${listing.title}*\n` +
-          `💰 ${rupiah(listing.price)}\n` +
-          `📍 ${listing.campus === "Semua" ? "Medan" : listing.campus}\n\n` +
-          `👉 ${url}\n\n` +
-          `_Balas STOP untuk berhenti notifikasi._`
-        ).catch(() => {})
-      )
-    );
+    
+    for (const s of subs) {
+      await send(
+        s.buyer_wa,
+        `🔔 *Iklan baru di kategori ${listing.category}!*\n\n` +
+        `Hei ${s.buyer_name || "kamu"},\n` +
+        `Ada iklan baru yang mungkin menarik:\n\n` +
+        `📦 *${listing.title}*\n` +
+        `💰 ${rupiah(listing.price)}\n` +
+        `📍 ${listing.campus === "Semua" ? "Medan" : listing.campus}\n\n` +
+        `👉 ${url}\n\n` +
+        `_Balas STOP untuk berhenti notifikasi._`
+      ).catch(() => {});
+      
+      // Berikan jeda 2 detik antar pesan agar tidak dianggap spam
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
   } catch (err) {
     console.error("[category-notify] error:", err?.message);
   }
