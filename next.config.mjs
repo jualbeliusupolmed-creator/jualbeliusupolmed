@@ -6,6 +6,10 @@ const nextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "**" },
     ],
+    formats: ["image/avif", "image/webp"],
+  },
+  experimental: {
+    optimizePackageImports: ["sonner", "embla-carousel-react"],
   },
   async redirects() {
     return [
