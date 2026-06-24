@@ -29,7 +29,7 @@ export async function GET(req) {
 
   const { data: expiringH3 } = await supa
     .from("listings")
-    .select("id, title, seller_wa, seller_name, expires_at")
+    .select("id, listing_code, title, seller_wa, seller_name, expires_at")
     .eq("status", "active")
     .gte("expires_at", h3Min)
     .lte("expires_at", h3Max);
@@ -37,13 +37,13 @@ export async function GET(req) {
   for (const l of expiringH3 || []) {
     try {
       const expDate = new Date(l.expires_at).toLocaleDateString("id-ID", { day: "numeric", month: "long" });
-      const shortId = l.id.slice(0, 8);
+      const kode = l.listing_code || l.id.slice(0, 8);
       const msg =
         `⚠️ *Iklan Hampir Berakhir — 3 Hari Lagi!*\n\n` +
         `Hei ${l.seller_name || "Penjual"},\n` +
         `Iklanmu *"${l.title}"* akan berakhir pada *${expDate}*.\n\n` +
         `Perpanjang sekarang agar tetap tayang:\n` +
-        `💬 Ketik: *PERPANJANG ${shortId}*\n` +
+        `💬 Ketik: *PERPANJANG ${kode}*\n` +
         `🌐 Dashboard: ${baseUrl}/dashboard\n\n` +
         `_Jangan sampai iklanmu hilang dari pencarian!_`;
       const waTarget = formatWaForBaileys(l.seller_wa);
@@ -59,7 +59,7 @@ export async function GET(req) {
 
   const { data: expiringH1 } = await supa
     .from("listings")
-    .select("id, title, seller_wa, seller_name, expires_at")
+    .select("id, listing_code, title, seller_wa, seller_name, expires_at")
     .eq("status", "active")
     .gte("expires_at", h1Min)
     .lte("expires_at", h1Max);
@@ -67,13 +67,13 @@ export async function GET(req) {
   for (const l of expiringH1 || []) {
     try {
       const expDate = new Date(l.expires_at).toLocaleDateString("id-ID", { day: "numeric", month: "long" });
-      const shortId = l.id.slice(0, 8);
+      const kode = l.listing_code || l.id.slice(0, 8);
       const msg =
         `🚨 *Iklan Berakhir Besok!*\n\n` +
         `Hei ${l.seller_name || "Penjual"},\n` +
         `Iklanmu *"${l.title}"* berakhir *${expDate}* — besok!\n\n` +
         `Perpanjang SEKARANG sebelum terlambat:\n` +
-        `💬 Ketik: *PERPANJANG ${shortId}*\n` +
+        `💬 Ketik: *PERPANJANG ${kode}*\n` +
         `🌐 Dashboard: ${baseUrl}/dashboard`;
       const waTarget = formatWaForBaileys(l.seller_wa);
       const res = await sendWa(waTarget, msg).catch(() => ({ ok: false }));
