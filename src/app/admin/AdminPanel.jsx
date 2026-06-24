@@ -102,6 +102,7 @@ export default function AdminPanel({
   const [newBl, setNewBl] = useState("");
   const [editingSeller, setEditingSeller] = useState(null);
   const [sellerForm, setSellerForm] = useState({ name: "", bio: "" });
+  const [sellerSearch, setSellerSearch] = useState("");
 
   useEffect(() => {
     if (!toast) return;
@@ -415,7 +416,9 @@ export default function AdminPanel({
               <input className="input min-w-[200px] flex-1" placeholder="Cari judul / nama / WA…" value={q} onChange={(e) => setQ(e.target.value)} />
               <select className="input w-auto" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
                 <option value="all">Semua status</option>
-                {["pending", "active", "sold", "expired", "suspended"].map((s) => <option key={s} value={s}>{s}</option>)}
+                {["pending", "active", "sold", "expired", "suspended", "deletion_pending", "deleted"].map((s) => (
+                  <option key={s} value={s}>{s === "deletion_pending" ? "⏳ Minta Hapus" : s}</option>
+                ))}
               </select>
               <button
                 onClick={() =>
@@ -481,14 +484,23 @@ export default function AdminPanel({
                       <td className="p-3">
                         <div className="flex flex-wrap gap-1">
                           <a href={`/admin/listings/${buildSlug(l.title, l.id)}`} className="rounded-md bg-gray-900 px-2 py-1 text-xs text-white dark:bg-slate-200 dark:text-slate-900">Edit</a>
-                          {l.status !== "active" && <button onClick={() => action({ action: "activate", id: l.id }, "Diaktifkan")} className="rounded-md bg-green-100 px-2 py-1 text-xs text-green-700">Aktifkan</button>}
-                          {l.status !== "suspended" && <button onClick={() => action({ action: "suspend", id: l.id }, "Disuspend")} className="rounded-md bg-amber-100 px-2 py-1 text-xs text-amber-700">Suspend</button>}
-                          {l.featured ? (
-                            <button onClick={() => action({ action: "unfeature", id: l.id }, "Featured dilepas")} className="rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-600 dark:bg-slate-800 dark:text-slate-300">Unfeature</button>
+                          {l.status === "deletion_pending" ? (
+                            <>
+                              <button onClick={() => confirmThen({ title: "Setujui penghapusan", message: `Hapus permanen "${l.title}"?`, danger: true }, () => action({ action: "delete", id: l.id }, "Iklan dihapus (APPROVED)"))} className="rounded-md bg-rose-600 px-2 py-1 text-xs text-white">✓ Approve</button>
+                              <button onClick={() => action({ action: "activate", id: l.id }, "Penghapusan ditolak — iklan aktif kembali")} className="rounded-md bg-green-100 px-2 py-1 text-xs text-green-700">✗ Reject</button>
+                            </>
                           ) : (
-                            <button onClick={() => action({ action: "feature", id: l.id, days: 7 }, "Featured 7 hari")} className="rounded-md bg-amber-50 px-2 py-1 text-xs text-amber-600">Featured</button>
+                            <>
+                              {l.status !== "active" && <button onClick={() => action({ action: "activate", id: l.id }, "Diaktifkan")} className="rounded-md bg-green-100 px-2 py-1 text-xs text-green-700">Aktifkan</button>}
+                              {l.status !== "suspended" && <button onClick={() => action({ action: "suspend", id: l.id }, "Disuspend")} className="rounded-md bg-amber-100 px-2 py-1 text-xs text-amber-700">Suspend</button>}
+                              {l.featured ? (
+                                <button onClick={() => action({ action: "unfeature", id: l.id }, "Featured dilepas")} className="rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-600 dark:bg-slate-800 dark:text-slate-300">Unfeature</button>
+                              ) : (
+                                <button onClick={() => action({ action: "feature", id: l.id, days: 7 }, "Featured 7 hari")} className="rounded-md bg-amber-50 px-2 py-1 text-xs text-amber-600">Featured</button>
+                              )}
+                              <button onClick={() => confirmThen({ title: "Hapus listing", message: `Hapus "${l.title}"?`, danger: true }, () => action({ action: "delete", id: l.id }, "Dihapus"))} className="rounded-md bg-rose-100 px-2 py-1 text-xs text-rose-700">Hapus</button>
+                            </>
                           )}
-                          <button onClick={() => confirmThen({ title: "Hapus listing", message: `Hapus "${l.title}"?`, danger: true }, () => action({ action: "delete", id: l.id }, "Dihapus"))} className="rounded-md bg-rose-100 px-2 py-1 text-xs text-rose-700">Hapus</button>
                           <button onClick={() => confirmThen({ title: "Blacklist penjual", message: `Blokir ${l.seller_wa}? Semua iklannya disuspend.`, danger: true }, () => action({ action: "blacklist", wa: l.seller_wa }, "Diblacklist"))} className="rounded-md border border-gray-300 px-2 py-1 text-xs text-gray-700 dark:border-slate-700 dark:text-slate-300">Blacklist</button>
                         </div>
                       </td>
@@ -522,6 +534,31 @@ export default function AdminPanel({
                 Export CSV
               </button>
             </div>
+            {/* Revenue summary per tipe */}
+            {(() => {
+              const paidOnly = filteredPayments.filter(p => p.status === "paid");
+              const totalPaid = paidOnly.reduce((s, p) => s + (p.amount || 0), 0);
+              const byType = PAYMENT_TYPES.reduce((acc, t) => {
+                const sum = paidOnly.filter(p => p.type === t).reduce((s, p) => s + (p.amount || 0), 0);
+                if (sum > 0) acc[t] = sum;
+                return acc;
+              }, {});
+              return (
+                <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                  <div className="rounded-xl border border-green-200 bg-green-50 p-3 dark:border-green-900 dark:bg-green-900/20">
+                    <p className="text-xs text-green-600 dark:text-green-400">Total Lunas</p>
+                    <p className="mt-0.5 text-base font-bold text-green-700 dark:text-green-300">{rupiah(totalPaid)}</p>
+                    <p className="text-[10px] text-gray-400">{paidOnly.length} transaksi</p>
+                  </div>
+                  {Object.entries(byType).map(([t, sum]) => (
+                    <div key={t} className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
+                      <p className="text-xs capitalize text-gray-500 dark:text-gray-400">{t}</p>
+                      <p className="mt-0.5 text-sm font-bold dark:text-white">{rupiah(sum)}</p>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
             <p className="mb-2 text-xs text-gray-400">{filteredPayments.length} transaksi</p>
             <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-slate-800">
               <table className="w-full text-sm">
@@ -655,57 +692,116 @@ export default function AdminPanel({
         )}
 
         {/* PENJUAL */}
-        {tab === "penjual" && (
-          <div>
-            <p className="mb-2 text-xs text-gray-400">{sellersList.length} penjual</p>
-            <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-slate-800">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 text-left text-xs uppercase text-gray-400 dark:bg-slate-900">
-                  <tr>
-                    <th className="p-3">Nama Penjual</th>
-                    <th className="p-3">WhatsApp</th>
-                    <th className="p-3">Total Iklan</th>
-                    <th className="p-3">Aktif</th>
-                    <th className="p-3">Terjual</th>
-                    <th className="p-3">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody className="dark:text-slate-300">
-                  {sellersList.map((s) => (
-                    <tr key={s.seller_wa} className="border-t dark:border-slate-800">
-                      <td className="p-3 font-medium dark:text-white">
-                        {s.seller_name}
-                        {s.trusted_seller && <span className="ml-2 text-xs text-blue-500">☑</span>}
-                        <a href={`/admin/penjual/${s.seller_wa.replace(/\D/g, "")}`} className="ml-2 text-xs text-primary hover:underline">Edit</a>
-                      </td>
-                      <td className="p-3 font-mono text-xs"><a href={`https://wa.me/${s.seller_wa.replace(/\D/g, "")}`} className="hover:text-primary" target="_blank" rel="noreferrer">{s.seller_wa}</a></td>
-                      <td className="p-3">{s.total_iklan}</td>
-                      <td className="p-3 text-green-600">{s.active_iklan}</td>
-                      <td className="p-3 text-gray-500">{s.sold_iklan}</td>
-                      <td className="p-3">
-                        <button 
-                          onClick={() => action({ action: "update_seller_profile", wa: s.seller_wa, trusted_seller: !s.trusted_seller }, `Status trusted seller diperbarui`)} 
-                          className="rounded-md bg-blue-100 px-2 py-1 text-xs text-blue-700"
-                        >
-                          {s.trusted_seller ? "Cabut Badge" : "Beri Badge"}
-                        </button>
-                        {settings?.bot?.paused_users?.includes(s.seller_wa) && (
-                          <button
-                            onClick={() => action({ action: "unpause_bot", wa: s.seller_wa }, `Bot diaktifkan kembali untuk ${s.seller_wa}`)}
-                            className="ml-2 rounded-md bg-green-100 px-2 py-1 text-xs text-green-700"
-                          >
-                            Unpause Bot
-                          </button>
-                        )}
-                      </td>
+        {tab === "penjual" && (() => {
+          const filteredSellers = sellersList.filter(s =>
+            !sellerSearch ||
+            (s.seller_name || "").toLowerCase().includes(sellerSearch.toLowerCase()) ||
+            (s.seller_wa || "").includes(sellerSearch)
+          );
+          return (
+            <div>
+              <div className="mb-3 flex flex-wrap gap-2">
+                <input
+                  className="input min-w-[200px] flex-1"
+                  placeholder="Cari nama / nomor WA…"
+                  value={sellerSearch}
+                  onChange={(e) => setSellerSearch(e.target.value)}
+                />
+                <button
+                  onClick={() => downloadCSV("penjual.csv", filteredSellers.map(s => ({
+                    nama: s.seller_name, wa: s.seller_wa,
+                    total_iklan: s.total_iklan, aktif: s.active_iklan, terjual: s.sold_iklan,
+                    trusted: s.trusted_seller ? "Ya" : "Tidak",
+                  })))}
+                  className="btn-outline text-xs"
+                >
+                  Export CSV
+                </button>
+              </div>
+              <p className="mb-2 text-xs text-gray-400">{filteredSellers.length} dari {sellersList.length} penjual</p>
+              <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-slate-800">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 text-left text-xs uppercase text-gray-400 dark:bg-slate-900">
+                    <tr>
+                      <th className="p-3">Nama Penjual</th>
+                      <th className="p-3">WhatsApp</th>
+                      <th className="p-3">Iklan</th>
+                      <th className="p-3">Aktif</th>
+                      <th className="p-3">Terjual</th>
+                      <th className="p-3">Status Bot</th>
+                      <th className="p-3">Aksi</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="dark:text-slate-300">
+                    {filteredSellers.length === 0 && (
+                      <tr><td colSpan="7" className="p-4 text-center text-gray-400">Tidak ada penjual ditemukan.</td></tr>
+                    )}
+                    {filteredSellers.map((s) => {
+                      const isPaused = settings?.bot?.paused_users?.includes(s.seller_wa);
+                      return (
+                        <tr key={s.seller_wa} className="border-t dark:border-slate-800">
+                          <td className="p-3 font-medium dark:text-white">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span>{s.seller_name}</span>
+                              {s.trusted_seller && <span className="text-[10px] font-bold text-blue-500 bg-blue-50 dark:bg-blue-900/30 rounded px-1">☑ Terpercaya</span>}
+                              {s.subscription_tier === "pro" && <span className="text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-900/30 rounded px-1">⭐ PRO</span>}
+                            </div>
+                            <div className="mt-0.5 flex gap-2 text-xs">
+                              <a href={`/admin/penjual/${s.seller_wa.replace(/\D/g, "")}`} className="text-primary hover:underline">Edit</a>
+                              <a href={`/penjual/${s.seller_wa.replace(/\D/g, "")}`} target="_blank" rel="noreferrer" className="text-gray-400 hover:underline">Profil ↗</a>
+                            </div>
+                          </td>
+                          <td className="p-3 font-mono text-xs">
+                            <a href={`https://wa.me/${s.seller_wa.replace(/\D/g, "")}`} className="hover:text-primary" target="_blank" rel="noreferrer">{s.seller_wa}</a>
+                          </td>
+                          <td className="p-3">{s.total_iklan}</td>
+                          <td className="p-3 text-green-600">{s.active_iklan}</td>
+                          <td className="p-3 text-gray-500">{s.sold_iklan}</td>
+                          <td className="p-3">
+                            {isPaused
+                              ? <span className="text-xs text-amber-600 font-medium">⏸ Paused</span>
+                              : <span className="text-xs text-green-600">▶ Aktif</span>}
+                          </td>
+                          <td className="p-3">
+                            <div className="flex flex-wrap gap-1">
+                              <button
+                                onClick={() => action({ action: "update_seller_profile", wa: s.seller_wa, trusted_seller: !s.trusted_seller }, "Badge diperbarui")}
+                                className="rounded-md bg-blue-100 px-2 py-1 text-xs text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                              >
+                                {s.trusted_seller ? "Cabut Badge" : "Beri Badge"}
+                              </button>
+                              {isPaused ? (
+                                <button
+                                  onClick={() => action({ action: "unpause_bot", wa: s.seller_wa }, "Bot diaktifkan")}
+                                  className="rounded-md bg-green-100 px-2 py-1 text-xs text-green-700"
+                                >
+                                  Aktifkan Bot
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => confirmThen({ title: "Pause Bot", message: `Pause bot untuk ${s.seller_name}?` }, () => action({ action: "pause_bot", wa: s.seller_wa }, "Bot di-pause"))}
+                                  className="rounded-md bg-amber-100 px-2 py-1 text-xs text-amber-700"
+                                >
+                                  Pause Bot
+                                </button>
+                              )}
+                              <button
+                                onClick={() => confirmThen({ title: "Blacklist", message: `Blokir ${s.seller_wa}? Semua iklannya disuspend.`, danger: true }, () => action({ action: "blacklist", wa: s.seller_wa }, "Diblacklist"))}
+                                className="rounded-md border border-gray-200 px-2 py-1 text-xs text-gray-600 dark:border-slate-700 dark:text-slate-400"
+                              >
+                                Blacklist
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
-
-          </div>
-        )}
+          );
+        })()}
 
         {/* BLOGS */}
         {tab === "blogs" && (

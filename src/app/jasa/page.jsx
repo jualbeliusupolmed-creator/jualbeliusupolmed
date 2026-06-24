@@ -4,8 +4,7 @@ import { fetchListingsWithProfiles } from "@/lib/dbHelpers";
 import { buildSlug } from "@/lib/slug";
 import JasaBrowser from "./JasaBrowser";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 300; // ISR 5 menit
 
 export const metadata = {
   title: "Jasa warga USU Polmed — Joki, Desain, IT",

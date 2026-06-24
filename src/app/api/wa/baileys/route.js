@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { parseListingFromText, verifyReceiptImage, processGeneralChat, suggestPrice, parseWantedFromText } from "@/lib/gemini";
-import { sendWa, postToGroup, notifyWantedMatch, notifyCategorySubscribers, notifyBuyerOfferResult, postWantedToGroup } from "@/lib/fonnte";
+import { sendWa, postToGroup, notifyWantedMatch, notifyCategorySubscribers, notifyBuyerOfferResult, postWantedToGroup, notifySellerNewOffer } from "@/lib/fonnte";
 import { formatWa } from "@/lib/constants";
 import { getSettings, adFeeFrom } from "@/lib/settings";
 import { createQrisTransaction } from "@/lib/midtrans";
@@ -60,7 +60,8 @@ export async function POST(req) {
     const formData = await req.formData();
     const senderJid = formData.get("sender");
     const message = formData.get("message") || "";
-    const file = formData.get("file");
+    const files = formData.getAll("file");
+    const file = files[0] || null;
     let conversationHistory = [];
     try {
       const rawContext = formData.get("context");
@@ -416,6 +417,201 @@ export async function POST(req) {
         await sendWa(senderJid, listMsg);
         return NextResponse.json({ ok: true, state: "upgrade_list_sent" });
 
+      // ==========================================
+      // IKLANKU — Lihat daftar iklan saya
+      // ==========================================
+      } else if (textMsg === "IKLANKU") {
+        const { data: myListings } = await supa
+          .from("listings")
+          .select("id, title, status, expires_at, price")
+          .eq("seller_wa", normalizedWa)
+          .not("status", "in", '("deleted")')
+          .order("created_at", { ascending: false })
+          .limit(8);
+
+        if (!myListings || myListings.length === 0) {
+          const noListMsg = "📭 Kamu belum punya iklan.\n\nKirim *foto + deskripsi barang* untuk pasang iklan baru!";
+          await sendWa(senderJid, noListMsg);
+          return NextResponse.json({ ok: true, state: "iklanku_empty", bot_reply: noListMsg });
+        }
+
+        const baseUrlIklanku = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+        let listMsg = `📋 *Iklan Kamu (${myListings.length}):*\n\n`;
+        myListings.forEach((l, i) => {
+          const emo = l.status === "active" ? "✅" : l.status === "sold" ? "🎉" : l.status === "deletion_pending" ? "🗑️" : "⏳";
+          const label = l.status === "active" ? "Aktif" : l.status === "sold" ? "Terjual" : l.status === "deletion_pending" ? "Menunggu hapus" : "Pending";
+          const exp = l.expires_at ? new Date(l.expires_at).toLocaleDateString("id-ID", { day: "numeric", month: "short" }) : "-";
+          const shortId = l.id.slice(0, 8);
+          listMsg += `${i + 1}. *${l.title}*\n`;
+          listMsg += `   ${emo} ${label} | Rp ${Number(l.price).toLocaleString("id-ID")}\n`;
+          listMsg += `   📅 s/d ${exp} | Kode: \`${shortId}\`\n\n`;
+        });
+        listMsg +=
+          `Perintah:\n` +
+          `• *PERPANJANG [kode]* — perpanjang iklan\n` +
+          `• *HAPUS LAKU [kode]* — barang sudah terjual\n` +
+          `• *HAPUS GALAKU [kode]* — barang tidak laku (minta admin)`;
+        await sendWa(senderJid, listMsg);
+        return NextResponse.json({ ok: true, state: "iklanku_sent", bot_reply: listMsg });
+
+      // ==========================================
+      // HAPUS — Hapus iklan via WA
+      // ==========================================
+      } else if (textMsg === "HAPUS") {
+        const { data: hapusList } = await supa
+          .from("listings")
+          .select("id, title, status, expires_at")
+          .eq("seller_wa", normalizedWa)
+          .in("status", ["active", "expired", "pending"])
+          .order("created_at", { ascending: false })
+          .limit(5);
+
+        if (!hapusList || hapusList.length === 0) {
+          await sendWa(senderJid, "📭 Tidak ada iklan yang bisa dihapus.\n\nKetik *IKLANKU* untuk lihat semua iklan.");
+          return NextResponse.json({ ok: true, state: "hapus_empty" });
+        }
+
+        let hapusMsg = `🗑️ *Pilih iklan yang mau dihapus:*\n\n`;
+        hapusList.forEach((l, i) => {
+          hapusMsg += `${i + 1}. *${l.title}*\n   Kode: \`${l.id.slice(0, 8)}\`\n\n`;
+        });
+        hapusMsg +=
+          `Balas dengan:\n` +
+          `✅ *HAPUS LAKU [kode]* — barang sudah terjual\n` +
+          `⏳ *HAPUS GALAKU [kode]* — barang tidak laku (butuh konfirmasi admin)`;
+        await sendWa(senderJid, hapusMsg);
+        return NextResponse.json({ ok: true, state: "hapus_menu" });
+
+      } else if (textMsg.startsWith("HAPUS ")) {
+        const hapusParts = textMsg.split(" ");
+        const hapusSubCmd = hapusParts[1]; // LAKU / GALAKU / [kode langsung]
+
+        if (hapusSubCmd === "LAKU" && hapusParts[2]) {
+          const shortId = hapusParts[2];
+          const { data: hapusListings } = await supa
+            .from("listings")
+            .select("id, title, status")
+            .ilike("id", `${shortId.toLowerCase()}%`)
+            .eq("seller_wa", normalizedWa)
+            .in("status", ["active", "expired", "pending"]);
+
+          if (!hapusListings || hapusListings.length === 0) {
+            await sendWa(senderJid, `❌ Iklan kode *${shortId}* tidak ditemukan atau bukan milik kamu.\n\nKetik *IKLANKU* untuk lihat daftar iklan.`);
+            return NextResponse.json({ ok: true, state: "hapus_not_found" });
+          }
+
+          const hapusListing = hapusListings[0];
+          await supa.from("listings").update({ status: "sold" }).eq("id", hapusListing.id);
+          const soldMsg =
+            `🎉 *Selamat! Barang Terjual!*\n\n` +
+            `📦 *${hapusListing.title}* sudah ditandai sebagai *terjual*.\n\n` +
+            `Terima kasih telah berjualan di Jual Beli USU! 🙌\n` +
+            `Pasang iklan baru kapan saja ya!`;
+          await sendWa(senderJid, soldMsg);
+          return NextResponse.json({ ok: true, state: "hapus_sold", bot_reply: soldMsg });
+
+        } else if (hapusSubCmd === "GALAKU" && hapusParts[2]) {
+          const shortId = hapusParts[2];
+          const { data: hapusListings } = await supa
+            .from("listings")
+            .select("id, title, status")
+            .ilike("id", `${shortId.toLowerCase()}%`)
+            .eq("seller_wa", normalizedWa)
+            .in("status", ["active", "expired", "pending"]);
+
+          if (!hapusListings || hapusListings.length === 0) {
+            await sendWa(senderJid, `❌ Iklan kode *${shortId}* tidak ditemukan atau bukan milik kamu.\n\nKetik *IKLANKU* untuk lihat daftar iklan.`);
+            return NextResponse.json({ ok: true, state: "hapus_not_found" });
+          }
+
+          const hapusListing = hapusListings[0];
+          await supa.from("listings").update({ status: "deletion_pending" }).eq("id", hapusListing.id);
+
+          const adminWa = process.env.ADMIN_WA;
+          if (adminWa) {
+            const adminMsg =
+              `🗑️ *Permintaan Hapus Iklan*\n\n` +
+              `Penjual: ${normalizedWa}\n` +
+              `Iklan: *${hapusListing.title}*\n` +
+              `Alasan: Barang tidak laku\n\n` +
+              `✅ Setuju → ketik: *APPROVE ${hapusListing.id.slice(0, 8)}*\n` +
+              `❌ Tolak → ketik: *REJECT ${hapusListing.id.slice(0, 8)}*`;
+            await sendWa(adminWa, adminMsg).catch(() => {});
+          }
+
+          const galakuMsg =
+            `✅ *Permintaan Terkirim ke Admin*\n\n` +
+            `Iklan *"${hapusListing.title}"* menunggu konfirmasi admin.\n\n` +
+            `Admin akan menghubungi dalam 1×24 jam. Iklan masih tayang sampai admin konfirmasi.`;
+          await sendWa(senderJid, galakuMsg);
+          return NextResponse.json({ ok: true, state: "hapus_galaku_requested", bot_reply: galakuMsg });
+
+        } else if (hapusSubCmd && hapusSubCmd.length >= 6) {
+          // HAPUS [kode] langsung → tanya alasan
+          const shortId = hapusSubCmd;
+          const { data: hapusListings } = await supa
+            .from("listings")
+            .select("id, title, status")
+            .ilike("id", `${shortId.toLowerCase()}%`)
+            .eq("seller_wa", normalizedWa)
+            .in("status", ["active", "expired", "pending"]);
+
+          if (!hapusListings || hapusListings.length === 0) {
+            await sendWa(senderJid, `❌ Iklan kode *${shortId}* tidak ditemukan atau bukan milik kamu.\n\nKetik *IKLANKU* untuk lihat daftar iklan.`);
+            return NextResponse.json({ ok: true, state: "hapus_not_found" });
+          }
+
+          const hapusListing = hapusListings[0];
+          const alasanMsg =
+            `🗑️ *Hapus Iklan: ${hapusListing.title}*\n\n` +
+            `Pilih alasan:\n\n` +
+            `✅ *HAPUS LAKU ${shortId}*\n` +
+            `   Barang sudah terjual (langsung hapus, gratis)\n\n` +
+            `⏳ *HAPUS GALAKU ${shortId}*\n` +
+            `   Barang tidak laku (minta konfirmasi admin)`;
+          await sendWa(senderJid, alasanMsg);
+          return NextResponse.json({ ok: true, state: "hapus_reason_asked" });
+        }
+
+      // ==========================================
+      // APPROVE / REJECT — Admin konfirmasi hapus
+      // ==========================================
+      } else if (textMsg.startsWith("APPROVE ") || textMsg.startsWith("REJECT ")) {
+        const adminWa = (process.env.ADMIN_WA || "").replace(/^0/, "62").replace(/\D/g, "");
+        const senderNorm = normalizedWa.replace(/\D/g, "");
+        if (!adminWa || senderNorm !== adminWa) {
+          return NextResponse.json({ ok: true, ignored: true });
+        }
+
+        const isApprove = textMsg.startsWith("APPROVE ");
+        const approveShortId = textMsg.split(" ")[1];
+        const { data: pendingListings } = await supa
+          .from("listings")
+          .select("id, title, seller_wa, seller_name")
+          .ilike("id", `${approveShortId.toLowerCase()}%`)
+          .eq("status", "deletion_pending");
+
+        if (!pendingListings || pendingListings.length === 0) {
+          await sendWa(senderJid, `❌ Tidak ada permintaan hapus untuk kode *${approveShortId}*.`);
+          return NextResponse.json({ ok: true, state: "admin_action_not_found" });
+        }
+
+        const pendingListing = pendingListings[0];
+        if (isApprove) {
+          await supa.from("listings").update({ status: "deleted" }).eq("id", pendingListing.id);
+          await sendWa(senderJid, `✅ Iklan *${pendingListing.title}* berhasil dihapus.`);
+          await sendWa(pendingListing.seller_wa,
+            `✅ *Iklan Kamu Dihapus*\n\nIklan *"${pendingListing.title}"* sudah dihapus oleh admin.\nTerima kasih!`
+          ).catch(() => {});
+        } else {
+          await supa.from("listings").update({ status: "active" }).eq("id", pendingListing.id);
+          await sendWa(senderJid, `❌ Permintaan hapus *${pendingListing.title}* ditolak, iklan dikembalikan aktif.`);
+          await sendWa(pendingListing.seller_wa,
+            `❌ *Permintaan Hapus Ditolak*\n\nAdmin tidak menyetujui penghapusan iklan *"${pendingListing.title}"*. Iklan kamu tetap tayang.\n\nHubungi admin jika ada pertanyaan.`
+          ).catch(() => {});
+        }
+        return NextResponse.json({ ok: true, state: isApprove ? "admin_approved" : "admin_rejected" });
+
       } else if (textMsg.match(/^UPGRADE FEATURED ([A-Z0-9]{8}) (\d+)$/i) || textMsg.match(/^UPGRADE AUTOBUMP ([A-Z0-9]{8})$/i)) {
         const isFeatured = textMsg.startsWith("UPGRADE FEATURED");
         const parts = textMsg.split(" ");
@@ -460,6 +656,743 @@ export async function POST(req) {
           : `🔄 *AutoBump 7 Hari*\n\n📦 *${listing.title}*\n💳 Biaya: *Rp ${totalAmount.toLocaleString("id-ID")}*\n\nScan QRIS di bawah untuk bayar.\nSetelah transfer, kirim *screenshot struk* ke sini.`;
         await sendWa(senderJid, upgradeMsg, qrisUrl);
         return NextResponse.json({ ok: true, state: "upgrade_payment_created" });
+
+      // ==========================================
+      // BUMP — Sundul iklan ke atas
+      // ==========================================
+      } else if (textMsg === "BUMP") {
+        const { data: bumpList } = await supa
+          .from("listings")
+          .select("id, title, bumped_at")
+          .eq("seller_wa", normalizedWa)
+          .eq("status", "active")
+          .order("bumped_at", { ascending: true })
+          .limit(5);
+
+        if (!bumpList || bumpList.length === 0) {
+          await sendWa(senderJid, "📭 Tidak ada iklan aktif yang bisa di-bump.\n\nKetik *IKLANKU* untuk cek status iklan.");
+          return NextResponse.json({ ok: true, state: "bump_empty" });
+        }
+
+        const bumpSettings = await getSettings();
+        const bumpFee = Number(bumpSettings.pricing?.bump) || 2000;
+        let bumpListMsg = `🔼 *Pilih Iklan untuk di-Bump:*\n\n`;
+        bumpList.forEach((l, i) => {
+          const bumpedAt = l.bumped_at ? new Date(l.bumped_at).toLocaleDateString("id-ID") : "-";
+          bumpListMsg += `${i + 1}. *${l.title}*\n   Terakhir sundul: ${bumpedAt}\n   Kode: \`${l.id.slice(0, 8)}\`\n\n`;
+        });
+        bumpListMsg += `Biaya bump: *Rp ${bumpFee.toLocaleString("id-ID")}* per iklan\n\nBalas: *BUMP [kode]*`;
+        await sendWa(senderJid, bumpListMsg);
+        return NextResponse.json({ ok: true, state: "bump_menu" });
+
+      } else if (textMsg.startsWith("BUMP ") && textMsg.split(" ").length === 2) {
+        const bumpShortId = textMsg.split(" ")[1];
+        const { data: bumpListings } = await supa
+          .from("listings")
+          .select("id, title")
+          .ilike("id", `${bumpShortId.toLowerCase()}%`)
+          .eq("seller_wa", normalizedWa)
+          .eq("status", "active");
+
+        if (!bumpListings || bumpListings.length === 0) {
+          await sendWa(senderJid, `❌ Iklan kode *${bumpShortId}* tidak ditemukan.\n\nKetik *IKLANKU* untuk lihat daftar iklan.`);
+          return NextResponse.json({ ok: true, state: "bump_not_found" });
+        }
+
+        const bumpListing = bumpListings[0];
+        const bumpSettings = await getSettings();
+        const bumpFee = Number(bumpSettings.pricing?.bump) || 2000;
+        const bumpUniqueCode = Math.floor(Math.random() * 99) + 1;
+        const bumpTotal = bumpFee + bumpUniqueCode;
+        const bumpOrderId = `BUMP-${bumpListing.id.slice(0, 8)}-${Date.now()}`;
+
+        await supa.from("payments").insert({
+          listing_id: bumpListing.id,
+          type: "bump",
+          amount: bumpTotal,
+          status: "pending",
+          midtrans_order_id: bumpOrderId,
+        });
+
+        const bumpQris = await getQrisUrl(supa, bumpOrderId, bumpTotal);
+        const bumpMsg =
+          `🔼 *Bump Iklan*\n\n` +
+          `📦 *${bumpListing.title}*\n` +
+          `💳 Biaya: *Rp ${bumpTotal.toLocaleString("id-ID")}*\n\n` +
+          `Scan QRIS di bawah — nominal sudah terisi otomatis.\n` +
+          `Setelah transfer, kirim *screenshot struk* ke sini.`;
+        await sendWa(senderJid, bumpMsg, bumpQris);
+        return NextResponse.json({ ok: true, state: "bump_payment_created" });
+
+      // ==========================================
+      // EDIT — Edit harga / deskripsi iklan
+      // ==========================================
+      } else if (textMsg === "EDIT") {
+        await sendWa(senderJid,
+          `✏️ *Edit Iklan*\n\n` +
+          `Format perintah:\n\n` +
+          `• *EDIT [kode] HARGA [nominal]*\n  Contoh: EDIT abc12345 HARGA 150000\n\n` +
+          `• *EDIT [kode] DESC [deskripsi baru]*\n  Contoh: EDIT abc12345 DESC Laptop mulus, baterai bagus\n\n` +
+          `Ketik *IKLANKU* untuk lihat kode iklan kamu.`
+        );
+        return NextResponse.json({ ok: true, state: "edit_help" });
+
+      } else if (textMsg.startsWith("EDIT ")) {
+        const editParts = message.trim().split(/\s+/); // pakai message asli untuk preserve case
+        const editShortId = editParts[1];
+        const editSubCmd = (editParts[2] || "").toUpperCase();
+
+        const { data: editListings } = await supa
+          .from("listings")
+          .select("id, title, price, description")
+          .ilike("id", `${(editShortId || "").toLowerCase()}%`)
+          .eq("seller_wa", normalizedWa)
+          .eq("status", "active");
+
+        if (!editListings || editListings.length === 0) {
+          await sendWa(senderJid, `❌ Iklan kode *${editShortId}* tidak ditemukan atau bukan milik kamu.\n\nKetik *IKLANKU* untuk lihat daftar iklan.`);
+          return NextResponse.json({ ok: true, state: "edit_not_found" });
+        }
+
+        const editListing = editListings[0];
+
+        if (editSubCmd === "HARGA") {
+          const newPrice = parseInt(editParts[3]);
+          if (!newPrice || newPrice < 0) {
+            await sendWa(senderJid, `❌ Harga tidak valid. Contoh: *EDIT ${editShortId} HARGA 150000*`);
+            return NextResponse.json({ ok: true, state: "edit_invalid_price" });
+          }
+          await supa.from("listings").update({ price: newPrice }).eq("id", editListing.id);
+          const editHargaMsg = `✅ *Harga diperbarui!*\n\n📦 *${editListing.title}*\n💰 Harga baru: *Rp ${newPrice.toLocaleString("id-ID")}*`;
+          await sendWa(senderJid, editHargaMsg);
+          return NextResponse.json({ ok: true, state: "edit_price_updated", bot_reply: editHargaMsg });
+
+        } else if (editSubCmd === "DESC") {
+          const newDesc = editParts.slice(3).join(" ").trim();
+          if (!newDesc) {
+            await sendWa(senderJid, `❌ Deskripsi kosong. Contoh: *EDIT ${editShortId} DESC Laptop mulus, baterai bagus*`);
+            return NextResponse.json({ ok: true, state: "edit_invalid_desc" });
+          }
+          await supa.from("listings").update({ description: newDesc }).eq("id", editListing.id);
+          const editDescMsg = `✅ *Deskripsi diperbarui!*\n\n📦 *${editListing.title}*\n📝 "${newDesc.slice(0, 100)}${newDesc.length > 100 ? "..." : ""}"`;
+          await sendWa(senderJid, editDescMsg);
+          return NextResponse.json({ ok: true, state: "edit_desc_updated", bot_reply: editDescMsg });
+
+        } else {
+          await sendWa(senderJid,
+            `✏️ *Edit Iklan: ${editListing.title}*\n\n` +
+            `💰 Harga saat ini: Rp ${Number(editListing.price).toLocaleString("id-ID")}\n\n` +
+            `Pilih yang mau diedit:\n` +
+            `• *EDIT ${editShortId} HARGA [nominal baru]*\n` +
+            `• *EDIT ${editShortId} DESC [deskripsi baru]*`
+          );
+          return NextResponse.json({ ok: true, state: "edit_choose" });
+        }
+
+      // ==========================================
+      // SHARE — Dapatkan link iklan siap share
+      // ==========================================
+      } else if (textMsg.startsWith("SHARE ") && textMsg.split(" ").length === 2) {
+        const shareShortId = textMsg.split(" ")[1];
+        const { data: shareListings } = await supa
+          .from("listings")
+          .select("id, title, price, category, condition, seller_wa")
+          .ilike("id", `${shareShortId.toLowerCase()}%`)
+          .in("status", ["active", "pending"]);
+
+        if (!shareListings || shareListings.length === 0) {
+          await sendWa(senderJid, `❌ Iklan kode *${shareShortId}* tidak ditemukan.`);
+          return NextResponse.json({ ok: true, state: "share_not_found" });
+        }
+
+        const shareListing = shareListings[0];
+        const shareBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+        const shareSlug = buildSlug(shareListing.title, shareListing.id);
+        const condLabel = shareListing.condition === "new" ? "✨ Baru" : "Bekas";
+        const shareMsg =
+          `🔗 *Link Iklan Siap Share:*\n\n` +
+          `📦 *${shareListing.title}*\n` +
+          `💰 Rp ${Number(shareListing.price).toLocaleString("id-ID")} · ${condLabel}\n` +
+          `🏷️ ${shareListing.category}\n\n` +
+          `👉 ${shareBaseUrl}/produk/${shareSlug}\n\n` +
+          `_Salin link di atas dan bagikan ke grup atau teman!_`;
+        await sendWa(senderJid, shareMsg);
+        return NextResponse.json({ ok: true, state: "share_sent", bot_reply: shareMsg });
+
+      // ==========================================
+      // TAGIH — Kirim ulang QRIS pending
+      // ==========================================
+      } else if (textMsg === "TAGIH") {
+        const { data: tagihPayments } = await supa
+          .from("payments")
+          .select("*, listings!inner(id, title, seller_wa)")
+          .eq("status", "pending")
+          .eq("listings.seller_wa", normalizedWa)
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        const tagihPayment = tagihPayments?.[0];
+        if (!tagihPayment) {
+          await sendWa(senderJid, "✅ Tidak ada tagihan yang menunggu pembayaran.\n\nKetik *IKLANKU* untuk cek status iklan.");
+          return NextResponse.json({ ok: true, state: "tagih_none" });
+        }
+
+        const tagihQris = await getQrisUrl(supa, tagihPayment.midtrans_order_id, tagihPayment.amount);
+        const typeLabel = tagihPayment.type === "renewal" ? "Perpanjang Iklan"
+          : tagihPayment.type === "featured" ? "Featured"
+          : tagihPayment.type === "autobump" ? "AutoBump"
+          : tagihPayment.type === "bump" ? "Bump"
+          : "Biaya Iklan";
+        const tagihMsg =
+          `🔔 *Tagihan Belum Lunas*\n\n` +
+          `📌 ${typeLabel}: *${tagihPayment.listings.title}*\n` +
+          `💳 Nominal: *Rp ${Number(tagihPayment.amount).toLocaleString("id-ID")}*\n\n` +
+          `Scan QRIS di bawah — nominal sudah terisi otomatis.\n` +
+          `Setelah transfer, kirim *screenshot struk* ke sini.\n\n` +
+          `_(Ketik *BATAL* untuk batalkan tagihan)_`;
+        await sendWa(senderJid, tagihMsg, tagihQris);
+        return NextResponse.json({ ok: true, state: "tagih_sent" });
+
+      // ==========================================
+      // LANGGANAN — Subscribe notif kategori baru
+      // ==========================================
+      } else if (textMsg === "LANGGANAN") {
+        const { data: activeCats } = await supa
+          .from("listings")
+          .select("category")
+          .eq("status", "active")
+          .not("category", "is", null);
+        const uniqueCats = [...new Set((activeCats || []).map(c => c.category).filter(Boolean))].sort();
+
+        const { data: mySubscriptions } = await supa
+          .from("category_subscriptions")
+          .select("category")
+          .eq("buyer_wa", normalizedWa);
+        const mySubs = (mySubscriptions || []).map(s => s.category);
+
+        let langgananMsg = `🔔 *Langganan Notifikasi Kategori*\n\n`;
+        langgananMsg += `Kategori tersedia:\n`;
+        uniqueCats.forEach((c, i) => {
+          const subscribed = mySubs.includes(c) ? " ✅" : "";
+          langgananMsg += `${i + 1}. ${c}${subscribed}\n`;
+        });
+        langgananMsg +=
+          `\n✅ = sudah berlangganan\n\n` +
+          `Balas: *LANGGANAN [nama kategori]*\n` +
+          `Contoh: LANGGANAN Elektronik\n\n` +
+          `Berhenti: *STOP*`;
+        await sendWa(senderJid, langgananMsg);
+        return NextResponse.json({ ok: true, state: "langganan_menu" });
+
+      } else if (textMsg.startsWith("LANGGANAN ")) {
+        const kategori = message.replace(/^LANGGANAN\s+/i, "").trim();
+        if (!kategori) {
+          await sendWa(senderJid, "❌ Format: *LANGGANAN [kategori]*\nContoh: LANGGANAN Elektronik");
+          return NextResponse.json({ ok: true, state: "langganan_invalid" });
+        }
+
+        const { data: existingSub } = await supa
+          .from("category_subscriptions")
+          .select("id")
+          .eq("buyer_wa", normalizedWa)
+          .ilike("category", kategori)
+          .maybeSingle();
+
+        if (existingSub) {
+          await sendWa(senderJid, `✅ Kamu sudah berlangganan kategori *${kategori}*.\n\nKetik *STOP* untuk berhenti notifikasi.`);
+          return NextResponse.json({ ok: true, state: "langganan_already" });
+        }
+
+        const { data: subProfile } = await supa.from("seller_profiles").select("name").eq("wa", normalizedWa).maybeSingle();
+        const subName = subProfile?.name || "Pengguna WA";
+
+        await supa.from("category_subscriptions").insert({
+          buyer_wa: normalizedWa,
+          buyer_name: subName,
+          category: kategori,
+          campus: "Semua",
+        });
+
+        const subMsg =
+          `✅ *Berhasil Langganan!*\n\n` +
+          `Kamu akan dapat notifikasi tiap ada iklan baru di kategori:\n` +
+          `🏷️ *${kategori}*\n\n` +
+          `Ketik *LANGGANAN* untuk lihat semua langganan.\n` +
+          `Ketik *STOP* untuk berhenti semua notifikasi.`;
+        await sendWa(senderJid, subMsg);
+        return NextResponse.json({ ok: true, state: "langganan_success", bot_reply: subMsg });
+
+      // ==========================================
+      // TAWAR — Tawar harga listing
+      // ==========================================
+      } else if (textMsg.startsWith("TAWAR ")) {
+        const tawarParts = message.trim().split(/\s+/);
+        const tawarShortId = tawarParts[1];
+        const tawarHarga = parseInt(tawarParts[2]);
+        const tawarPesan = tawarParts.slice(3).join(" ").trim();
+
+        if (!tawarShortId || !tawarHarga || tawarHarga <= 0) {
+          await sendWa(senderJid,
+            `💬 *Cara Tawar Harga:*\n\n` +
+            `Format: *TAWAR [kode] [harga] [pesan opsional]*\n\n` +
+            `Contoh:\nTAWAR abc12345 150000\nTAWAR abc12345 150000 Boleh nego kak?\n\n` +
+            `Ketik kode iklan dari halaman web atau minta ke penjual.`
+          );
+          return NextResponse.json({ ok: true, state: "tawar_help" });
+        }
+
+        const { data: tawarListings } = await supa
+          .from("listings")
+          .select("id, title, price, seller_wa, seller_name")
+          .ilike("id", `${tawarShortId.toLowerCase()}%`)
+          .eq("status", "active");
+
+        if (!tawarListings || tawarListings.length === 0) {
+          await sendWa(senderJid, `❌ Iklan kode *${tawarShortId}* tidak ditemukan atau sudah tidak aktif.`);
+          return NextResponse.json({ ok: true, state: "tawar_not_found" });
+        }
+
+        const tawarListing = tawarListings[0];
+        if (tawarListing.seller_wa === normalizedWa) {
+          await sendWa(senderJid, "❌ Tidak bisa menawar iklan milik sendiri.");
+          return NextResponse.json({ ok: true, state: "tawar_own_listing" });
+        }
+
+        if (tawarHarga >= tawarListing.price) {
+          await sendWa(senderJid, `❌ Harga tawaran (Rp ${tawarHarga.toLocaleString("id-ID")}) harus lebih rendah dari harga iklan (Rp ${Number(tawarListing.price).toLocaleString("id-ID")}).`);
+          return NextResponse.json({ ok: true, state: "tawar_too_high" });
+        }
+
+        const { data: tawarProfile } = await supa.from("seller_profiles").select("name").eq("wa", normalizedWa).maybeSingle();
+        const buyerName = tawarProfile?.name || "Pengguna WA";
+
+        const { data: newOffer } = await supa.from("price_offers").insert({
+          listing_id: tawarListing.id,
+          buyer_wa: normalizedWa,
+          buyer_name: buyerName,
+          offer_price: tawarHarga,
+          message: tawarPesan || null,
+          status: "pending",
+        }).select().single();
+
+        if (newOffer) {
+          await notifySellerNewOffer(tawarListing.seller_wa, tawarListing.seller_name, {
+            title: tawarListing.title,
+            offer: {
+              id: newOffer.id,
+              buyer_wa: normalizedWa,
+              buyer_name: buyerName,
+              offer_price: tawarHarga,
+              message: tawarPesan,
+            },
+          }).catch(() => {});
+        }
+
+        const tawarMsg =
+          `✅ *Tawaran Terkirim!*\n\n` +
+          `📦 *${tawarListing.title}*\n` +
+          `💰 Harga asli: Rp ${Number(tawarListing.price).toLocaleString("id-ID")}\n` +
+          `🤝 Tawaranmu: *Rp ${tawarHarga.toLocaleString("id-ID")}*\n\n` +
+          `Tunggu respon penjual ya. Penjual bisa TERIMA atau TOLAK tawaranmu.`;
+        await sendWa(senderJid, tawarMsg);
+        return NextResponse.json({ ok: true, state: "tawar_sent", bot_reply: tawarMsg });
+
+      // ==========================================
+      // IKLAN [kode] — Lihat detail iklan tertentu
+      // ==========================================
+      } else if (textMsg.startsWith("IKLAN ") && textMsg.split(" ").length === 2) {
+        const iklanShortId = textMsg.split(" ")[1];
+        const { data: iklanResults } = await supa
+          .from("listings")
+          .select("id, title, price, description, category, condition, campus, seller_wa, seller_name, image_url")
+          .ilike("id", `${iklanShortId.toLowerCase()}%`)
+          .eq("status", "active");
+
+        if (!iklanResults || iklanResults.length === 0) {
+          await sendWa(senderJid, `❌ Iklan kode *${iklanShortId}* tidak ditemukan atau sudah tidak aktif.`);
+          return NextResponse.json({ ok: true, state: "iklan_not_found" });
+        }
+
+        const iklanDetail = iklanResults[0];
+        const iklanBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+        const iklanSlug = buildSlug(iklanDetail.title, iklanDetail.id);
+        const condLbl = iklanDetail.condition === "new" ? "✨ Baru" : "Bekas";
+        const campusLbl = iklanDetail.campus && iklanDetail.campus !== "Semua" ? iklanDetail.campus : "Medan";
+        const iklanMsg =
+          `📦 *${iklanDetail.title}*\n\n` +
+          `💰 Harga: *Rp ${Number(iklanDetail.price).toLocaleString("id-ID")}*\n` +
+          `🏷️ ${iklanDetail.category} · ${condLbl}\n` +
+          `📍 ${campusLbl}\n\n` +
+          `📝 ${(iklanDetail.description || "").slice(0, 200)}${(iklanDetail.description?.length || 0) > 200 ? "..." : ""}\n\n` +
+          `👤 Penjual: ${iklanDetail.seller_name || "Anonim"}\n` +
+          `📲 WA: wa.me/${iklanDetail.seller_wa}\n\n` +
+          `🔗 ${iklanBaseUrl}/produk/${iklanSlug}\n\n` +
+          `_Untuk tawar harga: TAWAR ${iklanShortId} [harga]_`;
+        await sendWa(senderJid, iklanMsg, iklanDetail.image_url || undefined);
+        return NextResponse.json({ ok: true, state: "iklan_detail_sent", bot_reply: iklanMsg });
+
+      // ==========================================
+      // STATS — Statistik admin
+      // ==========================================
+      } else if (textMsg === "STATS") {
+        const adminWaStats = (process.env.ADMIN_WA || "").replace(/^0/, "62").replace(/\D/g, "");
+        const senderNormStats = normalizedWa.replace(/\D/g, "");
+        if (!adminWaStats || senderNormStats !== adminWaStats) {
+          return NextResponse.json({ ok: true, ignored: true });
+        }
+
+        const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+        const [
+          { count: totalActive },
+          { count: totalToday },
+          { data: paymentsToday },
+          { count: totalUsers },
+        ] = await Promise.all([
+          supa.from("listings").select("id", { count: "exact", head: true }).eq("status", "active"),
+          supa.from("listings").select("id", { count: "exact", head: true }).gte("created_at", todayStart.toISOString()),
+          supa.from("payments").select("amount").eq("status", "paid").gte("created_at", todayStart.toISOString()),
+          supa.from("seller_profiles").select("id", { count: "exact", head: true }),
+        ]);
+
+        const revenueToday = (paymentsToday || []).reduce((sum, p) => sum + Number(p.amount), 0);
+        const txToday = paymentsToday?.length || 0;
+
+        const statsMsg =
+          `📊 *Statistik Marketplace*\n\n` +
+          `🏪 Iklan aktif: *${totalActive || 0}*\n` +
+          `📅 Iklan baru hari ini: *${totalToday || 0}*\n` +
+          `💳 Transaksi hari ini: *${txToday}*\n` +
+          `💰 Revenue hari ini: *Rp ${revenueToday.toLocaleString("id-ID")}*\n` +
+          `👤 Total penjual terdaftar: *${totalUsers || 0}*`;
+        await sendWa(senderJid, statsMsg);
+        return NextResponse.json({ ok: true, state: "stats_sent" });
+
+      // ==========================================
+      // PAUSE [nomor] — Admin pause bot untuk user
+      // ==========================================
+      } else if (textMsg.startsWith("PAUSE ")) {
+        const adminWaPause = (process.env.ADMIN_WA || "").replace(/^0/, "62").replace(/\D/g, "");
+        const senderNormPause = normalizedWa.replace(/\D/g, "");
+        if (!adminWaPause || senderNormPause !== adminWaPause) {
+          return NextResponse.json({ ok: true, ignored: true });
+        }
+
+        const pauseTarget = message.split(/\s+/)[1]?.replace(/^0/, "62").replace(/\D/g, "");
+        if (!pauseTarget) {
+          await sendWa(senderJid, "❌ Format: *PAUSE [nomor WA]*\nContoh: PAUSE 628123456789");
+          return NextResponse.json({ ok: true, state: "pause_invalid" });
+        }
+
+        const pauseSettings = await getSettings();
+        const pausedUsers = pauseSettings?.bot?.paused_users || [];
+        if (!pausedUsers.includes(pauseTarget)) {
+          pausedUsers.push(pauseTarget);
+          await supa.from("settings").update({ value: { paused_users: pausedUsers } }).eq("key", "bot");
+        }
+
+        await sendWa(senderJid, `✅ Bot di-pause untuk nomor *${pauseTarget}*.\n\nKetik *RESUME ${pauseTarget}* untuk aktifkan kembali.`);
+        return NextResponse.json({ ok: true, state: "pause_done" });
+
+      } else if (textMsg.startsWith("RESUME ")) {
+        const adminWaResume = (process.env.ADMIN_WA || "").replace(/^0/, "62").replace(/\D/g, "");
+        const senderNormResume = normalizedWa.replace(/\D/g, "");
+        if (!adminWaResume || senderNormResume !== adminWaResume) {
+          return NextResponse.json({ ok: true, ignored: true });
+        }
+
+        const resumeTarget = message.split(/\s+/)[1]?.replace(/^0/, "62").replace(/\D/g, "");
+        if (!resumeTarget) {
+          await sendWa(senderJid, "❌ Format: *RESUME [nomor WA]*");
+          return NextResponse.json({ ok: true, state: "resume_invalid" });
+        }
+
+        const resumeSettings = await getSettings();
+        const resumeUsers = (resumeSettings?.bot?.paused_users || []).filter(u => u !== resumeTarget);
+        await supa.from("settings").update({ value: { paused_users: resumeUsers } }).eq("key", "bot");
+
+        await sendWa(senderJid, `✅ Bot aktif kembali untuk nomor *${resumeTarget}*.`);
+        return NextResponse.json({ ok: true, state: "resume_done" });
+
+      // ==========================================
+      // BROADCAST — Admin kirim pesan ke semua penjual
+      // ==========================================
+      } else if (textMsg.startsWith("BROADCAST ")) {
+        const adminWaBc = (process.env.ADMIN_WA || "").replace(/^0/, "62").replace(/\D/g, "");
+        const senderNormBc = normalizedWa.replace(/\D/g, "");
+        if (!adminWaBc || senderNormBc !== adminWaBc) {
+          return NextResponse.json({ ok: true, ignored: true });
+        }
+
+        const bcPesan = message.replace(/^BROADCAST\s+/i, "").trim();
+        if (!bcPesan) {
+          await sendWa(senderJid, "❌ Format: *BROADCAST [pesan]*");
+          return NextResponse.json({ ok: true, state: "broadcast_invalid" });
+        }
+
+        const { data: sellers } = await supa
+          .from("listings")
+          .select("seller_wa")
+          .eq("status", "active");
+
+        const uniqueSellers = [...new Set((sellers || []).map(s => s.seller_wa).filter(Boolean))];
+        await sendWa(senderJid, `📡 Memulai broadcast ke *${uniqueSellers.length} penjual*...\n\nPersan:\n"${bcPesan.slice(0, 100)}"`);
+
+        let bcSent = 0;
+        for (const sellerWa of uniqueSellers) {
+          try {
+            const res = await sendWa(sellerWa, `📢 *Pesan dari Admin Jual Beli USU:*\n\n${bcPesan}`).catch(() => ({ ok: false }));
+            if (res.ok) bcSent++;
+            await new Promise(r => setTimeout(r, 2000));
+          } catch (_) {}
+        }
+
+        await sendWa(senderJid, `✅ *Broadcast selesai!*\nTerkirim ke *${bcSent}/${uniqueSellers.length}* penjual.`);
+        return NextResponse.json({ ok: true, state: "broadcast_done", sent: bcSent, total: uniqueSellers.length });
+
+      // ==========================================
+      // CEK [kode] — Cek status & views iklan
+      // ==========================================
+      } else if (textMsg.startsWith("CEK ") && textMsg.split(" ").length === 2) {
+        const cekId = textMsg.split(" ")[1].toLowerCase();
+        const { data: cekListings } = await supa
+          .from("listings")
+          .select("id, title, status, price, views, expires_at, bumped_at, category")
+          .eq("seller_wa", normalizedWa)
+          .ilike("id", `${cekId}%`)
+          .limit(1);
+
+        if (!cekListings || cekListings.length === 0) {
+          await sendWa(senderJid, `❌ Iklan kode *${cekId}* tidak ditemukan atau bukan milik kamu.\n\nKetik *IKLANKU* untuk lihat daftar iklan.`);
+          return NextResponse.json({ ok: true, state: "cek_not_found" });
+        }
+
+        const cek = cekListings[0];
+        const cekExpDate = cek.expires_at
+          ? new Date(cek.expires_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
+          : "—";
+        const cekSisaHari = cek.expires_at
+          ? Math.ceil((new Date(cek.expires_at) - new Date()) / 86400000)
+          : null;
+        const cekBumpDate = cek.bumped_at
+          ? new Date(cek.bumped_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })
+          : "Belum pernah";
+        const statusEmoji = { active: "✅", pending: "⏳", sold: "🎉", expired: "❌", suspended: "⛔", deletion_pending: "🗑️" }[cek.status] || "❓";
+        const cekBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+
+        await sendWa(senderJid,
+          `📊 *Status Iklan*\n\n` +
+          `📌 *${cek.title}*\n` +
+          `💰 Harga: Rp ${Number(cek.price).toLocaleString("id-ID")}\n` +
+          `${statusEmoji} Status: *${cek.status}*\n` +
+          `👁️ Views: *${cek.views || 0}×*\n` +
+          `📅 Aktif s/d: *${cekExpDate}*${cekSisaHari !== null ? ` _(${cekSisaHari} hari lagi)_` : ""}\n` +
+          `⬆️ Terakhir bump: *${cekBumpDate}*\n\n` +
+          `🔗 ${cekBaseUrl}/produk/${buildSlug(cek.title, cek.id)}\n\n` +
+          `Perintah lain:\n` +
+          `• *BUMP ${cekId}* — naikkan posisi\n` +
+          `• *PERPANJANG ${cekId}* — perpanjang masa aktif`
+        );
+        return NextResponse.json({ ok: true, state: "cek_done" });
+
+      // ==========================================
+      // TAWARAN — Lihat semua tawaran masuk
+      // ==========================================
+      } else if (textMsg === "TAWARAN") {
+        const { data: tawaranList } = await supa
+          .from("price_offers")
+          .select("id, offer_price, message, buyer_name, buyer_wa, created_at, listings!inner(id, title, seller_wa)")
+          .eq("listings.seller_wa", normalizedWa)
+          .eq("status", "pending")
+          .order("created_at", { ascending: false })
+          .limit(10);
+
+        if (!tawaranList || tawaranList.length === 0) {
+          await sendWa(senderJid, "📭 Belum ada tawaran masuk yang menunggu respons.\n\nSaat ada yang menawar iklanmu, kamu langsung dapat notifikasi.");
+          return NextResponse.json({ ok: true, state: "tawaran_empty" });
+        }
+
+        let tawaranMsg = `💬 *Tawaran Masuk (${tawaranList.length})*\n\n`;
+        tawaranList.forEach((t, i) => {
+          tawaranMsg += `${i + 1}. *${t.listings?.title}*\n`;
+          tawaranMsg += `   👤 ${t.buyer_name || "Anonim"} (wa.me/${(t.buyer_wa || "").replace(/\D/g, "")})\n`;
+          tawaranMsg += `   💵 Rp ${Number(t.offer_price).toLocaleString("id-ID")}\n`;
+          if (t.message) tawaranMsg += `   💬 "${t.message}"\n`;
+          tawaranMsg += "\n";
+        });
+        tawaranMsg += `_Hubungi pembeli langsung via link WA di atas untuk negosiasi._`;
+        await sendWa(senderJid, tawaranMsg);
+        return NextResponse.json({ ok: true, state: "tawaran_listed", count: tawaranList.length });
+
+      // ==========================================
+      // SAYA — Lihat profil & statistik diri sendiri
+      // ==========================================
+      } else if (textMsg === "SAYA") {
+        const [profileRes, activeRes, soldRes, ratingRes, offerRes] = await Promise.all([
+          supa.from("seller_profiles").select("name, bio, trusted_seller, subscription_tier").eq("wa", normalizedWa).maybeSingle(),
+          supa.from("listings").select("id", { count: "exact", head: true }).eq("seller_wa", normalizedWa).eq("status", "active"),
+          supa.from("listings").select("id", { count: "exact", head: true }).eq("seller_wa", normalizedWa).eq("status", "sold"),
+          supa.from("seller_ratings").select("rating").eq("seller_wa", normalizedWa),
+          supa.from("price_offers").select("id", { count: "exact", head: true })
+            .in("listing_id",
+              supa.from("listings").select("id").eq("seller_wa", normalizedWa)
+            ).eq("status", "pending"),
+        ]);
+
+        const sayaProfile = profileRes.data;
+        const aktifCount = activeRes.count || 0;
+        const terjualCount = soldRes.count || 0;
+        const sayaRatings = ratingRes.data || [];
+        const pendingOffers = offerRes.count || 0;
+        const avgRating = sayaRatings.length > 0
+          ? (sayaRatings.reduce((s, r) => s + r.rating, 0) / sayaRatings.length).toFixed(1)
+          : null;
+        const tierLabel = { free: "Free", pro: "⭐ PRO" }[sayaProfile?.subscription_tier] || "Free";
+        const sayaBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+
+        await sendWa(senderJid,
+          `👤 *Profil Kamu*\n\n` +
+          `📛 Nama: *${sayaProfile?.name || "Belum diatur"}*\n` +
+          `🏷️ Paket: *${tierLabel}*\n` +
+          (sayaProfile?.trusted_seller ? `☑️ Penjual Terpercaya\n` : ``) +
+          `\n📦 Iklan Aktif: *${aktifCount}*\n` +
+          `✅ Total Terjual: *${terjualCount}×*\n` +
+          (pendingOffers > 0 ? `💬 Tawaran Menunggu: *${pendingOffers}* (ketik TAWARAN)\n` : ``) +
+          (avgRating ? `⭐ Rating: *${avgRating}/5* dari ${sayaRatings.length} ulasan\n` : ``) +
+          `\n🔗 Profil publik:\n${sayaBaseUrl}/penjual/${normalizedWa}\n\n` +
+          `Ketik *MENU* untuk daftar perintah lengkap.`
+        );
+        return NextResponse.json({ ok: true, state: "saya_done" });
+
+      // ==========================================
+      // MENU / HELP / BANTUAN — Daftar perintah
+      // ==========================================
+      } else if (textMsg === "MENU" || textMsg === "HELP" || textMsg === "BANTUAN") {
+        await sendWa(senderJid,
+          `📋 *Menu Bot Jual Beli USU*\n\n` +
+          `━━━ 🛒 IKLAN ━━━\n` +
+          `• Kirim foto+teks → Pasang iklan baru\n` +
+          `• *IKLANKU* → Semua iklan saya\n` +
+          `• *CEK [kode]* → Status & views iklan\n` +
+          `• *BUMP [kode]* → Naikkan ke atas\n` +
+          `• *AKTIFKAN [kode]* → Aktifkan iklan expired\n` +
+          `• *PERPANJANG [kode]* → Perpanjang masa aktif\n` +
+          `• *EDIT [kode] HARGA [nominal]* → Ubah harga\n` +
+          `• *EDIT [kode] DESC [teks]* → Ubah deskripsi\n` +
+          `• *FOTO [kode]* + foto → Tambah foto\n` +
+          `• *HAPUS LAKU [kode]* → Tandai terjual\n` +
+          `• *HAPUS GALAKU [kode]* → Minta hapus iklan\n` +
+          `\n━━━ 💬 TRANSAKSI ━━━\n` +
+          `• *TAWARAN* → Lihat tawaran masuk\n` +
+          `• *TAWAR [kode] [harga]* → Tawar harga\n` +
+          `• *TAGIH* → Kirim ulang QRIS\n` +
+          `• *SHARE [kode]* → Link iklan siap share\n` +
+          `\n━━━ 🔍 CARI & LANGGANAN ━━━\n` +
+          `• *CARI [barang]* → Posting pencarian\n` +
+          `• *LANGGANAN [kategori]* → Notif kategori baru\n` +
+          `• *IKLAN [kode]* → Lihat detail iklan\n` +
+          `\n━━━ 👤 PROFIL ━━━\n` +
+          `• *SAYA* → Profil & statistik saya\n` +
+          `• *LAPOR [kode] [alasan]* → Laporkan iklan\n`
+        );
+        return NextResponse.json({ ok: true, state: "menu_shown" });
+
+      // ==========================================
+      // LAPOR [kode] [alasan] — Laporkan iklan
+      // ==========================================
+      } else if (textMsg.startsWith("LAPOR ")) {
+        const laporParts = message.trim().split(/\s+/);
+        if (laporParts.length < 3) {
+          await sendWa(senderJid,
+            `❌ Format: *LAPOR [kode] [alasan]*\n\n` +
+            `Contoh:\n` +
+            `LAPOR abc12345 Penjual tidak responsif\n` +
+            `LAPOR abc12345 Harga tidak sesuai foto`
+          );
+          return NextResponse.json({ ok: true, state: "lapor_invalid" });
+        }
+
+        const laporId = laporParts[1].toLowerCase();
+        const laporAlasan = laporParts.slice(2).join(" ").trim();
+
+        const { data: laporListings } = await supa
+          .from("listings")
+          .select("id, title, seller_wa")
+          .ilike("id", `${laporId}%`)
+          .eq("status", "active")
+          .limit(1);
+
+        if (!laporListings || laporListings.length === 0) {
+          await sendWa(senderJid, `❌ Iklan kode *${laporId}* tidak ditemukan.\n\nPastikan kode benar dan iklan masih aktif.`);
+          return NextResponse.json({ ok: true, state: "lapor_not_found" });
+        }
+
+        if (laporListings[0].seller_wa === normalizedWa) {
+          await sendWa(senderJid, "❌ Tidak bisa melaporkan iklan sendiri.");
+          return NextResponse.json({ ok: true, state: "lapor_self" });
+        }
+
+        await supa.from("reports").insert({
+          listing_id: laporListings[0].id,
+          reporter_wa: normalizedWa,
+          reason: laporAlasan,
+          status: "pending",
+        });
+
+        await sendWa(senderJid,
+          `✅ *Laporan Diterima*\n\n` +
+          `Terima kasih! Laporan untuk iklan *"${laporListings[0].title}"* sudah diterima dan akan ditinjau admin dalam 1×24 jam.\n\n` +
+          `Alasan: _${laporAlasan}_`
+        );
+        return NextResponse.json({ ok: true, state: "lapor_done" });
+
+      // ==========================================
+      // AKTIFKAN [kode] — Reaktifkan iklan expired/suspended
+      // ==========================================
+      } else if (textMsg.startsWith("AKTIFKAN ") && textMsg.split(" ").length === 2) {
+        const aktifId = textMsg.split(" ")[1].toLowerCase();
+        const { data: aktifListings } = await supa
+          .from("listings")
+          .select("id, title, status")
+          .eq("seller_wa", normalizedWa)
+          .ilike("id", `${aktifId}%`)
+          .limit(1);
+
+        if (!aktifListings || aktifListings.length === 0) {
+          await sendWa(senderJid, `❌ Iklan kode *${aktifId}* tidak ditemukan.\n\nKetik *IKLANKU* untuk lihat daftar iklan.`);
+          return NextResponse.json({ ok: true, state: "aktifkan_not_found" });
+        }
+
+        const aktifListing = aktifListings[0];
+
+        if (aktifListing.status === "active") {
+          await sendWa(senderJid, `✅ Iklan *"${aktifListing.title}"* sudah aktif.\n\nKetik *CEK ${aktifId}* untuk lihat status lengkapnya.`);
+          return NextResponse.json({ ok: true, state: "aktifkan_already_active" });
+        }
+
+        if (aktifListing.status === "suspended") {
+          await sendWa(senderJid, `⛔ Iklan *"${aktifListing.title}"* sedang disuspend oleh admin.\n\nHubungi admin untuk informasi lebih lanjut.`);
+          return NextResponse.json({ ok: true, state: "aktifkan_suspended" });
+        }
+
+        if (aktifListing.status === "deletion_pending") {
+          await sendWa(senderJid, `🗑️ Iklan *"${aktifListing.title}"* sedang menunggu konfirmasi penghapusan.\n\nHubungi admin untuk membatalkan penghapusan.`);
+          return NextResponse.json({ ok: true, state: "aktifkan_deletion_pending" });
+        }
+
+        if (!["expired", "sold"].includes(aktifListing.status)) {
+          await sendWa(senderJid, `❌ Iklan ini tidak bisa diaktifkan (status: ${aktifListing.status}).\n\nKetik *IKLANKU* untuk lihat semua iklan.`);
+          return NextResponse.json({ ok: true, state: "aktifkan_invalid_status" });
+        }
+
+        // expired → arahkan ke PERPANJANG yang sudah punya flow lengkap (bayar, dll)
+        await sendWa(senderJid,
+          `📋 *Aktifkan Kembali Iklan*\n\n` +
+          `Iklan *"${aktifListing.title}"* berstatus *${aktifListing.status}*.\n\n` +
+          `Untuk mengaktifkan kembali, gunakan:\n\n` +
+          `*PERPANJANG ${aktifId}*\n\n` +
+          `_Iklan akan aktif kembali setelah proses selesai._`
+        );
+        return NextResponse.json({ ok: true, state: "aktifkan_redirect_perpanjang" });
       }
     }
 
@@ -513,8 +1446,8 @@ export async function POST(req) {
       }
 
       // ── Command DICARI: post wanted listing ke web + grup dari WA ──────────
-      if (msgLower.startsWith("dicari ") || msgLower.startsWith("wtb ") || msgLower.startsWith("cari beli ")) {
-        const rawText = message.replace(/^(dicari|wtb|cari beli)\s+/i, "").trim();
+      if (msgLower.startsWith("dicari ") || msgLower.startsWith("wtb ") || msgLower.startsWith("cari beli ") || msgLower.startsWith("cari ")) {
+        const rawText = message.replace(/^(dicari|wtb|cari beli|cari)\s+/i, "").trim();
         if (!rawText) {
           await sendWa(senderJid, "📝 Format: *DICARI [deskripsi barang yang dicari]*\n\nContoh:\n_DICARI laptop bekas budget 3jt area USU_");
           return NextResponse.json({ ok: true, state: "dicari_help" });
@@ -719,6 +1652,51 @@ export async function POST(req) {
       return NextResponse.json({ ok: true, state: "ai_general_chat" });
     }
 
+    // ==========================================
+    // FOTO [kode] + foto → tambah foto ke iklan
+    // ==========================================
+    const fotoMatch = (message || "").match(/^FOTO\s+([A-Za-z0-9]+)/i);
+    if (fotoMatch && file) {
+      const fotoShortId = fotoMatch[1];
+      const { data: fotoListings } = await supa
+        .from("listings")
+        .select("id, title, images")
+        .ilike("id", `${fotoShortId.toLowerCase()}%`)
+        .eq("seller_wa", normalizedWa)
+        .in("status", ["active", "pending"]);
+
+      if (fotoListings && fotoListings.length > 0) {
+        const fotoListing = fotoListings[0];
+        const fotoUrls = [];
+        for (const f of files.filter(f => (f.type || "").startsWith("image/"))) {
+          try {
+            const fBuf = await sharp(Buffer.from(await f.arrayBuffer())).webp({ quality: 80 }).toBuffer();
+            const fName = `wa-${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
+            await supa.storage.from("listings").upload(fName, fBuf, { contentType: "image/webp" });
+            const { data: { publicUrl: fUrl } } = supa.storage.from("listings").getPublicUrl(fName);
+            fotoUrls.push(fUrl);
+          } catch (_) {}
+        }
+
+        if (fotoUrls.length > 0) {
+          const existingImages = Array.isArray(fotoListing.images) ? fotoListing.images : [];
+          const newImages = [...existingImages, ...fotoUrls].slice(0, 10);
+          const updateData = { images: newImages };
+          if (!existingImages[0]) updateData.image_url = fotoUrls[0];
+          await supa.from("listings").update(updateData).eq("id", fotoListing.id);
+
+          const fotoMsg =
+            `✅ *${fotoUrls.length} foto ditambahkan!*\n\n` +
+            `📦 *${fotoListing.title}*\n` +
+            `🖼️ Total foto: ${newImages.length}/10\n\n` +
+            `Ketik *IKLANKU* untuk cek iklan kamu.`;
+          await sendWa(senderJid, fotoMsg);
+          return NextResponse.json({ ok: true, state: "foto_added", bot_reply: fotoMsg });
+        }
+      }
+      // Jika kode tidak ditemukan, lanjut ke new listing creation di bawah
+    }
+
     // Ada Teks + Media (Gambar/Video/Dokumen) = Iklan Baru!
     await sendWa(senderJid, "⏳ AI kami sedang membaca detail iklan Anda...");
 
@@ -730,36 +1708,44 @@ export async function POST(req) {
         throw new Error("AI gagal mengekstrak judul iklan. Coba tulis lebih jelas: nama barang, harga, dan kondisinya.");
       }
 
-      const arrayBuffer = await file.arrayBuffer();
-      const originalBuffer = Buffer.from(arrayBuffer);
-      const fileMimeType = file.type || "application/octet-stream";
+      // Upload semua file (multi-foto didukung)
+      const uploadedUrls = [];
+      let primaryMimeType = file?.type || "application/octet-stream";
 
-      let uploadBuffer = originalBuffer;
-      let uploadMimeType = fileMimeType;
-      let fileExt = "bin";
+      for (const f of files) {
+        const fMime = f.type || "application/octet-stream";
+        const fBuf = Buffer.from(await f.arrayBuffer());
+        let uploadBuf = fBuf;
+        let uploadMime = fMime;
+        let ext = "bin";
 
-      // Kompres hanya jika gambar, simpan apa adanya jika video/dokumen
-      if (fileMimeType.startsWith("image/")) {
-        uploadBuffer = await sharp(originalBuffer).webp({ quality: 80 }).toBuffer();
-        uploadMimeType = "image/webp";
-        fileExt = "webp";
-      } else if (fileMimeType.startsWith("video/")) {
-        fileExt = "mp4";
-      } else if (fileMimeType.includes("pdf")) {
-        fileExt = "pdf";
-      } else {
-        fileExt = fileMimeType.split("/")[1] || "bin";
+        if (fMime.startsWith("image/")) {
+          uploadBuf = await sharp(fBuf).webp({ quality: 80 }).toBuffer();
+          uploadMime = "image/webp";
+          ext = "webp";
+        } else if (fMime.startsWith("video/")) {
+          ext = "mp4";
+        } else if (fMime.includes("pdf")) {
+          ext = "pdf";
+        } else {
+          ext = fMime.split("/")[1] || "bin";
+        }
+
+        const fName = `wa-${Date.now()}-${Math.floor(Math.random() * 9999)}.${ext}`;
+        const { error: upErr } = await supa.storage
+          .from("listings")
+          .upload(fName, uploadBuf, { contentType: uploadMime });
+        if (upErr) throw new Error("Gagal mengunggah media ke server.");
+
+        const { data: { publicUrl: url } } = supa.storage.from("listings").getPublicUrl(fName);
+        uploadedUrls.push(url);
+        if (uploadedUrls.length === 1) primaryMimeType = fMime; // tipe file pertama
+        await new Promise(r => setTimeout(r, 200)); // beri jeda antar upload
       }
 
-      const fileName = `wa-${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExt}`;
-      const { error: uploadError } = await supa.storage
-        .from("listings")
-        .upload(fileName, uploadBuffer, { contentType: uploadMimeType });
-
-      if (uploadError) throw new Error("Gagal mengunggah media ke server.");
-
-      const { data: publicUrlData } = supa.storage.from("listings").getPublicUrl(fileName);
-      const publicUrl = publicUrlData.publicUrl;
+      if (uploadedUrls.length === 0) throw new Error("Gagal mengunggah media ke server.");
+      const publicUrl = uploadedUrls[0];
+      const fileMimeType = primaryMimeType;
 
       let profileName = "Pengguna WA";
       const { data: profile } = await supa.from("seller_profiles").select("name").eq("wa", normalizedWa).maybeSingle();
@@ -779,7 +1765,7 @@ export async function POST(req) {
         type: "barang",
         condition: extracted.condition === "new" ? "new" : "used",
         image_url: fileMimeType.startsWith("image/") ? publicUrl : null,
-        images: fileMimeType.startsWith("image/") ? [publicUrl] : [],
+        images: fileMimeType.startsWith("image/") ? uploadedUrls : [],
         status: "pending",
         expires_at: expiresAt,
         bumped_at: new Date().toISOString(),
