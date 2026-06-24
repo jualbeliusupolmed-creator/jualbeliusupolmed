@@ -19,5 +19,6 @@ CREATE INDEX IF NOT EXISTS idx_group_posts_created ON group_posts(created_at DES
 -- DELETE FROM group_posts WHERE created_at < NOW() - INTERVAL '30 days';
 
 ALTER TABLE group_posts ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Service role only" ON group_posts;
 CREATE POLICY "Service role only" ON group_posts
   USING (false) WITH CHECK (false);

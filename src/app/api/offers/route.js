@@ -3,6 +3,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { notifySellerNewOffer } from "@/lib/fonnte";
 import { formatWa } from "@/lib/constants";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { pushToWa } from "@/lib/webpush";
 
 export const dynamic = "force-dynamic";
 
@@ -75,6 +76,14 @@ export async function POST(req) {
     notifySellerNewOffer(listing.seller_wa, listing.seller_name, {
       ...listing,
       offer: { buyer_name, buyer_wa: normalizedWa, offer_price, message, id: offer.id },
+    }).catch(() => {});
+
+    // Push browser ke seller
+    pushToWa(supa, listing.seller_wa, {
+      title: "Tawaran Harga Baru!",
+      body: `${buyer_name} menawar "${listing.title}" — Rp ${Number(offer_price).toLocaleString("id-ID")}`,
+      url: "/dashboard",
+      tag: `offer-${offer.id}`,
     }).catch(() => {});
 
     return NextResponse.json({ ok: true, offer });
