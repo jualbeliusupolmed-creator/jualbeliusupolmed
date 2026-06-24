@@ -4,6 +4,22 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const apiKey = (process.env.GEMINI_API_KEY || "").replace(/^\uFEFF/, '').trim();
 const genAI = new GoogleGenerativeAI(apiKey);
 
+// Ekstrak JSON dari respons Gemini secara robust
+// Menangani: markdown code blocks, thinking tags, dan teks pengantar
+function extractJsonFromResponse(text) {
+  let clean = text
+    .replace(/```json\s*/g, '')
+    .replace(/```\s*/g, '')
+    .replace(/<thinking>[\s\S]*?<\/thinking>/gi, '')
+    .replace(/<think>[\s\S]*?<\/think>/gi, '')
+    .trim();
+  try { return JSON.parse(clean); } catch (_) {}
+  // Fallback: cari objek JSON pertama dalam teks
+  const match = clean.match(/\{[\s\S]*\}/);
+  if (match) return JSON.parse(match[0]);
+  throw new SyntaxError("No valid JSON found in AI response: " + clean.slice(0, 100));
+}
+
 /**
  * Validates a receipt image using Gemini Vision AI.
  * @param {Buffer} imageBuffer - The binary buffer of the uploaded image
@@ -52,24 +68,20 @@ export async function verifyReceiptImage(imageBuffer, mimeType, maxRetries = 3) 
 
       const result = await model.generateContent([prompt, ...imageParts]);
       const responseText = result.response.text();
-      
-      // Parse JSON safely by removing markdown code blocks if any
-      const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-      return JSON.parse(cleanJson);
-      
+      return extractJsonFromResponse(responseText);
+
     } catch (error) {
       const modelFailed = modelsToTry[attempt] || modelsToTry[modelsToTry.length - 1];
       attempt++;
       console.error(`Gemini AI Error (Attempt ${attempt}/${maxRetries} using ${modelFailed}):`, error.message);
-      
-      const isRateLimitOrOverload = error.message.includes("503") || error.message.includes("429");
-      
-      if (isRateLimitOrOverload && attempt < maxRetries) {
-        // Fallback to next lighter model immediately with 1s delay
+
+      const isRetryable = error.message.includes("503") || error.message.includes("429") || error instanceof SyntaxError;
+
+      if (isRetryable && attempt < maxRetries) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
         continue;
       }
-      
+
       throw new Error("Gagal memproses struk dengan AI. Server Google sedang penuh, silakan coba lagi dalam beberapa menit.");
     }
   }
@@ -122,22 +134,20 @@ export async function parseListingFromText(text, aiConfig = {}, maxRetries = 3) 
 
       const result = await model.generateContent(prompt);
       const responseText = result.response.text();
-      
-      const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-      return JSON.parse(cleanJson);
-      
+      return extractJsonFromResponse(responseText);
+
     } catch (error) {
       const modelFailed = modelsToTry[attempt] || modelsToTry[modelsToTry.length - 1];
       attempt++;
       console.error(`Gemini AI Text Error (Attempt ${attempt}/${maxRetries} using ${modelFailed}):`, error.message);
-      
-      const isRateLimitOrOverload = error.message.includes("503") || error.message.includes("429");
-      
-      if (isRateLimitOrOverload && attempt < maxRetries) {
+
+      const isRetryable = error.message.includes("503") || error.message.includes("429") || error instanceof SyntaxError;
+
+      if (isRetryable && attempt < maxRetries) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
         continue;
       }
-      
+
       throw new Error("Gagal mengekstrak data iklan menggunakan AI. Silakan coba lagi nanti.");
     }
   }
@@ -206,18 +216,16 @@ export async function processGeneralChat(text, aiConfig = {}, history = [], maxR
 
       const result = await model.generateContent(prompt);
       const responseText = result.response.text();
-
-      const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-      return JSON.parse(cleanJson);
+      return extractJsonFromResponse(responseText);
 
     } catch (error) {
       const modelFailed = modelsToTry[attempt] || modelsToTry[modelsToTry.length - 1];
       attempt++;
       console.error(`Gemini AI Chat Error (Attempt ${attempt}/${maxRetries} using ${modelFailed}):`, error.message);
 
-      const isRateLimitOrOverload = error.message.includes("503") || error.message.includes("429");
+      const isRetryable = error.message.includes("503") || error.message.includes("429") || error instanceof SyntaxError;
 
-      if (isRateLimitOrOverload && attempt < maxRetries) {
+      if (isRetryable && attempt < maxRetries) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
         continue;
       }
@@ -250,8 +258,7 @@ export async function parseWantedFromText(text, maxRetries = 2) {
         }
       `;
       const result = await model.generateContent(prompt);
-      const clean = result.response.text().replace(/```json/g, "").replace(/```/g, "").trim();
-      return JSON.parse(clean);
+      return extractJsonFromResponse(result.response.text());
     } catch (err) {
       attempt++;
       if (attempt < maxRetries) await new Promise(r => setTimeout(r, 800));
@@ -298,13 +305,11 @@ export async function suggestPrice(title, category, similarPrices = [], maxRetri
       `;
 
       const result = await model.generateContent(prompt);
-      const responseText = result.response.text();
-      const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-      return JSON.parse(cleanJson);
+      return extractJsonFromResponse(result.response.text());
 
     } catch (error) {
       attempt++;
-      const isRateLimit = error.message.includes("503") || error.message.includes("429");
+      const isRateLimit = error.message.includes("503") || error.message.includes("429") || error instanceof SyntaxError;
       if (isRateLimit && attempt < maxRetries) {
         await new Promise(r => setTimeout(r, 1000));
         continue;
