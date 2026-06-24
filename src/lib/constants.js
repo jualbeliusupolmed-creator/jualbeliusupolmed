@@ -26,14 +26,20 @@ export const POPULAR_AREAS = [
 ];
 
 // Normalisasi nomor ke format lokal (08xxx) untuk disimpan di DB
+// Return "" jika bukan nomor HP Indonesia yang valid → diabaikan webhook
 export function formatWa(num) {
   if (!num) return "";
-  let cleaned = num.replace(/\D/g, "");
+  const s = String(num);
+  // @lid JID tidak bisa dikonversi ke nomor HP → tolak
+  if (s.includes("@lid")) return "";
+  let cleaned = s.replace(/\D/g, "");
   if (cleaned.startsWith("62")) {
     cleaned = "0" + cleaned.slice(2);
   } else if (cleaned.startsWith("8")) {
     cleaned = "0" + cleaned;
   }
+  // Nomor HP Indonesia: 10–13 digit, harus diawali 0
+  if (!cleaned.startsWith("0") || cleaned.length < 10 || cleaned.length > 13) return "";
   return cleaned;
 }
 

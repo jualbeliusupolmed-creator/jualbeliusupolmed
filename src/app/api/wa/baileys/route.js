@@ -95,9 +95,17 @@ export async function POST(req) {
       return NextResponse.json({ ok: true, ignored: true });
     }
 
+    // @lid JID seharusnya sudah di-resolve oleh bot ke phone JID sebelum dikirim ke sini.
+    // Jika lolos (bot versi lama / race condition), tolak agar tidak buat akun ganda.
+    if (senderJid.includes("@lid")) {
+      console.warn(`[baileys-webhook] @lid JID lolos ke webhook: ${senderJid} — diabaikan`);
+      return NextResponse.json({ ok: true, ignored: true, reason: "unresolved_lid" });
+    }
+
     const normalizedWa = formatWa(senderJid);
     if (!normalizedWa) {
-      return NextResponse.json({ ok: true, ignored: true });
+      console.warn(`[baileys-webhook] JID tidak valid / bukan nomor Indonesia: ${senderJid}`);
+      return NextResponse.json({ ok: true, ignored: true, reason: "invalid_number" });
     }
 
     const settings = await getSettings();
