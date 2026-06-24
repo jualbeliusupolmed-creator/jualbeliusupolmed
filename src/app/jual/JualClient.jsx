@@ -25,6 +25,7 @@ export default function JualPage() {
     campus: "Semua",
     area: "",
     condition: "used",
+    rental_period: "harian",
   });
   const [media, setMedia] = useState([]);
   const [busy, setBusy] = useState(false);
@@ -149,10 +150,9 @@ export default function JualPage() {
     <div className="mx-auto max-w-4xl px-4 py-6">
 
 
-      <h1 className="text-2xl font-extrabold">Jual Barang</h1>
+      <h1 className="text-2xl font-extrabold">{form.type === "sewa" ? "Sewakan Barang" : "Jual Barang"}</h1>
       <p className="mt-1 text-gray-500">
-        Isi detail barang, bayar biaya tayang, barang langsung tampil ke pembeli setelah
-        pembayaran sukses.
+        Isi detail {form.type === "sewa" ? "barang sewaan" : "barang"}, bayar biaya tayang, iklan langsung tampil setelah pembayaran sukses.
       </p>
 
       <form onSubmit={handlePreviewClick} className="mt-6 grid gap-6 lg:grid-cols-3">
@@ -174,9 +174,20 @@ export default function JualPage() {
               <label className="label">Tipe Iklan</label>
               <select className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.type} onChange={set("type")}>
                 <option value="barang">Barang — {rupiah(adFeeFor("barang", form.price))}</option>
+                <option value="sewa">Sewa — {rupiah(adFeeFor("barang", form.price))}</option>
                 <option value="poster">Poster — {rupiah(adFeeFor("poster"))}</option>
               </select>
             </div>
+            {form.type === "sewa" && (
+              <div>
+                <label className="label">Periode Sewa</label>
+                <select className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.rental_period} onChange={set("rental_period")}>
+                  <option value="harian">Per Hari</option>
+                  <option value="mingguan">Per Minggu</option>
+                  <option value="bulanan">Per Bulan</option>
+                </select>
+              </div>
+            )}
             {form.type === "barang" && (
               <div>
                 <label className="label">Kondisi Barang</label>
@@ -281,7 +292,7 @@ export default function JualPage() {
                 placeholder=" "
                 required
               />
-              <label htmlFor="form-price" className="floating-label">Harga (Rp)</label>
+              <label htmlFor="form-price" className="floating-label">{form.type === "sewa" ? `Harga Sewa (Rp) / ${form.rental_period || "hari"}` : "Harga (Rp)"}</label>
             </div>
             
             <div className="floating-group">

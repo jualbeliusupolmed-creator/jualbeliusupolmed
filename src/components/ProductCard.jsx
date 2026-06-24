@@ -11,6 +11,7 @@ export default function ProductCard({ listing }) {
     (Date.now() - new Date(listing.created_at).getTime()) < 24 * 60 * 60 * 1000;
   const isLowStock = listing.stock === 1;
   const isSponsored = listing.sponsored_until && new Date(listing.sponsored_until) > new Date();
+  const isRental = listing.type === "sewa";
   const isConditionNew = listing.condition === "new";
   const isNego = listing.is_negotiable ||
     String(listing.description || "").toLowerCase().includes("nego") ||
@@ -35,22 +36,27 @@ export default function ProductCard({ listing }) {
               </svg>
             </div>
           )}
-          {isSponsored && !sold && (
+          {isRental && !sold && (
+            <span className="absolute left-2 top-2 rounded-md bg-teal-600 px-2 py-0.5 text-[11px] font-bold text-white shadow-sm">
+              🔑 SEWA
+            </span>
+          )}
+          {!isRental && isSponsored && !sold && (
             <span className="absolute left-2 top-2 rounded-md bg-indigo-600 px-2 py-0.5 text-[11px] font-bold text-white shadow-sm">
               📢 Sponsor
             </span>
           )}
-          {!isSponsored && listing.featured && (
+          {!isRental && !isSponsored && listing.featured && (
             <span className="absolute left-2 top-2 rounded-md bg-white/95 px-2 py-0.5 text-[11px] font-semibold text-gray-900 shadow-soft dark:bg-slate-900 dark:text-slate-100">
               Unggulan
             </span>
           )}
-          {!isSponsored && !listing.featured && isNew && !sold && (
+          {!isRental && !isSponsored && !listing.featured && isNew && !sold && (
             <span className="absolute left-2 top-2 rounded-md bg-emerald-500 px-2 py-0.5 text-[11px] font-bold text-white shadow-sm flex items-center gap-1">
               <Icon.Star className="h-3 w-3" /> BARU
             </span>
           )}
-          {!isSponsored && !listing.featured && isConditionNew && !isNew && !sold && (
+          {!isRental && !isSponsored && !listing.featured && isConditionNew && !isNew && !sold && (
             <span className="absolute left-2 top-2 rounded-md bg-sky-500 px-2 py-0.5 text-[11px] font-bold text-white shadow-sm">
               Baru
             </span>
@@ -83,10 +89,13 @@ export default function ProductCard({ listing }) {
             {listing.title}
           </h3>
           <p className="mt-1.5 text-[15px] font-bold tracking-tight text-gray-900 dark:text-white">
-            {listing.type === "jasa" ? (
+            {listing.type === "jasa" && (
               <span className="text-xs font-medium text-gray-500 dark:text-slate-400 font-normal">Mulai dari </span>
-            ) : ""}
+            )}
             {rupiah(listing.price)}
+            {listing.type === "sewa" && listing.rental_period && (
+              <span className="text-xs font-normal text-teal-600 dark:text-teal-400 ml-1">/{listing.rental_period}</span>
+            )}
           </p>
           <div className="mt-1.5 flex items-center justify-between text-[11px] text-gray-500 dark:text-slate-400">
             <p className="truncate flex items-center gap-1">

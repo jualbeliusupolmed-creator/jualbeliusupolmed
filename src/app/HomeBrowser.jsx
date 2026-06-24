@@ -52,6 +52,7 @@ export default function HomeBrowser({
   const [campusFilter, setCampusFilter] = useState(() => searchParams.get("campus") || "Semua");
   const [negoFilter, setNegoFilter] = useState(() => searchParams.get("nego") === "1");
   const [conditionFilter, setConditionFilter] = useState(() => searchParams.get("condition") || "all");
+  const [typeFilter, setTypeFilter] = useState(() => searchParams.get("type") || "default");
 
   // Category subscribe state
   const [showCatSubModal, setShowCatSubModal] = useState(false);
@@ -196,6 +197,7 @@ export default function HomeBrowser({
       newCampus = campusFilter,
       newNego = negoFilter,
       newCondition = conditionFilter,
+      newType = typeFilter,
     } = {}) => {
       setSearching(true);
       setPage(1);
@@ -208,6 +210,7 @@ export default function HomeBrowser({
         if (newCampus && newCampus !== "Semua") params.set("campus", newCampus);
         if (newNego) params.set("nego", "1"); // FIXED: use newNego param, not stale closure
         if (newCondition && newCondition !== "all") params.set("condition", newCondition);
+        if (newType && newType !== "default") params.set("type", newType);
 
         const res = await fetch(`/api/listings/browse?${params}`);
         const data = await res.json();
@@ -219,7 +222,7 @@ export default function HomeBrowser({
         setSearching(false);
       }
     },
-    [cat, q, sort, minPrice, maxPrice, campusFilter, negoFilter, conditionFilter]
+    [cat, q, sort, minPrice, maxPrice, campusFilter, negoFilter, conditionFilter, typeFilter]
   );
 
   function handleCampus(newCampus) {
@@ -565,6 +568,22 @@ export default function HomeBrowser({
                 </button>
               ))}
 
+              {/* Tipe Sewa */}
+              <button
+                type="button"
+                onClick={() => {
+                  const next = typeFilter === "sewa" ? "default" : "sewa";
+                  setTypeFilter(next);
+                  applyFilters({ newType: next });
+                }}
+                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${typeFilter === "sewa"
+                  ? "bg-teal-600 text-white"
+                  : "border border-gray-200 text-gray-600 hover:border-gray-300 dark:border-slate-800 dark:text-slate-300"
+                }`}
+              >
+                🔑 Sewa{typeFilter === "sewa" ? " ✓" : ""}
+              </button>
+
               {/* Reset */}
               {hasActiveFilter && (
                 <button
@@ -579,8 +598,9 @@ export default function HomeBrowser({
                     setCampusFilter("Semua");
                     setNegoFilter(false);
                     setConditionFilter("all");
+                    setTypeFilter("default");
                     setShowPriceFilter(false);
-                    applyFilters({ newCat: "all", newQ: "", newSort: "bumped", newMin: "", newMax: "", newCampus: "Semua", newNego: false, newCondition: "all" });
+                    applyFilters({ newCat: "all", newQ: "", newSort: "bumped", newMin: "", newMax: "", newCampus: "Semua", newNego: false, newCondition: "all", newType: "default" });
                     syncToUrl({ cat: "all", q: "", sort: "bumped", minPrice: "", maxPrice: "", campusFilter: "Semua", negoFilter: false });
                   }}
                   className="shrink-0 px-2 py-1.5 text-xs text-gray-400 hover:text-gray-700 dark:hover:text-slate-200"

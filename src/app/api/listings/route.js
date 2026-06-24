@@ -87,6 +87,7 @@ export async function POST(req) {
       campus,
       area,
       condition,
+      rental_period,
     } = body;
 
     if (!seller_name || !seller_wa || !title || price == null) {
@@ -188,7 +189,8 @@ export async function POST(req) {
         price: Math.round(Number(price)) || 0,
         stock: Math.max(1, Number(stock) || 1),
         category: category || "Elektronik",
-        type: type === "poster" ? "poster" : (type === "jasa" ? "jasa" : "barang"),
+        type: ["poster", "jasa", "sewa"].includes(type) ? type : "barang",
+        rental_period: type === "sewa" ? (rental_period || "harian") : null,
         image_url: image_url || null,
         status: initialStatus,
         campus: campus || "Semua",
