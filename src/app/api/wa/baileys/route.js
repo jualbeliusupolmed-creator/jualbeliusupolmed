@@ -1483,7 +1483,7 @@ export async function POST(req) {
 
       // "admin" / "min" / "mimin" → sapaan ke bot, balas dengan menu
       if (msgLower === "admin" || msgLower === "min" || msgLower === "mimin" || msgLower === "halo admin" || msgLower === "hai min") {
-        const greetingMsg = kwConfig.greeting || "Halo! 👋 Ada yang bisa dibantu?\n\nKetik:\n• *JUAL* — Pasang iklan\n• *CARI [barang]* — Cari barang\n• *PERPANJANG* — Perpanjang iklan\n• *UPGRADE* — Upgrade iklan";
+        const greetingMsg = kwConfig.greeting || "Halo! 👋\n\nKetik salah satu perintah berikut:\n• *JUAL* — Pasang iklan\n• *CARI [nama barang]* — Cari barang\n• *PERPANJANG* — Perpanjang iklan\n• *UPGRADE* — Upgrade iklan\n• *MENU* — Lihat semua perintah lengkap\n• *ADMIN* — Hubungi admin\n\nAtau langsung kirim *Foto + Deskripsi + Harga* untuk pasang iklan!\n\n🌐 Website: jualbeliusupolmed.web.id";
         await sendWa(senderJid, greetingMsg);
         return NextResponse.json({ ok: true, state: "admin_greeting", bot_reply: greetingMsg });
       }
