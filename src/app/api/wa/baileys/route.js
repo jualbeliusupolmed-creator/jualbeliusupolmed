@@ -261,13 +261,13 @@ export async function POST(req) {
       if (textMsg.startsWith("TERIMA ") || textMsg.startsWith("TOLAK ")) {
         const parts = textMsg.split(" ");
         const action = parts[0]; // TERIMA / TOLAK
-        const shortId = parts[1]; // short UUID
+        const shortId = parts[1]; // listing_code numerik
 
-        if (shortId && shortId.length >= 6) {
+        if (shortId && parseInt(shortId) > 0) {
           const { data: offers } = await supa
             .from("price_offers")
             .select("*, listings(title, seller_wa, seller_name)")
-            .ilike("id", `${shortId.toLowerCase()}%`)
+            .eq("listing_code", parseInt(shortId))
             .eq("status", "pending");
 
           if (offers && offers.length > 0) {
@@ -329,9 +329,9 @@ export async function POST(req) {
         myListings.forEach((l, i) => {
           const exp = l.expires_at ? new Date(l.expires_at).toLocaleDateString("id-ID") : "—";
           const statusLabel = l.status === "expired" ? "❌ Expired" : "✅ Aktif";
-          listMsg += `${i + 1}. *${l.title}*\n   ${statusLabel} | Berakhir: ${exp}\n   Kode: \`${l.id.slice(0, 8)}\`\n\n`;
+          listMsg += `${i + 1}. *${l.title}*\n   ${statusLabel} | Berakhir: ${exp}\n   Kode: \`${l.listing_code}\`\n\n`;
         });
-        listMsg += `Balas: *PERPANJANG [kode]* untuk perpanjang iklan.\nContoh: PERPANJANG ${myListings[0].id.slice(0, 8)}`;
+        listMsg += `Balas: *PERPANJANG [kode]* untuk perpanjang iklan.\nContoh: PERPANJANG ${myListings[0].listing_code}`;
         await sendWa(senderJid, listMsg);
         return NextResponse.json({ ok: true, state: "perpanjang_list_sent" });
 
@@ -340,7 +340,7 @@ export async function POST(req) {
         const { data: listings } = await supa
           .from("listings")
           .select("id, title, expires_at, status")
-          .ilike("id", `${shortId.toLowerCase()}%`)
+          .eq("listing_code", parseInt(shortId))
           .eq("seller_wa", normalizedWa)
           .in("status", ["active", "expired"]);
 
@@ -355,7 +355,7 @@ export async function POST(req) {
         const renewFee = Number(renewalSettings.pricing?.renewalFee) || 2000;
         const uniqueCode = Math.floor(Math.random() * 99) + 1;
         const totalAmount = renewFee + uniqueCode;
-        const orderId = `RENEW-${listing.id.slice(0, 8)}-${Date.now()}`;
+        const orderId = `RENEW-${listing.listing_code}-${Date.now()}`;
 
         await supa.from("payments").insert({
           listing_id: listing.id,
@@ -408,9 +408,9 @@ export async function POST(req) {
 
         let listMsg = `⭐ *Pilih Iklan untuk di-${upgradeType === "featured" ? "Featured" : "AutoBump"}:*\n\n`;
         myListings.forEach((l, i) => {
-          listMsg += `${i + 1}. *${l.title}*\n   Kode: \`${l.id.slice(0, 8)}\`\n\n`;
+          listMsg += `${i + 1}. *${l.title}*\n   Kode: \`${l.listing_code}\`\n\n`;
         });
-        const exampleCmd = upgradeType === "featured" ? `UPGRADE FEATURED ${myListings[0].id.slice(0, 8)} 3` : `UPGRADE AUTOBUMP ${myListings[0].id.slice(0, 8)}`;
+        const exampleCmd = upgradeType === "featured" ? `UPGRADE FEATURED ${myListings[0].listing_code} 3` : `UPGRADE AUTOBUMP ${myListings[0].listing_code}`;
         listMsg += upgradeType === "featured"
           ? `Balas: *UPGRADE FEATURED [kode] [hari]*\nContoh: ${exampleCmd}`
           : `Balas: *UPGRADE AUTOBUMP [kode]*\nContoh: ${exampleCmd}`;
@@ -441,7 +441,7 @@ export async function POST(req) {
           const emo = l.status === "active" ? "✅" : l.status === "sold" ? "🎉" : l.status === "deletion_pending" ? "🗑️" : "⏳";
           const label = l.status === "active" ? "Aktif" : l.status === "sold" ? "Terjual" : l.status === "deletion_pending" ? "Menunggu hapus" : "Pending";
           const exp = l.expires_at ? new Date(l.expires_at).toLocaleDateString("id-ID", { day: "numeric", month: "short" }) : "-";
-          const shortId = l.id.slice(0, 8);
+          const shortId = l.listing_code;
           listMsg += `${i + 1}. *${l.title}*\n`;
           listMsg += `   ${emo} ${label} | Rp ${Number(l.price).toLocaleString("id-ID")}\n`;
           listMsg += `   📅 s/d ${exp} | Kode: \`${shortId}\`\n\n`;
@@ -473,7 +473,7 @@ export async function POST(req) {
 
         let hapusMsg = `🗑️ *Pilih iklan yang mau dihapus:*\n\n`;
         hapusList.forEach((l, i) => {
-          hapusMsg += `${i + 1}. *${l.title}*\n   Kode: \`${l.id.slice(0, 8)}\`\n\n`;
+          hapusMsg += `${i + 1}. *${l.title}*\n   Kode: \`${l.listing_code}\`\n\n`;
         });
         hapusMsg +=
           `Balas dengan:\n` +
@@ -491,7 +491,7 @@ export async function POST(req) {
           const { data: hapusListings } = await supa
             .from("listings")
             .select("id, title, status")
-            .ilike("id", `${shortId.toLowerCase()}%`)
+            .eq("listing_code", parseInt(shortId))
             .eq("seller_wa", normalizedWa)
             .in("status", ["active", "expired", "pending"]);
 
@@ -515,7 +515,7 @@ export async function POST(req) {
           const { data: hapusListings } = await supa
             .from("listings")
             .select("id, title, status")
-            .ilike("id", `${shortId.toLowerCase()}%`)
+            .eq("listing_code", parseInt(shortId))
             .eq("seller_wa", normalizedWa)
             .in("status", ["active", "expired", "pending"]);
 
@@ -534,8 +534,8 @@ export async function POST(req) {
               `Penjual: ${normalizedWa}\n` +
               `Iklan: *${hapusListing.title}*\n` +
               `Alasan: Barang tidak laku\n\n` +
-              `✅ Setuju → ketik: *APPROVE ${hapusListing.id.slice(0, 8)}*\n` +
-              `❌ Tolak → ketik: *REJECT ${hapusListing.id.slice(0, 8)}*`;
+              `✅ Setuju → ketik: *APPROVE ${hapusListing.listing_code}*\n` +
+              `❌ Tolak → ketik: *REJECT ${hapusListing.listing_code}*`;
             await sendWa(adminWa, adminMsg).catch(() => {});
           }
 
@@ -546,13 +546,13 @@ export async function POST(req) {
           await sendWa(senderJid, galakuMsg);
           return NextResponse.json({ ok: true, state: "hapus_galaku_requested", bot_reply: galakuMsg });
 
-        } else if (hapusSubCmd && hapusSubCmd.length >= 6) {
+        } else if (hapusSubCmd && parseInt(hapusSubCmd) > 0) {
           // HAPUS [kode] langsung → tanya alasan
           const shortId = hapusSubCmd;
           const { data: hapusListings } = await supa
             .from("listings")
             .select("id, title, status")
-            .ilike("id", `${shortId.toLowerCase()}%`)
+            .eq("listing_code", parseInt(shortId))
             .eq("seller_wa", normalizedWa)
             .in("status", ["active", "expired", "pending"]);
 
@@ -588,7 +588,7 @@ export async function POST(req) {
         const { data: pendingListings } = await supa
           .from("listings")
           .select("id, title, seller_wa, seller_name")
-          .ilike("id", `${approveShortId.toLowerCase()}%`)
+          .eq("listing_code", parseInt(approveShortId))
           .eq("status", "deletion_pending");
 
         if (!pendingListings || pendingListings.length === 0) {
@@ -621,7 +621,7 @@ export async function POST(req) {
         const { data: listings } = await supa
           .from("listings")
           .select("id, title")
-          .ilike("id", `${shortId.toLowerCase()}%`)
+          .eq("listing_code", parseInt(shortId))
           .eq("seller_wa", normalizedWa)
           .eq("status", "active");
 
@@ -639,7 +639,7 @@ export async function POST(req) {
         const uniqueCode = Math.floor(Math.random() * 99) + 1;
         const totalAmount = baseFee + uniqueCode;
         const upgradeTypeKey = isFeatured ? "featured" : "autobump";
-        const orderId = `UPGRADE-${upgradeTypeKey.toUpperCase()}-${listing.id.slice(0, 8)}-${Date.now()}`;
+        const orderId = `UPGRADE-${upgradeTypeKey.toUpperCase()}-${listing.listing_code}-${Date.now()}`;
 
         await supa.from("payments").insert({
           listing_id: listing.id,
@@ -679,7 +679,7 @@ export async function POST(req) {
         let bumpListMsg = `🔼 *Pilih Iklan untuk di-Bump:*\n\n`;
         bumpList.forEach((l, i) => {
           const bumpedAt = l.bumped_at ? new Date(l.bumped_at).toLocaleDateString("id-ID") : "-";
-          bumpListMsg += `${i + 1}. *${l.title}*\n   Terakhir sundul: ${bumpedAt}\n   Kode: \`${l.id.slice(0, 8)}\`\n\n`;
+          bumpListMsg += `${i + 1}. *${l.title}*\n   Terakhir sundul: ${bumpedAt}\n   Kode: \`${l.listing_code}\`\n\n`;
         });
         bumpListMsg += `Biaya bump: *Rp ${bumpFee.toLocaleString("id-ID")}* per iklan\n\nBalas: *BUMP [kode]*`;
         await sendWa(senderJid, bumpListMsg);
@@ -690,7 +690,7 @@ export async function POST(req) {
         const { data: bumpListings } = await supa
           .from("listings")
           .select("id, title")
-          .ilike("id", `${bumpShortId.toLowerCase()}%`)
+          .eq("listing_code", parseInt(bumpShortId))
           .eq("seller_wa", normalizedWa)
           .eq("status", "active");
 
@@ -704,7 +704,7 @@ export async function POST(req) {
         const bumpFee = Number(bumpSettings.pricing?.bump) || 2000;
         const bumpUniqueCode = Math.floor(Math.random() * 99) + 1;
         const bumpTotal = bumpFee + bumpUniqueCode;
-        const bumpOrderId = `BUMP-${bumpListing.id.slice(0, 8)}-${Date.now()}`;
+        const bumpOrderId = `BUMP-${bumpListing.listing_code}-${Date.now()}`;
 
         await supa.from("payments").insert({
           listing_id: bumpListing.id,
@@ -745,7 +745,7 @@ export async function POST(req) {
         const { data: editListings } = await supa
           .from("listings")
           .select("id, title, price, description")
-          .ilike("id", `${(editShortId || "").toLowerCase()}%`)
+          .eq("listing_code", parseInt((editShortId || "")))
           .eq("seller_wa", normalizedWa)
           .eq("status", "active");
 
@@ -797,7 +797,7 @@ export async function POST(req) {
         const { data: shareListings } = await supa
           .from("listings")
           .select("id, title, price, category, condition, seller_wa")
-          .ilike("id", `${shareShortId.toLowerCase()}%`)
+          .eq("listing_code", parseInt(shareShortId))
           .in("status", ["active", "pending"]);
 
         if (!shareListings || shareListings.length === 0) {
@@ -944,7 +944,7 @@ export async function POST(req) {
         const { data: tawarListings } = await supa
           .from("listings")
           .select("id, title, price, seller_wa, seller_name")
-          .ilike("id", `${tawarShortId.toLowerCase()}%`)
+          .eq("listing_code", parseInt(tawarShortId))
           .eq("status", "active");
 
         if (!tawarListings || tawarListings.length === 0) {
@@ -1005,7 +1005,7 @@ export async function POST(req) {
         const { data: iklanResults } = await supa
           .from("listings")
           .select("id, title, price, description, category, condition, campus, seller_wa, seller_name, image_url")
-          .ilike("id", `${iklanShortId.toLowerCase()}%`)
+          .eq("listing_code", parseInt(iklanShortId))
           .eq("status", "active");
 
         if (!iklanResults || iklanResults.length === 0) {
@@ -1158,7 +1158,7 @@ export async function POST(req) {
           .from("listings")
           .select("id, title, status, price, views, expires_at, bumped_at, category")
           .eq("seller_wa", normalizedWa)
-          .ilike("id", `${cekId}%`)
+          .eq("listing_code", parseInt(cekId))
           .limit(1);
 
         if (!cekListings || cekListings.length === 0) {
@@ -1317,7 +1317,7 @@ export async function POST(req) {
         const { data: laporListings } = await supa
           .from("listings")
           .select("id, title, seller_wa")
-          .ilike("id", `${laporId}%`)
+          .eq("listing_code", parseInt(laporId))
           .eq("status", "active")
           .limit(1);
 
@@ -1354,7 +1354,7 @@ export async function POST(req) {
           .from("listings")
           .select("id, title, status")
           .eq("seller_wa", normalizedWa)
-          .ilike("id", `${aktifId}%`)
+          .eq("listing_code", parseInt(aktifId))
           .limit(1);
 
         if (!aktifListings || aktifListings.length === 0) {
@@ -1506,7 +1506,7 @@ export async function POST(req) {
           return NextResponse.json({ ok: true, state: "dicari_posted", bot_reply: confirmMsg });
         } else {
           // Berbayar: generate QRIS
-          const orderId = `WNT-${wanted.id.slice(0, 8)}-${Date.now()}`;
+          const orderId = `WNT-${wanted.listing_code}-${Date.now()}`;
           await supa.from("payments").insert({
             listing_id: null,
             type: "iklan",
@@ -1661,7 +1661,7 @@ export async function POST(req) {
       const { data: fotoListings } = await supa
         .from("listings")
         .select("id, title, images")
-        .ilike("id", `${fotoShortId.toLowerCase()}%`)
+        .eq("listing_code", parseInt(fotoShortId))
         .eq("seller_wa", normalizedWa)
         .in("status", ["active", "pending"]);
 
@@ -1776,7 +1776,7 @@ export async function POST(req) {
       const baseFee = adFeeFrom(settings.pricing, "barang", newListing.price);
       const uniqueCode = Math.floor(Math.random() * 99) + 1;
       const totalAmount = baseFee + uniqueCode;
-      const orderId = `IKLAN-WA-${newListing.id.slice(0, 8)}-${Date.now()}`;
+      const orderId = `IKLAN-WA-${newListing.listing_code}-${Date.now()}`;
 
       await supa.from("payments").insert({
         listing_id: newListing.id,
@@ -1809,8 +1809,8 @@ export async function POST(req) {
       } catch (_) {}
 
       const conditionLabel = newListing.condition === "new" ? "✨ Baru" : "Bekas";
-      const fallbackReply = `✅ *Iklan Berhasil Dibaca AI!*\n\n📦 *${newListing.title}*\n🏷️ ${newListing.category} · ${conditionLabel}\n💰 Rp ${newListing.price.toLocaleString("id-ID")}\n${priceSuggestion}\n`;
-      const aiReply = extracted.reply_message ? `${extracted.reply_message}${priceSuggestion}\n\n` : fallbackReply;
+      const fallbackReply = `✅ *Iklan Berhasil Dibaca AI!*\n\n📦 *${newListing.title}*\n🏷️ ${newListing.category} · ${conditionLabel}\n💰 Rp ${newListing.price.toLocaleString("id-ID")}\n🔑 Kode iklan: *${newListing.listing_code}*\n${priceSuggestion}\n`;
+      const aiReply = extracted.reply_message ? `${extracted.reply_message}🔑 Kode iklan: *${newListing.listing_code}*\n${priceSuggestion}\n\n` : fallbackReply;
 
       const paymentInstructions =
         `Untuk tayangkan iklan, scan QRIS di bawah ini.\n` +
