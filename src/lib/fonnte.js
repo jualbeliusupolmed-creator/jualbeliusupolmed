@@ -235,7 +235,20 @@ export async function notifyCategorySubscribers(supa, listing) {
 // FITUR YANG DINONAKTIFKAN (Untuk Hemat Kuota Fonnte)
 // ============================================================================
 
-export async function notifyAdminNewListing(listing) { return { ok: true, skipped: true }; }
+export async function notifyAdminNewListing(listing) {
+  const adminWa = process.env.ADMIN_WA;
+  if (!adminWa) return { ok: false, skipped: true };
+  const url = `${baseUrl()}/produk/${buildSlug(listing.title, listing.id)}`;
+  const msg =
+    `🆕 *Iklan Baru Tayang!*\n\n` +
+    `📦 *${listing.title}*\n` +
+    `💰 ${rupiah(listing.price)}\n` +
+    `🏷️ ${listing.category || "-"}\n` +
+    `👤 ${listing.seller_name || "-"} (${listing.seller_wa})\n` +
+    `🔑 Kode: ${listing.listing_code || "-"}\n\n` +
+    `👉 ${url}`;
+  return send(adminWa, msg, listing.image_url || null).catch(() => ({ ok: false }));
+}
 export async function notifyWantedBuyers(listing) { return { ok: true, skipped: true }; }
 export async function notifySellerInterest(listing, buyerWa) { return { ok: true, skipped: true }; }
 export async function notifyAdminReport(listing, report) { return { ok: true, skipped: true }; }

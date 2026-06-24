@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { verifyReceiptImage } from "@/lib/gemini";
 import { sendWa, notifyAdminNewListing, postToGroup, postWantedToGroup } from "@/lib/fonnte";
+import { buildSlug } from "@/lib/slug";
 
 export const dynamic = "force-dynamic";
 
@@ -47,7 +48,7 @@ export async function POST(req) {
         .from("payments")
         .update({ status: "paid" })
         .eq("midtrans_order_id", transactionId)
-        .select("*, listings(title, seller_wa)")
+        .select("*, listings(id, title, price, category, condition, seller_name, seller_wa, listing_code, image_url, expires_at)")
         .single();
 
       if (payment) {
@@ -87,10 +88,9 @@ export async function POST(req) {
               .single();
               
             if (listing && payment.type === "iklan") {
-              // notif admin + auto-post grup (aman-gagal)
               Promise.allSettled([
                 notifyAdminNewListing(listing),
-                postToGroup(listing)
+                postToGroup(listing),
               ]).catch(console.error);
             }
           } else if (payment.type === "featured") {
@@ -119,13 +119,27 @@ export async function POST(req) {
               .eq("id", payment.listing_id);
           }
           
-          // 5. Kirim Notifikasi Sukses via WhatsApp (Fonnte) ke Penjual
+          // 5. Kirim Notifikasi Sukses via WhatsApp ke Penjual
           if (payment.listings?.seller_wa) {
-            const title = payment.listings?.title || "Iklan Anda";
-            const message = `🎉 *Halo! Pembayaran Sukses*\n\nSistem AI kami telah memvalidasi struk transfer sebesar *Rp ${payment.amount.toLocaleString("id-ID")}* untuk transaksi ${payment.type}.\n\nLayanan untuk *"${title}"* sudah diaktifkan otomatis! 🚀`;
-            
-            // Jangan await agar tidak menahan response ke client
-            sendWa(payment.listings.seller_wa, message).catch(console.error);
+            const ls = payment.listings;
+            const productUrl = ls.id && ls.title
+              ? `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id"}/produk/${buildSlug(ls.title, ls.id)}`
+              : null;
+            const expDate = ls.expires_at
+              ? new Date(ls.expires_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
+              : null;
+
+            const typeMessages = {
+              iklan:    `✅ *Iklan Kamu Sudah Tayang!* 🎉\n\n📦 *${ls.title}*\n${expDate ? `📅 Aktif hingga: *${expDate}*\n` : ""}🔑 Kode: *${ls.listing_code || "-"}*\n\nIklan sudah disebarkan ke grup WA marketplace!\n\n${productUrl ? `👉 ${productUrl}` : ""}`,
+              bump:     `🔼 *Iklan Berhasil Disundul!*\n\n📦 *${ls.title}* sudah naik ke atas.\n\n${productUrl ? `👉 ${productUrl}` : ""}`,
+              renewal:  `🔄 *Iklan Diperpanjang!*\n\n📦 *${ls.title}*\n${expDate ? `📅 Aktif hingga: *${expDate}*` : ""}`,
+              featured: `⭐ *Featured Aktif!*\n\n📦 *${ls.title}* sekarang tampil sebagai Featured.\n\n${productUrl ? `👉 ${productUrl}` : ""}`,
+              autobump: `🔄 *AutoBump Aktif!*\n\n📦 *${ls.title}* akan otomatis disundul setiap hari.`,
+            };
+            const message = typeMessages[payment.type]
+              || `✅ *Pembayaran Sukses*\n\nLayanan untuk *"${ls.title}"* sudah diaktifkan! 🚀`;
+
+            sendWa(ls.seller_wa, message).catch(console.error);
           }
         }
       }

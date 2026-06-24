@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { parseListingFromText, verifyReceiptImage, processGeneralChat, parseWantedFromText } from "@/lib/gemini";
-import { sendWa, postToGroup, notifyWantedMatch, notifyCategorySubscribers, notifyBuyerOfferResult, postWantedToGroup, notifySellerNewOffer } from "@/lib/fonnte";
+import { sendWa, postToGroup, notifyAdminNewListing, notifyWantedMatch, notifyCategorySubscribers, notifyBuyerOfferResult, postWantedToGroup, notifySellerNewOffer } from "@/lib/fonnte";
 import { formatWa } from "@/lib/constants";
 import { getSettings, adFeeFrom } from "@/lib/settings";
 import { buildSlug } from "@/lib/slug";
@@ -241,6 +241,7 @@ export async function POST(req) {
 
           if (updatedListing) {
             await postToGroup(updatedListing).catch(() => {});
+            notifyAdminNewListing(updatedListing).catch(() => {});
             notifyMatchingWanted(supa, updatedListing).catch(() => {});
             notifyCategorySubscribers(supa, updatedListing).catch(() => {});
           }
