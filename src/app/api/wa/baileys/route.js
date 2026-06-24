@@ -11,13 +11,11 @@ import sharp from "sharp";
 export const dynamic = "force-dynamic";
 
 // Cek apakah nomor WA termasuk admin (support multi-admin, pisahkan koma di env)
+// Semua nomor dinormalisasi ke format 62xxx sebelum dibandingkan
 function isAdminWa(wa) {
-  const admins = (process.env.ADMIN_WA || "")
-    .split(",")
-    .map(a => a.trim().replace(/^0/, "62").replace(/\D/g, ""))
-    .filter(Boolean);
-  const normalized = (wa || "").replace(/\D/g, "");
-  return admins.length > 0 && admins.includes(normalized);
+  const to62 = n => (n || "").replace(/\D/g, "").replace(/^0/, "62");
+  const admins = (process.env.ADMIN_WA || "").split(",").map(a => to62(a.trim())).filter(Boolean);
+  return admins.length > 0 && admins.includes(to62(wa));
 }
 
 // Generate QRIS dinamis dan upload ke Supabase Storage → return public URL.
