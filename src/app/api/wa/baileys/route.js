@@ -440,7 +440,7 @@ export async function POST(req) {
       } else if (textMsg === "IKLANKU") {
         const { data: myListings } = await supa
           .from("listings")
-          .select("id, title, status, expires_at, price")
+          .select("id, listing_code, title, status, expires_at, price, featured, featured_until, auto_bump_until")
           .eq("seller_wa", normalizedWa)
           .not("status", "in", '("deleted")')
           .order("created_at", { ascending: false })
@@ -459,8 +459,12 @@ export async function POST(req) {
           const label = l.status === "active" ? "Aktif" : l.status === "sold" ? "Terjual" : l.status === "deletion_pending" ? "Menunggu hapus" : "Pending";
           const exp = l.expires_at ? new Date(l.expires_at).toLocaleDateString("id-ID", { day: "numeric", month: "short" }) : "-";
           const shortId = l.listing_code;
+          const now = new Date();
+          const isFeatured = l.featured && l.featured_until && new Date(l.featured_until) > now;
+          const isAutoBump = l.auto_bump_until && new Date(l.auto_bump_until) > now;
+          const upgradeBadge = isFeatured ? ` ⭐Featured` : isAutoBump ? ` 🔄AutoBump` : "";
           listMsg += `${i + 1}. *${l.title}*\n`;
-          listMsg += `   ${emo} ${label} | Rp ${Number(l.price).toLocaleString("id-ID")}\n`;
+          listMsg += `   ${emo} ${label}${upgradeBadge} | Rp ${Number(l.price).toLocaleString("id-ID")}\n`;
           listMsg += `   📅 s/d ${exp} | Kode: \`${shortId}\`\n\n`;
         });
         listMsg +=
@@ -629,7 +633,7 @@ export async function POST(req) {
         }
         return NextResponse.json({ ok: true, state: isApprove ? "admin_approved" : "admin_rejected" });
 
-      } else if (textMsg.match(/^UPGRADE FEATURED ([A-Z0-9]{8}) (\d+)$/i) || textMsg.match(/^UPGRADE AUTOBUMP ([A-Z0-9]{8})$/i)) {
+      } else if (textMsg.match(/^UPGRADE FEATURED (\d+) (\d+)$/i) || textMsg.match(/^UPGRADE AUTOBUMP (\d+)$/i)) {
         const isFeatured = textMsg.startsWith("UPGRADE FEATURED");
         const parts = textMsg.split(" ");
         const shortId = parts[2];
@@ -1201,7 +1205,7 @@ export async function POST(req) {
         const cekId = textMsg.split(" ")[1].toLowerCase();
         const { data: cekListings } = await supa
           .from("listings")
-          .select("id, title, status, price, views, expires_at, bumped_at, category")
+          .select("id, title, status, price, views, expires_at, bumped_at, category, featured, featured_until, auto_bump_until")
           .eq("seller_wa", normalizedWa)
           .eq("listing_code", parseInt(cekId))
           .limit(1);
@@ -1224,6 +1228,12 @@ export async function POST(req) {
         const statusEmoji = { active: "✅", pending: "⏳", sold: "🎉", expired: "❌", suspended: "⛔", deletion_pending: "🗑️" }[cek.status] || "❓";
         const cekBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
 
+        const cekNow = new Date();
+        const cekFeatured = cek.featured && cek.featured_until && new Date(cek.featured_until) > cekNow;
+        const cekAutoBump = cek.auto_bump_until && new Date(cek.auto_bump_until) > cekNow;
+        const cekFeaturedUntil = cekFeatured ? new Date(cek.featured_until).toLocaleDateString("id-ID", { day: "numeric", month: "short" }) : null;
+        const cekAutoBumpUntil = cekAutoBump ? new Date(cek.auto_bump_until).toLocaleDateString("id-ID", { day: "numeric", month: "short" }) : null;
+
         await sendWa(senderJid,
           `📊 *Status Iklan*\n\n` +
           `📌 *${cek.title}*\n` +
@@ -1231,11 +1241,14 @@ export async function POST(req) {
           `${statusEmoji} Status: *${cek.status}*\n` +
           `👁️ Views: *${cek.views || 0}×*\n` +
           `📅 Aktif s/d: *${cekExpDate}*${cekSisaHari !== null ? ` _(${cekSisaHari} hari lagi)_` : ""}\n` +
-          `⬆️ Terakhir bump: *${cekBumpDate}*\n\n` +
-          `🔗 ${cekBaseUrl}/produk/${buildSlug(cek.title, cek.id)}\n\n` +
+          `⬆️ Terakhir bump: *${cekBumpDate}*\n` +
+          (cekFeatured ? `⭐ Featured aktif s/d: *${cekFeaturedUntil}*\n` : ``) +
+          (cekAutoBump ? `🔄 AutoBump aktif s/d: *${cekAutoBumpUntil}*\n` : ``) +
+          `\n🔗 ${cekBaseUrl}/produk/${buildSlug(cek.title, cek.id)}\n\n` +
           `Perintah lain:\n` +
           `• *BUMP ${cekId}* — naikkan posisi\n` +
-          `• *PERPANJANG ${cekId}* — perpanjang masa aktif`
+          `• *PERPANJANG ${cekId}* — perpanjang masa aktif\n` +
+          `• *UPGRADE ${cekId}* — featured / autobump`
         );
         return NextResponse.json({ ok: true, state: "cek_done" });
 
@@ -1324,23 +1337,26 @@ export async function POST(req) {
           `━━━ 🛒 IKLAN ━━━\n` +
           `• Kirim foto+teks → Pasang iklan baru\n` +
           `• *IKLANKU* → Semua iklan saya\n` +
-          `• *CEK [kode]* → Status & views iklan\n` +
+          `• *CEK [kode]* → Status, views & upgrade aktif\n` +
           `• *BUMP [kode]* → Naikkan ke atas\n` +
+          `• *UPGRADE [kode]* → Featured / AutoBump\n` +
           `• *AKTIFKAN [kode]* → Aktifkan iklan expired\n` +
           `• *PERPANJANG [kode]* → Perpanjang masa aktif\n` +
           `• *EDIT [kode] HARGA [nominal]* → Ubah harga\n` +
           `• *EDIT [kode] DESC [teks]* → Ubah deskripsi\n` +
           `• *FOTO [kode]* + foto → Tambah foto\n` +
           `• *HAPUS LAKU [kode]* → Tandai terjual\n` +
-          `• *HAPUS GALAKU [kode]* → Minta hapus iklan\n` +
+          `• *HAPUS GALAKU [kode]* → Minta hapus ke admin\n` +
           `\n━━━ 💬 TRANSAKSI ━━━\n` +
           `• *TAWARAN* → Lihat tawaran masuk\n` +
           `• *TAWAR [kode] [harga]* → Tawar harga\n` +
           `• *TAGIH* → Kirim ulang QRIS\n` +
+          `• *BATAL* → Batalkan tagihan QRIS pending\n` +
           `• *SHARE [kode]* → Link iklan siap share\n` +
           `\n━━━ 🔍 CARI & LANGGANAN ━━━\n` +
           `• *CARI [barang]* → Posting pencarian\n` +
           `• *LANGGANAN [kategori]* → Notif kategori baru\n` +
+          `• *STOP* → Berhenti semua notifikasi\n` +
           `• *IKLAN [kode]* → Lihat detail iklan\n` +
           `\n━━━ 👤 PROFIL ━━━\n` +
           `• *SAYA* → Profil & statistik saya\n` +
