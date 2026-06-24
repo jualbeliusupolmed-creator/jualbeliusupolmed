@@ -1088,6 +1088,7 @@ export async function POST(req) {
       // ==========================================
       } else if (textMsg === "STATS") {
         if (!isAdminWa(normalizedWa)) {
+          await sendWa(senderJid, `⛔ Akses ditolak. Nomor kamu (${normalizedWa}) bukan admin.`);
           return NextResponse.json({ ok: true, ignored: true });
         }
 
