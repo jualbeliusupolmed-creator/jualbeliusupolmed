@@ -1299,16 +1299,19 @@ export async function POST(req) {
         const sayaBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
 
         await sendWa(senderJid,
-          `👤 *Profil Kamu*\n\n` +
+          `👤 *Profil Kamu*\n` +
+          `━━━━━━━━━━━━━━━\n\n` +
           `📛 Nama: *${sayaProfile?.name || "Belum diatur"}*\n` +
-          `🏷️ Paket: *${tierLabel}*\n` +
-          (sayaProfile?.trusted_seller ? `☑️ Penjual Terpercaya\n` : ``) +
-          `\n📦 Iklan Aktif: *${aktifCount}*\n` +
+          `🏷️ Paket: *${tierLabel}*` +
+          (sayaProfile?.trusted_seller ? `  ☑️ _Terpercaya_` : ``) +
+          `\n\n━━━ 📊 Statistik ━━━\n` +
+          `📦 Iklan Aktif: *${aktifCount}*\n` +
           `✅ Total Terjual: *${terjualCount}×*\n` +
-          (pendingOffers > 0 ? `💬 Tawaran Menunggu: *${pendingOffers}* (ketik TAWARAN)\n` : ``) +
           (avgRating ? `⭐ Rating: *${avgRating}/5* dari ${sayaRatings.length} ulasan\n` : ``) +
-          `\n🔗 Profil publik:\n${sayaBaseUrl}/penjual/${normalizedWa}\n\n` +
-          `Ketik *MENU* untuk daftar perintah lengkap.`
+          (pendingOffers > 0 ? `💬 Tawaran Pending: *${pendingOffers}* → ketik *TAWARAN*\n` : ``) +
+          `\n━━━ 🔗 Profil Publik ━━━\n` +
+          `${sayaBaseUrl}/penjual/${normalizedWa}\n\n` +
+          `Ketik *MENU* untuk semua perintah.`
         );
         return NextResponse.json({ ok: true, state: "saya_done" });
 
