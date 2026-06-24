@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { parseListingFromText, verifyReceiptImage, processGeneralChat, suggestPrice, parseWantedFromText } from "@/lib/gemini";
+import { parseListingFromText, verifyReceiptImage, processGeneralChat, parseWantedFromText } from "@/lib/gemini";
 import { sendWa, postToGroup, notifyWantedMatch, notifyCategorySubscribers, notifyBuyerOfferResult, postWantedToGroup, notifySellerNewOffer } from "@/lib/fonnte";
 import { formatWa } from "@/lib/constants";
 import { getSettings, adFeeFrom } from "@/lib/settings";
@@ -721,6 +721,23 @@ export async function POST(req) {
         }
 
         const bumpListing = bumpListings[0];
+
+        // Cek free_bumps dari referral sebelum buat tagihan
+        const { data: bumpProfile } = await supa.from("seller_profiles").select("free_bumps").eq("wa", normalizedWa).maybeSingle();
+        const freeBumpsLeft = bumpProfile?.free_bumps || 0;
+
+        if (freeBumpsLeft > 0) {
+          await supa.from("listings").update({ bumped_at: new Date().toISOString() }).eq("id", bumpListing.id);
+          await supa.from("seller_profiles").update({ free_bumps: freeBumpsLeft - 1 }).eq("wa", normalizedWa);
+          const freeBumpMsg =
+            `🎉 *Bump Gratis Digunakan!*\n\n` +
+            `📦 *${bumpListing.title}* berhasil dinaikkan ke atas.\n` +
+            `🎁 Sisa bump gratis: *${freeBumpsLeft - 1}*\n\n` +
+            `_Bump gratis didapat dari referral. Ajak teman pakai kode referralmu!_`;
+          await sendWa(senderJid, freeBumpMsg);
+          return NextResponse.json({ ok: true, state: "bump_free_used", bot_reply: freeBumpMsg });
+        }
+
         const bumpSettings = await getSettings();
         const bumpFee = Number(bumpSettings.pricing?.bump) || 2000;
         const bumpUniqueCode = Math.floor(Math.random() * 99) + 1;
@@ -909,6 +926,21 @@ export async function POST(req) {
           `Ketik *TAGIH* jika ingin bayar lagi, atau *IKLANKU* untuk lihat iklan Anda.`
         );
         return NextResponse.json({ ok: true, state: "batal_ok" });
+
+      // ==========================================
+      // NAMA — Set nama profil via WA
+      // ==========================================
+      } else if (textMsg.startsWith("NAMA ")) {
+        const newName = message.replace(/^NAMA\s+/i, "").trim().slice(0, 50);
+        if (!newName || newName.length < 2) {
+          await sendWa(senderJid, "❌ Nama terlalu pendek.\n\nContoh: *NAMA Budi Santoso*");
+          return NextResponse.json({ ok: true, state: "nama_invalid" });
+        }
+        await supa.from("seller_profiles").upsert({ wa: normalizedWa, name: newName }, { onConflict: "wa" });
+        await supa.from("listings").update({ seller_name: newName }).eq("seller_wa", normalizedWa).in("status", ["active", "pending"]);
+        const namaMsg = `✅ *Nama profil diperbarui!*\n\n📛 Nama: *${newName}*\n\nNama ini akan tampil di semua iklan kamu.`;
+        await sendWa(senderJid, namaMsg);
+        return NextResponse.json({ ok: true, state: "nama_updated", bot_reply: namaMsg });
 
       // ==========================================
       // LANGGANAN — Subscribe notif kategori baru
@@ -1816,9 +1848,13 @@ export async function POST(req) {
       const fileMimeType = primaryMimeType;
 
       let profileName = "Pengguna WA";
+      let isNewWaUser = false;
       const { data: profile } = await supa.from("seller_profiles").select("name").eq("wa", normalizedWa).maybeSingle();
       if (profile) profileName = profile.name;
-      else await supa.from("seller_profiles").insert({ wa: normalizedWa, name: profileName });
+      else {
+        isNewWaUser = true;
+        await supa.from("seller_profiles").insert({ wa: normalizedWa, name: profileName });
+      }
 
       const listingDays = Number(settings.pricing?.listingDays) || 14;
       const expiresAt = new Date(Date.now() + listingDays * 24 * 60 * 60 * 1000).toISOString();
@@ -1857,28 +1893,10 @@ export async function POST(req) {
       // Generate QRIS dinamis dengan nominal yang sudah terisi otomatis
       const qrisUrl = await getQrisUrl(supa, orderId, totalAmount);
 
-      // Ambil saran harga AI dari iklan serupa (non-blocking)
-      let priceSuggestion = "";
-      try {
-        const { data: similar } = await supa
-          .from("listings")
-          .select("price")
-          .eq("status", "active")
-          .eq("category", newListing.category)
-          .neq("id", newListing.id)
-          .limit(5);
-        if (similar && similar.length >= 2) {
-          const prices = similar.map(s => s.price);
-          const suggestion = await suggestPrice(newListing.title, newListing.category, prices);
-          if (suggestion) {
-            priceSuggestion = `\n💡 *Saran harga AI:* Rp ${Number(suggestion.suggested_price).toLocaleString("id-ID")} (${suggestion.note})\n`;
-          }
-        }
-      } catch (_) {}
-
       const conditionLabel = newListing.condition === "new" ? "✨ Baru" : "Bekas";
-      const fallbackReply = `✅ *Iklan Berhasil Dibaca AI!*\n\n📦 *${newListing.title}*\n🏷️ ${newListing.category} · ${conditionLabel}\n💰 Rp ${newListing.price.toLocaleString("id-ID")}\n🔑 Kode iklan: *${newListing.listing_code}*\n${priceSuggestion}\n`;
-      const aiReply = extracted.reply_message ? `${extracted.reply_message}🔑 Kode iklan: *${newListing.listing_code}*\n${priceSuggestion}\n\n` : fallbackReply;
+      const namaReminder = isNewWaUser ? `\n💡 Ketik *NAMA [nama kamu]* untuk set nama profil iklan.\n` : "";
+      const fallbackReply = `✅ *Iklan Berhasil Dibaca AI!*\n\n📦 *${newListing.title}*\n🏷️ ${newListing.category} · ${conditionLabel}\n💰 Rp ${newListing.price.toLocaleString("id-ID")}\n🔑 Kode iklan: *${newListing.listing_code}*\n${namaReminder}\n`;
+      const aiReply = extracted.reply_message ? `${extracted.reply_message}🔑 Kode iklan: *${newListing.listing_code}*\n${namaReminder}\n` : fallbackReply;
 
       const paymentInstructions =
         `Untuk tayangkan iklan, scan QRIS di bawah ini.\n` +
