@@ -1227,15 +1227,19 @@ export async function POST(req) {
       // SAYA — Lihat profil & statistik diri sendiri
       // ==========================================
       } else if (textMsg === "SAYA") {
+        // Ambil listing IDs dulu, baru query price_offers (subquery tidak support di Supabase JS)
+        const { data: myListingIds } = await supa
+          .from("listings").select("id").eq("seller_wa", normalizedWa);
+        const listingIds = (myListingIds || []).map(l => l.id);
+
         const [profileRes, activeRes, soldRes, ratingRes, offerRes] = await Promise.all([
           supa.from("seller_profiles").select("name, bio, trusted_seller, subscription_tier").eq("wa", normalizedWa).maybeSingle(),
           supa.from("listings").select("id", { count: "exact", head: true }).eq("seller_wa", normalizedWa).eq("status", "active"),
           supa.from("listings").select("id", { count: "exact", head: true }).eq("seller_wa", normalizedWa).eq("status", "sold"),
           supa.from("seller_ratings").select("rating").eq("seller_wa", normalizedWa),
-          supa.from("price_offers").select("id", { count: "exact", head: true })
-            .in("listing_id",
-              supa.from("listings").select("id").eq("seller_wa", normalizedWa)
-            ).eq("status", "pending"),
+          listingIds.length > 0
+            ? supa.from("price_offers").select("id", { count: "exact", head: true }).in("listing_id", listingIds).eq("status", "pending")
+            : Promise.resolve({ count: 0 }),
         ]);
 
         const sayaProfile = profileRes.data;
@@ -1335,7 +1339,7 @@ export async function POST(req) {
           listing_id: laporListings[0].id,
           reporter_wa: normalizedWa,
           reason: laporAlasan,
-          status: "pending",
+          status: "open",
         });
 
         await sendWa(senderJid,
