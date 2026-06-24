@@ -10,6 +10,16 @@ import sharp from "sharp";
 
 export const dynamic = "force-dynamic";
 
+// Cek apakah nomor WA termasuk admin (support multi-admin, pisahkan koma di env)
+function isAdminWa(wa) {
+  const admins = (process.env.ADMIN_WA || "")
+    .split(",")
+    .map(a => a.trim().replace(/^0/, "62").replace(/\D/g, ""))
+    .filter(Boolean);
+  const normalized = (wa || "").replace(/\D/g, "");
+  return admins.length > 0 && admins.includes(normalized);
+}
+
 // Generate QRIS dinamis dan upload ke Supabase Storage → return public URL.
 // Fallback ke QRIS statis jika gagal.
 async function getQrisUrl(supa, orderId, amount) {
@@ -527,8 +537,8 @@ export async function POST(req) {
           const hapusListing = hapusListings[0];
           await supa.from("listings").update({ status: "deletion_pending" }).eq("id", hapusListing.id);
 
-          const adminWa = process.env.ADMIN_WA;
-          if (adminWa) {
+          const adminNumbers = (process.env.ADMIN_WA || "").split(",").map(a => a.trim()).filter(Boolean);
+          if (adminNumbers.length > 0) {
             const adminMsg =
               `🗑️ *Permintaan Hapus Iklan*\n\n` +
               `Penjual: ${normalizedWa}\n` +
@@ -536,7 +546,9 @@ export async function POST(req) {
               `Alasan: Barang tidak laku\n\n` +
               `✅ Setuju → ketik: *APPROVE ${hapusListing.listing_code}*\n` +
               `❌ Tolak → ketik: *REJECT ${hapusListing.listing_code}*`;
-            await sendWa(adminWa, adminMsg).catch(() => {});
+            for (const adminNum of adminNumbers) {
+              await sendWa(adminNum, adminMsg).catch(() => {});
+            }
           }
 
           const galakuMsg =
@@ -577,9 +589,7 @@ export async function POST(req) {
       // APPROVE / REJECT — Admin konfirmasi hapus
       // ==========================================
       } else if (textMsg.startsWith("APPROVE ") || textMsg.startsWith("REJECT ")) {
-        const adminWa = (process.env.ADMIN_WA || "").replace(/^0/, "62").replace(/\D/g, "");
-        const senderNorm = normalizedWa.replace(/\D/g, "");
-        if (!adminWa || senderNorm !== adminWa) {
+        if (!isAdminWa(normalizedWa)) {
           return NextResponse.json({ ok: true, ignored: true });
         }
 
@@ -1071,9 +1081,7 @@ export async function POST(req) {
       // STATS — Statistik admin
       // ==========================================
       } else if (textMsg === "STATS") {
-        const adminWaStats = (process.env.ADMIN_WA || "").replace(/^0/, "62").replace(/\D/g, "");
-        const senderNormStats = normalizedWa.replace(/\D/g, "");
-        if (!adminWaStats || senderNormStats !== adminWaStats) {
+        if (!isAdminWa(normalizedWa)) {
           return NextResponse.json({ ok: true, ignored: true });
         }
 
@@ -1107,9 +1115,7 @@ export async function POST(req) {
       // PAUSE [nomor] — Admin pause bot untuk user
       // ==========================================
       } else if (textMsg.startsWith("PAUSE ")) {
-        const adminWaPause = (process.env.ADMIN_WA || "").replace(/^0/, "62").replace(/\D/g, "");
-        const senderNormPause = normalizedWa.replace(/\D/g, "");
-        if (!adminWaPause || senderNormPause !== adminWaPause) {
+        if (!isAdminWa(normalizedWa)) {
           return NextResponse.json({ ok: true, ignored: true });
         }
 
@@ -1130,9 +1136,7 @@ export async function POST(req) {
         return NextResponse.json({ ok: true, state: "pause_done" });
 
       } else if (textMsg.startsWith("RESUME ")) {
-        const adminWaResume = (process.env.ADMIN_WA || "").replace(/^0/, "62").replace(/\D/g, "");
-        const senderNormResume = normalizedWa.replace(/\D/g, "");
-        if (!adminWaResume || senderNormResume !== adminWaResume) {
+        if (!isAdminWa(normalizedWa)) {
           return NextResponse.json({ ok: true, ignored: true });
         }
 
@@ -1153,9 +1157,7 @@ export async function POST(req) {
       // BROADCAST — Admin kirim pesan ke semua penjual
       // ==========================================
       } else if (textMsg.startsWith("BROADCAST ")) {
-        const adminWaBc = (process.env.ADMIN_WA || "").replace(/^0/, "62").replace(/\D/g, "");
-        const senderNormBc = normalizedWa.replace(/\D/g, "");
-        if (!adminWaBc || senderNormBc !== adminWaBc) {
+        if (!isAdminWa(normalizedWa)) {
           return NextResponse.json({ ok: true, ignored: true });
         }
 
