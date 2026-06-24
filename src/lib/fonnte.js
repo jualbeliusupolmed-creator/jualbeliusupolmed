@@ -88,11 +88,34 @@ function rupiah(n) {
 // Auto-post ke grup WA setelah bayar iklan jualan — ringkas agar tidak menyemak
 export async function postToGroup(listing) {
   const group = process.env.FONNTE_WA_GROUP_ID;
+  const isRental = listing.type === "sewa";
+  const priceStr = isRental && listing.rental_period
+    ? `${rupiah(listing.price)}/${listing.rental_period}`
+    : rupiah(listing.price);
   const msg =
-    `🛒 *${listing.title}* — ${rupiah(listing.price)}\n` +
+    `${isRental ? "🔑 *[SEWA]*" : "🛒"} *${listing.title}* — ${priceStr}\n` +
     `🏷️ ${listing.category}\n` +
     `👉 ${baseUrl()}/produk/${buildSlug(listing.title, listing.id)}`;
-  return send(group, msg);
+
+  // Kirim ke grup utama (env FONNTE_WA_GROUP_ID)
+  const main = group ? send(group, msg, listing.image_url || null) : Promise.resolve();
+
+  // Kirim ke grup-grup tambahan dari env BAILEYS_BROADCAST_GROUPS (comma-separated JID)
+  const extraGroups = (process.env.BAILEYS_BROADCAST_GROUPS || "")
+    .split(",")
+    .map((g) => g.trim())
+    .filter(Boolean);
+
+  const extras = extraGroups.map((jid) =>
+    send(jid, msg, listing.image_url || null).catch(() => {})
+  );
+
+  // Kirim WA Story (status@broadcast) — hanya via Baileys karena Fonnte tidak support
+  const story = process.env.BAILEYS_API_URL
+    ? send("status@broadcast", msg, listing.image_url || null).catch(() => {})
+    : Promise.resolve();
+
+  await Promise.all([main, ...extras, story]);
 }
 
 // Auto-post ke grup WA ketika ada yang mencari barang (Papan Dicari) — ringkas
