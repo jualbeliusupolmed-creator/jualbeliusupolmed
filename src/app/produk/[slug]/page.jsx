@@ -6,7 +6,7 @@ import { buildSlug, getShortIdFromSlug, isUUID } from "@/lib/slug";
 import { fetchSingleListingWithProfile, fetchListingsWithProfiles } from "@/lib/dbHelpers";
 import MinatButton from "@/components/MinatButton";
 import OfferButton from "@/components/OfferButton";
-import IGShareButton from "@/components/IGShareButton";
+import ShareModal from "@/components/ShareModal";
 import ShareWAButton from "@/components/ShareWAButton";
 import QRButton from "@/components/QRButton";
 import CopyLinkButton from "@/components/CopyLinkButton";
@@ -246,7 +246,15 @@ export default async function ProdukPage({ params }) {
           <p className="mt-2 text-3xl font-extrabold tracking-tight text-gray-900">
             {listing.type === "jasa" && <span className="text-xl text-gray-500 font-medium">Mulai dari </span>}
             {rupiah(listing.price)}
+            {listing.type === "sewa" && listing.rental_period && (
+              <span className="text-lg font-medium text-teal-600 ml-1">/{listing.rental_period}</span>
+            )}
           </p>
+          {listing.type === "sewa" && (
+            <p className="mt-1 text-sm font-medium text-teal-700 dark:text-teal-400 flex items-center gap-1">
+              🔑 Barang ini disewakan, bukan dijual
+            </p>
+          )}
           <p className="mt-1 text-sm text-gray-400">
             {listing.type !== "jasa" && <span>Stok: {listing.stock}</span>}
             {listing.views > 0 && (
@@ -285,21 +293,21 @@ export default async function ProdukPage({ params }) {
           <div className="mt-4 space-y-2">
             {!sold && <MinatButton listing={listing} />}
             {!sold && <OfferButton listing={listing} />}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <div className="col-span-2 block md:hidden">
                 <NativeShareButton listing={listing} />
               </div>
               <div className="hidden md:block">
                 <ShareWAButton listing={listing} />
               </div>
-              <div className="hidden md:block">
-                <IGShareButton listing={listing} />
-              </div>
-              <div className="col-span-1 md:col-span-1">
+              <div className="col-span-1">
                 <CopyLinkButton listing={listing} />
               </div>
-              <div className="col-span-1 md:col-span-1">
+              <div className="col-span-1">
                 <QRButton listing={listing} />
+              </div>
+              <div className="col-span-2">
+                <ShareModal listing={listing} />
               </div>
             </div>
           </div>
