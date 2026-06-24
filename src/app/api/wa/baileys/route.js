@@ -132,10 +132,18 @@ export async function POST(req) {
 
     const pendingPayment = pendingPayments?.[0];
 
+    // Admin commands bypass semua flow payment
+    const adminCmds = ["STATS", "PAUSE", "RESUME", "BROADCAST", "APPROVE", "REJECT"];
+    const isAdminCommand = !file && isAdminWa(normalizedWa) &&
+      adminCmds.some(cmd => {
+        const t = (message || "").toUpperCase().trim();
+        return t === cmd || t.startsWith(cmd + " ");
+      });
+
     // ==========================================
     // STATE 2: Menunggu Bukti Transfer (Struk)
     // ==========================================
-    if (pendingPayment) {
+    if (pendingPayment && !isAdminCommand) {
       if (!file) {
         if (message && message.toLowerCase().trim() === "batal") {
           await supa.from("payments").delete().eq("id", pendingPayment.id);
