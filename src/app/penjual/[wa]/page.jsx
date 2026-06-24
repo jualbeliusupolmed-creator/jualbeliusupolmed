@@ -6,7 +6,7 @@ import ProductCard from "@/components/ProductCard";
 import ShareProfileButton from "@/components/ShareProfileButton";
 import { formatWa } from "@/lib/constants";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300; // ISR 5 menit — cukup segar untuk marketplace
 
 async function getSellerData(wa) {
   try {
@@ -111,9 +111,31 @@ export async function generateMetadata({ params }) {
   const data = await getSellerData(params.wa);
   if (!data) return { title: "Penjual tidak ditemukan" };
   const name = data.seller.seller_name;
+  const waClean = data.seller.seller_wa?.replace(/\D/g, "") || params.wa;
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+  const pageUrl = `${baseUrl}/penjual/${waClean}`;
+  const firstImage = data.listings[0]?.image_url || null;
+  const soldText = data.soldCount > 0 ? ` Sudah terjual ${data.soldCount}× barang.` : "";
+  const desc = `Lihat ${data.listings.length} iklan aktif dari ${name} di Jual Beli USU Polmed.${soldText}`;
+
   return {
     title: `${name} — Profil Penjual`,
-    description: `Lihat ${data.listings.length} iklan aktif dari ${name} di Marketplace Kota Medan.`,
+    description: desc,
+    keywords: [name, "penjual USU", "jual beli USU", "marketplace Medan", data.seller.topCategory].filter(Boolean),
+    alternates: { canonical: pageUrl },
+    openGraph: {
+      title: `${name} — Profil Penjual di Jual Beli USU`,
+      description: desc,
+      url: pageUrl,
+      type: "profile",
+      ...(firstImage && { images: [{ url: firstImage, width: 800, height: 600, alt: name }] }),
+    },
+    twitter: {
+      card: firstImage ? "summary_large_image" : "summary",
+      title: `${name} — Profil Penjual`,
+      description: desc,
+      ...(firstImage && { images: [firstImage] }),
+    },
   };
 }
 
@@ -144,8 +166,33 @@ export default async function SellerProfilePage({ params }) {
       ? ratings.reduce((s, r) => s + r.rating, 0) / ratings.length
       : null;
 
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+  const waClean = seller.seller_wa?.replace(/\D/g, "") || "";
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    "url": `${baseUrl}/penjual/${waClean}`,
+    "mainEntity": {
+      "@type": "Person",
+      "name": seller.seller_name,
+      "description": seller.bio || `Penjual di Jual Beli USU dengan ${listings.length} iklan aktif`,
+      "url": `${baseUrl}/penjual/${waClean}`,
+      ...(listings[0]?.image_url && { "image": listings[0].image_url }),
+      ...(avgRating !== null && ratings.length > 0 && {
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": avgRating.toFixed(1),
+          "reviewCount": ratings.length,
+          "bestRating": "5",
+          "worstRating": "1",
+        },
+      }),
+    },
+  };
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       {/* Breadcrumb */}
       <nav className="text-sm text-gray-400">
         <Link href="/" className="hover:text-primary">

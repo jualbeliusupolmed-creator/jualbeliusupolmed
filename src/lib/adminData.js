@@ -127,8 +127,8 @@ export async function getAdminStats(page = 1) {
   const paymentsTotal = paymentsRes.count;
   const pwaInstallsTotal = pwaInstallsRes.count;
 
-  // Reports and ratings stay reasonable with explicit limits
-  const [reports, ratings] = await Promise.all([
+  // Reports, ratings, dan seller profiles — berjalan paralel
+  const [reports, ratings, sellersFromProfiles, allListingStats] = await Promise.all([
     safe(
       supa
         .from("reports")
@@ -145,29 +145,52 @@ export async function getAdminStats(page = 1) {
         .limit(300),
       []
     ),
+    // Semua penjual terdaftar (bukan hanya halaman listing saat ini)
+    safe(
+      supa
+        .from("seller_profiles")
+        .select("wa, name, bio, trusted_seller, subscription_tier, subscription_expires_at, created_at")
+        .order("created_at", { ascending: false })
+        .limit(1000),
+      []
+    ),
+    // Statistik listing ringan — hanya seller_wa + status (tanpa pagination)
+    safe(
+      supa
+        .from("listings")
+        .select("seller_wa, status, seller_name")
+        .not("seller_wa", "is", null)
+        .limit(10000),
+      []
+    ),
   ]);
 
-  // Compute Sellers List from currently loaded listings page
-  const sellerMap = new Map();
-  listings.forEach((l) => {
-    if (!l.seller_wa) return;
-    if (!sellerMap.has(l.seller_wa)) {
-      sellerMap.set(l.seller_wa, {
-        seller_wa: l.seller_wa,
-        seller_name: l.seller_name || "Tanpa Nama",
-        total_iklan: 0,
-        active_iklan: 0,
-        sold_iklan: 0,
-        trusted_seller: l.seller_profiles?.trusted_seller || false,
-        subscription_tier: l.seller_profiles?.subscription_tier || "free",
-      });
+  // Build comprehensive sellers list dari seller_profiles + allListingStats
+  const statMap = new Map();
+  for (const l of allListingStats) {
+    if (!l.seller_wa) continue;
+    if (!statMap.has(l.seller_wa)) {
+      statMap.set(l.seller_wa, { total_iklan: 0, active_iklan: 0, sold_iklan: 0, seller_name: l.seller_name || "Tanpa Nama" });
     }
-    const stat = sellerMap.get(l.seller_wa);
-    stat.total_iklan++;
-    if (l.status === "active") stat.active_iklan++;
-    if (l.status === "sold") stat.sold_iklan++;
-  });
-  const sellersList = Array.from(sellerMap.values()).sort((a, b) => b.total_iklan - a.total_iklan);
+    const s = statMap.get(l.seller_wa);
+    s.total_iklan++;
+    if (l.status === "active") s.active_iklan++;
+    if (l.status === "sold") s.sold_iklan++;
+    if (l.seller_name && s.seller_name === "Tanpa Nama") s.seller_name = l.seller_name;
+  }
+
+  const sellersList = sellersFromProfiles.map((sp) => {
+    const stats = statMap.get(sp.wa) || { total_iklan: 0, active_iklan: 0, sold_iklan: 0, seller_name: sp.name || "Tanpa Nama" };
+    return {
+      seller_wa: sp.wa,
+      seller_name: sp.name || stats.seller_name,
+      total_iklan: stats.total_iklan,
+      active_iklan: stats.active_iklan,
+      sold_iklan: stats.sold_iklan,
+      trusted_seller: sp.trusted_seller || false,
+      subscription_tier: sp.subscription_tier || "free",
+    };
+  }).sort((a, b) => b.total_iklan - a.total_iklan);
 
   // Compute Revenue and Pending Count from current payments page
   let revenue = 0;

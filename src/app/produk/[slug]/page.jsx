@@ -20,7 +20,7 @@ import RecentlyViewedSaver from "@/components/RecentlyViewedSaver";
 import FavoriteButton from "@/components/FavoriteButton";
 import { Icon } from "@/components/Icons";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300; // ISR 5 menit
 
 /**
  * Resolve a slug or legacy UUID → listing row.
@@ -98,21 +98,32 @@ export async function generateMetadata({ params }) {
     return { title: "Produk tidak ditemukan" };
   }
 
-  const baseUrl =
-    (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbelimedan.web.id").trim();
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+  const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "Jual Beli USU Polmed";
   const title = `${listing.title} — ${rupiah(listing.price)}`;
   const description = listing.description
     ? listing.description.slice(0, 155)
-    : `${listing.title} dijual ${rupiah(listing.price)} oleh ${listing.seller_name} di Marketplace Kota Medan. COD di area yang disepakati, transaksi dibantu admin.`;
-  const imageUrl = listing.image_url || `${baseUrl}/icons/icon-512x512.png`;
+    : `${listing.title} dijual ${rupiah(listing.price)} oleh ${listing.seller_name} di ${siteName}. COD area kampus, transaksi dibantu admin.`;
   const canonicalSlug = buildSlug(listing.title, listing.id);
   const url = `${baseUrl}/produk/${canonicalSlug}`;
+
+  // Dynamic OG image via /api/og
+  const ogParams = new URLSearchParams({
+    title: listing.title,
+    price: String(listing.price || ""),
+    seller: listing.seller_name || "",
+    category: listing.category || "",
+    type: listing.type || "jual",
+    ...(listing.image_url ? { image: listing.image_url } : {}),
+  });
+  const ogImageUrl = `${baseUrl}/api/og?${ogParams.toString()}`;
 
   return {
     title,
     description,
-    openGraph: { title, description, url, type: "website", siteName: "Jual Beli Medan", locale: "id_ID", images: [{ url: imageUrl, width: 800, height: 800, alt: listing.title }] },
-    twitter: { card: "summary_large_image", title, description, images: [imageUrl] },
+    keywords: [listing.title, listing.category, listing.seller_name, "jual beli USU", "marketplace Medan"].filter(Boolean),
+    openGraph: { title, description, url, type: "website", siteName, locale: "id_ID", images: [{ url: ogImageUrl, width: 1200, height: 630, alt: listing.title }] },
+    twitter: { card: "summary_large_image", title, description, images: [ogImageUrl] },
     alternates: { canonical: url },
   };
 }

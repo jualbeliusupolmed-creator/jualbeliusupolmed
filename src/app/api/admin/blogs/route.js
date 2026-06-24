@@ -11,8 +11,8 @@ export async function POST(req) {
   
   try {
     const body = await req.json();
-    const { id, title, slug, content_markdown, image_url, status, author } = body;
-    
+    const { id, title, slug, content_markdown, image_url, status, author, excerpt, keywords } = body;
+
     if (!title || !slug || !content_markdown) {
       return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
     }
@@ -25,7 +25,9 @@ export async function POST(req) {
       image_url: image_url || null,
       status: status || "draft",
       author: author || "Admin",
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      ...(excerpt !== undefined && { excerpt: excerpt || null }),
+      ...(keywords !== undefined && { keywords: keywords || null }),
     };
 
     let result;
