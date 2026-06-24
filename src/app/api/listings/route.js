@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { createQrisTransaction } from "@/lib/midtrans";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { getSettings, adFeeFrom, listingExpiresAt, hasUnpaidSoldFees } from "@/lib/settings";
 import { formatWa } from "@/lib/constants";
@@ -231,20 +230,7 @@ export async function POST(req) {
       midtrans_order_id: orderId,
     });
 
-    let paymentUrl = null;
-    try {
-      const tx = await createQrisTransaction({
-        orderId,
-        amount,
-        customerName: seller_name,
-        customerWa: normalizedWa,
-        itemName: `Pasang Iklan: ${title}`,
-      });
-      paymentUrl = tx.redirect_url;
-    } catch (e) {
-      console.error("doku charge error:", e?.message);
-    }
-
+    const paymentUrl = "/qris.png";
     return NextResponse.json({ listing, paymentUrl, orderId, amount });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });

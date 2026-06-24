@@ -30,11 +30,11 @@ export async function POST(req) {
       }, { status: 400 });
     }
 
-    // 3. Validasi Nominal (Sangat Krusial)
-    if (expectedAmount && Number(extractedData.nominal) !== Number(expectedAmount)) {
-       return NextResponse.json({ 
-         success: false, 
-         error: `Nominal di struk (Rp ${extractedData.nominal?.toLocaleString("id-ID") || 0}) tidak sama dengan tagihan (Rp ${Number(expectedAmount).toLocaleString("id-ID")}). Transaksi ditolak.` 
+    // 3. Validasi Nominal — cukup >= tagihan (boleh lebih, tidak boleh kurang)
+    if (expectedAmount && Number(extractedData.nominal) < Number(expectedAmount)) {
+       return NextResponse.json({
+         success: false,
+         error: `Nominal di struk (Rp ${extractedData.nominal?.toLocaleString("id-ID") || 0}) kurang dari tagihan (Rp ${Number(expectedAmount).toLocaleString("id-ID")}). Mohon transfer ulang dengan nominal yang benar.`
        }, { status: 400 });
     }
 

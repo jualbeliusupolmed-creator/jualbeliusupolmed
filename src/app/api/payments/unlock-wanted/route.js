@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { createQrisTransaction } from "@/lib/midtrans";
 import { formatWa } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
@@ -71,21 +70,7 @@ export async function POST(req) {
       `Halo ${wanted.buyer_name}, saya ada barang "${shortTitle}".`
     )}`;
 
-    let paymentUrl = null;
-    try {
-      const tx = await createQrisTransaction({
-        orderId,
-        amount,
-        customerName: "Pengguna",
-        customerWa: formatWa(requester_wa),
-        itemName: `Buka Kontak Cari Barang: ${wanted.title}`,
-      });
-      paymentUrl = tx.redirect_url;
-    } catch (e) {
-      console.error("doku unlock-wanted charge:", e?.message);
-      return NextResponse.json({ error: "Gagal membuat gerbang pembayaran" }, { status: 500 });
-    }
-
+    const paymentUrl = "/qris.png";
     return NextResponse.json({ paymentUrl, orderId, amount });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });
