@@ -854,6 +854,42 @@ export async function POST(req) {
         return NextResponse.json({ ok: true, state: "tagih_sent" });
 
       // ==========================================
+      // BATAL — Batalkan tagihan QRIS yang pending
+      // ==========================================
+      } else if (textMsg === "BATAL") {
+        const { data: batalPayments } = await supa
+          .from("payments")
+          .select("id, type, amount, listing_id, listings!inner(id, title, status, seller_wa)")
+          .eq("status", "pending")
+          .eq("listings.seller_wa", normalizedWa)
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        const batalPayment = batalPayments?.[0];
+        if (!batalPayment) {
+          await sendWa(senderJid, "✅ Tidak ada tagihan aktif yang bisa dibatalkan.\n\nKetik *IKLANKU* untuk cek status iklan.");
+          return NextResponse.json({ ok: true, state: "batal_none" });
+        }
+
+        await supa.from("payments").update({ status: "expired" }).eq("id", batalPayment.id);
+
+        if (batalPayment.type === "iklan" && batalPayment.listings.status === "pending") {
+          await supa.from("listings").update({ status: "deleted" }).eq("id", batalPayment.listing_id);
+        }
+
+        const bLabel = batalPayment.type === "renewal" ? "Perpanjang Iklan"
+          : batalPayment.type === "featured" ? "Featured"
+          : batalPayment.type === "autobump" ? "AutoBump"
+          : batalPayment.type === "bump" ? "Bump"
+          : "Iklan";
+        await sendWa(senderJid,
+          `✅ *Tagihan Dibatalkan*\n\n` +
+          `Tagihan *${bLabel}: ${batalPayment.listings.title}* berhasil dibatalkan.\n\n` +
+          `Ketik *TAGIH* jika ingin bayar lagi, atau *IKLANKU* untuk lihat iklan Anda.`
+        );
+        return NextResponse.json({ ok: true, state: "batal_ok" });
+
+      // ==========================================
       // LANGGANAN — Subscribe notif kategori baru
       // ==========================================
       } else if (textMsg === "LANGGANAN") {
