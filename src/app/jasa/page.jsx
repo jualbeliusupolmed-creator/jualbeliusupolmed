@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getSettings } from "@/lib/settings";
 import { fetchListingsWithProfiles } from "@/lib/dbHelpers";
@@ -118,17 +119,19 @@ export default async function JasaPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
       />
-      <JasaBrowser
-        initialListings={listings}
-        initialTotal={total}
-        featured={featured}
-        trending={trending}
-        categories={JASA_CATEGORIES}
-        stats={null}
-        heroTitle="Marketplace Jasa Kampus"
-        heroSubtitle="Temukan berbagai jasa warga"
-        layoutOrder={["hero", "featured", "main"]}
-      />
+      <Suspense fallback={<div className="py-20 text-center text-gray-400">Memuat...</div>}>
+        <JasaBrowser
+          initialListings={listings}
+          initialTotal={total}
+          featured={featured}
+          trending={trending}
+          categories={JASA_CATEGORIES}
+          stats={null}
+          heroTitle="Marketplace Jasa Kampus"
+          heroSubtitle="Temukan berbagai jasa warga"
+          layoutOrder={["hero", "featured", "main"]}
+        />
+      </Suspense>
     </>
   );
 }
