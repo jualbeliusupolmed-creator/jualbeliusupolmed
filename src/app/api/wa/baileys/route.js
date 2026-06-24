@@ -10,11 +10,12 @@ import sharp from "sharp";
 
 export const dynamic = "force-dynamic";
 
-// Cek apakah nomor WA termasuk admin (support multi-admin, pisahkan koma di env)
-// Semua nomor dinormalisasi ke format 62xxx sebelum dibandingkan
+// Cek apakah nomor WA termasuk admin
+// Baca dari ADMIN_WA (bisa koma) + SUPER_ADMIN_WA sebagai var terpisah
 function isAdminWa(wa) {
   const to62 = n => (n || "").replace(/\D/g, "").replace(/^0/, "62");
-  const admins = (process.env.ADMIN_WA || "").split(",").map(a => to62(a.trim())).filter(Boolean);
+  const raw = [process.env.ADMIN_WA || "", process.env.SUPER_ADMIN_WA || ""].join(",");
+  const admins = raw.split(",").map(a => to62(a.trim())).filter(Boolean);
   return admins.length > 0 && admins.includes(to62(wa));
 }
 
