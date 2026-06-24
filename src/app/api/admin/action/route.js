@@ -4,6 +4,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { formatWa } from "@/lib/constants";
 import { getSettings } from "@/lib/settings";
 import { notifyAdminNewListing, postToGroup, notifyWantedBuyers, sendWa } from "@/lib/fonnte";
+import { pushCategorySubscribers } from "@/lib/webpush";
 
 export const dynamic = "force-dynamic";
 
@@ -75,6 +76,7 @@ export async function POST(req) {
 
         // Broadcast to WA Group when admin activates manually
         if (listingInfo) {
+          pushCategorySubscribers(supa, listingInfo).catch(() => {});
           const [groupRes] = await Promise.allSettled([
             postToGroup(listingInfo),
             notifyWantedBuyers(listingInfo)
@@ -229,6 +231,7 @@ export async function POST(req) {
               .single();
 
             if (listing && payment.type === "iklan") {
+              pushCategorySubscribers(supa, listing).catch(() => {});
               await Promise.allSettled([
                 postToGroup(listing),
                 notifyWantedBuyers(listing)

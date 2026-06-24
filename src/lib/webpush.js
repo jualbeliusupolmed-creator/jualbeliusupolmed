@@ -52,3 +52,32 @@ export async function pushToWa(supa, wa, payload) {
     }
   }
 }
+
+/**
+ * Kirim push browser ke semua subscriber kategori listing yang baru aktif
+ */
+export async function pushCategorySubscribers(supa, listing) {
+  if (!listing?.category) return;
+
+  const { data: subs } = await supa
+    .from("category_subscriptions")
+    .select("buyer_wa")
+    .eq("category", listing.category)
+    .neq("buyer_wa", listing.seller_wa);
+
+  if (!subs?.length) return;
+
+  const price = listing.price
+    ? `Rp ${Number(listing.price).toLocaleString("id-ID")}`
+    : "";
+  const payload = {
+    title: `Iklan Baru di ${listing.category}!`,
+    body: `${listing.title}${price ? " — " + price : ""}`,
+    url: `/produk/${listing.slug || listing.id}`,
+    tag: `cat-${listing.category}`,
+  };
+
+  for (const sub of subs) {
+    await pushToWa(supa, sub.buyer_wa, payload).catch(() => {});
+  }
+}

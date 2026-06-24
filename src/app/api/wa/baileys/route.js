@@ -4,7 +4,6 @@ import { parseListingFromText, verifyReceiptImage, processGeneralChat, parseWant
 import { sendWa, postToGroup, notifyWantedMatch, notifyCategorySubscribers, notifyBuyerOfferResult, postWantedToGroup, notifySellerNewOffer } from "@/lib/fonnte";
 import { formatWa } from "@/lib/constants";
 import { getSettings, adFeeFrom } from "@/lib/settings";
-import { createQrisTransaction } from "@/lib/midtrans";
 import { buildSlug } from "@/lib/slug";
 import sharp from "sharp";
 
@@ -19,22 +18,8 @@ function isAdminWa(wa) {
   return admins.length > 0 && admins.includes(to62(wa));
 }
 
-// Generate QRIS dinamis dan upload ke Supabase Storage → return public URL.
-// Fallback ke QRIS statis jika gagal.
-async function getQrisUrl(supa, orderId, amount) {
-  try {
-    const tx = await createQrisTransaction({ orderId, amount, customerName: "Pembeli", customerWa: "", itemName: "Pembayaran" });
-    const base64 = tx.redirect_url.replace(/^data:image\/\w+;base64,/, "");
-    const buffer = Buffer.from(base64, "base64");
-    const fileName = `qris/qr-${orderId}.png`;
-    const { error } = await supa.storage.from("listings").upload(fileName, buffer, { contentType: "image/png", upsert: true });
-    if (error) throw error;
-    const { data: { publicUrl } } = supa.storage.from("listings").getPublicUrl(fileName);
-    return publicUrl;
-  } catch (e) {
-    console.error("[qris-gen] gagal generate dinamis, fallback statis:", e?.message);
-    return `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id"}/qris.png`;
-  }
+function getQrisUrl() {
+  return `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id"}/qris.png`;
 }
 
 async function notifyMatchingWanted(supa, listing) {
@@ -156,8 +141,7 @@ export async function POST(req) {
           return NextResponse.json({ ok: true, state: "payment_cancelled" });
         }
 
-        // Generate QRIS dinamis dengan nominal yang sudah terisi
-        const qrisUrl = await getQrisUrl(supa, pendingPayment.midtrans_order_id, pendingPayment.amount);
+        const qrisUrl = getQrisUrl();
         const typeLabel = pendingPayment.type === "renewal" ? "Perpanjang Iklan"
           : pendingPayment.type === "featured" ? "Featured Iklan"
           : pendingPayment.type === "autobump" ? "AutoBump Iklan"
@@ -166,7 +150,7 @@ export async function POST(req) {
           `⚠️ *Tagihan Belum Lunas*\n\n` +
           `📌 ${typeLabel}: *${pendingPayment.listings.title}*\n` +
           `💳 Nominal: *Rp ${pendingPayment.amount.toLocaleString("id-ID")}*\n\n` +
-          `Scan QRIS di bawah ini — *nominal sudah terisi otomatis* saat di-scan.\n\n` +
+          `Scan QRIS di bawah dan transfer nominal di atas.\n\n` +
           `Setelah transfer, kirim *screenshot struk* ke sini.\n\n` +
           `_(Ketik *BATAL* untuk batalkan tagihan)_`;
         await sendWa(senderJid, reminderMsg, qrisUrl);
@@ -186,12 +170,12 @@ export async function POST(req) {
           return NextResponse.json({ ok: true, state: "invalid_receipt_image" });
         }
 
-        if (Number(extractedData.nominal) !== Number(pendingPayment.amount)) {
+        if (Number(extractedData.nominal) < Number(pendingPayment.amount)) {
           await sendWa(senderJid,
-            `❌ *Nominal Tidak Sesuai*\n\n` +
+            `❌ *Nominal Kurang*\n\n` +
             `Nominal di struk: *Rp ${(extractedData.nominal || 0).toLocaleString("id-ID")}*\n` +
             `Tagihan: *Rp ${Number(pendingPayment.amount).toLocaleString("id-ID")}*\n\n` +
-            `Tidak cocok. Mohon transfer ulang dengan nominal yang tepat, lalu kirim struk lagi.`
+            `Jumlah transfer kurang. Mohon transfer ulang dengan nominal yang benar, lalu kirim struk lagi.`
           );
           return NextResponse.json({ ok: true, state: "invalid_amount" });
         }
@@ -370,8 +354,7 @@ export async function POST(req) {
         const renewalSettings = await getSettings();
         const renewDays = Number(renewalSettings.pricing?.listingDays) || 14;
         const renewFee = Number(renewalSettings.pricing?.renewalFee) || 2000;
-        const uniqueCode = Math.floor(Math.random() * 99) + 1;
-        const totalAmount = renewFee + uniqueCode;
+        const totalAmount = renewFee;
         const orderId = `RENEW-${listing.listing_code}-${Date.now()}`;
 
         await supa.from("payments").insert({
@@ -383,13 +366,13 @@ export async function POST(req) {
           meta: { renew_days: renewDays },
         });
 
-        const qrisUrl = await getQrisUrl(supa, orderId, totalAmount);
+        const qrisUrl = getQrisUrl();
         const renewMsg =
           `🔄 *Perpanjang Iklan*\n\n` +
           `📦 *${listing.title}*\n` +
           `📅 Perpanjang +${renewDays} hari\n` +
           `💳 Biaya: *Rp ${totalAmount.toLocaleString("id-ID")}*\n\n` +
-          `Scan QRIS di bawah, nominal sudah terisi otomatis.\n` +
+          `Scan QRIS di bawah dan transfer nominal di atas.\n` +
           `Setelah transfer, kirim *screenshot struk* ke sini.`;
         await sendWa(senderJid, renewMsg, qrisUrl);
         return NextResponse.json({ ok: true, state: "perpanjang_payment_created" });
@@ -657,8 +640,7 @@ export async function POST(req) {
           ? (Number(upgradeSettings.pricing?.featuredPerDay) || 5000)
           : (Number(upgradeSettings.pricing?.bump) * 7 || 15000);
         const baseFee = isFeatured ? feePerDay * days : feePerDay;
-        const uniqueCode = Math.floor(Math.random() * 99) + 1;
-        const totalAmount = baseFee + uniqueCode;
+        const totalAmount = baseFee;
         const upgradeTypeKey = isFeatured ? "featured" : "autobump";
         const orderId = `UPGRADE-${upgradeTypeKey.toUpperCase()}-${listing.listing_code}-${Date.now()}`;
 
@@ -671,10 +653,10 @@ export async function POST(req) {
           meta: { days },
         });
 
-        const qrisUrl = await getQrisUrl(supa, orderId, totalAmount);
+        const qrisUrl = getQrisUrl();
         const upgradeMsg = isFeatured
-          ? `⭐ *Featured ${days} Hari*\n\n📦 *${listing.title}*\n💳 Biaya: *Rp ${totalAmount.toLocaleString("id-ID")}*\n\nScan QRIS di bawah untuk bayar.\nSetelah transfer, kirim *screenshot struk* ke sini.`
-          : `🔄 *AutoBump 7 Hari*\n\n📦 *${listing.title}*\n💳 Biaya: *Rp ${totalAmount.toLocaleString("id-ID")}*\n\nScan QRIS di bawah untuk bayar.\nSetelah transfer, kirim *screenshot struk* ke sini.`;
+          ? `⭐ *Featured ${days} Hari*\n\n📦 *${listing.title}*\n💳 Biaya: *Rp ${totalAmount.toLocaleString("id-ID")}*\n\nScan QRIS di bawah dan transfer nominal di atas.\nSetelah transfer, kirim *screenshot struk* ke sini.`
+          : `🔄 *AutoBump 7 Hari*\n\n📦 *${listing.title}*\n💳 Biaya: *Rp ${totalAmount.toLocaleString("id-ID")}*\n\nScan QRIS di bawah dan transfer nominal di atas.\nSetelah transfer, kirim *screenshot struk* ke sini.`;
         await sendWa(senderJid, upgradeMsg, qrisUrl);
         return NextResponse.json({ ok: true, state: "upgrade_payment_created" });
 
@@ -740,8 +722,7 @@ export async function POST(req) {
 
         const bumpSettings = await getSettings();
         const bumpFee = Number(bumpSettings.pricing?.bump) || 2000;
-        const bumpUniqueCode = Math.floor(Math.random() * 99) + 1;
-        const bumpTotal = bumpFee + bumpUniqueCode;
+        const bumpTotal = bumpFee;
         const bumpOrderId = `BUMP-${bumpListing.listing_code}-${Date.now()}`;
 
         await supa.from("payments").insert({
@@ -752,12 +733,12 @@ export async function POST(req) {
           midtrans_order_id: bumpOrderId,
         });
 
-        const bumpQris = await getQrisUrl(supa, bumpOrderId, bumpTotal);
+        const bumpQris = getQrisUrl();
         const bumpMsg =
           `🔼 *Bump Iklan*\n\n` +
           `📦 *${bumpListing.title}*\n` +
           `💳 Biaya: *Rp ${bumpTotal.toLocaleString("id-ID")}*\n\n` +
-          `Scan QRIS di bawah — nominal sudah terisi otomatis.\n` +
+          `Scan QRIS di bawah dan transfer nominal di atas.\n` +
           `Setelah transfer, kirim *screenshot struk* ke sini.`;
         await sendWa(senderJid, bumpMsg, bumpQris);
         return NextResponse.json({ ok: true, state: "bump_payment_created" });
@@ -875,7 +856,7 @@ export async function POST(req) {
           return NextResponse.json({ ok: true, state: "tagih_none" });
         }
 
-        const tagihQris = await getQrisUrl(supa, tagihPayment.midtrans_order_id, tagihPayment.amount);
+        const tagihQris = getQrisUrl();
         const typeLabel = tagihPayment.type === "renewal" ? "Perpanjang Iklan"
           : tagihPayment.type === "featured" ? "Featured"
           : tagihPayment.type === "autobump" ? "AutoBump"
@@ -885,7 +866,7 @@ export async function POST(req) {
           `🔔 *Tagihan Belum Lunas*\n\n` +
           `📌 ${typeLabel}: *${tagihPayment.listings.title}*\n` +
           `💳 Nominal: *Rp ${Number(tagihPayment.amount).toLocaleString("id-ID")}*\n\n` +
-          `Scan QRIS di bawah — nominal sudah terisi otomatis.\n` +
+          `Scan QRIS di bawah dan transfer nominal di atas.\n` +
           `Setelah transfer, kirim *screenshot struk* ke sini.\n\n` +
           `_(Ketik *BATAL* untuk batalkan tagihan)_`;
         await sendWa(senderJid, tagihMsg, tagihQris);
@@ -1615,7 +1596,7 @@ export async function POST(req) {
             midtrans_order_id: orderId,
             meta: { wanted_id: wanted.id },
           }).catch(() => {});
-          const qrisUrl = await getQrisUrl(supa, orderId, 1000);
+          const qrisUrl = getQrisUrl();
           const payMsg =
             `📋 *Posting Dicari ke-${(pastCount || 0) + 1}*\n\n` +
             `🔍 *${parsed.title}*\n` +
@@ -1878,8 +1859,7 @@ export async function POST(req) {
       if (listingError) throw new Error("Gagal menyimpan data iklan: " + listingError.message);
 
       const baseFee = adFeeFrom(settings.pricing, "barang", newListing.price);
-      const uniqueCode = Math.floor(Math.random() * 99) + 1;
-      const totalAmount = baseFee + uniqueCode;
+      const totalAmount = baseFee;
       const orderId = `IKLAN-WA-${newListing.listing_code}-${Date.now()}`;
 
       await supa.from("payments").insert({
@@ -1890,8 +1870,7 @@ export async function POST(req) {
         midtrans_order_id: orderId,
       });
 
-      // Generate QRIS dinamis dengan nominal yang sudah terisi otomatis
-      const qrisUrl = await getQrisUrl(supa, orderId, totalAmount);
+      const qrisUrl = getQrisUrl();
 
       const conditionLabel = newListing.condition === "new" ? "✨ Baru" : "Bekas";
       const namaReminder = isNewWaUser ? `\n💡 Ketik *NAMA [nama kamu]* untuk set nama profil iklan.\n` : "";
@@ -1899,8 +1878,7 @@ export async function POST(req) {
       const aiReply = extracted.reply_message ? `${extracted.reply_message}🔑 Kode iklan: *${newListing.listing_code}*\n${namaReminder}\n` : fallbackReply;
 
       const paymentInstructions =
-        `Untuk tayangkan iklan, scan QRIS di bawah ini.\n` +
-        `Nominal *sudah otomatis terisi* saat di-scan:\n\n` +
+        `Untuk tayangkan iklan, scan QRIS di bawah dan transfer:\n\n` +
         `💳 *Rp ${totalAmount.toLocaleString("id-ID")}*\n\n` +
         `Setelah transfer, kirim *screenshot struk* ke sini.`;
 

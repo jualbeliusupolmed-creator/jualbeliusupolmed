@@ -5,6 +5,7 @@ import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { getSettings, adFeeFrom, listingExpiresAt, hasUnpaidSoldFees } from "@/lib/settings";
 import { formatWa } from "@/lib/constants";
 import { postToGroup, notifyCategorySubscribers } from "@/lib/fonnte";
+import { pushCategorySubscribers } from "@/lib/webpush";
 
 export const dynamic = "force-dynamic";
 
@@ -209,10 +210,10 @@ export async function POST(req) {
     }
 
     if (isPro || isJasaFree) {
-      // Kirim notifikasi WA (berjalan di background tanpa await jika tidak mutlak diperlukan, tapi baiknya await)
       try {
         await postToGroup(listing);
         notifyCategorySubscribers(supa, listing).catch(() => {});
+        pushCategorySubscribers(supa, listing).catch(() => {});
       } catch (err) {
         console.error("Fonnte postToGroup error:", err?.message);
       }

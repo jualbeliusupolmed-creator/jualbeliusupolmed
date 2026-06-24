@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { notifyBuyerOfferResult } from "@/lib/fonnte";
+import { pushToWa } from "@/lib/webpush";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,16 @@ export async function PATCH(req, { params }) {
       offer_price: offer.offer_price,
       seller_wa: offer.listings?.seller_wa,
       accepted: action === "accept",
+    }).catch(() => {});
+
+    // Push browser ke buyer
+    pushToWa(supa, offer.buyer_wa, {
+      title: action === "accept" ? "Tawaran Diterima! 🎉" : "Tawaran Ditolak",
+      body: action === "accept"
+        ? `Tawaran kamu untuk "${offer.listings?.title}" diterima penjual`
+        : `Tawaran kamu untuk "${offer.listings?.title}" tidak diterima`,
+      url: "/dashboard",
+      tag: `offer-result-${id}`,
     }).catch(() => {});
 
     return NextResponse.json({ ok: true, status: newStatus });
