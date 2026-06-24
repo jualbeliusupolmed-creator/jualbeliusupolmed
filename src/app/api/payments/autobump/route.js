@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { createQrisTransaction } from "@/lib/midtrans";
 import { getSettings } from "@/lib/settings";
 import { FEES } from "@/lib/fees";
 
@@ -32,20 +31,7 @@ export async function POST(req) {
       midtrans_order_id: orderId,
     });
 
-    let paymentUrl = null;
-    try {
-      const tx = await createQrisTransaction({
-        orderId,
-        amount,
-        customerName: listing.seller_name,
-        customerWa: listing.seller_wa,
-        itemName: `Auto Bump Iklan: ${listing.title}`,
-      });
-      paymentUrl = tx.redirect_url;
-    } catch (e) {
-      console.error("doku autobump charge:", e?.message);
-    }
-
+    const paymentUrl = "/qris.png";
     return NextResponse.json({ paymentUrl, orderId, amount });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });

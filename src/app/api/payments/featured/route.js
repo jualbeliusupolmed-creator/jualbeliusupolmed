@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { createQrisTransaction } from "@/lib/midtrans";
 import { getSettings, featuredRateFrom } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
@@ -36,20 +35,7 @@ export async function POST(req) {
       meta: { days: d, per_day: rate },
     });
 
-    let paymentUrl = null;
-    try {
-      const tx = await createQrisTransaction({
-        orderId,
-        amount,
-        customerName: listing.seller_name,
-        customerWa: listing.seller_wa,
-        itemName: `Featured ${days} Hari: ${listing.title}`,
-      });
-      paymentUrl = tx.redirect_url;
-    } catch (e) {
-      console.error("doku featured charge:", e?.message);
-    }
-
+    const paymentUrl = "/qris.png";
     return NextResponse.json({ paymentUrl, orderId, amount });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });

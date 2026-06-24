@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { createQrisTransaction } from "@/lib/midtrans";
 
 export const dynamic = "force-dynamic";
 
@@ -32,20 +31,7 @@ export async function POST(req) {
       meta: { wa: seller_wa }
     });
 
-    let paymentUrl = null;
-    try {
-      const tx = await createQrisTransaction({
-        orderId,
-        amount,
-        customerName: profile.name || "Pengguna Pro",
-        customerWa: seller_wa,
-        itemName: `Berlangganan PRO (30 Hari)`,
-      });
-      paymentUrl = tx.redirect_url;
-    } catch (e) {
-      console.error("doku subscribe charge:", e?.message);
-    }
-
+    const paymentUrl = "/qris.png";
     return NextResponse.json({ paymentUrl, orderId, amount });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });

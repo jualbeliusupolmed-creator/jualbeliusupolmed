@@ -63,7 +63,6 @@ export async function GET(req) {
   }
 }
 
-import { createQrisTransaction } from "@/lib/midtrans";
 
 // POST /api/wanted -> create a wanted listing
 export async function POST(req) {
@@ -157,20 +156,7 @@ export async function POST(req) {
       meta: { wanted_id: listing.id }
     });
 
-    let paymentUrl = null;
-    try {
-      const tx = await createQrisTransaction({
-        orderId,
-        amount,
-        customerName: buyer_name || "Pencari Barang",
-        customerWa: normalizedBuyerWa,
-        itemName: `Pasang Cari Barang: ${title}`,
-      });
-      paymentUrl = tx.redirect_url;
-    } catch (e) {
-      console.error("doku wanted charge:", e?.message);
-    }
-
+    const paymentUrl = "/qris.png";
     return NextResponse.json({ listing, paymentUrl, isFree: false });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });

@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { createQrisTransaction } from "@/lib/midtrans";
 import { getSettings, soldFeeFrom } from "@/lib/settings";
 import { getSellerSession, isAdmin } from "@/lib/auth";
 
@@ -147,19 +146,8 @@ export async function PATCH(req, { params }) {
           meta: { seller_wa: currentListing.seller_wa },
         });
 
-        try {
-          const tx = await createQrisTransaction({
-            orderId,
-            amount: fee,
-            customerName: currentListing.seller_name,
-            customerWa: currentListing.seller_wa,
-            itemName: `Sold Fee: ${currentListing.title}`,
-          });
-          paymentUrl = tx.redirect_url;
-          return NextResponse.json({ listing, fee, paymentUrl, orderId });
-        } catch (e) {
-          console.error("soldfee qris:", e?.message);
-        }
+        paymentUrl = "/qris.png";
+        return NextResponse.json({ listing, fee, paymentUrl, orderId });
       }
 
       return NextResponse.json({ listing, fee, paymentUrl });
@@ -199,18 +187,7 @@ export async function PATCH(req, { params }) {
           meta: { seller_wa: currentListing.seller_wa },
         });
 
-        try {
-          const tx = await createQrisTransaction({
-            orderId,
-            amount: fee,
-            customerName: currentListing.seller_name,
-            customerWa: currentListing.seller_wa,
-            itemName: `Fee Terjual: ${currentListing.title}`,
-          });
-          paymentUrl = tx.redirect_url;
-        } catch (e) {
-          console.error("soldfee qris:", e?.message);
-        }
+        paymentUrl = "/qris.png";
       }
 
       return NextResponse.json({ listing, fee, paymentUrl, orderId });
