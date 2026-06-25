@@ -30,7 +30,7 @@ const faqs = [
   },
   {
     q: "Bagaimana cara melakukan pembayaran?",
-    a: "Transaksi pembayaran fitur berbayar (pasang iklan, sundul, iklan unggulan) diproses secara aman melalui gerbang pembayaran DOKU. Kamu dapat membayar menggunakan QRIS, virtual account bank, dan metode pembayaran lain yang tersedia di halaman pembayaran.",
+    a: "Pembayaran dilakukan via QRIS statis — scan kode QR yang tampil di halaman pembayaran, transfer sesuai nominal, lalu upload foto struk. Iklan aktif otomatis setelah struk diverifikasi oleh AI kami, biasanya dalam hitungan detik.",
   },
   {
     q: "Bagaimana penjual tahu kalau ada yang minat dengan barangnya?",
