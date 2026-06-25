@@ -5,6 +5,7 @@ import { sendWa, postToGroup, notifyAdminNewListing, notifyWantedMatch, notifyCa
 import { formatWa } from "@/lib/constants";
 import { getSettings, adFeeFrom } from "@/lib/settings";
 import { buildSlug } from "@/lib/slug";
+import { rateLimit } from "@/lib/rateLimit";
 import sharp from "sharp";
 
 export const dynamic = "force-dynamic";
@@ -52,6 +53,14 @@ export async function POST(req) {
     }
 
     const formData = await req.formData();
+
+    // Rate limit: max 20 pesan/menit per nomor WA (cegah flood/spam)
+    const rlKey = `baileys:${formData.get("sender") || "unknown"}`;
+    const rl = rateLimit(rlKey, { limit: 20, windowMs: 60_000 });
+    if (!rl.ok) {
+      console.warn(`[rate-limit] ${rlKey} \u2014 melebihi batas, retry setelah ${rl.retryAfter}s`);
+      return NextResponse.json({ ok: true, ignored: true, reason: "rate_limited" });
+    }
     const senderJid = formData.get("sender");
     const message = formData.get("message") || "";
     const files = formData.getAll("file");
@@ -1474,32 +1483,43 @@ export async function POST(req) {
       // ==========================================
       } else if (textMsg === "RIWAYAT") {
         const { data: myListIds } = await supa
-          .from("listings").select("id, listing_code, title").eq("seller_wa", normalizedWa);
+          .from("listings").select("id").eq("seller_wa", normalizedWa)
+          .in("status", ["active", "expired", "sold", "pending"]);
         const myIds = (myListIds || []).map(l => l.id);
 
-        if (myIds.length === 0) {
+        // Query paralel: payment dari listing milik user + wanted payment milik user
+        const [listingPaysRes, wantedPaysRes] = await Promise.all([
+          myIds.length > 0
+            ? supa.from("payments")
+                .select("id, type, amount, status, created_at, listings(title)")
+                .in("listing_id", myIds)
+                .order("created_at", { ascending: false })
+                .limit(8)
+            : Promise.resolve({ data: [] }),
+          supa.from("payments")
+            .select("id, type, amount, status, created_at, meta")
+            .eq("type", "wanted")
+            .filter("meta->>buyer_wa", "eq", normalizedWa)
+            .order("created_at", { ascending: false })
+            .limit(5),
+        ]);
+
+        const allPays = [
+          ...(listingPaysRes.data || []),
+          ...(wantedPaysRes.data || []),
+        ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 10);
+
+        if (allPays.length === 0) {
           await sendWa(senderJid, "📋 Belum ada riwayat transaksi.\n\nPasang iklan pertamamu dengan kirim foto+teks!");
           return NextResponse.json({ ok: true, state: "riwayat_empty" });
         }
 
-        const { data: riwayatPays } = await supa
-          .from("payments")
-          .select("id, type, amount, status, created_at, listings(listing_code, title)")
-          .in("listing_id", myIds)
-          .order("created_at", { ascending: false })
-          .limit(10);
-
-        if (!riwayatPays || riwayatPays.length === 0) {
-          await sendWa(senderJid, "📋 Belum ada riwayat transaksi pembayaran.");
-          return NextResponse.json({ ok: true, state: "riwayat_empty" });
-        }
-
-        const typeLabel = { iklan: "Pasang Iklan", bump: "Bump", renewal: "Perpanjang", featured: "Featured", autobump: "AutoBump", wanted: "Dicari" };
-        const statusLabel = { paid: "✅ Lunas", pending: "⏳ Pending", expired: "❌ Expired" };
+        const typeLabel = { iklan: "Pasang Iklan", bump: "Bump", renewal: "Perpanjang", featured: "Featured", autobump: "AutoBump", wanted: "Dicari", sponsored: "Sponsored" };
+        const statusLabel = { paid: "✅ Lunas", pending: "⏳ Pending", expired: "❌ Expired", failed: "❌ Gagal" };
         let riwayatMsg = `📋 *Riwayat Transaksi*\n━━━━━━━━━━━━━━━\n\n`;
-        riwayatPays.forEach((p, i) => {
+        allPays.forEach((p, i) => {
           const tgl = new Date(p.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
-          const judul = p.listings?.title ? `_${p.listings.title.slice(0, 25)}_` : "";
+          const judul = p.listings?.title ? `_${p.listings.title.slice(0, 25)}_` : (p.type === "wanted" ? "_Posting Dicari_" : "");
           riwayatMsg += `${i + 1}. *${typeLabel[p.type] || p.type}* ${judul}\n`;
           riwayatMsg += `   💳 Rp ${Number(p.amount).toLocaleString("id-ID")} · ${statusLabel[p.status] || p.status} · ${tgl}\n\n`;
         });
@@ -1758,7 +1778,7 @@ export async function POST(req) {
           description: parsed.description || rawText,
           budget: parsed.budget || 0,
           category: parsed.category || "Lainnya",
-          campus: parsed.campus || "Semua",
+          campus: ["USU", "POLMED", "Semua"].includes(parsed.campus) ? parsed.campus : "Semua",
           area: "Sekitar Kampus",
           status: isFree ? "active" : "pending",
         }).select().single();
@@ -2047,6 +2067,7 @@ export async function POST(req) {
         category: extracted.category || "Lainnya",
         type: "barang",
         condition: extracted.condition === "new" ? "new" : "used",
+        campus: ["USU", "POLMED", "Semua"].includes(extracted.campus) ? extracted.campus : "Semua",
         image_url: fileMimeType.startsWith("image/") ? publicUrl : null,
         images: fileMimeType.startsWith("image/") ? uploadedUrls : [],
         status: "pending",
