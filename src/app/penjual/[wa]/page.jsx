@@ -194,11 +194,12 @@ export default async function SellerProfilePage({ params }) {
     <div className="mx-auto max-w-5xl px-4 py-6">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       {/* Breadcrumb */}
-      <nav className="text-sm text-gray-400">
-        <Link href="/" className="hover:text-primary">
-          Beranda
-        </Link>{" "}
-        / Profil Penjual
+      <nav className="flex items-center gap-1 min-w-0 text-sm text-gray-400">
+        <Link href="/" className="hover:text-primary shrink-0">Beranda</Link>
+        <span className="shrink-0">/</span>
+        <span className="shrink-0">Profil Penjual</span>
+        <span className="shrink-0">/</span>
+        <span className="truncate text-gray-500">{seller.seller_name}</span>
       </nav>
 
       {/* Header Penjual */}
