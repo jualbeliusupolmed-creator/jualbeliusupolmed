@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
 
+export const dynamic = "force-dynamic";
+
 const BAILEYS_URL = process.env.BAILEYS_API_URL;
 const BAILEYS_TOKEN = (process.env.BAILEYS_API_TOKEN || "jualbeliusu_rahasia").replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
 
