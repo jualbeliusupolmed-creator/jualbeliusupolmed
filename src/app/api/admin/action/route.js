@@ -5,6 +5,7 @@ import { formatWa } from "@/lib/constants";
 import { getSettings } from "@/lib/settings";
 import { notifyAdminNewListing, postToGroup, notifyWantedBuyers, sendWa } from "@/lib/fonnte";
 import { pushCategorySubscribers } from "@/lib/webpush";
+import { logError } from "@/lib/logError";
 
 export const dynamic = "force-dynamic";
 
@@ -559,8 +560,19 @@ export async function POST(req) {
       default:
         return NextResponse.json({ error: "Aksi tidak dikenal" }, { status: 400 });
     }
+
+    // Audit trail — non-blocking
+    supa.from("admin_logs").insert({
+      action,
+      target_id: id ? String(id) : (wa ? String(wa) : null),
+      details: Object.fromEntries(
+        Object.entries(body).filter(([k]) => !["action", "id", "wa", "password"].includes(k))
+      ),
+    }).catch(() => {});
+
     return NextResponse.json(warning ? { ok: true, warning } : { ok: true });
   } catch (e) {
+    logError("/api/admin/action", e).catch(() => {});
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }
