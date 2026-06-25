@@ -86,8 +86,8 @@ function rupiah(n) {
 // ============================================================================
 
 // Auto-post ke grup WA setelah bayar iklan jualan — ringkas agar tidak menyemak
-export async function postToGroup(listing) {
-  const group = process.env.FONNTE_WA_GROUP_ID;
+export async function postToGroup(listing, adminSettings) {
+  const group = adminSettings?.groupJid || process.env.FONNTE_WA_GROUP_ID;
   const isRental = listing.type === "sewa";
   const priceStr = isRental && listing.rental_period
     ? `${rupiah(listing.price)}/${listing.rental_period}`
@@ -97,14 +97,12 @@ export async function postToGroup(listing) {
     `🏷️ ${listing.category}\n` +
     `👉 ${baseUrl()}/produk/${buildSlug(listing.title, listing.id)}`;
 
-  // Kirim ke grup utama (env FONNTE_WA_GROUP_ID)
+  // Kirim ke grup utama
   const main = group ? send(group, msg, listing.image_url || null) : Promise.resolve();
 
-  // Kirim ke grup-grup tambahan dari env BAILEYS_BROADCAST_GROUPS (comma-separated JID)
-  const extraGroups = (process.env.BAILEYS_BROADCAST_GROUPS || "")
-    .split(",")
-    .map((g) => g.trim())
-    .filter(Boolean);
+  // Kirim ke grup-grup tambahan (dari settings DB atau env)
+  const extraStr = adminSettings?.extraGroups || process.env.BAILEYS_BROADCAST_GROUPS || "";
+  const extraGroups = extraStr.split(",").map((g) => g.trim()).filter(Boolean);
 
   const extras = extraGroups.map((jid) =>
     send(jid, msg, listing.image_url || null).catch(() => {})
@@ -235,8 +233,8 @@ export async function notifyCategorySubscribers(supa, listing) {
 // FITUR YANG DINONAKTIFKAN (Untuk Hemat Kuota Fonnte)
 // ============================================================================
 
-export async function notifyAdminNewListing(listing) {
-  const adminWa = process.env.ADMIN_WA;
+export async function notifyAdminNewListing(listing, overrideAdminWa) {
+  const adminWa = overrideAdminWa || process.env.ADMIN_WA;
   if (!adminWa) return { ok: false, skipped: true };
   const url = `${baseUrl()}/produk/${buildSlug(listing.title, listing.id)}`;
   const msg =

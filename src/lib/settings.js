@@ -11,6 +11,15 @@ export const DEFAULT_SETTINGS = {
     featuredMaxPerDay: 10000,
     listingDays: 14,
     renewalFee: 2000,
+    dicariFreeLimt: 3,
+    // tier biaya iklan berdasarkan harga barang; dievaluasi berurutan, `upto` = batas atas (eksklusif)
+    adTiers: [
+      { upto: 50000, flat: 2000 },
+      { upto: 100000, flat: 3000 },
+      { upto: 500000, flat: 5000 },
+      { upto: 1000000, flat: 7000 },
+      { upto: null, pct: 1 },
+    ],
     // tier fee setelah barang terjual; dievaluasi berurutan, `upto` = batas atas (eksklusif)
     soldTiers: [
       { upto: 50000, flat: 0 },
@@ -45,9 +54,50 @@ export const DEFAULT_SETTINGS = {
     memory: "Pasar target adalah mahasiswa USU dan Polmed di Kota Medan. Pembayaran bisa pakai QRIS atau bayar tunai (COD). Kategori yang tersedia: Elektronik, Fashion, Kendaraan, Properti, Buku, Makanan, Jasa, Lainnya.",
     personality: "Kamu adalah asisten marketplace yang profesional tapi santai. Gunakan bahasa Indonesia sehari-hari, sopan, sedikit gaul (seperti pakai kata 'Kak' atau 'Agan'). Selalu berikan semangat untuk cepat berjualan.",
   },
+  admin: {
+    adminWa: process.env.ADMIN_WA || "62895429126232",
+    groupJid: process.env.GROUP_JID || "",
+    extraGroups: process.env.BAILEYS_BROADCAST_GROUPS || "",
+    qrisUrl: process.env.QRIS_URL || "",
+    fonnteFirst: false,
+  },
   bot: {
     paused_users: [],
+    webhookUrl: "",
+    contextExpiryMinutes: 30,
+    contextMaxHistory: 5,
+    otpExpiryMinutes: 10,
+    otpMaxAttempts: 3,
   },
+  messages: {
+    reminderH3: "Halo Kak! Iklan *{{title}}* milik Anda akan berakhir dalam *3 hari lagi*. Segera perpanjang agar iklan tetap aktif! 🔄\n\n👉 Balas *PERPANJANG* untuk memperpanjang.",
+    reminderH1: "⚠️ Halo Kak! Iklan *{{title}}* milik Anda akan berakhir *besok*! Segera perpanjang sekarang!\n\n👉 Balas *PERPANJANG*.",
+    qrisInstruction: "Silakan scan QRIS di bawah ini untuk membayar. Setelah bayar, kirimkan foto struk ke bot ini ya! 📸",
+    listingActive: "✅ Iklan *{{title}}* telah aktif dan bisa dilihat di marketplace! Semoga cepat laku ya Kak! 🎉\n\n🌐 {{url}}",
+    notifNewListing: "📢 *Iklan Baru!*\n\n*{{title}}*\nHarga: {{price}}\nPenjual: {{seller}}\n\n{{url}}",
+  },
+  areas: [
+    "Medan Baru",
+    "Medan Selayang",
+    "Medan Petisah",
+    "Medan Polonia",
+    "Medan Tuntungan",
+    "Medan Johor",
+    "Medan Amplas",
+    "Medan Denai",
+    "Medan Area",
+    "Medan Kota",
+    "Medan Maimun",
+    "Medan Sunggal",
+    "Medan Helvetia",
+    "Medan Perjuangan",
+    "Medan Tembung",
+    "Binjai",
+    "Deli Serdang",
+    "Kampus USU",
+    "Kampus Polmed",
+    "Semua Area",
+  ],
   bot_keywords: {
     enabled: true,
     greeting_enabled: false,
@@ -68,7 +118,10 @@ export async function getSettings() {
     const { data } = await supa.from("settings").select("key, value");
     const merged = clone(DEFAULT_SETTINGS);
     for (const row of data || []) {
-      if (merged[row.key] && typeof merged[row.key] === "object") {
+      if (Array.isArray(row.value) || Array.isArray(merged[row.key])) {
+        // Arrays (e.g. areas) are replaced entirely, not merged
+        merged[row.key] = row.value;
+      } else if (merged[row.key] && typeof merged[row.key] === "object") {
         merged[row.key] = { ...merged[row.key], ...row.value };
       } else {
         merged[row.key] = row.value;
@@ -84,11 +137,13 @@ export async function getSettings() {
 export function adFeeFrom(pricing, type, price = 0) {
   if (type === "poster") return pricing.adPoster || 10000;
   const p = Number(price) || 0;
-  if (p < 50000) return 2000;
-  if (p < 100000) return 3000;
-  if (p < 500000) return 5000;
-  if (p < 1000000) return 7000;
-  return Math.round(p * 0.01);
+  const tiers = pricing.adTiers || DEFAULT_SETTINGS.pricing.adTiers;
+  for (const t of tiers) {
+    if (t.upto == null || p < t.upto) {
+      return t.flat != null ? t.flat : Math.round((p * (t.pct || 0)) / 100);
+    }
+  }
+  return 2000;
 }
 
 // Mengecek apakah penjual memiliki tagihan komisi penjualan (sold_fee) yang belum lunas
