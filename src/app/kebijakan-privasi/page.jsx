@@ -14,7 +14,7 @@ export default function KebijakanPrivasiPage() {
     <div className="mx-auto max-w-4xl px-4 py-8">
       <div className="text-center">
         <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white sm:text-4xl">Kebijakan Privasi</h1>
-        <p className="mt-2 text-sm text-gray-500 dark:text-slate-400">Terakhir Diperbarui: 11 Juni 2026</p>
+        <p className="mt-2 text-sm text-gray-500 dark:text-slate-400">Terakhir Diperbarui: 25 Juni 2026</p>
       </div>
 
       <div className="card mt-8 p-6 sm:p-8 space-y-6 text-sm text-gray-650 dark:text-slate-300 leading-relaxed">
@@ -28,7 +28,7 @@ export default function KebijakanPrivasiPage() {
           <p className="mb-2">Kami mengumpulkan beberapa jenis informasi dari dan tentang pengguna platform kami, termasuk:</p>
           <ul className="list-disc pl-5 space-y-1">
             <li><strong>Informasi yang Anda Berikan:</strong> Saat Anda memasang iklan, mencari barang, atau menghubungi admin, Anda memberikan informasi seperti nama, nomor telepon (WhatsApp), foto produk, deskripsi produk, lokasi kampus/area kos, serta detail verifikasi (jika ada).</li>
-            <li><strong>Informasi Transaksi:</strong> Saat Anda membayar biaya periklanan melalui DOKU, kami mengumpulkan status transaksi, jumlah pembayaran, dan ID order pembayaran. Kami tidak menyimpan detail kartu kredit atau informasi sensitif perbankan Anda secara langsung; semua itu diproses dengan aman oleh DOKU.</li>
+            <li><strong>Informasi Transaksi:</strong> Saat Anda membayar biaya periklanan via QRIS, kami mengumpulkan status transaksi, jumlah pembayaran, dan foto struk yang Anda unggah. Kami tidak menyimpan informasi rekening atau data perbankan sensitif Anda.</li>
             <li><strong>Informasi Teknis & Log:</strong> Kami secara otomatis mengumpulkan informasi tentang perangkat Anda, alamat IP, browser yang digunakan, dan interaksi Anda di platform kami untuk analisis analitik dan optimasi performa.</li>
           </ul>
         </div>
@@ -40,7 +40,7 @@ export default function KebijakanPrivasiPage() {
           <ul className="list-disc pl-5 space-y-1">
             <li>Menyediakan, mengoperasikan, dan memelihara layanan marketplace kami.</li>
             <li>Menampilkan iklan produk/jasa Anda lengkap dengan nama dan nomor WhatsApp Anda agar pembeli potensial dapat menghubungi Anda secara langsung.</li>
-            <li>Memproses transaksi pembayaran Anda untuk layanan iklan berbayar (bump, featured, dll.) secara otomatis via DOKU.</li>
+            <li>Memproses verifikasi pembayaran Anda untuk layanan iklan berbayar (bump, featured, dll.) via QRIS statis dengan verifikasi struk oleh AI.</li>
             <li>Mengirimkan notifikasi penting terkait transaksi, status iklan, atau pembaruan layanan melalui WhatsApp atau email.</li>
             <li>Mendeteksi, mencegah, dan menangani aktivitas ilegal, kecurangan (fraud), atau penyalahgunaan platform.</li>
             <li>Meningkatkan pengalaman pengguna, melacak tren popularitas produk, dan menganalisis statistik situs secara anonim.</li>
@@ -52,7 +52,7 @@ export default function KebijakanPrivasiPage() {
           <h2 className="text-base font-bold text-gray-900 dark:text-white mb-2">3. Pembagian Informasi dengan Pihak Ketiga</h2>
           <p className="mb-2">Kami tidak menjual, menyewakan, atau menukar data pribadi Anda dengan pihak ketiga mana pun. Informasi Anda hanya dibagikan dalam kondisi berikut:</p>
           <ul className="list-disc pl-5 space-y-1">
-            <li><strong>Penyedia Layanan:</strong> Kami membagikan data transaksi dengan <strong>DOKU</strong> selaku gerbang pembayaran resmi untuk memproses transaksi secara aman.</li>
+            <li><strong>Penyedia Layanan:</strong> Kami menggunakan <strong>Supabase</strong> untuk menyimpan data dan struk pembayaran yang Anda unggah secara aman.</li>
             <li><strong>Kepatuhan Hukum:</strong> Kami dapat mengungkapkan informasi Anda jika diwajibkan oleh undang-undang atau perintah pengadilan untuk memenuhi kepatuhan hukum Negara Kesatuan Republik Indonesia.</li>
             <li><strong>Publik:</strong> Data iklan (judul, deskripsi, harga, foto, nama penjual, dan link WhatsApp) dipublikasikan di platform agar dapat diakses oleh calon pembeli.</li>
           </ul>

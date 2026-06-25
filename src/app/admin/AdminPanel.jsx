@@ -619,7 +619,7 @@ export default function AdminPanel({
                     <p className="font-medium text-amber-500">{"★".repeat(r.rating)}<span className="text-gray-300 dark:text-slate-700">{"★".repeat(5 - r.rating)}</span> <span className="text-xs text-gray-400">({r.rating}/5)</span></p>
                     <p className="mt-1 text-sm dark:text-slate-200">{r.listings?.title || "(listing terhapus)"}</p>
                     <p className="text-xs text-gray-400">{r.buyer_name || "Anonim"} → {r.seller_wa} · {new Date(r.created_at).toLocaleDateString("id-ID")}</p>
-                    {r.comment && <p className="mt-1 whitespace-pre-wrap text-sm text-gray-600 dark:text-slate-400">“{r.comment}”</p>}
+                    {r.comment && <p className="mt-1 whitespace-pre-wrap text-sm text-gray-600 dark:text-slate-400">"{r.comment}"</p>}
                   </div>
                   <div className="flex shrink-0 flex-col gap-1">
                     <button onClick={() => action({ action: r.hidden ? "show_rating" : "hide_rating", id: r.id }, r.hidden ? "Rating ditampilkan" : "Rating disembunyikan")} className={`rounded-md px-2 py-1 text-xs ${r.hidden ? "bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-300" : "bg-amber-100 text-amber-700"}`}>{r.hidden ? "Tampilkan" : "Sembunyikan"}</button>
@@ -644,7 +644,7 @@ export default function AdminPanel({
                     {r.status === "resolved" && <span className="badge ml-1 bg-green-100 text-green-700">selesai</span>}
                     <p className="mt-2 font-medium dark:text-white">{r.listings?.title || "(listing terhapus)"}</p>
                     <p className="text-xs text-gray-400">Penjual: {r.listings?.seller_wa || "-"} · {new Date(r.created_at).toLocaleString("id-ID")}</p>
-                    {r.detail && <p className="mt-2 whitespace-pre-wrap text-sm text-gray-600 dark:text-slate-400">“{r.detail}”</p>}
+                    {r.detail && <p className="mt-2 whitespace-pre-wrap text-sm text-gray-600 dark:text-slate-400">"{r.detail}"</p>}
                   </div>
                   <div className="flex shrink-0 flex-col gap-1">
                     {r.listing_id && <a href={`/produk/${buildSlug(r.listings?.title, r.listing_id)}`} target="_blank" rel="noreferrer" className="rounded-md bg-gray-100 px-2 py-1 text-center text-xs text-gray-600 dark:bg-slate-800 dark:text-slate-300">Lihat</a>}
@@ -1098,42 +1098,42 @@ function SettingsManager({ settings, action }) {
             <p className="mt-1 text-xs text-gray-400">Iklan aktif selama berapa hari setelah pembayaran. Default: 14 hari.</p>
           </Field>
         </div>
-        <div className=”mt-4 flex items-center justify-between”>
-          <p className=”text-xs font-semibold uppercase tracking-wide text-gray-500”>Tier biaya iklan (berdasarkan harga barang)</p>
-          <button onClick={() => setAdTiers([...adTiers, { upto: null, flat: 5000 }])} className=”text-xs text-gray-900 hover:underline dark:text-slate-200”>+ Tambah tier</button>
+        <div className="mt-4 flex items-center justify-between">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Tier biaya iklan (berdasarkan harga barang)</p>
+          <button onClick={() => setAdTiers([...adTiers, { upto: null, flat: 5000 }])} className="text-xs text-gray-900 hover:underline dark:text-slate-200">+ Tambah tier</button>
         </div>
-        <div className=”mt-2 space-y-2”>
+        <div className="mt-2 space-y-2">
           {adTiers.map((t, i) => (
-            <div key={i} className=”flex items-center gap-1.5 text-xs”>
-              <input type=”number” className=”input w-24” placeholder=”< batas Rp” value={t.upto ?? “”} onChange={(e) => { const c = [...adTiers]; c[i] = { ...t, upto: e.target.value === “” ? null : Number(e.target.value) }; setAdTiers(c); }} />
-              <input type=”number” className=”input w-20” placeholder=”flat Rp” value={t.flat ?? “”} onChange={(e) => { const c = [...adTiers]; c[i] = { ...t, flat: e.target.value === “” ? undefined : Number(e.target.value) }; setAdTiers(c); }} />
-              <input type=”number” className=”input w-16” placeholder=”%” value={t.pct ?? “”} onChange={(e) => { const c = [...adTiers]; c[i] = { ...t, pct: e.target.value === “” ? undefined : Number(e.target.value) }; setAdTiers(c); }} />
-              <button onClick={() => setAdTiers(adTiers.filter((_, j) => j !== i))} className=”rounded-md bg-rose-100 px-2 py-1 text-rose-700”>✕</button>
+            <div key={i} className="flex items-center gap-1.5 text-xs">
+              <input type="number" className="input w-24" placeholder="< batas Rp" value={t.upto ?? ""} onChange={(e) => { const c = [...adTiers]; c[i] = { ...t, upto: e.target.value === "" ? null : Number(e.target.value) }; setAdTiers(c); }} />
+              <input type="number" className="input w-20" placeholder="flat Rp" value={t.flat ?? ""} onChange={(e) => { const c = [...adTiers]; c[i] = { ...t, flat: e.target.value === "" ? undefined : Number(e.target.value) }; setAdTiers(c); }} />
+              <input type="number" className="input w-16" placeholder="%" value={t.pct ?? ""} onChange={(e) => { const c = [...adTiers]; c[i] = { ...t, pct: e.target.value === "" ? undefined : Number(e.target.value) }; setAdTiers(c); }} />
+              <button onClick={() => setAdTiers(adTiers.filter((_, j) => j !== i))} className="rounded-md bg-rose-100 px-2 py-1 text-rose-700">✕</button>
             </div>
           ))}
-          <p className=”text-[11px] text-gray-400”>Biaya pasang iklan sesuai harga barang. Kosongkan batas untuk tier akhir. Isi flat (Rp) atau % dari harga.</p>
+          <p className="text-[11px] text-gray-400">Biaya pasang iklan sesuai harga barang. Kosongkan batas untuk tier akhir. Isi flat (Rp) atau % dari harga.</p>
         </div>
-        <hr className=”my-3 border-gray-100 dark:border-slate-800” />
-        <div className=”mt-2 flex items-center justify-between”>
-          <p className=”text-xs font-semibold uppercase tracking-wide text-gray-500”>Fee setelah terjual</p>
-          <button onClick={() => setTiers([...tiers, { upto: null, pct: 5 }])} className=”text-xs text-gray-900 hover:underline dark:text-slate-200”>+ Tambah tier</button>
+        <hr className="my-3 border-gray-100 dark:border-slate-800" />
+        <div className="mt-2 flex items-center justify-between">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Fee setelah terjual</p>
+          <button onClick={() => setTiers([...tiers, { upto: null, pct: 5 }])} className="text-xs text-gray-900 hover:underline dark:text-slate-200">+ Tambah tier</button>
         </div>
-        <div className=”mt-2 space-y-2”>
+        <div className="mt-2 space-y-2">
           {tiers.map((t, i) => (
-            <div key={i} className=”flex items-center gap-1.5 text-xs”>
-              <input type=”number” className=”input w-24” placeholder=”< batas” value={t.upto ?? “”} onChange={(e) => { const c = [...tiers]; c[i] = { ...t, upto: e.target.value === “” ? null : Number(e.target.value) }; setTiers(c); }} />
-              <input type=”number” className=”input w-20” placeholder=”flat Rp” value={t.flat ?? “”} onChange={(e) => { const c = [...tiers]; c[i] = { ...t, flat: e.target.value === “” ? undefined : Number(e.target.value) }; setTiers(c); }} />
-              <input type=”number” className=”input w-16” placeholder=”%” value={t.pct ?? “”} onChange={(e) => { const c = [...tiers]; c[i] = { ...t, pct: e.target.value === “” ? undefined : Number(e.target.value) }; setTiers(c); }} />
-              <button onClick={() => setTiers(tiers.filter((_, j) => j !== i))} className=”rounded-md bg-rose-100 px-2 py-1 text-rose-700”>✕</button>
+            <div key={i} className="flex items-center gap-1.5 text-xs">
+              <input type="number" className="input w-24" placeholder="< batas" value={t.upto ?? ""} onChange={(e) => { const c = [...tiers]; c[i] = { ...t, upto: e.target.value === "" ? null : Number(e.target.value) }; setTiers(c); }} />
+              <input type="number" className="input w-20" placeholder="flat Rp" value={t.flat ?? ""} onChange={(e) => { const c = [...tiers]; c[i] = { ...t, flat: e.target.value === "" ? undefined : Number(e.target.value) }; setTiers(c); }} />
+              <input type="number" className="input w-16" placeholder="%" value={t.pct ?? ""} onChange={(e) => { const c = [...tiers]; c[i] = { ...t, pct: e.target.value === "" ? undefined : Number(e.target.value) }; setTiers(c); }} />
+              <button onClick={() => setTiers(tiers.filter((_, j) => j !== i))} className="rounded-md bg-rose-100 px-2 py-1 text-rose-700">✕</button>
             </div>
           ))}
-          <p className=”text-[11px] text-gray-400”>Kosongkan “&lt; batas” untuk tier teratas. Isi flat atau %.</p>
+          <p className="text-[11px] text-gray-400">Kosongkan "&lt; batas" untuk tier teratas. Isi flat atau %.</p>
         </div>
-        <Field label=”Limit DICARI gratis per user”>
-          <input type=”number” min=”1” className=”input” value={pricing.dicariFreeLimt ?? 3} onChange={(e) => setPricing({ ...pricing, dicariFreeLimt: Math.max(1, Number(e.target.value) || 3) })} />
-          <p className=”mt-1 text-xs text-gray-400”>Berapa kali user bisa post DICARI gratis. Default: 3.</p>
+        <Field label="Limit DICARI gratis per user">
+          <input type="number" min="1" className="input" value={pricing.dicariFreeLimt ?? 3} onChange={(e) => setPricing({ ...pricing, dicariFreeLimt: Math.max(1, Number(e.target.value) || 3) })} />
+          <p className="mt-1 text-xs text-gray-400">Berapa kali user bisa post DICARI gratis. Default: 3.</p>
         </Field>
-        <button onClick={() => { action({ action: “save_settings”, key: “pricing”, value: pricing }, “Harga disimpan”); flash(“pricing”); }} className=”btn-primary mt-4 w-full”>{saved === “pricing” ? “✓ Tersimpan” : “Simpan Harga”}</button>
+        <button onClick={() => { action({ action: "save_settings", key: "pricing", value: pricing }, "Harga disimpan"); flash("pricing"); }} className="btn-primary mt-4 w-full">{saved === "pricing" ? "✓ Tersimpan" : "Simpan Harga"}</button>
       </Card>
 
       {/* KONTAK DUKUNGAN */}
