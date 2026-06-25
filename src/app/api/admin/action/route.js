@@ -391,6 +391,34 @@ export async function POST(req) {
         break;
       }
 
+      case "notify_group_pricing": {
+        const { pricing: np } = body;
+        const pricingSettings = await getSettings().catch(() => null);
+        const groupJid = pricingSettings?.admin?.groupJid;
+        if (!groupJid) return NextResponse.json({ error: "groupJid belum dikonfigurasi di Pengaturan Admin" }, { status: 400 });
+        const fmtRp = (n) => Number(n) > 0 ? `Rp ${Number(n).toLocaleString("id-ID")}` : "Gratis";
+        const modeLabel = (() => {
+          const ad = Number(np?.adBarang || 0);
+          const bump = Number(np?.bump || 0);
+          const ft = Number(np?.featuredPerDay || 0);
+          const hasSold = (np?.soldTiers || []).some(t => t.pct > 0 || t.flat > 0);
+          if (ad === 0 && bump === 0 && ft === 0 && !hasSold) return "Gratis Semua";
+          if (ad === 0 && hasSold) return "Jual Dulu (Komisi)";
+          if (ad === 0 && !hasSold && (bump > 0 || ft > 0)) return "Freemium";
+          return "Sewa Lapak";
+        })();
+        const msg =
+          `📢 *Pembaruan Tarif Marketplace*\n\n` +
+          `Mode: *${modeLabel}*\n\n` +
+          `📦 Pasang iklan: *${fmtRp(np?.adBarang)}*\n` +
+          `🔼 Bump/sundul: *${fmtRp(np?.bump)}*\n` +
+          `⭐ Featured/hari: *${fmtRp(np?.featuredPerDay)}*\n` +
+          `⏳ Durasi iklan: *${np?.listingDays || 14} hari*\n\n` +
+          `_Tarif berlaku sekarang. Ketik MENU untuk info lanjut._`;
+        await sendWa(groupJid, msg);
+        break;
+      }
+
       case "pause_bot": {
         const normalizedWa = formatWa(wa);
         if (!normalizedWa) return NextResponse.json({ error: "WA wajib" }, { status: 400 });
