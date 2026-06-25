@@ -26,12 +26,12 @@ CREATE POLICY "anon_read_categories"
   ON categories FOR SELECT TO anon
   USING (true);
 
--- SELLER_RATINGS — publik baca rating yang tidak di-hidden
+-- SELLER_RATINGS — publik bisa baca semua rating
 ALTER TABLE seller_ratings ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "anon_read_visible_ratings"
+CREATE POLICY "anon_read_ratings"
   ON seller_ratings FOR SELECT TO anon
-  USING (hidden IS NOT TRUE);
+  USING (true);
 
 -- WANTED_LISTINGS — publik baca yang masih active
 ALTER TABLE wanted_listings ENABLE ROW LEVEL SECURITY;
@@ -40,12 +40,12 @@ CREATE POLICY "anon_read_active_wanted"
   ON wanted_listings FOR SELECT TO anon
   USING (status = 'active');
 
--- BLOGS — publik baca yang sudah published
+-- BLOGS — publik bisa baca semua artikel
 ALTER TABLE blogs ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "anon_read_published_blogs"
+CREATE POLICY "anon_read_blogs"
   ON blogs FOR SELECT TO anon
-  USING (published = true);
+  USING (true);
 
 -- PAYMENTS — sensitif, tidak ada akses anon
 ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
