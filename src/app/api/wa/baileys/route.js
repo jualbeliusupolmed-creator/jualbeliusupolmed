@@ -281,10 +281,12 @@ export async function POST(req) {
           );
 
           if (updatedListing) {
-            await postToGroup(updatedListing).catch(() => {});
-            notifyAdminNewListing(updatedListing).catch(() => {});
-            notifyMatchingWanted(supa, updatedListing).catch(() => {});
-            notifyCategorySubscribers(supa, updatedListing).catch(() => {});
+            await Promise.all([
+              postToGroup(updatedListing),
+              notifyAdminNewListing(updatedListing),
+              notifyMatchingWanted(supa, updatedListing),
+              notifyCategorySubscribers(supa, updatedListing),
+            ].map(p => p.catch(() => {})));
           }
           return NextResponse.json({ ok: true, state: "receipt_verified" });
         }
@@ -1499,14 +1501,14 @@ export async function POST(req) {
           supa.from("payments")
             .select("id, type, amount, status, created_at, meta")
             .eq("type", "wanted")
-            .filter("meta->>buyer_wa", "eq", normalizedWa)
             .order("created_at", { ascending: false })
-            .limit(5),
+            .limit(50),
         ]);
 
+        const myWantedPays = (wantedPaysRes.data || []).filter(p => p.meta?.buyer_wa === normalizedWa);
         const allPays = [
           ...(listingPaysRes.data || []),
-          ...(wantedPaysRes.data || []),
+          ...myWantedPays,
         ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 10);
 
         if (allPays.length === 0) {
