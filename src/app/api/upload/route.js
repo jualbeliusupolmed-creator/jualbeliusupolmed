@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import sharp from "sharp";
 
 export const dynamic = "force-dynamic";
 
@@ -92,21 +93,18 @@ export async function POST(req) {
       );
     }
 
-    // Extension based on detected MIME (trust server, not filename)
-    const extMap = {
-      "image/jpeg": "jpg",
-      "image/png": "png",
-      "image/webp": "webp",
-      "image/gif": "gif",
-    };
-    const ext = extMap[detectedMime] || "jpg";
-    const path = `listings/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    // Convert to WebP using sharp
+    const processedBuffer = await sharp(Buffer.from(arrayBuffer))
+      .webp({ quality: 80 })
+      .toBuffer();
+
+    const path = `listings/${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
 
     const supa = getAdminClient();
     const { error: uploadError } = await supa.storage
       .from("listings")
-      .upload(path, new Uint8Array(arrayBuffer), {
-        contentType: detectedMime,
+      .upload(path, processedBuffer, {
+        contentType: "image/webp",
         cacheControl: "31536000",
         upsert: false,
       });

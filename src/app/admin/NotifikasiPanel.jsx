@@ -6,6 +6,58 @@ function fmt(d) {
   return new Date(d).toLocaleString("id-ID", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
+// ── Push Status Banner ────────────────────────────────────────────────────────
+function PushStatusBanner({ pushCount }) {
+  const [vapidOk, setVapidOk] = useState(null); // null=loading, true=ok, false=error
+  const [testing, setTesting] = useState(false);
+  const [testMsg, setTestMsg] = useState(null);
+
+  useEffect(() => {
+    fetch("/api/push/subscribe")
+      .then(r => r.json())
+      .then(d => setVapidOk(!!(d.publicKey)))
+      .catch(() => setVapidOk(false));
+  }, []);
+
+  async function sendTestPush() {
+    if (!confirm(`Kirim test push ke ${pushCount} subscriber sekarang?`)) return;
+    setTesting(true); setTestMsg(null);
+    try {
+      const res = await fetch("/api/push/subscribe/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: "🔔 Test Push", body: "Notifikasi push berfungsi dengan baik!" }),
+      });
+      const d = await res.json();
+      setTestMsg(res.ok ? { ok: true, text: `✅ Test push terkirim ke ${d.sent ?? pushCount} subscriber.` } : { ok: false, text: `❌ ${d.error}` });
+    } catch (e) { setTestMsg({ ok: false, text: `❌ ${e.message}` }); }
+    finally { setTesting(false); }
+  }
+
+  return (
+    <div className={`flex flex-wrap items-center gap-3 rounded-xl border p-4 ${vapidOk ? "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20" : vapidOk === false ? "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20" : "border-gray-200 bg-gray-50 dark:border-slate-700 dark:bg-slate-900"}`}>
+      <div className="flex items-center gap-2">
+        <span className={`inline-block h-2.5 w-2.5 rounded-full ${vapidOk === null ? "bg-gray-400" : vapidOk ? "animate-pulse bg-green-500" : "bg-red-500"}`} />
+        <span className="text-sm font-semibold dark:text-white">
+          Push Notification Status:
+        </span>
+        <span className={`text-sm ${vapidOk === null ? "text-gray-400" : vapidOk ? "text-green-700 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+          {vapidOk === null ? "Memeriksa..." : vapidOk ? `✅ VAPID Terkonfigurasi — ${pushCount} Subscriber Aktif` : "❌ VAPID belum dikonfigurasi (tambahkan VAPID_PUBLIC_KEY & VAPID_PRIVATE_KEY di env)"}
+        </span>
+      </div>
+      {vapidOk && pushCount > 0 && (
+        <button onClick={sendTestPush} disabled={testing}
+          className="ml-auto rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
+          {testing ? "⏳ Mengirim..." : "🔔 Kirim Test Push"}
+        </button>
+      )}
+      {testMsg && (
+        <p className={`w-full text-xs ${testMsg.ok ? "text-green-600" : "text-red-500"}`}>{testMsg.text}</p>
+      )}
+    </div>
+  );
+}
+
 export default function NotifikasiPanel({ action }) {
   const [catSubs, setCatSubs] = useState([]);
   const [pushSubs, setPushSubs] = useState([]);
@@ -57,6 +109,8 @@ export default function NotifikasiPanel({ action }) {
 
   return (
     <div className="space-y-4">
+      <PushStatusBanner pushCount={pushSubs.length} />
+
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="rounded-xl border border-gray-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900 text-center">
           <div className="text-2xl font-bold text-gray-700 dark:text-slate-200">{catSubs.length}</div>
