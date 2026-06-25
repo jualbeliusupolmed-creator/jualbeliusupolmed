@@ -1230,10 +1230,63 @@ function SettingsManager({ settings, action }) {
     }
   }
 
+  const applyTemplate = (mode) => {
+    let p = { ...pricing };
+    if (mode === "sewa_lapak") {
+      p.adTiers = [
+        { upto: 50000, flat: 2000 },
+        { upto: 100000, flat: 3000 },
+        { upto: 500000, flat: 5000 },
+        { upto: 1000000, flat: 7000 },
+        { upto: null, pct: 1 },
+      ];
+      p.soldTiers = [];
+      p.bump = 1000;
+      p.featuredPerDay = 5000;
+      p.adBarang = 2000;
+    } else if (mode === "jual_dulu") {
+      p.adTiers = [{ upto: null, flat: 0 }];
+      p.soldTiers = [
+        { upto: 50000, flat: 0 },
+        { upto: 100000, pct: 10 },
+        { upto: null, pct: 5 },
+      ];
+      p.bump = 1000;
+      p.featuredPerDay = 5000;
+      p.adBarang = 0;
+    } else if (mode === "freemium") {
+      p.adTiers = [{ upto: null, flat: 0 }];
+      p.soldTiers = [];
+      p.bump = 2000;
+      p.featuredPerDay = 5000;
+      p.adBarang = 0;
+    } else if (mode === "gratis_semua") {
+      p.adTiers = [{ upto: null, flat: 0 }];
+      p.soldTiers = [];
+      p.bump = 0;
+      p.featuredPerDay = 0;
+      p.adBarang = 0;
+      p.adPoster = 0;
+      p.renewalFee = 0;
+    }
+    setPricing(p);
+  };
+
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       {/* HARGA & BIAYA */}
       <Card title="Harga & Biaya">
+        <div className="mb-6 rounded-xl border border-primary/20 bg-primary/5 p-4">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-primary">Template Monetisasi Cepat</p>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <button onClick={() => applyTemplate("sewa_lapak")} className="btn-outline border-primary/30 text-[10px] sm:text-xs">1. Sewa Lapak (Bayar Iklan)</button>
+            <button onClick={() => applyTemplate("jual_dulu")} className="btn-outline border-primary/30 text-[10px] sm:text-xs">2. Jual Dulu (Komisi Laku)</button>
+            <button onClick={() => applyTemplate("freemium")} className="btn-outline border-primary/30 text-[10px] sm:text-xs">3. Freemium (Hanya Upsell)</button>
+            <button onClick={() => applyTemplate("gratis_semua")} className="btn-outline border-primary/30 text-[10px] sm:text-xs bg-green-50 hover:bg-green-100 text-green-700">4. Gratis Semua</button>
+          </div>
+          <p className="mt-2 text-[10px] text-gray-500">Klik tombol di atas untuk mengisi otomatis tarif di bawah ini, lalu klik Simpan Harga.</p>
+        </div>
+        
         <div className="grid grid-cols-2 gap-3">
           <Field label="Iklan barang"><input type="number" className="input" value={pricing.adBarang ?? ""} onChange={numP("adBarang")} /></Field>
           <Field label="Iklan poster"><input type="number" className="input" value={pricing.adPoster ?? ""} onChange={numP("adPoster")} /></Field>

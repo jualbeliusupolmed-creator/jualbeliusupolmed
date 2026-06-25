@@ -38,5 +38,13 @@ export async function GET(req) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  // Non-blocking: rekam query untuk tren pencarian
+  if (q) {
+    getAdminClient().from("search_logs").insert({
+      query: q.toLowerCase().slice(0, 100),
+      results_count: data?.length || 0,
+    }).catch(() => {});
+  }
+
   return NextResponse.json({ listings: data || [], total: data?.length || 0 });
 }
