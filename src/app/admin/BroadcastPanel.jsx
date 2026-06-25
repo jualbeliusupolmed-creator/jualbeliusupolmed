@@ -4,7 +4,9 @@ import { useState, useEffect } from "react";
 
 export default function BroadcastPanel({ sellers }) {
   const [message, setMessage] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -60,6 +62,27 @@ export default function BroadcastPanel({ sellers }) {
     }
   }
 
+  async function uploadImageToServer(file) {
+    setUploadingImage(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: form });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload gagal");
+      return data.url;
+    } finally {
+      setUploadingImage(false);
+    }
+  }
+
+  function handleImageChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  }
+
   async function handleBroadcast() {
     if (!message.trim()) return alert("Pesan tidak boleh kosong!");
     if (!confirm(`Kirim pesan ini ke ${sellers.length} penjual?`)) return;
@@ -67,12 +90,18 @@ export default function BroadcastPanel({ sellers }) {
     setLoading(true);
     setStatus("Sedang mengirim...");
     try {
+      let finalImageUrl = null;
+      if (imageFile) {
+        setStatus("Mengupload gambar...");
+        finalImageUrl = await uploadImageToServer(imageFile);
+      }
+
       const res = await fetch("/api/admin/broadcast", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: message.trim(),
-          imageUrl: imageUrl.trim() || null,
+          imageUrl: finalImageUrl,
         }),
       });
 
@@ -81,7 +110,8 @@ export default function BroadcastPanel({ sellers }) {
 
       setStatus(`✅ Berhasil mengirim ke ${data.successCount} pengguna. Gagal: ${data.failCount}`);
       setMessage("");
-      setImageUrl("");
+      setImageFile(null);
+      setImagePreview("");
     } catch (err) {
       console.error(err);
       setStatus(`❌ Error: ${err.message}`);
@@ -98,12 +128,18 @@ export default function BroadcastPanel({ sellers }) {
     setLoading(true);
     setStatus("Menjadwalkan...");
     try {
+      let finalImageUrl = null;
+      if (imageFile) {
+        setStatus("Mengupload gambar...");
+        finalImageUrl = await uploadImageToServer(imageFile);
+      }
+
       const res = await fetch("/api/admin/broadcast/schedule", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: message.trim(),
-          imageUrl: imageUrl.trim() || null,
+          imageUrl: finalImageUrl,
           scheduledAt,
         }),
       });
@@ -111,7 +147,8 @@ export default function BroadcastPanel({ sellers }) {
       if (!res.ok) throw new Error(data.error || "Gagal menjadwalkan");
       setStatus(`📅 Broadcast dijadwalkan untuk ${new Date(scheduledAt).toLocaleString("id-ID")}`);
       setMessage("");
-      setImageUrl("");
+      setImageFile(null);
+      setImagePreview("");
       setScheduledAt("");
       loadScheduled();
     } catch (err) {
@@ -170,14 +207,27 @@ export default function BroadcastPanel({ sellers }) {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium dark:text-gray-300">URL Gambar (Opsional)</label>
-            <input
-              type="url"
-              className="input"
-              placeholder="https://example.com/promo.jpg"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-            />
+            <label className="mb-1 block text-sm font-medium dark:text-gray-300">Gambar (Opsional — otomatis dikonversi ke WebP)</label>
+            <label className="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-dashed border-gray-300 p-3 hover:border-blue-400 dark:border-slate-600 dark:hover:border-blue-500">
+              <span className="text-2xl">🖼️</span>
+              <div className="min-w-0">
+                <p className="text-sm font-medium dark:text-gray-300">
+                  {imageFile ? imageFile.name : "Klik untuk pilih gambar"}
+                </p>
+                <p className="text-xs text-gray-400">JPG, PNG, WebP · Maks 5 MB · Otomatis dikonversi ke WebP</p>
+              </div>
+              <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+            </label>
+            {imagePreview && (
+              <div className="relative mt-2 inline-block">
+                <img src={imagePreview} alt="preview" className="h-32 w-auto rounded-lg border object-cover" />
+                <button
+                  type="button"
+                  onClick={() => { setImageFile(null); setImagePreview(""); }}
+                  className="absolute -right-2 -top-2 rounded-full bg-red-500 p-0.5 text-xs text-white hover:bg-red-600"
+                >✕</button>
+              </div>
+            )}
           </div>
 
           <div>

@@ -271,18 +271,36 @@ function TabProfil() {
 
 // ── Tab: Status WA / Story ────────────────────────────────────────────────────
 function TabStory() {
-  const [form, setForm] = useState({ text: "", url: "" });
+  const [form, setForm] = useState({ text: "" });
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
   const [sending, setSending] = useState(false);
   const [msg, setMsg] = useState(null);
+
+  function handleImageChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  }
 
   async function handleSend(e) {
     e.preventDefault();
     if (!form.text.trim()) return;
     setSending(true); setMsg(null);
     try {
-      const r = await apiPost("story", { text: form.text, url: form.url || undefined });
+      let uploadedUrl;
+      if (imageFile) {
+        const fd = new FormData();
+        fd.append("file", imageFile);
+        const upRes = await fetch("/api/upload", { method: "POST", body: fd });
+        const upData = await upRes.json();
+        if (!upRes.ok) throw new Error(upData.error || "Upload gambar gagal");
+        uploadedUrl = upData.url;
+      }
+      const r = await apiPost("story", { text: form.text, url: uploadedUrl });
       setMsg(r.ok ? { ok: true, text: "✅ Status WA berhasil dipost!" } : { ok: false, text: `❌ ${r.error}` });
-      if (r.ok) setForm({ text: "", url: "" });
+      if (r.ok) { setForm({ text: "" }); setImageFile(null); setImagePreview(""); }
     } catch (e) { setMsg({ ok: false, text: `❌ ${e.message}` }); }
     finally { setSending(false); }
   }
@@ -308,17 +326,23 @@ function TabStory() {
           <p className="mt-1 text-xs text-gray-400">{form.text.length}/700 karakter</p>
         </div>
         <div>
-          <label className="label">URL Gambar (opsional — jadi status foto)</label>
-          <input
-            className="input"
-            placeholder="https://contoh.com/gambar.jpg"
-            value={form.url}
-            onChange={e => setForm(f => ({ ...f, url: e.target.value }))}
-          />
+          <label className="label">Gambar (opsional — jadi status foto, otomatis WebP)</label>
+          <label className="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-dashed border-gray-300 p-3 hover:border-blue-400 dark:border-slate-600">
+            <span className="text-2xl">🖼️</span>
+            <div className="min-w-0">
+              <p className="text-sm font-medium dark:text-gray-300">{imageFile ? imageFile.name : "Klik untuk pilih gambar"}</p>
+              <p className="text-xs text-gray-400">JPG, PNG, WebP · Maks 5 MB</p>
+            </div>
+            <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+          </label>
+          {imagePreview && (
+            <div className="relative mt-2 inline-block">
+              <img src={imagePreview} alt="preview" className="h-32 w-auto rounded-lg border object-cover" />
+              <button type="button" onClick={() => { setImageFile(null); setImagePreview(""); }}
+                className="absolute -right-2 -top-2 rounded-full bg-red-500 p-0.5 text-xs text-white hover:bg-red-600">✕</button>
+            </div>
+          )}
         </div>
-        {form.url && (
-          <img src={form.url} alt="preview" className="h-32 w-auto rounded-lg border object-cover" onError={e => e.target.style.display = "none"} />
-        )}
         <button type="submit" disabled={sending || !form.text.trim()} className="btn-primary w-full">
           {sending ? "⏳ Memposting..." : "📱 Post Status WA"}
         </button>
@@ -598,19 +622,39 @@ function TabSaluran() {
 // ── Tab: Kirim Pesan ──────────────────────────────────────────────────────────
 function TabKirim() {
   const [mode, setMode] = useState("pesan");
-  const [form, setForm] = useState({ target: "", message: "", url: "" });
+  const [form, setForm] = useState({ target: "", message: "" });
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
   const [poll, setPoll] = useState({ target: "", name: "", options: ["", ""] });
   const [status, setStatus] = useState(null);
   const [sending, setSending] = useState(false);
   const { data: groupData } = useApi("groups");
   const groups = groupData?.groups || [];
 
+  function handleImageChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  }
+
   async function handleSendMsg(e) {
     e.preventDefault();
     setSending(true); setStatus(null);
-    const r = await apiPost("send", { target: form.target, message: form.message, url: form.url || undefined });
-    setStatus(r.status ? { ok: true, text: "✅ Pesan berhasil dikirim!" } : { ok: false, text: `❌ ${r.reason || r.error}` });
-    if (r.status) setForm(f => ({ ...f, message: "", url: "" }));
+    try {
+      let uploadedUrl;
+      if (imageFile) {
+        const fd = new FormData();
+        fd.append("file", imageFile);
+        const upRes = await fetch("/api/upload", { method: "POST", body: fd });
+        const upData = await upRes.json();
+        if (!upRes.ok) throw new Error(upData.error || "Upload gambar gagal");
+        uploadedUrl = upData.url;
+      }
+      const r = await apiPost("send", { target: form.target, message: form.message, url: uploadedUrl });
+      setStatus(r.status ? { ok: true, text: "✅ Pesan berhasil dikirim!" } : { ok: false, text: `❌ ${r.reason || r.error}` });
+      if (r.status) { setForm(f => ({ ...f, message: "" })); setImageFile(null); setImagePreview(""); }
+    } catch (e) { setStatus({ ok: false, text: `❌ ${e.message}` }); }
     setSending(false);
   }
 
@@ -657,8 +701,22 @@ function TabKirim() {
             <textarea className="input min-h-[100px] resize-y" placeholder="Ketik pesan..." value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} required />
           </div>
           <div>
-            <label className="label">URL Gambar (opsional)</label>
-            <input className="input" placeholder="https://..." value={form.url} onChange={e => setForm(f => ({ ...f, url: e.target.value }))} />
+            <label className="label">Gambar (opsional — otomatis WebP)</label>
+            <label className="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-dashed border-gray-300 p-3 hover:border-blue-400 dark:border-slate-600">
+              <span className="text-2xl">🖼️</span>
+              <div className="min-w-0">
+                <p className="text-sm font-medium dark:text-gray-300">{imageFile ? imageFile.name : "Klik untuk pilih gambar"}</p>
+                <p className="text-xs text-gray-400">JPG, PNG, WebP · Maks 5 MB</p>
+              </div>
+              <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+            </label>
+            {imagePreview && (
+              <div className="relative mt-2 inline-block">
+                <img src={imagePreview} alt="preview" className="h-32 w-auto rounded-lg border object-cover" />
+                <button type="button" onClick={() => { setImageFile(null); setImagePreview(""); }}
+                  className="absolute -right-2 -top-2 rounded-full bg-red-500 p-0.5 text-xs text-white hover:bg-red-600">✕</button>
+              </div>
+            )}
           </div>
           <button type="submit" disabled={sending} className="btn-primary w-full">{sending ? "⏳ Mengirim..." : "🚀 Kirim"}</button>
         </form>
