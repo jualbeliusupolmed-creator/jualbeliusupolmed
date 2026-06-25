@@ -12,33 +12,34 @@ async function send(target, message, fileUrl = null) {
 
   // Jika BAILEYS_API_URL diset di Vercel, kita tembak Baileys Railway
   if (baileysUrl) {
-    // Bersihkan karakter aneh seperti BOM (\uFEFF) atau zero-width space
     const cleanUrl = baileysUrl.replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
-    
-    // Tambahkan "/send" di akhir URL
-    const finalUrl = cleanUrl.endsWith('/send') ? cleanUrl : `${cleanUrl.replace(/\/$/, '')}/send`;
+    const baseUrl = cleanUrl.replace(/\/(send|story)\/?$/, '').replace(/\/$/, '');
 
-    // Jika target sudah full JID (ada @), teruskan apa adanya ke Railway.
-    // Railway /send sudah menangani: @s.whatsapp.net, @lid, @g.us.
+    // status@broadcast harus pakai /story \u2014 endpoint khusus WA Status
+    if (target === "status@broadcast") {
+      const storyUrl = `${baseUrl}/story`;
+      const payload = { text: message, url: fileUrl || undefined };
+      console.log(`[sendWa] Posting story to: ${storyUrl}`);
+      const res = await fetch(storyUrl, {
+        method: "POST",
+        headers: { "Authorization": baileysToken, "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const json = await res.json();
+      console.log(`[sendWa] Story response: ${res.status} | ${JSON.stringify(json)}`);
+      return { ok: res.ok, data: json };
+    }
+
+    const finalUrl = `${baseUrl}/send`;
     const baileysTarget = target.includes('@') ? target : formatWaForBaileys(target);
-
-    const payload = {
-      target: baileysTarget,
-      message: message,
-      url: fileUrl || undefined
-    };
+    const payload = { target: baileysTarget, message: message, url: fileUrl || undefined };
 
     console.log(`[sendWa] Sending to: ${finalUrl} | Target: ${target}`);
-
     const res = await fetch(finalUrl, {
       method: "POST",
-      headers: {
-        "Authorization": baileysToken,
-        "Content-Type": "application/json"
-      },
+      headers: { "Authorization": baileysToken, "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
-    
     const json = await res.json();
     console.log(`[sendWa] Response: ${res.status} | Body: ${JSON.stringify(json)}`);
     return { ok: res.ok, data: json };
