@@ -55,7 +55,7 @@ export const DEFAULT_SETTINGS = {
     personality: "Kamu adalah asisten marketplace yang profesional tapi santai. Gunakan bahasa Indonesia sehari-hari, sopan, sedikit gaul (seperti pakai kata 'Kak' atau 'Agan'). Selalu berikan semangat untuk cepat berjualan.",
   },
   admin: {
-    adminWa: process.env.ADMIN_WA || "62895429126232",
+    adminWa: process.env.ADMIN_WA || process.env.SUPER_ADMIN_WA || "",
     groupJid: process.env.GROUP_JID || "",
     extraGroups: process.env.BAILEYS_BROADCAST_GROUPS || "",
     qrisUrl: process.env.QRIS_URL || "",
