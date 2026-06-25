@@ -10,12 +10,9 @@ export const dynamic = "force-dynamic";
 // Deduplication: cek window 24 jam sekitar titik H-3 / H-1.
 export async function GET(req) {
   const auth = req.headers.get("authorization");
-  const key = req.nextUrl.searchParams.get("key");
-  const ok =
-    (process.env.CRON_SECRET
-      ? auth === `Bearer ${process.env.CRON_SECRET}`
-      : !!req.headers.get("x-vercel-cron")) ||
-    (process.env.ADMIN_PASSWORD && key === process.env.ADMIN_PASSWORD);
+  const ok = process.env.CRON_SECRET
+    ? auth === `Bearer ${process.env.CRON_SECRET}`
+    : !!req.headers.get("x-vercel-cron");
   if (!ok) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const supa = getAdminClient();
