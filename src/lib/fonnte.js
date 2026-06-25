@@ -208,7 +208,7 @@ export async function notifyCategorySubscribers(supa, listing) {
 
     if (!subs?.length) return;
 
-    const url = `${baseUrl()}/produk/${(await import("@/lib/slug")).buildSlug(listing.title, listing.id)}`;
+    const url = `${baseUrl()}/produk/${buildSlug(listing.title, listing.id)}`;
     
     for (const s of subs) {
       await send(
