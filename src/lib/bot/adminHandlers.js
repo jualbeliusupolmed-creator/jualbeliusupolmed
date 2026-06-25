@@ -221,7 +221,7 @@ export async function handleAdminCmd(ctx) {
     await supa.from("listings").update({ fee_offer_status: "approved" }).eq("id", listing.id);
     // Update payment amount
     await supa.from("payments").update({ amount: newFee }).eq("listing_id", listing.id).eq("status", "pending");
-    const sellerJid = listing.seller_wa + "@s.whatsapp.net";
+    const sellerJid = listing.seller_wa;
     if (newFee === 0) {
       // Gratis — aktifkan langsung
       const expiresAt = new Date(Date.now() + 14 * 864e5).toISOString();
@@ -265,7 +265,7 @@ export async function handleAdminCmd(ctx) {
     }
     await supa.from("listings").update({ fee_offer: null, fee_offer_status: "rejected" }).eq("id", listing.id);
     const noteMsg = alasan ? `\n\nAlasan: _${alasan}_` : "";
-    const sellerJid = listing.seller_wa + "@s.whatsapp.net";
+    const sellerJid = listing.seller_wa;
     const { data: pmt } = await supa.from("payments").select("amount").eq("listing_id", listing.id).eq("status", "pending").maybeSingle();
     const originalFee = pmt?.amount || 0;
     await sendWa(sellerJid,
