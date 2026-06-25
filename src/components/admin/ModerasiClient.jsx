@@ -46,11 +46,11 @@ function ActionBtn({ label, onClick, danger }) {
   );
 }
 
-export default function ModerasiClient({ pendingListings, openReports, pendingProfiles, pendingFees }) {
+export default function ModerasiClient({ pendingListings, openReports, pendingProfiles, pendingFees, pendingFeeOffers = [] }) {
   const { action, confirmThen } = useAdmin();
   const [rejectNote, setRejectNote] = useState({});
 
-  const total = pendingListings.length + openReports.length + pendingProfiles.length + pendingFees.length;
+  const total = pendingListings.length + openReports.length + pendingProfiles.length + pendingFees.length + pendingFeeOffers.length;
 
   if (total === 0) {
     return (
@@ -164,6 +164,51 @@ export default function ModerasiClient({ pendingListings, openReports, pendingPr
                 </div>
               </div>
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* TAWARAN BIAYA IKLAN */}
+      {pendingFeeOffers.length > 0 && (
+        <section>
+          <SectionHeader title="Tawaran Biaya Iklan" count={pendingFeeOffers.length} color="blue" />
+          <div className="divide-y divide-gray-100 rounded-xl border border-gray-100 bg-white shadow-sm dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900/40">
+            {pendingFeeOffers.map((f) => {
+              const originalFee = f.payments?.[0]?.amount || 0;
+              return (
+                <div key={f.id} className="flex flex-col gap-2 p-4 sm:flex-row sm:items-start">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold dark:text-white">{f.title}</p>
+                    <p className="text-xs text-gray-400">
+                      {f.seller_name || f.seller_wa} · Kode {f.listing_code} · {relTime(f.created_at)}
+                    </p>
+                    <div className="mt-1 flex items-center gap-2 text-sm">
+                      <span className="text-gray-400 line-through">{rupiah(originalFee)}</span>
+                      <span className="text-gray-400">→</span>
+                      <span className="font-bold text-blue-600 dark:text-blue-400">{rupiah(f.fee_offer)}</span>
+                      {f.fee_offer === 0 && <span className="rounded bg-green-100 px-1.5 py-0.5 text-xs font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400">Minta Gratis</span>}
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 flex-wrap items-center gap-2">
+                    <ActionBtn label="✅ Setujui" onClick={() =>
+                      confirmThen({ title: `Setujui biaya ${rupiah(f.fee_offer)}?`, confirmLabel: "Setujui" }, () =>
+                        action({ action: "approve_fee_offer", id: f.id }, "Tawaran biaya disetujui"))
+                    } />
+                    <input
+                      type="text"
+                      placeholder="Alasan penolakan (opsional)"
+                      value={rejectNote[`fee_${f.id}`] || ""}
+                      onChange={(e) => setRejectNote((n) => ({ ...n, [`fee_${f.id}`]: e.target.value }))}
+                      className="min-w-0 w-40 rounded border border-gray-200 px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    />
+                    <ActionBtn label="❌ Tolak" danger onClick={() =>
+                      confirmThen({ title: "Tolak tawaran biaya?", danger: true, confirmLabel: "Tolak" }, () =>
+                        action({ action: "reject_fee_offer", id: f.id, note: rejectNote[`fee_${f.id}`] || "" }, "Tawaran ditolak"))
+                    } />
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
       )}

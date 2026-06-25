@@ -1666,6 +1666,7 @@ function SettingsManager({ settings, action }) {
         >{saved === "areas" ? "✓ Tersimpan" : "Simpan Daftar Area"}</button>
       </Card>
     </div>
+  </div>
   );
 }
 function Field({ label, children }) {

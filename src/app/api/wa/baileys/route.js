@@ -198,10 +198,13 @@ export async function POST(req) {
         return t === cmd || t.startsWith(cmd + " ");
       });
 
+    // Seller boleh kirim TAWAR BIAYA meski ada pending payment — jangan block
+    const isTawarBiaya = !file && textMsg?.startsWith("TAWAR BIAYA ");
+
     // ==========================================
     // STATE 2: Menunggu Bukti Transfer (Struk)
     // ==========================================
-    if (pendingPayment && !isAdminCommand) {
+    if (pendingPayment && !isAdminCommand && !isTawarBiaya) {
       if (!file) {
         if (message && message.toLowerCase().trim() === "batal") {
           await supa.from("payments").delete().eq("id", pendingPayment.id);
@@ -1371,10 +1374,73 @@ export async function POST(req) {
       // ==========================================
       // ADMIN COMMANDS — didelegasikan ke adminHandlers
       // ==========================================
+      // TAWAR BIAYA [kode] [nominal] — Seller nego biaya iklan ke admin
+      // ==========================================
+      } else if (textMsg.startsWith("TAWAR BIAYA ")) {
+        const tbParts = textMsg.split(/\s+/);
+        const tbKode = tbParts[2];
+        const tbNominal = parseInt(tbParts[3]);
+
+        if (!tbKode || !tbNominal || tbNominal < 0) {
+          await sendWa(senderJid,
+            `❌ Format: *TAWAR BIAYA [kode iklan] [nominal tawaran]*\n\nContoh:\n*TAWAR BIAYA 1018 1000*\n\n_(Masukkan 0 untuk minta gratis)_`
+          );
+          return NextResponse.json({ ok: true, state: "tawar_biaya_help" });
+        }
+
+        const { data: tbListing } = await supa
+          .from("listings")
+          .select("id, title, listing_code, seller_wa, fee_offer_status")
+          .eq("listing_code", parseInt(tbKode))
+          .eq("seller_wa", normalizedWa)
+          .in("status", ["pending", "active"])
+          .maybeSingle();
+
+        if (!tbListing) {
+          await sendWa(senderJid, `❌ Iklan kode *${tbKode}* tidak ditemukan atau bukan milikmu.`);
+          return NextResponse.json({ ok: true, state: "tawar_biaya_not_found" });
+        }
+
+        if (tbListing.fee_offer_status === "pending") {
+          await sendWa(senderJid, `⏳ Tawaranmu untuk iklan *${tbListing.title}* sudah dikirim dan masih menunggu persetujuan admin.`);
+          return NextResponse.json({ ok: true, state: "tawar_biaya_already_pending" });
+        }
+
+        await supa.from("listings").update({ fee_offer: tbNominal, fee_offer_status: "pending" }).eq("id", tbListing.id);
+
+        // Notif ke semua admin
+        const adminNumbers = [process.env.ADMIN_WA, process.env.SUPER_ADMIN_WA].filter(Boolean);
+        const { data: tbPayment } = await supa.from("payments").select("amount").eq("listing_id", tbListing.id).eq("status", "pending").maybeSingle();
+        const currentFee = tbPayment?.amount || 0;
+        const tbAdminMsg =
+          `💬 *Tawaran Biaya Iklan*\n\n` +
+          `📦 *${tbListing.title}*\n` +
+          `🔑 Kode: *${tbKode}*\n` +
+          `📱 Penjual: wa.me/${normalizedWa}\n` +
+          `💳 Biaya normal: *Rp ${Number(currentFee).toLocaleString("id-ID")}*\n` +
+          `🤝 Tawaran: *Rp ${tbNominal.toLocaleString("id-ID")}*\n\n` +
+          `Setuju? Balas:\n` +
+          `✅ *SETUJUI TAWAR BIAYA ${tbKode}*\n` +
+          `❌ *TOLAK TAWAR BIAYA ${tbKode}*`;
+        for (const adminNum of adminNumbers) {
+          await sendWa(adminNum, tbAdminMsg).catch(() => {});
+        }
+
+        await sendWa(senderJid,
+          `✅ *Tawaranmu terkirim!*\n\n` +
+          `📦 *${tbListing.title}*\n` +
+          `🤝 Kamu menawar biaya iklan: *Rp ${tbNominal.toLocaleString("id-ID")}*\n\n` +
+          `Tunggu konfirmasi dari admin ya. Jika disetujui, kamu akan dapat tagihan baru.`
+        );
+        return NextResponse.json({ ok: true, state: "tawar_biaya_sent" });
+
+      // ==========================================
       } else if (isAdminWa(normalizedWa) && (
         textMsg === "STATS" ||
         textMsg.startsWith("SETUJUI NAMA ") ||
         textMsg.startsWith("TOLAK NAMA ") ||
+        textMsg.startsWith("SETUJUI TAWAR BIAYA ") ||
+        textMsg.startsWith("TOLAK TAWAR BIAYA ") ||
         textMsg.startsWith("SETMODE") ||
         textMsg.startsWith("BROADCAST SETMODE ") ||
         textMsg.startsWith("PAUSE ") ||
@@ -1712,7 +1778,8 @@ export async function POST(req) {
             `• *RESUME [nomor]* → Nyalakan kembali bot untuk user\n` +
             `• *BROADCAST [pesan]* → Pesan massal ke semua penjual\n` +
             `• *APPROVE / REJECT [kode]* → Konfirmasi hapus iklan\n` +
-            `• *SETUJUI / TOLAK NAMA [nomor]* → Konfirmasi ganti nama\n`;
+            `• *SETUJUI / TOLAK NAMA [nomor]* → Konfirmasi ganti nama\n` +
+            `• *SETUJUI / TOLAK TAWAR BIAYA [kode]* → Nego biaya pasang iklan\n`;
         }
 
         await sendWa(senderJid, menuStr);
@@ -1867,7 +1934,8 @@ export async function POST(req) {
             `• *RESUME [nomor]* → Nyalakan kembali bot untuk user\n` +
             `• *BROADCAST [pesan]* → Pesan massal ke semua penjual\n` +
             `• *APPROVE / REJECT [kode]* → Konfirmasi hapus iklan\n` +
-            `• *SETUJUI / TOLAK NAMA [nomor]* → Konfirmasi ganti nama\n\n` +
+            `• *SETUJUI / TOLAK NAMA [nomor]* → Konfirmasi ganti nama\n` +
+            `• *SETUJUI / TOLAK TAWAR BIAYA [kode]* → Nego biaya pasang iklan\n\n` +
             `Untuk melihat menu pelanggan, ketik *MENU*.`;
         }
 
@@ -2244,7 +2312,8 @@ export async function POST(req) {
       const paymentInstructions =
         `Untuk tayangkan iklan, scan QRIS di bawah dan transfer:\n\n` +
         `💳 *Rp ${totalAmount.toLocaleString("id-ID")}*\n\n` +
-        `Setelah transfer, kirim *screenshot struk* ke sini.`;
+        `Setelah transfer, kirim *screenshot struk* ke sini.\n\n` +
+        `_(Biaya terasa berat? Ketik *TAWAR BIAYA ${newListing.listing_code} [nominal]* untuk menawar ke admin)_`;
 
       await sendWa(senderJid, aiReply + paymentInstructions, qrisUrl);
 
