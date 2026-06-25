@@ -124,8 +124,6 @@ export async function POST(req) {
             `👉 ${productUrl}\n\n` +
             `_Klik & bagikan link iklanmu ke teman-teman!_ 📤`;
 
-          const fullSuccessMessage = `${confirmMsg}\n\n${shareMsg}`;
-
           await sendWa(normalizedWa, confirmMsg);
           await new Promise(r => setTimeout(r, 1500));
           await sendWa(normalizedWa, shareMsg);
@@ -136,7 +134,7 @@ export async function POST(req) {
           const adminNumbers = [...new Set(rawAdmins.split(",").map(a => to62(a.trim())).filter(Boolean))];
           
           for (const adminNum of adminNumbers) {
-            await sendWa(adminNum, `📢 *Iklan Baru Tayang*\n\n${fullSuccessMessage}`).catch(() => {});
+            await sendWa(adminNum, `📢 *Iklan Baru Tayang*\n\n${shareMsg}`).catch(() => {});
           }
 
           // Auto-post ke Grup
