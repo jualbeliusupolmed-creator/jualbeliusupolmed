@@ -21,19 +21,28 @@ export default function ShareModal({ listing }) {
   const storyRef = useRef(null);
 
   function getUrl() {
-    const base = typeof window !== "undefined" ? window.location.origin : "https://www.jualbelimedan.web.id";
+    const base = typeof window !== "undefined"
+      ? window.location.origin
+      : (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id");
     return `${base}/produk/${buildSlug(listing.title, listing.id)}`;
   }
 
   async function downloadTemplate(format, platformId) {
     setBusy(platformId);
     try {
-      const html2canvas = (await import("html2canvas")).default;
+      const { toPng } = await import("html-to-image");
       const el = format === "feed" ? feedRef.current : storyRef.current;
-      const canvas = await html2canvas(el, { useCORS: true, scale: 2, backgroundColor: null });
+      const dataUrl = await toPng(el, { 
+        cacheBust: true,
+        pixelRatio: 2,
+        style: {
+          transform: 'scale(1)',
+          transformOrigin: 'top left'
+        }
+      });
       const link = document.createElement("a");
       link.download = `${platformId}-${listing.id}.png`;
-      link.href = canvas.toDataURL("image/png");
+      link.href = dataUrl;
       link.click();
     } catch (e) {
       alert("Gagal membuat gambar: " + e.message);
@@ -46,7 +55,8 @@ export default function ShareModal({ listing }) {
     if (p.action === "download") {
       downloadTemplate(p.format, p.id);
     } else if (p.id === "wa") {
-      const text = `*${listing.title}* — ${rupiah(listing.price)}\n\nLihat di Jual Beli Medan:\n${getUrl()}`;
+      const cond = listing.condition === "new" ? " · Baru" : listing.condition === "used" ? " · Bekas" : "";
+      const text = `📦 *${listing.title}*\n💰 ${rupiah(listing.price)}${cond}\n${listing.category ? `🏷️ ${listing.category}\n` : ""}\n👉 ${getUrl()}\n_Jual Beli USU Polmed — COD area kampus_`;
       window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener");
     } else if (p.id === "fb") {
       window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(getUrl())}`, "_blank", "noopener");

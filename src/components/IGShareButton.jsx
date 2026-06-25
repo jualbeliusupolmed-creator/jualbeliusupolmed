@@ -12,15 +12,18 @@ export default function IGShareButton({ listing }) {
   async function download() {
     setBusy(true);
     try {
-      const html2canvas = (await import("html2canvas")).default;
-      const canvas = await html2canvas(ref.current, {
-        useCORS: true,
-        scale: 2,
-        backgroundColor: null,
+      const { toPng } = await import("html-to-image");
+      const dataUrl = await toPng(ref.current, {
+        cacheBust: true,
+        pixelRatio: 2,
+        style: {
+          transform: 'scale(1)',
+          transformOrigin: 'top left'
+        }
       });
       const link = document.createElement("a");
       link.download = `iklan-${listing.id}.png`;
-      link.href = canvas.toDataURL("image/png");
+      link.href = dataUrl;
       link.click();
     } catch (e) {
       alert("Gagal membuat gambar: " + e.message);
