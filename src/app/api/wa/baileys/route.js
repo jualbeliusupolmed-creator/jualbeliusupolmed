@@ -74,9 +74,9 @@ export async function POST(req) {
           try {
             const arrayBuffer = await file.arrayBuffer();
             const buffer = Buffer.from(arrayBuffer);
-            const ext = (file.type || "image/jpeg").includes("png") ? "png" : "jpg";
-            const fileName = `group/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-            await supa.storage.from("listings").upload(fileName, buffer, { contentType: file.type || "image/jpeg", upsert: false });
+            const webpBuf = await sharp(buffer).webp({ quality: 80 }).toBuffer();
+            const fileName = `group/${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
+            await supa.storage.from("listings").upload(fileName, webpBuf, { contentType: "image/webp", upsert: false });
             const { data: { publicUrl } } = supa.storage.from("listings").getPublicUrl(fileName);
             imageUrl = publicUrl;
           } catch (_) {}
@@ -125,6 +125,30 @@ export async function POST(req) {
       .limit(1);
 
     const pendingPayment = pendingPayments?.[0];
+
+    // 1b. Cek pending payment untuk wanted listing (listing_id null, dikecualikan !inner di atas)
+    let pendingWantedPayment = null;
+    if (!pendingPayment) {
+      const { data: pendingWanted } = await supa
+        .from("wanted_listings")
+        .select("id, title, listing_code")
+        .eq("buyer_wa", normalizedWa)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (pendingWanted?.length > 0) {
+        const w = pendingWanted[0];
+        const { data: wPays } = await supa
+          .from("payments")
+          .select("id, amount, type, midtrans_order_id")
+          .eq("status", "pending")
+          .eq("type", "wanted")
+          .order("created_at", { ascending: false })
+          .limit(1);
+        const wPay = wPays?.find(p => p.midtrans_order_id?.startsWith(`WNT-${w.listing_code}-`));
+        if (wPay) pendingWantedPayment = { ...wPay, wanted: w };
+      }
+    }
 
     // Admin commands bypass semua flow payment
     const adminCmds = ["STATS", "PAUSE", "RESUME", "BROADCAST", "APPROVE", "REJECT"];
@@ -258,6 +282,64 @@ export async function POST(req) {
 
       } catch (err) {
         console.error("AI Receipt Error via Baileys:", err);
+        await sendWa(senderJid, "❌ Terjadi kendala saat membaca struk: " + err.message);
+        return NextResponse.json({ ok: true, error: err.message });
+      }
+    }
+
+    // ==========================================
+    // STATE 2b: Pembayaran Wanted Listing Pending
+    // ==========================================
+    if (pendingWantedPayment && !isAdminCommand) {
+      const qrisUrl = getQrisUrl();
+      if (!file) {
+        if (message && message.toLowerCase().trim() === "batal") {
+          await supa.from("payments").delete().eq("id", pendingWantedPayment.id);
+          await supa.from("wanted_listings").delete().eq("id", pendingWantedPayment.wanted.id);
+          await sendWa(senderJid, "🗑️ Tagihan dan permintaan dicari telah dibatalkan.");
+          return NextResponse.json({ ok: true, state: "wanted_payment_cancelled" });
+        }
+        await sendWa(senderJid,
+          `⚠️ *Tagihan Belum Lunas*\n\n` +
+          `🔍 Posting Dicari: *${pendingWantedPayment.wanted.title}*\n` +
+          `💳 Nominal: *Rp ${Number(pendingWantedPayment.amount).toLocaleString("id-ID")}*\n\n` +
+          `Scan QRIS di bawah dan transfer nominal di atas.\n` +
+          `Setelah transfer, kirim *screenshot struk* ke sini.\n\n` +
+          `_(Ketik *BATAL* untuk batalkan)_`,
+          qrisUrl
+        );
+        return NextResponse.json({ ok: true, state: "wanted_waiting_receipt" });
+      }
+
+      await sendWa(senderJid, "⏳ Sedang memverifikasi struk Anda menggunakan AI...");
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const extractedData = await verifyReceiptImage(buffer, file.type || "image/jpeg");
+        if (!extractedData.is_struk_valid) {
+          await sendWa(senderJid, "❌ *Gambar Ditolak*\n\nBukan struk transfer yang sah. Kirim ulang foto struk yang jelas.");
+          return NextResponse.json({ ok: true, state: "wanted_invalid_receipt" });
+        }
+        if (Number(extractedData.nominal) < Number(pendingWantedPayment.amount)) {
+          await sendWa(senderJid,
+            `❌ *Nominal Kurang*\n\nNominal di struk: *Rp ${(extractedData.nominal || 0).toLocaleString("id-ID")}*\n` +
+            `Tagihan: *Rp ${Number(pendingWantedPayment.amount).toLocaleString("id-ID")}*\n\nMohon transfer ulang dengan nominal yang benar.`
+          );
+          return NextResponse.json({ ok: true, state: "wanted_invalid_amount" });
+        }
+        await supa.from("payments").update({ status: "paid" }).eq("id", pendingWantedPayment.id);
+        await supa.from("wanted_listings").update({ status: "active" }).eq("id", pendingWantedPayment.wanted.id);
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+        const confirmMsg =
+          `🎉 *Pembayaran Berhasil!*\n\n` +
+          `🔍 Permintaan *"${pendingWantedPayment.wanted.title}"* sekarang aktif tayang.\n\n` +
+          `Cek di: ${baseUrl}/dicari`;
+        await sendWa(senderJid, confirmMsg);
+        const { data: activeWanted } = await supa.from("wanted_listings").select("*").eq("id", pendingWantedPayment.wanted.id).single();
+        if (activeWanted) await postWantedToGroup(activeWanted).catch(() => {});
+        return NextResponse.json({ ok: true, state: "wanted_payment_verified" });
+      } catch (err) {
+        console.error("Wanted receipt error:", err);
         await sendWa(senderJid, "❌ Terjadi kendala saat membaca struk: " + err.message);
         return NextResponse.json({ ok: true, error: err.message });
       }
@@ -1313,7 +1395,7 @@ export async function POST(req) {
         const listingIds = (myListingIds || []).map(l => l.id);
 
         const [profileRes, activeRes, soldRes, ratingRes, offerRes] = await Promise.all([
-          supa.from("seller_profiles").select("name, bio, trusted_seller, subscription_tier").eq("wa", normalizedWa).maybeSingle(),
+          supa.from("seller_profiles").select("name, bio, trusted_seller, subscription_tier, free_bumps, referral_code").eq("wa", normalizedWa).maybeSingle(),
           supa.from("listings").select("id", { count: "exact", head: true }).eq("seller_wa", normalizedWa).eq("status", "active"),
           supa.from("listings").select("id", { count: "exact", head: true }).eq("seller_wa", normalizedWa).eq("status", "sold"),
           supa.from("seller_ratings").select("rating").eq("seller_wa", normalizedWa),
@@ -1327,6 +1409,8 @@ export async function POST(req) {
         const terjualCount = soldRes.count || 0;
         const sayaRatings = ratingRes.data || [];
         const pendingOffers = offerRes.count || 0;
+        const freeBumps = sayaProfile?.free_bumps || 0;
+        const refCode = sayaProfile?.referral_code || null;
         const avgRating = sayaRatings.length > 0
           ? (sayaRatings.reduce((s, r) => s + r.rating, 0) / sayaRatings.length).toFixed(1)
           : null;
@@ -1344,11 +1428,113 @@ export async function POST(req) {
           `✅ Total Terjual: *${terjualCount}×*\n` +
           (avgRating ? `⭐ Rating: *${avgRating}/5* dari ${sayaRatings.length} ulasan\n` : ``) +
           (pendingOffers > 0 ? `💬 Tawaran Pending: *${pendingOffers}* → ketik *TAWARAN*\n` : ``) +
+          (freeBumps > 0 ? `🎁 Bump Gratis: *${freeBumps}* → ketik *BUMP [kode]*\n` : ``) +
+          (refCode ? `\n━━━ 🎯 Referral ━━━\n🔑 Kode: *${refCode}* → ketik *REFERRAL* untuk detail\n` : ``) +
           `\n━━━ 🔗 Profil Publik ━━━\n` +
           `${sayaBaseUrl}/penjual/${normalizedWa}\n\n` +
           `Ketik *MENU* untuk semua perintah.`
         );
         return NextResponse.json({ ok: true, state: "saya_done" });
+
+      // ==========================================
+      // REFERRAL — Kode referral & saldo bump gratis
+      // ==========================================
+      } else if (textMsg === "REFERRAL") {
+        const { data: refProfile } = await supa
+          .from("seller_profiles")
+          .select("name, referral_code, free_bumps")
+          .eq("wa", normalizedWa)
+          .maybeSingle();
+
+        let refCode = refProfile?.referral_code;
+        if (!refCode) {
+          refCode = normalizedWa.slice(-4) + Math.random().toString(36).slice(2, 6).toUpperCase();
+          await supa.from("seller_profiles")
+            .upsert({ wa: normalizedWa, referral_code: refCode }, { onConflict: "wa" });
+        }
+
+        const freeBumpsRef = refProfile?.free_bumps || 0;
+        const refBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+        const refMsg =
+          `🎯 *Kode Referral Kamu*\n` +
+          `━━━━━━━━━━━━━━━\n\n` +
+          `🔑 Kode: *${refCode}*\n` +
+          `🎁 Bump Gratis Tersisa: *${freeBumpsRef}*\n\n` +
+          `━━━ Cara Kerja ━━━\n` +
+          `Ajak teman daftar & pasang iklan pertama dengan kode referralmu.\n` +
+          `Setiap teman yang berhasil → kamu dapat *1 Bump Gratis*!\n\n` +
+          `📲 Share link ini:\n` +
+          `${refBaseUrl}?ref=${refCode}\n\n` +
+          `_Ketik *BUMP [kode iklan]* untuk pakai bump gratis._`;
+        await sendWa(senderJid, refMsg);
+        return NextResponse.json({ ok: true, state: "referral_shown", bot_reply: refMsg });
+
+      // ==========================================
+      // RIWAYAT — Riwayat 10 transaksi terakhir
+      // ==========================================
+      } else if (textMsg === "RIWAYAT") {
+        const { data: myListIds } = await supa
+          .from("listings").select("id, listing_code, title").eq("seller_wa", normalizedWa);
+        const myIds = (myListIds || []).map(l => l.id);
+
+        if (myIds.length === 0) {
+          await sendWa(senderJid, "📋 Belum ada riwayat transaksi.\n\nPasang iklan pertamamu dengan kirim foto+teks!");
+          return NextResponse.json({ ok: true, state: "riwayat_empty" });
+        }
+
+        const { data: riwayatPays } = await supa
+          .from("payments")
+          .select("id, type, amount, status, created_at, listings(listing_code, title)")
+          .in("listing_id", myIds)
+          .order("created_at", { ascending: false })
+          .limit(10);
+
+        if (!riwayatPays || riwayatPays.length === 0) {
+          await sendWa(senderJid, "📋 Belum ada riwayat transaksi pembayaran.");
+          return NextResponse.json({ ok: true, state: "riwayat_empty" });
+        }
+
+        const typeLabel = { iklan: "Pasang Iklan", bump: "Bump", renewal: "Perpanjang", featured: "Featured", autobump: "AutoBump", wanted: "Dicari" };
+        const statusLabel = { paid: "✅ Lunas", pending: "⏳ Pending", expired: "❌ Expired" };
+        let riwayatMsg = `📋 *Riwayat Transaksi*\n━━━━━━━━━━━━━━━\n\n`;
+        riwayatPays.forEach((p, i) => {
+          const tgl = new Date(p.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+          const judul = p.listings?.title ? `_${p.listings.title.slice(0, 25)}_` : "";
+          riwayatMsg += `${i + 1}. *${typeLabel[p.type] || p.type}* ${judul}\n`;
+          riwayatMsg += `   💳 Rp ${Number(p.amount).toLocaleString("id-ID")} · ${statusLabel[p.status] || p.status} · ${tgl}\n\n`;
+        });
+        await sendWa(senderJid, riwayatMsg.trim());
+        return NextResponse.json({ ok: true, state: "riwayat_shown" });
+
+      // ==========================================
+      // PENAWARAN SAYA — Tawaran yang pernah dikirim sebagai pembeli
+      // ==========================================
+      } else if (textMsg === "PENAWARAN SAYA") {
+        const { data: myOffers } = await supa
+          .from("price_offers")
+          .select("id, offer_price, message, status, created_at, listings(listing_code, title, seller_wa, seller_name)")
+          .eq("buyer_wa", normalizedWa)
+          .order("created_at", { ascending: false })
+          .limit(10);
+
+        if (!myOffers || myOffers.length === 0) {
+          await sendWa(senderJid, "💬 Kamu belum pernah mengirim tawaran.\n\nGunakan *TAWAR [kode] [harga]* untuk menawar harga iklan.");
+          return NextResponse.json({ ok: true, state: "my_offers_empty" });
+        }
+
+        const offerStatusLabel = { pending: "⏳ Menunggu", accepted: "✅ Diterima", rejected: "❌ Ditolak" };
+        let offersMsg = `💬 *Tawaran yang Kamu Kirim*\n━━━━━━━━━━━━━━━\n\n`;
+        myOffers.forEach((o, i) => {
+          const tgl = new Date(o.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short" });
+          offersMsg += `${i + 1}. *${o.listings?.title?.slice(0, 30) || "Iklan"}*\n`;
+          offersMsg += `   💵 Rp ${Number(o.offer_price).toLocaleString("id-ID")} · ${offerStatusLabel[o.status] || o.status} · ${tgl}\n`;
+          if (o.status === "accepted") {
+            offersMsg += `   📞 Hubungi penjual: wa.me/${(o.listings?.seller_wa || "").replace(/\D/g, "")}\n`;
+          }
+          offersMsg += `\n`;
+        });
+        await sendWa(senderJid, offersMsg.trim());
+        return NextResponse.json({ ok: true, state: "my_offers_shown" });
 
       // ==========================================
       // MENU / HELP / BANTUAN — Daftar perintah
@@ -1380,8 +1566,11 @@ export async function POST(req) {
           `• *LANGGANAN [kategori]* → Notif kategori baru\n` +
           `• *STOP* → Berhenti semua notifikasi\n` +
           `• *IKLAN [kode]* → Lihat detail iklan\n` +
-          `\n━━━ 👤 PROFIL ━━━\n` +
+          `\n━━━ 👤 PROFIL & RIWAYAT ━━━\n` +
           `• *SAYA* → Profil & statistik saya\n` +
+          `• *REFERRAL* → Kode referral & bump gratis\n` +
+          `• *RIWAYAT* → 10 transaksi terakhir\n` +
+          `• *PENAWARAN SAYA* → Tawaran yang kamu kirim\n` +
           `• *LAPOR [kode] [alasan]* → Laporkan iklan\n`
         );
         return NextResponse.json({ ok: true, state: "menu_shown" });
@@ -1599,11 +1788,11 @@ export async function POST(req) {
           const orderId = `WNT-${wanted.listing_code}-${Date.now()}`;
           await supa.from("payments").insert({
             listing_id: null,
-            type: "iklan",
+            type: "wanted",
             amount: 1000,
             status: "pending",
             midtrans_order_id: orderId,
-            meta: { wanted_id: wanted.id },
+            meta: { wanted_id: wanted.id, buyer_wa: normalizedWa },
           }).catch(() => {});
           const qrisUrl = getQrisUrl();
           const payMsg =
