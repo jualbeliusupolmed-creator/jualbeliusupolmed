@@ -25,6 +25,28 @@ export async function GET(req) {
   }
 }
 
+export async function DELETE(req) {
+  if (!isAdmin()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { searchParams } = new URL(req.url);
+  const endpoint = searchParams.get("endpoint") || "";
+  const body = await req.json().catch(() => ({}));
+
+  if (!BAILEYS_URL) return NextResponse.json({ error: "BAILEYS_API_URL belum diset" }, { status: 503 });
+  const cleanUrl = BAILEYS_URL.replace(/[​-‍﻿]/g, "").trim().replace(/\/$/, "");
+
+  try {
+    const res = await fetch(`${cleanUrl}/${endpoint}`, {
+      method: "DELETE",
+      headers: { Authorization: BAILEYS_TOKEN, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    return NextResponse.json(data, { status: res.status });
+  } catch (err) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
+
 export async function POST(req) {
   if (!isAdmin()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { searchParams } = new URL(req.url);
