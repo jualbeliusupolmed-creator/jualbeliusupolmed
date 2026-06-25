@@ -140,7 +140,7 @@ export async function POST(req) {
     if (!pendingPayment) {
       const { data: pendingWanted } = await supa
         .from("wanted_listings")
-        .select("id, title, listing_code")
+        .select("id, title")
         .eq("buyer_wa", normalizedWa)
         .eq("status", "pending")
         .order("created_at", { ascending: false })
@@ -149,12 +149,13 @@ export async function POST(req) {
         const w = pendingWanted[0];
         const { data: wPays } = await supa
           .from("payments")
-          .select("id, amount, type, midtrans_order_id")
+          .select("id, amount, type, midtrans_order_id, meta")
           .eq("status", "pending")
           .eq("type", "wanted")
           .order("created_at", { ascending: false })
-          .limit(1);
-        const wPay = wPays?.find(p => p.midtrans_order_id?.startsWith(`WNT-${w.listing_code}-`));
+          .limit(10);
+        // Match via meta.wanted_id (lebih reliable dari listing_code yg tidak ada di wanted_listings)
+        const wPay = wPays?.find(p => p.meta?.wanted_id === w.id);
         if (wPay) pendingWantedPayment = { ...wPay, wanted: w };
       }
     }
@@ -1807,7 +1808,7 @@ export async function POST(req) {
           return NextResponse.json({ ok: true, state: "dicari_posted", bot_reply: confirmMsg });
         } else {
           // Berbayar: generate QRIS
-          const orderId = `WNT-${wanted.listing_code}-${Date.now()}`;
+          const orderId = `WNT-${wanted.id.slice(0, 8)}-${Date.now()}`;
           await supa.from("payments").insert({
             listing_id: null,
             type: "wanted",
