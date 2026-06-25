@@ -1176,6 +1176,25 @@ function CategoryRow({ c, action, confirmThen }) {
   );
 }
 
+// Deteksi mode pricing dari nilai saat ini
+function detectMode(p) {
+  const ad = Number(p.adBarang || 0);
+  const bump = Number(p.bump || 0);
+  const featured = Number(p.featuredPerDay || 0);
+  const adPoster = Number(p.adPoster || 0);
+  const hasSold = (p.soldTiers || []).some(t => t.pct > 0 || t.flat > 0);
+  const hasAdCost = ad > 0 || (p.adTiers || []).some(t => t.pct > 0 || (t.flat > 0 && t.upto != null));
+  if (ad === 0 && bump === 0 && featured === 0 && adPoster === 0 && !hasSold)
+    return { key: "gratis_semua", label: "✅ Gratis Semua", bg: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" };
+  if (ad === 0 && hasSold && !hasAdCost)
+    return { key: "jual_dulu", label: "💸 Jual Dulu (Komisi)", bg: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300" };
+  if (ad === 0 && !hasSold && (bump > 0 || featured > 0))
+    return { key: "freemium", label: "⚡ Freemium (Upsell)", bg: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300" };
+  if (hasAdCost || ad > 0)
+    return { key: "sewa_lapak", label: "🏪 Sewa Lapak", bg: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300" };
+  return { key: "custom", label: "⚙️ Custom", bg: "bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-300" };
+}
+
 // ── Settings manager ──────────────────────────────────────────────────────────
 function SettingsManager({ settings, action }) {
   const [pricing, setPricing] = useState(settings.pricing || {});
@@ -1186,6 +1205,7 @@ function SettingsManager({ settings, action }) {
   const [messages, setMessages] = useState(settings.messages || {});
   const [areas, setAreas] = useState((settings.areas || []).join("\n"));
   const [saved, setSaved] = useState("");
+  const [showPriceConfirm, setShowPriceConfirm] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingFavicon, setUploadingFavicon] = useState(false);
 
@@ -1277,12 +1297,19 @@ function SettingsManager({ settings, action }) {
       {/* HARGA & BIAYA */}
       <Card title="Harga & Biaya">
         <div className="mb-6 rounded-xl border border-primary/20 bg-primary/5 p-4">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-primary">Template Monetisasi Cepat</p>
+          <div className="mb-3 flex items-center justify-between gap-2 flex-wrap">
+            <p className="text-xs font-semibold uppercase tracking-wide text-primary">Template Monetisasi Cepat</p>
+            {(() => { const m = detectMode(pricing); return (
+              <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${m.bg}`}>
+                Mode aktif: {m.label}
+              </span>
+            ); })()}
+          </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <button onClick={() => applyTemplate("sewa_lapak")} className="btn-outline border-primary/30 text-[10px] sm:text-xs">1. Sewa Lapak (Bayar Iklan)</button>
-            <button onClick={() => applyTemplate("jual_dulu")} className="btn-outline border-primary/30 text-[10px] sm:text-xs">2. Jual Dulu (Komisi Laku)</button>
-            <button onClick={() => applyTemplate("freemium")} className="btn-outline border-primary/30 text-[10px] sm:text-xs">3. Freemium (Hanya Upsell)</button>
-            <button onClick={() => applyTemplate("gratis_semua")} className="btn-outline border-primary/30 text-[10px] sm:text-xs bg-green-50 hover:bg-green-100 text-green-700">4. Gratis Semua</button>
+            <button onClick={() => { applyTemplate("sewa_lapak"); setShowPriceConfirm(false); }} className={`btn-outline border-primary/30 text-[10px] sm:text-xs ${detectMode(pricing).key === "sewa_lapak" ? "ring-2 ring-amber-400" : ""}`}>1. Sewa Lapak (Bayar Iklan)</button>
+            <button onClick={() => { applyTemplate("jual_dulu"); setShowPriceConfirm(false); }} className={`btn-outline border-primary/30 text-[10px] sm:text-xs ${detectMode(pricing).key === "jual_dulu" ? "ring-2 ring-blue-400" : ""}`}>2. Jual Dulu (Komisi Laku)</button>
+            <button onClick={() => { applyTemplate("freemium"); setShowPriceConfirm(false); }} className={`btn-outline border-primary/30 text-[10px] sm:text-xs ${detectMode(pricing).key === "freemium" ? "ring-2 ring-purple-400" : ""}`}>3. Freemium (Hanya Upsell)</button>
+            <button onClick={() => { applyTemplate("gratis_semua"); setShowPriceConfirm(false); }} className={`btn-outline border-primary/30 text-[10px] sm:text-xs bg-green-50 hover:bg-green-100 text-green-700 ${detectMode(pricing).key === "gratis_semua" ? "ring-2 ring-green-400" : ""}`}>4. Gratis Semua</button>
           </div>
           <p className="mt-2 text-[10px] text-gray-500">Klik tombol di atas untuk mengisi otomatis tarif di bawah ini, lalu klik Simpan Harga.</p>
         </div>
@@ -1340,7 +1367,46 @@ function SettingsManager({ settings, action }) {
           <input type="number" min="1" className="input" value={pricing.dicariFreeLimt ?? 3} onChange={(e) => setPricing({ ...pricing, dicariFreeLimt: Math.max(1, Number(e.target.value) || 3) })} />
           <p className="mt-1 text-xs text-gray-400">Berapa kali user bisa post DICARI gratis. Default: 3.</p>
         </Field>
-        <button onClick={() => { action({ action: "save_settings", key: "pricing", value: pricing }, "Harga disimpan"); flash("pricing"); }} className="btn-primary mt-4 w-full">{saved === "pricing" ? "✓ Tersimpan" : "Simpan Harga"}</button>
+        {!showPriceConfirm ? (
+          <button
+            onClick={() => setShowPriceConfirm(true)}
+            className="btn-primary mt-4 w-full"
+          >
+            {saved === "pricing" ? "✓ Tersimpan" : "Simpan Harga"}
+          </button>
+        ) : (
+          <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+            <p className="mb-3 text-sm font-medium dark:text-white">Kirim pemberitahuan perubahan harga ke grup WA?</p>
+            <div className="flex gap-2 flex-wrap">
+              <button
+                onClick={async () => {
+                  await action({ action: "save_settings", key: "pricing", value: pricing }, "Harga disimpan");
+                  flash("pricing"); setShowPriceConfirm(false);
+                }}
+                className="btn-outline flex-1 text-sm"
+              >
+                Simpan Saja
+              </button>
+              <button
+                onClick={async () => {
+                  await action({ action: "save_settings", key: "pricing", value: pricing }, "Harga disimpan");
+                  flash("pricing");
+                  await action({ action: "notify_group_pricing", pricing }, "Notifikasi harga dikirim ke grup");
+                  setShowPriceConfirm(false);
+                }}
+                className="btn-primary flex-1 text-sm"
+              >
+                Simpan + Kirim ke Grup WA
+              </button>
+              <button
+                onClick={() => setShowPriceConfirm(false)}
+                className="w-full text-xs text-gray-400 hover:text-gray-600 mt-1"
+              >
+                Batal
+              </button>
+            </div>
+          </div>
+        )}
       </Card>
 
       {/* KONTAK DUKUNGAN */}
