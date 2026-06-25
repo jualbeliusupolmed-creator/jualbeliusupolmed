@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { formatWa } from "@/lib/constants";
+import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
 // GET /api/analytics/seller?wa=...
 export async function GET(req) {
+  const rl = rateLimit(getClientIp(req), { limit: 30, windowMs: 60_000 });
+  if (!rl.ok) return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: { "Retry-After": String(rl.retryAfter) } });
+
   const wa = formatWa(req.nextUrl.searchParams.get("wa") || "");
   if (!wa) return NextResponse.json({ error: "wa required" }, { status: 400 });
 
@@ -39,9 +43,8 @@ export async function GET(req) {
     ? ((totalSold / Math.max(totalViews, 1)) * 100).toFixed(1)
     : "0.0";
 
-  const topListings = listings
+  const allListings = listings
     .filter(l => l.status === "active" || l.status === "sold")
-    .slice(0, 5)
     .map(l => ({
       id: l.id,
       title: l.title,
@@ -63,7 +66,8 @@ export async function GET(req) {
       conversionRate,
       totalListings: listings.length,
     },
-    topListings,
+    allListings,
+    topListings: allListings.slice(0, 5), // backward compat
     recentOffers: offers.slice(0, 5),
   });
 }

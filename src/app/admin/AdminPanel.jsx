@@ -88,7 +88,7 @@ export default function AdminPanel({
   pageSize = 100,
 }) {
   const router = useRouter();
-  const VALID_TABS = ["overview","listings","transaksi","rating","reports","dicari","kategori","pengaturan","blacklist","penjual","profil_request","blogs","wabot","ai","broadcast","referral","tawaran","grouppost","notifikasi"];
+  const VALID_TABS = ["overview","listings","transaksi","rating","reports","dicari","kategori","pengaturan","penjual","profil_request","blogs","wabot","ai","broadcast","referral","tawaran","grouppost","notifikasi"];
   const tab = VALID_TABS.includes(initialTab) ? initialTab : "overview";
   function goTab(key) {
     router.push(`/admin/${key}`);
@@ -243,27 +243,54 @@ export default function AdminPanel({
     );
   }
 
-  const NAV = [
-    { key: "overview", label: "Ringkasan" },
-    { key: "listings", label: "Listing", count: listings.length },
-    { key: "transaksi", label: "Transaksi" },
-    { key: "rating", label: "Rating" },
-    { key: "reports", label: "Laporan", count: openReports.length || null },
-    { key: "dicari", label: "Dicari", count: activeWanted.length || null },
-    { key: "kategori", label: "Kategori" },
-    { key: "pengaturan", label: "Pengaturan" },
-    { key: "blacklist", label: "Blacklist" },
-    { key: "penjual", label: "Penjual" },
-    { key: "profil_request", label: "Ubah Profil" },
-    { key: "blogs", label: "Artikel Blog" },
-    { key: "wabot", label: "WhatsApp Bot" },
-    { key: "broadcast", label: "Broadcast" },
-    { key: "ai", label: "AI & Memori" },
-    { key: "referral", label: "Referral" },
-    { key: "tawaran", label: "Tawaran Harga" },
-    { key: "grouppost", label: "Post Grup" },
-    { key: "notifikasi", label: "Notifikasi" },
+  const pendingProfileCount = profileRequests.filter((r) => r.status === "pending").length;
+
+  const NAV_GROUPS = [
+    {
+      label: "Utama",
+      items: [
+        { key: "overview",   label: "Ringkasan" },
+        { key: "listings",   label: "Listing",        count: listings.length || null },
+        { key: "transaksi",  label: "Transaksi",       count: pendingPayments.length || null },
+        { key: "tawaran",    label: "Tawaran Harga" },
+      ],
+    },
+    {
+      label: "Pengguna",
+      items: [
+        { key: "penjual",        label: "Penjual" },
+        { key: "profil_request", label: "Ubah Profil", count: pendingProfileCount || null },
+        { key: "rating",         label: "Rating" },
+        { key: "reports",        label: "Laporan",     count: openReports.length || null },
+      ],
+    },
+    {
+      label: "Konten",
+      items: [
+        { key: "dicari",    label: "Dicari",       count: activeWanted.length || null },
+        { key: "grouppost", label: "Post Grup" },
+        { key: "blogs",     label: "Artikel Blog" },
+      ],
+    },
+    {
+      label: "Otomasi",
+      items: [
+        { key: "wabot",      label: "WhatsApp Bot" },
+        { key: "broadcast",  label: "Broadcast" },
+        { key: "ai",         label: "AI & Memori" },
+        { key: "notifikasi", label: "Notifikasi" },
+        { key: "referral",   label: "Referral" },
+      ],
+    },
+    {
+      label: "Sistem",
+      items: [
+        { key: "kategori",   label: "Kategori" },
+        { key: "pengaturan", label: "Pengaturan" },
+      ],
+    },
   ];
+  const NAV = NAV_GROUPS.flatMap((g) => g.items);
   const activeLabel = NAV.find((n) => n.key === tab)?.label;
 
   return (
@@ -303,34 +330,43 @@ export default function AdminPanel({
             <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Panel</p>
             <p className="text-lg font-extrabold tracking-tight dark:text-white">Admin</p>
           </div>
-          <nav className="space-y-0.5">
-            {NAV.map((n) => (
-              <button
-                key={n.key}
-                onClick={() => goTab(n.key)}
-                className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  tab === n.key
-                    ? "bg-gray-900 text-white dark:bg-slate-100 dark:text-slate-900"
-                    : "text-gray-600 hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-900"
-                }`}
-              >
-                <NavIcon name={n.key} />
-                <span className="flex-1 text-left">{n.label}</span>
-                {n.count ? (
-                  <span
-                    className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                      tab === n.key
-                        ? "bg-white/20 text-white dark:bg-slate-900/20 dark:text-slate-900"
-                        : "bg-gray-200 text-gray-600 dark:bg-slate-800 dark:text-slate-300"
-                    }`}
-                  >
-                    {n.count}
-                  </span>
-                ) : null}
-              </button>
+          <nav className="space-y-3">
+            {NAV_GROUPS.map((group) => (
+              <div key={group.label}>
+                <p className="mb-1 px-3 text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-slate-600">
+                  {group.label}
+                </p>
+                <div className="space-y-0.5">
+                  {group.items.map((n) => (
+                    <button
+                      key={n.key}
+                      onClick={() => goTab(n.key)}
+                      className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                        tab === n.key
+                          ? "bg-gray-900 text-white dark:bg-slate-100 dark:text-slate-900"
+                          : "text-gray-600 hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-900"
+                      }`}
+                    >
+                      <NavIcon name={n.key} />
+                      <span className="flex-1 text-left">{n.label}</span>
+                      {n.count ? (
+                        <span
+                          className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                            tab === n.key
+                              ? "bg-white/20 text-white dark:bg-slate-900/20 dark:text-slate-900"
+                              : "bg-gray-200 text-gray-600 dark:bg-slate-800 dark:text-slate-300"
+                          }`}
+                        >
+                          {n.count}
+                        </span>
+                      ) : null}
+                    </button>
+                  ))}
+                </div>
+              </div>
             ))}
           </nav>
-          <button onClick={logout} className="btn-outline mt-4 w-full text-sm">Keluar</button>
+          <button onClick={logout} className="btn-outline mt-6 w-full text-sm">Keluar</button>
         </div>
       </aside>
 
@@ -340,25 +376,27 @@ export default function AdminPanel({
           <h1 className="text-xl font-extrabold dark:text-white">{activeLabel}</h1>
           <button onClick={logout} className="btn-outline text-xs">Keluar</button>
         </div>
-        <div className="mb-4 flex gap-1 overflow-x-auto pb-1 lg:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {NAV.map((n) => (
-            <button
-              key={n.key}
-              onClick={() => goTab(n.key)}
-              className={`shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium ${
-                tab === n.key
-                  ? "bg-gray-900 text-white dark:bg-slate-100 dark:text-slate-900"
-                  : "bg-gray-100 text-gray-600 dark:bg-slate-900 dark:text-slate-400"
-              }`}
-            >
-              {n.label}
-            </button>
-          ))}
+        <div className="mb-4 lg:hidden">
+          <select
+            value={tab}
+            onChange={(e) => goTab(e.target.value)}
+            className="input w-full"
+          >
+            {NAV_GROUPS.map((group) => (
+              <optgroup key={group.label} label={group.label}>
+                {group.items.map((n) => (
+                  <option key={n.key} value={n.key}>
+                    {n.label}{n.count ? ` (${n.count})` : ""}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
         </div>
 
         <h1 className="mb-4 hidden text-2xl font-extrabold dark:text-white lg:block">{activeLabel}</h1>
 
-        {tab !== "pengaturan" && (
+        {tab === "overview" && (
           <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-7">
             <Kpi label="Iklan aktif" value={active.length} sub={`${listings.length} total`} />
             <Kpi label="Terjual" value={sold.length} sub={`${pending.length} pending`} />
@@ -697,24 +735,6 @@ export default function AdminPanel({
         {tab === "pengaturan" && <SettingsManager settings={settings} action={action} />}
 
         {/* BLACKLIST */}
-        {tab === "blacklist" && (
-          <div className="max-w-lg">
-            <div className="card flex gap-2 p-4">
-              <input className="input" placeholder="Nomor WA untuk diblokir" value={newBl} onChange={(e) => setNewBl(e.target.value)} />
-              <button onClick={() => { if (newBl.trim()) action({ action: "blacklist", wa: newBl.trim() }, "Diblokir"); setNewBl(""); }} className="btn-primary shrink-0">Tambah</button>
-            </div>
-            <div className="mt-4 space-y-2">
-              {blacklist.length === 0 && <p className="text-sm text-gray-400">Belum ada nomor diblokir.</p>}
-              {blacklist.map((b) => (
-                <div key={b.id} className="card flex items-center justify-between p-3 text-sm">
-                  <span className="font-medium dark:text-white">{b.wa}</span>
-                  <button onClick={() => action({ action: "unblacklist", id: b.id }, "Dihapus")} className="text-rose-600 hover:underline">Hapus</button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* PENJUAL */}
         {tab === "penjual" && (() => {
           const filteredSellers = sellersList.filter(s =>
@@ -834,6 +854,24 @@ export default function AdminPanel({
                     })}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Blacklist — nomor terblokir */}
+              <div className="mt-8 border-t border-gray-100 pt-6 dark:border-slate-800">
+                <h3 className="mb-3 text-sm font-bold dark:text-white">Nomor Diblokir ({blacklist.length})</h3>
+                <div className="flex max-w-lg gap-2">
+                  <input className="input" placeholder="Nomor WA untuk diblokir" value={newBl} onChange={(e) => setNewBl(e.target.value)} />
+                  <button onClick={() => { if (newBl.trim()) { action({ action: "blacklist", wa: newBl.trim() }, "Diblokir"); setNewBl(""); } }} className="btn-primary shrink-0">Blokir</button>
+                </div>
+                <div className="mt-3 max-w-lg space-y-2">
+                  {blacklist.length === 0 && <p className="text-sm text-gray-400">Belum ada nomor diblokir.</p>}
+                  {blacklist.map((b) => (
+                    <div key={b.id} className="card flex items-center justify-between p-3 text-sm">
+                      <span className="font-mono text-xs dark:text-white">{b.wa}</span>
+                      <button onClick={() => action({ action: "unblacklist", id: b.id }, "Dihapus dari blacklist")} className="text-rose-600 hover:underline text-xs">Hapus</button>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           );

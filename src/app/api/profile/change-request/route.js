@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { formatWa } from "@/lib/constants";
 import { sendWa } from "@/lib/fonnte";
+import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,9 @@ export async function GET(req) {
 // Penjual mengajukan permintaan ubah nama/bio
 export async function POST(req) {
   try {
+    const rl = rateLimit(getClientIp(req), { limit: 5, windowMs: 300_000 }); // 5x per 5 menit
+    if (!rl.ok) return NextResponse.json({ error: "Terlalu banyak permintaan perubahan profil." }, { status: 429, headers: { "Retry-After": String(rl.retryAfter) } });
+
     const body = await req.json();
     const sellerWa = formatWa(body.seller_wa);
     const field = body.field; // 'name' atau 'bio'

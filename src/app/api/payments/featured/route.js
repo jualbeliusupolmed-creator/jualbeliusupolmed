@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getSettings, featuredRateFrom } from "@/lib/settings";
+import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
 // POST /api/payments/featured  { listing_id, days, per_day? } -> snap token
 export async function POST(req) {
   try {
+    const rl = rateLimit(getClientIp(req), { limit: 10, windowMs: 60_000 });
+    if (!rl.ok) return NextResponse.json({ error: "Terlalu banyak permintaan. Coba lagi sebentar." }, { status: 429, headers: { "Retry-After": String(rl.retryAfter) } });
+
     const { listing_id, days, per_day } = await req.json();
     if (!listing_id)
       return NextResponse.json({ error: "listing_id wajib" }, { status: 400 });

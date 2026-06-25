@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { hasUnpaidSoldFees } from "@/lib/settings";
+import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +10,9 @@ const SPONSORED_PER_DAY = 7000; // Rp 7.000 / hari
 // POST /api/payments/sponsored  { listing_id, days }
 export async function POST(req) {
   try {
+    const rl = rateLimit(getClientIp(req), { limit: 10, windowMs: 60_000 });
+    if (!rl.ok) return NextResponse.json({ error: "Terlalu banyak permintaan. Coba lagi sebentar." }, { status: 429, headers: { "Retry-After": String(rl.retryAfter) } });
+
     const { listing_id, days: daysRaw } = await req.json();
     const days = Math.min(30, Math.max(1, Number(daysRaw) || 1));
 
