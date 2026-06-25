@@ -174,24 +174,37 @@ export default function BlogEditor({ initialBlog }) {
         {/* Gambar Sampul */}
         <div>
           <label className="label">Gambar Sampul</label>
-          <div className="flex flex-wrap gap-2">
-            <input
-              className="input flex-1 min-w-[200px]"
-              value={form.image_url}
-              onChange={(e) => set("image_url", e.target.value)}
-              placeholder="https://… atau upload file di bawah"
-            />
-            <label className={`btn-outline cursor-pointer text-sm whitespace-nowrap ${uploading ? "opacity-50" : ""}`}>
-              {uploading ? "Mengupload…" : "Upload Gambar"}
-              <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
-            </label>
-          </div>
-          {form.image_url && (
-            <div className="mt-3 relative h-40 w-full overflow-hidden rounded-xl bg-gray-100 dark:bg-slate-800">
+          {form.image_url ? (
+            <div className="relative h-48 w-full overflow-hidden rounded-xl bg-gray-100 dark:bg-slate-800">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={form.image_url} alt="cover preview" className="h-full w-full object-cover" />
-              <button type="button" onClick={() => set("image_url", "")} className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-xs text-white hover:bg-black/80">✕</button>
+              <button
+                type="button"
+                onClick={() => set("image_url", "")}
+                className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-1 text-xs text-white hover:bg-black/80"
+              >
+                ✕ Hapus
+              </button>
+              <span className="absolute bottom-2 left-2 rounded bg-black/60 px-2 py-0.5 text-[10px] text-white">WebP</span>
             </div>
+          ) : (
+            <label className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 py-10 transition hover:border-gray-400 hover:bg-gray-100 dark:border-slate-700 dark:bg-slate-800/50 dark:hover:border-slate-500 ${uploading ? "pointer-events-none opacity-60" : ""}`}>
+              {uploading ? (
+                <>
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-400 border-t-transparent" />
+                  <span className="text-sm text-gray-500">Mengupload & konversi ke WebP…</span>
+                </>
+              ) : (
+                <>
+                  <svg className="h-8 w-8 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+                  </svg>
+                  <span className="text-sm font-medium text-gray-600 dark:text-slate-300">Klik untuk upload gambar sampul</span>
+                  <span className="text-xs text-gray-400">JPG, PNG, WebP — maks 5MB · Otomatis dikonversi ke WebP</span>
+                </>
+              )}
+              <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
+            </label>
           )}
         </div>
 

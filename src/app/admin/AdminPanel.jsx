@@ -1229,22 +1229,16 @@ function SettingsManager({ settings, action }) {
     else setUploadingFavicon(true);
 
     try {
-      const supabase = getSupabase();
-      const ext = file.name.split(".").pop() || "png";
-      const path = `site/${type}-${Date.now()}.${ext}`;
-      
-      const { error } = await supabase.storage
-        .from("listings")
-        .upload(path, file, { cacheControl: "31536000", upsert: false });
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("bucket", `site-${type}`);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload gagal");
 
-      if (error) throw new Error(error.message);
-
-      const { data } = supabase.storage.from("listings").getPublicUrl(path);
-      const publicUrl = data.publicUrl;
-
-      const updatedSite = { ...site, [isLogo ? "logoUrl" : "faviconUrl"]: publicUrl };
+      const updatedSite = { ...site, [isLogo ? "logoUrl" : "faviconUrl"]: data.url };
       setSite(updatedSite);
-      
+
       await action({ action: "save_settings", key: "site", value: updatedSite }, `${isLogo ? "Logo" : "Favicon"} berhasil diperbarui`);
     } catch (err) {
       alert(`Gagal mengunggah ${type}: ` + err.message);
