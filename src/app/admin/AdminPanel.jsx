@@ -1201,6 +1201,7 @@ function SettingsManager({ settings, action }) {
   const [contact, setContact] = useState(settings.contact || {});
   const [site, setSite] = useState(settings.site || {});
   const [adminCfg, setAdminCfg] = useState(settings.admin || {});
+  const [metaCfg, setMetaCfg] = useState(settings.meta || {});
   const [botCfg, setBotCfg] = useState(settings.bot || {});
   const [messages, setMessages] = useState(settings.messages || {});
   const [areas, setAreas] = useState((settings.areas || []).join("\n"));
@@ -1602,6 +1603,25 @@ function SettingsManager({ settings, action }) {
           <p className="mt-1 text-xs text-gray-400">URL endpoint bot untuk trigger notifikasi langsung. Opsional.</p>
         </Field>
         <button onClick={() => { action({ action: "save_settings", key: "bot", value: botCfg }, "Konfigurasi Bot disimpan"); flash("bot"); }} className="btn-primary mt-4 w-full">{saved === "bot" ? "✓ Tersimpan" : "Simpan Konfigurasi Bot"}</button>
+      </Card>
+
+      {/* KONFIGURASI META (IG & FB) */}
+      <Card title="Konfigurasi Meta (Instagram & Facebook)" className={match("konfigurasi meta instagram ig facebook fb token access page id media graph api post") ? "" : "hidden"}>
+        <div className="space-y-3">
+          <Field label="Meta Page Access Token (Never Expire)">
+            <input type="password" className="input font-mono text-sm" value={metaCfg.accessToken ?? ""} onChange={(e) => setMetaCfg({ ...metaCfg, accessToken: e.target.value })} placeholder="EAAI..." />
+            <p className="mt-1 text-xs text-gray-400">Pastikan token memiliki izin: pages_manage_posts, instagram_basic, instagram_content_publish.</p>
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Facebook Page ID">
+              <input className="input font-mono" value={metaCfg.fbPageId ?? ""} onChange={(e) => setMetaCfg({ ...metaCfg, fbPageId: e.target.value })} placeholder="123456789" />
+            </Field>
+            <Field label="Instagram User ID">
+              <input className="input font-mono" value={metaCfg.igUserId ?? ""} onChange={(e) => setMetaCfg({ ...metaCfg, igUserId: e.target.value })} placeholder="178414..." />
+            </Field>
+          </div>
+        </div>
+        <button onClick={() => { action({ action: "save_settings", key: "meta", value: metaCfg }, "Konfigurasi Meta disimpan"); flash("meta"); }} className="btn-primary mt-4 w-full">{saved === "meta" ? "✓ Tersimpan" : "Simpan Konfigurasi Meta"}</button>
       </Card>
 
       {/* TEMPLATE PESAN BOT */}

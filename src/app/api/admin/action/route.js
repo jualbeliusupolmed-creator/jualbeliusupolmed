@@ -6,6 +6,7 @@ import { getSettings } from "@/lib/settings";
 import { notifyAdminNewListing, postToGroup, notifyWantedBuyers, sendWa } from "@/lib/fonnte";
 import { pushCategorySubscribers } from "@/lib/webpush";
 import { logError } from "@/lib/logError";
+import { postToFacebook, postToInstagram } from "@/lib/meta";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +57,41 @@ export async function POST(req) {
     let warning = null;
 
     switch (action) {
+      case "post_meta": {
+        const { listing } = body;
+        if (!listing || !listing.id) throw new Error("Iklan tidak ditemukan");
+        const settings = await getSettings().catch(() => null);
+        const metaCfg = settings?.meta;
+        if (!metaCfg?.accessToken || (!metaCfg?.fbPageId && !metaCfg?.igUserId)) {
+          throw new Error("Pengaturan Meta belum lengkap (Token/Page ID belum diisi)");
+        }
+
+        const priceText = listing.price > 0 ? `Rp ${listing.price.toLocaleString("id-ID")}` : "GRATIS";
+        const caption = `${listing.title}\n\nHarga: ${priceText}\nKondisi: ${listing.stock > 1 ? "Tersedia" : "Terbatas"}\nLokasi: ${listing.campus} - ${listing.area || "-"}\n\n${listing.description || ""}\n\n👉 Pesan sekarang via WA (Cek di website)\n\n#JualBeliUSU #BarangBekas #AnakUSU`;
+        
+        // Use the raw image or fallback to dynamic OG image
+        const imgUrl = (listing.images && listing.images[0]) || `https://jualbeliusu.com/api/og?id=${listing.id}`;
+
+        let results = [];
+        if (metaCfg.fbPageId) {
+          try {
+            await postToFacebook(metaCfg.fbPageId, metaCfg.accessToken, imgUrl, caption);
+            results.push("Facebook ✅");
+          } catch (e) {
+            results.push(`Facebook ❌ (${e.message})`);
+          }
+        }
+        if (metaCfg.igUserId) {
+          try {
+            await postToInstagram(metaCfg.igUserId, metaCfg.accessToken, imgUrl, caption);
+            results.push("Instagram ✅");
+          } catch (e) {
+            results.push(`Instagram ❌ (${e.message})`);
+          }
+        }
+        warning = `Hasil Meta Auto-Post: ${results.join(" | ")}`;
+        break;
+      }
       // ── Listing: aksi cepat ────────────────────────────────────────────
       case "activate": {
         // Fetch listing info before updating for WA notification

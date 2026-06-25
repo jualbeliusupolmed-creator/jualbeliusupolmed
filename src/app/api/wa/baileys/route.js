@@ -1,9 +1,10 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { parseListingFromText, verifyReceiptImage, processGeneralChat, parseWantedFromText } from "@/lib/gemini";
 import { sendWa, postToGroup, notifyAdminNewListing, notifyWantedMatch, notifyCategorySubscribers, notifyBuyerOfferResult, postWantedToGroup, notifySellerNewOffer } from "@/lib/fonnte";
 import { formatWa } from "@/lib/constants";
 import { getSettings, adFeeFrom } from "@/lib/settings";
+import { postToFacebook, postToInstagram } from "@/lib/meta";
 import { buildSlug } from "@/lib/slug";
 import { rateLimit } from "@/lib/rateLimit";
 import { handleAdminCmd } from "@/lib/bot/adminHandlers";
@@ -727,6 +728,57 @@ export async function POST(req) {
       // ==========================================
       // APPROVE / REJECT — Admin konfirmasi hapus
       // ==========================================
+      } else if (textMsg.startsWith("POST IG ") && textMsg.split(" ").length === 3) {
+        if (!isAdminWa(normalizedWa)) {
+          return NextResponse.json({ ok: true, ignored: true });
+        }
+        
+        const shortId = textMsg.split(" ")[2];
+        const { data: listingData } = await supa
+          .from("listings")
+          .select("*")
+          .eq("listing_code", parseInt(shortId))
+          .maybeSingle();
+
+        if (!listingData) {
+          await sendWa(senderJid, `❌ Iklan dengan kode *${shortId}* tidak ditemukan.`);
+          return NextResponse.json({ ok: true });
+        }
+
+        const settings = await getSettings().catch(() => null);
+        const metaCfg = settings?.meta;
+        if (!metaCfg?.accessToken || (!metaCfg?.fbPageId && !metaCfg?.igUserId)) {
+          await sendWa(senderJid, `❌ Pengaturan Meta belum lengkap. Isi Token dan Page ID di panel admin.`);
+          return NextResponse.json({ ok: true });
+        }
+
+        await sendWa(senderJid, `⏳ Sedang memproses posting iklan *${shortId}* ke Meta (IG & FB)...`);
+
+        const priceText = listingData.price > 0 ? `Rp ${listingData.price.toLocaleString("id-ID")}` : "GRATIS";
+        const caption = `${listingData.title}\n\nHarga: ${priceText}\nKondisi: ${listingData.stock > 1 ? "Tersedia" : "Terbatas"}\nLokasi: ${listingData.campus} - ${listingData.area || "-"}\n\n${listingData.description || ""}\n\n👉 Pesan sekarang via WA (Cek di website)\n\n#JualBeliUSU #BarangBekas #AnakUSU`;
+        
+        const imgUrl = (listingData.images && listingData.images[0]) || `https://jualbeliusu.com/api/og?id=${listingData.id}`;
+        
+        let results = [];
+        if (metaCfg.fbPageId) {
+          try {
+            await postToFacebook(metaCfg.fbPageId, metaCfg.accessToken, imgUrl, caption);
+            results.push("Facebook ✅");
+          } catch (e) {
+            results.push(`Facebook ❌ (${e.message})`);
+          }
+        }
+        if (metaCfg.igUserId) {
+          try {
+            await postToInstagram(metaCfg.igUserId, metaCfg.accessToken, imgUrl, caption);
+            results.push("Instagram ✅");
+          } catch (e) {
+            results.push(`Instagram ❌ (${e.message})`);
+          }
+        }
+        await sendWa(senderJid, `🎉 Hasil Meta Auto-Post:\n\n${results.join("\n")}`);
+        return NextResponse.json({ ok: true });
+
       } else if (textMsg.startsWith("APPROVE ") || textMsg.startsWith("REJECT ")) {
         if (!isAdminWa(normalizedWa)) {
           return NextResponse.json({ ok: true, ignored: true });

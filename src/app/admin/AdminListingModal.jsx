@@ -61,6 +61,17 @@ export default function AdminListingModal({ listing, categories, onSave, onClose
     }
   }
 
+  async function postMeta() {
+    setBusy(true);
+    try {
+      await onSave({ action: "post_meta", listing: { ...listing, ...f } }, "Memproses upload ke Meta (IG & FB)...");
+    } catch (e) {
+      setFileError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const catNames = categories?.length
     ? categories.map((c) => c.name)
     : [f.category].filter(Boolean);
@@ -189,6 +200,9 @@ export default function AdminListingModal({ listing, categories, onSave, onClose
         <div className="mt-5 flex gap-2">
           <button onClick={save} disabled={busy} className="btn-primary flex-1">
             {busy ? "Menyimpan…" : "Simpan"}
+          </button>
+          <button onClick={postMeta} disabled={busy || f.status !== "active"} className="btn-outline flex-1 bg-gradient-to-r from-pink-50 to-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100">
+            Post ke IG/FB
           </button>
           <button onClick={onClose} className="btn-outline">
             Batal
