@@ -115,14 +115,20 @@ export async function POST(req) {
           const productSlug = (await import("@/lib/slug")).buildSlug(updatedListing.title, updatedListing.id);
           const productUrl = `${baseUrl}/produk/${productSlug}`;
 
-          const fullSuccessMessage = `🎉 *PEMBAYARAN BERHASIL*\n\n` +
+          const confirmMsg = `🎉 *PEMBAYARAN BERHASIL*\n\n` +
             `Struk sebesar *Rp ${pendingPayment.amount.toLocaleString("id-ID")}* telah divalidasi oleh AI.\n\n` +
-            `Iklan untuk *"${updatedListing.title}"* sudah tayang dan disebarkan ke Grup WhatsApp! 🚀\n\n` +
-            `🛒 *${updatedListing.title}* — Rp ${Number(updatedListing.price).toLocaleString("id-ID")}\n` +
-            `🏷️ ${updatedListing.category}\n` +
-            `👉 ${productUrl}`;
+            `Iklan untuk *"${updatedListing.title}"* sudah tayang dan disebarkan ke Grup WhatsApp! 🚀`;
 
-          await sendWa(normalizedWa, fullSuccessMessage);
+          const shareMsg = `🛒 *${updatedListing.title}* — Rp ${Number(updatedListing.price).toLocaleString("id-ID")}\n` +
+            `🏷️ ${updatedListing.category}\n` +
+            `👉 ${productUrl}\n\n` +
+            `_Klik & bagikan link iklanmu ke teman-teman!_ 📤`;
+
+          const fullSuccessMessage = `${confirmMsg}\n\n${shareMsg}`;
+
+          await sendWa(normalizedWa, confirmMsg);
+          await new Promise(r => setTimeout(r, 1500));
+          await sendWa(normalizedWa, shareMsg);
 
           // Send notification to superadmins
           const to62 = n => (n || "").replace(/\D/g, "").replace(/^0/, "62");
