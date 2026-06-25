@@ -125,6 +125,8 @@ export async function parseListingFromText(text, aiConfig = {}, maxRetries = 3) 
         - "price": Harga barang dalam angka murni (contoh: 50000). Jika nego atau tidak jelas, tebak dari konteks atau isi 0.
         - "description": Deksripsi lengkap barang. Jika ada informasi kontak, hapus informasi kontaknya.
         - "category": Pilih salah satu kategori paling cocok dari list berikut: ["Elektronik", "Fashion", "Kendaraan", "Properti", "Buku", "Makanan", "Jasa", "Lainnya"]. Default: "Lainnya".
+        - "condition": Kondisi barang. Gunakan "new" jika baru/segel/belum dipakai, "used" jika bekas/second/pernah dipakai. Default: "used".
+        - "campus": Kampus atau area yang disebutkan. Normalisasi ke salah satu: "USU", "POLMED", atau "Semua". Default: "Semua".
         - "reply_message": Tuliskan pesan balasan yang ramah kepada pengguna untuk mengkonfirmasi bahwa detail iklannya (nama barang, harga) sudah dicatat. WAJIB patuhi Kepribadian & Gaya Bicara di atas! Jangan tulis instruksi bayar di teks ini (akan ditambahkan otomatis oleh sistem).
         
         Aturan ketat:
@@ -254,7 +256,7 @@ export async function parseWantedFromText(text, maxRetries = 2) {
           "description": "deskripsi lengkap kebutuhan jika ada",
           "budget": <angka budget/harga maks dalam rupiah, 0 jika tidak disebutkan>,
           "category": "salah satu dari: Elektronik, Fashion, Kendaraan, Properti, Buku, Makanan, Jasa, Lainnya",
-          "campus": "nama kampus/area jika disebutkan, kosongkan jika tidak ada"
+          "campus": "Kampus atau area yang disebutkan. Normalisasi ke: USU, POLMED, atau Semua. Default: Semua"
         }
       `;
       const result = await model.generateContent(prompt);
@@ -264,7 +266,7 @@ export async function parseWantedFromText(text, maxRetries = 2) {
       if (attempt < maxRetries) await new Promise(r => setTimeout(r, 800));
     }
   }
-  return { title: text.slice(0, 60), description: "", budget: 0, category: "Lainnya", campus: "" };
+  return { title: text.slice(0, 60), description: "", budget: 0, category: "Lainnya", campus: "Semua" };
 }
 
 /**

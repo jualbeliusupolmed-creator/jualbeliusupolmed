@@ -4,7 +4,7 @@ export const CATEGORIES = [
   { name: "Buku", slug: "buku" },
   { name: "Makanan", slug: "makanan" },
   { name: "Kos", slug: "kos" },
-  { name: "buku", slug: "buku-kuliah" },
+  { name: "Buku Kuliah", slug: "buku-kuliah" },
   { name: "Jasa", slug: "jasa" },
 ];
 
