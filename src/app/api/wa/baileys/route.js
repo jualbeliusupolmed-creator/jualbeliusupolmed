@@ -1454,6 +1454,42 @@ export async function POST(req) {
         return NextResponse.json({ ok: true, state: "broadcast_done", sent: bcSent, total: uniqueSellers.length });
 
       // ==========================================
+      // CEK — Ringkasan semua iklanku (views + sisa hari)
+      // ==========================================
+      } else if (textMsg === "CEK") {
+        const { data: myAllListings } = await supa
+          .from("listings")
+          .select("id, listing_code, title, status, views, expires_at, featured_until, auto_bump_until")
+          .eq("seller_wa", normalizedWa)
+          .not("status", "in", '("deleted")')
+          .order("created_at", { ascending: false })
+          .limit(20);
+
+        if (!myAllListings?.length) {
+          await sendWa(senderJid, `📋 Kamu belum punya iklan.\n\nKirim *foto + deskripsi* untuk pasang iklan baru!`);
+          return NextResponse.json({ ok: true, state: "cek_all_empty" });
+        }
+
+        const cekNowAll = new Date();
+        const cekLines = myAllListings.map((l) => {
+          const kode = l.listing_code || l.id.slice(0, 8);
+          const sEmo = { active: "✅", pending: "⏳", expired: "❌", sold: "🏷️", suspended: "⛔", deletion_pending: "🗑️" }[l.status] || "❓";
+          const daysLeft = l.expires_at ? Math.ceil((new Date(l.expires_at) - cekNowAll) / 864e5) : null;
+          const sisaHari = daysLeft !== null ? (daysLeft > 0 ? `${daysLeft}h` : "expired") : "—";
+          const isFt = l.featured_until && new Date(l.featured_until) > cekNowAll;
+          const isAb = l.auto_bump_until && new Date(l.auto_bump_until) > cekNowAll;
+          const upgStr = [isFt && "⭐FT", isAb && "🔄AB"].filter(Boolean).join(" ");
+          return `${sEmo} *${l.title.slice(0, 28)}*\n   📌${kode} · 👁${l.views || 0} · ⏱${sisaHari}${upgStr ? " · " + upgStr : ""}`;
+        });
+
+        await sendWa(senderJid,
+          `📋 *Semua Iklanku (${myAllListings.length})*\n\n` +
+          cekLines.join("\n\n") +
+          `\n\n_Ketik *CEK [kode]* untuk detail iklan tertentu_`
+        );
+        return NextResponse.json({ ok: true, state: "cek_all" });
+
+      // ==========================================
       // CEK [kode] — Cek status & views iklan
       // ==========================================
       } else if (textMsg.startsWith("CEK ") && textMsg.split(" ").length === 2) {
@@ -1707,7 +1743,8 @@ export async function POST(req) {
           `━━━ 🛒 IKLAN ━━━\n` +
           `• Kirim foto+teks → Pasang iklan baru\n` +
           `• *IKLANKU* → Semua iklan saya\n` +
-          `• *CEK [kode]* → Status, views & upgrade aktif\n` +
+          `• *CEK* → Semua iklan (views & sisa hari)\n` +
+          `• *CEK [kode]* → Detail satu iklan\n` +
           `• *BUMP [kode]* → Naikkan ke atas\n` +
           `• *UPGRADE [kode]* → Featured / AutoBump\n` +
           `• *AKTIFKAN [kode]* → Aktifkan iklan expired\n` +
