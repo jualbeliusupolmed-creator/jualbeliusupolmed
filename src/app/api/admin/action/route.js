@@ -621,6 +621,40 @@ export async function POST(req) {
         break;
       }
 
+      // ── Tawaran Biaya Iklan ────────────────────────────────────────────────
+      case "approve_fee_offer": {
+        const { data: fl } = await supa.from("listings").select("id, title, seller_wa, fee_offer").eq("id", id).single();
+        if (!fl) return NextResponse.json({ error: "Listing tidak ditemukan" }, { status: 404 });
+        const newFee = Number(fl.fee_offer || 0);
+        await supa.from("listings").update({ fee_offer_status: "approved" }).eq("id", id);
+        await supa.from("payments").update({ amount: newFee }).eq("listing_id", id).eq("status", "pending");
+        if (newFee === 0) {
+          const expiresAt = new Date(Date.now() + 14 * 864e5).toISOString();
+          await supa.from("listings").update({ status: "active", expires_at: expiresAt }).eq("id", id);
+          await supa.from("payments").update({ status: "paid" }).eq("listing_id", id).eq("status", "pending");
+          await sendWa(fl.seller_wa, `🎉 *Admin menyetujui tawaranmu!*\n\n📦 *${fl.title}*\n✅ Biaya digratiskan. Iklanmu langsung aktif! 🚀`).catch(() => {});
+        } else {
+          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+          await sendWa(fl.seller_wa,
+            `🎉 *Admin menyetujui tawaranmu!*\n\n📦 *${fl.title}*\n💳 Biaya baru: *Rp ${newFee.toLocaleString("id-ID")}*\n\nKirim struk setelah transfer ke sini.`,
+            `${baseUrl}/qris.png`
+          ).catch(() => {});
+        }
+        break;
+      }
+
+      case "reject_fee_offer": {
+        const { data: flr } = await supa.from("listings").select("id, title, seller_wa").eq("id", id).single();
+        if (!flr) return NextResponse.json({ error: "Listing tidak ditemukan" }, { status: 404 });
+        const { data: pmtR } = await supa.from("payments").select("amount").eq("listing_id", id).eq("status", "pending").maybeSingle();
+        await supa.from("listings").update({ fee_offer: null, fee_offer_status: "rejected" }).eq("id", id);
+        const noteMsg = body.note ? `\n\nAlasan: _${body.note}_` : "";
+        await sendWa(flr.seller_wa,
+          `❌ *Tawaran biaya tidak disetujui.*${noteMsg}\n\n📦 *${flr.title}*\n💳 Biaya tetap: *Rp ${Number(pmtR?.amount || 0).toLocaleString("id-ID")}*\n\nSilakan bayar sesuai tagihan awal.`
+        ).catch(() => {});
+        break;
+      }
+
       default:
         return NextResponse.json({ error: "Aksi tidak dikenal" }, { status: 400 });
     }

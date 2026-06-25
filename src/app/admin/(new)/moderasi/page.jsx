@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export default async function ModerasiPage() {
   const supa = getAdminClient();
 
-  const [pendingRes, reportsRes, profilesRes, feesRes] = await Promise.all([
+  const [pendingRes, reportsRes, profilesRes, feesRes, feeOffersRes] = await Promise.all([
     supa
       .from("listings")
       .select("id, title, seller_wa, seller_name, price, category, image_url, created_at")
@@ -28,14 +28,20 @@ export default async function ModerasiPage() {
       .eq("type", "sold_fee")
       .eq("status", "pending")
       .order("created_at", { ascending: true }),
+    supa
+      .from("listings")
+      .select("id, title, listing_code, seller_wa, seller_name, fee_offer, created_at, payments(amount)")
+      .eq("fee_offer_status", "pending")
+      .order("created_at", { ascending: true }),
   ]);
 
   const pendingListings = pendingRes.data || [];
   const openReports = reportsRes.data || [];
   const pendingProfiles = profilesRes.data || [];
   const pendingFees = feesRes.data || [];
+  const pendingFeeOffers = feeOffersRes.data || [];
 
-  const total = pendingListings.length + openReports.length + pendingProfiles.length + pendingFees.length;
+  const total = pendingListings.length + openReports.length + pendingProfiles.length + pendingFees.length + pendingFeeOffers.length;
 
   return (
     <div className="animate-fade-in">
@@ -59,6 +65,7 @@ export default async function ModerasiPage() {
         openReports={openReports}
         pendingProfiles={pendingProfiles}
         pendingFees={pendingFees}
+        pendingFeeOffers={pendingFeeOffers}
       />
     </div>
   );

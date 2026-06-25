@@ -203,5 +203,80 @@ export async function handleAdminCmd(ctx) {
     return NextResponse.json({ ok: true, state: "broadcast_done", sent, total: unique.length });
   }
 
+  // ── SETUJUI TAWAR BIAYA [kode] ────────────────────────────────────────────
+  if (textMsg.startsWith("SETUJUI TAWAR BIAYA ")) {
+    const kode = textMsg.split(/\s+/)[3];
+    if (!kode) {
+      await sendWa(senderJid, "❌ Format: *SETUJUI TAWAR BIAYA [kode iklan]*");
+      return NextResponse.json({ ok: true, state: "approve_fee_invalid" });
+    }
+    const { data: listing } = await supa
+      .from("listings").select("id, title, seller_wa, fee_offer, fee_offer_status")
+      .eq("listing_code", parseInt(kode)).eq("fee_offer_status", "pending").maybeSingle();
+    if (!listing) {
+      await sendWa(senderJid, `❌ Tidak ada tawaran biaya pending untuk kode *${kode}*.`);
+      return NextResponse.json({ ok: true, state: "approve_fee_not_found" });
+    }
+    const newFee = Number(listing.fee_offer);
+    await supa.from("listings").update({ fee_offer_status: "approved" }).eq("id", listing.id);
+    // Update payment amount
+    await supa.from("payments").update({ amount: newFee }).eq("listing_id", listing.id).eq("status", "pending");
+    const sellerJid = listing.seller_wa + "@s.whatsapp.net";
+    if (newFee === 0) {
+      // Gratis — aktifkan langsung
+      const expiresAt = new Date(Date.now() + 14 * 864e5).toISOString();
+      await supa.from("listings").update({ status: "active", expires_at: expiresAt, fee_offer_status: "approved" }).eq("id", listing.id);
+      await supa.from("payments").update({ status: "paid" }).eq("listing_id", listing.id).eq("status", "pending");
+      await sendWa(sellerJid,
+        `🎉 *Admin menyetujui tawaranmu!*\n\n` +
+        `📦 *${listing.title}*\n` +
+        `✅ Biaya iklan digratiskan oleh admin.\n` +
+        `Iklanmu langsung aktif! Selamat berjualan! 🚀`
+      ).catch(() => {});
+    } else {
+      const qrisUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id"}/qris.png`;
+      await sendWa(sellerJid,
+        `🎉 *Admin menyetujui tawaranmu!*\n\n` +
+        `📦 *${listing.title}*\n` +
+        `💳 Biaya iklan baru: *Rp ${newFee.toLocaleString("id-ID")}*\n\n` +
+        `Scan QRIS di bawah dan transfer nominal di atas, lalu kirim struk.`,
+        qrisUrl
+      ).catch(() => {});
+    }
+    await sendWa(senderJid, `✅ Tawaran biaya kode *${kode}* disetujui (Rp ${newFee.toLocaleString("id-ID")}). Penjual sudah diberitahu.`);
+    return NextResponse.json({ ok: true, state: "approve_fee_done" });
+  }
+
+  // ── TOLAK TAWAR BIAYA [kode] [alasan] ────────────────────────────────────
+  if (textMsg.startsWith("TOLAK TAWAR BIAYA ")) {
+    const parts = textMsg.split(/\s+/);
+    const kode = parts[3];
+    const alasan = parts.slice(4).join(" ").trim();
+    if (!kode) {
+      await sendWa(senderJid, "❌ Format: *TOLAK TAWAR BIAYA [kode iklan] [alasan opsional]*");
+      return NextResponse.json({ ok: true, state: "reject_fee_invalid" });
+    }
+    const { data: listing } = await supa
+      .from("listings").select("id, title, seller_wa, fee_offer_status")
+      .eq("listing_code", parseInt(kode)).eq("fee_offer_status", "pending").maybeSingle();
+    if (!listing) {
+      await sendWa(senderJid, `❌ Tidak ada tawaran biaya pending untuk kode *${kode}*.`);
+      return NextResponse.json({ ok: true, state: "reject_fee_not_found" });
+    }
+    await supa.from("listings").update({ fee_offer: null, fee_offer_status: "rejected" }).eq("id", listing.id);
+    const noteMsg = alasan ? `\n\nAlasan: _${alasan}_` : "";
+    const sellerJid = listing.seller_wa + "@s.whatsapp.net";
+    const { data: pmt } = await supa.from("payments").select("amount").eq("listing_id", listing.id).eq("status", "pending").maybeSingle();
+    const originalFee = pmt?.amount || 0;
+    await sendWa(sellerJid,
+      `❌ *Tawaran biaya iklanmu tidak disetujui admin.*${noteMsg}\n\n` +
+      `📦 *${listing.title}*\n` +
+      `💳 Biaya iklan tetap: *Rp ${Number(originalFee).toLocaleString("id-ID")}*\n\n` +
+      `Silakan transfer sesuai tagihan awal dan kirim struk.`
+    ).catch(() => {});
+    await sendWa(senderJid, `✅ Tawaran biaya kode *${kode}* ditolak. Penjual sudah diberitahu.`);
+    return NextResponse.json({ ok: true, state: "reject_fee_done" });
+  }
+
   return null; // bukan perintah admin yang dikenali
 }
