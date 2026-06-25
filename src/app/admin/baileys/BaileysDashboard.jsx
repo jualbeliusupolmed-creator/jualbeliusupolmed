@@ -271,6 +271,7 @@ function TabProfil() {
 
 // ── Tab: Status WA / Story ────────────────────────────────────────────────────
 function TabStory() {
+  const { data, loading, refetch } = useApi("story");
   const [form, setForm] = useState({ text: "" });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
@@ -300,7 +301,7 @@ function TabStory() {
       }
       const r = await apiPost("story", { text: form.text, url: uploadedUrl });
       setMsg(r.ok ? { ok: true, text: "✅ Status WA berhasil dipost!" } : { ok: false, text: `❌ ${r.error}` });
-      if (r.ok) { setForm({ text: "" }); setImageFile(null); setImagePreview(""); }
+      if (r.ok) { setForm({ text: "" }); setImageFile(null); setImagePreview(""); refetch(); }
     } catch (e) { setMsg({ ok: false, text: `❌ ${e.message}` }); }
     finally { setSending(false); }
   }
@@ -350,6 +351,33 @@ function TabStory() {
 
       <div className="rounded-lg bg-blue-50 p-3 text-xs text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
         💡 Status hanya tampil ke kontak yang sudah pernah chat dengan nomor WA bot, dan yang setting privasi-nya mengizinkan.
+      </div>
+
+      <div className="pt-4 border-t dark:border-slate-700">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-bold dark:text-white">Status Aktif (24 Jam Terakhir)</h3>
+          <button type="button" onClick={refetch} className="btn-outline text-xs">🔄 Refresh</button>
+        </div>
+        
+        {loading && <p className="text-sm text-gray-400">Memuat status...</p>}
+        
+        {!loading && (!data?.statuses || data.statuses.length === 0) && (
+          <p className="text-sm text-gray-500 italic">Belum ada status aktif saat ini.</p>
+        )}
+
+        <div className="space-y-3">
+          {(data?.statuses || []).map((s, i) => (
+            <div key={s.id || i} className="card p-3 flex gap-3 items-start border-l-4 border-green-500">
+              {s.type === "image" && s.url && (
+                <img src={s.url} alt="status" className="h-16 w-16 object-cover rounded bg-gray-100" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-gray-400 mb-1">{new Date(s.timestamp).toLocaleString("id-ID")}</p>
+                <p className="text-sm font-medium dark:text-white whitespace-pre-wrap">{s.text || "[Gambar tanpa caption]"}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
