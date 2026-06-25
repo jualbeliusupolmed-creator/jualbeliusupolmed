@@ -40,10 +40,14 @@ export async function GET(req) {
 
   // Non-blocking: rekam query untuk tren pencarian
   if (q) {
-    getAdminClient().from("search_logs").insert({
-      query: q.toLowerCase().slice(0, 100),
-      results_count: data?.length || 0,
-    }).catch(() => {});
+    (async () => {
+      try {
+        await getAdminClient().from("search_logs").insert({
+          query: q.toLowerCase().slice(0, 100),
+          results_count: data?.length || 0,
+        });
+      } catch (_) {}
+    })();
   }
 
   return NextResponse.json({ listings: data || [], total: data?.length || 0 });
