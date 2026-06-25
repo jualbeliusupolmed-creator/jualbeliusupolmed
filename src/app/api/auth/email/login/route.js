@@ -16,11 +16,15 @@ export async function POST(req) {
 
     const { email, password } = await req.json();
     
-    // Akun Testing khusus untuk keperluan review (Midtrans, dll)
-    if (email === "ridhorobipasi@gmail.com" && password === "testing123") {
-      const backdoorWa = "6281234567890";
-      setSellerCookie(backdoorWa);
-      return NextResponse.json({ success: true, wa: backdoorWa, message: "Login berhasil (Test Account)!" });
+    // Akun Testing — hanya aktif jika TEST_ACCOUNT_ENABLED=true di env
+    if (process.env.TEST_ACCOUNT_ENABLED === "true") {
+      const testEmail = process.env.TEST_ACCOUNT_EMAIL || "ridhorobipasi@gmail.com";
+      const testPassword = process.env.TEST_ACCOUNT_PASSWORD || "testing123";
+      const testWa = process.env.TEST_ACCOUNT_WA || "6281234567890";
+      if (email === testEmail && password === testPassword) {
+        setSellerCookie(testWa);
+        return NextResponse.json({ success: true, wa: testWa, message: "Login berhasil (Test Account)!" });
+      }
     }
 
     return NextResponse.json({ error: "Email atau password salah, atau akun belum mendukung login email." }, { status: 400 });

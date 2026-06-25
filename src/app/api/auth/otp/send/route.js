@@ -22,9 +22,12 @@ export async function POST(req) {
       return NextResponse.json({ error: "Nomor WA tidak valid" }, { status: 400 });
     }
 
-    // Backdoor akun testing untuk reviewer (Midtrans, dll)
-    if (normalizedWa === "6281234567890") {
-      return NextResponse.json({ success: true, message: "OTP terkirim ke WhatsApp." });
+    // Akun Testing — hanya aktif jika TEST_ACCOUNT_ENABLED=true di env
+    if (process.env.TEST_ACCOUNT_ENABLED === "true") {
+      const testWa = process.env.TEST_ACCOUNT_WA || "6281234567890";
+      if (normalizedWa === testWa) {
+        return NextResponse.json({ success: true, message: "OTP terkirim ke WhatsApp." });
+      }
     }
 
     // Generate 6 digit OTP
