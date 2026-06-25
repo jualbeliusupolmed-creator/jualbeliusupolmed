@@ -325,18 +325,28 @@ export default async function SellerProfilePage({ params }) {
         </div>
       )}
 
-      {/* Grid Iklan Terjual */}
+      {/* Riwayat Terjual — list kompak, tidak mengganggu iklan aktif */}
       {soldListings.length > 0 && (
-        <>
-          <h2 className="mt-10 text-lg font-bold">
-            Riwayat Terjual <span className="text-gray-400 font-normal text-base">({soldCount})</span>
-          </h2>
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 opacity-75">
-            {soldListings.map((l) => (
-              <ProductCard key={l.id} listing={l} />
+        <div className="mt-8 border-t border-gray-100 dark:border-slate-800 pt-6">
+          <p className="text-sm font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wide mb-3">
+            Riwayat Terjual ({soldCount})
+          </p>
+          <ul className="space-y-1.5">
+            {soldListings.slice(0, 6).map((l) => (
+              <li key={l.id} className="flex items-center justify-between gap-2 text-sm text-gray-500 dark:text-slate-400">
+                <span className="truncate">✓ {l.title}</span>
+                <span className="shrink-0 text-xs text-gray-400 dark:text-slate-500">
+                  Rp {Number(l.price).toLocaleString("id-ID")}
+                </span>
+              </li>
             ))}
-          </div>
-        </>
+            {soldCount > 6 && (
+              <li className="text-xs text-gray-400 dark:text-slate-500 pt-1">
+                +{soldCount - 6} barang lainnya sudah terjual
+              </li>
+            )}
+          </ul>
+        </div>
       )}
 
       {/* Ulasan */}

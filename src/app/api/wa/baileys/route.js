@@ -63,6 +63,7 @@ export async function POST(req) {
     }
     const senderJid = formData.get("sender");
     const message = formData.get("message") || "";
+    const profileNameFromBot = (formData.get("profile_name") || "").trim().slice(0, 50);
     const files = formData.getAll("file");
     const file = files[0] || null;
     let conversationHistory = [];
@@ -2192,9 +2193,16 @@ export async function POST(req) {
       let profileName = "Pengguna WA";
       let isNewWaUser = false;
       const { data: profile } = await supa.from("seller_profiles").select("name").eq("wa", normalizedWa).maybeSingle();
-      if (profile) profileName = profile.name;
-      else {
+      if (profile) {
+        profileName = profile.name;
+        // Perbarui nama jika bot mengirim nama dari registrasi @lid dan nama masih default
+        if (profileNameFromBot && profile.name === "Pengguna WA") {
+          await supa.from("seller_profiles").update({ name: profileNameFromBot }).eq("wa", normalizedWa);
+          profileName = profileNameFromBot;
+        }
+      } else {
         isNewWaUser = true;
+        profileName = profileNameFromBot || "Pengguna WA";
         await supa.from("seller_profiles").insert({ wa: normalizedWa, name: profileName });
       }
 
