@@ -55,6 +55,57 @@ function StatusDot({ on }) {
   );
 }
 
+// ── QR Code display dengan auto-refresh ──────────────────────────────────────
+function QRDisplay() {
+  const [qrData, setQrData] = useState(null);
+  const [qrLoading, setQrLoading] = useState(true);
+  const [countdown, setCountdown] = useState(30);
+
+  const fetchQr = useCallback(async () => {
+    setQrLoading(true);
+    try {
+      const res = await fetch("/api/admin/baileys?endpoint=qr");
+      const json = await res.json();
+      setQrData(json);
+    } catch (_) {
+      setQrData(null);
+    } finally {
+      setQrLoading(false);
+      setCountdown(30);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchQr();
+  }, [fetchQr]);
+
+  // Countdown + auto-refresh tiap 30 detik (QR WA expire ~60 detik)
+  useEffect(() => {
+    const tick = setInterval(() => {
+      setCountdown(c => {
+        if (c <= 1) { fetchQr(); return 30; }
+        return c - 1;
+      });
+    }, 1000);
+    return () => clearInterval(tick);
+  }, [fetchQr]);
+
+  if (qrLoading) return <p className="text-sm text-amber-600 animate-pulse">⏳ Memuat QR Code...</p>;
+  if (!qrData?.qr) return <p className="text-sm text-gray-400">QR tidak tersedia (bot mungkin sedang reconnect).</p>;
+
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <img src={qrData.qr} alt="WhatsApp QR Code" className="w-56 h-56 rounded-xl border-4 border-green-400 shadow-lg" />
+      <p className="text-xs text-gray-500 dark:text-slate-400">Scan dengan WhatsApp → Perangkat Tertaut → Tautkan Perangkat</p>
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-gray-400">Refresh otomatis dalam</span>
+        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">{countdown}d</span>
+        <button onClick={fetchQr} className="text-xs text-blue-500 hover:underline">Refresh sekarang</button>
+      </div>
+    </div>
+  );
+}
+
 // ── Tab: Status ───────────────────────────────────────────────────────────────
 function TabStatus() {
   const { data, loading, error, refetch } = useApi("status");
@@ -77,6 +128,16 @@ function TabStatus() {
       {loading && <p className="text-sm text-gray-400">Memuat status...</p>}
       {error && <div className="rounded-lg bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">⚠️ {error}</div>}
 
+      {/* QR Code — muncul saat bot belum terhubung */}
+      {data?.hasQR && (
+        <div className="card p-5 border-2 border-amber-300 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/20">
+          <p className="mb-4 text-center text-sm font-semibold text-amber-700 dark:text-amber-400">
+            📱 Bot belum terhubung — Scan QR Code berikut
+          </p>
+          <QRDisplay />
+        </div>
+      )}
+
       {data && (
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="card p-4">
@@ -85,7 +146,6 @@ function TabStatus() {
               <StatusDot on={data.connected} />
               <span className="font-bold dark:text-white">{data.connected ? "Terhubung" : "Terputus"}</span>
             </div>
-            {data.hasQR && <p className="mt-2 text-xs text-amber-600">📷 Menunggu scan QR</p>}
           </div>
 
           <div className="card p-4">
@@ -122,14 +182,6 @@ function TabStatus() {
         >
           {restarting ? "⏳ Restarting..." : "🔄 Restart Bot"}
         </button>
-        <a
-          href="https://wa-bot-usu-production.up.railway.app"
-          target="_blank"
-          rel="noreferrer"
-          className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
-        >
-          🌐 Buka Halaman QR
-        </a>
       </div>
     </div>
   );
