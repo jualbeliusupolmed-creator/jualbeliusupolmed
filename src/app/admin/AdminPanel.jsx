@@ -1208,6 +1208,9 @@ function SettingsManager({ settings, action }) {
   const [showPriceConfirm, setShowPriceConfirm] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingFavicon, setUploadingFavicon] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const match = (k) => !searchQuery || k.toLowerCase().includes(searchQuery.toLowerCase());
 
   function flash(k) { setSaved(k); setTimeout(() => setSaved(""), 2000); }
   const numP = (k) => (e) => setPricing({ ...pricing, [k]: Math.max(0, Number(e.target.value) || 0) });
@@ -1293,9 +1296,22 @@ function SettingsManager({ settings, action }) {
   };
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      {/* HARGA & BIAYA */}
-      <Card title="Harga & Biaya">
+    <div className="space-y-6">
+      {/* PENCARIAN PENGATURAN */}
+      <div className="relative max-w-lg mb-4">
+        <input 
+          type="text" 
+          placeholder="Cari pengaturan (contoh: harga, logo, wa, bot)..." 
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="input w-full pl-10 bg-white dark:bg-slate-900 border-2 border-gray-200 dark:border-slate-700 focus:border-primary" 
+        />
+        <svg className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* HARGA & BIAYA */}
+        <Card title="Harga & Biaya" className={match("harga biaya tarif sewa lapak jual dulu freemium gratis iklan bump sundul featured komisi laku tier batas limit dicari free") ? "" : "hidden"}>
         <div className="mb-6 rounded-xl border border-primary/20 bg-primary/5 p-4">
           <div className="mb-3 flex items-center justify-between gap-2 flex-wrap">
             <p className="text-xs font-semibold uppercase tracking-wide text-primary">Template Monetisasi Cepat</p>
@@ -1410,7 +1426,7 @@ function SettingsManager({ settings, action }) {
       </Card>
 
       {/* KONTAK DUKUNGAN */}
-      <Card title="Kontak & Dukungan">
+      <Card title="Kontak & Dukungan" className={match("kontak dukungan wa whatsapp email cs admin customer service") ? "" : "hidden"}>
         <div className="space-y-3">
           <Field label="Nomor WA Marketplace"><input className="input" value={contact.marketplaceWa ?? ""} onChange={(e) => setContact({ ...contact, marketplaceWa: e.target.value })} /></Field>
           <Field label="Link Grup WhatsApp"><input className="input" value={contact.waGroupLink ?? ""} onChange={(e) => setContact({ ...contact, waGroupLink: e.target.value })} /></Field>
@@ -1422,7 +1438,7 @@ function SettingsManager({ settings, action }) {
       </Card>
 
       {/* BRANDING & IDENTITAS VISUAL */}
-      <Card title="Identitas Visual (Logo & Favicon)">
+      <Card title="Identitas Visual (Logo & Favicon)" className={match("identitas visual logo favicon icon gambar web situs") ? "" : "hidden"}>
         <div className="space-y-4">
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Logo Web</label>
@@ -1479,7 +1495,7 @@ function SettingsManager({ settings, action }) {
       </Card>
 
       {/* TATA LETAK BERANDA */}
-      <Card title="Tata Letak Beranda">
+      <Card title="Tata Letak Beranda" className={match("tata letak layout beranda home ucapan welcome teks sambutan hero populer banner") ? "" : "hidden"}>
         <div className="space-y-3">
           <p className="text-xs text-gray-500">
             Geser urutan atau hapus seksi yang tidak ingin ditampilkan. Tersedia: hero, featured, main.
@@ -1514,7 +1530,7 @@ function SettingsManager({ settings, action }) {
       </Card>
 
       {/* TEKS & SEO SITUS */}
-      <Card title="Teks & SEO Situs" className="lg:col-span-2">
+      <Card title="Teks & SEO Situs" className={`lg:col-span-2 ${match("teks seo situs nama domain url base footer rules disclaimer kebijakan privasi metadata") ? "" : "hidden"}`}>
         <div className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div>
@@ -1540,7 +1556,7 @@ function SettingsManager({ settings, action }) {
       </Card>
 
       {/* KONFIGURASI ADMIN & WA */}
-      <Card title="Konfigurasi Admin & WhatsApp">
+      <Card title="Konfigurasi Admin & WhatsApp" className={match("konfigurasi admin whatsapp nomor hp wa superadmin super") ? "" : "hidden"}>
         <div className="space-y-3">
           <Field label="Nomor WA Admin (Superadmin)">
             <input className="input font-mono" value={adminCfg.adminWa ?? ""} onChange={(e) => setAdminCfg({ ...adminCfg, adminWa: e.target.value })} placeholder="628xxxxxxxxxx" />
@@ -1566,7 +1582,7 @@ function SettingsManager({ settings, action }) {
       </Card>
 
       {/* KONFIGURASI BOT */}
-      <Card title="Konfigurasi Bot WhatsApp">
+      <Card title="Konfigurasi Bot WhatsApp" className={match("konfigurasi bot whatsapp token fonnte api baileys provider sender key") ? "" : "hidden"}>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Expiry Konteks Percakapan (menit)">
             <input type="number" min="5" className="input" value={botCfg.contextExpiryMinutes ?? 30} onChange={(e) => setBotCfg({ ...botCfg, contextExpiryMinutes: Number(e.target.value) || 30 })} />
@@ -1589,7 +1605,7 @@ function SettingsManager({ settings, action }) {
       </Card>
 
       {/* TEMPLATE PESAN BOT */}
-      <Card title="Template Pesan Bot WhatsApp" className="lg:col-span-2">
+      <Card title="Template Pesan Bot WhatsApp" className={`lg:col-span-2 ${match("template pesan bot whatsapp balasan admin dicari wanted notif pesan") ? "" : "hidden"}`}>
         <p className="mb-3 text-xs text-gray-400">Gunakan <code className="rounded bg-gray-100 px-1 dark:bg-slate-800">{"{{title}}"}</code>, <code className="rounded bg-gray-100 px-1 dark:bg-slate-800">{"{{url}}"}</code>, <code className="rounded bg-gray-100 px-1 dark:bg-slate-800">{"{{price}}"}</code>, <code className="rounded bg-gray-100 px-1 dark:bg-slate-800">{"{{seller}}"}</code> sebagai variabel.</p>
         <div className="grid gap-3 md:grid-cols-2">
           <Field label="Pengingat H-3 (iklan hampir berakhir)">
@@ -1612,7 +1628,7 @@ function SettingsManager({ settings, action }) {
       </Card>
 
       {/* AREA POPULER */}
-      <Card title="Daftar Area / Wilayah Populer">
+      <Card title="Daftar Area / Wilayah Populer" className={match("daftar area wilayah populer lokasi cod kampus") ? "" : "hidden"}>
         <p className="mb-2 text-xs text-gray-400">Satu area per baris. Digunakan sebagai pilihan area di form iklan.</p>
         <textarea
           className="input min-h-48 font-mono text-sm"
