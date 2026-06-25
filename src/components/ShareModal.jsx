@@ -114,7 +114,7 @@ export default function ShareModal({ listing }) {
                   <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80" />
                   {/* Top brand */}
                   <div className="absolute inset-x-0 top-0 px-4 pt-4 flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                    <div className="w-6 h-6 rounded-full bg-[#111] flex items-center justify-center">
                       <span className="text-white text-[10px] font-black">JB</span>
                     </div>
                     <span className="text-white text-xs font-bold tracking-wide drop-shadow">JUAL BELI Medan</span>
@@ -133,7 +133,7 @@ export default function ShareModal({ listing }) {
                   style={{ width: 180, height: 320 }}
                   className={`relative overflow-hidden rounded-2xl flex-shrink-0 ${tab !== "story" ? "hidden" : ""}`}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary-dark to-slate-900" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#111] via-black to-slate-900" />
                   {listing.image_url && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -152,7 +152,7 @@ export default function ShareModal({ listing }) {
                     <p className="line-clamp-2 text-sm font-bold text-white drop-shadow">{listing.title}</p>
                     <p className="mt-1 text-lg font-extrabold text-white drop-shadow">{priceLabel}</p>
                     <div className="mt-3 mx-auto inline-block rounded-full bg-white px-4 py-1.5">
-                      <span className="text-[10px] font-bold text-primary">jualbelimedan.web.id</span>
+                      <span className="text-[10px] font-bold text-[#111]">jualbelimedan.web.id</span>
                     </div>
                   </div>
                 </div>

@@ -48,7 +48,7 @@ export default function IGShareButton({ listing }) {
             <div
               ref={ref}
               style={{ width: 270, height: 480 }}
-              className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary to-primary-dark text-white"
+              className="relative overflow-hidden rounded-xl bg-gradient-to-br from-[#111] to-black text-white"
             >
               <div className="absolute inset-x-0 top-0 p-4 text-center text-sm font-extrabold tracking-wide">
                 JUAL BELI Medan
@@ -73,7 +73,7 @@ export default function IGShareButton({ listing }) {
                 <p className="mt-1 text-2xl font-extrabold">
                   {rupiah(listing.price)}
                 </p>
-                <p className="mt-3 inline-block rounded-full bg-white px-4 py-1.5 text-xs font-bold text-primary">
+                <p className="mt-3 inline-block rounded-full bg-white px-4 py-1.5 text-xs font-bold text-[#111]">
                   jualbelimedan.web.id
                 </p>
               </div>
