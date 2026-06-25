@@ -29,7 +29,8 @@ const LISTING_FIELDS = [
   "area",
 ];
 
-const PERIOD_MS = 14 * 864e5; // masa tayang 14 hari
+// PERIOD_MS: fallback untuk bulk activate (single activate membaca dari settings secara langsung)
+const PERIOD_MS = 14 * 864e5;
 
 const LISTING_STATUSES = ["pending", "active", "expired", "sold", "suspended"];
 
@@ -76,9 +77,10 @@ export async function POST(req) {
 
         // Broadcast to WA Group when admin activates manually
         if (listingInfo) {
+          const activateSettings = await getSettings().catch(() => null);
           pushCategorySubscribers(supa, listingInfo).catch(() => {});
           const [groupRes] = await Promise.allSettled([
-            postToGroup(listingInfo),
+            postToGroup(listingInfo, activateSettings?.admin),
             notifyWantedBuyers(listingInfo)
           ]);
           const broadcast =
@@ -108,11 +110,13 @@ export async function POST(req) {
           return NextResponse.json({ error: "Tidak ada item dipilih" }, { status: 400 });
         }
         if (body.op === "activate") {
+          const bulkSettings = await getSettings().catch(() => null);
+          const bulkDays = Math.max(1, Number(bulkSettings?.pricing?.listingDays) || 14);
           await supa
             .from("listings")
             .update({
               status: "active",
-              expires_at: new Date(Date.now() + PERIOD_MS).toISOString(),
+              expires_at: new Date(Date.now() + bulkDays * 864e5).toISOString(),
             })
             .in("id", ids);
         } else if (body.op === "suspend") {
@@ -231,9 +235,10 @@ export async function POST(req) {
               .single();
 
             if (listing && payment.type === "iklan") {
+              const paySettings = await getSettings().catch(() => null);
               pushCategorySubscribers(supa, listing).catch(() => {});
               await Promise.allSettled([
-                postToGroup(listing),
+                postToGroup(listing, paySettings?.admin),
                 notifyWantedBuyers(listing)
               ]);
             }
@@ -372,7 +377,7 @@ export async function POST(req) {
       // ── Pengaturan situs ───────────────────────────────────────────────
       case "save_settings": {
         const { key, value } = body;
-        if (!key || typeof value !== "object") {
+        if (!key || value == null || typeof value !== "object") {
           return NextResponse.json({ error: "key/value tidak valid" }, { status: 400 });
         }
         const { error } = await supa
@@ -436,6 +441,63 @@ export async function POST(req) {
       // ── Blogs ───────────────────────────────────────────────────────────
       case "delete_blog":
         await supa.from("blogs").delete().eq("id", id);
+        break;
+
+      // ── Sponsored listing ──────────────────────────────────────────────
+      case "set_sponsored": {
+        const days = Number(body.days) || 0;
+        await supa
+          .from("listings")
+          .update({ sponsored_until: days > 0 ? new Date(Date.now() + days * 864e5).toISOString() : null })
+          .eq("id", id);
+        break;
+      }
+
+      // ── Reset PIN / OTP penjual ────────────────────────────────────────
+      case "reset_pin": {
+        const normalizedWa = formatWa(wa);
+        if (!normalizedWa) return NextResponse.json({ error: "WA wajib" }, { status: 400 });
+        await supa.from("otps").delete().eq("wa", normalizedWa);
+        break;
+      }
+
+      // ── Award free bumps ke penjual ────────────────────────────────────
+      case "award_bumps": {
+        const normalizedWa = formatWa(wa);
+        const bumpsToAdd = Math.max(1, Number(body.count) || 1);
+        if (!normalizedWa) return NextResponse.json({ error: "WA wajib" }, { status: 400 });
+        const { data: sp } = await supa.from("seller_profiles").select("free_bumps").eq("wa", normalizedWa).maybeSingle();
+        const current = sp?.free_bumps || 0;
+        await supa.from("seller_profiles").upsert(
+          { wa: normalizedWa, free_bumps: current + bumpsToAdd },
+          { onConflict: "wa" }
+        );
+        break;
+      }
+
+      // ── Hapus group post ───────────────────────────────────────────────
+      case "delete_group_post":
+        await supa.from("group_posts").delete().eq("id", id);
+        break;
+
+      // ── Hapus subscription ─────────────────────────────────────────────
+      case "delete_subscription": {
+        const tbl = body.type === "push" ? "push_subscriptions" : "category_subscriptions";
+        await supa.from(tbl).delete().eq("id", id);
+        break;
+      }
+
+      // ── Hide/unhide rating ─────────────────────────────────────────────
+      case "hide_rating":
+        await supa.from("seller_ratings").update({ hidden: true }).eq("id", id);
+        break;
+      case "show_rating":
+        await supa.from("seller_ratings").update({ hidden: false }).eq("id", id);
+        break;
+
+      // ── Referral: award bumps manual via referrals table ──────────────
+      case "resolve_referral":
+        await supa.from("referrals").update({ status: "rewarded" }).eq("id", id);
         break;
 
       default:

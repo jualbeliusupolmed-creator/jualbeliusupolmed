@@ -12,6 +12,10 @@ import { getSupabase } from "@/lib/supabase";
 import BaileysDashboard from "./baileys/BaileysDashboard";
 import AIPanel from "./AIPanel";
 import BroadcastPanel from "./BroadcastPanel";
+import ReferralPanel from "./ReferralPanel";
+import TawaranPanel from "./TawaranPanel";
+import GroupPostsPanel from "./GroupPostsPanel";
+import NotifikasiPanel from "./NotifikasiPanel";
 
 const REPORT_LABELS = {
   penipuan: "Penipuan / scam",
@@ -47,6 +51,10 @@ const ICONS = {
   wabot: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z",
   ai: "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z",
   broadcast: "M3 3h18v4H3zM3 17h18v4H3zM7 8h10v8H7z",
+  referral: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zm10 0l2 2-2 2m4-2H15",
+  tawaran: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14H7l4-8 4 6-2-2-2 4z",
+  grouppost: "M17 3a2 2 0 012 2v6a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h12z",
+  notifikasi: "M15 17h5l-1.41-1.41A1 1 0 0118 15V10a6 6 0 00-5-5.92V4a1 1 0 00-2 0v.08A6 6 0 006 10v5a1 1 0 01-.59.89L4 17h5m6 0a3 3 0 01-6 0",
 };
 
 function NavIcon({ name }) {
@@ -78,7 +86,7 @@ export default function AdminPanel({
   pageSize = 100,
 }) {
   const router = useRouter();
-  const VALID_TABS = ["overview","listings","transaksi","rating","reports","dicari","kategori","pengaturan","blacklist","penjual","blogs","wabot","ai","broadcast"];
+  const VALID_TABS = ["overview","listings","transaksi","rating","reports","dicari","kategori","pengaturan","blacklist","penjual","blogs","wabot","ai","broadcast","referral","tawaran","grouppost","notifikasi"];
   const tab = VALID_TABS.includes(initialTab) ? initialTab : "overview";
   function goTab(key) {
     router.push(`/admin/${key}`);
@@ -247,6 +255,10 @@ export default function AdminPanel({
     { key: "wabot", label: "WhatsApp Bot" },
     { key: "broadcast", label: "Broadcast" },
     { key: "ai", label: "AI & Memori" },
+    { key: "referral", label: "Referral" },
+    { key: "tawaran", label: "Tawaran Harga" },
+    { key: "grouppost", label: "Post Grup" },
+    { key: "notifikasi", label: "Notifikasi" },
   ];
   const activeLabel = NAV.find((n) => n.key === tab)?.label;
 
@@ -498,6 +510,11 @@ export default function AdminPanel({
                               ) : (
                                 <button onClick={() => action({ action: "feature", id: l.id, days: 7 }, "Featured 7 hari")} className="rounded-md bg-amber-50 px-2 py-1 text-xs text-amber-600">Featured</button>
                               )}
+                              {l.sponsored_until && new Date(l.sponsored_until) > new Date() ? (
+                                <button onClick={() => action({ action: "set_sponsored", id: l.id, days: 0 }, "Sponsored dilepas")} className="rounded-md bg-purple-100 px-2 py-1 text-xs text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">Unsponsored</button>
+                              ) : (
+                                <button onClick={() => action({ action: "set_sponsored", id: l.id, days: 7 }, "Sponsored 7 hari")} className="rounded-md bg-purple-50 px-2 py-1 text-xs text-purple-600">Sponsored</button>
+                              )}
                               <button onClick={() => confirmThen({ title: "Hapus listing", message: `Hapus "${l.title}"?`, danger: true }, () => action({ action: "delete", id: l.id }, "Dihapus"))} className="rounded-md bg-rose-100 px-2 py-1 text-xs text-rose-700">Hapus</button>
                             </>
                           )}
@@ -604,7 +621,10 @@ export default function AdminPanel({
                     <p className="text-xs text-gray-400">{r.buyer_name || "Anonim"} → {r.seller_wa} · {new Date(r.created_at).toLocaleDateString("id-ID")}</p>
                     {r.comment && <p className="mt-1 whitespace-pre-wrap text-sm text-gray-600 dark:text-slate-400">“{r.comment}”</p>}
                   </div>
-                  <button onClick={() => confirmThen({ title: "Hapus rating", message: "Hapus rating ini?", danger: true }, () => action({ action: "delete_rating", id: r.id }, "Dihapus"))} className="shrink-0 rounded-md bg-rose-100 px-2 py-1 text-xs text-rose-700">Hapus</button>
+                  <div className="flex shrink-0 flex-col gap-1">
+                    <button onClick={() => action({ action: r.hidden ? "show_rating" : "hide_rating", id: r.id }, r.hidden ? "Rating ditampilkan" : "Rating disembunyikan")} className={`rounded-md px-2 py-1 text-xs ${r.hidden ? "bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-300" : "bg-amber-100 text-amber-700"}`}>{r.hidden ? "Tampilkan" : "Sembunyikan"}</button>
+                    <button onClick={() => confirmThen({ title: "Hapus rating", message: "Hapus rating ini?", danger: true }, () => action({ action: "delete_rating", id: r.id }, "Dihapus"))} className="rounded-md bg-rose-100 px-2 py-1 text-xs text-rose-700">Hapus</button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -786,6 +806,18 @@ export default function AdminPanel({
                                 </button>
                               )}
                               <button
+                                onClick={() => action({ action: "award_bumps", wa: s.seller_wa, count: 1 }, "+1 free bump diberikan")}
+                                className="rounded-md bg-emerald-100 px-2 py-1 text-xs text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                              >
+                                +1 Bump
+                              </button>
+                              <button
+                                onClick={() => confirmThen({ title: "Reset PIN", message: `Reset PIN/OTP untuk ${s.seller_wa}?` }, () => action({ action: "reset_pin", wa: s.seller_wa }, "PIN direset"))}
+                                className="rounded-md bg-violet-100 px-2 py-1 text-xs text-violet-700 dark:bg-violet-900/30 dark:text-violet-400"
+                              >
+                                Reset PIN
+                              </button>
+                              <button
                                 onClick={() => confirmThen({ title: "Blacklist", message: `Blokir ${s.seller_wa}? Semua iklannya disuspend.`, danger: true }, () => action({ action: "blacklist", wa: s.seller_wa }, "Diblacklist"))}
                                 className="rounded-md border border-gray-200 px-2 py-1 text-xs text-gray-600 dark:border-slate-700 dark:text-slate-400"
                               >
@@ -866,6 +898,38 @@ export default function AdminPanel({
 
         {/* AI PANEL */}
         {tab === "ai" && <AIPanel settings={settings} action={action} />}
+
+        {/* REFERRAL */}
+        {tab === "referral" && (
+          <div>
+            <p className="mb-4 text-sm text-gray-500">Kelola program referral — lihat siapa yang mengundang siapa, tandai reward, dan berikan free bump secara manual.</p>
+            <ReferralPanel action={action} />
+          </div>
+        )}
+
+        {/* TAWARAN HARGA */}
+        {tab === "tawaran" && (
+          <div>
+            <p className="mb-4 text-sm text-gray-500">Monitor semua tawaran harga dari pembeli ke penjual di seluruh marketplace.</p>
+            <TawaranPanel />
+          </div>
+        )}
+
+        {/* POST GRUP */}
+        {tab === "grouppost" && (
+          <div>
+            <p className="mb-4 text-sm text-gray-500">Moderasi postingan yang dikirim ke grup WA — lihat isi dan hapus jika perlu.</p>
+            <GroupPostsPanel action={action} />
+          </div>
+        )}
+
+        {/* NOTIFIKASI */}
+        {tab === "notifikasi" && (
+          <div>
+            <p className="mb-4 text-sm text-gray-500">Kelola subscriber notifikasi — berlangganan kategori WA dan push notification browser.</p>
+            <NotifikasiPanel action={action} />
+          </div>
+        )}
 
         {busy && <div className="fixed bottom-5 left-5 z-[60] rounded-lg bg-gray-900/80 px-3 py-1.5 text-xs text-white">Memproses…</div>}
       </main>
@@ -963,6 +1027,10 @@ function SettingsManager({ settings, action }) {
   const [pricing, setPricing] = useState(settings.pricing || {});
   const [contact, setContact] = useState(settings.contact || {});
   const [site, setSite] = useState(settings.site || {});
+  const [adminCfg, setAdminCfg] = useState(settings.admin || {});
+  const [botCfg, setBotCfg] = useState(settings.bot || {});
+  const [messages, setMessages] = useState(settings.messages || {});
+  const [areas, setAreas] = useState((settings.areas || []).join("\n"));
   const [saved, setSaved] = useState("");
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingFavicon, setUploadingFavicon] = useState(false);
@@ -971,6 +1039,8 @@ function SettingsManager({ settings, action }) {
   const numP = (k) => (e) => setPricing({ ...pricing, [k]: Math.max(0, Number(e.target.value) || 0) });
   const tiers = pricing.soldTiers || [];
   const setTiers = (t) => setPricing({ ...pricing, soldTiers: t });
+  const adTiers = pricing.adTiers || [];
+  const setAdTiers = (t) => setPricing({ ...pricing, adTiers: t });
 
   async function handleFileUpload(e, type) {
     const file = e.target.files?.[0];
@@ -1028,22 +1098,42 @@ function SettingsManager({ settings, action }) {
             <p className="mt-1 text-xs text-gray-400">Iklan aktif selama berapa hari setelah pembayaran. Default: 14 hari.</p>
           </Field>
         </div>
-        <div className="mt-4 flex items-center justify-between">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Fee setelah terjual</p>
-          <button onClick={() => setTiers([...tiers, { upto: null, pct: 5 }])} className="text-xs text-gray-900 hover:underline dark:text-slate-200">+ Tambah tier</button>
+        <div className=”mt-4 flex items-center justify-between”>
+          <p className=”text-xs font-semibold uppercase tracking-wide text-gray-500”>Tier biaya iklan (berdasarkan harga barang)</p>
+          <button onClick={() => setAdTiers([...adTiers, { upto: null, flat: 5000 }])} className=”text-xs text-gray-900 hover:underline dark:text-slate-200”>+ Tambah tier</button>
         </div>
-        <div className="mt-2 space-y-2">
-          {tiers.map((t, i) => (
-            <div key={i} className="flex items-center gap-1.5 text-xs">
-              <input type="number" className="input w-24" placeholder="< batas" value={t.upto ?? ""} onChange={(e) => { const c = [...tiers]; c[i] = { ...t, upto: e.target.value === "" ? null : Number(e.target.value) }; setTiers(c); }} />
-              <input type="number" className="input w-20" placeholder="flat Rp" value={t.flat ?? ""} onChange={(e) => { const c = [...tiers]; c[i] = { ...t, flat: e.target.value === "" ? undefined : Number(e.target.value) }; setTiers(c); }} />
-              <input type="number" className="input w-16" placeholder="%" value={t.pct ?? ""} onChange={(e) => { const c = [...tiers]; c[i] = { ...t, pct: e.target.value === "" ? undefined : Number(e.target.value) }; setTiers(c); }} />
-              <button onClick={() => setTiers(tiers.filter((_, j) => j !== i))} className="rounded-md bg-rose-100 px-2 py-1 text-rose-700">✕</button>
+        <div className=”mt-2 space-y-2”>
+          {adTiers.map((t, i) => (
+            <div key={i} className=”flex items-center gap-1.5 text-xs”>
+              <input type=”number” className=”input w-24” placeholder=”< batas Rp” value={t.upto ?? “”} onChange={(e) => { const c = [...adTiers]; c[i] = { ...t, upto: e.target.value === “” ? null : Number(e.target.value) }; setAdTiers(c); }} />
+              <input type=”number” className=”input w-20” placeholder=”flat Rp” value={t.flat ?? “”} onChange={(e) => { const c = [...adTiers]; c[i] = { ...t, flat: e.target.value === “” ? undefined : Number(e.target.value) }; setAdTiers(c); }} />
+              <input type=”number” className=”input w-16” placeholder=”%” value={t.pct ?? “”} onChange={(e) => { const c = [...adTiers]; c[i] = { ...t, pct: e.target.value === “” ? undefined : Number(e.target.value) }; setAdTiers(c); }} />
+              <button onClick={() => setAdTiers(adTiers.filter((_, j) => j !== i))} className=”rounded-md bg-rose-100 px-2 py-1 text-rose-700”>✕</button>
             </div>
           ))}
-          <p className="text-[11px] text-gray-400">Kosongkan “&lt; batas” untuk tier teratas. Isi flat atau %.</p>
+          <p className=”text-[11px] text-gray-400”>Biaya pasang iklan sesuai harga barang. Kosongkan batas untuk tier akhir. Isi flat (Rp) atau % dari harga.</p>
         </div>
-        <button onClick={() => { action({ action: "save_settings", key: "pricing", value: pricing }, "Harga disimpan"); flash("pricing"); }} className="btn-primary mt-4 w-full">{saved === "pricing" ? "✓ Tersimpan" : "Simpan Harga"}</button>
+        <hr className=”my-3 border-gray-100 dark:border-slate-800” />
+        <div className=”mt-2 flex items-center justify-between”>
+          <p className=”text-xs font-semibold uppercase tracking-wide text-gray-500”>Fee setelah terjual</p>
+          <button onClick={() => setTiers([...tiers, { upto: null, pct: 5 }])} className=”text-xs text-gray-900 hover:underline dark:text-slate-200”>+ Tambah tier</button>
+        </div>
+        <div className=”mt-2 space-y-2”>
+          {tiers.map((t, i) => (
+            <div key={i} className=”flex items-center gap-1.5 text-xs”>
+              <input type=”number” className=”input w-24” placeholder=”< batas” value={t.upto ?? “”} onChange={(e) => { const c = [...tiers]; c[i] = { ...t, upto: e.target.value === “” ? null : Number(e.target.value) }; setTiers(c); }} />
+              <input type=”number” className=”input w-20” placeholder=”flat Rp” value={t.flat ?? “”} onChange={(e) => { const c = [...tiers]; c[i] = { ...t, flat: e.target.value === “” ? undefined : Number(e.target.value) }; setTiers(c); }} />
+              <input type=”number” className=”input w-16” placeholder=”%” value={t.pct ?? “”} onChange={(e) => { const c = [...tiers]; c[i] = { ...t, pct: e.target.value === “” ? undefined : Number(e.target.value) }; setTiers(c); }} />
+              <button onClick={() => setTiers(tiers.filter((_, j) => j !== i))} className=”rounded-md bg-rose-100 px-2 py-1 text-rose-700”>✕</button>
+            </div>
+          ))}
+          <p className=”text-[11px] text-gray-400”>Kosongkan “&lt; batas” untuk tier teratas. Isi flat atau %.</p>
+        </div>
+        <Field label=”Limit DICARI gratis per user”>
+          <input type=”number” min=”1” className=”input” value={pricing.dicariFreeLimt ?? 3} onChange={(e) => setPricing({ ...pricing, dicariFreeLimt: Math.max(1, Number(e.target.value) || 3) })} />
+          <p className=”mt-1 text-xs text-gray-400”>Berapa kali user bisa post DICARI gratis. Default: 3.</p>
+        </Field>
+        <button onClick={() => { action({ action: “save_settings”, key: “pricing”, value: pricing }, “Harga disimpan”); flash(“pricing”); }} className=”btn-primary mt-4 w-full”>{saved === “pricing” ? “✓ Tersimpan” : “Simpan Harga”}</button>
       </Card>
 
       {/* KONTAK DUKUNGAN */}
@@ -1174,6 +1264,97 @@ function SettingsManager({ settings, action }) {
           </div>
         </div>
         <button onClick={() => { action({ action: "save_settings", key: "site", value: site }, "Teks & SEO disimpan"); flash("site"); }} className="btn-primary mt-4 w-full sm:w-auto sm:px-10">{saved === "site" ? "✓ Tersimpan" : "Simpan Teks & SEO"}</button>
+      </Card>
+
+      {/* KONFIGURASI ADMIN & WA */}
+      <Card title="Konfigurasi Admin & WhatsApp">
+        <div className="space-y-3">
+          <Field label="Nomor WA Admin (Superadmin)">
+            <input className="input font-mono" value={adminCfg.adminWa ?? ""} onChange={(e) => setAdminCfg({ ...adminCfg, adminWa: e.target.value })} placeholder="628xxxxxxxxxx" />
+            <p className="mt-1 text-xs text-gray-400">Nomor yang menerima notifikasi iklan baru, pembayaran, dll.</p>
+          </Field>
+          <Field label="JID Grup WA Utama (Broadcast Iklan)">
+            <input className="input font-mono" value={adminCfg.groupJid ?? ""} onChange={(e) => setAdminCfg({ ...adminCfg, groupJid: e.target.value })} placeholder="628xxx@g.us" />
+            <p className="mt-1 text-xs text-gray-400">Format: 628xxx-timestamp@g.us. Dapat dicopy dari tab Grup di WhatsApp Bot.</p>
+          </Field>
+          <Field label="Grup WA Tambahan (pisah koma)">
+            <textarea className="input min-h-16 font-mono text-xs" value={adminCfg.extraGroups ?? ""} onChange={(e) => setAdminCfg({ ...adminCfg, extraGroups: e.target.value })} placeholder="628xxx@g.us,628yyy@g.us" />
+          </Field>
+          <Field label="URL / Link Gambar QRIS">
+            <input className="input" value={adminCfg.qrisUrl ?? ""} onChange={(e) => setAdminCfg({ ...adminCfg, qrisUrl: e.target.value })} placeholder="https://..." />
+            <p className="mt-1 text-xs text-gray-400">URL gambar QRIS yang dikirim ke user saat checkout. Kosongkan untuk pakai default env.</p>
+          </Field>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={!!adminCfg.fonnteFirst} onChange={(e) => setAdminCfg({ ...adminCfg, fonnteFirst: e.target.checked })} className="h-4 w-4 rounded" />
+            <span className="dark:text-slate-200">Gunakan Fonnte sebagai gateway utama (bukan Baileys)</span>
+          </label>
+        </div>
+        <button onClick={() => { action({ action: "save_settings", key: "admin", value: adminCfg }, "Konfigurasi Admin disimpan"); flash("admin"); }} className="btn-primary mt-4 w-full">{saved === "admin" ? "✓ Tersimpan" : "Simpan Konfigurasi Admin"}</button>
+      </Card>
+
+      {/* KONFIGURASI BOT */}
+      <Card title="Konfigurasi Bot WhatsApp">
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Expiry Konteks Percakapan (menit)">
+            <input type="number" min="5" className="input" value={botCfg.contextExpiryMinutes ?? 30} onChange={(e) => setBotCfg({ ...botCfg, contextExpiryMinutes: Number(e.target.value) || 30 })} />
+          </Field>
+          <Field label="Maks Riwayat Konteks">
+            <input type="number" min="1" max="20" className="input" value={botCfg.contextMaxHistory ?? 5} onChange={(e) => setBotCfg({ ...botCfg, contextMaxHistory: Number(e.target.value) || 5 })} />
+          </Field>
+          <Field label="Expiry OTP (menit)">
+            <input type="number" min="1" className="input" value={botCfg.otpExpiryMinutes ?? 10} onChange={(e) => setBotCfg({ ...botCfg, otpExpiryMinutes: Number(e.target.value) || 10 })} />
+          </Field>
+          <Field label="Maks Percobaan OTP">
+            <input type="number" min="1" max="10" className="input" value={botCfg.otpMaxAttempts ?? 3} onChange={(e) => setBotCfg({ ...botCfg, otpMaxAttempts: Number(e.target.value) || 3 })} />
+          </Field>
+        </div>
+        <Field label="Webhook URL Bot (untuk kirim notif ke bot)">
+          <input className="input font-mono" value={botCfg.webhookUrl ?? ""} onChange={(e) => setBotCfg({ ...botCfg, webhookUrl: e.target.value })} placeholder="https://bot.railway.app/webhook" />
+          <p className="mt-1 text-xs text-gray-400">URL endpoint bot untuk trigger notifikasi langsung. Opsional.</p>
+        </Field>
+        <button onClick={() => { action({ action: "save_settings", key: "bot", value: botCfg }, "Konfigurasi Bot disimpan"); flash("bot"); }} className="btn-primary mt-4 w-full">{saved === "bot" ? "✓ Tersimpan" : "Simpan Konfigurasi Bot"}</button>
+      </Card>
+
+      {/* TEMPLATE PESAN BOT */}
+      <Card title="Template Pesan Bot WhatsApp" className="lg:col-span-2">
+        <p className="mb-3 text-xs text-gray-400">Gunakan <code className="rounded bg-gray-100 px-1 dark:bg-slate-800">{"{{title}}"}</code>, <code className="rounded bg-gray-100 px-1 dark:bg-slate-800">{"{{url}}"}</code>, <code className="rounded bg-gray-100 px-1 dark:bg-slate-800">{"{{price}}"}</code>, <code className="rounded bg-gray-100 px-1 dark:bg-slate-800">{"{{seller}}"}</code> sebagai variabel.</p>
+        <div className="grid gap-3 md:grid-cols-2">
+          <Field label="Pengingat H-3 (iklan hampir berakhir)">
+            <textarea className="input min-h-24 text-sm" value={messages.reminderH3 ?? ""} onChange={(e) => setMessages({ ...messages, reminderH3: e.target.value })} />
+          </Field>
+          <Field label="Pengingat H-1 (iklan mau berakhir besok)">
+            <textarea className="input min-h-24 text-sm" value={messages.reminderH1 ?? ""} onChange={(e) => setMessages({ ...messages, reminderH1: e.target.value })} />
+          </Field>
+          <Field label="Instruksi Pembayaran QRIS">
+            <textarea className="input min-h-20 text-sm" value={messages.qrisInstruction ?? ""} onChange={(e) => setMessages({ ...messages, qrisInstruction: e.target.value })} />
+          </Field>
+          <Field label="Notif Iklan Aktif (ke penjual)">
+            <textarea className="input min-h-20 text-sm" value={messages.listingActive ?? ""} onChange={(e) => setMessages({ ...messages, listingActive: e.target.value })} />
+          </Field>
+          <Field label="Notif Iklan Baru (ke grup)">
+            <textarea className="input min-h-20 text-sm" value={messages.notifNewListing ?? ""} onChange={(e) => setMessages({ ...messages, notifNewListing: e.target.value })} />
+          </Field>
+        </div>
+        <button onClick={() => { action({ action: "save_settings", key: "messages", value: messages }, "Template pesan disimpan"); flash("messages"); }} className="btn-primary mt-4 w-full sm:w-auto sm:px-10">{saved === "messages" ? "✓ Tersimpan" : "Simpan Template Pesan"}</button>
+      </Card>
+
+      {/* AREA POPULER */}
+      <Card title="Daftar Area / Wilayah Populer">
+        <p className="mb-2 text-xs text-gray-400">Satu area per baris. Digunakan sebagai pilihan area di form iklan.</p>
+        <textarea
+          className="input min-h-48 font-mono text-sm"
+          value={areas}
+          onChange={(e) => setAreas(e.target.value)}
+          placeholder={"Medan Baru\nMedan Selayang\nKampus USU\n..."}
+        />
+        <button
+          onClick={() => {
+            const list = areas.split("\n").map(s => s.trim()).filter(Boolean);
+            action({ action: "save_settings", key: "areas", value: list }, "Daftar area disimpan");
+            flash("areas");
+          }}
+          className="btn-primary mt-4 w-full"
+        >{saved === "areas" ? "✓ Tersimpan" : "Simpan Daftar Area"}</button>
       </Card>
     </div>
   );

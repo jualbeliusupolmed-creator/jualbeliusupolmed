@@ -283,8 +283,8 @@ export async function POST(req) {
 
           if (updatedListing) {
             await Promise.all([
-              postToGroup(updatedListing),
-              notifyAdminNewListing(updatedListing),
+              postToGroup(updatedListing, settings?.admin),
+              notifyAdminNewListing(updatedListing, settings?.admin?.adminWa),
               notifyMatchingWanted(supa, updatedListing),
               notifyCategorySubscribers(supa, updatedListing),
             ].map(p => p.catch(() => {})));
@@ -1767,12 +1767,13 @@ export async function POST(req) {
         const { data: sellerProfile } = await supa.from("seller_profiles").select("name").eq("wa", normalizedWa).maybeSingle();
         const buyerName = sellerProfile?.name || `Pengguna WA`;
 
-        // Cek jumlah posting sebelumnya (3 pertama gratis)
+        // Cek jumlah posting sebelumnya (N pertama gratis, sesuai settings)
         const { count: pastCount } = await supa
           .from("wanted_listings")
           .select("id", { count: "exact", head: true })
           .eq("buyer_wa", normalizedWa);
-        const isFree = (pastCount || 0) < 3;
+        const dicariFreeLimt = Number(settings?.pricing?.dicariFreeLimt) || 3;
+        const isFree = (pastCount || 0) < dicariFreeLimt;
 
         const { data: wanted, error: wErr } = await supa.from("wanted_listings").insert({
           buyer_name: buyerName,

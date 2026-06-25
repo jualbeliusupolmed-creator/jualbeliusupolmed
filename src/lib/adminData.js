@@ -36,6 +36,10 @@ export const ADMIN_TABS = [
   "wabot",
   "ai",
   "broadcast",
+  "referral",
+  "tawaran",
+  "grouppost",
+  "notifikasi",
 ];
 
 export const DEFAULT_DATA = {
