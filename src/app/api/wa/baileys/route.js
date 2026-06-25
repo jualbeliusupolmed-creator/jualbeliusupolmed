@@ -161,7 +161,7 @@ export async function POST(req) {
     }
 
     // Admin commands bypass semua flow payment
-    const adminCmds = ["STATS", "PAUSE", "RESUME", "BROADCAST", "APPROVE", "REJECT"];
+    const adminCmds = ["STATS", "PAUSE", "RESUME", "BROADCAST", "APPROVE", "REJECT", "SETUJUI", "TOLAK"];
     const isAdminCommand = !file && isAdminWa(normalizedWa) &&
       adminCmds.some(cmd => {
         const t = (message || "").toUpperCase().trim();
@@ -274,14 +274,28 @@ export async function POST(req) {
             .select()
             .single();
 
-          await sendWa(senderJid,
-            `🎉 *PEMBAYARAN BERHASIL!*\n\n` +
-            `Struk *Rp ${pendingPayment.amount.toLocaleString("id-ID")}* sudah divalidasi AI.\n\n` +
-            `Iklan *"${pendingPayment.listings.title}"* sudah tayang dan disebarkan ke Grup WA! 🚀\n\n` +
-            `Cek di: ${baseUrl}`
-          );
-
           if (updatedListing) {
+            const productSlug = buildSlug(updatedListing.title, updatedListing.id);
+            const productUrl = `${baseUrl}/produk/${productSlug}`;
+
+            const fullSuccessMessage = `🎉 *PEMBAYARAN BERHASIL!*\n\n` +
+              `Struk *Rp ${pendingPayment.amount.toLocaleString("id-ID")}* sudah divalidasi AI.\n\n` +
+              `Iklan *"${updatedListing.title}"* sudah tayang dan disebarkan ke Grup WA! 🚀\n\n` +
+              `🛒 *${updatedListing.title}* — Rp ${Number(updatedListing.price).toLocaleString("id-ID")}\n` +
+              `🏷️ ${updatedListing.category}\n` +
+              `👉 ${productUrl}`;
+
+            await sendWa(senderJid, fullSuccessMessage);
+
+            // Send notification to superadmins
+            const to62 = n => (n || "").replace(/\D/g, "").replace(/^0/, "62");
+            const rawAdmins = [process.env.ADMIN_WA || "", process.env.SUPER_ADMIN_WA || ""].join(",");
+            const adminNumbers = [...new Set(rawAdmins.split(",").map(a => to62(a.trim())).filter(Boolean))];
+            
+            for (const adminNum of adminNumbers) {
+              await sendWa(adminNum, `📢 *Iklan Baru Tayang*\n\n${fullSuccessMessage}`).catch(() => {});
+            }
+
             await Promise.all([
               postToGroup(updatedListing, settings?.admin),
               notifyAdminNewListing(updatedListing, settings?.admin?.adminWa),
@@ -1012,7 +1026,7 @@ export async function POST(req) {
         return NextResponse.json({ ok: true, state: "batal_ok" });
 
       // ==========================================
-      // NAMA — Set nama profil via WA
+      // NAMA — Ajukan permintaan ganti nama (butuh persetujuan admin)
       // ==========================================
       } else if (textMsg.startsWith("NAMA ")) {
         const newName = message.replace(/^NAMA\s+/i, "").trim().slice(0, 50);
@@ -1020,11 +1034,58 @@ export async function POST(req) {
           await sendWa(senderJid, "❌ Nama terlalu pendek.\n\nContoh: *NAMA Budi Santoso*");
           return NextResponse.json({ ok: true, state: "nama_invalid" });
         }
-        await supa.from("seller_profiles").upsert({ wa: normalizedWa, name: newName }, { onConflict: "wa" });
-        await supa.from("listings").update({ seller_name: newName }).eq("seller_wa", normalizedWa).in("status", ["active", "pending"]);
-        const namaMsg = `✅ *Nama profil diperbarui!*\n\n📛 Nama: *${newName}*\n\nNama ini akan tampil di semua iklan kamu.`;
+
+        // Cek sudah ada pending request
+        const { data: existingReq } = await supa
+          .from("profile_change_requests")
+          .select("id")
+          .eq("seller_wa", normalizedWa)
+          .eq("field", "name")
+          .eq("status", "pending")
+          .maybeSingle();
+
+        if (existingReq) {
+          await sendWa(senderJid, "⏳ Permintaan ganti nama sebelumnya masih menunggu persetujuan admin. Tunggu sebentar ya.");
+          return NextResponse.json({ ok: true, state: "nama_request_already_pending" });
+        }
+
+        // Ambil nama saat ini
+        const { data: currProfile } = await supa
+          .from("seller_profiles")
+          .select("name")
+          .eq("wa", normalizedWa)
+          .maybeSingle();
+
+        // Simpan request
+        await supa.from("profile_change_requests").insert({
+          seller_wa: normalizedWa,
+          field: "name",
+          current_value: currProfile?.name ?? null,
+          requested_value: newName,
+          status: "pending",
+          requested_via: "wa",
+        });
+
+        // Notifikasi admin
+        const adminWaEnv = process.env.ADMIN_WA || process.env.SUPER_ADMIN_WA;
+        if (adminWaEnv) {
+          const adminTarget = adminWaEnv.split(",")[0].trim();
+          const adminJid = adminTarget.replace(/\D/g, "") + "@s.whatsapp.net";
+          await sendWa(adminJid,
+            `📝 *Permintaan Ganti Nama Profil*\n\n` +
+            `No. WA: ${normalizedWa}\n` +
+            `Nama lama: _${currProfile?.name || "(belum ada)"}_ \n` +
+            `Nama baru: *${newName}*\n\n` +
+            `Balas:\n` +
+            `✅ *SETUJUI NAMA ${normalizedWa}*\n` +
+            `❌ *TOLAK NAMA ${normalizedWa}*\n\n` +
+            `Atau kelola di /admin/profil_request`
+          ).catch(() => {});
+        }
+
+        const namaMsg = `⏳ *Permintaan ganti nama dikirim!*\n\n📛 Nama baru: *${newName}*\n\nAdmin akan meninjau dan menyetujui perubahan ini. Anda akan dapat notifikasi setelah diproses.`;
         await sendWa(senderJid, namaMsg);
-        return NextResponse.json({ ok: true, state: "nama_updated", bot_reply: namaMsg });
+        return NextResponse.json({ ok: true, state: "nama_request_submitted", bot_reply: namaMsg });
 
       // ==========================================
       // LANGGANAN — Subscribe notif kategori baru
@@ -1237,6 +1298,83 @@ export async function POST(req) {
           `👤 Total penjual terdaftar: *${totalUsers || 0}*`;
         await sendWa(senderJid, statsMsg);
         return NextResponse.json({ ok: true, state: "stats_sent" });
+
+      // ==========================================
+      // SETUJUI NAMA [nomor] — Admin setujui ganti nama
+      // ==========================================
+      } else if (textMsg.startsWith("SETUJUI NAMA ")) {
+        if (!isAdminWa(normalizedWa)) {
+          return NextResponse.json({ ok: true, ignored: true });
+        }
+        const targetWaRaw = message.trim().split(/\s+/)[2] || "";
+        const targetWa = targetWaRaw.replace(/^0/, "62").replace(/\D/g, "");
+        if (!targetWa) {
+          await sendWa(senderJid, "❌ Format: *SETUJUI NAMA [nomor WA]*\nContoh: SETUJUI NAMA 628123456789");
+          return NextResponse.json({ ok: true, state: "setujui_invalid" });
+        }
+        const { data: pendingReq } = await supa
+          .from("profile_change_requests")
+          .select("*")
+          .eq("seller_wa", targetWa)
+          .eq("field", "name")
+          .eq("status", "pending")
+          .order("requested_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (!pendingReq) {
+          await sendWa(senderJid, `❌ Tidak ada permintaan ganti nama pending untuk nomor *${targetWa}*.`);
+          return NextResponse.json({ ok: true, state: "setujui_not_found" });
+        }
+
+        await supa.from("seller_profiles").upsert({ wa: targetWa, name: pendingReq.requested_value }, { onConflict: "wa" });
+        await supa.from("listings").update({ seller_name: pendingReq.requested_value }).eq("seller_wa", targetWa).in("status", ["active", "pending"]);
+        await supa.from("profile_change_requests").update({ status: "approved", reviewed_at: new Date().toISOString() }).eq("id", pendingReq.id);
+
+        const targetJid = targetWa + "@s.whatsapp.net";
+        await sendWa(targetJid, `✅ *Permintaan ganti nama Anda disetujui!*\n\n📛 Nama baru: *${pendingReq.requested_value}*\n\nPerubahan sudah berlaku di profil publik Anda.`).catch(() => {});
+        await sendWa(senderJid, `✅ Nama profil *${targetWa}* berhasil diubah menjadi *${pendingReq.requested_value}*. Penjual sudah diberitahu.`);
+        return NextResponse.json({ ok: true, state: "setujui_done" });
+
+      // ==========================================
+      // TOLAK NAMA [nomor] [alasan] — Admin tolak ganti nama
+      // ==========================================
+      } else if (textMsg.startsWith("TOLAK NAMA ")) {
+        if (!isAdminWa(normalizedWa)) {
+          return NextResponse.json({ ok: true, ignored: true });
+        }
+        const parts = message.trim().split(/\s+/);
+        const targetWaRaw = parts[2] || "";
+        const targetWa = targetWaRaw.replace(/^0/, "62").replace(/\D/g, "");
+        const alasan = parts.slice(3).join(" ").trim();
+
+        if (!targetWa) {
+          await sendWa(senderJid, "❌ Format: *TOLAK NAMA [nomor WA] [alasan opsional]*\nContoh: TOLAK NAMA 628123456789 Nama mengandung kata tidak pantas");
+          return NextResponse.json({ ok: true, state: "tolak_invalid" });
+        }
+
+        const { data: pendingReqTolak } = await supa
+          .from("profile_change_requests")
+          .select("*")
+          .eq("seller_wa", targetWa)
+          .eq("field", "name")
+          .eq("status", "pending")
+          .order("requested_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (!pendingReqTolak) {
+          await sendWa(senderJid, `❌ Tidak ada permintaan ganti nama pending untuk nomor *${targetWa}*.`);
+          return NextResponse.json({ ok: true, state: "tolak_not_found" });
+        }
+
+        await supa.from("profile_change_requests").update({ status: "rejected", reviewed_at: new Date().toISOString(), review_note: alasan || null }).eq("id", pendingReqTolak.id);
+
+        const noteMsg = alasan ? `\n\nAlasan: _${alasan}_` : "";
+        const targetJidTolak = targetWa + "@s.whatsapp.net";
+        await sendWa(targetJidTolak, `❌ *Permintaan ganti nama Anda ditolak.*${noteMsg}\n\nHubungi admin jika ada pertanyaan.`).catch(() => {});
+        await sendWa(senderJid, `✅ Permintaan ganti nama untuk *${targetWa}* ditolak. Penjual sudah diberitahu.`);
+        return NextResponse.json({ ok: true, state: "tolak_done" });
 
       // ==========================================
       // PAUSE [nomor] — Admin pause bot untuk user
@@ -1591,6 +1729,7 @@ export async function POST(req) {
           `• *IKLAN [kode]* → Lihat detail iklan\n` +
           `\n━━━ 👤 PROFIL & RIWAYAT ━━━\n` +
           `• *SAYA* → Profil & statistik saya\n` +
+          `• *NAMA [nama baru]* → Ajukan ganti nama profil\n` +
           `• *REFERRAL* → Kode referral & bump gratis\n` +
           `• *RIWAYAT* → 10 transaksi terakhir\n` +
           `• *PENAWARAN SAYA* → Tawaran yang kamu kirim\n` +
