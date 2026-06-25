@@ -2,11 +2,15 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getSettings } from "@/lib/settings";
 import { FEES } from "@/lib/fees";
+import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req) {
   try {
+    const rl = rateLimit(getClientIp(req), { limit: 10, windowMs: 60_000 });
+    if (!rl.ok) return NextResponse.json({ error: "Terlalu banyak permintaan. Coba lagi sebentar." }, { status: 429, headers: { "Retry-After": String(rl.retryAfter) } });
+
     const { listing_id } = await req.json();
     if (!listing_id)
       return NextResponse.json({ error: "listing_id wajib" }, { status: 400 });

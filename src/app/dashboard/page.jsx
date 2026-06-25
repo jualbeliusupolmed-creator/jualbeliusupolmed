@@ -208,6 +208,22 @@ function DashboardInner() {
     }
   }
 
+  async function deleteListing(id, title) {
+    if (!confirm(`Hapus iklan "${title}" secara permanen? Aksi ini tidak bisa dibatalkan.`)) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/listings/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal menghapus iklan");
+      toast.success("Iklan berhasil dihapus.");
+      load();
+    } catch (e) {
+      toast.error(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function deleteWanted(id) {
     if (!confirm("Hapus postingan dicari ini?")) return;
     setBusy(true);
@@ -567,12 +583,21 @@ function DashboardInner() {
 
       {/* ===== UI ===== */}
 
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-extrabold">Dashboard Penjual</h1>
-          <p className="mt-1 text-gray-500">Kelola iklan, stok, dan status barangmu.</p>
+          {sellerProfile?.name && sellerProfile.name !== "Pengguna WA" && (
+            <p className="mt-0.5 text-sm text-gray-500">Halo, {sellerProfile.name} 👋</p>
+          )}
         </div>
-        {wa && <PushNotificationButton wa={wa} />}
+        <div className="flex shrink-0 items-center gap-2">
+          {wa && <PushNotificationButton wa={wa} />}
+          {loaded && (
+            <Link href="/jual" className="btn-primary text-sm px-3 py-2 flex items-center gap-1.5">
+              + Tambah Iklan
+            </Link>
+          )}
+        </div>
       </div>
 
       {note && (
@@ -1268,12 +1293,19 @@ function DashboardInner() {
                               🚫 Ditangguhkan admin
                             </span>
                           )}
+                          <button
+                            onClick={() => deleteListing(i.id, i.title)}
+                            className="btn-outline text-xs py-1 px-2.5 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 border-rose-200 dark:border-rose-900/50 mt-1 w-fit"
+                          >
+                            🗑 Hapus
+                          </button>
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
+
             </div>
           ) : activeTab === "dicari" ? (
             <div className="mt-6 space-y-4">
@@ -1373,29 +1405,51 @@ function DashboardInner() {
                     </div>
                   </div>
 
-                  {/* Top Listings */}
-                  {analytics.topListings?.length > 0 && (
-                    <div className="card p-5">
-                      <h3 className="font-bold text-sm mb-4 dark:text-white">📈 Iklan Paling Banyak Dilihat</h3>
-                      <div className="space-y-3">
-                        {analytics.topListings.map((l) => (
-                          <div key={l.id} className="flex items-center gap-3">
-                            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-slate-800">
-                              {l.image_url && <Image src={l.image_url} alt="" width={40} height={40} className="h-full w-full object-cover" />}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate dark:text-white">{l.title}</p>
-                              <p className="text-xs text-gray-500 dark:text-slate-400">{rupiah(l.price)} · {l.category}</p>
-                            </div>
-                            <div className="text-right shrink-0">
-                              <p className="text-sm font-bold dark:text-white">{(l.views || 0).toLocaleString("id-ID")}x</p>
-                              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${statusBadge(l.status)}`}>{l.status}</span>
-                            </div>
-                          </div>
-                        ))}
+                  {/* Per-listing analytics table */}
+                  {(analytics.allListings || analytics.topListings)?.length > 0 && (() => {
+                    const listings = analytics.allListings || analytics.topListings;
+                    const maxViews = Math.max(...listings.map((l) => l.views || 0), 1);
+                    return (
+                      <div className="card p-5">
+                        <h3 className="font-bold text-sm mb-4 dark:text-white">📈 Performa Per Iklan</h3>
+                        <div className="space-y-3">
+                          {listings.map((l) => {
+                            const pct = Math.round(((l.views || 0) / maxViews) * 100);
+                            const sharePct = analytics.summary.totalViews > 0
+                              ? Math.round(((l.views || 0) / analytics.summary.totalViews) * 100)
+                              : 0;
+                            return (
+                              <div key={l.id}>
+                                <div className="flex items-center gap-3">
+                                  <div className="h-9 w-9 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-slate-800">
+                                    {l.image_url && <Image src={l.image_url} alt="" width={36} height={36} className="h-full w-full object-cover" />}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between gap-2">
+                                      <p className="text-sm font-medium truncate dark:text-white">{l.title}</p>
+                                      <div className="text-right shrink-0">
+                                        <span className="text-sm font-bold dark:text-white">{(l.views || 0).toLocaleString("id-ID")}</span>
+                                        <span className="text-xs text-gray-400 ml-1">×</span>
+                                        {sharePct > 0 && (
+                                          <span className="ml-1 text-[10px] text-gray-400">({sharePct}%)</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="mt-1.5 h-1.5 w-full rounded-full bg-gray-100 dark:bg-slate-800 overflow-hidden">
+                                      <div
+                                        className={`h-full rounded-full transition-all ${l.status === "sold" ? "bg-gray-400" : "bg-sky-400"}`}
+                                        style={{ width: `${pct}%` }}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   {/* Recent Offers */}
                   {analytics.recentOffers?.length > 0 && (

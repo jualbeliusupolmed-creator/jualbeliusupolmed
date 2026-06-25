@@ -198,3 +198,37 @@ export async function PATCH(req, { params }) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }
+
+// DELETE /api/listings/[id]  -> seller hapus iklan milik sendiri (expired/suspended/sold only)
+export async function DELETE(req, { params }) {
+  try {
+    const { id } = params;
+    const supa = getAdminClient();
+    const sessionWa = getSellerSession();
+
+    if (!sessionWa) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const { data: listing } = await supa
+      .from("listings")
+      .select("seller_wa, status, title")
+      .eq("id", id)
+      .single();
+
+    if (!listing) return NextResponse.json({ error: "Listing tidak ditemukan" }, { status: 404 });
+    if (listing.seller_wa !== sessionWa) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    if (!["expired", "suspended", "sold"].includes(listing.status)) {
+      return NextResponse.json(
+        { error: "Iklan aktif tidak bisa dihapus. Tandai terjual atau tunggu masa tayang habis." },
+        { status: 400 }
+      );
+    }
+
+    const { error } = await supa.from("listings").delete().eq("id", id);
+    if (error) throw new Error(error.message);
+
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
+}

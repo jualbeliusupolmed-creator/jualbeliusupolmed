@@ -3,11 +3,15 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { verifyReceiptImage } from "@/lib/gemini";
 import { sendWa, notifyAdminNewListing, postToGroup, postWantedToGroup } from "@/lib/fonnte";
 import { buildSlug } from "@/lib/slug";
+import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req) {
   try {
+    const rl = rateLimit(getClientIp(req), { limit: 5, windowMs: 60_000 });
+    if (!rl.ok) return NextResponse.json({ error: "Terlalu banyak permintaan. Coba lagi sebentar." }, { status: 429, headers: { "Retry-After": String(rl.retryAfter) } });
+
     const formData = await req.formData();
     const receiptFile = formData.get("receipt");
     const transactionId = formData.get("transactionId"); // Maps to midtrans_order_id
