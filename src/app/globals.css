@@ -14,7 +14,7 @@ html {
 }
 
 body {
-  @apply bg-white text-gray-900 antialiased transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100;
+  @apply bg-slate-50 text-gray-900 antialiased transition-colors duration-300 dark:bg-[#0B1120] dark:text-slate-100;
   font-feature-settings: "cv11", "ss01";
 }
 
@@ -39,7 +39,7 @@ body {
     @apply btn border border-gray-200 bg-white text-gray-800 hover:bg-gray-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800;
   }
   .card {
-    @apply rounded-xl border border-gray-200 bg-white transition-all dark:border-slate-800 dark:bg-slate-900/40 dark:backdrop-blur-md;
+    @apply rounded-2xl border border-gray-100 bg-white/80 shadow-sm backdrop-blur-xl transition-all dark:border-slate-800/60 dark:bg-[#0B1120]/70;
   }
   .input {
     @apply w-full rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-900 focus:ring-4 focus:ring-gray-900/5 dark:border-slate-800 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-white dark:focus:ring-white/5;
