@@ -199,7 +199,7 @@ export async function POST(req) {
       });
 
     // Seller boleh kirim TAWAR BIAYA meski ada pending payment — jangan block
-    const isTawarBiaya = !file && textMsg?.startsWith("TAWAR BIAYA ");
+    const isTawarBiaya = !file && (message || "").toUpperCase().trim().startsWith("TAWAR BIAYA ");
 
     // ==========================================
     // STATE 2: Menunggu Bukti Transfer (Struk)
@@ -1265,7 +1265,7 @@ export async function POST(req) {
       // ==========================================
       // TAWAR — Tawar harga listing
       // ==========================================
-      } else if (textMsg.startsWith("TAWAR ")) {
+      } else if (textMsg.startsWith("TAWAR ") && !textMsg.startsWith("TAWAR BIAYA ")) {
         const tawarParts = message.trim().split(/\s+/);
         const tawarShortId = tawarParts[1];
         const tawarHarga = parseInt(tawarParts[2]);
