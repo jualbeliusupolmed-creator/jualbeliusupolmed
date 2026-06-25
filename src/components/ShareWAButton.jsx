@@ -3,20 +3,26 @@
 import { rupiah } from "@/lib/fees";
 import { buildSlug } from "@/lib/slug";
 
-// Bagikan produk via WhatsApp (atau native share di HP). Cocok untuk
-// menyebarkan ke teman/grup — kanal utama audiens kampus.
 export default function ShareWAButton({ listing }) {
   function shareUrl() {
-    // Di client-side, window.location.origin selalu mengembalikan URL yang benar
-    // (https://www.jualbelimedan.web.id di production, url lokal di dev)
-    const base = typeof window !== "undefined" ? window.location.origin : "https://www.jualbelimedan.web.id";
+    const base = typeof window !== "undefined"
+      ? window.location.origin
+      : (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id");
     return `${base}/produk/${buildSlug(listing.title, listing.id)}`;
   }
 
   function shareText() {
+    const cond = listing.condition === "new" ? " · Baru" : listing.condition === "used" ? " · Bekas" : "";
+    const isRental = listing.type === "sewa";
+    const priceStr = isRental && listing.rental_period
+      ? `${rupiah(listing.price)}/${listing.rental_period}`
+      : rupiah(listing.price);
     return (
-      `*${listing.title}* — ${rupiah(listing.price)}\n` +
-      `Lihat di Jual Beli Medan:\n${shareUrl()}`
+      `📦 *${listing.title}*\n` +
+      `💰 ${priceStr}${cond}\n` +
+      (listing.category ? `🏷️ ${listing.category}\n` : "") +
+      `\n👉 ${shareUrl()}\n` +
+      `_Jual Beli USU Polmed — COD area kampus_`
     );
   }
 

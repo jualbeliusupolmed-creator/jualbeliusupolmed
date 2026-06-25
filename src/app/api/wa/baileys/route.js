@@ -23,6 +23,33 @@ function getQrisUrl() {
   return `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id"}/qris.png`;
 }
 
+async function processImageWithWatermark(fBuf) {
+  try {
+    const metadata = await sharp(fBuf).metadata();
+    const width = metadata.width || 800;
+    const height = metadata.height || 800;
+    
+    const svgOverlay = `
+      <svg width="${width}" height="${height}">
+        <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" 
+              font-size="${Math.max(width * 0.05, 20)}px" font-family="Arial, sans-serif" 
+              fill="rgba(255,255,255,0.7)" stroke="rgba(0,0,0,0.5)" stroke-width="2" font-weight="bold" 
+              transform="rotate(-30, ${width/2}, ${height/2})">
+          JUAL BELI USU
+        </text>
+      </svg>
+    `;
+
+    return await sharp(fBuf)
+      .composite([{ input: Buffer.from(svgOverlay), blend: 'over' }])
+      .webp({ quality: 80 })
+      .toBuffer();
+  } catch (err) {
+    console.error("[watermark] error:", err);
+    return await sharp(fBuf).webp({ quality: 80 }).toBuffer();
+  }
+}
+
 async function notifyMatchingWanted(supa, listing) {
   try {
     const { data: matches } = await supa
@@ -2366,7 +2393,7 @@ export async function POST(req) {
         let ext = "bin";
 
         if (fMime.startsWith("image/")) {
-          uploadBuf = await sharp(fBuf).webp({ quality: 80 }).toBuffer();
+          uploadBuf = await processImageWithWatermark(fBuf);
           uploadMime = "image/webp";
           ext = "webp";
         } else if (fMime.startsWith("video/")) {

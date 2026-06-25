@@ -100,14 +100,19 @@ export async function generateMetadata({ params }) {
 
   const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
   const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "Jual Beli USU Polmed";
-  const title = `${listing.title} — ${rupiah(listing.price)}`;
-  const description = listing.description
-    ? listing.description.slice(0, 155)
-    : `${listing.title} dijual ${rupiah(listing.price)} oleh ${listing.seller_name} di ${siteName}. COD area kampus, transaksi dibantu admin.`;
+  const condLabel = listing.condition === "new" ? "Baru" : listing.condition === "used" ? "Bekas" : null;
+  const isRental = listing.type === "sewa";
+  const priceLabel = isRental && listing.rental_period
+    ? `${rupiah(listing.price)}/${listing.rental_period}`
+    : rupiah(listing.price);
+  const title = `${listing.title} — ${priceLabel}${condLabel ? ` (${condLabel})` : ""}`;
+  const descBase = listing.description ? listing.description.slice(0, 120) : null;
+  const description = descBase
+    ? `${descBase} — ${priceLabel}. COD area USU & Polmed Medan.`
+    : `${listing.title}${condLabel ? ` kondisi ${condLabel}` : ""} dijual ${priceLabel} oleh ${listing.seller_name} di ${siteName}. COD kampus USU & Polmed, transaksi aman dibantu admin.`;
   const canonicalSlug = buildSlug(listing.title, listing.id);
   const url = `${baseUrl}/produk/${canonicalSlug}`;
 
-  // Dynamic OG image via /api/og
   const ogParams = new URLSearchParams({
     title: listing.title,
     price: String(listing.price || ""),
@@ -118,11 +123,27 @@ export async function generateMetadata({ params }) {
   });
   const ogImageUrl = `${baseUrl}/api/og?${ogParams.toString()}`;
 
+  const keywords = [
+    listing.title, listing.category, listing.seller_name,
+    condLabel, listing.listing_code ? `kode ${listing.listing_code}` : null,
+    "jual beli USU", "jual beli Polmed", "marketplace kampus Medan",
+    "Universitas Sumatera Utara", "Politeknik Negeri Medan",
+    "COD Medan", "preloved mahasiswa",
+  ].filter(Boolean);
+
   return {
     title,
     description,
-    keywords: [listing.title, listing.category, listing.seller_name, "jual beli USU", "marketplace Medan"].filter(Boolean),
-    openGraph: { title, description, url, type: "website", siteName, locale: "id_ID", images: [{ url: ogImageUrl, width: 1200, height: 630, alt: listing.title }] },
+    keywords,
+    openGraph: {
+      title,
+      description,
+      url,
+      type: "website",
+      siteName,
+      locale: "id_ID",
+      images: [{ url: ogImageUrl, width: 1200, height: 630, alt: listing.title }],
+    },
     twitter: { card: "summary_large_image", title, description, images: [ogImageUrl] },
     alternates: { canonical: url },
   };
@@ -145,6 +166,7 @@ export default async function ProdukPage({ params }) {
   // rich result (harga, ketersediaan) di Google.
   const baseUrl =
     (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+  const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "Jual Beli USU Polmed";
   const productUrl = `${baseUrl}/produk/${buildSlug(listing.title, listing.id)}`;
   const productJsonLd = {
     "@context": "https://schema.org",
@@ -157,6 +179,8 @@ export default async function ProdukPage({ params }) {
       ? [listing.image_url]
       : undefined,
     category: listing.category,
+    sku: listing.listing_code ? String(listing.listing_code) : listing.id?.slice(0, 8),
+    brand: { "@type": "Organization", name: siteName },
     offers: {
       "@type": "Offer",
       url: productUrl,
@@ -168,7 +192,14 @@ export default async function ProdukPage({ params }) {
       availability: sold
         ? "https://schema.org/SoldOut"
         : "https://schema.org/InStock",
-      seller: { "@type": "Person", name: listing.seller_name },
+      priceValidUntil: listing.expires_at
+        ? new Date(listing.expires_at).toISOString().split("T")[0]
+        : new Date(Date.now() + 14 * 86400000).toISOString().split("T")[0],
+      seller: {
+        "@type": "Person",
+        name: listing.seller_name,
+        identifier: listing.seller_wa,
+      },
     },
   };
   const breadcrumbJsonLd = {
