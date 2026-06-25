@@ -235,7 +235,8 @@ export async function notifyCategorySubscribers(supa, listing) {
 // ============================================================================
 
 export async function notifyAdminNewListing(listing, overrideAdminWa) {
-  const adminWa = overrideAdminWa || process.env.ADMIN_WA;
+  // Env var selalu prioritas — DB fallback kalau env kosong
+  const adminWa = process.env.ADMIN_WA || process.env.SUPER_ADMIN_WA || overrideAdminWa;
   if (!adminWa) return { ok: false, skipped: true };
   const url = `${baseUrl()}/produk/${buildSlug(listing.title, listing.id)}`;
   const msg =
