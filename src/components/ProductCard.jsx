@@ -22,12 +22,11 @@ export default function ProductCard({ listing }) {
       <Link href={`/produk/${buildSlug(listing.title, listing.id)}`} className="block">
         <div className="relative aspect-square overflow-hidden bg-gray-100 dark:bg-slate-950">
           {listing.image_url ? (
-            <Image
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
               src={listing.image_url}
               alt={listing.title}
-              fill
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
             />
           ) : (
             <div className="grid h-full w-full place-items-center text-gray-300 dark:text-slate-800">

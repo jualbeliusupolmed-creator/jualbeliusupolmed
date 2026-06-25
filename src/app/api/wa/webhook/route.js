@@ -109,12 +109,31 @@ export async function POST(req) {
           .select()
           .single();
 
-        // Notif Sukses ke User
-        const successMessage = `🎉 *PEMBAYARAN BERHASIL*\n\nStruk sebesar *Rp ${pendingPayment.amount.toLocaleString("id-ID")}* telah divalidasi oleh AI.\n\nIklan untuk *"${pendingPayment.listings.title}"* sudah tayang dan disebarkan ke Grup WhatsApp! 🚀\n\nCek di website: ${process.env.NEXT_PUBLIC_BASE_URL}`;
-        await sendWa(normalizedWa, successMessage);
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
 
-        // Auto-post ke Grup
         if (updatedListing) {
+          const productSlug = (await import("@/lib/slug")).buildSlug(updatedListing.title, updatedListing.id);
+          const productUrl = `${baseUrl}/produk/${productSlug}`;
+
+          const fullSuccessMessage = `🎉 *PEMBAYARAN BERHASIL*\n\n` +
+            `Struk sebesar *Rp ${pendingPayment.amount.toLocaleString("id-ID")}* telah divalidasi oleh AI.\n\n` +
+            `Iklan untuk *"${updatedListing.title}"* sudah tayang dan disebarkan ke Grup WhatsApp! 🚀\n\n` +
+            `🛒 *${updatedListing.title}* — Rp ${Number(updatedListing.price).toLocaleString("id-ID")}\n` +
+            `🏷️ ${updatedListing.category}\n` +
+            `👉 ${productUrl}`;
+
+          await sendWa(normalizedWa, fullSuccessMessage);
+
+          // Send notification to superadmins
+          const to62 = n => (n || "").replace(/\D/g, "").replace(/^0/, "62");
+          const rawAdmins = [process.env.ADMIN_WA || "", process.env.SUPER_ADMIN_WA || ""].join(",");
+          const adminNumbers = [...new Set(rawAdmins.split(",").map(a => to62(a.trim())).filter(Boolean))];
+          
+          for (const adminNum of adminNumbers) {
+            await sendWa(adminNum, `📢 *Iklan Baru Tayang*\n\n${fullSuccessMessage}`).catch(() => {});
+          }
+
+          // Auto-post ke Grup
           await postToGroup(updatedListing);
         }
 
