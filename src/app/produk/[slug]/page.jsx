@@ -144,7 +144,7 @@ export default async function ProdukPage({ params }) {
   // JSON-LD Product + BreadcrumbList — agar listing bisa muncul sebagai
   // rich result (harga, ketersediaan) di Google.
   const baseUrl =
-    (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbelimedan.web.id").trim();
+    (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
   const productUrl = `${baseUrl}/produk/${buildSlug(listing.title, listing.id)}`;
   const productJsonLd = {
     "@context": "https://schema.org",
@@ -162,7 +162,9 @@ export default async function ProdukPage({ params }) {
       url: productUrl,
       price: listing.price,
       priceCurrency: "IDR",
-      itemCondition: "https://schema.org/UsedCondition",
+      itemCondition: listing.condition === "new"
+        ? "https://schema.org/NewCondition"
+        : "https://schema.org/UsedCondition",
       availability: sold
         ? "https://schema.org/SoldOut"
         : "https://schema.org/InStock",
