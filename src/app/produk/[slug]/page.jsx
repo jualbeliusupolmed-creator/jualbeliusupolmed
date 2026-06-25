@@ -197,17 +197,14 @@ export default async function ProdukPage({ params }) {
       <ViewTracker listingId={listing.id} />
       <RecentlyViewedSaver listing={listing} slug={params.slug} />
       {/* Breadcrumb */}
-      <nav className="text-sm text-gray-400">
-        <Link href="/" className="hover:text-primary">
-          Beranda
-        </Link>{" "}
-        /{" "}
-        <Link
-          href={`/?cat=${listing.category}`}
-          className="hover:text-primary"
-        >
+      <nav className="flex items-center gap-1 min-w-0 text-sm text-gray-400">
+        <Link href="/" className="hover:text-primary shrink-0">Beranda</Link>
+        <span className="shrink-0">/</span>
+        <Link href={`/?cat=${listing.category}`} className="hover:text-primary shrink-0">
           {listing.category}
         </Link>
+        <span className="shrink-0">/</span>
+        <span className="truncate text-gray-500">{listing.title}</span>
       </nav>
 
       <div className="mt-4 grid gap-8 md:grid-cols-2">
