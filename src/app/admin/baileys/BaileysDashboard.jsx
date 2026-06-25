@@ -26,7 +26,7 @@ function useApi(endpoint, autoFetch = true) {
   const fetch_ = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      const res = await fetch(`/api/admin/baileys?endpoint=${endpoint}`);
+      const res = await fetch(`/api/admin/baileys?endpoint=${endpoint}&_t=${Date.now()}`);
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Gagal");
       setData(json);
