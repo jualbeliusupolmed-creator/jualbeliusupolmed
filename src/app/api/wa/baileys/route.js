@@ -1878,8 +1878,7 @@ export async function POST(req) {
       // MENU / HELP / BANTUAN — Daftar perintah
       // ==========================================
       } else if (textMsg === "MENU" || textMsg === "HELP" || textMsg === "BANTUAN") {
-        await sendWa(senderJid,
-          `📋 *Menu Bot Jual Beli USU*\n\n` +
+        let menuStr = `📋 *Menu Bot Jual Beli USU*\n\n` +
           `━━━ 🛒 IKLAN ━━━\n` +
           `• Kirim foto+teks → Pasang iklan baru\n` +
           `• *IKLANKU* → Semua iklan saya\n` +
@@ -1911,8 +1910,21 @@ export async function POST(req) {
           `• *REFERRAL* → Kode referral & bump gratis\n` +
           `• *RIWAYAT* → 10 transaksi terakhir\n` +
           `• *PENAWARAN SAYA* → Tawaran yang kamu kirim\n` +
-          `• *LAPOR [kode] [alasan]* → Laporkan iklan\n`
-        );
+          `• *LAPOR [kode] [alasan]* → Laporkan iklan\n`;
+          
+        if (isAdminWa(normalizedWa)) {
+          menuStr += `\n━━━ 👑 MENU ADMIN ━━━\n` +
+            `• *SETMODE AUTO* → Bot membalas pesan otomatis\n` +
+            `• *SETMODE MANUAL* → Matikan bot (mode manual)\n` +
+            `• *STATS* → Lihat statistik pendapatan & user\n` +
+            `• *PAUSE [nomor]* → Hentikan bot untuk 1 user\n` +
+            `• *RESUME [nomor]* → Nyalakan kembali bot untuk user\n` +
+            `• *BROADCAST [pesan]* → Pesan massal ke semua penjual\n` +
+            `• *APPROVE / REJECT [kode]* → Konfirmasi hapus iklan\n` +
+            `• *SETUJUI / TOLAK NAMA [nomor]* → Konfirmasi ganti nama\n`;
+        }
+
+        await sendWa(senderJid, menuStr);
         return NextResponse.json({ ok: true, state: "menu_shown" });
 
       // ==========================================
@@ -2053,7 +2065,21 @@ export async function POST(req) {
 
       // "admin" / "min" / "mimin" → sapaan ke bot, balas dengan menu
       if (msgLower === "admin" || msgLower === "min" || msgLower === "mimin" || msgLower === "halo admin" || msgLower === "hai min") {
-        const greetingMsg = kwConfig.greeting || "Halo! 👋\n\nKetik salah satu perintah berikut:\n• *JUAL* — Pasang iklan\n• *CARI [nama barang]* — Cari barang\n• *PERPANJANG* — Perpanjang iklan\n• *UPGRADE* — Upgrade iklan\n• *MENU* — Lihat semua perintah lengkap\n• *ADMIN* — Hubungi admin\n\nAtau langsung kirim *Foto + Deskripsi + Harga* untuk pasang iklan!\n\n🌐 Website: jualbeliusupolmed.web.id";
+        let greetingMsg = kwConfig.greeting || "Halo! 👋\n\nKetik salah satu perintah berikut:\n• *JUAL* — Pasang iklan\n• *CARI [nama barang]* — Cari barang\n• *PERPANJANG* — Perpanjang iklan\n• *UPGRADE* — Upgrade iklan\n• *MENU* — Lihat semua perintah lengkap\n• *ADMIN* — Hubungi admin\n\nAtau langsung kirim *Foto + Deskripsi + Harga* untuk pasang iklan!\n\n🌐 Website: jualbeliusupolmed.web.id";
+        
+        if (isAdminWa(normalizedWa)) {
+          greetingMsg = `👑 *Halo SuperAdmin!*\n\nBerikut daftar perintah khusus Admin yang bisa Anda gunakan:\n\n` +
+            `• *SETMODE AUTO* → Bot membalas pesan otomatis\n` +
+            `• *SETMODE MANUAL* → Matikan bot (semua pesan diteruskan ke admin)\n` +
+            `• *STATS* → Lihat statistik pendapatan & user\n` +
+            `• *PAUSE [nomor]* → Hentikan bot untuk 1 user\n` +
+            `• *RESUME [nomor]* → Nyalakan kembali bot untuk user\n` +
+            `• *BROADCAST [pesan]* → Pesan massal ke semua penjual\n` +
+            `• *APPROVE / REJECT [kode]* → Konfirmasi hapus iklan\n` +
+            `• *SETUJUI / TOLAK NAMA [nomor]* → Konfirmasi ganti nama\n\n` +
+            `Untuk melihat menu pelanggan, ketik *MENU*.`;
+        }
+
         await sendWa(senderJid, greetingMsg);
         return NextResponse.json({ ok: true, state: "admin_greeting", bot_reply: greetingMsg });
       }
