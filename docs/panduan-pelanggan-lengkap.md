@@ -7,26 +7,52 @@
 
 ## Daftar Isi
 
-1. [Cara Pasang Iklan](#1-cara-pasang-iklan)
-2. [Kelola Iklan](#2-kelola-iklan)
-3. [Upgrade Iklan](#3-upgrade-iklan)
-4. [Tawar & Tawaran](#4-tawar--tawaran)
-5. [Cari Barang](#5-cari-barang)
-6. [Langganan Kategori](#6-langganan-kategori)
-7. [Lapor Iklan](#7-lapor-iklan)
+1. [Registrasi & Login](#1-registrasi--login)
+2. [Cara Pasang Iklan](#2-cara-pasang-iklan)
+3. [Kelola Iklan](#3-kelola-iklan)
+4. [Upgrade Iklan](#4-upgrade-iklan)
+5. [Tawar & Tawaran](#5-tawar--tawaran)
+6. [Cari Barang](#6-cari-barang)
+7. [Langganan Kategori](#7-langganan-kategori)
 8. [Profil & Statistik](#8-profil--statistik)
-9. [Daftar Lengkap Perintah](#9-daftar-lengkap-perintah)
+9. [Lapor Iklan](#9-lapor-iklan)
+10. [Dashboard Web](#10-dashboard-web)
+11. [Daftar Lengkap Perintah WA](#11-daftar-lengkap-perintah-wa)
+12. [Tanya Jawab](#12-tanya-jawab)
 
 ---
 
-## 1. Cara Pasang Iklan
+## 1. Registrasi & Login
 
-### Langkah-langkah
+Tidak perlu daftar akun secara manual. Cukup dengan nomor WhatsApp.
 
-1. **Siapkan foto** barang yang mau dijual (bisa lebih dari 1 foto)
+### Login via Website
+1. Buka **jualbeliusupolmed.web.id** → klik **Login**
+2. Masukkan nomor WhatsApp aktif
+3. Bot akan kirim **OTP 6 digit** ke WA kamu
+4. Masukkan OTP + buat PIN 6 digit
+5. Login berhasil — session tersimpan 30 hari
+
+### Ganti Nama Profil
+```
+NAMA [nama baru]
+```
+Contoh: `NAMA Budi Santoso`
+
+Perubahan nama perlu disetujui admin jika nama sebelumnya sudah diverifikasi. Semua iklan aktif/pending akan ikut update namanya.
+
+---
+
+## 2. Cara Pasang Iklan
+
+Bisa lewat **WhatsApp** (lebih simpel) atau **Website** (lebih lengkap).
+
+### Via WhatsApp Bot
+
+1. **Siapkan foto** barang (bisa lebih dari 1 foto)
 2. **Kirim foto** ke nomor WA bot dengan **caption** berisi:
-   - Nama / judul barang
-   - Harga yang kamu minta
+   - Nama/judul barang
+   - Harga
    - Kondisi: baru atau bekas
    - Deskripsi singkat (opsional)
 
@@ -36,38 +62,51 @@
    harga Rp 3.500.000, area USU Medan
    ```
 
-3. **Bot AI** akan membaca pesanmu dan membalas dengan ringkasan iklan
-4. **Konfirmasi** detail iklan yang dibaca AI sudah benar
-5. **Scan QRIS** yang dikirim bot untuk bayar biaya pasang iklan
-6. **Kirim screenshot struk** pembayaran ke bot
-7. Bot memverifikasi struk → **iklan langsung tayang** di website ✅
+3. **AI bot** membaca caption dan membalas ringkasan iklan
+4. **Konfirmasi** detail sudah benar
+5. **Scan QRIS** yang dikirim bot → bayar biaya pasang
+6. **Kirim screenshot struk** ke bot
+7. AI verifikasi → **iklan tayang** ✅
+
+> Jika nominal terlalu tinggi, bisa negosiasi dengan `TAWAR BIAYA [kode] [nominal]`
+
+### Via Website
+
+1. Buka **jualbeliusupolmed.web.id/jual**
+2. Login dengan OTP WA (jika belum login)
+3. Isi form: judul, kategori, harga, kondisi, deskripsi
+4. Upload foto (otomatis dikonversi ke WebP)
+5. Submit → tampil QRIS + nominal
+6. Transfer sesuai nominal → upload screenshot struk
+7. AI verifikasi → **iklan tayang** ✅
 
 ### Yang perlu diketahui
-- Kode iklan berupa angka (contoh: **1001**) akan dikirim bot — **simpan kode ini**
+- Kode iklan (angka, contoh: **1001**) dikirim ke WA — **simpan kode ini**
 - Iklan aktif selama **14 hari** sejak tayang
 - Foto yang jelas dan deskripsi lengkap meningkatkan peluang laku
 - Jika kirim beberapa foto sekaligus, semua foto masuk ke 1 iklan
+- Setelah tayang, kamu dapat 2 pesan WA: konfirmasi + link iklan untuk di-share
 
 ---
 
-## 2. Kelola Iklan
+## 3. Kelola Iklan
 
 ### Cek Status Iklan
 ```
-CEK 1001
+CEK          → lihat semua iklan aktifmu
+CEK 1001     → detail status iklan tertentu
 ```
-Menampilkan: status aktif/expired, jumlah views, sisa hari, link iklan.
+Menampilkan: status, jumlah views, sisa hari, link iklan.
 
 ### Naikkan Iklan (BUMP)
-Iklan yang lama terpasang akan tenggelam. Bump untuk naik ke atas.
+Iklan lama akan tenggelam. Bump untuk naik ke posisi teratas.
 ```
 BUMP         → lihat daftar iklan yang bisa di-bump
 BUMP 1001    → bump iklan tertentu (bayar via QRIS)
 ```
-Biaya bump terjangkau, iklan naik ke posisi teratas.
 
 ### Perpanjang Masa Iklan
-Iklan expired tidak akan muncul di website. Perpanjang sebelum habis.
+Iklan expired tidak muncul di website. Perpanjang sebelum habis — bot akan kirim reminder H-3 dan H-1.
 ```
 PERPANJANG         → lihat daftar iklan yang bisa diperpanjang
 PERPANJANG 1001    → perpanjang iklan tertentu (bayar via QRIS)
@@ -79,13 +118,11 @@ Jika iklan expired atau tersuspend:
 ```
 AKTIFKAN 1001
 ```
-Bot akan memandu proses bayar untuk mengaktifkan kembali.
 
 ### Edit Harga
 ```
 EDIT 1001 HARGA 200000
 ```
-Ubah harga iklan tanpa perlu pasang ulang.
 
 ### Hapus Iklan
 
@@ -93,7 +130,7 @@ Ubah harga iklan tanpa perlu pasang ulang.
 ```
 HAPUS LAKU 1001
 ```
-Iklan ditandai sold dan tidak muncul di website.
+Iklan ditandai sold, tidak muncul di website.
 
 **Barang tidak laku / mau tarik iklan:**
 ```
@@ -101,87 +138,80 @@ HAPUS GALAKU 1001
 ```
 Permintaan dikirim ke admin untuk diproses.
 
+### Negosiasi Biaya (TAWAR BIAYA)
+Jika biaya pasang iklan dirasa terlalu tinggi:
+```
+TAWAR BIAYA 1001 5000
+```
+Admin akan dapat notif dan bisa setujui/tolak. Jika disetujui dengan nominal Rp 0, iklan diaktifkan gratis.
+
 ---
 
-## 3. Upgrade Iklan
+## 4. Upgrade Iklan
 
 ### Featured (Iklan Unggulan)
-Iklan ditampilkan di bagian atas dengan label ⭐ Unggulan.
+Iklan tampil di bagian atas halaman utama dengan label ⭐ Unggulan.
 ```
 UPGRADE FEATURED 1001 3    → featured 3 hari
 UPGRADE FEATURED 1001 7    → featured 7 hari
 ```
-Biaya: Rp 5.000/hari (default, bisa berbeda).
+Biaya: Rp 5.000/hari (default, bisa berbeda — cek dengan `UPGRADE`).
 
 ### Auto Bump
-Iklan otomatis dinaikkan setiap hari selama 7 hari tanpa perlu bump manual.
+Iklan otomatis dinaikkan setiap hari selama 7 hari.
 ```
 UPGRADE AUTOBUMP 1001
 ```
-Biaya: Rp 15.000/7 hari (default, bisa berbeda).
+Biaya: Rp 15.000/7 hari (default).
 
-> Ketik `UPGRADE` saja untuk melihat opsi dan harga terkini.
+> Ketik `UPGRADE` saja untuk melihat semua opsi dan harga terkini.
 
 ---
 
-## 4. Tawar & Tawaran
+## 5. Tawar & Tawaran
 
 ### Menawar Iklan Orang Lain
 ```
 TAWAR 1001 150000
-TAWAR 1001 150000 Boleh nego kak, saya serius beli
+TAWAR 1001 150000 Saya serius beli kak, bisa COD area USU?
 ```
 Format: `TAWAR [kode iklan] [harga tawaran] [pesan opsional]`
 
-Penjual akan mendapat notifikasi dan bisa balas langsung via WA.
+Penjual mendapat notifikasi WA dengan harga tawaran dan link chat langsung ke kamu.
 
 ### Lihat Tawaran Masuk (untuk Penjual)
 ```
 TAWARAN
 ```
-Menampilkan semua tawaran yang masuk ke iklanmu beserta link WA pembeli.
+Tampil semua tawaran yang masuk ke iklanmu beserta link WA pembeli.
 
 ---
 
-## 5. Cari Barang
+## 6. Cari Barang
 
 ### Posting Iklan Dicari
-Jika kamu mencari barang tertentu, post di halaman Dicari:
+Jika kamu mencari barang tertentu:
 ```
 DICARI laptop bekas budget 3 juta area USU
-DICARI motor matic 2019 plat BK
+DICARI motor matic 2019 plat BK murah
 ```
-Iklanmu akan muncul di halaman Dicari dan penjual yang punya bisa menghubungimu.
+Iklanmu muncul di halaman **Dicari** dan penjual yang punya bisa menghubungimu.
 
-Bisa juga langsung cari di website: **jualbeliusupolmed.web.id**
+Bisa juga langsung cari di website dengan kolom search.
 
 ---
 
-## 6. Langganan Kategori
+## 7. Langganan Kategori
 
-Dapatkan notifikasi WA otomatis setiap ada iklan baru di kategori tertentu.
+Dapatkan notifikasi WA otomatis setiap ada iklan baru di kategori yang kamu langgani.
 
 ```
-LANGGANAN              → lihat kategori yang bisa dilanggan
+LANGGANAN              → lihat kategori yang tersedia
 LANGGANAN Elektronik   → langganan kategori Elektronik
-LANGGANAN Laptop       → langganan kategori Laptop
+STOP                   → berhenti dari semua langganan
 ```
 
-Notifikasi dikirim otomatis begitu ada iklan baru yang sesuai.
-
----
-
-## 7. Lapor Iklan
-
-Jika menemukan iklan palsu, penipuan, atau melanggar aturan:
-```
-LAPOR 1001 Penjual tidak responsif
-LAPOR 1001 Harga tidak sesuai foto
-LAPOR 1001 Iklan duplikat
-```
-Format: `LAPOR [kode iklan] [alasan]`
-
-Admin akan meninjau laporan dalam waktu singkat.
+Notifikasi dikirim otomatis begitu ada iklan baru yang disetujui admin.
 
 ---
 
@@ -197,58 +227,102 @@ Menampilkan:
 - Rating dari pembeli
 - Tawaran yang belum dibalas
 
+Profil publik tersedia di: **jualbeliusupolmed.web.id/profil/[nomor_wa]**
+
 ---
 
-## 9. Daftar Lengkap Perintah
+## 9. Lapor Iklan
 
-### Iklan Saya
+Jika menemukan iklan palsu, penipuan, atau melanggar aturan:
+```
+LAPOR 1001 Penjual tidak responsif
+LAPOR 1001 Harga tidak sesuai dengan barang
+LAPOR 1001 Iklan duplikat
+```
+Format: `LAPOR [kode iklan] [alasan]`
+
+Admin akan meninjau laporan.
+
+---
+
+## 10. Dashboard Web
+
+Login ke **jualbeliusupolmed.web.id/dashboard** untuk:
+- Melihat semua iklan aktif, pending, expired
+- Statistik views dan tawaran
+- Riwayat pembayaran
+- Bump & perpanjang langsung dari web
+- Edit data iklan
+
+---
+
+## 11. Daftar Lengkap Perintah WA
+
+### Profil
 | Perintah | Fungsi |
 |---|---|
 | `SAYA` | Profil & statistik |
-| `CEK 1001` | Status & views iklan |
+| `NAMA [nama]` | Ganti nama profil |
+| `IKLANKU` | Daftar semua iklan |
+
+### Kelola Iklan
+| Perintah | Fungsi |
+|---|---|
+| `CEK` | Status semua iklan aktif |
+| `CEK 1001` | Status & views iklan tertentu |
 | `BUMP 1001` | Naikkan iklan ke atas |
-| `PERPANJANG 1001` | Perpanjang masa aktif |
+| `PERPANJANG 1001` | Perpanjang masa aktif 14 hari |
 | `AKTIFKAN 1001` | Aktifkan iklan expired |
 | `EDIT 1001 HARGA 200000` | Edit harga iklan |
 | `HAPUS LAKU 1001` | Tandai terjual |
 | `HAPUS GALAKU 1001` | Minta hapus iklan |
+| `TAWAR BIAYA 1001 5000` | Negosiasi biaya pasang ke admin |
+| `BATAL 1001` | Batalkan proses yang sedang berjalan |
 
 ### Upgrade
 | Perintah | Fungsi |
 |---|---|
-| `UPGRADE` | Lihat opsi upgrade |
+| `UPGRADE` | Lihat opsi & harga |
 | `UPGRADE FEATURED 1001 3` | Featured 3 hari |
+| `UPGRADE FEATURED 1001 7` | Featured 7 hari |
 | `UPGRADE AUTOBUMP 1001` | Auto bump 7 hari |
 
 ### Beli & Cari
 | Perintah | Fungsi |
 |---|---|
 | `TAWAR 1001 150000` | Tawar harga |
-| `TAWARAN` | Lihat tawaran masuk |
+| `TAWARAN` | Lihat tawaran masuk ke iklanmu |
 | `DICARI [deskripsi]` | Post barang yang dicari |
-| `LANGGANAN [kategori]` | Notif kategori baru |
 
-### Umum
+### Notifikasi & Komunitas
 | Perintah | Fungsi |
 |---|---|
-| `MENU` | Daftar semua perintah |
+| `LANGGANAN [kategori]` | Notif WA iklan baru di kategori |
+| `STOP` | Berhenti dari semua langganan |
 | `LAPOR 1001 alasan` | Laporkan iklan |
+| `MENU` | Daftar semua perintah |
 
 ---
 
-## Tanya Jawab
+## 12. Tanya Jawab
 
 **Q: Berapa lama iklan tayang?**  
-A: 14 hari sejak diaktifkan. Bisa diperpanjang dengan `PERPANJANG 1001`.
+A: 14 hari sejak diaktifkan. Bot akan kirim reminder H-3 dan H-1 sebelum expired. Perpanjang dengan `PERPANJANG 1001`.
 
 **Q: Bagaimana cara bayar?**  
-A: Scan QRIS yang dikirim bot, lalu kirim screenshot struk ke bot.
+A: Scan QRIS statis yang dikirim bot/web, transfer sesuai nominal, lalu kirim screenshot struk.
 
 **Q: Iklan saya tidak muncul di website?**  
-A: Cek status dengan `CEK 1001`. Mungkin pending konfirmasi atau sudah expired.
+A: Cek dengan `CEK 1001`. Kemungkinan masih pending moderasi admin atau struk belum terverifikasi.
 
 **Q: Bisa pasang lebih dari 1 foto?**  
-A: Bisa. Kirim beberapa foto sekaligus, semua masuk ke 1 iklan.
+A: Bisa. Via WA: kirim beberapa foto sekaligus (semua masuk ke 1 iklan). Via web: upload multi-foto di form.
 
-**Q: Bagaimana kalau salah ketik deskripsi?**  
-A: Gunakan `EDIT 1001 HARGA [harga baru]` untuk ubah harga. Untuk edit judul/deskripsi, hubungi admin.
+**Q: Bagaimana jika biaya terlalu mahal?**  
+A: Kirim `TAWAR BIAYA [kode] [nominal]` untuk negosiasi dengan admin.
+
+**Q: Bagaimana cara cek tawaran dari pembeli?**  
+A: Ketik `TAWARAN` di WA atau cek di dashboard website.
+
+**Q: Bisa ganti nama yang sudah diset?**  
+A: Bisa dengan `NAMA [nama baru]`. Perlu persetujuan admin jika nama sebelumnya sudah diverifikasi.
