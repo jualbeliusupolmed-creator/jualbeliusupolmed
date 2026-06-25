@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { parseListingFromText, verifyReceiptImage, processGeneralChat, parseWantedFromText } from "@/lib/gemini";
 import { sendWa, postToGroup, notifyAdminNewListing, notifyWantedMatch, notifyCategorySubscribers, notifyBuyerOfferResult, postWantedToGroup, notifySellerNewOffer } from "@/lib/fonnte";
@@ -6,6 +6,7 @@ import { formatWa } from "@/lib/constants";
 import { getSettings, adFeeFrom } from "@/lib/settings";
 import { buildSlug } from "@/lib/slug";
 import { rateLimit } from "@/lib/rateLimit";
+import { handleAdminCmd } from "@/lib/bot/adminHandlers";
 import sharp from "sharp";
 
 export const dynamic = "force-dynamic";
@@ -1316,309 +1317,20 @@ export async function POST(req) {
         return NextResponse.json({ ok: true, state: "iklan_detail_sent", bot_reply: iklanMsg });
 
       // ==========================================
-      // STATS — Statistik admin
+      // ADMIN COMMANDS — didelegasikan ke adminHandlers
       // ==========================================
-      } else if (textMsg === "STATS") {
-        if (!isAdminWa(normalizedWa)) {
-          return NextResponse.json({ ok: true, ignored: true });
-        }
-
-        const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
-        const [
-          { count: totalActive },
-          { count: totalToday },
-          { data: paymentsToday },
-          { count: totalUsers },
-        ] = await Promise.all([
-          supa.from("listings").select("id", { count: "exact", head: true }).eq("status", "active"),
-          supa.from("listings").select("id", { count: "exact", head: true }).gte("created_at", todayStart.toISOString()),
-          supa.from("payments").select("amount").eq("status", "paid").gte("created_at", todayStart.toISOString()),
-          supa.from("seller_profiles").select("id", { count: "exact", head: true }),
-        ]);
-
-        const revenueToday = (paymentsToday || []).reduce((sum, p) => sum + Number(p.amount), 0);
-        const txToday = paymentsToday?.length || 0;
-
-        const statsMsg =
-          `📊 *Statistik Marketplace*\n\n` +
-          `🏪 Iklan aktif: *${totalActive || 0}*\n` +
-          `📅 Iklan baru hari ini: *${totalToday || 0}*\n` +
-          `💳 Transaksi hari ini: *${txToday}*\n` +
-          `💰 Revenue hari ini: *Rp ${revenueToday.toLocaleString("id-ID")}*\n` +
-          `👤 Total penjual terdaftar: *${totalUsers || 0}*`;
-        await sendWa(senderJid, statsMsg);
-        return NextResponse.json({ ok: true, state: "stats_sent" });
-
-      // ==========================================
-      // SETUJUI NAMA [nomor] — Admin setujui ganti nama
-      // ==========================================
-      } else if (textMsg.startsWith("SETUJUI NAMA ")) {
-        if (!isAdminWa(normalizedWa)) {
-          return NextResponse.json({ ok: true, ignored: true });
-        }
-        const targetWaRaw = message.trim().split(/\s+/)[2] || "";
-        const targetWa = targetWaRaw.replace(/^0/, "62").replace(/\D/g, "");
-        if (!targetWa) {
-          await sendWa(senderJid, "❌ Format: *SETUJUI NAMA [nomor WA]*\nContoh: SETUJUI NAMA 628123456789");
-          return NextResponse.json({ ok: true, state: "setujui_invalid" });
-        }
-        const { data: pendingReq } = await supa
-          .from("profile_change_requests")
-          .select("*")
-          .eq("seller_wa", targetWa)
-          .eq("field", "name")
-          .eq("status", "pending")
-          .order("requested_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (!pendingReq) {
-          await sendWa(senderJid, `❌ Tidak ada permintaan ganti nama pending untuk nomor *${targetWa}*.`);
-          return NextResponse.json({ ok: true, state: "setujui_not_found" });
-        }
-
-        await supa.from("seller_profiles").upsert({ wa: targetWa, name: pendingReq.requested_value }, { onConflict: "wa" });
-        await supa.from("listings").update({ seller_name: pendingReq.requested_value }).eq("seller_wa", targetWa).in("status", ["active", "pending"]);
-        await supa.from("profile_change_requests").update({ status: "approved", reviewed_at: new Date().toISOString() }).eq("id", pendingReq.id);
-
-        const targetJid = targetWa + "@s.whatsapp.net";
-        await sendWa(targetJid, `✅ *Permintaan ganti nama Anda disetujui!*\n\n📛 Nama baru: *${pendingReq.requested_value}*\n\nPerubahan sudah berlaku di profil publik Anda.`).catch(() => {});
-        await sendWa(senderJid, `✅ Nama profil *${targetWa}* berhasil diubah menjadi *${pendingReq.requested_value}*. Penjual sudah diberitahu.`);
-        return NextResponse.json({ ok: true, state: "setujui_done" });
-
-      // ==========================================
-      // TOLAK NAMA [nomor] [alasan] — Admin tolak ganti nama
-      // ==========================================
-      } else if (textMsg.startsWith("TOLAK NAMA ")) {
-        if (!isAdminWa(normalizedWa)) {
-          return NextResponse.json({ ok: true, ignored: true });
-        }
-        const parts = message.trim().split(/\s+/);
-        const targetWaRaw = parts[2] || "";
-        const targetWa = targetWaRaw.replace(/^0/, "62").replace(/\D/g, "");
-        const alasan = parts.slice(3).join(" ").trim();
-
-        if (!targetWa) {
-          await sendWa(senderJid, "❌ Format: *TOLAK NAMA [nomor WA] [alasan opsional]*\nContoh: TOLAK NAMA 628123456789 Nama mengandung kata tidak pantas");
-          return NextResponse.json({ ok: true, state: "tolak_invalid" });
-        }
-
-        const { data: pendingReqTolak } = await supa
-          .from("profile_change_requests")
-          .select("*")
-          .eq("seller_wa", targetWa)
-          .eq("field", "name")
-          .eq("status", "pending")
-          .order("requested_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (!pendingReqTolak) {
-          await sendWa(senderJid, `❌ Tidak ada permintaan ganti nama pending untuk nomor *${targetWa}*.`);
-          return NextResponse.json({ ok: true, state: "tolak_not_found" });
-        }
-
-        await supa.from("profile_change_requests").update({ status: "rejected", reviewed_at: new Date().toISOString(), review_note: alasan || null }).eq("id", pendingReqTolak.id);
-
-        const noteMsg = alasan ? `\n\nAlasan: _${alasan}_` : "";
-        const targetJidTolak = targetWa + "@s.whatsapp.net";
-        await sendWa(targetJidTolak, `❌ *Permintaan ganti nama Anda ditolak.*${noteMsg}\n\nHubungi admin jika ada pertanyaan.`).catch(() => {});
-        await sendWa(senderJid, `✅ Permintaan ganti nama untuk *${targetWa}* ditolak. Penjual sudah diberitahu.`);
-        return NextResponse.json({ ok: true, state: "tolak_done" });
-
-      // ==========================================
-      // SETMODE [mode] — Admin set monetization mode
-      // ==========================================
-      } else if (textMsg.startsWith("SETMODE")) {
-        if (!isAdminWa(normalizedWa)) {
-          return NextResponse.json({ ok: true, ignored: true });
-        }
-
-        const modeArg = textMsg.split(/\s+/)[1]?.toLowerCase();
-        
-        if (!modeArg) {
-          const menuMsg = `⚙️ *Pengaturan Mode Monetisasi*\n\n` +
-            `Pilih mode yang ingin diaktifkan:\n\n` +
-            `1️⃣ *Sewa Lapak* (Bayar saat pasang iklan)\n` +
-            `2️⃣ *Jual Dulu* (Gratis pasang, bayar komisi laku)\n` +
-            `3️⃣ *Freemium* (Gratis pasang & laku, untung dari fitur premium)\n` +
-            `4️⃣ *Gratis Semua* (100% gratis promosi peluncuran)\n\n` +
-            `Balas dengan: *SETMODE [angka]*\nContoh: *SETMODE 1*`;
-          await sendWa(senderJid, menuMsg);
-          return NextResponse.json({ ok: true, state: "setmode_menu" });
-        }
-
-        const modeMap = {
-          "1": "sewalapak", "sewalapak": "sewalapak",
-          "2": "jualdulu", "jualdulu": "jualdulu",
-          "3": "freemium", "freemium": "freemium",
-          "4": "gratis", "gratis": "gratis"
-        };
-        
-        const resolvedMode = modeMap[modeArg];
-
-        if (!resolvedMode) {
-          await sendWa(senderJid, "❌ Pilihan tidak valid. Ketik *SETMODE* untuk melihat menu.");
-          return NextResponse.json({ ok: true, state: "setmode_invalid" });
-        }
-
-        const pricingSettings = await getSettings();
-        let p = { ...pricingSettings.pricing };
-
-        if (resolvedMode === "sewalapak") {
-          p.adTiers = [{ upto: 50000, flat: 2000 }, { upto: 100000, flat: 3000 }, { upto: 500000, flat: 5000 }, { upto: 1000000, flat: 7000 }, { upto: null, pct: 1 }];
-          p.soldTiers = [];
-          p.bump = 1000;
-          p.featuredPerDay = 5000;
-          p.adBarang = 2000;
-        } else if (resolvedMode === "jualdulu") {
-          p.adTiers = [{ upto: null, flat: 0 }];
-          p.soldTiers = [{ upto: 50000, flat: 0 }, { upto: 100000, pct: 10 }, { upto: null, pct: 5 }];
-          p.bump = 1000;
-          p.featuredPerDay = 5000;
-          p.adBarang = 0;
-        } else if (resolvedMode === "freemium") {
-          p.adTiers = [{ upto: null, flat: 0 }];
-          p.soldTiers = [];
-          p.bump = 2000;
-          p.featuredPerDay = 5000;
-          p.adBarang = 0;
-        } else if (resolvedMode === "gratis") {
-          p.adTiers = [{ upto: null, flat: 0 }];
-          p.soldTiers = [];
-          p.bump = 0;
-          p.featuredPerDay = 0;
-          p.adBarang = 0;
-          p.adPoster = 0;
-          p.renewalFee = 0;
-        }
-
-        await supa.from("settings").upsert({ key: "pricing", value: p }, { onConflict: "key" });
-
-        const modeLabels = {
-          sewalapak: "1. Sewa Lapak (Bayar Iklan)",
-          jualdulu: "2. Jual Dulu (Komisi Laku)",
-          freemium: "3. Freemium (Hanya Upsell)",
-          gratis: "4. Gratis Semua"
-        };
-        const confirmationMsg = 
-          `✅ Mode monetisasi berhasil diubah ke: *${modeLabels[resolvedMode]}*.\n` +
-          `Tarif otomatis diperbarui di sistem.\n\n` +
-          `Apakah Anda ingin menyiarkan pengumuman perubahan ini ke Grup WA utama?\n\n` +
-          `Balas dengan:\n` +
-          `📢 *BROADCAST SETMODE ${resolvedMode}*\n` +
-          `_(Atau abaikan pesan ini jika tidak ingin disiarkan)_`;
-        await sendWa(senderJid, confirmationMsg);
-        return NextResponse.json({ ok: true, state: "setmode_done_awaiting_broadcast" });
-
-      // ==========================================
-      // BROADCAST SETMODE [mode] — Admin setuju broadcast mode
-      // ==========================================
-      } else if (textMsg.startsWith("BROADCAST SETMODE ")) {
-        if (!isAdminWa(normalizedWa)) {
-          return NextResponse.json({ ok: true, ignored: true });
-        }
-        const bMode = textMsg.split(/\s+/)[2]?.toLowerCase();
-        const validBModes = ["sewalapak", "jualdulu", "freemium", "gratis"];
-        if (!bMode || !validBModes.includes(bMode)) {
-          return NextResponse.json({ ok: true, state: "broadcast_invalid" });
-        }
-        
-        const bSettings = await getSettings();
-        const groupJid = bSettings.admin?.groupJid || process.env.FONNTE_WA_GROUP_ID;
-        if (groupJid) {
-          let broadcastMsg = `📢 *PENGUMUMAN PENTING* 📢\n\n`;
-          if (bMode === "sewalapak") {
-            broadcastMsg += `Mulai sekarang, platform Jual Beli USU memberlakukan sistem *Sewa Lapak*.\n\nBiaya pasang iklan mulai dari Rp 2.000, tapi *TIDAK ADA KOMISI* sama sekali saat barang laku (100% hasil penjualan milik kamu)! 🤑\n\nYuk pasang iklanmu sekarang!`;
-          } else if (bMode === "jualdulu") {
-            broadcastMsg += `Kabar gembira! 🎉\n\nSekarang pasang iklan di Jual Beli USU *100% GRATIS* di awal.\nKamu baru bayar bagi hasil (komisi ringan) *HANYA JIKA* barangmu sudah laku terjual lewat platform ini.\n\nGak laku = Gak bayar sama sekali! Ayo post barang daganganmu sekarang! 🛒`;
-          } else if (bMode === "freemium") {
-            broadcastMsg += `Wahhh! 🔥\n\nPlatform Jual Beli USU sekarang sepenuhnya *GRATIS* untuk pasang iklan DAN gratis komisi laku!\n\nKami hanya menyediakan opsi berbayar bagi kamu yang ingin mengaktifkan fitur premium (seperti Sorotan Utama / Auto-Sundul) agar barang cepat laku. Mantap kan? Yuk jualan! 🚀`;
-          } else if (bMode === "gratis") {
-            broadcastMsg += `🎉 *PROMO SPESIAL PELUNCURAN!* 🎉\n\nPlatform Jual Beli USU kini menggratiskan *SEMUA* biaya layanan!\n\n✅ Gratis pasang iklan\n✅ Gratis fitur Premium (Sundul & Sorotan)\n✅ Bebas komisi saat laku\n\nMumpung masih 100% GRATIS, buruan posting semua barang jualanmu sekarang juga! 🏃‍♂️💨`;
-          }
-          await sendWa(groupJid, broadcastMsg).catch(() => {});
-          await sendWa(senderJid, `✅ Pengumuman mode monetisasi berhasil disiarkan ke Grup WA utama!`);
-        } else {
-          await sendWa(senderJid, `❌ Grup WA belum dikonfigurasi di pengaturan Admin, gagal mengirim pengumuman.`);
-        }
-        return NextResponse.json({ ok: true, state: "broadcast_sent" });
-
-      // ==========================================
-      // PAUSE [nomor] — Admin pause bot untuk user
-      // ==========================================
-      } else if (textMsg.startsWith("PAUSE ")) {
-        if (!isAdminWa(normalizedWa)) {
-          return NextResponse.json({ ok: true, ignored: true });
-        }
-
-        const pauseTarget = message.split(/\s+/)[1]?.replace(/^0/, "62").replace(/\D/g, "");
-        if (!pauseTarget) {
-          await sendWa(senderJid, "❌ Format: *PAUSE [nomor WA]*\nContoh: PAUSE 628123456789");
-          return NextResponse.json({ ok: true, state: "pause_invalid" });
-        }
-
-        const pauseSettings = await getSettings();
-        const pausedUsers = pauseSettings?.bot?.paused_users || [];
-        if (!pausedUsers.includes(pauseTarget)) {
-          pausedUsers.push(pauseTarget);
-          await supa.from("settings").update({ value: { paused_users: pausedUsers } }).eq("key", "bot");
-        }
-
-        await sendWa(senderJid, `✅ Bot di-pause untuk nomor *${pauseTarget}*.\n\nKetik *RESUME ${pauseTarget}* untuk aktifkan kembali.`);
-        return NextResponse.json({ ok: true, state: "pause_done" });
-
-      } else if (textMsg.startsWith("RESUME ")) {
-        if (!isAdminWa(normalizedWa)) {
-          return NextResponse.json({ ok: true, ignored: true });
-        }
-
-        const resumeTarget = message.split(/\s+/)[1]?.replace(/^0/, "62").replace(/\D/g, "");
-        if (!resumeTarget) {
-          await sendWa(senderJid, "❌ Format: *RESUME [nomor WA]*");
-          return NextResponse.json({ ok: true, state: "resume_invalid" });
-        }
-
-        const resumeSettings = await getSettings();
-        const resumeUsers = (resumeSettings?.bot?.paused_users || []).filter(u => u !== resumeTarget);
-        await supa.from("settings").update({ value: { paused_users: resumeUsers } }).eq("key", "bot");
-
-        await sendWa(senderJid, `✅ Bot aktif kembali untuk nomor *${resumeTarget}*.`);
-        return NextResponse.json({ ok: true, state: "resume_done" });
-
-      // ==========================================
-      // BROADCAST — Admin kirim pesan ke semua penjual
-      // ==========================================
-      } else if (textMsg.startsWith("BROADCAST ")) {
-        if (!isAdminWa(normalizedWa)) {
-          return NextResponse.json({ ok: true, ignored: true });
-        }
-
-        const bcPesan = message.replace(/^BROADCAST\s+/i, "").trim();
-        if (!bcPesan) {
-          await sendWa(senderJid, "❌ Format: *BROADCAST [pesan]*");
-          return NextResponse.json({ ok: true, state: "broadcast_invalid" });
-        }
-
-        const { data: sellers } = await supa
-          .from("listings")
-          .select("seller_wa")
-          .eq("status", "active");
-
-        const uniqueSellers = [...new Set((sellers || []).map(s => s.seller_wa).filter(Boolean))];
-        await sendWa(senderJid, `📡 Memulai broadcast ke *${uniqueSellers.length} penjual*...\n\nPersan:\n"${bcPesan.slice(0, 100)}"`);
-
-        let bcSent = 0;
-        for (const sellerWa of uniqueSellers) {
-          try {
-            const res = await sendWa(sellerWa, `📢 *Pesan dari Admin Jual Beli USU:*\n\n${bcPesan}`).catch(() => ({ ok: false }));
-            if (res.ok) bcSent++;
-            await new Promise(r => setTimeout(r, 2000));
-          } catch (_) {}
-        }
-
-        await sendWa(senderJid, `✅ *Broadcast selesai!*\nTerkirim ke *${bcSent}/${uniqueSellers.length}* penjual.`);
-        return NextResponse.json({ ok: true, state: "broadcast_done", sent: bcSent, total: uniqueSellers.length });
+      } else if (isAdminWa(normalizedWa) && (
+        textMsg === "STATS" ||
+        textMsg.startsWith("SETUJUI NAMA ") ||
+        textMsg.startsWith("TOLAK NAMA ") ||
+        textMsg.startsWith("SETMODE") ||
+        textMsg.startsWith("BROADCAST SETMODE ") ||
+        textMsg.startsWith("PAUSE ") ||
+        textMsg.startsWith("RESUME ") ||
+        (textMsg.startsWith("BROADCAST ") && !textMsg.startsWith("BROADCAST SETMODE"))
+      )) {
+        const adminRes = await handleAdminCmd({ textMsg, message, senderJid, normalizedWa, supa, sendWa, getSettings, isAdminWa });
+        if (adminRes) return adminRes;
 
       // ==========================================
       // CEK — Ringkasan semua iklanku (views + sisa hari)
