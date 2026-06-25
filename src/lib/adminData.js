@@ -32,6 +32,7 @@ export const ADMIN_TABS = [
   "pengaturan",
   "blacklist",
   "penjual",
+  "profil_request",
   "blogs",
   "wabot",
   "ai",
@@ -53,6 +54,7 @@ export const DEFAULT_DATA = {
   settings: DEFAULT_SETTINGS,
   wanted: [],
   sellersList: [],
+  profileRequests: [],
   revenue: 0,
   pendingCount: 0,
   listingsTotal: 0,
@@ -131,8 +133,8 @@ export async function getAdminStats(page = 1) {
   const paymentsTotal = paymentsRes.count;
   const pwaInstallsTotal = pwaInstallsRes.count;
 
-  // Reports, ratings, dan seller profiles — berjalan paralel
-  const [reports, ratings, sellersFromProfiles, allListingStats] = await Promise.all([
+  // Reports, ratings, seller profiles, dan profile requests — berjalan paralel
+  const [reports, ratings, sellersFromProfiles, allListingStats, profileRequests] = await Promise.all([
     safe(
       supa
         .from("reports")
@@ -165,6 +167,15 @@ export async function getAdminStats(page = 1) {
         .select("seller_wa, status, seller_name")
         .not("seller_wa", "is", null)
         .limit(10000),
+      []
+    ),
+    // Permintaan ubah profil — tampilkan semua, pending duluan
+    safe(
+      supa
+        .from("profile_change_requests")
+        .select("*")
+        .order("requested_at", { ascending: false })
+        .limit(200),
       []
     ),
   ]);
@@ -215,6 +226,7 @@ export async function getAdminStats(page = 1) {
     wanted,
     blogs,
     sellersList,
+    profileRequests,
     revenue,
     pendingCount,
     listingsTotal,

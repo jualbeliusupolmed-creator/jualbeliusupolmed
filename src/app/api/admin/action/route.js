@@ -500,6 +500,62 @@ export async function POST(req) {
         await supa.from("referrals").update({ status: "rewarded" }).eq("id", id);
         break;
 
+      // ── Permintaan Ubah Profil ─────────────────────────────────────────
+      case "approve_profile_change": {
+        const { data: req, error: reqErr } = await supa
+          .from("profile_change_requests")
+          .select("*")
+          .eq("id", id)
+          .single();
+        if (reqErr || !req) return NextResponse.json({ error: "Request tidak ditemukan" }, { status: 404 });
+        if (req.status !== "pending") return NextResponse.json({ error: "Request sudah diproses" }, { status: 400 });
+
+        // Update profil penjual
+        await supa
+          .from("seller_profiles")
+          .upsert({ wa: req.seller_wa, [req.field]: req.requested_value }, { onConflict: "wa" });
+
+        // Jika nama berubah, update semua iklan aktif
+        if (req.field === "name") {
+          await supa
+            .from("listings")
+            .update({ seller_name: req.requested_value })
+            .eq("seller_wa", req.seller_wa)
+            .in("status", ["active", "pending"]);
+        }
+
+        // Tandai request sebagai approved
+        await supa
+          .from("profile_change_requests")
+          .update({ status: "approved", reviewed_at: new Date().toISOString(), review_note: body.note || null })
+          .eq("id", id);
+
+        // Notifikasi penjual via WA
+        const fieldLabel = req.field === "name" ? "nama" : "bio";
+        await sendWa(req.seller_wa, `✅ *Permintaan perubahan ${fieldLabel} profil Anda disetujui!*\n\n${req.field === "name" ? `📛 Nama baru: *${req.requested_value}*` : `📝 Bio baru telah diperbarui.`}\n\nPerubahan sudah berlaku di profil publik Anda.`).catch(() => {});
+        break;
+      }
+
+      case "reject_profile_change": {
+        const { data: reqR, error: reqRErr } = await supa
+          .from("profile_change_requests")
+          .select("*")
+          .eq("id", id)
+          .single();
+        if (reqRErr || !reqR) return NextResponse.json({ error: "Request tidak ditemukan" }, { status: 404 });
+        if (reqR.status !== "pending") return NextResponse.json({ error: "Request sudah diproses" }, { status: 400 });
+
+        await supa
+          .from("profile_change_requests")
+          .update({ status: "rejected", reviewed_at: new Date().toISOString(), review_note: body.note || null })
+          .eq("id", id);
+
+        const fieldLabelR = reqR.field === "name" ? "nama" : "bio";
+        const noteMsg = body.note ? `\n\nAlasan: _${body.note}_` : "";
+        await sendWa(reqR.seller_wa, `❌ *Permintaan perubahan ${fieldLabelR} profil Anda ditolak.*${noteMsg}\n\nHubungi admin jika ada pertanyaan.`).catch(() => {});
+        break;
+      }
+
       default:
         return NextResponse.json({ error: "Aksi tidak dikenal" }, { status: 400 });
     }
