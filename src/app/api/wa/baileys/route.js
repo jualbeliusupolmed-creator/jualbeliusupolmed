@@ -299,7 +299,6 @@ export async function POST(req) {
 
             await Promise.all([
               postToGroup(updatedListing, settings?.admin),
-              notifyAdminNewListing(updatedListing, settings?.admin?.adminWa),
               notifyMatchingWanted(supa, updatedListing),
               notifyCategorySubscribers(supa, updatedListing),
             ].map(p => p.catch(() => {})));
