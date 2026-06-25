@@ -562,13 +562,17 @@ export async function POST(req) {
     }
 
     // Audit trail — non-blocking
-    supa.from("admin_logs").insert({
-      action,
-      target_id: id ? String(id) : (wa ? String(wa) : null),
-      details: Object.fromEntries(
-        Object.entries(body).filter(([k]) => !["action", "id", "wa", "password"].includes(k))
-      ),
-    }).catch(() => {});
+    (async () => {
+      try {
+        await supa.from("admin_logs").insert({
+          action,
+          target_id: id ? String(id) : (wa ? String(wa) : null),
+          details: Object.fromEntries(
+            Object.entries(body).filter(([k]) => !["action", "id", "wa", "password"].includes(k))
+          ),
+        });
+      } catch (_) {}
+    })();
 
     return NextResponse.json(warning ? { ok: true, warning } : { ok: true });
   } catch (e) {
