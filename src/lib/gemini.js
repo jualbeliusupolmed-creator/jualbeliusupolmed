@@ -29,9 +29,9 @@ function extractJsonFromResponse(text) {
 export async function verifyReceiptImage(imageBuffer, mimeType, maxRetries = 3) {
   let attempt = 0;
   const modelsToTry = [
-    "gemini-2.5-flash",
-    "gemini-2.5-flash-lite",
-    "gemini-2.0-flash-lite"
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+    "gemini-1.5-flash-8b"
   ];
   
   while (attempt < maxRetries) {
@@ -94,11 +94,12 @@ export async function verifyReceiptImage(imageBuffer, mimeType, maxRetries = 3) 
  */
 export async function parseListingFromText(text, aiConfig = {}, imageBuffers = [], mimeTypes = [], maxRetries = 3) {
   let attempt = 0;
-  const primaryModel = aiConfig.model || "gemini-2.5-flash";
+  const rawModel = aiConfig.model || "gemini-2.0-flash";
+  const primaryModel = rawModel.replace("2.5", "2.0").replace("2.0-flash-lite", "1.5-flash-8b");
   const modelsToTry = [
     primaryModel,
-    "gemini-2.5-flash-lite",
-    "gemini-2.0-flash-lite"
+    "gemini-1.5-flash",
+    "gemini-1.5-flash-8b"
   ];
   
   const memoryContext = aiConfig.memory ? `\nPengetahuan Sistem (Memory):\n${aiConfig.memory}\n` : "";
@@ -187,11 +188,12 @@ export async function parseListingFromText(text, aiConfig = {}, imageBuffers = [
  */
 export async function processGeneralChat(text, aiConfig = {}, history = [], maxRetries = 3) {
   let attempt = 0;
-  const primaryModel = aiConfig.model || "gemini-2.5-flash";
+  const rawModel = aiConfig.model || "gemini-2.0-flash";
+  const primaryModel = rawModel.replace("2.5", "2.0").replace("2.0-flash-lite", "1.5-flash-8b");
   const modelsToTry = [
     primaryModel,
-    "gemini-2.5-flash-lite",
-    "gemini-2.0-flash-lite"
+    "gemini-1.5-flash",
+    "gemini-1.5-flash-8b"
   ];
 
   const memoryContext = aiConfig.memory ? `\nPengetahuan Sistem (Memory):\n${aiConfig.memory}\n` : "";
@@ -266,7 +268,7 @@ export async function processGeneralChat(text, aiConfig = {}, history = [], maxR
  */
 export async function parseWantedFromText(text, maxRetries = 2) {
   let attempt = 0;
-  const modelsToTry = ["gemini-2.5-flash-lite", "gemini-2.0-flash-lite"];
+  const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-flash-8b"];
   while (attempt < maxRetries) {
     try {
       const model = genAI.getGenerativeModel({ model: modelsToTry[attempt] || modelsToTry[0] });
@@ -304,7 +306,7 @@ export async function suggestPrice(title, category, similarPrices = [], maxRetri
   if (!similarPrices || similarPrices.length === 0) return null;
 
   let attempt = 0;
-  const modelsToTry = ["gemini-2.5-flash-lite", "gemini-2.0-flash-lite"];
+  const modelsToTry = ["gemini-1.5-flash", "gemini-1.5-flash-8b"];
 
   while (attempt < maxRetries) {
     try {

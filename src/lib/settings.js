@@ -50,7 +50,7 @@ export const DEFAULT_SETTINGS = {
       "jual beli Medan, Marketplace Kota Medan, laptop bekas Medan, barang bekas warga, kos di Medan, COD Medan, preloved warga Medan",
   },
   ai_config: {
-    model: "gemini-2.5-flash",
+    model: "gemini-2.0-flash",
     memory: "Pasar target adalah mahasiswa USU dan Polmed di Kota Medan. Pembayaran bisa pakai QRIS atau bayar tunai (COD). Kategori yang tersedia: Elektronik, Fashion, Kendaraan, Properti, Buku, Makanan, Jasa, Lainnya.",
     personality: "Kamu adalah asisten marketplace yang profesional tapi santai. Gunakan bahasa Indonesia sehari-hari, sopan, sedikit gaul (seperti pakai kata 'Kak' atau 'Agan'). Selalu berikan semangat untuk cepat berjualan.",
   },
