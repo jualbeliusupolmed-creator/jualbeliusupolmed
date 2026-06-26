@@ -41,7 +41,8 @@ export default function JualPage() {
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   const [cfg, setCfg] = useState(null);
-  
+  const [sellerIsDistributor, setSellerIsDistributor] = useState(false);
+
   // Auto-fill from localStorage on mount
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -53,9 +54,16 @@ export default function JualPage() {
           seller_wa: savedWa || f.seller_wa,
           seller_name: savedName || f.seller_name,
         }));
+        // Cek status distributor dari WA tersimpan
+        if (savedWa) {
+          fetch(`/api/listings?seller_wa=${encodeURIComponent(savedWa)}`)
+            .then((r) => r.json())
+            .then((d) => setSellerIsDistributor(!!d.profile?.distributor))
+            .catch(() => {});
+        }
       }
     }
-    
+
     fetch("/api/config")
       .then((r) => r.json())
       .then((d) => setCfg(d))
@@ -124,6 +132,14 @@ export default function JualPage() {
 
       localStorage.setItem("seller_wa", formattedWa);
       localStorage.setItem("seller_name", form.seller_name);
+
+      if (data.isDistributor) {
+        const feeInfo = data.distributorFee > 0 ? ` Fee bagi hasil: ${rupiah(data.distributorFee)}` : "";
+        toast.success(`Iklan berhasil ditayangkan! (Gratis via Distributor)${feeInfo}`);
+        const waParam = encodeURIComponent(formattedWa);
+        router.push(`/dashboard?wa=${waParam}`);
+        return;
+      }
 
       if (data.isPro) {
         toast.success("Iklan berhasil ditayangkan! (Gratis via Paket Pro)");
@@ -367,12 +383,16 @@ export default function JualPage() {
               </div>
               <div className="flex justify-between">
                 <dt className="text-gray-500 dark:text-slate-400">Biaya tayang</dt>
-                <dd className="font-medium dark:text-white">{rupiah(fee)}</dd>
+                <dd className="font-medium dark:text-white">
+                  {sellerIsDistributor ? <span className="text-orange-600 font-bold">GRATIS 🏪</span> : rupiah(fee)}
+                </dd>
               </div>
               <div className="my-2 border-t dark:border-slate-800" />
               <div className="flex justify-between text-base">
                 <dt className="font-semibold dark:text-white">Total bayar</dt>
-                <dd className="font-extrabold text-primary dark:text-white">{rupiah(fee)}</dd>
+                <dd className="font-extrabold text-primary dark:text-white">
+                  {sellerIsDistributor ? <span className="text-orange-600">Rp 0</span> : rupiah(fee)}
+                </dd>
               </div>
             </dl>
             <button type="submit" disabled={busy || !!fileError} className="btn-primary mt-4 w-full">
@@ -470,7 +490,7 @@ export default function JualPage() {
                 disabled={busy}
                 className="btn-primary flex-1"
               >
-                {busy ? "Memproses…" : `Konfirmasi & Bayar ${rupiah(fee)}`}
+                {busy ? "Memproses…" : sellerIsDistributor ? "Konfirmasi & Tayang (Gratis)" : `Konfirmasi & Bayar ${rupiah(fee)}`}
               </button>
             </div>
           </div>

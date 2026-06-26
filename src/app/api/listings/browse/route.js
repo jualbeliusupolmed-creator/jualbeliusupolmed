@@ -47,7 +47,7 @@ export async function GET(req) {
       .from("listings")
       // SECURITY: We fetch seller_wa internally to map profiles, then delete it before returning
       .select(
-        "id, title, description, price, stock, category, type, campus, area, status, featured, bumped_at, created_at, views, image_url, images, seller_name, seller_wa, condition, sponsored_until, rental_period",
+        "id, title, description, price, stock, category, type, campus, area, status, featured, bumped_at, created_at, views, image_url, images, seller_name, seller_wa, condition, sponsored_until, rental_period, distributor_fee",
         { count: "exact" }
       )
       .eq("status", "active");
@@ -105,7 +105,7 @@ export async function GET(req) {
     if (sellerWas.length > 0) {
       const { data: profiles } = await supa
         .from("seller_profiles")
-        .select("wa, trusted_seller")
+        .select("wa, trusted_seller, distributor, subscription_tier, subscription_expires_at")
         .in("wa", sellerWas);
       
       const profileMap = new Map((profiles || []).map((p) => [p.wa, p]));

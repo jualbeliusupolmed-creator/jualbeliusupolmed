@@ -291,6 +291,14 @@ export default async function ProdukPage({ params }) {
               <span className="text-lg font-medium text-teal-600 ml-1">/{listing.rental_period}</span>
             )}
           </p>
+          {listing.seller_profiles?.distributor && listing.distributor_fee > 0 && (
+            <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-lg bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800/50 px-3 py-1.5 text-sm">
+              <span className="text-orange-500">🏪</span>
+              <span className="text-orange-700 dark:text-orange-400">
+                Fee Bagi Hasil Distributor: <strong>{rupiah(listing.distributor_fee)}</strong>
+              </span>
+            </div>
+          )}
           {listing.type === "sewa" && (
             <p className="mt-1 text-sm font-medium text-teal-700 dark:text-teal-400 flex items-center gap-1">
               🔑 Barang ini disewakan, bukan dijual
@@ -316,6 +324,11 @@ export default async function ProdukPage({ params }) {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <p className="text-sm font-semibold dark:text-white">{listing.seller_name}</p>
+                {listing.seller_profiles?.distributor && (
+                  <span className="inline-flex items-center gap-0.5 rounded-full bg-orange-100 dark:bg-orange-900/40 px-1.5 py-0.5 text-[10px] font-bold text-orange-600 dark:text-orange-400" title="Distributor Resmi">
+                    🏪 Distributor
+                  </span>
+                )}
                 {listing.seller_profiles?.trusted_seller && (
                   <span className="inline-flex items-center justify-center rounded-full bg-blue-100 p-0.5 text-blue-500" title="Penjual Terpercaya">
                     <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">

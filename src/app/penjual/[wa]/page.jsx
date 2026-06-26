@@ -62,6 +62,16 @@ async function getSellerData(wa) {
       allListings?.[0]?.seller_name ||
       decodedWa;
 
+    // Ambil kategori distributor
+    let distributorCategories = [];
+    if (profile?.distributor) {
+      const { data: distCats } = await supa
+        .from("distributor_categories")
+        .select("category")
+        .eq("seller_wa", decodedWa);
+      distributorCategories = (distCats || []).map((r) => r.category);
+    }
+
     // Hitung top kategori
     const catCounts = {};
     let topCat = null;
@@ -94,7 +104,7 @@ async function getSellerData(wa) {
     }
 
     return {
-      seller: { seller_name: sellerName, seller_wa: decodedWa, bio: profile?.bio || null, topCategory: topCat, trusted_seller: profile?.trusted_seller || false, subscription_tier: profile?.subscription_tier || null, subscription_expires_at: profile?.subscription_expires_at || null },
+      seller: { seller_name: sellerName, seller_wa: decodedWa, bio: profile?.bio || null, topCategory: topCat, trusted_seller: profile?.trusted_seller || false, distributor: profile?.distributor || false, distributorCategories, subscription_tier: profile?.subscription_tier || null, subscription_expires_at: profile?.subscription_expires_at || null },
       listings: listings || [],
       soldListings: soldListings || [],
       ratings: ratings || [],
@@ -161,6 +171,7 @@ export default async function SellerProfilePage({ params }) {
   if (!data) notFound();
 
   const { seller, listings, soldListings, ratings, soldCount, totalViews, memberSince } = data;
+  const isDistributor = !!seller.distributor;
   const avgRating =
     ratings.length > 0
       ? ratings.reduce((s, r) => s + r.rating, 0) / ratings.length
@@ -203,14 +214,19 @@ export default async function SellerProfilePage({ params }) {
       </nav>
 
       {/* Header Penjual */}
-      <div className="card mt-4 p-6 flex flex-col sm:flex-row sm:items-start gap-5">
-        <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-primary to-primary-dark text-2xl font-extrabold text-white shadow-lg">
+      <div className={`card mt-4 p-6 flex flex-col sm:flex-row sm:items-start gap-5 ${isDistributor ? "border-orange-200 dark:border-orange-800/50 bg-gradient-to-br from-orange-50/50 to-white dark:from-orange-950/20 dark:to-slate-900/30" : ""}`}>
+        <div className={`grid h-16 w-16 shrink-0 place-items-center rounded-2xl text-2xl font-extrabold text-white shadow-lg ${isDistributor ? "bg-gradient-to-br from-orange-500 to-amber-400" : "bg-gradient-to-br from-primary to-primary-dark"}`}>
           {seller.seller_name?.[0]?.toUpperCase() || "?"}
         </div>
         <div className="flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-extrabold flex items-center gap-2">
               {seller.seller_name}
+              {isDistributor && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 dark:bg-orange-900/40 px-2.5 py-0.5 text-xs font-bold text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-800/50" title="Distributor Resmi">
+                  🏪 DISTRIBUTOR
+                </span>
+              )}
               {seller.subscription_tier === "pro" && new Date(seller.subscription_expires_at) > new Date() && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-xs font-bold text-amber-700 dark:text-amber-400" title="Penjual Pro">
                   ⭐ PRO
@@ -272,6 +288,25 @@ export default async function SellerProfilePage({ params }) {
             </a>
             <ShareProfileButton />
           </div>
+
+          {/* Info Distributor */}
+          {isDistributor && (
+            <div className="mt-4 rounded-xl bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800/50 p-3">
+              <p className="text-xs font-semibold text-orange-700 dark:text-orange-400 mb-1">🏪 Mitra Distributor Resmi</p>
+              {seller.distributorCategories?.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {seller.distributorCategories.map((c) => (
+                    <span key={c} className="text-[11px] bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400 rounded-full px-2 py-0.5 font-medium">
+                      {c}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <p className="text-[11px] text-orange-500 dark:text-orange-500 mt-1.5">
+                Setiap iklan distributor mencantumkan info fee bagi hasil yang transparan.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 

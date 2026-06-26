@@ -16,6 +16,7 @@ import ReferralPanel from "./ReferralPanel";
 import TawaranPanel from "./TawaranPanel";
 import GroupPostsPanel from "./GroupPostsPanel";
 import NotifikasiPanel from "./NotifikasiPanel";
+import DistributorPanel from "./DistributorPanel";
 
 const REPORT_LABELS = {
   penipuan: "Penipuan / scam",
@@ -56,6 +57,7 @@ const ICONS = {
   grouppost: "M17 3a2 2 0 012 2v6a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h12z",
   notifikasi: "M15 17h5l-1.41-1.41A1 1 0 0118 15V10a6 6 0 00-5-5.92V4a1 1 0 00-2 0v.08A6 6 0 006 10v5a1 1 0 01-.59.89L4 17h5m6 0a3 3 0 01-6 0",
   profil_request: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7zM9 12h6M12 9v6",
+  distributor: "M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9zM9 22V12h6v10",
 };
 
 function NavIcon({ name }) {
@@ -88,7 +90,7 @@ export default function AdminPanel({
   pageSize = 100,
 }) {
   const router = useRouter();
-  const VALID_TABS = ["overview","listings","transaksi","rating","reports","dicari","kategori","pengaturan","penjual","profil_request","blogs","wabot","ai","broadcast","referral","tawaran","grouppost","notifikasi"];
+  const VALID_TABS = ["overview","listings","transaksi","rating","reports","dicari","kategori","pengaturan","penjual","profil_request","blogs","wabot","ai","broadcast","referral","tawaran","grouppost","notifikasi","distributor"];
   const tab = VALID_TABS.includes(initialTab) ? initialTab : "overview";
   function goTab(key) {
     router.push(`/admin/${key}`);
@@ -260,6 +262,7 @@ export default function AdminPanel({
       items: [
         { key: "penjual",        label: "Penjual" },
         { key: "profil_request", label: "Ubah Profil", count: pendingProfileCount || null },
+        { key: "distributor",    label: "Distributor" },
         { key: "rating",         label: "Rating" },
         { key: "reports",        label: "Laporan",     count: openReports.length || null },
       ],
@@ -1082,6 +1085,14 @@ export default function AdminPanel({
           <div>
             <p className="mb-4 text-sm text-gray-500">Kelola subscriber notifikasi — berlangganan kategori WA dan push notification browser.</p>
             <NotifikasiPanel action={action} />
+          </div>
+        )}
+
+        {/* DISTRIBUTOR */}
+        {tab === "distributor" && (
+          <div>
+            <p className="mb-4 text-sm text-gray-500">Kelola mitra distributor — badge, kategori, fee bagi hasil, dan link undangan.</p>
+            <DistributorPanel settings={settings} categories={categories} />
           </div>
         )}
 
