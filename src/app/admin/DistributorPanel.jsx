@@ -79,6 +79,32 @@ export default function DistributorPanel({ settings: initialSettings, categories
     }
   }
 
+  async function addDistributorDirectly() {
+    if (!inviteWa.trim()) return showToast("Masukkan nomor WA", "err");
+    setBusy(true);
+    try {
+      const res = await fetch("/api/admin/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "set_distributor", wa: inviteWa, distributor: true }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error);
+      setInviteWa("");
+      showToast("Pengguna berhasil dijadikan distributor!");
+      // Refresh list
+      setLoadingDist(true);
+      fetch("/api/admin/distributors")
+        .then((r) => r.json())
+        .then((d) => setDistributors(d.distributors || []))
+        .finally(() => setLoadingDist(false));
+    } catch (e) {
+      showToast(e.message, "err");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function saveFeeSettings() {
     setBusy(true);
     try {
@@ -146,15 +172,17 @@ export default function DistributorPanel({ settings: initialSettings, categories
       <section className="card p-6">
         <h2 className="font-bold text-lg mb-1">Generator Link Undangan Distributor</h2>
         <p className="text-sm text-gray-400 mb-4">Masukkan nomor WA calon distributor → link undangan dibuat & dikirim otomatis via WA.</p>
-        <div className="flex gap-2">
+        <div className="flex gap-2 mb-2">
           <input
             className="input flex-1"
             placeholder="Nomor WA (628xxx atau 08xxx)"
             value={inviteWa}
             onChange={(e) => setInviteWa(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && generateInvite()}
           />
-          <button onClick={generateInvite} disabled={busy} className="btn-primary px-5">
+          <button onClick={addDistributorDirectly} disabled={busy} className="btn-primary px-5 bg-emerald-600 hover:bg-emerald-700">
+            {busy ? "..." : "Jadikan Langsung"}
+          </button>
+          <button onClick={generateInvite} disabled={busy} className="btn-outline px-5">
             {busy ? "..." : "Buat Link"}
           </button>
         </div>
