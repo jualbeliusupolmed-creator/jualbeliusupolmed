@@ -21,7 +21,7 @@ export async function POST(req) {
 
     const settings = await getSettings();
     const config = settings.ai_config || {};
-    const modelName = config.model || "gemini-2.5-flash";
+    const modelName = config.model || "gemini-2.0-flash";
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) throw new Error("GEMINI_API_KEY belum dikonfigurasi");

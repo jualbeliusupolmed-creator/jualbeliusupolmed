@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 
 export default function AIPanel({ settings, action }) {
   const [aiConfig, setAiConfig] = useState(settings.ai_config || {
-    model: "gemini-2.5-flash",
+    model: "gemini-2.0-flash",
     memory: "Pasar target adalah mahasiswa USU dan Polmed di Kota Medan. Pembayaran bisa pakai QRIS atau bayar tunai (COD). Kategori yang tersedia: Elektronik, Fashion, Kendaraan, Properti, Buku, Makanan, Jasa, Lainnya.",
     personality: "Kamu adalah asisten marketplace yang profesional tapi santai. Gunakan bahasa Indonesia sehari-hari, sopan, sedikit gaul (seperti pakai kata 'Kak' atau 'Agan'). Selalu berikan semangat untuk cepat berjualan."
   });
@@ -162,9 +162,9 @@ export default function AIPanel({ settings, action }) {
           <label className="block">
             <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300">Model AI Utama</span>
             <select className="input" value={aiConfig.model} onChange={(e) => setAiConfig({...aiConfig, model: e.target.value})}>
-              <option value="gemini-2.5-flash">Gemini 2.5 Flash (Sangat Cepat & Cerdas)</option>
-              <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite (Paling Cepat)</option>
-              <option value="gemini-2.5-pro">Gemini 2.5 Pro (Paling Cerdas, Agak Lambat)</option>
+              <option value="gemini-2.0-flash">Gemini 2.0 Flash (Sangat Cepat & Cerdas)</option>
+              <option value="gemini-1.5-flash-8b">Gemini 2.0 Flash Lite (Paling Cepat)</option>
+              <option value="gemini-1.5-pro">Gemini 1.5 Pro (Paling Cerdas, Agak Lambat)</option>
             </select>
             <p className="mt-1 text-xs text-gray-400">Gemini Flash direkomendasikan untuk menyeimbangkan kecepatan dan kepintaran chatbot.</p>
           </label>
