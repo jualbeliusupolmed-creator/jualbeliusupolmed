@@ -91,10 +91,26 @@ export async function POST(req) {
       return NextResponse.json({ ok: true, ignored: true, reason: "rate_limited" });
     }
     const senderJid = formData.get("sender");
-    const message = formData.get("message") || "";
+    let message = formData.get("message") || "";
     const profileNameFromBot = (formData.get("profile_name") || "").trim().slice(0, 50);
     const files = formData.getAll("file");
     const file = files[0] || null;
+
+    let isForcedAd = false;
+    const fromMe = formData.get("fromMe") === "true" || formData.get("isBot") === "true" || formData.get("is_bot") === "true";
+
+    if (fromMe) {
+      if (message.trim().startsWith("#")) {
+        isForcedAd = true;
+        message = message.trim().substring(1).trim();
+      } else {
+        // Abaikan balasan manual dari admin agar bot tidak loop
+        return NextResponse.json({ ok: true, ignored: true, reason: "admin_reply" });
+      }
+    } else if (message.trim().startsWith("#")) {
+      isForcedAd = true;
+      message = message.trim().substring(1).trim();
+    }
     let conversationHistory = [];
     try {
       const rawContext = formData.get("context");
@@ -456,7 +472,7 @@ export async function POST(req) {
     // ==========================================
     // STATE 3: TERIMA / TOLAK Nego In-App
     // ==========================================
-    if (message && !file) {
+    if (message && !file && !isForcedAd) {
       const textMsg = message.toUpperCase().trim();
       if (textMsg.startsWith("TERIMA ") || textMsg.startsWith("TOLAK ")) {
         const parts = textMsg.split(" ");
