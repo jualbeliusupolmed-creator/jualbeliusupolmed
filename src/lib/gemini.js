@@ -7,7 +7,7 @@ const genAI = new GoogleGenerativeAI(geminiApiKey);
 
 // Initialize the OpenAI API
 const openaiApiKey = (process.env.OPENAI_API_KEY || "").replace(/^\uFEFF/, '').trim();
-const openai = new OpenAI({ apiKey: openaiApiKey });
+const openai = new OpenAI({ apiKey: openaiApiKey || "dummy_key_to_prevent_build_crash" });
 
 // Ekstrak JSON dari respons AI secara robust
 function extractJsonFromResponse(text) {
