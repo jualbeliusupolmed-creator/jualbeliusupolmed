@@ -298,6 +298,52 @@ export async function POST(req) {
           );
           return NextResponse.json({ ok: true, state: "autobump_activated" });
 
+        } else if (pendingPayment.type === "bulk_iklan") {
+          const listingIds = pendingPayment.meta?.listing_ids || [pendingPayment.listings.id];
+          
+          const { data: updatedListings } = await supa
+            .from("listings")
+            .update({ status: "active", bumped_at: new Date().toISOString() })
+            .in("id", listingIds)
+            .select();
+
+          if (updatedListings && updatedListings.length > 0) {
+            let confirmMsg = `🎉 *PEMBAYARAN BERHASIL!*\n\n` +
+              `Struk *Rp ${pendingPayment.amount.toLocaleString("id-ID")}* sudah divalidasi AI.\n\n` +
+              `Iklan berikut sudah tayang dan disebarkan ke Grup WA! 🚀\n\n`;
+
+            for (const l of updatedListings) {
+              confirmMsg += `- *${l.title}*\n`;
+            }
+            await sendWa(senderJid, confirmMsg);
+
+            const to62 = n => (n || "").replace(/\D/g, "").replace(/^0/, "62");
+            const rawAdmins = [process.env.ADMIN_WA || "", process.env.SUPER_ADMIN_WA || ""].join(",");
+            const adminNumbers = [...new Set(rawAdmins.split(",").map(a => to62(a.trim())).filter(Boolean))];
+            
+            for (const l of updatedListings) {
+              const productSlug = buildSlug(l.title, l.id);
+              const shareMsg = `🛒 *${l.title}* — Rp ${Number(l.price).toLocaleString("id-ID")}\n` +
+                `🏷️ ${l.category}\n` +
+                `👉 ${baseUrl}/produk/${productSlug}\n\n` +
+                `_Klik & bagikan link iklanmu ke teman-teman!_ 📤`;
+                
+              await new Promise(r => setTimeout(r, 1500));
+              await sendWa(senderJid, shareMsg);
+
+              for (const adminNum of adminNumbers) {
+                await sendWa(adminNum, `📢 *Iklan Baru Tayang*\n\n${shareMsg}`).catch(() => {});
+              }
+
+              await Promise.all([
+                postToGroup(l, settings?.admin),
+                notifyMatchingWanted(supa, l),
+                notifyCategorySubscribers(supa, l),
+              ].map(p => p.catch(() => {})));
+            }
+          }
+          return NextResponse.json({ ok: true, state: "receipt_verified_bulk" });
+
         } else {
           // Default: pembayaran iklan baru
           const { data: updatedListing } = await supa
@@ -1894,11 +1940,6 @@ export async function POST(req) {
     // ==========================================
     if (!message && !file) return NextResponse.json({ ok: true, ignored: true });
 
-    if (file && !message) {
-      await sendWa(senderJid, "📝 Tolong sertakan deskripsi barangnya (Nama, Harga, Kondisi, dll) bersama foto dalam 1 pesan agar AI bisa membacanya.");
-      return NextResponse.json({ ok: true, state: "new_listing_no_text" });
-    }
-
     if (message && !file) {
       const msgLower = message.toLowerCase().trim();
 
@@ -2206,38 +2247,68 @@ export async function POST(req) {
       // Jika kode tidak ditemukan, lanjut ke new listing creation di bawah
     }
 
-    // Ada Teks + Media (Gambar/Video/Dokumen) = Iklan Baru!
+    // Ada Teks/Media = Iklan Baru!
     await sendWa(senderJid, "⏳ AI kami sedang membaca detail iklan Anda...");
 
     try {
       const settings = await getSettings();
-      const extracted = await parseListingFromText(message, settings.ai_config || {});
-
-      if (!extracted || !extracted.title) {
-        throw new Error("AI gagal mengekstrak judul iklan. Coba tulis lebih jelas: nama barang, harga, dan kondisinya.");
+      
+      const fileBuffers = [];
+      const imageBuffers = [];
+      const mimeTypes = [];
+      
+      if (files && files.length > 0) {
+        for (const f of files) {
+          const buf = Buffer.from(await f.arrayBuffer());
+          const fType = f.type || "application/octet-stream";
+          fileBuffers.push({ file: f, buffer: buf, type: fType });
+          if (fType.startsWith("image/")) {
+            imageBuffers.push(buf);
+            mimeTypes.push(fType);
+          }
+        }
       }
 
-      // Upload semua file (multi-foto didukung)
-      const uploadedUrls = [];
-      let primaryMimeType = file?.type || "application/octet-stream";
+      const extracted = await parseListingFromText(message, settings.ai_config || {}, imageBuffers, mimeTypes);
 
-      for (const f of files) {
-        const fMime = f.type || "application/octet-stream";
-        const fBuf = Buffer.from(await f.arrayBuffer());
-        let uploadBuf = fBuf;
-        let uploadMime = fMime;
+      if (!extracted || !extracted.items || extracted.items.length === 0) {
+        throw new Error("AI gagal mengekstrak detail iklan. Coba tulis lebih jelas atau pastikan teks pada gambar terbaca.");
+      }
+
+      // Cek Distributor
+      const { data: profile } = await supa.from("seller_profiles").select("name, distributor").eq("wa", normalizedWa).maybeSingle();
+      
+      let profileName = profile?.name || profileNameFromBot || "Pengguna WA";
+      let isNewWaUser = false;
+      if (!profile) {
+        isNewWaUser = true;
+        await supa.from("seller_profiles").insert({ wa: normalizedWa, name: profileName });
+      } else if (profileNameFromBot && profile.name === "Pengguna WA") {
+        await supa.from("seller_profiles").update({ name: profileNameFromBot }).eq("wa", normalizedWa);
+        profileName = profileNameFromBot;
+      }
+      
+      const isDistributor = profile?.distributor === true;
+
+      // Upload semua file
+      const uploadedUrls = [];
+      let primaryMimeType = fileBuffers[0]?.type || "application/octet-stream";
+      
+      for (const fObj of fileBuffers) {
+        let uploadBuf = fObj.buffer;
+        let uploadMime = fObj.type;
         let ext = "bin";
 
-        if (fMime.startsWith("image/")) {
-          uploadBuf = await processImageWithWatermark(fBuf);
+        if (uploadMime.startsWith("image/")) {
+          uploadBuf = await processImageWithWatermark(uploadBuf);
           uploadMime = "image/webp";
           ext = "webp";
-        } else if (fMime.startsWith("video/")) {
+        } else if (uploadMime.startsWith("video/")) {
           ext = "mp4";
-        } else if (fMime.includes("pdf")) {
+        } else if (uploadMime.includes("pdf")) {
           ext = "pdf";
         } else {
-          ext = fMime.split("/")[1] || "bin";
+          ext = uploadMime.split("/")[1] || "bin";
         }
 
         const fName = `wa-${Date.now()}-${Math.floor(Math.random() * 9999)}.${ext}`;
@@ -2248,76 +2319,122 @@ export async function POST(req) {
 
         const { data: { publicUrl: url } } = supa.storage.from("listings").getPublicUrl(fName);
         uploadedUrls.push(url);
-        if (uploadedUrls.length === 1) primaryMimeType = fMime; // tipe file pertama
-        await new Promise(r => setTimeout(r, 200)); // beri jeda antar upload
+        await new Promise(r => setTimeout(r, 200));
       }
 
-      if (uploadedUrls.length === 0) throw new Error("Gagal mengunggah media ke server.");
-      const publicUrl = uploadedUrls[0];
+      const publicUrl = uploadedUrls[0] || null;
       const fileMimeType = primaryMimeType;
-
-      let profileName = "Pengguna WA";
-      let isNewWaUser = false;
-      const { data: profile } = await supa.from("seller_profiles").select("name").eq("wa", normalizedWa).maybeSingle();
-      if (profile) {
-        profileName = profile.name;
-        // Perbarui nama jika bot mengirim nama dari registrasi @lid dan nama masih default
-        if (profileNameFromBot && profile.name === "Pengguna WA") {
-          await supa.from("seller_profiles").update({ name: profileNameFromBot }).eq("wa", normalizedWa);
-          profileName = profileNameFromBot;
-        }
-      } else {
-        isNewWaUser = true;
-        profileName = profileNameFromBot || "Pengguna WA";
-        await supa.from("seller_profiles").insert({ wa: normalizedWa, name: profileName });
-      }
-
+      
       const listingDays = Number(settings.pricing?.listingDays) || 14;
       const expiresAt = new Date(Date.now() + listingDays * 24 * 60 * 60 * 1000).toISOString();
+      const isAutoAddFee = settings.distributor?.auto_add_fee !== false;
 
-      const { data: newListing, error: listingError } = await supa.from("listings").insert({
-        seller_wa: normalizedWa,
-        seller_name: profileName,
-        title: extracted.title || "Barang Dijual",
-        price: extracted.price || 0,
-        description: extracted.description || message,
-        category: extracted.category || "Lainnya",
-        type: "barang",
-        condition: extracted.condition === "new" ? "new" : "used",
-        campus: ["USU", "POLMED", "Semua"].includes(extracted.campus) ? extracted.campus : "Semua",
-        image_url: fileMimeType.startsWith("image/") ? publicUrl : null,
-        images: fileMimeType.startsWith("image/") ? uploadedUrls : [],
-        status: "pending",
-        expires_at: expiresAt,
-        bumped_at: new Date().toISOString(),
-      }).select().single();
+      let totalAmount = 0;
+      const createdListings = [];
 
-      if (listingError) throw new Error("Gagal menyimpan data iklan: " + listingError.message);
+      for (const item of extracted.items) {
+        let finalPrice = Number(item.price) || 0;
+        let distFee = 0;
 
-      const baseFee = adFeeFrom(settings.pricing, "barang", newListing.price);
-      const totalAmount = baseFee;
-      const orderId = `IKLAN-WA-${newListing.listing_code}-${Date.now()}`;
+        if (isDistributor) {
+          if (finalPrice < 6000000) {
+            distFee = 150000;
+          } else if (finalPrice <= 10000000) {
+            distFee = Math.round(finalPrice * 0.05);
+          } else {
+            distFee = Math.round(finalPrice * 0.05);
+          }
+          if (isAutoAddFee && distFee > 0) finalPrice += distFee;
+        }
+
+        const { data: newListing, error: listingError } = await supa.from("listings").insert({
+          seller_wa: normalizedWa,
+          seller_name: profileName,
+          title: item.title || "Barang Dijual",
+          price: finalPrice,
+          description: item.description || message || "",
+          category: item.category || "Lainnya",
+          type: "barang",
+          condition: item.condition === "new" ? "new" : "used",
+          campus: ["USU", "POLMED", "Semua"].includes(item.campus) ? item.campus : "Semua",
+          image_url: fileMimeType.startsWith("image/") ? publicUrl : null,
+          images: fileMimeType.startsWith("image/") ? uploadedUrls : [],
+          status: isDistributor ? "active" : "pending",
+          distributor_fee: isDistributor ? distFee : null,
+          expires_at: expiresAt,
+          bumped_at: new Date().toISOString(),
+        }).select().single();
+
+        if (listingError) throw new Error("Gagal menyimpan data iklan: " + listingError.message);
+        
+        createdListings.push(newListing);
+        if (!isDistributor) {
+          totalAmount += adFeeFrom(settings.pricing, "barang", newListing.price);
+        }
+      }
+
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+
+      if (isDistributor) {
+        let botReply = `✅ *Iklan Otomatis Tayang (Distributor)*\n\n`;
+        for (const l of createdListings) {
+          const productSlug = buildSlug(l.title, l.id);
+          botReply += `📦 *${l.title}*\n💰 Harga: Rp ${l.price.toLocaleString("id-ID")}\n💳 Fee: Rp ${l.distributor_fee?.toLocaleString("id-ID") || 0}\n🔗 ${baseUrl}/produk/${productSlug}\n\n`;
+        }
+        botReply += `_Barang sudah disebarkan ke grup WA dan tayang di website._`;
+        
+        await sendWa(senderJid, botReply);
+        
+        // Notify superadmins & post to group
+        const to62 = n => (n || "").replace(/\D/g, "").replace(/^0/, "62");
+        const rawAdmins = [process.env.ADMIN_WA || "", process.env.SUPER_ADMIN_WA || ""].join(",");
+        const adminNumbers = [...new Set(rawAdmins.split(",").map(a => to62(a.trim())).filter(Boolean))];
+        
+        for (const l of createdListings) {
+          const productSlug = buildSlug(l.title, l.id);
+          const shareMsg = `📢 *Distributor Post*\n\n🛒 *${l.title}* — Rp ${Number(l.price).toLocaleString("id-ID")}\nFee: Rp ${l.distributor_fee?.toLocaleString("id-ID") || 0}\n👉 ${baseUrl}/produk/${productSlug}`;
+          for (const adminNum of adminNumbers) {
+            await sendWa(adminNum, shareMsg).catch(() => {});
+          }
+          await Promise.all([
+            postToGroup(l, settings?.admin),
+            notifyMatchingWanted(supa, l),
+            notifyCategorySubscribers(supa, l),
+          ].map(p => p.catch(() => {})));
+        }
+        
+        return NextResponse.json({ ok: true, state: "listing_created_distributor" });
+      }
+
+      // Non-distributor payment logic
+      const orderId = `IKLAN-WA-${createdListings[0].listing_code}-${Date.now()}`;
+      const isBulk = createdListings.length > 1;
 
       await supa.from("payments").insert({
-        listing_id: newListing.id,
-        type: "iklan",
+        listing_id: createdListings[0].id,
+        type: isBulk ? "bulk_iklan" : "iklan",
         amount: totalAmount,
         status: "pending",
         midtrans_order_id: orderId,
+        meta: isBulk ? { listing_ids: createdListings.map(l => l.id) } : null,
       });
 
       const qrisUrl = getQrisUrl();
-
-      const conditionLabel = newListing.condition === "new" ? "✨ Baru" : "Bekas";
       const namaReminder = isNewWaUser ? `\n💡 Ketik *NAMA [nama kamu]* untuk set nama profil iklan.\n` : "";
-      const fallbackReply = `✅ *Iklan Berhasil Dibaca AI!*\n\n📦 *${newListing.title}*\n🏷️ ${newListing.category} · ${conditionLabel}\n💰 Rp ${newListing.price.toLocaleString("id-ID")}\n🔑 Kode iklan: *${newListing.listing_code}*\n${namaReminder}\n`;
-      const aiReply = extracted.reply_message ? `${extracted.reply_message}🔑 Kode iklan: *${newListing.listing_code}*\n${namaReminder}\n` : fallbackReply;
+      
+      let fallbackReply = `✅ *Iklan Berhasil Dibaca AI!*\n\n`;
+      for (const l of createdListings) {
+        fallbackReply += `📦 *${l.title}* (Rp ${l.price.toLocaleString("id-ID")}) - Kode: *${l.listing_code}*\n`;
+      }
+      fallbackReply += `${namaReminder}\n`;
+      
+      const aiReply = extracted.reply_message ? `${extracted.reply_message}\n${namaReminder}\n` : fallbackReply;
 
       const paymentInstructions =
         `Untuk tayangkan iklan, scan QRIS di bawah dan transfer:\n\n` +
         `💳 *Rp ${totalAmount.toLocaleString("id-ID")}*\n\n` +
         `Setelah transfer, kirim *screenshot struk* ke sini.\n\n` +
-        `_(Biaya terasa berat? Ketik *TAWAR BIAYA ${newListing.listing_code} [nominal]* untuk menawar ke admin)_`;
+        (isBulk ? "" : `_(Biaya terasa berat? Ketik *TAWAR BIAYA ${createdListings[0].listing_code} [nominal]* untuk menawar ke admin)_`);
 
       await sendWa(senderJid, aiReply + paymentInstructions, qrisUrl);
 

@@ -503,6 +503,31 @@ export async function POST(req) {
         break;
       }
 
+      case "set_distributor": {
+        const normalizedWa = formatWa(wa);
+        if (!normalizedWa) return NextResponse.json({ error: "WA wajib" }, { status: 400 });
+        const { error } = await supa.from("seller_profiles").upsert(
+          { wa: normalizedWa, distributor: !!body.distributor },
+          { onConflict: "wa" }
+        );
+        if (error) throw new Error(error.message);
+        break;
+      }
+
+      case "set_distributor_categories": {
+        const normalizedWa = formatWa(wa);
+        if (!normalizedWa) return NextResponse.json({ error: "WA wajib" }, { status: 400 });
+        
+        await supa.from("distributor_categories").delete().eq("seller_wa", normalizedWa);
+        
+        if (body.categories && body.categories.length > 0) {
+          const insertData = body.categories.map(c => ({ seller_wa: normalizedWa, category: c }));
+          const { error } = await supa.from("distributor_categories").insert(insertData);
+          if (error) throw new Error(error.message);
+        }
+        break;
+      }
+
       // ── Blogs ───────────────────────────────────────────────────────────
       case "delete_blog":
         await supa.from("blogs").delete().eq("id", id);

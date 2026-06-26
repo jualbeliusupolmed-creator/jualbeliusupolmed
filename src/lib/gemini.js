@@ -92,7 +92,7 @@ export async function verifyReceiptImage(imageBuffer, mimeType, maxRetries = 3) 
  * @param {string} text - The raw text message from the user
  * @returns {Promise<Object>} JSON object containing extracted data { title, price, description, category }
  */
-export async function parseListingFromText(text, aiConfig = {}, maxRetries = 3) {
+export async function parseListingFromText(text, aiConfig = {}, imageBuffers = [], mimeTypes = [], maxRetries = 3) {
   let attempt = 0;
   const primaryModel = aiConfig.model || "gemini-2.5-flash";
   const modelsToTry = [
@@ -111,30 +111,54 @@ export async function parseListingFromText(text, aiConfig = {}, maxRetries = 3) 
 
       const prompt = `
         Anda adalah asisten marketplace yang cerdas.
-        Tugas Anda adalah membaca pesan chat dari pengguna yang ingin mengiklankan barang dagangan mereka.
+        Tugas Anda adalah membaca pesan chat dan/atau beberapa gambar dari pengguna yang ingin mengiklankan barang dagangan mereka.
+        Pengguna mungkin mengirimkan SATU barang, atau BEBERAPA barang berbeda sekaligus.
+        Jika gambar berisi teks (misalnya screenshot spesifikasi atau pamflet), bacalah teks pada gambar tersebut untuk mendapatkan detail barang.
+        Bila ada banyak gambar, identifikasi apakah gambar-gambar tersebut adalah barang yang berbeda-beda, atau hanya sudut pandang lain dari barang yang sama.
         ${memoryContext}
         ${personalityContext}
         
-        Pesan pengguna:
-        """
-        ${text}
-        """
+        ${text ? `Pesan pengguna:\n"""\n${text}\n"""` : 'Pesan pengguna kosong. Harap ekstrak informasi HANYA dari teks/visual pada gambar yang dilampirkan.'}
         
-        Ekstrak informasi penting dari pesan di atas menjadi format JSON:
+        Ekstrak informasi dari pesan dan/atau gambar di atas, lalu kembalikan dalam format JSON berisi daftar "items" (berisi barang yang diiklankan) dan sebuah pesan "reply_message".
+        Setiap item dalam "items" harus memiliki properti berikut:
         - "title": Nama atau judul barang (maks 50 karakter).
         - "price": Harga barang dalam angka murni (contoh: 50000). Jika nego atau tidak jelas, tebak dari konteks atau isi 0.
-        - "description": Deksripsi lengkap barang. Jika ada informasi kontak, hapus informasi kontaknya.
+        - "description": Deksripsi lengkap barang. Jika ada informasi kontak, hapus informasi kontaknya. Tuliskan kembali detail spesifikasi yang ada di gambar ke dalam deskripsi ini secara rapi.
         - "category": Pilih salah satu kategori paling cocok dari list berikut: ["Elektronik", "Fashion", "Kendaraan", "Properti", "Buku", "Makanan", "Jasa", "Lainnya"]. Default: "Lainnya".
         - "condition": Kondisi barang. Gunakan "new" jika baru/segel/belum dipakai, "used" jika bekas/second/pernah dipakai. Default: "used".
         - "campus": Kampus atau area yang disebutkan. Normalisasi ke salah satu: "USU", "POLMED", atau "Semua". Default: "Semua".
-        - "reply_message": Tuliskan pesan balasan yang ramah kepada pengguna untuk mengkonfirmasi bahwa detail iklannya (nama barang, harga) sudah dicatat. WAJIB patuhi Kepribadian & Gaya Bicara di atas! Jangan tulis instruksi bayar di teks ini (akan ditambahkan otomatis oleh sistem).
+        
+        Sertakan juga "reply_message" di luar array "items":
+        - "reply_message": Tuliskan pesan balasan ramah yang merangkum APA SAJA barang yang sudah dicatat, dan beritahu harganya. WAJIB patuhi Kepribadian & Gaya Bicara di atas! Jangan tulis instruksi bayar di teks ini (akan ditambahkan otomatis).
         
         Aturan ketat:
-        - Kembalikan jawaban Anda HANYA dalam format JSON MURNI tanpa markdown, tanpa teks lain.
-        - Contoh output: {"title": "iPhone 12 Mulus", "price": 5000000, "description": "Lecet pemakaian", "category": "Elektronik", "reply_message": "Siap kak! iPhone 12 mulus udah aku catat nih detailnya. Tunggu sebentar ya! 🚀"}
+        - Kembalikan jawaban Anda HANYA dalam format JSON MURNI tanpa markdown.
+        - Contoh output: 
+        {
+          "items": [
+            { "title": "iPhone 12 Mulus", "price": 5000000, "description": "Lecet pemakaian", "category": "Elektronik", "condition": "used", "campus": "Semua" },
+            { "title": "Helm Bogo Hitam", "price": 150000, "description": "Baru dipakai 2 kali", "category": "Kendaraan", "condition": "used", "campus": "USU" }
+          ],
+          "reply_message": "Siap kak! iPhone 12 dan Helm Bogo udah aku catat nih detailnya. Tunggu sebentar ya! 🚀"
+        }
       `;
 
-      const result = await model.generateContent(prompt);
+      const contentParts = [prompt];
+      
+      // Masukkan semua gambar yang dikirim pengguna
+      if (imageBuffers && mimeTypes && imageBuffers.length === mimeTypes.length) {
+        for (let i = 0; i < imageBuffers.length; i++) {
+          contentParts.push({
+            inlineData: {
+              data: imageBuffers[i].toString("base64"),
+              mimeType: mimeTypes[i]
+            }
+          });
+        }
+      }
+
+      const result = await model.generateContent(contentParts);
       const responseText = result.response.text();
       return extractJsonFromResponse(responseText);
 
