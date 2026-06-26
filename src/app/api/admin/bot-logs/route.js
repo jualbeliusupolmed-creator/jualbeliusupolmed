@@ -9,7 +9,8 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const botUrl = process.env.BAILEYS_API_URL || "https://wa-bot-usu-production.up.railway.app";
+    const rawBotUrl = process.env.BAILEYS_API_URL || "https://wa-bot-usu-production.up.railway.app";
+    const botUrl = rawBotUrl.replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
     const rawToken = process.env.BAILEYS_API_TOKEN;
     if (!rawToken) {
       return NextResponse.json({ error: "BAILEYS_API_TOKEN belum dikonfigurasi di environment" }, { status: 500 });
