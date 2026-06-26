@@ -1003,8 +1003,8 @@ export default function AdminPanel({
         )}
 
         {busy && <div className="fixed bottom-5 left-5 z-[60] rounded-lg bg-gray-900/80 px-3 py-1.5 text-xs text-white">Memproses…</div>}
-      </main>
-    </div>
+      </AdminLayout>
+    </>
   );
 }
 
@@ -1578,8 +1578,8 @@ function SettingsManager({ settings, action }) {
           className="btn-primary mt-4 w-full"
         >{saved === "areas" ? "✓ Tersimpan" : "Simpan Daftar Area"}</button>
       </Card>
-      </AdminLayout>
-    </>
+    </div>
+  </div>
   );
 }
 function Field({ label, children }) {
