@@ -9,3 +9,4 @@ ALTER TABLE listings
 CREATE INDEX IF NOT EXISTS idx_listings_fee_offer_status
   ON listings (fee_offer_status)
   WHERE fee_offer_status IS NOT NULL;
+
