@@ -3,10 +3,13 @@
 import { useState, useEffect } from "react";
 
 export default function AIPanel({ settings, action }) {
-  const [aiConfig, setAiConfig] = useState(settings.ai_config || {
-    model: "gemini-2.0-flash",
-    memory: "Pasar target adalah mahasiswa USU dan Polmed di Kota Medan. Pembayaran bisa pakai QRIS atau bayar tunai (COD). Kategori yang tersedia: Elektronik, Fashion, Kendaraan, Properti, Buku, Makanan, Jasa, Lainnya.",
-    personality: "Kamu adalah asisten marketplace yang profesional tapi santai. Gunakan bahasa Indonesia sehari-hari, sopan, sedikit gaul (seperti pakai kata 'Kak' atau 'Agan'). Selalu berikan semangat untuk cepat berjualan."
+  const initialAiConfig = settings.ai_config || {};
+  const [aiConfig, setAiConfig] = useState({
+    provider_mode: initialAiConfig.provider_mode || "hybrid_gemini_first",
+    gemini_model: initialAiConfig.gemini_model || initialAiConfig.model || "gemini-2.5-flash",
+    openai_model: initialAiConfig.openai_model || "gpt-4o-mini",
+    memory: initialAiConfig.memory || "Pasar target adalah mahasiswa USU dan Polmed di Kota Medan. Pembayaran bisa pakai QRIS atau bayar tunai (COD). Kategori yang tersedia: Elektronik, Fashion, Kendaraan, Properti, Buku, Makanan, Jasa, Lainnya.",
+    personality: initialAiConfig.personality || "Kamu adalah asisten marketplace yang profesional tapi santai. Gunakan bahasa Indonesia sehari-hari, sopan, sedikit gaul (seperti pakai kata 'Kak' atau 'Agan'). Selalu berikan semangat untuk cepat berjualan."
   });
   const [saved, setSaved] = useState("");
 
@@ -160,14 +163,32 @@ export default function AIPanel({ settings, action }) {
         <h2 className="mb-4 text-lg font-bold dark:text-white">Pengaturan Memori & Kepribadian Bot</h2>
         <div className="space-y-4">
           <label className="block">
-            <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300">Model AI Utama</span>
-            <select className="input" value={aiConfig.model} onChange={(e) => setAiConfig({...aiConfig, model: e.target.value})}>
-              <option value="gemini-2.0-flash">Gemini 2.0 Flash (Sangat Cepat & Cerdas)</option>
-              <option value="gemini-1.5-flash-8b">Gemini 2.0 Flash Lite (Paling Cepat)</option>
-              <option value="gemini-1.5-pro">Gemini 1.5 Pro (Paling Cerdas, Agak Lambat)</option>
+            <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300">Provider AI (Mode Failover)</span>
+            <select className="input" value={aiConfig.provider_mode} onChange={(e) => setAiConfig({...aiConfig, provider_mode: e.target.value})}>
+              <option value="hybrid_gemini_first">Hybrid (Gemini Utama, Fallback OpenAI)</option>
+              <option value="hybrid_openai_first">Hybrid (OpenAI Utama, Fallback Gemini)</option>
+              <option value="gemini_only">Hanya Gemini</option>
+              <option value="openai_only">Hanya OpenAI</option>
             </select>
-            <p className="mt-1 text-xs text-gray-400">Gemini Flash direkomendasikan untuk menyeimbangkan kecepatan dan kepintaran chatbot.</p>
+            <p className="mt-1 text-xs text-gray-400">Pilih provider utama. Mode Hybrid akan otomatis beralih jika provider utama mengalami error/limit.</p>
           </label>
+
+          <div className="grid grid-cols-2 gap-4">
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300">Model Gemini</span>
+              <select className="input" value={aiConfig.gemini_model} onChange={(e) => setAiConfig({...aiConfig, gemini_model: e.target.value})}>
+                <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
+              </select>
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300">Model OpenAI</span>
+              <select className="input" value={aiConfig.openai_model} onChange={(e) => setAiConfig({...aiConfig, openai_model: e.target.value})}>
+                <option value="gpt-4o-mini">GPT-4o Mini</option>
+                <option value="gpt-4o">GPT-4o</option>
+              </select>
+            </label>
+          </div>
           
           <label className="block">
             <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300">Memori Bot (Konteks Fakta)</span>
