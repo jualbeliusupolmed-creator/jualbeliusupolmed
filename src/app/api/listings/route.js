@@ -5,6 +5,7 @@ import { getSettings, adFeeFrom, listingExpiresAt, hasUnpaidSoldFees } from "@/l
 import { formatWa } from "@/lib/constants";
 import { postToGroup, notifyCategorySubscribers } from "@/lib/fonnte";
 import { pushCategorySubscribers } from "@/lib/webpush";
+import { getDistributorSettings, calcDistributorFee, effectivePrice } from "@/lib/distributor";
 
 export const dynamic = "force-dynamic";
 
@@ -101,6 +102,14 @@ export async function POST(req) {
 
     const supa = getAdminClient();
 
+    // Cek status distributor
+    const { data: profileCheck } = await supa
+      .from("seller_profiles")
+      .select("distributor, name, subscription_tier, subscription_expires_at")
+      .eq("wa", normalizedWa)
+      .maybeSingle();
+    const isDistributor = !!profileCheck?.distributor;
+
     // Check if seller has unpaid sold fees (Account locked - Cara 2)
     const locked = await hasUnpaidSoldFees(supa, normalizedWa);
     if (locked) {
@@ -129,18 +138,13 @@ export async function POST(req) {
       { wa: normalizedWa, name: seller_name },
       { onConflict: "wa", ignoreDuplicates: true }
     );
-    // 2. Ambil nama paten dan status pro dari seller_profiles
-    const { data: profile } = await supa
-      .from("seller_profiles")
-      .select("name, subscription_tier, subscription_expires_at")
-      .eq("wa", normalizedWa)
-      .maybeSingle();
-
+    // 2. Ambil nama paten dan status pro dari seller_profiles (sudah punya dari check di atas)
+    const profile = profileCheck;
     const enforcedName = profile?.name || seller_name;
     const isPro = profile?.subscription_tier === "pro" && new Date(profile?.subscription_expires_at) > new Date();
 
-    // Batas iklan aktif+pending untuk non-PRO
-    if (!isPro) {
+    // Batas iklan aktif+pending untuk non-PRO (distributor tidak dibatasi seperti PRO)
+    if (!isPro && !isDistributor) {
       const { count: activeCount } = await supa
         .from("listings")
         .select("id", { count: "exact", head: true })
@@ -156,6 +160,7 @@ export async function POST(req) {
 
     // FIXED: Fetch settings BEFORE insert so expires_at uses configurable listingDays
     const settings = await getSettings();
+    const distSettings = isDistributor ? await getDistributorSettings(supa) : null;
     const isJasa = type === "jasa";
     let isJasaFree = false;
 
@@ -177,7 +182,16 @@ export async function POST(req) {
     else if (isJasa || type === "poster") days = 30; // Jasa berbayar dan poster dapat 30 hari
 
     const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
-    const initialStatus = (isPro || isJasaFree) ? "active" : "pending";
+    // Distributor langsung aktif tanpa bayar biaya iklan
+    const initialStatus = (isPro || isJasaFree || isDistributor) ? "active" : "pending";
+
+    // Hitung fee bagi hasil untuk distributor
+    let distributorFee = 0;
+    let finalPrice = Math.round(Number(price)) || 0;
+    if (isDistributor && distSettings) {
+      distributorFee = calcDistributorFee(finalPrice, distSettings.rules);
+      finalPrice = effectivePrice(finalPrice, distributorFee, distSettings.autoAddPrice);
+    }
 
     const { data: listing, error } = await supa
       .from("listings")
@@ -186,7 +200,8 @@ export async function POST(req) {
         seller_wa: normalizedWa,
         title,
         description: description || "",
-        price: Math.round(Number(price)) || 0,
+        price: finalPrice,
+        distributor_fee: distributorFee || null,
         stock: Math.max(1, Number(stock) || 1),
         category: category || "Elektronik",
         type: ["poster", "jasa", "sewa"].includes(type) ? type : "barang",
@@ -208,7 +223,7 @@ export async function POST(req) {
       await supa.from("listings").update({ images }).eq("id", listing.id);
     }
 
-    if (isPro || isJasaFree) {
+    if (isPro || isJasaFree || isDistributor) {
       try {
         await postToGroup(listing);
         notifyCategorySubscribers(supa, listing).catch(() => {});
@@ -216,7 +231,7 @@ export async function POST(req) {
       } catch (err) {
         console.error("Fonnte postToGroup error:", err?.message);
       }
-      return NextResponse.json({ listing, paymentUrl: null, isPro, isJasaFree });
+      return NextResponse.json({ listing, paymentUrl: null, isPro, isJasaFree, isDistributor, distributorFee });
     }
 
     const amount = adFeeFrom(settings.pricing, listing.type, listing.price);

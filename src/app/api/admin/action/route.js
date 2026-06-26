@@ -621,6 +621,31 @@ export async function POST(req) {
         break;
       }
 
+      // ── Distributor ────────────────────────────────────────────────────────
+      case "set_distributor": {
+        const normalizedWa = formatWa(wa);
+        if (!normalizedWa) return NextResponse.json({ error: "WA wajib" }, { status: 400 });
+        await supa.from("seller_profiles").upsert(
+          { wa: normalizedWa, distributor: !!body.distributor },
+          { onConflict: "wa" }
+        );
+        break;
+      }
+
+      case "set_distributor_categories": {
+        const normalizedWa = formatWa(wa);
+        if (!normalizedWa) return NextResponse.json({ error: "WA wajib" }, { status: 400 });
+        const cats = Array.isArray(body.categories) ? body.categories : [];
+        // Hapus lama, insert baru
+        await supa.from("distributor_categories").delete().eq("seller_wa", normalizedWa);
+        if (cats.length > 0) {
+          await supa.from("distributor_categories").insert(
+            cats.map((c) => ({ seller_wa: normalizedWa, category: c }))
+          );
+        }
+        break;
+      }
+
       // ── Tawaran Biaya Iklan ────────────────────────────────────────────────
       case "approve_fee_offer": {
         const { data: fl } = await supa.from("listings").select("id, title, seller_wa, fee_offer").eq("id", id).single();

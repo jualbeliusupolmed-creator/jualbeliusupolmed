@@ -16,6 +16,8 @@ export default function ProductCard({ listing }) {
   const isNego = listing.is_negotiable ||
     String(listing.description || "").toLowerCase().includes("nego") ||
     String(listing.title || "").toLowerCase().includes("nego");
+  const isDistributor = !!listing.seller_profiles?.distributor;
+  const distributorFee = listing.distributor_fee || 0;
   return (
     <div className="card group relative overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/30 dark:hover:border-slate-700/60 dark:hover:bg-slate-900/50">
       <FavoriteButton listing={listing} className="absolute right-2 top-2 z-10" />
@@ -96,6 +98,11 @@ export default function ProductCard({ listing }) {
               <span className="text-xs font-normal text-teal-600 dark:text-teal-400 ml-1">/{listing.rental_period}</span>
             )}
           </p>
+          {isDistributor && distributorFee > 0 && (
+            <p className="text-[10px] text-orange-500 dark:text-orange-400 font-medium mt-0.5">
+              Fee bagi hasil: {rupiah(distributorFee)}
+            </p>
+          )}
           <div className="mt-1.5 flex items-center justify-between text-[11px] text-gray-500 dark:text-slate-400">
             <p className="truncate flex items-center gap-1">
               <span>{listing.type !== "jasa" && listing.stock != null ? `Stok ${listing.stock} · ` : ""}{listing.seller_name}</span>
@@ -112,6 +119,11 @@ export default function ProductCard({ listing }) {
                   <svg className="h-2.5 w-2.5" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
+                </span>
+              )}
+              {isDistributor && (
+                <span className="inline-flex items-center gap-0.5 rounded-full bg-orange-100 dark:bg-orange-900/40 px-1 py-0.5 text-[10px] font-bold text-orange-600 dark:text-orange-400" title="Distributor Resmi">
+                  🏪
                 </span>
               )}
             </p>

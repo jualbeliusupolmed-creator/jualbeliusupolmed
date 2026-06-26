@@ -587,7 +587,14 @@ function DashboardInner() {
         <div>
           <h1 className="text-2xl font-extrabold">Dashboard Penjual</h1>
           {sellerProfile?.name && sellerProfile.name !== "Pengguna WA" && (
-            <p className="mt-0.5 text-sm text-gray-500">Halo, {sellerProfile.name} 👋</p>
+            <p className="mt-0.5 text-sm text-gray-500 flex items-center gap-2 flex-wrap">
+              Halo, {sellerProfile.name} 👋
+              {sellerProfile.distributor && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 dark:bg-orange-900/40 px-2 py-0.5 text-xs font-bold text-orange-700 dark:text-orange-400">
+                  🏪 DISTRIBUTOR
+                </span>
+              )}
+            </p>
           )}
         </div>
         <div className="flex shrink-0 items-center gap-2">

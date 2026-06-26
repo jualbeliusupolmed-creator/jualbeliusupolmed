@@ -41,6 +41,7 @@ export const ADMIN_TABS = [
   "tawaran",
   "grouppost",
   "notifikasi",
+  "distributor",
 ];
 
 export const DEFAULT_DATA = {
