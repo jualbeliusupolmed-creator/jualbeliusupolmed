@@ -12,6 +12,12 @@ export function TabGrup() {
   const [partForm, setPartForm] = useState({ action: "add", numbers: "" });
   const [partStatus, setPartStatus] = useState(null);
   const [partLoading, setPartLoading] = useState(false);
+  
+  // Japri states
+  const [japriMsg, setJapriMsg] = useState("");
+  const [japriStatus, setJapriStatus] = useState(null);
+  const [japriLoading, setJapriLoading] = useState(false);
+
   const [createForm, setCreateForm] = useState({ name: "", numbers: "" });
   const [creating, setCreating] = useState(false);
   const [createStatus, setCreateStatus] = useState(null);
@@ -39,6 +45,30 @@ export function TabGrup() {
     }).then(r => r.json());
     setPartStatus(r.ok ? { ok: true, text: `✅ ${partForm.action} berhasil!` } : { ok: false, text: `❌ ${r.error}` });
     setPartLoading(false);
+  }
+
+  async function handleJapri(e) {
+    e.preventDefault();
+    if (!confirm(`Yakin ingin japri ${selected?.participants} anggota grup ini? Aksi ini butuh waktu dan bisa beresiko banned jika terlalu sering.`)) return;
+    
+    setJapriLoading(true); setJapriStatus(null);
+    try {
+      const res = await fetch("/api/admin/broadcast/group-japri", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jid: selected.jid, message: japriMsg }),
+      });
+      const r = await res.json();
+      if (res.ok && r.ok) {
+        setJapriStatus({ ok: true, text: `✅ Berhasil mengirim japri ke ${r.successCount} anggota. Gagal: ${r.failCount}` });
+        setJapriMsg("");
+      } else {
+        setJapriStatus({ ok: false, text: `❌ Gagal: ${r.error || "Terjadi kesalahan"}` });
+      }
+    } catch (err) {
+      setJapriStatus({ ok: false, text: `❌ Error: ${err.message}` });
+    }
+    setJapriLoading(false);
   }
 
   async function handleCreate(e) {
@@ -96,7 +126,7 @@ export function TabGrup() {
               </div>
               <div className="flex gap-1 shrink-0">
                 <CopyBtn text={g.jid} />
-                <button onClick={() => { setSelected(selected?.jid === g.jid ? null : g); setInviteLink(null); setPartStatus(null); }}
+                <button onClick={() => { setSelected(selected?.jid === g.jid ? null : g); setInviteLink(null); setPartStatus(null); setJapriStatus(null); }}
                   className={`rounded px-2 py-0.5 text-xs font-medium transition-colors ${selected?.jid === g.jid ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-300"}`}>
                   ⚙️ Kelola
                 </button>
@@ -131,6 +161,15 @@ export function TabGrup() {
                   <textarea className="input min-h-[60px]" placeholder="08123456789, 08987654321" value={partForm.numbers} onChange={e => setPartForm(f => ({ ...f, numbers: e.target.value }))} required />
                   <Alert ok={partStatus?.ok} msg={partStatus?.text} />
                   <button type="submit" disabled={partLoading} className="btn-primary text-sm">{partLoading ? "⏳ Memproses..." : "✅ Jalankan"}</button>
+                </form>
+
+                {/* Broadcast Japri */}
+                <form onSubmit={handleJapri} className="space-y-2 pt-2 border-t dark:border-slate-700">
+                  <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">Broadcast Japri</p>
+                  <p className="text-xs text-gray-500 mb-1">Kirim pesan personal (japri) ke semua peserta grup secara bertahap.</p>
+                  <textarea className="input min-h-[80px]" placeholder="Pesan untuk semua anggota grup..." value={japriMsg} onChange={e => setJapriMsg(e.target.value)} required />
+                  <Alert ok={japriStatus?.ok} msg={japriStatus?.text} />
+                  <button type="submit" disabled={japriLoading || !japriMsg.trim()} className="btn-primary bg-emerald-600 hover:bg-emerald-700 text-sm">{japriLoading ? "⏳ Mengirim..." : `⚡ Kirim ke ${g.participants} anggota`}</button>
                 </form>
               </div>
             )}
