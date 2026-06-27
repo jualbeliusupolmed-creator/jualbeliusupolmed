@@ -67,11 +67,8 @@ function ChatRoom({ chat, onClose }) {
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {loading && <div className="text-center text-sm text-gray-400 my-4">Memuat pesan...</div>}
         {error && (
-          <div className="text-center text-sm text-amber-600 bg-amber-50 dark:bg-amber-900/30 dark:text-amber-400 p-3 rounded-lg my-4">
-            ⚠️ <b>Gagal memuat pesan riwayat asli dari server.</b><br/>
-            (Pesan error dari API: <i>{error}</i>)<br/>
-            Pastikan API Baileys Anda sudah mendukung endpoint <code>/messages?jid=xxx</code>.<br/>
-            Menampilkan pesan <i>dummy</i> sebagai simulasi antarmuka.
+          <div className="text-center text-xs text-gray-400 dark:text-slate-500 py-2">
+            📋 Riwayat pesan tidak tersedia — menampilkan contoh antarmuka
           </div>
         )}
         
