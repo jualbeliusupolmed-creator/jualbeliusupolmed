@@ -4,6 +4,7 @@ import { parseListingFromText, verifyReceiptImage, processGeneralChat } from "@/
 import { sendWa, postToGroup } from "@/lib/fonnte";
 import { formatWa } from "@/lib/constants";
 import { getSettings, adFeeFrom } from "@/lib/settings";
+import { createKlikQrisTransaction } from "@/lib/klikqris";
 
 export const dynamic = "force-dynamic";
 
@@ -75,9 +76,23 @@ export async function POST(req) {
           return NextResponse.json({ ok: true, state: "payment_cancelled" });
         }
 
-        const qrisUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id"}/qris.png`;
-        const reminderMsg = `⚠️ Anda masih memiliki tagihan pembayaran iklan yang belum lunas untuk:\n\n*Judul:* ${pendingPayment.listings.title}\n*Nominal:* Rp ${pendingPayment.amount.toLocaleString("id-ID")}\n\nSilakan scan QRIS ini dan kirimkan *GAMBAR STRUK* transfer Anda agar sistem AI kami dapat memverifikasinya.\n\n_(Ketik *BATAL* jika Anda ingin membatalkan iklan tersebut)_`;
-        await sendWa(normalizedWa, reminderMsg, qrisUrl);
+        // Pakai QRIS dari meta jika ada, fallback buat transaksi baru
+        let reminderQrisUrl = pendingPayment.meta?.klikqris_qris_url;
+        const nominal = pendingPayment.meta?.final_amount || pendingPayment.amount;
+        if (!reminderQrisUrl) {
+          try {
+            const kq = await createKlikQrisTransaction(
+              `${pendingPayment.midtrans_order_id}-R`,
+              nominal,
+              `Iklan: ${pendingPayment.listings.title}`
+            );
+            reminderQrisUrl = kq.qrisUrl;
+          } catch {
+            reminderQrisUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id"}/qris.png`;
+          }
+        }
+        const reminderMsg = `⚠️ Anda masih memiliki tagihan pembayaran iklan yang belum lunas untuk:\n\n*Judul:* ${pendingPayment.listings.title}\n*Nominal:* Rp ${nominal.toLocaleString("id-ID")}\n\nSilakan scan QRIS ini. Iklan otomatis aktif setelah pembayaran terdeteksi, atau kirim *GAMBAR STRUK* untuk konfirmasi manual.\n\n_(Ketik *BATAL* untuk membatalkan iklan)_`;
+        await sendWa(normalizedWa, reminderMsg, reminderQrisUrl);
         return NextResponse.json({ ok: true, state: "waiting_receipt_no_image" });
       }
 
@@ -92,8 +107,9 @@ export async function POST(req) {
           return NextResponse.json({ ok: true, state: "invalid_receipt_image" });
         }
 
-        if (Number(extractedData.nominal) !== Number(pendingPayment.amount)) {
-          await sendWa(normalizedWa, `❌ *Nominal Tidak Sesuai*\n\nNominal di struk (Rp ${extractedData.nominal?.toLocaleString("id-ID") || 0}) tidak sama dengan tagihan (Rp ${Number(pendingPayment.amount).toLocaleString("id-ID")}).\n\nSistem tidak dapat mengaktifkan iklan Anda.`);
+        const expectedNominal = pendingPayment.meta?.final_amount || pendingPayment.amount;
+        if (Number(extractedData.nominal) < Number(expectedNominal)) {
+          await sendWa(normalizedWa, `❌ *Nominal Tidak Sesuai*\n\nNominal di struk (Rp ${extractedData.nominal?.toLocaleString("id-ID") || 0}) kurang dari tagihan (Rp ${Number(expectedNominal).toLocaleString("id-ID")}).\n\nSistem tidak dapat mengaktifkan iklan Anda.`);
           return NextResponse.json({ ok: true, state: "invalid_amount" });
         }
 
@@ -281,26 +297,25 @@ export async function POST(req) {
 
       if (listingError) throw new Error("Gagal menyimpan data iklan. " + listingError.message);
 
-      // 6. Buat DB Payment dengan angka unik (Fee + Random 1-99)
+      // 6. Buat transaksi KlikQris
       const baseFee = adFeeFrom(settings.pricing, "barang", newListing.price);
-      const uniqueCode = Math.floor(Math.random() * 99) + 1; // 1 to 99
-      const totalAmount = baseFee + uniqueCode;
-      
       const orderId = `IKLAN-WA-${newListing.id.slice(0, 8)}-${Date.now()}`;
+      const kq = await createKlikQrisTransaction(orderId, baseFee, `Iklan: ${newListing.title}`);
+      const totalAmount = kq.totalAmount;
 
       await supa.from("payments").insert({
         listing_id: newListing.id,
         type: "iklan",
-        amount: totalAmount,
+        amount: baseFee,
         status: "pending",
         midtrans_order_id: orderId,
+        meta: { final_amount: totalAmount, klikqris_signature: kq.signature },
       });
 
       // 7. Kirim balasan QRIS
-      const qrisUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id"}/qris.png`;
-      const replyMessage = `✅ *Iklan Diterima!*\n\nAI berhasil membaca barang Anda:\n*Judul:* ${newListing.title}\n*Kategori:* ${newListing.category}\n*Harga:* Rp ${newListing.price.toLocaleString("id-ID")}\n\nUntuk menayangkannya, silakan Scan QRIS ini dan transfer *TEPAT SEBESAR*:\n\n👉 *Rp ${totalAmount.toLocaleString("id-ID")}* 👈\n*(Jangan dibulatkan!)*\n\nSetelah berhasil transfer, balas pesan ini dengan *GAMBAR STRUK* Anda.`;
+      const replyMessage = `✅ *Iklan Diterima!*\n\nAI berhasil membaca barang Anda:\n*Judul:* ${newListing.title}\n*Kategori:* ${newListing.category}\n*Harga:* Rp ${newListing.price.toLocaleString("id-ID")}\n\nUntuk menayangkannya, silakan Scan QRIS ini dan transfer *TEPAT SEBESAR*:\n\n👉 *Rp ${totalAmount.toLocaleString("id-ID")}* 👈\n*(Jangan dibulatkan!)*\n\nIklan otomatis aktif setelah pembayaran terdeteksi sistem. Atau kirim *GAMBAR STRUK* jika perlu konfirmasi manual.`;
 
-      await sendWa(normalizedWa, replyMessage, qrisUrl);
+      await sendWa(normalizedWa, replyMessage, kq.qrisUrl);
 
       return NextResponse.json({ ok: true, state: "listing_created_pending_payment" });
 
