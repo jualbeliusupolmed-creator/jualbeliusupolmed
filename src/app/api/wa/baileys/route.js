@@ -1354,6 +1354,55 @@ export async function POST(req) {
         return NextResponse.json({ ok: true, state: "langganan_success", bot_reply: subMsg });
 
       // ==========================================
+      // TANYA [kode] [pesan] — relay pesan buyer ke seller tanpa buka nomor
+      // ==========================================
+      } else if (textMsg.startsWith("TANYA ")) {
+        const tanyaParts = message.trim().split(/\s+/);
+        const tanyaKode = tanyaParts[1];
+        const tanyaPesan = tanyaParts.slice(2).join(" ").trim();
+
+        if (!tanyaKode || !tanyaPesan) {
+          await sendWa(senderJid,
+            `❌ Format salah.\n\nGunakan: *TANYA [kode iklan] [pesan kamu]*\n\nContoh:\n*TANYA USU123 Kak masih ada? Bisa COD di Padang Bulan?*`
+          );
+        } else {
+          const { data: tanyaListing } = await supa
+            .from("listings")
+            .select("id, title, seller_wa, seller_name, listing_code, status")
+            .or(`listing_code.ilike.%${tanyaKode}%,id.ilike.${tanyaKode}%`)
+            .eq("status", "active")
+            .maybeSingle();
+
+          if (!tanyaListing) {
+            await sendWa(senderJid, `❌ Iklan *${tanyaKode}* tidak ditemukan atau sudah tidak aktif.`);
+          } else if (tanyaListing.seller_wa === normalizedWa) {
+            await sendWa(senderJid, `❌ Kamu tidak bisa mengirim pesan ke iklanmu sendiri.`);
+          } else {
+            const { data: buyerProfile } = await supa
+              .from("seller_profiles")
+              .select("name")
+              .eq("wa", normalizedWa)
+              .maybeSingle();
+            const buyerName = buyerProfile?.name || "Calon Pembeli";
+            const buyerWaForSeller = normalizedWa.startsWith("0") ? "62" + normalizedWa.slice(1) : normalizedWa;
+
+            const sellerMsg =
+              `💬 *Pesan untuk Iklanmu*\n\n` +
+              `📦 *${tanyaListing.title}*\n\n` +
+              `${buyerName} bertanya:\n"${tanyaPesan}"\n\n` +
+              `Balas langsung: wa.me/${buyerWaForSeller}`;
+
+            const sellerJid = formatWaForBaileys(tanyaListing.seller_wa) + "@s.whatsapp.net";
+            await sendWa(sellerJid, sellerMsg).catch(() => {});
+
+            await sendWa(senderJid,
+              `✅ Pesanmu sudah dikirim ke penjual *${tanyaListing.seller_name || "Penjual"}*.\n\n` +
+              `Tunggu ya, mereka akan menghubungimu langsung di WA kalau tertarik.`
+            );
+          }
+        }
+
+      // ==========================================
       // TAWAR — Tawar harga listing
       // ==========================================
       } else if (textMsg.startsWith("TAWAR ") && !textMsg.startsWith("TAWAR BIAYA ")) {
@@ -1842,6 +1891,7 @@ export async function POST(req) {
           `• *HAPUS LAKU [kode]* → Tandai terjual\n` +
           `• *HAPUS GALAKU [kode]* → Minta hapus ke admin\n` +
           `\n━━━ 💬 TRANSAKSI ━━━\n` +
+          `• *TANYA [kode] [pesan]* → Tanya penjual (nomor aman)\n` +
           `• *TAWARAN* → Lihat tawaran masuk\n` +
           `• *TAWAR [kode] [harga]* → Tawar harga\n` +
           `• *TAGIH* → Kirim ulang QRIS\n` +
