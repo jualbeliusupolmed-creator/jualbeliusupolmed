@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { makeDynamicQris } from "@/lib/qris";
 
 export const dynamic = "force-dynamic";
 
@@ -35,8 +36,14 @@ export async function POST(req) {
       meta: { wa: seller_wa }
     });
 
-    const paymentUrl = "/qris.png";
-    return NextResponse.json({ paymentUrl, orderId, amount });
+    const { qrisString, finalAmount } = makeDynamicQris(
+      process.env.QIOSPAY_QRIS_STRING,
+      amount,
+      orderId
+    );
+    await supa.from("payments").update({ meta: { wa: seller_wa, final_amount: finalAmount } }).eq("midtrans_order_id", orderId);
+
+    return NextResponse.json({ qrisString, orderId, amount, finalAmount });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }

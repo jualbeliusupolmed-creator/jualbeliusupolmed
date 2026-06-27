@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getSettings, featuredRateFrom } from "@/lib/settings";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { makeDynamicQris } from "@/lib/qris";
 
 export const dynamic = "force-dynamic";
 
@@ -30,17 +31,21 @@ export async function POST(req) {
       return NextResponse.json({ error: "Listing tidak ada" }, { status: 404 });
 
     const orderId = `FEATURED-${listing_id.slice(0, 8)}-${Date.now()}`;
+    const { qrisString, finalAmount } = makeDynamicQris(
+      process.env.QIOSPAY_QRIS_STRING,
+      amount,
+      orderId
+    );
     await supa.from("payments").insert({
       listing_id,
       type: "featured",
       amount,
       status: "pending",
       midtrans_order_id: orderId,
-      meta: { days: d, per_day: rate },
+      meta: { days: d, per_day: rate, final_amount: finalAmount },
     });
 
-    const paymentUrl = "/qris.png";
-    return NextResponse.json({ paymentUrl, orderId, amount });
+    return NextResponse.json({ qrisString, orderId, amount, finalAmount });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
