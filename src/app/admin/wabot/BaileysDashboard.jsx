@@ -14,11 +14,13 @@ import { TabBlocklist } from "@/components/baileys/TabBlocklist";
 import { TabLidMap } from "@/components/baileys/TabLidMap";
 import { TabKonteks } from "@/components/baileys/TabKonteks";
 import { TabLog } from "@/components/baileys/TabLog";
+import { TabAksi } from "@/components/baileys/TabAksi";
 
 
-const TABS = ["status", "kapabilitas", "profil", "story", "chat", "grup", "saluran", "kirim", "blocklist", "lid", "konteks", "log"];
+const TABS = ["status", "aksi", "kapabilitas", "profil", "story", "chat", "grup", "saluran", "kirim", "blocklist", "lid", "konteks", "log"];
 const TAB_LABELS = {
   status:    "🔌 Status",
+  aksi:      "⚡ Aksi",
   kapabilitas: "🌟 Kapabilitas",
   profil:    "👤 Profil Bot",
   story:     "📱 Status WA",
@@ -50,6 +52,7 @@ export default function BaileysDashboard() {
       </div>
 
       {tab === "status"    && <TabStatus />}
+      {tab === "aksi"      && <TabAksi />}
       {tab === "kapabilitas" && <TabKapabilitas />}
       {tab === "profil"    && <TabProfil />}
       {tab === "story"     && <TabStory />}
