@@ -54,18 +54,25 @@ async function processImageWithWatermark(fBuf) {
 
 async function notifyMatchingWanted(supa, listing) {
   try {
+    const cooldownMs = 6 * 60 * 60 * 1000;
+    const cutoff = new Date(Date.now() - cooldownMs).toISOString();
+
     const { data: matches } = await supa
       .from("wanted_listings")
-      .select("id, buyer_wa, buyer_name, title")
+      .select("id, buyer_wa, buyer_name, title, last_notified_at")
       .eq("category", listing.category)
       .eq("status", "active")
+      .or(`last_notified_at.is.null,last_notified_at.lt.${cutoff}`)
       .order("created_at", { ascending: false })
       .limit(10);
 
     if (!matches || matches.length === 0) return;
-    
+
     for (const w of matches) {
       await notifyWantedMatch(w.buyer_wa, w.buyer_name, listing).catch(() => {});
+      await supa.from("wanted_listings")
+        .update({ last_notified_at: new Date().toISOString() })
+        .eq("id", w.id).catch(() => {});
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
   } catch (err) {
@@ -88,6 +95,24 @@ export async function POST(req) {
     const rl = rateLimit(rlKey, { limit: 20, windowMs: 60_000 });
     if (!rl.ok) {
       console.warn(`[rate-limit] ${rlKey} \u2014 melebihi batas, retry setelah ${rl.retryAfter}s`);
+      // Auto-pause: hitung berapa kali kena rate limit dalam 5 menit
+      const floodKey = `flood:${formData.get("sender") || "unknown"}`;
+      const flood = rateLimit(floodKey, { limit: 3, windowMs: 5 * 60_000 });
+      if (!flood.ok) {
+        // Sudah 3x kena rate limit dalam 5 menit \u2192 auto-pause nomor ini
+        const floodWa = formatWa(formData.get("sender") || "");
+        if (floodWa) {
+          try {
+            const supa = getAdminClient();
+            const { data: cfg } = await supa.from("settings").select("value").eq("key", "bot").maybeSingle();
+            const paused = cfg?.value?.paused_users || [];
+            if (!paused.includes(floodWa)) {
+              await supa.from("settings").upsert({ key: "bot", value: { ...(cfg?.value || {}), paused_users: [...paused, floodWa] } });
+              console.warn(`[auto-pause] ${floodWa} ditambahkan ke paused_users karena flood`);
+            }
+          } catch {}
+        }
+      }
       return NextResponse.json({ ok: true, ignored: true, reason: "rate_limited" });
     }
     const senderJid = formData.get("sender");
@@ -2305,6 +2330,23 @@ export async function POST(req) {
       }
       
       const isDistributor = profile?.distributor === true;
+
+      // Batas max listing aktif per seller (cegah spam listing)
+      const maxListings = isDistributor ? 30 : (settings.pricing?.maxActiveListings || 5);
+      const { count: activeCount } = await supa
+        .from("listings")
+        .select("id", { count: "exact", head: true })
+        .eq("seller_wa", normalizedWa)
+        .eq("status", "active");
+      if ((activeCount || 0) >= maxListings) {
+        await sendWa(senderJid,
+          `⚠️ *Batas Iklan Aktif Tercapai*\n\n` +
+          `Kamu sudah punya *${activeCount} iklan aktif* (maks. ${maxListings}).\n\n` +
+          `Hapus atau tandai iklan lama sebagai *TERJUAL* sebelum pasang yang baru.\n` +
+          `Ketik *IKLANKU* untuk melihat daftar iklanmu.`
+        );
+        return NextResponse.json({ ok: true, state: "max_listing_reached" });
+      }
 
       // Upload semua file
       const uploadedUrls = [];
