@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { hasUnpaidSoldFees } from "@/lib/settings";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
-import { makeDynamicQris } from "@/lib/qris";
+import { createKlikQrisTransaction } from "@/lib/klikqris";
 
 export const dynamic = "force-dynamic";
 
@@ -37,23 +37,19 @@ export async function POST(req) {
     const amount = SPONSORED_PER_DAY * days;
     const orderId = `SPON-${listing_id.slice(0, 8)}-${Date.now()}`;
 
+    const { qrisUrl, signature, totalAmount } = await createKlikQrisTransaction(
+      orderId, amount, `Sponsored ${days} hari`
+    );
     await supa.from("payments").insert({
       listing_id,
       type: "sponsored",
       amount,
       status: "pending",
       midtrans_order_id: orderId,
-      meta: { days },
+      meta: { days, final_amount: totalAmount, klikqris_signature: signature },
     });
 
-    const { qrisString, finalAmount } = makeDynamicQris(
-      process.env.QIOSPAY_QRIS_STRING,
-      amount,
-      orderId
-    );
-    await supa.from("payments").update({ meta: { days, final_amount: finalAmount } }).eq("midtrans_order_id", orderId);
-
-    return NextResponse.json({ qrisString, orderId, amount, finalAmount });
+    return NextResponse.json({ paymentUrl: qrisUrl, orderId, amount, finalAmount: totalAmount });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }

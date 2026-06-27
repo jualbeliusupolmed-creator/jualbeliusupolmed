@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getSettings, adFeeFrom } from "@/lib/settings";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
-import { makeDynamicQris } from "@/lib/qris";
+import { createKlikQrisTransaction } from "@/lib/klikqris";
 
 export const dynamic = "force-dynamic";
 
@@ -52,14 +52,12 @@ export async function POST(req) {
       midtrans_order_id: orderId,
     });
 
-    const { qrisString, finalAmount } = makeDynamicQris(
-      process.env.QIOSPAY_QRIS_STRING,
-      amount,
-      orderId
+    const { qrisUrl, signature, totalAmount } = await createKlikQrisTransaction(
+      orderId, amount, `Perpanjang iklan`
     );
-    await supa.from("payments").update({ meta: { final_amount: finalAmount } }).eq("midtrans_order_id", orderId);
+    await supa.from("payments").update({ meta: { final_amount: totalAmount, klikqris_signature: signature } }).eq("midtrans_order_id", orderId);
 
-    return NextResponse.json({ qrisString, orderId, amount, finalAmount });
+    return NextResponse.json({ paymentUrl: qrisUrl, orderId, amount, finalAmount: totalAmount });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
