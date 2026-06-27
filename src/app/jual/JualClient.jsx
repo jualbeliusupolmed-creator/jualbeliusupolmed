@@ -36,6 +36,7 @@ export default function JualPage() {
   const [createdOrderId, setCreatedOrderId] = useState("");
   const [showQRISModal, setShowQRISModal] = useState(false);
   const [qrisUrl, setQrisUrl] = useState("");
+  const [qrisFinalAmount, setQrisFinalAmount] = useState(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [areaOption, setAreaOption] = useState("");
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -151,6 +152,7 @@ export default function JualPage() {
       // Tampilkan Modal QRIS Otomatis
       if (data.paymentUrl) {
         setQrisUrl(data.paymentUrl);
+        setQrisFinalAmount(data.finalAmount || null);
       }
       setCreatedListing(data.listing || data);
       setCreatedOrderId(data.orderId || "");
@@ -416,7 +418,7 @@ export default function JualPage() {
       {showQRISModal && createdListing && qrisUrl && (
         <QRISModal
           qrisUrl={qrisUrl}
-          fee={fee}
+          fee={qrisFinalAmount ?? fee}
           transactionId={createdOrderId}
           onClose={() => {
             setShowQRISModal(false);

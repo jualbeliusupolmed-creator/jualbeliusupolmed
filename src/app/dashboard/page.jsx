@@ -275,7 +275,7 @@ function DashboardInner() {
       toast.success("Barang berhasil ditandai terjual! 🎉");
       if (data.paymentUrl && data.fee > 0) {
         setActiveQrisUrl(data.paymentUrl);
-        setActiveQrisFee(data.fee);
+        setActiveQrisFee(data.finalAmount || data.fee);
         setActiveQrisOrderId(data.orderId || "");
       }
       load();
@@ -326,13 +326,15 @@ function DashboardInner() {
 
       if (data.paymentUrl) {
         setActiveQrisUrl(data.paymentUrl);
-        if (label === 'autobump') setActiveQrisFee(data.amount || 15000);
-        else if (label === 'bump') setActiveQrisFee(data.amount || 1000);
-        else if (label === 'featured') setActiveQrisFee(data.amount || body.total || body.days * 5000);
-        else if (label === 'renewal') setActiveQrisFee(data.amount || 10000);
-        else if (label === 'subscribe') setActiveQrisFee(data.amount || 49000);
-        else if (label === 'sponsored') setActiveQrisFee(data.amount || (body.days || 1) * 7000);
-        else if (label === 'sold_fee') setActiveQrisFee(data.fee || data.amount || 0);
+        // Gunakan finalAmount (total KlikQris termasuk kode unik) sebagai nominal yang harus dibayar
+        const feeToShow = data.finalAmount || data.fee || data.amount;
+        if (label === 'autobump') setActiveQrisFee(feeToShow || 15000);
+        else if (label === 'bump') setActiveQrisFee(feeToShow || 1000);
+        else if (label === 'featured') setActiveQrisFee(feeToShow || body.total || body.days * 5000);
+        else if (label === 'renewal') setActiveQrisFee(feeToShow || 10000);
+        else if (label === 'subscribe') setActiveQrisFee(feeToShow || 49000);
+        else if (label === 'sponsored') setActiveQrisFee(feeToShow || (body.days || 1) * 7000);
+        else if (label === 'sold_fee') setActiveQrisFee(feeToShow || 0);
         setActiveQrisOrderId(data.orderId || "");
       } else {
         setNote(`Tidak bisa memproses ${label} — link pembayaran tidak ditemukan.`);
@@ -975,7 +977,7 @@ function DashboardInner() {
                                 
                                 if (data.paymentUrl) {
                                   setActiveQrisUrl(data.paymentUrl);
-                                  setActiveQrisFee(data.amount || (i.price ? adFee(i.type, i.price) : 0));
+                                  setActiveQrisFee(data.finalAmount || data.amount || (i.price ? adFee(i.type, i.price) : 0));
                                   setActiveQrisOrderId(data.orderId || "");
                                 } else {
                                   toast.error("Gagal mendapatkan link pembayaran.");

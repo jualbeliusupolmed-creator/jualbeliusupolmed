@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createKlikQrisTransaction } from "@/lib/klikqris";
 
 /**
  * Handler perintah admin bot WA.
@@ -234,14 +235,38 @@ export async function handleAdminCmd(ctx) {
         `Iklanmu langsung aktif! Selamat berjualan! 🚀`
       ).catch(() => {});
     } else {
-      const qrisUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id"}/qris.png`;
-      await sendWa(sellerJid,
-        `🎉 *Admin menyetujui tawaranmu!*\n\n` +
-        `📦 *${listing.title}*\n` +
-        `💳 Biaya iklan baru: *Rp ${newFee.toLocaleString("id-ID")}*\n\n` +
-        `Scan QRIS di bawah dan transfer nominal di atas, lalu kirim struk.`,
-        qrisUrl
-      ).catch(() => {});
+      // Buat transaksi KlikQris baru dengan fee yang sudah disetujui
+      const newOrderId = `TAWAR-${listing.id.slice(0, 8)}-${Date.now()}`;
+      let qrisUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id"}/qris.png`;
+      try {
+        const kq = await createKlikQrisTransaction(newOrderId, newFee, `Biaya iklan (tawar)`);
+        qrisUrl = kq.qrisUrl;
+        // Simpan transaksi baru dengan fee yang disetujui
+        await supa.from("payments").insert({
+          listing_id: listing.id,
+          type: "iklan",
+          amount: newFee,
+          status: "pending",
+          midtrans_order_id: newOrderId,
+          meta: { final_amount: kq.totalAmount, klikqris_signature: kq.signature },
+        });
+        await sendWa(sellerJid,
+          `🎉 *Admin menyetujui tawaranmu!*\n\n` +
+          `📦 *${listing.title}*\n` +
+          `💳 Biaya iklan: *Rp ${kq.totalAmount.toLocaleString("id-ID")}*\n\n` +
+          `Scan QRIS di bawah dan transfer nominal di atas. Iklan otomatis aktif setelah pembayaran terdeteksi.`,
+          qrisUrl
+        ).catch(() => {});
+      } catch (e) {
+        console.error("[adminHandlers] KlikQris error:", e.message);
+        await sendWa(sellerJid,
+          `🎉 *Admin menyetujui tawaranmu!*\n\n` +
+          `📦 *${listing.title}*\n` +
+          `💳 Biaya iklan baru: *Rp ${newFee.toLocaleString("id-ID")}*\n\n` +
+          `Scan QRIS di bawah dan transfer nominal di atas, lalu kirim struk.`,
+          qrisUrl
+        ).catch(() => {});
+      }
     }
     await sendWa(senderJid, `✅ Tawaran biaya kode *${kode}* disetujui (Rp ${newFee.toLocaleString("id-ID")}). Penjual sudah diberitahu.`);
     return NextResponse.json({ ok: true, state: "approve_fee_done" });

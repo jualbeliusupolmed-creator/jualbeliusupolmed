@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getSettings, adFeeFrom } from "@/lib/settings";
+import { createKlikQrisTransaction } from "@/lib/klikqris";
 
 export const dynamic = "force-dynamic";
 
@@ -71,17 +72,20 @@ export async function POST(req) {
       itemName = `Iklan: ${listing.title}`;
     }
 
-    // Create new payment record
+    const { qrisUrl, signature, totalAmount } = await createKlikQrisTransaction(
+      orderId, amount, paymentType === "sold_fee" ? `Fee terjual` : `Pasang iklan`
+    );
+
     await supa.from("payments").insert({
       listing_id: listing.id,
       type: paymentType,
       amount,
       status: "pending",
       midtrans_order_id: orderId,
+      meta: { final_amount: totalAmount, klikqris_signature: signature },
     });
 
-    const paymentUrl = "/qris.png";
-    return NextResponse.json({ paymentUrl, orderId, amount });
+    return NextResponse.json({ paymentUrl: qrisUrl, orderId, amount, finalAmount: totalAmount });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
