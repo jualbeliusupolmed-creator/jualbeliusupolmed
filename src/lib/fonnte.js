@@ -240,10 +240,6 @@ export async function notifyCategorySubscribers(supa, listing) {
   }
 }
 
-// ============================================================================
-// FITUR YANG DINONAKTIFKAN (Untuk Hemat Kuota Fonnte)
-// ============================================================================
-
 export async function notifyAdminNewListing(listing, overrideAdminWa) {
   const cleanEnv = (val) => (val || "").replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
   const adminWa = cleanEnv(process.env.ADMIN_WA) || cleanEnv(process.env.SUPER_ADMIN_WA) || overrideAdminWa;
@@ -259,9 +255,6 @@ export async function notifyAdminNewListing(listing, overrideAdminWa) {
     `👉 ${url}`;
   return send(adminWa, msg, listing.image_url || null).catch(() => ({ ok: false }));
 }
-export async function notifyWantedBuyers(listing) { return { ok: true, skipped: true }; }
-export async function notifySellerInterest(listing, buyerWa) { return { ok: true, skipped: true }; }
-export async function notifyAdminReport(listing, report) { return { ok: true, skipped: true }; }
 
 // Notifikasi H-3 sebelum masa iklan berakhir
 export async function notifySellerExpiring(listing) {

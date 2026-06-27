@@ -254,33 +254,3 @@ export async function parseWantedFromText(text) {
   }
 }
 
-/**
- * Suggest a fair price for a new listing based on similar active listings.
- */
-export async function suggestPrice(title, category, similarPrices = []) {
-  if (!similarPrices || similarPrices.length === 0) return null;
-  const modelsToTry = buildModelsToTry({});
-  const priceList = similarPrices.map(p => `Rp ${Number(p).toLocaleString("id-ID")}`).join(", ");
-
-  const prompt = `
-    Anda adalah analis harga marketplace. Berikan saran harga untuk barang berikut:
-    - Nama barang: ${title}
-    - Kategori: ${category}
-    - Harga iklan serupa di marketplace yang sedang aktif: ${priceList}
-
-    Tentukan harga yang wajar berdasarkan referensi di atas.
-
-    Kembalikan HANYA JSON MURNI (tanpa markdown):
-    {
-      "suggested_price": <angka harga yang paling wajar>,
-      "range_min": <batas bawah harga wajar>,
-      "range_max": <batas atas harga wajar>,
-      "note": "catatan singkat (maks 80 karakter) mengapa harga ini direkomendasikan"
-    }
-  `;
-  try {
-    return await executeHybridAI(modelsToTry, prompt);
-  } catch (err) {
-    return null;
-  }
-}
