@@ -38,20 +38,22 @@ export function formatWa(num) {
   } else if (cleaned.startsWith("8")) {
     cleaned = "0" + cleaned;
   }
-  // Nomor HP Indonesia: 10–13 digit, harus diawali 0
-  if (!cleaned.startsWith("0") || cleaned.length < 10 || cleaned.length > 13) return "";
+  // Nomor HP Indonesia: 10–13 digit, harus diawali 08
+  if (!cleaned.startsWith("08") || cleaned.length < 10 || cleaned.length > 13) return "";
   return cleaned;
 }
 
+// Validasi apakah string adalah nomor HP Indonesia yang valid
+// Menerima: 628xxx, 08xxx, 8xxx — menolak: nomor acak, internasional non-ID, dll
+export function isValidIndonesianPhone(num) {
+  return formatWa(num) !== "";
+}
+
 // Konversi nomor ke format internasional (628xxx) untuk dikirim ke Baileys API
+// Return "" jika bukan nomor Indonesia yang valid
 export function formatWaForBaileys(num) {
   if (!num) return "";
-  let cleaned = num.replace(/\D/g, "");
-  if (cleaned.startsWith("0")) {
-    cleaned = "62" + cleaned.slice(1);
-  } else if (cleaned.startsWith("8")) {
-    cleaned = "62" + cleaned;
-  }
-  // Jika sudah 62xxx atau format internasional lain, kembalikan apa adanya
-  return cleaned;
+  const local = formatWa(num); // validasi dulu
+  if (!local) return "";
+  return "62" + local.slice(1); // 08xxx → 628xxx
 }
