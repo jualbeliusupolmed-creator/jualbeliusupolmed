@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { 
-  Wifi, MessageSquare, FileText, MousePointer, 
+import { useState, useEffect, useRef } from "react";
+import {
+  Wifi, MessageSquare, FileText, MousePointer,
   Users, Globe, Megaphone, UserCheck, PhoneCall,
-  Database, Shield, Server, Cpu, ShieldAlert 
+  Database, Shield, Server, Cpu, ShieldAlert
 } from "lucide-react";
 
 const CAPABILITIES = [
@@ -176,69 +176,131 @@ const CAPABILITIES = [
   }
 ];
 
+const ALL_IDS = CAPABILITIES.flatMap(c => c.features.map(f => f.id));
+
 export function TabKapabilitas() {
   const [activeModules, setActiveModules] = useState({});
+  const [loadStatus, setLoadStatus] = useState("loading"); // "loading" | "ok" | "error"
+  const [saving, setSaving] = useState(false);
+  const [savedAt, setSavedAt] = useState(null);
+  const debounceRef = useRef(null);
 
-  const toggleModule = (id) => {
-    setActiveModules(prev => ({
-      ...prev,
-      [id]: !prev[id]
-    }));
-  };
+  useEffect(() => {
+    fetch("/api/admin/kapabilitas")
+      .then(r => r.json())
+      .then(d => { setActiveModules(d.kapabilitas || {}); setLoadStatus("ok"); })
+      .catch(() => setLoadStatus("error"));
+  }, []);
+
+  function saveModules(modules) {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      setSaving(true);
+      try {
+        await fetch("/api/admin/kapabilitas", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ modules }),
+        });
+        setSavedAt(new Date());
+      } finally {
+        setSaving(false);
+      }
+    }, 600);
+  }
+
+  function toggleModule(id) {
+    const updated = { ...activeModules, [id]: !activeModules[id] };
+    setActiveModules(updated);
+    saveModules(updated);
+  }
+
+  function toggleAll(on) {
+    const updated = Object.fromEntries(ALL_IDS.map(id => [id, on]));
+    setActiveModules(updated);
+    saveModules(updated);
+  }
+
+  const activeCount = Object.values(activeModules).filter(Boolean).length;
 
   return (
     <div className="space-y-6">
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">🌟 Katalog Kapabilitas Modul Baileys</h2>
-        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-          Kumpulan fitur tingkat mahir (low-level) yang didukung oleh mesin arsitektur Baileys. 
-          Anda dapat menyalakan <i>toggle</i> di bawah ini sebagai representasi modul aktif di dalam <i>roadmap</i> sistem WaBot Anda.
-        </p>
+      <div className="mb-2 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">🌟 Katalog Kapabilitas Modul Baileys</h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Aktifkan modul yang digunakan oleh server bot. Status disimpan ke database dan bisa dibaca bot via <code className="rounded bg-gray-100 dark:bg-slate-800 px-1 text-xs">/api/config</code>.
+          </p>
+        </div>
+        <div className="flex flex-col items-end gap-1.5 shrink-0">
+          <div className="flex items-center gap-2">
+            {loadStatus === "loading" && <span className="text-xs text-gray-400">Memuat...</span>}
+            {saving && <span className="text-xs text-blue-500 animate-pulse">Menyimpan...</span>}
+            {!saving && savedAt && <span className="text-xs text-emerald-600 dark:text-emerald-400">✓ Tersimpan {savedAt.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}</span>}
+            <span className="rounded-full bg-blue-100 dark:bg-blue-900/30 px-2.5 py-0.5 text-xs font-semibold text-blue-700 dark:text-blue-300">
+              {activeCount} aktif
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => toggleAll(true)} className="rounded-lg border border-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-800 px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 transition-colors">Aktifkan Semua</button>
+            <button onClick={() => toggleAll(false)} className="rounded-lg border border-gray-200 dark:border-slate-700 px-3 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">Reset Semua</button>
+          </div>
+        </div>
       </div>
 
+      {loadStatus === "error" && (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 dark:bg-rose-900/20 dark:border-rose-800 p-4 text-sm text-rose-600 dark:text-rose-400">
+          Gagal memuat data kapabilitas dari server. Toggle masih bisa dipakai tapi tidak tersimpan permanen.
+        </div>
+      )}
+
       <div className="space-y-8">
-        {CAPABILITIES.map((cat, idx) => (
-          <div key={idx} className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-6 shadow-sm transition-all hover:shadow-md">
-            <div className="flex items-center gap-3 mb-5 border-b border-gray-100 dark:border-slate-800 pb-4">
-              <div className="p-2.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg shadow-sm">
-                {cat.icon}
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{cat.category}</h3>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {cat.features.map((feat) => (
-                <div key={feat.id} className="relative flex flex-col p-4 rounded-xl border border-gray-100 dark:border-slate-800 bg-gray-50/40 dark:bg-slate-900/40 hover:bg-white dark:hover:bg-slate-800 transition-colors shadow-sm">
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="font-semibold text-gray-900 dark:text-white text-[13px] pr-6 leading-tight">{feat.title}</h4>
-                    <button 
-                      onClick={() => toggleModule(feat.id)}
-                      className={`relative inline-flex h-4 w-7 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${
-                        activeModules[feat.id] ? 'bg-blue-600' : 'bg-gray-300 dark:bg-slate-700'
-                      }`}
-                    >
-                      <span className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                        activeModules[feat.id] ? 'translate-x-3' : 'translate-x-0'
-                      }`} />
-                    </button>
+        {CAPABILITIES.map((cat, idx) => {
+          const catActive = cat.features.filter(f => activeModules[f.id]).length;
+          return (
+            <div key={idx} className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-6 shadow-sm transition-all hover:shadow-md">
+              <div className="flex items-center justify-between gap-3 mb-5 border-b border-gray-100 dark:border-slate-800 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg shadow-sm">
+                    {cat.icon}
                   </div>
-                  <p className="text-[11px] text-gray-600 dark:text-gray-400 leading-relaxed flex-grow">
-                    {feat.desc}
-                  </p>
-                  
-                  {activeModules[feat.id] && (
-                    <div className="mt-3 pt-2 border-t border-gray-200 dark:border-slate-700">
-                       <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 ring-1 ring-inset ring-green-600/20">
-                         <span className="h-1 w-1 rounded-full bg-green-500 animate-pulse"></span>
-                         Aktif
-                       </span>
-                    </div>
-                  )}
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-white">{cat.category}</h3>
                 </div>
-              ))}
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${catActive > 0 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-gray-100 text-gray-400 dark:bg-slate-800"}`}>
+                  {catActive}/{cat.features.length} aktif
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {cat.features.map((feat) => {
+                  const on = !!activeModules[feat.id];
+                  return (
+                    <div key={feat.id} className={`relative flex flex-col p-4 rounded-xl border transition-all ${on ? "border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-900/10" : "border-gray-100 dark:border-slate-800 bg-gray-50/40 dark:bg-slate-900/40"} hover:shadow-sm`}>
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-semibold text-gray-900 dark:text-white text-[13px] pr-6 leading-tight">{feat.title}</h4>
+                        <button
+                          onClick={() => toggleModule(feat.id)}
+                          className={`relative inline-flex h-4 w-7 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${on ? "bg-blue-600" : "bg-gray-300 dark:bg-slate-700"}`}
+                        >
+                          <span className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${on ? "translate-x-3" : "translate-x-0"}`} />
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-gray-600 dark:text-gray-400 leading-relaxed flex-grow">{feat.desc}</p>
+                      {on && (
+                        <div className="mt-3 pt-2 border-t border-blue-100 dark:border-blue-900/30">
+                          <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 ring-1 ring-inset ring-green-600/20">
+                            <span className="h-1 w-1 rounded-full bg-green-500 animate-pulse" />
+                            Aktif
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

@@ -17,6 +17,7 @@ export async function GET() {
       site: settings.site,
       contact: settings.contact,
       categories,
+      kapabilitas: settings.kapabilitas || {},
     });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });
