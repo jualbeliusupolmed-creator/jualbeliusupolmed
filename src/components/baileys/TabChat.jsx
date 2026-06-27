@@ -11,7 +11,13 @@ function ChatRoom({ chat, onClose }) {
   const [replyStatus, setReplyStatus] = useState(null);
   const messagesEndRef = useRef(null);
 
-  const messages = data?.messages || [];
+  // Jika error (misal endpoint tidak ada), tampilkan dummy agar UI tetap bisa didemokan
+  const messages = error ? [
+    { id: 1, text: "Halo, saya tertarik dengan listing Anda.", fromMe: false, timestamp: Date.now()/1000 - 3600 },
+    { id: 2, text: "Tentu, barang masih tersedia. Ada yang ingin ditanyakan?", fromMe: true, timestamp: Date.now()/1000 - 3500 },
+    { id: 3, text: "Apakah bisa nego?", fromMe: false, timestamp: Date.now()/1000 - 3400 },
+    { id: 4, text: "(Ini adalah riwayat pesan contoh (dummy) karena API Baileys Anda gagal merespons atau belum memiliki endpoint /messages)", fromMe: true, timestamp: Date.now()/1000 },
+  ] : (data?.messages || []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -60,7 +66,14 @@ function ChatRoom({ chat, onClose }) {
       {/* Message List */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {loading && <div className="text-center text-sm text-gray-400 my-4">Memuat pesan...</div>}
-        {error && <div className="text-center text-sm text-red-500 my-4">Gagal memuat pesan: {error}</div>}
+        {error && (
+          <div className="text-center text-sm text-amber-600 bg-amber-50 dark:bg-amber-900/30 dark:text-amber-400 p-3 rounded-lg my-4">
+            ⚠️ <b>Gagal memuat pesan riwayat asli dari server.</b><br/>
+            (Pesan error dari API: <i>{error}</i>)<br/>
+            Pastikan API Baileys Anda sudah mendukung endpoint <code>/messages?jid=xxx</code>.<br/>
+            Menampilkan pesan <i>dummy</i> sebagai simulasi antarmuka.
+          </div>
+        )}
         
         {!loading && messages.length === 0 && !error && (
           <div className="text-center text-sm text-gray-400 my-10 bg-white/50 dark:bg-slate-800/50 p-4 rounded-lg">
