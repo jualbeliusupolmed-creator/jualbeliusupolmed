@@ -1,9 +1,5 @@
 import { NextResponse } from "next/server";
 import { parseListingFromText } from "@/lib/gemini";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin"; // Wait, it's getAdminClient
-
-// Let's use getAdminClient
-import { getAdminClient } from "@/lib/supabaseAdmin";
 
 export async function POST(req) {
   try {

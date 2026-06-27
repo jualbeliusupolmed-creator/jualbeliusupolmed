@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
-import { notifyAdminReport } from "@/lib/fonnte";
 
 export const dynamic = "force-dynamic";
 
@@ -45,9 +44,6 @@ export async function POST(req) {
     if (error) throw new Error(error.message);
 
     // Notif WA ke admin (aman-gagal)
-    notifyAdminReport(listing, { reason: cleanReason, detail: cleanDetail }).catch(
-      () => {}
-    );
 
     return NextResponse.json({ ok: true });
   } catch (e) {
