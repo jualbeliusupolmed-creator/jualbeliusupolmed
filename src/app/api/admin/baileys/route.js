@@ -17,7 +17,12 @@ export async function GET(req) {
   const cleanUrl = BAILEYS_URL.replace(/[\u200B-\u200D\uFEFF]/g, "").trim().replace(/\/$/, "");
 
   try {
-    const res = await fetch(`${cleanUrl}/${endpoint}`, {
+    // Teruskan query param tambahan (selain endpoint & _t) ke Baileys server
+    const forwardUrl = new URL(`${cleanUrl}/${endpoint}`);
+    for (const [key, val] of searchParams.entries()) {
+      if (key !== "endpoint" && key !== "_t") forwardUrl.searchParams.set(key, val);
+    }
+    const res = await fetch(forwardUrl.toString(), {
       headers: { Authorization: BAILEYS_TOKEN },
       cache: "no-store",
     });
