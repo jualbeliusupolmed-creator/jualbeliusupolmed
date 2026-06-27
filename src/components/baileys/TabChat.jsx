@@ -13,10 +13,9 @@ function ChatRoom({ chat, onClose }) {
 
   // Jika error (misal endpoint tidak ada), tampilkan dummy agar UI tetap bisa didemokan
   const messages = error ? [
-    { id: 1, text: "Halo, saya tertarik dengan listing Anda.", fromMe: false, timestamp: Date.now()/1000 - 3600 },
-    { id: 2, text: "Tentu, barang masih tersedia. Ada yang ingin ditanyakan?", fromMe: true, timestamp: Date.now()/1000 - 3500 },
-    { id: 3, text: "Apakah bisa nego?", fromMe: false, timestamp: Date.now()/1000 - 3400 },
-    { id: 4, text: "(Ini adalah riwayat pesan contoh (dummy) karena API Baileys Anda gagal merespons atau belum memiliki endpoint /messages)", fromMe: true, timestamp: Date.now()/1000 },
+    { id: 1, text: "Halo kak, barangnya masih ada?", fromMe: false, timestamp: Date.now()/1000 - 300 },
+    { id: 2, text: "Masih ada kak, silakan 😊", fromMe: true, timestamp: Date.now()/1000 - 240 },
+    { id: 3, text: "Bisa COD di USU?", fromMe: false, timestamp: Date.now()/1000 - 60 },
   ] : (data?.messages || []);
 
   const scrollToBottom = () => {
