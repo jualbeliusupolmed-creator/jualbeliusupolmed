@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { TabStatus } from "@/components/baileys/TabStatus";
+import { TabKapabilitas } from "@/components/baileys/TabKapabilitas";
 import { TabProfil } from "@/components/baileys/TabProfil";
 import { TabStory } from "@/components/baileys/TabStory";
 import { TabChat } from "@/components/baileys/TabChat";
@@ -15,9 +16,10 @@ import { TabKonteks } from "@/components/baileys/TabKonteks";
 import { TabLog } from "@/components/baileys/TabLog";
 
 
-const TABS = ["status", "profil", "story", "chat", "grup", "saluran", "kirim", "blocklist", "lid", "konteks", "log"];
+const TABS = ["status", "kapabilitas", "profil", "story", "chat", "grup", "saluran", "kirim", "blocklist", "lid", "konteks", "log"];
 const TAB_LABELS = {
   status:    "🔌 Status",
+  kapabilitas: "🌟 Kapabilitas",
   profil:    "👤 Profil Bot",
   story:     "📱 Status WA",
   chat:      "💬 Chat",
@@ -48,6 +50,7 @@ export default function BaileysDashboard() {
       </div>
 
       {tab === "status"    && <TabStatus />}
+      {tab === "kapabilitas" && <TabKapabilitas />}
       {tab === "profil"    && <TabProfil />}
       {tab === "story"     && <TabStory />}
       {tab === "chat"      && <TabChat />}
