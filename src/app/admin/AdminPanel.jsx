@@ -9,7 +9,7 @@ import { formatWa } from "@/lib/constants";
 import AdminListingModal from "./AdminListingModal";
 import ConfirmModal from "@/components/ConfirmModal";
 import { getSupabase } from "@/lib/supabase";
-import BaileysDashboard from "./baileys/BaileysDashboard";
+import BaileysDashboard from "./wabot/BaileysDashboard";
 import AIPanel from "./AIPanel";
 import BroadcastPanel from "./BroadcastPanel";
 import ReferralPanel from "./ReferralPanel";
