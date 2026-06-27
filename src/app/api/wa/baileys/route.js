@@ -2436,7 +2436,7 @@ export async function POST(req) {
       });
 
       const qrisUrl = getQrisUrl();
-      const namaReminder = isNewWaUser ? `\n💡 Ketik *NAMA [nama kamu]* untuk set nama profil iklan.\n` : "";
+      const namaReminder = (isNewWaUser && profileName === "Pengguna WA") ? `\n💡 Ketik *NAMA [nama kamu]* untuk set nama profil iklan.\n` : "";
       
       let fallbackReply = `✅ *Iklan Berhasil Dibaca AI!*\n\n`;
       for (const l of createdListings) {
