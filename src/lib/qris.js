@@ -46,24 +46,22 @@ function buildQris(fields) {
  * @param {string} orderId - order ID untuk referensi (max 20 karakter)
  * @returns {{ qrisString: string, finalAmount: number, suffix: number }}
  */
+/**
+ * Buat QRIS dinamis dari QRIS statis dengan nominal unik.
+ * Kalau staticQris kosong/tidak ada, return null (fallback ke /qris.png di route).
+ */
 export function makeDynamicQris(staticQris, baseAmount, orderId) {
-  const fields = parseQris(staticQris);
+  if (!staticQris) return null;
 
-  // Ubah ke dinamis
+  const fields = parseQris(staticQris);
   fields["01"] = "12";
 
-  // Nominal unik: tambah 0-99 acak agar setiap transaksi bisa dibedakan
   const suffix = Math.floor(Math.random() * 100);
   const finalAmount = baseAmount + suffix;
   fields["54"] = String(finalAmount);
 
-  // Referensi order di tag 62 subtag 05
   const ref = orderId.replace(/[^A-Za-z0-9]/g, "").slice(0, 20);
   fields["62"] = "05" + ref.length.toString().padStart(2, "0") + ref;
 
-  return {
-    qrisString: buildQris(fields),
-    finalAmount,
-    suffix,
-  };
+  return { qrisString: buildQris(fields), finalAmount, suffix };
 }
