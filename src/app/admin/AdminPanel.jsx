@@ -1120,6 +1120,7 @@ function SettingsManager({ settings, action }) {
   const [adminCfg, setAdminCfg] = useState(settings.admin || {});
   const [metaCfg, setMetaCfg] = useState(settings.meta || {});
   const [botCfg, setBotCfg] = useState(settings.bot || {});
+  const [paymentCfg, setPaymentCfg] = useState(settings.payment || { mode: "auto" });
   const [messages, setMessages] = useState(settings.messages || {});
   const [areas, setAreas] = useState((settings.areas || []).join("\n"));
   const [saved, setSaved] = useState("");
@@ -1222,6 +1223,63 @@ function SettingsManager({ settings, action }) {
           <svg className="absolute left-3.5 top-3 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
         </div>
       </div>
+
+      {/* MODE PEMBAYARAN */}
+      <Card title="Mode Pembayaran">
+        <p className="mb-4 text-sm text-gray-500 dark:text-slate-400">
+          Pilih bagaimana sistem memverifikasi pembayaran dari penjual.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button
+            onClick={() => {
+              if (paymentCfg.mode === "auto") return;
+              const updated = { ...paymentCfg, mode: "auto" };
+              setPaymentCfg(updated);
+              action({ action: "save_settings", key: "payment", value: updated }, "Mode Otomatis diaktifkan");
+              flash("payment");
+            }}
+            className={`flex-1 rounded-xl border-2 p-4 text-left transition-all ${
+              paymentCfg.mode === "auto"
+                ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20"
+                : "border-gray-200 dark:border-slate-700 hover:border-emerald-300"
+            }`}
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <span className={`h-3 w-3 rounded-full ${paymentCfg.mode === "auto" ? "bg-emerald-500" : "bg-gray-300"}`} />
+              <span className="font-semibold text-sm dark:text-white">Otomatis</span>
+              {paymentCfg.mode === "auto" && <span className="ml-auto text-xs bg-emerald-500 text-white px-2 py-0.5 rounded-full">Aktif</span>}
+            </div>
+            <p className="text-xs text-gray-500 dark:text-slate-400">
+              Callback QiosPay / Midtrans memproses pembayaran secara otomatis tanpa perlu upload struk.
+            </p>
+          </button>
+
+          <button
+            onClick={() => {
+              if (paymentCfg.mode === "manual") return;
+              const updated = { ...paymentCfg, mode: "manual" };
+              setPaymentCfg(updated);
+              action({ action: "save_settings", key: "payment", value: updated }, "Mode Manual diaktifkan");
+              flash("payment");
+            }}
+            className={`flex-1 rounded-xl border-2 p-4 text-left transition-all ${
+              paymentCfg.mode === "manual"
+                ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20"
+                : "border-gray-200 dark:border-slate-700 hover:border-amber-300"
+            }`}
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <span className={`h-3 w-3 rounded-full ${paymentCfg.mode === "manual" ? "bg-amber-500" : "bg-gray-300"}`} />
+              <span className="font-semibold text-sm dark:text-white">Manual</span>
+              {paymentCfg.mode === "manual" && <span className="ml-auto text-xs bg-amber-500 text-white px-2 py-0.5 rounded-full">Aktif</span>}
+            </div>
+            <p className="text-xs text-gray-500 dark:text-slate-400">
+              Callback dinonaktifkan. Penjual wajib upload foto struk untuk verifikasi pembayaran via AI.
+            </p>
+          </button>
+        </div>
+        {saved === "payment" && <p className="mt-3 text-xs text-emerald-600 dark:text-emerald-400">✓ Mode disimpan</p>}
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* HARGA & BIAYA */}

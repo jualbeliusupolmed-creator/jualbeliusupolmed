@@ -61,6 +61,9 @@ export const DEFAULT_SETTINGS = {
     qrisUrl: process.env.QRIS_URL || "",
     fonnteFirst: false,
   },
+  payment: {
+    mode: "auto", // "auto" = QiosPay/callback aktif; "manual" = upload struk saja
+  },
   bot: {
     paused_users: [],
     webhookUrl: "",

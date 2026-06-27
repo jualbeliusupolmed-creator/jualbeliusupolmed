@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
+import { getSettings } from "@/lib/settings";
 import { sendWa, notifyAdminNewListing, postToGroup, postWantedToGroup } from "@/lib/fonnte";
 import { buildSlug } from "@/lib/slug";
 
@@ -9,6 +10,12 @@ export const dynamic = "force-dynamic";
 // Dipanggil oleh QiosPay saat pembayaran QRIS berhasil diterima
 export async function POST(req) {
   try {
+    const settings = await getSettings();
+    if ((settings.payment?.mode ?? "auto") !== "auto") {
+      console.log("[qiospay-callback] mode manual, callback diabaikan");
+      return NextResponse.json({ ok: false, message: "payment mode is manual" }, { status: 200 });
+    }
+
     const body = await req.json().catch(() => null) || await req.text().then(t => {
       try { return JSON.parse(t); } catch { return { raw: t }; }
     });
