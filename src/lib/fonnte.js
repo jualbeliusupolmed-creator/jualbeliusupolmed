@@ -197,18 +197,23 @@ export async function notifyBuyerOfferResult(buyer_wa, buyer_name, { listing_tit
 }
 
 // Notifikasi ke subscriber kategori: ada iklan baru
+// Cooldown 6 jam per buyer per kategori — mencegah banjir notif
 export async function notifyCategorySubscribers(supa, listing) {
   try {
+    const cooldownMs = 6 * 60 * 60 * 1000;
+    const cutoff = new Date(Date.now() - cooldownMs).toISOString();
+
     const { data: subs } = await supa
       .from("category_subscriptions")
-      .select("buyer_wa, buyer_name")
+      .select("id, buyer_wa, buyer_name, last_notified_at")
       .eq("category", listing.category)
-      .or(`campus.eq.Semua,campus.eq.${listing.campus}`);
+      .or(`campus.eq.Semua,campus.eq.${listing.campus}`)
+      .or(`last_notified_at.is.null,last_notified_at.lt.${cutoff}`);
 
     if (!subs?.length) return;
 
     const url = `${baseUrl()}/produk/${buildSlug(listing.title, listing.id)}`;
-    
+
     for (const s of subs) {
       await send(
         s.buyer_wa,
@@ -221,8 +226,13 @@ export async function notifyCategorySubscribers(supa, listing) {
         `👉 ${url}\n\n` +
         `_Balas STOP untuk berhenti notifikasi._`
       ).catch(() => {});
-      
-      // Berikan jeda 2 detik antar pesan agar tidak dianggap spam
+
+      // Update timestamp cooldown
+      await supa.from("category_subscriptions")
+        .update({ last_notified_at: new Date().toISOString() })
+        .eq("id", s.id).catch(() => {});
+
+      // Jeda 2 detik antar pesan
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
   } catch (err) {
