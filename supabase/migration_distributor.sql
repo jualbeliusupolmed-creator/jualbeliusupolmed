@@ -33,3 +33,8 @@ CREATE TABLE IF NOT EXISTS distributor_invites (
 
 CREATE INDEX IF NOT EXISTS idx_dist_invite_token ON distributor_invites(token);
 CREATE INDEX IF NOT EXISTS idx_dist_invite_wa    ON distributor_invites(wa);
+
+-- 5. RLS — kedua tabel hanya bisa diakses via service-role (server-side).
+--    Anon key tidak dapat SELECT/INSERT/UPDATE/DELETE sama sekali.
+ALTER TABLE distributor_categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE distributor_invites    ENABLE ROW LEVEL SECURITY;

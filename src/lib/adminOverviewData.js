@@ -8,7 +8,8 @@ export async function getOverviewStats() {
     activeCountRes,
     soldCountRes,
     pendingCountRes,
-    allPaymentsRes,
+    paidPaymentsRes,
+    pendingPaymentsCountRes,
     allListingsForCatRes,
     reportsCountRes,
     ratingsRes
@@ -19,7 +20,8 @@ export async function getOverviewStats() {
     supa.from("listings").select("id", { count: "exact", head: true }).eq("status", "active"),
     supa.from("listings").select("id", { count: "exact", head: true }).eq("status", "sold"),
     supa.from("listings").select("id", { count: "exact", head: true }).eq("status", "pending"),
-    supa.from("payments").select("amount, type, status, created_at"),
+    supa.from("payments").select("amount, type, created_at").eq("status", "paid"),
+    supa.from("payments").select("id", { count: "exact", head: true }).eq("status", "pending"),
     supa.from("listings").select("category"),
     supa.from("reports").select("id", { count: "exact", head: true }).eq("status", "open"),
     supa.from("seller_ratings").select("rating")
@@ -33,12 +35,10 @@ export async function getOverviewStats() {
   const pendingTotal = pendingCountRes.count || 0;
   const openReportsTotal = reportsCountRes.count || 0;
 
-  const allPayments = allPaymentsRes.data || [];
-  const paidPayments = allPayments.filter(p => p.status === "paid");
-  const pendingPayments = allPayments.filter(p => p.status === "pending");
+  const paidPayments = paidPaymentsRes.data || [];
 
   let revenue = 0;
-  let pendingPaymentCount = pendingPayments.length;
+  const pendingPaymentCount = pendingPaymentsCountRes.count || 0;
   paidPayments.forEach(p => revenue += Number(p.amount || 0));
 
   const perCat = {};
