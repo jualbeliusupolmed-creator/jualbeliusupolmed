@@ -11,6 +11,7 @@ export const dynamic = "force-dynamic";
 
 // GET /api/listings?seller_wa=...  -> daftar iklan milik penjual
 export async function GET(req) {
+  try {
   const wa = formatWa(req.nextUrl.searchParams.get("seller_wa") || "");
   if (!wa) return NextResponse.json({ listings: [] });
   const supa = getAdminClient();
@@ -60,6 +61,10 @@ export async function GET(req) {
   }
 
   return NextResponse.json({ listings, profile });
+  } catch (e) {
+    console.error("[GET /api/listings] error:", e);
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
 }
 
 // POST /api/listings -> buat listing (pending) + payment + snap token

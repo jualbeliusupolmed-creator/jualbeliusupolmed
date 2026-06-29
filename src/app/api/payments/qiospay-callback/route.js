@@ -29,8 +29,9 @@ export async function POST(req) {
     const rawAmount = body?.amount || body?.nominal || body?.total;
     const amount = Number(String(rawAmount).replace(/\D/g, ""));
 
-    // Validasi merchant code
-    if (merchantCode && merchantCode !== process.env.QIOSPAY_MERCHANT_CODE) {
+    // Validasi merchant code — wajib cocok jika env terkonfigurasi
+    const expectedMerchantCode = process.env.QIOSPAY_MERCHANT_CODE;
+    if (expectedMerchantCode && merchantCode !== expectedMerchantCode) {
       console.warn("[qiospay-callback] merchant_code tidak cocok:", merchantCode);
       return NextResponse.json({ ok: false }, { status: 403 });
     }

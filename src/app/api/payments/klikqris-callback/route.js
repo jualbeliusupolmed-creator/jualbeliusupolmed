@@ -55,21 +55,21 @@ export async function POST(req) {
       return NextResponse.json({ ok: true, message: "already paid" }, { status: 200 });
     }
 
-    // Verifikasi signature
+    // Verifikasi signature — tolak jika stored ada tapi incoming tidak cocok/absen
     const storedSignature = payment.meta?.klikqris_signature;
-    if (storedSignature && signature && storedSignature !== signature) {
+    if (storedSignature && storedSignature !== signature) {
       console.warn("[klikqris-callback] signature tidak cocok:", order_id);
       return NextResponse.json({ ok: false, message: "signature mismatch" }, { status: 200 });
     }
 
-    // Tandai paid
+    // Jalankan fulfillment DULU — baru tandai paid setelah berhasil.
+    // Urutan ini memastikan: kalau fulfillment gagal, gateway bisa retry (status masih pending).
+    await fulfillPayment(supa, payment);
+
     await supa
       .from("payments")
       .update({ status: "paid" })
       .eq("id", payment.id);
-
-    // Jalankan fulfillment sesuai tipe
-    await fulfillPayment(supa, { ...payment, status: "paid" });
 
     return NextResponse.json({ ok: true });
   } catch (e) {
