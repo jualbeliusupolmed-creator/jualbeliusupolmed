@@ -175,20 +175,15 @@ export async function POST(req) {
       return NextResponse.json({ ok: true, ignored: true });
     }
 
-    // @lid JID seharusnya sudah di-resolve oleh bot ke phone JID sebelum dikirim ke sini.
-    // Pengecualian: jika fromMe=true (admin pakai # dari WhatsApp), biarkan lewat —
-    // Baileys bisa kirim balik ke @lid langsung.
+    // @lid JID: tidak bisa di-resolve ke nomor HP biasa, tapi masih bisa diproses.
+    // Baileys bisa kirim pesan balik ke @lid JID langsung via sendWa (yang pakai Baileys URL).
+    // Kita izinkan @lid lewat dan pakai bagian numerik sebagai normalizedWa placeholder.
     if (senderJid.includes("@lid")) {
-      if (!fromMe) {
-        console.warn(`[baileys-webhook] @lid JID lolos ke webhook: ${senderJid} — diabaikan`);
-        return NextResponse.json({ ok: true, ignored: true, reason: "unresolved_lid" });
-      }
-      // fromMe + @lid: admin kirim # ke customer @lid — lanjutkan proses
-      console.log(`[baileys-webhook] @lid fromMe diizinkan: ${senderJid}`);
+      console.log(`[baileys-webhook] @lid JID diproses: ${senderJid} (fromMe=${fromMe})`);
     }
 
     const normalizedWa = senderJid.includes("@lid")
-      ? senderJid.split("@")[0]  // placeholder untuk @lid — cukup untuk flow, Baileys delivery pakai raw JID
+      ? senderJid.split("@")[0]  // placeholder untuk @lid — delivery tetap ke raw JID via Baileys
       : formatWa(senderJid);
     if (!normalizedWa) {
       console.warn(`[baileys-webhook] JID tidak valid / bukan nomor Indonesia: ${senderJid}`);
