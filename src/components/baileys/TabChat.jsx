@@ -9,8 +9,10 @@ function ChatRoom({ chat, onClose }) {
   const [replyMsg, setReplyMsg] = useState("");
   const [replying, setReplying] = useState(false);
   const [replyStatus, setReplyStatus] = useState(null);
-  const [forceAd, setForceAd] = useState(false);
   const messagesEndRef = useRef(null);
+
+  // Auto-detect: pesan diawali '#' → mode bot (seolah pelanggan yg kirim)
+  const isHashMode = replyMsg.trimStart().startsWith("#");
 
   // Jika error (misal endpoint tidak ada), tampilkan dummy agar UI tetap bisa didemokan
   const messages = error ? [
@@ -31,14 +33,14 @@ function ChatRoom({ chat, onClose }) {
     if (!replyMsg.trim()) return;
     setReplying(true); setReplyStatus(null);
 
-    if (forceAd) {
-      // Mode # : kirim langsung ke webhook sebagai "pesan dari admin" dengan prefix #
-      // Ini memicu alur AI buat iklan di route.js
+    if (isHashMode) {
+      // Pesan diawali '#': forward ke webhook seolah-olah pesan dari pelanggan ini
+      // Bot akan merespons atas nama pelanggan (buat iklan, cari barang, dll.)
       try {
         const jid = `${num}@s.whatsapp.net`;
         const fd = new FormData();
         fd.append("sender", jid);
-        fd.append("message", `#${replyMsg.trim()}`);
+        fd.append("message", replyMsg.trim()); // '#' sudah ada di depan
         fd.append("fromMe", "true");
         const resp = await fetch("/api/wa/baileys", {
           method: "POST",
@@ -48,7 +50,7 @@ function ChatRoom({ chat, onClose }) {
         const json = await resp.json();
         const ok = resp.ok && (json.ok || json.state);
         setReplyStatus(ok
-          ? { ok: true, text: `✅ Iklan diproses AI! State: ${json.state || "ok"}` }
+          ? { ok: true, text: `✅ Bot merespons! (${json.state || "ok"})` }
           : { ok: false, text: `❌ Gagal: ${json.error || json.reason || "unknown"}` }
         );
         if (ok) { setReplyMsg(""); setTimeout(() => setReplyStatus(null), 4000); }
@@ -56,7 +58,7 @@ function ChatRoom({ chat, onClose }) {
         setReplyStatus({ ok: false, text: `❌ Error: ${e.message}` });
       }
     } else {
-      // Mode normal: kirim pesan biasa via wa-bot
+      // Mode normal: kirim pesan manual dari admin ke pelanggan via wa-bot
       const r = await apiPost("send", { target: num, message: replyMsg });
       setReplyStatus(r.status ? { ok: true, text: "✅ Terkirim!" } : { ok: false, text: `❌ ${r.reason || r.error}` });
       if (r.status) {
@@ -130,36 +132,24 @@ function ChatRoom({ chat, onClose }) {
       <div className="bg-white dark:bg-slate-800 p-3 border-t border-gray-200 dark:border-slate-700 shrink-0">
         {replyStatus && <div className="mb-2"><Alert ok={replyStatus.ok} msg={replyStatus.text} /></div>}
 
-        {/* Mode Toggle */}
-        <div className="flex items-center gap-2 mb-2">
-          <button
-            onClick={() => setForceAd(v => !v)}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
-              forceAd
-                ? 'bg-amber-500 border-amber-600 text-white shadow-sm'
-                : 'bg-gray-100 dark:bg-slate-700 border-gray-300 dark:border-slate-600 text-gray-500 dark:text-gray-400 hover:bg-gray-200'
-            }`}
-            title={forceAd ? 'Mode aktif: pesan diproses AI sebagai iklan (#)' : 'Klik untuk aktifkan mode Buat Iklan'}
-          >
-            {forceAd ? '🏷️ Mode Iklan (#) AKTIF' : '💬 Pesan Biasa'}
-          </button>
-          {forceAd && (
-            <span className="text-[10px] text-amber-600 dark:text-amber-400">
-              Teks kamu akan diproses AI sebagai deskripsi iklan atas nama nomor ini
+        {/* Auto-indicator saat admin ketik '#' */}
+        {isHashMode && (
+          <div className="flex items-center gap-2 mb-2 px-1 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700">
+            <span className="text-amber-600 dark:text-amber-400 text-xs font-semibold">🤖 Mode Bot Aktif</span>
+            <span className="text-[10px] text-amber-600/80 dark:text-amber-400/80">
+              — teks setelah # dikirim ke bot seolah dari pelanggan ini
             </span>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="flex gap-2">
           <textarea 
-            className={`input flex-1 min-h-[44px] max-h-[120px] resize-y py-2.5 rounded-xl ${
-              forceAd
-                ? 'border-amber-400 dark:border-amber-600 focus:ring-amber-400 focus:border-amber-400 bg-amber-50 dark:bg-amber-900/10'
+            className={`input flex-1 min-h-[44px] max-h-[120px] resize-y py-2.5 rounded-xl transition-colors ${
+              isHashMode
+                ? 'border-amber-400 dark:border-amber-600 focus:ring-amber-400 focus:border-amber-400 bg-amber-50/50 dark:bg-amber-900/10'
                 : 'border-gray-300 dark:border-slate-600 focus:ring-blue-500 focus:border-blue-500'
             }`}
-            placeholder={forceAd
-              ? 'Contoh: Jual laptop Asus 8GB 512SSD harga 3jt mulus nego...'
-              : 'Ketik pesan balasan...'}
+            placeholder="Ketik pesan... atau awali '#' agar bot merespons atas nama pelanggan ini"
             value={replyMsg} 
             onChange={e => setReplyMsg(e.target.value)}
             onKeyDown={e => {
@@ -173,18 +163,18 @@ function ChatRoom({ chat, onClose }) {
             onClick={sendReply} 
             disabled={replying || !replyMsg.trim()} 
             className={`px-5 rounded-xl shrink-0 h-11 self-end disabled:opacity-50 font-semibold transition-colors ${
-              forceAd
+              isHashMode
                 ? 'bg-amber-500 hover:bg-amber-600 text-white'
                 : 'btn-primary'
             }`}
           >
-            {replying ? "⏳" : forceAd ? "Buat Iklan 🏷️" : "Kirim 🚀"}
+            {replying ? "⏳" : isHashMode ? "Bot 🤖" : "Kirim 🚀"}
           </button>
         </div>
         <p className="text-[10px] text-gray-400 mt-1 text-center">
-          {forceAd
-            ? '🏷️ Mode Iklan: teks dikirim ke AI untuk dibuatkan listing atas nama pelanggan ini'
-            : 'Tekan Enter untuk kirim, Shift+Enter untuk baris baru'}
+          {isHashMode
+            ? '🤖 Bot akan membalas ke pelanggan ini sesuai perintah setelah #'
+            : 'Enter kirim · Shift+Enter baris baru · Awali # untuk trigger bot'}
         </p>
       </div>
     </div>
