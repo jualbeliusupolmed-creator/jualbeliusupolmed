@@ -9,6 +9,7 @@ function ChatRoom({ chat, onClose }) {
   const [replyMsg, setReplyMsg] = useState("");
   const [replying, setReplying] = useState(false);
   const [replyStatus, setReplyStatus] = useState(null);
+  const [forceAd, setForceAd] = useState(false);
   const messagesEndRef = useRef(null);
 
   // Jika error (misal endpoint tidak ada), tampilkan dummy agar UI tetap bisa didemokan
@@ -29,14 +30,42 @@ function ChatRoom({ chat, onClose }) {
   async function sendReply() {
     if (!replyMsg.trim()) return;
     setReplying(true); setReplyStatus(null);
-    const r = await apiPost("send", { target: num, message: replyMsg });
-    setReplyStatus(r.status ? { ok: true, text: "✅ Terkirim!" } : { ok: false, text: `❌ ${r.reason || r.error}` });
-    setReplying(false);
-    if (r.status) { 
-      setReplyMsg(""); 
-      refetch(); // Reload messages
-      setTimeout(() => setReplyStatus(null), 2000); 
+
+    if (forceAd) {
+      // Mode # : kirim langsung ke webhook sebagai "pesan dari admin" dengan prefix #
+      // Ini memicu alur AI buat iklan di route.js
+      try {
+        const jid = `${num}@s.whatsapp.net`;
+        const fd = new FormData();
+        fd.append("sender", jid);
+        fd.append("message", `#${replyMsg.trim()}`);
+        fd.append("fromMe", "true");
+        const resp = await fetch("/api/wa/baileys", {
+          method: "POST",
+          headers: { Authorization: "jualbeliusu_rahasia" },
+          body: fd,
+        });
+        const json = await resp.json();
+        const ok = resp.ok && (json.ok || json.state);
+        setReplyStatus(ok
+          ? { ok: true, text: `✅ Iklan diproses AI! State: ${json.state || "ok"}` }
+          : { ok: false, text: `❌ Gagal: ${json.error || json.reason || "unknown"}` }
+        );
+        if (ok) { setReplyMsg(""); setTimeout(() => setReplyStatus(null), 4000); }
+      } catch (e) {
+        setReplyStatus({ ok: false, text: `❌ Error: ${e.message}` });
+      }
+    } else {
+      // Mode normal: kirim pesan biasa via wa-bot
+      const r = await apiPost("send", { target: num, message: replyMsg });
+      setReplyStatus(r.status ? { ok: true, text: "✅ Terkirim!" } : { ok: false, text: `❌ ${r.reason || r.error}` });
+      if (r.status) {
+        setReplyMsg("");
+        refetch();
+        setTimeout(() => setReplyStatus(null), 2000);
+      }
     }
+    setReplying(false);
   }
 
   return (
@@ -100,10 +129,37 @@ function ChatRoom({ chat, onClose }) {
       {/* Input Area */}
       <div className="bg-white dark:bg-slate-800 p-3 border-t border-gray-200 dark:border-slate-700 shrink-0">
         {replyStatus && <div className="mb-2"><Alert ok={replyStatus.ok} msg={replyStatus.text} /></div>}
+
+        {/* Mode Toggle */}
+        <div className="flex items-center gap-2 mb-2">
+          <button
+            onClick={() => setForceAd(v => !v)}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
+              forceAd
+                ? 'bg-amber-500 border-amber-600 text-white shadow-sm'
+                : 'bg-gray-100 dark:bg-slate-700 border-gray-300 dark:border-slate-600 text-gray-500 dark:text-gray-400 hover:bg-gray-200'
+            }`}
+            title={forceAd ? 'Mode aktif: pesan diproses AI sebagai iklan (#)' : 'Klik untuk aktifkan mode Buat Iklan'}
+          >
+            {forceAd ? '🏷️ Mode Iklan (#) AKTIF' : '💬 Pesan Biasa'}
+          </button>
+          {forceAd && (
+            <span className="text-[10px] text-amber-600 dark:text-amber-400">
+              Teks kamu akan diproses AI sebagai deskripsi iklan atas nama nomor ini
+            </span>
+          )}
+        </div>
+
         <div className="flex gap-2">
           <textarea 
-            className="input flex-1 min-h-[44px] max-h-[120px] resize-y py-2.5 rounded-xl border-gray-300 dark:border-slate-600 focus:ring-blue-500 focus:border-blue-500" 
-            placeholder="Ketik pesan balasan..." 
+            className={`input flex-1 min-h-[44px] max-h-[120px] resize-y py-2.5 rounded-xl ${
+              forceAd
+                ? 'border-amber-400 dark:border-amber-600 focus:ring-amber-400 focus:border-amber-400 bg-amber-50 dark:bg-amber-900/10'
+                : 'border-gray-300 dark:border-slate-600 focus:ring-blue-500 focus:border-blue-500'
+            }`}
+            placeholder={forceAd
+              ? 'Contoh: Jual laptop Asus 8GB 512SSD harga 3jt mulus nego...'
+              : 'Ketik pesan balasan...'}
             value={replyMsg} 
             onChange={e => setReplyMsg(e.target.value)}
             onKeyDown={e => {
@@ -116,12 +172,20 @@ function ChatRoom({ chat, onClose }) {
           <button 
             onClick={sendReply} 
             disabled={replying || !replyMsg.trim()} 
-            className="btn-primary px-5 rounded-xl shrink-0 h-11 self-end disabled:opacity-50"
+            className={`px-5 rounded-xl shrink-0 h-11 self-end disabled:opacity-50 font-semibold transition-colors ${
+              forceAd
+                ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                : 'btn-primary'
+            }`}
           >
-            {replying ? "⏳" : "Kirim 🚀"}
+            {replying ? "⏳" : forceAd ? "Buat Iklan 🏷️" : "Kirim 🚀"}
           </button>
         </div>
-        <p className="text-[10px] text-gray-400 mt-1 text-center">Tekan Enter untuk kirim, Shift+Enter untuk baris baru.</p>
+        <p className="text-[10px] text-gray-400 mt-1 text-center">
+          {forceAd
+            ? '🏷️ Mode Iklan: teks dikirim ke AI untuk dibuatkan listing atas nama pelanggan ini'
+            : 'Tekan Enter untuk kirim, Shift+Enter untuk baris baru'}
+        </p>
       </div>
     </div>
   );
