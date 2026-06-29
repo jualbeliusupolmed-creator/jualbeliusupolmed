@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 
-export const revalidate = 3600;
+export const revalidate = 60;
 
 export const metadata = {
   title: "Blog & Artikel Tips Jual Beli — Jual Beli USU Polmed",
