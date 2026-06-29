@@ -4,7 +4,7 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 
-export const revalidate = 3600; // ISR 1 jam — blog jarang berubah
+export const revalidate = 60; // ISR 1 menit
 
 async function getBlog(slug) {
   const supa = getAdminClient();
