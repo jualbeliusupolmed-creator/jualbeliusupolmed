@@ -30,4 +30,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 
-.vercel
+# PWA (auto-generated oleh next-pwa saat build — jangan di-commit)
+public/sw.js
+public/sw.js.map
+public/workbox-*.js
+public/worker-*.js
