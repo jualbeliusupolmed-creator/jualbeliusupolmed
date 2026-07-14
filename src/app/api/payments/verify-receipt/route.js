@@ -108,7 +108,7 @@ export async function POST(req) {
             const until = new Date(Date.now() + 30 * 864e5).toISOString(); // 30 Hari
             await supa
               .from("listings")
-              .update({ status: "active", expired_at: until, bumped_at: new Date().toISOString() })
+              .update({ status: "active", expires_at: until, bumped_at: new Date().toISOString() })
               .eq("id", payment.listing_id);
           } else if (payment.type === "autobump") {
             const until = new Date(Date.now() + 7 * 864e5).toISOString(); // 7 Hari
