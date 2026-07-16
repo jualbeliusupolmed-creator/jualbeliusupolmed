@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { formatWa } from "@/lib/constants";
-import { getSellerSession, isAdmin } from "@/lib/auth";
 import { postWantedToGroup } from "@/lib/fonnte";
 
 export const dynamic = "force-dynamic";
@@ -59,7 +58,11 @@ export async function GET(req) {
     if (error) throw new Error(error.message);
     // Guard LID: sembunyikan postingan yang buyer_wa-nya bukan nomor valid
     // (data lama via bot) — kontaknya tak bisa dibuka, jangan tawarkan ke user.
-    const listings = (data || []).filter((l) => formatWa(l.buyer_wa) !== "");
+    // Kontak pembeli DIJUAL lewat fitur Buka Kontak — jangan pernah kirim
+    // buyer_wa/buyer_name ke daftar publik.
+    const listings = (data || [])
+      .filter((l) => formatWa(l.buyer_wa) !== "")
+      .map(({ buyer_wa: _wa, buyer_name: _nama, ...rest }) => rest);
     return NextResponse.json({ listings });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });
