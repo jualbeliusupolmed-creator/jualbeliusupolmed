@@ -87,6 +87,7 @@ export async function POST(req) {
     }
 
     // === Fulfillment (logika sama seperti webhook pembayaran) ===
+    let unlockContact = null;
     if (payment.type === "subscribe") {
       const until = new Date(Date.now() + 30 * 864e5).toISOString(); // 30 Hari
       await supa
@@ -98,6 +99,29 @@ export async function POST(req) {
         wanted_id: payment.meta.unlock_wanted_id,
         unlocked_by_wa: payment.meta.requester_wa || null
       });
+
+      // Kirim kontak pembeli ke pemohon + balikan ke UI (pengganti approve admin)
+      const { data: wanted } = await supa
+        .from("wanted_listings")
+        .select("*")
+        .eq("id", payment.meta.unlock_wanted_id)
+        .single();
+      if (wanted) {
+        unlockContact = { buyer_name: wanted.buyer_name, buyer_wa: wanted.buyer_wa, title: wanted.title };
+        if (payment.meta?.requester_wa) {
+          const msg =
+            `✅ *PEMBAYARAN TERVERIFIKASI OTOMATIS*\n\n` +
+            `Halo, struk transfer Anda sudah diverifikasi AI untuk pencarian barang berikut:\n` +
+            `🔍 *Cari Barang:* ${wanted.title}\n\n` +
+            `Berikut adalah kontak pembeli yang mengajukan pencarian:\n` +
+            `👤 *Nama:* ${wanted.buyer_name}\n` +
+            `📱 *No. WhatsApp:* ${wanted.buyer_wa}\n\n` +
+            `Silakan langsung hubungi pembeli di atas melalui link berikut:\n` +
+            `👉 https://wa.me/${wanted.buyer_wa}?text=${encodeURIComponent(`Halo ${wanted.buyer_name}, saya melihat postingan Anda di Jual Beli Medan mencari "${wanted.title}". Saya ada barangnya.`)}\n\n` +
+            `Terima kasih telah menggunakan Jual Beli Medan!`;
+          sendWa(payment.meta.requester_wa, msg).catch(console.error);
+        }
+      }
     } else if (payment.meta?.wanted_id) {
       const { data: wanted } = await supa
         .from("wanted_listings")
@@ -170,7 +194,7 @@ export async function POST(req) {
       }
     }
 
-    return NextResponse.json({ success: true, data: extractedData });
+    return NextResponse.json({ success: true, data: extractedData, unlock: unlockContact });
 
   } catch (e) {
     console.error("verify-receipt error:", e);

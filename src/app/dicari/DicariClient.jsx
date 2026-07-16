@@ -41,8 +41,11 @@ export default function DicariPage() {
   const [qrisModal, setQrisModal] = useState(null);
   const [manualWa, setManualWa] = useState("");
   const [manualStep, setManualStep] = useState(1);
-  const [qrisPaymentId, setQrisPaymentId] = useState(null);
+  const [manualOrderId, setManualOrderId] = useState(null);
   const [manualLoading, setManualLoading] = useState(false);
+  const [manualFile, setManualFile] = useState(null);
+  const [manualError, setManualError] = useState("");
+  const [unlockResult, setUnlockResult] = useState(null);
 
   // Budget masking
   const [budgetRaw, setBudgetRaw] = useState("");
@@ -317,7 +320,10 @@ export default function DicariPage() {
                       const savedWa = localStorage.getItem("seller_wa") || "";
                       setManualWa(savedWa);
                       setManualStep(1);
-                      setQrisPaymentId(null);
+                      setManualOrderId(null);
+                      setManualFile(null);
+                      setManualError("");
+                      setUnlockResult(null);
                       setQrisModal(item);
                     }}
                     className="btn-outline w-full py-1.5 sm:py-2.5 text-center flex items-center justify-center gap-1 text-[10px] sm:text-xs font-bold bg-gray-50/50 hover:bg-gray-100 dark:bg-slate-950 dark:hover:bg-slate-900 border-gray-200 dark:border-slate-850 rounded-lg"
@@ -425,7 +431,7 @@ export default function DicariPage() {
                         if (!res.ok) throw new Error(data.error || "Gagal mencatat transaksi");
 
                         localStorage.setItem("seller_wa", manualWa);
-                        setQrisPaymentId(data.paymentId);
+                        setManualOrderId(data.orderId);
                         setManualStep(2);
                       } catch (e) {
                         toast.error(e.message);
@@ -444,15 +450,55 @@ export default function DicariPage() {
                   </button>
                 </div>
               </div>
+            ) : unlockResult ? (
+              <div className="mt-4 text-center">
+                <div className="p-3 rounded-xl bg-green-50 text-green-700 text-sm font-bold border border-green-200 dark:bg-green-900/20 dark:border-green-800/50 dark:text-green-400">
+                  🎉 Struk valid! Pembayaran dikonfirmasi AI.
+                </div>
+
+                <div className="mt-4 border border-gray-100 dark:border-slate-800/80 rounded-xl divide-y divide-gray-100 dark:divide-slate-850 text-left text-xs">
+                  <div className="p-3 flex justify-between gap-4">
+                    <span className="text-gray-400 dark:text-slate-500">Nama Pembeli</span>
+                    <span className="font-bold text-gray-750 dark:text-slate-300">{unlockResult.buyer_name}</span>
+                  </div>
+                  <div className="p-3 flex justify-between gap-4">
+                    <span className="text-gray-400 dark:text-slate-500">No. WhatsApp</span>
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400 select-all">{unlockResult.buyer_wa}</span>
+                  </div>
+                </div>
+
+                <p className="mt-2 text-[10px] text-gray-400 dark:text-slate-500">
+                  Kontak ini juga sudah dikirim ke WhatsApp Anda.
+                </p>
+
+                <div className="mt-4 space-y-2">
+                  <a
+                    href={`https://wa.me/${unlockResult.buyer_wa}?text=${encodeURIComponent(
+                      `Halo ${unlockResult.buyer_name}, saya lihat postingan Anda mencari "${unlockResult.title}". Saya ada barangnya.`
+                    )}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn-primary w-full py-2.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-1.5"
+                  >
+                    <span>💬 Chat Pembeli Sekarang</span>
+                  </a>
+                  <button
+                    onClick={() => setQrisModal(null)}
+                    className="btn-outline w-full py-2.5 text-xs font-bold bg-white hover:bg-gray-50 dark:bg-slate-950 dark:hover:bg-slate-900 rounded-lg"
+                  >
+                    Tutup
+                  </button>
+                </div>
+              </div>
             ) : (
               <div className="mt-4 text-center">
                 <p className="text-xs text-gray-500 dark:text-slate-400">
-                  Silakan scan QR Code di bawah untuk membayar Rp 2.000 melalui m-Banking/e-Wallet Anda.
+                  Scan QR Code di bawah untuk membayar Rp 2.000, lalu upload struk transfernya — AI kami langsung verifikasi otomatis.
                 </p>
 
                 <div className="mt-4 flex justify-center">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <div className="rounded-xl border-4 border-emerald-100 p-2 dark:border-emerald-900/50">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src="/qris.png"
                       alt="QRIS Admin"
@@ -466,24 +512,85 @@ export default function DicariPage() {
                   <p className="text-xl font-black text-emerald-600 dark:text-emerald-400">Rp 2.000</p>
                 </div>
 
-                <div className="mt-5 space-y-2">
-                  <a
-                    href={`https://wa.me/${MARKETPLACE_WA}?text=${encodeURIComponent(
-                      `Halo Admin, saya sudah transfer manual Rp 2.000 via QRIS untuk buka kontak pembeli di postingan Cari Barang:\n\n*Judul:* ${
-                        qrisModal.title
-                      }\n*ID Transaksi:* ${qrisPaymentId}\n*WA Pemohon:* ${manualWa}\n\nBerikut saya lampirkan bukti transfernya. Tolong disetujui di link ini ya:\n${
-                        typeof window !== "undefined" ? window.location.origin : ""
-                      }/admin/approve-unlock?id=${qrisPaymentId}`
-                    )}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    onClick={() => setQrisModal(null)}
-                    className="btn-primary w-full py-2.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-1.5"
+                <div className="mt-4 text-left">
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
+                    📸 Upload Bukti Transfer
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      if (e.target.files?.[0]) {
+                        setManualFile(e.target.files[0]);
+                        setManualError("");
+                      }
+                    }}
+                    disabled={manualLoading}
+                    className="block w-full text-xs text-slate-500
+                      file:mr-3 file:py-2 file:px-4
+                      file:rounded-full file:border-0
+                      file:text-xs file:font-semibold
+                      file:bg-primary/10 file:text-primary
+                      hover:file:bg-primary/20
+                      dark:file:bg-primary/20 dark:file:text-primary-light
+                      cursor-pointer"
+                  />
+                </div>
+
+                {manualError && (
+                  <div className="mt-3 p-3 rounded-lg bg-red-50 text-red-600 text-xs text-left border border-red-100 dark:bg-red-900/20 dark:border-red-800/50">
+                    ❌ {manualError}
+                  </div>
+                )}
+
+                <div className="mt-4 space-y-2">
+                  <button
+                    onClick={async () => {
+                      if (!manualFile) {
+                        setManualError("Mohon pilih gambar struk transfer Anda terlebih dahulu.");
+                        return;
+                      }
+                      setManualLoading(true);
+                      setManualError("");
+                      try {
+                        const formData = new FormData();
+                        formData.append("receipt", manualFile);
+                        formData.append("transactionId", manualOrderId);
+
+                        const res = await fetch("/api/payments/verify-receipt", {
+                          method: "POST",
+                          body: formData,
+                        });
+                        const data = await res.json();
+                        if (!res.ok || !data.success) throw new Error(data.error || "Gagal memverifikasi struk.");
+
+                        if (data.unlock) {
+                          setUnlockResult(data.unlock);
+                        } else {
+                          toast.success("Pembayaran terverifikasi! Kontak pembeli dikirim ke WhatsApp Anda.");
+                          setQrisModal(null);
+                        }
+                      } catch (err) {
+                        setManualError(err.message);
+                      } finally {
+                        setManualLoading(false);
+                      }
+                    }}
+                    disabled={!manualFile || manualLoading}
+                    className="btn-primary w-full py-2.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <span>✅ Kirim Bukti &amp; Link Approve ke Admin</span>
-                  </a>
+                    {manualLoading ? (
+                      <>
+                        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        AI Sedang Membaca Struk...
+                      </>
+                    ) : (
+                      <span>🤖 Kirim &amp; Verifikasi AI</span>
+                    )}
+                  </button>
                   <button
                     onClick={() => setManualStep(1)}
+                    disabled={manualLoading}
                     className="btn-outline w-full py-2.5 text-xs font-bold bg-white hover:bg-gray-50 dark:bg-slate-950 dark:hover:bg-slate-900 rounded-lg flex items-center justify-center gap-1.5"
                   >
                     Kembali
