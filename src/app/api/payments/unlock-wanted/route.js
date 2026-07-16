@@ -29,10 +29,9 @@ export async function POST(req) {
     const amount = 2000; // Tarif Rp 2.000 untuk buka kontak pembeli
 
     if (method === "manual") {
-      const formattedRequesterWa = formatWa(requester_wa);
-      if (!formattedRequesterWa) {
-        return NextResponse.json({ error: "Nomor WhatsApp Anda tidak valid" }, { status: 400 });
-      }
+      // Nomor WA pemohon opsional — kontak pembeli tampil langsung di layar
+      // setelah struk diverifikasi AI; WA hanya untuk salinan cadangan.
+      const formattedRequesterWa = formatWa(requester_wa) || null;
 
       const orderId = `MNL-${wanted.id.slice(0, 8)}-${Date.now()}`;
 
