@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 const rawBaileysUrl = process.env.BAILEYS_API_URL || "";
 const BAILEYS_URL = rawBaileysUrl.replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
-const BAILEYS_TOKEN = (process.env.BAILEYS_API_TOKEN || "jualbeliusu_rahasia").replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
+const BAILEYS_TOKEN = (process.env.BAILEYS_API_TOKEN || "").replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
 
 export async function GET(req) {
   if (!isAdmin()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

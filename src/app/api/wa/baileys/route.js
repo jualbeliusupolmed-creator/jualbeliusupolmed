@@ -141,7 +141,11 @@ async function notifyMatchingWanted(supa, listing) {
 export async function POST(req) {
   try {
     const authHeader = (req.headers.get("authorization") || "").trim();
-    const expectedToken = (process.env.BAILEYS_API_TOKEN || "jualbeliusu_rahasia").replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
+    const expectedToken = (process.env.BAILEYS_API_TOKEN || "").replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
+    if (!expectedToken) {
+      console.error("[baileys-webhook] BAILEYS_API_TOKEN belum di-set \u2014 tolak semua (fail-closed).");
+      return NextResponse.json({ error: "Server misconfigured" }, { status: 503 });
+    }
     if (authHeader !== expectedToken) {
       return NextResponse.json({ error: "Unauthorized webhook" }, { status: 401 });
     }
