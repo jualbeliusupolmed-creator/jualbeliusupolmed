@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getSettings, featuredRateFrom } from "@/lib/settings";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
-import { createKlikQrisTransaction } from "@/lib/klikqris";
 
 export const dynamic = "force-dynamic";
 
@@ -31,19 +30,16 @@ export async function POST(req) {
       return NextResponse.json({ error: "Listing tidak ada" }, { status: 404 });
 
     const orderId = `FEATURED-${listing_id.slice(0, 8)}-${Date.now()}`;
-    const { qrisUrl, signature, totalAmount } = await createKlikQrisTransaction(
-      orderId, amount, `Featured ${d} hari`
-    );
     await supa.from("payments").insert({
       listing_id,
       type: "featured",
       amount,
       status: "pending",
       midtrans_order_id: orderId,
-      meta: { days: d, per_day: rate, final_amount: totalAmount, klikqris_signature: signature },
+      meta: { days: d, per_day: rate, final_amount: amount },
     });
 
-    return NextResponse.json({ paymentUrl: qrisUrl, orderId, amount, finalAmount: totalAmount });
+    return NextResponse.json({ paymentUrl: "/qris.png", orderId, amount, finalAmount: amount });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
