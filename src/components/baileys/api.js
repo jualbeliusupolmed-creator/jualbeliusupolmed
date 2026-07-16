@@ -1,12 +1,25 @@
 "use client";
 import { useState, useCallback, useEffect } from "react";
 
+// Endpoint yang BELUM diimplementasi di bot (wa-bot-usu). Dicegat di sini agar tombol
+// panel menampilkan pesan jelas "belum tersedia", bukan error 404 yang membingungkan.
+// Hapus dari daftar ini begitu route-nya sudah ada di bot.
+const UNSUPPORTED = new Set([
+  "session/devices",
+  "community/list", "community/create", "community/link-group",
+  "check-number", "get-presence", "set-privacy",
+  "test-ai", "send-raw", "channel/send",
+]);
+const NOT_READY = { error: "Fitur ini belum tersedia di bot (belum diimplementasi)." };
+const epBase = (ep) => String(ep).split("?")[0];
+
 export function useApi(endpoint, autoFetch = true) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const fetch_ = useCallback(async () => {
+    if (UNSUPPORTED.has(epBase(endpoint))) { setError(NOT_READY.error); setLoading(false); return; }
     setLoading(true); setError(null);
     try {
       const res = await fetch(`/api/admin/baileys?endpoint=${encodeURIComponent(endpoint)}&_t=${Date.now()}`);
@@ -22,6 +35,7 @@ export function useApi(endpoint, autoFetch = true) {
 }
 
 export async function apiPost(endpoint, body = {}) {
+  if (UNSUPPORTED.has(epBase(endpoint))) return NOT_READY;
   const res = await fetch(`/api/admin/baileys?endpoint=${endpoint}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -31,6 +45,7 @@ export async function apiPost(endpoint, body = {}) {
 }
 
 export async function apiDelete(endpoint, body = {}) {
+  if (UNSUPPORTED.has(epBase(endpoint))) return NOT_READY;
   const res = await fetch(`/api/admin/baileys?endpoint=${endpoint}`, {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
