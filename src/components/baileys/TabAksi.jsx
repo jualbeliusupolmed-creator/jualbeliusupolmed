@@ -63,7 +63,7 @@ function PanelKoneksi() {
   async function getPairingCode(e) {
     e.preventDefault();
     setLoadingCode(true); setMsg(null);
-    const r = await apiPost("session/pairing-code", { phone: phoneInput.replace(/\D/g, "") });
+    const r = await apiPost("pairing-code", { phone: phoneInput.replace(/\D/g, "") });
     if (r.code) setCode(r.code);
     else setMsg({ ok: false, text: r.error || "Gagal mendapatkan pairing code" });
     setLoadingCode(false);
