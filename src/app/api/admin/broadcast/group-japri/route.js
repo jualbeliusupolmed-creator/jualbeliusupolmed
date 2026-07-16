@@ -4,7 +4,7 @@ import { isAdmin } from "@/lib/auth";
 export const dynamic = "force-dynamic";
 
 const BAILEYS_URL = (process.env.BAILEYS_API_URL || "").replace(/[\u200B-\u200D\uFEFF]/g, "").trim().replace(/\/$/, "");
-const BAILEYS_TOKEN = (process.env.BAILEYS_API_TOKEN || "jualbeliusu_rahasia").replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
+const BAILEYS_TOKEN = (process.env.BAILEYS_API_TOKEN || "").replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
 
 export async function POST(req) {
   if (!isAdmin()) {

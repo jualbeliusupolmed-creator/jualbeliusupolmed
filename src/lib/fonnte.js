@@ -42,7 +42,7 @@ async function send(target, message, fileUrl = null) {
   logBotSend(target, message, !!fileUrl);
 
   const baileysUrl = process.env.BAILEYS_API_URL;
-  const baileysToken = (process.env.BAILEYS_API_TOKEN || "jualbeliusu_rahasia").replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
+  const baileysToken = (process.env.BAILEYS_API_TOKEN || "").replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
 
   // Jika BAILEYS_API_URL diset di Vercel, kita tembak Baileys Railway
   if (baileysUrl) {

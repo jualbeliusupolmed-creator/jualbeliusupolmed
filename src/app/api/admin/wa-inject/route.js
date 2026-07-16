@@ -22,7 +22,8 @@ export async function POST(req) {
     return NextResponse.json({ error: "Hanya untuk perintah diawali '#'" }, { status: 400 });
   }
 
-  const token = (process.env.BAILEYS_API_TOKEN || "jualbeliusu_rahasia").replace(/[​-‍﻿]/g, "").trim();
+  const token = (process.env.BAILEYS_API_TOKEN || "").replace(/[​-‍﻿]/g, "").trim();
+  if (!token) return NextResponse.json({ error: "Server misconfigured" }, { status: 503 });
 
   const fd = new FormData();
   fd.append("sender", String(jid));
