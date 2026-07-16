@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { formatWa } from "@/lib/constants";
-import { createKlikQrisTransaction } from "@/lib/klikqris";
 import { loadLidPhoneMap, migrateLidToPhone } from "@/lib/lidMigrate";
 
 export const dynamic = "force-dynamic";
@@ -46,56 +45,26 @@ export async function POST(req) {
 
     const amount = 2000; // Tarif Rp 2.000 untuk buka kontak pembeli
 
-    if (method === "manual") {
-      // Nomor WA pemohon opsional — kontak pembeli tampil langsung di layar
-      // setelah struk diverifikasi AI; WA hanya untuk salinan cadangan.
-      const formattedRequesterWa = formatWa(requester_wa) || null;
+    // Selalu alur QRIS statis + verifikasi struk oleh AI (tanpa gateway).
+    // Nomor WA pemohon opsional — kontak pembeli tampil langsung di layar
+    // setelah struk diverifikasi AI; WA hanya untuk salinan cadangan.
+    const formattedRequesterWa = formatWa(requester_wa) || null;
+    const orderId = `MNL-${wanted.id.slice(0, 8)}-${Date.now()}`;
 
-      const orderId = `MNL-${wanted.id.slice(0, 8)}-${Date.now()}`;
-
-      // Catat transaksi di tabel payments
-      const { data: paymentRow, error: insertErr } = await supa.from("payments").insert({
-        listing_id: null,
-        type: "iklan", // bypass check constraint
-        amount,
-        status: "pending",
-        midtrans_order_id: orderId,
-        meta: { unlock_wanted_id: wanted.id, requester_wa: formattedRequesterWa, method: "manual" }
-      }).select().single();
-
-      if (insertErr || !paymentRow) {
-        throw new Error(insertErr?.message || "Gagal mencatat transaksi manual");
-      }
-
-      return NextResponse.json({ success: true, paymentId: paymentRow.id, orderId });
-    }
-
-    const orderId = `UNL-${wanted.id.slice(0, 8)}-${Date.now()}`;
-
-    // Catat transaksi di tabel payments
-    await supa.from("payments").insert({
+    const { data: paymentRow, error: insertErr } = await supa.from("payments").insert({
       listing_id: null,
       type: "iklan", // bypass check constraint
       amount,
       status: "pending",
       midtrans_order_id: orderId,
-      meta: { unlock_wanted_id: wanted.id, requester_wa: formatWa(requester_wa) }
-    });
+      meta: { unlock_wanted_id: wanted.id, requester_wa: formattedRequesterWa, method: "manual", final_amount: amount }
+    }).select().single();
 
-    // Buat pesan yang lebih ringkas.
-    const shortTitle = wanted.title.length > 30 ? wanted.title.substring(0, 30) + "..." : wanted.title;
-    const returnUrl = `https://wa.me/${wanted.buyer_wa}?text=${encodeURIComponent(
-      `Halo ${wanted.buyer_name}, saya ada barang "${shortTitle}".`
-    )}`;
+    if (insertErr || !paymentRow) {
+      throw new Error(insertErr?.message || "Gagal mencatat transaksi");
+    }
 
-    const { qrisUrl, signature, totalAmount } = await createKlikQrisTransaction(
-      orderId, amount, `Buka kontak pembeli`
-    );
-    await supa.from("payments").update({
-      meta: { unlock_wanted_id: wanted.id, requester_wa: formatWa(requester_wa), final_amount: totalAmount, klikqris_signature: signature }
-    }).eq("midtrans_order_id", orderId);
-
-    return NextResponse.json({ paymentUrl: qrisUrl, orderId, amount, finalAmount: totalAmount });
+    return NextResponse.json({ success: true, paymentId: paymentRow.id, orderId, paymentUrl: "/qris.png", amount, finalAmount: amount });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }

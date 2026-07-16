@@ -3,7 +3,6 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getSettings } from "@/lib/settings";
 import { FEES } from "@/lib/fees";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
-import { createKlikQrisTransaction } from "@/lib/klikqris";
 
 export const dynamic = "force-dynamic";
 
@@ -28,19 +27,16 @@ export async function POST(req) {
     const amount = FEES.autobump_7_days;
 
     const orderId = `AUTOBUMP-${listing_id.slice(0, 8)}-${Date.now()}`;
-    const { qrisUrl, signature, totalAmount } = await createKlikQrisTransaction(
-      orderId, amount, `AutoBump 7 hari`
-    );
     await supa.from("payments").insert({
       listing_id,
       type: "autobump",
       amount,
       status: "pending",
       midtrans_order_id: orderId,
-      meta: { final_amount: totalAmount, klikqris_signature: signature },
+      meta: { final_amount: amount },
     });
 
-    return NextResponse.json({ paymentUrl: qrisUrl, orderId, amount, finalAmount: totalAmount });
+    return NextResponse.json({ paymentUrl: "/qris.png", orderId, amount, finalAmount: amount });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
