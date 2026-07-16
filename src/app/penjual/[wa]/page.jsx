@@ -4,7 +4,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rupiah } from "@/lib/fees";
 import ProductCard from "@/components/ProductCard";
 import ShareProfileButton from "@/components/ShareProfileButton";
-import { formatWa } from "@/lib/constants";
+import { formatWa, formatWaForBaileys } from "@/lib/constants";
 
 export const revalidate = 300; // ISR 5 menit — cukup segar untuk marketplace
 
@@ -178,7 +178,9 @@ export default async function SellerProfilePage({ params }) {
       : null;
 
   const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
-  const waClean = seller.seller_wa?.replace(/\D/g, "") || "";
+  // Nomor asli untuk URL & link kontak. formatWa menolak LID → link wa.me disembunyikan.
+  const waClean = formatWa(seller.seller_wa) || seller.seller_wa?.replace(/\D/g, "") || "";
+  const waIntl = formatWaForBaileys(seller.seller_wa); // "62xxx" atau "" jika bukan nomor valid
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "ProfilePage",
@@ -276,16 +278,18 @@ export default async function SellerProfilePage({ params }) {
              </p>
           )}
           <div className="flex flex-wrap gap-2 mt-3.5">
-            <a
-              href={`https://wa.me/${(seller.seller_wa || "").replace(/\D/g, "")}?text=${encodeURIComponent(
-                `Halo Kak ${seller.seller_name}, saya lihat profil Kakak di Jual Beli Medan.`
-              )}`}
-              target="_blank"
-              rel="noreferrer"
-              className="btn-wa py-2 px-4 text-xs rounded-xl"
-            >
-              💬 Hubungi via WA
-            </a>
+            {waIntl && (
+              <a
+                href={`https://wa.me/${waIntl}?text=${encodeURIComponent(
+                  `Halo Kak ${seller.seller_name}, saya lihat profil Kakak di Jual Beli Medan.`
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+                className="btn-wa py-2 px-4 text-xs rounded-xl"
+              >
+                💬 Hubungi via WA
+              </a>
+            )}
             <ShareProfileButton />
           </div>
 

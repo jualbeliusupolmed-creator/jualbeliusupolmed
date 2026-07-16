@@ -1,5 +1,6 @@
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { buildSlug } from "@/lib/slug";
+import { formatWa } from "@/lib/constants";
 
 export const revalidate = 3600;
 
@@ -46,13 +47,16 @@ export default async function sitemap() {
     priority: 0.8,
   }));
 
-  // Halaman profil penjual — deduplikasi
+  // Halaman profil penjual — deduplikasi. Lewati seller_wa yang bukan nomor HP valid
+  // (mis. sisa LID) supaya tak mengindeks halaman profil dengan URL rusak.
   const sellerMap = new Map();
   for (const s of (sellersRes.data || [])) {
-    if (!sellerMap.has(s.seller_wa)) sellerMap.set(s.seller_wa, s.bumped_at);
+    const wa = formatWa(s.seller_wa);
+    if (!wa) continue;
+    if (!sellerMap.has(wa)) sellerMap.set(wa, s.bumped_at);
   }
   const sellerRoutes = Array.from(sellerMap.entries()).map(([wa, bumpedAt]) => ({
-    url: `${baseUrl}/penjual/${wa.replace(/\D/g, "")}`,
+    url: `${baseUrl}/penjual/${wa}`,
     lastModified: bumpedAt || new Date().toISOString(),
     changeFrequency: "weekly",
     priority: 0.6,
