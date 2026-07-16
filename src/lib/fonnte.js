@@ -2,9 +2,34 @@
 // jika token belum di-set / request error, hanya log, tidak melempar.
 
 import { buildSlug } from "@/lib/slug";
-import { formatWaForBaileys } from "@/lib/constants";
+import { formatWaForBaileys, formatWa } from "@/lib/constants";
+import { getAdminClient } from "@/lib/supabaseAdmin";
 
 const FONNTE_URL = "https://api.fonnte.com/send";
+
+// Catat SEMUA kiriman bot ke chat pribadi di wa_conversations (role 'bot'),
+// apa pun rutenya (webhook, OTP, unlock, notif). Krusial: webhook memakai catatan
+// ini untuk membedakan echo kiriman bot vs balasan MANUAL owner (mode senyap
+// otomatis) — kiriman yang tak tercatat bisa salah dikira balasan manual.
+// Fire-and-forget: gagal insert tidak boleh mengganggu pengiriman.
+function logBotSend(target, message, hasMedia) {
+  try {
+    const t = String(target || "");
+    if (!t || t === "status@broadcast" || t.includes("@g.us") || t.includes("@newsletter")) return;
+    const wa = formatWa(t) || t.split("@")[0];
+    if (!wa) return;
+    getAdminClient()
+      .from("wa_conversations")
+      .insert({
+        wa,
+        jid: t,
+        role: "bot",
+        message: String(message || "").slice(0, 2000),
+        has_media: !!hasMedia,
+      })
+      .then(() => {}, () => {});
+  } catch (_) {}
+}
 
 async function send(target, message, fileUrl = null) {
   // Jangan kirim pesan kosong (teks kosong tanpa lampiran) — pernah muncul
@@ -13,6 +38,8 @@ async function send(target, message, fileUrl = null) {
     console.warn("[sendWa] pesan kosong — dilewati");
     return { ok: false, skipped: true, reason: "empty" };
   }
+
+  logBotSend(target, message, !!fileUrl);
 
   const baileysUrl = process.env.BAILEYS_API_URL;
   const baileysToken = (process.env.BAILEYS_API_TOKEN || "jualbeliusu_rahasia").replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
