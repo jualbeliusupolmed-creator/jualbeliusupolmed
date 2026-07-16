@@ -8,6 +8,7 @@ import { postToFacebook, postToInstagram } from "@/lib/meta";
 import { buildSlug } from "@/lib/slug";
 import { rateLimit } from "@/lib/rateLimit";
 import { handleAdminCmd } from "@/lib/bot/adminHandlers";
+import { migrateLidToPhone } from "@/lib/lidMigrate";
 import sharp from "sharp";
 
 export const dynamic = "force-dynamic";
@@ -36,57 +37,6 @@ async function logConvo(target, role, message, hasMedia = false) {
 async function sendWa(target, message, fileUrl = null) {
   logConvo(target, "bot", message, !!fileUrl);
   return _sendWaBase(target, message, fileUrl);
-}
-
-// ── Migrasi identitas: data lama yang terlanjur ber-key LID → nomor asli ──────────
-// Dipicu ketika bot mengirim `prev_lid` (artinya mapping LID→nomor baru diketahui).
-// Tujuan: nomor jadi satu-satunya identitas user-facing; LID tinggal di backend.
-// Best-effort & idempotent: tiap langkah di-guard, kegagalan tak memblokir alur pesan.
-async function migrateLidToPhone(lidDigits, phoneWa) {
-  if (!lidDigits || !phoneWa || lidDigits === phoneWa) return;
-  const supa = getAdminClient();
-  const swallow = (p) => p.then(() => {}, () => {});
-  try {
-    // 1. Tabel anak yang TIDAK terikat FK ke seller_profiles → aman dipindah kapan saja.
-    const freeMoves = [
-      ["seller_ratings", "seller_wa"],
-      ["price_offers", "buyer_wa"],
-      ["wanted_listings", "buyer_wa"],
-      ["category_subscriptions", "buyer_wa"],
-      ["profile_change_requests", "seller_wa"],
-      ["group_posts", "sender_wa"],
-      ["wa_conversations", "wa"],
-      ["wa_drafts", "wa"],
-    ];
-    for (const [t, c] of freeMoves) {
-      await swallow(supa.from(t).update({ [c]: phoneWa }).eq(c, lidDigits));
-    }
-
-    // 2. Profil penjual + tabel ber-FK (listings, distributor_categories).
-    const { data: lidProf } = await supa.from("seller_profiles").select("*").eq("wa", lidDigits).maybeSingle();
-    const { data: phoneProf } = await supa.from("seller_profiles").select("wa").eq("wa", phoneWa).maybeSingle();
-    if (lidProf && !phoneProf) {
-      // Rename PK: listings.seller_wa ikut otomatis via ON UPDATE CASCADE.
-      const { error } = await supa.from("seller_profiles").update({ wa: phoneWa }).eq("wa", lidDigits);
-      if (error) {
-        // Fallback bila ada FK tanpa cascade (mis. distributor_categories):
-        // buat baris nomor (tanpa referral_code agar tak bentrok unique), pindahkan anak, hapus lama.
-        const { wa: _w, referral_code: _r, created_at: _c, ...rest } = lidProf;
-        await swallow(supa.from("seller_profiles").insert({ ...rest, wa: phoneWa }));
-        await swallow(supa.from("listings").update({ seller_wa: phoneWa }).eq("seller_wa", lidDigits));
-        await swallow(supa.from("distributor_categories").update({ seller_wa: phoneWa }).eq("seller_wa", lidDigits));
-        await swallow(supa.from("seller_profiles").delete().eq("wa", lidDigits));
-      }
-    } else {
-      // Nomor sudah punya profil (atau tak ada profil sama sekali) → cukup repoint anak ber-FK.
-      await swallow(supa.from("listings").update({ seller_wa: phoneWa }).eq("seller_wa", lidDigits));
-      await swallow(supa.from("distributor_categories").update({ seller_wa: phoneWa }).eq("seller_wa", lidDigits));
-      if (lidProf) await swallow(supa.from("seller_profiles").delete().eq("wa", lidDigits));
-    }
-    console.log(`[lid-migrate] ${lidDigits} → ${phoneWa} beres`);
-  } catch (e) {
-    console.warn(`[lid-migrate] gagal ${lidDigits} → ${phoneWa}: ${e?.message}`);
-  }
 }
 
 // Cek apakah nomor WA termasuk admin
@@ -272,7 +222,7 @@ export async function POST(req) {
     // sekali, sebelum query apa pun, supaya identitas konsisten & tak ada "double".
     const prevLid = (formData.get("prev_lid") || "").replace(/\D/g, "");
     if (prevLid && !senderJid.includes("@lid") && prevLid !== normalizedWa) {
-      await migrateLidToPhone(prevLid, normalizedWa);
+      await migrateLidToPhone(getAdminClient(), prevLid, normalizedWa).catch(() => {});
     }
 
     // Catat pesan masuk dari user untuk riwayat chat admin & audit.
