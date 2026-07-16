@@ -4,6 +4,8 @@ import { verifyReceiptImage } from "@/lib/gemini";
 import { sendWa, notifyAdminNewListing, postToGroup, postWantedToGroup } from "@/lib/fonnte";
 import { buildSlug } from "@/lib/slug";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { formatWa } from "@/lib/constants";
+import { loadLidPhoneMap, migrateLidToPhone } from "@/lib/lidMigrate";
 
 export const dynamic = "force-dynamic";
 
@@ -107,20 +109,48 @@ export async function POST(req) {
         .eq("id", payment.meta.unlock_wanted_id)
         .single();
       if (wanted) {
-        unlockContact = { buyer_name: wanted.buyer_name, buyer_wa: wanted.buyer_wa, title: wanted.title };
-        const buyerWaIntl = String(wanted.buyer_wa || "").startsWith("0") ? "62" + String(wanted.buyer_wa).slice(1) : wanted.buyer_wa;
-        if (payment.meta?.requester_wa) {
-          const msg =
-            `✅ *PEMBAYARAN TERVERIFIKASI OTOMATIS*\n\n` +
-            `Halo, struk transfer Anda sudah diverifikasi AI untuk pencarian barang berikut:\n` +
-            `🔍 *Cari Barang:* ${wanted.title}\n\n` +
-            `Berikut adalah kontak pembeli yang mengajukan pencarian:\n` +
-            `👤 *Nama:* ${wanted.buyer_name}\n` +
-            `📱 *No. WhatsApp:* ${wanted.buyer_wa}\n\n` +
-            `Silakan langsung hubungi pembeli di atas melalui link berikut:\n` +
-            `👉 https://wa.me/${buyerWaIntl}?text=${encodeURIComponent(`Halo ${wanted.buyer_name}, saya melihat postingan Anda di Jual Beli Medan mencari "${wanted.title}". Saya ada barangnya.`)}\n\n` +
-            `Terima kasih telah menggunakan Jual Beli Medan!`;
-          sendWa(payment.meta.requester_wa, msg).catch(console.error);
+        // Guard LID: JANGAN pernah tampilkan LID (ID internal WA) ke user.
+        let buyerWa = formatWa(wanted.buyer_wa) ? wanted.buyer_wa : null;
+        if (!buyerWa) {
+          const digits = String(wanted.buyer_wa || "").split("@")[0].replace(/:\d+$/, "");
+          const lidMap = await loadLidPhoneMap(supa);
+          const phone = lidMap.get(digits);
+          if (phone) {
+            await migrateLidToPhone(supa, digits, phone).catch(console.error);
+            buyerWa = phone;
+          }
+        }
+
+        if (buyerWa) {
+          unlockContact = { buyer_name: wanted.buyer_name, buyer_wa: buyerWa, title: wanted.title };
+          const buyerWaIntl = buyerWa.startsWith("0") ? "62" + buyerWa.slice(1) : buyerWa;
+          if (payment.meta?.requester_wa) {
+            const msg =
+              `✅ *PEMBAYARAN TERVERIFIKASI OTOMATIS*\n\n` +
+              `Halo, struk transfer Anda sudah diverifikasi AI untuk pencarian barang berikut:\n` +
+              `🔍 *Cari Barang:* ${wanted.title}\n\n` +
+              `Berikut adalah kontak pembeli yang mengajukan pencarian:\n` +
+              `👤 *Nama:* ${wanted.buyer_name}\n` +
+              `📱 *No. WhatsApp:* ${buyerWa}\n\n` +
+              `Silakan langsung hubungi pembeli di atas melalui link berikut:\n` +
+              `👉 https://wa.me/${buyerWaIntl}?text=${encodeURIComponent(`Halo ${wanted.buyer_name}, saya melihat postingan Anda di Jual Beli Medan mencari "${wanted.title}". Saya ada barangnya.`)}\n\n` +
+              `Terima kasih telah menggunakan Jual Beli Medan!`;
+            sendWa(payment.meta.requester_wa, msg).catch(console.error);
+          }
+        } else {
+          // Nomor pembeli belum diketahui (LID tanpa resolusi) — serahkan ke admin,
+          // jangan bocorkan LID ke pembayar.
+          unlockContact = { pending: true, title: wanted.title };
+          const adminWa = process.env.ADMIN_WA || process.env.SUPER_ADMIN_WA;
+          if (adminWa) {
+            sendWa(adminWa,
+              `⚠️ *UNLOCK KONTAK TERTAHAN (LID)*\n\n` +
+              `Pembayaran Rp ${serverAmount.toLocaleString("id-ID")} sudah lunas untuk buka kontak "${wanted.title}", ` +
+              `tapi buyer_wa postingan masih LID (${wanted.buyer_wa}) dan belum ada nomornya di wa_state.\n` +
+              `Pemohon: ${payment.meta?.requester_wa || "(tanpa WA)"} — order ${transactionId}.\n` +
+              `Tolong tindak lanjuti manual (cari nomornya / refund).`
+            ).catch(console.error);
+          }
         }
       }
     } else if (payment.meta?.wanted_id) {
