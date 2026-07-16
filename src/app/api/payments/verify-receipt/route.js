@@ -108,6 +108,7 @@ export async function POST(req) {
         .single();
       if (wanted) {
         unlockContact = { buyer_name: wanted.buyer_name, buyer_wa: wanted.buyer_wa, title: wanted.title };
+        const buyerWaIntl = String(wanted.buyer_wa || "").startsWith("0") ? "62" + String(wanted.buyer_wa).slice(1) : wanted.buyer_wa;
         if (payment.meta?.requester_wa) {
           const msg =
             `✅ *PEMBAYARAN TERVERIFIKASI OTOMATIS*\n\n` +
@@ -117,7 +118,7 @@ export async function POST(req) {
             `👤 *Nama:* ${wanted.buyer_name}\n` +
             `📱 *No. WhatsApp:* ${wanted.buyer_wa}\n\n` +
             `Silakan langsung hubungi pembeli di atas melalui link berikut:\n` +
-            `👉 https://wa.me/${wanted.buyer_wa}?text=${encodeURIComponent(`Halo ${wanted.buyer_name}, saya melihat postingan Anda di Jual Beli Medan mencari "${wanted.title}". Saya ada barangnya.`)}\n\n` +
+            `👉 https://wa.me/${buyerWaIntl}?text=${encodeURIComponent(`Halo ${wanted.buyer_name}, saya melihat postingan Anda di Jual Beli Medan mencari "${wanted.title}". Saya ada barangnya.`)}\n\n` +
             `Terima kasih telah menggunakan Jual Beli Medan!`;
           sendWa(payment.meta.requester_wa, msg).catch(console.error);
         }

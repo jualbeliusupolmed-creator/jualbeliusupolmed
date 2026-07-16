@@ -39,8 +39,6 @@ export default function DicariPage() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [qrisModal, setQrisModal] = useState(null);
-  const [manualWa, setManualWa] = useState("");
-  const [manualStep, setManualStep] = useState(1);
   const [manualOrderId, setManualOrderId] = useState(null);
   const [manualLoading, setManualLoading] = useState(false);
   const [manualFile, setManualFile] = useState(null);
@@ -317,14 +315,27 @@ export default function DicariPage() {
 
                   <button
                     onClick={() => {
-                      const savedWa = localStorage.getItem("seller_wa") || "";
-                      setManualWa(savedWa);
-                      setManualStep(1);
                       setManualOrderId(null);
                       setManualFile(null);
                       setManualError("");
                       setUnlockResult(null);
                       setQrisModal(item);
+                      // Langsung catat transaksi manual — tanpa minta nomor WA
+                      fetch("/api/payments/unlock-wanted", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          wanted_id: item.id,
+                          method: "manual",
+                          requester_wa: localStorage.getItem("seller_wa") || "",
+                        }),
+                      })
+                        .then((r) => r.json())
+                        .then((data) => {
+                          if (!data.orderId) throw new Error(data.error || "Gagal membuat transaksi");
+                          setManualOrderId(data.orderId);
+                        })
+                        .catch((e) => setManualError(e.message));
                     }}
                     className="btn-outline w-full py-1.5 sm:py-2.5 text-center flex items-center justify-center gap-1 text-[10px] sm:text-xs font-bold bg-gray-50/50 hover:bg-gray-100 dark:bg-slate-950 dark:hover:bg-slate-900 border-gray-200 dark:border-slate-850 rounded-lg"
                   >
@@ -387,70 +398,7 @@ export default function DicariPage() {
               </button>
             </div>
 
-            {manualStep === 1 ? (
-              <div className="mt-4 space-y-4">
-                <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed">
-                  Masukkan nomor WhatsApp Anda. Kontak pembeli akan dikirimkan otomatis ke nomor ini setelah transfer disetujui admin.
-                </p>
-                <div className="floating-group">
-                  <input
-                    id="manual-wa"
-                    className="floating-input peer"
-                    value={manualWa}
-                    onChange={(e) => setManualWa(e.target.value)}
-                    placeholder=" "
-                    required
-                  />
-                  <label htmlFor="manual-wa" className="floating-label">No. WhatsApp Anda (e.g. 62812...)</label>
-                </div>
-                <div className="pt-2 flex gap-2 justify-end">
-                  <button
-                    onClick={() => setQrisModal(null)}
-                    className="btn-outline px-4 py-2 text-xs"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    onClick={async () => {
-                      if (!manualWa) {
-                        toast.error("Nomor WhatsApp wajib diisi");
-                        return;
-                      }
-                      setManualLoading(true);
-                      try {
-                        const res = await fetch("/api/payments/unlock-wanted", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({
-                            wanted_id: qrisModal.id,
-                            method: "manual",
-                            requester_wa: manualWa,
-                          }),
-                        });
-                        const data = await res.json();
-                        if (!res.ok) throw new Error(data.error || "Gagal mencatat transaksi");
-
-                        localStorage.setItem("seller_wa", manualWa);
-                        setManualOrderId(data.orderId);
-                        setManualStep(2);
-                      } catch (e) {
-                        toast.error(e.message);
-                      } finally {
-                        setManualLoading(false);
-                      }
-                    }}
-                    disabled={manualLoading}
-                    className="btn-primary px-4 py-2 text-xs flex items-center justify-center gap-1.5"
-                  >
-                    {manualLoading ? (
-                      <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    ) : (
-                      "Lanjut ke QRIS"
-                    )}
-                  </button>
-                </div>
-              </div>
-            ) : unlockResult ? (
+            {unlockResult ? (
               <div className="mt-4 text-center">
                 <div className="p-3 rounded-xl bg-green-50 text-green-700 text-sm font-bold border border-green-200 dark:bg-green-900/20 dark:border-green-800/50 dark:text-green-400">
                   🎉 Struk valid! Pembayaran dikonfirmasi AI.
@@ -468,12 +416,12 @@ export default function DicariPage() {
                 </div>
 
                 <p className="mt-2 text-[10px] text-gray-400 dark:text-slate-500">
-                  Kontak ini juga sudah dikirim ke WhatsApp Anda.
+                  Simpan nomor ini sebelum menutup jendela.
                 </p>
 
                 <div className="mt-4 space-y-2">
                   <a
-                    href={`https://wa.me/${unlockResult.buyer_wa}?text=${encodeURIComponent(
+                    href={`https://wa.me/${unlockResult.buyer_wa.startsWith("0") ? "62" + unlockResult.buyer_wa.slice(1) : unlockResult.buyer_wa}?text=${encodeURIComponent(
                       `Halo ${unlockResult.buyer_name}, saya lihat postingan Anda mencari "${unlockResult.title}". Saya ada barangnya.`
                     )}`}
                     target="_blank"
@@ -550,6 +498,10 @@ export default function DicariPage() {
                         setManualError("Mohon pilih gambar struk transfer Anda terlebih dahulu.");
                         return;
                       }
+                      if (!manualOrderId) {
+                        setManualError("Transaksi belum siap. Tutup lalu buka lagi jendela ini.");
+                        return;
+                      }
                       setManualLoading(true);
                       setManualError("");
                       try {
@@ -589,11 +541,11 @@ export default function DicariPage() {
                     )}
                   </button>
                   <button
-                    onClick={() => setManualStep(1)}
+                    onClick={() => setQrisModal(null)}
                     disabled={manualLoading}
                     className="btn-outline w-full py-2.5 text-xs font-bold bg-white hover:bg-gray-50 dark:bg-slate-950 dark:hover:bg-slate-900 rounded-lg flex items-center justify-center gap-1.5"
                   >
-                    Kembali
+                    Batal
                   </button>
                 </div>
               </div>
