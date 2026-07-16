@@ -8,6 +8,24 @@ function rupiah(n) {
   return "Rp " + Number(n).toLocaleString("id-ID");
 }
 
+// Allowlist host gambar OG: cuma Supabase storage & domain sendiri. Tolak IP privat,
+// localhost, dan host lain (anti-SSRF).
+function isAllowedImageHost(raw) {
+  let u;
+  try { u = new URL(raw); } catch { return false; }
+  if (u.protocol !== "https:") return false;
+  const host = u.hostname.toLowerCase();
+  if (host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0") return false;
+  if (/^(10\.|127\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host)) return false;
+  const allowed = [];
+  for (const envUrl of [process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_BASE_URL]) {
+    try { if (envUrl) allowed.push(new URL(envUrl).hostname.toLowerCase()); } catch {}
+  }
+  // Fallback statis kalau env tak tersedia di runtime edge.
+  allowed.push("jualbeliusupolmed.web.id", "www.jualbeliusupolmed.web.id");
+  return allowed.some((h) => host === h || host.endsWith(".supabase.co") || host.endsWith("." + h));
+}
+
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const title    = (searchParams.get("title")    || "Jual Beli USU Polmed").slice(0, 90);
@@ -17,9 +35,12 @@ export async function GET(request) {
   const category = (searchParams.get("category") || "").slice(0, 30);
   const type     = searchParams.get("type")     || "jual"; // jual | jasa | blog
 
-  // Fetch product image as base64 so Satori can render it
+  // Fetch product image as base64 so Satori can render it.
+  // Anti-SSRF: hanya izinkan gambar dari host tepercaya (Supabase storage / domain
+  // sendiri). Tanpa ini, ?image=http://169.254.169.254/... memaksa server fetch
+  // endpoint internal/metadata.
   let imgSrc = null;
-  if (image) {
+  if (image && isAllowedImageHost(image)) {
     try {
       const r = await fetch(image, { signal: AbortSignal.timeout(4000) });
       if (r.ok) {

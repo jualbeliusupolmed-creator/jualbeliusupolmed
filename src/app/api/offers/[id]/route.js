@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { notifyBuyerOfferResult } from "@/lib/fonnte";
 import { pushToWa } from "@/lib/webpush";
+import { getSellerSession, isAdmin } from "@/lib/auth";
+import { formatWa } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +25,16 @@ export async function PATCH(req, { params }) {
       .single();
 
     if (!offer) return NextResponse.json({ error: "Tawaran tidak ditemukan" }, { status: 404 });
+
+    // Otorisasi: hanya PENJUAL pemilik iklan (dari sesi) atau admin yang boleh
+    // terima/tolak. Tanpa ini, siapa pun yang menebak id tawaran bisa
+    // menerima/menolak atas nama penjual + memicu notifikasi ke pembeli.
+    const sessionWa = getSellerSession();
+    const sellerWa = formatWa(offer.listings?.seller_wa || "");
+    if (!isAdmin() && (!sessionWa || sessionWa !== sellerWa)) {
+      return NextResponse.json({ error: "Tidak diizinkan" }, { status: 403 });
+    }
+
     if (offer.status !== "pending") return NextResponse.json({ error: "Tawaran sudah diproses" }, { status: 400 });
 
     const newStatus = action === "accept" ? "accepted" : "rejected";

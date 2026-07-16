@@ -41,6 +41,14 @@ async function handle(req) {
         results.push({ lid: p.lid, phone: p.phone, ok: false, error: "lid/phone tidak valid" });
         continue;
       }
+      // Guard alih-kepemilikan: `migrateLidToPhone` memindahkan SEMUA baris ber-key
+      // `lidDigits` → `phone` di 11 tabel. Kalau `lidDigits` ternyata sudah berupa
+      // NOMOR valid (bukan LID sejati), ini bisa dipakai memindahkan data akun korban
+      // ke nomor penyerang. LID WhatsApp bukan nomor Indonesia yang valid → tolak.
+      if (formatWa(lidDigits)) {
+        results.push({ lid: lidDigits, phone, ok: false, error: "sumber harus LID, bukan nomor valid" });
+        continue;
+      }
       if (!apply) {
         results.push({ lid: lidDigits, phone, ok: true, dryRun: true });
         continue;

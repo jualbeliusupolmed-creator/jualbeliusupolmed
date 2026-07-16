@@ -3,6 +3,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { formatWa } from "@/lib/constants";
 import { sendWa } from "@/lib/fonnte";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { getSellerSession, isAdmin } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,12 @@ export async function GET(req) {
   const raw = searchParams.get("seller_wa");
   const sellerWa = formatWa(raw);
   if (!sellerWa) return NextResponse.json({ error: "seller_wa wajib" }, { status: 400 });
+
+  // Hanya pemilik (sesi) atau admin — seller_wa itu publik, jangan dipercaya mentah.
+  const sessionWa = getSellerSession();
+  if (!isAdmin() && (!sessionWa || sessionWa !== sellerWa)) {
+    return NextResponse.json({ error: "Tidak diizinkan" }, { status: 403 });
+  }
 
   const supa = getAdminClient();
   const { data, error } = await supa
@@ -39,6 +46,14 @@ export async function POST(req) {
     const requestedValue = String(body.requested_value || "").trim();
 
     if (!sellerWa) return NextResponse.json({ error: "seller_wa wajib" }, { status: 400 });
+
+    // Otorisasi: hanya pemilik akun (sesi) yang boleh mengajukan perubahan
+    // profilnya sendiri. Tanpa ini, siapa pun bisa spam permintaan + notif admin
+    // atas nama penjual lain (social-engineering admin agar menyetujui).
+    const sessionWa = getSellerSession();
+    if (!isAdmin() && (!sessionWa || sessionWa !== sellerWa)) {
+      return NextResponse.json({ error: "Tidak diizinkan" }, { status: 403 });
+    }
     if (!["name", "bio"].includes(field)) return NextResponse.json({ error: "field harus 'name' atau 'bio'" }, { status: 400 });
     if (!requestedValue) return NextResponse.json({ error: "Nilai baru wajib diisi" }, { status: 400 });
     if (field === "name" && requestedValue.length < 2) return NextResponse.json({ error: "Nama minimal 2 karakter" }, { status: 400 });

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { verifyReceiptImage } from "@/lib/gemini";
+import { verifyReceiptImage, checkReceiverName } from "@/lib/gemini";
 import { sendWa, notifyAdminNewListing, postToGroup, postWantedToGroup } from "@/lib/fonnte";
 import { buildSlug } from "@/lib/slug";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
@@ -48,6 +48,13 @@ export async function POST(req) {
 
     if (!extractedData.is_struk_valid) {
       return NextResponse.json({ success: false, error: "Gambar ditolak — ini bukan struk transfer yang sah." }, { status: 400 });
+    }
+
+    // Cegah "bayar ke rekening sendiri": nama penerima wajib cocok rekening resmi
+    // (aktif bila EXPECTED_RECEIVER_NAMES di-set).
+    const recv = checkReceiverName(extractedData.penerima);
+    if (!recv.ok) {
+      return NextResponse.json({ success: false, error: recv.reason }, { status: 400 });
     }
 
     // Nominal WAJIB angka valid & >= tagihan server. Number.isFinite mencegah bug
