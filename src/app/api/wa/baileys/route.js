@@ -2225,13 +2225,30 @@ export async function POST(req) {
           message = `${waDraft.text_parts || ""}\n${message || ""}`.trim();
           await supa.from("wa_listing_drafts").delete().eq("wa", normalizedWa);
         } else if (message) {
-          // Masih teks (belum ada foto) → tumpuk teks, minta yang masih kurang.
-          const newText = `${waDraft.text_parts || ""}\n${message}`.trim().slice(0, 1500);
-          await supa.from("wa_listing_drafts").upsert({ wa: normalizedWa, text_parts: newText, updated_at: new Date().toISOString() });
-          const hasPrice = /\d{4,}|\d+\s*(rb|ribu|k|jt|juta)/i.test(newText);
-          const askPrice = hasPrice ? "" : " Sebutkan juga *harganya* ya.";
-          await sendWa(senderJid, `Sip, dicatat! 📸 Sekarang kirim *foto barang*nya dong (boleh beberapa).${askPrice}\n\n_(Ketik *BATAL* kalau ga jadi)_`);
-          return NextResponse.json({ ok: true, state: "draft_collecting" });
+          // PENTING: perintah TIDAK boleh ditelan draft jadi teks iklan. Dulu ini biang
+          // loop — user ketik "JUAL" ulang saat draft aktif → dianggap teks → bot minta
+          // foto lagi tanpa henti, iklan tak pernah jadi.
+          // "JUAL/WTS/dst" saat draft aktif = cukup ingatkan kirim foto (teks lama aman).
+          if (["jual", "wts", "dijual", "ready"].includes(draftMsgL)) {
+            const hasP = /\d{4,}|\d+\s*(rb|ribu|k|jt|juta)/i.test(waDraft.text_parts || "");
+            await sendWa(senderJid, `📸 Tinggal *foto barang*nya nih kak — kirim fotonya ya${hasP ? "" : " (sebutkan juga *harganya* kalau belum)"}. Teks yang tadi sudah kucatat kok.\n\n_(Ketik *BATAL* kalau ga jadi)_`);
+            return NextResponse.json({ ok: true, state: "draft_awaiting_photo" });
+          }
+          // Perintah lain (MENU/SAYA/IKLANKU/DICARI/LAPOR/TAWAR/PERPANJANG/dst) → biarkan
+          // lewat ke handler perintah di bawah; draft tetap tersimpan agar bisa dilanjutkan.
+          const isCommand =
+            ["menu", "saya", "iklanku", "admin", "perpanjang", "upgrade", "min", "mimin"].includes(draftMsgL) ||
+            /^(dicari|wtb|cari|lapor|tawar|hapus|nama|edit|setmode|approve|reject|setuju|tolak|broadcast|stats|pause|resume)\b/i.test(draftMsgL);
+          if (!isCommand) {
+            // Teks iklan biasa → tumpuk teks, minta yang masih kurang.
+            const newText = `${waDraft.text_parts || ""}\n${message}`.trim().slice(0, 1500);
+            await supa.from("wa_listing_drafts").upsert({ wa: normalizedWa, text_parts: newText, updated_at: new Date().toISOString() });
+            const hasPrice = /\d{4,}|\d+\s*(rb|ribu|k|jt|juta)/i.test(newText);
+            const askPrice = hasPrice ? "" : " Sebutkan juga *harganya* ya.";
+            await sendWa(senderJid, `Sip, dicatat! 📸 Sekarang kirim *foto barang*nya dong (boleh beberapa).${askPrice}\n\n_(Ketik *BATAL* kalau ga jadi)_`);
+            return NextResponse.json({ ok: true, state: "draft_collecting" });
+          }
+          // isCommand → jatuh ke handler di bawah (draft tak diutak-atik).
         }
       }
     }
