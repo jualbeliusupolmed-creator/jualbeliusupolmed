@@ -118,16 +118,20 @@ export async function verifyReceiptImage(imageBuffer, mimeType) {
     Anda adalah asisten validasi pembayaran yang cerdas.
     Tugas Anda adalah membaca gambar struk transfer bank atau e-wallet (GoPay, Dana, OVO, ShopeePay, BCA, dll).
     
-    Cari 2 informasi penting ini:
+    Cari informasi penting ini:
     1. Nominal/Jumlah transfer (pastikan ini adalah total yang ditransfer, bukan sisa saldo).
     2. Nama penerima transfer.
-    
+    3. Nomor referensi / ID transaksi / No. Ref (kode unik transaksi di struk).
+    4. Tanggal & waktu transaksi.
+
     Aturan ketat:
     - Kembalikan jawaban Anda HANYA dalam format JSON MURNI tanpa markdown, tanpa teks lain.
     - Format JSON yang diminta:
     {
       "nominal": <angka murni tanpa titik/koma, contoh: 5012>,
       "penerima": "<nama penerima, kosongkan jika tidak terbaca>",
+      "ref_id": "<nomor referensi/ID transaksi, kosongkan jika tidak terbaca>",
+      "tanggal": "<tanggal & waktu transaksi apa adanya, kosongkan jika tidak terbaca>",
       "is_struk_valid": <boolean, true jika ini benar-benar struk transfer, false jika ini foto selfie atau foto acak>
     }
   `;

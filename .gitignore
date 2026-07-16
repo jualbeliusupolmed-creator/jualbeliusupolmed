@@ -39,3 +39,8 @@ public/worker-*.js
 # Data percakapan pelanggan & screenshot — JANGAN commit (privasi)
 /Pelajari wa/
 /Rob - *.jpg
+
+# Laporan keamanan/audit — JANGAN commit (berisi detail celah sistem produksi)
+docs/AUDIT-*
+docs/Laporan-Keamanan.*
+docs/Checklist-Rotasi-Kunci.*
