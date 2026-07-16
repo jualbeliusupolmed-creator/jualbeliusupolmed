@@ -99,8 +99,9 @@ export async function POST(req) {
         });
       }
     } else {
-      // Update PIN
-      const updatePayload = { pin };
+      // Update PIN — WAJIB di-hash. Bug lama: menyimpan `pin` mentah di sini
+      // men-downgrade PIN yang tadinya bcrypt jadi plaintext tiap login OTP.
+      const updatePayload = { pin: hashPin(pin) };
       if (!profile.referral_code) {
         updatePayload.referral_code = Math.random().toString(36).substring(2, 8).toUpperCase();
       }

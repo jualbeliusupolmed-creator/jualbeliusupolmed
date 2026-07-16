@@ -38,14 +38,11 @@ function ChatRoom({ chat, onClose }) {
       // Bot akan merespons atas nama pelanggan (buat iklan, cari barang, dll.)
       try {
         const jid = `${num}@s.whatsapp.net`;
-        const fd = new FormData();
-        fd.append("sender", jid);
-        fd.append("message", replyMsg.trim()); // '#' sudah ada di depan
-        fd.append("fromMe", "true");
-        const resp = await fetch("/api/wa/baileys", {
+        // Lewat route server ber-isAdmin() — token bot TIDAK pernah ada di browser.
+        const resp = await fetch("/api/admin/wa-inject", {
           method: "POST",
-          headers: { Authorization: "jualbeliusu_rahasia" },
-          body: fd,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ jid, message: replyMsg.trim() }),
         });
         const json = await resp.json();
         const ok = resp.ok && (json.ok || json.state);

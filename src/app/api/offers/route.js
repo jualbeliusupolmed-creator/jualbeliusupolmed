@@ -4,6 +4,7 @@ import { notifySellerNewOffer } from "@/lib/fonnte";
 import { formatWa } from "@/lib/constants";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { pushToWa } from "@/lib/webpush";
+import { getSellerSession, isAdmin } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,15 @@ export const dynamic = "force-dynamic";
 export async function GET(req) {
   const seller_wa = formatWa(req.nextUrl.searchParams.get("seller_wa") || "");
   if (!seller_wa) return NextResponse.json({ offers: [] });
+
+  // Otorisasi: daftar tawaran memuat NOMOR & NAMA pembeli (PII). seller_wa itu
+  // publik (tampil di tiap iklan), jadi TIDAK boleh dipercaya dari query —
+  // wajib cocok dengan sesi penjual, atau admin. Tanpa ini nomor semua pembeli
+  // yang menawar bisa dipanen massal.
+  const sessionWa = getSellerSession();
+  if (!isAdmin() && (!sessionWa || sessionWa !== seller_wa)) {
+    return NextResponse.json({ error: "Tidak diizinkan" }, { status: 403 });
+  }
 
   const supa = getAdminClient();
 

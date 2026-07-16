@@ -140,6 +140,32 @@ export async function verifyReceiptImage(imageBuffer, mimeType) {
 }
 
 /**
+ * Verifikasi NAMA PENERIMA struk cocok dengan rekening/e-wallet resmi marketplace.
+ * Menutup celah "bayar ke rekening sendiri": tanpa cek ini, siapa pun bisa transfer
+ * ke akunnya sendiri, screenshot struk sah (nominal cukup, ref unik), lalu lolos.
+ *
+ * Aktif HANYA jika env EXPECTED_RECEIVER_NAMES di-set (daftar nama dipisah koma).
+ * Kalau belum di-set → return {ok:true, skipped:true} agar alur lama tidak rusak;
+ * SANGAT disarankan meng-set-nya di produksi.
+ * Return: { ok, skipped?, reason? }
+ */
+export function checkReceiverName(penerima) {
+  const raw = (process.env.EXPECTED_RECEIVER_NAMES || "").trim();
+  if (!raw) return { ok: true, skipped: true };
+  const norm = (s) =>
+    String(s || "")
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, ""); // buang gelar/spasi/tanda baca
+  const got = norm(penerima);
+  if (!got) return { ok: false, reason: "Nama penerima pada struk tidak terbaca." };
+  const allowed = raw.split(",").map((n) => norm(n)).filter(Boolean);
+  const match = allowed.some((a) => got.includes(a) || a.includes(got));
+  return match
+    ? { ok: true }
+    : { ok: false, reason: "Nama penerima pada struk tidak cocok dengan rekening resmi." };
+}
+
+/**
  * Parses raw text from a WhatsApp message into a structured JSON for a listing.
  */
 export async function parseListingFromText(text, aiConfig = {}, imageBuffers = [], mimeTypes = []) {

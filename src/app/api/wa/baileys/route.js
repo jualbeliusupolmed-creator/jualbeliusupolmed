@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { parseListingFromText, verifyReceiptImage, processGeneralChat, parseWantedFromText } from "@/lib/gemini";
+import { parseListingFromText, verifyReceiptImage, processGeneralChat, parseWantedFromText, checkReceiverName } from "@/lib/gemini";
 import { sendWa as _sendWaBase, postToGroup, notifyAdminNewListing, notifyWantedMatch, notifyCategorySubscribers, notifyBuyerOfferResult, postWantedToGroup, notifySellerNewOffer } from "@/lib/fonnte";
 import { formatWa } from "@/lib/constants";
 import { getSettings, adFeeFrom } from "@/lib/settings";
@@ -421,6 +421,12 @@ export async function POST(req) {
           return NextResponse.json({ ok: true, state: "invalid_receipt_image" });
         }
 
+        const recvIkl = checkReceiverName(extractedData.penerima);
+        if (!recvIkl.ok) {
+          await sendWa(senderJid, `❌ ${recvIkl.reason}\nPastikan transfer ke rekening resmi Jual Beli USU/Polmed ya kak 🙏`);
+          return NextResponse.json({ ok: true, state: "receiver_mismatch" });
+        }
+
         const nominalRcpt = Number(extractedData.nominal);
         if (!Number.isFinite(nominalRcpt) || nominalRcpt < Number(pendingPayment.amount)) {
           await sendWa(senderJid,
@@ -617,6 +623,11 @@ export async function POST(req) {
         if (!extractedData.is_struk_valid) {
           await sendWa(senderJid, "Ini bukan struk transfer ya kak 🙏 Coba kirim ulang yg jelas.");
           return NextResponse.json({ ok: true, state: "wanted_invalid_receipt" });
+        }
+        const recvW = checkReceiverName(extractedData.penerima);
+        if (!recvW.ok) {
+          await sendWa(senderJid, `❌ ${recvW.reason}\nPastikan transfer ke rekening resmi Jual Beli USU/Polmed ya kak 🙏`);
+          return NextResponse.json({ ok: true, state: "wanted_receiver_mismatch" });
         }
         const nominalW = Number(extractedData.nominal);
         if (!Number.isFinite(nominalW) || nominalW < Number(pendingWantedPayment.amount)) {

@@ -90,18 +90,30 @@ export async function POST(req) {
       );
     }
 
+    // Anti-manipulasi: satu listing hanya boleh dinilai SEKALI. Tanpa ini, upsert
+    // onConflict bisa dipakai siapa pun (endpoint publik) untuk MENIMPA rating asli
+    // penjual berkali-kali (mis. jatuhkan bintang-5 jadi bintang-1).
+    const { data: existingRating } = await supa
+      .from("seller_ratings")
+      .select("id")
+      .eq("listing_id", listing_id)
+      .maybeSingle();
+    if (existingRating) {
+      return NextResponse.json(
+        { error: "Barang ini sudah pernah diberi rating." },
+        { status: 409 }
+      );
+    }
+
     const { data, error } = await supa
       .from("seller_ratings")
-      .upsert(
-        {
-          listing_id,
-          seller_wa: listing.seller_wa,
-          rating: Number(rating),
-          comment: comment?.trim() || null,
-          buyer_name: buyer_name?.trim() || null,
-        },
-        { onConflict: "listing_id" }
-      )
+      .insert({
+        listing_id,
+        seller_wa: listing.seller_wa,
+        rating: Number(rating),
+        comment: comment?.trim() || null,
+        buyer_name: buyer_name?.trim() || null,
+      })
       .select()
       .single();
 
