@@ -29,9 +29,14 @@ export async function POST(req) {
     const rawAmount = body?.amount || body?.nominal || body?.total;
     const amount = Number(String(rawAmount).replace(/\D/g, ""));
 
-    // Validasi merchant code — wajib cocok jika env terkonfigurasi
+    // Validasi merchant code — WAJIB diset & cocok (fail-closed). Tanpa ini siapa pun
+    // bisa POST callback palsu {amount,status:paid} → aktivasi tanpa bayar.
     const expectedMerchantCode = process.env.QIOSPAY_MERCHANT_CODE;
-    if (expectedMerchantCode && merchantCode !== expectedMerchantCode) {
+    if (!expectedMerchantCode) {
+      console.error("[qiospay-callback] QIOSPAY_MERCHANT_CODE belum diset — tolak (fail-closed)");
+      return NextResponse.json({ ok: false, error: "callback not configured" }, { status: 503 });
+    }
+    if (merchantCode !== expectedMerchantCode) {
       console.warn("[qiospay-callback] merchant_code tidak cocok:", merchantCode);
       return NextResponse.json({ ok: false }, { status: 403 });
     }
@@ -57,13 +62,16 @@ export async function POST(req) {
       return NextResponse.json({ ok: false, message: "payment not found" }, { status: 200 });
     }
 
-    // Tandai paid
-    await supa
+    // Tandai paid ATOMIK — hanya kalau masih pending (idempotensi + anti double-fulfill).
+    const { data: claimed } = await supa
       .from("payments")
       .update({ status: "paid" })
-      .eq("id", payment.id);
+      .eq("id", payment.id)
+      .eq("status", "pending")
+      .select("id")
+      .maybeSingle();
+    if (!claimed) return NextResponse.json({ ok: true, message: "already processed" });
 
-    // Jalankan fulfillment sesuai tipe
     await fulfillPayment(supa, { ...payment, status: "paid" });
 
     return NextResponse.json({ ok: true });

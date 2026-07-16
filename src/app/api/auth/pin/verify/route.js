@@ -3,6 +3,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { formatWa } from "@/lib/constants";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { setSellerCookie } from "@/lib/auth";
+import { verifyPin, hashPin, isHashed } from "@/lib/pin";
 
 export const dynamic = "force-dynamic";
 
@@ -40,8 +41,13 @@ export async function POST(req) {
       .eq("wa", normalizedWa)
       .single();
 
-    if (!profile || profile.pin !== pin) {
+    if (!profile || !verifyPin(pin, profile.pin)) {
       return NextResponse.json({ error: "PIN salah." }, { status: 400 });
+    }
+
+    // Upgrade PIN lama (plaintext) ke hash saat login berhasil.
+    if (profile.pin && !isHashed(profile.pin)) {
+      await supa.from("seller_profiles").update({ pin: hashPin(pin) }).eq("wa", normalizedWa);
     }
 
     setSellerCookie(normalizedWa);

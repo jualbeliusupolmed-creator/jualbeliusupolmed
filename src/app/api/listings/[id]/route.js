@@ -45,7 +45,9 @@ export async function PATCH(req, { params }) {
       return NextResponse.json({ error: "Listing tidak ditemukan" }, { status: 404 });
     }
 
-    if (!isAd && sessionWa !== currentListing.seller_wa && body.seller_wa !== currentListing.seller_wa) {
+    // Otorisasi HANYA dari sesi login tepercaya — JANGAN percaya seller_wa dari body
+    // (nomor WA penjual bersifat publik → dulu bisa dipakai bypass = edit iklan orang lain).
+    if (!isAd && sessionWa !== currentListing.seller_wa) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

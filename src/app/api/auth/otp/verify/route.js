@@ -3,6 +3,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { formatWa } from "@/lib/constants";
 import { setSellerCookie } from "@/lib/auth";
+import { hashPin } from "@/lib/pin";
 
 export const dynamic = "force-dynamic";
 
@@ -87,7 +88,7 @@ export async function POST(req) {
         name: `User ${normalizedWa.slice(-4)}`,
         referral_code: newRefCode,
         free_bumps: freeBumps,
-        pin: pin
+        pin: hashPin(pin)
       });
 
       if (referrerWa) {

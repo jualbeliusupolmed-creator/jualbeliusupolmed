@@ -304,7 +304,7 @@ export async function POST(req) {
         return NextResponse.json({ ok: true, state: "waiting_receipt_no_image" });
       }
 
-      await sendWa(senderJid, "⏳ Sedang memverifikasi struk Anda menggunakan AI...");
+      await sendWa(senderJid, "⏳ Bentar ya, lagi dicek…");
 
       try {
         const arrayBuffer = await file.arrayBuffer();
@@ -313,22 +313,36 @@ export async function POST(req) {
         const extractedData = await verifyReceiptImage(buffer, mimeType);
 
         if (!extractedData.is_struk_valid) {
-          await sendWa(senderJid, "❌ *Gambar Ditolak*\n\nSistem AI mendeteksi bahwa gambar yang Anda kirim *bukan struk transfer yang sah*. Pastikan foto jelas dan terang.");
+          await sendWa(senderJid, "Hmm, ini kayaknya bukan struk transfer deh kak 🙏 Coba kirim ulang foto struknya yg jelas ya.");
           return NextResponse.json({ ok: true, state: "invalid_receipt_image" });
         }
 
-        if (Number(extractedData.nominal) < Number(pendingPayment.amount)) {
+        const nominalRcpt = Number(extractedData.nominal);
+        if (!Number.isFinite(nominalRcpt) || nominalRcpt < Number(pendingPayment.amount)) {
           await sendWa(senderJid,
-            `❌ *Nominal Kurang*\n\n` +
-            `Nominal di struk: *Rp ${(extractedData.nominal || 0).toLocaleString("id-ID")}*\n` +
+            `❌ *Nominal Kurang / Tak Terbaca*\n\n` +
+            `Nominal di struk: *Rp ${Number.isFinite(nominalRcpt) ? nominalRcpt.toLocaleString("id-ID") : "?"}*\n` +
             `Tagihan: *Rp ${Number(pendingPayment.amount).toLocaleString("id-ID")}*\n\n` +
-            `Jumlah transfer kurang. Mohon transfer ulang dengan nominal yang benar, lalu kirim struk lagi.`
+            `Transfer kurang atau angkanya tak terbaca. Kirim ulang struk yang jelas ya kak.`
           );
           return NextResponse.json({ ok: true, state: "invalid_amount" });
         }
 
-        // VERIFIKASI BERHASIL
-        await supa.from("payments").update({ status: "paid" }).eq("id", pendingPayment.id);
+        // Anti daur-ulang: tolak nomor referensi struk yang sudah pernah dipakai.
+        const refIdRcpt = String(extractedData.ref_id || "").trim();
+        if (refIdRcpt) {
+          const { data: dupR } = await supa.from("payments").select("id").eq("status", "paid").eq("meta->>receipt_ref", refIdRcpt).limit(1);
+          if (dupR && dupR.length > 0) {
+            await sendWa(senderJid, "Struk ini kayaknya udah pernah dipakai kak 🙏 Kirim struk transfer yang baru ya.");
+            return NextResponse.json({ ok: true, state: "receipt_reused" });
+          }
+        }
+
+        // VERIFIKASI BERHASIL — klaim ATOMIK (hanya kalau masih pending, cegah double).
+        const { data: claimedRcpt } = await supa.from("payments")
+          .update({ status: "paid", meta: { ...(pendingPayment.meta || {}), receipt_ref: refIdRcpt || null } })
+          .eq("id", pendingPayment.id).eq("status", "pending").select("id").maybeSingle();
+        if (!claimedRcpt) return NextResponse.json({ ok: true, state: "already_paid" });
 
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
 
@@ -381,7 +395,7 @@ export async function POST(req) {
 
           if (updatedListings && updatedListings.length > 0) {
             let confirmMsg = `🎉 *PEMBAYARAN BERHASIL!*\n\n` +
-              `Struk *Rp ${pendingPayment.amount.toLocaleString("id-ID")}* sudah divalidasi AI.\n\n` +
+              `Struk *Rp ${pendingPayment.amount.toLocaleString("id-ID")}* udah aku cek, aman 👍\n\n` +
               `Iklan berikut sudah tayang dan disebarkan ke Grup WA! 🚀\n\n`;
 
             for (const l of updatedListings) {
@@ -430,7 +444,7 @@ export async function POST(req) {
             const productUrl = `${baseUrl}/produk/${productSlug}`;
 
             const confirmMsg = `🎉 *PEMBAYARAN BERHASIL!*\n\n` +
-              `Struk *Rp ${pendingPayment.amount.toLocaleString("id-ID")}* sudah divalidasi AI.\n\n` +
+              `Struk *Rp ${pendingPayment.amount.toLocaleString("id-ID")}* udah aku cek, aman 👍\n\n` +
               `Iklan *"${updatedListing.title}"* sudah tayang dan disebarkan ke Grup WA! 🚀`;
 
             const shareMsg = `🛒 *${updatedListing.title}* — Rp ${Number(updatedListing.price).toLocaleString("id-ID")}\n` +
@@ -491,23 +505,36 @@ export async function POST(req) {
         return NextResponse.json({ ok: true, state: "wanted_waiting_receipt" });
       }
 
-      await sendWa(senderJid, "⏳ Sedang memverifikasi struk Anda menggunakan AI...");
+      await sendWa(senderJid, "⏳ Bentar ya, lagi dicek…");
       try {
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
         const extractedData = await verifyReceiptImage(buffer, file.type || "image/jpeg");
         if (!extractedData.is_struk_valid) {
-          await sendWa(senderJid, "❌ *Gambar Ditolak*\n\nBukan struk transfer yang sah. Kirim ulang foto struk yang jelas.");
+          await sendWa(senderJid, "Ini bukan struk transfer ya kak 🙏 Coba kirim ulang yg jelas.");
           return NextResponse.json({ ok: true, state: "wanted_invalid_receipt" });
         }
-        if (Number(extractedData.nominal) < Number(pendingWantedPayment.amount)) {
+        const nominalW = Number(extractedData.nominal);
+        if (!Number.isFinite(nominalW) || nominalW < Number(pendingWantedPayment.amount)) {
           await sendWa(senderJid,
-            `❌ *Nominal Kurang*\n\nNominal di struk: *Rp ${(extractedData.nominal || 0).toLocaleString("id-ID")}*\n` +
-            `Tagihan: *Rp ${Number(pendingWantedPayment.amount).toLocaleString("id-ID")}*\n\nMohon transfer ulang dengan nominal yang benar.`
+            `❌ *Nominal Kurang / Tak Terbaca*\n\nNominal di struk: *Rp ${Number.isFinite(nominalW) ? nominalW.toLocaleString("id-ID") : "?"}*\n` +
+            `Tagihan: *Rp ${Number(pendingWantedPayment.amount).toLocaleString("id-ID")}*\n\nTransfer kurang atau tak terbaca. Kirim ulang struk yang jelas ya kak.`
           );
           return NextResponse.json({ ok: true, state: "wanted_invalid_amount" });
         }
-        await supa.from("payments").update({ status: "paid" }).eq("id", pendingWantedPayment.id);
+        // Anti daur-ulang + klaim atomik.
+        const refIdW = String(extractedData.ref_id || "").trim();
+        if (refIdW) {
+          const { data: dupW } = await supa.from("payments").select("id").eq("status", "paid").eq("meta->>receipt_ref", refIdW).limit(1);
+          if (dupW && dupW.length > 0) {
+            await sendWa(senderJid, "Struk ini kayaknya udah pernah dipakai kak 🙏 Kirim struk yang baru ya.");
+            return NextResponse.json({ ok: true, state: "wanted_receipt_reused" });
+          }
+        }
+        const { data: claimedW } = await supa.from("payments")
+          .update({ status: "paid", meta: { ...(pendingWantedPayment.meta || {}), receipt_ref: refIdW || null } })
+          .eq("id", pendingWantedPayment.id).eq("status", "pending").select("id").maybeSingle();
+        if (!claimedW) return NextResponse.json({ ok: true, state: "already_paid" });
         await supa.from("wanted_listings").update({ status: "active" }).eq("id", pendingWantedPayment.wanted.id);
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
         const confirmMsg =
@@ -550,9 +577,9 @@ export async function POST(req) {
               await supa.from("price_offers").update({ status: newStatus }).eq("id", offer.id);
 
               if (action === "TERIMA") {
-                await sendWa(senderJid, `✅ Anda telah *MENERIMA* tawaran Rp ${offer.offer_price.toLocaleString("id-ID")} untuk *${offer.listings.title}*.\n\n📞 Silakan hubungi pembeli untuk janjian COD:\nwa.me/${offer.buyer_wa}`);
+                await sendWa(senderJid, `✅ Oke, kamu *TERIMA* tawaran Rp ${offer.offer_price.toLocaleString("id-ID")} buat *${offer.listings.title}*.\n\n📞 Langsung hubungi pembelinya ya buat janjian COD:\nwa.me/${offer.buyer_wa}`);
               } else {
-                await sendWa(senderJid, `❌ Anda telah *MENOLAK* tawaran Rp ${offer.offer_price.toLocaleString("id-ID")} untuk *${offer.listings.title}*.`);
+                await sendWa(senderJid, `❌ Oke, kamu *TOLAK* tawaran Rp ${offer.offer_price.toLocaleString("id-ID")} buat *${offer.listings.title}*.`);
               }
 
               // Notif ke pembeli
@@ -574,9 +601,9 @@ export async function POST(req) {
           .eq("buyer_wa", normalizedWa);
 
         if (!error) {
-          await sendWa(senderJid, "✅ Anda telah *berhasil berhenti berlangganan* dari semua notifikasi kategori.\nAnda tidak akan menerima pesan otomatis ini lagi.");
+          await sendWa(senderJid, "✅ Oke, kamu udah *berhenti langganan* notif kategori. Aku nggak bakal kirim notif itu lagi ya kak.");
         } else {
-          await sendWa(senderJid, "❌ Terjadi kesalahan saat memproses permintaan berhenti langganan Anda.");
+          await sendWa(senderJid, "Waduh, ada kendala pas proses berhenti langganannya kak. Coba lagi ya.");
         }
         return NextResponse.json({ ok: true, state: "unsubscribed" });
 
@@ -617,7 +644,7 @@ export async function POST(req) {
           .in("status", ["active", "expired"]);
 
         if (!listings || listings.length === 0) {
-          await sendWa(senderJid, `❌ Iklan dengan kode *${shortId}* tidak ditemukan atau bukan milik Anda.\n\nKetik *PERPANJANG* untuk lihat daftar iklan Anda.`);
+          await sendWa(senderJid, `Iklan kode *${shortId}* nggak ketemu atau bukan punya kamu kak.\n\nKetik *PERPANJANG* buat liat daftar iklanmu ya.`);
           return NextResponse.json({ ok: true, state: "perpanjang_not_found" });
         }
 
@@ -707,25 +734,20 @@ export async function POST(req) {
         }
 
         const baseUrlIklanku = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
-        let listMsg = `📋 *Iklan Kamu (${myListings.length}):*\n\n`;
+        let listMsg = `📋 *Iklanmu (${myListings.length})*\n\n`;
         myListings.forEach((l, i) => {
           const emo = l.status === "active" ? "✅" : l.status === "sold" ? "🎉" : l.status === "deletion_pending" ? "🗑️" : "⏳";
-          const label = l.status === "active" ? "Aktif" : l.status === "sold" ? "Terjual" : l.status === "deletion_pending" ? "Menunggu hapus" : "Pending";
+          const label = l.status === "active" ? "Aktif" : l.status === "sold" ? "Terjual" : l.status === "deletion_pending" ? "Nunggu hapus" : "Pending";
           const exp = l.expires_at ? new Date(l.expires_at).toLocaleDateString("id-ID", { day: "numeric", month: "short" }) : "-";
           const shortId = l.listing_code;
           const now = new Date();
           const isFeatured = l.featured && l.featured_until && new Date(l.featured_until) > now;
           const isAutoBump = l.auto_bump_until && new Date(l.auto_bump_until) > now;
-          const upgradeBadge = isFeatured ? ` ⭐Featured` : isAutoBump ? ` 🔄AutoBump` : "";
-          listMsg += `${i + 1}. *${l.title}*\n`;
-          listMsg += `   ${emo} ${label}${upgradeBadge} | Rp ${Number(l.price).toLocaleString("id-ID")}\n`;
-          listMsg += `   📅 s/d ${exp} | Kode: \`${shortId}\`\n\n`;
+          const upgradeBadge = isFeatured ? ` ⭐` : isAutoBump ? ` 🔄` : "";
+          listMsg += `${i + 1}. *${l.title}*  \`${shortId}\`${upgradeBadge}\n`;
+          listMsg += `    ${emo} ${label} · Rp ${Number(l.price).toLocaleString("id-ID")} · s/d ${exp}\n\n`;
         });
-        listMsg +=
-          `Perintah:\n` +
-          `• *PERPANJANG [kode]* — perpanjang iklan\n` +
-          `• *HAPUS LAKU [kode]* — barang sudah terjual\n` +
-          `• *HAPUS GALAKU [kode]* — barang tidak laku (minta admin)`;
+        listMsg += `_Perpanjang: *PERPANJANG [kode]*  ·  Terjual: *HAPUS LAKU [kode]*_`;
         await sendWa(senderJid, listMsg);
         return NextResponse.json({ ok: true, state: "iklanku_sent", bot_reply: listMsg });
 
@@ -1249,7 +1271,7 @@ export async function POST(req) {
         await sendWa(senderJid,
           `✅ *Tagihan Dibatalkan*\n\n` +
           `Tagihan *${bLabel}: ${batalPayment.listings.title}* berhasil dibatalkan.\n\n` +
-          `Ketik *TAGIH* jika ingin bayar lagi, atau *IKLANKU* untuk lihat iklan Anda.`
+          `Ketik *TAGIH* kalau mau bayar lagi, atau *IKLANKU* buat liat iklanmu.`
         );
         return NextResponse.json({ ok: true, state: "batal_ok" });
 
@@ -1773,21 +1795,16 @@ export async function POST(req) {
         const sayaBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
 
         await sendWa(senderJid,
-          `👤 *Profil Kamu*\n` +
-          `━━━━━━━━━━━━━━━\n\n` +
-          `📛 Nama: *${sayaProfile?.name || "Belum diatur"}*\n` +
-          `🏷️ Paket: *${tierLabel}*` +
-          (sayaProfile?.trusted_seller ? `  ☑️ _Terpercaya_` : ``) +
-          `\n\n━━━ 📊 Statistik ━━━\n` +
-          `📦 Iklan Aktif: *${aktifCount}*\n` +
-          `✅ Total Terjual: *${terjualCount}×*\n` +
-          (avgRating ? `⭐ Rating: *${avgRating}/5* dari ${sayaRatings.length} ulasan\n` : ``) +
-          (pendingOffers > 0 ? `💬 Tawaran Pending: *${pendingOffers}* → ketik *TAWARAN*\n` : ``) +
-          (freeBumps > 0 ? `🎁 Bump Gratis: *${freeBumps}* → ketik *BUMP [kode]*\n` : ``) +
-          (refCode ? `\n━━━ 🎯 Referral ━━━\n🔑 Kode: *${refCode}* → ketik *REFERRAL* untuk detail\n` : ``) +
-          `\n━━━ 🔗 Profil Publik ━━━\n` +
-          `${sayaBaseUrl}/penjual/${normalizedWa}\n\n` +
-          `Ketik *MENU* untuk semua perintah.`
+          `👤 *${sayaProfile?.name || "Belum diatur"}*  ·  ${tierLabel}` +
+          (sayaProfile?.trusted_seller ? `  ☑️ _Terpercaya_` : ``) + `\n\n` +
+          `📦 Iklan aktif: *${aktifCount}*\n` +
+          `✅ Terjual: *${terjualCount}×*\n` +
+          (avgRating ? `⭐ Rating: *${avgRating}/5* (${sayaRatings.length} ulasan)\n` : ``) +
+          (pendingOffers > 0 ? `💬 Ada *${pendingOffers}* tawaran masuk — ketik *TAWARAN*\n` : ``) +
+          (freeBumps > 0 ? `🎁 Bump gratis: *${freeBumps}* — ketik *BUMP [kode]*\n` : ``) +
+          (refCode ? `🎁 Kode referral: *${refCode}* — ketik *REFERRAL*\n` : ``) +
+          `\n🔗 Profil kamu:\n${sayaBaseUrl}/penjual/${normalizedWa}\n\n` +
+          `_Ketik *MENU* buat liat semua yang bisa aku bantu ya kak._`
         );
         return NextResponse.json({ ok: true, state: "saya_done" });
 
@@ -1811,11 +1828,10 @@ export async function POST(req) {
         const freeBumpsRef = refProfile?.free_bumps || 0;
         const refBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
         const refMsg =
-          `🎯 *Kode Referral Kamu*\n` +
-          `━━━━━━━━━━━━━━━\n\n` +
+          `🎯 *Kode Referral Kamu*\n\n` +
           `🔑 Kode: *${refCode}*\n` +
-          `🎁 Bump Gratis Tersisa: *${freeBumpsRef}*\n\n` +
-          `━━━ Cara Kerja ━━━\n` +
+          `🎁 Bump gratis tersisa: *${freeBumpsRef}*\n\n` +
+          `*Cara kerja:*\n` +
           `Ajak teman daftar & pasang iklan pertama dengan kode referralmu.\n` +
           `Setiap teman yang berhasil → kamu dapat *1 Bump Gratis*!\n\n` +
           `📲 Share link ini:\n` +
@@ -1862,7 +1878,7 @@ export async function POST(req) {
 
         const typeLabel = { iklan: "Pasang Iklan", bump: "Bump", renewal: "Perpanjang", featured: "Featured", autobump: "AutoBump", wanted: "Dicari", sponsored: "Sponsored" };
         const statusLabel = { paid: "✅ Lunas", pending: "⏳ Pending", expired: "❌ Expired", failed: "❌ Gagal" };
-        let riwayatMsg = `📋 *Riwayat Transaksi*\n━━━━━━━━━━━━━━━\n\n`;
+        let riwayatMsg = `📋 *Riwayat Transaksi*\n\n`;
         allPays.forEach((p, i) => {
           const tgl = new Date(p.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
           const judul = p.listings?.title ? `_${p.listings.title.slice(0, 25)}_` : (p.type === "wanted" ? "_Posting Dicari_" : "");
@@ -1889,7 +1905,7 @@ export async function POST(req) {
         }
 
         const offerStatusLabel = { pending: "⏳ Menunggu", accepted: "✅ Diterima", rejected: "❌ Ditolak" };
-        let offersMsg = `💬 *Tawaran yang Kamu Kirim*\n━━━━━━━━━━━━━━━\n\n`;
+        let offersMsg = `💬 *Tawaran yang Kamu Kirim*\n\n`;
         myOffers.forEach((o, i) => {
           const tgl = new Date(o.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short" });
           offersMsg += `${i + 1}. *${o.listings?.title?.slice(0, 30) || "Iklan"}*\n`;
@@ -1906,8 +1922,8 @@ export async function POST(req) {
       // MENU / HELP / BANTUAN — Daftar perintah
       // ==========================================
       } else if (textMsg === "MENU" || textMsg === "HELP" || textMsg === "BANTUAN") {
-        let menuStr = `📋 *Menu Bot Jual Beli USU*\n\n` +
-          `━━━ 🛒 IKLAN ━━━\n` +
+        let menuStr = `📋 *Menu Jual Beli USU*\n_Semua yang bisa aku bantu:_\n\n` +
+          `🛒 *IKLAN*\n` +
           `• Kirim foto+teks → Pasang iklan baru\n` +
           `• *IKLANKU* → Semua iklan saya\n` +
           `• *CEK* → Semua iklan (views & sisa hari)\n` +
@@ -1921,19 +1937,19 @@ export async function POST(req) {
           `• *FOTO [kode]* + foto → Tambah foto\n` +
           `• *HAPUS LAKU [kode]* → Tandai terjual\n` +
           `• *HAPUS GALAKU [kode]* → Minta hapus ke admin\n` +
-          `\n━━━ 💬 TRANSAKSI ━━━\n` +
+          `\n💬 *TRANSAKSI*\n` +
           `• *TANYA [kode] [pesan]* → Tanya penjual (nomor aman)\n` +
           `• *TAWARAN* → Lihat tawaran masuk\n` +
           `• *TAWAR [kode] [harga]* → Tawar harga\n` +
           `• *TAGIH* → Kirim ulang QRIS\n` +
           `• *BATAL* → Batalkan tagihan QRIS pending\n` +
           `• *SHARE [kode]* → Link iklan siap share\n` +
-          `\n━━━ 🔍 CARI & LANGGANAN ━━━\n` +
+          `\n🔍 *CARI & LANGGANAN*\n` +
           `• *CARI [barang]* → Posting pencarian\n` +
           `• *LANGGANAN [kategori]* → Notif kategori baru\n` +
           `• *STOP* → Berhenti semua notifikasi\n` +
           `• *IKLAN [kode]* → Lihat detail iklan\n` +
-          `\n━━━ 👤 PROFIL & RIWAYAT ━━━\n` +
+          `\n👤 *PROFIL & RIWAYAT*\n` +
           `• *SAYA* → Profil & statistik saya\n` +
           `• *NAMA [nama baru]* → Ajukan ganti nama profil\n` +
           `• *REFERRAL* → Kode referral & bump gratis\n` +
@@ -1942,7 +1958,7 @@ export async function POST(req) {
           `• *LAPOR [kode] [alasan]* → Laporkan iklan\n`;
           
         if (isAdminWa(normalizedWa)) {
-          menuStr += `\n━━━ 👑 MENU ADMIN ━━━\n` +
+          menuStr += `\n👑 *MENU ADMIN*\n` +
             `• *SETMODE AUTO* → Bot membalas pesan otomatis\n` +
             `• *SETMODE MANUAL* → Matikan bot (mode manual)\n` +
             `• *STATS* → Lihat statistik pendapatan & user\n` +
@@ -2116,8 +2132,23 @@ export async function POST(req) {
         const hasTrigger = triggerList.some(kw => msgLower.includes(kw));
 
         if (!hasTrigger && !hasNumber) {
-          // Tidak ada keyword → bot diam, tidak balas sama sekali
-          // Kecuali jika greeting diaktifkan dari settings (greeting_enabled: true)
+          // Kontak BARU (pertama kali chat) → sapa hangat SEKALI + panggil nama.
+          // Kontak lama tanpa keyword → tetap diam (hindari spam menu).
+          try {
+            const { count: priorMsgs } = await supa
+              .from("wa_conversations")
+              .select("id", { count: "exact", head: true })
+              .eq("wa", normalizedWa)
+              .eq("role", "user");
+            if ((priorMsgs || 0) <= 1) {
+              const fn = (profileNameFromBot || "").trim().split(/\s+/)[0];
+              const halo = `Haii${fn ? " " + fn : ""}! 👋 Aku admin *Jual Beli USU/Polmed*. Mau *jual* atau *cari* barang? Ketik *MENU* buat liat semua yang bisa aku bantu ya 😊`;
+              await sendWa(senderJid, halo);
+              return NextResponse.json({ ok: true, state: "greeting_first_contact", bot_reply: halo });
+            }
+          } catch (_) {}
+
+          // Tidak ada keyword & bukan kontak baru → bot diam (kecuali greeting_enabled).
           if (kwConfig.greeting_enabled) {
             const greetingMsg = kwConfig.greeting || "Halo! 👋 Ada yang bisa dibantu?";
             await sendWa(senderJid, greetingMsg);
@@ -2129,7 +2160,8 @@ export async function POST(req) {
 
       // "admin" / "min" / "mimin" → sapaan ke bot, balas dengan menu
       if (msgLower === "admin" || msgLower === "min" || msgLower === "mimin" || msgLower === "halo admin" || msgLower === "hai min") {
-        let greetingMsg = kwConfig.greeting || "Halo! 👋\n\nKetik salah satu perintah berikut:\n• *JUAL* — Pasang iklan\n• *CARI [nama barang]* — Cari barang\n• *PERPANJANG* — Perpanjang iklan\n• *UPGRADE* — Upgrade iklan\n• *MENU* — Lihat semua perintah lengkap\n• *ADMIN* — Hubungi admin\n\nAtau langsung kirim *Foto + Deskripsi + Harga* untuk pasang iklan!\n\n🌐 Website: jualbeliusupolmed.web.id";
+        const fnGreet = (profileNameFromBot || "").trim().split(/\s+/)[0];
+        let greetingMsg = kwConfig.greeting || `Haii${fnGreet ? " " + fnGreet : " kak"}! 👋 Mau *jual* atau *cari* barang?\nKetik *MENU* buat liat semua yg bisa aku bantu, atau *ADMIN* kalau mau ngobrol langsung ya 😊`;
         
         if (isAdminWa(normalizedWa)) {
           greetingMsg = `👑 *Halo SuperAdmin!*\n\nBerikut daftar perintah khusus Admin yang bisa Anda gunakan:\n\n` +
@@ -2165,7 +2197,7 @@ export async function POST(req) {
           return NextResponse.json({ ok: true, state: "dicari_help" });
         }
 
-        await sendWa(senderJid, "⏳ Memproses permintaan Anda...");
+        await sendWa(senderJid, "Oke bentar ya kak, aku proses dulu…");
 
         const parsed = await parseWantedFromText(rawText).catch(() => null);
         if (!parsed?.title) {
@@ -2209,7 +2241,7 @@ export async function POST(req) {
         if (isFree) {
           await postWantedToGroup(wanted).catch(() => {});
           const confirmMsg =
-            `✅ *Permintaan Berhasil Dipost!*\n\n` +
+            `✅ *Udah aku post ya kak!*\n\n` +
             `🔍 *${parsed.title}*\n` +
             `🏷️ ${parsed.category}${budgetStr}${campusStr}\n\n` +
             `Sudah tayang di: ${baseUrl}/dicari\n` +
@@ -2360,7 +2392,7 @@ export async function POST(req) {
         }
       } catch (err) {
         console.error("AI General Chat Error:", err);
-        await sendWa(senderJid, "Mohon maaf, sistem AI sedang sibuk. Silakan coba lagi nanti.");
+        await sendWa(senderJid, "Duh lagi rame nih kak, coba bentar lagi ya 🙏");
       }
       return NextResponse.json({ ok: true, state: "ai_general_chat" });
     }
@@ -2411,7 +2443,7 @@ export async function POST(req) {
     }
 
     // Ada Teks/Media = Iklan Baru!
-    await sendWa(senderJid, "⏳ AI kami sedang membaca detail iklan Anda...");
+    await sendWa(senderJid, "⏳ Bentar ya, lagi diproses…");
 
     try {
       const settings = await getSettings();
@@ -2435,7 +2467,7 @@ export async function POST(req) {
       const extracted = await parseListingFromText(message, settings.ai_config || {}, imageBuffers, mimeTypes);
 
       if (!extracted || !extracted.items || extracted.items.length === 0) {
-        throw new Error("AI gagal mengekstrak detail iklan. Coba tulis lebih jelas atau pastikan teks pada gambar terbaca.");
+        throw new Error("Waduh aku kurang nangkep detail iklannya kak. Coba tulis lebih jelas ya, atau pastikan tulisan di fotonya kebaca.");
       }
 
       // Cek Distributor
@@ -2602,7 +2634,7 @@ export async function POST(req) {
       const qrisUrl = getQrisUrl();
       const namaReminder = (isNewWaUser && profileName === "Pengguna WA") ? `\n💡 Ketik *NAMA [nama kamu]* untuk set nama profil iklan.\n` : "";
       
-      let fallbackReply = `✅ *Iklan Berhasil Dibaca AI!*\n\n`;
+      let fallbackReply = `✅ *Iklanmu udah masuk!*\n\n`;
       for (const l of createdListings) {
         fallbackReply += `📦 *${l.title}* (Rp ${l.price.toLocaleString("id-ID")}) - Kode: *${l.listing_code}*\n`;
       }
@@ -2611,9 +2643,9 @@ export async function POST(req) {
       const aiReply = extracted.reply_message ? `${extracted.reply_message}\n${namaReminder}\n` : fallbackReply;
 
       const paymentInstructions =
-        `Untuk tayangkan iklan, scan QRIS di bawah dan transfer:\n\n` +
+        `Biar iklannya tayang, scan QRIS di bawah & transfer ya kak:\n\n` +
         `💳 *Rp ${totalAmount.toLocaleString("id-ID")}*\n\n` +
-        `Setelah transfer, kirim *screenshot struk* ke sini.\n\n` +
+        `Kalau udah transfer, kirim *screenshot struk*nya ke sini ya.\n\n` +
         (isBulk ? "" : `_(Biaya terasa berat? Ketik *TAWAR BIAYA ${createdListings[0].listing_code} [nominal]* untuk menawar ke admin)_`);
 
       await sendWa(senderJid, aiReply + paymentInstructions, qrisUrl);
@@ -2622,7 +2654,7 @@ export async function POST(req) {
 
     } catch (err) {
       console.error("WA New Listing Error Baileys:", err);
-      await sendWa(senderJid, "❌ Terjadi kendala saat memproses iklan Anda: " + err.message);
+      await sendWa(senderJid, "Waduh, ada kendala pas proses iklanmu: " + err.message);
       return NextResponse.json({ ok: true, error: err.message });
     }
 

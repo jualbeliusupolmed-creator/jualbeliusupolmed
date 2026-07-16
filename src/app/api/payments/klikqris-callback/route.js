@@ -55,21 +55,25 @@ export async function POST(req) {
       return NextResponse.json({ ok: true, message: "already paid" }, { status: 200 });
     }
 
-    // Verifikasi signature — tolak jika stored ada tapi incoming tidak cocok/absen
+    // Verifikasi signature — WAJIB ada & cocok (fail-closed). Callback tanpa signature
+    // yang benar = palsu → tolak, cegah aktivasi tanpa bayar.
     const storedSignature = payment.meta?.klikqris_signature;
-    if (storedSignature && storedSignature !== signature) {
-      console.warn("[klikqris-callback] signature tidak cocok:", order_id);
-      return NextResponse.json({ ok: false, message: "signature mismatch" }, { status: 200 });
+    if (!storedSignature || storedSignature !== signature) {
+      console.warn("[klikqris-callback] signature absen/tidak cocok:", order_id);
+      return NextResponse.json({ ok: false, message: "signature mismatch" }, { status: 403 });
     }
 
-    // Jalankan fulfillment DULU — baru tandai paid setelah berhasil.
-    // Urutan ini memastikan: kalau fulfillment gagal, gateway bisa retry (status masih pending).
-    await fulfillPayment(supa, payment);
-
-    await supa
+    // Klaim ATOMIK — hanya kalau masih pending (cegah double-fulfill saat retry paralel).
+    const { data: claimed } = await supa
       .from("payments")
       .update({ status: "paid" })
-      .eq("id", payment.id);
+      .eq("id", payment.id)
+      .eq("status", "pending")
+      .select("id")
+      .maybeSingle();
+    if (!claimed) return NextResponse.json({ ok: true, message: "already processed" });
+
+    await fulfillPayment(supa, payment);
 
     return NextResponse.json({ ok: true });
   } catch (e) {
