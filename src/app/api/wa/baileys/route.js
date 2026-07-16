@@ -33,10 +33,41 @@ async function logConvo(target, role, message, hasMedia = false) {
     });
   } catch (_) {}
 }
-// Bungkus sendWa: tiap balasan bot otomatis tercatat (fire-and-forget, tak memblokir).
-async function sendWa(target, message, fileUrl = null) {
-  logConvo(target, "bot", message, !!fileUrl);
-  return _sendWaBase(target, message, fileUrl);
+// Balasan bot otomatis tercatat di dalam sendWa fonnte.js (logBotSend) — berlaku
+// untuk semua rute, bukan cuma webhook ini. Jangan log ganda di sini.
+const sendWa = _sendWaBase;
+
+// Kata yang BUKAN nama orang tapi sering nyangkut jadi nama (tangkapan bot lama /
+// pushName aneh). Jangan pernah menyapa orang dengan kata-kata ini.
+const NAME_STOPWORDS = new Set([
+  "min", "mimin", "admin", "bang", "bg", "kak", "ka", "dek", "mas", "mbak", "pak", "bu",
+  "bro", "sis", "cuy", "coy", "iya", "ya", "yaw", "yah", "ok", "oke", "okey", "okay",
+  "sip", "siap", "gas", "woi", "woy", "wey", "weh", "oi", "halo", "hai", "haii", "hallo",
+  "helo", "hello", "ntar", "nanti", "tar", "besok", "test", "tes", "info", "misi",
+  "permisi", "punten", "p", "pagi", "siang", "sore", "malam", "assalamualaikum",
+]);
+function cleanFirstName(raw) {
+  const fn = (String(raw || "").trim().split(/\s+/)[0] || "").replace(/[^\p{L}'-]/gu, "");
+  if (fn.length < 2 || fn.length > 20) return "";
+  if (NAME_STOPWORDS.has(fn.toLowerCase())) return "";
+  return fn;
+}
+
+// Cek apakah bot baru saja mengirim pesan persis sama ke nomor ini — dipakai untuk
+// mencegah template (greeting/menu) terkirim beruntun dalam waktu berdekatan.
+async function wasSentRecently(supa, wa, text, minutes = 10) {
+  try {
+    const { count } = await supa
+      .from("wa_conversations")
+      .select("id", { count: "exact", head: true })
+      .eq("wa", wa)
+      .eq("role", "bot")
+      .eq("message", String(text || "").slice(0, 2000))
+      .gte("created_at", new Date(Date.now() - minutes * 60 * 1000).toISOString());
+    return (count || 0) > 0;
+  } catch (_) {
+    return false;
+  }
 }
 
 // Cek apakah nomor WA termasuk admin
@@ -156,7 +187,36 @@ export async function POST(req) {
         isForcedAd = true;
         message = message.trim().substring(1).trim();
       } else {
-        // Abaikan balasan manual dari admin agar bot tidak loop
+        // Balasan MANUAL owner (HP/WA Web) — jangan diproses bot, tapi JANGAN dibuang:
+        // ini sinyal terkuat bahwa percakapan sedang ditangani manusia. Catat sebagai
+        // role 'admin' → dasar mode senyap otomatis (ownerActive) + riwayat lengkap
+        // di panel Kontrol Chat.
+        try {
+          const waKey = convoWa(senderJid);
+          const manualMedia = formData.get("manual_media") === "1";
+          if (waKey) {
+            const supaFm = getAdminClient();
+            // Bedakan ketikan manual vs ECHO balasan bot sendiri (bot versi lama
+            // meneruskan keduanya sebagai fromMe): balasan bot selalu sudah tercatat
+            // role 'bot' sesaat sebelumnya dengan teks persis sama.
+            let isBotEcho = false;
+            if ((message || "").trim()) {
+              isBotEcho = await wasSentRecently(supaFm, waKey, message, 10);
+            } else if (!file && !manualMedia) {
+              // Tanpa teks & tanpa media: tak bisa dipastikan manual → jangan catat.
+              isBotEcho = true;
+            }
+            if (!isBotEcho) {
+              await supaFm.from("wa_conversations").insert({
+                wa: waKey,
+                jid: String(senderJid || ""),
+                role: "admin",
+                message: (message || "").slice(0, 2000),
+                has_media: !!file || manualMedia,
+              });
+            }
+          }
+        } catch (_) {}
         return NextResponse.json({ ok: true, ignored: true, reason: "admin_reply" });
       }
     } else if (message.trim().startsWith("#")) {
@@ -235,6 +295,25 @@ export async function POST(req) {
 
     const supa = getAdminClient();
 
+    // ── Deteksi "owner lagi turun tangan" ────────────────────────────────────
+    // Ada balasan manual (role 'admin') ke kontak ini dalam 6 jam terakhir →
+    // bot senyap otomatis (gerbang di bawah, setelah pending payment dihitung).
+    // Timer 6 jam otomatis mundur tiap owner balas manual lagi. Dari audit chat:
+    // 24/24 pesan template bot mendarat justru saat owner sedang balas manual.
+    const OWNER_ACTIVE_MS = 6 * 60 * 60 * 1000;
+    let ownerActive = false;
+    if (!isAdminWa(normalizedWa)) {
+      try {
+        const { count: manualCount } = await supa
+          .from("wa_conversations")
+          .select("id", { count: "exact", head: true })
+          .eq("wa", normalizedWa)
+          .eq("role", "admin")
+          .gte("created_at", new Date(Date.now() - OWNER_ACTIVE_MS).toISOString());
+        ownerActive = (manualCount || 0) > 0;
+      } catch (_) {}
+    }
+
     // 1. Cek apakah ada pembayaran PENDING untuk user ini
     const { data: pendingPayments } = await supa
       .from("payments")
@@ -281,6 +360,22 @@ export async function POST(req) {
 
     // Seller boleh kirim TAWAR BIAYA meski ada pending payment — jangan block
     const isTawarBiaya = !file && (message || "").toUpperCase().trim().startsWith("TAWAR BIAYA ");
+
+    // ── MODE SENYAP OTOMATIS ─────────────────────────────────────────────────
+    // Owner sedang menangani chat ini secara manual → bot TIDAK BOLEH menyela
+    // (tidak ada greeting, menu, tagihan, AI, atau iklan-baru dari foto).
+    // Yang tetap dilayani: perintah bot eksplisit, kiriman struk untuk pembayaran
+    // yang sudah berjalan, dan takeover '#'. Pesan masuk tetap tercatat (logConvo).
+    if (ownerActive && !isForcedAd && !isAdminCommand) {
+      const tCmd = (message || "").toLowerCase().trim();
+      const explicitCmd =
+        ["menu", "jual", "wts", "dijual", "saya", "perpanjang", "upgrade", "batal", "cancel"].includes(tCmd) ||
+        tCmd.startsWith("cari ") || tCmd.startsWith("nama ") || isTawarBiaya;
+      const isReceiptFlow = !!file && (pendingPayment || pendingWantedPayment);
+      if (!explicitCmd && !isReceiptFlow) {
+        return NextResponse.json({ ok: true, ignored: true, reason: "owner_active_silent" });
+      }
+    }
 
     // ==========================================
     // STATE 2: Menunggu Bukti Transfer (Struk)
@@ -2139,14 +2234,20 @@ export async function POST(req) {
       // Pesan sapaan biasa (tanpa keyword) → balas dengan menu singkat saja.
       const kwConfig = settings.bot_keywords || {};
       if (kwConfig.enabled !== false) {
-        const triggerList = (kwConfig.triggers || "jual,wts,wtb,cari,beli,admin,min,perpanjang,upgrade,dijual")
+        const triggerList = (kwConfig.triggers || "jual,dijual,wts,wtb,cari,dicari,beli,dibeli,admin,min,mimin,perpanjang,upgrade")
           .split(",").map(t => t.trim().toLowerCase()).filter(Boolean);
         const minDigits = Number(kwConfig.min_price_digits) || 4;
         const hasNumber = new RegExp(`\\d{${minDigits},}`).test(message);
-        const hasTrigger = triggerList.some(kw => msgLower.includes(kw));
+        // Cocokkan per KATA UTUH, bukan substring — "min" tidak boleh kena "minat"/
+        // "minggu", "beli" tidak boleh kena "sembelit". Substring bikin bot nyela
+        // obrolan manusia yang kebetulan mengandung potongan keyword.
+        const escRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const hasTrigger = triggerList.some((kw) =>
+          new RegExp(`(^|[^\\p{L}\\p{N}])${escRe(kw)}($|[^\\p{L}\\p{N}])`, "iu").test(msgLower)
+        );
 
         if (!hasTrigger && !hasNumber) {
-          // Kontak BARU (pertama kali chat) → sapa hangat SEKALI + panggil nama.
+          // Kontak BARU (pertama kali chat) → sapa hangat SEKALI SEUMUR HIDUP.
           // Kontak lama tanpa keyword → tetap diam (hindari spam menu).
           try {
             const { count: priorMsgs } = await supa
@@ -2154,8 +2255,17 @@ export async function POST(req) {
               .select("id", { count: "exact", head: true })
               .eq("wa", normalizedWa)
               .eq("role", "user");
-            if ((priorMsgs || 0) <= 1) {
-              const fn = (profileNameFromBot || "").trim().split(/\s+/)[0];
+            // Pernah disapa sebelumnya? (greeting selalu tercatat role 'bot' berawalan
+            // "Haii") → jangan pernah ulangi, walau hitungan pesan user masih rendah
+            // (identitas LID vs nomor bisa bikin hitungan reset — jangan andalkan itu).
+            const { count: greetedBefore } = await supa
+              .from("wa_conversations")
+              .select("id", { count: "exact", head: true })
+              .eq("wa", normalizedWa)
+              .eq("role", "bot")
+              .like("message", "Haii%");
+            if ((priorMsgs || 0) <= 1 && !(greetedBefore || 0)) {
+              const fn = cleanFirstName(profileNameFromBot);
               const halo = `Haii${fn ? " " + fn : ""}! 👋 Aku admin *Jual Beli USU/Polmed*. Mau *jual* atau *cari* barang? Ketik *MENU* buat liat semua yang bisa aku bantu ya 😊`;
               await sendWa(senderJid, halo);
               return NextResponse.json({ ok: true, state: "greeting_first_contact", bot_reply: halo });
@@ -2165,6 +2275,9 @@ export async function POST(req) {
           // Tidak ada keyword & bukan kontak baru → bot diam (kecuali greeting_enabled).
           if (kwConfig.greeting_enabled) {
             const greetingMsg = kwConfig.greeting || "Halo! 👋 Ada yang bisa dibantu?";
+            if (await wasSentRecently(supa, normalizedWa, greetingMsg, 10)) {
+              return NextResponse.json({ ok: true, ignored: true, reason: "greeting_dedup" });
+            }
             await sendWa(senderJid, greetingMsg);
             return NextResponse.json({ ok: true, state: "greeting_only", bot_reply: greetingMsg });
           }
@@ -2174,7 +2287,7 @@ export async function POST(req) {
 
       // "admin" / "min" / "mimin" → sapaan ke bot, balas dengan menu
       if (msgLower === "admin" || msgLower === "min" || msgLower === "mimin" || msgLower === "halo admin" || msgLower === "hai min") {
-        const fnGreet = (profileNameFromBot || "").trim().split(/\s+/)[0];
+        const fnGreet = cleanFirstName(profileNameFromBot);
         let greetingMsg = kwConfig.greeting || `Haii${fnGreet ? " " + fnGreet : " kak"}! 👋 Mau *jual* atau *cari* barang?\nKetik *MENU* buat liat semua yg bisa aku bantu, atau *ADMIN* kalau mau ngobrol langsung ya 😊`;
         
         if (isAdminWa(normalizedWa)) {
@@ -2189,6 +2302,13 @@ export async function POST(req) {
             `• *SETUJUI / TOLAK NAMA [nomor]* → Konfirmasi ganti nama\n` +
             `• *SETUJUI / TOLAK TAWAR BIAYA [kode]* → Nego biaya pasang iklan\n\n` +
             `Untuk melihat menu pelanggan, ketik *MENU*.`;
+        }
+
+        // Anti-beruntun: greeting yang sama baru saja terkirim (≤10 mnt) → diam.
+        // "min" sering dipakai memanggil admin MANUSIA berulang kali; bot cukup
+        // menjawab sekali, sisanya biar manusia.
+        if (!isAdminWa(normalizedWa) && (await wasSentRecently(supa, normalizedWa, greetingMsg, 10))) {
+          return NextResponse.json({ ok: true, ignored: true, reason: "greeting_dedup" });
         }
 
         await sendWa(senderJid, greetingMsg);

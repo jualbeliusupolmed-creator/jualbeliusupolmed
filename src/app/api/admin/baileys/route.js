@@ -30,7 +30,7 @@ export async function GET(req) {
       const messages = (data || []).map((r) => ({
         id: r.id,
         text: r.message,
-        fromMe: r.role === "bot",
+        fromMe: r.role === "bot" || r.role === "admin",
         timestamp: Math.floor(new Date(r.created_at).getTime() / 1000),
         image: r.has_media && !r.message ? true : undefined,
       }));
