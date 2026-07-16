@@ -22,9 +22,12 @@ export default function MinatButton({ listing }) {
     let targetWa = listing.seller_wa;
     let finalMsg = text;
 
-    const wa = formatWa(targetWa || MARKETPLACE_WA);
-    // wa.me requires country code without 0. Since formatWa returns 08..., we convert it to 628...
-    const waLink = wa.startsWith("0") ? "62" + wa.slice(1) : wa;
+    // Nomor penjual dulu; kalau bukan nomor valid (mis. sisa LID) → jatuh ke nomor admin
+    // marketplace, jangan pernah buka wa.me tanpa nomor (link rusak).
+    const wa = formatWa(targetWa) || formatWa(MARKETPLACE_WA);
+    if (!wa) { setShowPicker(false); return; }
+    // wa.me butuh kode negara tanpa 0. formatWa mengembalikan 08..., ubah ke 628...
+    const waLink = "62" + wa.slice(1);
     window.open(
       `https://wa.me/${waLink}?text=${encodeURIComponent(finalMsg)}`,
       "_blank"

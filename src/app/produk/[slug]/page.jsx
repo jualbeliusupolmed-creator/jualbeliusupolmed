@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rupiah } from "@/lib/fees";
+import { formatWa } from "@/lib/constants";
 import { buildSlug, getShortIdFromSlug, isUUID } from "@/lib/slug";
 import { fetchSingleListingWithProfile, fetchListingsWithProfiles } from "@/lib/dbHelpers";
 import MinatButton from "@/components/MinatButton";
@@ -160,7 +161,9 @@ export default async function ProdukPage({ params }) {
   }
 
   const sold = listing.status === "sold";
-  const sellerWaEncoded = encodeURIComponent(listing.seller_wa || "");
+  // Pakai nomor asli untuk URL profil; kalau bukan nomor valid (sisa LID) fallback ke raw
+  // (halaman profil tetap menemukan penjualnya, & tombol wa.me di sana sudah di-guard).
+  const sellerWaEncoded = encodeURIComponent(formatWa(listing.seller_wa) || listing.seller_wa || "");
 
   // JSON-LD Product + BreadcrumbList — agar listing bisa muncul sebagai
   // rich result (harga, ketersediaan) di Google.

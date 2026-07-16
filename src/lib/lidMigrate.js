@@ -19,7 +19,7 @@ const IDENT_TABLES = [
   ["profile_change_requests", "seller_wa"],
   ["group_posts", "sender_wa"],
   ["wa_conversations", "wa"],
-  ["wa_drafts", "wa"],
+  ["wa_listing_drafts", "wa"],
   ["seller_profiles", "wa"],
 ];
 
@@ -35,7 +35,7 @@ export async function migrateLidToPhone(supa, lidDigits, phoneWa) {
     ["profile_change_requests", "seller_wa"],
     ["group_posts", "sender_wa"],
     ["wa_conversations", "wa"],
-    ["wa_drafts", "wa"],
+    ["wa_listing_drafts", "wa"],
   ];
   for (const [t, c] of freeMoves) {
     await swallow(supa.from(t).update({ [c]: phoneWa }).eq(c, lidDigits));
