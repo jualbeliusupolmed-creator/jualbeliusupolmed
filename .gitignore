@@ -35,3 +35,7 @@ public/sw.js
 public/sw.js.map
 public/workbox-*.js
 public/worker-*.js
+
+# Data percakapan pelanggan & screenshot — JANGAN commit (privasi)
+/Pelajari wa/
+/Rob - *.jpg

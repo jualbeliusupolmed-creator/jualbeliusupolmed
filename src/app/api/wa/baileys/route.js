@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { parseListingFromText, verifyReceiptImage, processGeneralChat, parseWantedFromText } from "@/lib/gemini";
-import { sendWa, postToGroup, notifyAdminNewListing, notifyWantedMatch, notifyCategorySubscribers, notifyBuyerOfferResult, postWantedToGroup, notifySellerNewOffer } from "@/lib/fonnte";
+import { sendWa as _sendWaBase, postToGroup, notifyAdminNewListing, notifyWantedMatch, notifyCategorySubscribers, notifyBuyerOfferResult, postWantedToGroup, notifySellerNewOffer } from "@/lib/fonnte";
 import { formatWa } from "@/lib/constants";
 import { getSettings, adFeeFrom } from "@/lib/settings";
 import { postToFacebook, postToInstagram } from "@/lib/meta";
@@ -11,6 +11,32 @@ import { handleAdminCmd } from "@/lib/bot/adminHandlers";
 import sharp from "sharp";
 
 export const dynamic = "force-dynamic";
+
+// ── Logging percakapan ke Supabase (riwayat chat panel admin + audit lanjutan) ──
+// Menggantikan messageLog in-memory bot yang hilang tiap restart & tak simpan balasan.
+function convoWa(target) {
+  const w = formatWa(target);
+  return w || String(target || "").split("@")[0];
+}
+async function logConvo(target, role, message, hasMedia = false) {
+  try {
+    if (!message && !hasMedia) return;
+    const wa = convoWa(target);
+    if (!wa) return;
+    await getAdminClient().from("wa_conversations").insert({
+      wa,
+      jid: String(target || ""),
+      role,
+      message: (message || "").slice(0, 2000),
+      has_media: !!hasMedia,
+    });
+  } catch (_) {}
+}
+// Bungkus sendWa: tiap balasan bot otomatis tercatat (fire-and-forget, tak memblokir).
+async function sendWa(target, message, fileUrl = null) {
+  logConvo(target, "bot", message, !!fileUrl);
+  return _sendWaBase(target, message, fileUrl);
+}
 
 // Cek apakah nomor WA termasuk admin
 // Baca dari ADMIN_WA (bisa koma) + SUPER_ADMIN_WA sebagai var terpisah
@@ -189,6 +215,9 @@ export async function POST(req) {
       console.warn(`[baileys-webhook] JID tidak valid / bukan nomor Indonesia: ${senderJid}`);
       return NextResponse.json({ ok: true, ignored: true, reason: "invalid_number" });
     }
+
+    // Catat pesan masuk dari user untuk riwayat chat admin & audit.
+    logConvo(senderJid, "user", message, !!file);
 
     const settings = await getSettings();
     if (!isAdminWa(normalizedWa) && settings?.bot?.paused_users?.includes(normalizedWa)) {
@@ -2029,6 +2058,45 @@ export async function POST(req) {
     }
 
     // ==========================================
+    // PEMANDU PASANG IKLAN (draft) — kumpulkan info sepotong-sepotong
+    // ==========================================
+    // Sampai di sini semua perintah lain (cari, perpanjang, dll) sudah ditangani &
+    // return. Draft mengingat teks yang penjual ketik (nama/harga/keterangan) sampai
+    // foto datang; saat foto tiba, teks digabung & iklan dibuat lewat alur normal di
+    // bawah. Foto WAJIB (alur pembuatan butuh gambar). Urutan bebas / boleh sekaligus.
+    {
+      const draftMsgL = (message || "").toLowerCase().trim();
+      const { data: waDraft } = await supa
+        .from("wa_listing_drafts")
+        .select("text_parts")
+        .eq("wa", normalizedWa)
+        .gte("updated_at", new Date(Date.now() - 60 * 60 * 1000).toISOString())
+        .maybeSingle();
+
+      if (waDraft) {
+        if (draftMsgL === "batal" || draftMsgL === "cancel") {
+          await supa.from("wa_listing_drafts").delete().eq("wa", normalizedWa);
+          await sendWa(senderJid, "🗑️ Oke, pasang iklan dibatalkan. Ketik *JUAL* lagi kapan pun kamu siap ya!");
+          return NextResponse.json({ ok: true, state: "draft_cancelled" });
+        }
+        if (file) {
+          // Foto datang → gabung teks draft ke pesan ini, hapus draft, lalu biarkan
+          // mengalir ke blok "Iklan Baru" di bawah (pakai kode pembuatan yang sama).
+          message = `${waDraft.text_parts || ""}\n${message || ""}`.trim();
+          await supa.from("wa_listing_drafts").delete().eq("wa", normalizedWa);
+        } else if (message) {
+          // Masih teks (belum ada foto) → tumpuk teks, minta yang masih kurang.
+          const newText = `${waDraft.text_parts || ""}\n${message}`.trim().slice(0, 1500);
+          await supa.from("wa_listing_drafts").upsert({ wa: normalizedWa, text_parts: newText, updated_at: new Date().toISOString() });
+          const hasPrice = /\d{4,}|\d+\s*(rb|ribu|k|jt|juta)/i.test(newText);
+          const askPrice = hasPrice ? "" : " Sebutkan juga *harganya* ya.";
+          await sendWa(senderJid, `Sip, dicatat! 📸 Sekarang kirim *foto barang*nya dong (boleh beberapa).${askPrice}\n\n_(Ketik *BATAL* kalau ga jadi)_`);
+          return NextResponse.json({ ok: true, state: "draft_collecting" });
+        }
+      }
+    }
+
+    // ==========================================
     // STATE 1: Iklan Baru
     // ==========================================
     if (!message && !file) return NextResponse.json({ ok: true, ignored: true });
@@ -2083,8 +2151,10 @@ export async function POST(req) {
 
       // Jika instruksi standar untuk pasang iklan dari command khusus, tetap layani dengan cepat
       if (msgLower === "jual" || msgLower === "wts" || msgLower === "dijual" || msgLower === "ready") {
-         await sendWa(senderJid, "📸 Sepertinya Anda ingin pasang iklan. Kirim *Foto Barang + Teks Deskripsi & Harga* dalam 1 pesan ya.");
-         return NextResponse.json({ ok: true, state: "new_listing_no_image" });
+         // Mulai draft "pemandu" — user boleh kirim info bertahap, bot nuntun sampai lengkap.
+         await supa.from("wa_listing_drafts").upsert({ wa: normalizedWa, text_parts: "", updated_at: new Date().toISOString() });
+         await sendWa(senderJid, "📸 Siap bantu pasang iklan!\n\nKirim *foto barang* + tulis *nama, harga, & keterangan* — boleh sekaligus dalam 1 pesan, atau satu-satu (aku tuntun kok).\n\nContoh: _Tumbler Enak, 50rb, warna hitam masih mulus_\n\n_(Ketik *BATAL* kalau ga jadi)_");
+         return NextResponse.json({ ok: true, state: "draft_started" });
       }
 
       // ── Command DICARI: post wanted listing ke web + grup dari WA ──────────

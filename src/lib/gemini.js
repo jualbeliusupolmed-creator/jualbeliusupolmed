@@ -242,13 +242,18 @@ export async function parseWantedFromText(text) {
     {
       "title": "nama/jenis barang yang dicari (singkat, maks 60 karakter)",
       "description": "deskripsi lengkap kebutuhan jika ada",
-      "budget": <angka budget/harga maks dalam rupiah, 0 jika tidak disebutkan>,
+      "budget": <angka budget/harga maks dalam rupiah, 0 jika tidak disebutkan. PENTING: pahami singkatan uang. "500" atau "500rb" atau "500k" = 500000; "2jt" atau "2 juta" = 2000000. Angka polos kecil pada konteks budget mahasiswa hampir pasti dalam ribuan (mis. "budget 500" = 500000)>,
       "category": "salah satu dari: Elektronik, Fashion, Kendaraan, Properti, Buku, Makanan, Jasa, Lainnya",
       "campus": "Kampus atau area yang disebutkan. Normalisasi ke: USU, POLMED, atau Semua. Default: Semua"
     }
   `;
   try {
-    return await executeHybridAI(modelsToTry, prompt);
+    const result = await executeHybridAI(modelsToTry, prompt);
+    // Jaring pengaman: angka budget polos < 1000 tidak masuk akal untuk barang apa pun
+    // (Rp 500?), hampir pasti maksudnya ribuan. Kalikan 1000. Kasus nyata: "budget 500" → Rp 500.
+    const b = Number(result?.budget);
+    if (result && b > 0 && b < 1000) result.budget = b * 1000;
+    return result;
   } catch (err) {
     return { title: text.slice(0, 60), description: "", budget: 0, category: "Lainnya", campus: "Semua" };
   }

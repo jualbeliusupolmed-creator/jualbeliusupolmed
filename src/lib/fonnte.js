@@ -7,6 +7,13 @@ import { formatWaForBaileys } from "@/lib/constants";
 const FONNTE_URL = "https://api.fonnte.com/send";
 
 async function send(target, message, fileUrl = null) {
+  // Jangan kirim pesan kosong (teks kosong tanpa lampiran) — pernah muncul
+  // gelembung kosong ke pelanggan.
+  if (!fileUrl && (!message || !String(message).trim())) {
+    console.warn("[sendWa] pesan kosong — dilewati");
+    return { ok: false, skipped: true, reason: "empty" };
+  }
+
   const baileysUrl = process.env.BAILEYS_API_URL;
   const baileysToken = (process.env.BAILEYS_API_TOKEN || "jualbeliusu_rahasia").replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
 

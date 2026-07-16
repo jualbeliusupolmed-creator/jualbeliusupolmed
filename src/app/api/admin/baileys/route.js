@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
+import { getAdminClient } from "@/lib/supabaseAdmin";
+import { formatWa } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +13,32 @@ export async function GET(req) {
   if (!isAdmin()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { searchParams } = new URL(req.url);
   const endpoint = searchParams.get("endpoint") || "status";
+
+  // Riwayat pesan disajikan dari Supabase (wa_conversations), bukan dari memori bot.
+  if (endpoint.startsWith("messages")) {
+    try {
+      const qs = new URLSearchParams(endpoint.includes("?") ? endpoint.slice(endpoint.indexOf("?") + 1) : "");
+      const jid = qs.get("jid") || "";
+      const wa = formatWa(jid) || jid.split("@")[0];
+      const supa = getAdminClient();
+      const { data } = await supa
+        .from("wa_conversations")
+        .select("id, role, message, has_media, created_at")
+        .or(`wa.eq.${wa},jid.eq.${jid}`)
+        .order("created_at", { ascending: true })
+        .limit(200);
+      const messages = (data || []).map((r) => ({
+        id: r.id,
+        text: r.message,
+        fromMe: r.role === "bot",
+        timestamp: Math.floor(new Date(r.created_at).getTime() / 1000),
+        image: r.has_media && !r.message ? true : undefined,
+      }));
+      return NextResponse.json({ messages });
+    } catch (err) {
+      return NextResponse.json({ messages: [], error: err.message });
+    }
+  }
 
   if (!BAILEYS_URL) return NextResponse.json({ error: "BAILEYS_API_URL belum diset" }, { status: 503 });
 
