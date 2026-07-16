@@ -38,6 +38,57 @@ async function sendWa(target, message, fileUrl = null) {
   return _sendWaBase(target, message, fileUrl);
 }
 
+// ── Migrasi identitas: data lama yang terlanjur ber-key LID → nomor asli ──────────
+// Dipicu ketika bot mengirim `prev_lid` (artinya mapping LID→nomor baru diketahui).
+// Tujuan: nomor jadi satu-satunya identitas user-facing; LID tinggal di backend.
+// Best-effort & idempotent: tiap langkah di-guard, kegagalan tak memblokir alur pesan.
+async function migrateLidToPhone(lidDigits, phoneWa) {
+  if (!lidDigits || !phoneWa || lidDigits === phoneWa) return;
+  const supa = getAdminClient();
+  const swallow = (p) => p.then(() => {}, () => {});
+  try {
+    // 1. Tabel anak yang TIDAK terikat FK ke seller_profiles → aman dipindah kapan saja.
+    const freeMoves = [
+      ["seller_ratings", "seller_wa"],
+      ["price_offers", "buyer_wa"],
+      ["wanted_listings", "buyer_wa"],
+      ["category_subscriptions", "buyer_wa"],
+      ["profile_change_requests", "seller_wa"],
+      ["group_posts", "sender_wa"],
+      ["wa_conversations", "wa"],
+      ["wa_drafts", "wa"],
+    ];
+    for (const [t, c] of freeMoves) {
+      await swallow(supa.from(t).update({ [c]: phoneWa }).eq(c, lidDigits));
+    }
+
+    // 2. Profil penjual + tabel ber-FK (listings, distributor_categories).
+    const { data: lidProf } = await supa.from("seller_profiles").select("*").eq("wa", lidDigits).maybeSingle();
+    const { data: phoneProf } = await supa.from("seller_profiles").select("wa").eq("wa", phoneWa).maybeSingle();
+    if (lidProf && !phoneProf) {
+      // Rename PK: listings.seller_wa ikut otomatis via ON UPDATE CASCADE.
+      const { error } = await supa.from("seller_profiles").update({ wa: phoneWa }).eq("wa", lidDigits);
+      if (error) {
+        // Fallback bila ada FK tanpa cascade (mis. distributor_categories):
+        // buat baris nomor (tanpa referral_code agar tak bentrok unique), pindahkan anak, hapus lama.
+        const { wa: _w, referral_code: _r, created_at: _c, ...rest } = lidProf;
+        await swallow(supa.from("seller_profiles").insert({ ...rest, wa: phoneWa }));
+        await swallow(supa.from("listings").update({ seller_wa: phoneWa }).eq("seller_wa", lidDigits));
+        await swallow(supa.from("distributor_categories").update({ seller_wa: phoneWa }).eq("seller_wa", lidDigits));
+        await swallow(supa.from("seller_profiles").delete().eq("wa", lidDigits));
+      }
+    } else {
+      // Nomor sudah punya profil (atau tak ada profil sama sekali) → cukup repoint anak ber-FK.
+      await swallow(supa.from("listings").update({ seller_wa: phoneWa }).eq("seller_wa", lidDigits));
+      await swallow(supa.from("distributor_categories").update({ seller_wa: phoneWa }).eq("seller_wa", lidDigits));
+      if (lidProf) await swallow(supa.from("seller_profiles").delete().eq("wa", lidDigits));
+    }
+    console.log(`[lid-migrate] ${lidDigits} → ${phoneWa} beres`);
+  } catch (e) {
+    console.warn(`[lid-migrate] gagal ${lidDigits} → ${phoneWa}: ${e?.message}`);
+  }
+}
+
 // Cek apakah nomor WA termasuk admin
 // Baca dari ADMIN_WA (bisa koma) + SUPER_ADMIN_WA sebagai var terpisah
 function isAdminWa(wa) {
@@ -201,19 +252,27 @@ export async function POST(req) {
       return NextResponse.json({ ok: true, ignored: true });
     }
 
-    // @lid JID: tidak bisa di-resolve ke nomor HP biasa, tapi masih bisa diproses.
-    // Baileys bisa kirim pesan balik ke @lid JID langsung via sendWa (yang pakai Baileys URL).
-    // Kita izinkan @lid lewat dan pakai bagian numerik sebagai normalizedWa placeholder.
+    // Identitas user = NOMOR asli. Bot sudah me-resolve @lid → nomor sebelum sampai sini
+    // (remoteJidAlt / kontak / getPNForLID). Kalau langka-langka masih @lid (belum ke-resolve),
+    // pakai bagian numerik sbg placeholder SEMENTARA — tak ditampilkan sebagai nomor ke user
+    // (lihat guard di blok SAYA), dan otomatis dimigrasi begitu nomornya ketahuan.
     if (senderJid.includes("@lid")) {
-      console.log(`[baileys-webhook] @lid JID diproses: ${senderJid} (fromMe=${fromMe})`);
+      console.log(`[baileys-webhook] @lid belum ter-resolve: ${senderJid} (fromMe=${fromMe})`);
     }
 
     const normalizedWa = senderJid.includes("@lid")
-      ? senderJid.split("@")[0]  // placeholder untuk @lid — delivery tetap ke raw JID via Baileys
+      ? senderJid.split("@")[0]  // placeholder sementara — delivery tetap ke raw JID via Baileys
       : formatWa(senderJid);
     if (!normalizedWa) {
       console.warn(`[baileys-webhook] JID tidak valid / bukan nomor Indonesia: ${senderJid}`);
       return NextResponse.json({ ok: true, ignored: true, reason: "invalid_number" });
+    }
+
+    // Bot baru saja mengetahui nomor asli dari sebuah LID → migrasi data lama (LID → nomor)
+    // sekali, sebelum query apa pun, supaya identitas konsisten & tak ada "double".
+    const prevLid = (formData.get("prev_lid") || "").replace(/\D/g, "");
+    if (prevLid && !senderJid.includes("@lid") && prevLid !== normalizedWa) {
+      await migrateLidToPhone(prevLid, normalizedWa);
     }
 
     // Catat pesan masuk dari user untuk riwayat chat admin & audit.
@@ -1793,18 +1852,23 @@ export async function POST(req) {
           : null;
         const tierLabel = { free: "Free", pro: "⭐ PRO" }[sayaProfile?.subscription_tier] || "Free";
         const sayaBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+        // Nomor asli sebagai identitas. formatWa() menolak placeholder LID (return ""),
+        // jadi nomor & link profil HANYA muncul kalau memang nomor HP valid — user tak
+        // pernah lihat angka JID/LID.
+        const sayaPhone = formatWa(normalizedWa);
 
         await sendWa(senderJid,
           `👤 *${sayaProfile?.name || "Belum diatur"}*  ·  ${tierLabel}` +
           (sayaProfile?.trusted_seller ? `  ☑️ _Terpercaya_` : ``) + `\n\n` +
+          (sayaPhone ? `📱 Nomor: *${sayaPhone}*\n` : ``) +
           `📦 Iklan aktif: *${aktifCount}*\n` +
           `✅ Terjual: *${terjualCount}×*\n` +
           (avgRating ? `⭐ Rating: *${avgRating}/5* (${sayaRatings.length} ulasan)\n` : ``) +
           (pendingOffers > 0 ? `💬 Ada *${pendingOffers}* tawaran masuk — ketik *TAWARAN*\n` : ``) +
           (freeBumps > 0 ? `🎁 Bump gratis: *${freeBumps}* — ketik *BUMP [kode]*\n` : ``) +
           (refCode ? `🎁 Kode referral: *${refCode}* — ketik *REFERRAL*\n` : ``) +
-          `\n🔗 Profil kamu:\n${sayaBaseUrl}/penjual/${normalizedWa}\n\n` +
-          `_Ketik *MENU* buat liat semua yang bisa aku bantu ya kak._`
+          (sayaPhone ? `\n🔗 Profil kamu:\n${sayaBaseUrl}/penjual/${sayaPhone}\n` : ``) +
+          `\n_Ketik *MENU* buat liat semua yang bisa aku bantu ya kak._`
         );
         return NextResponse.json({ ok: true, state: "saya_done" });
 
