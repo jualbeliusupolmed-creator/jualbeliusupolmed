@@ -398,7 +398,22 @@ export default function DicariPage() {
               </button>
             </div>
 
-            {unlockResult ? (
+            {unlockResult?.pending ? (
+              <div className="mt-4 text-center">
+                <div className="p-3 rounded-xl bg-green-50 text-green-700 text-sm font-bold border border-green-200 dark:bg-green-900/20 dark:border-green-800/50 dark:text-green-400">
+                  ✅ Pembayaran diterima!
+                </div>
+                <p className="mt-3 text-xs text-gray-500 dark:text-slate-400 leading-relaxed">
+                  Nomor pembeli untuk postingan ini sedang diproses admin dan akan dikirim ke WhatsApp Anda segera. Mohon tunggu ya.
+                </p>
+                <button
+                  onClick={() => setQrisModal(null)}
+                  className="btn-outline w-full mt-4 py-2.5 text-xs font-bold bg-white hover:bg-gray-50 dark:bg-slate-950 dark:hover:bg-slate-900 rounded-lg"
+                >
+                  Tutup
+                </button>
+              </div>
+            ) : unlockResult ? (
               <div className="mt-4 text-center">
                 <div className="p-3 rounded-xl bg-green-50 text-green-700 text-sm font-bold border border-green-200 dark:bg-green-900/20 dark:border-green-800/50 dark:text-green-400">
                   🎉 Struk valid! Pembayaran dikonfirmasi AI.

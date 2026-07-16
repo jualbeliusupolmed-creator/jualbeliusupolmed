@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { formatWa } from "@/lib/constants";
 import { createKlikQrisTransaction } from "@/lib/klikqris";
+import { loadLidPhoneMap, migrateLidToPhone } from "@/lib/lidMigrate";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +25,23 @@ export async function POST(req) {
 
     if (error || !wanted) {
       return NextResponse.json({ error: "Postingan Cari Barang tidak ditemukan" }, { status: 404 });
+    }
+
+    // Guard LID: postingan lama via bot bisa menyimpan LID (ID internal WA),
+    // bukan nomor HP. Jangan pernah terima pembayaran kalau nomornya tak ada.
+    if (!formatWa(wanted.buyer_wa)) {
+      const digits = String(wanted.buyer_wa || "").split("@")[0].replace(/:\d+$/, "");
+      const lidMap = await loadLidPhoneMap(supa);
+      const phone = lidMap.get(digits);
+      if (phone) {
+        await migrateLidToPhone(supa, digits, phone);
+        wanted.buyer_wa = phone;
+      } else {
+        return NextResponse.json(
+          { error: "Nomor WhatsApp pembeli untuk postingan ini belum tersedia, jadi kontaknya tidak bisa dibuka. Silakan pilih postingan lain." },
+          { status: 409 }
+        );
+      }
     }
 
     const amount = 2000; // Tarif Rp 2.000 untuk buka kontak pembeli

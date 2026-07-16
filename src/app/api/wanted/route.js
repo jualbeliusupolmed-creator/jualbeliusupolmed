@@ -57,7 +57,10 @@ export async function GET(req) {
 
     const { data, error } = await query;
     if (error) throw new Error(error.message);
-    return NextResponse.json({ listings: data || [] });
+    // Guard LID: sembunyikan postingan yang buyer_wa-nya bukan nomor valid
+    // (data lama via bot) — kontaknya tak bisa dibuka, jangan tawarkan ke user.
+    const listings = (data || []).filter((l) => formatWa(l.buyer_wa) !== "");
+    return NextResponse.json({ listings });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
