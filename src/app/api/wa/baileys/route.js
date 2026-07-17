@@ -83,6 +83,23 @@ function getQrisUrl() {
   return `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id"}/qris.png`;
 }
 
+// Parse harga dari teks Indonesia: "90rb"/"90 ribu"/"1.5jt"/"150000"/"150.000".
+// Angka polos < 1000 tanpa satuan dianggap ribuan (konvensi harga pasar: "90" = 90rb).
+function parsePriceId(text) {
+  const s = String(text || "").toLowerCase();
+  const m = s.match(/(\d[\d.,]*)\s*(jt|juta|m|rb|ribu|k)?/);
+  if (!m) return 0;
+  const unit = m[2] || "";
+  if (/jt|juta|m/.test(unit)) {
+    const n = parseFloat(m[1].replace(/\./g, "").replace(",", ".")) || 0;
+    return Math.round(n * 1_000_000);
+  }
+  let n = parseInt(m[1].replace(/[.,]/g, ""), 10) || 0;
+  if (/rb|ribu|k/.test(unit)) n *= 1000;
+  else if (n > 0 && n < 1000) n *= 1000; // "90" → 90.000
+  return n;
+}
+
 async function processImageWithWatermark(fBuf) {
   try {
     const metadata = await sharp(fBuf).metadata();
@@ -2226,6 +2243,53 @@ export async function POST(req) {
         .maybeSingle();
 
       if (waDraft) {
+        // ── RESUME: iklan sudah dibuat tapi MENUNGGU HARGA (dikirim tanpa harga) ──
+        // Draft menyimpan JSON {awaitingPriceFor: listingId}. Balasan berupa angka =
+        // harga → set harga + tagih. Jangan pernah posting Rp 0 tanpa tanya harga.
+        let awaitingPriceFor = null;
+        try {
+          const parsedDraft = JSON.parse(waDraft.text_parts || "{}");
+          if (parsedDraft && parsedDraft.awaitingPriceFor) awaitingPriceFor = parsedDraft.awaitingPriceFor;
+        } catch (_) {}
+        if (awaitingPriceFor) {
+          if (draftMsgL === "batal" || draftMsgL === "cancel") {
+            await supa.from("wa_listing_drafts").delete().eq("wa", normalizedWa);
+            await supa.from("listings").delete().eq("id", awaitingPriceFor).eq("seller_wa", normalizedWa).eq("status", "pending");
+            await sendWa(senderJid, "🗑️ Oke, dibatalkan. Ketik *JUAL* lagi kapan pun ya!");
+            return NextResponse.json({ ok: true, state: "await_price_cancelled" });
+          }
+          const price = parsePriceId(message);
+          if (!price || price <= 0) {
+            await sendWa(senderJid, "Hmm, harganya belum kebaca kak 🙏 Ketik *angka harganya* aja ya, contoh: *90rb* atau *150000*.\n\n_(Ketik *BATAL* kalau ga jadi)_");
+            return NextResponse.json({ ok: true, state: "await_price_retry" });
+          }
+          const { data: pl } = await supa
+            .from("listings")
+            .update({ price })
+            .eq("id", awaitingPriceFor).eq("seller_wa", normalizedWa)
+            .select("id, title, listing_code, price").single();
+          await supa.from("wa_listing_drafts").delete().eq("wa", normalizedWa);
+          if (!pl) {
+            await sendWa(senderJid, "Waduh, iklannya nggak ketemu kak. Ketik *JUAL* untuk mulai lagi ya.");
+            return NextResponse.json({ ok: true, state: "await_price_gone" });
+          }
+          const setng = await getSettings();
+          const fee = adFeeFrom(setng.pricing, "barang", price);
+          const orderId = `IKLAN-WA-${pl.listing_code}-${Date.now()}`;
+          await supa.from("payments").insert({
+            listing_id: pl.id, type: "iklan", amount: fee, status: "pending",
+            midtrans_order_id: orderId, meta: { final_amount: fee },
+          });
+          await sendWa(senderJid,
+            `✅ *Harga diset: Rp ${price.toLocaleString("id-ID")}*\n📦 *${pl.title}* (Kode: *${pl.listing_code}*)\n\n` +
+            `Biar tayang, scan QRIS di bawah & transfer:\n💳 *Rp ${fee.toLocaleString("id-ID")}*\n\n` +
+            `Kalau udah transfer, kirim *screenshot struk*nya ke sini ya.\n\n` +
+            `_(Biaya terasa berat? Ketik *TAWAR BIAYA ${pl.listing_code} [nominal]* untuk menawar ke admin)_`,
+            getQrisUrl()
+          );
+          return NextResponse.json({ ok: true, state: "price_set_pending_payment" });
+        }
+
         if (draftMsgL === "batal" || draftMsgL === "cancel") {
           await supa.from("wa_listing_drafts").delete().eq("wa", normalizedWa);
           await sendWa(senderJid, "🗑️ Oke, pasang iklan dibatalkan. Ketik *JUAL* lagi kapan pun kamu siap ya!");
@@ -2794,6 +2858,22 @@ export async function POST(req) {
         }
         
         return NextResponse.json({ ok: true, state: "listing_created_distributor" });
+      }
+
+      // Harga belum diisi (AI tak nemu harga di teks/foto) → JANGAN posting Rp 0 &
+      // langsung tagih. Iklan sudah tersimpan (pending, belum tayang) + foto aman;
+      // cukup tanya harganya, lalu resume via blok RESUME di atas.
+      if (createdListings.length === 1 && Number(createdListings[0].price) <= 0) {
+        await supa.from("wa_listing_drafts").upsert({
+          wa: normalizedWa,
+          text_parts: JSON.stringify({ awaitingPriceFor: createdListings[0].id }),
+          updated_at: new Date().toISOString(),
+        });
+        await sendWa(senderJid,
+          `📦 *${createdListings[0].title}* udah aku catat + fotonya tersimpan! 📸\n\n` +
+          `Tinggal *harganya* nih kak — ketik angka harganya aja ya, contoh: *90rb* atau *150000*.\n\n_(Ketik *BATAL* kalau ga jadi)_`
+        );
+        return NextResponse.json({ ok: true, state: "listing_awaiting_price" });
       }
 
       // Non-distributor payment logic
