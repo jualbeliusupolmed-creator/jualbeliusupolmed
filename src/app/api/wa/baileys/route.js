@@ -373,10 +373,22 @@ export async function POST(req) {
     if (ownerActive && !isForcedAd && !isAdminCommand) {
       const tCmd = (message || "").toLowerCase().trim();
       const explicitCmd =
-        ["menu", "jual", "wts", "dijual", "saya", "perpanjang", "upgrade", "batal", "cancel"].includes(tCmd) ||
+        ["menu", "jual", "wts", "dijual", "ready", "saya", "iklanku", "perpanjang", "upgrade", "batal", "cancel"].includes(tCmd) ||
         tCmd.startsWith("cari ") || tCmd.startsWith("nama ") || isTawarBiaya;
       const isReceiptFlow = !!file && (pendingPayment || pendingWantedPayment);
-      if (!explicitCmd && !isReceiptFlow) {
+      // User sedang di alur pasang-iklan (sudah ketik JUAL → draft aktif) → JANGAN
+      // bisukan foto/teks lanjutannya. Tanpa ini, "JUAL → kirim foto" mati di tengah
+      // (foto iklan-baru bukan perintah & bukan struk, jadi kena senyap).
+      let inListingFlow = false;
+      try {
+        const { count: draftCount } = await supa
+          .from("wa_listing_drafts")
+          .select("wa", { count: "exact", head: true })
+          .eq("wa", normalizedWa)
+          .gte("updated_at", new Date(Date.now() - 60 * 60 * 1000).toISOString());
+        inListingFlow = (draftCount || 0) > 0;
+      } catch (_) {}
+      if (!explicitCmd && !isReceiptFlow && !inListingFlow) {
         return NextResponse.json({ ok: true, ignored: true, reason: "owner_active_silent" });
       }
     }
