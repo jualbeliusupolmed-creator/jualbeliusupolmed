@@ -91,7 +91,8 @@ function parsePriceId(text) {
   if (!m) return 0;
   const unit = m[2] || "";
   if (/jt|juta|m/.test(unit)) {
-    const n = parseFloat(m[1].replace(/\./g, "").replace(",", ".")) || 0;
+    // Di konteks juta, titik/koma = desimal ("1.5jt" = 1,5 juta), bukan pemisah ribuan.
+    const n = parseFloat(m[1].replace(",", ".")) || 0;
     return Math.round(n * 1_000_000);
   }
   let n = parseInt(m[1].replace(/[.,]/g, ""), 10) || 0;
