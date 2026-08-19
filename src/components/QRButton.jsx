@@ -13,7 +13,7 @@ export default function QRButton({ listing }) {
   const [busy, setBusy] = useState(false);
 
   function productUrl() {
-    const base = typeof window !== "undefined" ? window.location.origin : "https://www.jualbelimedan.web.id";
+    const base = typeof window !== "undefined" ? window.location.origin : "https://www.jualbeliusupolmed.web.id";
     return `${base}/produk/${buildSlug(listing.title, listing.id)}`;
   }
 
