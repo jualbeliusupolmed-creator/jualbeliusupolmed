@@ -46,7 +46,11 @@ export async function POST(req) {
 
     // Send via Fonnte
     const msg = `*Jual Beli Medan* 🔒\n\nKode OTP Anda adalah: *${otp}*\n\nKode ini berlaku selama 5 menit. Jangan bagikan kode ini kepada siapapun!`;
-    const fonnteRes = await send(normalizedWa, msg);
+    // 300 detik: kode ini kedaluwarsa sendiri di sisi kita, jadi tidak ada gunanya
+    // bot menyimpannya lebih lama. Umur pendek juga yang membuat bot menolak cepat
+    // saat sesinya terkunci — dan penolakan cepat itulah yang membuka jalur Fonnte,
+    // alih-alih membiarkan pendaftar menunggu kode yang tidak akan pernah datang.
+    const fonnteRes = await send(normalizedWa, msg, null, 300);
 
     if (!fonnteRes || !fonnteRes.ok) {
       return NextResponse.json({ error: "Gagal mengirim pesan WA. Pastikan nomor aktif / token dikonfigurasi." }, { status: 500 });
