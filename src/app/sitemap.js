@@ -22,7 +22,7 @@ export default async function sitemap() {
   ].map((r) => ({ ...r, lastModified: new Date().toISOString() }));
 
   // Semua iklan aktif
-  const [listingsRes, sellersRes, blogsRes] = await Promise.all([
+  const [listingsRes, sellersRes, blogsRes, tokoRes] = await Promise.all([
     supa
       .from("listings")
       .select("id, title, updated_at")
@@ -38,6 +38,10 @@ export default async function sitemap() {
       .from("blogs")
       .select("slug, updated_at")
       .eq("status", "published"),
+    supa
+      .from("seller_profiles")
+      .select("wa, slug, store_updated_at")
+      .not("slug", "is", null),
   ]);
 
   const listingRoutes = ((listingsRes.data) || []).map((l) => ({
@@ -55,12 +59,33 @@ export default async function sitemap() {
     if (!wa) continue;
     if (!sellerMap.has(wa)) sellerMap.set(wa, s.bumped_at);
   }
-  const sellerRoutes = Array.from(sellerMap.entries()).map(([wa, bumpedAt]) => ({
-    url: `${baseUrl}/penjual/${wa}`,
-    lastModified: bumpedAt || new Date().toISOString(),
-    changeFrequency: "weekly",
-    priority: 0.6,
-  }));
+  // Penjual yang sudah punya toko dialihkan dari /penjual/... ke /toko/...,
+  // jadi mendaftarkan alamat lamanya di peta situs berarti mengirim perayap ke
+  // pengalihan. Yang punya slug didaftarkan pada alamat tokonya, dan dicoret
+  // dari daftar /penjual supaya tidak muncul dua kali.
+  const slugPerWa = new Map(
+    (tokoRes?.data || []).filter((t) => t.slug).map((t) => [formatWa(t.wa) || t.wa, t])
+  );
+
+  const sellerRoutes = Array.from(sellerMap.entries())
+    .filter(([wa]) => !slugPerWa.has(wa))
+    .map(([wa, bumpedAt]) => ({
+      url: `${baseUrl}/penjual/${wa}`,
+      lastModified: bumpedAt || new Date().toISOString(),
+      changeFrequency: "weekly",
+      priority: 0.6,
+    }));
+
+  // Hanya toko milik penjual yang punya iklan aktif — halaman toko kosong tidak
+  // pantas diminta diindeks.
+  const tokoRoutes = Array.from(slugPerWa.entries())
+    .filter(([wa]) => sellerMap.has(wa))
+    .map(([wa, t]) => ({
+      url: `${baseUrl}/toko/${t.slug}`,
+      lastModified: t.store_updated_at || sellerMap.get(wa) || new Date().toISOString(),
+      changeFrequency: "weekly",
+      priority: 0.7,
+    }));
 
   // Blog posts
   const blogRoutes = ((blogsRes.data) || []).map((b) => ({
@@ -70,5 +95,5 @@ export default async function sitemap() {
     priority: 0.5,
   }));
 
-  return [...staticRoutes, ...listingRoutes, ...sellerRoutes, ...blogRoutes];
+  return [...staticRoutes, ...listingRoutes, ...tokoRoutes, ...sellerRoutes, ...blogRoutes];
 }

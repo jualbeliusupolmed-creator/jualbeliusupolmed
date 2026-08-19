@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rupiah } from "@/lib/fees";
 import ProductCard from "@/components/ProductCard";
@@ -104,7 +104,7 @@ async function getSellerData(wa) {
     }
 
     return {
-      seller: { seller_name: sellerName, seller_wa: decodedWa, bio: profile?.bio || null, topCategory: topCat, trusted_seller: profile?.trusted_seller || false, distributor: profile?.distributor || false, distributorCategories, subscription_tier: profile?.subscription_tier || null, subscription_expires_at: profile?.subscription_expires_at || null },
+      seller: { seller_name: sellerName, seller_wa: decodedWa, slug: profile?.slug || null, bio: profile?.bio || null, topCategory: topCat, trusted_seller: profile?.trusted_seller || false, distributor: profile?.distributor || false, distributorCategories, subscription_tier: profile?.subscription_tier || null, subscription_expires_at: profile?.subscription_expires_at || null },
       listings: listings || [],
       soldListings: soldListings || [],
       ratings: ratings || [],
@@ -169,6 +169,12 @@ function StarDisplay({ value }) {
 export default async function SellerProfilePage({ params }) {
   const data = await getSellerData(params.wa);
   if (!data) notFound();
+
+  // Penjual yang sudah menamai tokonya punya alamat yang lebih layak dibagikan
+  // — dan yang tidak memajang nomor HP-nya di URL. Tautan /penjual/628... lama
+  // sengaja tidak dimatikan, cuma dialihkan, karena ia sudah tersebar di chat
+  // pembeli dan hasil pencarian.
+  if (data.seller.slug) redirect(`/toko/${data.seller.slug}`);
 
   const { seller, listings, soldListings, ratings, soldCount, totalViews, memberSince } = data;
   const isDistributor = !!seller.distributor;

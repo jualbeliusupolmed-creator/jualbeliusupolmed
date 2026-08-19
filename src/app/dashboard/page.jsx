@@ -602,6 +602,11 @@ function DashboardInner() {
         <div className="flex shrink-0 items-center gap-2">
           {wa && <PushNotificationButton wa={wa} />}
           {loaded && (
+            <Link href="/dashboard/toko" className="btn-outline text-sm px-3 py-2 flex items-center gap-1.5">
+              🏬 Toko saya
+            </Link>
+          )}
+          {loaded && (
             <Link href="/jual" className="btn-primary text-sm px-3 py-2 flex items-center gap-1.5">
               + Tambah Iklan
             </Link>
