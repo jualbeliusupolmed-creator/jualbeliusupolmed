@@ -16,7 +16,7 @@ export default function AIPanel({ settings, action }) {
   const [kwConfig, setKwConfig] = useState(settings.bot_keywords || {
     enabled: true,
     greeting_enabled: false,
-    greeting: "Halo! 👋\n\nKetik salah satu perintah berikut:\n• *JUAL* — Pasang iklan\n• *CARI [nama barang]* — Cari barang\n• *PERPANJANG* — Perpanjang iklan\n• *UPGRADE* — Upgrade iklan\n• *ADMIN* — Hubungi admin\n\nAtau langsung kirim *Foto + Deskripsi + Harga* untuk pasang iklan!",
+    greeting: "Halo! 👋\n\nPerintah bot diawali tanda titik ( *.* ), contoh: *.MENU*\n\n• *.JUAL* — Pasang iklan\n• *.CARI [nama barang]* — Cari barang\n• *.PERPANJANG* — Perpanjang iklan\n• *.UPGRADE* — Upgrade iklan\n• *.SAYA* — Profil & statistik saya\n• *.MENU* — Lihat semua perintah lengkap\n\nSetelah *.JUAL*, kirim *Foto + Deskripsi + Harga* untuk pasang iklan.\n\nMau ngobrol dengan admin (manusia)? Ketik *ADMIN* tanpa titik.\n\n🌐 Website: jualbeliusupolmed.web.id",
     triggers: "jual,wts,wtb,cari,beli,admin,min,mimin,perpanjang,upgrade,dijual,ready",
     min_price_digits: 4,
   });
