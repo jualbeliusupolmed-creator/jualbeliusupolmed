@@ -4,7 +4,7 @@ import { ImageResponse } from "next/og";
 // saat path proyek mengandung spasi (fileURLToPath "Invalid URL").
 export const runtime = "edge";
 export const alt =
-  "Jual Beli Medan — Marketplace Kota Medan Medan";
+  "Jual Beli USU & Polmed — marketplace mahasiswa USU dan Polmed di Medan";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -19,7 +19,7 @@ export default function OgImage() {
           flexDirection: "column",
           justifyContent: "center",
           padding: "80px",
-          background: "linear-gradient(135deg, #0f172a 0%, #111827 55%, #064e3b 100%)",
+          background: "linear-gradient(135deg, #03411f 0%, #14532d 38%, #3c1c74 100%)",
           fontFamily: "sans-serif",
           position: "relative",
         }}
@@ -33,7 +33,7 @@ export default function OgImage() {
             width: 420,
             height: 420,
             borderRadius: 9999,
-            background: "rgba(16,185,129,0.18)",
+            background: "rgba(124,79,212,0.28)",
             display: "flex",
           }}
         />
@@ -45,7 +45,7 @@ export default function OgImage() {
             width: 360,
             height: 360,
             borderRadius: 9999,
-            background: "rgba(255,255,255,0.05)",
+            background: "rgba(13,131,72,0.30)",
             display: "flex",
           }}
         />
@@ -62,7 +62,7 @@ export default function OgImage() {
             textTransform: "uppercase",
           }}
         >
-          Marketplace Kota · Medan
+          Marketplace Mahasiswa · Medan
         </div>
 
         <div
@@ -76,7 +76,7 @@ export default function OgImage() {
             letterSpacing: -2,
           }}
         >
-          Jual Beli Medan
+          Jual Beli USU & Polmed
         </div>
 
         <div
@@ -89,11 +89,12 @@ export default function OgImage() {
             maxWidth: 900,
           }}
         >
-          Laptop, HP, buku, fashion, makanan, kos, hingga jasa.
+          Laptop, HP, buku, fashion, makanan, kos, hingga jasa —
+          dari sesama mahasiswa, COD di sekitar kampus.
         </div>
 
         <div style={{ display: "flex", marginTop: 48, gap: 16 }}>
-          {["Aman & dibantu admin", "COD di area yang disepakati", "Gratis pasang dicari"].map(
+          {["Dibantu admin", "COD sekitar kampus", "Gratis pasang dicari"].map(
             (t) => (
               <div
                 key={t}
@@ -101,11 +102,11 @@ export default function OgImage() {
                   display: "flex",
                   padding: "12px 26px",
                   borderRadius: 9999,
-                  border: "2px solid rgba(52,211,153,0.45)",
+                  border: "2px solid rgba(167,243,208,0.40)",
                   color: "#a7f3d0",
                   fontSize: 24,
                   fontWeight: 600,
-                  background: "rgba(6,78,59,0.35)",
+                  background: "rgba(255,255,255,0.10)",
                 }}
               >
                 {t}

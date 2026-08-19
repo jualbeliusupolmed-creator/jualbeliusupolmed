@@ -9,25 +9,30 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata = {
-  title: "Jual Beli Medan — Marketplace Kota Medan",
-  description: "Temukan laptop bekas, buku, fashion, dan kos di sekitar Medan. Marketplace terpercaya untuk umum dengan transaksi aman dibantu admin.",
-  keywords: ["jual beli USU", "Marketplace Kota Medan", "laptop bekas USU", "barang bekas warga POLMED", "kos dekat USU", "jual beli polmed", "COD"],
+  // Judul & deskripsi beranda ditulis di sini (bukan dari pengaturan admin),
+  // jadi inilah yang muncul di tab peramban, hasil Google, dan pratinjau tautan
+  // saat alamatnya dibagikan di grup WhatsApp — jalur masuk utama situs ini.
+  title: "Jual Beli USU & Polmed — Marketplace Mahasiswa Medan",
+  description:
+    "Marketplace mahasiswa USU dan Polmed: laptop, HP, buku, fashion, makanan, kos, sampai jasa. Barangnya dari sesama mahasiswa, COD di sekitar kampus, dibantu admin.",
+  keywords: ["jual beli USU", "jual beli Polmed", "marketplace mahasiswa Medan", "laptop bekas USU", "barang bekas mahasiswa Polmed", "kos dekat USU", "COD kampus", "preloved mahasiswa Medan"],
   alternates: { canonical: "/" },
   openGraph: {
-    title: "Jual Beli Medan — Marketplace Kota Medan",
-    description: "Temukan laptop bekas, buku, fashion, dan kos di sekitar Medan. Marketplace terpercaya untuk umum dengan transaksi aman dibantu admin.",
+    title: "Jual Beli USU & Polmed — Marketplace Mahasiswa Medan",
+    description:
+      "Marketplace mahasiswa USU dan Polmed: laptop, HP, buku, fashion, makanan, kos, sampai jasa. COD di sekitar kampus, dibantu admin.",
     url: "/",
-    siteName: "Jual Beli Medan",
+    siteName: "Jual Beli USU & Polmed",
     locale: "id_ID",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Jual Beli Medan — Marketplace Kota Medan",
-    description: "Temukan laptop bekas, buku, fashion, dan kos di sekitar Medan. Marketplace terpercaya untuk umum dengan transaksi aman dibantu admin.",
+    title: "Jual Beli USU & Polmed — Marketplace Mahasiswa Medan",
+    description:
+      "Marketplace mahasiswa USU dan Polmed: laptop, HP, buku, fashion, makanan, kos, sampai jasa. COD di sekitar kampus, dibantu admin.",
   },
 };
-
 const PAGE_SIZE = 20;
 
 async function getInitialData() {

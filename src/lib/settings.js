@@ -36,18 +36,19 @@ export const DEFAULT_SETTINGS = {
     supportAddress: "Jl. Dr. T. Mansur No. 9, Medan 20155",
   },
   site: {
-    heroTitle: "Marketplace Kota Medan",
-    heroSubtitle:
-      "Jual-beli laptop, HP, buku, fashion, makanan, kos, hingga jasa. Aman, cepat, dibantu admin.",
+    // Kosong = hero beranda memakai judul rancangannya sendiri (tiga baris,
+    // dua warna kampus). Diisi lewat panel admin kalau mau judul lain.
+    heroTitle: "",
+    heroSubtitle: "",
     footerTagline:
-      "Marketplace Kota Medan. Jual-beli aman, dibantu admin.",
+      "Marketplace mahasiswa USU & Polmed. Jual-beli aman, dibantu admin.",
     logoUrl: "",
     faviconUrl: "",
-    metaTitle: "Jual Beli Medan — Marketplace Kota Medan",
+    metaTitle: "Jual Beli USU & Polmed — Marketplace Mahasiswa Medan",
     metaDescription:
-      "Marketplace jual-beli untuk warga Medan: laptop bekas, HP, buku, fashion, makanan, kos, dan jasa. Transaksi aman & COD di area yang disepakati, dibantu admin.",
+      "Marketplace jual-beli mahasiswa USU dan Polmed: laptop bekas, HP, buku, fashion, makanan, kos, dan jasa. Transaksi aman & COD di sekitar kampus, dibantu admin.",
     metaKeywords:
-      "jual beli Medan, Marketplace Kota Medan, laptop bekas Medan, barang bekas warga, kos di Medan, COD Medan, preloved warga Medan",
+      "jual beli USU, jual beli Polmed, marketplace mahasiswa Medan, laptop bekas USU, barang bekas mahasiswa Polmed, kos dekat USU, COD kampus",
   },
   ai_config: {
     model: "gemini-2.0-flash",
