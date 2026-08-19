@@ -10,12 +10,13 @@ import { Icon } from "@/components/Icons";
    berlaku di 360px, dan sm:/lg: hanya menambah. Jadi yang dijamin rapi lebih
    dulu adalah layar kecil — bukan desktop yang dipaksa mengecil.
 
-   Latar kampus (public/hero-kampus.jpg) dipasang sebagai background-image,
-   bukan <img>. Alasannya: kalau berkasnya hilang, background yang gagal dimuat
-   tidak meninggalkan ikon gambar rusak — pembaca cuma melihat gradien langit,
-   dan halaman tetap utuh. Berkasnya potongan sisi kanan mockup desain (gedung
-   USU & Polmed), 1200px lebar, ~190 KB: cukup tajam di layar HP tanpa jadi
-   beban unduh di jaringan kampus. */
+   Ilustrasi kampus (public/hero-kampus.jpg, 1536x1024, ~240 KB) muncul dua cara
+   yang berbeda, dan itu disengaja. Di layar lebar ia jadi latar di sisi kanan:
+   teks cuma memakai sisi kiri, jadi gambarnya boleh utuh dan pekat. Di HP teks
+   menutupi seluruh lebar, dan latar yang dipudarkan di belakang huruf cuma jadi
+   noda kelabu — di sana gambar yang sama diberi ruangnya sendiri sebagai <img>
+   dengan rasio aslinya, jadi gedung dan lambang dua kampus benar-benar
+   terbaca. */
 
 const FITUR = [
   { label: ["Aman &", "Terpercaya"], warna: "usu", ikon: "perisai" },
@@ -58,17 +59,17 @@ export default function HeroLanding({ q, onSearch, stats, total = 0, judul, subj
   return (
     <section className="-mx-4 -mt-3 mb-6 lg:mx-0 lg:mt-0">
       <div className="relative isolate overflow-hidden bg-[#fdf8f5] pb-6 pt-7 sm:pb-8 lg:rounded-3xl lg:pb-10 lg:pt-12 dark:bg-slate-900">
-        {/* Lapis 1 — foto kampus (opsional, lihat catatan di atas) */}
+        {/* Lapis 1 — ilustrasi kampus, hanya sejak lg ke atas (lihat catatan
+            di atas: di bawah itu gambarnya tampil utuh, bukan jadi latar). */}
         <div
           aria-hidden="true"
-          className="absolute inset-0 -z-20 bg-[url('/hero-kampus.jpg')] bg-cover bg-[position:72%_center] opacity-[0.55] sm:opacity-70 lg:bg-[position:60%_center] dark:opacity-25"
+          className="absolute inset-0 -z-20 hidden bg-[url('/hero-kampus.jpg')] bg-cover bg-[position:68%_center] lg:block dark:opacity-70"
         />
-        {/* Lapis 2 — langit + peredam. Di HP teks menumpuk penuh di atas gambar,
-            jadi peredamnya vertikal dan pekat; di layar lebar teks hanya memakai
-            sisi kiri, jadi peredamnya berubah jadi mendatar. */}
+        {/* Lapis 2 — peredam mendatar supaya judul di kiri tetap terbaca di atas
+            langit yang terang, sementara sisi kanan gambarnya dibiarkan bersih. */}
         <div
           aria-hidden="true"
-          className="absolute inset-0 -z-10 bg-gradient-to-b from-white via-white/85 to-white/60 sm:from-white/95 sm:via-white/70 lg:bg-gradient-to-r lg:from-white lg:via-white/85 lg:to-transparent dark:from-slate-900 dark:via-slate-900/85 dark:to-slate-900/40"
+          className="absolute inset-0 -z-10 hidden bg-gradient-to-r from-white via-white/90 to-transparent lg:block dark:from-slate-900 dark:via-slate-900/90 dark:to-transparent"
         />
 
         <div className="mx-auto max-w-6xl px-4">
@@ -117,6 +118,17 @@ export default function HeroLanding({ q, onSearch, stats, total = 0, judul, subj
                 Cari
               </button>
             </form>
+
+            {/* Ilustrasi utuh untuk HP & tablet. Ukuran width/height ditulis apa
+                adanya supaya peramban menyediakan ruangnya lebih dulu — tanpa itu
+                isi di bawahnya melompat begitu gambarnya selesai diunduh. */}
+            <img
+              src="/hero-kampus.jpg"
+              alt="Gedung Universitas Sumatera Utara dan Politeknik Negeri Medan berdampingan dengan lambang kedua kampus"
+              width={1536}
+              height={1024}
+              className="mt-5 w-full rounded-2xl shadow-sm ring-1 ring-black/5 lg:hidden dark:ring-white/10"
+            />
 
             {/* Pemasangan aplikasi. Tampil hanya kalau peramban memang menawarkan
                 (Android/Chrome); di iOS acara ini tak pernah ada, jadi menampilkan
