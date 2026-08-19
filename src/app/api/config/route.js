@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSettings } from "@/lib/settings";
 import { getCategories } from "@/lib/categories";
+import { kontakDenganCadangan } from "@/lib/kontakAdmin";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,9 @@ export async function GET() {
     return NextResponse.json({
       pricing: settings.pricing,
       site: settings.site,
-      contact: settings.contact,
+      // Satu-satunya tempat pengalihan ini dipasang: /api/config adalah hulu
+      // kontak untuk footer, dashboard, halaman jual/jasa/dicari sekaligus.
+      contact: await kontakDenganCadangan(settings.contact),
       categories,
       kapabilitas: settings.kapabilitas || {},
     });
