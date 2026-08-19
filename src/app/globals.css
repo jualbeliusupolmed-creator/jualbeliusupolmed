@@ -3,10 +3,43 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Palet kampus. Nilainya diambil dari mockup desain (median area rata, bukan
+   piksel tepi huruf yang dipucatkan JPEG): hijau #065932 (heading "Lebih
+   Mudah", tombol Cari, ikon perisai), ungu #532b98 (heading "Terpercaya", banner
+   bawah, ikon kotak), latar langit #fdf8f5. Diukur di sembilan titik berbeda dan
+   hasilnya seragam ± 3 poin per kanal, jadi ini memang warna mereknya.
+
+   Hijau = USU, ungu = Polmed. Pembagian perannya: ungu untuk ajakan bertindak
+   utama (Post Barang, tombol Jual), hijau untuk hal yang berhubungan dengan
+   uang dan pencarian (harga, tombol Cari, WhatsApp). Dua warna ini sengaja
+   tidak pernah bertabrakan dalam satu tombol.
+
+   Ditaruh di :root TANPA lapisan karena --primary juga dideklarasikan di dalam
+   @layer base di bawah; yang tak berlapis menang, dan itu memang yang kita mau. */
 :root {
-  --primary: #111111;
-  --accent: #059669;
+  --usu: #065932;
+  --usu-light: #0d8348;
+  --usu-dark: #03411f;
+  --polmed: #532b98;
+  --polmed-light: #7c4fd4;
+  --polmed-dark: #3c1c74;
+
+  --primary: var(--polmed);
+  --primary-foreground: #ffffff;
+  --accent: var(--usu);
+  --accent-foreground: #ffffff;
   --wa: #25d366;
+  --page: #f7f7f7;
+}
+
+/* Di gelap, ungu dan hijau tua jadi terlalu pekat untuk teks maupun tombol,
+   jadi keduanya dinaikkan terangnya. Blok ini harus tak berlapis juga supaya
+   menang atas .dark milik @layer base. */
+.dark {
+  --primary: #9a7ae8;
+  --primary-foreground: #14092e;
+  --accent: #22c55e;
+  --accent-foreground: #052e16;
 }
 
 html {
@@ -27,7 +60,7 @@ body {
     @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-all active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none;
   }
   .btn-primary {
-    @apply btn bg-gray-900 text-white hover:bg-gray-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200;
+    @apply btn bg-primary text-white hover:bg-primary-dark dark:text-[#14092e] dark:hover:brightness-110;
   }
   .btn-accent {
     @apply btn bg-accent text-white hover:bg-accent-dark;

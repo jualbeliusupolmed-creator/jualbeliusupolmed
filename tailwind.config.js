@@ -7,6 +7,11 @@ module.exports = {
   ],
   theme: {
     extend: {
+      // 475px: batas nyata antara HP sempit (iPhone SE, 360px Android) dan HP
+      // biasa. Dipakai untuk label yang harus memendek di layar paling kecil.
+      screens: {
+        xs: "475px",
+      },
       colors: {
         border: "var(--border)",
         input: "var(--input)",
@@ -16,8 +21,8 @@ module.exports = {
         primary: {
           DEFAULT: "var(--primary)",
           foreground: "var(--primary-foreground)",
-          dark: "#000000",
-          light: "#3f3f46",
+          dark: "#3c1c74",
+          light: "#7c4fd4",
         },
         secondary: {
           DEFAULT: "var(--secondary)",
@@ -34,8 +39,22 @@ module.exports = {
         accent: {
           DEFAULT: "var(--accent)",
           foreground: "var(--accent-foreground)",
-          dark: "#047857",
-          light: "#10b981",
+          dark: "#03411f",
+          light: "#0d8348",
+        },
+        // Dua warna kampus dinamai apa adanya supaya niatnya terbaca di kelas
+        // utility: text-usu jelas maksudnya, text-emerald-700 tidak.
+        usu: {
+          DEFAULT: "#065932",
+          light: "#0d8348",
+          dark: "#03411f",
+          soft: "#e3efe7",
+        },
+        polmed: {
+          DEFAULT: "#532b98",
+          light: "#7c4fd4",
+          dark: "#3c1c74",
+          soft: "#ece2f2",
         },
         popover: {
           DEFAULT: "var(--popover)",
