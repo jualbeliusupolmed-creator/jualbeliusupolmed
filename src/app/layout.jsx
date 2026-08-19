@@ -24,9 +24,9 @@ export async function generateMetadata() {
   const settings = await getSettings();
   const site = settings.site || {};
   
-  const baseTitle = site.metaTitle || "Jual Beli Medan — Marketplace Kota Medan";
+  const baseTitle = site.metaTitle || "Jual Beli USU & Polmed — Marketplace Mahasiswa Medan";
   const baseDesc = site.metaDescription || "Marketplace jual-beli khusus warga Medan Medan: laptop bekas, HP, buku, fashion, makanan, kos, dan jasa. Transaksi aman & COD di area yang disepakati, dibantu admin.";
-  const keywordsString = site.metaKeywords || "jual beli USU, Marketplace Kota Medan, laptop bekas USU, barang bekas warga POLMED, kos dekat USU, COD USU, preloved warga Medan";
+  const keywordsString = site.metaKeywords || "jual beli USU, jual beli Polmed, marketplace mahasiswa Medan, laptop bekas USU, barang bekas mahasiswa Polmed, kos dekat USU, COD kampus";
   const keywords = keywordsString.split(",").map(k => k.trim()).filter(Boolean);
 
   const faviconUrl = site.faviconUrl;
@@ -75,13 +75,15 @@ export async function generateMetadata() {
 export const viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#111111",
+  // Warna bilah peramban di Android/iOS. Ungu Polmed, sama dengan tombol
+  // ajakan utama — supaya jendela aplikasi menyatu dengan halamannya.
+  themeColor: "#532b98",
 };
 
 export default async function RootLayout({ children }) {
   const settings = await getSettings();
   const site = settings.site || {};
-  const baseTitle = site.metaTitle || "Jual Beli Medan — Marketplace Kota Medan";
+  const baseTitle = site.metaTitle || "Jual Beli USU & Polmed — Marketplace Mahasiswa Medan";
   const siteName = baseTitle.split("—")[0].trim();
   const logoUrl = site.logoUrl || `${BASE_URL}/icons/icon-512x512.png`;
 
