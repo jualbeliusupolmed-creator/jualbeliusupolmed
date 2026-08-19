@@ -88,7 +88,10 @@ export async function POST(req) {
         name: `User ${normalizedWa.slice(-4)}`,
         referral_code: newRefCode,
         free_bumps: freeBumps,
-        pin: hashPin(pin)
+        pin: hashPin(pin),
+        // Lewat jalur ini nomornya terbukti dipegang si pendaftar — kode tadi
+        // hanya bisa dibaca dari WhatsApp nomor itu sendiri.
+        wa_verified: true
       });
 
       if (referrerWa) {
@@ -101,7 +104,10 @@ export async function POST(req) {
     } else {
       // Update PIN — WAJIB di-hash. Bug lama: menyimpan `pin` mentah di sini
       // men-downgrade PIN yang tadinya bcrypt jadi plaintext tiap login OTP.
-      const updatePayload = { pin: hashPin(pin) };
+      // wa_verified ikut TRUE di sini, dan itu yang membuat "Lupa PIN" jadi jalan
+      // pulang: akun yang lahir lewat pendaftaran darurat (tanpa bukti nomor)
+      // direbut kembali oleh siapa pun yang benar-benar memegang nomornya.
+      const updatePayload = { pin: hashPin(pin), wa_verified: true };
       if (!profile.referral_code) {
         updatePayload.referral_code = Math.random().toString(36).substring(2, 8).toUpperCase();
       }
