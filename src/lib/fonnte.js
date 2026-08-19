@@ -31,7 +31,12 @@ function logBotSend(target, message, hasMedia) {
   } catch (_) {}
 }
 
-async function send(target, message, fileUrl = null) {
+// ttlDetik: berapa lama pesan ini masih berguna kalau terlambat. Bot memakainya
+// untuk memutuskan antara menyimpan (notifikasi penjualan — terlambat masih jauh
+// lebih baik daripada tidak sampai) dan menolak cepat (OTP — kode yang datang
+// sejam kemudian cuma membingungkan, dan penolakan cepat membuka jalur cadangan
+// di bawah). Kosong = pesan boleh menunggu selama bot menyimpannya.
+async function send(target, message, fileUrl = null, ttlDetik = null) {
   // Jangan kirim pesan kosong (teks kosong tanpa lampiran) — pernah muncul
   // gelembung kosong ke pelanggan.
   if (!fileUrl && (!message || !String(message).trim())) {
@@ -66,7 +71,7 @@ async function send(target, message, fileUrl = null) {
 
     const finalUrl = `${baseUrl}/send`;
     const baileysTarget = target.includes('@') ? target : formatWaForBaileys(target);
-    const payload = { target: baileysTarget, message: message, url: fileUrl || undefined };
+    const payload = { target: baileysTarget, message: message, url: fileUrl || undefined, ttlDetik: ttlDetik || undefined };
 
     console.log(`[sendWa] Sending to: ${finalUrl} | Target: ${target}`);
     const res = await fetch(finalUrl, {
