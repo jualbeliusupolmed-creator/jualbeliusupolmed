@@ -155,9 +155,16 @@ export async function postToGroup(listing, adminSettings) {
 export async function postWantedToGroup(wanted) {
   const group = process.env.FONNTE_WA_GROUP_ID;
   const budgetStr = wanted.budget && wanted.budget > 0 ? `maks ${rupiah(wanted.budget)}` : "Budget nego";
+  // Ajakan jual ditempel di sini, di sumbernya. Sebelumnya bot WhatsApp yang
+  // menyisipkannya lewat pencocokan teks di pintu /send — rapuh, karena diam-diam
+  // berhenti kalau kalimat di bawah berubah. Bot masih punya penambal itu sebagai
+  // jaring pengaman dan ia mengecek suffix ini sebelum menambah, jadi JANGAN ubah
+  // kata-katanya tanpa menyesuaikan DICARI_JUAL_SUFFIX di repo wa-bot-usu —
+  // kalau tidak cocok, ajakannya tertulis dua kali.
   const msg =
     `🔍 *Dicari:* ${wanted.title} (${budgetStr})\n` +
-    `Punya barangnya? 👉 ${baseUrl()}/dicari`;
+    `Punya barangnya? 👉 ${baseUrl()}/dicari` +
+    `, Atau kalau mau lebih cepat langsung jual di ${baseUrl()}/jual`;
   return send(group, msg);
 }
 
