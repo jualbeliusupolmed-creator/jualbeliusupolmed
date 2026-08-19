@@ -10,13 +10,18 @@ import { Icon } from "@/components/Icons";
    berlaku di 360px, dan sm:/lg: hanya menambah. Jadi yang dijamin rapi lebih
    dulu adalah layar kecil — bukan desktop yang dipaksa mengecil.
 
-   Ilustrasi kampus (public/hero-kampus.jpg, 1536x1024, ~240 KB) muncul dua cara
+   Ilustrasi kampus (public/hero-kampus*.webp) muncul dua cara
    yang berbeda, dan itu disengaja. Di layar lebar ia jadi latar di sisi kanan:
    teks cuma memakai sisi kiri, jadi gambarnya boleh utuh dan pekat. Di HP teks
    menutupi seluruh lebar, dan latar yang dipudarkan di belakang huruf cuma jadi
    noda kelabu — di sana gambar yang sama diberi ruangnya sendiri sebagai <img>
    dengan rasio aslinya, jadi gedung dan lambang dua kampus benar-benar
-   terbaca. */
+   terbaca.
+
+   Semua dalam WebP dan tiga ukuran: 800px (78 KB) untuk HP, 1200px (147 KB)
+   untuk tablet, 1536px (214 KB) untuk latar layar lebar. Peramban memilih
+   sendiri lewat srcSet — HP tidak perlu mengunduh berkas 1536px yang tiga kali
+   lebih berat dari yang sanggup ia tampilkan. */
 
 const FITUR = [
   { label: ["Aman &", "Terpercaya"], warna: "usu", ikon: "perisai" },
@@ -63,7 +68,7 @@ export default function HeroLanding({ q, onSearch, stats, total = 0, judul, subj
             di atas: di bawah itu gambarnya tampil utuh, bukan jadi latar). */}
         <div
           aria-hidden="true"
-          className="absolute inset-0 -z-20 hidden bg-[url('/hero-kampus.jpg')] bg-cover bg-[position:68%_center] lg:block dark:opacity-70"
+          className="absolute inset-0 -z-20 hidden bg-[url('/hero-kampus.webp')] bg-cover bg-[position:68%_center] lg:block dark:opacity-70"
         />
         {/* Lapis 2 — peredam mendatar supaya judul di kiri tetap terbaca di atas
             langit yang terang, sementara sisi kanan gambarnya dibiarkan bersih. */}
@@ -123,10 +128,12 @@ export default function HeroLanding({ q, onSearch, stats, total = 0, judul, subj
                 adanya supaya peramban menyediakan ruangnya lebih dulu — tanpa itu
                 isi di bawahnya melompat begitu gambarnya selesai diunduh. */}
             <img
-              src="/hero-kampus.jpg"
+              src="/hero-kampus-800.webp"
+              srcSet="/hero-kampus-800.webp 800w, /hero-kampus-1200.webp 1200w"
+              sizes="(min-width: 640px) 608px, 100vw"
               alt="Gedung Universitas Sumatera Utara dan Politeknik Negeri Medan berdampingan dengan lambang kedua kampus"
-              width={1536}
-              height={1024}
+              width={1200}
+              height={800}
               className="mt-5 w-full rounded-2xl shadow-sm ring-1 ring-black/5 lg:hidden dark:ring-white/10"
             />
 
