@@ -1,31 +1,26 @@
 import { WA_GROUP_LINK, MARKETPLACE_WA } from "@/lib/constants";
 
 export const metadata = {
-  title: "Cara Bergabung — Gabung Komunitas Jual Beli warga Medan",
-  description: "Panduan lengkap bergabung di komunitas jual-beli warga Medan Medan: cara menjual, cara membeli, rincian fee admin yang transparan, dan aturan keamanan transaksi.",
-  keywords: ["cara bergabung jual beli USU", "komunitas whatsapp USU", "Marketplace Kota Medan", "aturan jual beli POLMED", "fee admin jual beli usu"],
+  title: "Cara Bergabung — Komunitas Jual Beli Mahasiswa USU & Polmed",
+  description: "Panduan bergabung di komunitas jual-beli mahasiswa USU dan Polmed: cara menjual, cara membeli, rincian fee admin yang transparan, dan aturan keamanan transaksi.",
+  keywords: ["cara bergabung jual beli USU", "komunitas whatsapp USU", "jual beli Polmed", "aturan jual beli POLMED", "fee admin jual beli usu"],
   alternates: { canonical: "/cara-bergabung" },
+  // Tanpa daftar images sendiri: halaman ini mewarisi gambar pratinjau dari
+  // src/app/opengraph-image.jsx. Sebelumnya di sini ditulis "/og-image.png",
+  // berkas yang tidak pernah ada di public/ — hasilnya 404, dan tautan halaman
+  // ini muncul polos tanpa gambar setiap kali dibagikan di WhatsApp.
   openGraph: {
-    title: "Cara Bergabung — Jual Beli Medan",
+    title: "Cara Bergabung — Jual Beli USU & Polmed",
     description: "Gabung grup WhatsApp komunitas, pasang iklan, dan transaksi aman dibantu admin. Fee transparan mulai Rp 2.000.",
     url: "/cara-bergabung",
-    siteName: "Jual Beli Medan",
-    images: [
-      {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "Cara Bergabung Jual Beli Medan",
-      },
-    ],
+    siteName: "Jual Beli USU & Polmed",
     locale: "id_ID",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Cara Bergabung — Jual Beli Medan",
+    title: "Cara Bergabung — Jual Beli USU & Polmed",
     description: "Gabung grup WhatsApp komunitas, pasang iklan, dan transaksi aman dibantu admin. Fee transparan mulai Rp 2.000.",
-    images: ["/og-image.png"],
   },
 };
 
