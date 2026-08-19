@@ -9,6 +9,10 @@ export default function OTPModal({ isOpen, onClose, onSuccess, initialWa = "" })
   const [referral, setReferral] = useState("");
   const [otp, setOtp] = useState("");
   const [pin, setPin] = useState("");
+  // Nomor tanpa PIN DAN tanpa iklan. Hanya nomor seperti ini yang boleh lewat
+  // pendaftaran darurat kalau OTP gagal terkirim — mengklaimnya tidak mengambil
+  // apa pun dari siapa pun.
+  const [nomorBaru, setNomorBaru] = useState(false);
   const [step, setStep] = useState(1); // 1: WA, 2: OTP+Setup PIN, 3: Verify PIN
   
   // Email States
@@ -57,10 +61,11 @@ export default function OTPModal({ isOpen, onClose, onSuccess, initialWa = "" })
       });
       const data = await res.json();
       
+      setNomorBaru(!!data.nomorBaru);
       if (data.hasPin) {
         setStep(3); // Masuk ke mode PIN
       } else {
-        await handleSendOTP(null, true); // Belum ada PIN, daftar/reset
+        await handleSendOTP(null, true, !!data.nomorBaru); // Belum ada PIN, daftar/reset
       }
     } catch (err) {
       setError(err.message || "Gagal mengecek nomor WA.");
@@ -69,7 +74,11 @@ export default function OTPModal({ isOpen, onClose, onSuccess, initialWa = "" })
     }
   }
 
-  async function handleSendOTP(e, isSetup = false) {
+  // baruLangsung dioper sebagai argumen, bukan dibaca dari state: pemanggil di
+  // handleCheck baru saja memanggil setNomorBaru() dan React belum menerapkannya
+  // saat fungsi ini berjalan, jadi membaca state di sini akan selalu memberi
+  // nilai lama — dan pintu daruratnya tidak pernah muncul pada percobaan pertama.
+  async function handleSendOTP(e, isSetup = false, baruLangsung = null) {
     if (e) e.preventDefault();
     setError("");
     if (!wa.trim()) return setError("Nomor WA wajib diisi.");
@@ -88,6 +97,37 @@ export default function OTPModal({ isOpen, onClose, onSuccess, initialWa = "" })
       setOtp("");
       if (!isSetup) setPin(""); // Kosongkan PIN jika ini reset
       setCountdown(60); // 60 seconds cooldown for resend
+    } catch (err) {
+      // OTP gagal terkirim (mis. nomor bot sedang dibatasi WhatsApp). Untuk nomor
+      // tanpa riwayat, buntu ini tidak perlu: tawarkan pendaftaran darurat.
+      // Servernya memeriksa ulang kedua syaratnya sendiri — layar ini cuma
+      // membuka pintunya, bukan yang memutuskan.
+      if (baruLangsung ?? nomorBaru) {
+        setStep(4);
+        setPin("");
+        setError("");
+      } else {
+        setError(err.message);
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleDaftarDarurat(e) {
+    e.preventDefault();
+    setError("");
+    if (pin.length < 6) return setError("PIN harus 6 digit angka.");
+    setBusy(true);
+    try {
+      const res = await fetch("/api/auth/daftar-langsung", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ wa, pin, referral }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal mendaftar");
+      onSuccess?.(data.wa || wa);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -338,6 +378,42 @@ export default function OTPModal({ isOpen, onClose, onSuccess, initialWa = "" })
                   Lupa PIN?
                 </button>
               </div>
+            </form>
+          ) : step === 4 ? (
+            <form onSubmit={handleDaftarDarurat} className="space-y-4">
+              <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-700/50 dark:bg-amber-900/20 dark:text-amber-200">
+                <p className="font-semibold">Kode WhatsApp sedang tidak bisa dikirim</p>
+                <p className="mt-1 text-xs">
+                  Nomor {wa} belum pernah dipakai di sini, jadi kamu boleh langsung
+                  membuat PIN sekarang dan memakai akunnya. Verifikasi nomornya menyusul
+                  saat WhatsApp aktif lagi.
+                </p>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">
+                  Buat PIN (6 digit)
+                </label>
+                <input
+                  type="password" inputMode="numeric" maxLength={6}
+                  placeholder="Masukkan 6 digit PIN"
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+                  className="input" autoFocus
+                />
+                <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">
+                  Ingat baik-baik: selama WhatsApp belum aktif, PIN ini satu-satunya
+                  cara masuk ke akunmu.
+                </p>
+              </div>
+              {error && <p className="text-sm text-rose-600">{error}</p>}
+              <button type="submit" disabled={busy || pin.length < 6}
+                className="btn-primary w-full rounded-xl py-3 text-sm font-semibold disabled:opacity-60">
+                {busy ? "Memproses..." : "Buat akun"}
+              </button>
+              <button type="button" onClick={() => { setStep(1); setError(""); }}
+                className="w-full text-center text-sm text-gray-500 underline underline-offset-2 dark:text-slate-400">
+                Kembali
+              </button>
             </form>
           ) : (
             <form onSubmit={handleVerifyOTP} className="space-y-4">
