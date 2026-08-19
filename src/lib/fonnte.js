@@ -74,12 +74,27 @@ async function send(target, message, fileUrl = null) {
       headers: { "Authorization": baileysToken, "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
-    const json = await res.json();
+    // Bukan res.json() polos: kalau bot mati, yang balik bisa HTML 502 dari
+    // nginx, dan melempar di sini akan melewati jalur cadangan di bawah —
+    // tepat pada keadaan yang jalur itu dibuat untuk menanganinya.
+    const json = await res.json().catch(() => ({}));
     console.log(`[sendWa] Response: ${res.status} | Body: ${JSON.stringify(json)}`);
-    return { ok: res.ok, data: json };
+    if (res.ok) return { ok: true, data: json };
+
+    // Baileys menolak. Dulu jalur berhenti di sini, dan itu berarti bot yang
+    // padam ikut mematikan OTP — yaitu satu-satunya pintu masuk DAN pendaftaran
+    // penjual. Kalau ada token Fonnte, coba lewat sana sebelum menyerah.
+    //
+    // Aman dari kirim ganda: bot mengantre pesan dan menjawab ok=true begitu
+    // masuk antrean, jadi kita cuma sampai ke sini kalau ia menolak menerimanya
+    // sama sekali (mis. 503 saat sesi WhatsApp-nya terkunci).
+    console.warn(`[sendWa] Baileys menolak (${res.status}) — mencoba Fonnte.`);
+    if (!process.env.FONNTE_TOKEN) {
+      return { ok: false, data: json, noFallback: true };
+    }
   }
 
-  // Fallback ke Fonnte (jika Baileys belum siap)
+  // Fallback ke Fonnte (jika Baileys belum siap, atau barusan menolak)
   const token = process.env.FONNTE_TOKEN;
   if (!token || !target) {
     console.warn("[fonnte] token/target kosong — skip kirim WA");
