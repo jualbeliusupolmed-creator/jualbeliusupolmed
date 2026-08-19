@@ -1,6 +1,6 @@
 # Jual Beli USU Polmed 🛒
 
-Marketplace mahasiswa **USU & POLMED** — jual-beli laptop, HP, buku, fashion, makanan, kos, dan jasa. Dibangun dengan Next.js 14 App Router, Supabase, Gemini AI, dan Baileys (WhatsApp). Deploy gratis di Vercel + Railway.
+Marketplace mahasiswa **USU & POLMED** — jual-beli laptop, HP, buku, fashion, makanan, kos, dan jasa. Dibangun dengan Next.js 14 App Router, Supabase, Gemini AI, dan Baileys (WhatsApp). Web di-deploy di Vercel; bot WhatsApp jalan sebagai proses pm2 di VPS.
 
 ---
 
@@ -39,7 +39,7 @@ Marketplace mahasiswa **USU & POLMED** — jual-beli laptop, HP, buku, fashion, 
 | Layer | Teknologi |
 |---|---|
 | Web | Next.js 14 App Router (Vercel) |
-| WA Bot | Node.js + Baileys (Railway) |
+| WA Bot | Node.js + Baileys (VPS, dikelola pm2) |
 | Database | Supabase (PostgreSQL + Storage) |
 | AI | Google Gemini 2.5 Flash |
 | WA Gateway | Baileys (utama) + Fonnte (fallback) |
@@ -71,11 +71,13 @@ npm install
    - `anon public` → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `service_role` → `SUPABASE_SERVICE_ROLE_KEY`
 
-### 3. WA Bot (Railway)
-1. Deploy repo `wa-bot-usu` ke [railway.app](https://railway.app)
-2. Set env: `WEBHOOK_URL` (URL Vercel `/api/wa/baileys`), `BAILEYS_API_TOKEN`
-3. Scan QR nomor WA bot saat pertama kali
-4. Salin Railway URL → `BAILEYS_API_URL` di Vercel
+### 3. WA Bot (VPS)
+1. Clone repo `wa-bot-usu` di VPS, `npm install`, lalu jalankan dengan pm2
+   (`pm2 start index.js --name wa-bot-usu`) di belakang reverse-proxy HTTPS
+2. Set env: `WEBHOOK_URL` (URL Vercel `/api/wa/baileys`), `API_TOKEN`
+3. Scan QR nomor WA bot saat pertama kali — sesi disimpan di `auth_info_baileys/`,
+   jadi restart berikutnya tidak minta scan ulang
+4. Salin URL bot → `BAILEYS_API_URL` di Vercel
 
 ### 4. Gemini AI
 1. Buat API key di [aistudio.google.com](https://aistudio.google.com)
@@ -102,8 +104,8 @@ cp .env.example .env.local
 | `SUPER_ADMIN_WA` | Nomor superadmin alternatif |
 | `MARKETPLACE_WA` | Nomor publik marketplace |
 | `NEXT_PUBLIC_MARKETPLACE_WA` | Sama, dipakai di frontend |
-| `BAILEYS_API_URL` | URL Railway bot (endpoint `/send`) |
-| `BAILEYS_API_TOKEN` | Token auth Railway bot |
+| `BAILEYS_API_URL` | URL bot WhatsApp (endpoint `/send`) |
+| `BAILEYS_API_TOKEN` | Token webhook — harus sama persis dengan `API_TOKEN` di bot |
 | `FONNTE_TOKEN` | Token Fonnte (fallback jika Baileys mati) |
 | `FONNTE_WA_GROUP_ID` | JID grup utama marketplace |
 | `BAILEYS_BROADCAST_GROUPS` | JID grup tambahan (comma-separated) |
