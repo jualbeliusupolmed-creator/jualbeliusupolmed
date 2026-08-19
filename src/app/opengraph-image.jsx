@@ -125,7 +125,7 @@ export default function OgImage() {
             fontWeight: 600,
           }}
         >
-          jualbelimedan.web.id
+          jualbeliusupolmed.web.id
         </div>
       </div>
     ),
