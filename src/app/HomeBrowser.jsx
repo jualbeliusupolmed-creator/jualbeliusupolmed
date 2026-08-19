@@ -6,9 +6,10 @@ import Link from "next/link";
 import Image from "next/image";
 import ProductCard from "@/components/ProductCard";
 import CategoryFilter from "@/components/CategoryFilter";
-import { CATEGORIES as DEFAULT_CATEGORIES, POPULAR_AREAS } from "@/lib/constants";
+import { CATEGORIES as DEFAULT_CATEGORIES } from "@/lib/constants";
 import { rupiah } from "@/lib/fees";
 import { Icon } from "@/components/Icons";
+import HeroLanding from "@/components/HeroLanding";
 import { buildSlug } from "@/lib/slug";
 
 const SORT_OPTIONS = [
@@ -297,61 +298,17 @@ export default function HomeBrowser({
     switch (key) {
       case "hero":
         return (
-          <section key="hero" className="pb-5 pt-0">
-            <h1 className="whitespace-nowrap text-xs font-extrabold uppercase tracking-widest text-gray-900 dark:text-white">
-              Marketplace Kota · Medan
-            </h1>
-            <p className="mt-1 text-[11px] text-gray-400 dark:text-slate-500">
-              Jual-beli di area yang disepakati Medan. Aman, dibantu admin.
-            </p>
-
-            {/* CTAs — single row, pill style */}
-            <div className="mt-3 flex items-center gap-2">
-              <Link
-                href="/jual"
-                className="whitespace-nowrap rounded-full bg-gray-900 px-3.5 py-1 text-xs font-semibold text-white transition hover:bg-gray-700 active:scale-95 dark:bg-white dark:text-gray-900"
-              >
-              + Jual Barang
-              </Link>
-              <Link
-                href="/dicari"
-                className="whitespace-nowrap rounded-full border border-gray-200 px-3.5 py-1 text-xs font-medium text-gray-500 transition hover:bg-gray-50 active:scale-95 dark:border-slate-800 dark:text-slate-400"
-              >
-                Cari Barang
-              </Link>
-              <button
-                onClick={pwaReady ? handlePwaInstall : undefined}
-                className="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-gray-200 px-3.5 py-1 text-xs font-medium text-gray-500 transition hover:bg-gray-50 active:scale-95 dark:border-slate-800 dark:text-slate-400"
-                title="Install Aplikasi"
-              >
-                <Icon.Download className="h-3 w-3" />
-                Install
-              </button>
-            </div>
-
-            {/* Stats — inline compact */}
-            {(() => {
-              const proof = [
-                total > 0 && { v: total, l: "iklan" },
-                stats?.sellers > 1 && { v: stats.sellers, l: "penjual" },
-                stats?.wanted > 0 && { v: stats.wanted, l: "dicari" },
-                stats?.sold > 0 && { v: stats.sold, l: "terjual" },
-                { v: POPULAR_AREAS.length, l: "lokasi COD" },
-              ].filter(Boolean);
-              if (!proof.length) return null;
-              return (
-                <p className="mt-2 text-[11px] text-gray-400 dark:text-slate-500">
-                  {proof.map((p, i) => (
-                    <span key={p.l}>
-                      {i > 0 && <span className="mx-1.5">·</span>}
-                      <span className="font-bold text-gray-600 dark:text-slate-300">{p.v}</span>
-                      {" "}{p.l}
-                    </span>
-                  ))}
-                </p>
-              );
-            })()}
-          </section>
+          <HeroLanding
+            key="hero"
+            q={q}
+            onSearch={handleSearch}
+            stats={stats}
+            total={total}
+            judul={heroTitle}
+            subjudul={heroSubtitle}
+            pwaSiap={pwaReady}
+            onPasangPwa={handlePwaInstall}
+          />
         );
 
       case "featured":
@@ -474,7 +431,7 @@ export default function HomeBrowser({
 
       case "main":
         return (
-          <div key="main">
+          <div key="main" id="daftar-barang" className="scroll-mt-20">
             {/* Search bar — pill shaped */}
             <div className="relative">
               <svg

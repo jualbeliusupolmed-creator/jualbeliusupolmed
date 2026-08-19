@@ -110,8 +110,14 @@ export default function Navbar({ config }) {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
             <Logo className="h-7 w-7" src={config?.site?.logoUrl} />
-            <span className="text-[14px] font-extrabold tracking-tight text-gray-900 dark:text-white">
-              jualbeli<span className="text-gray-400 font-medium">.medan</span>
+            <span className="leading-none">
+              <span className="block text-[15px] font-extrabold tracking-tight">
+                <span className="text-usu dark:text-emerald-400">USU</span>{" "}
+                <span className="text-polmed dark:text-violet-400">POLMED</span>
+              </span>
+              <span className="mt-0.5 block text-[8px] font-bold uppercase tracking-[0.28em] text-gray-400 dark:text-slate-500">
+                Marketplace
+              </span>
             </span>
           </Link>
 
@@ -153,9 +159,11 @@ export default function Navbar({ config }) {
             ) : (
               <button
                 onClick={() => setShowOtp(true)}
-                className="rounded-full border border-gray-200 bg-gray-50/60 px-3 py-1 text-xs font-semibold text-gray-700 transition hover:bg-gray-100 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-300 dark:hover:bg-slate-800"
+                className="inline-flex items-center gap-1.5 rounded-full border border-usu/40 bg-white px-3 py-1.5 text-xs font-bold text-usu transition hover:bg-usu-soft dark:border-emerald-500/40 dark:bg-slate-900/40 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
               >
-                Masuk
+                <Icon.User className="h-3.5 w-3.5" />
+                <span className="hidden xs:inline">Masuk / Daftar</span>
+                <span className="xs:hidden">Masuk</span>
               </button>
             )}
 
@@ -177,7 +185,7 @@ export default function Navbar({ config }) {
             </button>
 
             {/* Jual Barang CTA — desktop only */}
-            <Link href="/jual" className="hidden md:inline-flex rounded-full bg-gray-900 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-gray-700 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100">
+            <Link href="/jual" className="hidden md:inline-flex rounded-full bg-polmed px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-polmed-dark">
               + Jual Barang
             </Link>
           </div>
@@ -195,7 +203,7 @@ export default function Navbar({ config }) {
                 href={l.href}
                 className={`shrink-0 whitespace-nowrap px-3 py-2.5 text-[11px] font-bold uppercase tracking-[0.12em] transition-colors ${
                   active
-                    ? "text-gray-900 border-b-2 border-gray-900 dark:text-white dark:border-white"
+                    ? "text-usu border-b-2 border-usu dark:text-emerald-400 dark:border-emerald-400"
                     : "text-gray-500 hover:text-gray-800 dark:text-slate-400 dark:hover:text-slate-200"
                 }`}
               >
