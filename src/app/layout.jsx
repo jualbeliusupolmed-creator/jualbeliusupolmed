@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 
 
 const BASE_URL =
-  (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbelimedan.web.id").trim();
+  (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
 
 const jakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
