@@ -1,4 +1,6 @@
 import { WA_GROUP_LINK, MARKETPLACE_WA } from "@/lib/constants";
+import { getSettings } from "@/lib/settings";
+import { kontakDenganCadangan } from "@/lib/kontakAdmin";
 
 export const metadata = {
   title: "Cara Bergabung — Komunitas Jual Beli Mahasiswa USU & Polmed",
@@ -55,7 +57,13 @@ function Fee({ label, value }) {
   );
 }
 
-export default function CaraBergabungPage() {
+export default async function CaraBergabungPage() {
+  // Halaman ini dulu memakai konstanta nomor bawaan kode, jadi ia satu-satunya
+  // "Hubungi Admin" yang tidak ikut pengaturan admin — apalagi ikut pengalihan
+  // saat bot padam. Sekarang sumbernya sama dengan sisa situs.
+  const { contact } = await getSettings();
+  const kontak = await kontakDenganCadangan(contact);
+  const waAdmin = String(kontak?.marketplaceWa || MARKETPLACE_WA).replace(/\D/g, "");
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="rounded-3xl bg-gradient-to-br from-primary to-primary-dark p-8 text-center text-white">
@@ -132,7 +140,7 @@ export default function CaraBergabungPage() {
             ))}
           </ul>
           <a
-            href={`https://wa.me/${MARKETPLACE_WA}`}
+            href={`https://wa.me/${waAdmin}`}
             target="_blank"
             rel="noreferrer"
             className="btn-wa mt-5 w-full"
