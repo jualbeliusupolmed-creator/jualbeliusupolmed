@@ -144,7 +144,8 @@ export default function PengaturanToko() {
         <div>
           <h1 className="text-xl font-bold">Toko saya</h1>
           <p className="text-sm text-gray-500 dark:text-slate-400">
-            Halaman gratis yang bisa kamu bagikan ke mana saja.
+            Halaman gratis yang bisa kamu bagikan ke mana saja — dan selama tokomu ada,
+            semua iklanmu tayang tanpa biaya.
           </p>
         </div>
         <Link href="/dashboard" className="btn-outline rounded-xl px-3 py-2 text-xs">

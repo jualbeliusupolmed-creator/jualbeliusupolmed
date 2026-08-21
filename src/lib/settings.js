@@ -20,6 +20,17 @@ export const DEFAULT_SETTINGS = {
       { upto: 1000000, flat: 7000 },
       { upto: null, pct: 1 },
     ],
+    // Penjual yang sudah punya halaman toko (/toko/<slug>) memasang iklan
+    // GRATIS. Keputusan pemilik, 21 Agustus 2026: toko adalah cara orang
+    // berjualan serius di sini, dan menagih biaya tayang untuk tiap barang
+    // membuat toko yang isinya banyak justru paling mahal.
+    //
+    // Sadari akibatnya sebelum mengubah: membuat toko itu gratis dan terbuka,
+    // jadi selama ini bernilai true, praktis SEMUA iklan gratis. Yang tersisa
+    // sebagai pemasukan adalah fee barang terjual, Featured, dan Sponsored.
+    // Setel false di sini (atau lewat panel Pengaturan) untuk mengembalikan
+    // biaya tayang seperti semula.
+    tokoGratis: true,
     // tier fee setelah barang terjual; dievaluasi berurutan, `upto` = batas atas (eksklusif)
     soldTiers: [
       { upto: 50000, flat: 0 },
