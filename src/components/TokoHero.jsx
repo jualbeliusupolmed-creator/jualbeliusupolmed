@@ -51,7 +51,7 @@ export default function TokoHero({ profil, nama, warna, waLink, statistik }) {
       <div className="px-5 pb-6 sm:px-8 sm:pb-8">
         <div className="-mt-12 flex flex-col gap-4 sm:-mt-16 sm:flex-row sm:items-end sm:gap-6">
           {/* Avatar / Logo */}
-          <div className="mx-auto sm:mx-0 relative z-10">
+          <div className="relative z-10 mx-auto shrink-0 sm:mx-0">
             <div className="h-[96px] w-[96px] shrink-0 overflow-hidden rounded-full border-[4px] border-white bg-white shadow-sm dark:border-slate-900 dark:bg-slate-900 sm:h-[120px] sm:w-[120px]">
               {profil.logo_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
