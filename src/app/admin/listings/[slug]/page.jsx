@@ -113,7 +113,7 @@ export default async function AdminListingPage({ params }) {
   const { listing, payments, reports, ratings, categories } = result;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6">
+    <div>
       {/* Breadcrumb */}
       <nav className="mb-4 flex items-center gap-1.5 text-sm text-gray-400">
         <Link href="/admin/overview" className="hover:text-gray-700 dark:hover:text-slate-200">

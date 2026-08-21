@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { PageHeader } from "@/components/admin/ui";
 
 export default function TrenPage() {
   const [data, setData] = useState(null);
@@ -19,23 +20,21 @@ export default function TrenPage() {
 
   return (
     <div className="animate-fade-in space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-extrabold dark:text-white">Tren Pencarian</h1>
-          <p className="mt-0.5 text-sm text-gray-400">
-            {data ? `${data.total.toLocaleString("id-ID")} pencarian` : "Memuat..."} dalam {days} hari terakhir
-          </p>
-        </div>
-        <select
-          value={days}
-          onChange={(e) => setDays(Number(e.target.value))}
-          className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-        >
-          <option value={7}>7 hari</option>
-          <option value={30}>30 hari</option>
-          <option value={90}>90 hari</option>
-        </select>
-      </div>
+      <PageHeader
+        title="Tren Pencarian"
+        description={`${data ? data.total.toLocaleString("id-ID") + " pencarian" : "Memuat…"} dalam ${days} hari terakhir`}
+        actions={
+          <select
+            value={days}
+            onChange={(e) => setDays(Number(e.target.value))}
+            className="input w-auto py-1.5 text-sm"
+          >
+            <option value={7}>7 hari</option>
+            <option value={30}>30 hari</option>
+            <option value={90}>90 hari</option>
+          </select>
+        }
+      />
 
       {loading ? (
         <div className="flex h-64 items-center justify-center text-gray-400">

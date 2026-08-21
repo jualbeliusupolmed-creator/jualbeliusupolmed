@@ -11,7 +11,7 @@ export default function ApproveUnlockClient({ paymentId, initialPayment, wanted 
 
   if (!payment) {
     return (
-      <div className="mx-auto max-w-md p-8 text-center bg-white dark:bg-slate-900 rounded-2xl shadow mt-10 border border-gray-100 dark:border-slate-800">
+      <div className="card mx-auto max-w-md p-8 text-center">
         <Icon.Package className="mx-auto h-12 w-12 text-gray-300 dark:text-slate-650 mb-3" />
         <h1 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Transaksi Tidak Ditemukan</h1>
         <p className="text-sm text-gray-500 dark:text-slate-400 mb-6">ID transaksi pembayaran manual tidak valid atau telah dihapus.</p>
@@ -49,7 +49,7 @@ export default function ApproveUnlockClient({ paymentId, initialPayment, wanted 
   };
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-10">
+    <div className="mx-auto max-w-lg">
       <div className="card bg-white p-6 shadow-xl dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800">
         <div className="flex items-center gap-2 pb-4 border-b border-gray-100 dark:border-slate-800">
           <Link href="/admin/overview" className="text-gray-400 hover:text-gray-650 p-1 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800">

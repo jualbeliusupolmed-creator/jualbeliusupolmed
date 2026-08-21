@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { PageHeader } from "@/components/admin/ui";
 
 const TYPES = ["iklan", "bump", "featured", "sold_fee", "subscribe", "renewal", "autobump", "sponsored", "wanted"];
 const TYPE_LABEL = {
@@ -91,18 +92,11 @@ export default function KeuanganPage() {
 
   return (
     <div className="animate-fade-in space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-extrabold dark:text-white">Laporan Keuangan</h1>
-          <p className="mt-0.5 text-sm text-gray-400">Pendapatan marketplace (pembayaran terkonfirmasi)</p>
-        </div>
-        <button
-          onClick={handleExportCsv}
-          className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 shadow-sm hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
-        >
-          ⬇ Export CSV
-        </button>
-      </div>
+      <PageHeader
+        title="Laporan Keuangan"
+        description="Pendapatan marketplace dari pembayaran yang sudah terkonfirmasi."
+        actions={<button onClick={handleExportCsv} className="btn-outline text-sm">⬇ Export CSV</button>}
+      />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">

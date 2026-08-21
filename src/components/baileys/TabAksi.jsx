@@ -14,9 +14,7 @@ const SUB_TABS = [
   { id: "akun",       label: "👤 Akun & Privasi" },
   { id: "panggilan",  label: "📞 Panggilan" },
   { id: "forensik",   label: "🔍 Forensik" },
-  { id: "keamanan",   label: "🔒 Keamanan" },
-  { id: "integrasi",  label: "⚙️ Integrasi" },
-  { id: "protokol",   label: "🔧 Protokol" },
+  { id: "protokol",   label: "🔧 Protokol (raw)" },
   { id: "antiban",    label: "🛡️ Anti-Ban" },
 ];
 
@@ -586,46 +584,89 @@ function PanelAkun() {
   );
 }
 
-// ── Panggilan ─────────────────────────────────────────────────────────────────
-function PanelPanggilan() {
-  const [cfg, setCfg] = useState({ call_reject: true, call_reply: true, call_reply_msg: "Maaf, bot tidak bisa menerima panggilan. Silakan kirim pesan teks." });
+// ── Setelan modul yang benar-benar dibaca bot ────────────────────────────────
+// Sebelum ini, enam panel di bawah menyimpan setelannya ke kolom `bot_modules`
+// di Supabase — kolom yang tidak dibaca siapa pun, termasuk bot. Sekarang
+// setelannya dikirim ke bot lewat endpoint /modul, ke proses yang benar-benar
+// memegang koneksi WhatsApp. Panel yang isinya tidak bisa dikerjakan bot ini
+// (enkripsi sesi di database, provider AI, protobuf manual) sudah dicabut:
+// sakelar yang berbohong lebih berbahaya daripada sakelar yang tidak ada.
+function useModul(nama) {
+  const [cfg, setCfg] = useState(null);
+  const [gagalMuat, setGagalMuat] = useState(null);
+  const [status, setStatus] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [result, setResult] = useState(null);
 
-  async function save() {
-    setSaving(true); setResult(null);
-    const res = await fetch("/api/admin/action", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "save_settings", key: "bot_modules", value: cfg }) });
-    const r = await res.json();
-    setResult(r.error ? { ok: false, text: r.error } : { ok: true, text: "✅ Konfigurasi panggilan tersimpan di database. Bot BELUM membacanya — panggilan masuk masih ditangani seperti sebelumnya." });
+  useEffect(() => {
+    let hidup = true;
+    fetch(`/api/admin/baileys?endpoint=modul&_t=${Date.now()}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (!hidup) return;
+        if (d?.modul?.[nama]) setCfg(d.modul[nama]);
+        else setGagalMuat(d?.error || "Bot tidak menjawab — setelan tidak bisa dimuat.");
+      })
+      .catch((e) => hidup && setGagalMuat(e.message));
+    return () => { hidup = false; };
+  }, [nama]);
+
+  async function simpan() {
+    setSaving(true);
+    setStatus(null);
+    const r = await apiPost("modul", { [nama]: cfg });
+    setStatus(r?.error
+      ? { ok: false, text: r.error }
+      : { ok: true, text: "✅ Tersimpan di bot dan langsung berlaku — tidak perlu restart." });
     setSaving(false);
   }
 
+  return { cfg, setCfg, simpan, saving, status, gagalMuat };
+}
+
+function ModulBelumSiap({ pesan }) {
+  return (
+    <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+      <b>Setelan tidak bisa dimuat dari bot.</b> {pesan} Selama itu, jangan menyimpan dari
+      halaman ini — yang tersimpan bisa menimpa setelan yang sedang dipakai bot.
+    </div>
+  );
+}
+
+// ── Panggilan ─────────────────────────────────────────────────────────────────
+function PanelPanggilan() {
+  const { cfg, setCfg, simpan, saving, status, gagalMuat } = useModul("panggilan");
+  if (gagalMuat) return <ModulBelumSiap pesan={gagalMuat} />;
+  if (!cfg) return <p className="text-sm text-gray-400">Memuat setelan dari bot…</p>;
+
   return (
     <div className="space-y-4">
-      <Alert ok={result?.ok} msg={result?.text} />
-      <Section title="Konfigurasi Auto-Reject & Balas Panggilan">
+      <Alert ok={status?.ok} msg={status?.text} />
+      <Section title="Tolak & Balas Panggilan Masuk">
         <div className="space-y-4">
           <label className="flex items-center gap-3">
-            <input type="checkbox" className="h-4 w-4 rounded" checked={cfg.call_reject} onChange={e => setCfg(c => ({ ...c, call_reject: e.target.checked }))} />
+            <input type="checkbox" className="h-4 w-4 rounded" checked={cfg.tolak}
+              onChange={(e) => setCfg((c) => ({ ...c, tolak: e.target.checked }))} />
             <div>
               <p className="text-sm font-medium dark:text-white">Tolak Panggilan Otomatis</p>
-              <p className="text-xs text-gray-400">Setiap panggilan masuk ke bot akan otomatis ditolak.</p>
+              <p className="text-xs text-gray-400">Panggilan masuk langsung ditolak. Kalau dimatikan, panggilan dibiarkan berdering sampai habis.</p>
             </div>
           </label>
           <label className="flex items-center gap-3">
-            <input type="checkbox" className="h-4 w-4 rounded" checked={cfg.call_reply} onChange={e => setCfg(c => ({ ...c, call_reply: e.target.checked }))} />
+            <input type="checkbox" className="h-4 w-4 rounded" checked={cfg.balas}
+              onChange={(e) => setCfg((c) => ({ ...c, balas: e.target.checked }))} />
             <div>
-              <p className="text-sm font-medium dark:text-white">Balas Otomatis Setelah Tolak</p>
-              <p className="text-xs text-gray-400">Kirim pesan teks setelah menolak panggilan.</p>
+              <p className="text-sm font-medium dark:text-white">Balas Teks Setelah Menolak</p>
+              <p className="text-xs text-gray-400">Sekali per panggilan, supaya penelepon tahu harus mengetik.</p>
             </div>
           </label>
-          {cfg.call_reply && (
-            <Field label="Pesan Balasan Setelah Tolak Panggilan">
-              <textarea className="input min-h-[80px]" value={cfg.call_reply_msg} onChange={e => setCfg(c => ({ ...c, call_reply_msg: e.target.value }))} />
+          {cfg.balas && (
+            <Field label="Pesan Balasan">
+              <textarea className="input min-h-[80px]" value={cfg.pesan}
+                onChange={(e) => setCfg((c) => ({ ...c, pesan: e.target.value }))} />
             </Field>
           )}
         </div>
-        <button onClick={save} disabled={saving} className="btn-primary mt-2">{saving ? "⏳" : "Simpan Konfigurasi"}</button>
+        <button onClick={simpan} disabled={saving} className="btn-primary mt-2">{saving ? "⏳" : "Simpan"}</button>
       </Section>
     </div>
   );
@@ -633,183 +674,67 @@ function PanelPanggilan() {
 
 // ── Forensik ──────────────────────────────────────────────────────────────────
 function PanelForensik() {
-  const [cfg, setCfg] = useState({ anti_delete: false, anti_edit: false, anti_delete_target: "", forward_log: false });
-  const [saving, setSaving] = useState(false);
-  const [result, setResult] = useState(null);
+  const { cfg, setCfg, simpan, saving, status, gagalMuat } = useModul("forensik");
   const { data: groupData } = useApi("groups");
   const groups = groupData?.groups || [];
-
-  async function save() {
-    setSaving(true); setResult(null);
-    const res = await fetch("/api/admin/action", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "save_settings", key: "bot_modules", value: cfg }) });
-    const r = await res.json();
-    setResult(r.error ? { ok: false, text: r.error } : { ok: true, text: "✅ Konfigurasi forensik tersimpan di database. Bot BELUM membacanya — pesan yang ditarik/diedit belum direkam." });
-    setSaving(false);
-  }
+  if (gagalMuat) return <ModulBelumSiap pesan={gagalMuat} />;
+  if (!cfg) return <p className="text-sm text-gray-400">Memuat setelan dari bot…</p>;
 
   return (
     <div className="space-y-4">
-      <Alert ok={result?.ok} msg={result?.text} />
-      <Section title="Konfigurasi Data & Forensik">
+      <Alert ok={status?.ok} msg={status?.text} />
+      <Section title="Pesan yang Ditarik & Diedit">
+        <p className="text-xs text-gray-400">
+          Yang bisa direkam hanya pesan yang sempat lewat selagi bot menyala. Pesan yang ditarik
+          saat bot mati tidak bisa dipulihkan dari mana pun.
+        </p>
         <div className="space-y-4">
           <label className="flex items-center gap-3">
-            <input type="checkbox" className="h-4 w-4 rounded" checked={cfg.anti_delete} onChange={e => setCfg(c => ({ ...c, anti_delete: e.target.checked }))} />
+            <input type="checkbox" className="h-4 w-4 rounded" checked={cfg.antiHapus}
+              onChange={(e) => setCfg((c) => ({ ...c, antiHapus: e.target.checked }))} />
             <div>
-              <p className="text-sm font-medium dark:text-white">Anti-Delete</p>
-              <p className="text-xs text-gray-400">Simpan pesan yang ditarik sebelum terhapus dari server.</p>
+              <p className="text-sm font-medium dark:text-white">Rekam Pesan yang Ditarik</p>
+              <p className="text-xs text-gray-400">Isinya disimpan ke arsip pesan dan terlihat di dashboard bot.</p>
             </div>
           </label>
           <label className="flex items-center gap-3">
-            <input type="checkbox" className="h-4 w-4 rounded" checked={cfg.anti_edit} onChange={e => setCfg(c => ({ ...c, anti_edit: e.target.checked }))} />
+            <input type="checkbox" className="h-4 w-4 rounded" checked={cfg.antiEdit}
+              onChange={(e) => setCfg((c) => ({ ...c, antiEdit: e.target.checked }))} />
             <div>
-              <p className="text-sm font-medium dark:text-white">Anti-Edit</p>
-              <p className="text-xs text-gray-400">Catat isi pesan asli sebelum diedit pengirim.</p>
+              <p className="text-sm font-medium dark:text-white">Rekam Pesan yang Diedit</p>
+              <p className="text-xs text-gray-400">Isi sebelum dan sesudah diedit dicatat berdampingan.</p>
             </div>
           </label>
-          <label className="flex items-center gap-3">
-            <input type="checkbox" className="h-4 w-4 rounded" checked={cfg.forward_log} onChange={e => setCfg(c => ({ ...c, forward_log: e.target.checked }))} />
-            <div>
-              <p className="text-sm font-medium dark:text-white">Log Forwarding Score</p>
-              <p className="text-xs text-gray-400">Catat berapa kali pesan telah diteruskan.</p>
-            </div>
-          </label>
-          {(cfg.anti_delete || cfg.anti_edit) && (
-            <Field label="Kirim Notif ke Grup / Nomor (opsional)">
-              <input className="input" placeholder="628xxx atau JID grup" value={cfg.anti_delete_target} onChange={e => setCfg(c => ({ ...c, anti_delete_target: e.target.value }))} />
+          {(cfg.antiHapus || cfg.antiEdit) && (
+            <Field label="Teruskan ke Nomor / Grup (opsional)">
+              <input className="input" placeholder="628xxx atau JID grup" value={cfg.tujuanNotif}
+                onChange={(e) => setCfg((c) => ({ ...c, tujuanNotif: e.target.value }))} />
               {groups.length > 0 && (
-                <select className="input mt-1 text-sm" onChange={e => setCfg(c => ({ ...c, anti_delete_target: e.target.value }))} value={cfg.anti_delete_target}>
+                <select className="input mt-1 text-sm" value={cfg.tujuanNotif}
+                  onChange={(e) => setCfg((c) => ({ ...c, tujuanNotif: e.target.value }))}>
                   <option value="">— Pilih grup —</option>
-                  {groups.map(g => <option key={g.jid} value={g.jid}>{g.name}</option>)}
+                  {groups.map((g) => <option key={g.jid} value={g.jid}>{g.name}</option>)}
                 </select>
               )}
             </Field>
           )}
         </div>
-        <button onClick={save} disabled={saving} className="btn-primary mt-2">{saving ? "⏳" : "Simpan Konfigurasi"}</button>
+        <button onClick={simpan} disabled={saving} className="btn-primary mt-2">{saving ? "⏳" : "Simpan"}</button>
       </Section>
     </div>
   );
 }
 
-// ── Keamanan & Enkripsi ───────────────────────────────────────────────────────
-function PanelKeamanan() {
-  const [cfg, setCfg] = useState({ cloud_encrypt: true, session_backup: false });
-  const [saving, setSaving] = useState(false);
-  const [result, setResult] = useState(null);
-
-  async function save() {
-    setSaving(true);
-    const res = await fetch("/api/admin/action", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "save_settings", key: "bot_modules", value: cfg }) });
-    const r = await res.json();
-    setResult(r.error ? { ok: false, text: r.error } : { ok: true, text: "✅ Tersimpan." });
-    setSaving(false);
-  }
-
-  return (
-    <div className="space-y-4">
-      <Alert ok={result?.ok} msg={result?.text} />
-      <div className="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 p-4 text-sm text-amber-700 dark:text-amber-400">
-        ⚠️ Fitur enkripsi beroperasi di sisi server bot. Setelan di sini dikomunikasikan ke bot saat startup.
-      </div>
-      <Section title="Konfigurasi Keamanan Sesi">
-        <div className="space-y-4">
-          <label className="flex items-center gap-3">
-            <input type="checkbox" className="h-4 w-4 rounded" checked={cfg.cloud_encrypt} onChange={e => setCfg(c => ({ ...c, cloud_encrypt: e.target.checked }))} />
-            <div>
-              <p className="text-sm font-medium dark:text-white">Enkripsi Sesi di Database</p>
-              <p className="text-xs text-gray-400">Sesi login Baileys tersimpan terenkripsi di DB cloud.</p>
-            </div>
-          </label>
-          <label className="flex items-center gap-3">
-            <input type="checkbox" className="h-4 w-4 rounded" checked={cfg.session_backup} onChange={e => setCfg(c => ({ ...c, session_backup: e.target.checked }))} />
-            <div>
-              <p className="text-sm font-medium dark:text-white">Backup Sesi Otomatis</p>
-              <p className="text-xs text-gray-400">Backup snapshot sesi setiap 6 jam ke storage.</p>
-            </div>
-          </label>
-        </div>
-        <button onClick={save} disabled={saving} className="btn-primary mt-2">{saving ? "⏳" : "Simpan"}</button>
-      </Section>
-    </div>
-  );
-}
-
-// ── Integrasi ─────────────────────────────────────────────────────────────────
-function PanelIntegrasi() {
-  const [cfg, setCfg] = useState({ ai_enabled: true, ai_provider: "gemini", mcp_enabled: false, ctwa_enabled: false });
-  const [saving, setSaving] = useState(false);
-  const [result, setResult] = useState(null);
-  const [testResult, setTestResult] = useState(null);
-  const [testing, setTesting] = useState(false);
-
-  async function save() {
-    setSaving(true);
-    const res = await fetch("/api/admin/action", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "save_settings", key: "bot_modules", value: cfg }) });
-    const r = await res.json();
-    setResult(r.error ? { ok: false, text: r.error } : { ok: true, text: "✅ Konfigurasi integrasi disimpan." });
-    setSaving(false);
-  }
-
-  async function testAI() {
-    setTesting(true); setTestResult(null);
-    const r = await apiPost("test-ai", { prompt: "Halo, apakah kamu online?" });
-    setTestResult(r.reply || r.error || JSON.stringify(r));
-    setTesting(false);
-  }
-
-  return (
-    <div className="space-y-4">
-      <Alert ok={result?.ok} msg={result?.text} />
-      <Section title="Integrasi AI">
-        <label className="flex items-center gap-3">
-          <input type="checkbox" className="h-4 w-4 rounded" checked={cfg.ai_enabled} onChange={e => setCfg(c => ({ ...c, ai_enabled: e.target.checked }))} />
-          <span className="text-sm dark:text-white">Aktifkan AI di Bot</span>
-        </label>
-        {cfg.ai_enabled && (
-          <Field label="Provider AI">
-            <select className="input" value={cfg.ai_provider} onChange={e => setCfg(c => ({ ...c, ai_provider: e.target.value }))}>
-              <option value="gemini">Google Gemini</option>
-              <option value="claude">Anthropic Claude</option>
-              <option value="openai">OpenAI GPT</option>
-            </select>
-          </Field>
-        )}
-        <div className="flex gap-2 mt-1">
-          <button onClick={save} disabled={saving} className="btn-primary">{saving ? "⏳" : "Simpan"}</button>
-          <button onClick={testAI} disabled={testing} className="btn-outline">{testing ? "⏳" : "🧪 Test AI"}</button>
-        </div>
-        {testResult && <div className="rounded-lg bg-gray-50 dark:bg-slate-800 p-3 text-sm dark:text-slate-300">{testResult}</div>}
-      </Section>
-
-      <Section title="Integrasi Lanjutan">
-        <div className="space-y-3">
-          {[
-            ["mcp_enabled", "MCP Server Agent", "Aktifkan penghubung agen AI Desktop (Claude Desktop, Cursor)."],
-            ["ctwa_enabled", "CTWA Ads Recovery", "Deteksi & tangani pesan dari iklan Click-to-WhatsApp."],
-          ].map(([key, label, desc]) => (
-            <label key={key} className="flex items-center gap-3">
-              <input type="checkbox" className="h-4 w-4 rounded" checked={cfg[key]} onChange={e => setCfg(c => ({ ...c, [key]: e.target.checked }))} />
-              <div><p className="text-sm font-medium dark:text-white">{label}</p><p className="text-xs text-gray-400">{desc}</p></div>
-            </label>
-          ))}
-        </div>
-        <button onClick={save} disabled={saving} className="btn-primary mt-2">{saving ? "⏳" : "Simpan"}</button>
-      </Section>
-    </div>
-  );
-}
-
-// ── Protokol Tingkat Lanjut ───────────────────────────────────────────────────
+// ── Protokol: kirim payload mentah ────────────────────────────────────────────
 function PanelProtokol() {
-  const [cfg, setCfg] = useState({ protobuf_manual: false, lid_enabled: false, meta_coex: false, wam_reader: false });
   const [rawPayload, setRawPayload] = useState('{"key": "value"}');
   const [rawResult, setRawResult] = useState(null);
   const [sending, setSending] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [result, setResult] = useState(null);
 
   async function sendRaw(e) {
-    e.preventDefault(); setSending(true); setRawResult(null);
+    e.preventDefault();
+    setSending(true);
+    setRawResult(null);
     try {
       const body = JSON.parse(rawPayload);
       const r = await apiPost("send-raw", body);
@@ -818,45 +743,19 @@ function PanelProtokol() {
     setSending(false);
   }
 
-  async function save() {
-    setSaving(true);
-    const res = await fetch("/api/admin/action", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "save_settings", key: "bot_modules", value: cfg }) });
-    const r = await res.json();
-    setResult(r.error ? { ok: false, text: r.error } : { ok: true, text: "✅ Tersimpan." });
-    setSaving(false);
-  }
-
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-rose-200 bg-rose-50 dark:bg-rose-900/20 dark:border-rose-800 p-4 text-sm text-rose-700 dark:text-rose-400">
-        ⚠️ Fitur protokol tingkat lanjut hanya untuk developer. Gunakan dengan hati-hati.
+      <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-800 dark:bg-rose-900/20 dark:text-rose-400">
+        ⚠️ Hanya untuk developer: payload dikirim apa adanya ke bot.
       </div>
-      <Alert ok={result?.ok} msg={result?.text} />
-
-      <Section title="Modul Protokol">
-        <div className="space-y-3">
-          {[
-            ["protobuf_manual", "Protobuf Manual", "Susun struktur pesan Protobuf secara mentah."],
-            ["lid_enabled", "LID & Username", "Tangani sistem ID baru WhatsApp tanpa nomor."],
-            ["meta_coex", "Meta Coexistence", "Kompatibel dengan asisten Meta AI."],
-            ["wam_reader", "WAM Metrics Reader", "Baca parameter pantauan WhatsApp."],
-          ].map(([key, label, desc]) => (
-            <label key={key} className="flex items-center gap-3">
-              <input type="checkbox" className="h-4 w-4 rounded" checked={cfg[key]} onChange={e => setCfg(c => ({ ...c, [key]: e.target.checked }))} />
-              <div><p className="text-sm font-medium dark:text-white">{label}</p><p className="text-xs text-gray-400">{desc}</p></div>
-            </label>
-          ))}
-        </div>
-        <button onClick={save} disabled={saving} className="btn-primary mt-2">{saving ? "⏳" : "Simpan"}</button>
-      </Section>
-
       <Section title="Kirim Raw Payload ke Bot">
-        <p className="text-xs text-gray-400">Kirim payload JSON mentah ke endpoint bot untuk debugging protokol.</p>
+        <p className="text-xs text-gray-400">Untuk menguji endpoint bot saat mengembangkan fitur baru.</p>
         <form onSubmit={sendRaw} className="space-y-2">
-          <textarea className="input min-h-[120px] font-mono text-xs" value={rawPayload} onChange={e => setRawPayload(e.target.value)} />
+          <textarea className="input min-h-[120px] font-mono text-xs" value={rawPayload}
+            onChange={(e) => setRawPayload(e.target.value)} />
           <button type="submit" disabled={sending} className="btn-primary text-sm">{sending ? "⏳" : "Kirim Raw"}</button>
         </form>
-        {rawResult && <pre className="rounded-lg bg-gray-50 dark:bg-slate-800 p-3 text-xs overflow-auto max-h-48 dark:text-slate-300">{rawResult}</pre>}
+        {rawResult && <pre className="max-h-48 overflow-auto rounded-lg bg-gray-50 p-3 text-xs dark:bg-slate-800 dark:text-slate-300">{rawResult}</pre>}
       </Section>
     </div>
   );
@@ -864,57 +763,52 @@ function PanelProtokol() {
 
 // ── Anti-Ban ──────────────────────────────────────────────────────────────────
 function PanelAntiBan() {
-  const [cfg, setCfg] = useState({
-    composing_signal: true, recording_signal: true,
-    random_delay: true, delay_min: 1000, delay_max: 4000,
-    rate_limit: true, rate_limit_per_hour: 100,
-    silent_reconnect: true,
-  });
-  const [saving, setSaving] = useState(false);
-  const [result, setResult] = useState(null);
-
-  async function save() {
-    setSaving(true);
-    const res = await fetch("/api/admin/action", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "save_settings", key: "bot_modules", value: cfg }) });
-    const r = await res.json();
-    setResult(r.error ? { ok: false, text: r.error } : { ok: true, text: "✅ Konfigurasi anti-ban disimpan ke database." });
-    setSaving(false);
-  }
+  const { cfg, setCfg, simpan, saving, status, gagalMuat } = useModul("antiban");
+  if (gagalMuat) return <ModulBelumSiap pesan={gagalMuat} />;
+  if (!cfg) return <p className="text-sm text-gray-400">Memuat setelan dari bot…</p>;
 
   return (
     <div className="space-y-4">
-      <Alert ok={result?.ok} msg={result?.text} />
-      <Section title="Strategi Anti-Ban">
-        <div className="space-y-5">
-          <div className="space-y-3">
-            {[
-              ["composing_signal", "Sinyal Mengetik", "Kirim sinyal 'sedang mengetik' sebelum bot membalas pesan."],
-              ["recording_signal", "Sinyal Merekam", "Kirim sinyal 'merekam' sebelum bot kirim Voice Note."],
-              ["random_delay", "Jeda Acak Antar Pesan", "Terapkan delay random agar perilaku bot mirip manusia."],
-              ["rate_limit", "Rate Limiting", "Batasi jumlah pesan maksimal per jam."],
-              ["silent_reconnect", "Silent Reconnect", "Reconnect tanpa memicu deteksi spam WhatsApp."],
-            ].map(([key, label, desc]) => (
-              <label key={key} className="flex items-start gap-3">
-                <input type="checkbox" className="h-4 w-4 rounded mt-0.5" checked={cfg[key]} onChange={e => setCfg(c => ({ ...c, [key]: e.target.checked }))} />
-                <div><p className="text-sm font-medium dark:text-white">{label}</p><p className="text-xs text-gray-400">{desc}</p></div>
-              </label>
-            ))}
-          </div>
-
-          {cfg.random_delay && (
-            <div className="grid grid-cols-2 gap-3 pl-7">
-              <Field label="Delay Min (ms)"><input type="number" className="input" min={0} value={cfg.delay_min} onChange={e => setCfg(c => ({ ...c, delay_min: Number(e.target.value) }))} /></Field>
-              <Field label="Delay Max (ms)"><input type="number" className="input" min={0} value={cfg.delay_max} onChange={e => setCfg(c => ({ ...c, delay_max: Number(e.target.value) }))} /></Field>
+      <Alert ok={status?.ok} msg={status?.text} />
+      <Section title="Rem Laju Kirim">
+        <div className="space-y-4">
+          <label className="flex items-start gap-3">
+            <input type="checkbox" className="mt-0.5 h-4 w-4 rounded" checked={cfg.sinyalMengetik}
+              onChange={(e) => setCfg((c) => ({ ...c, sinyalMengetik: e.target.checked }))} />
+            <div>
+              <p className="text-sm font-medium dark:text-white">Sinyal “sedang mengetik”</p>
+              <p className="text-xs text-gray-400">Dikirim sebelum balasan, supaya jedanya terlihat wajar.</p>
+            </div>
+          </label>
+          <label className="flex items-start gap-3">
+            <input type="checkbox" className="mt-0.5 h-4 w-4 rounded" checked={cfg.jedaAcak}
+              onChange={(e) => setCfg((c) => ({ ...c, jedaAcak: e.target.checked }))} />
+            <div>
+              <p className="text-sm font-medium dark:text-white">Jeda Acak Antar Pesan</p>
+              <p className="text-xs text-gray-400">Kalau dimatikan, bot memakai jeda bawaannya sendiri.</p>
+            </div>
+          </label>
+          {cfg.jedaAcak && (
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Jeda minimum (ms)">
+                <input type="number" min="0" className="input" value={cfg.jedaMin}
+                  onChange={(e) => setCfg((c) => ({ ...c, jedaMin: Number(e.target.value) }))} />
+              </Field>
+              <Field label="Jeda maksimum (ms)">
+                <input type="number" min="0" className="input" value={cfg.jedaMax}
+                  onChange={(e) => setCfg((c) => ({ ...c, jedaMax: Number(e.target.value) }))} />
+              </Field>
             </div>
           )}
-
-          {cfg.rate_limit && (
-            <div className="pl-7">
-              <Field label="Maks Pesan per Jam"><input type="number" className="input max-w-xs" min={1} max={1000} value={cfg.rate_limit_per_hour} onChange={e => setCfg(c => ({ ...c, rate_limit_per_hour: Number(e.target.value) }))} /></Field>
-            </div>
-          )}
+          <Field label="Batas pesan per jam (0 = tanpa batas)">
+            <input type="number" min="0" className="input" value={cfg.batasJam}
+              onChange={(e) => setCfg((c) => ({ ...c, batasJam: Number(e.target.value) }))} />
+            <p className="mt-1 text-xs text-gray-400">
+              Kalau batasnya tercapai, pesan berikutnya <b>ditahan</b> sampai jendela satu jam bergeser — tidak dibuang.
+            </p>
+          </Field>
         </div>
-        <button onClick={save} disabled={saving} className="btn-primary mt-2">{saving ? "⏳" : "Simpan Konfigurasi Anti-Ban"}</button>
+        <button onClick={simpan} disabled={saving} className="btn-primary mt-2">{saving ? "⏳" : "Simpan"}</button>
       </Section>
     </div>
   );
@@ -973,14 +867,6 @@ function PanelSaluran() {
   );
 }
 
-// Panel yang tombol "Simpan"-nya menulis ke `bot_modules` di database — kolom
-// yang TIDAK dibaca siapa pun: tidak oleh situs, tidak oleh bot WhatsApp. Dicatat
-// di satu tempat supaya peringatannya ikut hilang sendiri begitu salah satunya
-// benar-benar disambungkan ke bot (tinggal coret dari daftar ini).
-const PANEL_BELUM_TERHUBUNG = new Set([
-  "panggilan", "forensik", "keamanan", "integrasi", "protokol", "antiban",
-]);
-
 // ── Main TabAksi ─────────────────────────────────────────────────────────────
 const PANELS = {
   koneksi:    PanelKoneksi,
@@ -993,8 +879,6 @@ const PANELS = {
   akun:       PanelAkun,
   panggilan:  PanelPanggilan,
   forensik:   PanelForensik,
-  keamanan:   PanelKeamanan,
-  integrasi:  PanelIntegrasi,
   protokol:   PanelProtokol,
   antiban:    PanelAntiBan,
 };
@@ -1026,21 +910,6 @@ export function TabAksi() {
           ))}
         </div>
       </div>
-
-      {/* Enam panel di bawah ini MENYIMPAN setelan ke kolom `bot_modules` di
-          database — dan tidak ada satu pun yang membacanya: tidak di situs, tidak
-          di bot WhatsApp (yang bahkan tidak punya penangan panggilan masuk sama
-          sekali). Tanpa peringatan ini, tombol "Simpan" yang menjawab "tersimpan"
-          membuat admin yakin bot sudah menolak panggilan atau merekam pesan yang
-          ditarik, padahal tidak ada yang berubah. Sakelar yang berbohong lebih
-          berbahaya daripada sakelar yang belum ada. */}
-      {PANEL_BELUM_TERHUBUNG.has(sub) && (
-        <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
-          <b>Setelan di panel ini belum dibaca bot.</b> Nilainya tersimpan di database
-          (<code>bot_modules</code>), tapi bot WhatsApp belum mengambilnya — jadi menyimpan di sini
-          belum mengubah perilaku bot. Panel ini rencana yang tercatat, bukan sakelar yang hidup.
-        </div>
-      )}
 
       {sub === "grup" ? (
         <div className="card p-6 text-center space-y-3">

@@ -1,5 +1,6 @@
 import { getOverviewStats } from "@/lib/adminOverviewData";
 import { rupiah } from "@/lib/fees";
+import { PageHeader } from "@/components/admin/ui";
 
 // Helper components that used to be inside AdminPanel
 function Kpi({ label, value, sub }) {
@@ -55,8 +56,7 @@ export default async function OverviewPage() {
 
   return (
     <div className="animate-fade-in">
-      <h1 className="mb-6 hidden text-2xl font-extrabold dark:text-white lg:block">Ringkasan</h1>
-      
+      <PageHeader title="Ringkasan" description="Angka utama marketplace hari ini." />
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-7">
         <Kpi label="Iklan aktif" value={stats.activeTotal} sub={`${stats.listingsTotal} total`} />
         <Kpi label="Terjual" value={stats.soldTotal} sub={`${stats.pendingTotal} pending`} />
