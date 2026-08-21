@@ -27,7 +27,11 @@ const REPORT_LABELS = {
   salah_kategori: "Salah kategori",
   lainnya: "Lainnya",
 };
-const PAYMENT_TYPES = ["iklan", "bump", "featured", "sold_fee"];
+// Sembilan jenis, sama persis dengan payments_type_check di database dan
+// dengan /admin/keuangan. Sebelumnya cuma empat, jadi rincian "per tipe" di
+// bawah tidak pernah menjumlah sampai "Total Lunas" — pembayaran langganan,
+// perpanjangan, dan buka-kontak hilang tanpa jejak dari ringkasannya.
+const PAYMENT_TYPES = ["iklan", "bump", "featured", "sold_fee", "subscribe", "renewal", "autobump", "sponsored", "wanted"];
 const PAYMENT_STATUS = ["pending", "paid", "failed", "expired"];
 const PAGE = 25;
 
