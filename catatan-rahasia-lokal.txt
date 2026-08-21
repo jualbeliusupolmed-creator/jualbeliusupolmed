@@ -1,6 +1,0 @@
-Catatan pribadi — file ini di-gitignore, TIDAK ikut ke-commit.
-(Dipindahkan dari atas README.md pada 18 Jul 2026 supaya tidak bocor ke repo.)
-
-Softex123
-143.198.80.126
-jualbeliusu_rahasia
