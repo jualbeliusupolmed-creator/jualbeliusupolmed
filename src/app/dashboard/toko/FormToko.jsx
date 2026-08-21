@@ -8,7 +8,7 @@ import { AKSEN, BATAS, normalisasiSlug, SLUG_MIN } from "@/lib/toko";
 
 const KOSONG = {
   store_name: "", tagline: "", bio: "", store_area: "", store_hours: "",
-  store_instagram: "", store_announcement: "", store_accent: "emerald",
+  store_instagram: "", store_gmaps: "", store_announcement: "", store_accent: "emerald",
   store_open: true, logo_url: "", banner_url: "", slug: "",
 };
 
@@ -216,6 +216,10 @@ export default function FormToko({ onTersimpan }) {
           <Isian label="Instagram" petunjuk="Boleh tempel tautan penuh, nanti dirapikan sendiri.">
             <input value={form.store_instagram} onChange={ubah("store_instagram")}
               maxLength={BATAS.store_instagram} placeholder="tokoridho" className="input" />
+          </Isian>
+          <Isian label="Titik Google Maps" petunjuk="Tautan dari aplikasi Google Maps (contoh: https://maps.app.goo.gl/...)">
+            <input value={form.store_gmaps} onChange={ubah("store_gmaps")}
+              maxLength={BATAS.store_gmaps} placeholder="https://maps.app.goo.gl/..." className="input" />
           </Isian>
           <Isian label="Pengumuman" petunjuk="Muncul di kotak menyala di halaman toko. Kosongkan kalau tidak perlu.">
             <textarea value={form.store_announcement} onChange={ubah("store_announcement")}

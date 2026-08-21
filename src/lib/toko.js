@@ -86,6 +86,7 @@ export const BATAS = {
   store_hours: 80,
   store_instagram: 40,
   store_announcement: 300,
+  store_gmaps: 250,
   bio: 500,
 };
 
@@ -105,6 +106,21 @@ export function normalisasiInstagram(nilai) {
     .replace(/[/?#].*$/, "")
     .trim();
   return /^[A-Za-z0-9._]{1,30}$/.test(nama) ? nama : null;
+}
+
+/** Bersihkan input Google Maps: harus berupa URL Google Maps yang sah. */
+export function normalisasiGmaps(nilai) {
+  const teks = String(nilai ?? "").trim();
+  if (!teks) return null;
+  try {
+    const u = new URL(teks);
+    if (!u.hostname.includes("google.com") && !u.hostname.includes("maps.app.goo.gl") && !u.hostname.includes("goo.gl")) {
+      return null;
+    }
+    return u.toString();
+  } catch {
+    return null; // kalau bukan URL yang sah, buang
+  }
 }
 
 /** Nama yang ditampilkan di halaman toko: nama toko kalau ada, kalau tidak

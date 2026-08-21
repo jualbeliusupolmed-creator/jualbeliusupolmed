@@ -229,6 +229,13 @@ export default async function HalamanToko({ params }) {
           <div className="mt-2 divide-y divide-gray-100 dark:divide-slate-800">
             <Info ikon="📝" label="Deskripsi">{profil.bio}</Info>
             <Info ikon="📍" label="Wilayah / COD">{profil.store_area}</Info>
+            {profil.store_gmaps && (
+              <Info ikon="🗺️" label="Lokasi Maps">
+                <a href={profil.store_gmaps} target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: warna.utama }}>
+                  Buka Peta ↗
+                </a>
+              </Info>
+            )}
             <Info ikon="🕒" label="Jam buka">{profil.store_hours}</Info>
             <Info ikon="📱" label="WhatsApp">{profil.wa}</Info>
             <Info ikon="🔗" label="Alamat toko">{`jualbeliusupolmed.web.id/toko/${profil.slug}`}</Info>
