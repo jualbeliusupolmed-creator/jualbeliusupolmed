@@ -31,12 +31,61 @@ function logBotSend(target, message, hasMedia) {
   } catch (_) {}
 }
 
+// Batas "masih berguna kalau terlambat". Pesan dengan masa berlaku di bawah
+// ini (OTP: 300 detik) TIDAK pernah ditampung — kode lima menit yang dikirim
+// ulang tiga jam kemudian bukan pertolongan, melainkan kebingungan.
+const AMBANG_TAMPUNG_DETIK = 15 * 60;
+
+/**
+ * Simpan pesan yang gagal dikirim ke public.wa_outbox supaya bisa dikirim
+ * ulang dari panel begitu bot tersambung lagi.
+ *
+ * Sebelum ini, kegagalan cuma mendarat di console.error milik pemanggil —
+ * yaitu log Vercel, yang tidak dibaca siapa pun dan tidak punya tombol.
+ * Iklannya tetap tayang, penjualnya tidak pernah tahu.
+ *
+ * Sengaja tidak pernah melempar: ini jaring pengaman, dan jaring pengaman
+ * yang bisa menjatuhkan pemanggilnya lebih buruk daripada tidak ada.
+ */
+async function tampungGagal(target, message, fileUrl, ttlDetik, sebab, meta) {
+  try {
+    // Kiriman ulang dari panel sudah PUNYA barisnya sendiri di wa_outbox.
+    // Tanpa penjaga ini, tiap kali tombol Kirim ditekan saat bot masih mati,
+    // antreannya beranak — satu baris baru per penekanan, untuk pesan yang sama.
+    if (meta?.jangan_tampung) return;
+    if (ttlDetik && Number(ttlDetik) <= AMBANG_TAMPUNG_DETIK) {
+      console.warn(`[wa_outbox] tidak ditampung (masa berlaku ${ttlDetik}s terlalu pendek)`);
+      return;
+    }
+    const t = String(target || "");
+    // Grup, saluran, dan Status tidak ditampung: yang bisa dikirim ulang dari
+    // panel adalah pesan ke orang, dan pengumuman basi ke grup lebih merugikan
+    // daripada tidak terkirim sama sekali.
+    if (!t || t === "status@broadcast" || t.includes("@g.us") || t.includes("@newsletter")) return;
+
+    await getAdminClient().from("wa_outbox").insert({
+      target: t,
+      message: String(message || ""),
+      image_url: fileUrl || null,
+      ttl_detik: ttlDetik ? Number(ttlDetik) : null,
+      jenis: meta?.jenis || null,
+      listing_id: meta?.listingId || null,
+      galat_terakhir: String(sebab || "").slice(0, 500),
+    });
+    console.warn(`[wa_outbox] ditampung untuk ${t} — ${sebab}`);
+  } catch (e) {
+    // Tabelnya belum ada (migrasi belum jalan) juga mendarat di sini. Berisik
+    // di log, tapi tidak mematikan pengiriman apa pun.
+    console.error("[wa_outbox] gagal menampung:", e?.message);
+  }
+}
+
 // ttlDetik: berapa lama pesan ini masih berguna kalau terlambat. Bot memakainya
 // untuk memutuskan antara menyimpan (notifikasi penjualan — terlambat masih jauh
 // lebih baik daripada tidak sampai) dan menolak cepat (OTP — kode yang datang
 // sejam kemudian cuma membingungkan, dan penolakan cepat membuka jalur cadangan
 // di bawah). Kosong = pesan boleh menunggu selama bot menyimpannya.
-async function send(target, message, fileUrl = null, ttlDetik = null) {
+async function send(target, message, fileUrl = null, ttlDetik = null, meta = null) {
   // Jangan kirim pesan kosong (teks kosong tanpa lampiran) — pernah muncul
   // gelembung kosong ke pelanggan.
   if (!fileUrl && (!message || !String(message).trim())) {
@@ -74,28 +123,38 @@ async function send(target, message, fileUrl = null, ttlDetik = null) {
     const payload = { target: baileysTarget, message: message, url: fileUrl || undefined, ttlDetik: ttlDetik || undefined };
 
     console.log(`[sendWa] Sending to: ${finalUrl} | Target: ${target}`);
-    const res = await fetch(finalUrl, {
-      method: "POST",
-      headers: { "Authorization": baileysToken, "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    // Bukan res.json() polos: kalau bot mati, yang balik bisa HTML 502 dari
-    // nginx, dan melempar di sini akan melewati jalur cadangan di bawah —
-    // tepat pada keadaan yang jalur itu dibuat untuk menanganinya.
-    const json = await res.json().catch(() => ({}));
-    console.log(`[sendWa] Response: ${res.status} | Body: ${JSON.stringify(json)}`);
-    if (res.ok) return { ok: true, data: json };
 
-    // Baileys menolak. Dulu jalur berhenti di sini, dan itu berarti bot yang
-    // padam ikut mematikan OTP — yaitu satu-satunya pintu masuk DAN pendaftaran
-    // penjual. Kalau ada token Fonnte, coba lewat sana sebelum menyerah.
-    //
-    // Aman dari kirim ganda: bot mengantre pesan dan menjawab ok=true begitu
-    // masuk antrean, jadi kita cuma sampai ke sini kalau ia menolak menerimanya
-    // sama sekali (mis. 503 saat sesi WhatsApp-nya terkunci).
-    console.warn(`[sendWa] Baileys menolak (${res.status}) — mencoba Fonnte.`);
+    // fetch() melempar kalau VPS-nya tidak menjawab sama sekali — mati, nginx
+    // tumbang, DNS gagal. Sebelum ini lemparan itu keluar dari sendWa() dan
+    // mendarat di `.catch(console.error)` milik pemanggil, jadi pesannya lenyap
+    // tepat pada keadaan terburuk. Sekarang ia keadaan biasa yang ditampung.
+    let res = null, json = {}, galat = null;
+    try {
+      res = await fetch(finalUrl, {
+        method: "POST",
+        headers: { "Authorization": baileysToken, "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      // Bukan res.json() polos: kalau bot mati, yang balik bisa HTML 502 dari
+      // nginx, dan melempar di sini akan melewati jalur cadangan di bawah —
+      // tepat pada keadaan yang jalur itu dibuat untuk menanganinya.
+      json = await res.json().catch(() => ({}));
+      console.log(`[sendWa] Response: ${res.status} | Body: ${JSON.stringify(json)}`);
+      if (res.ok) return { ok: true, data: json };
+      galat = `bot menolak (HTTP ${res.status})${json?.error ? ": " + json.error : ""}`;
+    } catch (err) {
+      galat = `bot tidak menjawab: ${err?.message || "gagal menghubungi"}`;
+      console.error(`[sendWa] ${galat}`);
+    }
+
+    // Sampai di sini berarti pesannya TIDAK diterima siapa pun. Bot mengantre
+    // sendiri pesan yang berhasil masuk dan menjawab ok=true saat itu juga,
+    // jadi yang jatuh ke sini benar-benar tidak punya rumah.
+    await tampungGagal(target, message, fileUrl, ttlDetik, galat, meta);
+
+    console.warn(`[sendWa] ${galat} — mencoba jalur cadangan.`);
     if (!process.env.FONNTE_TOKEN) {
-      return { ok: false, data: json, noFallback: true };
+      return { ok: false, data: json, noFallback: true, ditampung: true, galat };
     }
   }
 
@@ -103,7 +162,10 @@ async function send(target, message, fileUrl = null, ttlDetik = null) {
   const token = process.env.FONNTE_TOKEN;
   if (!token || !target) {
     console.warn("[fonnte] token/target kosong — skip kirim WA");
-    return { ok: false, skipped: true };
+    // Tanpa BAILEYS_API_URL DAN tanpa token cadangan, pesan ini tidak pernah
+    // punya jalan keluar sama sekali. Dulu ia lenyap di sini juga.
+    if (target) await tampungGagal(target, message, fileUrl, ttlDetik, "tidak ada jalur kirim yang tersedia", meta);
+    return { ok: false, skipped: true, ditampung: !!target };
   }
   try {
     const fd = new FormData();
