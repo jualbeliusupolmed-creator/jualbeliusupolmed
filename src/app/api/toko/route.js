@@ -3,7 +3,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getSellerSession } from "@/lib/auth";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import {
-  periksaSlug, aksenAman, potong, normalisasiInstagram, BATAS, statusToko, namaToko,
+  periksaSlug, aksenAman, potong, normalisasiInstagram, normalisasiGmaps, BATAS, statusToko, namaToko,
 } from "@/lib/toko";
 import { getSettings } from "@/lib/settings";
 import { formatWaForBaileys } from "@/lib/constants";
@@ -11,7 +11,7 @@ import { formatWaForBaileys } from "@/lib/constants";
 export const dynamic = "force-dynamic";
 
 const KOLOM = "wa, name, bio, slug, store_name, tagline, logo_url, banner_url, "
-  + "store_area, store_hours, store_instagram, store_accent, store_open, "
+  + "store_area, store_hours, store_instagram, store_gmaps, store_accent, store_open, "
   + "store_announcement, store_updated_at, trusted_seller, "
   + "store_status, store_requested_at, store_approved_at, store_reject_note";
 
@@ -70,6 +70,7 @@ export async function PUT(req) {
     store_hours: potong(body.store_hours, BATAS.store_hours),
     store_announcement: potong(body.store_announcement, BATAS.store_announcement),
     store_instagram: normalisasiInstagram(body.store_instagram),
+    store_gmaps: normalisasiGmaps(body.store_gmaps) || potong(body.store_gmaps, BATAS.store_gmaps),
     store_accent: aksenAman(body.store_accent),
     store_open: body.store_open !== false,
     logo_url: bersihkanGambar(body.logo_url),
@@ -123,9 +124,10 @@ export async function PUT(req) {
   // Kolom status lahir di migrasi BAGIAN 26. Kalau belum ada, simpan ulang
   // tanpa kolom itu — penjual tidak boleh kehilangan seluruh perubahan tokonya
   // gara-gara satu kolom yang belum dibuat.
-  if (galat && /store_status|store_requested_at|column .* does not exist|schema cache/i.test(galat.message || "")) {
+  if (galat && /store_status|store_requested_at|store_gmaps|column .* does not exist|schema cache/i.test(galat.message || "")) {
     delete isian.store_status;
     delete isian.store_requested_at;
+    delete isian.store_gmaps;
     if (adaBaris) {
       ({ error: galat } = await supa.from("seller_profiles").update(isian).eq("wa", wa));
     } else {
