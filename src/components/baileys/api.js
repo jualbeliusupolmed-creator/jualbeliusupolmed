@@ -4,13 +4,14 @@ import { useState, useCallback, useEffect } from "react";
 // Endpoint yang BELUM diimplementasi di bot (wa-bot-usu). Dicegat di sini agar tombol
 // panel menampilkan pesan jelas "belum tersedia", bukan error 404 yang membingungkan.
 // Hapus dari daftar ini begitu route-nya sudah ada di bot.
-const UNSUPPORTED = new Set([
-  "session/devices",
-  "community/list", "community/create", "community/link-group",
-  "check-number", "get-presence", "set-privacy",
-  "test-ai", "send-raw", "channel/send",
-]);
-const NOT_READY = { error: "Fitur ini belum tersedia di bot (belum diimplementasi)." };
+//
+// Sembilan penghuni lama daftar ini sudah pindah ke bot (session/devices,
+// community/list|create|link-group, check-number, get-presence, set-privacy,
+// send-raw, channel/send) — semuanya bersandar pada kemampuan yang memang ada di
+// Baileys 7. Yang tersisa cuma test-ai, dan itu bukan soal route yang belum
+// ditulis: bot ini tidak memakai AI sama sekali, jadi tidak ada yang bisa diuji.
+const UNSUPPORTED = new Set(["test-ai"]);
+const NOT_READY = { error: "Bot ini tidak memakai AI, jadi tidak ada yang bisa diuji di sini." };
 const epBase = (ep) => String(ep).split("?")[0];
 
 export function useApi(endpoint, autoFetch = true) {

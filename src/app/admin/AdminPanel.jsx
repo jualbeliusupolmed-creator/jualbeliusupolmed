@@ -49,6 +49,9 @@ export default function AdminPanel({
   settings = {},
   wanted = [],
   sellersList = [],
+  stores = [],
+  storesMigrationMissing = false,
+  storesError = null,
   profileRequests = [],
   blogs = [],
   revenue = 0,
@@ -61,7 +64,7 @@ export default function AdminPanel({
   pageSize = 100,
 }) {
   const router = useRouter();
-  const VALID_TABS = ["overview","listings","transaksi","rating","reports","dicari","kategori","pengaturan","penjual","profil_request","blogs","wabot","ai","broadcast","referral","tawaran","grouppost","notifikasi","distributor"];
+  const VALID_TABS = ["overview","listings","transaksi","rating","reports","dicari","kategori","pengaturan","penjual","toko","profil_request","blogs","wabot","ai","broadcast","referral","tawaran","grouppost","notifikasi","distributor"];
   const tab = VALID_TABS.includes(initialTab) ? initialTab : "overview";
   function goTab(key) {
     router.push(`/admin/${key}`);
@@ -86,6 +89,7 @@ export default function AdminPanel({
   const [editingSeller, setEditingSeller] = useState(null);
   const [sellerForm, setSellerForm] = useState({ name: "", bio: "" });
   const [sellerSearch, setSellerSearch] = useState("");
+  const [storeSearch, setStoreSearch] = useState("");
   const [rejectNote, setRejectNote] = useState({});
 
   useEffect(() => {
@@ -232,6 +236,7 @@ export default function AdminPanel({
       label: "Pengguna",
       items: [
         { key: "penjual",        label: "Penjual" },
+        { key: "toko",           label: "Toko",        count: stores.length || null },
         { key: "profil_request", label: "Ubah Profil", count: pendingProfileCount || null },
         { key: "distributor",    label: "Distributor" },
         { key: "rating",         label: "Rating" },
@@ -782,6 +787,131 @@ export default function AdminPanel({
                   ))}
                 </div>
               </div>
+            </div>
+          );
+        })()}
+
+        {/* TOKO PENJUAL — storefront /toko/[slug] */}
+        {tab === "toko" && (() => {
+          const daftar = stores.filter(t =>
+            !storeSearch ||
+            (t.store_name || "").toLowerCase().includes(storeSearch.toLowerCase()) ||
+            (t.slug || "").toLowerCase().includes(storeSearch.toLowerCase()) ||
+            (t.wa || "").includes(storeSearch)
+          );
+          return (
+            <div>
+              {/* Kolom storefront datang dari migration_storefront.sql yang harus
+                  dijalankan manual di Supabase. Tanpa pesan ini, tab-nya cuma
+                  terlihat kosong dan admin menyimpulkan "belum ada yang bikin
+                  toko" — padahal halamannya memang belum bisa menyimpan apa pun. */}
+              {storesMigrationMissing ? (
+                <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+                  <p className="font-semibold">Kolom toko belum ada di database.</p>
+                  <p className="mt-1">
+                    Jalankan <code className="rounded bg-amber-100 px-1 dark:bg-amber-900/40">supabase/migration_storefront.sql</code>{" "}
+                    di SQL Editor Supabase, lalu muat ulang halaman ini. Sampai itu dilakukan,
+                    penjual tidak bisa membuat toko dan halaman <code>/toko/[slug]</code> tidak punya isi.
+                  </p>
+                  {storesError && <p className="mt-2 font-mono text-xs opacity-70">{storesError}</p>}
+                </div>
+              ) : (
+                <>
+                  <div className="mb-3 flex flex-wrap gap-2">
+                    <input
+                      className="input min-w-[200px] flex-1"
+                      placeholder="Cari nama toko / slug / nomor WA…"
+                      value={storeSearch}
+                      onChange={(e) => setStoreSearch(e.target.value)}
+                    />
+                    <button
+                      onClick={() => downloadCSV("toko.csv", daftar.map(t => ({
+                        toko: t.store_name, slug: t.slug, wa: t.wa,
+                        wilayah: t.store_area, buka: t.store_open === false ? "Tutup" : "Buka",
+                        diperbarui: t.store_updated_at,
+                      })))}
+                      className="btn-outline text-xs"
+                    >
+                      Export CSV
+                    </button>
+                  </div>
+                  <p className="mb-2 text-xs text-gray-400">
+                    {daftar.length} dari {stores.length} toko · alamatnya publik dan bisa dibuka siapa saja
+                  </p>
+                  <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-slate-800">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50 text-left text-xs uppercase text-gray-400 dark:bg-slate-900">
+                        <tr>
+                          <th className="p-3">Toko</th>
+                          <th className="p-3">Alamat</th>
+                          <th className="p-3">Penjual</th>
+                          <th className="p-3">Status</th>
+                          <th className="p-3">Diperbarui</th>
+                          <th className="p-3">Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody className="dark:text-slate-300">
+                        {daftar.length === 0 && (
+                          <tr><td colSpan="6" className="p-4 text-center text-gray-400">
+                            {stores.length === 0 ? "Belum ada penjual yang membuat toko." : "Tidak ada toko yang cocok."}
+                          </td></tr>
+                        )}
+                        {daftar.map((t) => (
+                          <tr key={t.wa} className="border-t dark:border-slate-800">
+                            <td className="p-3 font-medium dark:text-white">
+                              <div>{t.store_name || <span className="text-gray-400">Tanpa nama toko</span>}</div>
+                              {t.tagline && <div className="mt-0.5 text-xs text-gray-400">{t.tagline}</div>}
+                              {t.store_announcement && (
+                                <div className="mt-1 text-xs text-amber-600 dark:text-amber-400">📣 {t.store_announcement}</div>
+                              )}
+                            </td>
+                            <td className="p-3">
+                              <a href={`/toko/${t.slug}`} target="_blank" rel="noreferrer" className="font-mono text-xs text-primary hover:underline">
+                                /toko/{t.slug} ↗
+                              </a>
+                              {t.store_area && <div className="mt-0.5 text-xs text-gray-400">{t.store_area}</div>}
+                            </td>
+                            <td className="p-3 font-mono text-xs">
+                              <a href={`/admin/penjual/${String(t.wa).replace(/\D/g, "")}`} className="hover:text-primary">{t.name || t.wa}</a>
+                              <div className="text-gray-400">{t.wa}</div>
+                            </td>
+                            <td className="p-3">
+                              {t.store_open === false
+                                ? <span className="text-xs font-medium text-amber-600">⏸ Tutup</span>
+                                : <span className="text-xs text-green-600">▶ Buka</span>}
+                            </td>
+                            <td className="p-3 text-xs text-gray-400">
+                              {t.store_updated_at ? new Date(t.store_updated_at).toLocaleDateString("id-ID") : "–"}
+                            </td>
+                            <td className="p-3">
+                              <div className="flex flex-wrap gap-1">
+                                <button
+                                  onClick={() => action({ action: "set_store_open", wa: t.wa, open: t.store_open === false }, t.store_open === false ? "Toko dibuka" : "Toko ditutup")}
+                                  className="rounded-md bg-blue-100 px-2 py-1 text-xs text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                                >
+                                  {t.store_open === false ? "Buka Toko" : "Tutup Toko"}
+                                </button>
+                                {/* Slug adalah alamat publik: nama yang menyerempet merek
+                                    atau orang lain hanya bisa dicabut dari sini. Mencabutnya
+                                    tidak menghapus apa pun selain alamatnya. */}
+                                <button
+                                  onClick={() => confirmThen(
+                                    { title: "Cabut alamat toko", message: `Halaman /toko/${t.slug} akan berhenti bisa dibuka. Isi toko (nama, logo, iklan) tidak dihapus, dan penjual bisa memilih alamat baru.`, danger: true },
+                                    () => action({ action: "clear_store_slug", wa: t.wa }, "Alamat toko dicabut")
+                                  )}
+                                  className="rounded-md border border-gray-200 px-2 py-1 text-xs text-gray-600 dark:border-slate-700 dark:text-slate-400"
+                                >
+                                  Cabut Alamat
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
             </div>
           );
         })()}

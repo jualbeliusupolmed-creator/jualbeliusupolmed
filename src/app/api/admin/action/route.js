@@ -526,6 +526,37 @@ export async function POST(req) {
         break;
       }
 
+      // ── Toko penjual (/toko/[slug]) ────────────────────────────────────
+      // Buka/tutup toko. "Tutup" tidak menghapus apa pun — halamannya tetap ada
+      // dan tetap bisa dibuka, hanya menyatakan tokonya sedang tidak melayani.
+      case "set_store_open": {
+        const normalizedWa = formatWa(wa);
+        if (!normalizedWa) return NextResponse.json({ error: "WA wajib" }, { status: 400 });
+        const { error } = await supa
+          .from("seller_profiles")
+          .update({ store_open: !!body.open, store_updated_at: new Date().toISOString() })
+          .eq("wa", normalizedWa);
+        // Kolom store_* datang dari migration_storefront.sql yang dijalankan
+        // manual. Kalau belum, katakan itu — bukan "gagal menyimpan" yang bikin
+        // admin mengira datanya rusak.
+        if (error) throw new Error(`${error.message} — jalankan supabase/migration_storefront.sql dulu bila kolom toko belum ada.`);
+        break;
+      }
+
+      // Cabut alamat publik toko. Isinya (nama, logo, iklan) tidak disentuh:
+      // yang dicabut cuma slug-nya, jadi penjual bisa memilih alamat lain dan
+      // tidak ada satu pun iklannya yang ikut hilang.
+      case "clear_store_slug": {
+        const normalizedWa = formatWa(wa);
+        if (!normalizedWa) return NextResponse.json({ error: "WA wajib" }, { status: 400 });
+        const { error } = await supa
+          .from("seller_profiles")
+          .update({ slug: null, store_updated_at: new Date().toISOString() })
+          .eq("wa", normalizedWa);
+        if (error) throw new Error(`${error.message} — jalankan supabase/migration_storefront.sql dulu bila kolom toko belum ada.`);
+        break;
+      }
+
       // ── Blogs ───────────────────────────────────────────────────────────
       case "delete_blog":
         await supa.from("blogs").delete().eq("id", id);
@@ -645,29 +676,12 @@ export async function POST(req) {
       }
 
       // ── Distributor ────────────────────────────────────────────────────────
-      case "set_distributor": {
-        const normalizedWa = formatWa(wa);
-        if (!normalizedWa) return NextResponse.json({ error: "WA wajib" }, { status: 400 });
-        await supa.from("seller_profiles").upsert(
-          { wa: normalizedWa, distributor: !!body.distributor },
-          { onConflict: "wa" }
-        );
-        break;
-      }
-
-      case "set_distributor_categories": {
-        const normalizedWa = formatWa(wa);
-        if (!normalizedWa) return NextResponse.json({ error: "WA wajib" }, { status: 400 });
-        const cats = Array.isArray(body.categories) ? body.categories : [];
-        // Hapus lama, insert baru
-        await supa.from("distributor_categories").delete().eq("seller_wa", normalizedWa);
-        if (cats.length > 0) {
-          await supa.from("distributor_categories").insert(
-            cats.map((c) => ({ seller_wa: normalizedWa, category: c }))
-          );
-        }
-        break;
-      }
+      // `set_distributor` dan `set_distributor_categories` DULU ditulis dua kali
+      // dalam switch yang sama — salinan di sini tidak pernah dijalankan, karena
+      // JavaScript berhenti di case pertama yang cocok (keduanya ada di atas,
+      // sebelum bagian Blogs). Salinan mati itu dihapus; yang berlaku tetap yang
+      // pertama, dan kebetulan justru yang lebih ketat: ia melempar galat kalau
+      // penyimpanan gagal, sementara salinan ini menelannya diam-diam.
 
       // ── Tawaran Biaya Iklan ────────────────────────────────────────────────
       case "approve_fee_offer": {
