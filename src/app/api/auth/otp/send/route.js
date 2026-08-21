@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { hashOtp } from "@/lib/otp";
 import { formatWa } from "@/lib/constants";
 import { sendWa as send } from "@/lib/fonnte";
 
@@ -64,8 +65,9 @@ export async function POST(req) {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
+    // Yang dikirim ke WhatsApp adalah `otp`; yang disimpan cuma hash-nya.
     const { error } = await supa.from("otps").upsert(
-      { wa: normalizedWa, otp, expires_at: expiresAt.toISOString(), attempts: 0 },
+      { wa: normalizedWa, otp: hashOtp(otp), expires_at: expiresAt.toISOString(), attempts: 0 },
       { onConflict: "wa" }
     );
 

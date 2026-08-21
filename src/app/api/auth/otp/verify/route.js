@@ -4,6 +4,7 @@ import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { formatWa } from "@/lib/constants";
 import { setSellerCookie } from "@/lib/auth";
 import { hashPin } from "@/lib/pin";
+import { verifyOtp } from "@/lib/otp";
 import { validasiPin } from "@/lib/pinRules";
 import { tulisProfil } from "@/lib/tulisProfil";
 
@@ -67,7 +68,7 @@ export async function POST(req) {
       return NextResponse.json({ error: "Terlalu banyak percobaan salah. Silakan request OTP baru." }, { status: 400 });
     }
 
-    if (record.otp !== otp) {
+    if (!verifyOtp(otp, record.otp)) {
       await supa.from("otps").update({ attempts: record.attempts + 1 }).eq("wa", normalizedWa);
       return NextResponse.json({ error: "Kode OTP salah." }, { status: 400 });
     }

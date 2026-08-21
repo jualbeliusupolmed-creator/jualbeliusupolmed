@@ -155,7 +155,7 @@ export async function POST(req) {
               `⚠️ *UNLOCK KONTAK TERTAHAN (LID)*\n\n` +
               `Pembayaran Rp ${serverAmount.toLocaleString("id-ID")} sudah lunas untuk buka kontak "${wanted.title}", ` +
               `tapi buyer_wa postingan masih LID (${wanted.buyer_wa}) dan belum ada nomornya di wa_state.\n` +
-              `Pemohon: ${payment.meta?.requester_wa || "(tanpa WA)"} — order ${transactionId}.\n` +
+              `Pemohon: ${payment.meta?.requester_wa || (payment.meta?.requester_wa_diklaim ? payment.meta.requester_wa_diklaim + " (diketik sendiri, belum terverifikasi)" : "(tanpa WA)")} — order ${transactionId}.\n` +
               `Tolong tindak lanjuti manual (cari nomornya / refund).`
             ).catch(console.error);
           }

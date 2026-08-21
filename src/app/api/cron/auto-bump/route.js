@@ -1,17 +1,13 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
+import { tolakCron } from "@/lib/cronAuth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req) {
   try {
-    // Vercel Cron Authentication
-    if (
-      process.env.CRON_SECRET &&
-      req.headers.get("Authorization") !== `Bearer ${process.env.CRON_SECRET}`
-    ) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const tolak = tolakCron(req);
+    if (tolak) return tolak;
 
     const supa = getAdminClient();
     const now = new Date().toISOString();

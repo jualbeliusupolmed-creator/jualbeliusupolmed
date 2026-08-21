@@ -1,11 +1,24 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { sendPushNotification } from "@/lib/webpush";
+import { isAdmin } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-// POST /api/push/subscribe/test — kirim test push ke semua subscriber
+// POST /api/push/subscribe/test — kirim push ke SEMUA pelanggan notifikasi.
+//
+// Namanya "test", kelakuannya siaran. Judul, isi, dan tautan tujuan datang dari
+// badan permintaan, dan notifikasinya muncul di HP orang atas nama domain situs
+// ini — persis bahan phishing yang meminjam kepercayaan merek sendiri. Sampai
+// 21 Agustus 2026 rute ini tidak punya satu pun pemeriksaan.
+//
+// Gerbangnya sekarang sama dengan /api/admin/broadcast. Skalanya juga sudah
+// berubah: sejak BAGIAN 25 migrasi, setiap pengunjung boleh berlangganan tanpa
+// punya akun, jadi daftar tujuannya memang dirancang untuk tumbuh.
 export async function POST(req) {
+  if (!isAdmin()) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const body = await req.json().catch(() => ({}));
     const title = body.title || "🔔 Test Push";

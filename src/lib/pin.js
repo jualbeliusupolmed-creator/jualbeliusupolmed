@@ -1,6 +1,16 @@
-// Penyimpanan PIN penjual sebagai hash bcrypt (bukan plaintext).
-// Backward-compatible: PIN lama yang masih plaintext tetap bisa login, lalu
-// sebaiknya di-upgrade ke hash saat login berhasil (lihat pin/verify).
+// Penyimpanan PIN penjual sebagai hash bcrypt.
+//
+// Sampai 21 Agustus 2026 berkas ini menerima PIN plaintext sebagai jalur
+// mundur, dan meng-upgrade-nya jadi hash saat penjualnya berhasil login.
+// Niatnya benar, hasilnya tidak: penjual yang tidak pernah login lagi tidak
+// pernah kena giliran, jadi 32 dari 41 PIN masih telanjang di database hari
+// itu — 78%, dua bulan setelah bcrypt dipasang.
+//
+// Ke-41-nya sudah di-bcrypt lewat BAGIAN 28 migrasi (dihitung di dalam
+// database, nilai polosnya tidak pernah keluar dari sana), jadi jalur mundur
+// itu tidak lagi menolong siapa pun — ia cuma menyisakan pintu untuk
+// perbandingan plaintext kalau suatu saat ada kode baru yang menulis PIN tanpa
+// melewati hashPin(). Karena itu dicabut.
 import bcrypt from "bcryptjs";
 
 export function hashPin(pin) {
@@ -12,11 +22,14 @@ export function isHashed(stored) {
   return typeof stored === "string" && /^\$2[aby]\$/.test(stored);
 }
 
-// Cocokkan PIN input dengan yang tersimpan (hash atau — untuk data lama — plaintext).
+// Cocokkan PIN input dengan hash tersimpan. Nilai yang bukan hash SELALU
+// ditolak — termasuk kalau kebetulan sama persis dengan yang diketik.
 export function verifyPin(input, stored) {
   if (!stored || input == null) return false;
-  if (isHashed(stored)) {
-    try { return bcrypt.compareSync(String(input), stored); } catch { return false; }
+  if (!isHashed(stored)) return false;
+  try {
+    return bcrypt.compareSync(String(input), stored);
+  } catch {
+    return false;
   }
-  return String(input) === String(stored); // legacy plaintext
 }

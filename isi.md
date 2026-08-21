@@ -53,7 +53,7 @@ FONNTE:
 - Auto-post to WA group: format rapi dengan foto & detail barang
 
 ADMIN:
-- Password: bismillah
+- Password: (disetel lewat ADMIN_PASSWORD di lingkungan produksi — JANGAN pernah ditulis di berkas ini)
 - Simple session-based auth
 - Dashboard: total listings, total revenue, listings per kategori
 - Bisa hapus/suspend listing
@@ -73,7 +73,7 @@ ENV VARIABLES NEEDED:
 - MIDTRANS_CLIENT_KEY
 - FONNTE_TOKEN
 - FONNTE_WA_GROUP_ID
-- ADMIN_PASSWORD=bismillah
+- ADMIN_PASSWORD  (isi nilainya di Vercel, bukan di sini)
 - MARKETPLACE_WA=62895429126232
 
 Generate semua file lengkap termasuk:

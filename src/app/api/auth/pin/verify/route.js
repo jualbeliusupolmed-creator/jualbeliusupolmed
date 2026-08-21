@@ -3,7 +3,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { formatWa } from "@/lib/constants";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { setSellerCookie } from "@/lib/auth";
-import { verifyPin, hashPin, isHashed } from "@/lib/pin";
+import { verifyPin } from "@/lib/pin";
 
 export const dynamic = "force-dynamic";
 
@@ -45,10 +45,10 @@ export async function POST(req) {
       return NextResponse.json({ error: "PIN salah." }, { status: 400 });
     }
 
-    // Upgrade PIN lama (plaintext) ke hash saat login berhasil.
-    if (profile.pin && !isHashed(profile.pin)) {
-      await supa.from("seller_profiles").update({ pin: hashPin(pin) }).eq("wa", normalizedWa);
-    }
+    // Upgrade-saat-login sudah dicabut bersama jalur mundur plaintext di
+    // src/lib/pin.js: verifyPin() menolak apa pun yang bukan hash, jadi PIN
+    // plaintext tidak akan pernah sampai ke baris ini. Seluruh 41 PIN yang ada
+    // di-bcrypt sekali jalan lewat BAGIAN 28 migrasi.
 
     setSellerCookie(normalizedWa);
 
