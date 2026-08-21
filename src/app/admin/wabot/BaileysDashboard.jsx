@@ -15,11 +15,17 @@ import { TabLidMap } from "@/components/baileys/TabLidMap";
 import { TabKonteks } from "@/components/baileys/TabKonteks";
 import { TabLog } from "@/components/baileys/TabLog";
 import { TabAksi } from "@/components/baileys/TabAksi";
+import { TabStatistik } from "@/components/baileys/TabStatistik";
+import { TabSapaan } from "@/components/baileys/TabSapaan";
+import { TabBroadcast } from "@/components/baileys/TabBroadcast";
 
 
-const TABS = ["status", "aksi", "kapabilitas", "profil", "story", "chat", "grup", "saluran", "kirim", "blocklist", "lid", "konteks", "log"];
+const TABS = ["status", "statistik", "sapaan", "aksi", "kapabilitas", "profil", "story", "chat", "grup",
+              "saluran", "kirim", "broadcast", "blocklist", "lid", "konteks", "log"];
 const TAB_LABELS = {
   status:    "🔌 Status",
+  statistik: "📊 Statistik",
+  sapaan:    "💬 Sapaan & Nomor",
   aksi:      "⚡ Aksi",
   kapabilitas: "🌟 Kapabilitas",
   profil:    "👤 Profil Bot",
@@ -28,6 +34,7 @@ const TAB_LABELS = {
   grup:      "👥 Grup",
   saluran:   "📢 Saluran",
   kirim:     "✉️ Kirim",
+  broadcast: "📣 Broadcast",
   blocklist: "🚫 Blocklist",
   lid:       "🗺️ LID Map",
   konteks:   "🧠 Sesi Aktif",
@@ -52,6 +59,8 @@ export default function BaileysDashboard() {
       </div>
 
       {tab === "status"    && <TabStatus />}
+      {tab === "statistik" && <TabStatistik />}
+      {tab === "sapaan"    && <TabSapaan />}
       {tab === "aksi"      && <TabAksi />}
       {tab === "kapabilitas" && <TabKapabilitas />}
       {tab === "profil"    && <TabProfil />}
@@ -60,6 +69,7 @@ export default function BaileysDashboard() {
       {tab === "grup"      && <TabGrup />}
       {tab === "saluran"   && <TabSaluran />}
       {tab === "kirim"     && <TabKirim />}
+      {tab === "broadcast" && <TabBroadcast />}
       {tab === "blocklist" && <TabBlocklist />}
       {tab === "lid"       && <TabLidMap />}
       {tab === "konteks"   && <TabKonteks />}

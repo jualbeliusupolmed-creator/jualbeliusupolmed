@@ -70,3 +70,23 @@ export function QRDisplay({ perangkat = 1 }) {
     </div>
   );
 }
+
+// Baris "label — nilai" seperti di dashboard bot. Dipakai kartu ringkasan.
+export function KV({ k, v }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3 border-b border-gray-100 py-1.5 last:border-0 dark:border-slate-800">
+      <span className="text-xs text-gray-500 dark:text-slate-400">{k}</span>
+      <span className="text-right text-sm font-semibold dark:text-white">{v}</span>
+    </div>
+  );
+}
+
+// Kartu ringkasan berjudul.
+export function Kartu({ judul, children, className = "" }) {
+  return (
+    <div className={`card p-4 ${className}`}>
+      <p className="mb-3 text-sm font-bold dark:text-white">{judul}</p>
+      {children}
+    </div>
+  );
+}
