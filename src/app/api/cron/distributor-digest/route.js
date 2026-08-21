@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
+import { tolakCron } from "@/lib/cronAuth";
 import { sendWa } from "@/lib/fonnte";
 import { getSettings } from "@/lib/settings";
 import { buildSlug } from "@/lib/slug";
@@ -14,11 +15,8 @@ function rupiah(n) {
 // GET /api/cron/distributor-digest
 // Dipanggil oleh Vercel Cron setiap hari jam 13:00 WIB (UTC+7 = 06:00 UTC)
 export async function GET(req) {
-  const authHeader = req.headers.get("authorization");
-  const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const tolak = tolakCron(req);
+  if (tolak) return tolak;
 
   const supa = getAdminClient();
   const settings = await getSettings().catch(() => ({}));

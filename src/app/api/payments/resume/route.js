@@ -1,21 +1,36 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
+import { getSellerSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-// POST /api/payments/resume  { listing_id, seller_wa, type? }
+// POST /api/payments/resume  { listing_id, type? }
 //
 // "Lanjutkan bayar" — penjual menutup layar QRIS sebelum sempat transfer, lalu
 // menekan tombolnya lagi dari dasbor. Tugas rute ini HANYA menemukan tagihan
 // yang sudah ada dan mengembalikan nomor pesanannya; nominalnya tidak pernah
 // dihitung ulang di sini (lihat catatan "tagihan lama" di bawah).
+//
+// Nomor penjualnya diambil dari kuki sesi, BUKAN dari badan permintaan. Dulu
+// rute ini membandingkan `listing.seller_wa` dengan `seller_wa` kiriman klien —
+// dua nilai yang dua-duanya dikirim penyerang, dan yang satunya tercetak di
+// halaman produk untuk dibaca siapa saja. Itu bukan otorisasi, itu pengetikan
+// ulang. Badan permintaan masih boleh memuat `seller_wa`; nilainya diabaikan.
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { listing_id, seller_wa } = body;
+    const { listing_id } = body;
 
-    if (!listing_id || !seller_wa) {
+    if (!listing_id) {
       return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
+    }
+
+    const sesiWa = getSellerSession();
+    if (!sesiWa) {
+      return NextResponse.json(
+        { error: "Sesi sudah habis. Masuk lagi untuk melanjutkan pembayaran." },
+        { status: 401 }
+      );
     }
 
     const paymentType = body.type === "sold_fee" ? "sold_fee" : "iklan";
@@ -31,8 +46,8 @@ export async function POST(req) {
       return NextResponse.json({ error: "Iklan tidak ditemukan" }, { status: 404 });
     }
 
-    if (listing.seller_wa !== seller_wa) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (listing.seller_wa !== sesiWa) {
+      return NextResponse.json({ error: "Iklan ini bukan milik akun yang sedang masuk" }, { status: 403 });
     }
 
     // Status iklan yang sah berbeda per jenis tagihan, dan ini bukan detail

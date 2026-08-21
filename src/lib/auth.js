@@ -24,16 +24,56 @@ function secret() {
   return pw;
 }
 
-function token() {
-  return crypto.createHash("sha256").update(secret()).digest("hex");
+// Perbandingan tahan-waktu. `===` pada string keluar di karakter pertama yang
+// berbeda, jadi lamanya menjawab membocorkan berapa banyak awalan yang sudah
+// benar. Pola ini meniru yang sudah dipakai bot di index.js.
+function samaAman(a, b) {
+  const ha = crypto.createHash("sha256").update(String(a)).digest();
+  const hb = crypto.createHash("sha256").update(String(b)).digest();
+  return crypto.timingSafeEqual(ha, hb);
+}
+
+// Kuki admin: payload bertanda tangan + kedaluwarsa, bukan nilai tetap.
+//
+// Sebelumnya isinya sha256(ADMIN_PASSWORD) — satu nilai yang sama untuk
+// selamanya. Artinya kuki yang pernah bocor tidak pernah basi, dan kuki itu
+// bisa dihitung sendiri oleh siapa pun yang tahu sandinya tanpa perlu melewati
+// halaman login (dan karenanya tanpa kena rate limit). Sekarang tiap sesi
+// membawa nonce acak dan batas waktunya sendiri.
+//
+// Yang TIDAK diperbaiki oleh ini: siapa pun yang tahu ADMIN_PASSWORD tetap bisa
+// masuk. Kalau sandinya pernah bocor, satu-satunya obat adalah menggantinya.
+function buatTokenAdmin() {
+  const payload = {
+    n: crypto.randomBytes(16).toString("base64url"),
+    exp: Date.now() + 1000 * 60 * 60 * 8, // 8 jam
+  };
+  const p = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const sig = crypto.createHmac("sha256", secret()).update(p).digest("base64url");
+  return `${p}.${sig}`;
+}
+
+function tokenAdminSah(nilai) {
+  if (!nilai || typeof nilai !== "string") return false;
+  const bagian = nilai.split(".");
+  if (bagian.length !== 2) return false;
+  const [p, sig] = bagian;
+  const diharapkan = crypto.createHmac("sha256", secret()).update(p).digest("base64url");
+  if (!samaAman(sig, diharapkan)) return false;
+  try {
+    const payload = JSON.parse(Buffer.from(p, "base64url").toString("utf-8"));
+    return typeof payload.exp === "number" && payload.exp > Date.now();
+  } catch {
+    return false;
+  }
 }
 
 export function checkPassword(pw) {
-  return typeof pw === "string" && pw === secret();
+  return typeof pw === "string" && samaAman(pw, secret());
 }
 
 export function setAdminCookie() {
-  cookies().set(COOKIE, token(), {
+  cookies().set(COOKIE, buatTokenAdmin(), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
@@ -47,8 +87,7 @@ export function clearAdminCookie() {
 }
 
 export function isAdmin() {
-  const c = cookies().get(COOKIE)?.value;
-  return c && c === token();
+  return tokenAdminSah(cookies().get(COOKIE)?.value);
 }
 
 // --- SELLER AUTH ---
@@ -70,7 +109,7 @@ function verifySellerToken(token) {
   if (parts.length !== 2) return null;
   const [payloadB64, signature] = parts;
   const expectedSig = crypto.createHmac("sha256", secret()).update(payloadB64).digest("base64url");
-  if (signature !== expectedSig) return null;
+  if (!samaAman(signature, expectedSig)) return null;
   try {
     const payload = JSON.parse(Buffer.from(payloadB64, "base64url").toString("utf-8"));
     if (payload.exp < Date.now()) return null; // expired

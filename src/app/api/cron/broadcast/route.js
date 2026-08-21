@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
+import { tolakCron } from "@/lib/cronAuth";
 import { sendWa } from "@/lib/fonnte";
 
 export const dynamic = "force-dynamic";
@@ -7,11 +8,8 @@ export const dynamic = "force-dynamic";
 // Dipanggil Vercel Cron setiap jam.
 // Cek jadwal broadcast yang sudah waktunya dan kirimkan.
 export async function GET(req) {
-  const auth = req.headers.get("authorization");
-  const ok = process.env.CRON_SECRET
-    ? auth === `Bearer ${process.env.CRON_SECRET}`
-    : !!req.headers.get("x-vercel-cron");
-  if (!ok) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const tolak = tolakCron(req);
+  if (tolak) return tolak;
 
   const supa = getAdminClient();
   const now = new Date().toISOString();

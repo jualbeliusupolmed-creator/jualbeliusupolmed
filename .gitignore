@@ -44,3 +44,16 @@ public/worker-*.js
 docs/AUDIT-*
 docs/Laporan-Keamanan.*
 docs/Checklist-Rotasi-Kunci.*
+
+# Folder kerja bot WA yang disalin dari VPS. Kodenya boleh ikut; BERKAS
+# STATE-nya tidak. contacts.json / lid_resolution_map.json / messages.json
+# berisi nomor telepon dan isi chat pelanggan sungguhan — repo ini publik.
+# Pernah ikut ter-commit sekali (21 Agustus 2026) dan harus ditulis ulang.
+bot-wa/*.json
+!bot-wa/package.json
+!bot-wa/package-lock.json
+bot-wa/*.log
+bot-wa/.bot.lock
+bot-wa/.penjaga-*
+bot-wa/auth_info_baileys/
+bot-wa/push-ke-github.sh

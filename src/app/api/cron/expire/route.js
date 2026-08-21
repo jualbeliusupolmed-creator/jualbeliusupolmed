@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
+import { tolakCron } from "@/lib/cronAuth";
 import { sendWa } from "@/lib/fonnte";
 import { formatWaForBaileys } from "@/lib/constants";
 
@@ -9,11 +10,8 @@ export const dynamic = "force-dynamic";
 // Kirim reminder H-3 dan H-1 sebelum iklan expired.
 // Deduplication: cek window 24 jam sekitar titik H-3 / H-1.
 export async function GET(req) {
-  const auth = req.headers.get("authorization");
-  const ok = process.env.CRON_SECRET
-    ? auth === `Bearer ${process.env.CRON_SECRET}`
-    : !!req.headers.get("x-vercel-cron");
-  if (!ok) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const tolak = tolakCron(req);
+  if (tolak) return tolak;
 
   const supa = getAdminClient();
   const now = new Date();
@@ -79,9 +77,26 @@ export async function GET(req) {
     } catch (_) {}
   }
 
+  // ── Sapu OTP kedaluwarsa ────────────────────────────────────────────────────
+  // Kode OTP berumur 5 menit, tapi barisnya tidak pernah dibuang: 24 baris
+  // menumpuk sejak 11 Juni 2026, semuanya sudah mati. Tabel yang hanya tumbuh
+  // itu bukan cuma berantakan — ia menyimpan bahan pemulihan akun lebih lama
+  // dari kegunaannya. Dibersihkan di sini karena cron ini memang sudah berjalan
+  // tiap hari dan tidak butuh jadwal baru.
+  let otpDisapu = 0;
+  {
+    const { data: terhapus } = await supa
+      .from("otps")
+      .delete()
+      .lt("expires_at", new Date().toISOString())
+      .select("wa");
+    otpDisapu = terhapus?.length || 0;
+  }
+
   return NextResponse.json({
     reminded,
     h3_checked: expiringH3?.length || 0,
     h1_checked: expiringH1?.length || 0,
+    otp_disapu: otpDisapu,
   });
 }

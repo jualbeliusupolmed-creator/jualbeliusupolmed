@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { formatWa } from "@/lib/constants";
+import { getSellerSession } from "@/lib/auth";
 import { loadLidPhoneMap, migrateLidToPhone } from "@/lib/lidMigrate";
 
 export const dynamic = "force-dynamic";
@@ -58,9 +59,20 @@ export async function POST(req) {
     const amount = 2000; // Tarif Rp 2.000 untuk buka kontak pembeli
 
     // Selalu alur QRIS statis + verifikasi struk oleh AI (tanpa gateway).
-    // Nomor WA pemohon opsional — kontak pembeli tampil langsung di layar
-    // setelah struk diverifikasi AI; WA hanya untuk salinan cadangan.
-    const formattedRequesterWa = formatWa(requester_wa) || null;
+    //
+    // Nomor pemohon diambil dari kuki sesi, bukan dari badan permintaan. Nomor
+    // itu bukan sekadar catatan: /verify-receipt memakainya sebagai TUJUAN
+    // kiriman salinan kontak pembeli. Nomor kiriman klien berarti siapa pun yang
+    // membayar Rp 2.000 bisa menyuruh sistem mengirim kontak orang lain ke nomor
+    // pilihannya sendiri.
+    //
+    // Pengunjung tanpa akun tetap boleh membuka kontak — memang itu rancangannya
+    // — hanya saja tidak ada salinan WA untuk mereka: kontaknya tampil di layar
+    // begitu struknya lolos. Nomor yang mereka ketik tetap dicatat sebagai
+    // `requester_wa_diklaim`, untuk jejak, tidak pernah sebagai tujuan kirim.
+    const waSesi = getSellerSession();
+    const formattedRequesterWa = waSesi ? formatWa(waSesi) : null;
+    const waDiklaim = !waSesi ? formatWa(requester_wa) || null : null;
 
     // Pakai ulang tagihan yang masih menggantung milik pemohon yang sama.
     //
@@ -107,7 +119,13 @@ export async function POST(req) {
       amount,
       status: "pending",
       midtrans_order_id: orderId,
-      meta: { unlock_wanted_id: wanted.id, requester_wa: formattedRequesterWa, method: "manual", final_amount: amount }
+      meta: {
+        unlock_wanted_id: wanted.id,
+        requester_wa: formattedRequesterWa,
+        requester_wa_diklaim: waDiklaim,
+        method: "manual",
+        final_amount: amount,
+      }
     }).select().single();
 
     if (insertErr || !paymentRow) {
