@@ -313,7 +313,25 @@ export function getDemoStats(page = 1, tab = null) {
     wanted: wantedDemo,
     blogs: blogsDemo,
     penulisBadge: sellersDemo.filter((s) => s.blog_badge).map((s) => ({ wa: s.wa, name: s.name, blog_badge_at: s.blog_badge_at })),
-    sellersList: sellersDemo,
+    // BUKAN sellersDemo apa adanya. Tab "Penjual" membaca bentuk yang sudah
+    // diringkas oleh getAdminStats — `seller_wa`, bukan `wa`, plus tiga
+    // hitungan iklan. Versi pertama berkas ini menyodorkan baris profil mentah,
+    // dan tabnya menjawab 500: `s.seller_wa.replace(...)` pada undefined.
+    // Bentuk yang salah di data demo tidak terlihat sampai halamannya dibuka.
+    sellersList: sellersDemo
+      .map((sp) => {
+        const miliknya = listingsDemo.filter((l) => l.seller_wa === sp.wa);
+        return {
+          seller_wa: sp.wa,
+          seller_name: sp.name,
+          total_iklan: miliknya.length,
+          active_iklan: miliknya.filter((l) => l.status === "active").length,
+          sold_iklan: miliknya.filter((l) => l.status === "sold").length,
+          trusted_seller: sp.trusted_seller,
+          subscription_tier: sp.subscription_tier,
+        };
+      })
+      .sort((a, b) => b.total_iklan - a.total_iklan),
     stores,
     storesMigrationMissing: false,
     storesError: null,
