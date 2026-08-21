@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { rupiah } from "@/lib/fees";
 import { downloadCSV } from "@/lib/csv";
 import { buildSlug } from "@/lib/slug";
 import { formatWa } from "@/lib/constants";
 import AdminListingModal from "./AdminListingModal";
+import KirimManualModal from "./KirimManualModal";
 import ConfirmModal from "@/components/ConfirmModal";
 import { getSupabase } from "@/lib/supabase";
 import BaileysDashboard from "./wabot/BaileysDashboard";
@@ -28,6 +29,18 @@ const REPORT_LABELS = {
 const PAYMENT_TYPES = ["iklan", "bump", "featured", "sold_fee"];
 const PAYMENT_STATUS = ["pending", "paid", "failed", "expired"];
 const PAGE = 25;
+
+// Saringan status listing sebagai chip. Urutannya urutan kerja admin sehari-hari:
+// yang menunggu keputusan lebih dulu, yang sudah selesai belakangan.
+const LISTING_FILTERS = [
+  { key: "all", label: "Semua" },
+  { key: "pending", label: "Pending" },
+  { key: "active", label: "Aktif" },
+  { key: "deletion_pending", label: "Minta hapus" },
+  { key: "sold", label: "Terjual" },
+  { key: "expired", label: "Kedaluwarsa" },
+  { key: "suspended", label: "Suspended" },
+];
 
 // tanggal lokal YYYY-MM-DD (konsisten utk grafik, hindari geser zona waktu)
 function localDay(d) {
@@ -72,6 +85,8 @@ export default function AdminPanel({
   const [toast, setToast] = useState(null);
   const [confirmState, setConfirmState] = useState(null);
   const [editing, setEditing] = useState(null);
+  const [manual, setManual] = useState(null);        // listing yang dibuka di dialog "Kirim manual"
+  const [kirimSibuk, setKirimSibuk] = useState(null); // id listing yang sedang dikirim bot
 
   // filters / pagination
   const [q, setQ] = useState("");
@@ -121,6 +136,42 @@ export default function AdminPanel({
   }
   function confirmThen(opts, fn) {
     setConfirmState({ ...opts, onConfirm: fn });
+  }
+
+  /*
+   * Suruh bot mengumumkan satu iklan: grup, admin, penjual.
+   *
+   * Rutenya sendiri (bukan /api/admin/action) karena jawabannya beda jenis —
+   * bukan "berhasil / gagal", melainkan tiga tujuan yang masing-masing bisa
+   * berbeda nasib. Toast-nya menyebut yang gagal beserta sebabnya; "berhasil"
+   * untuk kiriman yang cuma sampai ke satu dari tiga grup adalah kabar baik
+   * palsu, dan justru kabar baik palsu itu yang membuat orang tidak memeriksa.
+   */
+  async function kirimViaBot(l) {
+    confirmThen(
+      {
+        title: "Kirim lewat bot",
+        message: `Bot akan mengirim "${l.title}" ke grup WA, admin, dan penjual (${l.seller_wa || "tanpa nomor"}). Lanjutkan?`,
+        confirmLabel: "Kirim",
+      },
+      async () => {
+        setKirimSibuk(l.id);
+        try {
+          const res = await fetch("/api/admin/notify-listing", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: l.id, mode: "bot" }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data.error || "Gagal mengirim");
+          setToast({ type: data.ok ? "ok" : "err", msg: data.ringkas || "Terkirim" });
+        } catch (e) {
+          setToast({ type: "err", msg: e.message });
+        } finally {
+          setKirimSibuk(null);
+        }
+      }
+    );
   }
 
   // ── derived stats ──────────────────────────────────────────────────────────
@@ -229,6 +280,7 @@ export default function AdminPanel({
           onClose={() => setEditing(null)}
         />
       )}
+      {manual && <KirimManualModal listing={manual} onClose={() => setManual(null)} />}
       <ConfirmModal
         open={!!confirmState}
         title={confirmState?.title}
@@ -239,15 +291,7 @@ export default function AdminPanel({
         onClose={() => setConfirmState(null)}
       />
 
-      {toast && (
-        <div
-          className={`fixed bottom-5 right-5 z-[60] rounded-xl px-4 py-3 text-sm font-medium text-white shadow-lg ${
-            toast.type === "err" ? "bg-rose-600" : "bg-gray-900 dark:bg-emerald-600"
-          }`}
-        >
-          {toast.msg}
-        </div>
-      )}
+      {toast && <div className={`g-toast${toast.type === "err" ? " is-bad" : ""}`}>{toast.msg}</div>}
 
       <PageHeader title={activeLabel} />
       <div className="space-y-6">
@@ -332,14 +376,35 @@ export default function AdminPanel({
         {/* LISTINGS */}
         {tab === "listings" && (
           <div>
-            <div className="mb-3 flex flex-wrap gap-2">
-              <input className="input min-w-[200px] flex-1" placeholder="Cari judul / nama / WA…" value={q} onChange={(e) => setQ(e.target.value)} />
-              <select className="input w-auto" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-                <option value="all">Semua status</option>
-                {["pending", "active", "sold", "expired", "suspended", "deletion_pending", "deleted"].map((s) => (
-                  <option key={s} value={s}>{s === "deletion_pending" ? "⏳ Minta Hapus" : s}</option>
+            {/* Bilah alat: satu kotak cari, saringan berupa chip, ekspor di kanan. */}
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <div className="g-searchbar" style={{ height: 40, maxWidth: 360 }}>
+                <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <path d="M21 21l-4.3-4.3M11 18a7 7 0 100-14 7 7 0 000 14z" />
+                </svg>
+                <input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder="Cari judul, penjual, atau nomor WA…"
+                  aria-label="Cari listing"
+                />
+              </div>
+
+              {/* Chip, bukan dropdown: status yang sedang dipakai kelihatan tanpa
+                  perlu dibuka, dan berpindah saringan cuma satu ketukan. */}
+              <div className="flex flex-wrap gap-1.5">
+                {LISTING_FILTERS.map((f) => (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => setStatusFilter(f.key)}
+                    className={`g-chip${statusFilter === f.key ? " is-on" : ""}`}
+                  >
+                    {f.label}
+                  </button>
                 ))}
-              </select>
+              </div>
+
               <button
                 onClick={() =>
                   downloadCSV("listing.csv", filteredListings.map((l) => ({
@@ -348,94 +413,134 @@ export default function AdminPanel({
                     kampus: l.campus, penjual: l.seller_name, wa: l.seller_wa, dibuat: l.created_at,
                   })))
                 }
-                className="btn-outline text-xs"
+                className="g-btn g-btn-outlined ml-auto"
               >
                 Export CSV
               </button>
             </div>
 
             {selected.size > 0 && (
-              <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-900">
-                <span className="font-medium dark:text-white">{selected.size} dipilih</span>
-                <button onClick={() => bulk("activate", "Aktifkan")} className="rounded-md bg-green-100 px-2 py-1 text-xs text-green-700">Aktifkan</button>
-                <button onClick={() => bulk("suspend", "Suspend")} className="rounded-md bg-amber-100 px-2 py-1 text-xs text-amber-700">Suspend</button>
-                <button onClick={() => bulk("delete", "Hapus")} className="rounded-md bg-rose-100 px-2 py-1 text-xs text-rose-700">Hapus</button>
-                <button onClick={() => setSelected(new Set())} className="ml-auto text-xs text-gray-500 hover:underline">Batal pilih</button>
+              <div className="g-selectbar">
+                <span>{selected.size} dipilih</span>
+                <button onClick={() => bulk("activate", "Aktifkan")} className="g-btn g-btn-sm g-btn-text">Aktifkan</button>
+                <button onClick={() => bulk("suspend", "Suspend")} className="g-btn g-btn-sm g-btn-text">Suspend</button>
+                <button onClick={() => bulk("delete", "Hapus")} className="g-btn g-btn-sm g-btn-danger">Hapus</button>
+                <button onClick={() => setSelected(new Set())} className="g-btn g-btn-sm g-btn-text ml-auto">Batal pilih</button>
               </div>
             )}
 
-            <p className="mb-2 text-xs text-gray-400">{filteredListings.length} listing</p>
-            <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-slate-800">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 text-left text-xs uppercase text-gray-400 dark:bg-slate-900">
+            <p className="mb-2 text-xs" style={{ color: "var(--g-ink-soft)" }}>{filteredListings.length} listing</p>
+
+            <div className="g-table-wrap">
+              <table className="g-table min-w-[860px]">
+                <thead>
                   <tr>
-                    <th className="p-3"><input type="checkbox" checked={allVisibleSelected} onChange={toggleSelAll} /></th>
-                    <th className="p-3">Barang</th>
-                    <th className="p-3">Penjual</th>
-                    <th className="p-3">Harga</th>
-                    <th className="p-3">Status</th>
-                    <th className="p-3">Views</th>
-                    <th className="p-3">Aksi</th>
+                    <th style={{ width: 44 }}><input type="checkbox" checked={allVisibleSelected} onChange={toggleSelAll} aria-label="Pilih semua" /></th>
+                    <th>Barang</th>
+                    <th>Penjual</th>
+                    <th>Harga</th>
+                    <th>Status</th>
+                    <th>Views</th>
+                    <th>Kirim WA</th>
+                    <th style={{ width: 56 }}></th>
                   </tr>
                 </thead>
-                <tbody className="dark:text-slate-300">
+                <tbody>
                   {filteredListings.map((l) => (
-                    <tr key={l.id} className="border-t align-top dark:border-slate-800">
-                      <td className="p-3"><input type="checkbox" checked={selected.has(l.id)} onChange={() => toggleSel(l.id)} /></td>
-                      <td className="max-w-[250px] p-3 flex items-center gap-3">
-                        {l.image_url ? (
-                          <img src={l.image_url} alt="" className="h-10 w-10 shrink-0 rounded-md object-cover bg-gray-100 dark:bg-slate-800" loading="lazy" />
-                        ) : (
-                          <div className="h-10 w-10 shrink-0 rounded-md bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-gray-300">
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    <tr key={l.id}>
+                      <td><input type="checkbox" checked={selected.has(l.id)} onChange={() => toggleSel(l.id)} aria-label={`Pilih ${l.title}`} /></td>
+                      <td>
+                        <div className="flex items-center gap-3">
+                          {l.image_url ? (
+                            <img src={l.image_url} alt="" className="h-10 w-10 shrink-0 rounded object-cover" style={{ background: "var(--g-surface-2)" }} loading="lazy" />
+                          ) : (
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded" style={{ background: "var(--g-surface-2)", color: "var(--g-ink-faint)" }}>
+                              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                            </div>
+                          )}
+                          <div className="min-w-0 max-w-[240px]">
+                            <a href={`/admin/listings/${buildSlug(l.title, l.id)}`} className="block truncate font-medium hover:underline" title={l.title}>
+                              {l.title}
+                            </a>
+                            <p className="truncate text-xs" style={{ color: "var(--g-ink-soft)" }}>{l.category}{l.featured ? " · ⭐" : ""}</p>
                           </div>
-                        )}
-                        <div className="min-w-0">
-                          <a href={`/admin/listings/${buildSlug(l.title, l.id)}`} className="block truncate font-medium hover:text-primary dark:text-white dark:hover:text-primary" title={l.title}>
-                            {l.title}
-                          </a>
-                          <p className="text-xs text-gray-400">{l.category}{l.featured ? " · ⭐" : ""}</p>
                         </div>
                       </td>
-                      <td className="p-3 text-gray-500">{l.seller_name}<br /><span className="text-xs">{l.seller_wa}</span></td>
-                      <td className="p-3">{rupiah(l.price)}</td>
-                      <td className="p-3"><StatusBadge s={l.status} /></td>
-                      <td className="p-3 text-gray-500">{l.views || 0}</td>
-                      <td className="p-3">
-                        <div className="flex flex-wrap gap-1">
-                          <a href={`/admin/listings/${buildSlug(l.title, l.id)}`} className="rounded-md bg-gray-900 px-2 py-1 text-xs text-white dark:bg-slate-200 dark:text-slate-900">Edit</a>
-                          {l.status === "deletion_pending" ? (
-                            <>
-                              <button onClick={() => confirmThen({ title: "Setujui penghapusan", message: `Hapus permanen "${l.title}"?`, danger: true }, () => action({ action: "delete", id: l.id }, "Iklan dihapus (APPROVED)"))} className="rounded-md bg-rose-600 px-2 py-1 text-xs text-white">✓ Approve</button>
-                              <button onClick={() => action({ action: "activate", id: l.id }, "Penghapusan ditolak — iklan aktif kembali")} className="rounded-md bg-green-100 px-2 py-1 text-xs text-green-700">✗ Reject</button>
-                            </>
-                          ) : (
-                            <>
-                              {l.status !== "active" && <button onClick={() => action({ action: "activate", id: l.id }, "Diaktifkan")} className="rounded-md bg-green-100 px-2 py-1 text-xs text-green-700">Aktifkan</button>}
-                              {l.status !== "suspended" && <button onClick={() => action({ action: "suspend", id: l.id }, "Disuspend")} className="rounded-md bg-amber-100 px-2 py-1 text-xs text-amber-700">Suspend</button>}
-                              {l.featured ? (
-                                <button onClick={() => action({ action: "unfeature", id: l.id }, "Featured dilepas")} className="rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-600 dark:bg-slate-800 dark:text-slate-300">Unfeature</button>
-                              ) : (
-                                <button onClick={() => action({ action: "feature", id: l.id, days: 7 }, "Featured 7 hari")} className="rounded-md bg-amber-50 px-2 py-1 text-xs text-amber-600">Featured</button>
-                              )}
-                              {l.sponsored_until && new Date(l.sponsored_until) > new Date() ? (
-                                <button onClick={() => action({ action: "set_sponsored", id: l.id, days: 0 }, "Sponsored dilepas")} className="rounded-md bg-purple-100 px-2 py-1 text-xs text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">Unsponsored</button>
-                              ) : (
-                                <button onClick={() => action({ action: "set_sponsored", id: l.id, days: 7 }, "Sponsored 7 hari")} className="rounded-md bg-purple-50 px-2 py-1 text-xs text-purple-600">Sponsored</button>
-                              )}
-                              <button onClick={() => confirmThen({ title: "Hapus listing", message: `Hapus "${l.title}"?`, danger: true }, () => action({ action: "delete", id: l.id }, "Dihapus"))} className="rounded-md bg-rose-100 px-2 py-1 text-xs text-rose-700">Hapus</button>
-                            </>
-                          )}
-                          <button onClick={() => confirmThen({ title: "Blacklist penjual", message: `Blokir ${l.seller_wa}? Semua iklannya disuspend.`, danger: true }, () => action({ action: "blacklist", wa: l.seller_wa }, "Diblacklist"))} className="rounded-md border border-gray-300 px-2 py-1 text-xs text-gray-700 dark:border-slate-700 dark:text-slate-300">Blacklist</button>
+                      <td className="g-td-soft">
+                        {l.seller_name}
+                        <br />
+                        <span className="text-xs">{l.seller_wa}</span>
+                      </td>
+                      <td className="whitespace-nowrap">{rupiah(l.price)}</td>
+                      <td><StatusBadge s={l.status} /></td>
+                      <td className="g-td-soft">{l.views || 0}</td>
+
+                      {/*
+                        Dua tombol, dua keadaan dunia. Yang pertama menyuruh bot
+                        mengirim (grup + admin + penjual) dan cuma berguna kalau
+                        botnya hidup. Yang kedua tidak mengirim apa pun: ia
+                        menyiapkan teks dan tautan wa.me supaya admin mengirim
+                        sendiri — jalan keluar saat nomor bot sedang dibatasi
+                        WhatsApp, yang di sini bisa berlangsung berhari-hari.
+                      */}
+                      <td>
+                        <div className="flex flex-wrap gap-1.5">
+                          <button
+                            onClick={() => kirimViaBot(l)}
+                            disabled={kirimSibuk === l.id}
+                            className="g-btn g-btn-sm g-btn-wa"
+                            title="Bot mengirim ke grup, admin, dan penjual"
+                          >
+                            {kirimSibuk === l.id ? "Mengirim…" : "Bot"}
+                          </button>
+                          <button
+                            onClick={() => setManual(l)}
+                            className="g-btn g-btn-sm g-btn-outlined"
+                            title="Siapkan teks + tautan untuk dikirim sendiri"
+                          >
+                            Manual
+                          </button>
                         </div>
+                      </td>
+
+                      <td>
+                        <MenuAksi
+                          items={[
+                            { label: "Edit", href: `/admin/listings/${buildSlug(l.title, l.id)}` },
+                            ...(l.status === "deletion_pending"
+                              ? [
+                                  { label: "Setujui penghapusan", tone: "bad", onClick: () => confirmThen({ title: "Setujui penghapusan", message: `Hapus permanen "${l.title}"?`, danger: true }, () => action({ action: "delete", id: l.id }, "Iklan dihapus (APPROVED)")) },
+                                  { label: "Tolak — aktifkan lagi", onClick: () => action({ action: "activate", id: l.id }, "Penghapusan ditolak — iklan aktif kembali") },
+                                ]
+                              : [
+                                  ...(l.status !== "active" ? [{ label: "Aktifkan", onClick: () => action({ action: "activate", id: l.id }, "Diaktifkan") }] : []),
+                                  ...(l.status !== "suspended" ? [{ label: "Suspend", onClick: () => action({ action: "suspend", id: l.id }, "Disuspend") }] : []),
+                                  l.featured
+                                    ? { label: "Lepas Featured", onClick: () => action({ action: "unfeature", id: l.id }, "Featured dilepas") }
+                                    : { label: "Featured 7 hari", onClick: () => action({ action: "feature", id: l.id, days: 7 }, "Featured 7 hari") },
+                                  l.sponsored_until && new Date(l.sponsored_until) > new Date()
+                                    ? { label: "Lepas Sponsored", onClick: () => action({ action: "set_sponsored", id: l.id, days: 0 }, "Sponsored dilepas") }
+                                    : { label: "Sponsored 7 hari", onClick: () => action({ action: "set_sponsored", id: l.id, days: 7 }, "Sponsored 7 hari") },
+                                  { label: "Hapus listing", tone: "bad", onClick: () => confirmThen({ title: "Hapus listing", message: `Hapus "${l.title}"?`, danger: true }, () => action({ action: "delete", id: l.id }, "Dihapus")) },
+                                ]),
+                            { label: "Blacklist penjual", tone: "bad", onClick: () => confirmThen({ title: "Blacklist penjual", message: `Blokir ${l.seller_wa}? Semua iklannya disuspend.`, danger: true }, () => action({ action: "blacklist", wa: l.seller_wa }, "Diblacklist")) },
+                          ]}
+                        />
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+              {filteredListings.length === 0 && (
+                <div className="g-empty" style={{ border: 0 }}>
+                  <p className="g-empty-title">Tidak ada listing yang cocok</p>
+                  <p className="g-empty-desc">Coba ganti kata kunci atau saringan statusnya.</p>
+                </div>
+              )}
             </div>
           </div>
         )}
+
 
         {/* TRANSAKSI */}
         {tab === "transaksi" && (
@@ -1094,47 +1199,139 @@ export default function AdminPanel({
 function Kpi({ label, value, sub, href, waspada = false }) {
   const isi = (
     <>
-      <p className="text-xs text-gray-400">{label}</p>
-      <p className={`mt-1 text-xl font-extrabold tracking-tight ${waspada ? "text-amber-600 dark:text-amber-400" : "dark:text-white"}`}>{value}</p>
-      {sub && <p className="text-[11px] text-gray-400">{sub}</p>}
+      <p className="g-stat-label">{label}</p>
+      <p className={`g-stat-value${waspada ? " is-warn" : ""}`}>{value}</p>
+      {sub && <p className="g-stat-sub">{sub}</p>}
     </>
   );
   // Angka yang menuntut tindakan harus bisa ditekan; angka yang cuma kabar tidak.
-  if (href) {
-    return (
-      <a href={href} className="card block p-4 transition-colors hover:border-gray-300 dark:hover:border-slate-600">
-        {isi}
-      </a>
-    );
-  }
-  return <div className="card p-4">{isi}</div>;
+  if (href) return <a href={href} className="g-stat block transition-shadow hover:shadow-md">{isi}</a>;
+  return <div className="g-stat">{isi}</div>;
 }
 function Card({ title, children, className = "" }) {
   return (
-    <div className={`card p-5 ${className}`}>
-      {title && <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-gray-800 dark:text-gray-200">{title}</h2>}
+    <div className={`g-card g-card-pad ${className}`}>
+      {title && <h2 className="g-card-title mb-4">{title}</h2>}
       {children}
     </div>
   );
 }
 function StatusBadge({ s }) {
   const map = {
-    active: "bg-green-100 text-green-700",
-    paid: "bg-green-100 text-green-700",
-    pending: "bg-amber-100 text-amber-700",
-    sold: "bg-gray-200 text-gray-700 dark:bg-slate-700 dark:text-slate-200",
-    expired: "bg-rose-100 text-rose-700",
-    failed: "bg-rose-100 text-rose-700",
-    suspended: "bg-rose-100 text-rose-700",
+    active: "is-ok",
+    paid: "is-ok",
+    pending: "is-warn",
+    sold: "",
+    expired: "is-bad",
+    failed: "is-bad",
+    suspended: "is-bad",
+    deletion_pending: "is-warn",
   };
-  return <span className={`badge ${map[s] || "bg-gray-100 text-gray-600"}`}>{s}</span>;
+  return <span className={`g-badge ${map[s] || ""}`}>{s}</span>;
 }
 function LoadMore({ shown, total, onClick }) {
   if (shown >= total) return null;
   return (
     <div className="mt-4 text-center">
-      <button onClick={onClick} className="btn-outline text-sm">Muat lebih banyak ({total - shown} lagi)</button>
+      <button onClick={onClick} className="g-btn g-btn-text">Muat lebih banyak ({total - shown} lagi)</button>
     </div>
+  );
+}
+
+/*
+ * Menu tiga-titik untuk aksi baris.
+ *
+ * Kolom aksi listing dulu memajang tujuh tombol berwarna sekaligus di tiap
+ * baris — Aktifkan, Suspend, Featured, Sponsored, Hapus, Blacklist, Edit —
+ * sehingga tabelnya terbaca sebagai dinding tombol dan yang benar-benar sering
+ * dipakai tenggelam di antaranya. Sekarang yang tinggal di baris cuma yang
+ * dipakai tiap hari; sisanya masuk ke sini.
+ *
+ * Menunya position:fixed, bukan absolute: pembungkus tabel punya
+ * `overflow-x: auto`, dan menu absolute di dalamnya akan terpotong tepat pada
+ * baris-baris paling bawah — persis baris yang paling sering perlu dibuka.
+ */
+function MenuAksi({ items }) {
+  const [buka, setBuka] = useState(false);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
+  const tombol = useRef(null);
+  const menu = useRef(null);
+
+  useEffect(() => {
+    if (!buka) return;
+    function luar(e) {
+      if (menu.current?.contains(e.target) || tombol.current?.contains(e.target)) return;
+      setBuka(false);
+    }
+    function pergi() { setBuka(false); }
+    document.addEventListener("mousedown", luar);
+    window.addEventListener("scroll", pergi, true);
+    window.addEventListener("resize", pergi);
+    return () => {
+      document.removeEventListener("mousedown", luar);
+      window.removeEventListener("scroll", pergi, true);
+      window.removeEventListener("resize", pergi);
+    };
+  }, [buka]);
+
+  function toggle() {
+    if (buka) return setBuka(false);
+    const r = tombol.current.getBoundingClientRect();
+    const lebar = 232;
+    setPos({
+      top: Math.min(r.bottom + 4, window.innerHeight - 8),
+      left: Math.max(8, Math.min(r.right - lebar, window.innerWidth - lebar - 8)),
+    });
+    setBuka(true);
+  }
+
+  return (
+    <>
+      <button ref={tombol} type="button" onClick={toggle} className="g-icon-btn h-9 w-9" aria-label="Aksi lain" aria-expanded={buka}>
+        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="12" cy="5" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="12" cy="19" r="1.8" />
+        </svg>
+      </button>
+      {buka && (
+        <div
+          ref={menu}
+          className="g-card py-2"
+          style={{ position: "fixed", top: pos.top, left: pos.left, width: 232, zIndex: 60, boxShadow: "var(--g-shadow-2)", maxHeight: "60vh", overflowY: "auto" }}
+          role="menu"
+        >
+          {items.map((it) => {
+            const isi = (
+              <>
+                <span>{it.label}</span>
+              </>
+            );
+            const gaya = {
+              display: "flex", alignItems: "center", width: "100%", height: 40, padding: "0 16px",
+              background: "transparent", border: 0, cursor: "pointer", textAlign: "left",
+              fontSize: ".875rem", fontWeight: 500,
+              color: it.tone === "bad" ? "var(--g-red)" : "var(--g-ink)",
+            };
+            if (it.href) {
+              return (
+                <a key={it.label} href={it.href} style={gaya} role="menuitem"
+                   onMouseEnter={(e) => (e.currentTarget.style.background = "var(--g-hover)")}
+                   onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}>
+                  {isi}
+                </a>
+              );
+            }
+            return (
+              <button key={it.label} type="button" role="menuitem" style={gaya}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "var(--g-hover)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                      onClick={() => { setBuka(false); it.onClick?.(); }}>
+                {isi}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </>
   );
 }
 
