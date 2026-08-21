@@ -22,6 +22,12 @@ export async function GET(req) {
     .eq("wa", wa)
     .maybeSingle();
 
+  // Dipakai halaman /jual untuk memajang "GRATIS" sebelum tombol ditekan.
+  // Kalau layar bilang Rp 5.000 lalu servernya menayangkan gratis, yang salah
+  // bukan cuma angkanya — orangnya jadi tidak percaya pada angka berikutnya.
+  const { pricing } = await getSettings().catch(() => ({ pricing: {} }));
+  const punyaToko = !!profile?.slug && pricing?.tokoGratis !== false;
+
   // Fetch listings
   const { data, error } = await supa
     .from("listings")
@@ -60,7 +66,7 @@ export async function GET(req) {
     }
   }
 
-  return NextResponse.json({ listings, profile });
+  return NextResponse.json({ punyaToko, listings, profile });
   } catch (e) {
     console.error("[GET /api/listings] error:", e);
     return NextResponse.json({ error: e.message }, { status: 500 });
@@ -149,7 +155,11 @@ export async function POST(req) {
     const isPro = profile?.subscription_tier === "pro" && new Date(profile?.subscription_expires_at) > new Date();
 
     // Batas iklan aktif+pending untuk non-PRO (distributor tidak dibatasi seperti PRO)
-    if (!isPro && !isDistributor) {
+    // Penjual bertoko sengaja TIDAK ikut dibatasi 15 iklan: kalau iklannya
+    // gratis tapi tokonya cuma boleh berisi 15 barang, yang dijanjikan dan yang
+    // diberikan tidak sama. Batasnya tetap berlaku untuk yang tidak punya toko.
+    const profilPunyaToko = !!profileCheck?.slug;
+    if (!isPro && !isDistributor && !profilPunyaToko) {
       const { count: activeCount } = await supa
         .from("listings")
         .select("id", { count: "exact", head: true })
@@ -182,13 +192,21 @@ export async function POST(req) {
       }
     }
 
+    // Punya toko = tidak bayar biaya tayang.
+    //
+    // Sebelum ini yang gratis cuma HALAMAN tokonya; tiap barang di dalamnya
+    // tetap ditagih satu per satu, sehingga toko yang isinya paling banyak
+    // justru paling mahal — kebalikan dari yang seharusnya didorong.
+    // Sakelarnya `pricing.tokoGratis` (bawaan: nyala).
+    const punyaToko = !!profile?.slug && settings.pricing?.tokoGratis !== false;
+
     let days = Math.max(1, Number(settings.pricing?.listingDays) || 14);
     if (isJasaFree) days = 7;
     else if (isJasa || type === "poster") days = 30; // Jasa berbayar dan poster dapat 30 hari
 
     const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
     // Distributor langsung aktif tanpa bayar biaya iklan
-    const initialStatus = (isPro || isJasaFree || isDistributor) ? "active" : "pending";
+    const initialStatus = (isPro || isJasaFree || isDistributor || punyaToko) ? "active" : "pending";
 
     // Hitung fee bagi hasil untuk distributor
     let distributorFee = 0;
@@ -228,7 +246,7 @@ export async function POST(req) {
       await supa.from("listings").update({ images }).eq("id", listing.id);
     }
 
-    if (isPro || isJasaFree || isDistributor) {
+    if (isPro || isJasaFree || isDistributor || punyaToko) {
       try {
         await postToGroup(listing);
         notifyCategorySubscribers(supa, listing).catch(() => {});
@@ -239,7 +257,7 @@ export async function POST(req) {
       } catch (err) {
         console.error("Fonnte postToGroup error:", err?.message);
       }
-      return NextResponse.json({ listing, paymentUrl: null, isPro, isJasaFree, isDistributor, distributorFee });
+      return NextResponse.json({ listing, paymentUrl: null, isPro, isJasaFree, isDistributor, punyaToko, distributorFee });
     }
 
     const amount = adFeeFrom(settings.pricing, listing.type, listing.price);

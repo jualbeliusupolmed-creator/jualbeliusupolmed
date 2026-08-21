@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
 import { adFee, rupiah } from "@/lib/fees";
 import { uploadMedia } from "@/lib/upload";
@@ -43,6 +44,10 @@ export default function JualPage() {
 
   const [cfg, setCfg] = useState(null);
   const [sellerIsDistributor, setSellerIsDistributor] = useState(false);
+  // Penjual yang sudah punya halaman toko memasang iklan gratis. Diketahui
+  // SEBELUM tombol ditekan: layar yang menagih Rp 5.000 lalu server yang
+  // menayangkan gratis membuat orang berhenti percaya pada angka berikutnya.
+  const [sellerPunyaToko, setSellerPunyaToko] = useState(false);
 
   // Auto-fill from localStorage on mount
   useEffect(() => {
@@ -59,7 +64,10 @@ export default function JualPage() {
         if (savedWa) {
           fetch(`/api/listings?seller_wa=${encodeURIComponent(savedWa)}`)
             .then((r) => r.json())
-            .then((d) => setSellerIsDistributor(!!d.profile?.distributor))
+            .then((d) => {
+              setSellerIsDistributor(!!d.profile?.distributor);
+              setSellerPunyaToko(!!d.punyaToko);
+            })
             .catch(() => {});
         }
       }
@@ -79,6 +87,10 @@ export default function JualPage() {
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const fee = adFeeFor(form.type, form.price);
+  // Dua sebab berbeda, satu akibat yang sama. Dipisah supaya alasannya bisa
+  // disebut apa adanya di layar — "gratis" tanpa sebab selalu memancing curiga.
+  const gratis = sellerIsDistributor || sellerPunyaToko;
+  const sebabGratis = sellerIsDistributor ? "Distributor" : "punya toko";
 
   const handleAreaOptionChange = (e) => {
     const val = e.target.value;
@@ -142,6 +154,12 @@ export default function JualPage() {
         return;
       }
 
+      if (data.punyaToko) {
+        toast.success("Iklan langsung tayang — gratis karena kamu punya toko! 🏪");
+        router.push(`/dashboard?wa=${encodeURIComponent(formattedWa)}`);
+        return;
+      }
+
       if (data.isPro) {
         toast.success("Iklan berhasil ditayangkan! (Gratis via Paket Pro)");
         const waParam = encodeURIComponent(formattedWa);
@@ -169,8 +187,24 @@ export default function JualPage() {
 
 
       <h1 className="text-2xl font-extrabold">{form.type === "sewa" ? "Sewakan Barang" : "Jual Barang"}</h1>
+
+      {/* Punya toko = iklan gratis. Disebut di ATAS, bukan cuma di rincian
+          biaya paling bawah: yang belum punya toko masih sempat membuatnya
+          sebelum mengetik apa pun. */}
+      {sellerPunyaToko ? (
+        <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-900/20 dark:text-emerald-300">
+          🏪 <strong>Iklanmu gratis</strong> — kamu sudah punya toko, jadi tidak ada biaya tayang.
+        </div>
+      ) : (
+        <div className="mt-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+          🏪 Punya toko di sini? <strong>Iklannya gratis.</strong>{" "}
+          <Link href="/dashboard/toko" className="font-semibold underline">Buat toko dulu</Link> — gratis, sekali saja, lalu semua iklan berikutnya tanpa biaya tayang.
+        </div>
+      )}
       <p className="mt-1 text-gray-500">
-        Isi detail {form.type === "sewa" ? "barang sewaan" : "barang"}, bayar biaya tayang, iklan langsung tampil setelah pembayaran sukses.
+        {gratis
+          ? `Isi detail ${form.type === "sewa" ? "barang sewaan" : "barang"}, tekan kirim, iklan langsung tayang — tanpa biaya.`
+          : `Isi detail ${form.type === "sewa" ? "barang sewaan" : "barang"}, bayar biaya tayang, iklan langsung tampil setelah pembayaran sukses.`}
       </p>
 
       <form onSubmit={handlePreviewClick} className="mt-6 grid gap-6 lg:grid-cols-3">
@@ -386,14 +420,14 @@ export default function JualPage() {
               <div className="flex justify-between">
                 <dt className="text-gray-500 dark:text-slate-400">Biaya tayang</dt>
                 <dd className="font-medium dark:text-white">
-                  {sellerIsDistributor ? <span className="text-orange-600 font-bold">GRATIS 🏪</span> : rupiah(fee)}
+                  {gratis ? <span className="font-bold text-emerald-600">GRATIS 🏪 <span className="font-normal text-xs">({sebabGratis})</span></span> : rupiah(fee)}
                 </dd>
               </div>
               <div className="my-2 border-t dark:border-slate-800" />
               <div className="flex justify-between text-base">
                 <dt className="font-semibold dark:text-white">Total bayar</dt>
                 <dd className="font-extrabold text-primary dark:text-white">
-                  {sellerIsDistributor ? <span className="text-orange-600">Rp 0</span> : rupiah(fee)}
+                  {gratis ? <span className="text-emerald-600">Rp 0</span> : rupiah(fee)}
                 </dd>
               </div>
             </dl>
@@ -492,7 +526,7 @@ export default function JualPage() {
                 disabled={busy}
                 className="btn-primary flex-1"
               >
-                {busy ? "Memproses…" : sellerIsDistributor ? "Konfirmasi & Tayang (Gratis)" : `Konfirmasi & Bayar ${rupiah(fee)}`}
+                {busy ? "Memproses…" : gratis ? "Konfirmasi & Tayang (Gratis)" : `Konfirmasi & Bayar ${rupiah(fee)}`}
               </button>
             </div>
           </div>
