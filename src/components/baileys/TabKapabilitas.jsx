@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  Wifi, MessageSquare, Users, UserCheck, SlidersHorizontal, Fingerprint
+  Wifi, MessageSquare, Users, UserCheck, ShieldAlert, Cpu
 } from "lucide-react";
 
 /*
@@ -72,7 +72,7 @@ const KEMAMPUAN = [
   },
   {
     kategori: "Yang punya sakelar sungguhan",
-    icon: <SlidersHorizontal className="w-5 h-5" />,
+    icon: <ShieldAlert className="w-5 h-5" />,
     catatan: "Tujuh setelan ini satu-satunya yang benar-benar mengubah perilaku bot saat disimpan. Semuanya diatur di tab Aksi, dan mendarat di proses yang memegang koneksi WhatsApp — bukan di database.",
     fitur: [
       { judul: "Tolak Panggilan", desc: "Tolak panggilan suara/video masuk otomatis.", di: "Tab Aksi", bukti: "modul.panggilan.tolak" },
@@ -86,7 +86,7 @@ const KEMAMPUAN = [
   },
   {
     kategori: "Identitas & Riwayat",
-    icon: <Fingerprint className="w-5 h-5" />,
+    icon: <Cpu className="w-5 h-5" />,
     fitur: [
       { judul: "LID & Username", desc: "Memetakan ID baru WhatsApp (@lid) yang tanpa nomor kembali ke nomor aslinya.", di: "Tab LID Map", bukti: "lib/lidMigrate.js" },
       { judul: "Riwayat Percakapan", desc: "Tiap pesan masuk dan keluar dicatat, bisa dibaca ulang dari panel.", di: "Tab Chat", bukti: "wa_conversations" },
