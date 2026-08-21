@@ -2,31 +2,30 @@ import { getOverviewStats } from "@/lib/adminOverviewData";
 import { rupiah } from "@/lib/fees";
 import { PageHeader } from "@/components/admin/ui";
 
-// Helper components that used to be inside AdminPanel
 function Kpi({ label, value, sub }) {
   return (
-    <div className="flex flex-col rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
-      <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">
-        {label}
-      </span>
-      <span className="mt-2 text-2xl font-black tracking-tight text-gray-900 dark:text-white">
-        {value}
-      </span>
-      {sub && <span className="mt-1 text-[11px] font-medium text-gray-400">{sub}</span>}
+    <div className="flex flex-col justify-between rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900">
+      <p className="text-[13px] font-semibold text-gray-500 dark:text-neutral-400">{label}</p>
+      <div className="mt-3">
+        <p className="text-3xl font-extrabold tracking-tight text-neutral-900 dark:text-white">{value}</p>
+        {sub && <p className="mt-1.5 text-xs text-gray-400 dark:text-neutral-500">{sub}</p>}
+      </div>
     </div>
   );
 }
 
-function Card({ title, children, className = "" }) {
+function Card({ title, subtitle, children, className = "" }) {
   return (
-    <div className={`rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/40 ${className}`}>
-      <h3 className="mb-4 text-sm font-bold tracking-wide text-gray-900 dark:text-white">{title}</h3>
+    <div className={`rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 ${className}`}>
+      <div className="mb-6">
+        <h3 className="text-base font-bold tracking-tight text-neutral-900 dark:text-white">{title}</h3>
+        {subtitle && <p className="mt-1 text-sm text-gray-500 dark:text-neutral-400">{subtitle}</p>}
+      </div>
       {children}
     </div>
   );
 }
 
-// tanggal lokal YYYY-MM-DD
 function localDay(d) {
   const x = new Date(d);
   return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(
@@ -51,68 +50,100 @@ export default async function OverviewPage() {
     if (k in idx) revByDay[idx[k]].total += p.amount || 0;
   });
   const maxRev = Math.max(1, ...revByDay.map((d) => d.total));
+  const totalRev14 = revByDay.reduce((s, d) => s + d.total, 0);
 
-  const PAYMENT_TYPES = ["iklan", "bump", "featured", "sold_fee"];
+  const PAYMENT_TYPES = [
+    { key: "iklan", label: "Pasang Iklan" },
+    { key: "bump", label: "Sundul Iklan" },
+    { key: "featured", label: "Featured" },
+    { key: "sold_fee", label: "Biaya Terjual" },
+  ];
 
   return (
-    <div className="animate-fade-in">
-      <PageHeader title="Ringkasan" description="Angka utama marketplace hari ini." />
-      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-7">
-        <Kpi label="Iklan aktif" value={stats.activeTotal} sub={`${stats.listingsTotal} total`} />
+    <div className="space-y-8 max-w-7xl">
+      <PageHeader
+        title="Ringkasan"
+        description="Statistik performa dan pendapatan marketplace USU & POLMED."
+      />
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
+        <Kpi label="Iklan Aktif" value={stats.activeTotal} sub={`${stats.listingsTotal} total iklan`} />
         <Kpi label="Terjual" value={stats.soldTotal} sub={`${stats.pendingTotal} pending`} />
-        <Kpi label="Revenue" value={rupiah(stats.revenue)} sub={`${stats.pendingPaymentCount} pending`} />
-        <Kpi label="Install PWA" value={stats.pwaInstallsTotal} sub="Orang" />
-        <Kpi label="Rating" value={stats.avgRating} sub={`${stats.totalRatings} ulasan`} />
-        <Kpi label="Laporan" value={stats.openReportsTotal} sub="open" />
+        <Kpi label="Total Revenue" value={rupiah(stats.revenue)} sub={`${stats.pendingPaymentCount} tertunda`} />
+        <Kpi label="Instalasi PWA" value={stats.pwaInstallsTotal} sub="Pengguna" />
+        <Kpi label="Rating Rata-rata" value={stats.avgRating} sub={`${stats.totalRatings} ulasan`} />
+        <Kpi label="Laporan Terbuka" value={stats.openReportsTotal} sub="Butuh tindakan" />
       </div>
 
+      {/* Graphs & Details */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card title="Revenue 14 Hari (paid)">
-          <div className="flex h-40 items-end gap-1">
-            {revByDay.map((d) => (
-              <div key={d.key} className="flex flex-1 flex-col items-center justify-end">
-                <div
-                  className="w-full rounded-t bg-gray-900 transition-all hover:bg-gray-700 dark:bg-slate-200 dark:hover:bg-white"
-                  style={{ height: `${(d.total / maxRev) * 100}%` }}
-                  title={`${d.key}: ${rupiah(d.total)}`}
-                />
-                <span className="mt-1 text-[9px] text-gray-400">{d.key.slice(8)}</span>
-              </div>
-            ))}
-          </div>
-          <p className="mt-2 text-xs text-gray-400">
-            Total 14 hari: <strong className="text-gray-700 dark:text-slate-200">{rupiah(revByDay.reduce((s, d) => s + d.total, 0))}</strong>
-          </p>
-        </Card>
-
-        <Card title="Listing per Kategori">
-          {Object.entries(stats.perCat).length === 0 && <p className="text-sm text-gray-400">Belum ada listing.</p>}
-          <div className="max-h-64 overflow-y-auto pr-2">
-            {Object.entries(stats.perCat).sort((a,b) => b[1]-a[1]).map(([name, count]) => {
-              const max = Math.max(1, ...Object.values(stats.perCat));
+        {/* Revenue 14 Days */}
+        <Card title="Pendapatan 14 Hari" subtitle={`Total: ${rupiah(totalRev14)}`}>
+          <div className="flex h-48 items-end gap-2 pt-2">
+            {revByDay.map((d) => {
+              const heightPct = Math.max(4, (d.total / maxRev) * 100);
               return (
-                <div key={name} className="mb-3 last:mb-0">
-                  <div className="flex justify-between text-sm dark:text-slate-300">
-                    <span>{name}</span>
-                    <span className="text-gray-400">{count}</span>
-                  </div>
-                  <div className="mt-1 h-2 rounded-full bg-gray-100 dark:bg-slate-800">
-                    <div className="h-2 rounded-full bg-gray-900 dark:bg-slate-200" style={{ width: `${(count / max) * 100}%` }} />
-                  </div>
+                <div key={d.key} className="group relative flex flex-1 flex-col items-center justify-end h-full">
+                  <div
+                    className="w-full rounded-t-md bg-neutral-900 transition-all hover:bg-neutral-700 dark:bg-white dark:hover:bg-neutral-200"
+                    style={{ height: `${heightPct}%` }}
+                    title={`${d.key}: ${rupiah(d.total)}`}
+                  />
+                  <span className="mt-3 text-[10px] font-medium text-gray-400 dark:text-neutral-500">
+                    {d.key.slice(8)}
+                  </span>
                 </div>
               );
             })}
           </div>
         </Card>
 
+        {/* Listing per Category */}
+        <Card title="Listing per Kategori" subtitle="Distribusi kategori produk">
+          {Object.entries(stats.perCat).length === 0 ? (
+            <p className="text-sm text-gray-400">Belum ada listing.</p>
+          ) : (
+            <div className="max-h-56 space-y-4 overflow-y-auto pr-2 scrollbar-thin">
+              {Object.entries(stats.perCat)
+                .sort((a, b) => b[1] - a[1])
+                .map(([name, count]) => {
+                  const max = Math.max(1, ...Object.values(stats.perCat));
+                  return (
+                    <div key={name} className="space-y-1.5">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="font-medium text-neutral-800 dark:text-neutral-200">{name}</span>
+                        <span className="text-gray-400 dark:text-neutral-500">{count}</span>
+                      </div>
+                      <div className="h-2 w-full rounded-full bg-gray-100 dark:bg-neutral-800">
+                        <div
+                          className="h-full rounded-full bg-neutral-900 dark:bg-white transition-all duration-500"
+                          style={{ width: `${(count / max) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+        </Card>
+
+        {/* Revenue by Type */}
         <Card title="Revenue per Tipe" className="lg:col-span-2">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             {PAYMENT_TYPES.map((t) => {
-              const sum = stats.paidPayments.filter((p) => p.type === t).reduce((s, p) => s + (p.amount || 0), 0);
+              const sum = stats.paidPayments
+                .filter((p) => p.type === t.key)
+                .reduce((s, p) => s + (p.amount || 0), 0);
               return (
-                <div key={t} className="rounded-xl bg-gray-50 p-3 dark:bg-slate-800/50">
-                  <p className="text-xs capitalize text-gray-400">{t}</p>
-                  <p className="mt-1 font-bold dark:text-white">{rupiah(sum)}</p>
+                <div
+                  key={t.key}
+                  className="rounded-xl border border-gray-100 bg-gray-50/50 p-4 transition-all hover:bg-white hover:shadow-sm dark:border-neutral-800 dark:bg-neutral-800/40"
+                >
+                  <p className="text-sm font-medium text-gray-500 dark:text-neutral-400">{t.label}</p>
+                  <p className="mt-2 text-xl font-bold text-neutral-900 dark:text-white">
+                    {rupiah(sum)}
+                  </p>
                 </div>
               );
             })}
@@ -122,3 +153,5 @@ export default async function OverviewPage() {
     </div>
   );
 }
+
+

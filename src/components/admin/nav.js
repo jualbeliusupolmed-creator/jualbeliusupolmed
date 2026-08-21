@@ -46,6 +46,7 @@ export const GROUPS = [
     label: "Utama",
     items: [
       { key: "overview", label: "Ringkasan" },
+      { key: "antrean",  label: "Antrean WA" },
       { key: "moderasi", label: "Moderasi" },
     ],
   },
@@ -91,10 +92,6 @@ export const GROUPS = [
       { key: "wabot",      label: "WhatsApp Bot" },
       { key: "broadcast",  label: "Broadcast" },
       { key: "notifikasi", label: "Notifikasi" },
-      // Antrean notifikasi yang GAGAL terkirim. Tetangganya "Notifikasi"
-      // (push ke peramban) sengaja dibiarkan terpisah: yang satu fitur
-      // kirim-pesan, yang ini daftar orang yang belum dapat kabarnya.
-      { key: "antrean",    label: "Antrean WA" },
       { key: "ai",         label: "AI & Memori" },
       { key: "referral",   label: "Referral" },
     ],

@@ -118,74 +118,55 @@ export const DEFAULT_DATA = {
 // PERFORMANCE: Records per page for paginated queries (was 500 flat)
 const PAGE_SIZE = 100;
 
-export async function getAdminStats(page = 1) {
+export async function getAdminStats(page = 1, tab = null) {
   const supa = getAdminClient();
 
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
-  // PAGINATED: listings and payments now use range() instead of loading all at once
+  // Hanya memuat tabel yang diperlukan oleh tab yang sedang aktif
+  const fetchListings = ["listings", "transaksi", "rating"].includes(tab) || !tab;
+  const fetchPayments = ["transaksi", "tawaran"].includes(tab) || !tab;
+  const fetchCategories = ["kategori", "listings"].includes(tab) || !tab;
+  const fetchSettings = ["pengaturan", "ai"].includes(tab) || !tab;
+  const fetchWanted = ["dicari"].includes(tab) || !tab;
+  const fetchBlogs = ["blogs"].includes(tab) || !tab;
+  
+  const fetchStores = ["toko"].includes(tab) || !tab;
+  const fetchReports = ["reports"].includes(tab) || !tab;
+  const fetchRatings = ["rating"].includes(tab) || !tab;
+  const fetchSellers = ["penjual", "broadcast"].includes(tab) || !tab;
+  const fetchProfileReqs = ["profil_request"].includes(tab) || !tab;
+
   const [listingsRes, paymentsRes, blacklist, categories, settings, wanted, blogs, pwaInstallsRes, outboxRes] = await Promise.all([
-    safePaginated(
+    fetchListings ? safePaginated(
       fetchListingsWithProfiles(
-        supa
-          .from("listings")
-          .select("*", { count: "exact" })
-          .order("created_at", { ascending: false })
-          .range(from, to)
-      ),
-      []
-    ),
-    safePaginated(
-      supa
-        .from("payments")
-        .select("*", { count: "exact" })
-        .order("created_at", { ascending: false })
-        .range(from, to),
-      []
-    ),
-    safe(supa.from("blacklist").select("*").order("created_at", { ascending: false }), []),
-    safe(
-      supa
-        .from("categories")
-        .select("*")
-        .order("sort_order", { ascending: true })
-        .order("name", { ascending: true }),
-      []
-    ),
-    getSettings(),
-    safe(
-      supa
-        .from("wanted_listings")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(200),
-      []
-    ),
-    safe(
-      supa
-        .from("blogs")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(100),
-      []
-    ),
-    safePaginated(
-      supa
-        .from("pwa_installs")
-        .select("id", { count: "exact", head: true }),
-      []
-    ),
-    // Antrean notifikasi WhatsApp yang belum sampai. safePaginated() memberi
-    // count 0 kalau tabelnya belum ada di sebuah lingkungan — Ringkasan tidak
-    // boleh gagal total gara-gara satu migrasi yang belum dijalankan.
-    safePaginated(
-      supa
-        .from("wa_outbox")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "tertunda"),
-      []
-    ),
+        supa.from("listings").select("*", { count: "exact" }).order("created_at", { ascending: false }).range(from, to)
+      ), []
+    ) : Promise.resolve({ data: [], count: 0 }),
+    
+    fetchPayments ? safePaginated(
+      supa.from("payments").select("*", { count: "exact" }).order("created_at", { ascending: false }).range(from, to), []
+    ) : Promise.resolve({ data: [], count: 0 }),
+    
+    Promise.resolve([]), // blacklist sudah tidak dipakai
+    
+    fetchCategories ? safe(
+      supa.from("categories").select("*").order("sort_order", { ascending: true }).order("name", { ascending: true }), []
+    ) : Promise.resolve([]),
+    
+    fetchSettings ? getSettings() : Promise.resolve(DEFAULT_SETTINGS),
+    
+    fetchWanted ? safe(
+      supa.from("wanted_listings").select("*").order("created_at", { ascending: false }).limit(200), []
+    ) : Promise.resolve([]),
+    
+    fetchBlogs ? safe(
+      supa.from("blogs").select("*").order("created_at", { ascending: false }).limit(100), []
+    ) : Promise.resolve([]),
+    
+    Promise.resolve({ data: [], count: 0 }), // pwa_installs pindah ke overview mandiri
+    Promise.resolve({ data: [], count: 0 })  // wa_outbox pindah ke overview mandiri
   ]);
 
   const listings = listingsRes.data || [];
@@ -195,69 +176,46 @@ export async function getAdminStats(page = 1) {
   const pwaInstallsTotal = pwaInstallsRes.count;
   const outboxPending = outboxRes.count || 0;
 
-  // Reports, ratings, seller profiles, dan profile requests — berjalan paralel
   const [toko, reports, ratings, sellersFromProfiles, allListingStats, profileRequests] = await Promise.all([
-    muatToko(supa),
-    safe(
-      supa
-        .from("reports")
-        .select("*, listings(title, seller_wa)")
-        .order("created_at", { ascending: false })
-        .limit(200),
-      []
-    ),
-    safe(
-      supa
-        .from("seller_ratings")
-        .select("*, listings(title)")
-        .order("created_at", { ascending: false })
-        .limit(300),
-      []
-    ),
-    // Semua penjual terdaftar (bukan hanya halaman listing saat ini)
-    safe(
-      supa
-        .from("seller_profiles")
-        .select("wa, name, bio, trusted_seller, subscription_tier, subscription_expires_at, created_at")
-        .order("created_at", { ascending: false })
-        .limit(1000),
-      []
-    ),
-    // Statistik listing ringan — hanya seller_wa + status (tanpa pagination)
-    safe(
-      supa
-        .from("listings")
-        .select("seller_wa, status, seller_name")
-        .not("seller_wa", "is", null)
-        .limit(10000),
-      []
-    ),
-    // Permintaan ubah profil — tampilkan semua, pending duluan
-    safe(
-      supa
-        .from("profile_change_requests")
-        .select("*")
-        .order("requested_at", { ascending: false })
-        .limit(200),
-      []
-    ),
+    fetchStores ? muatToko(supa) : Promise.resolve({ stores: [], storesMigrationMissing: false, storesError: null }),
+    
+    fetchReports ? safe(
+      supa.from("reports").select("*, listings(title, seller_wa)").order("created_at", { ascending: false }).limit(200), []
+    ) : Promise.resolve([]),
+    
+    fetchRatings ? safe(
+      supa.from("seller_ratings").select("*, listings(title)").order("created_at", { ascending: false }).limit(300), []
+    ) : Promise.resolve([]),
+    
+    fetchSellers ? safe(
+      supa.from("seller_profiles").select("wa, name, bio, trusted_seller, subscription_tier, subscription_expires_at, created_at").order("created_at", { ascending: false }).limit(1000), []
+    ) : Promise.resolve([]),
+    
+    fetchSellers ? safe(
+      supa.from("listings").select("seller_wa, status, seller_name").not("seller_wa", "is", null).limit(10000), []
+    ) : Promise.resolve([]),
+    
+    fetchProfileReqs ? safe(
+      supa.from("profile_change_requests").select("*").order("requested_at", { ascending: false }).limit(200), []
+    ) : Promise.resolve([]),
   ]);
 
-  // Build comprehensive sellers list dari seller_profiles + allListingStats
   const statMap = new Map();
-  for (const l of allListingStats) {
-    if (!l.seller_wa) continue;
-    if (!statMap.has(l.seller_wa)) {
-      statMap.set(l.seller_wa, { total_iklan: 0, active_iklan: 0, sold_iklan: 0, seller_name: l.seller_name || "Tanpa Nama" });
+  if (fetchSellers) {
+    for (const l of allListingStats) {
+      if (!l.seller_wa) continue;
+      if (!statMap.has(l.seller_wa)) {
+        statMap.set(l.seller_wa, { total_iklan: 0, active_iklan: 0, sold_iklan: 0, seller_name: l.seller_name || "Tanpa Nama" });
+      }
+      const s = statMap.get(l.seller_wa);
+      s.total_iklan++;
+      if (l.status === "active") s.active_iklan++;
+      if (l.status === "sold") s.sold_iklan++;
+      if (l.seller_name && s.seller_name === "Tanpa Nama") s.seller_name = l.seller_name;
     }
-    const s = statMap.get(l.seller_wa);
-    s.total_iklan++;
-    if (l.status === "active") s.active_iklan++;
-    if (l.status === "sold") s.sold_iklan++;
-    if (l.seller_name && s.seller_name === "Tanpa Nama") s.seller_name = l.seller_name;
   }
 
-  const sellersList = sellersFromProfiles.map((sp) => {
+  const sellersList = fetchSellers ? sellersFromProfiles.map((sp) => {
     const stats = statMap.get(sp.wa) || { total_iklan: 0, active_iklan: 0, sold_iklan: 0, seller_name: sp.name || "Tanpa Nama" };
     return {
       seller_wa: sp.wa,
@@ -268,7 +226,7 @@ export async function getAdminStats(page = 1) {
       trusted_seller: sp.trusted_seller || false,
       subscription_tier: sp.subscription_tier || "free",
     };
-  }).sort((a, b) => b.total_iklan - a.total_iklan);
+  }).sort((a, b) => b.total_iklan - a.total_iklan) : [];
 
   // Compute Revenue and Pending Count from current payments page
   let revenue = 0;
