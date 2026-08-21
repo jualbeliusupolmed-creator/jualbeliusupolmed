@@ -297,82 +297,7 @@ export default function AdminPanel({
       <PageHeader title={activeLabel} />
       <div className="space-y-6">
 
-        {tab === "overview" && (
-          <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
-            <Kpi label="Iklan aktif" value={active.length} sub={`${listings.length} total`} />
-            <Kpi label="Terjual" value={sold.length} sub={`${pending.length} pending`} />
-            <Kpi label="Revenue" value={rupiah(revenue)} sub={`${pendingCount} pending`} />
-            <Kpi label="Total views" value={totalViews} />
-            <Kpi label="Install PWA" value={pwaInstallsTotal} sub="Orang" />
-            <Kpi label="Rating" value={avgRating} sub={`${ratings.length} ulasan`} />
-            <Kpi label="Laporan" value={openReports.length} sub={`${pendingVerif.length} verifikasi`} />
-            {/* Notifikasi yang gagal terkirim. Dipajang di Ringkasan karena tiap
-                barisnya satu orang yang sedang menunggu kabar — dan tidak ada
-                yang berangkat sendiri: antrean ini HANYA jalan kalau ditekan. */}
-            <Kpi
-              label="Antrean WA"
-              value={outboxPending}
-              sub={outboxPending ? "menunggu dikirim ulang" : "semua sudah sampai"}
-              href="/admin/antrean"
-              waspada={outboxPending > 0}
-            />
-          </div>
-        )}
 
-        {/* OVERVIEW */}
-        {tab === "overview" && (
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Card title="Revenue 14 Hari (paid)">
-              <div className="flex h-40 items-end gap-1">
-                {revByDay.map((d) => (
-                  <div key={d.key} className="flex flex-1 flex-col items-center justify-end">
-                    <div
-                      className="w-full rounded-t bg-gray-900 transition-all hover:bg-gray-700 dark:bg-slate-200 dark:hover:bg-white"
-                      style={{ height: `${(d.total / maxRev) * 100}%` }}
-                      title={`${d.key}: ${rupiah(d.total)}`}
-                    />
-                    <span className="mt-1 text-[9px] text-gray-400">{d.key.slice(8)}</span>
-                  </div>
-                ))}
-              </div>
-              <p className="mt-2 text-xs text-gray-400">
-                Total 14 hari: <strong className="text-gray-700 dark:text-slate-200">{rupiah(revByDay.reduce((s, d) => s + d.total, 0))}</strong>
-              </p>
-            </Card>
-
-            <Card title="Listing per Kategori">
-              {Object.entries(perCat).length === 0 && <p className="text-sm text-gray-400">Belum ada listing.</p>}
-              {Object.entries(perCat).map(([name, count]) => {
-                const max = Math.max(1, ...Object.values(perCat));
-                return (
-                  <div key={name} className="mb-3 last:mb-0">
-                    <div className="flex justify-between text-sm dark:text-slate-300">
-                      <span>{name}</span>
-                      <span className="text-gray-400">{count}</span>
-                    </div>
-                    <div className="mt-1 h-2 rounded-full bg-gray-100 dark:bg-slate-800">
-                      <div className="h-2 rounded-full bg-gray-900 dark:bg-slate-200" style={{ width: `${(count / max) * 100}%` }} />
-                    </div>
-                  </div>
-                );
-              })}
-            </Card>
-
-            <Card title="Revenue per Tipe" className="lg:col-span-2">
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {PAYMENT_TYPES.map((t) => {
-                  const sum = paidPayments.filter((p) => p.type === t).reduce((s, p) => s + (p.amount || 0), 0);
-                  return (
-                    <div key={t} className="rounded-xl bg-gray-50 p-3 dark:bg-slate-800/50">
-                      <p className="text-xs capitalize text-gray-400">{t}</p>
-                      <p className="mt-1 font-bold dark:text-white">{rupiah(sum)}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            </Card>
-          </div>
-        )}
 
         {/* LISTINGS */}
         {tab === "listings" && (
@@ -1215,18 +1140,7 @@ export default function AdminPanel({
 }
 
 // ── small components ──────────────────────────────────────────────────────────
-function Kpi({ label, value, sub, href, waspada = false }) {
-  const isi = (
-    <>
-      <p className="g-stat-label">{label}</p>
-      <p className={`g-stat-value${waspada ? " is-warn" : ""}`}>{value}</p>
-      {sub && <p className="g-stat-sub">{sub}</p>}
-    </>
-  );
-  // Angka yang menuntut tindakan harus bisa ditekan; angka yang cuma kabar tidak.
-  if (href) return <a href={href} className="g-stat block transition-shadow hover:shadow-md">{isi}</a>;
-  return <div className="g-stat">{isi}</div>;
-}
+
 function Card({ title, children, className = "" }) {
   return (
     <div className={`g-card g-card-pad ${className}`}>

@@ -19,7 +19,7 @@ export default async function AdminTabPage({ params }) {
 
   let data = DEFAULT_DATA;
   try {
-    data = await getAdminStats();
+    data = await getAdminStats(1, tab);
   } catch (e) {
     return (
       <LoadError message={`${e.message}. Cek konfigurasi Supabase.`} />
