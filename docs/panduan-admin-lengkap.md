@@ -328,7 +328,7 @@ SETMODE custom          → Mode custom
 ### Alur Pembayaran via Web
 
 ```
-1. User login (OTP WA)
+1. User login (nomor WA + PIN / sandi)
 2. Isi form iklan + upload foto
 3. Submit → POST /api/listings → listing pending + payment record
 4. Web tampil QRIS statis + nominal
@@ -400,7 +400,7 @@ Setiap hari 00:00 — /api/cron/broadcast:
 | `group_posts` | Post dari grup WA (diindex bot) |
 | `scheduled_broadcasts` | Broadcast terjadwal |
 | `category_subscriptions` | Langganan notif kategori |
-| `otps` | OTP untuk login web (expire 5 menit) |
+| `otps` | Kode pemulihan sandi web (expire 5 menit) |
 | `referrals` | Data referral (referrer + referred) |
 | `profile_change_requests` | Antrian permintaan ganti nama |
 | `search_logs` | Log pencarian pengguna (untuk tren) |
@@ -491,7 +491,11 @@ INSERT INTO blacklist (wa, reason) VALUES ('62812345678', 'spam iklan');
 ```
 
 ### Reset PIN penjual (jika lupa)
+Cara normalnya penjual sendiri yang melakukannya: tombol **Lupa PIN / sandi?** di layar
+login mengirim kode ke WhatsApp-nya. Baru kalau itu pun buntu, hapus sandinya dari sini:
 ```sql
 UPDATE seller_profiles SET pin = NULL WHERE wa = '62812345678';
 ```
-Penjual bisa login ulang via OTP dan set PIN baru.
+Setelah ini penjual **tetap** harus lewat "Lupa PIN" (OTP), bukan mendaftar ulang —
+nomor yang sudah punya iklan sengaja ditolak jalur pendaftaran tanpa OTP, supaya akun
+berisi iklan tidak bisa diklaim orang lain hanya dengan mengetik nomornya.

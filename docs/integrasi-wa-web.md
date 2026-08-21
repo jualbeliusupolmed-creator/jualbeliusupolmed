@@ -56,7 +56,7 @@ WA bot dan website **membaca dan menulis ke database yang sama**. Tidak ada dupl
 - Settings (harga, mode monetisasi) berlaku untuk kedua saluran
 
 ### 2. Session Seller
-Login via website menggunakan **OTP yang dikirim ke WA**. Setelah login, session tersimpan di browser (cookie HMAC-signed, 30 hari). Tidak ada password terpisah untuk web dan WA.
+Login via website menggunakan **nomor WA + PIN / sandi**; nomor baru mendaftar tanpa OTP. OTP yang dikirim ke WA hanya dipakai untuk **memulihkan sandi yang lupa** — dan untuk nomor yang sudah punya iklan tapi sandinya hilang. Setelah login, session tersimpan di browser (cookie HMAC-signed, 30 hari).
 
 ### 3. Notifikasi WA dari Aksi Web
 Setiap aksi penting di website memicu notifikasi WA:
@@ -191,7 +191,7 @@ User ──form+foto──→ Browser (Next.js)
 | Tawaran masuk | ✅ `TAWARAN` | ✅ dashboard |
 | Hapus iklan | ✅ `HAPUS LAKU / GALAKU` | ✅ dashboard |
 | Ganti nama profil | ✅ `NAMA [nama]` | ✅ dashboard / edit profil |
-| Login | ✅ (OTP dikirim via WA) | ✅ (OTP input di web) |
+| Login | ✅ (kode pemulihan via WA) | ✅ (WA + sandi; OTP hanya saat lupa) |
 
 ---
 
@@ -216,7 +216,7 @@ Ini memastikan bot tetap bisa kirim pesan meski Railway sedang restart atau ada 
 
 ### Autentikasi
 - **Admin web**: Cookie HMAC-SHA256 dari `ADMIN_PASSWORD`, expire 8 jam
-- **Seller web**: Cookie HMAC-signed token `{ wa, exp }`, expire 30 hari, OTP via WA
+- **Seller web**: Cookie HMAC-signed token `{ wa, exp }`, expire 30 hari, sandi bcrypt (OTP via WA hanya untuk pemulihan)
 - **WA bot**: Token `BAILEYS_API_TOKEN` di header setiap request dari Railway ke Vercel
 - **Cron**: Bearer `CRON_SECRET` atau header `x-vercel-cron` dari Vercel infrastructure
 

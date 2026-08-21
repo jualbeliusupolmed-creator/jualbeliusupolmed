@@ -29,9 +29,16 @@ Tidak perlu daftar akun secara manual. Cukup dengan nomor WhatsApp.
 ### Login via Website
 1. Buka **jualbeliusupolmed.web.id** → klik **Login**
 2. Masukkan nomor WhatsApp aktif
-3. Bot akan kirim **OTP 6 digit** ke WA kamu
-4. Masukkan OTP + buat PIN 6 digit
+3. **Nomor baru?** Langsung buat PIN / sandi — tidak ada kode OTP yang perlu ditunggu
+4. **Sudah punya akun?** Masukkan PIN / sandi kamu
 5. Login berhasil — session tersimpan 30 hari
+
+PIN / sandi boleh huruf, angka, atau campuran, minimal 6 karakter.
+
+### Lupa PIN / sandi
+Di layar login, klik **Lupa PIN / sandi?**. Bot mengirim **kode 6 digit** ke WhatsApp
+nomor itu, dan kode itulah yang membuktikan nomornya memang milikmu. Masukkan kode +
+sandi baru, selesai. Ini satu-satunya tempat OTP masih dipakai.
 
 ### Ganti Nama Profil
 ```
@@ -73,7 +80,7 @@ Bisa lewat **WhatsApp** (lebih simpel) atau **Website** (lebih lengkap).
 ### Via Website
 
 1. Buka **jualbeliusupolmed.web.id/jual**
-2. Login dengan OTP WA (jika belum login)
+2. Login dengan nomor WA + PIN / sandi (jika belum login)
 3. Isi form: judul, kategori, harga, kondisi, deskripsi
 4. Upload foto (otomatis dikonversi ke WebP)
 5. Submit → tampil QRIS + nominal

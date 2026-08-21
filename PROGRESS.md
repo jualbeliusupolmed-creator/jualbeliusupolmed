@@ -138,7 +138,7 @@ In-memory rate limiter di: OTP send/verify, email login, admin login, admin acti
 - Langganan kategori
 - Referral system
 - Rating & ulasan penjual
-- Login OTP WA + PIN + Dashboard penjual
+- Login WA + PIN/sandi (OTP hanya untuk pemulihan) + Dashboard penjual
 
 ### SQL Migrations Dijalankan
 

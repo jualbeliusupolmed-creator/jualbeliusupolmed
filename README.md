@@ -8,7 +8,7 @@ Marketplace mahasiswa **USU & POLMED** — jual-beli laptop, HP, buku, fashion, 
 
 ### Untuk Penjual & Pembeli
 - **Pasang iklan via WA** — kirim foto + caption ke bot, AI baca otomatis, bayar QRIS statis, kirim struk, iklan tayang
-- **Pasang iklan via Web** — login OTP WA, isi form, upload foto, bayar QRIS, upload struk
+- **Pasang iklan via Web** — login WA + sandi, isi form, upload foto, bayar QRIS, upload struk
 - **Dashboard penjual** — lihat semua iklan, statistik, tawaran, rating
 - **Profil publik** — halaman profil penjual dengan semua iklan aktif
 - **Upgrade iklan** — Featured (tampil di atas), Auto Bump, Bump manual
@@ -187,7 +187,7 @@ src/
       listings/                 CRUD iklan
       payments/                 Semua tipe pembayaran (bump, featured, dll)
       payments/verify-receipt/  AI verifikasi struk QRIS
-      auth/                     Login OTP WA, logout, session check
+      auth/                     Daftar/login WA + sandi, OTP pemulihan, logout, session check
       admin/                    Admin action, login, upload
       cron/                     expire, auto-bump, broadcast
       og/                       OG image generator
@@ -227,7 +227,7 @@ vercel.json                     Cron config
 | `group_posts` | Post dari grup WA (diindex bot) |
 | `scheduled_broadcasts` | Broadcast terjadwal |
 | `category_subscriptions` | Langganan notif kategori |
-| `otps` | OTP untuk login web |
+| `otps` | Kode pemulihan sandi web |
 | `referrals` | Data referral |
 | `profile_change_requests` | Request ganti nama penjual |
 | `search_logs` | Log pencarian (tren) |
