@@ -109,6 +109,8 @@ export function TabAntrean() {
           <p className="g-card-desc max-w-2xl">
             Notifikasi yang <b>tidak berhasil dititipkan</b> ke bot sama sekali — VPS mati, nginx
             tumbang. Yang ini tidak berangkat sendiri: tekan <b>Kirim</b> setelah bot pulih.
+            Baris bertanda <b>grup</b> sengaja dilewati tombol "Kirim semua" — pengumuman grup
+            punya masa berlaku, jadi kirimnya satu per satu setelah melihat umurnya.
           </p>
         </div>
         <span className={`g-badge${tertunda ? " is-warn" : " is-ok"}`}>{tertunda} tertunda</span>
@@ -160,11 +162,19 @@ export function TabAntrean() {
           <div key={it.id} className="rounded-xl border border-gray-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <span className="font-mono text-sm font-semibold text-gray-900 dark:text-white">{it.target}</span>
-              {it.jenis && (
-                <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-                  {it.jenis}
-                </span>
-              )}
+              {it.jenis && <span className="g-badge is-info">{it.jenis}</span>}
+              {/* Umur baris disebut apa adanya: yang menentukan sebuah pengumuman
+                  masih pantas dikirim atau sudah basi adalah usianya, dan itu
+                  tidak boleh perlu dihitung sendiri dari tanggal. */}
+              {(() => {
+                const jam = Math.floor((Date.now() - new Date(it.created_at).getTime()) / 3600000);
+                if (!Number.isFinite(jam) || jam < 6) return null;
+                return (
+                  <span className={`g-badge${jam >= 24 ? " is-bad" : " is-warn"}`}>
+                    {jam >= 24 ? `${Math.floor(jam / 24)} hari lalu` : `${jam} jam lalu`}
+                  </span>
+                );
+              })()}
               <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${warnaStatus(it.status)}`}>
                 {it.status}
               </span>

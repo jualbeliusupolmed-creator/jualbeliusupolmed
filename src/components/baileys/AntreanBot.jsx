@@ -73,6 +73,7 @@ export function AntreanBot() {
   };
 
   const jumlah = data?.tertunda || 0;
+  const dibuang = data?.dibuang || [];
 
   return (
     <section className="g-card">
@@ -141,6 +142,63 @@ export function AntreanBot() {
             </div>
           ))}
         </div>
+
+        {/*
+          Bukan antrean: pesan yang sudah TIDAK akan berangkat sendiri karena
+          kedaluwarsa (72 jam) atau gagal tiga kali berturut-turut. Dulu
+          pembuangan itu cuma mendarat di log server, jadi pesan yang benar-benar
+          hilang tidak meninggalkan jejak yang bisa dilihat siapa pun.
+        */}
+        {dibuang.length > 0 && (
+          <div className="mt-6 border-t pt-5" style={{ borderColor: "var(--g-divider)" }}>
+            <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+              <h3 className="g-card-title">Dibuang bot ({data?.dibuangTotal || dibuang.length})</h3>
+              <button
+                onClick={() => aksi({ bersihkan_catatan: true }, "bersih")}
+                disabled={sibuk !== null}
+                className="g-btn g-btn-sm g-btn-text"
+              >
+                Bersihkan catatan
+              </button>
+            </div>
+            <p className="g-card-desc mb-3">
+              Kedaluwarsa setelah menunggu 72 jam, atau gagal tiga kali berturut-turut.
+              Catatan disimpan 14 hari. <b>Kirim ulang</b> memasukkannya kembali sebagai pesan baru —
+              periksa dulu apakah isinya masih pantas dikirim.
+            </p>
+            <div className="space-y-3">
+              {dibuang.map((d) => (
+                <div key={d.id} className="g-card g-card-pad">
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                    <span className="font-mono text-sm font-medium">{d.jid}</span>
+                    <span className="g-badge is-bad">dibuang</span>
+                    <span className="ml-auto text-xs" style={{ color: "var(--g-ink-faint)" }}>
+                      {d.dibuangAt ? new Date(d.dibuangAt).toLocaleString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}
+                    </span>
+                  </div>
+                  <pre className="g-pre">{d.message}</pre>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <span className="flex-1 text-xs" style={{ color: "var(--g-red)" }}>{d.sebab}</span>
+                    <button
+                      onClick={() => aksi({ ulang: d.id }, d.id)}
+                      disabled={sibuk !== null}
+                      className="g-btn g-btn-sm g-btn-outlined"
+                    >
+                      {sibuk === d.id ? "Memproses…" : "Kirim ulang"}
+                    </button>
+                    <button
+                      onClick={() => aksi({ hapus_catatan: d.id }, d.id)}
+                      disabled={sibuk !== null}
+                      className="g-btn g-btn-sm g-btn-text"
+                    >
+                      Lupakan
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
