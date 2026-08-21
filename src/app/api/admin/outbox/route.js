@@ -24,6 +24,23 @@ function boleh(req) {
   return kirim === seharusnya || kirim === `Bearer ${seharusnya}`;
 }
 
+// Supabase menjawab tabel yang belum ada dengan galat schema-cache yang tidak
+// berarti apa-apa bagi pembacanya. Terjemahkan jadi satu kalimat yang menyebut
+// apa yang harus dilakukan.
+function belumMigrasi(e) {
+  return /wa_outbox/i.test(e?.message || "") &&
+         /does not exist|schema cache|relation/i.test(e?.message || "");
+}
+function jawabGalat(e) {
+  if (belumMigrasi(e)) {
+    return NextResponse.json({
+      error: "Tabel wa_outbox belum ada — jalankan migrasi (BAGIAN 24) di Supabase dulu.",
+      belumAda: true,
+    }, { status: 503 });
+  }
+  return NextResponse.json({ error: e?.message || "Gagal" }, { status: 500 });
+}
+
 // GET /api/admin/outbox?status=tertunda&limit=100
 export async function GET(req) {
   if (!boleh(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -46,15 +63,7 @@ export async function GET(req) {
 
     return NextResponse.json({ ok: true, tertunda: tertunda || 0, items: data || [] });
   } catch (e) {
-    // Tabelnya belum ada = migrasi belum dijalankan. Itu jawaban yang berguna,
-    // bukan 500 tanpa keterangan.
-    const belumAda = /relation .*wa_outbox.* does not exist|schema cache/i.test(e?.message || "");
-    return NextResponse.json({
-      error: belumAda
-        ? "Tabel wa_outbox belum ada — jalankan migrasi (BAGIAN 24) di Supabase dulu."
-        : e.message,
-      belumAda,
-    }, { status: belumAda ? 503 : 500 });
+    return jawabGalat(e);
   }
 }
 
@@ -68,7 +77,7 @@ export async function POST(req) {
   if (body.batal) {
     const { error } = await supa
       .from("wa_outbox").update({ status: "dibatalkan" }).eq("id", body.batal).eq("status", "tertunda");
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return jawabGalat(error);
     return NextResponse.json({ ok: true, dibatalkan: 1 });
   }
 
@@ -83,7 +92,7 @@ export async function POST(req) {
     if (error) throw error;
     antre = data || [];
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 
   if (!antre.length) return NextResponse.json({ ok: true, terkirim: 0, gagal: 0, sisa: 0 });
