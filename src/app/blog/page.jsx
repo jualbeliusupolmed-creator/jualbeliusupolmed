@@ -3,7 +3,7 @@ import Image from "next/image";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 
 export const dynamic = 'force-dynamic';
-// export const revalidate = 60;
+export const revalidate = 0;
 
 export const metadata = {
   title: "Blog & Artikel Tips Jual Beli — Jual Beli USU Polmed",
