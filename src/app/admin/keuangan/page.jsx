@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/admin/ui";
+import { useBasisApi } from "@/components/admin/basis";
 
 const TYPES = ["iklan", "bump", "featured", "sold_fee", "subscribe", "renewal", "autobump", "sponsored", "wanted"];
 const TYPE_LABEL = {
@@ -26,11 +27,12 @@ function exportCsv(rows, headers, filename) {
 }
 
 export default function KeuanganPage() {
+  const api = useBasisApi();
   const [payments, setPayments] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/admin/keuangan")
+    fetch(`${api}/keuangan`)
       .then((r) => r.json())
       .then((d) => { setPayments(d.payments || []); setLoading(false); })
       .catch(() => setLoading(false));

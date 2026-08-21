@@ -3,11 +3,13 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import ConfirmModal from "@/components/ConfirmModal";
+import { useModeDemo } from "./basis";
 
 const AdminContext = createContext();
 
 export function AdminProvider({ children }) {
   const router = useRouter();
+  const demo = useModeDemo();
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState(null);
   const [confirmState, setConfirmState] = useState(null);
@@ -19,6 +21,15 @@ export function AdminProvider({ children }) {
   }, [toast]);
 
   async function action(body, okMsg) {
+    // Di /admin-demo tombolnya tetap ada, tetap bisa ditekan, dan tetap
+    // memberi tahu apa yang AKAN terjadi — tapi tidak ada permintaan yang
+    // dikirim. Dua lapis, dan yang ini yang pertama: rutenya sendiri tetap
+    // menuntut isAdmin(), jadi seandainya lapisan ini bocor pun tidak ada yang
+    // berubah di database.
+    if (demo) {
+      setToast({ type: "err", msg: `Panel demo — "${okMsg || "aksi ini"}" tidak dijalankan.` });
+      return false;
+    }
     setBusy(true);
     try {
       const res = await fetch("/api/admin/action", {
@@ -50,7 +61,7 @@ export function AdminProvider({ children }) {
   }
 
   return (
-    <AdminContext.Provider value={{ busy, action, confirmThen, logout, setToast }}>
+    <AdminContext.Provider value={{ busy, action, confirmThen, logout, setToast, demo }}>
       {children}
       
       <ConfirmModal

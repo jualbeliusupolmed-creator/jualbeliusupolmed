@@ -3,6 +3,7 @@
 import Link from "next/link";
 import AdminNav from "./AdminNav";
 import { NAV } from "./nav";
+import { useBasisAdmin } from "./basis";
 
 export { NAV };
 
@@ -10,11 +11,12 @@ export { NAV };
  * Sidebar Panel Admin Utama (Desktop Rail).
  */
 export default function AdminSidebar({ counts = {} }) {
+  const basis = useBasisAdmin();
   return (
     <aside className="g-rail hidden lg:flex">
       {/* Brand Header */}
       <div className="g-rail-brand justify-between">
-        <Link href="/admin/overview" className="flex items-center gap-3 transition-opacity hover:opacity-90">
+        <Link href={`${basis}/overview`} className="flex items-center gap-3 transition-opacity hover:opacity-90">
           <span className="g-rail-brand-mark">
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
               <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
@@ -40,7 +42,7 @@ export default function AdminSidebar({ counts = {} }) {
             <span className="text-[11px] font-semibold text-gray-600 dark:text-slate-300">Sistem Normal</span>
           </div>
           <Link
-            href="/admin/audit"
+            href={`${basis}/audit`}
             className="text-[10px] font-bold uppercase tracking-wider text-blue-600 hover:underline dark:text-blue-400"
           >
             Audit

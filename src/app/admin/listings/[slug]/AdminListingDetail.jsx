@@ -8,6 +8,7 @@ import { rupiah } from "@/lib/fees";
 import { buildSlug } from "@/lib/slug";
 import AdminListingModal from "../../AdminListingModal";
 import ConfirmModal from "@/components/ConfirmModal";
+import { useBasisAdmin } from "@/components/admin/basis";
 
 const STATUS_COLORS = {
   active:    "bg-green-100 text-green-700",
@@ -31,6 +32,7 @@ function Field({ label, children }) {
 }
 
 export default function AdminListingDetail({ listing, payments, reports, ratings, categories }) {
+  const basis = useBasisAdmin();
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [confirmState, setConfirmState] = useState(null);
@@ -145,7 +147,7 @@ export default function AdminListingDetail({ listing, payments, reports, ratings
         <button onClick={() => confirmThen({ title: "Blacklist penjual", message: `Blokir ${listing.seller_wa}?`, danger: true }, () => action({ action: "blacklist", wa: listing.seller_wa }, "Diblacklist"))} className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-slate-700 dark:text-slate-300">
           Blacklist WA
         </button>
-        <button onClick={() => confirmThen({ title: "Hapus listing", message: `Hapus "${listing.title}"?`, danger: true }, async () => { const ok = await action({ action: "delete", id: listing.id }, "Dihapus"); if (ok) router.push("/admin/listings"); })} className="rounded-lg bg-rose-100 px-3 py-1.5 text-sm font-medium text-rose-700 hover:bg-rose-200">
+        <button onClick={() => confirmThen({ title: "Hapus listing", message: `Hapus "${listing.title}"?`, danger: true }, async () => { const ok = await action({ action: "delete", id: listing.id }, "Dihapus"); if (ok) router.push(`${basis}/listings`); })} className="rounded-lg bg-rose-100 px-3 py-1.5 text-sm font-medium text-rose-700 hover:bg-rose-200">
           Hapus
         </button>
       </div>

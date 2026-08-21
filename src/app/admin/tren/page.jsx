@@ -2,15 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/admin/ui";
+import { useBasisApi } from "@/components/admin/basis";
 
 export default function TrenPage() {
+  const api = useBasisApi();
   const [data, setData] = useState(null);
   const [days, setDays] = useState(30);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/admin/tren?days=${days}`)
+    fetch(`${api}/tren?days=${days}`)
       .then((r) => r.json())
       .then((d) => { setData(d); setLoading(false); })
       .catch(() => setLoading(false));

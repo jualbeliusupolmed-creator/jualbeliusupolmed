@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/admin/ui";
+import { useBasisApi } from "@/components/admin/basis";
 
 function relTime(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -33,12 +34,13 @@ const ACTION_LABEL = {
 };
 
 export default function AuditPage() {
+  const api = useBasisApi();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("logs");
 
   useEffect(() => {
-    fetch("/api/admin/audit")
+    fetch(`${api}/audit`)
       .then((r) => r.json())
       .then((d) => { setData(d); setLoading(false); })
       .catch(() => setLoading(false));
