@@ -27,7 +27,7 @@ const TAB_LABELS = {
   statistik: "📊 Statistik",
   sapaan:    "💬 Sapaan & Nomor",
   aksi:      "⚡ Aksi",
-  kapabilitas: "🌟 Kapabilitas",
+  kapabilitas: "Kemampuan",
   profil:    "👤 Profil Bot",
   story:     "📱 Status WA",
   chat:      "💬 Chat",

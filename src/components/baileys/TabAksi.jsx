@@ -885,11 +885,6 @@ const PANELS = {
 
 export function TabAksi() {
   const [sub, setSub] = useState("koneksi");
-  const [kapabilitas, setKapabilitas] = useState({});
-
-  useEffect(() => {
-    fetch("/api/admin/kapabilitas").then(r => r.json()).then(d => setKapabilitas(d.kapabilitas || {}));
-  }, []);
 
   const Panel = PANELS[sub];
 
