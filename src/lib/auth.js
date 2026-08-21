@@ -24,6 +24,23 @@ function secret() {
   return pw;
 }
 
+// Kunci penanda tangan kuki, terpisah dari sandi admin.
+//
+// Sampai 21 Agustus 2026 kuki penjual ditandatangani dengan ADMIN_PASSWORD.
+// Akibatnya tidak kelihatan sampai sandinya benar-benar diganti: mengganti
+// sandi admin membatalkan tanda tangan SELURUH kuki penjual sekaligus, dan
+// 30 hari sesi yang seharusnya tidak ada hubungannya dengan panel admin ikut
+// hangus. Dua rahasia yang berbeda tugasnya tidak boleh berbagi satu nilai.
+//
+// `SESSION_SECRET` yang memutusnya. Kalau belum diset, ia jatuh kembali ke
+// ADMIN_PASSWORD supaya tidak ada yang mendadak keluar sendiri saat rilis ini
+// mendarat — jadi mengisinya di Vercel adalah langkah terpisah yang boleh
+// diambil kapan saja. Sekali diisi, ganti sandi admin tidak lagi menyentuh
+// sesi penjual.
+function kunciTandaTangan() {
+  return process.env.SESSION_SECRET || secret();
+}
+
 // Perbandingan tahan-waktu. `===` pada string keluar di karakter pertama yang
 // berbeda, jadi lamanya menjawab membocorkan berapa banyak awalan yang sudah
 // benar. Pola ini meniru yang sudah dipakai bot di index.js.
@@ -99,7 +116,7 @@ function signSellerToken(wa) {
   const exp = Date.now() + 1000 * 60 * 60 * 24 * 30; // 30 days
   const payloadStr = JSON.stringify({ wa, exp });
   const payloadB64 = Buffer.from(payloadStr).toString("base64url");
-  const signature = crypto.createHmac("sha256", secret()).update(payloadB64).digest("base64url");
+  const signature = crypto.createHmac("sha256", kunciTandaTangan()).update(payloadB64).digest("base64url");
   return `${payloadB64}.${signature}`;
 }
 
@@ -108,7 +125,7 @@ function verifySellerToken(token) {
   const parts = token.split(".");
   if (parts.length !== 2) return null;
   const [payloadB64, signature] = parts;
-  const expectedSig = crypto.createHmac("sha256", secret()).update(payloadB64).digest("base64url");
+  const expectedSig = crypto.createHmac("sha256", kunciTandaTangan()).update(payloadB64).digest("base64url");
   if (!samaAman(signature, expectedSig)) return null;
   try {
     const payload = JSON.parse(Buffer.from(payloadB64, "base64url").toString("utf-8"));
