@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { getSettings, adFeeFrom } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
+// POST /api/payments/resume  { listing_id, seller_wa, type? }
+//
+// "Lanjutkan bayar" — penjual menutup layar QRIS sebelum sempat transfer, lalu
+// menekan tombolnya lagi dari dasbor. Tugas rute ini HANYA menemukan tagihan
+// yang sudah ada dan mengembalikan nomor pesanannya; nominalnya tidak pernah
+// dihitung ulang di sini (lihat catatan "tagihan lama" di bawah).
 export async function POST(req) {
   try {
     const body = await req.json();
@@ -13,12 +18,12 @@ export async function POST(req) {
       return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
     }
 
+    const paymentType = body.type === "sold_fee" ? "sold_fee" : "iklan";
     const supa = getAdminClient();
 
-    // Verify ownership and status
     const { data: listing, error } = await supa
       .from("listings")
-      .select("*")
+      .select("id, title, seller_wa, status")
       .eq("id", listing_id)
       .single();
 
@@ -30,57 +35,55 @@ export async function POST(req) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (listing.status !== "pending") {
-      return NextResponse.json({ error: "Iklan ini tidak sedang pending" }, { status: 400 });
+    // Status iklan yang sah berbeda per jenis tagihan, dan ini bukan detail
+    // sepele: biaya terjual (`sold_fee`) justru ditagih SESUDAH iklan tayang
+    // atau terjual. Dulu keduanya diadu dengan syarat yang sama
+    // (`status !== "pending"` → tolak), jadi ketiga tombol "Bayar Tagihan" di
+    // dasbor selalu dijawab 400 dan tidak ada satu pun tagihan komisi yang bisa
+    // dilanjutkan dari situs.
+    const statusSah = paymentType === "sold_fee" ? ["active", "sold"] : ["pending"];
+    if (!statusSah.includes(listing.status)) {
+      return NextResponse.json(
+        {
+          error:
+            paymentType === "sold_fee"
+              ? "Iklan ini tidak sedang menunggu pembayaran komisi"
+              : "Iklan ini tidak sedang pending",
+        },
+        { status: 400 }
+      );
     }
 
-    const settings = await getSettings();
-    let amount = 0;
-    let orderId = "";
-    let itemName = "";
-    const isSoldFee = body.type === "sold_fee";
-
-    if (isSoldFee) {
-      amount = adFeeFrom(settings.pricing, listing.type, listing.price); // Wait, sold_fee is soldFeeFrom, not adFeeFrom! I will fix this in a moment
-      // Let's use the DB's existing pending payment amount instead of recalculating if possible, or recalculate.
-    }
-
-    // Actually, let's fetch the existing pending payment to get the exact amount!
-    const { data: existingPayment } = await supa
+    // Tagihan diambil dari server, bukan dihitung ulang. Tarif bisa berubah di
+    // /admin/settings sesudah tagihan terbit; yang harus dibayar penjual adalah
+    // angka saat tagihan dibuat, bukan angka hari ini.
+    const { data: tagihan } = await supa
       .from("payments")
-      .select("amount, type")
+      .select("id, amount, type, midtrans_order_id, meta")
       .eq("listing_id", listing.id)
       .eq("status", "pending")
-      .eq("type", body.type || "iklan")
+      .eq("type", paymentType)
       .order("created_at", { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
-    if (!existingPayment) {
+    if (!tagihan) {
       return NextResponse.json({ error: "Tidak ada pembayaran pending" }, { status: 400 });
     }
 
-    amount = existingPayment.amount;
-    const paymentType = existingPayment.type;
+    // Tagihan yang sama dipakai ulang, TIDAK dibuat baru. Sebelumnya tiap
+    // penekanan tombol menyisipkan satu baris `payments` tambahan — 460 dari 497
+    // baris (93%) berakhir pending selamanya, dan tiap baris membawa nomor
+    // pesanan berbeda sehingga struk untuk nomor lama tidak pernah cocok lagi.
+    const amount = Number(tagihan.meta?.final_amount || tagihan.amount) || 0;
 
-    if (paymentType === "sold_fee") {
-      orderId = `SOLDFEE-${listing.id.slice(0, 8)}-${Date.now()}`;
-      itemName = `Fee terjual: ${listing.title}`;
-    } else {
-      orderId = `IKLAN-${listing.id.slice(0, 8)}-${Date.now()}`;
-      itemName = `Iklan: ${listing.title}`;
-    }
-
-    await supa.from("payments").insert({
-      listing_id: listing.id,
-      type: paymentType,
+    return NextResponse.json({
+      paymentUrl: "/qris.png",
+      orderId: tagihan.midtrans_order_id,
+      paymentId: tagihan.id,
       amount,
-      status: "pending",
-      midtrans_order_id: orderId,
-      meta: { final_amount: amount },
+      finalAmount: amount,
     });
-
-    return NextResponse.json({ paymentUrl: "/qris.png", orderId, amount, finalAmount: amount });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }

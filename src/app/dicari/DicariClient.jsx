@@ -315,27 +315,28 @@ export default function DicariPage() {
 
                   <button
                     onClick={() => {
+                      // Membuka jendela QRIS TIDAK menerbitkan tagihan. Tagihannya
+                      // dibuat saat struk benar-benar dikirim (lihat tombol "Kirim
+                      // & Verifikasi AI" di bawah). Dulu dibuat di sini, jadi
+                      // sekadar melihat-lihat sudah meninggalkan baris `payments`
+                      // pending — 346 di antaranya menumpuk sebelum ini diperbaiki.
                       setManualOrderId(null);
                       setManualFile(null);
                       setManualError("");
                       setUnlockResult(null);
                       setQrisModal(item);
-                      // Langsung catat transaksi manual — tanpa minta nomor WA
+                      // Yang tetap dilakukan sekarang: memastikan kontak postingan
+                      // ini memang bisa dibuka (postingan lama lewat bot kadang
+                      // menyimpan LID, bukan nomor). Peringatannya harus muncul
+                      // sebelum orangnya transfer, bukan sesudah.
                       fetch("/api/payments/unlock-wanted", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          wanted_id: item.id,
-                          method: "manual",
-                          requester_wa: localStorage.getItem("seller_wa") || "",
-                        }),
+                        body: JSON.stringify({ wanted_id: item.id, check: true }),
                       })
-                        .then((r) => r.json())
-                        .then((data) => {
-                          if (!data.orderId) throw new Error(data.error || "Gagal membuat transaksi");
-                          setManualOrderId(data.orderId);
-                        })
-                        .catch((e) => setManualError(e.message));
+                        .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+                        .then(({ ok, d }) => { if (!ok) setManualError(d.error || "Kontak postingan ini belum bisa dibuka."); })
+                        .catch(() => {});
                     }}
                     className="btn-outline w-full py-1.5 sm:py-2.5 text-center flex items-center justify-center gap-1 text-[10px] sm:text-xs font-bold bg-gray-50/50 hover:bg-gray-100 dark:bg-slate-950 dark:hover:bg-slate-900 border-gray-200 dark:border-slate-850 rounded-lg"
                   >
@@ -513,16 +514,31 @@ export default function DicariPage() {
                         setManualError("Mohon pilih gambar struk transfer Anda terlebih dahulu.");
                         return;
                       }
-                      if (!manualOrderId) {
-                        setManualError("Transaksi belum siap. Tutup lalu buka lagi jendela ini.");
-                        return;
-                      }
                       setManualLoading(true);
                       setManualError("");
                       try {
+                        // Terbitkan tagihannya sekarang — atau pakai lagi yang
+                        // sudah terbit kalau struk sebelumnya ditolak AI, supaya
+                        // percobaan kedua tidak menambah baris baru.
+                        let orderId = manualOrderId;
+                        if (!orderId) {
+                          const inv = await fetch("/api/payments/unlock-wanted", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              wanted_id: qrisModal.id,
+                              method: "manual",
+                              requester_wa: localStorage.getItem("seller_wa") || "",
+                            }),
+                          }).then((r) => r.json());
+                          if (!inv.orderId) throw new Error(inv.error || "Gagal membuat transaksi");
+                          orderId = inv.orderId;
+                          setManualOrderId(orderId);
+                        }
+
                         const formData = new FormData();
                         formData.append("receipt", manualFile);
-                        formData.append("transactionId", manualOrderId);
+                        formData.append("transactionId", orderId);
 
                         const res = await fetch("/api/payments/verify-receipt", {
                           method: "POST",

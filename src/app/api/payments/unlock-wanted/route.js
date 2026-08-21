@@ -5,10 +5,15 @@ import { loadLidPhoneMap, migrateLidToPhone } from "@/lib/lidMigrate";
 
 export const dynamic = "force-dynamic";
 
-// POST /api/payments/unlock-wanted  { wanted_id, method, requester_wa } -> kembalikan link Midtrans Rp 2.000 atau buat invoice manual
+// POST /api/payments/unlock-wanted  { wanted_id, method, requester_wa }
+// -> terbitkan (atau pakai ulang) tagihan QRIS Rp 2.000 untuk membuka kontak pembeli.
+//
+// Dipanggil saat pemohon menekan "Kirim & Verifikasi AI", BUKAN saat jendela
+// QRIS dibuka. Dulu sebaliknya: sekadar melihat-lihat sudah menerbitkan tagihan,
+// dan 346 dari 460 baris pending di tabel `payments` lahir dari situ.
 export async function POST(req) {
   try {
-    const { wanted_id, method, requester_wa } = await req.json();
+    const { wanted_id, method, requester_wa, check } = await req.json();
     if (!wanted_id) {
       return NextResponse.json({ error: "wanted_id wajib diisi" }, { status: 400 });
     }
@@ -43,17 +48,62 @@ export async function POST(req) {
       }
     }
 
+    // Mode periksa: dipanggil saat jendela QRIS dibuka, hanya untuk memastikan
+    // kontaknya memang bisa dibuka (penjaga LID di atas). Tidak menerbitkan
+    // tagihan apa pun — supaya pemohon tahu SEBELUM transfer, bukan sesudah.
+    if (check) {
+      return NextResponse.json({ ok: true });
+    }
+
     const amount = 2000; // Tarif Rp 2.000 untuk buka kontak pembeli
 
     // Selalu alur QRIS statis + verifikasi struk oleh AI (tanpa gateway).
     // Nomor WA pemohon opsional — kontak pembeli tampil langsung di layar
     // setelah struk diverifikasi AI; WA hanya untuk salinan cadangan.
     const formattedRequesterWa = formatWa(requester_wa) || null;
+
+    // Pakai ulang tagihan yang masih menggantung milik pemohon yang sama.
+    //
+    // Kenapa hanya kalau nomornya diketahui: dua orang anonim yang membuka
+    // postingan yang sama tidak bisa dibedakan. Kalau tagihannya dipakai
+    // bersama, yang pertama membayar menandainya `paid`, lalu struk orang
+    // kedua dijawab "sudah dibayar" oleh /verify-receipt — dan orang kedua
+    // tidak pernah menerima kontak yang sudah dia bayar.
+    if (formattedRequesterWa) {
+      const { data: tagihanLama } = await supa
+        .from("payments")
+        .select("id, midtrans_order_id, amount")
+        .eq("status", "pending")
+        .eq("type", "wanted")
+        .eq("meta->>unlock_wanted_id", wanted.id)
+        .eq("meta->>requester_wa", formattedRequesterWa)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (tagihanLama) {
+        return NextResponse.json({
+          success: true,
+          paymentId: tagihanLama.id,
+          orderId: tagihanLama.midtrans_order_id,
+          paymentUrl: "/qris.png",
+          amount: tagihanLama.amount,
+          finalAmount: tagihanLama.amount,
+        });
+      }
+    }
+
     const orderId = `MNL-${wanted.id.slice(0, 8)}-${Date.now()}`;
 
+    // type "wanted" — bukan "iklan". Komentar lamanya bilang "bypass check
+    // constraint", dan itu memang benar sampai BAGIAN 9 migrasi menambahkan
+    // 'wanted' ke payments_type_check. Sesudah itu label "iklan" tinggal
+    // merusak laporan: /admin/keuangan sudah punya baris untuk jenis "wanted"
+    // yang selamanya kosong, sementara 346 pembukaan kontak menumpuk di
+    // kolom "Iklan Baru".
     const { data: paymentRow, error: insertErr } = await supa.from("payments").insert({
       listing_id: null,
-      type: "iklan", // bypass check constraint
+      type: "wanted",
       amount,
       status: "pending",
       midtrans_order_id: orderId,
