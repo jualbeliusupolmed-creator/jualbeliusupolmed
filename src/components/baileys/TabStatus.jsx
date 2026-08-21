@@ -1,24 +1,56 @@
 "use client";
-import { useState, useCallback, useEffect, useRef } from "react";
-import { useApi, apiPost, apiDelete, normalizeJid } from "./api";
-import { CopyBtn, StatusDot, Alert, QRDisplay } from "./ui";
+import { useState, useCallback, useEffect } from "react";
+import { useApi, apiPost } from "./api";
+import { StatusDot, Alert } from "./ui";
+import { KartuTaut } from "./KartuTaut";
+
+// Status perangkat kedua. Sengaja tidak lewat useApi: kalau bot kedua mati atau
+// belum dikonfigurasi, bot utama menjawab 502/503 — dan justru DI DALAM body itulah
+// keterangan yang paling dibutuhkan (`adaBot2`, `hidup`). useApi membuang body
+// non-2xx dan hanya menyisakan pesan error, jadi kartunya tidak bisa membedakan
+// "bot kedua belum dipasang" dari "bot kedua sedang mati".
+function usePerangkat2() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const refetch = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/baileys?endpoint=perangkat2/status&_t=${Date.now()}`);
+      setData(await res.json().catch(() => ({})));
+    } catch (e) {
+      setData({ error: e.message, hidup: false });
+    } finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { refetch(); }, [refetch]);
+  return { data, loading, refetch };
+}
 
 export function TabStatus() {
   const { data, loading, error, refetch } = useApi("status");
+  const { data: data2, refetch: refetch2 } = usePerangkat2();
   const [restarting, setRestarting] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [msg, setMsg] = useState(null);
-  
-  // State untuk Pairing Code
-  const [pairingPhone, setPairingPhone] = useState("");
-  const [pairingCode, setPairingCode] = useState("");
-  const [requestingPairing, setRequestingPairing] = useState(false);
+
+  const segarkan = useCallback(() => { refetch(); refetch2(); }, [refetch, refetch2]);
+
+  // Selama masih ada perangkat yang belum tertaut, keadaan di halaman ini berubah
+  // sendiri di sisi bot (QR muncul, pairing berhasil). Tanpa polling, orang yang
+  // baru saja scan tetap melihat layar "belum terhubung" sampai menekan Refresh.
+  const adaYangBelumTertaut = (data && !data.connected) || (data2 && data2.adaBot2 !== false && !data2.connected);
+  useEffect(() => {
+    if (!adaYangBelumTertaut) return;
+    const t = setInterval(segarkan, 15000);
+    return () => clearInterval(t);
+  }, [adaYangBelumTertaut, segarkan]);
 
   async function handleRestart() {
     if (!confirm("Restart bot sekarang?")) return;
     setRestarting(true);
     await apiPost("restart");
-    setTimeout(() => { setRestarting(false); refetch(); }, 4000);
+    setTimeout(() => { setRestarting(false); segarkan(); }, 4000);
   }
 
   async function handleReset() {
@@ -26,98 +58,29 @@ export function TabStatus() {
     setResetting(true);
     const r = await apiPost("reset");
     setMsg(r.ok ? { ok: true, text: "✅ Sesi dihapus. Bot restart, scan QR baru." } : { ok: false, text: "❌ Gagal reset." });
-    setPairingCode("");
-    setTimeout(() => { setResetting(false); refetch(); }, 4000);
-  }
-
-  async function handleRequestPairing() {
-    if (!pairingPhone) {
-        setMsg({ ok: false, text: "⚠️ Masukkan nomor HP terlebih dahulu." });
-        return;
-    }
-    setRequestingPairing(true);
-    setPairingCode("");
-    try {
-        const r = await apiPost("pairing-code", { phone: pairingPhone });
-        if (r.ok && r.code) {
-            setPairingCode(r.code);
-            setMsg({ ok: true, text: "✅ Kode pairing berhasil didapatkan!" });
-        } else {
-            setMsg({ ok: false, text: `❌ Gagal: ${r.error || 'Terjadi kesalahan'}` });
-        }
-    } catch (e) {
-        setMsg({ ok: false, text: `❌ Error: ${e.message}` });
-    }
-    setRequestingPairing(false);
+    setTimeout(() => { setResetting(false); segarkan(); }, 4000);
   }
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold dark:text-white">Status Koneksi Bot</h2>
-        <button onClick={refetch} className="btn-outline text-xs">🔄 Refresh</button>
+        <button onClick={segarkan} className="btn-outline text-xs">🔄 Refresh</button>
       </div>
 
       {loading && <p className="text-sm text-gray-400">Memuat...</p>}
       {error && <Alert ok={false} msg={`⚠️ ${error}`} />}
       <Alert ok={msg?.ok} msg={msg?.text} />
 
-      {data?.hasQR && (
-        <div className="card p-5 border-2 border-amber-300 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/20">
-          <p className="mb-4 text-center text-sm font-semibold text-amber-700 dark:text-amber-400">📱 Bot belum terhubung — Scan QR Code atau Gunakan Nomor HP</p>
-          
-          <div className="flex flex-col md:flex-row gap-8 items-center justify-center">
-            {/* Opsi 1: QR Code */}
-            <div className="flex flex-col items-center">
-                <p className="text-xs font-bold text-gray-500 mb-2 uppercase">Opsi 1: Scan QR</p>
-                <QRDisplay />
-            </div>
-
-            <div className="hidden md:block w-px h-32 bg-amber-200 dark:bg-amber-800"></div>
-
-            {/* Opsi 2: Pairing Code */}
-            <div className="flex flex-col items-center w-full max-w-xs space-y-3">
-                <p className="text-xs font-bold text-gray-500 mb-1 uppercase">Opsi 2: Nomor Telepon</p>
-                <input 
-                    type="text" 
-                    placeholder="Contoh: 62812..." 
-                    className="input w-full text-center font-mono"
-                    value={pairingPhone}
-                    onChange={e => setPairingPhone(e.target.value)}
-                    disabled={requestingPairing || !!pairingCode}
-                />
-                {!pairingCode ? (
-                    <button 
-                        onClick={handleRequestPairing}
-                        disabled={requestingPairing || !pairingPhone}
-                        className="btn-primary w-full disabled:opacity-50"
-                    >
-                        {requestingPairing ? "Meminta..." : "Dapatkan Kode"}
-                    </button>
-                ) : (
-                    <div className="w-full text-center space-y-2">
-                        <div className="bg-white dark:bg-slate-800 border-2 border-amber-400 dark:border-amber-500 rounded-xl p-3 shadow-inner">
-                            <p className="text-2xl font-black tracking-[0.2em] text-gray-800 dark:text-white">
-                                {pairingCode}
-                            </p>
-                        </div>
-                        <p className="text-xs text-amber-600 dark:text-amber-400">
-                            Masukkan kode ini di notifikasi WhatsApp di HP kamu.
-                        </p>
-                        <button onClick={() => setPairingCode("")} className="btn-outline w-full text-xs mt-2">
-                            Ulangi / Ganti Nomor
-                        </button>
-                    </div>
-                )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Dua perangkat, dua kartu. Yang kedua menghilang sendiri kalau bot kedua
+          memang belum dikonfigurasi di server (BOT2_TOKEN kosong). */}
+      {data && <KartuTaut perangkat={1} status={data} onRefresh={segarkan} />}
+      {data2 && data2.adaBot2 !== false && <KartuTaut perangkat={2} status={data2} onRefresh={segarkan} />}
 
       {data && (
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="card p-4">
-            <p className="text-xs text-gray-400 mb-2">Koneksi</p>
+            <p className="text-xs text-gray-400 mb-2">Koneksi (perangkat 1)</p>
             <div className="flex items-center gap-2">
               <StatusDot on={data.connected} />
               <span className="font-bold dark:text-white">{data.connected ? "Terhubung ✅" : "Terputus ❌"}</span>
@@ -127,6 +90,23 @@ export function TabStatus() {
             <p className="text-xs text-gray-400 mb-2">Nomor WA Bot</p>
             <p className="font-bold dark:text-white font-mono">{data.phone ? `+${data.phone}` : "–"}</p>
           </div>
+          {data2 && data2.adaBot2 !== false && (
+            <>
+              <div className="card p-4">
+                <p className="text-xs text-gray-400 mb-2">Koneksi (perangkat 2)</p>
+                <div className="flex items-center gap-2">
+                  <StatusDot on={!!data2.connected} />
+                  <span className="font-bold dark:text-white">
+                    {data2.hidup === false ? "Tidak berjalan ⛔" : data2.connected ? "Terhubung ✅" : "Terputus ❌"}
+                  </span>
+                </div>
+              </div>
+              <div className="card p-4">
+                <p className="text-xs text-gray-400 mb-2">Nomor WA Cadangan</p>
+                <p className="font-bold dark:text-white font-mono">{data2.phone ? `+${data2.phone}` : "–"}</p>
+              </div>
+            </>
+          )}
           <div className="card p-4">
             <p className="text-xs text-gray-400 mb-2">Terhubung Sejak</p>
             <p className="font-medium dark:text-white text-sm">{data.connectedAt ? new Date(data.connectedAt).toLocaleString("id-ID") : "–"}</p>
@@ -152,6 +132,9 @@ export function TabStatus() {
           {resetting ? "⏳ Mereset..." : "🗑️ Reset Sesi (Logout WA)"}
         </button>
       </div>
+      <p className="text-xs text-gray-400">
+        Tombol Restart & Reset di atas hanya mengenai perangkat 1. Perangkat 2 diurus dari server.
+      </p>
     </div>
   );
 }
