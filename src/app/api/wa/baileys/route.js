@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { parseListingFromText, verifyReceiptImage, processGeneralChat, parseWantedFromText, checkReceiverName } from "@/lib/gemini";
 import { sendWa as _sendWaBase, postToGroup, notifyAdminNewListing, notifyWantedMatch, notifyCategorySubscribers, notifyBuyerOfferResult, postWantedToGroup, notifySellerNewOffer } from "@/lib/fonnte";
+import { pushListingBaru } from "@/lib/webpush";
 import { formatWa } from "@/lib/constants";
 import { getSettings, adFeeFrom } from "@/lib/settings";
 import { postToFacebook, postToInstagram } from "@/lib/meta";
@@ -569,6 +570,9 @@ export async function POST(req) {
                 postToGroup(l, settings?.admin),
                 notifyMatchingWanted(supa, l),
                 notifyCategorySubscribers(supa, l),
+                // Notifikasi peramban ke semua pelanggan — jalur ini (verifikasi
+                // struk lewat WhatsApp) sebelumnya tidak mengirim push sama sekali.
+                pushListingBaru(supa, l),
               ].map(p => p.catch(() => {})));
             }
           }
@@ -613,6 +617,7 @@ export async function POST(req) {
               postToGroup(updatedListing, settings?.admin),
               notifyMatchingWanted(supa, updatedListing),
               notifyCategorySubscribers(supa, updatedListing),
+              pushListingBaru(supa, updatedListing),
             ].map(p => p.catch(() => {})));
           }
           return NextResponse.json({ ok: true, state: "receipt_verified" });
@@ -2855,6 +2860,7 @@ export async function POST(req) {
             postToGroup(l, settings?.admin),
             notifyMatchingWanted(supa, l),
             notifyCategorySubscribers(supa, l),
+            pushListingBaru(supa, l),
           ].map(p => p.catch(() => {})));
         }
         
