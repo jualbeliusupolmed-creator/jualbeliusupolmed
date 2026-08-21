@@ -25,10 +25,14 @@ export async function POST(req) {
     }
 
     // "Nomor baru" = tidak ada yang bisa dicuri dengan mengklaimnya: belum punya
-    // PIN, dan belum pernah memasang iklan satu pun. Ini yang menentukan boleh
-    // tidaknya pendaftaran darurat tanpa OTP saat WhatsApp tidak bisa dikirimi.
-    // Nomor yang PUNYA riwayat tidak pernah masuk ke jalur itu — di situlah
-    // pengambilalihan akun benar-benar merugikan orang.
+    // sandi, dan belum pernah memasang iklan satu pun. Hanya nomor seperti ini
+    // yang boleh mendaftar tanpa OTP.
+    //
+    // Nomor yang punya iklan tapi tidak punya sandi bukan pendaftar baru — itu
+    // akun lama yang sandinya hilang (mis. dihapus admin), dan menyerahkannya
+    // kepada siapa pun yang mengetik nomornya berarti menyerahkan iklan, toko,
+    // dan penilaian milik orang lain. Layar mengirim mereka ke jalur "Lupa PIN"
+    // yang tetap menuntut kode dari WhatsApp nomor itu sendiri.
     const { count } = await supa
       .from("listings")
       .select("id", { count: "exact", head: true })

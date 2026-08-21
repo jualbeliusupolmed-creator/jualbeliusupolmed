@@ -4,47 +4,34 @@ import { formatWa } from "@/lib/constants";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { setSellerCookie } from "@/lib/auth";
 import { hashPin } from "@/lib/pin";
+import { validasiPin } from "@/lib/pinRules";
+import { tulisProfil } from "@/lib/tulisProfil";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Pendaftaran darurat: bikin akun tanpa OTP.
+ * Pendaftaran penjual. Cukup nomor WhatsApp + sandi, tanpa OTP.
  *
- * Ada karena nomor WhatsApp bot bisa dibatasi oleh WhatsApp — dan saat itu
- * terjadi, pendaftaran mati untuk semua orang, termasuk yang tidak punya kaitan
- * apa pun dengan masalah kita.
+ * Dulu rute ini pintu darurat yang hanya terbuka saat OTP tidak bisa dikirim.
+ * Sekarang ia pintu depan, dan OTP dipakai untuk satu hal saja: mengembalikan
+ * akun kepada yang lupa sandinya. Alasannya sederhana — OTP di sini tidak
+ * pernah benar-benar menjaga pendaftaran, ia cuma menunda: nomor yang belum
+ * punya akun tidak menyimpan apa-apa yang bisa dicuri. Yang dijaganya cuma
+ * satu hal, dan hal itu tetap dijaga di bawah.
  *
- * Dua pagar menjaga jalur ini tetap sempit, dan KEDUANYA ditegakkan di server —
- * peramban tidak pernah jadi pihak yang memutuskan:
- *
- * 1. Hanya nomor tanpa riwayat. Belum punya PIN, belum punya satu iklan pun.
- *    Mengklaim nomor kosong tidak mengambil apa pun dari siapa pun, dan pemilik
- *    aslinya tetap bisa merebutnya lewat "Lupa PIN" yang masih menuntut OTP.
- * 2. Hanya saat OTP memang tidak bisa dikirim. Kalau bot WhatsApp sehat, atau
- *    ada token Fonnte sebagai cadangan, jalur ini menolak dan menyuruh kembali
- *    ke OTP. Pintu darurat yang tetap terbuka saat keadaan normal bukan pintu
- *    darurat — itu pintu belakang.
+ * Yang TIDAK boleh lewat sini: nomor yang sudah punya sesuatu untuk direbut.
+ * Sudah punya sandi, atau sudah pernah memasang iklan. Untuk mereka jalannya
+ * "Lupa PIN" yang tetap menuntut OTP — dan karena kodenya hanya bisa dibaca
+ * dari WhatsApp nomor itu sendiri, pemilik aslinya selalu bisa merebut kembali
+ * akun yang lahir di sini tanpa bukti kepemilikan.
  */
-async function otpMasihBisaDikirim() {
-  // Fonnte jalur terpisah yang tidak bergantung sesi WhatsApp kita sama sekali.
-  if (process.env.FONNTE_TOKEN) return true;
-
-  const dasar = process.env.BAILEYS_API_URL;
-  if (!dasar) return false;
-  try {
-    const url = dasar.replace(/\/(send|story)\/?$/, "").replace(/\/$/, "") + "/health";
-    const res = await fetch(url, { signal: AbortSignal.timeout(5000), cache: "no-store" });
-    const data = await res.json().catch(() => ({}));
-    return res.ok && data.ok === true;
-  } catch {
-    // Tidak menjawab sama sekali = jelas tidak bisa mengirim apa pun.
-    return false;
-  }
-}
 
 export async function POST(req) {
   try {
-    const rl = rateLimit(`daftar_langsung:${getClientIp(req)}`, { limit: 3, windowMs: 600_000 });
+    // 10 per 10 menit per IP. Dulu 3, karena ini pintu darurat yang seharusnya
+    // jarang dipakai. Sekarang ia pintu depan, dan satu IP bisa berarti satu
+    // wifi kampus berisi banyak orang yang mendaftar berbarengan.
+    const rl = rateLimit(`daftar_langsung:${getClientIp(req)}`, { limit: 10, windowMs: 600_000 });
     if (!rl.ok) {
       return NextResponse.json(
         { error: `Terlalu banyak percobaan. Coba lagi dalam ${rl.retryAfter} detik.` },
@@ -55,16 +42,9 @@ export async function POST(req) {
     const { wa, pin, referral } = await req.json();
     const normalizedWa = formatWa(wa);
     if (!normalizedWa) return NextResponse.json({ error: "Nomor WhatsApp tidak valid." }, { status: 400 });
-    if (!pin || String(pin).length < 6) {
-      return NextResponse.json({ error: "PIN harus minimal 6 digit." }, { status: 400 });
-    }
 
-    if (await otpMasihBisaDikirim()) {
-      return NextResponse.json(
-        { error: "WhatsApp sedang bisa dihubungi — silakan daftar lewat kode OTP seperti biasa." },
-        { status: 409 }
-      );
-    }
+    const salahPin = validasiPin(pin);
+    if (salahPin) return NextResponse.json({ error: salahPin }, { status: 400 });
 
     const supa = getAdminClient();
 
@@ -72,28 +52,30 @@ export async function POST(req) {
       .from("seller_profiles").select("wa, pin").eq("wa", normalizedWa).maybeSingle();
     if (profile?.pin) {
       return NextResponse.json(
-        { error: "Nomor ini sudah punya akun. Masuk dengan PIN, atau tunggu WhatsApp aktif untuk reset PIN." },
+        { error: "Nomor ini sudah punya akun. Masuk dengan PIN / sandi, atau pakai \"Lupa PIN\" kalau lupa." },
         { status: 409 }
       );
     }
 
+    // Punya iklan tapi tidak punya sandi = akun lama yang sandinya hilang, bukan
+    // pendaftar baru. Membiarkannya diklaim tanpa OTP berarti menyerahkan iklan,
+    // toko, dan penilaian orang lain kepada siapa pun yang mengetik nomornya.
     const { count } = await supa
       .from("listings").select("id", { count: "exact", head: true }).eq("seller_wa", normalizedWa);
     if ((count || 0) > 0) {
       return NextResponse.json(
-        { error: "Nomor ini sudah pernah memasang iklan, jadi pendaftarannya wajib lewat OTP. "
-               + "Tunggu WhatsApp aktif kembali." },
+        { error: "Nomor ini sudah punya iklan, jadi sandinya harus diatur lewat \"Lupa PIN\" "
+               + "supaya kami yakin nomornya memang milikmu." },
         { status: 409 }
       );
     }
 
     // Bentuk barisnya disamakan dengan otp/verify — kode referral sendiri dan
-    // bonus bump untuk pengundang — supaya akun yang lahir lewat pintu darurat
-    // tidak jadi warga kelas dua yang kehilangan fitur tanpa alasan.
+    // bonus bump untuk pengundang — supaya akun yang lahir tanpa OTP tidak jadi
+    // warga kelas dua yang kehilangan fitur tanpa alasan.
     let galat;
     if (profile) {
-      ({ error: galat } = await supa.from("seller_profiles")
-        .update({ pin: hashPin(String(pin)), wa_verified: false }).eq("wa", normalizedWa));
+      galat = await tulisProfil(supa, { pin: hashPin(String(pin)), wa_verified: false }, normalizedWa);
     } else {
       let freeBumps = 0;
       let referrerWa = null;
@@ -108,14 +90,14 @@ export async function POST(req) {
         }
       }
 
-      ({ error: galat } = await supa.from("seller_profiles").insert({
+      galat = await tulisProfil(supa, {
         wa: normalizedWa,
         name: `User ${normalizedWa.slice(-4)}`,
         referral_code: Math.random().toString(36).substring(2, 8).toUpperCase(),
         free_bumps: freeBumps,
         pin: hashPin(String(pin)),
         wa_verified: false,
-      }));
+      });
 
       if (!galat && referrerWa) {
         await supa.from("referrals").insert({
@@ -130,7 +112,7 @@ export async function POST(req) {
       success: true,
       wa: normalizedWa,
       belumTerverifikasi: true,
-      message: "Akun dibuat tanpa verifikasi WhatsApp. Verifikasi nomormu saat WhatsApp aktif lagi.",
+      message: "Akun dibuat. Simpan PIN / sandimu baik-baik — kalau lupa, kode pemulihannya dikirim ke nomor ini.",
     });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });

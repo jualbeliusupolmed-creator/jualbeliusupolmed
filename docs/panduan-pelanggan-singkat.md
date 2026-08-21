@@ -16,7 +16,7 @@
 
 ### Via Website
 1. Buka **jualbeliusupolmed.web.id/jual**
-2. Login dengan nomor WA (OTP dikirim ke WA)
+2. Login dengan nomor WA + PIN / sandi (nomor baru: langsung buat sandi)
 3. Isi form iklan + upload foto
 4. Bayar QRIS + upload screenshot struk
 5. Iklan tayang ✅

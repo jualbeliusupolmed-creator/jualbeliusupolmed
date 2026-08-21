@@ -4,8 +4,18 @@ import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { formatWa } from "@/lib/constants";
 import { setSellerCookie } from "@/lib/auth";
 import { hashPin } from "@/lib/pin";
+import { validasiPin } from "@/lib/pinRules";
+import { tulisProfil } from "@/lib/tulisProfil";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * Verifikasi OTP + pasang sandi baru — ujung dari jalur "Lupa PIN".
+ *
+ * Pendaftaran tidak lewat sini lagi; cabang "belum punya profil" di bawah
+ * dibiarkan hidup sebagai jaring pengaman untuk akun lama yang barisnya sudah
+ * telanjur hilang sementara iklannya masih ada.
+ */
 
 export async function POST(req) {
   try {
@@ -23,8 +33,9 @@ export async function POST(req) {
       return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
     }
     
-    if (pin.length < 6) {
-      return NextResponse.json({ error: "PIN harus minimal 6 karakter." }, { status: 400 });
+    const salahPin = validasiPin(pin);
+    if (salahPin) {
+      return NextResponse.json({ error: salahPin }, { status: 400 });
     }
 
     // Akun Testing — hanya aktif jika TEST_ACCOUNT_ENABLED=true di env
@@ -83,7 +94,7 @@ export async function POST(req) {
         }
       }
 
-      await supa.from("seller_profiles").insert({
+      await tulisProfil(supa, {
         wa: normalizedWa,
         name: `User ${normalizedWa.slice(-4)}`,
         referral_code: newRefCode,
@@ -105,13 +116,13 @@ export async function POST(req) {
       // Update PIN — WAJIB di-hash. Bug lama: menyimpan `pin` mentah di sini
       // men-downgrade PIN yang tadinya bcrypt jadi plaintext tiap login OTP.
       // wa_verified ikut TRUE di sini, dan itu yang membuat "Lupa PIN" jadi jalan
-      // pulang: akun yang lahir lewat pendaftaran darurat (tanpa bukti nomor)
+      // pulang: akun yang lahir tanpa OTP (pendaftaran biasa, tanpa bukti nomor)
       // direbut kembali oleh siapa pun yang benar-benar memegang nomornya.
       const updatePayload = { pin: hashPin(pin), wa_verified: true };
       if (!profile.referral_code) {
         updatePayload.referral_code = Math.random().toString(36).substring(2, 8).toUpperCase();
       }
-      await supa.from("seller_profiles").update(updatePayload).eq("wa", normalizedWa);
+      await tulisProfil(supa, updatePayload, normalizedWa);
     }
 
     setSellerCookie(normalizedWa);
