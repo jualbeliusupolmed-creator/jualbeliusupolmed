@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import InstallPrompt from "./InstallPrompt";
+import NotifPrompt from "./NotifPrompt";
 
 export default function LayoutWrapper({ children }) {
   const pathname = usePathname();
@@ -27,6 +28,9 @@ export default function LayoutWrapper({ children }) {
       {!isAdmin && (
         <>
           <InstallPrompt />
+          {/* Ajakan notifikasi peramban. Menahan dirinya sendiri (kunjungan
+              kedua / 25 detik), karena izin notifikasi cuma bisa diminta sekali. */}
+          <NotifPrompt />
           <Footer config={config} />
         </>
       )}

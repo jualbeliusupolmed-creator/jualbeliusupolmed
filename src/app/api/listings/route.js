@@ -4,7 +4,7 @@ import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { getSettings, adFeeFrom, listingExpiresAt, hasUnpaidSoldFees } from "@/lib/settings";
 import { formatWa } from "@/lib/constants";
 import { postToGroup, notifyCategorySubscribers } from "@/lib/fonnte";
-import { pushCategorySubscribers } from "@/lib/webpush";
+import { pushListingBaru } from "@/lib/webpush";
 import { getDistributorSettings, calcDistributorFee, effectivePrice } from "@/lib/distributor";
 
 export const dynamic = "force-dynamic";
@@ -232,7 +232,10 @@ export async function POST(req) {
       try {
         await postToGroup(listing);
         notifyCategorySubscribers(supa, listing).catch(() => {});
-        pushCategorySubscribers(supa, listing).catch(() => {});
+        // Push peramban ke SEMUA pelanggan, bukan cuma pelanggan kategori:
+        // yang paling ingin tahu ada barang baru adalah pembeli, dan pembeli
+        // tidak perlu punya akun di sini untuk membeli.
+        pushListingBaru(supa, listing).catch(() => {});
       } catch (err) {
         console.error("Fonnte postToGroup error:", err?.message);
       }

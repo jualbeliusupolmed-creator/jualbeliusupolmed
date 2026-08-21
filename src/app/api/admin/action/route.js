@@ -4,7 +4,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { formatWa } from "@/lib/constants";
 import { getSettings } from "@/lib/settings";
 import { notifyAdminNewListing, postToGroup, sendWa } from "@/lib/fonnte";
-import { pushCategorySubscribers } from "@/lib/webpush";
+import { pushListingBaru } from "@/lib/webpush";
 import { logError } from "@/lib/logError";
 import { postToFacebook, postToInstagram } from "@/lib/meta";
 
@@ -115,7 +115,8 @@ export async function POST(req) {
         // Broadcast to WA Group when admin activates manually
         if (listingInfo) {
           const activateSettings = await getSettings().catch(() => null);
-          pushCategorySubscribers(supa, listingInfo).catch(() => {});
+          // Push peramban ke semua pelanggan (bukan cuma pelanggan kategori).
+          pushListingBaru(supa, { ...listingInfo, id }).catch(() => {});
           const [groupRes] = await Promise.allSettled([
             postToGroup(listingInfo, activateSettings?.admin),
           ]);
@@ -272,7 +273,7 @@ export async function POST(req) {
 
             if (listing && payment.type === "iklan") {
               const paySettings = await getSettings().catch(() => null);
-              pushCategorySubscribers(supa, listing).catch(() => {});
+              pushListingBaru(supa, listing).catch(() => {});
               await Promise.allSettled([
                 postToGroup(listing, paySettings?.admin),
               ]);

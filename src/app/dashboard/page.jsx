@@ -14,6 +14,7 @@ import { Icon } from "@/components/Icons";
 import { toast } from "sonner";
 import QRISModal from "@/components/QRISModal";
 import PushNotificationButton from "@/components/PushNotificationButton";
+import BagikanIklan from "@/components/BagikanIklan";
 
 function statusBadge(s) {
   const map = {
@@ -75,6 +76,8 @@ function DashboardInner() {
 
   const [qrisModalItem, setQrisModalItem] = useState(null);
   const [openActionMenu, setOpenActionMenu] = useState(null);
+  // Iklan yang sedang dibuka lembar "Bagikan"-nya.
+  const [bagikan, setBagikan] = useState(null);
   const [activeQrisUrl, setActiveQrisUrl] = useState("");
   const [activeQrisFee, setActiveQrisFee] = useState(0);
   const [activeQrisOrderId, setActiveQrisOrderId] = useState("");
@@ -410,6 +413,9 @@ function DashboardInner() {
         onConfirm={(val) => onSoldPriceEntered(soldModal, val)}
         onClose={() => setSoldModal(null)}
       />
+
+      {/* Lembar "Bagikan" satu iklan — dipanggil dari tombol di kartu iklan. */}
+      {bagikan && <BagikanIklan listing={bagikan} onClose={() => setBagikan(null)} />}
 
       {/* Konfirmasi mark sold */}
       <ConfirmModal
@@ -1149,6 +1155,19 @@ function DashboardInner() {
                             </button>
                             <button onClick={() => openMarkSold(i)} className="btn-primary flex-1 text-xs px-3 py-1.5">
                               <Icon.CheckCircle className="h-3 w-3 inline mr-1" /> Mark Sold
+                            </button>
+                            {/* Bagikan: satu-satunya cara penjual menyebarkan
+                                iklannya sendiri tanpa menunggu bot. Sengaja
+                                sejajar dengan Sundul dan Mark Sold, bukan
+                                disembunyikan di menu "•••" — menyebarkan iklan
+                                adalah hal yang paling sering ingin dilakukan
+                                penjual sesudah memasangnya. */}
+                            <button
+                              onClick={() => setBagikan(i)}
+                              className="btn-outline text-xs px-3 py-1.5"
+                              title="Bagikan ke grup WA atau aplikasi lain"
+                            >
+                              📤 Bagikan
                             </button>
                             {/* More actions "..." */}
                             <div className="relative">

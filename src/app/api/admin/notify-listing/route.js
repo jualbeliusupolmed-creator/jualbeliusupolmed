@@ -3,6 +3,7 @@ import { isAdmin } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getSettings } from "@/lib/settings";
 import { formatWaForBaileys } from "@/lib/constants";
+import { pushListingBaru } from "@/lib/webpush";
 import {
   postToGroup,
   notifyAdminNewListing,
@@ -107,10 +108,15 @@ export async function POST(req) {
     }
 
     // ── Mode bot: kirim tiga-tiganya, laporkan apa adanya ─────────────────
-    const [grupRes, adminRes, penjualRes] = await Promise.allSettled([
+    const [grupRes, adminRes, penjualRes, pushRes] = await Promise.allSettled([
       postToGroup(listing, admin),
       notifyAdminNewListing(listing, admin.adminWa),
       notifySellerListingLive(listing),
+      // Notifikasi peramban ikut berangkat: kalau tombol ini ditekan karena
+      // pengumumannya memang belum pernah keluar, push-nya juga belum pernah
+      // keluar. Tag-nya sama per iklan, jadi penekanan kedua MENGGANTI
+      // notifikasi lama di layar orang, bukan menumpuknya.
+      pushListingBaru(supa, listing),
     ]);
 
     const nilai = (r) => (r.status === "fulfilled" ? (r.value || {}) : { ok: false, error: r.reason?.message });
@@ -142,6 +148,14 @@ export async function POST(req) {
       },
     ];
 
+    const push = nilai(pushRes);
+    hasil.push({
+      tujuan: "Notif peramban",
+      ok: !!push.ok,
+      detail: push.ok ? `${push.terkirim || 0}/${push.total || 0} perangkat` : "",
+      error: push.ok ? null : push.alasan || null,
+    });
+
     const berhasil = hasil.filter((h) => h.ok).length;
     return NextResponse.json({
       ok: berhasil === hasil.length,
@@ -153,7 +167,7 @@ export async function POST(req) {
       // sendiri dan berisiko menyebut "berhasil" untuk kiriman yang separuh.
       ringkas:
         berhasil === hasil.length
-          ? `Terkirim ke grup, admin, dan penjual.`
+          ? `Terkirim ke grup, admin, penjual, dan ${push.terkirim || 0} peramban.`
           : `${berhasil}/${hasil.length} tujuan berhasil — ` +
             hasil.filter((h) => !h.ok).map((h) => `${h.tujuan}: ${h.error || h.detail || "gagal"}`).join("; "),
     });

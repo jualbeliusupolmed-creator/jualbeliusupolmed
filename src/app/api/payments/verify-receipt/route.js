@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { verifyReceiptImage, checkReceiverName } from "@/lib/gemini";
 import { sendWa, notifyAdminNewListing, postToGroup, postWantedToGroup } from "@/lib/fonnte";
+import { pushListingBaru } from "@/lib/webpush";
 import { buildSlug } from "@/lib/slug";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { formatWa } from "@/lib/constants";
@@ -180,6 +181,10 @@ export async function POST(req) {
           Promise.allSettled([
             notifyAdminNewListing(listing),
             postToGroup(listing),
+            // Notifikasi peramban ke semua pelanggan. Jalur ini yang dilewati
+            // iklan berbayar biasa, dan sebelum ini ia satu-satunya jalur
+            // "iklan tayang" yang tidak mengirim push sama sekali.
+            pushListingBaru(supa, listing),
           ]).catch(console.error);
         }
       } else if (payment.type === "featured") {
