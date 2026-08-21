@@ -61,6 +61,7 @@ export default function AdminPanel({
   listingsTotal = 0,
   paymentsTotal = 0,
   pwaInstallsTotal = 0,
+  outboxPending = 0,
   currentPage = 1,
   pageSize = 100,
 }) {
@@ -252,7 +253,7 @@ export default function AdminPanel({
       <div className="space-y-6">
 
         {tab === "overview" && (
-          <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-7">
+          <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
             <Kpi label="Iklan aktif" value={active.length} sub={`${listings.length} total`} />
             <Kpi label="Terjual" value={sold.length} sub={`${pending.length} pending`} />
             <Kpi label="Revenue" value={rupiah(revenue)} sub={`${pendingCount} pending`} />
@@ -260,6 +261,16 @@ export default function AdminPanel({
             <Kpi label="Install PWA" value={pwaInstallsTotal} sub="Orang" />
             <Kpi label="Rating" value={avgRating} sub={`${ratings.length} ulasan`} />
             <Kpi label="Laporan" value={openReports.length} sub={`${pendingVerif.length} verifikasi`} />
+            {/* Notifikasi yang gagal terkirim. Dipajang di Ringkasan karena tiap
+                barisnya satu orang yang sedang menunggu kabar — dan tidak ada
+                yang berangkat sendiri: antrean ini HANYA jalan kalau ditekan. */}
+            <Kpi
+              label="Antrean WA"
+              value={outboxPending}
+              sub={outboxPending ? "menunggu dikirim ulang" : "semua sudah sampai"}
+              href="/admin/antrean"
+              waspada={outboxPending > 0}
+            />
           </div>
         )}
 
@@ -1080,14 +1091,23 @@ export default function AdminPanel({
 }
 
 // ── small components ──────────────────────────────────────────────────────────
-function Kpi({ label, value, sub }) {
-  return (
-    <div className="card p-4">
+function Kpi({ label, value, sub, href, waspada = false }) {
+  const isi = (
+    <>
       <p className="text-xs text-gray-400">{label}</p>
-      <p className="mt-1 text-xl font-extrabold tracking-tight dark:text-white">{value}</p>
+      <p className={`mt-1 text-xl font-extrabold tracking-tight ${waspada ? "text-amber-600 dark:text-amber-400" : "dark:text-white"}`}>{value}</p>
       {sub && <p className="text-[11px] text-gray-400">{sub}</p>}
-    </div>
+    </>
   );
+  // Angka yang menuntut tindakan harus bisa ditekan; angka yang cuma kabar tidak.
+  if (href) {
+    return (
+      <a href={href} className="card block p-4 transition-colors hover:border-gray-300 dark:hover:border-slate-600">
+        {isi}
+      </a>
+    );
+  }
+  return <div className="card p-4">{isi}</div>;
 }
 function Card({ title, children, className = "" }) {
   return (

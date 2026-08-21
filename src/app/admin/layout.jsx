@@ -22,11 +22,17 @@ export default async function AdminLayout({ children }) {
   }
 
   const supa = getAdminClient();
-  const [pendingRes, reportsRes, profilesRes, payRes] = await Promise.all([
+  const [pendingRes, reportsRes, profilesRes, payRes, outboxRes] = await Promise.all([
     supa.from("listings").select("id", { count: "exact", head: true }).eq("status", "pending"),
     supa.from("reports").select("id", { count: "exact", head: true }).eq("status", "open"),
     supa.from("profile_change_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
     supa.from("payments").select("id", { count: "exact", head: true }).eq("status", "pending"),
+    // wa_outbox lahir belakangan lewat migrasi terpisah. Kalau tabelnya belum
+    // ada di sebuah lingkungan, supabase-js menjawab dengan error di dalam
+    // hasilnya (bukan melempar), jadi seluruh sidebar tidak ikut mati — count
+    // tinggal null dan lencananya tidak muncul. Itu perilaku yang diinginkan:
+    // menu boleh kehilangan satu lencana, tidak boleh kehilangan seluruh menu.
+    supa.from("wa_outbox").select("id", { count: "exact", head: true }).eq("status", "tertunda"),
   ]);
 
   const counts = {
@@ -34,6 +40,7 @@ export default async function AdminLayout({ children }) {
     reports: reportsRes.count || 0,
     profil_request: profilesRes.count || 0,
     transaksi: payRes.count || 0,
+    antrean: outboxRes.count || 0,
   };
   // Angka nol tidak perlu dipajang — lencana kosong cuma jadi noise.
   for (const k of Object.keys(counts)) if (!counts[k]) delete counts[k];

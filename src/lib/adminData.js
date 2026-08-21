@@ -98,6 +98,7 @@ export const DEFAULT_DATA = {
   listingsTotal: 0,
   paymentsTotal: 0,
   pwaInstallsTotal: 0,
+  outboxPending: 0,
   currentPage: 1,
   pageSize: 100,
 };
@@ -112,7 +113,7 @@ export async function getAdminStats(page = 1) {
   const to = from + PAGE_SIZE - 1;
 
   // PAGINATED: listings and payments now use range() instead of loading all at once
-  const [listingsRes, paymentsRes, blacklist, categories, settings, wanted, blogs, pwaInstallsRes] = await Promise.all([
+  const [listingsRes, paymentsRes, blacklist, categories, settings, wanted, blogs, pwaInstallsRes, outboxRes] = await Promise.all([
     safePaginated(
       fetchListingsWithProfiles(
         supa
@@ -163,6 +164,16 @@ export async function getAdminStats(page = 1) {
         .select("id", { count: "exact", head: true }),
       []
     ),
+    // Antrean notifikasi WhatsApp yang belum sampai. safePaginated() memberi
+    // count 0 kalau tabelnya belum ada di sebuah lingkungan — Ringkasan tidak
+    // boleh gagal total gara-gara satu migrasi yang belum dijalankan.
+    safePaginated(
+      supa
+        .from("wa_outbox")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "tertunda"),
+      []
+    ),
   ]);
 
   const listings = listingsRes.data || [];
@@ -170,6 +181,7 @@ export async function getAdminStats(page = 1) {
   const payments = paymentsRes.data || [];
   const paymentsTotal = paymentsRes.count;
   const pwaInstallsTotal = pwaInstallsRes.count;
+  const outboxPending = outboxRes.count || 0;
 
   // Reports, ratings, seller profiles, dan profile requests — berjalan paralel
   const [toko, reports, ratings, sellersFromProfiles, allListingStats, profileRequests] = await Promise.all([
@@ -274,6 +286,7 @@ export async function getAdminStats(page = 1) {
     listingsTotal,
     paymentsTotal,
     pwaInstallsTotal,
+    outboxPending,
     currentPage: page,
     pageSize: PAGE_SIZE,
   };
