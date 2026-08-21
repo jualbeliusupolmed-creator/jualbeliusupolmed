@@ -98,6 +98,7 @@ export const DEFAULT_DATA = {
   ratings: [],
   categories: [],
   blogs: [],
+  penulisBadge: [],
   settings: DEFAULT_SETTINGS,
   wanted: [],
   sellersList: [],
@@ -138,7 +139,7 @@ export async function getAdminStats(page = 1, tab = null) {
   const fetchSellers = ["penjual", "broadcast"].includes(tab) || !tab;
   const fetchProfileReqs = ["profil_request"].includes(tab) || !tab;
 
-  const [listingsRes, paymentsRes, blacklist, categories, settings, wanted, blogs, pwaInstallsRes, outboxRes] = await Promise.all([
+  const [listingsRes, paymentsRes, blacklist, categories, settings, wanted, blogs, penulisBadge, pwaInstallsRes, outboxRes] = await Promise.all([
     fetchListings ? safePaginated(
       fetchListingsWithProfiles(
         supa.from("listings").select("*", { count: "exact" }).order("created_at", { ascending: false }).range(from, to)
@@ -164,7 +165,16 @@ export async function getAdminStats(page = 1, tab = null) {
     fetchBlogs ? safe(
       supa.from("blogs").select("*").order("created_at", { ascending: false }).limit(100), []
     ) : Promise.resolve([]),
-    
+
+    // Penulis berbadge. Daftarnya kecil (hanya yang diberi izin terbit-langsung)
+    // dan dibaca terpisah, BUKAN lewat embed foreign key: kalau nama relasinya
+    // meleset, embed membuat seluruh query blogs gagal dan tab Artikel berubah
+    // jadi kosong tanpa satu pun galat yang terlihat. Dua query kecil yang
+    // gagal sendiri-sendiri lebih jujur daripada satu query yang diam.
+    fetchBlogs ? safe(
+      supa.from("seller_profiles").select("wa, name, blog_badge_at").eq("blog_badge", true), []
+    ) : Promise.resolve([]),
+
     Promise.resolve({ data: [], count: 0 }), // pwa_installs pindah ke overview mandiri
     Promise.resolve({ data: [], count: 0 })  // wa_outbox pindah ke overview mandiri
   ]);
@@ -246,6 +256,7 @@ export async function getAdminStats(page = 1, tab = null) {
     settings,
     wanted,
     blogs,
+    penulisBadge,
     sellersList,
     stores: toko.stores,
     storesMigrationMissing: toko.storesMigrationMissing,

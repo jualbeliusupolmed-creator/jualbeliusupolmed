@@ -629,6 +629,112 @@ export async function POST(req) {
         await supa.from("blogs").delete().eq("id", id);
         break;
 
+      // Artikel tulisan penjual: setujui / tolak.
+      //
+      // Bentuknya sengaja dibuat kembar dengan toko_setujui / toko_tolak di
+      // atas — dua alur persetujuan yang berperilaku berbeda hanya karena
+      // ditulis pada hari yang berbeda adalah cara paling mudah membuat admin
+      // salah menebak apa yang akan terjadi saat menekan tombol.
+      case "blog_setujui":
+      case "blog_tolak": {
+        const setuju = action === "blog_setujui";
+        const catatan = String(body.catatan || "").trim().slice(0, 300);
+
+        const { data: artikel } = await supa
+          .from("blogs")
+          .select("id, title, slug, status, author, author_wa")
+          .eq("id", id)
+          .maybeSingle();
+        if (!artikel) return NextResponse.json({ error: "Artikel tidak ditemukan" }, { status: 404 });
+
+        const { error } = await supa
+          .from("blogs")
+          .update(
+            setuju
+              ? { status: "published", reviewed_at: new Date().toISOString(), reject_note: null }
+              : { status: "ditolak", reviewed_at: new Date().toISOString(), reject_note: catatan || null }
+          )
+          .eq("id", id);
+        if (error) {
+          const belumMigrasi = /reject_note|reviewed_at|blogs_status_check|column .* does not exist|schema cache/i.test(error.message || "");
+          throw new Error(belumMigrasi
+            ? "Kolom persetujuan artikel belum ada — jalankan migrasi BAGIAN 29 dulu."
+            : error.message);
+        }
+
+        // Penulis admin (author_wa NULL) tidak punya siapa pun untuk dikabari.
+        if (artikel.author_wa) {
+          const dasar = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+          sendWa(
+            artikel.author_wa,
+            setuju
+              ? `📝 *Artikelmu sudah terbit!*\n\n` +
+                `*${artikel.title}*\n\n` +
+                `Sudah bisa dibaca siapa saja di:\n${dasar}/blog/${artikel.slug}\n\n` +
+                `Terima kasih sudah menulis 🙌`
+              : `📝 *Artikelmu belum bisa diterbitkan*\n\n` +
+                `*${artikel.title}*\n` +
+                (catatan ? `\nCatatan admin: _${catatan}_\n` : "") +
+                `\nPerbaiki lewat ${dasar}/dashboard (tab Blog), lalu kirim lagi. ` +
+                `Tulisannya tidak hilang — masih tersimpan sebagai draf.`,
+            null,
+            null,
+            { jenis: setuju ? "blog_terbit" : "blog_ditolak" }
+          ).catch(() => {});
+        }
+        break;
+      }
+
+      // Badge penulis: pemisah antara "langsung terbit" dan "antre dulu".
+      //
+      // Bukan lencana kosmetik. Memberikannya berarti tulisan orang itu tayang
+      // di situs ini tanpa dibaca siapa pun lebih dulu, jadi ia dicatat dengan
+      // waktunya dan dikabarkan ke penerimanya — supaya tidak ada yang punya
+      // hak terbit-langsung tanpa tahu ia memilikinya.
+      case "set_blog_badge": {
+        const normalizedWa = formatWa(wa);
+        if (!normalizedWa) return NextResponse.json({ error: "WA wajib" }, { status: 400 });
+        const beri = body.value === true || body.value === "true";
+
+        const { data: profil } = await supa
+          .from("seller_profiles")
+          .select("wa, name, blog_badge")
+          .eq("wa", normalizedWa)
+          .maybeSingle();
+        if (!profil) return NextResponse.json({ error: "Penjual tidak ditemukan" }, { status: 404 });
+
+        const { error } = await supa
+          .from("seller_profiles")
+          .update({ blog_badge: beri, blog_badge_at: beri ? new Date().toISOString() : null })
+          .eq("wa", normalizedWa);
+        if (error) {
+          const belumMigrasi = /blog_badge|column .* does not exist|schema cache/i.test(error.message || "");
+          throw new Error(belumMigrasi
+            ? "Kolom badge penulis belum ada — jalankan migrasi BAGIAN 29 dulu."
+            : error.message);
+        }
+
+        // Hanya kabari kalau nilainya benar-benar berubah — menekan tombol dua
+        // kali tidak boleh mengirim dua pesan yang sama ke orangnya.
+        if (profil.blog_badge !== beri) {
+          const dasar = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+          sendWa(
+            normalizedWa,
+            beri
+              ? `✍️ *Kamu dapat badge Penulis!*\n\n` +
+                `Mulai sekarang artikel yang kamu kirim *langsung terbit* di ${dasar}/blog — tanpa antre persetujuan.\n\n` +
+                `Tulis lewat ${dasar}/dashboard, tab *Blog*. Dipercaya bukan berarti bebas: tulisan yang menyesatkan atau menyalin punya orang tetap bisa diturunkan.`
+              : `✍️ *Badge Penulis dinonaktifkan*\n\n` +
+                `Artikel yang kamu kirim setelah ini akan ditinjau admin dulu sebelum terbit, seperti sedia kala. ` +
+                `Artikel yang sudah tayang tidak diturunkan.`,
+            null,
+            null,
+            { jenis: beri ? "blog_badge_diberi" : "blog_badge_dicabut" }
+          ).catch(() => {});
+        }
+        break;
+      }
+
       // ── Sponsored listing ──────────────────────────────────────────────
       case "set_sponsored": {
         const days = Number(body.days) || 0;
