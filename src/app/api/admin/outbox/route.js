@@ -87,7 +87,15 @@ export async function POST(req) {
     // Sengaja dibatasi 50 per penekanan. Menyemburkan ratusan pesan sekaligus ke
     // WhatsApp adalah pola yang membuat nomor dibatasi — persis bencana yang
     // menciptakan antrean ini. Sisanya tinggal tekan lagi.
-    q = body.semua ? q.limit(50) : q.eq("id", body.id).limit(1);
+    //
+    // "Kirim semua" juga sengaja MELEWATI grup dan saluran. Kegagalan ke grup
+    // ikut ditampung supaya kehilangannya terlihat, tapi pengumuman ke grup
+    // punya masa berlaku: iklan yang diumumkan tiga hari terlambat membuat
+    // grupnya berisik tanpa menolong siapa pun. Barisnya tetap bisa dikirim
+    // satu per satu — dengan seorang manusia yang melihat umurnya dulu.
+    q = body.semua
+      ? (body.termasukGrup ? q : q.not("target", "like", "%@g.us").not("target", "like", "%@newsletter")).limit(50)
+      : q.eq("id", body.id).limit(1);
     const { data, error } = await q;
     if (error) throw error;
     antre = data || [];

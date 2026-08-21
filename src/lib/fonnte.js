@@ -58,25 +58,62 @@ async function tampungGagal(target, message, fileUrl, ttlDetik, sebab, meta) {
       return;
     }
     const t = String(target || "");
-    // Grup, saluran, dan Status tidak ditampung: yang bisa dikirim ulang dari
-    // panel adalah pesan ke orang, dan pengumuman basi ke grup lebih merugikan
-    // daripada tidak terkirim sama sekali.
-    if (!t || t === "status@broadcast" || t.includes("@g.us") || t.includes("@newsletter")) return;
+    if (!t) return;
+    // WA Status tetap TIDAK ditampung. Status berumur 24 jam dan sifatnya bonus
+    // (postToGroup pun tidak menghitungnya sebagai keberhasilan); mengirim ulang
+    // Status basi tidak menolong siapa pun.
+    if (t === "status@broadcast") return;
 
-    await getAdminClient().from("wa_outbox").insert({
+    // Grup dan saluran DULU ikut ditolak di sini, dengan alasan "pengumuman basi
+    // ke grup lebih merugikan daripada tidak terkirim". Alasan itu benar untuk
+    // pengiriman OTOMATIS, tapi akibatnya kegagalan grup tidak meninggalkan
+    // jejak sama sekali: kalau VPS mati saat iklan aktif, pengumumannya hilang
+    // dan tidak ada satu layar pun yang bisa memberi tahu bahwa ia hilang.
+    //
+    // Sekarang ditampung, TAPI ditandai: /api/admin/outbox mengeluarkannya dari
+    // "Kirim semua", jadi tidak ada pengumuman basi yang berangkat sendiri —
+    // yang ada cuma baris yang kelihatan, lengkap dengan umurnya, dan seorang
+    // manusia yang memutuskan masih pantas dikirim atau tidak.
+    const grup = t.includes("@g.us");
+    const saluran = t.includes("@newsletter");
+
+    const { data, error } = await getAdminClient().from("wa_outbox").insert({
       target: t,
       message: String(message || ""),
       image_url: fileUrl || null,
       ttl_detik: ttlDetik ? Number(ttlDetik) : null,
-      jenis: meta?.jenis || null,
+      jenis: meta?.jenis || (grup ? "grup" : saluran ? "saluran" : null),
       listing_id: meta?.listingId || null,
       galat_terakhir: String(sebab || "").slice(0, 500),
-    });
+    }).select("id").maybeSingle();
+    if (error) throw error;
     console.warn(`[wa_outbox] ditampung untuk ${t} — ${sebab}`);
+    return data?.id || null;
   } catch (e) {
     // Tabelnya belum ada (migrasi belum jalan) juga mendarat di sini. Berisik
     // di log, tapi tidak mematikan pengiriman apa pun.
     console.error("[wa_outbox] gagal menampung:", e?.message);
+  }
+}
+
+/**
+ * Tandai baris antrean sebagai sudah terkirim.
+ *
+ * Dipakai kalau jalur cadangan (Fonnte) BERHASIL setelah barisnya terlanjur
+ * ditampung. Tanpa ini barisnya tetap "tertunda" selamanya, dan penekanan
+ * tombol Kirim berikutnya mengirim pesan yang SUDAH sampai — pesan ganda ke
+ * orang yang sama.
+ */
+async function tandaiTerkirim(id) {
+  if (!id) return;
+  try {
+    await getAdminClient().from("wa_outbox").update({
+      status: "terkirim",
+      terkirim_at: new Date().toISOString(),
+      galat_terakhir: "terkirim lewat jalur cadangan (Fonnte)",
+    }).eq("id", id);
+  } catch (e) {
+    console.error("[wa_outbox] gagal menandai terkirim:", e?.message);
   }
 }
 
@@ -94,6 +131,10 @@ async function send(target, message, fileUrl = null, ttlDetik = null, meta = nul
   }
 
   logBotSend(target, message, !!fileUrl);
+
+  // Id baris wa_outbox kalau pesan ini sempat ditampung — dipakai di bawah untuk
+  // menutup barisnya kalau jalur cadangan ternyata berhasil.
+  let idTampungan = null;
 
   const baileysUrl = process.env.BAILEYS_API_URL;
   const baileysToken = (process.env.BAILEYS_API_TOKEN || "").replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
@@ -150,7 +191,7 @@ async function send(target, message, fileUrl = null, ttlDetik = null, meta = nul
     // Sampai di sini berarti pesannya TIDAK diterima siapa pun. Bot mengantre
     // sendiri pesan yang berhasil masuk dan menjawab ok=true saat itu juga,
     // jadi yang jatuh ke sini benar-benar tidak punya rumah.
-    await tampungGagal(target, message, fileUrl, ttlDetik, galat, meta);
+    idTampungan = await tampungGagal(target, message, fileUrl, ttlDetik, galat, meta);
 
     console.warn(`[sendWa] ${galat} — mencoba jalur cadangan.`);
     if (!process.env.FONNTE_TOKEN) {
@@ -181,6 +222,7 @@ async function send(target, message, fileUrl = null, ttlDetik = null, meta = nul
       body: fd,
     });
     const data = await res.json().catch(() => ({}));
+    if (res.ok) await tandaiTerkirim(idTampungan);
     return { ok: res.ok, data };
   } catch (err) {
     console.error("[fonnte] gagal kirim:", err?.message);
