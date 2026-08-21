@@ -24,7 +24,12 @@ export function Alert({ ok, msg }) {
   );
 }
 
-export function QRDisplay() {
+// QR satu perangkat. `perangkat` menentukan endpoint mana yang ditanya: bot utama
+// menjawab di /qr, sedangkan nomor cadangan ada di proses lain dan dijangkau lewat
+// /perangkat2/qr milik bot utama. Tanpa parameter ini kartu kedua akan menampilkan
+// QR perangkat pertama — dua kartu, satu QR, dan yang scan perangkat kedua gagal terus.
+export function QRDisplay({ perangkat = 1 }) {
+  const endpoint = perangkat === 2 ? "perangkat2/qr" : "qr";
   const [qrData, setQrData] = useState(null);
   const [qrLoading, setQrLoading] = useState(true);
   const [countdown, setCountdown] = useState(30);
@@ -32,11 +37,11 @@ export function QRDisplay() {
   const fetchQr = useCallback(async () => {
     setQrLoading(true);
     try {
-      const res = await fetch("/api/admin/baileys?endpoint=qr");
+      const res = await fetch(`/api/admin/baileys?endpoint=${endpoint}&_t=${Date.now()}`);
       setQrData(await res.json());
     } catch (_) { setQrData(null); }
     finally { setQrLoading(false); setCountdown(30); }
-  }, []);
+  }, [endpoint]);
 
   useEffect(() => { fetchQr(); }, [fetchQr]);
   useEffect(() => {
@@ -45,11 +50,17 @@ export function QRDisplay() {
   }, [fetchQr]);
 
   if (qrLoading) return <p className="text-sm text-amber-600 animate-pulse">⏳ Memuat QR Code...</p>;
-  if (!qrData?.qr) return <p className="text-sm text-gray-400">QR tidak tersedia.</p>;
+  // Bot yang tadinya diam menyiapkan socket baru begitu /qr diminta; QR-nya menyusul
+  // beberapa detik lagi lewat polling di atas, jadi ini bukan kegagalan.
+  if (!qrData?.qr) return (
+    <p className="text-sm text-gray-400">
+      {qrData?.menyiapkan ? "⏳ Menyiapkan QR… (±15 detik)" : "QR tidak tersedia."}
+    </p>
+  );
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <img src={qrData.qr} alt="QR" className="w-56 h-56 rounded-xl border-4 border-green-400 shadow-lg" />
+      <img src={qrData.qr} alt={`QR perangkat ${perangkat}`} className="w-56 h-56 rounded-xl border-4 border-green-400 shadow-lg" />
       <p className="text-xs text-gray-500 dark:text-slate-400 text-center">WhatsApp → Perangkat Tertaut → Tautkan Perangkat</p>
       <div className="flex items-center gap-2">
         <span className="text-xs text-gray-400">Refresh dalam</span>
