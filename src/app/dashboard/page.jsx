@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import QRISModal from "@/components/QRISModal";
 import PushNotificationButton from "@/components/PushNotificationButton";
 import BagikanIklan from "@/components/BagikanIklan";
+import BlogPenulisPanel from "@/components/BlogPenulisPanel";
 
 function statusBadge(s) {
   const map = {
@@ -685,6 +686,16 @@ function DashboardInner() {
               🎁 Referral
             </button>
             <button
+              onClick={() => setActiveTab("blog")}
+              className={`pb-2.5 px-4 text-sm font-bold border-b-2 transition-all ${
+                activeTab === "blog"
+                  ? "border-primary text-gray-900 dark:border-white dark:text-white"
+                  : "border-transparent text-gray-400 hover:text-gray-900 dark:hover:text-slate-200"
+              }`}
+            >
+              ✍️ Blog
+            </button>
+            <button
               onClick={() => setActiveTab("tawaran")}
               className={`pb-2.5 px-4 text-sm font-bold border-b-2 transition-all relative ${
                 activeTab === "tawaran"
@@ -887,6 +898,8 @@ function DashboardInner() {
                 </div>
               </div>
             </div>
+          ) : activeTab === "blog" ? (
+            <BlogPenulisPanel />
           ) : activeTab === "jual" ? (
             <div className="space-y-6 mt-6">
               {/* Peringatan Batas PRO */}

@@ -12,6 +12,30 @@ export default function AdminSellerDetail({ profile, listings, stats, wa }) {
     bio: profile?.bio || "",
   });
 
+  // Badge penulis blog. Ditaruh di halaman penjual, bukan di tab Artikel:
+  // ia sifat orangnya, bukan sifat satu tulisan — dan tempat orang mencarinya
+  // adalah halaman orang itu.
+  async function ubahBadge(beri) {
+    setBusy(true);
+    setToast(null);
+    try {
+      const res = await fetch("/api/admin/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "set_blog_badge", wa, value: beri }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Gagal mengubah badge");
+      setToast({ type: "ok", msg: beri ? "Badge penulis diberikan." : "Badge penulis dicabut." });
+      router.refresh();
+      setTimeout(() => setToast(null), 3000);
+    } catch (err) {
+      setToast({ type: "err", msg: err.message });
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function handleSave() {
     setBusy(true);
     setToast(null);
@@ -114,6 +138,44 @@ export default function AdminSellerDetail({ profile, listings, stats, wa }) {
             </button>
           </div>
         </div>
+      </div>
+
+      <div className="card p-6">
+        <h2 className="text-xl font-bold">Badge penulis blog</h2>
+        <p className="mt-1 max-w-2xl text-sm text-gray-500 dark:text-slate-400">
+          Tanpa badge, setiap artikel yang ditulis penjual ini masuk antrean review dulu.
+          Dengan badge, tulisannya <b>langsung terbit</b> di halaman blog tanpa dibaca siapa pun
+          lebih dahulu — jadi memberikannya berarti mempercayakan nama situs ini kepadanya.
+          Artikel yang sudah tayang tidak ikut turun saat badge dicabut.
+        </p>
+
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <span
+            className={`badge ${profile?.blog_badge
+              ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300"
+              : "bg-gray-200 text-gray-600 dark:bg-slate-700 dark:text-slate-300"}`}
+          >
+            {profile?.blog_badge ? "✍️ Berbadge" : "Tanpa badge"}
+          </span>
+          {profile?.blog_badge_at && (
+            <span className="text-xs text-gray-400">
+              sejak {new Date(profile.blog_badge_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+            </span>
+          )}
+          {profile?.blog_badge ? (
+            <button onClick={() => ubahBadge(false)} disabled={busy} className="btn-outline border-rose-300 text-rose-600 dark:border-rose-800">
+              Cabut badge
+            </button>
+          ) : (
+            <button onClick={() => ubahBadge(true)} disabled={busy} className="btn-primary">
+              Beri badge penulis
+            </button>
+          )}
+        </div>
+        <p className="mt-3 text-xs text-gray-400">
+          Penjual ini dikabari lewat WhatsApp setiap kali badge-nya berubah — supaya tidak ada
+          yang punya hak terbit-langsung tanpa tahu ia memilikinya.
+        </p>
       </div>
 
       <div className="card p-6">

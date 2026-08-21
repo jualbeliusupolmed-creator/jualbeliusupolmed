@@ -9,10 +9,16 @@ export const dynamic = 'force-dynamic';
 
 async function getBlog(slug) {
   const supa = getAdminClient();
+  // `.eq("status", "published")` bukan hiasan. Sejak penjual boleh menulis
+  // (BAGIAN 29), tabel ini juga memuat draf dan tulisan yang masih menunggu
+  // persetujuan admin — dan tanpa saringan ini, semuanya bisa dibaca siapa pun
+  // yang menebak alamatnya. "Menunggu persetujuan" yang isinya sudah terbaca
+  // di internet bukan menunggu apa-apa.
   const { data } = await supa
     .from("blogs")
     .select("*")
     .eq("slug", slug)
+    .eq("status", "published")
     .maybeSingle();
   return data;
 }
