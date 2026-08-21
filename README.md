@@ -61,11 +61,18 @@ npm install
 
 ### 2. Supabase
 1. Buat project di [supabase.com](https://supabase.com)
-2. Buka **SQL Editor**, jalankan file-file berikut secara berurutan:
-   - `supabase/schema.sql` — tabel utama
-   - `supabase/migration_rls.sql` — Row Level Security
-   - `supabase/migration_logs.sql` — tabel log (search_logs, admin_logs, error_logs)
-   - `supabase/migration_fee_offer.sql` — kolom TAWAR BIAYA
+2. Buka **SQL Editor**, tempel **satu file**: `supabase/migration_semua_sekali_jalan.sql`
+   → Run. Isinya seluruh migrasi, urut dan lengkap, dan aman dijalankan
+   berulang — jadi ia juga cara memeriksa database yang sudah jalan: bagian
+   yang sudah ada dilewati, dan baris terakhirnya mencetak tabel ringkasan
+   berisi apa yang ada dan apa yang kurang.
+
+   Dua file sengaja TIDAK ikut di dalamnya:
+   - `supabase/seed_dummy_20.sql` — 20 iklan karangan untuk mencoba-coba.
+     Jangan dijalankan di produksi.
+   - `supabase/migration_security_rls.sql` — mencabut hak baca anon dari lima
+     tabel. Itu perubahan perilaku, bukan penambahan; jalankan terpisah saat
+     siap memeriksa situsnya halaman per halaman.
 3. Ambil dari **Project Settings → API**:
    - `Project URL` → `NEXT_PUBLIC_SUPABASE_URL`
    - `anon public` → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
@@ -203,7 +210,8 @@ src/
     bot/adminHandlers.js        WA bot: semua command admin
 supabase/
   schema.sql                    Skema database utama
-  migration_*.sql               Migration tambahan
+  migration_*.sql               Migration tambahan (riwayat, per fitur)
+  migration_semua_sekali_jalan.sql  Semuanya jadi satu, aman diulang
 vercel.json                     Cron config
 ```
 
