@@ -1,8 +1,11 @@
+import { Roboto } from "next/font/google";
 import { AdminProvider } from "@/components/admin/AdminProvider";
 import AdminSidebar from "@/components/admin/AdminSidebar";
+import AdminTopbar from "@/components/admin/AdminTopbar";
 import { isAdmin } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import AdminLogin from "./AdminLogin";
+import "./google.css";
 
 /**
  * Satu cangkang untuk SELURUH /admin.
@@ -14,8 +17,22 @@ import AdminLogin from "./AdminLogin";
  * semuanya satu panel yang sama.
  *
  * Sekarang layout ini membungkus semua rute /admin/*, jadi tidak ada halaman
- * yang bisa punya kerangka sendiri.
+ * yang bisa punya kerangka sendiri. Bentuk rupanya mengikuti konsol Google
+ * (rel kiri berpil, bilah atas dengan kotak cari, kartu bersudut 8px) dan
+ * seluruh aturannya ada di ./google.css, dikurung di dalam kelas `.g-admin`
+ * supaya situs publiknya tidak ikut berubah.
  */
+
+// Roboto: muka huruf Google. "Google Sans" tidak dibagikan untuk umum, jadi
+// Roboto adalah yang paling dekat dan memang dipakai Google sendiri di seluruh
+// permukaan konsolnya. Situs publik tetap memakai Plus Jakarta Sans.
+const roboto = Roboto({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  display: "swap",
+  variable: "--font-google-sans",
+});
+
 export default async function AdminLayout({ children }) {
   if (!isAdmin()) {
     return <AdminLogin />;
@@ -46,17 +63,21 @@ export default async function AdminLayout({ children }) {
   for (const k of Object.keys(counts)) if (!counts[k]) delete counts[k];
 
   return (
-    <AdminProvider>
-      {/* Sidebar dan isi halaman scroll sendiri-sendiri. */}
-      <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-slate-950">
+    // `.g-admin` di LUAR AdminProvider, bukan di dalam: toast dan dialog
+    // konfirmasi digambar oleh provider sebagai saudara dari isi halaman, dan
+    // kalau kurungannya di dalam, keduanya kehilangan seluruh token warna
+    // Google — muncul sebagai kotak tanpa warna di pojok layar.
+    <div className={`${roboto.variable} g-admin g-shell`}>
+      <AdminProvider>
         <AdminSidebar counts={counts} />
 
-        <main className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-          {/* Ruang untuk bilah atas versi ponsel (tingginya ± 100px). */}
-          <div className="h-[100px] lg:hidden" />
-          <div className="mx-auto w-full max-w-6xl px-4 py-6 lg:px-8 lg:py-8">{children}</div>
-        </main>
-      </div>
-    </AdminProvider>
+        <div className="g-main">
+          <AdminTopbar counts={counts} />
+          <div className="g-content">
+            <div className="mx-auto w-full max-w-[1280px]">{children}</div>
+          </div>
+        </div>
+      </AdminProvider>
+    </div>
   );
 }

@@ -48,13 +48,11 @@ export default function BaileysDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap gap-1 border-b border-gray-200 pb-3 dark:border-slate-800">
+      {/* Tujuh belas sub-tab dalam satu baris yang bisa digeser — bentuk tab
+          Material: garis biru di bawah yang aktif, bukan blok hitam penuh. */}
+      <div className="g-tabbar -mx-1 rounded-lg">
         {TABS.map(t => (
-          <button key={t} onClick={() => setTab(t)}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-              tab === t ? "bg-gray-900 text-white dark:bg-slate-100 dark:text-slate-900"
-                       : "text-gray-600 hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-800"
-            }`}>
+          <button key={t} onClick={() => setTab(t)} className={`g-tab${tab === t ? " is-active" : ""}`}>
             {TAB_LABELS[t]}
           </button>
         ))}

@@ -202,35 +202,117 @@ function rupiah(n) {
 // 3. postWantedToGroup (broadcast pencarian baru)
 // ============================================================================
 
-// Auto-post ke grup WA setelah bayar iklan jualan — ringkas agar tidak menyemak
-export async function postToGroup(listing, adminSettings) {
-  const group = adminSettings?.groupJid || process.env.FONNTE_WA_GROUP_ID;
+// ── Kata-kata notifikasi iklan, di satu tempat ──────────────────────────────
+// Teksnya dipakai DUA jalur sekarang: bot yang mengirim sendiri, dan tombol
+// "Kirim manual" di panel admin yang menyiapkan teks untuk ditempel orang.
+// Kalau tiap jalur menyusun kalimatnya sendiri, keduanya akan pelan-pelan
+// berbeda — dan yang manual dipakai justru saat bot mati, yaitu saat tidak ada
+// siapa pun yang membandingkan.
+
+/** URL halaman produk. */
+export function urlProduk(listing) {
+  return `${baseUrl()}/produk/${buildSlug(listing.title, listing.id)}`;
+}
+
+/** Pesan iklan untuk grup / status WhatsApp. */
+export function pesanGrupIklan(listing) {
   const isRental = listing.type === "sewa";
   const priceStr = isRental && listing.rental_period
     ? `${rupiah(listing.price)}/${listing.rental_period}`
     : rupiah(listing.price);
-  const msg =
+  return (
     `${isRental ? "🔑 *[SEWA]*" : "🛒"} *${listing.title}* — ${priceStr}\n` +
     `🏷️ ${listing.category}\n` +
-    `👉 ${baseUrl()}/produk/${buildSlug(listing.title, listing.id)}`;
+    `👉 ${urlProduk(listing)}`
+  );
+}
 
-  // Kirim ke grup utama
-  const main = group ? send(group, msg, listing.image_url || null) : Promise.resolve();
+/** Pesan "iklanmu sudah tayang" untuk penjual. */
+export function pesanPenjualTayang(listing) {
+  const exp = listing.expires_at
+    ? new Date(listing.expires_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
+    : null;
+  return (
+    `✅ *Iklan Kamu Sudah Tayang!* 🎉\n\n` +
+    `📦 *${listing.title}*\n` +
+    (exp ? `📅 Aktif hingga: *${exp}*\n` : "") +
+    `🔑 Kode: *${listing.listing_code || "-"}*\n\n` +
+    `Iklan sudah disebarkan ke grup WA marketplace!\n\n` +
+    `👉 ${urlProduk(listing)}`
+  );
+}
 
-  // Kirim ke grup-grup tambahan (dari settings DB atau env)
+/** Pesan pemberitahuan iklan baru untuk admin. */
+export function pesanAdminIklan(listing) {
+  return (
+    `🆕 *Iklan Baru Tayang!*\n\n` +
+    `📦 *${listing.title}*\n` +
+    `💰 ${rupiah(listing.price)}\n` +
+    `🏷️ ${listing.category || "-"}\n` +
+    `👤 ${listing.seller_name || "-"} (${listing.seller_wa})\n` +
+    `🔑 Kode: ${listing.listing_code || "-"}\n\n` +
+    `👉 ${urlProduk(listing)}`
+  );
+}
+
+/** Daftar tujuan grup: grup utama + grup tambahan, tanpa duplikat. */
+export function daftarGrup(adminSettings) {
+  const utama = adminSettings?.groupJid || process.env.FONNTE_WA_GROUP_ID || "";
   const extraStr = adminSettings?.extraGroups || process.env.BAILEYS_BROADCAST_GROUPS || "";
-  const extraGroups = extraStr.split(",").map((g) => g.trim()).filter(Boolean);
+  const semua = [utama, ...extraStr.split(",")].map((g) => String(g || "").trim()).filter(Boolean);
+  return [...new Set(semua)];
+}
 
-  const extras = extraGroups.map((jid) =>
-    send(jid, msg, listing.image_url || null).catch(() => {})
+/** Nomor admin yang dipakai untuk notifikasi internal. */
+export function nomorAdmin(overrideAdminWa) {
+  const bersih = (val) => (val || "").replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
+  return bersih(process.env.ADMIN_WA) || bersih(process.env.SUPER_ADMIN_WA) || bersih(overrideAdminWa);
+}
+
+// Auto-post ke grup WA setelah bayar iklan jualan.
+//
+// Mengembalikan RINGKASAN, bukan undefined. Dulu fungsi ini tidak mengembalikan
+// apa-apa sementara pemanggilnya di /api/admin/action memeriksa `broadcast?.ok` —
+// jadi setiap kali admin menekan "Aktifkan", panel memajang "broadcast grup
+// gagal, cek log server" walaupun pesannya sampai dengan selamat.
+export async function postToGroup(listing, adminSettings) {
+  const msg = pesanGrupIklan(listing);
+  const gambar = listing.image_url || null;
+  const tujuan = daftarGrup(adminSettings);
+
+  const hasil = await Promise.all(
+    tujuan.map((jid) =>
+      send(jid, msg, gambar)
+        .then((r) => ({ target: jid, ok: !!r?.ok, error: r?.galat || r?.error || null }))
+        .catch((e) => ({ target: jid, ok: false, error: e?.message || "gagal" }))
+    )
   );
 
-  // Kirim WA Story (status@broadcast) — hanya via Baileys karena Fonnte tidak support
-  const story = process.env.BAILEYS_API_URL
-    ? send("status@broadcast", msg, listing.image_url || null).catch(() => {})
-    : Promise.resolve();
+  // Kirim WA Story (status@broadcast) — hanya via Baileys karena Fonnte tidak support.
+  // Tidak ikut menentukan ok: Status itu bonus, bukan janji ke penjual.
+  if (process.env.BAILEYS_API_URL) {
+    await send("status@broadcast", msg, gambar).catch(() => {});
+  }
 
-  await Promise.all([main, ...extras, story]);
+  const terkirim = hasil.filter((h) => h.ok).length;
+  return {
+    ok: tujuan.length > 0 && terkirim === tujuan.length,
+    skipped: tujuan.length === 0,
+    terkirim,
+    gagal: hasil.length - terkirim,
+    rincian: hasil,
+    error: tujuan.length === 0 ? "Tidak ada grup tujuan (groupJid/extraGroups kosong)"
+      : hasil.filter((h) => !h.ok).map((h) => `${h.target}: ${h.error || "gagal"}`).join("; ") || null,
+  };
+}
+
+/** Notifikasi ke penjual bahwa iklannya sudah tayang. */
+export async function notifySellerListingLive(listing) {
+  if (!listing?.seller_wa) return { ok: false, skipped: true, error: "penjual tanpa nomor WA" };
+  return send(listing.seller_wa, pesanPenjualTayang(listing), null, null, {
+    jenis: "iklan_tayang",
+    listingId: listing.id,
+  }).catch((e) => ({ ok: false, error: e?.message }));
 }
 
 // Auto-post ke grup WA ketika ada yang mencari barang (Papan Dicari) — ringkas
@@ -364,19 +446,12 @@ export async function notifyCategorySubscribers(supa, listing) {
 }
 
 export async function notifyAdminNewListing(listing, overrideAdminWa) {
-  const cleanEnv = (val) => (val || "").replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
-  const adminWa = cleanEnv(process.env.ADMIN_WA) || cleanEnv(process.env.SUPER_ADMIN_WA) || overrideAdminWa;
-  if (!adminWa) return { ok: false, skipped: true };
-  const url = `${baseUrl()}/produk/${buildSlug(listing.title, listing.id)}`;
-  const msg =
-    `🆕 *Iklan Baru Tayang!*\n\n` +
-    `📦 *${listing.title}*\n` +
-    `💰 ${rupiah(listing.price)}\n` +
-    `🏷️ ${listing.category || "-"}\n` +
-    `👤 ${listing.seller_name || "-"} (${listing.seller_wa})\n` +
-    `🔑 Kode: ${listing.listing_code || "-"}\n\n` +
-    `👉 ${url}`;
-  return send(adminWa, msg, listing.image_url || null).catch(() => ({ ok: false }));
+  const adminWa = nomorAdmin(overrideAdminWa);
+  if (!adminWa) return { ok: false, skipped: true, error: "ADMIN_WA belum di-set" };
+  return send(adminWa, pesanAdminIklan(listing), listing.image_url || null, null, {
+    jenis: "admin_iklan_baru",
+    listingId: listing.id,
+  }).catch((e) => ({ ok: false, error: e?.message }));
 }
 
 // Notifikasi H-3 sebelum masa iklan berakhir

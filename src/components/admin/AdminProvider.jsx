@@ -63,15 +63,9 @@ export function AdminProvider({ children }) {
         onClose={() => setConfirmState(null)}
       />
 
-      {toast && (
-        <div
-          className={`fixed bottom-5 right-5 z-[60] rounded-xl px-4 py-3 text-sm font-medium text-white shadow-lg ${
-            toast.type === "err" ? "bg-rose-600" : "bg-gray-900 dark:bg-emerald-600"
-          }`}
-        >
-          {toast.msg}
-        </div>
-      )}
+      {/* Roti bakar Google: kotak gelap di KIRI bawah, bukan kanan — di sana
+          ia tidak menutupi tombol aksi yang biasanya duduk di kanan bawah. */}
+      {toast && <div className={`g-toast${toast.type === "err" ? " is-bad" : ""}`}>{toast.msg}</div>}
     </AdminContext.Provider>
   );
 }

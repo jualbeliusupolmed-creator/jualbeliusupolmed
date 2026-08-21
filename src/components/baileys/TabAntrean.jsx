@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Megaphone } from "lucide-react";
+import { AntreanBot } from "./AntreanBot";
 
 /*
  * Antrean notifikasi WhatsApp yang belum sampai.
@@ -88,40 +89,46 @@ export function TabAntrean() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <h2 className="g-page-title flex items-center gap-2">
+          <Megaphone className="h-5 w-5" /> Antrean Notifikasi
+        </h2>
+        <p className="g-page-desc">
+          Pesan yang belum sampai ke penerimanya menunggu di salah satu dari <b>dua</b> antrean —
+          dan yang menentukan antrean mana adalah di mana pesannya berhenti.
+        </p>
+      </div>
+
+      {/* Antrean di dalam bot: keadaan yang paling sering terjadi (bot hidup,
+          WhatsApp putus) dan dulu satu-satunya yang tidak terlihat dari sini. */}
+      <AntreanBot />
+
+      <div className="flex flex-wrap items-start justify-between gap-3 pt-2">
         <div>
-          <h2 className="flex items-center gap-2 text-xl font-semibold text-gray-900 dark:text-white">
-            <Megaphone className="h-5 w-5" /> Antrean Notifikasi
-          </h2>
-          <p className="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
-            Notifikasi yang gagal terkirim karena bot sedang putus ditampung di sini alih-alih
-            lenyap. Tekan <b>Kirim</b> begitu bot tersambung lagi.
+          <h2 className="g-card-title">Antrean di situs</h2>
+          <p className="g-card-desc max-w-2xl">
+            Notifikasi yang <b>tidak berhasil dititipkan</b> ke bot sama sekali — VPS mati, nginx
+            tumbang. Yang ini tidak berangkat sendiri: tekan <b>Kirim</b> setelah bot pulih.
           </p>
         </div>
-        <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
-          {tertunda} tertunda
-        </span>
+        <span className={`g-badge${tertunda ? " is-warn" : " is-ok"}`}>{tertunda} tertunda</span>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
         <button
           onClick={() => kirim({ semua: true }, "semua")}
           disabled={sibuk !== null || !tertunda}
-          className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-40"
+          className="g-btn g-btn-filled"
         >
           {sibuk === "semua" ? "Mengirim…" : "Kirim semua"}
         </button>
-        <button
-          onClick={ambil}
-          disabled={muat}
-          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-40 dark:border-slate-700 dark:text-gray-400 dark:hover:bg-slate-800"
-        >
+        <button onClick={ambil} disabled={muat} className="g-btn g-btn-outlined">
           Muat ulang
         </button>
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
-          className="rounded-lg border border-gray-200 bg-transparent px-3 py-1.5 text-sm dark:border-slate-700 dark:text-gray-300"
+          className="g-field w-auto"
         >
           <option value="tertunda">Tertunda</option>
           <option value="terkirim">Sudah terkirim</option>
