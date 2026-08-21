@@ -11,6 +11,31 @@ async function safe(promise, fallback) {
   }
 }
 
+// Daftar toko penjual, DENGAN query tersendiri — sengaja tidak ditumpangkan ke
+// select seller_profiles yang dipakai tab Penjual. Kolom storefront datang dari
+// migration_storefront.sql yang harus dijalankan manual di Supabase; selama itu
+// belum dilakukan, query yang menyebut kolomnya akan gagal. Kalau digabung,
+// kegagalan itu ikut mengosongkan daftar penjual — satu migrasi yang tertinggal
+// mematikan tab yang tidak ada hubungannya dengan toko.
+//
+// Bedanya dengan safe(): di sini `error` dipakai, bukan dibuang. "Belum ada toko"
+// dan "kolomnya belum ada" sama-sama menghasilkan daftar kosong, dan hanya satu
+// dari keduanya yang bisa diperbaiki admin.
+async function muatToko(supa) {
+  try {
+    const { data, error } = await supa
+      .from("seller_profiles")
+      .select("wa, name, slug, store_name, tagline, store_area, store_open, store_announcement, store_updated_at")
+      .not("slug", "is", null)
+      .order("store_updated_at", { ascending: false, nullsFirst: false })
+      .limit(500);
+    if (error) return { stores: [], storesMigrationMissing: true, storesError: error.message };
+    return { stores: data || [], storesMigrationMissing: false, storesError: null };
+  } catch (e) {
+    return { stores: [], storesMigrationMissing: true, storesError: e.message };
+  }
+}
+
 // Same as safe() but also returns the count for pagination
 async function safePaginated(promise, fallback) {
   try {
@@ -30,8 +55,17 @@ export const ADMIN_TABS = [
   "dicari",
   "kategori",
   "pengaturan",
-  "blacklist",
+  // "blacklist" DIHAPUS dari sini: isinya sudah lama pindah ke dalam tab
+  // "penjual", dan tidak ada satu pun tautan yang menuju ke sana. Yang tersisa
+  // cuma alamat sah yang diam-diam menampilkan Ringkasan — orang yang mengetiknya
+  // mengira blacklist-nya kosong, padahal ia sedang melihat halaman lain.
   "penjual",
+  // Toko penjual (/toko/[slug]). Storefront-nya sudah tayang untuk pembeli sejak
+  // 678667f, tapi admin tidak punya satu pun tempat untuk melihatnya: tidak tahu
+  // siapa yang sudah punya toko, tidak tahu ada slug yang menyerempet nama orang
+  // lain, tidak bisa menutup toko yang bermasalah. Halaman publik tanpa jendela
+  // pengawasan itu cuma soal waktu sampai jadi masalah.
+  "toko",
   "profil_request",
   "blogs",
   "wabot",
@@ -55,6 +89,9 @@ export const DEFAULT_DATA = {
   settings: DEFAULT_SETTINGS,
   wanted: [],
   sellersList: [],
+  stores: [],
+  storesMigrationMissing: false,
+  storesError: null,
   profileRequests: [],
   revenue: 0,
   pendingCount: 0,
@@ -135,7 +172,8 @@ export async function getAdminStats(page = 1) {
   const pwaInstallsTotal = pwaInstallsRes.count;
 
   // Reports, ratings, seller profiles, dan profile requests — berjalan paralel
-  const [reports, ratings, sellersFromProfiles, allListingStats, profileRequests] = await Promise.all([
+  const [toko, reports, ratings, sellersFromProfiles, allListingStats, profileRequests] = await Promise.all([
+    muatToko(supa),
     safe(
       supa
         .from("reports")
@@ -227,6 +265,9 @@ export async function getAdminStats(page = 1) {
     wanted,
     blogs,
     sellersList,
+    stores: toko.stores,
+    storesMigrationMissing: toko.storesMigrationMissing,
+    storesError: toko.storesError,
     profileRequests,
     revenue,
     pendingCount,
