@@ -13,6 +13,9 @@ export function getAdminClient() {
   }
   _adminClient = createClient(url, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
+    global: {
+      fetch: (url, options = {}) => fetch(url, { ...options, cache: "no-store" }),
+    },
   });
   return _adminClient;
 }
