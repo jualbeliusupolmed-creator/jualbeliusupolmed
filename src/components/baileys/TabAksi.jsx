@@ -596,7 +596,7 @@ function PanelPanggilan() {
     setSaving(true); setResult(null);
     const res = await fetch("/api/admin/action", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "save_settings", key: "bot_modules", value: cfg }) });
     const r = await res.json();
-    setResult(r.error ? { ok: false, text: r.error } : { ok: true, text: "✅ Konfigurasi panggilan disimpan. Bot akan membaca setelan ini saat diaktifkan." });
+    setResult(r.error ? { ok: false, text: r.error } : { ok: true, text: "✅ Konfigurasi panggilan tersimpan di database. Bot BELUM membacanya — panggilan masuk masih ditangani seperti sebelumnya." });
     setSaving(false);
   }
 
@@ -643,7 +643,7 @@ function PanelForensik() {
     setSaving(true); setResult(null);
     const res = await fetch("/api/admin/action", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "save_settings", key: "bot_modules", value: cfg }) });
     const r = await res.json();
-    setResult(r.error ? { ok: false, text: r.error } : { ok: true, text: "✅ Konfigurasi forensik disimpan. Bot membaca setelan ini secara aktif." });
+    setResult(r.error ? { ok: false, text: r.error } : { ok: true, text: "✅ Konfigurasi forensik tersimpan di database. Bot BELUM membacanya — pesan yang ditarik/diedit belum direkam." });
     setSaving(false);
   }
 
@@ -973,6 +973,14 @@ function PanelSaluran() {
   );
 }
 
+// Panel yang tombol "Simpan"-nya menulis ke `bot_modules` di database — kolom
+// yang TIDAK dibaca siapa pun: tidak oleh situs, tidak oleh bot WhatsApp. Dicatat
+// di satu tempat supaya peringatannya ikut hilang sendiri begitu salah satunya
+// benar-benar disambungkan ke bot (tinggal coret dari daftar ini).
+const PANEL_BELUM_TERHUBUNG = new Set([
+  "panggilan", "forensik", "keamanan", "integrasi", "protokol", "antiban",
+]);
+
 // ── Main TabAksi ─────────────────────────────────────────────────────────────
 const PANELS = {
   koneksi:    PanelKoneksi,
@@ -1018,6 +1026,21 @@ export function TabAksi() {
           ))}
         </div>
       </div>
+
+      {/* Enam panel di bawah ini MENYIMPAN setelan ke kolom `bot_modules` di
+          database — dan tidak ada satu pun yang membacanya: tidak di situs, tidak
+          di bot WhatsApp (yang bahkan tidak punya penangan panggilan masuk sama
+          sekali). Tanpa peringatan ini, tombol "Simpan" yang menjawab "tersimpan"
+          membuat admin yakin bot sudah menolak panggilan atau merekam pesan yang
+          ditarik, padahal tidak ada yang berubah. Sakelar yang berbohong lebih
+          berbahaya daripada sakelar yang belum ada. */}
+      {PANEL_BELUM_TERHUBUNG.has(sub) && (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+          <b>Setelan di panel ini belum dibaca bot.</b> Nilainya tersimpan di database
+          (<code>bot_modules</code>), tapi bot WhatsApp belum mengambilnya — jadi menyimpan di sini
+          belum mengubah perilaku bot. Panel ini rencana yang tercatat, bukan sakelar yang hidup.
+        </div>
+      )}
 
       {sub === "grup" ? (
         <div className="card p-6 text-center space-y-3">
