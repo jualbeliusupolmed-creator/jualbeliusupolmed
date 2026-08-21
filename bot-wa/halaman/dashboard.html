@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard WA Bot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=Work+Sans:wght@400;500&display=swap">
+<link rel="stylesheet" href="/assets/ui.css?v=20260821b">
+<script>try{var t=localStorage.getItem('tema');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<script src="/assets/ui.js?v=20260821b" defer></script>
+</head>
+<body>
+
+    <!-- Login -->
+    <div id="auth-screen">
+        <div class="auth-card glass">
+            <h2><i class="fa-brands fa-whatsapp"></i> Dashboard Bot</h2>
+            <p class="muted" style="margin-bottom: 24px;">Masukkan sandi panel untuk masuk</p>
+            <input type="password" id="token-input" placeholder="Sandi panel" onkeydown="if(event.key==='Enter')login()">
+            <button class="wide" onclick="login()">Masuk Dashboard</button>
+        </div>
+    </div>
+
+    <div id="dashboard">
+        <div class="header">
+            <h1>Bot Panel</h1>
+            <div class="row">
+                <div id="connection-status" class="status-badge status-offline glass">
+                    <div class="status-dot"></div> <span id="status-text">Memuat...</span>
+                </div>
+                <button class="ghost small" onclick="bukaLaporan()"><i class="fa-solid fa-clipboard-list"></i> Laporan</button>
+                <button class="ghost small" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Keluar</button>
+            </div>
+        </div>
+
+        <div class="tabs" id="tabs">
+            <div class="tab active" data-tab="ringkasan"><i class="fa-solid fa-gauge"></i> Ringkasan</div>
+            <div class="tab" data-tab="inbox"><i class="fa-solid fa-inbox"></i> Inbox</div>
+            <div class="tab" data-tab="statistik"><i class="fa-solid fa-chart-column"></i> Statistik</div>
+            <div class="tab" data-tab="sapaan"><i class="fa-solid fa-comment-dots"></i> Sapaan</div>
+            <div class="tab" data-tab="broadcast"><i class="fa-solid fa-bullhorn"></i> Broadcast</div>
+            <div class="tab" data-tab="blokir"><i class="fa-solid fa-ban"></i> Blokir</div>
+            <div class="tab" data-tab="story"><i class="fa-solid fa-circle-play"></i> Status &amp; Poll</div>
+            <div class="tab" data-tab="sistem"><i class="fa-solid fa-terminal"></i> Sistem</div>
+        </div>
+
+        <!-- ── RINGKASAN ────────────────────────────────────────────────── -->
+        <div class="panel active" id="panel-ringkasan">
+            <div class="grid">
+                <div class="card glass">
+                    <div class="card-header"><i class="fa-solid fa-circle-info"></i> Informasi Bot</div>
+                    <div class="stat-value" id="phone-number">-</div>
+                    <p class="muted" style="margin-bottom: 12px;">Nomor terhubung</p>
+                    <div class="kv"><span>Uptime</span><span id="uptime">0s</span></div>
+                    <div class="kv"><span>Terhubung sejak</span><span id="connected-at">-</span></div>
+                    <div class="kv"><span>Webhook</span><span id="webhook-url" style="font-size:11px;word-break:break-all;">-</span></div>
+                </div>
+
+                <div class="card glass">
+                    <div class="card-header"><i class="fa-solid fa-list-check"></i> Antrean &amp; Kesehatan</div>
+                    <div class="stat-value" id="queue-length">0</div>
+                    <p class="muted" style="margin-bottom: 12px;">Menunggu di server ini — terkirim sendiri begitu WhatsApp nyambung (berlaku 3 hari)</p>
+                    <!-- Penampung KEDUA, dan sengaja disebut terpisah: yang di atas
+                         hidup di outbox.json server ini dan jalan sendiri; yang ini
+                         di database, lahir saat bot/VPS tidak terjangkau sama sekali,
+                         dan HANYA berangkat kalau tombolnya ditekan. Menjumlahkan
+                         keduanya jadi satu angka akan menyembunyikan perbedaan itu. -->
+                    <div class="kv">
+                        <span>Butuh dikirim manual</span>
+                        <span><a href="/antrean" id="outbox-db" style="font-weight:600">—</a></span>
+                    </div>
+                    <div class="kv"><span>Putus koneksi (sejak start)</span><span id="outage-count">0</span></div>
+                    <div class="kv"><span>Putus terakhir</span><span id="last-outage">-</span></div>
+                    <div class="kv"><span>Percobaan reconnect</span><span id="reconnect-attempts">0</span></div>
+                </div>
+
+                <div class="card glass">
+                    <div class="card-header"><i class="fa-solid fa-calendar-day"></i> Hari Ini</div>
+                    <div class="kv"><span>Pesan masuk</span><span id="t-masuk">0</span></div>
+                    <div class="kv"><span>Pesan keluar</span><span id="t-keluar">0</span></div>
+                    <div class="kv"><span>Sapaan terkirim</span><span id="t-sapaan">0</span></div>
+                    <div class="kv"><span>Panggil "min"</span><span id="t-min">0</span></div>
+                    <div class="kv"><span>Didiamkan (chat admin)</span><span id="t-diam">0</span></div>
+                    <div class="kv"><span>Sesi bot dibuka</span><span id="t-sesi">0</span></div>
+                </div>
+
+                <div class="card glass">
+                    <div class="card-header"><i class="fa-solid fa-database"></i> Data</div>
+                    <div class="kv"><span>Chat tersimpan</span><span id="chat-count">0</span></div>
+                    <div class="kv"><span>Grup diikuti</span><span id="group-count">-</span></div>
+                    <div class="kv"><span>Pesan diarsipkan</span><span id="archive-count">0</span></div>
+                    <div class="kv"><span>Sapaan kustom</span><span id="greeting-custom">-</span></div>
+                    <button class="ghost small" style="margin-top:12px" onclick="loadGroups(true)">Segarkan daftar grup</button>
+                </div>
+
+                <div class="card glass">
+                    <div class="card-header"><i class="fa-solid fa-qrcode"></i> Sambungan Perangkat</div>
+                    <div id="kunci-sesi" style="display:none;margin-bottom:16px;padding:12px;border-radius:10px;
+                         border:1px solid var(--danger,#e5484d);background:rgba(229,72,77,.08);">
+                        <p style="font-weight:600;margin-bottom:6px;"><i class="fa-solid fa-lock"></i> Sesi terkunci</p>
+                        <p class="tiny" id="kunci-sesi-teks" style="margin-bottom:10px;"></p>
+                        <button class="ghost small" onclick="bukaKunciSesi()">Buka kunci &amp; scan QR baru</button>
+                    </div>
+                    <div id="qr-container" class="qr-container">
+                        <p class="muted">Memuat…</p>
+                    </div>
+                    <div id="pairing-container" style="display:none; margin-top:16px; border-top:1px solid var(--card-border); padding-top:16px;">
+                        <p class="tiny" style="margin-bottom:8px;">Gagal scan QR WA Bisnis? Gunakan pairing code:</p>
+                        <div class="row">
+                            <input type="text" id="pairing-phone" placeholder="Contoh: 62812..." class="mb0" style="flex:1;padding:8px;font-size:14px;">
+                            <button class="small" onclick="requestPairing()">Minta Kode</button>
+                        </div>
+                        <div id="pairing-result" style="margin-top:12px;font-size:24px;font-weight:bold;color:var(--success);text-align:center;letter-spacing:2px;"></div>
+                    </div>
+                </div>
+
+                <!-- Perangkat kedua. Prosesnya terpisah (wa-bot-2, port 3001, folder
+                     data sendiri) dan hanya mendengar di loopback; dashboard ini
+                     menjangkaunya lewat /perangkat2/* di bot pertama. Kartunya
+                     disembunyikan sendiri kalau bot kedua memang belum dipasang. -->
+                <div class="card glass" id="kartu-perangkat2" style="display:none">
+                    <div class="card-header"><i class="fa-solid fa-mobile-screen"></i> Sambungan Perangkat 2 <span class="tiny muted" style="font-weight:400">(nomor cadangan)</span></div>
+                    <p class="tiny muted" style="margin-bottom:12px">Bot kedua dengan nomor WhatsApp berbeda. Berguna saat nomor utama bermasalah — dan bisa mengambil alih pengiriman OTP situs.</p>
+                    <div id="qr2-container" class="qr-container">
+                        <p class="muted">Memuat…</p>
+                    </div>
+                    <div id="pairing2-container" style="display:none; margin-top:16px; border-top:1px solid var(--card-border); padding-top:16px;">
+                        <p class="tiny" style="margin-bottom:8px;">Lebih mudah daripada scan: masukkan nomor kedua, lalu ketik kodenya di HP (WhatsApp &rarr; Perangkat tertaut &rarr; Tautkan dengan nomor telepon).</p>
+                        <div class="row">
+                            <input type="text" id="pairing2-phone" placeholder="Contoh: 62812..." class="mb0" style="flex:1;padding:8px;font-size:14px;">
+                            <button class="small" onclick="requestPairing2()">Minta Kode</button>
+                        </div>
+                        <div id="pairing2-result" style="margin-top:12px;font-size:24px;font-weight:bold;color:var(--success);text-align:center;letter-spacing:2px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── INBOX ────────────────────────────────────────────────────── -->
+        <div class="panel" id="panel-inbox">
+            <div class="inbox">
+                <div class="card glass" style="padding:16px;">
+                    <input type="text" id="chat-search" placeholder="Cari nama / nomor…" style="margin-bottom:12px;padding:10px;font-size:14px;" oninput="renderChatList()">
+                    <div class="chat-list" id="chat-list"><p class="muted">Memuat…</p></div>
+                </div>
+                <div class="card glass">
+                    <div class="card-header" id="thread-title"><i class="fa-solid fa-comments"></i> Pilih chat di kiri</div>
+                    <div class="thread">
+                        <div class="thread-body" id="thread-body">
+                            <p class="muted">Riwayat pesan muncul di sini. Arsip menyimpan pesan masuk dan keluar, dan tetap ada setelah bot restart.</p>
+                        </div>
+                        <div class="composer">
+                            <textarea id="reply-text" placeholder="Tulis balasan… (Ctrl+Enter untuk kirim)" onkeydown="if(event.ctrlKey&&event.key==='Enter')kirimBalasan()"></textarea>
+                            <button onclick="kirimBalasan()" id="reply-btn" disabled>Kirim</button>
+                        </div>
+                        <p class="tiny" style="margin-top:8px">Balasan dikirim sebagai bot lewat antrean yang sama dengan balasan otomatis.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── STATISTIK ────────────────────────────────────────────────── -->
+        <div class="panel" id="panel-statistik">
+            <div class="card glass" style="margin-bottom:20px;">
+                <div class="card-header"><i class="fa-solid fa-chart-column"></i> Pesan masuk 14 hari terakhir</div>
+                <div class="bars" id="bars"></div>
+                <p class="tiny" id="bars-note">—</p>
+            </div>
+            <div class="grid">
+                <div class="card glass">
+                    <div class="card-header"><i class="fa-solid fa-door-open"></i> Gerbang titik</div>
+                    <table id="tabel-gerbang"><tbody></tbody></table>
+                </div>
+                <div class="card glass">
+                    <div class="card-header"><i class="fa-solid fa-triangle-exclamation"></i> Perintah tanpa titik</div>
+                    <p class="tiny" style="margin-bottom:12px;">Pesan polos yang isinya kata perintah — ini yang saat ini tidak membuka alur bot.</p>
+                    <table id="tabel-polos"><tbody></tbody></table>
+                </div>
+                <div class="card glass">
+                    <div class="card-header"><i class="fa-solid fa-plug"></i> Webhook &amp; pengiriman</div>
+                    <table id="tabel-teknis"><tbody></tbody></table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── SAPAAN ───────────────────────────────────────────────────── -->
+        <div class="panel" id="panel-sapaan">
+            <div class="card glass">
+                <div class="card-header"><i class="fa-solid fa-comment-dots"></i> Teks sapaan otomatis</div>
+                <p class="tiny" style="margin-bottom:16px;">
+                    Dikirim ke pesan tanpa titik (sekali per kontak) dan setiap kali seseorang mengetik
+                    <b id="kata-min">min</b>. Perubahan langsung berlaku, tanpa restart bot.
+                </p>
+                <textarea id="greeting-text" rows="18" placeholder="Memuat…"></textarea>
+                <div class="row" style="justify-content:space-between">
+                    <span class="tiny" id="greeting-count">0 karakter</span>
+                    <div class="row">
+                        <button class="ghost small" onclick="loadGreeting()">Muat ulang</button>
+                        <button class="ghost small" onclick="resetGreeting()">Kembalikan bawaan</button>
+                        <button class="small" onclick="simpanGreeting()">Simpan</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card glass" style="margin-top:20px;">
+                <div class="card-header"><i class="fa-solid fa-phone-volume"></i> Nomor penting</div>
+                <p class="tiny" style="margin-bottom:16px;">
+                    Dua nomor untuk keadaan bot bermasalah. Berlaku langsung, tanpa restart bot.
+                    Format bebas — <b>0812…</b> atau <b>62812…</b> sama saja.
+                </p>
+                <label class="tiny" for="nomor-owner">Nomor alarm — dikabari lewat WA setiap kali bot sempat padam</label>
+                <input type="text" id="nomor-owner" placeholder="Contoh: 62812…" style="margin:6px 0 4px;">
+                <p class="tiny" id="nomor-owner-catatan" style="margin-bottom:16px;opacity:.75;"></p>
+
+                <label class="tiny" for="nomor-cadangan">Nomor admin cadangan — dipajang situs selama bot padam</label>
+                <input type="text" id="nomor-cadangan" placeholder="Contoh: 62812…" style="margin:6px 0 4px;">
+                <p class="tiny" style="margin-bottom:16px;opacity:.75;">
+                    Dipegang manusia, bukan bot. Kosongkan kalau belum ada — situs akan tetap
+                    memakai nomor utama.
+                </p>
+
+                <div class="row" style="justify-content:flex-end">
+                    <button class="ghost small" onclick="loadNomor()">Muat ulang</button>
+                    <button class="small" onclick="simpanNomor()">Simpan nomor</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── BROADCAST ────────────────────────────────────────────────── -->
+        <div class="panel" id="panel-broadcast">
+            <div class="card glass">
+                <div class="card-header"><i class="fa-solid fa-bullhorn"></i> Kirim ke kontak yang pernah chat</div>
+                <div class="note">
+                    Daftar ini <b>hanya</b> berisi nomor yang pernah mengirim pesan ke bot — mereka menghubungi duluan.
+                    Nomor dari buku kontak dan anggota grup sengaja tidak bisa dipilih: mengirim pesan borongan ke orang
+                    yang tidak pernah menghubungi kita itu spam, dan yang berisiko diblokir WhatsApp adalah nomor bot ini sendiri.
+                    Batas <b id="bc-max">50</b> tujuan sekali kirim, dijeda otomatis antar kontak.
+                </div>
+                <div class="row" style="justify-content:space-between;margin-bottom:12px">
+                    <span class="tiny" id="bc-count">0 tujuan tersedia</span>
+                    <div class="row">
+                        <button class="ghost small" onclick="pilihSemuaTarget(true)">Pilih semua</button>
+                        <button class="ghost small" onclick="pilihSemuaTarget(false)">Kosongkan</button>
+                        <button class="ghost small" onclick="loadTargets()">Muat ulang</button>
+                    </div>
+                </div>
+                <div class="target-list" id="target-list"><p class="muted">Memuat…</p></div>
+                <textarea id="bc-message" rows="6" placeholder="Isi pesan broadcast…"></textarea>
+                <div class="row" style="justify-content:space-between">
+                    <span class="tiny" id="bc-selected">0 dipilih</span>
+                    <button onclick="kirimBroadcast()" id="bc-btn">Kirim broadcast</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── BLOKIR ───────────────────────────────────────────────────── -->
+        <div class="panel" id="panel-blokir">
+            <div class="card glass">
+                <div class="card-header"><i class="fa-solid fa-ban"></i> Daftar blokir WhatsApp</div>
+                <div class="row" style="margin-bottom:16px">
+                    <input type="text" id="block-jid" placeholder="Nomor, contoh: 62812..." class="mb0" style="flex:1">
+                    <button class="danger small" onclick="blokir('block')">Blokir</button>
+                    <button class="ghost small" onclick="blokir('unblock')">Buka blokir</button>
+                </div>
+                <div id="blocklist"><p class="muted">Memuat…</p></div>
+            </div>
+        </div>
+
+        <!-- ── STATUS & POLL ────────────────────────────────────────────── -->
+        <div class="panel" id="panel-story">
+            <div class="grid">
+                <div class="card glass">
+                    <div class="card-header"><i class="fa-solid fa-circle-play"></i> Pasang status WA (24 jam)</div>
+                    <textarea id="story-text" rows="4" placeholder="Teks status…"></textarea>
+                    <input type="text" id="story-url" placeholder="URL gambar (opsional)">
+                    <button class="wide" onclick="kirimStory()">Pasang status</button>
+                    <div id="story-list" style="margin-top:16px"></div>
+                </div>
+                <div class="card glass">
+                    <div class="card-header"><i class="fa-solid fa-square-poll-vertical"></i> Kirim polling</div>
+                    <input type="text" id="poll-target" placeholder="Tujuan: nomor atau JID grup">
+                    <input type="text" id="poll-name" placeholder="Pertanyaan polling">
+                    <textarea id="poll-options" rows="4" placeholder="Pilihan, satu per baris"></textarea>
+                    <button class="wide" onclick="kirimPoll()">Kirim polling</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── SISTEM ───────────────────────────────────────────────────── -->
+        <div class="panel" id="panel-sistem">
+            <div class="card glass" style="margin-bottom:20px;">
+                <div class="card-header"><i class="fa-solid fa-terminal"></i> Log sistem langsung</div>
+                <div class="terminal" id="terminal"></div>
+            </div>
+            <div class="grid">
+                <div class="card glass">
+                    <div class="card-header"><i class="fa-solid fa-id-card"></i> Profil bot</div>
+                    <input type="text" id="profile-name" placeholder="Nama tampilan bot">
+                    <button class="wide small" onclick="simpanProfil('name')">Simpan nama</button>
+                    <input type="text" id="profile-status" placeholder="Info / status profil" style="margin-top:16px">
+                    <button class="wide small" onclick="simpanProfil('status')">Simpan info</button>
+                </div>
+                <div class="card glass">
+                    <div class="card-header"><i class="fa-solid fa-diagram-project"></i> Percakapan aktif</div>
+                    <p class="tiny" style="margin-bottom:12px">Konteks 30 menit terakhir yang dikirim ke webhook.</p>
+                    <div id="context-list"><p class="muted">Memuat…</p></div>
+                    <button class="ghost small" style="margin-top:12px" onclick="loadContext()">Muat ulang</button>
+                </div>
+                <div class="card glass">
+                    <div class="card-header"><i class="fa-solid fa-link"></i> Resolusi @lid</div>
+                    <p class="tiny" style="margin-bottom:12px">Pemetaan ID internal WhatsApp ke nomor asli.</p>
+                    <div class="stat-value" id="lid-count">0</div>
+                    <p class="muted">pemetaan tersimpan</p>
+                    <button class="ghost small" style="margin-top:12px" onclick="loadLidMap()">Muat ulang</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        let token = localStorage.getItem('bot_api_token');
+        let pollInterval, pollCount = 0;
+        let activeTab = 'ringkasan';
+        let chats = [], targets = [], activeJid = null, activeName = '';
+
+        /* ── util ───────────────────────────────────────────────────────── */
+        const $ = (id) => document.getElementById(id);
+        // Semua teks dari WhatsApp (nama kontak, isi pesan) ditulis lewat sini.
+        // Tanpa ini, satu pesan berisi <script> dari pelanggan cukup untuk menyuntik
+        // kode ke halaman admin yang memegang token.
+        const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+        function toast(msg, ok = true) {
+            const el = $('toast');
+            el.textContent = msg;
+            el.className = 'toast show ' + (ok ? 'ok' : 'err');
+            clearTimeout(el._t);
+            el._t = setTimeout(() => { el.className = 'toast'; }, 3200);
+        }
+
+        function nomorDari(jid) { return String(jid || '').split('@')[0]; }
+
+        function waktuSingkat(ts) {
+            if (!ts) return '-';
+            const d = new Date(ts);
+            if (isNaN(d)) return '-';
+            const kini = new Date();
+            const sameDay = d.toDateString() === kini.toDateString();
+            return sameDay
+                ? d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+                : d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }) + ' ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function formatUptime(seconds) {
+            if (!seconds) return '0s';
+            const h = Math.floor(seconds / 3600), m = Math.floor((seconds % 3600) / 60), s = seconds % 60;
+            return `${h}j ${m}m ${s}d`;
+        }
+
+        async function api(endpoint) {
+            try {
+                const res = await fetch(endpoint, { headers: { 'Authorization': token } });
+                if (res.status === 401) { logout(); alert('Token tidak valid atau kedaluwarsa!'); return null; }
+                if (res.status === 429) { toast('Terlalu banyak percobaan token, tunggu sebentar.', false); return null; }
+                return await res.json();
+            } catch (e) { return null; }
+        }
+
+        async function post(endpoint, body, method = 'POST') {
+            try {
+                const res = await fetch(endpoint, {
+                    method,
+                    headers: { 'Authorization': token, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body || {}),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) return { error: data.error || ('HTTP ' + res.status) };
+                return data;
+            } catch (e) { return { error: e.message }; }
+        }
+
+        /* ── auth & tab ─────────────────────────────────────────────────── */
+        function login() {
+            const input = $('token-input').value.trim();
+            if (!input) return alert('Masukkan sandi!');
+            token = input;
+            localStorage.setItem('bot_api_token', token);
+            showDashboard();
+        }
+
+        function bukaLaporan() { window.open('/laporan/penuh?token=' + encodeURIComponent(token), '_blank', 'noopener'); }
+
+        function logout() {
+            localStorage.removeItem('bot_api_token');
+            clearInterval(pollInterval);
+            $('dashboard').style.opacity = '0';
+            setTimeout(() => {
+                $('dashboard').style.display = 'none';
+                $('auth-screen').style.display = 'flex';
+                $('auth-screen').style.opacity = '1';
+                $('token-input').value = '';
+            }, 400);
+        }
+
+        function showDashboard() {
+            $('auth-screen').style.opacity = '0';
+            setTimeout(() => {
+                $('auth-screen').style.display = 'none';
+                $('dashboard').style.display = 'block';
+                setTimeout(() => $('dashboard').style.opacity = '1', 50);
+                startPolling();
+                loadGroups(false);
+            }, 400);
+        }
+
+        document.getElementById('tabs').addEventListener('click', (e) => {
+            const tab = e.target.closest('.tab');
+            if (!tab) return;
+            activeTab = tab.dataset.tab;
+            document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === tab));
+            document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + activeTab));
+            muatTab(activeTab);
+        });
+
+        // Tiap tab memuat datanya sendiri saat dibuka. Polling latar hanya menyentuh
+        // yang murah (/status); daftar grup & blokir memanggil server WhatsApp, jadi
+        // hanya diambil saat diminta — inilah yang dulu bikin kena rate limit.
+        function muatTab(tab) {
+            if (tab === 'inbox') loadChats();
+            if (tab === 'statistik') loadStats();
+            if (tab === 'sapaan') { loadGreeting(); loadNomor(); }
+            if (tab === 'broadcast') loadTargets();
+            if (tab === 'blokir') loadBlocklist();
+            if (tab === 'story') loadStories();
+            if (tab === 'sistem') { loadContext(); loadLidMap(); loadProfile(); }
+        }
+
+        /* ── ringkasan ──────────────────────────────────────────────────── */
+        async function updateStatus() {
+            const status = await api('/status');
+            if (!status) return;
+            const badge = $('connection-status'), text = $('status-text');
+            if (status.connected) { badge.className = 'status-badge status-online glass'; text.textContent = 'Online'; }
+            else { badge.className = 'status-badge status-offline glass'; text.textContent = status.offlineSince ? 'Terputus' : 'Menghubungkan'; }
+
+            $('phone-number').textContent = status.phone ? '+' + String(status.phone).split(':')[0] : 'Tidak ada';
+            $('uptime').textContent = formatUptime(status.uptime);
+            $('connected-at').textContent = status.connectedAt ? waktuSingkat(status.connectedAt) : '-';
+            $('webhook-url').textContent = status.webhookUrl || '-';
+            $('queue-length').textContent = status.queueLength ?? 0;
+            muatAntreanDb();
+            $('outage-count').textContent = status.outageCount ?? 0;
+            $('reconnect-attempts').textContent = status.reconnectAttempts ?? 0;
+            $('last-outage').textContent = status.lastOutage
+                ? `${Math.round(status.lastOutage.ms / 60000)} mnt (${waktuSingkat(status.lastOutage.endedAt)})`
+                : '-';
+            $('archive-count').textContent = status.archiveCount ?? 0;
+            $('chat-count').textContent = status.chatCount ?? 0;
+            $('greeting-custom').textContent = status.greetingCustom ? 'Ya' : 'Bawaan';
+
+            const t = status.today || {};
+            $('t-masuk').textContent = t.masuk || 0;
+            $('t-keluar').textContent = t.keluar || 0;
+            $('t-sapaan').textContent = t.sapaan || 0;
+            $('t-min').textContent = t.panggil_min || 0;
+            $('t-diam').textContent = t.didiamkan || 0;
+            $('t-sesi').textContent = t.sesi_bot || 0;
+
+            // Sesi terkunci bukan sekadar "terputus": bot menahan sesinya dengan
+            // sengaja dan tidak akan menampilkan QR sampai ada yang memutuskan.
+            // Kalau keadaan ini tidak terlihat di sini, ia cuma ada di log.
+            $('kunci-sesi').style.display = status.sesiTerkunci ? 'block' : 'none';
+            if (status.sesiTerkunci) {
+                $('kunci-sesi-teks').textContent = 'WhatsApp menolak sesi ini berulang kali. Sesi TIDAK dihapus — '
+                    + `bot mencoba lagi tiap ${status.kunciRetryMenit || 10} menit dengan sesi yang sama. `
+                    + 'Cek dulu daftar perangkat tertaut di HP: kalau bot masih terdaftar, biarkan saja. '
+                    + 'Buka kunci hanya kalau bot sudah tidak ada di daftar itu — sesi lama akan dibuang.';
+            }
+
+            if (status.hasQR) {
+                $('pairing-container').style.display = 'block';
+                const qr = await api('/qr');
+                if (qr && qr.qr) $('qr-container').innerHTML = `<img src="${qr.qr}" alt="QR">`;
+            } else if (status.connected) {
+                $('pairing-container').style.display = 'none';
+                $('qr-container').innerHTML = '<p style="color:var(--success);font-weight:600"><i class="fa-solid fa-circle-check"></i> Perangkat tersambung</p>';
+            } else if (status.menungguPindai) {
+                // Bot sengaja diam. Tanpa kartu ini, layarnya cuma bertuliskan
+                // "sedang menghubungkan…" selamanya dan tidak ada yang tahu bahwa
+                // yang ditunggu justru orang yang sedang membacanya.
+                // Form kode pairing tetap dibuka: meminta kode juga membangunkan
+                // bot, dan justru ini saat orang menautkan perangkat — sama seperti
+                // perangkat kedua di bawah, jangan cuma satu jalan yang tersedia.
+                $('pairing-container').style.display = 'block';
+                $('qr-container').innerHTML = kartuMenungguPindai(1, status.pindaiRetryMenit);
+            } else {
+                $('pairing-container').style.display = 'none';
+                $('qr-container').innerHTML = '<p class="muted"><i class="fa-solid fa-spinner fa-spin"></i> Sedang menghubungkan…</p>';
+            }
+        }
+
+        // Bot berhenti menampilkan QR karena tidak ada yang memindai. Yang
+        // membangunkannya adalah TINDAKAN — tombol di bawah ini — bukan halaman
+        // yang kebetulan terbuka; itulah bedanya dengan ketukan tanpa henti yang
+        // dulu bikin nomor kedua mencoba login 533 kali dalam 32 jam.
+        function kartuMenungguPindai(perangkat, menit) {
+            return '<p class="muted" style="text-align:center;max-width:320px">'
+                + '<i class="fa-solid fa-mobile-screen-button"></i> Perangkat belum tertaut. '
+                + 'QR berhenti ditampilkan karena tidak ada yang memindainya — bot sengaja diam '
+                + 'supaya tidak mengetuk WhatsApp terus-menerus.</p>'
+                + `<button class="small" onclick="bangunkanQr(${perangkat})">Tampilkan QR</button>`
+                + `<p class="tiny muted">Siapkan HP dulu (WhatsApp → Perangkat tertaut), baru tekan. `
+                + `Tanpa ditekan, bot mencoba sendiri tiap ${menit || 30} menit.</p>`;
+        }
+
+        // Permintaan /qr ITU tandanya: bot yang sedang diam akan menyiapkan socket
+        // baru begitu menerimanya, dan QR-nya muncul lewat polling biasa.
+        async function bangunkanQr(perangkat) {
+            const wadah = perangkat === 2 ? 'qr2-container' : 'qr-container';
+            $(wadah).innerHTML = '<p class="muted"><i class="fa-solid fa-spinner fa-spin"></i> Menyiapkan QR… (±15 detik)</p>';
+            await api(perangkat === 2 ? '/perangkat2/qr' : '/qr');
+        }
+
+        // Perangkat kedua. Gagal di sini tidak boleh mengganggu apa pun di atas:
+        // bot kedua itu tambahan, dan dashboard harus tetap berguna tanpanya.
+        async function loadStatus2() {
+            const st = await api('/perangkat2/status');
+            if (!st || st.adaBot2 === false) { $('kartu-perangkat2').style.display = 'none'; return; }
+            $('kartu-perangkat2').style.display = '';
+
+            if (st.hidup === false) {
+                $('pairing2-container').style.display = 'none';
+                $('qr2-container').innerHTML = '<p class="muted">Bot kedua tidak berjalan. Hidupkan dengan <code>/root/wa-bot-2/jalankan.sh</code>.</p>';
+                return;
+            }
+            if (st.hasQR) {
+                $('pairing2-container').style.display = 'block';
+                const qr = await api('/perangkat2/qr');
+                if (qr && qr.qr) $('qr2-container').innerHTML = `<img src="${qr.qr}" alt="QR perangkat 2">`;
+            } else if (st.connected) {
+                $('pairing2-container').style.display = 'none';
+                // `st.phone`, bukan `st.connectedPhone`: /status memang menamainya
+                // `phone`, jadi yang lama selalu undefined dan nomornya tidak pernah muncul.
+                $('qr2-container').innerHTML = '<p style="color:var(--success);font-weight:600"><i class="fa-solid fa-circle-check"></i> Perangkat 2 tersambung'
+                    + (st.phone ? ` (${st.phone})` : '') + '</p>';
+            } else if (st.menungguPindai) {
+                $('pairing2-container').style.display = 'block';
+                $('qr2-container').innerHTML = kartuMenungguPindai(2, st.pindaiRetryMenit);
+            } else {
+                $('pairing2-container').style.display = 'none';
+                $('qr2-container').innerHTML = '<p class="muted"><i class="fa-solid fa-spinner fa-spin"></i> Sedang menghubungkan…</p>';
+            }
+        }
+
+        async function requestPairing2() {
+            const phone = $('pairing2-phone').value.trim();
+            if (!phone) return alert('Isi nomor WhatsApp perangkat kedua dulu.');
+            $('pairing2-result').textContent = 'Memuat…';
+            const r = await post('/perangkat2/pairing-code', { phone });
+            $('pairing2-result').textContent = r && r.code ? r.code : '';
+            if (!r || r.error) toast(r && r.error ? r.error : 'Gagal meminta kode', false);
+        }
+
+        async function loadGroups(fresh) {
+            $('group-count').textContent = '…';
+            const g = await api('/groups' + (fresh ? '?fresh=1' : ''));
+            if (g && g.groups) {
+                $('group-count').textContent = g.groups.length + (g.cached ? ' (cache)' : '');
+                if (g.stale) toast('Daftar grup dari cache — WhatsApp membatasi permintaan.', false);
+            } else $('group-count').textContent = '-';
+        }
+
+        /* ── inbox ──────────────────────────────────────────────────────── */
+        async function loadChats() {
+            const data = await api('/chats');
+            if (!data) return;
+            chats = (data.chats || []);
+            renderChatList();
+        }
+
+        function renderChatList() {
+            const q = ($('chat-search').value || '').toLowerCase();
+            const list = chats.filter(c =>
+                !q || (c.name || '').toLowerCase().includes(q) || nomorDari(c.jid).includes(q));
+            if (!list.length) { $('chat-list').innerHTML = '<p class="muted">Tidak ada chat.</p>'; return; }
+            $('chat-list').innerHTML = list.slice(0, 200).map(c => `
+                <div class="chat-item ${c.jid === activeJid ? 'active' : ''}" onclick="bukaChat('${esc(c.jid)}', '${esc((c.name || '').replace(/'/g, ''))}')">
+                    <div class="chat-name">${esc(c.name || nomorDari(c.jid))}</div>
+                    <div class="chat-preview">${esc(c.preview || '—')}</div>
+                    <div class="tiny">${waktuSingkat(c.lastTime)}</div>
+                </div>`).join('');
+        }
+
+        async function bukaChat(jid, name) {
+            activeJid = jid; activeName = name || nomorDari(jid);
+            $('reply-btn').disabled = false;
+            $('thread-title').innerHTML = `<i class="fa-solid fa-comments"></i> ${esc(activeName)} <span class="tiny" style="text-transform:none;letter-spacing:0">${esc(nomorDari(jid))}</span>`;
+            renderChatList();
+            await loadThread();
+        }
+
+        async function loadThread() {
+            if (!activeJid) return;
+            const data = await api('/messages?jid=' + encodeURIComponent(activeJid));
+            const body = $('thread-body');
+            if (!data || !data.messages || !data.messages.length) {
+                body.innerHTML = '<p class="muted">Belum ada pesan terarsip untuk kontak ini. Arsip mulai terisi sejak fitur ini dipasang.</p>';
+                return;
+            }
+            body.innerHTML = data.messages.map(m => `
+                <div class="bubble ${m.fromMe ? 'out' : 'in'}">${esc(m.text || '[media]')}<span class="meta">${waktuSingkat(m.time)}${m.type && m.type !== 'text' ? ' · ' + esc(m.type) : ''}</span></div>`).join('');
+            body.scrollTop = body.scrollHeight;
+        }
+
+        async function kirimBalasan() {
+            if (!activeJid) return toast('Pilih chat dulu.', false);
+            const text = $('reply-text').value.trim();
+            if (!text) return;
+            $('reply-btn').disabled = true;
+            const r = await post('/send', { target: activeJid, message: text });
+            $('reply-btn').disabled = false;
+            if (r.error) return toast('Gagal: ' + r.error, false);
+            $('reply-text').value = '';
+            toast('Masuk antrean kirim.');
+            setTimeout(loadThread, 1500);
+        }
+
+        /* ── statistik ──────────────────────────────────────────────────── */
+        const LABEL = {
+            masuk: 'Pesan masuk', keluar: 'Pesan keluar', sapaan: 'Sapaan terkirim',
+            panggil_min: 'Panggil "min"', didiamkan: 'Didiamkan (chat admin)',
+            sesi_bot: 'Sesi bot dibuka', perintah_polos: 'Perintah tanpa titik',
+            balas_manual: 'Balasan manual admin', broadcast: 'Broadcast terkirim',
+            webhook_ok: 'Webhook sukses', webhook_gagal: 'Webhook gagal',
+            kirim_gagal: 'Gagal kirim (dibuang)', putus_koneksi: 'Putus koneksi',
+        };
+
+        function barisTabel(data, keys) {
+            const rows = keys.filter(k => data[k] !== undefined).map(k =>
+                `<tr><td>${esc(LABEL[k] || k)}</td><td style="text-align:right;font-weight:600">${data[k]}</td></tr>`);
+            return rows.length ? rows.join('') : '<tr><td class="muted">Belum ada data.</td></tr>';
+        }
+
+        async function loadStats() {
+            const s = await api('/stats');
+            if (!s) return;
+            const total = s.total || {};
+
+            $('tabel-gerbang').innerHTML = '<tbody>' + barisTabel(total,
+                ['masuk', 'keluar', 'sapaan', 'panggil_min', 'sesi_bot', 'didiamkan', 'balas_manual', 'broadcast']) + '</tbody>';
+
+            const polosKeys = Object.keys(total).filter(k => k.startsWith('polos_'));
+            const polosRows = polosKeys.length
+                ? polosKeys.sort((a, b) => total[b] - total[a]).map(k =>
+                    `<tr><td>"${esc(k.replace('polos_', ''))}" tanpa titik</td><td style="text-align:right;font-weight:600">${total[k]}</td></tr>`).join('')
+                  + `<tr><td><b>Total</b></td><td style="text-align:right;font-weight:700">${total.perintah_polos || 0}</td></tr>`
+                : '<tr><td class="muted">Belum ada. Angka mulai terkumpul sejak fitur ini dipasang.</td></tr>';
+            $('tabel-polos').innerHTML = '<tbody>' + polosRows + '</tbody>';
+
+            $('tabel-teknis').innerHTML = '<tbody>' + barisTabel(total,
+                ['webhook_ok', 'webhook_gagal', 'kirim_gagal', 'putus_koneksi']) + '</tbody>';
+
+            // Grafik 14 hari — dibangun dari kunci harian yang ada, hari kosong tetap
+            // digambar supaya jeda tanpa aktivitas terlihat, bukan disembunyikan.
+            const hari = [];
+            for (let i = 13; i >= 0; i--) {
+                const d = new Date(Date.now() + 7 * 3600 * 1000 - i * 86400000);
+                hari.push(d.toISOString().slice(0, 10));
+            }
+            const nilai = hari.map(h => (s.daily?.[h]?.masuk) || 0);
+            const max = Math.max(1, ...nilai);
+            $('bars').innerHTML = hari.map((h, i) => `
+                <div class="bar-col" title="${h}: ${nilai[i]} pesan masuk">
+                    <div class="tiny">${nilai[i] || ''}</div>
+                    <div class="bar" style="height:${Math.round((nilai[i] / max) * 100)}%"></div>
+                    <div class="bar-label">${h.slice(8)}</div>
+                </div>`).join('');
+            $('bars-note').textContent = `Arsip: ${s.archive?.messages || 0} pesan (batas ${s.archive?.cap || 0}). Data sejak ${s.since || '-'}.`;
+        }
+
+        /* ── sapaan ─────────────────────────────────────────────────────── */
+        async function loadGreeting() {
+            const s = await api('/settings');
+            if (!s) return;
+            $('greeting-text').value = s.greeting || '';
+            $('greeting-count').textContent = (s.greeting || '').length + ' karakter' + (s.isCustom ? ' · kustom' : ' · bawaan');
+            $('kata-min').textContent = (s.adminCallWords || ['min']).map(w => '"' + w + '"').join(' / ');
+        }
+
+        $('greeting-text').addEventListener('input', (e) => {
+            $('greeting-count').textContent = e.target.value.length + ' karakter';
+        });
+
+        async function simpanGreeting() {
+            const text = $('greeting-text').value;
+            const r = await post('/settings/greeting', { text });
+            if (r.error) return toast('Gagal: ' + r.error, false);
+            toast('Sapaan disimpan dan langsung berlaku.');
+            loadGreeting();
+        }
+
+        async function resetGreeting() {
+            if (!confirm('Kembalikan teks sapaan ke bawaan?')) return;
+            const r = await post('/settings/greeting/reset', {});
+            if (r.error) return toast('Gagal: ' + r.error, false);
+            toast('Sapaan dikembalikan ke bawaan.');
+            loadGreeting();
+        }
+
+        async function bukaKunciSesi() {
+            if (!confirm('Buang sesi WhatsApp yang sekarang dan minta scan QR baru?\n\n'
+                + 'Lakukan ini HANYA kalau bot sudah tidak ada di daftar perangkat tertaut di HP.')) return;
+            const r = await post('/sesi/buka-kunci', {});
+            if (r.error) return toast('Gagal: ' + r.error, false);
+            toast('Kunci dibuka. Bot restart, QR akan muncul sebentar lagi.');
+        }
+
+        /* ── nomor penting ──────────────────────────────────────────────── */
+        async function loadNomor() {
+            const s = await api('/settings');
+            if (!s) return;
+            $('nomor-owner').value = s.ownerNumber || '';
+            $('nomor-cadangan').value = s.backupAdmin || '';
+            // Bedanya penting saat menelusuri masalah: kotak yang terisi dari env
+            // belum tentu pernah disimpan dari sini, dan env kalah kalau disimpan.
+            $('nomor-owner-catatan').textContent = s.ownerNumber
+                ? (s.ownerFromEnv ? 'Sekarang diambil dari env OWNER_JID di server.'
+                                  : 'Tersimpan di dashboard.')
+                : 'Belum diisi — alarm padam sementara dikirim ke nomor bot sendiri.';
+        }
+
+        async function simpanNomor() {
+            const r = await post('/settings/nomor', {
+                owner: $('nomor-owner').value,
+                cadangan: $('nomor-cadangan').value,
+            });
+            if (r.error) return toast('Gagal: ' + r.error, false);
+            toast('Nomor disimpan dan langsung berlaku.');
+            loadNomor();
+        }
+
+        /* ── broadcast ──────────────────────────────────────────────────── */
+        async function loadTargets() {
+            const data = await api('/broadcast/targets');
+            if (!data) return;
+            targets = data.targets || [];
+            $('bc-max').textContent = data.max;
+            $('bc-count').textContent = targets.length + ' tujuan tersedia';
+            if (!targets.length) {
+                $('target-list').innerHTML = '<p class="muted">Belum ada kontak yang memenuhi syarat. Daftar terisi sendiri begitu ada pelanggan yang mengirim pesan ke bot.</p>';
+                return;
+            }
+            $('target-list').innerHTML = targets.map((t, i) => `
+                <label class="target-row">
+                    <input type="checkbox" data-jid="${esc(t.jid)}" onchange="hitungPilihan()">
+                    <span style="flex:1">${esc(t.name || nomorDari(t.jid))} <span class="tiny">${esc(nomorDari(t.jid))}</span></span>
+                    <span class="tiny">${waktuSingkat(t.lastTime)}</span>
+                </label>`).join('');
+            hitungPilihan();
+        }
+
+        function pilihSemuaTarget(on) {
+            const max = Number($('bc-max').textContent) || 50;
+            document.querySelectorAll('#target-list input[type=checkbox]').forEach((el, i) => { el.checked = on && i < max; });
+            hitungPilihan();
+            if (on && targets.length > max) toast(`Dibatasi ${max} tujuan pertama.`, false);
+        }
+
+        function hitungPilihan() {
+            const n = document.querySelectorAll('#target-list input[type=checkbox]:checked').length;
+            $('bc-selected').textContent = n + ' dipilih';
+        }
+
+        async function kirimBroadcast() {
+            const jids = [...document.querySelectorAll('#target-list input[type=checkbox]:checked')].map(el => el.dataset.jid);
+            const message = $('bc-message').value.trim();
+            if (!jids.length) return toast('Pilih tujuan dulu.', false);
+            if (!message) return toast('Isi pesannya dulu.', false);
+            if (!confirm(`Kirim pesan ini ke ${jids.length} kontak?`)) return;
+            $('bc-btn').disabled = true;
+            const r = await post('/broadcast', { message, jids });
+            $('bc-btn').disabled = false;
+            if (r.error) return toast('Gagal: ' + r.error, false);
+            toast(`${r.queued} pesan masuk antrean${r.rejected?.length ? `, ${r.rejected.length} ditolak` : ''}.`);
+            $('bc-message').value = '';
+            pilihSemuaTarget(false);
+        }
+
+        /* ── blokir ─────────────────────────────────────────────────────── */
+        async function loadBlocklist() {
+            const data = await api('/blocklist');
+            if (!data) return;
+            if (data.error) { $('blocklist').innerHTML = `<p class="muted">${esc(data.error)}</p>`; return; }
+            const list = data.blocklist || [];
+            $('blocklist').innerHTML = list.length
+                ? '<table><tbody>' + list.map(j =>
+                    `<tr><td>${esc(nomorDari(j))}</td><td style="text-align:right"><button class="ghost small" onclick="bukaBlokir('${esc(j)}')">Buka blokir</button></td></tr>`).join('') + '</tbody></table>'
+                : '<p class="muted">Tidak ada nomor yang diblokir.</p>';
+        }
+
+        async function blokir(aksi) {
+            const jid = $('block-jid').value.trim();
+            if (!jid) return toast('Isi nomornya dulu.', false);
+            const target = jid.includes('@') ? jid : jid.replace(/\D/g, '') + '@s.whatsapp.net';
+            const r = await post('/blocklist/' + aksi, { jid: target });
+            if (r.error) return toast('Gagal: ' + r.error, false);
+            toast(aksi === 'block' ? 'Nomor diblokir.' : 'Blokir dibuka.');
+            $('block-jid').value = '';
+            loadBlocklist();
+        }
+
+        async function bukaBlokir(jid) {
+            const r = await post('/blocklist/unblock', { jid });
+            if (r.error) return toast('Gagal: ' + r.error, false);
+            toast('Blokir dibuka.');
+            loadBlocklist();
+        }
+
+        /* ── status & poll ──────────────────────────────────────────────── */
+        async function loadStories() {
+            const data = await api('/story');
+            if (!data) return;
+            const list = data.statuses || [];
+            $('story-list').innerHTML = list.length
+                ? '<p class="tiny" style="margin-bottom:8px">Status aktif (24 jam):</p>' + list.slice().reverse().map(s =>
+                    `<div class="kv"><span>${esc((s.text || '').slice(0, 40))}</span><span class="tiny">${waktuSingkat(s.timestamp)}</span></div>`).join('')
+                : '<p class="muted">Belum ada status aktif.</p>';
+        }
+
+        async function kirimStory() {
+            const text = $('story-text').value.trim();
+            if (!text) return toast('Isi teks status dulu.', false);
+            const url = $('story-url').value.trim() || undefined;
+            const r = await post('/story', { text, url });
+            if (r.error) return toast('Gagal: ' + r.error, false);
+            toast('Status dipasang.');
+            $('story-text').value = ''; $('story-url').value = '';
+            loadStories();
+        }
+
+        async function kirimPoll() {
+            const target = $('poll-target').value.trim();
+            const name = $('poll-name').value.trim();
+            const options = $('poll-options').value.split('\n').map(s => s.trim()).filter(Boolean);
+            if (!target || !name || options.length < 2) return toast('Tujuan, pertanyaan, dan minimal 2 pilihan wajib diisi.', false);
+            const r = await post('/send-poll', { target, name, options });
+            if (r.error) return toast('Gagal: ' + r.error, false);
+            toast('Polling masuk antrean.');
+            $('poll-name').value = ''; $('poll-options').value = '';
+        }
+
+        /* ── sistem ─────────────────────────────────────────────────────── */
+        async function loadLogs() {
+            const logs = await api('/logs');
+            if (!logs || !logs.logs) return;
+            const term = $('terminal');
+            const atBottom = term.scrollHeight - term.clientHeight <= term.scrollTop + 12;
+            term.innerHTML = logs.logs.map(l => {
+                const c = esc(l);
+                if (c.includes('[INFO]')) return `<span class="info">${c}</span><br>`;
+                if (c.includes('[ERROR]')) return `<span class="error">${c}</span><br>`;
+                return c + '<br>';
+            }).join('');
+            if (atBottom) term.scrollTop = term.scrollHeight;
+        }
+
+        async function loadContext() {
+            const data = await api('/context');
+            if (!data) return;
+            const list = data.entries || [];
+            $('context-list').innerHTML = list.length
+                ? list.slice(0, 12).map(e =>
+                    `<div class="kv"><span>${esc(nomorDari(e.jid))}</span><span class="tiny">${e.messages} pesan · ${waktuSingkat(e.lastTime)}</span></div>`).join('')
+                : '<p class="muted">Tidak ada percakapan aktif.</p>';
+        }
+
+        async function loadLidMap() {
+            const data = await api('/lid-map');
+            if (data) $('lid-count').textContent = data.count ?? 0;
+        }
+
+        async function loadProfile() {
+            const p = await api('/profile');
+            if (p && !$('profile-name').value) $('profile-name').value = p.name || '';
+        }
+
+        async function simpanProfil(jenis) {
+            const val = jenis === 'name' ? $('profile-name').value.trim() : $('profile-status').value;
+            const r = await post('/profile/' + jenis, jenis === 'name' ? { name: val } : { status: val });
+            if (r.error) return toast('Gagal: ' + r.error, false);
+            toast('Profil diperbarui.');
+        }
+
+        async function requestPairing() {
+            const phone = $('pairing-phone').value.trim();
+            if (!phone) return toast('Masukkan nomor WA.', false);
+            $('pairing-result').textContent = 'Memuat…';
+            const r = await post('/pairing-code', { phone });
+            if (r.error) { $('pairing-result').textContent = ''; return toast('Gagal: ' + r.error, false); }
+            $('pairing-result').textContent = r.code || '';
+        }
+
+        /* ── polling ────────────────────────────────────────────────────── */
+        async function tick() {
+            await updateStatus();
+            // Perangkat kedua disegarkan lebih jarang: ia cuma perlu diperhatikan
+            // saat sedang ditautkan, dan tiap panggilan di sini adalah dua lompatan
+            // (dashboard → bot pertama → bot kedua), bukan satu.
+            if (pollCount % 3 === 0) loadStatus2();
+            if (activeTab === 'sistem') loadLogs();
+            // Inbox disegarkan lebih jarang: yang penting statusnya hidup, bukan
+            // daftar chat yang berkedip tiap dua detik saat admin sedang mengetik.
+            if (activeTab === 'inbox' && pollCount % 5 === 0) { loadChats(); if (activeJid) loadThread(); }
+            if (activeTab === 'ringkasan' && pollCount % 60 === 0) loadGroups(false);
+            pollCount++;
+        }
+
+        function startPolling() {
+            tick();
+            pollInterval = setInterval(tick, 3000);
+        }
+
+        // Auto-login DI AKHIR skrip: showDashboard memakai `$` dan kawan-kawan
+        // yang berupa const — memanggilnya sebelum baris const dieksekusi melempar
+        // ReferenceError dan mematikan seluruh skrip (termasuk tombol Masuk).
+        if (token) showDashboard();
+
+        // Angka antrean yang butuh tombol. Sumbernya database lewat proxy bot,
+        // bukan proses ini — jadi ia bisa gagal sendiri tanpa merusak dashboard.
+        // Kalau gagal, tulis "?" dan bukan "0": nol yang keliru di sini berarti
+        // orang mengira tidak ada yang tertahan padahal ada.
+        async function muatAntreanDb() {
+            const el = $('outbox-db');
+            if (!el) return;
+            try {
+                // `token` boleh kosong sejak masuk pakai sandi — kukinya yang
+                // dipakai, dan kuki ikut sendiri di permintaan seasal.
+                const r = await fetch('/antrean/data', {
+                    headers: token ? { 'Authorization': token } : {},
+                    cache: 'no-store',
+                });
+                if (!r.ok) throw new Error(r.status);
+                const j = await r.json();
+                el.textContent = (j.tertunda ?? 0) + ' pesan';
+                el.style.color = j.tertunda ? 'var(--warn)' : '';
+            } catch (e) {
+                el.textContent = '? — gagal dibaca';
+                el.style.color = 'var(--ink-faint)';
+            }
+        }
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catatan Perubahan — Jual Beli USU Polmed</title>
+<meta name="description" content="Semua perubahan pada situs dan bot WhatsApp Jual Beli USU Polmed, diambil langsung dari riwayat git kedua repositori.">
+<meta property="og:title" content="Catatan Perubahan — Jual Beli USU Polmed">
+<meta property="og:description" content="Setiap perubahan tercatat, lengkap dengan alasan kenapa diambil.">
+<meta property="og:type" content="article">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=Work+Sans:wght@400;500&display=swap">
+<link rel="stylesheet" href="/assets/ui.css?v=20260821b">
+<script>try{var t=localStorage.getItem('tema');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<script src="/assets/ui.js?v=20260821b" defer></script>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">Catatan Perubahan</div>
+  <h1>Semua yang pernah berubah, beserta alasannya</h1>
+  <p class="lead">Halaman ini tidak ditulis tangan. Isinya diambil langsung dari riwayat
+  <code>git</code> kedua repositori — bot dibaca dari salinan di server ini, situs lewat API
+  GitHub. Daftar perubahan yang harus diperbarui manusia selalu berhenti diperbarui pada
+  minggu ketiga; yang ini tidak bisa ketinggalan karena sumbernya adalah pekerjaannya sendiri.</p>
+</header>
+
+<div class="card">
+  <div class="stats">
+    <div class="stat"><div class="n" id="n-total">—</div><div class="l">perubahan tercatat</div></div>
+    <div class="stat"><div class="n" id="n-bot">—</div><div class="l">di bot WhatsApp</div></div>
+    <div class="stat"><div class="n" id="n-situs">—</div><div class="l">di situs</div></div>
+    <div class="stat"><div class="n" id="n-terakhir">—</div><div class="l">perubahan terakhir</div></div>
+  </div>
+</div>
+
+<h2><span class="no">01</span>Linimasa</h2>
+<div class="filter">
+  <button data-saring="semua" aria-pressed="true">Semua</button>
+  <button data-saring="bot" aria-pressed="false">Bot WhatsApp</button>
+  <button data-saring="situs" aria-pressed="false">Situs</button>
+</div>
+<p class="muted" id="catatan-sumber">Memuat…</p>
+<div id="linimasa"></div>
+
+<h2><span class="no">02</span>Yang belum selesai</h2>
+<p>Bagian ini ditulis tangan, karena tidak ada commit untuk pekerjaan yang belum dikerjakan.
+Tanda kuning berarti langkahnya ada di tangan pemilik, bukan di kode.</p>
+<p class="muted">Dua baris hilang dari daftar ini pada <b>21 Agustus 2026</b>: seluruh migrasi
+database dijalankan sekali jalan lewat <code>/jalankan</code> (halaman admin, butuh token
+bot — halaman ini publik, jadi sengaja tidak ditautkan), termasuk kolom toko
+(<code>migration_storefront.sql</code>) dan penanda <code>wa_verified</code>
+(<code>migration_daftar_tanpa_otp.sql</code>) yang selama ini menunggu. Dicatat di sini karena
+menjalankan SQL di Supabase tidak meninggalkan commit — linimasa di atas tidak akan pernah
+tahu itu terjadi.</p>
+<p class="muted">Baris keempat juga hilang di hari yang sama: tab <b>Kapabilitas</b> di panel
+admin ternyata bukan tiga kartu yang menulis ke ruang kosong, melainkan <b>82 sakelar</b> yang
+semuanya menulis ke sana — tujuh di antaranya bernama sama persis dengan setelan asli di tab
+Aksi, jadi ada dua sakelar untuk satu hal dan cuma satu yang bekerja. Sakelarnya dicabut; yang
+tersisa daftar baca-saja berisi 35 kemampuan yang benar-benar ada, masing-masing menyebut
+endpoint atau berkasnya.</p>
+<p class="muted">Kunci enkripsi cadangan juga turun dari daftar pada hari yang sama:
+pemilik menyalinnya keluar dari VPS lewat <code>scp</code>. Itu penting bukan cuma karena
+arsipnya jadi bisa dibuka — <code>cadangkan-sesi.sh</code> membuat kunci BARU tanpa mengeluh
+kalau berkasnya hilang, jadi kunci yang cuma hidup di satu server adalah satu penghapusan
+tak sengaja dari membuat seluruh arsip di GitHub jadi derau permanen.</p>
+<div class="card">
+  <ul class="todo">
+    <li><span class="kotak siapa"></span><span>
+      <span class="siapa-l">Perlu pemilik</span><br>
+      <strong>Tautkan ulang nomor bot pertama.</strong> Kunci sesi dibuka lagi dari dashboard pada
+      21 Agustus 2026 pukul 06:34 dan sesi lama dipindah ke
+      <code>auth_info_baileys.bak-20260821T063431</code> (bukan dihapus); folder sesi yang aktif
+      sekarang kosong, jadi bot menunggu ditautkan dan tidak ada pesan yang bisa dikirim maupun
+      diterima. Sebelum itu log-nya <code>401</code> tiga kali berturut-turut — tanda nomornya
+      sedang dibatasi WhatsApp, dan menautkan ulang saat sedang dibatasi justru memperpanjangnya.
+      Yang paling aman: kembalikan folder <code>.bak-</code> itu kalau nomornya masih tertaut di HP.
+      Pindai QR / kode pairing hanya kalau perangkatnya memang sudah dilepas.
+    </span></li>
+    <li><span class="kotak siapa"></span><span>
+      <span class="siapa-l">Perlu pemilik</span><br>
+      <strong>Masukkan kode pairing bot kedua di HP.</strong> Nomornya sudah ditentukan — sama
+      dengan nomor admin cadangan yang baru diisi — dan botnya sudah berjalan (proses
+      <code>wa-bot-2</code>, port 3001, datanya di <code>/root/wa-bot-2</code>). Sisanya satu
+      langkah yang memang harus dilakukan dengan HP di tangan: kartu <b>Perangkat 2</b> di
+      dashboard → "Minta Kode", lalu di HP buka WhatsApp → Perangkat tertaut → Tautkan dengan
+      nomor telepon, dan ketik kodenya sebelum kedaluwarsa.
+    </span></li>
+  </ul>
+</div>
+
+<h2><span class="no">03</span>Cara membacanya</h2>
+<p>Tiap baris adalah satu commit. Judulnya menjelaskan <em>apa</em> yang berubah; kalau ada
+tautan "lihat alasannya", di dalamnya ada penjelasan <em>kenapa</em> — masalah apa yang
+ditemukan, angka yang mendasarinya, dan apa yang ditukar untuk memperbaikinya. Kebiasaan itu
+dijaga karena kode bisa dibaca ulang kapan saja, sedangkan alasan hilang dalam hitungan minggu.</p>
+
+<div class="links">
+  <a href="/projek"><div class="t">Catatan proyek</div><div class="d">Cerita di balik pembuatannya</div></a>
+  <a href="/lomba"><div class="t">Halaman lomba</div><div class="d">Website Competition 2026</div></a>
+  <a href="https://www.jualbeliusupolmed.web.id"><div class="t">Situs utama</div><div class="d">jualbeliusupolmed.web.id</div></a>
+  <a href="/home"><div class="t">Panel bot</div><div class="d">Status dan kendali</div></a>
+</div>
+
+<footer>
+  <p style="margin:0">Dibangun oleh Ridho Robbi Pasi — Teknik Informatika, Universitas Sumatera Utara.<br>
+  Halaman ini disajikan langsung oleh bot WhatsApp-nya sendiri.</p>
+</footer>
+
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let semua = [];
+let saring = 'semua';
+
+// Pesan commit itu teks dari luar halaman ini. Dirakit lewat createElement dan
+// textContent, bukan innerHTML: satu tanda kurung sudut di judul commit sudah cukup
+// untuk merusak halaman kalau ditempel mentah.
+function elemen(tag, kelas, teks) {
+  const el = document.createElement(tag);
+  if (kelas) el.className = kelas;
+  if (teks != null) el.textContent = teks;
+  return el;
+}
+
+const HARI = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+const BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+
+function kunciHari(iso) {
+  const d = new Date(iso);
+  return isNaN(d) ? 'Tanggal tidak diketahui'
+    : `${HARI[d.getDay()]}, ${d.getDate()} ${BULAN[d.getMonth()]} ${d.getFullYear()}`;
+}
+function jam(iso) {
+  const d = new Date(iso);
+  return isNaN(d) ? '' : d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+}
+function jarak(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return '—';
+  const menit = Math.round((Date.now() - d.getTime()) / 60000);
+  if (menit < 60) return menit + ' mnt lalu';
+  if (menit < 1440) return Math.round(menit / 60) + ' jam lalu';
+  return Math.round(menit / 1440) + ' hari lalu';
+}
+
+function gambar() {
+  const wadah = $('linimasa');
+  wadah.textContent = '';
+  const daftar = semua.filter((c) => saring === 'semua' || c.repo === saring);
+  if (!daftar.length) { wadah.appendChild(elemen('p', 'muted', 'Belum ada yang bisa ditampilkan.')); return; }
+
+  let hariBerjalan = '';
+  let kotakHari = null;
+  for (const c of daftar) {
+    const hari = kunciHari(c.tanggal);
+    if (hari !== hariBerjalan) {
+      hariBerjalan = hari;
+      kotakHari = elemen('div', 'hari');
+      kotakHari.appendChild(elemen('div', 'tgl', hari));
+      wadah.appendChild(kotakHari);
+    }
+    const entri = elemen('div', 'entri');
+    entri.appendChild(elemen('span', 'pita ' + c.repo, c.repo === 'bot' ? 'Bot' : 'Situs'));
+
+    const badan = elemen('div', 'badan');
+    badan.appendChild(elemen('div', 'judul', c.judul || '(tanpa judul)'));
+
+    const kaki = elemen('div', 'kaki');
+    kaki.appendChild(elemen('span', null, jam(c.tanggal)));
+    const tautan = elemen('a', null, c.sha);
+    tautan.href = c.url; tautan.target = '_blank'; tautan.rel = 'noreferrer';
+    kaki.appendChild(tautan);
+    badan.appendChild(kaki);
+
+    if (c.isi) {
+      const rinci = elemen('details');
+      rinci.appendChild(elemen('summary', null, 'lihat alasannya'));
+      rinci.appendChild(elemen('pre', null, c.isi));
+      badan.appendChild(rinci);
+    }
+    entri.appendChild(badan);
+    kotakHari.appendChild(entri);
+  }
+}
+
+async function muat() {
+  try {
+    const res = await fetch('/riwayat');
+    const data = await res.json();
+    const bot = data.bot || [], situs = data.situs || [];
+    semua = [...bot, ...situs].sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+
+    $('n-total').textContent = semua.length;
+    $('n-bot').textContent = bot.length;
+    $('n-situs').textContent = situs.length;
+    $('n-terakhir').textContent = semua.length ? jarak(semua[0].tanggal) : '—';
+
+    // Kalau riwayat situs gagal diambil, katakan — jangan biarkan halaman terlihat
+    // lengkap padahal separuh sumbernya diam-diam hilang.
+    $('catatan-sumber').textContent = data.galatSitus
+      ? `Riwayat situs tidak bisa diambil dari GitHub (${data.galatSitus}) — yang tampil mungkin data lama.`
+      : `Diambil ${new Date(data.diambil).toLocaleString('id-ID')}${data.dariCache ? ' (dari cache 10 menit)' : ''}.`;
+    gambar();
+  } catch (e) {
+    $('catatan-sumber').textContent = 'Gagal memuat riwayat: ' + e.message;
+  }
+}
+
+for (const b of document.querySelectorAll('.filter button')) {
+  b.addEventListener('click', () => {
+    saring = b.dataset.saring;
+    for (const lain of document.querySelectorAll('.filter button')) {
+      lain.setAttribute('aria-pressed', String(lain === b));
+    }
+    gambar();
+  });
+}
+muat();
+</script>
+</body>
+</html>
