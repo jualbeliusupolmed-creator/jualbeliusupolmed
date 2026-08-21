@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
 
 /*
@@ -103,6 +104,23 @@ export default function TokoKatalog({ listings, warna }) {
           {tampil.map((l) => (
             <ProductCard key={l.id} listing={l} />
           ))}
+
+          {/* Toko baru biasanya berisi satu-dua barang, dan satu kartu yang
+              terdampar di kiri baris membuat halamannya terlihat rusak.
+              Kartu ini mengisi barisnya dengan sesuatu yang memang berguna —
+              jalan keluar ke barang lain — bukan dengan ruang kosong. */}
+          {tampil.length < 4 && (
+            <Link
+              href="/"
+              className="flex min-h-[180px] flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-gray-300 p-4 text-center transition hover:border-gray-400 dark:border-slate-700 dark:hover:border-slate-600"
+            >
+              <span className="text-2xl" aria-hidden>🔎</span>
+              <span className="text-sm font-semibold dark:text-white">Cari barang lain</span>
+              <span className="text-xs text-gray-500 dark:text-slate-400">
+                Lihat semua iklan di marketplace
+              </span>
+            </Link>
+          )}
         </div>
       )}
     </>

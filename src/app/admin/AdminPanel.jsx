@@ -6,6 +6,7 @@ import { rupiah } from "@/lib/fees";
 import { downloadCSV } from "@/lib/csv";
 import { buildSlug } from "@/lib/slug";
 import { formatWa } from "@/lib/constants";
+import { LABEL_STATUS, statusToko } from "@/lib/toko";
 import AdminListingModal from "./AdminListingModal";
 import KirimManualModal from "./KirimManualModal";
 import ConfirmModal from "@/components/ConfirmModal";
@@ -933,15 +934,33 @@ export default function AdminPanel({
                               <div className="text-gray-400">{t.wa}</div>
                             </td>
                             <td className="p-3">
-                              {t.store_open === false
-                                ? <span className="text-xs font-medium text-amber-600">⏸ Tutup</span>
-                                : <span className="text-xs text-green-600">▶ Buka</span>}
+                              {/* Dua status yang beda urusan, dan dulu cuma satu
+                                  yang kelihatan. "Buka/Tutup" itu jam operasional
+                                  yang diatur penjual sendiri; "Aktif/Menunggu"
+                                  adalah izin dari admin — dan sejak toko berarti
+                                  iklan gratis, yang kedua jauh lebih penting. */}
+                              {(() => {
+                                const st = statusToko(t);
+                                const nada = st === "aktif" ? "is-ok" : st === "menunggu" ? "is-warn" : st === "ditolak" ? "is-bad" : "";
+                                return <span className={`g-badge ${nada}`}>{LABEL_STATUS[st] || st}</span>;
+                              })()}
+                              <div className="mt-1 text-xs text-gray-400">
+                                {t.store_open === false ? "⏸ Sedang tutup" : "▶ Buka"}
+                              </div>
                             </td>
                             <td className="p-3 text-xs text-gray-400">
                               {t.store_updated_at ? new Date(t.store_updated_at).toLocaleDateString("id-ID") : "–"}
                             </td>
                             <td className="p-3">
                               <div className="flex flex-wrap gap-1">
+                                {statusToko(t) !== "aktif" && (
+                                  <a
+                                    href={`/admin/approve-toko?wa=${encodeURIComponent(t.wa)}`}
+                                    className="rounded-md bg-green-100 px-2 py-1 text-xs text-green-700"
+                                  >
+                                    Tinjau & aktifkan
+                                  </a>
+                                )}
                                 <button
                                   onClick={() => action({ action: "set_store_open", wa: t.wa, open: t.store_open === false }, t.store_open === false ? "Toko dibuka" : "Toko ditutup")}
                                   className="rounded-md bg-blue-100 px-2 py-1 text-xs text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"

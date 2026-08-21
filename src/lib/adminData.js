@@ -22,15 +22,27 @@ async function safe(promise, fallback) {
 // dan "kolomnya belum ada" sama-sama menghasilkan daftar kosong, dan hanya satu
 // dari keduanya yang bisa diperbaiki admin.
 async function muatToko(supa) {
-  try {
-    const { data, error } = await supa
-      .from("seller_profiles")
-      .select("wa, name, slug, store_name, tagline, store_area, store_open, store_announcement, store_updated_at")
+  const DASAR = "wa, name, slug, store_name, tagline, store_area, store_open, store_announcement, store_updated_at";
+  // Kolom persetujuan lahir di migrasi BAGIAN 26. Kalau belum ada, SELECT-nya
+  // gagal SELURUHNYA — dan tab Toko akan memajang "kolom toko belum ada",
+  // padahal yang belum ada cuma kolom yang baru. Jadi dicoba dua kali:
+  // dengan status dulu, lalu tanpa. Yang hilang cuma lencana statusnya.
+  const coba = async (kolom) =>
+    supa.from("seller_profiles").select(kolom)
       .not("slug", "is", null)
       .order("store_updated_at", { ascending: false, nullsFirst: false })
       .limit(500);
+  try {
+    let { data, error } = await coba(`${DASAR}, store_status, store_requested_at, store_reject_note`);
+    if (error) ({ data, error } = await coba(DASAR));
     if (error) return { stores: [], storesMigrationMissing: true, storesError: error.message };
-    return { stores: data || [], storesMigrationMissing: false, storesError: null };
+    // Yang menunggu persetujuan naik ke atas: daftar yang mengubur permohonan
+    // di bawah dua ratus toko lama sama saja dengan tidak punya daftar.
+    const urut = { menunggu: 0, ditolak: 1, aktif: 2, draf: 3 };
+    const stores = (data || []).sort(
+      (a, b) => (urut[a.store_status] ?? 2) - (urut[b.store_status] ?? 2)
+    );
+    return { stores, storesMigrationMissing: false, storesError: null };
   } catch (e) {
     return { stores: [], storesMigrationMissing: true, storesError: e.message };
   }

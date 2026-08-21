@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { formatWaForBaileys } from "@/lib/constants";
-import { AKSEN, aksenAman, namaToko } from "@/lib/toko";
+import { AKSEN, aksenAman, namaToko, tokoAktif } from "@/lib/toko";
 import ProductCard from "@/components/ProductCard";
 import ShareProfileButton from "@/components/ShareProfileButton";
 import TokoKatalog from "@/components/TokoKatalog";
@@ -22,12 +22,20 @@ async function ambilToko(slug) {
       .ilike("slug", String(slug || ""))
       .maybeSingle();
     if (!profil) return null;
+    // Toko yang belum disetujui admin tidak tayang. Alamatnya tetap dipegang
+    // penjualnya (slug-nya sudah tercatat), cuma halamannya belum ada isinya
+    // untuk umum — persis seperti sebelum ia mengajukan.
+    if (!tokoAktif(profil)) return null;
 
-    const [{ data: aktif }, { data: terjual }] = await Promise.all([
+    const [{ data: aktif }, { data: terjual }, { data: ulasan }] = await Promise.all([
       supa.from("listings").select("*").eq("seller_wa", profil.wa)
         .eq("status", "active").order("bumped_at", { ascending: false }),
       supa.from("listings").select("*").eq("seller_wa", profil.wa)
         .eq("status", "sold").order("created_at", { ascending: false }).limit(6),
+      // Tabelnya `seller_ratings` dengan kolom `rating` (bukan `stars`) — nama
+      // yang beda tipis ini sudah pernah membuat penilaian tidak muncul.
+      supa.from("seller_ratings").select("rating, comment, buyer_name, created_at")
+        .eq("seller_wa", profil.wa).order("created_at", { ascending: false }).limit(3),
     ]);
 
     // ProductCard membaca lencana distributor dari listing.seller_profiles,
@@ -39,11 +47,18 @@ async function ambilToko(slug) {
       .from("listings").select("id", { count: "exact", head: true })
       .eq("seller_wa", profil.wa).eq("status", "sold");
 
+    const daftarUlasan = ulasan || [];
+    const rata = daftarUlasan.length
+      ? daftarUlasan.reduce((t, u) => t + (u.rating || 0), 0) / daftarUlasan.length
+      : 0;
+
     return {
       profil,
       aktif: aktif || [],
       terjual: terjual || [],
       jumlahTerjual: jumlahTerjual || 0,
+      ulasan: daftarUlasan,
+      rataUlasan: rata,
     };
   } catch {
     return null;
@@ -82,12 +97,27 @@ export async function generateMetadata({ params }) {
   };
 }
 
-/** Angka dengan labelnya — dipakai berjajar di bawah nama toko. */
-function Angka({ nilai, label }) {
+/** Satu angka toko. Dipakai berjajar, dipisah garis tipis. */
+function Angka({ nilai, label, sub }) {
   return (
-    <div className="min-w-[72px] px-1 text-center">
-      <p className="text-lg font-extrabold leading-none tabular-nums dark:text-white">{nilai}</p>
-      <p className="mt-1 text-[11px] text-gray-500 dark:text-slate-400">{label}</p>
+    <div className="flex-1 px-2 py-1 text-center sm:px-4">
+      <p className="text-base font-extrabold leading-none tabular-nums dark:text-white sm:text-lg">{nilai}</p>
+      <p className="mt-1 text-[11px] leading-tight text-gray-500 dark:text-slate-400">{label}</p>
+      {sub ? <p className="text-[10px] text-gray-400">{sub}</p> : null}
+    </div>
+  );
+}
+
+/** Baris keterangan di panel "Tentang toko". */
+function Info({ ikon, label, children }) {
+  if (!children) return null;
+  return (
+    <div className="flex gap-3 py-2.5">
+      <span className="w-5 shrink-0 text-center text-sm" aria-hidden>{ikon}</span>
+      <div className="min-w-0">
+        <p className="text-[11px] uppercase tracking-wide text-gray-400">{label}</p>
+        <p className="mt-0.5 whitespace-pre-line text-sm text-gray-700 dark:text-slate-300">{children}</p>
+      </div>
     </div>
   );
 }
@@ -96,7 +126,7 @@ export default async function HalamanToko({ params }) {
   const data = await ambilToko(params.slug);
   if (!data) notFound();
 
-  const { profil, aktif, terjual, jumlahTerjual } = data;
+  const { profil, aktif, terjual, jumlahTerjual, ulasan, rataUlasan } = data;
   const nama = namaToko(profil);
   const warna = AKSEN[aksenAman(profil.store_accent)];
   const waIntl = formatWaForBaileys(profil.wa); // "" kalau bukan nomor sungguhan
@@ -109,143 +139,144 @@ export default async function HalamanToko({ params }) {
     : null;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 pb-24 sm:pb-16">
+    <div className="mx-auto max-w-5xl px-3 pb-24 sm:px-4 sm:pb-16">
       {/*
-        Sampul.
-        Sebelumnya sampul dan isi halaman adalah dua blok yang kebetulan
-        bertumpuk: logonya melayang di tengah dengan margin negatif, dan semua
-        yang di bawahnya rata tengah — termasuk bio panjang, yang paling susah
-        dibaca justru kalau rata tengah. Sekarang keduanya satu kartu: sampul,
-        lalu identitas toko rata kiri di layar lebar (tetap di tengah di ponsel,
-        karena di sana kolomnya memang sempit).
+        Kepala toko.
+        Rancangannya berangkat dari keadaan yang PALING SERING terjadi, bukan
+        dari toko contoh yang serba lengkap: toko baru biasanya belum punya
+        sampul, belum punya logo, dan isinya satu barang. Halaman yang cuma
+        bagus kalau semuanya terisi akan terlihat rusak justru pada hari
+        pertama — hari yang paling sering dilihat penjualnya.
       */}
-      <div className="mt-4 overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="mt-3 overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:mt-4">
         <div
-          className="relative h-36 sm:h-52"
+          className="relative h-24 sm:h-40"
           style={
             profil.banner_url
               ? undefined
-              : { backgroundImage: `linear-gradient(135deg, ${warna.utama}, ${warna.utama}88)` }
+              : {
+                  // Tanpa sampul, yang tampil bukan blok warna rata — dua bulatan
+                  // lembut membuatnya terlihat sengaja, bukan kosong.
+                  backgroundColor: warna.utama,
+                  backgroundImage:
+                    `radial-gradient(120% 90% at 12% 0%, rgba(255,255,255,.28), transparent 60%),` +
+                    `radial-gradient(90% 80% at 88% 100%, rgba(0,0,0,.22), transparent 55%)`,
+                }
           }
         >
           {profil.banner_url && (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={profil.banner_url} alt="" className="h-full w-full object-cover" />
           )}
-          {/* Peredup tipis: nama toko di bawahnya tetap terbaca apa pun
-              gambarnya, termasuk foto terang yang diunggah penjual. */}
-          <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/25 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-black/25 to-transparent" />
         </div>
 
-        <div className="px-5 pb-5 sm:px-7 sm:pb-6">
-          <div className="-mt-12 flex flex-col items-center gap-4 text-center sm:-mt-14 sm:flex-row sm:items-end sm:text-left">
+        <div className="px-4 pb-4 sm:px-6 sm:pb-5">
+          <div className="-mt-10 flex flex-col gap-3 sm:-mt-12 sm:flex-row sm:items-end sm:gap-5">
             <div
-              className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-white text-2xl font-bold shadow-md dark:border-slate-900 dark:bg-slate-900 sm:h-28 sm:w-28"
-              style={{ color: warna.utama }}
+              className="mx-auto h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-4 border-white bg-white shadow-lg dark:border-slate-900 dark:bg-slate-900 sm:mx-0 sm:h-24 sm:w-24"
             >
               {profil.logo_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={profil.logo_url} alt={nama} className="h-full w-full object-cover" />
               ) : (
-                nama.slice(0, 2).toUpperCase()
+                <div
+                  className="flex h-full w-full items-center justify-center text-2xl font-extrabold tracking-tight text-white"
+                  style={{ background: warna.utama }}
+                >
+                  {nama.slice(0, 2).toUpperCase()}
+                </div>
               )}
             </div>
 
-            <div className="min-w-0 flex-1 sm:pb-1">
-              <h1 className="flex items-center justify-center gap-2 text-xl font-extrabold tracking-tight sm:justify-start sm:text-2xl">
+            <div className="min-w-0 flex-1 text-center sm:pb-1 sm:text-left">
+              <h1 className="flex items-center justify-center gap-1.5 text-lg font-extrabold tracking-tight sm:justify-start sm:text-2xl">
                 <span className="truncate">{nama}</span>
                 {profil.trusted_seller && (
                   <span title="Penjual terverifikasi" className="shrink-0 text-sky-500">✓</span>
                 )}
               </h1>
-
               {profil.tagline && (
-                <p className="mt-1 line-clamp-2 text-sm text-gray-600 dark:text-slate-400">{profil.tagline}</p>
+                <p className="mt-0.5 line-clamp-2 text-sm text-gray-600 dark:text-slate-400">{profil.tagline}</p>
               )}
-
-              <div className="mt-2.5 flex flex-wrap items-center justify-center gap-1.5 text-xs sm:justify-start">
-                {/* Titik berwarna, bukan cuma kata: keadaan buka/tutup adalah
-                    hal pertama yang dicari pembeli, dan mata menangkap warna
-                    lebih dulu daripada huruf. */}
+              <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5 text-xs sm:justify-start">
                 <span
-                  className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-semibold"
+                  className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-semibold"
                   style={buka ? { background: warna.muda, color: warna.teks } : { background: "#f1f5f9", color: "#64748b" }}
                 >
-                  <span
-                    className="h-1.5 w-1.5 rounded-full"
-                    style={{ background: buka ? warna.utama : "#94a3b8" }}
-                  />
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ background: buka ? warna.utama : "#94a3b8" }} />
                   {buka ? "Buka" : "Sedang tutup"}
                 </span>
                 {profil.store_area && (
-                  <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-600 dark:bg-slate-800 dark:text-slate-300">
+                  <span className="rounded-full bg-gray-100 px-2.5 py-1 text-gray-600 dark:bg-slate-800 dark:text-slate-300">
                     📍 {profil.store_area}
                   </span>
                 )}
                 {profil.store_hours && (
-                  <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-600 dark:bg-slate-800 dark:text-slate-300">
+                  <span className="rounded-full bg-gray-100 px-2.5 py-1 text-gray-600 dark:bg-slate-800 dark:text-slate-300">
                     🕒 {profil.store_hours}
                   </span>
                 )}
               </div>
             </div>
+
+            {/* Tombol naik sejajar nama di layar lebar: kepala toko yang semua
+                isinya menumpuk ke tengah membuat halaman terasa berat di atas
+                dan kosong di bawah — persis keluhan yang bikin ini ditulis. */}
+            <div className="flex shrink-0 flex-wrap items-center justify-center gap-2 sm:justify-end sm:pb-1">
+              {waLink && (
+                <a
+                  href={waLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+                  style={{ background: warna.utama }}
+                >
+                  💬 Chat penjual
+                </a>
+              )}
+              {profil.store_instagram && (
+                <a
+                  href={`https://instagram.com/${profil.store_instagram}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-outline rounded-xl px-3 py-2 text-xs"
+                >
+                  @{profil.store_instagram}
+                </a>
+              )}
+              <ShareProfileButton />
+            </div>
           </div>
 
-          {/* Angka-angka toko. Dipisah dari lencana di atas supaya yang
-              menerangkan JAM BUKA tidak berdesakan dengan yang menerangkan
-              REKAM JEJAK — dua hal yang dicari pada saat yang berbeda. */}
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-1 divide-x divide-gray-200 rounded-2xl bg-gray-50 py-3 dark:divide-slate-800 dark:bg-slate-800/40 sm:justify-start sm:px-2">
+          <div className="mt-4 flex items-stretch divide-x divide-gray-200 rounded-2xl bg-gray-50 py-2.5 dark:divide-slate-800 dark:bg-slate-800/40">
             <Angka nilai={aktif.length} label="barang dijual" />
             <Angka nilai={jumlahTerjual} label="terjual" />
+            <Angka
+              nilai={ulasan.length ? `${rataUlasan.toFixed(1)}★` : "–"}
+              label="penilaian"
+              sub={ulasan.length ? `${ulasan.length} ulasan` : "belum ada"}
+            />
             {sejak && <Angka nilai={sejak} label="bergabung" />}
           </div>
-
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-            {waLink && (
-              <a
-                href={waLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
-                style={{ background: warna.utama }}
-              >
-                💬 Chat penjual
-              </a>
-            )}
-            {profil.store_instagram && (
-              <a
-                href={`https://instagram.com/${profil.store_instagram}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-outline rounded-xl px-4 py-2 text-xs"
-              >
-                @{profil.store_instagram}
-              </a>
-            )}
-            <ShareProfileButton />
-          </div>
-
-          {profil.store_announcement && (
-            <div
-              className="mt-5 flex gap-2.5 rounded-2xl border px-4 py-3 text-left text-sm"
-              style={{ background: warna.muda, borderColor: `${warna.utama}33`, color: warna.teks }}
-            >
-              <span aria-hidden>📣</span>
-              <p className="min-w-0 whitespace-pre-line">{profil.store_announcement}</p>
-            </div>
-          )}
-
-          {profil.bio && (
-            <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-gray-600 dark:text-slate-400">
-              {profil.bio}
-            </p>
-          )}
         </div>
       </div>
 
-      <section className="mt-8">
-        <div className="mb-4 flex items-baseline justify-between gap-3">
-          <h2 className="text-base font-bold sm:text-lg">Barang di toko ini</h2>
+      {profil.store_announcement && (
+        <div
+          className="mt-3 flex gap-2.5 rounded-2xl border px-4 py-3 text-sm"
+          style={{ background: warna.muda, borderColor: `${warna.utama}33`, color: warna.teks }}
+        >
+          <span aria-hidden>📣</span>
+          <p className="min-w-0 whitespace-pre-line">{profil.store_announcement}</p>
+        </div>
+      )}
+
+      <section className="mt-7">
+        {/* Garis aksen di kiri judul: penanda bagian yang lazim di halaman toko,
+            dan cukup untuk memberi ritme pada halaman yang isinya sedikit. */}
+        <div className="mb-4 flex items-center justify-between gap-3 border-l-4 pl-3" style={{ borderColor: warna.utama }}>
+          <h2 className="text-base font-extrabold sm:text-lg">Barang di toko ini</h2>
           <span className="shrink-0 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600 dark:bg-slate-800 dark:text-slate-300">
             {aktif.length}
           </span>
@@ -278,10 +309,86 @@ export default async function HalamanToko({ params }) {
         )}
       </section>
 
+      {/* Dua panel berdampingan. Halaman toko yang isinya cuma satu-dua barang
+          butuh sesuatu yang benar-benar berguna di bawahnya, bukan ruang kosong:
+          keterangan tokonya, dan cara membeli di sini. */}
+      <section className="mt-8 grid gap-3 lg:grid-cols-2">
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+          <h2 className="text-sm font-extrabold uppercase tracking-wide text-gray-500 dark:text-slate-400">
+            Tentang toko
+          </h2>
+          <div className="mt-2 divide-y divide-gray-100 dark:divide-slate-800">
+            <Info ikon="📝" label="Deskripsi">{profil.bio}</Info>
+            <Info ikon="📍" label="Wilayah / COD">{profil.store_area}</Info>
+            <Info ikon="🕒" label="Jam buka">{profil.store_hours}</Info>
+            <Info ikon="📱" label="WhatsApp">{profil.wa}</Info>
+            <Info ikon="🔗" label="Alamat toko">{`jualbeliusupolmed.web.id/toko/${profil.slug}`}</Info>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+          <h2 className="text-sm font-extrabold uppercase tracking-wide text-gray-500 dark:text-slate-400">
+            Cara belanja di sini
+          </h2>
+          <ol className="mt-3 space-y-3">
+            {[
+              ["Pilih barangnya", "Ketuk barang di atas untuk melihat foto, harga, dan keterangan lengkapnya."],
+              ["Chat penjualnya", "Tombol WhatsApp membuka chat langsung ke penjual — tanya stok, nego, atau janjian."],
+              ["COD di kampus", "Ketemuan di titik yang disepakati. Kalau ada masalah, admin bisa dimintai tolong."],
+            ].map(([judul, isi], i) => (
+              <li key={judul} className="flex gap-3">
+                <span
+                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+                  style={{ background: warna.utama }}
+                >
+                  {i + 1}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold dark:text-white">{judul}</p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-gray-500 dark:text-slate-400">{isi}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {ulasan.length > 0 && (
+        <section className="mt-8">
+          <div className="mb-4 flex items-center gap-3 border-l-4 pl-3" style={{ borderColor: warna.utama }}>
+            <h2 className="text-base font-extrabold sm:text-lg">Kata pembeli</h2>
+            <span className="text-sm font-semibold" style={{ color: warna.utama }}>
+              {rataUlasan.toFixed(1)}★
+            </span>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {ulasan.map((u, i) => (
+              <div key={i} className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+                <p className="text-sm" style={{ color: warna.utama }}>
+                  {"★".repeat(Math.max(1, Math.round(u.rating || 0)))}
+                  <span className="text-gray-300 dark:text-slate-700">
+                    {"★".repeat(Math.max(0, 5 - Math.round(u.rating || 0)))}
+                  </span>
+                </p>
+                {u.comment && (
+                  <p className="mt-1.5 line-clamp-4 text-sm text-gray-600 dark:text-slate-400">“{u.comment}”</p>
+                )}
+                <p className="mt-2 text-xs text-gray-400">
+                  {u.buyer_name || "Pembeli"}
+                  {u.created_at ? ` · ${new Date(u.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}` : ""}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {terjual.length > 0 && (
-        <section className="mt-10">
-          <h2 className="text-base font-bold sm:text-lg">Pernah terjual</h2>
-          <p className="mb-4 mt-0.5 text-xs text-gray-500 dark:text-slate-400">
+        <section className="mt-8">
+          <div className="mb-1 border-l-4 pl-3" style={{ borderColor: "#cbd5e1" }}>
+            <h2 className="text-base font-extrabold sm:text-lg">Pernah terjual</h2>
+          </div>
+          <p className="mb-4 pl-4 text-xs text-gray-500 dark:text-slate-400">
             Bukan untuk dibeli — ini jejak transaksi yang sudah selesai.
           </p>
           <div className="grid grid-cols-2 gap-3 opacity-70 sm:grid-cols-3 lg:grid-cols-4">
@@ -298,15 +405,15 @@ export default async function HalamanToko({ params }) {
         melainkan jualannya yang jadi tanpa biaya tayang.
       */}
       <div
-        className="mt-12 overflow-hidden rounded-3xl border px-6 py-8 text-center"
+        className="mt-10 overflow-hidden rounded-3xl border px-6 py-8 text-center"
         style={{ background: warna.muda, borderColor: `${warna.utama}33` }}
       >
         <p className="text-lg font-extrabold" style={{ color: warna.teks }}>
           Punya toko di sini, jualannya gratis
         </p>
         <p className="mx-auto mt-1.5 max-w-md text-sm" style={{ color: warna.teks, opacity: 0.85 }}>
-          Buat toko sekali — gratis — lalu semua barang yang kamu pasang tayang tanpa biaya.
-          Alamatnya jadi milikmu sendiri, seperti halaman ini.
+          Buat toko sekali — gratis, tinggal disetujui admin — lalu semua barang yang kamu pasang
+          tayang tanpa biaya. Alamatnya jadi milikmu sendiri, seperti halaman ini.
         </p>
         <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
           <Link
@@ -317,11 +424,11 @@ export default async function HalamanToko({ params }) {
             Buat toko punyamu
           </Link>
           <Link
-            href="/jual"
+            href="/"
             className="rounded-xl border border-white/60 bg-white px-5 py-2.5 text-sm font-semibold shadow-sm transition hover:opacity-90"
             style={{ color: warna.teks }}
           >
-            Pasang barang
+            Lihat barang lain
           </Link>
         </div>
       </div>

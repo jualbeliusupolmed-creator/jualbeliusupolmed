@@ -6,6 +6,7 @@ import { formatWa } from "@/lib/constants";
 import { postToGroup, notifyCategorySubscribers } from "@/lib/fonnte";
 import { pushListingBaru } from "@/lib/webpush";
 import { getDistributorSettings, calcDistributorFee, effectivePrice } from "@/lib/distributor";
+import { tokoAktif } from "@/lib/toko";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,9 @@ export async function GET(req) {
   // Kalau layar bilang Rp 5.000 lalu servernya menayangkan gratis, yang salah
   // bukan cuma angkanya — orangnya jadi tidak percaya pada angka berikutnya.
   const { pricing } = await getSettings().catch(() => ({ pricing: {} }));
-  const punyaToko = !!profile?.slug && pricing?.tokoGratis !== false;
+  // AKTIF, bukan sekadar punya slug: kalau mengetik alamat toko sudah cukup
+  // untuk iklan gratis, persetujuan admin tidak menjaga apa pun.
+  const punyaToko = tokoAktif(profile) && pricing?.tokoGratis !== false;
 
   // Fetch listings
   const { data, error } = await supa
@@ -158,7 +161,7 @@ export async function POST(req) {
     // Penjual bertoko sengaja TIDAK ikut dibatasi 15 iklan: kalau iklannya
     // gratis tapi tokonya cuma boleh berisi 15 barang, yang dijanjikan dan yang
     // diberikan tidak sama. Batasnya tetap berlaku untuk yang tidak punya toko.
-    const profilPunyaToko = !!profileCheck?.slug;
+    const profilPunyaToko = tokoAktif(profileCheck);
     if (!isPro && !isDistributor && !profilPunyaToko) {
       const { count: activeCount } = await supa
         .from("listings")
@@ -198,7 +201,7 @@ export async function POST(req) {
     // tetap ditagih satu per satu, sehingga toko yang isinya paling banyak
     // justru paling mahal — kebalikan dari yang seharusnya didorong.
     // Sakelarnya `pricing.tokoGratis` (bawaan: nyala).
-    const punyaToko = !!profile?.slug && settings.pricing?.tokoGratis !== false;
+    const punyaToko = tokoAktif(profile) && settings.pricing?.tokoGratis !== false;
 
     let days = Math.max(1, Number(settings.pricing?.listingDays) || 14);
     if (isJasaFree) days = 7;

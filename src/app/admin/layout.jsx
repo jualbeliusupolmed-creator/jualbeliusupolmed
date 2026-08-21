@@ -39,7 +39,7 @@ export default async function AdminLayout({ children }) {
   }
 
   const supa = getAdminClient();
-  const [pendingRes, reportsRes, profilesRes, payRes, outboxRes] = await Promise.all([
+  const [pendingRes, reportsRes, profilesRes, payRes, outboxRes, tokoRes] = await Promise.all([
     supa.from("listings").select("id", { count: "exact", head: true }).eq("status", "pending"),
     supa.from("reports").select("id", { count: "exact", head: true }).eq("status", "open"),
     supa.from("profile_change_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
@@ -50,6 +50,10 @@ export default async function AdminLayout({ children }) {
     // tinggal null dan lencananya tidak muncul. Itu perilaku yang diinginkan:
     // menu boleh kehilangan satu lencana, tidak boleh kehilangan seluruh menu.
     supa.from("wa_outbox").select("id", { count: "exact", head: true }).eq("status", "tertunda"),
+    // Toko yang menunggu persetujuan. Alasannya sama dengan wa_outbox: kolomnya
+    // lahir lewat migrasi terpisah (BAGIAN 26), dan lencana yang hilang lebih
+    // baik daripada seluruh menu yang hilang.
+    supa.from("seller_profiles").select("wa", { count: "exact", head: true }).eq("store_status", "menunggu"),
   ]);
 
   const counts = {
@@ -58,6 +62,7 @@ export default async function AdminLayout({ children }) {
     profil_request: profilesRes.count || 0,
     transaksi: payRes.count || 0,
     antrean: outboxRes.count || 0,
+    toko: tokoRes.count || 0,
   };
   // Angka nol tidak perlu dipajang — lencana kosong cuma jadi noise.
   for (const k of Object.keys(counts)) if (!counts[k]) delete counts[k];
