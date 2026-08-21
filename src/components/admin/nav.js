@@ -32,6 +32,7 @@ export const ICONS = {
   audit:          "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
   wabot:          "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z",
   broadcast:      "M3 3h18v4H3zM3 17h18v4H3zM7 8h10v8H7z",
+  antrean:        "M22 12h-6l-2 3h-4l-2-3H2M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z",
   notifikasi:     "M15 17h5l-1.41-1.41A1 1 0 0118 15V10a6 6 0 00-5-5.92V4a1 1 0 00-2 0v.08A6 6 0 006 10v5a1 1 0 01-.59.89L4 17h5m6 0a3 3 0 01-6 0",
   ai:             "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z",
   referral:       "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zm10 0l2 2-2 2m4-2H15",
@@ -90,6 +91,10 @@ export const GROUPS = [
       { key: "wabot",      label: "WhatsApp Bot" },
       { key: "broadcast",  label: "Broadcast" },
       { key: "notifikasi", label: "Notifikasi" },
+      // Antrean notifikasi yang GAGAL terkirim. Tetangganya "Notifikasi"
+      // (push ke peramban) sengaja dibiarkan terpisah: yang satu fitur
+      // kirim-pesan, yang ini daftar orang yang belum dapat kabarnya.
+      { key: "antrean",    label: "Antrean WA" },
       { key: "ai",         label: "AI & Memori" },
       { key: "referral",   label: "Referral" },
     ],
