@@ -37,7 +37,8 @@ function localDay(d) {
   ).padStart(2, "0")}`;
 }
 
-import AdminLayout from "./AdminLayout";
+import { PageHeader } from "@/components/admin/ui";
+import { labelTab } from "@/components/admin/nav";
 
 export default function AdminPanel({
   listings = [],
@@ -66,9 +67,6 @@ export default function AdminPanel({
   const router = useRouter();
   const VALID_TABS = ["overview","listings","transaksi","rating","reports","dicari","kategori","pengaturan","penjual","toko","profil_request","blogs","wabot","ai","broadcast","referral","tawaran","grouppost","notifikasi","distributor"];
   const tab = VALID_TABS.includes(initialTab) ? initialTab : "overview";
-  function goTab(key) {
-    router.push(`/admin/${key}`);
-  }
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState(null);
   const [confirmState, setConfirmState] = useState(null);
@@ -122,10 +120,6 @@ export default function AdminPanel({
   }
   function confirmThen(opts, fn) {
     setConfirmState({ ...opts, onConfirm: fn });
-  }
-  async function logout() {
-    await fetch("/api/admin/login", { method: "DELETE" });
-    router.refresh();
   }
 
   // ── derived stats ──────────────────────────────────────────────────────────
@@ -222,55 +216,7 @@ export default function AdminPanel({
 
   const pendingProfileCount = profileRequests.filter((r) => r.status === "pending").length;
 
-  const NAV_GROUPS = [
-    {
-      label: "Utama",
-      items: [
-        { key: "overview",   label: "Ringkasan" },
-        { key: "listings",   label: "Listing",        count: listings.length || null },
-        { key: "transaksi",  label: "Transaksi",       count: pendingPayments.length || null },
-        { key: "tawaran",    label: "Tawaran Harga" },
-      ],
-    },
-    {
-      label: "Pengguna",
-      items: [
-        { key: "penjual",        label: "Penjual" },
-        { key: "toko",           label: "Toko",        count: stores.length || null },
-        { key: "profil_request", label: "Ubah Profil", count: pendingProfileCount || null },
-        { key: "distributor",    label: "Distributor" },
-        { key: "rating",         label: "Rating" },
-        { key: "reports",        label: "Laporan",     count: openReports.length || null },
-      ],
-    },
-    {
-      label: "Konten",
-      items: [
-        { key: "dicari",    label: "Dicari",       count: activeWanted.length || null },
-        { key: "grouppost", label: "Post Grup" },
-        { key: "blogs",     label: "Artikel Blog" },
-      ],
-    },
-    {
-      label: "Otomasi",
-      items: [
-        { key: "wabot",      label: "WhatsApp Bot" },
-        { key: "broadcast",  label: "Broadcast" },
-        { key: "ai",         label: "AI & Memori" },
-        { key: "notifikasi", label: "Notifikasi" },
-        { key: "referral",   label: "Referral" },
-      ],
-    },
-    {
-      label: "Sistem",
-      items: [
-        { key: "kategori",   label: "Kategori" },
-        { key: "pengaturan", label: "Pengaturan" },
-      ],
-    },
-  ];
-  const NAV = NAV_GROUPS.flatMap((g) => g.items);
-  const activeLabel = NAV.find((n) => n.key === tab)?.label;
+  const activeLabel = labelTab(tab);
 
   return (
     <>
@@ -302,13 +248,8 @@ export default function AdminPanel({
         </div>
       )}
 
-      <AdminLayout
-        tab={tab}
-        goTab={goTab}
-        activeLabel={activeLabel}
-        NAV_GROUPS={NAV_GROUPS}
-        logout={logout}
-      >
+      <PageHeader title={activeLabel} />
+      <div className="space-y-6">
 
         {tab === "overview" && (
           <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-7">
@@ -1133,7 +1074,7 @@ export default function AdminPanel({
         )}
 
         {busy && <div className="fixed bottom-5 left-5 z-[60] rounded-lg bg-gray-900/80 px-3 py-1.5 text-xs text-white">Memproses…</div>}
-      </AdminLayout>
+      </div>
     </>
   );
 }

@@ -3,6 +3,7 @@ import { isAdmin } from "@/lib/auth";
 import { getAdminStats, DEFAULT_DATA, ADMIN_TABS } from "@/lib/adminData";
 import AdminLogin from "../AdminLogin";
 import AdminPanel from "../AdminPanel";
+import { LoadError } from "@/components/admin/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -21,9 +22,7 @@ export default async function AdminTabPage({ params }) {
     data = await getAdminStats();
   } catch (e) {
     return (
-      <div className="mx-auto max-w-2xl p-8 text-center text-rose-600">
-        Gagal memuat data admin: {e.message}. Cek konfigurasi Supabase.
-      </div>
+      <LoadError message={`${e.message}. Cek konfigurasi Supabase.`} />
     );
   }
 

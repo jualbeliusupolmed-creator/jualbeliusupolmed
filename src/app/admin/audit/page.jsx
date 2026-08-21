@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { PageHeader } from "@/components/admin/ui";
 
 function relTime(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -45,10 +46,7 @@ export default function AuditPage() {
 
   return (
     <div className="animate-fade-in space-y-6">
-      <div>
-        <h1 className="text-2xl font-extrabold dark:text-white">Audit Trail</h1>
-        <p className="mt-0.5 text-sm text-gray-400">Log semua aksi admin dan error kritis</p>
-      </div>
+      <PageHeader title="Audit Trail" description="Catatan semua aksi admin dan error kritis." />
 
       <div className="flex gap-2">
         {[["logs", "Aksi Admin"], ["errors", "Error Log"]].map(([key, label]) => (

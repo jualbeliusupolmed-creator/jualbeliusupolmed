@@ -79,7 +79,7 @@ export default function BlogEditor({ initialBlog }) {
   const readMins  = Math.max(1, Math.round(wordCount / 200));
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
+    <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold dark:text-white">
           {initialBlog ? "Edit Artikel" : "Tulis Artikel Baru"}

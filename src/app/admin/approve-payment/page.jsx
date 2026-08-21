@@ -15,7 +15,7 @@ export default async function ApprovePaymentPage({ searchParams }) {
 
   if (!id && !orderId) {
     return (
-      <div className="mx-auto max-w-md p-8 text-center bg-white dark:bg-slate-900 rounded-2xl shadow mt-10 border border-gray-100 dark:border-slate-800">
+      <div className="card mx-auto max-w-md p-8 text-center">
         <h1 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Parameter Tidak Lengkap</h1>
         <p className="text-sm text-gray-500 dark:text-slate-400">ID Pembayaran atau Order ID wajib disertakan.</p>
       </div>

@@ -1,5 +1,6 @@
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import ModerasiClient from "@/components/admin/ModerasiClient";
+import { PageHeader } from "@/components/admin/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -45,20 +46,15 @@ export default async function ModerasiPage() {
 
   return (
     <div className="animate-fade-in">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-extrabold dark:text-white">Antrian Moderasi</h1>
-          <p className="mt-0.5 text-sm text-gray-400">{total} item perlu perhatian</p>
-        </div>
-        <form action="" method="get">
-          <button
-            type="submit"
-            className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 shadow-sm hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
-          >
-            Refresh
-          </button>
-        </form>
-      </div>
+      <PageHeader
+        title="Antrian Moderasi"
+        description={`${total} item perlu perhatian.`}
+        actions={
+          <form action="" method="get">
+            <button type="submit" className="btn-outline text-sm">Muat ulang</button>
+          </form>
+        }
+      />
 
       <ModerasiClient
         pendingListings={pendingListings}
