@@ -5,12 +5,14 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAdmin } from "./AdminProvider";
 import AdminNav from "./AdminNav";
 import { NAV, ICONS, labelTab } from "./nav";
+import { useBasisAdmin } from "./basis";
 
 /*
  * Bilah atas ala Modern Admin: nama halaman di kiri, satu kotak cari cepat (Command Palette Ctrl+K),
  * aksi navigasi langsung dan kontrol akun di kanan.
  */
 export default function AdminTopbar({ counts = {} }) {
+  const basis = useBasisAdmin();
   const router = useRouter();
   const pathname = usePathname();
   const { logout } = useAdmin();
@@ -65,7 +67,7 @@ export default function AdminTopbar({ counts = {} }) {
   }, [pathname]);
 
   function pilih(key) {
-    router.push(`/admin/${key}`);
+    router.push(`${basis}/${key}`);
     setQ("");
     setFokus(false);
   }

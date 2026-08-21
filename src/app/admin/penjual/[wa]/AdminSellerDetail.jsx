@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useBasisAdmin } from "@/components/admin/basis";
 
 export default function AdminSellerDetail({ profile, listings, stats, wa }) {
+  const basis = useBasisAdmin();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState(null);
@@ -124,7 +126,7 @@ export default function AdminSellerDetail({ profile, listings, stats, wa }) {
           
           <div className="mt-6 flex gap-2">
             <button
-              onClick={() => router.push("/admin/penjual")}
+              onClick={() => router.push(`${basis}/penjual`)}
               className="btn-outline"
             >
               Kembali
@@ -211,7 +213,7 @@ export default function AdminSellerDetail({ profile, listings, stats, wa }) {
                       </span>
                     </td>
                     <td className="p-3">
-                      <a href={`/admin/listings/${l.id}`} className="text-primary hover:underline" target="_blank" rel="noreferrer">Detail</a>
+                      <a href={`${basis}/listings/${l.id}`} className="text-primary hover:underline" target="_blank" rel="noreferrer">Detail</a>
                     </td>
                   </tr>
                 ))

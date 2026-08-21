@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
+import { useBasisAdmin, useModeDemo } from "@/components/admin/basis";
 
 function autoSlug(val) {
   return val
@@ -12,6 +13,8 @@ function autoSlug(val) {
 }
 
 export default function BlogEditor({ initialBlog }) {
+  const basis = useBasisAdmin();
+  const demo = useModeDemo();
   const router = useRouter();
   const [busy, setBusy]         = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -38,6 +41,16 @@ export default function BlogEditor({ initialBlog }) {
     }
     setBusy(true);
     try {
+      // Di salinan demo, editor ini tetap bisa diisi dan dilihat — yang tidak
+      // terjadi cuma penyimpanannya. Tanpa penjaga ini, tombol Simpan mengetuk
+      // rute admin sungguhan dan dijawab "Unauthorized", yang terbaca seperti
+      // panelnya rusak alih-alih seperti demo yang memang tidak menyimpan.
+      if (demo) {
+        alert("Panel demo — artikel tidak disimpan.");
+        setBusy(false);
+        return;
+      }
+
       const res = await fetch("/api/admin/blogs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -45,7 +58,7 @@ export default function BlogEditor({ initialBlog }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal menyimpan");
-      router.push("/admin/blogs");
+      router.push(`${basis}/blogs`);
       router.refresh();
     } catch (err) {
       alert(err.message);
@@ -88,7 +101,7 @@ export default function BlogEditor({ initialBlog }) {
           <button type="button" onClick={() => setPreview(!preview)} className={`btn-outline text-sm ${preview ? "bg-primary/10 border-primary/50" : ""}`}>
             {preview ? "✏️ Editor" : "👁 Preview"}
           </button>
-          <button onClick={() => router.push("/admin/blogs")} className="btn-outline text-sm">
+          <button onClick={() => router.push(`${basis}/blogs`)} className="btn-outline text-sm">
             Kembali
           </button>
         </div>
@@ -240,7 +253,7 @@ export default function BlogEditor({ initialBlog }) {
             {charCount > 0 ? `${charCount} karakter` : ""}
           </div>
           <div className="flex gap-3">
-            <button type="button" onClick={() => router.push("/admin/blogs")} className="btn-outline">Batal</button>
+            <button type="button" onClick={() => router.push(`${basis}/blogs`)} className="btn-outline">Batal</button>
             <button
               type="button"
               disabled={busy}

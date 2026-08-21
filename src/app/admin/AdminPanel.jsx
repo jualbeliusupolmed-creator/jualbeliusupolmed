@@ -57,6 +57,7 @@ function localDay(d) {
 
 import { PageHeader } from "@/components/admin/ui";
 import { labelTab } from "@/components/admin/nav";
+import { useBasisAdmin } from "@/components/admin/basis";
 
 export default function AdminPanel({
   listings = [],
@@ -84,6 +85,7 @@ export default function AdminPanel({
   currentPage = 1,
   pageSize = 100,
 }) {
+  const basis = useBasisAdmin();
   const router = useRouter();
   const VALID_TABS = ["overview","listings","transaksi","rating","reports","dicari","kategori","pengaturan","penjual","toko","profil_request","blogs","wabot","ai","broadcast","referral","tawaran","grouppost","notifikasi","distributor"];
   const tab = VALID_TABS.includes(initialTab) ? initialTab : "overview";
@@ -392,7 +394,7 @@ export default function AdminPanel({
                             </div>
                           )}
                           <div className="min-w-0 max-w-[240px]">
-                            <a href={`/admin/listings/${buildSlug(l.title, l.id)}`} className="block truncate font-medium hover:underline" title={l.title}>
+                            <a href={`${basis}/listings/${buildSlug(l.title, l.id)}`} className="block truncate font-medium hover:underline" title={l.title}>
                               {l.title}
                             </a>
                             <p className="truncate text-xs" style={{ color: "var(--g-ink-soft)" }}>{l.category}{l.featured ? " · ⭐" : ""}</p>
@@ -439,7 +441,7 @@ export default function AdminPanel({
                       <td>
                         <MenuAksi
                           items={[
-                            { label: "Edit", href: `/admin/listings/${buildSlug(l.title, l.id)}` },
+                            { label: "Edit", href: `${basis}/listings/${buildSlug(l.title, l.id)}` },
                             ...(l.status === "deletion_pending"
                               ? [
                                   { label: "Setujui penghapusan", tone: "bad", onClick: () => confirmThen({ title: "Setujui penghapusan", message: `Hapus permanen "${l.title}"?`, danger: true }, () => action({ action: "delete", id: l.id }, "Iklan dihapus (APPROVED)")) },
@@ -695,7 +697,7 @@ export default function AdminPanel({
                               {s.subscription_tier === "pro" && <span className="text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-900/30 rounded px-1">⭐ PRO</span>}
                             </div>
                             <div className="mt-0.5 flex gap-2 text-xs">
-                              <a href={`/admin/penjual/${s.seller_wa.replace(/\D/g, "")}`} className="text-primary hover:underline">Edit</a>
+                              <a href={`${basis}/penjual/${s.seller_wa.replace(/\D/g, "")}`} className="text-primary hover:underline">Edit</a>
                               <a href={`/penjual/${s.seller_wa.replace(/\D/g, "")}`} target="_blank" rel="noreferrer" className="text-gray-400 hover:underline">Profil ↗</a>
                             </div>
                           </td>
@@ -862,7 +864,7 @@ export default function AdminPanel({
                               {t.store_area && <div className="mt-0.5 text-xs text-gray-400">{t.store_area}</div>}
                             </td>
                             <td className="p-3 font-mono text-xs">
-                              <a href={`/admin/penjual/${String(t.wa).replace(/\D/g, "")}`} className="hover:text-primary">{t.name || t.wa}</a>
+                              <a href={`${basis}/penjual/${String(t.wa).replace(/\D/g, "")}`} className="hover:text-primary">{t.name || t.wa}</a>
                               <div className="text-gray-400">{t.wa}</div>
                             </td>
                             <td className="p-3">
@@ -887,7 +889,7 @@ export default function AdminPanel({
                               <div className="flex flex-wrap gap-1">
                                 {statusToko(t) !== "aktif" && (
                                   <a
-                                    href={`/admin/approve-toko?wa=${encodeURIComponent(t.wa)}`}
+                                    href={`${basis}/approve-toko?wa=${encodeURIComponent(t.wa)}`}
                                     className="rounded-md bg-green-100 px-2 py-1 text-xs text-green-700"
                                   >
                                     Tinjau & aktifkan
@@ -1073,7 +1075,7 @@ export default function AdminPanel({
                 {penulisBadge.length > 0 && <span className="ml-2">· {penulisBadge.length} penulis berbadge</span>}
               </p>
               <button
-                onClick={() => router.push("/admin/blogs/new")}
+                onClick={() => router.push(`${basis}/blogs/new`)}
                 className="btn-primary"
               >
                 Tulis Artikel Baru
@@ -1094,7 +1096,7 @@ export default function AdminPanel({
                     {b.excerpt && <p className="mt-2 text-sm text-gray-600 dark:text-slate-300">{b.excerpt}</p>}
 
                     <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <a href={`/admin/blogs/${b.id}`} className="btn-outline text-xs">Baca / sunting</a>
+                      <a href={`${basis}/blogs/${b.id}`} className="btn-outline text-xs">Baca / sunting</a>
                       <button
                         onClick={() => action({ action: "blog_setujui", id: b.id }, "Artikel diterbitkan")}
                         disabled={busy}
@@ -1189,7 +1191,7 @@ export default function AdminPanel({
                       <td className="p-3 text-xs text-gray-400">{new Date(b.created_at).toLocaleDateString("id-ID")}</td>
                       <td className="p-3">
                         <div className="flex flex-wrap gap-2">
-                          <a href={`/admin/blogs/${b.id}`} className="text-primary hover:underline">Edit</a>
+                          <a href={`${basis}/blogs/${b.id}`} className="text-primary hover:underline">Edit</a>
                           {b.status === "published" && <a href={`/blog/${b.slug}`} target="_blank" rel="noreferrer" className="text-gray-500 hover:text-gray-900 dark:hover:text-white">Lihat</a>}
                           {b.status === "published" && b.author_wa && (
                             <button

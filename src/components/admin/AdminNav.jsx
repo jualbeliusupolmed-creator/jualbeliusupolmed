@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { GROUPS, ICONS } from "./nav";
+import { useBasisAdmin } from "./basis";
 
 /*
  * Daftar menu — satu komponen, dua tempat: rel kiri di layar lebar dan laci
@@ -24,10 +25,11 @@ function NavIcon({ name }) {
 export default function AdminNav({ counts = {}, onNavigate }) {
   const router = useRouter();
   const pathname = usePathname();
+  const basis = useBasisAdmin();
   const currentTab = pathname.split("/").filter(Boolean)[1] || "overview";
 
   function go(key) {
-    router.push(`/admin/${key}`);
+    router.push(`${basis}/${key}`);
     onNavigate?.();
   }
 

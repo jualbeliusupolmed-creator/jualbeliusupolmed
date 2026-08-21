@@ -4,8 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LABEL_STATUS, statusToko, namaToko } from "@/lib/toko";
+import { useBasisAdmin, useModeDemo } from "@/components/admin/basis";
 
 export default function ApproveTokoClient({ wa, profil, jumlahIklan, galat }) {
+  const basis = useBasisAdmin();
+  const demo = useModeDemo();
   const router = useRouter();
   const [sibuk, setSibuk] = useState("");
   const [catatan, setCatatan] = useState("");
@@ -20,7 +23,7 @@ export default function ApproveTokoClient({ wa, profil, jumlahIklan, galat }) {
           Tidak ada profil dengan nomor <b>{wa || "(kosong)"}</b>.
           {galat ? <span className="mt-2 block font-mono text-xs opacity-70">{galat}</span> : null}
         </p>
-        <Link href="/admin/toko" className="g-btn g-btn-filled mt-5 inline-flex">Lihat semua toko</Link>
+        <Link href={`${basis}/toko`} className="g-btn g-btn-filled mt-5 inline-flex">Lihat semua toko</Link>
       </div>
     );
   }
@@ -34,6 +37,12 @@ export default function ApproveTokoClient({ wa, profil, jumlahIklan, galat }) {
     setSibuk(aksi);
     setPesan(null);
     try {
+      if (demo) {
+        setPesan({ buruk: true, teks: "Panel demo — persetujuan tidak dijalankan." });
+        setSibuk("");
+        return;
+      }
+
       const res = await fetch("/api/admin/action", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -67,7 +76,7 @@ export default function ApproveTokoClient({ wa, profil, jumlahIklan, galat }) {
     <div className="mx-auto max-w-2xl">
       <div className="g-page-head">
         <div>
-          <Link href="/admin/toko" className="g-back">← Semua toko</Link>
+          <Link href={`${basis}/toko`} className="g-back">← Semua toko</Link>
           <h1 className="g-page-title">Aktivasi toko</h1>
           <p className="g-page-desc">
             Mengaktifkan toko bukan cuma menyalakan halamannya: sejak toko berarti iklan gratis,
@@ -100,7 +109,7 @@ export default function ApproveTokoClient({ wa, profil, jumlahIklan, galat }) {
             )}
           </Baris>
           <Baris label="Penjual">
-            <a href={`/admin/penjual/${String(wa).replace(/\D/g, "")}`} className="underline">{profil.name || "-"}</a>
+            <a href={`${basis}/penjual/${String(wa).replace(/\D/g, "")}`} className="underline">{profil.name || "-"}</a>
           </Baris>
           <Baris label="WhatsApp"><span className="font-mono text-xs">{profil.wa}</span></Baris>
           <Baris label="Wilayah">{profil.store_area || "–"}</Baris>
@@ -126,7 +135,7 @@ export default function ApproveTokoClient({ wa, profil, jumlahIklan, galat }) {
             <b>Toko ini sudah aktif.</b>
             <p className="mt-1">
               Halamannya bisa dibuka siapa saja dan semua iklan penjual ini tayang tanpa biaya.
-              Untuk mencabutnya, pakai tombol di tab <Link href="/admin/toko" className="underline">Toko</Link>.
+              Untuk mencabutnya, pakai tombol di tab <Link href={`${basis}/toko`} className="underline">Toko</Link>.
             </p>
           </div>
         </div>
