@@ -20,6 +20,7 @@ import ProductCard from "@/components/ProductCard";
 export default function TokoKatalog({ listings, warna }) {
   const [q, setQ] = useState("");
   const [kategori, setKategori] = useState("Semua");
+  const [urut, setUrut] = useState("baru");
 
   const kategoriAda = useMemo(() => {
     const set = new Set(listings.map((l) => l.category).filter(Boolean));
@@ -28,7 +29,7 @@ export default function TokoKatalog({ listings, warna }) {
 
   const tampil = useMemo(() => {
     const s = q.trim().toLowerCase();
-    return listings.filter((l) => {
+    const hasil = listings.filter((l) => {
       if (kategori !== "Semua" && l.category !== kategori) return false;
       if (!s) return true;
       return (
@@ -37,13 +38,32 @@ export default function TokoKatalog({ listings, warna }) {
         l.category?.toLowerCase().includes(s)
       );
     });
-  }, [listings, q, kategori]);
+    // Pengurutan disalin dari cara orang benar-benar mencari di toko: yang baru
+    // dulu, atau yang paling murah. "Paling dilihat" jadi penanda laris — satu
+    // -satunya sinyal populer yang benar-benar kita punya.
+    const urutan = {
+      baru: (a, b) => new Date(b.bumped_at || b.created_at || 0) - new Date(a.bumped_at || a.created_at || 0),
+      murah: (a, b) => (a.price || 0) - (b.price || 0),
+      mahal: (a, b) => (b.price || 0) - (a.price || 0),
+      laris: (a, b) => (b.views || 0) - (a.views || 0),
+    };
+    return [...hasil].sort(urutan[urut] || urutan.baru);
+  }, [listings, q, kategori, urut]);
 
   const pakaiCari = listings.length >= 6;
+  // Pengurutan baru berguna kalau memang ada yang bisa diurutkan. Di toko
+  // berisi dua barang, ia cuma tombol yang tidak mengubah apa pun.
+  const pakaiUrut = listings.length >= 4;
+  const URUT = [
+    ["baru", "Terbaru"],
+    ["murah", "Termurah"],
+    ["mahal", "Termahal"],
+    ["laris", "Paling dilihat"],
+  ];
 
   return (
     <>
-      {(pakaiCari || kategoriAda.length > 0) && (
+      {(pakaiCari || pakaiUrut || kategoriAda.length > 0) && (
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
           {pakaiCari && (
             <div className="relative sm:w-64">
@@ -61,6 +81,17 @@ export default function TokoKatalog({ listings, warna }) {
                 className="w-full rounded-xl border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm outline-none transition focus:border-gray-400 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
               />
             </div>
+          )}
+
+          {pakaiUrut && (
+            <select
+              value={urut}
+              onChange={(e) => setUrut(e.target.value)}
+              aria-label="Urutkan barang"
+              className="shrink-0 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+            >
+              {URUT.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+            </select>
           )}
 
           {kategoriAda.length > 0 && (
@@ -102,7 +133,7 @@ export default function TokoKatalog({ listings, warna }) {
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {tampil.map((l) => (
-            <ProductCard key={l.id} listing={l} />
+            <ProductCard key={l.id} listing={l} tanpaPenjual />
           ))}
 
           {/* Toko baru biasanya berisi satu-dua barang, dan satu kartu yang

@@ -5,7 +5,12 @@ import FavoriteButton from "@/components/FavoriteButton";
 import { Icon } from "@/components/Icons";
 import { buildSlug } from "@/lib/slug";
 
-export default function ProductCard({ listing }) {
+/**
+ * @param tanpaPenjual  Sembunyikan nama penjual di kaki kartu. Dipakai di
+ *   halaman toko: di sana SEMUA kartu milik penjual yang sama, dan mengulang
+ *   namanya dua belas kali cuma memakan ruang yang seharusnya jadi judul barang.
+ */
+export default function ProductCard({ listing, tanpaPenjual = false }) {
   const sold = listing.status === "sold";
   const isNew = listing.created_at &&
     (Date.now() - new Date(listing.created_at).getTime()) < 24 * 60 * 60 * 1000;
@@ -105,7 +110,7 @@ export default function ProductCard({ listing }) {
           )}
           <div className="mt-1.5 flex items-center justify-between text-[11px] text-gray-500 dark:text-slate-400">
             <p className="truncate flex items-center gap-1">
-              <span>{listing.type !== "jasa" && listing.stock != null ? `Stok ${listing.stock} · ` : ""}{listing.seller_name}</span>
+              <span>{listing.type !== "jasa" && listing.stock != null ? `Stok ${listing.stock}` : ""}{!tanpaPenjual ? `${listing.type !== "jasa" && listing.stock != null ? " · " : ""}${listing.seller_name || ""}` : ""}</span>
               {listing.seller_profiles?.subscription_tier === "pro" &&
                 new Date(listing.seller_profiles?.subscription_expires_at) > new Date() && (
                 <span className="inline-flex items-center justify-center rounded-full bg-amber-100 p-0.5 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400" title="Penjual Pro">
