@@ -65,7 +65,6 @@ export const DEFAULT_SETTINGS = {
   payment: {
     mode: "auto", // "auto" = QiosPay/callback aktif; "manual" = upload struk saja
   },
-  kapabilitas: {}, // map featureId → boolean, dikelola dari TabKapabilitas
   bot: {
     paused_users: [],
     webhookUrl: "",

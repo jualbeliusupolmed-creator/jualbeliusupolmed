@@ -20,7 +20,6 @@ export async function GET() {
       // kontak untuk footer, dashboard, halaman jual/jasa/dicari sekaligus.
       contact: await kontakDenganCadangan(settings.contact),
       categories,
-      kapabilitas: settings.kapabilitas || {},
     });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });
