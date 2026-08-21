@@ -112,3 +112,40 @@ export function normalisasiInstagram(nilai) {
 export function namaToko(profil) {
   return (profil?.store_name || profil?.name || "Toko").trim();
 }
+
+/* ── Persetujuan admin ──────────────────────────────────────────────────────
+ *
+ * Sejak "punya toko = iklan gratis", membuat toko bukan lagi urusan tampilan:
+ * ia pintu masuk ke iklan tanpa biaya. Karena itu toko baru menunggu
+ * persetujuan admin dulu, dan alurnya cuma satu arah:
+ *
+ *   draf → menunggu → aktif
+ *              └───→ ditolak → (penjual perbaiki) → menunggu
+ *
+ * Kolomnya lahir di BAGIAN 26. Sebelum migrasi itu dijalankan, `store_status`
+ * TIDAK ADA di baris mana pun — dan pada saat itu satu-satunya jawaban yang
+ * benar adalah "toko lama tetap hidup". Itulah kenapa tokoAktif() jatuh ke
+ * `!!slug` saat kolomnya undefined: migrasi yang belum dijalankan tidak boleh
+ * memadamkan halaman toko yang alamatnya sudah disebar penjualnya.
+ */
+
+export const STATUS_TOKO = ["draf", "menunggu", "aktif", "ditolak"];
+
+export const LABEL_STATUS = {
+  draf: "Belum diajukan",
+  menunggu: "Menunggu persetujuan admin",
+  aktif: "Aktif",
+  ditolak: "Ditolak admin",
+};
+
+export function statusToko(profil) {
+  if (!profil) return "draf";
+  // Kolomnya belum ada (migrasi BAGIAN 26 belum jalan) → toko lama tetap aktif.
+  if (profil.store_status === undefined) return profil.slug ? "aktif" : "draf";
+  return STATUS_TOKO.includes(profil.store_status) ? profil.store_status : "draf";
+}
+
+/** Boleh tayang di /toko/<slug> dan berhak atas iklan gratis. */
+export function tokoAktif(profil) {
+  return !!profil?.slug && statusToko(profil) === "aktif";
+}

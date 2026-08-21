@@ -3,14 +3,32 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getSellerSession } from "@/lib/auth";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import {
-  periksaSlug, aksenAman, potong, normalisasiInstagram, BATAS,
+  periksaSlug, aksenAman, potong, normalisasiInstagram, BATAS, statusToko, namaToko,
 } from "@/lib/toko";
+import { getSettings } from "@/lib/settings";
+import { formatWaForBaileys } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
 const KOLOM = "wa, name, bio, slug, store_name, tagline, logo_url, banner_url, "
   + "store_area, store_hours, store_instagram, store_accent, store_open, "
+  + "store_announcement, store_updated_at, trusted_seller, "
+  + "store_status, store_requested_at, store_approved_at, store_reject_note";
+
+// Kolom persetujuan lahir belakangan (migrasi BAGIAN 26). Kalau belum ada,
+// Postgres menolak SELECT-nya seluruhnya — dan penjual kehilangan halaman
+// tokonya karena satu kolom yang belum dibuat. Jadi kalau gagal, ulangi tanpa
+// kolom itu: yang hilang cuma lencana statusnya, bukan seluruh formulir.
+const KOLOM_LAMA = "wa, name, bio, slug, store_name, tagline, logo_url, banner_url, "
+  + "store_area, store_hours, store_instagram, store_accent, store_open, "
   + "store_announcement, store_updated_at, trusted_seller";
+
+async function ambilProfil(supa, wa) {
+  const { data, error } = await supa.from("seller_profiles").select(KOLOM).eq("wa", wa).maybeSingle();
+  if (!error) return { data, error: null };
+  const ulang = await supa.from("seller_profiles").select(KOLOM_LAMA).eq("wa", wa).maybeSingle();
+  return { data: ulang.data, error: ulang.error };
+}
 
 // GET /api/toko — profil toko milik sesi yang sedang masuk.
 // Sengaja tanpa parameter: penjual hanya boleh memuat tokonya sendiri, dan
@@ -21,8 +39,7 @@ export async function GET() {
   if (!wa) return NextResponse.json({ error: "Belum masuk" }, { status: 401 });
 
   const supa = getAdminClient();
-  const { data, error } = await supa
-    .from("seller_profiles").select(KOLOM).eq("wa", wa).maybeSingle();
+  const { data, error } = await ambilProfil(supa, wa);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   // Penjual yang belum pernah punya baris profil tetap harus bisa membuka
@@ -79,7 +96,21 @@ export async function PUT(req) {
   // Baris profil belum tentu ada: penjual yang iklannya masuk lewat bot
   // WhatsApp bisa saja belum pernah punya baris di seller_profiles.
   const { data: adaBaris } = await supa
-    .from("seller_profiles").select("wa, name").eq("wa", wa).maybeSingle();
+    .from("seller_profiles").select("wa, name, slug, store_status").eq("wa", wa).maybeSingle();
+
+  // Mengubah ALAMAT toko yang sudah aktif berarti tokonya perlu ditinjau lagi.
+  //
+  // Alasannya bukan birokrasi: persetujuan admin diberikan untuk sebuah nama di
+  // sebuah alamat. Kalau alamatnya bisa diganti sesudahnya, izin yang sudah
+  // diberikan untuk "warung-ridho" bisa berpindah ke "admin-resmi" tanpa
+  // seorang pun melihatnya lagi. Yang lain (logo, jam buka, pengumuman) boleh
+  // diubah kapan saja tanpa menyentuh status.
+  const gantiAlamat =
+    isian.slug !== undefined && adaBaris?.slug && isian.slug !== adaBaris.slug;
+  if (gantiAlamat) {
+    isian.store_status = "menunggu";
+    isian.store_requested_at = new Date().toISOString();
+  }
 
   let galat;
   if (adaBaris) {
@@ -87,6 +118,20 @@ export async function PUT(req) {
   } else {
     ({ error: galat } = await supa.from("seller_profiles")
       .insert({ wa, name: isian.store_name, ...isian }));
+  }
+
+  // Kolom status lahir di migrasi BAGIAN 26. Kalau belum ada, simpan ulang
+  // tanpa kolom itu — penjual tidak boleh kehilangan seluruh perubahan tokonya
+  // gara-gara satu kolom yang belum dibuat.
+  if (galat && /store_status|store_requested_at|column .* does not exist|schema cache/i.test(galat.message || "")) {
+    delete isian.store_status;
+    delete isian.store_requested_at;
+    if (adaBaris) {
+      ({ error: galat } = await supa.from("seller_profiles").update(isian).eq("wa", wa));
+    } else {
+      ({ error: galat } = await supa.from("seller_profiles")
+        .insert({ wa, name: isian.store_name, ...isian }));
+    }
   }
 
   if (galat) {
@@ -101,8 +146,7 @@ export async function PUT(req) {
     return NextResponse.json({ error: galat.message }, { status: 500 });
   }
 
-  const { data: sesudah } = await supa
-    .from("seller_profiles").select(KOLOM).eq("wa", wa).maybeSingle();
+  const { data: sesudah } = await ambilProfil(supa, wa);
   return NextResponse.json({ ok: true, toko: sesudah });
 }
 

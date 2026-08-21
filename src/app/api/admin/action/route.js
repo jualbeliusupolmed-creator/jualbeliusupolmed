@@ -558,6 +558,72 @@ export async function POST(req) {
         break;
       }
 
+      /*
+       * Aktifkan / tolak toko.
+       *
+       * Sejak "punya toko = iklan gratis", mengaktifkan toko bukan urusan
+       * tampilan — ia memberi penjual iklan tanpa biaya. Karena itu keputusan
+       * ini punya tombolnya sendiri, bukan efek samping dari menyunting profil.
+       *
+       * Penjualnya dikabari lewat WhatsApp pada dua-duanya. Ditolak tanpa alasan
+       * membuat orang mengajukan lagi hal yang sama persis; alasannya ikut
+       * dikirim supaya ada yang bisa diperbaiki.
+       */
+      case "toko_setujui":
+      case "toko_tolak": {
+        const normalizedWa = formatWa(wa);
+        if (!normalizedWa) return NextResponse.json({ error: "WA wajib" }, { status: 400 });
+
+        const setuju = action === "toko_setujui";
+        const catatan = String(body.catatan || "").trim().slice(0, 300);
+
+        const { data: profil } = await supa
+          .from("seller_profiles")
+          .select("wa, name, slug, store_name")
+          .eq("wa", normalizedWa)
+          .maybeSingle();
+        if (!profil) return NextResponse.json({ error: "Penjual tidak ditemukan" }, { status: 404 });
+        if (setuju && !profil.slug) {
+          return NextResponse.json({ error: "Toko ini belum punya alamat (slug) — belum bisa diaktifkan." }, { status: 400 });
+        }
+
+        const { error } = await supa
+          .from("seller_profiles")
+          .update(
+            setuju
+              ? { store_status: "aktif", store_approved_at: new Date().toISOString(), store_reject_note: null }
+              : { store_status: "ditolak", store_reject_note: catatan || null }
+          )
+          .eq("wa", normalizedWa);
+        if (error) {
+          const belumMigrasi = /store_status|column .* does not exist|schema cache/i.test(error.message || "");
+          throw new Error(belumMigrasi
+            ? "Kolom persetujuan toko belum ada — jalankan migrasi BAGIAN 26 dulu."
+            : error.message);
+        }
+
+        const nama = profil.store_name || profil.name || "Tokomu";
+        const alamat = `${(process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim()}/toko/${profil.slug}`;
+        sendWa(
+          normalizedWa,
+          setuju
+            ? `🏪 *Toko kamu sudah aktif!*\n\n` +
+              `*${nama}* sekarang bisa dibuka siapa saja di:\n${alamat}\n\n` +
+              `Mulai sekarang semua iklan yang kamu pasang *tayang gratis* — tanpa biaya tayang. ` +
+              `Bagikan alamat tokomu ke pembeli ya! 🚀`
+            : `🏪 *Pengajuan toko belum bisa disetujui*\n\n` +
+              `Toko *${nama}* belum kami aktifkan.\n` +
+              (catatan ? `\nAlasannya: _${catatan}_\n` : "") +
+              `\nPerbaiki dulu di ${(process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim()}/dashboard/toko, ` +
+              `lalu ajukan lagi. Kami akan meninjaunya kembali.`,
+          null,
+          null,
+          { jenis: setuju ? "toko_aktif" : "toko_ditolak" }
+        ).catch(() => {});
+
+        break;
+      }
+
       // ── Blogs ───────────────────────────────────────────────────────────
       case "delete_blog":
         await supa.from("blogs").delete().eq("id", id);
