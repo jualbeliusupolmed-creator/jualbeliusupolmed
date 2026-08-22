@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { getSettings, angkaSetelan } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,8 @@ export async function POST(req) {
 
     if (!profile) return NextResponse.json({ error: "Profil tidak ditemukan" }, { status: 404 });
 
-    const amount = 49000;
+    const { pricing } = await getSettings();
+    const amount = angkaSetelan(pricing?.proMonthly, 49000);
     const orderId = `PRO-${seller_wa.slice(0, 8)}-${Date.now()}`;
     
     // We can save to a `payments` table with type `subscribe`

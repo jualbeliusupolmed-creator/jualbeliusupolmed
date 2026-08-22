@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { rupiah } from "@/lib/fees";
+import { getSettings } from "@/lib/settings";
 
 export const metadata = {
   title: "Daftar Harga Layanan & Kebijakan",
@@ -7,56 +8,96 @@ export const metadata = {
   alternates: { canonical: "/daftar-harga" },
 };
 
-const advertisingServices = [
-  {
-    title: "Iklan Barang Standar",
-    price: 2000,
-    unit: "per postingan",
-    desc: "Tayangkan barang dagangan Anda (Laptop, HP, Buku, Kos, dll.) di halaman utama selama 14 hari.",
-    features: ["Tampil di Grid Utama", "Bisa Edit Iklan", "Fitur Chat WA Langsung", "Aktif 14 Hari"],
-    popular: false,
-  },
-  {
-    title: "Iklan Poster",
-    price: 10000,
-    unit: "per postingan",
-    desc: "Tayangkan poster acara, promosi jasa, atau produk digital dengan visual yang lebih besar.",
-    features: ["Ukuran Poster Penuh", "Tampil di Grid Utama", "Bisa Edit Iklan", "Aktif 14 Hari"],
-    popular: true,
-  },
-  {
-    title: "Sundul Iklan (Bump)",
-    price: 1000,
-    unit: "per kali sundul",
-    desc: "Naikkan kembali posisi iklan Anda ke baris paling atas agar dilihat oleh lebih banyak calon pembeli.",
-    features: ["Naik ke Urutan Pertama", "Instan & Real-time", "Tanpa Batas Penggunaan"],
-    popular: false,
-  },
-  {
-    title: "Iklan Unggulan (Featured)",
-    price: 5000,
-    unit: "per hari",
-    desc: "Sematkan iklan Anda pada banner utama paling atas (horizontal scroll) agar menjadi pusat perhatian.",
-    features: ["Tampil di Banner Utama", "Prioritas Dilihat Pertama", "Meningkatkan Penjualan 3x Lipat"],
-    popular: false,
-  },
-  {
-    title: "Paket Penjual Pro (Bulanan)",
-    price: 49000,
-    unit: "per bulan",
-    desc: "Bebas pasang iklan standar sepuasnya tanpa bayar per postingan selama 30 hari penuh.",
-    features: ["Gratis Pasang Iklan Unlimited", "Badge Penjual Pro", "Lebih Hemat untuk Toko/Usaha"],
-    popular: true,
-  },
-];
+// Halaman ini dulu memuat angkanya sendiri, diketik langsung di berkas ini,
+// sementara yang benar-benar menagih membaca `settings.pricing` dari database.
+// Dua sumber untuk satu harga selalu berakhir sama: pemilik mengubah tarif dari
+// panel admin, tagihannya ikut berubah, dan halaman "Daftar Harga" tetap
+// menjanjikan angka lama. Sekarang keduanya membaca sumber yang sama.
+export const dynamic = "force-dynamic";
 
-const transactionFees = [
-  { range: "Nilai Transaksi < Rp 50.000", fee: "Rp 2.000" },
-  { range: "Nilai Transaksi < Rp 100.000", fee: "10% dari Nilai Transaksi" },
-  { range: "Nilai Transaksi ≥ Rp 100.000", fee: "5% dari Nilai Transaksi" },
-];
+const nomor = (v, bawaan) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : bawaan;
+};
 
-export default function DaftarHargaPage() {
+// "Iklan Barang" itu berjenjang menurut harga barangnya, jadi tidak bisa
+// diringkas jadi satu angka tanpa berbohong. Yang ditampilkan: jenjangnya.
+function jenjangIklan(pricing) {
+  const tiers = Array.isArray(pricing?.adTiers) && pricing.adTiers.length
+    ? pricing.adTiers
+    : [];
+  return tiers.map((t) => {
+    const batas = t.upto == null
+      ? "Rp 1.000.000 ke atas"
+      : `di bawah ${rupiah(t.upto)}`;
+    const biaya = t.flat != null ? rupiah(t.flat) : `${t.pct}% dari harga barang`;
+    return { range: `Harga barang ${batas}`, fee: biaya };
+  });
+}
+
+function layananIklan(pricing) {
+  const hariTayang = nomor(pricing?.listingDays, 14);
+  const daftar = [
+    {
+      title: "Iklan Poster",
+      price: nomor(pricing?.adPoster, 10000),
+      unit: "per postingan",
+      desc: "Tayangkan poster acara, promosi jasa, atau produk digital dengan visual yang lebih besar.",
+      features: ["Ukuran Poster Penuh", "Tampil di Grid Utama", "Bisa Edit Iklan", `Aktif ${hariTayang} Hari`],
+      popular: true,
+    },
+    {
+      title: "Sundul Iklan (Bump)",
+      price: nomor(pricing?.bump, 1000),
+      unit: "per kali sundul",
+      desc: "Naikkan kembali posisi iklan Anda ke baris paling atas agar dilihat oleh lebih banyak calon pembeli.",
+      features: ["Naik ke Urutan Pertama", "Instan & Real-time", "Tanpa Batas Penggunaan"],
+      popular: false,
+    },
+    {
+      title: "Iklan Unggulan (Featured)",
+      price: nomor(pricing?.featuredPerDay, 5000),
+      unit: "per hari",
+      desc: "Sematkan iklan Anda pada banner utama paling atas (horizontal scroll) agar menjadi pusat perhatian.",
+      features: ["Tampil di Banner Utama", "Prioritas Dilihat Pertama", `Sampai ${rupiah(nomor(pricing?.featuredMaxPerDay, 10000))}/hari kalau mau lebih di atas`],
+      popular: false,
+    },
+    {
+      title: "Paket Penjual Pro (Bulanan)",
+      price: nomor(pricing?.proMonthly, 49000),
+      unit: "per bulan",
+      desc: "Bebas pasang iklan standar sepuasnya tanpa bayar per postingan selama 30 hari penuh.",
+      features: ["Gratis Pasang Iklan Unlimited", "Badge Penjual Pro", "Lebih Hemat untuk Toko/Usaha"],
+      popular: true,
+    },
+    {
+      title: "Perpanjang Iklan",
+      price: nomor(pricing?.renewalFee, 2000),
+      unit: "per perpanjangan",
+      desc: `Lanjutkan masa tayang iklan yang hampir habis, tanpa memasang ulang dari awal.`,
+      features: [`Tambah ${hariTayang} Hari`, "Balas PERPANJANG di WhatsApp", "Statistik iklan tetap"],
+      popular: false,
+    },
+  ];
+  return daftar;
+}
+
+function biayaTransaksi(pricing) {
+  const tiers = Array.isArray(pricing?.soldTiers) ? pricing.soldTiers : [];
+  if (!tiers.length) return [];
+  return tiers.map((t) => {
+    const batas = t.upto == null ? "Rp 100.000 ke atas" : `di bawah ${rupiah(t.upto)}`;
+    const biaya = t.flat != null ? rupiah(t.flat) : `${t.pct}% dari nilai transaksi`;
+    return { range: `Nilai transaksi ${batas}`, fee: biaya };
+  });
+}
+
+export default async function DaftarHargaPage() {
+  const { pricing } = await getSettings();
+  const advertisingServices = layananIklan(pricing);
+  const tierIklan = jenjangIklan(pricing);
+  const transactionFees = biayaTransaksi(pricing);
+  const tokoGratis = pricing?.tokoGratis !== false;
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
       {/* Header */}
@@ -69,9 +110,35 @@ export default function DaftarHargaPage() {
         </p>
       </div>
 
+      {/* Iklan barang: berjenjang menurut harga, jadi tidak bisa satu angka */}
+      <section className="mt-10">
+        <h2 className="text-xl font-bold text-gray-900 border-b pb-2">1. Iklan Barang</h2>
+        <p className="mt-2 text-sm text-gray-500 leading-relaxed">
+          Biayanya mengikuti harga barangnya — makin murah barangnya, makin murah iklannya.
+        </p>
+        {tokoGratis && (
+          <p className="mt-3 rounded-xl bg-emerald-50 border border-emerald-100 p-3 text-sm text-emerald-800">
+            <strong>Punya halaman toko? Iklannya gratis.</strong> Semua tarif di bawah ini tidak
+            berlaku untuk penjual yang sudah membuka toko — dan membuka toko itu sendiri gratis.
+          </p>
+        )}
+        {tierIklan.length > 0 ? (
+          <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            {tierIklan.map((t, i) => (
+              <div key={i} className="rounded-xl bg-gray-50 p-4 border border-gray-100 flex flex-col justify-between">
+                <span className="text-xs font-semibold text-gray-500">{t.range}</span>
+                <span className="mt-2 text-lg font-bold text-primary">{t.fee}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-4 text-sm text-gray-500">Iklan barang sedang gratis.</p>
+        )}
+      </section>
+
       {/* Grid Harga Jasa Iklan */}
       <section className="mt-10">
-        <h2 className="text-xl font-bold text-gray-900 border-b pb-2">1. Layanan Jasa Iklan (Awal)</h2>
+        <h2 className="text-xl font-bold text-gray-900 border-b pb-2">2. Layanan Iklan Lainnya</h2>
         <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {advertisingServices.map((s, idx) => (
             <div
@@ -108,10 +175,16 @@ export default function DaftarHargaPage() {
       {/* Biaya Transaksi */}
       <section className="mt-12">
         <div className="card p-6">
-          <h2 className="text-xl font-bold text-gray-900">2. Biaya Layanan Transaksi (Setelah Deal/Sukses)</h2>
+          <h2 className="text-xl font-bold text-gray-900">3. Biaya Layanan Transaksi (Setelah Deal/Sukses)</h2>
           <p className="mt-2 text-sm text-gray-500 leading-relaxed">
-            Biaya layanan transaksi (*success fee*) dibebankan kepada penjual setelah proses transaksi berhasil diselesaikan dan pembeli telah menerima barang dengan baik.
+            Biaya layanan transaksi (success fee) dibebankan kepada penjual setelah proses transaksi berhasil diselesaikan dan pembeli telah menerima barang dengan baik.
           </p>
+          {transactionFees.length === 0 && (
+            <p className="mt-4 rounded-xl bg-gray-50 border border-gray-100 p-4 text-sm text-gray-600">
+              <strong>Sedang tidak ada biaya transaksi.</strong> Tidak ada potongan setelah barang
+              laku. Kalau nanti diberlakukan, jenjangnya muncul di sini.
+            </p>
+          )}
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
             {transactionFees.map((f, i) => (
               <div key={i} className="rounded-xl bg-gray-50 p-4 border border-gray-100 flex flex-col justify-between">

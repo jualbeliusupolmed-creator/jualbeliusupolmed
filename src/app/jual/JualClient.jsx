@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { adFee, rupiah } from "@/lib/fees";
+import { adFeeFrom, rupiah } from "@/lib/fees";
 import { uploadMedia } from "@/lib/upload";
 import MediaUploader from "@/components/MediaUploader";
 import { CATEGORIES, MARKETPLACE_WA, POPULAR_AREAS, formatWa } from "@/lib/constants";
@@ -80,10 +80,12 @@ export default function JualPage() {
   }, []);
 
   const cats = cfg?.categories?.length ? cfg.categories : CATEGORIES;
-  const adFeeFor = (type, price = 0) =>
-    type === "poster"
-      ? (cfg?.pricing?.adPoster || 10000)
-      : adFee(type, price);
+  // Angka yang dilihat penjual harus lahir dari setelan yang sama dengan yang
+  // menagihnya di server (`adFeeFrom` di lib/settings). Dulu poster memakai
+  // setelan, tapi barang memakai tabel keras di lib/fees — jadi begitu pemilik
+  // mengubah tarif dari panel admin, layar dan tagihan diam-diam berbeda.
+  // `?? ` bukan `|| `: tarif 0 artinya GRATIS, bukan "belum diisi".
+  const adFeeFor = (type, price = 0) => adFeeFrom(cfg?.pricing, type, price);
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const fee = adFeeFor(form.type, form.price);
@@ -394,10 +396,11 @@ export default function JualPage() {
                 className="flex flex-col text-left p-4 rounded-xl border-2 border-primary bg-primary/5 dark:border-white dark:bg-white/5 transition-all"
               >
                 <span className="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-1.5">
-                  ⚡ QRIS Dinamis Otomatis
+                  QRIS + verifikasi struk
                 </span>
                 <span className="text-xs text-gray-500 dark:text-slate-400 mt-1.5 leading-relaxed">
-                  Scan QR code yang muncul setelah ini. Konfirmasi instan tanpa kirim bukti.
+                  Scan QRIS yang muncul setelah ini, lalu unggah foto struknya di layar yang sama.
+                  Strukmu diperiksa otomatis dan iklan langsung aktif kalau cocok.
                 </span>
               </div>
             </div>
@@ -415,7 +418,7 @@ export default function JualPage() {
               </div>
               <div className="flex justify-between">
                 <dt className="text-gray-500 dark:text-slate-400">Metode</dt>
-                <dd className="font-medium capitalize dark:text-white">QRIS Dinamis</dd>
+                <dd className="font-medium capitalize dark:text-white">QRIS</dd>
               </div>
               <div className="flex justify-between">
                 <dt className="text-gray-500 dark:text-slate-400">Biaya tayang</dt>
