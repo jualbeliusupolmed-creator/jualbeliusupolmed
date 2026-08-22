@@ -7,7 +7,7 @@ export async function GET() {
   const supa = getAdminClient();
   const [catRes, pushRes] = await Promise.all([
     supa.from("category_subscriptions").select("*").order("created_at", { ascending: false }).limit(500),
-    supa.from("push_subscriptions").select("id, created_at, user_agent").order("created_at", { ascending: false }).limit(1000),
+    supa.from("push_subscriptions").select("id, wa, endpoint, created_at").order("created_at", { ascending: false }).limit(1000),
   ]);
   return NextResponse.json({
     catSubs: catRes.data || [],
