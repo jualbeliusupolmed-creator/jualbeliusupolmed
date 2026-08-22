@@ -4,6 +4,7 @@
 import { buildSlug } from "@/lib/slug";
 import { formatWaForBaileys, formatWa } from "@/lib/constants";
 import { getAdminClient } from "@/lib/supabaseAdmin";
+import { tokenBotUtama } from "@/lib/botTokens";
 
 const FONNTE_URL = "https://api.fonnte.com/send";
 
@@ -137,7 +138,7 @@ async function send(target, message, fileUrl = null, ttlDetik = null, meta = nul
   let idTampungan = null;
 
   const baileysUrl = process.env.BAILEYS_API_URL;
-  const baileysToken = (process.env.BAILEYS_API_TOKEN || "").replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
+  const baileysToken = tokenBotUtama();   // token bot yang ditunjuk BAILEYS_API_URL
 
   // Jika BAILEYS_API_URL diset di Vercel, kita tembak Baileys Railway
   if (baileysUrl) {

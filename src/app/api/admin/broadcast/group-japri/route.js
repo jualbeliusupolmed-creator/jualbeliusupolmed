@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
+import { tokenBotUtama } from "@/lib/botTokens";
 
 export const dynamic = "force-dynamic";
 
 const BAILEYS_URL = (process.env.BAILEYS_API_URL || "").replace(/[\u200B-\u200D\uFEFF]/g, "").trim().replace(/\/$/, "");
-const BAILEYS_TOKEN = (process.env.BAILEYS_API_TOKEN || "").replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
+const BAILEYS_TOKEN = tokenBotUtama();   // lihat catatan di lib/botTokens.js
 
 export async function POST(req) {
   if (!isAdmin()) {
