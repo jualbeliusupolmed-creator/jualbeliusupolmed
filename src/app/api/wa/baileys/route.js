@@ -11,6 +11,7 @@ import { rateLimit } from "@/lib/rateLimit";
 import { handleAdminCmd } from "@/lib/bot/adminHandlers";
 import { migrateLidToPhone } from "@/lib/lidMigrate";
 import sharp from "sharp";
+import { jumlahTokenBot, tokenBotSah } from "@/lib/botTokens";
 
 export const dynamic = "force-dynamic";
 
@@ -159,13 +160,15 @@ async function notifyMatchingWanted(supa, listing) {
 
 export async function POST(req) {
   try {
-    const authHeader = (req.headers.get("authorization") || "").trim();
-    const expectedToken = (process.env.BAILEYS_API_TOKEN || "").replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
-    if (!expectedToken) {
+    // Dua perangkat WhatsApp, dua token — dan yang kedua memegang nomor yang
+    // dipajang situs. Gerbangnya menerima token perangkat MANA PUN yang terdaftar
+    // di BAILEYS_API_TOKEN (dipisah koma). Tetap fail-closed kalau env-nya kosong.
+    const authHeader = req.headers.get("authorization") || "";
+    if (!jumlahTokenBot()) {
       console.error("[baileys-webhook] BAILEYS_API_TOKEN belum di-set \u2014 tolak semua (fail-closed).");
       return NextResponse.json({ error: "Server misconfigured" }, { status: 503 });
     }
-    if (authHeader !== expectedToken) {
+    if (!tokenBotSah(authHeader)) {
       return NextResponse.json({ error: "Unauthorized webhook" }, { status: 401 });
     }
 

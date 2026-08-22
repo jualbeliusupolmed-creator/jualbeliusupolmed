@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
+import { tokenBotUtama } from "@/lib/botTokens";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,8 @@ export async function POST(req) {
     return NextResponse.json({ error: "Hanya untuk perintah diawali '#'" }, { status: 400 });
   }
 
-  const token = (process.env.BAILEYS_API_TOKEN || "").replace(/[​-‍﻿]/g, "").trim();
+  // Menembak webhook milik situs ini sendiri; token utama sudah pasti diterima.
+  const token = tokenBotUtama();
   if (!token) return NextResponse.json({ error: "Server misconfigured" }, { status: 503 });
 
   const fd = new FormData();

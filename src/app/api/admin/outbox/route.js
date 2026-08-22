@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { sendWa } from "@/lib/fonnte";
+import { tokenBotSah } from "@/lib/botTokens";
 
 export const dynamic = "force-dynamic";
 
@@ -17,11 +18,10 @@ export const dynamic = "force-dynamic";
  */
 function boleh(req) {
   if (isAdmin()) return true;
-  const kirim = (req.headers.get("authorization") || "").replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
-  const seharusnya = (process.env.BAILEYS_API_TOKEN || "").replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
-  // Fail-closed: token kosong di server tidak boleh berarti "semua boleh".
-  if (!seharusnya) return false;
-  return kirim === seharusnya || kirim === `Bearer ${seharusnya}`;
+  // Token perangkat MANA PUN yang terdaftar — sejak 22 Agu 2026 ada dua bot, dan
+  // keduanya memakai proxy antrean ini. tokenBotSah() sudah fail-closed sendiri
+  // kalau BAILEYS_API_TOKEN kosong, dan sudah menerima bentuk "Bearer <token>".
+  return tokenBotSah(req.headers.get("authorization"));
 }
 
 // Supabase menjawab tabel yang belum ada dengan galat schema-cache yang tidak

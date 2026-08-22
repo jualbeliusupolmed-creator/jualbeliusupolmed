@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
+import { tokenBotUtama } from "@/lib/botTokens";
 
 export const dynamic = "force-dynamic";
 
@@ -11,11 +12,12 @@ export async function GET() {
 
     const rawBotUrl = process.env.BAILEYS_API_URL || "https://wa-bot-usu-production.up.railway.app";
     const botUrl = rawBotUrl.replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
-    const rawToken = process.env.BAILEYS_API_TOKEN;
-    if (!rawToken) {
+    // Token bot yang ditunjuk BAILEYS_API_URL — nilai pertama daftar, bukan
+    // seluruh daftarnya. Lihat catatan di lib/botTokens.js.
+    const apiKey = tokenBotUtama();
+    if (!apiKey) {
       return NextResponse.json({ error: "BAILEYS_API_TOKEN belum dikonfigurasi di environment" }, { status: 500 });
     }
-    const apiKey = rawToken.replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
 
     const res = await fetch(`${botUrl}/logs`, {
       headers: { Authorization: apiKey },

@@ -2,12 +2,15 @@ import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { formatWa } from "@/lib/constants";
+import { tokenBotUtama } from "@/lib/botTokens";
 
 export const dynamic = "force-dynamic";
 
 const rawBaileysUrl = process.env.BAILEYS_API_URL || "";
 const BAILEYS_URL = rawBaileysUrl.replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
-const BAILEYS_TOKEN = (process.env.BAILEYS_API_TOKEN || "").replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
+// Nilai PERTAMA dari daftar: BAILEYS_API_URL cuma menunjuk satu bot, jadi yang
+// dikirim harus token milik bot itu — bukan seluruh daftarnya.
+const BAILEYS_TOKEN = tokenBotUtama();
 
 export async function GET(req) {
   if (!isAdmin()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
