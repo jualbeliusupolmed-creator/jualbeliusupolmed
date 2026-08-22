@@ -1515,7 +1515,6 @@ function SettingsManager({ settings, action }) {
   const [adminCfg, setAdminCfg] = useState(settings.admin || {});
   const [metaCfg, setMetaCfg] = useState(settings.meta || {});
   const [botCfg, setBotCfg] = useState(settings.bot || {});
-  const [paymentCfg, setPaymentCfg] = useState(settings.payment || { mode: "auto" });
   const [messages, setMessages] = useState(settings.messages || {});
   const [areas, setAreas] = useState((settings.areas || []).join("\n"));
   const [saved, setSaved] = useState("");
@@ -1619,61 +1618,26 @@ function SettingsManager({ settings, action }) {
         </div>
       </div>
 
-      {/* MODE PEMBAYARAN */}
-      <Card title="Mode Pembayaran">
-        <p className="mb-4 text-sm text-gray-500 dark:text-slate-400">
-          Pilih bagaimana sistem memverifikasi pembayaran dari penjual.
+      {/* ALUR PEMBAYARAN — dulu sepasang tombol Otomatis/Manual.
+          Tombol itu MENIPU: nilainya tersimpan rapi ke settings.payment.mode,
+          lalu tidak dibaca kode mana pun di seluruh src/. Kedua pilihan berakhir
+          di alur yang sama, dan "Otomatis — tanpa perlu upload struk" tidak
+          pernah ada wujudnya: /api/listings mengembalikan QRIS statis (/qris.png)
+          dan struknya diperiksa /api/payments/verify-receipt. Sakelar yang tidak
+          menyakelar apa pun lebih buruk daripada tidak ada sakelar, jadi diganti
+          keterangan alur yang sebenarnya. Kalau QRIS dinamis benar-benar dipasang
+          nanti, sakelarnya boleh kembali — bersama kodenya. */}
+      <Card title="Alur Pembayaran">
+        <p className="text-sm text-gray-500 dark:text-slate-400">
+          Penjual membayar lewat <strong>QRIS statis</strong>, lalu mengunggah foto struknya.
+          Struk itu diperiksa AI di <code>/api/payments/verify-receipt</code>; kalau cocok,
+          pembayaran ditandai lunas dan iklannya aktif. Yang tidak cocok masuk ke
+          <strong> Approve Payment</strong> untuk diperiksa manusia.
         </p>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <button
-            onClick={() => {
-              if (paymentCfg.mode === "auto") return;
-              const updated = { ...paymentCfg, mode: "auto" };
-              setPaymentCfg(updated);
-              action({ action: "save_settings", key: "payment", value: updated }, "Mode Otomatis diaktifkan");
-              flash("payment");
-            }}
-            className={`flex-1 rounded-xl border-2 p-4 text-left transition-all ${
-              paymentCfg.mode === "auto"
-                ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20"
-                : "border-gray-200 dark:border-slate-700 hover:border-emerald-300"
-            }`}
-          >
-            <div className="flex items-center gap-2 mb-1">
-              <span className={`h-3 w-3 rounded-full ${paymentCfg.mode === "auto" ? "bg-emerald-500" : "bg-gray-300"}`} />
-              <span className="font-semibold text-sm dark:text-white">Otomatis</span>
-              {paymentCfg.mode === "auto" && <span className="ml-auto text-xs bg-emerald-500 text-white px-2 py-0.5 rounded-full">Aktif</span>}
-            </div>
-            <p className="text-xs text-gray-500 dark:text-slate-400">
-              Callback QiosPay / Midtrans memproses pembayaran secara otomatis tanpa perlu upload struk.
-            </p>
-          </button>
-
-          <button
-            onClick={() => {
-              if (paymentCfg.mode === "manual") return;
-              const updated = { ...paymentCfg, mode: "manual" };
-              setPaymentCfg(updated);
-              action({ action: "save_settings", key: "payment", value: updated }, "Mode Manual diaktifkan");
-              flash("payment");
-            }}
-            className={`flex-1 rounded-xl border-2 p-4 text-left transition-all ${
-              paymentCfg.mode === "manual"
-                ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20"
-                : "border-gray-200 dark:border-slate-700 hover:border-amber-300"
-            }`}
-          >
-            <div className="flex items-center gap-2 mb-1">
-              <span className={`h-3 w-3 rounded-full ${paymentCfg.mode === "manual" ? "bg-amber-500" : "bg-gray-300"}`} />
-              <span className="font-semibold text-sm dark:text-white">Manual</span>
-              {paymentCfg.mode === "manual" && <span className="ml-auto text-xs bg-amber-500 text-white px-2 py-0.5 rounded-full">Aktif</span>}
-            </div>
-            <p className="text-xs text-gray-500 dark:text-slate-400">
-              Callback dinonaktifkan. Penjual wajib upload foto struk untuk verifikasi pembayaran via AI.
-            </p>
-          </button>
-        </div>
-        {saved === "payment" && <p className="mt-3 text-xs text-emerald-600 dark:text-emerald-400">✓ Mode disimpan</p>}
+        <p className="mt-3 text-xs text-gray-400 dark:text-slate-500">
+          Belum ada callback penyedia pembayaran (QRIS dinamis) yang terpasang, jadi tidak ada
+          mode lain yang bisa dipilih di sini.
+        </p>
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">

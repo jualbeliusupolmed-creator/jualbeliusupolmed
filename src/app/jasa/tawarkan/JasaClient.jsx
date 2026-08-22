@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { adFee, rupiah } from "@/lib/fees";
+import { adFeeFrom, rupiah } from "@/lib/fees";
 import { uploadMedia } from "@/lib/upload";
 import MediaUploader from "@/components/MediaUploader";
 import QRISModal from "@/components/QRISModal";
@@ -78,7 +78,10 @@ export default function JasaClient() {
   }, []);
 
   const cats = JASA_CATEGORIES;
-  const adFeeFor = (type, price = 0) => adFee("jasa", price);
+  // Dulu ini memakai tarif poster (Rp10.000) untuk semua jasa, padahal server
+  // menagih jasa lewat JENJANG HARGA seperti barang biasa — jasa Rp8.000
+  // ditampilkan Rp10.000 tapi ditagih Rp2.000. Sekarang keduanya satu rumus.
+  const adFeeFor = (type, price = 0) => adFeeFrom(cfg?.pricing, "jasa", price);
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const fee = adFeeFor(form.type, form.price);

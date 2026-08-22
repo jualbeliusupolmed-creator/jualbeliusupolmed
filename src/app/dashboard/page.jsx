@@ -5,7 +5,7 @@ import Script from "next/script";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams, useRouter } from "next/navigation";
-import { rupiah, soldFee, adFee } from "@/lib/fees";
+import { rupiah, soldFeeFrom, adFeeFrom } from "@/lib/fees";
 import ConfirmModal from "@/components/ConfirmModal";
 import InputModal from "@/components/InputModal";
 import { formatWa } from "@/lib/constants";
@@ -266,7 +266,7 @@ function DashboardInner() {
     const price = Number(priceStr);
     if (!price || isNaN(price)) return;
     setSoldModal(null);
-    setSoldPriceModal({ item, price, fee: soldFee(price) });
+    setSoldPriceModal({ item, price, fee: soldFeeFrom(cfg?.pricing, price) });
   }
 
   // Mark sold — step 3: eksekusi
@@ -1001,7 +1001,7 @@ function DashboardInner() {
                                 
                                 if (data.paymentUrl) {
                                   setActiveQrisUrl(data.paymentUrl);
-                                  setActiveQrisFee(data.finalAmount || data.amount || (i.price ? adFee(i.type, i.price) : 0));
+                                  setActiveQrisFee(data.finalAmount || data.amount || (i.price ? adFeeFrom(cfg?.pricing, i.type, i.price) : 0));
                                   setActiveQrisOrderId(data.orderId || "");
                                 } else {
                                   toast.error("Gagal mendapatkan link pembayaran.");

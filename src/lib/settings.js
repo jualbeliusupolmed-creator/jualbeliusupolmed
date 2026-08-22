@@ -1,6 +1,14 @@
 // Konfigurasi situs yang bisa diubah dari admin (DB-backed).
 // Semua pembacaan fail-safe: jika tabel/DB belum ada, pakai DEFAULT_SETTINGS.
 import { getAdminClient } from "@/lib/supabaseAdmin";
+// Perhitungan biayanya tinggal di lib/fees.js — berkas murni tanpa impor, jadi
+// komponen klien boleh memakainya tanpa menyeret kode server ke bundel peramban.
+// Dulu rumus yang sama ditulis dua kali (di sini dan di sana) dengan angka yang
+// tidak selalu sama; yang menagih cuma yang di sini, jadi layar dan tagihan bisa
+// diam-diam berbeda. Sekarang satu definisi, dipakai dua-duanya.
+import { TARIF_BAWAAN, angkaSetelan, adFeeFrom, soldFeeFrom, featuredRateFrom } from "@/lib/fees";
+
+export { angkaSetelan, adFeeFrom, soldFeeFrom, featuredRateFrom };
 
 export const DEFAULT_SETTINGS = {
   pricing: {
@@ -11,15 +19,13 @@ export const DEFAULT_SETTINGS = {
     featuredMaxPerDay: 10000,
     listingDays: 14,
     renewalFee: 2000,
+    // Paket Penjual Pro. Dulu angkanya cuma hidup di dalam
+    // api/payments/subscribe/route.js — sumber harga keempat, tidak terlihat
+    // dari panel admin dan tidak terbaca halaman Daftar Harga.
+    proMonthly: 49000,
     dicariFreeLimt: 3,
     // tier biaya iklan berdasarkan harga barang; dievaluasi berurutan, `upto` = batas atas (eksklusif)
-    adTiers: [
-      { upto: 50000, flat: 2000 },
-      { upto: 100000, flat: 3000 },
-      { upto: 500000, flat: 5000 },
-      { upto: 1000000, flat: 7000 },
-      { upto: null, pct: 1 },
-    ],
+    adTiers: TARIF_BAWAAN.adTiers,
     // Penjual yang sudah punya halaman toko (/toko/<slug>) memasang iklan
     // GRATIS. Keputusan pemilik, 21 Agustus 2026: toko adalah cara orang
     // berjualan serius di sini, dan menagih biaya tayang untuk tiap barang
@@ -32,11 +38,7 @@ export const DEFAULT_SETTINGS = {
     // biaya tayang seperti semula.
     tokoGratis: true,
     // tier fee setelah barang terjual; dievaluasi berurutan, `upto` = batas atas (eksklusif)
-    soldTiers: [
-      { upto: 50000, flat: 0 },
-      { upto: 100000, pct: 10 },
-      { upto: null, pct: 5 },
-    ],
+    soldTiers: TARIF_BAWAAN.soldTiers,
   },
   contact: {
     marketplaceWa: process.env.NEXT_PUBLIC_MARKETPLACE_WA || "62895429126232",
@@ -148,19 +150,6 @@ export async function getSettings() {
   }
 }
 
-// ── Helper perhitungan biaya (server-side, sumber kebenaran) ─────────────────
-export function adFeeFrom(pricing, type, price = 0) {
-  if (type === "poster") return pricing.adPoster || 10000;
-  const p = Number(price) || 0;
-  const tiers = pricing.adTiers || DEFAULT_SETTINGS.pricing.adTiers;
-  for (const t of tiers) {
-    if (t.upto == null || p < t.upto) {
-      return t.flat != null ? t.flat : Math.round((p * (t.pct || 0)) / 100);
-    }
-  }
-  return 2000;
-}
-
 // Mengecek apakah penjual memiliki tagihan komisi penjualan (sold_fee) yang belum lunas
 export async function hasUnpaidSoldFees(supa, sellerWa) {
   const { data: listings } = await supa
@@ -188,19 +177,3 @@ export function listingExpiresAt(pricing) {
   return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 }
 
-export function soldFeeFrom(pricing, price) {
-  const p = Number(price) || 0;
-  for (const t of pricing.soldTiers || []) {
-    if (t.upto == null || p < t.upto) {
-      return t.flat != null ? t.flat : Math.round((p * t.pct) / 100);
-    }
-  }
-  return 0;
-}
-
-export function featuredRateFrom(pricing, perDayReq) {
-  const min = pricing.featuredPerDay;
-  const max = pricing.featuredMaxPerDay || min;
-  if (perDayReq == null) return min;
-  return Math.min(max, Math.max(min, Number(perDayReq) || min));
-}

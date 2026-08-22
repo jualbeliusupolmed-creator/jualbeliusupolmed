@@ -4,7 +4,7 @@ import { parseListingFromText, verifyReceiptImage, processGeneralChat, parseWant
 import { sendWa as _sendWaBase, postToGroup, notifyAdminNewListing, notifyWantedMatch, notifyCategorySubscribers, notifyBuyerOfferResult, postWantedToGroup, notifySellerNewOffer } from "@/lib/fonnte";
 import { pushListingBaru } from "@/lib/webpush";
 import { formatWa } from "@/lib/constants";
-import { getSettings, adFeeFrom } from "@/lib/settings";
+import { getSettings, adFeeFrom, angkaSetelan } from "@/lib/settings";
 import { postToFacebook, postToInstagram } from "@/lib/meta";
 import { buildSlug } from "@/lib/slug";
 import { rateLimit } from "@/lib/rateLimit";
@@ -804,8 +804,11 @@ export async function POST(req) {
 
         const listing = listings[0];
         const renewalSettings = await getSettings();
-        const renewDays = Number(renewalSettings.pricing?.listingDays) || 14;
-        const renewFee = Number(renewalSettings.pricing?.renewalFee) || 2000;
+        const renewDays = angkaSetelan(renewalSettings.pricing?.listingDays, 14);
+        // Sama seperti adPoster: `|| 2000` membuang setelan "perpanjang gratis"
+        // (renewalFee = 0) dan tetap menagih Rp2.000. Panel admin bahkan punya
+        // preset yang menyetelnya ke 0 — preset yang selama ini tidak berpengaruh.
+        const renewFee = angkaSetelan(renewalSettings.pricing?.renewalFee, 2000);
         const totalAmount = renewFee;
         const orderId = `RENEW-${listing.listing_code}-${Date.now()}`;
 
@@ -2462,7 +2465,8 @@ export async function POST(req) {
           .from("wanted_listings")
           .select("id", { count: "exact", head: true })
           .eq("buyer_wa", normalizedWa);
-        const dicariFreeLimt = Number(settings?.pricing?.dicariFreeLimt) || 3;
+        // 0 = tidak ada jatah gratis sama sekali; itu setelan yang sah.
+        const dicariFreeLimt = angkaSetelan(settings?.pricing?.dicariFreeLimt, 3);
         const isFree = (pastCount || 0) < dicariFreeLimt;
 
         const { data: wanted, error: wErr } = await supa.from("wanted_listings").insert({
