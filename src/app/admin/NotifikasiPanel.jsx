@@ -12,6 +12,10 @@ function PushStatusBanner({ pushCount }) {
   const [testing, setTesting] = useState(false);
   const [testMsg, setTestMsg] = useState(null);
 
+  const [pushTitle, setPushTitle] = useState("");
+  const [pushBody, setPushBody] = useState("");
+  const [pushUrl, setPushUrl] = useState("/");
+
   useEffect(() => {
     fetch("/api/push/subscribe")
       .then(r => r.json())
@@ -19,40 +23,71 @@ function PushStatusBanner({ pushCount }) {
       .catch(() => setVapidOk(false));
   }, []);
 
-  async function sendTestPush() {
-    if (!confirm(`Kirim test push ke ${pushCount} subscriber sekarang?`)) return;
+  async function sendCustomPush() {
+    if (!pushTitle.trim() || !pushBody.trim()) {
+      alert("Judul dan isi pesan harus diisi!");
+      return;
+    }
+    if (!confirm(`Kirim notifikasi ini ke ${pushCount} pelanggan peramban sekarang?`)) return;
     setTesting(true); setTestMsg(null);
     try {
       const res = await fetch("/api/push/subscribe/test", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: "🔔 Test Push", body: "Notifikasi push berfungsi dengan baik!" }),
+        body: JSON.stringify({ 
+          title: pushTitle, 
+          body: pushBody,
+          url: pushUrl 
+        }),
       });
       const d = await res.json();
-      setTestMsg(res.ok ? { ok: true, text: `✅ Test push terkirim ke ${d.sent ?? pushCount} subscriber.` } : { ok: false, text: `❌ ${d.error}` });
+      setTestMsg(res.ok ? { ok: true, text: `✅ Berhasil dikirim ke ${d.sent ?? pushCount} peramban.` } : { ok: false, text: `❌ ${d.error}` });
+      if (res.ok) {
+        setPushTitle("");
+        setPushBody("");
+        setPushUrl("/");
+      }
     } catch (e) { setTestMsg({ ok: false, text: `❌ ${e.message}` }); }
     finally { setTesting(false); }
   }
 
   return (
-    <div className={`flex flex-wrap items-center gap-3 rounded-xl border p-4 ${vapidOk ? "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20" : vapidOk === false ? "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20" : "border-gray-200 bg-gray-50 dark:border-slate-700 dark:bg-slate-900"}`}>
+    <div className={`flex flex-col gap-4 rounded-xl border p-4 ${vapidOk ? "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20" : vapidOk === false ? "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20" : "border-gray-200 bg-gray-50 dark:border-slate-700 dark:bg-slate-900"}`}>
       <div className="flex items-center gap-2">
         <span className={`inline-block h-2.5 w-2.5 rounded-full ${vapidOk === null ? "bg-gray-400" : vapidOk ? "animate-pulse bg-green-500" : "bg-red-500"}`} />
         <span className="text-sm font-semibold dark:text-white">
           Push Notification Status:
         </span>
         <span className={`text-sm ${vapidOk === null ? "text-gray-400" : vapidOk ? "text-green-700 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
-          {vapidOk === null ? "Memeriksa..." : vapidOk ? `✅ VAPID Terkonfigurasi — ${pushCount} Subscriber Aktif` : "❌ VAPID belum dikonfigurasi (tambahkan VAPID_PUBLIC_KEY & VAPID_PRIVATE_KEY di env)"}
+          {vapidOk === null ? "Memeriksa..." : vapidOk ? `✅ VAPID Terkonfigurasi — ${pushCount} Pelanggan Peramban Aktif` : "❌ VAPID belum dikonfigurasi (tambahkan VAPID_PUBLIC_KEY & VAPID_PRIVATE_KEY di env)"}
         </span>
       </div>
+
       {vapidOk && pushCount > 0 && (
-        <button onClick={sendTestPush} disabled={testing}
-          className="ml-auto rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
-          {testing ? "⏳ Mengirim..." : "🔔 Kirim Test Push"}
-        </button>
-      )}
-      {testMsg && (
-        <p className={`w-full text-xs ${testMsg.ok ? "text-green-600" : "text-red-500"}`}>{testMsg.text}</p>
+        <div className="mt-1 flex flex-col gap-3 rounded-lg bg-white p-4 shadow-sm dark:bg-slate-800 border border-gray-200 dark:border-slate-700">
+          <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Kirim Notifikasi Siaran (Push Browser)</h4>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-xs text-gray-500 dark:text-gray-400">Judul Notifikasi</label>
+              <input type="text" value={pushTitle} onChange={e => setPushTitle(e.target.value)} placeholder="Contoh: Info Penting" className="w-full rounded-md border p-2 text-sm dark:bg-slate-900 dark:border-slate-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs text-gray-500 dark:text-gray-400">URL Tujuan (saat diklik)</label>
+              <input type="text" value={pushUrl} onChange={e => setPushUrl(e.target.value)} placeholder="/" className="w-full rounded-md border p-2 text-sm dark:bg-slate-900 dark:border-slate-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
+            </div>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-gray-500 dark:text-gray-400">Isi Pesan</label>
+            <textarea value={pushBody} onChange={e => setPushBody(e.target.value)} rows="2" placeholder="Isi pesan notifikasi..." className="w-full resize-none rounded-md border p-2 text-sm dark:bg-slate-900 dark:border-slate-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
+          </div>
+          <div className="flex items-center justify-between">
+            {testMsg ? <p className={`text-xs font-medium ${testMsg.ok ? "text-green-600" : "text-red-500"}`}>{testMsg.text}</p> : <span />}
+            <button onClick={sendCustomPush} disabled={testing || !pushTitle.trim() || !pushBody.trim()}
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50">
+              {testing ? "⏳ Mengirim..." : "🚀 Kirim ke Semua"}
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
