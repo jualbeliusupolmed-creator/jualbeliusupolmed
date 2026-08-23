@@ -122,10 +122,13 @@ export default function JasaBrowser({
     }
   }
 
-  const catName = (slug) => CATEGORIES.find((c) => c.slug === slug)?.name || null;
+  const catName = useCallback(
+    (slug) => CATEGORIES.find((c) => c.slug === slug)?.name || null,
+    [CATEGORIES]
+  );
 
   // Sync filter state to URL for shareable links
-  function syncToUrl(overrides = {}) {
+  const syncToUrl = useCallback((overrides = {}) => {
     const params = new URLSearchParams();
     const state = {
       cat,
@@ -148,7 +151,7 @@ export default function JasaBrowser({
     if (state.negoFilter) params.set("nego", "1");
     const str = params.toString();
     router.replace(`${pathname}${str ? `?${str}` : ""}`, { scroll: false });
-  }
+  }, [campusFilter, cat, catName, maxPrice, minPrice, negoFilter, pathname, q, router, sort]);
 
   // Terapkan filter dari URL (?q= dari search navbar / SearchAction Google,
   // ?cat= dari breadcrumb halaman produk) — juga saat URL berubah tanpa remount.
@@ -201,7 +204,7 @@ export default function JasaBrowser({
       }
     },
     // FIXED: added negoFilter to dependency array
-    [cat, q, sort, minPrice, maxPrice, campusFilter, negoFilter]
+    [cat, q, sort, minPrice, maxPrice, campusFilter, negoFilter, catName]
   );
 
   function handleCampus(newCampus) {
@@ -217,7 +220,7 @@ export default function JasaBrowser({
       applyFilters({ newQ: val });
       syncToUrl({ q: val });
     }, 400);
-  }, [applyFilters]);
+  }, [applyFilters, syncToUrl]);
 
   function handleCat(newCat) {
     setCat(newCat);

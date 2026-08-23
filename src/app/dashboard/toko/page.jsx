@@ -8,6 +8,7 @@ import { rupiah } from "@/lib/fees";
 import { buildSlug } from "@/lib/slug";
 import { namaToko } from "@/lib/toko";
 import BagikanIklan from "@/components/BagikanIklan";
+import DashboardModeToggle from "@/components/DashboardModeToggle";
 import FormToko from "./FormToko";
 
 /*
@@ -59,7 +60,7 @@ export default function TokoSaya() {
 
   useEffect(() => { muat(); }, [muat]);
 
-  const toko = data?.toko || {};
+  const toko = useMemo(() => data?.toko || {}, [data?.toko]);
   const status = data?.status || "draf";
   const st = data?.statistik || { aktif: 0, terjual: 0, pending: 0, views: 0, ulasan: 0, rata: 0 };
   const produk = data?.produk || [];
@@ -125,16 +126,30 @@ export default function TokoSaya() {
     <div className="mx-auto max-w-3xl px-4 py-5 pb-24">
       {bagikan && <BagikanIklan listing={bagikan} onClose={() => setBagikan(null)} />}
 
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="text-xl font-extrabold tracking-tight">Toko saya</h1>
-          <p className="text-sm text-gray-500 dark:text-slate-400">
-            Halaman tokomu, izinnya, dan barang yang tampil di dalamnya.
-          </p>
-        </div>
-        <Link href="/dashboard" className="btn-outline shrink-0 rounded-xl px-3 py-2 text-xs">
-          ← Dashboard
-        </Link>
+      {/* Mode Switcher */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+        <DashboardModeToggle 
+          storeStatus={status} 
+          activeCount={st.aktif} 
+        />
+        {status === "aktif" && alamat && (
+          <a
+            href={`/toko/${toko.slug}`}
+            target="_blank"
+            rel="noreferrer"
+            className="px-3.5 py-2 rounded-2xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 transition-all flex items-center gap-1.5 self-end sm:self-auto"
+          >
+            <span>Lihat Etalase Toko</span>
+            <span className="text-[10px]">↗</span>
+          </a>
+        )}
+      </div>
+
+      <div className="mb-4">
+        <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">Toko Saya</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Kelola profil toko, etalase barang, jam operasional, dan izin tokomu.
+        </p>
       </div>
 
       {/* ── Status izin: hal pertama yang perlu diketahui penjual ───────── */}

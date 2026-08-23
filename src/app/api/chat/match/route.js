@@ -39,10 +39,17 @@ export async function POST(request) {
 
     const body = await request.json();
     const { action, roomId } = body;
-    const alias = censorProfanity(String(body.alias || "Anonim").trim().slice(0, 50)) || "Anonim";
     const faculty = String(body.faculty || "Umum").trim().slice(0, 50) || "Umum";
 
     const supa = getAdminClient();
+    // Pseudonim Cari Teman selalu diambil dari profil, bukan dari payload
+    // browser. Ini mencegah nama berubah-ubah atau pemalsuan nama lawan chat.
+    const { data: profile } = await supa
+      .from("seller_profiles")
+      .select("anonymous_name")
+      .eq("wa", wa)
+      .maybeSingle();
+    const alias = censorProfanity(String(profile?.anonymous_name || "Anonim").trim().slice(0, 30)) || "Anonim";
 
     // 1. Action: Poll — baca status room, murni untuk klien yang tabnya masih
     // terbuka supaya terasa seketika. Tidak menulis apa pun; matching hanya

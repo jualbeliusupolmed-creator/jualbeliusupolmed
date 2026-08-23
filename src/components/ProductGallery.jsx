@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import useEmblaCarousel from "embla-carousel-react";
+import { hapticLight } from "@/lib/haptics";
 
 export default function ProductGallery({ images = [], title }) {
   const imgs = images.filter(Boolean);
@@ -18,7 +19,9 @@ export default function ProductGallery({ images = [], title }) {
 
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
-    setActive(emblaApi.selectedScrollSnap());
+    const nextIdx = emblaApi.selectedScrollSnap();
+    setActive(nextIdx);
+    hapticLight();
   }, [emblaApi]);
 
   useEffect(() => {

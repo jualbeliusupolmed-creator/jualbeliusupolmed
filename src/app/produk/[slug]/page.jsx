@@ -397,11 +397,11 @@ export default async function ProdukPage({ params }) {
         </section>
       )}
 
-      {/* Mobile Floating Action Bar (Sticky CTA) */}
+      {/* Mobile Floating Action Bar (Sticky CTA di atas BottomNavbar) */}
       {!sold && (
-        <div className="fixed bottom-[80px] left-4 right-4 z-30 md:hidden flex justify-center animate-fade-in pointer-events-none">
-          <div className="pointer-events-auto w-full max-w-sm rounded-full bg-white/90 p-2 shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-xl border border-gray-100 dark:bg-slate-900/90 dark:border-slate-800 dark:shadow-black/50">
-            <MinatButton listing={listing} className="w-full shadow-lg shadow-wa/20 rounded-full text-[15px]" />
+        <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] left-3.5 right-3.5 z-30 md:hidden flex justify-center animate-fade-in pointer-events-none">
+          <div className="pointer-events-auto w-full max-w-sm rounded-full bg-white/95 p-1.5 shadow-[0_8px_30px_rgb(0,0,0,0.15)] backdrop-blur-xl border border-gray-200/80 dark:bg-slate-900/95 dark:border-slate-800 dark:shadow-black/50">
+            <MinatButton listing={listing} className="w-full shadow-md shadow-wa/20 rounded-full text-[14px] xs:text-[15px] py-2.5" />
           </div>
         </div>
       )}

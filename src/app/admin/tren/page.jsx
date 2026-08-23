@@ -16,7 +16,7 @@ export default function TrenPage() {
       .then((r) => r.json())
       .then((d) => { setData(d); setLoading(false); })
       .catch(() => setLoading(false));
-  }, [days]);
+  }, [api, days]);
 
   const maxCount = data?.top?.[0]?.count || 1;
 

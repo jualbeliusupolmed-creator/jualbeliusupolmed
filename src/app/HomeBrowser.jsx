@@ -11,6 +11,8 @@ import { rupiah } from "@/lib/fees";
 import { Icon } from "@/components/Icons";
 import HeroLanding from "@/components/HeroLanding";
 import { buildSlug } from "@/lib/slug";
+import BottomSheet from "@/components/BottomSheet";
+import ProductGridSkeleton from "@/components/ProductSkeleton";
 
 const SORT_OPTIONS = [
   { value: "bumped", label: "Paling Relevan" },
@@ -141,10 +143,13 @@ export default function HomeBrowser({
     }
   }
 
-  const catName = (slug) => CATEGORIES.find((c) => c.slug === slug)?.name || null;
+  const catName = useCallback(
+    (slug) => CATEGORIES.find((c) => c.slug === slug)?.name || null,
+    [CATEGORIES]
+  );
 
   // Sync filter state to URL for shareable links
-  function syncToUrl(overrides = {}) {
+  const syncToUrl = useCallback((overrides = {}) => {
     const params = new URLSearchParams();
     const state = {
       cat,
@@ -167,7 +172,7 @@ export default function HomeBrowser({
     if (state.negoFilter) params.set("nego", "1");
     const str = params.toString();
     router.replace(`${pathname}${str ? `?${str}` : ""}`, { scroll: false });
-  }
+  }, [campusFilter, cat, catName, maxPrice, minPrice, negoFilter, pathname, q, router, sort]);
 
   // Terapkan filter dari URL (?q= dari search navbar / SearchAction Google,
   // ?cat= dari breadcrumb halaman produk) — juga saat URL berubah tanpa remount.
@@ -223,7 +228,7 @@ export default function HomeBrowser({
         setSearching(false);
       }
     },
-    [cat, q, sort, minPrice, maxPrice, campusFilter, negoFilter, conditionFilter, typeFilter]
+    [cat, q, sort, minPrice, maxPrice, campusFilter, negoFilter, conditionFilter, typeFilter, catName]
   );
 
   function handleCampus(newCampus) {
@@ -239,7 +244,7 @@ export default function HomeBrowser({
       applyFilters({ newQ: val });
       syncToUrl({ q: val });
     }, 400);
-  }, [applyFilters]);
+  }, [applyFilters, syncToUrl]);
 
   function handleCat(newCat) {
     setCat(newCat);
@@ -449,18 +454,18 @@ export default function HomeBrowser({
                 value={q}
                 onChange={(e) => handleSearch(e.target.value)}
                 placeholder="Cari barang… laptop, buku, kos"
-                className="w-full rounded-full border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-400 focus:ring-2 focus:ring-gray-900/5 dark:border-slate-800 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-slate-600"
+                className="w-full rounded-full border border-gray-200 bg-white py-2.5 xs:py-3 pl-11 pr-4 text-base md:text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-400 focus:ring-2 focus:ring-gray-900/5 dark:border-slate-800 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-slate-600"
               />
             </div>
 
-            {/* Filter chips — single horizontal scroll */}
-            <div className="mt-2.5 flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {/* Filter chips — single horizontal scroll with momentum and touch feedback */}
+            <div className="mt-2.5 flex gap-1.5 xs:gap-2 overflow-x-auto pb-1 touch-pan-x no-tap-highlight [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {/* Sort */}
               <select
                 value={sort}
                 onChange={(e) => handleSort(e.target.value)}
                 aria-label="Urutkan"
-                className="shrink-0 cursor-pointer appearance-none rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 outline-none transition dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+                className="shrink-0 cursor-pointer appearance-none rounded-full border border-gray-200 bg-white px-3.5 py-1.5 min-h-[34px] text-xs font-semibold text-gray-700 outline-none transition active:scale-95 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
               >
                 {SORT_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>{o.label}</option>
@@ -471,8 +476,8 @@ export default function HomeBrowser({
               <button
                 type="button"
                 onClick={() => setShowPriceFilter((v) => !v)}
-                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${showPriceFilter || minPrice || maxPrice
-                    ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
+                className={`shrink-0 rounded-full px-3.5 py-1.5 min-h-[34px] text-xs font-semibold transition-all active:scale-95 ${showPriceFilter || minPrice || maxPrice
+                    ? "bg-gray-900 text-white shadow-sm dark:bg-white dark:text-gray-900"
                     : "border border-gray-200 text-gray-600 hover:border-gray-300 dark:border-slate-800 dark:text-slate-300"
                   }`}
               >
@@ -485,8 +490,8 @@ export default function HomeBrowser({
                   key={c}
                   type="button"
                   onClick={() => handleCampus(c)}
-                  className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${campusFilter === c
-                      ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
+                  className={`shrink-0 rounded-full px-3.5 py-1.5 min-h-[34px] text-xs font-semibold transition-all active:scale-95 ${campusFilter === c
+                      ? "bg-gray-900 text-white shadow-sm dark:bg-white dark:text-gray-900"
                       : "border border-gray-200 text-gray-600 hover:border-gray-300 dark:border-slate-800 dark:text-slate-300"
                     }`}
                 >
@@ -502,8 +507,8 @@ export default function HomeBrowser({
                   setNegoFilter(next);
                   applyFilters({ newNego: next });
                 }}
-                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${negoFilter
-                    ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
+                className={`shrink-0 rounded-full px-3.5 py-1.5 min-h-[34px] text-xs font-semibold transition-all active:scale-95 ${negoFilter
+                    ? "bg-gray-900 text-white shadow-sm dark:bg-white dark:text-gray-900"
                     : "border border-gray-200 text-gray-600 hover:border-gray-300 dark:border-slate-800 dark:text-slate-300"
                   }`}
               >
@@ -516,8 +521,8 @@ export default function HomeBrowser({
                   key={c}
                   type="button"
                   onClick={() => { setConditionFilter(c); applyFilters({ newCondition: c }); }}
-                  className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${conditionFilter === c
-                    ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
+                  className={`shrink-0 rounded-full px-3.5 py-1.5 min-h-[34px] text-xs font-semibold transition-all active:scale-95 ${conditionFilter === c
+                    ? "bg-gray-900 text-white shadow-sm dark:bg-white dark:text-gray-900"
                     : "border border-gray-200 text-gray-600 hover:border-gray-300 dark:border-slate-800 dark:text-slate-300"
                   }`}
                 >
@@ -533,8 +538,8 @@ export default function HomeBrowser({
                   setTypeFilter(next);
                   applyFilters({ newType: next });
                 }}
-                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${typeFilter === "sewa"
-                  ? "bg-teal-600 text-white"
+                className={`shrink-0 rounded-full px-3.5 py-1.5 min-h-[34px] text-xs font-semibold transition-all active:scale-95 ${typeFilter === "sewa"
+                  ? "bg-teal-600 text-white shadow-sm"
                   : "border border-gray-200 text-gray-600 hover:border-gray-300 dark:border-slate-800 dark:text-slate-300"
                 }`}
               >
@@ -560,56 +565,71 @@ export default function HomeBrowser({
                     applyFilters({ newCat: "all", newQ: "", newSort: "bumped", newMin: "", newMax: "", newCampus: "Semua", newNego: false, newCondition: "all", newType: "default" });
                     syncToUrl({ cat: "all", q: "", sort: "bumped", minPrice: "", maxPrice: "", campusFilter: "Semua", negoFilter: false });
                   }}
-                  className="shrink-0 px-2 py-1.5 text-xs text-gray-400 hover:text-gray-700 dark:hover:text-slate-200"
+                  className="shrink-0 px-3 py-1.5 min-h-[34px] text-xs font-bold text-rose-500 hover:text-rose-600 dark:hover:text-rose-400 active:scale-95 transition-transform"
                 >
                   × Reset
                 </button>
               )}
             </div>
 
-            {/* Price filter panel */}
-            {showPriceFilter && (
-              <div className="mt-2 flex flex-wrap items-end gap-3 rounded-2xl border border-gray-100 bg-gray-50 p-4 dark:border-slate-800 dark:bg-slate-900/50">
-                <div>
-                  <label className="label text-xs">Min (Rp)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={minPrice}
-                    onChange={(e) => setMinPrice(e.target.value)}
-                    placeholder="0"
-                    className="input w-28 text-sm"
-                  />
+            {/* Mobile Bottom Sheet Price Filter */}
+            <BottomSheet
+              isOpen={showPriceFilter}
+              onClose={() => setShowPriceFilter(false)}
+              title="Filter Rentang Harga"
+            >
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Min (Rp)</label>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min="0"
+                      value={minPrice}
+                      onChange={(e) => setMinPrice(e.target.value)}
+                      placeholder="0"
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 px-3.5 py-2.5 text-base md:text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Max (Rp)</label>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min="0"
+                      value={maxPrice}
+                      onChange={(e) => setMaxPrice(e.target.value)}
+                      placeholder="Tanpa batas"
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 px-3.5 py-2.5 text-base md:text-sm text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="label text-xs">Max (Rp)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={maxPrice}
-                    onChange={(e) => setMaxPrice(e.target.value)}
-                    placeholder="∞"
-                    className="input w-28 text-sm"
-                  />
-                </div>
-                <div className="flex gap-2">
+
+                <div className="flex gap-2 pt-2">
                   <button
-                    onClick={handlePriceApply}
-                    className="rounded-full bg-gray-900 px-4 py-2 text-xs font-semibold text-white dark:bg-white dark:text-gray-900"
+                    onClick={() => {
+                      handlePriceApply();
+                      setShowPriceFilter(false);
+                    }}
+                    className="flex-1 py-3 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-sm shadow-md active:scale-95 transition-all"
                   >
-                    Terapkan
+                    Terapkan Filter
                   </button>
                   {(minPrice || maxPrice) && (
                     <button
-                      onClick={handlePriceClear}
-                      className="rounded-full border border-gray-200 px-4 py-2 text-xs text-gray-500 dark:border-slate-700"
+                      onClick={() => {
+                        handlePriceClear();
+                        setShowPriceFilter(false);
+                      }}
+                      className="px-5 py-3 rounded-full border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-semibold text-sm active:scale-95 transition-all"
                     >
                       Reset
                     </button>
                   )}
                 </div>
               </div>
-            )}
+            </BottomSheet>
 
             {/* Categories */}
             <div className="mt-3">
@@ -709,17 +729,8 @@ export default function HomeBrowser({
 
             {/* Grid */}
             {searching ? (
-              <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="card overflow-hidden bg-white dark:border-slate-800 dark:bg-slate-900/30">
-                    <div className="aspect-square w-full bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800 bg-[length:200%_100%] animate-shimmer" />
-                    <div className="p-3 space-y-2">
-                      <div className="h-3 w-1/4 rounded bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800 bg-[length:200%_100%] animate-shimmer" />
-                      <div className="h-4 w-3/4 rounded bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800 bg-[length:200%_100%] animate-shimmer" />
-                      <div className="h-4 w-1/2 rounded bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800 bg-[length:200%_100%] animate-shimmer" />
-                    </div>
-                  </div>
-                ))}
+              <div className="mt-3">
+                <ProductGridSkeleton count={8} />
               </div>
             ) : listings.length === 0 ? (
               <div className="mt-8 mb-12 flex flex-col items-center justify-center py-16 px-4 text-center bg-gray-50/50 dark:bg-slate-900/20 rounded-3xl border border-gray-100 dark:border-slate-800/60">

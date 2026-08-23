@@ -2,165 +2,276 @@
 
 import { useState } from "react";
 import { useAdmin } from "./AdminProvider";
+import Image from "next/image";
 
 function rupiah(n) {
   return "Rp " + Number(n || 0).toLocaleString("id-ID");
 }
 
 function relTime(dateStr) {
+  if (!dateStr) return "Baru saja";
   const diff = Date.now() - new Date(dateStr).getTime();
   const m = Math.floor(diff / 60000);
-  if (m < 60) return `${m} menit lalu`;
+  if (m < 60) return `${m} mnt lalu`;
   const h = Math.floor(m / 60);
   if (h < 24) return `${h} jam lalu`;
   return `${Math.floor(h / 24)} hari lalu`;
 }
 
-function SectionHeader({ title, count, color = "gray" }) {
-  const colors = {
-    amber: "bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-300",
-    rose: "bg-rose-50 border-rose-200 text-rose-800 dark:bg-rose-900/20 dark:border-rose-800 dark:text-rose-300",
-    blue: "bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300",
-    gray: "bg-gray-50 border-gray-200 text-gray-700 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300",
-  };
-  return (
-    <div className={`mb-3 flex items-center gap-2 rounded-lg border px-3 py-2 ${colors[color]}`}>
-      <span className="font-semibold">{title}</span>
-      <span className="ml-auto rounded-full px-2 py-0.5 text-xs font-bold bg-current/10">{count}</span>
-    </div>
-  );
-}
-
-function ActionBtn({ label, onClick, danger }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`rounded px-2.5 py-1 text-xs font-semibold transition-colors ${
-        danger
-          ? "bg-rose-100 text-rose-700 hover:bg-rose-200 dark:bg-rose-900/40 dark:text-rose-300"
-          : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-      }`}
-    >
-      {label}
-    </button>
-  );
-}
-
-export default function ModerasiClient({ pendingListings, openReports, pendingProfiles, pendingFees, pendingFeeOffers = [] }) {
+export default function ModerasiClient({ 
+  pendingListings = [], 
+  openReports = [], 
+  pendingProfiles = [], 
+  pendingFees = [], 
+  pendingFeeOffers = [] 
+}) {
   const { action, confirmThen } = useAdmin();
+  const [activeTab, setActiveTab] = useState("all"); // 'all' | 'listings' | 'reports' | 'profiles' | 'fee_offers' | 'fees'
   const [rejectNote, setRejectNote] = useState({});
 
   const total = pendingListings.length + openReports.length + pendingProfiles.length + pendingFees.length + pendingFeeOffers.length;
 
   if (total === 0) {
     return (
-      <div className="rounded-2xl border border-gray-100 bg-white p-10 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
-        <p className="text-3xl">✅</p>
-        <p className="mt-2 font-semibold text-gray-700 dark:text-slate-200">Semua bersih!</p>
-        <p className="text-sm text-gray-400">Tidak ada item yang perlu dimoderasi saat ini.</p>
+      <div className="rounded-3xl border border-slate-200/80 bg-white p-12 text-center shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div className="w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center text-3xl mb-3">
+          ✓
+        </div>
+        <h3 className="text-lg font-black text-slate-900 dark:text-white">Semua Bersih &amp; Terkendali!</h3>
+        <p className="mt-1 text-xs text-slate-400 dark:text-slate-500 max-w-sm mx-auto">
+          Tidak ada iklan, laporan, atau permintaan profil yang perlu dimoderasi saat ini.
+        </p>
       </div>
     );
   }
 
+  const tabs = [
+    { id: "all", label: "Semua", count: total },
+    { id: "listings", label: "Iklan Pending", count: pendingListings.length, icon: "📦" },
+    { id: "reports", label: "Laporan", count: openReports.length, icon: "⚠️", badgeColor: "bg-rose-500 text-white" },
+    { id: "profiles", label: "Ubah Profil", count: pendingProfiles.length, icon: "👤" },
+    { id: "fee_offers", label: "Tawaran Biaya", count: pendingFeeOffers.length, icon: "🏷️" },
+    { id: "fees", label: "Komisi Terjual", count: pendingFees.length, icon: "💳" },
+  ].filter((t) => t.id === "all" || t.count > 0);
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 font-sans">
+      {/* FILTER PILLS */}
+      <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900/90 p-1.5 rounded-2xl overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden border border-slate-200/80 dark:border-slate-800">
+        {tabs.map((t) => {
+          const isActive = activeTab === t.id;
+          return (
+            <button
+              key={t.id}
+              onClick={() => setActiveTab(t.id)}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 whitespace-nowrap active:scale-95 ${
+                isActive
+                  ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs font-extrabold"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              }`}
+            >
+              {t.icon && <span>{t.icon}</span>}
+              <span>{t.label}</span>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                t.badgeColor || (isActive ? "bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200" : "bg-slate-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-400")
+              }`}>
+                {t.count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
-      {/* IKLAN PENDING */}
-      {pendingListings.length > 0 && (
-        <section>
-          <SectionHeader title="Iklan Menunggu Persetujuan" count={pendingListings.length} color="amber" />
-          <div className="divide-y divide-gray-100 rounded-xl border border-gray-100 bg-white shadow-sm dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900/40">
+      {/* 1. IKLAN PENDING */}
+      {(activeTab === "all" || activeTab === "listings") && pendingListings.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
+              <span>📦</span> Iklan Menunggu Persetujuan ({pendingListings.length})
+            </h3>
+          </div>
+
+          <div className="grid gap-3">
             {pendingListings.map((l) => (
-              <div key={l.id} className="flex flex-col gap-2 p-4 sm:flex-row sm:items-start">
-                {l.image_url && (
-                  <img src={l.image_url} alt={l.title} className="h-16 w-16 rounded-lg object-cover" />
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold dark:text-white">{l.title}</p>
-                  <p className="text-xs text-gray-400">
-                    {l.seller_name} · {l.seller_wa} · {l.category} · {rupiah(l.price)} · {relTime(l.created_at)}
-                  </p>
-                </div>
-                <div className="flex shrink-0 gap-2">
-                  <ActionBtn label="✅ Aktifkan" onClick={() =>
-                    confirmThen({ title: "Aktifkan iklan?", confirmLabel: "Aktifkan" }, () => action({ action: "activate", id: l.id }, "Iklan diaktifkan"))
-                  } />
-                  <ActionBtn label="⛔ Suspend" danger onClick={() =>
-                    confirmThen({ title: "Suspend iklan?", danger: true, confirmLabel: "Suspend" }, () => action({ action: "suspend", id: l.id }, "Iklan disuspend"))
-                  } />
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* LAPORAN OPEN */}
-      {openReports.length > 0 && (
-        <section>
-          <SectionHeader title="Laporan Belum Diselesaikan" count={openReports.length} color="rose" />
-          <div className="divide-y divide-gray-100 rounded-xl border border-gray-100 bg-white shadow-sm dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900/40">
-            {openReports.map((r) => (
-              <div key={r.id} className="flex flex-col gap-2 p-4 sm:flex-row sm:items-start">
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold dark:text-white">{r.listings?.title || "Iklan dihapus"}</p>
-                  <p className="mt-0.5 text-xs text-gray-500 dark:text-slate-400">
-                    Dilaporkan oleh: {r.reporter_wa || "—"} · {relTime(r.created_at)}
-                  </p>
-                  {r.reason && (
-                    <p className="mt-1 rounded bg-gray-50 px-2 py-1 text-xs dark:bg-slate-800">"{r.reason}"</p>
-                  )}
-                </div>
-                <div className="flex shrink-0 gap-2">
-                  <ActionBtn label="✅ Selesaikan" onClick={() =>
-                    action({ action: "resolve_report", id: r.id }, "Laporan diselesaikan")
-                  } />
-                  {r.listing_id && (
-                    <ActionBtn label="⛔ Suspend iklan" danger onClick={() =>
-                      confirmThen({ title: "Suspend iklan yang dilaporkan?", danger: true, confirmLabel: "Suspend" }, async () => {
-                        await action({ action: "suspend", id: r.listing_id }, "Iklan disuspend");
-                        await action({ action: "resolve_report", id: r.id }, "Laporan diselesaikan");
-                      })
-                    } />
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* PERMINTAAN UBAH PROFIL */}
-      {pendingProfiles.length > 0 && (
-        <section>
-          <SectionHeader title="Permintaan Ubah Profil" count={pendingProfiles.length} color="blue" />
-          <div className="divide-y divide-gray-100 rounded-xl border border-gray-100 bg-white shadow-sm dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900/40">
-            {pendingProfiles.map((p) => (
-              <div key={p.id} className="flex flex-col gap-3 p-4">
-                <div>
-                  <p className="text-xs text-gray-400">{p.seller_wa} · Ubah {p.field === "name" ? "nama" : "bio"} · {relTime(p.created_at)}</p>
-                  <div className="mt-1.5 flex items-center gap-3">
-                    <span className="text-sm text-gray-400 line-through">{p.current_value || "—"}</span>
-                    <span className="text-gray-400">→</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">{p.requested_value}</span>
+              <div 
+                key={l.id} 
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 hover:shadow-xs transition-shadow"
+              >
+                <div className="flex items-start sm:items-center gap-3.5 min-w-0">
+                  <div className="w-14 h-14 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 relative">
+                    {l.image_url ? (
+                      <img src={l.image_url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-xl text-slate-400">📦</div>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="font-extrabold text-sm text-slate-900 dark:text-white truncate" title={l.title}>
+                      {l.title}
+                    </h4>
+                    <div className="flex items-center gap-2 flex-wrap mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      <span className="font-bold text-slate-700 dark:text-slate-300">{l.seller_name || "Penjual"}</span>
+                      <span>•</span>
+                      <a 
+                        href={`https://wa.me/${l.seller_wa?.startsWith("0") ? "62" + l.seller_wa.slice(1) : l.seller_wa}`} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="text-emerald-600 dark:text-emerald-400 hover:underline font-semibold"
+                      >
+                        📱 {l.seller_wa}
+                      </a>
+                      <span>•</span>
+                      <span className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                        {l.category}
+                      </span>
+                      <span>•</span>
+                      <span className="font-black text-slate-900 dark:text-white">{rupiah(l.price)}</span>
+                      <span>•</span>
+                      <span className="text-[11px] text-slate-400">{relTime(l.created_at)}</span>
+                    </div>
                   </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <ActionBtn label="✅ Setujui" onClick={() =>
-                    confirmThen({ title: "Setujui perubahan profil?", confirmLabel: "Setujui" }, () =>
-                      action({ action: "approve_profile_change", id: p.id }, "Profil disetujui"))
-                  } />
+
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                  <button
+                    onClick={() =>
+                      confirmThen({ title: `Aktifkan iklan "${l.title}"?`, confirmLabel: "Aktifkan" }, () =>
+                        action({ action: "activate", id: l.id }, "Iklan berhasil diaktifkan")
+                      )
+                    }
+                    className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold shadow-xs active:scale-95 transition-all flex items-center gap-1.5"
+                  >
+                    <span>✓</span> Aktifkan
+                  </button>
+                  <button
+                    onClick={() =>
+                      confirmThen({ title: `Suspend iklan "${l.title}"?`, danger: true, confirmLabel: "Suspend" }, () =>
+                        action({ action: "suspend", id: l.id }, "Iklan disuspend")
+                      )
+                    }
+                    className="px-3.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60 text-xs font-bold active:scale-95 transition-all flex items-center gap-1"
+                  >
+                    <span>✕</span> Suspend
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 2. LAPORAN TERBUKA */}
+      {(activeTab === "all" || activeTab === "reports") && openReports.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <h3 className="text-xs font-black uppercase tracking-wider text-rose-600 dark:text-rose-400 flex items-center gap-2">
+              <span>⚠️</span> Laporan Masuk ({openReports.length})
+            </h3>
+          </div>
+
+          <div className="grid gap-3">
+            {openReports.map((r) => (
+              <div 
+                key={r.id} 
+                className="p-4 rounded-2xl bg-white dark:bg-slate-900/90 border border-rose-200/80 dark:border-rose-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+              >
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-md bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 text-[11px] font-black uppercase">
+                      {r.reason || "Laporan"}
+                    </span>
+                    <h4 className="font-extrabold text-sm text-slate-900 dark:text-white truncate">
+                      {r.listings?.title || "Iklan Dihapus"}
+                    </h4>
+                  </div>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    Pelapor: <strong>{r.reporter_wa || "Anonim"}</strong> • {relTime(r.created_at)}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => action({ action: "resolve_report", id: r.id }, "Laporan diselesaikan")}
+                    className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs font-bold active:scale-95 transition-all"
+                  >
+                    ✓ Selesaikan
+                  </button>
+                  {r.listing_id && (
+                    <button
+                      onClick={() =>
+                        confirmThen({ title: "Suspend iklan yang dilaporkan?", danger: true, confirmLabel: "Suspend" }, async () => {
+                          await action({ action: "suspend", id: r.listing_id }, "Iklan disuspend");
+                          await action({ action: "resolve_report", id: r.id }, "Laporan diselesaikan");
+                        })
+                      }
+                      className="px-3.5 py-1.5 rounded-xl bg-rose-50 text-rose-600 border border-rose-200 dark:border-rose-900 dark:bg-rose-950/40 text-xs font-bold active:scale-95 transition-all"
+                    >
+                      ⛔ Suspend Iklan
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 3. PERMINTAAN PROFIL */}
+      {(activeTab === "all" || activeTab === "profiles") && pendingProfiles.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
+              <span>👤</span> Permintaan Ubah Profil ({pendingProfiles.length})
+            </h3>
+          </div>
+
+          <div className="grid gap-3">
+            {pendingProfiles.map((p) => (
+              <div 
+                key={p.id} 
+                className="p-4 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 flex flex-col gap-3"
+              >
+                <div>
+                  <p className="text-xs text-slate-400 font-semibold">
+                    WA: {p.seller_wa} • Ubah {p.field === "name" ? "Nama Penjual" : "Biodata"} • {relTime(p.created_at)}
+                  </p>
+                  <div className="mt-1.5 flex items-center gap-3 text-sm">
+                    <span className="text-slate-400 line-through">{p.current_value || "(Kosong)"}</span>
+                    <span className="text-slate-400">→</span>
+                    <span className="font-extrabold text-slate-900 dark:text-white bg-primary/10 text-primary px-2.5 py-0.5 rounded-lg">
+                      {p.requested_value}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <button
+                    onClick={() =>
+                      confirmThen({ title: "Setujui perubahan profil?", confirmLabel: "Setujui" }, () =>
+                        action({ action: "approve_profile_change", id: p.id }, "Profil berhasil diperbarui")
+                      )
+                    }
+                    className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold active:scale-95 transition-all"
+                  >
+                    ✓ Setujui
+                  </button>
                   <input
                     type="text"
                     placeholder="Alasan penolakan (opsional)"
                     value={rejectNote[p.id] || ""}
                     onChange={(e) => setRejectNote((n) => ({ ...n, [p.id]: e.target.value }))}
-                    className="min-w-0 flex-1 rounded border border-gray-200 px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    className="min-w-0 flex-1 rounded-xl border border-slate-200 px-3 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-white outline-none"
                   />
-                  <ActionBtn label="❌ Tolak" danger onClick={() =>
-                    confirmThen({ title: "Tolak permintaan profil?", danger: true, confirmLabel: "Tolak" }, () =>
-                      action({ action: "reject_profile_change", id: p.id, note: rejectNote[p.id] || "" }, "Permintaan ditolak"))
-                  } />
+                  <button
+                    onClick={() =>
+                      confirmThen({ title: "Tolak permintaan profil?", danger: true, confirmLabel: "Tolak" }, () =>
+                        action({ action: "reject_profile_change", id: p.id, note: rejectNote[p.id] || "" }, "Permintaan ditolak")
+                      )
+                    }
+                    className="px-3.5 py-1.5 rounded-xl bg-rose-50 text-rose-600 border border-rose-200 dark:border-rose-900 dark:bg-rose-950/40 text-xs font-bold active:scale-95 transition-all"
+                  >
+                    ✕ Tolak
+                  </button>
                 </div>
               </div>
             ))}
@@ -168,43 +279,61 @@ export default function ModerasiClient({ pendingListings, openReports, pendingPr
         </section>
       )}
 
-      {/* TAWARAN BIAYA IKLAN */}
-      {pendingFeeOffers.length > 0 && (
-        <section>
-          <SectionHeader title="Tawaran Biaya Iklan" count={pendingFeeOffers.length} color="blue" />
-          <div className="divide-y divide-gray-100 rounded-xl border border-gray-100 bg-white shadow-sm dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900/40">
+      {/* 4. TAWARAN BIAYA IKLAN */}
+      {(activeTab === "all" || activeTab === "fee_offers") && pendingFeeOffers.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
+              <span>🏷️</span> Tawaran Biaya Iklan ({pendingFeeOffers.length})
+            </h3>
+          </div>
+
+          <div className="grid gap-3">
             {pendingFeeOffers.map((f) => {
               const originalFee = f.payments?.[0]?.amount || 0;
               return (
-                <div key={f.id} className="flex flex-col gap-2 p-4 sm:flex-row sm:items-start">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold dark:text-white">{f.title}</p>
-                    <p className="text-xs text-gray-400">
-                      {f.seller_name || f.seller_wa} · Kode {f.listing_code} · {relTime(f.created_at)}
+                <div 
+                  key={f.id} 
+                  className="p-4 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                >
+                  <div className="min-w-0">
+                    <h4 className="font-extrabold text-sm text-slate-900 dark:text-white truncate">{f.title}</h4>
+                    <p className="text-xs text-slate-400 font-semibold mt-0.5">
+                      {f.seller_name || f.seller_wa} • Kode #{f.listing_code} • {relTime(f.created_at)}
                     </p>
-                    <div className="mt-1 flex items-center gap-2 text-sm">
-                      <span className="text-gray-400 line-through">{rupiah(originalFee)}</span>
-                      <span className="text-gray-400">→</span>
-                      <span className="font-bold text-blue-600 dark:text-blue-400">{rupiah(f.fee_offer)}</span>
-                      {f.fee_offer === 0 && <span className="rounded bg-green-100 px-1.5 py-0.5 text-xs font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400">Minta Gratis</span>}
+                    <div className="mt-1 flex items-center gap-2 text-xs">
+                      <span className="text-slate-400 line-through">{rupiah(originalFee)}</span>
+                      <span>→</span>
+                      <span className="font-extrabold text-primary">{rupiah(f.fee_offer)}</span>
+                      {f.fee_offer === 0 && (
+                        <span className="bg-emerald-100 text-emerald-700 text-[10px] font-black px-2 py-0.5 rounded-full">
+                          Minta Gratis
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <div className="flex shrink-0 flex-wrap items-center gap-2">
-                    <ActionBtn label="✅ Setujui" onClick={() =>
-                      confirmThen({ title: `Setujui biaya ${rupiah(f.fee_offer)}?`, confirmLabel: "Setujui" }, () =>
-                        action({ action: "approve_fee_offer", id: f.id }, "Tawaran biaya disetujui"))
-                    } />
-                    <input
-                      type="text"
-                      placeholder="Alasan penolakan (opsional)"
-                      value={rejectNote[`fee_${f.id}`] || ""}
-                      onChange={(e) => setRejectNote((n) => ({ ...n, [`fee_${f.id}`]: e.target.value }))}
-                      className="min-w-0 w-40 rounded border border-gray-200 px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                    />
-                    <ActionBtn label="❌ Tolak" danger onClick={() =>
-                      confirmThen({ title: "Tolak tawaran biaya?", danger: true, confirmLabel: "Tolak" }, () =>
-                        action({ action: "reject_fee_offer", id: f.id, note: rejectNote[`fee_${f.id}`] || "" }, "Tawaran ditolak"))
-                    } />
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() =>
+                        confirmThen({ title: `Setujui biaya ${rupiah(f.fee_offer)}?`, confirmLabel: "Setujui" }, () =>
+                          action({ action: "approve_fee_offer", id: f.id }, "Tawaran biaya disetujui")
+                        )
+                      }
+                      className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold active:scale-95 transition-all"
+                    >
+                      ✓ Setujui
+                    </button>
+                    <button
+                      onClick={() =>
+                        confirmThen({ title: "Tolak tawaran biaya?", danger: true, confirmLabel: "Tolak" }, () =>
+                          action({ action: "reject_fee_offer", id: f.id, note: rejectNote[`fee_${f.id}`] || "" }, "Tawaran ditolak")
+                        )
+                      }
+                      className="px-3.5 py-1.5 rounded-xl bg-rose-50 text-rose-600 border border-rose-200 dark:border-rose-900 dark:bg-rose-950/40 text-xs font-bold active:scale-95 transition-all"
+                    >
+                      ✕ Tolak
+                    </button>
                   </div>
                 </div>
               );
@@ -213,34 +342,56 @@ export default function ModerasiClient({ pendingListings, openReports, pendingPr
         </section>
       )}
 
-      {/* SOLD FEE PENDING */}
-      {pendingFees.length > 0 && (
-        <section>
-          <SectionHeader title="Biaya Terjual Belum Dibayar" count={pendingFees.length} color="gray" />
-          <div className="divide-y divide-gray-100 rounded-xl border border-gray-100 bg-white shadow-sm dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900/40">
+      {/* 5. SOLD FEE PENDING */}
+      {(activeTab === "all" || activeTab === "fees") && pendingFees.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
+              <span>💳</span> Tagihan Komisi Terjual ({pendingFees.length})
+            </h3>
+          </div>
+
+          <div className="grid gap-3">
             {pendingFees.map((f) => (
-              <div key={f.id} className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center">
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold dark:text-white">{f.listings?.title || "Iklan"}</p>
-                  <p className="text-xs text-gray-400">
-                    {f.listings?.seller_wa || "—"} · {rupiah(f.amount)} · {relTime(f.created_at)}
+              <div 
+                key={f.id} 
+                className="p-4 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+              >
+                <div className="min-w-0">
+                  <h4 className="font-extrabold text-sm text-slate-900 dark:text-white truncate">{f.listings?.title || "Iklan Terjual"}</h4>
+                  <p className="text-xs text-slate-400 font-semibold mt-0.5">
+                    {f.listings?.seller_wa || "—"} • Tagihan: <strong className="text-slate-700 dark:text-slate-200">{rupiah(f.amount)}</strong> • {relTime(f.created_at)}
                   </p>
                 </div>
-                <div className="flex shrink-0 gap-2">
-                  <ActionBtn label="✅ Lunas" onClick={() =>
-                    confirmThen({ title: "Tandai sold fee sebagai lunas?", confirmLabel: "Lunas" }, () =>
-                      action({ action: "update_payment", id: f.id, status: "paid" }, "Pembayaran dikonfirmasi"))
-                  } />
-                  <ActionBtn label="🗑 Hapus" danger onClick={() =>
-                    confirmThen({ title: "Hapus tagihan ini?", danger: true, confirmLabel: "Hapus" }, () =>
-                      action({ action: "delete_payment", id: f.id }, "Tagihan dihapus"))
-                  } />
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() =>
+                      confirmThen({ title: "Tandai komisi sebagai lunas?", confirmLabel: "Lunas" }, () =>
+                        action({ action: "update_payment", id: f.id, status: "paid" }, "Komisi lunas")
+                      )
+                    }
+                    className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold active:scale-95 transition-all"
+                  >
+                    ✓ Tandai Lunas
+                  </button>
+                  <button
+                    onClick={() =>
+                      confirmThen({ title: "Hapus tagihan ini?", danger: true, confirmLabel: "Hapus" }, () =>
+                        action({ action: "delete_payment", id: f.id }, "Tagihan dihapus")
+                      )
+                    }
+                    className="px-3.5 py-1.5 rounded-xl bg-rose-50 text-rose-600 border border-rose-200 dark:border-rose-900 dark:bg-rose-950/40 text-xs font-bold active:scale-95 transition-all"
+                  >
+                    🗑 Hapus
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         </section>
       )}
+
     </div>
   );
 }

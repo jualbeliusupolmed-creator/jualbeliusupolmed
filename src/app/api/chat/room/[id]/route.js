@@ -72,7 +72,7 @@ export async function POST(request, { params }) {
   try {
     const roomId = params.id;
     const body = await request.json();
-    let { senderAlias, message } = body;
+    const { message } = body;
 
     // `senderId` sengaja TIDAK lagi dibaca dari body: identitas pengirim datang
     // dari sesi login (ambilRoomUntuk), dan klien memang berhenti mengirimnya.
@@ -92,7 +92,6 @@ export async function POST(request, { params }) {
     }
 
     const cleanMessage = censorProfanity(message.trim().slice(0, 500));
-    senderAlias = (senderAlias || "Anonim").trim().slice(0, 50);
 
     const supa = getAdminClient();
 
@@ -105,15 +104,12 @@ export async function POST(request, { params }) {
     // Gunakan actingUserId dari session jika marketplace
     const actingUserId = hasil.actingUserId;
     
-    // Jika marketplace, ambil alias dari tabel seller_profiles atau room
-    let finalAlias = senderAlias;
-    if (hasil.room.type === "marketplace") {
-      if (hasil.room.user1_id === actingUserId) {
-        finalAlias = hasil.room.user1_alias;
-      } else {
-        finalAlias = hasil.room.user2_alias;
-      }
-    }
+    // Alias selalu berasal dari room yang terbentuk saat matching, bukan dari
+    // payload klien. Untuk Cari Teman ini memastikan nama anon yang dipilih
+    // di profil tidak dapat ditukar/ditiru di tengah percakapan.
+    const finalAlias = hasil.room.user1_id === actingUserId
+      ? hasil.room.user1_alias
+      : hasil.room.user2_alias;
 
     const { data, error } = await supa
       .from("chat_messages")

@@ -87,8 +87,8 @@ export default async function HomePage() {
       <SuperAppHome
         latestListings={listings}
         madingPosts={madingPosts}
-        heroTitle={settings.site?.heroTitle}
-        heroSubtitle={settings.site?.heroSubtitle}
+        heroTitle={settings.site?.heroTitle === "Marketplace Mahasiswa USU & POLMED" ? "" : settings.site?.heroTitle}
+        heroSubtitle={settings.site?.heroSubtitle?.includes("dibantu admin") ? "" : settings.site?.heroSubtitle}
       />
     </>
   );

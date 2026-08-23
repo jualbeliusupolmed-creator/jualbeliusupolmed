@@ -32,11 +32,22 @@ export function AntreanBot() {
     setMuat(true);
     try {
       const r = await fetch(proxy("antrean/lokal"), { cache: "no-store" });
-      const j = await r.json();
-      if (!r.ok) { setGalat(j.error || `HTTP ${r.status}`); setData(null); }
-      else { setGalat(null); setData(j); }
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        if (r.status === 404) {
+          setGalat("Fitur antrean lokal belum aktif di bot WhatsApp (perlu sinkronisasi & restart bot di VPS).");
+        } else if (r.status === 503 || r.status === 502) {
+          setGalat(j.error || "Bot WhatsApp sedang tidak terhubung / server VPS offline.");
+        } else {
+          setGalat(j.error || `Koneksi bot merespons HTTP ${r.status}`);
+        }
+        setData(null);
+      } else {
+        setGalat(null);
+        setData(j);
+      }
     } catch (e) {
-      setGalat(`Bot tidak menjawab: ${e.message}`);
+      setGalat(`Tidak dapat menghubungi Bot WhatsApp: ${e.message}`);
     } finally {
       setMuat(false);
     }

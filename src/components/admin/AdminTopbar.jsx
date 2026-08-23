@@ -212,12 +212,19 @@ export default function AdminTopbar({ counts = {} }) {
           >
             <div className="g-rail-brand justify-between">
               <div className="flex items-center gap-3">
-                <span className="g-rail-brand-mark">
-                  <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="currentColor">
+                <div className="w-8 h-8 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center shadow-sm">
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
                   </svg>
-                </span>
-                <span className="g-rail-brand-text"><b>Admin</b> USU-POLMED</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-black text-slate-900 dark:text-white leading-none tracking-tight">
+                    Kampusfess Admin
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">
+                    USU • POLMED
+                  </span>
+                </div>
               </div>
               <button
                 type="button"

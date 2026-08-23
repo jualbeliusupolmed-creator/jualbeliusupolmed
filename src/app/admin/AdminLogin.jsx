@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function AdminLogin() {
   const router = useRouter();
@@ -35,33 +36,36 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 dark:bg-neutral-950">
-      <div className="w-full max-w-sm">
+    <div className="relative min-h-screen flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950 overflow-hidden font-sans">
+      {/* Subtle Background Glow */}
+      <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-emerald-400/10 rounded-full blur-[100px] pointer-events-none" />
+
+      <div className="w-full max-w-md relative z-10">
         {/* Card */}
-        <div className="rounded-xl border border-gray-200 bg-white p-7 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-          {/* Header */}
-          <div className="mb-6">
-            <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-neutral-900 text-white dark:bg-white dark:text-neutral-900">
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
-              </div>
-              <h1 className="text-base font-semibold tracking-tight text-neutral-900 dark:text-white">
-                Admin Console
-              </h1>
+        <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/90 backdrop-blur-xl p-7 sm:p-8 shadow-2xl shadow-slate-200/50 dark:shadow-none">
+          
+          {/* Brand Header */}
+          <div className="mb-6 text-center">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-slate-900 to-slate-800 dark:from-white dark:to-slate-200 text-white dark:text-slate-900 mx-auto flex items-center justify-center shadow-lg shadow-slate-900/10 mb-3">
+              <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
             </div>
-            <p className="mt-1.5 text-xs text-gray-500 dark:text-neutral-400">
-              Marketplace USU & POLMED
+            <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
+              Admin Console
+            </h1>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Kampusfess Marketplace &amp; Media Komunitas USU-POLMED
             </p>
           </div>
 
           {/* Form */}
           <form onSubmit={login} className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-gray-700 dark:text-neutral-300">
-                Kata Sandi
+              <label className="mb-1.5 block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Kata Sandi Admin
               </label>
               <div className="relative">
                 <input
@@ -71,15 +75,15 @@ export default function AdminLogin() {
                     setPw(e.target.value);
                     if (err) setErr("");
                   }}
-                  placeholder="Masukkan kata sandi..."
+                  placeholder="Masukkan password admin..."
                   autoFocus
                   required
-                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-neutral-900 outline-none transition placeholder:text-gray-400 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:placeholder:text-neutral-500 dark:focus:border-white dark:focus:ring-white pr-9"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white outline-none transition placeholder:text-slate-400 focus:border-primary focus:bg-white dark:focus:bg-slate-800 pr-10"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPw(!showPw)}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 transition hover:text-gray-600 dark:text-neutral-400 dark:hover:text-neutral-200"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                   tabIndex={-1}
                   aria-label={showPw ? "Sembunyikan" : "Tampilkan"}
                 >
@@ -98,8 +102,8 @@ export default function AdminLogin() {
             </div>
 
             {err && (
-              <div className="flex items-center gap-1.5 text-xs font-medium text-red-600 dark:text-red-400">
-                <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-xs font-semibold text-rose-600 dark:text-rose-400">
+                <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="12" cy="12" r="10" />
                   <line x1="12" y1="8" x2="12" y2="12" />
                   <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -111,34 +115,29 @@ export default function AdminLogin() {
             <button
               type="submit"
               disabled={busy || !pw}
-              className="flex w-full items-center justify-center rounded-lg bg-neutral-900 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
+              className="flex w-full items-center justify-center rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 py-3 text-sm font-bold text-white shadow-lg shadow-slate-900/10 active:scale-98 transition-all disabled:opacity-50"
             >
               {busy ? (
                 <span className="flex items-center gap-2">
-                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  Memeriksa...
+                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  Memeriksa…
                 </span>
               ) : (
-                "Masuk"
+                "Masuk ke Admin Console"
               )}
             </button>
           </form>
         </div>
 
-        <div className="mt-4 text-center">
-          <a
+        <div className="mt-5 text-center">
+          <Link
             href="/"
-            className="text-xs text-gray-500 transition hover:text-gray-800 dark:text-neutral-400 dark:hover:text-neutral-200"
+            className="text-xs font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
           >
-            ← Kembali ke Marketplace
-          </a>
+            ← Kembali ke Halaman Utama
+          </Link>
         </div>
       </div>
     </div>
   );
 }
-
-

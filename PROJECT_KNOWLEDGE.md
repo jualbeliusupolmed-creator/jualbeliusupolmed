@@ -102,5 +102,49 @@ Berjalan dengan PostgreSQL, memiliki tabel-tabel berikut:
 
 ## 5. Log & Riwayat Audit
 
+*   **24 Agustus 2026 — Traffic Menfess, pseudonim, dan audit Cari Teman**
+    - Migration `supabase/migrations/20260823194939_mading_engagement_anonymous_identity.sql` menambah hitungan tayangan unik dan bagikan Menfess, tabel engagement berisi hash bergaram (bukan IP/nomor mentah), serta kolom `seller_profiles.anonymous_name`.
+    - Semua penulisan hitungan berjalan melalui API server dan fungsi `SECURITY INVOKER` yang hanya dapat dieksekusi `service_role`; tabel audit engagement tidak memiliki policy publik.
+    - Pseudonim profil digunakan server-side untuk Menfess, komentar, dan room Cari Teman. Nama marketplace tidak otomatis terekspos dalam komunitas anonim.
+    - Admin memiliki halaman Analitik Menfess dan Audit Cari Teman. Isi chat diperlakukan sebagai data privat; panel menampilkan pengingat akses hanya untuk moderasi/penanganan laporan.
+    - Migration belum diterapkan ke produksi dalam perubahan kode ini; terapkan dan verifikasi melalui workflow Supabase yang disetujui sebelum mengaktifkan indikator traffic di Vercel.
+
+*   **24 Agustus 2026 — Verifikasi kualitas web**
+    - `npm run lint` bersih tanpa warning maupun error; dependency React Hooks pada halaman admin, marketplace, jasa, dan toko telah dirapikan.
+    - `npm test` lulus 20/20. Build produksi lokal berhasil dibuat dengan PWA dinonaktifkan secara diagnostik (`DISABLE_PWA=true`); artefak `.next/BUILD_ID` dan manifest tersedia.
+
+*   **24 Agustus 2026 — Snapshot operasional & audit read-only**
+    - Web utama dan deployment Vercel merespons normal (`200`) dengan HSTS,
+      CSP, `nosniff`, dan Permissions-Policy. Endpoint Railway yang pernah
+      dicatat untuk bot menghasilkan fallback `404`; VPS/PM2 adalah jalur bot
+      yang terverifikasi aktif sampai ada keputusan arsitektur baru.
+    - VPS memiliki dua proses bot aktif di balik Nginx. Kapasitas saat audit
+      memadai, tetapi restart bot perlu ditangani sebagai masalah reliabilitas:
+      log menunjukkan putus koneksi WhatsApp dan reconnect berulang. Jangan
+      menyertakan nomor, isi chat, atau session file dalam laporan debugging.
+    - Worktree bot di VPS dan `bot-wa/` lokal memiliki perubahan yang belum
+      dikomit. Tetapkan repo/commit canonical sebelum deploy atau sinkronisasi;
+      jangan menimpa perubahan produksi.
+    - RLS produksi belum tervalidasi karena konfigurasi koneksi database lokal
+      tidak valid dan koneksi yang tersedia tidak mencapai tenant. Audit berikut
+      harus menggunakan OAuth Supabase MCP read-only, lalu memeriksa tabel,
+      policy, functions, Storage, Auth, dan Security Advisors.
+    - Tes web: 20/20 lulus. Linter tidak memiliki error, namun terdapat
+      peringatan dependency React Hooks yang perlu dibereskan bertahap.
+    - Risiko prioritas: rahasia pernah berada di tempat yang tidak semestinya
+      (remote Git/artefak dokumentasi lokal). Jangan catat nilainya di dokumen;
+      lakukan rotasi melalui secret manager dan hapus artefaknya secara aman.
+
+### Prioritas lanjutan
+
+1. Rotasi seluruh rahasia yang pernah terekspos dan bersihkan artefak lokal/VPS.
+2. Hubungkan Supabase, GitHub, dan Vercel melalui OAuth/read-only; hindari
+   berbagi token di chat.
+3. Putuskan jalur deployment bot canonical dan commit/review perubahan yang
+   memang ingin dipertahankan.
+4. Audit RLS produksi serta policy publik yang luas, terutama fitur tawaran,
+   komentar, dan langganan.
+5. Tambahkan pengujian bot, monitoring restart, dan runbook deploy/rollback.
+
 *   **23 Agustus 2026** - *Chat realtime dituntaskan* - Dua akar berbeda ditutup: (1) `NEXT_PUBLIC_SUPABASE_ANON_KEY` ditandai Sensitive di Vercel sehingga tidak ter-bake ke bundel klien — diganti publishable key tanpa tanda Sensitive; (2) `/api/chat/room/[id]` menyimpan pesan tanpa menyiarkannya, sehingga hanya pesan pembuka yang terasa seketika dan semua balasan menunggu polling 10 detik. Pola broadcast disatukan ke `src/lib/chatRealtime.js` (sebelumnya cuma ada inline di `marketplace/start`).
 *   **21 Agustus 2026** - *Audit Infrastruktur Menyeluruh* - Melakukan pemetaan sistem Web, Bot, dan Database. Menghapus rute `/admin/[tab]` yang redundan dan refactor `getAdminStats()`. Hasil audit didokumentasikan di file ini.

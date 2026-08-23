@@ -94,6 +94,33 @@ body {
   .floating-label {
     @apply absolute left-3.5 top-4 z-10 origin-[0] -translate-y-2.5 scale-75 transform text-xs font-semibold uppercase tracking-wide text-gray-400 transition-all duration-200 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-2.5 peer-focus:scale-75 peer-focus:text-gray-900 dark:peer-focus:text-white;
   }
+
+  /* Safe area utility classes for iOS and Android gesture bars */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .mb-safe {
+    margin-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .bottom-safe {
+    bottom: env(safe-area-inset-bottom, 0px);
+  }
+  
+  /* Mobile smooth touch and tap highlight */
+  .touch-pan-x {
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+  }
+  .touch-pan-y {
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+  .no-tap-highlight {
+    -webkit-tap-highlight-color: transparent;
+  }
 }
 
 @keyframes fadeIn {

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { isFavorite, toggleFavorite } from "@/lib/favorites";
 import { Icon } from "@/components/Icons";
+import { hapticLight, hapticSuccess } from "@/lib/haptics";
 
 // Tombol hati untuk menyimpan/melepas favorit. Sinkron antar-instance via event.
 export default function FavoriteButton({ listing, className = "", size = "md" }) {
@@ -18,6 +19,12 @@ export default function FavoriteButton({ listing, className = "", size = "md" })
   function onClick(e) {
     e.preventDefault();
     e.stopPropagation();
+    const nextState = !fav;
+    if (nextState) {
+      hapticSuccess();
+    } else {
+      hapticLight();
+    }
     toggleFavorite(listing);
   }
 
