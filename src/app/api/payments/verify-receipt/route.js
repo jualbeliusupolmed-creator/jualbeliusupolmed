@@ -46,6 +46,11 @@ export async function POST(req) {
     const serverAmount = Number(payment0.meta?.final_amount || payment0.amount) || 0;
 
     // Baca & hash struk via AI Vision
+    // Vercel menolak body > ~4,5 MB, tapi pagar sendiri tetap dipasang: foto
+    // struk yang wajar < 2 MB, dan buffer sebesar ini tidak perlu sampai ke AI.
+    if (receiptFile.size > 8 * 1024 * 1024) {
+      return NextResponse.json({ success: false, error: "Ukuran foto struk maksimal 8 MB." }, { status: 400 });
+    }
     const buffer = Buffer.from(await receiptFile.arrayBuffer());
     const imageHash = computeImageHash(buffer);
 

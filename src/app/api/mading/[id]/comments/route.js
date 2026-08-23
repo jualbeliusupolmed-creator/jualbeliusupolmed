@@ -14,6 +14,18 @@ export async function GET(request, { params }) {
     }
 
     const supa = getAdminClient();
+
+    // Komentar mengikuti nasib induknya: postingan yang disembunyikan tidak
+    // boleh isinya tetap terbaca lewat pintu samping ini.
+    const { data: post } = await supa
+      .from("mading_posts")
+      .select("id, status")
+      .eq("id", postId)
+      .maybeSingle();
+    if (!post || post.status !== "active") {
+      return NextResponse.json({ comments: [] });
+    }
+
     const { data, error } = await supa
       .from("mading_comments")
       .select("*")
@@ -56,6 +68,18 @@ export async function POST(request, { params }) {
     const cleanContent = censorProfanity(content.trim().slice(0, 500));
 
     const supa = getAdminClient();
+
+    // Postingan yang sudah `hidden` (termasuk oleh 5 laporan) tidak boleh
+    // terus menerima komentar — moderasinya percuma kalau percakapannya lanjut.
+    const { data: post } = await supa
+      .from("mading_posts")
+      .select("id, status")
+      .eq("id", postId)
+      .maybeSingle();
+    if (!post || post.status !== "active") {
+      return NextResponse.json({ error: "Postingan tidak ditemukan atau sudah disembunyikan." }, { status: 404 });
+    }
+
     const { data, error } = await supa
       .from("mading_comments")
       .insert({
@@ -72,10 +96,15 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: "Gagal menyimpan komentar." }, { status: 500 });
     }
 
-    // Update comments_count pada mading_posts
-    const { data: post } = await supa.from("mading_posts").select("comments_count").eq("id", postId).single();
-    if (post) {
-      await supa.from("mading_posts").update({ comments_count: (post.comments_count || 0) + 1 }).eq("id", postId);
+    // Penghitung atomik; fallback baca-lalu-tulis kalau RPC-nya belum ada.
+    // Query supabase-js tidak punya .catch (thenable saja) dan tidak pernah
+    // reject — galatnya dibaca dari properti `error`, jangan dari exception.
+    const { error: rpcErr } = await supa.rpc("increment_mading_comments", { target_post_id: postId });
+    if (rpcErr) {
+      const { data: p } = await supa.from("mading_posts").select("comments_count").eq("id", postId).single();
+      if (p) {
+        await supa.from("mading_posts").update({ comments_count: (p.comments_count || 0) + 1 }).eq("id", postId);
+      }
     }
 
     return NextResponse.json({ success: true, comment: data });

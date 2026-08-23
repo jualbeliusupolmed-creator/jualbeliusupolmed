@@ -5,6 +5,9 @@ import { sendWa } from "@/lib/fonnte";
 import { rupiah } from "@/lib/fees";
 
 export const dynamic = "force-dynamic";
+// Loop kirim WA berjeda (anti-ban) mudah melewati batas default 10-15 detik —
+// fungsi yang dibunuh di tengah loop meninggalkan sebagian penerima tanpa pesan.
+export const maxDuration = 300;
 
 export async function GET(req) {
   try {
@@ -102,7 +105,10 @@ export async function GET(req) {
           });
         }
 
-        msg += `\n💡 *Tips Jual Cepat:* Iklan yang disundul (*BUMP*) atau dijadikan *FEATURED* mendapat 3x lebih banyak calon pembeli!\n`;
+        // Tanpa angka karangan: klaim "3x lebih banyak pembeli" sudah pernah
+        // dicabut dari /lomba dan /daftar-harga (22 Agu) karena tidak ada
+        // datanya — jangan hidupkan lagi lewat pintu belakang pesan WA.
+        msg += `\n💡 *Tips Jual Cepat:* Iklan yang disundul (*BUMP*) naik lagi ke urutan atas, dan *FEATURED* tampil menonjol di beranda.\n`;
         msg += `Ketik *.UPGRADE* atau *.SAYA* untuk kelola tokomu.`;
 
         await sendWa(wa, msg);

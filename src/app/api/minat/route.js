@@ -3,6 +3,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { sendWa } from "@/lib/fonnte";
 import { buildSlug } from "@/lib/slug";
+import { formatWaForBaileys } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
@@ -18,9 +19,23 @@ export async function POST(req) {
       );
     }
 
-    const { listing_id, buyer_wa, buyer_name } = await req.json();
+    const body = await req.json();
+    const { listing_id } = body;
     if (!listing_id)
       return NextResponse.json({ error: "listing_id wajib" }, { status: 400 });
+
+    // Endpoint ini meneruskan nomor & nama KIRIMAN KLIEN ke WA penjual — tanpa
+    // pagar, ia jadi relay gratis untuk mengarahkan penjual ke nomor siapa pun
+    // atas nama siapa pun. Nomor yang tidak lolos format Indonesia dianggap
+    // tidak ada (kontak tetap dicatat, penjual tidak dikirimi tautan), dan nama
+    // dipangkas dari baris baru / markup supaya tidak bisa menyusun pesan palsu
+    // di dalam notifikasi.
+    const buyer_wa = formatWaForBaileys(body.buyer_wa) || null;
+    const buyer_name = String(body.buyer_name || "")
+      .replace(/[\r\n*_~`]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 60) || null;
 
     const supa = getAdminClient();
     const { data: listing } = await supa
@@ -47,9 +62,7 @@ export async function POST(req) {
     if (buyer_wa && listing.seller_wa) {
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
       const slug = buildSlug(listing.title, listing.id);
-      const buyerLink = buyer_wa.startsWith("0")
-        ? `62${buyer_wa.slice(1)}`
-        : buyer_wa;
+      const buyerLink = buyer_wa; // sudah tervalidasi 628xx oleh formatWaForBaileys
 
       const msg =
         `👀 *Ada yang Tertarik dengan Iklanmu!*\n\n` +
