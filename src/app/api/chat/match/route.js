@@ -56,7 +56,9 @@ export async function POST(request) {
         await supa.from("chat_rooms").update({ updated_at: kini })
           .eq("id", room.id).eq("status", "waiting");
 
-        const segar = new Date(Date.now() - 15_000).toISOString();
+        // Room dianggap "segar" jika polling dalam 45 detik terakhir.
+        // Ini memberikan buffer kalau user ketinggalan 1-2 polling (polling = 1.5 detik).
+        const segar = new Date(Date.now() - 45_000).toISOString();
         const { data: lain } = await supa
           .from("chat_rooms")
           .select("*")

@@ -50,13 +50,26 @@ function ChatContent() {
   // Auto-open room from query parameter (Marketplace Chat)
   useEffect(() => {
     if (roomQuery) {
-      setCurrentRoomId(roomQuery);
-      setChatState("chat");
-      setMainTab("marketplace");
-      // Fetch room data immediately saat URL punya room, jangan tunggu interval realtime
-      fetchRoomData(roomQuery);
+      (async () => {
+        try {
+          const res = await fetch(`/api/chat/room/${roomQuery}`);
+          const data = await res.json();
+          if (data.room && data.myId) {
+            setCurrentRoomId(roomQuery);
+            setMyWa(data.myId);
+            const akuUser1 = data.room.user1_id === data.myId;
+            setPartnerInfo({
+              alias: (akuUser1 ? data.room.user2_alias : data.room.user1_alias) || "Anonim",
+              faculty: (akuUser1 ? data.room.user2_faculty : data.room.user1_faculty) || "Umum",
+            });
+            setMessages(data.messages || []);
+            setChatState("chat");
+            setMainTab("marketplace");
+          }
+        } catch {}
+      })();
     }
-  }, [roomQuery, fetchRoomData]);
+  }, [roomQuery]);
 
   // ── Obrolan selamat dari refresh ─────────────────────────────────────────────
   // State React hilang tiap kali halaman dimuat ulang, padahal room-nya masih
@@ -247,7 +260,7 @@ function ChatContent() {
       } catch {
         // silent
       }
-    }, 3000);
+    }, 1500); // Polling 1.5 detik, lebih cepat dari timeout basi 15 detik. Jadi user tidak akan pernah dianggap pergi kecuali benar-benar offline.
   };
 
   // ── Pesan masuk: Supabase Realtime Broadcast, polling tinggal jaring pengaman ──
