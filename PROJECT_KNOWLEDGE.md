@@ -62,6 +62,16 @@ Berjalan dengan PostgreSQL, memiliki tabel-tabel berikut:
 3. **Logika**: Bot membaca nomor WA dan pesan, mengirimnya melalui pustaka Baileys.
 4. **Data Berubah**: Status di `wa_outbox` berubah menjadi `terkirim` atau `gagal`.
 
+
+### D. Alur Chat (Anonim & Marketplace) — Realtime
+1. **Trigger**: Peserta mengirim pesan di `/chat`.
+2. **Proses Web**: POST ke `/api/chat/room/[id]` (atau `/api/chat/marketplace/start` untuk pesan pembuka).
+3. **Data Berubah**: Baris baru di `chat_messages`.
+4. **Side Effect**: Server memanggil `siarkanPesanBaru()` (`src/lib/chatRealtime.js`) → broadcast event `pesan` di kanal `chat-room-<id>`. Klien yang mendengar lalu menarik ulang isi room lewat API yang memeriksa keanggotaan.
+5. **Aturan penting**: Broadcast TIDAK PERNAH membawa isi pesan, hanya penanda `{refresh:true}`. Kebijakan RLS SELECT untuk `anon` sudah dicabut karena membuat seluruh isi chat terbaca siapa pun — data asli tidak boleh lewat kanal realtime.
+6. **Edge Case**: Kalau broadcast gagal, permintaan TIDAK ikut gagal — pesan sudah aman di database dan klien masih punya polling 10 detik sebagai jaring pengaman.
+7. **Prasyarat env**: `NEXT_PUBLIC_SUPABASE_ANON_KEY` di Vercel tidak boleh ditandai **Sensitive**. Variabel Sensitive hanya terbaca di runtime server dan tidak pernah ter-*bake* ke bundel klien, sehingga realtime mati diam-diam tanpa galat build.
+
 ---
 
 ## 3. Keamanan & Eksposur
@@ -84,4 +94,5 @@ Berjalan dengan PostgreSQL, memiliki tabel-tabel berikut:
 
 ## 5. Log & Riwayat Audit
 
+*   **23 Agustus 2026** - *Chat realtime dituntaskan* - Dua akar berbeda ditutup: (1) `NEXT_PUBLIC_SUPABASE_ANON_KEY` ditandai Sensitive di Vercel sehingga tidak ter-bake ke bundel klien — diganti publishable key tanpa tanda Sensitive; (2) `/api/chat/room/[id]` menyimpan pesan tanpa menyiarkannya, sehingga hanya pesan pembuka yang terasa seketika dan semua balasan menunggu polling 10 detik. Pola broadcast disatukan ke `src/lib/chatRealtime.js` (sebelumnya cuma ada inline di `marketplace/start`).
 *   **21 Agustus 2026** - *Audit Infrastruktur Menyeluruh* - Melakukan pemetaan sistem Web, Bot, dan Database. Menghapus rute `/admin/[tab]` yang redundan dan refactor `getAdminStats()`. Hasil audit didokumentasikan di file ini.
