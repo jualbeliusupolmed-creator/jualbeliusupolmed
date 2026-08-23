@@ -1,138 +1,165 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, Suspense } from "react";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Icon } from "@/components/Icons";
 import { FACULTIES } from "@/lib/profanity";
 import { getSupabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import MarketplaceInbox from "@/components/MarketplaceInbox";
 
+function waktuRelatif(iso) {
+  if (!iso) return "";
+  const detik = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
+  if (detik < 60) return "baru saja";
+  if (detik < 3600) return `${Math.floor(detik / 60)} menit lalu`;
+  if (detik < 86400) return `${Math.floor(detik / 3600)} jam lalu`;
+  return `${Math.floor(detik / 86400)} hari lalu`;
+}
+
+const ICEBREAKERS = [
+  "Halo! Jurusan apa nih? 👋",
+  "Anak kos atau pp dari rumah?",
+  "Lagi di kampus ga hari ini?",
+  "Rekomendasi tempat makan murah dong 🤤",
+];
+
 function ChatContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const roomQuery = searchParams.get("room");
 
-  const [mainTab, setMainTab] = useState(roomQuery ? "marketplace" : "random"); // 'random' | 'marketplace'
-
-  // User Identification State
+  // ── Kotak masuk (dilihat saat tidak ada ?room=) ─────────────────────────
+  const [anonRooms, setAnonRooms] = useState([]);
+  const [anonLoading, setAnonLoading] = useState(true);
+  const [showSearchModal, setShowSearchModal] = useState(false);
   const [userAlias, setUserAlias] = useState("Anonim");
   const [userFaculty, setUserFaculty] = useState("Umum");
-  const [myWa, setMyWa] = useState(null);
+  const [searching, setSearching] = useState(false);
 
-  // Anonymous Chat State: 'idle' | 'matching' | 'chat' | 'ended'
-  const [chatState, setChatState] = useState("idle");
-  const [currentRoomId, setCurrentRoomId] = useState(null);
+  // ── Obrolan yang sedang dibuka (?room=<id>) ─────────────────────────────
+  const [myWa, setMyWa] = useState(null);
+  const [roomType, setRoomType] = useState(null); // 'random' | 'marketplace'
+  const [roomStatus, setRoomStatus] = useState(null); // 'waiting' | 'active' | 'closed'
   const [partnerInfo, setPartnerInfo] = useState({ alias: "Anonim", faculty: "Umum" });
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [roomNotFound, setRoomNotFound] = useState(false);
 
   const messagesEndRef = useRef(null);
-  const pollIntervalRef = useRef(null);
   const rtChannelRef = useRef(null);
 
-  // Initialize user alias locally for anonymous chat if needed,
-  // but remove the random chat_user_id since backend now handles auth
-  useEffect(() => {
-    // we don't generate chat_user_id anymore
-  }, []);
-
-  // Scroll to bottom of message list
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
-
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  // Auto-open room from query parameter (Marketplace Chat)
-  useEffect(() => {
-    if (roomQuery) {
-      (async () => {
-        try {
-          const res = await fetch(`/api/chat/room/${roomQuery}`);
-          const data = await res.json();
-          if (data.room && data.myId) {
-            setCurrentRoomId(roomQuery);
-            setMyWa(data.myId);
-            const akuUser1 = data.room.user1_id === data.myId;
-            setPartnerInfo({
-              alias: (akuUser1 ? data.room.user2_alias : data.room.user1_alias) || "Anonim",
-              faculty: (akuUser1 ? data.room.user2_faculty : data.room.user1_faculty) || "Umum",
-            });
-            setMessages(data.messages || []);
-            setChatState("chat");
-            setMainTab("marketplace");
-          }
-        } catch {}
-      })();
-    }
-  }, [roomQuery]);
-
-  // ── Obrolan selamat dari refresh ─────────────────────────────────────────────
-  // State React hilang tiap kali halaman dimuat ulang, padahal room-nya masih
-  // hidup di server — dulu refresh berarti kembali ke layar awal dan lawan
-  // bicara ditinggal tanpa kabar. Room aktif dicatat di localStorage; saat
-  // halaman dibuka lagi, keadaannya ditanyakan ke server dan dilanjutkan dari
-  // sana (chat → lanjut mengobrol, waiting → lanjut menunggu, closed → lupakan).
-  useEffect(() => {
+  // ── Kotak masuk: daftar obrolan anonim milikku ──────────────────────────
+  const refreshAnonInbox = useCallback(async () => {
     try {
-      if (currentRoomId && (chatState === "chat" || chatState === "matching")) {
-        localStorage.setItem("chat_room_aktif", currentRoomId);
-      } else if (chatState === "idle" || chatState === "ended") {
-        localStorage.removeItem("chat_room_aktif");
-      }
-    } catch {}
-  }, [currentRoomId, chatState]);
-
-  useEffect(() => {
-    if (roomQuery) return; // tautan ?room= punya jalur pemulihannya sendiri di atas
-    let simpanan = null;
-    try { simpanan = localStorage.getItem("chat_room_aktif"); } catch {}
-    if (!simpanan) return;
-    (async () => {
-      try {
-        const res = await fetch(`/api/chat/room/${simpanan}`);
-        const data = await res.json();
-        if (!res.ok || !data.room || data.room.status === "closed") {
-          try { localStorage.removeItem("chat_room_aktif"); } catch {}
-          return;
-        }
-        setCurrentRoomId(simpanan);
-        if (data.room.type === "marketplace") setMainTab("marketplace");
-        if (data.room.status === "waiting") {
-          setChatState("matching");
-          startPollingForPartner(simpanan);
-        } else {
-          setChatState("chat");
-          toast.info("👋 Melanjutkan obrolanmu yang tadi.");
-        }
-      } catch {
-        try { localStorage.removeItem("chat_room_aktif"); } catch {}
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+      const res = await fetch("/api/chat/anon/inbox");
+      if (res.status === 401) return;
+      const data = await res.json();
+      if (data.ok) setAnonRooms(data.rooms || []);
+    } catch {
+      // silent — kotak masuk tetap menampilkan data lama
+    } finally {
+      setAnonLoading(false);
+    }
   }, []);
 
-  // Polling Messages while in chat
+  useEffect(() => {
+    if (roomQuery) return; // sedang di dalam obrolan, bukan di kotak masuk
+    refreshAnonInbox();
+    const iv = setInterval(refreshAnonInbox, 15000);
+    return () => clearInterval(iv);
+  }, [roomQuery, refreshAnonInbox]);
+
+  // Room tunggu milikku dipantau lebih sering supaya begitu ada yang cocok,
+  // langsung terbuka tanpa perlu menunggu push atau refresh manual — push
+  // notification tetap jalan untuk saat tab ini sudah ditutup.
+  useEffect(() => {
+    if (roomQuery) return;
+    const menunggu = anonRooms.find((r) => r.menunggu);
+    if (!menunggu) return;
+    const iv = setInterval(async () => {
+      try {
+        const res = await fetch("/api/chat/match", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "poll", roomId: menunggu.id }),
+        });
+        const data = await res.json();
+        if (data.status === "not_found") {
+          clearInterval(iv);
+          refreshAnonInbox();
+          return;
+        }
+        if (data.isMatched && data.room) {
+          clearInterval(iv);
+          toast.success("🎉 Teman ditemukan!");
+          router.push(`/chat?room=${data.room.id}`);
+        }
+      } catch {
+        // silent
+      }
+    }, 4000);
+    return () => clearInterval(iv);
+  }, [roomQuery, anonRooms, router, refreshAnonInbox]);
+
+  // ── Membuka satu room lewat ?room=<id> ──────────────────────────────────
+  // Server (bukan localStorage) jadi sumber kebenaran: setiap kali link ini
+  // dibuka — refresh, tautan dari push notification, tab baru — datanya
+  // ditanyakan langsung ke API. Jadi "sesi hilang saat refresh" tidak bisa
+  // terjadi lagi, dan tautan yang sama bisa dibuka dari perangkat mana pun.
+  useEffect(() => {
+    if (!roomQuery) {
+      setRoomNotFound(false);
+      return;
+    }
+    setRoomNotFound(false);
+    (async () => {
+      try {
+        const res = await fetch(`/api/chat/room/${roomQuery}`);
+        const data = await res.json();
+        if (res.status === 401) {
+          toast.error("Masuk dulu ya untuk membuka obrolan ini.");
+          router.push("/profil");
+          return;
+        }
+        if (!res.ok || !data.room) {
+          setRoomNotFound(true);
+          return;
+        }
+        setMyWa(data.myId);
+        setRoomType(data.room.type);
+        setRoomStatus(data.room.status);
+        const akuUser1 = data.room.user1_id === data.myId;
+        setPartnerInfo({
+          alias: (akuUser1 ? data.room.user2_alias : data.room.user1_alias) || "Anonim",
+          faculty: (akuUser1 ? data.room.user2_faculty : data.room.user1_faculty) || "Umum",
+        });
+        setMessages(data.messages || []);
+      } catch {
+        setRoomNotFound(true);
+      }
+    })();
+  }, [roomQuery, router]);
+
+  // Polling isi room — jaring pengaman kalau broadcast realtime terlewat.
   const fetchRoomData = useCallback(async (roomId) => {
     if (!roomId) return;
     try {
       const res = await fetch(`/api/chat/room/${roomId}`);
       const data = await res.json();
-      
-      if (res.status === 401) {
-        toast.error("Silakan login terlebih dahulu");
-        return;
-      }
-      
+      if (res.status === 401) return;
       if (data.room) {
+        setRoomStatus(data.room.status);
         if (data.myId) {
-          setMyWa(data.myId); // ini bisa berupa WA mentah (marketplace) atau hashedWa (anonim)
-          // Info lawan bicara diturunkan dari room + myId — supaya obrolan yang
-          // dibuka ulang (refresh, tautan ?room=) tidak kehilangan nama lawannya.
+          setMyWa(data.myId);
           const akuUser1 = data.room.user1_id === data.myId;
           const aliasLawan = akuUser1 ? data.room.user2_alias : data.room.user1_alias;
           if (aliasLawan) {
@@ -142,161 +169,34 @@ function ChatContent() {
             });
           }
         }
-        if (data.room.status === "closed" && chatState === "chat") {
-          setChatState("ended");
-        }
         setMessages(data.messages || []);
       }
     } catch {
       // silent
     }
-  }, [chatState]);
-
-  // Start Matchmaking
-  const handleStartMatch = async () => {
-    setChatState("matching");
-    setMessages([]);
-    setCurrentRoomId(null);
-
-    try {
-      const res = await fetch("/api/chat/match", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "find",
-          alias: userAlias,
-          faculty: userFaculty,
-        }),
-      });
-
-      const data = await res.json();
-
-      // Tanpa dua cabang ini, radar "Mencari..." berputar selamanya untuk orang
-      // yang belum login atau sedang diblokir — servernya menjawab, klien yang
-      // dulu tidak mendengarkan.
-      if (res.status === 401) {
-        setChatState("idle");
-        toast.error("Masuk dulu ya untuk mulai mengobrol.");
-        window.location.href = "/profil";
-        return;
-      }
-      if (res.status === 403 || res.status === 429) {
-        setChatState("idle");
-        toast.error(data.error || "Belum bisa memulai obrolan sekarang.");
-        return;
-      }
-
-      if (data.status === "matched" && data.room) {
-        setCurrentRoomId(data.room.id);
-        const partnerIsUser1 = data.room.user1_alias !== userAlias; // Simplifikasi, karena backend override
-        setPartnerInfo({
-          alias: data.partner?.alias || "Anonim",
-          faculty: data.partner?.faculty || "Umum",
-        });
-        setChatState("chat");
-        fetchRoomData(data.room.id);
-        toast.success("🎉 Berhasil terhubung dengan teman!");
-      } else if (data.status === "waiting" && data.roomId) {
-        setCurrentRoomId(data.roomId);
-        // Start polling for match
-        startPollingForPartner(data.roomId);
-      }
-    } catch (e) {
-      toast.error("Gagal memulai pencarian teman.");
-      setChatState("idle");
-    }
-  };
-
-  // Poll waiting room until user2 joins
-  const startPollingForPartner = (roomId) => {
-    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-    const mulaiMenunggu = Date.now();
-
-    pollIntervalRef.current = setInterval(async () => {
-      // Room waiting hanya berlaku 3 menit di matchmaking — menunggu lebih lama
-      // dari itu berarti mem-poll room yang tidak akan pernah dipasangkan lagi.
-      if (Date.now() - mulaiMenunggu > 3 * 60_000) {
-        clearInterval(pollIntervalRef.current);
-        fetch("/api/chat/match", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "cancel", roomId }),
-        }).catch(() => {});
-        setChatState("idle");
-        setCurrentRoomId(null);
-        toast.info("😔 Belum ada teman yang tersedia. Coba lagi nanti ya!");
-        return;
-      }
-      try {
-        const res = await fetch("/api/chat/match", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "poll", roomId }),
-        });
-        const data = await res.json();
-
-        // Room-nya lenyap — biasanya karena pencarian dimulai lagi dari tab
-        // atau perangkat lain dengan akun yang sama (room lama dihapus). Dulu
-        // cabang ini tidak ada dan poll terus menembak room hantu sampai
-        // timeout, tanpa pernah memberi tahu penggunanya.
-        if (data.status === "not_found") {
-          clearInterval(pollIntervalRef.current);
-          setChatState("idle");
-          setCurrentRoomId(null);
-          toast.info("Pencarian ini berakhir — sepertinya kamu memulai pencarian baru di tab/perangkat lain. Coba lagi ya.");
-          return;
-        }
-
-        if (data.isMatched && data.room) {
-          clearInterval(pollIntervalRef.current);
-          // Room hasil penjodohan bisa BERBEDA dari yang di-poll (penunggu yang
-          // bergabung ke room penunggu lain) — selalu pakai id dari jawaban.
-          setCurrentRoomId(data.room.id);
-          setChatState("chat");
-          // Alias & fakultas lawan diisi fetchRoomData dari room + myId.
-          fetchRoomData(data.room.id);
-          toast.success("🎉 Teman ditemukan!");
-        }
-      } catch {
-        // silent
-      }
-    }, 1500); // Polling 1.5 detik, lebih cepat dari timeout basi 15 detik. Jadi user tidak akan pernah dianggap pergi kecuali benar-benar offline.
-  };
+  }, []);
 
   // ── Pesan masuk: Supabase Realtime Broadcast, polling tinggal jaring pengaman ──
-  //
-  // Dulu pesan ditarik lewat API tiap 2 detik. Itu berarti SATU pasangan yang
-  // sedang mengobrol menembak Vercel ~1 request/detik — cukup ramai pengguna,
-  // kuota harian Vercel habis oleh orang yang cuma menunggu balasan.
-  //
-  // Sekarang pengirim menyiarkan sinyal lewat kanal Broadcast per-room, dan
-  // penerima baru menarik pesan saat sinyal itu datang. Kenapa Broadcast, bukan
-  // postgres_changes: postgres_changes butuh kebijakan RLS SELECT untuk anon —
-  // dan kebijakan itu baru saja DICABUT karena membuat seluruh isi chat bisa
-  // dibaca siapa pun. Broadcast tidak menyentuh tabel; isinya cuma "ada pesan
-  // baru", data aslinya tetap lewat API yang memeriksa keanggotaan room.
+  // postgres_changes butuh kebijakan RLS SELECT untuk anon — dan kebijakan itu
+  // dicabut karena membuat seluruh isi chat bisa dibaca siapa pun. Broadcast
+  // tidak menyentuh tabel; isinya cuma "ada pesan baru", data aslinya tetap
+  // lewat API yang memeriksa keanggotaan room.
   useEffect(() => {
-    if (chatState !== "chat" || !currentRoomId) return;
+    if (!roomQuery || roomStatus !== "active") return;
     let channel = null;
     let supa = null;
     try {
       supa = getSupabase();
       channel = supa
-        .channel(`chat-room-${currentRoomId}`)
-        .on("broadcast", { event: "pesan" }, () => fetchRoomData(currentRoomId))
+        .channel(`chat-room-${roomQuery}`)
+        .on("broadcast", { event: "pesan" }, () => fetchRoomData(roomQuery))
         .subscribe((status) => {
-          // Dulu status subscribe tidak pernah dibaca — kalau env Supabase
-          // client belum terisi atau koneksi realtime gagal, satu-satunya
-          // gejala yang terlihat pengguna adalah "kok delay 10 detik", tanpa
-          // jejak apa pun buat siapa yang membuka devtools. Sekarang jelas.
           if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
             console.warn("[chat] Realtime tidak tersambung (" + status + ") — mengandalkan polling 10 detik.");
           }
         });
       rtChannelRef.current = channel;
     } catch (e) {
-      // Realtime tidak tersedia (mis. env Supabase client belum terisi) →
-      // polling di bawah tetap jadi jalur utama.
       console.warn("[chat] Kanal realtime tidak dibuat:", e?.message || e);
     }
     return () => {
@@ -305,85 +205,79 @@ function ChatContent() {
         try { supa.removeChannel(channel); } catch {}
       }
     };
-  }, [chatState, currentRoomId, fetchRoomData]);
+  }, [roomQuery, roomStatus, fetchRoomData]);
 
-  // Poll message feed while in chat — jaring pengaman kalau broadcast terlewat
-  // (koneksi realtime putus, tab lama di belakang), bukan lagi jalur utama.
   useEffect(() => {
-    let msgInterval;
-    if (chatState === "chat" && currentRoomId) {
-      fetchRoomData(currentRoomId);
-      msgInterval = setInterval(() => {
-        fetchRoomData(currentRoomId);
-      }, 10000);
-    }
-    return () => {
-      if (msgInterval) clearInterval(msgInterval);
-      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-    };
-  }, [chatState, currentRoomId, fetchRoomData]);
+    if (!roomQuery || roomStatus !== "active") return;
+    const iv = setInterval(() => fetchRoomData(roomQuery), 10000);
+    return () => clearInterval(iv);
+  }, [roomQuery, roomStatus, fetchRoomData]);
 
-  // Wake up polling on tab active (fixes browser background throttling)
   useEffect(() => {
     const handleVisibility = () => {
-      if (document.visibilityState === "visible") {
-        if (chatState === "matching" && currentRoomId) {
-          fetch("/api/chat/match", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "poll", roomId: currentRoomId }),
-          })
-            .then((r) => r.json())
-            .then((data) => {
-              if (data.isMatched && data.room) {
-                if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-                setCurrentRoomId(data.room.id);
-                // `userId` klien sudah tiada sejak identitas pindah ke sesi —
-                // referensi lamanya di sini melempar ReferenceError yang
-                // tertelan .catch, jadi tab yang bangun dari belakang tidak
-                // pernah masuk ke chat. Alias lawan kini diisi fetchRoomData.
-                setPartnerInfo({
-                  alias: "Anonim",
-                  faculty: "Umum",
-                });
-                setChatState("chat");
-                fetchRoomData(data.room.id);
-                toast.success("🎉 Teman ditemukan setelah tab aktif!");
-              }
-            })
-            .catch(() => {});
-        } else if (chatState === "chat" && currentRoomId) {
-          fetchRoomData(currentRoomId);
-        }
+      if (document.visibilityState === "visible" && roomQuery && roomStatus === "active") {
+        fetchRoomData(roomQuery);
       }
     };
     document.addEventListener("visibilitychange", handleVisibility);
     return () => document.removeEventListener("visibilitychange", handleVisibility);
-  }, [chatState, currentRoomId, fetchRoomData]);
+  }, [roomQuery, roomStatus, fetchRoomData]);
 
-  // Cancel Matching
-  const handleCancelMatch = async () => {
-    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-    if (currentRoomId) {
+  // ── Cari teman baru ──────────────────────────────────────────────────────
+  const handleFindPartner = async () => {
+    setSearching(true);
+    try {
+      const res = await fetch("/api/chat/match", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "find", alias: userAlias, faculty: userFaculty }),
+      });
+      const data = await res.json();
+
+      if (res.status === 401) {
+        toast.error("Masuk dulu ya untuk mulai mengobrol.");
+        window.location.href = "/profil";
+        return;
+      }
+      if (res.status === 403 || res.status === 429) {
+        toast.error(data.error || "Belum bisa memulai obrolan sekarang.");
+        return;
+      }
+
+      setShowSearchModal(false);
+      if (data.status === "matched" && data.room) {
+        toast.success("🎉 Berhasil terhubung dengan teman!");
+        router.push(`/chat?room=${data.room.id}`);
+      } else if (data.status === "waiting") {
+        toast.info("🔍 Belum ada yang online sekarang — kamu masuk antrean. Kami kabari lewat notifikasi kalau ada yang cocok.");
+        refreshAnonInbox();
+      }
+    } catch {
+      toast.error("Gagal memulai pencarian teman.");
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleCancelWaiting = async (waitingRoomId) => {
+    try {
       await fetch("/api/chat/match", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "cancel", roomId: currentRoomId }),
+        body: JSON.stringify({ action: "cancel", roomId: waitingRoomId }),
       });
-    }
-    setChatState("idle");
-    setCurrentRoomId(null);
+    } catch {}
+    refreshAnonInbox();
   };
 
-  // Send Message
+  // ── Kirim pesan ───────────────────────────────────────────────────────────
   const handleSendMessage = async (customText) => {
     const text = (customText || inputMessage).trim();
-    if (!text || !currentRoomId || sending) return;
+    if (!text || !roomQuery || sending) return;
 
     setSending(true);
     setInputMessage("");
 
-    // Optimistic UI
     const tempMsg = {
       id: "temp_" + Date.now(),
       sender_id: myWa,
@@ -394,20 +288,15 @@ function ChatContent() {
     setMessages((prev) => [...prev, tempMsg]);
 
     try {
-      const res = await fetch(`/api/chat/room/${currentRoomId}`, {
+      const res = await fetch(`/api/chat/room/${roomQuery}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          senderAlias: userAlias,
-          message: text,
-        }),
+        body: JSON.stringify({ senderAlias: userAlias, message: text }),
       });
       const data = await res.json();
       if (!data.success) {
         toast.error(data.error || "Gagal mengirim pesan");
       } else {
-        // Beri tahu lawan bicara lewat kanal broadcast — tanpa ini ia baru
-        // melihat pesannya pada poll jaring-pengaman berikutnya (±10 detik).
         try {
           rtChannelRef.current?.send({ type: "broadcast", event: "pesan", payload: {} });
         } catch {}
@@ -416,264 +305,139 @@ function ChatContent() {
       toast.error("Gagal mengirim pesan");
     } finally {
       setSending(false);
-      fetchRoomData(currentRoomId);
+      fetchRoomData(roomQuery);
     }
   };
 
   // Laporkan lawan bicara — pola bot chat anonim Telegram: laporan dari tiga
   // room berbeda memblokir pelakunya otomatis dari obrolan selama seminggu.
   const handleReportPartner = async () => {
-    if (!currentRoomId) return;
+    if (!roomQuery) return;
     const alasan = prompt("Laporkan lawan bicara — apa alasannya? (mis. kasar, pelecehan, penipuan, spam)");
     if (alasan === null) return;
     try {
-      const res = await fetch(`/api/chat/room/${currentRoomId}/report`, {
+      const res = await fetch(`/api/chat/room/${roomQuery}/report`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reason: alasan }),
       });
       const data = await res.json();
-      if (data.success) {
-        toast.success(data.pesan || "Laporan diterima.");
-      } else {
-        toast.error(data.error || "Gagal mengirim laporan");
-      }
+      if (data.success) toast.success(data.pesan || "Laporan diterima.");
+      else toast.error(data.error || "Gagal mengirim laporan");
     } catch {
       toast.error("Gagal mengirim laporan");
     }
   };
 
-  // Leave / Skip Chat
   const handleLeaveChat = async () => {
-    if (currentRoomId) {
-      await fetch(`/api/chat/room/${currentRoomId}`, { method: "DELETE" });
-      // Kabari lawan bicara sekarang juga, jangan menunggu poll berikutnya.
+    if (roomQuery) {
+      await fetch(`/api/chat/room/${roomQuery}`, { method: "DELETE" });
       try {
         rtChannelRef.current?.send({ type: "broadcast", event: "pesan", payload: {} });
       } catch {}
     }
-    setChatState("idle");
-    setCurrentRoomId(null);
-    setMessages([]);
+    router.push("/chat");
   };
 
   const handleSkipChat = async () => {
-    if (currentRoomId) {
-      await fetch(`/api/chat/room/${currentRoomId}`, { method: "DELETE" });
-      // Kabari lawan bicara sekarang juga, jangan menunggu poll berikutnya.
+    if (roomQuery) {
+      await fetch(`/api/chat/room/${roomQuery}`, { method: "DELETE" });
       try {
         rtChannelRef.current?.send({ type: "broadcast", event: "pesan", payload: {} });
       } catch {}
     }
-    handleStartMatch();
+    router.push("/chat");
+    handleFindPartner();
   };
 
-  const ICEBREAKERS = [
-    "Halo! Jurusan apa nih? 👋",
-    "Anak kos atau pp dari rumah?",
-    "Lagi di kampus ga hari ini?",
-    "Rekomendasi tempat makan murah dong 🤤",
-  ];
+  // ══════════════════════════════════════════════════════════════════════
+  // TAMPILAN: ROOM VIEW (?room=<id> ada)
+  // ══════════════════════════════════════════════════════════════════════
+  if (roomQuery) {
+    if (roomNotFound) {
+      return (
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center gap-4 p-6 text-center">
+          <div className="text-4xl">🔎</div>
+          <p className="text-sm font-bold text-slate-700 dark:text-slate-300">Obrolan ini tidak ditemukan.</p>
+          <button
+            onClick={() => router.push("/chat")}
+            className="px-4 py-2 rounded-full bg-primary text-white text-xs font-bold"
+          >
+            Kembali ke Kotak Masuk
+          </button>
+        </div>
+      );
+    }
 
-  return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20 font-sans selection:bg-primary/20 flex flex-col">
-      {/* HEADER */}
-      <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 sticky top-0 z-40">
-        <div className="flex items-center justify-between px-4 py-3 max-w-2xl mx-auto">
+    // Room masih menunggu partner (bisa terjadi kalau membuka tautan lamamu
+    // sendiri sebelum ada yang cocok).
+    if (roomStatus === "waiting") {
+      return (
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center gap-6 p-6 text-center">
+          <div className="relative w-24 h-24 flex items-center justify-center">
+            <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
+            <div className="relative w-14 h-14 bg-primary text-white rounded-full flex items-center justify-center text-2xl">🔍</div>
+          </div>
           <div>
-            <span className="text-[9px] font-extrabold text-primary uppercase tracking-widest bg-primary/10 px-2 py-0.5 rounded">
-              OBROLAN KAMPUS
-            </span>
-            <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight mt-0.5">
-              Pusat Obrolan
-            </h1>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Masih menunggu partner...</h3>
+            <p className="text-xs text-slate-500 mt-1 max-w-xs">
+              Kamu ada di antrean. Nanti kami kabari lewat notifikasi begitu ada yang cocok.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleCancelWaiting(roomQuery).then(() => router.push("/chat"))}
+              className="px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-400"
+            >
+              Batalkan
+            </button>
+            <button
+              onClick={() => router.push("/chat")}
+              className="px-4 py-2 rounded-full bg-primary text-white text-xs font-bold"
+            >
+              Kembali ke Kotak Masuk
+            </button>
           </div>
         </div>
+      );
+    }
 
-        {/* 2 TABS */}
-        <div className="flex px-4 max-w-2xl mx-auto border-t border-slate-50 dark:border-slate-800/60">
-          <button
-            onClick={() => {
-              if (chatState === "chat") {
-                if (confirm("Keluar dari obrolan anonim saat ini?")) {
-                  handleLeaveChat();
-                  setMainTab("random");
-                }
-              } else {
-                setMainTab("random");
-              }
-            }}
-            className={`flex-1 text-center py-2.5 text-xs font-bold transition-all relative ${
-              mainTab === "random"
-                ? "text-primary"
-                : "text-slate-500 hover:text-slate-700 dark:text-slate-400"
-            }`}
-          >
-            🎭 Cari Teman Anonim
-            {mainTab === "random" && (
-              <div className="absolute bottom-0 left-4 right-4 h-[2.5px] bg-primary rounded-t-full" />
-            )}
-          </button>
+    const isRandom = roomType === "random";
 
-          <button
-            onClick={() => setMainTab("marketplace")}
-            className={`flex-1 text-center py-2.5 text-xs font-bold transition-all relative ${
-              mainTab === "marketplace"
-                ? "text-primary"
-                : "text-slate-500 hover:text-slate-700 dark:text-slate-400"
-            }`}
-          >
-            💬 Chat Jual Beli
-            {mainTab === "marketplace" && (
-              <div className="absolute bottom-0 left-4 right-4 h-[2.5px] bg-primary rounded-t-full" />
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* TAB 1: RANDOM ANONYMOUS CHAT */}
-      {mainTab === "random" && (
-        <div className="flex-1 flex flex-col max-w-2xl w-full mx-auto p-4">
-          {/* 1. STATE: IDLE */}
-          {chatState === "idle" && (
-            <div className="my-auto py-8 text-center space-y-6 animate-in fade-in zoom-in-95 duration-300">
-              <div className="w-20 h-20 bg-gradient-to-tr from-blue-500 to-sky-400 text-white rounded-3xl shadow-xl shadow-blue-500/20 flex items-center justify-center mx-auto text-4xl">
-                🎭
-              </div>
-
-              <div>
-                <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                  Cari Teman Ngobrol Anonim
-                </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 max-w-xs mx-auto leading-relaxed">
-                  Ngobrol 1-on-1 dengan sesama mahasiswa USU & POLMED secara acak tanpa perlu tahu identitas asli.
-                </p>
-              </div>
-
-              {/* Preferences Box */}
-              <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm text-left space-y-3.5 max-w-sm mx-auto">
-                <div>
-                  <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                    Fakultas / Kampus Kamu
-                  </label>
-                  <select
-                    value={userFaculty}
-                    onChange={(e) => setUserFaculty(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary"
-                  >
-                    {FACULTIES.map((fac) => (
-                      <option key={fac} value={fac}>
-                        {fac}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                    Nama Panggilanmu (Boleh Samaran)
-                  </label>
-                  <input
-                    type="text"
-                    value={userAlias}
-                    onChange={(e) => setUserAlias(e.target.value)}
-                    placeholder="Anonim / Si Manis / Budi"
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-              </div>
-
-              {/* Big CTA */}
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans">
+        <div className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-40">
+          <div className="flex items-center justify-between px-4 py-3 max-w-2xl mx-auto">
+            <div className="flex items-center gap-2.5 min-w-0">
               <button
-                onClick={handleStartMatch}
-                className="w-full max-w-sm mx-auto py-3.5 bg-gradient-to-r from-primary to-emerald-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-primary/30 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+                onClick={() => router.push("/chat")}
+                className="p-1.5 -ml-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-full"
+                title="Kembali ke kotak masuk"
               >
-                <span>🚀 Mulai Cari Teman</span>
+                <Icon.ChevronLeft className="w-5 h-5" />
               </button>
-
-              {/* Guarantees */}
-              <div className="grid grid-cols-3 gap-2 max-w-sm mx-auto text-center pt-2">
-                <div className="p-2">
-                  <span className="text-base">🔒</span>
-                  <p className="text-[10px] text-slate-500 font-medium mt-1">Anonim ke Lawan Bicara</p>
-                </div>
-                <div className="p-2">
-                  <span className="text-base">⚡</span>
-                  <p className="text-[10px] text-slate-500 font-medium mt-1">Bebas Skip</p>
-                </div>
-                <div className="p-2">
-                  <span className="text-base">🛡️</span>
-                  <p className="text-[10px] text-slate-500 font-medium mt-1">Sensor Sopan</p>
-                </div>
+              <div className="relative shrink-0">
+                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">👤</div>
+                {roomStatus === "active" && (
+                  <div className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900" />
+                )}
               </div>
-
-              {/* Aturan main — jujur soal batas anonimitasnya */}
-              <p className="max-w-sm mx-auto text-center text-[10px] leading-relaxed text-slate-400 dark:text-slate-500 pt-1">
-                Dengan memulai, kamu setuju: sopan, tanpa SARA/pelecehan, dan jangan bagikan
-                data pribadi. Ada tombol 🚩 untuk melaporkan lawan bicara — yang dilaporkan
-                banyak orang diblokir otomatis. Namamu tidak pernah ditampilkan, tapi obrolan
-                terikat ke akunmu supaya pelanggaran bisa ditindak.
-              </p>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{partnerInfo.alias}</p>
+                <p className="text-[10px] text-slate-500">{partnerInfo.faculty}</p>
+              </div>
             </div>
-          )}
 
-          {/* 2. STATE: MATCHING (RADAR) */}
-          {chatState === "matching" && (
-            <div className="my-auto py-16 text-center space-y-6 animate-in fade-in duration-300">
-              <div className="relative w-28 h-28 mx-auto flex items-center justify-center">
-                <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
-                <div className="absolute inset-2 rounded-full bg-primary/30 animate-pulse" />
-                <div className="relative w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center text-2xl shadow-lg shadow-primary/40">
-                  🔍
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                  Mencari Teman Mengobrol...
-                </h3>
-                <p className="text-xs text-slate-500 mt-1">
-                  Menghubungkanmu dengan mahasiswa USU/Polmed yang sedang online.
-                </p>
-              </div>
-
-              <button
-                onClick={handleCancelMatch}
-                className="px-5 py-2 rounded-full border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              >
-                Batalkan Pencarian
-              </button>
-            </div>
-          )}
-
-          {/* 3. STATE: CHAT ROOM */}
-          {(chatState === "chat" || chatState === "ended") && (
-            <div className="flex-1 flex flex-col bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden min-h-[500px]">
-              {/* Chat Room Top Bar */}
-              <div className="flex items-center justify-between px-4 py-3 bg-slate-50/80 dark:bg-slate-800/80 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2.5">
-                  <div className="relative">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">
-                      👤
-                    </div>
-                    <div className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-900 dark:text-white">
-                      {partnerInfo.alias}
-                    </p>
-                    <p className="text-[10px] text-slate-500">{partnerInfo.faculty}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={handleReportPartner}
-                    title="Laporkan lawan bicara"
-                    className="px-2 py-1 rounded-full text-xs text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors"
-                  >
-                    🚩
-                  </button>
+            {isRandom && (
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  onClick={handleReportPartner}
+                  title="Laporkan lawan bicara"
+                  className="px-2 py-1 rounded-full text-xs text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors"
+                >
+                  🚩
+                </button>
+                {roomStatus === "active" && (
                   <button
                     onClick={handleSkipChat}
                     title="Ganti Lawan Obrolan"
@@ -681,120 +445,250 @@ function ChatContent() {
                   >
                     <span>⏭️ Ganti</span>
                   </button>
-                  <button
-                    onClick={handleLeaveChat}
-                    title="Keluar"
-                    className="p-1.5 text-slate-400 hover:text-rose-500 rounded-full transition-colors"
-                  >
-                    <Icon.X className="w-4 h-4" />
-                  </button>
-                </div>
+                )}
+                <button
+                  onClick={handleLeaveChat}
+                  title="Keluar"
+                  className="p-1.5 text-slate-400 hover:text-rose-500 rounded-full transition-colors"
+                >
+                  <Icon.X className="w-4 h-4" />
+                </button>
               </div>
+            )}
+          </div>
+        </div>
 
-              {/* Messages Feed */}
-              <div className="flex-1 p-4 overflow-y-auto space-y-3 min-h-[350px] max-h-[50vh]">
-                {messages.map((m, idx) => {
-                  const isMe = m.sender_id === myWa;
-                  const isSystem = m.sender_id === "system";
-
-                  if (isSystem) {
-                    return (
-                      <div key={m.id || idx} className="text-center my-2">
-                        <span className="inline-block bg-slate-100 dark:bg-slate-800 text-slate-500 text-[10px] px-3 py-1 rounded-full font-medium">
-                          {m.message}
-                        </span>
-                      </div>
-                    );
-                  }
-
+        <div className="flex-1 flex flex-col max-w-2xl w-full mx-auto p-4">
+          <div className="flex-1 flex flex-col bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
+            <div className="flex-1 p-4 overflow-y-auto space-y-3 min-h-[400px] max-h-[62vh]">
+              {messages.map((m, idx) => {
+                const isMe = m.sender_id === myWa;
+                const isSystem = m.sender_id === "system";
+                if (isSystem) {
                   return (
-                    <div
-                      key={m.id || idx}
-                      className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
-                    >
-                      <div
-                        className={`max-w-[75%] px-3.5 py-2.5 rounded-2xl text-xs leading-relaxed ${
-                          isMe
-                            ? "bg-primary text-white rounded-br-none shadow-sm shadow-primary/20"
-                            : "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-bl-none"
-                        }`}
-                      >
+                    <div key={m.id || idx} className="text-center my-2">
+                      <span className="inline-block bg-slate-100 dark:bg-slate-800 text-slate-500 text-[10px] px-3 py-1 rounded-full font-medium">
                         {m.message}
-                      </div>
+                      </span>
                     </div>
                   );
-                })}
-                <div ref={messagesEndRef} />
-              </div>
-
-              {/* Ended Banner */}
-              {chatState === "ended" && (
-                <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border-t border-amber-200 dark:border-amber-900 text-center space-y-2">
-                  <p className="text-xs font-bold text-amber-800 dark:text-amber-300">
-                    👋 Temanmu telah keluar dari obrolan.
-                  </p>
-                  <button
-                    onClick={handleStartMatch}
-                    className="bg-primary text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-md shadow-primary/25 hover:bg-primary/95"
-                  >
-                    🚀 Cari Teman Baru
-                  </button>
-                </div>
-              )}
-
-              {/* Icebreaker Prompts */}
-              {chatState === "chat" && messages.length <= 2 && (
-                <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {ICEBREAKERS.map((prompt, i) => (
-                    <button
-                      key={i}
-                      onClick={() => handleSendMessage(prompt)}
-                      className="px-2.5 py-1 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px] font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap hover:bg-slate-100 transition-colors"
+                }
+                return (
+                  <div key={m.id || idx} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
+                    <div
+                      className={`max-w-[75%] px-3.5 py-2.5 rounded-2xl text-xs leading-relaxed ${
+                        isMe
+                          ? "bg-primary text-white rounded-br-none shadow-sm shadow-primary/20"
+                          : "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-bl-none"
+                      }`}
                     >
-                      {prompt}
-                    </button>
-                  ))}
-                </div>
-              )}
+                      {m.message}
+                    </div>
+                  </div>
+                );
+              })}
+              <div ref={messagesEndRef} />
+            </div>
 
-              {/* Message Input Box */}
-              {chatState === "chat" && (
-                <div className="p-3 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex gap-2">
-                  <input
-                    type="text"
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleSendMessage();
-                    }}
-                    placeholder="Ketik pesan santai..."
-                    className="flex-1 bg-slate-100 dark:bg-slate-800 rounded-full px-4 py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-primary"
-                  />
+            {roomStatus === "closed" && (
+              <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border-t border-amber-200 dark:border-amber-900 text-center space-y-2">
+                <p className="text-xs font-bold text-amber-800 dark:text-amber-300">
+                  👋 Temanmu telah keluar dari obrolan.
+                </p>
+                <button
+                  onClick={() => router.push("/chat")}
+                  className="bg-primary text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-md shadow-primary/25 hover:bg-primary/95"
+                >
+                  Kembali ke Kotak Masuk
+                </button>
+              </div>
+            )}
+
+            {isRandom && roomStatus === "active" && messages.length <= 2 && (
+              <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {ICEBREAKERS.map((prompt, i) => (
                   <button
-                    onClick={() => handleSendMessage()}
-                    disabled={!inputMessage.trim() || sending}
-                    className="w-8 h-8 rounded-full bg-primary disabled:opacity-40 text-white flex items-center justify-center transition-opacity"
+                    key={i}
+                    onClick={() => handleSendMessage(prompt)}
+                    className="px-2.5 py-1 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px] font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap hover:bg-slate-100 transition-colors"
                   >
-                    <Icon.ArrowUp className="w-4 h-4" />
+                    {prompt}
                   </button>
-                </div>
-              )}
+                ))}
+              </div>
+            )}
+
+            {roomStatus === "active" && (
+              <div className="p-3 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex gap-2">
+                <input
+                  type="text"
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleSendMessage(); }}
+                  placeholder="Ketik pesan santai..."
+                  className="flex-1 bg-slate-100 dark:bg-slate-800 rounded-full px-4 py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-primary"
+                />
+                <button
+                  onClick={() => handleSendMessage()}
+                  disabled={!inputMessage.trim() || sending}
+                  className="w-8 h-8 rounded-full bg-primary disabled:opacity-40 text-white flex items-center justify-center transition-opacity"
+                >
+                  <Icon.ArrowUp className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // TAMPILAN: KOTAK MASUK (tidak ada ?room=)
+  // ══════════════════════════════════════════════════════════════════════
+  return (
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20 font-sans">
+      <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 sticky top-0 z-40">
+        <div className="px-4 py-3 max-w-2xl mx-auto">
+          <span className="text-[9px] font-extrabold text-primary uppercase tracking-widest bg-primary/10 px-2 py-0.5 rounded">
+            OBROLAN KAMPUS
+          </span>
+          <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight mt-0.5">Pusat Obrolan</h1>
+        </div>
+      </div>
+
+      <div className="max-w-2xl w-full mx-auto p-4 space-y-6">
+        {/* ── OBROLAN ANONIM — disematkan paling atas ── */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+              🎭 Obrolan Anonim
+            </h2>
+            <button
+              onClick={() => setShowSearchModal(true)}
+              className="flex items-center gap-1.5 bg-primary text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow-md shadow-primary/25 hover:bg-primary/95 active:scale-95 transition-all"
+            >
+              <span>🚀 Cari Teman Baru</span>
+            </button>
+          </div>
+
+          {anonLoading ? (
+            <div className="text-center p-6 text-xs text-gray-500">Memuat...</div>
+          ) : anonRooms.length === 0 ? (
+            <button
+              onClick={() => setShowSearchModal(true)}
+              className="w-full bg-white dark:bg-slate-900 p-6 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700 text-center text-xs text-slate-500 hover:border-primary/50 transition-colors"
+            >
+              Belum ada obrolan anonim. Ngobrol 1-on-1 dengan sesama mahasiswa USU & POLMED secara acak, tanpa perlu tahu identitas asli. ✍️
+            </button>
+          ) : (
+            <div className="space-y-2">
+              {anonRooms.map((r) => {
+                if (r.menunggu) {
+                  return (
+                    <div
+                      key={r.id}
+                      className="w-full bg-white dark:bg-slate-900 border border-dashed border-primary/40 p-3 rounded-2xl flex items-center gap-3 shadow-sm"
+                    >
+                      <div className="w-10 h-10 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-lg animate-pulse">🔍</div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-slate-900 dark:text-white">Menunggu partner...</p>
+                        <p className="text-[10px] text-slate-500">Kami kabari lewat notifikasi kalau ada yang cocok</p>
+                      </div>
+                      <button
+                        onClick={() => handleCancelWaiting(r.id)}
+                        className="text-[10px] font-bold text-rose-500 px-2 py-1 rounded-full hover:bg-rose-50 dark:hover:bg-rose-950/30 shrink-0"
+                      >
+                        Batalkan
+                      </button>
+                    </div>
+                  );
+                }
+                return (
+                  <button
+                    key={r.id}
+                    onClick={() => router.push(`/chat?room=${r.id}`)}
+                    className="w-full text-left bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 p-3 rounded-2xl flex items-center gap-3 hover:border-primary/50 transition-colors shadow-sm"
+                  >
+                    <div className="w-10 h-10 shrink-0 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">👤</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-gray-900 dark:text-white truncate">{r.partnerAlias}</span>
+                        {r.status === "closed" && (
+                          <span className="text-[9px] font-medium bg-gray-100 dark:bg-slate-800 text-gray-500 px-1.5 py-0.5 rounded-full shrink-0">Berakhir</span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-500 truncate">
+                        {r.pesanTerakhir ? `${r.pesanTerakhir.milikku ? "Kamu: " : ""}${r.pesanTerakhir.teks}` : "Belum ada pesan"}
+                      </p>
+                    </div>
+                    <span className="text-[10px] text-slate-400 shrink-0">{waktuRelatif(r.updatedAt)}</span>
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
-      )}
 
-      {/* TAB 2: MARKETPLACE TRANSACTIONS CHAT */}
-      {mainTab === "marketplace" && chatState === "idle" && (
-        <div className="flex-1 max-w-2xl w-full mx-auto p-4 space-y-4">
-          <MarketplaceInbox
-            onSelectRoom={(roomId, pAlias, pWa) => {
-              setCurrentRoomId(roomId);
-              setPartnerInfo({ alias: pAlias, faculty: "Umum" });
-              setMyWa(pWa);
-              setChatState("chat");
-            }}
-          />
+        {/* ── CHAT JUAL BELI ── */}
+        <div>
+          <h2 className="text-sm font-bold text-slate-900 dark:text-white mb-3">💬 Chat Jual Beli</h2>
+          <MarketplaceInbox onSelectRoom={(roomId) => router.push(`/chat?room=${roomId}`)} />
+        </div>
+      </div>
+
+      {/* ── MODAL: Cari Teman Baru ── */}
+      {showSearchModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="w-full sm:max-w-sm bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl p-5 space-y-4 animate-in slide-in-from-bottom sm:zoom-in-95 duration-300">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-black text-slate-900 dark:text-white">Cari Teman Ngobrol</h3>
+              <button onClick={() => setShowSearchModal(false)} className="p-1 text-slate-400 hover:text-slate-700">
+                <Icon.X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Ngobrol 1-on-1 dengan sesama mahasiswa USU & POLMED secara acak tanpa perlu tahu identitas asli.
+            </p>
+
+            <div>
+              <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">Fakultas / Kampus Kamu</label>
+              <select
+                value={userFaculty}
+                onChange={(e) => setUserFaculty(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary"
+              >
+                {FACULTIES.map((fac) => (
+                  <option key={fac} value={fac}>{fac}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">Nama Panggilanmu (Boleh Samaran)</label>
+              <input
+                type="text"
+                value={userAlias}
+                onChange={(e) => setUserAlias(e.target.value)}
+                placeholder="Anonim / Si Manis / Budi"
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+
+            <button
+              onClick={handleFindPartner}
+              disabled={searching}
+              className="w-full py-3.5 bg-gradient-to-r from-primary to-emerald-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-primary/30 active:scale-95 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+            >
+              {searching ? "Mencari..." : "🚀 Mulai Cari Teman"}
+            </button>
+
+            <p className="text-center text-[10px] leading-relaxed text-slate-400 dark:text-slate-500">
+              Dengan memulai, kamu setuju: sopan, tanpa SARA/pelecehan, dan jangan bagikan data pribadi.
+              Ada tombol 🚩 untuk melaporkan lawan bicara — yang dilaporkan banyak orang diblokir otomatis.
+              Namamu tidak pernah ditampilkan, tapi obrolan terikat ke akunmu supaya pelanggaran bisa ditindak.
+            </p>
+          </div>
         </div>
       )}
     </div>
