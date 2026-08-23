@@ -1,7 +1,7 @@
 {
   "name": "Jual Beli USU & POLMED — Campus Super App",
   "short_name": "USU SuperApp",
-  "description": "Pusat jual beli, info mading & menfess, dan obrolan sesama mahasiswa USU & POLMED Medan.",
+  "description": "Pusat jual beli, menfess & info kampus, dan obrolan sesama mahasiswa USU & POLMED Medan.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -32,8 +32,8 @@
       "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
     },
     {
-      "name": "Mading & Menfess",
-      "short_name": "Mading",
+      "name": "Menfess & Info",
+      "short_name": "Menfess",
       "description": "Lihat curhatan & info kampus",
       "url": "/mading",
       "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]

@@ -14,7 +14,7 @@ export default function OfflinePage() {
       </h1>
       <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs mb-6">
         Tidak ada koneksi internet. Periksa jaringanmu, lalu coba muat ulang —
-        iklan dan mading akan kembali begitu kamu online.
+        iklan, menfess, dan info kampus akan kembali begitu kamu online.
       </p>
       <a
         href="/"
