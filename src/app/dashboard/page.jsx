@@ -654,7 +654,7 @@ function DashboardInner() {
       {loaded && !busy && (
         <>
           {/* Tab Selection */}
-          <div className="mt-8 flex gap-2 border-b dark:border-slate-800">
+          <div className="mt-8 flex gap-2 border-b dark:border-slate-800 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pb-1">
             <button
               onClick={() => setActiveTab("jual")}
               className={`pb-2.5 px-4 text-sm font-bold border-b-2 transition-all ${

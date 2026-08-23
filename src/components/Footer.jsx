@@ -9,13 +9,13 @@ export default function Footer({ config }) {
   const contact = config?.contact || {};
   const site = config?.site || {};
 
-  const waGroupLink = contact.waGroupLink || WA_GROUP_LINK;
-  const tagline = site.footerTagline || "Marketplace Kota Medan. Jual-beli aman, dibantu admin.";
+  const waGroupLink = contact.waGroupLink || "https://bit.ly/jualbeliusupolmed";
+  const tagline = site.footerTagline || "Marketplace mahasiswa USU & POLMED. Jual-beli aman, dibantu admin.";
   
   const supportEmail = contact.supportEmail || "admin@jualbelimedan.web.id";
-  const supportPhone = contact.supportPhone || "+62 895-4291-26232";
+  const supportPhone = contact.supportPhone || "+6289502472594";
   const supportAddress = contact.supportAddress || "Jl. Dr. T. Mansur No. 9, Medan 20155";
-  const logoUrl = site.logoUrl;
+  const logoUrl = site.logoUrl || "https://autgrnrqeqdpqwkbolyh.supabase.co/storage/v1/object/public/listings/site/logo-1781175724233.jpg";
 
   return (
     <footer className="mt-20 border-t border-gray-100 bg-gradient-to-b from-transparent to-gray-50/50 dark:border-slate-900 dark:to-slate-950/20">
@@ -83,11 +83,6 @@ export default function Footer({ config }) {
               <li>
                 <Link href="/faq" className="text-gray-600 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white transition-colors">
                   FAQ / Bantuan
-                </Link>
-              </li>
-              <li>
-                <Link href="/dashboard" className="text-gray-600 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white transition-colors">
-                  Dashboard
                 </Link>
               </li>
             </ul>

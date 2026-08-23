@@ -71,13 +71,22 @@ function ChatContent() {
 
   const messagesEndRef = useRef(null);
   const rtChannelRef = useRef(null);
+  const messageCountRef = useRef(0);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, utas]);
+    const totalMessages = anonView 
+      ? (utas?.segmen || []).reduce((acc, seg) => acc + (seg.pesan?.length || 0), 0)
+      : messages.length;
+      
+    if (totalMessages > messageCountRef.current) {
+      messageCountRef.current = totalMessages;
+      scrollToBottom();
+    }
+  }, [messages, utas, anonView]);
 
   // ══ KOTAK MASUK ════════════════════════════════════════════════════════
   const refreshAnonInbox = useCallback(async () => {
