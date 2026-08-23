@@ -143,6 +143,11 @@ export const Icon = {
       <polyline points="9 18 15 12 9 6" />
     </svg>
   ),
+  ChevronLeft: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <polyline points="15 18 9 12 15 6" />
+    </svg>
+  ),
   Filter: (p) => (
     <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
       <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
