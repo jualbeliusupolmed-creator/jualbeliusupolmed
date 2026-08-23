@@ -10,6 +10,8 @@ import { buildSlug } from "@/lib/slug";
 import { rateLimit } from "@/lib/rateLimit";
 import { handleAdminCmd } from "@/lib/bot/adminHandlers";
 import { migrateLidToPhone } from "@/lib/lidMigrate";
+import { computeImageHash, checkReceiptHashDuplicate, saveReceiptHash } from "@/lib/receiptHash";
+import { addKeywordSubscription, removeKeywordSubscription, listKeywordSubscriptions, notifyKeywordSubscribers } from "@/lib/keywordSubs";
 import sharp from "sharp";
 import { jumlahTokenBot, tokenBotSah } from "@/lib/botTokens";
 
@@ -395,8 +397,8 @@ export async function POST(req) {
     if (ownerActive && !isForcedAd && !isAdminCommand) {
       const tCmd = (message || "").toLowerCase().trim();
       const explicitCmd =
-        ["menu", "jual", "wts", "dijual", "ready", "saya", "iklanku", "perpanjang", "upgrade", "batal", "cancel"].includes(tCmd) ||
-        tCmd.startsWith("cari ") || tCmd.startsWith("nama ") || isTawarBiaya;
+        ["menu", "jual", "wts", "dijual", "ready", "saya", "iklanku", "perpanjang", "upgrade", "batal", "cancel", "pantau", "daftar pantau", "tawaran", "referral", "riwayat"].includes(tCmd) ||
+        tCmd.startsWith("cari ") || tCmd.startsWith("dicari ") || tCmd.startsWith("wtb ") || tCmd.startsWith("pantau ") || tCmd.startsWith("nama ") || isTawarBiaya;
       const isReceiptFlow = !!file && (pendingPayment || pendingWantedPayment);
       // User sedang di alur pasang-iklan (sudah ketik JUAL → draft aktif) → JANGAN
       // bisukan foto/teks lanjutannya. Tanpa ini, "JUAL → kirim foto" mati di tengah
@@ -451,6 +453,15 @@ export async function POST(req) {
       try {
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
+        const imageHash = computeImageHash(buffer);
+
+        // Anti-fraud: Cek apakah gambar struk persis sama sudah pernah dipakai
+        const hashCheck = await checkReceiptHashDuplicate(supa, imageHash);
+        if (hashCheck.isDuplicate) {
+          await sendWa(senderJid, "❌ *Struk Sudah Pernah Dipakai*\n\nFoto struk ini sudah pernah diverifikasi sebelumnya untuk transaksi lain. Harap kirimkan struk pembayaran yang sah dan baru ya kak 🙏");
+          return NextResponse.json({ ok: true, state: "receipt_hash_duplicate" });
+        }
+
         const mimeType = file.type || "image/jpeg";
         const extractedData = await verifyReceiptImage(buffer, mimeType);
 
@@ -491,6 +502,13 @@ export async function POST(req) {
           .update({ status: "paid", meta: { ...(pendingPayment.meta || {}), receipt_ref: refIdRcpt || null } })
           .eq("id", pendingPayment.id).eq("status", "pending").select("id").maybeSingle();
         if (!claimedRcpt) return NextResponse.json({ ok: true, state: "already_paid" });
+
+        // Simpan hash struk
+        await saveReceiptHash(supa, imageHash, {
+          payment_id: pendingPayment.id,
+          wa: normalizedWa,
+          amount: pendingPayment.amount,
+        });
 
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
 
@@ -573,6 +591,7 @@ export async function POST(req) {
                 postToGroup(l, settings?.admin),
                 notifyMatchingWanted(supa, l),
                 notifyCategorySubscribers(supa, l),
+                notifyKeywordSubscribers(supa, l),
                 // Notifikasi peramban ke semua pelanggan — jalur ini (verifikasi
                 // struk lewat WhatsApp) sebelumnya tidak mengirim push sama sekali.
                 pushListingBaru(supa, l),
@@ -620,6 +639,7 @@ export async function POST(req) {
               postToGroup(updatedListing, settings?.admin),
               notifyMatchingWanted(supa, updatedListing),
               notifyCategorySubscribers(supa, updatedListing),
+              notifyKeywordSubscribers(supa, updatedListing),
               pushListingBaru(supa, updatedListing),
             ].map(p => p.catch(() => {})));
           }
@@ -1927,25 +1947,32 @@ export async function POST(req) {
       // ==========================================
       } else if (textMsg === "SAYA") {
         // Ambil listing IDs dulu, baru query price_offers (subquery tidak support di Supabase JS)
-        const { data: myListingIds } = await supa
-          .from("listings").select("id").eq("seller_wa", normalizedWa);
-        const listingIds = (myListingIds || []).map(l => l.id);
+        const { data: myListings } = await supa
+          .from("listings")
+          .select("id, title, price, views, expires_at, status, listing_code")
+          .eq("seller_wa", normalizedWa)
+          .eq("status", "active")
+          .order("bumped_at", { ascending: false });
 
-        const [profileRes, activeRes, soldRes, ratingRes, offerRes] = await Promise.all([
+        const listingIds = (myListings || []).map(l => l.id);
+
+        const [profileRes, soldRes, ratingRes, offerRes, pantauRes] = await Promise.all([
           supa.from("seller_profiles").select("name, bio, trusted_seller, subscription_tier, free_bumps, referral_code").eq("wa", normalizedWa).maybeSingle(),
-          supa.from("listings").select("id", { count: "exact", head: true }).eq("seller_wa", normalizedWa).eq("status", "active"),
           supa.from("listings").select("id", { count: "exact", head: true }).eq("seller_wa", normalizedWa).eq("status", "sold"),
           supa.from("seller_ratings").select("rating").eq("seller_wa", normalizedWa),
           listingIds.length > 0
             ? supa.from("price_offers").select("id", { count: "exact", head: true }).in("listing_id", listingIds).eq("status", "pending")
             : Promise.resolve({ count: 0 }),
+          supa.from("keyword_subscriptions").select("id, keyword").eq("buyer_wa", normalizedWa),
         ]);
 
         const sayaProfile = profileRes.data;
-        const aktifCount = activeRes.count || 0;
+        const aktifCount = myListings?.length || 0;
+        const totalViews = (myListings || []).reduce((sum, l) => sum + (l.views || 0), 0);
         const terjualCount = soldRes.count || 0;
         const sayaRatings = ratingRes.data || [];
         const pendingOffers = offerRes.count || 0;
+        const pantauList = pantauRes.data || [];
         const freeBumps = sayaProfile?.free_bumps || 0;
         const refCode = sayaProfile?.referral_code || null;
         const avgRating = sayaRatings.length > 0
@@ -1953,25 +1980,36 @@ export async function POST(req) {
           : null;
         const tierLabel = { free: "Free", pro: "⭐ PRO" }[sayaProfile?.subscription_tier] || "Free";
         const sayaBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
-        // Nomor asli sebagai identitas. formatWa() menolak placeholder LID (return ""),
-        // jadi nomor & link profil HANYA muncul kalau memang nomor HP valid — user tak
-        // pernah lihat angka JID/LID.
         const sayaPhone = formatWa(normalizedWa);
 
-        await sendWa(senderJid,
+        let sayaMsg =
           `👤 *${sayaProfile?.name || "Belum diatur"}*  ·  ${tierLabel}` +
           (sayaProfile?.trusted_seller ? `  ☑️ _Terpercaya_` : ``) + `\n\n` +
           (sayaPhone ? `📱 Nomor: *${sayaPhone}*\n` : ``) +
           `📦 Iklan aktif: *${aktifCount}*\n` +
+          `👁️ Total dilihat: *${totalViews.toLocaleString("id-ID")}×*\n` +
           `✅ Terjual: *${terjualCount}×*\n` +
           (avgRating ? `⭐ Rating: *${avgRating}/5* (${sayaRatings.length} ulasan)\n` : ``) +
           (pendingOffers > 0 ? `💬 Ada *${pendingOffers}* tawaran masuk — ketik *TAWARAN*\n` : ``) +
+          (pantauList.length > 0 ? `🔔 Memantau *${pantauList.length}* kata kunci — ketik *.DAFTAR PANTAU*\n` : ``) +
           (freeBumps > 0 ? `🎁 Bump gratis: *${freeBumps}* — ketik *BUMP [kode]*\n` : ``) +
-          (refCode ? `🎁 Kode referral: *${refCode}* — ketik *REFERRAL*\n` : ``) +
-          (sayaPhone ? `\n🔗 Profil kamu:\n${sayaBaseUrl}/penjual/${sayaPhone}\n` : ``) +
-          `\n_Ketik *MENU* buat liat semua yang bisa aku bantu ya kak._`
-        );
-        return NextResponse.json({ ok: true, state: "saya_done" });
+          (refCode ? `🎁 Kode referral: *${refCode}* — ketik *REFERRAL*\n` : ``);
+
+        if (aktifCount > 0) {
+          sayaMsg += `\n📌 *Iklan Aktif Kamu:*\n`;
+          myListings.slice(0, 3).forEach((l, i) => {
+            sayaMsg += `${i + 1}. ${l.title} (Kode: *${l.listing_code || "-"}* | ${l.views || 0} views)\n`;
+          });
+          if (aktifCount > 3) sayaMsg += `_...dan ${aktifCount - 3} iklan lainnya._\n`;
+        }
+
+        if (sayaPhone) {
+          sayaMsg += `\n🔗 Profil toko kamu:\n${sayaBaseUrl}/penjual/${sayaPhone}\n`;
+        }
+        sayaMsg += `\n_Ketik *MENU* untuk daftar semua perintah bantuan._`;
+
+        await sendWa(senderJid, sayaMsg);
+        return NextResponse.json({ ok: true, state: "saya_done", bot_reply: sayaMsg });
 
       // ==========================================
       // REFERRAL — Kode referral & saldo bump gratis
@@ -2109,9 +2147,13 @@ export async function POST(req) {
           `• *TAGIH* → Kirim ulang QRIS\n` +
           `• *BATAL* → Batalkan tagihan QRIS pending\n` +
           `• *SHARE [kode]* → Link iklan siap share\n` +
-          `\n🔍 *CARI & LANGGANAN*\n` +
-          `• *CARI [barang]* → Posting pencarian\n` +
-          `• *LANGGANAN [kategori]* → Notif kategori baru\n` +
+          `\n🔍 *CARI & PANTAU*\n` +
+          `• *CARI [barang]* → Cari barang aktif (+ foto preview)\n` +
+          `• *PANTAU [kata kunci]* → Notif otomatis saat ada barang baru\n` +
+          `• *DAFTAR PANTAU* → Lihat semua kata kunci yang dipantau\n` +
+          `• *PANTAU OFF [kata kunci]* → Berhenti memantau kata kunci\n` +
+          `• *DICARI [deskripsi]* → Pasang iklan barang dicari (WTB)\n` +
+          `• *LANGGANAN [kategori]* → Notif iklan kategori baru\n` +
           `• *STOP* → Berhenti semua notifikasi\n` +
           `• *IKLAN [kode]* → Lihat detail iklan\n` +
           `\n👤 *PROFIL & RIWAYAT*\n` +
@@ -2443,9 +2485,160 @@ export async function POST(req) {
          return NextResponse.json({ ok: true, state: "draft_started" });
       }
 
+      // ── Command PANTAU: Notifikasi otomatis saat ada barang dengan keyword tertentu ──
+      if (msgLower === "pantau" || msgLower.startsWith("pantau ") || msgLower === "daftar pantau") {
+        const rawText = message.replace(/^pantau\s*/i, "").trim();
+
+        // Hapus pantauan: .PANTAU OFF [kata] atau .PANTAU HAPUS [kata]
+        if (rawText.toLowerCase().startsWith("off ") || rawText.toLowerCase().startsWith("hapus ")) {
+          const targetKw = rawText.replace(/^(off|hapus)\s+/i, "").trim();
+          const res = await removeKeywordSubscription(supa, normalizedWa, targetKw);
+          if (res.ok) {
+            const reply = `✅ Pantauan kata kunci *"${targetKw}"* berhasil dihentikan.`;
+            await sendWa(senderJid, reply);
+            return NextResponse.json({ ok: true, state: "pantau_removed", bot_reply: reply });
+          } else {
+            await sendWa(senderJid, `❌ ${res.message || "Gagal menghapus pantauan."}`);
+            return NextResponse.json({ ok: true, state: "pantau_remove_error" });
+          }
+        }
+
+        // Tampilkan daftar pantauan jika tidak ada keyword spesifik atau ketik "DAFTAR"
+        if (!rawText || rawText.toLowerCase() === "daftar" || msgLower === "daftar pantau") {
+          const list = await listKeywordSubscriptions(supa, normalizedWa);
+          if (!list || list.length === 0) {
+            const reply =
+              `📭 *Kamu belum memantau kata kunci apapun.*\n\n` +
+              `Pasang alarm otomatis untuk barang yang kamu incar! Begitu ada penjual posting iklan baru, bot akan langsung kirim WA ke kamu 🚀\n\n` +
+              `*Contoh Pasang Pantauan:*\n` +
+              `• *.PANTAU laptop rog*\n` +
+              `• *.PANTAU iphone 13*\n` +
+              `• *.PANTAU kos usu*\n\n` +
+              `_Maksimal 10 kata kunci per nomor WA._`;
+            await sendWa(senderJid, reply);
+            return NextResponse.json({ ok: true, state: "pantau_list_empty", bot_reply: reply });
+          }
+
+          let reply = `🔔 *Daftar Kata Kunci Pantauanmu (${list.length}/10)*\n\n`;
+          list.forEach((item, idx) => {
+            reply += `${idx + 1}. *${item.keyword}*\n`;
+          });
+          reply += `\n*Cara Hapus Pantauan:*\n`;
+          reply += `Ketik: *.PANTAU OFF [kata kunci]*\nContoh: *.PANTAU OFF ${list[0].keyword}*`;
+          await sendWa(senderJid, reply);
+          return NextResponse.json({ ok: true, state: "pantau_listed", bot_reply: reply, count: list.length });
+        }
+
+        // Tambah pantauan baru
+        const res = await addKeywordSubscription(supa, normalizedWa, rawText);
+        if (res.ok) {
+          const reply =
+            `🔔 *Pantauan Kata Kunci Berhasil Diaktifkan!* 🎉\n\n` +
+            `Kamu sekarang memantau kata kunci: *"${res.keyword}"*\n\n` +
+            `Setiap ada iklan baru yang memuat kata *"${res.keyword}"*, bot akan otomatis kirim notifikasi WhatsApp ke nomor ini 🚀\n\n` +
+            `_Untuk berhenti memantau: *.PANTAU OFF ${res.keyword}*_\n` +
+            `_Lihat semua pantauan: *.DAFTAR PANTAU*_`;
+          await sendWa(senderJid, reply);
+          return NextResponse.json({ ok: true, state: "pantau_added", bot_reply: reply });
+        } else {
+          await sendWa(senderJid, `❌ ${res.message || "Gagal memantau kata kunci."}`);
+          return NextResponse.json({ ok: true, state: "pantau_add_failed" });
+        }
+      }
+
+      // ── Command DEAL / GAGAL: Konfirmasi transaksi dari followup otomatis ──
+      if (msgLower.startsWith("deal ") || msgLower.startsWith("gagal ")) {
+        const isDeal = msgLower.startsWith("deal ");
+        const shortId = msgLower.replace(/^(deal|gagal)\s+/i, "").trim();
+        
+        // Cari di buyer_contacts menggunakan awalan uuid
+        const { data: contact } = await supa
+          .from("buyer_contacts")
+          .select("id, listing_id")
+          .eq("seller_wa", normalizedWa)
+          .like("id", `${shortId}%`)
+          .single();
+
+        if (!contact) {
+          await sendWa(senderJid, `❌ Kode kontak tidak ditemukan atau pesanan bukan milik Anda.`);
+          return NextResponse.json({ ok: true, state: "deal_invalid_code" });
+        }
+
+        const newStatus = isDeal ? "deal" : "gagal";
+        await supa.from("buyer_contacts").update({ deal_status: newStatus }).eq("id", contact.id);
+
+        if (isDeal) {
+          await sendWa(senderJid, `✅ Mantap! Status transaksi telah diperbarui menjadi *DEAL* 🎉\nTerima kasih atas konfirmasinya. Jangan lupa tandai barang Anda sebagai TERJUAL jika stok sudah habis dengan membalas pesan iklan Anda.`);
+        } else {
+          await sendWa(senderJid, `✅ Siap kak, status diperbarui menjadi *GAGAL*. Semoga cepat laku ya!`);
+        }
+
+        return NextResponse.json({ ok: true, state: "deal_status_updated", status: newStatus });
+      }
+
+      // ── Command CARI: Cari barang di katalog aktif (dengan foto preview) ──
+      if (msgLower === "cari" || msgLower.startsWith("cari ")) {
+        const query = message.replace(/^cari\s*/i, "").trim();
+        if (!query) {
+          const helpMsg = `🔍 Format: *.CARI [nama barang]*\n\nContoh:\n• *.CARI laptop asus*\n• *.CARI sepatu nike*\n• *.CARI helm bogo*`;
+          await sendWa(senderJid, helpMsg);
+          return NextResponse.json({ ok: true, state: "cari_help", bot_reply: helpMsg });
+        }
+
+        await sendWa(senderJid, `🔍 Sedang mencari *"${query}"* di katalog...`);
+
+        const { data: results } = await supa
+          .from("listings")
+          .select("id, title, price, seller_name, seller_wa, category, condition, campus, image_url, featured")
+          .eq("status", "active")
+          .or(`title.ilike.%${query}%,description.ilike.%${query}%`)
+          .order("featured", { ascending: false })
+          .order("bumped_at", { ascending: false })
+          .limit(5);
+
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+
+        if (!results || results.length === 0) {
+          const notFoundMsg =
+            `❌ Tidak ditemukan barang dengan kata kunci *"${query}"* di katalog aktif saat ini.\n\n` +
+            `💡 *Solusi:*\n` +
+            `• Pasang alarm pantau otomatis: ketik *.PANTAU ${query}* (bot akan WA kamu begitu ada barang baru!)\n` +
+            `• Atau pasang iklan dicari: ketik *.DICARI ${query}*`;
+          await sendWa(senderJid, notFoundMsg);
+          return NextResponse.json({ ok: true, state: "cari_empty", bot_reply: notFoundMsg });
+        }
+
+        let reply = `🔍 *Hasil Pencarian: "${query}"*\n`;
+        reply += `Ditemukan *${results.length}* barang aktif:\n\n`;
+
+        results.forEach((r, idx) => {
+          const condLabel = r.condition === "new" ? "✨ Baru" : "Bekas";
+          const campusLabel = r.campus && r.campus !== "Semua" ? ` | 🏫 ${r.campus}` : "";
+          const slug = buildSlug(r.title, r.id);
+          const featBadge = r.featured ? " ⭐ [FEATURED]" : "";
+          reply += `${idx + 1}. *${r.title}*${featBadge}\n`;
+          reply += `   💰 Rp ${Number(r.price).toLocaleString("id-ID")} · ${condLabel}${campusLabel}\n`;
+          reply += `   👤 Penjual: ${r.seller_name || "Penjual"} (wa.me/${(r.seller_wa || "").replace(/\D/g, "")})\n`;
+          reply += `   👉 ${baseUrl}/produk/${slug}\n\n`;
+        });
+
+        reply += `_Lihat lebih lengkap di web:_ ${baseUrl}/produk?q=${encodeURIComponent(query)}\n\n`;
+        reply += `💡 _Ketik *.PANTAU ${query}* untuk notifikasi otomatis setiap ada barang baru sejenis!_`;
+
+        // Kirim preview foto dari listing teratas jika tersedia
+        const topPhoto = results.find(r => r.image_url)?.image_url;
+        if (topPhoto) {
+          await sendWa(senderJid, reply, topPhoto);
+        } else {
+          await sendWa(senderJid, reply);
+        }
+
+        return NextResponse.json({ ok: true, state: "cari_results", count: results.length, bot_reply: reply });
+      }
+
       // ── Command DICARI: post wanted listing ke web + grup dari WA ──────────
-      if (msgLower.startsWith("dicari ") || msgLower.startsWith("wtb ") || msgLower.startsWith("cari beli ") || msgLower.startsWith("cari ")) {
-        const rawText = message.replace(/^(dicari|wtb|cari beli|cari)\s+/i, "").trim();
+      if (msgLower.startsWith("dicari ") || msgLower.startsWith("wtb ") || msgLower.startsWith("cari beli ")) {
+        const rawText = message.replace(/^(dicari|wtb|cari beli)\s+/i, "").trim();
         if (!rawText) {
           await sendWa(senderJid, "📝 Format: *DICARI [deskripsi barang yang dicari]*\n\nContoh:\n_DICARI laptop bekas budget 3jt area USU_");
           return NextResponse.json({ ok: true, state: "dicari_help" });

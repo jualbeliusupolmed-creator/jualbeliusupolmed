@@ -7,6 +7,8 @@ import { buildSlug } from "@/lib/slug";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { formatWa } from "@/lib/constants";
 import { loadLidPhoneMap, migrateLidToPhone } from "@/lib/lidMigrate";
+import { computeImageHash, checkReceiptHashDuplicate, saveReceiptHash } from "@/lib/receiptHash";
+import { notifyKeywordSubscribers } from "@/lib/keywordSubs";
 
 export const dynamic = "force-dynamic";
 
@@ -43,8 +45,19 @@ export async function POST(req) {
     }
     const serverAmount = Number(payment0.meta?.final_amount || payment0.amount) || 0;
 
-    // Baca struk via AI Vision
+    // Baca & hash struk via AI Vision
     const buffer = Buffer.from(await receiptFile.arrayBuffer());
+    const imageHash = computeImageHash(buffer);
+
+    // Anti-fraud: Periksa apakah foto struk yang persis sama pernah diverifikasi sebelumnya
+    const hashCheck = await checkReceiptHashDuplicate(supa, imageHash);
+    if (hashCheck.isDuplicate) {
+      return NextResponse.json({
+        success: false,
+        error: "Struk transfer ini sudah pernah diverifikasi sebelumnya untuk transaksi lain. Harap kirimkan struk pembayaran yang sah dan baru."
+      }, { status: 400 });
+    }
+
     const extractedData = await verifyReceiptImage(buffer, receiptFile.type);
 
     if (!extractedData.is_struk_valid) {
@@ -95,6 +108,13 @@ export async function POST(req) {
       // Sudah diproses paralel — anggap sukses (idempoten).
       return NextResponse.json({ success: true, alreadyPaid: true });
     }
+
+    // Simpan image hash agar tidak bisa dipakai ulang
+    await saveReceiptHash(supa, imageHash, {
+      payment_id: payment.id,
+      wa: payment.listings?.seller_wa || payment.meta?.wa || payment.meta?.requester_wa,
+      amount: serverAmount,
+    });
 
     // === Fulfillment (logika sama seperti webhook pembayaran) ===
     let unlockContact = null;
@@ -185,6 +205,8 @@ export async function POST(req) {
             // iklan berbayar biasa, dan sebelum ini ia satu-satunya jalur
             // "iklan tayang" yang tidak mengirim push sama sekali.
             pushListingBaru(supa, listing),
+            // Notifikasi subscriber kata kunci (Keyword Subscriptions)
+            notifyKeywordSubscribers(supa, listing),
           ]).catch(console.error);
         }
       } else if (payment.type === "featured") {
