@@ -6,6 +6,7 @@ import { getUserSession } from "@/lib/auth";
 import { hashIdentitas } from "@/lib/identitasHash";
 import { catatIdentitasWa, cariWaDariHash } from "@/lib/chatIdentity";
 import { pushToWa } from "@/lib/webpush";
+import { siarkanPesanBaru } from "@/lib/chatRealtime";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -112,6 +113,38 @@ export async function POST(request) {
       // nanti, server tahu ke nomor mana push dikirim.
       await catatIdentitasWa(supa, userId, wa);
 
+      // Satu partner aktif pada satu waktu. Tombol "⏭️ Ganti" sudah menutup
+      // obrolan sebelumnya, tapi "🚀 Cari Teman Baru" dari kotak masuk tidak —
+      // jadi seseorang bisa punya beberapa obrolan hidup sekaligus (36 slot
+      // peserta aktif di 22 orang, 23 Agu 2026). Selama tampilannya masih satu
+      // baris per room itu cuma berantakan; sejak semuanya jadi SATU utas, itu
+      // ambigu: pesan yang diketik tidak jelas sampai ke siapa. Yang lama
+      // ditutup di sini, dengan pesan sistem yang sama seperti keluar manual —
+      // partner lama tidak boleh menunggu balasan yang tidak akan datang.
+      const { data: masihAktif } = await supa
+        .from("chat_rooms")
+        .select("id")
+        .eq("type", "random")
+        .eq("status", "active")
+        .or(`user1_id.eq.${userId},user2_id.eq.${userId}`);
+      for (const lama of masihAktif || []) {
+        await supa
+          .from("chat_rooms")
+          .update({ status: "closed", updated_at: new Date().toISOString() })
+          .eq("id", lama.id);
+        await supa.from("chat_messages").insert({
+          room_id: lama.id,
+          sender_id: "system",
+          sender_alias: "Sistem",
+          message: "👋 Temanmu telah meninggalkan obrolan.",
+        });
+        try {
+          await siarkanPesanBaru(supa, lama.id);
+        } catch {
+          // Siaran gagal cuma berarti lawan bicara tahu dari polling 10 detik.
+        }
+      }
+
       // Cari room tunggu siapa pun selain diri sendiri — TANPA batas umur.
       // Room yang dibuat kemarin pun tetap sah dipasangkan hari ini.
       const { data: waitingRooms } = await supa
@@ -157,7 +190,7 @@ export async function POST(request) {
               await pushToWa(supa, waNunggu, {
                 title: "🎭 Ada yang mau ngobrol!",
                 body: `${alias} baru bergabung — obrolan kalian sudah bisa dibuka.`,
-                url: `/chat?room=${updatedRoom.id}`,
+                url: "/chat?anon=1",
                 tag: `chat-match-${updatedRoom.id}`,
               });
             }
