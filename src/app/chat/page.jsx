@@ -102,6 +102,21 @@ function ChatContent() {
 
       const data = await res.json();
 
+      // Tanpa dua cabang ini, radar "Mencari..." berputar selamanya untuk orang
+      // yang belum login atau sedang diblokir — servernya menjawab, klien yang
+      // dulu tidak mendengarkan.
+      if (res.status === 401) {
+        setChatState("idle");
+        toast.error("Masuk dulu ya untuk mulai mengobrol.");
+        window.location.href = "/profil";
+        return;
+      }
+      if (res.status === 403 || res.status === 429) {
+        setChatState("idle");
+        toast.error(data.error || "Belum bisa memulai obrolan sekarang.");
+        return;
+      }
+
       if (data.status === "matched" && data.room) {
         setCurrentRoomId(data.room.id);
         const partnerIsUser1 = data.room.user1_alias !== userAlias; // Simplifikasi, karena backend override
@@ -312,6 +327,29 @@ function ChatContent() {
     }
   };
 
+  // Laporkan lawan bicara — pola bot chat anonim Telegram: laporan dari tiga
+  // room berbeda memblokir pelakunya otomatis dari obrolan selama seminggu.
+  const handleReportPartner = async () => {
+    if (!currentRoomId) return;
+    const alasan = prompt("Laporkan lawan bicara — apa alasannya? (mis. kasar, pelecehan, penipuan, spam)");
+    if (alasan === null) return;
+    try {
+      const res = await fetch(`/api/chat/room/${currentRoomId}/report`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: alasan }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(data.pesan || "Laporan diterima.");
+      } else {
+        toast.error(data.error || "Gagal mengirim laporan");
+      }
+    } catch {
+      toast.error("Gagal mengirim laporan");
+    }
+  };
+
   // Leave / Skip Chat
   const handleLeaveChat = async () => {
     if (currentRoomId) {
@@ -464,7 +502,7 @@ function ChatContent() {
               <div className="grid grid-cols-3 gap-2 max-w-sm mx-auto text-center pt-2">
                 <div className="p-2">
                   <span className="text-base">🔒</span>
-                  <p className="text-[10px] text-slate-500 font-medium mt-1">100% Rahasia</p>
+                  <p className="text-[10px] text-slate-500 font-medium mt-1">Anonim ke Lawan Bicara</p>
                 </div>
                 <div className="p-2">
                   <span className="text-base">⚡</span>
@@ -475,6 +513,14 @@ function ChatContent() {
                   <p className="text-[10px] text-slate-500 font-medium mt-1">Sensor Sopan</p>
                 </div>
               </div>
+
+              {/* Aturan main — jujur soal batas anonimitasnya */}
+              <p className="max-w-sm mx-auto text-center text-[10px] leading-relaxed text-slate-400 dark:text-slate-500 pt-1">
+                Dengan memulai, kamu setuju: sopan, tanpa SARA/pelecehan, dan jangan bagikan
+                data pribadi. Ada tombol 🚩 untuk melaporkan lawan bicara — yang dilaporkan
+                banyak orang diblokir otomatis. Namamu tidak pernah ditampilkan, tapi obrolan
+                terikat ke akunmu supaya pelanggaran bisa ditindak.
+              </p>
             </div>
           )}
 
@@ -528,6 +574,13 @@ function ChatContent() {
                 </div>
 
                 <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={handleReportPartner}
+                    title="Laporkan lawan bicara"
+                    className="px-2 py-1 rounded-full text-xs text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors"
+                  >
+                    🚩
+                  </button>
                   <button
                     onClick={handleSkipChat}
                     title="Ganti Lawan Obrolan"

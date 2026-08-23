@@ -69,6 +69,24 @@ export async function POST(request) {
       );
     }
 
+    // Blokir hasil laporan (lihat /api/chat/room/[id]/report): yang sedang
+    // diblokir tidak boleh masuk antrean — pola bot chat anonim Telegram.
+    const { data: ban } = await supa
+      .from("chat_bans")
+      .select("until")
+      .eq("subject_id", userId)
+      .gt("until", new Date().toISOString())
+      .maybeSingle();
+    if (ban) {
+      return NextResponse.json(
+        {
+          error: `Kamu diblokir sementara dari obrolan karena laporan beberapa pengguna lain `
+            + `(sampai ${new Date(ban.until).toLocaleDateString("id-ID")}).`,
+        },
+        { status: 403 }
+      );
+    }
+
     // 3. Action: Find or Create Match (Default)
     // Cari room yang sedang menunggu (created dalam 3 menit terakhir) yang bukan dibuat oleh user ini
     const twoMinutesAgo = new Date(Date.now() - 3 * 60 * 1000).toISOString();
