@@ -27,7 +27,6 @@ function ChatContent() {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
   const [sending, setSending] = useState(false);
-  const [myWa, setMyWa] = useState(null);
 
   const messagesEndRef = useRef(null);
   const pollIntervalRef = useRef(null);
