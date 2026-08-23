@@ -711,12 +711,12 @@ export default function HomeBrowser({
             {searching ? (
               <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                 {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="card animate-pulse overflow-hidden bg-white dark:border-slate-800 dark:bg-slate-900/30">
-                    <div className="aspect-square w-full bg-gray-100 dark:bg-slate-950" />
+                  <div key={i} className="card overflow-hidden bg-white dark:border-slate-800 dark:bg-slate-900/30">
+                    <div className="aspect-square w-full bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800 bg-[length:200%_100%] animate-shimmer" />
                     <div className="p-3 space-y-2">
-                      <div className="h-3 w-1/4 rounded bg-gray-100 dark:bg-slate-800" />
-                      <div className="h-4 w-3/4 rounded bg-gray-100 dark:bg-slate-800" />
-                      <div className="h-4 w-1/2 rounded bg-gray-200 dark:bg-slate-700" />
+                      <div className="h-3 w-1/4 rounded bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800 bg-[length:200%_100%] animate-shimmer" />
+                      <div className="h-4 w-3/4 rounded bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800 bg-[length:200%_100%] animate-shimmer" />
+                      <div className="h-4 w-1/2 rounded bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800 bg-[length:200%_100%] animate-shimmer" />
                     </div>
                   </div>
                 ))}

@@ -86,9 +86,9 @@ export async function POST(request) {
       );
     }
 
-    // Posting kini wajib login, tapi rem per-IP tetap dipasang: satu akun yang
-    // dibajak skrip tidak boleh bisa membanjiri mading.
-    const laju = rateLimit(`mading-post:${getClientIp(request)}`, { limit: 5, windowMs: 10 * 60_000 });
+    // Posting kini di-rate-limit berdasarkan sesi WA pengirim, 
+    // agar adil dan tidak memblokir IP publik kampus.
+    const laju = rateLimit(`mading-post:${wa}`, { limit: 5, windowMs: 10 * 60_000 });
     if (!laju.ok) {
       return NextResponse.json(
         { error: `Terlalu banyak postingan dalam waktu singkat. Coba lagi dalam ${laju.retryAfter} detik.` },

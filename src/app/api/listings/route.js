@@ -7,6 +7,7 @@ import { postToGroup, notifyCategorySubscribers } from "@/lib/fonnte";
 import { pushListingBaru } from "@/lib/webpush";
 import { getDistributorSettings, calcDistributorFee, effectivePrice } from "@/lib/distributor";
 import { tokoAktif } from "@/lib/toko";
+import { getSellerSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -105,11 +106,17 @@ export async function POST(req) {
       rental_period,
     } = body;
 
+    const normalizedWa = formatWa(seller_wa);
+    const sessionWa = getSellerSession();
+
+    if (!sessionWa || sessionWa !== normalizedWa) {
+      return NextResponse.json({ error: "Sesi tidak valid atau telah berakhir. Silakan login kembali." }, { status: 401 });
+    }
+
     if (!seller_name || !seller_wa || !title || price == null) {
       return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
     }
 
-    const normalizedWa = formatWa(seller_wa);
     if (!normalizedWa) {
       return NextResponse.json({ error: "Nomor WA tidak valid" }, { status: 400 });
     }

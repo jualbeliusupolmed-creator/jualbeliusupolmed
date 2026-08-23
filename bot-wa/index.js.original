@@ -2914,19 +2914,6 @@ process.on('SIGINT', () => gracefulExit('SIGINT'));
 
 app.listen(PORT, process.env.BIND_HOST || '127.0.0.1', () => {
     console.log(`Bot Server listening on ${process.env.BIND_HOST || '127.0.0.1'}:${PORT}`);
-    
-    // --- Phase 2: Start Outbox Worker ---
-    if (supabase) {
-        const OutboxWorker = require('./src/core/outboxWorker.js');
-        const outboxWorker = new OutboxWorker(SUPABASE_URL, SUPABASE_KEY, async (target, message, imageUrl, ttlDetik, meta) => {
-            const jid = target.includes('@') ? target : target + '@s.whatsapp.net';
-            messageQueue.push({ jid, text: message, image: imageUrl, id: Math.random().toString(36).substring(7), ...meta });
-            kickQueue();
-            return { ok: true };
-        }, 15000);
-        outboxWorker.start();
-    }
-    
     // unref: pemantau tidak boleh jadi alasan proses menolak keluar saat shutdown.
     setInterval(watchProlongedOutage, 60000).unref();
     // Proses sebelumnya sudah memutuskan untuk diam karena tidak ada yang

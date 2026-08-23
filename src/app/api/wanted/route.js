@@ -3,6 +3,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { formatWa } from "@/lib/constants";
 import { postWantedToGroup } from "@/lib/fonnte";
+import { getSellerSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -84,11 +85,17 @@ export async function POST(req) {
     const body = await req.json();
     const { buyer_name, buyer_wa, title, description, budget, category, campus, area } = body;
 
+    const normalizedBuyerWa = formatWa(buyer_wa);
+    const sessionWa = getSellerSession();
+    
+    if (!sessionWa || sessionWa !== normalizedBuyerWa) {
+      return NextResponse.json({ error: "Sesi tidak valid atau telah berakhir. Silakan login kembali." }, { status: 401 });
+    }
+
     if (!buyer_name || !buyer_wa || !title || !category) {
       return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
     }
 
-    const normalizedBuyerWa = formatWa(buyer_wa);
     if (!normalizedBuyerWa) {
       return NextResponse.json({ error: "Nomor WA tidak valid" }, { status: 400 });
     }
