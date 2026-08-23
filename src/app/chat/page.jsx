@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/Icons";
 import { FACULTIES } from "@/lib/profanity";
+import { getSupabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
 export default function ChatPage() {
@@ -24,6 +25,7 @@ export default function ChatPage() {
 
   const messagesEndRef = useRef(null);
   const pollIntervalRef = useRef(null);
+  const rtChannelRef = useRef(null);
 
   // Initialize unique user ID
   useEffect(() => {
@@ -48,9 +50,9 @@ export default function ChatPage() {
 
   // Polling Messages while in chat
   const fetchRoomData = useCallback(async (roomId) => {
-    if (!roomId) return;
+    if (!roomId || !userId) return;
     try {
-      const res = await fetch(`/api/chat/room/${roomId}`);
+      const res = await fetch(`/api/chat/room/${roomId}?userId=${encodeURIComponent(userId)}`);
       const data = await res.json();
       if (data.room) {
         if (data.room.status === "closed" && chatState === "chat") {
@@ -61,7 +63,7 @@ export default function ChatPage() {
     } catch {
       // silent
     }
-  }, [chatState]);
+  }, [chatState, userId]);
 
   // Start Matchmaking
   const handleStartMatch = async () => {
@@ -108,8 +110,23 @@ export default function ChatPage() {
   // Poll waiting room until user2 joins
   const startPollingForPartner = (roomId) => {
     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    const mulaiMenunggu = Date.now();
 
     pollIntervalRef.current = setInterval(async () => {
+      // Room waiting hanya berlaku 3 menit di matchmaking — menunggu lebih lama
+      // dari itu berarti mem-poll room yang tidak akan pernah dipasangkan lagi.
+      if (Date.now() - mulaiMenunggu > 3 * 60_000) {
+        clearInterval(pollIntervalRef.current);
+        fetch("/api/chat/match", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "cancel", userId, roomId }),
+        }).catch(() => {});
+        setChatState("idle");
+        setCurrentRoomId(null);
+        toast.info("😔 Belum ada teman yang tersedia. Coba lagi nanti ya!");
+        return;
+      }
       try {
         const res = await fetch("/api/chat/match", {
           method: "POST",
@@ -133,17 +150,52 @@ export default function ChatPage() {
       } catch {
         // silent
       }
-    }, 2000);
+    }, 3000);
   };
 
-  // Poll message feed while in chat
+  // ── Pesan masuk: Supabase Realtime Broadcast, polling tinggal jaring pengaman ──
+  //
+  // Dulu pesan ditarik lewat API tiap 2 detik. Itu berarti SATU pasangan yang
+  // sedang mengobrol menembak Vercel ~1 request/detik — cukup ramai pengguna,
+  // kuota harian Vercel habis oleh orang yang cuma menunggu balasan.
+  //
+  // Sekarang pengirim menyiarkan sinyal lewat kanal Broadcast per-room, dan
+  // penerima baru menarik pesan saat sinyal itu datang. Kenapa Broadcast, bukan
+  // postgres_changes: postgres_changes butuh kebijakan RLS SELECT untuk anon —
+  // dan kebijakan itu baru saja DICABUT karena membuat seluruh isi chat bisa
+  // dibaca siapa pun. Broadcast tidak menyentuh tabel; isinya cuma "ada pesan
+  // baru", data aslinya tetap lewat API yang memeriksa keanggotaan room.
+  useEffect(() => {
+    if (chatState !== "chat" || !currentRoomId) return;
+    let channel = null;
+    let supa = null;
+    try {
+      supa = getSupabase();
+      channel = supa
+        .channel(`chat-room-${currentRoomId}`)
+        .on("broadcast", { event: "pesan" }, () => fetchRoomData(currentRoomId))
+        .subscribe();
+      rtChannelRef.current = channel;
+    } catch {
+      // Realtime tidak tersedia → polling di bawah tetap jadi jalur utama.
+    }
+    return () => {
+      rtChannelRef.current = null;
+      if (channel && supa) {
+        try { supa.removeChannel(channel); } catch {}
+      }
+    };
+  }, [chatState, currentRoomId, fetchRoomData]);
+
+  // Poll message feed while in chat — jaring pengaman kalau broadcast terlewat
+  // (koneksi realtime putus, tab lama di belakang), bukan lagi jalur utama.
   useEffect(() => {
     let msgInterval;
     if (chatState === "chat" && currentRoomId) {
       fetchRoomData(currentRoomId);
       msgInterval = setInterval(() => {
         fetchRoomData(currentRoomId);
-      }, 2000);
+      }, 10000);
     }
     return () => {
       if (msgInterval) clearInterval(msgInterval);
@@ -231,6 +283,12 @@ export default function ChatPage() {
       const data = await res.json();
       if (!data.success) {
         toast.error(data.error || "Gagal mengirim pesan");
+      } else {
+        // Beri tahu lawan bicara lewat kanal broadcast — tanpa ini ia baru
+        // melihat pesannya pada poll jaring-pengaman berikutnya (±10 detik).
+        try {
+          rtChannelRef.current?.send({ type: "broadcast", event: "pesan", payload: {} });
+        } catch {}
       }
     } catch {
       toast.error("Gagal mengirim pesan");
@@ -243,7 +301,11 @@ export default function ChatPage() {
   // Leave / Skip Chat
   const handleLeaveChat = async () => {
     if (currentRoomId) {
-      await fetch(`/api/chat/room/${currentRoomId}`, { method: "DELETE" });
+      await fetch(`/api/chat/room/${currentRoomId}?userId=${encodeURIComponent(userId)}`, { method: "DELETE" });
+      // Kabari lawan bicara sekarang juga, jangan menunggu poll berikutnya.
+      try {
+        rtChannelRef.current?.send({ type: "broadcast", event: "pesan", payload: {} });
+      } catch {}
     }
     setChatState("idle");
     setCurrentRoomId(null);
@@ -252,7 +314,11 @@ export default function ChatPage() {
 
   const handleSkipChat = async () => {
     if (currentRoomId) {
-      await fetch(`/api/chat/room/${currentRoomId}`, { method: "DELETE" });
+      await fetch(`/api/chat/room/${currentRoomId}?userId=${encodeURIComponent(userId)}`, { method: "DELETE" });
+      // Kabari lawan bicara sekarang juga, jangan menunggu poll berikutnya.
+      try {
+        rtChannelRef.current?.send({ type: "broadcast", event: "pesan", payload: {} });
+      } catch {}
     }
     handleStartMatch();
   };

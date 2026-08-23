@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
+import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,14 @@ export async function POST(request, { params }) {
 
     if (!postId || !user_identifier) {
       return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
+    }
+
+    const laju = rateLimit(`mading-like:${getClientIp(request)}`, { limit: 30, windowMs: 60_000 });
+    if (!laju.ok) {
+      return NextResponse.json(
+        { error: `Terlalu cepat. Coba lagi dalam ${laju.retryAfter} detik.` },
+        { status: 429 }
+      );
     }
 
     const supa = getAdminClient();

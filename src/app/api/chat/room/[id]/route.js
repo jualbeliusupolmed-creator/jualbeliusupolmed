@@ -1,29 +1,50 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { censorProfanity } from "@/lib/profanity";
+import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 export const revalidate = 0;
-// GET /api/chat/room/[id] - Ambil data ruangan & pesan
+
+// Obrolan ini anonim, tapi anonim BUKAN publik: isi room hanya boleh dibaca dan
+// ditulis oleh dua peserta yang dipertemukan matchmaking. Karena tidak ada
+// login, "bukti keanggotaan" satu-satunya adalah userId acak yang dibuat klien
+// saat pertama kali membuka /chat — cukup untuk menahan orang luar yang cuma
+// memegang roomId, dan itulah ancaman yang nyata di sini.
+async function ambilRoomUntuk(supa, roomId, userId) {
+  if (!roomId || !userId) return { error: "Room ID dan User ID wajib diisi", status: 400 };
+  const { data: room, error } = await supa
+    .from("chat_rooms")
+    .select("*")
+    .eq("id", roomId)
+    .single();
+  if (error || !room) return { error: "Ruangan obrolan tidak ditemukan", status: 404 };
+  if (room.user1_id !== userId && room.user2_id !== userId) {
+    return { error: "Kamu bukan peserta obrolan ini", status: 403 };
+  }
+  return { room };
+}
+
+// GET /api/chat/room/[id]?userId=... - Ambil data ruangan & pesan
 export async function GET(request, { params }) {
   try {
     const roomId = params.id;
-    if (!roomId) return NextResponse.json({ error: "Room ID wajib diisi" }, { status: 400 });
+    const userId = new URL(request.url).searchParams.get("userId");
 
     const supa = getAdminClient();
-    const [roomRes, msgRes] = await Promise.all([
-      supa.from("chat_rooms").select("*").eq("id", roomId).single(),
-      supa.from("chat_messages").select("*").eq("room_id", roomId).order("created_at", { ascending: true }),
-    ]);
+    const hasil = await ambilRoomUntuk(supa, roomId, userId);
+    if (hasil.error) return NextResponse.json({ error: hasil.error }, { status: hasil.status });
 
-    if (roomRes.error || !roomRes.data) {
-      return NextResponse.json({ error: "Ruangan obrolan tidak ditemukan" }, { status: 404 });
-    }
+    const { data: messages } = await supa
+      .from("chat_messages")
+      .select("*")
+      .eq("room_id", roomId)
+      .order("created_at", { ascending: true });
 
     return NextResponse.json({
-      room: roomRes.data,
-      messages: msgRes.data || [],
+      room: hasil.room,
+      messages: messages || [],
     });
   } catch (err) {
     console.error("GET /api/chat/room/[id] error:", err);
@@ -42,14 +63,22 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: "Pesan tidak boleh kosong" }, { status: 400 });
     }
 
+    const laju = rateLimit(`chat-msg:${getClientIp(request)}`, { limit: 25, windowMs: 30_000 });
+    if (!laju.ok) {
+      return NextResponse.json(
+        { error: `Terlalu cepat. Coba lagi dalam ${laju.retryAfter} detik.` },
+        { status: 429 }
+      );
+    }
+
     const cleanMessage = censorProfanity(message.trim().slice(0, 500));
     senderAlias = (senderAlias || "Anonim").trim().slice(0, 50);
 
     const supa = getAdminClient();
 
-    // Periksa apakah ruangan masih aktif
-    const { data: room } = await supa.from("chat_rooms").select("status").eq("id", roomId).single();
-    if (!room || room.status === "closed") {
+    const hasil = await ambilRoomUntuk(supa, roomId, senderId);
+    if (hasil.error) return NextResponse.json({ error: hasil.error }, { status: hasil.status });
+    if (hasil.room.status === "closed") {
       return NextResponse.json({ error: "Obrolan ini telah berakhir" }, { status: 400 });
     }
 
@@ -76,13 +105,16 @@ export async function POST(request, { params }) {
   }
 }
 
-// DELETE /api/chat/room/[id] - Tinggalkan / akhiri obrolan
+// DELETE /api/chat/room/[id]?userId=... - Tinggalkan / akhiri obrolan
 export async function DELETE(request, { params }) {
   try {
     const roomId = params.id;
-    if (!roomId) return NextResponse.json({ error: "Room ID wajib diisi" }, { status: 400 });
+    const userId = new URL(request.url).searchParams.get("userId");
 
     const supa = getAdminClient();
+    const hasil = await ambilRoomUntuk(supa, roomId, userId);
+    if (hasil.error) return NextResponse.json({ error: hasil.error }, { status: hasil.status });
+
     await supa
       .from("chat_rooms")
       .update({ status: "closed", updated_at: new Date().toISOString() })
