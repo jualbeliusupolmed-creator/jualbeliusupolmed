@@ -3,38 +3,49 @@
 import { useState } from "react";
 import { rupiah } from "@/lib/fees";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export default function OfferButton({ listing }) {
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ buyer_name: "", buyer_wa: "", offer_price: "", message: "" });
+  const [offerPrice, setOfferPrice] = useState("");
+  const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
-
-  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const router = useRouter();
 
   async function submit(e) {
     e.preventDefault();
-    if (!form.buyer_name || !form.buyer_wa || !form.offer_price) {
-      toast.error("Lengkapi nama, WA, dan harga tawaran.");
+    if (!offerPrice) {
+      toast.error("Masukkan harga tawaran.");
       return;
     }
     setBusy(true);
     try {
-      const res = await fetch("/api/offers", {
+      const priceNum = Number(offerPrice.replace(/\D/g, ""));
+      const finalMessage = `Halo, saya ingin mengajukan tawaran sebesar ${rupiah(priceNum)} untuk barang ini.${message ? ' ' + message : ''}`;
+      
+      const res = await fetch("/api/chat/marketplace/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          listing_id: listing.id,
-          buyer_name: form.buyer_name,
-          buyer_wa: form.buyer_wa,
-          offer_price: Number(form.offer_price.replace(/\D/g, "")),
-          message: form.message || null,
+          listingId: listing.id,
+          message: finalMessage,
+          offerPrice: priceNum
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      toast.success("Tawaran terkirim! Penjual akan menghubungi kamu via WhatsApp.");
+      
+      if (!res.ok) {
+        if (res.status === 401) {
+          toast.error("Silakan masuk/login terlebih dahulu untuk menawar harga.");
+          router.push("/dashboard/login");
+          return;
+        }
+        throw new Error(data.error || "Gagal memulai chat");
+      }
+      
+      toast.success("Tawaran terkirim!");
       setOpen(false);
-      setForm({ buyer_name: "", buyer_wa: "", offer_price: "", message: "" });
+      router.push(`/chat?room=${data.roomId}`);
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -72,30 +83,22 @@ export default function OfferButton({ listing }) {
                 <input
                   type="text"
                   inputMode="numeric"
-                  value={form.offer_price ? Number(form.offer_price.replace(/\D/g, "")).toLocaleString("id-ID") : ""}
-                  onChange={(e) => setForm((f) => ({ ...f, offer_price: e.target.value.replace(/\D/g, "") }))}
+                  value={offerPrice ? Number(offerPrice.replace(/\D/g, "")).toLocaleString("id-ID") : ""}
+                  onChange={(e) => setOfferPrice(e.target.value.replace(/\D/g, ""))}
                   placeholder="Contoh: 500.000"
                   className="input text-sm"
                   required
                 />
               </div>
               <div>
-                <label className="label text-xs">Namamu</label>
-                <input type="text" value={form.buyer_name} onChange={set("buyer_name")} placeholder="Nama Lengkap" className="input text-sm" required />
-              </div>
-              <div>
-                <label className="label text-xs">Nomor WhatsApp</label>
-                <input type="tel" value={form.buyer_wa} onChange={set("buyer_wa")} placeholder="08xxxxxxxxxx" className="input text-sm" required />
-              </div>
-              <div>
                 <label className="label text-xs">Pesan (opsional)</label>
-                <input type="text" value={form.message} onChange={set("message")} placeholder="Misal: bisa COD hari ini?" className="input text-sm" />
+                <input type="text" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Misal: bisa COD hari ini?" className="input text-sm" />
               </div>
 
               <button type="submit" disabled={busy} className="btn-primary w-full disabled:opacity-50">
-                {busy ? "Mengirim…" : "💰 Kirim Tawaran"}
+                {busy ? "Memproses…" : "💰 Chat Penjual & Ajukan Tawaran"}
               </button>
-              <p className="text-[10px] text-center text-gray-400">Penjual akan membalas via WhatsApp jika tertarik.</p>
+              <p className="text-[10px] text-center text-gray-400">Kamu akan diarahkan ke Obrolan Transaksi.</p>
             </form>
           </div>
         </div>

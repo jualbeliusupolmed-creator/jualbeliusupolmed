@@ -3,6 +3,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { censorProfanity } from "@/lib/profanity";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { hashIdentitas } from "@/lib/identitasHash";
+import { getUserSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -63,6 +64,11 @@ export async function POST(request) {
     const body = await request.json();
     let { type, sender_name, faculty, title, content } = body;
 
+    const wa = getUserSession();
+    if (!wa) {
+      return NextResponse.json({ error: "Silakan login terlebih dahulu untuk memposting." }, { status: 401 });
+    }
+
     if (!content || typeof content !== "string" || content.trim().length < 5) {
       return NextResponse.json(
         { error: "Isi postingan minimal 5 karakter." },
@@ -106,10 +112,9 @@ export async function POST(request) {
         title: cleanTitle,
         content: cleanContent,
         status: "active",
-        // Anonim ke sesama mahasiswa, TIDAK anonim ke moderasi: hash IP (bukan
-        // IP mentah) disimpan supaya pelaku pencemaran bisa dikaitkan antar-
-        // postingan dan diblokir, tanpa menyimpan alamat aslinya di database.
-        author_ip_hash: hashIdentitas(getClientIp(request)),
+        // Menggunakan hash dari WA agar anonim bagi sistem publik tapi tetap unik
+        // dan berbasis login satu pintu, bukan IP yang bisa berubah.
+        author_ip_hash: hashIdentitas(wa),
       })
       .select()
       .single();

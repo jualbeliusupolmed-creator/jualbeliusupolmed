@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { MARKETPLACE_WA, formatWa } from "@/lib/constants";
 import { rupiah } from "@/lib/fees";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 const TEMPLATES = [
   (title) => `Halo, apakah "${title}" masih tersedia?`,
@@ -16,22 +18,34 @@ export default function MinatButton({ listing }) {
   const [showPicker, setShowPicker] = useState(false);
   const [customMsg, setCustomMsg] = useState("");
 
-  function sendMinat(text) {
-    setShowPicker(false);
-    
-    let targetWa = listing.seller_wa;
-    let finalMsg = text;
+  const router = useRouter();
 
-    // Nomor penjual dulu; kalau bukan nomor valid (mis. sisa LID) → jatuh ke nomor admin
-    // marketplace, jangan pernah buka wa.me tanpa nomor (link rusak).
-    const wa = formatWa(targetWa) || formatWa(MARKETPLACE_WA);
-    if (!wa) { setShowPicker(false); return; }
-    // wa.me butuh kode negara tanpa 0. formatWa mengembalikan 08..., ubah ke 628...
-    const waLink = "62" + wa.slice(1);
-    window.open(
-      `https://wa.me/${waLink}?text=${encodeURIComponent(finalMsg)}`,
-      "_blank"
-    );
+  async function sendMinat(text) {
+    setShowPicker(false);
+    setBusy(true);
+
+    try {
+      const res = await fetch("/api/chat/marketplace/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listingId: listing.id, message: text }),
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        if (res.status === 401) {
+          toast.error("Silakan masuk/login terlebih dahulu untuk chat penjual.");
+          router.push("/dashboard/login");
+          return;
+        }
+        throw new Error(data.error || "Gagal memulai chat");
+      }
+
+      router.push(`/chat?room=${data.roomId}`);
+    } catch (err) {
+      toast.error(err.message);
+      setBusy(false);
+    }
   }
 
   return (

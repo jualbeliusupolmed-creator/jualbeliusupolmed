@@ -13,7 +13,7 @@ export default function BottomNavbar() {
     { name: "Jual Beli", href: "/jual-beli", icon: Icon.Package },
     { name: "Mading", href: "/mading", icon: Icon.BookOpen, special: true },
     { name: "Obrolan", href: "/chat", icon: Icon.MessageCircle },
-    { name: "Profil", href: "/penjual/login", icon: Icon.User },
+    { name: "Akun Saya", href: "/dashboard", icon: Icon.User },
   ];
 
   return (
