@@ -1,21 +1,49 @@
 {
-  "name": "Jual Beli USU Polmed",
-  "short_name": "JB USU Polmed",
-  "description": "Marketplace mahasiswa USU dan Polmed",
+  "name": "Jual Beli USU & POLMED — Campus Super App",
+  "short_name": "USU SuperApp",
+  "description": "Pusat jual beli, info mading & menfess, dan obrolan sesama mahasiswa USU & POLMED Medan.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#ffffff",
-  "theme_color": "#532b98",
+  "theme_color": "#16a34a",
+  "categories": ["shopping", "social", "lifestyle", "education"],
   "icons": [
     {
       "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Pasar Kampus",
+      "short_name": "Pasar",
+      "description": "Buka katalog jual beli barang",
+      "url": "/jual-beli",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Mading & Menfess",
+      "short_name": "Mading",
+      "description": "Lihat curhatan & info kampus",
+      "url": "/mading",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Obrolan",
+      "short_name": "Chat",
+      "description": "Cari teman ngobrol anonim",
+      "url": "/chat",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
     }
   ]
 }
