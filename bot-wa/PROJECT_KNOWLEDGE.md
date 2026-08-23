@@ -1462,7 +1462,11 @@ dibatasi jalur internal, dan kelayakan target broadcast ditegakkan di server.
 
 ---
 
-## 5. Variabel lingkungan
+## 5. Variabel lingkungan & Infrastruktur
+
+> **Aturan:** Kredensial produksi hanya disimpan di secret manager masing-masing
+> platform atau berkas environment yang diabaikan Git. Jangan pernah membuat
+> dokumen, halaman panel, atau tautan yang memuat nilai kredensial.
 
 ### Bot — wajib
 | Variabel | Fungsi |

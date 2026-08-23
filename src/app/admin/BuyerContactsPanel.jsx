@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 function fmt(d) {
   if (!d) return "-";
@@ -25,7 +25,7 @@ export default function BuyerContactsPanel() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -44,9 +44,9 @@ export default function BuyerContactsPanel() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [page, q, statusFilter]);
 
-  useEffect(() => { load(); }, [page, statusFilter]);
+  useEffect(() => { load(); }, [load]);
 
   // Debounced search
   useEffect(() => {
@@ -55,7 +55,7 @@ export default function BuyerContactsPanel() {
       load();
     }, 500);
     return () => clearTimeout(t);
-  }, [q]);
+  }, [q, load]);
 
   const waLink = (wa) => wa ? `https://wa.me/${wa.startsWith("0") ? "62" + wa.slice(1) : wa}` : "#";
 

@@ -343,6 +343,7 @@ export default function JualPage() {
               <input 
                 id="form-price"
                 type="text" 
+                inputMode="numeric"
                 className="floating-input peer" 
                 value={form.price ? Number(form.price).toLocaleString("id-ID") : ""} 
                 onChange={(e) => {
@@ -359,6 +360,7 @@ export default function JualPage() {
               <input 
                 id="form-stock"
                 type="number" 
+                inputMode="numeric"
                 min="1" 
                 className="floating-input peer" 
                 value={form.stock} 
@@ -384,6 +386,8 @@ export default function JualPage() {
             <div className="floating-group">
               <input 
                 id="form-seller-wa"
+                type="tel"
+                inputMode="tel"
                 className="floating-input peer" 
                 value={form.seller_wa} 
                 onChange={set("seller_wa")} 

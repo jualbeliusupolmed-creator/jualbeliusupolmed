@@ -890,6 +890,42 @@ export async function POST(req) {
         break;
       }
 
+      // ── Moderasi Menfess (Mading) ───────────────────────────────────────────
+      case "toggle_mading_status": {
+        const { data: currentPost } = await supa
+          .from("mading_posts")
+          .select("id, status")
+          .eq("id", id)
+          .single();
+        if (!currentPost) return NextResponse.json({ error: "Postingan Menfess tidak ditemukan" }, { status: 404 });
+        const nextStatus = body.status || (currentPost.status === "active" ? "suspended" : "active");
+        const { error: upErr } = await supa
+          .from("mading_posts")
+          .update({ status: nextStatus })
+          .eq("id", id);
+        if (upErr) return NextResponse.json({ error: upErr.message }, { status: 500 });
+        break;
+      }
+
+      case "delete_mading_post": {
+        const { error: delErr } = await supa
+          .from("mading_posts")
+          .delete()
+          .eq("id", id);
+        if (delErr) return NextResponse.json({ error: delErr.message }, { status: 500 });
+        break;
+      }
+
+      // ── Moderasi Cari Teman (Chat Room) ────────────────────────────────────
+      case "close_chat_room": {
+        const { error: closeErr } = await supa
+          .from("chat_rooms")
+          .update({ status: "closed", updated_at: new Date().toISOString() })
+          .eq("id", id);
+        if (closeErr) return NextResponse.json({ error: closeErr.message }, { status: 500 });
+        break;
+      }
+
       default:
         return NextResponse.json({ error: "Aksi tidak dikenal" }, { status: 400 });
     }

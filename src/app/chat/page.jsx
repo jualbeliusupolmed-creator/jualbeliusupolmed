@@ -558,12 +558,12 @@ function ChatContent() {
             </div>
 
             {aktifRoomId && pesanAktif.length <= 1 && (
-              <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex gap-1.5 overflow-x-auto touch-pan-x no-tap-highlight [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {ICEBREAKERS.map((prompt, i) => (
                   <button
                     key={i}
                     onClick={() => handleSendMessage(prompt)}
-                    className="px-2.5 py-1 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px] font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap hover:bg-slate-100 transition-colors"
+                    className="px-3 py-1.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[11px] font-semibold text-slate-600 dark:text-slate-400 whitespace-nowrap active:scale-95 transition-all shadow-2xs"
                   >
                     {prompt}
                   </button>
@@ -572,19 +572,19 @@ function ChatContent() {
             )}
 
             {aktifRoomId ? (
-              <div className="p-3 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex gap-2">
+              <div className="p-2.5 xs:p-3 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2">
                 <input
                   type="text"
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") handleSendMessage(); }}
                   placeholder="Ketik pesan santai..."
-                  className="flex-1 bg-slate-100 dark:bg-slate-800 rounded-full px-4 py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-primary"
+                  className="flex-1 bg-slate-100 dark:bg-slate-800 rounded-full px-4 py-2.5 text-base md:text-xs text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-primary"
                 />
                 <button
                   onClick={() => handleSendMessage()}
                   disabled={!inputMessage.trim() || sending}
-                  className="w-8 h-8 rounded-full bg-primary disabled:opacity-40 text-white flex items-center justify-center transition-opacity"
+                  className="w-9 h-9 shrink-0 rounded-full bg-primary disabled:opacity-40 text-white flex items-center justify-center active:scale-90 transition-all shadow-md shadow-primary/20"
                 >
                   <Icon.ArrowUp className="w-4 h-4" />
                 </button>
@@ -720,19 +720,19 @@ function ChatContent() {
             )}
 
             {roomStatus === "active" && (
-              <div className="p-3 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex gap-2">
+              <div className="p-2.5 xs:p-3 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2">
                 <input
                   type="text"
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") handleSendMessage(); }}
-                  placeholder="Ketik pesan..."
-                  className="flex-1 bg-slate-100 dark:bg-slate-800 rounded-full px-4 py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Ketik pesan ke penjual/pembeli..."
+                  className="flex-1 bg-slate-100 dark:bg-slate-800 rounded-full px-4 py-2.5 text-base md:text-xs text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-primary"
                 />
                 <button
                   onClick={() => handleSendMessage()}
                   disabled={!inputMessage.trim() || sending}
-                  className="w-8 h-8 rounded-full bg-primary disabled:opacity-40 text-white flex items-center justify-center transition-opacity"
+                  className="w-9 h-9 shrink-0 rounded-full bg-primary disabled:opacity-40 text-white flex items-center justify-center active:scale-90 transition-all shadow-md shadow-primary/20"
                 >
                   <Icon.ArrowUp className="w-4 h-4" />
                 </button>

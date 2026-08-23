@@ -26,7 +26,7 @@ export default function Footer({ config }) {
             <Link href="/" className="inline-flex items-center gap-2.5">
               <Logo className="h-8 w-8" src={logoUrl} />
               <span className="text-lg font-extrabold tracking-tight text-gray-900 dark:text-white">
-                jualbeli<span className="text-gray-400 font-medium">.medan</span>
+                jualbeli<span className="text-primary font-bold">.usupolmed</span>
               </span>
             </Link>
             <p className="max-w-xs text-sm leading-relaxed text-gray-500 dark:text-slate-400">
@@ -124,7 +124,7 @@ export default function Footer({ config }) {
         {/* Bottom bar */}
         <div className="mt-12 border-t border-gray-100 pt-6 dark:border-slate-900">
           <p className="text-center text-xs text-gray-400 dark:text-slate-500">
-            © {new Date().getFullYear()} Jual Beli Medan. Dibuat khusus untuk warga Kota Medan.
+            © {new Date().getFullYear()} Jual Beli USU & POLMED. Didedikasikan untuk mahasiswa & komunitas kampus.
           </p>
         </div>
       </div>

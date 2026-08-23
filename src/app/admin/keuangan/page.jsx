@@ -36,7 +36,7 @@ export default function KeuanganPage() {
       .then((r) => r.json())
       .then((d) => { setPayments(d.payments || []); setLoading(false); })
       .catch(() => setLoading(false));
-  }, []);
+  }, [api]);
 
   if (loading) {
     return (

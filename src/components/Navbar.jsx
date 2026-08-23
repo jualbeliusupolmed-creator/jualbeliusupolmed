@@ -6,15 +6,15 @@ import { useState, useEffect } from "react";
 import Logo from "@/components/Logo";
 import { Icon } from "@/components/Icons";
 import OTPModal from "@/components/OTPModal";
+import NotificationCenter from "@/components/NotificationCenter";
 import { toast } from "sonner";
 
 const links = [
   { href: "/", label: "Beranda" },
-  { href: "/jual", label: "Jual Barang" },
+  { href: "/jual-beli", label: "Marketplace" },
   { href: "/jasa", label: "Jasa" },
-  { href: "/dicari", label: "Cari Barang" },
-  { href: "/favorit", label: "Favorit" },
-  { href: "/cara-bergabung", label: "Info" },
+  { href: "/dicari", label: "Dicari" },
+  { href: "/mading", label: "Menfess" },
 ];
 
 export default function Navbar({ config }) {
@@ -110,14 +110,8 @@ export default function Navbar({ config }) {
             <div className="shrink-0 transition-transform duration-300 group-hover:scale-110">
               <Logo className="h-7 w-7" src={config?.site?.logoUrl} />
             </div>
-            <span className="leading-none truncate">
-              <span className="block text-[15px] font-extrabold tracking-tight truncate">
-                <span className="text-usu dark:text-emerald-400 transition-colors">USU</span>{" "}
-                <span className="text-polmed dark:text-violet-400 transition-colors">POLMED</span>
-              </span>
-              <span className="mt-0.5 block text-[8px] font-bold uppercase tracking-[0.28em] text-gray-400 dark:text-slate-500 truncate">
-                Marketplace
-              </span>
+            <span className="truncate text-[15px] font-extrabold leading-none tracking-tight text-primary transition-colors dark:text-emerald-400">
+              USUPOLMEDUPDATE
             </span>
           </Link>
 
@@ -163,6 +157,20 @@ export default function Navbar({ config }) {
                 <span className="hidden xs:inline">Masuk</span>
               </button>
             )}
+
+            {/* Notification Center */}
+            <NotificationCenter />
+
+            {/* Ke dashboard harus selalu terlihat di mobile, bukan terselip di nav yang dapat digeser. */}
+            <Link
+              href="/dashboard"
+              aria-label="Buka dashboard"
+              title="Dashboard"
+              className="inline-flex items-center gap-1.5 rounded-full p-2 text-gray-500 transition-all duration-300 hover:bg-gray-100 hover:text-primary active:scale-90 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-emerald-400"
+            >
+              <Icon.User className="h-4 w-4" />
+              <span className="hidden lg:inline text-xs font-bold">Dashboard</span>
+            </Link>
 
             {/* Theme toggle */}
             <button

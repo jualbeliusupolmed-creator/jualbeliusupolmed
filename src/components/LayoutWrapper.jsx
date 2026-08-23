@@ -12,6 +12,7 @@ export default function LayoutWrapper({ children }) {
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith("/admin");
   const isChat = pathname?.startsWith("/chat");
+  const isHome = pathname === "/";
   const [config, setConfig] = useState(null);
 
   useEffect(() => {
@@ -26,7 +27,7 @@ export default function LayoutWrapper({ children }) {
   return (
     <>
       {!isAdmin && <Navbar config={config} />}
-      <main className={isAdmin ? "flex-1" : "flex-1 pb-20 md:pb-0"}>{children}</main>
+      <main className={isAdmin ? "flex-1" : "flex-1 pb-24 md:pb-28"}>{children}</main>
       {!isAdmin && (
         <>
           <InstallPrompt />
@@ -34,7 +35,7 @@ export default function LayoutWrapper({ children }) {
               kedua / 25 detik), karena izin notifikasi cuma bisa diminta sekali. */}
           <NotifPrompt />
           <BottomNavbar />
-          {!isChat && <Footer config={config} />}
+          {!isChat && !isHome && <Footer config={config} />}
         </>
       )}
     </>

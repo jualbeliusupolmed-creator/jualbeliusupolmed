@@ -1,27 +1,27 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/Icons";
-import { FACULTIES } from "@/lib/profanity";
 import { toast } from "sonner";
+import PullToRefresh from "@/components/PullToRefresh";
+
+const CAMPUSES = ["USU", "POLMED", "Bebas"];
+const FILTER_CAMPUSES = ["Semua", "USU", "POLMED", "Bebas"];
 
 export default function MadingPage() {
-  const [activeTab, setActiveTab] = useState("all"); // 'all' | 'menfess' | 'info'
+  const [activeTab, setActiveTab] = useState("all"); // 'all' | 'menfess' | 'info' | 'blog'
 
-  // Hormati ?tab= dari tautan luar (kartu "Info Kampus" di beranda mengirim
-  // /mading?tab=info) — tanpa ini query-nya diabaikan diam-diam dan pengunjung
-  // selalu mendarat di tab default. Dibaca dari location, bukan useSearchParams,
-  // supaya tidak butuh pagar <Suspense> untuk satu nilai sekali-baca.
   useEffect(() => {
     try {
       const tab = new URLSearchParams(window.location.search).get("tab");
-      if (tab === "info" || tab === "menfess") setActiveTab(tab);
+      if (tab === "info" || tab === "menfess" || tab === "blog") setActiveTab(tab);
     } catch {}
   }, []);
+
   const [selectedFaculty, setSelectedFaculty] = useState("Semua");
+  const [filterType, setFilterType] = useState("all"); // 'all' | 'popular' | 'photo'
   const [posts, setPosts] = useState([]);
-  const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [activeCommentsPostId, setActiveCommentsPostId] = useState(null);
@@ -33,15 +33,20 @@ export default function MadingPage() {
   const [formData, setFormData] = useState({
     type: "menfess",
     sender_name: "Anonim",
-    faculty: "Umum",
+    faculty: "USU",
     title: "",
     content: "",
     is_anon: true,
   });
   const [submitting, setSubmitting] = useState(false);
+  const [uploadStage, setUploadStage] = useState("");
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
+  const [zoomImage, setZoomImage] = useState(null);
 
   // Get or create unique user ID for liking
   const [userId, setUserId] = useState("");
+  const viewedPostIds = useRef(new Set());
   useEffect(() => {
     if (typeof window !== "undefined") {
       let uid = localStorage.getItem("mading_user_id");
@@ -52,6 +57,52 @@ export default function MadingPage() {
       setUserId(uid);
     }
   }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setZoomImage(null);
+        setShowModal(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  const trackEngagement = useCallback(async (postId, action) => {
+    if (!userId || !postId) return;
+    try {
+      const res = await fetch(`/api/mading/${postId}/engagement`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, clientId: userId }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      setPosts((current) => current.map((post) => (
+        post.id === postId
+          ? { ...post, views_count: data.viewsCount, shares_count: data.sharesCount }
+          : post
+      )));
+    } catch {
+      // Statistik tidak boleh mengganggu pengalaman membaca feed.
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        const postId = entry.target.dataset.madingPostId;
+        if (!entry.isIntersecting || !postId || viewedPostIds.current.has(postId)) return;
+        viewedPostIds.current.add(postId);
+        trackEngagement(postId, "view");
+        observer.unobserve(entry.target);
+      });
+    }, { threshold: 0.6 });
+    document.querySelectorAll("[data-mading-post-id]").forEach((element) => observer.observe(element));
+    return () => observer.disconnect();
+  }, [posts, userId, trackEngagement]);
 
   const fetchPosts = useCallback(async () => {
     setLoading(true);
@@ -83,7 +134,7 @@ export default function MadingPage() {
         const data = await res.json();
         setPosts((data.posts || []).map((p) => ({ ...p, _kind: "mading" })));
       }
-    } catch (e) {
+    } catch {
       toast.error(activeTab === "blog" ? "Gagal memuat Blog." : "Gagal memuat feed.");
     } finally {
       setLoading(false);
@@ -94,7 +145,7 @@ export default function MadingPage() {
     fetchPosts();
   }, [fetchPosts]);
 
-  // Handle Report — 5 pelapor berbeda menyembunyikan postingan otomatis
+  // Handle Report
   const handleReport = async (postId) => {
     if (!userId) return;
     if (!confirm("Laporkan postingan ini sebagai tidak pantas?")) return;
@@ -121,7 +172,6 @@ export default function MadingPage() {
   // Handle Like
   const handleLike = async (postId) => {
     if (!userId) return;
-    // Optimistic UI
     setPosts((prev) =>
       prev.map((p) => {
         if (p.id === postId) {
@@ -144,7 +194,7 @@ export default function MadingPage() {
       });
       const data = await res.json();
       if (!data.success) {
-        fetchPosts(); // Rollback if error
+        fetchPosts();
       }
     } catch {
       fetchPosts();
@@ -181,7 +231,7 @@ export default function MadingPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sender_name: "Mahasiswa",
-          faculty: "Umum",
+          faculty: "Bebas",
           content: newCommentText.trim(),
         }),
       });
@@ -207,6 +257,45 @@ export default function MadingPage() {
     }
   };
 
+  // Handle Share to WhatsApp & Social Media
+  const handleShare = async (post) => {
+    trackEngagement(post.id, "share");
+    const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/mading#post-${post.id}` : "";
+    const cleanSnippet = (post.content || "").trim().slice(0, 120);
+    const titleText = post.title ? `*${post.title}*\n` : "";
+    const shareText = `🔥 *[Mading & Menfess Kampus]*\n${titleText}"${cleanSnippet}${post.content && post.content.length > 120 ? "..." : ""}"\n\n👀 Baca selengkapnya & beri tanggapan:\n${shareUrl}`;
+
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({
+          title: post.title || "Mading & Menfess Kampus",
+          text: shareText,
+          url: shareUrl,
+        });
+        setPosts((prev) =>
+          prev.map((p) => (p.id === post.id ? { ...p, shares_count: (p.shares_count || 0) + 1 } : p))
+        );
+        toast.success("Berhasil dibagikan!");
+        return;
+      } catch (e) {
+        if (e.name === "AbortError") return;
+      }
+    }
+
+    // Fallback: Copy to clipboard & open WhatsApp
+    try {
+      await navigator.clipboard.writeText(shareText);
+      toast.success("Tautan & ringkasan disalin! Membuka WhatsApp…");
+    } catch {}
+
+    const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
+    window.open(waUrl, "_blank");
+
+    setPosts((prev) =>
+      prev.map((p) => (p.id === post.id ? { ...p, shares_count: (p.shares_count || 0) + 1 } : p))
+    );
+  };
+
   // Handle Submit New Post
   const handleCreatePost = async (e) => {
     e.preventDefault();
@@ -216,7 +305,22 @@ export default function MadingPage() {
     }
 
     setSubmitting(true);
+    setUploadStage(imageFile ? "uploading_photo" : "publishing");
     try {
+      let imageUrl = null;
+      if (imageFile) {
+        setUploadStage("uploading_photo");
+        const uploadForm = new FormData();
+        uploadForm.append("file", imageFile);
+        const uploadRes = await fetch("/api/upload", { method: "POST", body: uploadForm });
+        const uploadData = await uploadRes.json();
+        if (!uploadRes.ok || !uploadData.url) {
+          throw new Error(uploadData.error || "Gagal mengunggah foto.");
+        }
+        imageUrl = uploadData.url;
+      }
+
+      setUploadStage("publishing");
       const res = await fetch("/api/mading", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -226,6 +330,7 @@ export default function MadingPage() {
           faculty: formData.faculty,
           title: formData.type === "info" ? formData.title : null,
           content: formData.content,
+          image_url: imageUrl,
         }),
       });
 
@@ -241,11 +346,13 @@ export default function MadingPage() {
         setFormData({
           type: "menfess",
           sender_name: "Anonim",
-          faculty: "Umum",
+          faculty: "USU",
           title: "",
           content: "",
           is_anon: true,
         });
+        setImageFile(null);
+        setImagePreview("");
         fetchPosts();
       } else {
         toast.error(data.error || "Gagal menerbitkan postingan.");
@@ -254,6 +361,7 @@ export default function MadingPage() {
       toast.error("Terjadi gangguan jaringan.");
     } finally {
       setSubmitting(false);
+      setUploadStage("");
     }
   };
 
@@ -268,451 +376,619 @@ export default function MadingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24 font-sans selection:bg-primary/20">
-      
-      {/* STICKY HEADER */}
-      <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 sticky top-0 z-40">
-        <div className="flex items-center justify-between px-4 py-3 max-w-2xl mx-auto">
-          <div>
-            <span className="text-[9px] font-extrabold text-primary uppercase tracking-widest bg-primary/10 px-2 py-0.5 rounded">
-              KAMPUS FEED
-            </span>
-            <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight mt-0.5">
-              Mading & Blog
-            </h1>
-          </div>
-          <button
-            onClick={() => setShowModal(true)}
-            className="flex items-center gap-1.5 bg-primary text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow-md shadow-primary/25 hover:bg-primary/95 active:scale-95 transition-all"
-          >
-            <Icon.PlusCircle className="w-4 h-4" />
-            <span>Kirim Post</span>
-          </button>
-        </div>
-
-        {/* 4 TABS */}
-        <div className="flex px-4 max-w-2xl mx-auto border-t border-slate-50 dark:border-slate-800/60">
-          {[
-            { id: "all", label: "🌟 Semua" },
-            { id: "menfess", label: "💌 Menfess" },
-            { id: "info", label: "📢 Info" },
-            { id: "blog", label: "📝 Blog" },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 text-center py-2.5 text-xs font-bold transition-all relative ${
-                activeTab === tab.id
-                  ? "text-primary"
-                  : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-              }`}
-            >
-              {tab.label}
-              {activeTab === tab.id && (
-                <div className="absolute bottom-0 left-4 right-4 h-[2.5px] bg-primary rounded-t-full" />
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="max-w-2xl mx-auto px-4 py-4 space-y-4">
-        {/* FACULTY FILTER PILLS (Hide on Blog tab) */}
-        {activeTab !== "blog" && (
-          <div className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {["Semua", "FASILKOM-TI", "FT", "FEB", "FIB", "FK", "FH", "POLMED"].map((f) => (
-            <button
-              key={f}
-              onClick={() => setSelectedFaculty(f)}
-              className={`px-3 py-1 rounded-full text-[11px] font-semibold shrink-0 transition-all ${
-                selectedFaculty === f
-                  ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm"
-                  : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:border-slate-300"
-              }`}
-            >
-              {f}
-            </button>
-          ))}
-          </div>
-        )}
-
-        {/* FEED LIST */}
-        {loading ? (
-          <div className="space-y-3 py-4">
-            {[1, 2, 3].map((n) => (
-              <div key={n} className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 animate-pulse space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800" />
-                  <div className="space-y-1.5 flex-1">
-                    <div className="h-3 w-28 bg-slate-200 dark:bg-slate-800 rounded" />
-                    <div className="h-2 w-16 bg-slate-100 dark:bg-slate-800/60 rounded" />
-                  </div>
-                </div>
-                <div className="h-4 w-full bg-slate-100 dark:bg-slate-800 rounded" />
-                <div className="h-4 w-3/4 bg-slate-100 dark:bg-slate-800 rounded" />
-              </div>
-            ))}
-          </div>
-        ) : posts.length === 0 ? (
-          <div className="text-center py-16 px-4 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800">
-            <div className="w-14 h-14 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
-              📝
+    <PullToRefresh onRefresh={fetchPosts}>
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24 font-sans selection:bg-primary/20">
+        
+        {/* STICKY HEADER */}
+        <div className="sticky top-0 z-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800/60">
+          <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div>
+              <h1 className="text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                <span>Mading Kampus</span>
+                <span className="text-[10px] uppercase font-bold tracking-widest bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
+                  Menfess &amp; Info
+                </span>
+              </h1>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                Ruang ekspresi anonim, curhat, dan pengumuman kampus USU &amp; POLMED
+              </p>
             </div>
-            <h3 className="font-bold text-slate-800 dark:text-slate-200 text-base">Belum Ada Sesuatu di Sini</h3>
-            <p className="text-xs text-slate-500 max-w-xs mx-auto mt-1">
-              Jadilah orang pertama yang mengisi kekosongan ini!
-            </p>
+
             {activeTab !== "blog" && (
               <button
                 onClick={() => setShowModal(true)}
-                className="mt-4 inline-flex items-center gap-1 bg-primary text-white px-4 py-2 rounded-full text-xs font-bold shadow-md shadow-primary/20"
+                className="flex items-center gap-1.5 bg-primary text-white px-3.5 py-2 rounded-full text-xs font-bold shadow-md shadow-primary/25 hover:bg-primary/90 active:scale-95 transition-all"
               >
                 <Icon.PlusCircle className="w-4 h-4" />
-                Tulis Sekarang
+                <span className="hidden sm:inline">Tulis Menfess</span>
+                <span className="sm:hidden">Tulis</span>
               </button>
             )}
           </div>
-        ) : (
-          <div className={activeTab === "blog" ? "grid gap-4 sm:grid-cols-2" : "space-y-4"}>
-            {posts.map((item) => {
-              if (item._kind === "blog") {
-                const excerpt = item.excerpt || item.content_markdown?.replace(/[#*`]/g, "")?.slice(0, 100);
-                return (
-                  <Link
-                    key={`blog-${item.id}`}
-                    href={`/blog/${item.slug}`}
-                    className={`group flex overflow-hidden bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm transition-all hover:border-primary/50 hover:shadow-md ${activeTab === "blog" ? "flex-col rounded-2xl" : "flex-col sm:flex-row rounded-3xl"}`}
-                  >
-                    <div className={`relative overflow-hidden bg-slate-100 dark:bg-slate-800 flex-shrink-0 ${activeTab === "blog" ? "w-full h-40" : "w-full h-48 sm:w-48 sm:h-auto"}`}>
-                      {item.image_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={item.image_url}
-                          alt={item.title}
-                          className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-3xl text-slate-300 dark:text-slate-700">📝</div>
-                      )}
-                    </div>
-                    <div className="flex flex-1 flex-col p-4 sm:p-5">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-primary">Artikel Blog</p>
-                      <h2 className="mt-1.5 line-clamp-2 text-sm sm:text-base font-bold leading-snug transition-colors group-hover:text-primary dark:text-white">
-                        {item.title}
-                      </h2>
-                      {excerpt && (
-                        <p className="mt-1.5 line-clamp-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{excerpt}</p>
-                      )}
-                      <div className="mt-auto pt-4 flex items-center justify-between text-[10px] font-medium text-slate-400">
-                        <span>{item.author}</span>
-                        <time dateTime={item.created_at}>
-                          {timeAgo(item.created_at)}
-                        </time>
-                      </div>
-                    </div>
-                  </Link>
-                );
-              }
-              
-              const post = item;
-              return (
-              <div
-                key={`post-${post.id}`}
-                className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden transition-all hover:border-slate-200 dark:hover:border-slate-700"
-              >
-              {/* Type Indicator Line */}
-              <div
-                className={`absolute top-0 right-0 w-1.5 h-full ${
-                  post.type === "info" ? "bg-fuchsia-500" : "bg-amber-400"
+
+          {/* TABS FILTER */}
+          <div className="max-w-2xl mx-auto px-4 flex border-t border-slate-100 dark:border-slate-800/50">
+            {[
+              { id: "all", label: "Semua", icon: "✨" },
+              { id: "menfess", label: "Menfess", icon: "💌" },
+              { id: "info", label: "Info Kampus", icon: "📢" },
+              { id: "blog", label: "Blog", icon: "📝" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex-1 py-3 text-xs font-bold border-b-2 flex items-center justify-center gap-1.5 transition-colors ${
+                  activeTab === tab.id
+                    ? "border-primary text-primary dark:text-emerald-400"
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400"
                 }`}
-              />
+              >
+                <span>{tab.icon}</span>
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
 
-              {/* Header */}
-              <div className="flex items-center gap-3 mb-3">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg ${
-                    post.type === "info"
-                      ? "bg-fuchsia-100 dark:bg-fuchsia-950 text-fuchsia-600"
-                      : "bg-amber-100 dark:bg-amber-950 text-amber-600"
-                  }`}
-                >
-                  {post.type === "info" ? "📢" : "👤"}
-                </div>
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <p className="text-sm font-bold text-slate-900 dark:text-white">
-                      {post.sender_name}
-                    </p>
-                    <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-1.5 py-0.2 rounded font-semibold">
-                      {post.faculty}
-                    </span>
-                  </div>
-                  <p className="text-[10px] text-slate-400">
-                    {post.type === "info" ? "Info Kampus" : "Menfess"} • {timeAgo(post.created_at)}
-                  </p>
-                </div>
+        <div className="max-w-2xl mx-auto px-4 py-4 space-y-4">
+          {/* CAMPUS FILTER PILLS (Hide on Blog tab) */}
+          {/* CAMPUS & QUICK CATEGORY FILTER PILLS (Hide on Blog tab) */}
+          {activeTab !== "blog" && (
+            <div className="space-y-2">
+              <div className="flex gap-1.5 xs:gap-2 overflow-x-auto pb-0.5 touch-pan-x no-tap-highlight [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {FILTER_CAMPUSES.map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setSelectedFaculty(f)}
+                    className={`px-3.5 py-1.5 min-h-[34px] rounded-full text-xs font-semibold shrink-0 transition-all active:scale-95 ${
+                      selectedFaculty === f
+                        ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm font-bold"
+                        : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:border-slate-300"
+                    }`}
+                  >
+                    {f}
+                  </button>
+                ))}
               </div>
 
-              {/* Title (If info) */}
-              {post.title && (
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1.5 leading-snug">
-                  {post.title}
-                </h3>
-              )}
+              {/* Sub-Filters: Semua, Terpopuler, Ada Foto */}
+              <div className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {[
+                  { id: "all", label: "✨ Semua" },
+                  { id: "popular", label: "🔥 Terpopuler" },
+                  { id: "photo", label: "📸 Ada Foto" },
+                ].map((st) => (
+                  <button
+                    key={st.id}
+                    onClick={() => setFilterType(st.id)}
+                    className={`px-2.5 py-1 rounded-xl text-[11px] font-bold shrink-0 transition-all ${
+                      filterType === st.id
+                        ? "bg-primary/10 text-primary dark:bg-emerald-400/20 dark:text-emerald-300 border border-primary/20"
+                        : "text-slate-500 hover:text-slate-700 dark:text-slate-400 bg-slate-100/70 dark:bg-slate-800/60"
+                    }`}
+                  >
+                    {st.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
-              {/* Content */}
-              <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
-                {post.content}
+          {/* FEED LIST */}
+          {loading ? (
+            <div className="space-y-3 py-4">
+              {[1, 2, 3].map((n) => (
+                <div key={n} className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 animate-pulse space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800" />
+                    <div className="space-y-1.5 flex-1">
+                      <div className="h-3 w-28 bg-slate-200 dark:bg-slate-800 rounded" />
+                      <div className="h-2 w-16 bg-slate-100 dark:bg-slate-800/60 rounded" />
+                    </div>
+                  </div>
+                  <div className="h-4 w-full bg-slate-100 dark:bg-slate-800 rounded" />
+                  <div className="h-4 w-3/4 bg-slate-100 dark:bg-slate-800 rounded" />
+                </div>
+              ))}
+            </div>
+          ) : posts.length === 0 ? (
+            <div className="text-center py-16 px-4 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800">
+              <div className="w-14 h-14 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
+                📝
+              </div>
+              <h3 className="font-bold text-slate-800 dark:text-slate-200 text-base">Belum Ada Sesuatu di Sini</h3>
+              <p className="text-xs text-slate-500 max-w-xs mx-auto mt-1">
+                Jadilah orang pertama yang mengisi kekosongan ini!
               </p>
-
-              {/* Action Buttons */}
-              <div className="flex items-center gap-4 mt-4 pt-3 border-t border-slate-50 dark:border-slate-800/80 text-slate-500 text-xs font-semibold">
+              {activeTab !== "blog" && (
                 <button
-                  onClick={() => handleLike(post.id)}
-                  className={`flex items-center gap-1.5 py-1 px-2 rounded-lg transition-colors ${
-                    post._isLiked
-                      ? "text-rose-500 bg-rose-50 dark:bg-rose-950/30"
-                      : "hover:text-rose-500 hover:bg-slate-50 dark:hover:bg-slate-800"
-                  }`}
+                  onClick={() => setShowModal(true)}
+                  className="mt-4 inline-flex items-center gap-1 bg-primary text-white px-4 py-2 rounded-full text-xs font-bold shadow-md shadow-primary/20"
                 >
-                  <Icon.Heart className={`w-4 h-4 ${post._isLiked ? "fill-current text-rose-500" : ""}`} />
-                  <span>{post.likes_count || 0}</span>
+                  <Icon.PlusCircle className="w-4 h-4" />
+                  Tulis Sekarang
                 </button>
-
-                <button
-                  onClick={() => toggleComments(post.id)}
-                  className={`flex items-center gap-1.5 py-1 px-2 rounded-lg transition-colors ${
-                    activeCommentsPostId === post.id
-                      ? "text-blue-500 bg-blue-50 dark:bg-blue-950/30"
-                      : "hover:text-blue-500 hover:bg-slate-50 dark:hover:bg-slate-800"
-                  }`}
-                >
-                  <Icon.MessageCircle className="w-4 h-4" />
-                  <span>{post.comments_count || 0} Komentar</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    if (navigator.share) {
-                      navigator.share({
-                        title: "Menfess & Info — USU & POLMED",
-                        text: post.content,
-                        url: window.location.href,
-                      }).catch(() => {});
-                    } else {
-                      navigator.clipboard.writeText(post.content);
-                      toast.success("Teks disalin ke papan klip!");
-                    }
-                  }}
-                  className="flex items-center gap-1 py-1 px-2 rounded-lg hover:text-slate-800 dark:hover:text-slate-200 ml-auto transition-colors"
-                >
-                  <Icon.ExternalLink className="w-3.5 h-3.5" />
-                  <span>Bagi</span>
-                </button>
-
-                <button
-                  onClick={() => handleReport(post.id)}
-                  title="Laporkan postingan ini"
-                  className="flex items-center gap-1 py-1 px-2 rounded-lg hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors"
-                >
-                  <Icon.Flag className="w-3.5 h-3.5" />
-                  <span className="sr-only sm:not-sr-only">Lapor</span>
-                </button>
-              </div>
-
-              {/* COMMENTS ACCORDION SECTION */}
-              {activeCommentsPostId === post.id && (
-                <div className="mt-3 pt-3 border-t border-dashed border-slate-200 dark:border-slate-800 space-y-3 animate-in fade-in duration-300">
-                  <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                    {(commentsMap[post.id] || []).length === 0 ? (
-                      <p className="text-[11px] text-slate-400 italic text-center py-2">
-                        Belum ada komentar. Jadilah yang pertama berkomentar!
-                      </p>
-                    ) : (
-                      commentsMap[post.id].map((c) => (
-                        <div key={c.id} className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl text-xs">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="font-bold text-slate-800 dark:text-slate-200">{c.sender_name}</span>
-                            <span className="text-[9px] text-slate-400">{timeAgo(c.created_at)}</span>
-                          </div>
-                          <p className="text-slate-600 dark:text-slate-300 leading-snug">{c.content}</p>
-                        </div>
-                      ))
-                    )}
-                  </div>
-
-                  {/* Comment Input */}
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={newCommentText}
-                      onChange={(e) => setNewCommentText(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") handleSendComment(post.id);
-                      }}
-                      placeholder="Tulis balasan anonim…"
-                      className="flex-1 bg-slate-100 dark:bg-slate-800 border-none rounded-full px-3.5 py-1.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary outline-none"
-                    />
-                    <button
-                      onClick={() => handleSendComment(post.id)}
-                      disabled={submittingComment || !newCommentText.trim()}
-                      className="bg-primary disabled:opacity-50 text-white px-3 py-1.5 rounded-full text-xs font-bold hover:bg-primary/90 transition-opacity shrink-0"
-                    >
-                      Kirim
-                    </button>
-                  </div>
-                </div>
               )}
             </div>
-            );
-          })
-          }
+          ) : (
+            <div className={activeTab === "blog" ? "grid gap-4 sm:grid-cols-2" : "space-y-4"}>
+              {posts
+                .filter((item) => {
+                  if (item._kind === "blog") return true;
+                  if (filterType === "photo" && !item.image_url) return false;
+                  return true;
+                })
+                .sort((a, b) => {
+                  if (filterType === "popular") {
+                    const scoreA = (a.views_count || 0) + (a.likes_count || 0) * 3 + (a.comments_count || 0) * 2;
+                    const scoreB = (b.views_count || 0) + (b.likes_count || 0) * 3 + (b.comments_count || 0) * 2;
+                    return scoreB - scoreA;
+                  }
+                  return 0;
+                })
+                .map((item) => {
+                if (item._kind === "blog") {
+                  const excerpt = item.excerpt || item.content_markdown?.replace(/[#*`]/g, "")?.slice(0, 100);
+                  return (
+                    <Link
+                      key={`blog-${item.id}`}
+                      href={`/blog/${item.slug}`}
+                      className={`group flex overflow-hidden bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm transition-all hover:border-primary/50 hover:shadow-md ${activeTab === "blog" ? "flex-col rounded-2xl" : "flex-col sm:flex-row rounded-3xl"}`}
+                    >
+                      <div className={`relative overflow-hidden bg-slate-100 dark:bg-slate-800 flex-shrink-0 ${activeTab === "blog" ? "w-full h-40" : "w-full h-48 sm:w-48 sm:h-auto"}`}>
+                        {item.image_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={item.image_url}
+                            alt={item.title}
+                            className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-3xl text-slate-300 dark:text-slate-700">📝</div>
+                        )}
+                      </div>
+                      <div className="flex flex-1 flex-col p-4 sm:p-5">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-primary">Artikel Blog</p>
+                        <h2 className="mt-1.5 line-clamp-2 text-sm sm:text-base font-bold leading-snug transition-colors group-hover:text-primary dark:text-white">
+                          {item.title}
+                        </h2>
+                        {excerpt && (
+                          <p className="mt-1.5 line-clamp-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{excerpt}</p>
+                        )}
+                        <div className="mt-auto pt-4 flex items-center justify-between text-[10px] font-medium text-slate-400">
+                          <span>{item.author}</span>
+                          <time dateTime={item.created_at}>
+                            {timeAgo(item.created_at)}
+                          </time>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                }
+                
+                const post = item;
+                return (
+                  <div
+                    key={`post-${post.id}`}
+                    data-mading-post-id={post.id}
+                    className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden transition-all hover:border-slate-200 dark:hover:border-slate-700"
+                  >
+                    {/* Type Indicator Line */}
+                    <div
+                      className={`absolute top-0 right-0 w-1.5 h-full ${
+                        post.type === "info" ? "bg-fuchsia-500" : "bg-amber-400"
+                      }`}
+                    />
+
+                    {/* Header */}
+                    <div className="flex items-center gap-3 mb-3">
+                      <div
+                        className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg ${
+                          post.type === "info"
+                            ? "bg-fuchsia-100 dark:bg-fuchsia-950 text-fuchsia-600"
+                            : "bg-amber-100 dark:bg-amber-950 text-amber-600"
+                        }`}
+                      >
+                        {post.type === "info" ? "📢" : "👤"}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-bold text-slate-900 dark:text-white">
+                            {post.sender_name}
+                          </p>
+                          <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-1.5 py-0.5 rounded font-semibold">
+                            {post.faculty}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-400">
+                          {post.type === "info" ? "Info Kampus" : "Menfess"} • {timeAgo(post.created_at)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Title (If info) */}
+                    {post.title && (
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1.5 leading-snug">
+                        {post.title}
+                      </h3>
+                    )}
+
+                    {/* Content */}
+                    <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
+                      {post.content}
+                    </p>
+
+                    {post.image_url && (
+                      <button
+                        type="button"
+                        onClick={() => setZoomImage({ url: post.image_url, sender: post.sender_name, title: post.title || post.content })}
+                        className="mt-3 relative block w-full rounded-2xl overflow-hidden cursor-zoom-in group border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-left focus:outline-none focus:ring-2 focus:ring-primary/40"
+                      >
+                        <img
+                          src={post.image_url}
+                          alt="Foto kiriman Menfess"
+                          className="max-h-[420px] w-full object-cover transition-transform duration-300 group-hover:scale-[1.01]"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors flex items-end justify-end p-2.5 pointer-events-none">
+                          <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/70 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm">
+                            🔍 Perbesar Foto
+                          </span>
+                        </div>
+                      </button>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-4 mt-4 pt-3 border-t border-slate-50 dark:border-slate-800/80 text-slate-500 text-xs font-semibold">
+                      <button
+                        onClick={() => handleLike(post.id)}
+                        className={`flex items-center gap-1.5 py-1 px-2 rounded-lg transition-colors ${
+                          post._isLiked
+                            ? "text-rose-500 bg-rose-50 dark:bg-rose-950/30"
+                            : "hover:text-rose-500 hover:bg-slate-50 dark:hover:bg-slate-800"
+                        }`}
+                      >
+                        <Icon.Heart className={`w-4 h-4 ${post._isLiked ? "fill-current text-rose-500" : ""}`} />
+                        <span>{post.likes_count || 0}</span>
+                      </button>
+
+                      <button
+                        onClick={() => toggleComments(post.id)}
+                        className={`flex items-center gap-1.5 py-1 px-2 rounded-lg transition-colors ${
+                          activeCommentsPostId === post.id
+                            ? "text-blue-500 bg-blue-50 dark:bg-blue-950/30"
+                            : "hover:text-blue-500 hover:bg-slate-50 dark:hover:bg-slate-800"
+                        }`}
+                      >
+                        <Icon.MessageCircle className="w-4 h-4" />
+                        <span>{post.comments_count || 0} Komentar</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleShare(post)}
+                        className="flex items-center gap-1 py-1 px-2 rounded-lg hover:text-slate-800 dark:hover:text-slate-200 ml-auto transition-colors"
+                      >
+                        <Icon.Share className="w-3.5 h-3.5" />
+                        <span>{post.shares_count || 0} Bagikan</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleReport(post.id)}
+                        title="Laporkan postingan ini"
+                        className="flex items-center gap-1 py-1 px-2 rounded-lg hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors"
+                      >
+                        <Icon.Flag className="w-3.5 h-3.5" />
+                        <span className="sr-only sm:not-sr-only">Lapor</span>
+                      </button>
+                    </div>
+                    <p className="mt-2 flex items-center gap-1.5 text-[11px] text-slate-400 dark:text-slate-500">
+                      <Icon.Eye className="h-3.5 w-3.5" />
+                      Dilihat {post.views_count || 0} kali
+                    </p>
+
+                    {/* COMMENTS ACCORDION SECTION */}
+                    {activeCommentsPostId === post.id && (
+                      <div className="mt-3 pt-3 border-t border-dashed border-slate-200 dark:border-slate-800 space-y-3 animate-in fade-in duration-300">
+                        <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                          {(commentsMap[post.id] || []).length === 0 ? (
+                            <p className="text-[11px] text-slate-400 italic text-center py-2">
+                              Belum ada komentar. Jadilah yang pertama berkomentar!
+                            </p>
+                          ) : (
+                            commentsMap[post.id].map((c) => (
+                              <div key={c.id} className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl text-xs">
+                                <div className="flex items-center justify-between mb-1">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-bold text-slate-800 dark:text-slate-200">{c.sender_name}</span>
+                                    {c.is_op && (
+                                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-black bg-primary/10 text-primary dark:bg-emerald-400/15 dark:text-emerald-300 border border-primary/20 dark:border-emerald-400/20">
+                                        Penulis • OP
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className="text-[9px] text-slate-400">{timeAgo(c.created_at)}</span>
+                                </div>
+                                <p className="text-slate-600 dark:text-slate-300 leading-snug">{c.content}</p>
+                              </div>
+                            ))
+                          )}
+                        </div>
+
+                        {/* Comment Input */}
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={newCommentText}
+                            onChange={(e) => setNewCommentText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") handleSendComment(post.id);
+                            }}
+                            placeholder="Tulis balasan anonim…"
+                            className="flex-1 bg-slate-100 dark:bg-slate-800 border-none rounded-full px-3.5 py-1.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary outline-none"
+                          />
+                          <button
+                            onClick={() => handleSendComment(post.id)}
+                            disabled={submittingComment || !newCommentText.trim()}
+                            className="bg-primary disabled:opacity-50 text-white px-3 py-1.5 rounded-full text-xs font-bold hover:bg-primary/90 transition-opacity shrink-0"
+                          >
+                            Kirim
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* MODAL BUAT POST BARU */}
+        {showModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md p-6 shadow-2xl border border-slate-100 dark:border-slate-800 relative max-h-[90vh] overflow-y-auto">
+              <button
+                onClick={() => setShowModal(false)}
+                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full"
+              >
+                ✕
+              </button>
+
+              <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tight mb-4">
+                Kirim Postingan Menfess &amp; Info
+              </h2>
+
+              <form onSubmit={handleCreatePost} className="space-y-4">
+                {/* Type Selection */}
+                <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, type: "menfess" })}
+                    className={`py-2 rounded-xl text-xs font-bold transition-all ${
+                      formData.type === "menfess"
+                        ? "bg-white dark:bg-slate-700 text-amber-600 shadow-sm"
+                        : "text-slate-500"
+                    }`}
+                  >
+                    💌 Menfess (Curhat)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, type: "info" })}
+                    className={`py-2 rounded-xl text-xs font-bold transition-all ${
+                      formData.type === "info"
+                        ? "bg-white dark:bg-slate-700 text-fuchsia-600 shadow-sm"
+                        : "text-slate-500"
+                    }`}
+                  >
+                    📢 Info Kampus
+                  </button>
+                </div>
+
+                {/* Title (Only for Info) */}
+                {formData.type === "info" && (
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                      Judul Pengumuman / Event
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      placeholder="Contoh: Oprec Panitia Seminar Nasional 2026"
+                      className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none"
+                    />
+                  </div>
+                )}
+
+                {/* Campus Picker */}
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                    Kategori Kampus
+                  </label>
+                  <select
+                    value={formData.faculty}
+                    onChange={(e) => setFormData({ ...formData, faculty: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none"
+                  >
+                    {CAMPUSES.map((fac) => (
+                      <option key={fac} value={fac}>
+                        {fac}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Content Textarea */}
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                      {formData.type === "menfess" ? "Isi Curhatan / Pesan" : "Detail Informasi"}
+                    </label>
+                    <span className="text-[10px] text-slate-400">
+                      {formData.content.length}/1000
+                    </span>
+                  </div>
+                  <textarea
+                    rows={4}
+                    required
+                    maxLength={1000}
+                    value={formData.content}
+                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                    placeholder={
+                      formData.type === "menfess"
+                        ? "Ketik pesanmu di sini... (Sensor kata kotor aktif otomatis)"
+                        : "Jelaskan detail informasi kegiatan atau pengumuman kampus..."
+                    }
+                    className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none resize-none leading-relaxed"
+                  />
+                </div>
+
+                <div>
+                  <div className="mb-1 flex items-center justify-between">
+                    <label htmlFor="mading-image" className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                      Foto (opsional)
+                    </label>
+                    <span className="text-[10px] text-slate-400">JPG, PNG, WebP, atau GIF · maks. 5 MB</span>
+                  </div>
+                  {imagePreview ? (
+                    <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
+                      <img src={imagePreview} alt="Pratinjau foto Menfess" className="h-40 w-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => { setImageFile(null); setImagePreview(""); }}
+                        className="absolute right-2 top-2 rounded-full bg-black/70 px-2.5 py-1 text-[11px] font-bold text-white"
+                      >
+                        Hapus
+                      </button>
+                    </div>
+                  ) : (
+                    <label htmlFor="mading-image" className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 px-4 py-5 text-xs font-semibold text-slate-500 transition hover:border-primary hover:text-primary dark:border-slate-700 dark:text-slate-400">
+                      <Icon.PlusCircle className="h-4 w-4" /> Tambahkan foto
+                    </label>
+                  )}
+                  <input
+                    id="mading-image"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    className="sr-only"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (!file) return;
+                      if (file.size > 5 * 1024 * 1024) {
+                        toast.error("Foto maksimal 5 MB.");
+                        event.target.value = "";
+                        return;
+                      }
+                      setImageFile(file);
+                      setImagePreview(URL.createObjectURL(file));
+                    }}
+                  />
+                </div>
+
+                {/* Anonimity Toggle */}
+                <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Kirim Sebagai Anonim (Rahasiakan Nama)
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={formData.is_anon}
+                    onChange={(e) => setFormData({ ...formData, is_anon: e.target.checked })}
+                    className="w-4 h-4 rounded text-primary focus:ring-primary"
+                  />
+                </div>
+
+                {!formData.is_anon && (
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                      Nama / Alias Kamu
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.sender_name}
+                      onChange={(e) => setFormData({ ...formData, sender_name: e.target.value })}
+                      placeholder="Nama lengkap / panggilan"
+                      className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none"
+                    />
+                  </div>
+                )}
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full py-3 bg-primary text-white rounded-xl text-xs font-bold shadow-lg shadow-primary/30 hover:bg-primary/95 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+                >
+                  {submitting ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>
+                        {uploadStage === "uploading_photo"
+                          ? "Mengompresi & Mengunggah Foto..."
+                          : "Menerbitkan Postingan..."}
+                      </span>
+                    </>
+                  ) : (
+                    <span>Terbitkan ke Menfess & Info 🚀</span>
+                  )}
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* LIGHTBOX / FULL SCREEN PHOTO MODAL */}
+        {zoomImage && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in fade-in duration-200"
+            onClick={() => setZoomImage(null)}
+          >
+            <div
+              className="relative max-w-4xl max-h-[92vh] flex flex-col items-center w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Top Action Bar */}
+              <div className="w-full flex items-center justify-between text-white/90 mb-3 px-1">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-xs font-bold bg-white/20 px-3 py-1.5 rounded-full backdrop-blur-xs truncate max-w-[200px] xs:max-w-xs">
+                    📷 Kiriman {zoomImage.sender || "Anonim"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <a
+                    href={zoomImage.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-xs font-bold text-white transition-all flex items-center gap-1"
+                  >
+                    Buka Ukuran Penuh ↗
+                  </a>
+                  <button
+                    onClick={() => setZoomImage(null)}
+                    className="p-2 rounded-xl bg-white/20 hover:bg-white/30 text-white font-bold transition-all text-xs w-8 h-8 flex items-center justify-center"
+                    aria-label="Tutup Foto"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+
+              {/* Photo View */}
+              <div className="overflow-hidden rounded-2xl shadow-2xl border border-white/10 max-h-[80vh] flex items-center justify-center bg-black/40">
+                <img
+                  src={zoomImage.url}
+                  alt="Foto kiriman diperbesar"
+                  className="max-h-[80vh] w-auto max-w-full object-contain rounded-2xl"
+                />
+              </div>
+            </div>
           </div>
         )}
       </div>
-
-      {/* MODAL BUAT POST BARU */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md p-6 shadow-2xl border border-slate-100 dark:border-slate-800 relative max-h-[90vh] overflow-y-auto">
-            <button
-              onClick={() => setShowModal(false)}
-              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full"
-            >
-              ✕
-            </button>
-
-            <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tight mb-4">
-              Kirim Postingan Menfess & Info
-            </h2>
-
-            <form onSubmit={handleCreatePost} className="space-y-4">
-              {/* Type Selection */}
-              <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl">
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, type: "menfess" })}
-                  className={`py-2 rounded-xl text-xs font-bold transition-all ${
-                    formData.type === "menfess"
-                      ? "bg-white dark:bg-slate-700 text-amber-600 shadow-sm"
-                      : "text-slate-500"
-                  }`}
-                >
-                  💌 Menfess (Curhat)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, type: "info" })}
-                  className={`py-2 rounded-xl text-xs font-bold transition-all ${
-                    formData.type === "info"
-                      ? "bg-white dark:bg-slate-700 text-fuchsia-600 shadow-sm"
-                      : "text-slate-500"
-                  }`}
-                >
-                  📢 Info Kampus
-                </button>
-              </div>
-
-              {/* Title (Only for Info) */}
-              {formData.type === "info" && (
-                <div>
-                  <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                    Judul Pengumuman / Event
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="Contoh: Oprec Panitia Seminar Nasional 2026"
-                    className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none"
-                  />
-                </div>
-              )}
-
-              {/* Faculty Picker */}
-              <div>
-                <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                  Fakultas / Kampus
-                </label>
-                <select
-                  value={formData.faculty}
-                  onChange={(e) => setFormData({ ...formData, faculty: e.target.value })}
-                  className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none"
-                >
-                  {FACULTIES.map((fac) => (
-                    <option key={fac} value={fac}>
-                      {fac}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Content Textarea */}
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                    {formData.type === "menfess" ? "Isi Curhatan / Pesan" : "Detail Informasi"}
-                  </label>
-                  <span className="text-[10px] text-slate-400">
-                    {formData.content.length}/1000
-                  </span>
-                </div>
-                <textarea
-                  rows={4}
-                  required
-                  maxLength={1000}
-                  value={formData.content}
-                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                  placeholder={
-                    formData.type === "menfess"
-                      ? "Ketik pesanmu di sini... (Sensor kata kotor aktif otomatis)"
-                      : "Jelaskan detail informasi kegiatan atau pengumuman kampus..."
-                  }
-                  className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none resize-none leading-relaxed"
-                />
-              </div>
-
-              {/* Anonimity Toggle */}
-              <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
-                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Kirim Sebagai Anonim (Rahasiakan Nama)
-                </span>
-                <input
-                  type="checkbox"
-                  checked={formData.is_anon}
-                  onChange={(e) => setFormData({ ...formData, is_anon: e.target.checked })}
-                  className="w-4 h-4 rounded text-primary focus:ring-primary"
-                />
-              </div>
-
-              {!formData.is_anon && (
-                <div>
-                  <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                    Nama / Alias Kamu
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.sender_name}
-                    onChange={(e) => setFormData({ ...formData, sender_name: e.target.value })}
-                    placeholder="Nama lengkap / panggilan"
-                    className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none"
-                  />
-                </div>
-              )}
-
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full py-3 bg-primary text-white rounded-xl text-xs font-bold shadow-lg shadow-primary/30 hover:bg-primary/95 transition-all disabled:opacity-50"
-              >
-                {submitting ? "Menerbitkan..." : "Terbitkan ke Menfess & Info 🚀"}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
+    </PullToRefresh>
   );
 }

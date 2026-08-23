@@ -44,7 +44,7 @@ export default function AuditPage() {
       .then((r) => r.json())
       .then((d) => { setData(d); setLoading(false); })
       .catch(() => setLoading(false));
-  }, []);
+  }, [api]);
 
   return (
     <div className="animate-fade-in space-y-6">

@@ -57,6 +57,11 @@ bot-wa/.bot.lock
 bot-wa/.penjaga-*
 bot-wa/auth_info_baileys/
 bot-wa/push-ke-github.sh
+# Dokumen atau dashboard yang memuat kredensial tidak boleh berada di worktree.
+bot-wa/INFRASTRUKTUR_DAN_KREDENSIAL.md
+bot-wa/halaman/infrastruktur.html
+**/*kredensial*.md
+**/*credentials*.md
 
 # Catatan pribadi — namanya sudah bilang sendiri. Sempat terlacak
 # 20 Jul–21 Agu 2026; isinya harus dianggap bocor dan dirotasi.

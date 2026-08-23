@@ -9,6 +9,7 @@ export default function MarketplaceInbox({ onSelectRoom }) {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [myWa, setMyWa] = useState(null);
+  const [isLoggedOut, setIsLoggedOut] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -16,7 +17,8 @@ export default function MarketplaceInbox({ onSelectRoom }) {
       try {
         const res = await fetch("/api/chat/marketplace/inbox");
         if (res.status === 401) {
-          router.push("/dashboard/login");
+          setIsLoggedOut(true);
+          setRooms([]);
           return;
         }
         const data = await res.json();
@@ -34,7 +36,21 @@ export default function MarketplaceInbox({ onSelectRoom }) {
   }, [router]);
 
   if (loading) {
-    return <div className="text-center p-8 text-gray-500">Memuat kotak masuk...</div>;
+    return <div className="text-center p-8 text-xs text-gray-500">Memuat kotak masuk...</div>;
+  }
+
+  if (isLoggedOut) {
+    return (
+      <div className="text-center p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 space-y-2">
+        <p className="text-xs text-slate-500">Masuk ke akunmu untuk melihat pesan jual beli.</p>
+        <button
+          onClick={() => router.push("/profil")}
+          className="inline-flex items-center gap-1 bg-primary text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow-sm"
+        >
+          Masuk Akun
+        </button>
+      </div>
+    );
   }
 
   if (rooms.length === 0) {

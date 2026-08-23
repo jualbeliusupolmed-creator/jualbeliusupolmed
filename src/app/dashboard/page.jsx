@@ -16,6 +16,7 @@ import QRISModal from "@/components/QRISModal";
 import PushNotificationButton from "@/components/PushNotificationButton";
 import BagikanIklan from "@/components/BagikanIklan";
 import BlogPenulisPanel from "@/components/BlogPenulisPanel";
+import DashboardModeToggle from "@/components/DashboardModeToggle";
 
 function statusBadge(s) {
   const map = {
@@ -58,6 +59,8 @@ function DashboardInner() {
 
   // Profil edit state
   const [profilForm, setProfilForm] = useState({ name: "", bio: "" });
+  const [anonymousName, setAnonymousName] = useState("Anonim");
+  const [anonymousNameBusy, setAnonymousNameBusy] = useState(false);
   const [profilRequests, setProfilRequests] = useState([]);
   const [profilBusy, setProfilBusy] = useState(false);
 
@@ -169,6 +172,7 @@ function DashboardInner() {
           name: dataListings.profile.name || "",
           bio: dataListings.profile.bio || "",
         });
+        setAnonymousName(dataListings.profile.anonymous_name || "Anonim");
       }
 
       setLoaded(true);
@@ -178,6 +182,31 @@ function DashboardInner() {
       console.error(e);
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function saveAnonymousName() {
+    const value = anonymousName.trim();
+    if (value.length < 2) {
+      toast.error("Nama anonim minimal 2 karakter.");
+      return;
+    }
+    setAnonymousNameBusy(true);
+    try {
+      const res = await fetch("/api/profile/anonymous-name", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ anonymousName: value }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal menyimpan nama anonim.");
+      setAnonymousName(data.anonymousName);
+      setSellerProfile((current) => ({ ...(current || {}), anonymous_name: data.anonymousName }));
+      toast.success("Nama anonim diperbarui.");
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setAnonymousNameBusy(false);
     }
   }
 
@@ -592,155 +621,243 @@ function DashboardInner() {
 
       {/* ===== UI ===== */}
 
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-extrabold">Dashboard Penjual</h1>
-          {sellerProfile?.name && sellerProfile.name !== "Pengguna WA" && (
-            <p className="mt-0.5 text-sm text-gray-500 flex items-center gap-2 flex-wrap">
-              Halo, {sellerProfile.name} 👋
-              {sellerProfile.distributor && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 dark:bg-orange-900/40 px-2 py-0.5 text-xs font-bold text-orange-700 dark:text-orange-400">
-                  🏪 DISTRIBUTOR
-                </span>
-              )}
-            </p>
-          )}
-        </div>
-        <div className="flex flex-wrap shrink-0 items-center gap-2">
+      {/* ===== UI HEADER & PROFILE ===== */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <DashboardModeToggle 
+          storeStatus={sellerProfile?.store_status} 
+          activeCount={(items || []).filter(l => l.status === "active").length} 
+        />
+        <div className="flex items-center gap-2 self-end sm:self-auto">
           {wa && <PushNotificationButton wa={wa} />}
           {loaded && (
-            <Link href="/dashboard/toko" className="btn-outline text-sm px-3 py-2 flex items-center gap-1.5 whitespace-nowrap">
-              🏬 Toko saya
-            </Link>
-          )}
-          {loaded && (
-            <Link href="/jual" className="btn-primary text-sm px-3 py-2 flex items-center gap-1.5 whitespace-nowrap">
-              + Tambah Iklan
+            <Link 
+              href="/jual" 
+              className="px-4 py-2 rounded-2xl text-xs font-black bg-primary hover:bg-primary/95 text-white shadow-md shadow-primary/20 active:scale-95 transition-all flex items-center gap-1.5"
+            >
+              <Icon.PlusCircle className="w-3.5 h-3.5" />
+              <span>+ Tambah Iklan</span>
             </Link>
           )}
         </div>
       </div>
 
+      <div className="bg-white dark:bg-slate-900/90 rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm mb-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 via-emerald-400/10 to-teal-500/20 dark:from-emerald-950 dark:to-slate-900 border border-primary/20 flex items-center justify-center text-2xl font-black text-primary dark:text-emerald-400 shadow-inner">
+              {sellerProfile?.name ? sellerProfile.name.charAt(0).toUpperCase() : "👤"}
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                  {sellerProfile?.name || "Dashboard Penjual"}
+                </h1>
+                {sellerProfile?.subscription_tier === "pro" && new Date(sellerProfile?.subscription_expires_at) > new Date() && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-950/60 px-2.5 py-0.5 text-[10px] font-black text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800">
+                    👑 PRO
+                  </span>
+                )}
+                {sellerProfile?.distributor && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 dark:bg-orange-950/60 px-2.5 py-0.5 text-[10px] font-black text-orange-700 dark:text-orange-400 border border-orange-300 dark:border-orange-800">
+                    🏪 DISTRIBUTOR
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                <span>📱 {wa || "Nomor terhubung"}</span>
+                {sellerProfile?.free_bumps > 0 && (
+                  <span className="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full text-[10px] font-bold border border-indigo-200 dark:border-indigo-800">
+                    🎁 {sellerProfile.free_bumps}x Free Bump
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-slate-800">
+            {sellerProfile?.slug && (
+              <a
+                href={`/toko/${sellerProfile.slug}`}
+                target="_blank"
+                rel="noreferrer"
+                className="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 transition-all flex items-center gap-1"
+              >
+                <span>Lihat Profil Publik</span>
+                <span className="text-[10px]">↗</span>
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+
       {note && (
-        <div className="mt-4 rounded-xl bg-primary/10 px-4 py-3 text-sm text-primary">
+        <div className="mb-6 rounded-2xl bg-primary/10 border border-primary/20 px-4 py-3 text-xs font-semibold text-primary">
           {note}
         </div>
       )}
 
-
-
       {busy && !loaded && (
-        <div className="mt-8 space-y-6">
+        <div className="mt-6 space-y-6">
           <div className="flex gap-2 border-b dark:border-slate-800">
             <div className="h-8 w-32 animate-pulse bg-gray-200 dark:bg-slate-800 rounded-t-md"></div>
             <div className="h-8 w-32 animate-pulse bg-gray-100 dark:bg-slate-900 rounded-t-md"></div>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-24 rounded-xl animate-pulse bg-white dark:bg-slate-900/30 border border-gray-100 dark:border-slate-800"></div>
+              <div key={i} className="h-24 rounded-2xl animate-pulse bg-white dark:bg-slate-900/30 border border-gray-100 dark:border-slate-800"></div>
             ))}
-          </div>
-          <div className="space-y-4">
-            <div className="h-6 w-32 animate-pulse bg-gray-200 dark:bg-slate-800 rounded"></div>
-            <div className="flex flex-col gap-4">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="h-32 rounded-xl animate-pulse bg-white dark:bg-slate-900/30 border border-gray-100 dark:border-slate-800"></div>
-              ))}
-            </div>
           </div>
         </div>
       )}
 
       {loaded && !busy && (
         <>
-          {/* Tab Selection */}
-          <div className="mt-8 flex gap-2 border-b dark:border-slate-800 overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pb-1">
-            <button
-              onClick={() => setActiveTab("jual")}
-              className={`pb-2.5 px-4 text-sm font-bold border-b-2 transition-all ${
-                activeTab === "jual"
-                  ? "border-primary text-gray-900 dark:border-white dark:text-white"
-                  : "border-transparent text-gray-400 hover:text-gray-900 dark:hover:text-slate-200"
-              }`}
-            >
-              📦 Iklan Jual ({items.length})
-            </button>
-            <button
-              onClick={() => setActiveTab("dicari")}
-              className={`pb-2.5 px-4 text-sm font-bold border-b-2 transition-all ${
-                activeTab === "dicari"
-                  ? "border-primary text-gray-900 dark:border-white dark:text-white"
-                  : "border-transparent text-gray-400 hover:text-gray-900 dark:hover:text-slate-200"
-              }`}
-            >
-              🔍 Kebutuhan Dicari ({wantedItems.length})
-            </button>
-            <button
-              onClick={() => setActiveTab("referral")}
-              className={`pb-2.5 px-4 text-sm font-bold border-b-2 transition-all ${
-                activeTab === "referral"
-                  ? "border-primary text-gray-900 dark:border-white dark:text-white"
-                  : "border-transparent text-gray-400 hover:text-gray-900 dark:hover:text-slate-200"
-              }`}
-            >
-              🎁 Referral
-            </button>
-            <button
-              onClick={() => setActiveTab("blog")}
-              className={`pb-2.5 px-4 text-sm font-bold border-b-2 transition-all ${
-                activeTab === "blog"
-                  ? "border-primary text-gray-900 dark:border-white dark:text-white"
-                  : "border-transparent text-gray-400 hover:text-gray-900 dark:hover:text-slate-200"
-              }`}
-            >
-              ✍️ Blog
-            </button>
-            <button
-              onClick={() => setActiveTab("tawaran")}
-              className={`pb-2.5 px-4 text-sm font-bold border-b-2 transition-all relative ${
-                activeTab === "tawaran"
-                  ? "border-indigo-500 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400"
-                  : "border-transparent text-gray-400 hover:text-gray-900 dark:hover:text-slate-200"
-              }`}
-            >
-              💰 Tawaran
-              {offers.filter((o) => o.status === "pending").length > 0 && (
-                <span className="absolute -top-0.5 -right-1 h-4 w-4 rounded-full bg-indigo-500 text-white text-[10px] font-bold flex items-center justify-center">
-                  {offers.filter((o) => o.status === "pending").length}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab("pro")}
-              className={`pb-2.5 px-4 text-sm font-bold border-b-2 transition-all ${
-                activeTab === "pro"
-                  ? "border-amber-500 text-amber-600 dark:border-amber-400 dark:text-amber-400"
-                  : "border-transparent text-gray-400 hover:text-gray-900 dark:hover:text-slate-200"
-              }`}
-            >
-              🌟 Paket Pro
-            </button>
-            <button
-              onClick={() => { setActiveTab("statistik"); if (!analytics) loadAnalytics(); }}
-              className={`pb-2.5 px-4 text-sm font-bold border-b-2 transition-all ${
-                activeTab === "statistik"
-                  ? "border-sky-500 text-sky-600 dark:border-sky-400 dark:text-sky-400"
-                  : "border-transparent text-gray-400 hover:text-gray-900 dark:hover:text-slate-200"
-              }`}
-            >
-              📊 Statistik
-            </button>
-            <button
-              onClick={() => setActiveTab("profil")}
-              className={`pb-2.5 px-4 text-sm font-bold border-b-2 transition-all ${
-                activeTab === "profil"
-                  ? "border-violet-500 text-violet-600 dark:border-violet-400 dark:text-violet-400"
-                  : "border-transparent text-gray-400 hover:text-gray-900 dark:hover:text-slate-200"
-              }`}
-            >
-              👤 Profil
-            </button>
+          {/* 4 PRIMARY HUBS */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 bg-slate-100 dark:bg-slate-900/90 p-1.5 rounded-2xl border border-slate-200/80 dark:border-slate-800">
+            {[
+              { 
+                id: "iklan", 
+                label: "Iklan & Dagangan", 
+                icon: "📦", 
+                active: activeTab === "jual" || activeTab === "dicari",
+                count: items.length,
+                onClick: () => setActiveTab(activeTab === "dicari" ? "dicari" : "jual")
+              },
+              { 
+                id: "tawaran", 
+                label: "Tawaran Masuk", 
+                icon: "💰", 
+                active: activeTab === "tawaran",
+                count: offers.filter((o) => o.status === "pending").length,
+                badgeColor: "bg-rose-500 text-white",
+                onClick: () => setActiveTab("tawaran")
+              },
+              { 
+                id: "performa", 
+                label: "Performa & PRO", 
+                icon: "📊", 
+                active: activeTab === "statistik" || activeTab === "pro" || activeTab === "referral",
+                onClick: () => {
+                  const target = ["statistik", "pro", "referral"].includes(activeTab) ? activeTab : "statistik";
+                  setActiveTab(target);
+                  if (target === "statistik" && !analytics) loadAnalytics();
+                }
+              },
+              { 
+                id: "akun", 
+                label: "Akun & Blog", 
+                icon: "👤", 
+                active: activeTab === "profil" || activeTab === "blog",
+                onClick: () => setActiveTab(["profil", "blog"].includes(activeTab) ? activeTab : "profil")
+              },
+            ].map((hub) => (
+              <button
+                key={hub.id}
+                onClick={hub.onClick}
+                className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-black transition-all active:scale-95 text-center ${
+                  hub.active
+                    ? "bg-white dark:bg-slate-800 text-primary dark:text-emerald-400 shadow-sm border border-slate-200/50 dark:border-slate-700"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                <span className="text-sm">{hub.icon}</span>
+                <span className="truncate">{hub.label}</span>
+                {typeof hub.count === "number" && hub.count > 0 && (
+                  <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-black ${
+                    hub.badgeColor || "bg-primary/10 dark:bg-emerald-950 text-primary dark:text-emerald-400"
+                  }`}>
+                    {hub.count}
+                  </span>
+                )}
+              </button>
+            ))}
           </div>
+
+          {/* SUB-TABS ROW (Contextual inside active category) */}
+          {(activeTab === "jual" || activeTab === "dicari") && (
+            <div className="flex items-center gap-2 mb-6 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <button
+                onClick={() => setActiveTab("jual")}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                  activeTab === "jual"
+                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
+                    : "bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
+                }`}
+              >
+                📦 Iklan Jual ({items.length})
+              </button>
+              <button
+                onClick={() => setActiveTab("dicari")}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                  activeTab === "dicari"
+                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
+                    : "bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
+                }`}
+              >
+                🔍 Kebutuhan Dicari ({wantedItems.length})
+              </button>
+            </div>
+          )}
+
+          {(activeTab === "statistik" || activeTab === "pro" || activeTab === "referral") && (
+            <div className="flex items-center gap-2 mb-6 border-b border-slate-100 dark:border-slate-800 pb-3 overflow-x-auto [scrollbar-width:none]">
+              <button
+                onClick={() => { setActiveTab("statistik"); if (!analytics) loadAnalytics(); }}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 ${
+                  activeTab === "statistik"
+                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
+                    : "bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
+                }`}
+              >
+                📊 Statistik Kinerja
+              </button>
+              <button
+                onClick={() => setActiveTab("pro")}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 ${
+                  activeTab === "pro"
+                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
+                    : "bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
+                }`}
+              >
+                🌟 Paket PRO Langganan
+              </button>
+              <button
+                onClick={() => setActiveTab("referral")}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 ${
+                  activeTab === "referral"
+                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
+                    : "bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
+                }`}
+              >
+                🎁 Program Referral
+              </button>
+            </div>
+          )}
+
+          {(activeTab === "profil" || activeTab === "blog") && (
+            <div className="flex items-center gap-2 mb-6 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <button
+                onClick={() => setActiveTab("profil")}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                  activeTab === "profil"
+                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
+                    : "bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
+                }`}
+              >
+                👤 Edit Profil Penjual
+              </button>
+              <button
+                onClick={() => setActiveTab("blog")}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                  activeTab === "blog"
+                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
+                    : "bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
+                }`}
+              >
+                ✍️ Tulis Blog Mahasiswa
+              </button>
+            </div>
+          )}
 
           {activeTab === "tawaran" ? (
             <div className="space-y-4 mt-6">
@@ -930,10 +1047,10 @@ function DashboardInner() {
               )}
 
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <Stat label="Iklan aktif" value={active.length} />
-                <Stat label="Terjual" value={soldItems.length} />
-                <Stat label="Total dilihat" value={totalViews} />
-                <Stat label="Fee dibayar" value={rupiah(totalFee)} />
+                <Stat label="Iklan Aktif" value={active.length} icon="📦" />
+                <Stat label="Terjual" value={soldItems.length} icon="🤝" />
+                <Stat label="Total Dilihat" value={totalViews} icon="👁️" />
+                <Stat label="Fee Dibayar" value={rupiah(totalFee)} icon="💳" />
               </div>
 
               {/* Top 3 Iklan Paling Dilihat */}
@@ -1535,6 +1652,27 @@ function DashboardInner() {
                 <h2 className="text-base font-bold dark:text-white mb-1">Edit Profil</h2>
                 <p className="text-xs text-gray-400 mb-5">Perubahan nama dan bio perlu disetujui admin sebelum tampil di publik.</p>
 
+                <div className="mb-6 rounded-xl border border-violet-100 bg-violet-50/60 p-4 dark:border-violet-500/20 dark:bg-violet-500/5">
+                  <label className="block text-sm font-semibold text-violet-950 dark:text-violet-100 mb-1">Nama Anonim</label>
+                  <p className="mb-3 text-xs leading-relaxed text-violet-800/75 dark:text-violet-200/70">Nama ini dipakai di Menfess, komentar, dan Cari Teman. Nama toko/profil publik Anda tidak akan ditampilkan di sana.</p>
+                  <div className="flex gap-2">
+                    <input
+                      className="input flex-1"
+                      placeholder="Contoh: Kucing Kampus"
+                      maxLength={30}
+                      value={anonymousName}
+                      onChange={(e) => setAnonymousName(e.target.value)}
+                    />
+                    <button
+                      onClick={saveAnonymousName}
+                      disabled={anonymousNameBusy || anonymousName.trim().length < 2}
+                      className="btn-primary shrink-0 px-4 disabled:opacity-50"
+                    >
+                      Simpan
+                    </button>
+                  </div>
+                </div>
+
                 {/* Nama */}
                 <div className="mb-6">
                   <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1">
@@ -1704,11 +1842,14 @@ function DashboardInner() {
   );
 }
 
-function Stat({ label, value }) {
+function Stat({ label, value, icon }) {
   return (
-    <div className="card p-4">
-      <p className="text-xs text-gray-400">{label}</p>
-      <p className="mt-1 text-xl font-extrabold text-primary">{value}</p>
+    <div className="bg-white dark:bg-slate-900/90 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:border-primary/40 transition-colors">
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400">{label}</p>
+        {icon && <span className="text-base opacity-80">{icon}</span>}
+      </div>
+      <p className="mt-1.5 text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">{value}</p>
     </div>
   );
 }

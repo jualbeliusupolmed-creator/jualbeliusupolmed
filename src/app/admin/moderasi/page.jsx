@@ -47,11 +47,17 @@ export default async function ModerasiPage() {
   return (
     <div className="animate-fade-in">
       <PageHeader
-        title="Antrian Moderasi"
-        description={`${total} item perlu perhatian.`}
+        title="Antrean Moderasi"
+        description={`${total} item butuh peninjauan admin.`}
         actions={
           <form action="" method="get">
-            <button type="submit" className="btn-outline text-sm">Muat ulang</button>
+            <button 
+              type="submit" 
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 active:scale-95 transition-all shadow-xs flex items-center gap-1.5"
+            >
+              <span>🔄</span>
+              <span>Segarkan Data</span>
+            </button>
           </form>
         }
       />

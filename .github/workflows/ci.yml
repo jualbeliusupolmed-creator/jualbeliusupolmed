@@ -36,3 +36,26 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+  bot-test:
+    name: Bot Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: bot-wa
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: bot-wa/package-lock.json
+
+      - name: Install Bot Dependencies
+        run: npm ci
+
+      - name: Run Bot Tests
+        run: npm test
