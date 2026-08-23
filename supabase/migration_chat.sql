@@ -51,6 +51,23 @@ DROP POLICY IF EXISTS "Public update chat rooms" ON public.chat_rooms;
 DROP POLICY IF EXISTS "Public read chat messages" ON public.chat_messages;
 DROP POLICY IF EXISTS "Public insert chat messages" ON public.chat_messages;
 
+-- Chat marketplace (23 Agu 2026): room bertaut ke iklan. Kolom ini semula
+-- ditambahkan langsung ke produksi TANPA foreign key — dan tanpa FK, embedded
+-- join PostgREST di /api/chat/marketplace/inbox tidak mengenal relasinya
+-- (galat "Could not find a relationship", inbox mati). ON DELETE SET NULL:
+-- riwayat obrolan tetap hidup walau iklannya dihapus.
+ALTER TABLE public.chat_rooms ADD COLUMN IF NOT EXISTS listing_id UUID;
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE table_name = 'chat_rooms' AND constraint_name = 'chat_rooms_listing_id_fkey'
+  ) THEN
+    ALTER TABLE public.chat_rooms
+      ADD CONSTRAINT chat_rooms_listing_id_fkey
+      FOREIGN KEY (listing_id) REFERENCES public.listings(id) ON DELETE SET NULL;
+  END IF;
+END $$;
+
 -- Enable Realtime (Aman jika tabel sudah terdaftar)
 DO $$
 BEGIN
