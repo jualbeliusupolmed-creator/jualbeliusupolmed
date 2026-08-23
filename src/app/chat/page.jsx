@@ -57,6 +57,51 @@ function ChatContent() {
     }
   }, [roomQuery]);
 
+  // ── Obrolan selamat dari refresh ─────────────────────────────────────────────
+  // State React hilang tiap kali halaman dimuat ulang, padahal room-nya masih
+  // hidup di server — dulu refresh berarti kembali ke layar awal dan lawan
+  // bicara ditinggal tanpa kabar. Room aktif dicatat di localStorage; saat
+  // halaman dibuka lagi, keadaannya ditanyakan ke server dan dilanjutkan dari
+  // sana (chat → lanjut mengobrol, waiting → lanjut menunggu, closed → lupakan).
+  useEffect(() => {
+    try {
+      if (currentRoomId && (chatState === "chat" || chatState === "matching")) {
+        localStorage.setItem("chat_room_aktif", currentRoomId);
+      } else if (chatState === "idle" || chatState === "ended") {
+        localStorage.removeItem("chat_room_aktif");
+      }
+    } catch {}
+  }, [currentRoomId, chatState]);
+
+  useEffect(() => {
+    if (roomQuery) return; // tautan ?room= punya jalur pemulihannya sendiri di atas
+    let simpanan = null;
+    try { simpanan = localStorage.getItem("chat_room_aktif"); } catch {}
+    if (!simpanan) return;
+    (async () => {
+      try {
+        const res = await fetch(`/api/chat/room/${simpanan}`);
+        const data = await res.json();
+        if (!res.ok || !data.room || data.room.status === "closed") {
+          try { localStorage.removeItem("chat_room_aktif"); } catch {}
+          return;
+        }
+        setCurrentRoomId(simpanan);
+        if (data.room.type === "marketplace") setMainTab("marketplace");
+        if (data.room.status === "waiting") {
+          setChatState("matching");
+          startPollingForPartner(simpanan);
+        } else {
+          setChatState("chat");
+          toast.info("👋 Melanjutkan obrolanmu yang tadi.");
+        }
+      } catch {
+        try { localStorage.removeItem("chat_room_aktif"); } catch {}
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Polling Messages while in chat
   const fetchRoomData = useCallback(async (roomId) => {
     if (!roomId) return;
@@ -72,6 +117,16 @@ function ChatContent() {
       if (data.room) {
         if (data.myId) {
           setMyWa(data.myId); // ini bisa berupa WA mentah (marketplace) atau hashedWa (anonim)
+          // Info lawan bicara diturunkan dari room + myId — supaya obrolan yang
+          // dibuka ulang (refresh, tautan ?room=) tidak kehilangan nama lawannya.
+          const akuUser1 = data.room.user1_id === data.myId;
+          const aliasLawan = akuUser1 ? data.room.user2_alias : data.room.user1_alias;
+          if (aliasLawan) {
+            setPartnerInfo({
+              alias: aliasLawan,
+              faculty: (akuUser1 ? data.room.user2_faculty : data.room.user1_faculty) || "Umum",
+            });
+          }
         }
         if (data.room.status === "closed" && chatState === "chat") {
           setChatState("ended");
