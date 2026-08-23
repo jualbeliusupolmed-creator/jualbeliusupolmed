@@ -15,21 +15,30 @@ const { createClient } = require('@supabase/supabase-js');
 const { useSupabaseAuthState } = require('./useSupabaseAuthState');
 const { useFileAuthState } = require('./waAuthState');
 
-// Baris log libsignal yang dibungkam. Bukan sekadar berisik: empat di antaranya
-// ("Closing session:" dkk) mencetak objek SessionEntry UTUH — termasuk `privKey` —
-// ke file log pm2 di disk. Kunci sesi WhatsApp tidak boleh mendarat di file yang
-// bisa dibaca siapa pun yang punya akses server.
-const SIGNAL_NOISE = [
-    'Closing session:',
-    'Opening session:',
-    'Removing old closed session:',
-    'Session already closed',
-    'Session already open',
-    'Decrypted message with closed session.',
-    'Closing stale open session',
-    'Closing open session in favor of incoming prekey bundle',
-];
-const isSignalNoise = (args) => typeof args[0] === 'string' && SIGNAL_NOISE.some(p => args[0].startsWith(p));
+// Utilitas murni — dipindah ke src/lib/utils.js. Lihat catatan di sana soal
+// apa yang boleh dan tidak boleh tinggal di berkas itu.
+const {
+    SIGNAL_NOISE,
+    isSignalNoise,
+    safeStringify,
+    INVISIBLE_RE,
+    stripInvisible,
+    stripBotPrefix,
+    toJid,
+    BOT_PREFIX,
+    ADMIN_CALL_WORDS,
+    isAdminCall,
+    PLAIN_COMMAND_WORDS,
+    plainCommandWord,
+    boundedSet,
+    amanTujuan,
+    dgnBatas,
+    teksPesan,
+    META_KEYS,
+    extractMessage,
+} = require('./src/lib/utils');
+
+
 
 // Buffer untuk melacak console.log dan error (berguna untuk debugging)
 const systemLogs = [];
@@ -38,18 +47,6 @@ const originalError = console.error;
 const originalInfo = console.info;
 const originalWarn = console.warn;
 
-// Buffer & kunci mentah jangan ikut ter-serialize ke buffer yang disajikan /logs.
-function safeStringify(a) {
-    if (Buffer.isBuffer(a)) return `<Buffer ${a.length}B>`;
-    if (typeof a !== 'object' || a === null) return String(a);
-    try {
-        return JSON.stringify(a, (k, v) => {
-            if (v?.type === 'Buffer' && Array.isArray(v.data)) return `<Buffer ${v.data.length}B>`;
-            if (/priv|secret|key/i.test(k) && typeof v === 'string' && v.length > 32) return '<redacted>';
-            return v;
-        });
-    } catch (_) { return '[unserializable]'; }
-}
 function pushLog(level, args) {
     systemLogs.push(`[${new Date().toISOString()}] [${level}] ${args.map(safeStringify).join(' ')}`);
     if (systemLogs.length > 200) systemLogs.shift();
@@ -59,26 +56,7 @@ console.error = function(...args) { pushLog('ERROR', args); originalError.apply(
 console.info = function(...args) { if (isSignalNoise(args)) return; originalInfo.apply(console, args); };
 console.warn = function(...args) { if (isSignalNoise(args)) return; originalWarn.apply(console, args); };
 
-// Karakter tak terlihat (BOM, zero-width, soft hyphen) ikut terbawa dari HP dan
-// bikin FormData/pencocokan keyword meleset. Dulu regex ini disalin di 3 tempat
-// dengan isi yang berbeda-beda — sekarang satu definisi untuk semuanya.
-const INVISIBLE_RE = /[﻿​-‍⁠­]/g;
-const stripInvisible = (s) => String(s || '').replace(INVISIBLE_RE, '').trim();
-// Titik pemanggil bot dibuang sebelum pesan diteruskan: website mengenali perintah
-// polos ("JUAL", "CARI sepatu"), bukan ".JUAL".
-const stripBotPrefix = (s) => {
-    const t = String(s || '');
-    return t.startsWith(BOT_PREFIX) ? t.slice(BOT_PREFIX.length).trimStart() : t;
-};
 
-// '08xxx' / '+62 xxx' / '62xxx' → JID WhatsApp. Dulu disalin di 4 endpoint.
-function toJid(target) {
-    const raw = String(target || '');
-    if (raw.includes('@')) return raw;
-    let num = raw.replace(/[^0-9]/g, '');
-    if (num.startsWith('0')) num = '62' + num.slice(1);
-    return num + '@s.whatsapp.net';
-}
 
 const WEBHOOK_URL = process.env.WEBHOOK_URL || 'https://www.jualbeliusupolmed.web.id/api/wa/baileys';
 const API_TOKEN = process.env.API_TOKEN;
@@ -89,6 +67,20 @@ if (!API_TOKEN) {
 }
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = process.env.DATA_DIR || '.'; // set ke mount path Volume/Disk kalau mau file persisten
+
+// ── Identitas bot ini di mata WEBHOOK situs ──────────────────────────────────
+// Env situs cuma mengenal SATU token (milik bot pertama), jadi bot KEDUA
+// menembak webhook memakai token bot pertama (WEBHOOK_TOKEN, diisi jalankan.sh
+// bot 2) sambil menandai dirinya `perangkat=lain`. Situs membaca tanda itu dan
+// mengarahkan semua balasannya kembali lewat perangkat ini (gerbang failover
+// /send perangkat:'lain') — pelanggan dibalas dari nomor yang memang ia chat.
+// Di bot pertama kedua env ini kosong dan semuanya berjalan seperti sedia kala.
+const WEBHOOK_TOKEN = process.env.WEBHOOK_TOKEN || API_TOKEN;
+const WEBHOOK_PERANGKAT = (process.env.WEBHOOK_PERANGKAT || '').trim();
+function tandaiPerangkat(form) {
+    if (WEBHOOK_PERANGKAT) form.append('perangkat', WEBHOOK_PERANGKAT);
+    return form;
+}
 const AUTH_DIR = process.env.AUTH_DIR || path.join(DATA_DIR, 'auth_info_baileys');
 const MARKETPLACE_GROUP_JID = process.env.GROUP_JID || '';
 
@@ -169,11 +161,6 @@ function lepasKunciProses() {
 ambilKunciProses();
 process.on('exit', lepasKunciProses);
 
-// ── Gerbang bot ───────────────────────────────────────────────────────────────
-// Default percakapan pelanggan adalah dengan ADMIN (manusia). Bot baru ikut campur
-// kalau pesan diawali tanda ini. Tanpa gerbang, bot menyahut tiap chat masuk dan
-// admin jadi tak leluasa membalas manual.
-const BOT_PREFIX = process.env.BOT_PREFIX || '.';
 // Titik cuma dipakai untuk MEMBUKA sesi. Alur bot itu bertahap (.JUAL → bot tanya
 // harga/kondisi → pelanggan kirim foto tanpa caption); kalau tiap pesan wajib
 // bertitik, alur itu putus di langkah kedua. Sesi disegarkan tiap pesan yang lolos.
@@ -182,32 +169,9 @@ const BOT_SESSION_MS = Number(process.env.BOT_SESSION_MINUTES || 15) * 60 * 1000
 // Sengaja pendek: kata seperti "sudah"/"oke" sering jadi JAWABAN wajar di tengah alur
 // .JUAL, jadi kalau dimasukkan ke sini sesi bisa putus di tengah pemasangan iklan.
 const BOT_END_WORDS = new Set(['admin', 'stop', 'selesai']);
-// Panggilan ke admin ("min"). Bedanya dengan BOT_END_WORDS: kata di sini BUKAN cuma
-// menutup sesi, tapi selalu dibalas sapaan — orang yang manggil "min" jelas sedang
-// mencari manusia, jadi dia harus langsung tahu chat ini dipegang admin dan bot
-// punya jalur titik sendiri. Sengaja dipisah supaya "admin"/"stop" di tengah alur
-// .JUAL tetap menutup sesi tanpa memuntahkan sapaan panjang.
-const ADMIN_CALL_WORDS = new Set(
-    (process.env.ADMIN_CALL_WORDS || 'min,mimin')
-        .split(',').map((s) => s.trim().toLowerCase()).filter(Boolean)
-);
 // Jeda minimum antar sapaan untuk kontak yang sama. Tanpa ini, "min min min" tiga
 // kali dibalas tiga sapaan panjang — mirip spam dan bikin admin susah baca chat.
 const ADMIN_CALL_COOLDOWN_MS = Number(process.env.ADMIN_CALL_COOLDOWN_SECONDS || 60) * 1000;
-// Cocokkan hanya kalau SELURUH pesan berupa panggilan itu ("Min", "min?", "MIN!!").
-// Kalimat seperti "admin nya kemana" sengaja tidak kena: itu pesan untuk dibaca
-// admin, bukan permintaan menu.
-const isAdminCall = (s) => ADMIN_CALL_WORDS.has(
-    String(s || '').toLowerCase().replace(/[^a-z]/g, '')
-);
-// Kata perintah yang sering diketik TANPA titik. Tidak mengubah perilaku gerbang —
-// murni untuk dihitung, supaya keputusan "buka kata polos atau tidak" punya angka.
-const PLAIN_COMMAND_WORDS = new Set(['jual', 'cari', 'menu', 'perpanjang', 'upgrade', 'saya', 'beli', 'pantau']);
-function plainCommandWord(text) {
-    const first = String(text || '').trim().toLowerCase().split(/\s+/)[0] || '';
-    const word = first.replace(/[^a-z]/g, '');
-    return PLAIN_COMMAND_WORDS.has(word) ? word : '';
-}
 // Sapaan untuk pesan TANPA titik — dikirim SEKALI per kontak, sesudah itu bot diam
 // total di chat itu supaya admin bebas membalas manual.
 const DEFAULT_GREETING = process.env.GREETING_TEXT || [
@@ -321,6 +285,97 @@ const PINDAI_MAKS_SIKLUS = Number(process.env.PINDAI_MAKS_SIKLUS || 5);
 const PINDAI_RETRY_MS = Number(process.env.PINDAI_RETRY_MINUTES || 30) * 60 * 1000;
 let menungguPindai = false;
 let siklusQrSiaSia = 0;
+// Sesi ini sudah tertaut ke sebuah nomor atau belum. Dipakai untuk membedakan dua
+// kegagalan yang kelihatan sama dari luar: "punya sesi tapi jaringannya putus"
+// (restart masuk akal) dan "tidak punya sesi sama sekali" (restart tidak akan
+// pernah menolong — yang ditunggu manusia dengan HP di tangan).
+let sesiTerdaftar = false;
+
+// JANGAN memakai `creds.registered` untuk ini. Kelihatannya memang penanda yang
+// tepat, dan dulu memang dipakai — sampai sesi yang JELAS tertaut ketahuan
+// membawa `registered: false`. Buktinya di mesin ini pada 22 Agustus 2026: bot
+// menyambung, melaporkan nomornya, dan menerima pesan, sementara creds.json-nya
+// tetap `registered:false`. Baileys menyalakan tanda itu di jalur kode pairing
+// tertentu saja, bukan sebagai "sesi ini sudah jadi".
+//
+// Yang selalu ada begitu pairing selesai: `creds.me.id` — identitas akun yang
+// baru saja tertaut. Itu yang dipakai; `registered` disimpan sebagai penguat,
+// bukan sebagai syarat.
+function credsTertaut(creds) {
+    return !!(creds && (creds.me?.id || creds.registered));
+}
+
+// ── Kenapa "menunggu dipindai" harus selamat dari restart ────────────────────
+// Penandanya dulu cuma hidup di memori, dan itu melahirkan lingkaran yang tidak
+// kelihatan sampai ia terjadi: bot diam karena tidak ada yang memindai →
+// /health menjawab 503 → penjaga menghitung delapan kali 503 → penjaga
+// me-restart → proses baru LUPA bahwa ia sedang sengaja diam → mengetuk
+// WhatsApp lagi → diam lagi → dihitung lagi. Setiap putaran menambah ketukan
+// login ke nomor yang justru sedang menunggu ditautkan, persis pola yang bikin
+// nomor dicurigai. Penjaganya tidak salah: ia memang mundur kalau melihat
+// `menungguPindai`, tapi yang dilihatnya sudah terhapus oleh restart yang ia
+// lakukan sendiri.
+//
+// Jadi penandanya ditulis ke disk. Dipulihkan HANYA kalau sesinya masih belum
+// tertaut: begitu ada creds baru (mis. folder .bak dikembalikan pemilik), bot
+// harus mencoba menyambung seperti biasa, bukan meneruskan diam yang sudah
+// tidak relevan.
+const PINDAI_FILE = path.join(DATA_DIR, 'pindai_state.json');
+
+// Berkas ini menampung DUA keputusan "berhenti mengetuk", bukan satu. Keduanya
+// mahal untuk diambil ulang dan murah untuk disimpan:
+//
+//   menungguPindai — tidak ada yang memindai QR-nya (sejak 22 Agu 2026)
+//   sesiTerkunci   — WhatsApp menolak sesi ini berkali-kali (sejak 23 Agu 2026)
+//
+// `sesiTerkunci` menyusul karena sebabnya persis sama dengan yang pertama: ia
+// cuma hidup di memori, jadi tiap restart melupakannya dan bot mengulang burst
+// 3 ketukan "untuk memastikan 401-nya sungguhan" — pertanyaan yang sudah dijawab
+// sebelum restart, pada nomor yang justru sedang ditolak. `kunciSiklus` ikut
+// disimpan supaya jedanya tidak balik ke 10 menit tiap kali prosesnya lahir.
+function simpanPindaiState() {
+    try {
+        if (menungguPindai || sesiTerkunci) {
+            fs.writeFileSync(PINDAI_FILE, JSON.stringify({
+                menungguPindai, sesiTerkunci, kunciSiklus, sejak: Date.now(),
+            }), { mode: 0o600 });
+        } else if (fs.existsSync(PINDAI_FILE)) {
+            fs.unlinkSync(PINDAI_FILE);
+        }
+    } catch (e) {
+        // Gagal menulis penanda bukan alasan bot berhenti: yang hilang cuma
+        // ketahanan terhadap restart, bukan kemampuan menyambung.
+        console.warn('[pindai] gagal menyimpan penanda:', e?.message || e);
+    }
+}
+
+// Dibaca SEBELUM socket pertama lahir, jadi tidak bisa memakai `sesiTerdaftar`
+// yang baru diisi startBotInner(). Membaca creds.json langsung adalah satu-satunya
+// cara tahu "sudah tertaut atau belum" pada saat boot.
+function credsTerdaftarDiDisk() {
+    // Sesi dari Supabase tidak tinggal di disk — jangan menebak, biarkan
+    // startBot() yang memutuskan seperti biasa.
+    if (supabase) return true;
+    try {
+        const berkas = path.join(AUTH_DIR, 'creds.json');
+        if (!fs.existsSync(berkas)) return false;
+        return credsTertaut(JSON.parse(fs.readFileSync(berkas, 'utf8')));
+    } catch (_) { return false; }
+}
+
+function muatPindaiState() {
+    try {
+        if (!fs.existsSync(PINDAI_FILE)) return {};
+        const isi = JSON.parse(fs.readFileSync(PINDAI_FILE, 'utf8'));
+        return {
+            menungguPindai: !!isi?.menungguPindai,
+            sesiTerkunci: !!isi?.sesiTerkunci,
+            // Berkas dari versi lama tidak punya angka ini; nol berarti jeda mulai
+            // dari yang tercepat, sama seperti perilaku sebelumnya.
+            kunciSiklus: Number(isi?.kunciSiklus) || 0,
+        };
+    } catch (_) { return {}; }
+}
 
 
 const app = express();
@@ -458,15 +513,6 @@ function socketAlive() { return !!(waSocket && waSocket.ws?.isOpen); }
 // adalah adanya nomor yang tersambung.
 function botSiap() { return socketAlive() && !!connectedPhone; }
 
-// Permintaan ke WhatsApp yang tidak pernah dijawab. Sesekali terjadi meski sesi
-// sehat (server WA rewel, jaringan setengah mati), dan tanpa batas waktu ia
-// menahan satu koneksi HTTP selamanya. Lebih baik 504 yang jujur.
-function dgnBatas(janji, ms = 15000, apa = 'Permintaan ke WhatsApp') {
-    return Promise.race([
-        janji,
-        new Promise((_, tolak) => setTimeout(() => tolak(new Error(`${apa} tidak dijawab dalam ${Math.round(ms / 1000)} detik.`)), ms)),
-    ]);
-}
 
 // Laporan ke pemilik lewat WhatsApp. Tanpa OWNER_JID, dikirim ke nomor bot sendiri
 // (chat "pesan ke diri sendiri") — tetap sampai dan tidak mengganggu pelanggan.
@@ -474,12 +520,59 @@ function notifyOwner(text) {
     const nomor = nomorAlarm();
     const target = nomor ? toJid(nomor) : (connectedPhone ? `${connectedPhone}@s.whatsapp.net` : '');
     if (!target) return;
+
+    // Alarm ini lahir justru SAAT bot bermasalah — dan sampai 23 Agustus 2026 ia
+    // diantre di bot yang sedang bermasalah itu. Hasilnya persis seperti yang
+    // ditemukan malam ini: pemberitahuan "Sesi WhatsApp terkunci" tertahan 3,4 jam
+    // di antrean, di belakang kunci yang ingin ia laporkan. Peringatan yang cuma
+    // sampai kalau tidak ada yang perlu diperingatkan.
+    //
+    // Kalau bot ini tidak bisa mengirim tapi perangkat kedua bisa, alarm lewat
+    // sana. Inilah pekerjaan paling berharga untuk nomor cadangan: memberi tahu
+    // bahwa nomor utama jatuh. Gagalnya diabaikan diam-diam dan pesannya tetap
+    // diantre di bawah — alarm tidak boleh menjatuhkan apa pun.
     // TTL panjang: alarm padam justru lahir SAAT bot bermasalah, jadi kalau ia
     // ikut kedaluwarsa dalam tiga menit, pemilik tidak pernah diberi tahu tentang
     // satu-satunya kejadian yang paling perlu ia ketahui.
-    messageQueue.push({ jid: target, message: text, ts: Date.now(), ttl: OUTBOX_TTL_MS });
+    const tugas = { jid: target, message: text, ts: Date.now(), ttl: OUTBOX_TTL_MS };
+    messageQueue.push(tugas);
     simpanOutbox();
     kickQueue();
+
+    // Diantre DULU, baru dicoba lewat perangkat kedua — urutannya disengaja. Kalau
+    // prosesnya mati di antara keduanya, yang tertinggal adalah alarm yang masih
+    // akan berangkat, bukan alarm yang hilang.
+    //
+    // Dan kalau perangkat kedua berhasil, salinan lokalnya DICABUT. Membiarkannya
+    // berarti pemilik menerima alarm yang sama dua kali: sekarang, lalu sekali lagi
+    // berjam-jam kemudian saat bot pertama pulih — pada saat mana isinya ("sesi
+    // terkunci") justru sudah tidak benar lagi. Alarm basi lebih buruk daripada
+    // tidak ada alarm kedua.
+    if (!botSiap()) {
+        // `tahan` menutup celah alarm dobel: kalau bot INI pulih dan menguras
+        // antrean selagi percobaan lewat perangkat kedua masih di udara (≤8 dtk),
+        // alarm yang sama berangkat dari dua nomor. Selama penandanya menyala,
+        // processQueue menahan diri; penanda dilepas begitu percobaannya selesai —
+        // dan muatOutbox membuangnya saat boot, jadi proses yang mati di tengah
+        // percobaan meninggalkan alarm yang masih akan berangkat, bukan alarm
+        // yang tertahan selamanya.
+        tugas.tahan = true;
+        bot2Siap().then(async (siap) => {
+            if (!siap) return;
+            const hasil = await teruskanKeBot2('/send', {
+                method: 'POST',
+                body: { target, message: `${text}\n\n_(dikirim lewat perangkat kedua — perangkat pertama sedang tidak bisa mengirim)_` },
+                headers: { 'X-Diteruskan': '1' },
+            });
+            if (hasil.status >= 400) return;   // gagal → biarkan salinan lokal menunggu
+            const i = messageQueue.indexOf(tugas);
+            if (i >= 0) { messageQueue.splice(i, 1); simpanOutbox(); }
+            bump('alarm_lewat_bot2');
+        }).catch(() => {}).finally(() => {
+            delete tugas.tahan;
+            kickQueue();   // kalau salinan lokalnya masih ada, ia boleh jalan lagi
+        });
+    }
 }
 
 // ── Kotak keluar tahan-mati ──────────────────────────────────────────────────
@@ -531,6 +624,10 @@ function muatOutbox() {
         const sekarang = Date.now();
         const hidup = isi.filter((t) => t && t.jid
             && sekarang - (t.ts || 0) < (t.ttl || TTL_BALASAN_MS));
+        // `tahan` cuma bermakna selama percobaan kirim-lewat-bot2 yang memasangnya
+        // masih hidup — dan percobaan itu mati bersama proses lama. Dibiarkan,
+        // kepala antrean tertahan selamanya.
+        hidup.forEach((t) => { delete t.tahan; });
         messageQueue.push(...hidup.slice(0, OUTBOX_MAX));
         const dibuang = isi.length - hidup.length;
         console.log(`[outbox] ${messageQueue.length} pesan tertunda dimuat`
@@ -631,6 +728,10 @@ async function processQueue() {
     // MEMBUANG pesan pelanggan. Sudah pernah terjadi: 21 Agu 2026, satu pesan ke
     // 6288211366083 hilang persis begitu, beberapa detik setelah sesi direset.
     if (!botSiap()) { scheduleQueue(1000); return; }               // belum login → tahan, jangan buang
+    // Kepala antrean sedang dicoba lewat perangkat kedua (lihat notifyOwner):
+    // tunggu percobaan itu selesai supaya alarm yang sama tidak berangkat dari
+    // dua nomor. Paling lama ~8 detik — timeout teruskanKeBot2.
+    if (messageQueue[0]?.tahan) { scheduleQueue(2000); return; }
     const wait = nextSendAt - Date.now();
     if (wait > 0) { scheduleQueue(wait); return; }
 
@@ -721,6 +822,16 @@ async function processQueue() {
                 // hanya karena kebetulan antre saat bot sedang tersambung ulang.
                 const sesiBelumSiap = !botSiap() || /undefined \(reading 'id'\)|Connection Closed|not open/i.test(err.message || '');
                 if (!sesiBelumSiap) task.attempts = (task.attempts || 0) + 1;
+                // JANGAN menganggap `forbidden` sebagai penolakan tetap. Godaannya
+                // besar — kedengarannya seperti "bot bukan anggota grup ini" — dan
+                // sempat ditulis begitu di sini pada 22 Agustus 2026. Buktinya
+                // membantah: tiga iklan hari itu ditolak `forbidden` dari dua grup,
+                // lalu pesan uji ke grup yang SAMA berhasil beberapa jam kemudian,
+                // tanpa ada yang menambahkan nomornya ke mana pun. Yang terjadi:
+                // sesi baru saja ditautkan ulang dan daftar peserta grup belum
+                // selesai disinkronkan. `forbidden` di sini keadaan sementara yang
+                // umurnya jam, bukan detik. Kalau ia dibuang pada percobaan pertama,
+                // yang hilang justru pesan yang beberapa jam lagi bisa berangkat.
                 if (sesiBelumSiap || task.attempts < MAX_SEND_ATTEMPTS) {
                     messageQueue.unshift(task);
                     gap = 1000;   // beri napas sebelum coba lagi, jangan loop ketat
@@ -728,7 +839,12 @@ async function processQueue() {
                 } else {
                     bump('kirim_gagal');
                     console.error(`[Queue] Gagal kirim ke ${task.jid} setelah ${MAX_SEND_ATTEMPTS} percobaan, pesan DIBUANG:`, err.message);
-                    catatDibuang(task, `gagal ${MAX_SEND_ATTEMPTS}× berturut-turut: ${err.message}`);
+                    const sebab = /forbidden|not-authorized/i.test(err.message || '') && task.jid.endsWith('@g.us')
+                        ? `gagal ${MAX_SEND_ATTEMPTS}× berturut-turut: ${err.message} — WhatsApp menolak kirim ke grup ini. `
+                          + 'Sesudah nomor ditautkan ulang, daftar peserta grup bisa perlu berjam-jam untuk sinkron; '
+                          + 'coba kirim ulang dari dashboard sebelum menyimpulkan botnya bukan anggota.'
+                        : `gagal ${MAX_SEND_ATTEMPTS}× berturut-turut: ${err.message}`;
+                    catatDibuang(task, sebab);
                 }
             }
         }
@@ -984,15 +1100,6 @@ let conversationContext = new Map(); // jid → [{ role, text, time }] max 5 ent
 let photoBuffer = new Map();         // jid → { images:[{buf,mime}], caption:string, timer }
 // Map @lid JID → phone JID (@s.whatsapp.net) agar nomor user konsisten
 let lidMap = new Map();
-// Set berukuran terbatas (FIFO) — cegah pertumbuhan memori tak terbatas pada bot
-// yang uptime-nya panjang di VPS.
-function boundedSet(cap) {
-  const s = new Set();
-  const q = [];
-  const _add = s.add.bind(s);
-  s.add = (v) => { if (!s.has(v)) { q.push(v); if (q.length > cap) s.delete(q.shift()); } return _add(v); };
-  return s;
-}
 // Penanda @lid yang sudah pernah ditanya nama (agar tanya nama HANYA sekali, tak loop)
 const askedNameOnce = boundedSet(5000);
 // @lid yang mapping nomornya SUDAH dikirim ke website (untuk memicu migrasi data lama
@@ -1125,300 +1232,54 @@ function addToContext(jid, role, text) {
     return history;
 }
 
-// ── Auth middleware ───────────────────────────────────────────────────────────
-// Perbandingan token dibuat waktu-konstan: `!==` biasa keluar lebih cepat pada byte
-// pertama yang beda, yang secara teori bisa dipakai menebak token per karakter.
-function tokenMatches(given) {
-    const a = Buffer.from(String(given || ''));
-    const b = Buffer.from(String(API_TOKEN));
-    if (a.length !== b.length) return false;
-    return crypto.timingSafeEqual(a, b);
-}
-// ── Sandi panel (manusia) di samping token (mesin) ───────────────────────────
-// Token 48 karakter itu dipakai DUA hal: manusia menempelkannya ke kolom token
-// di tiap halaman, dan mesin memakainya untuk saling memanggil (situs → bot, dan
-// bot → webhook situs di lima tempat). Menggantinya dengan sandi berarti ikut
-// menurunkan autentikasi antar-server jadi satu kata yang bisa ditebak, dan
-// nilainya harus diganti serentak di Vercel atau sambungannya putus.
+
+
+
+
+
+
+
+
+
+
+// ── Gerbang panel ────────────────────────────────────────────────────────────
+// Seluruh aturan "siapa boleh masuk" tinggal di src/lib/gerbang.js. Yang tersisa
+// di sini cuma dua hal yang memang milik berkas ini: rahasia yang dipakainya,
+// dan JENDELA ke keadaan sesi WhatsApp yang terus berubah.
 //
-// Jadi keduanya hidup berdampingan: sandi untuk manusia, token tetap untuk
-// mesin. Di mana pun token diterima, sandi juga diterima.
-//
-// Nilainya HANYA dari environment. Repo ini publik — sandi yang di-commit sama
-// saja dengan diumumkan. Kalau variabelnya kosong, jalur sandi mati total dan
-// yang tersisa cuma token: gagal-tertutup, bukan gagal-terbuka.
-const PANEL_PASSWORD = (process.env.PANEL_PASSWORD || '').trim();
+// `keadaan` sengaja berupa getter, bukan salinan nilai. Gerbang pemulihan
+// bertanya "apakah sesinya memang sudah mati?" pada saat tombolnya ditekan —
+// bukan pada saat modul ini dimuat, yang selalu menjawab keadaan bot beberapa
+// detik setelah menyala.
+const keadaan = {
+    get sesiTerkunci() { return sesiTerkunci; },
+    get sessionLostAt() { return sessionLostAt; },
+    get connectedPhone() { return connectedPhone; },
+};
 
-// Dibandingkan lewat digest, bukan string mentah: panjang sandi tidak boleh
-// bocor lewat lama waktu pembandingan, dan timingSafeEqual menuntut dua
-// penyangga berukuran sama.
-const cap = (v) => crypto.createHash('sha256').update(String(v ?? '')).digest();
-function passwordMatches(given) {
-    if (!PANEL_PASSWORD) return false;
-    return crypto.timingSafeEqual(cap(given), cap(PANEL_PASSWORD));
-}
+const {
+    PANEL_PASSWORD, KUKI_NAMA,
+    tokenMatches, passwordMatches, kukiSah, kukiDari, sesiSah, bolehMasuk,
+    authBlocked, noteAuthFail,
+    requireAuth, requireAuthPage, requireRelink, requirePemulihan,
+    sesiTersimpanAda, halamanMasuk,
+} = require('./src/lib/gerbang')({ API_TOKEN, AUTH_DIR, keadaan });
 
-// Kuki sesi supaya sandi cukup diketik SEKALI, bukan di tiap halaman. Nilainya
-// diturunkan dari API_TOKEN + sandi: tidak ada yang perlu disimpan di disk, dan
-// mengganti salah satunya otomatis mementahkan semua sesi lama.
-const KUKI_NAMA = 'panel_sesi';
-function kukiSah() {
-    return crypto.createHmac('sha256', String(API_TOKEN))
-        .update('panel-v1:' + PANEL_PASSWORD).digest('hex');
-}
-function kukiDari(req) {
-    const mentah = req.headers.cookie || '';
-    for (const bagian of mentah.split(';')) {
-        const [k, ...v] = bagian.trim().split('=');
-        if (k === KUKI_NAMA) return decodeURIComponent(v.join('='));
-    }
-    return '';
-}
-function sesiSah(req) {
-    if (!PANEL_PASSWORD) return false;
-    const punya = kukiDari(req);
-    if (!punya) return false;
-    try { return crypto.timingSafeEqual(cap(punya), cap(kukiSah())); } catch { return false; }
-}
 
-// Satu jawaban untuk pertanyaan "boleh masuk?", dipakai gerbang halaman maupun
-// gerbang API. Tiga jalan: kuki sesi (manusia yang sudah masuk), sandi/token di
-// header (mesin, dan curl), atau ?token= di alamat (tautan yang sudah tersebar).
-function bolehMasuk(req) {
-    if (sesiSah(req)) return true;
-    const h = req.headers.authorization;
-    const q = req.query ? req.query.token : undefined;
-    return tokenMatches(h) || tokenMatches(q) || passwordMatches(h) || passwordMatches(q);
-}
 
-// ── Rem percobaan token ──────────────────────────────────────────────────────
-// Satu token statis tanpa pembatasan laju artinya token boleh ditebak secepat
-// jaringan mengizinkan. Ini tidak mengubah kekuatan tokennya, tapi mengubah
-// tebakan dari "jutaan per jam" jadi segelintir — cukup untuk membuat penebakan
-// tidak praktis. Per-IP dan hanya di memori; restart membersihkannya, dan itu
-// tidak apa-apa karena serangan yang relevan berlangsung dalam hitungan menit.
-const AUTH_FAIL_MAX = Number(process.env.AUTH_FAIL_MAX || 10);
-const AUTH_FAIL_WINDOW_MS = Number(process.env.AUTH_FAIL_WINDOW_MINUTES || 5) * 60 * 1000;
-const authFails = new Map();   // ip → { count, first }
-setInterval(() => {
-    const now = Date.now();
-    for (const [ip, rec] of authFails) if (now - rec.first > AUTH_FAIL_WINDOW_MS) authFails.delete(ip);
-}, 60000).unref();
 
-function authBlocked(ip) {
-    const rec = authFails.get(ip);
-    if (!rec) return false;
-    if (Date.now() - rec.first > AUTH_FAIL_WINDOW_MS) { authFails.delete(ip); return false; }
-    return rec.count >= AUTH_FAIL_MAX;
-}
-function noteAuthFail(ip) {
-    const rec = authFails.get(ip);
-    if (!rec || Date.now() - rec.first > AUTH_FAIL_WINDOW_MS) {
-        authFails.set(ip, { count: 1, first: Date.now() });
-    } else {
-        rec.count++;
-        if (rec.count === AUTH_FAIL_MAX) console.warn(`[auth] ${ip} diblokir sementara setelah ${rec.count} token salah.`);
-    }
-}
 
-function requireAuth(req, res, next) {
-    const ip = req.ip || req.socket?.remoteAddress || 'unknown';
-    if (authBlocked(ip)) return res.status(429).json({ error: 'Terlalu banyak percobaan. Coba lagi beberapa menit lagi.' });
-    if (!bolehMasuk(req)) {
-        noteAuthFail(ip);
-        return res.status(401).json({ error: 'Unauthorized' });
-    }
-    next();
-}
 
-// ── Gerbang endpoint berbahaya (re-link/reset) ───────────────────────────────
-// Endpoint yang bisa MENGHAPUS SESI atau MENAUTKAN perangkat (reset/restart/
-// pairing-code) dikunci default. Selama token bot masih bisa bocor (mis. default
-// publik), tanpa gerbang ini penyerang bisa /reset → bot logout → /pairing-code →
-// ambil alih WhatsApp bisnis. Website normal TIDAK memakai endpoint ini.
-// Untuk re-link sah: set env ALLOW_RELINK=true di server sementara, lalu matikan lagi.
-function requireRelink(req, res, next) {
-    if (process.env.ALLOW_RELINK === 'true') return next();
-    return res.status(403).json({ error: 'Endpoint terkunci demi keamanan. Set ALLOW_RELINK=true di server bila memang mau re-link/reset.' });
-}
 
-// Sesi yang benar-benar tersimpan, dibaca dari disk — BUKAN dari waSocket, yang
-// null di sela sambung-ulang. `registered` sengaja tidak dipakai sebagai tanda:
-// sesi yang ditautkan lewat QR tetap `registered:false` padahal `me` sudah terisi
-// (sesi bot pertama persis begitu). Yang menandakan ada sesi adalah `me.id`.
-function sesiTersimpanAda() {
-    try {
-        const creds = JSON.parse(fs.readFileSync(path.join(AUTH_DIR, 'creds.json'), 'utf8'));
-        return !!creds?.me?.id;
-    } catch (_) { return false; }
-}
 
-// Gerbang khusus PEMULIHAN: menautkan ulang perangkat dan membuka sesi terkunci.
-// Bedanya dengan requireRelink — yang tetap menjaga /reset dan /restart — adalah
-// apa yang sedang dijaga. Gerbang itu ada untuk melindungi sesi yang masih HIDUP:
-// /reset menghapusnya, dan itulah langkah pertama pengambilalihan. Kalau sesinya
-// memang sudah mati (belum pernah tertaut, hilang, atau ditolak WhatsApp sampai
-// terkunci), tidak ada lagi yang bisa direbut — sementara pemiliknya justru sedang
-// paling butuh jalan masuk.
-//
-// Ini menutup jebakan yang nyata terjadi: bot pertama terkunci, tombol "Buka kunci"
-// di dashboard dijawab 403, dan satu-satunya jalan keluar adalah menyunting env di
-// server lalu restart — padahal restart menghapus penanda kunci (ia cuma di memori)
-// sehingga proses baru mengulang ketukan login pada nomor yang sedang dibatasi.
-// Pemilik yang hanya memegang dashboard tidak punya jalan keluar sama sekali.
-function requirePemulihan(req, res, next) {
-    if (process.env.ALLOW_RELINK === 'true') return next();
-    if (sesiTerkunci || sessionLostAt || (!connectedPhone && !sesiTersimpanAda())) return next();
-    return res.status(403).json({ error: 'Terkunci demi keamanan: sesi bot masih hidup, '
-        + 'jadi tidak ada yang perlu ditaut ulang. Set ALLOW_RELINK=true di server bila memang mau.' });
-}
 
-// ── Health check (public, untuk Railway health check) ────────────────────────
-app.get('/health', (req, res) => {
-    // Definisinya disamakan persis dengan /status — dulu /health cuma cek `waSocket`
-    // tanpa `connectedPhone`, jadi bisa bilang sehat padahal login belum selesai.
-    const isConnected = !!(waSocket && connectedPhone && !currentQR);
-    // Endpoint publik — JANGAN bocorkan nomor telepon di sini.
-    res.status(isConnected ? 200 : 503).json({
-        ok: isConnected,
-        uptime: Math.floor(process.uptime()),
-        // Dibaca penjaga-bot.sh: sesi terkunci berarti yang dibutuhkan tangan
-        // manusia, dan restart proses hanya menambah ketukan yang sia-sia.
-        terkunci: sesiTerkunci,
-        // Sama alasannya: perangkat belum tertaut dan bot sedang diam menunggu
-        // ada yang memindai. Proses baru tidak memindai QR-nya sendiri.
-        menungguPindai,
-    });
-});
 
-// ── Pintu masuk panel ────────────────────────────────────────────────────────
-// Sebelum ini setiap halaman meminta token 48 karakter ditempel sendiri-sendiri.
-// Sekarang sandi diketik SEKALI di sini dan kukinya berlaku untuk semua halaman
-// maupun semua panggilan API dari halaman itu.
-//
-// Rutenya sendiri publik — pintu yang butuh kunci untuk dilihat bukan pintu.
-app.get('/masuk', (req, res) => {
-    if (bolehMasuk(req)) return res.redirect(302, amanTujuan(req.query.next));
-    res.type('html').send(halamanMasuk(req.query.next, null));
-});
 
-app.post('/masuk', (req, res) => {
-    const ip = req.ip || req.socket?.remoteAddress || 'unknown';
-    if (authBlocked(ip)) return res.status(429).type('html').send(halamanMasuk(req.body?.next, 'Terlalu banyak percobaan. Coba lagi beberapa menit lagi.'));
 
-    if (!PANEL_PASSWORD) {
-        return res.status(503).type('html').send(halamanMasuk(req.body?.next, 'Sandi panel belum dipasang di server (PANEL_PASSWORD kosong). Sementara ini pakai token.'));
-    }
-    if (!passwordMatches(req.body?.sandi)) {
-        noteAuthFail(ip);
-        return res.status(401).type('html').send(halamanMasuk(req.body?.next, 'Sandi salah.'));
-    }
-    res.cookie(KUKI_NAMA, kukiSah(), {
-        httpOnly: true,          // JavaScript halaman tidak perlu membacanya
-        sameSite: 'strict',      // kuki tidak ikut permintaan dari situs lain (anti-CSRF)
-        secure: true,            // hanya lewat https; seluruh panel memang di balik nginx TLS
-        maxAge: 30 * 24 * 60 * 60 * 1000,
-        path: '/',
-    });
-    res.redirect(302, amanTujuan(req.body?.next));
-});
 
-app.get('/keluar', (req, res) => {
-    res.clearCookie(KUKI_NAMA, { path: '/' });
-    res.redirect(302, '/masuk');
-});
 
-// Tujuan setelah masuk datang dari alamat, artinya dari luar. Terima HANYA jalur
-// internal: tanpa ini, /masuk?next=https://situs-jahat berubah jadi pengalihan
-// terbuka yang meminjam kredibilitas domain ini.
-function amanTujuan(n) {
-    const t = String(n || '/');
-    if (!t.startsWith('/') || t.startsWith('//')) return '/';
-    return t;
-}
 
-function halamanMasuk(next, galat) {
-    const tujuan = amanTujuan(next);
-    const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    return `<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Masuk — Bot USU Polmed</title>
-<meta name="robots" content="noindex, nofollow">
-<link rel="stylesheet" href="/assets/ui.css">
-<script>try{var t=localStorage.getItem('tema');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
-</head><body>
-<div class="wrap doc" style="max-width:26rem;margin-top:14vh">
-  <header style="text-align:center">
-    <div class="kicker">Panel Bot</div>
-    <h1 style="font-size:1.4rem">Masuk</h1>
-    <p class="muted">Satu sandi untuk semua halaman panel.</p>
-  </header>
-  <div class="card">
-    <form method="POST" action="/masuk">
-      <input type="hidden" name="next" value="${esc(tujuan)}">
-      <label for="sandi" class="muted" style="display:block;margin-bottom:6px;font-size:.85rem">Sandi</label>
-      <input id="sandi" name="sandi" type="password" autocomplete="current-password" autofocus required
-             style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;
-                    background:var(--sunk);color:var(--ink);font-size:1rem">
-      ${galat ? `<p style="color:var(--bad);font-size:.85rem;margin:10px 0 0">${esc(galat)}</p>` : ''}
-      <button class="btn primary wide" type="submit" style="margin-top:14px">Masuk</button>
-    </form>
-  </div>
-  <p class="muted tiny" style="text-align:center">
-    Satu-satunya halaman yang bisa dibuka tanpa sandi: <a href="/lomba">/lomba</a>.
-  </p>
-</div>
-</body></html>`;
-}
 
-// ── QR Page (public) ─────────────────────────────────────────────────────────
-app.get('/', requireAuthPage, (req, res) => {
-    res.sendFile(path.join(__dirname, 'halaman', 'dashboard.html'));
-});
-
-// ── Beranda (public) ─────────────────────────────────────────────────────────
-// Daftar tombol ke semua halaman & endpoint. Halamannya sendiri publik; data
-// yang butuh token tetap diambil lewat fetch ber-Authorization dari browser.
-app.get('/home', requireAuthPage, (req, res) => {
-    res.sendFile(path.join(__dirname, 'halaman', 'home.html'));
-});
-
-// ── Halaman catatan proyek (public) ──────────────────────────────────────────
-// Halaman baca panjang berisi detail proyek: masalah yang diangkat, arsitektur
-// dua-pintu (web + WhatsApp), keputusan desain gerbang titik, dan jejak perbaikan
-// keandalan. Sengaja disajikan dari bot, bukan dari situs utama — halaman yang
-// menceritakan bot ini pantas dilayani oleh bot itu sendiri.
-app.get('/projek', requireAuthPage, (req, res) => {
-    res.sendFile(path.join(__dirname, 'halaman', 'projek.html'));
-});
-
-app.get('/update', requireAuthPage, (req, res) => {
-    res.sendFile(path.join(__dirname, 'halaman', 'update.html'));
-});
-
-app.get('/lomba', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'lomba.html'));
-});
-
-// ── Migrasi database, siap salin (butuh token) ───────────────────────────────
-// Berkas migrasi gabungan itu 1.469 baris; menyalinnya dari terminal atau dari
-// tampilan berkas di GitHub selalu meleset sebagian. Halaman ini menyajikannya
-// dengan satu tombol salin, dan mengambil isinya lewat fetch() saat dibuka
-// supaya tidak ada salinan kedua yang perlahan berbeda dari yang di repo.
-//
-// Berkasnya SENGAJA tidak tinggal di public/. express.static melayani apa pun
-// di sana tanpa melewati gerbang mana pun, jadi menaruh migrasi.sql di public/
-// sambil memasang requireAuthPage di rute ini akan menghasilkan gerbang yang
-// bisa dilewati hanya dengan mengetik /migrasi.sql. Berkasnya di migrasi/,
-// di luar jangkauan static, dan satu-satunya jalan masuk adalah rute ini.
-//
-// Halaman ini membawa nama tabel, nama kolom, dan bentuk seluruh basis data —
-// peta yang mempersingkat pekerjaan siapa pun yang mencari celah. Token, dan
-// tetap noindex.
-app.get('/jalankan', requireAuthPage, (req, res) => {
-    res.sendFile(path.join(__dirname, 'jalankan.html'));
-});
 
 // ── Antrean notifikasi yang belum sampai (butuh token) ───────────────────────
 // Pemilik antreannya adalah tabel `wa_outbox` di Supabase, dan VPS ini TIDAK
@@ -1432,9 +1293,6 @@ app.get('/jalankan', requireAuthPage, (req, res) => {
 const SITUS_BASE = WEBHOOK_URL.replace(/\/api\/wa\/baileys\/?$/, '').replace(/\/$/, '');
 const SITUS_OUTBOX = `${SITUS_BASE}/api/admin/outbox`;
 
-app.get('/antrean', requireAuthPage, (req, res) => {
-    res.sendFile(path.join(__dirname, 'antrean.html'));
-});
 
 // Proxy tipis. Dijaga requireAuth supaya token bot tidak pernah perlu ada di
 // JavaScript halaman — yang keluar dari peramban cuma ?token= milik halaman itu
@@ -1458,18 +1316,7 @@ async function terusanOutbox(req, res, init) {
     }
 }
 
-app.get('/antrean/data', requireAuth, (req, res) => {
-    const status = encodeURIComponent(String(req.query.status || 'tertunda'));
-    return terusanOutbox(req, res, { url: `${SITUS_OUTBOX}?status=${status}&limit=200`, method: 'GET' });
-});
 
-app.post('/antrean/kirim', requireAuth, (req, res) => {
-    return terusanOutbox(req, res, {
-        url: SITUS_OUTBOX,
-        method: 'POST',
-        body: JSON.stringify(req.body || {}),
-    });
-});
 
 // ── Antrean MILIK BOT INI (outbox.json) ──────────────────────────────────────
 // Ada DUA antrean, dan halaman /antrean dulu cuma memperlihatkan salah satunya.
@@ -1496,106 +1343,7 @@ function idTugas(t) {
     return t.id;
 }
 
-app.get('/antrean/lokal', requireAuth, (req, res) => {
-    const sekarang = Date.now();
-    const items = messageQueue.map((t) => ({
-        id: idTugas(t),
-        jid: t.jid,
-        message: t.poll ? `[poll] ${t.poll.name || ''}` : (t.message || ''),
-        url: t.url || null,
-        ts: t.ts || null,
-        kedaluwarsa: (t.ts || sekarang) + (t.ttl || TTL_BALASAN_MS),
-        percobaan: t.attempts || 0,
-        grup: String(t.jid || '').includes('@g.us'),
-    }));
-    simpanOutbox();
-    // Buang catatan yang sudah lewat 14 hari sebelum menjawab, supaya daftarnya
-    // tidak pelan-pelan jadi arsip yang tak pernah dibaca.
-    const batasCatatan = Date.now() - DIBUANG_TTL_MS;
-    if (dibuangList.some((d) => (d.dibuangAt || 0) < batasCatatan)) {
-        dibuangList = dibuangList.filter((d) => (d.dibuangAt || 0) >= batasCatatan);
-        simpanDibuang();
-    }
-    res.json({
-        ok: true,
-        // Kenapa antreannya belum berangkat — pertanyaan pertama siapa pun yang
-        // melihat daftar ini, dan jawabannya tidak boleh perlu dicari di halaman lain.
-        siap: botSiap(),
-        tersambung: socketAlive(),
-        menungguPindai,
-        terkunci: sesiTerkunci,
-        sebab: botSiap() ? null
-            : sesiTerkunci ? 'Sesi WhatsApp terkunci — perlu dibuka dari dashboard.'
-            : menungguPindai ? 'Perangkat belum tertaut — QR/pairing menunggu dipindai.'
-            : 'WhatsApp belum tersambung.',
-        tertunda: items.length,
-        items,
-        // Bukan antrean: pesan yang sudah TIDAK akan berangkat sendiri. Dipajang
-        // supaya kehilangan yang sudah terjadi tetap punya jejak yang bisa dilihat.
-        dibuang: dibuangList.slice(0, 50),
-        dibuangTotal: dibuangList.length,
-    });
-});
 
-// Yang bisa dilakukan di sini cuma dua, dan keduanya jujur soal batasnya:
-// "kirim sekarang" hanya membangunkan antrean (pengirimannya tetap butuh WA
-// tersambung — tidak ada tombol yang bisa menyambungkannya), dan "hapus"
-// membuang pesan yang memang sudah tidak pantas berangkat.
-app.post('/antrean/lokal', requireAuth, (req, res) => {
-    const b = req.body || {};
-    if (b.hapus) {
-        const sebelum = messageQueue.length;
-        const sisa = messageQueue.filter((t) => idTugas(t) !== String(b.hapus));
-        messageQueue.length = 0;
-        messageQueue.push(...sisa);
-        simpanOutbox();
-        return res.json({ ok: true, dihapus: sebelum - messageQueue.length, sisa: messageQueue.length });
-    }
-    if (b.hapus_semua) {
-        const dihapus = messageQueue.length;
-        messageQueue.length = 0;
-        simpanOutbox();
-        return res.json({ ok: true, dihapus, sisa: 0 });
-    }
-    // Kirim ulang satu pesan yang sudah dibuang: masuk ke antrean sebagai pesan
-    // BARU (ts sekarang), karena kalau ts lamanya ikut, ia langsung dibuang lagi
-    // oleh pemeriksaan kedaluwarsa yang sama yang membuangnya pertama kali.
-    if (b.ulang) {
-        const c = dibuangList.find((d) => d.id === String(b.ulang));
-        if (!c) return res.status(404).json({ error: 'Catatan tidak ditemukan.' });
-        if (messageQueue.length >= OUTBOX_MAX) {
-            return res.status(503).json({ error: 'Antrean penuh — coba lagi setelah antrean berkurang.' });
-        }
-        messageQueue.push({ jid: c.jid, message: c.message, url: c.url || undefined, ts: Date.now(), ttl: OUTBOX_TTL_MS });
-        dibuangList = dibuangList.filter((d) => d.id !== c.id);
-        simpanOutbox();
-        simpanDibuang();
-        kickQueue();
-        return res.json({ ok: true, diantrekan: 1, sisa: messageQueue.length, siap: botSiap() });
-    }
-    if (b.hapus_catatan) {
-        const sebelum = dibuangList.length;
-        dibuangList = dibuangList.filter((d) => d.id !== String(b.hapus_catatan));
-        simpanDibuang();
-        return res.json({ ok: true, dihapusCatatan: sebelum - dibuangList.length });
-    }
-    if (b.bersihkan_catatan) {
-        const dihapusCatatan = dibuangList.length;
-        dibuangList = [];
-        simpanDibuang();
-        return res.json({ ok: true, dihapusCatatan });
-    }
-    if (b.kirim) {
-        if (!botSiap()) {
-            return res.status(409).json({
-                error: 'WhatsApp belum tersambung — antrean tetap disimpan dan berangkat sendiri begitu tersambung.',
-            });
-        }
-        kickQueue();
-        return res.json({ ok: true, dibangunkan: true, sisa: messageQueue.length });
-    }
-    return res.status(400).json({ error: 'Sebutkan hapus, hapus_semua, kirim, ulang, hapus_catatan, atau bersihkan_catatan.' });
-});
 
 // Teks biasa, bukan application/sql: kalau tipenya dibiarkan apa adanya,
 // peramban mengunduhnya alih-alih menampilkan, dan curl kehilangan gunanya.
@@ -1617,224 +1365,23 @@ for (const berkas of ['migrasi.sql', 'migrasi-keamanan.sql']) {
 // GitHub habis dalam hitungan menit.
 const REPO_BOT = 'jualbeliusupolmed-creator/wa-bot-usu';
 const REPO_SITUS = 'jualbeliusupolmed-creator/jualbeliusupolmed';
-const RIWAYAT_TTL_MS = Number(process.env.RIWAYAT_TTL_MENIT || 10) * 60 * 1000;
-let riwayatCache = { pada: 0, data: null };
 
-function riwayatBot(batas = 200) {
-    return new Promise((resolve) => {
-        // %x1f dan %x1e: pemisah unit & rekaman ASCII. Baris commit di repo ini
-        // memuat baris kosong, tanda hubung, dan tabel — pemisah yang "kelihatan"
-        // seperti --- pasti cepat atau lambat muncul di dalam pesan commit sendiri.
-        execFile('git', ['-C', __dirname, 'log', `-n${batas}`, '--no-color',
-            '--pretty=format:%H%x1f%aI%x1f%s%x1f%b%x1e'],
-        { maxBuffer: 8 * 1024 * 1024, timeout: 8000 }, (err, stdout) => {
-            if (err) return resolve([]);
-            resolve(String(stdout).split('\x1e').map((e) => e.trim()).filter(Boolean).map((entri) => {
-                const [sha, tanggal, judul, isi] = entri.split('\x1f');
-                return {
-                    sha: (sha || '').slice(0, 7), tanggal, judul,
-                    isi: (isi || '').trim(), repo: 'bot',
-                    url: `https://github.com/${REPO_BOT}/commit/${sha}`,
-                };
-            }));
-        });
-    });
-}
-
-async function riwayatSitus(batas = 100) {
-    // Tanpa token: 60 permintaan per jam per IP. Cukup, karena hasilnya di-cache.
-    const res = await fetch(`https://api.github.com/repos/${REPO_SITUS}/commits?per_page=${batas}`, {
-        headers: { 'User-Agent': 'wa-bot-usu', Accept: 'application/vnd.github+json' },
-        signal: AbortSignal.timeout(8000),
-    });
-    if (!res.ok) throw new Error(`GitHub ${res.status}`);
-    const data = await res.json();
-    return (Array.isArray(data) ? data : []).map((c) => {
-        const pesan = String(c?.commit?.message || '');
-        const pisah = pesan.indexOf('\n');
-        return {
-            sha: String(c.sha || '').slice(0, 7),
-            tanggal: c?.commit?.author?.date || c?.commit?.committer?.date || null,
-            judul: pisah === -1 ? pesan : pesan.slice(0, pisah),
-            isi: pisah === -1 ? '' : pesan.slice(pisah + 1).trim(),
-            repo: 'situs',
-            url: c.html_url || `https://github.com/${REPO_SITUS}/commit/${c.sha}`,
-        };
-    });
-}
-
-app.get('/riwayat', requireAuthPage, async (req, res) => {
-    if (riwayatCache.data && Date.now() - riwayatCache.pada < RIWAYAT_TTL_MS) {
-        return res.json({ ...riwayatCache.data, dariCache: true });
-    }
-    const bot = await riwayatBot();
-    let situs = [];
-    let galatSitus = null;
-    try {
-        situs = await riwayatSitus();
-    } catch (e) {
-        galatSitus = e.message;
-        // GitHub mati bukan alasan menampilkan halaman kosong: riwayat situs yang
-        // terakhir berhasil diambil masih jauh lebih berguna daripada tidak ada.
-        if (riwayatCache.data?.situs?.length) situs = riwayatCache.data.situs;
-    }
-    const data = { bot, situs, galatSitus, diambil: new Date().toISOString() };
-    riwayatCache = { pada: Date.now(), data };
-    res.json({ ...data, dariCache: false });
+// ── Rute halaman ─────────────────────────────────────────────────────────────
+// Semua yang menjawab dengan HTML tinggal di src/routes/web.routes.js.
+require('./src/routes/web.routes')(app, {
+    AKAR: __dirname, WEBHOOK_URL, API_TOKEN, REPO_BOT, REPO_SITUS,
+    PANEL_PASSWORD, KUKI_NAMA,
+    requireAuthPage, bolehMasuk, halamanMasuk, amanTujuan,
+    authBlocked, noteAuthFail, passwordMatches, kukiSah,
 });
 
-// ── QR JSON endpoint (untuk admin panel web) ─────────────────────────────────
-app.get('/qr', requireAuth, async (req, res) => {
-    if (!currentQR) {
-        // Membuka kartu QR itu sendiri tandanya: kalau bot sedang diam menunggu
-        // ditautkan, permintaan inilah yang membangunkannya. Dulu di sini selalu
-        // dijawab `connected: true` — padahal "tidak ada QR" juga berarti belum
-        // tersambung sama sekali, dan dashboard jadi tidak bisa membedakannya.
-        const dibangunkan = bangunkanPindai();
-        const tersambung = !!(waSocket && connectedPhone);
-        return res.json({ qr: null, connected: tersambung, menyiapkan: dibangunkan || !tersambung });
-    }
-    try {
-        const qrImage = await QRCode.toDataURL(currentQR, { width: 300 });
-        res.json({ qr: qrImage, connected: false });
-    } catch (err) {
-        res.status(500).json({ error: 'Gagal generate QR' });
-    }
-});
 
-// ── Status endpoint ───────────────────────────────────────────────────────────
-app.get('/status', requireAuth, (req, res) => {
-    // Konversi eksplisit ke boolean agar tidak pernah null/undefined
-    const isConnected = !!(waSocket && connectedPhone && !currentQR);
-    res.json({
-        connected: isConnected,
-        phone: connectedPhone || null,
-        connectedAt: connectedAt || null,
-        hasQR: !!currentQR,
-        qr: currentQR, // Tambahkan raw QR string agar bisa di-debug jika perlu
-        uptime: Math.floor(process.uptime()),
-        webhookUrl: WEBHOOK_URL,
-        queueLength: messageQueue.length,
-        // Kesehatan koneksi — supaya bot mati tidak perlu ditemukan lewat `pm2 logs`.
-        offlineSince: offlineSince ? new Date(offlineSince).toISOString() : null,
-        lastOutage,
-        outageCount,
-        reconnectAttempts,
-        // Restart darurat karena padam berkepanjangan: 0 = belum pernah, angka naik
-        // = bot sedang berjuang. Ambangnya ikut dilaporkan supaya jelas kapan
-        // eskalasi berikutnya jatuh tanpa perlu menghitung sendiri.
-        offlineEscalations,
-        escalationThresholdMinutes: Math.round(ambangEskalasiMs() / 60000),
-        // Kapan perangkat terakhir benar-benar dilepas WhatsApp (butuh scan ulang).
-        // null artinya sesi masih utuh — putus koneksi biasa tidak mengisi ini.
-        sessionLostAt,
-        sesiTerkunci,
-        kunciSesiAktif: KUNCI_SESI,
-        kunciRetryMenit: Math.round(kunciRetryMs() / 60000),
-        // Perangkat belum tertaut dan bot berhenti mengetuk sampai ada yang siap
-        // memindai. Dashboard memakai ini untuk menawarkan tombol "Tampilkan QR".
-        menungguPindai,
-        siklusQrSiaSia,
-        pindaiRetryMenit: Math.round(PINDAI_RETRY_MS / 60000),
-        logoutStrikes,
-        // Ringkasan hari ini, biar dashboard tidak perlu dua panggilan untuk kartu utama.
-        today: stats.daily[statsDay()] || {},
-        archiveCount: msgArchive.length,
-        chatCount: chatMap.size,
-        greetingCustom: greetingText !== DEFAULT_GREETING,
-        // Berapa kali sapaan lama website dicegat sejak proses hidup. Angka yang
-        // mandek di 0 padahal sapaan lama masih muncul di HP = penandanya meleset.
-        legacyGreetingSwaps,
-    });
-});
 
-// ── Logs endpoint ─────────────────────────────────────────────────────────────
-app.get('/logs', requireAuth, (req, res) => {
-    res.json({ logs: systemLogs });
-});
 
-// ── Halaman laporan analisis ─────────────────────────────────────────────────
-// Ada DUA berkas, dan bedanya disengaja:
-//
-//   laporan-publik.html — /laporan, tanpa token. Temuan bisnis & performa utuh,
-//       tapi cara menembus keamanan bot dibuang. Sebuah halaman publik yang
-//       menuliskan "endpoint X cuma dijaga satu token dan tidak dibatasi laju"
-//       berhenti jadi laporan audit dan berubah jadi petunjuk serangan.
-//
-//   laporan.html — /laporan/penuh, wajib token. Versi lengkap untuk admin.
-//
-// Keduanya di root proyek, BUKAN di public/, supaya express.static tidak diam-diam
-// menyajikan versi lengkapnya ke siapa saja.
-//
-// Token boleh lewat query string KHUSUS di rute penuh: tautan yang diklik dari
-// browser tidak bisa membawa header Authorization. Konsekuensinya token ikut
-// tercatat di riwayat browser, jadi tautan /laporan/penuh jangan disebar.
-function requireAuthPage(req, res, next) {
-    const ip = req.ip || req.socket?.remoteAddress || 'unknown';
-    if (authBlocked(ip)) return res.status(429).type('html').send('<!doctype html><meta charset="utf-8"><title>429</title><body style="font:16px/1.6 system-ui;max-width:34rem;margin:18vh auto"><h1 style="font-size:1.25rem">Terlalu banyak percobaan</h1><p>Coba lagi beberapa menit lagi.</p></body>');
-    if (bolehMasuk(req)) {
-        // Masuk lewat ?token= / sandi di alamat: tukar jadi kuki sekalian.
-        // Tanpa ini halaman lolos gerbang tapi fetch()-nya sendiri tidak —
-        // /update mengambil /riwayat lewat JavaScript, dan JavaScript tidak
-        // ikut membawa ?token= milik halamannya. Hasilnya halaman terbuka
-        // dengan linimasa kosong, yang jauh lebih membingungkan daripada
-        // ditolak terang-terangan.
-        if (PANEL_PASSWORD && !sesiSah(req)) {
-            res.cookie(KUKI_NAMA, kukiSah(), {
-                httpOnly: true, sameSite: 'strict', secure: true,
-                maxAge: 30 * 24 * 60 * 60 * 1000, path: '/',
-            });
-        }
-        return next();
-    }
-    // Belum masuk bukan kesalahan yang perlu diomeli — antar saja ke pintunya,
-    // sambil mengingat halaman yang tadi dituju supaya ia tidak hilang.
-    // noteAuthFail() TIDAK dipanggil di sini: yang barusan terjadi cuma
-    // "belum punya kuki", dan menghitungnya sebagai percobaan gagal akan
-    // memblokir orang yang bahkan belum sempat mengetik apa pun.
-    const tujuan = encodeURIComponent(req.originalUrl || '/');
-    res.redirect(302, '/masuk?next=' + tujuan);
-}
-// Versi lengkap — admin saja.
-app.get('/laporan/penuh', requireAuthPage, (req, res) => {
-    res.sendFile(path.join(__dirname, 'laporan.html'));
-});
-// Versi publik — tanpa token, boleh dibagikan.
-app.get('/laporan', requireAuthPage, (req, res) => {
-    // Dulu di sini ada percabangan tamu/admin, karena halamannya publik. Sejak
-    // seluruh panel butuh sandi, siapa pun yang sampai ke baris ini SUDAH admin —
-    // percabangan itu tinggal jebakan: sesi berkuki lolos gerbang lalu gagal di
-    // pemeriksaan token dan disuguhi versi publik seolah ia orang asing.
-    res.sendFile(path.join(__dirname, 'laporan.html'));
-});
-// Menebak '/laporan.html' itu refleks yang wajar — dan tanpa ini jawabannya cuma
-// "Cannot GET" dari Express, yang bikin orang mengira halamannya belum ada.
-app.get('/laporan.html', requireAuthPage, (req, res) => {
-    const q = req.query.token ? '?token=' + encodeURIComponent(req.query.token) : '';
-    res.redirect(301, '/laporan' + q);
-});
 
-// ── Resolve @lid → nomor (admin) ─────────────────────────────────────────────
-// Untuk migrasi data lama ber-key LID: tanya pemetaan LID↔nomor langsung ke
-// WhatsApp (getPNForLID). Hasil dipakai POST /api/admin/migrate-lid di website.
-app.get('/resolve-lid', requireAuth, async (req, res) => {
-    if (!botSiap()) return res.status(503).json({ error: 'Bot belum tersambung' });
-    const digits = String(req.query.lid || '').split('@')[0].replace(/\D/g, '');
-    if (!digits) return res.status(400).json({ error: 'param ?lid= wajib' });
-    const lidJid = digits + '@lid';
-    const cached = lidMap.get(lidJid) || lidResolutionMap.get(lidJid) || null;
-    let phone = cached;
-    if (!phone) {
-        try {
-            const pn = await waSocket.signalRepository?.lidMapping?.getPNForLID?.(lidJid);
-            if (pn && pn.endsWith('@s.whatsapp.net')) phone = pn;
-        } catch (e) {
-            return res.status(500).json({ error: e.message });
-        }
-    }
-    if (phone && !lidResolutionMap.has(lidJid)) { lidResolutionMap.set(lidJid, phone); saveLidResolutionMap(); }
-    res.json({ lid: lidJid, phone: phone || null, source: phone ? (cached ? 'cache' : 'query') : null });
-});
+
+
+
 
 // ── Groups endpoint ───────────────────────────────────────────────────────────
 // Hasil di-cache. groupFetchAllParticipating() itu panggilan ke server WhatsApp,
@@ -1844,183 +1391,16 @@ app.get('/resolve-lid', requireAuth, async (req, res) => {
 const GROUPS_TTL_MS = Number(process.env.GROUPS_TTL_MINUTES || 5) * 60 * 1000;
 let groupsCache = { at: 0, data: null };
 
-app.get('/groups', requireAuth, async (req, res) => {
-    const fresh = req.query.fresh === '1';
-    if (!fresh && groupsCache.data && Date.now() - groupsCache.at < GROUPS_TTL_MS) {
-        return res.json({ groups: groupsCache.data, cached: true, age: Date.now() - groupsCache.at });
-    }
-    // botSiap(), bukan sekadar `waSocket`: selama menunggu QR dipindai socket-nya
-    // sudah terbuka tapi belum login, dan groupFetchAllParticipating() akan
-    // menggantung sampai klien menyerah — cache basi jauh lebih berguna daripada
-    // permintaan yang tidak pernah dijawab.
-    if (!botSiap()) {
-        // Bot lagi putus? Sajikan cache lama daripada gagal total.
-        if (groupsCache.data) return res.json({ groups: groupsCache.data, cached: true, stale: true, age: Date.now() - groupsCache.at });
-        return res.status(503).json({ error: 'Bot not connected' });
-    }
-    try {
-        const chats = await waSocket.groupFetchAllParticipating();
-        const groups = Object.entries(chats).map(([jid, meta]) => ({
-            jid,
-            name: meta.subject || 'Tanpa Nama',
-            participants: meta.participants?.length || 0,
-            isAdmin: meta.participants?.some(p =>
-                p.id === waSocket.user?.id && (p.admin === 'admin' || p.admin === 'superadmin')
-            ) || false,
-        }));
-        groupsCache = { at: Date.now(), data: groups };
-        res.json({ groups, cached: false });
-    } catch (err) {
-        // Rate limit WhatsApp jangan menghapus daftar yang sudah pernah berhasil.
-        if (groupsCache.data) {
-            return res.json({ groups: groupsCache.data, cached: true, stale: true, error: err.message, age: Date.now() - groupsCache.at });
-        }
-        res.status(500).json({ error: err.message });
-    }
-});
 
-// ── Chats / Kontak endpoint ───────────────────────────────────────────────────
-app.get('/chats', requireAuth, (req, res) => {
-    // Tetap kembalikan data dari cache meski bot sedang reconnecting
-    const list = Array.from(chatMap.values())
-        .filter(c => c.jid.endsWith('@s.whatsapp.net') || c.jid.endsWith('@lid'))
-        .sort((a, b) => (b.lastTime || 0) - (a.lastTime || 0));
-    res.json({ chats: list, connected: !!(waSocket && connectedPhone) });
-});
 
-// ── Messages endpoint (riwayat pesan per JID dari arsip persisten) ───────────
-// Dulu endpoint ini membaca messageLog (100 entri, in-memory, semua ditandai
-// fromMe:false). Sekarang dari msgArchive: dua arah, isi penuh, selamat dari restart.
-app.get('/messages', requireAuth, (req, res) => {
-    const { jid } = req.query;
-    if (!jid) return res.status(400).json({ error: 'jid required' });
-    const limit = Math.min(Number(req.query.limit) || 200, 500);
-    const msgs = msgArchive
-        .filter(m => m.jid === jid)
-        .slice(-limit)
-        .map((m, i) => ({
-            id: i,
-            text: m.text || '',
-            type: m.type,
-            fromMe: m.dir === 'out',
-            time: m.time,
-            timestamp: m.time ? Math.floor(new Date(m.time).getTime() / 1000) : 0,
-        }));
-    res.json({ messages: msgs, count: msgs.length });
-});
 
-// ── Statistik gerbang ────────────────────────────────────────────────────────
-app.get('/stats', requireAuth, (req, res) => {
-    const days = Object.keys(stats.daily).sort();
-    res.json({
-        total: stats.total,
-        today: stats.daily[statsDay()] || {},
-        daily: stats.daily,
-        days,
-        archive: { messages: msgArchive.length, cap: MSG_ARCHIVE_CAP },
-        since: days[0] || statsDay(),
-    });
-});
 
-// ── Pengaturan sapaan ────────────────────────────────────────────────────────
-app.get('/settings', requireAuth, (req, res) => {
-    res.json({
-        greeting: greetingText,
-        isCustom: greetingText !== DEFAULT_GREETING,
-        default: DEFAULT_GREETING,
-        adminCallWords: [...ADMIN_CALL_WORDS],
-        botPrefix: BOT_PREFIX,
-        max: GREETING_MAX,
-        ownerNumber: nomorAlarm(),
-        // Dibedakan supaya dashboard bisa jujur: kotak yang terlihat terisi tapi
-        // nilainya datang dari env bukan berarti sudah pernah disimpan di sini.
-        ownerFromEnv: !settings.ownerNumber && !!OWNER_NUMBER,
-        backupAdmin: nomorCadangan(),
-    });
-});
 
-// Kedua nomor disimpan lewat satu endpoint: keduanya bagian dari satu keputusan
-// ("siapa yang dihubungi kalau bot bermasalah"), dan menyimpannya sekali jalan
-// menghindari keadaan setengah tersimpan.
-app.post('/settings/nomor', requireAuth, (req, res) => {
-    const hasil = {};
-    for (const [field, kunci, label] of [
-        ['owner', 'ownerNumber', 'Nomor alarm'],
-        ['cadangan', 'backupAdmin', 'Nomor cadangan'],
-    ]) {
-        if (!(field in (req.body || {}))) continue;
-        const nomor = normalisasiNomor(req.body[field]);
-        if (nomor === null) return res.status(400).json({ error: `${label} tidak sah — pakai format 62xxx atau 08xxx.` });
-        if (nomor) settings[kunci] = nomor; else delete settings[kunci];
-        hasil[kunci] = nomor;
-    }
-    saveSettings();
-    console.log(`[settings] Nomor penting diubah dari dashboard: ${JSON.stringify(hasil)}`);
-    res.json({ ok: true, ownerNumber: nomorAlarm(), backupAdmin: nomorCadangan() });
-});
 
-// ── Modul bot (panggilan, anti-ban, forensik) ────────────────────────────────
-// Ini jendela yang dipakai panel "WhatsApp Bot" di situs. Sebelumnya panel itu
-// menyimpan setelannya ke Supabase dan berhenti di sana; sekarang setelannya
-// mendarat di sini, di proses yang benar-benar memegang koneksi WhatsApp.
-app.get('/modul', requireAuth, (req, res) => {
-    res.json({ ok: true, modul: semuaModul(), bawaan: MODUL_BAWAAN });
-});
 
-app.post('/modul', requireAuth, (req, res) => {
-    const masuk = req.body || {};
-    // Panel bisa mengirim satu kelompok saja ({panggilan:{...}}) atau beberapa
-    // sekaligus. Yang tidak dikirim tidak disentuh — dulu tiap panel menimpa
-    // seluruh isi `bot_modules`, jadi menyimpan Anti-Ban menghapus setelan
-    // Panggilan yang baru saja disimpan sebelahnya.
-    const diubah = [];
-    settings.modul = settings.modul || {};
-    for (const nama of Object.keys(MODUL_BAWAAN)) {
-        if (!(nama in masuk)) continue;
-        const bersih = bersihkanModul(nama, masuk[nama]);
-        if (!bersih) return res.status(400).json({ error: `Isi modul "${nama}" tidak sah.` });
-        settings.modul[nama] = { ...(settings.modul[nama] || {}), ...bersih };
-        diubah.push(nama);
-    }
-    if (!diubah.length) return res.status(400).json({ error: 'Tidak ada modul yang dikenali di badan permintaan.' });
-    saveSettings();
-    console.log(`[modul] Diubah dari panel: ${diubah.join(', ')}`);
-    res.json({ ok: true, modul: semuaModul(), diubah });
-});
 
-// ── Kontak admin untuk situs (publik) ────────────────────────────────────────
-// Situs jualbeliusupolmed dipasang di Vercel, jadi ia tidak bisa mengintip
-// proses ini; endpoint inilah jendelanya. Sengaja TIDAK memuat nomor utama —
-// situs sudah tahu nomornya sendiri, dan /health pun dijaga tidak membocorkan
-// nomor bot. Yang dibagikan cuma dua hal yang memang perlu diketahui publik:
-// bot sedang sehat atau tidak, dan ke mana harus lari kalau tidak.
-app.get('/kontak-admin', (req, res) => {
-    res.set('Access-Control-Allow-Origin', '*');   // dibaca dari domain situs
-    res.set('Cache-Control', 'no-store');          // situs yang mengatur cache-nya
-    res.json({
-        sehat: !!(waSocket && connectedPhone && !currentQR),
-        cadangan: nomorCadangan() || null,
-    });
-});
 
-app.post('/settings/greeting', requireAuth, (req, res) => {
-    const text = String(req.body?.text ?? '');
-    if (!text.trim()) return res.status(400).json({ error: 'Teks sapaan tidak boleh kosong' });
-    if (text.length > GREETING_MAX) return res.status(400).json({ error: `Maksimal ${GREETING_MAX} karakter` });
-    greetingText = text;
-    settings.greeting = text;
-    saveSettings();
-    console.log(`[settings] Sapaan diubah dari dashboard (${text.length} karakter).`);
-    res.json({ ok: true, greeting: greetingText });
-});
 
-app.post('/settings/greeting/reset', requireAuth, (req, res) => {
-    greetingText = DEFAULT_GREETING;
-    delete settings.greeting;
-    saveSettings();
-    console.log('[settings] Sapaan dikembalikan ke bawaan.');
-    res.json({ ok: true, greeting: greetingText });
-});
 
 // ── Newsletters / Channels endpoint ──────────────────────────────────────────
 const NEWSLETTER_FILE = path.join(DATA_DIR, 'newsletters.json');
@@ -2066,43 +1446,8 @@ function saveStatus(data) {
     catch (e) { console.error('[status] gagal simpan:', e.message); }
 }
 
-app.get('/newsletters', requireAuth, async (req, res) => {
-    if (!botSiap()) return res.status(503).json({ error: 'Bot not connected' });
-    res.json({ newsletters: getSavedNewsletters() });
-});
 
-app.post('/newsletters/add', requireAuth, async (req, res) => {
-    if (!botSiap()) return res.status(503).json({ error: 'Bot not connected' });
-    const { invite } = req.body;
-    if (!invite) return res.status(400).json({ error: 'Invite link required' });
-    try {
-        let code = invite;
-        if (invite.includes('whatsapp.com/channel/')) {
-            code = invite.split('whatsapp.com/channel/')[1].split('?')[0].split('/')[0];
-        }
-        const meta = await waSocket.newsletterMetadata('invite', code);
-        if (!meta || !meta.id) throw new Error('Saluran tidak ditemukan atau bot tidak memiliki akses.');
-        const data = {
-            jid: meta.id,
-            name: meta.name || 'Tanpa Nama',
-            description: meta.description?.text || meta.description || '',
-            subscribers: meta.subscribers || 0,
-            addedAt: new Date().toISOString()
-        };
-        saveNewsletter(data);
-        res.json({ success: true, data });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
 
-// ── Riwayat pesan masuk (in-memory) ──────────────────────────────────────────
-// Dulu ini juga didaftarkan sebagai GET /logs — nama yang sudah dipakai endpoint
-// log sistem di atas, jadi Express selalu memilih yang pertama dan handler ini
-// mati total. Diberi path sendiri supaya benar-benar bisa dipanggil.
-app.get('/message-log', requireAuth, (req, res) => {
-    res.json({ logs: messageLog });
-});
 
 // Keluar setelah tulisan sesi yang masih di udara selesai. process.exit() polos
 // bisa memotong penulisan creds.json di tengah jalan — file sesi jadi separuh dan
@@ -2121,6 +1466,7 @@ function bangunkanPindai() {
     if (!menungguPindai) return false;
     menungguPindai = false;
     siklusQrSiaSia = 0;
+    simpanPindaiState();
     console.log('[pindai] Ada yang membuka kartu QR — menyiapkan QR baru sekarang.');
     // startBot() menolak jalan ganda (startingBot) dan menaikkan botGeneration,
     // jadi timer denyut lambat yang masih menggantung otomatis jadi tidak berlaku.
@@ -2163,41 +1509,9 @@ function watchProlongedOutage() {
     exitAfterFlush(1);
 }
 
-// ── Restart endpoint ──────────────────────────────────────────────────────────
-app.post('/restart', requireAuth, requireRelink, (req, res) => {
-    res.json({ ok: true, message: 'Bot akan restart dalam 1 detik...' });
-    setTimeout(() => exitAfterFlush(1), 1000);
-});
 
-// ── Reset / Hapus sesi ────────────────────────────────────────────────────────
-app.get('/reset', requireAuth, requireRelink, async (req, res) => {
-    try { await clearAuthState(); } catch (e) { console.error('[reset] gagal hapus sesi:', e); }
-    res.send('Sesi dihapus. Restarting...');
-    setTimeout(() => exitAfterFlush(1), 1000);
-});
 
-app.post('/reset', requireAuth, requireRelink, async (req, res) => {
-    try { await clearAuthState(); } catch (e) { console.error('[reset] gagal hapus sesi:', e); }
-    res.json({ ok: true, message: 'Sesi dihapus. Bot akan restart...' });
-    setTimeout(() => exitAfterFlush(1), 1000);
-});
 
-// ── Buka kunci sesi ──────────────────────────────────────────────────────────
-// Satu-satunya jalan sah membuang sesi yang sedang dikunci. Gerbangnya BUKAN
-// ALLOW_RELINK melainkan requirePemulihan: yang dibuang di sini adalah sesi yang
-// sudah ditolak WhatsApp berulang kali, jadi sesi hidup — hal yang dijaga
-// ALLOW_RELINK — memang sudah tidak ada. Lihat catatan di requirePemulihan.
-app.post('/sesi/buka-kunci', requireAuth, requirePemulihan, async (req, res) => {
-    if (!sesiTerkunci) return res.status(400).json({ error: 'Sesi sedang tidak terkunci.' });
-    console.warn('[sesi] Kunci dibuka dari dashboard — sesi dicadangkan, bot akan menampilkan QR.');
-    sessionLostAt = new Date().toISOString();
-    sesiTerkunci = false;
-    kunciSiklus = 0;
-    bump('sesi_hilang');
-    try { await clearAuthState(); } catch (e) { console.error('[sesi] gagal cadangkan sesi:', e); }
-    res.json({ ok: true, message: 'Kunci dibuka. Bot restart dan akan menampilkan QR.' });
-    setTimeout(() => exitAfterFlush(1), 1000);
-});
 
 // ── Jendela ke bot kedua ─────────────────────────────────────────────────────
 // Bot kedua adalah proses terpisah dengan folder data dan nomor WhatsApp sendiri,
@@ -2219,7 +1533,7 @@ async function teruskanKeBot2(jalur, opsi = {}) {
     try {
         const res = await fetch(`${BOT2_URL}${jalur}`, {
             method: opsi.method || 'GET',
-            headers: { Authorization: BOT2_TOKEN, 'Content-Type': 'application/json' },
+            headers: { Authorization: BOT2_TOKEN, 'Content-Type': 'application/json', ...(opsi.headers || {}) },
             body: opsi.body ? JSON.stringify(opsi.body) : undefined,
             // Bot kedua ada di mesin yang sama; kalau ia tidak menjawab dalam 8 detik
             // ia memang mati, dan dashboard tidak boleh ikut menggantung karenanya.
@@ -2233,56 +1547,47 @@ async function teruskanKeBot2(jalur, opsi = {}) {
     }
 }
 
-app.get('/perangkat2/status', requireAuth, async (req, res) => {
+
+
+
+
+// ── Dua nomor, satu gerbang ──────────────────────────────────────────────────
+// Situs cuma tahu SATU alamat bot (BAILEYS_API_URL) dan alamat itu menunjuk ke
+// sini. Sampai 23 Agustus 2026 itu berarti: kalau sesi WhatsApp bot ini mati,
+// situs tidak bisa mengirim apa pun — walaupun perangkat kedua sedang sehat dan
+// justru memegang nomor yang dipajang situs. Malam 22→23 Agustus keadaan itu
+// benar-benar terjadi selama berjam-jam.
+//
+// Jadi /send sekarang bisa menyerahkan kirimannya ke perangkat kedua. Yang perlu
+// dijaga dua hal, dan keduanya lebih penting daripada fiturnya sendiri:
+//
+//   TIDAK BOLEH DOBEL     — kalau diteruskan, JANGAN juga diantre di sini.
+//   TIDAK BOLEH BERPUTAR  — bot kedua menjalankan berkas yang sama persis, jadi
+//                           ia bisa meneruskan balik. Penjaganya header
+//                           X-Diteruskan: permintaan yang sudah pernah
+//                           diteruskan tidak pernah diteruskan lagi.
+//
+// Statusnya di-cache sebentar: /send bisa dipanggil beruntun, dan menanyai bot
+// kedua lewat HTTP tiap kali cuma menambah lambat pada jalur yang justru sedang
+// dipakai karena ada yang mati.
+let bot2SiapCache = { pada: 0, siap: false };
+const BOT2_CACHE_MS = 15000;
+
+async function bot2Siap() {
+    if (!BOT2_TOKEN) return false;
+    if (Date.now() - bot2SiapCache.pada < BOT2_CACHE_MS) return bot2SiapCache.siap;
     const hasil = await teruskanKeBot2('/status');
-    res.status(hasil.status).json({ ...hasil.body, adaBot2: !!BOT2_TOKEN });
-});
+    const siap = hasil.status === 200 && !!hasil.body?.connected;
+    bot2SiapCache = { pada: Date.now(), siap };
+    return siap;
+}
 
-app.get('/perangkat2/qr', requireAuth, async (req, res) => {
-    const hasil = await teruskanKeBot2('/qr');
-    res.status(hasil.status).json(hasil.body);
-});
-
-app.post('/perangkat2/pairing-code', requireAuth, async (req, res) => {
-    const hasil = await teruskanKeBot2('/pairing-code', { method: 'POST', body: { phone: req.body?.phone } });
-    res.status(hasil.status).json(hasil.body);
-});
-
-// ── Pairing Code endpoint ─────────────────────────────────────────────────────
-app.post('/pairing-code', requireAuth, requirePemulihan, async (req, res) => {
-    try {
-        const { phone } = req.body;
-        if (!phone) return res.status(400).json({ error: 'Nomor HP wajib diisi' });
-        
-        if (!waSocket) {
-            // Minta kode pairing = ada orang yang sedang menautkan. Bangunkan dulu,
-            // lalu minta ia mencoba lagi sebentar — soket baru butuh beberapa detik.
-            const dibangunkan = bangunkanPindai();
-            return res.status(503).json({ error: dibangunkan
-                ? 'Bot tadi diam menunggu ditautkan. Koneksi sedang disiapkan — coba lagi ~15 detik.'
-                : 'Bot sedang tidak aktif/terhubung' });
-        }
-        
-        if (waSocket.authState.creds.registered || connectedPhone) {
-            return res.status(400).json({ error: 'Bot sudah login dan terdaftar' });
-        }
-        
-        // Bersihkan nomor (hilangkan +, spasi, -) dan ganti awalan 0 menjadi 62
-        let cleanPhone = phone.replace(/[^0-9]/g, '');
-        if (cleanPhone.startsWith('0')) cleanPhone = '62' + cleanPhone.slice(1);
-        
-        // Request kode pairing ke Baileys
-        let code = await waSocket.requestPairingCode(cleanPhone);
-        
-        // Format kode agar lebih mudah dibaca, misalnya: "ABCD-EFGH"
-        code = code?.match(/.{1,4}/g)?.join('-') || code;
-        
-        res.json({ ok: true, code });
-    } catch (e) {
-        console.error('Error request pairing code:', e);
-        res.status(500).json({ error: e.message || 'Gagal meminta kode pairing' });
-    }
-});
+// Nomor yang benar-benar mengirim, supaya pemanggilnya tidak perlu menebak dari
+// nomor mana pesannya muncul di layar pelanggan.
+async function nomorBot2() {
+    const hasil = await teruskanKeBot2('/status');
+    return hasil.status === 200 ? (hasil.body?.phone || '') : '';
+}
 
 // ── Sapaan lama dari website → diganti sapaan resmi bot ──────────────────────
 // Website punya jawaban cadangan sendiri ("Halo! 👋 Ketik salah satu perintah…")
@@ -2324,68 +1629,6 @@ function enrichDicariMessage(text, jid) {
     return text.replace(DICARI_LINK_MARK, DICARI_LINK_MARK + DICARI_JUAL_SUFFIX);
 }
 
-// ── Send message endpoint ─────────────────────────────────────────────────────
-app.post('/send', requireAuth, async (req, res) => {
-    const { target, url } = req.body;
-    if (!target) return res.status(400).json({ error: 'Target required' });
-
-    const jid = toJid(target);
-    const message = enrichDicariMessage(swapLegacyGreeting(req.body.message, jid), jid);
-
-    // Masa berlaku ditentukan PEMANGGIL, karena hanya dia yang tahu pesannya
-    // masih berguna atau tidak kalau terlambat. Notifikasi penjualan: berhari-hari.
-    // Kode OTP: beberapa menit, lewat dari itu ia sampah yang membingungkan.
-    const ttlDetik = Number(req.body.ttlDetik);
-    const ttl = Number.isFinite(ttlDetik) && ttlDetik > 0
-        ? Math.min(ttlDetik * 1000, OUTBOX_TTL_MS)
-        : OUTBOX_TTL_MS;
-
-    // Pesan berumur pendek (OTP) yang mengantre saat bot tidak bisa mengirim
-    // adalah janji yang tidak bisa ditepati: 'status: true' membuat situs
-    // memberi tahu pendaftar bahwa kodenya sudah terkirim, lalu pesannya
-    // kedaluwarsa di antrean tanpa seorang pun tahu. Tolak terang-terangan
-    // supaya pemanggilnya bisa memilih jalan lain (mis. Fonnte). Pesan berumur
-    // panjang tetap diterima — ia memang dibuat untuk menunggu.
-    //
-    // Syaratnya botSiap(), BUKAN cuma sesiTerkunci. Sesi terkunci adalah satu
-    // dari beberapa cara bot tidak bisa mengirim; yang lain adalah belum
-    // ditautkan sama sekali — dan itu keadaan yang benar-benar terjadi pada 21
-    // Agustus 2026, saat dua OTP mengantre lalu dibuang kedaluwarsa sementara
-    // situs sudah terlanjur bilang "OTP terkirim ke WhatsApp".
-    //
-    // botSiap(), bukan socketAlive(): selama menunggu dipindai, WebSocket-nya
-    // sudah terbuka padahal belum ada nomor yang bisa mengirim apa pun.
-    if (!botSiap() && ttl <= 15 * 60 * 1000) {
-        return res.status(503).json({
-            error: sesiTerkunci
-                ? 'Sesi WhatsApp terkunci — pesan berumur pendek tidak bisa dijanjikan sekarang.'
-                : 'Bot belum tersambung ke WhatsApp — pesan berumur pendek tidak bisa dijanjikan sekarang.',
-            terkunci: sesiTerkunci,
-            tersambung: botSiap(),
-        });
-    }
-
-    // Cap antrean. Bukan cuma penjaga memori: menyemburkan ribuan pesan sekaligus
-    // begitu tersambung adalah pola spam yang bisa membuat nomornya dibatasi lagi.
-    if (messageQueue.length >= OUTBOX_MAX) {
-        return res.status(503).json({ error: 'Antrean penuh, bot sedang tidak stabil' });
-    }
-    messageQueue.push({ jid, message, url, ts: Date.now(), ttl });
-    simpanOutbox();
-    kickQueue();
-    // botSiap(), bukan socketAlive(): kabel yang tersambung ke WhatsApp tanpa
-    // nomor yang login tetap tidak bisa mengirim apa pun, dan menjawab
-    // tertunda:false di keadaan itu adalah kabar baik yang keliru.
-    const tertunda = !botSiap();
-    res.json({
-        status: true,
-        tertunda,
-        antre: messageQueue.length,
-        detail: tertunda
-            ? 'Bot sedang tidak tersambung — pesan disimpan dan dikirim otomatis begitu tersambung lagi.'
-            : 'Pesan ditambahkan ke antrean (Queue)',
-    });
-});
 
 // ── Broadcast terbatas ────────────────────────────────────────────────────────
 // Batasannya ditegakkan di SERVER, bukan cuma disembunyikan di UI: tujuan wajib
@@ -2418,236 +1661,23 @@ function broadcastTargets() {
         .sort((a, b) => (b.lastTime || 0) - (a.lastTime || 0));
 }
 
-app.get('/broadcast/targets', requireAuth, (req, res) => {
-    const list = broadcastTargets();
-    res.json({ targets: list, count: list.length, max: BROADCAST_MAX });
-});
 
-app.post('/broadcast', requireAuth, (req, res) => {
-    const message = String(req.body?.message || '').trim();
-    const jids = Array.isArray(req.body?.jids) ? req.body.jids : [];
-    if (!message) return res.status(400).json({ error: 'Pesan tidak boleh kosong' });
-    if (!jids.length) return res.status(400).json({ error: 'Pilih minimal satu tujuan' });
-    if (jids.length > BROADCAST_MAX) {
-        return res.status(400).json({ error: `Maksimal ${BROADCAST_MAX} tujuan sekali kirim` });
-    }
-    if (messageQueue.length > 100) {
-        return res.status(503).json({ error: 'Antrean sedang panjang, coba lagi nanti' });
-    }
-    const allowed = new Set(broadcastTargets().map(t => t.jid));
-    const accepted = [], rejected = [];
-    for (const raw of jids) {
-        const jid = String(raw || '');
-        if (allowed.has(jid)) accepted.push(jid); else rejected.push(jid);
-    }
-    if (!accepted.length) {
-        return res.status(400).json({
-            error: 'Tidak ada tujuan yang valid. Hanya kontak yang pernah chat bot yang bisa dikirimi.',
-            rejected,
-        });
-    }
-    // Lewat antrean yang sama dengan balasan biasa, jadi jeda antar kontak berbeda
-    // (GAP_OTHER_*) tetap berlaku — kiriman menyebar, bukan burst.
-    for (const jid of accepted) messageQueue.push({ jid, message, ts: Date.now() });
-    kickQueue();
-    bump('broadcast', accepted.length);
-    console.log(`[broadcast] ${accepted.length} tujuan diantrekan${rejected.length ? `, ${rejected.length} ditolak (bukan kontak yang pernah chat)` : ''}.`);
-    res.json({ ok: true, queued: accepted.length, rejected });
-});
 
-// ── Profile Bot endpoint ──────────────────────────────────────────────────────
-app.get('/profile', requireAuth, (req, res) => {
-    res.json({
-        name: waSocket?.user?.name || '',
-        jid: waSocket?.user?.id || '',
-        phone: connectedPhone || '',
-    });
-});
 
-app.post('/profile/name', requireAuth, async (req, res) => {
-    if (!botSiap()) return res.status(503).json({ error: 'Bot not connected' });
-    const { name } = req.body;
-    if (!name?.trim()) return res.status(400).json({ error: 'name required' });
-    try {
-        await waSocket.updateProfileName(name.trim());
-        res.json({ ok: true });
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
 
-app.post('/profile/status', requireAuth, async (req, res) => {
-    if (!botSiap()) return res.status(503).json({ error: 'Bot not connected' });
-    const { status } = req.body;
-    if (status === undefined) return res.status(400).json({ error: 'status required' });
-    try {
-        await waSocket.updateProfileStatus(status);
-        res.json({ ok: true });
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
 
-// ── LID Resolution Map endpoint ───────────────────────────────────────────────
-app.get('/lid-map', requireAuth, (req, res) => {
-    const entries = Array.from(lidResolutionMap.entries())
-        .map(([lid, phone]) => ({ lid, phone }));
-    res.json({ entries, count: entries.length });
-});
 
-app.delete('/lid-map', requireAuth, (req, res) => {
-    const { lid } = req.body;
-    if (!lid) return res.status(400).json({ error: 'lid required' });
-    const deleted = lidResolutionMap.delete(lid);
-    if (deleted) saveLidResolutionMap();
-    res.json({ ok: deleted });
-});
 
-// ── Conversation Context endpoint ─────────────────────────────────────────────
-app.get('/context', requireAuth, (req, res) => {
-    const now = Date.now();
-    const entries = Array.from(conversationContext.entries()).map(([jid, history]) => ({
-        jid,
-        messages: history.length,
-        lastTime: history[history.length - 1]?.time || 0,
-        lastText: history[history.length - 1]?.text?.slice(0, 80) || '',
-        lastRole: history[history.length - 1]?.role || '',
-        history,
-    }));
-    res.json({ entries: entries.sort((a, b) => b.lastTime - a.lastTime), count: entries.length, now });
-});
 
-app.delete('/context', requireAuth, (req, res) => {
-    const { jid } = req.body;
-    if (jid) {
-        conversationContext.delete(jid);
-    } else {
-        conversationContext.clear();
-    }
-    res.json({ ok: true });
-});
 
-// ── Blocklist endpoint ────────────────────────────────────────────────────────
-app.get('/blocklist', requireAuth, async (req, res) => {
-    if (!botSiap()) return res.status(503).json({ error: 'Bot not connected' });
-    try {
-        const list = await waSocket.fetchBlocklist();
-        res.json({ blocklist: list || [] });
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
 
-app.post('/blocklist/block', requireAuth, async (req, res) => {
-    if (!botSiap()) return res.status(503).json({ error: 'Bot not connected' });
-    const { jid } = req.body;
-    if (!jid) return res.status(400).json({ error: 'jid required' });
-    try {
-        await waSocket.updateBlockStatus(jid, 'block');
-        res.json({ ok: true });
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
 
-app.post('/blocklist/unblock', requireAuth, async (req, res) => {
-    if (!botSiap()) return res.status(503).json({ error: 'Bot not connected' });
-    const { jid } = req.body;
-    if (!jid) return res.status(400).json({ error: 'jid required' });
-    try {
-        await waSocket.updateBlockStatus(jid, 'unblock');
-        res.json({ ok: true });
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
 
-// ── WA Story / Status endpoint ────────────────────────────────────────────────
-app.get('/story', requireAuth, (req, res) => {
-    res.json({ statuses: getSavedStatuses() });
-});
 
-app.post('/story', requireAuth, async (req, res) => {
-    if (!botSiap()) return res.status(503).json({ error: 'Bot not connected' });
-    const { text, url } = req.body;
-    if (!text?.trim()) return res.status(400).json({ error: 'text required' });
-    try {
-        const jidsSet = new Set([...chatMap.keys(), ...contactMap.keys()]);
-        if (connectedPhone) jidsSet.add(connectedPhone + '@s.whatsapp.net');
-        const jids = Array.from(jidsSet).filter(jid => jid.endsWith('@s.whatsapp.net'));
-            
-        let result;
-        if (url) {
-            const imgRes = await fetch(url);
-            const buf = Buffer.from(await imgRes.arrayBuffer());
-            result = await waSocket.sendMessage('status@broadcast', { image: buf, caption: text }, { statusJidList: jids });
-        } else {
-            result = await waSocket.sendMessage('status@broadcast', { text, backgroundColor: '#075E54', font: 3 }, { statusJidList: jids });
-        }
-        
-        const now = Date.now();
-        saveStatus({
-            id: result?.key?.id || now.toString(),
-            type: url ? 'image' : 'text',
-            text,
-            url,
-            timestamp: now,
-            expiresAt: now + 24 * 60 * 60 * 1000
-        });
-        
-        res.json({ ok: true });
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
 
-// ── Group management endpoints ────────────────────────────────────────────────
-app.get('/groups/:jid/invite', requireAuth, async (req, res) => {
-    if (!botSiap()) return res.status(503).json({ error: 'Bot not connected' });
-    const jid = decodeURIComponent(req.params.jid);
-    try {
-        const code = await waSocket.groupInviteCode(jid);
-        res.json({ ok: true, link: `https://chat.whatsapp.com/${code}`, code });
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
 
-app.post('/groups/create', requireAuth, async (req, res) => {
-    if (!botSiap()) return res.status(503).json({ error: 'Bot not connected' });
-    const { name, participants } = req.body;
-    if (!name?.trim() || !Array.isArray(participants) || !participants.length) {
-        return res.status(400).json({ error: 'name and participants (array) required' });
-    }
-    try {
-        const jids = participants.map(toJid);
-        const result = await waSocket.groupCreate(name.trim(), jids);
-        res.json({ ok: true, jid: result.id });
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
 
-app.post('/groups/:jid/participants', requireAuth, async (req, res) => {
-    if (!botSiap()) return res.status(503).json({ error: 'Bot not connected' });
-    const jid = decodeURIComponent(req.params.jid);
-    const { action, participants } = req.body;
-    if (!['add', 'remove', 'promote', 'demote'].includes(action)) {
-        return res.status(400).json({ error: 'action: add/remove/promote/demote' });
-    }
-    // Dulu `participants` tidak divalidasi: kalau tidak dikirim, `.map` melempar di
-    // dalam try dan klien menerima 500 padahal itu salah input (400).
-    if (!Array.isArray(participants) || !participants.length) {
-        return res.status(400).json({ error: 'participants (array) required' });
-    }
-    try {
-        const jids = participants.map(toJid);
-        const result = await waSocket.groupParticipantsUpdate(jid, jids, action);
-        res.json({ ok: true, result });
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
 
-// ── Send Poll endpoint ────────────────────────────────────────────────────────
-app.post('/send-poll', requireAuth, async (req, res) => {
-    const { target, name, options } = req.body;
-    if (!target || !name?.trim() || !options?.length) {
-        return res.status(400).json({ error: 'target, name, options required' });
-    }
-    
-    const jid = toJid(target);
-
-    // Cap antrean sama seperti /send: cegah burst (pola spam → risiko blokir WA).
-    if (messageQueue.length > 200) {
-        return res.status(503).json({ error: 'Antrean penuh, bot sedang tidak stabil' });
-    }
-    messageQueue.push({ jid, poll: { name: name.trim(), values: options, selectableCount: 1 }, ts: Date.now() });
-    kickQueue();
-    res.json({ ok: true, detail: 'Poll ditambahkan ke antrean' });
-});
 
 // ── Endpoint yang dipanggil panel admin situs ────────────────────────────────
 // Panel WhatsApp di situs (src/components/baileys/) sudah punya tombol untuk
@@ -2659,228 +1689,16 @@ app.post('/send-poll', requireAuth, async (req, res) => {
 // Semuanya bersandar pada kemampuan yang memang sudah ada di Baileys 7.0.0-rc14
 // yang terpasang — tidak ada satu pun yang dikarang di sisi bot.
 
-// Satu grup, lengkap dengan DAFTAR anggotanya. Beda dengan GET /groups yang
-// menyajikan `participants` sebagai ANGKA (jumlah) demi daftar yang ringan.
-// Bedanya bukan kosmetik: broadcast japri di situs mengambil daftar anggota dari
-// sini, dan ketika route ini tidak ada ia jatuh ke /groups lalu memeriksa
-// Array.isArray(participants) — yang selalu gagal karena isinya angka. Fitur itu
-// tidak pernah bisa jalan sama sekali sebelum route ini ada.
-app.get('/groups/:jid', requireAuth, async (req, res) => {
-    if (!botSiap()) return res.status(503).json({ error: 'Bot not connected' });
-    const jid = decodeURIComponent(req.params.jid);
-    try {
-        const meta = await dgnBatas(waSocket.groupMetadata(jid), 15000, `Metadata grup ${jid}`);
-        res.json({
-            jid: meta.id,
-            name: meta.subject || 'Tanpa Nama',
-            desc: meta.desc || '',
-            owner: meta.owner || null,
-            size: meta.participants?.length || 0,
-            isCommunity: !!meta.isCommunity,
-            linkedParent: meta.linkedParent || null,
-            participants: (meta.participants || []).map((p) => ({
-                id: p.id,
-                admin: p.admin || null,
-            })),
-        });
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
 
-// Nomor terdaftar di WhatsApp atau tidak. Jawabannya memakai kunci `exists`
-// karena itu yang dibaca panel situs.
-app.post('/check-number', requireAuth, async (req, res) => {
-    if (!botSiap()) return res.status(503).json({ error: 'Bot not connected' });
-    const nomor = String(req.body?.phone || '').replace(/[^0-9]/g, '');
-    if (!nomor) return res.status(400).json({ error: 'phone wajib diisi' });
-    try {
-        const hasil = await dgnBatas(waSocket.onWhatsApp(nomor), 15000, "Pemeriksaan nomor");
-        const cocok = hasil?.[0];
-        res.json({ exists: !!cocok?.exists, jid: cocok?.jid || null, phone: nomor });
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
 
-// Kehadiran (online/mengetik) tidak bisa ditanyakan langsung — WhatsApp
-// MENGIRIMKANNYA setelah kita berlangganan. Jadi: berlangganan, tunggu sebentar,
-// lalu jawab apa yang datang. Tanpa batas waktu, permintaan ini menggantung
-// selamanya untuk nomor yang kebetulan sedang offline dan tidak mengirim apa pun.
-app.post('/get-presence', requireAuth, async (req, res) => {
-    if (!botSiap()) return res.status(503).json({ error: 'Bot not connected' });
-    // Diperiksa SEBELUM toJid: toJid('') menjawab '@s.whatsapp.net' yang truthy,
-    // jadi memeriksa hasilnya sama saja dengan tidak memeriksa apa-apa.
-    const mentah = String(req.body?.jid || req.body?.phone || '').trim();
-    if (!mentah) return res.status(400).json({ error: 'jid wajib diisi' });
-    const jid = toJid(mentah);
-    const TUNGGU_MS = Math.min(Number(req.body?.timeoutMs) || 6000, 15000);
-    try {
-        let jawab = null;
-        const dengar = (ev) => {
-            if (ev?.id !== jid || jawab) return;
-            const isi = ev.presences?.[jid] || Object.values(ev.presences || {})[0];
-            if (isi) jawab = isi;
-        };
-        waSocket.ev.on('presence.update', dengar);
-        await waSocket.presenceSubscribe(jid).catch(() => {});
-        await new Promise((r) => setTimeout(r, TUNGGU_MS));
-        waSocket.ev.off('presence.update', dengar);
 
-        // Bio/"about" datang dari jalur lain dan tidak selalu ada — kegagalannya
-        // tidak boleh menghapus hasil kehadiran yang barusan ditunggu.
-        let about = null;
-        try {
-            const st = await waSocket.fetchStatus(jid);
-            about = st?.[0]?.status?.status || null;
-        } catch (_) {}
 
-        res.json({
-            jid,
-            // Tidak ada kabar BUKAN berarti offline: WhatsApp hanya mengirim
-            // kehadiran orang yang mengizinkannya. Katakan apa adanya.
-            presence: jawab?.lastKnownPresence || null,
-            lastSeen: jawab?.lastSeen || null,
-            about,
-            keterangan: jawab ? null : `Tidak ada kabar kehadiran dalam ${Math.round(TUNGGU_MS / 1000)} detik `
-                + '— nomor ini mungkin menyembunyikan status online-nya, atau memang sedang tidak aktif.',
-        });
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
 
-// Setelan privasi akun bot. Nama medannya mengikuti panel situs
-// (lastSeen/profilePhoto/status/readReceipts), bukan nama Baileys.
-app.post('/set-privacy', requireAuth, async (req, res) => {
-    if (!botSiap()) return res.status(503).json({ error: 'Bot not connected' });
-    const { lastSeen, profilePhoto, status, readReceipts } = req.body || {};
-    const SAH = new Set(['all', 'contacts', 'contact_blacklist', 'none']);
-    // Panel memakai "everyone"; WhatsApp menyebutnya "all".
-    const nilai = (v) => (v === 'everyone' ? 'all' : v);
-    try {
-        const dikerjakan = [];
-        if (lastSeen !== undefined) {
-            if (!SAH.has(nilai(lastSeen))) return res.status(400).json({ error: `lastSeen tidak sah: ${lastSeen}` });
-            await waSocket.updateLastSeenPrivacy(nilai(lastSeen)); dikerjakan.push('lastSeen');
-        }
-        if (profilePhoto !== undefined) {
-            if (!SAH.has(nilai(profilePhoto))) return res.status(400).json({ error: `profilePhoto tidak sah: ${profilePhoto}` });
-            await waSocket.updateProfilePicturePrivacy(nilai(profilePhoto)); dikerjakan.push('profilePhoto');
-        }
-        if (status !== undefined) {
-            if (!SAH.has(nilai(status))) return res.status(400).json({ error: `status tidak sah: ${status}` });
-            await waSocket.updateStatusPrivacy(nilai(status)); dikerjakan.push('status');
-        }
-        if (readReceipts !== undefined) {
-            await waSocket.updateReadReceiptsPrivacy(readReceipts ? 'all' : 'none'); dikerjakan.push('readReceipts');
-        }
-        if (!dikerjakan.length) return res.status(400).json({ error: 'Tidak ada setelan yang dikirim.' });
-        res.json({ ok: true, diubah: dikerjakan });
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
 
-// Perangkat/sesi yang sedang dipakai bot ini. WhatsApp tidak membuka daftar
-// perangkat tertaut lewat protokol yang dipakai Baileys, jadi yang dijawab di
-// sini adalah sesi INI apa adanya — bukan daftar semua perangkat di HP. Lebih
-// baik satu baris yang benar daripada daftar karangan yang terlihat meyakinkan.
-app.post('/session/devices', requireAuth, (req, res) => {
-    const creds = waSocket?.authState?.creds || {};
-    res.json({
-        keterangan: 'WhatsApp tidak membuka daftar perangkat tertaut lewat protokol ini. '
-            + 'Yang di bawah adalah sesi bot ini sendiri; daftar lengkap ada di HP '
-            + '(WhatsApp → Perangkat tertaut).',
-        devices: [{
-            jid: creds.me?.id || null,
-            nama: creds.me?.name || null,
-            platform: creds.platform || null,
-            registered: !!creds.registered,
-            tersambung: !!(waSocket && connectedPhone),
-            tersambungSejak: connectedAt || null,
-        }],
-    });
-});
 
-// Kirim pesan Baileys apa adanya. Ini pintu belakang yang sengaja dibiarkan
-// terbuka untuk admin: bentuk pesan WhatsApp jauh lebih banyak daripada yang
-// pantas dijadikan endpoint sendiri-sendiri. Tidak lewat antrean — pemakainya
-// satu orang yang sedang menatap layar, bukan lonjakan otomatis.
-app.post('/send-raw', requireAuth, async (req, res) => {
-    if (!botSiap()) return res.status(503).json({ error: 'Bot not connected' });
-    const { jid, target, message, ...sisa } = req.body || {};
-    const tujuan = jid || target;
-    if (!tujuan) return res.status(400).json({ error: 'jid wajib diisi' });
-    // `message` boleh berupa objek pesan Baileys utuh; kalau tidak ada, sisa
-    // medan di badan dipakai apa adanya (mis. {text: "..."}).
-    const isi = message && typeof message === 'object' ? message : sisa;
-    if (!isi || !Object.keys(isi).length) return res.status(400).json({ error: 'message (objek pesan Baileys) wajib diisi' });
-    try {
-        const hasil = await waSocket.sendMessage(toJid(tujuan), isi);
-        res.json({ ok: true, id: hasil?.key?.id || null });
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
 
-// Posting ke Saluran (channel/newsletter). JID-nya berakhiran @newsletter dan
-// TIDAK boleh lewat toJid() — itu mengubah apa pun jadi nomor @s.whatsapp.net.
-app.post('/channel/send', requireAuth, async (req, res) => {
-    if (!botSiap()) return res.status(503).json({ error: 'Bot not connected' });
-    const { jid, message, url } = req.body || {};
-    if (!jid || !String(jid).endsWith('@newsletter')) {
-        return res.status(400).json({ error: 'jid saluran wajib diisi (berakhiran @newsletter)' });
-    }
-    if (!String(message || '').trim()) return res.status(400).json({ error: 'message wajib diisi' });
-    const teks = url ? `${String(message).trim()}\n\n${url}` : String(message).trim();
-    try {
-        const hasil = await waSocket.sendMessage(jid, { text: teks });
-        res.json({ ok: true, id: hasil?.key?.id || null });
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
 
-// ── Komunitas ────────────────────────────────────────────────────────────────
-// Komunitas adalah grup induk: di daftar grup ia muncul dengan isCommunity,
-// dan grup yang bernaung di bawahnya menyebut induknya lewat linkedParent.
-app.post('/community/list', requireAuth, async (req, res) => {
-    if (!botSiap()) return res.status(503).json({ error: 'Bot not connected' });
-    try {
-        const semua = await dgnBatas(waSocket.groupFetchAllParticipating(), 20000, "Daftar grup");
-        const komunitas = Object.entries(semua)
-            .filter(([, m]) => m.isCommunity)
-            .map(([jid, m]) => ({
-                jid,
-                name: m.subject || 'Tanpa Nama',
-                desc: m.desc || '',
-                // Sub-grup dihitung dari daftar yang sama — tidak perlu satu
-                // panggilan jaringan lagi per komunitas.
-                subGrup: Object.entries(semua)
-                    .filter(([, g]) => g.linkedParent === jid)
-                    .map(([gj, g]) => ({ jid: gj, name: g.subject || 'Tanpa Nama' })),
-            }));
-        res.json({ communities: komunitas });
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
 
-app.post('/community/create', requireAuth, async (req, res) => {
-    if (!botSiap()) return res.status(503).json({ error: 'Bot not connected' });
-    const nama = String(req.body?.name || '').trim();
-    if (!nama) return res.status(400).json({ error: 'name wajib diisi' });
-    try {
-        const hasil = await waSocket.communityCreate(nama, String(req.body?.desc || '').trim());
-        res.json({ ok: true, jid: hasil?.id || null, name: hasil?.subject || nama });
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-app.post('/community/link-group', requireAuth, async (req, res) => {
-    if (!botSiap()) return res.status(503).json({ error: 'Bot not connected' });
-    const { communityJid, groupJid } = req.body || {};
-    if (!communityJid || !groupJid) return res.status(400).json({ error: 'communityJid dan groupJid wajib diisi' });
-    try {
-        // Urutan argumen Baileys: (grup, induk). Tertukar = grup induk yang
-        // dicoba ditautkan ke dalam sub-grupnya, dan pesan galatnya menyesatkan.
-        await waSocket.communityLinkGroup(groupJid, communityJid);
-        res.json({ ok: true });
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-// ── Ekstrak isi pesan — skip metadata wrapper (messageContextInfo, dll) ───────
-const META_KEYS = new Set([
-    'messageContextInfo',
-    'senderKeyDistributionMessage',
-    'deviceSentMessage', // sudah di-unwrap Baileys saat dekripsi; jaring pengaman saja
-]);
 
 // Tipe yang BUKAN percakapan — hanya metadata/aksi UI. Dulu semuanya jatuh ke
 // cabang 'else' dan diteruskan ke webhook sebagai "non-text message", sehingga bot
@@ -2896,20 +1714,6 @@ const IGNORED_MESSAGE_TYPES = new Set([
     'keepInChatMessage',
 ]);
 
-function extractMessage(rawMessage) {
-    if (!rawMessage) return { type: '', content: null, rawForMedia: rawMessage };
-
-    // Buka SEMUA pembungkus: ephemeral, view-once V1/V2/V2Extension, edited,
-    // documentWithCaption, dst. Dulu ini dikerjakan manual dan salah — rantai
-    // `viewOnceMessageV2?.message?.viewOnceMessage?.message` menunjuk nesting yang
-    // tidak ada, dan documentWithCaptionMessage tidak ditangani sama sekali, jadi
-    // pesan view-once & dokumen berketerangan lolos sebagai "non-text message".
-    // normalizeMessageContent bawaan Baileys menangani kesembilan pembungkusnya.
-    const inner = normalizeMessageContent(rawMessage) || rawMessage;
-
-    const type = Object.keys(inner).find(k => !META_KEYS.has(k)) || '';
-    return { type, content: inner[type], rawForMedia: rawMessage };
-}
 
 // ── Bot core ──────────────────────────────────────────────────────────────────
 // ── Versi protokol WhatsApp ──────────────────────────────────────────────────
@@ -2976,16 +1780,6 @@ async function getWaVersion() {
 // menit terakhir.
 const sentMsgStore = new Map();   // `${jid}:${id}` → proto message
 const SENT_STORE_CAP = Number(process.env.SENT_STORE_CAP || 3000);
-// Teks dari struktur pesan Baileys, apa pun bungkusnya.
-function teksPesan(msg) {
-    if (!msg) return '';
-    return msg.conversation
-        || msg.extendedTextMessage?.text
-        || msg.imageMessage?.caption
-        || msg.videoMessage?.caption
-        || msg.documentMessage?.caption
-        || '';
-}
 
 // Satu tempat untuk mencatat kejadian forensik: masuk arsip pesan (jadi terlihat
 // di dashboard) dan, kalau tujuannya diisi, diteruskan ke nomor/grup pengawas.
@@ -3061,6 +1855,19 @@ async function startBot() {
     }
 }
 
+// Dua baris log yang saling membantah itu mahal saat mencari sebab. stdout dulu
+// selalu menulis "Sesi WhatsApp dimuat" — juga ketika folder sesinya kosong dan
+// stderr baru saja menulis "Tidak ada creds tersimpan". Yang membaca stdout
+// menyimpulkan sesinya ada, lalu mencari sebab putusnya di tempat yang salah.
+// Satu baris, dan isinya keadaan yang sebenarnya.
+function laporAuth(sumber, state) {
+    if (credsTertaut(state?.creds)) {
+        console.log(`[auth] Sesi WhatsApp tertaut dimuat dari ${sumber}.`);
+    } else {
+        console.log(`[auth] Belum ada sesi tertaut di ${sumber} — bot akan meminta scan QR.`);
+    }
+}
+
 async function startBotInner(myGen) {
     let state, saveCreds;
     if (supabase) {
@@ -3069,7 +1876,7 @@ async function startBotInner(myGen) {
         saveCreds = authState.saveCreds;
         clearAuthState = authState.clear;
         flushAuthState = authState.flush;
-        console.log(`[auth] Sesi WhatsApp dimuat dari Supabase (session_id=${WA_SESSION_ID}).`);
+        laporAuth(`Supabase (session_id=${WA_SESSION_ID})`, state);
     } else {
         // useFileAuthState (bukan useMultiFileAuthState bawaan): tulis atomik +
         // creds cadangan + cache baca. Format foldernya sama, sesi lama tetap jalan.
@@ -3078,8 +1885,11 @@ async function startBotInner(myGen) {
         saveCreds = authState.saveCreds;
         clearAuthState = authState.clear;
         flushAuthState = authState.flush;
-        console.log(`[auth] Sesi WhatsApp dimuat dari filesystem (${AUTH_DIR}).`);
+        laporAuth(`filesystem (${AUTH_DIR})`, state);
     }
+    // Dipakai handler 'close' untuk membedakan "jaringan putus" dari "belum
+    // pernah ditautkan". Lihat credsTertaut() soal kenapa bukan creds.registered.
+    sesiTerdaftar = credsTertaut(state?.creds);
 
     // Muat nama user & resolusi @lid SEKALI saja (jangan clobber map in-memory saat
     // reconnect). Dari Supabase kalau ada, else file lokal.
@@ -3330,7 +2140,49 @@ async function startBotInner(myGen) {
         if (myGen !== botGeneration) return;
         if (qr) {
             currentQR = qr;
+            // Satu socket memancarkan BEBERAPA QR: Baileys menyegarkan kodenya tiap
+            // ~60 detik sampai daftar referensinya habis, baru menutup koneksi. Itu
+            // ±6 menit per socket — dan dulu yang dihitung sebagai "siklus sia-sia"
+            // adalah penutupan socketnya, bukan QR-nya. Akibatnya lima siklus butuh
+            // ±30 menit, sementara penjaga sudah me-restart bot pada menit ke-16:
+            // bot TIDAK PERNAH sampai ke keadaan diam, dan tiap restart mengulang
+            // ketukannya dari nol. Komentar di PINDAI_MAKS_SIKLUS sendiri menulis
+            // "5 siklus ≈ 5 menit" — itu maksud aslinya, dan yang dihitung sekarang
+            // memang QR-nya.
             qrSiklusIni = true;
+            if (!pernahTersambung) siklusQrSiaSia++;
+            // `!menungguPindai` dulu ikut menjaga SELURUH blok ini, dan itu membuat
+            // keadaan diam hanya berlaku SEKALI seumur proses. Pada denyut 30 menit
+            // berikutnya penandanya masih true, syaratnya gagal, QR tetap dipancarkan
+            // sampai socketnya mati sendiri, lalu handler 'close' melewati blok
+            // penghitungnya juga (`qrSiklusIni` sudah true) dan bot jatuh ke rantai
+            // sambung-ulang 408 biasa: mengetuk tiap ≤60 detik tanpa henti, justru
+            // pada nomor yang belum tertaut. Yang dijaga sekarang cuma PENGUMUMANnya;
+            // berhentinya selalu jadi.
+            if (!pernahTersambung && siklusQrSiaSia >= PINDAI_MAKS_SIKLUS) {
+                if (!menungguPindai) {
+                    menungguPindai = true;
+                    simpanPindaiState();
+                    console.warn(`[pindai] ${siklusQrSiaSia} QR berturut-turut kedaluwarsa tanpa dipindai — `
+                        + 'bot BERHENTI mengetuk WhatsApp. Buka kartu QR di dashboard (atau minta kode '
+                        + `pairing) untuk memunculkan QR baru; kalau tidak, dicoba lagi tiap `
+                        + `${Math.round(PINDAI_RETRY_MS / 60000)} menit.`);
+                }
+                currentQR = '';
+                // Jatah siklus berikutnya mulai dari nol. Tanpa ini penghitungnya
+                // menempel di angka maksimum selamanya, dan denyut 30 menit yang
+                // berikut berhenti pada QR pertamanya — QR yang tidak pernah sempat
+                // terlihat siapa pun.
+                siklusQrSiaSia = 0;
+                if (connectWatchdog) { clearTimeout(connectWatchdog); connectWatchdog = null; }
+                reconnectAttempts = 0;
+                scheduleRestart(PINDAI_RETRY_MS);
+                // Socketnya ditutup di sini, bukan dibiarkan menghabiskan sisa
+                // referensi QR-nya: membiarkannya berarti terus mengetuk selama
+                // menit-menit berikutnya justru sesudah memutuskan berhenti.
+                try { sock.end(new Error('berhenti mengetuk: tidak ada yang memindai')); } catch (_) {}
+                return;
+            }
             // Nunggu QR discan itu WAJAR, bukan nyangkut — jangan diputus watchdog
             // 90 detik. Baileys punya qrTimeout sendiri yang menutup koneksi kalau
             // QR kedaluwarsa; watchdog di sini cuma jaring pengaman terakhir.
@@ -3364,12 +2216,27 @@ async function startBotInner(myGen) {
             // menjawab dengan benar, yang tidak datang manusianya — jadi menyambung
             // ulang tiap menit tidak mempercepat apa pun. (515 dikecualikan: itu
             // restart normal tepat SETELAH pairing berhasil.)
-            if (qrSiklusIni && !pernahTersambung && statusCode !== 515) {
+            //
+            // `!sesiTerdaftar` ikut dihitung, dan itu menutup lubang yang nyata:
+            // socket yang mati SEBELUM sempat memancarkan event QR (408 di tengah
+            // handshake) dulu tidak menaikkan hitungan sama sekali. Padahal sesi
+            // yang belum tertaut tidak punya jalan lain untuk hidup selain
+            // dipindai manusia — jadi tiap percobaan yang gagal, ber-QR atau
+            // tidak, sama-sama ketukan sia-sia. Tanpa ini bot bisa berputar di
+            // rantai sambung-ulang biasa berjam-jam tanpa pernah mencapai keadaan
+            // diam, dan penjaga akan me-restart-nya terus.
+            // QR yang kedaluwarsa sudah dihitung di handler `qr` di atas. Yang
+            // dihitung DI SINI cuma socket yang mati tanpa sempat memancarkan QR
+            // sama sekali (mis. 408 di tengah handshake) — sesi yang belum tertaut
+            // tidak punya jalan hidup selain dipindai manusia, jadi percobaan
+            // seperti itu pun ketukan sia-sia dan harus ikut menghabiskan jatah.
+            if (!qrSiklusIni && !sesiTerdaftar && !pernahTersambung && statusCode !== 515) {
                 siklusQrSiaSia++;
                 if (siklusQrSiaSia >= PINDAI_MAKS_SIKLUS) {
                     if (!menungguPindai) {
                         menungguPindai = true;
-                        console.warn(`[pindai] ${siklusQrSiaSia} QR berturut-turut kedaluwarsa tanpa dipindai — `
+                        simpanPindaiState();
+                        console.warn(`[pindai] ${siklusQrSiaSia} percobaan berturut-turut gagal tanpa dipindai — `
                             + 'bot BERHENTI mengetuk WhatsApp. Buka kartu QR di dashboard (atau minta kode '
                             + `pairing) untuk memunculkan QR baru; kalau tidak, dicoba lagi tiap `
                             + `${Math.round(PINDAI_RETRY_MS / 60000)} menit.`);
@@ -3377,6 +2244,7 @@ async function startBotInner(myGen) {
                     // QR-nya mati bersama socket ini. Memajangnya lebih lama cuma
                     // membuat orang memindai gambar yang sudah tidak berlaku.
                     currentQR = '';
+                    siklusQrSiaSia = 0;   // jatah denyut berikutnya, lihat catatan di handler `qr`
                     reconnectAttempts = 0;
                     scheduleRestart(PINDAI_RETRY_MS);
                     return;
@@ -3386,7 +2254,20 @@ async function startBotInner(myGen) {
             // (428 gangguan sementara, 515 restartRequired yang NORMAL) cukup sambung
             // ulang dgn creds yang sama. Menghapus sesi → QR scan ulang berulang =
             // sinyal mencurigakan ke WhatsApp → risiko nomor diblokir.
-            if (statusCode === 401) {
+            //
+            // 403 (forbidden) ikut di sini sejak 23 Agustus 2026, dan itu memperbaiki
+            // ketukan yang nyata. Sebelumnya ia jatuh ke cabang "gangguan sementara"
+            // paling bawah, yang backoff-nya mentok di 60 DETIK dan tidak pernah
+            // menyerah. Malam 22→23 Agustus bot mengetuk 18 kali berturut-turut
+            // seperti itu, lalu dapat 401 tiga kali, lalu terkunci — 18 percobaan
+            // login pada nomor yang justru sedang ditolak WhatsApp, persis pola yang
+            // seluruh mesin kunci-sesi ini dibangun untuk mencegah.
+            //
+            // Bedanya dengan 401 dijaga: 403 TIDAK PERNAH boleh menghapus sesi.
+            // "Ditolak masuk" bukan "perangkat dilepas dari HP" — dan menghapus sesi
+            // karenanya berarti meminta QR baru untuk nomor yang sedang diblokir.
+            const penolakanAkun = statusCode === 401 || statusCode === 403;
+            if (penolakanAkun) {
                 logoutStrikes++;
                 // `!sesiTerkunci`: burst cepat itu untuk MENENTUKAN apakah 401-nya
                 // sungguhan. Setelah terkunci pertanyaan itu sudah terjawab, jadi
@@ -3396,7 +2277,7 @@ async function startBotInner(myGen) {
                     // Belum tentu benar-benar dilepas dari HP. Coba lagi dengan creds
                     // yang SAMA — kalau 401-nya cuma gangguan sementara, bot pulih
                     // sendiri dan tidak ada yang perlu scan apa pun.
-                    console.warn(`[reconnect] Dapat 401 (percobaan ${logoutStrikes}/${LOGOUT_STRIKES}). `
+                    console.warn(`[reconnect] Dapat ${statusCode} (percobaan ${logoutStrikes}/${LOGOUT_STRIKES}). `
                         + 'Sesi BELUM dihapus, coba sambung ulang dengan sesi yang sama...');
                     reconnectAttempts = 0;
                     scheduleRestart(5000 * logoutStrikes);
@@ -3407,8 +2288,9 @@ async function startBotInner(myGen) {
                     logoutStrikes = 0;
                     if (!sesiTerkunci) {
                         sesiTerkunci = true;
+                        simpanPindaiState();   // keputusan ini harus selamat dari restart
                         bump('sesi_terkunci');
-                        console.warn(`[sesi] 401 berturut-turut ${LOGOUT_STRIKES}x — sesi TIDAK dihapus `
+                        console.warn(`[sesi] ${statusCode} berturut-turut ${LOGOUT_STRIKES}x — sesi TIDAK dihapus `
                             + '(kunci sesi aktif). Bot akan terus mencoba dengan creds yang sama tiap '
                             + `${Math.round(kunciRetryMs() / 60000)} menit (makin lama kalau terus ditolak). Kalau perangkat memang dilepas `
                             + 'dari HP, buka kunci dari dashboard untuk scan QR baru.');
@@ -3422,7 +2304,20 @@ async function startBotInner(myGen) {
                     reconnectAttempts = 0;
                     const jeda = kunciRetryMs();
                     kunciSiklus++;                     // percobaan berikutnya menunggu lebih lama
+                    simpanPindaiState();               // ...dan tetap lebih lama sesudah restart
                     scheduleRestart(jeda);
+                } else if (statusCode === 403) {
+                    // KUNCI_SESI dimatikan, tapi 403 tetap tidak boleh menghapus sesi:
+                    // yang dikatakan WhatsApp adalah "kamu tidak boleh masuk", bukan
+                    // "perangkatmu sudah tidak terdaftar". Melambat, bukan menghapus.
+                    logoutStrikes = 0;
+                    reconnectAttempts = 0;
+                    const jeda403 = kunciRetryMs();
+                    kunciSiklus++;
+                    simpanPindaiState();
+                    console.warn(`[reconnect] 403 berturut-turut ${LOGOUT_STRIKES}x dan kunci sesi mati. `
+                        + `Sesi tetap TIDAK dihapus — dicoba lagi ${Math.round(jeda403 / 60000)} menit lagi.`);
+                    scheduleRestart(jeda403);
                 } else {
                     console.warn(`[reconnect] 401 berturut-turut ${logoutStrikes}x — perangkat memang `
                         + 'dilepas dari WhatsApp. Sesi dicadangkan, bot akan menampilkan QR.');
@@ -3442,7 +2337,11 @@ async function startBotInner(myGen) {
                 reconnectAttempts = 0;
                 scheduleRestart(2000);
             } else {
-                // 428 & lainnya = gangguan sementara. Sambung ulang backoff, JANGAN hapus sesi.
+                // 428 & lainnya = gangguan sementara sungguhan (jaringan, server WA).
+                // Sambung ulang dengan backoff, JANGAN hapus sesi. Penolakan tingkat
+                // akun (401/403) sudah ditangani di atas dan tidak sampai ke sini —
+                // backoff 60 detik yang tidak pernah menyerah ini memang cuma cocok
+                // untuk gangguan yang akan pulih sendiri.
                 reconnectAttempts++;
                 const backoff = Math.min(3000 * Math.pow(1.8, reconnectAttempts - 1), 60000);
                 console.log(`[reconnect] Koneksi terputus (kode: ${statusCode ?? 'unknown'}). Reconnect ke-${reconnectAttempts} dalam ${Math.round(backoff/1000)}s...`);
@@ -3455,15 +2354,23 @@ async function startBotInner(myGen) {
             pernahTersambung = true;
             menungguPindai = false;
             siklusQrSiaSia = 0;
+            sesiTerdaftar = true;
             connectedPhone = sock.user?.id?.split(':')[0] || '';
             connectedAt = new Date().toISOString();
             reconnectAttempts = 0;
             logoutStrikes = 0;   // sambungan sehat → hitungan 401 mulai dari nol lagi
             kunciSiklus = 0;     // dan jeda kunci kembali ke yang tercepat
-            if (sesiTerkunci) {
-                sesiTerkunci = false;
+            const tadinyaTerkunci = sesiTerkunci;
+            sesiTerkunci = false;
+            // Sudah tersambung: SEMUA penanda "berhenti mengetuk" di disk harus lenyap,
+            // atau proses berikutnya lahir dalam keadaan diam/terkunci padahal sesinya
+            // sehat. Sengaja dipanggil SESUDAH ketiga penandanya dinolkan — dulu ia
+            // dipanggil di tengah, sebelum `sesiTerkunci` dan `kunciSiklus` sempat
+            // disentuh, jadi berkasnya menyimpan keadaan yang sudah tidak berlaku.
+            simpanPindaiState();
+            if (tadinyaTerkunci) {
                 console.log('[sesi] Tersambung lagi dengan sesi yang sama — kunci dilepas sendiri. '
-                    + '401 tadi memang palsu, dan tidak ada yang perlu scan apa pun.');
+                    + 'Penolakan tadi memang sementara, dan tidak ada yang perlu scan apa pun.');
                 notifyOwner('✅ *Sesi WhatsApp pulih sendiri*\n\nBot tersambung lagi memakai sesi lama. '
                     + 'Tidak perlu scan QR.');
             }
@@ -3604,7 +2511,7 @@ async function startBotInner(myGen) {
                     gForm.append('source', 'group');
                     gForm.append('group_jid', sender);
                     if (buf) gForm.append('file', new Blob([buf], { type: mime }), fname);
-                    await fetch(WEBHOOK_URL, { method: 'POST', body: gForm, headers: { 'Authorization': API_TOKEN } }).catch(() => {});
+                    await fetch(WEBHOOK_URL, { method: 'POST', body: tandaiPerangkat(gForm), headers: { 'Authorization': WEBHOOK_TOKEN } }).catch(() => {});
                 } catch (e) { console.error('[grup] error:', e.message); }
                 continue;
             }
@@ -3648,7 +2555,7 @@ async function startBotInner(myGen) {
                         fmForm.append('message', fmText.slice(0, 1500));
                         fmForm.append('fromMe', 'true');
                         if (isMediaFm) fmForm.append('manual_media', '1');
-                        fetch(WEBHOOK_URL, { method: 'POST', body: fmForm, headers: { 'Authorization': API_TOKEN } }).catch(() => {});
+                        fetch(WEBHOOK_URL, { method: 'POST', body: tandaiPerangkat(fmForm), headers: { 'Authorization': WEBHOOK_TOKEN } }).catch(() => {});
                         // Balasan manual admin ikut diarsipkan, kalau tidak inbox dashboard
                         // cuma menampilkan sisi pelanggan dan riwayatnya terbaca timpang.
                         recordMessage(manualTarget, 'out', isMediaFm ? (fmText || '[media]') : fmText, 'manual');
@@ -3868,7 +2775,7 @@ async function startBotInner(myGen) {
                                 pForm.append('file', new Blob([img.buf], { type: img.mime }), `image${i + 1}.jpg`);
                             });
                             try {
-                                const pResp = await fetch(WEBHOOK_URL, { method: 'POST', body: pForm, headers: { 'Authorization': API_TOKEN } });
+                                const pResp = await fetch(WEBHOOK_URL, { method: 'POST', body: tandaiPerangkat(pForm), headers: { 'Authorization': WEBHOOK_TOKEN } });
                                 const pText = await pResp.text();
                                 if (!pResp.ok) { console.error(`Webhook error ${pResp.status}: ${pText}`); }
                                 else {
@@ -3942,8 +2849,8 @@ async function startBotInner(myGen) {
                 const hookStart = Date.now();
                 const response = await fetch(WEBHOOK_URL, {
                     method: 'POST',
-                    body: form,
-                    headers: { 'Authorization': API_TOKEN }
+                    body: tandaiPerangkat(form),
+                    headers: { 'Authorization': WEBHOOK_TOKEN }
                 });
                 const responseText = await response.text();
                 const hookMs = Date.now() - hookStart;
@@ -4005,13 +2912,153 @@ process.on('SIGINT', () => gracefulExit('SIGINT'));
 // reverse-proxy nginx (HTTPS) → 127.0.0.1:3000. Bisa di-override via env BIND_HOST
 // (mis. '0.0.0.0') kalau suatu saat perlu, tapi default aman.
 
-app.get('/progres', (req, res) => res.send('<!DOCTYPE html><html style="margin:0;padding:0;height:100%;overflow:hidden;"><head><title>Sistem Progres</title><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><style>body{margin:0;padding:0;height:100%;overflow:hidden;}iframe{width:100%;height:100%;border:none;}</style></head><body><iframe src="https://jualbeliusupolmed.web.id/progres"></iframe></body></html>'));
 app.listen(PORT, process.env.BIND_HOST || '127.0.0.1', () => {
     console.log(`Bot Server listening on ${process.env.BIND_HOST || '127.0.0.1'}:${PORT}`);
     // unref: pemantau tidak boleh jadi alasan proses menolak keluar saat shutdown.
     setInterval(watchProlongedOutage, 60000).unref();
-    startBot().catch((e) => {
-        console.error('[startBot] gagal init:', e?.message || e);
-        setTimeout(() => startBot().catch(() => {}), 10000); // coba lagi 10 dtk
-    });
+    // Proses sebelumnya sudah memutuskan untuk diam karena tidak ada yang
+    // memindai. Keputusan itu dihormati — dulu hilang bersama prosesnya, dan
+    // yang lahir dari situ adalah lingkaran restart yang mengetuk WhatsApp
+    // berulang kali (lihat catatan di PINDAI_FILE). Kalau ternyata sesinya sudah
+    // tertaut lagi — mis. pemilik mengembalikan folder .bak — penandanya tidak
+    // relevan lagi dan bot menyambung seperti biasa.
+    const keadaanLalu = muatPindaiState();
+    const tertautDiDisk = credsTerdaftarDiDisk();
+    if (keadaanLalu.sesiTerkunci && tertautDiDisk) {
+        // Proses sebelumnya sudah menyimpulkan WhatsApp menolak sesi ini. Kesimpulan
+        // itu tidak perlu dibeli dua kali: tanpa baris ini, `sesiTerkunci` lahir
+        // false dan penolakan pertama sesudah restart memicu lagi burst 3 ketukan
+        // "untuk memastikan" — pada nomor yang sudah jelas sedang ditolak.
+        //
+        // Botnya TETAP mencoba sekali sekarang, dan itu disengaja: orang yang me-restart
+        // bot biasanya sedang membetulkan sesuatu, jadi satu ketukan langsung itu
+        // berguna. Yang dihemat adalah dua ketukan sesudahnya — begitu yang pertama
+        // ditolak, cabang 401/403 langsung masuk jalur kunci karena penandanya
+        // sudah menyala.
+        sesiTerkunci = true;
+        kunciSiklus = keadaanLalu.kunciSiklus;
+        console.warn('[sesi] Melanjutkan keadaan TERKUNCI dari proses sebelumnya. Satu percobaan '
+            + `sekarang; kalau masih ditolak, berikutnya ${Math.round(kunciRetryMs() / 60000)} menit lagi `
+            + '(bukan tiga ketukan beruntun). Buka kunci dari dashboard kalau perangkatnya memang '
+            + 'sudah dilepas dari HP.');
+        startBot().catch((e) => {
+            console.error('[startBot] gagal init:', e?.message || e);
+            setTimeout(() => startBot().catch(() => {}), 10000);
+        });
+    } else if (keadaanLalu.menungguPindai && !tertautDiDisk) {
+        menungguPindai = true;
+        console.warn('[pindai] Melanjutkan keadaan DIAM dari proses sebelumnya — perangkat belum '
+            + 'tertaut dan tidak ada yang memindai. Tidak ada ketukan ke WhatsApp sampai ada yang '
+            + `membuka kartu QR di dashboard; denyut lambat tiap ${Math.round(PINDAI_RETRY_MS / 60000)} menit.`);
+        setTimeout(() => startBot().catch((e) => console.error('[pindai] startBot gagal:', e?.message || e)),
+            PINDAI_RETRY_MS).unref();
+    } else {
+        startBot().catch((e) => {
+            console.error('[startBot] gagal init:', e?.message || e);
+            setTimeout(() => startBot().catch(() => {}), 10000); // coba lagi 10 dtk
+        });
+    }
 });
+
+// ── Konteks bersama untuk modul rute ─────────────────────────────────────────
+// Satu objek yang dioper ke semua modul di src/routes/. Isinya dua macam, dan
+// bedanya yang penting:
+//
+//   NILAI TETAP  — konstanta dan fungsi. Diambil sekali oleh modulnya lewat
+//                  destrukturisasi di baris pertamanya.
+//   STATE HIDUP  — lewat getter/setter. Modul menulis `K.waSocket`, bukan
+//                  menyalinnya ke variabel lokal, karena soket WhatsApp diganti
+//                  tiap kali bot menyambung ulang. Salinan yang diambil saat
+//                  modul dimuat akan menunjuk ke soket yang sudah mati, dan
+//                  gejalanya bukan galat — melainkan pesan yang tidak pernah
+//                  sampai.
+//
+// Objek ini juga jadi daftar sambungan yang jujur: sepanjang apa pun ia, itulah
+// ukuran seberapa terikat rute-rute itu pada keadaan bot. Menyusutkannya adalah
+// pekerjaan fase berikutnya, dan sekarang setidaknya ia bisa dilihat.
+const K = {
+    AKAR: __dirname, API_TOKEN, BOT2_TOKEN, BOT_PREFIX,
+    bot2Siap, nomorBot2,
+    BROADCAST_MAX, DEFAULT_GREETING, DIBUANG_TTL_MS, GREETING_MAX,
+    GROUPS_TTL_MS, KUKI_NAMA, KUNCI_SESI, MODUL_BAWAAN,
+    MSG_ARCHIVE_CAP, OUTBOX_MAX, OUTBOX_TTL_MS, OWNER_NUMBER,
+    PANEL_PASSWORD, PINDAI_RETRY_MS, REPO_BOT, REPO_SITUS,
+    SITUS_OUTBOX, TTL_BALASAN_MS, WEBHOOK_URL, amanTujuan,
+    ambangEskalasiMs, authBlocked, bangunkanPindai, bersihkanModul,
+    bolehMasuk, botSiap, broadcastTargets, bump,
+    dgnBatas, enrichDicariMessage, exitAfterFlush, getSavedNewsletters,
+    getSavedStatuses, halamanMasuk, idTugas, kickQueue,
+    kukiSah, kunciRetryMs, messageQueue, nomorAlarm,
+    nomorCadangan, normalisasiNomor, noteAuthFail, passwordMatches,
+    requireAuth, requireAuthPage, requirePemulihan, requireRelink,
+    saveLidResolutionMap, saveNewsletter, saveSettings, saveStatus,
+    semuaModul, simpanDibuang, simpanOutbox, socketAlive,
+    statsDay, swapLegacyGreeting, systemLogs, terusanOutbox,
+    teruskanKeBot2, toJid,
+
+    get chatMap() { return chatMap; },
+    set chatMap(v) { chatMap = v; },
+    get clearAuthState() { return clearAuthState; },
+    set clearAuthState(v) { clearAuthState = v; },
+    get connectedAt() { return connectedAt; },
+    set connectedAt(v) { connectedAt = v; },
+    get connectedPhone() { return connectedPhone; },
+    set connectedPhone(v) { connectedPhone = v; },
+    get conversationContext() { return conversationContext; },
+    set conversationContext(v) { conversationContext = v; },
+    get currentQR() { return currentQR; },
+    set currentQR(v) { currentQR = v; },
+    get dibuangList() { return dibuangList; },
+    set dibuangList(v) { dibuangList = v; },
+    get greetingText() { return greetingText; },
+    set greetingText(v) { greetingText = v; },
+    get groupsCache() { return groupsCache; },
+    set groupsCache(v) { groupsCache = v; },
+    get kunciSiklus() { return kunciSiklus; },
+    set kunciSiklus(v) { kunciSiklus = v; },
+    get lastOutage() { return lastOutage; },
+    set lastOutage(v) { lastOutage = v; },
+    get legacyGreetingSwaps() { return legacyGreetingSwaps; },
+    set legacyGreetingSwaps(v) { legacyGreetingSwaps = v; },
+    get lidMap() { return lidMap; },
+    set lidMap(v) { lidMap = v; },
+    get lidResolutionMap() { return lidResolutionMap; },
+    set lidResolutionMap(v) { lidResolutionMap = v; },
+    get logoutStrikes() { return logoutStrikes; },
+    set logoutStrikes(v) { logoutStrikes = v; },
+    get menungguPindai() { return menungguPindai; },
+    set menungguPindai(v) { menungguPindai = v; },
+    get messageLog() { return messageLog; },
+    set messageLog(v) { messageLog = v; },
+    get msgArchive() { return msgArchive; },
+    set msgArchive(v) { msgArchive = v; },
+    get offlineEscalations() { return offlineEscalations; },
+    set offlineEscalations(v) { offlineEscalations = v; },
+    get offlineSince() { return offlineSince; },
+    set offlineSince(v) { offlineSince = v; },
+    get outageCount() { return outageCount; },
+    set outageCount(v) { outageCount = v; },
+    get reconnectAttempts() { return reconnectAttempts; },
+    set reconnectAttempts(v) { reconnectAttempts = v; },
+    get sesiTerkunci() { return sesiTerkunci; },
+    // Rute /sesi/buka-kunci menulis lewat sini. Penyimpanan ikut di setter, bukan
+    // di rutenya: siapa pun yang membuka kunci nanti akan lupa memanggilnya, dan
+    // kunci yang "dibuka" tapi hidup lagi sesudah restart adalah jenis kebingungan
+    // yang paling mahal untuk dilacak.
+    set sesiTerkunci(v) { sesiTerkunci = !!v; if (!sesiTerkunci) kunciSiklus = 0; simpanPindaiState(); },
+    get sessionLostAt() { return sessionLostAt; },
+    set sessionLostAt(v) { sessionLostAt = v; },
+    get settings() { return settings; },
+    set settings(v) { settings = v; },
+    get siklusQrSiaSia() { return siklusQrSiaSia; },
+    set siklusQrSiaSia(v) { siklusQrSiaSia = v; },
+    get stats() { return stats; },
+    set stats(v) { stats = v; },
+    get waSocket() { return waSocket; },
+    set waSocket(v) { waSocket = v; },
+};
+
+require('./src/routes/panel.routes')(app, K);
+require('./src/routes/antrean.routes')(app, K);
+require('./src/routes/sesi.routes')(app, K);
+require('./src/routes/wa.routes')(app, K);

@@ -1,10 +1,20 @@
 // Integrasi Fonnte (WhatsApp gateway). Semua fungsi aman-gagal:
 // jika token belum di-set / request error, hanya log, tidak melempar.
 
+import { AsyncLocalStorage } from "async_hooks";
 import { buildSlug } from "@/lib/slug";
 import { formatWaForBaileys, formatWa } from "@/lib/constants";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { tokenBotUtama } from "@/lib/botTokens";
+
+// ── Balasan lewat perangkat yang menerima ────────────────────────────────────
+// Situs cuma menembak SATU alamat bot (bot pertama), tapi pesan pelanggan bisa
+// masuk lewat NOMOR bot kedua. Webhook menandai asal perangkatnya di konteks
+// async ini; send() di bawah membaca tandanya dan menitipkan `perangkat` pada
+// /send bot pertama — yang meneruskannya ke perangkat kedua (gerbang failover
+// 24749b5). Hasilnya balasan keluar dari nomor yang SAMA dengan yang di-chat
+// pelanggan, tanpa satu pun pemanggil sendWa perlu tahu-menahu.
+export const perangkatBalasan = new AsyncLocalStorage();
 
 const FONNTE_URL = "https://api.fonnte.com/send";
 
@@ -162,7 +172,15 @@ async function send(target, message, fileUrl = null, ttlDetik = null, meta = nul
 
     const finalUrl = `${baseUrl}/send`;
     const baileysTarget = target.includes('@') ? target : formatWaForBaileys(target);
-    const payload = { target: baileysTarget, message: message, url: fileUrl || undefined, ttlDetik: ttlDetik || undefined };
+    const payload = {
+      target: baileysTarget,
+      message: message,
+      url: fileUrl || undefined,
+      ttlDetik: ttlDetik || undefined,
+      // 'lain' saat pesan aslinya masuk lewat nomor bot kedua — lihat
+      // perangkatBalasan di atas.
+      perangkat: perangkatBalasan.getStore() || undefined,
+    };
 
     console.log(`[sendWa] Sending to: ${finalUrl} | Target: ${target}`);
 

@@ -11,9 +11,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=Work+Sans:wght@400;500&display=swap">
-<link rel="stylesheet" href="/assets/ui.css?v=20260821b">
+<link rel="stylesheet" href="/assets/ui.css?v=20260822">
 <script>try{var t=localStorage.getItem('tema');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
-<script src="/assets/ui.js?v=20260821b" defer></script>
+<script src="/assets/ui.js?v=20260822" defer></script>
 </head>
 <body>
 <div class="wrap">
@@ -82,20 +82,37 @@ melonggarkan gerbang bisa diambil berdasarkan data, bukan firasat.</p>
 <h2><span class="no">04</span>Ukuran pekerjaannya</h2>
 <div class="card">
   <div class="stats">
-    <div class="stat"><div class="n">31.538</div><div class="l">baris kode website</div></div>
-    <div class="stat"><div class="n">2.483</div><div class="l">baris kode bot</div></div>
-    <div class="stat"><div class="n">323</div><div class="l">commit</div></div>
-    <div class="stat"><div class="n">68</div><div class="l">endpoint API web</div></div>
-    <div class="stat"><div class="n">43</div><div class="l">endpoint bot</div></div>
-    <div class="stat"><div class="n">19</div><div class="l">halaman publik</div></div>
-    <div class="stat"><div class="n">49</div><div class="l">komponen React</div></div>
-    <div class="stat"><div class="n">12</div><div class="l">tabel database</div></div>
+    <div class="stat"><div class="n">40.288</div><div class="l">baris kode website</div></div>
+    <div class="stat"><div class="n">12.561</div><div class="l">baris kode bot</div></div>
+    <div class="stat"><div class="n">375</div><div class="l">commit repo situs</div></div>
+    <div class="stat"><div class="n">78</div><div class="l">rute API web</div></div>
+    <div class="stat"><div class="n">71</div><div class="l">rute bot</div></div>
+    <div class="stat"><div class="n">24</div><div class="l">halaman untuk pengguna</div></div>
+    <div class="stat"><div class="n">66</div><div class="l">komponen React</div></div>
+    <div class="stat"><div class="n">32</div><div class="l">tabel database</div></div>
   </div>
 </div>
-<p>Sebarannya sendiri bercerita. Dari 323 commit, <strong>298 di antaranya jatuh di bulan Juni</strong> —
-kira-kira dua puluh hari kerja yang sangat padat untuk membangun seluruh sisi website. Juli
-melambat jadi 22 commit, karena perhatian pindah ke bot WhatsApp, yang dibangun terpisah
-mulai pertengahan Juli dan masih diperbaiki sampai sekarang.</p>
+<p>Sebarannya sendiri bercerita. Dari 375 commit, <strong>298 di antaranya jatuh di bulan
+Juni</strong> — kira-kira dua puluh hari kerja yang sangat padat untuk membangun seluruh sisi
+website. Juli melambat jadi 22 commit, karena perhatian pindah ke bot WhatsApp, yang dibangun
+terpisah mulai pertengahan Juli. Agustus menambah 55 lagi, hampir semuanya perbaikan setelah
+sistemnya benar-benar dipakai orang.</p>
+<p class="small">Angka di atas dihitung ulang <strong>22 Agustus 2026</strong> dari klon segar
+kedua repo, dan cara menghitungnya ditulis supaya bisa diperiksa: <em>baris kode website</em> =
+seluruh berkas <code>.js</code>/<code>.jsx</code>/<code>.css</code> di <code>src/</code> repo
+situs; <em>baris kode bot</em> = semua berkas <code>.js</code>, <code>.html</code>, dan
+<code>.css</code> yang dilacak git di repo bot — <code>index.js</code> (3.050), tujuh modul
+<code>src/</code> hasil refactor 22 Agustus (2.024), halaman-halaman panelnya, dan berkas rupa
+bersamanya; berkas SQL migrasi tidak ikut. <em>Rute</em> = alamat unik, bukan jumlah metode:
+78 berkas rute situs sebenarnya memuat 98 metode GET/POST/PUT/PATCH/DELETE. <em>Halaman</em>
+di sini yang dipakai pengguna saja (24); kalau panel admin dan 12 halaman
+<code>/admin-demo/*</code> ikut dihitung, jumlahnya 50. <em>Commit</em> cuma repo situs, karena
+riwayat repo bot pernah dimulai ulang pada Agustus 2026.</p>
+
+<p class="small">Halaman <a href="/lomba">/lomba</a> menyebut angka yang sama persis. Itu bukan
+kebetulan: dua halaman ini pernah dua kali mengaku angka berbeda untuk hal yang sama — pertama
+antara <code>/projek</code> dan <code>/lomba</code>, lalu <code>/lomba</code> dengan panel
+rinciannya sendiri. Kalau salah satunya diubah lagi, yang satunya wajib ikut.</p>
 
 <h2><span class="no">05</span>Apa saja yang bisa dilakukan</h2>
 <table>

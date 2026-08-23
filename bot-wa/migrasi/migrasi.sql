@@ -1587,3 +1587,238 @@ UPDATE public.seller_profiles
 -- Panel admin selalu membuka daftar "yang menunggu dulu".
 CREATE INDEX IF NOT EXISTS seller_profiles_store_status_idx
   ON public.seller_profiles (store_status);
+
+
+-- ---------------------------------------------------------------------
+-- BAGIAN 27 — Membuang yang kembar
+--
+-- Tidak ada fitur baru di sini. Yang dibuang lahir dari kebiasaan lama:
+-- SQL yang sama dijalankan lewat dasbor Supabase dengan nama berbeda,
+-- lalu dijalankan lagi lewat berkas ini. Postgres menurut saja — dua
+-- indeks identik dipelihara dua-duanya (dua kali kerja tiap INSERT), dan
+-- dua kebijakan RLS yang berbunyi sama dievaluasi dua-duanya tiap query.
+--
+-- Aman diulang: semuanya IF EXISTS.
+-- ---------------------------------------------------------------------
+
+-- 1. INDEKS KEMBAR ------------------------------------------------------
+-- Yang disimpan selalu nama yang ditulis berkas ini, supaya menjalankan
+-- ulang migrasi tidak menghidupkan lagi yang barusan dibuang.
+DROP INDEX IF EXISTS public.idx_listings_bumped_at;   -- = listings_bumped_idx (BAGIAN 1)
+DROP INDEX IF EXISTS public.idx_listings_status;      -- = listings_status_idx (BAGIAN 1)
+DROP INDEX IF EXISTS public.idx_listings_seller_wa;   -- = listings_seller_idx (BAGIAN 1)
+DROP INDEX IF EXISTS public.idx_reports_listing_id;   -- = reports_listing_idx (BAGIAN 3)
+
+-- 2. INDEKS YANG SUDAH DITANGGUNG CONSTRAINT UNIQUE ---------------------
+-- UNIQUE membuat indeksnya sendiri. Indeks biasa di kolom yang sama tidak
+-- menambah kecepatan apa pun — cuma satu pohon lagi yang harus diperbarui
+-- tiap tulis.
+DROP INDEX IF EXISTS public.idx_listings_listing_code; -- ada listings_listing_code_unique
+DROP INDEX IF EXISTS public.blogs_slug_idx;            -- ada blogs_slug_key
+DROP INDEX IF EXISTS public.idx_dist_invite_token;     -- ada distributor_invites_token_key
+DROP INDEX IF EXISTS public.payments_order_idx;        -- ada payments_midtrans_order_id_key
+DROP INDEX IF EXISTS public.referrals_referred_idx;    -- ada referrals_referred_wa_key
+
+-- 3. UNIQUE KEMBAR DI KUNCI UTAMA ---------------------------------------
+-- `seller_profiles.wa` adalah PRIMARY KEY, dan primary key sudah unik.
+-- `seller_profiles_wa_key` yang dibuat BAGIAN 5 tidak pernah menambah
+-- jaminan apa pun. Sudah diperiksa: ketiga foreign key yang menunjuk ke
+-- tabel ini memakai seller_profiles_pkey, bukan constraint ini.
+ALTER TABLE public.seller_profiles DROP CONSTRAINT IF EXISTS seller_profiles_wa_key;
+
+-- 4. DUA FOREIGN KEY DI SATU KOLOM --------------------------------------
+-- `listings.seller_wa` punya DUA foreign key ke seller_profiles(wa):
+--
+--   listings_seller_wa_fkey   ON UPDATE CASCADE  ON DELETE SET NULL  (BAGIAN 5)
+--   fk_seller_profiles        (tanpa ON UPDATE)  ON DELETE RESTRICT  (entah dari mana)
+--
+-- Postgres menegakkan keduanya, jadi yang paling ketat yang menang dan
+-- BAGIAN 5 tidak pernah benar-benar berlaku. Akibatnya nyata, bukan
+-- teoretis: `migrateLidToPhone()` di situs mengganti `seller_profiles.wa`
+-- dari LID ke nomor HP dan mengandalkan ON UPDATE CASCADE. Selama
+-- fk_seller_profiles berdiri, UPDATE itu SELALU ditolak, dan kodenya jatuh
+-- ke jalur cadangan: baris profil baru dibuat lalu yang lama dihapus —
+-- `created_at` dan `referral_code` penjualnya hilang tiap kali.
+ALTER TABLE public.listings DROP CONSTRAINT IF EXISTS fk_seller_profiles;
+
+-- 5. KEBIJAKAN RLS KEMBAR -----------------------------------------------
+-- Satu kebijakan per tabel per aksi. Yang disimpan adalah policy anon dari
+-- BAGIAN 23 (dan untuk blogs: policy "published" dari BAGIAN 7).
+DROP POLICY IF EXISTS "public read active listings"  ON public.listings;
+DROP POLICY IF EXISTS "public read categories"       ON public.categories;
+DROP POLICY IF EXISTS "public read ratings"          ON public.seller_ratings;
+DROP POLICY IF EXISTS "public read active wanted"    ON public.wanted_listings;
+DROP POLICY IF EXISTS "Public read seller_profiles"  ON public.seller_profiles;  -- kembar BAGIAN 4
+DROP POLICY IF EXISTS "Public can view published blogs" ON public.blogs;
+
+-- blogs perlu perlakuan sendiri. Dua policy-nya TIDAK berbunyi sama:
+-- `anon_read_blogs` (BAGIAN 23) memakai USING (true), sedangkan
+-- "public read published blogs" (BAGIAN 7) membatasi ke artikel yang sudah
+-- terbit. Dua aturan berbeda untuk satu tabel berarti yang paling longgar
+-- yang menang. Yang disimpan yang lebih ketat.
+DROP POLICY IF EXISTS "anon_read_blogs" ON public.blogs;
+
+
+-- ---------------------------------------------------------------------
+-- RINGKASAN BAGIAN 27 — semuanya harus 0
+-- ---------------------------------------------------------------------
+WITH kembar AS (
+  SELECT tablename, regexp_replace(indexdef, '^CREATE (UNIQUE )?INDEX \S+ ON', 'ON') AS bentuk
+    FROM pg_indexes WHERE schemaname = 'public'
+   GROUP BY 1, 2 HAVING count(*) > 1
+)
+SELECT 'indeks kembar tersisa' AS periksa, count(*)::text AS jumlah FROM kembar
+UNION ALL
+SELECT 'foreign key kembar di listings.seller_wa',
+       (count(*) - 1)::text FROM pg_constraint
+ WHERE conrelid = 'public.listings'::regclass AND contype = 'f'
+   AND confrelid = 'public.seller_profiles'::regclass
+UNION ALL
+SELECT 'kebijakan kembar tersisa', (count(*))::text FROM (
+  SELECT tablename, cmd, qual FROM pg_policies WHERE schemaname = 'public'
+   GROUP BY 1, 2, 3 HAVING count(*) > 1) k;
+
+
+-- ---------------------------------------------------------------------
+-- BAGIAN 28 — Tiga temuan keamanan yang tinggal di database
+--
+-- Ditulis 21 Agustus 2026. Kode situs yang bersangkutan sudah disesuaikan
+-- lebih dulu, jadi menjalankan berkas ini TIDAK mengunci siapa pun di luar.
+--
+-- Aman diulang: ketiganya menyaring apa yang sudah beres.
+-- ---------------------------------------------------------------------
+
+-- 1. PIN PENJUAL YANG MASIH TELANJANG ------------------------------------
+-- 32 dari 41 PIN masih tersimpan apa adanya. Sebabnya bukan kelalaian di
+-- kode: `verifyPin()` memang mengubah PIN jadi hash saat penjualnya login,
+-- tapi penjual yang tidak pernah login lagi tidak pernah kena giliran.
+--
+-- Ini menghitung ulang di dalam database — nilai polosnya tidak pernah
+-- keluar dari sana. `gen_salt('bf')` menghasilkan bcrypt `$2a$`, dan sudah
+-- diuji cocok dengan `bcrypt.compareSync()` milik bcryptjs yang dipakai
+-- situs, juga dengan regex `isHashed()` di `src/lib/pin.js`.
+--
+-- Penjual tetap memakai PIN yang sama; yang berubah cuma bentuk simpanannya.
+UPDATE public.seller_profiles
+   SET pin = extensions.crypt(pin, extensions.gen_salt('bf', 10))
+ WHERE pin IS NOT NULL
+   AND pin !~ '^\$2[aby]\$';
+
+-- 2. OTP KEDALUWARSA YANG TIDAK PERNAH DISAPU -----------------------------
+-- 24 baris menumpuk sejak 11 Juni 2026, semuanya sudah mati, semuanya masih
+-- berisi kode terang. Tabel `otps` adalah satu-satunya jalan pulang ke akun
+-- yang lupa sandi, jadi menyimpannya lebih lama dari lima menit umur
+-- pakainya cuma menambah bahan bakar tanpa menambah guna.
+--
+-- Yang akan datang sudah aman: sejak 21 Agustus, `/api/auth/otp/send`
+-- menyimpan hash bcrypt, dan cron `expire` menyapu yang kedaluwarsa tiap
+-- hari. Baris di bawah ini membereskan yang terlanjur ada.
+DELETE FROM public.otps WHERE expires_at < now();
+
+-- 3. FUNGSI DENGAN search_path YANG BISA DIGESER --------------------------
+-- `increment_listing_views` berjalan sebagai pemiliknya tanpa mengunci
+-- search_path, jadi ia menyelesaikan nama tabel lewat jalur yang bisa
+-- diubah pemanggilnya. Mengunci jalurnya menutup itu tanpa mengubah apa pun
+-- yang dikerjakannya.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_proc p
+      JOIN pg_namespace n ON n.oid = p.pronamespace
+     WHERE n.nspname = 'public' AND p.proname = 'increment_listing_views'
+  ) THEN
+    EXECUTE 'ALTER FUNCTION public.increment_listing_views(uuid) SET search_path = public, pg_temp';
+  END IF;
+END $$;
+
+
+-- ---------------------------------------------------------------------
+-- RINGKASAN BAGIAN 28 — dua baris pertama harus 0
+-- ---------------------------------------------------------------------
+SELECT 'PIN masih plaintext' AS periksa,
+       count(*)::text AS jumlah
+  FROM public.seller_profiles
+ WHERE pin IS NOT NULL AND pin !~ '^\$2[aby]\$'
+UNION ALL
+SELECT 'OTP kedaluwarsa tersisa', count(*)::text FROM public.otps WHERE expires_at < now()
+UNION ALL
+SELECT 'search_path increment_listing_views',
+       COALESCE((SELECT array_to_string(p.proconfig, ', ') FROM pg_proc p
+                   JOIN pg_namespace n ON n.oid = p.pronamespace
+                  WHERE n.nspname='public' AND p.proname='increment_listing_views'), 'fungsi tidak ada');
+
+
+-- ---------------------------------------------------------------------
+-- BAGIAN 29 — Penjual boleh menulis blog, dengan dua pintu
+--
+-- Sampai sekarang `blogs` hanya bisa diisi admin, dan kolom `author` cuma
+-- teks bebas berisi "Admin". Bagian ini membuka penulisan untuk penjual,
+-- dengan dua jalur yang sengaja berbeda:
+--
+--   berbadge (blog_badge = true)  → tulisannya langsung terbit
+--   tanpa badge                    → tulisannya menunggu persetujuan admin
+--
+-- Badge diberikan admin, dan hanya admin yang bisa mencabutnya. Ia bukan
+-- hadiah kosmetik: ia memindahkan orang dari antrean moderasi ke jalur
+-- terbit-langsung, jadi memberikannya = mempercayakan nama situs ini.
+--
+-- Kenapa nilai statusnya campur bahasa ('published' dan 'draft' Inggris,
+-- 'menunggu' dan 'ditolak' Indonesia): dua yang pertama sudah dipakai 7
+-- baris yang ada, halaman /blog, dan editor admin. Menyeragamkannya berarti
+-- menyentuh ketiganya demi kerapian nama — utang yang lebih murah dibayar
+-- nanti daripada risiko artikel hilang dari beranda hari ini.
+-- ---------------------------------------------------------------------
+
+-- 1. BADGE PENULIS DI PROFIL PENJUAL ------------------------------------
+ALTER TABLE public.seller_profiles
+  ADD COLUMN IF NOT EXISTS blog_badge    boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS blog_badge_at timestamptz;
+
+-- 2. PENULIS DAN JEJAK PERSETUJUAN DI ARTIKEL ---------------------------
+ALTER TABLE public.blogs
+  ADD COLUMN IF NOT EXISTS author_wa    text,
+  ADD COLUMN IF NOT EXISTS reject_note  text,
+  ADD COLUMN IF NOT EXISTS submitted_at timestamptz,
+  ADD COLUMN IF NOT EXISTS reviewed_at  timestamptz;
+
+-- `author` (teks bebas) DIBIARKAN. Ia yang tampil di halaman publik dan
+-- sudah terisi di 7 artikel lama; `author_wa` yang menyimpan siapa
+-- pemiliknya di sistem. Artikel admin punya author_wa NULL, dan itu sah.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'blogs_author_wa_fkey') THEN
+    ALTER TABLE public.blogs
+      ADD CONSTRAINT blogs_author_wa_fkey
+      FOREIGN KEY (author_wa) REFERENCES public.seller_profiles(wa)
+      ON UPDATE CASCADE ON DELETE SET NULL;
+  END IF;
+END $$;
+
+-- 3. STATUS YANG SAH ----------------------------------------------------
+-- Tanpa CHECK, satu salah ketik di kode menghasilkan artikel yang tidak
+-- pernah tampil di mana pun dan tidak pernah muncul di antrean moderasi —
+-- hilang tanpa jejak, tanpa galat.
+ALTER TABLE public.blogs DROP CONSTRAINT IF EXISTS blogs_status_check;
+ALTER TABLE public.blogs ADD CONSTRAINT blogs_status_check
+  CHECK (status IN ('draft', 'menunggu', 'published', 'ditolak'));
+
+-- 4. INDEKS -------------------------------------------------------------
+-- Dasbor penjual selalu bertanya "artikel milik nomor ini, terbaru dulu".
+CREATE INDEX IF NOT EXISTS blogs_author_idx ON public.blogs (author_wa, created_at DESC);
+
+
+-- ---------------------------------------------------------------------
+-- RINGKASAN BAGIAN 29 — semuanya harus 'ada'
+-- ---------------------------------------------------------------------
+SELECT 'seller_profiles.blog_badge' AS objek,
+       CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns
+                          WHERE table_schema='public' AND table_name='seller_profiles'
+                            AND column_name='blog_badge') THEN 'ada' ELSE 'TIDAK ADA' END AS status
+UNION ALL SELECT 'blogs.author_wa',
+       CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns
+                          WHERE table_schema='public' AND table_name='blogs'
+                            AND column_name='author_wa') THEN 'ada' ELSE 'TIDAK ADA' END
+UNION ALL SELECT 'blogs_author_wa_fkey',
+       CASE WHEN EXISTS (SELECT 1 FROM pg_constraint WHERE conname='blogs_author_wa_fkey') THEN 'ada' ELSE 'TIDAK ADA' END
+UNION ALL SELECT 'blogs_status_check',
+       CASE WHEN EXISTS (SELECT 1 FROM pg_constraint WHERE conname='blogs_status_check') THEN 'ada' ELSE 'TIDAK ADA' END;

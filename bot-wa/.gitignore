@@ -1,4 +1,63 @@
+# Dependensi
 node_modules/
+
+# Sesi & kredensial WhatsApp — JANGAN pernah masuk git
 auth_info_baileys/
 .env
-*.bak*
+
+# State runtime (dibangun ulang sendiri saat jalan)
+chats.json
+contacts.json
+statuses.json
+newsletters.json
+lid_resolution_map.json
+name_map.json
+greeted_map.json
+messages.json
+stats.json
+settings.json
+wa_version.json
+outage_guard.json
+# Penanda "sedang sengaja diam menunggu dipindai" — state runtime per-mesin,
+# bukan bagian aplikasi. Sengaja ikut DATA_DIR supaya bot kedua punya sendiri.
+pindai_state.json
+
+# Cadangan manual era pra-git
+*.bak-*
+push-ke-github.sh
+
+# Berkas kerja penjaga-bot.sh (status lokal, bukan bagian aplikasi)
+.penjaga-hitung
+.penjaga-restart-terakhir
+penjaga-bot.log
+.bot.lock
+outbox.json
+# Kembarannya: antrean yang menyerah setelah gagal 3x. Isinya pesan siap kirim
+# lengkap dengan JID grup tujuan — data jalan, bukan kode (index.js:558).
+outbox-dibuang.json
+
+# Temuan keamanan yang BELUM diperbaiki. Repo ini publik: menerbitkan daftar
+# endpoint yang belum bergerbang sama saja dengan menerbitkan petanya. Berkasnya
+# tinggal di VPS dan disajikan lewat /progres-claude yang butuh sandi panel.
+catatan/
+
+# halaman/progres.html — halaman audit yang dibuat sesi lain. Ia MENGUTIP sandi
+# admin situs apa adanya sebagai bukti temuan. Sempat tinggal di public/ (yang
+# disajikan express.static tanpa gerbang) sampai 21 Agustus 2026; sekarang
+# bergerbang sandi.
+#
+# Dua syarat untuk ia boleh masuk git sudah terpenuhi pada 22 Agustus 2026:
+# sandinya dirotasi pemilik (21 Agu malam) dan keenam kutipannya disensor. Ia
+# TETAP di sini karena syarat ketiga bukan teknis: menerbitkan halaman audit
+# sesi lain ke repo publik itu keputusan pemilik, bukan keputusan yang diambil
+# sambil merapikan. Kalau diputuskan boleh, cukup hapus baris di bawah ini —
+# tapi baca dulu isinya sekali lagi dengan mata "ini akan publik".
+halaman/progres.html
+
+# rahasia.env — SUDAH TIDAK DIPAKAI sejak 22 Agustus 2026. Ia sempat menampung
+# salinan kedua dari API_TOKEN, PANEL_PASSWORD, dan BOT2_TOKEN; jalankan.sh
+# sekarang membaca tiap rahasia dari satu berkas simpanannya sendiri, karena
+# salinan kedua hanya menunggu untuk basi dan yang basi itu muncul sebagai 401
+# tanpa penjelasan. Barisnya sengaja ditinggal sebagai jaring: kalau berkasnya
+# dibuat lagi oleh siapa pun, ia tetap tidak ikut ter-commit.
+rahasia.env
