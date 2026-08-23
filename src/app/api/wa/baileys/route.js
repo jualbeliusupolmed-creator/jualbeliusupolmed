@@ -16,6 +16,9 @@ import sharp from "sharp";
 import { jumlahTokenBot, tokenBotSah } from "@/lib/botTokens";
 
 export const dynamic = "force-dynamic";
+// Loop kirim WA berjeda (anti-ban) mudah melewati batas default 10-15 detik —
+// fungsi yang dibunuh di tengah loop meninggalkan sebagian penerima tanpa pesan.
+export const maxDuration = 300;
 
 // ── Logging percakapan ke Supabase (riwayat chat panel admin + audit lanjutan) ──
 // Menggantikan messageLog in-memory bot yang hilang tiap restart & tak simpan balasan.
@@ -681,6 +684,18 @@ export async function POST(req) {
       try {
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
+
+        // Anti-fraud hash gambar — jalur ini dulu cuma mengandalkan dedup
+        // ref_id hasil baca AI, yang kosong begitu nomor referensinya tidak
+        // terbaca. Hash SHA-256 tidak bergantung pada kualitas baca: foto yang
+        // sama persis selalu ketahuan, di jalur mana pun ia pernah dipakai.
+        const imageHashW = computeImageHash(buffer);
+        const hashCheckW = await checkReceiptHashDuplicate(supa, imageHashW);
+        if (hashCheckW.isDuplicate) {
+          await sendWa(senderJid, "❌ *Struk Sudah Pernah Dipakai*\n\nFoto struk ini sudah pernah diverifikasi untuk transaksi lain. Kirim struk pembayaran yang baru ya kak 🙏");
+          return NextResponse.json({ ok: true, state: "wanted_receipt_hash_duplicate" });
+        }
+
         const extractedData = await verifyReceiptImage(buffer, file.type || "image/jpeg");
         if (!extractedData.is_struk_valid) {
           await sendWa(senderJid, "Ini bukan struk transfer ya kak 🙏 Coba kirim ulang yg jelas.");
@@ -712,6 +727,13 @@ export async function POST(req) {
           .update({ status: "paid", meta: { ...(pendingWantedPayment.meta || {}), receipt_ref: refIdW || null } })
           .eq("id", pendingWantedPayment.id).eq("status", "pending").select("id").maybeSingle();
         if (!claimedW) return NextResponse.json({ ok: true, state: "already_paid" });
+        // Disimpan SETELAH klaim atomik berhasil — struk yang gagal di tengah
+        // jalan tidak boleh "hangus" untuk percobaan ulang yang sah.
+        await saveReceiptHash(supa, imageHashW, {
+          payment_id: pendingWantedPayment.id,
+          wa: normalizedWa,
+          amount: pendingWantedPayment.amount,
+        });
         await supa.from("wanted_listings").update({ status: "active" }).eq("id", pendingWantedPayment.wanted.id);
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
         const confirmMsg =

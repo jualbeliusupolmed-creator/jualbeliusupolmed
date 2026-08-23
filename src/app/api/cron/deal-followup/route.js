@@ -4,6 +4,9 @@ import { tolakCron } from "@/lib/cronAuth";
 import { sendWa } from "@/lib/fonnte";
 
 export const dynamic = "force-dynamic";
+// Loop kirim WA berjeda (anti-ban) mudah melewati batas default 10-15 detik —
+// fungsi yang dibunuh di tengah loop meninggalkan sebagian penerima tanpa pesan.
+export const maxDuration = 300;
 
 // GET /api/cron/deal-followup
 // Berjalan setiap jam (misal 0 * * * *)

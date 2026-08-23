@@ -6,6 +6,9 @@ import { buildSlug } from "@/lib/slug";
 import { getSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
+// Loop kirim WA berjeda (anti-ban) mudah melewati batas default 10-15 detik —
+// fungsi yang dibunuh di tengah loop meninggalkan sebagian penerima tanpa pesan.
+export const maxDuration = 300;
 
 export async function GET(req) {
   const tolak = tolakCron(req);

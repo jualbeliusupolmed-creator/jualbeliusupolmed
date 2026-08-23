@@ -5,6 +5,9 @@ import { sendWa } from "@/lib/fonnte";
 import { formatWaForBaileys } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
+// Loop kirim WA berjeda (anti-ban) mudah melewati batas default 10-15 detik —
+// fungsi yang dibunuh di tengah loop meninggalkan sebagian penerima tanpa pesan.
+export const maxDuration = 300;
 
 // Vercel Cron harian jam 08:00.
 // Kirim reminder H-3 dan H-1 sebelum iklan expired.
@@ -111,11 +114,38 @@ export async function GET(req) {
     langgananDiturunkan = turun?.length || 0;
   }
 
+  // ── Sapu obrolan anonim yang sudah selesai ──────────────────────────────────
+  // Fitur yang menjual keanoniman tidak pantas menyimpan isi obrolan selamanya.
+  // Room `closed` berumur > 30 hari dihapus (chat_messages ikut lewat ON DELETE
+  // CASCADE), dan room `waiting` yang tidak pernah dipasangkan disapu setelah
+  // sehari — matchmaking hanya melirik yang berumur < 3 menit, sisanya bangkai.
+  let chatDisapu = 0;
+  {
+    const batasClosed = new Date(Date.now() - 30 * 864e5).toISOString();
+    // `active` ikut: room yang ditinggal tanpa menekan "keluar" diam di status
+    // itu selamanya; 30 hari tanpa aktivitas artinya kedua pesertanya sudah pergi.
+    const { data: closedLama } = await supa
+      .from("chat_rooms")
+      .delete()
+      .in("status", ["closed", "active"])
+      .lt("updated_at", batasClosed)
+      .select("id");
+    const batasWaiting = new Date(Date.now() - 864e5).toISOString();
+    const { data: waitingBasi } = await supa
+      .from("chat_rooms")
+      .delete()
+      .eq("status", "waiting")
+      .lt("created_at", batasWaiting)
+      .select("id");
+    chatDisapu = (closedLama?.length || 0) + (waitingBasi?.length || 0);
+  }
+
   return NextResponse.json({
     reminded,
     h3_checked: expiringH3?.length || 0,
     h1_checked: expiringH1?.length || 0,
     otp_disapu: otpDisapu,
     langganan_diturunkan: langgananDiturunkan,
+    chat_disapu: chatDisapu,
   });
 }

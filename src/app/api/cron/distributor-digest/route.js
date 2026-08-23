@@ -7,6 +7,9 @@ import { buildSlug } from "@/lib/slug";
 import { getDistributorSettings } from "@/lib/distributor";
 
 export const dynamic = "force-dynamic";
+// Loop kirim WA berjeda (anti-ban) mudah melewati batas default 10-15 detik —
+// fungsi yang dibunuh di tengah loop meninggalkan sebagian penerima tanpa pesan.
+export const maxDuration = 300;
 
 function rupiah(n) {
   return "Rp " + (Number(n) || 0).toLocaleString("id-ID");
