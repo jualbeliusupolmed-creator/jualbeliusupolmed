@@ -221,14 +221,25 @@ function ChatContent() {
         });
         const data = await res.json();
 
+        // Room-nya lenyap — biasanya karena pencarian dimulai lagi dari tab
+        // atau perangkat lain dengan akun yang sama (room lama dihapus). Dulu
+        // cabang ini tidak ada dan poll terus menembak room hantu sampai
+        // timeout, tanpa pernah memberi tahu penggunanya.
+        if (data.status === "not_found") {
+          clearInterval(pollIntervalRef.current);
+          setChatState("idle");
+          setCurrentRoomId(null);
+          toast.info("Pencarian ini berakhir — sepertinya kamu memulai pencarian baru di tab/perangkat lain. Coba lagi ya.");
+          return;
+        }
+
         if (data.isMatched && data.room) {
           clearInterval(pollIntervalRef.current);
+          // Room hasil penjodohan bisa BERBEDA dari yang di-poll (penunggu yang
+          // bergabung ke room penunggu lain) — selalu pakai id dari jawaban.
           setCurrentRoomId(data.room.id);
-          setPartnerInfo({
-            alias: data.room.user2_alias === userAlias ? data.room.user1_alias : data.room.user2_alias,
-            faculty: "Umum",
-          });
           setChatState("chat");
+          // Alias & fakultas lawan diisi fetchRoomData dari room + myId.
           fetchRoomData(data.room.id);
           toast.success("🎉 Teman ditemukan!");
         }
@@ -296,17 +307,20 @@ function ChatContent() {
           fetch("/api/chat/match", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "poll", userId, roomId: currentRoomId }),
+            body: JSON.stringify({ action: "poll", roomId: currentRoomId }),
           })
             .then((r) => r.json())
             .then((data) => {
               if (data.isMatched && data.room) {
                 if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
                 setCurrentRoomId(data.room.id);
-                const partnerIsUser1 = data.room.user1_id !== userId;
+                // `userId` klien sudah tiada sejak identitas pindah ke sesi —
+                // referensi lamanya di sini melempar ReferenceError yang
+                // tertelan .catch, jadi tab yang bangun dari belakang tidak
+                // pernah masuk ke chat. Alias lawan kini diisi fetchRoomData.
                 setPartnerInfo({
-                  alias: partnerIsUser1 ? data.room.user1_alias : data.room.user2_alias,
-                  faculty: partnerIsUser1 ? data.room.user1_faculty : data.room.user2_faculty,
+                  alias: "Anonim",
+                  faculty: "Umum",
                 });
                 setChatState("chat");
                 fetchRoomData(data.room.id);

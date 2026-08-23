@@ -41,6 +41,59 @@ export async function POST(request) {
         return NextResponse.json({ error: "Kamu bukan peserta obrolan ini" }, { status: 403 });
       }
 
+      // ── Penunggu tidak boleh pasif ────────────────────────────────────────
+      // Dua orang yang menekan "Mulai" hampir bersamaan sama-sama membuat room
+      // tunggu, dan poll yang cuma menengok room sendiri membuat mereka saling
+      // menunggu selamanya. Maka tiap poll: (1) DETAK JANTUNG — segarkan
+      // updated_at supaya room yang pemiliknya pergi jadi basi dalam 15 detik
+      // dan tidak dipasangkan ke siapa pun; (2) MENJODOHKAN AKTIF — kalau ada
+      // room tunggu lain yang masih segar, gabung ke sana dan buang room
+      // sendiri. Klaimnya atomik (eq status waiting), jadi dua penunggu yang
+      // saling menemukan di saat yang sama tidak bisa dobel-gabung.
+      if (room.status === "waiting" && room.user1_id === userId) {
+        const kini = new Date().toISOString();
+        await supa.from("chat_rooms").update({ updated_at: kini })
+          .eq("id", room.id).eq("status", "waiting");
+
+        const segar = new Date(Date.now() - 15_000).toISOString();
+        const { data: lain } = await supa
+          .from("chat_rooms")
+          .select("*")
+          .eq("type", "random")
+          .eq("status", "waiting")
+          .neq("user1_id", userId)
+          .gt("updated_at", segar)
+          .order("created_at", { ascending: true })
+          .limit(1);
+
+        if (lain && lain.length > 0) {
+          const { data: gabung } = await supa
+            .from("chat_rooms")
+            .update({
+              user2_id: userId,
+              user2_alias: room.user1_alias,
+              user2_faculty: room.user1_faculty,
+              status: "active",
+              updated_at: kini,
+            })
+            .eq("id", lain[0].id)
+            .eq("status", "waiting")
+            .select()
+            .maybeSingle();
+
+          if (gabung) {
+            await supa.from("chat_rooms").delete().eq("id", room.id).eq("status", "waiting");
+            await supa.from("chat_messages").insert({
+              room_id: gabung.id,
+              sender_id: "system",
+              sender_alias: "Sistem",
+              message: "🎉 Kalian telah terhubung! Mulai obrolan dengan santai dan sopan ya.",
+            });
+            return NextResponse.json({ status: "active", room: gabung, isMatched: true });
+          }
+        }
+      }
+
       return NextResponse.json({
         status: room.status,
         room,
@@ -98,6 +151,10 @@ export async function POST(request) {
       .eq("status", "waiting")
       .neq("user1_id", userId)
       .gt("created_at", twoMinutesAgo)
+      // Hanya room yang penunggunya MASIH DI HALAMAN (poll = detak jantung tiap
+      // 3 dtk). Tanpa saringan ini, pencari dipasangkan ke room bangkai yang
+      // pemiliknya sudah menutup tab — "berhasil" mengobrol dengan kekosongan.
+      .gt("updated_at", new Date(Date.now() - 15_000).toISOString())
       .order("created_at", { ascending: true })
       .limit(1);
 
@@ -150,6 +207,7 @@ export async function POST(request) {
         user1_alias: alias,
         user1_faculty: faculty,
         status: "waiting",
+        updated_at: new Date().toISOString(), // detak jantung pertama
       })
       .select()
       .single();
