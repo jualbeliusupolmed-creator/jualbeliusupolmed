@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 
 export const dynamic = "force-dynamic";
-
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
 // POST /api/chat/match - Matchmaking Cari Teman Anonim
 export async function POST(request) {
   try {

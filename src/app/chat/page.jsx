@@ -151,6 +151,41 @@ export default function ChatPage() {
     };
   }, [chatState, currentRoomId, fetchRoomData]);
 
+  // Wake up polling on tab active (fixes browser background throttling)
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        if (chatState === "matching" && currentRoomId) {
+          fetch("/api/chat/match", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "poll", userId, roomId: currentRoomId }),
+          })
+            .then((r) => r.json())
+            .then((data) => {
+              if (data.isMatched && data.room) {
+                if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+                setCurrentRoomId(data.room.id);
+                const partnerIsUser1 = data.room.user1_id !== userId;
+                setPartnerInfo({
+                  alias: partnerIsUser1 ? data.room.user1_alias : data.room.user2_alias,
+                  faculty: partnerIsUser1 ? data.room.user1_faculty : data.room.user2_faculty,
+                });
+                setChatState("chat");
+                fetchRoomData(data.room.id);
+                toast.success("🎉 Teman ditemukan setelah tab aktif!");
+              }
+            })
+            .catch(() => {});
+        } else if (chatState === "chat" && currentRoomId) {
+          fetchRoomData(currentRoomId);
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [chatState, currentRoomId, userId, fetchRoomData]);
+
   // Cancel Matching
   const handleCancelMatch = async () => {
     if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
