@@ -11,8 +11,8 @@ export default function BottomNavbar() {
   const navs = [
     { name: "Beranda", href: "/", icon: Icon.Home },
     { name: "Jual Beli", href: "/jual-beli", icon: Icon.Package },
-    { name: "Post", href: "/menfess/baru", icon: Icon.PlusCircle, special: true },
-    { name: "Cari Teman", href: "/chat", icon: Icon.MessageCircle },
+    { name: "Mading", href: "/mading", icon: Icon.BookOpen, special: true },
+    { name: "Obrolan", href: "/chat", icon: Icon.MessageCircle },
     { name: "Profil", href: "/penjual/login", icon: Icon.User },
   ];
 
