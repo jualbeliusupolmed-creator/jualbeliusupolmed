@@ -104,12 +104,12 @@ function Judul({ children, jumlah, warna, redup }) {
   return (
     <div className="mb-4 flex items-center gap-2.5">
       <span
-        className="h-4 w-1.5 shrink-0 rounded-full"
+        className="h-5 w-1.5 shrink-0 rounded-full"
         style={{ background: redup ? "#cbd5e1" : warna.utama }}
       />
       <h2 className="text-[17px] font-extrabold tracking-tight sm:text-lg">{children}</h2>
       {jumlah != null && (
-        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-bold text-gray-500 dark:bg-slate-800 dark:text-slate-400">
+        <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-[11px] font-bold text-gray-500 dark:bg-slate-800 dark:text-slate-400">
           {jumlah}
         </span>
       )}
@@ -343,10 +343,10 @@ export default async function HalamanToko({ params }) {
       </div>
 
       {/* Bilah lekat khusus ponsel: nomor penjual tidak boleh hilang di atas
-          layar begitu orang menggulir katalognya. */}
+          layar begitu orang menggulir katalognya. Dibuat melayang ala iOS. */}
       {waLink && (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 px-3 py-2.5 backdrop-blur dark:border-slate-800 dark:bg-slate-900/95 sm:hidden">
-          <div className="flex items-center gap-2.5">
+        <div className="fixed bottom-[80px] left-4 right-4 z-40 md:hidden flex justify-center pointer-events-none animate-fade-in-up">
+          <div className="pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-full bg-white/90 p-2 pl-3 shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-xl border border-gray-100 dark:bg-slate-900/90 dark:border-slate-800 dark:shadow-black/50">
             <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full ring-1 ring-black/5 dark:ring-white/10">
               {profil.logo_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -362,17 +362,16 @@ export default async function HalamanToko({ params }) {
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs font-bold leading-tight dark:text-white">{nama}</p>
-              <p className="truncate text-[11px] text-gray-500 dark:text-slate-400">
+              <p className="truncate text-[10px] text-gray-500 dark:text-slate-400 font-medium">
                 {buka ? "Buka sekarang" : "Sedang tutup"}
-                {profil.store_area ? ` · ${profil.store_area}` : ""}
               </p>
             </div>
             <a
               href={waLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="shrink-0 rounded-full px-5 py-2.5 text-sm font-bold text-white active:scale-[.98]"
-              style={{ background: warna.utama }}
+              className="shrink-0 rounded-full px-5 py-2 text-sm font-bold text-white shadow-lg transition-transform active:scale-95"
+              style={{ background: warna.utama, shadowColor: `${warna.utama}33` }}
             >
               Chat
             </a>

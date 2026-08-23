@@ -244,9 +244,19 @@ export default function FormToko({ onTersimpan }) {
           </label>
         </Bagian>
 
-        <div className="sticky bottom-0 -mx-4 border-t border-gray-200 bg-white/90 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+        <div className="fixed bottom-[80px] left-4 right-4 z-40 md:hidden flex justify-center pointer-events-none animate-fade-in-up">
+          <div className="pointer-events-auto w-full max-w-sm rounded-full bg-white/90 p-2 shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-xl border border-gray-100 dark:bg-slate-900/90 dark:border-slate-800 dark:shadow-black/50">
+            <button type="submit" disabled={menyimpan}
+              className="btn-primary w-full rounded-full py-3 text-[15px] font-semibold disabled:opacity-60 shadow-lg shadow-black/10 dark:shadow-black/40">
+              {menyimpan ? "Menyimpan…" : "Simpan toko"}
+            </button>
+          </div>
+        </div>
+        
+        {/* Desktop Sticky Footer */}
+        <div className="hidden md:block sticky bottom-0 -mx-4 mt-8 border-t border-gray-200 bg-white/90 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90 z-40">
           <button type="submit" disabled={menyimpan}
-            className="btn-primary w-full rounded-xl py-3 text-sm font-semibold disabled:opacity-60">
+            className="btn-primary w-full max-w-md mx-auto block rounded-xl py-3 text-sm font-semibold disabled:opacity-60">
             {menyimpan ? "Menyimpan…" : "Simpan toko"}
           </button>
         </div>
@@ -280,12 +290,12 @@ function Gambar({ label, nilai, sibuk, onPilih, onHapus, bulat }) {
   return (
     <div>
       <div className="mb-1 text-sm font-semibold">{label}</div>
-      <div className={`flex h-24 items-center justify-center overflow-hidden border border-dashed border-gray-300 bg-gray-50 dark:border-slate-700 dark:bg-slate-800/40 ${bulat ? "rounded-2xl" : "rounded-xl"}`}>
+      <div className={`flex h-24 items-center justify-center overflow-hidden border border-dashed border-gray-300 bg-gray-50 dark:border-slate-700 dark:bg-slate-800/40 transition-colors hover:border-gray-400 hover:bg-gray-100 dark:hover:border-slate-500 dark:hover:bg-slate-800 ${bulat ? "rounded-full aspect-square h-20 w-20 mx-auto" : "rounded-2xl"}`}>
         {nilai ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={nilai} alt={label} className="h-full w-full object-cover" />
         ) : (
-          <span className="text-xs text-gray-400">Belum ada</span>
+          <span className="text-xs text-gray-400 font-medium">Belum ada</span>
         )}
       </div>
       <div className="mt-1 flex gap-2">

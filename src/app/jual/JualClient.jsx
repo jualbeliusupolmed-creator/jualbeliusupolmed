@@ -194,13 +194,19 @@ export default function JualPage() {
           biaya paling bawah: yang belum punya toko masih sempat membuatnya
           sebelum mengetik apa pun. */}
       {sellerPunyaToko ? (
-        <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-900/20 dark:text-emerald-300">
-          🏪 <strong>Iklanmu gratis</strong> — kamu sudah punya toko, jadi tidak ada biaya tayang.
+        <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-900/20 dark:text-emerald-300 shadow-sm flex items-start gap-3">
+          <span className="text-xl">🏪</span>
+          <div>
+            <strong>Iklanmu gratis</strong> — kamu sudah punya toko, jadi tidak ada biaya tayang.
+          </div>
         </div>
       ) : (
-        <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-900/20 dark:text-amber-300">
-          🏪 Punya toko fisik di sekitar kampus? <strong>Daftar Toko Mitra & Berlangganan.</strong>{" "}
-          <Link href="/dashboard/toko" className="font-semibold underline">Daftarkan tokomu</Link> (syarat: memiliki toko fisik & paket langganan aktif) untuk pasang iklan sepuasnya tanpa biaya tayang per barang.
+        <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50/70 px-5 py-4 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-900/20 dark:text-amber-300 shadow-sm flex items-start gap-3">
+          <span className="text-xl">🏪</span>
+          <div>
+            Punya toko fisik di sekitar kampus? <strong>Daftar Toko Mitra & Berlangganan.</strong>{" "}
+            <Link href="/dashboard/toko" className="font-semibold underline hover:text-amber-700 dark:hover:text-amber-100 transition">Daftarkan tokomu</Link> (syarat: memiliki toko fisik & paket langganan aktif) untuk pasang iklan sepuasnya tanpa biaya tayang per barang.
+          </div>
         </div>
       )}
       <p className="mt-1 text-gray-500">
@@ -245,20 +251,20 @@ export default function JualPage() {
             {form.type === "barang" && (
               <div>
                 <label className="label">Kondisi Barang</label>
-                <div className="flex gap-2">
+                <div className="flex gap-2 bg-gray-50 dark:bg-slate-800/50 p-1 rounded-xl">
                   <button
                     type="button"
                     onClick={() => setForm((f) => ({ ...f, condition: "used" }))}
-                    className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-all ${form.condition === "used" ? "bg-gray-900 text-white border-gray-900 dark:bg-white dark:text-gray-900 dark:border-white" : "border-gray-200 text-gray-500 hover:border-gray-400 dark:border-slate-700 dark:text-slate-400"}`}
+                    className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${form.condition === "used" ? "bg-white text-gray-900 shadow-sm dark:bg-slate-700 dark:text-white" : "text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-300"}`}
                   >
                     Bekas
                   </button>
                   <button
                     type="button"
                     onClick={() => setForm((f) => ({ ...f, condition: "new" }))}
-                    className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-all ${form.condition === "new" ? "bg-sky-500 text-white border-sky-500" : "border-gray-200 text-gray-500 hover:border-sky-400 dark:border-slate-700 dark:text-slate-400"}`}
+                    className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${form.condition === "new" ? "bg-white text-gray-900 shadow-sm dark:bg-slate-700 dark:text-white" : "text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-300"}`}
                   >
-                    ✨ Baru (Belum Pernah Pakai)
+                    ✨ Baru
                   </button>
                 </div>
               </div>
@@ -393,7 +399,7 @@ export default function JualPage() {
             <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400">Metode Pembayaran</h3>
             <div className="grid gap-3 sm:grid-cols-1">
               <div
-                className="flex flex-col text-left p-4 rounded-xl border-2 border-primary bg-primary/5 dark:border-white dark:bg-white/5 transition-all"
+                className="flex flex-col text-left p-4 rounded-xl border-2 border-primary bg-primary/5 dark:border-slate-700 dark:bg-slate-800/50 transition-all"
               >
                 <span className="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-1.5">
                   QRIS + verifikasi struk
