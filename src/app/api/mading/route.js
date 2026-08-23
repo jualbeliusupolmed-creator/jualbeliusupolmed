@@ -23,8 +23,11 @@ export async function GET(request) {
     // membatalkan anonimitasnya bagi siapa pun yang membaca API publik ini.
     let query = supa
       .from("mading_posts")
+      // `views_count` sengaja tidak ikut: tidak ada yang pernah menaikkannya,
+      // jadi mengembalikannya berarti memajang angka nol yang menyamar sebagai
+      // data. Kembalikan ke daftar ini kalau penghitungnya benar-benar dibuat.
       .select(
-        "id, type, sender_name, faculty, title, content, likes_count, comments_count, views_count, status, created_at",
+        "id, type, sender_name, faculty, title, content, likes_count, comments_count, status, created_at",
         { count: "exact" }
       )
       .eq("status", "active")
@@ -116,7 +119,9 @@ export async function POST(request) {
         // dan berbasis login satu pintu, bukan IP yang bisa berubah.
         author_ip_hash: hashIdentitas(wa),
       })
-      .select()
+      // Kolom disebut satu-satu, sama seperti GET: hash IP tidak perlu mampir
+      // ke respons siapa pun, termasuk pengirimnya sendiri.
+      .select("id, type, sender_name, faculty, title, content, likes_count, comments_count, status, created_at")
       .single();
 
     if (error) {

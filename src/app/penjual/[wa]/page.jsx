@@ -167,6 +167,14 @@ function StarDisplay({ value }) {
 }
 
 export default async function SellerProfilePage({ params }) {
+  // Navbar bawah pernah menautkan "Profil" ke /penjual/login — halaman ini,
+  // dengan wa="login", memajang profil penjual yang tidak pernah ada. Tautan
+  // dan bookmark lama masih bisa membawanya, jadi slug cadangan itu diantar ke
+  // pintu tunggal /profil alih-alih dirender sebagai penjual.
+  if (["login", "profil", "masuk"].includes(params.wa?.toLowerCase())) {
+    redirect("/profil");
+  }
+
   const data = await getSellerData(params.wa);
   if (!data) notFound();
 
