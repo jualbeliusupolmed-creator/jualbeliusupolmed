@@ -22,7 +22,7 @@ export default function RecentlyViewedSaver({ listing, slug }) {
     } catch {
       // localStorage mungkin diblokir
     }
-  }, [listing?.id, slug]);
+  }, [listing?.id, slug, listing?.title, listing?.price, listing?.image_url]);
 
   return null;
 }

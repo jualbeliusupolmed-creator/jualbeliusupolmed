@@ -1,6 +1,7 @@
 import { useId } from "react";
 
 export default function Logo({ className = "h-9 w-9", src }) {
+  const id = useId();
   if (src) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
@@ -11,7 +12,7 @@ export default function Logo({ className = "h-9 w-9", src }) {
       />
     );
   }
-  const id = useId();
+
   const gradId = "logo-grad-" + id.replace(/:/g, "");
   return (
     <svg
