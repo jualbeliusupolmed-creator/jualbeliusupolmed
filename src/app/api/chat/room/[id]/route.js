@@ -71,9 +71,14 @@ export async function POST(request, { params }) {
   try {
     const roomId = params.id;
     const body = await request.json();
-    let { senderId, senderAlias, message } = body;
+    let { senderAlias, message } = body;
 
-    if (!roomId || !senderId || !message || typeof message !== "string" || !message.trim()) {
+    // `senderId` sengaja TIDAK lagi dibaca dari body: identitas pengirim datang
+    // dari sesi login (ambilRoomUntuk), dan klien memang berhenti mengirimnya.
+    // Validasi lama yang tetap mewajibkannya sempat membuat SEMUA kirim pesan
+    // dijawab 400 "Pesan tidak boleh kosong" — chat mati total, ketahuan lewat
+    // uji ujung-ke-ujung dengan akun uji, 23 Agu 2026 petang.
+    if (!roomId || !message || typeof message !== "string" || !message.trim()) {
       return NextResponse.json({ error: "Pesan tidak boleh kosong" }, { status: 400 });
     }
 
@@ -90,7 +95,7 @@ export async function POST(request, { params }) {
 
     const supa = getAdminClient();
 
-    const hasil = await ambilRoomUntuk(supa, roomId, senderId);
+    const hasil = await ambilRoomUntuk(supa, roomId, null);
     if (hasil.error) return NextResponse.json({ error: hasil.error }, { status: hasil.status });
     if (hasil.room.status === "closed") {
       return NextResponse.json({ error: "Obrolan ini telah berakhir" }, { status: 400 });
