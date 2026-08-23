@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { censorProfanity } from "@/lib/profanity";
+import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { hashIdentitas } from "@/lib/identitasHash";
 
 export const dynamic = "force-dynamic";
 
@@ -15,9 +17,15 @@ export async function GET(request) {
     const offset = (page - 1) * limit;
 
     const supa = getAdminClient();
+    // Kolom disebut satu-satu — `author_ip_hash` TIDAK boleh ikut: hash yang
+    // sama di dua postingan menautkan keduanya ke satu penulis, dan itu
+    // membatalkan anonimitasnya bagi siapa pun yang membaca API publik ini.
     let query = supa
       .from("mading_posts")
-      .select("*", { count: "exact" })
+      .select(
+        "id, type, sender_name, faculty, title, content, likes_count, comments_count, views_count, status, created_at",
+        { count: "exact" }
+      )
       .eq("status", "active")
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
@@ -69,6 +77,16 @@ export async function POST(request) {
       );
     }
 
+    // Posting itu anonim dan tanpa login — sensor kata kasar saja tidak menahan
+    // banjir. Batasnya longgar untuk manusia, mematikan untuk skrip.
+    const laju = rateLimit(`mading-post:${getClientIp(request)}`, { limit: 5, windowMs: 10 * 60_000 });
+    if (!laju.ok) {
+      return NextResponse.json(
+        { error: `Terlalu banyak postingan dalam waktu singkat. Coba lagi dalam ${laju.retryAfter} detik.` },
+        { status: 429 }
+      );
+    }
+
     type = type === "info" ? "info" : "menfess";
     sender_name = (sender_name || "Anonim").trim().slice(0, 50);
     faculty = (faculty || "Umum").trim().slice(0, 50);
@@ -88,6 +106,10 @@ export async function POST(request) {
         title: cleanTitle,
         content: cleanContent,
         status: "active",
+        // Anonim ke sesama mahasiswa, TIDAK anonim ke moderasi: hash IP (bukan
+        // IP mentah) disimpan supaya pelaku pencemaran bisa dikaitkan antar-
+        // postingan dan diblokir, tanpa menyimpan alamat aslinya di database.
+        author_ip_hash: hashIdentitas(getClientIp(request)),
       })
       .select()
       .single();

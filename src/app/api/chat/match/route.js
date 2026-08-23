@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
+import { censorProfanity } from "@/lib/profanity";
+import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -8,7 +10,9 @@ export const revalidate = 0;
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { action, userId, alias = "Anonim", faculty = "Umum", roomId } = body;
+    const { action, userId, roomId } = body;
+    const alias = censorProfanity(String(body.alias || "Anonim").trim().slice(0, 50)) || "Anonim";
+    const faculty = String(body.faculty || "Umum").trim().slice(0, 50) || "Umum";
 
     if (!userId) {
       return NextResponse.json({ error: "User ID diperlukan" }, { status: 400 });
@@ -16,7 +20,9 @@ export async function POST(request) {
 
     const supa = getAdminClient();
 
-    // 1. Action: Polling status waiting room
+    // 1. Action: Polling status waiting room — hanya peserta room-nya sendiri.
+    // Tanpa pemeriksaan ini, siapa pun yang memegang roomId bisa membaca kedua
+    // userId peserta, lalu memakai salah satunya untuk menyamar di room itu.
     if (action === "poll" && roomId) {
       const { data: room } = await supa
         .from("chat_rooms")
@@ -27,6 +33,9 @@ export async function POST(request) {
       if (!room) {
         return NextResponse.json({ status: "not_found" });
       }
+      if (room.user1_id !== userId && room.user2_id !== userId) {
+        return NextResponse.json({ error: "Kamu bukan peserta obrolan ini" }, { status: 403 });
+      }
 
       return NextResponse.json({
         status: room.status,
@@ -35,10 +44,25 @@ export async function POST(request) {
       });
     }
 
-    // 2. Action: Cancel waiting
+    // 2. Action: Cancel waiting — hanya pembuat room yang boleh membatalkannya.
     if (action === "cancel" && roomId) {
-      await supa.from("chat_rooms").delete().eq("id", roomId).eq("status", "waiting");
+      await supa
+        .from("chat_rooms")
+        .delete()
+        .eq("id", roomId)
+        .eq("user1_id", userId)
+        .eq("status", "waiting");
       return NextResponse.json({ success: true });
+    }
+
+    // Membuat/mencari room itu menulis ke database — jangan bisa dibanjiri.
+    // Poll di atas sengaja TIDAK dibatasi: klien memanggilnya tiap ~2 detik.
+    const laju = rateLimit(`chat-match:${getClientIp(request)}`, { limit: 10, windowMs: 60_000 });
+    if (!laju.ok) {
+      return NextResponse.json(
+        { error: `Terlalu sering mencari teman. Coba lagi dalam ${laju.retryAfter} detik.` },
+        { status: 429 }
+      );
     }
 
     // 3. Action: Find or Create Match (Default)

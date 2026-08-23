@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { censorProfanity } from "@/lib/profanity";
+import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +41,14 @@ export async function POST(request, { params }) {
 
     if (!postId || !content || typeof content !== "string" || content.trim().length < 2) {
       return NextResponse.json({ error: "Isi komentar minimal 2 karakter." }, { status: 400 });
+    }
+
+    const laju = rateLimit(`mading-komentar:${getClientIp(request)}`, { limit: 10, windowMs: 5 * 60_000 });
+    if (!laju.ok) {
+      return NextResponse.json(
+        { error: `Terlalu banyak komentar dalam waktu singkat. Coba lagi dalam ${laju.retryAfter} detik.` },
+        { status: 429 }
+      );
     }
 
     sender_name = (sender_name || "Anonim").trim().slice(0, 50);

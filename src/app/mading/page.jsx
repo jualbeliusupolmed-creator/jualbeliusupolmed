@@ -62,6 +62,30 @@ export default function MadingPage() {
     fetchPosts();
   }, [fetchPosts]);
 
+  // Handle Report — 5 pelapor berbeda menyembunyikan postingan otomatis
+  const handleReport = async (postId) => {
+    if (!userId) return;
+    if (!confirm("Laporkan postingan ini sebagai tidak pantas?")) return;
+    try {
+      const res = await fetch(`/api/mading/${postId}/report`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_identifier: userId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(data.pesan || "Laporan diterima.");
+        if (data.disembunyikan) {
+          setPosts((prev) => prev.filter((p) => p.id !== postId));
+        }
+      } else {
+        toast.error(data.error || "Gagal mengirim laporan");
+      }
+    } catch {
+      toast.error("Gagal mengirim laporan");
+    }
+  };
+
   // Handle Like
   const handleLike = async (postId) => {
     if (!userId) return;
@@ -400,6 +424,15 @@ export default function MadingPage() {
                 >
                   <Icon.ExternalLink className="w-3.5 h-3.5" />
                   <span>Bagi</span>
+                </button>
+
+                <button
+                  onClick={() => handleReport(post.id)}
+                  title="Laporkan postingan ini"
+                  className="flex items-center gap-1 py-1 px-2 rounded-lg hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors"
+                >
+                  <Icon.Flag className="w-3.5 h-3.5" />
+                  <span className="sr-only sm:not-sr-only">Lapor</span>
                 </button>
               </div>
 

@@ -31,34 +31,25 @@ CREATE TABLE IF NOT EXISTS public.chat_messages (
 
 CREATE INDEX IF NOT EXISTS idx_chat_messages_room ON public.chat_messages(room_id, created_at ASC);
 
--- RLS Policies
+-- RLS: TIDAK ada kebijakan untuk anon/authenticated — dan itu disengaja.
+--
+-- Versi awal migrasi ini (23 Agu 2026 pagi) membuka SELECT/INSERT/UPDATE `true`
+-- untuk role public. Karena anon key Supabase ada di bundle situs, itu berarti
+-- siapa pun bisa membaca SELURUH isi "chat anonim", menyisipkan pesan palsu ke
+-- room mana pun, dan menutup room orang lain — langsung lewat REST Supabase,
+-- tanpa menyentuh API situs. Padahal kebijakan itu tidak dipakai siapa-siapa:
+-- semua route /api/chat/* memakai admin client (service_role melewati RLS).
+--
+-- Jadi: RLS menyala, tanpa satu pun kebijakan publik. Anon ditolak seluruhnya;
+-- satu-satunya pintu adalah API situs, yang memeriksa keanggotaan room.
 ALTER TABLE public.chat_rooms ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Public read active chat rooms" ON public.chat_rooms;
-CREATE POLICY "Public read active chat rooms" 
-ON public.chat_rooms FOR SELECT 
-USING (true);
-
 DROP POLICY IF EXISTS "Public insert chat rooms" ON public.chat_rooms;
-CREATE POLICY "Public insert chat rooms" 
-ON public.chat_rooms FOR INSERT 
-WITH CHECK (true);
-
 DROP POLICY IF EXISTS "Public update chat rooms" ON public.chat_rooms;
-CREATE POLICY "Public update chat rooms" 
-ON public.chat_rooms FOR UPDATE 
-USING (true);
-
 DROP POLICY IF EXISTS "Public read chat messages" ON public.chat_messages;
-CREATE POLICY "Public read chat messages" 
-ON public.chat_messages FOR SELECT 
-USING (true);
-
 DROP POLICY IF EXISTS "Public insert chat messages" ON public.chat_messages;
-CREATE POLICY "Public insert chat messages" 
-ON public.chat_messages FOR INSERT 
-WITH CHECK (true);
 
 -- Enable Realtime (Aman jika tabel sudah terdaftar)
 DO $$
