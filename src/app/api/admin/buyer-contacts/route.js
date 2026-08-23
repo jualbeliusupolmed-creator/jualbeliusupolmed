@@ -1,14 +1,15 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { tolakAdmin } from "@/lib/cronAuth";
+import { isAdmin } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 // GET /api/admin/buyer-contacts
 // Query params: page, limit, deal_status, seller_wa, listing_id, q (search)
 export async function GET(req) {
-  const tolak = await tolakAdmin(req);
-  if (tolak) return tolak;
+  if (!isAdmin()) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const { searchParams } = new URL(req.url);
   const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
@@ -25,19 +26,23 @@ export async function GET(req) {
     .order("created_at", { ascending: false })
     .range((page - 1) * limit, page * limit - 1);
 
-  if (dealStatus) query = query.eq("deal_status", dealStatus);
-  if (sellerWa) query = query.eq("seller_wa", sellerWa);
-  if (listingId) query = query.eq("listing_id", listingId);
+  if (dealStatus) {
+    query = query.eq("deal_status", dealStatus);
+  }
+  if (sellerWa) {
+    query = query.eq("seller_wa", sellerWa);
+  }
+  if (listingId) {
+    query = query.eq("listing_id", listingId);
+  }
   if (q) {
-    // Cari di judul iklan, nama/WA pembeli, atau nama penjual
-    query = query.or(
-      `listing_title.ilike.%${q}%,buyer_name.ilike.%${q}%,buyer_wa.ilike.%${q}%,seller_name.ilike.%${q}%`
-    );
+    query = query.or(`buyer_name.ilike.%${q}%,buyer_wa.ilike.%${q}%,listing_title.ilike.%${q}%`);
   }
 
-  const { data, error, count } = await query;
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  const { data, count, error } = await query;
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 
   return NextResponse.json({
     contacts: data || [],
