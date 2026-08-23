@@ -592,7 +592,7 @@ function DashboardInner() {
 
       {/* ===== UI ===== */}
 
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-extrabold">Dashboard Penjual</h1>
           {sellerProfile?.name && sellerProfile.name !== "Pengguna WA" && (
@@ -606,15 +606,15 @@ function DashboardInner() {
             </p>
           )}
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex flex-wrap shrink-0 items-center gap-2">
           {wa && <PushNotificationButton wa={wa} />}
           {loaded && (
-            <Link href="/dashboard/toko" className="btn-outline text-sm px-3 py-2 flex items-center gap-1.5">
+            <Link href="/dashboard/toko" className="btn-outline text-sm px-3 py-2 flex items-center gap-1.5 whitespace-nowrap">
               🏬 Toko saya
             </Link>
           )}
           {loaded && (
-            <Link href="/jual" className="btn-primary text-sm px-3 py-2 flex items-center gap-1.5">
+            <Link href="/jual" className="btn-primary text-sm px-3 py-2 flex items-center gap-1.5 whitespace-nowrap">
               + Tambah Iklan
             </Link>
           )}
