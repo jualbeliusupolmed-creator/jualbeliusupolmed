@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useApi, apiPost } from "./api";
 import { CopyBtn, Alert } from "./ui";
 
@@ -15,11 +15,13 @@ function ChatRoom({ chat, onClose }) {
   const isHashMode = replyMsg.trimStart().startsWith("#");
 
   // Jika error (misal endpoint tidak ada), tampilkan dummy agar UI tetap bisa didemokan
-  const messages = error ? [
-    { id: 1, text: "Halo kak, barangnya masih ada?", fromMe: false, timestamp: Date.now()/1000 - 300 },
-    { id: 2, text: "Masih ada kak, silakan 😊", fromMe: true, timestamp: Date.now()/1000 - 240 },
-    { id: 3, text: "Bisa COD di USU?", fromMe: false, timestamp: Date.now()/1000 - 60 },
-  ] : (data?.messages || []);
+  const messages = React.useMemo(() => {
+    return error ? [
+      { id: 1, text: "Halo kak, barangnya masih ada?", fromMe: false, timestamp: Date.now()/1000 - 300 },
+      { id: 2, text: "Masih ada kak, silakan 😊", fromMe: true, timestamp: Date.now()/1000 - 240 },
+      { id: 3, text: "Bisa COD di USU?", fromMe: false, timestamp: Date.now()/1000 - 60 },
+    ] : (data?.messages || []);
+  }, [error, data?.messages]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

@@ -138,6 +138,17 @@ npm run build    # cek build production
 
 ---
 
+### 7. Pengujian (Testing)
+Proyek ini menggunakan **Vitest** untuk *unit testing*. Jalankan perintah berikut untuk mengeksekusi test suite (terutama logika krusial seperti harga & URL slug):
+```bash
+npm run test
+```
+
+### 8. CI/CD (GitHub Actions)
+Pipeline terintegrasi melalui `.github/workflows/ci.yml`. Setiap ada *push* atau *pull request* ke branch `main`, pipeline otomatis menjalankan linter, tes unit, dan build aplikasi.
+
+---
+
 ## 💰 Struktur Fee (Default)
 
 | Item | Biaya |
@@ -172,8 +183,7 @@ src/
     produk/[slug]/              Detail produk + OG image
     dashboard/                  Dashboard penjual
     profil/[wa]/                Profil publik penjual
-    blog/                       Halaman blog
-    dicari/                     Iklan barang dicari
+    mading/                     Halaman Mading (gabungan Blog & Iklan Dicari)
     admin/
       (new)/                    Admin panel utama (layout terpisah)
         overview/               Ringkasan & statistik

@@ -48,6 +48,7 @@ export const FEES = {
 // menyetel Iklan Poster jadi 0, panel menyimpannya dengan benar, lalu server
 // tetap menagih Rp10.000 karena `0 || 10000` bernilai 10000.
 export function angkaSetelan(nilai, bawaan) {
+  if (nilai === null || nilai === "" || nilai === undefined) return bawaan;
   const n = Number(nilai);
   return Number.isFinite(n) ? n : bawaan;
 }
