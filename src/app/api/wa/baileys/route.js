@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { parseListingFromText, verifyReceiptImage, processGeneralChat, parseWantedFromText, checkReceiverName } from "@/lib/gemini";
-import { sendWa as _sendWaBase, postToGroup, notifyAdminNewListing, notifyWantedMatch, notifyCategorySubscribers, notifyBuyerOfferResult, postWantedToGroup, notifySellerNewOffer } from "@/lib/fonnte";
+import { sendWa as _sendWaBase, postToGroup, notifyAdminNewListing, notifyWantedMatch, notifyCategorySubscribers, notifyBuyerOfferResult, postWantedToGroup, notifySellerNewOffer, perangkatBalasan } from "@/lib/fonnte";
 import { pushListingBaru } from "@/lib/webpush";
 import { formatWa } from "@/lib/constants";
 import { getSettings, adFeeFrom, angkaSetelan } from "@/lib/settings";
@@ -181,6 +181,14 @@ export async function POST(req) {
     }
 
     const formData = await req.formData();
+
+    // Pesan yang masuk lewat NOMOR bot kedua menandai dirinya (field `perangkat`
+    // dari VPS). enterWith memasang tanda itu pada konteks async request ini,
+    // dan sendWa di lib/fonnte membacanya supaya SEMUA balasan handler ini
+    // berangkat dari nomor yang sama dengan yang di-chat pelanggan.
+    if (String(formData.get("perangkat") || "") === "lain") {
+      perangkatBalasan.enterWith("lain");
+    }
 
     // Rate limit: max 20 pesan/menit per nomor WA (cegah flood/spam)
     const rlKey = `baileys:${formData.get("sender") || "unknown"}`;

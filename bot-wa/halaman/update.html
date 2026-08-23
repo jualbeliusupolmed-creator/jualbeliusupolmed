@@ -11,9 +11,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=Work+Sans:wght@400;500&display=swap">
-<link rel="stylesheet" href="/assets/ui.css?v=20260821b">
+<link rel="stylesheet" href="/assets/ui.css?v=20260822">
 <script>try{var t=localStorage.getItem('tema');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
-<script src="/assets/ui.js?v=20260821b" defer></script>
+<script src="/assets/ui.js?v=20260822" defer></script>
 </head>
 <body>
 <div class="wrap">
@@ -55,6 +55,15 @@ bot — halaman ini publik, jadi sengaja tidak ditautkan), termasuk kolom toko
 (<code>migration_daftar_tanpa_otp.sql</code>) yang selama ini menunggu. Dicatat di sini karena
 menjalankan SQL di Supabase tidak meninggalkan commit — linimasa di atas tidak akan pernah
 tahu itu terjadi.</p>
+<p class="muted">Kalimat "seluruh migrasi" di atas berlaku untuk pagi itu saja: <b>BAGIAN 25</b>
+dan <b>BAGIAN 26</b> ditulis sesudahnya, dan baru dijalankan sore harinya — kali ini langsung
+ke database, bukan lewat salin-tempel. Hasilnya dua: <code>push_subscriptions.wa</code> tidak
+lagi wajib diisi, jadi pengunjung yang belum punya akun pun boleh berlangganan kabar barang
+baru; dan <code>seller_profiles</code> mendapat empat kolom <code>store_*</code> beserta
+pemeriksa nilainya — pintu masuk alur "toko menunggu persetujuan admin". Satu-satunya toko
+yang alamatnya sudah beredar, <code>/toko/bismillah</code>, ikut ditandai aktif supaya tidak
+mendadak padam; 81 penjual lain tetap <code>draf</code> karena memang belum pernah membuat
+toko.</p>
 <p class="muted">Baris keempat juga hilang di hari yang sama: tab <b>Kapabilitas</b> di panel
 admin ternyata bukan tiga kartu yang menulis ke ruang kosong, melainkan <b>82 sakelar</b> yang
 semuanya menulis ke sana — tujuh di antaranya bernama sama persis dengan setelan asli di tab
@@ -66,18 +75,450 @@ pemilik menyalinnya keluar dari VPS lewat <code>scp</code>. Itu penting bukan cu
 arsipnya jadi bisa dibuka — <code>cadangkan-sesi.sh</code> membuat kunci BARU tanpa mengeluh
 kalau berkasnya hilang, jadi kunci yang cuma hidup di satu server adalah satu penghapusan
 tak sengaja dari membuat seluruh arsip di GitHub jadi derau permanen.</p>
+<p class="muted">Perapian utang teknis pada <b>21 Agustus 2026</b> sore, tanpa satu pun baris
+baru masuk ke daftar di bawah. <b>BAGIAN 27</b> ditulis dan langsung dijalankan: tidak ada lagi
+indeks kembar, tidak ada lagi kebijakan RLS kembar, dan <code>listings.seller_wa</code> tinggal
+punya satu foreign key — yang benar, sehingga migrasi LID&rarr;nomor berhenti membuang
+<code>created_at</code> dan <code>referral_code</code> penjualnya. Label 355 transaksi buka-kontak
+juga dibetulkan, jadi Rp 18.000 pendapatan yang selama ini tersamar sebagai penjualan iklan
+sekarang tampil di barisnya sendiri. Sisanya: tagihan "buka kontak" tidak lagi terbit hanya karena
+jendela QRIS dibuka (346 dari 460 baris <code>payments</code> yang menggantung lahir dari situ),
+tombol "Bayar Tagihan" untuk komisi penjualan berhenti dijawab 400, tujuh berkas yang tidak
+pernah dipanggil dari mana pun dihapus, dan dua halaman yang selama ini menyebut angka berbeda
+untuk hal yang sama — <code>/projek</code> dan <code>/lomba</code> — sekarang menyebut angka yang
+dihitung ulang dari repo hari itu juga.</p>
+<p class="muted">Malamnya, perapian keamanan: sepuluh dari dua belas temuan audit
+ditutup dan diuji langsung di produksi — otorisasi pembayaran berhenti memakai nomor
+kiriman klien, rute push yang bernama "test" tapi menyiarkan ke semua orang dapat gerbang
+admin, empat cron berhenti membuka pintunya sendiri saat rahasianya kosong, 41 PIN penjual
+di-bcrypt, dan OTP berhenti disimpan apa adanya. Satu pertanyaan yang menggantung sejak
+pagi ikut terjawab: <code>CRON_SECRET</code> memang terisi di Vercel. Dua baris di bawah
+ini yang tidak bisa diselesaikan dari kursi mana pun kecuali kursimu.</p>
+<p class="muted">Larut malamnya keduanya selesai, dijalankan pemiliknya sendiri lewat SSH:
+riwayat git repo situs ditulis ulang sampai bersih, dan ketiga nilai kredensial diganti.
+Diverifikasi dari klon segar GitHub — bukan dari salinan yang ada di VPS — dan hasilnya
+utuh: isi kerja di puncak repo tidak bergeser satu byte pun, 361 commit tetap 361. Satu
+berkas hampir lolos karena <code>git rm --cached</code> yang commit-nya dijalankan dengan
+daftar path: bentuk itu diam-diam menulis balik berkasnya dari disk. Ketahuan justru karena
+diperiksa dari klon segar, bukan dari <code>git status</code>.</p>
+<p class="muted">Satu hal yang menyusul dari rotasi sandi itu: kuki sesi penjual selama ini
+ditandatangani dengan <code>ADMIN_PASSWORD</code>, jadi mengganti sandi admin membatalkan
+seluruh sesi penjual sekaligus. Kalau ada yang mengeluh tiba-tiba diminta masuk lagi, itu
+sebabnya — dan sekarang sudah diputus lewat <code>SESSION_SECRET</code>.</p>
+<p class="muted"><b>22 Agustus 2026</b> — <code>/lomba</code> dibaca ulang dari awal, bersama
+16 tangkapan layarnya dan arsip WhatsApp bot yang hidup di server ini. Yang ditemukan bukan salah
+ketik, melainkan <b>halaman yang bertengkar dengan dirinya sendiri</b>: kartu angka menulis 40
+halaman, 56 komponen, 30 tabel — panel "rinciannya" satu klik di bawahnya menulis 38, 63, dan 32,
+dan teks deskripsinya menulis angka ketiga lagi (74 API situs, 70 bot). Itu ada di slide yang
+justru menantang juri untuk mengecek sendiri. Semuanya dihitung ulang hari itu dari klon segar
+kedua repo dan dari database langsung, lalu disamakan di sembilan tempat: <b>40.288</b> baris
+situs · <b>11.454</b> baris bot · <b>375</b> commit · <b>78</b> API situs · <b>71</b> rute bot ·
+<b>50</b> halaman · <b>66</b> komponen · <b>32</b> tabel. Dua tabel rinciannya ikut dijumlahkan
+ulang sampai benar-benar berjumlah 78 dan 71.</p>
+
+<p class="muted">Tiga hal yang ikut ketahuan sambil menghitung. <b>Cara mengeceknya sendiri
+sudah tidak berlaku:</b> halaman itu menyuruh menjalankan <code>grep ... index.js</code> untuk
+menghitung rute bot, padahal refactor 22 Agustus memindahkan rutenya ke tujuh modul
+<code>src/</code> — perintahnya diperbaiki. <b>12 halaman <code>/admin-demo/*</code></b> ikut
+terhitung di angka 50; itu panel admin berisi data contoh, dan sekarang disebut terpisah supaya
+juri yang mau menghitung ketat tahu angkanya 38. Dan <b>hitungan baris bot yang lama melewatkan
+berkasnya sendiri</b> — 8.508 itu tidak memuat <code>ui.css</code>, <code>lomba.html</code>,
+maupun <code>waAuthState.js</code>, padahal ketiganya dilacak git.</p>
+
+<p class="muted"><b>22 Agustus 2026 (lanjutan)</b> — sisa analisis itu <b>dikerjakan</b>.
+Contoh karangan dicabut: "keyboard mekanik Rp250.000" jadi <b>Sepatu Crocs Classic Biru Muda
+Rp750.000</b> (iklan asli), dan grup karangan "912 anggota" hilang, diganti bunyi permintaan
+sungguhan dari papan Dicari. Ada slide baru <b>"Uangnya dari mana"</b> — deck jadi 13 slide —
+yang akhirnya menyebut tarifnya terang-terangan (Rp2.000 → 1% menurut harga, komisi 10%/5%
+setelah deal, iklan gratis untuk pemilik toko) dan mengakui apa yang selama ini disembunyikan:
+<b>admin manusia yang menjembatani transaksinya</b>, dengan catatan botnya sendiri sebagai bukti
+— 42 dijawab manusia, 30 kali bot diam, 8 kali masuk sesi bot. Katalog asli masuk (iPhone XR
+156 tayangan, APK Premium 154, BARANG KOS 104, Pokemon TCG 96), begitu juga suara penggunanya:
+30 dari 71 pesan cuma satu kata, dan empat orang lupa tanda titik sampai admin menjawab
+"Pake titik we".</p>
+
+<p class="muted">Dan cerita matinya diperbaiki jadi lebih buruk dari sebelumnya, karena memang
+begitu faktanya: bukan "6 jam", melainkan <b>501, 907, dan 360 menit</b> pada 18–19 Agustus —
+hampir 30 jam — dan ketiganya <b>diumumkan botnya sendiri</b> begitu hidup lagi.</p>
+
+<p class="muted"><b>Dua catatan sesi sebelumnya ternyata salah, dan itu ketahuan justru karena
+diperiksa ke alurnya, bukan ke teksnya.</b> Pertama: alur bayar <em>tidak</em> pindah ke QRIS
+otomatis. <code>/api/listings</code> membuat tagihan berstatus <code>pending</code> lalu
+mengembalikan QRIS <b>statis</b> yang struknya diperiksa manusia — jadi tulisan "foto struknya"
+di <code>/lomba</code> itu benar, dan yang berbohong adalah form <code>/jual</code> di situs
+("QRIS Dinamis Otomatis, konfirmasi instan tanpa kirim bukti"). Kedua: sakelar mode pembayaran
+di panel admin <b>tidak dibaca kode mana pun</b> — ditulis ke database, lalu diam di sana.
+Keduanya masuk daftar di bawah.</p>
+
+<p class="muted">Lalu ketahuan satu lagi sambil memeriksa: <b><code>/projek</code> tidak ikut
+disamakan</b>. Penghitungan ulang 22 Agustus cuma dipasang di <code>/lomba</code>, sementara
+<code>/projek</code> masih menulis 38.068 baris situs, 8.508 baris bot, 358 commit, 74 API, 70
+rute, dan 63 komponen — sambil menjanjikan di paragraf bawahnya bahwa "<code>/lomba</code>
+menyebut angka yang sama persis". Persis kesalahan yang dulu diperbaiki, terulang dari sisi
+sebaliknya. Semuanya dihitung ulang lagi dari klon segar dan disamakan.</p>
+
+<p class="muted">Sekalian ketemu jebakannya: <b>hitungan baris bot itu menghitung dirinya
+sendiri</b>. Rumusnya memuat semua berkas HTML yang dilacak git — dan halaman ini salah satunya.
+Jadi menyunting <code>/lomba</code>, <code>/projek</code>, atau <code>/update</code> mengubah
+angkanya, dan menulis angka barunya bisa membatalkan angka itu juga. Sekarang urutannya: sunting
+dulu sampai selesai, hitung, baru ganti digitnya saja. Angkanya <b>12.411</b> — naik dari 11.454
+murni karena suntingan halaman hari ini, bukan karena kode botnya bertambah.</p>
+
+<p class="muted"><b>22 Agustus 2026, dini hari</b> — <code>/health</code> dapat tampilan untuk
+mata manusia: dibuka dari peramban ia menyajikan halaman status berwarna, dipanggil mesin ia tetap
+memulangkan JSON yang sama persis. Urutan pemilihannya yang menentukan: <code>curl</code> mengirim
+<code>Accept: */*</code> yang cocok dengan dua-duanya, jadi JSON harus disebut lebih dulu — kalau
+terbalik, penjaga bot menerima HTML, gagal mengenali keadaan, lalu me-restart bot yang justru
+sedang menunggu tangan manusia. Ditambah <code>Vary: Accept</code>, karena tanpa itu cache mana
+pun boleh menyimpan satu bentuk lalu menyodorkannya ke peminta yang meminta bentuk lain.</p>
+
+<p class="muted"><b>Dan menyalakannya membuka bug yang lebih besar.</b> Restart ternyata membuat
+bot <em>tidak pernah</em> sampai ke keadaan diam: penjaganya menghitung delapan kali 503,
+me-restart, dan proses baru lupa bahwa ia sedang sengaja diam — lalu mengetuk WhatsApp lagi.
+Tiap putaran menambah percobaan login ke nomor yang justru sedang dibatasi. Tiga sebabnya
+diperbaiki: penanda "menunggu dipindai" sekarang <b>ditulis ke disk</b> (dan diabaikan kalau
+sesinya sudah tertaut lagi); percobaan yang mati sebelum QR-nya sempat muncul <b>ikut
+dihitung</b>; dan yang paling menentukan — yang dihitung selama ini <b>socket yang tertutup,
+padahal maksudnya QR yang kedaluwarsa</b>. Komentar di kodenya sendiri menulis "5 siklus ≈ 5
+menit", padahal satu socket menahan beberapa QR selama ±6 menit, jadi lima siklus itu ±30 menit
+— lewat jauh dari ambang penjaga yang 16 menit. Sesudah diperbaiki: <b>kedua bot mendiam dalam
+110 detik</b>, dan penjaganya berhenti me-restart.</p>
+
+<p class="muted"><b>Empat jam kemudian ketukan itu kembali, dan tidak ada satu pun log yang
+mengaku.</b> Perbaikan tadi bekerja untuk siklus pertama saja: syarat berhentinya ikut dijaga
+oleh penanda "sudah diumumkan", jadi begitu penandanya menyala, keputusan berhenti tidak bisa
+diambil lagi seumur proses. Denyut 30 menit membangunkan bot, QR dipancarkan, tidak ada yang
+menutup socketnya, dan bot jatuh ke sambung-ulang biasa: <b>tiap 60 detik, tanpa henti</b>.
+Yang menutupinya justru dua tanda yang benar — <code>/health</code> tetap menjawab "menunggu
+dipindai" dan penjaga tetap menulis "tidak me-restart". Keduanya menggambarkan
+<em>keputusan</em> bot, bukan ketukannya. Yang membuktikan ketukan cuma satu: waktu ubah berkas
+lognya. Sesudah ditambal, tiap denyut punya jatah lima ketukan lalu diam lagi — dan di antaranya
+<b>nol ketukan</b>.</p>
+
+<p class="muted">Ikut dibereskan: baris log yang membantah dirinya sendiri (stdout menulis "Sesi
+WhatsApp dimuat dari filesystem" sementara stderr menulis "Tidak ada creds tersimpan" —
+sekarang satu baris yang menyebut keadaan sebenarnya), dan bot pertama akhirnya punya
+<code>jalankan.sh</code> sendiri seperti bot kedua. Sebelumnya <code>API_TOKEN</code> dan
+kawan-kawannya cuma hidup di daftar proses pm2: satu restart dari terminal polos menghapus
+semuanya, dan bot menolak jalan.</p>
+
+<p class="muted"><b>Tambalan itu sendiri melahirkan dua duplikat, dan duplikat itu jenis
+kesalahan yang tidak pernah terasa hari ini.</b> Bot pertama jadi punya <em>dua</em> skrip jalan
+(<code>/root/jalankan-bot-1.sh</code> dan yang baru di repo), padahal yang dipanggil penjaga
+tiap dua menit cuma satu — perbaiki yang salah, dan restart otomatis berikutnya tetap membawa
+env lama. Rahasianya pun jadi punya dua salinan: <code>rahasia.env</code> yang baru, di samping
+<code>/root/.api_token_bot1</code> dan <code>/root/.sandi-panel</code> yang sudah ada. Rotasi
+satu berkas, lupa yang lain, dan hasilnya <code>401</code> yang tidak ada penjelasannya.
+Sekarang <b>satu bot satu skrip, satu rahasia satu berkas</b>: skrip kanoniknya ada di sebelah
+datanya masing-masing, penjaga menunjuk ke yang di dalam repo (supaya perubahannya kelihatan di
+<code>git diff</code>, bukan cuma di ingatan), dan <code>rahasia.env</code> dihapus setelah tiap
+nilainya dibuktikan sama persis dengan berkas aslinya. <code>WEBHOOK_URL</code> yang selama ini
+di-<em>export</em> dengan nilai kosong juga dicabut — tidak merusak karena kodenya memakai
+<code>||</code>, tapi persis jenis nilai yang meledak diam-diam kalau suatu hari diganti
+<code>??</code>.</p>
+
+<p class="muted"><b>Dan restart itu memperlihatkan satu baris log yang membantah kenyataan
+— lagi.</b> Sesudah bot menyala, stdout menulis <em>"Belum ada sesi tertaut — bot akan meminta
+scan QR"</em>, lalu baris berikutnya <em>"Berhasil terhubung ke WhatsApp"</em> lengkap dengan
+nomornya. Yang kedua yang benar. Penyebabnya penanda <code>creds.registered</code> milik
+Baileys: sesi yang jelas tertaut ternyata membawa nilai <code>false</code>. Penanda itu menyala
+di jalur pairing tertentu saja, bukan sebagai "sesi ini sudah jadi". Yang buruk bukan baris
+lognya — penanda yang sama juga memutuskan <b>kapan bot berhenti menyambung</b>: lima kali
+gangguan jaringan pada sesi yang sehat sudah cukup untuk membuatnya diam setengah jam, dan saat
+boot ia bisa menunda start 30 menit padahal sesinya siap pakai. Sekarang yang dipakai
+<code>creds.me.id</code> — identitas akun yang selalu ada begitu pairing selesai. Diuji terhadap
+berkas sesi yang asli di mesin ini, bukan terhadap dugaan.</p>
+
+<p class="muted"><b>Lalu saya mencabut sesi bot kedua — dengan sebuah pemeriksaan.</b> Sebelum
+menutup gerbang taut-ulang, saya memanggil endpoint yang dijaganya untuk melihat gerbangnya masih
+terbuka atau tidak. <code>/pairing-code</code> menjawab 400, seperti pemeriksaan biasa.
+<code>/reset</code> menjawab 200 — dan itu bukan jawaban, itu pelaksanaan. Sesi bot kedua
+tercabut, bot yang justru memegang nomor yang dipajang situs. Yang menyelamatkannya bukan
+kehati-hatian saya, tapi keputusan lama yang benar: fungsi penghapus sesi <b>memindahkan</b>
+sesinya ke folder cadangan, bukan menghapusnya. Prosesnya saya hentikan sebelum sempat menulis
+sesi kosong, foldernya dikembalikan, dan bot kedua tersambung lagi ke nomor yang sama tanpa QR —
+1.435 berkas utuh.</p>
+
+<p class="muted">Dua hal diperbaiki sesudahnya, dan yang kedua lebih penting. Gerbang taut-ulang
+bot kedua sekarang <b>bawaannya tertutup</b> — alasan membukanya habis begitu nomornya tertaut.
+Dan <code>GET /reset</code> tidak lagi mengerjakan apa pun: ia menjawab 405 dan menunjuk ke POST.
+<b>Aksi yang tidak bisa dibatalkan tidak boleh berada di belakang kata kerja yang artinya
+"ambilkan"</b> — GET dilakukan peramban yang prefetch, pemindai tautan, riwayat, dan orang yang
+menekan Enter dua kali di bilah alamat. Tidak ada yang kehilangan pemanggil: dashboard tidak
+pernah memakai jalur itu.</p>
+
+<p class="muted">Ini kedua kalinya dalam dua hari, dan polanya sama: <b>"memeriksa" dengan
+memanggil endpoint sungguhan bukan pemeriksaan — itu pemakaian.</b> Kemarin satu pesan uji
+mendarat di grup 956 orang karena saya memperkirakan ia akan ditolak. Hari ini satu GET yang
+dikira bertanya justru menjawab dengan mencabut sesi. Kalau yang ingin diketahui adalah apa yang
+<em>akan</em> terjadi, tempat memeriksanya kode — bukan produksi.</p>
+
+<p class="muted"><b>Dan sekarang dua nomornya benar-benar saling menopang.</b> Situs cuma tahu
+satu alamat bot, dan alamat itu menunjuk bot pertama — jadi selama sesi bot pertama mati, situs
+tidak bisa mengirim apa pun, walaupun perangkat kedua sehat dan justru memegang nomor yang
+dipajang situs. Sekarang kirimannya diserahkan ke perangkat yang bisa mengirim. Dua hal dijaga
+lebih ketat daripada fiturnya sendiri: <b>tidak boleh dobel</b> (kalau diserahkan, pesannya tidak
+juga diantre di sini, dan tidak ada jatuh-balik yang bisa mengirimkannya dua kali) dan <b>tidak
+boleh berputar</b> (bot kedua menjalankan berkas yang sama, jadi tanpa penanda ia bisa melempar
+balik). Jawabannya selalu menyebut perangkat mana yang mengambil — pemanggilnya tidak perlu
+menebak dari nomor mana pesannya muncul.</p>
+
+<p class="muted"><b>Buktinya kenapa ini perlu tergeletak di antrean malam itu:</b> pemberitahuan
+"🔒 Sesi WhatsApp terkunci" tertahan <b>3,4 jam</b> di bot yang sedang terkunci — peringatan
+yang cuma sampai kalau tidak ada yang perlu diperingatkan. Alarm pemilik sekarang lewat perangkat
+kedua, dan salinan lokalnya dicabut kalau berhasil, supaya alarm yang sama tidak datang lagi
+berjam-jam kemudian saat isinya sudah tidak benar. Diuji sungguhan: satu pesan dikirim ke
+<code>/send</code> bot pertama yang sedang terkunci, dijawab "perangkat: lain", dan bot kedua
+yang mengirimkannya.</p>
+
+<p class="muted"><b>23 Agustus, dini hari — bot pertama terkunci, dan 18 menit sebelumnya ia
+mengetuk tiap 60 detik.</b> Kode <code>403</code> dari WhatsApp jatuh ke cabang "gangguan
+sementara" yang backoff-nya mentok di satu menit dan tidak pernah menyerah. Delapan belas
+percobaan login pada nomor yang justru sedang ditolak — persis pola yang seluruh mesin kunci
+sesi ini dibangun untuk mencegah, lolos lewat satu kode status yang tidak pernah dimasukkan
+daftar. Sekarang <code>403</code> sekeluarga dengan <code>401</code>: penolakan tingkat akun,
+bukan gangguan jaringan. Satu beda dijaga ketat — <b>403 tidak pernah boleh menghapus sesi</b>.
+"Kamu tidak boleh masuk" bukan "perangkatmu sudah dilepas dari HP", dan menghapus sesi karenanya
+berarti meminta QR baru untuk nomor yang sedang diblokir.</p>
+
+<p class="muted"><b>Sambil memperbaikinya, ketahuan penandanya pun cuma hidup di memori —
+keluarga bug yang sama dengan kemarin.</b> Komentar di kodenya sendiri sudah menjelaskan kenapa
+burst tiga ketukan itu ada: untuk <em>menentukan</em> apakah penolakannya sungguhan. Tapi
+jawabannya tidak pernah mendarat di disk, jadi tiap restart membelinya lagi dengan tiga ketukan
+baru. Sekarang keadaan terkunci ikut tersimpan, lengkap dengan sudah berapa kali ditolak supaya
+jedanya tidak balik ke sepuluh menit tiap proses lahir. Saat menyala lagi bot <b>tetap mencoba
+sekali</b> — orang yang me-restart biasanya sedang membetulkan sesuatu — lalu langsung masuk
+jalur lambat kalau masih ditolak. Sudah terbukti di produksi malam ini.</p>
+
+<p class="muted"><b>Dan perangkat kedua ternyata tidak pernah bisa bicara dengan situs.</b>
+Nomor yang dipajang di situs justru dipegang perangkat kedua, sementara webhook situs
+membandingkan token dengan satu nilai saja — jadi setiap pesan yang masuk lewat nomor itu
+ditolak <code>401</code>. Pengirimnya menerima sapaan (itu dikirim bot sendiri) lalu kesunyian
+untuk semua yang butuh situs. Situs sekarang menerima token perangkat mana pun. Yang paling
+gampang terlewat justru arah sebaliknya: alamat kirim situs cuma satu, jadi kalau daftar
+tokennya bertambah tanpa pemakainya diubah, yang terkirim adalah seluruh daftar sekaligus dan
+semua pengiriman rusak — sekarang tidak ada lagi tempat yang membaca env itu langsung.</p>
+
+<p class="muted"><b>Sore harinya nomornya kembali — dan saya sempat salah membaca apa yang
+terjadi sesudahnya.</b> Tiga iklan hari ini gagal berangkat ke dua grup dengan galat
+<code>forbidden</code>; ambil keterangan grupnya pun ditolak, dan daftar grup bot tidak memuat
+keduanya. Tiga tanda yang semuanya cocok dengan satu kesimpulan: nomornya bukan anggota grup itu.
+Saya menuliskannya begitu, dan mengubah antrean supaya penolakan semacam itu tidak diulang tiga
+kali. Lalu satu pesan uji ke grup yang <b>sama</b> berhasil terkirim, tanpa ada yang menambahkan
+nomor itu ke mana pun. Yang sebenarnya terjadi: sesi yang baru ditautkan ulang <b>belum selesai
+menyinkronkan daftar peserta grup</b>, dan selama jendela itu WhatsApp menjawab
+<code>forbidden</code> untuk grup yang keanggotaannya sah. Umur keadaan itu jam, bukan detik —
+tiga percobaan yang berjarak satu detik semuanya jatuh di jendela yang sama. Perubahan antrean
+itu <b>dicabut</b>: kalau <code>forbidden</code> dibuang pada percobaan pertama, yang hilang
+justru pesan yang beberapa jam lagi bisa berangkat. Yang ditinggal cuma catatan alasannya, dan
+sekarang isinya menyebut kemungkinan sinkron itu — bukan tuduhan bahwa botnya bukan anggota.</p>
+
+<p class="muted"><b>Dan pemeriksaan itu menemukan yang lebih mahal di repo situs: harga punya
+empat sumber, dan yang menagih cuma satu.</b> Rumus biaya iklan hidup di tiga tempat sekaligus —
+<code>lib/fees.js</code> (angka keras, dipakai seluruh layar), <code>lib/settings.js</code> (dari
+database, satu-satunya yang menagih), dan diketik ulang di halaman <code>/daftar-harga</code> —
+ditambah harga Paket Pro yang cuma ada di dalam route pembayarannya sendiri. Begitu tarif diubah
+dari panel admin, yang ikut berubah cuma tagihannya. Sekarang satu definisi, dan pembungkus yang
+tidak bersetelan dihapus supaya kekeliruan yang sama tidak bisa terulang diam-diam.</p>
+
+<p class="muted">Di dalamnya ada <b>bug uang</b>: <code>x || bawaan</code> membuang angka 0,
+padahal 0 di sini artinya gratis. Pemilik menyetel iklan poster jadi 0, panel menyimpannya dengan
+benar, lalu server tetap menagih Rp10.000 — dan hal yang sama untuk biaya perpanjangan yang
+disetel 0 tapi ditagih Rp2.000. Panel admin bahkan punya preset yang menyetel keduanya ke nol;
+preset yang selama ini tidak pernah berpengaruh.</p>
+
+<p class="muted">Tiga kebohongan di layar ikut dicabut: form <code>/jual</code> yang menjanjikan
+"QRIS Dinamis Otomatis, konfirmasi instan tanpa kirim bukti" padahal QRIS-nya statis dan struknya
+tetap harus diunggah; sakelar "Mode Otomatis / Manual" di panel admin yang <b>tidak dibaca kode
+mana pun</b>; dan tarif jasa yang ditampilkan Rp10.000 padahal ditagih menurut jenjang harga —
+jasa Rp8.000 ditulis Rp10.000, ditagih Rp2.000. Klaim "Meningkatkan Penjualan 3x Lipat" di daftar
+harga juga dicabut: tidak ada datanya.</p>
+
+<p class="muted">Yang tersisa cuma satu, dan itu memang tidak ada di server ini:
+<b>sejarah sebelum kodenya ada</b>. Halaman itu masih mulai dari commit pertama 11 Juni 2026,
+padahal usahanya berdiri <b>8 Desember</b> — berbulan-bulan sebelum ada satu baris kode pun.</p>
+
+<p class="muted"><b>23 Agustus, pagi — gelombang "Super App" mendarat di repo situs lewat tool
+lain.</b> Sepuluh commit dalam 47 menit: mading &amp; menfess, chat anonim satu-lawan-satu,
+paket langganan toko, penyiapan Play Store, perintah <code>.PANTAU</code>, dan pemeriksa struk
+yang menolak foto yang sudah pernah dipakai. Fiturnya nyata dan migrasinya jalan. Tapi audit
+sesudahnya menemukan satu hal yang membatalkan janji fiturnya sendiri: <b>chat "anonim" itu
+terbuka untuk siapa pun.</b> Migrasi-nya membuat kebijakan database yang mengizinkan role publik
+membaca, menulis, dan mengubah semua room dan semua pesan — dan kunci anon Supabase memang ada
+di dalam bundle yang diunduh setiap peramban. Artinya seluruh isi obrolan bisa dibaca orang luar
+langsung dari database, tanpa menyentuh situs sama sekali. Yang membuatnya makin janggal:
+kebijakan itu tidak dipakai siapa-siapa, karena semua route chat memakai kunci admin yang
+melewati RLS.</p>
+
+<p class="muted">Kebijakannya <b>dicabut hari itu juga</b> — RLS tetap menyala, tanpa satu pun
+pintu publik; satu-satunya jalan masuk sekarang API situs, yang akhirnya memeriksa <b>siapa</b>
+yang bertanya: bukan peserta room, tidak ada pesan untukmu. Poll matchmaking berhenti membocorkan
+identitas kedua peserta (bekal lengkap untuk menyamar), semua tulisan anonim — postingan mading,
+komentar, like, pesan chat, pencarian teman — dapat rem laju per-IP, dan filter kata kasarnya
+berhenti bisa ditembus dengan <code>b4ngsat</code> atau <code>a n j i n g</code> (sekaligus
+berhenti menyensor "pantai" karena mengandung "tai"). Kolom <code>author_ip_hash</code> yang
+selama ini kosong akhirnya diisi hash bergaram — anonim ke sesama mahasiswa, tidak anonim ke
+moderasi — dan justru karena terisi, API publiknya berhenti mengembalikan kolom itu. Mading juga
+dapat tombol <b>Lapor</b>: lima pelapor berbeda menyembunyikan postingan otomatis, tanpa
+menunggu admin bangun.</p>
+
+<p class="muted"><b>Beban chat-nya juga dijinakkan sebelum sempat jadi tagihan.</b> Semula tiap
+pasangan yang mengobrol menarik pesan lewat API tiap dua detik — orang yang cuma menunggu
+balasan ikut membakar kuota Vercel. Sekarang pengirim menyiarkan sinyal lewat kanal Supabase
+Realtime <em>Broadcast</em> per-room dan penerima baru menarik saat sinyal datang; polling
+tinggal jaring pengaman sepuluh detik. Sengaja bukan <em>postgres_changes</em> seperti saran
+audit sebelah: cara itu butuh persis kebijakan baca-publik yang baru saja dicabut. Ikut serta:
+ruang tunggu pencarian teman menyerah setelah tiga menit (umur room tunggu di server juga tiga
+menit — menunggu lebih lama berarti mem-poll sesuatu yang tidak akan datang), PWA yang dibuka
+tanpa koneksi mendapat halaman offline sendiri alih-alih dinosaurus Chrome, langganan toko
+<code>pro</code> yang kedaluwarsa akhirnya diturunkan otomatis oleh cron harian, dan 4.016 baris
+salinan kode bot yang mati ikut terbuang dari repo.</p>
+
+<p class="muted">Di repo bot sendiri, tiga hal kecil menyusul: sapaan bot akhirnya
+<b>mengiklankan <code>.PANTAU</code></b> — perintahnya sudah hidup di webhook situs sejak pagi,
+tapi yang mengedit sapaannya cuma salinan <code>bot-wa/</code> di repo situs, yang tidak pernah
+tayang; celah <b>alarm dobel</b> di jalur alarm-lewat-perangkat-kedua ditutup (selama percobaan
+±8 detik itu di udara, antrean lokal menahan diri, dan penandanya tidak pernah selamat dari
+restart); dan 405 di <code>GET /reset</code> kini menyebut <code>Allow: POST</code> seperti
+seharusnya.</p>
+
+<p class="muted"><b>Sore harinya, audit kedua mencocokkan kode gelombang pagi ke database
+produksi — dan dua fiturnya ternyata belum pernah hidup.</b> Tabel kontak pembeli dan kolom
+penanda milestone view dirujuk kode sejak pagi, tapi migrasinya tidak pernah dijalankan; semua
+gagalnya senyap, jadi fitur "log kontak pembeli", panel adminnya, follow-up 24 jamnya, dan
+notifikasi "iklanmu tembus 100 view" belum pernah bekerja sedetik pun. Keduanya kini diterapkan.
+Pelajarannya satu kalimat: <b>berkas migrasi yang ikut ter-commit belum berarti migrasinya
+jalan</b> — periksa databasenya, bukan reponya.</p>
+
+<p class="muted">Di commit yang sama, tujuh perkara lain ditutup. Ketujuh cron (dan webhook yang
+menanggung seluruh kiriman notifikasi saat iklan tayang) akhirnya menyetel batas durasinya
+sendiri — sebelumnya laporan mingguan penjual dibunuh Vercel setelah ±enam penerima, tanpa jejak
+dan tanpa lanjutan. Struk pembayaran di alur "Dicari" ikut memeriksa sidik jari gambar, bukan
+cuma nomor referensi hasil baca AI yang bisa kosong. Tombol "hubungi penjual" berhenti meneruskan
+nomor dan nama kiriman klien mentah-mentah ke WA penjual. Komentar dan like berhenti menembus
+postingan mading yang sudah disembunyikan, dan penghitungnya jadi atomik. Obrolan anonim dapat
+umur: room yang selesai atau ditinggalkan lebih dari sebulan disapu tiap hari. Klaim "3x lebih
+banyak pembeli" yang diam-diam hidup lagi di pesan mingguan diganti kalimat yang jujur. Dan foto
+struk dibatasi 8 MB sebelum menyentuh AI.</p>
+
+<p class="muted"><b>Lalu semuanya diuji sungguhan di produksi — dan pengujian menemukan yang
+tidak ditemukan pembacaan.</b> Dua puluhan skenario dijalankan dengan data uji yang dibuat lalu
+dihapus sendiri (alur yang mengirim WhatsApp ke manusia sengaja tidak disentuh): sensor kata
+kasar, lapor lima kali sampai tersembunyi, seluruh alur obrolan anonim berikut pagar-pagarnya,
+penghitung view berikut remnya, dan kedua rem laju. Hampir semua lulus — tapi <b>tombol like
+mading ternyata mati sejak lahir</b>, dan komentar ikut mati sehari kemudian. Penyebabnya satu
+sifat pustaka yang tidak diduga siapa pun: objek query Supabase itu bukan Promise penuh — ia
+tidak punya metode <code>.catch</code>, jadi memanggilnya justru melempar galat sebelum query
+berangkat. Idiom keliru itu ada di empat tempat (dua di antaranya bom waktu di webhook yang
+belum sempat meledak), dibuktikan dulu di luar dugaan, lalu dibetulkan semuanya. Pengujian juga
+menyelamatkan satu hal sebelum terjadi: penanda milestone view lahir bernilai nol untuk semua
+iklan, jadi satu view berikutnya pada iklan yang sudah 156 kali dilihat akan mengirim WA "baru
+tembus 10 dilihat" — beruntun. Penandanya di-backfill sesuai kenyataan sebelum ada yang sempat
+menerima pesan basi itu.</p>
+
+<p class="muted"><b>Dan tombol Profil di navbar bawah akhirnya membuka pintu, bukan
+kebohongan kecil.</b> Ia menunjuk <code>/penjual/login</code> — yang bukan halaman login,
+melainkan halaman profil publik untuk penjual bernama "login" yang tidak pernah ada. Sekarang
+satu pintu: <code>/profil</code> memeriksa sesi di server lalu mengantar ke dasbor (sudah masuk)
+atau halaman masuk (belum); yang sudah masuk dan nyasar ke halaman login dipantulkan ke dasbor;
+tautan lama ke alamat yang salah ikut diantar ke pintu yang sama.</p>
+
+<p class="muted"><b>Petangnya, mading dan obrolan berhenti sepenuhnya tanpa nama.</b> Dua
+gelombang bersambung: gelombang dari tool lain mewajibkan login untuk memposting mading dan
+mencari teman ngobrol — ke sesama pengguna tetap anonim, tapi di server setiap postingan dan
+room terikat ke akun lewat hash bergaram, supaya pencemaran dan pelecehan tidak lagi tak
+tertelusur — sekaligus menghadirkan <b>chat jual-beli di dalam situs</b> (tab yang dulu cuma
+melempar ke WhatsApp kini ruang obrolan sungguhan, dengan notifikasi WA ke penjual). Gelombang
+sesi ini melengkapinya dengan pelajaran dari bot chat anonim Telegram: tombol 🚩 <b>melaporkan
+lawan bicara</b>, dan yang dilaporkan tiga room berbeda dalam sebulan <b>diblokir otomatis
+seminggu</b> dari semua obrolan — satu orang yang tersinggung tidak bisa memblokir siapa pun
+sendirian. Layar awalnya kini memuat aturan main yang jujur ("Anonim ke Lawan Bicara", bukan
+"100% Rahasia"), radar pencarian tidak lagi berputar selamanya untuk yang belum login (diantar
+ke pintu /profil), dan pesan pembuka chat jual-beli — yang tadinya satu-satunya pesan lolos
+tanpa saringan — kini disensor, dipotong, dan tidak bisa menyusun kalimat palsu di notifikasi
+WA penjual.</p>
+
+<p class="muted"><b>Malamnya, dua akun uji sekali pakai membuktikan apa yang tidak bisa dilihat
+uji tanpa-login: chat sempat mati total.</b> Karena pendaftaran memang tanpa OTP, seluruh alur
+ber-login dijalani seperti pengguna sungguhan — daftar, posting menfess yang terlacak, tiga kali
+dipertemukan, tiga laporan dari room berbeda, dan blokir otomatis yang benar-benar menolak si
+terlapor sampai tanggalnya. Semua rantai itu hidup. Tapi di tengahnya ketahuan: sejak obrolan
+diwajibkan login, halaman berhenti mengirim identitas di badan permintaan (identitasnya kini
+dari sesi) sementara pemeriksa di server masih mewajibkannya — jadi <b>setiap pesan, dari siapa
+pun, dijawab "Pesan tidak boleh kosong"</b>. Diperbaiki, dibuktikan pulih, dan semua jejak akun
+ujinya dihapus. Menyusul satu perbaikan yang datang dari keluhan sederhana — "kenapa kalau
+di-refresh terulang lagi?" — obrolan sekarang <b>selamat dari muat ulang</b>: room aktif diingat,
+keadaannya ditanyakan ke server, dan percakapan dilanjutkan dari tempatnya, bukan dari nol.
+Lawan bicara di chat jual-beli yang dibuka lewat tautan juga akhirnya punya nama, bukan "Anonim"
+kosong.</p>
+
+<p class="muted"><b>Larut malam, keluhan "ga pernah berhasil chat anonim" dibongkar sampai ke
+akarnya — dan akarnya empat.</b> Dua orang yang menekan Mulai hampir bersamaan sama-sama membuat
+ruang tunggu, dan tidak ada mekanisme apa pun yang menjodohkan sesama penunggu: keduanya
+menunggu selamanya. Penunggu yang menutup halaman meninggalkan ruang tunggu "hidup" selama tiga
+menit, dan pencari berikutnya dipasangkan ke kekosongan — itulah "berhasil cuma di satu sisi".
+Pencarian dari tab kedua diam-diam menghapus ruang milik tab pertama, yang terus bertanya pada
+ruang yang sudah tiada. Dan satu sisa refactor: handler tab-aktif masih memakai variabel yang
+sudah dihapus, galatnya tertelan senyap. Sekarang setiap poll penunggu adalah <b>detak
+jantung</b> — hanya ruang yang berdetak dalam 15 detik terakhir yang boleh dijodohkan — dan
+penunggu <b>ikut menjodohkan</b>: melihat ruang tunggu lain yang segar, ia bergabung ke sana.
+Ketiganya dibuktikan lulus di produksi dengan dua akun uji (ruang basi ditolak, dua penunggu
+saling menemukan lewat poll, ruang hantu dijawab "sudah tidak ada" dengan penjelasan), lalu
+semua jejak ujinya dihapus. Satu catatan untuk penguji berikutnya: chat anonim sengaja menolak
+menjodohkan akun dengan dirinya sendiri — mengujinya butuh dua akun, bukan dua tab.</p>
+
+<p class="muted">Perapian <b>22 Agustus 2026</b>, dan kali ini yang dirapikan adalah
+halamannya sendiri. <code>/progres-claude</code> masih membaca seperti pagi 21 Agustus:
+delapan kartu utang teknis yang enam di antaranya sudah dikerjakan sore itu juga, dan satu
+daftar "kerjakan berikutnya" yang lima dari enam isinya sudah selesai — termasuk pertanyaan
+<code>CRON_SECRET</code> yang sudah terjawab. Penandanya diperbarui, temuannya
+<em>tidak</em> dihapus: temuan yang lenyap begitu diperbaiki akan ditemukan lagi oleh audit
+berikutnya sebagai hal baru. Dua kesalahan audit pagi ikut dikoreksi di tempatnya — tiga
+paket yang disebut "tidak pernah dipakai" ternyata dipakai lewat <code>await import()</code>
+(jangan dicabut), dan 460 baris pembayaran menggantung ternyata lahir dari tiga sebab
+berbeda, bukan satu. Ditambah tiga hal kecil yang sudah lama menggantung: penanda tingkat
+temuan tidak pernah kena selektor CSS-nya sejak <code>ui.css</code> disatukan (semua jatuh
+ke rupa pil biasa), penyaji markdown di halaman itu tidak mengenal tabel sehingga tabel
+12 baris tampil sebagai prosa penuh tanda pipa, dan halaman audit lama masih mengutip sandi
+admin yang sudah dirotasi — di enam tempat.</p>
+
 <div class="card">
   <ul class="todo">
     <li><span class="kotak siapa"></span><span>
       <span class="siapa-l">Perlu pemilik</span><br>
-      <strong>Tautkan ulang nomor bot pertama.</strong> Kunci sesi dibuka lagi dari dashboard pada
-      21 Agustus 2026 pukul 06:34 dan sesi lama dipindah ke
-      <code>auth_info_baileys.bak-20260821T063431</code> (bukan dihapus); folder sesi yang aktif
-      sekarang kosong, jadi bot menunggu ditautkan dan tidak ada pesan yang bisa dikirim maupun
-      diterima. Sebelum itu log-nya <code>401</code> tiga kali berturut-turut — tanda nomornya
-      sedang dibatasi WhatsApp, dan menautkan ulang saat sedang dibatasi justru memperpanjangnya.
-      Yang paling aman: kembalikan folder <code>.bak-</code> itu kalau nomornya masih tertaut di HP.
-      Pindai QR / kode pairing hanya kalau perangkatnya memang sudah dilepas.
+      <strong>Satu baris di Vercel supaya nomor kedua bisa menerima.</strong> Arah keluar sudah
+      beres — kiriman otomatis pindah ke perangkat yang sehat. Arah masuk belum: webhook situs
+      baru mengenali token perangkat mana pun sejak hari ini, tapi env-nya masih berisi satu
+      token. Selama itu, chat yang masuk lewat nomor yang dipajang situs dibalas sapaan lalu
+      diam. Yang perlu dilakukan: isi <code>BAILEYS_API_TOKEN</code> di Vercel dengan
+      <b>dua token dipisah koma</b> — token bot pertama <b>tetap di depan</b> (alamat kirim
+      situs menunjuk ke sana), token bot kedua sesudahnya. Tokennya ada di
+      <code>/root/.api_token_bot1</code> dan <code>/root/wa-bot-2/api_token</code> di VPS.
+    </span></li>
+    <li><span class="kotak siapa"></span><span>
+      <span class="siapa-l">Perlu pemilik</span><br>
+      <strong>Tiga iklan hari ini belum sampai ke dua grup — bisa dikirim ulang.</strong>
+      Iklan pukul 07:13, 09:45, dan 10:52 ditolak WhatsApp waktu itu karena sesi bot baru saja
+      ditautkan ulang dan daftar peserta grupnya belum sinkron. Sekarang kedua grup sudah bisa
+      dikirimi (956 dan 161 anggota). Ketiganya tersimpan di daftar <b>"dibuang"</b> pada
+      dashboard selama 14 hari — tinggal kirim ulang dari sana. Tidak saya kirim sendiri karena
+      itu pesan yang mendarat di grup berisi seribuan orang, jadi keputusannya milik Anda.
+    </span></li>
+    <li><span class="kotak siapa"></span><span>
+      <span class="siapa-l">Perlu pemilik</span><br>
+      <strong>Nomor yang disuruh dichat situs bukan nomor yang menjawab.</strong> Situs memajang
+      <code>supportPhone</code> yang berakhiran <b>…26232</b>, sementara bot pertama tertaut ke
+      nomor yang berakhiran <b>…2594</b>. Siapa pun yang mengikuti nomor di situs mengetuk nomor
+      yang tidak ada botnya. Yang perlu diputuskan: situsnya yang menyesuaikan, atau botnya yang
+      pindah ke nomor itu lagi.
+    </span></li>
+    <li><span class="kotak siapa"></span><span>
+      <span class="siapa-l">Perlu pemilik</span><br>
+      <strong><code>/kontak-admin</code> menunjuk ke nomor botnya sendiri.</strong> Endpoint itu
+      ada supaya situs punya jalan pulang saat bot padam — ia menjawab nomor cadangan. Tapi
+      <code>backupAdmin</code> di <code>settings.json</code> sekarang berisi nomor yang sama
+      dengan yang dipakai bot pertama, jadi jalan pulangnya menunjuk ke nomor yang ikut padam.
+      Isi <code>backupAdmin</code> dengan nomor manusia yang benar-benar berbeda.
     </span></li>
     <li><span class="kotak siapa"></span><span>
       <span class="siapa-l">Perlu pemilik</span><br>
@@ -87,6 +528,74 @@ tak sengaja dari membuat seluruh arsip di GitHub jadi derau permanen.</p>
       langkah yang memang harus dilakukan dengan HP di tangan: kartu <b>Perangkat 2</b> di
       dashboard → "Minta Kode", lalu di HP buka WhatsApp → Perangkat tertaut → Tautkan dengan
       nomor telepon, dan ketik kodenya sebelum kedaluwarsa.
+    </span></li>
+    <li><span class="kotak siapa"></span><span>
+      <span class="siapa-l">Perlu pemilik</span><br>
+      <strong>Isi <code>SESSION_SECRET</code> di Vercel.</strong> Satu nilai acak panjang,
+      sekali saja, lalu tidak pernah disentuh lagi. Ini yang tersisa dari rotasi sandi
+      21 Agustus malam: kodenya sudah berhenti menandatangani kuki penjual dengan
+      <code>ADMIN_PASSWORD</code>, tapi selama <code>SESSION_SECRET</code> kosong ia jatuh
+      kembali ke sana — jadi rotasi sandi admin berikutnya akan sekali lagi mengeluarkan
+      seluruh penjual dari akunnya. Tidak ada yang rusak kalau dibiarkan; yang terjadi cuma
+      kejutan yang sama terulang di lain hari.
+    </span></li>
+    <li><span class="kotak siapa"></span><span>
+      <span class="siapa-l">Perlu pemilik</span><br>
+      <strong>Ceritakan sejarah sebelum kodenya ada.</strong> <code>/lomba</code> menulis "hidup
+      sejak Juni 2026", dan itu tanggal baris kode pertama — bukan tanggal berdirinya. Usahanya
+      mulai <b>8 Desember</b>, dan tidak ada satu jejak pun soal itu di repo mana pun, jadi tidak
+      bisa ditebak dari sini. Yang dibutuhkan: tahunnya, apa yang terjadi hari itu (grup dibuat?
+      Instagram? penjualan pertama?), dan tiga sampai empat titik sesudahnya sampai Juni 2026 —
+      terutama kapan admin kewalahan sampai memutuskan "ini harus dibikin sistem". Titik itu yang
+      menyambungkan komunitas ke kode, dan itu cerita yang paling kuat di depan juri.
+    </span></li>
+    <li><span class="kotak siapa"></span><span>
+      <span class="siapa-l">Perlu pemilik</span><br>
+      <strong>Kirim folder <code>Pelajari wa</code> ke server.</strong> Ada di
+      <code>D:\5.RIDHO\1.BISNIS\JUAL BELI USU\</code> di komputer pemilik; server ini Linux dan
+      tidak bisa membukanya. Kalau isinya ekspor chat WhatsApp, zip lalu
+      <code>scp arsip.zip root@&lt;ip-vps&gt;:/root/</code>. Isinya dipakai untuk mengganti dialog
+      karangan di <code>/lomba</code> dengan percakapan sungguhan — dengan catatan nomor dan nama
+      orang harus disamarkan dulu, karena <code>/lomba</code> satu-satunya halaman tanpa sandi.
+    </span></li>
+    <li><span class="kotak siapa"></span><span>
+      <span class="siapa-l">Perlu pemilik</span><br>
+      <strong>Poster dan perpanjangan sekarang benar-benar gratis. Sengaja?</strong> Di database
+      <code>adPoster</code> dan <code>renewalFee</code> dua-duanya berisi <b>0</b>, tapi kodenya
+      selama ini mengabaikan angka itu dan tetap menagih Rp10.000 dan Rp2.000 — karena
+      <code>0 || 10000</code> bernilai 10000. Bug itu sudah diperbaiki, jadi kodenya sekarang
+      <em>menurut</em> pada setelan. Kalau memang mau ditagih, isi angkanya lewat panel admin.
+      Hal yang sama berlaku untuk komisi setelah deal: daftar jenjangnya kosong di database, jadi
+      <code>/daftar-harga</code> sekarang jujur menulis "sedang tidak ada biaya transaksi".
+    </span></li>
+    <li><span class="kotak siapa"></span><span>
+      <span class="siapa-l">Perlu pemilik</span><br>
+      <strong>Mereknya terbelah dua.</strong> Header situs menulis "USU POLMED Marketplace",
+      tapi footer, halaman legal, FAQ, dan <b>pesan OTP</b> menulis "<b>Jual Beli Medan</b>"
+      dengan alamat <code>admin@jualbelimedan.web.id</code>. Ini tidak diubah sendiri karena ada
+      repo terpisah bernama <code>jualbelimedan</code> — jadi kemungkinan besar itu merek induk
+      yang memang disengaja, bukan salah ketik. Yang perlu diputuskan: pengguna situs ini
+      seharusnya menerima OTP atas nama siapa?
+    </span></li>
+    <li><span class="kotak siapa"></span><span>
+      <span class="siapa-l">Perlu pemilik</span><br>
+      <strong>Instagram mana yang benar?</strong> Sapaan bot menaut
+      <code>instagram.com/usulovepolmed</code>, sementara catatan menyebut akun yang aktif
+      <code>usupolmedupdate</code>. Instagram menolak diperiksa tanpa login, jadi tautannya
+      sengaja <b>tidak diubah</b> — sebutkan yang benar dan perbaikannya satu baris.
+    </span></li>
+    <li><span class="kotak siapa"></span><span>
+      <span class="siapa-l">Perlu pemilik</span><br>
+      <strong>Dua baris SSH: jadikan skrip lama sekadar penerus.</strong> Skrip jalan yang
+      kanonik sekarang ada di sebelah data tiap bot, dan penjaga sudah menunjuk ke sana. Yang
+      belum: <code>/root/jalankan-bot-1.sh</code> dan <code>/root/jalankan-bot-2.sh</code> masih
+      menyimpan salinan penuh isinya. <b>Hari ini keduanya masih benar</b> — yang ditunggu cuma
+      kapan salah satunya disunting dan yang lain tidak. Menulis ke <code>/root/*.sh</code>
+      ditolak penyaring izin, jadi perintahnya diserahkan apa adanya:
+      <pre><code>printf '#!/bin/bash\n# Penerus; isi sebenarnya di skrip sebelah DATA_DIR.\nexec /root/wa-bot-usu/jalankan.sh "$@"\n' &gt; /root/jalankan-bot-1.sh
+printf '#!/bin/bash\n# Penerus; isi sebenarnya di skrip sebelah DATA_DIR.\nexec /root/wa-bot-2/jalankan.sh "$@"\n' &gt; /root/jalankan-bot-2.sh
+chmod 700 /root/jalankan-bot-1.sh /root/jalankan-bot-2.sh</code></pre>
+      Tidak perlu me-restart bot untuk ini; skripnya baru terpakai pada restart berikutnya.
     </span></li>
   </ul>
 </div>
