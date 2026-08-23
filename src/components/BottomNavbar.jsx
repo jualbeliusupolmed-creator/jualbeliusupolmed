@@ -16,7 +16,7 @@ export default function BottomNavbar() {
     // Satu pintu: /profil memeriksa sesi di server lalu mengarahkan ke
     // /dashboard (sudah masuk) atau /dashboard/login (belum). `match` membuat
     // tab ini tetap menyala setelah pengalihan mendarat di /dashboard.
-    { name: "Profil", href: "/profil", icon: Icon.User, match: ["/profil", "/dashboard"] },
+    { name: "Dashboard", href: "/dashboard", icon: Icon.LayoutDashboard, match: ["/dashboard", "/profil"] },
   ];
 
   return (

@@ -14,8 +14,6 @@ const links = [
   { href: "/jasa", label: "Jasa" },
   { href: "/dicari", label: "Cari Barang" },
   { href: "/favorit", label: "Favorit" },
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/blog", label: "Blog" },
   { href: "/cara-bergabung", label: "Info" },
 ];
 
