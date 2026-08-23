@@ -21,6 +21,7 @@ export default function MadingPage() {
   }, []);
   const [selectedFaculty, setSelectedFaculty] = useState("Semua");
   const [posts, setPosts] = useState([]);
+  const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [activeCommentsPostId, setActiveCommentsPostId] = useState(null);
@@ -55,15 +56,21 @@ export default function MadingPage() {
   const fetchPosts = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams();
-      if (activeTab !== "all") params.set("type", activeTab);
-      if (selectedFaculty !== "Semua") params.set("faculty", selectedFaculty);
-
-      const res = await fetch(`/api/mading?${params.toString()}`);
-      const data = await res.json();
-      setPosts(data.posts || []);
+      if (activeTab === "blog") {
+        const res = await fetch(`/api/blog`);
+        const data = await res.json();
+        setBlogs(data.blogs || []);
+      } else {
+        const params = new URLSearchParams();
+        if (activeTab !== "all") params.set("type", activeTab);
+        if (selectedFaculty !== "Semua") params.set("faculty", selectedFaculty);
+  
+        const res = await fetch(`/api/mading?${params.toString()}`);
+        const data = await res.json();
+        setPosts(data.posts || []);
+      }
     } catch (e) {
-      toast.error("Gagal memuat postingan Menfess & Info.");
+      toast.error(activeTab === "blog" ? "Gagal memuat Blog." : "Gagal memuat postingan Menfess & Info.");
     } finally {
       setLoading(false);
     }
@@ -257,7 +264,7 @@ export default function MadingPage() {
               KAMPUS FEED
             </span>
             <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight mt-0.5">
-              Menfess & Info
+              Mading & Blog
             </h1>
           </div>
           <button
@@ -269,12 +276,13 @@ export default function MadingPage() {
           </button>
         </div>
 
-        {/* 3 TABS */}
+        {/* 4 TABS */}
         <div className="flex px-4 max-w-2xl mx-auto border-t border-slate-50 dark:border-slate-800/60">
           {[
             { id: "all", label: "🌟 Semua" },
             { id: "menfess", label: "💌 Menfess" },
-            { id: "info", label: "📢 Info Kampus" },
+            { id: "info", label: "📢 Info" },
+            { id: "blog", label: "📝 Blog" },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -295,9 +303,10 @@ export default function MadingPage() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-4 space-y-4">
-        {/* FACULTY FILTER PILLS */}
-        <div className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {["Semua", "FASILKOM-TI", "FT", "FEB", "FIB", "FK", "FH", "POLMED"].map((f) => (
+        {/* FACULTY FILTER PILLS (Hide on Blog tab) */}
+        {activeTab !== "blog" && (
+          <div className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {["Semua", "FASILKOM-TI", "FT", "FEB", "FIB", "FK", "FH", "POLMED"].map((f) => (
             <button
               key={f}
               onClick={() => setSelectedFaculty(f)}
@@ -310,7 +319,8 @@ export default function MadingPage() {
               {f}
             </button>
           ))}
-        </div>
+          </div>
+        )}
 
         {/* FEED LIST */}
         {loading ? (
@@ -329,6 +339,56 @@ export default function MadingPage() {
               </div>
             ))}
           </div>
+        ) : activeTab === "blog" ? (
+          blogs.length === 0 ? (
+            <div className="text-center py-16 px-4 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800">
+              <div className="w-14 h-14 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
+                📝
+              </div>
+              <h3 className="font-bold text-slate-800 dark:text-slate-200 text-base">Belum Ada Artikel</h3>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {blogs.map((blog) => {
+                const excerpt = blog.excerpt || blog.content_markdown?.replace(/[#*`]/g, "")?.slice(0, 100);
+                return (
+                  <Link
+                    key={blog.id}
+                    href={`/blog/${blog.slug}`}
+                    className="group flex flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition-all hover:border-primary/50 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
+                  >
+                    <div className="relative h-40 w-full overflow-hidden bg-slate-100 dark:bg-slate-800 flex-shrink-0">
+                      {blog.image_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={blog.image_url}
+                          alt={blog.title}
+                          className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-3xl text-slate-300 dark:text-slate-700">📝</div>
+                      )}
+                    </div>
+                    <div className="flex flex-1 flex-col p-4">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-primary">Artikel</p>
+                      <h2 className="mt-1 line-clamp-2 text-sm font-bold leading-snug transition-colors group-hover:text-primary dark:text-white">
+                        {blog.title}
+                      </h2>
+                      {excerpt && (
+                        <p className="mt-1 line-clamp-2 text-[11px] text-slate-500 dark:text-slate-400">{excerpt}</p>
+                      )}
+                      <div className="mt-3 flex items-center justify-between text-[10px] font-medium text-slate-400">
+                        <span>{blog.author}</span>
+                        <time dateTime={blog.created_at}>
+                          {new Date(blog.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+                        </time>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )
         ) : posts.length === 0 ? (
           <div className="text-center py-16 px-4 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800">
             <div className="w-14 h-14 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
