@@ -56,21 +56,35 @@ export default function MadingPage() {
   const fetchPosts = useCallback(async () => {
     setLoading(true);
     try {
+      const params = new URLSearchParams();
+      if (activeTab !== "all" && activeTab !== "blog") params.set("type", activeTab);
+      if (selectedFaculty !== "Semua") params.set("faculty", selectedFaculty);
+
       if (activeTab === "blog") {
         const res = await fetch(`/api/blog`);
         const data = await res.json();
-        setBlogs(data.blogs || []);
+        setPosts((data.blogs || []).map((b) => ({ ...b, _kind: "blog" })));
+      } else if (activeTab === "all") {
+        const [resMading, resBlog] = await Promise.all([
+          fetch(`/api/mading?${params.toString()}`),
+          fetch(`/api/blog`),
+        ]);
+        const dataMading = await resMading.json();
+        const dataBlog = await resBlog.json();
+
+        const combined = [
+          ...(dataMading.posts || []).map((p) => ({ ...p, _kind: "mading" })),
+          ...(dataBlog.blogs || []).map((b) => ({ ...b, _kind: "blog" })),
+        ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        setPosts(combined);
       } else {
-        const params = new URLSearchParams();
-        if (activeTab !== "all") params.set("type", activeTab);
-        if (selectedFaculty !== "Semua") params.set("faculty", selectedFaculty);
-  
         const res = await fetch(`/api/mading?${params.toString()}`);
         const data = await res.json();
-        setPosts(data.posts || []);
+        setPosts((data.posts || []).map((p) => ({ ...p, _kind: "mading" })));
       }
     } catch (e) {
-      toast.error(activeTab === "blog" ? "Gagal memuat Blog." : "Gagal memuat postingan Menfess & Info.");
+      toast.error(activeTab === "blog" ? "Gagal memuat Blog." : "Gagal memuat feed.");
     } finally {
       setLoading(false);
     }
@@ -339,79 +353,73 @@ export default function MadingPage() {
               </div>
             ))}
           </div>
-        ) : activeTab === "blog" ? (
-          blogs.length === 0 ? (
-            <div className="text-center py-16 px-4 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800">
-              <div className="w-14 h-14 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
-                📝
-              </div>
-              <h3 className="font-bold text-slate-800 dark:text-slate-200 text-base">Belum Ada Artikel</h3>
+        ) : posts.length === 0 ? (
+          <div className="text-center py-16 px-4 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800">
+            <div className="w-14 h-14 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
+              📝
             </div>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {blogs.map((blog) => {
-                const excerpt = blog.excerpt || blog.content_markdown?.replace(/[#*`]/g, "")?.slice(0, 100);
+            <h3 className="font-bold text-slate-800 dark:text-slate-200 text-base">Belum Ada Sesuatu di Sini</h3>
+            <p className="text-xs text-slate-500 max-w-xs mx-auto mt-1">
+              Jadilah orang pertama yang mengisi kekosongan ini!
+            </p>
+            {activeTab !== "blog" && (
+              <button
+                onClick={() => setShowModal(true)}
+                className="mt-4 inline-flex items-center gap-1 bg-primary text-white px-4 py-2 rounded-full text-xs font-bold shadow-md shadow-primary/20"
+              >
+                <Icon.PlusCircle className="w-4 h-4" />
+                Tulis Sekarang
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className={activeTab === "blog" ? "grid gap-4 sm:grid-cols-2" : "space-y-4"}>
+            {posts.map((item) => {
+              if (item._kind === "blog") {
+                const excerpt = item.excerpt || item.content_markdown?.replace(/[#*`]/g, "")?.slice(0, 100);
                 return (
                   <Link
-                    key={blog.id}
-                    href={`/blog/${blog.slug}`}
-                    className="group flex flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition-all hover:border-primary/50 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
+                    key={`blog-${item.id}`}
+                    href={`/blog/${item.slug}`}
+                    className={`group flex overflow-hidden bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm transition-all hover:border-primary/50 hover:shadow-md ${activeTab === "blog" ? "flex-col rounded-2xl" : "flex-col sm:flex-row rounded-3xl"}`}
                   >
-                    <div className="relative h-40 w-full overflow-hidden bg-slate-100 dark:bg-slate-800 flex-shrink-0">
-                      {blog.image_url ? (
+                    <div className={`relative overflow-hidden bg-slate-100 dark:bg-slate-800 flex-shrink-0 ${activeTab === "blog" ? "w-full h-40" : "w-full h-48 sm:w-48 sm:h-auto"}`}>
+                      {item.image_url ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          src={blog.image_url}
-                          alt={blog.title}
+                          src={item.image_url}
+                          alt={item.title}
                           className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center text-3xl text-slate-300 dark:text-slate-700">📝</div>
                       )}
                     </div>
-                    <div className="flex flex-1 flex-col p-4">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-primary">Artikel</p>
-                      <h2 className="mt-1 line-clamp-2 text-sm font-bold leading-snug transition-colors group-hover:text-primary dark:text-white">
-                        {blog.title}
+                    <div className="flex flex-1 flex-col p-4 sm:p-5">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-primary">Artikel Blog</p>
+                      <h2 className="mt-1.5 line-clamp-2 text-sm sm:text-base font-bold leading-snug transition-colors group-hover:text-primary dark:text-white">
+                        {item.title}
                       </h2>
                       {excerpt && (
-                        <p className="mt-1 line-clamp-2 text-[11px] text-slate-500 dark:text-slate-400">{excerpt}</p>
+                        <p className="mt-1.5 line-clamp-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{excerpt}</p>
                       )}
-                      <div className="mt-3 flex items-center justify-between text-[10px] font-medium text-slate-400">
-                        <span>{blog.author}</span>
-                        <time dateTime={blog.created_at}>
-                          {new Date(blog.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+                      <div className="mt-auto pt-4 flex items-center justify-between text-[10px] font-medium text-slate-400">
+                        <span>{item.author}</span>
+                        <time dateTime={item.created_at}>
+                          {timeAgo(item.created_at)}
                         </time>
                       </div>
                     </div>
                   </Link>
                 );
-              })}
-            </div>
-          )
-        ) : posts.length === 0 ? (
-          <div className="text-center py-16 px-4 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800">
-            <div className="w-14 h-14 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
-              📝
-            </div>
-            <h3 className="font-bold text-slate-800 dark:text-slate-200 text-base">Belum Ada Postingan</h3>
-            <p className="text-xs text-slate-500 max-w-xs mx-auto mt-1">
-              Jadilah orang pertama yang mengirim Menfess atau Info kampus hari ini!
-            </p>
-            <button
-              onClick={() => setShowModal(true)}
-              className="mt-4 inline-flex items-center gap-1 bg-primary text-white px-4 py-2 rounded-full text-xs font-bold shadow-md shadow-primary/20"
-            >
-              <Icon.PlusCircle className="w-4 h-4" />
-              Tulis Sekarang
-            </button>
-          </div>
-        ) : (
-          posts.map((post) => (
-            <div
-              key={post.id}
-              className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden transition-all hover:border-slate-200 dark:hover:border-slate-700"
-            >
+              }
+              
+              const post = item;
+              return (
+              <div
+                key={`post-${post.id}`}
+                className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden transition-all hover:border-slate-200 dark:hover:border-slate-700"
+              >
               {/* Type Indicator Line */}
               <div
                 className={`absolute top-0 right-0 w-1.5 h-full ${
@@ -556,7 +564,10 @@ export default function MadingPage() {
                 </div>
               )}
             </div>
-          ))
+            );
+          })
+          }
+          </div>
         )}
       </div>
 
