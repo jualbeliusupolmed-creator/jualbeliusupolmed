@@ -106,23 +106,23 @@ export default function Navbar({ config }) {
       <div className="border-b border-gray-100 bg-white/85 backdrop-blur-xl transition-all duration-300 dark:border-slate-900/80 dark:bg-slate-950/85">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="transition-transform duration-300 group-hover:scale-110">
+          <Link href="/" className="flex items-center gap-2 group min-w-0">
+            <div className="shrink-0 transition-transform duration-300 group-hover:scale-110">
               <Logo className="h-7 w-7" src={config?.site?.logoUrl} />
             </div>
-            <span className="leading-none">
-              <span className="block text-[15px] font-extrabold tracking-tight">
+            <span className="leading-none truncate">
+              <span className="block text-[15px] font-extrabold tracking-tight truncate">
                 <span className="text-usu dark:text-emerald-400 transition-colors">USU</span>{" "}
                 <span className="text-polmed dark:text-violet-400 transition-colors">POLMED</span>
               </span>
-              <span className="mt-0.5 block text-[8px] font-bold uppercase tracking-[0.28em] text-gray-400 dark:text-slate-500">
+              <span className="mt-0.5 block text-[8px] font-bold uppercase tracking-[0.28em] text-gray-400 dark:text-slate-500 truncate">
                 Marketplace
               </span>
             </span>
           </Link>
 
           {/* Right side: session + theme */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex shrink-0 items-center gap-2.5">
             {/* Search mini — desktop only */}
             <form onSubmit={submitSearch} className="relative hidden md:block mr-2">
               <Icon.Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400 transition-colors peer-focus:text-primary" />
