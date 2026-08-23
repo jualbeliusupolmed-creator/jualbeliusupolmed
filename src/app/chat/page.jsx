@@ -270,10 +270,20 @@ function ChatContent() {
       channel = supa
         .channel(`chat-room-${currentRoomId}`)
         .on("broadcast", { event: "pesan" }, () => fetchRoomData(currentRoomId))
-        .subscribe();
+        .subscribe((status) => {
+          // Dulu status subscribe tidak pernah dibaca — kalau env Supabase
+          // client belum terisi atau koneksi realtime gagal, satu-satunya
+          // gejala yang terlihat pengguna adalah "kok delay 10 detik", tanpa
+          // jejak apa pun buat siapa yang membuka devtools. Sekarang jelas.
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+            console.warn("[chat] Realtime tidak tersambung (" + status + ") — mengandalkan polling 10 detik.");
+          }
+        });
       rtChannelRef.current = channel;
-    } catch {
-      // Realtime tidak tersedia → polling di bawah tetap jadi jalur utama.
+    } catch (e) {
+      // Realtime tidak tersedia (mis. env Supabase client belum terisi) →
+      // polling di bawah tetap jadi jalur utama.
+      console.warn("[chat] Kanal realtime tidak dibuat:", e?.message || e);
     }
     return () => {
       rtChannelRef.current = null;
