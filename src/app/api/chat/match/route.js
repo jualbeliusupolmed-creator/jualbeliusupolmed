@@ -50,7 +50,8 @@ export async function POST(request) {
       // room tunggu lain yang masih segar, gabung ke sana dan buang room
       // sendiri. Klaimnya atomik (eq status waiting), jadi dua penunggu yang
       // saling menemukan di saat yang sama tidak bisa dobel-gabung.
-      if (room.status === "waiting" && room.user1_id === userId) {
+      const isUser1 = room.user1_id === userId;
+      if (room.status === "waiting" && isUser1) {
         const kini = new Date().toISOString();
         await supa.from("chat_rooms").update({ updated_at: kini })
           .eq("id", room.id).eq("status", "waiting");
@@ -92,6 +93,15 @@ export async function POST(request) {
             return NextResponse.json({ status: "active", room: gabung, isMatched: true });
           }
         }
+      }
+
+      // User2 juga kirim heartbeat saat active, bukan hanya user1 saat waiting.
+      // Ini supaya saat user2 poll room yang sudah active (karena user1 gabung
+      // dari user1-nya room lain), user2 tidak ketinggalan update status dan bisa
+      // langsung tahu dia sudah matched.
+      if (room.status === "active" && !isUser1) {
+        await supa.from("chat_rooms").update({ updated_at: new Date().toISOString() })
+          .eq("id", room.id);
       }
 
       return NextResponse.json({
