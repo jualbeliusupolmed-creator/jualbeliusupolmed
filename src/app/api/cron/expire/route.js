@@ -93,10 +93,29 @@ export async function GET(req) {
     otpDisapu = terhapus?.length || 0;
   }
 
+  // ── Turunkan langganan toko yang kedaluwarsa ────────────────────────────────
+  // subscription_tier 'pro' dipasang saat pembayaran, tapi sebelum ini tidak
+  // ada yang pernah menurunkannya lagi — penjual yang masa berlakunya habis
+  // tiga bulan lalu tetap tercatat 'pro' di database, dan setiap pembaca yang
+  // lupa ikut memeriksa subscription_expires_at akan mempercayainya. Penurunan
+  // di sini membuat tier-nya sendiri jujur, bukan cuma tanggalnya. Menumpang
+  // cron harian yang sudah ada, tidak butuh jadwal baru.
+  let langgananDiturunkan = 0;
+  {
+    const { data: turun } = await supa
+      .from("seller_profiles")
+      .update({ subscription_tier: "free" })
+      .neq("subscription_tier", "free")
+      .lt("subscription_expires_at", new Date().toISOString())
+      .select("wa");
+    langgananDiturunkan = turun?.length || 0;
+  }
+
   return NextResponse.json({
     reminded,
     h3_checked: expiringH3?.length || 0,
     h1_checked: expiringH1?.length || 0,
     otp_disapu: otpDisapu,
+    langganan_diturunkan: langgananDiturunkan,
   });
 }
