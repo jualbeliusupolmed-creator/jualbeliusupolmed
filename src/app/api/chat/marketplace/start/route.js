@@ -54,9 +54,17 @@ export async function POST(req) {
     }
 
     // 1. Dapatkan info barang dan profil penjual
+    //
+    // `faculty` DIBUANG dari select ini — kolom itu TIDAK ADA di seller_profiles
+    // (hanya dipakai chat_rooms.user1_faculty/user2_faculty, kolom tabel yang
+    // berbeda). Selama kolomnya disebut di sini, PostgREST menjawab galat
+    // "column ... does not exist" untuk SETIAP iklan tanpa kecuali, dan galat
+    // itu tertangkap sebagai listingError — jadi tombol Chat Penjual menjawab
+    // "Barang tidak ditemukan" walau barangnya jelas ada. Dibuktikan dengan
+    // memanggil PostgREST langsung memakai kueri persis ini, 23 Agu 2026 malam.
     const { data: listing, error: listingError } = await supa
       .from("listings")
-      .select("*, seller_profiles(name, faculty)")
+      .select("*, seller_profiles(name)")
       .eq("id", listingId)
       .single();
 
@@ -70,10 +78,10 @@ export async function POST(req) {
       return NextResponse.json({ error: "Tidak bisa mengirim chat ke barang sendiri" }, { status: 400 });
     }
 
-    // 2. Dapatkan info pembeli
+    // 2. Dapatkan info pembeli (faculty dibuang — lihat catatan di query listing)
     const { data: buyerProfile } = await supa
       .from("seller_profiles")
-      .select("name, faculty")
+      .select("name")
       .eq("wa", buyerWa)
       .single();
 
@@ -102,10 +110,10 @@ export async function POST(req) {
           listing_id: listingId,
           user1_id: buyerWa,
           user1_alias: buyerName,
-          user1_faculty: buyerProfile?.faculty || "Umum",
+          user1_faculty: "Umum", // seller_profiles tidak punya kolom fakultas
           user2_id: sellerWa,
           user2_alias: sellerName,
-          user2_faculty: listing.seller_profiles?.faculty || "Umum",
+          user2_faculty: "Umum",
           status: "active",
         })
         .select()
