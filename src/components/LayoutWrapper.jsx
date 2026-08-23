@@ -11,6 +11,7 @@ import BottomNavbar from "./BottomNavbar";
 export default function LayoutWrapper({ children }) {
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith("/admin");
+  const isChat = pathname?.startsWith("/chat");
   const [config, setConfig] = useState(null);
 
   useEffect(() => {
@@ -33,7 +34,7 @@ export default function LayoutWrapper({ children }) {
               kedua / 25 detik), karena izin notifikasi cuma bisa diminta sekali. */}
           <NotifPrompt />
           <BottomNavbar />
-          <Footer config={config} />
+          {!isChat && <Footer config={config} />}
         </>
       )}
     </>

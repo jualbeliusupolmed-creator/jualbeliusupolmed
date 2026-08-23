@@ -430,7 +430,7 @@ function ChatContent() {
     const pesanAktif = (segAktif?.pesan || []).filter((m) => m.sender_id !== "system");
 
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans">
+      <div className="h-[calc(100dvh-130px)] md:h-[calc(100dvh-75px)] bg-slate-50 dark:bg-slate-950 flex flex-col font-sans">
         <div className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-40">
           <div className="flex items-center justify-between px-4 py-3 max-w-2xl mx-auto">
             <div className="flex items-center gap-2.5 min-w-0">
@@ -489,7 +489,7 @@ function ChatContent() {
 
         <div className="flex-1 flex flex-col max-w-2xl w-full mx-auto p-4">
           <div className="flex-1 flex flex-col bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
-            <div className="flex-1 p-4 overflow-y-auto min-h-[400px] max-h-[62vh]">
+            <div className="flex-1 p-4 overflow-y-auto">
               {utasLoading ? (
                 <p className="text-center text-xs text-slate-400 py-10">Memuat obrolan…</p>
               ) : segmen.length === 0 ? (
@@ -651,7 +651,7 @@ function ChatContent() {
     }
 
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans">
+      <div className="h-[calc(100dvh-130px)] md:h-[calc(100dvh-75px)] bg-slate-50 dark:bg-slate-950 flex flex-col font-sans">
         <div className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-40">
           <div className="flex items-center justify-between px-4 py-3 max-w-2xl mx-auto">
             <div className="flex items-center gap-2.5 min-w-0">
@@ -678,7 +678,7 @@ function ChatContent() {
 
         <div className="flex-1 flex flex-col max-w-2xl w-full mx-auto p-4">
           <div className="flex-1 flex flex-col bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
-            <div className="flex-1 p-4 overflow-y-auto space-y-3 min-h-[400px] max-h-[62vh]">
+            <div className="flex-1 p-4 overflow-y-auto space-y-3">
               {messages.map((m, idx) => {
                 const isMe = m.sender_id === myWa;
                 const isSystem = m.sender_id === "system";
