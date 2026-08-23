@@ -430,66 +430,65 @@ function ChatContent() {
     const pesanAktif = (segAktif?.pesan || []).filter((m) => m.sender_id !== "system");
 
     return (
-      <div className="h-[calc(100dvh-130px)] md:h-[calc(100dvh-75px)] bg-slate-50 dark:bg-slate-950 flex flex-col font-sans">
-        <div className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-40">
-          <div className="flex items-center justify-between px-4 py-3 max-w-2xl mx-auto">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <button
-                onClick={() => router.push("/chat")}
-                className="p-1.5 -ml-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-full"
-                title="Kembali ke kotak masuk"
-              >
-                <Icon.ChevronLeft className="w-5 h-5" />
-              </button>
-              <div className="relative shrink-0">
-                <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">🎭</div>
-                {aktifRoomId && (
-                  <div className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900" />
-                )}
+      <div className="h-[calc(100dvh-130px)] md:h-[calc(100dvh-75px)] bg-slate-50 dark:bg-slate-950 flex flex-col font-sans p-2 sm:p-4">
+        <div className="flex-1 flex flex-col max-w-2xl w-full mx-auto bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 shrink-0 z-40">
+            <div className="flex items-center justify-between px-4 py-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <button
+                  onClick={() => router.push("/chat")}
+                  className="p-1.5 -ml-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-full"
+                  title="Kembali ke kotak masuk"
+                >
+                  <Icon.ChevronLeft className="w-5 h-5" />
+                </button>
+                <div className="relative shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">🎭</div>
+                  {aktifRoomId && (
+                    <div className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-slate-900 dark:text-white truncate">Cari Temen</p>
+                  <p className="text-[10px] text-slate-500 truncate">
+                    {segAktif
+                      ? `Sedang bicara dengan ${segAktif.alias} · ${segAktif.faculty}`
+                      : utas?.menungguRoomId
+                        ? "Menunggu partner…"
+                        : "Belum ada obrolan berjalan — ketuk Cari Teman Baru"}
+                  </p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">Cari Temen</p>
-                <p className="text-[10px] text-slate-500 truncate">
-                  {segAktif
-                    ? `Sedang bicara dengan ${segAktif.alias} · ${segAktif.faculty}`
-                    : utas?.menungguRoomId
-                      ? "Menunggu partner…"
-                      : "Belum ada obrolan berjalan — ketuk Cari Teman Baru"}
-                </p>
-              </div>
+
+              {aktifRoomId && (
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    onClick={handleReportPartner}
+                    title="Laporkan lawan bicara"
+                    className="px-2 py-1 rounded-full text-xs text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors"
+                  >
+                    🚩
+                  </button>
+                  <button
+                    onClick={handleSkipChat}
+                    title="Ganti Lawan Obrolan"
+                    className="flex items-center gap-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1 rounded-full text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 shadow-sm active:scale-95 transition-all"
+                  >
+                    <span>⏭️ Ganti</span>
+                  </button>
+                  <button
+                    onClick={handleLeaveChat}
+                    title="Akhiri obrolan"
+                    className="p-1.5 text-slate-400 hover:text-rose-500 rounded-full transition-colors"
+                  >
+                    <Icon.X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
             </div>
-
-            {aktifRoomId && (
-              <div className="flex items-center gap-1.5 shrink-0">
-                <button
-                  onClick={handleReportPartner}
-                  title="Laporkan lawan bicara"
-                  className="px-2 py-1 rounded-full text-xs text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors"
-                >
-                  🚩
-                </button>
-                <button
-                  onClick={handleSkipChat}
-                  title="Ganti Lawan Obrolan"
-                  className="flex items-center gap-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1 rounded-full text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 shadow-sm active:scale-95 transition-all"
-                >
-                  <span>⏭️ Ganti</span>
-                </button>
-                <button
-                  onClick={handleLeaveChat}
-                  title="Akhiri obrolan"
-                  className="p-1.5 text-slate-400 hover:text-rose-500 rounded-full transition-colors"
-                >
-                  <Icon.X className="w-4 h-4" />
-                </button>
-              </div>
-            )}
           </div>
-        </div>
 
-        <div className="flex-1 flex flex-col max-w-2xl w-full mx-auto p-4">
-          <div className="flex-1 flex flex-col bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
-            <div className="flex-1 p-4 overflow-y-auto">
+          <div className="flex-1 p-4 overflow-y-auto">
               {utasLoading ? (
                 <p className="text-center text-xs text-slate-400 py-10">Memuat obrolan…</p>
               ) : segmen.length === 0 ? (
@@ -651,34 +650,33 @@ function ChatContent() {
     }
 
     return (
-      <div className="h-[calc(100dvh-130px)] md:h-[calc(100dvh-75px)] bg-slate-50 dark:bg-slate-950 flex flex-col font-sans">
-        <div className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-40">
-          <div className="flex items-center justify-between px-4 py-3 max-w-2xl mx-auto">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <button
-                onClick={() => router.push("/chat")}
-                className="p-1.5 -ml-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-full"
-                title="Kembali ke kotak masuk"
-              >
-                <Icon.ChevronLeft className="w-5 h-5" />
-              </button>
-              <div className="relative shrink-0">
-                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">👤</div>
-                {roomStatus === "active" && (
-                  <div className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900" />
-                )}
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{partnerInfo.alias}</p>
-                <p className="text-[10px] text-slate-500">{partnerInfo.faculty}</p>
+      <div className="h-[calc(100dvh-130px)] md:h-[calc(100dvh-75px)] bg-slate-50 dark:bg-slate-950 flex flex-col font-sans p-2 sm:p-4">
+        <div className="flex-1 flex flex-col max-w-2xl w-full mx-auto bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 shrink-0 z-40">
+            <div className="flex items-center justify-between px-4 py-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <button
+                  onClick={() => router.push("/chat")}
+                  className="p-1.5 -ml-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-full"
+                  title="Kembali ke kotak masuk"
+                >
+                  <Icon.ChevronLeft className="w-5 h-5" />
+                </button>
+                <div className="relative shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">👤</div>
+                  {roomStatus === "active" && (
+                    <div className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{partnerInfo.alias}</p>
+                  <p className="text-[10px] text-slate-500">{partnerInfo.faculty}</p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div className="flex-1 flex flex-col max-w-2xl w-full mx-auto p-4">
-          <div className="flex-1 flex flex-col bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
-            <div className="flex-1 p-4 overflow-y-auto space-y-3">
+          <div className="flex-1 p-4 overflow-y-auto space-y-3">
               {messages.map((m, idx) => {
                 const isMe = m.sender_id === myWa;
                 const isSystem = m.sender_id === "system";
