@@ -7,13 +7,18 @@ export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 export const revalidate = 0;
 
-// GET /api/chat/anon/inbox — daftar obrolan anonim milikku, terbaru dulu.
+// GET /api/chat/anon/inbox — RINGKASAN satu baris untuk kotak masuk.
 //
-// Server jadi sumber kebenaran, bukan localStorage: dulu obrolan yang masih
-// menunggu cuma diingat lewat localStorage di satu perangkat, jadi hilang
-// kalau tab ditutup lama atau dibuka dari perangkat lain. Sekarang daftar ini
-// langsung dari chat_rooms, jadi "menunggu" atau "sudah tersambung" selalu
-// akurat kapan pun dan di perangkat mana pun dibuka.
+// Dulu endpoint ini mengembalikan satu baris per room, dan kotak masuk
+// merendernya apa adanya: lima kali "cari teman" = lima baris dengan lima nama
+// asing, empat di antaranya berisi cuplikan yang sama persis ("🎉 Kalian telah
+// terhubung!"). Sekarang seluruh obrolan anonim adalah SATU utas
+// (/api/chat/anon/thread), jadi kotak masuk cuma perlu tahu satu hal: apa yang
+// terakhir terjadi di sana.
+//
+// Server tetap sumber kebenarannya — status "menunggu" ikut dari sini, supaya
+// membuka situs dari perangkat lain tetap menampilkan antrean yang sedang
+// jalan.
 export async function GET() {
   try {
     const wa = getUserSession();
@@ -29,49 +34,59 @@ export async function GET() {
       .eq("type", "random")
       .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
       .order("updated_at", { ascending: false })
-      .limit(30);
+      .limit(60);
 
     if (error) {
       console.error("GET /api/chat/anon/inbox error:", error);
       return NextResponse.json({ error: "Gagal memuat kotak masuk" }, { status: 500 });
     }
 
-    if (!rooms?.length) {
-      return NextResponse.json({ ok: true, rooms: [], myId: userId });
-    }
+    const semua = rooms || [];
+    const menunggu = semua.find((r) => r.status === "waiting") || null;
+    const berpesan = semua.filter((r) => r.status !== "waiting");
+    const aktif = berpesan.find((r) => r.status === "active") || null;
 
-    const ids = rooms.map((r) => r.id);
-    const { data: pesanTerbaru } = await supa
-      .from("chat_messages")
-      .select("room_id, message, sender_id, created_at")
-      .in("room_id", ids)
-      .order("created_at", { ascending: false });
-
-    const terakhirPerRoom = {};
-    for (const m of pesanTerbaru || []) {
-      if (!terakhirPerRoom[m.room_id]) terakhirPerRoom[m.room_id] = m;
-    }
-
-    const shaped = rooms.map((r) => {
+    const aliasLawan = (r) => {
+      if (!r) return null;
       const akuUser1 = r.user1_id === userId;
-      const partnerAlias = akuUser1 ? r.user2_alias : r.user1_alias;
-      const partnerFaculty = akuUser1 ? r.user2_faculty : r.user1_faculty;
-      const menunggu = r.status === "waiting"; // hanya user1 yang bisa berstatus waiting
-      const pesan = terakhirPerRoom[r.id];
-      return {
-        id: r.id,
-        status: r.status,
-        menunggu,
-        partnerAlias: menunggu ? null : (partnerAlias || "Anonim"),
-        partnerFaculty: partnerFaculty || "Umum",
-        pesanTerakhir: pesan
-          ? { teks: pesan.message, pada: pesan.created_at, milikku: pesan.sender_id === userId }
-          : null,
-        updatedAt: r.updated_at,
-      };
-    });
+      return (akuUser1 ? r.user2_alias : r.user1_alias) || "Anonim";
+    };
 
-    return NextResponse.json({ ok: true, rooms: shaped, myId: userId });
+    let pesanTerakhir = null;
+    if (berpesan.length) {
+      // Satu baris saja — dulu di sini SELURUH pesan dari 30 room ditarik cuma
+      // untuk mengambil yang paling baru di tiap room.
+      const { data: pesan } = await supa
+        .from("chat_messages")
+        .select("message, sender_id, created_at")
+        .in("room_id", berpesan.map((r) => r.id))
+        .order("created_at", { ascending: false })
+        .limit(1);
+      const m = pesan?.[0];
+      if (m) {
+        pesanTerakhir = {
+          teks: m.message,
+          pada: m.created_at,
+          milikku: m.sender_id === userId,
+          sistem: m.sender_id === "system",
+        };
+      }
+    }
+
+    return NextResponse.json({
+      ok: true,
+      myId: userId,
+      utas: {
+        ada: berpesan.length > 0 || !!menunggu,
+        jumlahOrang: berpesan.length,
+        menunggu: !!menunggu,
+        menungguRoomId: menunggu?.id || null,
+        aktifRoomId: aktif?.id || null,
+        partnerAktif: aliasLawan(aktif),
+        pesanTerakhir,
+        updatedAt: berpesan[0]?.updated_at || menunggu?.updated_at || null,
+      },
+    });
   } catch (err) {
     console.error("GET /api/chat/anon/inbox error:", err);
     return NextResponse.json({ error: "Terjadi kesalahan internal server" }, { status: 500 });
