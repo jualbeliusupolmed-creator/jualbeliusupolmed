@@ -97,12 +97,15 @@ export async function POST(request, { params }) {
     }
 
     // Penghitung atomik; fallback baca-lalu-tulis kalau RPC-nya belum ada.
-    await supa.rpc("increment_mading_comments", { target_post_id: postId }).catch(async () => {
+    // Query supabase-js tidak punya .catch (thenable saja) dan tidak pernah
+    // reject — galatnya dibaca dari properti `error`, jangan dari exception.
+    const { error: rpcErr } = await supa.rpc("increment_mading_comments", { target_post_id: postId });
+    if (rpcErr) {
       const { data: p } = await supa.from("mading_posts").select("comments_count").eq("id", postId).single();
       if (p) {
         await supa.from("mading_posts").update({ comments_count: (p.comments_count || 0) + 1 }).eq("id", postId);
       }
-    });
+    }
 
     return NextResponse.json({ success: true, comment: data });
   } catch (err) {

@@ -44,16 +44,21 @@ export async function POST(request, { params }) {
 
     let liked = false;
 
+    // CATATAN: query supabase-js adalah thenable TANPA metode .catch —
+    // `supa.rpc(...).catch(...)` melempar TypeError dan me-500-kan route ini
+    // (begitulah like mati sejak lahir, ketahuan saat diuji 23 Agu 2026).
+    // Ia juga tidak pernah reject: galat dibaca dari properti `error`.
     if (existing) {
       // Unlike
       await supa.from("mading_likes").delete().eq("id", existing.id);
-      await supa.rpc("decrement_mading_likes", { target_post_id: postId }).catch(async () => {
+      const { error: rpcTurun } = await supa.rpc("decrement_mading_likes", { target_post_id: postId });
+      if (rpcTurun) {
         // Fallback jika stored procedure belum dibuat
         const { data: post } = await supa.from("mading_posts").select("likes_count").eq("id", postId).single();
         if (post) {
           await supa.from("mading_posts").update({ likes_count: Math.max(0, (post.likes_count || 1) - 1) }).eq("id", postId);
         }
-      });
+      }
       liked = false;
     } else {
       // Like
@@ -61,13 +66,14 @@ export async function POST(request, { params }) {
         post_id: postId,
         user_identifier: user_identifier,
       });
-      await supa.rpc("increment_mading_likes", { target_post_id: postId }).catch(async () => {
+      const { error: rpcNaik } = await supa.rpc("increment_mading_likes", { target_post_id: postId });
+      if (rpcNaik) {
         // Fallback jika stored procedure belum dibuat
         const { data: post } = await supa.from("mading_posts").select("likes_count").eq("id", postId).single();
         if (post) {
           await supa.from("mading_posts").update({ likes_count: (post.likes_count || 0) + 1 }).eq("id", postId);
         }
-      });
+      }
       liked = true;
     }
 
