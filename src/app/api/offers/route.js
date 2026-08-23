@@ -62,6 +62,12 @@ export async function POST(req) {
     }
 
     const normalizedWa = formatWa(buyer_wa);
+    const sessionWa = getSellerSession();
+    
+    if (!sessionWa || sessionWa !== normalizedWa) {
+      return NextResponse.json({ error: "Sesi tidak valid atau telah berakhir. Silakan login kembali." }, { status: 401 });
+    }
+
     if (!normalizedWa) return NextResponse.json({ error: "Nomor WA tidak valid" }, { status: 400 });
 
     const supa = getAdminClient();

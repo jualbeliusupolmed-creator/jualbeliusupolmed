@@ -399,8 +399,10 @@ export default async function ProdukPage({ params }) {
 
       {/* Mobile Floating Action Bar (Sticky CTA) */}
       {!sold && (
-        <div className="fixed bottom-[64px] left-0 right-0 z-30 md:hidden bg-white/90 backdrop-blur-md border-t border-gray-100 p-3 shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)] dark:bg-slate-950/90 dark:border-slate-900 pb-safe">
-          <MinatButton listing={listing} className="w-full shadow-lg shadow-wa/20" />
+        <div className="fixed bottom-[80px] left-4 right-4 z-30 md:hidden flex justify-center animate-fade-in pointer-events-none">
+          <div className="pointer-events-auto w-full max-w-sm rounded-full bg-white/90 p-2 shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-xl border border-gray-100 dark:bg-slate-900/90 dark:border-slate-800 dark:shadow-black/50">
+            <MinatButton listing={listing} className="w-full shadow-lg shadow-wa/20 rounded-full text-[15px]" />
+          </div>
         </div>
       )}
     </div>

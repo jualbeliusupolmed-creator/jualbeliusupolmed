@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { getSellerSession } from "@/lib/auth";
 import sharp from "sharp";
 
 export const dynamic = "force-dynamic";
@@ -54,8 +55,13 @@ function validateMagicBytes(buffer) {
  * Returns: { url: string }
  */
 export async function POST(req) {
-  // Rate limit: 20 uploads per minute per IP
-  const rl = rateLimit(`upload:${getClientIp(req)}`, { limit: 20, windowMs: 60_000 });
+  const sessionWa = getSellerSession();
+  if (!sessionWa) {
+    return NextResponse.json({ error: "Sesi tidak valid. Silakan login kembali." }, { status: 401 });
+  }
+
+  // Rate limit: 20 uploads per minute per akun WA, bukan per IP (melindungi WiFi asrama/kampus)
+  const rl = rateLimit(`upload:${sessionWa}`, { limit: 20, windowMs: 60_000 });
   if (!rl.ok) {
     return NextResponse.json(
       { error: `Terlalu banyak upload. Coba lagi dalam ${rl.retryAfter} detik.` },

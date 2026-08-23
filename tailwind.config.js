@@ -77,6 +77,25 @@ module.exports = {
       },
       boxShadow: {
         soft: "0 1px 2px 0 rgb(0 0 0 / 0.04), 0 1px 3px 0 rgb(0 0 0 / 0.06)",
+        glow: "0 0 20px -5px var(--tw-shadow-color)",
+      },
+      keyframes: {
+        shimmer: {
+          "100%": { transform: "translateX(100%)" },
+        },
+        float: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-5px)" },
+        },
+        "fade-in-up": {
+          "0%": { opacity: "0", transform: "translateY(10px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        }
+      },
+      animation: {
+        shimmer: "shimmer 2s infinite",
+        float: "float 3s ease-in-out infinite",
+        "fade-in-up": "fade-in-up 0.5s ease-out forwards",
       },
     },
   },

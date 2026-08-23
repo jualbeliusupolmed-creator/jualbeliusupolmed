@@ -84,7 +84,7 @@ export async function PATCH(req, { params }) {
 
       if (body.description !== undefined) updates.description = String(body.description || "").trim();
       if (body.price !== undefined) updates.price = Math.max(0, Math.round(Number(body.price) || 0));
-      if (body.stock !== undefined) updates.stock = Math.max(0, Number(body.stock) || 0);
+      if (body.stock !== undefined) updates.stock = Math.min(9999, Math.max(0, Number(body.stock) || 0));
       if (body.seller_name !== undefined) updates.seller_name = String(body.seller_name).trim();
       if (body.image_url !== undefined) updates.image_url = body.image_url || null;
       if (body.campus !== undefined) updates.campus = body.campus;
@@ -112,7 +112,7 @@ export async function PATCH(req, { params }) {
 
     // ── Update stok ────────────────────────────────────────────────────────
     if (body.action === "update_stock") {
-      const stock = Math.max(0, Number(body.stock) || 0);
+      const stock = Math.min(9999, Math.max(0, Number(body.stock) || 0));
       const updates = { stock };
       let fee = 0;
       let paymentUrl = null;
