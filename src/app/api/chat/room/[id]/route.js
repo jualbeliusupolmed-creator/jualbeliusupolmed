@@ -8,6 +8,7 @@ export const revalidate = 0;
 
 import { getUserSession } from "@/lib/auth";
 import { hashIdentitas } from "@/lib/identitasHash";
+import { siarkanPesanBaru } from "@/lib/chatRealtime";
 
 // Obrolan ini anonim, tapi anonim BUKAN publik: isi room hanya boleh dibaca dan
 // ditulis oleh dua peserta yang dipertemukan matchmaking. Karena tidak ada
@@ -130,6 +131,8 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: "Gagal mengirim pesan" }, { status: 500 });
     }
 
+    await siarkanPesanBaru(supa, roomId);
+
     return NextResponse.json({ success: true, message: data });
   } catch (err) {
     console.error("POST /api/chat/room/[id] error:", err);
@@ -159,6 +162,8 @@ export async function DELETE(request, { params }) {
       sender_alias: "Sistem",
       message: "👋 Temanmu telah meninggalkan obrolan.",
     });
+
+    await siarkanPesanBaru(supa, roomId);
 
     return NextResponse.json({ success: true });
   } catch (err) {

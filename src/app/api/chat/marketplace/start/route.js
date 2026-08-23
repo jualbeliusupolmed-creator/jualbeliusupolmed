@@ -5,6 +5,7 @@ import { sendWa } from "@/lib/fonnte";
 import { buildSlug } from "@/lib/slug";
 import { censorProfanity } from "@/lib/profanity";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { siarkanPesanBaru } from "@/lib/chatRealtime";
 
 export const dynamic = "force-dynamic";
 
@@ -136,11 +137,7 @@ export async function POST(req) {
     if (msgError) throw new Error("Gagal mengirim pesan: " + msgError.message);
 
     // 6. Broadcast Realtime
-    await supa.channel(`chat-room-${roomId}`).send({
-      type: "broadcast",
-      event: "pesan",
-      payload: { refresh: true },
-    });
+    await siarkanPesanBaru(supa, roomId);
 
     // 7. Notifikasi WhatsApp ke Penjual
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
