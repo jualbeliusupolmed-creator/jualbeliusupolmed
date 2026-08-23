@@ -24,6 +24,16 @@ export async function POST(request, { params }) {
 
     const supa = getAdminClient();
 
+    // Postingan yang disembunyikan tidak menerima like — sama seperti komentar.
+    const { data: induk } = await supa
+      .from("mading_posts")
+      .select("id, status")
+      .eq("id", postId)
+      .maybeSingle();
+    if (!induk || induk.status !== "active") {
+      return NextResponse.json({ error: "Postingan tidak ditemukan." }, { status: 404 });
+    }
+
     // Periksa apakah user sudah like
     const { data: existing } = await supa
       .from("mading_likes")
