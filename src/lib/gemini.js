@@ -182,7 +182,7 @@ export async function parseListingFromText(text, aiConfig = {}, imageBuffers = [
     ${memoryContext}
     ${personalityContext}
     
-    ${text ? `Pesan pengguna:\n"""\n${text}\n"""` : 'Pesan pengguna kosong. Harap ekstrak informasi HANYA dari teks/visual pada gambar yang dilampirkan.'}
+    ${text ? `Pesan pengguna:\n"""\n${text}\n"""` : 'Pesan pengguna kosong. Pengguna hanya mengirim gambar. Harap ekstrak informasi HANYA dari analisis visual pada gambar yang dilampirkan. Tebak nama barang dengan spesifik (misal: "Helm Bogo Hitam" atau "Laptop ASUS ROG"), jangan hanya menggunakan nama generik ("Barang Bekas").'}
     
     Ekstrak informasi dari pesan dan/atau gambar di atas, lalu kembalikan dalam format JSON berisi daftar "items" (berisi barang yang diiklankan) dan sebuah pesan "reply_message".
     Setiap item dalam "items" harus memiliki properti berikut:

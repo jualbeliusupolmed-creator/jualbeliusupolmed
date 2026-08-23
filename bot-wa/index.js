@@ -202,7 +202,7 @@ const isAdminCall = (s) => ADMIN_CALL_WORDS.has(
 );
 // Kata perintah yang sering diketik TANPA titik. Tidak mengubah perilaku gerbang —
 // murni untuk dihitung, supaya keputusan "buka kata polos atau tidak" punya angka.
-const PLAIN_COMMAND_WORDS = new Set(['jual', 'cari', 'menu', 'perpanjang', 'upgrade', 'saya', 'beli']);
+const PLAIN_COMMAND_WORDS = new Set(['jual', 'cari', 'menu', 'perpanjang', 'upgrade', 'saya', 'beli', 'pantau']);
 function plainCommandWord(text) {
     const first = String(text || '').trim().toLowerCase().split(/\s+/)[0] || '';
     const word = first.replace(/[^a-z]/g, '');
@@ -218,10 +218,11 @@ const DEFAULT_GREETING = process.env.GREETING_TEXT || [
     `Kalau ingin jual beli & cari barang lewat *bot*, awali pesan dengan tanda titik ( *${BOT_PREFIX}* ), contoh: *${BOT_PREFIX}MENU*`,
     '',
     `• *${BOT_PREFIX}JUAL* — Pasang iklan`,
-    `• *${BOT_PREFIX}CARI [nama barang]* — Cari barang`,
+    `• *${BOT_PREFIX}CARI [nama barang]* — Cari barang (+ foto)`,
+    `• *${BOT_PREFIX}PANTAU [kata kunci]* — Notifikasi otomatis ada barang baru`,
     `• *${BOT_PREFIX}PERPANJANG* — Perpanjang iklan`,
-    `• *${BOT_PREFIX}UPGRADE* — Upgrade iklan`,
-    `• *${BOT_PREFIX}SAYA* — Profil & statistik saya`,
+    `• *${BOT_PREFIX}UPGRADE* — Upgrade iklan (Featured/Bump)`,
+    `• *${BOT_PREFIX}SAYA* — Profil & statistik toko`,
     `• *${BOT_PREFIX}MENU* — Lihat semua perintah lengkap`,
     '',
     'Dan jika ingin lebih mudah, bisa melalui website:',

@@ -19,6 +19,7 @@ import TawaranPanel from "./TawaranPanel";
 import GroupPostsPanel from "./GroupPostsPanel";
 import NotifikasiPanel from "./NotifikasiPanel";
 import DistributorPanel from "./DistributorPanel";
+import BuyerContactsPanel from "./BuyerContactsPanel";
 
 const REPORT_LABELS = {
   penipuan: "Penipuan / scam",
@@ -87,7 +88,7 @@ export default function AdminPanel({
 }) {
   const basis = useBasisAdmin();
   const router = useRouter();
-  const VALID_TABS = ["overview","listings","transaksi","rating","reports","dicari","kategori","pengaturan","penjual","toko","profil_request","blogs","wabot","ai","broadcast","referral","tawaran","grouppost","notifikasi","distributor"];
+  const VALID_TABS = ["overview","listings","transaksi","rating","reports","dicari","kategori","pengaturan","penjual","toko","profil_request","blogs","wabot","ai","broadcast","referral","tawaran","grouppost","notifikasi","distributor","kontak_pembeli"];
   const tab = VALID_TABS.includes(initialTab) ? initialTab : "overview";
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState(null);
@@ -458,6 +459,9 @@ export default function AdminPanel({
                                     : { label: "Sponsored 7 hari", onClick: () => action({ action: "set_sponsored", id: l.id, days: 7 }, "Sponsored 7 hari") },
                                   { label: "Hapus listing", tone: "bad", onClick: () => confirmThen({ title: "Hapus listing", message: `Hapus "${l.title}"?`, danger: true }, () => action({ action: "delete", id: l.id }, "Dihapus")) },
                                 ]),
+                            { id: "tawaran", label: "Tawaran Harga", icon: "💰" },
+                            { id: "kontak_pembeli", label: "Kontak Pembeli", icon: "👀" },
+                            { id: "broadcast", label: "Broadcast", icon: "📢" },
                             { label: "Blacklist penjual", tone: "bad", onClick: () => confirmThen({ title: "Blacklist penjual", message: `Blokir ${l.seller_wa}? Semua iklannya disuspend.`, danger: true }, () => action({ action: "blacklist", wa: l.seller_wa }, "Diblacklist")) },
                           ]}
                         />
@@ -1277,9 +1281,19 @@ export default function AdminPanel({
 
         {/* TAWARAN HARGA */}
         {tab === "tawaran" && (
-          <div>
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <h2 className="mb-6 text-xl font-bold">Monitor Tawaran Harga</h2>
             <p className="mb-4 text-sm text-gray-500">Monitor semua tawaran harga dari pembeli ke penjual di seluruh marketplace.</p>
             <TawaranPanel />
+          </div>
+        )}
+
+        {/* KONTAK PEMBELI */}
+        {tab === "kontak_pembeli" && (
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <h2 className="mb-6 text-xl font-bold">Log Kontak Pembeli</h2>
+            <p className="mb-4 text-sm text-gray-500">Monitor siapa saja yang menghubungi penjual dan bagaimana status deal-nya.</p>
+            <BuyerContactsPanel />
           </div>
         )}
 

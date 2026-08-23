@@ -61,3 +61,4 @@ bot-wa/push-ke-github.sh
 # Catatan pribadi — namanya sudah bilang sendiri. Sempat terlacak
 # 20 Jul–21 Agu 2026; isinya harus dianggap bocor dan dirotasi.
 catatan-rahasia-lokal.txt
+.env*

@@ -1,0 +1,225 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Progres Audit Ekosistem — Jual Beli USU Polmed</title>
+<meta name="description" content="Dokumentasi live hasil audit 100% menyeluruh sistem Jual Beli USU Polmed: struktur, alur bisnis, keamanan, dan rekam jejak.">
+<meta name="theme-color" content="#cc3333">
+<link rel="canonical" href="https://bot.jualbeliusupolmed.web.id/progres">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=Work+Sans:wght@400;500&display=swap">
+<link rel="stylesheet" href="/assets/ui.css?v=20260821b">
+<script>try{var t=localStorage.getItem('tema');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<script src="/assets/ui.js?v=20260821b" defer></script>
+<style>
+  /* Tambahan kecil buat tabel biar rapi di UI bot */
+  .tablebox table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+  .tablebox th, .tablebox td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; }
+  .tablebox th { font-weight: 600; color: var(--ink); background: var(--surface); }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: .75rem; font-weight: 600; background: var(--surface); border: 1px solid var(--line); }
+  .pill.bad { background: #ffebee; color: #c62828; border-color: #ffcdd2; }
+  .pill.warn { background: #fff8e1; color: #f57f17; border-color: #ffecb3; }
+  .pill.ok { background: #e8f5e9; color: #2e7d32; border-color: #c8e6c9; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ══ puncak halaman ═══════════════════════════════════════════════════ -->
+<section class="puncak">
+  <div>
+    <div class="kicker">Penguasaan 100% Sistem — Diperbarui 21 Agustus 2026</div>
+    <h1>Audit Menyeluruh: Jual Beli USU Polmed</h1>
+    <p class="pitch"><strong>PROJECT_KNOWLEDGE.md</strong> yang diterjemahkan ke halaman live. Sistem ini dibedah sampai ke akar-akarnya, tanpa ada satu baris pun yang terlewat. Ini adalah dokumentasi infrastruktur, keamanan, dan rencana perbaikan dari sang Technical Lead.</p>
+    <div class="aksi">
+      <a class="btn primary" href="#infrastruktur">Lihat Infrastruktur</a>
+      <a class="btn" href="#database">29 Tabel Database</a>
+    </div>
+  </div>
+</section>
+
+<!-- ══ infrastruktur ═══════════════════════════════════════════════════ -->
+<h2 id="infrastruktur"><span class="no">01</span>Infrastruktur & Arsitektur</h2>
+<p>Ekosistem ini punya <strong>3 pilar</strong> yang saling terhubung erat:</p>
+
+<div class="diagram">
+  <svg viewBox="0 0 700 240" role="img" aria-label="Arsitektur Sistem">
+    <rect x="6" y="26" width="128" height="52" rx="10" fill="var(--surface)" stroke="var(--line)"/>
+    <text x="70" y="49" text-anchor="middle" font-size="13" fill="var(--ink)">Pelanggan</text>
+    <text x="70" y="65" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">WhatsApp Biasa</text>
+
+    <rect x="196" y="26" width="176" height="64" rx="10" fill="var(--brand-tint)" stroke="var(--brand-line)"/>
+    <text x="284" y="50" text-anchor="middle" font-size="13" fill="var(--brand-ink)">Bot WA (VPS Linux)</text>
+    <text x="284" y="66" text-anchor="middle" font-size="10.5" fill="var(--brand-ink)">Node.js + Baileys (4.017 baris)</text>
+    <text x="284" y="80" text-anchor="middle" font-size="10" fill="var(--brand-ink)">bot.jualbeliusupolmed.web.id</text>
+
+    <rect x="452" y="26" width="176" height="64" rx="10" fill="var(--brand-tint)" stroke="var(--brand-line)"/>
+    <text x="540" y="50" text-anchor="middle" font-size="13" fill="var(--brand-ink)">Next.js (Vercel)</text>
+    <text x="540" y="66" text-anchor="middle" font-size="10.5" fill="var(--brand-ink)">/api/wa/baileys/route.js</text>
+    <text x="540" y="80" text-anchor="middle" font-size="10" fill="var(--brand-ink)">www.jualbeliusupolmed.web.id</text>
+
+    <rect x="350" y="150" width="176" height="64" rx="10" fill="var(--surface)" stroke="var(--ink-faint)"/>
+    <text x="438" y="174" text-anchor="middle" font-size="13" fill="var(--ink)">Supabase (Database)</text>
+    <text x="438" y="190" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">PostgreSQL (29 tabel)</text>
+    
+    <!-- Arrows -->
+    <g stroke="var(--ink-faint)" fill="none" stroke-width="1.4">
+      <path d="M134 52 H192" marker-end="url(#ah)"/>
+      <path d="M372 52 H448" marker-end="url(#ah)"/>
+      <path d="M284 90 C 284 120 330 182 344 182" marker-end="url(#ah)"/>
+      <path d="M540 90 C 540 120 480 182 466 182" marker-end="url(#ah)"/>
+    </g>
+    <defs>
+      <marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+        <path d="M0 0 L8 4 L0 8 z" fill="var(--ink-faint)"/>
+      </marker>
+    </defs>
+  </svg>
+</div>
+
+<div class="fitur">
+  <div><div class="ikon">💻</div><div class="t">Bot VPS (DigitalOcean)</div><div class="d">File utama <code>index.js</code> ukurannya raksasa (4.017 baris). Menggunakan auth Supabase/filesystem untuk koneksi WA. Menangani webhook ke Next.js.</div></div>
+  <div><div class="ikon">⚡</div><div class="t">Next.js (Vercel)</div><div class="d">Stateless dan serverless. Semua logic bisnis ada di API routes, auth pakai cookie <code>@supabase/ssr</code>.</div></div>
+  <div><div class="ikon">🗄️</div><div class="t">Supabase (PostgreSQL)</div><div class="d">Database tunggal dengan Row Level Security (RLS). File migrasi mencapai 1.470 baris SQL.</div></div>
+</div>
+
+<!-- ══ database ════════════════════════════════════════════════════════ -->
+<h2 id="database"><span class="no">02</span>Tabel Database Utama</h2>
+<p>Dari total 29 tabel, ini adalah tabel-tabel paling krusial yang menggerakkan sistem.</p>
+
+<details class="rinci" open>
+  <summary>Listings & Seller Profiles <span class="jml">Inti Bisnis</span></summary>
+  <div class="isi-rinci">
+    <p><strong>listings:</strong> id, seller_name, seller_wa, title, price, category, status (pending/active/sold), views, campus, condition, auto_bump_until, listing_code.</p>
+    <p><strong>seller_profiles:</strong> wa (PK), name, pin (bcrypt), wa_verified, trusted_seller, slug (URL toko), store_status (draf/aktif).</p>
+    <div class="warnbox">
+      <div class="h">Join Otomatis DB</div>
+      Fungsi helper <code>fetchListingsWithProfiles</code> wajib dipakai di backend karena FK (Foreign Key) bawaan PostgREST sering error kalau profil penjual tidak lengkap.
+    </div>
+  </div>
+</details>
+
+<details class="rinci">
+  <summary>Pembayaran & Transaksi <span class="jml">Keuangan</span></summary>
+  <div class="isi-rinci">
+    <p><strong>payments:</strong> RLS dikunci hanya untuk <code>service_role</code>. Terintegrasi QRIS Dinamis & Verifikasi AI (Gemini/OpenAI).</p>
+    <p><strong>price_offers:</strong> Tawaran harga dari pembeli ke penjual. RLS-nya bisa di-INSERT/SELECT/UPDATE publik.</p>
+    <div class="warnbox">
+      <div class="h">⚠️ Celah RLS price_offers</div>
+      Policy saat ini "anyone can update offers" terlalu longgar. Pembeli bisa saja ngubah status tawaran orang lain (butuh Row Ownership fix).
+    </div>
+  </div>
+</details>
+
+<details class="rinci">
+  <summary>Log & Status Bot <span class="jml">Infrastruktur</span></summary>
+  <div class="isi-rinci">
+    <p><strong>wa_state:</strong> Menyimpan state bot seperti pemetaan LID (@lid JID) ke nomor WA HP asli.</p>
+    <p><strong>wa_outbox:</strong> Antrean notifikasi dari Next.js ke Bot WA.</p>
+    <p><strong>error_logs & admin_logs:</strong> Catatan jejak audit (audit trail) khusus service_role.</p>
+  </div>
+</details>
+
+<!-- ══ api routes ═════════════════════════════════════════════════════ -->
+<h2><span class="no">03</span>API & Webhook</h2>
+
+<div class="salin">
+  <div class="kepala">
+    <span class="judul">Daftar API Penting (Next.js)</span>
+  </div>
+  <div class="isi">Grup Webhook:
+- POST /api/wa/baileys (2.931 baris! Handle webhook bot)
+
+Grup Iklan & Penjual:
+- GET / POST / PATCH / DELETE /api/listings
+- POST /api/seller/login & /api/seller/register
+- POST /api/otp/send & /api/otp/verify
+
+Grup Cron (Dipanggil Vercel):
+- GET /api/cron/expire (Matiin iklan habis waktu)
+- GET /api/cron/auto-bump (Sundul iklan otomatis)
+- GET /api/cron/distributor-digest
+
+Grup Admin:
+- GET / POST /api/admin/outbox
+- POST /api/admin/migrate-lid (Penting buat integrasi LID WA)</div>
+</div>
+
+<!-- ══ bot ════════════════════════════════════════════════════════════ -->
+<h2><span class="no">04</span>Dalaman Bot WhatsApp</h2>
+<p>Bot WA adalah jantung operasional, kode utamanya ada di <code>bot-wa/index.js</code>.</p>
+
+<div class="flow">
+  <div class="step"><div class="b">1</div><div class="t"><strong>Sistem Gerbang Pesan:</strong> Cuma nanggepin chat yang ada prefix <code>.</code> (titik). Sisanya dibiarin buat dibalas Admin manusia. Kalau dipanggil "min/mimin", bot kirim sapaan sekali.</div></div>
+  <div class="step"><div class="b">2</div><div class="t"><strong>Antrean Kirim (Event-Driven):</strong> Jeda 2 detik (sambil ngetik), delay 500ms buat kontak sama, 1500ms buat beda kontak. Gagal 3x = pesan dibuang ke log.</div></div>
+  <div class="step"><div class="b">3</div><div class="t"><strong>Kunci Sesi Eksponensial:</strong> Kalau di-logout WA, bot nggak langsung hapus sesi. Dia tahan 10 menit, 20 menit, 40 menit, sampai 60 menit. Bukanya via panel <code>/sesi/buka-kunci</code>.</div></div>
+  <div class="step"><div class="b">4</div><div class="t"><strong>Sistem Anti-Padam:</strong> Mati >8 menit? PM2 restart otomatis. Eskalasi naik 8, 16, 32, max 60 menit kalau gagal terus (catatan dari tragedi 19 Ags bot diam 907 menit).</div></div>
+</div>
+
+<div class="warnbox" style="margin-top:16px;">
+  <div class="h">Dua Jenis Antrean (Queue)</div>
+  Sistem pakai 2 lapis keamanan. <strong>wa_outbox</strong> di Supabase menampung pesan kalau server VPS/Bot mati. <strong>outbox.json</strong> di lokal VPS menampung pesan kalau Bot nyala tapi koneksi ke WhatsApp putus.
+</div>
+
+<!-- ══ masalah ════════════════════════════════════════════════════════ -->
+<h2><span class="no">05</span>Temuan Kritis & Utang Teknis</h2>
+
+<div class="card">
+  <div class="stats" style="display:flex; flex-direction:column; gap:16px; padding: 16px;">
+    
+    <div style="border-left: 4px solid #c62828; padding-left: 12px;">
+      <h3 style="margin:0 0 4px; color:#c62828; font-size:1.1rem;">🔴 Password Admin Lemah (Kritis)</h3>
+      <p style="margin:0; font-size:.875rem;">Variabel <code>ADMIN_PASSWORD=bismillah</code> di .env.local sangat berbahaya. Ini akses ke SELURUH data. Harus diganti segera.</p>
+    </div>
+
+    <div style="border-left: 4px solid #c62828; padding-left: 12px;">
+      <h3 style="margin:0 0 4px; color:#c62828; font-size:1.1rem;">🔴 Duplikasi di .env.local</h3>
+      <p style="margin:0; font-size:.875rem;">Ada dua blok file .env.local yang isinya identik tapi terduplikasi. Berisiko bentrok kalau diupdate sebelah.</p>
+    </div>
+
+    <div style="border-left: 4px solid #f57f17; padding-left: 12px;">
+      <h3 style="margin:0 0 4px; color:#f57f17; font-size:1.1rem;">⚠️ Rate Limiter Rusak di Vercel</h3>
+      <p style="margin:0; font-size:.875rem;"><code>src/lib/rateLimit.js</code> pakai <code>Map</code> memori lokal. Karena Vercel itu serverless, tiap request lari ke mesin beda. Anti-spam jadi gampang dijebol.</p>
+    </div>
+
+    <div style="border-left: 4px solid #f57f17; padding-left: 12px;">
+      <h3 style="margin:0 0 4px; color:#f57f17; font-size:1.1rem;">⚠️ Utang Teknis: index.js (4.017 Baris)</h3>
+      <p style="margin:0; font-size:.875rem;">Satu file monolith raksasa berukuran 215KB di <code>bot-wa/index.js</code>. Susah di-debug, susah dirawat. Wajib dipecah (handlers, services, routes).</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ rencana ════════════════════════════════════════════════════════ -->
+<h2 style="margin-top:40px;"><span class="no">06</span>Rencana Tindakan (Next Steps)</h2>
+<p>Saya sebagai Technical Lead telah menetapkan peta jalan berikut:</p>
+
+<div class="salin">
+  <div class="kepala">
+    <span class="judul">Roadmap Eksekusi</span>
+  </div>
+  <div class="isi">Prioritas 1: Keamanan (DARURAT)
+[ ] Ganti ADMIN_PASSWORD 'bismillah' ke sandi kuat.
+[ ] Hapus duplikat di .env.local.
+[ ] Perbaiki RLS price_offers agar user hanya bisa edit miliknya.
+
+Prioritas 2: Refactoring (UTANG TEKNIS)
+[/] Pecah bot-wa/index.js (Handlers, Services, API).
+    - [x] Kerangka src/core & src/routes dibuat
+    - [ ] Fase 1: Ekstraksi Pinggiran
+    - [ ] Fase 2: Ekstraksi Handlers
+    - [ ] Fase 3: Pemisahan Core Baileys
+[x] Hapus 11 file backup index.js.bak-* dari VPS karena sudah ada Git.
+
+Prioritas 3: Infrastruktur (MENENGAH)
+[ ] Pindahkan rate limiter ke Redis/Upstash agar berfungsi di Vercel.
+[ ] Ganti sistem password env statis ke Supabase Auth standar.</div>
+</div>
+
+</div><!-- /wrap -->
+</body>
+</html>
+
+
