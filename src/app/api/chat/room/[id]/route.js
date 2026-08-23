@@ -3,9 +3,11 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { censorProfanity } from "@/lib/profanity";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
-export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 export const revalidate = 0;
+
+import { getUserSession } from "@/lib/auth";
+import { hashIdentitas } from "@/lib/identitasHash";
 
 // Obrolan ini anonim, tapi anonim BUKAN publik: isi room hanya boleh dibaca dan
 // ditulis oleh dua peserta yang dipertemukan matchmaking. Karena tidak ada
@@ -13,17 +15,28 @@ export const revalidate = 0;
 // saat pertama kali membuka /chat — cukup untuk menahan orang luar yang cuma
 // memegang roomId, dan itulah ancaman yang nyata di sini.
 async function ambilRoomUntuk(supa, roomId, userId) {
-  if (!roomId || !userId) return { error: "Room ID dan User ID wajib diisi", status: 400 };
+  if (!roomId) return { error: "Room ID wajib diisi", status: 400 };
   const { data: room, error } = await supa
     .from("chat_rooms")
     .select("*")
     .eq("id", roomId)
     .single();
   if (error || !room) return { error: "Ruangan obrolan tidak ditemukan", status: 404 };
-  if (room.user1_id !== userId && room.user2_id !== userId) {
-    return { error: "Kamu bukan peserta obrolan ini", status: 403 };
+  const wa = getUserSession();
+  if (!wa) return { error: "Unauthorized", status: 401 };
+
+  if (room.type === "marketplace") {
+    if (room.user1_id !== wa && room.user2_id !== wa) {
+      return { error: "Kamu bukan peserta obrolan ini", status: 403 };
+    }
+    return { room, actingUserId: wa };
+  } else {
+    const hashedWa = hashIdentitas(wa);
+    if (room.user1_id !== hashedWa && room.user2_id !== hashedWa) {
+      return { error: "Kamu bukan peserta obrolan ini", status: 403 };
+    }
+    return { room, actingUserId: hashedWa };
   }
-  return { room };
 }
 
 // GET /api/chat/room/[id]?userId=... - Ambil data ruangan & pesan
@@ -45,6 +58,7 @@ export async function GET(request, { params }) {
     return NextResponse.json({
       room: hasil.room,
       messages: messages || [],
+      myId: hasil.actingUserId,
     });
   } catch (err) {
     console.error("GET /api/chat/room/[id] error:", err);
@@ -81,13 +95,26 @@ export async function POST(request, { params }) {
     if (hasil.room.status === "closed") {
       return NextResponse.json({ error: "Obrolan ini telah berakhir" }, { status: 400 });
     }
+    
+    // Gunakan actingUserId dari session jika marketplace
+    const actingUserId = hasil.actingUserId;
+    
+    // Jika marketplace, ambil alias dari tabel seller_profiles atau room
+    let finalAlias = senderAlias;
+    if (hasil.room.type === "marketplace") {
+      if (hasil.room.user1_id === actingUserId) {
+        finalAlias = hasil.room.user1_alias;
+      } else {
+        finalAlias = hasil.room.user2_alias;
+      }
+    }
 
     const { data, error } = await supa
       .from("chat_messages")
       .insert({
         room_id: roomId,
-        sender_id: senderId,
-        sender_alias: senderAlias,
+        sender_id: actingUserId,
+        sender_alias: finalAlias,
         message: cleanMessage,
       })
       .select()

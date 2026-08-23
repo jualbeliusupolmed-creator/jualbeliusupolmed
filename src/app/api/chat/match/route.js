@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { censorProfanity } from "@/lib/profanity";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { getUserSession } from "@/lib/auth";
+import { hashIdentitas } from "@/lib/identitasHash";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -9,14 +11,16 @@ export const revalidate = 0;
 // POST /api/chat/match - Matchmaking Cari Teman Anonim
 export async function POST(request) {
   try {
+    const wa = getUserSession();
+    if (!wa) {
+      return NextResponse.json({ error: "Silakan login terlebih dahulu untuk mencari teman chat." }, { status: 401 });
+    }
+    const userId = hashIdentitas(wa);
+
     const body = await request.json();
-    const { action, userId, roomId } = body;
+    const { action, roomId } = body;
     const alias = censorProfanity(String(body.alias || "Anonim").trim().slice(0, 50)) || "Anonim";
     const faculty = String(body.faculty || "Umum").trim().slice(0, 50) || "Umum";
-
-    if (!userId) {
-      return NextResponse.json({ error: "User ID diperlukan" }, { status: 400 });
-    }
 
     const supa = getAdminClient();
 

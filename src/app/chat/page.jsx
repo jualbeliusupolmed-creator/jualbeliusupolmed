@@ -1,19 +1,24 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Icon } from "@/components/Icons";
 import { FACULTIES } from "@/lib/profanity";
 import { getSupabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import MarketplaceInbox from "@/components/MarketplaceInbox";
 
-export default function ChatPage() {
-  const [mainTab, setMainTab] = useState("random"); // 'random' | 'marketplace'
+function ChatContent() {
+  const searchParams = useSearchParams();
+  const roomQuery = searchParams.get("room");
+
+  const [mainTab, setMainTab] = useState(roomQuery ? "marketplace" : "random"); // 'random' | 'marketplace'
 
   // User Identification State
-  const [userId, setUserId] = useState("");
   const [userAlias, setUserAlias] = useState("Anonim");
   const [userFaculty, setUserFaculty] = useState("Umum");
+  const [myWa, setMyWa] = useState(null);
 
   // Anonymous Chat State: 'idle' | 'matching' | 'chat' | 'ended'
   const [chatState, setChatState] = useState("idle");
@@ -22,21 +27,16 @@ export default function ChatPage() {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [myWa, setMyWa] = useState(null);
 
   const messagesEndRef = useRef(null);
   const pollIntervalRef = useRef(null);
   const rtChannelRef = useRef(null);
 
-  // Initialize unique user ID
+  // Initialize user alias locally for anonymous chat if needed,
+  // but remove the random chat_user_id since backend now handles auth
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      let uid = localStorage.getItem("chat_user_id");
-      if (!uid) {
-        uid = "chat_" + Math.random().toString(36).substring(2, 14);
-        localStorage.setItem("chat_user_id", uid);
-      }
-      setUserId(uid);
-    }
+    // we don't generate chat_user_id anymore
   }, []);
 
   // Scroll to bottom of message list
@@ -48,13 +48,32 @@ export default function ChatPage() {
     scrollToBottom();
   }, [messages]);
 
+  // Auto-open room from query parameter (Marketplace Chat)
+  useEffect(() => {
+    if (roomQuery) {
+      setCurrentRoomId(roomQuery);
+      setChatState("chat");
+      setMainTab("marketplace");
+      // myWa and partnerInfo will be set when fetchRoomData completes or when they click from Inbox
+    }
+  }, [roomQuery]);
+
   // Polling Messages while in chat
   const fetchRoomData = useCallback(async (roomId) => {
-    if (!roomId || !userId) return;
+    if (!roomId) return;
     try {
-      const res = await fetch(`/api/chat/room/${roomId}?userId=${encodeURIComponent(userId)}`);
+      const res = await fetch(`/api/chat/room/${roomId}`);
       const data = await res.json();
+      
+      if (res.status === 401) {
+        toast.error("Silakan login terlebih dahulu");
+        return;
+      }
+      
       if (data.room) {
+        if (data.myId) {
+          setMyWa(data.myId); // ini bisa berupa WA mentah (marketplace) atau hashedWa (anonim)
+        }
         if (data.room.status === "closed" && chatState === "chat") {
           setChatState("ended");
         }
@@ -63,11 +82,10 @@ export default function ChatPage() {
     } catch {
       // silent
     }
-  }, [chatState, userId]);
+  }, [chatState]);
 
   // Start Matchmaking
   const handleStartMatch = async () => {
-    if (!userId) return;
     setChatState("matching");
     setMessages([]);
     setCurrentRoomId(null);
@@ -78,7 +96,6 @@ export default function ChatPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "find",
-          userId,
           alias: userAlias,
           faculty: userFaculty,
         }),
@@ -88,10 +105,10 @@ export default function ChatPage() {
 
       if (data.status === "matched" && data.room) {
         setCurrentRoomId(data.room.id);
-        const partnerIsUser1 = data.room.user1_id !== userId;
+        const partnerIsUser1 = data.room.user1_alias !== userAlias; // Simplifikasi, karena backend override
         setPartnerInfo({
-          alias: partnerIsUser1 ? data.room.user1_alias : data.room.user2_alias,
-          faculty: partnerIsUser1 ? data.room.user1_faculty : data.room.user2_faculty,
+          alias: data.partner?.alias || "Anonim",
+          faculty: data.partner?.faculty || "Umum",
         });
         setChatState("chat");
         fetchRoomData(data.room.id);
@@ -120,7 +137,7 @@ export default function ChatPage() {
         fetch("/api/chat/match", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "cancel", userId, roomId }),
+          body: JSON.stringify({ action: "cancel", roomId }),
         }).catch(() => {});
         setChatState("idle");
         setCurrentRoomId(null);
@@ -131,17 +148,16 @@ export default function ChatPage() {
         const res = await fetch("/api/chat/match", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "poll", userId, roomId }),
+          body: JSON.stringify({ action: "poll", roomId }),
         });
         const data = await res.json();
 
         if (data.isMatched && data.room) {
           clearInterval(pollIntervalRef.current);
           setCurrentRoomId(data.room.id);
-          const partnerIsUser1 = data.room.user1_id !== userId;
           setPartnerInfo({
-            alias: partnerIsUser1 ? data.room.user1_alias : data.room.user2_alias,
-            faculty: partnerIsUser1 ? data.room.user1_faculty : data.room.user2_faculty,
+            alias: data.room.user2_alias === userAlias ? data.room.user1_alias : data.room.user2_alias,
+            faculty: "Umum",
           });
           setChatState("chat");
           fetchRoomData(data.room.id);
@@ -236,7 +252,7 @@ export default function ChatPage() {
     };
     document.addEventListener("visibilitychange", handleVisibility);
     return () => document.removeEventListener("visibilitychange", handleVisibility);
-  }, [chatState, currentRoomId, userId, fetchRoomData]);
+  }, [chatState, currentRoomId, fetchRoomData]);
 
   // Cancel Matching
   const handleCancelMatch = async () => {
@@ -245,7 +261,7 @@ export default function ChatPage() {
       await fetch("/api/chat/match", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "cancel", userId, roomId: currentRoomId }),
+        body: JSON.stringify({ action: "cancel", roomId: currentRoomId }),
       });
     }
     setChatState("idle");
@@ -263,7 +279,7 @@ export default function ChatPage() {
     // Optimistic UI
     const tempMsg = {
       id: "temp_" + Date.now(),
-      sender_id: userId,
+      sender_id: myWa,
       sender_alias: userAlias,
       message: text,
       created_at: new Date().toISOString(),
@@ -275,7 +291,6 @@ export default function ChatPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          senderId: userId,
           senderAlias: userAlias,
           message: text,
         }),
@@ -301,7 +316,7 @@ export default function ChatPage() {
   // Leave / Skip Chat
   const handleLeaveChat = async () => {
     if (currentRoomId) {
-      await fetch(`/api/chat/room/${currentRoomId}?userId=${encodeURIComponent(userId)}`, { method: "DELETE" });
+      await fetch(`/api/chat/room/${currentRoomId}`, { method: "DELETE" });
       // Kabari lawan bicara sekarang juga, jangan menunggu poll berikutnya.
       try {
         rtChannelRef.current?.send({ type: "broadcast", event: "pesan", payload: {} });
@@ -314,7 +329,7 @@ export default function ChatPage() {
 
   const handleSkipChat = async () => {
     if (currentRoomId) {
-      await fetch(`/api/chat/room/${currentRoomId}?userId=${encodeURIComponent(userId)}`, { method: "DELETE" });
+      await fetch(`/api/chat/room/${currentRoomId}`, { method: "DELETE" });
       // Kabari lawan bicara sekarang juga, jangan menunggu poll berikutnya.
       try {
         rtChannelRef.current?.send({ type: "broadcast", event: "pesan", payload: {} });
@@ -534,7 +549,7 @@ export default function ChatPage() {
               {/* Messages Feed */}
               <div className="flex-1 p-4 overflow-y-auto space-y-3 min-h-[350px] max-h-[50vh]">
                 {messages.map((m, idx) => {
-                  const isMe = m.sender_id === userId;
+                  const isMe = m.sender_id === myWa;
                   const isSystem = m.sender_id === "system";
 
                   if (isSystem) {
@@ -625,36 +640,26 @@ export default function ChatPage() {
       )}
 
       {/* TAB 2: MARKETPLACE TRANSACTIONS CHAT */}
-      {mainTab === "marketplace" && (
+      {mainTab === "marketplace" && chatState === "idle" && (
         <div className="flex-1 max-w-2xl w-full mx-auto p-4 space-y-4">
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 text-center space-y-3">
-            <div className="w-14 h-14 rounded-2xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center text-2xl mx-auto">
-              🛒
-            </div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">
-              Obrolan Transaksi & Tawar Barang
-            </h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
-              Semua penawaran dan tanya jawab dengan penjual dikelola secara otomatis dan aman via Bot WhatsApp kami.
-            </p>
-            <div className="pt-2 flex justify-center gap-2">
-              <Link
-                href="/jual-beli"
-                className="inline-flex items-center gap-1.5 bg-primary text-white px-4 py-2 rounded-full text-xs font-bold shadow-md shadow-primary/20 hover:bg-primary/90 transition-colors"
-              >
-                <Icon.Package className="w-4 h-4" />
-                Cari Barang di Pasar
-              </Link>
-              <Link
-                href="/dashboard"
-                className="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-4 py-2 rounded-full text-xs font-bold hover:bg-slate-200 transition-colors"
-              >
-                Dashboard Penjual
-              </Link>
-            </div>
-          </div>
+          <MarketplaceInbox
+            onSelectRoom={(roomId, pAlias, pWa) => {
+              setCurrentRoomId(roomId);
+              setPartnerInfo({ alias: pAlias, faculty: "Umum" });
+              setMyWa(pWa);
+              setChatState("chat");
+            }}
+          />
         </div>
       )}
     </div>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center">Memuat...</div>}>
+      <ChatContent />
+    </Suspense>
   );
 }

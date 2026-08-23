@@ -107,7 +107,7 @@ export function isAdmin() {
   return tokenAdminSah(cookies().get(COOKIE)?.value);
 }
 
-// --- SELLER AUTH ---
+// --- USER AUTH (Unified) ---
 
 const SELLER_COOKIE = "seller_session";
 
@@ -153,5 +153,9 @@ export function clearSellerCookie() {
 export function getSellerSession() {
   const c = cookies().get(SELLER_COOKIE)?.value;
   return verifySellerToken(c);
+}
+
+export function getUserSession() {
+  return getSellerSession();
 }
 
