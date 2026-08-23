@@ -1,4 +1,4 @@
--- Migration: Mading & Menfess Kampus
+-- Migration: Mading & Menfess Kampus (Idempotent / Aman Dijalankan Berulang)
 -- Tabel untuk menampung curhatan (menfess) dan pengumuman/info kampus
 
 CREATE TABLE IF NOT EXISTS public.mading_posts (
@@ -47,35 +47,40 @@ ALTER TABLE public.mading_posts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mading_comments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mading_likes ENABLE ROW LEVEL SECURITY;
 
--- Public can read active posts
+-- 1. Policies untuk mading_posts
+DROP POLICY IF EXISTS "Public read active mading posts" ON public.mading_posts;
 CREATE POLICY "Public read active mading posts" 
 ON public.mading_posts FOR SELECT 
 USING (status = 'active');
 
--- Public can insert mading posts
+DROP POLICY IF EXISTS "Public insert mading posts" ON public.mading_posts;
 CREATE POLICY "Public insert mading posts" 
 ON public.mading_posts FOR INSERT 
 WITH CHECK (true);
 
--- Public can read comments
+-- 2. Policies untuk mading_comments
+DROP POLICY IF EXISTS "Public read mading comments" ON public.mading_comments;
 CREATE POLICY "Public read mading comments" 
 ON public.mading_comments FOR SELECT 
 USING (true);
 
--- Public can insert comments
+DROP POLICY IF EXISTS "Public insert mading comments" ON public.mading_comments;
 CREATE POLICY "Public insert mading comments" 
 ON public.mading_comments FOR INSERT 
 WITH CHECK (true);
 
--- Public can read & insert likes
+-- 3. Policies untuk mading_likes
+DROP POLICY IF EXISTS "Public read mading likes" ON public.mading_likes;
 CREATE POLICY "Public read mading likes" 
 ON public.mading_likes FOR SELECT 
 USING (true);
 
+DROP POLICY IF EXISTS "Public insert mading likes" ON public.mading_likes;
 CREATE POLICY "Public insert mading likes" 
 ON public.mading_likes FOR INSERT 
 WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Public delete own mading likes" ON public.mading_likes;
 CREATE POLICY "Public delete own mading likes" 
 ON public.mading_likes FOR DELETE 
 USING (true);

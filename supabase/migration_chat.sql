@@ -1,4 +1,4 @@
--- Migration: Realtime Chat & Random Matchmaking
+-- Migration: Realtime Chat & Random Matchmaking (Idempotent / Aman Dijalankan Berulang)
 -- Tabel untuk menampung percakapan anonim (Cari Teman) dan pesan transaksi
 
 CREATE TABLE IF NOT EXISTS public.chat_rooms (
@@ -35,26 +35,42 @@ CREATE INDEX IF NOT EXISTS idx_chat_messages_room ON public.chat_messages(room_i
 ALTER TABLE public.chat_rooms ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Public read active chat rooms" ON public.chat_rooms;
 CREATE POLICY "Public read active chat rooms" 
 ON public.chat_rooms FOR SELECT 
 USING (true);
 
+DROP POLICY IF EXISTS "Public insert chat rooms" ON public.chat_rooms;
 CREATE POLICY "Public insert chat rooms" 
 ON public.chat_rooms FOR INSERT 
 WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Public update chat rooms" ON public.chat_rooms;
 CREATE POLICY "Public update chat rooms" 
 ON public.chat_rooms FOR UPDATE 
 USING (true);
 
+DROP POLICY IF EXISTS "Public read chat messages" ON public.chat_messages;
 CREATE POLICY "Public read chat messages" 
 ON public.chat_messages FOR SELECT 
 USING (true);
 
+DROP POLICY IF EXISTS "Public insert chat messages" ON public.chat_messages;
 CREATE POLICY "Public insert chat messages" 
 ON public.chat_messages FOR INSERT 
 WITH CHECK (true);
 
--- Enable Realtime untuk chat_messages dan chat_rooms
-ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_rooms;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_messages;
+-- Enable Realtime (Aman jika tabel sudah terdaftar)
+DO $$
+BEGIN
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_rooms;
+  EXCEPTION WHEN duplicate_object THEN
+    -- abaikan jika sudah ada
+  END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_messages;
+  EXCEPTION WHEN duplicate_object THEN
+    -- abaikan jika sudah ada
+  END;
+END $$;
