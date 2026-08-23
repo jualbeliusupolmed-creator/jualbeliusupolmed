@@ -58,6 +58,11 @@ const withPWA = withPWAInit({
   register: true,
   skipWaiting: true,
   customWorkerSrc: "worker",
+  // Tanpa ini, PWA yang dibuka saat offline menampilkan dinosaurus Chrome —
+  // bukan pengalaman "aplikasi" yang dijanjikan ikon di layar utama.
+  fallbacks: {
+    document: "/offline",
+  },
 });
 
 export default withPWA(nextConfig);
