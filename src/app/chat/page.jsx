@@ -439,13 +439,13 @@ function ChatContent() {
                 )}
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">Obrolan Anonim</p>
+                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">Cari Temen</p>
                 <p className="text-[10px] text-slate-500 truncate">
                   {segAktif
                     ? `Sedang bicara dengan ${segAktif.alias} · ${segAktif.faculty}`
                     : utas?.menungguRoomId
                       ? "Menunggu partner…"
-                      : "Tidak ada obrolan yang sedang jalan"}
+                      : "Belum ada obrolan berjalan — ketuk Cari Teman Baru"}
                 </p>
               </div>
             </div>
@@ -487,8 +487,9 @@ function ChatContent() {
                 <div className="text-center py-10 space-y-2">
                   <div className="text-4xl">🎭</div>
                   <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
-                    Belum pernah ada obrolan di sini. Semua obrolan anonimmu akan tersimpan di satu tempat ini,
-                    dipisah garis tiap ganti orang.
+                    Belum pernah ada obrolan di sini. Ketuk <b>Cari Teman Baru</b> di bawah — kalau belum ada yang
+                    online, pencariannya tetap jalan di latar belakang dan kamu dikabari begitu ada yang cocok.
+                    Semua obrolanmu tersimpan di satu tempat ini, dipisah garis tiap ganti orang.
                   </p>
                 </div>
               ) : (
@@ -523,6 +524,25 @@ function ChatContent() {
                       })}
                     </div>
                     {seg.status === "closed" && <Pemisah anak="Obrolan berakhir" nada="putus" />}
+                    {/* Sisa data lama: sebelum "satu partner aktif pada satu
+                        waktu" berlaku (23 Agu 2026), satu orang bisa punya
+                        beberapa obrolan hidup sekaligus. Yang bukan obrolan
+                        terkini tidak punya kotak ketik — jadi jangan biarkan ia
+                        terlihat seperti obrolan yang bisa dibalas. */}
+                    {seg.status === "active" && seg.roomId !== aktifRoomId && (
+                      <div className="my-2 flex items-center justify-center gap-2">
+                        <span className="text-[10px] text-slate-400">Obrolan lama yang belum ditutup</span>
+                        <button
+                          onClick={async () => {
+                            await fetch(`/api/chat/room/${seg.roomId}`, { method: "DELETE" });
+                            muatUtas();
+                          }}
+                          className="text-[10px] font-bold text-rose-500 px-2 py-0.5 rounded-full hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                        >
+                          Tutup
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))
               )}
@@ -722,9 +742,16 @@ function ChatContent() {
   // TAMPILAN: KOTAK MASUK
   // ══════════════════════════════════════════════════════════════════════
   const anon = ringkasAnon;
+  // Barisnya SELALU ada, walau belum pernah ngobrol dan belum ada siapa-siapa
+  // yang online: kotaknya harus bisa dimasuki dulu, pencariannya jalan sendiri
+  // di latar belakang sampai ada yang muncul.
   const cuplikan = anon?.pesanTerakhir
     ? `${anon.pesanTerakhir.milikku ? "Kamu: " : ""}${anon.pesanTerakhir.teks}`
-    : "Belum ada pesan";
+    : anon?.menunggu
+      ? "Sedang mencari teman… kamu dikabari begitu ada yang cocok"
+      : anon?.ada
+        ? "Belum ada pesan"
+        : "Ngobrol 1-on-1 dengan mahasiswa USU & POLMED — ketuk buat mulai";
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20 font-sans">
@@ -742,7 +769,7 @@ function ChatContent() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-              🎭 Obrolan Anonim
+              🎭 Cari Temen
             </h2>
             <button
               onClick={() => setShowSearchModal(true)}
@@ -754,13 +781,6 @@ function ChatContent() {
 
           {anonLoading ? (
             <div className="text-center p-6 text-xs text-gray-500">Memuat...</div>
-          ) : !anon?.ada ? (
-            <button
-              onClick={() => setShowSearchModal(true)}
-              className="w-full bg-white dark:bg-slate-900 p-6 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700 text-center text-xs text-slate-500 hover:border-primary/50 transition-colors"
-            >
-              Belum ada obrolan anonim. Ngobrol 1-on-1 dengan sesama mahasiswa USU & POLMED secara acak, tanpa perlu tahu identitas asli. ✍️
-            </button>
           ) : (
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
               <button
@@ -770,27 +790,27 @@ function ChatContent() {
                 <div className="w-10 h-10 shrink-0 rounded-full bg-primary/10 text-primary flex items-center justify-center text-lg">🎭</div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-gray-900 dark:text-white truncate">Obrolan Anonim</span>
-                    {anon.partnerAktif ? (
+                    <span className="text-xs font-bold text-gray-900 dark:text-white truncate">Cari Temen</span>
+                    {anon?.partnerAktif ? (
                       <span className="text-[9px] font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 px-1.5 py-0.5 rounded-full shrink-0">
                         {anon.partnerAktif}
                       </span>
-                    ) : anon.menunggu ? (
+                    ) : anon?.menunggu ? (
                       <span className="text-[9px] font-medium bg-primary/10 text-primary px-1.5 py-0.5 rounded-full shrink-0 animate-pulse">
-                        Menunggu partner
+                        Mencari…
                       </span>
-                    ) : (
+                    ) : anon?.ada ? (
                       <span className="text-[9px] font-medium bg-gray-100 dark:bg-slate-800 text-gray-500 px-1.5 py-0.5 rounded-full shrink-0">
                         Tidak aktif
                       </span>
-                    )}
+                    ) : null}
                   </div>
                   <p className="text-[11px] text-slate-500 truncate">{cuplikan}</p>
-                  {anon.jumlahOrang > 1 && (
+                  {anon?.jumlahOrang > 1 && (
                     <p className="text-[10px] text-slate-400 mt-0.5">{anon.jumlahOrang} orang pernah diajak ngobrol</p>
                   )}
                 </div>
-                <span className="text-[10px] text-slate-400 shrink-0">{waktuRelatif(anon.updatedAt)}</span>
+                <span className="text-[10px] text-slate-400 shrink-0">{waktuRelatif(anon?.updatedAt)}</span>
               </button>
             </div>
           )}
