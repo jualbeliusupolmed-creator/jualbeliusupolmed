@@ -27,6 +27,7 @@ import FormToko from "./FormToko";
 
 const TAB = [
   { key: "ringkasan", label: "Ringkasan", ikon: "🏠" },
+  { key: "langganan", label: "Paket Langganan", ikon: "💎" },
   { key: "produk", label: "Produk", ikon: "📦" },
   { key: "tampilan", label: "Tampilan", ikon: "🎨" },
   { key: "promosi", label: "Promosi", ikon: "📣" },
@@ -303,6 +304,100 @@ export default function TokoSaya() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Paket Langganan Toko Fisik ─────────────────────────────── */}
+      {tab === "langganan" && (
+        <div className="space-y-4">
+          <div className="card p-5 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-slate-900 border border-emerald-200 dark:border-emerald-800">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-2xl">🏪</span>
+              <h2 className="text-base font-extrabold text-slate-900 dark:text-white">Program Toko Mitra Fisik</h2>
+            </div>
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              Khusus pemilik tempat / toko fisik di sekitar kampus USU & POLMED. Dengan paket langganan aktif, tokomu mendapat etalase digital resmi dan bebas pasang iklan sepuasnya tanpa biaya tayang per postingan.
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            {/* Paket 1 Bulan */}
+            <div className="card p-4 flex flex-col justify-between border-slate-200 dark:border-slate-800 relative">
+              <div>
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Bulanan</span>
+                <h3 className="text-base font-extrabold text-slate-900 dark:text-white mt-0.5">Paket 1 Bulan</h3>
+                <p className="text-lg font-black text-primary mt-2">Rp 25.000 <span className="text-[11px] font-normal text-slate-400">/bln</span></p>
+                <ul className="mt-3 space-y-1.5 text-xs text-slate-600 dark:text-slate-400">
+                  <li className="flex items-center gap-1.5">✓ Iklan tanpa batas</li>
+                  <li className="flex items-center gap-1.5">✓ Lencana Toko Mitra</li>
+                  <li className="flex items-center gap-1.5">✓ Link custom etalase</li>
+                </ul>
+              </div>
+              <button 
+                onClick={() => {
+                  const pesan = `Halo Admin, saya ingin berlangganan Paket Toko Mitra 1 Bulan (Rp 25.000) untuk toko *${nama}* (${alamat || ""}).`;
+                  window.open(`https://wa.me/6282274151745?text=${encodeURIComponent(pesan)}`, '_blank');
+                }}
+                className="btn-outline mt-4 w-full rounded-xl py-2 text-xs font-bold"
+              >
+                Pilih 1 Bulan
+              </button>
+            </div>
+
+            {/* Paket 6 Bulan */}
+            <div className="card p-4 flex flex-col justify-between border-primary bg-primary/5 relative shadow-md">
+              <div className="absolute -top-2.5 right-3 bg-primary text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                Populer (Hemat 20%)
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-primary uppercase tracking-wider">Semesteran</span>
+                <h3 className="text-base font-extrabold text-slate-900 dark:text-white mt-0.5">Paket 6 Bulan</h3>
+                <p className="text-lg font-black text-primary mt-2">Rp 120.000 <span className="text-[11px] font-normal text-slate-400">/6 bln</span></p>
+                <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">Hemat Rp 30.000</p>
+                <ul className="mt-3 space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
+                  <li className="flex items-center gap-1.5">✓ Semua fitur 1 bulan</li>
+                  <li className="flex items-center gap-1.5">✓ Prioritas pencarian</li>
+                  <li className="flex items-center gap-1.5">✓ Auto-share grup WA</li>
+                </ul>
+              </div>
+              <button 
+                onClick={() => {
+                  const pesan = `Halo Admin, saya ingin berlangganan Paket Toko Mitra 6 Bulan (Rp 120.000) untuk toko *${nama}* (${alamat || ""}).`;
+                  window.open(`https://wa.me/6282274151745?text=${encodeURIComponent(pesan)}`, '_blank');
+                }}
+                className="btn-primary mt-4 w-full rounded-xl py-2 text-xs font-bold"
+              >
+                Pilih 6 Bulan ⭐
+              </button>
+            </div>
+
+            {/* Paket 12 Bulan */}
+            <div className="card p-4 flex flex-col justify-between border-amber-300 bg-amber-50/40 dark:bg-amber-950/20 relative">
+              <div className="absolute -top-2.5 right-3 bg-amber-500 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                Paling Hemat
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Tahunan</span>
+                <h3 className="text-base font-extrabold text-slate-900 dark:text-white mt-0.5">Paket 1 Tahun</h3>
+                <p className="text-lg font-black text-amber-600 mt-2">Rp 200.000 <span className="text-[11px] font-normal text-slate-400">/thn</span></p>
+                <p className="text-[10px] text-amber-700 dark:text-amber-400 font-semibold mt-0.5">Hemat Rp 100.000</p>
+                <ul className="mt-3 space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
+                  <li className="flex items-center gap-1.5">✓ Semua fitur 6 bulan</li>
+                  <li className="flex items-center gap-1.5">✓ Banner khusus di Beranda</li>
+                  <li className="flex items-center gap-1.5">✓ Lencana Verified Gold</li>
+                </ul>
+              </div>
+              <button 
+                onClick={() => {
+                  const pesan = `Halo Admin, saya ingin berlangganan Paket Toko Mitra 1 Tahun (Rp 200.000) untuk toko *${nama}* (${alamat || ""}).`;
+                  window.open(`https://wa.me/6282274151745?text=${encodeURIComponent(pesan)}`, '_blank');
+                }}
+                className="btn-outline mt-4 w-full rounded-xl py-2 text-xs font-bold border-amber-400 text-amber-800 hover:bg-amber-100 dark:text-amber-300"
+              >
+                Pilih 1 Tahun 👑
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
