@@ -72,6 +72,14 @@ Berjalan dengan PostgreSQL, memiliki tabel-tabel berikut:
 6. **Edge Case**: Kalau broadcast gagal, permintaan TIDAK ikut gagal — pesan sudah aman di database dan klien masih punya polling 10 detik sebagai jaring pengaman.
 7. **Prasyarat env**: `NEXT_PUBLIC_SUPABASE_ANON_KEY` di Vercel tidak boleh ditandai **Sensitive**. Variabel Sensitive hanya terbaca di runtime server dan tidak pernah ter-*bake* ke bundel klien, sehingga realtime mati diam-diam tanpa galat build.
 
+### E. Matchmaking Chat Anonim — Asinkron, Bukan Harus Online Bersamaan (23 Agu 2026)
+1. **Masalah lama**: Room tunggu dianggap "basi" kalau `updated_at` lebih tua dari 15 detik (lalu 45 detik). Ini menutup gejala "radar berputar selamanya", tapi TIDAK menutup akar masalahnya: dua orang yang cari teman di jam yang tidak tumpang tindih (A menunggu lalu pergi, B baru datang belakangan) tidak akan pernah dipertemukan, seberapa pun besar toleransinya.
+2. **Solusi**: Heartbeat/staleness dibuang total dari `/api/chat/match`. Room tunggu (`status='waiting'`) sah dipasangkan kapan pun, tidak kedaluwarsa. `action:"poll"` sekarang murni baca (dulu ikut menulis + logika penjodohan sendiri).
+3. **Push saat cocok belakangan**: Tabel `chat_identity_wa` (hash → WA, service-role only, TIDAK PERNAH keluar ke respons API) memetakan identitas anonim ke nomor asli HANYA untuk kebutuhan push. Begitu room tunggu seseorang diklaim, `pushToWa()` (`src/lib/webpush.js`, infrastruktur yang sama dengan notif listing baru) mengabari pemiliknya untuk kembali — walau tab sudah lama ditutup. Push cuma jalan kalau penerima sudah mengizinkan notifikasi peramban; kalau belum, dia tetap lihat hasilnya lain kali buka kotak masuk.
+4. **`/chat` jadi kotak masuk**: bukan lagi formulir "klik cari → radar berputar → langsung 1 room". Obrolan anonim disematkan di atas (tombol "Cari Teman Baru" terpisah, dipencet — bukan otomatis), Chat Jual Beli di bawah, satu halaman (`src/app/chat/page.jsx`). Room tunggu tampil sebagai kartu "Menunggu partner..." di kotak masuk, bisa dibatalkan kapan saja. `/api/chat/anon/inbox` (GET) adalah sumbernya.
+5. **Sesi tidak hilang, dan lebih kuat dari sebelumnya**: source of truth pindah dari localStorage (satu perangkat) ke server. Setiap room dibuka lewat `?room=<id>` di URL — refresh, tautan push, tab baru, semua menanyakan langsung ke API. Riwayat yang sudah `closed` pun tetap ada di kotak masuk.
+6. **Bug yang ikut tertutup**: struktur tab lama (`mainTab` "random"/"marketplace") menggerbangi UI chat-room di balik kondisi yang salah — memilih room dari Chat Jual Beli, atau tautan `?room=` dari `OfferButton`/`MinatButton`, membuka layar **putih total** (UI room cuma dirender kalau `mainTab==='random'`, padahal kasus itu selalu `mainTab==='marketplace'`). Desain baru menghapus gerbang `mainTab` sepenuhnya — kelas bug ini terstruktur tidak bisa terjadi lagi.
+
 ---
 
 ## 3. Keamanan & Eksposur
