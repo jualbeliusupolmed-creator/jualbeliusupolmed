@@ -43,14 +43,26 @@ async function getInitialData() {
       .range(0, PAGE_SIZE - 1);
       
     const { data } = await fetchListingsWithProfiles(query);
-    return { listings: data || [] };
+
+    // Cuplikan mading untuk beranda — POSTINGAN SUNGGUHAN. Dulu bagian ini
+    // mockup hardcode, termasuk pengumuman karangan atas nama BEM KM USU;
+    // barang karangan di halaman depan adalah jenis kebohongan yang audit
+    // 22 Agu sudah bersihkan dari /lomba, jangan tumbuh lagi di sini.
+    const { data: mading } = await supa
+      .from("mading_posts")
+      .select("id, type, sender_name, faculty, title, content, likes_count, comments_count, created_at")
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(2);
+
+    return { listings: data || [], madingPosts: mading || [] };
   } catch (e) {
-    return { listings: [] };
+    return { listings: [], madingPosts: [] };
   }
 }
 
 export default async function HomePage() {
-  const [{ listings }, settings] = await Promise.all([
+  const [{ listings, madingPosts }, settings] = await Promise.all([
     getInitialData(),
     getSettings(),
   ]);
@@ -74,6 +86,7 @@ export default async function HomePage() {
       />
       <SuperAppHome
         latestListings={listings}
+        madingPosts={madingPosts}
         heroTitle={settings.site?.heroTitle}
         heroSubtitle={settings.site?.heroSubtitle}
       />
