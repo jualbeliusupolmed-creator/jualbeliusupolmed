@@ -50,7 +50,7 @@ export default function MarketplaceInbox({ onSelectRoom }) {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm divide-y divide-gray-100 dark:divide-slate-800 overflow-hidden">
       {rooms.map((room) => {
         const isBuyer = room.user1_id === myWa;
         const partnerAlias = isBuyer ? room.user2_alias : room.user1_alias;
@@ -61,7 +61,7 @@ export default function MarketplaceInbox({ onSelectRoom }) {
           <button
             key={room.id}
             onClick={() => onSelectRoom(room.id, partnerAlias, myWa)}
-            className="w-full text-left bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 p-3 rounded-2xl flex gap-4 hover:border-primary/50 transition-colors shadow-sm"
+            className="w-full text-left p-3 flex gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/60 active:bg-slate-100 dark:active:bg-slate-800 transition-colors"
           >
             {/* Thumbnail Barang */}
             <div className="w-16 h-16 shrink-0 rounded-xl bg-gray-100 dark:bg-slate-800 overflow-hidden">

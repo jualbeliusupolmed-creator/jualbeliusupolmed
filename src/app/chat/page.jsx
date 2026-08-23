@@ -582,13 +582,13 @@ function ChatContent() {
               Belum ada obrolan anonim. Ngobrol 1-on-1 dengan sesama mahasiswa USU & POLMED secara acak, tanpa perlu tahu identitas asli. ✍️
             </button>
           ) : (
-            <div className="space-y-2">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm divide-y divide-gray-100 dark:divide-slate-800 overflow-hidden">
               {anonRooms.map((r) => {
                 if (r.menunggu) {
                   return (
                     <div
                       key={r.id}
-                      className="w-full bg-white dark:bg-slate-900 border border-dashed border-primary/40 p-3 rounded-2xl flex items-center gap-3 shadow-sm"
+                      className="w-full bg-primary/5 p-3 flex items-center gap-3"
                     >
                       <div className="w-10 h-10 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-lg animate-pulse">🔍</div>
                       <div className="flex-1 min-w-0">
@@ -608,7 +608,7 @@ function ChatContent() {
                   <button
                     key={r.id}
                     onClick={() => router.push(`/chat?room=${r.id}`)}
-                    className="w-full text-left bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 p-3 rounded-2xl flex items-center gap-3 hover:border-primary/50 transition-colors shadow-sm"
+                    className="w-full text-left p-3 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 active:bg-slate-100 dark:active:bg-slate-800 transition-colors"
                   >
                     <div className="w-10 h-10 shrink-0 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">👤</div>
                     <div className="flex-1 min-w-0">
