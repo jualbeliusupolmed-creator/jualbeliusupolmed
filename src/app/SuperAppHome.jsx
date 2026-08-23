@@ -77,7 +77,7 @@ export default function SuperAppHome({ latestListings = [], madingPosts = [], he
           <GridItem 
             href="/mading" 
             icon={Icon.BookOpen} 
-            label="Mading" 
+            label="Menfess" 
             colorClass="bg-gradient-to-br from-orange-100 to-amber-200 dark:from-orange-900/40 dark:to-amber-800/40" 
             delay="200ms" 
           />
@@ -155,9 +155,9 @@ export default function SuperAppHome({ latestListings = [], madingPosts = [], he
       {/* FEED MADING KAMPUS */}
       <div className="px-5 sm:px-6 md:px-10 lg:px-16">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white">Mading & Menfess</h3>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white">Menfess & Info</h3>
           <Link href="/mading" className="text-xs font-bold text-primary hover:underline">
-            Buka Mading →
+            Buka Menfess & Info →
           </Link>
         </div>
         
@@ -172,7 +172,7 @@ export default function SuperAppHome({ latestListings = [], madingPosts = [], he
               href="/mading"
               className="block bg-white dark:bg-slate-900 p-6 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700 text-center text-sm text-slate-500 hover:border-primary/50 transition-colors"
             >
-              Mading masih sepi — jadilah yang pertama menulis menfess atau info kampus ✍️
+              Menfess & Info masih sepi — jadilah yang pertama menulis menfess atau info kampus ✍️
             </Link>
           )}
           {madingPosts.map((post) => {

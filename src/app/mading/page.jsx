@@ -63,7 +63,7 @@ export default function MadingPage() {
       const data = await res.json();
       setPosts(data.posts || []);
     } catch (e) {
-      toast.error("Gagal memuat postingan mading.");
+      toast.error("Gagal memuat postingan Menfess & Info.");
     } finally {
       setLoading(false);
     }
@@ -210,7 +210,7 @@ export default function MadingPage() {
 
       const data = await res.json();
       if (res.status === 401) {
-        toast.error("Masuk dulu ya untuk memposting ke mading.");
+        toast.error("Masuk dulu ya untuk memposting ke Menfess & Info.");
         window.location.href = "/profil";
         return;
       }
@@ -257,7 +257,7 @@ export default function MadingPage() {
               KAMPUS FEED
             </span>
             <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight mt-0.5">
-              Mading & Menfess
+              Menfess & Info
             </h1>
           </div>
           <button
@@ -427,7 +427,7 @@ export default function MadingPage() {
                   onClick={() => {
                     if (navigator.share) {
                       navigator.share({
-                        title: "Mading USU & POLMED",
+                        title: "Menfess & Info — USU & POLMED",
                         text: post.content,
                         url: window.location.href,
                       }).catch(() => {});
@@ -512,7 +512,7 @@ export default function MadingPage() {
             </button>
 
             <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tight mb-4">
-              Kirim Postingan Mading
+              Kirim Postingan Menfess & Info
             </h2>
 
             <form onSubmit={handleCreatePost} className="space-y-4">
@@ -636,7 +636,7 @@ export default function MadingPage() {
                 disabled={submitting}
                 className="w-full py-3 bg-primary text-white rounded-xl text-xs font-bold shadow-lg shadow-primary/30 hover:bg-primary/95 transition-all disabled:opacity-50"
               >
-                {submitting ? "Menerbitkan..." : "Terbitkan ke Mading 🚀"}
+                {submitting ? "Menerbitkan..." : "Terbitkan ke Menfess & Info 🚀"}
               </button>
             </form>
           </div>

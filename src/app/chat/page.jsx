@@ -53,9 +53,10 @@ function ChatContent() {
       setCurrentRoomId(roomQuery);
       setChatState("chat");
       setMainTab("marketplace");
-      // myWa and partnerInfo will be set when fetchRoomData completes or when they click from Inbox
+      // Fetch room data immediately saat URL punya room, jangan tunggu interval realtime
+      fetchRoomData(roomQuery);
     }
-  }, [roomQuery]);
+  }, [roomQuery, fetchRoomData]);
 
   // ── Obrolan selamat dari refresh ─────────────────────────────────────────────
   // State React hilang tiap kali halaman dimuat ulang, padahal room-nya masih

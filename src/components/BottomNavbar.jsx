@@ -11,7 +11,7 @@ export default function BottomNavbar() {
   const navs = [
     { name: "Beranda", href: "/", icon: Icon.Home },
     { name: "Jual Beli", href: "/jual-beli", icon: Icon.Package },
-    { name: "Mading", href: "/mading", icon: Icon.BookOpen, special: true },
+    { name: "Menfess & Info", href: "/mading", icon: Icon.BookOpen, special: true },
     { name: "Obrolan", href: "/chat", icon: Icon.MessageCircle },
     // Satu pintu: /profil memeriksa sesi di server lalu mengarahkan ke
     // /dashboard (sudah masuk) atau /dashboard/login (belum). `match` membuat
@@ -34,7 +34,7 @@ export default function BottomNavbar() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/30 group-active:scale-95 transition-transform">
                   <IconComp className="h-6 w-6" strokeWidth="2.5" />
                 </div>
-                <span className="mt-1 text-[10px] font-medium text-gray-500 dark:text-slate-400">{n.name}</span>
+                <span className="mt-1 text-[9px] font-medium whitespace-nowrap text-gray-500 dark:text-slate-400">{n.name}</span>
               </Link>
             );
           }
