@@ -22,7 +22,16 @@ function GridItem({ href, icon, label, colorClass, delay }) {
   );
 }
 
-export default function SuperAppHome({ latestListings = [], heroTitle, heroSubtitle }) {
+// Umur relatif singkat untuk kartu mading di beranda.
+function waktuLalu(dateStr) {
+  const detik = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+  if (detik < 60) return "baru saja";
+  if (detik < 3600) return `${Math.floor(detik / 60)} menit lalu`;
+  if (detik < 86400) return `${Math.floor(detik / 3600)} jam lalu`;
+  return `${Math.floor(detik / 86400)} hari lalu`;
+}
+
+export default function SuperAppHome({ latestListings = [], madingPosts = [], heroTitle, heroSubtitle }) {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24 font-sans selection:bg-primary/20 overflow-x-hidden">
       
@@ -152,53 +161,60 @@ export default function SuperAppHome({ latestListings = [], heroTitle, heroSubti
           </Link>
         </div>
         
+        {/* Postingan SUNGGUHAN dari database — bukan mockup. Versi awal bagian
+            ini memajang menfess karangan dan pengumuman palsu atas nama BEM KM
+            USU; barang karangan di halaman depan menipu pengunjung pertama dan
+            mencatut nama organisasi nyata. Kalau madingnya kosong, katakan
+            kosong — itu ajakan yang jujur. */}
         <div className="space-y-4">
-          {/* MOCKUP MENFESS 1 */}
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-1 h-full bg-amber-400" />
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 font-bold text-lg">
-                👤
-              </div>
-              <div>
-                <p className="text-sm font-bold">Anonim (FIB)</p>
-                <p className="text-[10px] text-slate-500">Menfess • 10 menit lalu</p>
-              </div>
-            </div>
-            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-              Tadi pagi jam 10 di perpus ketemu cowok pakai jaket himpunan mesin, manis banget senyumnya. Kalau ada yang tau ignya, bisikin dong 😆
-            </p>
-            <div className="flex items-center gap-4 mt-4 pt-4 border-t border-slate-50 dark:border-slate-800 text-slate-500 text-xs font-medium">
-              <button className="flex items-center gap-1 hover:text-rose-500 transition-colors">
-                <Icon.Heart className="w-4 h-4" /> 12
-              </button>
-              <button className="flex items-center gap-1 hover:text-blue-500 transition-colors">
-                <Icon.MessageCircle className="w-4 h-4" /> 4 Komentar
-              </button>
-            </div>
-          </div>
-
-          {/* MOCKUP INFO KAMPUS */}
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-1 h-full bg-fuchsia-500" />
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-full bg-fuchsia-100 flex items-center justify-center text-fuchsia-600 font-bold text-lg">
-                📢
-              </div>
-              <div>
-                <p className="text-sm font-bold">BEM KM USU</p>
-                <p className="text-[10px] text-slate-500">Info Kampus • 2 jam lalu</p>
-              </div>
-            </div>
-            <p className="text-sm font-bold mb-1 dark:text-slate-200">Open Recruitment Panitia PORSENI 2026!</p>
-            <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
-              Halo sobat USU! PORSENI kembali hadir. Buat kamu yang ingin melatih leadership dan nambah relasi, yuk daftar jadi panitia sekarang juga. Slot terbatas!
-            </p>
-            <button className="mt-3 text-xs font-bold text-primary bg-primary/10 px-4 py-2 rounded-full hover:bg-primary/20 transition-colors">
-              Baca Selengkapnya
-            </button>
-          </div>
-          
+          {madingPosts.length === 0 && (
+            <Link
+              href="/mading"
+              className="block bg-white dark:bg-slate-900 p-6 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700 text-center text-sm text-slate-500 hover:border-primary/50 transition-colors"
+            >
+              Mading masih sepi — jadilah yang pertama menulis menfess atau info kampus ✍️
+            </Link>
+          )}
+          {madingPosts.map((post) => {
+            const isInfo = post.type === "info";
+            return (
+              <Link
+                key={post.id}
+                href={isInfo ? "/mading?tab=info" : "/mading"}
+                className="block bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden hover:shadow-md transition-shadow"
+              >
+                <div className={`absolute top-0 right-0 w-1 h-full ${isInfo ? "bg-fuchsia-500" : "bg-amber-400"}`} />
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg ${isInfo ? "bg-fuchsia-100 text-fuchsia-600" : "bg-amber-100 text-amber-600"}`}>
+                    {isInfo ? "📢" : "👤"}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold dark:text-slate-200">
+                      {post.sender_name || "Anonim"}
+                      {post.faculty && post.faculty !== "Umum" ? ` (${post.faculty})` : ""}
+                    </p>
+                    <p className="text-[10px] text-slate-500">
+                      {isInfo ? "Info Kampus" : "Menfess"} • {waktuLalu(post.created_at)}
+                    </p>
+                  </div>
+                </div>
+                {post.title && (
+                  <p className="text-sm font-bold mb-1 dark:text-slate-200">{post.title}</p>
+                )}
+                <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed line-clamp-3">
+                  {post.content}
+                </p>
+                <div className="flex items-center gap-4 mt-4 pt-4 border-t border-slate-50 dark:border-slate-800 text-slate-500 text-xs font-medium">
+                  <span className="flex items-center gap-1">
+                    <Icon.Heart className="w-4 h-4" /> {post.likes_count || 0}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Icon.MessageCircle className="w-4 h-4" /> {post.comments_count || 0} Komentar
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </div>

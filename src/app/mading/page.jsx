@@ -8,6 +8,17 @@ import { toast } from "sonner";
 
 export default function MadingPage() {
   const [activeTab, setActiveTab] = useState("all"); // 'all' | 'menfess' | 'info'
+
+  // Hormati ?tab= dari tautan luar (kartu "Info Kampus" di beranda mengirim
+  // /mading?tab=info) — tanpa ini query-nya diabaikan diam-diam dan pengunjung
+  // selalu mendarat di tab default. Dibaca dari location, bukan useSearchParams,
+  // supaya tidak butuh pagar <Suspense> untuk satu nilai sekali-baca.
+  useEffect(() => {
+    try {
+      const tab = new URLSearchParams(window.location.search).get("tab");
+      if (tab === "info" || tab === "menfess") setActiveTab(tab);
+    } catch {}
+  }, []);
   const [selectedFaculty, setSelectedFaculty] = useState("Semua");
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
