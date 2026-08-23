@@ -198,6 +198,11 @@ export default function MadingPage() {
       });
 
       const data = await res.json();
+      if (res.status === 401) {
+        toast.error("Masuk dulu ya untuk memposting ke mading.");
+        window.location.href = "/profil";
+        return;
+      }
       if (data.success) {
         toast.success("Postingan berhasil diterbitkan!");
         setShowModal(false);

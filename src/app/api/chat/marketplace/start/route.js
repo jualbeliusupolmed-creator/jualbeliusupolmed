@@ -3,6 +3,8 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getUserSession } from "@/lib/auth";
 import { sendWa } from "@/lib/fonnte";
 import { buildSlug } from "@/lib/slug";
+import { censorProfanity } from "@/lib/profanity";
+import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -13,12 +15,43 @@ export async function POST(req) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { listingId, message } = await req.json();
+    // Tiap chat pertama memicu notifikasi WA ke penjual — tanpa rem, satu akun
+    // bisa menghujani penjual mana pun.
+    const laju = rateLimit(`mp-chat-start:${getClientIp(req)}`, { limit: 10, windowMs: 60_000 });
+    if (!laju.ok) {
+      return NextResponse.json(
+        { error: `Terlalu sering memulai chat. Coba lagi dalam ${laju.retryAfter} detik.` },
+        { status: 429 }
+      );
+    }
+
+    const body = await req.json();
+    const { listingId } = body;
+    // Disensor & dibatasi seperti pesan chat lain — pesan pertama tidak boleh
+    // jadi satu-satunya pesan yang lolos tanpa saringan.
+    const message = censorProfanity(String(body.message || "").trim().slice(0, 500));
     if (!listingId || !message) {
       return NextResponse.json({ error: "Missing listingId or message" }, { status: 400 });
     }
 
     const supa = getAdminClient();
+
+    // Blokir hasil laporan (lihat /api/chat/room/[id]/report) berlaku juga di sini.
+    const { data: ban } = await supa
+      .from("chat_bans")
+      .select("until")
+      .eq("subject_id", buyerWa)
+      .gt("until", new Date().toISOString())
+      .maybeSingle();
+    if (ban) {
+      return NextResponse.json(
+        {
+          error: `Kamu diblokir sementara dari obrolan karena laporan beberapa pengguna lain `
+            + `(sampai ${new Date(ban.until).toLocaleDateString("id-ID")}).`,
+        },
+        { status: 403 }
+      );
+    }
 
     // 1. Dapatkan info barang dan profil penjual
     const { data: listing, error: listingError } = await supa
@@ -104,9 +137,12 @@ export async function POST(req) {
     // 7. Notifikasi WhatsApp ke Penjual
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
     
+    // Kutipan di notifikasi WA dibersihkan dari baris-baru & markup WhatsApp —
+    // isi pesan pembeli tidak boleh bisa menyusun kalimat palsu atas nama bot.
+    const kutipan = message.replace(/[\r\n*_~`]/g, " ").replace(/\s+/g, " ").trim().slice(0, 200);
     let waMsg = `*Pesan Baru dari Pembeli!* 💬\n\n`;
     waMsg += `Ada yang tertarik dengan barang *${listing.title}*.\n\n`;
-    waMsg += `*Pesan:* "${message}"\n\n`;
+    waMsg += `*Pesan:* "${kutipan}"\n\n`;
     waMsg += `Balas pesannya secara langsung di Web:\n${baseUrl}/chat`;
 
     sendWa(sellerWa, waMsg, null, 14400).catch(console.error);
