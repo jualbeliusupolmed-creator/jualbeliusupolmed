@@ -614,7 +614,6 @@ function ChatContent() {
               </div>
             )}
           </div>
-        </div>
 
         <ModalCari
           tampil={showSearchModal}
@@ -740,7 +739,6 @@ function ChatContent() {
               </div>
             )}
           </div>
-        </div>
       </div>
     );
   }
