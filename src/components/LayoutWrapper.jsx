@@ -6,6 +6,7 @@ import Navbar from "./Navbar";
 import Footer from "./Footer";
 import InstallPrompt from "./InstallPrompt";
 import NotifPrompt from "./NotifPrompt";
+import BottomNavbar from "./BottomNavbar";
 
 export default function LayoutWrapper({ children }) {
   const pathname = usePathname();
@@ -24,13 +25,14 @@ export default function LayoutWrapper({ children }) {
   return (
     <>
       {!isAdmin && <Navbar config={config} />}
-      <main className="flex-1">{children}</main>
+      <main className={isAdmin ? "flex-1" : "flex-1 pb-20 md:pb-0"}>{children}</main>
       {!isAdmin && (
         <>
           <InstallPrompt />
           {/* Ajakan notifikasi peramban. Menahan dirinya sendiri (kunjungan
               kedua / 25 detik), karena izin notifikasi cuma bisa diminta sekali. */}
           <NotifPrompt />
+          <BottomNavbar />
           <Footer config={config} />
         </>
       )}
