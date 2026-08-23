@@ -153,9 +153,12 @@ async function notifyMatchingWanted(supa, listing) {
 
     for (const w of matches) {
       await notifyWantedMatch(w.buyer_wa, w.buyer_name, listing).catch(() => {});
+      // Tanpa .catch: query supabase-js bukan Promise penuh (tidak punya metode
+      // itu — memanggilnya melempar TypeError), dan galatnya memang tidak
+      // pernah dilempar, cuma dikembalikan lewat properti `error`.
       await supa.from("wanted_listings")
         .update({ last_notified_at: new Date().toISOString() })
-        .eq("id", w.id).catch(() => {});
+        .eq("id", w.id);
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
   } catch (err) {
@@ -279,12 +282,14 @@ export async function POST(req) {
             imageUrl = publicUrl;
           } catch (_) {}
         }
+        // Tanpa .catch — lihat catatan di notifyMatchingWanted: query
+        // supabase-js tidak punya metode itu, memanggilnya justru melempar.
         await supa.from("group_posts").upsert({
           sender_wa: formatWa(senderJid) || senderJid,
           message: msgText || "",
           image_url: imageUrl,
           group_jid: groupJid,
-        }).catch(() => {});
+        });
       }
       return NextResponse.json({ ok: true, state: "group_post_indexed" });
     }

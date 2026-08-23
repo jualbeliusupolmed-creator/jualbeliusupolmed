@@ -7,6 +7,17 @@
 alter table public.listings
   add column if not exists last_milestone_notified integer not null default 0;
 
+-- A2. Backfill: iklan lama yang sudah ramai dilihat harus mulai dari milestone
+-- yang SUDAH terlampaui — tanpa ini, satu view berikutnya pada iklan ber-156
+-- views memicu WA "baru saja melewati 10 kali dilihat" yang basi, lalu 25, 50,
+-- dst., satu pesan tiap view sampai hitungannya terkejar. Idempotent: hanya
+-- menyentuh baris yang penandanya masih 0.
+update public.listings set last_milestone_notified = case
+  when coalesce(views,0) >= 1000 then 1000 when views >= 500 then 500
+  when views >= 250 then 250 when views >= 100 then 100 when views >= 50 then 50
+  when views >= 25 then 25 else 10 end
+where coalesce(views,0) >= 10 and last_milestone_notified = 0;
+
 -- B. Tabel log kontak pembeli (setiap kali seseorang klik "Hubungi Penjual")
 create table if not exists public.buyer_contacts (
   id           uuid primary key default gen_random_uuid(),

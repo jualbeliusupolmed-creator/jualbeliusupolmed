@@ -114,7 +114,9 @@ export async function POST(request) {
         // postingan dan diblokir, tanpa menyimpan alamat aslinya di database.
         author_ip_hash: hashIdentitas(getClientIp(request)),
       })
-      .select()
+      // Kolom disebut satu-satu, sama seperti GET: hash IP tidak perlu mampir
+      // ke respons siapa pun, termasuk pengirimnya sendiri.
+      .select("id, type, sender_name, faculty, title, content, likes_count, comments_count, status, created_at")
       .single();
 
     if (error) {
