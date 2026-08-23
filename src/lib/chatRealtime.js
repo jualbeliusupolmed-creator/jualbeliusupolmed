@@ -14,11 +14,18 @@ export async function siarkanPesanBaru(supa, roomId) {
   let kanal = null;
   try {
     kanal = supa.channel(`chat-room-${roomId}`);
-    await kanal.send({
-      type: "broadcast",
-      event: "pesan",
-      payload: { refresh: true },
-    });
+    // httpSend() mengirim lewat REST, bukan lewat websocket — dan itu memang
+    // yang dibutuhkan fungsi serverless yang umurnya cuma sepanjang satu
+    // permintaan. channel.send() sebenarnya diam-diam melakukan hal yang sama,
+    // tapi pustakanya sudah menandai jalan pintas itu akan dihapus; kalau
+    // sampai hilang tanpa ada yang sadar, gejalanya persis bug yang baru saja
+    // kita tutup: pesan tersimpan, tidak ada yang mengetuk. Cabang send() di
+    // bawah cuma jaring kalau versi pustaka yang terpasang lebih tua.
+    if (typeof kanal.httpSend === "function") {
+      await kanal.httpSend("pesan", { refresh: true });
+    } else {
+      await kanal.send({ type: "broadcast", event: "pesan", payload: { refresh: true } });
+    }
   } catch (e) {
     // Realtime cuma mempercepat kedatangan; pesannya sudah aman di database.
     // Menggagalkan permintaan di sini berarti menukar "telat 10 detik" dengan
