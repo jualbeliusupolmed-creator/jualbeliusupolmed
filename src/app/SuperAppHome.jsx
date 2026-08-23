@@ -11,13 +11,13 @@ function GridItem({ href, icon, label, colorClass, delay }) {
   return (
     <Link 
       href={href} 
-      className={`flex flex-col items-center justify-center p-4 rounded-3xl ${colorClass} shadow-sm border border-white/40 backdrop-blur-md hover:scale-95 transition-transform animate-in fade-in zoom-in duration-500`}
+      className={`flex flex-col items-center justify-start p-2 rounded-2xl ${colorClass} shadow-sm border border-white/40 backdrop-blur-md hover:scale-95 transition-transform animate-in fade-in zoom-in duration-500`}
       style={{ animationDelay: delay }}
     >
-      <div className="bg-white/80 p-3 rounded-full shadow-inner mb-3">
-        <Comp className="w-8 h-8 opacity-90" strokeWidth="1.8" />
+      <div className="bg-white/80 p-2 rounded-full shadow-inner mb-2">
+        <Comp className="w-6 h-6 opacity-90" strokeWidth="2" />
       </div>
-      <span className="text-sm font-bold text-gray-800 tracking-tight">{label}</span>
+      <span className="text-[11px] font-bold text-gray-800 tracking-tight text-center leading-tight">{label}</span>
     </Link>
   );
 }
@@ -32,48 +32,50 @@ export default function SuperAppHome({ latestListings = [], heroTitle, heroSubti
         <div className="absolute top-[-10%] right-[-10%] w-64 h-64 bg-emerald-300/30 rounded-full blur-[80px]" />
         <div className="absolute top-[20%] left-[-10%] w-72 h-72 bg-blue-400/20 rounded-full blur-[80px]" />
         
-        <div className="relative z-10 flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-sm font-bold text-primary tracking-widest uppercase mb-1">KAMPUS HUB</h2>
-            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-              {heroTitle || "Halo, Mahasiswa!"}
-            </h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-sm leading-relaxed">
-              {heroSubtitle || "Pusat info, jual beli, dan obrolan seru anak kampus."}
-            </p>
+        <div className="relative z-10 mb-4">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[9px] font-extrabold text-primary tracking-widest uppercase bg-primary/10 px-2 py-0.5 rounded">
+              KAMPUS HUB
+            </span>
+            <Link href="/jual-beli" className="p-1.5 bg-white dark:bg-slate-800 rounded-full shadow-sm border border-slate-100 dark:border-slate-700 hover:shadow-md transition-shadow">
+              <Icon.Search className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+            </Link>
           </div>
-          <button className="p-3 bg-white dark:bg-slate-800 rounded-full shadow-sm border border-slate-100 dark:border-slate-700 hover:shadow-md transition-shadow">
-            <Icon.MessageCircle className="w-6 h-6 text-slate-600 dark:text-slate-300" />
-          </button>
+          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-none">
+            {heroTitle || "Halo, Mahasiswa!"}
+          </h1>
+          <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-snug pr-4 line-clamp-2">
+            {heroSubtitle || "Pusat info, jual beli, dan obrolan seru anak kampus."}
+          </p>
         </div>
 
         {/* 4 GRID MENU */}
-        <div className="grid grid-cols-2 gap-4 mt-6 relative z-10">
+        <div className="grid grid-cols-4 gap-3 mt-6 relative z-10">
           <GridItem 
             href="/jual-beli" 
             icon={Icon.Package} 
-            label="Pasar Kampus" 
+            label="Pasar" 
             colorClass="bg-gradient-to-br from-emerald-100 to-green-200 dark:from-emerald-900/40 dark:to-green-800/40" 
             delay="0ms" 
           />
           <GridItem 
             href="/chat" 
             icon={Icon.User} 
-            label="Cari Teman" 
+            label="Teman" 
             colorClass="bg-gradient-to-br from-blue-100 to-sky-200 dark:from-blue-900/40 dark:to-sky-800/40" 
             delay="100ms" 
           />
           <GridItem 
-            href="/menfess" 
-            icon={Icon.PlusCircle} 
-            label="Menfess" 
+            href="/mading" 
+            icon={Icon.BookOpen} 
+            label="Mading" 
             colorClass="bg-gradient-to-br from-orange-100 to-amber-200 dark:from-orange-900/40 dark:to-amber-800/40" 
             delay="200ms" 
           />
           <GridItem 
-            href="/blog" 
-            icon={Icon.BookOpen} 
-            label="Info Kampus" 
+            href="/mading?tab=info" 
+            icon={Icon.Info} 
+            label="Info" 
             colorClass="bg-gradient-to-br from-purple-100 to-fuchsia-200 dark:from-purple-900/40 dark:to-fuchsia-800/40" 
             delay="300ms" 
           />
@@ -90,11 +92,11 @@ export default function SuperAppHome({ latestListings = [], heroTitle, heroSubti
         </div>
         
         <div className="flex gap-4 overflow-x-auto pb-6 px-5 sm:px-6 md:px-10 lg:px-16 snap-x snap-mandatory hide-scrollbar">
-          {latestListings.slice(0, 8).map((ad, idx) => (
+          {latestListings.slice(0, 30).map((ad, idx) => (
             <Link 
               key={ad.id} 
               href={`/produk/${buildSlug(ad.title, ad.id)}`}
-              className="flex-none w-[160px] sm:w-[200px] bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden snap-start hover:shadow-md transition-shadow group"
+              className="flex-none w-[140px] sm:w-[180px] bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden snap-start hover:shadow-md transition-shadow group"
             >
               <div className="relative aspect-square w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                 {ad.image_url ? (
@@ -126,12 +128,29 @@ export default function SuperAppHome({ latestListings = [], heroTitle, heroSubti
               </div>
             </Link>
           ))}
+          
+          {/* LIHAT SEMUA CARD */}
+          <Link 
+            href="/jual-beli"
+            className="flex-none w-[140px] sm:w-[180px] bg-primary/5 dark:bg-primary/10 rounded-2xl border border-primary/20 flex flex-col items-center justify-center snap-start hover:bg-primary/10 transition-colors group"
+          >
+            <div className="w-12 h-12 bg-primary/20 text-primary rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+              <Icon.ArrowUp className="w-6 h-6 rotate-90" />
+            </div>
+            <span className="text-sm font-bold text-primary">Lihat 400+</span>
+            <span className="text-[10px] text-primary/70">Barang Lainnya</span>
+          </Link>
         </div>
       </div>
 
       {/* FEED MADING KAMPUS */}
       <div className="px-5 sm:px-6 md:px-10 lg:px-16">
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Feed Kampus</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white">Mading & Menfess</h3>
+          <Link href="/mading" className="text-xs font-bold text-primary hover:underline">
+            Buka Mading →
+          </Link>
+        </div>
         
         <div className="space-y-4">
           {/* MOCKUP MENFESS 1 */}

@@ -198,9 +198,9 @@ export default function JualPage() {
           🏪 <strong>Iklanmu gratis</strong> — kamu sudah punya toko, jadi tidak ada biaya tayang.
         </div>
       ) : (
-        <div className="mt-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
-          🏪 Punya toko di sini? <strong>Iklannya gratis.</strong>{" "}
-          <Link href="/dashboard/toko" className="font-semibold underline">Buat toko dulu</Link> — gratis, sekali saja, lalu semua iklan berikutnya tanpa biaya tayang.
+        <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-900/20 dark:text-amber-300">
+          🏪 Punya toko fisik di sekitar kampus? <strong>Daftar Toko Mitra & Berlangganan.</strong>{" "}
+          <Link href="/dashboard/toko" className="font-semibold underline">Daftarkan tokomu</Link> (syarat: memiliki toko fisik & paket langganan aktif) untuk pasang iklan sepuasnya tanpa biaya tayang per barang.
         </div>
       )}
       <p className="mt-1 text-gray-500">

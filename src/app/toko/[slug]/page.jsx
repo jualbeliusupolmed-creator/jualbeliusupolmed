@@ -318,11 +318,11 @@ export default async function HalamanToko({ params }) {
         style={{ background: warna.muda, borderColor: `${warna.utama}33` }}
       >
         <p className="text-lg font-extrabold" style={{ color: warna.teks }}>
-          Punya toko di sini, jualannya gratis
+          Punya toko fisik? Gabung jadi Toko Mitra
         </p>
         <p className="mx-auto mt-1.5 max-w-md text-sm" style={{ color: warna.teks, opacity: 0.85 }}>
-          Buat toko sekali — gratis, tinggal disetujui admin — lalu semua barang yang kamu pasang
-          tayang tanpa biaya. Alamatnya jadi milikmu sendiri, seperti halaman ini.
+          Khusus pemilik toko fisik di sekitar USU & Polmed dengan paket langganan aktif.
+          Semua barang tayang tanpa biaya per iklan, punya etalase digital & alamat website sendiri.
         </p>
         <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
           <Link
