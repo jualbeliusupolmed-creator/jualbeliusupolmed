@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getUserSession } from "@/lib/auth";
 import { hashIdentitas } from "@/lib/identitasHash";
+import { formatWa } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -12,8 +13,10 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const customUserId = searchParams.get("userId");
     const campus = searchParams.get("campus");
+    const headerWa = request.headers.get("x-seller-wa");
+    const queryWa = searchParams.get("wa");
 
-    const sessionWa = getUserSession();
+    const sessionWa = formatWa(getUserSession() || headerWa || queryWa || "");
     const userId = sessionWa ? hashIdentitas(sessionWa) : customUserId;
 
     if (!userId) {
@@ -22,36 +25,46 @@ export async function GET(request) {
 
     const supa = getAdminClient();
 
-    // 1. Ambil profil user sendiri
+    // 1. Ambil profil user sendiri dari teman_profiles
     let { data: myProfile } = await supa
       .from("teman_profiles")
       .select("*")
       .eq("user_id", userId)
       .maybeSingle();
 
-    // Jika belum ada di teman_profiles, coba fallback dari seller_profiles (Satu Pintu)
-    if (!myProfile && sessionWa) {
-      const { data: sProfile } = await supa
+    // 2. Ambil data dari seller_profiles untuk sinkronisasi Satu Pintu
+    let sProfile = null;
+    if (sessionWa) {
+      const { data } = await supa
         .from("seller_profiles")
-        .select("name, bio, campus, faculty, whatsapp, photo_url")
+        .select("name, bio, campus, faculty, whatsapp, photo_url, anonymous_name")
         .eq("wa", sessionWa)
         .maybeSingle();
-
-      if (sProfile) {
-        myProfile = {
-          user_id: userId,
-          display_name: sProfile.name || "Anak Kampus",
-          bio: sProfile.bio || "",
-          campus: sProfile.campus || "USU",
-          faculty: sProfile.faculty || "Umum",
-          whatsapp: sProfile.whatsapp || sessionWa,
-          photo_url: sProfile.photo_url || "",
-          intent: "Teman Santai ☕",
-        };
-      }
+      sProfile = data;
     }
 
-    // 2. Ambil ID target yang sudah pernah di-swipe oleh user
+    // Jika belum ada di teman_profiles, bangun objek dari seller_profiles
+    if (!myProfile && sProfile) {
+      myProfile = {
+        user_id: userId,
+        display_name: sProfile.name || "Anak Kampus",
+        bio: sProfile.bio || "",
+        campus: sProfile.campus || "USU",
+        faculty: sProfile.faculty || "Umum",
+        whatsapp: sProfile.whatsapp || sessionWa,
+        photo_url: sProfile.photo_url || "",
+        intent: "Teman Santai ☕",
+      };
+    } else if (myProfile && sProfile) {
+      // Jika keduanya ada, pastikan data yang paling lengkap & baru dipakai
+      if (!myProfile.photo_url && sProfile.photo_url) myProfile.photo_url = sProfile.photo_url;
+      if (!myProfile.display_name && sProfile.name) myProfile.display_name = sProfile.name;
+      if (!myProfile.bio && sProfile.bio) myProfile.bio = sProfile.bio;
+      if (!myProfile.campus && sProfile.campus) myProfile.campus = sProfile.campus;
+      if (!myProfile.faculty && sProfile.faculty) myProfile.faculty = sProfile.faculty;
+    }
+
+    // 3. Ambil ID target yang sudah pernah di-swipe oleh user
     let swipedTargetIds = [];
     if (myProfile?.id) {
       const { data: swipes } = await supa
@@ -62,7 +75,7 @@ export async function GET(request) {
       swipedTargetIds = (swipes || []).map((s) => s.target_id);
     }
 
-    // 3. Ambil deck profil teman yang aktif dan belum di-swipe
+    // 4. Ambil deck profil teman yang aktif dan belum di-swipe
     let query = supa
       .from("teman_profiles")
       .select("id, user_id, photo_url, photo_urls, display_name, gender, campus, faculty, batch, intent, bio, instagram, created_at")
@@ -87,6 +100,7 @@ export async function GET(request) {
     return NextResponse.json({
       ok: true,
       myProfile: myProfile || null,
+      sellerProfile: sProfile || null,
       profiles: availableProfiles,
     });
   } catch (err) {
@@ -114,38 +128,45 @@ export async function POST(request) {
       target_gender = "all",
     } = body;
 
-    const sessionWa = getUserSession();
+    const headerWa = request.headers.get("x-seller-wa");
+    const sessionWa = formatWa(getUserSession() || headerWa || whatsapp || "");
     const userId = sessionWa ? hashIdentitas(sessionWa) : customUserId;
 
     if (!userId) {
       return NextResponse.json({ error: "Identitas pengguna diperlukan" }, { status: 400 });
     }
 
-    if (!photo_url || typeof photo_url !== "string" || photo_url.length < 5) {
-      return NextResponse.json({ error: "Foto profil wajib diunggah" }, { status: 400 });
-    }
+    const cleanName = String(display_name || "Anak Kampus").trim();
+    const cleanPhoto = photo_url || "";
+    const cleanBio = String(bio || "").trim();
+    const cleanCampus = String(campus || "USU").trim();
+    const cleanFaculty = String(faculty || "Umum").trim();
+    const cleanBatch = String(batch || "2024").trim();
+    const cleanIntent = String(intent || "Teman Santai ☕").trim();
+    const cleanInstagram = String(instagram || "").replace(/^@/, "").trim();
+    const cleanWa = sessionWa || String(whatsapp || "").trim();
 
     const supa = getAdminClient();
 
     const profileData = {
       user_id: userId,
-      photo_url,
-      photo_urls: Array.isArray(photo_urls) && photo_urls.length ? photo_urls : [photo_url],
-      display_name: String(display_name || "Anak Kampus").trim(),
-      campus: String(campus || "USU").trim(),
-      faculty: String(faculty || "Umum").trim(),
-      batch: String(batch || "2024").trim(),
-      intent: String(intent || "Teman Santai ☕").trim(),
-      bio: String(bio || "").trim(),
-      instagram: String(instagram || "").replace(/^@/, "").trim(),
-      whatsapp: String(whatsapp || (sessionWa || "")).trim(),
+      photo_url: cleanPhoto,
+      photo_urls: Array.isArray(photo_urls) && photo_urls.length ? photo_urls : (cleanPhoto ? [cleanPhoto] : []),
+      display_name: cleanName,
+      campus: cleanCampus,
+      faculty: cleanFaculty,
+      batch: cleanBatch,
+      intent: cleanIntent,
+      bio: cleanBio,
+      instagram: cleanInstagram,
+      whatsapp: cleanWa,
       gender: String(gender || "all").trim(),
       target_gender: String(target_gender || "all").trim(),
       is_active: true,
       updated_at: new Date().toISOString(),
     };
 
-    // Cari apakah sudah punya profil
+    // 1. Simpan ke teman_profiles
     const { data: existing } = await supa
       .from("teman_profiles")
       .select("id")
@@ -173,7 +194,7 @@ export async function POST(request) {
       resultProfile = data;
     }
 
-    // Sinkronisasi Satu Pintu: jika ada sesi login, update juga seller_profiles
+    // 2. Sinkronisasi Satu Pintu ke seller_profiles & listings
     if (sessionWa) {
       try {
         await supa
@@ -181,15 +202,22 @@ export async function POST(request) {
           .upsert(
             {
               wa: sessionWa,
-              name: profileData.display_name,
-              bio: profileData.bio,
-              campus: profileData.campus,
-              faculty: profileData.faculty,
-              photo_url: profileData.photo_url,
+              name: cleanName,
+              bio: cleanBio,
+              campus: cleanCampus,
+              faculty: cleanFaculty,
+              photo_url: cleanPhoto,
+              whatsapp: sessionWa,
               updated_at: new Date().toISOString(),
             },
             { onConflict: "wa" }
           );
+
+        // Update juga nama penjual di seluruh listing miliknya agar seragam
+        await supa
+          .from("listings")
+          .update({ seller_name: cleanName })
+          .eq("seller_wa", sessionWa);
       } catch (syncErr) {
         console.warn("Sync to seller_profiles warning:", syncErr?.message);
       }
@@ -198,6 +226,7 @@ export async function POST(request) {
     return NextResponse.json({
       ok: true,
       profile: resultProfile,
+      seller_wa: sessionWa,
     });
   } catch (err) {
     console.error("POST /api/teman/profiles error:", err);
