@@ -34,6 +34,7 @@ export const ICONS = {
   tren:           "M21 21l-4.3-4.3M11 18a7 7 0 100-14 7 7 0 000 14zM21 3l-5 5m0-5l5 5",
   audit:          "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
   wabot:          "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z",
+  teman:          "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z",
   broadcast:      "M3 3h18v4H3zM3 17h18v4H3zM7 8h10v8H7z",
   antrean:        "M22 12h-6l-2 3h-4l-2-3H2M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z",
   notifikasi:     "M15 17h5l-1.41-1.41A1 1 0 0118 15V10a6 6 0 00-5-5.92V4a1 1 0 00-2 0v.08A6 6 0 006 10v5a1 1 0 01-.59.89L4 17h5m6 0a3 3 0 01-6 0",
@@ -79,6 +80,7 @@ export const GROUPS = [
   {
     label: "Bot & Komunikasi",
     items: [
+      { key: "teman",      label: "Swipe Teman Kampus" },
       { key: "wabot",      label: "WhatsApp Bot" },
       { key: "obrolan",    label: "Audit Cari Teman" },
       { key: "broadcast",  label: "Broadcast" },
