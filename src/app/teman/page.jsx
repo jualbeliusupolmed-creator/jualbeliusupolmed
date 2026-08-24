@@ -22,6 +22,7 @@ function getClientId() {
 
 export default function TemanSwipePage() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [userId, setUserId] = useState("");
   const [myProfile, setMyProfile] = useState(null);
   const [deck, setDeck] = useState([]);
@@ -39,6 +40,7 @@ export default function TemanSwipePage() {
   const [matchesLoading, setMatchesLoading] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const cid = getClientId();
     setUserId(cid);
   }, []);
@@ -147,6 +149,17 @@ export default function TemanSwipePage() {
 
   const currentTopProfile = deck[0] || null;
   const nextProfile = deck[1] || null;
+
+  if (!mounted) {
+    return (
+      <div className="relative min-h-[calc(100dvh-60px)] md:min-h-[calc(100dvh-64px)] bg-[#f5f5f7] dark:bg-[#000000] flex flex-col font-sans max-w-lg w-full mx-auto px-4 py-3">
+        <div className="flex flex-col items-center justify-center my-auto py-24 space-y-3">
+          <div className="w-10 h-10 border-3 border-primary/30 border-t-primary rounded-full animate-spin" />
+          <p className="text-xs text-gray-400 font-medium">Menyiapkan Cari Teman Kampus...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-[calc(100dvh-60px)] md:min-h-[calc(100dvh-64px)] bg-[#f5f5f7] dark:bg-[#000000] flex flex-col font-sans max-w-lg w-full mx-auto px-4 py-3 select-none">
