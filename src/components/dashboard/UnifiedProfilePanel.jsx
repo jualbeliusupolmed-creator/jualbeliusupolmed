@@ -60,12 +60,14 @@ export default function UnifiedProfilePanel({ sellerProfile, wa, onProfileUpdate
     anonymous_name: sellerProfile?.anonymous_name || "Anonim",
   });
 
+  const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [compressing, setCompressing] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
+    setMounted(true);
     async function loadTemanProfile() {
       try {
         setLoading(true);
@@ -216,6 +218,15 @@ export default function UnifiedProfilePanel({ sellerProfile, wa, onProfileUpdate
   };
 
   const currentFaculties = formData.campus === "Polmed" ? FACULTIES_POLMED : FACULTIES_USU;
+
+  if (!mounted) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <div className="h-24 rounded-[22px] bg-white dark:bg-[#1c1c1e] border border-black/[0.06] dark:border-white/[0.08]" />
+        <div className="h-96 rounded-[22px] bg-white dark:bg-[#1c1c1e] border border-black/[0.06] dark:border-white/[0.08]" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

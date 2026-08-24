@@ -42,6 +42,7 @@ function daysLeft(expiredAt) {
 
 function DashboardInner() {
   const params = useSearchParams();
+  const [mounted, setMounted] = useState(false);
   const [wa, setWa] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [items, setItems] = useState([]);
@@ -122,6 +123,7 @@ function DashboardInner() {
   }
 
   useEffect(() => {
+    setMounted(true);
     fetch("/api/config")
       .then((r) => r.json())
       .then((d) => setCfg(d))
@@ -425,6 +427,21 @@ function DashboardInner() {
   const totalFee = soldItems.reduce((s, i) => s + (i.sold_fee || 0), 0);
   const totalViews = items.reduce((s, i) => s + (i.views || 0), 0);
   const topViewed = [...items].filter((i) => i.status === "active" && (i.views || 0) > 0).sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 3);
+
+  if (!mounted) {
+    return (
+      <div className="mx-auto max-w-5xl px-4 py-6 animate-pulse space-y-6">
+        <div className="h-32 rounded-3xl bg-gray-100 dark:bg-slate-800/50" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="h-10 rounded-xl bg-gray-100 dark:bg-slate-800/50" />
+          <div className="h-10 rounded-xl bg-gray-100 dark:bg-slate-800/50" />
+          <div className="h-10 rounded-xl bg-gray-100 dark:bg-slate-800/50" />
+          <div className="h-10 rounded-xl bg-gray-100 dark:bg-slate-800/50" />
+        </div>
+        <div className="h-64 rounded-2xl bg-gray-100 dark:bg-slate-800/50" />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
