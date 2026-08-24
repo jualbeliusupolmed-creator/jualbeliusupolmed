@@ -85,13 +85,13 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
             <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 bg-black/[0.04] dark:bg-white/[0.08] px-2 py-0.5 rounded-full truncate max-w-[80px] xs:max-w-none">
               {listing.category}
             </span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/8 text-primary dark:bg-emerald-400/15 dark:text-emerald-300 font-semibold max-w-[100px] xs:max-w-[140px] truncate flex items-center gap-0.5">
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/8 text-primary dark:bg-violet-500/15 dark:text-violet-300 font-semibold max-w-[100px] xs:max-w-[140px] truncate flex items-center gap-0.5">
               <Icon.MapPin className="h-2.5 w-2.5 shrink-0" />
               <span className="truncate">{listing.campus === "Semua" ? "Medan" : listing.campus}
               {listing.area ? ` (${listing.area})` : ""}</span>
             </span>
           </div>
-          <h3 className="mt-1.5 line-clamp-2 text-xs xs:text-sm font-semibold leading-snug text-[#1d1d1f] dark:text-[#f5f5f7] group-hover:text-primary dark:group-hover:text-emerald-400 transition-colors min-h-[2rem] xs:min-h-[2.5rem]">
+          <h3 className="mt-1.5 line-clamp-2 text-xs xs:text-sm font-semibold leading-snug text-[#1d1d1f] dark:text-[#f5f5f7] group-hover:text-primary dark:group-hover:text-violet-400 transition-colors min-h-[2rem] xs:min-h-[2.5rem]">
             {listing.title}
           </h3>
           <p className="mt-1 text-sm xs:text-base font-black tracking-tight text-[#1d1d1f] dark:text-white">
