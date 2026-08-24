@@ -17,6 +17,7 @@ const jakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
   display: "swap",
+  preload: true,
   variable: "--font-jakarta",
 });
 
@@ -135,7 +136,7 @@ export default async function RootLayout({ children }) {
           })();
         ` }} />
       </head>
-      <body className="min-h-screen flex flex-col">
+      <body className={cn(jakartaSans.className, "min-h-screen flex flex-col font-sans antialiased")}>
         <Script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6730561722094443"

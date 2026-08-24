@@ -13,14 +13,14 @@ export async function GET(req) {
 
     const supa = getAdminClient();
 
-    // Dapatkan semua room marketplace milik user ini
+    // Dapatkan semua room marketplace dan direct DM milik user ini
     const { data: rooms, error } = await supa
       .from("chat_rooms")
       .select(`
         *,
         listings:listing_id (id, title, image_url, price)
       `)
-      .eq("type", "marketplace")
+      .in("type", ["marketplace", "direct"])
       .or(`user1_id.eq.${wa},user2_id.eq.${wa}`)
       .order("updated_at", { ascending: false });
 

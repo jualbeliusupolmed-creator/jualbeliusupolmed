@@ -102,12 +102,26 @@ Berjalan dengan PostgreSQL, memiliki tabel-tabel berikut:
 
 ## 5. Log & Riwayat Audit
 
+*   **24 Agustus 2026 — Owner Fast Actions, Photo Attachments & Realtime Typing Indicators**
+    - **Panel Aksi Cepat Pemilik (`OwnerFastActions.jsx`)**: Menampilkan panel kontrol khusus saat penjual membuka halaman iklannya sendiri di `/produk/[slug]` (`[✏️ Edit Iklan]`, `[✅ Tandai Terjual]`, `[🚀 Sundul / Bump]`, `[📊 Dashboard]`).
+    - **Lampiran Foto di Chat & DM (`/chat`)**: Input obrolan dilengkapi tombol `[📷]` yang terintegrasi dengan `/api/upload` dan Lightbox modal interaktif untuk memperbesar foto.
+    - **Realtime Typing Indicator**: Supabase Realtime broadcast event `typing` menampilkan animasi gelembung titik membal saat lawan bicara sedang mengetik pesan.
+    - **Kombinasi Tombol Akun Navbar**: Menggabungkan tombol Masuk & Dashboard menjadi satu pil status akun cerdas di `Navbar.jsx`.
+    - **Kepadatan Tampilan Beranda**: Merapikan padding dan margin vertikal hero bar di `SuperAppHome.jsx`.
+
+*   **24 Agustus 2026 — Fitur Lanjut DM Pribadi Terintegrasi di Website & Panel Admin**
+    - **Lanjut DM Pribadi Saling Setuju (Mutual Consent Website DM)**: Fitur "Lanjut DM" di Cari Teman (`type: 'random'`). Saat kedua pihak saling setuju, sistem membuat ruang DM 1-on-1 permanen (`type: 'direct'`) di website dengan identitas profil asli pengguna.
+    - **Integrasi Kotak Masuk Pengguna**: Ruang DM muncul otomatis di kotak masuk akun (`/chat`) dengan kartu profil, fakultas, dan badge `💬 DM Pribadi`.
+    - **Integrasi Panel Admin**: Admin panel (`/admin/obrolan`) memiliki tab filter `💬 DM Pribadi` (`type=direct`), badge identitas pengguna 1 ↔ 2, tautan profil, serta log pesan lengkap untuk moderasi.
+    - **Notifikasi WA Kontak Pertama**: Notifikasi WhatsApp ke penjual hanya dikirim 1 kali saat pembeli pertama kali menghubungi barang di `POST /api/chat/marketplace/start`.
+    - **Notifikasi Suara & Quick Reply**: Web Audio API notifikasi (`playChatSound()`, `playSentSound()`) dan kartu balasan langsung in-app.
+
 *   **24 Agustus 2026 — Traffic Menfess, pseudonim, dan audit Cari Teman**
     - Migration `supabase/migrations/20260823194939_mading_engagement_anonymous_identity.sql` menambah hitungan tayangan unik dan bagikan Menfess, tabel engagement berisi hash bergaram (bukan IP/nomor mentah), serta kolom `seller_profiles.anonymous_name`.
     - Semua penulisan hitungan berjalan melalui API server dan fungsi `SECURITY INVOKER` yang hanya dapat dieksekusi `service_role`; tabel audit engagement tidak memiliki policy publik.
     - Pseudonim profil digunakan server-side untuk Menfess, komentar, dan room Cari Teman. Nama marketplace tidak otomatis terekspos dalam komunitas anonim.
     - Admin memiliki halaman Analitik Menfess dan Audit Cari Teman. Isi chat diperlakukan sebagai data privat; panel menampilkan pengingat akses hanya untuk moderasi/penanganan laporan.
-    - Migration belum diterapkan ke produksi dalam perubahan kode ini; terapkan dan verifikasi melalui workflow Supabase yang disetujui sebelum mengaktifkan indikator traffic di Vercel.
+    - Migration diterapkan dan diverifikasi di Supabase produksi pada 24 Agustus 2026. Kolom foto/traffic dan pseudonim sudah ada; tabel engagement memakai RLS. Hak eksekusi fungsi engagement telah ditegaskan hanya untuk `service_role` (anon/authenticated ditolak), dan Security Advisors tidak menemukan isu pada level warning.
 
 *   **24 Agustus 2026 — Verifikasi kualitas web**
     - `npm run lint` bersih tanpa warning maupun error; dependency React Hooks pada halaman admin, marketplace, jasa, dan toko telah dirapikan.

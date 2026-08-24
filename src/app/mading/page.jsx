@@ -377,27 +377,24 @@ export default function MadingPage() {
 
   return (
     <PullToRefresh onRefresh={fetchPosts}>
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24 font-sans selection:bg-primary/20">
+      <div className="min-h-screen bg-[#f5f5f7] dark:bg-[#0b0b0f] pb-24 font-sans selection:bg-primary/20">
         
         {/* STICKY HEADER */}
-        <div className="sticky top-0 z-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800/60">
-          <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="sticky top-0 z-20 bg-white/85 dark:bg-[#1c1c1e]/85 backdrop-blur-2xl border-b border-black/[0.06] dark:border-white/[0.08]">
+          <div className="max-w-2xl mx-auto px-4 py-3.5 flex items-center justify-between">
             <div>
-              <h1 className="text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-                <span>Mading Kampus</span>
-                <span className="text-[10px] uppercase font-bold tracking-widest bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
-                  Menfess &amp; Info
-                </span>
+              <h1 className="text-[22px] font-semibold tracking-[-0.035em] text-[#1d1d1f] dark:text-white">
+                Mading
               </h1>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                Ruang ekspresi anonim, curhat, dan pengumuman kampus USU &amp; POLMED
+              <p className="text-[12px] text-[#6e6e73] dark:text-slate-400 mt-0.5">
+                Menfess, kabar, dan cerita kampus
               </p>
             </div>
 
             {activeTab !== "blog" && (
               <button
                 onClick={() => setShowModal(true)}
-                className="flex items-center gap-1.5 bg-primary text-white px-3.5 py-2 rounded-full text-xs font-bold shadow-md shadow-primary/25 hover:bg-primary/90 active:scale-95 transition-all"
+                className="flex items-center gap-1.5 bg-[#0071e3] text-white px-3.5 py-2 rounded-xl text-xs font-semibold hover:bg-[#0077ed] active:scale-[0.98] transition-all"
               >
                 <Icon.PlusCircle className="w-4 h-4" />
                 <span className="hidden sm:inline">Tulis Menfess</span>
@@ -407,23 +404,22 @@ export default function MadingPage() {
           </div>
 
           {/* TABS FILTER */}
-          <div className="max-w-2xl mx-auto px-4 flex border-t border-slate-100 dark:border-slate-800/50">
+          <div className="max-w-2xl mx-auto px-4 flex border-t border-black/[0.05] dark:border-white/[0.06]">
             {[
-              { id: "all", label: "Semua", icon: "✨" },
-              { id: "menfess", label: "Menfess", icon: "💌" },
-              { id: "info", label: "Info Kampus", icon: "📢" },
-              { id: "blog", label: "Blog", icon: "📝" },
+              { id: "all", label: "Semua" },
+              { id: "menfess", label: "Menfess" },
+              { id: "info", label: "Info Kampus" },
+              { id: "blog", label: "Blog" },
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 py-3 text-xs font-bold border-b-2 flex items-center justify-center gap-1.5 transition-colors ${
+                className={`flex-1 py-3 text-xs font-semibold border-b-2 flex items-center justify-center transition-colors ${
                   activeTab === tab.id
                     ? "border-primary text-primary dark:text-emerald-400"
                     : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400"
                 }`}
               >
-                <span>{tab.icon}</span>
                 <span>{tab.label}</span>
               </button>
             ))}
@@ -442,8 +438,8 @@ export default function MadingPage() {
                     onClick={() => setSelectedFaculty(f)}
                     className={`px-3.5 py-1.5 min-h-[34px] rounded-full text-xs font-semibold shrink-0 transition-all active:scale-95 ${
                       selectedFaculty === f
-                        ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-sm font-bold"
-                        : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:border-slate-300"
+                        ? "bg-[#1d1d1f] text-white dark:bg-white dark:text-slate-900 shadow-sm font-semibold"
+                        : "bg-white dark:bg-[#1c1c1e] text-[#424245] dark:text-slate-400 border border-black/[0.07] dark:border-white/[0.08] hover:border-black/[0.15]"
                     }`}
                   >
                     {f}
@@ -454,9 +450,9 @@ export default function MadingPage() {
               {/* Sub-Filters: Semua, Terpopuler, Ada Foto */}
               <div className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {[
-                  { id: "all", label: "✨ Semua" },
-                  { id: "popular", label: "🔥 Terpopuler" },
-                  { id: "photo", label: "📸 Ada Foto" },
+                  { id: "all", label: "Semua" },
+                  { id: "popular", label: "Terpopuler" },
+                  { id: "photo", label: "Ada Foto" },
                 ].map((st) => (
                   <button
                     key={st.id}
@@ -478,7 +474,7 @@ export default function MadingPage() {
           {loading ? (
             <div className="space-y-3 py-4">
               {[1, 2, 3].map((n) => (
-                <div key={n} className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 animate-pulse space-y-3">
+                <div key={n} className="bg-white dark:bg-[#1c1c1e] p-5 rounded-[20px] border border-black/[0.06] dark:border-white/[0.08] animate-pulse space-y-3">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800" />
                     <div className="space-y-1.5 flex-1">
@@ -492,9 +488,9 @@ export default function MadingPage() {
               ))}
             </div>
           ) : posts.length === 0 ? (
-            <div className="text-center py-16 px-4 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800">
-              <div className="w-14 h-14 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
-                📝
+            <div className="text-center py-16 px-4 bg-white dark:bg-[#1c1c1e] rounded-[20px] border border-black/[0.06] dark:border-white/[0.08]">
+              <div className="w-14 h-14 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mx-auto mb-3">
+                <Icon.MessageCircle className="w-6 h-6" />
               </div>
               <h3 className="font-bold text-slate-800 dark:text-slate-200 text-base">Belum Ada Sesuatu di Sini</h3>
               <p className="text-xs text-slate-500 max-w-xs mx-auto mt-1">
@@ -503,7 +499,7 @@ export default function MadingPage() {
               {activeTab !== "blog" && (
                 <button
                   onClick={() => setShowModal(true)}
-                  className="mt-4 inline-flex items-center gap-1 bg-primary text-white px-4 py-2 rounded-full text-xs font-bold shadow-md shadow-primary/20"
+                  className="mt-4 inline-flex items-center gap-1 bg-[#0071e3] text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-[#0077ed]"
                 >
                   <Icon.PlusCircle className="w-4 h-4" />
                   Tulis Sekarang
@@ -533,7 +529,7 @@ export default function MadingPage() {
                     <Link
                       key={`blog-${item.id}`}
                       href={`/blog/${item.slug}`}
-                      className={`group flex overflow-hidden bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm transition-all hover:border-primary/50 hover:shadow-md ${activeTab === "blog" ? "flex-col rounded-2xl" : "flex-col sm:flex-row rounded-3xl"}`}
+                      className={`group flex overflow-hidden bg-white dark:bg-[#1c1c1e] border border-black/[0.06] dark:border-white/[0.08] shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-all hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] ${activeTab === "blog" ? "flex-col rounded-[20px]" : "flex-col sm:flex-row rounded-[20px]"}`}
                     >
                       <div className={`relative overflow-hidden bg-slate-100 dark:bg-slate-800 flex-shrink-0 ${activeTab === "blog" ? "w-full h-40" : "w-full h-48 sm:w-48 sm:h-auto"}`}>
                         {item.image_url ? (
@@ -544,11 +540,11 @@ export default function MadingPage() {
                             className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
                           />
                         ) : (
-                          <div className="flex h-full w-full items-center justify-center text-3xl text-slate-300 dark:text-slate-700">📝</div>
+                          <div className="flex h-full w-full items-center justify-center text-primary/40 dark:text-slate-700"><Icon.MessageCircle className="h-8 w-8" /></div>
                         )}
                       </div>
                       <div className="flex flex-1 flex-col p-4 sm:p-5">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-primary">Artikel Blog</p>
+                        <p className="text-[11px] font-semibold text-primary">Artikel Blog</p>
                         <h2 className="mt-1.5 line-clamp-2 text-sm sm:text-base font-bold leading-snug transition-colors group-hover:text-primary dark:text-white">
                           {item.title}
                         </h2>
@@ -571,32 +567,30 @@ export default function MadingPage() {
                   <div
                     key={`post-${post.id}`}
                     data-mading-post-id={post.id}
-                    className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden transition-all hover:border-slate-200 dark:hover:border-slate-700"
+                    className="bg-white dark:bg-[#1c1c1e] p-5 rounded-[20px] border border-black/[0.06] dark:border-white/[0.08] shadow-[0_1px_2px_rgba(0,0,0,0.03)] relative overflow-hidden transition-all hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)]"
                   >
                     {/* Type Indicator Line */}
                     <div
-                      className={`absolute top-0 right-0 w-1.5 h-full ${
-                        post.type === "info" ? "bg-fuchsia-500" : "bg-amber-400"
-                      }`}
+                      className={`absolute top-0 left-0 h-1 w-full ${post.type === "info" ? "bg-primary" : "bg-amber-400"}`}
                     />
 
                     {/* Header */}
                     <div className="flex items-center gap-3 mb-3">
                       <div
-                        className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg ${
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                           post.type === "info"
                             ? "bg-fuchsia-100 dark:bg-fuchsia-950 text-fuchsia-600"
                             : "bg-amber-100 dark:bg-amber-950 text-amber-600"
                         }`}
                       >
-                        {post.type === "info" ? "📢" : "👤"}
+                        {post.type === "info" ? <Icon.Info className="w-5 h-5" /> : <Icon.MessageCircle className="w-5 h-5" />}
                       </div>
                       <div>
                         <div className="flex items-center gap-1.5">
-                          <p className="text-sm font-bold text-slate-900 dark:text-white">
+                          <p className="text-sm font-semibold text-[#1d1d1f] dark:text-white">
                             {post.sender_name}
                           </p>
-                          <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-1.5 py-0.5 rounded font-semibold">
+                          <span className="text-[10px] bg-[#f5f5f7] dark:bg-slate-800 text-[#6e6e73] dark:text-slate-400 px-1.5 py-0.5 rounded-md font-medium">
                             {post.faculty}
                           </span>
                         </div>
@@ -608,7 +602,7 @@ export default function MadingPage() {
 
                     {/* Title (If info) */}
                     {post.title && (
-                      <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-1.5 leading-snug">
+                      <h3 className="text-sm font-semibold text-[#1d1d1f] dark:text-white mb-1.5 leading-snug">
                         {post.title}
                       </h3>
                     )}
@@ -622,7 +616,7 @@ export default function MadingPage() {
                       <button
                         type="button"
                         onClick={() => setZoomImage({ url: post.image_url, sender: post.sender_name, title: post.title || post.content })}
-                        className="mt-3 relative block w-full rounded-2xl overflow-hidden cursor-zoom-in group border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-left focus:outline-none focus:ring-2 focus:ring-primary/40"
+                        className="mt-3 relative block w-full rounded-2xl overflow-hidden cursor-zoom-in group border border-black/[0.06] dark:border-white/[0.08] bg-[#f5f5f7] dark:bg-slate-800/50 text-left focus:outline-none focus:ring-2 focus:ring-primary/40"
                       >
                         <img
                           src={post.image_url}
@@ -631,8 +625,8 @@ export default function MadingPage() {
                           loading="lazy"
                         />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors flex items-end justify-end p-2.5 pointer-events-none">
-                          <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/70 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm">
-                            🔍 Perbesar Foto
+                          <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/70 backdrop-blur-sm text-white text-[10px] font-semibold px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm">
+                            Perbesar foto
                           </span>
                         </div>
                       </button>
@@ -746,7 +740,7 @@ export default function MadingPage() {
         {/* MODAL BUAT POST BARU */}
         {showModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md p-6 shadow-2xl border border-slate-100 dark:border-slate-800 relative max-h-[90vh] overflow-y-auto">
+            <div className="bg-white dark:bg-[#1c1c1e] rounded-[24px] w-full max-w-md p-6 shadow-2xl border border-black/[0.06] dark:border-white/[0.08] relative max-h-[90vh] overflow-y-auto">
               <button
                 onClick={() => setShowModal(false)}
                 className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full"
@@ -754,7 +748,7 @@ export default function MadingPage() {
                 ✕
               </button>
 
-              <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tight mb-4">
+              <h2 className="text-xl font-semibold text-[#1d1d1f] dark:text-white tracking-[-0.03em] mb-4">
                 Kirim Postingan Menfess &amp; Info
               </h2>
 
@@ -954,7 +948,7 @@ export default function MadingPage() {
               {/* Top Action Bar */}
               <div className="w-full flex items-center justify-between text-white/90 mb-3 px-1">
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-xs font-bold bg-white/20 px-3 py-1.5 rounded-full backdrop-blur-xs truncate max-w-[200px] xs:max-w-xs">
+                  <span className="text-xs font-bold bg-white/20 px-3 py-1.5 rounded-full backdrop-blur-sm truncate max-w-[200px] xs:max-w-xs">
                     📷 Kiriman {zoomImage.sender || "Anonim"}
                   </span>
                 </div>

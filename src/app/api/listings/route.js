@@ -16,6 +16,17 @@ export async function GET(req) {
   try {
   const wa = formatWa(req.nextUrl.searchParams.get("seller_wa") || "");
   if (!wa) return NextResponse.json({ listings: [] });
+  // Ini adalah endpoint dashboard: ia memuat profil, daftar iklan, dan status
+  // pembayaran pemilik. Nomor WA di query string bukan bukti kepemilikan;
+  // sebelum 24 Agustus 2026 siapa pun dapat menggantinya dan membaca data
+  // dashboard penjual lain. Identitas harus selalu berasal dari kuki sesi.
+  const sessionWa = formatWa(getSellerSession() || "");
+  if (!sessionWa) {
+    return NextResponse.json({ error: "Silakan masuk terlebih dahulu." }, { status: 401 });
+  }
+  if (sessionWa !== wa) {
+    return NextResponse.json({ error: "Kamu tidak berhak melihat dashboard penjual ini." }, { status: 403 });
+  }
   const supa = getAdminClient();
   // Fetch seller profile
   const { data: profile } = await supa

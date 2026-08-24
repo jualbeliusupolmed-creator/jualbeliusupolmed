@@ -19,6 +19,7 @@ import ReportButton from "@/components/ReportButton";
 import ViewTracker from "@/components/ViewTracker";
 import RecentlyViewedSaver from "@/components/RecentlyViewedSaver";
 import FavoriteButton from "@/components/FavoriteButton";
+import OwnerFastActions from "@/components/OwnerFastActions";
 import { Icon } from "@/components/Icons";
 
 export const revalidate = 300; // ISR 5 menit
@@ -233,7 +234,7 @@ export default async function ProdukPage({ params }) {
       <ViewTracker listingId={listing.id} />
       <RecentlyViewedSaver listing={listing} slug={params.slug} />
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-1 min-w-0 text-sm text-gray-400">
+      <nav className="flex items-center gap-1.5 min-w-0 text-[13px] text-[#6e6e73] dark:text-slate-400">
         <Link href="/" className="hover:text-primary shrink-0">Beranda</Link>
         <span className="shrink-0">/</span>
         <Link href={`/?cat=${listing.category}`} className="hover:text-primary shrink-0">
@@ -243,7 +244,7 @@ export default async function ProdukPage({ params }) {
         <span className="truncate text-gray-500">{listing.title}</span>
       </nav>
 
-      <div className="mt-4 grid gap-8 md:grid-cols-2">
+      <div className="mt-5 grid gap-8 md:grid-cols-2 lg:gap-10">
         {/* Galeri */}
         <div className="card overflow-hidden">
           <ProductGallery
@@ -284,10 +285,10 @@ export default async function ProdukPage({ params }) {
           </div>
 
           <div className="mt-2 flex items-start justify-between gap-3">
-            <h1 className="text-2xl font-extrabold">{listing.title}</h1>
+            <h1 className="text-[28px] font-semibold leading-tight tracking-[-0.04em] text-[#1d1d1f] dark:text-white">{listing.title}</h1>
             <FavoriteButton listing={listing} size="lg" className="shrink-0" />
           </div>
-          <p className="mt-2 text-3xl font-extrabold tracking-tight text-gray-900">
+          <p className="mt-2.5 text-3xl font-semibold tracking-[-0.04em] text-[#1d1d1f] dark:text-white">
             {listing.type === "jasa" && <span className="text-xl text-gray-500 font-medium">Mulai dari </span>}
             {rupiah(listing.price)}
             {listing.type === "sewa" && listing.rental_period && (
@@ -319,9 +320,9 @@ export default async function ProdukPage({ params }) {
           {/* Card penjual — link ke halaman profil */}
           <Link
             href={`/penjual/${sellerWaEncoded}`}
-            className="card mt-4 flex items-center gap-3 p-3 hover:border-primary/30 hover:shadow-md transition-shadow dark:border-slate-800 dark:bg-slate-900/40"
+            className="card mt-5 flex items-center gap-3 p-3.5 hover:border-primary/30 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-shadow dark:border-slate-800 dark:bg-slate-900/40"
           >
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/10 font-bold text-primary dark:bg-white/10 dark:text-white">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 font-semibold text-primary dark:bg-white/10 dark:text-white">
               {listing.seller_name?.[0]?.toUpperCase() || "?"}
             </div>
             <div className="flex-1 min-w-0">
@@ -345,6 +346,8 @@ export default async function ProdukPage({ params }) {
               </p>
             </div>
           </Link>
+          {/* Panel Kontrol Khusus Pemilik Iklan */}
+          <OwnerFastActions listing={listing} />
 
           {/* Aksi */}
           <div className="mt-4 space-y-2">
@@ -370,9 +373,9 @@ export default async function ProdukPage({ params }) {
           </div>
 
           {/* Deskripsi */}
-          <div className="card mt-4 p-4">
-            <h3 className="font-semibold">Deskripsi</h3>
-            <p className="mt-2 whitespace-pre-wrap text-sm text-gray-600">
+          <div className="card mt-5 p-5">
+            <h3 className="text-base font-semibold tracking-[-0.02em] text-[#1d1d1f] dark:text-white">Deskripsi</h3>
+            <p className="mt-2.5 whitespace-pre-wrap text-sm leading-relaxed text-[#424245] dark:text-slate-300">
               {listing.description || "Tidak ada deskripsi."}
             </p>
           </div>
@@ -388,7 +391,7 @@ export default async function ProdukPage({ params }) {
       {/* Produk serupa */}
       {related.length > 0 && (
         <section className="mt-10 mb-20 md:mb-0">
-          <h2 className="text-lg font-bold">{listing.type === "jasa" ? "Jasa serupa" : "Barang serupa"}</h2>
+          <h2 className="section-title">{listing.type === "jasa" ? "Jasa serupa" : "Barang serupa"}</h2>
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {related.map((r) => (
               <ProductCard key={r.id} listing={r} />
@@ -400,8 +403,8 @@ export default async function ProdukPage({ params }) {
       {/* Mobile Floating Action Bar (Sticky CTA di atas BottomNavbar) */}
       {!sold && (
         <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] left-3.5 right-3.5 z-30 md:hidden flex justify-center animate-fade-in pointer-events-none">
-          <div className="pointer-events-auto w-full max-w-sm rounded-full bg-white/95 p-1.5 shadow-[0_8px_30px_rgb(0,0,0,0.15)] backdrop-blur-xl border border-gray-200/80 dark:bg-slate-900/95 dark:border-slate-800 dark:shadow-black/50">
-            <MinatButton listing={listing} className="w-full shadow-md shadow-wa/20 rounded-full text-[14px] xs:text-[15px] py-2.5" />
+          <div className="pointer-events-auto w-full max-w-sm rounded-[20px] bg-white/92 p-1.5 shadow-[0_8px_30px_rgb(0,0,0,0.15)] backdrop-blur-xl border border-black/[0.08] dark:bg-[#1c1c1e]/95 dark:border-white/[0.1] dark:shadow-black/50">
+            <MinatButton listing={listing} className="w-full shadow-md shadow-wa/20 rounded-xl text-[14px] xs:text-[15px] py-2.5" />
           </div>
         </div>
       )}

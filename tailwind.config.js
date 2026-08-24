@@ -70,7 +70,7 @@ module.exports = {
         },
       },
       fontFamily: {
-        sans: ["var(--font-jakarta)", '"Plus Jakarta Sans"', "system-ui", "sans-serif"],
+        sans: ["var(--font-jakarta)", '"Plus Jakarta Sans"', "Inter", "-apple-system", "BlinkMacSystemFont", '"Segoe UI"', "Roboto", "sans-serif"],
       },
       letterSpacing: {
         tightest: "-0.04em",
