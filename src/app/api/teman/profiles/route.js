@@ -23,11 +23,33 @@ export async function GET(request) {
     const supa = getAdminClient();
 
     // 1. Ambil profil user sendiri
-    const { data: myProfile } = await supa
+    let { data: myProfile } = await supa
       .from("teman_profiles")
       .select("*")
       .eq("user_id", userId)
       .maybeSingle();
+
+    // Jika belum ada di teman_profiles, coba fallback dari seller_profiles (Satu Pintu)
+    if (!myProfile && sessionWa) {
+      const { data: sProfile } = await supa
+        .from("seller_profiles")
+        .select("name, bio, campus, faculty, whatsapp, photo_url")
+        .eq("wa", sessionWa)
+        .maybeSingle();
+
+      if (sProfile) {
+        myProfile = {
+          user_id: userId,
+          display_name: sProfile.name || "Anak Kampus",
+          bio: sProfile.bio || "",
+          campus: sProfile.campus || "USU",
+          faculty: sProfile.faculty || "Umum",
+          whatsapp: sProfile.whatsapp || sessionWa,
+          photo_url: sProfile.photo_url || "",
+          intent: "Teman Santai ☕",
+        };
+      }
+    }
 
     // 2. Ambil ID target yang sudah pernah di-swipe oleh user
     let swipedTargetIds = [];
@@ -149,6 +171,28 @@ export async function POST(request) {
         .single();
       if (error) throw error;
       resultProfile = data;
+    }
+
+    // Sinkronisasi Satu Pintu: jika ada sesi login, update juga seller_profiles
+    if (sessionWa) {
+      try {
+        await supa
+          .from("seller_profiles")
+          .upsert(
+            {
+              wa: sessionWa,
+              name: profileData.display_name,
+              bio: profileData.bio,
+              campus: profileData.campus,
+              faculty: profileData.faculty,
+              photo_url: profileData.photo_url,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "wa" }
+          );
+      } catch (syncErr) {
+        console.warn("Sync to seller_profiles warning:", syncErr?.message);
+      }
     }
 
     return NextResponse.json({
