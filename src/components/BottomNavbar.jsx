@@ -39,25 +39,6 @@ export default function BottomNavbar() {
             || cakupan.some((c) => c !== "/" && pathname?.startsWith(c));
           const IconComp = n.icon;
 
-          if (n.special) {
-            return (
-              <Link 
-                key={n.name} 
-                href={n.href} 
-                onClick={() => hapticLight()}
-                aria-current={isActive ? "page" : undefined}
-                className="relative -top-4 md:-top-3 flex flex-col items-center group touch-manipulation"
-              >
-                <div className={cn(
-                  "relative flex h-13 w-13 md:h-11 md:w-11 items-center justify-center rounded-full text-white shadow-[0_4px_16px_rgba(83,43,152,0.35)] transition-all duration-200 group-hover:scale-105 active:scale-90",
-                  "bg-primary"
-                )}>
-                  <IconComp className="h-6 w-6 md:h-5 md:w-5 relative z-10" strokeWidth="2.5" />
-                </div>
-                <span className="mt-0.5 text-[10px] md:text-[9px] font-bold tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">{n.name}</span>
-              </Link>
-            );
-          }
 
           return (
             <Link
