@@ -65,7 +65,6 @@ export default function UnifiedProfilePanel({ sellerProfile, wa, onProfileUpdate
   const [compressing, setCompressing] = useState(false);
   const fileInputRef = useRef(null);
 
-  // Load existing profile from /api/teman/profiles
   useEffect(() => {
     async function loadTemanProfile() {
       try {
@@ -148,7 +147,6 @@ export default function UnifiedProfilePanel({ sellerProfile, wa, onProfileUpdate
 
     try {
       setSaving(true);
-      // 1. Simpan ke teman_profiles (yang otomatis mensinkronkan ke seller_profiles)
       const res = await fetch("/api/teman/profiles", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -170,7 +168,6 @@ export default function UnifiedProfilePanel({ sellerProfile, wa, onProfileUpdate
         throw new Error(data.error || "Gagal menyimpan biodata");
       }
 
-      // 2. Simpan nama anonim jika ada perubahan
       if (formData.anonymous_name && formData.anonymous_name.trim().length >= 2) {
         await fetch("/api/profile/anonymous-name", {
           method: "PUT",
@@ -179,7 +176,7 @@ export default function UnifiedProfilePanel({ sellerProfile, wa, onProfileUpdate
         });
       }
 
-      toast.success("✅ Biodata & Profil Satu Pintu berhasil diperbarui!");
+      toast.success("Biodata Satu Pintu berhasil disimpan! 🎉");
       onProfileUpdated?.();
     } catch (err) {
       toast.error(err.message || "Terjadi kesalahan saat menyimpan");
@@ -191,65 +188,43 @@ export default function UnifiedProfilePanel({ sellerProfile, wa, onProfileUpdate
   const currentFaculties = formData.campus === "Polmed" ? FACULTIES_POLMED : FACULTIES_USU;
 
   return (
-    <div className="space-y-6 mt-4">
-      {/* CARD SATU PINTU INFO */}
-      <div className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 via-purple-500/10 to-indigo-500/10 p-5 dark:border-violet-500/30">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="text-xl">✨</span>
-              <h2 className="text-base font-black text-[#1d1d1f] dark:text-white">
-                Satu Pintu: Biodata &amp; Profil Kampus
-              </h2>
-            </div>
-            <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed max-w-xl">
-              Biodata ini otomatis tersinkronisasi di seluruh ekosistem: <strong>Marketplace</strong>, <strong>Cari Teman Swipe</strong>, <strong>Pusat Obrolan</strong>, dan <strong>Menfess Kampus</strong>.
-            </p>
+    <div className="space-y-6">
+      {/* HEADER BANNER */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-[22px] bg-white dark:bg-[#1c1c1e] border border-black/[0.06] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">✨</span>
+            <h2 className="text-base font-black text-[#1d1d1f] dark:text-white">
+              Biodata &amp; Profil Satu Pintu
+            </h2>
           </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <Link
-              href="/teman"
-              className="rounded-full bg-primary px-4 py-2 text-xs font-bold text-white shadow-md hover:brightness-105 active:scale-95 transition-all flex items-center gap-1.5"
-            >
-              <span>🔥 Buka Cari Teman</span>
-              <Icon.ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 max-w-lg leading-relaxed">
+            Data ini tersinkronisasi otomatis di <strong>Marketplace</strong>, <strong>Cari Teman Swipe</strong>, <strong>Pusat Obrolan</strong>, dan <strong>Menfess Kampus</strong>.
+          </p>
         </div>
 
-        {/* Sync Badges */}
-        <div className="mt-4 pt-3 border-t border-black/[0.06] dark:border-white/[0.08] flex flex-wrap items-center gap-2 text-[11px] font-semibold text-gray-700 dark:text-gray-300">
-          <span className="rounded-full bg-white/80 dark:bg-white/10 px-2.5 py-1 flex items-center gap-1 shadow-2xs">
-            <span>🛍️ Marketplace</span>
-          </span>
-          <span className="rounded-full bg-white/80 dark:bg-white/10 px-2.5 py-1 flex items-center gap-1 shadow-2xs">
-            <span>🎴 Cari Teman</span>
-          </span>
-          <span className="rounded-full bg-white/80 dark:bg-white/10 px-2.5 py-1 flex items-center gap-1 shadow-2xs">
-            <span>💬 Pusat Obrolan</span>
-          </span>
-          <span className="rounded-full bg-white/80 dark:bg-white/10 px-2.5 py-1 flex items-center gap-1 shadow-2xs">
-            <span>📢 Menfess / Mading</span>
-          </span>
-        </div>
+        <Link
+          href="/teman"
+          className="rounded-full bg-primary px-4 py-2 text-xs font-bold text-white shadow-xs hover:brightness-105 active:scale-95 transition-all flex items-center gap-1.5 shrink-0"
+        >
+          <span>🔥 Buka Cari Teman</span>
+          <Icon.ArrowRight className="w-3.5 h-3.5" />
+        </Link>
       </div>
 
-      {/* FORM BIODATA */}
-      <form onSubmit={handleSave} className="card p-6 space-y-6">
-        <h3 className="text-base font-bold text-[#1d1d1f] dark:text-white pb-3 border-b border-black/[0.06] dark:border-white/[0.08]">
-          Informasi Pribadi &amp; Mahasiswa
-        </h3>
-
-        {/* FOTO PROFIL UTAMA */}
-        <div>
-          <label className="block text-xs font-bold text-[#1d1d1f] dark:text-white mb-2">
+      {/* FORM CARD */}
+      <form onSubmit={handleSave} className="rounded-[22px] bg-white dark:bg-[#1c1c1e] p-6 border border-black/[0.06] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.03)] space-y-6">
+        
+        {/* FOTO PROFIL SECTION */}
+        <div className="pb-6 border-b border-black/[0.06] dark:border-white/[0.08]">
+          <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">
             Foto Profil Utama
           </label>
-          <div className="flex items-center gap-4">
+          
+          <div className="flex items-center gap-5">
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="relative h-24 w-24 shrink-0 cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed border-primary/40 bg-primary/[0.04] hover:bg-primary/[0.08] dark:border-violet-400/40 dark:bg-violet-500/10 flex items-center justify-center transition-all group shadow-sm"
+              className="relative h-20 w-20 shrink-0 cursor-pointer overflow-hidden rounded-full border-2 border-primary/30 bg-primary/5 hover:border-primary transition-all group"
             >
               {formData.photo_url ? (
                 <Image
@@ -259,33 +234,27 @@ export default function UnifiedProfilePanel({ sellerProfile, wa, onProfileUpdate
                   className="object-cover"
                 />
               ) : (
-                <div className="flex flex-col items-center justify-center text-center p-2">
-                  <span className="text-2xl mb-0.5">📷</span>
-                  <span className="text-[10px] font-bold text-primary dark:text-violet-300">
-                    {compressing ? "Upload..." : "+ Ganti Foto"}
-                  </span>
+                <div className="flex h-full w-full items-center justify-center text-2xl">
+                  👤
                 </div>
               )}
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold">
-                Ganti Foto
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold">
+                Ganti
               </div>
             </div>
 
-            <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
-              <p className="font-semibold text-[#1d1d1f] dark:text-white">
-                Foto akan tampil di profil penjual dan deck Cari Teman ✨
-              </p>
-              <p className="text-[11px] leading-relaxed">
-                Format didukung: JPG, PNG, WebP (otomatis dikompresi).
-              </p>
+            <div className="space-y-1">
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={compressing}
-                className="mt-1 text-xs font-bold text-primary dark:text-violet-400 hover:underline"
+                className="rounded-full bg-black/[0.04] dark:bg-white/[0.08] hover:bg-black/[0.08] dark:hover:bg-white/[0.12] px-3.5 py-1.5 text-xs font-bold text-[#1d1d1f] dark:text-white transition-all active:scale-95"
               >
-                {formData.photo_url ? "Pilih Foto Baru" : "Pilih dari Galeri"}
+                {compressing ? "Mengompres..." : formData.photo_url ? "Ganti Foto" : "Unggah Foto"}
               </button>
+              <p className="text-[11px] text-gray-400">
+                Otomatis dikompresi ke WebP agar hemat kuota.
+              </p>
             </div>
           </div>
           <input
@@ -297,10 +266,10 @@ export default function UnifiedProfilePanel({ sellerProfile, wa, onProfileUpdate
           />
         </div>
 
-        {/* NAMA & NAMA ANONIM */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-bold text-[#1d1d1f] dark:text-white mb-1.5">
+        {/* NAMA LENGKAP & ANONIM */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-6 border-b border-black/[0.06] dark:border-white/[0.08]">
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-[#1d1d1f] dark:text-white">
               Nama Lengkap / Nama Tampil <span className="text-rose-500">*</span>
             </label>
             <input
@@ -309,36 +278,36 @@ export default function UnifiedProfilePanel({ sellerProfile, wa, onProfileUpdate
               value={formData.display_name}
               onChange={(e) => setFormData((prev) => ({ ...prev, display_name: e.target.value }))}
               placeholder="Contoh: Sarah Angelina"
-              className="input w-full text-xs"
+              className="w-full rounded-xl border border-black/[0.1] bg-black/[0.02] dark:border-white/[0.1] dark:bg-white/[0.04] px-3.5 py-2.5 text-xs text-[#1d1d1f] dark:text-white outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
             />
-            <p className="text-[11px] text-gray-400 mt-1">Ditampilkan di profil toko dan kartu Cari Teman.</p>
+            <p className="text-[10px] text-gray-400">Ditampilkan di toko dan kartu Cari Teman.</p>
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-[#1d1d1f] dark:text-white mb-1.5">
-              Nama Anonim (Menfess)
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-[#1d1d1f] dark:text-white">
+              Nama Samaran (Anonim)
             </label>
             <input
               type="text"
               value={formData.anonymous_name}
               onChange={(e) => setFormData((prev) => ({ ...prev, anonymous_name: e.target.value }))}
               placeholder="Contoh: Kucing Kampus"
-              className="input w-full text-xs"
+              className="w-full rounded-xl border border-black/[0.1] bg-black/[0.02] dark:border-white/[0.1] dark:bg-white/[0.04] px-3.5 py-2.5 text-xs text-[#1d1d1f] dark:text-white outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
             />
-            <p className="text-[11px] text-gray-400 mt-1">Nama samaran khusus posting/komentar di Menfess.</p>
+            <p className="text-[10px] text-gray-400">Dipakai saat posting &amp; komentar di Menfess.</p>
           </div>
         </div>
 
         {/* KAMPUS, FAKULTAS, ANGKATAN */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-xs font-bold text-[#1d1d1f] dark:text-white mb-1.5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pb-6 border-b border-black/[0.06] dark:border-white/[0.08]">
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-[#1d1d1f] dark:text-white">
               Kampus
             </label>
             <select
               value={formData.campus}
               onChange={(e) => setFormData((prev) => ({ ...prev, campus: e.target.value, faculty: "Umum" }))}
-              className="input w-full text-xs"
+              className="w-full rounded-xl border border-black/[0.1] bg-black/[0.02] dark:border-white/[0.1] dark:bg-white/[0.04] px-3.5 py-2.5 text-xs text-[#1d1d1f] dark:text-white outline-none focus:border-primary"
             >
               <option value="USU">Universitas Sumatera Utara (USU)</option>
               <option value="Polmed">Politeknik Negeri Medan (Polmed)</option>
@@ -346,14 +315,14 @@ export default function UnifiedProfilePanel({ sellerProfile, wa, onProfileUpdate
             </select>
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-[#1d1d1f] dark:text-white mb-1.5">
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-[#1d1d1f] dark:text-white">
               Fakultas / Jurusan
             </label>
             <select
               value={formData.faculty}
               onChange={(e) => setFormData((prev) => ({ ...prev, faculty: e.target.value }))}
-              className="input w-full text-xs"
+              className="w-full rounded-xl border border-black/[0.1] bg-black/[0.02] dark:border-white/[0.1] dark:bg-white/[0.04] px-3.5 py-2.5 text-xs text-[#1d1d1f] dark:text-white outline-none focus:border-primary"
             >
               {currentFaculties.map((f) => (
                 <option key={f} value={f}>{f}</option>
@@ -361,14 +330,14 @@ export default function UnifiedProfilePanel({ sellerProfile, wa, onProfileUpdate
             </select>
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-[#1d1d1f] dark:text-white mb-1.5">
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-[#1d1d1f] dark:text-white">
               Angkatan
             </label>
             <select
               value={formData.batch}
               onChange={(e) => setFormData((prev) => ({ ...prev, batch: e.target.value }))}
-              className="input w-full text-xs"
+              className="w-full rounded-xl border border-black/[0.1] bg-black/[0.02] dark:border-white/[0.1] dark:bg-white/[0.04] px-3.5 py-2.5 text-xs text-[#1d1d1f] dark:text-white outline-none focus:border-primary"
             >
               {["2026", "2025", "2024", "2023", "2022", "2021", "Alumni"].map((b) => (
                 <option key={b} value={b}>{b}</option>
@@ -378,9 +347,9 @@ export default function UnifiedProfilePanel({ sellerProfile, wa, onProfileUpdate
         </div>
 
         {/* INTENT / TUJUAN CARI TEMAN */}
-        <div>
-          <label className="block text-xs font-bold text-[#1d1d1f] dark:text-white mb-2">
-            Tujuan Cari Teman Kampus (Intent)
+        <div className="space-y-2 pb-6 border-b border-black/[0.06] dark:border-white/[0.08]">
+          <label className="block text-xs font-bold text-[#1d1d1f] dark:text-white">
+            Tujuan Cari Teman Kampus
           </label>
           <div className="flex flex-wrap gap-2">
             {INTENTS.map((item) => (
@@ -401,58 +370,56 @@ export default function UnifiedProfilePanel({ sellerProfile, wa, onProfileUpdate
         </div>
 
         {/* BIO & CERITA */}
-        <div>
-          <label className="block text-xs font-bold text-[#1d1d1f] dark:text-white mb-1.5">
+        <div className="space-y-1.5 pb-6 border-b border-black/[0.06] dark:border-white/[0.08]">
+          <label className="block text-xs font-bold text-[#1d1d1f] dark:text-white">
             Bio / Deskripsi Profil
           </label>
           <textarea
-            rows={3}
+            rows={2}
             value={formData.bio}
             onChange={(e) => setFormData((prev) => ({ ...prev, bio: e.target.value }))}
             placeholder="Ceritakan tentang tokomu, barang yang kamu jual, atau hobi & selera musik kamu..."
-            className="input w-full text-xs"
+            className="w-full rounded-xl border border-black/[0.1] bg-black/[0.02] dark:border-white/[0.1] dark:bg-white/[0.04] px-3.5 py-2.5 text-xs text-[#1d1d1f] dark:text-white outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
           />
         </div>
 
         {/* KONTAK (WHATSAPP & INSTAGRAM) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-bold text-[#1d1d1f] dark:text-white mb-1.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-2">
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-[#1d1d1f] dark:text-white">
               WhatsApp Utama
             </label>
             <input
               type="text"
               readOnly
               value={formData.whatsapp || wa}
-              className="input w-full text-xs bg-black/[0.03] dark:bg-white/[0.04] text-gray-500 cursor-not-allowed"
+              className="w-full rounded-xl border border-black/[0.06] bg-black/[0.04] dark:border-white/[0.06] dark:bg-white/[0.06] px-3.5 py-2.5 text-xs text-gray-500 cursor-not-allowed"
             />
-            <p className="text-[11px] text-gray-400 mt-1">Nomor akun aktif Anda.</p>
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-[#1d1d1f] dark:text-white mb-1.5">
-              Instagram
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-[#1d1d1f] dark:text-white">
+              Instagram <span className="text-gray-400 font-normal">(Opsional)</span>
             </label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">@</span>
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">@</span>
               <input
                 type="text"
                 value={formData.instagram}
                 onChange={(e) => setFormData((prev) => ({ ...prev, instagram: e.target.value.replace(/^@/, "") }))}
                 placeholder="username_kamu"
-                className="input w-full text-xs pl-7"
+                className="w-full rounded-xl border border-black/[0.1] bg-black/[0.02] dark:border-white/[0.1] dark:bg-white/[0.04] pl-8 pr-3.5 py-2.5 text-xs text-[#1d1d1f] dark:text-white outline-none focus:border-primary"
               />
             </div>
-            <p className="text-[11px] text-gray-400 mt-1">Opsional, untuk memudahkan teman kampus menyapa.</p>
           </div>
         </div>
 
         {/* SUBMIT BUTTON */}
-        <div className="pt-3 border-t border-black/[0.06] dark:border-white/[0.08] flex items-center justify-end gap-3">
+        <div className="pt-2 flex items-center justify-end">
           <button
             type="submit"
             disabled={saving || compressing}
-            className="btn-primary px-6 py-2.5 text-xs font-bold rounded-xl shadow-md disabled:opacity-50"
+            className="rounded-full bg-primary px-6 py-2.5 text-xs font-bold text-white shadow-md hover:brightness-105 active:scale-[0.98] transition-all disabled:opacity-50"
           >
             {saving ? "Menyimpan Biodata..." : "💾 Simpan Biodata Kampus"}
           </button>
