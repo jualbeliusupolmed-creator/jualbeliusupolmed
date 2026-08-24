@@ -69,22 +69,43 @@ export default function UnifiedProfilePanel({ sellerProfile, wa, onProfileUpdate
     async function loadTemanProfile() {
       try {
         setLoading(true);
-        const res = await fetch(`/api/teman/profiles`);
+        const res = await fetch(`/api/teman/profiles?wa=${encodeURIComponent(wa || "")}`, {
+          headers: { "x-seller-wa": wa || "" },
+        });
         const data = await res.json();
-        if (data.ok && data.myProfile) {
-          const p = data.myProfile;
-          setFormData((prev) => ({
-            ...prev,
-            photo_url: p.photo_url || prev.photo_url,
-            display_name: p.display_name || prev.display_name,
-            campus: p.campus || prev.campus,
-            faculty: p.faculty || prev.faculty,
-            batch: p.batch || prev.batch,
-            intent: p.intent || prev.intent,
-            bio: p.bio || prev.bio,
-            instagram: p.instagram || prev.instagram,
-            whatsapp: p.whatsapp || prev.whatsapp,
-          }));
+        if (data.ok) {
+          const p = data.myProfile || {};
+          const s = data.sellerProfile || {};
+          const mergedName = p.display_name || s.name || sellerProfile?.name || "";
+          const mergedPhoto = p.photo_url || s.photo_url || sellerProfile?.photo_url || "";
+          const mergedBio = p.bio || s.bio || sellerProfile?.bio || "";
+          const mergedCampus = p.campus || s.campus || sellerProfile?.campus || "USU";
+          const mergedFaculty = p.faculty || s.faculty || sellerProfile?.faculty || "Umum";
+          const mergedAnon = s.anonymous_name || sellerProfile?.anonymous_name || "Anonim";
+
+          setFormData({
+            photo_url: mergedPhoto,
+            display_name: mergedName,
+            campus: mergedCampus,
+            faculty: mergedFaculty,
+            batch: p.batch || "2024",
+            intent: p.intent || "Teman Santai ☕",
+            bio: mergedBio,
+            instagram: p.instagram || "",
+            whatsapp: wa || p.whatsapp || "",
+            anonymous_name: mergedAnon,
+          });
+
+          // Sync parent header if currently desynchronized
+          if (mergedName && mergedName !== sellerProfile?.name) {
+            onProfileUpdated?.({
+              name: mergedName,
+              photo_url: mergedPhoto,
+              bio: mergedBio,
+              campus: mergedCampus,
+              faculty: mergedFaculty,
+            });
+          }
         }
       } catch (err) {
         console.error("Failed to load unified profile:", err);
@@ -92,8 +113,11 @@ export default function UnifiedProfilePanel({ sellerProfile, wa, onProfileUpdate
         setLoading(false);
       }
     }
-    loadTemanProfile();
-  }, []);
+    if (wa) {
+      loadTemanProfile();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wa]);
 
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -121,11 +145,14 @@ export default function UnifiedProfilePanel({ sellerProfile, wa, onProfileUpdate
         const uploadData = await uploadRes.json();
         const url = uploadData.url || uploadData.image_url;
         setFormData((prev) => ({ ...prev, photo_url: url }));
+        // Live preview on parent
+        onProfileUpdated?.({ photo_url: url });
         toast.success("Foto profil berhasil diunggah! 📸");
       } else {
         const reader = new FileReader();
         reader.onloadend = () => {
           setFormData((prev) => ({ ...prev, photo_url: reader.result }));
+          onProfileUpdated?.({ photo_url: reader.result });
           toast.success("Foto lokal dipilih.");
         };
         reader.readAsDataURL(compressedFile);
@@ -147,20 +174,26 @@ export default function UnifiedProfilePanel({ sellerProfile, wa, onProfileUpdate
 
     try {
       setSaving(true);
+      const payload = {
+        userId: wa,
+        photo_url: formData.photo_url || "",
+        display_name: formData.display_name.trim(),
+        campus: formData.campus,
+        faculty: formData.faculty,
+        batch: formData.batch,
+        intent: formData.intent,
+        bio: formData.bio,
+        instagram: formData.instagram,
+        whatsapp: wa || formData.whatsapp,
+      };
+
       const res = await fetch("/api/teman/profiles", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          photo_url: formData.photo_url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80",
-          display_name: formData.display_name,
-          campus: formData.campus,
-          faculty: formData.faculty,
-          batch: formData.batch,
-          intent: formData.intent,
-          bio: formData.bio,
-          instagram: formData.instagram,
-          whatsapp: formData.whatsapp || wa,
-        }),
+        headers: {
+          "Content-Type": "application/json",
+          "x-seller-wa": wa || "",
+        },
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -176,8 +209,16 @@ export default function UnifiedProfilePanel({ sellerProfile, wa, onProfileUpdate
         });
       }
 
-      toast.success("Biodata Satu Pintu berhasil disimpan! 🎉");
-      onProfileUpdated?.();
+      // Immediately propagate to parent header & views
+      onProfileUpdated?.({
+        name: formData.display_name.trim(),
+        photo_url: formData.photo_url,
+        bio: formData.bio,
+        campus: formData.campus,
+        faculty: formData.faculty,
+      });
+
+      toast.success("✅ Biodata Satu Pintu berhasil diperbarui!");
     } catch (err) {
       toast.error(err.message || "Terjadi kesalahan saat menyimpan");
     } finally {

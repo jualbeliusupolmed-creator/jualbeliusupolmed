@@ -1663,7 +1663,12 @@ function DashboardInner() {
               <UnifiedProfilePanel
                 sellerProfile={sellerProfile}
                 wa={wa}
-                onProfileUpdated={() => load()}
+                onProfileUpdated={(updated) => {
+                  if (updated) {
+                    setSellerProfile((prev) => ({ ...prev, ...updated }));
+                  }
+                  load(wa);
+                }}
               />
             </div>
           ) : null}
