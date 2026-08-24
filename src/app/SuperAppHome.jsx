@@ -59,13 +59,22 @@ export default function SuperAppHome({ latestListings = [], madingPosts = [] }) 
               <span>Dicari</span>
             </Link>
 
-            {/* Cari Teman / Obrolan */}
+            {/* Cari Teman Swipe */}
+            <Link 
+              href="/teman" 
+              className="flex items-center gap-1.5 rounded-full border border-pink-500/25 bg-gradient-to-r from-pink-500/10 to-purple-500/10 px-3.5 py-1.5 text-xs font-black text-pink-700 dark:text-pink-300 transition-all hover:bg-pink-500/20 active:scale-[0.96] whitespace-nowrap shadow-2xs"
+            >
+              <span>🔥</span>
+              <span>Cari Teman</span>
+            </Link>
+
+            {/* Obrolan Kampus */}
             <Link 
               href="/chat" 
               className="flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/8 px-3.5 py-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-300 transition-all hover:bg-emerald-500/15 active:scale-[0.96] whitespace-nowrap dark:border-emerald-400/30 dark:bg-emerald-500/15"
             >
               <Icon.MessageCircle className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span>Obrolan &amp; Teman</span>
+              <span>Pusat Obrolan</span>
             </Link>
           </div>
         </div>

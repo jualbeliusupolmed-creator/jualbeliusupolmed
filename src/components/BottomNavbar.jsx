@@ -14,7 +14,7 @@ export default function BottomNavbar() {
     { name: "Marketplace", href: "/jual-beli", icon: Icon.ShoppingBag },
     { name: "Jual", href: "/jual", icon: Icon.Package, special: true },
     { name: "Menfess", href: "/mading", icon: Icon.BookOpen },
-    { name: "Obrolan", href: "/chat", icon: Icon.MessageCircle },
+    { name: "Obrolan", href: "/chat", match: ["/chat", "/teman", "/cari-teman", "/swap"], icon: Icon.MessageCircle },
   ];
 
   return (
