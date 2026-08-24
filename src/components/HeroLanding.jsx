@@ -63,23 +63,23 @@ export default function HeroLanding({ q, onSearch, stats, total = 0, judul, subj
 
   return (
     <section className="-mx-4 -mt-3 mb-6 lg:mx-0 lg:mt-0">
-      <div className="relative isolate overflow-hidden bg-[#fdf8f5] pb-6 pt-7 sm:pb-8 lg:rounded-3xl lg:pb-10 lg:pt-12 dark:bg-slate-900">
+      <div className="relative isolate overflow-hidden bg-white pb-7 pt-8 sm:pb-9 lg:rounded-[28px] lg:pb-12 lg:pt-14 dark:bg-[#1c1c1e]">
         {/* Lapis 1 — ilustrasi kampus, hanya sejak lg ke atas (lihat catatan
             di atas: di bawah itu gambarnya tampil utuh, bukan jadi latar). */}
         <div
           aria-hidden="true"
-          className="absolute inset-0 -z-20 hidden bg-[url('/hero-kampus.webp')] bg-cover bg-[position:68%_center] lg:block dark:opacity-70"
+          className="absolute inset-y-0 right-0 -z-20 hidden w-[52%] bg-[url('/hero-kampus.webp')] bg-cover bg-[position:68%_center] opacity-35 lg:block dark:opacity-20"
         />
         {/* Lapis 2 — peredam mendatar supaya judul di kiri tetap terbaca di atas
             langit yang terang, sementara sisi kanan gambarnya dibiarkan bersih. */}
         <div
           aria-hidden="true"
-          className="absolute inset-0 -z-10 hidden bg-gradient-to-r from-white via-white/90 to-transparent lg:block dark:from-slate-900 dark:via-slate-900/90 dark:to-transparent"
+          className="absolute inset-0 -z-10 hidden bg-gradient-to-r from-white via-white/95 to-white/30 lg:block dark:from-[#1c1c1e] dark:via-[#1c1c1e]/95 dark:to-[#1c1c1e]/30"
         />
 
         <div className="mx-auto max-w-6xl px-4">
           <div className="lg:max-w-xl">
-            <h1 className="text-[clamp(1.9rem,8.5vw,2.6rem)] font-extrabold leading-[1.08] tracking-tight text-gray-900 sm:text-5xl lg:text-[3.4rem] dark:text-white">
+            <h1 className="text-[clamp(2rem,8.5vw,2.75rem)] font-semibold leading-[1.06] tracking-[-0.045em] text-[#1d1d1f] sm:text-5xl lg:text-[3.4rem] dark:text-white">
               {judul ? (
                 judul
               ) : (
@@ -93,7 +93,7 @@ export default function HeroLanding({ q, onSearch, stats, total = 0, judul, subj
               )}
             </h1>
 
-            <p className="mt-3 text-[15px] font-medium leading-snug text-gray-600 sm:text-lg dark:text-slate-300">
+            <p className="mt-4 text-[15px] font-normal leading-relaxed text-[#6e6e73] sm:text-lg dark:text-slate-300">
               {subjudul || (
                 <>
                   Marketplace Resmi Mahasiswa
@@ -107,7 +107,7 @@ export default function HeroLanding({ q, onSearch, stats, total = 0, judul, subj
 
             {/* Pencarian. Tombolnya tetap berlabel "Cari" walau sempit — ikon
                 kaca pembesar sendirian sering dikira tombol filter. */}
-            <form onSubmit={kirim} role="search" className="mt-5 flex items-center gap-2 rounded-full bg-white p-1.5 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.3)] ring-1 ring-black/5 dark:bg-slate-800 dark:ring-white/10">
+            <form onSubmit={kirim} role="search" className="mt-6 flex items-center gap-2 rounded-2xl bg-[#f5f5f7] p-1.5 ring-1 ring-black/[0.05] transition-shadow focus-within:shadow-[0_8px_24px_rgba(0,0,0,0.08)] dark:bg-slate-800 dark:ring-white/10">
               <Icon.Search className="ml-2.5 h-4 w-4 shrink-0 text-gray-400" />
               <input
                 value={nilai}
@@ -118,7 +118,7 @@ export default function HeroLanding({ q, onSearch, stats, total = 0, judul, subj
               />
               <button
                 type="submit"
-                className="shrink-0 rounded-full bg-usu px-5 py-2.5 text-sm font-bold text-white transition active:scale-95 hover:bg-usu-dark"
+                className="shrink-0 rounded-xl bg-[#0071e3] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0077ed] active:scale-[0.98]"
               >
                 Cari
               </button>
@@ -134,7 +134,7 @@ export default function HeroLanding({ q, onSearch, stats, total = 0, judul, subj
               alt="Gedung Universitas Sumatera Utara dan Politeknik Negeri Medan berdampingan dengan lambang kedua kampus"
               width={1200}
               height={800}
-              className="mt-5 w-full rounded-2xl shadow-sm ring-1 ring-black/5 lg:hidden dark:ring-white/10"
+              className="mt-6 w-full rounded-[20px] ring-1 ring-black/[0.05] lg:hidden dark:ring-white/10"
             />
 
             {/* Pemasangan aplikasi. Tampil hanya kalau peramban memang menawarkan
@@ -144,7 +144,7 @@ export default function HeroLanding({ q, onSearch, stats, total = 0, judul, subj
               <button
                 type="button"
                 onClick={onPasangPwa}
-                className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white/80 px-3.5 py-2 text-xs font-semibold text-gray-600 transition active:scale-95 hover:bg-white dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-300"
+                className="mt-3 inline-flex items-center gap-1.5 rounded-xl border border-black/[0.08] bg-white px-3.5 py-2 text-xs font-semibold text-[#424245] transition active:scale-[0.98] hover:bg-[#f5f5f7] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
               >
                 <Icon.Download className="h-3.5 w-3.5" />
                 Pasang aplikasinya
@@ -154,10 +154,10 @@ export default function HeroLanding({ q, onSearch, stats, total = 0, judul, subj
             {/* Empat janji. Dua kolom di HP supaya labelnya tetap terbaca utuh;
                 memaksa empat kolom di 360px membuat "Dari Mahasiswa Untuk
                 Mahasiswa" pecah jadi lima baris. */}
-            <ul className="mt-6 grid grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-4">
+            <ul className="mt-7 grid grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-4">
               {FITUR.map((f) => (
                 <li key={f.label.join(" ")} className="flex flex-col items-center gap-2 text-center sm:items-start sm:text-left">
-                  <span className={`grid h-11 w-11 place-items-center rounded-full ${f.warna === "usu" ? "bg-usu-soft text-usu dark:bg-emerald-950/60 dark:text-emerald-400" : "bg-polmed-soft text-polmed dark:bg-violet-950/60 dark:text-violet-400"}`}>
+                  <span className={`grid h-10 w-10 place-items-center rounded-xl ${f.warna === "usu" ? "bg-usu-soft text-usu dark:bg-emerald-950/60 dark:text-emerald-400" : "bg-polmed-soft text-polmed dark:bg-violet-950/60 dark:text-violet-400"}`}>
                     <IkonFitur nama={f.ikon} className="h-5 w-5" />
                   </span>
                   <span className="text-[11px] font-bold leading-tight text-gray-700 sm:text-xs dark:text-slate-300">
@@ -170,7 +170,7 @@ export default function HeroLanding({ q, onSearch, stats, total = 0, judul, subj
             </ul>
 
             {statistik.length > 0 && (
-              <dl className="mt-6 grid grid-cols-3 divide-x divide-gray-200/70 rounded-2xl bg-white/90 px-2 py-3 shadow-sm ring-1 ring-black/5 backdrop-blur sm:px-4 dark:divide-slate-700 dark:bg-slate-800/90 dark:ring-white/10">
+              <dl className="mt-7 grid grid-cols-3 divide-x divide-black/[0.06] rounded-[20px] bg-[#f5f5f7] px-2 py-3.5 sm:px-4 dark:divide-slate-700 dark:bg-slate-800/90">
                 {statistik.map((s) => (
                   <div key={s.label} className="flex flex-col items-center gap-0.5 px-1 sm:flex-row sm:gap-2.5 sm:px-3">
                     <span className={`hidden shrink-0 sm:grid sm:h-9 sm:w-9 sm:place-items-center sm:rounded-full ${s.warna === "usu" ? "bg-usu-soft text-usu dark:bg-emerald-950/60 dark:text-emerald-400" : "bg-polmed-soft text-polmed dark:bg-violet-950/60 dark:text-violet-400"}`}>
@@ -194,19 +194,19 @@ export default function HeroLanding({ q, onSearch, stats, total = 0, judul, subj
         {/* Pita ajakan. Di HP menumpuk (teks lalu tombol selebar layar) karena
             tombol sempit di samping teks panjang adalah sasaran jempol yang buruk. */}
         <div className="mx-auto mt-7 max-w-6xl px-4 lg:mt-10">
-          <div className="flex flex-col gap-3 rounded-2xl bg-gradient-to-r from-polmed to-usu px-4 py-4 text-white sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <div className="flex flex-col gap-3 rounded-[20px] bg-[#1d1d1f] px-4 py-4 text-white sm:flex-row sm:items-center sm:justify-between sm:px-6 dark:bg-white dark:text-[#1d1d1f]">
             <div className="flex items-start gap-3">
               <IkonFitur nama="perisai" className="mt-0.5 h-6 w-6 shrink-0" />
               <div>
                 <p className="text-sm font-bold leading-tight sm:text-base">Aman, Nyaman, dan Terpercaya</p>
-                <p className="mt-0.5 text-xs leading-snug text-white/85 sm:text-sm">
+                <p className="mt-0.5 text-xs leading-snug text-white/70 sm:text-sm dark:text-[#424245]">
                   Belanja dengan sesama mahasiswa jadi lebih mudah.
                 </p>
               </div>
             </div>
             <Link
               href="#daftar-barang"
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-bold text-gray-900 transition active:scale-95 hover:bg-gray-100 sm:shrink-0"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-[#1d1d1f] transition active:scale-[0.98] hover:bg-[#f5f5f7] sm:shrink-0 dark:bg-[#0071e3] dark:text-white"
             >
               Mulai Belanja Sekarang
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

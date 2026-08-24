@@ -61,22 +61,24 @@ export default function Navbar({ config }) {
   }, []);
 
   // Cookie server adalah satu-satunya sumber kebenaran sesi;
-  // localStorage hanya dipakai untuk nama tampilan.
-  useEffect(() => {
-    let cancelled = false;
+  // profile name diambil dari server/localStorage.
+  const syncSession = () => {
     fetch("/api/auth/me")
       .then((r) => r.json())
       .then((d) => {
-        if (cancelled) return;
         if (d.loggedIn) {
-          setSession({ name: localStorage.getItem("seller_name") || "", wa: d.wa });
+          const storedName = localStorage.getItem("seller_name") || "";
+          setSession({ name: d.name || storedName || d.wa, wa: d.wa });
         } else {
           localStorage.removeItem("seller_wa");
           setSession({ name: "", wa: "" });
         }
       })
       .catch(() => {});
-    return () => { cancelled = true; };
+  };
+
+  useEffect(() => {
+    syncSession();
   }, [pathname]);
 
   const doLogout = async () => {
@@ -102,38 +104,46 @@ export default function Navbar({ config }) {
 
   return (
     <header className="sticky top-0 z-40">
-      {/* ── Top bar ── */}
-      <div className="border-b border-gray-100 bg-white/85 backdrop-blur-xl transition-all duration-300 dark:border-slate-900/80 dark:bg-slate-950/85">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+      {/* ── Top bar: Apple Frosted Glass ── */}
+      <div className="border-b border-black/[0.06] bg-white/80 backdrop-blur-2xl transition-all duration-300 dark:border-white/[0.08] dark:bg-[#000000]/80">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-2.5">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group min-w-0">
-            <div className="shrink-0 transition-transform duration-300 group-hover:scale-110">
+          <Link href="/" className="flex items-center gap-2.5 group min-w-0 active:scale-[0.98] transition-transform">
+            <div className="shrink-0 transition-transform duration-300 group-hover:scale-105">
               <Logo className="h-7 w-7" src={config?.site?.logoUrl} />
             </div>
-            <span className="truncate text-[15px] font-extrabold leading-none tracking-tight text-primary transition-colors dark:text-emerald-400">
+            <span className="truncate text-[15px] font-bold leading-none tracking-tight text-[#1d1d1f] transition-colors dark:text-[#f5f5f7]">
               USUPOLMEDUPDATE
             </span>
           </Link>
 
-          {/* Right side: session + theme */}
-          <div className="flex shrink-0 items-center gap-2.5">
-            {/* Search mini — desktop only */}
-            <form onSubmit={submitSearch} className="relative hidden md:block mr-2">
+          {/* Right side: search, unified user account button, notif, theme, cta */}
+          <div className="flex shrink-0 items-center gap-2">
+            {/* Search mini — Spotlight style */}
+            <form onSubmit={submitSearch} className="relative hidden md:block">
               <Icon.Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400 transition-colors peer-focus:text-primary" />
               <input
                 value={navQ}
                 onChange={(e) => setNavQ(e.target.value)}
-                placeholder="Cari barang…"
+                placeholder="Cari di kampus…"
                 aria-label="Cari barang"
-                className="peer w-40 rounded-full border border-gray-200 bg-gray-50/80 py-1.5 pl-9 pr-3 text-xs text-gray-700 outline-none transition-all duration-300 focus:w-56 focus:border-gray-300 focus:bg-white focus:shadow-soft dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-200 dark:focus:border-slate-700 dark:focus:bg-slate-900"
+                className="peer w-36 rounded-full border border-black/[0.06] bg-black/[0.04] py-1.5 pl-8.5 pr-3 text-xs text-[#1d1d1f] outline-none transition-all duration-300 focus:w-52 focus:border-primary/30 focus:bg-white focus:ring-4 focus:ring-primary/10 dark:border-white/[0.08] dark:bg-white/[0.08] dark:text-[#f5f5f7] dark:focus:border-primary/40 dark:focus:bg-[#1c1c1e]"
               />
             </form>
 
-            {/* Session indicator */}
+            {/* Unified User Account / Dashboard Button */}
             {session.wa ? (
-              <div className="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm transition-all dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
-                <Icon.User className="h-3.5 w-3.5 shrink-0 text-primary" />
-                <span className="max-w-[80px] truncate">{session.name || session.wa}</span>
+              <div className="flex items-center gap-0.5 bg-black/[0.04] dark:bg-white/[0.08] p-0.5 rounded-full border border-black/[0.04] dark:border-white/[0.06]">
+                <Link
+                  href="/dashboard"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-white dark:bg-[#1c1c1e] px-3 py-1.5 text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7] hover:text-primary dark:hover:text-emerald-400 transition-all active:scale-[0.96] shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
+                  title="Buka Dashboard Akun"
+                  aria-label="Buka dashboard"
+                >
+                  <Icon.User className="h-3.5 w-3.5 text-primary shrink-0" />
+                  <span className="max-w-[85px] truncate">{session.name || session.wa}</span>
+                  <span className="hidden lg:inline text-[10px] text-gray-400 font-medium">· Dashboard</span>
+                </Link>
                 <button
                   onClick={() => {
                     toast("Keluar dari akun ini?", {
@@ -141,8 +151,8 @@ export default function Navbar({ config }) {
                       cancel: { label: "Batal" },
                     });
                   }}
-                  className="ml-1 text-gray-400 hover:text-rose-500 transition-colors font-bold"
-                  title="Keluar"
+                  className="px-2 py-1 text-gray-400 hover:text-rose-500 rounded-full transition-colors text-xs font-bold active:scale-90"
+                  title="Keluar dari akun"
                   aria-label="Keluar dari akun"
                 >
                   ✕
@@ -151,31 +161,21 @@ export default function Navbar({ config }) {
             ) : (
               <button
                 onClick={() => setShowOtp(true)}
-                className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3.5 py-1.5 text-xs font-bold text-primary transition-all duration-300 hover:bg-primary hover:text-white active:scale-95 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400 dark:hover:bg-emerald-500 dark:hover:text-white"
+                className="inline-flex items-center gap-1.5 rounded-full border border-black/[0.08] bg-black/[0.03] px-3.5 py-1.5 text-xs font-bold text-[#1d1d1f] transition-all duration-200 hover:bg-black/[0.06] active:scale-[0.95] dark:border-white/[0.1] dark:bg-white/[0.06] dark:text-[#f5f5f7] dark:hover:bg-white/[0.1]"
+                title="Masuk / Daftar Akun"
               >
                 <Icon.User className="h-3.5 w-3.5" />
-                <span className="hidden xs:inline">Masuk</span>
+                <span>Masuk</span>
               </button>
             )}
 
             {/* Notification Center */}
             <NotificationCenter />
 
-            {/* Ke dashboard harus selalu terlihat di mobile, bukan terselip di nav yang dapat digeser. */}
-            <Link
-              href="/dashboard"
-              aria-label="Buka dashboard"
-              title="Dashboard"
-              className="inline-flex items-center gap-1.5 rounded-full p-2 text-gray-500 transition-all duration-300 hover:bg-gray-100 hover:text-primary active:scale-90 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-emerald-400"
-            >
-              <Icon.User className="h-4 w-4" />
-              <span className="hidden lg:inline text-xs font-bold">Dashboard</span>
-            </Link>
-
             {/* Theme toggle */}
             <button
               onClick={toggleTheme}
-              className="rounded-full p-2 text-gray-500 transition-all duration-300 hover:bg-gray-100 hover:text-gray-900 active:scale-90 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
+              className="rounded-full p-2 text-gray-500 transition-all duration-200 hover:bg-black/[0.05] hover:text-[#1d1d1f] active:scale-90 dark:text-gray-400 dark:hover:bg-white/[0.08] dark:hover:text-white"
               aria-label="Toggle Theme"
             >
               <div className="relative h-4 w-4 overflow-hidden">
@@ -188,42 +188,37 @@ export default function Navbar({ config }) {
               </div>
             </button>
 
-            {/* Jual Barang CTA — desktop only */}
-            <Link href="/jual" className="hidden lg:inline-flex items-center gap-1.5 rounded-full bg-polmed px-4 py-1.5 text-xs font-bold text-white shadow-md shadow-polmed/20 transition-all duration-300 hover:-translate-y-0.5 hover:bg-polmed-dark hover:shadow-lg hover:shadow-polmed/30 active:scale-95">
+            {/* Jual Barang CTA */}
+            <Link href="/jual" className="hidden lg:inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-bold text-white shadow-[0_2px_8px_rgba(83,43,152,0.25)] transition-all duration-200 hover:brightness-105 active:scale-[0.95]">
               <span>+ Jual</span>
             </Link>
           </div>
         </div>
       </div>
 
-      {/* ── Nav links bar — horizontal scroll with gradient mask ── */}
-      <div className="relative border-b border-gray-100 bg-white/90 backdrop-blur-md dark:border-slate-900/80 dark:bg-slate-950/90">
-        {/* Soft edge masks for smooth scroll indication */}
-        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-white to-transparent z-10 dark:from-slate-950" />
-        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent z-10 dark:from-slate-950" />
+      {/* ── Nav links bar — Apple Segmented Style ── */}
+      <div className="relative border-b border-black/[0.06] bg-white/70 backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#000000]/70">
+        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-[#f5f5f7] to-transparent z-10 dark:from-[#000000]" />
+        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#f5f5f7] to-transparent z-10 dark:from-[#000000]" />
         
-        <nav className="mx-auto flex max-w-6xl items-center gap-1 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <nav className="mx-auto flex max-w-6xl items-center gap-1.5 overflow-x-auto px-4 py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {links.map((l) => {
             const active = l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
             return (
               <Link
                 key={l.href}
                 href={l.href}
-                className={`relative shrink-0 whitespace-nowrap px-3.5 py-3 text-[11px] font-bold uppercase tracking-[0.12em] transition-colors duration-200 ${
+                className={`relative shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-bold tracking-tight transition-all duration-200 active:scale-[0.96] ${
                   active
-                    ? "text-primary dark:text-emerald-400"
-                    : "text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-slate-200"
+                    ? "bg-black/[0.08] text-[#1d1d1f] dark:bg-white/[0.14] dark:text-[#f5f5f7] shadow-xs"
+                    : "text-gray-500 hover:text-[#1d1d1f] hover:bg-black/[0.03] dark:text-gray-400 dark:hover:text-[#f5f5f7] dark:hover:bg-white/[0.05]"
                 }`}
               >
                 {l.label}
                 {l.href === "/dicari" && wantedCount > 0 && (
-                  <span className="ml-1.5 rounded-full bg-rose-500 px-1.5 py-0.5 text-[9px] font-bold text-white leading-none animate-pulse">
+                  <span className="ml-1.5 rounded-full bg-rose-500 px-1.5 py-0.5 text-[9px] font-bold text-white leading-none">
                     {wantedCount}
                   </span>
-                )}
-                {/* Active indicator line */}
-                {active && (
-                  <div className="absolute bottom-0 left-3 right-3 h-[3px] rounded-t-full bg-primary dark:bg-emerald-400 animate-fade-in" />
                 )}
               </Link>
             );
@@ -236,7 +231,7 @@ export default function Navbar({ config }) {
         onClose={() => setShowOtp(false)}
         onSuccess={(wa) => {
           setShowOtp(false);
-          setSession((s) => ({ ...s, wa }));
+          syncSession();
           router.refresh();
         }}
       />

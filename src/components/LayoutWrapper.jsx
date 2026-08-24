@@ -7,6 +7,7 @@ import Footer from "./Footer";
 import InstallPrompt from "./InstallPrompt";
 import NotifPrompt from "./NotifPrompt";
 import BottomNavbar from "./BottomNavbar";
+import GlobalChatNotifier from "./GlobalChatNotifier";
 
 export default function LayoutWrapper({ children }) {
   const pathname = usePathname();
@@ -27,9 +28,10 @@ export default function LayoutWrapper({ children }) {
   return (
     <>
       {!isAdmin && <Navbar config={config} />}
-      <main className={isAdmin ? "flex-1" : "flex-1 pb-24 md:pb-28"}>{children}</main>
+      <main className={isAdmin ? "flex-1" : "flex-1 bg-[#f5f5f7] pb-24 md:pb-28 dark:bg-[#0b0b0f]"}>{children}</main>
       {!isAdmin && (
         <>
+          <GlobalChatNotifier />
           <InstallPrompt />
           {/* Ajakan notifikasi peramban. Menahan dirinya sendiri (kunjungan
               kedua / 25 detik), karena izin notifikasi cuma bisa diminta sekali. */}

@@ -18,6 +18,13 @@ export async function GET(req, { params }) {
     if (error || !data) {
       return NextResponse.json({ error: "Listing tidak ditemukan" }, { status: 404 });
     }
+    // Endpoint ini hanya dipakai editor iklan. Data lengkap (termasuk nomor
+    // penjual dan status internal) tidak boleh menjadi API publik hanya karena
+    // ID iklan dapat ditemukan dari URL produk.
+    const sessionWa = getSellerSession();
+    if (!isAdmin() && sessionWa !== data.seller_wa) {
+      return NextResponse.json({ error: "Kamu tidak berhak melihat detail iklan ini." }, { status: 403 });
+    }
     return NextResponse.json({ listing: data });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });

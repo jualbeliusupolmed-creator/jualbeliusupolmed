@@ -41,7 +41,7 @@ export default function NotificationCenter() {
       // Gather latest announcements & listings for real-time notifications
       const [resMading, resListings] = await Promise.all([
         fetch("/api/mading?limit=5").then((r) => r.json()).catch(() => ({ posts: [] })),
-        fetch("/api/listings/latest?limit=5").then((r) => r.json()).catch(() => ({ listings: [] })),
+        fetch("/api/listings/browse?limit=5&sort=newest").then((r) => r.json()).catch(() => ({ listings: [] })),
       ]);
 
       const madingItems = (resMading.posts || []).map((p) => ({
@@ -216,7 +216,15 @@ export default function NotificationCenter() {
 
       {/* NOTIFICATION POPOVER / MODAL */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-[340px] xs:w-[380px] max-w-[92vw] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200/80 dark:border-slate-800 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 font-sans">
+        <>
+          {/* Backdrop on mobile for easy dismissal */}
+          <div
+            className="fixed inset-0 z-40 bg-black/25 backdrop-blur-[1px] sm:hidden"
+            onClick={() => setIsOpen(false)}
+            aria-hidden="true"
+          />
+
+          <div className="fixed inset-x-3 top-[58px] mx-auto max-w-[390px] w-auto sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-2 sm:w-[380px] sm:max-w-[92vw] sm:mx-0 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200/80 dark:border-slate-800 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 font-sans">
           
           {/* HEADER */}
           <div className="p-4 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/70 backdrop-blur-md">
@@ -356,7 +364,8 @@ export default function NotificationCenter() {
             </Link>
           </div>
 
-        </div>
+          </div>
+        </>
       )}
     </div>
   );

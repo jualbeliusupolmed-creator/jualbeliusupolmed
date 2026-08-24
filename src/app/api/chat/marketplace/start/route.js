@@ -139,18 +139,17 @@ export async function POST(req) {
     // 6. Broadcast Realtime
     await siarkanPesanBaru(supa, roomId);
 
-    // 7. Notifikasi WhatsApp ke Penjual
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
-    
-    // Kutipan di notifikasi WA dibersihkan dari baris-baru & markup WhatsApp —
-    // isi pesan pembeli tidak boleh bisa menyusun kalimat palsu atas nama bot.
-    const kutipan = message.replace(/[\r\n*_~`]/g, " ").replace(/\s+/g, " ").trim().slice(0, 200);
-    let waMsg = `*Pesan Baru dari Pembeli!* 💬\n\n`;
-    waMsg += `Ada yang tertarik dengan barang *${listing.title}*.\n\n`;
-    waMsg += `*Pesan:* "${kutipan}"\n\n`;
-    waMsg += `Balas pesannya secara langsung di Web:\n${baseUrl}/chat`;
+    // 7. Notifikasi WhatsApp ke Penjual — HANYA sekali saat pertama kali dihubungi (ruang baru dibuat)
+    if (!existingRoom) {
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+      const kutipan = message.replace(/[\r\n*_~`]/g, " ").replace(/\s+/g, " ").trim().slice(0, 200);
+      let waMsg = `*Pesan Baru dari Pembeli!* 💬\n\n`;
+      waMsg += `Ada yang tertarik dengan barang *${listing.title}*.\n\n`;
+      waMsg += `*Pesan:* "${kutipan}"\n\n`;
+      waMsg += `Balas pesannya secara langsung di Web:\n${baseUrl}/chat`;
 
-    sendWa(sellerWa, waMsg, null, 14400).catch(console.error);
+      sendWa(sellerWa, waMsg, null, 14400).catch(console.error);
+    }
 
     return NextResponse.json({ success: true, roomId });
   } catch (e) {

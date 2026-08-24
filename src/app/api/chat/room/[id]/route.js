@@ -2,19 +2,16 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { censorProfanity } from "@/lib/profanity";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { getUserSession } from "@/lib/auth";
+import { hashIdentitas } from "@/lib/identitasHash";
+import { siarkanPesanBaru } from "@/lib/chatRealtime";
+import { sendWa } from "@/lib/fonnte";
 
 export const fetchCache = "force-no-store";
 export const revalidate = 0;
 
-import { getUserSession } from "@/lib/auth";
-import { hashIdentitas } from "@/lib/identitasHash";
-import { siarkanPesanBaru } from "@/lib/chatRealtime";
-
 // Obrolan ini anonim, tapi anonim BUKAN publik: isi room hanya boleh dibaca dan
-// ditulis oleh dua peserta yang dipertemukan matchmaking. Karena tidak ada
-// login, "bukti keanggotaan" satu-satunya adalah userId acak yang dibuat klien
-// saat pertama kali membuka /chat — cukup untuk menahan orang luar yang cuma
-// memegang roomId, dan itulah ancaman yang nyata di sini.
+// ditulis oleh dua peserta yang dipertemukan matchmaking.
 async function ambilRoomUntuk(supa, roomId, userId) {
   if (!roomId) return { error: "Room ID wajib diisi", status: 400 };
   const { data: room, error } = await supa
@@ -26,7 +23,7 @@ async function ambilRoomUntuk(supa, roomId, userId) {
   const wa = getUserSession();
   if (!wa) return { error: "Unauthorized", status: 401 };
 
-  if (room.type === "marketplace") {
+  if (room.type === "marketplace" || room.type === "direct") {
     if (room.user1_id !== wa && room.user2_id !== wa) {
       return { error: "Kamu bukan peserta obrolan ini", status: 403 };
     }
@@ -76,9 +73,6 @@ export async function POST(request, { params }) {
 
     // `senderId` sengaja TIDAK lagi dibaca dari body: identitas pengirim datang
     // dari sesi login (ambilRoomUntuk), dan klien memang berhenti mengirimnya.
-    // Validasi lama yang tetap mewajibkannya sempat membuat SEMUA kirim pesan
-    // dijawab 400 "Pesan tidak boleh kosong" — chat mati total, ketahuan lewat
-    // uji ujung-ke-ujung dengan akun uji, 23 Agu 2026 petang.
     if (!roomId || !message || typeof message !== "string" || !message.trim()) {
       return NextResponse.json({ error: "Pesan tidak boleh kosong" }, { status: 400 });
     }
@@ -105,8 +99,7 @@ export async function POST(request, { params }) {
     const actingUserId = hasil.actingUserId;
     
     // Alias selalu berasal dari room yang terbentuk saat matching, bukan dari
-    // payload klien. Untuk Cari Teman ini memastikan nama anon yang dipilih
-    // di profil tidak dapat ditukar/ditiru di tengah percakapan.
+    // payload klien.
     const finalAlias = hasil.room.user1_id === actingUserId
       ? hasil.room.user1_alias
       : hasil.room.user2_alias;
@@ -127,6 +120,7 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: "Gagal mengirim pesan" }, { status: 500 });
     }
 
+    // Broadcast Realtime ke web
     await siarkanPesanBaru(supa, roomId);
 
     return NextResponse.json({ success: true, message: data });

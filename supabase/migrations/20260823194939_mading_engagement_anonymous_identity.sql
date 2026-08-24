@@ -96,4 +96,6 @@ end;
 $$;
 
 revoke all on function public.record_mading_engagement(uuid, text, text) from public;
+revoke all on function public.record_mading_engagement(uuid, text, text) from anon;
+revoke all on function public.record_mading_engagement(uuid, text, text) from authenticated;
 grant execute on function public.record_mading_engagement(uuid, text, text) to service_role;
