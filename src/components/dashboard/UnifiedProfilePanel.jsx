@@ -253,132 +253,102 @@ export default function UnifiedProfilePanel({ sellerProfile, wa, onProfileUpdate
         </Link>
       </div>
 
-      {/* FORM CARD */}
-      <form onSubmit={handleSave} className="rounded-[22px] bg-white dark:bg-[#1c1c1e] p-6 border border-black/[0.06] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.03)] space-y-6">
+      {/* FORM CARD (iOS Settings Style) */}
+      <form onSubmit={handleSave} className="space-y-6">
         
         {/* FOTO PROFIL SECTION */}
-        <div className="pb-6 border-b border-black/[0.06] dark:border-white/[0.08]">
-          <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">
-            Foto Profil Utama
-          </label>
-          
-          <div className="flex items-center gap-5">
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className="relative h-20 w-20 shrink-0 cursor-pointer overflow-hidden rounded-full border-2 border-primary/30 bg-primary/5 hover:border-primary transition-all group"
-            >
-              {formData.photo_url ? (
-                <Image
-                  src={formData.photo_url}
-                  alt="Avatar"
-                  fill
-                  className="object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-2xl">
-                  👤
-                </div>
-              )}
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold">
-                Ganti
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={compressing}
-                className="rounded-full bg-black/[0.04] dark:bg-white/[0.08] hover:bg-black/[0.08] dark:hover:bg-white/[0.12] px-3.5 py-1.5 text-xs font-bold text-[#1d1d1f] dark:text-white transition-all active:scale-95"
-              >
-                {compressing ? "Mengompres..." : formData.photo_url ? "Ganti Foto" : "Unggah Foto"}
-              </button>
-              <p className="text-[11px] text-gray-400">
-                Otomatis dikompresi ke WebP agar hemat kuota.
-              </p>
+        <div className="flex flex-col items-center justify-center space-y-3 pb-2">
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className="relative h-24 w-24 cursor-pointer overflow-hidden rounded-full bg-black/[0.05] dark:bg-white/[0.1] transition-all hover:opacity-80"
+          >
+            {formData.photo_url ? (
+              <Image src={formData.photo_url} alt="Avatar" fill className="object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-3xl">👤</div>
+            )}
+            <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
+              Edit
             </div>
           </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handlePhotoUpload}
-          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={compressing}
+            className="text-[15px] font-medium text-primary hover:text-primary/80 transition-colors"
+          >
+            {compressing ? "Menyiapkan..." : formData.photo_url ? "Edit Foto" : "Tambah Foto"}
+          </button>
+          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
         </div>
 
-        {/* NAMA LENGKAP & ANONIM */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-6 border-b border-black/[0.06] dark:border-white/[0.08]">
-          <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-[#1d1d1f] dark:text-white">
-              Nama Lengkap / Nama Tampil <span className="text-rose-500">*</span>
-            </label>
+        {/* Group 1: Informasi Dasar */}
+        <div className="rounded-[12px] bg-white dark:bg-[#1c1c1e] overflow-hidden border border-black/[0.05] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+          <div className="flex items-center px-4 py-3 border-b border-black/[0.05] dark:border-white/[0.08]">
+            <label className="w-1/3 shrink-0 text-[15px] text-[#1d1d1f] dark:text-white">Nama</label>
             <input
               type="text"
               required
               value={formData.display_name}
               onChange={(e) => setFormData((prev) => ({ ...prev, display_name: e.target.value }))}
-              placeholder="Contoh: Sarah Angelina"
-              className="w-full rounded-xl border border-black/[0.1] bg-black/[0.02] dark:border-white/[0.1] dark:bg-white/[0.04] px-3.5 py-2.5 text-xs text-[#1d1d1f] dark:text-white outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
+              placeholder="Nama Lengkap"
+              className="flex-1 min-w-0 bg-transparent text-[15px] text-[#86868b] text-right outline-none dark:text-slate-400 placeholder:text-gray-300 dark:placeholder:text-gray-600"
             />
-            <p className="text-[10px] text-gray-400">Ditampilkan di toko dan kartu Cari Teman.</p>
           </div>
-
-          <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-[#1d1d1f] dark:text-white">
-              Nama Samaran (Anonim)
-            </label>
+          <div className="flex items-center px-4 py-3 border-b border-black/[0.05] dark:border-white/[0.08]">
+            <label className="w-1/3 shrink-0 text-[15px] text-[#1d1d1f] dark:text-white">Anonim</label>
             <input
               type="text"
               value={formData.anonymous_name}
               onChange={(e) => setFormData((prev) => ({ ...prev, anonymous_name: e.target.value }))}
-              placeholder="Contoh: Kucing Kampus"
-              className="w-full rounded-xl border border-black/[0.1] bg-black/[0.02] dark:border-white/[0.1] dark:bg-white/[0.04] px-3.5 py-2.5 text-xs text-[#1d1d1f] dark:text-white outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
+              placeholder="Kucing Kampus"
+              className="flex-1 min-w-0 bg-transparent text-[15px] text-[#86868b] text-right outline-none dark:text-slate-400 placeholder:text-gray-300 dark:placeholder:text-gray-600"
             />
-            <p className="text-[10px] text-gray-400">Dipakai saat posting &amp; komentar di Menfess.</p>
+          </div>
+          <div className="px-4 py-3 border-b border-black/[0.05] dark:border-white/[0.08]">
+            <label className="block text-[15px] text-[#1d1d1f] dark:text-white mb-1.5">Bio</label>
+            <textarea
+              rows={2}
+              value={formData.bio}
+              onChange={(e) => setFormData((prev) => ({ ...prev, bio: e.target.value }))}
+              placeholder="Ceritakan sedikit tentang dirimu..."
+              className="w-full bg-transparent text-[15px] text-[#86868b] outline-none dark:text-slate-400 placeholder:text-gray-300 dark:placeholder:text-gray-600 resize-none"
+            />
           </div>
         </div>
 
-        {/* KAMPUS, FAKULTAS, ANGKATAN */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pb-6 border-b border-black/[0.06] dark:border-white/[0.08]">
-          <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-[#1d1d1f] dark:text-white">
-              Kampus
-            </label>
+        {/* Group 2: Edukasi */}
+        <div className="rounded-[12px] bg-white dark:bg-[#1c1c1e] overflow-hidden border border-black/[0.05] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-black/[0.05] dark:border-white/[0.08]">
+            <label className="text-[15px] text-[#1d1d1f] dark:text-white">Kampus</label>
             <select
               value={formData.campus}
               onChange={(e) => setFormData((prev) => ({ ...prev, campus: e.target.value, faculty: "Umum" }))}
-              className="w-full rounded-xl border border-black/[0.1] bg-black/[0.02] dark:border-white/[0.1] dark:bg-white/[0.04] px-3.5 py-2.5 text-xs text-[#1d1d1f] dark:text-white outline-none focus:border-primary"
+              className="bg-transparent text-[15px] text-[#86868b] text-right outline-none dark:text-slate-400"
             >
-              <option value="USU">Universitas Sumatera Utara (USU)</option>
-              <option value="Polmed">Politeknik Negeri Medan (Polmed)</option>
-              <option value="Semua">Kampus Lainnya di Medan</option>
+              <option value="USU">USU</option>
+              <option value="Polmed">Polmed</option>
+              <option value="Semua">Lainnya</option>
             </select>
           </div>
-
-          <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-[#1d1d1f] dark:text-white">
-              Fakultas / Jurusan
-            </label>
+          <div className="flex items-center justify-between px-4 py-3 border-b border-black/[0.05] dark:border-white/[0.08]">
+            <label className="text-[15px] text-[#1d1d1f] dark:text-white">Fakultas</label>
             <select
               value={formData.faculty}
               onChange={(e) => setFormData((prev) => ({ ...prev, faculty: e.target.value }))}
-              className="w-full rounded-xl border border-black/[0.1] bg-black/[0.02] dark:border-white/[0.1] dark:bg-white/[0.04] px-3.5 py-2.5 text-xs text-[#1d1d1f] dark:text-white outline-none focus:border-primary"
+              className="bg-transparent text-[15px] text-[#86868b] text-right outline-none dark:text-slate-400 max-w-[200px]"
             >
               {currentFaculties.map((f) => (
                 <option key={f} value={f}>{f}</option>
               ))}
             </select>
           </div>
-
-          <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-[#1d1d1f] dark:text-white">
-              Angkatan
-            </label>
+          <div className="flex items-center justify-between px-4 py-3 border-b border-black/[0.05] dark:border-white/[0.08]">
+            <label className="text-[15px] text-[#1d1d1f] dark:text-white">Angkatan</label>
             <select
               value={formData.batch}
               onChange={(e) => setFormData((prev) => ({ ...prev, batch: e.target.value }))}
-              className="w-full rounded-xl border border-black/[0.1] bg-black/[0.02] dark:border-white/[0.1] dark:bg-white/[0.04] px-3.5 py-2.5 text-xs text-[#1d1d1f] dark:text-white outline-none focus:border-primary"
+              className="bg-transparent text-[15px] text-[#86868b] text-right outline-none dark:text-slate-400"
             >
               {["2026", "2025", "2024", "2023", "2022", "2021", "Alumni"].map((b) => (
                 <option key={b} value={b}>{b}</option>
@@ -387,82 +357,56 @@ export default function UnifiedProfilePanel({ sellerProfile, wa, onProfileUpdate
           </div>
         </div>
 
-        {/* INTENT / TUJUAN CARI TEMAN */}
-        <div className="space-y-2 pb-6 border-b border-black/[0.06] dark:border-white/[0.08]">
-          <label className="block text-xs font-bold text-[#1d1d1f] dark:text-white">
-            Tujuan Cari Teman Kampus
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {INTENTS.map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => setFormData((prev) => ({ ...prev, intent: item }))}
-                className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
-                  formData.intent === item
-                    ? "bg-primary text-white shadow-xs"
-                    : "bg-black/[0.04] text-gray-700 hover:bg-black/[0.08] dark:bg-white/[0.08] dark:text-gray-300"
-                }`}
-              >
-                {item}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* BIO & CERITA */}
-        <div className="space-y-1.5 pb-6 border-b border-black/[0.06] dark:border-white/[0.08]">
-          <label className="block text-xs font-bold text-[#1d1d1f] dark:text-white">
-            Bio / Deskripsi Profil
-          </label>
-          <textarea
-            rows={2}
-            value={formData.bio}
-            onChange={(e) => setFormData((prev) => ({ ...prev, bio: e.target.value }))}
-            placeholder="Ceritakan tentang tokomu, barang yang kamu jual, atau hobi & selera musik kamu..."
-            className="w-full rounded-xl border border-black/[0.1] bg-black/[0.02] dark:border-white/[0.1] dark:bg-white/[0.04] px-3.5 py-2.5 text-xs text-[#1d1d1f] dark:text-white outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
-          />
-        </div>
-
-        {/* KONTAK (WHATSAPP & INSTAGRAM) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-2">
-          <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-[#1d1d1f] dark:text-white">
-              WhatsApp Utama
-            </label>
+        {/* Group 3: Kontak & Intent */}
+        <div className="rounded-[12px] bg-white dark:bg-[#1c1c1e] overflow-hidden border border-black/[0.05] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+          <div className="flex items-center px-4 py-3 border-b border-black/[0.05] dark:border-white/[0.08]">
+            <label className="w-1/3 shrink-0 text-[15px] text-[#1d1d1f] dark:text-white">WhatsApp</label>
             <input
               type="text"
               readOnly
               value={formData.whatsapp || wa}
-              className="w-full rounded-xl border border-black/[0.06] bg-black/[0.04] dark:border-white/[0.06] dark:bg-white/[0.06] px-3.5 py-2.5 text-xs text-gray-500 cursor-not-allowed"
+              className="flex-1 min-w-0 bg-transparent text-[15px] text-gray-400 text-right outline-none"
             />
           </div>
-
-          <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-[#1d1d1f] dark:text-white">
-              Instagram <span className="text-gray-400 font-normal">(Opsional)</span>
-            </label>
-            <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">@</span>
-              <input
-                type="text"
-                value={formData.instagram}
-                onChange={(e) => setFormData((prev) => ({ ...prev, instagram: e.target.value.replace(/^@/, "") }))}
-                placeholder="username_kamu"
-                className="w-full rounded-xl border border-black/[0.1] bg-black/[0.02] dark:border-white/[0.1] dark:bg-white/[0.04] pl-8 pr-3.5 py-2.5 text-xs text-[#1d1d1f] dark:text-white outline-none focus:border-primary"
-              />
+          <div className="flex items-center px-4 py-3 border-b border-black/[0.05] dark:border-white/[0.08]">
+            <label className="w-1/3 shrink-0 text-[15px] text-[#1d1d1f] dark:text-white">Instagram</label>
+            <input
+              type="text"
+              value={formData.instagram}
+              onChange={(e) => setFormData((prev) => ({ ...prev, instagram: e.target.value.replace(/^@/, "") }))}
+              placeholder="username"
+              className="flex-1 min-w-0 bg-transparent text-[15px] text-[#86868b] text-right outline-none dark:text-slate-400 placeholder:text-gray-300 dark:placeholder:text-gray-600"
+            />
+          </div>
+          <div className="px-4 py-3">
+            <label className="block text-[15px] text-[#1d1d1f] dark:text-white mb-2">Tujuan Cari Teman</label>
+            <div className="flex flex-wrap gap-1.5">
+              {INTENTS.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => setFormData((prev) => ({ ...prev, intent: item }))}
+                  className={`rounded-full px-3 py-1 text-[13px] transition-all ${
+                    formData.intent === item
+                      ? "bg-[#1d1d1f] text-white dark:bg-white dark:text-black"
+                      : "bg-black/[0.04] text-[#1d1d1f] hover:bg-black/[0.08] dark:bg-white/[0.08] dark:text-white"
+                  }`}
+                >
+                  {item}
+                </button>
+              ))}
             </div>
           </div>
         </div>
 
         {/* SUBMIT BUTTON */}
-        <div className="pt-2 flex items-center justify-end">
+        <div className="pt-2">
           <button
             type="submit"
             disabled={saving || compressing}
-            className="rounded-full bg-primary px-6 py-2.5 text-xs font-bold text-white shadow-md hover:brightness-105 active:scale-[0.98] transition-all disabled:opacity-50"
+            className="w-full rounded-[14px] bg-primary px-4 py-3.5 text-[15px] font-bold text-white shadow-md hover:brightness-105 active:scale-[0.98] transition-all disabled:opacity-50"
           >
-            {saving ? "Menyimpan Biodata..." : "💾 Simpan Biodata Kampus"}
+            {saving ? "Menyimpan..." : "Simpan Biodata"}
           </button>
         </div>
       </form>

@@ -63,18 +63,16 @@ export default function HeroLanding({ q, onSearch, stats, total = 0, judul, subj
 
   return (
     <section className="-mx-4 -mt-3 mb-6 lg:mx-0 lg:mt-0">
-      <div className="relative isolate overflow-hidden bg-white pb-7 pt-8 sm:pb-9 lg:rounded-[28px] lg:pb-12 lg:pt-14 dark:bg-[#1c1c1e]">
-        {/* Lapis 1 — ilustrasi kampus, hanya sejak lg ke atas (lihat catatan
-            di atas: di bawah itu gambarnya tampil utuh, bukan jadi latar). */}
+      <div className="relative isolate overflow-hidden bg-white pb-7 pt-8 sm:pb-9 lg:rounded-[32px] lg:pb-12 lg:pt-14 dark:bg-[#111113] border border-black/[0.04] dark:border-white/[0.05] shadow-[0_2px_40px_rgba(0,0,0,0.04)]">
+        {/* Lapis 1 — ilustrasi kampus, hanya sejak lg ke atas. */}
         <div
           aria-hidden="true"
-          className="absolute inset-y-0 right-0 -z-20 hidden w-[52%] bg-[url('/hero-kampus.webp')] bg-cover bg-[position:68%_center] opacity-35 lg:block dark:opacity-20"
+          className="absolute inset-y-0 right-0 -z-20 hidden w-[52%] bg-[url('/hero-kampus.webp')] bg-cover bg-[position:68%_center] opacity-30 lg:block dark:opacity-15"
         />
-        {/* Lapis 2 — peredam mendatar supaya judul di kiri tetap terbaca di atas
-            langit yang terang, sementara sisi kanan gambarnya dibiarkan bersih. */}
+        {/* Lapis 2 — peredam mendatar supaya judul di kiri tetap terbaca. */}
         <div
           aria-hidden="true"
-          className="absolute inset-0 -z-10 hidden bg-gradient-to-r from-white via-white/95 to-white/30 lg:block dark:from-[#1c1c1e] dark:via-[#1c1c1e]/95 dark:to-[#1c1c1e]/30"
+          className="absolute inset-0 -z-10 hidden bg-gradient-to-r from-white via-white/95 to-white/30 lg:block dark:from-[#111113] dark:via-[#111113]/95 dark:to-[#111113]/30"
         />
 
         <div className="mx-auto max-w-6xl px-4">
@@ -105,20 +103,19 @@ export default function HeroLanding({ q, onSearch, stats, total = 0, judul, subj
               )}
             </p>
 
-            {/* Pencarian. Tombolnya tetap berlabel "Cari" walau sempit — ikon
-                kaca pembesar sendirian sering dikira tombol filter. */}
-            <form onSubmit={kirim} role="search" className="mt-6 flex items-center gap-2 rounded-2xl bg-[#f5f5f7] p-1.5 ring-1 ring-black/[0.05] transition-shadow focus-within:shadow-[0_8px_24px_rgba(0,0,0,0.08)] dark:bg-slate-800 dark:ring-white/10">
-              <Icon.Search className="ml-2.5 h-4 w-4 shrink-0 text-gray-400" />
+            {/* Pencarian. */}
+            <form onSubmit={kirim} role="search" className="mt-6 flex items-center gap-2 rounded-full bg-black/[0.04] p-1.5 transition-shadow focus-within:bg-white focus-within:shadow-[0_8px_24px_rgba(0,0,0,0.06)] focus-within:ring-1 focus-within:ring-black/[0.06] dark:bg-white/[0.06] dark:focus-within:bg-[#1c1c1e] dark:focus-within:ring-white/10">
+              <Icon.Search className="ml-3 h-4.5 w-4.5 shrink-0 text-gray-500" />
               <input
                 value={nilai}
                 onChange={(e) => { setNilai(e.target.value); onSearch?.(e.target.value); }}
-                placeholder="Cari barang, kategori, atau toko…"
+                placeholder="Cari barang atau jasa…"
                 aria-label="Cari barang"
-                className="min-w-0 flex-1 bg-transparent py-2 text-sm text-gray-900 outline-none placeholder:text-gray-400 dark:text-white dark:placeholder:text-slate-500"
+                className="min-w-0 flex-1 bg-transparent py-2.5 text-[15px] text-[#1d1d1f] outline-none placeholder:text-gray-500 dark:text-white dark:placeholder:text-gray-400"
               />
               <button
                 type="submit"
-                className="shrink-0 rounded-xl bg-[#0071e3] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0077ed] active:scale-[0.98]"
+                className="shrink-0 rounded-full bg-[#1d1d1f] px-5 py-2.5 text-[13px] font-bold text-white transition hover:bg-black active:scale-[0.96] dark:bg-white dark:text-[#1d1d1f] shadow-sm"
               >
                 Cari
               </button>
@@ -191,27 +188,24 @@ export default function HeroLanding({ q, onSearch, stats, total = 0, judul, subj
           </div>
         </div>
 
-        {/* Pita ajakan. Di HP menumpuk (teks lalu tombol selebar layar) karena
-            tombol sempit di samping teks panjang adalah sasaran jempol yang buruk. */}
+        {/* Pita ajakan. */}
         <div className="mx-auto mt-7 max-w-6xl px-4 lg:mt-10">
-          <div className="flex flex-col gap-3 rounded-[20px] bg-[#1d1d1f] px-4 py-4 text-white sm:flex-row sm:items-center sm:justify-between sm:px-6 dark:bg-white dark:text-[#1d1d1f]">
+          <div className="flex flex-col gap-3 rounded-[24px] bg-gradient-to-r from-[#1d1d1f] to-[#3a3a3c] px-4 py-4 text-white sm:flex-row sm:items-center sm:justify-between sm:px-6 shadow-[0_12px_32px_rgba(0,0,0,0.15)] dark:from-[#2c2c2e] dark:to-[#1c1c1e] dark:border dark:border-white/[0.08]">
             <div className="flex items-start gap-3">
-              <IkonFitur nama="perisai" className="mt-0.5 h-6 w-6 shrink-0" />
+              <IkonFitur nama="perisai" className="mt-0.5 h-6 w-6 shrink-0 text-[#f5f5f7]" />
               <div>
-                <p className="text-sm font-bold leading-tight sm:text-base">Aman, Nyaman, dan Terpercaya</p>
-                <p className="mt-0.5 text-xs leading-snug text-white/70 sm:text-sm dark:text-[#424245]">
+                <p className="text-[15px] font-bold leading-tight sm:text-[17px] tracking-tight">Aman, Nyaman, dan Terpercaya</p>
+                <p className="mt-0.5 text-xs leading-snug text-white/70 sm:text-sm">
                   Belanja dengan sesama mahasiswa jadi lebih mudah.
                 </p>
               </div>
             </div>
             <Link
               href="#daftar-barang"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-[#1d1d1f] transition active:scale-[0.98] hover:bg-[#f5f5f7] sm:shrink-0 dark:bg-[#0071e3] dark:text-white"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-2.5 text-[13px] font-bold text-[#1d1d1f] transition active:scale-[0.96] hover:bg-gray-100 sm:shrink-0 dark:bg-white dark:text-[#1d1d1f] shadow-sm"
             >
-              Mulai Belanja Sekarang
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 12h14M13 6l6 6-6 6" />
-              </svg>
+              Mulai Belanja
+              <Icon.ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </div>

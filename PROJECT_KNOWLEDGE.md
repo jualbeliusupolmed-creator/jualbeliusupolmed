@@ -102,6 +102,16 @@ Berjalan dengan PostgreSQL, memiliki tabel-tabel berikut:
 
 ## 5. Log & Riwayat Audit
 
+*   **25 Agustus 2026 — Antrean publikasi Instagram Menfess (belum diaktifkan di produksi)**
+    - Menfess yang sudah aktif dapat diterbitkan langsung oleh admin melalui tombol `Terbitkan IG`; sistem tetap memakai antrean dan lock status untuk mencegah publikasi ganda. Scheduler server menjadi jalur cadangan untuk antrean yang belum diproses.
+    - Token dan ID akun Instagram tidak disimpan di database maupun kode. Koneksi produksi menggunakan environment server `META_IG_ACCESS_TOKEN`, `META_IG_USER_ID`, dan `CRON_SECRET`.
+    - Endpoint gambar Menfess menghasilkan JPEG publik khusus Instagram agar Menfess teks dapat diposting tanpa mengekspos identitas internal pengirim.
+    - Migration `20260824192759_mading_instagram_publication_queue.sql` harus direview dan diterapkan sebelum kode ini dideploy. Cron dijadwalkan sekali sehari agar kompatibel dengan batas Vercel Hobby; frekuensi dapat ditingkatkan setelah paket Vercel diverifikasi.
+
+*   **25 Agustus 2026 — Tampilan feed Menfess & balasan komentar (belum dimigrasikan di produksi)**
+    - Feed `/mading` memakai daftar datar yang sama dengan cuplikan Menfess di Beranda; fungsi laporan, view, share, dan komentar tetap tersedia.
+    - Balasan komentar satu tingkat memakai `mading_comments.parent_id`, dengan validasi bahwa induk berasal dari post yang sama dan bukan balasan lain. Migration `20260824194256_mading_comment_replies.sql` harus diterapkan sebelum fitur reply digunakan di produksi.
+
 *   **24 Agustus 2026 — Owner Fast Actions, Photo Attachments & Realtime Typing Indicators**
     - **Panel Aksi Cepat Pemilik (`OwnerFastActions.jsx`)**: Menampilkan panel kontrol khusus saat penjual membuka halaman iklannya sendiri di `/produk/[slug]` (`[✏️ Edit Iklan]`, `[✅ Tandai Terjual]`, `[🚀 Sundul / Bump]`, `[📊 Dashboard]`).
     - **Lampiran Foto di Chat & DM (`/chat`)**: Input obrolan dilengkapi tombol `[📷]` yang terintegrasi dengan `/api/upload` dan Lightbox modal interaktif untuk memperbesar foto.

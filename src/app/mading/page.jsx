@@ -12,21 +12,27 @@ const FILTER_CAMPUSES = ["Semua", "USU", "POLMED", "Bebas"];
 export default function MadingPage() {
   const [activeTab, setActiveTab] = useState("all"); // 'all' | 'menfess' | 'info' | 'blog'
 
-  useEffect(() => {
-    try {
-      const tab = new URLSearchParams(window.location.search).get("tab");
-      if (tab === "info" || tab === "menfess" || tab === "blog") setActiveTab(tab);
-    } catch {}
-  }, []);
-
   const [selectedFaculty, setSelectedFaculty] = useState("Semua");
   const [filterType, setFilterType] = useState("all"); // 'all' | 'popular' | 'photo'
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get("tab");
+      if (tab === "info" || tab === "menfess" || tab === "blog") setActiveTab(tab);
+      if (params.get("buat") === "1") setShowModal(true);
+    } catch {
+      // Query parameters are a progressive enhancement only.
+    }
+  }, []);
+
   const [activeCommentsPostId, setActiveCommentsPostId] = useState(null);
   const [commentsMap, setCommentsMap] = useState({});
   const [newCommentText, setNewCommentText] = useState("");
+  const [replyingTo, setReplyingTo] = useState(null);
   const [submittingComment, setSubmittingComment] = useState(false);
 
   // Form State
@@ -205,6 +211,7 @@ export default function MadingPage() {
   const toggleComments = async (postId) => {
     if (activeCommentsPostId === postId) {
       setActiveCommentsPostId(null);
+      setReplyingTo(null);
       return;
     }
 
@@ -233,6 +240,7 @@ export default function MadingPage() {
           sender_name: "Mahasiswa",
           faculty: "Bebas",
           content: newCommentText.trim(),
+          parent_id: replyingTo?.postId === postId ? replyingTo.commentId : null,
         }),
       });
       const data = await res.json();
@@ -243,6 +251,7 @@ export default function MadingPage() {
           [postId]: [...(prev[postId] || []), data.comment],
         }));
         setNewCommentText("");
+        setReplyingTo(null);
         setPosts((prev) =>
           prev.map((p) => (p.id === postId ? { ...p, comments_count: p.comments_count + 1 } : p))
         );
@@ -507,7 +516,7 @@ export default function MadingPage() {
               )}
             </div>
           ) : (
-            <div className={activeTab === "blog" ? "grid gap-4 sm:grid-cols-2" : "space-y-4"}>
+            <div className={activeTab === "blog" ? "grid gap-4 sm:grid-cols-2" : "overflow-hidden bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] sm:rounded-[24px] sm:border sm:border-black/[0.06] dark:bg-[#0A0A0A] dark:sm:border-white/[0.08]"}>
               {posts
                 .filter((item) => {
                   if (item._kind === "blog") return true;
@@ -567,48 +576,46 @@ export default function MadingPage() {
                   <div
                     key={`post-${post.id}`}
                     data-mading-post-id={post.id}
-                    className="bg-white dark:bg-[#1c1c1e] p-5 rounded-[20px] border border-black/[0.06] dark:border-white/[0.08] shadow-[0_1px_2px_rgba(0,0,0,0.03)] relative overflow-hidden transition-all hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)]"
+                    className="group relative border-b border-black/[0.06] p-4 transition-colors last:border-b-0 hover:bg-black/[0.02] dark:border-white/[0.08] dark:hover:bg-white/[0.02] sm:p-5"
                   >
-                    {/* Type Indicator Line */}
-                    <div
-                      className={`absolute top-0 left-0 h-1 w-full ${post.type === "info" ? "bg-primary" : "bg-amber-400"}`}
-                    />
-
                     {/* Header */}
-                    <div className="flex items-center gap-3 mb-3">
+                    <div className="mb-1.5 flex items-center gap-2.5">
                       <div
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg ${
                           post.type === "info"
-                            ? "bg-fuchsia-100 dark:bg-fuchsia-950 text-fuchsia-600"
-                            : "bg-amber-100 dark:bg-amber-950 text-amber-600"
+                            ? "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300"
+                            : "bg-slate-100 text-slate-700 dark:bg-white/[0.06] dark:text-slate-300"
                         }`}
                       >
-                        {post.type === "info" ? <Icon.Info className="w-5 h-5" /> : <Icon.MessageCircle className="w-5 h-5" />}
+                        {post.type === "info" ? "📢" : "👤"}
                       </div>
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <p className="text-sm font-semibold text-[#1d1d1f] dark:text-white">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <p className="truncate text-[15px] font-bold text-[#1d1d1f] dark:text-white">
                             {post.sender_name}
                           </p>
-                          <span className="text-[10px] bg-[#f5f5f7] dark:bg-slate-800 text-[#6e6e73] dark:text-slate-400 px-1.5 py-0.5 rounded-md font-medium">
+                          <span className="rounded-md bg-black/[0.04] px-1.5 py-0.5 text-[10px] font-semibold text-gray-600 dark:bg-white/[0.08] dark:text-gray-400">
                             {post.faculty}
                           </span>
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${post.type === "info" ? "bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300" : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"}`}>
+                            {post.type === "info" ? "Info Kampus" : "Menfess"}
+                          </span>
                         </div>
-                        <p className="text-[10px] text-slate-400">
-                          {post.type === "info" ? "Info Kampus" : "Menfess"} • {timeAgo(post.created_at)}
+                        <p className="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400">
+                          {timeAgo(post.created_at)}
                         </p>
                       </div>
                     </div>
 
                     {/* Title (If info) */}
                     {post.title && (
-                      <h3 className="text-sm font-semibold text-[#1d1d1f] dark:text-white mb-1.5 leading-snug">
+                      <h3 className="mb-1 text-[15px] font-bold leading-snug text-[#1d1d1f] dark:text-white">
                         {post.title}
                       </h3>
                     )}
 
                     {/* Content */}
-                    <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
+                    <p className="mt-1 whitespace-pre-wrap text-[15px] leading-[1.6] text-[#1d1d1f] dark:text-gray-200 sm:text-base">
                       {post.content}
                     </p>
 
@@ -633,52 +640,53 @@ export default function MadingPage() {
                     )}
 
                     {/* Action Buttons */}
-                    <div className="flex items-center gap-4 mt-4 pt-3 border-t border-slate-50 dark:border-slate-800/80 text-slate-500 text-xs font-semibold">
+                    <div className="mt-3.5 flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 sm:gap-6">
                       <button
                         onClick={() => handleLike(post.id)}
-                        className={`flex items-center gap-1.5 py-1 px-2 rounded-lg transition-colors ${
+                        className={`flex items-center gap-1 rounded-lg px-2 py-1 transition-colors ${
                           post._isLiked
                             ? "text-rose-500 bg-rose-50 dark:bg-rose-950/30"
                             : "hover:text-rose-500 hover:bg-slate-50 dark:hover:bg-slate-800"
                         }`}
                       >
-                        <Icon.Heart className={`w-4 h-4 ${post._isLiked ? "fill-current text-rose-500" : ""}`} />
+                        <Icon.Heart className={`h-3.5 w-3.5 ${post._isLiked ? "fill-current text-rose-500" : ""}`} />
                         <span>{post.likes_count || 0}</span>
                       </button>
 
                       <button
                         onClick={() => toggleComments(post.id)}
-                        className={`flex items-center gap-1.5 py-1 px-2 rounded-lg transition-colors ${
+                        className={`flex items-center gap-1 rounded-lg px-2 py-1 transition-colors ${
                           activeCommentsPostId === post.id
                             ? "text-blue-500 bg-blue-50 dark:bg-blue-950/30"
                             : "hover:text-blue-500 hover:bg-slate-50 dark:hover:bg-slate-800"
                         }`}
                       >
-                        <Icon.MessageCircle className="w-4 h-4" />
+                        <Icon.MessageCircle className="h-3.5 w-3.5" />
                         <span>{post.comments_count || 0} Komentar</span>
                       </button>
 
                       <button
                         onClick={() => handleShare(post)}
-                        className="flex items-center gap-1 py-1 px-2 rounded-lg hover:text-slate-800 dark:hover:text-slate-200 ml-auto transition-colors"
+                        className="ml-auto flex items-center gap-1 rounded-lg px-2 py-1 transition-colors hover:text-emerald-600"
                       >
-                        <Icon.Share className="w-3.5 h-3.5" />
-                        <span>{post.shares_count || 0} Bagikan</span>
+                        <Icon.Share className="h-3.5 w-3.5" />
+                        <span className="hidden font-bold xs:inline">Bagikan</span>
                       </button>
 
                       <button
                         onClick={() => handleReport(post.id)}
                         title="Laporkan postingan ini"
-                        className="flex items-center gap-1 py-1 px-2 rounded-lg hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors"
+                        aria-label="Laporkan postingan ini"
+                        className="rounded-lg p-1.5 transition-colors hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-950/30"
                       >
-                        <Icon.Flag className="w-3.5 h-3.5" />
-                        <span className="sr-only sm:not-sr-only">Lapor</span>
+                        <Icon.Flag className="h-3.5 w-3.5" />
                       </button>
+
+                      <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                        <Icon.Eye className="h-3 w-3" />
+                        <span>{post.views_count || 0}</span>
+                      </span>
                     </div>
-                    <p className="mt-2 flex items-center gap-1.5 text-[11px] text-slate-400 dark:text-slate-500">
-                      <Icon.Eye className="h-3.5 w-3.5" />
-                      Dilihat {post.views_count || 0} kali
-                    </p>
 
                     {/* COMMENTS ACCORDION SECTION */}
                     {activeCommentsPostId === post.id && (
@@ -689,26 +697,55 @@ export default function MadingPage() {
                               Belum ada komentar. Jadilah yang pertama berkomentar!
                             </p>
                           ) : (
-                            commentsMap[post.id].map((c) => (
-                              <div key={c.id} className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl text-xs">
-                                <div className="flex items-center justify-between mb-1">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="font-bold text-slate-800 dark:text-slate-200">{c.sender_name}</span>
-                                    {c.is_op && (
-                                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-black bg-primary/10 text-primary dark:bg-emerald-400/15 dark:text-emerald-300 border border-primary/20 dark:border-emerald-400/20">
-                                        Penulis • OP
-                                      </span>
-                                    )}
+                            commentsMap[post.id].filter((c) => !c.parent_id).map((c) => (
+                              <div key={c.id} className="space-y-2">
+                                <div className="rounded-xl bg-slate-50 p-2.5 text-xs dark:bg-slate-800/60">
+                                  <div className="mb-1 flex items-center justify-between">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="font-bold text-slate-800 dark:text-slate-200">{c.sender_name}</span>
+                                      {c.is_op && (
+                                        <span className="inline-flex items-center rounded-md border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-[9px] font-black text-primary dark:border-emerald-400/20 dark:bg-emerald-400/15 dark:text-emerald-300">
+                                          Penulis • OP
+                                        </span>
+                                      )}
+                                    </div>
+                                    <span className="text-[9px] text-slate-400">{timeAgo(c.created_at)}</span>
                                   </div>
-                                  <span className="text-[9px] text-slate-400">{timeAgo(c.created_at)}</span>
+                                  <p className="leading-snug text-slate-600 dark:text-slate-300">{c.content}</p>
+                                  <button
+                                    type="button"
+                                    onClick={() => setReplyingTo({ postId: post.id, commentId: c.id, sender: c.sender_name })}
+                                    className="mt-1.5 text-[10px] font-bold text-primary hover:underline"
+                                  >
+                                    Balas
+                                  </button>
                                 </div>
-                                <p className="text-slate-600 dark:text-slate-300 leading-snug">{c.content}</p>
+                                {commentsMap[post.id].filter((reply) => reply.parent_id === c.id).map((reply) => (
+                                  <div key={reply.id} className="ml-5 border-l-2 border-primary/20 pl-2.5">
+                                    <div className="rounded-xl bg-primary/[0.04] p-2.5 text-xs dark:bg-primary/10">
+                                      <div className="mb-1 flex items-center justify-between">
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="font-bold text-slate-800 dark:text-slate-200">{reply.sender_name}</span>
+                                          {reply.is_op && <span className="text-[9px] font-black text-primary dark:text-emerald-300">OP</span>}
+                                        </div>
+                                        <span className="text-[9px] text-slate-400">{timeAgo(reply.created_at)}</span>
+                                      </div>
+                                      <p className="leading-snug text-slate-600 dark:text-slate-300">{reply.content}</p>
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
                             ))
                           )}
                         </div>
 
                         {/* Comment Input */}
+                        {replyingTo?.postId === post.id && (
+                          <div className="flex items-center justify-between rounded-lg bg-primary/10 px-2.5 py-1.5 text-[10px] font-semibold text-primary">
+                            <span>Membalas {replyingTo.sender}</span>
+                            <button type="button" onClick={() => setReplyingTo(null)} className="font-black" aria-label="Batal membalas">×</button>
+                          </div>
+                        )}
                         <div className="flex gap-2">
                           <input
                             type="text"
@@ -717,7 +754,7 @@ export default function MadingPage() {
                             onKeyDown={(e) => {
                               if (e.key === "Enter") handleSendComment(post.id);
                             }}
-                            placeholder="Tulis balasan anonim…"
+                            placeholder={replyingTo?.postId === post.id ? `Balas ${replyingTo.sender}…` : "Tulis komentar anonim…"}
                             className="flex-1 bg-slate-100 dark:bg-slate-800 border-none rounded-full px-3.5 py-1.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary outline-none"
                           />
                           <button

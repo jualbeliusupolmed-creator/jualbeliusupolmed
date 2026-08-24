@@ -5,6 +5,7 @@
   "description": "Marketplace Kota Medan",
   "scripts": {
     "dev": "next dev",
+    "dev:clean": "Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue; next dev",
     "dev:turbo": "next dev --turbo",
     "build": "next build",
     "start": "next start",

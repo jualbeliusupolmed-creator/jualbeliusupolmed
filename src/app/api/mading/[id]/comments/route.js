@@ -28,16 +28,28 @@ export async function GET(request, { params }) {
       return NextResponse.json({ comments: [] });
     }
 
+    let hasParentId = true;
+    let hasAuthorHash = true;
     let { data, error } = await supa
       .from("mading_comments")
-      .select("id, post_id, sender_name, faculty, content, author_ip_hash, created_at")
+      .select("id, post_id, parent_id, sender_name, faculty, content, author_ip_hash, created_at")
       .eq("post_id", postId)
       .order("created_at", { ascending: true });
 
-    if (error && /author_ip_hash/i.test(error.message || "")) {
+    if (error && /parent_id/i.test(error.message || "")) {
+      hasParentId = false;
       ({ data, error } = await supa
         .from("mading_comments")
-        .select("id, post_id, sender_name, faculty, content, created_at")
+        .select("id, post_id, sender_name, faculty, content, author_ip_hash, created_at")
+        .eq("post_id", postId)
+        .order("created_at", { ascending: true }));
+    }
+
+    if (error && /author_ip_hash/i.test(error.message || "")) {
+      hasAuthorHash = false;
+      ({ data, error } = await supa
+        .from("mading_comments")
+        .select(hasParentId ? "id, post_id, parent_id, sender_name, faculty, content, created_at" : "id, post_id, sender_name, faculty, content, created_at")
         .eq("post_id", postId)
         .order("created_at", { ascending: true }));
     }
@@ -50,11 +62,12 @@ export async function GET(request, { params }) {
     const commentsWithOp = (data || []).map((c) => ({
       id: c.id,
       post_id: c.post_id,
+      parent_id: hasParentId ? c.parent_id : null,
       sender_name: c.sender_name,
       faculty: c.faculty,
       content: c.content,
       created_at: c.created_at,
-      is_op: Boolean(post.author_ip_hash && c.author_ip_hash && post.author_ip_hash === c.author_ip_hash),
+      is_op: Boolean(hasAuthorHash && post.author_ip_hash && c.author_ip_hash && post.author_ip_hash === c.author_ip_hash),
     }));
 
     return NextResponse.json({ comments: commentsWithOp });
@@ -69,7 +82,7 @@ export async function POST(request, { params }) {
   try {
     const postId = params.id;
     const body = await request.json();
-    let { faculty, content } = body;
+    let { faculty, content, parent_id: parentId } = body;
     const wa = getUserSession();
     if (!wa) return NextResponse.json({ error: "Silakan masuk untuk berkomentar." }, { status: 401 });
 
@@ -107,6 +120,26 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: "Postingan tidak ditemukan atau sudah disembunyikan." }, { status: 404 });
     }
 
+    if (parentId) {
+      const { data: parent, error: parentError } = await supa
+        .from("mading_comments")
+        .select("id, parent_id")
+        .eq("id", parentId)
+        .eq("post_id", postId)
+        .maybeSingle();
+      if (parentError && /parent_id/i.test(parentError.message || "")) {
+        return NextResponse.json(
+          { error: "Fitur balas komentar sedang diaktifkan. Coba lagi sesaat lagi." },
+          { status: 409 }
+        );
+      }
+      if (parentError || !parent || parent.parent_id) {
+        return NextResponse.json({ error: "Komentar yang ingin dibalas tidak valid." }, { status: 400 });
+      }
+    } else {
+      parentId = null;
+    }
+
     const authorHash = hashIdentitas(wa);
     let { data, error } = await supa
       .from("mading_comments")
@@ -116,9 +149,14 @@ export async function POST(request, { params }) {
         faculty,
         content: cleanContent,
         author_ip_hash: authorHash,
+        parent_id: parentId,
       })
       .select()
       .single();
+
+    if (error && parentId && /parent_id/i.test(error.message || "")) {
+      return NextResponse.json({ error: "Fitur balas komentar belum diaktifkan di database." }, { status: 409 });
+    }
 
     if (error && /author_ip_hash/i.test(error.message || "")) {
       ({ data, error } = await supa
@@ -128,6 +166,7 @@ export async function POST(request, { params }) {
           sender_name,
           faculty,
           content: cleanContent,
+          parent_id: parentId,
         })
         .select()
         .single());

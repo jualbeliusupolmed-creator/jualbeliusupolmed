@@ -17,6 +17,7 @@ export default function LayoutWrapper({ children }) {
   const isDashboard = pathname?.startsWith("/dashboard");
   const isHome = pathname === "/";
   const hideFooter = isAdmin || isChat || isTeman || isDashboard || isHome;
+  const isImmersive = isAdmin;
   const [config, setConfig] = useState(null);
 
   useEffect(() => {
@@ -30,9 +31,9 @@ export default function LayoutWrapper({ children }) {
 
   return (
     <>
-      {!isAdmin && <Navbar config={config} />}
-      <main className={isAdmin ? "flex-1" : isTeman || isChat ? "flex-1 bg-[#f5f5f7] dark:bg-[#000000]" : "flex-1 bg-[#f5f5f7] pb-24 md:pb-28 dark:bg-[#0b0b0f]"}>{children}</main>
-      {!isAdmin && (
+      {!isImmersive && <Navbar config={config} />}
+      <main className={isAdmin ? "flex-1" : isChat || isTeman ? "flex-1 bg-[#f5f5f7] pb-20 md:pb-28 dark:bg-[#000000]" : "flex-1 bg-[#f5f5f7] pb-24 md:pb-28 dark:bg-[#0b0b0f]"}>{children}</main>
+      {!isImmersive && (
         <>
           <GlobalChatNotifier />
           <InstallPrompt />

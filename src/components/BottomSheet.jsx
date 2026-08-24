@@ -57,7 +57,7 @@ export default function BottomSheet({ isOpen, onClose, title, children }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300 animate-in fade-in">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-[8px] transition-opacity duration-300 animate-in fade-in">
       {/* Backdrop tap to close */}
       <button
         type="button"
@@ -72,16 +72,16 @@ export default function BottomSheet({ isOpen, onClose, title, children }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative z-10 flex max-h-[85vh] w-full max-w-lg flex-col rounded-t-[28px] border-t border-slate-200 bg-white p-5 pb-safe shadow-2xl animate-in slide-in-from-bottom duration-300 dark:border-slate-800 dark:bg-slate-900"
+        className="relative z-10 flex max-h-[88vh] w-full max-w-lg flex-col rounded-t-[32px] border-t border-black/[0.05] bg-white/95 backdrop-blur-xl p-5 pb-safe shadow-[0_-24px_64px_rgba(0,0,0,0.15)] animate-slide-up dark:border-white/[0.08] dark:bg-[#1c1c1e]/95"
       >
-        {/* Drag Handle */}
-        <div className="flex justify-center mb-3">
-          <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full" />
+        {/* Drag Handle — iOS style */}
+        <div className="flex justify-center mb-4">
+          <div className="w-10 h-1 bg-black/[0.15] dark:bg-white/[0.2] rounded-full" />
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-          <h3 id={titleId} className="text-base font-bold text-slate-900 dark:text-white">
+        <div className="flex items-center justify-between pb-3 border-b border-black/[0.06] dark:border-white/[0.08]">
+          <h3 id={titleId} className="text-[17px] font-bold tracking-tight text-[#1d1d1f] dark:text-white">
             {title || "Filter"}
           </h3>
           <button
@@ -89,9 +89,9 @@ export default function BottomSheet({ isOpen, onClose, title, children }) {
             type="button"
             onClick={onClose}
             aria-label="Tutup panel"
-            className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-full active:scale-90 transition-transform"
+            className="w-7 h-7 flex items-center justify-center rounded-full bg-black/[0.05] text-[#1d1d1f] hover:bg-black/[0.09] active:scale-90 transition-all dark:bg-white/[0.08] dark:text-white"
           >
-            <Icon.X className="w-5 h-5" />
+            <Icon.X className="w-3.5 h-3.5" />
           </button>
         </div>
 

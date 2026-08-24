@@ -50,10 +50,10 @@ async function getInitialData() {
     // 22 Agu sudah bersihkan dari /lomba, jangan tumbuh lagi di sini.
     const { data: mading } = await supa
       .from("mading_posts")
-      .select("id, type, sender_name, faculty, title, content, likes_count, comments_count, created_at")
+      .select("id, type, sender_name, faculty, title, content, image_url, likes_count, comments_count, views_count, shares_count, created_at")
       .eq("status", "active")
       .order("created_at", { ascending: false })
-      .limit(2);
+      .limit(15);
 
     return { listings: data || [], madingPosts: mading || [] };
   } catch (e) {

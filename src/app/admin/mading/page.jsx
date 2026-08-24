@@ -14,16 +14,24 @@ export default async function AnalitikMadingPage({ searchParams }) {
   const supa = getAdminClient();
   let { data: posts, error } = await supa
     .from("mading_posts")
-    .select("id, type, sender_name, faculty, title, content, image_url, views_count, shares_count, likes_count, comments_count, status, author_ip_hash, created_at")
+    .select("id, type, sender_name, faculty, title, content, image_url, views_count, shares_count, likes_count, comments_count, status, instagram_status, instagram_media_id, instagram_published_at, author_ip_hash, created_at")
     .order("created_at", { ascending: false })
     .limit(150);
+
+  if (error && /instagram_status|instagram_media_id|instagram_published_at/i.test(error.message || "")) {
+    ({ data: posts, error } = await supa
+      .from("mading_posts")
+      .select("id, type, sender_name, faculty, title, content, image_url, views_count, shares_count, likes_count, comments_count, status, author_ip_hash, created_at")
+      .order("created_at", { ascending: false })
+      .limit(150));
+  }
 
   let trafficReady = true;
   if (error && /shares_count/i.test(error.message || "")) {
     trafficReady = false;
     ({ data: posts, error } = await supa
       .from("mading_posts")
-      .select("id, type, sender_name, faculty, title, content, image_url, likes_count, comments_count, status, author_ip_hash, created_at")
+      .select("id, type, sender_name, faculty, title, content, image_url, likes_count, comments_count, status, instagram_status, instagram_media_id, instagram_published_at, author_ip_hash, created_at")
       .order("created_at", { ascending: false })
       .limit(150));
   }

@@ -24,51 +24,51 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
   const isDistributor = !!listing.seller_profiles?.distributor;
   const distributorFee = listing.distributor_fee || 0;
   return (
-    <div className="group relative overflow-hidden rounded-[22px] bg-white border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.03)] transition-all duration-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 active:scale-[0.97] dark:bg-[#1c1c1e] dark:border-white/[0.08] dark:hover:border-white/[0.16] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] no-tap-highlight">
+    <div className="group relative overflow-hidden rounded-[24px] bg-white border border-black/[0.05] shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all duration-300 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:-translate-y-1 active:scale-[0.97] active:shadow-none dark:bg-[#1c1c1e] dark:border-white/[0.08] dark:hover:border-white/[0.16] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] no-tap-highlight">
       <FavoriteButton listing={listing} className="absolute right-2 top-2 z-10" />
       <Link href={`/produk/${buildSlug(listing.title, listing.id)}`} className="block">
-        <div className="relative aspect-square overflow-hidden bg-black/[0.03] dark:bg-black/40">
+        <div className="relative aspect-square overflow-hidden bg-black/[0.03] dark:bg-black/40 rounded-t-[24px]">
           {listing.image_url ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={listing.image_url}
               alt={listing.title}
-              className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-103"
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
             />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 dark:from-slate-800 dark:via-slate-700 dark:to-slate-800 bg-[length:200%_100%] animate-shimmer" />
+            <div className="absolute inset-0 animate-shimmer" />
           )}
           
           <div className="absolute left-2 top-2 flex flex-col gap-1 items-start">
             {isRental && !sold && (
-              <span className="rounded-full bg-teal-600/90 backdrop-blur-md px-2 py-0.5 text-[10px] font-semibold text-white shadow-xs">
+              <span className="rounded-full bg-teal-600/90 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
                 Sewa
               </span>
             )}
             {!isRental && isSponsored && !sold && (
-              <span className="rounded-full bg-indigo-600/90 backdrop-blur-md px-2 py-0.5 text-[10px] font-semibold text-white shadow-xs">
+              <span className="rounded-full bg-indigo-600/90 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
                 Sponsor
               </span>
             )}
             {!isRental && !isSponsored && listing.featured && (
-              <span className="rounded-full bg-white/90 backdrop-blur-md px-2 py-0.5 text-[10px] font-semibold text-[#1d1d1f] shadow-xs dark:bg-[#1c1c1e]/90 dark:text-white">
+              <span className="rounded-full bg-white/95 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-[#1d1d1f] shadow-sm dark:bg-[#1c1c1e]/95 dark:text-white">
                 Unggulan
               </span>
             )}
             {!isRental && !isSponsored && !listing.featured && isNew && !sold && (
-              <span className="rounded-full bg-emerald-500/90 backdrop-blur-md px-2 py-0.5 text-[10px] font-semibold text-white shadow-xs flex items-center gap-1">
+              <span className="rounded-full bg-emerald-500/95 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-white shadow-sm flex items-center gap-1">
                 <Icon.Star className="h-2.5 w-2.5" /> Baru
               </span>
             )}
             {!isRental && !isSponsored && !listing.featured && isConditionNew && !isNew && !sold && (
-              <span className="rounded-full bg-sky-500/90 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-white shadow-xs">
+              <span className="rounded-full bg-sky-500/95 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
                 Baru
               </span>
             )}
           </div>
           
           {isLowStock && !sold && (
-            <span className="absolute bottom-2 left-2 rounded-full bg-amber-500/90 backdrop-blur-md px-2 py-0.5 text-[9px] font-bold text-white shadow-xs">
+            <span className="absolute bottom-2 left-2 rounded-full bg-amber-500/95 backdrop-blur-md px-2 py-0.5 text-[9px] font-bold text-white shadow-sm">
               Stok Tipis
             </span>
           )}
@@ -82,19 +82,19 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
         </div>
         <div className="p-3 xs:p-3.5">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 bg-black/[0.04] dark:bg-white/[0.08] px-2 py-0.5 rounded-full truncate max-w-[80px] xs:max-w-none">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 bg-black/[0.04] dark:bg-white/[0.08] px-2 py-0.5 rounded-full truncate max-w-[80px] xs:max-w-none">
               {listing.category}
             </span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/8 text-primary dark:bg-violet-500/15 dark:text-violet-300 font-semibold max-w-[100px] xs:max-w-[140px] truncate flex items-center gap-0.5">
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/[0.08] text-primary dark:bg-violet-500/15 dark:text-violet-300 font-semibold max-w-[100px] xs:max-w-[140px] truncate flex items-center gap-0.5">
               <Icon.MapPin className="h-2.5 w-2.5 shrink-0" />
               <span className="truncate">{listing.campus === "Semua" ? "Medan" : listing.campus}
               {listing.area ? ` (${listing.area})` : ""}</span>
             </span>
           </div>
-          <h3 className="mt-1.5 line-clamp-2 text-xs xs:text-sm font-semibold leading-snug text-[#1d1d1f] dark:text-[#f5f5f7] group-hover:text-primary dark:group-hover:text-violet-400 transition-colors min-h-[2rem] xs:min-h-[2.5rem]">
+          <h3 className="mt-2 line-clamp-2 text-[13px] xs:text-sm font-semibold leading-snug text-[#1d1d1f] dark:text-[#f5f5f7] group-hover:text-primary dark:group-hover:text-violet-400 transition-colors min-h-[2rem] xs:min-h-[2.5rem] tracking-tight">
             {listing.title}
           </h3>
-          <p className="mt-1 text-sm xs:text-base font-black tracking-tight text-[#1d1d1f] dark:text-white">
+          <p className="mt-1.5 text-sm xs:text-[15px] font-black tracking-tight text-[#1d1d1f] dark:text-white">
             {listing.type === "jasa" && (
               <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mr-1">Mulai</span>
             )}
@@ -108,7 +108,7 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
               Fee: {rupiah(distributorFee)}
             </p>
           )}
-          <div className="mt-2.5 pt-2 border-t border-black/[0.04] dark:border-white/[0.06] flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
+          <div className="mt-2.5 pt-2 border-t border-black/[0.04] dark:border-white/[0.05] flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
             <div className="flex items-center gap-1 min-w-0 pr-1">
               <span className="truncate">{!tanpaPenjual ? listing.seller_name || "Penjual" : ""}</span>
               {listing.seller_profiles?.subscription_tier === "pro" &&
@@ -129,11 +129,11 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
             </div>
             <div className="shrink-0 flex items-center gap-1.5">
               {isNego && (
-                <span className="rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider">
+                <span className="rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">
                   Nego
                 </span>
               )}
-              <span className="flex items-center gap-0.5 opacity-75 text-[10px]">
+              <span className="flex items-center gap-0.5 opacity-70 text-[10px]">
                 <Icon.Eye className="h-2.5 w-2.5" /> {listing.views || 0}
               </span>
             </div>
@@ -143,3 +143,4 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
     </div>
   );
 }
+

@@ -35,7 +35,10 @@ export async function POST(request, { params }) {
   });
 
   if (error) {
-    if (/record_mading_engagement|shares_count|mading_post_engagements/i.test(error.message || "")) {
+    // Pattern ini mencakup: fungsi RPC belum ada, kolom belum ada (migration pending),
+    // atau error "column reference ... is ambiguous" dari SQL yang bentrok kolom.
+    if (/record_mading_engagement|shares_count|mading_post_engagements|ambiguous|views_count/i.test(error.message || "")) {
+      // Kembalikan 409 (bukan 500) — ini bukan crash app, tapi migration DB belum dijalankan.
       return NextResponse.json({ error: "Fitur statistik Menfess belum diaktifkan." }, { status: 409 });
     }
     console.error("Mading engagement error:", error.message);

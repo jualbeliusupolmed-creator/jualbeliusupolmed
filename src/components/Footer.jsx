@@ -18,7 +18,7 @@ export default function Footer({ config }) {
   const logoUrl = site.logoUrl || "https://autgrnrqeqdpqwkbolyh.supabase.co/storage/v1/object/public/listings/site/logo-1781175724233.jpg";
 
   return (
-    <footer className="mt-20 border-t border-gray-100 bg-gradient-to-b from-transparent to-gray-50/50 dark:border-slate-900 dark:to-slate-950/20">
+    <footer className="mt-20 border-t border-black/[0.06] bg-[#f5f5f7] dark:border-white/[0.06] dark:bg-[#111113]">
       <div className="mx-auto max-w-6xl px-6 py-12 md:py-16">
         <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-3 lg:gap-12">
           {/* Brand section */}

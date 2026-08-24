@@ -122,7 +122,7 @@ export default function Navbar({ config }) {
           {/* Right side: search, unified user account button, notif, theme, cta */}
           <div className="flex shrink-0 items-center gap-2">
             {/* Search mini — Spotlight style */}
-            <form onSubmit={submitSearch} className="relative hidden md:block">
+            <form onSubmit={submitSearch} className="relative hidden">
               <Icon.Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400 transition-colors peer-focus:text-primary" />
               <input
                 value={navQ}
@@ -171,6 +171,15 @@ export default function Navbar({ config }) {
               </button>
             )}
 
+            <Link
+              href="/chat"
+              aria-label="Buka pesan"
+              title="Pesan"
+              className="rounded-full p-2 text-gray-500 transition-all duration-200 hover:bg-black/[0.05] hover:text-[#1d1d1f] active:scale-90 dark:text-gray-400 dark:hover:bg-white/[0.08] dark:hover:text-white"
+            >
+              <Icon.MessageCircle className="h-4 w-4" />
+            </Link>
+
             {/* Notification Center */}
             <NotificationCenter />
 
@@ -199,7 +208,7 @@ export default function Navbar({ config }) {
       </div>
 
       {/* ── Nav links bar — Apple Segmented Style ── */}
-      <div className="relative border-b border-black/[0.06] bg-white/70 backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#000000]/70">
+      <div className="relative hidden border-b border-black/[0.06] bg-white/70 backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#000000]/70">
         <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-[#f5f5f7] to-transparent z-10 dark:from-[#000000]" />
         <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#f5f5f7] to-transparent z-10 dark:from-[#000000]" />
         
