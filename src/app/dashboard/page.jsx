@@ -645,8 +645,19 @@ function DashboardInner() {
       <div className="bg-white dark:bg-slate-900/90 rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm mb-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 via-emerald-400/10 to-teal-500/20 dark:from-emerald-950 dark:to-slate-900 border border-primary/20 flex items-center justify-center text-2xl font-black text-primary dark:text-emerald-400 shadow-inner">
-              {sellerProfile?.name ? sellerProfile.name.charAt(0).toUpperCase() : "👤"}
+            <div className="relative w-14 h-14 rounded-2xl overflow-hidden bg-gradient-to-br from-primary/20 via-purple-400/10 to-indigo-500/20 dark:from-purple-950 dark:to-slate-900 border border-primary/20 flex items-center justify-center text-2xl font-black text-primary dark:text-violet-300 shadow-inner shrink-0">
+              {sellerProfile?.photo_url ? (
+                <Image
+                  src={sellerProfile.photo_url}
+                  alt="Avatar"
+                  fill
+                  className="object-cover"
+                />
+              ) : sellerProfile?.name ? (
+                sellerProfile.name.charAt(0).toUpperCase()
+              ) : (
+                "👤"
+              )}
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
