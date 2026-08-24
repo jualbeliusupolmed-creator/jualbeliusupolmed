@@ -4,6 +4,7 @@ import { getUserSession } from "@/lib/auth";
 import { hashIdentitas } from "@/lib/identitasHash";
 import { cariWaDariHash } from "@/lib/chatIdentity";
 import { siarkanPesanBaru } from "@/lib/chatRealtime";
+import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,16 @@ export async function POST(request, { params }) {
     const wa = getUserSession();
     if (!wa) {
       return NextResponse.json({ error: "Silakan login terlebih dahulu" }, { status: 401 });
+    }
+
+    // Persetujuan mengubah ruang anonim menjadi DM permanen. Batasi agar tidak
+    // bisa dipakai untuk membanjiri room maupun memicu banyak insert sistem.
+    const laju = rateLimit(`chat-exchange:${getClientIp(request)}`, { limit: 6, windowMs: 5 * 60_000 });
+    if (!laju.ok) {
+      return NextResponse.json(
+        { error: `Terlalu sering mengirim ajakan. Coba lagi dalam ${laju.retryAfter} detik.` },
+        { status: 429 }
+      );
     }
 
     const userId = hashIdentitas(wa);
@@ -93,19 +104,20 @@ export async function POST(request, { params }) {
         throw new Error("Nomor identitas pengguna tidak ditemukan");
       }
 
-      // Ambil nama profil asli dari seller_profiles jika ada
+      // seller_profiles memakai `wa` sebagai identitas. Fakultas memang tidak
+      // disimpan di profil; nilainya yang aman dan relevan ada pada room.
       const { data: profiles } = await supa
         .from("seller_profiles")
-        .select("phone, name, faculty")
-        .in("phone", [realWa1, realWa2]);
+        .select("wa, name")
+        .in("wa", [realWa1, realWa2]);
 
       const profMap = {};
-      (profiles || []).forEach((p) => { profMap[p.phone] = p; });
+      (profiles || []).forEach((p) => { profMap[p.wa] = p; });
 
       const name1 = profMap[realWa1]?.name || room.user1_alias || "Teman Kampus";
-      const faculty1 = profMap[realWa1]?.faculty || room.user1_faculty || "Umum";
+      const faculty1 = room.user1_faculty || "Umum";
       const name2 = profMap[realWa2]?.name || room.user2_alias || "Teman Kampus";
-      const faculty2 = profMap[realWa2]?.faculty || room.user2_faculty || "Umum";
+      const faculty2 = room.user2_faculty || "Umum";
 
       // Cek apakah sudah ada room direct sebelumnya antara kedua user ini
       let directRoomId = null;

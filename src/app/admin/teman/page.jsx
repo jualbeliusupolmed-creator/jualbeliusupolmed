@@ -1,5 +1,5 @@
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { PageHeader, Card, StatCard, Badge } from "@/components/admin/ui";
+import { PageHeader, Panel, Stat, StatGrid, Badge } from "@/components/admin/ui";
 import Image from "next/image";
 import AdminTemanActions from "./AdminTemanActions";
 
@@ -40,32 +40,32 @@ export default async function AdminTemanPage() {
     <div className="space-y-6 pb-12">
       <PageHeader
         title="Moderasi & Tracking Swipe Teman Kampus"
-        subtitle="Pantau profil aktif, aktivitas swipe, dan interaksi mutual match mahasiswa USU & Polmed."
+        description="Pantau profil aktif, aktivitas swipe, dan interaksi mutual match mahasiswa USU & Polmed."
       />
 
       {/* METRICS ROW */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard
+      <StatGrid>
+        <Stat
           label="Total Profil Teman"
           value={totalProfiles}
-          hint="Pengguna yang sudah upload foto"
+          sub="Pengguna yang sudah upload foto"
         />
-        <StatCard
+        <Stat
           label="Total Aksi Swipe"
           value={totalSwipes}
-          hint="Interaksi Like & Pass"
+          sub="Interaksi Like & Pass"
         />
-        <StatCard
+        <Stat
           label="Mutual Matches"
           value={totalMatches}
-          hint="Pasangan yang saling cocok 🎉"
+          sub="Pasangan yang saling cocok 🎉"
         />
-      </div>
+      </StatGrid>
 
       {/* DAFTAR PROFIL TEMAN */}
-      <Card
+      <Panel
         title="Daftar Profil Mahasiswa (Dengan Foto)"
-        subtitle="Tinjau foto profil dan bio untuk moderasi konten yang pantas."
+        description="Tinjau foto profil dan bio untuk moderasi konten yang pantas."
       >
         {profiles.length === 0 ? (
           <div className="p-8 text-center text-sm text-gray-500">
@@ -155,7 +155,7 @@ export default async function AdminTemanPage() {
 
                     {/* Status */}
                     <td className="p-3">
-                      <Badge variant={p.is_active ? "success" : "muted"}>
+                      <Badge tone={p.is_active ? "ok" : "netral"}>
                         {p.is_active ? "Aktif" : "Dinonaktifkan"}
                       </Badge>
                     </td>
@@ -174,7 +174,7 @@ export default async function AdminTemanPage() {
             </table>
           </div>
         )}
-      </Card>
+      </Panel>
     </div>
   );
 }
