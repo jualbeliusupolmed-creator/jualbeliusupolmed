@@ -1,0 +1,119 @@
+import { NextResponse } from "next/server";
+import { getAdminClient } from "@/lib/supabaseAdmin";
+
+export const dynamic = "force-dynamic";
+
+export async function POST(request) {
+  try {
+    const { swiper_id, target_id, action = "like" } = await request.json();
+
+    if (!swiper_id || !target_id) {
+      return NextResponse.json({ error: "swiper_id dan target_id diperlukan" }, { status: 400 });
+    }
+
+    if (!["like", "pass", "superlike"].includes(action)) {
+      return NextResponse.json({ error: "Aksi tidak valid" }, { status: 400 });
+    }
+
+    const supa = getAdminClient();
+
+    // 1. Coba panggil RPC atomik process_teman_swipe
+    const { data: rpcData, error: rpcError } = await supa.rpc("process_teman_swipe", {
+      p_swiper_id: swiper_id,
+      p_target_id: target_id,
+      p_action: action,
+    });
+
+    let matched = false;
+    let matchId = null;
+    let partner = null;
+
+    if (!rpcError && rpcData) {
+      matched = !!rpcData.matched;
+      matchId = rpcData.match_id || null;
+      partner = rpcData.partner || null;
+    } else {
+      // Fallback manual jika RPC belum dibuat di Supabase
+      await supa
+        .from("teman_swipes")
+        .upsert(
+          { swiper_id, target_id, action, created_at: new Date().toISOString() },
+          { onConflict: "swiper_id, target_id" }
+        );
+
+      if (action !== "pass") {
+        // Cek reciprocal like
+        const { data: reciprocal } = await supa
+          .from("teman_swipes")
+          .select("action")
+          .eq("swiper_id", target_id)
+          .eq("target_id", swiper_id)
+          .in("action", ["like", "superlike"])
+          .maybeSingle();
+
+        if (reciprocal) {
+          matched = true;
+          const u1 = swiper_id < target_id ? swiper_id : target_id;
+          const u2 = swiper_id < target_id ? target_id : swiper_id;
+
+          const { data: matchRecord } = await supa
+            .from("teman_matches")
+            .upsert(
+              { user1_id: u1, user2_id: u2, is_active: true, matched_at: new Date().toISOString() },
+              { onConflict: "user1_id, user2_id" }
+            )
+            .select("id")
+            .single();
+
+          matchId = matchRecord?.id || null;
+
+          const { data: partnerData } = await supa
+            .from("teman_profiles")
+            .select("id, display_name, photo_url, campus, faculty, intent, whatsapp, instagram, bio")
+            .eq("id", target_id)
+            .maybeSingle();
+
+          partner = partnerData || null;
+        }
+      }
+    }
+
+    // 2. Jika Match, masukkan antrean pesan ke wa_outbox jika nomor WA tersedia
+    if (matched && partner?.whatsapp) {
+      try {
+        const { data: swiperProfile } = await supa
+          .from("teman_profiles")
+          .select("display_name, campus, faculty, whatsapp")
+          .eq("id", swiper_id)
+          .maybeSingle();
+
+        if (swiperProfile?.whatsapp) {
+          const pesanNotif = `🎉 *IT'S A MATCH! — Teman Kampus USU & Polmed*\n\n` +
+            `Hai kak! Profil kamu dan *${partner.display_name || "Seseorang"}* (${partner.campus} · ${partner.faculty}) saling LIKE di fitur Cari Teman!\n\n` +
+            `Yuk sapa langsung di WhatsApp: wa.me/${(partner.whatsapp || "").replace(/\D/g, "")}\n\n` +
+            `_Teman baru, peluang baru di kampus! 🚀_`;
+
+          await supa.from("wa_outbox").insert({
+            nomor: swiperProfile.whatsapp,
+            pesan: pesanNotif,
+            kategori: "teman_match",
+            status: "tertunda",
+            created_at: new Date().toISOString(),
+          }).select().maybeSingle();
+        }
+      } catch (notifErr) {
+        console.warn("Outbox notification error (non-fatal):", notifErr?.message);
+      }
+    }
+
+    return NextResponse.json({
+      ok: true,
+      matched,
+      matchId,
+      partner,
+    });
+  } catch (err) {
+    console.error("POST /api/teman/swipe error:", err);
+    return NextResponse.json({ error: err.message || "Gagal memproses swipe" }, { status: 500 });
+  }
+}
