@@ -160,6 +160,20 @@ Berjalan dengan PostgreSQL, memiliki tabel-tabel berikut:
    komentar, dan langganan.
 5. Tambahkan pengujian bot, monitoring restart, dan runbook deploy/rollback.
 
+*   **24 Agustus 2026 — Peluncuran Fitur "Cari Teman Kampus" (Swipe Match ala Dating App) & Moderasi Admin**
+    - **Frontend (`/teman`, `/swap`, `/cari-teman`):** Dibangun dengan kartu swipe interaktif berbasis touch/mouse drag gesture dengan efek stamp *LIKE 💚* / *PASS ❌*, undo/rewind, dan perayaan *Mutual Match Pop-up*.
+    - **Aturan Foto Wajib:** Onboarding modal mewajibkan 1 foto profil sebelum pengguna dapat membuka deck swiping. Foto otomatis dikompresi ke WebP hemat bandwidth.
+    - **Backend & Database:** Skema `teman_profiles`, `teman_swipes`, `teman_matches`, dan fungsi RPC PostgreSQL atomik `process_teman_swipe`.
+    - **Integrasi Menyeluruh:** Diintegrasikan pada Capsule Bar & Hero Banner Beranda, Navigasi Utama Navbar, Bottom Navbar matcher, dan Banner Pusat Obrolan.
+    - **Panel Moderasi Admin (`/admin/teman`):** Menampilkan metrik real-time profil aktif, total swipe, mutual match, serta kontrol aktifkan/nonaktifkan dan hapus akun.
+
+### 📌 Roadmap & Backlog Pengembangan Lanjutan (Cari Teman & Swap)
+1. **Notifikasi WhatsApp Otomatis saat Match:** Begitu terjadi mutual like (match), Bot WhatsApp (Fonnte/Baileys) otomatis mengirim pesan WA ke kedua belah pihak dengan link sapaan instan.
+2. **Centang Biru Verifikasi Mahasiswa (Verified Student Badge):** Verifikasi identitas mahasiswa USU/Polmed via upload KTM atau email institusi (`@students.usu.ac.id` / `@polmed.ac.id`).
+3. **Icebreaker Prompts Khas Kampus:** Kartu pertanyaan interaktif ala Hinge (contoh: *Tempat ngopi favorit sekitar Mansyur/Padang Bulan*, *Red flag anak kampus*, *Lagu Spotify favorit*).
+4. **Modul Tukar Jadwal Kuliah / Praktikum (KRS & Shift Swap Matrix):** Fitur auto-matching jadwal bentrok matkul/kelas saat awal semester.
+5. **Fitur Monetisasi Mikro (Boost Profil & Lihat Siapa yang Like Kamu):** Paket top-up hemat via QRIS (Rp 3.000–5.000) untuk spotlight profil dan intip likers.
+
 *   **24 Agustus 2026** - *Fresh Canvas Cari Temen & Penyempurnaan Obrolan Mobile/PC* - (1) Mengubah tampilan Cari Temen (`/chat?anon=1`) menjadi sistem Fresh Canvas: hanya merender sesi percakapan yang sedang aktif sehingga tumpukan riwayat obrolan masa lalu (divider, pesan keluar) tidak lagi mencemari obrolan baru. Riwayat lama dapat diakses melalui accordion non-intrusif. (2) Menambahkan layar radar matching interaktif saat antrean dan banner interaktif saat teman meninggalkan percakapan. (3) Menghapus double bottom padding di `LayoutWrapper` khusus rute obrolan dan menyempurnakan responsivitas container di mobile (`100dvh`, safe area) dan desktop card (Apple HIG border & shadow). (4) Toggle Global Mode Transaksi & fix constraint direct chat type.
 *   **23 Agustus 2026** - *Chat realtime dituntaskan* - Dua akar berbeda ditutup: (1) `NEXT_PUBLIC_SUPABASE_ANON_KEY` ditandai Sensitive di Vercel sehingga tidak ter-bake ke bundel klien — diganti publishable key tanpa tanda Sensitive; (2) `/api/chat/room/[id]` menyimpan pesan tanpa menyiarkannya, sehingga hanya pesan pembuka yang terasa seketika dan semua balasan menunggu polling 10 detik. Pola broadcast disatukan ke `src/lib/chatRealtime.js` (sebelumnya cuma ada inline di `marketplace/start`).
 *   **21 Agustus 2026** - *Audit Infrastruktur Menyeluruh* - Melakukan pemetaan sistem Web, Bot, dan Database. Menghapus rute `/admin/[tab]` yang redundan dan refactor `getAdminStats()`. Hasil audit didokumentasikan di file ini.
