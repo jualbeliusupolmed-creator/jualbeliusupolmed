@@ -13,34 +13,17 @@ function waktuRelatif(iso) {
   if (!iso) return "";
   const detik = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
   if (detik < 60) return "baru saja";
-  if (detik < 3600) return `${Math.floor(detik / 60)} menit lalu`;
-  if (detik < 86400) return `${Math.floor(detik / 3600)} jam lalu`;
-  return `${Math.floor(detik / 86400)} hari lalu`;
+  if (detik < 3600) return `${Math.floor(detik / 60)}m lalu`;
+  if (detik < 86400) return `${Math.floor(detik / 3600)}j lalu`;
+  return `${Math.floor(detik / 86400)}h lalu`;
 }
 
 const ICEBREAKERS = [
   "Halo! Jurusan apa nih? 👋",
-  "Anak kos atau pp dari rumah?",
-  "Lagi di kampus ga hari ini?",
+  "Anak kos atau pp dari rumah? 🏠",
+  "Lagi di kampus ga hari ini? 🏫",
   "Rekomendasi tempat makan murah dong 🤤",
 ];
-
-// Garis pemisah antar-partner di dalam utas anonim. Ini yang menggantikan
-// "satu baris kotak masuk per pertemuan": ganti orang tidak lagi melahirkan
-// obrolan baru di daftar, cuma sekat baru di utas yang sama.
-function Pemisah({ anak, nada = "netral" }) {
-  const warna =
-    nada === "putus"
-      ? "text-slate-400 dark:text-slate-500"
-      : "text-primary dark:text-emerald-400";
-  return (
-    <div className="flex items-center gap-2 my-3">
-      <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
-      <span className={`text-[10px] font-bold uppercase tracking-wide ${warna} shrink-0`}>{anak}</span>
-      <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
-    </div>
-  );
-}
 
 function parseMessageContent(msg) {
   if (!msg) return { isImage: false, text: "" };
@@ -63,6 +46,7 @@ function ChatContent() {
   const [ringkasAnon, setRingkasAnon] = useState(null);
   const [anonLoading, setAnonLoading] = useState(true);
   const [searching, setSearching] = useState(false);
+  const [showPastHistory, setShowPastHistory] = useState(false);
 
   // ── Utas anonim (?anon=1) ────────────────────────────────────────────────
   const [utas, setUtas] = useState(null);
@@ -89,19 +73,20 @@ function ChatContent() {
   const typingTimeoutRef = useRef(null);
   const lastTypingSentRef = useRef(0);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const scrollToBottom = (behavior = "smooth") => {
+    messagesEndRef.current?.scrollIntoView({ behavior });
   };
 
+  // ══ SCROLL & SOUND TRIGGER ══════════════════════════════════════════════
   useEffect(() => {
-    const totalMessages = anonView 
-      ? (utas?.segmen || []).reduce((acc, seg) => acc + (seg.pesan?.length || 0), 0)
+    const totalMessages = anonView
+      ? (utas?.segmen?.find((s) => s.roomId === utas?.aktifRoomId)?.pesan || []).length
       : messages.length;
-      
+
     if (totalMessages > messageCountRef.current) {
       if (messageCountRef.current > 0) {
         const lastMsg = anonView
-          ? (utas?.segmen || []).flatMap((s) => s.pesan || []).slice(-1)[0]
+          ? (utas?.segmen?.find((s) => s.roomId === utas?.aktifRoomId)?.pesan || []).slice(-1)[0]
           : messages.slice(-1)[0];
         const isMe = lastMsg ? (anonView ? lastMsg.sender_id === utas?.myId : lastMsg.sender_id === myWa) : true;
         if (lastMsg && !isMe && lastMsg.sender_id !== "system") {
@@ -148,9 +133,11 @@ function ChatContent() {
         return;
       }
       const data = await res.json();
-      if (data.ok) setUtas(data);
+      if (data.ok) {
+        setUtas(data);
+      }
     } catch {
-      // silent — polling berikutnya mencoba lagi
+      // silent
     } finally {
       setUtasLoading(false);
     }
@@ -175,8 +162,7 @@ function ChatContent() {
     };
   }, [anonView, muatUtas]);
 
-  // Room tunggu dipantau lebih sering supaya begitu ada yang cocok, utasnya
-  // langsung menyambung tanpa menunggu push atau refresh manual.
+  // Room tunggu dipantau agar otomatis terhubung begitu lawan bicara ditemukan
   const menungguRoomId = anonView ? utas?.menungguRoomId : ringkasAnon?.menungguRoomId;
   useEffect(() => {
     if (!menungguRoomId) return;
@@ -193,6 +179,8 @@ function ChatContent() {
         } else if (data.isMatched) {
           clearInterval(iv);
           toast.success("🎉 Teman ditemukan!");
+          playChatSound();
+          hapticSuccess();
         } else {
           return;
         }
@@ -201,14 +189,11 @@ function ChatContent() {
       } catch {
         // silent
       }
-    }, 4000);
+    }, 3500);
     return () => clearInterval(iv);
   }, [menungguRoomId, anonView, muatUtas, refreshAnonInbox]);
 
   // ══ ROOM JUAL BELI ═════════════════════════════════════════════════════
-  // Server (bukan localStorage) jadi sumber kebenaran: setiap kali link ini
-  // dibuka — refresh, tautan dari notifikasi, tab baru — datanya ditanyakan
-  // langsung ke API.
   useEffect(() => {
     if (!roomQuery) {
       setRoomNotFound(false);
@@ -228,8 +213,6 @@ function ChatContent() {
           setRoomNotFound(true);
           return;
         }
-        // Tautan lama ke satu room anonim (mis. dari push notification yang
-        // sudah terkirim) tetap sah — cuma tempatnya sekarang di dalam utas.
         if (data.room.type === "random") {
           router.replace("/chat?anon=1");
           return;
@@ -278,11 +261,7 @@ function ChatContent() {
     }
   }, []);
 
-  // ── Pesan masuk: Supabase Realtime Broadcast, polling tinggal jaring pengaman ──
-  // postgres_changes butuh kebijakan RLS SELECT untuk anon — dan kebijakan itu
-  // dicabut karena membuat seluruh isi chat bisa dibaca siapa pun. Broadcast
-  // tidak menyentuh tabel; isinya cuma "ada pesan baru", data aslinya tetap
-  // lewat API yang memeriksa keanggotaan room.
+  // ── Realtime Broadcast ──
   const kanalRoomId = anonView ? utas?.aktifRoomId : roomStatus === "active" ? roomQuery : null;
   useEffect(() => {
     if (!kanalRoomId) return;
@@ -307,12 +286,12 @@ function ChatContent() {
         })
         .subscribe((status) => {
           if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-            console.warn("[chat] Realtime tidak tersambung (" + status + ") — mengandalkan polling 10 detik.");
+            console.warn("[chat] Realtime fallback polling 10s.");
           }
         });
       rtChannelRef.current = channel;
     } catch (e) {
-      console.warn("[chat] Kanal realtime tidak dibuat:", e?.message || e);
+      console.warn("[chat] Realtime init error:", e?.message || e);
     }
     return () => {
       rtChannelRef.current = null;
@@ -326,16 +305,6 @@ function ChatContent() {
     if (anonView || !roomQuery || roomStatus !== "active") return;
     const iv = setInterval(() => fetchRoomData(roomQuery), 10000);
     return () => clearInterval(iv);
-  }, [anonView, roomQuery, roomStatus, fetchRoomData]);
-
-  useEffect(() => {
-    const handleVisibility = () => {
-      if (document.visibilityState === "visible" && !anonView && roomQuery && roomStatus === "active") {
-        fetchRoomData(roomQuery);
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibility);
-    return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, [anonView, roomQuery, roomStatus, fetchRoomData]);
 
   // ══ AKSI ═══════════════════════════════════════════════════════════════
@@ -361,8 +330,10 @@ function ChatContent() {
 
       if (data.status === "matched") {
         toast.success("🎉 Berhasil terhubung dengan teman!");
+        playChatSound();
+        hapticSuccess();
       } else if (data.status === "waiting") {
-        toast.info("🔍 Belum ada yang online sekarang — kamu masuk antrean. Kami kabari lewat notifikasi kalau ada yang cocok.");
+        toast.info("🔍 Belum ada yang online sekarang — kamu masuk antrean.");
       }
       if (anonView) muatUtas();
       else router.push("/chat?anon=1");
@@ -380,6 +351,7 @@ function ChatContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "cancel", roomId: waitingRoomId }),
       });
+      toast.info("Pencarian dibatalkan.");
     } catch {}
     if (anonView) muatUtas();
     else refreshAnonInbox();
@@ -479,12 +451,10 @@ function ChatContent() {
     }
   };
 
-  // Laporkan lawan bicara — pola bot chat anonim Telegram: laporan dari tiga
-  // room berbeda memblokir pelakunya otomatis dari obrolan selama seminggu.
   const handleReportPartner = async () => {
     const targetRoom = anonView ? utas?.aktifRoomId : roomQuery;
     if (!targetRoom) return;
-    const alasan = prompt("Laporkan lawan bicara — apa alasannya? (mis. kasar, pelecehan, penipuan, spam)");
+    const alasan = prompt("Laporkan lawan bicara — apa alasannya? (mis. kasar, pelecehan, spam, penipuan)");
     if (alasan === null) return;
     try {
       const res = await fetch(`/api/chat/room/${targetRoom}/report`, {
@@ -528,7 +498,7 @@ function ChatContent() {
         return;
       }
       if (data.status === "revealed") {
-        toast.success("🎉 Saling setuju! Kontak WhatsApp terbuka.");
+        toast.success("🎉 Saling setuju! Kontak DM Pribadi website terbuka.");
         playSentSound();
         hapticSuccess();
       } else if (data.status === "requested") {
@@ -544,247 +514,328 @@ function ChatContent() {
   };
 
   const handleSkipChat = async () => {
-    // Tidak perlu menutup manual: action "find" menutup obrolan aktif mana pun
-    // milik kita sebelum mencari yang baru (satu partner pada satu waktu).
     handleFindPartner();
   };
 
   // ══════════════════════════════════════════════════════════════════════
-  // TAMPILAN: UTAS ANONIM (?anon=1)
+  // TAMPILAN 1: UTAS ANONIM (?anon=1) — FRESH CANVAS & CLEAN MOBILE/PC
   // ══════════════════════════════════════════════════════════════════════
   if (anonView) {
     const rawSegmen = utas?.segmen || [];
     const aktifRoomId = utas?.aktifRoomId || null;
-    const segAktif = rawSegmen.find((s) => s.roomId === aktifRoomId) || null;
-    const pesanAktif = (segAktif?.pesan || []).filter((m) => m.sender_id !== "system");
+    const isWaiting = !!utas?.menungguRoomId || searching;
 
-    // Saring segmen yang kosong/ditinggalkan tanpa chat nyata agar riwayat tidak penuh divider kosong
-    const segmen = rawSegmen.filter((seg, idx, arr) => {
-      if (seg.roomId === aktifRoomId) return true;
-      const realMsgs = (seg.pesan || []).filter(
-        (m) => m.sender_id !== "system" && !m.sender_id.startsWith("system:")
-      );
-      if (realMsgs.length > 0) return true;
-      return idx === arr.length - 1;
-    });
+    // Sesi aktif saat ini
+    const segAktif = rawSegmen.find((s) => s.roomId === aktifRoomId) || null;
+    // Sesi terakhir yang pernah ada (jika tidak ada yang aktif)
+    const segTerakhir = rawSegmen.length > 0 ? rawSegmen[rawSegmen.length - 1] : null;
+    // Sesi yang akan dirender: prioritas sesi aktif, atau sesi terakhir jika baru saja selesai
+    const segmenDitampilkan = segAktif || (segTerakhir?.status === "closed" ? segTerakhir : null);
+
+    const pesanTampil = (segmenDitampilkan?.pesan || []).filter(
+      (m) => m.sender_id !== "system" || m.message?.startsWith("system:")
+    );
+    const realMsgCount = pesanTampil.filter(
+      (m) => !m.sender_id.startsWith("system")
+    ).length;
 
     return (
-      <div className="h-[calc(100dvh-70px)] md:h-[calc(100dvh-64px)] bg-[#f5f5f7] dark:bg-[#000000] flex flex-col font-sans max-w-2xl w-full mx-auto border-x border-black/[0.06] dark:border-white/[0.08]">
-        <div className="bg-white/80 dark:bg-[#000000]/80 backdrop-blur-2xl border-b border-black/[0.06] dark:border-white/[0.08] shrink-0 z-40 pt-[max(env(safe-area-inset-top),0.25rem)]">
-          <div className="flex items-center justify-between px-3 xs:px-4 py-2.5">
-            <div className="flex items-center gap-2 xs:gap-2.5 min-w-0">
+      <div className="flex flex-col h-[100dvh] md:h-[calc(100vh-76px)] md:my-3 max-w-2xl w-full mx-auto bg-white dark:bg-[#000000] md:rounded-[28px] md:shadow-2xl md:border md:border-black/[0.08] dark:md:border-white/[0.08] overflow-hidden font-sans select-none no-tap-highlight">
+        {/* ── HEADER APPLE HIG ── */}
+        <div className="bg-white/85 dark:bg-[#000000]/85 backdrop-blur-2xl border-b border-black/[0.06] dark:border-white/[0.08] shrink-0 z-40 pt-[max(env(safe-area-inset-top),0.5rem)] px-3 xs:px-4 py-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 xs:gap-3 min-w-0">
               <button
                 onClick={() => router.push("/chat")}
-                className="p-1 -ml-1 text-gray-500 hover:text-[#1d1d1f] dark:hover:text-[#f5f5f7] rounded-full active:scale-90 transition-transform"
+                className="p-1.5 -ml-1 text-gray-500 hover:text-[#1d1d1f] dark:hover:text-[#f5f5f7] rounded-full active:scale-90 transition-transform"
                 title="Kembali ke kotak masuk"
               >
                 <Icon.ChevronLeft className="w-5 h-5" />
               </button>
+
               <div className="relative shrink-0">
-                <div className="w-7 h-7 xs:w-8 xs:h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs xs:text-sm">🎭</div>
+                <div className="w-8 h-8 xs:w-9 xs:h-9 rounded-full bg-gradient-to-tr from-primary/20 to-purple-500/20 text-primary flex items-center justify-center font-bold text-base shadow-xs">
+                  🎭
+                </div>
                 {aktifRoomId && (
-                  <div className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-black" />
+                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-black animate-pulse" />
                 )}
               </div>
+
               <div className="min-w-0">
-                <p className="text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7] truncate">Cari Temen</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-xs xs:text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7] truncate">
+                    {segmenDitampilkan ? segmenDitampilkan.alias : "Cari Temen"}
+                  </p>
+                  {segmenDitampilkan && (
+                    <span className="text-[9px] font-semibold bg-primary/10 text-primary dark:text-purple-300 px-2 py-0.5 rounded-full shrink-0">
+                      {segmenDitampilkan.faculty}
+                    </span>
+                  )}
+                </div>
                 <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
-                  {segAktif
-                    ? `Bicara dg ${segAktif.alias}`
-                    : utas?.menungguRoomId
-                      ? "Menunggu partner…"
-                      : "Belum ada obrolan — Cari Teman Baru"}
+                  {aktifRoomId
+                    ? "🟢 Sedang terhubung"
+                    : isWaiting
+                      ? "🔍 Sedang mencari partner..."
+                      : "Sesi anonim"}
                 </p>
               </div>
             </div>
 
-            {aktifRoomId && (
+            {/* Quick Actions */}
+            {aktifRoomId ? (
               <div className="flex items-center gap-1 xs:gap-1.5 shrink-0">
                 <button
                   onClick={() => handleExchangeContact(aktifRoomId)}
                   title="Ajak lanjut mengobrol di DM Pribadi website"
-                  className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 px-2 xs:px-2.5 py-1 rounded-full text-[11px] xs:text-xs font-bold hover:bg-emerald-100 shadow-2xs active:scale-95 transition-all"
+                  className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 px-2.5 py-1.5 rounded-full text-[11px] font-bold hover:bg-emerald-100 active:scale-95 transition-all shadow-2xs"
                 >
                   <span>💬 DM</span>
                 </button>
                 <button
                   onClick={handleReportPartner}
                   title="Laporkan lawan bicara"
-                  className="px-1.5 py-1 rounded-full text-xs text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors"
+                  className="p-1.5 rounded-full text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors active:scale-90"
                 >
                   🚩
                 </button>
                 <button
                   onClick={handleSkipChat}
                   title="Ganti Lawan Obrolan"
-                  className="flex items-center gap-1 bg-white dark:bg-[#1c1c1e] border border-black/[0.08] dark:border-white/[0.1] px-2 xs:px-2.5 py-1 rounded-full text-[11px] xs:text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7] hover:bg-black/[0.03] shadow-xs active:scale-95 transition-all"
+                  className="flex items-center gap-1 bg-black/[0.04] dark:bg-white/[0.08] hover:bg-black/[0.08] dark:hover:bg-white/[0.15] border border-black/[0.06] dark:border-white/[0.08] px-2.5 py-1.5 rounded-full text-[11px] font-bold text-[#1d1d1f] dark:text-[#f5f5f7] active:scale-95 transition-all shadow-2xs"
                 >
                   <span>⏭️ Ganti</span>
                 </button>
                 <button
                   onClick={handleLeaveChat}
                   title="Akhiri obrolan"
-                  className="p-1 text-gray-400 hover:text-rose-500 rounded-full transition-colors active:scale-90"
+                  className="p-1.5 text-gray-400 hover:text-rose-500 rounded-full transition-colors active:scale-90"
                 >
                   <Icon.X className="w-4 h-4" />
                 </button>
               </div>
+            ) : (
+              <button
+                onClick={handleFindPartner}
+                disabled={searching || isWaiting}
+                className="flex items-center gap-1 bg-primary text-white px-3.5 py-1.5 rounded-full text-[11px] font-bold shadow-xs hover:brightness-105 active:scale-95 transition-all disabled:opacity-50"
+              >
+                <span>{searching ? "Mencari..." : "🚀 Cari Baru"}</span>
+              </button>
             )}
           </div>
         </div>
 
-        <div className="flex-1 p-4 overflow-y-auto overscroll-contain">
+        {/* ── CHAT CANVAS AREA ── */}
+        <div className="flex-1 p-4 overflow-y-auto overscroll-contain space-y-3">
           {utasLoading ? (
-            <p className="text-center text-xs text-slate-400 py-10">Memuat obrolan…</p>
-          ) : segmen.length === 0 ? (
-            <div className="text-center py-10 space-y-2">
-              <div className="text-4xl">🎭</div>
-              <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
-                Belum pernah ada obrolan di sini. Ketuk <b>Cari Teman Baru</b> di bawah — kalau belum ada yang
-                online, pencariannya tetap jalan di latar belakang dan kamu dikabari begitu ada yang cocok.
-                Semua obrolanmu tersimpan di satu tempat ini, dipisah garis tiap ganti orang.
-              </p>
+            <div className="flex flex-col items-center justify-center h-full py-16 text-center space-y-3">
+              <div className="w-10 h-10 border-3 border-primary/30 border-t-primary rounded-full animate-spin" />
+              <p className="text-xs text-gray-400 font-medium">Menghubungkan ke Cari Temen...</p>
+            </div>
+          ) : isWaiting && !aktifRoomId ? (
+            /* RADAR / WAITING SCREEN */
+            <div className="flex flex-col items-center justify-center h-full py-12 text-center px-4 space-y-5 animate-in fade-in zoom-in-95 duration-300">
+              <div className="relative flex items-center justify-center">
+                <div className="w-24 h-24 rounded-full bg-primary/10 animate-ping absolute" />
+                <div className="w-20 h-20 rounded-full bg-primary/15 animate-pulse absolute" />
+                <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-primary to-purple-600 text-white flex items-center justify-center text-3xl shadow-lg relative z-10">
+                  🎭
+                </div>
+              </div>
+              <div className="space-y-1.5 max-w-xs">
+                <h3 className="text-base font-black text-[#1d1d1f] dark:text-[#f5f5f7]">
+                  Sedang Mencari Teman...
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                  Menghubungkan dengan mahasiswa USU/POLMED yang sedang online. Kamu tetap bisa menunggu di sini atau kami beri notifikasi saat cocok!
+                </p>
+              </div>
+              <button
+                onClick={() => handleCancelWaiting(utas?.menungguRoomId)}
+                className="px-4 py-2 rounded-full bg-black/[0.04] dark:bg-white/[0.08] hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/30 text-xs font-bold text-gray-600 dark:text-gray-300 border border-black/[0.06] dark:border-white/[0.08] active:scale-95 transition-all"
+              >
+                Batalkan Pencarian
+              </button>
+            </div>
+          ) : !segmenDitampilkan ? (
+            /* EMPTY / WELCOME SCREEN */
+            <div className="flex flex-col items-center justify-center h-full py-12 text-center px-4 space-y-6 animate-in fade-in zoom-in-95 duration-300">
+              <div className="w-20 h-20 rounded-[24px] bg-gradient-to-tr from-primary/20 via-purple-500/10 to-transparent flex items-center justify-center text-4xl shadow-sm border border-primary/20">
+                🎭
+              </div>
+              <div className="space-y-2 max-w-xs">
+                <h2 className="text-lg font-black text-[#1d1d1f] dark:text-[#f5f5f7]">
+                  Cari Teman Kampus
+                </h2>
+                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                  Ngobrol santai 1-on-1 secara anonim & rahasia dengan sesama mahasiswa USU & POLMED.
+                </p>
+              </div>
+              <button
+                onClick={handleFindPartner}
+                disabled={searching}
+                className="w-full max-w-xs py-3.5 rounded-full bg-primary hover:brightness-105 text-white text-xs font-black shadow-lg shadow-primary/25 active:scale-95 transition-all flex items-center justify-center gap-2"
+              >
+                <span>{searching ? "Mencari Teman..." : "🚀 Mulai Cari Teman"}</span>
+              </button>
             </div>
           ) : (
-            segmen.map((seg) => (
-              <div key={seg.roomId}>
-                <Pemisah anak={`Terhubung dengan ${seg.alias} · ${seg.faculty}`} />
-                <div className="space-y-3">
-                  {seg.pesan.map((m, idx) => {
-                    const isMe = m.sender_id === utas.myId;
+            /* ACTIVE SESSION STREAM (FRESH CANVAS) */
+            <div className="space-y-3.5">
+              {/* Info Header Banner */}
+              <div className="text-center my-3 p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.06] max-w-sm mx-auto">
+                <p className="text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7] flex items-center justify-center gap-1.5">
+                  <span>🎭</span> Terhubung dengan {segmenDitampilkan.alias}
+                </p>
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
+                  Fakultas {segmenDitampilkan.faculty} · Obrolan 100% Anonim & Rahasia
+                </p>
+              </div>
 
-                    if (m.sender_id === "system:consent_request") {
-                      let reqData = null;
-                      try { reqData = JSON.parse(m.message); } catch {}
-                      const isReqMe = reqData?.requesterId === utas.myId;
-                      return (
-                        <div key={m.id || idx} className="my-3 p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-xs">
-                          <div className="flex items-start gap-2.5">
-                            <span className="text-base shrink-0">💬</span>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-bold text-amber-900 dark:text-amber-200 mb-1">
-                                {isReqMe ? "Ajakan Lanjut DM Terkirim" : `${reqData?.requesterAlias || "Temanmu"} Mengajak Lanjut DM Pribadi`}
-                              </p>
-                              <p className="text-amber-800/80 dark:text-amber-300/80 text-[11px] leading-relaxed mb-2">
-                                {isReqMe
-                                  ? `Menunggu ${seg.alias} menyetujui ajakanmu untuk membuka ruang DM Pribadi di website.`
-                                  : "Jika kamu setuju, ruang DM Pribadi 1-on-1 permanen akan otomatis dibuat di kotak masuk akun kalian berdua di website."}
-                              </p>
-                              {!isReqMe && seg.status === "active" && (
-                                <button
-                                  onClick={() => handleExchangeContact(seg.roomId)}
-                                  className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs active:scale-95 transition-all inline-flex items-center gap-1.5"
-                                >
-                                  <span>✓ Setuju & Buka DM Pribadi</span>
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    }
+              {/* Messages list */}
+              {segmenDitampilkan.pesan.map((m, idx) => {
+                const isMe = m.sender_id === utas?.myId;
 
-                    if (m.sender_id === "system:consent_revealed") {
-                      let revData = null;
-                      try { revData = JSON.parse(m.message); } catch {}
-                      const isUser1 = revData?.user1_id === utas.myId;
-                      const partnerAlias = isUser1 ? revData?.user2_alias : revData?.user1_alias;
-                      const directRoomId = revData?.directRoomId;
-
-                      return (
-                        <div key={m.id || idx} className="my-3 p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 shadow-xs text-xs">
-                          <div className="flex items-start gap-3">
-                            <span className="text-xl shrink-0">🎉</span>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-black text-emerald-900 dark:text-emerald-200 text-xs mb-1">
-                                Saling Setuju! Ruang DM Pribadi Terbuka
-                              </p>
-                              <p className="text-emerald-800/90 dark:text-emerald-300/90 text-[11px] leading-relaxed mb-2.5">
-                                Kalian berdua telah terhubung di DM Pribadi website. Obrolan ini tersimpan permanen di Kotak Masuk akun kalian bersama <b>{partnerAlias || seg.alias}</b>.
-                              </p>
-                              {directRoomId ? (
-                                <button
-                                  onClick={() => router.push(`/chat?room=${directRoomId}`)}
-                                  className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl font-bold text-xs shadow-xs active:scale-95 transition-all"
-                                >
-                                  <span>💬 Masuk ke Ruang DM Pribadi ↗</span>
-                                </button>
-                              ) : (
-                                <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold">Ruang DM berhasil dibuat</span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    }
-
-                    if (m.sender_id === "system") {
-                      return (
-                        <div key={m.id || idx} className="text-center my-2">
-                          <span className="inline-block bg-slate-100 dark:bg-slate-800 text-slate-500 text-[10px] px-3 py-1 rounded-full font-medium">
-                            {m.message}
-                          </span>
-                        </div>
-                      );
-                    }
-                    const parsed = parseMessageContent(m.message);
-                    return (
-                      <div key={m.id || idx} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
-                        <div
-                          className={`max-w-[78%] xs:max-w-[85%] text-xs leading-relaxed ${
-                            parsed.isImage
-                              ? isMe
-                                ? "bg-primary text-white p-1 rounded-[20px] rounded-br-[4px] shadow-xs"
-                                : "bg-[#E9E9EB] text-[#000000] dark:bg-[#262628] dark:text-[#FFFFFF] p-1 rounded-[20px] rounded-bl-[4px]"
-                              : isMe
-                                ? "bg-primary text-white px-3.5 py-2 rounded-[20px] rounded-br-[4px] shadow-xs"
-                                : "bg-[#E9E9EB] text-[#000000] dark:bg-[#262628] dark:text-[#FFFFFF] px-3.5 py-2 rounded-[20px] rounded-bl-[4px]"
-                          }`}
-                        >
-                          {parsed.isImage ? (
-                            <div className="space-y-1">
-                              <div
-                                onClick={() => setPreviewImage(parsed.imgUrl)}
-                                className="relative rounded-[16px] overflow-hidden cursor-pointer group bg-black/5"
-                              >
-                                <img
-                                  src={parsed.imgUrl}
-                                  alt="Foto obrolan"
-                                  className="w-full max-h-64 object-cover rounded-[16px] transition-transform duration-300 group-hover:scale-102"
-                                  loading="lazy"
-                                />
-                                <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
-                                  🔍 Perbesar Foto
-                                </div>
-                              </div>
-                              {parsed.text && <p className="px-2 pt-1 text-xs leading-relaxed">{parsed.text}</p>}
-                            </div>
-                          ) : (
-                            parsed.text
+                // ── Direct Consent Request Bubble ──
+                if (m.sender_id === "system:consent_request") {
+                  let reqData = null;
+                  try { reqData = JSON.parse(m.message); } catch {}
+                  const isReqMe = reqData?.requesterId === utas?.myId;
+                  return (
+                    <div key={m.id || idx} className="my-3 p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 shadow-xs text-xs animate-in fade-in duration-200">
+                      <div className="flex items-start gap-2.5">
+                        <span className="text-lg shrink-0">💬</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-amber-900 dark:text-amber-200 mb-1">
+                            {isReqMe ? "Ajakan Lanjut DM Terkirim" : `${reqData?.requesterAlias || "Temanmu"} Mengajak Lanjut DM`}
+                          </p>
+                          <p className="text-amber-800/80 dark:text-amber-300/80 text-[11px] leading-relaxed mb-2.5">
+                            {isReqMe
+                              ? `Menunggu ${segmenDitampilkan.alias} menyetujui ajakan untuk membuka ruang DM Pribadi di website.`
+                              : "Jika kamu setuju, ruang DM Pribadi 1-on-1 permanen akan otomatis dibuat di kotak masuk akun kalian berdua."}
+                          </p>
+                          {!isReqMe && segmenDitampilkan.status === "active" && (
+                            <button
+                              onClick={() => handleExchangeContact(segmenDitampilkan.roomId)}
+                              className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs active:scale-95 transition-all inline-flex items-center gap-1.5"
+                            >
+                              <span>✓ Setuju & Buka DM Pribadi</span>
+                            </button>
                           )}
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-                {seg.status === "closed" && <Pemisah anak="Obrolan berakhir" nada="putus" />}
-                {seg.status === "active" && seg.roomId !== aktifRoomId && (
-                  <div className="my-2 flex items-center justify-center gap-2">
-                    <span className="text-[10px] text-gray-400">Obrolan lama yang belum ditutup</span>
-                    <button
-                      onClick={async () => {
-                        await fetch(`/api/chat/room/${seg.roomId}`, { method: "DELETE" });
-                        muatUtas();
-                      }}
-                      className="text-[10px] font-bold text-rose-500 px-2 py-0.5 rounded-full hover:bg-rose-50 dark:hover:bg-rose-950/30"
+                    </div>
+                  );
+                }
+
+                // ── Direct Consent Revealed Bubble ──
+                if (m.sender_id === "system:consent_revealed") {
+                  let revData = null;
+                  try { revData = JSON.parse(m.message); } catch {}
+                  const isUser1 = revData?.user1_id === utas?.myId;
+                  const partnerAlias = isUser1 ? revData?.user2_alias : revData?.user1_alias;
+                  const directRoomId = revData?.directRoomId;
+
+                  return (
+                    <div key={m.id || idx} className="my-3 p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 shadow-xs text-xs animate-in fade-in duration-200">
+                      <div className="flex items-start gap-3">
+                        <span className="text-xl shrink-0">🎉</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-black text-emerald-900 dark:text-emerald-200 text-xs mb-1">
+                            Saling Setuju! Ruang DM Pribadi Terbuka
+                          </p>
+                          <p className="text-emerald-800/90 dark:text-emerald-300/90 text-[11px] leading-relaxed mb-2.5">
+                            Kalian berdua telah terhubung di DM Pribadi website bersama <b>{partnerAlias || segmenDitampilkan.alias}</b>.
+                          </p>
+                          {directRoomId ? (
+                            <button
+                              onClick={() => router.push(`/chat?room=${directRoomId}`)}
+                              className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl font-bold text-xs shadow-xs active:scale-95 transition-all"
+                            >
+                              <span>💬 Masuk ke Ruang DM Pribadi ↗</span>
+                            </button>
+                          ) : (
+                            <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold">Ruang DM berhasil dibuat</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                // ── General System Notice ──
+                if (m.sender_id === "system") {
+                  return (
+                    <div key={m.id || idx} className="text-center my-2">
+                      <span className="inline-block bg-black/[0.04] dark:bg-white/[0.08] text-gray-500 dark:text-gray-400 text-[10px] px-3 py-1 rounded-full font-medium">
+                        {m.message}
+                      </span>
+                    </div>
+                  );
+                }
+
+                const parsed = parseMessageContent(m.message);
+                return (
+                  <div key={m.id || idx} className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}>
+                    <div
+                      className={`max-w-[78%] xs:max-w-[85%] text-xs leading-relaxed ${
+                        parsed.isImage
+                          ? isMe
+                            ? "bg-primary text-white p-1 rounded-[20px] rounded-br-[4px] shadow-xs"
+                            : "bg-[#E9E9EB] text-[#000000] dark:bg-[#262628] dark:text-[#FFFFFF] p-1 rounded-[20px] rounded-bl-[4px]"
+                          : isMe
+                            ? "bg-primary text-white px-3.5 py-2 rounded-[20px] rounded-br-[4px] shadow-xs"
+                            : "bg-[#E9E9EB] text-[#000000] dark:bg-[#262628] dark:text-[#FFFFFF] px-3.5 py-2 rounded-[20px] rounded-bl-[4px]"
+                      }`}
                     >
-                      Tutup
-                    </button>
+                      {parsed.isImage ? (
+                        <div className="space-y-1">
+                          <div
+                            onClick={() => setPreviewImage(parsed.imgUrl)}
+                            className="relative rounded-[16px] overflow-hidden cursor-pointer group bg-black/5"
+                          >
+                            <img
+                              src={parsed.imgUrl}
+                              alt="Foto obrolan"
+                              className="w-full max-h-64 object-cover rounded-[16px] transition-transform duration-300 group-hover:scale-102"
+                              loading="lazy"
+                            />
+                            <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
+                              🔍 Perbesar Foto
+                            </div>
+                          </div>
+                          {parsed.text && <p className="px-2 pt-1 text-xs leading-relaxed">{parsed.text}</p>}
+                        </div>
+                      ) : (
+                        parsed.text
+                      )}
+                    </div>
                   </div>
-                )}
-              </div>
-            ))
+                );
+              })}
+
+              {/* End of session notice if closed */}
+              {segmenDitampilkan.status === "closed" && (
+                <div className="my-6 p-4 rounded-2xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/40 text-center space-y-3 animate-in fade-in duration-300">
+                  <div className="text-2xl">👋</div>
+                  <p className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                    Obrolan dengan {segmenDitampilkan.alias} telah berakhir.
+                  </p>
+                  <button
+                    onClick={handleFindPartner}
+                    disabled={searching}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary hover:brightness-105 text-white text-xs font-black shadow-md shadow-primary/20 active:scale-95 transition-all"
+                  >
+                    <span>🚀 Cari Teman Baru</span>
+                  </button>
+                </div>
+              )}
+            </div>
           )}
+
+          {/* Typing Indicator */}
           {partnerTyping && (
             <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#E9E9EB] dark:bg-[#262628] text-gray-600 dark:text-gray-300 text-xs w-fit my-1.5 animate-in fade-in slide-in-from-bottom-1 duration-200">
               <span className="flex items-center gap-1">
@@ -795,10 +846,43 @@ function ChatContent() {
               <span className="text-[11px] font-semibold">{partnerTyping.alias} sedang mengetik...</span>
             </div>
           )}
+
+          {/* Past History Accordion (Clean & Non-Intrusive) */}
+          {rawSegmen.length > 1 && !isWaiting && (
+            <div className="pt-6 border-t border-black/[0.04] dark:border-white/[0.06] text-center">
+              <button
+                onClick={() => setShowPastHistory(!showPastHistory)}
+                className="text-[11px] font-semibold text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 inline-flex items-center gap-1 transition-colors"
+              >
+                <span>📜 {showPastHistory ? "Sembunyikan" : "Lihat"} Riwayat Obrolan Lalu ({rawSegmen.length - (aktifRoomId ? 1 : 0)})</span>
+                <Icon.ChevronDown className={`w-3.5 h-3.5 transition-transform ${showPastHistory ? "rotate-180" : ""}`} />
+              </button>
+
+              {showPastHistory && (
+                <div className="mt-3 text-left space-y-2 max-h-60 overflow-y-auto p-2 rounded-2xl bg-black/[0.02] dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.06]">
+                  {rawSegmen
+                    .filter((s) => s.roomId !== aktifRoomId)
+                    .map((s) => (
+                      <div key={s.roomId} className="p-2.5 rounded-xl bg-white dark:bg-[#1c1c1e] border border-black/[0.04] dark:border-white/[0.06] text-[11px] flex justify-between items-center">
+                        <div>
+                          <p className="font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">🎭 {s.alias} · {s.faculty}</p>
+                          <p className="text-gray-400 text-[10px]">{s.pesan.length} pesan · {waktuRelatif(s.mulai)}</p>
+                        </div>
+                        <span className="text-[9px] text-gray-400 font-semibold px-2 py-0.5 rounded-full bg-black/[0.04] dark:bg-white/[0.06]">
+                          Selesai
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div ref={messagesEndRef} />
         </div>
 
-        {aktifRoomId && pesanAktif.length <= 1 && (
+        {/* ── ICEBREAKERS (When active and new) ── */}
+        {aktifRoomId && realMsgCount <= 1 && (
           <div className="px-3 py-2 bg-black/[0.02] dark:bg-white/[0.03] border-t border-black/[0.04] dark:border-white/[0.06] flex gap-1.5 overflow-x-auto touch-pan-x no-tap-highlight [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {ICEBREAKERS.map((prompt, i) => (
               <button
@@ -812,8 +896,9 @@ function ChatContent() {
           </div>
         )}
 
+        {/* ── BOTTOM INPUT BAR ── */}
         {aktifRoomId ? (
-          <div className="p-2.5 xs:p-3 bg-white/85 dark:bg-[#000000]/85 backdrop-blur-2xl border-t border-black/[0.06] dark:border-white/[0.08] flex items-center gap-2">
+          <div className="p-2.5 xs:p-3 bg-white/85 dark:bg-[#000000]/85 backdrop-blur-2xl border-t border-black/[0.06] dark:border-white/[0.08] flex items-center gap-2 pb-[max(env(safe-area-inset-bottom),0.6rem)]">
             <input
               ref={fileInputRef}
               type="file"
@@ -846,26 +931,26 @@ function ChatContent() {
               <Icon.ArrowUp className="w-4 h-4" />
             </button>
           </div>
-        ) : utas?.menungguRoomId ? (
-          <div className="p-3 bg-primary/5 border-t border-slate-100 dark:border-slate-800 flex items-center gap-3">
+        ) : isWaiting ? (
+          <div className="p-3 bg-primary/5 border-t border-slate-100 dark:border-slate-800 flex items-center gap-3 pb-[max(env(safe-area-inset-bottom),0.6rem)]">
             <div className="w-8 h-8 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-base animate-pulse">🔍</div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-slate-900 dark:text-white">Menunggu partner…</p>
               <p className="text-[10px] text-slate-500">Kami kabari lewat notifikasi kalau ada yang cocok</p>
             </div>
             <button
-              onClick={() => handleCancelWaiting(utas.menungguRoomId)}
-              className="text-[10px] font-bold text-rose-500 px-2 py-1 rounded-full hover:bg-rose-50 dark:hover:bg-rose-950/30 shrink-0"
+              onClick={() => handleCancelWaiting(utas?.menungguRoomId)}
+              className="text-[10px] font-bold text-rose-500 px-3 py-1.5 rounded-full hover:bg-rose-50 dark:hover:bg-rose-950/30 shrink-0"
             >
               Batalkan
             </button>
           </div>
         ) : (
-          <div className="p-3 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
+          <div className="p-3 bg-white dark:bg-[#000000] border-t border-black/[0.06] dark:border-white/[0.08] pb-[max(env(safe-area-inset-bottom),0.6rem)]">
             <button
               onClick={handleFindPartner}
               disabled={searching}
-              className="w-full py-2.5 rounded-full bg-primary text-white text-xs font-bold shadow-md shadow-primary/25 hover:bg-primary/95 active:scale-95 transition-all disabled:opacity-60 flex items-center justify-center gap-1.5"
+              className="w-full py-3 rounded-full bg-primary text-white text-xs font-black shadow-md shadow-primary/25 hover:brightness-105 active:scale-95 transition-all disabled:opacity-60 flex items-center justify-center gap-1.5"
             >
               <span>{searching ? "Mencari Teman..." : "🚀 Cari Teman Baru"}</span>
             </button>
@@ -909,17 +994,17 @@ function ChatContent() {
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  // TAMPILAN: ROOM JUAL BELI (?room=<id>)
+  // TAMPILAN 2: ROOM JUAL BELI & DM PRIBADI (?room=<id>)
   // ══════════════════════════════════════════════════════════════════════
   if (roomQuery) {
     if (roomNotFound) {
       return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center gap-4 p-6 text-center">
+        <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4 p-6 text-center">
           <div className="text-4xl">🔎</div>
           <p className="text-sm font-bold text-slate-700 dark:text-slate-300">Obrolan ini tidak ditemukan.</p>
           <button
             onClick={() => router.push("/chat")}
-            className="px-4 py-2 rounded-full bg-primary text-white text-xs font-bold"
+            className="px-5 py-2 rounded-full bg-primary text-white text-xs font-bold shadow-md active:scale-95 transition-all"
           >
             Kembali ke Kotak Masuk
           </button>
@@ -928,9 +1013,9 @@ function ChatContent() {
     }
 
     return (
-      <div className="h-[calc(100dvh-70px)] md:h-[calc(100dvh-64px)] bg-[#f5f5f7] dark:bg-[#000000] flex flex-col font-sans max-w-2xl w-full mx-auto border-x border-black/[0.06] dark:border-white/[0.08]">
-        <div className="bg-white/80 dark:bg-[#000000]/80 backdrop-blur-2xl border-b border-black/[0.06] dark:border-white/[0.08] shrink-0 z-40">
-          <div className="flex items-center justify-between px-4 py-2.5">
+      <div className="flex flex-col h-[100dvh] md:h-[calc(100vh-76px)] md:my-3 max-w-2xl w-full mx-auto bg-white dark:bg-[#000000] md:rounded-[28px] md:shadow-2xl md:border md:border-black/[0.08] dark:md:border-white/[0.08] overflow-hidden font-sans select-none no-tap-highlight">
+        <div className="bg-white/85 dark:bg-[#000000]/85 backdrop-blur-2xl border-b border-black/[0.06] dark:border-white/[0.08] shrink-0 z-40 pt-[max(env(safe-area-inset-top),0.5rem)] px-3 xs:px-4 py-2.5">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5 min-w-0">
               <button
                 onClick={() => router.push("/chat")}
@@ -948,12 +1033,12 @@ function ChatContent() {
                   {roomType === "direct" ? "💬" : "👤"}
                 </div>
                 {roomStatus === "active" && (
-                  <div className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-black" />
+                  <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-black" />
                 )}
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7] truncate">{partnerInfo.alias}</p>
-                <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                <p className="text-xs xs:text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7] truncate">{partnerInfo.alias}</p>
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
                   {roomType === "direct" ? `💬 DM Pribadi · ${partnerInfo.faculty}` : partnerInfo.faculty}
                 </p>
               </div>
@@ -964,7 +1049,7 @@ function ChatContent() {
                 href={`https://wa.me/${String(partnerInfo.wa).replace(/^0/, "62")}?text=${encodeURIComponent("Halo Kak, saya dari obrolan Jual Beli USU 👋")}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 px-2.5 py-1 rounded-full text-xs font-bold hover:bg-emerald-100 shadow-2xs active:scale-95 transition-all shrink-0"
+                className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 px-3 py-1.5 rounded-full text-xs font-bold hover:bg-emerald-100 shadow-2xs active:scale-95 transition-all shrink-0"
                 title="Lanjut ngobrol di WhatsApp Pribadi"
               >
                 <span>🟢 Lanjut WA</span>
@@ -1039,7 +1124,7 @@ function ChatContent() {
         </div>
 
         {roomStatus === "closed" && (
-          <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border-t border-amber-200 dark:border-amber-900 text-center space-y-2">
+          <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border-t border-amber-200 dark:border-amber-900 text-center space-y-2 pb-[max(env(safe-area-inset-bottom),0.6rem)]">
             <p className="text-xs font-bold text-amber-800 dark:text-amber-300">
               👋 Obrolan ini telah berakhir.
             </p>
@@ -1053,7 +1138,7 @@ function ChatContent() {
         )}
 
         {roomStatus === "active" && (
-          <div className="p-2.5 xs:p-3 bg-white/85 dark:bg-[#000000]/85 backdrop-blur-2xl border-t border-black/[0.06] dark:border-white/[0.08] flex items-center gap-2">
+          <div className="p-2.5 xs:p-3 bg-white/85 dark:bg-[#000000]/85 backdrop-blur-2xl border-t border-black/[0.06] dark:border-white/[0.08] flex items-center gap-2 pb-[max(env(safe-area-inset-bottom),0.6rem)]">
             <input
               ref={fileInputRef}
               type="file"
@@ -1125,7 +1210,7 @@ function ChatContent() {
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  // TAMPILAN: KOTAK MASUK
+  // TAMPILAN 3: KOTAK MASUK (/chat)
   // ══════════════════════════════════════════════════════════════════════
   const anon = ringkasAnon;
   const cuplikan = anon?.pesanTerakhir
@@ -1137,18 +1222,20 @@ function ChatContent() {
         : "Ngobrol 1-on-1 dengan mahasiswa USU & POLMED — ketuk buat mulai";
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] dark:bg-[#000000] pb-24 font-sans">
+    <div className="min-h-screen bg-[#f5f5f7] dark:bg-[#000000] pb-28 font-sans">
       <div className="bg-white/80 dark:bg-[#000000]/80 backdrop-blur-2xl border-b border-black/[0.06] dark:border-white/[0.08] sticky top-0 z-40">
-        <div className="px-4 py-3 max-w-2xl mx-auto">
-          <span className="text-[10px] font-black text-primary uppercase tracking-wider bg-primary/10 px-2 py-0.5 rounded-full">
-            OBROLAN KAMPUS
-          </span>
-          <h1 className="text-xl font-black text-[#1d1d1f] dark:text-[#f5f5f7] tracking-tight mt-0.5">Pusat Obrolan</h1>
+        <div className="px-4 py-3 max-w-2xl mx-auto flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-black text-primary uppercase tracking-wider bg-primary/10 px-2 py-0.5 rounded-full">
+              OBROLAN KAMPUS
+            </span>
+            <h1 className="text-xl font-black text-[#1d1d1f] dark:text-[#f5f5f7] tracking-tight mt-0.5">Pusat Obrolan</h1>
+          </div>
         </div>
       </div>
 
       <div className="max-w-2xl w-full mx-auto p-4 space-y-6">
-        {/* ── OBROLAN ANONIM — satu baris, satu utas ── */}
+        {/* ── OBROLAN ANONIM — SATU KARTU UTAMA ── */}
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7] flex items-center gap-1.5">
@@ -1171,7 +1258,9 @@ function ChatContent() {
                 onClick={() => router.push("/chat?anon=1")}
                 className="w-full text-left p-3.5 flex items-center gap-3 hover:bg-black/[0.02] dark:hover:bg-white/[0.04] active:scale-[0.99] transition-all"
               >
-                <div className="w-10 h-10 shrink-0 rounded-full bg-primary/10 text-primary flex items-center justify-center text-lg">🎭</div>
+                <div className="w-10 h-10 shrink-0 rounded-full bg-gradient-to-tr from-primary/20 to-purple-500/20 text-primary flex items-center justify-center text-xl shadow-xs">
+                  🎭
+                </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7] truncate">Cari Temen</span>
@@ -1190,19 +1279,19 @@ function ChatContent() {
                     ) : null}
                   </div>
                   <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate mt-0.5">{cuplikan}</p>
-                  {anon?.jumlahOrang > 1 && (
-                    <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">{anon.jumlahOrang} orang pernah diajak ngobrol</p>
-                  )}
                 </div>
-                <span className="text-[10px] text-gray-400 shrink-0">{waktuRelatif(anon?.updatedAt)}</span>
+                <div className="flex items-center gap-1 text-gray-400">
+                  <span className="text-[10px] shrink-0">{waktuRelatif(anon?.updatedAt)}</span>
+                  <Icon.ChevronRight className="w-4 h-4" />
+                </div>
               </button>
             </div>
           )}
         </div>
 
-        {/* ── CHAT JUAL BELI — tetap terpisah per barang ── */}
+        {/* ── CHAT JUAL BELI & DM PRIBADI ── */}
         <div>
-          <h2 className="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7] mb-3">💬 Chat Jual Beli</h2>
+          <h2 className="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7] mb-3">💬 Chat Jual Beli & DM Pribadi</h2>
           <MarketplaceInbox onSelectRoom={(roomId) => router.push(`/chat?room=${roomId}`)} />
         </div>
       </div>
@@ -1212,7 +1301,7 @@ function ChatContent() {
 
 export default function ChatPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center">Memuat...</div>}>
+    <Suspense fallback={<div className="p-8 text-center text-xs text-gray-400">Memuat...</div>}>
       <ChatContent />
     </Suspense>
   );
