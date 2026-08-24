@@ -9,17 +9,30 @@ import { hapticLight } from "@/lib/haptics";
 export default function BottomNavbar() {
   const pathname = usePathname();
 
-  const navs = [
-    { name: "Beranda", href: "/", icon: Icon.Home },
-    { name: "Marketplace", href: "/jual-beli", icon: Icon.ShoppingBag },
-    { name: "Jual", href: "/jual", icon: Icon.Package, special: true },
-    { name: "Menfess", href: "/mading", icon: Icon.BookOpen },
-    { name: "Obrolan", href: "/chat", match: ["/chat", "/teman", "/cari-teman", "/swap"], icon: Icon.MessageCircle },
-  ];
+  const isSocialContext = ["/sosial", "/mading", "/teman", "/cari-teman", "/swap", "/chat"]
+    .some((route) => pathname === route || pathname.startsWith(`${route}/`));
+
+  // Di area Sosial, dock berubah menjadi shortcut langsung ke tiga fitur
+  // komunitas. Di halaman lain, ia tetap menjadi lima tujuan inti aplikasi.
+  const navs = isSocialContext
+    ? [
+        { name: "Beranda", href: "/", icon: Icon.Home },
+        { name: "Marketplace", href: "/jual-beli", match: ["/jual-beli", "/produk", "/jasa", "/favorit"], icon: Icon.ShoppingBag },
+        { name: "Social", href: "/mading", match: ["/mading"], icon: Icon.BookOpen },
+        { name: "Chat", href: "/chat", icon: Icon.MessageCircle },
+        { name: "Swipe", href: "/teman", match: ["/teman", "/cari-teman", "/swap"], icon: Icon.Handshake },
+      ]
+    : [
+        { name: "Social", href: "/mading", match: ["/sosial", "/mading", "/teman", "/cari-teman", "/swap", "/chat"], icon: Icon.BookOpen },
+        { name: "Beranda", href: "/", icon: Icon.Home },
+        { name: "Marketplace", href: "/jual-beli", match: ["/jual-beli", "/produk", "/jasa", "/dicari", "/favorit", "/jual"], icon: Icon.ShoppingBag },
+        { name: "Jual", href: "/jual", icon: Icon.Package },
+        { name: "Dicari", href: "/dicari", match: ["/dicari"], icon: Icon.Search },
+      ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-black/[0.06] bg-white/80 pb-safe shadow-[0_-1px_12px_rgba(0,0,0,0.03)] backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#000000]/80 select-none no-tap-highlight md:bottom-6 md:left-1/2 md:right-auto md:w-auto md:min-w-[420px] md:max-w-md md:-translate-x-1/2 md:rounded-full md:border md:shadow-[0_12px_36px_rgba(0,0,0,0.18)] md:pb-0">
-      <div className="flex h-16 md:h-14 items-center justify-around px-2 md:px-4 md:gap-2">
+    <div className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 z-50 w-[calc(100%-2rem)] max-w-[650px] -translate-x-1/2 rounded-[28px] border border-black/[0.06] bg-white/90 shadow-[0_14px_38px_rgba(15,23,42,0.16)] backdrop-blur-2xl dark:border-white/[0.1] dark:bg-[#111113]/90 select-none no-tap-highlight">
+      <div className="flex h-16 items-center justify-around px-2 md:h-14 md:px-4 md:gap-2">
         {navs.map((n) => {
           const cakupan = n.match || [n.href];
           const isActive = pathname === n.href

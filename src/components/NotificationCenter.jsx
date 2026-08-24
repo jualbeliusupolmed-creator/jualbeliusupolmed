@@ -21,7 +21,17 @@ export default function NotificationCenter() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [pushStatus, setPushStatus] = useState("default"); // 'default' | 'granted' | 'denied' | 'unsupported'
   const [pushBusy, setPushBusy] = useState(false);
+  // readIds disimpan di state supaya tidak ada beda render server vs client (hydration safe)
+  const [readIds, setReadIds] = useState([]);
   const popoverRef = useRef(null);
+
+  // Baca readIds dari localStorage HANYA di client (setelah mount)
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem("read_notif_ids") || "[]");
+      setReadIds(stored);
+    } catch {}
+  }, []);
 
   // Check push permission status on mount
   useEffect(() => {
@@ -80,12 +90,13 @@ export default function NotificationCenter() {
         .sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0))
         .slice(0, 15);
 
-      // Check read state from localStorage
-      const readIds = JSON.parse(localStorage.getItem("read_notif_ids") || "[]");
-      const unread = combined.filter((n) => !readIds.includes(n.id)).length;
+      // Check read state from localStorage (safe — only runs client-side)
+      const storedReadIds = JSON.parse(localStorage.getItem("read_notif_ids") || "[]");
+      const unread = combined.filter((n) => !storedReadIds.includes(n.id)).length;
 
       setNotifications(combined);
       setUnreadCount(unread);
+      setReadIds(storedReadIds);
     } catch {
       // Fallback silent
     } finally {
@@ -116,6 +127,7 @@ export default function NotificationCenter() {
     hapticLight();
     const allIds = notifications.map((n) => n.id);
     localStorage.setItem("read_notif_ids", JSON.stringify(allIds));
+    setReadIds(allIds);
     setUnreadCount(0);
     toast.success("Semua notifikasi ditandai dibaca");
   };
@@ -179,7 +191,7 @@ export default function NotificationCenter() {
     return true;
   });
 
-  const readIds = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("read_notif_ids") || "[]") : [];
+  // readIds sekarang berasal dari state (hydration-safe), tidak perlu baca localStorage langsung di sini
 
   const handleToggleOpen = () => {
     hapticLight();
@@ -192,6 +204,7 @@ export default function NotificationCenter() {
         const currentRead = JSON.parse(localStorage.getItem("read_notif_ids") || "[]");
         const merged = Array.from(new Set([...currentRead, ...allIds]));
         localStorage.setItem("read_notif_ids", JSON.stringify(merged));
+        setReadIds(merged);
         setUnreadCount(0);
       }
       fetchNotifs();

@@ -82,6 +82,27 @@ export default function AdminMadingTable({
     }
   }
 
+  async function handlePublishInstagram(post) {
+    if (!confirm("Terbitkan Menfess ini ke Instagram sekarang? Pastikan isi dan moderasinya sudah benar.")) return;
+
+    setBusyId(post.id);
+    try {
+      const res = await fetch("/api/admin/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "publish_mading_instagram", id: post.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal menerbitkan ke Instagram");
+      showToast("Menfess berhasil diterbitkan ke Instagram.");
+      router.refresh();
+    } catch (err) {
+      showToast(err.message, true);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   return (
     <div className="relative">
       {toast && (
@@ -218,6 +239,15 @@ export default function AdminMadingTable({
                           title={post.status === "active" ? "Sembunyikan dari publik" : "Aktifkan kembali ke feed"}
                         >
                           {post.status === "active" ? "🚫 Sembunyikan" : "✅ Pulihkan"}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={isBusy || post.status !== "active" || post.instagram_status === "published"}
+                          onClick={() => handlePublishInstagram(post)}
+                          className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-fuchsia-50 dark:bg-fuchsia-950/40 text-fuchsia-700 dark:text-fuchsia-300 border border-fuchsia-200 dark:border-fuchsia-900/50 hover:bg-fuchsia-100 transition-all disabled:opacity-50"
+                          title={post.instagram_status === "published" ? "Sudah terbit di Instagram" : "Terbitkan ke Instagram sekarang"}
+                        >
+                          {post.instagram_status === "published" ? "📸 Terbit IG" : post.instagram_status === "queued" ? "⏳ Sedang Proses" : "📸 Terbitkan IG"}
                         </button>
                         <button
                           type="button"

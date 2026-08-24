@@ -152,7 +152,7 @@ export default function TemanSwipePage() {
 
   if (!mounted) {
     return (
-      <div className="relative min-h-[calc(100dvh-60px)] md:min-h-[calc(100dvh-64px)] bg-[#f5f5f7] dark:bg-[#000000] flex flex-col font-sans max-w-lg w-full mx-auto px-4 py-3">
+    <div className="relative h-[calc(100dvh-150px)] md:h-[calc(100dvh-112px)] bg-[#f5f5f7] dark:bg-[#000000] flex flex-col font-sans max-w-lg w-full mx-auto px-4 py-3 overflow-hidden">
         <div className="flex flex-col items-center justify-center my-auto py-24 space-y-3">
           <div className="w-10 h-10 border-3 border-primary/30 border-t-primary rounded-full animate-spin" />
           <p className="text-xs text-gray-400 font-medium">Menyiapkan Cari Teman Kampus...</p>
@@ -162,7 +162,7 @@ export default function TemanSwipePage() {
   }
 
   return (
-    <div className="relative min-h-[calc(100dvh-60px)] md:min-h-[calc(100dvh-64px)] bg-[#f5f5f7] dark:bg-[#000000] flex flex-col font-sans max-w-lg w-full mx-auto px-4 py-3 select-none">
+    <div className="relative h-[calc(100dvh-150px)] md:h-[calc(100dvh-112px)] bg-[#f5f5f7] dark:bg-[#000000] flex flex-col font-sans max-w-lg w-full mx-auto px-4 py-3 select-none overflow-hidden">
       
       {/* TOP BAR & FILTER */}
       <div className="flex items-center justify-between gap-2 pb-3">
@@ -220,7 +220,7 @@ export default function TemanSwipePage() {
       </div>
 
       {/* MAIN CARD STACK CONTAINER */}
-      <div className="relative flex-1 min-h-[440px] max-h-[580px] w-full flex items-center justify-center my-auto">
+      <div className="relative flex-1 min-h-0 w-full flex items-center justify-center py-2">
         {loading ? (
           <div className="flex flex-col items-center justify-center space-y-3 py-16">
             <div className="w-10 h-10 border-3 border-primary/30 border-t-primary rounded-full animate-spin" />
@@ -276,7 +276,7 @@ export default function TemanSwipePage() {
 
       {/* BOTTOM ACTION CONTROLS */}
       {deck.length > 0 && (
-        <div className="flex items-center justify-center gap-4 pt-4 pb-2 z-30">
+        <div className="flex items-center justify-center gap-4 pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] z-30">
           {/* UNDO / REWIND */}
           <button
             onClick={handleUndo}
@@ -290,7 +290,7 @@ export default function TemanSwipePage() {
           {/* PASS BUTTON (❌) */}
           <button
             onClick={() => handleSwipe("pass")}
-            className="flex h-15 w-15 items-center justify-center rounded-full bg-white dark:bg-[#1c1c1e] text-rose-500 shadow-xl border border-black/[0.08] dark:border-white/[0.12] active:scale-90 hover:scale-105 transition-all"
+            className="flex h-16 w-16 items-center justify-center rounded-full bg-white dark:bg-[#1c1c1e] text-rose-500 shadow-xl border border-black/[0.08] dark:border-white/[0.12] active:scale-90 hover:scale-105 transition-all"
             title="Lewati (Pass)"
           >
             <span className="text-2xl">❌</span>
@@ -299,7 +299,7 @@ export default function TemanSwipePage() {
           {/* LIKE BUTTON (💚) */}
           <button
             onClick={() => handleSwipe("like")}
-            className="flex h-15 w-15 items-center justify-center rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 text-white shadow-xl shadow-emerald-500/30 active:scale-90 hover:scale-105 transition-all"
+            className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 text-white shadow-xl shadow-emerald-500/30 active:scale-90 hover:scale-105 transition-all"
             title="Suka (Like)"
           >
             <span className="text-2xl">💚</span>

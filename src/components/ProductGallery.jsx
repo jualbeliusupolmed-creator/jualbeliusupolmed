@@ -52,7 +52,7 @@ export default function ProductGallery({ images = [], title }) {
   return (
     <div className="group relative">
       {/* Main Image View */}
-      <div className="relative overflow-hidden bg-gray-100 dark:bg-slate-950 aspect-square" ref={emblaRef}>
+      <div className="relative overflow-hidden bg-black/[0.03] dark:bg-black/40 sm:rounded-[24px] aspect-square" ref={emblaRef}>
         <div className="flex h-full touch-pan-y">
           {imgs.map((src, i) => (
             <div className="relative min-w-0 flex-[0_0_100%] h-full" key={i}>
@@ -111,9 +111,9 @@ export default function ProductGallery({ images = [], title }) {
               key={i}
               onClick={() => scrollTo(i)}
               aria-label={`Lihat foto ${i + 1}`}
-              className={`h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
+              className={`h-16 w-16 shrink-0 overflow-hidden rounded-[14px] border-[2.5px] transition-all no-tap-highlight ${
                 i === active
-                  ? "border-primary dark:border-white scale-[0.98]"
+                  ? "border-[#1d1d1f] dark:border-white scale-[0.96]"
                   : "border-transparent opacity-60 hover:opacity-100"
               }`}
             >

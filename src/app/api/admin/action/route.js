@@ -7,6 +7,7 @@ import { notifyAdminNewListing, postToGroup, sendWa } from "@/lib/fonnte";
 import { pushListingBaru } from "@/lib/webpush";
 import { logError } from "@/lib/logError";
 import { postToFacebook, postToInstagram } from "@/lib/meta";
+import { publishQueuedMadingInstagram, siteOriginFromRequest } from "@/lib/madingInstagram";
 
 export const dynamic = "force-dynamic";
 
@@ -891,6 +892,76 @@ export async function POST(req) {
       }
 
       // ── Moderasi Menfess (Mading) ───────────────────────────────────────────
+      case "queue_mading_instagram": {
+        const { data: post } = await supa
+          .from("mading_posts")
+          .select("id, status, instagram_status")
+          .eq("id", id)
+          .maybeSingle();
+        if (!post) return NextResponse.json({ error: "Postingan Menfess tidak ditemukan" }, { status: 404 });
+        if (post.status !== "active") return NextResponse.json({ error: "Aktifkan Menfess sebelum mengantrekan ke Instagram." }, { status: 400 });
+        if (post.instagram_status === "published") return NextResponse.json({ error: "Menfess ini sudah terbit di Instagram." }, { status: 400 });
+
+        const now = new Date().toISOString();
+        const { error: queueError } = await supa
+          .from("mading_instagram_publications")
+          .upsert({
+            post_id: id,
+            status: "queued",
+            attempts: 0,
+            last_error: null,
+            instagram_media_id: null,
+            published_at: null,
+            queued_at: now,
+            updated_at: now,
+          }, { onConflict: "post_id" });
+        if (queueError) return NextResponse.json({ error: queueError.message }, { status: 500 });
+
+        const { error: postError } = await supa
+          .from("mading_posts")
+          .update({ instagram_status: "queued", instagram_media_id: null, instagram_published_at: null })
+          .eq("id", id);
+        if (postError) return NextResponse.json({ error: postError.message }, { status: 500 });
+        warning = "Menfess masuk antrean Instagram. Scheduler akan menerbitkannya setelah konfigurasi Meta tersedia.";
+        break;
+      }
+
+      case "publish_mading_instagram": {
+        const { data: post } = await supa
+          .from("mading_posts")
+          .select("id, status, instagram_status")
+          .eq("id", id)
+          .maybeSingle();
+        if (!post) return NextResponse.json({ error: "Postingan Menfess tidak ditemukan" }, { status: 404 });
+        if (post.status !== "active") return NextResponse.json({ error: "Aktifkan Menfess sebelum menerbitkannya ke Instagram." }, { status: 400 });
+        if (post.instagram_status === "published") return NextResponse.json({ error: "Menfess ini sudah terbit di Instagram." }, { status: 400 });
+
+        const now = new Date().toISOString();
+        const { error: queueError } = await supa
+          .from("mading_instagram_publications")
+          .upsert({
+            post_id: id, status: "queued", attempts: 0, last_error: null,
+            instagram_media_id: null, published_at: null, queued_at: now, updated_at: now,
+          }, { onConflict: "post_id" });
+        if (queueError) return NextResponse.json({ error: queueError.message }, { status: 500 });
+
+        await supa
+          .from("mading_posts")
+          .update({ instagram_status: "queued", instagram_media_id: null, instagram_published_at: null })
+          .eq("id", id);
+
+        const [result] = await publishQueuedMadingInstagram({
+          origin: siteOriginFromRequest(req),
+          postId: id,
+          limit: 1,
+        });
+        if (!result || result.status !== "published") {
+          return NextResponse.json({ error: result?.error || "Instagram belum menerima postingan. Cek konfigurasi Meta lalu coba lagi." }, { status: 502 });
+        }
+        warning = "Menfess berhasil diterbitkan ke Instagram.";
+        break;
+      }
+
       case "toggle_mading_status": {
         const { data: currentPost } = await supa
           .from("mading_posts")

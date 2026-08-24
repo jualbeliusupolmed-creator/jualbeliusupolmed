@@ -550,7 +550,7 @@ function ChatContent() {
     ).length;
 
     return (
-      <div className="flex flex-col h-[100dvh] md:h-[calc(100vh-76px)] md:my-3 max-w-2xl w-full mx-auto bg-white dark:bg-[#000000] md:rounded-[28px] md:shadow-2xl md:border md:border-black/[0.08] dark:md:border-white/[0.08] overflow-hidden font-sans select-none no-tap-highlight">
+      <div className="flex flex-col h-dvh max-w-2xl w-full mx-auto bg-white dark:bg-[#000000] overflow-hidden font-sans select-none no-tap-highlight">
         {/* ── HEADER APPLE HIG ── */}
         <div className="bg-white/85 dark:bg-[#000000]/85 backdrop-blur-2xl border-b border-black/[0.06] dark:border-white/[0.08] shrink-0 z-40 pt-[max(env(safe-area-inset-top),0.5rem)] px-3 xs:px-4 py-2.5">
           <div className="flex items-center justify-between">
@@ -1001,7 +1001,7 @@ function ChatContent() {
     }
 
     return (
-      <div className="flex flex-col h-[100dvh] md:h-[calc(100vh-76px)] md:my-3 max-w-2xl w-full mx-auto bg-white dark:bg-[#000000] md:rounded-[28px] md:shadow-2xl md:border md:border-black/[0.08] dark:md:border-white/[0.08] overflow-hidden font-sans select-none no-tap-highlight">
+      <div className="flex flex-col h-dvh max-w-2xl w-full mx-auto bg-white dark:bg-[#000000] overflow-hidden font-sans select-none no-tap-highlight">
         <div className="bg-white/85 dark:bg-[#000000]/85 backdrop-blur-2xl border-b border-black/[0.06] dark:border-white/[0.08] shrink-0 z-40 pt-[max(env(safe-area-inset-top),0.5rem)] px-3 xs:px-4 py-2.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5 min-w-0">
@@ -1210,7 +1210,7 @@ function ChatContent() {
         : "Ngobrol 1-on-1 dengan mahasiswa USU & POLMED — ketuk buat mulai";
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] dark:bg-[#000000] pb-28 font-sans">
+    <div className="h-dvh overflow-y-auto bg-[#f5f5f7] dark:bg-[#000000] font-sans">
       <div className="bg-white/80 dark:bg-[#000000]/80 backdrop-blur-2xl border-b border-black/[0.06] dark:border-white/[0.08] sticky top-0 z-40">
         <div className="px-4 py-3 max-w-2xl mx-auto flex items-center justify-between">
           <div>
@@ -1223,30 +1223,6 @@ function ChatContent() {
       </div>
 
       <div className="max-w-2xl w-full mx-auto p-4 space-y-6">
-        {/* ── BANNER FITUR: CARI TEMAN SWIPE DECK ── */}
-        <div className="relative overflow-hidden rounded-[24px] bg-gradient-to-r from-purple-900 via-primary to-indigo-800 p-5 text-white shadow-xl shadow-primary/20">
-          <div className="relative z-10 flex items-center justify-between gap-4">
-            <div className="space-y-1">
-              <span className="inline-block rounded-full bg-white/20 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-300 backdrop-blur-md">
-                FITUR BARU 🔥
-              </span>
-              <h2 className="text-base font-black tracking-tight text-white">
-                Swipe Teman Kampus USU &amp; Polmed
-              </h2>
-              <p className="text-xs text-white/80 leading-relaxed max-w-sm">
-                Lihat foto mahasiswa aktif, geser LIKE 💚 atau PASS ❌, dan langsung match!
-              </p>
-            </div>
-            <button
-              onClick={() => router.push("/teman")}
-              className="shrink-0 rounded-full bg-white px-4 py-2.5 text-xs font-black text-primary shadow-lg hover:bg-white/95 active:scale-95 transition-all"
-            >
-              Mulai Swipe ➔
-            </button>
-          </div>
-          <div className="pointer-events-none absolute -bottom-6 -right-6 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
-        </div>
-
         {/* ── OBROLAN ANONIM — SATU KARTU UTAMA ── */}
         <div>
           <div className="flex items-center justify-between mb-3">

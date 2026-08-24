@@ -1,25 +1,25 @@
 export function ProductCardSkeleton() {
   return (
-    <div className="card group relative flex flex-col justify-between overflow-hidden p-2.5 xs:p-3.5 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl animate-pulse">
-      <div>
-        {/* Image placeholder */}
-        <div className="relative aspect-square w-full rounded-xl bg-slate-200 dark:bg-slate-800 overflow-hidden" />
+    <div className="group relative flex flex-col overflow-hidden rounded-[24px] bg-white dark:bg-[#1c1c1e] border border-black/[0.05] dark:border-white/[0.07] shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+      {/* Image placeholder */}
+      <div className="relative aspect-square w-full rounded-t-[24px] animate-shimmer" />
 
-        {/* Content placeholders */}
-        <div className="mt-2.5 space-y-2">
-          {/* Title */}
-          <div className="h-3.5 bg-slate-200 dark:bg-slate-800 rounded-md w-4/5" />
-          <div className="h-3 bg-slate-100 dark:bg-slate-800/60 rounded-md w-3/5" />
-
-          {/* Price */}
-          <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded-md w-1/2 mt-2" />
+      {/* Content placeholders */}
+      <div className="p-3 xs:p-3.5 space-y-2.5">
+        <div className="flex gap-1.5">
+          <div className="h-4 w-14 bg-black/[0.05] dark:bg-white/[0.06] rounded-full animate-pulse" />
+          <div className="h-4 w-16 bg-black/[0.05] dark:bg-white/[0.06] rounded-full animate-pulse" />
         </div>
-      </div>
-
-      {/* Footer info */}
-      <div className="mt-3.5 pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
-        <div className="h-2.5 bg-slate-200 dark:bg-slate-800 rounded w-16" />
-        <div className="h-2.5 bg-slate-200 dark:bg-slate-800 rounded w-8" />
+        {/* Title */}
+        <div className="h-3.5 bg-black/[0.05] dark:bg-white/[0.06] rounded-full w-full animate-pulse" />
+        <div className="h-3 bg-black/[0.04] dark:bg-white/[0.05] rounded-full w-3/4 animate-pulse" />
+        {/* Price */}
+        <div className="h-4 bg-black/[0.05] dark:bg-white/[0.06] rounded-full w-2/5 animate-pulse" />
+        {/* Footer */}
+        <div className="pt-2 border-t border-black/[0.04] dark:border-white/[0.05] flex items-center justify-between">
+          <div className="h-2.5 bg-black/[0.04] dark:bg-white/[0.05] rounded-full w-16 animate-pulse" />
+          <div className="h-2.5 bg-black/[0.04] dark:bg-white/[0.05] rounded-full w-8 animate-pulse" />
+        </div>
       </div>
     </div>
   );
@@ -34,3 +34,4 @@ export default function ProductGridSkeleton({ count = 8 }) {
     </div>
   );
 }
+

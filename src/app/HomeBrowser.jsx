@@ -319,26 +319,26 @@ export default function HomeBrowser({
       case "featured":
         if (!featured?.length) return null;
         return (
-          <section key="featured" className="mb-5">
-            <div className="mb-2.5 flex items-center justify-between">
-              <h2 className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider">Unggulan</h2>
-              <span className="text-[10px] text-gray-400 dark:text-slate-500">Dipromosikan</span>
+          <section key="featured" className="mb-6">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-[13px] font-bold text-[#6e6e73] dark:text-slate-400 uppercase tracking-tight">Unggulan</h2>
+              <span className="text-[11px] font-semibold text-[#86868b] dark:text-slate-500">Dipromosikan</span>
             </div>
-            <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden no-tap-highlight">
               {featured.map((f) => (
                 <Link
                   key={f.id}
                   href={`/produk/${buildSlug(f.title, f.id)}`}
-                  className="flex w-52 shrink-0 items-center gap-3 rounded-2xl border border-gray-100 bg-gray-50/80 p-3 transition hover:border-gray-200 hover:bg-gray-50 dark:border-slate-800/70 dark:bg-slate-900/40 dark:hover:border-slate-700"
+                  className="flex w-56 shrink-0 items-center gap-3 rounded-[20px] border border-black/[0.05] bg-white p-3 shadow-sm transition hover:shadow-md hover:-translate-y-0.5 dark:border-white/[0.08] dark:bg-[#1c1c1e] active:scale-[0.98]"
                 >
-                  <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-gray-200 dark:bg-slate-800">
+                  <div className="h-[52px] w-[52px] shrink-0 overflow-hidden rounded-[14px] bg-black/[0.03] dark:bg-black/40">
                     {f.image_url && (
-                      <Image src={f.image_url} alt={f.title} width={48} height={48} loading="lazy" className="h-full w-full object-cover" />
+                      <Image src={f.image_url} alt={f.title} width={52} height={52} loading="lazy" className="h-full w-full object-cover" />
                     )}
                   </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-xs font-semibold text-gray-900 dark:text-slate-200">{f.title}</p>
-                    <p className="mt-0.5 text-sm font-bold text-gray-900 dark:text-white">{rupiah(f.price)}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[13px] font-semibold text-[#1d1d1f] dark:text-slate-200">{f.title}</p>
+                    <p className="mt-0.5 text-[15px] font-bold tracking-tight text-[#1d1d1f] dark:text-white">{rupiah(f.price)}</p>
                   </div>
                 </Link>
               ))}
@@ -349,10 +349,10 @@ export default function HomeBrowser({
       case "recently_viewed":
         if (!recentlyViewed.length) return null;
         return (
-          <section key="recently_viewed" className="mb-5">
-            <div className="mb-2.5 flex items-center justify-between">
-              <h2 className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                <Icon.Eye className="h-3.5 w-3.5" />
+          <section key="recently_viewed" className="mb-6">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-[13px] font-bold text-[#6e6e73] dark:text-slate-400 uppercase tracking-tight flex items-center gap-1.5">
+                <Icon.Eye className="h-4 w-4" />
                 Baru Dilihat
               </h2>
               <button
@@ -360,19 +360,19 @@ export default function HomeBrowser({
                   try { localStorage.removeItem("recently_viewed"); } catch {}
                   setRecentlyViewed([]);
                 }}
-                className="text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-slate-300"
+                className="text-[12px] font-medium text-[#0071e3] hover:underline dark:text-[#2997ff]"
               >
                 Hapus
               </button>
             </div>
-            <div className="flex gap-2.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden no-tap-highlight">
               {recentlyViewed.map((item) => (
                 <Link
                   key={item.id}
                   href={`/produk/${item.slug}`}
-                  className="flex w-36 shrink-0 flex-col overflow-hidden rounded-2xl border border-gray-100 bg-gray-50/80 transition hover:border-gray-200 dark:border-slate-800/70 dark:bg-slate-900/40 dark:hover:border-slate-700"
+                  className="flex w-[140px] shrink-0 flex-col overflow-hidden rounded-[20px] border border-black/[0.05] bg-white transition hover:shadow-md hover:-translate-y-0.5 dark:border-white/[0.08] dark:bg-[#1c1c1e] active:scale-[0.98]"
                 >
-                  <div className="aspect-square bg-gray-100 dark:bg-slate-950 overflow-hidden">
+                  <div className="aspect-square bg-black/[0.03] dark:bg-black/40 overflow-hidden">
                     {item.image_url ? (
                       <Image src={item.image_url} alt={item.title} width={144} height={144} loading="lazy" className="h-full w-full object-cover" />
                     ) : (
@@ -381,9 +381,9 @@ export default function HomeBrowser({
                       </div>
                     )}
                   </div>
-                  <div className="p-2.5">
-                    <p className="truncate text-xs font-semibold dark:text-slate-200">{item.title}</p>
-                    <p className="text-xs font-bold text-accent dark:text-accent-light">{rupiah(item.price)}</p>
+                  <div className="p-3">
+                    <p className="truncate text-[13px] font-semibold text-[#1d1d1f] dark:text-slate-200">{item.title}</p>
+                    <p className="mt-1 text-[14px] tracking-tight font-bold text-[#1d1d1f] dark:text-white">{rupiah(item.price)}</p>
                   </div>
                 </Link>
               ))}
@@ -437,10 +437,9 @@ export default function HomeBrowser({
       case "main":
         return (
           <div key="main" id="daftar-barang" className="scroll-mt-20">
-            {/* Search bar — pill shaped */}
-            <div className="relative">
+            <div className="relative mb-5">
               <svg
-                className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+                className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#86868b] dark:text-slate-400"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -451,11 +450,24 @@ export default function HomeBrowser({
                 <path d="m21 21-4.3-4.3" />
               </svg>
               <input
+                type="text"
+                placeholder="Cari barang, jasa, kos..."
                 value={q}
                 onChange={(e) => handleSearch(e.target.value)}
-                placeholder="Cari barang… laptop, buku, kos"
-                className="w-full rounded-full border border-gray-200 bg-white py-2.5 xs:py-3 pl-11 pr-4 text-base md:text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-400 focus:ring-2 focus:ring-gray-900/5 dark:border-slate-800 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-slate-600"
+                className="w-full rounded-full border border-black/[0.05] bg-black/[0.03] py-3.5 pl-11 pr-12 text-[15px] focus:border-black/[0.1] focus:bg-white focus:outline-none focus:ring-4 focus:ring-black/[0.02] dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-white dark:focus:border-white/[0.15] dark:focus:bg-[#1c1c1e] transition-all"
               />
+              {q && (
+                <button
+                  onClick={() => {
+                    setQ("");
+                    setPage(1);
+                  }}
+                  className="absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-black/[0.08] text-white hover:bg-black/[0.12] dark:bg-white/[0.12] dark:hover:bg-white/[0.2] transition-colors"
+                  aria-label="Bersihkan pencarian"
+                >
+                  <Icon.X className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
 
             {/* Filter chips — single horizontal scroll with momentum and touch feedback */}

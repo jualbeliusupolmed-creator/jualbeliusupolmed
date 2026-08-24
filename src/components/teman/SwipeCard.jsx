@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
 import { Icon } from "@/components/Icons";
 import { hapticLight } from "@/lib/haptics";
@@ -12,72 +12,60 @@ export default function SwipeCard({
 }) {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [exitAction, setExitAction] = useState(null);
   const [showBio, setShowBio] = useState(false);
   const cardRef = useRef(null);
+  const dragStartRef = useRef({ x: 0, y: 0 });
+  const dragOffsetRef = useRef({ x: 0, y: 0 });
 
-  const SWIPE_THRESHOLD = 90;
+  const SWIPE_THRESHOLD = 96;
 
-  // Touch Handlers
-  const handleTouchStart = (e) => {
-    if (!isTop) return;
-    const touch = e.touches[0];
-    setIsDragging(true);
-    setDragStart({ x: touch.clientX, y: touch.clientY });
+  const setOffset = (offset) => {
+    dragOffsetRef.current = offset;
+    setDragOffset(offset);
   };
 
-  const handleTouchMove = (e) => {
-    if (!isDragging || !isTop) return;
-    const touch = e.touches[0];
-    const dx = touch.clientX - dragStart.x;
-    const dy = touch.clientY - dragStart.y;
-    setDragOffset({ x: dx, y: dy });
-  };
-
-  const handleTouchEnd = () => {
-    if (!isDragging || !isTop) return;
+  const finishDrag = () => {
+    if (!isDragging || !isTop || exitAction) return;
+    const { x } = dragOffsetRef.current;
+    const action = x > SWIPE_THRESHOLD ? "like" : x < -SWIPE_THRESHOLD ? "pass" : null;
     setIsDragging(false);
-    if (dragOffset.x > SWIPE_THRESHOLD) {
-      onSwipe?.("like");
-    } else if (dragOffset.x < -SWIPE_THRESHOLD) {
-      onSwipe?.("pass");
-    }
-    setDragOffset({ x: 0, y: 0 });
-  };
-
-  // Mouse Handlers (Desktop drag)
-  const handleMouseDown = (e) => {
-    if (!isTop || e.button !== 0) return;
-    setIsDragging(true);
-    setDragStart({ x: e.clientX, y: e.clientY });
-  };
-
-  useEffect(() => {
-    if (!isDragging) return;
-
-    const handleMouseMove = (e) => {
-      const dx = e.clientX - dragStart.x;
-      const dy = e.clientY - dragStart.y;
-      setDragOffset({ x: dx, y: dy });
-    };
-
-    const handleMouseUp = () => {
+    if (!action) {
       setIsDragging(false);
-      if (dragOffset.x > SWIPE_THRESHOLD) {
-        onSwipe?.("like");
-      } else if (dragOffset.x < -SWIPE_THRESHOLD) {
-        onSwipe?.("pass");
-      }
-      setDragOffset({ x: 0, y: 0 });
-    };
+      setOffset({ x: 0, y: 0 });
+      return;
+    }
 
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [isDragging, dragStart, dragOffset.x, onSwipe]);
+    const direction = action === "pass" ? -1 : 1;
+    const width = cardRef.current?.clientWidth || 320;
+    setExitAction(action);
+    setOffset({ x: direction * width * 1.18, y: -10 });
+    window.setTimeout(() => onSwipe?.(action), 180);
+  };
+
+  const handlePointerDown = (e) => {
+    if (!isTop || exitAction || (e.pointerType === "mouse" && e.button !== 0)) return;
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    dragStartRef.current = { x: e.clientX, y: e.clientY };
+    setOffset({ x: 0, y: 0 });
+    setIsDragging(true);
+  };
+
+  const handlePointerMove = (e) => {
+    if (!isDragging || !isTop || exitAction) return;
+    const dx = e.clientX - dragStartRef.current.x;
+    const dy = e.clientY - dragStartRef.current.y;
+    if (Math.abs(dx) > Math.abs(dy)) e.preventDefault();
+    setOffset({ x: dx, y: dy });
+  };
+
+  const handlePointerEnd = () => finishDrag();
+  const handlePointerCancel = () => {
+    if (!exitAction) {
+      setIsDragging(false);
+      setOffset({ x: 0, y: 0 });
+    }
+  };
 
   const rotation = dragOffset.x * 0.08;
   const likeOpacity = Math.min(1, Math.max(0, dragOffset.x / 75));
@@ -88,18 +76,18 @@ export default function SwipeCard({
   return (
     <div
       ref={cardRef}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      onMouseDown={handleMouseDown}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerEnd}
+      onPointerCancel={handlePointerCancel}
       style={{
         transform: isTop
           ? `translate3d(${dragOffset.x}px, ${dragOffset.y * 0.4}px, 0) rotate(${rotation}deg)`
           : "scale(0.96) translateY(12px)",
-        transition: isDragging ? "none" : "transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+        transition: isDragging ? "none" : "transform 0.24s cubic-bezier(0.22, 1, 0.36, 1)",
         zIndex: isTop ? 20 : 10,
       }}
-      className={`absolute inset-0 select-none overflow-hidden rounded-[28px] border border-black/[0.08] bg-black shadow-[0_12px_36px_rgba(0,0,0,0.18)] dark:border-white/[0.12] dark:shadow-[0_16px_40px_rgba(0,0,0,0.6)] cursor-grab active:cursor-grabbing ${
+      className={`absolute inset-0 touch-pan-y select-none overflow-hidden rounded-[28px] border border-black/[0.08] bg-black shadow-[0_12px_36px_rgba(0,0,0,0.18)] dark:border-white/[0.12] dark:shadow-[0_16px_40px_rgba(0,0,0,0.6)] cursor-grab active:cursor-grabbing ${
         !isTop ? "pointer-events-none opacity-80" : ""
       }`}
     >
@@ -192,6 +180,7 @@ export default function SwipeCard({
             {profile.bio && (
               <button
                 type="button"
+                onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowBio(!showBio);

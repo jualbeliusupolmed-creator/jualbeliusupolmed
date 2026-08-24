@@ -12,7 +12,7 @@ const PLATFORMS = [
   { id: "fb",       label: "Facebook", icon: "🔵", action: "share",    format: null,    desc: "Bagikan link" },
 ];
 
-export default function ShareModal({ listing }) {
+export default function ShareModal({ listing, isIconOnly = false }) {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState("story");
   const [busy, setBusy] = useState(null);
@@ -70,33 +70,54 @@ export default function ShareModal({ listing }) {
 
   return (
     <>
-      <button onClick={() => setOpen(true)} className="btn-outline w-full">
-        🎨 Buat Template Share
-      </button>
+      {isIconOnly ? (
+        <button 
+          onClick={() => setOpen(true)} 
+          className="flex h-11 w-full items-center justify-center rounded-full bg-black/[0.04] text-[#1d1d1f] hover:bg-black/[0.08] active:scale-95 transition-all dark:bg-white/[0.08] dark:text-white"
+          aria-label="Bagikan"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+          </svg>
+        </button>
+      ) : (
+        <button onClick={() => setOpen(true)} className="btn-outline w-full">
+          🎨 Buat Template Share
+        </button>
+      )}
 
       {open && (
         <div
-          className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 sm:p-6"
           onClick={() => setOpen(false)}
         >
+          {/* Overlay frosted glass */}
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[6px]" />
+          
           <div
-            className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 overflow-hidden shadow-2xl"
+            className="relative w-full max-w-md rounded-[28px] bg-white/95 backdrop-blur-xl overflow-hidden shadow-[0_32px_64px_rgba(0,0,0,0.2)] dark:bg-[#1c1c1e]/95 border border-black/[0.05] dark:border-white/[0.08] animate-slide-up"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-slate-800">
-              <h3 className="font-bold text-gray-900 dark:text-white">Buat Template</h3>
-              <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-gray-700 dark:hover:text-white text-xl leading-none">×</button>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.06] dark:border-white/[0.08]">
+              <h3 className="font-bold tracking-tight text-[17px] text-[#1d1d1f] dark:text-white">Buat Template</h3>
+              <button onClick={() => setOpen(false)} className="flex h-7 w-7 items-center justify-center rounded-full bg-black/[0.05] text-[#1d1d1f] hover:bg-black/[0.09] active:scale-90 transition-all dark:bg-white/[0.08] dark:text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
             </div>
 
             <div className="p-5 space-y-5">
-              {/* Tab switcher */}
-              <div className="flex gap-2 rounded-xl bg-gray-100 dark:bg-slate-800 p-1">
+              {/* Segmented Control iOS Style */}
+              <div className="flex gap-1 rounded-xl bg-black/[0.04] dark:bg-white/[0.08] p-1">
                 {["feed", "story"].map((t) => (
                   <button
                     key={t}
                     onClick={() => setTab(t)}
-                    className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-all ${tab === t ? "bg-white dark:bg-slate-700 text-gray-900 dark:text-white shadow-sm" : "text-gray-500 dark:text-slate-400"}`}
+                    className={`flex-1 rounded-[10px] py-2 text-[13px] font-semibold transition-all ${
+                      tab === t 
+                        ? "bg-white dark:bg-[#2c2c2e] text-[#1d1d1f] dark:text-white shadow-sm" 
+                        : "text-[#6e6e73] dark:text-slate-400 hover:text-[#1d1d1f] dark:hover:text-white"
+                    }`}
                   >
                     {t === "feed" ? "📷 Feed (1:1)" : "📱 Story (9:16)"}
                   </button>

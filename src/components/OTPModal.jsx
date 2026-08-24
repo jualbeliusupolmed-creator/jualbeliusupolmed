@@ -252,22 +252,21 @@ export default function OTPModal({ isOpen, onClose, onSuccess, initialWa = "" })
   const petunjukSandi = `Boleh huruf, angka, atau campuran — minimal ${PIN_MIN} karakter.`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl dark:bg-slate-900 border border-gray-100 dark:border-slate-800 animate-in fade-in zoom-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 sm:p-6">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-[6px]" onClick={onClose} />
+      <div className="relative w-full max-w-sm rounded-[28px] bg-white/95 backdrop-blur-xl p-6 shadow-[0_32px_64px_rgba(0,0,0,0.2)] dark:bg-[#1c1c1e]/95 border border-black/[0.05] dark:border-white/[0.08] animate-slide-up">
         <button
           onClick={onClose}
           aria-label="Tutup"
-          className="absolute right-4 top-4 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+          className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-full bg-black/[0.05] text-[#1d1d1f] hover:bg-black/[0.09] active:scale-90 transition-all dark:bg-white/[0.08] dark:text-white"
         >
           ✕
         </button>
 
-        <h3 className="mb-1 text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-          <Icon.User className="h-5 w-5 text-gray-700 dark:text-slate-300" />
+        <h3 className="mb-1 text-[17px] font-bold tracking-tight text-[#1d1d1f] dark:text-white flex items-center gap-2">
           Masuk / Daftar
         </h3>
-        <p className="mb-4 text-sm text-gray-500 dark:text-slate-400">
+        <p className="mb-4 text-[13px] text-[#6e6e73] dark:text-slate-400">
           Gunakan nomor WhatsApp atau Email.
         </p>
 

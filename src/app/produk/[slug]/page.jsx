@@ -349,8 +349,8 @@ export default async function ProdukPage({ params }) {
           {/* Panel Kontrol Khusus Pemilik Iklan */}
           <OwnerFastActions listing={listing} />
 
-          {/* Aksi */}
-          <div className="mt-4 space-y-2">
+          {/* Aksi (Desktop: inline, Mobile: sticky bottom bar) */}
+          <div className="mt-4 hidden md:block space-y-2">
             {!sold && <MinatButton listing={listing} />}
             {!sold && <OfferButton listing={listing} />}
             <div className="grid grid-cols-2 gap-2">
@@ -368,6 +368,22 @@ export default async function ProdukPage({ params }) {
               </div>
               <div className="col-span-2">
                 <ShareModal listing={listing} />
+              </div>
+            </div>
+          </div>
+
+          {/* Sticky Bottom Action Bar for Mobile (App Store Style) */}
+          <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-black/[0.05] p-4 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.04)] dark:bg-[#1c1c1e]/95 dark:border-white/[0.08]">
+            <div className="max-w-5xl mx-auto flex gap-2">
+              <div className="flex-1">
+                {!sold ? (
+                  <MinatButton listing={listing} />
+                ) : (
+                  <button disabled className="btn w-full bg-black/[0.04] text-gray-500 font-bold dark:bg-white/[0.08] dark:text-gray-400">Terjual</button>
+                )}
+              </div>
+              <div className="w-12 shrink-0">
+                <ShareModal listing={listing} isIconOnly={true} />
               </div>
             </div>
           </div>
