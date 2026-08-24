@@ -95,17 +95,6 @@ export default function UnifiedProfilePanel({ sellerProfile, wa, onProfileUpdate
             whatsapp: wa || p.whatsapp || "",
             anonymous_name: mergedAnon,
           });
-
-          // Sync parent header if currently desynchronized
-          if (mergedName && mergedName !== sellerProfile?.name) {
-            onProfileUpdated?.({
-              name: mergedName,
-              photo_url: mergedPhoto,
-              bio: mergedBio,
-              campus: mergedCampus,
-              faculty: mergedFaculty,
-            });
-          }
         }
       } catch (err) {
         console.error("Failed to load unified profile:", err);
