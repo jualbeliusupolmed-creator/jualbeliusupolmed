@@ -757,7 +757,7 @@ function DashboardInner() {
               },
               { 
                 id: "akun", 
-                label: "Akun & Blog", 
+                label: "Biodata & Profil", 
                 icon: "👤", 
                 active: activeTab === "profil" || activeTab === "blog",
                 onClick: () => setActiveTab(["profil", "blog"].includes(activeTab) ? activeTab : "profil")
@@ -856,7 +856,7 @@ function DashboardInner() {
                     : "bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
                 }`}
               >
-                👤 Edit Profil Penjual
+                👤 Biodata Satu Pintu
               </button>
               <button
                 onClick={() => setActiveTab("blog")}
