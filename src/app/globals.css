@@ -120,7 +120,17 @@ body {
     @apply rounded-[22px] border border-black/[0.06] bg-white shadow-[0_1px_4px_rgba(0,0,0,0.03)] transition-all duration-200 dark:border-white/[0.08] dark:bg-[#1c1c1e];
   }
   .input {
-    @apply w-full rounded-full border border-black/[0.08] bg-white px-4 py-2.5 text-xs text-[#1d1d1f] placeholder:text-gray-400 outline-none transition-all focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 dark:border-white/[0.1] dark:bg-[#1c1c1e] dark:text-[#f5f5f7];
+    @apply w-full rounded-2xl border border-black/[0.08] bg-white px-4 py-2.5 text-sm text-[#1d1d1f] placeholder:text-gray-400 outline-none transition-all focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 dark:border-white/[0.1] dark:bg-[#1c1c1e] dark:text-[#f5f5f7];
+  }
+  /* Floating Input & Labels untuk Form Jual & Pasang Iklan */
+  .floating-group {
+    @apply relative w-full;
+  }
+  .floating-input {
+    @apply block w-full rounded-2xl border border-black/[0.08] bg-white px-4 pt-5 pb-2 text-sm text-[#1d1d1f] placeholder-transparent outline-none transition-all focus:border-violet-500 focus:bg-white focus:ring-4 focus:ring-violet-500/10 dark:border-white/[0.1] dark:bg-[#1c1c1e] dark:text-[#f5f5f7] dark:focus:border-violet-400 dark:focus:bg-[#2c2c2e];
+  }
+  .floating-label {
+    @apply pointer-events-none absolute left-4 top-2 text-[11px] font-semibold text-[#86868b] transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-placeholder-shown:font-normal peer-placeholder-shown:text-gray-400 peer-focus:top-2 peer-focus:text-[11px] peer-focus:font-semibold peer-focus:text-violet-600 dark:text-slate-400 dark:peer-placeholder-shown:text-slate-500 dark:peer-focus:text-violet-400;
   }
   .section-title {
     @apply text-[20px] font-semibold tracking-[-0.03em] text-[#1d1d1f] dark:text-white;

@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { MARKETPLACE_WA, formatWa } from "@/lib/constants";
-import { rupiah } from "@/lib/fees";
+import { formatWaForBaileys } from "@/lib/constants";
+import { buildSlug } from "@/lib/slug";
 import { useRouter } from "next/navigation";
+import { useTransactionMode } from "@/lib/useTransactionMode";
 import { toast } from "sonner";
 
 const TEMPLATES = [
@@ -12,18 +13,60 @@ const TEMPLATES = [
   (title) => `Bisa COD di mana untuk "${title}"?`,
 ];
 
-// Tombol "Minat": kirim notif ke penjual (Fonnte) + buka WhatsApp penjual.
+// Tombol "Minat": Mengikuti mode transaksi global (Mode 1: WA langsung vs Mode 2: In-App DM)
 export default function MinatButton({ listing }) {
   const [busy, setBusy] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
   const [customMsg, setCustomMsg] = useState("");
 
   const router = useRouter();
+  const { isWaMode } = useTransactionMode();
 
   async function sendMinat(text) {
     setShowPicker(false);
     setBusy(true);
 
+    // MODE 1: DIRECT WHATSAPP
+    if (isWaMode) {
+      try {
+        const rawWa = listing.seller_wa;
+        const formattedWa = formatWaForBaileys(rawWa);
+
+        if (!formattedWa) {
+          toast.error("Nomor WhatsApp penjual tidak tersedia.");
+          setBusy(false);
+          return;
+        }
+
+        // Catat interaksi minat ke backend (fire-and-forget)
+        fetch("/api/minat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ listing_id: listing.id }),
+        }).catch(() => {});
+
+        const slug = buildSlug(listing.title, listing.id);
+        const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://www.jualbeliusupolmed.web.id";
+        const productLink = `${baseUrl}/produk/${slug}`;
+
+        const fullMsg =
+          `Halo ${listing.seller_name || "Penjual"},\n\n` +
+          `${text}\n\n` +
+          `📦 *${listing.title}*\n` +
+          `🔗 ${productLink}`;
+
+        const waUrl = `https://wa.me/${formattedWa}?text=${encodeURIComponent(fullMsg)}`;
+        window.open(waUrl, "_blank", "noopener,noreferrer");
+        toast.success("Membuka WhatsApp penjual...");
+      } catch (err) {
+        toast.error("Gagal membuka WhatsApp.");
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+
+    // MODE 2: IN-APP DIRECT MESSAGE
     try {
       const res = await fetch("/api/chat/marketplace/start", {
         method: "POST",
@@ -31,7 +74,7 @@ export default function MinatButton({ listing }) {
         body: JSON.stringify({ listingId: listing.id, message: text }),
       });
       const data = await res.json();
-      
+
       if (!res.ok) {
         if (res.status === 401) {
           toast.error("Silakan masuk/login terlebih dahulu untuk chat penjual.");
@@ -55,7 +98,11 @@ export default function MinatButton({ listing }) {
         disabled={busy}
         className="btn-wa w-full"
       >
-        {busy ? "Memproses…" : "💬 Minat / Chat Penjual"}
+        {busy
+          ? "Memproses…"
+          : isWaMode
+          ? "📱 Chat Penjual via WhatsApp"
+          : "💬 Minat / Chat Penjual"}
       </button>
 
       {/* Template Picker Modal */}
@@ -67,8 +114,8 @@ export default function MinatButton({ listing }) {
           <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 shadow-2xl overflow-hidden animate-fade-in">
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-slate-800">
-              <p className="font-bold text-sm text-gray-900 dark:text-white">
-                💬 Pilih Pesan ke Penjual
+              <p className="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-1.5">
+                {isWaMode ? "📱 Chat WhatsApp Penjual" : "💬 Pilih Pesan ke Penjual"}
               </p>
               <button
                 onClick={() => setShowPicker(false)}

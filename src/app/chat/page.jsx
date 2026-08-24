@@ -553,25 +553,35 @@ function ChatContent() {
   // TAMPILAN: UTAS ANONIM (?anon=1)
   // ══════════════════════════════════════════════════════════════════════
   if (anonView) {
-    const segmen = utas?.segmen || [];
+    const rawSegmen = utas?.segmen || [];
     const aktifRoomId = utas?.aktifRoomId || null;
-    const segAktif = segmen.find((s) => s.roomId === aktifRoomId) || null;
+    const segAktif = rawSegmen.find((s) => s.roomId === aktifRoomId) || null;
     const pesanAktif = (segAktif?.pesan || []).filter((m) => m.sender_id !== "system");
+
+    // Saring segmen yang kosong/ditinggalkan tanpa chat nyata agar riwayat tidak penuh divider kosong
+    const segmen = rawSegmen.filter((seg, idx, arr) => {
+      if (seg.roomId === aktifRoomId) return true;
+      const realMsgs = (seg.pesan || []).filter(
+        (m) => m.sender_id !== "system" && !m.sender_id.startsWith("system:")
+      );
+      if (realMsgs.length > 0) return true;
+      return idx === arr.length - 1;
+    });
 
     return (
       <div className="h-[calc(100dvh-70px)] md:h-[calc(100dvh-64px)] bg-[#f5f5f7] dark:bg-[#000000] flex flex-col font-sans max-w-2xl w-full mx-auto border-x border-black/[0.06] dark:border-white/[0.08]">
-        <div className="bg-white/80 dark:bg-[#000000]/80 backdrop-blur-2xl border-b border-black/[0.06] dark:border-white/[0.08] shrink-0 z-40">
-          <div className="flex items-center justify-between px-4 py-2.5">
-            <div className="flex items-center gap-2.5 min-w-0">
+        <div className="bg-white/80 dark:bg-[#000000]/80 backdrop-blur-2xl border-b border-black/[0.06] dark:border-white/[0.08] shrink-0 z-40 pt-[max(env(safe-area-inset-top),0.25rem)]">
+          <div className="flex items-center justify-between px-3 xs:px-4 py-2.5">
+            <div className="flex items-center gap-2 xs:gap-2.5 min-w-0">
               <button
                 onClick={() => router.push("/chat")}
-                className="p-1.5 -ml-1.5 text-gray-500 hover:text-[#1d1d1f] dark:hover:text-[#f5f5f7] rounded-full active:scale-90 transition-transform"
+                className="p-1 -ml-1 text-gray-500 hover:text-[#1d1d1f] dark:hover:text-[#f5f5f7] rounded-full active:scale-90 transition-transform"
                 title="Kembali ke kotak masuk"
               >
                 <Icon.ChevronLeft className="w-5 h-5" />
               </button>
               <div className="relative shrink-0">
-                <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">🎭</div>
+                <div className="w-7 h-7 xs:w-8 xs:h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs xs:text-sm">🎭</div>
                 {aktifRoomId && (
                   <div className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-black" />
                 )}
@@ -580,41 +590,41 @@ function ChatContent() {
                 <p className="text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7] truncate">Cari Temen</p>
                 <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
                   {segAktif
-                    ? `Sedang bicara dengan ${segAktif.alias} · ${segAktif.faculty}`
+                    ? `Bicara dg ${segAktif.alias}`
                     : utas?.menungguRoomId
                       ? "Menunggu partner…"
-                      : "Belum ada obrolan berjalan — ketuk Cari Teman Baru"}
+                      : "Belum ada obrolan — Cari Teman Baru"}
                 </p>
               </div>
             </div>
 
             {aktifRoomId && (
-              <div className="flex items-center gap-1.5 shrink-0">
+              <div className="flex items-center gap-1 xs:gap-1.5 shrink-0">
                 <button
                   onClick={() => handleExchangeContact(aktifRoomId)}
                   title="Ajak lanjut mengobrol di DM Pribadi website"
-                  className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 px-2.5 py-1 rounded-full text-xs font-bold hover:bg-emerald-100 shadow-2xs active:scale-95 transition-all"
+                  className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 px-2 xs:px-2.5 py-1 rounded-full text-[11px] xs:text-xs font-bold hover:bg-emerald-100 shadow-2xs active:scale-95 transition-all"
                 >
-                  <span>💬 Lanjut DM</span>
+                  <span>💬 DM</span>
                 </button>
                 <button
                   onClick={handleReportPartner}
                   title="Laporkan lawan bicara"
-                  className="px-2 py-1 rounded-full text-xs text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors"
+                  className="px-1.5 py-1 rounded-full text-xs text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors"
                 >
                   🚩
                 </button>
                 <button
                   onClick={handleSkipChat}
                   title="Ganti Lawan Obrolan"
-                  className="flex items-center gap-1 bg-white dark:bg-[#1c1c1e] border border-black/[0.08] dark:border-white/[0.1] px-3 py-1 rounded-full text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7] hover:bg-black/[0.03] shadow-xs active:scale-95 transition-all"
+                  className="flex items-center gap-1 bg-white dark:bg-[#1c1c1e] border border-black/[0.08] dark:border-white/[0.1] px-2 xs:px-2.5 py-1 rounded-full text-[11px] xs:text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7] hover:bg-black/[0.03] shadow-xs active:scale-95 transition-all"
                 >
                   <span>⏭️ Ganti</span>
                 </button>
                 <button
                   onClick={handleLeaveChat}
                   title="Akhiri obrolan"
-                  className="p-1.5 text-gray-400 hover:text-rose-500 rounded-full transition-colors active:scale-90"
+                  className="p-1 text-gray-400 hover:text-rose-500 rounded-full transition-colors active:scale-90"
                 >
                   <Icon.X className="w-4 h-4" />
                 </button>

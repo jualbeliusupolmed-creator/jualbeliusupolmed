@@ -6,6 +6,7 @@ import { useAdmin } from "./AdminProvider";
 import AdminNav from "./AdminNav";
 import { NAV, ICONS, labelTab } from "./nav";
 import { useBasisAdmin } from "./basis";
+import TransactionModeToggle from "./TransactionModeToggle";
 
 /*
  * Bilah atas ala Modern Admin: nama halaman di kiri, satu kotak cari cepat (Command Palette Ctrl+K),
@@ -172,6 +173,11 @@ export default function AdminTopbar({ counts = {} }) {
               ))}
             </div>
           )}
+        </div>
+
+        {/* Toggle Cepat Mode Transaksi */}
+        <div className="hidden sm:block">
+          <TransactionModeToggle variant="compact" />
         </div>
 
         {/* Tautan Langsung ke Marketplace */}
