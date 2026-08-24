@@ -15,6 +15,7 @@ const links = [
   { href: "/jasa", label: "Jasa" },
   { href: "/dicari", label: "Dicari" },
   { href: "/mading", label: "Menfess" },
+  { href: "/chat", label: "Obrolan & Teman" },
 ];
 
 export default function Navbar({ config }) {

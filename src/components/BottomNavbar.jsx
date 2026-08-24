@@ -54,12 +54,12 @@ export default function BottomNavbar() {
               aria-current={isActive ? "page" : undefined}
               className={cn(
                 "group relative flex w-14 xs:w-16 md:w-16 flex-col items-center justify-center gap-0.5 py-1 transition-all duration-200 active:scale-[0.92] touch-manipulation",
-                isActive ? "text-primary dark:text-emerald-400" : "text-gray-400 hover:text-[#1d1d1f] dark:text-gray-500 dark:hover:text-gray-300"
+                isActive ? "text-primary dark:text-violet-400" : "text-gray-400 hover:text-[#1d1d1f] dark:text-gray-500 dark:hover:text-gray-300"
               )}
             >
               <div className={cn(
                 "flex items-center justify-center rounded-full p-1 transition-all duration-200",
-                isActive ? "bg-primary/10 dark:bg-emerald-400/15" : "bg-transparent"
+                isActive ? "bg-primary/10 dark:bg-violet-400/15" : "bg-transparent"
               )}>
                 <IconComp className={cn("h-5 w-5 md:h-4.5 md:w-4.5 transition-transform duration-200", isActive ? "scale-105 stroke-[2.4px]" : "scale-100 stroke-[1.8px]")} />
               </div>

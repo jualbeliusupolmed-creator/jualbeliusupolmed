@@ -4,7 +4,6 @@ import { getUserSession } from "@/lib/auth";
 import { hashIdentitas } from "@/lib/identitasHash";
 import { cariWaDariHash } from "@/lib/chatIdentity";
 import { siarkanPesanBaru } from "@/lib/chatRealtime";
-import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -20,16 +19,6 @@ export async function POST(request, { params }) {
     const wa = getUserSession();
     if (!wa) {
       return NextResponse.json({ error: "Silakan login terlebih dahulu" }, { status: 401 });
-    }
-
-    // Persetujuan mengubah ruang anonim menjadi DM permanen. Batasi agar tidak
-    // bisa dipakai untuk membanjiri room maupun memicu banyak insert sistem.
-    const laju = rateLimit(`chat-exchange:${getClientIp(request)}`, { limit: 6, windowMs: 5 * 60_000 });
-    if (!laju.ok) {
-      return NextResponse.json(
-        { error: `Terlalu sering mengirim ajakan. Coba lagi dalam ${laju.retryAfter} detik.` },
-        { status: 429 }
-      );
     }
 
     const userId = hashIdentitas(wa);

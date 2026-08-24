@@ -20,16 +20,25 @@ export default function SuperAppHome({ latestListings = [], madingPosts = [] }) 
     <div className="min-h-screen bg-[#f5f5f7] pb-24 font-sans selection:bg-primary/20 dark:bg-[#000000] overflow-x-hidden">
       
       {/* QUICK ACTIONS BAR — Apple Capsule Bar */}
-      <div className="relative px-4 pt-3 pb-1.5 sm:px-6 md:px-10 lg:px-16">
+      <div className="relative px-4 pt-3.5 pb-2 sm:px-6 md:px-10 lg:px-16">
         <div className="relative z-10">
-          <div className="flex items-center gap-2 overflow-x-auto touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {/* Paling Kiri: Cari Barang */}
+          <div className="flex items-center gap-2 overflow-x-auto touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-0.5">
+            {/* Cari Barang */}
             <Link 
               href="/jual-beli" 
-              className="flex items-center gap-1.5 rounded-full border border-black/[0.06] bg-white/90 backdrop-blur-md px-3.5 py-1.5 text-xs font-bold text-[#1d1d1f] transition-all hover:bg-black/[0.03] active:scale-[0.96] whitespace-nowrap shadow-[0_1px_2px_rgba(0,0,0,0.03)] dark:border-white/[0.08] dark:bg-[#1c1c1e] dark:text-[#f5f5f7] dark:hover:bg-white/[0.08]"
+              className="flex items-center gap-1.5 rounded-full border border-black/[0.06] bg-white/90 backdrop-blur-md px-3.5 py-1.5 text-xs font-bold text-[#1d1d1f] transition-all hover:bg-black/[0.03] active:scale-[0.96] whitespace-nowrap shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:border-white/[0.08] dark:bg-[#1c1c1e] dark:text-[#f5f5f7] dark:hover:bg-white/[0.08]"
             >
-              <Icon.Search className="w-3.5 h-3.5 text-primary dark:text-emerald-400" />
+              <Icon.Search className="w-3.5 h-3.5 text-primary dark:text-violet-400" />
               <span>Cari barang</span>
+            </Link>
+
+            {/* Jasa Mahasiswa */}
+            <Link
+              href="/jasa"
+              className="flex items-center gap-1.5 rounded-full border border-black/[0.06] bg-white/90 backdrop-blur-md px-3.5 py-1.5 text-xs font-bold text-[#1d1d1f] transition-all hover:bg-black/[0.03] active:scale-[0.96] whitespace-nowrap shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:border-white/[0.08] dark:bg-[#1c1c1e] dark:text-[#f5f5f7] dark:hover:bg-white/[0.08]"
+            >
+              <span className="text-xs">⚡</span>
+              <span>Jasa</span>
             </Link>
 
             {/* Menfess */}
@@ -41,13 +50,22 @@ export default function SuperAppHome({ latestListings = [], madingPosts = [] }) 
               <span>Menfess</span>
             </Link>
 
-            {/* Kanan: Cari Teman */}
+            {/* Dicari */}
+            <Link
+              href="/dicari"
+              className="flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/8 px-3.5 py-1.5 text-xs font-bold text-amber-700 dark:text-amber-300 transition-all hover:bg-amber-500/15 active:scale-[0.96] whitespace-nowrap dark:border-amber-400/30 dark:bg-amber-500/15"
+            >
+              <span className="text-xs">🔍</span>
+              <span>Dicari</span>
+            </Link>
+
+            {/* Cari Teman / Obrolan */}
             <Link 
               href="/chat" 
-              className="flex items-center gap-1.5 rounded-full border border-black/[0.06] bg-white/90 backdrop-blur-md px-3.5 py-1.5 text-xs font-bold text-[#1d1d1f] transition-all hover:bg-black/[0.03] active:scale-[0.96] whitespace-nowrap shadow-[0_1px_2px_rgba(0,0,0,0.03)] dark:border-white/[0.08] dark:bg-[#1c1c1e] dark:text-[#f5f5f7] dark:hover:bg-white/[0.08]"
+              className="flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/8 px-3.5 py-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-300 transition-all hover:bg-emerald-500/15 active:scale-[0.96] whitespace-nowrap dark:border-emerald-400/30 dark:bg-emerald-500/15"
             >
-              <Icon.MessageCircle className="h-3.5 w-3.5 text-primary dark:text-emerald-400" />
-              <span>Cari temen</span>
+              <Icon.MessageCircle className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>Obrolan &amp; Teman</span>
             </Link>
           </div>
         </div>
