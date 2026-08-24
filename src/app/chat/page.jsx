@@ -1235,18 +1235,42 @@ function ChatContent() {
       </div>
 
       <div className="max-w-2xl w-full mx-auto p-4 space-y-6">
+        {/* ── BANNER FITUR: CARI TEMAN SWIPE DECK ── */}
+        <div className="relative overflow-hidden rounded-[24px] bg-gradient-to-r from-purple-900 via-primary to-indigo-800 p-5 text-white shadow-xl shadow-primary/20">
+          <div className="relative z-10 flex items-center justify-between gap-4">
+            <div className="space-y-1">
+              <span className="inline-block rounded-full bg-white/20 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-300 backdrop-blur-md">
+                FITUR BARU 🔥
+              </span>
+              <h2 className="text-base font-black tracking-tight text-white">
+                Swipe Teman Kampus USU &amp; Polmed
+              </h2>
+              <p className="text-xs text-white/80 leading-relaxed max-w-sm">
+                Lihat foto mahasiswa aktif, geser LIKE 💚 atau PASS ❌, dan langsung match!
+              </p>
+            </div>
+            <button
+              onClick={() => router.push("/teman")}
+              className="shrink-0 rounded-full bg-white px-4 py-2.5 text-xs font-black text-primary shadow-lg hover:bg-white/95 active:scale-95 transition-all"
+            >
+              Mulai Swipe ➔
+            </button>
+          </div>
+          <div className="pointer-events-none absolute -bottom-6 -right-6 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
+        </div>
+
         {/* ── OBROLAN ANONIM — SATU KARTU UTAMA ── */}
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7] flex items-center gap-1.5">
-              🎭 Cari Temen
+              🎭 Obrolan Anonim (Teks Langsung)
             </h2>
             <button
               onClick={handleFindPartner}
               disabled={searching}
               className="flex items-center gap-1.5 bg-primary text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow-[0_2px_8px_rgba(83,43,152,0.25)] hover:brightness-105 active:scale-[0.96] transition-all disabled:opacity-60"
             >
-              <span>{searching ? "Mencari..." : "🚀 Cari Teman Baru"}</span>
+              <span>{searching ? "Mencari..." : "🚀 Cari Partner Teks"}</span>
             </button>
           </div>
 
