@@ -28,7 +28,7 @@ export default function LayoutWrapper({ children }) {
   return (
     <>
       {!isAdmin && <Navbar config={config} />}
-      <main className={isAdmin ? "flex-1" : "flex-1 bg-[#f5f5f7] pb-24 md:pb-28 dark:bg-[#0b0b0f]"}>{children}</main>
+      <main className={isAdmin ? "flex-1" : isChat ? "flex-1 bg-[#f5f5f7] dark:bg-[#000000] flex flex-col" : "flex-1 bg-[#f5f5f7] pb-24 md:pb-28 dark:bg-[#0b0b0f]"}>{children}</main>
       {!isAdmin && (
         <>
           <GlobalChatNotifier />
