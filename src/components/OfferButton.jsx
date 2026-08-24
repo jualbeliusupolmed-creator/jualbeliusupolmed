@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import { rupiah } from "@/lib/fees";
+import { formatWaForBaileys } from "@/lib/constants";
+import { buildSlug } from "@/lib/slug";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useTransactionMode } from "@/lib/useTransactionMode";
 
 export default function OfferButton({ listing }) {
   const [open, setOpen] = useState(false);
@@ -11,6 +14,7 @@ export default function OfferButton({ listing }) {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const router = useRouter();
+  const { isWaMode } = useTransactionMode();
 
   async function submit(e) {
     e.preventDefault();
@@ -19,21 +23,66 @@ export default function OfferButton({ listing }) {
       return;
     }
     setBusy(true);
+    const priceNum = Number(offerPrice.replace(/\D/g, ""));
+
+    // MODE 1: DIRECT WHATSAPP
+    if (isWaMode) {
+      try {
+        const rawWa = listing.seller_wa;
+        const formattedWa = formatWaForBaileys(rawWa);
+
+        if (!formattedWa) {
+          toast.error("Nomor WhatsApp penjual tidak tersedia.");
+          setBusy(false);
+          return;
+        }
+
+        // Catat interaksi ke backend
+        fetch("/api/minat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ listing_id: listing.id }),
+        }).catch(() => {});
+
+        const slug = buildSlug(listing.title, listing.id);
+        const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://www.jualbeliusupolmed.web.id";
+        const productLink = `${baseUrl}/produk/${slug}`;
+
+        const finalMessage =
+          `Halo ${listing.seller_name || "Penjual"},\n\n` +
+          `Saya ingin mengajukan penawaran harga sebesar *${rupiah(priceNum)}* (harga iklan: ${rupiah(listing.price)}) untuk barang:\n` +
+          `📦 *${listing.title}*\n` +
+          (message ? `💬 Catatan: "${message}"\n` : "") +
+          `🔗 ${productLink}\n\n` +
+          `Apakah harganya bisa disetujui? Terima kasih!`;
+
+        const waUrl = `https://wa.me/${formattedWa}?text=${encodeURIComponent(finalMessage)}`;
+        window.open(waUrl, "_blank", "noopener,noreferrer");
+        toast.success("Membuka WhatsApp untuk mengirim tawaran...");
+        setOpen(false);
+      } catch (err) {
+        toast.error("Gagal membuka WhatsApp.");
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+
+    // MODE 2: IN-APP DIRECT MESSAGE
     try {
-      const priceNum = Number(offerPrice.replace(/\D/g, ""));
-      const finalMessage = `Halo, saya ingin mengajukan tawaran sebesar ${rupiah(priceNum)} untuk barang ini.${message ? ' ' + message : ''}`;
-      
+      const finalMessage = `Halo, saya ingin mengajukan tawaran sebesar ${rupiah(priceNum)} untuk barang ini.${message ? " " + message : ""}`;
+
       const res = await fetch("/api/chat/marketplace/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           listingId: listing.id,
           message: finalMessage,
-          offerPrice: priceNum
+          offerPrice: priceNum,
         }),
       });
       const data = await res.json();
-      
+
       if (!res.ok) {
         if (res.status === 401) {
           toast.error("Silakan masuk/login terlebih dahulu untuk menawar harga.");
@@ -42,7 +91,7 @@ export default function OfferButton({ listing }) {
         }
         throw new Error(data.error || "Gagal memulai chat");
       }
-      
+
       toast.success("Tawaran terkirim!");
       setOpen(false);
       router.push(`/chat?room=${data.roomId}`);
@@ -96,9 +145,17 @@ export default function OfferButton({ listing }) {
               </div>
 
               <button type="submit" disabled={busy} className="btn-primary w-full disabled:opacity-50">
-                {busy ? "Memproses…" : "💰 Chat Penjual & Ajukan Tawaran"}
+                {busy
+                  ? "Memproses…"
+                  : isWaMode
+                  ? "📱 Kirim Tawaran via WhatsApp"
+                  : "💰 Chat Penjual & Ajukan Tawaran"}
               </button>
-              <p className="text-[10px] text-center text-gray-400">Kamu akan diarahkan ke Obrolan Transaksi.</p>
+              <p className="text-[10px] text-center text-gray-400">
+                {isWaMode
+                  ? "Tawaran akan dikirimkan langsung ke nomor WhatsApp penjual."
+                  : "Kamu akan diarahkan ke ruang Obrolan Transaksi."}
+              </p>
             </form>
           </div>
         </div>

@@ -3,7 +3,7 @@
 
 CREATE TABLE IF NOT EXISTS public.chat_rooms (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  type TEXT NOT NULL DEFAULT 'random' CHECK (type IN ('random', 'marketplace')),
+  type TEXT NOT NULL DEFAULT 'random' CHECK (type IN ('random', 'marketplace', 'direct')),
   user1_id TEXT NOT NULL,
   user1_alias TEXT NOT NULL DEFAULT 'Anonim',
   user1_faculty TEXT NOT NULL DEFAULT 'Umum',
