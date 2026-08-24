@@ -104,7 +104,7 @@ export default function SwipeCard({
       }`}
     >
       {/* BACKGROUND PHOTO */}
-      <div className="relative h-full w-full bg-slate-900 overflow-hidden">
+      <div className="relative h-full w-full bg-gradient-to-b from-[#1c1c1e] to-[#0a0a0c] overflow-hidden">
         {profile.photo_url ? (
           <Image
             src={profile.photo_url}
@@ -115,8 +115,13 @@ export default function SwipeCard({
             className="object-cover pointer-events-none"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-4xl">
-            🎭
+          <div className="flex flex-col h-full w-full items-center justify-center bg-gradient-to-tr from-slate-950 via-primary/20 to-indigo-950/80 text-center p-6 space-y-3 select-none pb-24">
+            <div className="w-24 h-24 rounded-full bg-white/10 border-2 border-white/15 backdrop-blur-xl flex items-center justify-center text-3xl font-black text-white shadow-2xl">
+              {profile.display_name ? profile.display_name.charAt(0).toUpperCase() : "👤"}
+            </div>
+            <p className="text-[11px] font-medium text-white/50 tracking-wider">
+              {profile.campus} · {profile.faculty || "Mahasiswa"}
+            </p>
           </div>
         )}
 
