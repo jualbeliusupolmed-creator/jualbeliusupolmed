@@ -27,8 +27,8 @@ export default function LayoutWrapper({ children }) {
 
   return (
     <>
-      {!isAdmin && !isChat && <Navbar config={config} />}
-      <main className={isAdmin ? "flex-1" : isChat ? "flex-1 bg-[#f5f5f7] dark:bg-[#000000] flex flex-col" : "flex-1 bg-[#f5f5f7] pb-24 md:pb-28 dark:bg-[#0b0b0f]"}>{children}</main>
+      {!isAdmin && <Navbar config={config} />}
+      <main className={isAdmin ? "flex-1" : "flex-1 bg-[#f5f5f7] pb-24 md:pb-28 dark:bg-[#0b0b0f]"}>{children}</main>
       {!isAdmin && (
         <>
           <GlobalChatNotifier />
@@ -36,7 +36,7 @@ export default function LayoutWrapper({ children }) {
           {/* Ajakan notifikasi peramban. Menahan dirinya sendiri (kunjungan
               kedua / 25 detik), karena izin notifikasi cuma bisa diminta sekali. */}
           <NotifPrompt />
-          {!isChat && <BottomNavbar />}
+          <BottomNavbar />
           {!isChat && !isHome && <Footer config={config} />}
         </>
       )}
