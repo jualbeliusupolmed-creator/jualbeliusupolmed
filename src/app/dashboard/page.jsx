@@ -156,26 +156,39 @@ function DashboardInner() {
     setWa(n);
     setBusy(true);
     try {
-      const [resListings, resWanted, resOffers] = await Promise.all([
+      const [resListings, resWanted, resOffers, resTeman] = await Promise.all([
         fetch(`/api/listings?seller_wa=${encodeURIComponent(n)}`),
         fetch(`/api/wanted?buyer_wa=${encodeURIComponent(n)}`),
         fetch(`/api/offers?seller_wa=${encodeURIComponent(n)}`),
+        fetch(`/api/teman/profiles?wa=${encodeURIComponent(n)}`, {
+          headers: { "x-seller-wa": n },
+        }),
       ]);
       const dataListings = await resListings.json();
       const dataWanted = await resWanted.json();
       const dataOffers = await resOffers.json();
+      const dataTeman = await resTeman.json();
+
+      const mergedProfile = {
+        ...(dataListings.profile || {}),
+        name: dataTeman?.myProfile?.display_name || dataListings.profile?.name || "Penjual",
+        photo_url: dataTeman?.myProfile?.photo_url || dataListings.profile?.photo_url || "",
+        campus: dataTeman?.myProfile?.campus || dataListings.profile?.campus || "USU",
+        faculty: dataTeman?.myProfile?.faculty || dataListings.profile?.faculty || "Umum",
+        bio: dataTeman?.myProfile?.bio || dataListings.profile?.bio || "",
+      };
 
       setItems(dataListings.listings || []);
-      setSellerProfile(dataListings.profile || null);
+      setSellerProfile(mergedProfile);
       setWantedItems(dataWanted.listings || []);
       setOffers(dataOffers.offers || []);
 
-      if (dataListings.profile) {
+      if (mergedProfile) {
         setProfilForm({
-          name: dataListings.profile.name || "",
-          bio: dataListings.profile.bio || "",
+          name: mergedProfile.name || "",
+          bio: mergedProfile.bio || "",
         });
-        setAnonymousName(dataListings.profile.anonymous_name || "Anonim");
+        setAnonymousName(mergedProfile.anonymous_name || "Anonim");
       }
 
       setLoaded(true);
