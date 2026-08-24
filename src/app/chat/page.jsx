@@ -37,6 +37,7 @@ function parseMessageContent(msg) {
 }
 
 function ChatContent() {
+  const [mounted, setMounted] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
   const roomQuery = searchParams.get("room");
@@ -513,9 +514,23 @@ function ChatContent() {
     }
   };
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const handleSkipChat = async () => {
     handleFindPartner();
   };
+
+  if (!mounted) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-8 animate-pulse space-y-4">
+        <div className="h-8 w-44 rounded-xl bg-gray-200 dark:bg-slate-800" />
+        <div className="h-28 rounded-2xl bg-gray-100 dark:bg-slate-900" />
+        <div className="h-44 rounded-2xl bg-gray-100 dark:bg-slate-900" />
+      </div>
+    );
+  }
 
   // ══════════════════════════════════════════════════════════════════════
   // TAMPILAN 1: UTAS ANONIM (?anon=1) — FRESH CANVAS & CLEAN MOBILE/PC

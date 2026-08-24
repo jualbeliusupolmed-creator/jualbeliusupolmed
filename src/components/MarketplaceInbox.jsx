@@ -6,6 +6,7 @@ import { Icon } from "./Icons";
 import { useRouter } from "next/navigation";
 
 export default function MarketplaceInbox({ onSelectRoom }) {
+  const [mounted, setMounted] = useState(false);
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [myWa, setMyWa] = useState(null);
@@ -13,6 +14,7 @@ export default function MarketplaceInbox({ onSelectRoom }) {
   const router = useRouter();
 
   useEffect(() => {
+    setMounted(true);
     async function fetchInbox() {
       try {
         const res = await fetch("/api/chat/marketplace/inbox");
@@ -35,7 +37,7 @@ export default function MarketplaceInbox({ onSelectRoom }) {
     fetchInbox();
   }, [router]);
 
-  if (loading) {
+  if (!mounted || loading) {
     return <div className="text-center p-8 text-xs text-gray-500">Memuat kotak masuk...</div>;
   }
 
