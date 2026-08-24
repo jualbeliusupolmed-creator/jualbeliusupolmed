@@ -17,6 +17,7 @@ import PushNotificationButton from "@/components/PushNotificationButton";
 import BagikanIklan from "@/components/BagikanIklan";
 import BlogPenulisPanel from "@/components/BlogPenulisPanel";
 import DashboardModeToggle from "@/components/DashboardModeToggle";
+import UnifiedProfilePanel from "@/components/dashboard/UnifiedProfilePanel";
 
 function statusBadge(s) {
   const map = {
@@ -1648,126 +1649,11 @@ function DashboardInner() {
             </div>
           ) : activeTab === "profil" ? (
             <div className="space-y-6 mt-6">
-              <div className="card p-6">
-                <h2 className="text-base font-bold dark:text-white mb-1">Edit Profil</h2>
-                <p className="text-xs text-gray-400 mb-5">Perubahan nama dan bio perlu disetujui admin sebelum tampil di publik.</p>
-
-                <div className="mb-6 rounded-xl border border-violet-100 bg-violet-50/60 p-4 dark:border-violet-500/20 dark:bg-violet-500/5">
-                  <label className="block text-sm font-semibold text-violet-950 dark:text-violet-100 mb-1">Nama Anonim</label>
-                  <p className="mb-3 text-xs leading-relaxed text-violet-800/75 dark:text-violet-200/70">Nama ini dipakai di Menfess, komentar, dan Cari Teman. Nama toko/profil publik Anda tidak akan ditampilkan di sana.</p>
-                  <div className="flex gap-2">
-                    <input
-                      className="input flex-1"
-                      placeholder="Contoh: Kucing Kampus"
-                      maxLength={30}
-                      value={anonymousName}
-                      onChange={(e) => setAnonymousName(e.target.value)}
-                    />
-                    <button
-                      onClick={saveAnonymousName}
-                      disabled={anonymousNameBusy || anonymousName.trim().length < 2}
-                      className="btn-primary shrink-0 px-4 disabled:opacity-50"
-                    >
-                      Simpan
-                    </button>
-                  </div>
-                </div>
-
-                {/* Nama */}
-                <div className="mb-6">
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1">
-                    Nama Tampil
-                  </label>
-                  <p className="text-xs text-gray-400 mb-2">Saat ini: <span className="font-medium text-gray-700 dark:text-slate-300">{sellerProfile?.name || "(belum diset)"}</span></p>
-                  <div className="flex gap-2">
-                    <input
-                      className="input flex-1"
-                      placeholder="Nama baru (2–50 karakter)"
-                      maxLength={50}
-                      value={profilForm.name}
-                      onChange={(e) => setProfilForm(prev => ({ ...prev, name: e.target.value }))}
-                    />
-                    <button
-                      onClick={() => submitProfilChange("name")}
-                      disabled={profilBusy || !profilForm.name.trim() || profilForm.name.trim() === sellerProfile?.name}
-                      className="btn-primary shrink-0 px-4 disabled:opacity-50"
-                    >
-                      Ajukan
-                    </button>
-                  </div>
-                  {(() => {
-                    const pendingName = profilRequests.find(r => r.field === "name" && r.status === "pending");
-                    if (!pendingName) return null;
-                    return (
-                      <p className="mt-2 text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                        ⏳ Permintaan pending: <span className="font-semibold">"{pendingName.requested_value}"</span> — menunggu admin
-                      </p>
-                    );
-                  })()}
-                </div>
-
-                {/* Bio */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1">
-                    Bio / Deskripsi Toko
-                  </label>
-                  <p className="text-xs text-gray-400 mb-2">Saat ini: <span className="font-medium text-gray-700 dark:text-slate-300">{sellerProfile?.bio || "(belum diset)"}</span></p>
-                  <textarea
-                    className="input w-full min-h-[80px] text-sm"
-                    placeholder="Deskripsi singkat toko Anda (maks. 200 karakter)"
-                    maxLength={200}
-                    value={profilForm.bio}
-                    onChange={(e) => setProfilForm(prev => ({ ...prev, bio: e.target.value }))}
-                  />
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="text-xs text-gray-400">{profilForm.bio.length}/200</span>
-                    <button
-                      onClick={() => submitProfilChange("bio")}
-                      disabled={profilBusy || !profilForm.bio.trim() || profilForm.bio.trim() === sellerProfile?.bio}
-                      className="btn-primary shrink-0 px-4 disabled:opacity-50"
-                    >
-                      Ajukan
-                    </button>
-                  </div>
-                  {(() => {
-                    const pendingBio = profilRequests.find(r => r.field === "bio" && r.status === "pending");
-                    if (!pendingBio) return null;
-                    return (
-                      <p className="mt-2 text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                        ⏳ Bio pending persetujuan admin
-                      </p>
-                    );
-                  })()}
-                </div>
-              </div>
-
-              {/* Riwayat Permintaan */}
-              {profilRequests.length > 0 && (
-                <div className="card p-5">
-                  <h3 className="text-sm font-bold dark:text-white mb-3">Riwayat Permintaan</h3>
-                  <div className="space-y-2">
-                    {profilRequests.map((r) => (
-                      <div key={r.id} className="flex items-start justify-between gap-3 py-2 border-b border-gray-100 dark:border-slate-800 last:border-0">
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase">{r.field === "name" ? "Nama" : "Bio"}</p>
-                          <p className="text-sm dark:text-white truncate max-w-[220px]">{r.requested_value}</p>
-                          <p className="text-xs text-gray-400 mt-0.5">
-                            {new Date(r.requested_at).toLocaleDateString("id-ID", { dateStyle: "short" })}
-                            {r.review_note ? ` · ${r.review_note}` : ""}
-                          </p>
-                        </div>
-                        <span className={`shrink-0 text-xs font-semibold px-2 py-1 rounded-full ${
-                          r.status === "pending" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                          : r.status === "approved" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                          : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
-                        }`}>
-                          {r.status === "pending" ? "⏳ Menunggu" : r.status === "approved" ? "✅ Disetujui" : "❌ Ditolak"}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <UnifiedProfilePanel
+                sellerProfile={sellerProfile}
+                wa={wa}
+                onProfileUpdated={() => load()}
+              />
             </div>
           ) : null}
         </>
