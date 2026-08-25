@@ -6,6 +6,7 @@ import { Icon } from "@/components/Icons";
 import { toast } from "sonner";
 import PullToRefresh from "@/components/PullToRefresh";
 import UnduhMenfessModal from "@/components/mading/UnduhMenfessModal";
+import MenfessReplySection from "@/components/mading/MenfessReplySection";
 
 const CAMPUSES = ["USU", "POLMED", "Bebas"];
 const FILTER_CAMPUSES = ["Semua", "USU", "POLMED", "Bebas"];
@@ -665,7 +666,7 @@ export default function MadingPage() {
                         }`}
                       >
                         <Icon.MessageCircle className="h-3.5 w-3.5" />
-                        <span>{post.comments_count || 0} Komentar</span>
+                        <span>{post.comments_count || 0} Balasan</span>
                       </button>
 
                       <button
@@ -781,6 +782,14 @@ export default function MadingPage() {
                           </button>
                         </div>
                       </div>
+                    )}
+
+                    {/* MENFESS REPLY THREAD (sistem baru) */}
+                    {activeCommentsPostId !== post.id && (
+                      <MenfessReplySection
+                        postId={post.id}
+                        initialCount={post.comments_count || 0}
+                      />
                     )}
                   </div>
                 );

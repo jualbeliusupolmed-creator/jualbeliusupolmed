@@ -19,6 +19,8 @@ import BlogPenulisPanel from "@/components/BlogPenulisPanel";
 import DashboardModeToggle from "@/components/DashboardModeToggle";
 import UnifiedProfilePanel from "@/components/dashboard/UnifiedProfilePanel";
 import SellerAnalyticsView from "@/components/dashboard/SellerAnalyticsView";
+import OprecPengurusPanel from "@/components/oprec/OprecPengurusPanel";
+import BuatOprecModal from "@/components/oprec/BuatOprecModal";
 
 function statusBadge(s) {
   const map = {
@@ -56,6 +58,14 @@ function DashboardInner() {
   const [activeTab, setActiveTab] = useState("jual");
   const [analytics, setAnalytics] = useState(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
+
+  // UKM / Organisasi state
+  const [oprecList, setOprecList] = useState([]);
+  const [oprecLoading, setOprecLoading] = useState(false);
+  const [oprecLoaded, setOprecLoaded] = useState(false);
+  const [pengurusPanel, setPengurusPanel] = useState(null); // oprec yang sedang dibuka panelnya
+  const [buatOprecModal, setBuatOprecModal] = useState(false);
+  const isUkmAccount = !!(sellerProfile?.account_type === "ukm" || sellerProfile?.ukm_verified || sellerProfile?.ukm_name);
 
   const [sponsoredModal, setSponsoredModal] = useState(null);
   const [sponsoredConfirm, setSponsoredConfirm] = useState(null);
@@ -238,6 +248,21 @@ function DashboardInner() {
     } catch (_) {
     } finally {
       setAnalyticsLoading(false);
+    }
+  }
+
+  async function loadOprec(num) {
+    const n = formatWa(num ?? wa);
+    if (!n) return;
+    setOprecLoading(true);
+    try {
+      const res = await fetch(`/api/oprec?ukm_wa=${encodeURIComponent(n)}&status=all`);
+      const data = await res.json();
+      setOprecList(data.oprecs || []);
+      setOprecLoaded(true);
+    } catch (_) {
+    } finally {
+      setOprecLoading(false);
     }
   }
 
@@ -793,6 +818,15 @@ function DashboardInner() {
                 active: activeTab === "profil" || activeTab === "blog",
                 onClick: () => setActiveTab(["profil", "blog"].includes(activeTab) ? activeTab : "profil")
               },
+              ...(isUkmAccount ? [{ 
+                id: "organisasi", 
+                label: "Panel UKM", 
+                icon: "🏛️", 
+                active: activeTab === "ukm",
+                count: oprecList.filter(o => o.status === "active").length || undefined,
+                badgeColor: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+                onClick: () => { setActiveTab("ukm"); if (!oprecLoaded) loadOprec(); }
+              }] : []),
             ].map((hub) => (
               <button
                 key={hub.id}
@@ -877,6 +911,23 @@ function DashboardInner() {
             </div>
           )}
 
+          {activeTab === "ukm" && isUkmAccount && (
+            <div className="flex items-center gap-2 mb-6 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <span className="text-xs font-bold text-primary dark:text-emerald-400">🏛️ {sellerProfile?.ukm_name || sellerProfile?.name}</span>
+              {sellerProfile?.ukm_verified && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                  ✓ Terverifikasi
+                </span>
+              )}
+              <button
+                onClick={() => setBuatOprecModal(true)}
+                className="ml-auto px-3 py-1.5 rounded-xl text-xs font-bold bg-primary text-white hover:bg-primary/90 transition-all flex items-center gap-1"
+              >
+                + Buat Oprec
+              </button>
+            </div>
+          )}
+
           {(activeTab === "profil" || activeTab === "blog") && (
             <div className="flex items-center gap-2 mb-6 border-b border-slate-100 dark:border-slate-800 pb-3">
               <button
@@ -902,7 +953,158 @@ function DashboardInner() {
             </div>
           )}
 
+          {/* ===== TAB UKM / ORGANISASI ===== */}
+          {activeTab === "ukm" && isUkmAccount && (
+            <div className="space-y-4">
+              {/* Stats Cards UKM */}
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { label: "Total Oprec", val: oprecList.length, icon: "📋", color: "text-primary dark:text-emerald-400" },
+                  { label: "Oprec Aktif", val: oprecList.filter(o => o.status === "active").length, icon: "✅", color: "text-emerald-600 dark:text-emerald-400" },
+                  { label: "Total Pendaftar", val: oprecList.reduce((s, o) => s + (o.submissions_count || 0), 0), icon: "👥", color: "text-blue-600 dark:text-blue-400" },
+                ].map((stat) => (
+                  <div key={stat.label} className="rounded-2xl bg-white dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800 p-4 text-center">
+                    <div className="text-xl mb-1">{stat.icon}</div>
+                    <div className={`text-2xl font-black ${stat.color}`}>{stat.val}</div>
+                    <div className="text-[10px] text-gray-500 dark:text-slate-400 mt-0.5">{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Daftar Oprec */}
+              <div className="rounded-2xl bg-white dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800 overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800">
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">Formulir Open Recruitment</h3>
+                  <button
+                    onClick={() => loadOprec()}
+                    className="text-[11px] text-primary dark:text-emerald-400 hover:underline font-semibold"
+                  >
+                    ↻ Refresh
+                  </button>
+                </div>
+
+                {oprecLoading ? (
+                  <div className="flex items-center justify-center py-10 text-gray-400 text-sm gap-2">
+                    <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    Memuat...
+                  </div>
+                ) : oprecList.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 gap-2 text-gray-400">
+                    <span className="text-3xl">📋</span>
+                    <p className="text-sm font-medium">Belum ada formulir Oprec.</p>
+                    <button
+                      onClick={() => setBuatOprecModal(true)}
+                      className="mt-1 px-4 py-2 rounded-xl text-xs font-bold bg-primary text-white hover:bg-primary/90 transition-all"
+                    >
+                      + Buat Formulir Oprec Pertama
+                    </button>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {oprecList.map((oprec) => {
+                      const isActive = oprec.status === "active";
+                      const deadlinePast = oprec.deadline && new Date() > new Date(oprec.deadline);
+                      const daysLeft = oprec.deadline
+                        ? Math.max(0, Math.ceil((new Date(oprec.deadline) - new Date()) / 864e5))
+                        : null;
+
+                      return (
+                        <div key={oprec.id} className="flex items-start gap-3 p-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                          {/* Banner thumb */}
+                          <div className="shrink-0 w-12 h-12 rounded-xl overflow-hidden bg-gradient-to-br from-primary/20 to-emerald-400/10 flex items-center justify-center text-xl border border-primary/10">
+                            {oprec.banner_url ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={oprec.banner_url} alt="" className="w-full h-full object-cover" />
+                            ) : "📋"}
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                                {oprec.title}
+                              </span>
+                              <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                                isActive && !deadlinePast
+                                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                                  : "bg-gray-200 text-gray-600 dark:bg-slate-700 dark:text-slate-400"
+                              }`}>
+                                {deadlinePast ? "Kadaluarsa" : isActive ? "● Aktif" : "◉ Tutup"}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+                              <span className="text-[11px] text-gray-500 dark:text-slate-400">
+                                {oprec.campus} · {(oprec.divisions || []).length} Divisi
+                              </span>
+                              {daysLeft !== null && (
+                                <span className={`text-[11px] font-semibold ${
+                                  daysLeft <= 3 ? "text-rose-500" : daysLeft <= 7 ? "text-amber-500" : "text-gray-400"
+                                }`}>
+                                  {daysLeft === 0 ? "Hari terakhir!" : `${daysLeft} hari lagi`}
+                                </span>
+                              )}
+                              <span className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold">
+                                👥 {oprec.submissions_count || 0} Pendaftar
+                              </span>
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={() => setPengurusPanel(oprec)}
+                            className="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-primary/10 text-primary dark:text-emerald-400 hover:bg-primary/20 transition-all"
+                          >
+                            👁️ Kelola
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Profil UKM Card */}
+              <div className="rounded-2xl bg-white dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800 p-4 space-y-2">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Profil Organisasi</h3>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  {[
+                    { label: "Nama UKM", val: sellerProfile?.ukm_name || "-" },
+                    { label: "Kategori", val: sellerProfile?.ukm_category || "-" },
+                    { label: "Kampus", val: sellerProfile?.campus || "-" },
+                    { label: "Instagram", val: sellerProfile?.ukm_instagram || "-" },
+                  ].map((row) => (
+                    <div key={row.label} className="rounded-xl bg-slate-50 dark:bg-slate-800 px-3 py-2">
+                      <p className="text-[10px] text-gray-400 dark:text-slate-500">{row.label}</p>
+                      <p className="font-bold text-gray-800 dark:text-white truncate">{row.val}</p>
+                    </div>
+                  ))}
+                </div>
+                <a
+                  href="/organisasi/daftar"
+                  className="inline-flex items-center gap-1 text-[11px] text-primary dark:text-emerald-400 hover:underline font-semibold mt-1"
+                >
+                  Edit Profil Organisasi →
+                </a>
+              </div>
+            </div>
+          )}
+
+          {/* ===== MODALS UKM ===== */}
+          {pengurusPanel && (
+            <OprecPengurusPanel
+              oprec={pengurusPanel}
+              onClose={() => { setPengurusPanel(null); loadOprec(); }}
+            />
+          )}
+
+          {buatOprecModal && (
+            <BuatOprecModal
+              onClose={() => setBuatOprecModal(false)}
+              onCreated={() => { setBuatOprecModal(false); loadOprec(); }}
+            />
+          )}
+
           {activeTab === "tawaran" ? (
+
             <div className="space-y-4 mt-6">
               <h2 className="text-base font-bold dark:text-white">Tawaran Harga Masuk</h2>
               {offers.length === 0 ? (
