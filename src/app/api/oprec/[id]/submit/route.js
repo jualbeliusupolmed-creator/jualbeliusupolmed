@@ -25,6 +25,7 @@ export async function POST(req, { params }) {
       division_2,
       reason,
       portfolio_url,
+      custom_answers,
     } = body;
 
     if (!applicant_name || applicant_name.trim().length < 2) {
@@ -58,6 +59,7 @@ export async function POST(req, { params }) {
           applicant_name: applicant_name.trim(),
           division_1,
           division_2,
+          custom_answers: custom_answers || {},
           wa_group_link: "https://chat.whatsapp.com/DQMZK2qSgq2D0WvH7BlBSA",
         },
       });
@@ -79,18 +81,37 @@ export async function POST(req, { params }) {
       division_2: division_2 || null,
       reason: reason ? reason.trim() : null,
       portfolio_url: portfolio_url ? portfolio_url.trim() : null,
+      custom_answers: custom_answers || {},
       status: "pending",
       created_at: new Date().toISOString(),
     };
 
-    const { data, error } = await supa
+    let { data, error } = await supa
       .from("oprec_submissions")
       .upsert(insertData, { onConflict: "oprec_id,applicant_wa" })
       .select()
       .single();
 
     if (error) {
-      console.error("Submit oprec error:", error.message);
+      console.warn("Submit oprec warning:", error.message);
+      // Fallback if custom_answers column not yet migrated
+      if (error.message.includes("custom_answers")) {
+        delete insertData.custom_answers;
+        const { data: retryData, error: retryErr } = await supa
+          .from("oprec_submissions")
+          .upsert(insertData, { onConflict: "oprec_id,applicant_wa" })
+          .select()
+          .single();
+        if (!retryErr) {
+          return NextResponse.json({
+            success: true,
+            message: "Pendaftaran berhasil dikirimkan!",
+            submission: retryData,
+            wa_group_link: oprec.wa_group_link,
+          });
+        }
+      }
+
       // Fail-safe graceful success
       return NextResponse.json({
         success: true,

@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
+import imageCompression from "browser-image-compression";
 
-export default function BuatOprecModal({ onClose, onCreated }) {
+export default function BuatOprecModal({ onClose, onCreated, isUkmAccount = true }) {
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -24,7 +26,14 @@ export default function BuatOprecModal({ onClose, onCreated }) {
     "Dokumentasi & Media",
   ]);
   const [newDiv, setNewDiv] = useState("");
+
+  // Inputan Kustom Tambahan (Tulisan, Paragraf, Upload Gambar/KTM, Link)
+  const [customFields, setCustomFields] = useState([
+    { id: "ktm_foto", label: "Upload Foto KTM / Bukti Mahasiswa Aktif", type: "image", required: true },
+  ]);
+
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
 
   function addDivision() {
     if (!newDiv.trim()) return;
@@ -38,6 +47,63 @@ export default function BuatOprecModal({ onClose, onCreated }) {
     setDivisions(divisions.filter((_, i) => i !== index));
   }
 
+  function addCustomField(type) {
+    const id = "field_" + Date.now();
+    let defaultLabel = "";
+    if (type === "text") defaultLabel = "Username Instagram Pribadi / Keahlian";
+    else if (type === "textarea") defaultLabel = "Ceritakan studi kasus / essay singkat...";
+    else if (type === "image") defaultLabel = "Upload Foto KTM / Bukti Follow IG";
+    else if (type === "url") defaultLabel = "Link Portofolio / Google Drive";
+
+    setCustomFields([
+      ...customFields,
+      { id, label: defaultLabel, type, required: false },
+    ]);
+  }
+
+  function updateCustomField(index, key, val) {
+    const updated = [...customFields];
+    updated[index][key] = val;
+    setCustomFields(updated);
+  }
+
+  function removeCustomField(index) {
+    setCustomFields(customFields.filter((_, i) => i !== index));
+  }
+
+  async function handleBannerUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingBanner(true);
+    try {
+      const compressed = await imageCompression(file, {
+        maxSizeMB: 0.8,
+        maxWidthOrHeight: 1200,
+        useWebWorker: true,
+        fileType: "image/webp",
+      });
+
+      const fd = new FormData();
+      fd.append("file", compressed, "oprec_banner.webp");
+      fd.append("bucket", "banners");
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: fd,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal mengunggah banner.");
+
+      setForm((prev) => ({ ...prev, banner_url: data.url }));
+      toast.success("Poster/Banner Oprec berhasil diunggah!");
+    } catch (err) {
+      toast.error(err.message || "Gagal mengunggah foto poster.");
+    } finally {
+      setUploadingBanner(false);
+    }
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     if (!form.title.trim()) return toast.error("Judul Oprec wajib diisi.");
@@ -49,10 +115,21 @@ export default function BuatOprecModal({ onClose, onCreated }) {
       const res = await fetch("/api/oprec", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, divisions }),
+        body: JSON.stringify({ ...form, divisions, custom_fields: customFields }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Gagal membuat formulir Oprec.");
+      if (!res.ok) {
+        if (data.needsUkmRegister) {
+          toast.error(data.error, {
+            action: {
+              label: "Daftar Akun UKM",
+              onClick: () => (window.location.href = "/organisasi/daftar"),
+            },
+          });
+          return;
+        }
+        throw new Error(data.error || "Gagal membuat formulir Oprec.");
+      }
 
       toast.success("Formulir Oprec berhasil dipublikasikan! 🎉");
       if (onCreated) onCreated(data.oprec);
@@ -68,15 +145,18 @@ export default function BuatOprecModal({ onClose, onCreated }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       
-      <div className="relative w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl dark:bg-slate-900 border border-black/[0.06] dark:border-white/[0.08] z-10 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div className="relative w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl dark:bg-slate-900 border border-black/[0.06] dark:border-white/[0.08] z-10 space-y-4 max-h-[90vh] overflow-y-auto">
         {/* HEADER */}
         <div className="flex items-center justify-between border-b border-gray-100 dark:border-slate-800 pb-3">
           <div>
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mb-1">
+              <span>🏛️ Khusus Pengurus UKM &amp; PIC</span>
+            </div>
             <h3 className="text-base font-bold text-gray-900 dark:text-white">
               Buka Formulir Open Recruitment Baru
             </h3>
             <p className="text-xs text-gray-500 dark:text-slate-400">
-              Formulir in-app untuk kepanitiaan acara atau anggota baru UKM
+              Kustomisasi pertanyaan, divisi, dan kolom upload gambar/dokumen untuk calon pendaftar.
             </p>
           </div>
           <button
@@ -174,7 +254,104 @@ export default function BuatOprecModal({ onClose, onCreated }) {
                 onClick={addDivision}
                 className="btn-outline py-1.5 px-3 text-xs shrink-0 font-bold"
               >
-                + Tambah
+                + Tambah Divisi
+              </button>
+            </div>
+          </div>
+
+          {/* INPUTAN KUSTOM DINAMIS (TULISAN & GAMBAR) */}
+          <div className="rounded-2xl border border-emerald-500/20 bg-emerald-50/30 p-3.5 dark:border-emerald-500/30 dark:bg-emerald-950/20 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
+                  <span>✨ Kolom Inputan Kustom Tambahan</span>
+                </p>
+                <p className="text-[11px] text-gray-500 dark:text-slate-400">
+                  Tambahkan pertanyaan teks, essay, atau kolom unggah foto/KTM yang wajib diisi calon pendaftar.
+                </p>
+              </div>
+            </div>
+
+            {/* DAFTAR FIELD KUSTOM */}
+            {customFields.length > 0 && (
+              <div className="space-y-2 pt-1">
+                {customFields.map((field, idx) => (
+                  <div
+                    key={field.id || idx}
+                    className="flex flex-col sm:flex-row items-start sm:items-center gap-2 bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-gray-200 dark:border-slate-800"
+                  >
+                    <span className="shrink-0 px-2 py-0.5 rounded text-[10px] font-bold bg-primary/10 text-primary">
+                      {field.type === "image"
+                        ? "🖼️ Upload Foto/Gambar"
+                        : field.type === "textarea"
+                        ? "📝 Tulisan Paragraf"
+                        : field.type === "url"
+                        ? "🔗 Link/URL"
+                        : "✏️ Teks Singkat"}
+                    </span>
+
+                    <input
+                      type="text"
+                      value={field.label}
+                      onChange={(e) => updateCustomField(idx, "label", e.target.value)}
+                      placeholder="Judul / Pertanyaan untuk pendaftar..."
+                      className="input py-1 text-xs flex-1"
+                    />
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <label className="flex items-center gap-1 text-[11px] cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={field.required}
+                          onChange={(e) => updateCustomField(idx, "required", e.target.checked)}
+                          className="rounded text-primary"
+                        />
+                        <span>Wajib</span>
+                      </label>
+
+                      <button
+                        type="button"
+                        onClick={() => removeCustomField(idx)}
+                        className="text-rose-500 hover:text-rose-700 p-1 font-bold text-xs"
+                        title="Hapus kolom ini"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* TOMBOL TAMBAH INPUTAN */}
+            <div className="flex flex-wrap gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => addCustomField("image")}
+                className="btn-outline py-1 px-2.5 text-[11px] font-bold bg-white dark:bg-slate-900 flex items-center gap-1"
+              >
+                <span>+ 🖼️ Upload Foto / Gambar (KTM)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => addCustomField("text")}
+                className="btn-outline py-1 px-2.5 text-[11px] font-bold bg-white dark:bg-slate-900 flex items-center gap-1"
+              >
+                <span>+ ✏️ Teks Singkat</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => addCustomField("textarea")}
+                className="btn-outline py-1 px-2.5 text-[11px] font-bold bg-white dark:bg-slate-900 flex items-center gap-1"
+              >
+                <span>+ 📝 Tulisan Panjang / Essay</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => addCustomField("url")}
+                className="btn-outline py-1 px-2.5 text-[11px] font-bold bg-white dark:bg-slate-900 flex items-center gap-1"
+              >
+                <span>+ 🔗 Link / URL</span>
               </button>
             </div>
           </div>
@@ -195,7 +372,7 @@ export default function BuatOprecModal({ onClose, onCreated }) {
 
           <div>
             <label className="block font-bold text-gray-700 dark:text-slate-300 mb-1">
-              Persyaratan & Kualifikasi Pendaftar
+              Persyaratan &amp; Kualifikasi Pendaftar
             </label>
             <textarea
               rows={2}
@@ -219,14 +396,38 @@ export default function BuatOprecModal({ onClose, onCreated }) {
               className="input py-2 text-xs font-mono"
             />
             <p className="mt-0.5 text-[10px] text-gray-400">
-              Pendaftar yang berhasil submit akan langsung diarahkan ke grup WhatsApp ini.
+              Pendaftar yang berhasil submit akan langsung diarahkan ke tautan grup WhatsApp ini.
             </p>
+          </div>
+
+          {/* POSTER / BANNER OPREC */}
+          <div>
+            <label className="block font-bold text-gray-700 dark:text-slate-300 mb-1">
+              Poster / Banner Oprec (Opsional)
+            </label>
+            <div className="flex items-center gap-3">
+              <label className="btn-outline cursor-pointer py-1.5 px-3 text-xs font-bold shrink-0">
+                <span>{uploadingBanner ? "Mengunggah..." : form.banner_url ? "Ganti Poster" : "Unggah Poster"}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleBannerUpload}
+                  disabled={uploadingBanner}
+                  className="hidden"
+                />
+              </label>
+              {form.banner_url && (
+                <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold truncate">
+                  ✓ Poster siap dipasang
+                </span>
+              )}
+            </div>
           </div>
 
           {/* SUBMIT */}
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || uploadingBanner}
             className="btn-primary w-full py-3 text-xs font-bold shadow-lg shadow-primary/20 flex items-center justify-center gap-2 mt-2"
           >
             {submitting ? "Mempublikasikan Oprec..." : "🚀 Publikasikan Formulir Oprec"}

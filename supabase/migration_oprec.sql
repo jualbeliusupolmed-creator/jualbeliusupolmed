@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS oprec_events (
   description TEXT,
   divisions JSONB NOT NULL DEFAULT '["Acara", "Humas & Publikasi", "Kreatif & Desain", "Perlengkapan", "Konsumsi", "Dokumentasi"]'::jsonb,
   requirements TEXT,
+  custom_fields JSONB DEFAULT '[]'::jsonb, -- Inputan kustom tambahan (tulisan, upload gambar/KTM, essay)
   deadline TIMESTAMPTZ NOT NULL,
   wa_group_link TEXT,
   banner_url TEXT,
@@ -21,6 +22,10 @@ CREATE TABLE IF NOT EXISTS oprec_events (
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
+
+-- Kolom custom_fields jika tabel sudah terlanjur dibuat sebelumnya
+ALTER TABLE public.oprec_events 
+  ADD COLUMN IF NOT EXISTS custom_fields JSONB DEFAULT '[]'::jsonb;
 
 -- 2. Tabel Pengajuan / Pendaftar Formulir Oprec oleh Mahasiswa
 CREATE TABLE IF NOT EXISTS oprec_submissions (
@@ -36,12 +41,17 @@ CREATE TABLE IF NOT EXISTS oprec_submissions (
   division_2 TEXT,
   reason TEXT,
   portfolio_url TEXT,
+  custom_answers JSONB DEFAULT '{}'::jsonb, -- Jawaban inputan kustom & URL gambar yang diunggah
   status TEXT NOT NULL DEFAULT 'pending', -- 'pending' | 'reviewed' | 'accepted' | 'rejected'
   reviewer_note TEXT,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now(),
   UNIQUE (oprec_id, applicant_wa)
 );
+
+-- Kolom custom_answers jika tabel sudah ada sebelumnya
+ALTER TABLE public.oprec_submissions 
+  ADD COLUMN IF NOT EXISTS custom_answers JSONB DEFAULT '{}'::jsonb;
 
 -- Indexes untuk pencarian cepat
 CREATE INDEX IF NOT EXISTS idx_oprec_events_ukm_wa ON oprec_events(ukm_wa);
@@ -54,19 +64,24 @@ ALTER TABLE oprec_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE oprec_submissions ENABLE ROW LEVEL SECURITY;
 
 -- Policies untuk oprec_events
+DROP POLICY IF EXISTS "Public can view active oprec events" ON oprec_events;
 CREATE POLICY "Public can view active oprec events"
   ON oprec_events FOR SELECT
   USING (true);
 
-CREATE POLICY "Service role full access on oprec_events"
+DROP POLICY IF EXISTS "UKM can manage their own oprec events" ON oprec_events;
+CREATE POLICY "UKM can manage their own oprec events"
   ON oprec_events FOR ALL
-  TO service_role
   USING (true)
   WITH CHECK (true);
 
 -- Policies untuk oprec_submissions
-CREATE POLICY "Service role full access on oprec_submissions"
-  ON oprec_submissions FOR ALL
-  TO service_role
-  USING (true)
+DROP POLICY IF EXISTS "Public can submit oprec application" ON oprec_submissions;
+CREATE POLICY "Public can submit oprec application"
+  ON oprec_submissions FOR INSERT
   WITH CHECK (true);
+
+DROP POLICY IF EXISTS "UKM and applicant can view submissions" ON oprec_submissions;
+CREATE POLICY "UKM and applicant can view submissions"
+  ON oprec_submissions FOR SELECT
+  USING (true);

@@ -18,6 +18,11 @@ const SAMPLE_OPREC = [
     description: "Bergabunglah menjadi bagian dari perhelatan musik dan seni terbesar mahasiswa USU. Terbuka untuk seluruh mahasiswa aktif angkatan 2023, 2024, dan 2025.",
     divisions: ["Acara & Talent", "Humas & Sponsorship", "Kreatif & Desain", "Perlengkapan & Sound", "Konsumsi", "Dokumentasi & Media"],
     requirements: "1. Mahasiswa aktif USU (S1/D3)\n2. Berkomitmen dan bertanggung jawab\n3. Memiliki loyalitas untuk menyukseskan acara kampus",
+    custom_fields: [
+      { id: "ktm_foto", label: "Upload Foto KTM / Bukti Mahasiswa Aktif", type: "image", required: true },
+      { id: "ig_pribadi", label: "Username Instagram Pribadi", type: "text", placeholder: "@username", required: true },
+      { id: "alasan_detail", label: "Ide & Kontribusi yang ingin kamu bawa untuk divisi pilihan 1", type: "textarea", required: false }
+    ],
     deadline: new Date(Date.now() + 14 * 864e5).toISOString(),
     wa_group_link: "https://chat.whatsapp.com/DQMZK2qSgq2D0WvH7BlBSA",
     banner_url: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&auto=format&fit=crop&q=80",
@@ -35,6 +40,10 @@ const SAMPLE_OPREC = [
     description: "Ingin belajar pemrograman mikrokontroler, IoT, dan mekanik robot? Daftarkan dirimu ke divisi software, hardware, atau mekanik.",
     divisions: ["Divisi Software & AI", "Divisi Hardware & IoT", "Divisi Mekanik & 3D Design", "Divisi Manajemen & Humas"],
     requirements: "1. Mahasiswa aktif USU semua jurusan (terbuka untuk pemula)\n2. Memiliki kemauan belajar tinggi",
+    custom_fields: [
+      { id: "upload_ktm", label: "Foto KTM / Kartu Tanda Mahasiswa", type: "image", required: true },
+      { id: "link_github", label: "Link Portofolio / GitHub / Project (Opsional)", type: "url", required: false }
+    ],
     deadline: new Date(Date.now() + 20 * 864e5).toISOString(),
     wa_group_link: "https://chat.whatsapp.com/DQMZK2qSgq2D0WvH7BlBSA",
     banner_url: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&auto=format&fit=crop&q=80",
@@ -73,7 +82,6 @@ export async function GET(req) {
       return NextResponse.json({ oprecs: fallback, total: fallback.length });
     }
 
-    // Hitung submissions_count per oprec
     const oprecList = (data && data.length > 0) ? data : SAMPLE_OPREC;
 
     return NextResponse.json({
@@ -86,7 +94,7 @@ export async function GET(req) {
   }
 }
 
-// POST /api/oprec — Buat formulir Oprec baru
+// POST /api/oprec — Buat formulir Oprec baru (Khusus Akun Organisasi / PIC Terdaftar)
 export async function POST(req) {
   try {
     const rl = rateLimit(`create_oprec:${getClientIp(req)}`, { limit: 15, windowMs: 600_000 });
@@ -96,7 +104,27 @@ export async function POST(req) {
 
     const wa = getUserSession();
     if (!wa) {
-      return NextResponse.json({ error: "Silakan login terlebih dahulu." }, { status: 401 });
+      return NextResponse.json({ error: "Silakan login dengan akun Organisasi / UKM terlebih dahulu." }, { status: 401 });
+    }
+
+    const supa = getAdminClient();
+
+    // Verifikasi apakah profil ini adalah Akun Organisasi (UKM / BEM / HIMA)
+    const { data: profile } = await supa
+      .from("seller_profiles")
+      .select("name, ukm_name, account_type, ukm_verified, campus, faculty")
+      .eq("wa", wa)
+      .maybeSingle();
+
+    const isUkm = profile?.account_type === "ukm" || profile?.ukm_verified || Boolean(profile?.ukm_name);
+    if (!isUkm) {
+      return NextResponse.json(
+        {
+          error: "Pembuatan formulir Oprec hanya dapat dilakukan oleh akun resmi Organisasi / UKM. Silakan daftarkan akun organisasimu terlebih dahulu.",
+          needsUkmRegister: true,
+        },
+        { status: 403 }
+      );
     }
 
     const body = await req.json();
@@ -105,6 +133,7 @@ export async function POST(req) {
       description,
       divisions,
       requirements,
+      custom_fields, // Inputan kustom tambahan (tulisan / gambar / dokumen)
       deadline,
       wa_group_link,
       banner_url,
@@ -120,15 +149,6 @@ export async function POST(req) {
       return NextResponse.json({ error: "Batas waktu pendaftaran (deadline) wajib diisi." }, { status: 400 });
     }
 
-    const supa = getAdminClient();
-
-    // Dapatkan data profil UKM
-    const { data: profile } = await supa
-      .from("seller_profiles")
-      .select("name, ukm_name, campus, faculty")
-      .eq("wa", wa)
-      .maybeSingle();
-
     const ukmName = profile?.ukm_name || profile?.name || "Organisasi Mahasiswa";
     const ukmCampus = campus || profile?.campus || "USU";
     const ukmFaculty = faculty || profile?.faculty || "Universitas";
@@ -142,6 +162,7 @@ export async function POST(req) {
       description: description ? description.trim() : "",
       divisions: Array.isArray(divisions) && divisions.length > 0 ? divisions : ["Divisi 1", "Divisi 2"],
       requirements: requirements ? requirements.trim() : "",
+      custom_fields: Array.isArray(custom_fields) ? custom_fields : [],
       deadline: new Date(deadline).toISOString(),
       wa_group_link: wa_group_link ? wa_group_link.trim() : null,
       banner_url: banner_url || null,
@@ -157,7 +178,17 @@ export async function POST(req) {
 
     if (error) {
       console.error("Insert oprec error:", error.message);
-      return NextResponse.json({ error: "Gagal menyimpan formulir Oprec." }, { status: 500 });
+      // Fallback response if custom_fields column isn't created in DB yet
+      if (error.message.includes("custom_fields")) {
+        delete insertPayload.custom_fields;
+        const { data: retryData, error: retryErr } = await supa
+          .from("oprec_events")
+          .insert(insertPayload)
+          .select()
+          .single();
+        if (!retryErr) return NextResponse.json({ success: true, oprec: retryData });
+      }
+      return NextResponse.json({ error: "Gagal menyimpan formulir Oprec: " + error.message }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, oprec: data });
