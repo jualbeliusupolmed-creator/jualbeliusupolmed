@@ -14,7 +14,7 @@ function BottomNavbarInner() {
   // Sembunyikan/minimalkan BottomNavbar jika sedang di dalam room chat aktif
   const isChatRoom = pathname === "/chat" && searchParams && (searchParams.has("anon") || searchParams.has("room"));
 
-  const isSocialContext = ["/sosial", "/mading", "/teman", "/cari-teman", "/swap", "/chat"]
+  const isSocialContext = ["/sosial", "/mading", "/organisasi", "/oprec", "/teman", "/cari-teman", "/swap", "/chat"]
     .some((route) => pathname === route || pathname.startsWith(`${route}/`));
 
   // Di area Sosial, dock berubah menjadi shortcut langsung ke tiga fitur
@@ -23,12 +23,12 @@ function BottomNavbarInner() {
     ? [
         { name: "Beranda", href: "/", icon: Icon.Home },
         { name: "Marketplace", href: "/jual-beli", match: ["/jual-beli", "/produk", "/jasa", "/favorit"], icon: Icon.ShoppingBag },
-        { name: "Social", href: "/mading", match: ["/mading"], icon: Icon.BookOpen },
+        { name: "Social", href: "/mading", match: ["/mading", "/organisasi", "/oprec"], icon: Icon.BookOpen },
         { name: "Chat", href: "/chat", icon: Icon.MessageCircle },
         { name: "Swipe", href: "/teman", match: ["/teman", "/cari-teman", "/swap"], icon: Icon.Handshake },
       ]
     : [
-        { name: "Social", href: "/mading", match: ["/sosial", "/mading", "/teman", "/cari-teman", "/swap", "/chat"], icon: Icon.BookOpen },
+        { name: "Social", href: "/mading", match: ["/sosial", "/mading", "/organisasi", "/oprec", "/teman", "/cari-teman", "/swap", "/chat"], icon: Icon.BookOpen },
         { name: "Beranda", href: "/", icon: Icon.Home },
         { name: "Market", href: "/jual-beli", match: ["/jual-beli", "/produk", "/jasa", "/favorit"], icon: Icon.ShoppingBag },
         { name: "Jual", href: "/jual", icon: Icon.Package },
