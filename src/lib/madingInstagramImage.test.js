@@ -1,21 +1,39 @@
+import path from "node:path";
+import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 import {
   createMadingInstagramSvg,
+  createMadingInstagramTextLayers,
   layoutMadingInstagramPost,
   wrapInstagramText,
 } from "./madingInstagramImage";
 
 describe("mading Instagram image", () => {
   it("creates the minimal 4:5 USU-POLMED layout", () => {
-    const svg = createMadingInstagramSvg({
+    const post = {
       content: "Semangat kuliah dan OJT. Tetap kompak untuk satu angkatan.",
+    };
+    const svg = createMadingInstagramSvg();
+    const layers = createMadingInstagramTextLayers(post, {
+      regularFontPath: "/fonts/regular.ttf",
+      semiboldFontPath: "/fonts/semibold.ttf",
     });
 
     expect(svg).toContain('width="1080" height="1350"');
-    expect(svg).toContain("@usupolmedmenfess");
-    expect(svg).toContain("dikirim lewat jualbeliusupolmed.web.id");
-    expect(svg).toContain("USU · POLMED");
     expect(svg).toContain('fill="#F8F7F3"');
+    expect(svg).not.toContain("<text");
+    expect(layers.map((layer) => layer.input.text.text).join(" ")).toContain(
+      "@usupolmedmenfess",
+    );
+    expect(layers.map((layer) => layer.input.text.text).join(" ")).toContain(
+      "dikirim lewat jualbeliusupolmed.web.id",
+    );
+    expect(layers.map((layer) => layer.input.text.text).join(" ")).toContain(
+      "USU · POLMED",
+    );
+    expect(
+      layers.every((layer) => layer.input.text.fontfile.endsWith(".ttf")),
+    ).toBe(true);
     expect(svg).not.toContain("MENFESS USU · POLMED");
   });
 
@@ -31,16 +49,55 @@ describe("mading Instagram image", () => {
 
   it("escapes user content and breaks oversized words safely", () => {
     const lines = wrapInstagramText("<rahasia> " + "a".repeat(70), 20, 5);
-    const svg = createMadingInstagramSvg({ content: "A & B <aman>" });
+    const layers = createMadingInstagramTextLayers(
+      { content: "A & B <aman>" },
+      {
+        regularFontPath: "/fonts/regular.ttf",
+        semiboldFontPath: "/fonts/semibold.ttf",
+      },
+    );
+    const layerText = layers.map((layer) => layer.input.text.text).join(" ");
 
     expect(lines.every((line) => Array.from(line).length <= 20)).toBe(true);
-    expect(svg).toContain("A &amp; B &lt;aman&gt;");
-    expect(svg).not.toContain("A & B <aman>");
+    expect(layerText).toContain("A &amp; B &lt;aman&gt;");
+    expect(layerText).not.toContain("A & B <aman>");
   });
 
   it("removes unsupported skin-tone modifiers from the rendered image", () => {
     const layout = layoutMadingInstagramPost({ content: "Semangat 🤌🏻" });
 
     expect(layout.lines.join(" ")).toBe("Semangat 🤌");
+  });
+
+  it("renders with the bundled font files", async () => {
+    const fontDirectory = path.join(
+      process.cwd(),
+      "src",
+      "assets",
+      "fonts",
+      "plus-jakarta-sans",
+    );
+    const layers = createMadingInstagramTextLayers(
+      { content: "Halo mahasiswa USU dan POLMED" },
+      {
+        regularFontPath: path.join(
+          fontDirectory,
+          "PlusJakartaSans-Regular.ttf",
+        ),
+        semiboldFontPath: path.join(
+          fontDirectory,
+          "PlusJakartaSans-SemiBold.ttf",
+        ),
+      },
+    );
+    const rendered = await sharp(Buffer.from(createMadingInstagramSvg()))
+      .composite(layers)
+      .png()
+      .toBuffer();
+    const metadata = await sharp(rendered).metadata();
+
+    expect(metadata.width).toBe(1080);
+    expect(metadata.height).toBe(1350);
+    expect(rendered.length).toBeGreaterThan(10_000);
   });
 });

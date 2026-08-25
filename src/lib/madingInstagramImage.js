@@ -99,17 +99,101 @@ export function layoutMadingInstagramPost(post = {}) {
   };
 }
 
-export function createMadingInstagramSvg(post = {}) {
+function pangoTextLayer({
+  text,
+  fontPath,
+  fontName,
+  fontSize,
+  color,
+  width,
+  left,
+  top,
+  align = "center",
+}) {
+  return {
+    input: {
+      text: {
+        text: `<span foreground="${color}">${escapeXml(text)}</span>`,
+        font: `${fontName} ${fontSize}`,
+        fontfile: fontPath,
+        width,
+        align,
+        rgba: true,
+        dpi: 72,
+      },
+    },
+    left,
+    top,
+  };
+}
+
+export function createMadingInstagramTextLayers(
+  post = {},
+  { regularFontPath, semiboldFontPath },
+) {
   const layout = layoutMadingInstagramPost(post);
+  const layers = [
+    pangoTextLayer({
+      text: layout.handle,
+      fontPath: semiboldFontPath,
+      fontName: "Plus Jakarta Sans SemiBold",
+      fontSize: 28,
+      color: "#7050C2",
+      width: 800,
+      left: 140,
+      top: 137,
+    }),
+  ];
+
+  layout.lines.forEach((line, index) => {
+    layers.push(
+      pangoTextLayer({
+        text: line,
+        fontPath: regularFontPath,
+        fontName: "Plus Jakarta Sans",
+        fontSize: layout.fontSize,
+        color: "#24262B",
+        width: 900,
+        left: 90,
+        top: Math.round(
+          layout.firstLineY + index * layout.lineHeight - layout.fontSize,
+        ),
+      }),
+    );
+  });
+
+  layers.push(
+    pangoTextLayer({
+      text: layout.footer,
+      fontPath: regularFontPath,
+      fontName: "Plus Jakarta Sans",
+      fontSize: 23,
+      color: "#96938D",
+      width: 800,
+      left: 140,
+      top: 1166,
+    }),
+    pangoTextLayer({
+      text: "USU · POLMED",
+      fontPath: semiboldFontPath,
+      fontName: "Plus Jakarta Sans SemiBold",
+      fontSize: 21,
+      color: "#77746F",
+      width: 370,
+      left: 505,
+      top: 1238,
+      align: "left",
+    }),
+  );
+
+  return layers;
+}
+
+export function createMadingInstagramSvg() {
 
   return `
     <svg width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" viewBox="0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id="handle" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stop-color="#6D4BC3"/>
-          <stop offset="0.55" stop-color="#7856CF"/>
-          <stop offset="1" stop-color="#18A875"/>
-        </linearGradient>
         <radialGradient id="violetGlow" cx="0" cy="0" r="1" gradientTransform="translate(80 80) rotate(42) scale(520 410)" gradientUnits="userSpaceOnUse">
           <stop stop-color="#7C5AC8" stop-opacity=".055"/>
           <stop offset="1" stop-color="#7C5AC8" stop-opacity="0"/>
@@ -124,20 +208,8 @@ export function createMadingInstagramSvg(post = {}) {
       <rect width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" fill="url(#violetGlow)"/>
       <rect width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" fill="url(#greenGlow)"/>
 
-      <text x="540" y="164" text-anchor="middle" fill="url(#handle)" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="600" letter-spacing=".2">${escapeXml(layout.handle)}</text>
-
-      ${layout.lines
-        .map(
-          (line, index) =>
-            `<text x="540" y="${Math.round(layout.firstLineY + index * layout.lineHeight)}" text-anchor="middle" fill="#24262B" font-family="Arial, Helvetica, sans-serif" font-size="${layout.fontSize}" font-weight="400" letter-spacing="-.25">${escapeXml(line)}</text>`,
-        )
-        .join("\n      ")}
-
       <line x1="164" y1="1138" x2="916" y2="1138" stroke="#D8D6D0" stroke-width="1.5"/>
-      <text x="540" y="1194" text-anchor="middle" fill="#96938D" font-family="Arial, Helvetica, sans-serif" font-size="23" font-weight="400">${escapeXml(layout.footer)}</text>
-
       <circle cx="454" cy="1254" r="8" fill="#16B77E"/>
       <circle cx="481" cy="1254" r="8" fill="#7050C2"/>
-      <text x="510" y="1262" fill="#77746F" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="600" letter-spacing="4">USU · POLMED</text>
     </svg>`;
 }

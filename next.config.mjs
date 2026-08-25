@@ -11,6 +11,11 @@ const nextConfig = {
   },
   experimental: {
     optimizePackageImports: ["sonner", "embla-carousel-react"],
+    outputFileTracingIncludes: {
+      "/api/mading/[id]/instagram-image": [
+        "./src/assets/fonts/plus-jakarta-sans/*.ttf",
+      ],
+    },
   },
   async headers() {
     return [
