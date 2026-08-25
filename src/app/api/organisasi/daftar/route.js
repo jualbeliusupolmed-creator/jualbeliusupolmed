@@ -3,6 +3,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { formatWa } from "@/lib/constants";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { setSellerCookie } from "@/lib/auth";
+import { hashPin } from "@/lib/pin";
 import { validateOrganisasiForm, DEFAULT_INVITE_CODE } from "@/lib/organisasi";
 
 export const dynamic = "force-dynamic";
@@ -27,6 +28,8 @@ export async function POST(req) {
       ukm_instagram,
       contact_name,
       contact_wa,
+      email,
+      password,
       bio,
       photo_url,
       invite_code,
@@ -57,6 +60,9 @@ export async function POST(req) {
       ? ukm_instagram.replace(/^@/, "").replace(/https?:\/\/(www\.)?instagram\.com\//i, "").trim()
       : "";
 
+    const cleanEmail = email ? email.toLowerCase().trim() : null;
+    const hashedPassword = password && password.length >= 6 ? hashPin(password) : null;
+
     const supa = getAdminClient();
 
     const isVerified = Boolean(
@@ -76,6 +82,8 @@ export async function POST(req) {
       bio: bio ? bio.trim() : `Akun Resmi ${ukm_name.trim()} (${campus || "USU"}).`,
     };
 
+    if (cleanEmail) fullPayload.email = cleanEmail;
+    if (hashedPassword) fullPayload.pin = hashedPassword;
     if (photo_url) {
       fullPayload.photo_url = photo_url;
       fullPayload.avatar_url = photo_url;
@@ -105,6 +113,8 @@ export async function POST(req) {
         created_at: new Date().toISOString(),
       };
 
+      if (cleanEmail) standardPayload.email = cleanEmail;
+      if (hashedPassword) standardPayload.pin = hashedPassword;
       if (photo_url) {
         standardPayload.photo_url = photo_url;
         standardPayload.avatar_url = photo_url;
@@ -131,6 +141,7 @@ export async function POST(req) {
       success: true,
       message: "Akun Organisasi / UKM berhasil didaftarkan dan terverifikasi! 🎉",
       wa: formattedWa,
+      email: cleanEmail,
       organization: {
         ukm_name: ukm_name.trim(),
         campus: campus || "USU",

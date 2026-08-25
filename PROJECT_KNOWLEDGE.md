@@ -274,6 +274,13 @@ Berjalan dengan PostgreSQL, memiliki tabel-tabel berikut:
 4. **Modul Tukar Jadwal Kuliah / Praktikum (KRS & Shift Swap Matrix):** Fitur auto-matching jadwal bentrok matkul/kelas saat awal semester.
 5. **Fitur Monetisasi Mikro (Boost Profil & Lihat Siapa yang Like Kamu):** Paket top-up hemat via QRIS (Rp 3.000–5.000) untuk spotlight profil dan intip likers.
 
+*   **26 Agustus 2026** - *Autentikasi Penuh Email & Password Tanpa OTP (Organisasi & Pengguna Umum)*
+    - **Email & Password Login & Register (`/api/auth/email/login`, `/api/auth/email/daftar`, `src/components/OTPModal.jsx`):**
+      - Pengguna dan pengurus organisasi kini dapat mendaftar dan masuk secara instan menggunakan **Email & Password** tanpa memerlukan kode OTP WhatsApp sama sekali.
+      - Password di-hash aman dengan `bcryptjs` (salt rounds 10) dan dicocokkan langsung ke kolom `seller_profiles.pin`.
+      - Modal `OTPModal.jsx` memiliki sub-toggle *Masuk* dan *Daftar Baru (Tanpa OTP)* di tab *Email & Password*.
+      - Formulir pendaftaran akun UKM `/organisasi/daftar` menyertakan kolom Email Organisasi dan Password Akun agar pengurus dapat mengelola akun tanpa bergantung pada nomor WhatsApp.
+
 *   **26 Agustus 2026** - *Fitur Unduh Menfess (Potrait & Landscape) & Ekosistem Akun Resmi UKM / Organisasi Kampus*
     - **Unduh Menfess Visual (`src/components/mading/UnduhMenfessModal.jsx`, `src/lib/madingInstagramImage.js`):** Menambahkan tombol Unduh tepat di samping tombol Bagikan di setiap kartu Menfess. Pengguna dapat memilih 2 opsi rasio: **Potrait (1080×1350 / 4:5)** untuk Instagram Feed & Story, dan **Landscape (1200×675 / 16:9)** untuk Twitter/Status WhatsApp. Menghasilkan file gambar JPG HD instan tanpa watermark mengganggu.
     - **Akun Khusus Organisasi & UKM Kampus (`/organisasi`, `/organisasi/daftar`, `src/lib/organisasi.js`):**
