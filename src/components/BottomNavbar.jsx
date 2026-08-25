@@ -1,13 +1,19 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Icon } from "./Icons";
 import { cn } from "@/lib/utils";
 import { hapticLight } from "@/lib/haptics";
 
-export default function BottomNavbar() {
+function BottomNavbarInner() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Sembunyikan BottomNavbar jika sedang di dalam room chat aktif
+  const isChatRoom = pathname === "/chat" && (searchParams.has("anon") || searchParams.has("room"));
+  if (isChatRoom) return null;
 
   const isSocialContext = ["/sosial", "/mading", "/teman", "/cari-teman", "/swap", "/chat"]
     .some((route) => pathname === route || pathname.startsWith(`${route}/`));
@@ -31,14 +37,18 @@ export default function BottomNavbar() {
       ];
 
   return (
-    <div className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 z-50 w-[calc(100%-2rem)] max-w-[650px] -translate-x-1/2 rounded-[28px] border border-black/[0.06] bg-white/90 shadow-[0_14px_38px_rgba(15,23,42,0.16)] backdrop-blur-2xl dark:border-white/[0.1] dark:bg-[#111113]/90 select-none no-tap-highlight">
-      <div className="flex h-16 items-center justify-around px-2 md:h-14 md:px-4 md:gap-2">
+    <div className={cn(
+      "fixed left-1/2 z-50 -translate-x-1/2 select-none no-tap-highlight transition-all duration-300",
+      isChatRoom 
+        ? "bottom-0 w-full max-w-2xl bg-white/90 dark:bg-[#000000]/90 backdrop-blur-2xl border-t border-black/[0.06] dark:border-white/[0.08] pb-[env(safe-area-inset-bottom)] shadow-none" 
+        : "bottom-[max(0.75rem,env(safe-area-inset-bottom))] w-[calc(100%-2rem)] max-w-[650px] rounded-[28px] border border-black/[0.06] bg-white/90 shadow-[0_14px_38px_rgba(15,23,42,0.16)] backdrop-blur-2xl dark:border-white/[0.1] dark:bg-[#111113]/90"
+    )}>
+      <div className={cn("flex items-center justify-around px-2", isChatRoom ? "h-12 md:h-10" : "h-16 md:h-14 md:px-4 md:gap-2")}>
         {navs.map((n) => {
           const cakupan = n.match || [n.href];
           const isActive = pathname === n.href
             || cakupan.some((c) => c !== "/" && pathname?.startsWith(c));
           const IconComp = n.icon;
-
 
           return (
             <Link
@@ -65,5 +75,13 @@ export default function BottomNavbar() {
         })}
       </div>
     </div>
+  );
+}
+
+export default function BottomNavbar() {
+  return (
+    <Suspense fallback={null}>
+      <BottomNavbarInner />
+    </Suspense>
   );
 }

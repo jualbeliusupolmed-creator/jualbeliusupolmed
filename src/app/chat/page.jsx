@@ -886,7 +886,7 @@ function ChatContent() {
 
         {/* ── BOTTOM INPUT BAR ── */}
         {aktifRoomId ? (
-          <div className="p-2.5 xs:p-3 bg-white/85 dark:bg-[#000000]/85 backdrop-blur-2xl border-t border-black/[0.06] dark:border-white/[0.08] flex items-center gap-2 pb-[max(env(safe-area-inset-bottom),0.6rem)]">
+          <div className="p-2.5 xs:p-3 bg-white/85 dark:bg-[#000000]/85 backdrop-blur-2xl border-t border-black/[0.06] dark:border-white/[0.08] flex items-center gap-2 pb-[calc(env(safe-area-inset-bottom)+3rem)] md:pb-[calc(env(safe-area-inset-bottom)+2.5rem)]">
             <input
               ref={fileInputRef}
               type="file"
@@ -1128,7 +1128,7 @@ function ChatContent() {
         )}
 
         {roomStatus === "active" && (
-          <div className="p-2.5 xs:p-3 bg-white/85 dark:bg-[#000000]/85 backdrop-blur-2xl border-t border-black/[0.06] dark:border-white/[0.08] flex items-center gap-2 pb-[max(env(safe-area-inset-bottom),0.6rem)]">
+          <div className="p-2.5 xs:p-3 bg-white/85 dark:bg-[#000000]/85 backdrop-blur-2xl border-t border-black/[0.06] dark:border-white/[0.08] flex items-center gap-2 pb-[calc(env(safe-area-inset-bottom)+3rem)] md:pb-[calc(env(safe-area-inset-bottom)+2.5rem)]">
             <input
               ref={fileInputRef}
               type="file"

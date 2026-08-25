@@ -78,7 +78,7 @@ export async function POST(request) {
       }
     }
 
-    // 2. Jika Match, masukkan antrean pesan ke wa_outbox jika nomor WA tersedia
+    // 2. Jika Match, otomatis buat DM Room dan beritahu via WA
     if (matched && partner?.whatsapp) {
       try {
         const { data: swiperProfile } = await supa
@@ -88,9 +88,59 @@ export async function POST(request) {
           .maybeSingle();
 
         if (swiperProfile?.whatsapp) {
+          const myWa = swiperProfile.whatsapp;
+          const partnerWa = partner.whatsapp;
+          
+          const myAlias = swiperProfile.display_name || "Kamu";
+          const partnerAlias = partner.display_name || "Teman";
+
+          // Buat room
+          const [u1, u2, a1, a2] = myWa < partnerWa
+            ? [myWa, partnerWa, myAlias, partnerAlias]
+            : [partnerWa, myWa, partnerAlias, myAlias];
+
+          const { data: existing } = await supa
+            .from("chat_rooms")
+            .select("id")
+            .eq("type", "direct")
+            .eq("user1_id", u1)
+            .eq("user2_id", u2)
+            .maybeSingle();
+
+          let finalRoomId = existing?.id;
+
+          if (!finalRoomId) {
+            const { data: newRoom } = await supa
+              .from("chat_rooms")
+              .insert({
+                type: "direct",
+                user1_id: u1,
+                user1_alias: a1,
+                user1_faculty: "Teman Kampus",
+                user2_id: u2,
+                user2_alias: a2,
+                user2_faculty: "Teman Kampus",
+                status: "active",
+              })
+              .select("id")
+              .single();
+
+            if (newRoom) {
+              finalRoomId = newRoom.id;
+              await supa.from("chat_messages").insert({
+                room_id: finalRoomId,
+                sender_id: "system",
+                sender_alias: "Sistem",
+                message: `🎉 ${a1} dan ${a2} match di Cari Teman Kampus! Mulai ngobrol sekarang 👋`,
+              });
+            }
+          }
+
+          const roomUrl = finalRoomId ? `https://usupolmed.com/chat?room=${finalRoomId}` : `https://usupolmed.com/chat`;
+
           const pesanNotif = `🎉 *IT'S A MATCH! — Teman Kampus USU & Polmed*\n\n` +
             `Hai kak! Profil kamu dan *${partner.display_name || "Seseorang"}* (${partner.campus} · ${partner.faculty}) saling LIKE di fitur Cari Teman!\n\n` +
-            `Yuk sapa langsung di WhatsApp: wa.me/${(partner.whatsapp || "").replace(/\D/g, "")}\n\n` +
+            `Sistem telah membuat ruang obrolan anonim spesial untuk kalian. Langsung sapa dia di sini:\n${roomUrl}\n\n` +
             `_Teman baru, peluang baru di kampus! 🚀_`;
 
           await supa.from("wa_outbox").insert({
@@ -99,10 +149,24 @@ export async function POST(request) {
             kategori: "teman_match",
             status: "tertunda",
             created_at: new Date().toISOString(),
-          }).select().maybeSingle();
+          });
+
+          // Notif untuk partner juga
+          const pesanPartner = `🎉 *IT'S A MATCH! — Teman Kampus USU & Polmed*\n\n` +
+            `Hai kak! Profil kamu dan *${swiperProfile.display_name || "Seseorang"}* (${swiperProfile.campus} · ${swiperProfile.faculty}) saling LIKE di fitur Cari Teman!\n\n` +
+            `Yuk balas sapaannya di sini:\n${roomUrl}\n\n` +
+            `_Teman baru, peluang baru di kampus! 🚀_`;
+
+          await supa.from("wa_outbox").insert({
+            nomor: partner.whatsapp,
+            pesan: pesanPartner,
+            kategori: "teman_match",
+            status: "tertunda",
+            created_at: new Date().toISOString(),
+          });
         }
       } catch (notifErr) {
-        console.warn("Outbox notification error (non-fatal):", notifErr?.message);
+        console.warn("Outbox/Room creation error (non-fatal):", notifErr?.message);
       }
     }
 
