@@ -30,14 +30,14 @@ function BottomNavbarInner() {
     : [
         { name: "Social", href: "/mading", match: ["/sosial", "/mading", "/teman", "/cari-teman", "/swap", "/chat"], icon: Icon.BookOpen },
         { name: "Beranda", href: "/", icon: Icon.Home },
-        { name: "Marketplace", href: "/jual-beli", match: ["/jual-beli", "/produk", "/jasa", "/dicari", "/favorit", "/jual"], icon: Icon.ShoppingBag },
+        { name: "Market", href: "/jual-beli", match: ["/jual-beli", "/produk", "/jasa", "/favorit"], icon: Icon.ShoppingBag },
         { name: "Jual", href: "/jual", icon: Icon.Package },
         { name: "Dicari", href: "/dicari", match: ["/dicari"], icon: Icon.Search },
       ];
 
   return (
     <div className={cn(
-      "fixed left-1/2 z-50 -translate-x-1/2 select-none no-tap-highlight transition-all duration-300",
+      "fixed left-1/2 z-40 -translate-x-1/2 select-none no-tap-highlight transition-all duration-300",
       isChatRoom 
         ? "bottom-0 w-full max-w-2xl bg-white/90 dark:bg-[#000000]/90 backdrop-blur-2xl border-t border-black/[0.06] dark:border-white/[0.08] pb-[env(safe-area-inset-bottom)] shadow-none" 
         : "bottom-[max(0.75rem,env(safe-area-inset-bottom))] w-[calc(100%-2rem)] max-w-[650px] rounded-[28px] border border-black/[0.06] bg-white/90 shadow-[0_14px_38px_rgba(15,23,42,0.16)] backdrop-blur-2xl dark:border-white/[0.1] dark:bg-[#111113]/90"

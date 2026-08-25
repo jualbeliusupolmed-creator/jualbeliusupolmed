@@ -18,6 +18,7 @@ import BagikanIklan from "@/components/BagikanIklan";
 import BlogPenulisPanel from "@/components/BlogPenulisPanel";
 import DashboardModeToggle from "@/components/DashboardModeToggle";
 import UnifiedProfilePanel from "@/components/dashboard/UnifiedProfilePanel";
+import SellerAnalyticsView from "@/components/dashboard/SellerAnalyticsView";
 
 function statusBadge(s) {
   const map = {
@@ -1576,118 +1577,13 @@ function DashboardInner() {
               )}
             </div>
           ) : activeTab === "statistik" ? (
-            <div className="space-y-6 mt-6">
-              {analyticsLoading ? (
-                <div className="text-center py-12 text-gray-400">Memuat statistik...</div>
-              ) : analytics ? (
-                <>
-                  {/* Summary Cards */}
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    {[
-                      { label: "Total Dilihat", value: (analytics.summary.totalViews || 0).toLocaleString("id-ID"), icon: "👁️", color: "sky" },
-                      { label: "Iklan Aktif", value: analytics.summary.totalActive, icon: "📦", color: "green" },
-                      { label: "Terjual", value: analytics.summary.totalSold, icon: "✅", color: "indigo" },
-                      { label: "Total Tawaran", value: analytics.summary.totalOffers, icon: "💰", color: "amber" },
-                    ].map((stat) => (
-                      <div key={stat.label} className="card p-4 text-center">
-                        <div className="text-2xl mb-1">{stat.icon}</div>
-                        <div className="text-2xl font-black dark:text-white">{stat.value}</div>
-                        <div className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{stat.label}</div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Conversion Rate */}
-                  <div className="card p-5 flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-semibold dark:text-white">Konversi Penjualan</p>
-                      <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
-                        {analytics.summary.totalSold} terjual dari {(analytics.summary.totalViews || 0).toLocaleString("id-ID")} total views
-                      </p>
-                    </div>
-                    <div className="text-3xl font-black text-primary dark:text-white">
-                      {analytics.summary.conversionRate}%
-                    </div>
-                  </div>
-
-                  {/* Per-listing analytics table */}
-                  {(analytics.allListings || analytics.topListings)?.length > 0 && (() => {
-                    const listings = analytics.allListings || analytics.topListings;
-                    const maxViews = Math.max(...listings.map((l) => l.views || 0), 1);
-                    return (
-                      <div className="card p-5">
-                        <h3 className="font-bold text-sm mb-4 dark:text-white">📈 Performa Per Iklan</h3>
-                        <div className="space-y-3">
-                          {listings.map((l) => {
-                            const pct = Math.round(((l.views || 0) / maxViews) * 100);
-                            const sharePct = analytics.summary.totalViews > 0
-                              ? Math.round(((l.views || 0) / analytics.summary.totalViews) * 100)
-                              : 0;
-                            return (
-                              <div key={l.id}>
-                                <div className="flex items-center gap-3">
-                                  <div className="h-9 w-9 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-slate-800">
-                                    {l.image_url && <Image src={l.image_url} alt="" width={36} height={36} className="h-full w-full object-cover" />}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between gap-2">
-                                      <p className="text-sm font-medium truncate dark:text-white">{l.title}</p>
-                                      <div className="text-right shrink-0">
-                                        <span className="text-sm font-bold dark:text-white">{(l.views || 0).toLocaleString("id-ID")}</span>
-                                        <span className="text-xs text-gray-400 ml-1">×</span>
-                                        {sharePct > 0 && (
-                                          <span className="ml-1 text-[10px] text-gray-400">({sharePct}%)</span>
-                                        )}
-                                      </div>
-                                    </div>
-                                    <div className="mt-1.5 h-1.5 w-full rounded-full bg-gray-100 dark:bg-slate-800 overflow-hidden">
-                                      <div
-                                        className={`h-full rounded-full transition-all ${l.status === "sold" ? "bg-gray-400" : "bg-sky-400"}`}
-                                        style={{ width: `${pct}%` }}
-                                      />
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })()}
-
-                  {/* Recent Offers */}
-                  {analytics.recentOffers?.length > 0 && (
-                    <div className="card p-5">
-                      <h3 className="font-bold text-sm mb-4 dark:text-white">💰 Tawaran Terbaru</h3>
-                      <div className="space-y-3">
-                        {analytics.recentOffers.map((o) => (
-                          <div key={o.id} className="flex items-center justify-between gap-3">
-                            <div className="min-w-0">
-                              <p className="text-sm font-medium truncate dark:text-white">{o.listings?.title || "—"}</p>
-                              <p className="text-xs text-gray-500 dark:text-slate-400">{new Date(o.created_at).toLocaleDateString("id-ID")}</p>
-                            </div>
-                            <div className="text-right shrink-0">
-                              <p className="text-sm font-bold dark:text-white">{rupiah(o.offer_price)}</p>
-                              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${o.status === "accepted" ? "bg-green-100 text-green-700" : o.status === "rejected" ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"}`}>
-                                {o.status === "accepted" ? "Diterima" : o.status === "rejected" ? "Ditolak" : "Pending"}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <button onClick={() => loadAnalytics()} className="btn-outline w-full text-sm">🔄 Refresh Statistik</button>
-                </>
-              ) : (
-                <div className="text-center py-12">
-                  <p className="text-gray-400 mb-4">Statistik belum dimuat</p>
-                  <button onClick={() => loadAnalytics()} className="btn-primary">Muat Statistik</button>
-                </div>
-              )}
-            </div>
+            <SellerAnalyticsView
+              analytics={analytics}
+              loading={analyticsLoading}
+              onRefresh={() => loadAnalytics()}
+              onOpenBumpModal={(item) => bump(item)}
+              onOpenBagikanModal={(item) => setBagikan(item)}
+            />
           ) : activeTab === "profil" ? (
             <div className="space-y-6 mt-6">
               <UnifiedProfilePanel
