@@ -178,7 +178,7 @@ export default function TemanSwipePage() {
 
   if (!mounted) {
     return (
-      <div className="fixed inset-0 z-30 pt-[50px] pb-[90px] md:pb-[100px] bg-[#f5f5f7] dark:bg-[#000000] flex flex-col font-sans max-w-lg w-full mx-auto px-4 py-3 overflow-hidden">
+      <div className="flex-1 flex flex-col bg-[#f5f5f7] dark:bg-[#000000] font-sans max-w-lg w-full mx-auto px-4 py-3 overflow-hidden">
         <div className="flex flex-col items-center justify-center my-auto py-24 space-y-3">
           <div className="w-10 h-10 border-3 border-primary/30 border-t-primary rounded-full animate-spin" />
           <p className="text-xs text-gray-400 font-medium">Menyiapkan Cari Teman Kampus...</p>
@@ -188,7 +188,7 @@ export default function TemanSwipePage() {
   }
 
   return (
-    <div className="fixed inset-0 z-30 pt-[50px] pb-[90px] md:pb-[100px] bg-[#f5f5f7] dark:bg-[#000000] flex flex-col font-sans max-w-lg w-full mx-auto px-4 py-3 select-none overflow-hidden">
+    <div className="flex-1 flex flex-col bg-[#f5f5f7] dark:bg-[#000000] font-sans max-w-lg w-full mx-auto px-4 py-3 select-none overflow-hidden">
       
       {/* TOP BAR & FILTER */}
       <div className="flex items-center justify-between gap-2 pb-3">
