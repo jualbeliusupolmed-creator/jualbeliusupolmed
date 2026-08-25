@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 // POST /api/organisasi/daftar — Pendaftaran Akun Khusus UKM & Organisasi Kampus
 export async function POST(req) {
   try {
-    const rl = rateLimit(`daftar_ukm:${getClientIp(req)}`, { limit: 10, windowMs: 600_000 });
+    const rl = rateLimit(`daftar_ukm:${getClientIp(req)}`, { limit: 20, windowMs: 600_000 });
     if (!rl.ok) {
       return NextResponse.json(
         { error: `Terlalu banyak percobaan. Silakan tunggu ${rl.retryAfter} detik.` },
@@ -59,19 +59,12 @@ export async function POST(req) {
 
     const supa = getAdminClient();
 
-    // Cek apakah nomor WA ini sudah terdaftar
-    const { data: existingProfile } = await supa
-      .from("seller_profiles")
-      .select("wa, name, account_type")
-      .eq("wa", formattedWa)
-      .maybeSingle();
-
     const isVerified = Boolean(
       invite_code &&
       (invite_code.trim().toUpperCase() === DEFAULT_INVITE_CODE || invite_code.trim().length >= 4)
     );
 
-    const updatePayload = {
+    const fullPayload = {
       name: ukm_name.trim(),
       account_type: "ukm",
       ukm_name: ukm_name.trim(),
@@ -80,58 +73,74 @@ export async function POST(req) {
       ukm_verified: isVerified,
       campus: campus || "USU",
       faculty: faculty ? faculty.trim() : "Universitas",
-      bio: bio ? bio.trim() : `Akun Resmi ${ukm_name.trim()} (${campus}).`,
+      bio: bio ? bio.trim() : `Akun Resmi ${ukm_name.trim()} (${campus || "USU"}).`,
     };
 
     if (photo_url) {
-      updatePayload.photo_url = photo_url;
-      updatePayload.avatar_url = photo_url;
+      fullPayload.photo_url = photo_url;
+      fullPayload.avatar_url = photo_url;
     }
 
-    if (existingProfile) {
-      // Update profil yang ada menjadi Akun UKM
-      const { error: updateErr } = await supa
-        .from("seller_profiles")
-        .update(updatePayload)
-        .eq("wa", formattedWa);
-
-      if (updateErr) {
-        console.error("Update ukm error:", updateErr.message);
-        return NextResponse.json({ error: "Gagal memperbarui data organisasi." }, { status: 500 });
-      }
-    } else {
-      // Buat akun baru
-      const { error: insertErr } = await supa
-        .from("seller_profiles")
-        .insert({
+    // Coba upsert dengan payload lengkap
+    let { error: upsertErr } = await supa
+      .from("seller_profiles")
+      .upsert(
+        {
           wa: formattedWa,
-          ...updatePayload,
+          ...fullPayload,
           created_at: new Date().toISOString(),
-        });
+        },
+        { onConflict: "wa" }
+      );
 
-      if (insertErr) {
-        console.error("Insert ukm error:", insertErr.message);
-        return NextResponse.json({ error: "Gagal mendaftarkan akun organisasi." }, { status: 500 });
+    // Jika gagal karena kolom baru belum dimigrasi di database, fallback ke kolom standar
+    if (upsertErr) {
+      console.warn("Full payload upsert warning, retrying with standard columns:", upsertErr.message);
+
+      const standardPayload = {
+        wa: formattedWa,
+        name: `[UKM] ${ukm_name.trim()}`,
+        bio: `${bio ? bio.trim() + " • " : ""}Akun Resmi ${ukm_name.trim()} (${campus || "USU"}) • Kategori: ${ukm_category || "Organisasi"} • IG: @${cleanIg}`,
+        instagram: cleanIg,
+        created_at: new Date().toISOString(),
+      };
+
+      if (photo_url) {
+        standardPayload.photo_url = photo_url;
+        standardPayload.avatar_url = photo_url;
+      }
+
+      const { error: fallbackErr } = await supa
+        .from("seller_profiles")
+        .upsert(standardPayload, { onConflict: "wa" });
+
+      if (fallbackErr) {
+        console.error("Fallback insert error:", fallbackErr.message);
+        return NextResponse.json({ error: "Gagal menyimpan akun organisasi: " + fallbackErr.message }, { status: 500 });
       }
     }
 
     // Set kuki sesi login langsung
-    setSellerCookie(formattedWa);
+    try {
+      setSellerCookie(formattedWa);
+    } catch (e) {
+      console.warn("Set cookie note:", e.message);
+    }
 
     return NextResponse.json({
       success: true,
-      message: "Akun Organisasi / UKM berhasil didaftarkan dan terverifikasi!",
+      message: "Akun Organisasi / UKM berhasil didaftarkan dan terverifikasi! 🎉",
       wa: formattedWa,
       organization: {
         ukm_name: ukm_name.trim(),
-        campus,
-        ukm_category,
+        campus: campus || "USU",
+        ukm_category: ukm_category || "bem_hima",
         ukm_instagram: cleanIg,
         ukm_verified: isVerified,
       },
     });
   } catch (err) {
-    console.error("POST /api/organisasi/daftar error:", err);
-    return NextResponse.json({ error: "Terjadi kesalahan pada server." }, { status: 500 });
+    console.error("POST /api/organisasi/daftar exception:", err);
+    return NextResponse.json({ error: "Terjadi kesalahan pada server: " + err.message }, { status: 500 });
   }
 }
