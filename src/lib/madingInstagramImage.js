@@ -88,9 +88,13 @@ function typographyForLength(length) {
 
 export function layoutMadingInstagramPost(post = {}) {
   const message = normalizeText([post.title, post.content].filter(Boolean).join(" — "));
-  const typography = typographyForLength(message.length);
+  const typography = post.image_url
+    ? message.length <= 160
+      ? { fontSize: 36, lineHeight: 54, maxChars: 44, maxLines: 6 }
+      : { fontSize: 30, lineHeight: 46, maxChars: 53, maxLines: 7 }
+    : typographyForLength(message.length);
   const lines = wrapInstagramText(message, typography.maxChars, typography.maxLines);
-  const messageCenterY = 650;
+  const messageCenterY = post.image_url ? 900 : 650;
   const firstLineY = messageCenterY - ((lines.length - 1) * typography.lineHeight) / 2;
 
   return {
@@ -192,7 +196,7 @@ export function createMadingInstagramTextLayers(
   return layers;
 }
 
-export function createMadingInstagramSvg() {
+export function createMadingInstagramSvg({ hasPhoto = false } = {}) {
 
   return `
     <svg width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" viewBox="0 0 ${CANVAS_WIDTH} ${CANVAS_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
@@ -210,6 +214,8 @@ export function createMadingInstagramSvg() {
       <rect width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" fill="#F8F7F3"/>
       <rect width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" fill="url(#violetGlow)"/>
       <rect width="${CANVAS_WIDTH}" height="${CANVAS_HEIGHT}" fill="url(#greenGlow)"/>
+
+      ${hasPhoto ? '<rect x="122" y="237" width="836" height="476" rx="30" fill="#E9E6DE"/>' : ""}
 
       <line x1="164" y1="1138" x2="916" y2="1138" stroke="#D8D6D0" stroke-width="1.5"/>
       <circle cx="454" cy="1254" r="8" fill="#16B77E"/>

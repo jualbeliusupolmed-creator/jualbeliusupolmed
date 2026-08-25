@@ -105,7 +105,7 @@ export default function MadingPage() {
         trackEngagement(postId, "view");
         observer.unobserve(entry.target);
       });
-    }, { threshold: 0.6 });
+    }, { threshold: 0.1 });
     document.querySelectorAll("[data-mading-post-id]").forEach((element) => observer.observe(element));
     return () => observer.disconnect();
   }, [posts, userId, trackEngagement]);

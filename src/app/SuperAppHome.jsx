@@ -101,7 +101,7 @@ export default function SuperAppHome({
           observer.unobserve(entry.target);
         });
       },
-      { threshold: 0.6 }
+      { threshold: 0.1 }
     );
     document.querySelectorAll("[data-mading-post-id]").forEach((el) => observer.observe(el));
     return () => observer.disconnect();

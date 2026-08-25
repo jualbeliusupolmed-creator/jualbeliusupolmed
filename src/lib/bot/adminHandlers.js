@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { autoPublishListingInstagram } from "@/lib/listingInstagram";
 
 /**
  * Handler perintah admin bot WA.
@@ -227,6 +228,10 @@ export async function handleAdminCmd(ctx) {
       const expiresAt = new Date(Date.now() + 14 * 864e5).toISOString();
       await supa.from("listings").update({ status: "active", expires_at: expiresAt, fee_offer_status: "approved" }).eq("id", listing.id);
       await supa.from("payments").update({ status: "paid" }).eq("listing_id", listing.id).eq("status", "pending");
+      await autoPublishListingInstagram({
+        origin: (process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").replace(/\/$/, ""),
+        listingId: listing.id,
+      });
       await sendWa(sellerJid,
         `🎉 *Admin menyetujui tawaranmu!*\n\n` +
         `📦 *${listing.title}*\n` +

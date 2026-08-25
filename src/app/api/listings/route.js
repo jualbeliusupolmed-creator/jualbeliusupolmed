@@ -8,8 +8,11 @@ import { pushListingBaru } from "@/lib/webpush";
 import { getDistributorSettings, calcDistributorFee, effectivePrice } from "@/lib/distributor";
 import { tokoAktif } from "@/lib/toko";
 import { getSellerSession } from "@/lib/auth";
+import { autoPublishListingInstagram } from "@/lib/listingInstagram";
+import { siteOriginFromRequest } from "@/lib/instagramQueue";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 // GET /api/listings?seller_wa=...  -> daftar iklan milik penjual
 export async function GET(req) {
@@ -278,6 +281,10 @@ export async function POST(req) {
       } catch (err) {
         console.error("Fonnte postToGroup error:", err?.message);
       }
+      await autoPublishListingInstagram({
+        origin: siteOriginFromRequest(req),
+        listingId: listing.id,
+      });
       return NextResponse.json({ listing, paymentUrl: null, isPro, isJasaFree, isDistributor, punyaToko, distributorFee });
     }
 

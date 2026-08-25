@@ -5,8 +5,10 @@ import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { hashIdentitas } from "@/lib/identitasHash";
 import { catatIdentitasWa } from "@/lib/chatIdentity";
 import { getUserSession } from "@/lib/auth";
+import { autoPublishMadingInstagram, siteOriginFromRequest } from "@/lib/madingInstagram";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const POST_COLUMNS = "id, type, sender_name, faculty, title, content, likes_count, comments_count, status, created_at";
 const POST_COLUMNS_WITH_IMAGE = "id, type, sender_name, faculty, title, content, image_url, likes_count, comments_count, status, created_at";
@@ -173,6 +175,13 @@ export async function POST(request) {
 
     // Catat pemetaan hash -> WA untuk panel admin & push notification
     await catatIdentitasWa(supa, hashIdentitas(wa), wa);
+
+    // Auto-post tanpa persetujuan admin. Jika Meta belum siap, postingan web
+    // tetap berhasil dan antreannya akan dicoba ulang oleh cron/panel admin.
+    await autoPublishMadingInstagram({
+      origin: siteOriginFromRequest(request),
+      postId: data.id,
+    });
 
     return NextResponse.json({ success: true, post: data });
   } catch (err) {

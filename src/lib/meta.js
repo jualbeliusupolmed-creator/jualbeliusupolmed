@@ -1,95 +1,177 @@
 /**
- * Utilities for Meta Graph API (Instagram & Facebook Auto-Posting)
+ * Klien server-only untuk Meta Graph API.
+ * Token dikirim melalui Authorization header agar tidak masuk URL/log.
  */
 
-const META_API_VERSION = "v19.0";
-const META_BASE_URL = `https://graph.facebook.com/${META_API_VERSION}`;
+const DEFAULT_META_API_VERSION = "v24.0";
+const TERMINAL_CONTAINER_ERRORS = new Set(["ERROR", "EXPIRED"]);
 
-/**
- * Mem-posting gambar dan caption ke Facebook Page
- * @param {string} pageId FB Page ID
- * @param {string} token Page Access Token
- * @param {string} imageUrl URL gambar publik
- * @param {string} caption Caption postingan
- * @returns {object} Response dari FB (misal { id: "post_id" })
- */
-export async function postToFacebook(pageId, token, imageUrl, caption) {
-  if (!pageId || !token) throw new Error("FB_PAGE_ID atau Token Meta tidak ditemukan di pengaturan.");
+function metaApiVersion() {
+  const configured = String(process.env.META_GRAPH_API_VERSION || "").trim();
+  return /^v\d+\.\d+$/.test(configured)
+    ? configured
+    : DEFAULT_META_API_VERSION;
+}
+function metaUrl(pathname) {
+  return `https://graph.facebook.com/${metaApiVersion()}/${String(pathname).replace(/^\//, "")}`;
+}
 
-  const url = `${META_BASE_URL}/${pageId}/photos`;
-  const body = new URLSearchParams({
-    url: imageUrl,
-    message: caption,
-    access_token: token,
-  });
+function safeMetaMessage(data, fallback) {
+  const message = String(data?.error?.message || fallback || "Permintaan Meta gagal")
+    .replace(/[\r\n]+/g, " ")
+    .slice(0, 240);
+  const code = data?.error?.code ? ` [${data.error.code}]` : "";
+  return `${message}${code}`;
+}
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: body.toString(),
-  });
+async function graphRequest(pathname, {
+  token,
+  method = "GET",
+  body,
+  stage = "Meta API",
+} = {}) {
+  if (!token) throw new Error(`${stage}: token belum dikonfigurasi.`);
 
-  const data = await res.json();
-  if (data.error) {
-    throw new Error(`Facebook API Error: ${data.error.message}`);
+  const options = {
+    method,
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    cache: "no-store",
+  };
+  if (body) {
+    options.headers["Content-Type"] = "application/x-www-form-urlencoded";
+    options.body = new URLSearchParams(body).toString();
+  }
+  if (typeof AbortSignal !== "undefined" && AbortSignal.timeout) {
+    options.signal = AbortSignal.timeout(20_000);
   }
 
+  let response;
+  try {
+    response = await fetch(metaUrl(pathname), options);
+  } catch (error) {
+    const reason = error?.name === "TimeoutError" ? "waktu tunggu habis" : "koneksi gagal";
+    throw new Error(`${stage}: ${reason}.`);
+  }
+
+  const raw = await response.text();
+  let data = {};
+  try {
+    data = raw ? JSON.parse(raw) : {};
+  } catch {
+    data = {};
+  }
+
+  if (!response.ok || data?.error) {
+    throw new Error(`${stage}: ${safeMetaMessage(data, `HTTP ${response.status}`)}`);
+  }
   return data;
 }
 
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export async function waitForInstagramContainer(
+  creationId,
+  token,
+  { maxPolls = 12, pollIntervalMs = 1_000 } = {},
+) {
+  for (let poll = 0; poll < maxPolls; poll += 1) {
+    const data = await graphRequest(`${creationId}?fields=status_code`, {
+      token,
+      stage: "Pemeriksaan media Instagram",
+    });
+    const status = String(data.status_code || "IN_PROGRESS").toUpperCase();
+
+    if (status === "FINISHED" || status === "PUBLISHED") return status;
+    if (TERMINAL_CONTAINER_ERRORS.has(status)) {
+      throw new Error(`Pemeriksaan media Instagram: container berstatus ${status}.`);
+    }
+    if (poll < maxPolls - 1) await delay(pollIntervalMs);
+  }
+  throw new Error("Pemeriksaan media Instagram: media belum siap dalam batas waktu.");
+}
+
+export async function postToFacebook(pageId, token, imageUrl, caption) {
+  if (!pageId || !token) {
+    throw new Error("Konfigurasi Facebook Page belum lengkap.");
+  }
+  return graphRequest(`${pageId}/photos`, {
+    token,
+    method: "POST",
+    stage: "Publikasi Facebook",
+    body: { url: imageUrl, message: caption },
+  });
+}
+
 /**
- * Mem-posting gambar dan caption ke Instagram (Via IG User ID)
- * Melibatkan 2 tahap: 1) Create Media Container, 2) Publish Media
- * @param {string} igUserId IG User ID (terhubung ke FB Page)
- * @param {string} token Page Access Token
- * @param {string} imageUrl URL gambar publik
- * @param {string} caption Caption postingan
- * @returns {object} Response dari IG (misal { id: "media_id" })
+ * Membuat container gambar, menunggu FINISHED, lalu menerbitkannya.
+ * creationId dapat dipakai ulang setelah proses terputus agar retry tidak
+ * membuat post duplikat.
  */
-export async function postToInstagram(igUserId, token, imageUrl, caption) {
-  if (!igUserId || !token) throw new Error("IG_USER_ID atau Token Meta tidak ditemukan di pengaturan.");
-
-  // TAHAP 1: Create Media Container
-  const createUrl = `${META_BASE_URL}/${igUserId}/media`;
-  const createBody = new URLSearchParams({
-    image_url: imageUrl,
-    caption: caption,
-    access_token: token,
-  });
-
-  const createRes = await fetch(createUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: createBody.toString(),
-  });
-
-  const createData = await createRes.json();
-  if (createData.error) {
-    throw new Error(`Instagram Create Error: ${createData.error.message}`);
+export async function postToInstagram(
+  igUserId,
+  token,
+  imageUrl,
+  caption,
+  {
+    creationId: existingCreationId = null,
+    onContainerCreated,
+    maxPolls,
+    pollIntervalMs,
+  } = {},
+) {
+  if (!igUserId || !token) {
+    throw new Error("Konfigurasi akun Instagram belum lengkap.");
+  }
+  if (!imageUrl || !/^https:\/\//i.test(imageUrl)) {
+    throw new Error("URL gambar Instagram harus berupa HTTPS publik.");
   }
 
-  const creationId = createData.id;
+  let creationId = existingCreationId;
   if (!creationId) {
-    throw new Error("Gagal mendapatkan creation_id dari Instagram API.");
+    const created = await graphRequest(`${igUserId}/media`, {
+      token,
+      method: "POST",
+      stage: "Pembuatan media Instagram",
+      body: { image_url: imageUrl, caption },
+    });
+    creationId = created.id;
+    if (!creationId) {
+      throw new Error("Pembuatan media Instagram: creation_id tidak diterima.");
+    }
+    if (onContainerCreated) await onContainerCreated(creationId);
   }
 
-  // TAHAP 2: Publish Media Container
-  const publishUrl = `${META_BASE_URL}/${igUserId}/media_publish`;
-  const publishBody = new URLSearchParams({
-    creation_id: creationId,
-    access_token: token,
+  const containerStatus = await waitForInstagramContainer(creationId, token, {
+    maxPolls,
+    pollIntervalMs,
   });
-
-  const publishRes = await fetch(publishUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: publishBody.toString(),
-  });
-
-  const publishData = await publishRes.json();
-  if (publishData.error) {
-    throw new Error(`Instagram Publish Error: ${publishData.error.message}`);
+  if (containerStatus === "PUBLISHED") {
+    return { id: null, creation_id: creationId, already_published: true };
   }
 
-  return publishData;
+  try {
+    const published = await graphRequest(`${igUserId}/media_publish`, {
+      token,
+      method: "POST",
+      stage: "Publikasi Instagram",
+      body: { creation_id: creationId },
+    });
+    return { ...published, creation_id: creationId };
+  } catch (error) {
+    // Jika respons publish terputus tetapi Meta sebenarnya sudah menerima,
+    // status PUBLISHED mencegah retry membuat post baru.
+    const status = await waitForInstagramContainer(creationId, token, {
+      maxPolls: 2,
+      pollIntervalMs: 250,
+    }).catch(() => null);
+    if (status === "PUBLISHED") {
+      return { id: null, creation_id: creationId, already_published: true };
+    }
+    throw error;
+  }
 }

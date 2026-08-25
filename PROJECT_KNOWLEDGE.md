@@ -87,7 +87,7 @@ Berjalan dengan PostgreSQL, memiliki tabel-tabel berikut:
 1. **Exposure Sensitif**: Kredensial aman (tidak ter-commit). Disimpan di `.env.local` dan dikelola di Vercel/VPS.
 2. **Validasi Input & Otorisasi**: 
    - Row Level Security (RLS) di Supabase mencegah klien membaca data yang bukan haknya (misalnya, pembeli tidak bisa baca orderan penjual lain).
-   - Akses admin di-handle via JWT dan pengecekan manual (`ADMIN_PASSWORD=bismillah` - *Perlu dievaluasi untuk diubah ke SSO/Email*).
+   - Akses admin di-handle via JWT dan secret environment `ADMIN_PASSWORD` (*Perlu dievaluasi untuk diubah ke SSO/Email*).
 3. **Rate Limiting**: Endpoint kritikal seperti pembuat iklan telah dilengkapi proteksi anti-spam lokal (*in-memory*).
 
 ---
@@ -102,6 +102,17 @@ Berjalan dengan PostgreSQL, memiliki tabel-tabel berikut:
 
 ## 5. Log & Riwayat Audit
 
+*   **25 Agustus 2026 — Arsitektur auto-post Instagram dua akun (database produksi aktif; kode menunggu deploy)**
+    - Menfess diarahkan hanya ke `@usupolmedmenfess`; iklan marketplace berstatus aktif diarahkan hanya ke `@katalogusupolmed`. Akun umum `@usupolmedupdate` tidak dipakai oleh jalur otomatis.
+    - Kredensial dipisah menjadi `META_MENFESS_IG_USER_ID` / `META_MENFESS_IG_ACCESS_TOKEN` dan `META_KATALOG_IG_USER_ID` / `META_KATALOG_IG_ACCESS_TOKEN`. Nilainya hanya boleh berada di secret manager server. Nama lama `META_IG_*` masih menjadi fallback Menfess selama transisi, bukan untuk katalog.
+    - Generator katalog dan Menfess menghasilkan JPEG feed 4:5 (1080×1350). Foto sumber hanya diambil dari host Supabase proyek dan dibatasi ukuran; nomor WA serta identitas internal tidak dirender. Lampiran foto Menfess ikut masuk kartu Instagram bila valid.
+    - Migration `20260825120507_instagram_dual_account_publishing.sql` menambah antrean katalog server-only, container ID, retry bertahap maksimal tiga kali, pemulihan worker basi, RLS tanpa policy publik, grant eksplisit `service_role`, dan trigger antrean saat konten berubah menjadi aktif.
+    - Meta client memakai Graph API `v24.0` secara default, menunggu status container sebelum publish, mengirim token melalui header Authorization, dan memakai ulang container pada retry untuk mencegah post ganda. Cron harian tetap menjadi jalur pemulihan; request pembuatan/aktivasi normal mencoba publikasi langsung secara non-fatal.
+    - Panel admin Menfess dan detail listing menampilkan status, jumlah percobaan, galat operasional, waktu terbit, serta tombol proses/coba lagi.
+    - Migration diterapkan ke Supabase produksi dan tercatat sebagai versi `20260825120507`. Verifikasi setelah migrasi: kedua tabel ber-RLS, tidak dapat dibaca `anon`/`authenticated`, `service_role` memiliki CRUD, serta kedua trigger terpasang. Security Advisor tidak menemukan warning baru dari fitur ini; dua warning lama tetap berada pada fungsi `process_teman_swipe` dan harus ditangani terpisah.
+    - Verifikasi lokal: seluruh 32 unit test lulus, lint bersih, build produksi bersih berhasil, endpoint pratinjau Menfess dan katalog merespons `200 image/jpeg`, dan kedua hasil diperiksa visual pada kanvas 1080×1350.
+    - Environment Meta belum ada di Vercel pada saat verifikasi. Sampai empat variable akun tujuan diisi dan deployment diuji, konten hanya akan tersimpan dalam antrean—tidak ada post yang dikirim ke Instagram.
+
 *   **25 Agustus 2026 — Desain generator Menfess Instagram aktif di produksi**
     - Generator JPEG Menfess memakai format feed 4:5 (1080×1350), latar ivory, tipografi adaptif, identitas `@usupolmedmenfess` yang halus, dan footer domain. Isi panjang diperkecil dan dipotong aman.
     - Plus Jakarta Sans Regular/SemiBold beserta lisensi OFL dibundel dan dirender melalui `sharp` `fontfile` agar hasil konsisten di Vercel Linux. Emoji yang tidak tersedia pada font dibersihkan hanya dari gambar; caption Instagram dan isi website tetap utuh.
@@ -109,9 +120,9 @@ Berjalan dengan PostgreSQL, memiliki tabel-tabel berikut:
     - Commit desain `d596901`, bundling font `d01636b`, dan pembersihan emoji `a5c82d0` sudah didorong ke `main`. Deployment produksi berstatus `READY` dan menguasai `jualbeliusupolmed.vercel.app`, `www.jualbeliusupolmed.web.id`, serta domain apex.
     - Folder lokal sudah ditautkan ulang ke proyek produksi pada scope `jualbeliusupolmed-creators-projects`; verifikasi scope tetap wajib sebelum deployment berikutnya.
 
-*   **25 Agustus 2026 — Antrean publikasi Instagram Menfess (belum diaktifkan di produksi)**
+*   **25 Agustus 2026 — Antrean publikasi Instagram Menfess generasi pertama (digantikan arsitektur dua akun di atas)**
     - Menfess yang sudah aktif dapat diterbitkan langsung oleh admin melalui tombol `Terbitkan IG`; sistem tetap memakai antrean dan lock status untuk mencegah publikasi ganda. Scheduler server menjadi jalur cadangan untuk antrean yang belum diproses.
-    - Token dan ID akun Instagram tidak disimpan di database maupun kode. Koneksi produksi menggunakan environment server `META_IG_ACCESS_TOKEN`, `META_IG_USER_ID`, dan `CRON_SECRET`.
+    - Token dan ID akun Instagram tidak disimpan di database maupun kode. Nama environment generasi pertama `META_IG_ACCESS_TOKEN` dan `META_IG_USER_ID` kini hanya fallback transisi untuk akun Menfess.
     - Endpoint gambar Menfess menghasilkan JPEG publik khusus Instagram agar Menfess teks dapat diposting tanpa mengekspos identitas internal pengirim.
     - Migration `20260824192759_mading_instagram_publication_queue.sql` harus direview dan diterapkan sebelum kode ini dideploy. Cron dijadwalkan sekali sehari agar kompatibel dengan batas Vercel Hobby; frekuensi dapat ditingkatkan setelah paket Vercel diverifikasi.
 

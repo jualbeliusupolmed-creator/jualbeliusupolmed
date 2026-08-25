@@ -6,10 +6,20 @@ import { getSettings } from "@/lib/settings";
 import { notifyAdminNewListing, postToGroup, sendWa } from "@/lib/fonnte";
 import { pushListingBaru } from "@/lib/webpush";
 import { logError } from "@/lib/logError";
-import { postToFacebook, postToInstagram } from "@/lib/meta";
-import { publishQueuedMadingInstagram, siteOriginFromRequest } from "@/lib/madingInstagram";
+import {
+  autoPublishMadingInstagram,
+  publishQueuedMadingInstagram,
+  queueMadingInstagram,
+  siteOriginFromRequest,
+} from "@/lib/madingInstagram";
+import {
+  autoPublishListingInstagram,
+  publishQueuedListingInstagram,
+  queueListingInstagram,
+} from "@/lib/listingInstagram";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 // Field listing yang boleh diubah admin lewat update_listing
 const LISTING_FIELDS = [
@@ -61,36 +71,19 @@ export async function POST(req) {
       case "post_meta": {
         const { listing } = body;
         if (!listing || !listing.id) throw new Error("Iklan tidak ditemukan");
-        const settings = await getSettings().catch(() => null);
-        const metaCfg = settings?.meta;
-        if (!metaCfg?.accessToken || (!metaCfg?.fbPageId && !metaCfg?.igUserId)) {
-          throw new Error("Pengaturan Meta belum lengkap (Token/Page ID belum diisi)");
+        await queueListingInstagram(listing.id, { supa });
+        const [result] = await publishQueuedListingInstagram({
+          origin: siteOriginFromRequest(req),
+          listingId: listing.id,
+          limit: 1,
+        });
+        if (!result || result.status !== "published") {
+          return NextResponse.json(
+            { error: result?.error || "Instagram katalog belum menerima iklan." },
+            { status: 502 },
+          );
         }
-
-        const priceText = listing.price > 0 ? `Rp ${listing.price.toLocaleString("id-ID")}` : "GRATIS";
-        const caption = `${listing.title}\n\nHarga: ${priceText}\nKondisi: ${listing.stock > 1 ? "Tersedia" : "Terbatas"}\nLokasi: ${listing.campus} - ${listing.area || "-"}\n\n${listing.description || ""}\n\n👉 Pesan sekarang via WA (Cek di website)\n\n#JualBeliUSU #BarangBekas #AnakUSU`;
-        
-        // Use the raw image or fallback to dynamic OG image
-        const imgUrl = (listing.images && listing.images[0]) || `https://jualbeliusu.com/api/og?id=${listing.id}`;
-
-        let results = [];
-        if (metaCfg.fbPageId) {
-          try {
-            await postToFacebook(metaCfg.fbPageId, metaCfg.accessToken, imgUrl, caption);
-            results.push("Facebook ✅");
-          } catch (e) {
-            results.push(`Facebook ❌ (${e.message})`);
-          }
-        }
-        if (metaCfg.igUserId) {
-          try {
-            await postToInstagram(metaCfg.igUserId, metaCfg.accessToken, imgUrl, caption);
-            results.push("Instagram ✅");
-          } catch (e) {
-            results.push(`Instagram ❌ (${e.message})`);
-          }
-        }
-        warning = `Hasil Meta Auto-Post: ${results.join(" | ")}`;
+        warning = "Iklan berhasil diterbitkan ke @katalogusupolmed.";
         break;
       }
       // ── Listing: aksi cepat ────────────────────────────────────────────
@@ -132,6 +125,10 @@ export async function POST(req) {
               : `Iklan aktif, tapi broadcast grup gagal: ${broadcast?.error || broadcast?.data?.reason || "cek log server"}.`;
           }
         }
+        await autoPublishListingInstagram({
+          origin: siteOriginFromRequest(req),
+          listingId: id,
+        });
         break;
       }
       case "suspend":
@@ -157,6 +154,13 @@ export async function POST(req) {
               expires_at: new Date(Date.now() + bulkDays * 864e5).toISOString(),
             })
             .in("id", ids);
+          await Promise.allSettled(ids.map((listingId) =>
+            queueListingInstagram(listingId, { supa })
+          ));
+          await publishQueuedListingInstagram({
+            origin: siteOriginFromRequest(req),
+            limit: 3,
+          }).catch(() => []);
         } else if (body.op === "suspend") {
           await supa.from("listings").update({ status: "suspended" }).in("id", ids);
         } else if (body.op === "delete") {
@@ -278,6 +282,10 @@ export async function POST(req) {
               await Promise.allSettled([
                 postToGroup(listing, paySettings?.admin),
               ]);
+              await autoPublishListingInstagram({
+                origin: siteOriginFromRequest(req),
+                listingId: listing.id,
+              });
             }
           } else if (payment.type === "featured") {
             const days = payment.meta?.days || 1;
@@ -869,6 +877,10 @@ export async function POST(req) {
           await supa.from("listings").update({ status: "active", expires_at: expiresAt }).eq("id", id);
           await supa.from("payments").update({ status: "paid" }).eq("listing_id", id).eq("status", "pending");
           await sendWa(fl.seller_wa, `🎉 *Admin menyetujui tawaranmu!*\n\n📦 *${fl.title}*\n✅ Biaya digratiskan. Iklanmu langsung aktif! 🚀`).catch(() => {});
+          await autoPublishListingInstagram({
+            origin: siteOriginFromRequest(req),
+            listingId: id,
+          });
         } else {
           const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
           await sendWa(fl.seller_wa,
@@ -892,37 +904,36 @@ export async function POST(req) {
       }
 
       // ── Moderasi Menfess (Mading) ───────────────────────────────────────────
+      case "queue_listing_instagram": {
+        const queued = await queueListingInstagram(id, { supa });
+        warning = queued.alreadyPublished
+          ? "Iklan ini sudah terbit di @katalogusupolmed."
+          : "Iklan masuk antrean @katalogusupolmed.";
+        break;
+      }
+
+      case "publish_listing_instagram": {
+        await queueListingInstagram(id, { supa });
+        const [result] = await publishQueuedListingInstagram({
+          origin: siteOriginFromRequest(req),
+          listingId: id,
+          limit: 1,
+        });
+        if (!result || result.status !== "published") {
+          return NextResponse.json(
+            { error: result?.error || "Instagram katalog belum menerima iklan." },
+            { status: 502 },
+          );
+        }
+        warning = "Iklan berhasil diterbitkan ke @katalogusupolmed.";
+        break;
+      }
+
       case "queue_mading_instagram": {
-        const { data: post } = await supa
-          .from("mading_posts")
-          .select("id, status, instagram_status")
-          .eq("id", id)
-          .maybeSingle();
-        if (!post) return NextResponse.json({ error: "Postingan Menfess tidak ditemukan" }, { status: 404 });
-        if (post.status !== "active") return NextResponse.json({ error: "Aktifkan Menfess sebelum mengantrekan ke Instagram." }, { status: 400 });
-        if (post.instagram_status === "published") return NextResponse.json({ error: "Menfess ini sudah terbit di Instagram." }, { status: 400 });
-
-        const now = new Date().toISOString();
-        const { error: queueError } = await supa
-          .from("mading_instagram_publications")
-          .upsert({
-            post_id: id,
-            status: "queued",
-            attempts: 0,
-            last_error: null,
-            instagram_media_id: null,
-            published_at: null,
-            queued_at: now,
-            updated_at: now,
-          }, { onConflict: "post_id" });
-        if (queueError) return NextResponse.json({ error: queueError.message }, { status: 500 });
-
-        const { error: postError } = await supa
-          .from("mading_posts")
-          .update({ instagram_status: "queued", instagram_media_id: null, instagram_published_at: null })
-          .eq("id", id);
-        if (postError) return NextResponse.json({ error: postError.message }, { status: 500 });
-        warning = "Menfess masuk antrean Instagram. Scheduler akan menerbitkannya setelah konfigurasi Meta tersedia.";
+        const queued = await queueMadingInstagram(id, { supa });
+        warning = queued.alreadyPublished
+          ? "Menfess ini sudah terbit di @usupolmedmenfess."
+          : "Menfess masuk antrean @usupolmedmenfess.";
         break;
       }
 
@@ -936,19 +947,7 @@ export async function POST(req) {
         if (post.status !== "active") return NextResponse.json({ error: "Aktifkan Menfess sebelum menerbitkannya ke Instagram." }, { status: 400 });
         if (post.instagram_status === "published") return NextResponse.json({ error: "Menfess ini sudah terbit di Instagram." }, { status: 400 });
 
-        const now = new Date().toISOString();
-        const { error: queueError } = await supa
-          .from("mading_instagram_publications")
-          .upsert({
-            post_id: id, status: "queued", attempts: 0, last_error: null,
-            instagram_media_id: null, published_at: null, queued_at: now, updated_at: now,
-          }, { onConflict: "post_id" });
-        if (queueError) return NextResponse.json({ error: queueError.message }, { status: 500 });
-
-        await supa
-          .from("mading_posts")
-          .update({ instagram_status: "queued", instagram_media_id: null, instagram_published_at: null })
-          .eq("id", id);
+        await queueMadingInstagram(id, { supa });
 
         const [result] = await publishQueuedMadingInstagram({
           origin: siteOriginFromRequest(req),
@@ -975,6 +974,12 @@ export async function POST(req) {
           .update({ status: nextStatus })
           .eq("id", id);
         if (upErr) return NextResponse.json({ error: upErr.message }, { status: 500 });
+        if (nextStatus === "active") {
+          await autoPublishMadingInstagram({
+            origin: siteOriginFromRequest(req),
+            postId: id,
+          });
+        }
         break;
       }
 

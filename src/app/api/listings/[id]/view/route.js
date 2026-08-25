@@ -22,7 +22,13 @@ export async function POST(req, { params }) {
 
     const supa = getAdminClient();
     const { error } = await supa.rpc("increment_listing_views", { lid: id });
-    if (error) throw new Error(error.message);
+    if (error) {
+      // Fallback jika RPC belum ada atau gagal
+      const { data: item } = await supa.from("listings").select("views").eq("id", id).single();
+      if (item) {
+        await supa.from("listings").update({ views: (item.views || 0) + 1 }).eq("id", id);
+      }
+    }
 
     // Cek milestone secara async (fire-and-forget, jangan blok response)
     checkAndNotifyMilestone(supa, id).catch(() => {});
