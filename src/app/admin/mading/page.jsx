@@ -36,7 +36,22 @@ export default async function AnalitikMadingPage({ searchParams }) {
       .limit(150));
   }
 
-  const rows = posts || [];
+  const publicationMap = {};
+  const publicationPostIds = (posts || []).map((post) => post.id);
+  if (publicationPostIds.length > 0) {
+    const { data: publications } = await supa
+      .from("mading_instagram_publications")
+      .select("post_id, status, attempts, last_error, published_at")
+      .in("post_id", publicationPostIds);
+    (publications || []).forEach((publication) => {
+      publicationMap[publication.post_id] = publication;
+    });
+  }
+
+  const rows = (posts || []).map((post) => ({
+    ...post,
+    instagram_publication: publicationMap[post.id] || null,
+  }));
   const totals = rows.reduce((result, post) => ({
     posts: result.posts + 1,
     views: result.views + (post.views_count || 0),

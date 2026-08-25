@@ -61,7 +61,7 @@ async function getData(slug) {
     if (!listing) return null;
 
     // 2. Fetch related data in parallel
-    const [paymentsRes, reportsRes, ratingsRes, categoriesRes] =
+    const [paymentsRes, reportsRes, ratingsRes, categoriesRes, instagramRes] =
       await Promise.all([
         supa
           .from("payments")
@@ -82,6 +82,11 @@ async function getData(slug) {
           .from("categories")
           .select("id, name, slug")
           .order("sort_order", { ascending: true }),
+        supa
+          .from("listing_instagram_publications")
+          .select("status, attempts, last_error, instagram_media_id, queued_at, published_at, updated_at")
+          .eq("listing_id", listing.id)
+          .maybeSingle(),
       ]);
 
     return {
@@ -90,6 +95,7 @@ async function getData(slug) {
       reports: reportsRes.data || [],
       ratings: ratingsRes.data || [],
       categories: categoriesRes.data || [],
+      instagramPublication: instagramRes.data || null,
     };
   } catch (err) {
     console.error("[admin/listings/[slug]] getData error:", err?.message);
@@ -110,7 +116,7 @@ export default async function AdminListingPage({ params }) {
   const result = await getData(params.slug);
   if (!result) notFound();
 
-  const { listing, payments, reports, ratings, categories } = result;
+  const { listing, payments, reports, ratings, categories, instagramPublication } = result;
 
   return (
     <div>
@@ -135,6 +141,7 @@ export default async function AdminListingPage({ params }) {
         reports={reports}
         ratings={ratings}
         categories={categories}
+        instagramPublication={instagramPublication}
       />
     </div>
   );

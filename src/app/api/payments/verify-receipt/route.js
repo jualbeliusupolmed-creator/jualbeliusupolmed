@@ -9,8 +9,11 @@ import { formatWa } from "@/lib/constants";
 import { loadLidPhoneMap, migrateLidToPhone } from "@/lib/lidMigrate";
 import { computeImageHash, checkReceiptHashDuplicate, saveReceiptHash } from "@/lib/receiptHash";
 import { notifyKeywordSubscribers } from "@/lib/keywordSubs";
+import { autoPublishListingInstagram } from "@/lib/listingInstagram";
+import { siteOriginFromRequest } from "@/lib/instagramQueue";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 export async function POST(req) {
   try {
@@ -213,6 +216,10 @@ export async function POST(req) {
             // Notifikasi subscriber kata kunci (Keyword Subscriptions)
             notifyKeywordSubscribers(supa, listing),
           ]).catch(console.error);
+          await autoPublishListingInstagram({
+            origin: siteOriginFromRequest(req),
+            listingId: listing.id,
+          });
         }
       } else if (payment.type === "featured") {
         const days = payment.meta?.days || 1;

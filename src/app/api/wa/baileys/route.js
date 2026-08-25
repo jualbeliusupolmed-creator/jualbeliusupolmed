@@ -5,7 +5,6 @@ import { sendWa as _sendWaBase, postToGroup, notifyAdminNewListing, notifyWanted
 import { pushListingBaru } from "@/lib/webpush";
 import { formatWa } from "@/lib/constants";
 import { getSettings, adFeeFrom, angkaSetelan } from "@/lib/settings";
-import { postToFacebook, postToInstagram } from "@/lib/meta";
 import { buildSlug } from "@/lib/slug";
 import { rateLimit } from "@/lib/rateLimit";
 import { handleAdminCmd } from "@/lib/bot/adminHandlers";
@@ -14,6 +13,7 @@ import { computeImageHash, checkReceiptHashDuplicate, saveReceiptHash } from "@/
 import { addKeywordSubscription, removeKeywordSubscription, listKeywordSubscriptions, notifyKeywordSubscribers } from "@/lib/keywordSubs";
 import sharp from "sharp";
 import { jumlahTokenBot, tokenBotSah } from "@/lib/botTokens";
+import { autoPublishListingInstagram } from "@/lib/listingInstagram";
 
 export const dynamic = "force-dynamic";
 // Loop kirim WA berjeda (anti-ban) mudah melewati batas default 10-15 detik —
@@ -612,6 +612,10 @@ export async function POST(req) {
                 // struk lewat WhatsApp) sebelumnya tidak mengirim push sama sekali.
                 pushListingBaru(supa, l),
               ].map(p => p.catch(() => {})));
+              await autoPublishListingInstagram({
+                origin: baseUrl,
+                listingId: l.id,
+              });
             }
           }
           return NextResponse.json({ ok: true, state: "receipt_verified_bulk" });
@@ -628,6 +632,11 @@ export async function POST(req) {
           if (updatedListing) {
             const productSlug = buildSlug(updatedListing.title, updatedListing.id);
             const productUrl = `${baseUrl}/produk/${productSlug}`;
+
+            await autoPublishListingInstagram({
+              origin: baseUrl,
+              listingId: updatedListing.id,
+            });
 
             const confirmMsg = `🎉 *PEMBAYARAN BERHASIL!*\n\n` +
               `Struk *Rp ${pendingPayment.amount.toLocaleString("id-ID")}* udah aku cek, aman 👍\n\n` +
@@ -1107,38 +1116,23 @@ export async function POST(req) {
           return NextResponse.json({ ok: true });
         }
 
-        const settings = await getSettings().catch(() => null);
-        const metaCfg = settings?.meta;
-        if (!metaCfg?.accessToken || (!metaCfg?.fbPageId && !metaCfg?.igUserId)) {
-          await sendWa(senderJid, `❌ Pengaturan Meta belum lengkap. Isi Token dan Page ID di panel admin.`);
+        if (listingData.status !== "active") {
+          await sendWa(senderJid, "❌ Iklan harus aktif sebelum diterbitkan ke Instagram katalog.");
           return NextResponse.json({ ok: true });
         }
 
-        await sendWa(senderJid, `⏳ Sedang memproses posting iklan *${shortId}* ke Meta (IG & FB)...`);
-
-        const priceText = listingData.price > 0 ? `Rp ${listingData.price.toLocaleString("id-ID")}` : "GRATIS";
-        const caption = `${listingData.title}\n\nHarga: ${priceText}\nKondisi: ${listingData.stock > 1 ? "Tersedia" : "Terbatas"}\nLokasi: ${listingData.campus} - ${listingData.area || "-"}\n\n${listingData.description || ""}\n\n👉 Pesan sekarang via WA (Cek di website)\n\n#JualBeliUSU #BarangBekas #AnakUSU`;
-        
-        const imgUrl = (listingData.images && listingData.images[0]) || `https://jualbeliusu.com/api/og?id=${listingData.id}`;
-        
-        let results = [];
-        if (metaCfg.fbPageId) {
-          try {
-            await postToFacebook(metaCfg.fbPageId, metaCfg.accessToken, imgUrl, caption);
-            results.push("Facebook ✅");
-          } catch (e) {
-            results.push(`Facebook ❌ (${e.message})`);
-          }
-        }
-        if (metaCfg.igUserId) {
-          try {
-            await postToInstagram(metaCfg.igUserId, metaCfg.accessToken, imgUrl, caption);
-            results.push("Instagram ✅");
-          } catch (e) {
-            results.push(`Instagram ❌ (${e.message})`);
-          }
-        }
-        await sendWa(senderJid, `🎉 Hasil Meta Auto-Post:\n\n${results.join("\n")}`);
+        await sendWa(senderJid, `⏳ Memproses iklan *${shortId}* ke @katalogusupolmed...`);
+        const results = await autoPublishListingInstagram({
+          origin: (process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").replace(/\/$/, ""),
+          listingId: listingData.id,
+        });
+        const published = results.some((result) => result.status === "published");
+        await sendWa(
+          senderJid,
+          published
+            ? "✅ Iklan berhasil diterbitkan ke @katalogusupolmed."
+            : "⏳ Iklan sudah masuk antrean @katalogusupolmed dan akan dicoba ulang otomatis.",
+        );
         return NextResponse.json({ ok: true });
 
       } else if (textMsg.startsWith("APPROVE ") || textMsg.startsWith("REJECT ")) {

@@ -1,18 +1,30 @@
 import { NextResponse } from "next/server";
 import { tolakCron } from "@/lib/cronAuth";
 import { publishQueuedMadingInstagram, siteOriginFromRequest } from "@/lib/madingInstagram";
+import { publishQueuedListingInstagram } from "@/lib/listingInstagram";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-// Dipanggil scheduler tepercaya. Hanya post yang sudah diantrekan admin yang diproses.
+// Backup scheduler untuk retry Menfess dan katalog yang gagal diproses langsung.
 export async function GET(request) {
   const tolak = tolakCron(request);
   if (tolak) return tolak;
 
   try {
-    const results = await publishQueuedMadingInstagram({ origin: siteOriginFromRequest(request) });
-    return NextResponse.json({ ok: true, processed: results.length, results });
+    const origin = siteOriginFromRequest(request);
+    const [menfess, catalog] = await Promise.allSettled([
+      publishQueuedMadingInstagram({ origin, limit: 5 }),
+      publishQueuedListingInstagram({ origin, limit: 5 }),
+    ]);
+    const menfessResults = menfess.status === "fulfilled" ? menfess.value : [];
+    const catalogResults = catalog.status === "fulfilled" ? catalog.value : [];
+    return NextResponse.json({
+      ok: menfess.status === "fulfilled" || catalog.status === "fulfilled",
+      processed: menfessResults.length + catalogResults.length,
+      menfess: menfessResults,
+      catalog: catalogResults,
+    });
   } catch (error) {
     return NextResponse.json({ error: error.message || "Gagal menerbitkan antrean Instagram." }, { status: 503 });
   }

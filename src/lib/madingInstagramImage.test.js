@@ -71,6 +71,19 @@ describe("mading Instagram image", () => {
     expect(layout.lines.join(" ")).toBe("Semangat untuk kampus");
   });
 
+  it("reserves a compact photo area for Menfess with an attachment", () => {
+    const post = {
+      image_url: "https://example.test/photo.jpg",
+      content: "Foto kegiatan kampus hari ini.",
+    };
+    const layout = layoutMadingInstagramPost(post);
+    const svg = createMadingInstagramSvg({ hasPhoto: true });
+
+    expect(layout.maxLines).toBe(6);
+    expect(layout.firstLineY).toBeGreaterThan(700);
+    expect(svg).toContain('x="122" y="237" width="836" height="476"');
+  });
+
   it("renders with the bundled font files", async () => {
     const fontDirectory = path.join(
       process.cwd(),

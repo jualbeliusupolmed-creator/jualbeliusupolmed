@@ -218,6 +218,21 @@ export default function AdminMadingTable({
                             🚩 {reportCount} Laporan
                           </span>
                         )}
+                        {post.instagram_status && post.instagram_status !== "not_queued" && (
+                          <span
+                            className={`inline-flex max-w-44 items-center gap-1 rounded-lg px-2 py-0.5 text-[10px] font-bold ${
+                              post.instagram_status === "published"
+                                ? "bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300"
+                                : post.instagram_status === "failed"
+                                  ? "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300"
+                                  : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                            }`}
+                            title={post.instagram_publication?.last_error || "Status publikasi Instagram"}
+                          >
+                            IG: {post.instagram_status === "published" ? "Terbit" : post.instagram_status === "processing" ? "Diproses" : post.instagram_status === "failed" ? "Gagal" : "Antrean"}
+                            {post.instagram_publication?.attempts ? ` (${post.instagram_publication.attempts}/3)` : ""}
+                          </span>
+                        )}
                       </div>
                     </td>
 
@@ -247,7 +262,7 @@ export default function AdminMadingTable({
                           className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-fuchsia-50 dark:bg-fuchsia-950/40 text-fuchsia-700 dark:text-fuchsia-300 border border-fuchsia-200 dark:border-fuchsia-900/50 hover:bg-fuchsia-100 transition-all disabled:opacity-50"
                           title={post.instagram_status === "published" ? "Sudah terbit di Instagram" : "Terbitkan ke Instagram sekarang"}
                         >
-                          {post.instagram_status === "published" ? "📸 Terbit IG" : post.instagram_status === "queued" ? "⏳ Sedang Proses" : "📸 Terbitkan IG"}
+                          {post.instagram_status === "published" ? "📸 Terbit IG" : post.instagram_status === "processing" ? "⏳ Diproses" : post.instagram_status === "failed" ? "↻ Coba Lagi IG" : post.instagram_status === "queued" ? "▶ Proses IG" : "📸 Terbitkan IG"}
                         </button>
                         <button
                           type="button"

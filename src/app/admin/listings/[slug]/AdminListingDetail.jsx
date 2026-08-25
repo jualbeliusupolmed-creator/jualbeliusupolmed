@@ -31,7 +31,7 @@ function Field({ label, children }) {
   );
 }
 
-export default function AdminListingDetail({ listing, payments, reports, ratings, categories }) {
+export default function AdminListingDetail({ listing, payments, reports, ratings, categories, instagramPublication }) {
   const basis = useBasisAdmin();
   const router = useRouter();
   const [editing, setEditing] = useState(false);
@@ -72,6 +72,14 @@ export default function AdminListingDetail({ listing, payments, reports, ratings
 
   const publicSlug = buildSlug(listing.title, listing.id);
   const totalRevenue = payments.filter(p => p.status === "paid").reduce((s, p) => s + (p.amount || 0), 0);
+  const instagramStatus = instagramPublication?.status || "not_queued";
+  const instagramLabel = {
+    not_queued: "Belum diantrekan",
+    queued: "Menunggu / akan dicoba ulang",
+    processing: "Sedang diproses Meta",
+    published: "Sudah terbit",
+    failed: "Gagal setelah 3 percobaan",
+  }[instagramStatus] || instagramStatus;
 
   return (
     <>
@@ -142,6 +150,18 @@ export default function AdminListingDetail({ listing, payments, reports, ratings
         ) : (
           <button onClick={() => action({ action: "feature", id: listing.id, days: 7 }, "Featured 7 hari")} className="rounded-lg bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-600 hover:bg-amber-100">
             Featured 7 Hari
+          </button>
+        )}
+        {listing.status === "active" && instagramStatus !== "published" && (
+          <button
+            onClick={() => action(
+              { action: "publish_listing_instagram", id: listing.id },
+              "Terbit di @katalogusupolmed",
+            )}
+            disabled={busy || instagramStatus === "processing"}
+            className="rounded-lg bg-violet-100 px-3 py-1.5 text-sm font-medium text-violet-700 hover:bg-violet-200 disabled:cursor-wait disabled:opacity-60"
+          >
+            {instagramStatus === "failed" ? "Coba Lagi Instagram" : instagramStatus === "queued" ? "Proses Instagram" : "Terbitkan ke Instagram"}
           </button>
         )}
         <button onClick={() => confirmThen({ title: "Blacklist penjual", message: `Blokir ${listing.seller_wa}?`, danger: true }, () => action({ action: "blacklist", wa: listing.seller_wa }, "Diblacklist"))} className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-slate-700 dark:text-slate-300">
@@ -277,6 +297,35 @@ export default function AdminListingDetail({ listing, payments, reports, ratings
 
         {/* Sidebar kanan — info penjual */}
         <div className="space-y-4">
+          <div className="card p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="font-bold dark:text-white">Instagram Katalog</h2>
+                <p className="mt-1 text-xs text-gray-400">@katalogusupolmed</p>
+              </div>
+              <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                instagramStatus === "published"
+                  ? "bg-emerald-100 text-emerald-700"
+                  : instagramStatus === "failed"
+                    ? "bg-rose-100 text-rose-700"
+                    : "bg-violet-100 text-violet-700"
+              }`}>
+                {instagramLabel}
+              </span>
+            </div>
+            <div className="mt-4 space-y-2 text-xs text-gray-500 dark:text-slate-400">
+              <p>Percobaan: {instagramPublication?.attempts || 0}/3</p>
+              {instagramPublication?.published_at && (
+                <p>Terbit: {new Date(instagramPublication.published_at).toLocaleString("id-ID")}</p>
+              )}
+              {instagramPublication?.last_error && instagramStatus !== "published" && (
+                <p className="rounded-lg bg-rose-50 p-2 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300">
+                  {instagramPublication.last_error}
+                </p>
+              )}
+            </div>
+          </div>
+
           <div className="card p-5">
             <h2 className="mb-3 font-bold dark:text-white">Penjual</h2>
             <div className="space-y-3">
