@@ -12,9 +12,10 @@ import { toast } from "sonner";
 const links = [
   { href: "/", label: "Beranda" },
   { href: "/jual-beli", label: "Marketplace" },
-  { href: "/jasa", label: "Jasa" },
-  { href: "/dicari", label: "Dicari" },
   { href: "/mading", label: "Menfess" },
+  { href: "/organisasi", label: "UKM" },
+  { href: "/oprec", label: "Oprec" },
+  { href: "/dicari", label: "Dicari" },
   { href: "/teman", label: "Cari Teman 🔥" },
   { href: "/chat", label: "Obrolan" },
 ];

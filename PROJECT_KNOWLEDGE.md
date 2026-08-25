@@ -282,6 +282,11 @@ Berjalan dengan PostgreSQL, memiliki tabel-tabel berikut:
       - **Tautan Pendaftaran Private (`/organisasi/daftar?invite=...`):** Formulir pendaftaran khusus pengurus organisasi dengan verifikasi token invite, upload logo WebP, dan auto-session login.
       - **Panel Admin:** Pengaturan kode undangan private organisasi dan tombol salin tautan instan di tab Pengaturan Admin.
       - **Feed Mading Organisasi:** Tab `🏛️ Organisasi` di Mading untuk pengumuman resmi, oprec kepanitiaan, dan info kegiatan UKM.
+    - **Sistem Formulir Oprec In-App (`/oprec`, `src/components/oprec/OprecDaftarModal.jsx`, `src/components/oprec/BuatOprecModal.jsx`):**
+      - **Pusat Oprec Kampus (`/oprec`):** Direktori lowongan kepanitiaan acara, staf BEM/HIMA, dan keanggotaan UKM dengan countdown sisa hari pendaftaran.
+      - **Formulir Pendaftaran Mahasiswa:** Modal in-app untuk submit data (Nama, NIM, Kampus, Fakultas, Angkatan, Divisi Pilihan 1 & 2, Alasan/Portofolio) dan langsung diarahkan ke grup WhatsApp peserta.
+      - **Pembuatan Oprec Dinamis:** Pengurus UKM dapat membuka oprec dengan konfigurasi divisi dinamis, deadline, dan link grup WhatsApp.
+      - **Tabel Database & Migration (`supabase/migration_oprec.sql`):** Tabel `oprec_events` dan `oprec_submissions` dengan RLS policies.
 
 *   **26 Agustus 2026** - *Pembaruan Statistik Dashboard Penjual (Seller Analytics & Performance Matrix)*
     - **Komponen (`src/components/dashboard/SellerAnalyticsView.jsx`):** Menghadirkan antarmuka analitik modern dengan 6 KPI Cards (Total Views, Omset Terjual GMV, Nilai Aset Aktif, Konversi %, Tawaran Masuk, Rating Kepuasan Pembeli).
