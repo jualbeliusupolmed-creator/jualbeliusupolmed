@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getUserSession } from "@/lib/auth";
+import { sendWa } from "@/lib/fonnte";
 
 export const dynamic = "force-dynamic";
 
@@ -74,7 +75,7 @@ export async function PATCH(req, { params }) {
     // Verifikasi pemilik oprec
     const { data: oprec } = await supa
       .from("oprec_events")
-      .select("id, ukm_wa")
+      .select("id, ukm_wa, title, ukm_name")
       .eq("id", params.id)
       .maybeSingle();
 
@@ -103,6 +104,20 @@ export async function PATCH(req, { params }) {
 
       if (error) {
         return NextResponse.json({ error: "Gagal memperbarui status pendaftar." }, { status: 500 });
+      }
+
+      // Kirim Notifikasi WA ke pendaftar
+      if (newStatus === "accepted" || newStatus === "rejected") {
+        const isAccepted = newStatus === "accepted";
+        const msg = 
+          `Halo *${data.applicant_name}*,\n\n` +
+          `Pengumuman Seleksi Open Recruitment *${oprec.title}*:\n` +
+          `Status: ${isAccepted ? "✅ *DITERIMA*" : "❌ *DITOLAK*"}\n\n` +
+          (data.reviewer_note ? `Catatan Pengurus:\n_${data.reviewer_note}_\n\n` : "") +
+          (isAccepted ? `Selamat bergabung di ${oprec.ukm_name}! 🎉` : `Tetap semangat dan coba lagi tahun depan! 💪`);
+        
+        // Fire and forget, biarkan Fonnte / Baileys fallback yang menangani
+        sendWa(data.applicant_wa, msg).catch(() => {});
       }
 
       return NextResponse.json({ success: true, submission: data });
