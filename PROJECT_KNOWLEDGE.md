@@ -102,6 +102,12 @@ Berjalan dengan PostgreSQL, memiliki tabel-tabel berikut:
 
 ## 5. Log & Riwayat Audit
 
+*   **25 Agustus 2026 — Desain generator Menfess Instagram & temuan jalur deploy Vercel**
+    - Generator JPEG Menfess diubah menjadi format feed 4:5 (1080×1350) dengan latar ivory, tipografi adaptif, identitas `@usupolmedmenfess` yang halus, dan footer domain. Isi panjang diperkecil dan dipotong aman; modifier warna kulit emoji yang tidak didukung rasterizer dibersihkan hanya pada gambar (caption tetap utuh).
+    - Verifikasi lokal: 24/24 tes lulus, lint bersih, build produksi berhasil, dan JPEG nyata dari route telah diperiksa secara visual.
+    - Commit `d596901` sudah didorong ke `main`. Deployment Vercel baru berstatus `READY` pada proyek yang tertaut di `.vercel/project.json`, tetapi proyek tersebut tidak memiliki environment variable produksi dan tidak menguasai `www.jualbeliusupolmed.web.id` maupun `jualbeliusupolmed.vercel.app`.
+    - Smoke test domain utama masih menghasilkan generator lama 1080×1080. Jangan memindahkan domain ke proyek tertaut sebelum akses ke proyek produksi sebenarnya ditemukan, environment parity diverifikasi, dan rollback disiapkan; pemindahan sekarang akan memutus API yang bergantung pada Supabase.
+
 *   **25 Agustus 2026 — Antrean publikasi Instagram Menfess (belum diaktifkan di produksi)**
     - Menfess yang sudah aktif dapat diterbitkan langsung oleh admin melalui tombol `Terbitkan IG`; sistem tetap memakai antrean dan lock status untuk mencegah publikasi ganda. Scheduler server menjadi jalur cadangan untuk antrean yang belum diproses.
     - Token dan ID akun Instagram tidak disimpan di database maupun kode. Koneksi produksi menggunakan environment server `META_IG_ACCESS_TOKEN`, `META_IG_USER_ID`, dan `CRON_SECRET`.
