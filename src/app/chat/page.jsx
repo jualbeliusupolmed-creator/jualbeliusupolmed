@@ -550,7 +550,7 @@ function ChatContent() {
     ).length;
 
     return (
-      <div className="flex flex-col h-dvh max-w-2xl w-full mx-auto bg-white dark:bg-[#000000] overflow-hidden font-sans no-tap-highlight">
+      <div className="flex flex-col h-[calc(100dvh-50px)] max-w-2xl w-full mx-auto bg-white dark:bg-[#000000] overflow-hidden font-sans no-tap-highlight">
         {/* ── HEADER APPLE HIG ── */}
         <div className="bg-white/85 dark:bg-[#000000]/85 backdrop-blur-2xl border-b border-black/[0.06] dark:border-white/[0.08] shrink-0 z-40 pt-[max(env(safe-area-inset-top),0.5rem)] px-3 xs:px-4 py-2.5">
           <div className="flex items-center justify-between">
@@ -886,7 +886,7 @@ function ChatContent() {
 
         {/* ── BOTTOM INPUT BAR ── */}
         {aktifRoomId ? (
-          <div className="p-2.5 xs:p-3 bg-white/85 dark:bg-[#000000]/85 backdrop-blur-2xl border-t border-black/[0.06] dark:border-white/[0.08] flex items-center gap-2 pb-[calc(env(safe-area-inset-bottom)+3rem)] md:pb-[calc(env(safe-area-inset-bottom)+2.5rem)]">
+          <div className="p-2.5 xs:p-3 bg-white/85 dark:bg-[#000000]/85 backdrop-blur-2xl border-t border-black/[0.06] dark:border-white/[0.08] flex items-center gap-2 pb-[calc(env(safe-area-inset-bottom)_+_3.5rem)] md:pb-[calc(env(safe-area-inset-bottom)_+_3rem)]">
             <input
               ref={fileInputRef}
               type="file"
@@ -1003,7 +1003,7 @@ function ChatContent() {
     }
 
     return (
-      <div className="flex flex-col h-dvh max-w-2xl w-full mx-auto bg-white dark:bg-[#000000] overflow-hidden font-sans no-tap-highlight">
+      <div className="flex flex-col h-[calc(100dvh-50px)] max-w-2xl w-full mx-auto bg-white dark:bg-[#000000] overflow-hidden font-sans no-tap-highlight">
         <div className="bg-white/85 dark:bg-[#000000]/85 backdrop-blur-2xl border-b border-black/[0.06] dark:border-white/[0.08] shrink-0 z-40 pt-[max(env(safe-area-inset-top),0.5rem)] px-3 xs:px-4 py-2.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5 min-w-0">
@@ -1128,7 +1128,7 @@ function ChatContent() {
         )}
 
         {roomStatus === "active" && (
-          <div className="p-2.5 xs:p-3 bg-white/85 dark:bg-[#000000]/85 backdrop-blur-2xl border-t border-black/[0.06] dark:border-white/[0.08] flex items-center gap-2 pb-[calc(env(safe-area-inset-bottom)+3rem)] md:pb-[calc(env(safe-area-inset-bottom)+2.5rem)]">
+          <div className="p-2.5 xs:p-3 bg-white/85 dark:bg-[#000000]/85 backdrop-blur-2xl border-t border-black/[0.06] dark:border-white/[0.08] flex items-center gap-2 pb-[calc(env(safe-area-inset-bottom)_+_3.5rem)] md:pb-[calc(env(safe-area-inset-bottom)_+_3rem)]">
             <input
               ref={fileInputRef}
               type="file"
@@ -1214,7 +1214,7 @@ function ChatContent() {
         : "Ngobrol 1-on-1 dengan mahasiswa USU & POLMED — ketuk buat mulai";
 
   return (
-    <div className="h-dvh overflow-y-auto bg-[#f5f5f7] dark:bg-[#000000] font-sans">
+    <div className="fixed inset-0 z-30 pt-[50px] pb-[90px] md:pb-[100px] overflow-y-auto bg-[#f5f5f7] dark:bg-[#000000] font-sans">
       <div className="bg-white/80 dark:bg-[#000000]/80 backdrop-blur-2xl border-b border-black/[0.06] dark:border-white/[0.08] sticky top-0 z-40">
         <div className="px-4 py-3 max-w-2xl mx-auto flex items-center justify-between">
           <div>

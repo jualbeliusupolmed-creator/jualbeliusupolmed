@@ -147,12 +147,38 @@ export default function TemanSwipePage() {
     toast.success(`Mengembalikan ${lastCard.display_name}`);
   };
 
+  const handleToggleVisibility = async () => {
+    if (!myProfile) return;
+    const newStatus = !myProfile.is_active;
+    
+    setMyProfile((prev) => ({ ...prev, is_active: newStatus }));
+    toast(newStatus ? "Profilmu kini bisa dilihat!" : "Profilmu disembunyikan", {
+      icon: newStatus ? "👁️" : "🙈",
+    });
+
+    try {
+      const res = await fetch("/api/teman/profiles", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, is_active: newStatus }),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        throw new Error(data.error);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Gagal mengubah status privasi");
+      setMyProfile((prev) => ({ ...prev, is_active: !newStatus }));
+    }
+  };
+
   const currentTopProfile = deck[0] || null;
   const nextProfile = deck[1] || null;
 
   if (!mounted) {
     return (
-    <div className="relative h-[calc(100dvh-150px)] md:h-[calc(100dvh-112px)] bg-[#f5f5f7] dark:bg-[#000000] flex flex-col font-sans max-w-lg w-full mx-auto px-4 py-3 overflow-hidden">
+      <div className="fixed inset-0 z-30 pt-[50px] pb-[90px] md:pb-[100px] bg-[#f5f5f7] dark:bg-[#000000] flex flex-col font-sans max-w-lg w-full mx-auto px-4 py-3 overflow-hidden">
         <div className="flex flex-col items-center justify-center my-auto py-24 space-y-3">
           <div className="w-10 h-10 border-3 border-primary/30 border-t-primary rounded-full animate-spin" />
           <p className="text-xs text-gray-400 font-medium">Menyiapkan Cari Teman Kampus...</p>
@@ -162,7 +188,7 @@ export default function TemanSwipePage() {
   }
 
   return (
-    <div className="relative h-[calc(100dvh-150px)] md:h-[calc(100dvh-112px)] bg-[#f5f5f7] dark:bg-[#000000] flex flex-col font-sans max-w-lg w-full mx-auto px-4 py-3 select-none overflow-hidden">
+    <div className="fixed inset-0 z-30 pt-[50px] pb-[90px] md:pb-[100px] bg-[#f5f5f7] dark:bg-[#000000] flex flex-col font-sans max-w-lg w-full mx-auto px-4 py-3 select-none overflow-hidden">
       
       {/* TOP BAR & FILTER */}
       <div className="flex items-center justify-between gap-2 pb-3">
@@ -184,6 +210,19 @@ export default function TemanSwipePage() {
 
         {/* Right Buttons: Matches & Profile */}
         <div className="flex items-center gap-1.5">
+          {myProfile && (
+            <button
+              onClick={handleToggleVisibility}
+              className={`flex items-center justify-center h-8 w-8 rounded-full border shadow-2xs active:scale-95 transition-all ${
+                myProfile.is_active
+                  ? "bg-white/90 dark:bg-[#1c1c1e] border-black/[0.06] dark:border-white/[0.08]"
+                  : "bg-red-50 text-red-600 border-red-200 dark:bg-red-950/40 dark:border-red-800 dark:text-red-400"
+              }`}
+              title={myProfile.is_active ? "Sembunyikan Profil" : "Tampilkan Profil"}
+            >
+              <span className="text-sm leading-none">{myProfile.is_active ? "👁️" : "🙈"}</span>
+            </button>
+          )}
           <button
             onClick={handleOpenMatches}
             className="relative flex items-center gap-1 bg-white/90 dark:bg-[#1c1c1e] border border-black/[0.06] dark:border-white/[0.08] px-3 py-1.5 rounded-full text-xs font-bold text-[#1d1d1f] dark:text-white shadow-2xs active:scale-95 transition-all"
@@ -225,6 +264,24 @@ export default function TemanSwipePage() {
           <div className="flex flex-col items-center justify-center space-y-3 py-16">
             <div className="w-10 h-10 border-3 border-primary/30 border-t-primary rounded-full animate-spin" />
             <p className="text-xs text-gray-400 font-medium">Menyiapkan profil mahasiswa...</p>
+          </div>
+        ) : myProfile && !myProfile.is_active ? (
+          <div className="flex flex-col items-center justify-center text-center p-8 rounded-3xl bg-white dark:bg-[#1c1c1e] border border-black/[0.06] dark:border-white/[0.08] shadow-sm space-y-3 w-full h-full max-h-[400px]">
+            <span className="text-6xl mb-2">🙈</span>
+            <h3 className="text-lg font-black text-[#1d1d1f] dark:text-white">
+              Profilmu Disembunyikan
+            </h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 max-w-xs leading-relaxed">
+              Kamu tidak bisa mencari teman dan profilmu tidak akan ditampilkan ke orang lain saat ini.
+            </p>
+            <div className="flex gap-2 pt-4">
+              <button
+                onClick={handleToggleVisibility}
+                className="rounded-full bg-primary px-5 py-2.5 text-xs font-bold text-white shadow-xs hover:brightness-105 active:scale-95 transition-all"
+              >
+                Aktifkan Profil 👁️
+              </button>
+            </div>
           </div>
         ) : deck.length === 0 ? (
           <div className="flex flex-col items-center justify-center text-center p-8 rounded-3xl bg-white dark:bg-[#1c1c1e] border border-black/[0.06] dark:border-white/[0.08] shadow-sm space-y-3 w-full">

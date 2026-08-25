@@ -8,6 +8,7 @@ import InstallPrompt from "./InstallPrompt";
 import NotifPrompt from "./NotifPrompt";
 import BottomNavbar from "./BottomNavbar";
 import GlobalChatNotifier from "./GlobalChatNotifier";
+import { cn } from "@/lib/utils";
 
 export default function LayoutWrapper({ children }) {
   const pathname = usePathname();
@@ -29,10 +30,19 @@ export default function LayoutWrapper({ children }) {
     }
   }, [isAdmin]);
 
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+  const isChatRoom = isChat && searchParams && (searchParams.has("anon") || searchParams.has("room"));
+
   return (
     <>
       {!isImmersive && <Navbar config={config} />}
-      <main className={isAdmin ? "flex-1" : isChat || isTeman ? "flex-1 bg-[#f5f5f7] pb-20 md:pb-28 dark:bg-[#000000]" : "flex-1 bg-[#f5f5f7] pb-24 md:pb-28 dark:bg-[#0b0b0f]"}>{children}</main>
+      <main className={cn(
+        "flex-1 flex flex-col bg-[#f5f5f7]",
+        isAdmin ? "dark:bg-[#000000]" : isChat || isTeman ? "dark:bg-[#000000]" : "dark:bg-[#0b0b0f]",
+        !isAdmin && !isChatRoom && (isChat || isTeman ? "pb-20 md:pb-28" : "pb-24 md:pb-28")
+      )}>
+        {children}
+      </main>
       {!isImmersive && (
         <>
           <GlobalChatNotifier />
