@@ -76,6 +76,8 @@ export async function generateMetadata() {
 export const viewport = {
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   // Warna bilah peramban di Android/iOS. Ungu Polmed, sama dengan tombol
   // ajakan utama — supaya jendela aplikasi menyatu dengan halamannya.
   themeColor: "#532b98",
