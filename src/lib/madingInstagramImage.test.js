@@ -63,10 +63,12 @@ describe("mading Instagram image", () => {
     expect(layerText).not.toContain("A & B <aman>");
   });
 
-  it("removes unsupported skin-tone modifiers from the rendered image", () => {
-    const layout = layoutMadingInstagramPost({ content: "Semangat 🤌🏻" });
+  it("removes unsupported emoji from the rendered image", () => {
+    const layout = layoutMadingInstagramPost({
+      content: "Semangat 🤌🏻 untuk kampus 👨‍👩‍👧‍👦 🇮🇩",
+    });
 
-    expect(layout.lines.join(" ")).toBe("Semangat 🤌");
+    expect(layout.lines.join(" ")).toBe("Semangat untuk kampus");
   });
 
   it("renders with the bundled font files", async () => {

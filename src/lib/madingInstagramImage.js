@@ -12,9 +12,12 @@ export function escapeXml(value = "") {
 
 function normalizeText(value = "") {
   return String(value)
-    // Font rasterizer server dapat menggambar emoji dasar, tetapi modifier warna
-    // kulit sering berubah menjadi kotak kosong. Caption Instagram tetap utuh.
-    .replace(/[\u{1F3FB}-\u{1F3FF}]/gu, "")
+    // Font yang dibundel menjamin teks Latin konsisten di server Linux, tetapi
+    // tidak memuat glyph emoji. Emoji dibersihkan hanya dari gambar agar tidak
+    // menjadi kotak; caption Instagram dan isi website tetap utuh.
+    .replace(/\p{Extended_Pictographic}/gu, " ")
+    .replace(/[\u{1F1E6}-\u{1F1FF}]/gu, " ")
+    .replace(/[\u{1F3FB}-\u{1F3FF}\u200D\uFE0E\uFE0F\u20E3]/gu, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
