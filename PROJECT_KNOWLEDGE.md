@@ -102,11 +102,12 @@ Berjalan dengan PostgreSQL, memiliki tabel-tabel berikut:
 
 ## 5. Log & Riwayat Audit
 
-*   **25 Agustus 2026 — Desain generator Menfess Instagram & temuan jalur deploy Vercel**
-    - Generator JPEG Menfess diubah menjadi format feed 4:5 (1080×1350) dengan latar ivory, tipografi adaptif, identitas `@usupolmedmenfess` yang halus, dan footer domain. Isi panjang diperkecil dan dipotong aman; modifier warna kulit emoji yang tidak didukung rasterizer dibersihkan hanya pada gambar (caption tetap utuh).
-    - Verifikasi lokal: 24/24 tes lulus, lint bersih, build produksi berhasil, dan JPEG nyata dari route telah diperiksa secara visual.
-    - Commit `d596901` sudah didorong ke `main`. Deployment Vercel baru berstatus `READY` pada proyek yang tertaut di `.vercel/project.json`, tetapi proyek tersebut tidak memiliki environment variable produksi dan tidak menguasai `www.jualbeliusupolmed.web.id` maupun `jualbeliusupolmed.vercel.app`.
-    - Smoke test domain utama masih menghasilkan generator lama 1080×1080. Jangan memindahkan domain ke proyek tertaut sebelum akses ke proyek produksi sebenarnya ditemukan, environment parity diverifikasi, dan rollback disiapkan; pemindahan sekarang akan memutus API yang bergantung pada Supabase.
+*   **25 Agustus 2026 — Desain generator Menfess Instagram aktif di produksi**
+    - Generator JPEG Menfess memakai format feed 4:5 (1080×1350), latar ivory, tipografi adaptif, identitas `@usupolmedmenfess` yang halus, dan footer domain. Isi panjang diperkecil dan dipotong aman.
+    - Plus Jakarta Sans Regular/SemiBold beserta lisensi OFL dibundel dan dirender melalui `sharp` `fontfile` agar hasil konsisten di Vercel Linux. Emoji yang tidak tersedia pada font dibersihkan hanya dari gambar; caption Instagram dan isi website tetap utuh.
+    - Verifikasi: 25/25 tes lulus, lint bersih, build produksi berhasil, trace fungsi memuat kedua TTF, serta JPEG produksi diperiksa visual. Smoke test domain utama menghasilkan `200 image/jpeg` berukuran 1080×1350 tanpa huruf atau emoji kotak.
+    - Commit desain `d596901`, bundling font `d01636b`, dan pembersihan emoji `a5c82d0` sudah didorong ke `main`. Deployment produksi berstatus `READY` dan menguasai `jualbeliusupolmed.vercel.app`, `www.jualbeliusupolmed.web.id`, serta domain apex.
+    - Folder lokal sudah ditautkan ulang ke proyek produksi pada scope `jualbeliusupolmed-creators-projects`; verifikasi scope tetap wajib sebelum deployment berikutnya.
 
 *   **25 Agustus 2026 — Antrean publikasi Instagram Menfess (belum diaktifkan di produksi)**
     - Menfess yang sudah aktif dapat diterbitkan langsung oleh admin melalui tombol `Terbitkan IG`; sistem tetap memakai antrean dan lock status untuk mencegah publikasi ganda. Scheduler server menjadi jalur cadangan untuk antrean yang belum diproses.
