@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { formatWa } from "@/lib/constants";
 import { toast } from "sonner";
-import { Icon } from "@/components/Icons";
+import imageCompression from "browser-image-compression";
 
 export default function OprecDaftarModal({ oprec, onClose, onSubmitted }) {
   const [form, setForm] = useState({
@@ -19,19 +20,57 @@ export default function OprecDaftarModal({ oprec, onClose, onSubmitted }) {
     portfolio_url: "",
   });
 
+  const [customAnswers, setCustomAnswers] = useState({});
+  const [uploadingFields, setUploadingFields] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submittedData, setSubmittedData] = useState(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedWa = localStorage.getItem("seller_wa");
-      if (savedWa) {
-        setForm((prev) => ({ ...prev, applicant_wa: savedWa }));
-      }
+      const savedName = localStorage.getItem("seller_name");
+      setForm((prev) => ({
+        ...prev,
+        applicant_wa: savedWa || prev.applicant_wa,
+        applicant_name: savedName || prev.applicant_name,
+      }));
     }
   }, []);
 
   if (!oprec) return null;
+
+  async function handleImageUpload(fieldId, e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingFields((prev) => ({ ...prev, [fieldId]: true }));
+    try {
+      const compressed = await imageCompression(file, {
+        maxSizeMB: 0.8,
+        maxWidthOrHeight: 1200,
+        useWebWorker: true,
+        fileType: "image/webp",
+      });
+
+      const fd = new FormData();
+      fd.append("file", compressed, "oprec_attachment.webp");
+      fd.append("bucket", "oprec");
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: fd,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal mengunggah foto.");
+
+      setCustomAnswers((prev) => ({ ...prev, [fieldId]: data.url }));
+      toast.success("Foto / Berkas berhasil diunggah!");
+    } catch (err) {
+      toast.error(err.message || "Gagal mengunggah foto.");
+    } finally {
+      setUploadingFields((prev) => ({ ...prev, [fieldId]: false }));
+    }
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -39,12 +78,21 @@ export default function OprecDaftarModal({ oprec, onClose, onSubmitted }) {
     if (!form.applicant_wa.trim()) return toast.error("Nomor WhatsApp wajib diisi.");
     if (!form.division_1) return toast.error("Pilihan divisi 1 wajib dipilih.");
 
+    // Validasi kolom kustom wajib
+    if (Array.isArray(oprec.custom_fields)) {
+      for (const cf of oprec.custom_fields) {
+        if (cf.required && !customAnswers[cf.id]) {
+          return toast.error(`Kolom "${cf.label}" wajib diisi / diunggah.`);
+        }
+      }
+    }
+
     setSubmitting(true);
     try {
       const res = await fetch(`/api/oprec/${oprec.id}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, custom_answers: customAnswers }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal mengirim pendaftaran.");
@@ -185,7 +233,7 @@ export default function OprecDaftarModal({ oprec, onClose, onSubmitted }) {
                 type="text"
                 value={form.faculty}
                 onChange={(e) => setForm({ ...form, faculty: e.target.value })}
-                placeholder="Contoh: Fasilkom-TI / Elektro"
+                placeholder="Contoh: Fasilkom-TI / Teknik"
                 className="input py-2 text-xs font-medium"
               />
             </div>
@@ -262,13 +310,87 @@ export default function OprecDaftarModal({ oprec, onClose, onSubmitted }) {
             </div>
           </div>
 
-          {/* ALASAN & PORTOFOLIO */}
+          {/* KOLOM INPUTAN KUSTOM DARI UKM (TULISAN / UPLOAD GAMBAR) */}
+          {Array.isArray(oprec.custom_fields) && oprec.custom_fields.length > 0 && (
+            <div className="rounded-2xl border border-primary/20 bg-primary/[0.02] p-3.5 space-y-3 dark:border-primary/30 dark:bg-slate-800/40">
+              <p className="font-bold text-primary dark:text-emerald-400 text-xs">
+                📋 Pertanyaan &amp; Berkas Tambahan UKM
+              </p>
+
+              {oprec.custom_fields.map((cf) => (
+                <div key={cf.id} className="space-y-1">
+                  <label className="block font-bold text-gray-700 dark:text-slate-300">
+                    {cf.label} {cf.required && <span className="text-rose-500">*</span>}
+                  </label>
+
+                  {cf.type === "image" ? (
+                    <div className="flex items-center gap-3">
+                      <label className="btn-outline cursor-pointer py-1.5 px-3 text-xs font-bold shrink-0">
+                        <span>
+                          {uploadingFields[cf.id]
+                            ? "Mengunggah..."
+                            : customAnswers[cf.id]
+                            ? "Ganti Foto / Berkas"
+                            : "Unggah Foto / KTM"}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleImageUpload(cf.id, e)}
+                          disabled={uploadingFields[cf.id]}
+                          className="hidden"
+                        />
+                      </label>
+
+                      {customAnswers[cf.id] ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                            ✓ Berkas Terunggah
+                          </span>
+                          <a
+                            href={customAnswers[cf.id]}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[10px] underline text-gray-500 hover:text-gray-900"
+                          >
+                            Lihat Foto
+                          </a>
+                        </div>
+                      ) : (
+                        <span className="text-[10px] text-gray-400">JPG/PNG/WebP</span>
+                      )}
+                    </div>
+                  ) : cf.type === "textarea" ? (
+                    <textarea
+                      rows={2}
+                      value={customAnswers[cf.id] || ""}
+                      onChange={(e) => setCustomAnswers({ ...customAnswers, [cf.id]: e.target.value })}
+                      placeholder={cf.placeholder || "Tuliskan jawabanmu..."}
+                      className="input py-2 text-xs"
+                      required={cf.required}
+                    />
+                  ) : (
+                    <input
+                      type={cf.type === "url" ? "url" : "text"}
+                      value={customAnswers[cf.id] || ""}
+                      onChange={(e) => setCustomAnswers({ ...customAnswers, [cf.id]: e.target.value })}
+                      placeholder={cf.placeholder || "Ketik jawaban..."}
+                      className="input py-2 text-xs"
+                      required={cf.required}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* ALASAN & PORTOFOLIO UMUM */}
           <div>
             <label className="block font-bold text-gray-700 dark:text-slate-300 mb-1">
               Alasan Bergabung / Pengalaman Terkait
             </label>
             <textarea
-              rows={3}
+              rows={2}
               value={form.reason}
               onChange={(e) => setForm({ ...form, reason: e.target.value })}
               placeholder="Ceritakan motivasimu atau pengalaman organisasi sebelumnya..."
