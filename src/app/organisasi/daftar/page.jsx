@@ -20,6 +20,8 @@ function DaftarOrganisasiForm() {
     ukm_instagram: "",
     contact_name: "",
     contact_wa: "",
+    email: "",
+    password: "",
     bio: "",
     photo_url: "",
     invite_code: "",
@@ -28,6 +30,7 @@ function DaftarOrganisasiForm() {
   const [submitting, setSubmitting] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [successData, setSuccessData] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const invite = searchParams.get("invite") || searchParams.get("code") || DEFAULT_INVITE_CODE;
@@ -119,7 +122,7 @@ function DaftarOrganisasiForm() {
               {form.ukm_name}
             </h2>
             <p className="mt-2 text-sm text-gray-500 dark:text-slate-400">
-              Selamat! Akun resmi UKM/Organisasi kamu telah aktif. Kamu sekarang memiliki hak istimewa untuk memposting pengumuman resmi di Mading, memasang tiket/merchandise, dan tampil di Direktori UKM Kampus.
+              Selamat! Akun resmi UKM/Organisasi kamu telah aktif. Kamu sekarang bisa login kapan saja menggunakan <strong>Email &amp; Password</strong> atau <strong>WhatsApp</strong> tanpa ribet.
             </p>
           </div>
 
@@ -153,7 +156,7 @@ function DaftarOrganisasiForm() {
           Pendaftaran Akun Resmi Organisasi
         </h1>
         <p className="text-sm text-gray-500 dark:text-slate-400 max-w-lg mx-auto">
-          Dapatkan lencana resmi terverifikasi, publikasikan oprec kepanitiaan, info lomba, tiket konser kampus, dan merchandise resmi UKM di USU & POLMED.
+          Dapatkan lencana resmi terverifikasi, publikasikan oprec kepanitiaan, info lomba, tiket konser kampus, dan merchandise resmi UKM di USU &amp; POLMED.
         </p>
       </div>
 
@@ -277,6 +280,53 @@ function DaftarOrganisasiForm() {
           </div>
         </div>
 
+        {/* EMAIL & PASSWORD LOGIN AKUN ORGANISASI */}
+        <div className="rounded-2xl border border-primary/20 bg-primary/[0.03] p-4 dark:border-primary/30 dark:bg-slate-800/40 space-y-3">
+          <p className="text-xs font-bold uppercase tracking-wider text-primary">
+            🔐 Akses Login Akun (Email &amp; Password)
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                Email Organisasi / Akun
+              </label>
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                placeholder="contoh: bem.fasilkom@gmail.com"
+                className="input text-xs"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+                Password Akun (Min 6 Karakter)
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  placeholder="Ketik password organisasi..."
+                  className="input text-xs pr-16"
+                  minLength={6}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-gray-500 hover:text-gray-800 dark:text-slate-400"
+                >
+                  {showPassword ? "Sembunyi" : "Lihat"}
+                </button>
+              </div>
+            </div>
+          </div>
+          <p className="text-[11px] text-gray-400">
+            Digunakan untuk login langsung menggunakan Email &amp; Password tanpa perlu OTP.
+          </p>
+        </div>
+
         {/* DESKRIPSI SINGKAT */}
         <div>
           <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-300 mb-1.5">
@@ -316,7 +366,7 @@ function DaftarOrganisasiForm() {
 
             <div>
               <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
-                Nomor WhatsApp PIC (Dipakai Login) <span className="text-rose-500">*</span>
+                Nomor WhatsApp PIC <span className="text-rose-500">*</span>
               </label>
               <input
                 type="tel"

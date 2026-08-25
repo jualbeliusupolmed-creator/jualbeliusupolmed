@@ -53,6 +53,8 @@ export default function OTPModal({ isOpen, onClose, onSuccess, initialWa = "" })
   // Email States
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [emailSubMode, setEmailSubMode] = useState("login"); // "login" | "register"
+  const [fullName, setFullName] = useState("");
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -243,6 +245,33 @@ export default function OTPModal({ isOpen, onClose, onSuccess, initialWa = "" })
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal login dengan email");
 
+      if (data.name) localStorage.setItem("seller_name", data.name);
+      selesai(data.wa);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleEmailRegister(e) {
+    e.preventDefault();
+    setError("");
+    if (!fullName.trim()) return setError("Nama lengkap wajib diisi.");
+    if (!email.trim() || !email.includes("@")) return setError("Email tidak valid.");
+    if (!password || password.length < 6) return setError("Password minimal 6 karakter.");
+
+    setBusy(true);
+    try {
+      const res = await fetch("/api/auth/email/daftar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: fullName, email, password, wa }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal membuat akun");
+
+      if (data.name) localStorage.setItem("seller_name", data.name);
       selesai(data.wa);
     } catch (err) {
       setError(err.message);
@@ -289,11 +318,21 @@ export default function OTPModal({ isOpen, onClose, onSuccess, initialWa = "" })
           Masuk / Daftar
         </h3>
         <p className="mb-4 text-[13px] text-[#6e6e73] dark:text-slate-400">
-          Gunakan nomor WhatsApp atau Email.
+          Gunakan Email &amp; Password atau nomor WhatsApp.
         </p>
 
         {/* Tab Toggle */}
         <div className="mb-4 flex gap-2 border-b dark:border-slate-800">
+          <button
+            onClick={() => { setLoginMode("email"); setError(""); }}
+            className={`pb-2 text-sm font-bold border-b-2 flex-1 transition-colors ${
+              loginMode === "email"
+                ? "border-gray-900 text-gray-900 dark:border-white dark:text-white"
+                : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            }`}
+          >
+            Email &amp; Password
+          </button>
           <button
             onClick={() => { setLoginMode("wa"); setError(""); }}
             className={`pb-2 text-sm font-bold border-b-2 flex-1 transition-colors ${
@@ -303,16 +342,6 @@ export default function OTPModal({ isOpen, onClose, onSuccess, initialWa = "" })
             }`}
           >
             WhatsApp
-          </button>
-          <button
-            onClick={() => { setLoginMode("email"); setError(""); }}
-            className={`pb-2 text-sm font-bold border-b-2 flex-1 transition-colors ${
-              loginMode === "email"
-                ? "border-gray-900 text-gray-900 dark:border-white dark:text-white"
-                : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-            }`}
-          >
-            Email
           </button>
         </div>
 
@@ -324,38 +353,127 @@ export default function OTPModal({ isOpen, onClose, onSuccess, initialWa = "" })
         )}
 
         {loginMode === "email" ? (
-          <form onSubmit={handleEmailLogin} className="space-y-4">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300">
-                Alamat Email
-              </label>
-              <input
-                type="email"
-                placeholder="nama@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className={KELAS_INPUT}
-                required
-              />
+          <div className="space-y-4">
+            {/* Sub-Toggle Masuk vs Daftar */}
+            <div className="flex rounded-xl bg-gray-100 p-1 dark:bg-slate-800 text-xs font-bold">
+              <button
+                type="button"
+                onClick={() => { setEmailSubMode("login"); setError(""); }}
+                className={`flex-1 py-1.5 rounded-lg transition-all ${
+                  emailSubMode === "login"
+                    ? "bg-white text-gray-900 shadow-sm dark:bg-slate-700 dark:text-white"
+                    : "text-gray-500 hover:text-gray-900 dark:text-slate-400"
+                }`}
+              >
+                Masuk
+              </button>
+              <button
+                type="button"
+                onClick={() => { setEmailSubMode("register"); setError(""); }}
+                className={`flex-1 py-1.5 rounded-lg transition-all ${
+                  emailSubMode === "register"
+                    ? "bg-white text-gray-900 shadow-sm dark:bg-slate-700 dark:text-white"
+                    : "text-gray-500 hover:text-gray-900 dark:text-slate-400"
+                }`}
+              >
+                Daftar Baru (Tanpa OTP)
+              </button>
             </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300">
-                Password
-              </label>
-              <KolomSandi
-                nilai={password}
-                onChange={setPassword}
-                placeholder="Masukkan password"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={busy || !email.trim() || !password.trim()}
-              className="btn-primary w-full py-2.5 flex justify-center items-center gap-2"
-            >
-              {busy ? "Memproses..." : "Masuk via Email"}
-            </button>
-          </form>
+
+            {emailSubMode === "login" ? (
+              <form onSubmit={handleEmailLogin} className="space-y-3">
+                <div>
+                  <label className="mb-1 block text-xs font-bold text-gray-700 dark:text-slate-300">
+                    Alamat Email
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="nama@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className={KELAS_INPUT}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-bold text-gray-700 dark:text-slate-300">
+                    Password
+                  </label>
+                  <KolomSandi
+                    nilai={password}
+                    onChange={setPassword}
+                    placeholder="Masukkan password"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={busy || !email.trim() || !password.trim()}
+                  className="btn-primary w-full py-2.5 flex justify-center items-center gap-2 text-xs font-bold"
+                >
+                  {busy ? "Memproses..." : "Masuk dengan Email"}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleEmailRegister} className="space-y-3">
+                <div>
+                  <label className="mb-1 block text-xs font-bold text-gray-700 dark:text-slate-300">
+                    Nama Lengkap
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Contoh: Rian Pratama"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className={KELAS_INPUT}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-bold text-gray-700 dark:text-slate-300">
+                    Alamat Email
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="nama@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className={KELAS_INPUT}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-bold text-gray-700 dark:text-slate-300">
+                    Password (Min. 6 Karakter)
+                  </label>
+                  <KolomSandi
+                    nilai={password}
+                    onChange={setPassword}
+                    placeholder="Buat password baru"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 flex justify-between text-xs font-bold text-gray-700 dark:text-slate-300">
+                    <span>Nomor WhatsApp</span>
+                    <span className="text-gray-400 text-[10px] font-normal">Opsional</span>
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="Contoh: 081234567890"
+                    value={wa}
+                    onChange={(e) => setWa(e.target.value)}
+                    className={KELAS_INPUT}
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={busy || !fullName.trim() || !email.trim() || !password.trim()}
+                  className="btn-primary w-full py-2.5 flex justify-center items-center gap-2 text-xs font-bold shadow-md shadow-primary/20"
+                >
+                  {busy ? "Membuat Akun..." : "Daftar Akun (Tanpa OTP)"}
+                </button>
+              </form>
+            )}
+          </div>
         ) : (
           /* WA Mode */
           step === 1 ? (
