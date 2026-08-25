@@ -550,7 +550,7 @@ function ChatContent() {
     ).length;
 
     return (
-      <div className="flex flex-col h-dvh max-w-2xl w-full mx-auto bg-white dark:bg-[#000000] overflow-hidden font-sans select-none no-tap-highlight">
+      <div className="flex flex-col h-dvh max-w-2xl w-full mx-auto bg-white dark:bg-[#000000] overflow-hidden font-sans no-tap-highlight">
         {/* ── HEADER APPLE HIG ── */}
         <div className="bg-white/85 dark:bg-[#000000]/85 backdrop-blur-2xl border-b border-black/[0.06] dark:border-white/[0.08] shrink-0 z-40 pt-[max(env(safe-area-inset-top),0.5rem)] px-3 xs:px-4 py-2.5">
           <div className="flex items-center justify-between">
@@ -909,7 +909,9 @@ function ChatContent() {
               onChange={(e) => handleInputChange(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") handleSendMessage(); }}
               placeholder="Ketik pesan santai..."
-              className="flex-1 bg-black/[0.04] dark:bg-white/[0.08] border border-black/[0.06] dark:border-white/[0.08] rounded-full px-4 py-2 text-base md:text-xs text-[#1d1d1f] dark:text-white placeholder:text-gray-400 outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
+              autoComplete="off"
+              autoCorrect="off"
+              className="flex-1 select-text bg-black/[0.04] dark:bg-white/[0.08] border border-black/[0.06] dark:border-white/[0.08] rounded-full px-4 py-2 text-base md:text-xs text-[#1d1d1f] dark:text-white placeholder:text-gray-400 outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
             />
             <button
               onClick={() => handleSendMessage()}
@@ -1001,7 +1003,7 @@ function ChatContent() {
     }
 
     return (
-      <div className="flex flex-col h-dvh max-w-2xl w-full mx-auto bg-white dark:bg-[#000000] overflow-hidden font-sans select-none no-tap-highlight">
+      <div className="flex flex-col h-dvh max-w-2xl w-full mx-auto bg-white dark:bg-[#000000] overflow-hidden font-sans no-tap-highlight">
         <div className="bg-white/85 dark:bg-[#000000]/85 backdrop-blur-2xl border-b border-black/[0.06] dark:border-white/[0.08] shrink-0 z-40 pt-[max(env(safe-area-inset-top),0.5rem)] px-3 xs:px-4 py-2.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5 min-w-0">
@@ -1149,7 +1151,9 @@ function ChatContent() {
               onChange={(e) => handleInputChange(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") handleSendMessage(); }}
               placeholder={roomType === "direct" ? `Ketik pesan ke ${partnerInfo.alias}...` : "Ketik pesan..."}
-              className="flex-1 bg-black/[0.04] dark:bg-white/[0.08] border border-black/[0.06] dark:border-white/[0.08] rounded-full px-4 py-2 text-base md:text-xs text-[#1d1d1f] dark:text-white placeholder:text-gray-400 outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
+              autoComplete="off"
+              autoCorrect="off"
+              className="flex-1 select-text bg-black/[0.04] dark:bg-white/[0.08] border border-black/[0.06] dark:border-white/[0.08] rounded-full px-4 py-2 text-base md:text-xs text-[#1d1d1f] dark:text-white placeholder:text-gray-400 outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
             />
             <button
               onClick={() => handleSendMessage()}
