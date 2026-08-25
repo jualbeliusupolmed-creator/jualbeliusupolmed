@@ -169,20 +169,13 @@ module.exports = function pasangRuteHalaman(app, ctx) {
         res.sendFile(path.join(AKAR, 'public', 'lomba.html'));
     });
 
-    // ── Panel bot versi demo (public) ────────────────────────────────────────────
-    // Berkas yang SAMA dengan /dashboard — bukan salinan.
-    //
-    // Panel ini bagian yang paling banyak menjelaskan cara kerja bot, dan ia justru
-    // yang paling tidak bisa diperlihatkan: bergerbang sandi, dan isinya nomor serta
-    // isi percakapan orang sungguhan. Jadi yang dibuka kembarannya: halaman yang
-    // sama, data karangan.
-    //
-    // Yang membuatnya aman ada di halamannya, bukan di sini. Saat dibuka lewat
-    // /demo, api() dan post() di dashboard.html tidak pernah memanggil jaringan —
-    // jawabannya dirakit di dalam halaman. Jadi tidak ada satu pun endpoint bot yang
-    // bisa disentuh dari sana, bahkan dari konsol peramban. Gerbang requireAuth di
-    // endpoint-endpoint itu pun tetap berdiri seperti biasa, sebagai lapis kedua.
+    // ── Pusat Tutorial & Demo Sistem (Public) ──────────────────────────────────
     app.get('/demo', (req, res) => {
+        res.sendFile(path.join(AKAR, 'public', 'demo.html'));
+    });
+
+    // ── Panel bot versi demo (standalone mock dashboard) ─────────────────────────
+    app.get('/bot-demo', (req, res) => {
         res.sendFile(path.join(AKAR, 'halaman', 'dashboard.html'));
     });
 
