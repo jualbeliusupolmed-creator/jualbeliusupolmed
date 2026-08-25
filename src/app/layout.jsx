@@ -120,6 +120,7 @@ export default async function RootLayout({ children }) {
   return (
     <html lang="id" className={cn("font-sans", jakartaSans.variable)} suppressHydrationWarning>
       <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="google-adsense-account" content="ca-pub-6730561722094443" />
