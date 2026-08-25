@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panduan UKM & Organisasi — Jual Beli USU & POLMED</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+  :root {
+    --primary: #16a34a;
+    --primary-light: #dcfce7;
+    --primary-dark: #14532d;
+    --accent: #0ea5e9;
+    --accent-light: #e0f2fe;
+    --warn: #f59e0b;
+    --warn-light: #fef3c7;
+    --danger: #ef4444;
+    --dark: #111827;
+    --gray: #6b7280;
+    --light: #f9fafb;
+    --border: #e5e7eb;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--dark);
+    background: #fff;
+    font-size: 11pt;
+    line-height: 1.65;
+  }
+
+  /* ===== PRINT ===== */
+  @media print {
+    .no-print { display: none !important; }
+    .page-break { page-break-before: always; }
+    body { font-size: 10pt; }
+    .cover { page-break-after: always; }
+  }
+
+  /* ===== COVER ===== */
+  .cover {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #052e16 0%, #14532d 35%, #166534 60%, #16a34a 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 60px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    width: 500px; height: 500px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+    top: -150px; right: -150px;
+  }
+  .cover::after {
+    content: '';
+    position: absolute;
+    width: 300px; height: 300px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+    bottom: -80px; left: -80px;
+  }
+  .cover-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 100px;
+    padding: 6px 16px;
+    color: rgba(255,255,255,0.9);
+    font-size: 10pt;
+    font-weight: 600;
+    margin-bottom: 28px;
+    backdrop-filter: blur(4px);
+  }
+  .cover h1 {
+    font-size: 36pt;
+    font-weight: 900;
+    color: white;
+    letter-spacing: -1px;
+    line-height: 1.15;
+    margin-bottom: 8px;
+  }
+  .cover-sub {
+    font-size: 16pt;
+    font-weight: 400;
+    color: rgba(255,255,255,0.75);
+    margin-bottom: 32px;
+  }
+  .cover-divider {
+    width: 60px; height: 3px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 2px;
+    margin: 0 auto 32px;
+  }
+  .cover-desc {
+    max-width: 480px;
+    color: rgba(255,255,255,0.7);
+    font-size: 11pt;
+    line-height: 1.7;
+    margin-bottom: 48px;
+  }
+  .cover-meta {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .cover-meta-item {
+    text-align: center;
+    color: rgba(255,255,255,0.6);
+    font-size: 9pt;
+  }
+  .cover-meta-val {
+    display: block;
+    font-size: 20pt;
+    font-weight: 800;
+    color: white;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .cover-footer {
+    position: absolute;
+    bottom: 32px;
+    color: rgba(255,255,255,0.4);
+    font-size: 8pt;
+  }
+
+  /* ===== LAYOUT ===== */
+  .container {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 48px 48px;
+  }
+
+  /* ===== TOC ===== */
+  .toc-page {
+    padding: 60px 48px;
+    max-width: 820px;
+    margin: 0 auto;
+  }
+  .toc-title {
+    font-size: 22pt;
+    font-weight: 900;
+    color: var(--dark);
+    margin-bottom: 32px;
+    padding-bottom: 12px;
+    border-bottom: 3px solid var(--primary);
+  }
+  .toc-section { margin-bottom: 6px; }
+  .toc-item {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 7px 0;
+    border-bottom: 1px dotted var(--border);
+    text-decoration: none;
+    color: var(--dark);
+  }
+  .toc-num {
+    font-size: 9pt;
+    font-weight: 700;
+    color: var(--primary);
+    background: var(--primary-light);
+    border-radius: 4px;
+    padding: 1px 6px;
+    min-width: 28px;
+    text-align: center;
+  }
+  .toc-label { font-weight: 600; font-size: 11pt; flex: 1; }
+  .toc-dots { flex: 1; border-bottom: 1.5px dotted #d1d5db; margin: 0 8px; position: relative; top: -3px; }
+  .toc-pg { font-size: 9pt; color: var(--gray); font-weight: 600; }
+
+  /* ===== SECTION HEADER ===== */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--border);
+  }
+  .section-num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    background: var(--primary);
+    color: white;
+    font-size: 15pt;
+    font-weight: 900;
+    flex-shrink: 0;
+  }
+  .section-title { font-size: 18pt; font-weight: 800; color: var(--dark); }
+  .section-subtitle { font-size: 10pt; color: var(--gray); margin-top: 2px; }
+
+  /* ===== CONTENT ===== */
+  h2 { font-size: 14pt; font-weight: 800; color: var(--dark); margin: 28px 0 12px; }
+  h3 { font-size: 12pt; font-weight: 700; color: var(--dark); margin: 20px 0 8px; }
+  p { margin-bottom: 12px; color: #374151; }
+
+  /* ===== STEPS ===== */
+  .steps { margin: 16px 0; }
+  .step {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 14px;
+    align-items: flex-start;
+  }
+  .step-num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    font-size: 10pt;
+    font-weight: 800;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .step-content { flex: 1; }
+  .step-title { font-weight: 700; font-size: 11pt; color: var(--dark); margin-bottom: 2px; }
+  .step-desc { font-size: 10pt; color: var(--gray); }
+
+  /* ===== CALLOUT ===== */
+  .callout {
+    display: flex;
+    gap: 12px;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin: 16px 0;
+  }
+  .callout-icon { font-size: 16pt; flex-shrink: 0; margin-top: 2px; }
+  .callout-body { flex: 1; }
+  .callout-title { font-weight: 700; font-size: 11pt; margin-bottom: 2px; }
+  .callout-desc { font-size: 10pt; }
+  .callout.info { background: var(--accent-light); color: #0c4a6e; }
+  .callout.info .callout-title { color: #0369a1; }
+  .callout.warning { background: var(--warn-light); color: #78350f; }
+  .callout.warning .callout-title { color: #b45309; }
+  .callout.success { background: var(--primary-light); color: #14532d; }
+  .callout.success .callout-title { color: #15803d; }
+  .callout.danger { background: #fee2e2; color: #7f1d1d; }
+  .callout.danger .callout-title { color: #b91c1c; }
+
+  /* ===== TABLE ===== */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10pt;
+    margin: 16px 0;
+  }
+  th {
+    background: var(--dark);
+    color: white;
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 700;
+  }
+  th:first-child { border-radius: 8px 0 0 0; }
+  th:last-child { border-radius: 0 8px 0 0; }
+  td {
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--border);
+    color: #374151;
+  }
+  tr:nth-child(even) td { background: var(--light); }
+  td strong { color: var(--dark); }
+
+  /* ===== FEATURE CARD ===== */
+  .feature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .feature-card {
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .feature-icon { font-size: 18pt; margin-bottom: 8px; }
+  .feature-name { font-weight: 700; font-size: 11pt; color: var(--dark); margin-bottom: 4px; }
+  .feature-desc { font-size: 9.5pt; color: var(--gray); }
+
+  /* ===== URL BOX ===== */
+  .url-box {
+    background: #f1f5f9;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-family: 'Courier New', monospace;
+    font-size: 10pt;
+    font-weight: 700;
+    color: var(--primary-dark);
+    margin: 8px 0;
+    word-break: break-all;
+  }
+
+  /* ===== BADGE ===== */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 100px;
+    font-size: 8.5pt;
+    font-weight: 700;
+  }
+  .badge-green { background: var(--primary-light); color: var(--primary-dark); }
+  .badge-blue { background: var(--accent-light); color: #0369a1; }
+  .badge-amber { background: var(--warn-light); color: #92400e; }
+  .badge-red { background: #fee2e2; color: #991b1b; }
+
+  /* ===== CHECKLIST ===== */
+  .checklist { list-style: none; margin: 12px 0; }
+  .checklist li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 5px 0;
+    font-size: 10.5pt;
+    color: #374151;
+  }
+  .checklist li::before {
+    content: '✓';
+    color: var(--primary);
+    font-weight: 900;
+    font-size: 10pt;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* ===== DIVIDER ===== */
+  .divider {
+    border: none;
+    border-top: 2px solid var(--border);
+    margin: 32px 0;
+  }
+
+  /* ===== FOOTER ===== */
+  .page-footer {
+    margin-top: 60px;
+    padding-top: 20px;
+    border-top: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 8.5pt;
+    color: var(--gray);
+  }
+  .footer-brand { font-weight: 700; color: var(--primary); }
+
+  /* ===== PRINT BUTTON ===== */
+  .print-btn {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    padding: 12px 20px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 11pt;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(22,163,74,0.4);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .print-btn:hover { background: #15803d; }
+</style>
+</head>
+<body>
+
+<!-- ===== PRINT BUTTON ===== -->
+<button class="print-btn no-print" onclick="window.print()">
+  🖨️ Simpan / Cetak PDF
+</button>
+
+<!-- ══════════════════════════════════════════
+     COVER
+══════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-badge">🏛️ Panduan Resmi Platform</div>
+  <h1>Panduan UKM<br>&amp; Organisasi</h1>
+  <p class="cover-sub">Jual Beli USU &amp; POLMED</p>
+  <div class="cover-divider"></div>
+  <p class="cover-desc">
+    Panduan lengkap untuk pengurus UKM dan organisasi dalam mendaftarkan akun,
+    membuka Open Recruitment, mengelola pendaftar, dan memaksimalkan fitur platform
+    komunitas mahasiswa USU &amp; POLMED.
+  </p>
+  <div class="cover-meta">
+    <div class="cover-meta-item">
+      <span class="cover-meta-val">7</span>Bab Panduan
+    </div>
+    <div class="cover-meta-item">
+      <span class="cover-meta-val">∞</span>Gratis Selamanya
+    </div>
+    <div class="cover-meta-item">
+      <span class="cover-meta-val">2026</span>Versi Terbaru
+    </div>
+  </div>
+  <div class="cover-footer">jualbeliusupolmed.web.id — Edisi Agustus 2026</div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     DAFTAR ISI
+══════════════════════════════════════════ -->
+<div class="toc-page page-break">
+  <div class="toc-title">📋 Daftar Isi</div>
+
+  <div class="toc-section">
+    <a class="toc-item">
+      <span class="toc-num">01</span>
+      <span class="toc-label">Tentang Platform</span>
+      <span class="toc-dots"></span>
+      <span class="toc-pg">3</span>
+    </a>
+    <a class="toc-item">
+      <span class="toc-num">02</span>
+      <span class="toc-label">Daftar Akun UKM / Organisasi</span>
+      <span class="toc-dots"></span>
+      <span class="toc-pg">4</span>
+    </a>
+    <a class="toc-item">
+      <span class="toc-num">03</span>
+      <span class="toc-label">Login &amp; Akses Dashboard</span>
+      <span class="toc-dots"></span>
+      <span class="toc-pg">5</span>
+    </a>
+    <a class="toc-item">
+      <span class="toc-num">04</span>
+      <span class="toc-label">Membuat Formulir Open Recruitment (Oprec)</span>
+      <span class="toc-dots"></span>
+      <span class="toc-pg">6</span>
+    </a>
+    <a class="toc-item">
+      <span class="toc-num">05</span>
+      <span class="toc-label">Mengelola Pendaftar Oprec</span>
+      <span class="toc-dots"></span>
+      <span class="toc-pg">8</span>
+    </a>
+    <a class="toc-item">
+      <span class="toc-num">06</span>
+      <span class="toc-label">Posting Pengumuman &amp; Mading</span>
+      <span class="toc-dots"></span>
+      <span class="toc-pg">10</span>
+    </a>
+    <a class="toc-item">
+      <span class="toc-num">07</span>
+      <span class="toc-label">FAQ &amp; Kontak Bantuan</span>
+      <span class="toc-dots"></span>
+      <span class="toc-pg">11</span>
+    </a>
+  </div>
+
+  <div style="margin-top: 36px; padding: 20px; background: var(--primary-light); border-radius: 14px; border: 1.5px solid #bbf7d0;">
+    <p style="font-weight: 700; color: var(--primary-dark); margin-bottom: 6px;">💡 Tips Membaca Panduan Ini</p>
+    <p style="font-size: 10pt; color: #166534; margin: 0;">
+      Baca urut dari Bab 1–3 untuk memulai. Bab 4–5 khusus panduan Oprec (bisa langsung dibuka).
+      Panduan ini bisa dicetak atau disimpan sebagai PDF dengan tombol di pojok kanan bawah.
+    </p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     BAB 1 — TENTANG PLATFORM
+══════════════════════════════════════════ -->
+<div class="container page-break">
+  <div class="section-header">
+    <div class="section-num">1</div>
+    <div>
+      <div class="section-title">Tentang Platform</div>
+      <div class="section-subtitle">Apa itu Jual Beli USU &amp; POLMED dan kenapa UKM harus bergabung?</div>
+    </div>
+  </div>
+
+  <p>
+    <strong>Jual Beli USU &amp; POLMED</strong> adalah platform komunitas mahasiswa yang menyatukan
+    jual beli barang bekas, mading digital, menfess anonim, dan sistem Open Recruitment
+    organisasi dalam satu ekosistem yang mudah diakses.
+  </p>
+
+  <h2>🌟 Mengapa UKM Harus Mendaftar?</h2>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="feature-icon">📋</div>
+      <div class="feature-name">Oprec Digital Gratis</div>
+      <div class="feature-desc">Buat formulir pendaftaran anggota dengan kustom pertanyaan, upload foto, dan pilihan divisi.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">👥</div>
+      <div class="feature-name">Kelola Pendaftar Mudah</div>
+      <div class="feature-desc">Terima/tolak pendaftar, kirim WA otomatis, export data CSV — semuanya dari satu panel.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📢</div>
+      <div class="feature-name">Publikasi Pengumuman</div>
+      <div class="feature-desc">Post info kegiatan langsung ke feed mading yang dibaca ribuan mahasiswa setiap hari.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🏛️</div>
+      <div class="feature-name">Profil Organisasi Resmi</div>
+      <div class="feature-desc">Akun terverifikasi dengan badge ✓ resmi tampil di Direktori UKM kampus.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔗</div>
+      <div class="feature-name">Link Pendaftaran Unik</div>
+      <div class="feature-desc">Bagikan link formulir Oprec langsung ke grup WA atau medsos — tidak perlu Google Form lagi.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📊</div>
+      <div class="feature-name">Statistik Pendaftar</div>
+      <div class="feature-desc">Lihat data pendaftar per divisi, angkatan, kampus, dan status seleksi secara real-time.</div>
+    </div>
+  </div>
+
+  <div class="callout success">
+    <div class="callout-icon">✅</div>
+    <div class="callout-body">
+      <div class="callout-title">Semua fitur untuk UKM 100% Gratis</div>
+      <div class="callout-desc">Tidak ada biaya pendaftaran, biaya pembuatan oprec, atau biaya bulanan untuk akun organisasi.</div>
+    </div>
+  </div>
+
+  <h2>🎓 Siapa yang Bisa Mendaftar?</h2>
+  <ul class="checklist">
+    <li>BEM (Badan Eksekutif Mahasiswa) Universitas, Fakultas, Jurusan</li>
+    <li>HIMA (Himpunan Mahasiswa) Jurusan / Program Studi</li>
+    <li>UKM (Unit Kegiatan Mahasiswa) — Olahraga, Seni, Akademik, dll</li>
+    <li>Lembaga Kemahasiswaan resmi di lingkungan USU &amp; POLMED</li>
+    <li>Komunitas / Forum mahasiswa yang berkegiatan di kampus</li>
+  </ul>
+
+  <div class="page-footer">
+    <span class="footer-brand">Jual Beli USU &amp; POLMED</span>
+    <span>Panduan UKM &amp; Organisasi — Bab 1</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     BAB 2 — DAFTAR AKUN
+══════════════════════════════════════════ -->
+<div class="container page-break">
+  <div class="section-header">
+    <div class="section-num">2</div>
+    <div>
+      <div class="section-title">Daftar Akun UKM</div>
+      <div class="section-subtitle">Langkah-langkah mendaftarkan organisasi kamu ke platform</div>
+    </div>
+  </div>
+
+  <h2>🔗 Link Pendaftaran Resmi</h2>
+  <p>Gunakan link khusus pendaftaran organisasi berikut:</p>
+  <div class="url-box">https://jualbeliusupolmed.web.id/organisasi/daftar?invite=KAMPUS_USU_POLMED_2026</div>
+
+  <div class="callout warning">
+    <div class="callout-icon">⚠️</div>
+    <div class="callout-body">
+      <div class="callout-title">Pastikan pakai link di atas</div>
+      <div class="callout-desc">Link tanpa kode <code>?invite=KAMPUS_USU_POLMED_2026</code> akan diarahkan ke pendaftaran akun biasa (bukan UKM).</div>
+    </div>
+  </div>
+
+  <h2>📝 Langkah Pendaftaran</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <div class="step-title">Buka Link Pendaftaran</div>
+        <div class="step-desc">Akses link di atas dari browser HP atau laptop. Pastikan koneksi internet stabil.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <div class="step-title">Isi Identitas Organisasi</div>
+        <div class="step-desc">Isi nama UKM, kategori (BEM / HIMA / UKM / dll), kampus (USU atau POLMED), dan fakultas.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <div class="step-title">Isi Email &amp; Password</div>
+        <div class="step-desc">Masukkan email aktif organisasi dan buat password minimal 8 karakter. Simpan baik-baik!</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <div class="step-title">Isi Informasi Tambahan (Opsional)</div>
+        <div class="step-desc">Username Instagram, link grup WA, deskripsi singkat organisasi.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-content">
+        <div class="step-title">Klik "Daftarkan Organisasi"</div>
+        <div class="step-desc">Jika berhasil, kamu akan otomatis masuk ke Dashboard. Tab <strong>🏛️ Panel UKM</strong> akan muncul.</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>📋 Data yang Dibutuhkan</h2>
+  <table>
+    <tr><th>Data</th><th>Wajib?</th><th>Keterangan</th></tr>
+    <tr><td><strong>Nama UKM / Organisasi</strong></td><td><span class="badge badge-red">Wajib</span></td><td>Nama resmi, contoh: "BEM FISIP USU"</td></tr>
+    <tr><td><strong>Kategori</strong></td><td><span class="badge badge-red">Wajib</span></td><td>BEM, HIMA, UKM, Komunitas, dll</td></tr>
+    <tr><td><strong>Kampus</strong></td><td><span class="badge badge-red">Wajib</span></td><td>USU atau POLMED</td></tr>
+    <tr><td><strong>Email</strong></td><td><span class="badge badge-red">Wajib</span></td><td>Email aktif untuk login</td></tr>
+    <tr><td><strong>Password</strong></td><td><span class="badge badge-red">Wajib</span></td><td>Min. 8 karakter, simpan di tempat aman</td></tr>
+    <tr><td>Instagram</td><td><span class="badge badge-amber">Opsional</span></td><td>Tampil di profil publik organisasi</td></tr>
+    <tr><td>Deskripsi</td><td><span class="badge badge-amber">Opsional</span></td><td>Penjelasan singkat tentang organisasi</td></tr>
+  </table>
+
+  <div class="callout info">
+    <div class="callout-icon">ℹ️</div>
+    <div class="callout-body">
+      <div class="callout-title">Akun Langsung Aktif</div>
+      <div class="callout-desc">Tidak perlu menunggu verifikasi admin. Akun UKM langsung bisa digunakan setelah mendaftar. Badge "✓ Terverifikasi" akan ditambahkan oleh UP Admin setelah konfirmasi.</div>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">Jual Beli USU &amp; POLMED</span>
+    <span>Panduan UKM &amp; Organisasi — Bab 2</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     BAB 3 — LOGIN & DASHBOARD
+══════════════════════════════════════════ -->
+<div class="container page-break">
+  <div class="section-header">
+    <div class="section-num">3</div>
+    <div>
+      <div class="section-title">Login &amp; Akses Dashboard</div>
+      <div class="section-subtitle">Cara masuk dan navigasi Panel UKM</div>
+    </div>
+  </div>
+
+  <h2>🔐 Cara Login</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <div class="step-title">Buka halaman login</div>
+        <div class="step-desc">Kunjungi <strong>jualbeliusupolmed.web.id</strong> → klik tombol <strong>Masuk</strong> di pojok kanan atas.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <div class="step-title">Masukkan Email &amp; Password</div>
+        <div class="step-desc">Gunakan email dan password yang didaftarkan saat membuat akun UKM.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <div class="step-title">Buka Dashboard</div>
+        <div class="step-desc">Setelah login, klik foto profil → <strong>Dashboard</strong>, atau langsung buka <code>/dashboard</code>.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <div class="step-title">Klik Tab "🏛️ Panel UKM"</div>
+        <div class="step-desc">Tab khusus UKM muncul di deretan tab utama dashboard. Klik untuk membuka panel organisasi.</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>🗂️ Isi Panel UKM Dashboard</h2>
+  <table>
+    <tr><th>Bagian</th><th>Fungsi</th></tr>
+    <tr><td><strong>📊 Statistik</strong></td><td>Total oprec dibuat, oprec aktif, total pendaftar</td></tr>
+    <tr><td><strong>📋 Daftar Oprec</strong></td><td>List semua formulir oprec + status + tombol Kelola</td></tr>
+    <tr><td><strong>🏛️ Profil Organisasi</strong></td><td>Info UKM: nama, kategori, kampus, Instagram</td></tr>
+    <tr><td><strong>+ Buat Oprec</strong></td><td>Tombol membuka formulir pembuatan oprec baru</td></tr>
+  </table>
+
+  <div class="callout warning">
+    <div class="callout-icon">🔑</div>
+    <div class="callout-body">
+      <div class="callout-title">Jaga Keamanan Akun</div>
+      <div class="callout-desc">Jangan bagikan password ke siapapun. Jika berganti pengurus, ganti password akun via pengaturan profil.</div>
+    </div>
+  </div>
+
+  <h2>👤 Akun UP Admin (Untuk Platform)</h2>
+  <table>
+    <tr><th>Kredensial</th><th>Nilai</th></tr>
+    <tr><td>Email</td><td><code>admin@jualbeliusupolmed.web.id</code></td></tr>
+    <tr><td>Password</td><td><code>upadmin2026</code> — <strong>Ganti setelah login pertama!</strong></td></tr>
+    <tr><td>Tipe</td><td><span class="badge badge-green">UKM Terverifikasi</span></td></tr>
+  </table>
+
+  <div class="page-footer">
+    <span class="footer-brand">Jual Beli USU &amp; POLMED</span>
+    <span>Panduan UKM &amp; Organisasi — Bab 3</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     BAB 4 — MEMBUAT OPREC
+══════════════════════════════════════════ -->
+<div class="container page-break">
+  <div class="section-header">
+    <div class="section-num">4</div>
+    <div>
+      <div class="section-title">Membuat Formulir Oprec</div>
+      <div class="section-subtitle">Cara membuka Open Recruitment dengan formulir kustom</div>
+    </div>
+  </div>
+
+  <p>
+    Oprec (Open Recruitment) adalah sistem pendaftaran anggota UKM berbasis digital.
+    Kamu bisa membuat formulir dengan divisi, pertanyaan kustom, unggah foto, dan deadline otomatis.
+  </p>
+
+  <h2>📋 Langkah Membuat Oprec</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <div class="step-title">Buka Panel UKM → Klik "Buat Oprec"</div>
+        <div class="step-desc">Tombol ada di pojok kanan atas tab Panel UKM di dashboard, atau di dalam daftar oprec.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <div class="step-title">Isi Informasi Dasar Oprec</div>
+        <div class="step-desc">Judul oprec, deskripsi, kampus, dan deadline (tanggal &amp; waktu tutup pendaftaran).</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <div class="step-title">Atur Divisi yang Dibuka</div>
+        <div class="step-desc">Tambah atau hapus divisi. Pendaftar bisa memilih 1–2 divisi pilihan mereka.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <div class="step-title">Tambah Pertanyaan Kustom (Opsional)</div>
+        <div class="step-desc">Klik "+ Tambah Pertanyaan" untuk pertanyaan essay, link portofolio, atau unggah foto/CV.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-content">
+        <div class="step-title">Publish &amp; Bagikan Link</div>
+        <div class="step-desc">Setelah tersimpan, salin link oprec dan bagikan ke grup WA, Instagram story, atau LINE.</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>🛠️ Jenis Pertanyaan Kustom yang Tersedia</h2>
+  <table>
+    <tr><th>Jenis</th><th>Contoh Penggunaan</th></tr>
+    <tr><td>📝 <strong>Teks / Essay</strong></td><td>"Mengapa kamu ingin bergabung?", "Pengalaman organisasi sebelumnya"</td></tr>
+    <tr><td>🔗 <strong>Link / URL</strong></td><td>"Link portofolio desain", "Link LinkedIn", "Link karya terbaik"</td></tr>
+    <tr><td>📸 <strong>Upload Foto</strong></td><td>"Upload KTM", "Upload pas foto formal", "Upload sertifikat"</td></tr>
+  </table>
+
+  <h2>📤 Contoh Link Oprec</h2>
+  <div class="url-box">https://jualbeliusupolmed.web.id/oprec/[id-oprec-kamu]</div>
+  <p style="font-size: 10pt; color: var(--gray);">Link ini bisa langsung dibuka mahasiswa tanpa perlu login. Form akan otomatis tertutup saat deadline lewat.</p>
+
+  <h2>💡 Tips Membuat Oprec yang Menarik</h2>
+  <ul class="checklist">
+    <li>Tulis judul yang jelas: "Open Recruitment Panitia Konser USU 2026 - Batch 3"</li>
+    <li>Sertakan deskripsi singkat tentang UKM dan kegiatan yang akan datang</li>
+    <li>Jangan terlalu banyak pertanyaan kustom — 2–3 pertanyaan sudah cukup</li>
+    <li>Beri deadline yang realistis, minimal 5–7 hari dari tanggal publish</li>
+    <li>Upload banner yang menarik agar link preview terlihat profesional di sosmed</li>
+    <li>Sertakan link grup WA penerimaan agar pendaftar yang diterima bisa langsung masuk</li>
+  </ul>
+
+  <div class="callout info">
+    <div class="callout-icon">ℹ️</div>
+    <div class="callout-body">
+      <div class="callout-title">Berapa Oprec Bisa Dibuat?</div>
+      <div class="callout-desc">Tidak ada batasan. Kamu bisa buat oprec untuk berbagai keperluan: anggota baru, panitia acara, tim inti, dll. Semua gratis.</div>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">Jual Beli USU &amp; POLMED</span>
+    <span>Panduan UKM &amp; Organisasi — Bab 4</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     BAB 5 — KELOLA PENDAFTAR
+══════════════════════════════════════════ -->
+<div class="container page-break">
+  <div class="section-header">
+    <div class="section-num">5</div>
+    <div>
+      <div class="section-title">Mengelola Pendaftar Oprec</div>
+      <div class="section-subtitle">Cara mereview, menerima, menolak, dan mengekspor data pendaftar</div>
+    </div>
+  </div>
+
+  <p>
+    Setelah oprec dipublikasikan dan mahasiswa mulai mendaftar, gunakan <strong>Panel Pengurus UKM</strong>
+    untuk mengelola seluruh pendaftar dari satu halaman.
+  </p>
+
+  <h2>👁️ Membuka Panel Pengurus</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <div class="step-title">Buka Dashboard → Panel UKM</div>
+        <div class="step-desc">Klik tab "🏛️ Panel UKM" di dashboard.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <div class="step-title">Klik "👁️ Kelola" pada Oprec</div>
+        <div class="step-desc">Setiap baris oprec di daftar memiliki tombol Kelola. Klik untuk membuka panel pendaftar.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <div class="step-title">Panel Terbuka Fullscreen</div>
+        <div class="step-desc">Daftar seluruh pendaftar tampil lengkap dengan nama, NIM, kampus, divisi pilihan, dan status.</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>📊 Status Pendaftar</h2>
+  <table>
+    <tr><th>Status</th><th>Arti</th><th>Siapa yang Mengubah</th></tr>
+    <tr><td><span class="badge badge-amber">Menunggu</span></td><td>Baru mendaftar, belum diproses</td><td>Otomatis saat daftar</td></tr>
+    <tr><td><span class="badge badge-blue">Ditinjau</span></td><td>Sedang dipertimbangkan pengurus</td><td>Pengurus UKM</td></tr>
+    <tr><td><span class="badge badge-green">Diterima ✅</span></td><td>Pendaftar resmi diterima sebagai anggota</td><td>Pengurus UKM</td></tr>
+    <tr><td><span class="badge badge-red">Ditolak ❌</span></td><td>Pendaftar tidak lolos seleksi</td><td>Pengurus UKM</td></tr>
+  </table>
+
+  <h2>✅ Cara Menerima / Menolak Pendaftar</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <div class="step-title">Baca Data Pendaftar</div>
+        <div class="step-desc">Lihat nama, NIM, kampus, fakultas, angkatan, divisi pilihan, alasan mendaftar, dan link portofolio.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <div class="step-title">Klik "✅ Terima" atau "❌ Tolak"</div>
+        <div class="step-desc">Modal konfirmasi akan muncul. Kamu bisa tambahkan catatan untuk pendaftar (opsional).</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <div class="step-title">Isi Catatan (Opsional)</div>
+        <div class="step-desc">
+          Contoh terima: <em>"Selamat! Kamu diterima di Divisi Kreatif. Rapat perdana Sabtu 30 Agustus pukul 10.00 di Gedung A."</em><br>
+          Contoh tolak: <em>"Maaf, posisi sudah terpenuhi. Tetap semangat dan coba lagi tahun depan!"</em>
+        </div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <div class="step-title">Hubungi via WhatsApp (Opsional)</div>
+        <div class="step-desc">Klik ikon 💬 di setiap baris pendaftar untuk langsung buka chat WA dengan pesan awal yang sudah terisi otomatis.</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>⬇️ Export Data Pendaftar (CSV)</h2>
+  <p>Klik tombol <strong>"⬇️ Export CSV"</strong> di toolbar panel untuk mengunduh seluruh data pendaftar dalam format Excel/CSV.</p>
+  <p>File berisi: Nama, WA, NIM, Kampus, Fakultas, Angkatan, Divisi 1, Divisi 2, Status, Catatan, Tanggal Daftar.</p>
+
+  <h2>🔒 Menutup / Membuka Kembali Oprec</h2>
+  <p>
+    Klik <strong>"🔒 Tutup Oprec"</strong> di toolbar panel untuk menghentikan pendaftaran baru tanpa menghapus data.
+    Tutup oprec jika kuota sudah terpenuhi atau deadline sudah lewat.
+    Klik <strong>"🔓 Buka Kembali"</strong> untuk membuka lagi jika dibutuhkan.
+  </p>
+
+  <div class="callout success">
+    <div class="callout-icon">💡</div>
+    <div class="callout-body">
+      <div class="callout-title">Filter Cepat Pendaftar</div>
+      <div class="callout-desc">Gunakan filter <strong>Divisi</strong> dan <strong>Status</strong> di toolbar untuk melihat pendaftar per divisi atau hanya yang masih menunggu keputusan.</div>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">Jual Beli USU &amp; POLMED</span>
+    <span>Panduan UKM &amp; Organisasi — Bab 5</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     BAB 6 — MADING & PENGUMUMAN
+══════════════════════════════════════════ -->
+<div class="container page-break">
+  <div class="section-header">
+    <div class="section-num">6</div>
+    <div>
+      <div class="section-title">Posting Pengumuman &amp; Mading</div>
+      <div class="section-subtitle">Cara mempublikasikan info kegiatan ke feed mahasiswa</div>
+    </div>
+  </div>
+
+  <p>
+    UKM bisa memposting pengumuman, info acara, dan konten mading langsung ke feed yang
+    dibaca ribuan mahasiswa USU &amp; POLMED setiap harinya.
+  </p>
+
+  <h2>📢 Cara Posting Pengumuman</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <div class="step-title">Buka halaman Mading</div>
+        <div class="step-desc">Klik menu <strong>Mading</strong> di navigasi utama, atau kunjungi <code>/mading</code>.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <div class="step-title">Klik "+ Tulis Postingan"</div>
+        <div class="step-desc">Tombol di sudut kanan atas halaman Mading.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <div class="step-title">Pilih Tipe: "📢 Info / Pengumuman"</div>
+        <div class="step-desc">Pilih tipe <em>Info</em> agar postingan tampil dengan label 📢 dan masuk tab Organisasi.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <div class="step-title">Tulis Konten &amp; Upload Foto (Opsional)</div>
+        <div class="step-desc">Tulis pengumuman, tambah foto flyer, dan pilih kampus yang relevan.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-content">
+        <div class="step-title">Publish</div>
+        <div class="step-desc">Klik Kirim. Postingan langsung tampil di feed utama dan tab Organisasi.</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>📌 Jenis Konten yang Bisa Diposting</h2>
+  <table>
+    <tr><th>Tipe</th><th>Cocok Untuk</th></tr>
+    <tr><td>📢 <strong>Info / Pengumuman</strong></td><td>Jadwal acara, info rapat, perubahan kegiatan, pengumuman resmi UKM</td></tr>
+    <tr><td>💬 <strong>Menfess</strong></td><td>Pesan anonim, diskusi bebas, keluh kesah mahasiswa</td></tr>
+    <tr><td>✍️ <strong>Blog</strong></td><td>Artikel panjang, liputan acara, opini mahasiswa</td></tr>
+  </table>
+
+  <div class="callout info">
+    <div class="callout-icon">💡</div>
+    <div class="callout-body">
+      <div class="callout-title">Tips Postingan Info yang Efektif</div>
+      <div class="callout-desc">Sertakan: <strong>nama acara · tanggal &amp; waktu · tempat · link pendaftaran (jika ada) · kontak PIC</strong>. Foto flyer menarik meningkatkan engagement hingga 3×.</div>
+    </div>
+  </div>
+
+  <h2>⚠️ Kebijakan Konten</h2>
+  <ul class="checklist">
+    <li>Konten harus relevan dengan kegiatan kampus / kemahasiswaan</li>
+    <li>Tidak boleh mengandung SARA, ujaran kebencian, atau konten dewasa</li>
+    <li>Tidak boleh posting iklan komersial di tab Organisasi / Info</li>
+    <li>Pelanggaran berulang dapat mengakibatkan akun dinonaktifkan</li>
+  </ul>
+
+  <div class="page-footer">
+    <span class="footer-brand">Jual Beli USU &amp; POLMED</span>
+    <span>Panduan UKM &amp; Organisasi — Bab 6</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     BAB 7 — FAQ
+══════════════════════════════════════════ -->
+<div class="container page-break">
+  <div class="section-header">
+    <div class="section-num">7</div>
+    <div>
+      <div class="section-title">FAQ &amp; Bantuan</div>
+      <div class="section-subtitle">Pertanyaan yang sering ditanyakan dan cara menghubungi tim</div>
+    </div>
+  </div>
+
+  <h2>❓ Pertanyaan Umum</h2>
+
+  <h3>Apakah akun UKM saya perlu diverifikasi terlebih dahulu?</h3>
+  <p>Tidak. Akun langsung bisa digunakan setelah mendaftar. Badge ✓ Terverifikasi resmi akan diberikan oleh admin platform setelah konfirmasi singkat via WA.</p>
+
+  <h3>Mahasiswa perlu login untuk mendaftar oprec?</h3>
+  <p>Tidak perlu. Link oprec bisa diakses siapapun tanpa akun. Mahasiswa cukup isi form dan klik Daftar.</p>
+
+  <h3>Apakah ada notifikasi otomatis ke pendaftar?</h3>
+  <p>Saat ini notifikasi WA otomatis sedang dalam pengembangan. Sementara, gunakan tombol 💬 di panel untuk menghubungi pendaftar secara manual via WA.</p>
+
+  <h3>Bagaimana jika lupa password?</h3>
+  <p>Hubungi admin UP Admin via WA dengan menyebutkan email akun organisasi kamu. Admin akan membantu reset password.</p>
+
+  <h3>Bisakah satu UKM punya lebih dari satu akun?</h3>
+  <p>Tidak disarankan. Satu UKM cukup satu akun. Jika berganti pengurus, ganti password akun yang ada — jangan buat akun baru.</p>
+
+  <h3>Apakah link oprec bisa disebarkan ke publik?</h3>
+  <p>Ya. Link oprec terbuka untuk umum dan bisa disebarkan ke grup WA, Instagram, LINE, atau media apapun. Tidak ada batasan jumlah pendaftar.</p>
+
+  <h3>Tab "Panel UKM" tidak muncul di dashboard, kenapa?</h3>
+  <p>Pastikan kamu login dengan akun UKM (bukan akun mahasiswa biasa). Cek apakah <code>account_type</code> sudah terisi <em>ukm</em> di profil. Jika belum, hubungi admin.</p>
+
+  <h3>Bisakah export data hanya untuk divisi tertentu?</h3>
+  <p>Gunakan filter divisi terlebih dahulu, lalu klik Export CSV — data yang diekspor sesuai filter yang aktif.</p>
+
+  <hr class="divider">
+
+  <h2>📞 Hubungi Tim UP Admin</h2>
+  <table>
+    <tr><th>Saluran</th><th>Kontak</th><th>Waktu Respon</th></tr>
+    <tr><td>📱 WhatsApp</td><td>Hubungi via profil UP Admin di direktori</td><td>&lt; 1 jam (jam aktif)</td></tr>
+    <tr><td>📸 Instagram</td><td>@jualbeliusupolmed</td><td>1–2 hari kerja</td></tr>
+    <tr><td>🌐 Website</td><td>jualbeliusupolmed.web.id</td><td>—</td></tr>
+  </table>
+
+  <div class="callout success">
+    <div class="callout-icon">🎓</div>
+    <div class="callout-body">
+      <div class="callout-title">Selamat Bergabung!</div>
+      <div class="callout-desc">
+        Platform ini dibangun oleh dan untuk mahasiswa USU &amp; POLMED.
+        Masukan dan saran dari pengurus UKM sangat berarti untuk terus mengembangkan fitur yang relevan.
+        Sampai jumpa di ekosistem komunitas mahasiswa terbesar di Sumatera Utara! 🌱
+      </div>
+    </div>
+  </div>
+
+  <!-- PENUTUP -->
+  <div style="text-align: center; margin-top: 60px; padding: 40px 20px; background: linear-gradient(135deg, #052e16, #166534); border-radius: 20px; color: white;">
+    <div style="font-size: 32pt; margin-bottom: 12px;">🏛️</div>
+    <div style="font-size: 16pt; font-weight: 900; margin-bottom: 8px;">Jual Beli USU &amp; POLMED</div>
+    <div style="font-size: 10pt; color: rgba(255,255,255,0.7); margin-bottom: 16px;">Platform Komunitas Mahasiswa — Gratis Selamanya</div>
+    <div style="display: inline-block; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 100px; padding: 6px 20px; font-size: 10pt; font-weight: 600;">
+      jualbeliusupolmed.web.id
+    </div>
+    <div style="margin-top: 24px; font-size: 8.5pt; color: rgba(255,255,255,0.4);">
+      Panduan ini terakhir diperbarui: Agustus 2026
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">Jual Beli USU &amp; POLMED</span>
+    <span>Panduan UKM &amp; Organisasi — Bab 7 (Terakhir)</span>
+  </div>
+</div>
+
+</body>
+</html>
