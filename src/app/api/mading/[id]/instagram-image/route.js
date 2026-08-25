@@ -27,7 +27,7 @@ const SEMIBOLD_FONT_PATH = path.join(
 );
 const MAX_SOURCE_BYTES = 8 * 1024 * 1024;
 
-async function fetchSafeMadingPhoto(url) {
+async function fetchSafeMadingPhoto(url, isLandscape = false) {
   if (!url) return null;
   try {
     const parsed = new URL(url);
@@ -46,12 +46,17 @@ async function fetchSafeMadingPhoto(url) {
     }
     const source = Buffer.from(await response.arrayBuffer());
     if (source.length > MAX_SOURCE_BYTES) return null;
+
+    const width = isLandscape ? 500 : 820;
+    const height = isLandscape ? 230 : 460;
+    const radius = isLandscape ? 16 : 26;
+
     const mask = Buffer.from(
-      '<svg width="820" height="460"><rect width="820" height="460" rx="26" fill="white"/></svg>',
+      `<svg width="${width}" height="${height}"><rect width="${width}" height="${height}" rx="${radius}" fill="white"/></svg>`,
     );
     return sharp(source)
       .rotate()
-      .resize(820, 460, { fit: "cover", position: "attention" })
+      .resize(width, height, { fit: "cover", position: "attention" })
       .composite([{ input: mask, blend: "dest-in" }])
       .jpeg({ quality: 90, mozjpeg: true })
       .toBuffer();
@@ -60,8 +65,12 @@ async function fetchSafeMadingPhoto(url) {
   }
 }
 
-// Gambar JPEG publik untuk Instagram. Tidak memuat identitas internal pengirim.
-export async function GET(_request, { params }) {
+// Gambar JPEG publik untuk Menfess & Instagram. Mendukung rasio Portrait (1080x1350) & Landscape (1200x675)
+export async function GET(request, { params }) {
+  const { searchParams } = new URL(request.url);
+  const ratio = searchParams.get("ratio") === "landscape" ? "landscape" : "portrait";
+  const isDownload = searchParams.get("download") === "1" || searchParams.get("dl") === "1";
+
   const { data: post, error } = await getAdminClient()
     .from("mading_posts")
     .select("id, type, sender_name, faculty, title, content, image_url, status")
@@ -71,25 +80,35 @@ export async function GET(_request, { params }) {
 
   if (error || !post) return new NextResponse("Not found", { status: 404 });
 
-  const photo = await fetchSafeMadingPhoto(post.image_url);
+  const isLandscape = ratio === "landscape";
+  const photo = await fetchSafeMadingPhoto(post.image_url, isLandscape);
   const renderPost = photo ? post : { ...post, image_url: null };
-  const svg = createMadingInstagramSvg({ hasPhoto: Boolean(photo) });
+  const svg = createMadingInstagramSvg({ hasPhoto: Boolean(photo), ratio });
   const textLayers = createMadingInstagramTextLayers(renderPost, {
     regularFontPath: REGULAR_FONT_PATH,
     semiboldFontPath: SEMIBOLD_FONT_PATH,
-  });
+  }, ratio);
+
+  const photoLeft = isLandscape ? 350 : 130;
+  const photoTop = isLandscape ? 90 : 245;
 
   const image = await sharp(Buffer.from(svg))
     .composite([
-      ...(photo ? [{ input: photo, left: 130, top: 245 }] : []),
+      ...(photo ? [{ input: photo, left: photoLeft, top: photoTop }] : []),
       ...textLayers,
     ])
     .jpeg({ quality: 92, mozjpeg: true })
     .toBuffer();
-  return new NextResponse(image, {
-    headers: {
-      "Content-Type": "image/jpeg",
-      "Cache-Control": "public, max-age=300, s-maxage=300",
-    },
-  });
+
+  const headers = {
+    "Content-Type": "image/jpeg",
+    "Cache-Control": "public, max-age=300, s-maxage=300",
+  };
+
+  if (isDownload) {
+    const filename = `menfess-usu-${params.id}-${ratio}.jpg`;
+    headers["Content-Disposition"] = `attachment; filename="${filename}"`;
+  }
+
+  return new NextResponse(image, { headers });
 }

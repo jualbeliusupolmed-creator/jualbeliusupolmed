@@ -122,6 +122,13 @@ export const DEFAULT_SETTINGS = {
     triggers: "jual,wts,wtb,cari,beli,dicari,admin,min,mimin,perpanjang,upgrade,dijual,ready",
     min_price_digits: 4,
   },
+  popupAd: {
+    enabled: false,
+    title: "Promo & Event Spesial",
+    imageUrl: "",
+    targetUrl: "",
+    buttonText: "Lihat Sekarang",
+  },
 };
 
 function clone(obj) {

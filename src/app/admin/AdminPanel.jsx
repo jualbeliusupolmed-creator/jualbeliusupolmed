@@ -1531,6 +1531,10 @@ function SettingsManager({ settings, action }) {
   const [botCfg, setBotCfg] = useState(settings.bot || {});
   const [messages, setMessages] = useState(settings.messages || {});
   const [areas, setAreas] = useState((settings.areas || []).join("\n"));
+  const [popupAd, setPopupAd] = useState(settings.popupAd || { enabled: false, title: "", imageUrl: "", targetUrl: "", buttonText: "Lihat Selengkapnya" });
+  const [aiCfg, setAiCfg] = useState(settings.ai_config || { model: "gemini-2.0-flash", memory: "", personality: "" });
+  const [botKeywords, setBotKeywords] = useState(settings.bot_keywords || { enabled: true, greeting_enabled: false, greeting: "", triggers: "", min_price_digits: 4 });
+  const [ukmInviteCode, setUkmInviteCode] = useState(settings.ukmInviteCode || "KAMPUS_USU_POLMED_2026");
   const [saved, setSaved] = useState("");
   const [showPriceConfirm, setShowPriceConfirm] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -2008,6 +2012,232 @@ function SettingsManager({ settings, action }) {
           }}
           className="btn-primary mt-4 w-full"
         >{saved === "areas" ? "✓ Tersimpan" : "Simpan Daftar Area"}</button>
+      </Card>
+
+      {/* KONTAK & INFO MARKETPLACE */}
+      <Card title="Kontak & Info Marketplace" className={match("kontak info whatsapp wa grup link email telepon alamat marketplace support") ? "" : "hidden"}>
+        <div className="space-y-3">
+          <Field label="Nomor WA Marketplace (untuk chat ke penjual)">
+            <input className="input font-mono" value={contact.marketplaceWa ?? ""} onChange={(e) => setContact({ ...contact, marketplaceWa: e.target.value })} placeholder="628xxxxx" />
+            <p className="mt-1 text-xs text-gray-400">Nomor ini dipakai sebagai pengirim pesan/notifikasi ke penjual dan pembeli.</p>
+          </Field>
+          <Field label="Link Grup WhatsApp">
+            <input className="input" value={contact.waGroupLink ?? ""} onChange={(e) => setContact({ ...contact, waGroupLink: e.target.value })} placeholder="https://chat.whatsapp.com/..." />
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Email Support">
+              <input type="email" className="input" value={contact.supportEmail ?? ""} onChange={(e) => setContact({ ...contact, supportEmail: e.target.value })} placeholder="admin@domain.com" />
+            </Field>
+            <Field label="Telepon Support">
+              <input className="input" value={contact.supportPhone ?? ""} onChange={(e) => setContact({ ...contact, supportPhone: e.target.value })} placeholder="+62 8xx-xxxx" />
+            </Field>
+          </div>
+          <Field label="Alamat Fisik (tampil di footer)">
+            <input className="input" value={contact.supportAddress ?? ""} onChange={(e) => setContact({ ...contact, supportAddress: e.target.value })} placeholder="Jl. Dr. T. Mansur No. 9, Medan" />
+          </Field>
+        </div>
+        <button onClick={() => { action({ action: "save_settings", key: "contact", value: contact }, "Kontak disimpan"); flash("contact"); }} className="btn-primary mt-4 w-full sm:w-auto sm:px-10">{saved === "contact" ? "✓ Tersimpan" : "Simpan Kontak"}</button>
+      </Card>
+
+      {/* KONFIGURASI BOT KEYWORDS */}
+      <Card title="Bot WhatsApp — Keyword & Greeting" className={`lg:col-span-2 ${match("bot keyword greeting sapaan trigger pesan selamat datang menu kata kunci harga minimum") ? "" : "hidden"}`}>
+        <div className="space-y-4">
+          <div className="flex flex-wrap gap-4">
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <input type="checkbox" className="h-4 w-4 rounded" checked={!!botKeywords.enabled} onChange={(e) => setBotKeywords({ ...botKeywords, enabled: e.target.checked })} />
+              <span className="dark:text-slate-200">Bot keywords aktif</span>
+            </label>
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <input type="checkbox" className="h-4 w-4 rounded" checked={!!botKeywords.greeting_enabled} onChange={(e) => setBotKeywords({ ...botKeywords, greeting_enabled: e.target.checked })} />
+              <span className="dark:text-slate-200">Kirim pesan sapaan otomatis</span>
+            </label>
+          </div>
+          <Field label="Kata Kunci Trigger Bot (pisah koma)">
+            <input className="input font-mono text-sm" value={botKeywords.triggers ?? ""} onChange={(e) => setBotKeywords({ ...botKeywords, triggers: e.target.value })} placeholder="jual,wts,cari,beli,admin" />
+            <p className="mt-1 text-xs text-gray-400">Pesan yang mengandung kata ini akan ditangani bot secara otomatis.</p>
+          </Field>
+          <Field label="Min. Digit Harga (cegah harga asal-asalan)">
+            <input type="number" min="1" max="10" className="input w-32" value={botKeywords.min_price_digits ?? 4} onChange={(e) => setBotKeywords({ ...botKeywords, min_price_digits: Number(e.target.value) || 4 })} />
+            <p className="mt-1 text-xs text-gray-400">Contoh: 4 digit = harga minimal Rp 1.000.</p>
+          </Field>
+          <Field label="Pesan Sapaan (jika diaktifkan)">
+            <textarea className="input min-h-40 text-sm font-mono" value={botKeywords.greeting ?? ""} onChange={(e) => setBotKeywords({ ...botKeywords, greeting: e.target.value })} placeholder="Halo! Ketik .MENU untuk melihat perintah..." />
+            <p className="mt-1 text-xs text-gray-400">Mendukung format WhatsApp: *tebal*, _miring_. Gunakan \n untuk baris baru.</p>
+          </Field>
+        </div>
+        <button onClick={() => { action({ action: "save_settings", key: "bot_keywords", value: botKeywords }, "Konfigurasi Bot Keywords disimpan"); flash("bot_keywords"); }} className="btn-primary mt-4 w-full sm:w-auto sm:px-10">{saved === "bot_keywords" ? "✓ Tersimpan" : "Simpan Bot Keywords"}</button>
+      </Card>
+
+      {/* KONFIGURASI AI */}
+      <Card title="Konfigurasi AI Marketplace" className={`lg:col-span-2 ${match("ai kecerdasan buatan model gemini gpt kepribadian personality memory memori instruksi") ? "" : "hidden"}`}>
+        <p className="mb-4 text-xs text-gray-500 dark:text-slate-400">
+          AI digunakan untuk verifikasi struk pembayaran, menjawab pertanyaan di bot, dan berbagai otomasi cerdas di marketplace.
+        </p>
+        <div className="space-y-4">
+          <Field label="Model AI">
+            <select className="input" value={aiCfg.model ?? "gemini-2.0-flash"} onChange={(e) => setAiCfg({ ...aiCfg, model: e.target.value })}>
+              <option value="gemini-2.0-flash">Gemini 2.0 Flash (Cepat, Hemat)</option>
+              <option value="gemini-2.0-flash-thinking-exp">Gemini 2.0 Flash Thinking (Analitik)</option>
+              <option value="gemini-1.5-pro">Gemini 1.5 Pro (Akurat, Lebih Lambat)</option>
+              <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+            </select>
+          </Field>
+          <Field label="Kepribadian AI (Personality / System Prompt)">
+            <textarea
+              className="input min-h-28 text-sm"
+              value={aiCfg.personality ?? ""}
+              onChange={(e) => setAiCfg({ ...aiCfg, personality: e.target.value })}
+              placeholder="Kamu adalah asisten marketplace yang profesional tapi santai..."
+            />
+            <p className="mt-1 text-xs text-gray-400">Instruksi persona yang selalu disertakan di tiap percakapan AI.</p>
+          </Field>
+          <Field label="Memori Konteks Marketplace (pengetahuan tentang toko)">
+            <textarea
+              className="input min-h-28 text-sm"
+              value={aiCfg.memory ?? ""}
+              onChange={(e) => setAiCfg({ ...aiCfg, memory: e.target.value })}
+              placeholder="Pasar target adalah mahasiswa USU dan Polmed. Pembayaran via QRIS atau COD..."
+            />
+            <p className="mt-1 text-xs text-gray-400">Fakta tentang marketplace yang diinjeksikan ke konteks AI (kategori, area, harga, dll).</p>
+          </Field>
+        </div>
+        <button onClick={() => { action({ action: "save_settings", key: "ai_config", value: aiCfg }, "Konfigurasi AI disimpan"); flash("ai_config"); }} className="btn-primary mt-4 w-full sm:w-auto sm:px-10">{saved === "ai_config" ? "✓ Tersimpan" : "Simpan Konfigurasi AI"}</button>
+      </Card>
+
+      {/* POPUP IKLAN SPONSOR / EVENT KAMPUS */}
+      <Card title="Popup Iklan Sponsor / Event Kampus" className={match("popup iklan sponsor event kampus promo banner modal harian") ? "" : "hidden"}>
+        <p className="mb-4 text-xs text-gray-500 dark:text-slate-400">
+          Popup ini muncul otomatis <strong>1× per 24 jam</strong> saat pengguna membuka situs. Berguna untuk promo sponsor, event kampus, atau pengumuman penting.
+        </p>
+        <div className="space-y-4">
+          <label className="flex items-center gap-3 cursor-pointer select-none">
+            <div className="relative">
+              <input
+                type="checkbox"
+                className="sr-only"
+                checked={!!popupAd.enabled}
+                onChange={(e) => setPopupAd({ ...popupAd, enabled: e.target.checked })}
+              />
+              <div className={`block w-12 h-6 rounded-full transition-colors ${popupAd.enabled ? "bg-primary" : "bg-gray-300 dark:bg-slate-600"}`} />
+              <div className={`absolute left-1 top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${popupAd.enabled ? "translate-x-6" : ""}`} />
+            </div>
+            <span className="text-sm font-medium dark:text-slate-200">
+              {popupAd.enabled ? "Popup Aktif" : "Popup Nonaktif"}
+            </span>
+          </label>
+
+          <Field label="Judul Promo / Pengumuman">
+            <input
+              className="input"
+              value={popupAd.title ?? ""}
+              onChange={(e) => setPopupAd({ ...popupAd, title: e.target.value })}
+              placeholder="Contoh: Event Bazaar USU 2025 🎉"
+            />
+          </Field>
+
+          <Field label="URL Gambar Banner (Rasio 16:9 disarankan)">
+            <input
+              className="input"
+              type="url"
+              value={popupAd.imageUrl ?? ""}
+              onChange={(e) => setPopupAd({ ...popupAd, imageUrl: e.target.value })}
+              placeholder="https://..."
+            />
+            {popupAd.imageUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={popupAd.imageUrl} alt="Preview" className="mt-2 w-full max-w-xs rounded-lg border border-gray-200 dark:border-slate-700 object-cover" />
+            )}
+          </Field>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Link Tujuan (klik banner/tombol)">
+              <input
+                className="input"
+                type="url"
+                value={popupAd.targetUrl ?? ""}
+                onChange={(e) => setPopupAd({ ...popupAd, targetUrl: e.target.value })}
+                placeholder="https://..."
+              />
+            </Field>
+            <Field label="Teks Tombol CTA">
+              <input
+                className="input"
+                value={popupAd.buttonText ?? ""}
+                onChange={(e) => setPopupAd({ ...popupAd, buttonText: e.target.value })}
+                placeholder="Lihat Selengkapnya"
+              />
+            </Field>
+          </div>
+        </div>
+        <button
+          onClick={() => {
+            action({ action: "save_settings", key: "popupAd", value: popupAd }, "Pengaturan Popup Ads disimpan");
+            flash("popupAd");
+          }}
+          className="btn-primary mt-4 w-full sm:w-auto sm:px-10"
+        >
+          {saved === "popupAd" ? "✓ Tersimpan" : "Simpan Pengaturan Popup"}
+        </button>
+      </Card>
+
+      {/* AKUN RESMI ORGANISASI & UKM KAMPUS */}
+      <Card title="Akun Resmi UKM & Organisasi Kampus" className={`lg:col-span-2 ${match("organisasi ukm hima bem komunitas kampus resmi private invite pendaftaran link") ? "" : "hidden"}`}>
+        <p className="mb-4 text-xs text-gray-500 dark:text-slate-400">
+          Kelola kode undangan dan tautan pendaftaran private untuk pengurus BEM, HIMA, dan UKM di USU & POLMED agar mendapatkan lencana resmi terverifikasi.
+        </p>
+
+        <div className="space-y-4">
+          <Field label="Kode Undangan Pendaftaran Private">
+            <input
+              className="input font-mono text-sm uppercase"
+              value={ukmInviteCode}
+              onChange={(e) => setUkmInviteCode(e.target.value.toUpperCase())}
+              placeholder="KAMPUS_USU_POLMED_2026"
+            />
+            <p className="mt-1 text-xs text-gray-400">
+              Kode ini otomatis memverifikasi akun organisasi saat mendaftar lewat formulir private.
+            </p>
+          </Field>
+
+          {/* Link Private Generator */}
+          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 space-y-2">
+            <span className="text-xs font-bold text-primary uppercase tracking-wider">
+              🔗 Tautan Pendaftaran Private (Bagikan ke Pengurus UKM)
+            </span>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                readOnly
+                value={typeof window !== "undefined" ? `${window.location.origin}/organisasi/daftar?invite=${ukmInviteCode}` : `/organisasi/daftar?invite=${ukmInviteCode}`}
+                className="input font-mono text-xs bg-white dark:bg-slate-900 select-all"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const url = `${window.location.origin}/organisasi/daftar?invite=${ukmInviteCode}`;
+                  navigator.clipboard.writeText(url);
+                  setToast({ type: "ok", msg: "Tautan pendaftaran disalin!" });
+                }}
+                className="btn-primary shrink-0 text-xs py-2 px-3"
+              >
+                Salin Tautan
+              </button>
+            </div>
+            <p className="text-[11px] text-gray-500 dark:text-slate-400">
+              Pengurus yang mendaftar melalui tautan ini akan langsung mendapatkan badge <strong>🏛️ Resmi Terverifikasi</strong>.
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => {
+            action({ action: "save_settings", key: "ukmInviteCode", value: ukmInviteCode }, "Kode undangan organisasi disimpan");
+            flash("ukmInviteCode");
+          }}
+          className="btn-primary mt-4 w-full sm:w-auto sm:px-10"
+        >
+          {saved === "ukmInviteCode" ? "✓ Tersimpan" : "Simpan Kode Undangan"}
+        </button>
       </Card>
     </div>
   </div>

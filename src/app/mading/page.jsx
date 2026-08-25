@@ -5,18 +5,20 @@ import Link from "next/link";
 import { Icon } from "@/components/Icons";
 import { toast } from "sonner";
 import PullToRefresh from "@/components/PullToRefresh";
+import UnduhMenfessModal from "@/components/mading/UnduhMenfessModal";
 
 const CAMPUSES = ["USU", "POLMED", "Bebas"];
 const FILTER_CAMPUSES = ["Semua", "USU", "POLMED", "Bebas"];
 
 export default function MadingPage() {
-  const [activeTab, setActiveTab] = useState("all"); // 'all' | 'menfess' | 'info' | 'blog'
+  const [activeTab, setActiveTab] = useState("all"); // 'all' | 'menfess' | 'info' | 'organisasi' | 'blog'
 
   const [selectedFaculty, setSelectedFaculty] = useState("Semua");
   const [filterType, setFilterType] = useState("all"); // 'all' | 'popular' | 'photo'
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [unduhPost, setUnduhPost] = useState(null);
 
   useEffect(() => {
     try {
@@ -413,17 +415,18 @@ export default function MadingPage() {
           </div>
 
           {/* TABS FILTER */}
-          <div className="max-w-2xl mx-auto px-4 flex border-t border-black/[0.05] dark:border-white/[0.06]">
+          <div className="max-w-2xl mx-auto px-4 flex border-t border-black/[0.05] dark:border-white/[0.06] overflow-x-auto no-scrollbar">
             {[
               { id: "all", label: "Semua" },
               { id: "menfess", label: "Menfess" },
               { id: "info", label: "Info Kampus" },
+              { id: "organisasi", label: "🏛️ Organisasi" },
               { id: "blog", label: "Blog" },
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 py-3 text-xs font-semibold border-b-2 flex items-center justify-center transition-colors ${
+                className={`flex-1 min-w-[72px] py-3 text-xs font-semibold border-b-2 flex items-center justify-center transition-colors whitespace-nowrap px-2 ${
                   activeTab === tab.id
                     ? "border-primary text-primary dark:text-emerald-400"
                     : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400"
@@ -667,10 +670,22 @@ export default function MadingPage() {
 
                       <button
                         onClick={() => handleShare(post)}
-                        className="ml-auto flex items-center gap-1 rounded-lg px-2 py-1 transition-colors hover:text-emerald-600"
+                        className="ml-auto flex items-center gap-1 rounded-lg px-2 py-1 transition-colors hover:text-emerald-600 text-slate-500"
+                        title="Bagikan Tautan"
                       >
                         <Icon.Share className="h-3.5 w-3.5" />
                         <span className="hidden font-bold xs:inline">Bagikan</span>
+                      </button>
+
+                      {/* TOMBOL UNDUH MENFESS (POTRAIT & LANDSCAPE) */}
+                      <button
+                        onClick={() => setUnduhPost(post)}
+                        title="Unduh gambar Menfess (Potrait 1080×1350 & Landscape 1200×675)"
+                        aria-label="Unduh Menfess"
+                        className="flex items-center gap-1 rounded-lg px-2 py-1 transition-colors text-slate-500 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-800"
+                      >
+                        <Icon.Download className="h-3.5 w-3.5" />
+                        <span className="hidden font-bold xs:inline">Unduh</span>
                       </button>
 
                       <button
@@ -1018,6 +1033,14 @@ export default function MadingPage() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* MODAL UNDUH MENFESS */}
+        {unduhPost && (
+          <UnduhMenfessModal
+            post={unduhPost}
+            onClose={() => setUnduhPost(null)}
+          />
         )}
       </div>
     </PullToRefresh>
