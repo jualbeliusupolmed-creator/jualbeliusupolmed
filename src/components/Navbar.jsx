@@ -110,7 +110,7 @@ export default function Navbar({ config }) {
       <div className="border-b border-black/[0.06] bg-white/80 backdrop-blur-2xl transition-all duration-300 dark:border-white/[0.08] dark:bg-[#000000]/80">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-2.5">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group min-w-0 active:scale-[0.98] transition-transform">
+          <Link href="/" className="flex items-center gap-2.5 group min-w-0 shrink active:scale-[0.98] transition-transform">
             <div className="shrink-0 transition-transform duration-300 group-hover:scale-105">
               <Logo className="h-7 w-7" src={config?.site?.logoUrl} />
             </div>

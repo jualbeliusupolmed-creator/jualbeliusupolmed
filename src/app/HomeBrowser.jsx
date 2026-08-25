@@ -844,7 +844,7 @@ export default function HomeBrowser({
   };
 
   return (
-    <main className="mx-auto max-w-6xl px-4 pt-3 pb-6">
+    <main className="mx-auto w-full max-w-6xl px-4 pt-3 pb-6 overflow-hidden">
       {order.map(renderSection)}
     </main>
   );
