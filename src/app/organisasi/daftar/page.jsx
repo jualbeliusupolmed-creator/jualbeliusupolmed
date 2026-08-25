@@ -89,9 +89,10 @@ function DaftarOrganisasiForm() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal mendaftarkan organisasi.");
 
-      // Simpan session seller_wa
+      // Simpan session seller_wa & seller_name
       if (data.wa) {
         localStorage.setItem("seller_wa", data.wa);
+        localStorage.setItem("seller_name", data.organization?.ukm_name || form.ukm_name);
       }
 
       setSuccessData(data);
