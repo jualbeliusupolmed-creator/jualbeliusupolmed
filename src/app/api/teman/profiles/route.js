@@ -162,7 +162,7 @@ export async function POST(request) {
       whatsapp: cleanWa,
       gender: String(gender || "all").trim(),
       target_gender: String(target_gender || "all").trim(),
-      is_active: true,
+      is_active: body.is_active !== undefined ? Boolean(body.is_active) : true,
       updated_at: new Date().toISOString(),
     };
 
@@ -231,5 +231,39 @@ export async function POST(request) {
   } catch (err) {
     console.error("POST /api/teman/profiles error:", err);
     return NextResponse.json({ error: err.message || "Gagal menyimpan profil" }, { status: 500 });
+  }
+}
+
+export async function PATCH(request) {
+  try {
+    const body = await request.json();
+    const { userId: customUserId, is_active } = body;
+
+    const headerWa = request.headers.get("x-seller-wa");
+    const sessionWa = formatWa(getUserSession() || headerWa || "");
+    const userId = sessionWa ? hashIdentitas(sessionWa) : customUserId;
+
+    if (!userId) {
+      return NextResponse.json({ error: "Identitas pengguna diperlukan" }, { status: 400 });
+    }
+
+    if (is_active === undefined) {
+      return NextResponse.json({ error: "is_active diperlukan" }, { status: 400 });
+    }
+
+    const supa = getAdminClient();
+    const { data, error } = await supa
+      .from("teman_profiles")
+      .update({ is_active: Boolean(is_active), updated_at: new Date().toISOString() })
+      .eq("user_id", userId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return NextResponse.json({ ok: true, profile: data });
+  } catch (err) {
+    console.error("PATCH /api/teman/profiles error:", err);
+    return NextResponse.json({ error: err.message || "Gagal mengubah status" }, { status: 500 });
   }
 }

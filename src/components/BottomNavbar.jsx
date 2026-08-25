@@ -11,9 +11,8 @@ function BottomNavbarInner() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Sembunyikan BottomNavbar jika sedang di dalam room chat aktif
-  const isChatRoom = pathname === "/chat" && (searchParams.has("anon") || searchParams.has("room"));
-  if (isChatRoom) return null;
+  // Sembunyikan/minimalkan BottomNavbar jika sedang di dalam room chat aktif
+  const isChatRoom = pathname === "/chat" && searchParams && (searchParams.has("anon") || searchParams.has("room"));
 
   const isSocialContext = ["/sosial", "/mading", "/teman", "/cari-teman", "/swap", "/chat"]
     .some((route) => pathname === route || pathname.startsWith(`${route}/`));
