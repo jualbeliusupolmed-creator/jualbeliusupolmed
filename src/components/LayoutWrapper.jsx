@@ -34,8 +34,9 @@ export default function LayoutWrapper({ children }) {
     <>
       {!isImmersive && <Navbar config={config} />}
       <main className={cn(
-        "flex-1 flex flex-col min-h-0",
-        isAdmin ? "dark:bg-[#000000] overflow-auto" : isChat || isTeman ? "dark:bg-[#000000] overflow-hidden" : "bg-[#f5f5f7] dark:bg-[#0b0b0f] overflow-auto pb-24 md:pb-28"
+        "flex-1 flex flex-col bg-[#f5f5f7]",
+        isAdmin ? "dark:bg-[#000000]" : isChat || isTeman ? "dark:bg-[#000000]" : "dark:bg-[#0b0b0f]",
+        !isAdmin && !isChat && !isTeman ? "pb-24 md:pb-28" : ""
       )}>
         {children}
       </main>

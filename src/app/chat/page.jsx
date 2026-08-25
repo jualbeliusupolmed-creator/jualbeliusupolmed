@@ -550,7 +550,7 @@ function ChatContent() {
     ).length;
 
     return (
-      <div className="flex-1 flex flex-col max-w-2xl w-full mx-auto bg-white dark:bg-[#000000] overflow-hidden font-sans no-tap-highlight">
+      <div className="fixed inset-x-0 bottom-0 top-[52px] z-20 flex flex-col max-w-2xl w-full mx-auto bg-white dark:bg-[#000000] overflow-hidden font-sans no-tap-highlight">
         {/* ── HEADER APPLE HIG ── */}
         <div className="bg-white/85 dark:bg-[#000000]/85 backdrop-blur-2xl border-b border-black/[0.06] dark:border-white/[0.08] shrink-0 z-40 pt-[max(env(safe-area-inset-top),0.5rem)] px-3 xs:px-4 py-2.5">
           <div className="flex items-center justify-between">
@@ -1003,7 +1003,7 @@ function ChatContent() {
     }
 
     return (
-      <div className="flex-1 flex flex-col max-w-2xl w-full mx-auto bg-white dark:bg-[#000000] overflow-hidden font-sans no-tap-highlight">
+      <div className="fixed inset-x-0 bottom-0 top-[52px] z-20 flex flex-col max-w-2xl w-full mx-auto bg-white dark:bg-[#000000] overflow-hidden font-sans no-tap-highlight">
         <div className="bg-white/85 dark:bg-[#000000]/85 backdrop-blur-2xl border-b border-black/[0.06] dark:border-white/[0.08] shrink-0 z-40 pt-[max(env(safe-area-inset-top),0.5rem)] px-3 xs:px-4 py-2.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5 min-w-0">
@@ -1214,7 +1214,7 @@ function ChatContent() {
         : "Ngobrol 1-on-1 dengan mahasiswa USU & POLMED — ketuk buat mulai";
 
   return (
-    <div className="flex-1 flex flex-col overflow-y-auto bg-[#f5f5f7] dark:bg-[#000000] font-sans pb-24 md:pb-28">
+    <div className="fixed inset-x-0 bottom-0 top-[52px] z-20 overflow-y-auto bg-[#f5f5f7] dark:bg-[#000000] font-sans pb-24 md:pb-28">
       <div className="bg-white/80 dark:bg-[#000000]/80 backdrop-blur-2xl border-b border-black/[0.06] dark:border-white/[0.08] sticky top-0 z-40">
         <div className="px-4 py-3 max-w-2xl mx-auto flex items-center justify-between">
           <div>
