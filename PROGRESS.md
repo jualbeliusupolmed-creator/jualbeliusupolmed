@@ -155,7 +155,7 @@ In-memory rate limiter di: OTP send/verify, email login, admin login, admin acti
 - Homepage + search + filter kategori
 - Pasang iklan via WA (foto + caption → AI parse → QRIS → struk → tayang)
 - Admin panel (login, moderasi, penjual, transaksi)
-- WA bot di Railway dengan Baileys
+- WA bot di VPS DigitalOcean dengan Baileys (bot.jualbeliusupolmed.web.id)
 - Cron jobs: expire, auto-bump, broadcast
 - Blog dengan Markdown editor
 - Profil publik penjual
@@ -165,7 +165,7 @@ In-memory rate limiter di: OTP send/verify, email login, admin login, admin acti
 ## Arsitektur Sistem
 
 ```
-[User WA] ──→ [WA Bot / Railway / Baileys]
+[User WA] ──→ [WA Bot / VPS DigitalOcean / Baileys]
                     │ forward pesan
                     ↓
               [/api/wa/baileys / Vercel]
@@ -185,6 +185,6 @@ In-memory rate limiter di: OTP send/verify, email login, admin login, admin acti
 [Vercel Cron] ──→ expire · auto-bump · broadcast
 ```
 
-**Stack:** Next.js 14 App Router · Supabase · Gemini 2.5 Flash · Baileys (Railway) · Fonnte · Sharp · Tailwind CSS · Vercel
+**Stack:** Next.js 14 App Router · Supabase · Gemini 2.5 Flash · Baileys (VPS DigitalOcean) · Fonnte · Sharp · Tailwind CSS · Vercel
 
 **DB Tables:** listings · seller_profiles · payments · price_offers · seller_ratings · reports · blacklist · settings · blogs · categories · wanted_listings · group_posts · scheduled_broadcasts · category_subscriptions · otps · referrals · profile_change_requests · search_logs · admin_logs · error_logs
