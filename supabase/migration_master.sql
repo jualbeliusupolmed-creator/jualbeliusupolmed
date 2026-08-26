@@ -37,6 +37,10 @@ CREATE TABLE IF NOT EXISTS oprec_events (
 ALTER TABLE public.oprec_events
   ADD COLUMN IF NOT EXISTS custom_fields JSONB DEFAULT '[]'::jsonb;
 
+-- Kolom email (jika tabel sudah ada sebelumnya)
+ALTER TABLE public.seller_profiles
+  ADD COLUMN IF NOT EXISTS email TEXT;
+
 -- 1b. Tabel Pengajuan / Pendaftar Oprec
 CREATE TABLE IF NOT EXISTS oprec_submissions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

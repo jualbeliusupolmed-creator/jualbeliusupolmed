@@ -6,7 +6,7 @@ import { Icon } from "@/components/Icons";
 import { toast } from "sonner";
 
 export default function UnduhMenfessModal({ post, onClose }) {
-  const [ratio, setRatio] = useState("portrait"); // 'portrait' (1080x1350) | 'landscape' (1200x675)
+  const [ratio, setRatio] = useState("portrait"); // 'portrait' (1080x1350) | 'story' (1080x1920)
   const [downloading, setDownloading] = useState(false);
 
   if (!post) return null;
@@ -24,12 +24,12 @@ export default function UnduhMenfessModal({ post, onClose }) {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `menfess-usu-${post.id}-${ratio}.jpg`;
+      a.download = `menfess-usu-${post.id}-${ratio === "story" ? "9-16" : "1080x1350"}.jpg`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
-      toast.success(`Gambar Menfess (${ratio === "portrait" ? "Potrait 1080×1350" : "Landscape 1200×675"}) berhasil diunduh! 📸`);
+      toast.success(`Gambar Menfess (${ratio === "story" ? "Potrait 9:16 (Story/Status)" : "Potrait 4:5 (1080×1350)"}) berhasil diunduh! 📸`);
     } catch (err) {
       toast.error(err.message || "Gagal mengunduh gambar");
     } finally {
@@ -63,7 +63,7 @@ export default function UnduhMenfessModal({ post, onClose }) {
                 Unduh Gambar Menfess
               </h3>
               <p className="text-[11px] text-gray-500 dark:text-slate-400">
-                Pilih rasio tampilan kartu untuk posting di media sosial
+                Pilih format Potrait untuk Feed atau Story / Status WA
               </p>
             </div>
           </div>
@@ -80,35 +80,37 @@ export default function UnduhMenfessModal({ post, onClose }) {
           <button
             type="button"
             onClick={() => setRatio("portrait")}
-            className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all ${
+            className={`flex flex-col items-center justify-center py-2 px-3 rounded-xl text-xs font-bold transition-all ${
               ratio === "portrait"
                 ? "bg-white text-gray-900 shadow-sm dark:bg-slate-900 dark:text-white"
                 : "text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white"
             }`}
           >
-            <span>📱 Potrait (1080 × 1350)</span>
+            <span>📱 Potrait 1080 × 1350</span>
+            <span className="text-[10px] font-medium text-gray-400 dark:text-slate-500">Feed / Postingan (4:5)</span>
           </button>
 
           <button
             type="button"
-            onClick={() => setRatio("landscape")}
-            className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all ${
-              ratio === "landscape"
+            onClick={() => setRatio("story")}
+            className={`flex flex-col items-center justify-center py-2 px-3 rounded-xl text-xs font-bold transition-all ${
+              ratio === "story"
                 ? "bg-white text-gray-900 shadow-sm dark:bg-slate-900 dark:text-white"
                 : "text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white"
             }`}
           >
-            <span>🖼️ Landscape (1200 × 675)</span>
+            <span>📲 Potrait 9 : 16</span>
+            <span className="text-[10px] font-medium text-gray-400 dark:text-slate-500">Story IG & Status WA</span>
           </button>
         </div>
 
         {/* LIVE PREVIEW CONTAINER */}
-        <div className="relative overflow-hidden rounded-2xl bg-slate-950/5 p-2 dark:bg-black/30 border border-slate-200 dark:border-slate-800 flex items-center justify-center min-h-[260px]">
+        <div className="relative overflow-hidden rounded-2xl bg-slate-950/5 p-2 dark:bg-black/30 border border-slate-200 dark:border-slate-800 flex items-center justify-center min-h-[280px]">
           <div
             className={`relative transition-all duration-300 shadow-lg rounded-xl overflow-hidden ${
-              ratio === "portrait"
-                ? "aspect-[4/5] w-full max-w-[260px]"
-                : "aspect-[16/9] w-full max-w-[420px]"
+              ratio === "story"
+                ? "aspect-[9/16] w-full max-w-[210px]"
+                : "aspect-[4/5] w-full max-w-[260px]"
             }`}
           >
             <Image
@@ -122,9 +124,9 @@ export default function UnduhMenfessModal({ post, onClose }) {
         </div>
 
         <div className="text-center text-[11px] text-gray-400">
-          {ratio === "portrait"
-            ? "Format 4:5 Instagram Feed & Story HD • Pas untuk feed tanpa terpotong"
-            : "Format 16:9 Landscape • Pas untuk Twitter/X, Status WhatsApp & Banner"}
+          {ratio === "story"
+            ? "Format 9:16 Fullscreen Potrait • Pas untuk Story IG, Status WA & TikTok"
+            : "Format 4:5 Potrait Feed • Pas untuk postingan Feed Instagram tanpa terpotong"}
         </div>
 
         {/* ACTION BUTTONS */}

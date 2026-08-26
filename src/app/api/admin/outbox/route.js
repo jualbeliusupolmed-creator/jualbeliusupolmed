@@ -81,6 +81,21 @@ export async function POST(req) {
     return NextResponse.json({ ok: true, dibatalkan: 1 });
   }
 
+  if (body.manual || body.tandai_manual) {
+    const targetId = body.manual || body.tandai_manual;
+    const { error } = await supa
+      .from("wa_outbox")
+      .update({
+        status: "terkirim",
+        terkirim_at: new Date().toISOString(),
+        galat_terakhir: "Dikirim manual oleh admin via WA Web/App",
+      })
+      .eq("id", targetId)
+      .eq("status", "tertunda");
+    if (error) return jawabGalat(error);
+    return NextResponse.json({ ok: true, manual: 1, terkirim: 1 });
+  }
+
   let antre = [];
   try {
     let q = supa.from("wa_outbox").select("*").eq("status", "tertunda").order("created_at", { ascending: true });

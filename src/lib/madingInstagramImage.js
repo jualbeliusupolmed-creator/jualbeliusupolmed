@@ -1,6 +1,9 @@
 const PORTRAIT_WIDTH = 1080;
 const PORTRAIT_HEIGHT = 1350;
 
+const STORY_WIDTH = 1080;
+const STORY_HEIGHT = 1920;
+
 const LANDSCAPE_WIDTH = 1200;
 const LANDSCAPE_HEIGHT = 675;
 
@@ -79,11 +82,17 @@ export function wrapInstagramText(value, maxChars = 46, maxLines = 10) {
   return lines;
 }
 
-function typographyForLength(length, isLandscape = false) {
-  if (isLandscape) {
+function typographyForLength(length, ratio = "portrait") {
+  if (ratio === "landscape") {
     if (length <= 100) return { fontSize: 34, lineHeight: 50, maxChars: 56, maxLines: 6 };
     if (length <= 200) return { fontSize: 28, lineHeight: 42, maxChars: 68, maxLines: 7 };
     return { fontSize: 24, lineHeight: 36, maxChars: 78, maxLines: 8 };
+  }
+  if (ratio === "story" || ratio === "9:16") {
+    if (length <= 120) return { fontSize: 42, lineHeight: 66, maxChars: 38, maxLines: 12 };
+    if (length <= 260) return { fontSize: 36, lineHeight: 56, maxChars: 44, maxLines: 16 };
+    if (length <= 450) return { fontSize: 31, lineHeight: 50, maxChars: 52, maxLines: 20 };
+    return { fontSize: 27, lineHeight: 44, maxChars: 60, maxLines: 24 };
   }
   if (length <= 110) return { fontSize: 40, lineHeight: 62, maxChars: 39, maxLines: 8 };
   if (length <= 220) return { fontSize: 35, lineHeight: 55, maxChars: 46, maxLines: 11 };
@@ -93,19 +102,24 @@ function typographyForLength(length, isLandscape = false) {
 
 export function layoutMadingInstagramPost(post = {}, ratio = "portrait") {
   const isLandscape = ratio === "landscape";
+  const isStory = ratio === "story" || ratio === "9:16";
   const message = normalizeText([post.title, post.content].filter(Boolean).join(" — "));
   
   const typography = post.image_url
     ? isLandscape
       ? { fontSize: 24, lineHeight: 36, maxChars: 54, maxLines: 5 }
+      : isStory
+      ? { fontSize: 34, lineHeight: 52, maxChars: 46, maxLines: 9 }
       : message.length <= 160
       ? { fontSize: 36, lineHeight: 54, maxChars: 44, maxLines: 6 }
       : { fontSize: 30, lineHeight: 46, maxChars: 53, maxLines: 7 }
-    : typographyForLength(message.length, isLandscape);
+    : typographyForLength(message.length, ratio);
 
   const lines = wrapInstagramText(message, typography.maxChars, typography.maxLines);
   const messageCenterY = isLandscape
     ? post.image_url ? 440 : 330
+    : isStory
+    ? post.image_url ? 1240 : 960
     : post.image_url ? 900 : 650;
   const firstLineY = messageCenterY - ((lines.length - 1) * typography.lineHeight) / 2;
 
@@ -212,7 +226,68 @@ export function createMadingInstagramTextLayers(
     return layers;
   }
 
-  // PORTRAIT DEFAULT (1080 x 1350)
+  const isStory = ratio === "story" || ratio === "9:16";
+
+  if (isStory) {
+    // STORY 9:16 (1080 x 1920)
+    const layers = [
+      pangoTextLayer({
+        text: layout.handle,
+        fontPath: semiboldFontPath,
+        fontName: "Plus Jakarta Sans SemiBold",
+        fontSize: 28,
+        color: "#7050C2",
+        width: 800,
+        left: 140,
+        top: 190,
+      }),
+    ];
+
+    layout.lines.forEach((line, index) => {
+      layers.push(
+        pangoTextLayer({
+          text: line,
+          fontPath: regularFontPath,
+          fontName: "Plus Jakarta Sans",
+          fontSize: layout.fontSize,
+          color: "#24262B",
+          width: 900,
+          left: 90,
+          top: Math.round(
+            layout.firstLineY + index * layout.lineHeight - layout.fontSize,
+          ),
+        }),
+      );
+    });
+
+    layers.push(
+      pangoTextLayer({
+        text: layout.footer,
+        fontPath: regularFontPath,
+        fontName: "Plus Jakarta Sans",
+        fontSize: 23,
+        color: "#96938D",
+        width: 800,
+        left: 140,
+        top: 1736,
+      }),
+      pangoTextLayer({
+        text: "USU · POLMED",
+        fontPath: semiboldFontPath,
+        fontName: "Plus Jakarta Sans SemiBold",
+        fontSize: 21,
+        color: "#77746F",
+        width: 370,
+        left: 505,
+        top: 1808,
+        align: "left",
+      }),
+    );
+
+    return layers;
+  }
+
+  // PORTRAIT DEFAULT 4:5 (1080 x 1350)
   const layers = [
     pangoTextLayer({
       text: layout.handle,
@@ -272,8 +347,9 @@ export function createMadingInstagramTextLayers(
 
 export function createMadingInstagramSvg({ hasPhoto = false, ratio = "portrait" } = {}) {
   const isLandscape = ratio === "landscape";
-  const width = isLandscape ? LANDSCAPE_WIDTH : PORTRAIT_WIDTH;
-  const height = isLandscape ? LANDSCAPE_HEIGHT : PORTRAIT_HEIGHT;
+  const isStory = ratio === "story" || ratio === "9:16";
+  const width = isLandscape ? LANDSCAPE_WIDTH : isStory ? STORY_WIDTH : PORTRAIT_WIDTH;
+  const height = isLandscape ? LANDSCAPE_HEIGHT : isStory ? STORY_HEIGHT : PORTRAIT_HEIGHT;
 
   if (isLandscape) {
     return `
@@ -301,7 +377,34 @@ export function createMadingInstagramSvg({ hasPhoto = false, ratio = "portrait" 
       </svg>`;
   }
 
-  // PORTRAIT (1080 x 1350)
+  if (isStory) {
+    // STORY 9:16 (1080 x 1920)
+    return `
+      <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="violetGlow" cx="0" cy="0" r="1" gradientTransform="translate(80 120) rotate(42) scale(600 500)" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#7C5AC8" stop-opacity=".055"/>
+            <stop offset="1" stop-color="#7C5AC8" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="greenGlow" cx="0" cy="0" r="1" gradientTransform="translate(1000 1800) rotate(-140) scale(600 500)" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#14A875" stop-opacity=".05"/>
+            <stop offset="1" stop-color="#14A875" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+
+        <rect width="${width}" height="${height}" fill="#F8F7F3"/>
+        <rect width="${width}" height="${height}" fill="url(#violetGlow)"/>
+        <rect width="${width}" height="${height}" fill="url(#greenGlow)"/>
+
+        ${hasPhoto ? '<rect x="110" y="320" width="860" height="580" rx="30" fill="#E9E6DE"/>' : ""}
+
+        <line x1="164" y1="1708" x2="916" y2="1708" stroke="#D8D6D0" stroke-width="1.5"/>
+        <circle cx="454" cy="1824" r="8" fill="#16B77E"/>
+        <circle cx="481" cy="1824" r="8" fill="#7050C2"/>
+      </svg>`;
+  }
+
+  // PORTRAIT 4:5 (1080 x 1350)
   return `
     <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
       <defs>

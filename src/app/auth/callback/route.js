@@ -119,14 +119,19 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: "Invalid token" }, { status: 401 });
     }
 
-    const redirectResponse = await syncUserAndSetSession(data.user, origin, next);
+    const result = await syncUserAndSetSession(data.user, origin, next || "/");
     
-    // Karena ini respons JSON, kita ekstrak URL dari redirectResponse
-    const redirectUrl = redirectResponse.headers.get("Location");
-    return NextResponse.json({ success: true, redirectUrl });
+    // Ekstrak URL dari redirect response
+    const redirectUrl = result.headers.get("Location") || `${origin}/`;
+    return NextResponse.json({
+      success: true,
+      wa: result._wa || null,
+      name: result._name || null,
+      redirectUrl
+    });
   } catch (err) {
     console.error("[auth/callback POST] error:", err.message);
-    return NextResponse.json({ success: false, error: "Server error" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Server error: " + err.message }, { status: 500 });
   }
 }
 
@@ -142,38 +147,86 @@ async function syncUserAndSetSession(user, origin, next) {
 
   const supa = getAdminClient();
 
-  const { data: existing } = await supa
-    .from("seller_profiles")
-    .select("wa, name, avatar_url")
-    .eq("email_google", email)
-    .maybeSingle();
+  // Cari profil: cek email_google ATAU kolom email
+  let existing = null;
+  try {
+    const { data: byGoogleEmail } = await supa
+      .from("seller_profiles")
+      .select("wa, name, email_google")
+      .eq("email_google", email)
+      .maybeSingle();
+    existing = byGoogleEmail;
+  } catch (_) {
+    // Abaikan jika kolom email_google belum ada
+  }
+
+  // Fallback: cek kolom email jika tidak ditemukan via email_google
+  if (!existing) {
+    try {
+      const { data: byEmail } = await supa
+        .from("seller_profiles")
+        .select("wa, name")
+        .eq("email", email)
+        .maybeSingle();
+      existing = byEmail;
+    } catch (_) {
+      // Kolom email belum ada — abaikan
+    }
+  }
 
   let waIdentifier;
 
   if (existing) {
     waIdentifier = existing.wa;
-    const updates = {};
-    if (name && !existing.name) updates.name = name;
-    if (avatar && !existing.avatar_url) updates.avatar_url = avatar;
-    if (Object.keys(updates).length > 0) {
-      await supa.from("seller_profiles").update(updates).eq("wa", waIdentifier);
+    try {
+      const updates = {};
+      if (name && !existing.name) updates.name = name;
+      if (avatar) updates.photo_url = avatar;
+      if (!existing.email_google) updates.email_google = email;
+      if (Object.keys(updates).length > 0) {
+        await supa.from("seller_profiles").update(updates).eq("wa", waIdentifier);
+      }
+    } catch (err) {
+      console.warn("[auth/callback] update profile non-fatal warning:", err.message);
     }
   } else {
     const localPart = email.split("@")[0].replace(/[^a-zA-Z0-9]/g, "").slice(0, 20);
     waIdentifier = `google_${localPart}_${Date.now().toString(36)}`;
 
-    await supa.from("seller_profiles").insert({
-      wa: waIdentifier,
-      name: name || email,
-      email_google: email,
-      avatar_url: avatar || null,
-      auth_provider: "google",
-    });
+    // Coba insert lengkap
+    let inserted = false;
+    try {
+      const { error: insErr } = await supa.from("seller_profiles").insert({
+        wa: waIdentifier,
+        name: name || email,
+        email: email,
+        email_google: email,
+        photo_url: avatar || null,
+        auth_provider: "google",
+      });
+      if (!insErr) inserted = true;
+    } catch (_) {}
+
+    // Fallback jika ada kolom yang belum ada di schema DB
+    if (!inserted) {
+      try {
+        await supa.from("seller_profiles").insert({
+          wa: waIdentifier,
+          name: name || email,
+        });
+      } catch (err) {
+        console.error("[auth/callback] insert fallback error:", err.message);
+      }
+    }
   }
 
   setSellerCookie(waIdentifier);
 
-  const redirectUrl = new URL(`${origin}${next}`);
+  const redirectUrl = new URL(`${origin}${next || "/"}`);
   redirectUrl.searchParams.set("_gwa", waIdentifier);
-  return NextResponse.redirect(redirectUrl.toString());
+  const response = NextResponse.redirect(redirectUrl.toString());
+  response._wa = waIdentifier;
+  response._name = name || existing?.name || email;
+  return response;
 }
+

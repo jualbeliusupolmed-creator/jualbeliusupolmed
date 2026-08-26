@@ -141,7 +141,26 @@ export function AntreanBot() {
                 </span>
               </div>
               <pre className="g-pre">{it.message}</pre>
-              <div className="mt-3 flex justify-end">
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                {(() => {
+                  const cleanPhone = String(it.jid || "").replace(/@s\.whatsapp\.net|@g\.us/g, "").replace(/\D/g, "");
+                  const waPhone = cleanPhone.startsWith("0") ? "62" + cleanPhone.slice(1) : cleanPhone;
+                  if (!waPhone || waPhone.length < 5 || it.grup) return <span />;
+                  const waUrl = `https://wa.me/${waPhone}?text=${encodeURIComponent(it.message || "")}`;
+                  return (
+                    <a
+                      href={waUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="g-btn g-btn-sm"
+                      style={{ background: "#16a34a", color: "#fff" }}
+                      title="Buka WhatsApp untuk kirim manual"
+                    >
+                      💬 Chat WA Manual ↗
+                    </a>
+                  );
+                })()}
+
                 <button
                   onClick={() => aksi({ hapus: it.id }, it.id)}
                   disabled={sibuk !== null}

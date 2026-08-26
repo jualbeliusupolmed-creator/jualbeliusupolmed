@@ -1,241 +1,173 @@
-"use client";
+import { getAdminClient } from "@/lib/supabaseAdmin";
+import OrganisasiClient from "./OrganisasiClient";
 
-import { useState, useEffect } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { UKM_CATEGORIES } from "@/lib/organisasi";
-import { Icon } from "@/components/Icons";
+export const dynamic = "force-dynamic";
+export const revalidate = 120;
 
-export default function DirektoriOrganisasiPage() {
-  const [organisasi, setOrganisasi] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedCampus, setSelectedCampus] = useState("Semua");
-  const [searchQuery, setSearchQuery] = useState("");
+export const metadata = {
+  title: "Direktori UKM, BEM & Organisasi Kampus — USU & POLMED",
+  description: "Eksplorasi daftar BEM, HIMA, dan Unit Kegiatan Mahasiswa (UKM) resmi di Universitas Sumatera Utara (USU) & Politeknik Negeri Medan (POLMED). Info oprec dan kegiatan kampus.",
+  keywords: ["ukm usu", "ukm polmed", "bem usu", "bem polmed", "hima usu", "organisasi mahasiswa medan", "oprec ukm usu"],
+  alternates: { canonical: "/organisasi" },
+  openGraph: {
+    title: "Direktori UKM, BEM & Organisasi Kampus — USU & POLMED",
+    description: "Temukan BEM, HIMA, dan Unit Kegiatan Mahasiswa (UKM) resmi di USU & POLMED. Info open recruitment dan kegiatan kepanitiaan.",
+    url: "/organisasi",
+    type: "website",
+    locale: "id_ID",
+    siteName: "Jual Beli & Komunitas Mahasiswa USU POLMED",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Direktori UKM, BEM & Organisasi Kampus — USU & POLMED",
+    description: "Temukan BEM, HIMA, dan Unit Kegiatan Mahasiswa (UKM) resmi di USU & POLMED.",
+  },
+};
 
-  useEffect(() => {
-    async function loadData() {
-      setLoading(true);
-      try {
-        const params = new URLSearchParams();
-        if (selectedCategory !== "all") params.set("category", selectedCategory);
-        if (selectedCampus !== "Semua") params.set("campus", selectedCampus);
-        if (searchQuery) params.set("q", searchQuery);
+const DEMO_ORGANISASI = [
+  {
+    id: "org-pema-usu",
+    ukm_name: "PEMA USU (Pemerintahan Mahasiswa)",
+    ukm_category: "bem_hima",
+    ukm_category_label: "BEM & HIMA",
+    campus: "USU",
+    faculty: "Universitas",
+    ukm_instagram: "pema.usu",
+    photo_url: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=300&auto=format&fit=crop&q=80",
+    bio: "Lembaga eksekutif tertinggi mahasiswa Universitas Sumatera Utara. Mewadahi aspirasi, advokasi, dan kolaborasi mahasiswa USU.",
+    ukm_verified: true,
+    created_at: "2026-01-01T00:00:00.000Z",
+  },
+  {
+    id: "org-bem-polmed",
+    ukm_name: "BEM POLMED",
+    ukm_category: "bem_hima",
+    ukm_category_label: "BEM & HIMA",
+    campus: "POLMED",
+    faculty: "Politeknik",
+    ukm_instagram: "bempolmed_official",
+    photo_url: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=300&auto=format&fit=crop&q=80",
+    bio: "Badan Eksekutif Mahasiswa Politeknik Negeri Medan. Bergerak untuk kemajuan dan kreativitas mahasiswa Polmed.",
+    ukm_verified: true,
+    created_at: "2026-01-02T00:00:00.000Z",
+  },
+  {
+    id: "org-robotika-usu",
+    ukm_name: "UKM Robotika USU",
+    ukm_category: "riset_teknologi",
+    ukm_category_label: "Riset & Teknologi",
+    campus: "USU",
+    faculty: "Fasilkom-TI / Teknik",
+    ukm_instagram: "robotika_usu",
+    photo_url: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=300&auto=format&fit=crop&q=80",
+    bio: "Unit Kegiatan Mahasiswa bidang riset otomasi, IoT, dan kontes robot nasional. Terbuka untuk seluruh mahasiswa USU.",
+    ukm_verified: true,
+    created_at: "2026-01-03T00:00:00.000Z",
+  },
+  {
+    id: "org-teater-o",
+    ukm_name: "Teater O USU",
+    ukm_category: "seni_budaya",
+    ukm_category_label: "Seni & Budaya",
+    campus: "USU",
+    faculty: "FIB / Universitas",
+    ukm_instagram: "teatero_usu",
+    photo_url: "https://images.unsplash.com/photo-1460723237483-7a6dc9d0b212?w=300&auto=format&fit=crop&q=80",
+    bio: "Komunitas dan UKM seni peran, sastra, teater, dan pementasan seni budaya mahasiswa USU Medan.",
+    ukm_verified: true,
+    created_at: "2026-01-04T00:00:00.000Z",
+  },
+  {
+    id: "org-pers-suara-usu",
+    ukm_name: "Pers Mahasiswa Suara USU",
+    ukm_category: "media_pers",
+    ukm_category_label: "Pers & Media",
+    campus: "USU",
+    faculty: "Universitas",
+    ukm_instagram: "suarausu",
+    photo_url: "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=300&auto=format&fit=crop&q=80",
+    bio: "Lembaga Pers Mahasiswa independen Universitas Sumatera Utara. Menyajikan berita, liputan investigasi, dan opini kampus.",
+    ukm_verified: true,
+    created_at: "2026-01-05T00:00:00.000Z",
+  },
+  {
+    id: "org-futsal-polmed",
+    ukm_name: "UKM Olahraga & Futsal Polmed",
+    ukm_category: "olahraga",
+    ukm_category_label: "Olahraga",
+    campus: "POLMED",
+    faculty: "Politeknik",
+    ukm_instagram: "futsal_polmed",
+    photo_url: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=300&auto=format&fit=crop&q=80",
+    bio: "Pusat pembinaan bakat olahraga, futsal, basket, dan kejuaraan pekan olahraga mahasiswa Polmed Medan.",
+    ukm_verified: true,
+    created_at: "2026-01-06T00:00:00.000Z",
+  },
+];
 
-        const res = await fetch(`/api/organisasi?${params.toString()}`);
-        const data = await res.json();
-        setOrganisasi(data.organisasi || []);
-      } catch (err) {
-        console.error("Gagal memuat direktori organisasi:", err);
-      } finally {
-        setLoading(false);
-      }
+async function getInitialOrganisasi() {
+  try {
+    const supa = getAdminClient();
+    const { data: dbOrgs } = await supa
+      .from("seller_profiles")
+      .select("wa, name, bio, avatar_url, photo_url, campus, faculty, ukm_name, ukm_category, ukm_instagram, ukm_verified, created_at")
+      .or("account_type.eq.ukm,ukm_verified.eq.true")
+      .order("created_at", { ascending: false });
+
+    let orgList = [];
+    if (dbOrgs && dbOrgs.length > 0) {
+      orgList = dbOrgs.map((org) => ({
+        id: org.wa,
+        ukm_name: org.ukm_name || org.name,
+        ukm_category: org.ukm_category || "bem_hima",
+        campus: org.campus || "USU",
+        faculty: org.faculty || "Umum",
+        ukm_instagram: org.ukm_instagram || "",
+        photo_url: org.photo_url || org.avatar_url || "",
+        bio: org.bio || "",
+        ukm_verified: org.ukm_verified !== false,
+        created_at: org.created_at,
+      }));
     }
 
-    const timer = setTimeout(loadData, 200);
-    return () => clearTimeout(timer);
-  }, [selectedCategory, selectedCampus, searchQuery]);
+    const combined = [...orgList, ...DEMO_ORGANISASI];
+    const uniqueMap = new Map();
+    combined.forEach((o) => {
+      const key = (o.ukm_name || "").toLowerCase();
+      if (!uniqueMap.has(key)) uniqueMap.set(key, o);
+    });
+
+    return Array.from(uniqueMap.values());
+  } catch (err) {
+    console.error("getInitialOrganisasi error:", err?.message);
+    return DEMO_ORGANISASI;
+  }
+}
+
+export default async function DirektoriOrganisasiPage() {
+  const initialOrganisasi = await getInitialOrganisasi();
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+
+  const itemListJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "Direktori UKM & Organisasi Kampus USU POLMED",
+    "description": "Daftar resmi Unit Kegiatan Mahasiswa, BEM, dan HIMA di USU & POLMED.",
+    "itemListElement": initialOrganisasi.map((org, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "name": org.ukm_name,
+      "url": `${baseUrl}/organisasi`,
+    })),
+  };
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] dark:bg-[#0b0b0f] pb-24 font-sans selection:bg-primary/20">
-      {/* HEADER SECTION */}
-      <div className="bg-white/80 dark:bg-[#1c1c1e]/80 backdrop-blur-xl border-b border-black/[0.06] dark:border-white/[0.08] py-8 sm:py-10">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="space-y-1.5">
-              <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-0.5 text-xs font-bold text-primary border border-primary/20">
-                <span>🏛️ Ekosistem Komunitas Mahasiswa</span>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-gray-900 dark:text-white">
-                Direktori UKM & Organisasi Kampus
-              </h1>
-              <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400 max-w-2xl">
-                Temukan dan ikuti kegiatan BEM, HIMA, lembaga, dan Unit Kegiatan Mahasiswa resmi di Universitas Sumatera Utara (USU) & Politeknik Negeri Medan (POLMED).
-              </p>
-            </div>
-
-            <Link
-              href="/organisasi/daftar"
-              className="btn-primary py-2.5 px-4 text-xs font-bold shadow-lg shadow-primary/20 flex items-center justify-center gap-2 shrink-0 self-start md:self-auto"
-            >
-              <span>+ Daftarkan Akun Organisasi</span>
-            </Link>
-          </div>
-
-          {/* SEARCH & FILTERS */}
-          <div className="mt-6 flex flex-col sm:flex-row sm:items-center gap-3">
-            {/* Search Input */}
-            <div className="relative flex-1">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari nama UKM, organisasi, atau fakultas..."
-                className="input py-2.5 pl-9 pr-4 text-xs shadow-sm bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800"
-              />
-              <span className="absolute left-3 top-3 text-xs text-gray-400">🔍</span>
-            </div>
-
-            {/* Campus Selector */}
-            <div className="flex items-center gap-1.5 bg-gray-100 dark:bg-slate-800/80 p-1 rounded-xl shrink-0">
-              {["Semua", "USU", "POLMED"].map((c) => (
-                <button
-                  key={c}
-                  onClick={() => setSelectedCampus(c)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                    selectedCampus === c
-                      ? "bg-white dark:bg-slate-900 text-gray-900 dark:text-white shadow-sm"
-                      : "text-gray-500 dark:text-slate-400 hover:text-gray-900"
-                  }`}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* CATEGORIES PILLS */}
-          <div className="mt-3 flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-            <button
-              onClick={() => setSelectedCategory("all")}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border ${
-                selectedCategory === "all"
-                  ? "bg-primary text-white border-primary shadow-sm"
-                  : "bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-gray-600 dark:text-slate-300 hover:bg-gray-50"
-              }`}
-            >
-              Semua Kategori
-            </button>
-            {UKM_CATEGORIES.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border flex items-center gap-1.5 ${
-                  selectedCategory === cat.id
-                    ? "bg-primary text-white border-primary shadow-sm"
-                    : "bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-gray-600 dark:text-slate-300 hover:bg-gray-50"
-                }`}
-              >
-                <span>{cat.icon}</span>
-                <span>{cat.label.replace(/^[^\w]+/, "").trim()}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* DIRECTORY GRID CONTENT */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-pulse">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="h-56 rounded-3xl bg-gray-200/70 dark:bg-slate-800/60" />
-            ))}
-          </div>
-        ) : organisasi.length === 0 ? (
-          <div className="card p-12 text-center max-w-md mx-auto space-y-4">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-3xl text-primary">
-              🏛️
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-gray-900 dark:text-white">
-                Organisasi Tidak Ditemukan
-              </h3>
-              <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">
-                Belum ada organisasi yang cocok dengan saringan atau kata kunci pencarian.
-              </p>
-            </div>
-            <Link href="/organisasi/daftar" className="btn-primary inline-flex text-xs py-2 px-4">
-              <span>+ Daftarkan Organisasimu Sekarang</span>
-            </Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {organisasi.map((org) => {
-              const catObj = UKM_CATEGORIES.find((c) => c.id === org.ukm_category);
-              const igClean = org.ukm_instagram?.replace(/^@/, "");
-
-              return (
-                <div
-                  key={org.id}
-                  className="card p-5 flex flex-col justify-between border border-black/[0.04] dark:border-white/[0.06] hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 group"
-                >
-                  <div className="space-y-3">
-                    {/* Top Row: Logo, Badges */}
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl border border-black/[0.06] dark:border-white/[0.08] bg-gray-50 dark:bg-slate-800 shadow-sm">
-                        {org.photo_url ? (
-                          <Image
-                            src={org.photo_url}
-                            alt={org.ukm_name}
-                            fill
-                            className="object-cover group-hover:scale-105 transition-transform"
-                            sizes="56px"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-2xl">
-                            🏛️
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex flex-col items-end gap-1">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                          ✓ Resmi
-                        </span>
-                        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary dark:text-emerald-400">
-                          {org.campus}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Org Name & Faculty */}
-                    <div>
-                      <h2 className="text-base font-bold text-gray-900 dark:text-white group-hover:text-primary transition-colors leading-tight">
-                        {org.ukm_name}
-                      </h2>
-                      <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5 flex items-center gap-1.5">
-                        <span>{catObj ? catObj.icon : "🏛️"}</span>
-                        <span>{org.faculty || "Tingkat Universitas"}</span>
-                      </p>
-                    </div>
-
-                    {/* Bio / Description */}
-                    <p className="text-xs text-gray-600 dark:text-slate-300 line-clamp-3 leading-relaxed">
-                      {org.bio || "Organisasi mahasiswa resmi di lingkungan kampus USU & POLMED."}
-                    </p>
-                  </div>
-
-                  {/* Actions Bottom Bar */}
-                  <div className="mt-4 pt-3.5 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between gap-2">
-                    {igClean ? (
-                      <a
-                        href={`https://instagram.com/${igClean}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs font-semibold text-gray-700 dark:text-slate-200 hover:text-primary flex items-center gap-1.5 py-1 px-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
-                      >
-                        <span>📸</span>
-                        <span>@{igClean}</span>
-                      </a>
-                    ) : (
-                      <span className="text-[11px] text-gray-400">Official Partner</span>
-                    )}
-
-                    <Link
-                      href={`/mading?tab=organisasi`}
-                      className="btn-outline text-[11px] py-1 px-3 rounded-xl flex items-center gap-1 font-semibold"
-                    >
-                      <span>Lihat Postingan</span>
-                      <span>→</span>
-                    </Link>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    </div>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd).replace(/</g, "\\u003c") }}
+      />
+      <OrganisasiClient initialOrganisasi={initialOrganisasi} />
+    </>
   );
 }

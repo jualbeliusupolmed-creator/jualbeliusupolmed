@@ -70,7 +70,7 @@ export async function GET(req) {
 
     if (status !== "all") query = query.eq("status", status);
     if (campus && campus !== "Semua") query = query.eq("campus", campus);
-    if (ukm_wa) query = query.eq("ukm_wa", formatWa(ukm_wa));
+    if (ukm_wa) query = query.eq("ukm_wa", formatWa(ukm_wa) || ukm_wa);
 
     const { data, error } = await query;
 

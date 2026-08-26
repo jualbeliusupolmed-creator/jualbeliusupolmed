@@ -16,7 +16,8 @@ export async function GET(request) {
     const headerWa = request.headers.get("x-seller-wa");
     const queryWa = searchParams.get("wa");
 
-    const sessionWa = formatWa(getUserSession() || headerWa || queryWa || "");
+    const rawWa = (getUserSession() || headerWa || queryWa || "").trim();
+    const sessionWa = formatWa(rawWa) || rawWa;
     const userId = sessionWa ? hashIdentitas(sessionWa) : customUserId;
 
     if (!userId) {
