@@ -117,7 +117,7 @@ export default async function JasaPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd).replace(/</g, "\u003c") }}
       />
       <Suspense fallback={<div className="py-20 text-center text-gray-400">Memuat...</div>}>
         <JasaBrowser

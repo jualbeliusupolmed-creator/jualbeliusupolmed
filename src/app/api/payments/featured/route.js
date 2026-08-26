@@ -2,10 +2,16 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getSettings, featuredRateFrom } from "@/lib/settings";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { tolakBukanPemilik } from "@/lib/kepemilikan";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
 // POST /api/payments/featured  { listing_id, days, per_day? } -> snap token
+//
+// Butuh sesi pemilik iklan. Tanpa itu siapa pun bisa menyisipkan baris
+// `payments` berstatus pending atas nama iklan orang lain — panel keuangan
+// terisi tagihan yang tidak pernah dipesan siapa pun.
 export async function POST(req) {
   try {
     const rl = rateLimit(getClientIp(req), { limit: 10, windowMs: 60_000 });
@@ -29,6 +35,9 @@ export async function POST(req) {
     if (!listing)
       return NextResponse.json({ error: "Listing tidak ada" }, { status: 404 });
 
+    const tolak = tolakBukanPemilik(listing.seller_wa, { aksi: "menyorot iklan" });
+    if (tolak) return tolak;
+
     const orderId = `FEATURED-${listing_id.slice(0, 8)}-${Date.now()}`;
     await supa.from("payments").insert({
       listing_id,
@@ -41,6 +50,6 @@ export async function POST(req) {
 
     return NextResponse.json({ paymentUrl: "/qris.png", orderId, amount, finalAmount: amount });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 }

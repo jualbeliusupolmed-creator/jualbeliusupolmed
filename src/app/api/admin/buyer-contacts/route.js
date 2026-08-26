@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { isAdmin } from "@/lib/auth";
+import { cariAman } from "@/lib/cariAman";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -36,12 +38,13 @@ export async function GET(req) {
     query = query.eq("listing_id", listingId);
   }
   if (q) {
-    query = query.or(`buyer_name.ilike.%${q}%,buyer_wa.ilike.%${q}%,listing_title.ilike.%${q}%`);
+    const qAman = cariAman(q);
+    if (qAman) query = query.or(`buyer_name.ilike.%${qAman}%,buyer_wa.ilike.%${qAman}%,listing_title.ilike.%${qAman}%`);
   }
 
   const { data, count, error } = await query;
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return jawabGalat(error);
   }
 
   return NextResponse.json({

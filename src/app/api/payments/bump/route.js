@@ -2,10 +2,18 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getSettings, hasUnpaidSoldFees } from "@/lib/settings";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { tolakBukanPemilik } from "@/lib/kepemilikan";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
 // POST /api/payments/bump  { listing_id } -> snap token untuk bump Rp1.000
+//
+// Kepemilikan diperiksa, bukan sekadar keberadaan iklan. Sampai 26 Agustus 2026
+// rute ini tidak menoleh ke sesi sama sekali: `listing_id` dari body dipakai
+// untuk mencari `seller_wa`, lalu kuota `free_bumps` MILIK PENJUAL ITU dipotong.
+// Artinya siapa pun yang tahu satu id iklan bisa menghabiskan jatah bump gratis
+// pemiliknya sampai nol — tanpa login, tanpa bayar, tanpa si pemilik tahu.
 export async function POST(req) {
   try {
     const rl = rateLimit(getClientIp(req), { limit: 10, windowMs: 60_000 });
@@ -23,6 +31,9 @@ export async function POST(req) {
       .single();
     if (!listing)
       return NextResponse.json({ error: "Listing tidak ada" }, { status: 404 });
+
+    const tolak = tolakBukanPemilik(listing.seller_wa, { aksi: "menyundul iklan" });
+    if (tolak) return tolak;
 
     // Check if seller has unpaid sold fees (Account locked - Cara 2)
     const locked = await hasUnpaidSoldFees(supa, listing.seller_wa);
@@ -65,6 +76,6 @@ export async function POST(req) {
 
     return NextResponse.json({ paymentUrl: "/qris.png", orderId, amount, finalAmount: amount });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 }
