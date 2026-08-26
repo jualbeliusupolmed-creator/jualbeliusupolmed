@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { verifyReceiptImage, checkReceiverName } from "@/lib/gemini";
-import { sendWa, notifyAdminNewListing, postToGroup, postWantedToGroup } from "@/lib/fonnte";
+import { sendWa, notifyAdminNewListing, postToGroup, postWantedToGroup, notifySellerProActivated } from "@/lib/fonnte";
 import { pushListingBaru } from "@/lib/webpush";
 import { buildSlug } from "@/lib/slug";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
@@ -128,10 +128,22 @@ export async function POST(req) {
     let unlockContact = null;
     if (payment.type === "subscribe") {
       const until = new Date(Date.now() + 30 * 864e5).toISOString(); // 30 Hari
-      await supa
+      const waPro = payment.meta?.wa;
+      const { data: profilPro } = await supa
         .from("seller_profiles")
         .update({ subscription_tier: "pro", subscription_expires_at: until })
-        .eq("wa", payment.meta?.wa);
+        .eq("wa", waPro)
+        .select("name")
+        .maybeSingle();
+
+      // Sampai 26 Agustus 2026 alurnya berhenti di baris update: tier naik jadi
+      // "pro" dan pelanggannya tidak diberi tahu apa pun. Pesannya sendiri sudah
+      // lama ditulis di lib/fonnte.js, hanya tidak pernah dipanggil — orang
+      // membayar Rp49.000 lalu disambut kesunyian. Gagal kirim sengaja tidak
+      // membatalkan apa pun: langganannya sudah sah, notifikasi cuma kabar.
+      if (waPro) {
+        await notifySellerProActivated(waPro, profilPro?.name, until).catch(() => {});
+      }
     } else if (payment.meta?.unlock_wanted_id) {
       await supa.from("wanted_unlocks").insert({
         wanted_id: payment.meta.unlock_wanted_id,
@@ -275,6 +287,7 @@ export async function POST(req) {
 
   } catch (e) {
     console.error("verify-receipt error:", e);
-    return NextResponse.json({ success: false, error: e.message }, { status: 500 });
+    console.error("[verify-receipt]", e?.stack || e);
+    return NextResponse.json({ success: false, error: "Gagal memproses struk. Coba lagi sebentar lagi." }, { status: 500 });
   }
 }

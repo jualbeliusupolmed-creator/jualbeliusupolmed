@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { getUserSession } from "@/lib/auth";
-import { hashIdentitas } from "@/lib/identitasHash";
-import { formatWa } from "@/lib/constants";
+import { identitasTeman } from "@/lib/identitasTeman";
+import { simpanProfil } from "@/lib/simpanProfil";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -11,14 +11,11 @@ export const revalidate = 0;
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const customUserId = searchParams.get("userId");
     const campus = searchParams.get("campus");
-    const headerWa = request.headers.get("x-seller-wa");
-    const queryWa = searchParams.get("wa");
-
-    const rawWa = (getUserSession() || headerWa || queryWa || "").trim();
-    const sessionWa = formatWa(rawWa) || rawWa;
-    const userId = sessionWa ? hashIdentitas(sessionWa) : customUserId;
+    // Identitas dari sesi bila ada; `?userId=` hanya untuk pemakai anonim.
+    // Header `x-seller-wa` dan `?wa=` sengaja TIDAK lagi dipercaya — lihat
+    // penjelasannya di lib/identitasTeman.js.
+    const { userId, wa: sessionWa } = identitasTeman(request, { idKlien: searchParams.get("userId") });
 
     if (!userId) {
       return NextResponse.json({ error: "Identitas pengguna diperlukan" }, { status: 400 });
@@ -38,7 +35,7 @@ export async function GET(request) {
     if (sessionWa) {
       const { data } = await supa
         .from("seller_profiles")
-        .select("name, bio, campus, faculty, whatsapp, photo_url, anonymous_name")
+        .select("wa, name, bio, campus, faculty, avatar_url, anonymous_name")
         .eq("wa", sessionWa)
         .maybeSingle();
       sProfile = data;
@@ -52,13 +49,13 @@ export async function GET(request) {
         bio: sProfile.bio || "",
         campus: sProfile.campus || "USU",
         faculty: sProfile.faculty || "Umum",
-        whatsapp: sProfile.whatsapp || sessionWa,
-        photo_url: sProfile.photo_url || "",
+        whatsapp: sProfile.wa || sessionWa,
+        photo_url: sProfile.avatar_url || "",
         intent: "Teman Santai ☕",
       };
     } else if (myProfile && sProfile) {
       // Jika keduanya ada, pastikan data yang paling lengkap & baru dipakai
-      if (!myProfile.photo_url && sProfile.photo_url) myProfile.photo_url = sProfile.photo_url;
+      if (!myProfile.photo_url && sProfile.avatar_url) myProfile.photo_url = sProfile.avatar_url;
       if (!myProfile.display_name && sProfile.name) myProfile.display_name = sProfile.name;
       if (!myProfile.bio && sProfile.bio) myProfile.bio = sProfile.bio;
       if (!myProfile.campus && sProfile.campus) myProfile.campus = sProfile.campus;
@@ -79,7 +76,7 @@ export async function GET(request) {
     // 4. Ambil deck profil teman yang aktif dan belum di-swipe
     let query = supa
       .from("teman_profiles")
-      .select("id, user_id, photo_url, photo_urls, display_name, gender, campus, faculty, batch, intent, bio, instagram, created_at")
+      .select("id, photo_url, photo_urls, display_name, gender, campus, faculty, batch, intent, bio, instagram, created_at")
       .eq("is_active", true)
       .neq("user_id", userId);
 
@@ -129,9 +126,9 @@ export async function POST(request) {
       target_gender = "all",
     } = body;
 
-    const headerWa = request.headers.get("x-seller-wa");
-    const sessionWa = formatWa(getUserSession() || headerWa || whatsapp || "");
-    const userId = sessionWa ? hashIdentitas(sessionWa) : customUserId;
+    // `whatsapp` dari body TIDAK boleh jadi identitas — dulu bisa, dan itu
+    // berarti mengirim nomor orang lain menimpa profil orang itu.
+    const { userId, wa: sessionWa } = identitasTeman(request, { idKlien: customUserId });
 
     if (!userId) {
       return NextResponse.json({ error: "Identitas pengguna diperlukan" }, { status: 400 });
@@ -195,32 +192,37 @@ export async function POST(request) {
       resultProfile = data;
     }
 
-    // 2. Sinkronisasi Satu Pintu ke seller_profiles & listings
+    // 2. Sinkronisasi Satu Pintu — lewat penulis bersama, bukan aturan sendiri.
+    //
+    // Rute ini melayani DUA jenis pemakai: yang punya akun, dan yang anonim
+    // (Cari Teman memang boleh dipakai tanpa mendaftar). Hanya yang pertama
+    // punya profil penjual untuk disinkronkan.
+    //
+    // Blok yang dulu di sini merakit payload-nya sendiri dan menyebut tiga
+    // kolom yang tidak ada — `photo_url`, `whatsapp`, `updated_at` — jadi
+    // PostgREST menolak seluruh perintah. Penolakannya tidak terlihat siapa
+    // pun: klien Supabase MENGEMBALIKAN galat, tidak melemparnya, jadi `catch`
+    // di bawahnya tidak pernah berjalan. Layar tetap berkata "berhasil".
+    //
+    // Yang bikin makin sulit disadari: perintah BERIKUTNYA — menyeragamkan
+    // `seller_name` di semua iklan — berhasil. Nama di kartu iklan berubah,
+    // profil penjualnya tidak, dan gejalanya terbaca seperti "kadang tersimpan".
     if (sessionWa) {
-      try {
-        await supa
-          .from("seller_profiles")
-          .upsert(
-            {
-              wa: sessionWa,
-              name: cleanName,
-              bio: cleanBio,
-              campus: cleanCampus,
-              faculty: cleanFaculty,
-              photo_url: cleanPhoto,
-              whatsapp: sessionWa,
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: "wa" }
-          );
+      const hasil = await simpanProfil(sessionWa, {
+        name: cleanName,
+        bio: cleanBio,
+        campus: cleanCampus,
+        faculty: cleanFaculty,
+        avatar_url: cleanPhoto || undefined,
+      }, { supa });
 
-        // Update juga nama penjual di seluruh listing miliknya agar seragam
-        await supa
-          .from("listings")
-          .update({ seller_name: cleanName })
-          .eq("seller_wa", sessionWa);
-      } catch (syncErr) {
-        console.warn("Sync to seller_profiles warning:", syncErr?.message);
+      if (hasil.pesanPengguna) {
+        return NextResponse.json({ error: hasil.pesanPengguna }, { status: hasil.status || 400 });
+      }
+      if (hasil.error) {
+        return jawabGalat(hasil.error, {
+          pesan: "Profil Cari Teman tersimpan, tapi gagal menyinkronkan ke profil penjual.",
+        });
       }
     }
 
@@ -240,9 +242,7 @@ export async function PATCH(request) {
     const body = await request.json();
     const { userId: customUserId, is_active } = body;
 
-    const headerWa = request.headers.get("x-seller-wa");
-    const sessionWa = formatWa(getUserSession() || headerWa || "");
-    const userId = sessionWa ? hashIdentitas(sessionWa) : customUserId;
+    const { userId } = identitasTeman(request, { idKlien: customUserId });
 
     if (!userId) {
       return NextResponse.json({ error: "Identitas pengguna diperlukan" }, { status: 400 });

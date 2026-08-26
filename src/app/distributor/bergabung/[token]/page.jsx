@@ -55,7 +55,11 @@ export default function BergabungDistributorPage({ params }) {
           Badge <span className="font-bold text-orange-600">DISTRIBUTOR</span> sudah aktif di profil Anda.
         </p>
         <p className="text-sm text-gray-400 mb-6">Konfirmasi juga sudah dikirim via WhatsApp.</p>
-        <Link href="/pasang-iklan" className="btn-primary">Mulai Pasang Iklan Gratis</Link>
+        {/* Dulu menunjuk /pasang-iklan — halaman yang tidak pernah ada dan tanpa
+            redirect di next.config.mjs. Tombol ajakan utama di ujung funnel
+            undangan distributor berakhir di 404. Halaman pasang iklan yang
+            sebenarnya adalah /jual. */}
+        <Link href="/jual" className="btn-primary">Mulai Pasang Iklan Gratis</Link>
       </div>
     );
   }

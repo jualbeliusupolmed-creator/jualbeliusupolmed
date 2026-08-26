@@ -14,6 +14,8 @@ import { addKeywordSubscription, removeKeywordSubscription, listKeywordSubscript
 import sharp from "sharp";
 import { jumlahTokenBot, tokenBotSah } from "@/lib/botTokens";
 import { autoPublishListingInstagram } from "@/lib/listingInstagram";
+import { cariAman } from "@/lib/cariAman";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 // Loop kirim WA berjeda (anti-ban) mudah melewati batas default 10-15 detik —
@@ -1631,7 +1633,7 @@ export async function POST(req) {
           const { data: tanyaListing } = await supa
             .from("listings")
             .select("id, title, seller_wa, seller_name, listing_code, status")
-            .or(`listing_code.ilike.%${tanyaKode}%,id.ilike.${tanyaKode}%`)
+            .or(`listing_code.ilike.%${cariAman(tanyaKode)}%,id.ilike.${cariAman(tanyaKode)}%`)
             .eq("status", "active")
             .maybeSingle();
 
@@ -2620,7 +2622,7 @@ export async function POST(req) {
           .from("listings")
           .select("id, title, price, seller_name, seller_wa, category, condition, campus, image_url, featured")
           .eq("status", "active")
-          .or(`title.ilike.%${query}%,description.ilike.%${query}%`)
+          .or(`title.ilike.%${cariAman(query)}%,description.ilike.%${cariAman(query)}%`)
           .order("featured", { ascending: false })
           .order("bumped_at", { ascending: false })
           .limit(5);
@@ -2763,7 +2765,7 @@ export async function POST(req) {
             .from("listings")
             .select("id, title, price, seller_wa, condition, campus, sponsored_until, bumped_at")
             .eq("status", "active")
-            .or(`title.ilike.%${aiRes.keywords}%,description.ilike.%${aiRes.keywords}%`);
+            .or(`title.ilike.%${cariAman(aiRes.keywords)}%,description.ilike.%${cariAman(aiRes.keywords)}%`);
 
           if (aiRes.category && aiRes.category !== "Lainnya") {
             query = query.eq("category", aiRes.category);
@@ -2781,7 +2783,7 @@ export async function POST(req) {
               .from("listings")
               .select("id, title, price, seller_wa, condition, campus, sponsored_until, bumped_at")
               .eq("status", "active")
-              .or(`title.ilike.%${aiRes.keywords}%,description.ilike.%${aiRes.keywords}%`)
+              .or(`title.ilike.%${cariAman(aiRes.keywords)}%,description.ilike.%${cariAman(aiRes.keywords)}%`)
               .order("bumped_at", { ascending: false, nullsFirst: false })
               .limit(5);
             finalResults = fallbackResults || [];
@@ -2800,7 +2802,7 @@ export async function POST(req) {
             .from("wanted_listings")
             .select("id, buyer_name, buyer_wa, title, budget, campus")
             .eq("status", "active")
-            .or(`title.ilike.%${aiRes.keywords}%,description.ilike.%${aiRes.keywords}%`)
+            .or(`title.ilike.%${cariAman(aiRes.keywords)}%,description.ilike.%${cariAman(aiRes.keywords)}%`)
             .order("created_at", { ascending: false })
             .limit(3);
 
@@ -3154,6 +3156,6 @@ export async function POST(req) {
 
   } catch (error) {
     console.error("Webhook Error Baileys:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return jawabGalat(error);
   }
 }

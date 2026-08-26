@@ -25,7 +25,12 @@ export async function handleAdminCmd(ctx) {
       supa.from("listings").select("id", { count: "exact", head: true }).eq("status", "active"),
       supa.from("listings").select("id", { count: "exact", head: true }).gte("created_at", todayStart.toISOString()),
       supa.from("payments").select("amount").eq("status", "paid").gte("created_at", todayStart.toISOString()),
-      supa.from("seller_profiles").select("id", { count: "exact", head: true }),
+      // `seller_profiles` tidak punya kolom `id` — kunci utamanya `wa`. Menyalin
+      // pola dari dua baris di atas (tabel `listings` yang memang ber-id) membuat
+      // hitungan ini selalu gagal, dan karena `count` yang gagal dibaca sebagai
+      // undefined lalu jatuh ke `|| 0`, laporan statistik ke admin sejak dulu
+      // selalu berbunyi "Total penjual: 0" tanpa ada yang tampak salah.
+      supa.from("seller_profiles").select("wa", { count: "exact", head: true }),
     ]);
     const revenueToday = (paymentsToday || []).reduce((s, p) => s + Number(p.amount), 0);
     const msg =

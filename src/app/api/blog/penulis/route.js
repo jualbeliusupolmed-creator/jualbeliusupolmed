@@ -1,3 +1,4 @@
+import { jawabGalat } from "@/lib/jawabGalat";
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getSellerSession } from "@/lib/auth";
@@ -212,6 +213,6 @@ export async function DELETE(req) {
   }
 
   const { error } = await supa.from("blogs").delete().eq("id", id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return jawabGalat(error);
   return NextResponse.json({ ok: true });
 }

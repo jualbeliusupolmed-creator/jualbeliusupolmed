@@ -77,7 +77,17 @@ export default function Footer({ config }) {
               </li>
               <li>
                 <Link href="/refund-policy" className="text-gray-600 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white transition-colors">
-                  Refund Policy
+                  Pengembalian Dana
+                </Link>
+              </li>
+              {/* /return-policy sudah lama ada dan isinya berbeda dari
+                  /refund-policy — yang satu soal barang, yang satu soal uang —
+                  tapi tidak pernah ditaut dari mana pun, jadi tidak ada yang
+                  bisa menemukannya. Label keduanya dibuat eksplisit supaya
+                  bedanya terbaca tanpa harus dibuka dulu. */}
+              <li>
+                <Link href="/return-policy" className="text-gray-600 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white transition-colors">
+                  Pengembalian Barang
                 </Link>
               </li>
               <li>

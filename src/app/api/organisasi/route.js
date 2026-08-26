@@ -103,7 +103,7 @@ export async function GET(req) {
     // Query seller_profiles yang memiliki account_type 'ukm' atau is_ukm true
     const { data: dbOrgs, error } = await supa
       .from("seller_profiles")
-      .select("wa, name, bio, avatar_url, photo_url, campus, faculty, ukm_name, ukm_category, ukm_instagram, ukm_verified, created_at")
+      .select("wa, name, bio, avatar_url, campus, faculty, ukm_name, ukm_category, ukm_instagram, ukm_verified, created_at")
       .or("account_type.eq.ukm,ukm_verified.eq.true")
       .order("created_at", { ascending: false });
 
@@ -117,7 +117,7 @@ export async function GET(req) {
         campus: org.campus || "USU",
         faculty: org.faculty || "Umum",
         ukm_instagram: org.ukm_instagram || "",
-        photo_url: org.photo_url || org.avatar_url || "",
+        photo_url: org.avatar_url || "",
         bio: org.bio || "",
         ukm_verified: org.ukm_verified !== false,
         created_at: org.created_at,

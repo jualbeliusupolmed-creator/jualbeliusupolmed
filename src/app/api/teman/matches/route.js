@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { getUserSession } from "@/lib/auth";
-import { hashIdentitas } from "@/lib/identitasHash";
+import { identitasTeman } from "@/lib/identitasTeman";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -11,9 +10,10 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const customUserId = searchParams.get("userId");
-
-    const sessionWa = getUserSession();
-    const userId = sessionWa ? hashIdentitas(sessionWa) : customUserId;
+    // Sesi menang atas `?userId=`. Dulu keduanya setara, dan karena feed
+    // Cari Teman membagikan `user_id` setiap kandidat, siapa pun bisa
+    // menempelkan id orang lain di sini dan membaca daftar match mereka.
+    const { userId } = identitasTeman(request, { idKlien: customUserId });
 
     if (!userId) {
       return NextResponse.json({ error: "Identitas pengguna diperlukan" }, { status: 400 });

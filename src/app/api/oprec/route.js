@@ -3,6 +3,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getUserSession } from "@/lib/auth";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { formatWa } from "@/lib/constants";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -188,7 +189,7 @@ export async function POST(req) {
           .single();
         if (!retryErr) return NextResponse.json({ success: true, oprec: retryData });
       }
-      return NextResponse.json({ error: "Gagal menyimpan formulir Oprec: " + error.message }, { status: 500 });
+      return jawabGalat(error, { pesan: "Gagal menyimpan formulir Oprec." });
     }
 
     return NextResponse.json({ success: true, oprec: data });

@@ -23,10 +23,27 @@ module.exports = function buatGerbang({ API_TOKEN, AUTH_DIR, keadaan }) {
     // ── Auth middleware ───────────────────────────────────────────────────────────
     // Perbandingan token dibuat waktu-konstan: `!==` biasa keluar lebih cepat pada byte
     // pertama yang beda, yang secara teori bisa dipakai menebak token per karakter.
+    //
+    // Dibandingkan lewat digest, bukan penyangga mentah. Versi sebelumnya
+    // menyerah lebih dulu kalau panjangnya berbeda (`if (a.length !== b.length)
+    // return false`) — dan pintasan itu mengembalikan sebagian dari yang tadi
+    // hendak disembunyikan: lamanya menjawab jadi memberi tahu apakah tebakan
+    // penyerang sudah sepanjang token aslinya. Di-hash lebih dulu, kedua sisi
+    // selalu 32 bita, jadi tidak ada lagi cabang yang bergantung pada panjang.
+    //
+    // Ini menyamakan bot dengan sisi web, yang sudah memakai idiom yang sama di
+    // lib/botTokens.js, lib/cronAuth.js, dan lib/auth.js.
+    // Gagal-tertutup kalau tokennya belum diset. Ini bukan kehati-hatian
+    // berlebihan: versi lama membandingkan panjang lebih dulu, jadi API_TOKEN
+    // kosong melawan header kosong menghasilkan dua penyangga nol-bita yang
+    // dinyatakan SAMA — siapa pun yang mengetuk tanpa header apa pun akan
+    // diterima. Bentuk hash mewarisi lubang yang sama kalau tidak dijaga di
+    // sini, karena sha256('') tentu saja sama dengan sha256(''). Idiom yang
+    // sama sudah dipakai tokenBotSah() dan tolakCron() di sisi web.
     function tokenMatches(given) {
-        const a = Buffer.from(String(given || ''));
-        const b = Buffer.from(String(API_TOKEN));
-        if (a.length !== b.length) return false;
+        if (!API_TOKEN) return false;
+        const a = crypto.createHash('sha256').update(String(given ?? '')).digest();
+        const b = crypto.createHash('sha256').update(String(API_TOKEN)).digest();
         return crypto.timingSafeEqual(a, b);
     }
 

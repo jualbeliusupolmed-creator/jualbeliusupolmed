@@ -3,6 +3,8 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getSettings } from "@/lib/settings";
 import { FEES } from "@/lib/fees";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { tolakBukanPemilik } from "@/lib/kepemilikan";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +26,9 @@ export async function POST(req) {
     if (!listing)
       return NextResponse.json({ error: "Listing tidak ada" }, { status: 404 });
 
+    const tolak = tolakBukanPemilik(listing.seller_wa, { aksi: "mengaktifkan auto-bump" });
+    if (tolak) return tolak;
+
     const amount = FEES.autobump_7_days;
 
     const orderId = `AUTOBUMP-${listing_id.slice(0, 8)}-${Date.now()}`;
@@ -38,6 +43,6 @@ export async function POST(req) {
 
     return NextResponse.json({ paymentUrl: "/qris.png", orderId, amount, finalAmount: amount });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 }

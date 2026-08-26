@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { sendWa } from "@/lib/fonnte";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +45,6 @@ export async function POST(req) {
 
     return NextResponse.json({ successCount, failCount });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return jawabGalat(error);
   }
 }

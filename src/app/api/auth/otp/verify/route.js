@@ -7,6 +7,7 @@ import { hashPin } from "@/lib/pin";
 import { verifyOtp } from "@/lib/otp";
 import { validasiPin } from "@/lib/pinRules";
 import { tulisProfil } from "@/lib/tulisProfil";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -130,6 +131,6 @@ export async function POST(req) {
 
     return NextResponse.json({ success: true, message: "Login berhasil dan PIN telah diset!" });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 }

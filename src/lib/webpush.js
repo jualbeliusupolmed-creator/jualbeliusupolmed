@@ -54,34 +54,11 @@ export async function pushToWa(supa, wa, payload) {
   }
 }
 
-/**
- * Kirim push browser ke semua subscriber kategori listing yang baru aktif
- */
-export async function pushCategorySubscribers(supa, listing) {
-  if (!listing?.category) return;
-
-  const { data: subs } = await supa
-    .from("category_subscriptions")
-    .select("buyer_wa")
-    .eq("category", listing.category)
-    .neq("buyer_wa", listing.seller_wa);
-
-  if (!subs?.length) return;
-
-  const price = listing.price
-    ? `Rp ${Number(listing.price).toLocaleString("id-ID")}`
-    : "";
-  const payload = {
-    title: `Iklan Baru di ${listing.category}!`,
-    body: `${listing.title}${price ? " — " + price : ""}`,
-    url: `/produk/${listing.slug || listing.id}`,
-    tag: `cat-${listing.category}`,
-  };
-
-  for (const sub of subs) {
-    await pushToWa(supa, sub.buyer_wa, payload).catch(() => {});
-  }
-}
+// Catatan: `pushCategorySubscribers()` dulu ada di sini dan tidak pernah
+// dipanggil. Ia digantikan `pushKeSemua()` — lihat penjelasannya di bawah:
+// push barang baru sekarang menyapa SEMUA peramban yang berlangganan, bukan
+// cuma pelanggan satu kategori yang punya akun. Menyambungkannya kembali
+// berarti orang yang sama menerima dua notifikasi untuk iklan yang sama.
 
 /**
  * Kirim satu push ke SEMUA peramban yang berlangganan.

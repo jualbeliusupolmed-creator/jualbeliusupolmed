@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { formatWa } from "@/lib/constants";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -63,7 +64,7 @@ export async function POST(req) {
     return NextResponse.json({ ok: true, action: "subscribed", anonim: !normalizedWa });
   } catch (err) {
     console.error("[push/subscribe]", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return jawabGalat(err);
   }
 }
 

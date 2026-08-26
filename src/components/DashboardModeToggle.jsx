@@ -1,16 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 /**
- * Segmented Mode Switcher untuk berpindah antara:
- * - Mode Iklan & Jualan Pribadi (/dashboard)
- * - Mode Kelola Toko Resmi (/dashboard/toko)
+ * Pemindah mode: Iklan & Jualan ⟷ Toko Saya.
+ *
+ * Dulu keduanya halaman terpisah dan tombol ini membandingkan `pathname`.
+ * Sejak penyuntingan toko pindah ke Profil Satu Pintu, "Toko Saya" bukan lagi
+ * alamat lain melainkan tab profil — jadi yang dibandingkan sekarang `?tab=`.
+ * Tanpa perubahan ini tombolnya tetap berpindah (pengalihan menangkapnya), tapi
+ * tidak pernah tampak aktif, dan tombol yang tidak menunjukkan di mana kita
+ * berada terasa rusak meski berfungsi.
  */
 export default function DashboardModeToggle({ storeStatus, activeCount }) {
   const pathname = usePathname();
-  const isToko = pathname?.startsWith("/dashboard/toko");
+  const params = useSearchParams();
+  const isToko = pathname?.startsWith("/dashboard/toko") || params.get("tab") === "profil";
 
   return (
     <div className="inline-flex items-center p-1 bg-slate-100 dark:bg-slate-800/90 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 shadow-inner w-full sm:w-auto">
@@ -31,7 +37,7 @@ export default function DashboardModeToggle({ storeStatus, activeCount }) {
       </Link>
 
       <Link
-        href="/dashboard/toko"
+        href="/dashboard?tab=profil"
         className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold transition-all duration-150 ${
           isToko
             ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm"

@@ -4,6 +4,7 @@ import { getUserSession } from "@/lib/auth";
 import { hashIdentitas } from "@/lib/identitasHash";
 import { cariWaDariHash } from "@/lib/chatIdentity";
 import { siarkanPesanBaru } from "@/lib/chatRealtime";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -228,6 +229,6 @@ export async function POST(request, { params }) {
     });
   } catch (err) {
     console.error("POST /api/chat/room/[id]/exchange-contact error:", err);
-    return NextResponse.json({ error: err.message || "Terjadi kesalahan internal" }, { status: 500 });
+    return jawabGalat(err);
   }
 }

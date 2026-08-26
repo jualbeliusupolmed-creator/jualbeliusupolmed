@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { hasUnpaidSoldFees } from "@/lib/settings";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { tolakBukanPemilik } from "@/lib/kepemilikan";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +28,10 @@ export async function POST(req) {
       .single();
 
     if (!listing) return NextResponse.json({ error: "Listing tidak ada" }, { status: 404 });
+
+    const tolak = tolakBukanPemilik(listing.seller_wa, { aksi: "menyponsori iklan" });
+    if (tolak) return tolak;
+
     if (listing.status !== "active") return NextResponse.json({ error: "Hanya iklan aktif yang bisa disponsori" }, { status: 400 });
 
     const locked = await hasUnpaidSoldFees(supa, listing.seller_wa);
@@ -47,6 +53,6 @@ export async function POST(req) {
 
     return NextResponse.json({ paymentUrl: "/qris.png", orderId, amount, finalAmount: amount });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 }

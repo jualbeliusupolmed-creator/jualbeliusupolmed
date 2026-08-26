@@ -17,12 +17,14 @@ export async function POST(request) {
     if (error) {
       console.error("Failed to track PWA install in Supabase:", error);
       // We still return 200 so the frontend doesn't break, as analytics shouldn't crash the app
-      return NextResponse.json({ success: false, error: error.message });
+      console.error("[pwa-install]", error?.stack || error);
+      return NextResponse.json({ success: false, error: "Gagal mencatat." });
     }
 
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("PWA Install tracking error:", err);
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    console.error("[pwa-install]", err?.stack || err);
+    return NextResponse.json({ success: false, error: "Gagal mencatat." }, { status: 500 });
   }
 }

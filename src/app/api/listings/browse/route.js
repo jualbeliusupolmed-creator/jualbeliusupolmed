@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { cariAman } from "@/lib/cariAman";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -60,7 +62,10 @@ export async function GET(req) {
 
     if (cat) query = query.eq("category", cat);
     if (campus && campus !== "Semua") query = query.eq("campus", campus);
-    if (q) query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%`);
+    if (q) {
+      const qAman = cariAman(q);
+      if (qAman) query = query.or(`title.ilike.%${qAman}%,description.ilike.%${qAman}%`);
+    }
     if (minPrice !== null) query = query.gte("price", minPrice);
     if (maxPrice !== null) query = query.lte("price", maxPrice);
     if (nego) query = query.ilike("description", "%nego%");
@@ -123,6 +128,6 @@ export async function GET(req) {
       hasMore: from + limit < (count || 0),
     });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 }
