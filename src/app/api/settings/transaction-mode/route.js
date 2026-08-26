@@ -79,7 +79,7 @@ export async function POST(req) {
     return NextResponse.json({ ok: true, mode, message: "Mode transaksi berhasil diperbarui." });
   } catch (err) {
     return NextResponse.json(
-      { error: err.message || "Gagal mengubah mode transaksi." },
+      { error: "Gagal mengubah mode transaksi." },
       { status: 500 }
     );
   }

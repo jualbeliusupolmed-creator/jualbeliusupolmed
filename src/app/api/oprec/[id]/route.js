@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getUserSession } from "@/lib/auth";
 import { sendWa } from "@/lib/fonnte";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -147,7 +148,7 @@ export async function PATCH(req, { params }) {
     return NextResponse.json({ error: "Action tidak dikenal." }, { status: 400 });
   } catch (err) {
     console.error("PATCH /api/oprec/[id] error:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return jawabGalat(err);
   }
 }
 
@@ -172,6 +173,6 @@ export async function DELETE(req, { params }) {
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return jawabGalat(err);
   }
 }

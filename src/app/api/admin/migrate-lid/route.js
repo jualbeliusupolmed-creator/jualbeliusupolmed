@@ -67,7 +67,8 @@ async function handle(req) {
     const report = await cleanupAllLids(getAdminClient(), { apply });
     return NextResponse.json({ ok: true, ...report });
   } catch (e) {
-    return NextResponse.json({ ok: false, error: e?.message || String(e) }, { status: 500 });
+    console.error("[migrate-lid]", e?.stack || e);
+    return NextResponse.json({ ok: false, error: "Migrasi gagal. Lihat log server." }, { status: 500 });
   }
 }
 

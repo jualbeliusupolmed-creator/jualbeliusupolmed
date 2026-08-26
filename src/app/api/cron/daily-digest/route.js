@@ -4,6 +4,7 @@ import { tolakCron } from "@/lib/cronAuth";
 import { sendWa, daftarGrup } from "@/lib/fonnte";
 import { buildSlug } from "@/lib/slug";
 import { getSettings } from "@/lib/settings";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 // Loop kirim WA berjeda (anti-ban) mudah melewati batas default 10-15 detik —
@@ -27,7 +28,7 @@ export async function GET(req) {
     .limit(5);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return jawabGalat(error);
   }
 
   if (!listings || listings.length === 0) {

@@ -3,6 +3,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { setSellerCookie } from "@/lib/auth";
 import { verifyPin } from "@/lib/pin";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -84,6 +85,6 @@ export async function POST(req) {
     });
   } catch (e) {
     console.error("Email login error:", e);
-    return NextResponse.json({ error: "Terjadi kesalahan pada server: " + e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 }

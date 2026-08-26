@@ -5,6 +5,7 @@ import { formatWa } from "@/lib/constants";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { pushToWa } from "@/lib/webpush";
 import { getSellerSession, isAdmin } from "@/lib/auth";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -104,6 +105,6 @@ export async function POST(req) {
 
     return NextResponse.json({ ok: true, offer });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 }

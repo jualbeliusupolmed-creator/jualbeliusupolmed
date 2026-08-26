@@ -1,3 +1,4 @@
+import { jawabGalat } from "@/lib/jawabGalat";
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabaseAdmin";
@@ -973,7 +974,7 @@ export async function POST(req) {
           .from("mading_posts")
           .update({ status: nextStatus })
           .eq("id", id);
-        if (upErr) return NextResponse.json({ error: upErr.message }, { status: 500 });
+        if (upErr) return jawabGalat(upErr);
         if (nextStatus === "active") {
           await autoPublishMadingInstagram({
             origin: siteOriginFromRequest(req),
@@ -988,7 +989,7 @@ export async function POST(req) {
           .from("mading_posts")
           .delete()
           .eq("id", id);
-        if (delErr) return NextResponse.json({ error: delErr.message }, { status: 500 });
+        if (delErr) return jawabGalat(delErr);
         break;
       }
 
@@ -998,7 +999,7 @@ export async function POST(req) {
           .from("chat_rooms")
           .update({ status: "closed", updated_at: new Date().toISOString() })
           .eq("id", id);
-        if (closeErr) return NextResponse.json({ error: closeErr.message }, { status: 500 });
+        if (closeErr) return jawabGalat(closeErr);
         break;
       }
 
@@ -1022,6 +1023,6 @@ export async function POST(req) {
     return NextResponse.json(warning ? { ok: true, warning } : { ok: true });
   } catch (e) {
     logError("/api/admin/action", e).catch(() => {});
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 }

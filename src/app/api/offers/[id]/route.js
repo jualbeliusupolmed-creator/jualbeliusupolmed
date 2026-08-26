@@ -4,6 +4,7 @@ import { notifyBuyerOfferResult } from "@/lib/fonnte";
 import { pushToWa } from "@/lib/webpush";
 import { getSellerSession, isAdmin } from "@/lib/auth";
 import { formatWa } from "@/lib/constants";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -60,6 +61,6 @@ export async function PATCH(req, { params }) {
 
     return NextResponse.json({ ok: true, status: newStatus });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 }
