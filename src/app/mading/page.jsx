@@ -1,5 +1,6 @@
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import MadingClient from "./MadingClient";
+import { skripJsonLd } from "@/lib/jsonLd";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 60; // ISR revalidate 60 detik
@@ -75,7 +76,7 @@ export default async function MadingPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd).replace(/</g, "\\u003c") }}
+        dangerouslySetInnerHTML={{ __html: skripJsonLd(itemListJsonLd) }}
       />
       <MadingClient initialPosts={initialPosts} />
     </>

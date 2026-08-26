@@ -3,6 +3,7 @@ import { getSettings } from "@/lib/settings";
 import { fetchListingsWithProfiles } from "@/lib/dbHelpers";
 import { buildSlug } from "@/lib/slug";
 import SuperAppHome from "./SuperAppHome";
+import { skripJsonLd } from "@/lib/jsonLd";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -82,7 +83,7 @@ export default async function HomePage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd).replace(/</g, '\\u003c') }}
+        dangerouslySetInnerHTML={{ __html: skripJsonLd(itemListJsonLd) }}
       />
       <SuperAppHome
         latestListings={listings}

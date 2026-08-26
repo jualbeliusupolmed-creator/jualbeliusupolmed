@@ -1,6 +1,7 @@
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import OrganisasiClient from "./OrganisasiClient";
 import { bentukOrganisasi, gabungDenganContoh, ORGANISASI_CONTOH } from "@/lib/organisasiDemo";
+import { skripJsonLd } from "@/lib/jsonLd";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 120;
@@ -64,7 +65,7 @@ export default async function DirektoriOrganisasiPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd).replace(/</g, "\\u003c") }}
+        dangerouslySetInnerHTML={{ __html: skripJsonLd(itemListJsonLd) }}
       />
       <OrganisasiClient initialOrganisasi={initialOrganisasi} />
     </>

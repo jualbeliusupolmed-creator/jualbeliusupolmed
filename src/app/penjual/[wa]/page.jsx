@@ -5,6 +5,7 @@ import { rupiah } from "@/lib/fees";
 import ProductCard from "@/components/ProductCard";
 import ShareProfileButton from "@/components/ShareProfileButton";
 import { formatWa, formatWaForBaileys } from "@/lib/constants";
+import { skripJsonLd } from "@/lib/jsonLd";
 
 export const revalidate = 300; // ISR 5 menit — cukup segar untuk marketplace
 
@@ -219,7 +220,7 @@ export default async function SellerProfilePage({ params }) {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: skripJsonLd(jsonLd) }} />
       {/* Breadcrumb */}
       <nav className="flex items-center gap-1 min-w-0 text-sm text-gray-400">
         <Link href="/" className="hover:text-primary shrink-0">Beranda</Link>

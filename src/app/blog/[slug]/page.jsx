@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import { getAdminClient } from "@/lib/supabaseAdmin";
+import { skripJsonLd } from "@/lib/jsonLd";
 
 export const dynamic = 'force-dynamic';
 // export const revalidate = 60; // ISR 1 menit
@@ -117,8 +118,8 @@ export default async function BlogPost({ params }) {
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-8 pb-[calc(5rem+env(safe-area-inset-bottom))]">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd).replace(/</g, "\\u003c") }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, "\\u003c") }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: skripJsonLd(articleJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: skripJsonLd(breadcrumbJsonLd) }} />
 
       {/* Breadcrumb */}
       <nav className="mb-6 flex items-center gap-2 text-sm text-gray-400">
