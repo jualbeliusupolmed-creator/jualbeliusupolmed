@@ -41,18 +41,11 @@ const POLA = BAD_WORDS.map((word) => {
   );
 });
 
-/**
- * Memeriksa apakah ada kata terlarang dalam teks
- * @param {string} text
- * @returns {boolean}
- */
-export function hasProfanity(text) {
-  if (!text || typeof text !== "string") return false;
-  return POLA.some((p) => {
-    p.lastIndex = 0;
-    return p.test(text);
-  });
-}
+// Catatan: dulu ada `hasProfanity()` di sini, tidak pernah dipanggil siapa pun.
+// Penyensoran yang sungguhan berjalan lewat `censorProfanity()` di tujuh rute
+// (mading, komentar, balasan, chat, nama anonim). Kembaran yang hanya menjawab
+// ya/tidak tidak pernah dibutuhkan, dan keberadaannya bikin orang mengira
+// filternya belum terpasang.
 
 /**
  * Menyensor kata terlarang menjadi tanda bintang (***)

@@ -1947,14 +1947,14 @@ function SettingsManager({ settings, action }) {
           </Field>
         </div>
         <Field label="Webhook URL Bot (untuk kirim notif ke bot)">
-          <input className="input font-mono" value={botCfg.webhookUrl ?? ""} onChange={(e) => setBotCfg({ ...botCfg, webhookUrl: e.target.value })} placeholder="https://bot.railway.app/webhook" />
+          <input className="input font-mono" value={botCfg.webhookUrl ?? ""} onChange={(e) => setBotCfg({ ...botCfg, webhookUrl: e.target.value })} placeholder="https://bot.jualbeliusupolmed.web.id/webhook" />
           <p className="mt-1 text-xs text-gray-400">URL endpoint bot untuk trigger notifikasi langsung. Opsional.</p>
         </Field>
         <button onClick={() => { action({ action: "save_settings", key: "bot", value: botCfg }, "Konfigurasi Bot disimpan"); flash("bot"); }} className="btn-primary mt-4 w-full">{saved === "bot" ? "✓ Tersimpan" : "Simpan Konfigurasi Bot"}</button>
       </Card>
 
       {/* KONFIGURASI META (IG & FB) */}
-      <Card title="Konfigurasi Meta (Instagram & Facebook)" className={match("konfigurasi meta instagram ig facebook fb token access page id media graph api post") ? "" : "hidden"}>
+      <Card title="Konfigurasi Meta (Instagram)" className={match("konfigurasi meta instagram ig facebook fb token access page id media graph api post") ? "" : "hidden"}>
         <div className="space-y-3">
           <Field label="Meta Page Access Token (Never Expire)">
             <input type="password" className="input font-mono text-sm" value={metaCfg.accessToken ?? ""} onChange={(e) => setMetaCfg({ ...metaCfg, accessToken: e.target.value })} placeholder="EAAI..." />

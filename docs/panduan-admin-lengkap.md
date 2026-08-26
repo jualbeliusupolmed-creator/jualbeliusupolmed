@@ -3,7 +3,7 @@
 **Panel Admin:** jualbeliusupolmed.web.id/admin  
 **WA Admin:** 62895429126232  
 **Supabase:** supabase.com  
-**Railway:** railway.app (WA bot)  
+**Bot WA:** bot.jualbeliusupolmed.web.id (DigitalOcean VPS, dashboard bot)  
 **Vercel:** vercel.com (website)
 
 ---
@@ -178,7 +178,7 @@ Filter tersedia: Semua | Pending | Aktif | Expired | Sold | Suspended | Minta Ha
 ## 6. Bot & Komunikasi
 
 ### WA Bot (`/admin/wabot`)
-- Monitor status Baileys (Railway)
+- Monitor status Baileys (VPS)
 - Log pesan masuk/keluar
 - Restart / reconnect bot
 
@@ -287,7 +287,7 @@ SETMODE custom          → Mode custom
 ### Arsitektur
 
 ```
-[User WA] ──→ [WA Bot / Railway]
+[User WA] ──→ [WA Bot / VPS]
                     │ forward pesan (text + foto)
                     ↓
               [/api/wa/baileys / Vercel]
@@ -436,8 +436,8 @@ Setiap hari 00:00 — /api/cron/broadcast:
 | `SUPER_ADMIN_WA` | Nomor superadmin alternatif |
 | `MARKETPLACE_WA` | Nomor publik marketplace |
 | `NEXT_PUBLIC_MARKETPLACE_WA` | Sama, dipakai di frontend |
-| `BAILEYS_API_URL` | URL Railway bot endpoint `/send` |
-| `BAILEYS_API_TOKEN` | Token auth Railway bot |
+| `BAILEYS_API_URL` | URL bot di VPS, mis. `https://bot.jualbeliusupolmed.web.id` |
+| `BAILEYS_API_TOKEN` | Token auth bot. Boleh berisi beberapa token dipisah koma bila ada lebih dari satu perangkat; yang PERTAMA milik bot yang ditunjuk `BAILEYS_API_URL`. |
 | `FONNTE_TOKEN` | Token Fonnte (fallback jika Baileys mati) |
 | `FONNTE_WA_GROUP_ID` | JID grup utama marketplace |
 | `BAILEYS_BROADCAST_GROUPS` | JID grup tambahan (comma-separated) |
@@ -458,10 +458,21 @@ Setiap hari 00:00 — /api/cron/broadcast:
 4. Minta penjual kirim ulang screenshot yang lebih jelas, atau approve manual
 
 ### Bot tidak merespons
-1. Cek Railway → service `wa-bot-usu` harus Running
-2. Cek log Railway untuk error
-3. QR nomor WA bot mungkin perlu scan ulang
-4. Buka railway.app → wa-bot-usu → klik Restart
+
+Bot **tidak lagi di Railway** — sejak pertengahan Juli 2026 ia jalan di
+DigitalOcean VPS, di belakang `https://bot.jualbeliusupolmed.web.id`.
+
+1. Cek kesehatannya dulu — buka `https://bot.jualbeliusupolmed.web.id/health`.
+   Jawabannya menjelaskan sendiri apa yang salah:
+   - `{"ok":true,...}` → bot sehat, masalahnya di tempat lain.
+   - `"menungguPindai":true` → sesi WhatsApp lepas, **perlu scan QR ulang**.
+     Buka dashboard bot → tab Status → pindai QR-nya.
+   - `"terkunci":true` → WhatsApp sedang membatasi nomornya; tunggu, jangan
+     ulang-ulang menautkan.
+   - Tidak menjawab sama sekali → prosesnya mati, lihat langkah 3.
+2. Cek log lewat panel bot (`/logs`) atau dari panel admin situs → tab WA Bot.
+3. Kalau prosesnya mati, masuk VPS dan hidupkan lagi:
+   `ssh jualbeli-vps` lalu `pm2 restart wa-bot-usu` (`pm2 logs` untuk melihat sebabnya).
 
 ### Cron tidak berjalan
 1. Cek Vercel: Project → Settings → Cron Jobs → lihat last run
@@ -471,12 +482,12 @@ Setiap hari 00:00 — /api/cron/broadcast:
 ### Admin tidak dapat notif iklan baru
 1. Cek `ADMIN_WA` di Vercel env — harus format `628xxx` (tanpa `+` atau `0` depan)
 2. Cek tabel `settings` key `admin`, subkey `adminWa` — harus sama dengan `ADMIN_WA`
-3. Cek Railway bot masih connect
+3. Cek bot masih connect (`/health` → `"ok":true`)
 
 ### Broadcast tidak terkirim
 1. Cek tabel `scheduled_broadcasts` — status `pending`?
 2. Cek cron `/api/cron/broadcast` last run
-3. Pastikan Railway bot running
+3. Pastikan bot di VPS running (`pm2 list` di `ssh jualbeli-vps`)
 
 ### Export penjual
 ```sql

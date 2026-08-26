@@ -515,29 +515,10 @@ export async function notifyAdminNewListing(listing, overrideAdminWa) {
   }).catch((e) => ({ ok: false, error: e?.message }));
 }
 
-// Notifikasi H-3 sebelum masa iklan berakhir
-export async function notifySellerExpiring(listing) {
-  if (!listing.seller_wa) return { ok: false };
-  const url = `${baseUrl()}/dashboard`;
-  const renewUrl = `${baseUrl()}/dashboard`;
-  const msg =
-    `⚠️ *Iklan mau habis masa aktifnya!*\n\n` +
-    `Hei ${listing.seller_name || "Penjual"},\n` +
-    `Iklanmu *"${listing.title}"* akan habis dalam *3 hari lagi*.\n\n` +
-    `Perpanjang sekarang agar iklan tetap tayang:\n` +
-    `👉 ${renewUrl}\n\n` +
-    `_Jangan sampai iklanmu hilang dari pencarian!_`;
-  return send(listing.seller_wa, msg).catch(() => ({ ok: false }));
-}
+// Catatan (26 Agustus 2026): `notifySellerExpiring()` dan `notifySellerExpired()`
+// dulu ada di sini dan tidak pernah dipanggil siapa pun. Keduanya duplikat yang
+// lebih miskin dari yang sudah hidup di /api/cron/expire — versi cron membawa
+// kode iklan, tanggal berakhir yang pasti, dan pintasan `PERPANJANG <kode>`.
+// Menyatukan ke arah helper ini berarti menurunkan mutu pesannya, jadi yang
+// dibuang justru helper-nya. Teks reminder H-3/H-1 tinggal satu tempat.
 
-// Notifikasi saat iklan sudah expired
-export async function notifySellerExpired(listing) {
-  if (!listing.seller_wa) return { ok: false };
-  const msg =
-    `❌ *Iklan kamu sudah tidak tayang*\n\n` +
-    `Hei ${listing.seller_name || "Penjual"},\n` +
-    `Iklan *"${listing.title}"* sudah tidak aktif.\n\n` +
-    `Perpanjang atau pasang iklan baru di:\n` +
-    `👉 ${baseUrl()}/dashboard`;
-  return send(listing.seller_wa, msg).catch(() => ({ ok: false }));
-}

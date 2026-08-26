@@ -64,7 +64,7 @@ export default function AdminListingModal({ listing, categories, onSave, onClose
   async function postMeta() {
     setBusy(true);
     try {
-      await onSave({ action: "post_meta", listing: { ...listing, ...f } }, "Memproses upload ke Meta (IG & FB)...");
+      await onSave({ action: "post_meta", listing: { ...listing, ...f } }, "Memproses upload ke Instagram (@katalogusupolmed)...");
     } catch (e) {
       setFileError(e.message);
     } finally {
