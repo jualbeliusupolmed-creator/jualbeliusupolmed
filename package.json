@@ -1,8 +1,8 @@
 {
-  "name": "jual-beli-medan",
+  "name": "jual-beli-usu-polmed",
   "version": "1.0.0",
   "private": true,
-  "description": "Marketplace Kota Medan",
+  "description": "Marketplace & Komunitas Digital Mahasiswa USU dan POLMED",
   "scripts": {
     "dev": "next dev",
     "dev:clean": "Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue; next dev",
