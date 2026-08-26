@@ -1535,6 +1535,33 @@ function SettingsManager({ settings, action }) {
   const [aiCfg, setAiCfg] = useState(settings.ai_config || { model: "gemini-2.0-flash", memory: "", personality: "" });
   const [botKeywords, setBotKeywords] = useState(settings.bot_keywords || { enabled: true, greeting_enabled: false, greeting: "", triggers: "", min_price_digits: 4 });
   const [ukmInviteCode, setUkmInviteCode] = useState(settings.ukmInviteCode || "KAMPUS_USU_POLMED_2026");
+  const [autoExpire, setAutoExpire] = useState(!!settings.autoExpire);
+
+  // Pratinjau iklan kadaluarsa. Dimuat sesuai permintaan, bukan saat panel
+  // dibuka: ini pertanyaan yang cuma relevan kalau seseorang memang mau
+  // menurunkannya.
+  const [kadaluarsa, setKadaluarsa] = useState(null);
+  const [memuatKadaluarsa, setMemuatKadaluarsa] = useState(false);
+  const [galatKadaluarsa, setGalatKadaluarsa] = useState("");
+
+  async function lihatKadaluarsa() {
+    setMemuatKadaluarsa(true);
+    setGalatKadaluarsa("");
+    try {
+      const res = await fetch("/api/admin/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "peek_expired" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal memuat");
+      setKadaluarsa(data);
+    } catch (e) {
+      setGalatKadaluarsa(e.message || "Gagal memuat");
+    } finally {
+      setMemuatKadaluarsa(false);
+    }
+  }
   const [saved, setSaved] = useState("");
   const [showPriceConfirm, setShowPriceConfirm] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -1645,6 +1672,104 @@ function SettingsManager({ settings, action }) {
           menyakelar apa pun lebih buruk daripada tidak ada sakelar, jadi diganti
           keterangan alur yang sebenarnya. Kalau QRIS dinamis benar-benar dipasang
           nanti, sakelarnya boleh kembali — bersama kodenya. */}
+      {/* Iklan yang tenggatnya lewat.
+          Sengaja tombol, bukan otomatis. Sampai 26 Agustus 2026 tidak ada satu
+          pun iklan yang pernah kedaluwarsa — cron-nya mengirim reminder tapi
+          tidak pernah menurunkan apa pun, jadi tunggakannya menumpuk dua bulan.
+          Menurunkan semuanya diam-diam berarti puluhan penjual kehilangan iklan
+          dalam semalam tanpa pernah diberi tahu. Jadi: lihat dulu, baru putuskan. */}
+      <Card title="Iklan Kadaluarsa">
+        <p className="text-sm text-gray-500 dark:text-slate-400">
+          Iklan yang sudah lewat masa tayang tapi masih berstatus aktif. Menurunkannya
+          membuat statusnya jadi <code>expired</code> — penjual bisa memperpanjang dari
+          dashboard masing-masing.
+        </p>
+
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <button onClick={lihatKadaluarsa} disabled={memuatKadaluarsa} className="btn-outline">
+            {memuatKadaluarsa ? "Memeriksa…" : "Periksa"}
+          </button>
+          {kadaluarsa?.jumlah > 0 && (
+            <button
+              className="btn-primary"
+              onClick={async () => {
+                // Dikonfirmasi dulu. `confirmThen` milik komponen induk dan
+                // tidak dioper ke sini, jadi dipakai konfirmasi peramban —
+                // yang penting perintahnya tidak berjalan karena satu klik.
+                const yakin = window.confirm(
+                  `${kadaluarsa.jumlah} iklan akan berubah jadi "expired" dan hilang dari pencarian.
+
+Penjualnya bisa memperpanjang sendiri dari dashboard.
+
+Lanjutkan?`
+                );
+                if (!yakin) return;
+                const ok = await action({ action: "expire_now" }, "Iklan kadaluarsa diturunkan");
+                if (ok) setKadaluarsa(null);
+              }}
+            >
+              Turunkan {kadaluarsa.jumlah} iklan
+            </button>
+          )}
+        </div>
+
+        {galatKadaluarsa && (
+          <p className="mt-3 text-sm text-red-600 dark:text-red-400">{galatKadaluarsa}</p>
+        )}
+
+        {kadaluarsa && (
+          <div className="mt-4">
+            {kadaluarsa.jumlah === 0 ? (
+              <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                ✓ Tidak ada iklan yang menunggak.
+              </p>
+            ) : (
+              <>
+                <p className="text-sm font-semibold text-amber-600 dark:text-amber-400">
+                  {kadaluarsa.jumlah} iklan sudah lewat masa tayang.
+                </p>
+                <ul className="mt-2 space-y-1 text-xs text-gray-500 dark:text-slate-400">
+                  {kadaluarsa.iklan.map((l) => (
+                    <li key={l.id} className="flex justify-between gap-3 border-b border-black/[0.04] py-1 dark:border-white/[0.06]">
+                      <span className="truncate">{l.title} — {l.seller_name || "?"}</span>
+                      <span className="shrink-0 tabular-nums">lewat {l.hari} hari</span>
+                    </li>
+                  ))}
+                </ul>
+                {kadaluarsa.jumlah > kadaluarsa.iklan.length && (
+                  <p className="mt-1 text-xs text-gray-400">
+                    …dan {kadaluarsa.jumlah - kadaluarsa.iklan.length} lainnya.
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        <label className="mt-5 flex items-start gap-3 border-t border-black/[0.05] pt-4 dark:border-white/[0.08]">
+          <input
+            type="checkbox"
+            className="mt-0.5 h-5 w-5 accent-primary"
+            checked={!!autoExpire}
+            onChange={(e) => {
+              setAutoExpire(e.target.checked);
+              action(
+                { action: "save_settings", key: "autoExpire", value: e.target.checked },
+                e.target.checked ? "Penurunan otomatis DINYALAKAN" : "Penurunan otomatis dimatikan"
+              );
+            }}
+          />
+          <span className="text-sm text-gray-600 dark:text-slate-300">
+            <strong>Turunkan otomatis setiap hari.</strong>{" "}
+            <span className="text-gray-500 dark:text-slate-400">
+              Cron harian akan menurunkannya sendiri. Sebaiknya dinyalakan setelah
+              tunggakan di atas diberesi — kalau tidak, semuanya turun sekaligus pada
+              cron berikutnya tanpa kamu melihat dulu apa yang hilang.
+            </span>
+          </span>
+        </label>
+      </Card>
+
       <Card title="Alur Pembayaran">
         <p className="text-sm text-gray-500 dark:text-slate-400">
           Penjual membayar lewat <strong>QRIS statis</strong>, lalu mengunggah foto struknya.

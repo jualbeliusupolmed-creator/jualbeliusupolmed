@@ -3,6 +3,8 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { tolakCron } from "@/lib/cronAuth";
 import { sendWa } from "@/lib/fonnte";
 import { formatWaForBaileys } from "@/lib/constants";
+import { turunkanKadaluarsa } from "@/lib/kadaluarsa";
+import { getSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 // Loop kirim WA berjeda (anti-ban) mudah melewati batas default 10-15 detik —
@@ -114,6 +116,26 @@ export async function GET(req) {
     langgananDiturunkan = turun?.length || 0;
   }
 
+  // ── Turunkan iklan yang tenggatnya lewat ────────────────────────────────────
+  //
+  // Bagian yang selama ini TIDAK ADA di rute bernama "expire". Ia mengirim
+  // reminder H-3 dan H-1 dengan rajin, tenggatnya lewat, lalu tidak terjadi
+  // apa-apa: `status='expired'` berjumlah nol sepanjang umur basis data.
+  //
+  // Dijaga sakelar `autoExpire` yang bawaannya mati. Menyalakannya adalah
+  // keputusan pemilik, bukan efek samping dari kode ini mendarat — 20 iklan
+  // yang menunggak dua bulan tidak pantas hilang dalam satu malam tanpa
+  // pemiliknya diberi tahu. Sebelum sakelar dinyalakan, tunggakannya diberesi
+  // lewat tombol di panel admin, yang memperlihatkan dulu apa yang akan turun.
+  let iklanDiturunkan = 0;
+  {
+    const setelan = await getSettings();
+    if (setelan.autoExpire) {
+      const { diturunkan } = await turunkanKadaluarsa(supa);
+      iklanDiturunkan = diturunkan || 0;
+    }
+  }
+
   // ── Sapu obrolan anonim yang sudah selesai ──────────────────────────────────
   // Fitur yang menjual keanoniman tidak pantas menyimpan isi obrolan selamanya.
   // Room `closed` berumur > 30 hari dihapus (chat_messages ikut lewat ON DELETE
@@ -146,6 +168,7 @@ export async function GET(req) {
     h1_checked: expiringH1?.length || 0,
     otp_disapu: otpDisapu,
     langganan_diturunkan: langgananDiturunkan,
+    iklan_diturunkan: iklanDiturunkan,
     chat_disapu: chatDisapu,
   });
 }

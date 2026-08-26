@@ -1,4 +1,5 @@
 import { jawabGalat } from "@/lib/jawabGalat";
+import { iklanKadaluarsa, turunkanKadaluarsa } from "@/lib/kadaluarsa";
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabaseAdmin";
@@ -188,6 +189,43 @@ export async function POST(req) {
           .update({ featured: false, featured_until: null })
           .eq("id", id);
         break;
+      // ── Iklan kadaluarsa ───────────────────────────────────────────────
+      // Dua aksi, sengaja dipisah: yang pertama hanya MELIHAT, yang kedua
+      // mengubah. Penurunan pertama menyangkut dua bulan tunggakan sekaligus,
+      // dan tombol yang langsung mengeksekusi tanpa memperlihatkan dulu apa
+      // yang akan hilang adalah tombol yang ditekan orang tanpa tahu.
+      case "peek_expired": {
+        const { iklan, error } = await iklanKadaluarsa(supa);
+        if (error) throw error;
+        return NextResponse.json({
+          ok: true,
+          jumlah: iklan.length,
+          iklan: iklan.slice(0, 10).map((l) => ({
+            id: l.id, title: l.title, seller_name: l.seller_name,
+            expires_at: l.expires_at,
+            hari: Math.floor((Date.now() - new Date(l.expires_at)) / 864e5),
+          })),
+        });
+      }
+      case "expire_now": {
+        const { diturunkan, iklan, error } = await turunkanKadaluarsa(supa, {
+          batas: Number(body.batas) > 0 ? Number(body.batas) : 200,
+        });
+        if (error) throw error;
+        // Dicatat di sini, bukan menumpang pencatatan umum di ujung rute:
+        // cabang ini keluar lebih awal karena jawabannya perlu membawa daftar
+        // id yang benar-benar diturunkan.
+        await supa.from("admin_logs").insert({
+          action: "expire_now",
+          target_id: null,
+          details: { diturunkan, ids: iklan.map((l) => l.id).slice(0, 50) },
+        }).then(() => {}, () => {});
+        warning = diturunkan
+          ? `${diturunkan} iklan diturunkan ke status kadaluarsa.`
+          : "Tidak ada iklan yang perlu diturunkan.";
+        return NextResponse.json({ ok: true, diturunkan, iklan: iklan.map((l) => l.id), warning });
+      }
+
       case "bump_now":
         await supa
           .from("listings")
