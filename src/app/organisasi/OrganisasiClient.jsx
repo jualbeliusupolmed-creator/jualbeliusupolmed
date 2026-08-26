@@ -180,9 +180,25 @@ export default function OrganisasiClient({ initialOrganisasi = [] }) {
                       </div>
 
                       <div className="flex flex-col items-end gap-1">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                          ✓ Resmi
-                        </span>
+                        {/* Lencana ini dulu menempel di SEMUA kartu tanpa membaca
+                            ukm_verified — termasuk enam contoh etalase yang tak
+                            pernah mendaftar. Sekarang ia menyatakan sesuatu. */}
+                        {org.is_demo ? (
+                          <span
+                            title="Belum mendaftar — ditampilkan sebagai contoh direktori"
+                            className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-500 dark:bg-slate-800 dark:text-slate-400 border border-gray-200 dark:border-slate-700"
+                          >
+                            Contoh
+                          </span>
+                        ) : org.ukm_verified ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                            ✓ Resmi
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-sky-700 dark:bg-sky-950/50 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
+                            Terdaftar
+                          </span>
+                        )}
                         <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary dark:text-emerald-400">
                           {org.campus}
                         </span>

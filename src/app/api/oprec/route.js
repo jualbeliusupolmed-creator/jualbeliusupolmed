@@ -7,7 +7,15 @@ import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
-// Sample initial data if table is fresh
+// Dua oprec ini contoh etalase, bukan lowongan sungguhan: oprec_events kosong
+// di produksi, dan keduanya tayang setiap kali kosong. Sampai hari ini kartunya
+// tak terbedakan dari yang asli — tombol "Daftar Sekarang" menyala, tenggatnya
+// bergeser maju sendiri tiap hari (`Date.now() + 14 hari`), dan angka
+// "12 pendaftar" / "8 pendaftar" dikarang. Yang menekan tombolnya mengisi NIM
+// dan mengunggah KTM untuk kepanitiaan yang tidak ada.
+//
+// Sekarang keduanya membawa `is_demo`, kartunya berlabel "Contoh" dan tombolnya
+// mati; jumlah pendaftar palsu dan tautan grup WA-nya dibuang.
 const SAMPLE_OPREC = [
   {
     id: "demo-oprec-1",
@@ -25,11 +33,11 @@ const SAMPLE_OPREC = [
       { id: "alasan_detail", label: "Ide & Kontribusi yang ingin kamu bawa untuk divisi pilihan 1", type: "textarea", required: false }
     ],
     deadline: new Date(Date.now() + 14 * 864e5).toISOString(),
-    wa_group_link: "https://chat.whatsapp.com/DQMZK2qSgq2D0WvH7BlBSA",
     banner_url: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&auto=format&fit=crop&q=80",
     status: "active",
+    is_demo: true,
     created_at: new Date().toISOString(),
-    submissions_count: 12,
+    submissions_count: 0,
   },
   {
     id: "demo-oprec-2",
@@ -46,11 +54,11 @@ const SAMPLE_OPREC = [
       { id: "link_github", label: "Link Portofolio / GitHub / Project (Opsional)", type: "url", required: false }
     ],
     deadline: new Date(Date.now() + 20 * 864e5).toISOString(),
-    wa_group_link: "https://chat.whatsapp.com/DQMZK2qSgq2D0WvH7BlBSA",
     banner_url: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&auto=format&fit=crop&q=80",
     status: "active",
+    is_demo: true,
     created_at: new Date().toISOString(),
-    submissions_count: 8,
+    submissions_count: 0,
   },
 ];
 

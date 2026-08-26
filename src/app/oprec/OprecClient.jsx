@@ -134,7 +134,10 @@ export default function OprecClient({ initialOprecs = [] }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {oprecs.map((op) => {
               const daysLeft = getDaysLeft(op.deadline);
-              const isClosed = daysLeft === "Ditutup";
+              // Contoh etalase (lihat SAMPLE_OPREC di /api/oprec): tak ada
+              // panitia di baliknya, jadi tombolnya tidak boleh mengundang.
+              const contoh = op.is_demo === true;
+              const isClosed = daysLeft === "Ditutup" || contoh;
 
               return (
                 <div
@@ -147,11 +150,19 @@ export default function OprecClient({ initialOprecs = [] }) {
                       <div>
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                            ✓ {op.ukm_name}
+                            {contoh ? "" : "✓ "}{op.ukm_name}
                           </span>
                           <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary dark:text-emerald-400">
                             {op.campus}
                           </span>
+                          {contoh && (
+                            <span
+                              title="Contoh tampilan — belum ada oprec yang dibuka"
+                              className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-500 dark:bg-slate-800 dark:text-slate-400 border border-gray-200 dark:border-slate-700"
+                            >
+                              Contoh
+                            </span>
+                          )}
                         </div>
                         <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white mt-1.5 leading-snug">
                           {op.title}
@@ -215,7 +226,9 @@ export default function OprecClient({ initialOprecs = [] }) {
                         isClosed ? "opacity-50 cursor-not-allowed" : ""
                       }`}
                     >
-                      <span>📝 {isClosed ? "Pendaftaran Ditutup" : "Daftar Sekarang"}</span>
+                      <span>
+                        📝 {contoh ? "Segera Hadir" : isClosed ? "Pendaftaran Ditutup" : "Daftar Sekarang"}
+                      </span>
                     </button>
                   </div>
                 </div>

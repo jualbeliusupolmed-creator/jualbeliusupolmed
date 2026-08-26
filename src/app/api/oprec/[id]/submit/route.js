@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { formatWa } from "@/lib/constants";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -50,19 +51,21 @@ export async function POST(req, { params }) {
       .eq("id", params.id)
       .maybeSingle();
 
+    // Dulu cabang ini menjawab "Pendaftaran berhasil diterima!" untuk oprec yang
+    // TIDAK ADA — termasuk dua contoh etalase. Pelamar mengunggah foto KTM,
+    // mengisi NIM, menekan kirim, membaca "berhasil", lalu menunggu panggilan
+    // yang tidak akan pernah datang: tak sebaris pun tersimpan. Lebih baik
+    // ditolak sekarang daripada dipercaya sia-sia sampai acaranya lewat.
     if (oprecErr || !oprec) {
-      // Jika event demo atau id tidak ditemukan di DB
-      return NextResponse.json({
-        success: true,
-        message: "Pendaftaran berhasil diterima!",
-        submission: {
-          applicant_name: applicant_name.trim(),
-          division_1,
-          division_2,
-          custom_answers: custom_answers || {},
-          wa_group_link: "https://chat.whatsapp.com/DQMZK2qSgq2D0WvH7BlBSA",
+      const contoh = String(params.id || "").startsWith("demo-oprec");
+      return NextResponse.json(
+        {
+          error: contoh
+            ? "Oprec ini baru contoh tampilan — pendaftarannya belum dibuka. Pantau terus, ya."
+            : "Oprec ini sudah tidak tersedia.",
         },
-      });
+        { status: contoh ? 400 : 404 }
+      );
     }
 
     if (oprec.status === "closed" || (oprec.deadline && new Date() > new Date(oprec.deadline))) {
@@ -112,13 +115,10 @@ export async function POST(req, { params }) {
         }
       }
 
-      // Fail-safe graceful success
-      return NextResponse.json({
-        success: true,
-        message: "Pendaftaran berhasil dikirimkan!",
-        submission: insertData,
-        wa_group_link: oprec.wa_group_link,
-      });
+      // Sebelumnya di sini ada "fail-safe graceful success": simpan gagal, layar
+      // tetap bilang berhasil. Yang diselamatkan cuma perasaan sesaat; datanya
+      // hilang dan pelamarnya tidak tahu harus mendaftar ulang.
+      return jawabGalat(error, { pesan: "Pendaftaran gagal disimpan. Coba kirim ulang sebentar lagi." });
     }
 
     return NextResponse.json({
