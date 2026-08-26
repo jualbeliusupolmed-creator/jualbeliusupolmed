@@ -91,6 +91,8 @@ function DashboardInner() {
 
   const [autobumpConfirm, setAutobumpConfirm] = useState(null);
   const [renewConfirm, setRenewConfirm] = useState(null);
+  const [deleteListingConfirm, setDeleteListingConfirm] = useState(null);
+  const [deleteWantedConfirm, setDeleteWantedConfirm] = useState(null);
 
   const [qrisModalItem, setQrisModalItem] = useState(null);
   const [openActionMenu, setOpenActionMenu] = useState(null);
@@ -299,8 +301,14 @@ function DashboardInner() {
     }
   }
 
-  async function deleteListing(id, title) {
-    if (!confirm(`Hapus iklan "${title}" secara permanen? Aksi ini tidak bisa dibatalkan.`)) return;
+  function deleteListing(id, title) {
+    setDeleteListingConfirm({ id, title });
+  }
+
+  async function confirmDeleteListing() {
+    if (!deleteListingConfirm) return;
+    const { id } = deleteListingConfirm;
+    setDeleteListingConfirm(null);
     setBusy(true);
     try {
       const res = await fetch(`/api/listings/${id}`, { method: "DELETE" });
@@ -315,8 +323,14 @@ function DashboardInner() {
     }
   }
 
-  async function deleteWanted(id) {
-    if (!confirm("Hapus postingan dicari ini?")) return;
+  function deleteWanted(id) {
+    setDeleteWantedConfirm({ id });
+  }
+
+  async function confirmDeleteWanted() {
+    if (!deleteWantedConfirm) return;
+    const { id } = deleteWantedConfirm;
+    setDeleteWantedConfirm(null);
     setBusy(true);
     try {
       const res = await fetch(`/api/wanted/${id}`, {
@@ -683,6 +697,32 @@ function DashboardInner() {
         confirmLabel="Lanjut Pembayaran"
         onConfirm={doRenew}
         onClose={() => setRenewConfirm(null)}
+      />
+
+      {/* Konfirmasi hapus iklan */}
+      <ConfirmModal
+        open={!!deleteListingConfirm}
+        title="Hapus Iklan Permanen"
+        message={
+          deleteListingConfirm && (
+            <p>
+              Hapus iklan <strong>&ldquo;{deleteListingConfirm.title}&rdquo;</strong> secara permanen? Aksi ini tidak dapat dibatalkan.
+            </p>
+          )
+        }
+        confirmLabel="Ya, Hapus"
+        onConfirm={confirmDeleteListing}
+        onClose={() => setDeleteListingConfirm(null)}
+      />
+
+      {/* Konfirmasi hapus postingan dicari */}
+      <ConfirmModal
+        open={!!deleteWantedConfirm}
+        title="Hapus Postingan Dicari"
+        message="Hapus postingan dicari ini secara permanen?"
+        confirmLabel="Ya, Hapus"
+        onConfirm={confirmDeleteWanted}
+        onClose={() => setDeleteWantedConfirm(null)}
       />
 
       <QRISModal 
@@ -1358,7 +1398,7 @@ function DashboardInner() {
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className={`badge ${statusBadge(i.status)}`}>{i.status}</span>
                             <span className="badge bg-primary/10 text-primary">{i.category}</span>
-                            <span className="badge bg-gray-150 text-gray-700 dark:bg-slate-800 dark:text-slate-350 flex items-center gap-1">
+                            <span className="badge bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-300 flex items-center gap-1">
                               <Icon.MapPin className="h-3 w-3" /> {i.campus}
                             </span>
                             {i.auto_bump_until && new Date(i.auto_bump_until) > new Date() && (
@@ -1587,7 +1627,7 @@ function DashboardInner() {
                           <div>
                             <div className="flex items-center gap-1.5">
                               <span className={`badge ${statusBadge(i.status)}`}>{i.status}</span>
-                              <span className="badge bg-gray-105 text-gray-500 dark:bg-slate-800 dark:text-slate-400">{i.category}</span>
+                              <span className="badge bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-slate-400">{i.category}</span>
                             </div>
                             <p className="font-semibold text-sm mt-0.5 dark:text-white">{i.title}</p>
                             <p className="text-xs text-gray-400">{rupiah(i.price)}</p>
@@ -1665,7 +1705,7 @@ function DashboardInner() {
                             {wi.status}
                           </span>
                           <span className="badge bg-primary/10 text-primary">{wi.category}</span>
-                          <span className="badge bg-gray-150 text-gray-700 dark:bg-slate-800 dark:text-slate-350 flex items-center gap-1"><Icon.MapPin className="h-3 w-3 shrink-0" /> {wi.campus}</span>
+                          <span className="badge bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-300 flex items-center gap-1"><Icon.MapPin className="h-3 w-3 shrink-0" /> {wi.campus}</span>
                         </div>
                         <p className="mt-1.5 font-bold text-gray-900 dark:text-white">{wi.title}</p>
                         <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
@@ -1726,7 +1766,7 @@ function DashboardInner() {
               <button
                 type="button"
                 onClick={() => setQrisModalItem(null)}
-                className="absolute -right-2 -top-2 text-gray-400 hover:text-gray-650 text-lg p-1"
+                className="absolute -right-2 -top-2 text-gray-400 hover:text-gray-600 text-lg p-1"
               >
                 ✕
               </button>
@@ -1747,7 +1787,7 @@ function DashboardInner() {
                 />
               </div>
 
-              <div className="mt-3 p-3 rounded-xl bg-gray-50 dark:bg-slate-950 border border-gray-150/40 dark:border-slate-850">
+              <div className="mt-3 p-3 rounded-xl bg-gray-50 dark:bg-slate-950 border border-gray-100 dark:border-slate-800">
                 <p className="text-xs text-gray-400 dark:text-slate-500 uppercase tracking-wider font-semibold">Nominal Transfer</p>
                 <p className="text-2xl font-black text-primary dark:text-white mt-0.5">
                   {rupiah(qrisModalItem.payment_type === "sold_fee" ? qrisModalItem.pending_sold_fee_amount : (qrisModalItem.pending_amount || (qrisModalItem.type === "poster" ? 10000 : 5000)))}
@@ -1774,7 +1814,7 @@ function DashboardInner() {
                 <button
                   type="button"
                   onClick={() => setQrisModalItem(null)}
-                  className="btn-outline w-full text-center py-2.5 text-xs text-gray-600 dark:text-slate-350 hover:bg-gray-100 dark:hover:bg-slate-800"
+                  className="btn-outline w-full text-center py-2.5 text-xs text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800"
                 >
                   Tutup
                 </button>

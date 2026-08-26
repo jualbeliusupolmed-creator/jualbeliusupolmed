@@ -37,7 +37,7 @@ export default function AdminSidebar({ counts = {} }) {
       <AdminNav counts={counts} />
 
       {/* Sidebar Footer Info */}
-      <div className="flex-shrink-0 border-t border-slate-100 p-3.5 dark:border-slate-850">
+      <div className="flex-shrink-0 border-t border-slate-100 p-3.5 dark:border-slate-800">
         <div className="flex items-center justify-between rounded-xl bg-slate-50 p-2.5 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800">
           <div className="flex items-center gap-2">
             <span className="relative flex h-2.5 w-2.5">

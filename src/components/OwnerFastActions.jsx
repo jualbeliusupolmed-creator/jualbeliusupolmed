@@ -87,7 +87,7 @@ export default function OwnerFastActions({ listing }) {
 
   return (
     <>
-      <div className="my-4 p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-primary/10 to-emerald-500/10 border border-primary/20 shadow-xs">
+      <div className="my-4 p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-primary/10 to-emerald-500/10 border border-primary/20 shadow-sm">
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-1.5 text-xs font-black text-slate-800 dark:text-slate-200">
             <span className="text-sm">👑</span>
@@ -102,7 +102,7 @@ export default function OwnerFastActions({ listing }) {
           {/* Edit Button */}
           <Link
             href={`/dashboard?edit=${listing.id}`}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold shadow-2xs hover:bg-slate-50 dark:hover:bg-slate-750 active:scale-95 transition-all"
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-95 transition-all"
           >
             <span>✏️ Edit Iklan</span>
           </Link>
@@ -112,7 +112,7 @@ export default function OwnerFastActions({ listing }) {
             <button
               onClick={() => setShowSoldModal(true)}
               disabled={busy}
-              className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs active:scale-95 transition-all disabled:opacity-50"
+              className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm active:scale-95 transition-all disabled:opacity-50"
             >
               <span>✅ Tandai Terjual</span>
             </button>
@@ -126,7 +126,7 @@ export default function OwnerFastActions({ listing }) {
           <button
             onClick={handleBump}
             disabled={busy || isSold}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-xs active:scale-95 transition-all disabled:opacity-50"
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-sm active:scale-95 transition-all disabled:opacity-50"
           >
             <span>🚀 Sundul / Bump</span>
           </button>
@@ -134,7 +134,7 @@ export default function OwnerFastActions({ listing }) {
           {/* Dashboard Link */}
           <Link
             href="/dashboard"
-            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-black text-white dark:bg-slate-100 dark:text-slate-900 text-xs font-bold shadow-xs active:scale-95 transition-all"
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-black text-white dark:bg-slate-100 dark:text-slate-900 text-xs font-bold shadow-sm active:scale-95 transition-all"
           >
             <span>📊 Dashboard</span>
           </Link>
@@ -186,7 +186,7 @@ export default function OwnerFastActions({ listing }) {
                 <button
                   type="submit"
                   disabled={busy}
-                  className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs active:scale-95 transition-all disabled:opacity-50"
+                  className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm active:scale-95 transition-all disabled:opacity-50"
                 >
                   {busy ? "Memproses..." : "Konfirmasi Terjual"}
                 </button>

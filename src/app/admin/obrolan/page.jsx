@@ -152,7 +152,7 @@ export default async function AuditCariTemanPage({ searchParams }) {
 
       {/* FILTER TABS & SEARCH BAR */}
       <div className="mb-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-850 p-1 rounded-2xl w-fit border border-slate-200/80 dark:border-slate-800">
+        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-2xl w-fit border border-slate-200/80 dark:border-slate-800">
           <Link
             href={`/admin/obrolan?type=all${q ? `&q=${encodeURIComponent(q)}` : ""}`}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${

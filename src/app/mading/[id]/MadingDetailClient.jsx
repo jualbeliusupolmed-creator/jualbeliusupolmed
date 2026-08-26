@@ -178,7 +178,7 @@ export default function MadingDetailClient({ post: initialPost }) {
   const isLiked = post._isLiked;
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] dark:bg-[#0b0b0f] pb-24 font-sans selection:bg-primary/20">
+    <div className="min-h-screen bg-[#f5f5f7] dark:bg-[#0b0b0f] pb-[calc(6.5rem+env(safe-area-inset-bottom))] font-sans selection:bg-primary/20">
       {/* TOP NAVBAR */}
       <div className="sticky top-0 z-20 bg-white/85 dark:bg-[#121215]/85 backdrop-blur-2xl border-b border-black/[0.06] dark:border-white/[0.08]">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3">

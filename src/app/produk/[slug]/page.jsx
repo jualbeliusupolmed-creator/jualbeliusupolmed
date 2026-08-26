@@ -263,7 +263,7 @@ export default async function ProdukPage({ params }) {
         <div>
           {/* Badges */}
           <div className="flex flex-wrap items-center gap-2">
-            <span className="badge bg-gray-100 text-gray-700 dark:bg-slate-900 dark:text-slate-350">
+            <span className="badge bg-gray-100 text-gray-700 dark:bg-slate-900 dark:text-slate-300">
               {listing.category}
             </span>
             <span className="badge bg-primary/5 text-primary dark:bg-white/10 dark:text-white font-medium flex items-center gap-1">
@@ -271,7 +271,7 @@ export default async function ProdukPage({ params }) {
             </span>
             {listing.area && (
               <span className="badge bg-primary/5 text-primary dark:bg-white/10 dark:text-white font-medium flex items-center gap-1">
-                <Icon.MapPin className="h-3 w-3" /> {listing.type === "jasa" ? listing.area : listing.area}
+                <Icon.MapPin className="h-3 w-3" /> {listing.area}
               </span>
             )}
             {listing.featured && (
@@ -372,21 +372,7 @@ export default async function ProdukPage({ params }) {
             </div>
           </div>
 
-          {/* Sticky Bottom Action Bar for Mobile (App Store Style) */}
-          <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-black/[0.05] p-4 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.04)] dark:bg-[#1c1c1e]/95 dark:border-white/[0.08]">
-            <div className="max-w-5xl mx-auto flex gap-2">
-              <div className="flex-1">
-                {!sold ? (
-                  <MinatButton listing={listing} />
-                ) : (
-                  <button disabled className="btn w-full bg-black/[0.04] text-gray-500 font-bold dark:bg-white/[0.08] dark:text-gray-400">Terjual</button>
-                )}
-              </div>
-              <div className="w-12 shrink-0">
-                <ShareModal listing={listing} isIconOnly={true} />
-              </div>
-            </div>
-          </div>
+          {/* Catatan: CTA mobile ada di floating pill di bawah (line ~420), bukan di sini */}
 
           {/* Deskripsi */}
           <div className="card mt-5 p-5">

@@ -74,7 +74,7 @@ export default function QRISModal({ qrisUrl, fee, onClose, transactionId, onSucc
           </div>
 
           {fee ? (
-            <div className="mt-3 p-3 rounded-xl bg-gray-50 dark:bg-slate-950 border border-gray-150/40 dark:border-slate-850">
+            <div className="mt-3 p-3 rounded-xl bg-gray-50 dark:bg-slate-950 border border-gray-100 dark:border-slate-800">
               <p className="text-xs text-gray-400 dark:text-slate-500 uppercase tracking-wider font-semibold">Nominal Transfer:</p>
               <p className="text-3xl font-black text-primary dark:text-white mt-0.5">{rupiah(fee)}</p>
             </div>

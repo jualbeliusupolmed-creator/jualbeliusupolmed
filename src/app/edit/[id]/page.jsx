@@ -314,7 +314,7 @@ export default function EditPage() {
           </div>
 
           <div className="card p-4 text-xs text-gray-500 dark:text-slate-400">
-            <p className="font-semibold text-gray-700 dark:text-slate-350">ℹ️ Info</p>
+            <p className="font-semibold text-gray-700 dark:text-slate-300">ℹ️ Info</p>
             <ul className="mt-2 list-disc space-y-1 pl-4">
               <li>Edit gratis, tidak ada biaya tambahan.</li>
               <li>Status iklan tidak berubah.</li>

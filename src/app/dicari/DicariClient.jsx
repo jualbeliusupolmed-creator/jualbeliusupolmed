@@ -154,7 +154,7 @@ export default function DicariPage({ initialItems = [] }) {
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
+    <div className="mx-auto max-w-6xl px-4 py-6 pb-[calc(7rem+env(safe-area-inset-bottom))]">
       {/* Hero compact */}
       <section className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-gray-50/60 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/20">
         <div>
@@ -178,7 +178,7 @@ export default function DicariPage({ initialItems = [] }) {
       {/* Filter Bar */}
       <div className="mt-3 flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {/* Search */}
-        <div className="relative min-w-[140px] flex-1">
+        <div className="relative min-w-0 flex-1">
           <svg
             className="absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"
             viewBox="0 0 24 24"
@@ -202,7 +202,7 @@ export default function DicariPage({ initialItems = [] }) {
         <select
           value={campus}
           onChange={(e) => setCampus(e.target.value)}
-          className="shrink-0 cursor-pointer rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-350"
+          className="shrink-0 cursor-pointer rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
         >
           <option value="Semua">Semua Kampus</option>
           <option value="USU">USU</option>
@@ -213,7 +213,7 @@ export default function DicariPage({ initialItems = [] }) {
         <select
           value={cat}
           onChange={(e) => setCat(e.target.value)}
-          className="shrink-0 cursor-pointer rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-350"
+          className="shrink-0 cursor-pointer rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
         >
           <option value="all">Semua Kategori</option>
           {cats.map((c) => (
@@ -228,12 +228,12 @@ export default function DicariPage({ initialItems = [] }) {
       {loading ? (
         <div className="mt-4 grid grid-cols-2 gap-2 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="card animate-pulse p-3 sm:p-5 space-y-3 bg-white dark:border-slate-805 dark:bg-slate-900/30">
-              <div className="h-4 w-1/4 rounded bg-gray-150 dark:bg-slate-800" />
-              <div className="h-5 w-3/4 rounded bg-gray-150 dark:bg-slate-800" />
-              <div className="h-3 w-5/6 rounded bg-gray-150 dark:bg-slate-800" />
-              <div className="h-4.5 w-1/3 rounded bg-gray-200 dark:bg-slate-700" />
-              <div className="h-9 rounded bg-gray-150 dark:bg-slate-800" />
+            <div key={i} className="card animate-pulse p-3 sm:p-5 space-y-3 bg-white dark:border-slate-800 dark:bg-slate-900/30">
+              <div className="h-4 w-1/4 rounded bg-gray-100 dark:bg-slate-800" />
+              <div className="h-5 w-3/4 rounded bg-gray-100 dark:bg-slate-800" />
+              <div className="h-3 w-5/6 rounded bg-gray-100 dark:bg-slate-800" />
+              <div className="h-5 w-1/3 rounded bg-gray-200 dark:bg-slate-700" />
+              <div className="h-9 rounded bg-gray-100 dark:bg-slate-800" />
             </div>
           ))}
         </div>
@@ -277,7 +277,7 @@ export default function DicariPage({ initialItems = [] }) {
                 }`}
               >
                 <div>
-                  <div className="flex flex-wrap items-center justify-between gap-1 text-[9px] sm:text-xs text-gray-400 dark:text-slate-550">
+                  <div className="flex flex-wrap items-center justify-between gap-1 text-[9px] sm:text-xs text-gray-400 dark:text-slate-500">
                     <div className="flex items-center gap-1 flex-wrap">
                       <span className="badge bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 font-medium truncate max-w-[80px] sm:max-w-none">
                         {item.category}
@@ -286,7 +286,7 @@ export default function DicariPage({ initialItems = [] }) {
                         <span className={`badge font-semibold ${
                           itemCondition.toLowerCase() === "baru"
                             ? "bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400"
-                            : "bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-350"
+                            : "bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-300"
                         }`}>
                           {itemCondition}
                         </span>
@@ -297,7 +297,7 @@ export default function DicariPage({ initialItems = [] }) {
                     {item.title}
                   </h3>
                   <div className="mt-1.5 flex items-center gap-1 text-[10px] sm:text-xs text-gray-500 dark:text-slate-400">
-                    <Icon.MapPin className="h-3 w-3 shrink-0 text-gray-400 dark:text-slate-550" />
+                    <Icon.MapPin className="h-3 w-3 shrink-0 text-gray-400 dark:text-slate-500" />
                     <span className="truncate">{item.campus} · {item.area}</span>
                   </div>
                   <p className="mt-2 text-[10px] sm:text-xs text-gray-600 dark:text-slate-400 whitespace-pre-wrap leading-relaxed line-clamp-2 sm:line-clamp-4">
@@ -306,9 +306,9 @@ export default function DicariPage({ initialItems = [] }) {
                 </div>
 
                 <div className="mt-3 sm:mt-5 pt-2 sm:pt-3 border-t border-gray-100 dark:border-slate-800/80">
-                  <div className="flex items-center justify-between mb-2 sm:mb-3 text-[10px] sm:text-xs">
-                    <span className="text-gray-400 dark:text-slate-500">Budget</span>
-                    <span className="font-extrabold text-emerald-600 dark:text-emerald-400 truncate ml-1">
+                  <div className="flex items-center justify-between gap-1 mb-2 sm:mb-3 text-[10px] sm:text-xs">
+                    <span className="shrink-0 text-gray-400 dark:text-slate-500">Budget</span>
+                    <span className="font-extrabold text-emerald-600 dark:text-emerald-400 text-right break-all leading-tight">
                       {item.budget > 0 ? rupiah(item.budget) : "Nego"}
                     </span>
                   </div>
@@ -338,7 +338,7 @@ export default function DicariPage({ initialItems = [] }) {
                         .then(({ ok, d }) => { if (!ok) setManualError(d.error || "Kontak postingan ini belum bisa dibuka."); })
                         .catch(() => {});
                     }}
-                    className="btn-outline w-full py-1.5 sm:py-2.5 text-center flex items-center justify-center gap-1 text-[10px] sm:text-xs font-bold bg-gray-50/50 hover:bg-gray-100 dark:bg-slate-950 dark:hover:bg-slate-900 border-gray-200 dark:border-slate-850 rounded-lg"
+                    className="btn-outline w-full py-1.5 sm:py-2.5 text-center flex items-center justify-center gap-1 text-[10px] sm:text-xs font-bold bg-gray-50/50 hover:bg-gray-100 dark:bg-slate-950 dark:hover:bg-slate-900 border-gray-200 dark:border-slate-800 rounded-lg"
                   >
                     <Icon.MessageCircle className="h-3.5 w-3.5 text-emerald-500 shrink-0" /> <span className="truncate">Tawarkan</span>
                   </button>
@@ -355,7 +355,7 @@ export default function DicariPage({ initialItems = [] }) {
           <div className="card w-full max-w-lg bg-white p-6 shadow-2xl dark:bg-slate-900 animate-fade-in max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-slate-800">
               <h2 className="text-lg font-bold text-gray-900 dark:text-white">Posting Barang</h2>
-              <button type="button" onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-650">✕</button>
+              <button type="button" onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
             </div>
             <form onSubmit={submitWanted} className="mt-4 space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
@@ -535,7 +535,7 @@ export default function DicariPage({ initialItems = [] }) {
               <button
                 type="button"
                 onClick={() => setQrisModal(null)}
-                className="text-gray-400 hover:text-gray-650"
+                className="text-gray-400 hover:text-gray-600"
               >
                 ✕
               </button>
@@ -562,10 +562,10 @@ export default function DicariPage({ initialItems = [] }) {
                   🎉 Struk valid! Pembayaran dikonfirmasi AI.
                 </div>
 
-                <div className="mt-4 border border-gray-100 dark:border-slate-800/80 rounded-xl divide-y divide-gray-100 dark:divide-slate-850 text-left text-xs">
+                <div className="mt-4 border border-gray-100 dark:border-slate-800/80 rounded-xl divide-y divide-gray-100 dark:divide-slate-800 text-left text-xs">
                   <div className="p-3 flex justify-between gap-4">
                     <span className="text-gray-400 dark:text-slate-500">Nama Pembeli</span>
-                    <span className="font-bold text-gray-750 dark:text-slate-300">{unlockResult.buyer_name}</span>
+                    <span className="font-bold text-gray-700 dark:text-slate-300">{unlockResult.buyer_name}</span>
                   </div>
                   <div className="p-3 flex justify-between gap-4">
                     <span className="text-gray-400 dark:text-slate-500">No. WhatsApp</span>
