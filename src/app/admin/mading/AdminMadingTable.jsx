@@ -117,10 +117,10 @@ export default function AdminMadingTable({
         </div>
       )}
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
+      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-sm font-sans">
-            <thead className="bg-slate-50/80 text-[11px] font-black uppercase tracking-wider text-slate-500 dark:bg-slate-850 dark:text-slate-400">
+            <thead className="bg-slate-50/80 text-[11px] font-black uppercase tracking-wider text-slate-500 dark:bg-slate-800 dark:text-slate-400">
               <tr>
                 <th className="px-4 py-3.5 font-bold">Isi Postingan &amp; Foto</th>
                 <th className="px-4 py-3.5 font-bold">Identitas Pengirim</th>
@@ -140,7 +140,7 @@ export default function AdminMadingTable({
                 const isBusy = busyId === post.id;
 
                 return (
-                  <tr key={post.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-850/40 transition-colors">
+                  <tr key={post.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
                     <td className="max-w-xs sm:max-w-md px-4 py-3.5">
                       {post.title && (
                         <p className="font-bold text-slate-900 dark:text-white line-clamp-1 mb-0.5">{post.title}</p>

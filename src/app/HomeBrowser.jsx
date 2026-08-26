@@ -77,6 +77,7 @@ export default function HomeBrowser({
 
   // PWA Install prompt state
   const [pwaReady, setPwaReady] = useState(false);
+  const searchTimerRef = useRef(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -239,8 +240,8 @@ export default function HomeBrowser({
   // Debounce search
   const handleSearch = useCallback((val) => {
     setQ(val);
-    clearTimeout(window._searchTimer);
-    window._searchTimer = setTimeout(() => {
+    clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => {
       applyFilters({ newQ: val });
       syncToUrl({ q: val });
     }, 400);

@@ -367,7 +367,7 @@ export default function NotificationCenter() {
           </div>
 
           {/* FOOTER */}
-          <div className="p-2.5 bg-slate-50 dark:bg-slate-850 border-t border-slate-100 dark:border-slate-800 text-center">
+          <div className="p-2.5 bg-slate-50 dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 text-center">
             <Link
               href="/mading"
               onClick={() => setIsOpen(false)}

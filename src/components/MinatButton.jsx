@@ -133,7 +133,7 @@ export default function MinatButton({ listing }) {
                   <button
                     key={i}
                     onClick={() => sendMinat(msg)}
-                    className="w-full text-left rounded-xl border border-gray-150 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/50 px-4 py-3 text-sm text-gray-800 dark:text-slate-200 hover:bg-emerald-50 hover:border-emerald-200 dark:hover:bg-emerald-950/30 dark:hover:border-emerald-800 transition-all"
+                    className="w-full text-left rounded-xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/50 px-4 py-3 text-sm text-gray-800 dark:text-slate-200 hover:bg-emerald-50 hover:border-emerald-200 dark:hover:bg-emerald-950/30 dark:hover:border-emerald-800 transition-all"
                   >
                     {msg}
                   </button>

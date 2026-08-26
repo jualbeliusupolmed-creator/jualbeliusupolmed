@@ -95,14 +95,14 @@ export default function ApprovePaymentClient({ payment: initialPayment, listing,
           </div>
 
           {/* Details */}
-          <div className="border border-gray-100 dark:border-slate-800/80 rounded-xl divide-y divide-gray-100 dark:divide-slate-850">
+          <div className="border border-gray-100 dark:border-slate-800/80 rounded-xl divide-y divide-gray-100 dark:divide-slate-800">
             <div className="p-3 flex justify-between gap-4">
               <span className="text-gray-400 dark:text-slate-500">Tipe Layanan</span>
-              <span className="font-bold text-gray-750 dark:text-slate-350">{getTypeLabel(payment.type)}</span>
+              <span className="font-bold text-gray-700 dark:text-slate-300">{getTypeLabel(payment.type)}</span>
             </div>
             <div className="p-3 flex justify-between gap-4">
               <span className="text-gray-400 dark:text-slate-500">Order ID</span>
-              <span className="font-semibold text-gray-750 dark:text-slate-350 font-mono select-all">{payment.midtrans_order_id}</span>
+              <span className="font-semibold text-gray-700 dark:text-slate-300 font-mono select-all">{payment.midtrans_order_id}</span>
             </div>
             <div className="p-3 flex justify-between gap-4">
               <span className="text-gray-400 dark:text-slate-500">Nominal Transfer</span>
@@ -114,9 +114,9 @@ export default function ApprovePaymentClient({ payment: initialPayment, listing,
           {listing && (
             <div className="mt-4 p-4 bg-blue-50/20 dark:bg-blue-950/10 border border-blue-100 dark:border-blue-900/30 rounded-xl space-y-2">
               <h3 className="font-bold text-blue-800 dark:text-blue-400 text-xs">Detail Iklan:</h3>
-              <p className="text-gray-750 dark:text-slate-300"><span className="font-medium text-gray-400">Judul Barang:</span> {listing.title}</p>
-              <p className="text-gray-750 dark:text-slate-300"><span className="font-medium text-gray-400">Penjual:</span> {listing.seller_name}</p>
-              <p className="text-gray-750 dark:text-slate-300"><span className="font-medium text-gray-400">WhatsApp Penjual:</span> {listing.seller_wa}</p>
+              <p className="text-gray-700 dark:text-slate-300"><span className="font-medium text-gray-400">Judul Barang:</span> {listing.title}</p>
+              <p className="text-gray-700 dark:text-slate-300"><span className="font-medium text-gray-400">Penjual:</span> {listing.seller_name}</p>
+              <p className="text-gray-700 dark:text-slate-300"><span className="font-medium text-gray-400">WhatsApp Penjual:</span> {listing.seller_wa}</p>
             </div>
           )}
 
@@ -124,9 +124,9 @@ export default function ApprovePaymentClient({ payment: initialPayment, listing,
           {wanted && (
             <div className="mt-4 p-4 bg-indigo-50/20 dark:bg-indigo-950/10 border border-indigo-100 dark:border-indigo-900/30 rounded-xl space-y-2">
               <h3 className="font-bold text-indigo-800 dark:text-indigo-400 text-xs">Detail Buka Kontak:</h3>
-              <p className="text-gray-750 dark:text-slate-300"><span className="font-medium text-gray-400">Pencarian Barang:</span> {wanted.title}</p>
-              <p className="text-gray-750 dark:text-slate-300"><span className="font-medium text-gray-400">Pembeli (Target):</span> {wanted.buyer_name} ({wanted.buyer_wa})</p>
-              <p className="text-gray-750 dark:text-slate-300"><span className="font-medium text-gray-400">WhatsApp Penerima:</span> {payment.meta?.requester_wa}</p>
+              <p className="text-gray-700 dark:text-slate-300"><span className="font-medium text-gray-400">Pencarian Barang:</span> {wanted.title}</p>
+              <p className="text-gray-700 dark:text-slate-300"><span className="font-medium text-gray-400">Pembeli (Target):</span> {wanted.buyer_name} ({wanted.buyer_wa})</p>
+              <p className="text-gray-700 dark:text-slate-300"><span className="font-medium text-gray-400">WhatsApp Penerima:</span> {payment.meta?.requester_wa}</p>
             </div>
           )}
 

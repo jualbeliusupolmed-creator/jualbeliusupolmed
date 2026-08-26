@@ -46,17 +46,20 @@ export default function TemanSwipePage() {
   }, []);
 
   // Fetch Deck & Profile
-  const loadDeck = useCallback(async () => {
+  // deckOnly=true → hanya refresh kartu, jangan override myProfile atau buka onboarding
+  const loadDeck = useCallback(async (deckOnly = false) => {
     if (!userId) return;
     try {
       setLoading(true);
       const res = await fetch(`/api/teman/profiles?userId=${userId}&campus=${campusFilter}`);
       const data = await res.json();
       if (data.ok) {
-        setMyProfile(data.myProfile);
         setDeck(data.profiles || []);
-        if (!data.myProfile) {
-          setShowOnboarding(true);
+        if (!deckOnly) {
+          setMyProfile(data.myProfile);
+          if (!data.myProfile) {
+            setShowOnboarding(true);
+          }
         }
       }
     } catch (err) {
@@ -380,8 +383,13 @@ export default function TemanSwipePage() {
         initialProfile={myProfile}
         userId={userId}
         onSuccess={(updated) => {
+          // 1. Segera update profil & tutup modal dari sini
+          //    (PhotoUploadModal juga memanggil onClose() setelahnya, tapi ini lebih cepat)
           setMyProfile(updated);
-          loadDeck();
+          setShowOnboarding(false);
+          // 2. Refresh daftar kartu saja (deckOnly=true) agar tidak overwrite myProfile
+          //    dan tidak memicu buka-ulang onboarding
+          loadDeck(true);
         }}
       />
 

@@ -74,14 +74,14 @@ export default function ApproveUnlockClient({ paymentId, initialPayment, wanted 
           </div>
 
           {/* Details */}
-          <div className="border border-gray-100 dark:border-slate-800/80 rounded-xl divide-y divide-gray-100 dark:divide-slate-850">
+          <div className="border border-gray-100 dark:border-slate-800/80 rounded-xl divide-y divide-gray-100 dark:divide-slate-800">
             <div className="p-3 flex justify-between gap-4">
               <span className="text-gray-400 dark:text-slate-500">ID Pembayaran</span>
-              <span className="font-mono text-gray-750 dark:text-slate-350 select-all">{paymentId}</span>
+              <span className="font-mono text-gray-700 dark:text-slate-300 select-all">{paymentId}</span>
             </div>
             <div className="p-3 flex justify-between gap-4">
               <span className="text-gray-400 dark:text-slate-500">Order ID</span>
-              <span className="font-semibold text-gray-750 dark:text-slate-350">{payment.midtrans_order_id}</span>
+              <span className="font-semibold text-gray-700 dark:text-slate-300">{payment.midtrans_order_id}</span>
             </div>
             <div className="p-3 flex justify-between gap-4">
               <span className="text-gray-400 dark:text-slate-500">Nominal</span>
@@ -89,15 +89,15 @@ export default function ApproveUnlockClient({ paymentId, initialPayment, wanted 
             </div>
             <div className="p-3 flex justify-between gap-4">
               <span className="text-gray-400 dark:text-slate-500">No. WA Penerima (Pemohon)</span>
-              <span className="font-bold text-gray-750 dark:text-slate-300">{payment.meta?.requester_wa}</span>
+              <span className="font-bold text-gray-700 dark:text-slate-300">{payment.meta?.requester_wa}</span>
             </div>
           </div>
 
           {wanted && (
             <div className="mt-4 p-4 bg-blue-50/20 dark:bg-blue-950/10 border border-blue-100 dark:border-blue-900/30 rounded-xl space-y-2">
               <h3 className="font-bold text-blue-800 dark:text-blue-400 text-xs">Detail Postingan Cari Barang:</h3>
-              <p className="text-gray-750 dark:text-slate-300"><span className="font-medium text-gray-400">Judul:</span> {wanted.title}</p>
-              <p className="text-gray-750 dark:text-slate-300"><span className="font-medium text-gray-400">Pembeli (Target):</span> {wanted.buyer_name} ({wanted.buyer_wa})</p>
+              <p className="text-gray-700 dark:text-slate-300"><span className="font-medium text-gray-400">Judul:</span> {wanted.title}</p>
+              <p className="text-gray-700 dark:text-slate-300"><span className="font-medium text-gray-400">Pembeli (Target):</span> {wanted.buyer_name} ({wanted.buyer_wa})</p>
             </div>
           )}
 
