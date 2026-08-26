@@ -4,6 +4,8 @@ import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { formatWa } from "@/lib/constants";
 import { postWantedToGroup } from "@/lib/fonnte";
 import { getSellerSession } from "@/lib/auth";
+import { cariAman } from "@/lib/cariAman";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -48,8 +50,7 @@ export async function GET(req) {
       query = query.eq("category", cat);
     }
     if (q) {
-      // Sanitasi karakter khusus PostgREST agar tidak bisa memanipulasi filter
-      const safeQ = q.replace(/[%_,()]/g, " ").trim().slice(0, 100);
+      const safeQ = cariAman(q);
       if (safeQ) {
         query = query.or(`title.ilike.%${safeQ}%,description.ilike.%${safeQ}%`);
       }
@@ -66,7 +67,7 @@ export async function GET(req) {
       .map(({ buyer_wa: _wa, buyer_name: _nama, ...rest }) => rest);
     return NextResponse.json({ listings });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 }
 
@@ -172,6 +173,6 @@ export async function POST(req) {
     const paymentUrl = "/qris.png";
     return NextResponse.json({ listing, paymentUrl, isFree: false });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 }

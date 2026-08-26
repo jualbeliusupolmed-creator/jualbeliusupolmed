@@ -10,6 +10,7 @@ import { tokoAktif } from "@/lib/toko";
 import { getSellerSession } from "@/lib/auth";
 import { autoPublishListingInstagram } from "@/lib/listingInstagram";
 import { siteOriginFromRequest } from "@/lib/instagramQueue";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -52,7 +53,7 @@ export async function GET(req) {
     .select("*")
     .eq("seller_wa", wa)
     .order("created_at", { ascending: false });
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return jawabGalat(error);
 
   const listings = data || [];
   if (listings.length > 0) {
@@ -87,7 +88,7 @@ export async function GET(req) {
   return NextResponse.json({ punyaToko, listings, profile });
   } catch (e) {
     console.error("[GET /api/listings] error:", e);
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 }
 
@@ -302,6 +303,6 @@ export async function POST(req) {
     const paymentUrl = "/qris.png";
     return NextResponse.json({ listing, paymentUrl, orderId, amount });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 }
