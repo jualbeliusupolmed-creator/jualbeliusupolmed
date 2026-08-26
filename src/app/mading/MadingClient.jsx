@@ -311,7 +311,7 @@ export default function MadingClient({ initialPosts = [] }) {
   // Handle Share to WhatsApp & Social Media
   const handleShare = async (post) => {
     trackEngagement(post.id, "share");
-    const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/mading#post-${post.id}` : "";
+    const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/mading/${post.id}` : "";
     const cleanSnippet = (post.content || "").trim().slice(0, 120);
     const titleText = post.title ? `*${post.title}*\n` : "";
     const shareText = `🔥 *[Mading & Menfess Kampus]*\n${titleText}"${cleanSnippet}${post.content && post.content.length > 120 ? "..." : ""}"\n\n👀 Baca selengkapnya & beri tanggapan:\n${shareUrl}`;
@@ -655,17 +655,22 @@ export default function MadingClient({ initialPosts = [] }) {
                             {post.type === "info" ? "📢 Info Kampus" : "💌 Menfess"}
                           </span>
                         </div>
-                        <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500 mt-0.5">
-                          {timeAgo(post.created_at)}
-                        </p>
+                        <Link
+                          href={`/mading/${post.id}`}
+                          className="inline-block text-[11px] font-medium text-slate-400 dark:text-slate-500 hover:text-primary transition-colors mt-0.5"
+                        >
+                          {timeAgo(post.created_at)} ↗
+                        </Link>
                       </div>
                     </div>
 
                     {/* Title (If info) */}
                     {post.title && (
-                      <h3 className="mb-1.5 text-sm sm:text-base font-black leading-snug text-[#1d1d1f] dark:text-white">
-                        {post.title}
-                      </h3>
+                      <Link href={`/mading/${post.id}`}>
+                        <h3 className="mb-1.5 text-sm sm:text-base font-black leading-snug text-[#1d1d1f] dark:text-white hover:text-primary transition-colors">
+                          {post.title}
+                        </h3>
+                      </Link>
                     )}
 
                     {/* Content */}

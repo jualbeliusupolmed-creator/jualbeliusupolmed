@@ -274,6 +274,16 @@ Berjalan dengan PostgreSQL, memiliki tabel-tabel berikut:
 4. **Modul Tukar Jadwal Kuliah / Praktikum (KRS & Shift Swap Matrix):** Fitur auto-matching jadwal bentrok matkul/kelas saat awal semester.
 5. **Fitur Monetisasi Mikro (Boost Profil & Lihat Siapa yang Like Kamu):** Paket top-up hemat via QRIS (Rp 3.000–5.000) untuk spotlight profil dan intip likers.
 
+*   **26 Agustus 2026** - *Standalone Mading Post Permalink (`/mading/[id]`) & Feed Pagination*
+    - **Halaman Standalone Menfess & Mading (`src/app/mading/[id]/page.jsx`, `MadingDetailClient.jsx`):**
+      - Menghadirkan halaman detail mandiri untuk tiap postingan Menfess dan Info Kampus (`/mading/[id]`) lengkap dengan dynamic metadata OpenGraph (`title`, `description`, `images` ke endpoint generator IG image) dan Schema.org `SocialMediaPosting` JSON-LD.
+      - Memungkinkan link preview kaya saat dibagikan ke WhatsApp, Telegram, Twitter/X, dan Facebook.
+      - Fitur interaktif penuh: Like, Laporkan, Unduh Gambar Potrait HD (1080×1350 & 9:16), Balas Komentar bersarang, dan indikator badge OP.
+    - **Penyempurnaan Feed Mading (`src/app/mading/MadingClient.jsx` & `src/app/api/mading/route.js`):**
+      - Whitelist tipe postingan `organisasi`, `info`, dan `menfess` di backend dan URL parser (`?tab=organisasi`).
+      - Menambahkan sistem pagination dengan tombol "Muat lebih banyak" (Load More) sehingga ribuan postingan lampau tetap dapat diakses pengguna tanpa batas.
+      - Memperbarui tombol Bagikan agar menghasilkan link permalink presisi (`/mading/[id]`).
+
 *   **26 Agustus 2026** - *Manual WhatsApp Escape Hatch di Antrean Notifikasi (Anti-Banned Fail-Safe)*
     - **Komponen (`src/components/baileys/TabAntrean.jsx`, `src/components/baileys/AntreanBot.jsx`, `src/app/api/admin/outbox/route.js`):**
       - Menghadirkan tombol **`💬 Chat WA Manual`** (`wa.me/62xxx?text=...`) di setiap baris antrean tertunda. Jika bot utama & bot cadangan sedang diblokir/down, admin dapat langsung membuka chat ke nomor tujuan lewat browser/HP dari nomor WhatsApp pribadi mana pun dengan teks notifikasi yang sudah otomatis terisi.
