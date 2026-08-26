@@ -68,3 +68,9 @@ bot-wa/halaman/infrastruktur.html
 catatan-rahasia-lokal.txt
 .env*
 supabase/.temp/
+
+# Coretan kerja lokal — bukan bagian aplikasi.
+scratch/
+
+# Arsip salinan env lama — berisi kredensial, jangan pernah di-commit.
+arsip-env/

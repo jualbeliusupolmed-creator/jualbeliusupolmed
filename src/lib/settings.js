@@ -7,6 +7,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 // tidak selalu sama; yang menagih cuma yang di sini, jadi layar dan tagihan bisa
 // diam-diam berbeda. Sekarang satu definisi, dipakai dua-duanya.
 import { TARIF_BAWAAN, angkaSetelan, adFeeFrom, soldFeeFrom, featuredRateFrom } from "@/lib/fees";
+import { DEFAULT_INVITE_CODE } from "@/lib/organisasi";
 
 export { angkaSetelan, adFeeFrom, soldFeeFrom, featuredRateFrom };
 
@@ -75,9 +76,6 @@ export const DEFAULT_SETTINGS = {
     qrisUrl: process.env.QRIS_URL || "",
     fonnteFirst: false,
   },
-  payment: {
-    mode: "auto", // "auto" = QiosPay/callback aktif; "manual" = upload struk saja
-  },
   bot: {
     paused_users: [],
     webhookUrl: "",
@@ -93,6 +91,11 @@ export const DEFAULT_SETTINGS = {
     listingActive: "✅ Iklan *{{title}}* telah aktif dan bisa dilihat di marketplace! Semoga cepat laku ya Kak! 🎉\n\n🌐 {{url}}",
     notifNewListing: "📢 *Iklan Baru!*\n\n*{{title}}*\nHarga: {{price}}\nPenjual: {{seller}}\n\n{{url}}",
   },
+  // Kode undangan organisasi. Panel admin sudah lama menulis kunci ini dan
+  // membuatkan tautan undangan dari nilainya; sejak 26 Agustus 2026
+  // /api/organisasi/daftar benar-benar membacanya.
+  ukmInviteCode: DEFAULT_INVITE_CODE,
+
   areas: [
     "Medan Baru",
     "Medan Selayang",

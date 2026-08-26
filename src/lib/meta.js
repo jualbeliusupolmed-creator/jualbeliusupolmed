@@ -95,17 +95,16 @@ export async function waitForInstagramContainer(
   throw new Error("Pemeriksaan media Instagram: media belum siap dalam batas waktu.");
 }
 
-export async function postToFacebook(pageId, token, imageUrl, caption) {
-  if (!pageId || !token) {
-    throw new Error("Konfigurasi Facebook Page belum lengkap.");
-  }
-  return graphRequest(`${pageId}/photos`, {
-    token,
-    method: "POST",
-    stage: "Publikasi Facebook",
-    body: { url: imageUrl, message: caption },
-  });
-}
+// Catatan (26 Agustus 2026): `postToFacebook()` dulu ada di sini — lengkap dan
+// berfungsi — tapi tidak pernah dipanggil dari mana pun. Sementara antarmuka
+// menjanjikan sebaliknya: tombolnya berbunyi "upload ke Meta (IG & FB)" dan
+// panel punya kartu "Konfigurasi Meta (Instagram & Facebook)". Facebook tidak
+// pernah menerima apa pun.
+//
+// Yang dibereskan di sini adalah janjinya, bukan fungsinya: teks antarmuka
+// sekarang menyebut Instagram saja. Kalau publikasi Facebook memang diinginkan,
+// yang dibutuhkan cuma Page ID + token halaman, lalu panggil graphRequest ke
+// `<pageId>/photos` — persis pola postToInstagram di bawah.
 
 /**
  * Membuat container gambar, menunggu FINISHED, lalu menerbitkannya.

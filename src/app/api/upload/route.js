@@ -3,6 +3,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { getSellerSession } from "@/lib/auth";
 import sharp from "sharp";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -120,6 +121,6 @@ export async function POST(req) {
     const { data } = supa.storage.from("listings").getPublicUrl(path);
     return NextResponse.json({ url: data.publicUrl });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 }

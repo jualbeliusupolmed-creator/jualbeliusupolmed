@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabaseAdmin";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ export async function GET(req) {
     .order("created_at", { ascending: false })
     .limit(50);
 
-  if (logsErr || errErr) return NextResponse.json({ error: (logsErr || errErr).message }, { status: 500 });
+  if (logsErr || errErr) return jawabGalat(logsErr || errErr, { pesan: "Gagal memuat data audit." });
 
   return NextResponse.json({ logs: logs || [], errors: errors || [] });
 }

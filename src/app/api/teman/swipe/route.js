@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
+import { identitasTeman } from "@/lib/identitasTeman";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request) {
   try {
-    const { swiper_id, target_id, action = "like" } = await request.json();
+    const { swiper_id, target_id, action = "like", userId: idKlien } = await request.json();
 
     if (!swiper_id || !target_id) {
       return NextResponse.json({ error: "swiper_id dan target_id diperlukan" }, { status: 400 });
@@ -16,6 +17,33 @@ export async function POST(request) {
     }
 
     const supa = getAdminClient();
+
+    // Rute ini dulu tidak menoleh ke sesi sama sekali: `swiper_id` diambil apa
+    // adanya dari body. Karena feed Cari Teman membagikan `id` setiap kandidat,
+    // menyapu ATAS NAMA ORANG LAIN cuma perlu menyalin satu nilai dari layar.
+    //
+    // Dan akibatnya tidak berhenti di satu "like" palsu. Beberapa baris di bawah,
+    // begitu dua sapuan saling bertemu, sistem mengirim WhatsApp ke KEDUA pihak
+    // berisi nomor masing-masing. Jadi memalsukan like dari korban ke diri sendiri
+    // adalah cara memaksa sistem menyerahkan nomor korban — tanpa korban pernah
+    // membuka aplikasinya.
+    //
+    // Sekarang penyapunya harus membuktikan bahwa profil itu miliknya.
+    const { userId } = identitasTeman(request, { idKlien });
+    if (!userId) {
+      return NextResponse.json({ error: "Identitas pengguna diperlukan" }, { status: 400 });
+    }
+
+    const { data: profilPenyapu } = await supa
+      .from("teman_profiles")
+      .select("id")
+      .eq("id", swiper_id)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (!profilPenyapu) {
+      return NextResponse.json({ error: "Profil ini bukan milikmu." }, { status: 403 });
+    }
 
     // 1. Coba panggil RPC atomik process_teman_swipe
     const { data: rpcData, error: rpcError } = await supa.rpc("process_teman_swipe", {

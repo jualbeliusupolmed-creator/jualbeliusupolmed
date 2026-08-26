@@ -6,6 +6,7 @@ import { setSellerCookie } from "@/lib/auth";
 import { hashPin } from "@/lib/pin";
 import { validasiPin } from "@/lib/pinRules";
 import { tulisProfil } from "@/lib/tulisProfil";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -105,7 +106,7 @@ export async function POST(req) {
         });
       }
     }
-    if (galat) return NextResponse.json({ error: galat.message }, { status: 500 });
+    if (galat) return jawabGalat(galat);
 
     setSellerCookie(normalizedWa);
     return NextResponse.json({
@@ -115,6 +116,6 @@ export async function POST(req) {
       message: "Akun dibuat. Simpan PIN / sandimu baik-baik — kalau lupa, kode pemulihannya dikirim ke nomor ini.",
     });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 }

@@ -4,6 +4,7 @@ import { setSellerCookie } from "@/lib/auth";
 import { hashPin } from "@/lib/pin";
 import { formatWa } from "@/lib/constants";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -78,7 +79,7 @@ export async function POST(req) {
     if (insertErr) {
       console.error("Daftar email insert error:", insertErr.message);
       return NextResponse.json(
-        { error: "Gagal membuat akun baru: " + insertErr.message },
+        { error: "Gagal membuat akun baru. Coba lagi sebentar lagi." },
         { status: 500 }
       );
     }
@@ -94,6 +95,6 @@ export async function POST(req) {
     });
   } catch (e) {
     console.error("Email daftar error:", e);
-    return NextResponse.json({ error: "Terjadi kesalahan pada server: " + e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 }

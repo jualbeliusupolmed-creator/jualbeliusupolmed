@@ -75,11 +75,3 @@ export async function isDistributor(supa, seller_wa) {
   return !!data?.distributor;
 }
 
-// Ambil kategori distributor
-export async function getDistributorCategories(supa, seller_wa) {
-  const { data } = await supa
-    .from("distributor_categories")
-    .select("category")
-    .eq("seller_wa", seller_wa);
-  return (data || []).map((r) => r.category);
-}

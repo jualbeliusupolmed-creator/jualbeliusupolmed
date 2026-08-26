@@ -5,6 +5,9 @@ import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { setSellerCookie } from "@/lib/auth";
 import { hashPin } from "@/lib/pin";
 import { validateOrganisasiForm, DEFAULT_INVITE_CODE } from "@/lib/organisasi";
+import { getSettings } from "@/lib/settings";
+import { simpanProfil } from "@/lib/simpanProfil";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -65,69 +68,63 @@ export async function POST(req) {
 
     const supa = getAdminClient();
 
+    // Centang "terverifikasi" hanya untuk yang memegang kode undangan asli.
+    //
+    // Sampai 26 Agustus 2026 syaratnya berbunyi:
+    //
+    //     kode === DEFAULT_INVITE_CODE || kode.trim().length >= 4
+    //
+    // Cabang kedua membatalkan cabang pertama seluruhnya: `aaaa` menghasilkan
+    // centang yang sama persis dengan kode asli. Selama itu berlaku, lencana
+    // "organisasi resmi" tidak menyatakan apa pun — siapa saja bisa terdaftar
+    // sebagai BEM fakultas mana pun dan memasang oprec atas namanya.
+    //
+    // Kode pembandingnya kini diambil dari setelan admin, bukan dari konstanta.
+    // Kolomnya sudah lama ada di panel (dan panel bahkan membuatkan tautan
+    // undangan dari nilainya), tapi tidak ada rute yang pernah membacanya —
+    // menggantinya di sana tidak mengubah apa pun. Sekarang mengubahnya berarti.
+    const setelan = await getSettings();
+    const kodeSah = String(setelan.ukmInviteCode || DEFAULT_INVITE_CODE).trim().toUpperCase();
     const isVerified = Boolean(
-      invite_code &&
-      (invite_code.trim().toUpperCase() === DEFAULT_INVITE_CODE || invite_code.trim().length >= 4)
+      invite_code && String(invite_code).trim().toUpperCase() === kodeSah
     );
 
-    const fullPayload = {
-      name: ukm_name.trim(),
-      account_type: "ukm",
-      ukm_name: ukm_name.trim(),
+    // Profilnya ditulis lewat penulis bersama (lib/simpanProfil.js), bukan
+    // dengan payload rakitan sendiri. Rute ini dulu merakit dua payload —
+    // "lengkap" dan "standar" — dan keduanya menyebut kolom yang tidak ada
+    // (`instagram`, `photo_url`, `avatar_url`), jadi mendaftar dengan foto
+    // selalu berakhir 500.
+    //
+    // `ukm_verified` sengaja TIDAK ikut dikirim ke sana: penulis bersama memang
+    // menyaringnya keluar, karena centang resmi tidak boleh bisa dinyalakan
+    // lewat formulir mana pun. Yang berhak memberikannya adalah rute ini —
+    // satu-satunya yang memeriksa kode undangan — dan ia melakukannya di
+    // langkah terpisah di bawah, sesudah profilnya tersimpan.
+    const hasil = await simpanProfil(formattedWa, {
+      name: ukm_name,
+      ukm_name,
       ukm_category: ukm_category || "bem_hima",
       ukm_instagram: cleanIg,
-      ukm_verified: isVerified,
       campus: campus || "USU",
       faculty: faculty ? faculty.trim() : "Universitas",
       bio: bio ? bio.trim() : `Akun Resmi ${ukm_name.trim()} (${campus || "USU"}).`,
-    };
+      avatar_url: photo_url || undefined,
+    }, { supa });
 
-    if (cleanEmail) fullPayload.email = cleanEmail;
-    if (hashedPassword) fullPayload.pin = hashedPassword;
-    if (photo_url) {
-      fullPayload.photo_url = photo_url;
-      fullPayload.avatar_url = photo_url;
+    if (hasil.pesanPengguna) {
+      return NextResponse.json({ error: hasil.pesanPengguna }, { status: hasil.status || 400 });
     }
+    if (hasil.error) return jawabGalat(hasil.error, { pesan: "Gagal menyimpan akun organisasi." });
 
-    // Coba upsert dengan payload lengkap
-    let { error: upsertErr } = await supa
-      .from("seller_profiles")
-      .upsert(
-        {
-          wa: formattedWa,
-          ...fullPayload,
-          created_at: new Date().toISOString(),
-        },
-        { onConflict: "wa" }
-      );
-
-    // Jika gagal karena kolom baru belum dimigrasi di database, fallback ke kolom standar
-    if (upsertErr) {
-      console.warn("Full payload upsert warning, retrying with standard columns:", upsertErr.message);
-
-      const standardPayload = {
-        wa: formattedWa,
-        name: `[UKM] ${ukm_name.trim()}`,
-        bio: `${bio ? bio.trim() + " • " : ""}Akun Resmi ${ukm_name.trim()} (${campus || "USU"}) • Kategori: ${ukm_category || "Organisasi"} • IG: @${cleanIg}`,
-        instagram: cleanIg,
-        created_at: new Date().toISOString(),
-      };
-
-      if (cleanEmail) standardPayload.email = cleanEmail;
-      if (hashedPassword) standardPayload.pin = hashedPassword;
-      if (photo_url) {
-        standardPayload.photo_url = photo_url;
-        standardPayload.avatar_url = photo_url;
-      }
-
-      const { error: fallbackErr } = await supa
-        .from("seller_profiles")
-        .upsert(standardPayload, { onConflict: "wa" });
-
-      if (fallbackErr) {
-        console.error("Fallback insert error:", fallbackErr.message);
-        return NextResponse.json({ error: "Gagal menyimpan akun organisasi: " + fallbackErr.message }, { status: 500 });
-      }
+    // Kolom yang tidak boleh ditulis pemiliknya sendiri, ditulis di sini karena
+    // di sinilah kode undangannya diperiksa.
+    const lanjutan = { account_type: "ukm", ukm_verified: isVerified };
+    if (cleanEmail) lanjutan.email = cleanEmail;
+    if (hashedPassword) lanjutan.pin = hashedPassword;
+    const { error: galatLanjutan } = await supa
+      .from("seller_profiles").update(lanjutan).eq("wa", formattedWa);
+    if (galatLanjutan) {
+      return jawabGalat(galatLanjutan, { pesan: "Gagal menyimpan akun organisasi." });
     }
 
     // Set kuki sesi login langsung
@@ -139,7 +136,14 @@ export async function POST(req) {
 
     return NextResponse.json({
       success: true,
-      message: "Akun Organisasi / UKM berhasil didaftarkan dan terverifikasi! 🎉",
+      // Dulu kalimat ini selalu berbunyi "…dan terverifikasi! 🎉" apa pun
+      // hasilnya. Itu tidak apa-apa selama semua orang lolos; sejak kode
+      // undangannya benar-benar diperiksa, sebagian pendaftar TIDAK
+      // terverifikasi — dan mereka berhak tahu itu sekarang, bukan nanti saat
+      // bertanya-tanya kenapa centangnya tidak muncul.
+      message: isVerified
+        ? "Akun Organisasi / UKM berhasil didaftarkan dan terverifikasi! 🎉"
+        : "Akun Organisasi / UKM berhasil didaftarkan. Centang resmi belum aktif karena kode undangannya tidak cocok — hubungi admin untuk mendapatkan kode yang benar.",
       wa: formattedWa,
       email: cleanEmail,
       organization: {
@@ -152,6 +156,6 @@ export async function POST(req) {
     });
   } catch (err) {
     console.error("POST /api/organisasi/daftar exception:", err);
-    return NextResponse.json({ error: "Terjadi kesalahan pada server: " + err.message }, { status: 500 });
+    return jawabGalat(err);
   }
 }

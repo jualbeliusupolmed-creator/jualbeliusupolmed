@@ -3,6 +3,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { tolakCron } from "@/lib/cronAuth";
 import { sendWa } from "@/lib/fonnte";
 import { rupiah } from "@/lib/fees";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 // Loop kirim WA berjeda (anti-ban) mudah melewati batas default 10-15 detik —
@@ -130,6 +131,6 @@ export async function GET(req) {
     });
   } catch (e) {
     console.error("Weekly-Report Cron Error:", e);
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 }

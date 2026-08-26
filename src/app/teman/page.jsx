@@ -127,6 +127,10 @@ export default function TemanSwipePage() {
           swiper_id: myProfile.id,
           target_id: currentCard.id,
           action,
+          // Dibutuhkan pemakai anonim (belum punya akun) supaya server bisa
+          // memastikan `swiper_id` memang miliknya. Yang sudah masuk akun
+          // diabaikan nilainya — sesi yang menentukan.
+          userId,
         }),
       });
 

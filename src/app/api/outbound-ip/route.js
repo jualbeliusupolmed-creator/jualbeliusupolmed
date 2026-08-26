@@ -20,6 +20,7 @@ export async function GET() {
       ip_outbound: data.ip
     });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error("[outbound-ip]", error?.stack || error);
+    return Response.json({ error: "Gagal mengambil IP keluar." }, { status: 500 });
   }
 }

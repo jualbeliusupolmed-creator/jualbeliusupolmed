@@ -6,6 +6,26 @@ import Link from "next/link";
 import { Icon } from "@/components/Icons";
 import { toast } from "sonner";
 import imageCompression from "browser-image-compression";
+import { AKSEN, statusToko } from "@/lib/toko";
+
+/*
+ * Satu pintu untuk profil.
+ *
+ * Sebelum ini, "profil" disunting dari empat formulir yang tidak saling kenal:
+ * panel ini (biodata), /dashboard/toko, formulir pendaftaran organisasi, dan
+ * modal foto Cari Teman. Keempatnya menulis ke tabel yang sama, masing-masing
+ * dengan aturannya sendiri.
+ *
+ * Yang membedakan pemakai sekarang bukan pintunya, melainkan LAPISAN yang
+ * menyala untuknya — dan lapisan itu datang dari server (`profil.peran`), bukan
+ * ditebak di sini. Punya toko → seksi Toko muncul. Akun organisasi → seksi
+ * Organisasi muncul, dan kolom yang tidak masuk akal untuk sebuah lembaga
+ * (angkatan, tujuan berkenalan) tidak ditawarkan sama sekali.
+ *
+ * Formulir ini tidak menjaga batas itu sendirian: server menyaring ulang setiap
+ * field lewat `saringIsian()`. Menyembunyikan input hanya soal kerapian; yang
+ * benar-benar menghalangi ada di lib/profil.js.
+ */
 
 const INTENTS = [
   "Teman Santai ☕",
@@ -17,396 +37,500 @@ const INTENTS = [
 ];
 
 const FACULTIES_USU = [
-  "Kedokteran",
-  "Hukum",
-  "Pertanian",
-  "Teknik",
-  "Ekonomi & Bisnis",
-  "Kedokteran Gigi",
-  "Ilmu Budaya",
-  "MIPA",
-  "ISIP",
-  "Kesehatan Masyarakat",
-  "Farmasi",
-  "Psikologi",
-  "Keperawatan",
-  "Fasilkom-TI",
-  "Kehutanan",
-  "Vokasi",
-  "Umum",
+  "Kedokteran", "Hukum", "Pertanian", "Teknik", "Ekonomi & Bisnis",
+  "Kedokteran Gigi", "Ilmu Budaya", "MIPA", "ISIP", "Kesehatan Masyarakat",
+  "Farmasi", "Psikologi", "Keperawatan", "Fasilkom-TI", "Kehutanan", "Vokasi", "Umum",
 ];
 
 const FACULTIES_POLMED = [
-  "Teknik Mesin",
-  "Teknik Sipil",
-  "Teknik Elektro",
-  "Akuntansi",
-  "Administrasi Niaga",
-  "Teknik Komputer & Informatika",
-  "Umum",
+  "Teknik Mesin", "Teknik Sipil", "Teknik Elektro", "Akuntansi",
+  "Administrasi Niaga", "Teknik Komputer & Informatika", "Umum",
 ];
 
-export default function UnifiedProfilePanel({ sellerProfile, wa, onProfileUpdated }) {
-  const [formData, setFormData] = useState({
-    photo_url: sellerProfile?.photo_url || "",
-    display_name: sellerProfile?.name || "",
-    campus: sellerProfile?.campus || "USU",
-    faculty: sellerProfile?.faculty || "Umum",
-    batch: "2024",
-    intent: "Teman Santai ☕",
-    bio: sellerProfile?.bio || "",
-    instagram: "",
-    whatsapp: wa || "",
-    anonymous_name: sellerProfile?.anonymous_name || "Anonim",
-  });
+const KATEGORI_UKM = [
+  { id: "bem_hima", label: "👑 BEM & Himpunan" },
+  { id: "olahraga", label: "🏃 Olahraga" },
+  { id: "seni_budaya", label: "🎨 Seni & Budaya" },
+  { id: "riset_teknologi", label: "🔬 Riset & Teknologi" },
+  { id: "keagamaan", label: "🕌 Kerohanian" },
+  { id: "media_pers", label: "📰 Pers & Media" },
+  { id: "sosial_lingkungan", label: "🌱 Sosial & Lingkungan" },
+];
 
-  const [mounted, setMounted] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [compressing, setCompressing] = useState(false);
-  const fileInputRef = useRef(null);
+// Satu jalur unggah untuk foto profil, logo, dan sampul. Dipampatkan di
+// peramban lebih dulu: foto kamera ponsel rutin 4–8 MB, dan mengunggahnya utuh
+// lewat kuota mahasiswa adalah cara paling cepat membuat orang menyerah di
+// tengah jalan.
+async function unggahGambar(berkas, { maks = 0.4, sisi = 900 } = {}) {
+  const kecil = await imageCompression(berkas, { maxSizeMB: maks, maxWidthOrHeight: sisi, useWebWorker: true });
+  const fd = new FormData();
+  fd.append("file", kecil, berkas.name);
+  const res = await fetch("/api/upload", { method: "POST", body: fd });
+  const data = await res.json();
+  if (!res.ok || !data.url) throw new Error(data.error || "Gagal mengunggah gambar");
+  return data.url;
+}
+
+function GambarToko({ label, nilai, ubah, bulat = false }) {
+  const rujuk = useRef(null);
+  const [sibuk, setSibuk] = useState(false);
+  async function pilih(e) {
+    const berkas = e.target.files?.[0];
+    if (!berkas) return;
+    try {
+      setSibuk(true);
+      ubah(await unggahGambar(berkas, bulat ? {} : { maks: 0.6, sisi: 1600 }));
+      toast.success(label + " siap. Jangan lupa Simpan.");
+    } catch (err) {
+      toast.error(err.message || "Gagal mengunggah " + label.toLowerCase());
+    } finally {
+      setSibuk(false);
+      if (rujuk.current) rujuk.current.value = "";
+    }
+  }
+  return (
+    <div className="flex-1 space-y-1.5">
+      <p className="text-[13px] text-[#1d1d1f] dark:text-white">{label}</p>
+      <div onClick={() => rujuk.current?.click()}
+        className={`relative cursor-pointer overflow-hidden bg-black/[0.05] transition-all hover:opacity-80 dark:bg-white/[0.1] ${bulat ? "h-16 w-16 rounded-full" : "h-16 w-full rounded-lg"}`}>
+        {nilai
+          ? <Image src={nilai} alt={label} fill className="object-cover" />
+          : <div className="flex h-full w-full items-center justify-center text-[11px] text-gray-400">{sibuk ? "…" : "Pilih"}</div>}
+      </div>
+      <input ref={rujuk} type="file" accept="image/*" className="hidden" onChange={pilih} />
+    </div>
+  );
+}
+
+/*
+ * Status pengajuan toko.
+ *
+ * Ini yang selama ini tidak pernah tampil: `store_status` dibuang oleh cadangan
+ * di /api/toko yang selalu aktif, jadi penjual tidak pernah tahu tokonya sedang
+ * menunggu, ditolak, atau kenapa. Sekarang kolomnya ada dan statusnya terbaca.
+ */
+function StatusToko({ profil }) {
+  const [mengajukan, setMengajukan] = useState(false);
+  const [status, setStatus] = useState(statusToko(profil));
+  const siap = Boolean(profil?.slug && profil?.store_name);
+
+  const rupa = {
+    draf:     { warna: "text-gray-500 dark:text-slate-400", teks: "Belum diajukan" },
+    menunggu: { warna: "text-amber-600 dark:text-amber-400", teks: "Menunggu ditinjau admin" },
+    aktif:    { warna: "text-emerald-600 dark:text-emerald-400", teks: "Aktif — tokomu tayang" },
+    ditolak:  { warna: "text-red-600 dark:text-red-400", teks: "Ditolak" },
+  }[status] || { warna: "text-gray-500", teks: status };
+
+  async function ajukan() {
+    try {
+      setMengajukan(true);
+      const res = await fetch("/api/toko/ajukan", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || "Gagal mengajukan");
+      setStatus("menunggu");
+      toast.success("Toko diajukan. Admin akan meninjaunya.");
+    } catch (e) {
+      toast.error(e.message || "Gagal mengajukan");
+    } finally {
+      setMengajukan(false);
+    }
+  }
+
+  return (
+    <Kartu judul="Status toko" catatan="Toko hanya tayang di alamatnya setelah ditinjau admin.">
+      <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <p className={`text-[15px] font-semibold ${rupa.warna}`}>{rupa.teks}</p>
+          {status === "ditolak" && profil.store_reject_note && (
+            <p className="text-[11px] leading-relaxed text-red-600 dark:text-red-400">
+              Alasannya: “{profil.store_reject_note}”. Perbaiki dulu, lalu ajukan lagi.
+            </p>
+          )}
+          {!siap && (
+            <p className="text-[11px] text-gray-400 dark:text-slate-500">
+              Isi nama toko dan alamatnya dulu, simpan, baru bisa diajukan.
+            </p>
+          )}
+          {profil?.slug && status === "aktif" && (
+            <Link href={`/toko/${profil.slug}`} target="_blank" className="text-[11px] font-semibold text-primary underline">
+              Lihat halaman tokomu →
+            </Link>
+          )}
+        </div>
+        {status !== "menunggu" && status !== "aktif" && (
+          <button type="button" onClick={ajukan} disabled={mengajukan || !siap}
+            className="shrink-0 rounded-full bg-primary px-4 py-2 text-xs font-bold text-white transition-all hover:brightness-105 active:scale-95 disabled:opacity-50">
+            {mengajukan ? "Mengajukan…" : "Ajukan toko"}
+          </button>
+        )}
+      </div>
+    </Kartu>
+  );
+}
+
+// ── Potongan tampilan bersama ────────────────────────────────────────────────
+function Kartu({ judul, catatan, children }) {
+  return (
+    <section className="space-y-2">
+      <div className="px-1">
+        <h3 className="text-[13px] font-bold uppercase tracking-wide text-[#86868b] dark:text-slate-400">{judul}</h3>
+        {catatan && <p className="mt-0.5 text-[11px] leading-relaxed text-gray-400 dark:text-slate-500">{catatan}</p>}
+      </div>
+      <div className="overflow-hidden rounded-[12px] border border-black/[0.05] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.02)] dark:border-white/[0.08] dark:bg-[#1c1c1e]">
+        {children}
+      </div>
+    </section>
+  );
+}
+
+function Baris({ label, children }) {
+  return (
+    <div className="flex items-center gap-3 border-b border-black/[0.05] px-4 py-3 last:border-b-0 dark:border-white/[0.08]">
+      <label className="w-1/3 shrink-0 text-[15px] text-[#1d1d1f] dark:text-white">{label}</label>
+      {children}
+    </div>
+  );
+}
+
+const gayaInput =
+  "flex-1 min-w-0 bg-transparent text-[15px] text-[#86868b] text-right outline-none dark:text-slate-400 placeholder:text-gray-300 dark:placeholder:text-gray-600";
+
+function Teks({ nilai, ubah, ...sisa }) {
+  return <input type="text" value={nilai ?? ""} onChange={(e) => ubah(e.target.value)} className={gayaInput} {...sisa} />;
+}
+
+function Pilih({ nilai, ubah, opsi }) {
+  return (
+    <select value={nilai ?? ""} onChange={(e) => ubah(e.target.value)} className={gayaInput}>
+      {opsi.map((o) => (
+        <option key={o.id ?? o} value={o.id ?? o}>{o.label ?? o}</option>
+      ))}
+    </select>
+  );
+}
+
+export default function UnifiedProfilePanel({ onProfileUpdated }) {
+  const [profil, setProfil] = useState(null);
+  const [f, setF] = useState(null);
+  const [memuat, setMemuat] = useState(true);
+  const [menyimpan, setMenyimpan] = useState(false);
+  const [memampatkan, setMemampatkan] = useState(false);
+  const [bukaToko, setBukaToko] = useState(false);
+  const [daftarOrg, setDaftarOrg] = useState(false);
+  const inputFoto = useRef(null);
+
+  const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
+  const setTeman = (k, v) => setF((p) => ({ ...p, teman: { ...p.teman, [k]: v } }));
 
   useEffect(() => {
-    setMounted(true);
-    async function loadTemanProfile() {
+    let hidup = true;
+    (async () => {
       try {
-        setLoading(true);
-        const res = await fetch(`/api/teman/profiles?wa=${encodeURIComponent(wa || "")}`, {
-          headers: { "x-seller-wa": wa || "" },
-        });
+        // Tanpa `?wa=` dan tanpa header identitas: sesi yang menentukan siapa
+        // ini. Endpoint profil yang menerima nomor dari peramban selalu berakhir
+        // dipakai membaca profil orang lain — itu yang terjadi di /api/teman/profiles.
+        const res = await fetch("/api/profil", { cache: "no-store" });
         const data = await res.json();
-        if (data.ok) {
-          const p = data.myProfile || {};
-          const s = data.sellerProfile || {};
-          const mergedName = p.display_name || s.name || sellerProfile?.name || "";
-          const mergedPhoto = p.photo_url || s.photo_url || sellerProfile?.photo_url || "";
-          const mergedBio = p.bio || s.bio || sellerProfile?.bio || "";
-          const mergedCampus = p.campus || s.campus || sellerProfile?.campus || "USU";
-          const mergedFaculty = p.faculty || s.faculty || sellerProfile?.faculty || "Umum";
-          const mergedAnon = s.anonymous_name || sellerProfile?.anonymous_name || "Anonim";
-
-          setFormData({
-            photo_url: mergedPhoto,
-            display_name: mergedName,
-            campus: mergedCampus,
-            faculty: mergedFaculty,
-            batch: p.batch || "2024",
-            intent: p.intent || "Teman Santai ☕",
-            bio: mergedBio,
-            instagram: p.instagram || "",
-            whatsapp: wa || p.whatsapp || "",
-            anonymous_name: mergedAnon,
-          });
-        }
-      } catch (err) {
-        console.error("Failed to load unified profile:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    if (wa) {
-      loadTemanProfile();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wa]);
-
-  const handlePhotoUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      setCompressing(true);
-      const options = {
-        maxSizeMB: 0.6,
-        maxWidthOrHeight: 1080,
-        useWebWorker: true,
-        fileType: "image/webp",
-      };
-
-      const compressedFile = await imageCompression(file, options);
-      const fd = new FormData();
-      fd.append("file", compressedFile);
-
-      const uploadRes = await fetch("/api/upload", {
-        method: "POST",
-        body: fd,
-      });
-
-      if (uploadRes.ok) {
-        const uploadData = await uploadRes.json();
-        const url = uploadData.url || uploadData.image_url;
-        setFormData((prev) => ({ ...prev, photo_url: url }));
-        // Live preview on parent
-        onProfileUpdated?.({ photo_url: url });
-        toast.success("Foto profil berhasil diunggah! 📸");
-      } else {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setFormData((prev) => ({ ...prev, photo_url: reader.result }));
-          onProfileUpdated?.({ photo_url: reader.result });
-          toast.success("Foto lokal dipilih.");
-        };
-        reader.readAsDataURL(compressedFile);
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("Gagal mengompres/mengunggah foto.");
-    } finally {
-      setCompressing(false);
-    }
-  };
-
-  const handleSave = async (e) => {
-    e.preventDefault();
-    if (!formData.display_name.trim()) {
-      toast.error("Nama lengkap / nama tampil wajib diisi");
-      return;
-    }
-
-    try {
-      setSaving(true);
-      const payload = {
-        userId: wa,
-        photo_url: formData.photo_url || "",
-        display_name: formData.display_name.trim(),
-        campus: formData.campus,
-        faculty: formData.faculty,
-        batch: formData.batch,
-        intent: formData.intent,
-        bio: formData.bio,
-        instagram: formData.instagram,
-        whatsapp: wa || formData.whatsapp,
-      };
-
-      const res = await fetch("/api/teman/profiles", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-seller-wa": wa || "",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-      if (!res.ok || !data.ok) {
-        throw new Error(data.error || "Gagal menyimpan biodata");
-      }
-
-      if (formData.anonymous_name && formData.anonymous_name.trim().length >= 2) {
-        await fetch("/api/profile/anonymous-name", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ anonymousName: formData.anonymous_name.trim() }),
+        if (!hidup) return;
+        if (!res.ok || !data.ok) throw new Error(data.error || "Gagal memuat profil");
+        setProfil(data.profil);
+        setF({
+          avatar_url: data.profil.avatar_url || "",
+          name: data.profil.name || "",
+          anonymous_name: data.profil.anonymous_name || "",
+          bio: data.profil.bio || "",
+          campus: data.profil.campus || "USU",
+          faculty: data.profil.faculty || "Umum",
+          store_name: data.profil.store_name || "",
+          tagline: data.profil.tagline || "",
+          store_area: data.profil.store_area || "",
+          store_hours: data.profil.store_hours || "",
+          store_instagram: data.profil.store_instagram || "",
+          store_gmaps: data.profil.store_gmaps || "",
+          store_announcement: data.profil.store_announcement || "",
+          store_accent: data.profil.store_accent || "emerald",
+          store_open: data.profil.store_open !== false,
+          slug: data.profil.slug || "",
+          logo_url: data.profil.logo_url || "",
+          banner_url: data.profil.banner_url || "",
+          ukm_name: data.profil.ukm_name || "",
+          ukm_category: data.profil.ukm_category || "bem_hima",
+          ukm_instagram: data.profil.ukm_instagram || "",
+          teman: {
+            aktif: Boolean(data.profil.teman?.is_active),
+            ada: Boolean(data.profil.teman),
+            batch: data.profil.teman?.batch || "2024",
+            intent: data.profil.teman?.intent || INTENTS[0],
+            instagram: data.profil.teman?.instagram || "",
+          },
         });
+      } catch (e) {
+        toast.error(e.message || "Gagal memuat profil");
+      } finally {
+        if (hidup) setMemuat(false);
       }
+    })();
+    return () => { hidup = false; };
+  }, []);
 
-      // Immediately propagate to parent header & views
-      onProfileUpdated?.({
-        name: formData.display_name.trim(),
-        photo_url: formData.photo_url,
-        bio: formData.bio,
-        campus: formData.campus,
-        faculty: formData.faculty,
-      });
-
-      toast.success("✅ Biodata Satu Pintu berhasil diperbarui!");
+  async function unggahFoto(e) {
+    const berkas = e.target.files?.[0];
+    if (!berkas) return;
+    try {
+      setMemampatkan(true);
+      set("avatar_url", await unggahGambar(berkas));
+      toast.success("Foto siap. Jangan lupa Simpan.");
     } catch (err) {
-      toast.error(err.message || "Terjadi kesalahan saat menyimpan");
+      toast.error(err.message || "Gagal mengunggah foto");
     } finally {
-      setSaving(false);
+      setMemampatkan(false);
+      if (inputFoto.current) inputFoto.current.value = "";
     }
-  };
+  }
 
-  const currentFaculties = formData.campus === "Polmed" ? FACULTIES_POLMED : FACULTIES_USU;
+  async function simpan(e) {
+    e.preventDefault();
+    if (!f.name.trim()) return toast.error("Nama wajib diisi");
+    if ((peran.toko || bukaToko) && !f.store_name.trim()) return toast.error("Nama toko wajib diisi");
+    if ((peran.organisasi || daftarOrg) && !f.ukm_name.trim()) return toast.error("Nama organisasi wajib diisi");
 
-  if (!mounted) {
+    try {
+      setMenyimpan(true);
+      const res = await fetch("/api/profil", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(f),
+      });
+      const data = await res.json();
+      // Galatnya diperiksa. Versi lama menelan kegagalan sinkronisasi lalu tetap
+      // menampilkan tanda centang — profil tidak pernah tersimpan dan tidak ada
+      // yang tahu.
+      if (!res.ok || !data.ok) throw new Error(data.error || "Gagal menyimpan profil");
+
+      setProfil(data.profil);
+      onProfileUpdated?.(data.profil);
+      toast.success("✅ Profil tersimpan dan tersebar ke semua fitur.");
+    } catch (err) {
+      toast.error(err.message || "Gagal menyimpan profil");
+    } finally {
+      setMenyimpan(false);
+    }
+  }
+
+  if (memuat || !f) {
     return (
       <div className="space-y-6 animate-pulse">
-        <div className="h-24 rounded-[22px] bg-white dark:bg-[#1c1c1e] border border-black/[0.06] dark:border-white/[0.08]" />
-        <div className="h-96 rounded-[22px] bg-white dark:bg-[#1c1c1e] border border-black/[0.06] dark:border-white/[0.08]" />
+        <div className="h-24 rounded-[22px] border border-black/[0.06] bg-white dark:border-white/[0.08] dark:bg-[#1c1c1e]" />
+        <div className="h-96 rounded-[22px] border border-black/[0.06] bg-white dark:border-white/[0.08] dark:bg-[#1c1c1e]" />
       </div>
     );
   }
 
+  const peran = profil.peran;
+  const fakultas = f.campus === "Polmed" || f.campus === "POLMED" ? FACULTIES_POLMED : FACULTIES_USU;
+  // Sebuah lembaga tidak punya angkatan dan tidak sedang mencari teman nongkrong.
+  const tawarkanCariTeman = !peran.organisasi && !daftarOrg;
+
   return (
     <div className="space-y-6">
-      {/* HEADER BANNER */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-[22px] bg-white dark:bg-[#1c1c1e] border border-black/[0.06] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
+      <div className="flex flex-col items-start justify-between gap-4 rounded-[22px] border border-black/[0.06] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:border-white/[0.08] dark:bg-[#1c1c1e] sm:flex-row sm:items-center">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="text-xl">✨</span>
-            <h2 className="text-base font-black text-[#1d1d1f] dark:text-white">
-              Biodata &amp; Profil Satu Pintu
-            </h2>
+            <h2 className="text-base font-black text-[#1d1d1f] dark:text-white">Profil Satu Pintu</h2>
+            {peran.organisasi && (
+              <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">
+                {profil.ukm_verified ? "🏛️ Organisasi Terverifikasi" : "🏛️ Organisasi"}
+              </span>
+            )}
+            {peran.toko && (
+              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                🏪 Punya Toko
+              </span>
+            )}
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 max-w-lg leading-relaxed">
-            Data ini tersinkronisasi otomatis di <strong>Marketplace</strong>, <strong>Cari Teman Swipe</strong>, <strong>Pusat Obrolan</strong>, dan <strong>Menfess Kampus</strong>.
+          <p className="max-w-lg text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+            Satu kali isi, tersebar ke <strong>Marketplace</strong>, <strong>Pusat Obrolan</strong>,{" "}
+            <strong>Menfess Kampus</strong>
+            {peran.toko && <>, <strong>halaman toko</strong></>}
+            {peran.organisasi && <>, <strong>direktori organisasi</strong></>}
+            {tawarkanCariTeman && <>, dan <strong>Cari Teman</strong></>}.
           </p>
         </div>
-
-        <Link
-          href="/teman"
-          className="rounded-full bg-primary px-4 py-2 text-xs font-bold text-white shadow-xs hover:brightness-105 active:scale-95 transition-all flex items-center gap-1.5 shrink-0"
-        >
-          <span>🔥 Buka Cari Teman</span>
-          <Icon.ArrowRight className="w-3.5 h-3.5" />
-        </Link>
+        {peran.toko && profil.slug && (
+          <Link href={`/toko/${profil.slug}`} target="_blank" className="flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-bold text-white shadow-xs transition-all hover:brightness-105 active:scale-95">
+            <span>🏪 Lihat Toko</span>
+            <Icon.ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        )}
       </div>
 
-      {/* FORM CARD (iOS Settings Style) */}
-      <form onSubmit={handleSave} className="space-y-6">
-        
-        {/* FOTO PROFIL SECTION */}
+      <form onSubmit={simpan} className="space-y-6">
         <div className="flex flex-col items-center justify-center space-y-3 pb-2">
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            className="relative h-24 w-24 cursor-pointer overflow-hidden rounded-full bg-black/[0.05] dark:bg-white/[0.1] transition-all hover:opacity-80"
-          >
-            {formData.photo_url ? (
-              <Image src={formData.photo_url} alt="Avatar" fill className="object-cover" />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-3xl">👤</div>
-            )}
-            <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
-              Edit
-            </div>
+          <div onClick={() => inputFoto.current?.click()} className="relative h-24 w-24 cursor-pointer overflow-hidden rounded-full bg-black/[0.05] transition-all hover:opacity-80 dark:bg-white/[0.1]">
+            {f.avatar_url
+              ? <Image src={f.avatar_url} alt="Foto profil" fill className="object-cover" />
+              : <div className="flex h-full w-full items-center justify-center text-3xl">{peran.organisasi ? "🏛️" : "👤"}</div>}
+            <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-[11px] font-bold text-white opacity-0 transition-opacity hover:opacity-100">Edit</div>
           </div>
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={compressing}
-            className="text-[15px] font-medium text-primary hover:text-primary/80 transition-colors"
-          >
-            {compressing ? "Menyiapkan..." : formData.photo_url ? "Edit Foto" : "Tambah Foto"}
+          <button type="button" onClick={() => inputFoto.current?.click()} disabled={memampatkan} className="text-[15px] font-medium text-primary transition-colors hover:text-primary/80">
+            {memampatkan ? "Menyiapkan..." : f.avatar_url ? "Ganti Foto" : "Tambah Foto"}
           </button>
-          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+          <input ref={inputFoto} type="file" accept="image/*" className="hidden" onChange={unggahFoto} />
         </div>
 
-        {/* Group 1: Informasi Dasar */}
-        <div className="rounded-[12px] bg-white dark:bg-[#1c1c1e] overflow-hidden border border-black/[0.05] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-          <div className="flex items-center px-4 py-3 border-b border-black/[0.05] dark:border-white/[0.08]">
-            <label className="w-1/3 shrink-0 text-[15px] text-[#1d1d1f] dark:text-white">Nama</label>
-            <input
-              type="text"
-              required
-              value={formData.display_name}
-              onChange={(e) => setFormData((prev) => ({ ...prev, display_name: e.target.value }))}
-              placeholder="Nama Lengkap"
-              className="flex-1 min-w-0 bg-transparent text-[15px] text-[#86868b] text-right outline-none dark:text-slate-400 placeholder:text-gray-300 dark:placeholder:text-gray-600"
-            />
-          </div>
-          <div className="flex items-center px-4 py-3 border-b border-black/[0.05] dark:border-white/[0.08]">
-            <label className="w-1/3 shrink-0 text-[15px] text-[#1d1d1f] dark:text-white">Anonim</label>
-            <input
-              type="text"
-              value={formData.anonymous_name}
-              onChange={(e) => setFormData((prev) => ({ ...prev, anonymous_name: e.target.value }))}
-              placeholder="Kucing Kampus"
-              className="flex-1 min-w-0 bg-transparent text-[15px] text-[#86868b] text-right outline-none dark:text-slate-400 placeholder:text-gray-300 dark:placeholder:text-gray-600"
-            />
-          </div>
-          <div className="px-4 py-3 border-b border-black/[0.05] dark:border-white/[0.08]">
-            <label className="block text-[15px] text-[#1d1d1f] dark:text-white mb-1.5">Bio</label>
-            <textarea
-              rows={2}
-              value={formData.bio}
-              onChange={(e) => setFormData((prev) => ({ ...prev, bio: e.target.value }))}
-              placeholder="Ceritakan sedikit tentang dirimu..."
-              className="w-full bg-transparent text-[15px] text-[#86868b] outline-none dark:text-slate-400 placeholder:text-gray-300 dark:placeholder:text-gray-600 resize-none"
-            />
-          </div>
-        </div>
-
-        {/* Group 2: Edukasi */}
-        <div className="rounded-[12px] bg-white dark:bg-[#1c1c1e] overflow-hidden border border-black/[0.05] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-black/[0.05] dark:border-white/[0.08]">
-            <label className="text-[15px] text-[#1d1d1f] dark:text-white">Kampus</label>
-            <select
-              value={formData.campus}
-              onChange={(e) => setFormData((prev) => ({ ...prev, campus: e.target.value, faculty: "Umum" }))}
-              className="bg-transparent text-[15px] text-[#86868b] text-right outline-none dark:text-slate-400"
-            >
-              <option value="USU">USU</option>
-              <option value="Polmed">Polmed</option>
-              <option value="Semua">Lainnya</option>
-            </select>
-          </div>
-          <div className="flex items-center justify-between px-4 py-3 border-b border-black/[0.05] dark:border-white/[0.08]">
-            <label className="text-[15px] text-[#1d1d1f] dark:text-white">Fakultas</label>
-            <select
-              value={formData.faculty}
-              onChange={(e) => setFormData((prev) => ({ ...prev, faculty: e.target.value }))}
-              className="bg-transparent text-[15px] text-[#86868b] text-right outline-none dark:text-slate-400 max-w-[200px]"
-            >
-              {currentFaculties.map((f) => (
-                <option key={f} value={f}>{f}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex items-center justify-between px-4 py-3 border-b border-black/[0.05] dark:border-white/[0.08]">
-            <label className="text-[15px] text-[#1d1d1f] dark:text-white">Angkatan</label>
-            <select
-              value={formData.batch}
-              onChange={(e) => setFormData((prev) => ({ ...prev, batch: e.target.value }))}
-              className="bg-transparent text-[15px] text-[#86868b] text-right outline-none dark:text-slate-400"
-            >
-              {["2026", "2025", "2024", "2023", "2022", "2021", "Alumni"].map((b) => (
-                <option key={b} value={b}>{b}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Group 3: Kontak & Intent */}
-        <div className="rounded-[12px] bg-white dark:bg-[#1c1c1e] overflow-hidden border border-black/[0.05] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-          <div className="flex items-center px-4 py-3 border-b border-black/[0.05] dark:border-white/[0.08]">
-            <label className="w-1/3 shrink-0 text-[15px] text-[#1d1d1f] dark:text-white">WhatsApp</label>
-            <input
-              type="text"
-              readOnly
-              value={formData.whatsapp || wa}
-              className="flex-1 min-w-0 bg-transparent text-[15px] text-gray-400 text-right outline-none"
-            />
-          </div>
-          <div className="flex items-center px-4 py-3 border-b border-black/[0.05] dark:border-white/[0.08]">
-            <label className="w-1/3 shrink-0 text-[15px] text-[#1d1d1f] dark:text-white">Instagram</label>
-            <input
-              type="text"
-              value={formData.instagram}
-              onChange={(e) => setFormData((prev) => ({ ...prev, instagram: e.target.value.replace(/^@/, "") }))}
-              placeholder="username"
-              className="flex-1 min-w-0 bg-transparent text-[15px] text-[#86868b] text-right outline-none dark:text-slate-400 placeholder:text-gray-300 dark:placeholder:text-gray-600"
-            />
-          </div>
+        <Kartu judul="Identitas" catatan="Dipakai di kartu iklan, obrolan, dan mading.">
+          <Baris label={peran.organisasi ? "Nama pengurus" : "Nama"}>
+            <Teks nilai={f.name} ubah={(v) => set("name", v)} required placeholder="Nama lengkap" />
+          </Baris>
+          <Baris label="Nama anonim">
+            <Teks nilai={f.anonymous_name} ubah={(v) => set("anonymous_name", v)} placeholder="Dipakai di Menfess" />
+          </Baris>
+          <Baris label="Kampus">
+            <Pilih nilai={f.campus} ubah={(v) => { set("campus", v); set("faculty", "Umum"); }} opsi={["USU", "POLMED"]} />
+          </Baris>
+          <Baris label="Fakultas">
+            <Pilih nilai={f.faculty} ubah={(v) => set("faculty", v)} opsi={fakultas} />
+          </Baris>
           <div className="px-4 py-3">
-            <label className="block text-[15px] text-[#1d1d1f] dark:text-white mb-2">Tujuan Cari Teman</label>
-            <div className="flex flex-wrap gap-1.5">
-              {INTENTS.map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  onClick={() => setFormData((prev) => ({ ...prev, intent: item }))}
-                  className={`rounded-full px-3 py-1 text-[13px] transition-all ${
-                    formData.intent === item
-                      ? "bg-[#1d1d1f] text-white dark:bg-white dark:text-black"
-                      : "bg-black/[0.04] text-[#1d1d1f] hover:bg-black/[0.08] dark:bg-white/[0.08] dark:text-white"
-                  }`}
-                >
-                  {item}
-                </button>
-              ))}
-            </div>
+            <label className="mb-1.5 block text-[15px] text-[#1d1d1f] dark:text-white">Bio</label>
+            <textarea rows={3} value={f.bio} onChange={(e) => set("bio", e.target.value)} placeholder="Ceritakan singkat tentangmu" className="w-full resize-none rounded-lg bg-black/[0.03] p-3 text-[15px] outline-none dark:bg-white/[0.06] dark:text-slate-300" />
           </div>
-        </div>
+        </Kartu>
 
-        {/* SUBMIT BUTTON */}
-        <div className="pt-2">
-          <button
-            type="submit"
-            disabled={saving || compressing}
-            className="w-full rounded-[14px] bg-primary px-4 py-3.5 text-[15px] font-bold text-white shadow-md hover:brightness-105 active:scale-[0.98] transition-all disabled:opacity-50"
-          >
-            {saving ? "Menyimpan..." : "Simpan Biodata"}
+        {(peran.organisasi || daftarOrg) && (
+          <Kartu judul="Organisasi" catatan="Tampil di direktori /organisasi dan pada setiap oprec yang kamu buka.">
+            <Baris label="Nama organisasi">
+              <Teks nilai={f.ukm_name} ubah={(v) => set("ukm_name", v)} placeholder="mis. BEM Fasilkom-TI USU" />
+            </Baris>
+            <Baris label="Kategori">
+              <Pilih nilai={f.ukm_category} ubah={(v) => set("ukm_category", v)} opsi={KATEGORI_UKM} />
+            </Baris>
+            <Baris label="Instagram">
+              <Teks nilai={f.ukm_instagram} ubah={(v) => set("ukm_instagram", v)} placeholder="tanpa @" />
+            </Baris>
+            <div className="px-4 py-3 text-[11px] leading-relaxed text-gray-400 dark:text-slate-500">
+              {/* Centang resmi sengaja tidak bisa disentuh dari sini. Ia diberikan
+                  kode undangan saat mendaftar atau oleh admin — kalau formulir
+                  pemiliknya sendiri bisa menyalakannya, lencananya berhenti
+                  berarti apa pun. */}
+              Status verifikasi:{" "}
+              <strong className={profil.ukm_verified ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}>
+                {profil.ukm_verified ? "Terverifikasi ✓" : "Belum terverifikasi"}
+              </strong>
+              . Centang resmi hanya diberikan lewat kode undangan atau oleh admin, bukan dari halaman ini.
+            </div>
+          </Kartu>
+        )}
+
+        {(peran.toko || bukaToko) && (
+          <>
+            <Kartu judul="Toko" catatan="Yang dibaca pembeli di halaman tokomu.">
+              <Baris label="Nama toko">
+                <Teks nilai={f.store_name} ubah={(v) => set("store_name", v)} placeholder="Nama yang dibaca pembeli" />
+              </Baris>
+              <Baris label="Alamat">
+                <div className="flex flex-1 items-center justify-end gap-1 text-[15px] text-[#86868b] dark:text-slate-400">
+                  <span className="shrink-0 text-gray-400">/toko/</span>
+                  <input type="text" value={f.slug} onChange={(e) => set("slug", e.target.value)} placeholder="warung-ridho" className="w-full min-w-0 bg-transparent text-right outline-none placeholder:text-gray-300 dark:placeholder:text-gray-600" />
+                </div>
+              </Baris>
+              <Baris label="Tagline">
+                <Teks nilai={f.tagline} ubah={(v) => set("tagline", v)} placeholder="Satu kalimat: kamu jualan apa" />
+              </Baris>
+              <Baris label="Area COD">
+                <Teks nilai={f.store_area} ubah={(v) => set("store_area", v)} placeholder="mis. Padang Bulan, USU" />
+              </Baris>
+              <Baris label="Jam buka">
+                <Teks nilai={f.store_hours} ubah={(v) => set("store_hours", v)} placeholder="mis. 09.00–21.00" />
+              </Baris>
+              <Baris label="Instagram toko">
+                <Teks nilai={f.store_instagram} ubah={(v) => set("store_instagram", v)} placeholder="tanpa @" />
+              </Baris>
+              <Baris label="Google Maps">
+                <Teks nilai={f.store_gmaps} ubah={(v) => set("store_gmaps", v)} placeholder="tautan Google Maps" />
+              </Baris>
+              <Baris label="Toko buka">
+                <div className="flex flex-1 justify-end">
+                  <input type="checkbox" checked={f.store_open} onChange={(e) => set("store_open", e.target.checked)} className="h-5 w-5 accent-primary" />
+                </div>
+              </Baris>
+              <div className="px-4 py-3">
+                <label className="mb-1.5 block text-[15px] text-[#1d1d1f] dark:text-white">Pengumuman</label>
+                <textarea rows={2} value={f.store_announcement} onChange={(e) => set("store_announcement", e.target.value)} placeholder="mis. Libur Lebaran 3 hari" className="w-full resize-none rounded-lg bg-black/[0.03] p-3 text-[15px] outline-none dark:bg-white/[0.06] dark:text-slate-300" />
+              </div>
+            </Kartu>
+
+            <Kartu judul="Tampilan toko" catatan="Logo, sampul, dan warna halaman tokomu.">
+              <div className="flex items-center gap-4 border-b border-black/[0.05] px-4 py-4 dark:border-white/[0.08]">
+                <GambarToko label="Logo" nilai={f.logo_url} ubah={(v) => set("logo_url", v)} bulat />
+                <GambarToko label="Sampul" nilai={f.banner_url} ubah={(v) => set("banner_url", v)} />
+              </div>
+              <div className="px-4 py-3">
+                <label className="mb-2 block text-[15px] text-[#1d1d1f] dark:text-white">Warna</label>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(AKSEN).map(([kunci, a]) => (
+                    <button key={kunci} type="button" onClick={() => set("store_accent", kunci)}
+                      className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${f.store_accent === kunci ? "ring-2 ring-offset-1 dark:ring-offset-[#1c1c1e]" : "opacity-70 hover:opacity-100"}`}
+                      style={{ background: a.muda, color: a.teks, ringColor: a.utama }}>
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: a.utama }} />
+                      {a.nama}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </Kartu>
+
+            {peran.toko && <StatusToko profil={profil} />}
+          </>
+        )}
+
+        {!peran.toko && !bukaToko && (
+          <Kartu judul="Toko" catatan="Halaman toko sendiri dengan alamat yang bisa kamu sebar ke pembeli.">
+            {/* Dulu satu-satunya jalan adalah menemukan sendiri /dashboard/toko —
+                tidak ditawarkan dari mana pun, jadi fiturnya cuma ketemu kalau
+                ada yang memberitahu. Sekarang tidak perlu pindah halaman:
+                menekan ini membuka isiannya di tempat. */}
+            <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-[13px] leading-relaxed text-gray-500 dark:text-slate-400">
+                Belum punya toko. Kalau kamu berjualan rutin, halaman toko membuat semua
+                iklanmu berkumpul di satu alamat yang bisa disebar.
+              </p>
+              <button type="button" onClick={() => setBukaToko(true)}
+                className="shrink-0 rounded-full border border-black/[0.08] px-4 py-2 text-center text-xs font-bold text-[#1d1d1f] transition-all hover:bg-black/[0.03] active:scale-95 dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06]">
+                🏪 Buka Toko
+              </button>
+            </div>
+          </Kartu>
+        )}
+
+        {!peran.organisasi && !daftarOrg && (
+          <Kartu judul="Organisasi" catatan="Untuk BEM, himpunan, UKM, komunitas, dan pers kampus.">
+            <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-[13px] leading-relaxed text-gray-500 dark:text-slate-400">
+                Mengurus sebuah organisasi kampus? Daftarkan di sini supaya muncul di
+                direktori dan bisa membuka oprec atas namanya.
+              </p>
+              <button type="button" onClick={() => setDaftarOrg(true)}
+                className="shrink-0 rounded-full border border-black/[0.08] px-4 py-2 text-center text-xs font-bold text-[#1d1d1f] transition-all hover:bg-black/[0.03] active:scale-95 dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06]">
+                🏛️ Daftarkan Organisasi
+              </button>
+            </div>
+          </Kartu>
+        )}
+
+        {peran.tanpaNomor && (
+          <p className="px-1 text-[11px] leading-relaxed text-amber-600 dark:text-amber-400">
+            {/* Akun yang mendaftar lewat email tidak punya nomor — dan pengenal
+                internalnya bukan nomor telepon, jadi tidak ada yang bisa dihubungi. */}
+            Akunmu terdaftar lewat email, jadi belum punya nomor WhatsApp. Notifikasi WhatsApp
+            dan tombol “chat penjual” tidak akan aktif sampai nomornya ditambahkan.
+          </p>
+        )}
+
+        <div className="flex justify-end gap-3 pb-2">
+          <button type="submit" disabled={menyimpan} className="rounded-full bg-primary px-6 py-2.5 text-sm font-bold text-white shadow-xs transition-all hover:brightness-105 active:scale-95 disabled:opacity-60">
+            {menyimpan ? "Menyimpan..." : "Simpan Profil"}
           </button>
         </div>
       </form>

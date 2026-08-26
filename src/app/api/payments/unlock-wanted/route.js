@@ -3,6 +3,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { formatWa } from "@/lib/constants";
 import { getSellerSession } from "@/lib/auth";
 import { loadLidPhoneMap, migrateLidToPhone } from "@/lib/lidMigrate";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -134,6 +135,6 @@ export async function POST(req) {
 
     return NextResponse.json({ success: true, paymentId: paymentRow.id, orderId, paymentUrl: "/qris.png", amount, finalAmount: amount });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 }

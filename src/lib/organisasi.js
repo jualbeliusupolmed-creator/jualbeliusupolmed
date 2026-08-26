@@ -47,14 +47,3 @@ export function validateOrganisasiForm({
   return null;
 }
 
-/**
- * Helper pembuat slug URL organisasi
- */
-export function generateOrganisasiSlug(name, campus) {
-  const cleanName = String(name || "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-  const cleanCampus = String(campus || "usu").toLowerCase();
-  return `${cleanName}-${cleanCampus}`.slice(0, 40);
-}

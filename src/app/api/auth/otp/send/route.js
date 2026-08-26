@@ -4,6 +4,7 @@ import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { hashOtp } from "@/lib/otp";
 import { formatWa } from "@/lib/constants";
 import { sendWa as send } from "@/lib/fonnte";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -91,6 +92,6 @@ export async function POST(req) {
 
     return NextResponse.json({ success: true, message: "OTP terkirim ke WhatsApp." });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 }

@@ -2,10 +2,15 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { getSettings, angkaSetelan } from "@/lib/settings";
+import { tolakBukanPemilik } from "@/lib/kepemilikan";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
 // POST /api/payments/subscribe { seller_wa } -> snap token
+//
+// `seller_wa` datang dari body, jadi ia harus dicocokkan dengan sesi — kalau
+// tidak, siapa pun bisa membuat tagihan langganan atas nama penjual mana pun.
 export async function POST(req) {
   try {
     const rl = rateLimit(getClientIp(req), { limit: 5, windowMs: 60_000 });
@@ -13,6 +18,9 @@ export async function POST(req) {
 
     const { seller_wa } = await req.json();
     if (!seller_wa) return NextResponse.json({ error: "seller_wa wajib" }, { status: 400 });
+
+    const tolak = tolakBukanPemilik(seller_wa, { aksi: "berlangganan" });
+    if (tolak) return tolak;
 
     const supa = getAdminClient();
     const { data: profile } = await supa
@@ -39,6 +47,6 @@ export async function POST(req) {
 
     return NextResponse.json({ paymentUrl: "/qris.png", orderId, amount, finalAmount: amount });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 }

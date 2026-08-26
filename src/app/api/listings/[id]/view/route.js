@@ -36,7 +36,8 @@ export async function POST(req, { params }) {
     return NextResponse.json({ ok: true, counted: true });
   } catch (e) {
     // jangan ganggu UX kalau gagal — view counter bukan kritikal
-    return NextResponse.json({ ok: false, error: e.message }, { status: 200 });
+    console.error("[listing-view]", e?.stack || e);
+    return NextResponse.json({ ok: false }, { status: 200 });
   }
 }
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getSellerSession, isAdmin } from "@/lib/auth";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +35,7 @@ export async function PATCH(req, { params }) {
 
     return NextResponse.json({ error: "Aksi tidak dikenal" }, { status: 400 });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 }
 
@@ -56,6 +57,6 @@ export async function DELETE(req, { params }) {
     if (error) throw new Error(error.message);
     return NextResponse.json({ ok: true });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 }
