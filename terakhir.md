@@ -1,59 +1,61 @@
+2:50 AM
+Sekarang buka tab baru di browser dan buka URL ini:
 
-❯ untuk otp penjual yg mau daftar atau lupa pin.. ini kalau ditiadakan gmn?
+👉 http://localhost:3000/api/admin/setup-up-admin
 
-Pertanyaan bagus, dan jawabannya bergantung pada satu hal yang mudah terlewat: di sistem ini, nomor WhatsApp itu bukan sekadar kontak — ia kunci akunnya. Iklan (listings.seller_wa), profil, toko, penilaian, semuanya digantung pada nomor. OTP adalah satu-satunya hal yang membuktikan orang yang mengetik nomor itu benar-benar memegangnya.
+Seharusnya muncul JSON seperti:
 
-Kalau OTP ditiadakan begitu saja, yang terjadi persis ini:
+json
+{ "success": true, "message": "Profil UP Admin berhasil diperbarui!..." }
+Setelah itu refresh halaman dashboard → tab 🏛️ Panel UKM akan muncul! 🎉
 
-Untuk pendaftaran: siapa pun bisa mengetik nomor siapa pun lalu memasang PIN. Ketik nomor penjual yang sudah punya 20 iklan aktif → sekarang iklan itu miliknya. Bisa ditandai terjual, diedit harganya, dihapus, dan tokonya diganti nama. Pemilik aslinya tidak bisa masuk lagi, karena PIN-nya sudah dipasang orang lain.
+2:50 AM
+{"error":"Unauthorized access to admin API"}
+2:51 AM
+Sekarang buka URL ini di browser (tab baru):
 
-Untuk "Lupa PIN": ini malah lebih parah — fitur itu memang dirancang untuk mengambil alih akun yang sudah ada. Tanpa bukti kepemilikan nomor, "Lupa PIN" berubah menjadi tombol "ambil akun siapa saja".
+👉 http://localhost:3000/api/setup/ukm-admin
 
-Jadi meniadakan OTP sepenuhnya bukan menghapus satu langkah merepotkan; ia menghapus satu-satunya kunci pintunya.
+Harusnya muncul:
 
-Tapi ada jalan tengah yang masuk akal, dan berangkat dari satu pengamatan: risikonya tidak rata. Mengklaim nomor yang belum punya riwayat apa pun hampir tidak merugikan siapa-siapa — tidak ada yang bisa dicuri. Yang berbahaya cuma mengklaim nomor yang sudah punya iklan atau PIN.
+json
+{"success":true,"message":"✅ Profil UP Admin berhasil diperbarui!..."}
+Lalu refresh /dashboard → Panel UKM akan muncul! 🎉
 
-● User answered Claude's questions:
-· OTP mau diapakan? (nomor WA = kunci akun, jadi ini menentukan siapa yang bisa masuk ke akun siapa) → Daftar tanpa OTP hanya untuk nomor baru (Disarankan)
+2:51 AM
+2:53 AM
+Dua hal penting dari log:
 
-Keputusan bagus — itu memulihkan pendaftaran tanpa membuka pintu pengambilalihan. Satu tambahan yang saya pasang sekalian, karena membuat perbedaan besar: jalur tanpa-OTP hanya muncul kalau OTP-nya benar-benar gagal terkirim, bukan sebagai pintu permanen.
+GET /api/setup/ukm-admin 200 ✅ — Setup UP Admin berhasil dijalankan!
+GET /api/teman/profiles?wa=email_up_admin 400 — masih pakai email_up_admin lama dari localStorage
+Untuk dashboard: refresh dulu (F5), seharusnya data profil sudah berubah.
 
-  Ran 3 shell commands
+Untuk Google OAuth — log tidak menunjukkan POST /auth/callback sama sekali, artinya Google tidak berhasil redirect balik ke server. Ini masalah konfigurasi Supabase, bukan kode.
 
-Sekarang rutenya. Kuncinya di sini: jalur ini menolak dirinya sendiri kalau WhatsApp sebenarnya masih bisa mengirim — jadi ia pintu darurat, bukan pintu belakang permanen.
+Fix Google OAuth: Tambah Redirect URL di Supabase
+Buka Supabase Dashboard → pilih project
+Kiri sidebar: Authentication → URL Configuration
+Di bagian Redirect URLs, tambahkan:
+http://localhost:3000/auth/callback
+Klik Save
+Setelah itu coba login Google lagi.
 
-  Ran 1 shell command
+Sekarang refresh dashboard dulu — Panel UKM seharusnya sudah muncul karena setup berhasil! 🏛️
 
-referred_by itu kolom yang saya karang — tidak ada di skema. Saya samakan dengan cara otp/verify menangani referral.
+2:53 AM
+2:55 AM
+2:55 AM
+lanjut
+2:58 AM
+Sudah saya temukan penyebabnya dan langsung diperbaiki di kode:
 
-  Ran 5 shell commands
+🔍 Akar Masalah:
+Di fungsi load() dashboard sebelumnya, fungsi formatWa("email_up_admin") membersihkan nomor dan menganggap email_up_admin bukan nomor HP Indonesia valid, sehingga identifiernya dikosongkan menjadi string kosong "". Akibatnya data profil, role UKM, dan daftar oprec tidak pernah berhasil dimuat dari database.
 
-Ada jebakan React di situ: setNomorBaru(...) lalu langsung await handleSendOTP(...) — state belum diperbarui saat fungsi itu berjalan, jadi jalur daruratnya tidak akan pernah muncul pada percobaan pertama. Saya oper nilainya sebagai argumen.
-
-  Ran 1 shell command
-
-❯ sekarang audit dan analisis ulang semua yg di web, bot dan apapun itu lalu pastikan semua terintegrasi perbaiki yang rusak dan sempurnakan semua lalu terakhir update di web progres proyek
-
-Baik — audit menyeluruh. Saya mulai dari yang paling berbahaya, dan itu justru sesuatu yang baru saja saya sendiri sebabkan.
-
-Dua migrasi belum dijalankan di Supabase, tapi kode yang baru saya kirim sudah menulis ke kolom yang belum ada. Saya periksa akibatnya.
-
-  Ran 1 shell command
-
-Terkonfirmasi, dan ini serius: galat insert/update di otp/verify tidak diperiksa sama sekali. Kalau kolom wa_verified belum ada, penulisannya gagal diam-diam — pengguna terlihat berhasil masuk, padahal PIN-nya tidak pernah tersimpan. Saya lepaskan ketergantungan itu.
-
-  Ran 1 shell command
-You've hit your weekly limit · resets Aug 21, 12am (UTC)
-
-✻ Brewed for 4m 56s
-
-❯ kita lanjut besokl
-You've hit your weekly limit · resets Aug 21, 12am (UTC)
-/upgrade to increase your usage limit.
-
-✻ Crunched for 0s
-
-─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-❯
-─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  ⏵⏵ auto mode on (shift+tab t
+🛠️ Perbaikan yang Sudah Diterapkan:
+Dukungan Custom Identifier: Dashboard dan endpoint (/api/oprec, /api/teman/profiles) sekarang mendukung akun berbasis email/Google identifier tanpa menghapus ID akun.sss
+Setup Endpoint Otomatis: Endpoint /api/setup/ukm-admin sekarang menggunakan upsert langsung ke database untuk akun aktif.
+🚀 Cara Menampilkan Panel UKM Sekarang:
+Buka tab baru di browser Anda dan kunjungi: 👉 http://localhost:3000/api/setup/ukm-admin (Akan muncul respon JSON sukses dan profil ter-upgrade otomatis ke UKM Terverifikasi).
+Kembali ke tab dashboard lalu Refresh (F5): 👉 http://localhost:3000/dashboard
+Tab 🏛️ Panel UKM (Kelola & Buat Formulir Oprec) akan langsung muncul di dashboard Anda!
