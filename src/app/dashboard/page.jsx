@@ -73,8 +73,6 @@ function DashboardInner() {
 
   // Profil edit state
   const [profilForm, setProfilForm] = useState({ name: "", bio: "" });
-  const [anonymousName, setAnonymousName] = useState("Anonim");
-  const [anonymousNameBusy, setAnonymousNameBusy] = useState(false);
   const [profilRequests, setProfilRequests] = useState([]);
   const [profilBusy, setProfilBusy] = useState(false);
 
@@ -167,6 +165,11 @@ function DashboardInner() {
         .catch(() => router.push("/dashboard/login"));
     }
 
+    // `?tab=` sengaja dihormati: tanpa ini, "satu pintu" /profil mendarat di
+    // tab jualan dan orang harus mencari sendiri tab profilnya — pintu yang
+    // membuka ke ruangan yang salah.
+    const tabDiminta = params.get("tab");
+    if (tabDiminta && TAB_SAH.includes(tabDiminta)) setActiveTab(tabDiminta);
     if (params.get("paid")) setNote("Pembayaran sukses! Iklan tayang sebentar lagi.");
     if (params.get("pending")) setNote("Pembayaran pending. Selesaikan ya.");
     if (params.get("edited")) setNote("Iklan berhasil diperbarui!");
@@ -180,26 +183,34 @@ function DashboardInner() {
     setWa(n);
     setBusy(true);
     try {
-      const [resListings, resWanted, resOffers, resTeman] = await Promise.all([
+      const [resListings, resWanted, resOffers, resProfil] = await Promise.all([
         fetch(`/api/listings?seller_wa=${encodeURIComponent(n)}`),
         fetch(`/api/wanted?buyer_wa=${encodeURIComponent(n)}`),
         fetch(`/api/offers?seller_wa=${encodeURIComponent(n)}`),
-        fetch(`/api/teman/profiles?wa=${encodeURIComponent(n)}`, {
-          headers: { "x-seller-wa": n },
-        }),
+        // Satu pintu. Dulu baris ini menembak /api/teman/profiles — kartu Cari
+        // Teman dipakai sebagai sumber kebenaran untuk nama dan foto SELURUH
+        // dashboard, lalu ditumpuk di atas profil penjual dengan rantai `||`.
+        // Akibatnya siapa yang menang bergantung pada fitur mana yang kebetulan
+        // diisi lebih dulu, dan identitas orang yang sama bisa berbeda antar
+        // halaman. Sekarang sumbernya satu dan tahu perannya sendiri.
+        fetch("/api/profil", { cache: "no-store" }),
       ]);
       const dataListings = await resListings.json();
       const dataWanted = await resWanted.json();
       const dataOffers = await resOffers.json();
-      const dataTeman = await resTeman.json();
+      const dataProfil = await resProfil.json();
+      const p = dataProfil?.profil || {};
 
       const mergedProfile = {
         ...(dataListings.profile || {}),
-        name: dataTeman?.myProfile?.display_name || dataListings.profile?.name || "Penjual",
-        photo_url: dataTeman?.myProfile?.photo_url || dataListings.profile?.photo_url || "",
-        campus: dataTeman?.myProfile?.campus || dataListings.profile?.campus || "USU",
-        faculty: dataTeman?.myProfile?.faculty || dataListings.profile?.faculty || "Umum",
-        bio: dataTeman?.myProfile?.bio || dataListings.profile?.bio || "",
+        ...p,
+        name: p.name || dataListings.profile?.name || "Penjual",
+        // Nama kolomnya `avatar_url`; `photo_url` dipertahankan di sini karena
+        // itulah yang dibaca header dashboard dan beberapa komponen lain.
+        photo_url: p.avatar_url || p.teman?.photo_url || "",
+        campus: p.campus || "USU",
+        faculty: p.faculty || "Umum",
+        bio: p.bio || "",
       };
 
       setItems(dataListings.listings || []);
@@ -225,31 +236,6 @@ function DashboardInner() {
       console.error(e);
     } finally {
       setBusy(false);
-    }
-  }
-
-  async function saveAnonymousName() {
-    const value = anonymousName.trim();
-    if (value.length < 2) {
-      toast.error("Nama anonim minimal 2 karakter.");
-      return;
-    }
-    setAnonymousNameBusy(true);
-    try {
-      const res = await fetch("/api/profile/anonymous-name", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ anonymousName: value }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Gagal menyimpan nama anonim.");
-      setAnonymousName(data.anonymousName);
-      setSellerProfile((current) => ({ ...(current || {}), anonymous_name: data.anonymousName }));
-      toast.success("Nama anonim diperbarui.");
-    } catch (error) {
-      toast.error(error.message);
-    } finally {
-      setAnonymousNameBusy(false);
     }
   }
 
@@ -1743,12 +1729,16 @@ function DashboardInner() {
             />
           ) : activeTab === "profil" ? (
             <div className="space-y-6 mt-6">
+              {/* Tanpa prop identitas: panel memuat profilnya sendiri dari
+                  /api/profil, yang menentukan "siapa ini" dari sesi. Mengoper
+                  `wa` dari state peramban berarti identitas ikut berpindah
+                  tangan setiap kali state-nya salah. */}
               <UnifiedProfilePanel
-                sellerProfile={sellerProfile}
-                wa={wa}
-                onProfileUpdated={(updated) => {
-                  if (updated) {
-                    setSellerProfile((prev) => ({ ...prev, ...updated }));
+                onProfileUpdated={(p) => {
+                  if (p) {
+                    setSellerProfile((prev) => ({
+                      ...prev, ...p, photo_url: p.avatar_url || prev?.photo_url || "",
+                    }));
                   }
                   load(wa);
                 }}
@@ -1838,6 +1828,8 @@ function Stat({ label, value, icon }) {
     </div>
   );
 }
+
+const TAB_SAH = ["jual", "dicari", "tawaran", "statistik", "pro", "referral", "profil", "blog", "ukm"];
 
 export default function DashboardPage() {
   return (

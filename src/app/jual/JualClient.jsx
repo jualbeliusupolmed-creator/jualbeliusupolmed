@@ -205,7 +205,7 @@ export default function JualPage() {
           <span className="text-xl">🏪</span>
           <div>
             Punya toko fisik di sekitar kampus? <strong>Daftar Toko Mitra & Berlangganan.</strong>{" "}
-            <Link href="/dashboard/toko" className="font-semibold underline hover:text-amber-700 dark:hover:text-amber-100 transition">Daftarkan tokomu</Link> (syarat: memiliki toko fisik & paket langganan aktif) untuk pasang iklan sepuasnya tanpa biaya tayang per barang.
+            <Link href="/dashboard?tab=profil" className="font-semibold underline hover:text-amber-700 dark:hover:text-amber-100 transition">Daftarkan tokomu</Link> (syarat: memiliki toko fisik & paket langganan aktif) untuk pasang iklan sepuasnya tanpa biaya tayang per barang.
           </div>
         </div>
       )}

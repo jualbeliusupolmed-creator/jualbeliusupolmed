@@ -5,8 +5,12 @@ import { getSellerSession } from "@/lib/auth";
 // "bawa saya ke akunku"): sesi diperiksa DI SERVER, lalu pengunjung diarahkan
 // ke tempat yang benar untuk keadaannya —
 //
-//   sudah masuk  → /dashboard        (kelola iklan & toko)
-//   belum masuk  → /dashboard/login  (masuk dulu, lalu dashboard)
+//   sudah masuk  → /dashboard?tab=profil   (langsung ke Profil Satu Pintu)
+//   belum masuk  → /dashboard/login         (masuk dulu)
+//
+// `?tab=profil` bukan hiasan: tanpa itu tombol "Profil" mendarat di tab jualan,
+// dan pengunjung harus mencari sendiri tab mana yang berisi profilnya. Pintu
+// yang membuka ke ruangan yang salah tetap terasa seperti pintu yang salah.
 //
 // Sebelum halaman ini ada, tombol Profil menunjuk /penjual/login — yang BUKAN
 // halaman login, melainkan halaman profil publik untuk penjual bernama "login"
@@ -18,5 +22,5 @@ export const metadata = {
 };
 
 export default function ProfilPage() {
-  redirect(getSellerSession() ? "/dashboard" : "/dashboard/login");
+  redirect(getSellerSession() ? "/dashboard?tab=profil" : "/dashboard/login?next=/dashboard%3Ftab%3Dprofil");
 }

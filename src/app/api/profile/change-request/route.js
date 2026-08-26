@@ -4,6 +4,7 @@ import { formatWa } from "@/lib/constants";
 import { sendWa } from "@/lib/fonnte";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { getSellerSession, isAdmin } from "@/lib/auth";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,7 @@ export async function GET(req) {
     .order("requested_at", { ascending: false })
     .limit(20);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return jawabGalat(error);
   return NextResponse.json({ requests: data || [] });
 }
 
@@ -119,6 +120,6 @@ export async function POST(req) {
 
     return NextResponse.json({ ok: true, request: inserted });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 }
