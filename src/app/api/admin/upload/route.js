@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import sharp from "sharp";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +52,6 @@ export async function POST(req) {
     const { data } = supa.storage.from("listings").getPublicUrl(fileName);
     return NextResponse.json({ ok: true, url: data.publicUrl });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 }

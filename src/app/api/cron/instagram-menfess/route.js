@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { tolakCron } from "@/lib/cronAuth";
 import { publishQueuedMadingInstagram, siteOriginFromRequest } from "@/lib/madingInstagram";
 import { publishQueuedListingInstagram } from "@/lib/listingInstagram";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -26,6 +27,6 @@ export async function GET(request) {
       catalog: catalogResults,
     });
   } catch (error) {
-    return NextResponse.json({ error: error.message || "Gagal menerbitkan antrean Instagram." }, { status: 503 });
+    return jawabGalat(error, { status: 503, pesan: "Gagal menerbitkan antrean Instagram." });
   }
 }

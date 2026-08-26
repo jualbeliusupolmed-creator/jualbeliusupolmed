@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
 import { tokenBotUtama } from "@/lib/botTokens";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -10,8 +11,27 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const rawBotUrl = process.env.BAILEYS_API_URL || "https://wa-bot-usu-production.up.railway.app";
-    const botUrl = rawBotUrl.replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
+    // Alamat bot HANYA dari environment \u2014 tidak ada cadangan yang ditulis di sini.
+    //
+    // Sampai 26 Agustus 2026 baris ini jatuh ke
+    // `https://wa-bot-usu-production.up.railway.app`, rumah lama bot sebelum
+    // pindah ke VPS. Nama itu bukan milik kita lagi, dan subdomain Railway bisa
+    // diklaim ulang setelah proyeknya dihapus. Sementara beberapa baris di bawah
+    // token bot yang masih hidup dikirim sebagai header `Authorization` \u2014 jadi
+    // satu env yang kosong atau salah ketik cukup untuk menyerahkan token itu ke
+    // siapa pun yang kebetulan memegang nama tersebut.
+    //
+    // Dua saudaranya sudah lama benar (`admin/baileys/route.js`,
+    // `admin/broadcast/group-japri/route.js`): keduanya jatuh ke string kosong
+    // dan berhenti. Berkas ini menyusul.
+    const rawBotUrl = process.env.BAILEYS_API_URL || "";
+    const botUrl = rawBotUrl.replace(/[\u200B-\u200D\uFEFF]/g, "").trim().replace(/\/$/, "");
+    if (!botUrl) {
+      return NextResponse.json(
+        { error: "BAILEYS_API_URL belum dikonfigurasi di environment" },
+        { status: 500 }
+      );
+    }
     // Token bot yang ditunjuk BAILEYS_API_URL — nilai pertama daftar, bukan
     // seluruh daftarnya. Lihat catatan di lib/botTokens.js.
     const apiKey = tokenBotUtama();
@@ -33,9 +53,9 @@ export async function GET() {
     return NextResponse.json(data);
   } catch (error) {
     if (error.name === "TimeoutError") {
-      return NextResponse.json({ error: "Bot tidak merespons (timeout 8 detik). Cek apakah Railway masih berjalan." }, { status: 504 });
+      return NextResponse.json({ error: "Bot tidak merespons (timeout 8 detik). Cek https://bot.jualbeliusupolmed.web.id/health." }, { status: 504 });
     }
     console.error("Bot Logs fetch error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return jawabGalat(error);
   }
 }

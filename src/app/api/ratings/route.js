@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +44,7 @@ export async function GET(req) {
 
     return NextResponse.json({ error: "Param listing_id atau seller_wa diperlukan" }, { status: 400 });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 }
 
@@ -120,6 +121,6 @@ export async function POST(req) {
     if (error) throw new Error(error.message);
     return NextResponse.json({ rating: data });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 }

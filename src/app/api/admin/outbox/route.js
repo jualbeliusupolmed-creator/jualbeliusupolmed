@@ -38,7 +38,7 @@ function jawabGalat(e) {
       belumAda: true,
     }, { status: 503 });
   }
-  return NextResponse.json({ error: e?.message || "Gagal" }, { status: 500 });
+  return NextResponse.json({ error: "Gagal memproses outbox." }, { status: 500 });
 }
 
 // GET /api/admin/outbox?status=tertunda&limit=100

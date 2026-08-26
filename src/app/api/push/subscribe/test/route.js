@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { sendPushNotification } from "@/lib/webpush";
 import { isAdmin } from "@/lib/auth";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -54,6 +55,6 @@ export async function POST(req) {
     return NextResponse.json({ ok: true, sent, total: subs.length, expired: expiredIds.length });
   } catch (err) {
     console.error("[push/test]", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return jawabGalat(err);
   }
 }

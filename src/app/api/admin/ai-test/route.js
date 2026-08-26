@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
 import { parseListingFromText } from "@/lib/gemini";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export async function POST(req) {
   if (!isAdmin()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -11,6 +12,6 @@ export async function POST(req) {
     const extracted = await parseListingFromText(text, aiConfig);
     return NextResponse.json(extracted);
   } catch (err) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return jawabGalat(err);
   }
 }

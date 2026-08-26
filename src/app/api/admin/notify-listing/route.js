@@ -1,3 +1,4 @@
+import { jawabGalat } from "@/lib/jawabGalat";
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabaseAdmin";
@@ -64,7 +65,7 @@ export async function POST(req) {
       .eq("id", id)
       .maybeSingle();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return jawabGalat(error);
     if (!listing) return NextResponse.json({ error: "Listing tidak ditemukan" }, { status: 404 });
 
     const settings = await getSettings().catch(() => null);
@@ -172,6 +173,6 @@ export async function POST(req) {
             hasil.filter((h) => !h.ok).map((h) => `${h.tujuan}: ${h.error || h.detail || "gagal"}`).join("; "),
     });
   } catch (e) {
-    return NextResponse.json({ error: e?.message || "Gagal memproses" }, { status: 500 });
+    return jawabGalat(e, { pesan: "Gagal memproses notifikasi iklan." });
   }
 }

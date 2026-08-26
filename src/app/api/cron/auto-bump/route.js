@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { tolakCron } from "@/lib/cronAuth";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 // Loop kirim WA berjeda (anti-ban) mudah melewati batas default 10-15 detik —
@@ -36,6 +37,6 @@ export async function GET(req) {
     return NextResponse.json({ ok: true, count: listings?.length || 0 });
   } catch (e) {
     console.error("Auto-Bump Cron Error:", e);
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 }

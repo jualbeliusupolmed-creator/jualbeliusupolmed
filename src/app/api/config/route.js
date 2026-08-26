@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSettings } from "@/lib/settings";
 import { getCategories } from "@/lib/categories";
 import { kontakDenganCadangan } from "@/lib/kontakAdmin";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,6 @@ export async function GET() {
       popupAd: settings.popupAd,
     });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 }

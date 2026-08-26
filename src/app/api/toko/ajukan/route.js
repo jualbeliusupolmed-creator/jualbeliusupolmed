@@ -4,6 +4,7 @@ import { getSellerSession } from "@/lib/auth";
 import { getSettings } from "@/lib/settings";
 import { formatWaForBaileys } from "@/lib/constants";
 import { namaToko, statusToko } from "@/lib/toko";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +40,7 @@ export async function POST() {
     .eq("wa", wa)
     .maybeSingle();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return jawabGalat(error);
   if (!profil) return NextResponse.json({ error: "Simpan tokomu dulu sebelum diajukan." }, { status: 400 });
   if (!profil.slug) {
     return NextResponse.json({ error: "Isi alamat toko (/toko/…) dulu, lalu simpan." }, { status: 400 });

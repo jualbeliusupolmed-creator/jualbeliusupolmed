@@ -52,7 +52,7 @@ ATURAN:
   } catch (error) {
     console.error("AI Generate Broadcast Error:", error);
     return NextResponse.json(
-      { error: error.message || "Gagal menghasilkan teks broadcast" },
+      { error: "Gagal menghasilkan teks broadcast." },
       { status: 500 }
     );
   }

@@ -3,6 +3,7 @@ import { isAdmin } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { formatWa } from "@/lib/constants";
 import { tokenBotUtama } from "@/lib/botTokens";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +40,8 @@ export async function GET(req) {
       }));
       return NextResponse.json({ messages });
     } catch (err) {
-      return NextResponse.json({ messages: [], error: err.message });
+      console.error("[admin/baileys]", err?.stack || err);
+      return NextResponse.json({ messages: [], error: "Gagal mengambil pesan dari bot." });
     }
   }
 
@@ -60,7 +62,7 @@ export async function GET(req) {
     const data = await res.json().catch(() => ({}));
     return NextResponse.json(data, { status: res.status });
   } catch (err) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return jawabGalat(err);
   }
 }
 
@@ -82,7 +84,7 @@ export async function DELETE(req) {
     const data = await res.json().catch(() => ({}));
     return NextResponse.json(data, { status: res.status });
   } catch (err) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return jawabGalat(err);
   }
 }
 
@@ -105,6 +107,6 @@ export async function POST(req) {
     const data = await res.json().catch(() => ({}));
     return NextResponse.json(data, { status: res.status });
   } catch (err) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return jawabGalat(err);
   }
 }

@@ -4,6 +4,7 @@ import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { sendWa } from "@/lib/fonnte";
 import { buildSlug } from "@/lib/slug";
 import { formatWaForBaileys } from "@/lib/constants";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -81,7 +82,7 @@ export async function POST(req) {
 
     return NextResponse.json({ ok: true });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 }
 

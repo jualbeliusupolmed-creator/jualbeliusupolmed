@@ -4,6 +4,7 @@ import { formatWa } from "@/lib/constants";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { setSellerCookie } from "@/lib/auth";
 import { verifyPin } from "@/lib/pin";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -54,6 +55,6 @@ export async function POST(req) {
 
     return NextResponse.json({ success: true, message: "Login berhasil!" });
   } catch (err) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return jawabGalat(err);
   }
 }

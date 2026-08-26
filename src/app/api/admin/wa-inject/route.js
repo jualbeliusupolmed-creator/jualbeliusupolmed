@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
 import { tokenBotUtama } from "@/lib/botTokens";
+import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +42,6 @@ export async function POST(req) {
     const data = await res.json().catch(() => ({}));
     return NextResponse.json(data, { status: res.status });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return jawabGalat(e);
   }
 }
