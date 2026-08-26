@@ -1,15 +1,26 @@
 {
+  "id": "/",
   "name": "Jual Beli USU & POLMED — Campus Super App",
   "short_name": "USU SuperApp",
   "description": "Pusat jual beli, menfess & info kampus, dan obrolan sesama mahasiswa USU & POLMED Medan.",
+  "lang": "id",
+  "dir": "ltr",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "browser"],
   "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#16a34a",
   "categories": ["shopping", "social", "lifestyle", "education"],
+  "prefer_related_applications": false,
   "icons": [
+    {
+      "src": "/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
@@ -23,27 +34,43 @@
       "purpose": "any maskable"
     }
   ],
+  "screenshots": [
+    {
+      "src": "/screenshot-mobile.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Tampilan Mobile Jual Beli USU Polmed"
+    },
+    {
+      "src": "/screenshot-desktop.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Tampilan Desktop Jual Beli USU Polmed"
+    }
+  ],
   "shortcuts": [
     {
       "name": "Pasar Kampus",
       "short_name": "Pasar",
       "description": "Buka katalog jual beli barang",
       "url": "/jual-beli",
-      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png" }]
     },
     {
       "name": "Menfess & Info",
       "short_name": "Menfess",
       "description": "Lihat curhatan & info kampus",
       "url": "/mading",
-      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png" }]
     },
     {
       "name": "Obrolan",
       "short_name": "Chat",
       "description": "Cari teman ngobrol anonim",
       "url": "/chat",
-      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png" }]
     }
   ]
 }

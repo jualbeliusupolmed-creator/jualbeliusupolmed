@@ -195,6 +195,21 @@ export default async function RootLayout({ children }) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }}
         />
+        <Script
+          id="sw-register"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js').catch(function(err) {
+                    console.warn('SW reg failed: ', err);
+                  });
+                });
+              }
+            `,
+          }}
+        />
         <LayoutWrapper>{children}</LayoutWrapper>
         <BackToTop />
         <Toaster position="top-center" theme="system" richColors closeButton />
