@@ -19,6 +19,7 @@ import BlogPenulisPanel from "@/components/BlogPenulisPanel";
 import DashboardModeToggle from "@/components/DashboardModeToggle";
 import UnifiedProfilePanel from "@/components/dashboard/UnifiedProfilePanel";
 import SellerAnalyticsView from "@/components/dashboard/SellerAnalyticsView";
+import UkmDashboardView from "@/components/dashboard/UkmDashboardView";
 import OprecPengurusPanel from "@/components/oprec/OprecPengurusPanel";
 import BuatOprecModal from "@/components/oprec/BuatOprecModal";
 
@@ -102,8 +103,9 @@ function DashboardInner() {
   const router = useRouter();
 
   async function loadProfilRequests(num) {
-    const n = formatWa(num ?? wa);
-    if (!n) return;
+    const raw = (num ?? wa)?.trim();
+    if (!raw) return;
+    const n = formatWa(raw) || raw;
     try {
       const res = await fetch(`/api/profile/change-request?seller_wa=${encodeURIComponent(n)}`);
       const data = await res.json();
@@ -142,16 +144,25 @@ function DashboardInner() {
 
     const saved = localStorage.getItem("seller_wa");
     
-    // Jika tidak ada session WA, lempar ke halaman login OTP
-    if (!saved) {
-      router.push("/dashboard/login");
-      return;
-    }
-
-    const waToLoad = formatWa(saved);
-    if (waToLoad) {
-      setWa(waToLoad);
-      load(waToLoad);
+    if (saved) {
+      const cleanWa = formatWa(saved) || saved;
+      setWa(cleanWa);
+      load(cleanWa);
+    } else {
+      // Jika tidak ada di localStorage, cek sesi login di cookie server
+      fetch("/api/auth/me")
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.loggedIn && data.wa) {
+            const cleanWa = formatWa(data.wa) || data.wa;
+            localStorage.setItem("seller_wa", cleanWa);
+            setWa(cleanWa);
+            load(cleanWa);
+          } else {
+            router.push("/dashboard/login");
+          }
+        })
+        .catch(() => router.push("/dashboard/login"));
     }
 
     if (params.get("paid")) setNote("Pembayaran sukses! Iklan tayang sebentar lagi.");
@@ -161,9 +172,9 @@ function DashboardInner() {
   }, [params, router]);
 
   async function load(num) {
-    let raw = (num ?? wa).trim();
+    let raw = (num ?? wa)?.trim();
     if (!raw) return;
-    const n = formatWa(raw);
+    const n = formatWa(raw) || raw;
     setWa(n);
     setBusy(true);
     try {
@@ -203,6 +214,9 @@ function DashboardInner() {
       }
 
       setLoaded(true);
+      if (mergedProfile?.account_type === "ukm" || mergedProfile?.ukm_verified || mergedProfile?.ukm_name) {
+        setActiveTab("ukm");
+      }
       loadProfilRequests(n);
       localStorage.setItem("seller_wa", n);
     } catch (e) {
@@ -238,8 +252,9 @@ function DashboardInner() {
   }
 
   async function loadAnalytics(num) {
-    const n = formatWa(num ?? wa);
-    if (!n) return;
+    const raw = (num ?? wa)?.trim();
+    if (!raw) return;
+    const n = formatWa(raw) || raw;
     setAnalyticsLoading(true);
     try {
       const res = await fetch(`/api/analytics/seller?wa=${encodeURIComponent(n)}`);
@@ -252,8 +267,9 @@ function DashboardInner() {
   }
 
   async function loadOprec(num) {
-    const n = formatWa(num ?? wa);
-    if (!n) return;
+    const raw = (num ?? wa)?.trim();
+    if (!raw) return;
+    const n = formatWa(raw) || raw;
     setOprecLoading(true);
     try {
       const res = await fetch(`/api/oprec?ukm_wa=${encodeURIComponent(n)}&status=all`);
@@ -680,19 +696,30 @@ function DashboardInner() {
 
       {/* ===== UI HEADER & PROFILE ===== */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-        <DashboardModeToggle 
-          storeStatus={sellerProfile?.store_status} 
-          activeCount={(items || []).filter(l => l.status === "active").length} 
-        />
+        {isUkmAccount ? (
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 px-3.5 py-1.5 text-xs font-black text-indigo-700 dark:text-indigo-300">
+              🏛️ Portal Resmi Organisasi Kampus
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 px-2.5 py-0.5 text-[10px] font-black text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+              ✓ Terverifikasi
+            </span>
+          </div>
+        ) : (
+          <DashboardModeToggle 
+            storeStatus={sellerProfile?.store_status} 
+            activeCount={(items || []).filter(l => l.status === "active").length} 
+          />
+        )}
         <div className="flex items-center gap-2 self-end sm:self-auto">
           {wa && <PushNotificationButton wa={wa} />}
           {loaded && (
             <Link 
-              href="/jual" 
+              href={isUkmAccount ? "/jual?type=danus" : "/jual"} 
               className="px-4 py-2 rounded-2xl text-xs font-black bg-primary hover:bg-primary/95 text-white shadow-md shadow-primary/20 active:scale-95 transition-all flex items-center gap-1.5"
             >
               <Icon.PlusCircle className="w-3.5 h-3.5" />
-              <span>+ Tambah Iklan</span>
+              <span>{isUkmAccount ? "+ Tambah Danus / Merch" : "+ Tambah Iklan"}</span>
             </Link>
           )}
         </div>
@@ -718,8 +745,13 @@ function DashboardInner() {
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                  {sellerProfile?.name || "Dashboard Penjual"}
+                  {sellerProfile?.ukm_name || sellerProfile?.name || "Dashboard Penjual"}
                 </h1>
+                {isUkmAccount && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 px-2.5 py-0.5 text-[10px] font-black text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800">
+                    🏛️ UKM / BEM RESMI
+                  </span>
+                )}
                 {sellerProfile?.subscription_tier === "pro" && new Date(sellerProfile?.subscription_expires_at) > new Date() && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-950/60 px-2.5 py-0.5 text-[10px] font-black text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800">
                     👑 PRO
@@ -745,12 +777,12 @@ function DashboardInner() {
           <div className="flex items-center gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-slate-800">
             {sellerProfile?.slug && (
               <a
-                href={`/toko/${sellerProfile.slug}`}
+                href={isUkmAccount ? `/organisasi` : `/toko/${sellerProfile.slug}`}
                 target="_blank"
                 rel="noreferrer"
                 className="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 transition-all flex items-center gap-1"
               >
-                <span>Lihat Profil Publik</span>
+                <span>{isUkmAccount ? "Lihat Direktori Organisasi" : "Lihat Profil Publik"}</span>
                 <span className="text-[10px]">↗</span>
               </a>
             )}
@@ -780,9 +812,56 @@ function DashboardInner() {
 
       {loaded && !busy && (
         <>
-          {/* 4 PRIMARY HUBS */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 bg-slate-100 dark:bg-slate-900/90 p-1.5 rounded-2xl border border-slate-200/80 dark:border-slate-800">
-            {[
+          {/* PRIMARY HUBS */}
+          <div className={`grid gap-2 mb-4 bg-slate-100 dark:bg-slate-900/90 p-1.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 ${
+            isUkmAccount ? "grid-cols-2 sm:grid-cols-5" : "grid-cols-2 sm:grid-cols-4"
+          }`}>
+            {(isUkmAccount ? [
+              { 
+                id: "organisasi", 
+                label: "Panel Organisasi", 
+                icon: "🏛️", 
+                active: activeTab === "ukm",
+                count: oprecList.filter(o => o.status === "active").length || undefined,
+                badgeColor: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+                onClick: () => { setActiveTab("ukm"); if (!oprecLoaded) loadOprec(); }
+              },
+              { 
+                id: "iklan", 
+                label: "Danus & Merch", 
+                icon: "🛍️", 
+                active: activeTab === "jual" || activeTab === "dicari",
+                count: items.length,
+                onClick: () => setActiveTab(activeTab === "dicari" ? "dicari" : "jual")
+              },
+              { 
+                id: "tawaran", 
+                label: "Tawaran Masuk", 
+                icon: "💰", 
+                active: activeTab === "tawaran",
+                count: offers.filter((o) => o.status === "pending").length,
+                badgeColor: "bg-rose-500 text-white",
+                onClick: () => setActiveTab("tawaran")
+              },
+              { 
+                id: "performa", 
+                label: "Performa & PRO", 
+                icon: "📊", 
+                active: activeTab === "statistik" || activeTab === "pro" || activeTab === "referral",
+                onClick: () => {
+                  const target = ["statistik", "pro", "referral"].includes(activeTab) ? activeTab : "statistik";
+                  setActiveTab(target);
+                  if (target === "statistik" && !analytics) loadAnalytics();
+                }
+              },
+              { 
+                id: "akun", 
+                label: "Biodata & Profil", 
+                icon: "👤", 
+                active: activeTab === "profil" || activeTab === "blog",
+                onClick: () => setActiveTab(["profil", "blog"].includes(activeTab) ? activeTab : "profil")
+              },
+            ] : [
               { 
                 id: "iklan", 
                 label: "Iklan & Dagangan", 
@@ -818,16 +897,7 @@ function DashboardInner() {
                 active: activeTab === "profil" || activeTab === "blog",
                 onClick: () => setActiveTab(["profil", "blog"].includes(activeTab) ? activeTab : "profil")
               },
-              ...(isUkmAccount ? [{ 
-                id: "organisasi", 
-                label: "Panel UKM", 
-                icon: "🏛️", 
-                active: activeTab === "ukm",
-                count: oprecList.filter(o => o.status === "active").length || undefined,
-                badgeColor: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-                onClick: () => { setActiveTab("ukm"); if (!oprecLoaded) loadOprec(); }
-              }] : []),
-            ].map((hub) => (
+            ]).map((hub) => (
               <button
                 key={hub.id}
                 onClick={hub.onClick}
@@ -911,23 +981,6 @@ function DashboardInner() {
             </div>
           )}
 
-          {activeTab === "ukm" && isUkmAccount && (
-            <div className="flex items-center gap-2 mb-6 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <span className="text-xs font-bold text-primary dark:text-emerald-400">🏛️ {sellerProfile?.ukm_name || sellerProfile?.name}</span>
-              {sellerProfile?.ukm_verified && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
-                  ✓ Terverifikasi
-                </span>
-              )}
-              <button
-                onClick={() => setBuatOprecModal(true)}
-                className="ml-auto px-3 py-1.5 rounded-xl text-xs font-bold bg-primary text-white hover:bg-primary/90 transition-all flex items-center gap-1"
-              >
-                + Buat Oprec
-              </button>
-            </div>
-          )}
-
           {(activeTab === "profil" || activeTab === "blog") && (
             <div className="flex items-center gap-2 mb-6 border-b border-slate-100 dark:border-slate-800 pb-3">
               <button
@@ -955,151 +1008,13 @@ function DashboardInner() {
 
           {/* ===== TAB UKM / ORGANISASI ===== */}
           {activeTab === "ukm" && isUkmAccount && (
-            <div className="space-y-4">
-              {/* Stats Cards UKM */}
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { label: "Total Oprec", val: oprecList.length, icon: "📋", color: "text-primary dark:text-emerald-400" },
-                  { label: "Oprec Aktif", val: oprecList.filter(o => o.status === "active").length, icon: "✅", color: "text-emerald-600 dark:text-emerald-400" },
-                  { label: "Total Pendaftar", val: oprecList.reduce((s, o) => s + (o.submissions_count || 0), 0), icon: "👥", color: "text-blue-600 dark:text-blue-400" },
-                ].map((stat) => (
-                  <div key={stat.label} className="rounded-2xl bg-white dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800 p-4 text-center">
-                    <div className="text-xl mb-1">{stat.icon}</div>
-                    <div className={`text-2xl font-black ${stat.color}`}>{stat.val}</div>
-                    <div className="text-[10px] text-gray-500 dark:text-slate-400 mt-0.5">{stat.label}</div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Daftar Oprec */}
-              <div className="rounded-2xl bg-white dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800 overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800">
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">Formulir Open Recruitment</h3>
-                  <button
-                    onClick={() => loadOprec()}
-                    className="text-[11px] text-primary dark:text-emerald-400 hover:underline font-semibold"
-                  >
-                    ↻ Refresh
-                  </button>
-                </div>
-
-                {oprecLoading ? (
-                  <div className="flex items-center justify-center py-10 text-gray-400 text-sm gap-2">
-                    <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                    Memuat...
-                  </div>
-                ) : oprecList.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 gap-2 text-gray-400">
-                    <span className="text-3xl">📋</span>
-                    <p className="text-sm font-medium">Belum ada formulir Oprec.</p>
-                    <button
-                      onClick={() => setBuatOprecModal(true)}
-                      className="mt-1 px-4 py-2 rounded-xl text-xs font-bold bg-primary text-white hover:bg-primary/90 transition-all"
-                    >
-                      + Buat Formulir Oprec Pertama
-                    </button>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {oprecList.map((oprec) => {
-                      const isActive = oprec.status === "active";
-                      const deadlinePast = oprec.deadline && new Date() > new Date(oprec.deadline);
-                      const daysLeft = oprec.deadline
-                        ? Math.max(0, Math.ceil((new Date(oprec.deadline) - new Date()) / 864e5))
-                        : null;
-
-                      return (
-                        <div key={oprec.id} className="flex items-start gap-3 p-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
-                          {/* Banner thumb */}
-                          <div className="shrink-0 w-12 h-12 rounded-xl overflow-hidden bg-gradient-to-br from-primary/20 to-emerald-400/10 flex items-center justify-center text-xl border border-primary/10">
-                            {oprec.banner_url ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img src={oprec.banner_url} alt="" className="w-full h-full object-cover" />
-                            ) : "📋"}
-                          </div>
-
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-sm font-bold text-gray-900 dark:text-white truncate">
-                                {oprec.title}
-                              </span>
-                              <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                                isActive && !deadlinePast
-                                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
-                                  : "bg-gray-200 text-gray-600 dark:bg-slate-700 dark:text-slate-400"
-                              }`}>
-                                {deadlinePast ? "Kadaluarsa" : isActive ? "● Aktif" : "◉ Tutup"}
-                              </span>
-                            </div>
-
-                            <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-                              <span className="text-[11px] text-gray-500 dark:text-slate-400">
-                                {oprec.campus} · {(oprec.divisions || []).length} Divisi
-                              </span>
-                              {daysLeft !== null && (
-                                <span className={`text-[11px] font-semibold ${
-                                  daysLeft <= 3 ? "text-rose-500" : daysLeft <= 7 ? "text-amber-500" : "text-gray-400"
-                                }`}>
-                                  {daysLeft === 0 ? "Hari terakhir!" : `${daysLeft} hari lagi`}
-                                </span>
-                              )}
-                              <span className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold">
-                                👥 {oprec.submissions_count || 0} Pendaftar
-                              </span>
-                            </div>
-                          </div>
-
-                          <button
-                            onClick={() => setPengurusPanel(oprec)}
-                            className="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-primary/10 text-primary dark:text-emerald-400 hover:bg-primary/20 transition-all"
-                          >
-                            👁️ Kelola
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Profil UKM Card */}
-              <div className="rounded-2xl bg-white dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800 p-4 space-y-2">
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Profil Organisasi</h3>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  {[
-                    { label: "Nama UKM", val: sellerProfile?.ukm_name || "-" },
-                    { label: "Kategori", val: sellerProfile?.ukm_category || "-" },
-                    { label: "Kampus", val: sellerProfile?.campus || "-" },
-                    { label: "Instagram", val: sellerProfile?.ukm_instagram || "-" },
-                  ].map((row) => (
-                    <div key={row.label} className="rounded-xl bg-slate-50 dark:bg-slate-800 px-3 py-2">
-                      <p className="text-[10px] text-gray-400 dark:text-slate-500">{row.label}</p>
-                      <p className="font-bold text-gray-800 dark:text-white truncate">{row.val}</p>
-                    </div>
-                  ))}
-                </div>
-                <a
-                  href="/organisasi/daftar"
-                  className="inline-flex items-center gap-1 text-[11px] text-primary dark:text-emerald-400 hover:underline font-semibold mt-1"
-                >
-                  Edit Profil Organisasi →
-                </a>
-              </div>
-            </div>
-          )}
-
-          {/* ===== MODALS UKM ===== */}
-          {pengurusPanel && (
-            <OprecPengurusPanel
-              oprec={pengurusPanel}
-              onClose={() => { setPengurusPanel(null); loadOprec(); }}
-            />
-          )}
-
-          {buatOprecModal && (
-            <BuatOprecModal
-              onClose={() => setBuatOprecModal(false)}
-              onCreated={() => { setBuatOprecModal(false); loadOprec(); }}
+            <UkmDashboardView
+              sellerProfile={sellerProfile}
+              wa={wa}
+              items={items}
+              onRefresh={() => load(wa)}
+              onOpenBumpModal={(item) => bump(item)}
+              onOpenBagikanModal={(item) => setBagikan(item)}
             />
           )}
 

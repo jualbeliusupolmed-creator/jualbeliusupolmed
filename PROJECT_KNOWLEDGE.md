@@ -274,6 +274,45 @@ Berjalan dengan PostgreSQL, memiliki tabel-tabel berikut:
 4. **Modul Tukar Jadwal Kuliah / Praktikum (KRS & Shift Swap Matrix):** Fitur auto-matching jadwal bentrok matkul/kelas saat awal semester.
 5. **Fitur Monetisasi Mikro (Boost Profil & Lihat Siapa yang Like Kamu):** Paket top-up hemat via QRIS (Rp 3.000–5.000) untuk spotlight profil dan intip likers.
 
+*   **26 Agustus 2026** - *Manual WhatsApp Escape Hatch di Antrean Notifikasi (Anti-Banned Fail-Safe)*
+    - **Komponen (`src/components/baileys/TabAntrean.jsx`, `src/components/baileys/AntreanBot.jsx`, `src/app/api/admin/outbox/route.js`):**
+      - Menghadirkan tombol **`💬 Chat WA Manual`** (`wa.me/62xxx?text=...`) di setiap baris antrean tertunda. Jika bot utama & bot cadangan sedang diblokir/down, admin dapat langsung membuka chat ke nomor tujuan lewat browser/HP dari nomor WhatsApp pribadi mana pun dengan teks notifikasi yang sudah otomatis terisi.
+      - Menambahkan tombol **`✓ Tandai Terkirim`** (`POST /api/admin/outbox` dengan `{ manual: id }`) agar pesan yang sudah dikirimkan manual langsung beralih status menjadi `terkirim` dengan catatan audit `"Dikirim manual oleh admin via WA Web/App"`.
+
+*   **26 Agustus 2026** - *Format Unduh Menfess: Dual Potrait HD (1080×1350 & 9:16 Story)*
+    - **Generator Gambar Visual Menfess (`src/lib/madingInstagramImage.js`, `src/components/mading/UnduhMenfessModal.jsx`, `/api/mading/[id]/instagram-image`):**
+      - Mengonfigurasi 2 opsi unduh gambar Menfess ke dalam format **Potrait HD**:
+        1. **📱 Potrait 1080 × 1350 (Rasio 4:5):** Disesuaikan khusus untuk postingan Feed Instagram & Carousel tanpa cropping.
+        2. **📲 Potrait 1080 × 1920 (Rasio 9:16):** Disesuaikan khusus untuk Instagram Story, WhatsApp Status, TikTok, dan Reels dengan tipografi bertingkat, area aman (*safe margin*) status bar, dan badge komunitas.
+      - Menghasilkan file JPEG tajam berkualitas tinggi via Sharp dan layout Pango text layer yang aman dari teks overflow.
+
+*   **26 Agustus 2026** - *Penyempurnaan Tampilan Menfess & Mading (Minimalis, Rapi & Elegan)*
+    - **Penyempurnaan Desain Antarmuka (`src/app/mading/MadingClient.jsx`):**
+      - **Header & Filter Terpadu:** Merapikan tab bar kategori (`✨ Semua`, `💌 Menfess`, `📢 Info Kampus`, `🏛️ Organisasi`, `✍️ Blog`) dengan jarak teratur dan indikator aktif model *pill button* Apple-style. Menggabungkan pemilihan kampus (`USU`, `POLMED`, `Bebas`) dan filter cepat (`🔥 Populer`, `📷 Foto`) ke satu baris rapi yang anti-tumpuk di layar HP.
+      - **Kartu Menfess Terisolasi (Clean Minimalist Cards):** Mengubah tampilan list flat menjadi kartu-kartu rounded 3xl (`rounded-3xl bg-white dark:bg-[#151518]`) dengan border lembut, bayangan halus, dan kontras teks yang tajam dan nyaman dibaca.
+      - **Toolbar Aksi 1-Baris:** Memperbaiki teks balasan/like yang sebelumnya terpotong atau wrap vertikal di mobile (`❤️ Like`, `💬 Komentar`, `📥 Unduh`, `🔗 Bagikan`, `🚩 Laporkan`, `👁️ Views`).
+      - **Thread Komentar Terintegrasi:** Menghapus tombol balas ganda yang redundan; klik pada ikon komentar kini langsung membuka accordion tanggapan thread komentar dengan indikator badge OP dan kotak input minimalis.
+      - **Fitur 100% Utuh:** Tidak ada fitur yang dikurangi — Like, balasan, unduh gambar potrait/landscape, share WhatsApp, report, zoom gambar, filter kampus, dan posting menfess tetap aktif sempurna.
+
+*   **26 Agustus 2026** - *Full SSR Pre-rendering, JSON-LD Schema & Crawler / SEO Optimization across All Discovery Pages*
+    - **Arsitektur Server-Side Rendering (SSR + Hybrid Client Hydration):**
+      - Merombak halaman eksplorasi publik yang sebelumnya pure client component (`"use client"` dengan `useEffect` fetch) menjadi **Async Server Components** dengan pre-fetching data langsung di server:
+        1. **`/mading` (`src/app/mading/page.jsx` & `MadingClient.jsx`):** Server merender 20 postingan menfess & blog awal langsung ke dalam HTML mentah, menyertakan Schema.org `ItemList`, dan passing `initialPosts` ke antarmuka interaktif.
+        2. **`/organisasi` (`src/app/organisasi/page.jsx` & `OrganisasiClient.jsx`):** Server mengambil direktori UKM, BEM, HIMA terverifikasi dan menyuntikkan Schema `ItemList` organisasi kampus.
+        3. **`/oprec` (`src/app/oprec/page.jsx` & `OprecClient.jsx`):** Server mengambil daftar open recruitment aktif dan menyuntikkan metadata serta schema event/kepanitiaan.
+        4. **`/dicari` (`src/app/dicari/page.jsx` & `DicariClient.jsx`):** Server mengambil daftar kebutuhan barang/jasa mahasiswa langsung dari tabel `wanted_listings`.
+      - **Dampak:** Web crawler (Googlebot, Bingbot, Meta crawler, Twitterbot, preview WhatsApp, dan AI scraper) dapat langsung membaca 100% konten live di request pertama tanpa mengalami *cache-miss* atau skeleton kosong, sekaligus meningkatkan First Contentful Paint (FCP) bagi pengunjung pengguna.
+
+*   **26 Agustus 2026** - *Transformasi Total Dashboard Khusus Organisasi & UKM (Adaptive Institutional Portal)*
+    - **Komponen (`src/components/dashboard/UkmDashboardView.jsx`, `src/app/dashboard/page.jsx`):**
+      - Merombak pengalaman dashboard untuk akun bertipe Organisasi/UKM agar terpisah total dari persona penjual barang bekas biasa.
+      - **Header Organisasi:** Menghilangkan toggle "Iklan & Jualan / Toko Saya" dan menggantinya dengan **Header Portal Resmi UKM** ber-badge `✓ Akun Resmi Terverifikasi`, kategori organisasi, dan aksi cepat (`+ Buka Oprec Baru`, `📢 Mading Resmi`, `🛍️ Tambah Danus`).
+      - **Pusat Rekrutmen & Oprec ATS:** Manajemen formulir oprec, countdown sisa hari, live applicants counter, screening pelamar, dan ekspor data pendaftar ke file CSV/Excel instan.
+      - **Pusat Publikasi & Mading Resmi:** Formulir terbit pengumuman resmi organisasi berstempel `🏛️ Pengumuman Resmi` ke feed Mading Kampus dengan tracking views/shares/komentar.
+      - **Danus & Merchandise Resmi:** Mengubah konteks jualan barang biasa menjadi etalase Dana Usaha (Korsa, Jaket Himpunan, Kaos Event, Tiket Acara).
+      - **Struktur Pengurus & BPH:** Manajemen susunan kepengurusan (Ketua, Sekretaris, Bendahara, Koordinator Divisi) dan editor Visi & Misi yang langsung tersinkronisasi ke profil publik.
+      - **Endpoint Backend (`PATCH /api/organisasi`):** Menyimpan pembaruan struktur pengurus, bio, dan medsos organisasi.
+
 *   **26 Agustus 2026** - *Autentikasi Penuh Email & Password Tanpa OTP (Organisasi & Pengguna Umum)*
     - **Email & Password Login & Register (`/api/auth/email/login`, `/api/auth/email/daftar`, `src/components/OTPModal.jsx`):**
       - Pengguna dan pengurus organisasi kini dapat mendaftar dan masuk secara instan menggunakan **Email & Password** tanpa memerlukan kode OTP WhatsApp sama sekali.

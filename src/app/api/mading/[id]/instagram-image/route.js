@@ -27,7 +27,7 @@ const SEMIBOLD_FONT_PATH = path.join(
 );
 const MAX_SOURCE_BYTES = 8 * 1024 * 1024;
 
-async function fetchSafeMadingPhoto(url, isLandscape = false) {
+async function fetchSafeMadingPhoto(url, ratio = "portrait") {
   if (!url) return null;
   try {
     const parsed = new URL(url);
@@ -47,9 +47,12 @@ async function fetchSafeMadingPhoto(url, isLandscape = false) {
     const source = Buffer.from(await response.arrayBuffer());
     if (source.length > MAX_SOURCE_BYTES) return null;
 
-    const width = isLandscape ? 500 : 820;
-    const height = isLandscape ? 230 : 460;
-    const radius = isLandscape ? 16 : 26;
+    const isLandscape = ratio === "landscape";
+    const isStory = ratio === "story" || ratio === "9:16";
+
+    const width = isLandscape ? 500 : isStory ? 860 : 820;
+    const height = isLandscape ? 230 : isStory ? 580 : 460;
+    const radius = isLandscape ? 16 : isStory ? 28 : 26;
 
     const mask = Buffer.from(
       `<svg width="${width}" height="${height}"><rect width="${width}" height="${height}" rx="${radius}" fill="white"/></svg>`,
@@ -65,10 +68,11 @@ async function fetchSafeMadingPhoto(url, isLandscape = false) {
   }
 }
 
-// Gambar JPEG publik untuk Menfess & Instagram. Mendukung rasio Portrait (1080x1350) & Landscape (1200x675)
+// Gambar JPEG publik untuk Menfess & Instagram. Mendukung rasio Portrait 4:5 (1080x1350) & Story 9:16 (1080x1920)
 export async function GET(request, { params }) {
   const { searchParams } = new URL(request.url);
-  const ratio = searchParams.get("ratio") === "landscape" ? "landscape" : "portrait";
+  const rawRatio = searchParams.get("ratio") || "portrait";
+  const ratio = rawRatio === "story" || rawRatio === "9:16" ? "story" : rawRatio === "landscape" ? "landscape" : "portrait";
   const isDownload = searchParams.get("download") === "1" || searchParams.get("dl") === "1";
 
   const { data: post, error } = await getAdminClient()
@@ -80,8 +84,7 @@ export async function GET(request, { params }) {
 
   if (error || !post) return new NextResponse("Not found", { status: 404 });
 
-  const isLandscape = ratio === "landscape";
-  const photo = await fetchSafeMadingPhoto(post.image_url, isLandscape);
+  const photo = await fetchSafeMadingPhoto(post.image_url, ratio);
   const renderPost = photo ? post : { ...post, image_url: null };
   const svg = createMadingInstagramSvg({ hasPhoto: Boolean(photo), ratio });
   const textLayers = createMadingInstagramTextLayers(renderPost, {
@@ -89,8 +92,10 @@ export async function GET(request, { params }) {
     semiboldFontPath: SEMIBOLD_FONT_PATH,
   }, ratio);
 
-  const photoLeft = isLandscape ? 350 : 130;
-  const photoTop = isLandscape ? 90 : 245;
+  const isLandscape = ratio === "landscape";
+  const isStory = ratio === "story";
+  const photoLeft = isLandscape ? 350 : isStory ? 110 : 130;
+  const photoTop = isLandscape ? 90 : isStory ? 320 : 245;
 
   const image = await sharp(Buffer.from(svg))
     .composite([
@@ -106,9 +111,9 @@ export async function GET(request, { params }) {
   };
 
   if (isDownload) {
-    const filename = `menfess-usu-${params.id}-${ratio}.jpg`;
+    const filename = `menfess-usu-${params.id}-${ratio === "story" ? "9-16" : ratio === "portrait" ? "1080x1350" : ratio}.jpg`;
     headers["Content-Disposition"] = `attachment; filename="${filename}"`;
   }
 
-  return new NextResponse(image, { headers });
+  return new NextResponse(image, { status: 200, headers });
 }

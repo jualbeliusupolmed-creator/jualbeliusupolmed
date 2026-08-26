@@ -115,4 +115,33 @@ describe("mading Instagram image", () => {
     expect(metadata.height).toBe(1350);
     expect(rendered.length).toBeGreaterThan(10_000);
   });
+
+  it("creates and renders the 9:16 Story portrait format (1080 x 1920)", async () => {
+    const fontDirectory = path.join(
+      process.cwd(),
+      "src",
+      "assets",
+      "fonts",
+      "plus-jakarta-sans",
+    );
+    const post = {
+      content: "Menfess untuk Story Instagram dan Status WhatsApp 9:16",
+    };
+    const svg = createMadingInstagramSvg({ ratio: "story" });
+    const layers = createMadingInstagramTextLayers(post, {
+      regularFontPath: path.join(fontDirectory, "PlusJakartaSans-Regular.ttf"),
+      semiboldFontPath: path.join(fontDirectory, "PlusJakartaSans-SemiBold.ttf"),
+    }, "story");
+
+    expect(svg).toContain('width="1080" height="1920"');
+    const rendered = await sharp(Buffer.from(svg))
+      .composite(layers)
+      .png()
+      .toBuffer();
+    const metadata = await sharp(rendered).metadata();
+
+    expect(metadata.width).toBe(1080);
+    expect(metadata.height).toBe(1920);
+    expect(rendered.length).toBeGreaterThan(10_000);
+  });
 });

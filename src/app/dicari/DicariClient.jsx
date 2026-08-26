@@ -9,11 +9,11 @@ import { Icon } from "@/components/Icons";
 import QRISModal from "@/components/QRISModal";
 import { toast } from "sonner";
 
-export default function DicariPage() {
+export default function DicariPage({ initialItems = [] }) {
   const router = useRouter();
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState(initialItems);
   const [cats, setCats] = useState(CATEGORIES);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(initialItems.length === 0);
   const [error, setError] = useState("");
 
   // Filters

@@ -163,3 +163,45 @@ export async function GET(req) {
     return NextResponse.json({ error: "Gagal memuat direktori organisasi." }, { status: 500 });
   }
 }
+
+// PATCH /api/organisasi — Update profil & susunan struktur BPH organisasi
+export async function PATCH(req) {
+  try {
+    const body = await req.json();
+    const { wa, ukm_bio, ukm_structure, ukm_instagram } = body;
+
+    if (!wa) {
+      return NextResponse.json({ error: "Identitas organisasi (wa) diperlukan." }, { status: 400 });
+    }
+
+    const supa = getAdminClient();
+    const updates = {};
+    if (typeof ukm_bio === "string") {
+      updates.ukm_bio = ukm_bio;
+      updates.bio = ukm_bio;
+    }
+    if (typeof ukm_structure === "string" || typeof ukm_structure === "object") {
+      updates.ukm_structure = typeof ukm_structure === "string" ? ukm_structure : JSON.stringify(ukm_structure);
+    }
+    if (typeof ukm_instagram === "string") {
+      updates.ukm_instagram = ukm_instagram;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      try {
+        await supa.from("seller_profiles").update(updates).eq("wa", wa);
+      } catch (err) {
+        // Fallback jika kolom tertentu belum ada di DB
+        if (updates.bio) {
+          await supa.from("seller_profiles").update({ bio: updates.bio }).eq("wa", wa);
+        }
+      }
+    }
+
+    return NextResponse.json({ success: true, message: "Profil organisasi berhasil diperbarui." });
+  } catch (err) {
+    console.error("PATCH /api/organisasi error:", err);
+    return NextResponse.json({ error: "Gagal menyimpan perubahan organisasi." }, { status: 500 });
+  }
+}
+

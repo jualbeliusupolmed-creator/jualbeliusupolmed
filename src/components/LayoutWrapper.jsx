@@ -31,19 +31,62 @@ export default function LayoutWrapper({ children }) {
     }
   }, [isAdmin]);
 
-  // Sinkronisasi Google OAuth: setelah redirect /auth/callback, URL mengandung
-  // ?_gwa=<identifier> yang perlu disimpan ke localStorage agar komponen lain
-  // (profil, dashboard) tahu siapa yang sedang login.
+  // Sinkronisasi Google OAuth:
+  // 1. Query param ?_gwa=<identifier> (dari redirect GET /auth/callback)
+  // 2. Hash fragment #access_token=... (jika Supabase me-redirect langsung ke root URL pada implicit flow)
   useEffect(() => {
     if (typeof window === "undefined") return;
+
+    // A. Tangani query param ?_gwa=...
     const params = new URLSearchParams(window.location.search);
     const gwa = params.get("_gwa");
     if (gwa) {
       localStorage.setItem("seller_wa", gwa);
-      // Bersihkan query param dari URL tanpa reload
       params.delete("_gwa");
-      const newUrl = [window.location.pathname, params.toString()].filter(Boolean).join("?");
+      const newSearch = params.toString() ? `?${params.toString()}` : "";
+      const newUrl = `${window.location.pathname}${newSearch}${window.location.hash}`;
       window.history.replaceState({}, "", newUrl);
+    }
+
+    // B. Tangani hash fragment #access_token=...
+    const hash = window.location.hash.substring(1);
+    if (hash && hash.includes("access_token=")) {
+      const hashParams = new URLSearchParams(hash);
+      const accessToken = hashParams.get("access_token");
+      if (accessToken) {
+        // Segera bersihkan hash dari URL browser agar bersih
+        window.history.replaceState(
+          null,
+          "",
+          window.location.pathname + (window.location.search || "")
+        );
+
+        fetch("/auth/callback", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            access_token: accessToken,
+            next: window.location.pathname,
+          }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success) {
+              if (data.wa) localStorage.setItem("seller_wa", data.wa);
+              if (data.name) localStorage.setItem("seller_name", data.name);
+              if (data.redirectUrl) {
+                window.location.href = data.redirectUrl;
+              } else {
+                window.location.reload();
+              }
+            } else {
+              console.error("[OAuth Sync] Gagal sinkronisasi token Google:", data.error);
+            }
+          })
+          .catch((err) => {
+            console.error("[OAuth Sync] Error fetch /auth/callback:", err);
+          });
+      }
     }
   }, []);
 

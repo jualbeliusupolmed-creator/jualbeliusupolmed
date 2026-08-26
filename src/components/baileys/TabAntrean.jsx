@@ -195,13 +195,43 @@ export function TabAntrean() {
                 <span className="flex-1 text-[11px] text-rose-600 dark:text-rose-400">{it.galat_terakhir}</span>
               )}
               {it.status === "tertunda" && (
-                <>
+                <div className="ml-auto flex flex-wrap items-center gap-1.5">
+                  {/* Tombol Buka WhatsApp Manual (Bisa dikirim dari WA pribadi mana saja) */}
+                  {(() => {
+                    const cleanPhone = String(it.target || "").replace(/@s\.whatsapp\.net|@g\.us/g, "").replace(/\D/g, "");
+                    const waPhone = cleanPhone.startsWith("0") ? "62" + cleanPhone.slice(1) : cleanPhone;
+                    if (!waPhone || waPhone.length < 5) return null;
+                    const waUrl = `https://wa.me/${waPhone}?text=${encodeURIComponent(it.message || "")}`;
+                    return (
+                      <a
+                        href={waUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700 transition-colors shadow-xs"
+                        title="Buka chat WhatsApp langsung dari browser/HP untuk kirim manual"
+                      >
+                        <span>💬 Chat WA Manual</span>
+                        <span className="text-[10px]">↗</span>
+                      </a>
+                    );
+                  })()}
+
+                  {/* Tombol Tandai Sudah Terkirim Manual */}
+                  <button
+                    onClick={() => kirim({ manual: it.id }, it.id)}
+                    disabled={sibuk !== null}
+                    className="rounded-lg bg-slate-100 border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-700 disabled:opacity-40"
+                    title="Tandai antrean ini sebagai sudah terkirim manual agar bersih dari antrean"
+                  >
+                    {sibuk === it.id ? "Memproses…" : "✓ Tandai Terkirim"}
+                  </button>
+
                   <button
                     onClick={() => kirim({ id: it.id }, it.id)}
                     disabled={sibuk !== null}
-                    className="ml-auto rounded-lg bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-40"
+                    className="rounded-lg bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-40"
                   >
-                    {sibuk === it.id ? "Mengirim…" : "Kirim"}
+                    {sibuk === it.id ? "Mengirim…" : "Kirim Bot"}
                   </button>
                   <button
                     onClick={() => kirim({ batal: it.id }, it.id)}
@@ -210,7 +240,7 @@ export function TabAntrean() {
                   >
                     Batalkan
                   </button>
-                </>
+                </div>
               )}
             </div>
           </div>
