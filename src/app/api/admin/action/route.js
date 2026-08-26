@@ -226,6 +226,59 @@ export async function POST(req) {
         return NextResponse.json({ ok: true, diturunkan, iklan: iklan.map((l) => l.id), warning });
       }
 
+      case "unexpire_now": {
+        // Pembatalan yang benar-benar membatalkan.
+        //
+        // Aksi `activate` TIDAK bisa dipakai untuk ini. Ia menyetel ulang
+        // expires_at jadi +14 hari DAN menyiarkan iklannya ke grup WhatsApp
+        // sekaligus push ke seluruh pelanggan, seolah iklan baru. Membatalkan
+        // dua puluh penurunan lewat jalur itu berarti dua puluh pengumuman
+        // palsu dan dua puluh perpanjangan gratis yang tidak seorang pun minta.
+        //
+        // Yang dikembalikan di sini hanya `status`, persis kolom yang diubah
+        // `expire_now`. `expires_at` tidak disentuh, jadi iklannya kembali ke
+        // keadaan sebelum tombol ditekan — termasuk fakta bahwa tenggatnya
+        // memang sudah lewat.
+        const { data: jejak } = await supa
+          .from("admin_logs")
+          .select("details, created_at")
+          .eq("action", "expire_now")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        const ids = jejak?.details?.ids || [];
+        if (!ids.length) {
+          return NextResponse.json(
+            { error: "Tidak ada penurunan yang bisa dibatalkan." },
+            { status: 400 }
+          );
+        }
+
+        // Hanya yang MASIH `expired` yang dikembalikan: kalau penjualnya sudah
+        // memperpanjang sendiri sesudahnya, pembatalan ini tidak boleh menimpa
+        // keputusan itu.
+        const { data: pulih, error: galatPulih } = await supa
+          .from("listings")
+          .update({ status: "active" })
+          .in("id", ids)
+          .eq("status", "expired")
+          .select("id");
+        if (galatPulih) throw galatPulih;
+
+        await supa.from("admin_logs").insert({
+          action: "unexpire_now",
+          target_id: null,
+          details: { dipulihkan: pulih?.length || 0, dari: jejak.created_at },
+        }).then(() => {}, () => {});
+
+        return NextResponse.json({
+          ok: true,
+          dipulihkan: pulih?.length || 0,
+          warning: `${pulih?.length || 0} iklan dikembalikan ke aktif. Tenggatnya tidak diubah.`,
+        });
+      }
+
       case "bump_now":
         await supa
           .from("listings")
