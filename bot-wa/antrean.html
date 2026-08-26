@@ -172,6 +172,13 @@
     }
     var h = '';
     for (var it of items) {
+      var cleanPhone = String(it.jid || '').replace(/@s\.whatsapp\.net|@g\.us/g, '').replace(/\D/g, '');
+      var waPhone = cleanPhone.startsWith('0') ? ('62' + cleanPhone.slice(1)) : cleanPhone;
+      var waLink = (!it.grup && waPhone && waPhone.length >= 5)
+        ? '<a href="https://wa.me/' + waPhone + '?text=' + encodeURIComponent(it.message || '')
+          + '" target="_blank" rel="noreferrer" class="btn small" style="background:#16a34a;color:#fff;text-decoration:none">💬 Chat WA Manual ↗</a>'
+        : '';
+
       h += '<div class="item">'
         + '<div class="atas">'
         + '<span class="nomor">' + lolos(it.jid) + '</span>'
@@ -182,6 +189,7 @@
         + '</div>'
         + '<div class="teks">' + lolos(it.message) + '</div>'
         + '<div class="bawah"><span class="galat"></span>'
+        + waLink
         + '<button class="btn small ghost" data-hapus="' + lolos(it.id) + '">Hapus</button>'
         + '</div></div>';
     }
@@ -313,6 +321,13 @@
     var h = '';
     for (var it of items) {
       var bisaKirim = it.status === 'tertunda';
+      var cleanPhone = String(it.target || '').replace(/@s\.whatsapp\.net|@g\.us/g, '').replace(/\D/g, '');
+      var waPhone = cleanPhone.startsWith('0') ? ('62' + cleanPhone.slice(1)) : cleanPhone;
+      var waLink = (bisaKirim && waPhone && waPhone.length >= 5)
+        ? '<a href="https://wa.me/' + waPhone + '?text=' + encodeURIComponent(it.message || '')
+          + '" target="_blank" rel="noreferrer" class="btn small" style="background:#16a34a;color:#fff;text-decoration:none">💬 Chat WA Manual ↗</a>'
+        : '';
+
       h += '<div class="item" data-id="' + lolos(it.id) + '">'
         + '<div class="atas">'
         + '<span class="nomor">' + lolos(it.target) + '</span>'
@@ -325,8 +340,12 @@
         + '<div class="teks">' + lolos(it.message) + '</div>'
         + '<div class="bawah">'
         + (it.galat_terakhir ? '<span class="galat">' + lolos(it.galat_terakhir) + '</span>' : '<span class="galat"></span>')
-        + (bisaKirim ? '<button class="btn small primary" data-kirim="' + lolos(it.id) + '">Kirim</button>'
-                     + '<button class="btn small ghost" data-batal="' + lolos(it.id) + '">Batalkan</button>' : '')
+        + (bisaKirim ? (
+            waLink
+            + '<button class="btn small" style="background:#f1f5f9;color:#334155" data-manual="' + lolos(it.id) + '">✓ Tandai Terkirim</button>'
+            + '<button class="btn small primary" data-kirim="' + lolos(it.id) + '">Kirim Bot</button>'
+            + '<button class="btn small ghost" data-batal="' + lolos(it.id) + '">Batalkan</button>'
+          ) : '')
         + '</div></div>';
     }
     elAntre.innerHTML = h;
@@ -362,6 +381,7 @@
         if (h.s !== 200) { kotak(elStatus, h.j.error || ('HTTP ' + h.s), 'bad'); return; }
         var j = h.j;
         if (j.dibatalkan) kotak(elStatus, 'Dibatalkan.');
+        else if (j.manual) kotak(elStatus, 'Ditandai sudah terkirim manual.');
         else if (j.gagal) {
           // Sebutkan alasannya. "Gagal" tanpa sebab membuat orang menekan
           // tombolnya berulang kali pada bot yang memang belum tersambung.
@@ -381,9 +401,10 @@
   }
 
   elAntre.addEventListener('click', function (ev) {
-    var t = ev.target.closest('[data-kirim], [data-batal]');
+    var t = ev.target.closest('[data-kirim], [data-batal], [data-manual]');
     if (!t) return;
-    if (t.dataset.kirim) kirim({ id: t.dataset.kirim }, t);
+    if (t.dataset.manual) kirim({ manual: t.dataset.manual }, t);
+    else if (t.dataset.kirim) kirim({ id: t.dataset.kirim }, t);
     else kirim({ batal: t.dataset.batal }, t);
   });
 
