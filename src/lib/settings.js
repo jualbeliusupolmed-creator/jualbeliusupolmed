@@ -91,6 +91,16 @@ export const DEFAULT_SETTINGS = {
     listingActive: "✅ Iklan *{{title}}* telah aktif dan bisa dilihat di marketplace! Semoga cepat laku ya Kak! 🎉\n\n🌐 {{url}}",
     notifNewListing: "📢 *Iklan Baru!*\n\n*{{title}}*\nHarga: {{price}}\nPenjual: {{seller}}\n\n{{url}}",
   },
+  // Turunkan iklan yang tenggatnya lewat, otomatis lewat cron harian.
+  //
+  // Bawaannya MATI, dan itu bukan kehati-hatian berlebihan. Sampai 26 Agustus
+  // 2026 tidak ada iklan yang pernah kedaluwarsa sama sekali — /api/cron/expire
+  // mengirim reminder tapi tidak pernah menurunkan apa pun. Menyalakan ini
+  // begitu kodenya mendarat berarti 20 iklan hilang dalam satu malam dari layar
+  // penjual yang sudah dua bulan melihatnya tayang. Nyalakan setelah tunggakan
+  // itu diberesi lewat tombol di panel, bukan sebelumnya.
+  autoExpire: false,
+
   // Kode undangan organisasi. Panel admin sudah lama menulis kunci ini dan
   // membuatkan tautan undangan dari nilainya; sejak 26 Agustus 2026
   // /api/organisasi/daftar benar-benar membacanya.
