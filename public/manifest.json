@@ -14,6 +14,16 @@
   "theme_color": "#16a34a",
   "categories": ["shopping", "social", "lifestyle", "education"],
   "prefer_related_applications": false,
+  "related_applications": [],
+  "share_target": {
+    "action": "/mading",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
   "icons": [
     {
       "src": "/icons/icon-96x96.png",
