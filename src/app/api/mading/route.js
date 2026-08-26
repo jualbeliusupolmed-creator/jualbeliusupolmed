@@ -18,7 +18,7 @@ const POST_COLUMNS_WITH_TRAFFIC = "id, type, sender_name, faculty, title, conten
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const type = searchParams.get("type") || "all"; // 'all' | 'menfess' | 'info'
+    const type = searchParams.get("type") || "all"; // 'all' | 'menfess' | 'info' | 'organisasi'
     const faculty = searchParams.get("faculty");
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") || "15", 10)));
@@ -103,7 +103,9 @@ export async function POST(request) {
       );
     }
 
-    type = type === "info" ? "info" : "menfess";
+    // Whitelist semua type yang valid; selain ini jatuh ke 'menfess'
+    const VALID_TYPES = ["menfess", "info", "organisasi"];
+    type = VALID_TYPES.includes(type) ? type : "menfess";
     // Alias komunitas terpusat di profil. Klien tidak boleh menyisipkan nama
     // lain setiap kali post, dan nama profil marketplace tidak pernah dipakai
     // secara otomatis agar ruang Menfess tetap anonim.

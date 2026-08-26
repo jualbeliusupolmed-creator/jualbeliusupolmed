@@ -255,4 +255,3 @@ vercel.json                     Cron config
 ---
 
 Dibuat untuk komunitas **Jual Beli USU Polmed** · [chat.whatsapp.com/DQMZK2qSgq2D0WvH7BlBSA](https://chat.whatsapp.com/DQMZK2qSgq2D0WvH7BlBSA)
-Softex123

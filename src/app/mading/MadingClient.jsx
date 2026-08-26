@@ -18,6 +18,9 @@ export default function MadingClient({ initialPosts = [] }) {
   const [filterType, setFilterType] = useState("all"); // 'all' | 'popular' | 'photo'
   const [posts, setPosts] = useState(initialPosts);
   const [loading, setLoading] = useState(initialPosts.length === 0);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [unduhPost, setUnduhPost] = useState(null);
 
@@ -25,7 +28,8 @@ export default function MadingClient({ initialPosts = [] }) {
     try {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get("tab");
-      if (tab === "info" || tab === "menfess" || tab === "blog") setActiveTab(tab);
+      // Semua tab yang valid sekarang termasuk 'organisasi'
+      if (["info", "menfess", "blog", "organisasi"].includes(tab)) setActiveTab(tab);
       if (params.get("buat") === "1") setShowModal(true);
     } catch {
       // Query parameters are a progressive enhancement only.
@@ -113,10 +117,15 @@ export default function MadingClient({ initialPosts = [] }) {
     return () => observer.disconnect();
   }, [posts, userId, trackEngagement]);
 
-  const fetchPosts = useCallback(async () => {
-    setLoading(true);
+  const PAGE_LIMIT = 15;
+
+  const fetchPosts = useCallback(async (page = 1, append = false) => {
+    if (page === 1) setLoading(true);
+    else setLoadingMore(true);
     try {
       const params = new URLSearchParams();
+      params.set("page", String(page));
+      params.set("limit", String(PAGE_LIMIT));
       if (activeTab !== "all" && activeTab !== "blog") params.set("type", activeTab);
       if (selectedFaculty !== "Semua") params.set("faculty", selectedFaculty);
 
@@ -124,35 +133,65 @@ export default function MadingClient({ initialPosts = [] }) {
         const res = await fetch(`/api/blog`);
         const data = await res.json();
         setPosts((data.blogs || []).map((b) => ({ ...b, _kind: "blog" })));
+        setHasMore(false);
       } else if (activeTab === "all") {
         const [resMading, resBlog] = await Promise.all([
           fetch(`/api/mading?${params.toString()}`),
-          fetch(`/api/blog`),
+          page === 1 ? fetch(`/api/blog`) : Promise.resolve(null),
         ]);
         const dataMading = await resMading.json();
-        const dataBlog = await resBlog.json();
+        const dataBlog = resBlog ? await resBlog.json() : { blogs: [] };
 
-        const combined = [
-          ...(dataMading.posts || []).map((p) => ({ ...p, _kind: "mading" })),
-          ...(dataBlog.blogs || []).map((b) => ({ ...b, _kind: "blog" })),
-        ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        const madingPosts = (dataMading.posts || []).map((p) => ({ ...p, _kind: "mading" }));
+        const blogPosts = page === 1
+          ? (dataBlog.blogs || []).map((b) => ({ ...b, _kind: "blog" }))
+          : [];
 
-        setPosts(combined);
+        const combined = [...madingPosts, ...blogPosts]
+          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        if (append) {
+          setPosts((prev) => {
+            const existingIds = new Set(prev.map((p) => p.id));
+            return [...prev, ...combined.filter((p) => !existingIds.has(p.id))];
+          });
+        } else {
+          setPosts(combined);
+        }
+        setHasMore(dataMading.page < dataMading.totalPages);
       } else {
         const res = await fetch(`/api/mading?${params.toString()}`);
         const data = await res.json();
-        setPosts((data.posts || []).map((p) => ({ ...p, _kind: "mading" })));
+        const newPosts = (data.posts || []).map((p) => ({ ...p, _kind: "mading" }));
+        if (append) {
+          setPosts((prev) => {
+            const existingIds = new Set(prev.map((p) => p.id));
+            return [...prev, ...newPosts.filter((p) => !existingIds.has(p.id))];
+          });
+        } else {
+          setPosts(newPosts);
+        }
+        setHasMore(data.page < data.totalPages);
       }
     } catch {
       toast.error(activeTab === "blog" ? "Gagal memuat Blog." : "Gagal memuat feed.");
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }, [activeTab, selectedFaculty]);
 
   useEffect(() => {
-    fetchPosts();
+    setCurrentPage(1);
+    setHasMore(true);
+    fetchPosts(1, false);
   }, [fetchPosts]);
+
+  const handleLoadMore = useCallback(() => {
+    const nextPage = currentPage + 1;
+    setCurrentPage(nextPage);
+    fetchPosts(nextPage, true);
+  }, [currentPage, fetchPosts]);
 
   // Handle Report
   const handleReport = async (postId) => {
@@ -365,7 +404,7 @@ export default function MadingClient({ initialPosts = [] }) {
         });
         setImageFile(null);
         setImagePreview("");
-        fetchPosts();
+        fetchPosts(1, false);
       } else {
         toast.error(data.error || "Gagal menerbitkan postingan.");
       }
@@ -805,6 +844,35 @@ export default function MadingClient({ initialPosts = [] }) {
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* LOAD MORE */}
+          {!loading && posts.length > 0 && activeTab !== "blog" && (
+            <div className="flex justify-center pt-2 pb-4">
+              {hasMore ? (
+                <button
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#151518] px-5 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all disabled:opacity-50"
+                >
+                  {loadingMore ? (
+                    <>
+                      <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                      Memuat...
+                    </>
+                  ) : (
+                    <>
+                      <Icon.ChevronDown className="h-3.5 w-3.5" />
+                      Muat lebih banyak
+                    </>
+                  )}
+                </button>
+              ) : (
+                <p className="text-[11px] text-slate-400 dark:text-slate-600 font-medium">
+                  Semua postingan sudah ditampilkan ✓
+                </p>
+              )}
             </div>
           )}
         </div>
