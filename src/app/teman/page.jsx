@@ -262,7 +262,7 @@ export default function TemanSwipePage() {
       </div>
 
       {/* MAIN CARD STACK CONTAINER */}
-      <div className="relative flex-1 min-h-0 w-full flex items-center justify-center py-2">
+      <div className="relative flex-1 min-h-0 w-full flex items-center justify-center">
         {loading ? (
           <div className="flex flex-col items-center justify-center space-y-3 py-16">
             <div className="w-10 h-10 border-3 border-primary/30 border-t-primary rounded-full animate-spin" />
@@ -336,7 +336,7 @@ export default function TemanSwipePage() {
 
       {/* BOTTOM ACTION CONTROLS */}
       {deck.length > 0 && (
-        <div className="flex items-center justify-center gap-4 pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] z-30">
+        <div className="shrink-0 flex items-center justify-center gap-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] z-30 bg-transparent">
           {/* UNDO / REWIND */}
           <button
             onClick={handleUndo}
