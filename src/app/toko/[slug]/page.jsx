@@ -326,7 +326,7 @@ export default async function HalamanToko({ params }) {
         </p>
         <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
           <Link
-            href="/dashboard/toko"
+            href="/dashboard?tab=profil"
             className="rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
             style={{ background: warna.utama }}
           >
