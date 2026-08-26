@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { skripJsonLd } from "@/lib/jsonLd";
 
 export const metadata = {
   title: "Pertanyaan Umum (FAQ)",
@@ -70,7 +71,7 @@ export default function FaqPage() {
     <div className="mx-auto max-w-4xl px-4 py-8">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd).replace(/</g, "\u003c") }}
+        dangerouslySetInnerHTML={{ __html: skripJsonLd(faqJsonLd) }}
       />
       <div className="text-center">
         <h1 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">Pertanyaan Umum (FAQ)</h1>

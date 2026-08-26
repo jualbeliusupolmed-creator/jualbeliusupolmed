@@ -1,5 +1,6 @@
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import OprecClient from "./OprecClient";
+import { skripJsonLd } from "@/lib/jsonLd";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 60;
@@ -65,7 +66,7 @@ export default async function OprecPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd).replace(/</g, "\\u003c") }}
+        dangerouslySetInnerHTML={{ __html: skripJsonLd(itemListJsonLd) }}
       />
       <OprecClient initialOprecs={initialOprecs} />
     </>

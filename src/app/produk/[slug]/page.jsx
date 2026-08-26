@@ -21,6 +21,7 @@ import RecentlyViewedSaver from "@/components/RecentlyViewedSaver";
 import FavoriteButton from "@/components/FavoriteButton";
 import OwnerFastActions from "@/components/OwnerFastActions";
 import { Icon } from "@/components/Icons";
+import { skripJsonLd } from "@/lib/jsonLd";
 
 export const revalidate = 300; // ISR 5 menit
 
@@ -225,11 +226,11 @@ export default async function ProdukPage({ params }) {
     <div className="mx-auto max-w-5xl px-4 py-6">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd).replace(/</g, '\\u003c') }}
+        dangerouslySetInnerHTML={{ __html: skripJsonLd(productJsonLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, '\\u003c') }}
+        dangerouslySetInnerHTML={{ __html: skripJsonLd(breadcrumbJsonLd) }}
       />
       <ViewTracker listingId={listing.id} />
       <RecentlyViewedSaver listing={listing} slug={params.slug} />

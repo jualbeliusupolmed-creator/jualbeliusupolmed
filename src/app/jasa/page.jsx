@@ -4,6 +4,7 @@ import { getSettings } from "@/lib/settings";
 import { fetchListingsWithProfiles } from "@/lib/dbHelpers";
 import { buildSlug } from "@/lib/slug";
 import JasaBrowser from "./JasaBrowser";
+import { skripJsonLd } from "@/lib/jsonLd";
 
 export const revalidate = 300; // ISR 5 menit
 
@@ -117,7 +118,7 @@ export default async function JasaPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd).replace(/</g, "\u003c") }}
+        dangerouslySetInnerHTML={{ __html: skripJsonLd(itemListJsonLd) }}
       />
       <Suspense fallback={<div className="py-20 text-center text-gray-400">Memuat...</div>}>
         <JasaBrowser

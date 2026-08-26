@@ -7,6 +7,7 @@ import { Toaster } from "sonner";
 import Script from "next/script";
 import { getSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
+import { skripJsonLd } from "@/lib/jsonLd";
 
 
 
@@ -193,7 +194,7 @@ export default async function RootLayout({ children }) {
         />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd).replace(/</g, "\u003c") }}
+          dangerouslySetInnerHTML={{ __html: skripJsonLd(siteJsonLd) }}
         />
         <Script
           id="sw-register"

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import MadingDetailClient from "./MadingDetailClient";
+import { skripJsonLd } from "@/lib/jsonLd";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 60;
@@ -117,7 +118,7 @@ export default async function MadingDetailPage({ params }) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+        dangerouslySetInnerHTML={{ __html: skripJsonLd(jsonLd) }}
       />
       <MadingDetailClient post={post} />
     </>
