@@ -1543,6 +1543,7 @@ function SettingsManager({ settings, action }) {
   const [kadaluarsa, setKadaluarsa] = useState(null);
   const [memuatKadaluarsa, setMemuatKadaluarsa] = useState(false);
   const [galatKadaluarsa, setGalatKadaluarsa] = useState("");
+  const [bisaBatal, setBisaBatal] = useState(false);
 
   async function lihatKadaluarsa() {
     setMemuatKadaluarsa(true);
@@ -1705,13 +1706,31 @@ Lanjutkan?`
                 );
                 if (!yakin) return;
                 const ok = await action({ action: "expire_now" }, "Iklan kadaluarsa diturunkan");
-                if (ok) setKadaluarsa(null);
+                if (ok) { setKadaluarsa(null); setBisaBatal(true); }
               }}
             >
               Turunkan {kadaluarsa.jumlah} iklan
             </button>
           )}
         </div>
+
+        {bisaBatal && (
+          <div className="mt-3 rounded-lg bg-amber-50 p-3 dark:bg-amber-900/20">
+            <p className="text-xs leading-relaxed text-amber-800 dark:text-amber-300">
+              Salah tekan? Pembatalan mengembalikan status iklannya saja — tenggatnya
+              tidak diubah dan tidak ada pengumuman apa pun yang dikirim.
+            </p>
+            <button
+              className="btn-outline mt-2 text-xs"
+              onClick={async () => {
+                const ok = await action({ action: "unexpire_now" }, "Penurunan dibatalkan");
+                if (ok) { setBisaBatal(false); setKadaluarsa(null); }
+              }}
+            >
+              Batalkan penurunan terakhir
+            </button>
+          </div>
+        )}
 
         {galatKadaluarsa && (
           <p className="mt-3 text-sm text-red-600 dark:text-red-400">{galatKadaluarsa}</p>

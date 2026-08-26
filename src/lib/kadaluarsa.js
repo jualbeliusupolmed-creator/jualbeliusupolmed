@@ -22,15 +22,23 @@
 
 const KOLOM = "id, title, seller_wa, seller_name, expires_at, listing_code";
 
-/** Iklan yang berstatus aktif tapi tenggatnya sudah lewat. Tidak mengubah apa pun. */
-export async function iklanKadaluarsa(supa, { batas = 200 } = {}) {
-  const { data, error } = await supa
+/**
+ * Iklan yang berstatus aktif tapi tenggatnya sudah lewat. Tidak mengubah apa pun.
+ *
+ * `ids` mempersempit ke sekumpulan iklan tertentu. Ini bukan kenyamanan:
+ * tanpanya, fungsi ini SELALU menyentuh seluruh tabel, dan itu pernah menggigit —
+ * sebuah tes integrasi yang bermaksud menguji satu iklan buatan memanggilnya
+ * tanpa batasan dan menurunkan 20 iklan sungguhan di produksi. Sekarang apa pun
+ * yang cuma ingin memeriksa sebagian bisa mengatakannya.
+ */
+export async function iklanKadaluarsa(supa, { batas = 200, ids = null } = {}) {
+  let q = supa
     .from("listings")
     .select(KOLOM)
     .eq("status", "active")
-    .lt("expires_at", new Date().toISOString())
-    .order("expires_at", { ascending: true })
-    .limit(batas);
+    .lt("expires_at", new Date().toISOString());
+  if (ids?.length) q = q.in("id", ids);
+  const { data, error } = await q.order("expires_at", { ascending: true }).limit(batas);
   if (error) return { error };
   return { iklan: data || [] };
 }
@@ -42,8 +50,8 @@ export async function iklanKadaluarsa(supa, { batas = 200 } = {}) {
  * dikerjakan bertahap kalau memang diinginkan, alih-alih satu perintah besar
  * yang tidak bisa ditarik lagi.
  */
-export async function turunkanKadaluarsa(supa, { batas = 200 } = {}) {
-  const { iklan, error } = await iklanKadaluarsa(supa, { batas });
+export async function turunkanKadaluarsa(supa, { batas = 200, ids = null } = {}) {
+  const { iklan, error } = await iklanKadaluarsa(supa, { batas, ids });
   if (error) return { error };
   if (!iklan.length) return { diturunkan: 0, iklan: [] };
 
