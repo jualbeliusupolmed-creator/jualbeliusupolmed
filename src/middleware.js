@@ -14,15 +14,10 @@ export async function middleware(request) {
     // misalnya menyimpan IP ke edge config/Supabase. Karena kita tidak menggunakan Redis,
     // kita asumsikan Vercel WAF atau Supabase API gateway akan menangani rate limit global.
 
-    // Contoh proteksi rute admin (jika ingin ketat di level middleware)
-    if (request.nextUrl.pathname.startsWith("/api/admin") && !request.nextUrl.pathname.startsWith("/api/admin/login")) {
-      // Periksa cookie admin_session
-      const adminCookie = request.cookies.get("admin_session");
-      if (!adminCookie) {
-        return NextResponse.json({ error: "Unauthorized access to admin API" }, { status: 401 });
-      }
-    }
-    
+    // Otorisasi admin dilakukan oleh setiap handler melalui isAdmin(), yang
+    // memverifikasi tanda tangan dan expiry token. Middleware hanya menangani
+    // header lintas API agar tidak ada pemeriksaan cookie yang tampak aman
+    // tetapi hanya mengecek keberadaannya.
     return res;
   }
 }

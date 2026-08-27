@@ -42,9 +42,9 @@ export async function POST(req) {
 
     // Akun Testing — hanya aktif jika TEST_ACCOUNT_ENABLED=true di env
     if (process.env.TEST_ACCOUNT_ENABLED === "true") {
-      const testWa = process.env.TEST_ACCOUNT_WA || "6281234567890";
-      const testOtp = process.env.TEST_ACCOUNT_OTP || "123456";
-      if (normalizedWa === testWa && otp === testOtp) {
+      const testWa = process.env.TEST_ACCOUNT_WA || "";
+      const testOtp = process.env.TEST_ACCOUNT_OTP || "";
+      if (testWa && testOtp && normalizedWa === testWa && otp === testOtp) {
         setSellerCookie(normalizedWa);
         return NextResponse.json({ success: true, message: "Login berhasil (Test Account)!" });
       }

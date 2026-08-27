@@ -67,12 +67,15 @@ npm install
    yang sudah ada dilewati, dan baris terakhirnya mencetak tabel ringkasan
    berisi apa yang ada dan apa yang kurang.
 
-   Dua file sengaja TIDAK ikut di dalamnya:
+  Setelah migrasi dasar selesai, jalankan juga `supabase/migration_rls_kunci_publik.sql`.
+  Migration ini menutup akses langsung anon/authenticated ke tabel `public`; seluruh
+  akses aplikasi harus melewati API server yang memakai service-role secara server-only.
+
+  Dua file sengaja TIDAK ikut di dalam migrasi dasar:
    - `supabase/seed_dummy_20.sql` — 20 iklan karangan untuk mencoba-coba.
      Jangan dijalankan di produksi.
-   - `supabase/migration_security_rls.sql` — mencabut hak baca anon dari lima
-     tabel. Itu perubahan perilaku, bukan penambahan; jalankan terpisah saat
-     siap memeriksa situsnya halaman per halaman.
+   - `supabase/migration_security_rls.sql` — migration historis yang lebih sempit;
+     gunakan migration penguncian publik di atas sebagai baseline saat ini.
 3. Ambil dari **Project Settings → API**:
    - `Project URL` → `NEXT_PUBLIC_SUPABASE_URL`
    - `anon public` → `NEXT_PUBLIC_SUPABASE_ANON_KEY`

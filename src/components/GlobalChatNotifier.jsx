@@ -126,6 +126,8 @@ export default function GlobalChatNotifier() {
     let timer = null;
 
     async function checkNewMessages() {
+      // Inbox bersifat privat; jangan polling untuk pengunjung anonim.
+      if (!window.localStorage.getItem("seller_wa")) return;
       try {
         const res = await fetch("/api/chat/marketplace/inbox");
         if (res.status === 401 || !res.ok) return;
