@@ -6,7 +6,9 @@ import { buildSlug } from "@/lib/slug";
 import JasaBrowser from "./JasaBrowser";
 import { skripJsonLd } from "@/lib/jsonLd";
 
-export const revalidate = 300; // ISR 5 menit
+// Client service-role memakai fetch no-store agar data marketplace tidak basi.
+// Tandai halaman dynamic supaya kontrak cache Next.js sesuai dengan implementasi.
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Jasa warga USU Polmed — Joki, Desain, IT",

@@ -38,8 +38,8 @@ export async function POST(req) {
 
     // Akun Testing — hanya aktif jika TEST_ACCOUNT_ENABLED=true di env
     if (process.env.TEST_ACCOUNT_ENABLED === "true") {
-      const testWa = process.env.TEST_ACCOUNT_WA || "6281234567890";
-      if (normalizedWa === testWa) {
+      const testWa = process.env.TEST_ACCOUNT_WA || "";
+      if (testWa && normalizedWa === testWa) {
         return NextResponse.json({ success: true, message: "OTP terkirim ke WhatsApp." });
       }
     }

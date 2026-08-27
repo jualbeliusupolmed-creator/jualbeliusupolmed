@@ -30,10 +30,10 @@ export async function POST(req) {
 
     // 1. Akun Testing khusus (jika TEST_ACCOUNT_ENABLED=true di env)
     if (process.env.TEST_ACCOUNT_ENABLED === "true") {
-      const testEmail = (process.env.TEST_ACCOUNT_EMAIL || "ridhorobipasi@gmail.com").toLowerCase().trim();
-      const testPassword = process.env.TEST_ACCOUNT_PASSWORD || "testing123";
-      const testWa = process.env.TEST_ACCOUNT_WA || "6281234567890";
-      if (cleanEmail === testEmail && password === testPassword) {
+      const testEmail = (process.env.TEST_ACCOUNT_EMAIL || "").toLowerCase().trim();
+      const testPassword = process.env.TEST_ACCOUNT_PASSWORD || "";
+      const testWa = process.env.TEST_ACCOUNT_WA || "";
+      if (testEmail && testPassword && testWa && cleanEmail === testEmail && password === testPassword) {
         setSellerCookie(testWa);
         return NextResponse.json({
           success: true,
