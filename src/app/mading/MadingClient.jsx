@@ -5,6 +5,9 @@ import Link from "next/link";
 import { Icon } from "@/components/Icons";
 import { toast } from "sonner";
 import PullToRefresh from "@/components/PullToRefresh";
+import TagProdukPicker from "@/components/TagProdukPicker";
+import ProductPeekSheet from "@/components/ProductPeekSheet";
+import { rupiah } from "@/lib/fees";
 import UnduhMenfessModal from "@/components/mading/UnduhMenfessModal";
 import MenfessReplySection from "@/components/mading/MenfessReplySection";
 
@@ -22,6 +25,19 @@ export default function MadingClient({ initialPosts = [] }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  // Produk yang ditandai penulis di form, dan produk yang sedang diintip
+  // pembaca dari dalam feed.
+  const [tagProduk, setTagProduk] = useState(null);
+  const [intipProduk, setIntipProduk] = useState(null);
+
+  // Dibuka dari tombol "Buat" di dock bawah: /rute?tulis=1 langsung
+  // membuka form, jadi pengguna tidak perlu mencari tombolnya di halaman.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("tulis") === "1") {
+      setShowModal(true);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
   const [unduhPost, setUnduhPost] = useState(null);
 
   useEffect(() => {
@@ -382,6 +398,7 @@ export default function MadingClient({ initialPosts = [] }) {
           title: formData.type === "info" ? formData.title : null,
           content: formData.content,
           image_url: imageUrl,
+          listing_id: tagProduk?.id || null,
         }),
       });
 
@@ -404,6 +421,7 @@ export default function MadingClient({ initialPosts = [] }) {
         });
         setImageFile(null);
         setImagePreview("");
+        setTagProduk(null);
         fetchPosts(1, false);
       } else {
         toast.error(data.error || "Gagal menerbitkan postingan.");
@@ -696,6 +714,40 @@ export default function MadingClient({ initialPosts = [] }) {
                             🔍 Perbesar foto
                           </span>
                         </div>
+                      </button>
+                    )}
+
+                    {/* Produk yang ditandai — diketuk membuka panel bawah,
+                        pembaca tidak kehilangan posisi gulirnya di feed. */}
+                    {post.listings && (
+                      <button
+                        type="button"
+                        onClick={() => setIntipProduk(post.listings)}
+                        className="mt-3 flex w-full items-center gap-3 rounded-2xl border border-primary/25 bg-primary/[0.05] p-2.5 text-left transition-all active:scale-[0.99] hover:bg-primary/[0.09]"
+                      >
+                        <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-black/[0.06] dark:bg-white/[0.08]">
+                          {post.listings.image_url || post.listings.images?.[0] ? (
+                            <img
+                              src={post.listings.image_url || post.listings.images[0]}
+                              alt=""
+                              className="h-full w-full object-cover"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center">📦</div>
+                          )}
+                        </div>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-xs font-bold text-[#1d1d1f] dark:text-white">
+                            {post.listings.title}
+                          </span>
+                          <span className="block text-[11px] font-extrabold text-primary dark:text-violet-400">
+                            {rupiah(post.listings.price)}
+                          </span>
+                        </span>
+                        <span className="shrink-0 rounded-full bg-primary px-3 py-1.5 text-[11px] font-bold text-white">
+                          Lihat
+                        </span>
                       </button>
                     )}
 
@@ -1026,6 +1078,14 @@ export default function MadingClient({ initialPosts = [] }) {
                   />
                 </div>
 
+                {/* Tag produk — jembatan ke sisi marketplace */}
+                <div>
+                  <label className="mb-1 block text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                    Produk jualan (opsional)
+                  </label>
+                  <TagProdukPicker value={tagProduk} onChange={setTagProduk} />
+                </div>
+
                 {/* Anonimity Toggle */}
                 <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
                   <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
@@ -1135,6 +1195,13 @@ export default function MadingClient({ initialPosts = [] }) {
             onClose={() => setUnduhPost(null)}
           />
         )}
+
+        {/* PRATINJAU PRODUK DARI DALAM FEED */}
+        <ProductPeekSheet
+          listing={intipProduk}
+          isOpen={!!intipProduk}
+          onClose={() => setIntipProduk(null)}
+        />
       </div>
     </PullToRefresh>
   );
