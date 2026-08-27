@@ -18,7 +18,13 @@ export default function NativeShareButton({ listing }) {
         }
       }
     } else {
-      toast.error("Browser Anda tidak mendukung fitur Share ini.");
+      // Browser tanpa Web Share API (mis. desktop Firefox): salin link saja
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success("Link disalin ke clipboard");
+      } catch {
+        toast.error("Gagal menyalin link. Salin manual dari address bar ya.");
+      }
     }
   };
 

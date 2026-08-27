@@ -351,9 +351,14 @@ export default async function ProdukPage({ params }) {
           <OwnerFastActions listing={listing} />
 
           {/* Aksi (Desktop: inline, Mobile: sticky bottom bar) */}
-          <div className="mt-4 hidden md:block space-y-2">
-            {!sold && <MinatButton listing={listing} />}
-            {!sold && <OfferButton listing={listing} />}
+          <div className="mt-4 space-y-2">
+            {/* CTA utama desktop saja — di mobile sudah ada floating pill di bawah */}
+            {!sold && (
+              <div className="hidden md:block space-y-2">
+                <MinatButton listing={listing} />
+                <OfferButton listing={listing} />
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-2">
               <div className="col-span-2 block md:hidden">
                 <NativeShareButton listing={listing} />
