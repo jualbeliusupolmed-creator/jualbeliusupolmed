@@ -13,6 +13,11 @@ export const maxDuration = 60;
 const POST_COLUMNS = "id, type, sender_name, faculty, title, content, likes_count, comments_count, status, created_at";
 const POST_COLUMNS_WITH_IMAGE = "id, type, sender_name, faculty, title, content, image_url, likes_count, comments_count, status, created_at";
 const POST_COLUMNS_WITH_TRAFFIC = "id, type, sender_name, faculty, title, content, image_url, likes_count, comments_count, views_count, shares_count, status, created_at";
+// Produk yang ditandai ikut dibawa dalam satu permintaan — kartu produk di
+// feed harus tampil bersamaan dengan postingannya, bukan berkedip belakangan.
+// seller_wa sengaja TIDAK ikut: feed ini publik.
+const PRODUK_TERTAUT = ", listing_id, listings:listing_id (id, title, price, image_url, images, category, condition, campus, status)";
+const POST_COLUMNS_WITH_PRODUK = POST_COLUMNS_WITH_TRAFFIC + PRODUK_TERTAUT;
 
 // GET /api/mading - Fetch daftar postingan mading & menfess
 export async function GET(request) {
@@ -42,7 +47,10 @@ export async function GET(request) {
 
     // Database lama tetap dapat melayani Menfess teks sebelum migration foto
     // diterapkan. Setelah kolom tersedia, foto ikut dikembalikan otomatis.
-    let { data, count, error } = await makeQuery(POST_COLUMNS_WITH_TRAFFIC);
+    let { data, count, error } = await makeQuery(POST_COLUMNS_WITH_PRODUK);
+    if (error && /listing_id|listings/i.test(error.message || "")) {
+      ({ data, count, error } = await makeQuery(POST_COLUMNS_WITH_TRAFFIC));
+    }
     if (error && /views_count|shares_count/i.test(error.message || "")) {
       ({ data, count, error } = await makeQuery(POST_COLUMNS_WITH_IMAGE));
     }
@@ -72,7 +80,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const body = await request.json();
-    let { type, sender_name, faculty, title, content, image_url } = body;
+    let { type, sender_name, faculty, title, content, image_url, listing_id } = body;
 
     const wa = getUserSession();
     if (!wa) {
@@ -135,6 +143,25 @@ export async function POST(request) {
       image_url = null;
     }
 
+    // Produk yang ditandai harus benar-benar milik penulisnya dan masih
+    // aktif. Tanpa pagar ini, siapa pun bisa menempelkan dagangan orang lain
+    // (atau iklan yang sudah dihapus) ke postingannya sendiri.
+    if (listing_id) {
+      const { data: iklan } = await getAdminClient()
+        .from("listings")
+        .select("id, seller_wa, status")
+        .eq("id", listing_id)
+        .maybeSingle();
+      if (!iklan || iklan.seller_wa !== wa || iklan.status !== "active") {
+        return NextResponse.json(
+          { error: "Iklan yang ditandai tidak ditemukan atau bukan milikmu." },
+          { status: 400 }
+        );
+      }
+    } else {
+      listing_id = null;
+    }
+
     // Bersihkan / sensor kata-kata kasar secara otomatis
     const cleanContent = censorProfanity(content.trim());
     const cleanTitle = title ? censorProfanity(title) : null;
@@ -152,16 +179,29 @@ export async function POST(request) {
       author_ip_hash: hashIdentitas(wa),
     };
     if (image_url) insertData.image_url = image_url;
+    if (listing_id) insertData.listing_id = listing_id;
 
     const { data, error } = await supa
       .from("mading_posts")
       .insert(insertData)
       // Kolom disebut satu-satu, sama seperti GET: hash IP tidak perlu mampir
       // ke respons siapa pun, termasuk pengirimnya sendiri.
-      .select(image_url ? POST_COLUMNS_WITH_IMAGE : POST_COLUMNS)
+      .select(
+        listing_id
+          ? POST_COLUMNS_WITH_IMAGE + PRODUK_TERTAUT
+          : image_url
+          ? POST_COLUMNS_WITH_IMAGE
+          : POST_COLUMNS
+      )
       .single();
 
     if (error) {
+      if (listing_id && /listing_id|listings/i.test(error.message || "")) {
+        return NextResponse.json(
+          { error: "Fitur tag produk belum aktif di database. Jalankan migrations/20260827090000_mading_listing_tag.sql dulu." },
+          { status: 409 }
+        );
+      }
       if (image_url && /image_url/i.test(error.message || "")) {
         return NextResponse.json(
           { error: "Fitur foto belum diaktifkan di database. Jalankan migration_mading_images.sql terlebih dahulu." },
