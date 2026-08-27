@@ -23,6 +23,15 @@ export default function DicariPage({ initialItems = [] }) {
 
   // Form modal
   const [showModal, setShowModal] = useState(false);
+
+  // Dibuka dari tombol "Buat" di dock bawah: /rute?tulis=1 langsung
+  // membuka form, jadi pengguna tidak perlu mencari tombolnya di halaman.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("tulis") === "1") {
+      setShowModal(true);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
   const [activeQrisUrl, setActiveQrisUrl] = useState("");
   const [activeQrisFee, setActiveQrisFee] = useState(0);
   const [activeQrisOrderId, setActiveQrisOrderId] = useState("");

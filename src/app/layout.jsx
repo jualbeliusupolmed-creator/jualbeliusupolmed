@@ -77,8 +77,10 @@ export async function generateMetadata() {
 export const viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  // Cubit-untuk-perbesar dibiarkan hidup: mengunci zoom bikin teks kecil
+  // mustahil dibaca sebagian orang, dan itu pelanggaran aksesibilitas.
+  maximumScale: 5,
+  userScalable: true,
   // Warna bilah peramban di Android/iOS. Ungu Polmed, sama dengan tombol
   // ajakan utama — supaya jendela aplikasi menyatu dengan halamannya.
   themeColor: "#532b98",
@@ -103,7 +105,7 @@ export default async function RootLayout({ children }) {
         inLanguage: "id-ID",
         potentialAction: {
           "@type": "SearchAction",
-          target: { "@type": "EntryPoint", urlTemplate: `${BASE_URL}/?q={search_term_string}` },
+          target: { "@type": "EntryPoint", urlTemplate: `${BASE_URL}/jual-beli?q={search_term_string}` },
           "query-input": "required name=search_term_string",
         },
       },
@@ -121,7 +123,6 @@ export default async function RootLayout({ children }) {
   return (
     <html lang="id" className={cn("font-sans", jakartaSans.variable)} suppressHydrationWarning>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="google-adsense-account" content="ca-pub-6730561722094443" />
@@ -131,11 +132,14 @@ export default async function RootLayout({ children }) {
             try {
               var d = document.documentElement;
               var c = localStorage.getItem('theme');
-              if (c === 'dark') {
-                d.classList.add('dark');
-              } else {
-                d.classList.remove('dark');
-              }
+              var gelap = c === 'dark'
+                || (!c && window.matchMedia('(prefers-color-scheme: dark)').matches);
+              d.classList.toggle('dark', !!gelap);
+
+              var skala = { kecil: 0.92, normal: 1, besar: 1.12, jumbo: 1.24 }[
+                localStorage.getItem('text-scale')
+              ];
+              if (skala && skala !== 1) d.style.fontSize = 16 * skala + 'px';
             } catch (e) {}
           })();
         ` }} />

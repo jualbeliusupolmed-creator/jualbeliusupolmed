@@ -8,6 +8,9 @@ import { Icon } from "@/components/Icons";
 import OTPModal from "@/components/OTPModal";
 import NotificationCenter from "@/components/NotificationCenter";
 import { toast } from "sonner";
+import { useHideOnScroll } from "@/lib/useHideOnScroll";
+import { bacaTema, terapkanTema } from "@/lib/tampilan";
+import QuickSearchSheet from "@/components/QuickSearchSheet";
 
 const links = [
   { href: "/", label: "Beranda" },
@@ -28,15 +31,31 @@ export default function Navbar({ config }) {
   const [session, setSession] = useState({ name: "", wa: "" });
   const [navQ, setNavQ] = useState("");
   const [wantedCount, setWantedCount] = useState(0);
+  const [notifTerbuka, setNotifTerbuka] = useState(false);
+  const [cariTerbuka, setCariTerbuka] = useState(false);
+  // Bilah tidak boleh menyingkir sambil membawa panel yang sedang dibuka.
+  const bilahTersembunyi =
+    useHideOnScroll({ batasAtas: 96 }) && !notifTerbuka && !cariTerbuka;
 
   const submitSearch = (e) => {
     e.preventDefault();
     const term = navQ.trim();
-    router.push(term ? `/?q=${encodeURIComponent(term)}` : "/");
+    // Beranda tidak membaca ?q= — hasil pencarian ada di halaman marketplace.
+    router.push(term ? `/jual-beli?q=${encodeURIComponent(term)}` : "/jual-beli");
   };
 
   useEffect(() => {
     setDark(document.documentElement.classList.contains("dark"));
+
+    // Kalau pengguna belum memilih tema sendiri, ikuti setelan HP-nya —
+    // termasuk saat ia berganti ke mode gelap sambil halaman terbuka.
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const ikutSistem = () => {
+      if (bacaTema() !== "sistem") return;
+      setDark(!!terapkanTema("sistem"));
+    };
+    ikutSistem();
+    media.addEventListener?.("change", ikutSistem);
 
     if (typeof window !== "undefined" && "serviceWorker" in navigator) {
       window.addEventListener("load", () => {
@@ -61,6 +80,8 @@ export default function Navbar({ config }) {
       .then((r) => r.json())
       .then((d) => setWantedCount(d.total || d.listings?.length || 0))
       .catch(() => {});
+
+    return () => media.removeEventListener?.("change", ikutSistem);
   }, []);
 
   // Cookie server adalah satu-satunya sumber kebenaran sesi;
@@ -96,17 +117,15 @@ export default function Navbar({ config }) {
   const toggleTheme = () => {
     const isDark = !dark;
     setDark(isDark);
-    if (isDark) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
+    terapkanTema(isDark ? "gelap" : "terang");
   };
 
   return (
-    <header className="sticky top-0 z-40">
+    <header
+      className={`sticky top-0 z-40 transition-transform duration-300 will-change-transform ${
+        bilahTersembunyi ? "-translate-y-full md:translate-y-0" : "translate-y-0"
+      }`}
+    >
       {/* ── Top bar: Apple Frosted Glass ── */}
       <div className="border-b border-black/[0.06] bg-white/80 backdrop-blur-2xl transition-all duration-300 dark:border-white/[0.08] dark:bg-[#000000]/80">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-2.5">
@@ -181,8 +200,19 @@ export default function Navbar({ config }) {
               <Icon.MessageCircle className="h-4 w-4" />
             </Link>
 
+            {/* Cari — pil di bawah hanya ada di halaman telusur, jadi ikon
+                ini yang menjamin pencarian tetap terjangkau di halaman lain. */}
+            <button
+              onClick={() => setCariTerbuka(true)}
+              aria-label="Cari barang atau jasa"
+              title="Cari"
+              className="rounded-full p-2 text-gray-500 transition-all duration-200 hover:bg-black/[0.05] hover:text-[#1d1d1f] active:scale-90 dark:text-gray-400 dark:hover:bg-white/[0.08] dark:hover:text-white"
+            >
+              <Icon.Search className="h-4 w-4" />
+            </button>
+
             {/* Notification Center */}
-            <NotificationCenter />
+            <NotificationCenter onOpenChange={setNotifTerbuka} />
 
             {/* Theme toggle */}
             <button
@@ -237,6 +267,8 @@ export default function Navbar({ config }) {
           })}
         </nav>
       </div>
+
+      <QuickSearchSheet isOpen={cariTerbuka} onClose={() => setCariTerbuka(false)} />
 
       <OTPModal
         isOpen={showOtp}
