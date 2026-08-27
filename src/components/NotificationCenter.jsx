@@ -13,7 +13,7 @@ function urlBase64ToUint8Array(base64String) {
   return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
 }
 
-export default function NotificationCenter() {
+export default function NotificationCenter({ onOpenChange }) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState("all");
   const [notifications, setNotifications] = useState([]);
@@ -24,6 +24,12 @@ export default function NotificationCenter() {
   // readIds disimpan di state supaya tidak ada beda render server vs client (hydration safe)
   const [readIds, setReadIds] = useState([]);
   const popoverRef = useRef(null);
+
+  // Bilah atas perlu tahu panel ini sedang terbuka — kalau ia menyingkir saat
+  // digulir, panelnya ikut terseret keluar layar bersamanya.
+  useEffect(() => {
+    onOpenChange?.(isOpen);
+  }, [isOpen, onOpenChange]);
 
   // Baca readIds dari localStorage HANYA di client (setelah mount)
   useEffect(() => {
@@ -287,9 +293,11 @@ export default function NotificationCenter() {
           {/* FILTER PILLS */}
           <div className="flex gap-1.5 px-3 py-2 border-b border-slate-100 dark:border-slate-800/80 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {[
+              // Dua dunia yang berbeda tidak boleh menumpuk jadi satu tumpukan
+              // yang sama: kabar sosial dan kabar dagang dipisah tegas.
               { id: "all", label: "Semua" },
-              { id: "mading", label: "Menfess & Info" },
-              { id: "listing", label: "Iklan Pasar" },
+              { id: "mading", label: "🫂 Sosial" },
+              { id: "listing", label: "🛒 Belanja" },
             ].map((tab) => (
               <button
                 key={tab.id}

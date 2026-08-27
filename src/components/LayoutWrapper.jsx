@@ -9,6 +9,8 @@ import NotifPrompt from "./NotifPrompt";
 import BottomNavbar from "./BottomNavbar";
 import GlobalChatNotifier from "./GlobalChatNotifier";
 import PopupSponsor from "./PopupSponsor";
+import SwipeBackGesture from "./SwipeBackGesture";
+import GlobalPullToRefresh from "./GlobalPullToRefresh";
 import { cn } from "@/lib/utils";
 
 export default function LayoutWrapper({ children }) {
@@ -96,13 +98,16 @@ export default function LayoutWrapper({ children }) {
       <main className={cn(
         "flex-1 flex flex-col bg-[#f5f5f7]",
         isAdmin ? "dark:bg-[#000000]" : isChat || isTeman ? "dark:bg-[#000000]" : "dark:bg-[#0b0b0f]",
-        !isAdmin && !isChat && !isTeman ? "pb-28 md:pb-32" : ""
+        // Ruang bawah disesuaikan: dock + kolom cari yang menempel di bawah
+        !isAdmin && !isChat && !isTeman ? "pb-36 md:pb-32" : ""
       )}>
         {children}
       </main>
       {!isImmersive && (
         <>
           <GlobalChatNotifier />
+          <SwipeBackGesture />
+          <GlobalPullToRefresh />
           <InstallPrompt />
           {/* Ajakan notifikasi peramban. Menahan dirinya sendiri (kunjungan
               kedua / 25 detik), karena izin notifikasi cuma bisa diminta sekali. */}

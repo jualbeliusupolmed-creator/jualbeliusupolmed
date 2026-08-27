@@ -14,6 +14,15 @@ export default function OprecClient({ initialOprecs = [] }) {
   const [activeDaftarModal, setActiveDaftarModal] = useState(null);
   const [showBuatModal, setShowBuatModal] = useState(false);
 
+  // Dibuka dari tombol "Buat" di dock bawah: /rute?tulis=1 langsung
+  // membuka form, jadi pengguna tidak perlu mencari tombolnya di halaman.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("tulis") === "1") {
+      setShowBuatModal(true);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
+
   const loadOprecs = useCallback(async () => {
     setLoading(true);
     try {

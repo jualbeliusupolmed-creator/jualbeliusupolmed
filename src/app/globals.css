@@ -150,6 +150,11 @@ body {
   .no-tap-highlight {
     -webkit-tap-highlight-color: transparent;
   }
+  /* Panel bawah menempel di tepi layar; tanpa ini tombol terakhirnya
+     bersembunyi di balik garis home iPhone. Dipakai BottomSheet. */
+  .pb-safe {
+    padding-bottom: max(1.25rem, env(safe-area-inset-bottom, 0px));
+  }
 }
 
 /* Shimmer animation for skeletons */
