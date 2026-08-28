@@ -477,11 +477,11 @@ export default function MadingClient({ initialPosts = [] }) {
           {/* MAIN TABS */}
           <div className="max-w-2xl mx-auto px-4 flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-2.5 pt-0.5">
             {[
-              { id: "all", label: "Semua", icon: "✨" },
-              { id: "menfess", label: "Menfess", icon: "💌" },
-              { id: "info", label: "Info Kampus", icon: "📢" },
-              { id: "organisasi", label: "Organisasi", icon: "🏛️" },
-              { id: "blog", label: "Blog", icon: "✍️" },
+              { id: "all", label: "Semua", icon: <Icon.Sparkles className="w-3.5 h-3.5 shrink-0" /> },
+              { id: "menfess", label: "Menfess", icon: <Icon.Mail className="w-3.5 h-3.5 shrink-0" /> },
+              { id: "info", label: "Info Kampus", icon: <Icon.Megaphone className="w-3.5 h-3.5 shrink-0" /> },
+              { id: "organisasi", label: "Organisasi", icon: <Icon.Landmark className="w-3.5 h-3.5 shrink-0" /> },
+              { id: "blog", label: "Blog", icon: <Icon.Edit2 className="w-3.5 h-3.5 shrink-0" /> },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -492,11 +492,13 @@ export default function MadingClient({ initialPosts = [] }) {
                     : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white bg-slate-100/80 hover:bg-slate-200/80 dark:bg-white/[0.05] dark:hover:bg-white/[0.08]"
                 }`}
               >
-                <span>{tab.icon}</span>
+                {tab.icon}
                 <span>{tab.label}</span>
               </button>
             ))}
           </div>
+
+
         </div>
 
         <div className="max-w-2xl mx-auto px-4 py-4 space-y-3.5">

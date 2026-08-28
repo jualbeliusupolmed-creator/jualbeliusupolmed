@@ -69,7 +69,7 @@ export default async function CaraBergabungPage() {
       <div className="rounded-3xl bg-gradient-to-br from-primary to-primary-dark p-8 text-center text-white">
         <h1 className="text-3xl font-extrabold">Cara Bergabung</h1>
         <p className="mt-2 text-white/80">
-          Komunitas jual-beli khusus warga Medan
+          Komunitas jual-beli khusus mahasiswa USU & Polmed
         </p>
         <a href={WA_GROUP_LINK} target="_blank" rel="noreferrer" className="btn mt-5 bg-white text-primary hover:bg-white/90">
           <span aria-hidden="true">🟢</span> Gabung Grup WhatsApp

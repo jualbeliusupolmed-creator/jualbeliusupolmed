@@ -190,7 +190,7 @@ export default function OprecDaftarModal({ oprec, onClose, onSubmitted }) {
                 required
                 value={form.applicant_name}
                 onChange={(e) => setForm({ ...form, applicant_name: e.target.value })}
-                placeholder="Contoh: Rian Pratama"
+                placeholder="Contoh: Budi Siregar"
                 className="input py-2 text-xs font-medium"
               />
             </div>

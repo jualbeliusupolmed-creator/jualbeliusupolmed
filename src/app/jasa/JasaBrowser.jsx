@@ -285,7 +285,7 @@ export default function JasaBrowser({
               Marketplace Jasa · Medan
             </h1>
             <p className="mt-1 text-[11px] text-gray-400 dark:text-slate-500">
-              Temukan berbagai jasa warga (Tugas, Desain, IT, dll).
+              Temukan berbagai Jasa Mahasiswa (Tugas, Desain, IT, dll).
             </p>
 
             {/* CTAs — single row, pill style */}

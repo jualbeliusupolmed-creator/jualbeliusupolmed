@@ -27,7 +27,7 @@ export async function generateMetadata() {
   const site = settings.site || {};
   
   const baseTitle = site.metaTitle || "Jual Beli USU & Polmed — Marketplace Mahasiswa Medan";
-  const baseDesc = site.metaDescription || "Marketplace jual-beli khusus warga Medan Medan: laptop bekas, HP, buku, fashion, makanan, kos, dan jasa. Transaksi aman & COD di area yang disepakati, dibantu admin.";
+  const baseDesc = site.metaDescription || "Marketplace jual-beli khusus mahasiswa USU & Polmed: laptop bekas, HP, buku, fashion, makanan, kos, dan jasa. Transaksi aman & COD di area yang disepakati, dibantu admin.";
   const keywordsString = site.metaKeywords || "jual beli USU, jual beli Polmed, marketplace mahasiswa Medan, laptop bekas USU, barang bekas mahasiswa Polmed, kos dekat USU, COD kampus";
   const keywords = keywordsString.split(",").map(k => k.trim()).filter(Boolean);
 
@@ -101,7 +101,7 @@ export default async function RootLayout({ children }) {
         "@id": `${BASE_URL}/#website`,
         url: BASE_URL,
         name: siteName,
-        description: site.metaDescription || "Marketplace jual-beli khusus warga Medan Medan.",
+        description: site.metaDescription || "Marketplace jual-beli khusus mahasiswa USU & Polmed.",
         inLanguage: "id-ID",
         potentialAction: {
           "@type": "SearchAction",

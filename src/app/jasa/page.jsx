@@ -11,15 +11,15 @@ import { skripJsonLd } from "@/lib/jsonLd";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Jasa warga USU Polmed — Joki, Desain, IT",
-  description: "Temukan jasa dari warga Medan. Mulai dari pekerjaan lepas, desain grafis, service laptop, hingga jasa angkut barang.",
-  keywords: ["jasa warga", "pekerjaan lepas usu", "service laptop polmed", "desain grafis medan", "jasa angkut medan", "freelance warga"],
+  title: "Jasa Mahasiswa USU Polmed — Joki, Desain, IT",
+  description: "Temukan jasa dari mahasiswa USU & Polmed. Mulai dari pekerjaan lepas, desain grafis, service laptop, hingga jasa angkut barang.",
+  keywords: ["Jasa Mahasiswa", "pekerjaan lepas usu", "service laptop polmed", "desain grafis medan", "jasa angkut medan", "freelance warga"],
   alternates: { canonical: "/jasa" },
   openGraph: {
-    title: "Jasa warga USU Polmed",
-    description: "Marketplace jasa khusus warga Medan.",
+    title: "Jasa Mahasiswa USU Polmed",
+    description: "Marketplace jasa khusus mahasiswa USU & Polmed.",
     url: "/jasa",
-    siteName: "Jual Beli Medan",
+    siteName: "Jual Beli USU Polmed",
     locale: "id_ID",
     type: "website",
   },
@@ -131,7 +131,7 @@ export default async function JasaPage() {
           categories={JASA_CATEGORIES}
           stats={null}
           heroTitle="Marketplace Jasa Kampus"
-          heroSubtitle="Temukan berbagai jasa warga"
+          heroSubtitle="Temukan berbagai Jasa Mahasiswa"
           layoutOrder={["hero", "featured", "main"]}
         />
       </Suspense>

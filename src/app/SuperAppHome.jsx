@@ -307,7 +307,7 @@ export default function SuperAppHome({
         <div className="flex items-center justify-between px-4 sm:px-6 md:px-10 lg:px-16 mb-2.5">
           <div className="flex items-center gap-2">
             <h3 className="text-base sm:text-lg font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">
-              🛍️ Belanja di Marketplace
+              <span className="inline-flex items-center gap-2"><Icon.ShoppingBag className="h-5 w-5" />Belanja di Marketplace</span>
             </h3>
             <span className="rounded-full bg-black/[0.05] px-2.5 py-0.5 text-[10px] font-semibold text-gray-600 dark:bg-white/[0.08] dark:text-gray-400">
               Geser
@@ -484,7 +484,7 @@ export default function SuperAppHome({
                   {/* Top Header */}
                   <div className="flex items-center gap-2.5 mb-1.5">
                     <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg ${isInfo ? "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300" : "bg-slate-100 text-slate-700 dark:bg-white/[0.06] dark:text-slate-300"}`}>
-                      {isInfo ? "📢" : "👤"}
+                    {isInfo ? <Icon.Megaphone className="h-4 w-4" /> : <Icon.User className="h-4 w-4" />}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5 flex-wrap">
@@ -625,7 +625,7 @@ export default function SuperAppHome({
               onClick={() => setShowModal(false)}
               className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full font-bold"
             >
-              ✕
+            <Icon.X className="h-4 w-4" />
             </button>
 
             <h2 className="text-lg font-bold text-[#1d1d1f] dark:text-white tracking-tight mb-4">
@@ -644,7 +644,7 @@ export default function SuperAppHome({
                       : "text-slate-500"
                   }`}
                 >
-                  💌 Menfess
+            <span className="inline-flex items-center gap-1.5"><Icon.Mail className="h-4 w-4" />Menfess</span>
                 </button>
                 <button
                   type="button"
@@ -655,7 +655,7 @@ export default function SuperAppHome({
                       : "text-slate-500"
                   }`}
                 >
-                  📢 Info Kampus
+            <span className="inline-flex items-center gap-1.5"><Icon.Megaphone className="h-4 w-4" />Info Kampus</span>
                 </button>
               </div>
 

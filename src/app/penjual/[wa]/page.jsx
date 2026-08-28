@@ -296,7 +296,7 @@ export default async function SellerProfilePage({ params }) {
             {waIntl && (
               <a
                 href={`https://wa.me/${waIntl}?text=${encodeURIComponent(
-                  `Halo Kak ${seller.seller_name}, saya lihat profil Kakak di Jual Beli Medan.`
+                  `Halo Kak ${seller.seller_name}, saya lihat profil Kakak di Jual Beli USU Polmed.`
                 )}`}
                 target="_blank"
                 rel="noreferrer"

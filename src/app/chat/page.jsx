@@ -1020,7 +1020,7 @@ function ChatContent() {
                     ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
                     : "bg-blue-100 text-blue-600 dark:bg-blue-950/60 dark:text-blue-300"
                 }`}>
-                  {roomType === "direct" ? "💬" : "👤"}
+              {roomType === "direct" ? <Icon.MessageCircle className="h-5 w-5" /> : <Icon.User className="h-5 w-5" />}
                 </div>
                 {roomStatus === "active" && (
                   <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-black" />
@@ -1029,7 +1029,7 @@ function ChatContent() {
               <div className="min-w-0">
                 <p className="text-xs xs:text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7] truncate">{partnerInfo.alias}</p>
                 <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
-                  {roomType === "direct" ? `💬 DM Pribadi · ${partnerInfo.faculty}` : partnerInfo.faculty}
+            {roomType === "direct" ? <span className="inline-flex items-center gap-1"><Icon.MessageCircle className="h-3 w-3" />DM Pribadi · {partnerInfo.faculty}</span> : partnerInfo.faculty}
                 </p>
               </div>
             </div>
@@ -1042,7 +1042,7 @@ function ChatContent() {
                 className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 px-3 py-1.5 rounded-full text-xs font-bold hover:bg-emerald-100 shadow-2xs active:scale-95 transition-all shrink-0"
                 title="Lanjut ngobrol di WhatsApp Pribadi"
               >
-                <span>🟢 Lanjut WA</span>
+              <span className="inline-flex items-center gap-1.5"><Icon.MessageCircle className="h-4 w-4" />Lanjut WA</span>
               </a>
             )}
           </div>
@@ -1088,7 +1088,7 @@ function ChatContent() {
                           loading="lazy"
                         />
                         <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
-                          🔍 Perbesar Foto
+                    <span className="inline-flex items-center gap-1"><Icon.Search className="h-3.5 w-3.5" />Perbesar Foto</span>
                         </div>
                       </div>
                       {parsed.text && <p className="px-2 pt-1 text-xs leading-relaxed">{parsed.text}</p>}
@@ -1116,7 +1116,7 @@ function ChatContent() {
         {roomStatus === "closed" && (
           <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border-t border-amber-200 dark:border-amber-900 text-center space-y-2 pb-[max(env(safe-area-inset-bottom),0.6rem)]">
             <p className="text-xs font-bold text-amber-800 dark:text-amber-300">
-              👋 Obrolan ini telah berakhir.
+                Obrolan ini telah berakhir.
             </p>
             <button
               onClick={() => router.push("/chat")}
@@ -1143,7 +1143,7 @@ function ChatContent() {
               title="Kirim Foto"
               className="w-9 h-9 shrink-0 rounded-full bg-black/[0.05] dark:bg-white/[0.1] hover:bg-black/[0.08] dark:hover:bg-white/[0.15] text-gray-700 dark:text-gray-200 flex items-center justify-center active:scale-90 transition-all text-sm disabled:opacity-50"
             >
-              {uploadingImg ? "⏳" : "📷"}
+              {uploadingImg ? <span className="h-4 w-4 animate-pulse">...</span> : <Icon.Camera className="h-4 w-4" />}
             </button>
             <input
               type="text"
@@ -1214,7 +1214,7 @@ function ChatContent() {
         : "Ngobrol 1-on-1 dengan mahasiswa USU & POLMED — ketuk buat mulai";
 
   return (
-    <div className="fixed inset-x-0 bottom-0 top-[52px] z-20 overflow-y-auto bg-[#f5f5f7] dark:bg-[#000000] font-sans pb-24 md:pb-28">
+    <div className="fixed inset-x-0 bottom-0 top-[52px] z-20 overflow-y-auto bg-[#f5f5f7] dark:bg-[#000000] font-sans pb-[calc(6rem+env(safe-area-inset-bottom,0px))] md:pb-28">
       <div className="bg-white/80 dark:bg-[#000000]/80 backdrop-blur-2xl border-b border-black/[0.06] dark:border-white/[0.08] sticky top-0 z-40">
         <div className="px-4 py-3 max-w-2xl mx-auto flex items-center justify-between">
           <div>

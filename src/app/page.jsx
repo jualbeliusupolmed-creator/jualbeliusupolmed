@@ -11,12 +11,12 @@ export const revalidate = 0;
 export const metadata = {
   title: "Jual Beli USU & Polmed — Kampus Hub",
   description:
-    "Marketplace mahasiswa USU dan Polmed, info kampus, menfess, dan cari teman anonim. Super app untuk mahasiswa Medan.",
+    "Marketplace mahasiswa USU dan Polmed, info kampus, menfess, dan cari teman anonim. Pusat kampus untuk mahasiswa Medan.",
   keywords: ["jual beli USU", "jual beli Polmed", "menfess usu", "info kampus", "mahasiswa Medan", "cari teman", "marketplace mahasiswa"],
   alternates: { canonical: "/" },
   openGraph: {
     title: "Jual Beli USU & Polmed — Kampus Hub",
-    description: "Marketplace mahasiswa USU dan Polmed, info kampus, menfess, dan cari teman anonim. Super app untuk mahasiswa Medan.",
+    description: "Marketplace mahasiswa USU dan Polmed, info kampus, menfess, dan cari teman anonim. Pusat kampus untuk mahasiswa Medan.",
     url: "/",
     siteName: "Jual Beli USU & Polmed",
     locale: "id_ID",

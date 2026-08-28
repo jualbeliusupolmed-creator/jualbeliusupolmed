@@ -15,10 +15,10 @@ import {
 
 const KUNCI_RIWAYAT = "riwayat_cari";
 const PINTASAN = [
-  { href: "/dicari", label: "Barang Dicari", ikon: "📌" },
-  { href: "/favorit", label: "Favorit", ikon: "❤️" },
-  { href: "/jasa", label: "Jasa", ikon: "🛠️" },
-  { href: "/chat", label: "Obrolan", ikon: "💬" },
+  { href: "/dicari", label: "Barang Dicari", ikon: Icon.Pin },
+  { href: "/favorit", label: "Favorit", ikon: Icon.Heart },
+  { href: "/jasa", label: "Jasa", ikon: Icon.Briefcase },
+  { href: "/chat", label: "Obrolan", ikon: Icon.MessageCircle },
 ];
 const TEMA = [
   { id: "terang", label: "Terang" },
@@ -133,7 +133,7 @@ export default function QuickSearchSheet({ isOpen, onClose }) {
               onClick={() => buka(p.href)}
               className="flex flex-col items-center gap-1 rounded-2xl border border-black/[0.06] bg-black/[0.03] px-2 py-3 text-[11px] font-semibold text-[#1d1d1f] active:scale-95 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-white"
             >
-              <span className="text-lg leading-none">{p.ikon}</span>
+              <p.ikon className="h-5 w-5 text-primary" aria-hidden="true" />
               <span className="truncate max-w-full">{p.label}</span>
             </button>
           ))}
