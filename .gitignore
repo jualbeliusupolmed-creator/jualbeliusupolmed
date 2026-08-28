@@ -74,3 +74,7 @@ scratch/
 
 # Arsip salinan env lama — berisi kredensial, jangan pernah di-commit.
 arsip-env/
+
+# Artefak kerja alat browser & tangkapan layar sementara — bukan bagian aplikasi.
+.playwright-mcp/
+/ui-home-*.png
