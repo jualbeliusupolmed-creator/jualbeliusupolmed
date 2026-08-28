@@ -36,7 +36,8 @@ const roboto = Roboto({
 });
 
 export const metadata = {
-  title: "Panel Admin (Demo) — Jual Beli USU Polmed",
+  // Tanpa sufiks: template di layout akar yang menambahkannya.
+  title: "Panel Admin (Demo)",
   description:
     "Salinan terbuka panel admin Jual Beli USU Polmed, berisi data contoh. Dibuat supaya cara kerja sistemnya bisa dipelajari tanpa membuka data siapa pun.",
   // Salinan demo tidak boleh bersaing dengan halaman sungguhan di hasil

@@ -63,6 +63,12 @@ export const ADMIN_TABS = [
   "listings",
   "transaksi",
   "rating",
+  // Kontak Pembeli. Menunya sudah dipajang di nav.js, panelnya sudah ada
+  // (BuyerContactsPanel), API-nya sudah ada (/api/admin/buyer-contacts), dan
+  // AdminPanel sudah siap merendernya — yang hilang cuma baris ini, sehingga
+  // /admin/[tab] memanggil notFound() dan menunya berakhir 404 saat diklik.
+  // Persis kasus "blacklist" yang diceritakan di bawah, dengan arah terbalik.
+  "kontak_pembeli",
   "reports",
   "dicari",
   "kategori",

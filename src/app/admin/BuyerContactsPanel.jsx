@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import { useBasisApi } from "@/components/admin/basis";
 
 function fmt(d) {
   if (!d) return "-";
@@ -17,6 +18,11 @@ function Badge({ status }) {
 }
 
 export default function BuyerContactsPanel() {
+  // Satu komponen, dua alamat: di /admin ia memanggil /api/admin/buyer-contacts
+  // (data sungguhan, bergerbang), di /admin-demo ia memanggil
+  // /api/admin-demo/buyer-contacts (data karangan). Tanpa ini panelnya memang
+  // tampil di salinan demo, tapi isinya cuma "Unauthorized".
+  const basisApi = useBasisApi();
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,7 +35,7 @@ export default function BuyerContactsPanel() {
     setLoading(true);
     setError(null);
     try {
-      let url = `/api/admin/buyer-contacts?page=${page}&limit=50`;
+      let url = `${basisApi}/buyer-contacts?page=${page}&limit=50`;
       if (statusFilter !== "all") url += `&deal_status=${statusFilter}`;
       if (q) url += `&q=${encodeURIComponent(q)}`;
 
@@ -44,7 +50,7 @@ export default function BuyerContactsPanel() {
     } finally {
       setLoading(false);
     }
-  }, [page, q, statusFilter]);
+  }, [basisApi, page, q, statusFilter]);
 
   useEffect(() => { load(); }, [load]);
 

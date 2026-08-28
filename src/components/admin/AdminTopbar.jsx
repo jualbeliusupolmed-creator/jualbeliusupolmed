@@ -4,8 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAdmin } from "./AdminProvider";
 import AdminNav from "./AdminNav";
-import { NAV, ICONS, labelTab } from "./nav";
-import { useBasisAdmin } from "./basis";
+import { ICONS, labelTab, navUntuk } from "./nav";
+import { useBasisAdmin, useModeDemo } from "./basis";
 import TransactionModeToggle from "./TransactionModeToggle";
 
 /*
@@ -14,6 +14,7 @@ import TransactionModeToggle from "./TransactionModeToggle";
  */
 export default function AdminTopbar({ counts = {} }) {
   const basis = useBasisAdmin();
+  const demo = useModeDemo();
   const router = useRouter();
   const pathname = usePathname();
   const { logout } = useAdmin();
@@ -28,11 +29,16 @@ export default function AdminTopbar({ counts = {} }) {
   const currentTab = pathname.split("/").filter(Boolean)[1] || "overview";
   const judul = labelTab(currentTab);
 
+  // Pencarian ikut basis: menu yang tidak punya halaman demo tidak boleh
+  // muncul sebagai saran di panel demo — jalan pintas ke halaman kosong sama
+  // saja dengan tautan mati, cuma lebih sulit ditemukan.
   const hasil = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return [];
-    return NAV.filter((n) => n.label.toLowerCase().includes(s) || n.key.includes(s)).slice(0, 8);
-  }, [q]);
+    return navUntuk(demo)
+      .filter((n) => n.label.toLowerCase().includes(s) || n.key.includes(s))
+      .slice(0, 8);
+  }, [demo, q]);
 
   // Global hotkey: Ctrl+K / Cmd+K / Slash to search
   useEffect(() => {
