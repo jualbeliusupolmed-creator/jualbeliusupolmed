@@ -33,10 +33,10 @@ const SOSIAL = {
 };
 
 const SWIPE = {
-  name: "Swipe",
+  name: "Teman",
   href: "/teman",
   match: ["/teman", "/cari-teman", "/swap"],
-  icon: Icon.Handshake,
+  icon: Icon.Users,
 };
 
 // Chat sengaja tidak dihitung sebagai area sosial: ia dibuka dari mana saja,

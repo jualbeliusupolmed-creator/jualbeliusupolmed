@@ -21,6 +21,19 @@ function secret() {
     );
     return "dev_only_insecure_password";
   }
+  // Validasi panjang minimum — password pendek mudah di-brute-force.
+  if (pw.length < 16) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "ADMIN_PASSWORD harus minimal 16 karakter. " +
+          "Gunakan: openssl rand -base64 24"
+      );
+    }
+    console.warn(
+      "[SECURITY WARNING] ADMIN_PASSWORD terlalu pendek (< 16 karakter). " +
+        "Gunakan: openssl rand -base64 24"
+    );
+  }
   return pw;
 }
 

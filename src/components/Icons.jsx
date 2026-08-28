@@ -123,9 +123,19 @@ export const Icon = {
       <line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
     </svg>
   ),
+  // Jabat tangan — ikon untuk tab Teman/Swipe di dock
   Handshake: (p) => (
     <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
-      <path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z" />
+      <path d="M14 9a3 3 0 0 1-3 3H8a3 3 0 0 1 0-6h3a3 3 0 0 1 3 3z" />
+      <path d="M22 12h-4l-3 3-4-6-3 3H2" />
+    </svg>
+  ),
+  UserPlus: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="8.5" cy="7" r="4" />
+      <line x1="20" y1="8" x2="20" y2="14" />
+      <line x1="23" y1="11" x2="17" y2="11" />
     </svg>
   ),
   User: (p) => (
@@ -285,13 +295,6 @@ export const Icon = {
     <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
       <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
       <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-    </svg>
-  ),
-  Download: (p) => (
-    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-      <polyline points="7 10 12 15 17 10" />
-      <line x1="12" y1="15" x2="12" y2="3" />
     </svg>
   ),
   // ─── Tab Mading ───────────────────────────────────────────────────────────
