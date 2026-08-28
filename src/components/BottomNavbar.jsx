@@ -10,28 +10,38 @@ import { useHideOnScroll } from "@/lib/useHideOnScroll";
 import QuickSearchSheet from "./QuickSearchSheet";
 import CreateSheet from "./CreateSheet";
 
-// Dock dibagi seimbang: dua tujuan di kiri (sisi belanja), dua di kanan
-// (sisi sosial dan percakapan), dan satu tombol buat di tengah — supaya
-// pengguna bisa berpindah "mode mental" tanpa mencari-cari menu.
-const NAV_KIRI = [
-  { name: "Beranda", href: "/", icon: Icon.Home },
-  {
-    name: "Market",
-    href: "/jual-beli",
-    match: ["/jual-beli", "/produk", "/jasa", "/favorit", "/dicari", "/toko", "/penjual", "/distributor"],
-    icon: Icon.ShoppingBag,
-  },
-];
+// Dua slot terluar (Beranda dan Chat) tidak pernah pindah tempat, begitu
+// juga tombol buat di tengah. Yang berganti cuma sepasang slot di dalam:
+// biasanya Market + Sosial, tetapi begitu pengguna masuk area sosial,
+// pasangan itu jadi Sosial + Swipe — seperti dock lama, cuma tanpa
+// menggeser tujuan yang sudah dihafal jempol.
+const BERANDA = { name: "Beranda", href: "/", icon: Icon.Home };
+const CHAT = { name: "Chat", href: "/chat", icon: Icon.MessageCircle };
 
-const NAV_KANAN = [
-  {
-    name: "Sosial",
-    href: "/mading",
-    match: ["/sosial", "/mading", "/organisasi", "/oprec", "/teman", "/cari-teman", "/swap"],
-    icon: Icon.BookOpen,
-  },
-  { name: "Chat", href: "/chat", icon: Icon.MessageCircle },
-];
+const MARKET = {
+  name: "Market",
+  href: "/jual-beli",
+  match: ["/jual-beli", "/produk", "/jasa", "/favorit", "/dicari", "/toko", "/penjual", "/distributor"],
+  icon: Icon.ShoppingBag,
+};
+
+const SOSIAL = {
+  name: "Sosial",
+  href: "/mading",
+  match: ["/sosial", "/mading", "/organisasi", "/oprec"],
+  icon: Icon.BookOpen,
+};
+
+const SWIPE = {
+  name: "Swipe",
+  href: "/teman",
+  match: ["/teman", "/cari-teman", "/swap"],
+  icon: Icon.Handshake,
+};
+
+// Chat sengaja tidak dihitung sebagai area sosial: ia dibuka dari mana saja,
+// jadi dock tidak perlu ikut berubah tiap kali orang membalas pesan.
+const RUTE_SOSIAL = ["/sosial", "/mading", "/organisasi", "/oprec", "/teman", "/cari-teman", "/swap"];
 
 // Halaman yang memang untuk menelusuri barang — di sinilah kolom cari
 // pantas menempel di bawah, dalam jangkauan ibu jari.
@@ -92,6 +102,13 @@ function BottomNavbarInner() {
     pathname === "/chat" && searchParams && (searchParams.has("anon") || searchParams.has("room"));
 
   const adaPencarian = RUTE_PENCARIAN.includes(pathname || "");
+  // Di area sosial, Market mundur satu langkah (masih sekali ketuk lewat
+  // Beranda) supaya Swipe bisa berdiri di sebelah Sosial.
+  const diAreaSosial = RUTE_SOSIAL.some(
+    (r) => pathname === r || pathname?.startsWith(`${r}/`)
+  );
+  const navKiri = [BERANDA, diAreaSosial ? SOSIAL : MARKET];
+  const navKanan = [diAreaSosial ? SWIPE : SOSIAL, CHAT];
   // Sheet yang terbuka menahan dock supaya tidak menyingkir di belakangnya.
   const menyingkir = tersembunyi && !bukaCari && !bukaBuat && !isChatRoom;
 
@@ -142,7 +159,7 @@ function BottomNavbarInner() {
             isChatRoom ? "h-12 md:h-10" : "h-16 md:h-14 md:px-4 md:gap-2"
           )}
         >
-          {NAV_KIRI.map((n) => (
+          {navKiri.map((n) => (
             <ItemNav key={n.name} n={n} pathname={pathname} />
           ))}
 
@@ -184,7 +201,7 @@ function BottomNavbarInner() {
             )}
           </button>
 
-          {NAV_KANAN.map((n) => (
+          {navKanan.map((n) => (
             <ItemNav key={n.name} n={n} pathname={pathname} />
           ))}
         </div>
