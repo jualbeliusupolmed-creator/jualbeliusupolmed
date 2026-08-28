@@ -78,3 +78,20 @@ arsip-env/
 # Artefak kerja alat browser & tangkapan layar sementara — bukan bagian aplikasi.
 .playwright-mcp/
 /ui-home-*.png
+
+# ── Artefak kerja yang sempat ter-commit (dibersihkan 28 Agustus 2026) ────────
+# Repo ini PUBLIK. Yang terlanjur masuk di sini bukan rahasia — sudah diperiksa,
+# tidak ada kredensial, dan nomor WA di dalamnya cuma placeholder — tapi 4,6 MB
+# tangkapan layar acak dan transkrip percakapan AI membuat `git clone` berat dan
+# akar repo tidak bisa dibaca sekilas.
+#
+# Barisnya ditinggal sebagai jaring: kalau berkas serupa dibuat lagi oleh alat
+# mana pun, ia tidak ikut ter-commit.
+lint-results.txt
+isi.md
+terakhir.md
+/ggg.png
+/sssss.png
+/image.png
+Screenshot */
+*.tmp.png

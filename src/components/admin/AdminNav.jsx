@@ -2,8 +2,8 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { GROUPS, ICONS } from "./nav";
-import { useBasisAdmin } from "./basis";
+import { ICONS, grupUntuk } from "./nav";
+import { useBasisAdmin, useModeDemo } from "./basis";
 
 const ALERT_KEYS = new Set(["moderasi", "reports", "profil_request", "toko", "antrean"]);
 
@@ -19,6 +19,8 @@ export default function AdminNav({ counts = {}, onNavigate }) {
   const router = useRouter();
   const pathname = usePathname();
   const basis = useBasisAdmin();
+  const demo = useModeDemo();
+  const grup = useMemo(() => grupUntuk(demo), [demo]);
   const currentTab = pathname.split("/").filter(Boolean)[1] || "overview";
 
   const [search, setSearch] = useState("");
@@ -26,7 +28,7 @@ export default function AdminNav({ counts = {}, onNavigate }) {
   // State accordion: default BUKA SEMUA GRUP agar admin langsung melihat seluruh menu
   const [openGroups, setOpenGroups] = useState(() => {
     const initial = {};
-    GROUPS.forEach((g) => {
+    grup.forEach((g) => {
       initial[g.label] = true;
     });
     return initial;
@@ -34,7 +36,7 @@ export default function AdminNav({ counts = {}, onNavigate }) {
 
   // Saat tab berpindah, pastikan grup yang berisi tab baru terbuka otomatis
   useEffect(() => {
-    GROUPS.forEach((g) => {
+    grup.forEach((g) => {
       if (g.items.some((item) => item.key === currentTab)) {
         setOpenGroups((prev) => ({ ...prev, [g.label]: true }));
       }
@@ -52,15 +54,15 @@ export default function AdminNav({ counts = {}, onNavigate }) {
 
   // Filter menu berdasarkan input pencarian
   const filteredGroups = useMemo(() => {
-    if (!search.trim()) return GROUPS;
+    if (!search.trim()) return grup;
     const q = search.toLowerCase();
-    return GROUPS.map((g) => {
+    return grup.map((g) => {
       const matchingItems = g.items.filter(
         (item) => item.label.toLowerCase().includes(q) || item.key.toLowerCase().includes(q)
       );
       return { ...g, items: matchingItems };
     }).filter((g) => g.items.length > 0);
-  }, [search]);
+  }, [grup, search]);
 
   return (
     <nav className="g-rail-nav flex flex-col font-sans">

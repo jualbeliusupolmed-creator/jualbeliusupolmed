@@ -80,9 +80,9 @@ export const GROUPS = [
   {
     label: "Bot & Komunikasi",
     items: [
-      { key: "teman",      label: "Swipe Teman Kampus" },
+      { key: "teman",      label: "Swipe Teman Kampus" , demoOff: true },
       { key: "wabot",      label: "WhatsApp Bot" },
-      { key: "obrolan",    label: "Audit Cari Teman" },
+      { key: "obrolan",    label: "Audit Cari Teman" , demoOff: true },
       { key: "broadcast",  label: "Broadcast" },
       { key: "notifikasi", label: "Notifikasi" },
       { key: "grouppost",  label: "Post Grup" },
@@ -94,13 +94,38 @@ export const GROUPS = [
     items: [
       { key: "keuangan",   label: "Keuangan" },
       { key: "tren",       label: "Tren Pencarian" },
-      { key: "mading",     label: "Analitik Menfess" },
+      { key: "mading",     label: "Analitik Menfess" , demoOff: true },
       { key: "blogs",      label: "Artikel Blog" },
       { key: "audit",      label: "Audit Trail" },
       { key: "pengaturan", label: "Pengaturan" },
     ],
   },
 ];
+
+/*
+ * Tiga menu di atas ditandai `demoOff`. Alasannya bukan rahasia data,
+ * melainkan halaman: /admin/teman, /admin/obrolan, dan /admin/mading adalah
+ * halaman eksplisit yang tidak punya kembaran di /admin-demo, sementara
+ * /admin-demo/[tab] cuma menerima tab yang terdaftar di ADMIN_TABS. Sebelum
+ * ditandai, ketiganya tetap dipajang di sidebar demo dan mengantar
+ * pengunjung ke halaman kosong — di panel yang justru dibuka supaya orang
+ * bisa mempelajari sistemnya.
+ *
+ * Menambah halaman demo untuk salah satunya = hapus `demoOff` dari barisnya.
+ */
+
+/** Grup menu untuk basis yang sedang dibuka. Demo membuang yang tak punya halaman. */
+export function grupUntuk(demo) {
+  if (!demo) return GROUPS;
+  return GROUPS.map((g) => ({ ...g, items: g.items.filter((i) => !i.demoOff) })).filter(
+    (g) => g.items.length > 0,
+  );
+}
+
+/** Versi datar dari grupUntuk(), untuk pencarian di topbar. */
+export function navUntuk(demo) {
+  return grupUntuk(demo).flatMap((g) => g.items);
+}
 
 /** Daftar datar untuk nav mobile dan pencarian judul halaman. */
 export const NAV = GROUPS.flatMap((g) => g.items);
