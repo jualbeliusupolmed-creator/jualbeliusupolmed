@@ -64,7 +64,7 @@ export default function JualPage() {
   // `siap` menahannya sampai server menjawab — mengisi formulir dengan
   // tebakan lalu menimpanya sedetik kemudian membuat kolom yang sedang
   // diketik berkedip.
-  const { wa: sesiWa, nama: sesiNama, siap: sesiSiap, segarkan: segarkanSesi } = useSesi();
+  const { wa: sesiWa, nama: sesiNama, siap: sesiSiap, segarkan: segarkanSesi, tunggu: tungguSesi } = useSesi();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -171,8 +171,13 @@ export default function JualPage() {
     // 30 hari tetap dihadang modal masuk di sini. Nomor yang diketik tetap
     // harus sama dengan nomor sesinya: itu yang menghalangi seseorang
     // memasang iklan atas nama orang lain.
-    if (!sesiSiap) return;
-    if (formatWa(sesiWa || "") !== formattedWa) {
+    // Kalau sesi belum selesai terbaca, TUNGGU — jangan pulang diam-diam.
+    // Versi pertama perbaikan ini `return` begitu saja, dan akibatnya tombol
+    // "Pasang iklan" yang ditekan pada detik pertama tidak melakukan apa pun,
+    // tanpa satu pun pesan. Tombol yang diam lebih membingungkan daripada
+    // tombol yang menolak.
+    const waSesi = sesiSiap ? sesiWa : await tungguSesi();
+    if (formatWa(waSesi || "") !== formattedWa) {
       setShowPreviewModal(false);
       setShowAuthModal(true);
       return;

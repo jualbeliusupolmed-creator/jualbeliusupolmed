@@ -36,7 +36,7 @@ export default function TagProdukPicker({ value, onChange }) {
         setMemuat(false);
         setSudahAmbil(true);
       });
-  }, [terbuka, sudahAmbil]);
+  }, [terbuka, sudahAmbil, sesiSiap, sesiWa]);
 
   if (value) {
     const gambar =

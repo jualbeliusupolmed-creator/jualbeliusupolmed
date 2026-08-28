@@ -120,6 +120,14 @@ export function SesiProvider({ children }) {
     return d;
   }, [terapkan]);
 
+  // Menunggu jawaban server, bukan menyerah. Dipakai gerbang yang berjalan
+  // karena ditekan orang (tombol kirim), di mana `siap === false` berarti
+  // "tunggu sebentar" — bukan "batalkan diam-diam".
+  const tunggu = useCallback(async () => {
+    const d = await ambilSesi();
+    return d?.loggedIn && d.wa ? d.wa : "";
+  }, []);
+
   const keluar = useCallback(async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
@@ -131,7 +139,7 @@ export function SesiProvider({ children }) {
   }, []);
 
   return (
-    <SesiCtx.Provider value={{ ...sesi, masuk: segarkan, segarkan, keluar }}>
+    <SesiCtx.Provider value={{ ...sesi, masuk: segarkan, segarkan, keluar, tunggu }}>
       {children}
     </SesiCtx.Provider>
   );
@@ -154,6 +162,7 @@ export function useSesi() {
       masuk: async () => null,
       segarkan: async () => null,
       keluar: async () => {},
+      tunggu: async () => "",
     }
   );
 }
