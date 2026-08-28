@@ -11,6 +11,7 @@ import { CATEGORIES, MARKETPLACE_WA, POPULAR_AREAS, formatWa } from "@/lib/const
 import { buildSlug } from "@/lib/slug";
 import { toast } from "sonner";
 import Link from "next/link";
+import { useSesi } from "@/components/SesiProvider";
 
 const JASA_CATEGORIES = [
   "Tugas & Akademik",
@@ -30,6 +31,7 @@ const WORK_SYSTEMS = [
 ];
 
 export default function JasaClient() {
+  const { wa: sesiWa, nama: sesiNama, siap: sesiSiap } = useSesi();
   const router = useRouter();
   const [form, setForm] = useState({
     seller_name: "",
@@ -57,20 +59,22 @@ export default function JasaClient() {
 
   const [cfg, setCfg] = useState(null);
   
-  // Auto-fill from localStorage on mount
+  // Prefill identitas: menunggu sesi, jadi efeknya terpisah dari pemuatan
+  // config. Digabung, ia akan menarik ulang /api/config setiap kali sesi
+  // selesai terbaca — satu permintaan tambahan tanpa alasan.
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedWa = localStorage.getItem("seller_wa") || "";
-      const savedName = localStorage.getItem("seller_name") || "";
-      if (savedWa || savedName) {
-        setForm((f) => ({
-          ...f,
-          seller_wa: savedWa || f.seller_wa,
-          seller_name: savedName || f.seller_name,
-        }));
-      }
-    }
-    
+    if (!sesiSiap) return;
+    const savedWa = sesiWa || "";
+    const savedName = sesiNama || "";
+    if (!savedWa && !savedName) return;
+    setForm((f) => ({
+      ...f,
+      seller_wa: savedWa || f.seller_wa,
+      seller_name: savedName || f.seller_name,
+    }));
+  }, [sesiSiap, sesiWa, sesiNama]);
+
+  useEffect(() => {
     fetch("/api/config")
       .then((r) => r.json())
       .then((d) => setCfg(d))

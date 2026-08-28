@@ -5,8 +5,10 @@ import Image from "next/image";
 import { formatWa } from "@/lib/constants";
 import { toast } from "sonner";
 import imageCompression from "browser-image-compression";
+import { useSesi } from "@/components/SesiProvider";
 
 export default function OprecDaftarModal({ oprec, onClose, onSubmitted }) {
+  const { wa: sesiWa, nama: sesiNama } = useSesi();
   const [form, setForm] = useState({
     applicant_name: "",
     applicant_wa: "",
@@ -25,17 +27,17 @@ export default function OprecDaftarModal({ oprec, onClose, onSubmitted }) {
   const [submitting, setSubmitting] = useState(false);
   const [submittedData, setSubmittedData] = useState(null);
 
+  // Dependensinya sesi, bukan array kosong: identitas baru diketahui setelah
+  // /api/auth/me menjawab, dan efek yang cuma jalan sekali saat pasang akan
+  // selalu melewatkannya.
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedWa = localStorage.getItem("seller_wa");
-      const savedName = localStorage.getItem("seller_name");
-      setForm((prev) => ({
-        ...prev,
-        applicant_wa: savedWa || prev.applicant_wa,
-        applicant_name: savedName || prev.applicant_name,
-      }));
-    }
-  }, []);
+    if (!sesiWa && !sesiNama) return;
+    setForm((prev) => ({
+      ...prev,
+      applicant_wa: sesiWa || prev.applicant_wa,
+      applicant_name: sesiNama || prev.applicant_name,
+    }));
+  }, [sesiWa, sesiNama]);
 
   if (!oprec) return null;
 

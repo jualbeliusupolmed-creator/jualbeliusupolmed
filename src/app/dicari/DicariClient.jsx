@@ -8,8 +8,10 @@ import { rupiah } from "@/lib/fees";
 import { Icon } from "@/components/Icons";
 import QRISModal from "@/components/QRISModal";
 import { toast } from "sonner";
+import { useSesi } from "@/components/SesiProvider";
 
 export default function DicariPage({ initialItems = [] }) {
+  const { wa: sesiWa } = useSesi();
   const router = useRouter();
   const [items, setItems] = useState(initialItems);
   const [cats, setCats] = useState(CATEGORIES);
@@ -174,7 +176,7 @@ export default function DicariPage({ initialItems = [] }) {
         </div>
         <button
           onClick={() => {
-            const savedWa = localStorage.getItem("seller_wa") || "";
+            const savedWa = sesiWa || "";
             setForm((f) => ({ ...f, buyer_wa: savedWa }));
             setShowModal(true);
           }}
@@ -261,7 +263,7 @@ export default function DicariPage({ initialItems = [] }) {
             </p>
             <button
               onClick={() => {
-                const savedWa = localStorage.getItem("seller_wa") || "";
+                const savedWa = sesiWa || "";
                 setForm((f) => ({ ...f, buyer_wa: savedWa }));
                 setShowModal(true);
               }}
@@ -679,7 +681,7 @@ export default function DicariPage({ initialItems = [] }) {
                             body: JSON.stringify({
                               wanted_id: qrisModal.id,
                               method: "manual",
-                              requester_wa: localStorage.getItem("seller_wa") || "",
+                              requester_wa: sesiWa || "",
                             }),
                           }).then((r) => r.json());
                           if (!inv.orderId) throw new Error(inv.error || "Gagal membuat transaksi");
@@ -742,11 +744,11 @@ export default function DicariPage({ initialItems = [] }) {
         transactionId={activeQrisOrderId}
         onClose={() => {
           setActiveQrisUrl("");
-          router.push(`/dashboard?pending=1&wa=${encodeURIComponent(form.buyer_wa || localStorage.getItem("seller_wa") || "")}`);
+          router.push(`/dashboard?pending=1&wa=${encodeURIComponent(form.buyer_wa || sesiWa || "")}`);
         }} 
         onSuccess={() => {
           setActiveQrisUrl("");
-          router.push(`/dashboard?paid=1&wa=${encodeURIComponent(form.buyer_wa || localStorage.getItem("seller_wa") || "")}`);
+          router.push(`/dashboard?paid=1&wa=${encodeURIComponent(form.buyer_wa || sesiWa || "")}`);
         }}
       />
     </div>

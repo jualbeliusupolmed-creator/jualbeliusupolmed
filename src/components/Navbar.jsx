@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import Logo from "@/components/Logo";
 import { Icon } from "@/components/Icons";
 import OTPModal from "@/components/OTPModal";
+import { useSesi } from "@/components/SesiProvider";
 import NotificationCenter from "@/components/NotificationCenter";
 import { toast } from "sonner";
 import { useHideOnScroll } from "@/lib/useHideOnScroll";
@@ -28,7 +29,12 @@ export default function Navbar({ config }) {
   const router = useRouter();
   const [dark, setDark] = useState(false);
   const [showOtp, setShowOtp] = useState(false);
-  const [session, setSession] = useState({ name: "", wa: "" });
+  // Sesi tidak lagi diambil sendiri di sini. Dulu Navbar memanggil
+  // /api/auth/me pada SETIAP pindah alamat, dan hasilnya berhenti di
+  // komponen ini — nomor yang sudah diketahuinya tidak pernah dikembalikan
+  // ke localStorage, padahal delapan berkas lain membacanya dari sana.
+  const { wa: sesiWa, nama: sesiNama, segarkan, keluar } = useSesi();
+  const session = { wa: sesiWa, name: sesiNama || sesiWa };
   const [navQ, setNavQ] = useState("");
   const [wantedCount, setWantedCount] = useState(0);
   const [notifTerbuka, setNotifTerbuka] = useState(false);
@@ -84,32 +90,8 @@ export default function Navbar({ config }) {
     return () => media.removeEventListener?.("change", ikutSistem);
   }, []);
 
-  // Cookie server adalah satu-satunya sumber kebenaran sesi;
-  // profile name diambil dari server/localStorage.
-  const syncSession = () => {
-    fetch("/api/auth/me")
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.loggedIn) {
-          const storedName = localStorage.getItem("seller_name") || "";
-          setSession({ name: d.name || storedName || d.wa, wa: d.wa });
-        } else {
-          localStorage.removeItem("seller_wa");
-          setSession({ name: "", wa: "" });
-        }
-      })
-      .catch(() => {});
-  };
-
-  useEffect(() => {
-    syncSession();
-  }, [pathname]);
-
   const doLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    localStorage.removeItem("seller_wa");
-    localStorage.removeItem("seller_name");
-    setSession({ name: "", wa: "" });
+    await keluar();
     toast.success("Berhasil keluar.");
     router.refresh();
   };
@@ -275,7 +257,7 @@ export default function Navbar({ config }) {
         onClose={() => setShowOtp(false)}
         onSuccess={(wa) => {
           setShowOtp(false);
-          syncSession();
+          segarkan();
           router.refresh();
         }}
       />

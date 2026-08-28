@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 import OTPModal from "@/components/OTPModal";
 import QRISModal from "@/components/QRISModal";
+import { useSesi } from "@/components/SesiProvider";
 export default function JualPage() {
   const router = useRouter();
   const [form, setForm] = useState({
@@ -55,11 +56,21 @@ export default function JualPage() {
   // menayangkan gratis membuat orang berhenti percaya pada angka berikutnya.
   const [sellerPunyaToko, setSellerPunyaToko] = useState(false);
 
-  // Auto-fill from localStorage on mount
+  // Identitas datang dari sesi bersama, bukan dibaca sendiri dari
+  // localStorage. Bedanya terasa pada peranti baru: kukinya sah, cermin
+  // localStorage-nya kosong, dan pembacaan langsung akan menyimpulkan
+  // "belum masuk" untuk orang yang jelas-jelas sudah masuk.
+  //
+  // `siap` menahannya sampai server menjawab — mengisi formulir dengan
+  // tebakan lalu menimpanya sedetik kemudian membuat kolom yang sedang
+  // diketik berkedip.
+  const { wa: sesiWa, nama: sesiNama, siap: sesiSiap, segarkan: segarkanSesi } = useSesi();
+
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const savedWa = localStorage.getItem("seller_wa") || "";
-      const savedName = localStorage.getItem("seller_name") || "";
+      if (!sesiSiap) return;
+      const savedWa = sesiWa || "";
+      const savedName = sesiNama || "";
       if (savedWa || savedName) {
         setForm((f) => ({
           ...f,
@@ -83,7 +94,7 @@ export default function JualPage() {
       .then((r) => r.json())
       .then((d) => setCfg(d))
       .catch(() => {});
-  }, []);
+  }, [sesiSiap, sesiWa, sesiNama]);
 
   const cats = cfg?.categories?.length ? cfg.categories : CATEGORIES;
   // Angka yang dilihat penjual harus lahir dari setelan yang sama dengan yang
@@ -152,9 +163,16 @@ export default function JualPage() {
       return;
     }
 
-    // Cek apakah pengguna sudah login dengan nomor ini
-    const loggedInWa = localStorage.getItem("seller_wa");
-    if (loggedInWa !== formattedWa) {
+    // Cek apakah pengguna sudah login dengan nomor ini.
+    //
+    // Dibaca dari sesi, bukan dari localStorage. Dulu localStorage yang
+    // kosong — peranti baru, riwayat peramban dibersihkan, mode privat —
+    // dibaca sebagai "belum masuk", jadi pengguna yang kukinya masih sah
+    // 30 hari tetap dihadang modal masuk di sini. Nomor yang diketik tetap
+    // harus sama dengan nomor sesinya: itu yang menghalangi seseorang
+    // memasang iklan atas nama orang lain.
+    if (!sesiSiap) return;
+    if (formatWa(sesiWa || "") !== formattedWa) {
       setShowPreviewModal(false);
       setShowAuthModal(true);
       return;
@@ -651,6 +669,10 @@ export default function JualPage() {
           if (verifiedWa && formatWa(form.seller_wa) !== verifiedWa) {
              setForm(f => ({ ...f, seller_wa: verifiedWa }));
           }
+          // Sesi bersama ikut disegarkan, supaya halaman lain (dan gerbang
+          // di atas) langsung tahu orang ini sudah masuk — tanpa menunggu
+          // pemuatan ulang.
+          segarkanSesi();
           // Setelah berhasil auth, lanjutkan proses listing
           processListing(verifiedWa);
         }}

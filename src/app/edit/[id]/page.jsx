@@ -6,8 +6,10 @@ import { CATEGORIES, POPULAR_AREAS } from "@/lib/constants";
 import { rupiah } from "@/lib/fees";
 import { uploadMedia } from "@/lib/upload";
 import MediaUploader from "@/components/MediaUploader";
+import { useSesi } from "@/components/SesiProvider";
 
 export default function EditPage() {
+  const { wa: sesiWa } = useSesi();
   const router = useRouter();
   const { id } = useParams();
 
@@ -102,7 +104,9 @@ export default function EditPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "edit",
-          seller_wa: localStorage.getItem("seller_wa"),
+          // Dari sesi, bukan localStorage: cermin yang kosong dulu mengirim
+          // seller_wa: null dan server menolak suntingan milik sendiri.
+          seller_wa: sesiWa || null,
           seller_name: form.seller_name,
           title: form.title,
           description: form.description,

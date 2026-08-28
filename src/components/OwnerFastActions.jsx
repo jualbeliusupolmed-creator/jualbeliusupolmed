@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { formatWa } from "@/lib/constants";
 import { Icon } from "@/components/Icons";
 import { toast } from "sonner";
+import { useSesi } from "@/components/SesiProvider";
 
 export default function OwnerFastActions({ listing }) {
   const router = useRouter();
@@ -14,20 +15,17 @@ export default function OwnerFastActions({ listing }) {
   const [showSoldModal, setShowSoldModal] = useState(false);
   const [soldPrice, setSoldPrice] = useState(listing?.price || 0);
 
+  // Sesi bersama, bukan panggilan /api/auth/me sendiri. Komponen ini muncul
+  // di setiap kartu iklan; satu panggilan per kartu berarti satu halaman
+  // daftar bisa menanyakan hal yang sama belasan kali.
+  const { wa: sesiWa, siap: sesiSiap } = useSesi();
+
   useEffect(() => {
-    fetch("/api/auth/me")
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.loggedIn && d.wa) {
-          const ownerWa = formatWa(listing?.seller_wa);
-          const myWa = formatWa(d.wa);
-          if (ownerWa && myWa && ownerWa === myWa) {
-            setIsOwner(true);
-          }
-        }
-      })
-      .catch(() => {});
-  }, [listing]);
+    if (!sesiSiap || !sesiWa) return setIsOwner(false);
+    const ownerWa = formatWa(listing?.seller_wa);
+    const myWa = formatWa(sesiWa);
+    setIsOwner(!!(ownerWa && myWa && ownerWa === myWa));
+  }, [listing, sesiSiap, sesiWa]);
 
   if (!isOwner) return null;
 

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { rupiah } from "@/lib/fees";
 import { hapticLight } from "@/lib/haptics";
+import { useSesi } from "@/components/SesiProvider";
 
 // Penulis postingan boleh menempelkan SATU iklan miliknya sendiri. Daftarnya
 // diambil dari endpoint dashboard (terkunci sesi), jadi tidak ada cara
@@ -12,16 +13,14 @@ export default function TagProdukPicker({ value, onChange }) {
   const [memuat, setMemuat] = useState(false);
   const [terbuka, setTerbuka] = useState(false);
   const [sudahAmbil, setSudahAmbil] = useState(false);
+  const { wa: sesiWa, siap: sesiSiap } = useSesi();
 
   useEffect(() => {
     if (!terbuka || sudahAmbil) return;
-    const wa = (() => {
-      try {
-        return localStorage.getItem("seller_wa") || "";
-      } catch {
-        return "";
-      }
-    })();
+    // Tunggu sesi terbaca; kalau tidak, pemilik kuki yang cerminnya kosong
+    // langsung ditandai "tidak punya iklan" dan pemilihnya berhenti mencoba.
+    if (!sesiSiap) return;
+    const wa = sesiWa || "";
     if (!wa) {
       setSudahAmbil(true);
       return;
