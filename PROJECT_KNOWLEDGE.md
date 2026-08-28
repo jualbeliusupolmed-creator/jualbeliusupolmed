@@ -87,7 +87,9 @@ Berjalan dengan PostgreSQL, memiliki tabel-tabel berikut:
 1. **Exposure Sensitif**: Kredensial aman (tidak ter-commit). Disimpan di `.env.local` dan dikelola di Vercel/VPS.
 2. **Validasi Input & Otorisasi**: 
    - Row Level Security (RLS) di Supabase mencegah klien membaca data yang bukan haknya (misalnya, pembeli tidak bisa baca orderan penjual lain).
-   - Akses admin di-handle via JWT dan secret environment `ADMIN_PASSWORD` (*Perlu dievaluasi untuk diubah ke SSO/Email*).
+   - Akses admin di-handle via JWT dan secret environment `ADMIN_PASSWORD`. Login/logout admin kini **dicatat ke `admin_logs`** (IP + timestamp + hasil) sejak 28 Agustus 2026.
+   - `ADMIN_PASSWORD` wajib minimal 16 karakter di production (divalidasi startup).
+   - `SESSION_SECRET` tersedia sebagai kunci terpisah untuk sesi penjual — **wajib diisi di Vercel** agar ganti `ADMIN_PASSWORD` tidak membatalkan sesi penjual.
 3. **Rate Limiting**: Endpoint kritikal seperti pembuat iklan telah dilengkapi proteksi anti-spam lokal (*in-memory*).
 
 ---
@@ -95,12 +97,25 @@ Berjalan dengan PostgreSQL, memiliki tabel-tabel berikut:
 ## 4. Kualitas Kode & Utang Teknis (Tech Debt)
 
 - [ ] **Kritis**: Script WA Bot di VPS (`index.js`) berukuran sangat membengkak (~215KB). Ini sangat berisiko (*Spaghetti code*) jika ada logic yang rusak, akan sulit ditelusuri. **Saran perbaikan**: Pecah `index.js` menjadi berbasis *controller/service* per modul (misal: `handler_transaksi.js`, `handler_admin.js`).
-- [ ] **Menengah**: Sistem login Admin masih bersifat *hardcode* kata sandi di `.env` (bukan sistem User Management Supabase).
+- [x] **Menengah (sebagian)**: Login Admin tetap berbasis `ADMIN_PASSWORD` di `.env`, tapi kini diperkuat: (a) validasi panjang ≥16 karakter, (b) audit log login/logout ke `admin_logs`, (c) `SESSION_SECRET` terpisah dari `ADMIN_PASSWORD`. Migrasi ke SSO Supabase tetap backlog jangka panjang.
 - [ ] **Peningkatan**: Desain panel admin sudah dibersihkan (rute redundan dihapus), namun perlu konsistensi desain (Dark mode / Light mode) yang merata di semua komponen UI.
 
 ---
 
 ## 5. Log & Riwayat Audit
+
+### Canonical Bot Source of Truth
+
+- **Repo bot**: `jualbeliusupolmed-creator/wa-bot-usu` (terpisah dari repo web ini)
+- **Working copy lokal**: `bot-wa/` di root repo ini — **selalu sinkronkan sebelum edit**
+- **Working copy VPS**: worktree di server produksi — **cek `git status` via SSH sebelum deploy**
+- **Sebelum edit bot**: (1) SSH ke VPS, (2) catat commit HEAD aktif, (3) pastikan `bot-wa/` lokal sama commit-nya
+- **Setelah edit lokal**: push ke `wa-bot-usu` dulu, baru pull di VPS. JANGAN langsung edit di VPS.
+- **Status 28 Agustus 2026**: `bot-wa/` lokal branch `main` up-to-date dengan origin. Ada perubahan unstaged di `BottomNavbar.jsx` dan `Icons.jsx` (perlu di-review sebelum commit).
+
+### Build Status
+
+- **28 Agustus 2026**: `npm run build` **BERHASIL** — semua halaman dirender sebagai `ƒ (Dynamic)`, tidak ada static generation failure. Build issue yang dicatat sebelumnya sudah tidak ada.
 
 *   **28 Agustus 2026 — Kode Iklan Pendek, URL `/c/{kode}`, dan Spesifikasi Terstruktur Listing**
     - Menambahkan helper `listingCode` dan migration `20260827205354_listing_code_and_specs.sql` untuk memperkuat field `listing_code` yang sudah ada di produksi (integer berbasis sequence, kini dikunci `NOT NULL` + `UNIQUE`) serta menambah `specs` (`jsonb`) untuk spesifikasi terstruktur per kategori.

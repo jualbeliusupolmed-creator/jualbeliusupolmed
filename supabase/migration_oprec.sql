@@ -63,25 +63,36 @@ CREATE INDEX IF NOT EXISTS idx_oprec_submissions_applicant_wa ON oprec_submissio
 ALTER TABLE oprec_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE oprec_submissions ENABLE ROW LEVEL SECURITY;
 
--- Policies untuk oprec_events
+-- =============================================================================
+-- RLS Policies untuk oprec_events
+-- Akses INSERT/UPDATE/DELETE tidak perlu policy publik — API server memakai
+-- service_role yang bypass RLS sepenuhnya. Policy di bawah hanya untuk SELECT
+-- via kunci anon (tampilan publik halaman /oprec).
+-- =============================================================================
+
+-- Publik hanya bisa melihat oprec yang sedang aktif (belum ditutup).
 DROP POLICY IF EXISTS "Public can view active oprec events" ON oprec_events;
 CREATE POLICY "Public can view active oprec events"
   ON oprec_events FOR SELECT
-  USING (true);
+  USING (status = 'active');
 
+-- Blokir semua INSERT/UPDATE/DELETE dari anon/authenticated secara eksplisit.
+-- Pengelolaan oprec wajib lewat API server (service_role).
 DROP POLICY IF EXISTS "UKM can manage their own oprec events" ON oprec_events;
-CREATE POLICY "UKM can manage their own oprec events"
-  ON oprec_events FOR ALL
-  USING (true)
-  WITH CHECK (true);
+-- (policy ALL dengan USING(true) dihapus — tidak diganti; service_role bypass RLS)
 
--- Policies untuk oprec_submissions
+-- =============================================================================
+-- RLS Policies untuk oprec_submissions
+-- =============================================================================
+
+-- Pendaftar boleh submit (INSERT) melalui API publik.
+-- API server memvalidasi bahwa oprec masih aktif sebelum menerima submission.
 DROP POLICY IF EXISTS "Public can submit oprec application" ON oprec_submissions;
 CREATE POLICY "Public can submit oprec application"
   ON oprec_submissions FOR INSERT
   WITH CHECK (true);
 
+-- Pembacaan submission: hanya bisa dilakukan via API server (service_role).
+-- Anon TIDAK boleh melihat daftar pendaftar orang lain — IDOR/privasi.
 DROP POLICY IF EXISTS "UKM and applicant can view submissions" ON oprec_submissions;
-CREATE POLICY "UKM and applicant can view submissions"
-  ON oprec_submissions FOR SELECT
-  USING (true);
+-- (policy SELECT dengan USING(true) dihapus — tidak diganti; service_role bypass RLS)
