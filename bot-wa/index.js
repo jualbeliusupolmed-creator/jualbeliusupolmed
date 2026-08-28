@@ -175,11 +175,12 @@ const ADMIN_CALL_COOLDOWN_MS = Number(process.env.ADMIN_CALL_COOLDOWN_SECONDS ||
 // Sapaan untuk pesan TANPA titik — dikirim SEKALI per kontak, sesudah itu bot diam
 // total di chat itu supaya admin bebas membalas manual.
 const DEFAULT_GREETING = process.env.GREETING_TEXT || [
-    'Terima kasih telah menghubungi 🙏',
+    'Halo kak! 👋 Selamat datang di *Jual Beli USU Polmed*',
+    'Platform jual-beli & komunitas mahasiswa USU & Polmed.',
     '',
-    'Anda akan chat dengan *admin (manusia)*.',
+    'Pesan ini disampaikan ke *admin (manusia)* — mohon tunggu ya 🙏',
     '',
-    `Kalau ingin jual beli & cari barang lewat *bot*, awali pesan dengan tanda titik ( *${BOT_PREFIX}* ), contoh: *${BOT_PREFIX}MENU*`,
+    `Mau transaksi via *bot* langsung? Awali pesan dengan titik ( *${BOT_PREFIX}* ), contoh: *${BOT_PREFIX}MENU*`,
     '',
     `• *${BOT_PREFIX}JUAL* — Pasang iklan`,
     `• *${BOT_PREFIX}CARI [nama barang]* — Cari barang (+ foto)`,
@@ -187,13 +188,13 @@ const DEFAULT_GREETING = process.env.GREETING_TEXT || [
     `• *${BOT_PREFIX}PERPANJANG* — Perpanjang iklan`,
     `• *${BOT_PREFIX}UPGRADE* — Upgrade iklan (Featured/Bump)`,
     `• *${BOT_PREFIX}SAYA* — Profil & statistik toko`,
-    `• *${BOT_PREFIX}MENU* — Lihat semua perintah lengkap`,
+    `• *${BOT_PREFIX}MENU* — Lihat semua perintah`,
     '',
-    'Dan jika ingin lebih mudah, bisa melalui website:',
+    'Atau lebih mudah lewat website:',
     '*Lihat Barang* jualbeliusupolmed.web.id',
     '*Jual Barang* jualbeliusupolmed.web.id/jual',
     '*Cari Barang* jualbeliusupolmed.web.id/dicari',
-    '*Instagram* instagram.com/usulovepolmed',
+    '*Instagram* instagram.com/usupolmedupdate',
     '',
     'Terima kasih 🙏',
 ].join('\n');
