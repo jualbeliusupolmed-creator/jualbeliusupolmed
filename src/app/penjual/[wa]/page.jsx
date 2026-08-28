@@ -30,7 +30,16 @@ async function getSellerData(wa) {
       .eq("seller_wa", decodedWa)
       .order("created_at", { ascending: true });
 
-    if (!listings && (!allListings || allListings.length === 0)) {
+    // Penjaga "penjual ini tidak ada". Dulu berbunyi `!listings && …`, dan itu
+    // tidak pernah benar: supabase-js mengembalikan ARRAY KOSONG saat tak ada
+    // baris, bukan null — jadi `!listings` selalu false dan penjaganya tidak
+    // pernah berjalan. Akibatnya /penjual/<apa pun> menjawab 200 dengan profil
+    // kosong: "000 — Profil Penjual, 0 iklan". Alamat karangan tak terhingga,
+    // semuanya sah di mata mesin pencari.
+    //
+    // `!allListings` sengaja dipertahankan supaya kegagalan query (null, bukan
+    // array kosong) tidak ikut dibaca sebagai "penjualnya tidak ada".
+    if (!allListings || allListings.length === 0) {
       const { data: any } = await supa
         .from("listings")
         .select("seller_name, seller_wa")
