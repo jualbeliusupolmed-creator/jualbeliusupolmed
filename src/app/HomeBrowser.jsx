@@ -11,6 +11,11 @@ import { rupiah } from "@/lib/fees";
 import { Icon } from "@/components/Icons";
 import HeroLanding from "@/components/HeroLanding";
 import { buildSlug } from "@/lib/slug";
+import {
+  buildSpecFilterToken,
+  getListingSpecFilters,
+  parseSpecFilterToken,
+} from "@/lib/listingSpecs";
 import BottomSheet from "@/components/BottomSheet";
 import ProductGridSkeleton from "@/components/ProductSkeleton";
 
@@ -56,6 +61,9 @@ export default function HomeBrowser({
   const [negoFilter, setNegoFilter] = useState(() => searchParams.get("nego") === "1");
   const [conditionFilter, setConditionFilter] = useState(() => searchParams.get("condition") || "all");
   const [typeFilter, setTypeFilter] = useState(() => searchParams.get("type") || "default");
+  const [selectedSpecFilters, setSelectedSpecFilters] = useState(() =>
+    searchParams.getAll("spec").map(parseSpecFilterToken).filter(Boolean)
+  );
 
   // Category subscribe state
   const [showCatSubModal, setShowCatSubModal] = useState(false);
@@ -148,6 +156,10 @@ export default function HomeBrowser({
     (slug) => CATEGORIES.find((c) => c.slug === slug)?.name || null,
     [CATEGORIES]
   );
+  const availableSpecFilters = useMemo(
+    () => (cat === "all" ? [] : getListingSpecFilters(catName(cat))),
+    [cat, catName]
+  );
 
   // Sync filter state to URL for shareable links
   const syncToUrl = useCallback((overrides = {}) => {
@@ -160,6 +172,9 @@ export default function HomeBrowser({
       maxPrice,
       campusFilter,
       negoFilter,
+      conditionFilter,
+      typeFilter,
+      selectedSpecFilters,
       ...overrides,
     };
     if (state.q) params.set("q", state.q);
@@ -171,24 +186,33 @@ export default function HomeBrowser({
     if (state.maxPrice) params.set("maxPrice", state.maxPrice);
     if (state.campusFilter && state.campusFilter !== "Semua") params.set("campus", state.campusFilter);
     if (state.negoFilter) params.set("nego", "1");
+    if (state.conditionFilter && state.conditionFilter !== "all") params.set("condition", state.conditionFilter);
+    if (state.typeFilter && state.typeFilter !== "default") params.set("type", state.typeFilter);
+    for (const spec of state.selectedSpecFilters || []) {
+      const token = buildSpecFilterToken(spec.key, spec.value);
+      if (token) params.append("spec", token);
+    }
     const str = params.toString();
     router.replace(`${pathname}${str ? `?${str}` : ""}`, { scroll: false });
-  }, [campusFilter, cat, catName, maxPrice, minPrice, negoFilter, pathname, q, router, sort]);
+  }, [campusFilter, cat, catName, conditionFilter, maxPrice, minPrice, negoFilter, pathname, q, router, selectedSpecFilters, sort, typeFilter]);
 
   // Terapkan filter dari URL (?q= dari search navbar / SearchAction Google,
   // ?cat= dari breadcrumb halaman produk) — juga saat URL berubah tanpa remount.
   useEffect(() => {
     const urlQ = searchParams.get("q");
     const urlCat = searchParams.get("cat");
+    const urlSpecs = searchParams.getAll("spec").map(parseSpecFilterToken).filter(Boolean);
     const catSlug = urlCat
       ? CATEGORIES.find((c) => c.name === urlCat || c.slug === urlCat)?.slug || null
       : null;
-    if (urlQ === null && !catSlug) return;
+    if (urlQ === null && !catSlug && urlSpecs.length === 0) return;
     if (urlQ !== null) setQ(urlQ);
     if (catSlug) setCat(catSlug);
+    setSelectedSpecFilters(urlSpecs);
     applyFilters({
       ...(urlQ !== null ? { newQ: urlQ } : {}),
       ...(catSlug ? { newCat: catSlug } : {}),
+      newSpecs: urlSpecs,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
@@ -205,6 +229,7 @@ export default function HomeBrowser({
       newNego = negoFilter,
       newCondition = conditionFilter,
       newType = typeFilter,
+      newSpecs = selectedSpecFilters,
     } = {}) => {
       setSearching(true);
       setPage(1);
@@ -218,6 +243,10 @@ export default function HomeBrowser({
         if (newNego) params.set("nego", "1"); // FIXED: use newNego param, not stale closure
         if (newCondition && newCondition !== "all") params.set("condition", newCondition);
         if (newType && newType !== "default") params.set("type", newType);
+        for (const spec of newSpecs || []) {
+          const token = buildSpecFilterToken(spec.key, spec.value);
+          if (token) params.append("spec", token);
+        }
 
         const res = await fetch(`/api/listings/browse?${params}`);
         const data = await res.json();
@@ -229,12 +258,13 @@ export default function HomeBrowser({
         setSearching(false);
       }
     },
-    [cat, q, sort, minPrice, maxPrice, campusFilter, negoFilter, conditionFilter, typeFilter, catName]
+    [cat, q, sort, minPrice, maxPrice, campusFilter, negoFilter, conditionFilter, typeFilter, selectedSpecFilters, catName]
   );
 
   function handleCampus(newCampus) {
     setCampusFilter(newCampus);
     applyFilters({ newCampus });
+    syncToUrl({ campusFilter: newCampus });
   }
 
   // Debounce search
@@ -249,8 +279,9 @@ export default function HomeBrowser({
 
   function handleCat(newCat) {
     setCat(newCat);
-    applyFilters({ newCat });
-    syncToUrl({ cat: newCat });
+    setSelectedSpecFilters([]);
+    applyFilters({ newCat, newSpecs: [] });
+    syncToUrl({ cat: newCat, selectedSpecFilters: [] });
   }
 
   function handleSort(newSort) {
@@ -282,6 +313,12 @@ export default function HomeBrowser({
       if (maxPrice) params.set("maxPrice", maxPrice);
       if (campusFilter && campusFilter !== "Semua") params.set("campus", campusFilter);
       if (negoFilter) params.set("nego", "1");
+      if (conditionFilter && conditionFilter !== "all") params.set("condition", conditionFilter);
+      if (typeFilter && typeFilter !== "default") params.set("type", typeFilter);
+      for (const spec of selectedSpecFilters) {
+        const token = buildSpecFilterToken(spec.key, spec.value);
+        if (token) params.append("spec", token);
+      }
 
       const res = await fetch(`/api/listings/browse?${params}`);
       const data = await res.json();
@@ -296,7 +333,21 @@ export default function HomeBrowser({
 
   const hasMore = listings.length < total;
   const hasActiveFilter =
-    cat !== "all" || q || sort !== "bumped" || minPrice || maxPrice || campusFilter !== "Semua" || negoFilter || conditionFilter !== "all";
+    cat !== "all" || q || sort !== "bumped" || minPrice || maxPrice || campusFilter !== "Semua" || negoFilter || conditionFilter !== "all" || typeFilter !== "default" || selectedSpecFilters.length > 0;
+
+  function toggleSpecFilter(filter) {
+    const exists = selectedSpecFilters.some(
+      (item) => item.key === filter.key && item.value === filter.label
+    );
+    const next = exists
+      ? selectedSpecFilters.filter(
+          (item) => !(item.key === filter.key && item.value === filter.label)
+        )
+      : [...selectedSpecFilters, { key: filter.key, value: filter.label }];
+    setSelectedSpecFilters(next);
+    applyFilters({ newSpecs: next });
+    syncToUrl({ selectedSpecFilters: next });
+  }
 
   const order = layoutOrder && layoutOrder.length > 0 ? layoutOrder : ["hero", "featured", "recently_viewed", "wanted", "main"];
 
@@ -462,6 +513,8 @@ export default function HomeBrowser({
                   onClick={() => {
                     setQ("");
                     setPage(1);
+                    applyFilters({ newQ: "" });
+                    syncToUrl({ q: "" });
                   }}
                   className="absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-black/[0.08] text-white hover:bg-black/[0.12] dark:bg-white/[0.12] dark:hover:bg-white/[0.2] transition-colors"
                   aria-label="Bersihkan pencarian"
@@ -519,6 +572,7 @@ export default function HomeBrowser({
                   const next = !negoFilter;
                   setNegoFilter(next);
                   applyFilters({ newNego: next });
+                  syncToUrl({ negoFilter: next });
                 }}
                 className={`shrink-0 rounded-full px-3.5 py-1.5 min-h-[34px] text-xs font-semibold transition-all active:scale-95 ${negoFilter
                     ? "bg-gray-900 text-white shadow-sm dark:bg-white dark:text-gray-900"
@@ -533,7 +587,11 @@ export default function HomeBrowser({
                 <button
                   key={c}
                   type="button"
-                  onClick={() => { setConditionFilter(c); applyFilters({ newCondition: c }); }}
+                  onClick={() => {
+                    setConditionFilter(c);
+                    applyFilters({ newCondition: c });
+                    syncToUrl({ conditionFilter: c });
+                  }}
                   className={`shrink-0 rounded-full px-3.5 py-1.5 min-h-[34px] text-xs font-semibold transition-all active:scale-95 ${conditionFilter === c
                     ? "bg-gray-900 text-white shadow-sm dark:bg-white dark:text-gray-900"
                     : "border border-gray-200 text-gray-600 hover:border-gray-300 dark:border-slate-800 dark:text-slate-300"
@@ -550,14 +608,15 @@ export default function HomeBrowser({
                   const next = typeFilter === "sewa" ? "default" : "sewa";
                   setTypeFilter(next);
                   applyFilters({ newType: next });
+                  syncToUrl({ typeFilter: next });
                 }}
                 className={`shrink-0 rounded-full px-3.5 py-1.5 min-h-[34px] text-xs font-semibold transition-all active:scale-95 ${typeFilter === "sewa"
                   ? "bg-teal-600 text-white shadow-sm"
                   : "border border-gray-200 text-gray-600 hover:border-gray-300 dark:border-slate-800 dark:text-slate-300"
                 }`}
-              >
-                🔑 Sewa{typeFilter === "sewa" ? " ✓" : ""}
-              </button>
+                >
+                  🔑 Sewa{typeFilter === "sewa" ? " ✓" : ""}
+                </button>
 
               {/* Reset */}
               {hasActiveFilter && (
@@ -649,6 +708,60 @@ export default function HomeBrowser({
               <CategoryFilter active={cat} onChange={handleCat} categories={CATEGORIES} />
             </div>
 
+            {cat !== "all" && availableSpecFilters.length > 0 && (
+              <div className="mt-3 rounded-[28px] border border-black/[0.06] bg-white/80 p-3.5 backdrop-blur dark:border-white/[0.08] dark:bg-[#1c1c1e]/80">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-[#86868b] dark:text-slate-500">
+                      Filter Spesifikasi
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-[#1d1d1f] dark:text-white">
+                      Cari {catName(cat)} dengan atribut yang lebih spesifik
+                    </p>
+                  </div>
+                  {selectedSpecFilters.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedSpecFilters([]);
+                        applyFilters({ newSpecs: [] });
+                        syncToUrl({ selectedSpecFilters: [] });
+                      }}
+                      className="rounded-full border border-rose-200 px-3 py-1 text-[11px] font-bold text-rose-500 transition hover:bg-rose-50 dark:border-rose-900/40 dark:hover:bg-rose-950/20"
+                    >
+                      Reset chip
+                    </button>
+                  )}
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {availableSpecFilters.map((filter) => {
+                    const active = selectedSpecFilters.some(
+                      (item) => item.key === filter.key && item.value === filter.label
+                    );
+                    return (
+                      <button
+                        key={`${filter.key}:${filter.label}`}
+                        type="button"
+                        onClick={() => toggleSpecFilter(filter)}
+                        className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-all active:scale-95 ${
+                          active
+                            ? "bg-primary text-white shadow-sm"
+                            : "border border-black/[0.08] bg-black/[0.02] text-[#3a3a3c] hover:border-black/[0.16] dark:border-white/[0.1] dark:bg-white/[0.05] dark:text-slate-300"
+                        }`}
+                      >
+                        {filter.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                {selectedSpecFilters.length > 0 && (
+                  <p className="mt-3 text-xs text-[#6e6e73] dark:text-slate-400">
+                    Menyaring {selectedSpecFilters.length} atribut sekaligus. Semua chip harus cocok.
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Category subscribe button — tampil saat kategori tertentu dipilih */}
             {cat !== "all" && (
               <div className="mt-2 flex items-center gap-2">
@@ -683,7 +796,7 @@ export default function HomeBrowser({
                         type="text"
                         value={catSubForm.name}
                         onChange={(e) => setCatSubForm((f) => ({ ...f, name: e.target.value }))}
-                        placeholder="Nama Lengkap"
+                        placeholder="Nama panggilan kamu"
                         className="input text-sm"
                       />
                     </div>
@@ -729,7 +842,7 @@ export default function HomeBrowser({
                     >
                       {catSubBusy ? "Menyimpan…" : "🔔 Aktifkan Notifikasi"}
                     </button>
-                    <p className="text-[10px] text-center text-gray-400">Balas STOP ke bot WA kami untuk berhenti langganan.</p>
+                    <p className="text-[10px] text-center text-gray-400">Untuk berhenti langganan, hubungi admin WA.</p>
                   </div>
                 </div>
               </div>
@@ -755,7 +868,7 @@ export default function HomeBrowser({
                 </div>
                 <h3 className="text-xl font-extrabold text-gray-900 dark:text-white mb-2">Belum ada barang di kategori ini</h3>
                 <p className="max-w-md text-sm text-gray-500 dark:text-slate-400 mb-8 leading-relaxed">
-                  Jadilah yang pertama menawarkan produkmu di sini! Ribuan warga Medan sedang mencari barang incaran mereka.
+                  Belum ada yang jual di kategori ini — kamu duluan yuk!
                 </p>
                 <Link
                   href="/jual"

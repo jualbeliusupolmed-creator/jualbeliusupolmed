@@ -3,6 +3,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getSettings, soldFeeFrom } from "@/lib/settings";
 import { getSellerSession, isAdmin } from "@/lib/auth";
 import { jawabGalat } from "@/lib/jawabGalat";
+import { sanitizeListingSpecs } from "@/lib/listingSpecs";
 
 export const dynamic = "force-dynamic";
 
@@ -67,7 +68,7 @@ export async function PATCH(req, { params }) {
 
       const { data: oldListing } = await supa
         .from("listings")
-        .select("category, title, status")
+        .select("category, title, status, specs")
         .eq("id", id)
         .single();
 
@@ -97,6 +98,9 @@ export async function PATCH(req, { params }) {
       if (body.image_url !== undefined) updates.image_url = body.image_url || null;
       if (body.campus !== undefined) updates.campus = body.campus;
       if (body.area !== undefined) updates.area = String(body.area || "").trim();
+      if (body.specs !== undefined) {
+        updates.specs = sanitizeListingSpecs(updates.category || oldListing?.category || "Elektronik", body.specs);
+      }
 
       if (titleChangedToDigital || categoryChangedToDigital) updates.status = "pending";
 

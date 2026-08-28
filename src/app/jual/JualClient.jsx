@@ -9,6 +9,11 @@ import { uploadMedia } from "@/lib/upload";
 import MediaUploader from "@/components/MediaUploader";
 import { CATEGORIES, MARKETPLACE_WA, POPULAR_AREAS, formatWa } from "@/lib/constants";
 import { buildSlug } from "@/lib/slug";
+import {
+  buildListingDescriptionTemplate,
+  formatListingSpecs,
+  getListingSpecConfig,
+} from "@/lib/listingSpecs";
 import { toast } from "sonner";
 import OTPModal from "@/components/OTPModal";
 import QRISModal from "@/components/QRISModal";
@@ -27,6 +32,7 @@ export default function JualPage() {
     area: "",
     condition: "used",
     rental_period: "harian",
+    specs: {},
   });
   const [media, setMedia] = useState([]);
   const [busy, setBusy] = useState(false);
@@ -88,6 +94,8 @@ export default function JualPage() {
   const adFeeFor = (type, price = 0) => adFeeFrom(cfg?.pricing, type, price);
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+  const specConfig = getListingSpecConfig(form.category);
+  const specPreview = formatListingSpecs(form.category, form.specs);
   const fee = adFeeFor(form.type, form.price);
   // Dua sebab berbeda, satu akibat yang sama. Dipisah supaya alasannya bisa
   // disebut apa adanya di layar — "gratis" tanpa sebab selalu memancing curiga.
@@ -100,6 +108,31 @@ export default function JualPage() {
     if (val !== "Lainnya") {
       setForm((f) => ({ ...f, area: val }));
     }
+  };
+
+  const handleCategoryChange = (e) => {
+    const nextCategory = e.target.value;
+    setForm((f) => ({ ...f, category: nextCategory, specs: {} }));
+  };
+
+  const handleSpecChange = (key) => (e) => {
+    const value = e.target.value;
+    setForm((f) => ({
+      ...f,
+      specs: {
+        ...f.specs,
+        [key]: value,
+      },
+    }));
+  };
+
+  const applyCategoryTemplate = () => {
+    const template = buildListingDescriptionTemplate(form.category);
+    if (form.description.trim()) {
+      const shouldReplace = window.confirm("Deskripsi saat ini akan diganti dengan template kategori. Lanjutkan?");
+      if (!shouldReplace) return;
+    }
+    setForm((f) => ({ ...f, description: template }));
   };
 
   function handlePreviewClick(e) {
@@ -169,7 +202,7 @@ export default function JualPage() {
         return;
       }
 
-      // Tampilkan Modal QRIS Otomatis
+      // Tampilkan modal pembayaran QRIS + verifikasi struk
       if (data.paymentUrl) {
         setQrisUrl(data.paymentUrl);
         setQrisFinalAmount(data.finalAmount || null);
@@ -271,7 +304,7 @@ export default function JualPage() {
             )}
             <div>
               <label className="label">Kategori</label>
-              <select className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.category} onChange={set("category")}>
+              <select className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.category} onChange={handleCategoryChange}>
                 {cats.map((c) => (
                   <option key={c.slug} value={c.name}>
                     {c.name}
@@ -338,6 +371,21 @@ export default function JualPage() {
               />
               <label htmlFor="form-description" className="floating-label">Deskripsi Lengkap (kondisi, minus, dll)</label>
             </div>
+            <div className="sm:col-span-2 flex items-center justify-between rounded-2xl border border-dashed border-primary/25 bg-primary/[0.04] px-4 py-3 text-sm">
+              <div>
+                <p className="font-semibold text-gray-900 dark:text-white">Template deskripsi kategori</p>
+                <p className="text-xs text-gray-500 dark:text-slate-400">
+                  Bikin format iklan lebih rapi dan seragam untuk pembeli maupun bot WA.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={applyCategoryTemplate}
+                className="rounded-xl border border-primary/20 bg-white px-3 py-2 text-xs font-semibold text-primary shadow-sm transition hover:border-primary/40 dark:bg-slate-900"
+              >
+                Isi Template
+              </button>
+            </div>
             
             <div className="floating-group">
               <input 
@@ -395,6 +443,37 @@ export default function JualPage() {
                 required
               />
               <label htmlFor="form-seller-wa" className="floating-label">Nomor WhatsApp</label>
+            </div>
+
+            <div className="sm:col-span-2 rounded-3xl border border-black/[0.06] bg-black/[0.02] p-4 dark:border-white/[0.08] dark:bg-white/[0.03]">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-bold text-gray-900 dark:text-white">Spesifikasi {form.category}</p>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">
+                    Field ini tampil sebagai tabel spesifikasi di halaman produk.
+                  </p>
+                </div>
+                <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 shadow-sm dark:bg-slate-900 dark:text-slate-400">
+                  Terstruktur
+                </span>
+              </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {specConfig.fields.map((field) => (
+                  <div key={field.key} className="floating-group">
+                    <input
+                      id={`spec-${field.key}`}
+                      className="floating-input peer"
+                      value={form.specs?.[field.key] || ""}
+                      onChange={handleSpecChange(field.key)}
+                      placeholder=" "
+                    />
+                    <label htmlFor={`spec-${field.key}`} className="floating-label">
+                      {field.label}
+                    </label>
+                    <p className="mt-1 px-1 text-[11px] text-gray-400">{field.placeholder}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -521,6 +600,21 @@ export default function JualPage() {
                   <span className="badge badge-primary">{form.category}</span>
                   <span className="badge badge-outline">{form.campus}</span>
                 </div>
+                {specPreview.length > 0 && (
+                  <div className="mt-4 rounded-2xl bg-gray-50 p-3 dark:bg-slate-800/60">
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-gray-500 dark:text-slate-400">
+                      Spesifikasi
+                    </p>
+                    <dl className="mt-2 space-y-1.5">
+                      {specPreview.map((item) => (
+                        <div key={item.key} className="flex items-start justify-between gap-3 text-sm">
+                          <dt className="text-gray-500 dark:text-slate-400">{item.label}</dt>
+                          <dd className="text-right font-medium text-gray-900 dark:text-white">{item.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                )}
               </div>
             </div>
 

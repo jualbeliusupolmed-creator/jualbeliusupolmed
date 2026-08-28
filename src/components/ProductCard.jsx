@@ -85,6 +85,12 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
             <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 bg-black/[0.04] dark:bg-white/[0.08] px-2 py-0.5 rounded-full truncate max-w-[80px] xs:max-w-none">
               {listing.category}
             </span>
+            {listing.listing_code && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-white text-gray-600 dark:bg-slate-900 dark:text-slate-300 font-semibold flex items-center gap-0.5 border border-black/[0.06] dark:border-white/[0.08]">
+                <Icon.Hash className="h-2.5 w-2.5 shrink-0" />
+                {listing.listing_code}
+              </span>
+            )}
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/[0.08] text-primary dark:bg-violet-500/15 dark:text-violet-300 font-semibold max-w-[100px] xs:max-w-[140px] truncate flex items-center gap-0.5">
               <Icon.MapPin className="h-2.5 w-2.5 shrink-0" />
               <span className="truncate">{listing.campus === "Semua" ? "Medan" : listing.campus}
