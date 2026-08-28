@@ -60,6 +60,14 @@ export const Icon = {
       <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
     </svg>
   ),
+  Hash: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <line x1="4" y1="9" x2="20" y2="9" />
+      <line x1="4" y1="15" x2="20" y2="15" />
+      <line x1="10" y1="3" x2="8" y2="21" />
+      <line x1="16" y1="3" x2="14" y2="21" />
+    </svg>
+  ),
   Check: (p) => (
     <svg viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
       <polyline points="20 6 9 17 4 12" />
@@ -177,6 +185,12 @@ export const Icon = {
       <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" y1="22" x2="4" y2="15" />
     </svg>
   ),
+  Shield: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <path d="M12 3l7 3v6c0 5-3.5 8.74-7 10-3.5-1.26-7-5-7-10V6l7-3z" />
+      <path d="m9.5 12 1.8 1.8 3.7-4.1" />
+    </svg>
+  ),
   Info: (p) => (
     <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
       <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
@@ -278,6 +292,88 @@ export const Icon = {
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
       <polyline points="7 10 12 15 17 10" />
       <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  ),
+  // ─── Tab Mading ───────────────────────────────────────────────────────────
+  // ✨ Semua
+  Sparkles: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z" />
+      <path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z" />
+      <path d="M19 3l.5 1.5L21 5l-1.5.5L19 7l-.5-1.5L17 5l1.5-.5L19 3z" />
+    </svg>
+  ),
+  // 📢 Info Kampus
+  Megaphone: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <path d="M3 11l19-9-9 19-2-8-8-2z" />
+    </svg>
+  ),
+  // 🏛️ Organisasi
+  Landmark: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <line x1="3" y1="22" x2="21" y2="22" />
+      <line x1="6" y1="18" x2="6" y2="11" />
+      <line x1="10" y1="18" x2="10" y2="11" />
+      <line x1="14" y1="18" x2="14" y2="11" />
+      <line x1="18" y1="18" x2="18" y2="11" />
+      <polygon points="12 2 20 7 4 7" />
+    </svg>
+  ),
+  // 👥 Cari Teman
+  Users: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  ),
+  Camera: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <path d="M4 7h3l1.5-2h7L17 7h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z" />
+      <circle cx="12" cy="13" r="3.5" />
+    </svg>
+  ),
+  Smartphone: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <rect x="5" y="2" width="14" height="20" rx="2" /><line x1="11" y1="18" x2="13" y2="18" />
+    </svg>
+  ),
+  Music: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <path d="M9 18V5l11-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="17" cy="16" r="3" />
+    </svg>
+  ),
+  ShoppingCart: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <circle cx="9" cy="20" r="1.5" /><circle cx="18" cy="20" r="1.5" />
+      <path d="M3 4h2l2.2 11.2a2 2 0 0 0 2 1.6h8.9a2 2 0 0 0 1.9-1.4L22 8H6" />
+    </svg>
+  ),
+  Pin: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <path d="M12 17v5M5 3h14l-2 7 2 3H5l2-3-2-7z" /><path d="M12 13v4" />
+    </svg>
+  ),
+  Rocket: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <path d="M14.5 4.5C17 2 20.5 2 22 2c0 1.5 0 5-2.5 7.5L13 16l-5-5 6.5-6.5z" /><path d="M8 11 3 12l-1 4 5-1" /><path d="m13 16-1 5-4 1 1-5" /><circle cx="17.5" cy="6.5" r="1.5" />
+    </svg>
+  ),
+  Clock3: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
+    </svg>
+  ),
+  ClipboardList: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <rect x="5" y="4" width="14" height="18" rx="2" /><path d="M9 4V2h6v2M9 10h6M9 14h6M9 18h3" />
+    </svg>
+  ),
+  Trash2: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <path d="M3 6h18M8 6V3h8v3m-9 0 1 15h8l1-15M10 10v7M14 10v7" />
     </svg>
   ),
 };
