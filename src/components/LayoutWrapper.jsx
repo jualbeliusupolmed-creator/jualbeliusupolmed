@@ -11,6 +11,7 @@ import GlobalChatNotifier from "./GlobalChatNotifier";
 import PopupSponsor from "./PopupSponsor";
 import SwipeBackGesture from "./SwipeBackGesture";
 import GlobalPullToRefresh from "./GlobalPullToRefresh";
+import { SesiProvider } from "./SesiProvider";
 import { cn } from "@/lib/utils";
 
 export default function LayoutWrapper({ children }) {
@@ -93,7 +94,11 @@ export default function LayoutWrapper({ children }) {
   }, []);
 
   return (
-    <>
+    // Sesi dibungkus di sini, bukan di layout.jsx, supaya Navbar dan seluruh
+    // halaman membaca SATU hasil `/api/auth/me` yang sama. Sebelumnya Navbar
+    // memanggilnya sendiri setiap kali alamat berpindah, dan hasilnya tidak
+    // pernah sampai ke komponen lain.
+    <SesiProvider>
       {!isImmersive && <Navbar config={config} />}
       <main className={cn(
         "flex-1 flex flex-col bg-[#f5f5f7]",
@@ -117,6 +122,6 @@ export default function LayoutWrapper({ children }) {
           {!hideFooter && <Footer config={config} />}
         </>
       )}
-    </>
+    </SesiProvider>
   );
 }

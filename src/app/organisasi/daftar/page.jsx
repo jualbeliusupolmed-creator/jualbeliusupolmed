@@ -7,6 +7,7 @@ import Link from "next/link";
 import { UKM_CATEGORIES, KAMPUS_OPTIONS, DEFAULT_INVITE_CODE } from "@/lib/organisasi";
 import { toast } from "sonner";
 import imageCompression from "browser-image-compression";
+import { useSesi } from "@/components/SesiProvider";
 
 function DaftarOrganisasiForm() {
   const router = useRouter();
@@ -92,10 +93,12 @@ function DaftarOrganisasiForm() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal mendaftarkan organisasi.");
 
-      // Simpan session seller_wa & seller_name
+      // Simpan cermin identitas, lalu segarkan sesi bersama supaya Navbar dan
+      // halaman lain langsung mengenali akun baru ini tanpa muat ulang.
       if (data.wa) {
         localStorage.setItem("seller_wa", data.wa);
         localStorage.setItem("seller_name", data.organization?.ukm_name || form.ukm_name);
+        segarkanSesi();
       }
 
       setSuccessData(data);
@@ -419,6 +422,7 @@ function DaftarOrganisasiForm() {
 }
 
 export default function DaftarOrganisasiPage() {
+  const { segarkan: segarkanSesi } = useSesi();
   return (
     <Suspense fallback={<div className="p-12 text-center text-sm text-gray-400">Memuat formulir pendaftaran...</div>}>
       <DaftarOrganisasiForm />

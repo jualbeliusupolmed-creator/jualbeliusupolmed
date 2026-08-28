@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { playChatSound, playSentSound } from "@/lib/sound";
 import { hapticLight, hapticSuccess } from "@/lib/haptics";
 import { Icon } from "@/components/Icons";
+import { useSesi } from "@/components/SesiProvider";
 
 function QuickReplyToast({ senderName, messageText, roomId, toastId, router }) {
   const [replyText, setReplyText] = useState("");
@@ -118,6 +119,10 @@ export default function GlobalChatNotifier() {
   const router = useRouter();
   const roomTimestampsRef = useRef(new Map());
   const initialLoadRef = useRef(true);
+  // Dulu gerbangnya membaca localStorage langsung, jadi pemilik kuki yang
+  // cerminnya kosong tidak pernah menerima notifikasi pesan masuk sampai ia
+  // masuk ulang — diam-diam, tanpa satu pun pesan galat.
+  const { wa: sesiWa, siap: sesiSiap } = useSesi();
 
   useEffect(() => {
     // Jika sedang di halaman /chat, biarkan halaman chat yang mengurus realtime secara mandiri
@@ -127,7 +132,7 @@ export default function GlobalChatNotifier() {
 
     async function checkNewMessages() {
       // Inbox bersifat privat; jangan polling untuk pengunjung anonim.
-      if (!window.localStorage.getItem("seller_wa")) return;
+      if (!sesiSiap || !sesiWa) return;
       try {
         const res = await fetch("/api/chat/marketplace/inbox");
         if (res.status === 401 || !res.ok) return;
@@ -193,7 +198,7 @@ export default function GlobalChatNotifier() {
       clearTimeout(timeout);
       if (timer) clearInterval(timer);
     };
-  }, [pathname, router]);
+  }, [pathname, router, sesiSiap, sesiWa]);
 
   return null;
 }

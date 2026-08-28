@@ -102,6 +102,50 @@ Berjalan dengan PostgreSQL, memiliki tabel-tabel berikut:
 
 ---
 
+### F. Sesi Pengguna — Satu Sumber, Satu Kali Masuk (28 Agu 2026)
+
+Kebenaran sesi ada di kuki `seller_session`: httpOnly, bertanda tangan HMAC,
+**30 hari** (`lib/auth.js`). Tapi yang dibaca antarmuka selama ini
+`localStorage.seller_wa` — sepuluh berkas membacanya untuk menentukan "siapa
+yang sedang memakai ini".
+
+**Akar keluhan "disuruh login berkali-kali".** Kedua nilai itu bisa berbeda,
+dan yang paling sering: kuki masih sah, localStorage kosong (peranti baru,
+riwayat peramban dibersihkan, mode privat). Navbar sudah memanggil
+`/api/auth/me` dan **tahu** nomor yang benar — tapi cabang `loggedIn`-nya tidak
+pernah menulis balik ke localStorage; hanya cabang `else` yang menyentuhnya
+(untuk menghapus). Jadi pengguna melihat namanya di pojok kanan atas, lalu
+menekan **Jual** dan dihadang modal masuk. `/jual` membandingkan
+`localStorage.seller_wa !== formattedWa`, dan string kosong tidak akan pernah
+sama dengan nomor mana pun.
+
+**Aturannya sekarang** — `components/SesiProvider.jsx`, dipasang di
+`LayoutWrapper`:
+
+1. Kuki tetap satu-satunya kebenaran; localStorage cuma **cerminnya**, supaya
+   formulir bisa terisi tanpa menunggu jaringan.
+2. Cermin dipulihkan otomatis kalau kuki sah tapi localStorage kosong, dan
+   **dihapus** kalau kuki sudah tidak sah — jadi tidak ada antarmuka yang
+   menyangka dirinya masih masuk lalu ditolak 401.
+3. `siap` membedakan "belum tahu" dari "sudah tahu, memang belum masuk". Tanpa
+   itu setiap gerbang berkedip jadi layar login sepersekian detik pertama —
+   bentuk lain dari disuruh masuk lagi.
+4. Satu permintaan `/api/auth/me` per pemuatan halaman, dipakai bersama
+   (`janjiSesi`). Sebelumnya Navbar memanggilnya **setiap pindah alamat**, dan
+   `OwnerFastActions` sekali **per kartu iklan** — satu halaman daftar bisa
+   menanyakan hal yang sama belasan kali, dan tiap panggilan ikut menanyai
+   Supabase untuk profilnya.
+
+**Gerbang login dirapikan jadi satu.** `/dashboard/login` dulu punya dua:
+`layout.jsx` (mengalihkan yang sudah masuk, tapi selalu ke `/dashboard`,
+membuang `?next=`) dan halaman kliennya sendiri (tidak tahu apa-apa soal kuki
+httpOnly). Sekarang satu gerbang di `page.jsx` — server, sebelum satu piksel
+dikirim, dan menghormati `?next=` lewat `tujuanAman()`.
+
+**Aturan umum yang layak diingat:** jangan pernah menyimpulkan "belum masuk"
+dari nilai localStorage yang kosong. Kosong berarti *tidak tahu*, dan yang tahu
+cuma server.
+
 ## 5. Log & Riwayat Audit
 
 ### Canonical Bot Source of Truth

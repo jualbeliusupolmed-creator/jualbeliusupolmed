@@ -22,6 +22,7 @@ import SellerAnalyticsView from "@/components/dashboard/SellerAnalyticsView";
 import UkmDashboardView from "@/components/dashboard/UkmDashboardView";
 import OprecPengurusPanel from "@/components/oprec/OprecPengurusPanel";
 import BuatOprecModal from "@/components/oprec/BuatOprecModal";
+import { useSesi } from "@/components/SesiProvider";
 
 function statusBadge(s) {
   const map = {
@@ -45,6 +46,7 @@ function daysLeft(expiredAt) {
 }
 
 function DashboardInner() {
+  const { wa: sesiWa, siap: sesiSiap } = useSesi();
   const params = useSearchParams();
   const [mounted, setMounted] = useState(false);
   const [wa, setWa] = useState("");
@@ -70,11 +72,6 @@ function DashboardInner() {
 
   const [sponsoredModal, setSponsoredModal] = useState(null);
   const [sponsoredConfirm, setSponsoredConfirm] = useState(null);
-
-  // Profil edit state
-  const [profilForm, setProfilForm] = useState({ name: "", bio: "" });
-  const [profilRequests, setProfilRequests] = useState([]);
-  const [profilBusy, setProfilBusy] = useState(false);
 
   // Config from API (for dynamic admin WA number)
   const [cfg, setCfg] = useState(null);
@@ -102,68 +99,12 @@ function DashboardInner() {
 
   const router = useRouter();
 
-  async function loadProfilRequests(num) {
-    const raw = (num ?? wa)?.trim();
-    if (!raw) return;
-    const n = formatWa(raw) || raw;
-    try {
-      const res = await fetch(`/api/profile/change-request?seller_wa=${encodeURIComponent(n)}`);
-      const data = await res.json();
-      setProfilRequests(data.requests || []);
-    } catch (_) {}
-  }
-
-  async function submitProfilChange(field) {
-    const value = field === "name" ? profilForm.name.trim() : profilForm.bio.trim();
-    if (!value) return;
-    setProfilBusy(true);
-    try {
-      const res = await fetch("/api/profile/change-request", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ seller_wa: wa, field, requested_value: value }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Gagal mengirim permintaan");
-      toast.success("Permintaan terkirim! Admin akan meninjau perubahan ini.");
-      setProfilForm(prev => ({ ...prev, [field]: "" }));
-      loadProfilRequests();
-    } catch (e) {
-      toast.error(e.message);
-    } finally {
-      setProfilBusy(false);
-    }
-  }
-
   useEffect(() => {
     setMounted(true);
     fetch("/api/config")
       .then((r) => r.json())
       .then((d) => setCfg(d))
       .catch(() => {});
-
-    const saved = localStorage.getItem("seller_wa");
-    
-    if (saved) {
-      const cleanWa = formatWa(saved) || saved;
-      setWa(cleanWa);
-      load(cleanWa);
-    } else {
-      // Jika tidak ada di localStorage, cek sesi login di cookie server
-      fetch("/api/auth/me")
-        .then((r) => r.json())
-        .then((data) => {
-          if (data.loggedIn && data.wa) {
-            const cleanWa = formatWa(data.wa) || data.wa;
-            localStorage.setItem("seller_wa", cleanWa);
-            setWa(cleanWa);
-            load(cleanWa);
-          } else {
-            router.push("/dashboard/login");
-          }
-        })
-        .catch(() => router.push("/dashboard/login"));
-    }
 
     // `?tab=` sengaja dihormati: tanpa ini, "satu pintu" /profil mendarat di
     // tab jualan dan orang harus mencari sendiri tab profilnya — pintu yang
@@ -175,6 +116,29 @@ function DashboardInner() {
     if (params.get("edited")) setNote("Iklan berhasil diperbarui!");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params, router]);
+
+  // Identitas dashboard datang dari sesi bersama.
+  //
+  // Dulu ia membaca localStorage lebih dulu dan baru menoleh ke
+  // /api/auth/me kalau kosong. Dua akibatnya: (1) nomor basi di localStorage
+  // — kuki sudah kedaluwarsa, atau peranti itu dipakai bergantian — dipercaya
+  // apa adanya dan dashboard memuat akun yang salah; (2) panggilan
+  // /api/auth/me kedua, sesudah Navbar memanggilnya juga.
+  //
+  // Sekarang kukinya yang menentukan, dan menunggu `siap` berarti tidak ada
+  // lagi lemparan ke halaman login yang berkedip sepersekian detik sebelum
+  // sesi selesai terbaca.
+  useEffect(() => {
+    if (!sesiSiap) return;
+    if (!sesiWa) {
+      router.push("/dashboard/login?next=" + encodeURIComponent(pathAsli()));
+      return;
+    }
+    const cleanWa = formatWa(sesiWa) || sesiWa;
+    setWa(cleanWa);
+    load(cleanWa);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sesiSiap, sesiWa]);
 
   async function load(num) {
     let raw = (num ?? wa)?.trim();
@@ -230,7 +194,6 @@ function DashboardInner() {
       if (mergedProfile?.account_type === "ukm" || mergedProfile?.ukm_verified || mergedProfile?.ukm_name) {
         setActiveTab("ukm");
       }
-      loadProfilRequests(n);
       localStorage.setItem("seller_wa", n);
     } catch (e) {
       console.error(e);
@@ -1830,6 +1793,11 @@ function Stat({ label, value, icon }) {
 }
 
 const TAB_SAH = ["jual", "dicari", "tawaran", "statistik", "pro", "referral", "profil", "blog", "ukm"];
+
+function pathAsli() {
+  if (typeof window === "undefined") return "/dashboard";
+  return window.location.pathname + (window.location.search || "");
+}
 
 export default function DashboardPage() {
   return (
