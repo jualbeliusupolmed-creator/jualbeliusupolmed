@@ -28,12 +28,12 @@ import { AKSEN, statusToko } from "@/lib/toko";
  */
 
 const INTENTS = [
-  "Teman Santai ☕",
-  "Belajar Bareng 📚",
-  "Teman Olahraga 🏃‍♂️",
-  "Teman Event / Konser 🎟️",
-  "Ngobrol Seru 💬",
-  "Cari Relasi Karir 💼",
+  { id: "Teman Santai", label: "Teman Santai", icon: Icon.Coffee },
+  { id: "Belajar Bareng", label: "Belajar Bareng", icon: Icon.BookOpen },
+  { id: "Teman Olahraga", label: "Teman Olahraga", icon: Icon.Users },
+  { id: "Teman Event / Konser", label: "Teman Event / Konser", icon: Icon.Sparkles },
+  { id: "Ngobrol Seru", label: "Ngobrol Seru", icon: Icon.MessageCircle },
+  { id: "Cari Relasi Karir", label: "Cari Relasi Karir", icon: Icon.Briefcase },
 ];
 
 const FACULTIES_USU = [
@@ -48,13 +48,13 @@ const FACULTIES_POLMED = [
 ];
 
 const KATEGORI_UKM = [
-  { id: "bem_hima", label: "👑 BEM & Himpunan" },
-  { id: "olahraga", label: "🏃 Olahraga" },
-  { id: "seni_budaya", label: "🎨 Seni & Budaya" },
-  { id: "riset_teknologi", label: "🔬 Riset & Teknologi" },
-  { id: "keagamaan", label: "🕌 Kerohanian" },
-  { id: "media_pers", label: "📰 Pers & Media" },
-  { id: "sosial_lingkungan", label: "🌱 Sosial & Lingkungan" },
+  { id: "bem_hima", label: "BEM & Himpunan" },
+  { id: "olahraga", label: "Olahraga" },
+  { id: "seni_budaya", label: "Seni & Budaya" },
+  { id: "riset_teknologi", label: "Riset & Teknologi" },
+  { id: "keagamaan", label: "Kerohanian" },
+  { id: "media_pers", label: "Pers & Media" },
+  { id: "sosial_lingkungan", label: "Sosial & Lingkungan" },
 ];
 
 // Satu jalur unggah untuk foto profil, logo, dan sampul. Dipampatkan di

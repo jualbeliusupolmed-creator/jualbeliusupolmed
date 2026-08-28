@@ -3,13 +3,14 @@
 import { useRef, useState } from "react";
 import { rupiah } from "@/lib/fees";
 import { buildSlug } from "@/lib/slug";
+import { Icon } from "@/components/Icons";
 
 const PLATFORMS = [
-  { id: "ig-feed",  label: "IG Feed",  icon: "📷", action: "download", format: "feed",  desc: "1:1 — Download" },
-  { id: "ig-story", label: "IG Story", icon: "📱", action: "download", format: "story", desc: "9:16 — Download" },
-  { id: "tiktok",   label: "TikTok",   icon: "🎵", action: "download", format: "story", desc: "9:16 — Download" },
-  { id: "wa",       label: "WhatsApp", icon: "🟢", action: "share",    format: null,    desc: "Kirim teks + link" },
-  { id: "fb",       label: "Facebook", icon: "🔵", action: "share",    format: null,    desc: "Bagikan link" },
+  { id: "ig-feed",  label: "IG Feed",  IconComponent: Icon.Camera, action: "download", format: "feed",  desc: "1:1 — Download" },
+  { id: "ig-story", label: "IG Story", IconComponent: Icon.Smartphone, action: "download", format: "story", desc: "9:16 — Download" },
+  { id: "tiktok",   label: "TikTok",   IconComponent: Icon.Music, action: "download", format: "story", desc: "9:16 — Download" },
+  { id: "wa",       label: "WhatsApp", IconComponent: Icon.MessageCircle, action: "share", format: null, desc: "Kirim teks + link" },
+  { id: "fb",       label: "Facebook", IconComponent: Icon.Share, action: "share", format: null, desc: "Bagikan link" },
 ];
 
 export default function ShareModal({ listing, isIconOnly = false }) {
@@ -56,7 +57,7 @@ export default function ShareModal({ listing, isIconOnly = false }) {
       downloadTemplate(p.format, p.id);
     } else if (p.id === "wa") {
       const cond = listing.condition === "new" ? " · Baru" : listing.condition === "used" ? " · Bekas" : "";
-      const text = `📦 *${listing.title}*\n💰 ${rupiah(listing.price)}${cond}\n${listing.category ? `🏷️ ${listing.category}\n` : ""}\n👉 ${getUrl()}\n_Jual Beli USU Polmed — COD area kampus_`;
+      const text = `*${listing.title}*\nHarga: ${rupiah(listing.price)}${cond}\n${listing.category ? `Kategori: ${listing.category}\n` : ""}\n${getUrl()}\n_Jual Beli USU Polmed — COD area kampus_`;
       window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener");
     } else if (p.id === "fb") {
       window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(getUrl())}`, "_blank", "noopener");
@@ -82,7 +83,7 @@ export default function ShareModal({ listing, isIconOnly = false }) {
         </button>
       ) : (
         <button onClick={() => setOpen(true)} className="btn-outline w-full">
-          🎨 Buat Template Share
+          <span className="inline-flex items-center justify-center gap-2"><Icon.Sparkles className="h-4 w-4" />Buat Template Share</span>
         </button>
       )}
 
@@ -102,7 +103,7 @@ export default function ShareModal({ listing, isIconOnly = false }) {
             <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.06] dark:border-white/[0.08]">
               <h3 className="font-bold tracking-tight text-[17px] text-[#1d1d1f] dark:text-white">Buat Template</h3>
               <button onClick={() => setOpen(false)} className="flex h-7 w-7 items-center justify-center rounded-full bg-black/[0.05] text-[#1d1d1f] hover:bg-black/[0.09] active:scale-90 transition-all dark:bg-white/[0.08] dark:text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                <Icon.X className="h-3.5 w-3.5" />
               </button>
             </div>
 
@@ -119,7 +120,7 @@ export default function ShareModal({ listing, isIconOnly = false }) {
                         : "text-[#6e6e73] dark:text-slate-400 hover:text-[#1d1d1f] dark:hover:text-white"
                     }`}
                   >
-                    {t === "feed" ? "📷 Feed (1:1)" : "📱 Story (9:16)"}
+                    <span className="inline-flex items-center justify-center gap-1.5">{t === "feed" ? <Icon.Camera className="h-3.5 w-3.5" /> : <Icon.Smartphone className="h-3.5 w-3.5" />}{t === "feed" ? "Feed (1:1)" : "Story (9:16)"}</span>
                   </button>
                 ))}
               </div>
@@ -200,7 +201,7 @@ export default function ShareModal({ listing, isIconOnly = false }) {
                       disabled={busy === p.id}
                       className={`flex flex-col items-center gap-1.5 rounded-xl p-2.5 transition-all text-center ${isActive ? "bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700" : "opacity-50 bg-gray-50 dark:bg-slate-800"}`}
                     >
-                      <span className="text-2xl">{busy === p.id ? "⏳" : p.icon}</span>
+                      <p.IconComponent className={`h-6 w-6 ${busy === p.id ? "animate-pulse" : ""}`} />
                       <span className="text-[10px] font-semibold text-gray-700 dark:text-slate-300">{p.label}</span>
                       <span className="text-[9px] text-gray-400 dark:text-slate-500 leading-tight">{p.desc}</span>
                     </button>

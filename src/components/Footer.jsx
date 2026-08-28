@@ -12,7 +12,7 @@ export default function Footer({ config }) {
   const waGroupLink = contact.waGroupLink || "https://bit.ly/jualbeliusupolmed";
   const tagline = site.footerTagline || "Marketplace mahasiswa USU & POLMED. Jual-beli aman, dibantu admin.";
   
-  const supportEmail = contact.supportEmail || "admin@jualbelimedan.web.id";
+  const supportEmail = contact.supportEmail || "admin@jualbeliusupolmed.web.id";
   const supportPhone = contact.supportPhone || "+6289502472594";
   const supportAddress = contact.supportAddress || "Jl. Dr. T. Mansur No. 9, Medan 20155";
   const logoUrl = site.logoUrl || "https://autgrnrqeqdpqwkbolyh.supabase.co/storage/v1/object/public/listings/site/logo-1781175724233.jpg";

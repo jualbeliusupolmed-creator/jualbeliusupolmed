@@ -67,7 +67,7 @@ export default function NotificationCenter({ onOpenChange }) {
         desc: p.content?.slice(0, 80) + (p.content?.length > 80 ? "…" : ""),
         time: p.created_at,
         url: "/mading",
-        icon: p.type === "info" ? "📢" : "💌",
+        icon: p.type === "info" ? "megaphone" : "mail",
       }));
 
       const listingItems = (resListings.listings || []).map((l) => ({
@@ -77,7 +77,7 @@ export default function NotificationCenter({ onOpenChange }) {
         desc: `Rp ${(l.price || 0).toLocaleString("id-ID")} • di ${l.campus || "Medan"}`,
         time: l.created_at,
         url: `/produk/${l.slug || l.id}`,
-        icon: "🛍️",
+        icon: "shopping-bag",
       }));
 
       const staticNotifs = [
@@ -88,7 +88,7 @@ export default function NotificationCenter({ onOpenChange }) {
           desc: "Marketplace, Menfess & Media Komunitas USU & POLMED.",
           time: new Date().toISOString(),
           url: "/cara-bergabung",
-          icon: "🎓",
+          icon: "landmark",
         }
       ];
 
@@ -173,7 +173,7 @@ export default function NotificationCenter({ onOpenChange }) {
       });
 
       hapticSuccess();
-      toast.success("🔔 Notifikasi HP berhasil diaktifkan!");
+      toast.success("Notifikasi HP berhasil diaktifkan!");
     } catch (e) {
       toast.error("Gagal menyalakan notifikasi: " + (e.message || ""));
     } finally {
@@ -196,6 +196,17 @@ export default function NotificationCenter({ onOpenChange }) {
     if (activeFilter === "listing") return n.type === "listing";
     return true;
   });
+
+  const notificationIcon = (name) => {
+    const icons = {
+      megaphone: Icon.Megaphone,
+      mail: Icon.Mail,
+      "shopping-bag": Icon.ShoppingBag,
+      landmark: Icon.Landmark,
+    };
+    const Component = icons[name] || Icon.Bell;
+    return <Component className="h-4 w-4" aria-hidden="true" />;
+  };
 
   // readIds sekarang berasal dari state (hydration-safe), tidak perlu baca localStorage langsung di sini
 
@@ -248,7 +259,7 @@ export default function NotificationCenter({ onOpenChange }) {
           {/* HEADER */}
           <div className="p-4 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/70 backdrop-blur-md">
             <div className="flex items-center gap-2">
-              <span className="text-base">🔔</span>
+              <Icon.Bell className="h-4 w-4 text-primary" aria-hidden="true" />
               <h3 className="font-extrabold text-sm text-slate-900 dark:text-white tracking-tight">
                 Notifikasi
               </h3>
@@ -274,7 +285,7 @@ export default function NotificationCenter({ onOpenChange }) {
             <div className="p-3.5 mx-3 mt-3 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-primary/10 to-teal-500/10 border border-primary/20 flex items-center justify-between gap-2">
               <div className="text-left">
                 <p className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1">
-                  <span>📱</span> Nyalakan Notifikasi HP
+                  <Icon.Smartphone className="h-4 w-4" aria-hidden="true" /> Nyalakan Notifikasi HP
                 </p>
                 <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight mt-0.5">
                   Dapat info instan saat ada barang murah &amp; balasan menfess.
@@ -296,8 +307,8 @@ export default function NotificationCenter({ onOpenChange }) {
               // Dua dunia yang berbeda tidak boleh menumpuk jadi satu tumpukan
               // yang sama: kabar sosial dan kabar dagang dipisah tegas.
               { id: "all", label: "Semua" },
-              { id: "mading", label: "🫂 Sosial" },
-              { id: "listing", label: "🛒 Belanja" },
+              { id: "mading", label: "Sosial", icon: Icon.Users },
+              { id: "listing", label: "Belanja", icon: Icon.ShoppingCart },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -311,7 +322,7 @@ export default function NotificationCenter({ onOpenChange }) {
                     : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
                 }`}
               >
-                {tab.label}
+                <span className="inline-flex items-center gap-1">{tab.icon ? <tab.icon className="h-3.5 w-3.5" aria-hidden="true" /> : null}{tab.label}</span>
               </button>
             ))}
           </div>
@@ -325,7 +336,7 @@ export default function NotificationCenter({ onOpenChange }) {
               </div>
             ) : filteredNotifs.length === 0 ? (
               <div className="p-8 text-center space-y-1">
-                <span className="text-2xl">📭</span>
+                <Icon.Mail className="mx-auto h-7 w-7 text-slate-400" aria-hidden="true" />
                 <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Belum ada notifikasi baru</p>
                 <p className="text-[10px] text-slate-400">Pemberitahuan terbaru akan muncul di sini.</p>
               </div>
@@ -349,8 +360,8 @@ export default function NotificationCenter({ onOpenChange }) {
                       !isRead ? "bg-primary/[0.03] dark:bg-emerald-500/[0.03]" : ""
                     }`}
                   >
-                    <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-sm shrink-0 mt-0.5">
-                      {item.icon}
+                    <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+                      {notificationIcon(item.icon)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1 mb-0.5">

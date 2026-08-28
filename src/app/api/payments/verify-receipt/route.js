@@ -181,8 +181,8 @@ export async function POST(req) {
               `👤 *Nama:* ${wanted.buyer_name}\n` +
               `📱 *No. WhatsApp:* ${buyerWa}\n\n` +
               `Silakan langsung hubungi pembeli di atas melalui link berikut:\n` +
-              `👉 https://wa.me/${buyerWaIntl}?text=${encodeURIComponent(`Halo ${wanted.buyer_name}, saya melihat postingan Anda di Jual Beli Medan mencari "${wanted.title}". Saya ada barangnya.`)}\n\n` +
-              `Terima kasih telah menggunakan Jual Beli Medan!`;
+              `👉 https://wa.me/${buyerWaIntl}?text=${encodeURIComponent(`Halo ${wanted.buyer_name}, saya melihat postingan Anda di Jual Beli USU Polmed mencari "${wanted.title}". Saya ada barangnya.`)}\n\n` +
+              `Terima kasih telah menggunakan Jual Beli USU Polmed!`;
             sendWa(payment.meta.requester_wa, msg).catch(console.error);
           }
         } else {

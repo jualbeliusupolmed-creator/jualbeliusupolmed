@@ -58,7 +58,7 @@ export default function MarketplaceInbox({ onSelectRoom }) {
   if (rooms.length === 0) {
     return (
       <div className="text-center p-8 space-y-3 bg-white dark:bg-[#1c1c1e] rounded-[22px] border border-black/[0.06] dark:border-white/[0.08]">
-        <div className="text-4xl">🛒</div>
+        <Icon.ShoppingCart className="mx-auto h-10 w-10 text-primary" aria-hidden="true" />
         <h3 className="font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Belum Ada Transaksi</h3>
         <p className="text-xs text-gray-500 dark:text-gray-400 max-w-xs mx-auto">
           Kamu belum memiliki obrolan terkait jual beli barang. Mulai cari barang di Jual Beli!
@@ -86,14 +86,14 @@ export default function MarketplaceInbox({ onSelectRoom }) {
             {/* Avatar / Thumbnail */}
             {isDirect ? (
               <div className="w-12 h-12 shrink-0 rounded-[16px] bg-gradient-to-br from-primary/15 to-emerald-500/15 border border-primary/20 flex items-center justify-center text-lg text-primary font-black shadow-xs">
-                {partnerAlias ? partnerAlias[0].toUpperCase() : "💬"}
+                {partnerAlias ? partnerAlias[0].toUpperCase() : <Icon.MessageCircle className="h-5 w-5" aria-hidden="true" />}
               </div>
             ) : (
               <div className="w-12 h-12 shrink-0 rounded-[16px] bg-black/[0.03] dark:bg-black/40 overflow-hidden border border-black/[0.04] dark:border-white/[0.06]">
                 {listing?.image_url ? (
                   <img src={listing.image_url} alt={listing.title} className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-lg">📦</div>
+                  <div className="w-full h-full flex items-center justify-center text-primary"><Icon.Package className="h-5 w-5" aria-hidden="true" /></div>
                 )}
               </div>
             )}
@@ -109,7 +109,7 @@ export default function MarketplaceInbox({ onSelectRoom }) {
                     ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60"
                     : "bg-black/[0.04] dark:bg-white/[0.08] text-gray-500 dark:text-gray-400"
                 }`}>
-                  {isDirect ? "💬 DM Pribadi" : partnerRole}
+                  {isDirect ? <span className="inline-flex items-center gap-1"><Icon.MessageCircle className="h-3 w-3" />DM Pribadi</span> : partnerRole}
                 </span>
               </div>
               {isDirect ? (

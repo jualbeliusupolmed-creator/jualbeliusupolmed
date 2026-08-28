@@ -45,7 +45,7 @@ export const DEFAULT_SETTINGS = {
     marketplaceWa: process.env.NEXT_PUBLIC_MARKETPLACE_WA || "62895429126232",
     waGroupLink:
       process.env.NEXT_PUBLIC_WA_GROUP_LINK || "https://chat.whatsapp.com/DQMZK2qSgq2D0WvH7BlBSA",
-    supportEmail: "admin@jualbelimedan.web.id",
+    supportEmail: "admin@jualbeliusupolmed.web.id",
     supportPhone: "+62 895-4291-26232",
     supportAddress: "Jl. Dr. T. Mansur No. 9, Medan 20155",
   },

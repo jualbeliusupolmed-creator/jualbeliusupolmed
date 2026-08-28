@@ -3,7 +3,7 @@ import { MARKETPLACE_WA } from "@/lib/constants";
 
 export const metadata = {
   title: "Kebijakan Pengembalian Barang (Return Policy)",
-  description: "Kebijakan pengembalian dan penukaran barang fisik di Jual Beli Medan.",
+  description: "Kebijakan pengembalian dan penukaran barang fisik di Jual Beli USU Polmed.",
   alternates: { canonical: "/return-policy" },
 };
 
@@ -19,7 +19,7 @@ export default function ReturnPolicyPage() {
 
       <div className="card mt-8 p-6 sm:p-8 space-y-6 text-sm text-gray-600 leading-relaxed">
         <p>
-          Kebijakan Pengembalian Barang (Return Policy) ini berlaku untuk pembelian produk fisik melalui platform <strong>Jual Beli Medan</strong>. Kami berkomitmen untuk memastikan kepuasan Anda dalam setiap transaksi.
+          Kebijakan Pengembalian Barang (Return Policy) ini berlaku untuk pembelian produk fisik melalui platform <strong>Jual Beli USU Polmed</strong>. Kami berkomitmen untuk memastikan kepuasan Anda dalam setiap transaksi.
         </p>
 
         <div>

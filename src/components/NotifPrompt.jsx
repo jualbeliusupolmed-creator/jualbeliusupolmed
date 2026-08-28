@@ -121,7 +121,7 @@ export default function NotifPrompt() {
   if (!tampil) return null;
 
   return (
-    <div className="fixed inset-x-3 bottom-28 z-[60] mx-auto max-w-md sm:inset-x-auto sm:right-5 sm:bottom-5">
+    <div className="fixed inset-x-3 bottom-[calc(6.5rem+env(safe-area-inset-bottom,0px))] z-[60] mx-auto max-w-md sm:inset-x-auto sm:right-5 sm:bottom-5">
       <div className="flex items-start gap-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-lg dark:border-slate-700 dark:bg-slate-900">
         <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
           <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">

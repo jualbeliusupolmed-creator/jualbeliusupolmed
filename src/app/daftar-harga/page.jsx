@@ -4,7 +4,7 @@ import { getSettings } from "@/lib/settings";
 
 export const metadata = {
   title: "Daftar Harga Layanan & Kebijakan",
-  description: "Daftar tarif iklan, biaya layanan transaksi, dan kebijakan pengembalian dana di Jual Beli Medan.",
+  description: "Daftar tarif iklan, biaya layanan transaksi, dan kebijakan pengembalian dana di Jual Beli USU Polmed.",
   alternates: { canonical: "/daftar-harga" },
 };
 
@@ -106,7 +106,7 @@ export default async function DaftarHargaPage() {
           Daftar Harga Layanan &amp; Kebijakan
         </h1>
         <p className="mx-auto mt-3 max-w-2xl text-gray-500 text-sm sm:text-base">
-          Transparan dan terjangkau untuk komunitas warga Medan. Seluruh biaya iklan digunakan untuk pemeliharaan server dan pengembangan platform.
+          Transparan dan terjangkau untuk komunitas mahasiswa USU & Polmed. Seluruh biaya iklan digunakan untuk pemeliharaan server dan pengembangan platform.
         </p>
       </div>
 

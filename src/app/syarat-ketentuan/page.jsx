@@ -3,7 +3,7 @@ import { MARKETPLACE_WA } from "@/lib/constants";
 
 export const metadata = {
   title: "Syarat & Ketentuan",
-  description: "Syarat dan ketentuan penggunaan platform serta kebijakan transaksi di Jual Beli Medan.",
+  description: "Syarat dan ketentuan penggunaan platform serta kebijakan transaksi di Jual Beli USU Polmed.",
   alternates: { canonical: "/syarat-ketentuan" },
 };
 
@@ -19,7 +19,7 @@ export default function SyaratKetentuanPage() {
 
       <div className="card mt-8 p-6 sm:p-8 space-y-6 text-sm text-gray-600 leading-relaxed">
         <p>
-          Selamat datang di <strong>Jual Beli Medan</strong>. Dengan mengakses, mendaftar, atau menggunakan platform kami, Anda setuju untuk terikat oleh Syarat dan Ketentuan berikut. Mohon baca dengan saksama sebelum menggunakan layanan kami.
+          Selamat datang di <strong>Jual Beli USU Polmed</strong>. Dengan mengakses, mendaftar, atau menggunakan platform kami, Anda setuju untuk terikat oleh Syarat dan Ketentuan berikut. Mohon baca dengan saksama sebelum menggunakan layanan kami.
         </p>
 
         {/* 1. Ketentuan Umum */}
@@ -85,7 +85,7 @@ export default function SyaratKetentuanPage() {
           <dl className="grid gap-2 sm:grid-cols-2 text-xs sm:text-sm">
             <div>
               <dt className="font-semibold text-gray-900">Nama Layanan:</dt>
-              <dd>Jual Beli Medan</dd>
+              <dd>Jual Beli USU Polmed</dd>
             </div>
             <div>
               <dt className="font-semibold text-gray-900">Kontak WhatsApp:</dt>
@@ -93,12 +93,12 @@ export default function SyaratKetentuanPage() {
             </div>
             <div>
               <dt className="font-semibold text-gray-900">Email Hubungan Pelanggan:</dt>
-              <dd>admin@jualbelimedan.web.id</dd>
+              <dd>admin@jualbeliusupolmed.web.id</dd>
             </div>
             <div>
               <dt className="font-semibold text-gray-900">Alamat Operasional:</dt>
               <dd>
-                Kantor Pengelola Jual Beli Medan,<br />
+                Kantor Pengelola Jual Beli USU Polmed,<br />
                 Jl. Dr. T. Mansur No. 9, Padang Bulan, Kec. Medan Baru,<br />
                 Kota Medan, Sumatera Utara 20155
               </dd>

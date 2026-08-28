@@ -421,7 +421,7 @@ export default function OTPModal({ isOpen, onClose, onSuccess, initialWa = "" })
                   </label>
                   <input
                     type="text"
-                    placeholder="Contoh: Rian Pratama"
+                    placeholder="Contoh: Budi Siregar"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     className={KELAS_INPUT}

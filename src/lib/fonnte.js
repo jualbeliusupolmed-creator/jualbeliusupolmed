@@ -490,7 +490,7 @@ export async function notifyCategorySubscribers(supa, listing) {
         `💰 ${rupiah(listing.price)}\n` +
         `📍 ${listing.campus === "Semua" ? "Medan" : listing.campus}\n\n` +
         `👉 ${url}\n\n` +
-        `_Balas STOP untuk berhenti notifikasi._`
+        `_Untuk berhenti notifikasi, hubungi admin._`
       ).catch(() => {});
 
       // Update timestamp cooldown
