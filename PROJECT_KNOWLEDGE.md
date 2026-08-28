@@ -102,6 +102,15 @@ Berjalan dengan PostgreSQL, memiliki tabel-tabel berikut:
 
 ## 5. Log & Riwayat Audit
 
+*   **28 Agustus 2026 — Kode Iklan Pendek, URL `/c/{kode}`, dan Spesifikasi Terstruktur Listing**
+    - Menambahkan helper `listingCode` dan migration `20260827205354_listing_code_and_specs.sql` untuk memperkuat field `listing_code` yang sudah ada di produksi (integer berbasis sequence, kini dikunci `NOT NULL` + `UNIQUE`) serta menambah `specs` (`jsonb`) untuk spesifikasi terstruktur per kategori.
+    - Form jual (`src/app/jual/JualClient.jsx`) kini menampilkan blok spesifikasi dinamis per kategori (`Elektronik`, `Fashion`, `Buku`, `Buku Kuliah`, `Makanan`, `Kos`, `Jasa`) dan tombol template deskripsi agar input penjual lebih seragam.
+    - API `POST /api/listings` kini mengikuti `listing_code` bawaan database dan menyanitasi `specs` di server; `PATCH /api/listings/[id]` ikut menjaga sanitasi saat edit; `GET /api/listings/browse` dapat menemukan listing langsung dari kode iklan yang diketik pengguna.
+    - Browser publik (`src/app/HomeBrowser.jsx`) kini mendukung filter multi-chip berbasis `specs` dengan URL shareable (`?spec=key:value`) dan perilaku `AND`, misalnya kombinasi `Kos + AC + WiFi + Putri`. Filter dikerjakan deterministik di server route setelah query utama supaya tidak bergantung pada operator `jsonb` PostgREST yang rawan drift.
+    - Halaman produk (`/produk/[slug]`) kini menampilkan kode iklan, tabel spesifikasi, dan panel edukasi "Transaksi Aman di Kampus". Kartu produk, share WhatsApp, dan QR poster ikut membawa konteks kode iklan; route baru `/c/[code]` me-redirect ke slug kanonis produk.
+    - Verifikasi produksi setelah migration: `listing_code` bertipe `integer` dengan default sequence, `NOT NULL`, dan index unik; `specs` bertipe `jsonb` dengan default `{}` dan index GIN. Verifikasi lokal: `npm run lint` lulus tanpa error dan `npm test` lulus 61/61.
+    - `npm run build` lokal di Windows masih gagal pada tahap prerender/export banyak halaman dengan pola `Cannot find module .next/server/app/.../page.js` setelah kompilasi sukses. Gejalanya lintas-rute dan tidak spesifik ke fitur listing/specs; indikasinya problem konfigurasi build/lingkungan lokal yang sudah lebih luas dari perubahan ini.
+
 *   **25 Agustus 2026 — Arsitektur auto-post Instagram dua akun (database produksi aktif; kode menunggu deploy)**
     - Menfess diarahkan hanya ke `@usupolmedmenfess`; iklan marketplace berstatus aktif diarahkan hanya ke `@katalogusupolmed`. Akun umum `@usupolmedupdate` tidak dipakai oleh jalur otomatis.
     - Kredensial dipisah menjadi `META_MENFESS_IG_USER_ID` / `META_MENFESS_IG_ACCESS_TOKEN` dan `META_KATALOG_IG_USER_ID` / `META_KATALOG_IG_ACCESS_TOKEN`. Nilainya hanya boleh berada di secret manager server. Nama lama `META_IG_*` masih menjadi fallback Menfess selama transisi, bukan untuk katalog.

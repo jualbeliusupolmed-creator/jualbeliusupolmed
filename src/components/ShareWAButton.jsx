@@ -2,13 +2,15 @@
 
 import { rupiah } from "@/lib/fees";
 import { buildSlug } from "@/lib/slug";
+import { buildListingShortPath } from "@/lib/listingCode";
 
 export default function ShareWAButton({ listing }) {
   function shareUrl() {
     const base = typeof window !== "undefined"
       ? window.location.origin
       : (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id");
-    return `${base}/produk/${buildSlug(listing.title, listing.id)}`;
+    const shortPath = buildListingShortPath(listing.listing_code);
+    return shortPath ? `${base}${shortPath}` : `${base}/produk/${buildSlug(listing.title, listing.id)}`;
   }
 
   function shareText() {
@@ -19,6 +21,7 @@ export default function ShareWAButton({ listing }) {
       : rupiah(listing.price);
     return (
       `📦 *${listing.title}*\n` +
+      (listing.listing_code ? `#️⃣ Kode: ${listing.listing_code}\n` : "") +
       `💰 ${priceStr}${cond}\n` +
       (listing.category ? `🏷️ ${listing.category}\n` : "") +
       `\n👉 ${shareUrl()}\n` +

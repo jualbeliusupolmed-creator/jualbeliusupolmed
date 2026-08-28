@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { rupiah } from "@/lib/fees";
 import { buildSlug } from "@/lib/slug";
+import { buildListingShortPath } from "@/lib/listingCode";
 
 /*
  * Satu lembar "Bagikan" untuk satu iklan.
@@ -48,7 +49,8 @@ export default function BagikanIklan({ listing, onClose }) {
   const asal = typeof window !== "undefined"
     ? window.location.origin
     : "https://www.jualbeliusupolmed.web.id";
-  const url = `${asal}/produk/${buildSlug(listing.title, listing.id)}`;
+  const shortPath = buildListingShortPath(listing.listing_code);
+  const url = shortPath ? `${asal}${shortPath}` : `${asal}/produk/${buildSlug(listing.title, listing.id)}`;
 
   const isRental = listing.type === "sewa";
   const harga = isRental && listing.rental_period
@@ -58,6 +60,7 @@ export default function BagikanIklan({ listing, onClose }) {
 
   const teks =
     `${isRental ? "🔑 *[SEWA]*" : "🛒"} *${listing.title}*\n` +
+    (listing.listing_code ? `#️⃣ Kode: ${listing.listing_code}\n` : "") +
     `💰 ${harga}${kondisi}\n` +
     (listing.category ? `🏷️ ${listing.category}\n` : "") +
     `\n👉 ${url}\n` +

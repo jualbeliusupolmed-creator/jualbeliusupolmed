@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { rupiah } from "@/lib/fees";
 import { buildSlug } from "@/lib/slug";
+import { buildListingShortPath } from "@/lib/listingCode";
 
 // Membuat poster QR untuk satu iklan. Cocok dicetak & ditempel di area yang disepakati —
 // orang scan langsung ke halaman produk (offline → online).
@@ -14,7 +15,8 @@ export default function QRButton({ listing }) {
 
   function productUrl() {
     const base = typeof window !== "undefined" ? window.location.origin : "https://www.jualbeliusupolmed.web.id";
-    return `${base}/produk/${buildSlug(listing.title, listing.id)}`;
+    const shortPath = buildListingShortPath(listing.listing_code);
+    return shortPath ? `${base}${shortPath}` : `${base}/produk/${buildSlug(listing.title, listing.id)}`;
   }
 
   async function openModal() {
@@ -75,8 +77,13 @@ export default function QRButton({ listing }) {
               className="rounded-xl border border-gray-100 p-5 text-center"
             >
               <p className="text-sm font-extrabold tracking-wide text-primary">
-                JUAL BELI Medan
+                Jual Beli USU Polmed
               </p>
+              {listing.listing_code && (
+                <p className="mt-1 text-xs font-semibold uppercase tracking-[0.24em] text-gray-500">
+                  Kode {listing.listing_code}
+                </p>
+              )}
               <p className="mt-3 line-clamp-2 text-base font-bold text-gray-900">
                 {listing.title}
               </p>

@@ -22,6 +22,8 @@ import FavoriteButton from "@/components/FavoriteButton";
 import OwnerFastActions from "@/components/OwnerFastActions";
 import { Icon } from "@/components/Icons";
 import { skripJsonLd } from "@/lib/jsonLd";
+import { buildListingShortPath } from "@/lib/listingCode";
+import { formatListingSpecs } from "@/lib/listingSpecs";
 
 export const revalidate = 300; // ISR 5 menit
 
@@ -163,6 +165,8 @@ export default async function ProdukPage({ params }) {
   }
 
   const sold = listing.status === "sold";
+  const shortPath = buildListingShortPath(listing.listing_code);
+  const listingSpecs = formatListingSpecs(listing.category, listing.specs);
   // Pakai nomor asli untuk URL profil; kalau bukan nomor valid (sisa LID) fallback ke raw
   // (halaman profil tetap menemukan penjualnya, & tombol wa.me di sana sudah di-guard).
   const sellerWaEncoded = encodeURIComponent(formatWa(listing.seller_wa) || listing.seller_wa || "");
@@ -289,6 +293,15 @@ export default async function ProdukPage({ params }) {
             <h1 className="text-[28px] font-semibold leading-tight tracking-[-0.04em] text-[#1d1d1f] dark:text-white">{listing.title}</h1>
             <FavoriteButton listing={listing} size="lg" className="shrink-0" />
           </div>
+          {listing.listing_code && (
+            <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-black/[0.08] bg-black/[0.02] px-3 py-1.5 text-sm font-medium text-[#1d1d1f] dark:border-white/[0.1] dark:bg-white/[0.05] dark:text-white">
+              <Icon.Hash className="h-4 w-4" />
+              <span>Kode Iklan {listing.listing_code}</span>
+              {shortPath ? (
+                <span className="text-xs text-[#6e6e73] dark:text-slate-400">{shortPath}</span>
+              ) : null}
+            </div>
+          )}
           <p className="mt-2.5 text-3xl font-semibold tracking-[-0.04em] text-[#1d1d1f] dark:text-white">
             {listing.type === "jasa" && <span className="text-xl text-gray-500 font-medium">Mulai dari </span>}
             {rupiah(listing.price)}
@@ -381,11 +394,40 @@ export default async function ProdukPage({ params }) {
           {/* Catatan: CTA mobile ada di floating pill di bawah (line ~420), bukan di sini */}
 
           {/* Deskripsi */}
+          {listingSpecs.length > 0 && (
+            <div className="card mt-5 p-5">
+              <h3 className="text-base font-semibold tracking-[-0.02em] text-[#1d1d1f] dark:text-white">Spesifikasi</h3>
+              <dl className="mt-3 space-y-2">
+                {listingSpecs.map((item) => (
+                  <div
+                    key={item.key}
+                    className="flex items-start justify-between gap-4 rounded-2xl bg-black/[0.02] px-3 py-2.5 dark:bg-white/[0.04]"
+                  >
+                    <dt className="text-sm text-[#6e6e73] dark:text-slate-400">{item.label}</dt>
+                    <dd className="text-right text-sm font-medium text-[#1d1d1f] dark:text-white">{item.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          )}
           <div className="card mt-5 p-5">
             <h3 className="text-base font-semibold tracking-[-0.02em] text-[#1d1d1f] dark:text-white">Deskripsi</h3>
             <p className="mt-2.5 whitespace-pre-wrap text-sm leading-relaxed text-[#424245] dark:text-slate-300">
               {listing.description || "Tidak ada deskripsi."}
             </p>
+          </div>
+
+          <div className="card mt-4 p-5">
+            <div className="flex items-center gap-2">
+              <Icon.Shield className="h-5 w-5 text-amber-500" />
+              <h3 className="text-base font-semibold tracking-[-0.02em] text-[#1d1d1f] dark:text-white">Transaksi Aman di Kampus</h3>
+            </div>
+            <ul className="mt-3 space-y-2 text-sm leading-relaxed text-[#424245] dark:text-slate-300">
+              <li>Selalu minta penjual kirim kode iklan ini sebelum deal: <strong>{listing.listing_code || listing.id?.slice(0, 8)}</strong>.</li>
+              <li>Utamakan COD di area ramai kampus seperti fakultas, kantin, atau gerbang utama.</li>
+              <li>Cek fisik barang dan kelengkapan sebelum transfer atau menekan tombol barang diterima.</li>
+              <li>Kalau ada perilaku mencurigakan, laporkan lewat tombol lapor pada halaman ini.</li>
+            </ul>
           </div>
 
           {/* Rating widget — hanya tampil jika barang sudah sold */}
@@ -419,4 +461,3 @@ export default async function ProdukPage({ params }) {
     </div>
   );
 }
-

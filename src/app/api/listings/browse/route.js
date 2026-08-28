@@ -3,6 +3,8 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { cariAman } from "@/lib/cariAman";
 import { jawabGalat } from "@/lib/jawabGalat";
+import { normalizeListingCode } from "@/lib/listingCode";
+import { getAllListingSpecKeys, parseSpecFilterToken } from "@/lib/listingSpecs";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +42,12 @@ export async function GET(req) {
     const nego = sp.get("nego") === "1";
     const typeStr = sp.get("type") || "";
     const condition = sp.get("condition") || "";
+    const exactCode = normalizeListingCode(q);
+    const allowedSpecKeys = new Set(getAllListingSpecKeys());
+    const specFilters = sp
+      .getAll("spec")
+      .map(parseSpecFilterToken)
+      .filter((item) => item && allowedSpecKeys.has(item.key));
 
     const from = (page - 1) * limit;
     const to = from + limit - 1;
@@ -49,7 +57,7 @@ export async function GET(req) {
       .from("listings")
       // SECURITY: We fetch seller_wa internally to map profiles, then delete it before returning
       .select(
-        "id, title, description, price, stock, category, type, campus, area, status, featured, bumped_at, created_at, views, image_url, images, seller_name, seller_wa, condition, sponsored_until, rental_period, distributor_fee",
+        "id, listing_code, title, description, price, stock, category, type, campus, area, status, featured, bumped_at, created_at, views, image_url, images, seller_name, seller_wa, condition, sponsored_until, rental_period, distributor_fee, specs",
         { count: "exact" }
       )
       .eq("status", "active");
@@ -62,7 +70,9 @@ export async function GET(req) {
 
     if (cat) query = query.eq("category", cat);
     if (campus && campus !== "Semua") query = query.eq("campus", campus);
-    if (q) {
+    if (exactCode.length >= 6) {
+      query = query.eq("listing_code", exactCode);
+    } else if (q) {
       const qAman = cariAman(q);
       if (qAman) query = query.or(`title.ilike.%${qAman}%,description.ilike.%${qAman}%`);
     }
@@ -91,19 +101,32 @@ export async function GET(req) {
           .order("bumped_at", { ascending: false, nullsFirst: false });
     }
 
-    query = query.range(from, to);
+    query = query.range(specFilters.length > 0 ? 0 : from, specFilters.length > 0 ? 499 : to);
 
     const { data: rawData, error, count } = await query;
     if (error) throw new Error(error.message);
 
+    const filteredBySpecs = specFilters.length > 0
+      ? (rawData || []).filter((item) =>
+          specFilters.every((spec) =>
+            String(item.specs?.[spec.key] || "")
+              .toLowerCase()
+              .includes(String(spec.value || "").toLowerCase())
+          )
+        )
+      : rawData || [];
+
     // Angkat sponsored aktif ke paling atas (dalam JS supaya pagination tetap benar untuk page 1)
     const now = Date.now();
-    const data = page === 1
+    const orderedData = page === 1
       ? [
-          ...(rawData || []).filter((d) => d.sponsored_until && new Date(d.sponsored_until).getTime() > now),
-          ...(rawData || []).filter((d) => !d.sponsored_until || new Date(d.sponsored_until).getTime() <= now),
+          ...filteredBySpecs.filter((d) => d.sponsored_until && new Date(d.sponsored_until).getTime() > now),
+          ...filteredBySpecs.filter((d) => !d.sponsored_until || new Date(d.sponsored_until).getTime() <= now),
         ]
-      : rawData || [];
+      : filteredBySpecs;
+    const data = specFilters.length > 0
+      ? orderedData.slice(from, to + 1)
+      : orderedData;
 
     // FIX: Manual join for seller_profiles to avoid Foreign Key schema cache errors
     const sellerWas = [...new Set((data || []).map((d) => d.seller_wa).filter(Boolean))];
@@ -122,10 +145,10 @@ export async function GET(req) {
 
     return NextResponse.json({
       listings: data || [],
-      total: count || 0,
+      total: specFilters.length > 0 ? filteredBySpecs.length : (count || 0),
       page,
       limit,
-      hasMore: from + limit < (count || 0),
+      hasMore: from + limit < (specFilters.length > 0 ? filteredBySpecs.length : (count || 0)),
     });
   } catch (e) {
     return jawabGalat(e);

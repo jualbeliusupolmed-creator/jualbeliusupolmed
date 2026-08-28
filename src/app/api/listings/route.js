@@ -11,6 +11,7 @@ import { getSellerSession } from "@/lib/auth";
 import { autoPublishListingInstagram } from "@/lib/listingInstagram";
 import { siteOriginFromRequest } from "@/lib/instagramQueue";
 import { jawabGalat } from "@/lib/jawabGalat";
+import { sanitizeListingSpecs } from "@/lib/listingSpecs";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -119,6 +120,7 @@ export async function POST(req) {
       area,
       condition,
       rental_period,
+      specs,
     } = body;
 
     const normalizedWa = formatWa(seller_wa);
@@ -232,6 +234,7 @@ export async function POST(req) {
     const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
     // Distributor langsung aktif tanpa bayar biaya iklan
     const initialStatus = (isPro || isJasaFree || isDistributor || punyaToko) ? "active" : "pending";
+    const safeSpecs = sanitizeListingSpecs(category || "Elektronik", specs);
 
     // Hitung fee bagi hasil untuk distributor
     let distributorFee = 0;
@@ -259,6 +262,7 @@ export async function POST(req) {
         campus: campus || "Semua",
         area: area || "Sekitar Kampus",
         condition: (type === "barang" && condition) ? condition : "used",
+        specs: safeSpecs,
         bumped_at: new Date().toISOString(),
         expires_at: expiresAt, // FIXED: from settings.pricing.listingDays
       })
