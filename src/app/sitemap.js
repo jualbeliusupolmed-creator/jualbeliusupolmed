@@ -7,6 +7,12 @@ export const revalidate = 3600;
 export default async function sitemap() {
   const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
 
+  // Catatan: `/blog` SENGAJA tidak ada di sini. Indeks blog pindah ke
+  // `/mading?tab=blog` dan `/blog` cuma menjawab 307 ke sana — alamat yang
+  // mengalihkan di dalam peta situs berarti mesin pencari mengantre satu
+  // permintaan untuk tidak menemukan apa pun, lalu menghitungnya sebagai
+  // duplikat dari `/mading` yang sudah terdaftar di bawah. Tulisan blognya
+  // sendiri (`/blog/<slug>`, 200) tetap didaftarkan lewat blogRoutes.
   const staticRoutes = [
     { url: `${baseUrl}`,                  changeFrequency: "always",  priority: 1.0 },
     { url: `${baseUrl}/jual-beli`,        changeFrequency: "always",  priority: 0.9 },
@@ -15,7 +21,6 @@ export default async function sitemap() {
     { url: `${baseUrl}/dicari`,           changeFrequency: "hourly",  priority: 0.8 },
     { url: `${baseUrl}/jual`,             changeFrequency: "monthly", priority: 0.7 },
     { url: `${baseUrl}/jasa`,             changeFrequency: "daily",   priority: 0.7 },
-    { url: `${baseUrl}/blog`,             changeFrequency: "daily",   priority: 0.7 },
     { url: `${baseUrl}/cara-bergabung`,   changeFrequency: "monthly", priority: 0.5 },
     { url: `${baseUrl}/daftar-harga`,     changeFrequency: "weekly",  priority: 0.5 },
     { url: `${baseUrl}/faq`,              changeFrequency: "monthly", priority: 0.5 },
