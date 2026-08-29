@@ -62,9 +62,19 @@ export function formatWa(num) {
   //   email_0812345_1234      -> "08123451234"
   //   email_081234567_9012    -> "0812345679012"
   //   google_0812345678_ab12x -> "081234567812"
-  if (adalahIdSintetis(s)) return "";
+  // JID WhatsApp dipangkas SEBELUM diperiksa: `6289…@s.whatsapp.net` memang
+  // berhuruf, tapi hurufnya milik SUFIKS, bukan nomornya. Tanpa pemangkasan ini
+  // adalahIdSintetis() menolak setiap JID, formatWa memulangkan "", dan pemanggil
+  // yang punya cadangan `jid.split("@")[0]` diam-diam menulis digit mentah
+  // berformat 62 — sementara seluruh basis data memakai 08. Itu memecah satu
+  // orang jadi dua kunci: riwayat chat terbelah, penjaga "sapa sekali seumur
+  // hidup" tidak menemukan sapaannya sendiri, dan kiriman bot bisa salah dikira
+  // balasan manual admin. Terbukti di produksi 28 Agustus 2026 — empat baris
+  // wa_conversations berformat 62 dengan tiga baris 08 milik nomor yang sama.
+  const lokal = s.split("@")[0];
+  if (adalahIdSintetis(lokal)) return "";
 
-  let cleaned = s.replace(/\D/g, "");
+  let cleaned = lokal.replace(/\D/g, "");
   if (cleaned.startsWith("62")) {
     cleaned = "0" + cleaned.slice(2);
   } else if (cleaned.startsWith("8")) {
