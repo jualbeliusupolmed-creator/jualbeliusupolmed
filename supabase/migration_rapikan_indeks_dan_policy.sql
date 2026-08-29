@@ -1,5 +1,11 @@
 -- Dua peringatan Performance Advisor Supabase, 28 Agustus 2026.
--- BELUM diterapkan ke produksi — menunggu persetujuan pemilik.
+-- DITERAPKAN ke produksi 29 Agustus 2026, tercatat sebagai versi 20260829021232.
+-- Verifikasi sesudahnya: constraint UNIQUE listings_listing_code_unique masih
+-- berdiri dengan satu indeks pendukung, policy buyer_contacts sudah berbentuk
+-- (SELECT auth.role()), dan kedua peringatan WARN Performance Advisor hilang.
+-- Membalikkan bagian 1 kalau perlu:
+--   CREATE UNIQUE INDEX idx_listings_listing_code_unique
+--     ON public.listings (listing_code);
 
 -- 1. Indeks kembar di tabel tersibuk.
 --    listings punya DUA indeks unik yang isinya persis sama atas kolom
@@ -24,7 +30,7 @@ CREATE POLICY service_role_full_access_buyer_contacts
   FOR ALL
   USING ((select auth.role()) = 'service_role');
 
--- Yang SENGAJA tidak disentuh: 23 lint "Unused Index" tingkat INFO. Hampir
+-- Yang SENGAJA tidak disentuh: 22 lint "Unused Index" tingkat INFO. Hampir
 -- semuanya milik tabel fitur baru (oprec, mading, teman, buyer_contacts) yang
 -- memang belum ramai. "Belum pernah terpakai" pada tabel berumur seminggu
 -- bukan bukti indeksnya salah — membuangnya sekarang berarti membuangnya
