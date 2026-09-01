@@ -187,7 +187,6 @@ function DashboardInner() {
           name: mergedProfile.name || "",
           bio: mergedProfile.bio || "",
         });
-        setAnonymousName(mergedProfile.anonymous_name || "Anonim");
       }
 
       setLoaded(true);
