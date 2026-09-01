@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Icon } from "@/components/Icons";
 import { toast } from "sonner";
 import { hapticLight, hapticSuccess } from "@/lib/haptics";
+import { getTemanIntentLabel } from "@/lib/temanIntents";
 import SwipeCard from "@/components/teman/SwipeCard";
 import PhotoUploadModal from "@/components/teman/PhotoUploadModal";
 import MatchModal from "@/components/teman/MatchModal";
@@ -160,7 +161,7 @@ export default function TemanSwipePage() {
     
     setMyProfile((prev) => ({ ...prev, is_active: newStatus }));
     toast(newStatus ? "Profilmu kini bisa dilihat!" : "Profilmu disembunyikan", {
-      icon: newStatus ? "👁️" : "🙈",
+      icon: newStatus ? <Icon.Eye className="h-4 w-4 text-emerald-600" /> : <Icon.EyeOff className="h-4 w-4 text-slate-500" />,
     });
 
     try {
@@ -210,7 +211,7 @@ export default function TemanSwipePage() {
           <div>
             <h1 className="text-base font-black tracking-tight text-[#1d1d1f] dark:text-white flex items-center gap-1.5">
               <span>Cari Teman Kampus</span>
-              <span className="text-sm">🔥</span>
+              <Icon.Handshake className="h-4 w-4 text-orange-500" />
             </h1>
           </div>
         </div>
@@ -227,7 +228,7 @@ export default function TemanSwipePage() {
               }`}
               title={myProfile.is_active ? "Sembunyikan Profil" : "Tampilkan Profil"}
             >
-              <span className="text-sm leading-none">{myProfile.is_active ? "👁️" : "🙈"}</span>
+              {myProfile.is_active ? <Icon.Eye className="h-4 w-4" /> : <Icon.EyeOff className="h-4 w-4" />}
             </button>
           )}
           <button
@@ -235,7 +236,8 @@ export default function TemanSwipePage() {
             className="relative flex items-center gap-1 bg-white/90 dark:bg-[#1c1c1e] border border-black/[0.06] dark:border-white/[0.08] px-3 py-1.5 rounded-full text-xs font-bold text-[#1d1d1f] dark:text-white shadow-2xs active:scale-95 transition-all"
             title="Buka Daftar Matches"
           >
-            <span>💬 Matches</span>
+            <Icon.MessageCircle className="h-3.5 w-3.5" />
+            <span>Matches</span>
           </button>
 
           <button
@@ -243,7 +245,7 @@ export default function TemanSwipePage() {
             className="flex items-center justify-center h-8 w-8 rounded-full bg-white/90 dark:bg-[#1c1c1e] border border-black/[0.06] dark:border-white/[0.08] text-xs shadow-2xs active:scale-95 transition-all"
             title="Edit Profil Saya"
           >
-            <span>✏️</span>
+            <Icon.Edit2 className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>
@@ -274,7 +276,9 @@ export default function TemanSwipePage() {
           </div>
         ) : myProfile && !myProfile.is_active ? (
           <div className="flex flex-col items-center justify-center text-center p-8 rounded-3xl bg-white dark:bg-[#1c1c1e] border border-black/[0.06] dark:border-white/[0.08] shadow-sm space-y-3 w-full h-full max-h-[400px]">
-            <span className="text-6xl mb-2">🙈</span>
+            <div className="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-slate-500 dark:bg-white/[0.06] dark:text-slate-300">
+              <Icon.EyeOff className="h-8 w-8" />
+            </div>
             <h3 className="text-lg font-black text-[#1d1d1f] dark:text-white">
               Profilmu Disembunyikan
             </h3>
@@ -284,15 +288,18 @@ export default function TemanSwipePage() {
             <div className="flex gap-2 pt-4">
               <button
                 onClick={handleToggleVisibility}
-                className="rounded-full bg-primary px-5 py-2.5 text-xs font-bold text-white shadow-xs hover:brightness-105 active:scale-95 transition-all"
+                className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-xs font-bold text-white shadow-xs hover:brightness-105 active:scale-95 transition-all"
               >
-                Aktifkan Profil 👁️
+                <Icon.Eye className="h-4 w-4" />
+                Aktifkan Profil
               </button>
             </div>
           </div>
         ) : deck.length === 0 ? (
           <div className="flex flex-col items-center justify-center text-center p-8 rounded-3xl bg-white dark:bg-[#1c1c1e] border border-black/[0.06] dark:border-white/[0.08] shadow-sm space-y-3 w-full">
-            <span className="text-5xl">☕</span>
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-500 dark:bg-white/[0.06] dark:text-slate-300">
+              <Icon.Coffee className="h-7 w-7" />
+            </div>
             <h3 className="text-base font-black text-[#1d1d1f] dark:text-white">
               Semua Profil Sudah Dilihat!
             </h3>
@@ -302,15 +309,17 @@ export default function TemanSwipePage() {
             <div className="flex gap-2 pt-2">
               <button
                 onClick={loadDeck}
-                className="rounded-full bg-primary px-4 py-2 text-xs font-bold text-white shadow-xs hover:brightness-105 active:scale-95 transition-all"
+                className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-bold text-white shadow-xs hover:brightness-105 active:scale-95 transition-all"
               >
-                Muat Ulang Deck 🔄
+                <Icon.RefreshCcw className="h-3.5 w-3.5" />
+                Muat Ulang Deck
               </button>
               <button
                 onClick={handleOpenMatches}
-                className="rounded-full bg-black/[0.04] dark:bg-white/[0.08] px-4 py-2 text-xs font-bold text-[#1d1d1f] dark:text-white active:scale-95 transition-all"
+                className="inline-flex items-center gap-2 rounded-full bg-black/[0.04] dark:bg-white/[0.08] px-4 py-2 text-xs font-bold text-[#1d1d1f] dark:text-white active:scale-95 transition-all"
               >
-                Buka Matches 🎉
+                <Icon.HeartFilled className="h-3.5 w-3.5 text-rose-500" />
+                Buka Matches
               </button>
             </div>
           </div>
@@ -348,7 +357,7 @@ export default function TemanSwipePage() {
             className="flex h-12 w-12 items-center justify-center rounded-full bg-white dark:bg-[#1c1c1e] text-amber-500 shadow-md border border-black/[0.06] dark:border-white/[0.08] active:scale-90 hover:scale-105 transition-all disabled:opacity-40"
             title="Kembalikan Profil Terakhir"
           >
-            <span className="text-lg">⏪</span>
+            <Icon.ArrowLeft className="h-5 w-5" />
           </button>
 
           {/* PASS BUTTON (❌) */}
@@ -357,7 +366,7 @@ export default function TemanSwipePage() {
             className="flex h-16 w-16 items-center justify-center rounded-full bg-white dark:bg-[#1c1c1e] text-rose-500 shadow-xl border border-black/[0.08] dark:border-white/[0.12] active:scale-90 hover:scale-105 transition-all"
             title="Lewati (Pass)"
           >
-            <span className="text-2xl">❌</span>
+            <Icon.X className="h-7 w-7" />
           </button>
 
           {/* LIKE BUTTON (💚) */}
@@ -366,7 +375,7 @@ export default function TemanSwipePage() {
             className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 text-white shadow-xl shadow-emerald-500/30 active:scale-90 hover:scale-105 transition-all"
             title="Suka (Like)"
           >
-            <span className="text-2xl">💚</span>
+            <Icon.HeartFilled className="h-7 w-7" />
           </button>
 
           {/* SUPERLIKE BUTTON (⭐) */}
@@ -375,7 +384,7 @@ export default function TemanSwipePage() {
             className="flex h-12 w-12 items-center justify-center rounded-full bg-white dark:bg-[#1c1c1e] text-sky-500 shadow-md border border-black/[0.06] dark:border-white/[0.08] active:scale-90 hover:scale-105 transition-all"
             title="Superlike"
           >
-            <span className="text-lg">⭐</span>
+            <Icon.Star className="h-5 w-5" />
           </button>
         </div>
       )}

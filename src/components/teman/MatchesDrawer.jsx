@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { Icon } from "@/components/Icons";
+import { getTemanIntent, getTemanIntentLabel } from "@/lib/temanIntents";
 
 export default function MatchesDrawer({
   isOpen,
@@ -18,7 +19,9 @@ export default function MatchesDrawer({
         {/* Top Header */}
         <div className="flex items-center justify-between pb-4 border-b border-black/[0.06] dark:border-white/[0.08]">
           <div className="flex items-center gap-2">
-            <span className="text-xl">🎉</span>
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300">
+              <Icon.HeartFilled className="h-5 w-5" />
+            </div>
             <div>
               <h3 className="text-base font-black tracking-tight text-[#1d1d1f] dark:text-white">
                 Daftar Teman Cocok ({matches.length})
@@ -44,7 +47,9 @@ export default function MatchesDrawer({
             </div>
           ) : matches.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center space-y-2">
-              <span className="text-4xl">☕</span>
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-500 dark:bg-white/[0.06] dark:text-slate-300">
+                <Icon.Coffee className="h-7 w-7" />
+              </div>
               <p className="text-sm font-bold text-[#1d1d1f] dark:text-white">
                 Belum ada match
               </p>
@@ -55,6 +60,8 @@ export default function MatchesDrawer({
           ) : (
             matches.map((item) => {
               const cleanWa = (item.whatsapp || "").replace(/\D/g, "");
+              const intentMeta = getTemanIntent(item.intent);
+              const IntentIcon = intentMeta?.icon ? Icon[intentMeta.icon] : null;
               const waUrl = cleanWa
                 ? `https://wa.me/${cleanWa.startsWith("0") ? "62" + cleanWa.slice(1) : cleanWa}?text=${encodeURIComponent(
                     `Halo ${item.display_name || "kak"}! Kita match di Cari Teman Kampus USU & Polmed nih 👋`
@@ -77,7 +84,7 @@ export default function MatchesDrawer({
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center bg-slate-800 text-base">
-                          👤
+                          <Icon.User className="h-5 w-5 text-white" />
                         </div>
                       )}
                     </div>
@@ -87,11 +94,15 @@ export default function MatchesDrawer({
                         {item.display_name}
                       </p>
                       <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
-                        🎓 {item.campus} · {item.faculty || "Umum"}
+                        <span className="inline-flex items-center gap-1.5">
+                          <Icon.GraduationCap className="h-3.5 w-3.5 shrink-0" />
+                          {item.campus} · {item.faculty || "Umum"}
+                        </span>
                       </p>
                       {item.intent && (
-                        <span className="inline-block mt-0.5 text-[9px] font-semibold text-emerald-600 dark:text-emerald-400">
-                          {item.intent}
+                        <span className="inline-flex items-center gap-1 mt-0.5 text-[9px] font-semibold text-emerald-600 dark:text-emerald-400">
+                          {IntentIcon ? <IntentIcon className="h-3 w-3" /> : null}
+                          {getTemanIntentLabel(item.intent)}
                         </span>
                       )}
                     </div>
@@ -106,7 +117,7 @@ export default function MatchesDrawer({
                         className="rounded-full bg-emerald-500 hover:bg-emerald-600 text-white p-2 shadow-xs active:scale-90 transition-all"
                         title="Chat di WhatsApp"
                       >
-                        <span className="text-xs">💬</span>
+                        <Icon.MessageCircle className="h-3.5 w-3.5" />
                       </a>
                     )}
                     {item.instagram && (
@@ -117,7 +128,7 @@ export default function MatchesDrawer({
                         className="rounded-full bg-pink-500 hover:bg-pink-600 text-white p-2 shadow-xs active:scale-90 transition-all"
                         title="Lihat Instagram"
                       >
-                        <span className="text-xs">📸</span>
+                        <Icon.Instagram className="h-3.5 w-3.5" />
                       </a>
                     )}
                   </div>

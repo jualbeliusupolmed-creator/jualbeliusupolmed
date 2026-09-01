@@ -358,7 +358,7 @@ function PanelInteraktif() {
   const [listTitle, setListTitle] = useState("");
   const [listSections, setListSections] = useState([{ title: "Pilihan", rows: [{ id: "1", title: "", description: "" }] }]);
   const [reactionMsgId, setReactionMsgId] = useState("");
-  const [reactionEmoji, setReactionEmoji] = useState("👍");
+  const [reactionEmoji, setReactionEmoji] = useState("like");
 
   async function run(endpoint, body) {
     setBusy(true); setResult(null);
@@ -420,7 +420,7 @@ function PanelInteraktif() {
           <Field label="ID Pesan yang Direaksi"><input className="input font-mono" placeholder="ABCDEF123..." value={reactionMsgId} onChange={e => setReactionMsgId(e.target.value)} /></Field>
           <Field label="Emoji Reaksi">
             <div className="flex flex-wrap gap-2 mt-1">
-              {["👍","❤️","😂","😮","😢","🙏","🔥","🎉","👏","✅","❌","💯"].map(e => (
+              {["like","love","laugh","wow","sad","pray","fire","party","clap","ok","no","hundred"].map(e => (
                 <button key={e} onClick={() => setReactionEmoji(e)} className={`text-xl rounded-lg p-1.5 border-2 transition-all ${reactionEmoji === e ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" : "border-gray-200 dark:border-slate-700"}`}>{e}</button>
               ))}
             </div>

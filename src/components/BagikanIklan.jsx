@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { rupiah } from "@/lib/fees";
 import { buildSlug } from "@/lib/slug";
 import { buildListingShortPath } from "@/lib/listingCode";
+import { Icon } from "@/components/Icons";
 
 /*
  * Satu lembar "Bagikan" untuk satu iklan.
@@ -93,11 +94,11 @@ export default function BagikanIklan({ listing, onClose }) {
 
   const waText = `https://wa.me/?text=${encodeURIComponent(teks)}`;
 
-  const Baris = ({ ikon, judul, sub, ...sisa }) => {
+  const Baris = ({ icon, iconClassName = "", judul, sub, ...sisa }) => {
     const isi = (
       <>
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-lg dark:bg-slate-800">
-          {ikon}
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-slate-600 dark:bg-slate-800 dark:text-slate-200">
+          {icon ? icon({ className: `h-5 w-5 ${iconClassName}`.trim() }) : null}
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-semibold text-gray-900 dark:text-white">{judul}</span>
@@ -138,31 +139,31 @@ export default function BagikanIklan({ listing, onClose }) {
 
         <div className="space-y-0.5">
           <Baris
-            ikon="👥"
+            icon={(p) => <Icon.Users {...p} />}
             judul="Kirim ke grup WA"
             sub="Buka WhatsApp, lalu pilih grupnya — teks sudah terisi"
             href={waText}
           />
           {grupLink ? (
-            <Baris ikon="🔗" judul="Buka grup marketplace" sub="Belum gabung? Masuk dulu dari sini" href={grupLink} />
+            <Baris icon={(p) => <Icon.Link {...p} />} judul="Buka grup marketplace" sub="Belum gabung? Masuk dulu dari sini" href={grupLink} />
           ) : null}
-          <Baris ikon="🟢" judul="Bagikan ke WhatsApp" sub="Chat pribadi atau status" href={waText} />
+          <Baris icon={(p) => <Icon.MessageCircle {...p} />} iconClassName="text-emerald-600" judul="Bagikan ke WhatsApp" sub="Chat pribadi atau status" href={waText} />
           {bisaNative ? (
             <Baris
-              ikon="📤"
+              icon={(p) => <Icon.Share {...p} />}
               judul="Bagikan ke aplikasi lain"
               sub="Instagram, Telegram, Facebook, dan seterusnya"
               onClick={bagikanNative}
             />
           ) : null}
           <Baris
-            ikon="🔗"
+            icon={(p) => <Icon.Link {...p} />}
             judul={tersalin === "url" ? "Tautan tersalin ✓" : "Salin tautan"}
             sub={url.replace(/^https?:\/\//, "")}
             onClick={() => salin(url, "url")}
           />
           <Baris
-            ikon="📋"
+            icon={(p) => <Icon.Clipboard {...p} />}
             judul={tersalin === "teks" ? "Teks tersalin ✓" : "Salin teks iklan"}
             sub="Untuk ditempel di mana saja"
             onClick={() => salin(teks, "teks")}

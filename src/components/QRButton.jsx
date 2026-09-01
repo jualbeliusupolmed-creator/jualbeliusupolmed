@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { rupiah } from "@/lib/fees";
 import { buildSlug } from "@/lib/slug";
 import { buildListingShortPath } from "@/lib/listingCode";
+import { Icon } from "@/components/Icons";
 
 // Membuat poster QR untuk satu iklan. Cocok dicetak & ditempel di area yang disepakati —
 // orang scan langsung ke halaman produk (offline → online).
@@ -58,7 +59,10 @@ export default function QRButton({ listing }) {
   return (
     <>
       <button onClick={openModal} className="btn-outline">
-        🔳 QR Poster
+        <span className="inline-flex items-center gap-2">
+          <Icon.QrCode className="h-4 w-4" />
+          QR Poster
+        </span>
       </button>
 
       {open && (
@@ -101,7 +105,10 @@ export default function QRButton({ listing }) {
                 )}
               </div>
               <p className="mt-2 text-xs font-medium text-gray-500">
-                📱 Scan untuk lihat & beli
+                <span className="inline-flex items-center gap-1">
+                  <Icon.Smartphone className="h-3.5 w-3.5" />
+                  Scan untuk lihat & beli
+                </span>
               </p>
             </div>
 
@@ -111,7 +118,19 @@ export default function QRButton({ listing }) {
                 disabled={busy || !qr}
                 className="btn-primary flex-1"
               >
-                {busy ? "Membuat…" : "⬇️ Download Poster"}
+                <span className="inline-flex items-center justify-center gap-2">
+                  {busy ? (
+                    <>
+                      <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                      Membuat…
+                    </>
+                  ) : (
+                    <>
+                      <Icon.Download className="h-4 w-4" />
+                      Download Poster
+                    </>
+                  )}
+                </span>
               </button>
               <button onClick={() => setOpen(false)} className="btn-outline">
                 Tutup

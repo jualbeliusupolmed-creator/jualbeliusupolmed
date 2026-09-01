@@ -13,6 +13,7 @@ import SwipeBackGesture from "./SwipeBackGesture";
 import GlobalPullToRefresh from "./GlobalPullToRefresh";
 import { SesiProvider } from "./SesiProvider";
 import { cn } from "@/lib/utils";
+import GlobalImageLightbox from "./GlobalImageLightbox";
 
 export default function LayoutWrapper({ children }) {
   const pathname = usePathname();
@@ -122,6 +123,8 @@ export default function LayoutWrapper({ children }) {
           {!hideFooter && <Footer config={config} />}
         </>
       )}
+      {/* Lightbox global — aktif di semua halaman, dipicu oleh img[data-zoom] */}
+      <GlobalImageLightbox />
     </SesiProvider>
   );
 }

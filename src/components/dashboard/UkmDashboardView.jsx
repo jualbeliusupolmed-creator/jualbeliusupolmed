@@ -107,7 +107,7 @@ export default function UkmDashboardView({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal menerbitkan pengumuman.");
-      toast.success("📢 Pengumuman resmi berhasil diterbitkan ke Mading Kampus!");
+      toast.success("Pengumuman resmi berhasil diterbitkan ke Mading Kampus!");
       setMadingForm({ title: "", content: "", faculty: sellerProfile?.faculty || "Umum" });
       setShowBuatMading(false);
       loadMading();
@@ -152,11 +152,11 @@ export default function UkmDashboardView({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal menyimpan struktur pengurus.");
-      toast.success("✅ Struktur pengurus & visi-misi berhasil diperbarui!");
+      toast.success("Struktur pengurus dan visi-misi berhasil diperbarui!");
       onRefresh?.();
     } catch (err) {
       // Fallback local save jika endpoint PATCH belum ada
-      toast.success("✅ Struktur pengurus tersimpan di profil!");
+      toast.success("Struktur pengurus tersimpan di profil!");
     } finally {
       setSavingStructure(false);
     }
@@ -166,6 +166,13 @@ export default function UkmDashboardView({
   const danusItems = items.filter(i => i.status === "active" || i.status === "pending" || i.status === "sold");
   const totalPelamar = oprecList.reduce((acc, o) => acc + (o.submissions_count || 0), 0);
   const totalOprecAktif = oprecList.filter(o => o.status === "active").length;
+  const subTabs = [
+    { id: "oprec", label: "Pusat Oprec & Rekrutmen", IconComponent: Icon.ClipboardList, badge: totalOprecAktif },
+    { id: "mading", label: "Mading & Berita Resmi", IconComponent: Icon.Megaphone, badge: madingList.length },
+    { id: "danus", label: "Danus & Merchandise", IconComponent: Icon.ShoppingBag, badge: danusItems.length },
+    { id: "struktur", label: "Struktur BPH & Pengurus", IconComponent: Icon.Users },
+    { id: "profil", label: "Profil & Visi Misi", IconComponent: Icon.Landmark },
+  ];
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -182,10 +189,12 @@ export default function UkmDashboardView({
                   src={sellerProfile.photo_url}
                   alt="Logo"
                   fill
+                  data-zoom
+                  data-zoom-alt={sellerProfile?.ukm_name || sellerProfile?.name || "Logo organisasi"}
                   className="object-cover"
                 />
               ) : (
-                "🏛️"
+                <Icon.Landmark className="h-8 w-8 text-white/80" />
               )}
             </div>
 
@@ -195,16 +204,19 @@ export default function UkmDashboardView({
                   {sellerProfile?.ukm_name || sellerProfile?.name}
                 </h1>
                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-3 py-0.5 text-xs font-bold text-emerald-300 border border-emerald-500/30">
-                  ✓ Akun Resmi Terverifikasi
+                  <Icon.Check className="h-3.5 w-3.5" />
+                  Akun Resmi Terverifikasi
                 </span>
               </div>
 
               <div className="mt-2 flex items-center gap-3 text-xs text-slate-300 flex-wrap">
-                <span className="bg-white/10 px-2.5 py-0.5 rounded-lg border border-white/10 font-semibold">
-                  🏛️ {sellerProfile?.ukm_category || "Organisasi Kampus"}
+                <span className="inline-flex items-center gap-1.5 bg-white/10 px-2.5 py-0.5 rounded-lg border border-white/10 font-semibold">
+                  <Icon.Landmark className="h-3.5 w-3.5" />
+                  {sellerProfile?.ukm_category || "Organisasi Kampus"}
                 </span>
-                <span className="bg-white/10 px-2.5 py-0.5 rounded-lg border border-white/10 font-semibold">
-                  📍 {sellerProfile?.campus || "USU & POLMED"}
+                <span className="inline-flex items-center gap-1.5 bg-white/10 px-2.5 py-0.5 rounded-lg border border-white/10 font-semibold">
+                  <Icon.MapPin className="h-3.5 w-3.5" />
+                  {sellerProfile?.campus || "USU & POLMED"}
                 </span>
                 {sellerProfile?.ukm_instagram && (
                   <a 
@@ -213,7 +225,8 @@ export default function UkmDashboardView({
                     rel="noreferrer"
                     className="text-pink-300 hover:text-pink-200 hover:underline flex items-center gap-1"
                   >
-                    <span>📷 @{sellerProfile.ukm_instagram.replace("@", "")}</span>
+                    <Icon.Instagram className="h-3.5 w-3.5" />
+                    <span>@{sellerProfile.ukm_instagram.replace("@", "")}</span>
                   </a>
                 )}
               </div>
@@ -232,7 +245,8 @@ export default function UkmDashboardView({
               onClick={() => { setUkmSubTab("mading"); setShowBuatMading(true); }}
               className="px-4 py-2.5 rounded-2xl text-xs font-black bg-white/10 hover:bg-white/20 text-white border border-white/20 active:scale-95 transition-all flex items-center gap-1.5"
             >
-              <span>📢 Mading Resmi</span>
+              <Icon.Megaphone className="w-4 h-4" />
+              <span>Mading Resmi</span>
             </button>
           </div>
         </div>
@@ -241,25 +255,25 @@ export default function UkmDashboardView({
       {/* ===== UKM KPI STATS MATRIX ===== */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="rounded-2xl bg-white dark:bg-slate-900 p-4 border border-slate-200/80 dark:border-slate-800 shadow-sm text-center">
-          <div className="text-2xl mb-1">📋</div>
+          <Icon.ClipboardList className="mx-auto mb-1 h-7 w-7 text-emerald-500" />
           <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{totalOprecAktif}</div>
           <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 mt-0.5">Oprec Aktif</div>
         </div>
 
         <div className="rounded-2xl bg-white dark:bg-slate-900 p-4 border border-slate-200/80 dark:border-slate-800 shadow-sm text-center">
-          <div className="text-2xl mb-1">👥</div>
+          <Icon.Users className="mx-auto mb-1 h-7 w-7 text-blue-500" />
           <div className="text-2xl font-black text-blue-600 dark:text-blue-400">{totalPelamar}</div>
           <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 mt-0.5">Total Pendaftar</div>
         </div>
 
         <div className="rounded-2xl bg-white dark:bg-slate-900 p-4 border border-slate-200/80 dark:border-slate-800 shadow-sm text-center">
-          <div className="text-2xl mb-1">📢</div>
+          <Icon.Megaphone className="mx-auto mb-1 h-7 w-7 text-amber-500" />
           <div className="text-2xl font-black text-amber-600 dark:text-amber-400">{madingList.length}</div>
           <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 mt-0.5">Pengumuman Terbit</div>
         </div>
 
         <div className="rounded-2xl bg-white dark:bg-slate-900 p-4 border border-slate-200/80 dark:border-slate-800 shadow-sm text-center">
-          <div className="text-2xl mb-1">🛍️</div>
+          <Icon.ShoppingBag className="mx-auto mb-1 h-7 w-7 text-purple-500" />
           <div className="text-2xl font-black text-purple-600 dark:text-purple-400">{danusItems.length}</div>
           <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 mt-0.5">Danus & Merch</div>
         </div>
@@ -267,13 +281,7 @@ export default function UkmDashboardView({
 
       {/* ===== UKM NAVIGATION SUBTABS ===== */}
       <div className="flex rounded-2xl bg-slate-100 dark:bg-slate-900 p-1.5 border border-slate-200/80 dark:border-slate-800 overflow-x-auto [scrollbar-width:none]">
-        {[
-          { id: "oprec", label: "Pusat Oprec & Rekrutmen", icon: "📋", badge: totalOprecAktif },
-          { id: "mading", label: "Mading & Berita Resmi", icon: "📢", badge: madingList.length },
-          { id: "danus", label: "Danus & Merchandise", icon: "🛍️", badge: danusItems.length },
-          { id: "struktur", label: "Struktur BPH & Pengurus", icon: "👥" },
-          { id: "profil", label: "Profil & Visi Misi", icon: "🏛️" },
-        ].map((tab) => (
+        {subTabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setUkmSubTab(tab.id)}
@@ -283,7 +291,7 @@ export default function UkmDashboardView({
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
-            <span>{tab.icon}</span>
+            <tab.IconComponent className="h-4 w-4" />
             <span>{tab.label}</span>
             {typeof tab.badge === "number" && tab.badge > 0 && (
               <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
@@ -301,7 +309,10 @@ export default function UkmDashboardView({
             <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
               <div>
                 <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
-                  <span>📋 Open Recruitment & Kepanitiaan</span>
+                  <span className="inline-flex items-center gap-2">
+                    <Icon.ClipboardList className="h-4 w-4 text-emerald-500" />
+                    Open Recruitment & Kepanitiaan
+                  </span>
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   Kelola pendaftaran anggota baru, panitia event, dan screening pelamar.
@@ -312,13 +323,17 @@ export default function UkmDashboardView({
                   onClick={() => loadOprec()}
                   className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition-all"
                 >
-                  ↻ Refresh
+                  <span className="inline-flex items-center gap-1.5">
+                    <Icon.RefreshCcw className="h-3.5 w-3.5" />
+                    Refresh
+                  </span>
                 </button>
                 <button
                   onClick={() => setShowBuatOprec(true)}
                   className="px-3.5 py-1.5 rounded-xl text-xs font-black bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-all flex items-center gap-1"
                 >
-                  <span>+ Buka Oprec</span>
+                  <Icon.PlusCircle className="h-4 w-4" />
+                  <span>Buka Oprec</span>
                 </button>
               </div>
             </div>
@@ -331,7 +346,7 @@ export default function UkmDashboardView({
             ) : oprecList.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <div className="h-16 w-16 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-3xl mb-3">
-                  📋
+                  <Icon.ClipboardList className="h-8 w-8" />
                 </div>
                 <h4 className="text-base font-black text-slate-900 dark:text-white">Belum Ada Formulir Oprec</h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mt-1 mb-5">
@@ -341,7 +356,10 @@ export default function UkmDashboardView({
                   onClick={() => setShowBuatOprec(true)}
                   className="px-5 py-2.5 rounded-2xl text-xs font-black bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-500/20 active:scale-95 transition-all"
                 >
-                  + Buat Formulir Oprec Pertama
+                  <span className="inline-flex items-center gap-1.5">
+                    <Icon.PlusCircle className="h-4 w-4" />
+                    Buat Formulir Oprec Pertama
+                  </span>
                 </button>
               </div>
             ) : (
@@ -359,7 +377,7 @@ export default function UkmDashboardView({
                         <div className="relative h-14 w-14 shrink-0 rounded-2xl overflow-hidden bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-500/20 flex items-center justify-center text-2xl">
                           {oprec.banner_url ? (
                             <Image src={oprec.banner_url} alt="" fill className="object-cover" />
-                          ) : "📋"}
+                          ) : <Icon.ClipboardList className="h-6 w-6 text-emerald-500" />}
                         </div>
 
                         <div>
@@ -372,18 +390,27 @@ export default function UkmDashboardView({
                                 ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
                                 : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-400"
                             }`}>
-                              {deadlinePast ? "⏰ Selesai" : isActive ? "● Menerima Pendaftar" : "◉ Ditutup"}
+                              {deadlinePast ? "Selesai" : isActive ? "Menerima Pendaftar" : "Ditutup"}
                             </span>
                           </div>
 
                           <div className="flex items-center gap-3 mt-1 text-xs text-slate-500 dark:text-slate-400 flex-wrap">
-                            <span>🏛️ {oprec.campus}</span>
+                            <span className="inline-flex items-center gap-1">
+                              <Icon.Landmark className="h-3.5 w-3.5" />
+                              {oprec.campus}
+                            </span>
                             <span>·</span>
-                            <span>🎯 {(oprec.divisions || []).length} Divisi</span>
+                            <span className="inline-flex items-center gap-1">
+                              <Icon.Sparkles className="h-3.5 w-3.5" />
+                              {(oprec.divisions || []).length} Divisi
+                            </span>
                             <span>·</span>
                             {daysLeft !== null && (
                               <span className={daysLeft <= 3 ? "text-rose-500 font-bold" : "font-semibold"}>
-                                ⏰ {daysLeft === 0 ? "Hari Terakhir!" : `Sisa ${daysLeft} hari`}
+                                <span className="inline-flex items-center gap-1">
+                                  <Icon.Clock3 className="h-3.5 w-3.5" />
+                                  {daysLeft === 0 ? "Hari Terakhir!" : `Sisa ${daysLeft} hari`}
+                                </span>
                               </span>
                             )}
                           </div>
@@ -402,7 +429,8 @@ export default function UkmDashboardView({
                           onClick={() => setSelectedOprec(oprec)}
                           className="px-4 py-2 rounded-xl text-xs font-black bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm active:scale-95 transition-all flex items-center gap-1.5"
                         >
-                          <span>👥 Kelola Pendaftar</span>
+                          <Icon.Users className="h-4 w-4" />
+                          <span>Kelola Pendaftar</span>
                         </button>
                       </div>
                     </div>
@@ -421,7 +449,10 @@ export default function UkmDashboardView({
             <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
               <div>
                 <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
-                  <span>📢 Pusat Publikasi & Mading Resmi Organisasi</span>
+                  <span className="inline-flex items-center gap-2">
+                    <Icon.Megaphone className="h-4 w-4 text-emerald-500" />
+                    Pusat Publikasi & Mading Resmi Organisasi
+                  </span>
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   Publikasikan pengumuman penting, rilis pers, press release, atau info lomba dengan stempel resmi organisasi.
@@ -431,7 +462,8 @@ export default function UkmDashboardView({
                 onClick={() => setShowBuatMading(prev => !prev)}
                 className="px-3.5 py-1.5 rounded-xl text-xs font-black bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-all flex items-center gap-1"
               >
-                <span>{showBuatMading ? "✕ Batal" : "+ Buat Pengumuman"}</span>
+                {showBuatMading ? <Icon.X className="h-4 w-4" /> : <Icon.PlusCircle className="h-4 w-4" />}
+                <span>{showBuatMading ? "Batal" : "Buat Pengumuman"}</span>
               </button>
             </div>
 
@@ -439,7 +471,10 @@ export default function UkmDashboardView({
             {showBuatMading && (
               <form onSubmit={handleKirimMading} className="mt-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3 animate-slide-up">
                 <div className="flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                  <span>🏛️ Menerbitkan sebagai:</span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <Icon.Landmark className="h-4 w-4" />
+                    Menerbitkan sebagai:
+                  </span>
                   <span className="bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded-md">{sellerProfile?.ukm_name || sellerProfile?.name}</span>
                 </div>
 
@@ -484,7 +519,12 @@ export default function UkmDashboardView({
                     disabled={madingBusy}
                     className="px-5 py-2 rounded-xl text-xs font-black bg-emerald-600 hover:bg-emerald-500 text-white shadow-md disabled:opacity-50"
                   >
-                    {madingBusy ? "Menerbitkan..." : "📢 Terbitkan Sekarang"}
+                    {madingBusy ? "Menerbitkan..." : (
+                      <span className="inline-flex items-center gap-1.5">
+                        <Icon.Megaphone className="h-4 w-4" />
+                        Terbitkan Sekarang
+                      </span>
+                    )}
                   </button>
                 </div>
               </form>
@@ -504,7 +544,10 @@ export default function UkmDashboardView({
                     <div key={post.id} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
-                          🏛️ Pengumuman Resmi
+                          <span className="inline-flex items-center gap-1">
+                            <Icon.Landmark className="h-3 w-3" />
+                            Pengumuman Resmi
+                          </span>
                         </span>
                         <span className="text-[10px] text-slate-400">
                           {new Date(post.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
@@ -514,9 +557,9 @@ export default function UkmDashboardView({
                       <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-3 leading-relaxed">{post.content}</p>
                       
                       <div className="flex items-center gap-4 text-[11px] text-slate-400 pt-2 border-t border-slate-200/40 dark:border-slate-700/50">
-                        <span>👁️ {post.views_count || 0} Dilihat</span>
-                        <span>💬 {post.comments_count || 0} Komentar</span>
-                        <span>❤️ {post.likes_count || 0} Dukungan</span>
+                        <span className="inline-flex items-center gap-1"><Icon.Eye className="h-3.5 w-3.5" /> {post.views_count || 0} Dilihat</span>
+                        <span className="inline-flex items-center gap-1"><Icon.MessageCircle className="h-3.5 w-3.5" /> {post.comments_count || 0} Komentar</span>
+                        <span className="inline-flex items-center gap-1"><Icon.HeartFilled className="h-3.5 w-3.5 text-rose-500" /> {post.likes_count || 0} Dukungan</span>
                       </div>
                     </div>
                   ))}
@@ -534,7 +577,10 @@ export default function UkmDashboardView({
             <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
               <div>
                 <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
-                  <span>🛍️ Katalog Danus & Merchandise Resmi</span>
+                  <span className="inline-flex items-center gap-2">
+                    <Icon.ShoppingBag className="h-4 w-4 text-emerald-500" />
+                    Katalog Danus & Merchandise Resmi
+                  </span>
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   Kelola penjualan jaket himpunan, kaos event, tiket konser/seminar, dan produk dana usaha organisasi.
@@ -551,7 +597,7 @@ export default function UkmDashboardView({
             {danusItems.length === 0 ? (
               <div className="py-16 text-center">
                 <div className="h-16 w-16 rounded-full bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 flex items-center justify-center text-3xl mx-auto mb-3">
-                  🛍️
+                  <Icon.ShoppingBag className="h-8 w-8" />
                 </div>
                 <h4 className="text-base font-black text-slate-900 dark:text-white">Belum Ada Produk Danus</h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1 mb-5">
@@ -561,7 +607,10 @@ export default function UkmDashboardView({
                   href="/jual"
                   className="px-5 py-2.5 rounded-2xl text-xs font-black bg-emerald-600 hover:bg-emerald-500 text-white shadow-md active:scale-95 transition-all inline-block"
                 >
-                  + Tambah Produk Danus Sekarang
+                  <span className="inline-flex items-center gap-1.5">
+                    <Icon.PlusCircle className="h-4 w-4" />
+                    Tambah Produk Danus Sekarang
+                  </span>
                 </Link>
               </div>
             ) : (
@@ -571,9 +620,9 @@ export default function UkmDashboardView({
                     <div>
                       <div className="relative aspect-video rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 mb-2">
                         {item.image_url ? (
-                          <Image src={item.image_url} alt="" fill className="object-cover" />
+                          <Image src={item.image_url} alt={item.title || "Foto produk"} fill data-zoom data-zoom-alt={item.title || "Foto produk"} className="object-cover" />
                         ) : (
-                          <div className="h-full flex items-center justify-center text-2xl">🛍️</div>
+                          <div className="h-full flex items-center justify-center text-slate-400"><Icon.ShoppingBag className="h-7 w-7" /></div>
                         )}
                       </div>
                       <h4 className="text-xs font-bold text-slate-900 dark:text-white line-clamp-1">{item.title}</h4>
@@ -581,19 +630,19 @@ export default function UkmDashboardView({
                     </div>
 
                     <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800 mt-2 text-[11px]">
-                      <span className="text-slate-400">👁️ {item.views || 0} Views</span>
+                      <span className="inline-flex items-center gap-1 text-slate-400"><Icon.Eye className="h-3.5 w-3.5" /> {item.views || 0} Views</span>
                       <div className="flex gap-1.5">
                         <button
                           onClick={() => onOpenBumpModal?.(item)}
                           className="px-2 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-300 font-bold"
                         >
-                          🚀 Sundul
+                          <span className="inline-flex items-center gap-1"><Icon.Rocket className="h-3.5 w-3.5" /> Sundul</span>
                         </button>
                         <button
                           onClick={() => onOpenBagikanModal?.(item)}
                           className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold"
                         >
-                          🔗 Bagikan
+                          <span className="inline-flex items-center gap-1"><Icon.Link className="h-3.5 w-3.5" /> Bagikan</span>
                         </button>
                       </div>
                     </div>
@@ -612,7 +661,10 @@ export default function UkmDashboardView({
             <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
               <div>
                 <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
-                  <span>👥 Struktur Kepengurusan & BPH Resmi</span>
+                  <span className="inline-flex items-center gap-2">
+                    <Icon.Users className="h-4 w-4 text-emerald-500" />
+                    Struktur Kepengurusan & BPH Resmi
+                  </span>
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   Daftar susunan pengurus (Ketua, Sekretaris, Bendahara, Kadiv) yang akan tampil di profil organisasi.
@@ -675,7 +727,7 @@ export default function UkmDashboardView({
                       className="mt-4 p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg text-xs"
                       title="Hapus"
                     >
-                      🗑️
+                      <Icon.Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
@@ -688,7 +740,7 @@ export default function UkmDashboardView({
                 disabled={savingStructure}
                 className="px-6 py-2.5 rounded-2xl text-xs font-black bg-emerald-600 hover:bg-emerald-500 text-white shadow-md disabled:opacity-50 active:scale-95 transition-all"
               >
-                {savingStructure ? "Menyimpan..." : "💾 Simpan Susunan Pengurus"}
+                {savingStructure ? "Menyimpan..." : "Simpan Susunan Pengurus"}
               </button>
             </div>
           </div>
@@ -700,7 +752,10 @@ export default function UkmDashboardView({
         <div className="space-y-4">
           <div className="rounded-3xl bg-white dark:bg-slate-900 p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
             <h3 className="text-base font-black text-slate-900 dark:text-white">
-              🏛️ Profil & Visi Misi Organisasi
+              <span className="inline-flex items-center gap-2">
+                <Icon.Landmark className="h-4 w-4 text-emerald-500" />
+                Profil & Visi Misi Organisasi
+              </span>
             </h3>
 
             <div>
@@ -733,7 +788,7 @@ export default function UkmDashboardView({
                 disabled={savingStructure}
                 className="px-6 py-2.5 rounded-2xl text-xs font-black bg-emerald-600 hover:bg-emerald-500 text-white shadow-md disabled:opacity-50 active:scale-95 transition-all"
               >
-                {savingStructure ? "Menyimpan..." : "💾 Simpan Perubahan Profil"}
+                {savingStructure ? "Menyimpan..." : "Simpan Perubahan Profil"}
               </button>
             </div>
           </div>

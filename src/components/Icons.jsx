@@ -379,4 +379,135 @@ export const Icon = {
       <path d="M3 6h18M8 6V3h8v3m-9 0 1 15h8l1-15M10 10v7M14 10v7" />
     </svg>
   ),
+  EyeOff: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <path d="M3 3l18 18" />
+      <path d="M10.58 10.58a2 2 0 0 0 2.83 2.83" />
+      <path d="M9.88 5.09A9.76 9.76 0 0 1 12 4c7 0 11 8 11 8a18.8 18.8 0 0 1-5.08 5.95" />
+      <path d="M6.61 6.61C3.71 8.57 2 12 2 12a18.7 18.7 0 0 0 5.39 6.14" />
+    </svg>
+  ),
+  GraduationCap: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <path d="m2 9.5 10-5 10 5-10 5-10-5Z" />
+      <path d="M6 11.5V16c0 .9 2.69 3 6 3s6-2.1 6-3v-4.5" />
+      <path d="M22 9.5v6" />
+    </svg>
+  ),
+  Coffee: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <path d="M3 9h13v5a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9Z" />
+      <path d="M16 10h1a3 3 0 1 1 0 6h-1" />
+      <path d="M6 4v2" />
+      <path d="M10 4v2" />
+      <path d="M14 4v2" />
+    </svg>
+  ),
+  Dumbbell: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <path d="M2 10v4" />
+      <path d="M5 8v8" />
+      <path d="M19 8v8" />
+      <path d="M22 10v4" />
+      <path d="M7 12h10" />
+    </svg>
+  ),
+  Ticket: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <path d="M3 9a2 2 0 0 0 0 6v3h18v-3a2 2 0 0 0 0-6V6H3v3Z" />
+      <path d="M12 6v12" />
+      <path d="M12 9h.01" />
+      <path d="M12 15h.01" />
+    </svg>
+  ),
+  Briefcase: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <rect x="3" y="7" width="18" height="12" rx="2" />
+      <path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
+      <path d="M3 12h18" />
+    </svg>
+  ),
+  TheaterMasks: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <path d="M4 5c3 0 4-2 8-2s5 2 8 2v6c0 4.42-3.58 8-8 8-1.35 0-2.62-.33-3.73-.92" />
+      <path d="M4 5v5c0 3.87 2.75 7.09 6.4 7.81" />
+      <path d="M8 9h.01" />
+      <path d="M14 9h.01" />
+      <path d="M8 13c1 .8 2 .8 3 0" />
+      <path d="M13.5 14.5c.9.7 1.9.7 2.8 0" />
+    </svg>
+  ),
+  Instagram: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <rect x="3" y="3" width="18" height="18" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <path d="M17.5 6.5h.01" />
+    </svg>
+  ),
+  Clipboard: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <rect x="6" y="4" width="12" height="17" rx="2" />
+      <path d="M9 4.5h6" />
+      <path d="M9 9h6" />
+      <path d="M9 13h6" />
+    </svg>
+  ),
+  Download: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <path d="M12 3v12" />
+      <path d="m7 10 5 5 5-5" />
+      <path d="M4 20h16" />
+    </svg>
+  ),
+  RefreshCcw: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <polyline points="23 4 23 10 17 10" />
+      <polyline points="1 20 1 14 7 14" />
+      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+    </svg>
+  ),
+  AlertCircle: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 8v5" />
+      <path d="M12 16h.01" />
+    </svg>
+  ),
+  Box: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <path d="M21 8.5 12 4 3 8.5 12 13l9-4.5z" />
+      <path d="M3 8.5V17l9 4 9-4V8.5" />
+      <path d="M12 13v8" />
+    </svg>
+  ),
+  Store: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <path d="M3 10h18" />
+      <path d="M5 10V6h14v4" />
+      <path d="M4 10v8h16v-8" />
+      <path d="M9 18v-5h6v5" />
+    </svg>
+  ),
+  CreditCard: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M3 9h18" />
+      <path d="M7 15h4" />
+    </svg>
+  ),
+  QrCode: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <rect x="3" y="3" width="6" height="6" rx="1" />
+      <rect x="15" y="3" width="6" height="6" rx="1" />
+      <rect x="3" y="15" width="6" height="6" rx="1" />
+      <path d="M13 13h2v2h-2zM17 13h2v2h-2zM13 17h2v2h-2zM17 17h2v2h-2zM11 11h2v2h-2z" />
+    </svg>
+  ),
+  Photo: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <circle cx="9" cy="10" r="1.5" />
+      <path d="m3 16 5-5 4 4 3-3 6 6" />
+    </svg>
+  ),
 };
