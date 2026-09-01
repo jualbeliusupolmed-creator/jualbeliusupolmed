@@ -182,12 +182,6 @@ function DashboardInner() {
       setWantedItems(dataWanted.listings || []);
       setOffers(dataOffers.offers || []);
 
-      if (mergedProfile) {
-        setProfilForm({
-          name: mergedProfile.name || "",
-          bio: mergedProfile.bio || "",
-        });
-      }
 
       setLoaded(true);
       if (mergedProfile?.account_type === "ukm" || mergedProfile?.ukm_verified || mergedProfile?.ukm_name) {

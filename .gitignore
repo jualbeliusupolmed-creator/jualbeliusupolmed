@@ -71,6 +71,10 @@ supabase/.temp/
 
 # Coretan kerja lokal — bukan bagian aplikasi.
 scratch/
+testDeal.js
+__read_lighthouse.mjs
+.lighthouse-*.json
+.npm-cache/
 
 # Arsip salinan env lama — berisi kredensial, jangan pernah di-commit.
 arsip-env/
