@@ -35,7 +35,7 @@ export default function QRISModal({ qrisUrl, fee, onClose, transactionId, onSucc
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || "Gagal memverifikasi struk.");
 
-      setSuccessMsg("🎉 Struk valid! Pembayaran berhasil dikonfirmasi oleh AI.");
+      setSuccessMsg(" Struk valid! Pembayaran berhasil dikonfirmasi oleh AI.");
       setTimeout(() => {
         if (onSuccess) onSuccess(data);
         else onClose();
@@ -57,12 +57,12 @@ export default function QRISModal({ qrisUrl, fee, onClose, transactionId, onSucc
           disabled={loading || !!successMsg}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50"
         >
-          ✕
+          <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg>
         </button>
 
         <div className="text-center mt-2">
           <h2 className="text-xl font-extrabold text-gray-900 dark:text-white flex items-center justify-center gap-2">
-            ⚡ Bayar via QRIS
+             Bayar via QRIS
           </h2>
           <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
             Scan kode QRIS di bawah dengan m-Banking / e-Wallet Anda
@@ -82,7 +82,7 @@ export default function QRISModal({ qrisUrl, fee, onClose, transactionId, onSucc
 
           {error && (
             <div className="mt-3 p-3 rounded-lg bg-red-50 text-red-600 text-xs text-left border border-red-100 dark:bg-red-900/20 dark:border-red-800/50">
-              ❌ {error}
+               {error}
             </div>
           )}
 
@@ -93,7 +93,7 @@ export default function QRISModal({ qrisUrl, fee, onClose, transactionId, onSucc
           ) : (
             <div className="mt-4 border-t border-gray-100 dark:border-slate-800 pt-4 text-left">
               <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1">
-                📸 Sudah transfer? Upload struk untuk verifikasi
+                 Sudah transfer? Upload struk untuk verifikasi
               </label>
               <p className="text-xs text-gray-500 dark:text-slate-400 mb-3">
                 Setelah transfer, kirim foto struk di sini. AI akan memverifikasi otomatis.

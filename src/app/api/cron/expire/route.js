@@ -39,12 +39,12 @@ export async function GET(req) {
       const expDate = new Date(l.expires_at).toLocaleDateString("id-ID", { day: "numeric", month: "long" });
       const kode = l.listing_code || l.id.slice(0, 8);
       const msg =
-        `⚠️ *Iklan Hampir Berakhir — 3 Hari Lagi!*\n\n` +
+        ` *Iklan Hampir Berakhir — 3 Hari Lagi!*\n\n` +
         `Hei ${l.seller_name || "Penjual"},\n` +
         `Iklanmu *"${l.title}"* akan berakhir pada *${expDate}*.\n\n` +
         `Perpanjang sekarang agar tetap tayang:\n` +
-        `💬 Ketik: *PERPANJANG ${kode}*\n` +
-        `🌐 Dashboard: ${baseUrl}/dashboard\n\n` +
+        ` Ketik: *PERPANJANG ${kode}*\n` +
+        ` Dashboard: ${baseUrl}/dashboard\n\n` +
         `_Jangan sampai iklanmu hilang dari pencarian!_`;
       const waTarget = formatWaForBaileys(l.seller_wa);
       const res = await sendWa(waTarget, msg).catch(() => ({ ok: false }));
@@ -69,12 +69,12 @@ export async function GET(req) {
       const expDate = new Date(l.expires_at).toLocaleDateString("id-ID", { day: "numeric", month: "long" });
       const kode = l.listing_code || l.id.slice(0, 8);
       const msg =
-        `🚨 *Iklan Berakhir Besok!*\n\n` +
+        ` *Iklan Berakhir Besok!*\n\n` +
         `Hei ${l.seller_name || "Penjual"},\n` +
         `Iklanmu *"${l.title}"* berakhir *${expDate}* — besok!\n\n` +
         `Perpanjang SEKARANG sebelum terlambat:\n` +
-        `💬 Ketik: *PERPANJANG ${kode}*\n` +
-        `🌐 Dashboard: ${baseUrl}/dashboard`;
+        ` Ketik: *PERPANJANG ${kode}*\n` +
+        ` Dashboard: ${baseUrl}/dashboard`;
       const waTarget = formatWaForBaileys(l.seller_wa);
       const res = await sendWa(waTarget, msg).catch(() => ({ ok: false }));
       if (res.ok) reminded++;

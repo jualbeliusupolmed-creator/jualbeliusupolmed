@@ -35,19 +35,19 @@ export function TabKirim() {
         uploadedUrl = upData.url;
       }
       const r = await apiPost("send", { target: form.target, message: form.message, url: uploadedUrl });
-      setStatus(r.status ? { ok: true, text: "✅ Pesan berhasil dikirim!" } : { ok: false, text: `❌ ${r.reason || r.error}` });
+      setStatus(r.status ? { ok: true, text: "Pesan berhasil dikirim!" } : { ok: false, text: `${r.reason || r.error}` });
       if (r.status) { setForm(f => ({ ...f, message: "" })); setImageFile(null); setImagePreview(""); }
-    } catch (e) { setStatus({ ok: false, text: `❌ ${e.message}` }); }
+    } catch (e) { setStatus({ ok: false, text: `${e.message}` }); }
     setSending(false);
   }
 
   async function handleSendPoll(e) {
     e.preventDefault();
     const opts = poll.options.filter(o => o.trim());
-    if (opts.length < 2) { setStatus({ ok: false, text: "❌ Minimal 2 pilihan polling." }); return; }
+    if (opts.length < 2) { setStatus({ ok: false, text: "Minimal 2 pilihan polling." }); return; }
     setSending(true); setStatus(null);
     const r = await apiPost("send-poll", { target: poll.target, name: poll.name, options: opts });
-    setStatus(r.ok ? { ok: true, text: "✅ Polling berhasil dikirim!" } : { ok: false, text: `❌ ${r.error}` });
+    setStatus(r.ok ? { ok: true, text: "Polling berhasil dikirim!" } : { ok: false, text: `${r.error}` });
     if (r.ok) setPoll({ target: "", name: "", options: ["", ""] });
     setSending(false);
   }
@@ -57,7 +57,7 @@ export function TabKirim() {
       <h2 className="text-lg font-bold dark:text-white">Kirim Pesan via Bot</h2>
 
       <div className="flex gap-1 border-b dark:border-slate-700 pb-2">
-        {[["pesan", "💬 Teks/Foto"], ["poll", "📊 Polling"]].map(([k, l]) => (
+        {[["pesan", "Teks/Foto"], ["poll", "Polling"]].map(([k, l]) => (
           <button key={k} onClick={() => { setMode(k); setStatus(null); }}
             className={`rounded-lg px-3 py-1.5 text-sm font-medium ${mode === k ? "bg-gray-900 text-white dark:bg-slate-100 dark:text-slate-900" : "text-gray-600 hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-slate-800"}`}>
             {l}
@@ -86,7 +86,7 @@ export function TabKirim() {
           <div>
             <label className="label">Gambar (opsional — otomatis WebP)</label>
             <label className="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-dashed border-gray-300 p-3 hover:border-blue-400 dark:border-slate-600">
-              <span className="text-2xl">🖼️</span>
+              <span className="text-2xl"><svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg></span>
               <div className="min-w-0">
                 <p className="text-sm font-medium dark:text-gray-300">{imageFile ? imageFile.name : "Klik untuk pilih gambar"}</p>
                 <p className="text-xs text-gray-400">JPG, PNG, WebP · Maks 5 MB</p>
@@ -97,11 +97,11 @@ export function TabKirim() {
               <div className="relative mt-2 inline-block">
                 <img src={imagePreview} alt="preview" className="h-32 w-auto rounded-lg border object-cover" />
                 <button type="button" onClick={() => { setImageFile(null); setImagePreview(""); }}
-                  className="absolute -right-2 -top-2 rounded-full bg-red-500 p-0.5 text-xs text-white hover:bg-red-600">✕</button>
+                  className="absolute -right-2 -top-2 rounded-full bg-red-500 p-0.5 text-xs text-white hover:bg-red-600"></button>
               </div>
             )}
           </div>
-          <button type="submit" disabled={sending} className="btn-primary w-full">{sending ? "⏳ Mengirim..." : "🚀 Kirim"}</button>
+          <button type="submit" disabled={sending} className="btn-primary w-full">{sending ? "Mengirim..." : "Kirim"}</button>
         </form>
       )}
 
@@ -127,7 +127,7 @@ export function TabKirim() {
               <div key={i} className="flex gap-2 mt-1">
                 <input className="input flex-1" placeholder={`Pilihan ${i + 1}`} value={opt} onChange={e => setPoll(f => ({ ...f, options: f.options.map((o, j) => j === i ? e.target.value : o) }))} />
                 {poll.options.length > 2 && (
-                  <button type="button" onClick={() => setPoll(f => ({ ...f, options: f.options.filter((_, j) => j !== i) }))} className="text-red-400 hover:text-red-600 text-lg">✕</button>
+                  <button type="button" onClick={() => setPoll(f => ({ ...f, options: f.options.filter((_, j) => j !== i) }))} className="text-red-400 hover:text-red-600 text-lg"></button>
                 )}
               </div>
             ))}
@@ -135,7 +135,7 @@ export function TabKirim() {
               <button type="button" onClick={() => setPoll(f => ({ ...f, options: [...f.options, ""] }))} className="mt-2 text-xs text-blue-500 hover:underline">+ Tambah pilihan</button>
             )}
           </div>
-          <button type="submit" disabled={sending} className="btn-primary w-full">{sending ? "⏳ Mengirim..." : "📊 Kirim Polling"}</button>
+          <button type="submit" disabled={sending} className="btn-primary w-full">{sending ? "Mengirim..." : "Kirim Polling"}</button>
         </form>
       )}
     </div>

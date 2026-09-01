@@ -17,7 +17,7 @@ export function TabLidMap() {
     if (!confirm(`Hapus mapping ${lid}?`)) return;
     setDeleting(lid); setMsg(null);
     const r = await apiDelete("lid-map", { lid });
-    setMsg(r.ok ? { ok: true, text: "✅ Entri dihapus." } : { ok: false, text: "❌ Gagal menghapus." });
+    setMsg(r.ok ? { ok: true, text: "Entri dihapus." } : { ok: false, text: "Gagal menghapus." });
     if (r.ok) refetch();
     setDeleting(null);
   }
@@ -26,16 +26,16 @@ export function TabLidMap() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold dark:text-white">LID Resolution Map</h2>
-        <button onClick={refetch} className="btn-outline text-xs">🔄 Refresh</button>
+        <button onClick={refetch} className="btn-outline text-xs">Refresh</button>
       </div>
 
       <div className="rounded-lg bg-blue-50 p-3 text-xs text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
-        💡 LID Map menyimpan mapping antara format WA baru (<code>@lid</code>) ke nomor HP asli. Hapus entri yang salah mapping saja — entri yang benar jangan dihapus.
+         LID Map menyimpan mapping antara format WA baru (<code>@lid</code>) ke nomor HP asli. Hapus entri yang salah mapping saja — entri yang benar jangan dihapus.
       </div>
 
       <Alert ok={msg?.ok} msg={msg?.text} />
       {loading && <p className="text-sm text-gray-400">Memuat LID Map...</p>}
-      {error && <Alert ok={false} msg={`⚠️ ${error}`} />}
+      {error && <Alert ok={false} msg={error} />}
 
       {data && (
         <>
@@ -66,7 +66,7 @@ export function TabLidMap() {
                     <td className="p-3">
                       <button onClick={() => handleDelete(e.lid)} disabled={deleting === e.lid}
                         className="rounded bg-red-100 px-2 py-0.5 text-xs text-red-600 hover:bg-red-200 dark:bg-red-900/40 dark:text-red-400 disabled:opacity-50">
-                        {deleting === e.lid ? "⏳" : "🗑️ Hapus"}
+                        {deleting === e.lid ? "..." : "Hapus"}
                       </button>
                     </td>
                   </tr>

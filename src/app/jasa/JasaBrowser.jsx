@@ -403,7 +403,7 @@ export default function JasaBrowser({
                 href="/dicari"
                 className="flex w-36 shrink-0 flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-emerald-200 bg-transparent p-3 text-center transition hover:bg-emerald-50 dark:border-emerald-900/40 dark:hover:bg-emerald-900/10"
               >
-                <span className="text-xl">🔍</span>
+                <Icon.Search className="h-5 w-5" />
                 <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 leading-tight">Lihat semua yang dicari</span>
               </Link>
             </div>
@@ -457,7 +457,7 @@ export default function JasaBrowser({
                     : "border border-gray-200 text-gray-600 hover:border-gray-300 dark:border-slate-800 dark:text-slate-300"
                   }`}
               >
-                Harga{minPrice || maxPrice ? " ✓" : ""}
+                Harga{minPrice || maxPrice ? <Icon.Check className="h-3.5 w-3.5" /> : null}
               </button>
 
               {/* Campus */}
@@ -489,7 +489,7 @@ export default function JasaBrowser({
                     : "border border-gray-200 text-gray-600 hover:border-gray-300 dark:border-slate-800 dark:text-slate-300"
                   }`}
               >
-                Nego{negoFilter ? " ✓" : ""}
+                Nego{negoFilter ? <Icon.Check className="h-3.5 w-3.5" /> : null}
               </button>
 
               {/* Reset */}

@@ -86,15 +86,15 @@ export async function POST() {
   const tautanPersetujuan = `${dasar}/admin/approve-toko?wa=${encodeURIComponent(profil.wa)}`;
 
   const pesan =
-    `🏪 *Permohonan Aktivasi Toko*\n\n` +
+    ` *Permohonan Aktivasi Toko*\n\n` +
     `Halo Admin, saya ingin mengaktifkan toko saya di Jual Beli USU Polmed.\n\n` +
-    `📛 Nama toko: *${nama}*\n` +
-    `🔗 Alamat: ${dasar}/toko/${profil.slug}\n` +
-    `👤 Penjual: ${profil.name || "-"}\n` +
-    `📱 WhatsApp: ${profil.wa}\n` +
-    (profil.store_area ? `📍 Wilayah: ${profil.store_area}\n` : "") +
-    (profil.tagline ? `📝 ${profil.tagline}\n` : "") +
-    `\nMohon diaktifkan ya, terima kasih 🙏\n\n` +
+    ` Nama toko: *${nama}*\n` +
+    ` Alamat: ${dasar}/toko/${profil.slug}\n` +
+    ` Penjual: ${profil.name || "-"}\n` +
+    ` WhatsApp: ${profil.wa}\n` +
+    (profil.store_area ? ` Wilayah: ${profil.store_area}\n` : "") +
+    (profil.tagline ? ` ${profil.tagline}\n` : "") +
+    `\nMohon diaktifkan ya, terima kasih \n\n` +
     `— Aktifkan lewat panel admin:\n${tautanPersetujuan}`;
 
   return NextResponse.json({

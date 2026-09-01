@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Icon } from "@/components/Icons";
@@ -47,8 +46,6 @@ function ChatContent() {
   const [ringkasAnon, setRingkasAnon] = useState(null);
   const [anonLoading, setAnonLoading] = useState(true);
   const [searching, setSearching] = useState(false);
-  const [showPastHistory, setShowPastHistory] = useState(false);
-
   // ── Utas anonim (?anon=1) ────────────────────────────────────────────────
   const [utas, setUtas] = useState(null);
   const [utasLoading, setUtasLoading] = useState(true);
@@ -73,6 +70,8 @@ function ChatContent() {
   const fileInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const lastTypingSentRef = useRef(0);
+  const loadingThreadRef = useRef(false);
+  const pollingMatchRef = useRef(false);
 
   const scrollToBottom = (behavior = "smooth") => {
     messagesEndRef.current?.scrollIntoView({ behavior });
@@ -120,14 +119,18 @@ function ChatContent() {
   useEffect(() => {
     if (roomQuery || anonView) return;
     refreshAnonInbox();
-    const iv = setInterval(refreshAnonInbox, 15000);
+    const iv = setInterval(() => {
+      if (document.visibilityState === "visible") refreshAnonInbox();
+    }, 60000);
     return () => clearInterval(iv);
   }, [roomQuery, anonView, refreshAnonInbox]);
 
   // ══ UTAS ANONIM ════════════════════════════════════════════════════════
   const muatUtas = useCallback(async () => {
+    if (loadingThreadRef.current) return;
+    loadingThreadRef.current = true;
     try {
-      const res = await fetch("/api/chat/anon/thread");
+      const res = await fetch("/api/chat/anon/thread", { cache: "no-store" });
       if (res.status === 401) {
         toast.error("Masuk dulu ya untuk membuka obrolan.");
         router.push("/profil");
@@ -140,6 +143,7 @@ function ChatContent() {
     } catch {
       // silent
     } finally {
+      loadingThreadRef.current = false;
       setUtasLoading(false);
     }
   }, [router]);
@@ -152,7 +156,9 @@ function ChatContent() {
 
   useEffect(() => {
     if (!anonView) return;
-    const iv = setInterval(muatUtas, 10000);
+    const iv = setInterval(() => {
+      if (document.visibilityState === "visible") muatUtas();
+    }, 30000);
     const saatTampil = () => {
       if (document.visibilityState === "visible") muatUtas();
     };
@@ -168,6 +174,8 @@ function ChatContent() {
   useEffect(() => {
     if (!menungguRoomId) return;
     const iv = setInterval(async () => {
+      if (document.visibilityState !== "visible" || pollingMatchRef.current) return;
+      pollingMatchRef.current = true;
       try {
         const res = await fetch("/api/chat/match", {
           method: "POST",
@@ -189,8 +197,10 @@ function ChatContent() {
         else refreshAnonInbox();
       } catch {
         // silent
+      } finally {
+        pollingMatchRef.current = false;
       }
-    }, 3500);
+    }, 5000);
     return () => clearInterval(iv);
   }, [menungguRoomId, anonView, muatUtas, refreshAnonInbox]);
 
@@ -304,7 +314,9 @@ function ChatContent() {
 
   useEffect(() => {
     if (anonView || !roomQuery || roomStatus !== "active") return;
-    const iv = setInterval(() => fetchRoomData(roomQuery), 10000);
+    const iv = setInterval(() => {
+      if (document.visibilityState === "visible") fetchRoomData(roomQuery);
+    }, 30000);
     return () => clearInterval(iv);
   }, [anonView, roomQuery, roomStatus, fetchRoomData]);
 
@@ -546,6 +558,7 @@ function ChatContent() {
 
     // Sesi aktif saat ini
     const segAktif = rawSegmen.find((s) => s.roomId === aktifRoomId) || null;
+    const segmenRiwayat = rawSegmen.filter((s) => s.roomId !== aktifRoomId);
     const activeMessages = (segAktif?.pesan || []).filter(
       (m) => m.sender_id !== "system" || m.message?.startsWith("system:")
     );
@@ -569,7 +582,7 @@ function ChatContent() {
 
               <div className="relative shrink-0">
                 <div className="w-8 h-8 xs:w-9 xs:h-9 rounded-full bg-gradient-to-tr from-primary/20 to-purple-500/20 text-primary flex items-center justify-center font-bold text-base shadow-xs">
-                  🎭
+                  <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg>
                 </div>
                 {aktifRoomId && (
                   <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-black animate-pulse" />
@@ -589,9 +602,9 @@ function ChatContent() {
                 </div>
                 <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
                   {aktifRoomId
-                    ? "🟢 Sedang terhubung"
+                    ? "Sedang terhubung"
                     : isWaiting
-                      ? "🔍 Sedang mencari partner..."
+                      ? "Sedang mencari partner..."
                       : "Mahasiswa USU & Polmed"}
                 </p>
               </div>
@@ -605,21 +618,21 @@ function ChatContent() {
                   title="Ajak lanjut mengobrol di DM Pribadi website"
                   className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 px-2.5 py-1.5 rounded-full text-[11px] font-bold hover:bg-emerald-100 active:scale-95 transition-all shadow-2xs"
                 >
-                  <span>💬 DM</span>
+                  <Icon.MessageCircle className="h-4 w-4" /><span>DM</span>
                 </button>
                 <button
                   onClick={handleReportPartner}
                   title="Laporkan lawan bicara"
                   className="p-1.5 rounded-full text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors active:scale-90"
                 >
-                  🚩
+                  <Icon.Flag className="h-4 w-4" />
                 </button>
                 <button
                   onClick={handleSkipChat}
                   title="Ganti Lawan Obrolan"
                   className="flex items-center gap-1 bg-black/[0.04] dark:bg-white/[0.08] hover:bg-black/[0.08] dark:hover:bg-white/[0.15] border border-black/[0.06] dark:border-white/[0.08] px-2.5 py-1.5 rounded-full text-[11px] font-bold text-[#1d1d1f] dark:text-[#f5f5f7] active:scale-95 transition-all shadow-2xs"
                 >
-                  <span>⏭️ Ganti</span>
+                  <Icon.ArrowPath className="h-4 w-4" /><span>Ganti</span>
                 </button>
                 <button
                   onClick={handleLeaveChat}
@@ -635,11 +648,31 @@ function ChatContent() {
                 disabled={searching || isWaiting}
                 className="flex items-center gap-1 bg-primary text-white px-3.5 py-1.5 rounded-full text-[11px] font-bold shadow-xs hover:brightness-105 active:scale-95 transition-all disabled:opacity-50"
               >
-                <span>{searching ? "Mencari..." : "🚀 Cari Baru"}</span>
+                {searching ? "Mencari..." : <><Icon.Rocket className="h-4 w-4" /><span>Cari Baru</span></>}
               </button>
             )}
           </div>
         </div>
+        {!utasLoading && segmenRiwayat.length > 0 && (
+          <div className="shrink-0 border-b border-black/[0.06] bg-slate-50/90 px-3 py-2 dark:border-white/[0.08] dark:bg-white/[0.04]">
+            <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold text-slate-500 dark:text-slate-400">
+              <Icon.Clock className="h-3.5 w-3.5" />
+              Riwayat obrolan ({segmenRiwayat.length})
+            </div>
+            <div className="flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {[...segmenRiwayat].reverse().map((seg) => (
+                <button
+                  key={seg.roomId}
+                  type="button"
+                  onClick={() => document.getElementById(`anon-seg-${seg.roomId}`)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                  className="shrink-0 rounded-full border border-black/[0.07] bg-white px-3 py-1.5 text-[10px] font-semibold text-slate-700 shadow-xs active:scale-95 dark:border-white/[0.1] dark:bg-[#1c1c1e] dark:text-slate-200"
+                >
+                  {seg.alias} · {waktuRelatif(seg.mulai)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* ── CHAT CANVAS AREA (TELEGRAM ANONYMOUS BOT STYLE) ── */}
         <div className="flex-1 p-4 overflow-y-auto overscroll-contain space-y-4">
@@ -652,7 +685,7 @@ function ChatContent() {
             /* EMPTY / WELCOME SCREEN */
             <div className="flex flex-col items-center justify-center h-full py-12 text-center px-4 space-y-6 animate-in fade-in zoom-in-95 duration-300">
               <div className="w-20 h-20 rounded-[24px] bg-gradient-to-tr from-primary/20 via-purple-500/10 to-transparent flex items-center justify-center text-4xl shadow-sm border border-primary/20">
-                🎭
+                <Icon.TheaterMasks className="h-10 w-10" />
               </div>
               <div className="space-y-2 max-w-xs">
                 <h2 className="text-lg font-black text-[#1d1d1f] dark:text-[#f5f5f7]">
@@ -667,7 +700,7 @@ function ChatContent() {
                 disabled={searching}
                 className="w-full max-w-xs py-3.5 rounded-full bg-primary hover:brightness-105 text-white text-xs font-black shadow-lg shadow-primary/25 active:scale-95 transition-all flex items-center justify-center gap-2"
               >
-                <span>{searching ? "Mencari Teman..." : "🚀 Cari Teman Baru"}</span>
+                {searching ? "Mencari Teman..." : <><Icon.Rocket className="h-4 w-4" /><span>Cari Teman Baru</span></>}
               </button>
             </div>
           ) : (
@@ -678,12 +711,12 @@ function ChatContent() {
                 const isLastSeg = sIdx === rawSegmen.length - 1;
 
                 return (
-                  <div key={seg.roomId || sIdx} className="space-y-3">
+                  <div id={`anon-seg-${seg.roomId}`} key={seg.roomId || sIdx} className="scroll-mt-4 space-y-3">
                     {/* Telegram Style Session Banner */}
                     <div className="flex items-center justify-center my-3">
                       <div className="bg-black/[0.04] dark:bg-white/[0.08] backdrop-blur-md px-3.5 py-1.5 rounded-full border border-black/[0.06] dark:border-white/[0.08] text-center shadow-2xs">
                         <p className="text-[11px] font-bold text-[#1d1d1f] dark:text-[#f5f5f7] flex items-center gap-1.5 justify-center">
-                          <span>🎭</span>
+                          <Icon.TheaterMasks className="h-4 w-4" />
                           <span>Terhubung dengan {seg.alias}</span>
                           {seg.faculty && (
                             <span className="text-[9px] bg-primary/10 text-primary dark:text-purple-300 px-2 py-0.5 rounded-full font-semibold">
@@ -711,7 +744,7 @@ function ChatContent() {
                         return (
                           <div key={m.id || idx} className="my-3 p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 shadow-xs text-xs animate-in fade-in duration-200">
                             <div className="flex items-start gap-2.5">
-                              <span className="text-lg shrink-0">💬</span>
+                              <Icon.MessageCircle className="h-5 w-5 shrink-0" />
                               <div className="flex-1 min-w-0">
                                 <p className="font-bold text-amber-900 dark:text-amber-200 mb-1">
                                   {isReqMe ? "Ajakan Lanjut DM Terkirim" : `${reqData?.requesterAlias || "Temanmu"} Mengajak Lanjut DM`}
@@ -726,7 +759,7 @@ function ChatContent() {
                                     onClick={() => handleExchangeContact(seg.roomId)}
                                     className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs active:scale-95 transition-all inline-flex items-center gap-1.5"
                                   >
-                                    <span>✓ Setuju &amp; Buka DM Pribadi</span>
+                                    <Icon.Check className="h-4 w-4" /><span>Setuju &amp; Buka DM Pribadi</span>
                                   </button>
                                 )}
                               </div>
@@ -746,7 +779,7 @@ function ChatContent() {
                         return (
                           <div key={m.id || idx} className="my-3 p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 shadow-xs text-xs animate-in fade-in duration-200">
                             <div className="flex items-start gap-3">
-                              <span className="text-xl shrink-0">🎉</span>
+                              <Icon.Sparkles className="h-5 w-5 shrink-0" />
                               <div className="flex-1 min-w-0">
                                 <p className="font-black text-emerald-900 dark:text-emerald-200 text-xs mb-1">
                                   Saling Setuju! Ruang DM Pribadi Terbuka
@@ -759,7 +792,7 @@ function ChatContent() {
                                     onClick={() => router.push(`/chat?room=${directRoomId}`)}
                                     className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl font-bold text-xs shadow-xs active:scale-95 transition-all"
                                   >
-                                    <span>💬 Masuk ke Ruang DM Pribadi ↗</span>
+                                    <Icon.MessageCircle className="h-4 w-4" /><span>Masuk ke Ruang DM Pribadi</span>
                                   </button>
                                 ) : (
                                   <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold">Ruang DM berhasil dibuat</span>
@@ -808,7 +841,7 @@ function ChatContent() {
                                     loading="lazy"
                                   />
                                   <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-bold">
-                                    🔍 Perbesar Foto
+                                    <Icon.Search className="mr-1 inline h-3.5 w-3.5" /> Perbesar Foto
                                   </div>
                                 </div>
                                 {parsed.text && <p className="px-2 pt-1 text-xs leading-relaxed">{parsed.text}</p>}
@@ -825,7 +858,7 @@ function ChatContent() {
                     {seg.status === "closed" && (
                       <div className="flex items-center justify-center my-2.5">
                         <div className="bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/20 text-amber-800 dark:text-amber-300 text-[10px] font-semibold px-3 py-1 rounded-full text-center">
-                          👋 Obrolan dengan {seg.alias} telah berakhir
+                           Obrolan dengan {seg.alias} telah berakhir
                         </div>
                       </div>
                     )}
@@ -863,7 +896,7 @@ function ChatContent() {
                     disabled={searching}
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary hover:brightness-105 text-white text-xs font-bold shadow-md shadow-primary/25 active:scale-95 transition-all disabled:opacity-60"
                   >
-                    <span>{searching ? "Mencari Partner..." : "🚀 Cari Partner Baru (/next)"}</span>
+                    {searching ? "Mencari Partner..." : <><Icon.Rocket className="h-4 w-4" /><span>Cari Partner Baru (/next)</span></>}
                   </button>
                 </div>
               )}
@@ -927,7 +960,7 @@ function ChatContent() {
           </div>
         ) : isWaiting ? (
           <div className="p-3 bg-primary/5 border-t border-slate-100 dark:border-slate-800 flex items-center gap-3 pb-[max(env(safe-area-inset-bottom),0.6rem)]">
-            <div className="w-8 h-8 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-base animate-pulse">🔍</div>
+            <div className="w-8 h-8 shrink-0 rounded-full bg-primary/10 flex items-center justify-center animate-pulse"><Icon.Search className="h-4 w-4" /></div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-slate-900 dark:text-white">Menunggu partner…</p>
               <p className="text-[10px] text-slate-500">Kami kabari lewat notifikasi kalau ada yang cocok</p>
@@ -946,7 +979,7 @@ function ChatContent() {
               disabled={searching}
               className="w-full py-3 rounded-full bg-primary text-white text-xs font-black shadow-md shadow-primary/25 hover:brightness-105 active:scale-95 transition-all disabled:opacity-60 flex items-center justify-center gap-1.5"
             >
-              <span>{searching ? "Mencari Teman..." : "🚀 Cari Teman Baru"}</span>
+              {searching ? "Mencari Teman..." : <><Icon.Rocket className="h-4 w-4" /><span>Cari Teman Baru</span></>}
             </button>
           </div>
         )}
@@ -1042,7 +1075,7 @@ function ChatContent() {
 
             {roomType === "marketplace" && partnerInfo.wa && (
               <a
-                href={`https://wa.me/${String(partnerInfo.wa).replace(/^0/, "62")}?text=${encodeURIComponent("Halo Kak, saya dari obrolan Jual Beli USU 👋")}`}
+                href={`https://wa.me/${String(partnerInfo.wa).replace(/^0/, "62")}?text=${encodeURIComponent("Halo Kak, saya dari obrolan Jual Beli USU ")}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 px-3 py-1.5 rounded-full text-xs font-bold hover:bg-emerald-100 shadow-2xs active:scale-95 transition-all shrink-0"
@@ -1149,7 +1182,7 @@ function ChatContent() {
               title="Kirim Foto"
               className="w-9 h-9 shrink-0 rounded-full bg-black/[0.05] dark:bg-white/[0.1] hover:bg-black/[0.08] dark:hover:bg-white/[0.15] text-gray-700 dark:text-gray-200 flex items-center justify-center active:scale-90 transition-all text-sm disabled:opacity-50"
             >
-              {uploadingImg ? <span className="h-4 w-4 animate-pulse">...</span> : <Icon.Camera className="h-4 w-4" />}
+              {uploadingImg ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-current/30 border-t-current" /> : <Icon.Camera className="h-4 w-4" />}
             </button>
             <input
               type="text"

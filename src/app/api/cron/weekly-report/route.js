@@ -84,17 +84,17 @@ export async function GET(req) {
         });
 
         // Susun pesan laporan mingguan
-        let msg = `📊 *Laporan Mingguan Iklanmu*\n`;
+        let msg = ` *Laporan Mingguan Iklanmu*\n`;
         msg += `Halo, *${seller_name}*! Berikut performa tokomu pekan ini:\n\n`;
-        msg += `📦 *Total Iklan Aktif:* ${listings.length}\n`;
-        msg += `👁️ *Total Dilihat Calon Pembeli:* ${totalViews.toLocaleString("id-ID")} kali\n`;
+        msg += ` *Total Iklan Aktif:* ${listings.length}\n`;
+        msg += ` *Total Dilihat Calon Pembeli:* ${totalViews.toLocaleString("id-ID")} kali\n`;
         if ((offerCount || 0) > 0) {
-          msg += `💬 *Tawaran Masuk Minggu Ini:* ${offerCount} tawaran\n`;
+          msg += ` *Tawaran Masuk Minggu Ini:* ${offerCount} tawaran\n`;
         }
         if (newRatingCount > 0) {
           msg += `⭐ *Ulasan Baru:* ${newRatingCount} ulasan (Rata-rata: ${avgRatingNew}/5)\n`;
         }
-        msg += `\n🔥 *Iklan Terpopuler Kamu:*\n`;
+        msg += `\n *Iklan Terpopuler Kamu:*\n`;
         topListings.forEach((tl, idx) => {
           msg += `${idx + 1}. ${tl.title} — ${rupiah(tl.price)} (${tl.views || 0} views)\n`;
         });
@@ -109,7 +109,7 @@ export async function GET(req) {
         // Tanpa angka karangan: klaim "3x lebih banyak pembeli" sudah pernah
         // dicabut dari /lomba dan /daftar-harga (22 Agu) karena tidak ada
         // datanya — jangan hidupkan lagi lewat pintu belakang pesan WA.
-        msg += `\n💡 *Tips Jual Cepat:* Iklan yang disundul (*BUMP*) naik lagi ke urutan atas, dan *FEATURED* tampil menonjol di beranda.\n`;
+        msg += `\n *Tips Jual Cepat:* Iklan yang disundul (*BUMP*) naik lagi ke urutan atas, dan *FEATURED* tampil menonjol di beranda.\n`;
         msg += `Ketik *.UPGRADE* atau *.SAYA* untuk kelola tokomu.`;
 
         await sendWa(wa, msg);

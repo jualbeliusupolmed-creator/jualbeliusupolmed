@@ -1,5 +1,5 @@
 "use client";
-
+                      <Icon.X className="h-5 w-5" />
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -192,7 +192,7 @@ export default function SuperAppHome({
     const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/mading#post-${post.id}` : "";
     const cleanSnippet = (post.content || "").trim().slice(0, 120);
     const titleText = post.title ? `*${post.title}*\n` : "";
-    const shareText = `🔥 *[Menfess & Info Kampus USU / POLMED]*\n${titleText}"${cleanSnippet}${post.content && post.content.length > 120 ? "..." : ""}"\n\n👀 Baca & beri tanggapan:\n${shareUrl}`;
+    const shareText = ` *[Menfess & Info Kampus USU / POLMED]*\n${titleText}"${cleanSnippet}${post.content && post.content.length > 120 ? "..." : ""}"\n\n Baca & beri tanggapan:\n${shareUrl}`;
 
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
@@ -739,7 +739,7 @@ export default function SuperAppHome({
                       }}
                       className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 text-[10px]"
                     >
-                      ✕
+                      <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg>
                     </button>
                   </div>
                 )}

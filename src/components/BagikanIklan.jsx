@@ -60,11 +60,11 @@ export default function BagikanIklan({ listing, onClose }) {
   const kondisi = listing.condition === "new" ? " · Baru" : listing.condition === "used" ? " · Bekas" : "";
 
   const teks =
-    `${isRental ? "🔑 *[SEWA]*" : "🛒"} *${listing.title}*\n` +
-    (listing.listing_code ? `#️⃣ Kode: ${listing.listing_code}\n` : "") +
-    `💰 ${harga}${kondisi}\n` +
-    (listing.category ? `🏷️ ${listing.category}\n` : "") +
-    `\n👉 ${url}\n` +
+    `${isRental ? "[SEWA]" : "[JUAL]"} *${listing.title}*\n` +
+    (listing.listing_code ? `#⃣ Kode: ${listing.listing_code}\n` : "") +
+    ` ${harga}${kondisi}\n` +
+    (listing.category ? ` ${listing.category}\n` : "") +
+    `\n ${url}\n` +
     `_Jual Beli USU Polmed — COD area kampus_`;
 
   async function salin(nilai, tanda) {
@@ -158,13 +158,13 @@ export default function BagikanIklan({ listing, onClose }) {
           ) : null}
           <Baris
             icon={(p) => <Icon.Link {...p} />}
-            judul={tersalin === "url" ? "Tautan tersalin ✓" : "Salin tautan"}
+            judul={tersalin === "url" ? "Tautan tersalin " : "Salin tautan"}
             sub={url.replace(/^https?:\/\//, "")}
             onClick={() => salin(url, "url")}
           />
           <Baris
             icon={(p) => <Icon.Clipboard {...p} />}
-            judul={tersalin === "teks" ? "Teks tersalin ✓" : "Salin teks iklan"}
+            judul={tersalin === "teks" ? "Teks tersalin " : "Salin teks iklan"}
             sub="Untuk ditempel di mana saja"
             onClick={() => salin(teks, "teks")}
           />

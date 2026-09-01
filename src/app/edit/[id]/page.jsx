@@ -141,7 +141,7 @@ export default function EditPage() {
   if (!form) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10 text-center text-gray-500">
-        <p className="text-4xl">😕</p>
+        <p className="text-4xl"><svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg></p>
         <p className="mt-3">{msg || "Iklan tidak ditemukan."}</p>
       </div>
     );
@@ -305,7 +305,7 @@ export default function EditPage() {
               disabled={busy || !!fileError}
               className="btn-primary mt-4 w-full"
             >
-              {busy ? "Menyimpan…" : "💾 Simpan Perubahan"}
+              {busy ? "Menyimpan…" : " Simpan Perubahan"}
             </button>
             <button
               type="button"
@@ -318,7 +318,7 @@ export default function EditPage() {
           </div>
 
           <div className="card p-4 text-xs text-gray-500 dark:text-slate-400">
-            <p className="font-semibold text-gray-700 dark:text-slate-300">ℹ️ Info</p>
+            <p className="font-semibold text-gray-700 dark:text-slate-300">ℹ Info</p>
             <ul className="mt-2 list-disc space-y-1 pl-4">
               <li>Edit gratis, tidak ada biaya tambahan.</li>
               <li>Status iklan tidak berubah.</li>

@@ -103,7 +103,7 @@ export default function SellerAnalyticsView({
     return (
       <div className="card p-12 text-center mt-6 space-y-4">
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-3xl text-primary">
-          📊
+          <Icon.TrendingUp className="h-8 w-8" />
         </div>
         <div>
           <h3 className="text-base font-bold text-gray-900 dark:text-white">
@@ -141,13 +141,13 @@ export default function SellerAnalyticsView({
             className="btn-outline text-xs py-2 px-3 flex items-center gap-1.5 shadow-sm"
             title="Download CSV"
           >
-            <span>📥 Ekspor CSV</span>
+            <span> Ekspor CSV</span>
           </button>
           <button
             onClick={onRefresh}
             className="btn-outline text-xs py-2 px-3 flex items-center gap-1.5 shadow-sm"
           >
-            <span>🔄 Segarkan</span>
+            <span> Segarkan</span>
           </button>
         </div>
       </div>
@@ -157,7 +157,7 @@ export default function SellerAnalyticsView({
         <div className="card p-4 flex flex-col justify-between border border-black/[0.04] dark:border-white/[0.06] hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-gray-500 dark:text-slate-400">Total Views</span>
-            <span className="text-lg">👁️</span>
+            <Icon.Eye className="h-5 w-5 text-slate-400" />
           </div>
           <div className="mt-2">
             <div className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">
@@ -172,7 +172,7 @@ export default function SellerAnalyticsView({
         <div className="card p-4 flex flex-col justify-between border border-black/[0.04] dark:border-white/[0.06] hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-gray-500 dark:text-slate-400">Omset Terjual</span>
-            <span className="text-lg">💵</span>
+            <Icon.CreditCard className="h-5 w-5 text-emerald-500" />
           </div>
           <div className="mt-2">
             <div className="text-lg sm:text-xl font-black tracking-tight text-emerald-600 dark:text-emerald-400 truncate">
@@ -187,7 +187,7 @@ export default function SellerAnalyticsView({
         <div className="card p-4 flex flex-col justify-between border border-black/[0.04] dark:border-white/[0.06] hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-gray-500 dark:text-slate-400">Nilai Aset Aktif</span>
-            <span className="text-lg">📦</span>
+            <Icon.Package className="h-5 w-5 text-blue-500" />
           </div>
           <div className="mt-2">
             <div className="text-lg sm:text-xl font-black tracking-tight text-sky-600 dark:text-sky-400 truncate">
@@ -202,7 +202,7 @@ export default function SellerAnalyticsView({
         <div className="card p-4 flex flex-col justify-between border border-black/[0.04] dark:border-white/[0.06] hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-gray-500 dark:text-slate-400">Konversi</span>
-            <span className="text-lg">⚡</span>
+            <Icon.TrendingUp className="h-5 w-5 text-amber-500" />
           </div>
           <div className="mt-2">
             <div className="text-2xl font-black tracking-tight text-indigo-600 dark:text-indigo-400">
@@ -217,7 +217,7 @@ export default function SellerAnalyticsView({
         <div className="card p-4 flex flex-col justify-between border border-black/[0.04] dark:border-white/[0.06] hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-gray-500 dark:text-slate-400">Tawaran Masuk</span>
-            <span className="text-lg">💰</span>
+            <Icon.MessageCircle className="h-5 w-5 text-violet-500" />
           </div>
           <div className="mt-2">
             <div className="text-2xl font-black tracking-tight text-amber-600 dark:text-amber-400">
@@ -249,7 +249,7 @@ export default function SellerAnalyticsView({
       {analytics.insights && analytics.insights.length > 0 && (
         <div className="space-y-2">
           <p className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-slate-500">
-            💡 Rekomendasi & Insight Cerdas
+             Rekomendasi & Insight Cerdas
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             {analytics.insights.map((ins, i) => {
@@ -285,7 +285,7 @@ export default function SellerAnalyticsView({
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <span>🏷️ Distribusi Kategori Barang</span>
+                <span className="inline-flex items-center gap-1.5"><Icon.Tag className="h-4 w-4" /> Distribusi Kategori Barang</span>
               </h3>
               <p className="text-xs text-gray-400 mt-0.5">
                 Perbandingan jumlah iklan dan tayangan yang diperoleh di tiap kategori.
@@ -326,7 +326,7 @@ export default function SellerAnalyticsView({
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div>
             <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <span>📈 Performa Detail Per Iklan</span>
+              <span> Performa Detail Per Iklan</span>
               <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600 dark:bg-slate-800 dark:text-slate-300">
                 {filteredAndSortedListings.length}
               </span>
@@ -346,7 +346,7 @@ export default function SellerAnalyticsView({
                 placeholder="Cari judul iklan..."
                 className="input py-1.5 pl-8 pr-3 text-xs w-40 sm:w-48 shadow-sm"
               />
-              <span className="absolute left-2.5 top-2 text-xs text-gray-400">🔍</span>
+              <Icon.Search className="absolute left-2.5 top-2 h-4 w-4 text-gray-400" />
             </div>
 
             {/* Status Filter */}
@@ -404,7 +404,7 @@ export default function SellerAnalyticsView({
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center text-xs text-gray-400">
-                          📦
+                          <Icon.Package className="h-5 w-5" />
                         </div>
                       )}
                     </div>
@@ -442,7 +442,7 @@ export default function SellerAnalyticsView({
                           <>
                             <span>•</span>
                             <span className="text-amber-600 dark:text-amber-400 font-medium">
-                              💰 {l.offers_count} tawaran
+                               {l.offers_count} tawaran
                             </span>
                           </>
                         )}
@@ -482,7 +482,7 @@ export default function SellerAnalyticsView({
                           className="btn-outline py-1 px-2 text-xs text-primary border-primary/30 hover:bg-primary/5 rounded-lg"
                           title="Sundul Iklan"
                         >
-                          🚀 Sundul
+                           Sundul
                         </button>
                       )}
                       {onOpenBagikanModal && (
@@ -492,7 +492,7 @@ export default function SellerAnalyticsView({
                           className="btn-outline py-1 px-2 text-xs rounded-lg"
                           title="Bagikan Iklan"
                         >
-                          📤
+                          <Icon.Share className="h-4 w-4" />
                         </button>
                       )}
                     </div>
@@ -521,7 +521,7 @@ export default function SellerAnalyticsView({
                     {r.buyer_name || "Mahasiswa"}
                   </span>
                   <span className="text-amber-500 font-bold">
-                    {"★".repeat(r.rating || 5)}{"☆".repeat(5 - (r.rating || 5))}
+                    {"*".repeat(r.rating || 5)}{".".repeat(5 - (r.rating || 5))}
                   </span>
                 </div>
                 {r.comment && (

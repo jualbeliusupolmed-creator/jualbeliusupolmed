@@ -38,7 +38,7 @@ export default function BergabungDistributorPage({ params }) {
   if (state === "error") {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4 text-center">
-        <div className="text-5xl mb-4">❌</div>
+        <div className="text-5xl mb-4"><svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg></div>
         <h1 className="text-xl font-bold text-red-600 mb-2">Undangan Tidak Valid</h1>
         <p className="text-gray-500 mb-6">{errorMsg}</p>
         <Link href="/" className="btn-primary">Kembali ke Beranda</Link>
@@ -49,7 +49,7 @@ export default function BergabungDistributorPage({ params }) {
   if (state === "done") {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4 text-center">
-        <div className="text-6xl mb-4">🎊</div>
+        <div className="text-6xl mb-4"><svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg></div>
         <h1 className="text-2xl font-extrabold text-emerald-600 mb-3">Selamat Bergabung!</h1>
         <p className="text-gray-600 dark:text-slate-300 mb-2">
           Badge <span className="font-bold text-orange-600">DISTRIBUTOR</span> sudah aktif di profil Anda.
@@ -69,7 +69,7 @@ export default function BergabungDistributorPage({ params }) {
       {/* Header */}
       <div className="text-center mb-8">
         <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-400 text-white text-3xl shadow-lg mb-4">
-          🏪
+          <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg>
         </div>
         <h1 className="text-2xl font-extrabold">Bergabung Sebagai Distributor</h1>
         {info?.name && (
@@ -86,7 +86,7 @@ export default function BergabungDistributorPage({ params }) {
 
         <div className="space-y-3">
           <div className="flex gap-3">
-            <span className="shrink-0 w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-600 font-bold text-sm">✓</span>
+            <span className="shrink-0 w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-600 font-bold text-sm"><svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg></span>
             <div>
               <p className="font-semibold text-sm">Posting Iklan GRATIS</p>
               <p className="text-xs text-gray-400">Tidak perlu bayar biaya iklan, apapun mode yang diatur admin.</p>
@@ -100,14 +100,14 @@ export default function BergabungDistributorPage({ params }) {
             </div>
           </div>
           <div className="flex gap-3">
-            <span className="shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 font-bold text-sm">🏷</span>
+            <span className="shrink-0 w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 font-bold text-sm"><svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg></span>
             <div>
               <p className="font-semibold text-sm">Badge Distributor Eksklusif</p>
               <p className="text-xs text-gray-400">Profil Anda akan menampilkan badge khusus yang menandai status distributor resmi.</p>
             </div>
           </div>
           <div className="flex gap-3">
-            <span className="shrink-0 w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center text-purple-600 font-bold text-sm">📢</span>
+            <span className="shrink-0 w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center text-purple-600 font-bold text-sm"><svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg></span>
             <div>
               <p className="font-semibold text-sm">Digest Harian Otomatis</p>
               <p className="text-xs text-gray-400">Semua iklan distributor dikumpulkan & disebarkan ke grup setiap hari pukul 13.00.</p>
@@ -138,7 +138,7 @@ export default function BergabungDistributorPage({ params }) {
             Memproses...
           </span>
         ) : (
-          "✅ Konfirmasi Bergabung Sebagai Distributor"
+          " Konfirmasi Bergabung Sebagai Distributor"
         )}
       </button>
       <p className="text-center text-xs text-gray-400 mt-3">

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Icon } from "@/components/Icons";
 import Image from "next/image";
 import { adFeeFrom, rupiah } from "@/lib/fees";
 import { uploadMedia } from "@/lib/upload";
@@ -213,7 +214,7 @@ export default function JualPage() {
       }
 
       if (data.punyaToko) {
-        toast.success("Iklan langsung tayang — gratis karena kamu punya toko! 🏪");
+        toast.success("Iklan langsung tayang — gratis karena kamu punya toko! ");
         router.push(`/dashboard?wa=${encodeURIComponent(formattedWa)}`);
         return;
       }
@@ -251,14 +252,14 @@ export default function JualPage() {
           sebelum mengetik apa pun. */}
       {sellerPunyaToko ? (
         <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-900/20 dark:text-emerald-300 shadow-sm flex items-start gap-3">
-          <span className="text-xl">🏪</span>
+          <Icon.Store className="h-5 w-5 shrink-0" />
           <div>
             <strong>Iklanmu gratis</strong> — kamu sudah punya toko, jadi tidak ada biaya tayang.
           </div>
         </div>
       ) : (
         <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50/70 px-5 py-4 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-900/20 dark:text-amber-300 shadow-sm flex items-start gap-3">
-          <span className="text-xl">🏪</span>
+          <Icon.Store className="h-5 w-5 shrink-0" />
           <div>
             Punya toko fisik di sekitar kampus? <strong>Daftar Toko Mitra & Berlangganan.</strong>{" "}
             <Link href="/dashboard?tab=profil" className="font-semibold underline hover:text-amber-700 dark:hover:text-amber-100 transition">Daftarkan tokomu</Link> (syarat: memiliki toko fisik & paket langganan aktif) untuk pasang iklan sepuasnya tanpa biaya tayang per barang.
@@ -320,7 +321,7 @@ export default function JualPage() {
                     onClick={() => setForm((f) => ({ ...f, condition: "new" }))}
                     className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${form.condition === "new" ? "bg-white text-gray-900 shadow-sm dark:bg-slate-700 dark:text-white" : "text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-300"}`}
                   >
-                    ✨ Baru
+                    <span className="inline-flex items-center justify-center gap-1.5"><Icon.Sparkles className="h-4 w-4" /> Baru</span>
                   </button>
                 </div>
               </div>
@@ -535,7 +536,7 @@ export default function JualPage() {
               <div className="flex justify-between">
                 <dt className="text-gray-500 dark:text-slate-400">Biaya tayang</dt>
                 <dd className="font-medium dark:text-white">
-                  {gratis ? <span className="font-bold text-emerald-600">GRATIS 🏪 <span className="font-normal text-xs">({sebabGratis})</span></span> : rupiah(fee)}
+                  {gratis ? <span className="inline-flex items-center gap-1 font-bold text-emerald-600">GRATIS <Icon.Store className="h-4 w-4" /> <span className="font-normal text-xs">({sebabGratis})</span></span> : rupiah(fee)}
                 </dd>
               </div>
               <div className="my-2 border-t dark:border-slate-800" />
@@ -551,9 +552,9 @@ export default function JualPage() {
             </button>
             {msg && <p className="mt-3 text-sm text-rose-600">{msg}</p>}
           </div>
-
+                <Icon.X className="h-5 w-5" />
           <div className="card p-4 text-sm text-gray-500 dark:text-slate-400">
-            <p className="font-semibold text-gray-700 dark:text-slate-300">ℹ️ Fee setelah deal</p>
+            <p className="font-semibold text-gray-700 dark:text-slate-300">ℹ Fee setelah deal</p>
             <ul className="mt-2 list-disc space-y-1 pl-4">
               <li>&lt; Rp50.000 → Gratis (Bebas Komisi)</li>
               <li>&lt; Rp100.000 → 10%</li>
@@ -595,7 +596,7 @@ export default function JualPage() {
                 onClick={() => setShowPreviewModal(false)}
                 className="text-gray-500 hover:bg-gray-100 p-2 rounded-full dark:hover:bg-slate-800"
               >
-                ✕
+                <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg>
               </button>
             </div>
             

@@ -95,14 +95,14 @@ export async function GET(req) {
       type: "tip",
       title: "Promosikan Iklanmu",
       message: "Iklanmu belum mendapatkan tayangan. Bagikan link tokomu ke grup WA atau media sosial agar cepat dilirik!",
-      icon: "📢",
+      icon: "campaign",
     });
   } else if (Number(conversionRate) > 5) {
     insights.push({
       type: "success",
-      title: "Konversi Penjualan Tinggi! 🎉",
+      title: "Konversi Penjualan Tinggi! ",
       message: `Konversi tokomu mencapai ${conversionRate}%. Harga dan deskripsi barangmu sangat menarik bagi mahasiswa.`,
-      icon: "🔥",
+      icon: "hot",
     });
   }
 
@@ -118,7 +118,7 @@ export async function GET(req) {
       type: "warning",
       title: `${staleListings.length} Iklan Butuh Disundul`,
       message: `Ada ${staleListings.length} barang yang posisinya mulai turun. Gunakan fitur Sundul (Bump) agar naik kembali ke urutan teratas.`,
-      icon: "🚀",
+      icon: "boost",
     });
   }
 
@@ -127,7 +127,7 @@ export async function GET(req) {
       type: "action",
       title: `${pendingOffers} Tawaran Menunggu Konfirmasi`,
       message: "Ada calon pembeli yang mengajukan penawaran harga. Segera respon di tab Tawaran untuk mengunci penjualan!",
-      icon: "💰",
+      icon: "sales",
     });
   }
 
@@ -138,7 +138,7 @@ export async function GET(req) {
         type: "info",
         title: `Kategori Terpopuler: ${topCat.name}`,
         message: `${topCat.name} menyumbang tayangan terbanyak (${topCat.views} views). Menambah barang di kategori ini berpotensi laku lebih cepat.`,
-        icon: "📊",
+        icon: "stats",
       });
     }
   }

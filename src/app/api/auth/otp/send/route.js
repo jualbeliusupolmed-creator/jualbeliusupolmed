@@ -77,7 +77,7 @@ export async function POST(req) {
     }
 
     // Send via Fonnte
-    const msg = `*Jual Beli USU Polmed* 🔒\n\nKode untuk mengatur ulang PIN / sandi kamu: *${otp}*\n\n`
+    const msg = `*Jual Beli USU Polmed* \n\nKode untuk mengatur ulang PIN / sandi kamu: *${otp}*\n\n`
       + `Berlaku 5 menit. Kalau kamu tidak sedang mengatur ulang sandi, abaikan pesan ini `
       + `dan jangan berikan kodenya kepada siapa pun.`;
     // 300 detik: kode ini kedaluwarsa sendiri di sisi kita, jadi tidak ada gunanya

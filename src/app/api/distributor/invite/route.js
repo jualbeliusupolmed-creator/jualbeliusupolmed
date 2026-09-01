@@ -35,14 +35,14 @@ export async function POST(req) {
 
   // Kirim link via WA
   const msg =
-    `🎉 *Undangan Bergabung sebagai Distributor*\n\n` +
+    ` *Undangan Bergabung sebagai Distributor*\n\n` +
     `Halo! Anda diundang bergabung sebagai *Distributor Resmi* di Jual Beli USU Polmed.\n\n` +
     `Sebagai Distributor, Anda mendapatkan:\n` +
-    `✅ Badge khusus *DISTRIBUTOR* di profil\n` +
-    `✅ Posting iklan *GRATIS* tanpa biaya iklan\n` +
-    `✅ Info *Fee Bagi Hasil* otomatis di setiap iklan\n\n` +
+    ` Badge khusus *DISTRIBUTOR* di profil\n` +
+    ` Posting iklan *GRATIS* tanpa biaya iklan\n` +
+    ` Info *Fee Bagi Hasil* otomatis di setiap iklan\n\n` +
     `Klik link berikut untuk konfirmasi bergabung:\n` +
-    `👉 ${link}\n\n` +
+    ` ${link}\n\n` +
     `_Link berlaku 7 hari. Jangan share ke orang lain._`;
 
   await sendWa(normalizedWa, msg).catch(() => {});

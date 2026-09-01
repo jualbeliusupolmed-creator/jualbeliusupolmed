@@ -16,7 +16,7 @@ export default function ShareProfileButton({ nama = "", warna }) {
 
   async function bagikan() {
     const url = typeof window !== "undefined" ? window.location.href : "";
-    const teks = nama ? `Mampir ke toko ${nama} ya 🙏\n${url}` : url;
+    const teks = nama ? `Mampir ke toko ${nama} ya \n${url}` : url;
 
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
@@ -51,7 +51,7 @@ export default function ShareProfileButton({ nama = "", warna }) {
       style={tersalin && warna ? { color: warna.utama, borderColor: warna.utama } : undefined}
     >
       {tersalin ? (
-        <>✓ Tersalin</>
+        <> Tersalin</>
       ) : (
         <>
           <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">

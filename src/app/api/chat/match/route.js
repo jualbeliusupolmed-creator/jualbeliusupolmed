@@ -120,8 +120,8 @@ export async function POST(request) {
       // nanti, server tahu ke nomor mana push dikirim.
       await catatIdentitasWa(supa, userId, wa);
 
-      // Satu partner aktif pada satu waktu. Tombol "⏭️ Ganti" sudah menutup
-      // obrolan sebelumnya, tapi "🚀 Cari Teman Baru" dari kotak masuk tidak —
+      // Satu partner aktif pada satu waktu. Tombol "⏭ Ganti" sudah menutup
+      // obrolan sebelumnya, tapi " Cari Teman Baru" dari kotak masuk tidak —
       // jadi seseorang bisa punya beberapa obrolan hidup sekaligus (36 slot
       // peserta aktif di 22 orang, 23 Agu 2026). Selama tampilannya masih satu
       // baris per room itu cuma berantakan; sejak semuanya jadi SATU utas, itu
@@ -143,7 +143,7 @@ export async function POST(request) {
           room_id: lama.id,
           sender_id: "system",
           sender_alias: "Sistem",
-          message: "👋 Temanmu telah meninggalkan obrolan.",
+          message: " Temanmu telah meninggalkan obrolan.",
         });
         try {
           await siarkanPesanBaru(supa, lama.id);
@@ -185,7 +185,7 @@ export async function POST(request) {
             room_id: updatedRoom.id,
             sender_id: "system",
             sender_alias: "Sistem",
-            message: "🎉 Kalian telah terhubung! Mulai obrolan dengan santai dan sopan ya.",
+            message: " Kalian telah terhubung! Mulai obrolan dengan santai dan sopan ya.",
           });
 
           // Orang yang tadi menunggu (bisa jadi sudah lama pergi) diberi tahu.
@@ -195,7 +195,7 @@ export async function POST(request) {
             const waNunggu = await cariWaDariHash(supa, targetRoom.user1_id);
             if (waNunggu) {
               await pushToWa(supa, waNunggu, {
-                title: "🎭 Ada yang mau ngobrol!",
+                title: " Ada yang mau ngobrol!",
                 body: `${alias} baru bergabung — obrolan kalian sudah bisa dibuka.`,
                 url: "/chat?anon=1",
                 tag: `chat-match-${updatedRoom.id}`,

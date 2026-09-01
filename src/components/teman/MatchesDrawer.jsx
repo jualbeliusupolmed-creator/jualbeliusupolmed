@@ -64,7 +64,7 @@ export default function MatchesDrawer({
               const IntentIcon = intentMeta?.icon ? Icon[intentMeta.icon] : null;
               const waUrl = cleanWa
                 ? `https://wa.me/${cleanWa.startsWith("0") ? "62" + cleanWa.slice(1) : cleanWa}?text=${encodeURIComponent(
-                    `Halo ${item.display_name || "kak"}! Kita match di Cari Teman Kampus USU & Polmed nih 👋`
+                    `Halo ${item.display_name || "kak"}! Kita match di Cari Teman Kampus USU & Polmed nih `
                   )}`
                 : null;
 

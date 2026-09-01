@@ -15,7 +15,7 @@ export async function getCategories() {
         id: c.id,
         name: c.name,
         slug: c.slug,
-        icon: c.icon || "🏷️",
+        icon: c.icon || "Box",
         sort_order: c.sort_order ?? 0,
       }));
     }

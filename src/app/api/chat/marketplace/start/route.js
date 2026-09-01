@@ -144,7 +144,7 @@ export async function POST(req) {
     if (!existingRoom) {
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
       const kutipan = message.replace(/[\r\n*_~`]/g, " ").replace(/\s+/g, " ").trim().slice(0, 200);
-      let waMsg = `*Pesan Baru dari Pembeli!* 💬\n\n`;
+      let waMsg = `*Pesan Baru dari Pembeli!* \n\n`;
       waMsg += `Ada yang tertarik dengan barang *${listing.title}*.\n\n`;
       waMsg += `*Pesan:* "${kutipan}"\n\n`;
       waMsg += `Balas pesannya secara langsung di Web:\n${baseUrl}/chat`;

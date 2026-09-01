@@ -159,17 +159,17 @@ export async function POST(request) {
                 room_id: finalRoomId,
                 sender_id: "system",
                 sender_alias: "Sistem",
-                message: `🎉 ${a1} dan ${a2} match di Cari Teman Kampus! Mulai ngobrol sekarang 👋`,
+                message: ` ${a1} dan ${a2} match di Cari Teman Kampus! Mulai ngobrol sekarang `,
               });
             }
           }
 
           const roomUrl = finalRoomId ? `https://usupolmed.com/chat?room=${finalRoomId}` : `https://usupolmed.com/chat`;
 
-          const pesanNotif = `🎉 *IT'S A MATCH! — Teman Kampus USU & Polmed*\n\n` +
+          const pesanNotif = ` *IT'S A MATCH! — Teman Kampus USU & Polmed*\n\n` +
             `Hai kak! Profil kamu dan *${partner.display_name || "Seseorang"}* (${partner.campus} · ${partner.faculty}) saling LIKE di fitur Cari Teman!\n\n` +
             `Sistem telah membuat ruang obrolan anonim spesial untuk kalian. Langsung sapa dia di sini:\n${roomUrl}\n\n` +
-            `_Teman baru, peluang baru di kampus! 🚀_`;
+            `_Teman baru, peluang baru di kampus! _`;
 
           await supa.from("wa_outbox").insert({
             nomor: swiperProfile.whatsapp,
@@ -180,10 +180,10 @@ export async function POST(request) {
           });
 
           // Notif untuk partner juga
-          const pesanPartner = `🎉 *IT'S A MATCH! — Teman Kampus USU & Polmed*\n\n` +
+          const pesanPartner = ` *IT'S A MATCH! — Teman Kampus USU & Polmed*\n\n` +
             `Hai kak! Profil kamu dan *${swiperProfile.display_name || "Seseorang"}* (${swiperProfile.campus} · ${swiperProfile.faculty}) saling LIKE di fitur Cari Teman!\n\n` +
             `Yuk balas sapaannya di sini:\n${roomUrl}\n\n` +
-            `_Teman baru, peluang baru di kampus! 🚀_`;
+            `_Teman baru, peluang baru di kampus! _`;
 
           await supa.from("wa_outbox").insert({
             nomor: partner.whatsapp,

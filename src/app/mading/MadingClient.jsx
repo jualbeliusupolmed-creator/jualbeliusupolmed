@@ -330,7 +330,7 @@ export default function MadingClient({ initialPosts = [] }) {
     const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/mading/${post.id}` : "";
     const cleanSnippet = (post.content || "").trim().slice(0, 120);
     const titleText = post.title ? `*${post.title}*\n` : "";
-    const shareText = `🔥 *[Mading & Menfess Kampus]*\n${titleText}"${cleanSnippet}${post.content && post.content.length > 120 ? "..." : ""}"\n\n👀 Baca selengkapnya & beri tanggapan:\n${shareUrl}`;
+    const shareText = ` *[Mading & Menfess Kampus]*\n${titleText}"${cleanSnippet}${post.content && post.content.length > 120 ? "..." : ""}"\n\n Baca selengkapnya & beri tanggapan:\n${shareUrl}`;
 
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
@@ -526,8 +526,8 @@ export default function MadingClient({ initialPosts = [] }) {
               <div className="flex items-center gap-1 shrink-0">
                 {[
                   { id: "all", label: "Semua" },
-                  { id: "popular", label: "🔥 Populer" },
-                  { id: "photo", label: "📷 Foto" },
+                  { id: "popular", label: "Populer" },
+                  { id: "photo", label: "Foto" },
                 ].map((st) => (
                   <button
                     key={st.id}
@@ -538,13 +538,15 @@ export default function MadingClient({ initialPosts = [] }) {
                         : "text-slate-500 hover:text-slate-700 dark:text-slate-400 bg-white/70 dark:bg-white/[0.04] border border-black/[0.04] dark:border-white/[0.04]"
                     }`}
                   >
+                    {st.id === "popular" ? <Icon.Flame className="h-3.5 w-3.5" /> : null}
+                    {st.id === "photo" ? <Icon.Camera className="h-3.5 w-3.5" /> : null}
                     {st.label}
                   </button>
                 ))}
               </div>
             </div>
           )}
-
+                <Icon.Mail className="h-7 w-7" />
           {/* FEED LIST */}
           {loading ? (
             <div className="space-y-3 py-2">
@@ -565,7 +567,7 @@ export default function MadingClient({ initialPosts = [] }) {
           ) : posts.length === 0 ? (
             <div className="text-center py-16 px-4 bg-white dark:bg-[#151518] rounded-3xl border border-black/[0.06] dark:border-white/[0.08] shadow-xs">
               <div className="w-14 h-14 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl">
-                💌
+                <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg>
               </div>
               <h3 className="font-extrabold text-slate-800 dark:text-slate-200 text-base">Belum Ada Menfess di Sini</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto mt-1">
@@ -619,7 +621,7 @@ export default function MadingClient({ initialPosts = [] }) {
                         )}
                       </div>
                       <div className="flex flex-1 flex-col p-4 sm:p-5">
-                        <p className="text-[11px] font-bold text-primary dark:text-emerald-400">✍️ Artikel Blog</p>
+                        <p className="flex items-center gap-1 text-[11px] font-bold text-primary dark:text-emerald-400"><Icon.PencilSquare className="h-3.5 w-3.5" /> Artikel Blog</p>
                         <h2 className="mt-1 line-clamp-2 text-sm sm:text-base font-extrabold leading-snug transition-colors group-hover:text-primary dark:text-white">
                           {item.title}
                         </h2>
@@ -656,7 +658,7 @@ export default function MadingClient({ initialPosts = [] }) {
                             : "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300"
                         }`}
                       >
-                        {post.type === "info" ? "📢" : post.is_anon ? "👤" : post.sender_name?.charAt(0) || "👤"}
+                        {post.type === "info" ? <Icon.Megaphone className="h-4 w-4" /> : post.is_anon ? <Icon.User className="h-4 w-4" /> : post.sender_name?.charAt(0) || "A"}
                       </div>
 
                       <div className="min-w-0 flex-1">
@@ -672,7 +674,7 @@ export default function MadingClient({ initialPosts = [] }) {
                               ? "bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300 border border-violet-200 dark:border-violet-800"
                               : "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
                           }`}>
-                            {post.type === "info" ? "📢 Info Kampus" : "💌 Menfess"}
+                            {post.type === "info" ? <><Icon.Megaphone className="h-3 w-3" /> Info Kampus</> : <><Icon.Mail className="h-3 w-3" /> Menfess</>}
                           </span>
                         </div>
                         <Link
@@ -713,7 +715,7 @@ export default function MadingClient({ initialPosts = [] }) {
                         />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors flex items-end justify-end p-2.5 pointer-events-none">
                           <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/70 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm">
-                            🔍 Perbesar foto
+                            <Icon.Search className="h-3 w-3" /> Perbesar foto
                           </span>
                         </div>
                       </button>
@@ -736,7 +738,7 @@ export default function MadingClient({ initialPosts = [] }) {
                               loading="lazy"
                             />
                           ) : (
-                            <div className="flex h-full w-full items-center justify-center">📦</div>
+                            <div className="flex h-full w-full items-center justify-center"><Icon.Package className="h-5 w-5" /></div>
                           )}
                         </div>
                         <span className="min-w-0 flex-1">
@@ -827,7 +829,7 @@ export default function MadingClient({ initialPosts = [] }) {
                         <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
                           {(commentsMap[post.id] || []).length === 0 ? (
                             <p className="text-[11px] text-slate-400 italic text-center py-2">
-                              Belum ada komentar. Jadilah yang pertama membalas! 💬
+                              Belum ada komentar. Jadilah yang pertama membalas! 
                             </p>
                           ) : (
                             commentsMap[post.id].filter((c) => !c.parent_id).map((c) => (
@@ -876,7 +878,7 @@ export default function MadingClient({ initialPosts = [] }) {
                         {replyingTo?.postId === post.id && (
                           <div className="flex items-center justify-between rounded-xl bg-primary/10 px-3 py-1.5 text-[11px] font-bold text-primary">
                             <span>Membalas @{replyingTo.sender}</span>
-                            <button type="button" onClick={() => setReplyingTo(null)} className="text-sm font-black px-1" aria-label="Batal membalas">✕</button>
+                            <button type="button" onClick={() => setReplyingTo(null)} className="px-1" aria-label="Batal membalas"><Icon.X className="h-4 w-4" /></button>
                           </div>
                         )}
                         <div className="flex gap-2">
@@ -929,13 +931,13 @@ export default function MadingClient({ initialPosts = [] }) {
                 </button>
               ) : (
                 <p className="text-[11px] text-slate-400 dark:text-slate-600 font-medium">
-                  Semua postingan sudah ditampilkan ✓
+                  <span className="inline-flex items-center gap-1"><Icon.Check className="h-3.5 w-3.5" /> Semua postingan sudah ditampilkan</span>
                 </p>
               )}
             </div>
           )}
         </div>
-
+                <Icon.X className="h-5 w-5" />
         {/* MODAL BUAT POST BARU */}
         {showModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -944,7 +946,7 @@ export default function MadingClient({ initialPosts = [] }) {
                 onClick={() => setShowModal(false)}
                 className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full"
               >
-                ✕
+                    <Icon.X className="h-4 w-4" />
               </button>
 
               <h2 className="text-xl font-semibold text-[#1d1d1f] dark:text-white tracking-[-0.03em] mb-4">
@@ -1183,7 +1185,7 @@ export default function MadingClient({ initialPosts = [] }) {
                     className="p-2 rounded-xl bg-white/20 hover:bg-white/30 text-white font-bold transition-all text-xs w-8 h-8 flex items-center justify-center"
                     aria-label="Tutup Foto"
                   >
-                    ✕
+                    <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg>
                   </button>
                 </div>
               </div>

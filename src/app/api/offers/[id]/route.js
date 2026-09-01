@@ -51,7 +51,7 @@ export async function PATCH(req, { params }) {
 
     // Push browser ke buyer
     pushToWa(supa, offer.buyer_wa, {
-      title: action === "accept" ? "Tawaran Diterima! 🎉" : "Tawaran Ditolak",
+      title: action === "accept" ? "Tawaran Diterima! " : "Tawaran Ditolak",
       body: action === "accept"
         ? `Tawaran kamu untuk "${offer.listings?.title}" diterima penjual`
         : `Tawaran kamu untuk "${offer.listings?.title}" tidak diterima`,

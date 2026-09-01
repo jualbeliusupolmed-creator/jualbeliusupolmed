@@ -156,7 +156,7 @@ export function AntreanBot() {
                       style={{ background: "#16a34a", color: "#fff" }}
                       title="Buka WhatsApp untuk kirim manual"
                     >
-                      💬 Chat WA Manual ↗
+                      Chat WA Manual ↗
                     </a>
                   );
                 })()}

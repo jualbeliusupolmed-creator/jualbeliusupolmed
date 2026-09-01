@@ -47,15 +47,15 @@ export function TabStatistik() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold dark:text-white">Statistik Bot</h2>
-        <button onClick={refetch} className="btn-outline text-xs">🔄 Refresh</button>
+        <button onClick={refetch} className="btn-outline text-xs">Refresh</button>
       </div>
 
       {loading && !data && <p className="text-sm text-gray-400">Memuat...</p>}
-      {error && <Alert ok={false} msg={`⚠️ ${error}`} />}
+      {error && <Alert ok={false} msg={error} />}
 
       {data && (
         <>
-          <Kartu judul="📊 Pesan masuk 14 hari terakhir">
+          <Kartu judul="Pesan masuk 14 hari terakhir">
             <div className="flex h-40 items-end gap-1 overflow-x-auto">
               {hari.map((h, i) => (
                 <div key={h} title={`${h}: ${nilai[i]} pesan masuk`} className="flex min-w-[24px] flex-1 flex-col items-center justify-end gap-1">
@@ -72,11 +72,11 @@ export function TabStatistik() {
           </Kartu>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <Kartu judul="🚪 Gerbang titik">
+            <Kartu judul=" Gerbang titik">
               <Tabel data={total} keys={["masuk", "keluar", "sapaan", "panggil_min", "sesi_bot", "didiamkan", "balas_manual", "broadcast"]} />
             </Kartu>
 
-            <Kartu judul="⚠️ Perintah tanpa titik">
+            <Kartu judul="Perintah tanpa titik">
               <p className="mb-3 text-xs text-gray-400">
                 Pesan polos yang isinya kata perintah — ini yang saat ini tidak membuka alur bot.
               </p>
@@ -98,7 +98,7 @@ export function TabStatistik() {
               )}
             </Kartu>
 
-            <Kartu judul="🔌 Webhook & pengiriman" className="sm:col-span-2">
+            <Kartu judul=" Webhook & pengiriman" className="sm:col-span-2">
               <Tabel data={total} keys={["webhook_ok", "webhook_gagal", "kirim_gagal", "putus_koneksi"]} />
             </Kartu>
           </div>

@@ -1,4 +1,5 @@
 "use client";
+import { Icon } from "@/components/Icons";
 
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
@@ -52,7 +53,7 @@ export default function OprecClient({ initialOprecs = [] }) {
   }
 
   function handleShare(oprec) {
-    const text = `📢 *[OPEN RECRUITMENT]*\n\n🏛️ *${oprec.ukm_name}* (${oprec.campus})\n*${oprec.title}*\n\n⏳ Batas Pendaftaran: ${new Date(oprec.deadline).toLocaleDateString("id-ID")}\n\n📝 Daftar langsung di website:\n${window.location.origin}/oprec`;
+    const text = ` *[OPEN RECRUITMENT]*\n\n *${oprec.ukm_name}* (${oprec.campus})\n*${oprec.title}*\n\n⏳ Batas Pendaftaran: ${new Date(oprec.deadline).toLocaleDateString("id-ID")}\n\n Daftar langsung di website:\n${window.location.origin}/oprec`;
     if (navigator.share) {
       navigator.share({ title: oprec.title, text }).catch(() => {});
     } else {
@@ -69,7 +70,7 @@ export default function OprecClient({ initialOprecs = [] }) {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1.5">
               <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-0.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                <span>📋 Portal Oprec & Kepanitiaan Kampus</span>
+                <Icon.ClipboardList className="h-4 w-4" /><span>Portal Oprec & Kepanitiaan Kampus</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-gray-900 dark:text-white">
                 Pusat Open Recruitment Mahasiswa
@@ -125,7 +126,7 @@ export default function OprecClient({ initialOprecs = [] }) {
         ) : oprecs.length === 0 ? (
           <div className="card p-12 text-center max-w-md mx-auto space-y-4">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-3xl text-primary">
-              📋
+              <Icon.ClipboardList className="h-8 w-8" />
             </div>
             <div>
               <h3 className="text-base font-bold text-gray-900 dark:text-white">
@@ -159,7 +160,7 @@ export default function OprecClient({ initialOprecs = [] }) {
                       <div>
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                            {contoh ? "" : "✓ "}{op.ukm_name}
+                            {contoh ? "" : " "}{op.ukm_name}
                           </span>
                           <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary dark:text-emerald-400">
                             {op.campus}
@@ -224,7 +225,7 @@ export default function OprecClient({ initialOprecs = [] }) {
                       className="btn-outline text-xs py-2 px-3 flex items-center gap-1.5"
                       title="Bagikan Oprec ke WhatsApp"
                     >
-                      <span>📤 Bagikan</span>
+                      <Icon.Share className="h-4 w-4" /><span>Bagikan</span>
                     </button>
 
                     <button
@@ -236,7 +237,7 @@ export default function OprecClient({ initialOprecs = [] }) {
                       }`}
                     >
                       <span>
-                        📝 {contoh ? "Segera Hadir" : isClosed ? "Pendaftaran Ditutup" : "Daftar Sekarang"}
+                        <Icon.PencilSquare className="h-4 w-4" /> {contoh ? "Segera Hadir" : isClosed ? "Pendaftaran Ditutup" : "Daftar Sekarang"}
                       </span>
                     </button>
                   </div>

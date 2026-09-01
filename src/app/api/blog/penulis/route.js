@@ -176,7 +176,7 @@ export async function POST(req) {
     if (admin) {
       sendWa(
         admin,
-        `📝 *Artikel menunggu review*\n\n` +
+        ` *Artikel menunggu review*\n\n` +
           `*${isi.title}*\n` +
           `Penulis: ${isi.author} (${penulis.wa})\n\n` +
           `Tinjau di panel:\n${dasar}/admin/blogs`,

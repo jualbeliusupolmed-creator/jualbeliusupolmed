@@ -132,7 +132,7 @@ export default function NotifPrompt() {
         <div className="min-w-0 flex-1">
           {selesai ? (
             <>
-              <p className="text-sm font-bold text-gray-900 dark:text-white">Notifikasi aktif ✓</p>
+              <p className="text-sm font-bold text-gray-900 dark:text-white">Notifikasi aktif </p>
               <p className="mt-0.5 text-xs text-gray-500 dark:text-slate-400">
                 Kamu akan dikabari tiap ada barang baru tayang.
               </p>

@@ -162,7 +162,7 @@ export default async function DaftarHargaPage() {
                 <ul className="mt-4 space-y-2 text-xs text-gray-600">
                   {s.features.map((f, i) => (
                     <li key={i} className="flex items-center gap-1.5">
-                      <span className="text-green-500 font-bold">✓</span> {f}
+                      <span className="text-green-500 font-bold"></span> {f}
                     </li>
                   ))}
                 </ul>
@@ -199,7 +199,7 @@ export default async function DaftarHargaPage() {
       {/* Kebijakan Refund & Cancellation */}
       <section className="mt-12 grid gap-6 md:grid-cols-2">
         <div className="card p-6">
-          <h3 className="text-lg font-bold text-gray-900">📄 Kebijakan Pembatalan Layanan</h3>
+          <h3 className="text-lg font-bold text-gray-900"> Kebijakan Pembatalan Layanan</h3>
           <p className="mt-2 text-sm text-gray-500 leading-relaxed">
             Pengguna dapat melakukan pembatalan pengajuan iklan barang sebelum iklan dikonfirmasi oleh sistem. Apabila iklan telah diverifikasi dan ditayangkan secara aktif di platform, maka pembatalan iklan yang mengakibatkan penghentian layanan tidak dapat dilakukan di tengah jalan.
           </p>
@@ -209,7 +209,7 @@ export default async function DaftarHargaPage() {
         </div>
 
         <div className="card p-6">
-          <h3 className="text-lg font-bold text-gray-900">💸 Kebijakan Pengembalian Dana (Refund)</h3>
+          <h3 className="text-lg font-bold text-gray-900"> Kebijakan Pengembalian Dana (Refund)</h3>
           <p className="mt-2 text-sm text-gray-500 leading-relaxed">
             Seluruh transaksi pembayaran untuk biaya pemasangan iklan standar, iklan poster, *bump*, dan *featured ads* bersifat final dan tidak dapat dikembalikan dana (*non-refundable*), kecuali terjadi kondisi kegagalan sistematis dari pihak kami yang menyebabkan layanan iklan sama sekali tidak tayang/aktif dalam waktu 24 jam setelah pembayaran sukses.
           </p>

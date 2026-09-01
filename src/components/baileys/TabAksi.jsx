@@ -4,18 +4,18 @@ import { useApi, apiPost, normalizeJid } from "./api";
 import { Alert, CopyBtn, QRDisplay } from "./ui";
 
 const SUB_TABS = [
-  { id: "koneksi",    label: "🔌 Koneksi" },
-  { id: "pesan",      label: "💬 Pesan" },
-  { id: "media",      label: "📎 Media" },
-  { id: "interaktif", label: "🖱️ Interaktif" },
-  { id: "grup",       label: "👥 Grup" },
-  { id: "komunitas",  label: "🌐 Komunitas" },
-  { id: "saluran",    label: "📢 Saluran" },
-  { id: "akun",       label: "👤 Akun & Privasi" },
-  { id: "panggilan",  label: "📞 Panggilan" },
-  { id: "forensik",   label: "🔍 Forensik" },
-  { id: "protokol",   label: "🔧 Protokol (raw)" },
-  { id: "antiban",    label: "🛡️ Anti-Ban" },
+  { id: "koneksi",    label: " Koneksi" },
+  { id: "pesan",      label: "Pesan" },
+  { id: "media",      label: " Media" },
+  { id: "interaktif", label: " Interaktif" },
+  { id: "grup",       label: "Grup" },
+  { id: "komunitas",  label: "Komunitas" },
+  { id: "saluran",    label: "Saluran" },
+  { id: "akun",       label: " Akun & Privasi" },
+  { id: "panggilan",  label: " Panggilan" },
+  { id: "forensik",   label: " Forensik" },
+  { id: "protokol",   label: " Protokol (raw)" },
+  { id: "antiban",    label: " Anti-Ban" },
 ];
 
 function Section({ title, children }) {
@@ -79,7 +79,7 @@ function PanelKoneksi() {
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-xl bg-gray-50 dark:bg-slate-800 p-3">
               <p className="text-xs text-gray-400">Status</p>
-              <p className="font-bold text-sm dark:text-white">{data.connected ? "✅ Terhubung" : "❌ Terputus"}</p>
+              <p className="font-bold text-sm dark:text-white">{data.connected ? "Terhubung" : "Terputus"}</p>
             </div>
             <div className="rounded-xl bg-gray-50 dark:bg-slate-800 p-3">
               <p className="text-xs text-gray-400">Nomor</p>
@@ -95,7 +95,7 @@ function PanelKoneksi() {
             </div>
           </div>
         )}
-        <button onClick={refetch} className="btn-outline text-xs">🔄 Refresh</button>
+        <button onClick={refetch} className="btn-outline text-xs">Refresh</button>
       </Section>
 
       <Section title="Login via QR Code">
@@ -105,7 +105,7 @@ function PanelKoneksi() {
       <Section title="Login via Pairing Code (tanpa kamera)">
         <form onSubmit={getPairingCode} className="flex gap-2">
           <input className="input flex-1" placeholder="628xxxxxxxxxx" value={phoneInput} onChange={e => setPhoneInput(e.target.value)} required />
-          <button type="submit" disabled={loadingCode} className="btn-primary shrink-0">{loadingCode ? "⏳" : "Minta Kode"}</button>
+          <button type="submit" disabled={loadingCode} className="btn-primary shrink-0">{loadingCode ? "..." : "Minta Kode"}</button>
         </form>
         {code && (
           <div className="rounded-xl border-2 border-blue-300 bg-blue-50 dark:bg-blue-900/20 p-4 text-center">
@@ -118,7 +118,7 @@ function PanelKoneksi() {
       </Section>
 
       <Section title="Perangkat Tertaut">
-        <button onClick={getDevices} className="btn-outline text-sm">📱 Lihat Semua Perangkat</button>
+        <button onClick={getDevices} className="btn-outline text-sm">Lihat Semua Perangkat</button>
         {devices && (
           <pre className="mt-2 rounded-lg bg-gray-50 dark:bg-slate-800 p-3 text-xs dark:text-slate-300 overflow-auto max-h-48">
             {JSON.stringify(devices, null, 2)}
@@ -148,14 +148,14 @@ function PanelPesan() {
   async function run(endpoint, body) {
     setBusy(true); setResult(null);
     const r = await apiPost(endpoint, body);
-    setResult(r.ok || r.status ? { ok: true, text: "✅ Berhasil!" } : { ok: false, text: r.error || "Gagal" });
+    setResult(r.ok || r.status ? { ok: true, text: "Berhasil!" } : { ok: false, text: r.error || "Gagal" });
     setBusy(false);
   }
 
   const modes = [
-    ["text", "📝 Teks"], ["quote", "↩️ Quote"], ["mention", "🏷️ Mention"],
-    ["forward", "↪️ Forward"], ["edit", "✏️ Edit"], ["delete", "🗑️ Tarik"],
-    ["disappear", "⏳ Disappearing"],
+    ["text", " Teks"], ["quote", "↩ Quote"], ["mention", " Mention"],
+    ["forward", "Forward"], ["edit", "Edit"], ["delete", "Tarik"],
+    ["disappear", "Disappearing"],
   ];
 
   return (
@@ -174,7 +174,7 @@ function PanelPesan() {
         <Section title="Kirim Teks Biasa">
           <Field label="Tujuan"><input className="input" placeholder="628xxx atau JID grup" value={target} onChange={e => setTarget(e.target.value)} /><GroupSelect value={target} onChange={setTarget} /></Field>
           <Field label="Pesan"><textarea className="input min-h-[80px]" value={msg} onChange={e => setMsg(e.target.value)} /></Field>
-          <button disabled={busy} onClick={() => run("send", { target: normalizeJid(target), message: msg })} className="btn-primary">{busy ? "⏳" : "Kirim"}</button>
+          <button disabled={busy} onClick={() => run("send", { target: normalizeJid(target), message: msg })} className="btn-primary">{busy ? "..." : "Kirim"}</button>
         </Section>
       )}
 
@@ -183,7 +183,7 @@ function PanelPesan() {
           <Field label="Tujuan"><input className="input" placeholder="628xxx atau JID grup" value={target} onChange={e => setTarget(e.target.value)} /></Field>
           <Field label="ID Pesan yang Dikutip" hint="Message ID dari pesan yang mau di-reply"><input className="input font-mono" placeholder="ABCDEF123..." value={quoteId} onChange={e => setQuoteId(e.target.value)} /></Field>
           <Field label="Balasan"><textarea className="input min-h-[80px]" value={msg} onChange={e => setMsg(e.target.value)} /></Field>
-          <button disabled={busy} onClick={() => run("send-quote", { target: normalizeJid(target), message: msg, quotedId: quoteId })} className="btn-primary">{busy ? "⏳" : "Kirim Reply"}</button>
+          <button disabled={busy} onClick={() => run("send-quote", { target: normalizeJid(target), message: msg, quotedId: quoteId })} className="btn-primary">{busy ? "..." : "Kirim Reply"}</button>
         </Section>
       )}
 
@@ -192,7 +192,7 @@ function PanelPesan() {
           <Field label="Tujuan (grup)"><input className="input" placeholder="120363xxx@g.us" value={target} onChange={e => setTarget(e.target.value)} /><GroupSelect value={target} onChange={setTarget} /></Field>
           <Field label="Nomor yang di-mention (pisah koma)" hint="Contoh: 628111,628222"><input className="input" value={mentions} onChange={e => setMentions(e.target.value)} /></Field>
           <Field label="Pesan"><textarea className="input min-h-[80px]" value={msg} onChange={e => setMsg(e.target.value)} /></Field>
-          <button disabled={busy} onClick={() => run("send-mention", { target, message: msg, mentions: mentions.split(",").map(m => normalizeJid(m.trim())).filter(Boolean) })} className="btn-primary">{busy ? "⏳" : "Kirim + Mention"}</button>
+          <button disabled={busy} onClick={() => run("send-mention", { target, message: msg, mentions: mentions.split(",").map(m => normalizeJid(m.trim())).filter(Boolean) })} className="btn-primary">{busy ? "..." : "Kirim + Mention"}</button>
         </Section>
       )}
 
@@ -200,7 +200,7 @@ function PanelPesan() {
         <Section title="Forward Pesan">
           <Field label="ID Pesan Asli"><input className="input font-mono" placeholder="ABCDEF123..." value={forwardId} onChange={e => setForwardId(e.target.value)} /></Field>
           <Field label="Tujuan Forward"><input className="input" placeholder="628xxx atau JID grup" value={forwardTarget} onChange={e => setForwardTarget(e.target.value)} /><GroupSelect value={forwardTarget} onChange={setForwardTarget} /></Field>
-          <button disabled={busy} onClick={() => run("forward-message", { messageId: forwardId, target: normalizeJid(forwardTarget) })} className="btn-primary">{busy ? "⏳" : "Forward"}</button>
+          <button disabled={busy} onClick={() => run("forward-message", { messageId: forwardId, target: normalizeJid(forwardTarget) })} className="btn-primary">{busy ? "..." : "Forward"}</button>
         </Section>
       )}
 
@@ -209,7 +209,7 @@ function PanelPesan() {
           <Field label="Tujuan (chat asal pesan)"><input className="input" placeholder="628xxx atau JID grup" value={target} onChange={e => setTarget(e.target.value)} /></Field>
           <Field label="ID Pesan yang Diedit"><input className="input font-mono" placeholder="ABCDEF123..." value={editId} onChange={e => setEditId(e.target.value)} /></Field>
           <Field label="Teks Baru"><textarea className="input min-h-[80px]" value={msg} onChange={e => setMsg(e.target.value)} /></Field>
-          <button disabled={busy} onClick={() => run("edit-message", { target: normalizeJid(target), messageId: editId, newText: msg })} className="btn-primary">{busy ? "⏳" : "Edit Pesan"}</button>
+          <button disabled={busy} onClick={() => run("edit-message", { target: normalizeJid(target), messageId: editId, newText: msg })} className="btn-primary">{busy ? "..." : "Edit Pesan"}</button>
         </Section>
       )}
 
@@ -217,7 +217,7 @@ function PanelPesan() {
         <Section title="Tarik / Hapus Pesan">
           <Field label="Tujuan (chat asal pesan)"><input className="input" placeholder="628xxx atau JID grup" value={target} onChange={e => setTarget(e.target.value)} /></Field>
           <Field label="ID Pesan yang Ditarik"><input className="input font-mono" placeholder="ABCDEF123..." value={deleteId} onChange={e => setDeleteId(e.target.value)} /></Field>
-          <button disabled={busy} onClick={() => run("delete-message", { target: normalizeJid(target), messageId: deleteId })} className="btn-primary bg-red-600 hover:bg-red-700">{busy ? "⏳" : "Tarik Pesan"}</button>
+          <button disabled={busy} onClick={() => run("delete-message", { target: normalizeJid(target), messageId: deleteId })} className="btn-primary bg-red-600 hover:bg-red-700">{busy ? "..." : "Tarik Pesan"}</button>
         </Section>
       )}
 
@@ -232,7 +232,7 @@ function PanelPesan() {
               <option value="7776000">90 Hari</option>
             </select>
           </Field>
-          <button disabled={busy} onClick={() => run("set-disappearing", { target: normalizeJid(disappearingTarget), timer: Number(disappearTimer) })} className="btn-primary">{busy ? "⏳" : "Terapkan"}</button>
+          <button disabled={busy} onClick={() => run("set-disappearing", { target: normalizeJid(disappearingTarget), timer: Number(disappearTimer) })} className="btn-primary">{busy ? "..." : "Terapkan"}</button>
         </Section>
       )}
     </div>
@@ -263,12 +263,12 @@ function PanelMedia() {
         url = ud.url;
       }
       const r = await apiPost(endpoint, { target: normalizeJid(target), url, ...extra });
-      setResult(r.ok || r.status ? { ok: true, text: "✅ Berhasil dikirim!" } : { ok: false, text: r.error || "Gagal" });
+    setResult(r.ok || r.status ? { ok: true, text: "Berhasil dikirim!" } : { ok: false, text: r.error || "Gagal" });
     } catch (e) { setResult({ ok: false, text: e.message }); }
     setBusy(false);
   }
 
-  const modes = [["audio", "🎵 Audio / VN"], ["doc", "📄 Dokumen"], ["sticker", "🎨 Stiker"], ["location", "📍 Lokasi"], ["vcard", "👤 Kontak"], ["viewonce", "👁️ View Once"]];
+  const modes = [["audio", " Audio / VN"], ["doc", " Dokumen"], ["sticker", " Stiker"], ["location", " Lokasi"], ["vcard", " Kontak"], ["viewonce", " View Once"]];
 
   return (
     <div className="space-y-4">
@@ -292,7 +292,7 @@ function PanelMedia() {
           <Field label="File Audio (mp3, ogg, m4a)" hint="Otomatis dikirim sebagai Voice Note asli (ikon biru)">
             <input type="file" accept="audio/*" className="input text-sm py-1.5" onChange={e => setFile(e.target.files[0])} />
           </Field>
-          <button disabled={busy || !file || !target} onClick={() => uploadAndSend("send-audio", { ptt: true })} className="btn-primary">{busy ? "⏳" : "Kirim Voice Note"}</button>
+          <button disabled={busy || !file || !target} onClick={() => uploadAndSend("send-audio", { ptt: true })} className="btn-primary">{busy ? "..." : "Kirim Voice Note"}</button>
         </Section>
       )}
 
@@ -302,7 +302,7 @@ function PanelMedia() {
             <input type="file" className="input text-sm py-1.5" onChange={e => setFile(e.target.files[0])} />
           </Field>
           <Field label="Caption (opsional)"><input className="input" value={caption} onChange={e => setCaption(e.target.value)} /></Field>
-          <button disabled={busy || !file || !target} onClick={() => uploadAndSend("send-doc", { caption })} className="btn-primary">{busy ? "⏳" : "Kirim Dokumen"}</button>
+          <button disabled={busy || !file || !target} onClick={() => uploadAndSend("send-doc", { caption })} className="btn-primary">{busy ? "..." : "Kirim Dokumen"}</button>
         </Section>
       )}
 
@@ -311,7 +311,7 @@ function PanelMedia() {
           <Field label="Gambar (PNG/JPG — dikonversi ke stiker WebP)">
             <input type="file" accept="image/*" className="input text-sm py-1.5" onChange={e => setFile(e.target.files[0])} />
           </Field>
-          <button disabled={busy || !file || !target} onClick={() => uploadAndSend("send-sticker")} className="btn-primary">{busy ? "⏳" : "Kirim Stiker"}</button>
+          <button disabled={busy || !file || !target} onClick={() => uploadAndSend("send-sticker")} className="btn-primary">{busy ? "..." : "Kirim Stiker"}</button>
         </Section>
       )}
 
@@ -322,7 +322,7 @@ function PanelMedia() {
             <Field label="Longitude"><input className="input" type="number" step="any" placeholder="98.672" value={lng} onChange={e => setLng(e.target.value)} /></Field>
           </div>
           <Field label="Nama Lokasi (opsional)"><input className="input" placeholder="Kampus USU Medan" value={locName} onChange={e => setLocName(e.target.value)} /></Field>
-          <button disabled={busy || !lat || !lng || !target} onClick={() => uploadAndSend("send-location", { latitude: Number(lat), longitude: Number(lng), name: locName })} className="btn-primary">{busy ? "⏳" : "Kirim Lokasi"}</button>
+          <button disabled={busy || !lat || !lng || !target} onClick={() => uploadAndSend("send-location", { latitude: Number(lat), longitude: Number(lng), name: locName })} className="btn-primary">{busy ? "..." : "Kirim Lokasi"}</button>
         </Section>
       )}
 
@@ -330,7 +330,7 @@ function PanelMedia() {
         <Section title="Kirim Kartu Kontak">
           <Field label="Nama Kontak"><input className="input" value={vcardName} onChange={e => setVcardName(e.target.value)} /></Field>
           <Field label="Nomor WA Kontak"><input className="input" placeholder="628xxxxxxxxxx" value={vcardPhone} onChange={e => setVcardPhone(e.target.value)} /></Field>
-          <button disabled={busy || !vcardName || !vcardPhone || !target} onClick={() => uploadAndSend("send-vcard", { name: vcardName, phone: vcardPhone.replace(/\D/g, "") })} className="btn-primary">{busy ? "⏳" : "Kirim Kontak"}</button>
+          <button disabled={busy || !vcardName || !vcardPhone || !target} onClick={() => uploadAndSend("send-vcard", { name: vcardName, phone: vcardPhone.replace(/\D/g, "") })} className="btn-primary">{busy ? "..." : "Kirim Kontak"}</button>
         </Section>
       )}
 
@@ -339,7 +339,7 @@ function PanelMedia() {
           <Field label="Gambar / Video">
             <input type="file" accept="image/*,video/*" className="input text-sm py-1.5" onChange={e => setFile(e.target.files[0])} />
           </Field>
-          <button disabled={busy || !file || !target} onClick={() => uploadAndSend("send-view-once")} className="btn-primary">{busy ? "⏳" : "Kirim View Once"}</button>
+          <button disabled={busy || !file || !target} onClick={() => uploadAndSend("send-view-once")} className="btn-primary">{busy ? "..." : "Kirim View Once"}</button>
         </Section>
       )}
     </div>
@@ -363,11 +363,11 @@ function PanelInteraktif() {
   async function run(endpoint, body) {
     setBusy(true); setResult(null);
     const r = await apiPost(endpoint, { target: normalizeJid(target), ...body });
-    setResult(r.ok || r.status ? { ok: true, text: "✅ Berhasil!" } : { ok: false, text: r.error || "Gagal" });
+    setResult(r.ok || r.status ? { ok: true, text: "Berhasil!" } : { ok: false, text: r.error || "Gagal" });
     setBusy(false);
   }
 
-  const modes = [["buttons", "🔘 Tombol"], ["list", "📋 Daftar Pilihan"], ["reaction", "😀 Reaksi"]];
+  const modes = [["buttons", " Tombol"], ["list", " Daftar Pilihan"], ["reaction", " Reaksi"]];
 
   return (
     <div className="space-y-4">
@@ -393,11 +393,11 @@ function PanelInteraktif() {
           {buttons.map((b, i) => (
             <div key={i} className="flex gap-2">
               <input className="input flex-1" placeholder={`Teks tombol ${i + 1}`} value={b.text} onChange={e => setButtons(bs => bs.map((x, j) => j === i ? { ...x, text: e.target.value } : x))} />
-              {buttons.length > 2 && <button onClick={() => setButtons(bs => bs.filter((_, j) => j !== i))} className="text-red-400 text-lg">✕</button>}
+              {buttons.length > 2 && <button onClick={() => setButtons(bs => bs.filter((_, j) => j !== i))} className="text-red-400 text-lg"></button>}
             </div>
           ))}
           {buttons.length < 3 && <button onClick={() => setButtons(bs => [...bs, { id: String(bs.length + 1), text: "" }])} className="text-xs text-blue-500 hover:underline">+ Tambah tombol</button>}
-          <button disabled={busy || !target || !btnText} onClick={() => run("send-buttons", { text: btnText, buttons })} className="btn-primary">{busy ? "⏳" : "Kirim Pesan Tombol"}</button>
+          <button disabled={busy || !target || !btnText} onClick={() => run("send-buttons", { text: btnText, buttons })} className="btn-primary">{busy ? "..." : "Kirim Pesan Tombol"}</button>
         </Section>
       )}
 
@@ -411,7 +411,7 @@ function PanelInteraktif() {
             </div>
           ))}
           {listSections[0].rows.length < 10 && <button onClick={() => setListSections(s => [{ ...s[0], rows: [...s[0].rows, { id: String(s[0].rows.length + 1), title: "", description: "" }] }])} className="text-xs text-blue-500 hover:underline">+ Tambah baris</button>}
-          <button disabled={busy || !target || !listTitle} onClick={() => run("send-list", { title: listTitle, sections: listSections })} className="btn-primary">{busy ? "⏳" : "Kirim Daftar"}</button>
+          <button disabled={busy || !target || !listTitle} onClick={() => run("send-list", { title: listTitle, sections: listSections })} className="btn-primary">{busy ? "..." : "Kirim Daftar"}</button>
         </Section>
       )}
 
@@ -425,7 +425,7 @@ function PanelInteraktif() {
               ))}
             </div>
           </Field>
-          <button disabled={busy || !target || !reactionMsgId} onClick={() => run("send-reaction", { messageId: reactionMsgId, emoji: reactionEmoji })} className="btn-primary">{busy ? "⏳" : "Kirim Reaksi"}</button>
+          <button disabled={busy || !target || !reactionMsgId} onClick={() => run("send-reaction", { messageId: reactionMsgId, emoji: reactionEmoji })} className="btn-primary">{busy ? "..." : "Kirim Reaksi"}</button>
         </Section>
       )}
     </div>
@@ -455,7 +455,7 @@ function PanelKomunitas() {
     e.preventDefault();
     setCreating(true); setResult(null);
     const r = await apiPost("community/create", { name: createName });
-    setResult(r.ok ? { ok: true, text: `✅ Komunitas "${createName}" berhasil dibuat!` } : { ok: false, text: r.error || "Gagal" });
+    setResult(r.ok ? { ok: true, text: `Komunitas "${createName}" berhasil dibuat!` } : { ok: false, text: r.error || "Gagal" });
     if (r.ok) { setCreateName(""); loadCommunities(); }
     setCreating(false);
   }
@@ -463,7 +463,7 @@ function PanelKomunitas() {
   async function linkGroup(e) {
     e.preventDefault(); setResult(null);
     const r = await apiPost("community/link-group", { communityJid: linkCommJid, groupJid: linkGroupJid });
-    setResult(r.ok ? { ok: true, text: "✅ Sub-grup berhasil ditautkan!" } : { ok: false, text: r.error || "Gagal" });
+    setResult(r.ok ? { ok: true, text: "Sub-grup berhasil ditautkan!" } : { ok: false, text: r.error || "Gagal" });
   }
 
   return (
@@ -471,7 +471,7 @@ function PanelKomunitas() {
       <Alert ok={result?.ok} msg={result?.text} />
 
       <Section title="Daftar Komunitas">
-        <button onClick={loadCommunities} disabled={loading} className="btn-outline text-sm">{loading ? "⏳ Memuat..." : "🌐 Muat Komunitas"}</button>
+        <button onClick={loadCommunities} disabled={loading} className="btn-outline text-sm">{loading ? "Memuat..." : "Muat Komunitas"}</button>
         {Array.isArray(commList) && commList.map((c, i) => (
           <div key={i} className="rounded-xl bg-gray-50 dark:bg-slate-800 p-3">
             <p className="font-semibold text-sm dark:text-white">{c.name || c.subject}</p>
@@ -483,7 +483,7 @@ function PanelKomunitas() {
       <Section title="Buat Komunitas Baru">
         <form onSubmit={createCommunity} className="flex gap-2">
           <input className="input flex-1" placeholder="Nama Komunitas" value={createName} onChange={e => setCreateName(e.target.value)} required />
-          <button type="submit" disabled={creating} className="btn-primary shrink-0">{creating ? "⏳" : "Buat"}</button>
+          <button type="submit" disabled={creating} className="btn-primary shrink-0">{creating ? "..." : "Buat"}</button>
         </form>
       </Section>
 
@@ -496,7 +496,7 @@ function PanelKomunitas() {
               {groups.map(g => <option key={g.jid} value={g.jid}>{g.name}</option>)}
             </select>
           </Field>
-          <button type="submit" className="btn-primary">🔗 Tautkan Sub-Grup</button>
+          <button type="submit" className="btn-primary"> Tautkan Sub-Grup</button>
         </form>
       </Section>
     </div>
@@ -531,7 +531,7 @@ function PanelAkun() {
   async function savePrivacy() {
     setSaving(true); setResult(null);
     const r = await apiPost("set-privacy", privacy);
-    setResult(r.ok ? { ok: true, text: "✅ Setelan privasi disimpan!" } : { ok: false, text: r.error || "Gagal" });
+    setResult(r.ok ? { ok: true, text: "Setelan privasi disimpan!" } : { ok: false, text: r.error || "Gagal" });
     setSaving(false);
   }
 
@@ -544,11 +544,11 @@ function PanelAkun() {
       <Section title="Validasi Nomor WA">
         <form onSubmit={checkNumber} className="flex gap-2">
           <input className="input flex-1" placeholder="628xxxxxxxxxx" value={checkNum} onChange={e => setCheckNum(e.target.value)} required />
-          <button type="submit" disabled={busy} className="btn-primary shrink-0">{busy ? "⏳" : "Cek"}</button>
+          <button type="submit" disabled={busy} className="btn-primary shrink-0">{busy ? "..." : "Cek"}</button>
         </form>
         {checkResult && (
           <div className={`rounded-xl p-3 text-sm ${checkResult.exists ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400" : "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"}`}>
-            {checkResult.exists ? `✅ Nomor terdaftar di WhatsApp. JID: ${checkResult.jid || ""}` : "❌ Nomor tidak terdaftar di WhatsApp."}
+            {checkResult.exists ? `Nomor terdaftar di WhatsApp. JID: ${checkResult.jid || ""}` : "Nomor tidak terdaftar di WhatsApp."}
           </div>
         )}
       </Section>
@@ -556,7 +556,7 @@ function PanelAkun() {
       <Section title="Pantau Status Online (Presence)">
         <form onSubmit={checkPresence} className="flex gap-2">
           <input className="input flex-1" placeholder="628xxxxxxxxxx" value={presenceJid} onChange={e => setPresenceJid(e.target.value)} required />
-          <button type="submit" disabled={busy} className="btn-primary shrink-0">{busy ? "⏳" : "Cek Online"}</button>
+          <button type="submit" disabled={busy} className="btn-primary shrink-0">{busy ? "..." : "Cek Online"}</button>
         </form>
         {presenceResult && (
           <pre className="rounded-lg bg-gray-50 dark:bg-slate-800 p-3 text-xs dark:text-slate-300 overflow-auto">{JSON.stringify(presenceResult, null, 2)}</pre>
@@ -578,7 +578,7 @@ function PanelAkun() {
             <input type="checkbox" checked={privacy.readReceipts} onChange={e => setPrivacy(p => ({ ...p, readReceipts: e.target.checked }))} className="h-4 w-4 rounded" />
           </div>
         </div>
-        <button onClick={savePrivacy} disabled={saving} className="btn-primary mt-2">{saving ? "⏳" : "Simpan Privasi"}</button>
+        <button onClick={savePrivacy} disabled={saving} className="btn-primary mt-2">{saving ? "..." : "Simpan Privasi"}</button>
       </Section>
     </div>
   );
@@ -616,7 +616,7 @@ function useModul(nama) {
     const r = await apiPost("modul", { [nama]: cfg });
     setStatus(r?.error
       ? { ok: false, text: r.error }
-      : { ok: true, text: "✅ Tersimpan di bot dan langsung berlaku — tidak perlu restart." });
+      : { ok: true, text: "Tersimpan di bot dan langsung berlaku - tidak perlu restart." });
     setSaving(false);
   }
 
@@ -666,7 +666,7 @@ function PanelPanggilan() {
             </Field>
           )}
         </div>
-        <button onClick={simpan} disabled={saving} className="btn-primary mt-2">{saving ? "⏳" : "Simpan"}</button>
+        <button onClick={simpan} disabled={saving} className="btn-primary mt-2">{saving ? "..." : "Simpan"}</button>
       </Section>
     </div>
   );
@@ -719,7 +719,7 @@ function PanelForensik() {
             </Field>
           )}
         </div>
-        <button onClick={simpan} disabled={saving} className="btn-primary mt-2">{saving ? "⏳" : "Simpan"}</button>
+        <button onClick={simpan} disabled={saving} className="btn-primary mt-2">{saving ? "..." : "Simpan"}</button>
       </Section>
     </div>
   );
@@ -746,14 +746,14 @@ function PanelProtokol() {
   return (
     <div className="space-y-4">
       <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-800 dark:bg-rose-900/20 dark:text-rose-400">
-        ⚠️ Hanya untuk developer: payload dikirim apa adanya ke bot.
+        Hanya untuk developer: payload dikirim apa adanya ke bot.
       </div>
       <Section title="Kirim Raw Payload ke Bot">
         <p className="text-xs text-gray-400">Untuk menguji endpoint bot saat mengembangkan fitur baru.</p>
         <form onSubmit={sendRaw} className="space-y-2">
           <textarea className="input min-h-[120px] font-mono text-xs" value={rawPayload}
             onChange={(e) => setRawPayload(e.target.value)} />
-          <button type="submit" disabled={sending} className="btn-primary text-sm">{sending ? "⏳" : "Kirim Raw"}</button>
+          <button type="submit" disabled={sending} className="btn-primary text-sm">{sending ? "..." : "Kirim Raw"}</button>
         </form>
         {rawResult && <pre className="max-h-48 overflow-auto rounded-lg bg-gray-50 p-3 text-xs dark:bg-slate-800 dark:text-slate-300">{rawResult}</pre>}
       </Section>
@@ -808,7 +808,7 @@ function PanelAntiBan() {
             </p>
           </Field>
         </div>
-        <button onClick={simpan} disabled={saving} className="btn-primary mt-2">{saving ? "⏳" : "Simpan"}</button>
+        <button onClick={simpan} disabled={saving} className="btn-primary mt-2">{saving ? "..." : "Simpan"}</button>
       </Section>
     </div>
   );
@@ -836,7 +836,7 @@ function PanelSaluran() {
         url = ud.url;
       }
       const r = await apiPost("channel/send", { jid: selectedJid, message: postMsg, url });
-      setResult(r.ok || r.status ? { ok: true, text: "✅ Post berhasil dikirim ke saluran!" } : { ok: false, text: r.error || "Gagal" });
+      setResult(r.ok || r.status ? { ok: true, text: "Post berhasil dikirim ke saluran!" } : { ok: false, text: r.error || "Gagal" });
       if (r.ok || r.status) { setPostMsg(""); setPostFile(null); }
     } catch (e) { setResult({ ok: false, text: e.message }); }
     setBusy(false);
@@ -859,9 +859,9 @@ function PanelSaluran() {
           <Field label="Gambar / Video (opsional)">
             <input type="file" accept="image/*,video/*" className="input text-sm py-1.5" onChange={e => setPostFile(e.target.files[0])} />
           </Field>
-          <button type="submit" disabled={busy || !selectedJid} className="btn-primary">{busy ? "⏳" : "📢 Kirim ke Saluran"}</button>
+          <button type="submit" disabled={busy || !selectedJid} className="btn-primary">{busy ? "..." : "Kirim ke Saluran"}</button>
         </form>
-        <button onClick={refetch} className="btn-outline text-xs">🔄 Refresh Daftar Saluran</button>
+        <button onClick={refetch} className="btn-outline text-xs">Refresh Daftar Saluran</button>
       </Section>
     </div>
   );
@@ -891,7 +891,7 @@ export function TabAksi() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-bold dark:text-white">⚡ Panel Aksi</h2>
+        <h2 className="text-lg font-bold dark:text-white">Panel Aksi</h2>
         <p className="text-sm text-gray-400 mt-0.5">Gunakan semua kapabilitas WA Bot dari satu tempat.</p>
       </div>
 
@@ -908,10 +908,10 @@ export function TabAksi() {
 
       {sub === "grup" ? (
         <div className="card p-6 text-center space-y-3">
-          <p className="text-4xl">👥</p>
+          <p className="text-4xl">Grup</p>
           <p className="font-semibold dark:text-white">Manajemen Grup</p>
           <p className="text-sm text-gray-400">Fitur grup sudah tersedia di tab Grup dengan tampilan lebih lengkap.</p>
-          <p className="text-xs text-gray-400">Gunakan tombol tab di atas (bukan panel ini) → pilih "👥 Grup"</p>
+          <p className="text-xs text-gray-400">Gunakan tombol tab di atas (bukan panel ini) - pilih "Grup"</p>
         </div>
       ) : Panel ? (
         <Panel />

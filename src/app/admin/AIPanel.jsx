@@ -16,7 +16,7 @@ export default function AIPanel({ settings, action }) {
   const [kwConfig, setKwConfig] = useState(settings.bot_keywords || {
     enabled: true,
     greeting_enabled: false,
-    greeting: "Halo! 👋\n\nPerintah bot diawali tanda titik ( *.* ), contoh: *.MENU*\n\n• *.JUAL* — Pasang iklan\n• *.CARI [nama barang]* — Cari barang\n• *.PERPANJANG* — Perpanjang iklan\n• *.UPGRADE* — Upgrade iklan\n• *.SAYA* — Profil & statistik saya\n• *.MENU* — Lihat semua perintah lengkap\n\nSetelah *.JUAL*, kirim *Foto + Deskripsi + Harga* untuk pasang iklan.\n\nMau ngobrol dengan admin (manusia)? Ketik *ADMIN* tanpa titik.\n\n🌐 Website: jualbeliusupolmed.web.id",
+    greeting: "Halo! \n\nPerintah bot diawali tanda titik ( *.* ), contoh: *.MENU*\n\n• *.JUAL* — Pasang iklan\n• *.CARI [nama barang]* — Cari barang\n• *.PERPANJANG* — Perpanjang iklan\n• *.UPGRADE* — Upgrade iklan\n• *.SAYA* — Profil & statistik saya\n• *.MENU* — Lihat semua perintah lengkap\n\nSetelah *.JUAL*, kirim *Foto + Deskripsi + Harga* untuk pasang iklan.\n\nMau ngobrol dengan admin (manusia)? Ketik *ADMIN* tanpa titik.\n\n Website: jualbeliusupolmed.web.id",
     triggers: "jual,wts,wtb,cari,beli,admin,min,mimin,perpanjang,upgrade,dijual,ready",
     min_price_digits: 4,
   });
@@ -138,7 +138,7 @@ export default function AIPanel({ settings, action }) {
               className="input min-h-[130px] font-mono text-sm"
               value={kwConfig.greeting || ""}
               onChange={e => setKwConfig({ ...kwConfig, greeting: e.target.value })}
-              placeholder="Halo! 👋 Ketik JUAL untuk pasang iklan atau CARI untuk cari barang."
+              placeholder="Halo!  Ketik JUAL untuk pasang iklan atau CARI untuk cari barang."
             />
             <p className="mt-1 text-xs text-gray-400">Gunakan *teks tebal* dan _miring_ sesuai format WhatsApp.</p>
           </div>
@@ -149,11 +149,11 @@ export default function AIPanel({ settings, action }) {
             onClick={() => { action({ action: "save_settings", key: "bot_keywords", value: kwConfig }, "Pengaturan keyword bot disimpan"); flashKw(); }}
             className="btn-primary"
           >
-            {kwSaved === "ok" ? "✓ Tersimpan" : "Simpan Pengaturan"}
+            {kwSaved === "ok" ? " Tersimpan" : "Simpan Pengaturan"}
           </button>
           <p className="text-xs text-gray-400">
             {kwConfig.enabled !== false
-              ? "✅ Aktif — bot hanya proses AI jika ada keyword atau angka harga"
+              ? " Aktif — bot hanya proses AI jika ada keyword atau angka harga"
               : "⭕ Nonaktif — semua pesan diproses AI (perilaku lama)"}
           </p>
         </div>
@@ -203,7 +203,7 @@ export default function AIPanel({ settings, action }) {
           </label>
         </div>
         <button onClick={() => { action({ action: "save_settings", key: "ai_config", value: aiConfig }, "Pengaturan AI disimpan"); flash(); }} className="btn-primary mt-5 w-full">
-          {saved === "ok" ? "✓ Tersimpan" : "Simpan Pengaturan AI"}
+          {saved === "ok" ? " Tersimpan" : "Simpan Pengaturan AI"}
         </button>
       </div>
 

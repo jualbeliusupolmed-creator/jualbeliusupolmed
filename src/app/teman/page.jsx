@@ -360,7 +360,7 @@ export default function TemanSwipePage() {
             <Icon.ArrowLeft className="h-5 w-5" />
           </button>
 
-          {/* PASS BUTTON (❌) */}
+          {/* PASS BUTTON () */}
           <button
             onClick={() => handleSwipe("pass")}
             className="flex h-16 w-16 items-center justify-center rounded-full bg-white dark:bg-[#1c1c1e] text-rose-500 shadow-xl border border-black/[0.08] dark:border-white/[0.12] active:scale-90 hover:scale-105 transition-all"
@@ -369,7 +369,7 @@ export default function TemanSwipePage() {
             <Icon.X className="h-7 w-7" />
           </button>
 
-          {/* LIKE BUTTON (💚) */}
+          {/* LIKE BUTTON () */}
           <button
             onClick={() => handleSwipe("like")}
             className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 text-white shadow-xl shadow-emerald-500/30 active:scale-90 hover:scale-105 transition-all"

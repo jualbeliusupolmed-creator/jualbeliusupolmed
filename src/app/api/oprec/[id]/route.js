@@ -113,9 +113,9 @@ export async function PATCH(req, { params }) {
         const msg = 
           `Halo *${data.applicant_name}*,\n\n` +
           `Pengumuman Seleksi Open Recruitment *${oprec.title}*:\n` +
-          `Status: ${isAccepted ? "✅ *DITERIMA*" : "❌ *DITOLAK*"}\n\n` +
+          `Status: ${isAccepted ? " *DITERIMA*" : " *DITOLAK*"}\n\n` +
           (data.reviewer_note ? `Catatan Pengurus:\n_${data.reviewer_note}_\n\n` : "") +
-          (isAccepted ? `Selamat bergabung di ${oprec.ukm_name}! 🎉` : `Tetap semangat dan coba lagi tahun depan! 💪`);
+          (isAccepted ? `Selamat bergabung di ${oprec.ukm_name}! ` : `Tetap semangat dan coba lagi tahun depan! `);
         
         // Fire and forget, biarkan Fonnte / Baileys fallback yang menangani
         sendWa(data.applicant_wa, msg).catch(() => {});

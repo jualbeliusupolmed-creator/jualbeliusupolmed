@@ -22,19 +22,19 @@ export function KartuTaut({ perangkat, status, onRefresh }) {
   const [msg, setMsg] = useState(null);
 
   async function mintaPairing() {
-    if (!pairingPhone) { setMsg({ ok: false, text: "⚠️ Masukkan nomor HP terlebih dahulu." }); return; }
+    if (!pairingPhone) { setMsg({ ok: false, text: "Masukkan nomor HP terlebih dahulu." }); return; }
     setMeminta(true);
     setPairingCode("");
     try {
       const r = await apiPost(pairingEndpoint, { phone: pairingPhone });
       if (r.ok && r.code) {
         setPairingCode(r.code);
-        setMsg({ ok: true, text: "✅ Kode pairing berhasil didapatkan!" });
+        setMsg({ ok: true, text: "Kode pairing berhasil didapatkan!" });
       } else {
-        setMsg({ ok: false, text: `❌ Gagal: ${r.error || "Terjadi kesalahan"}` });
+        setMsg({ ok: false, text: `Gagal: ${r.error || "Terjadi kesalahan"}` });
       }
     } catch (e) {
-      setMsg({ ok: false, text: `❌ Error: ${e.message}` });
+      setMsg({ ok: false, text: `Error: ${e.message}` });
     }
     setMeminta(false);
   }
@@ -63,7 +63,7 @@ export function KartuTaut({ perangkat, status, onRefresh }) {
                         : "border-amber-300 dark:border-amber-600 bg-amber-50 dark:bg-amber-900/20"
     }`}>
       <div className="mb-4 flex items-center justify-between gap-2">
-        <p className="text-sm font-bold dark:text-white">{kedua ? "📱 " : "🤖 "}{judul}</p>
+        <p className="text-sm font-bold dark:text-white">{judul}</p>
         {status?.connected && status?.phone && (
           <span className="font-mono text-xs text-green-600 dark:text-green-400">+{status.phone}</span>
         )}
@@ -83,7 +83,7 @@ export function KartuTaut({ perangkat, status, onRefresh }) {
       )}
 
       {!mati && status?.connected && (
-        <p className="text-sm font-semibold text-green-600 dark:text-green-400">✅ Tersambung — tidak perlu scan.</p>
+        <p className="text-sm font-semibold text-green-600 dark:text-green-400">Tersambung - tidak perlu scan.</p>
       )}
 
       {!mati && !status?.connected && (
@@ -98,7 +98,7 @@ export function KartuTaut({ perangkat, status, onRefresh }) {
                   bot sengaja diam supaya tidak mengetuk WhatsApp terus-menerus.
                 </p>
                 <button onClick={bangunkan} disabled={membangunkan} className="btn-outline text-xs disabled:opacity-50">
-                  {membangunkan ? "⏳ Menyiapkan QR…" : "Tampilkan QR"}
+                  {membangunkan ? "Menyiapkan QR..." : "Tampilkan QR"}
                 </button>
                 <p className="text-[11px] text-gray-400">
                   Siapkan HP dulu (WhatsApp → Perangkat tertaut), baru tekan. Tanpa ditekan,
@@ -107,7 +107,7 @@ export function KartuTaut({ perangkat, status, onRefresh }) {
               </div>
             )}
             {!tampilkanQr && !menunggu && (
-              <p className="text-sm text-gray-400">⏳ Sedang menghubungkan…</p>
+              <p className="text-sm text-gray-400">Sedang menghubungkan...</p>
             )}
           </div>
 

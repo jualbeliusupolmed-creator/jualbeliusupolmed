@@ -259,7 +259,7 @@ export default function DistributorPanel({ settings: initialSettings, categories
                     <span className="font-semibold truncate">{d.name || d.wa}</span>
                     {d.distributor && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 dark:bg-orange-900/40 px-2 py-0.5 text-[11px] font-bold text-orange-700 dark:text-orange-400">
-                        🏪 DISTRIBUTOR
+                         DISTRIBUTOR
                       </span>
                     )}
                   </div>

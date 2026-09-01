@@ -44,9 +44,9 @@ export default function CopyLinkButton({ listing }) {
       className="btn-outline flex items-center justify-center gap-1.5 text-xs font-medium"
     >
       {copied ? (
-        <>✅ Tersalin!</>
+        <> Tersalin!</>
       ) : (
-        <>🔗 Salin Link</>
+        <> Salin Link</>
       )}
     </button>
   );

@@ -102,7 +102,7 @@ function DaftarOrganisasiForm() {
       }
 
       setSuccessData(data);
-      toast.success("Akun Organisasi Resmi Berhasil Didaftarkan! 🎉");
+      toast.success("Akun Organisasi Resmi Berhasil Didaftarkan! ");
     } catch (err) {
       toast.error(err.message || "Terjadi kesalahan saat pendaftaran.");
     } finally {
@@ -115,11 +115,11 @@ function DaftarOrganisasiForm() {
       <div className="mx-auto max-w-xl px-4 py-12">
         <div className="card p-8 text-center space-y-6 border-2 border-emerald-500/20 shadow-xl dark:bg-slate-900">
           <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-emerald-500/10 text-4xl text-emerald-600">
-            🏛️
+            <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg>
           </div>
           <div>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 mb-2">
-              ✓ Akun Resmi Terverifikasi
+               Akun Resmi Terverifikasi
             </span>
             <h2 className="text-2xl font-black text-gray-900 dark:text-white">
               {form.ukm_name}
@@ -134,13 +134,13 @@ function DaftarOrganisasiForm() {
               href="/mading?buat=1&tab=organisasi"
               className="btn-primary w-full sm:w-auto py-3 px-6 text-sm flex items-center justify-center gap-2"
             >
-              <span>📢 Buat Postingan / Oprec di Mading</span>
+              <span> Buat Postingan / Oprec di Mading</span>
             </Link>
             <Link
               href="/organisasi"
               className="btn-outline w-full sm:w-auto py-3 px-6 text-sm flex items-center justify-center gap-2"
             >
-              <span>🌐 Lihat Direktori UKM</span>
+              <span> Lihat Direktori UKM</span>
             </Link>
           </div>
         </div>
@@ -153,7 +153,7 @@ function DaftarOrganisasiForm() {
       {/* HEADER */}
       <div className="text-center mb-8 space-y-2">
         <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3.5 py-1 text-xs font-bold text-primary border border-primary/20">
-          <span>🏛️ Portal Khusus Pengurus UKM / HIMA / BEM</span>
+          <span> Portal Khusus Pengurus UKM / HIMA / BEM</span>
         </div>
         <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-gray-900 dark:text-white">
           Pendaftaran Akun Resmi Organisasi
@@ -175,7 +175,7 @@ function DaftarOrganisasiForm() {
               {form.photo_url ? (
                 <Image src={form.photo_url} alt="Logo Preview" fill className="object-cover" />
               ) : (
-                <span className="text-2xl text-gray-400">🏛️</span>
+                <span className="text-2xl text-gray-400"><svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg></span>
               )}
             </div>
             <div className="flex-1">
@@ -286,7 +286,7 @@ function DaftarOrganisasiForm() {
         {/* EMAIL & PASSWORD LOGIN AKUN ORGANISASI */}
         <div className="rounded-2xl border border-primary/20 bg-primary/[0.03] p-4 dark:border-primary/30 dark:bg-slate-800/40 space-y-3">
           <p className="text-xs font-bold uppercase tracking-wider text-primary">
-            🔐 Akses Login Akun (Email &amp; Password)
+             Akses Login Akun (Email &amp; Password)
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
@@ -349,7 +349,7 @@ function DaftarOrganisasiForm() {
         {/* DATA NARAHUBUNG / PIC */}
         <div className="space-y-4">
           <p className="text-xs font-bold uppercase tracking-wider text-primary">
-            👤 Data Penanggung Jawab / Narahubung (PIC)
+             Data Penanggung Jawab / Narahubung (PIC)
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -409,7 +409,7 @@ function DaftarOrganisasiForm() {
           {submitting ? (
             <span>Memproses Pendaftaran...</span>
           ) : (
-            <span>🏛️ Daftarkan Akun Resmi Organisasi</span>
+            <span> Daftarkan Akun Resmi Organisasi</span>
           )}
         </button>
 

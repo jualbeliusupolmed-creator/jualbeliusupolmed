@@ -19,9 +19,9 @@ export function TabProfil() {
     setMsg(null);
     try {
       const r = await apiPost(`profile/${field}`, { [field]: value });
-      setMsg(r.ok ? { ok: true, text: `✅ ${field === "name" ? "Nama" : "Status"} berhasil diperbarui!` } : { ok: false, text: `❌ ${r.error}` });
+      setMsg(r.ok ? { ok: true, text: `${field === "name" ? "Nama" : "Status"} berhasil diperbarui!` } : { ok: false, text: `${r.error}` });
       if (r.ok) refetch();
-    } catch (e) { setMsg({ ok: false, text: `❌ ${e.message}` }); }
+    } catch (e) { setMsg({ ok: false, text: `${e.message}` }); }
     finally { setSaving(null); }
   }
 
@@ -44,7 +44,7 @@ export function TabProfil() {
           <div className="flex gap-2">
             <input className="input flex-1" value={name} onChange={e => setName(e.target.value)} placeholder="Nama yang tampil di WA" />
             <button onClick={() => save("name", name)} disabled={saving === "name" || !name.trim()} className="btn-primary shrink-0">
-              {saving === "name" ? "⏳" : "Simpan"}
+              {saving === "name" ? "..." : "Simpan"}
             </button>
           </div>
           <p className="mt-1 text-xs text-gray-400">Nama yang terlihat penerima saat bot kirim pesan.</p>
@@ -53,9 +53,9 @@ export function TabProfil() {
         <div>
           <label className="label">Status / Bio WA</label>
           <div className="flex gap-2">
-            <input className="input flex-1" value={status} onChange={e => setStatus(e.target.value)} placeholder="Contoh: Bot Jual Beli USU 🤖" />
+            <input className="input flex-1" value={status} onChange={e => setStatus(e.target.value)} placeholder="Contoh: Bot Jual Beli USU" />
             <button onClick={() => save("status", status)} disabled={saving === "status"} className="btn-primary shrink-0">
-              {saving === "status" ? "⏳" : "Simpan"}
+              {saving === "status" ? "..." : "Simpan"}
             </button>
           </div>
           <p className="mt-1 text-xs text-gray-400">Kalimat singkat yang muncul di profil WA bot.</p>

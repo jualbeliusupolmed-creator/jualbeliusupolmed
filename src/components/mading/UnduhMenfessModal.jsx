@@ -29,7 +29,7 @@ export default function UnduhMenfessModal({ post, onClose }) {
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
-      toast.success(`Gambar Menfess (${ratio === "story" ? "Potrait 9:16 (Story/Status)" : "Potrait 4:5 (1080×1350)"}) berhasil diunduh! 📸`);
+      toast.success(`Gambar Menfess (${ratio === "story" ? "Potrait 9:16 (Story/Status)" : "Potrait 4:5 (1080×1350)"}) berhasil diunduh! `);
     } catch (err) {
       toast.error(err.message || "Gagal mengunduh gambar");
     } finally {
@@ -71,7 +71,7 @@ export default function UnduhMenfessModal({ post, onClose }) {
             onClick={onClose}
             className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-slate-800 dark:text-slate-400"
           >
-            ✕
+            <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg>
           </button>
         </div>
 
@@ -86,7 +86,7 @@ export default function UnduhMenfessModal({ post, onClose }) {
                 : "text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white"
             }`}
           >
-            <span>📱 Potrait 1080 × 1350</span>
+            <span> Potrait 1080 × 1350</span>
             <span className="text-[10px] font-medium text-gray-400 dark:text-slate-500">Feed / Postingan (4:5)</span>
           </button>
 
@@ -99,7 +99,7 @@ export default function UnduhMenfessModal({ post, onClose }) {
                 : "text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white"
             }`}
           >
-            <span>📲 Potrait 9 : 16</span>
+            <span> Potrait 9 : 16</span>
             <span className="text-[10px] font-medium text-gray-400 dark:text-slate-500">Story IG & Status WA</span>
           </button>
         </div>

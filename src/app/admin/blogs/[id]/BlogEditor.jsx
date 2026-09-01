@@ -99,7 +99,7 @@ export default function BlogEditor({ initialBlog }) {
         </h1>
         <div className="flex gap-2">
           <button type="button" onClick={() => setPreview(!preview)} className={`btn-outline text-sm ${preview ? "bg-primary/10 border-primary/50" : ""}`}>
-            {preview ? "✏️ Editor" : "👁 Preview"}
+            {preview ? " Editor" : " Preview"}
           </button>
           <button onClick={() => router.push(`${basis}/blogs`)} className="btn-outline text-sm">
             Kembali
@@ -178,8 +178,8 @@ export default function BlogEditor({ initialBlog }) {
           <div className="md:col-span-1">
             <label className="label">Status</label>
             <select className="input" value={form.status} onChange={(e) => set("status", e.target.value)}>
-              <option value="draft">📝 Draft</option>
-              <option value="published">✅ Published</option>
+              <option value="draft"> Draft</option>
+              <option value="published"> Published</option>
             </select>
           </div>
         </div>
@@ -196,7 +196,7 @@ export default function BlogEditor({ initialBlog }) {
                 onClick={() => set("image_url", "")}
                 className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-1 text-xs text-white hover:bg-black/80"
               >
-                ✕ Hapus
+                 Hapus
               </button>
               <span className="absolute bottom-2 left-2 rounded bg-black/60 px-2 py-0.5 text-[10px] text-white">WebP</span>
             </div>

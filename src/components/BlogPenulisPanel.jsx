@@ -116,7 +116,7 @@ export default function BlogPenulisPanel() {
         ? "border-indigo-200 bg-indigo-50/60 dark:border-indigo-900/60 dark:bg-indigo-900/10"
         : "border-gray-200 bg-gray-50 dark:border-slate-800 dark:bg-slate-900/50"}`}>
         <div className="flex items-start gap-3">
-          <span className="text-2xl">{berbadge ? "✍️" : "📝"}</span>
+          <span className="text-2xl">{berbadge ? "Edit" : "Catat"}</span>
           <div>
             <p className="font-bold dark:text-white">
               {berbadge ? "Kamu penulis berbadge" : "Tulisanmu ditinjau admin dulu"}
@@ -224,7 +224,7 @@ export default function BlogPenulisPanel() {
           </div>
         </div>
       ) : (
-        <button onClick={() => setForm({ ...KOSONG })} className="btn-primary text-sm">✍️ Tulis artikel baru</button>
+        <button onClick={() => setForm({ ...KOSONG })} className="btn-primary text-sm"> Tulis artikel baru</button>
       )}
 
       {/* Daftar artikel sendiri */}

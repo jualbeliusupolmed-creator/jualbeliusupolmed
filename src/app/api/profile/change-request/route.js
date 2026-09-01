@@ -106,14 +106,14 @@ export async function POST(req) {
     if (adminWa) {
       const fieldLabel = field === "name" ? "Nama" : "Bio";
       const msg =
-        `📝 *Permintaan Ubah ${fieldLabel} Profil*\n\n` +
+        ` *Permintaan Ubah ${fieldLabel} Profil*\n\n` +
         `Penjual: ${profile?.name || "-"}\n` +
         `No. WA: ${sellerWa}\n\n` +
         `Nilai saat ini: _${currentValue || "(kosong)"}_ \n` +
         `Nilai baru: *${requestedValue}*\n\n` +
         `Balas dengan:\n` +
-        `✅ *SETUJUI NAMA ${sellerWa}* → setujui\n` +
-        `❌ *TOLAK NAMA ${sellerWa}* → tolak\n\n` +
+        ` *SETUJUI NAMA ${sellerWa}* → setujui\n` +
+        ` *TOLAK NAMA ${sellerWa}* → tolak\n\n` +
         `Atau kelola di panel admin (/admin/profil_request)`;
       sendWa(adminWa.split(",")[0].trim(), msg).catch(() => {});
     }

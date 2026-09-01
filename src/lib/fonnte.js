@@ -282,9 +282,9 @@ export function pesanGrupIklan(listing) {
     ? `${rupiah(listing.price)}/${listing.rental_period}`
     : rupiah(listing.price);
   return (
-    `${isRental ? "🔑 *[SEWA]*" : "🛒"} *${listing.title}* — ${priceStr}\n` +
-    `🏷️ ${listing.category}\n` +
-    `👉 ${urlProduk(listing)}`
+    `${isRental ? "[SEWA]" : "[JUAL]"} *${listing.title}* — ${priceStr}\n` +
+    ` ${listing.category}\n` +
+    ` ${urlProduk(listing)}`
   );
 }
 
@@ -294,25 +294,25 @@ export function pesanPenjualTayang(listing) {
     ? new Date(listing.expires_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
     : null;
   return (
-    `✅ *Iklan Kamu Sudah Tayang!* 🎉\n\n` +
-    `📦 *${listing.title}*\n` +
-    (exp ? `📅 Aktif hingga: *${exp}*\n` : "") +
-    `🔑 Kode: *${listing.listing_code || "-"}*\n\n` +
+    ` *Iklan Kamu Sudah Tayang!* \n\n` +
+    ` *${listing.title}*\n` +
+    (exp ? ` Aktif hingga: *${exp}*\n` : "") +
+    ` Kode: *${listing.listing_code || "-"}*\n\n` +
     `Iklan sudah disebarkan ke grup WA marketplace!\n\n` +
-    `👉 ${urlProduk(listing)}`
+    ` ${urlProduk(listing)}`
   );
 }
 
 /** Pesan pemberitahuan iklan baru untuk admin. */
 export function pesanAdminIklan(listing) {
   return (
-    `🆕 *Iklan Baru Tayang!*\n\n` +
-    `📦 *${listing.title}*\n` +
-    `💰 ${rupiah(listing.price)}\n` +
-    `🏷️ ${listing.category || "-"}\n` +
-    `👤 ${listing.seller_name || "-"} (${listing.seller_wa})\n` +
-    `🔑 Kode: ${listing.listing_code || "-"}\n\n` +
-    `👉 ${urlProduk(listing)}`
+    ` *Iklan Baru Tayang!*\n\n` +
+    ` *${listing.title}*\n` +
+    ` ${rupiah(listing.price)}\n` +
+    ` ${listing.category || "-"}\n` +
+    ` ${listing.seller_name || "-"} (${listing.seller_wa})\n` +
+    ` Kode: ${listing.listing_code || "-"}\n\n` +
+    ` ${urlProduk(listing)}`
   );
 }
 
@@ -387,8 +387,8 @@ export async function postWantedToGroup(wanted) {
   // kata-katanya tanpa menyesuaikan DICARI_JUAL_SUFFIX di repo wa-bot-usu —
   // kalau tidak cocok, ajakannya tertulis dua kali.
   const msg =
-    `🔍 *Dicari:* ${wanted.title} (${budgetStr})\n` +
-    `Punya barangnya? 👉 ${baseUrl()}/dicari` +
+    ` *Dicari:* ${wanted.title} (${budgetStr})\n` +
+    `Punya barangnya?  ${baseUrl()}/dicari` +
     `, Atau kalau mau lebih cepat langsung jual di ${baseUrl()}/jual`;
   return send(group, msg);
 }
@@ -399,12 +399,12 @@ export { send as sendWa };
 export async function notifyWantedMatch(buyer_wa, buyer_name, listing) {
   const url = `${baseUrl()}/produk/${buildSlug(listing.title, listing.id)}`;
   const msg =
-    `🎉 *Hei ${buyer_name}!*\n\n` +
+    ` *Hei ${buyer_name}!*\n\n` +
     `Ada iklan baru yang mungkin cocok dengan yang kamu cari:\n\n` +
-    `📦 *${listing.title}*\n` +
-    `💰 ${rupiah(listing.price)}\n` +
-    `🏷️ ${listing.category}\n\n` +
-    `👉 Lihat sekarang: ${url}`;
+    ` *${listing.title}*\n` +
+    ` ${rupiah(listing.price)}\n` +
+    ` ${listing.category}\n\n` +
+    ` Lihat sekarang: ${url}`;
   return send(buyer_wa, msg).catch(() => ({ ok: false }));
 }
 
@@ -412,14 +412,14 @@ export async function notifyWantedMatch(buyer_wa, buyer_name, listing) {
 export async function notifySellerProActivated(seller_wa, seller_name, expiresAt) {
   const expStr = new Date(expiresAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
   const msg =
-    `🌟 *Selamat! Paket Pro Aktif!*\n\n` +
+    ` *Selamat! Paket Pro Aktif!*\n\n` +
     `Hei ${seller_name || "Penjual"},\n` +
     `Langganan *Penjual Pro* kamu sudah aktif hingga *${expStr}*.\n\n` +
     `Keuntungan Pro:\n` +
-    `✅ Iklan standar GRATIS (0 Rp)\n` +
-    `✅ Pasang iklan tanpa batas\n` +
-    `✅ Badge ⭐ PRO di profil & kartu iklan\n\n` +
-    `Selamat berjualan! 🚀`;
+    ` Iklan standar GRATIS (0 Rp)\n` +
+    ` Pasang iklan tanpa batas\n` +
+    ` Badge ⭐ PRO di profil & kartu iklan\n\n` +
+    `Selamat berjualan! `;
   return send(seller_wa, msg).catch(() => ({ ok: false }));
 }
 
@@ -431,16 +431,16 @@ export async function notifySellerNewOffer(seller_wa, seller_name, listingWithOf
   const shortId = offer.id.split('-')[0]; // Ambil 8 karakter pertama UUID
 
   const msg =
-    `💰 *Tawaran Harga Baru!*\n\n` +
+    ` *Tawaran Harga Baru!*\n\n` +
     `Hei ${seller_name || "Penjual"},\n` +
     `*${offer.buyer_name}* menawar *${rupiah(offer.offer_price)}* untuk iklanmu:\n\n` +
-    `📦 _${title}_\n` +
-    (offer.message ? `💬 "${offer.message}"\n\n` : "\n") +
-    `📞 Hubungi pembeli: wa.me/${waLink}\n\n` +
+    ` _${title}_\n` +
+    (offer.message ? ` "${offer.message}"\n\n` : "\n") +
+    ` Hubungi pembeli: wa.me/${waLink}\n\n` +
     `*CARA MENJAWAB:*\n` +
     `Balas pesan ini dengan perintah:\n` +
-    `✅ *TERIMA ${shortId}*\n` +
-    `❌ *TOLAK ${shortId}*`;
+    ` *TERIMA ${shortId}*\n` +
+    ` *TOLAK ${shortId}*`;
   return send(seller_wa, msg).catch(() => ({ ok: false }));
 }
 
@@ -450,14 +450,14 @@ export async function notifyBuyerOfferResult(buyer_wa, buyer_name, { listing_tit
     ? `wa.me/${seller_wa.startsWith("0") ? "62" + seller_wa.slice(1) : seller_wa}`
     : null;
   const msg = accepted
-    ? `🎉 *Tawaran Diterima!*\n\n` +
+    ? ` *Tawaran Diterima!*\n\n` +
       `Hei ${buyer_name},\n` +
-      `Tawaranmu *${rupiah(offer_price)}* untuk:\n📦 _${listing_title}_\n\n` +
-      `*DITERIMA* oleh penjual! 🙌\n\n` +
+      `Tawaranmu *${rupiah(offer_price)}* untuk:\n _${listing_title}_\n\n` +
+      `*DITERIMA* oleh penjual! \n\n` +
       (sellerLink ? `Hubungi penjual sekarang:\n${sellerLink}` : "")
-    : `😔 *Tawaran Ditolak*\n\n` +
+    : ` *Tawaran Ditolak*\n\n` +
       `Hei ${buyer_name},\n` +
-      `Sayang sekali, tawaranmu *${rupiah(offer_price)}* untuk:\n📦 _${listing_title}_\n\n` +
+      `Sayang sekali, tawaranmu *${rupiah(offer_price)}* untuk:\n _${listing_title}_\n\n` +
       `tidak bisa diterima penjual. Coba cari barang lain di ${baseUrl()}`;
   return send(buyer_wa, msg).catch(() => ({ ok: false }));
 }
@@ -483,13 +483,13 @@ export async function notifyCategorySubscribers(supa, listing) {
     for (const s of subs) {
       await send(
         s.buyer_wa,
-        `🔔 *Iklan baru di kategori ${listing.category}!*\n\n` +
+        ` *Iklan baru di kategori ${listing.category}!*\n\n` +
         `Hei ${s.buyer_name || "kamu"},\n` +
         `Ada iklan baru yang mungkin menarik:\n\n` +
-        `📦 *${listing.title}*\n` +
-        `💰 ${rupiah(listing.price)}\n` +
-        `📍 ${listing.campus === "Semua" ? "Medan" : listing.campus}\n\n` +
-        `👉 ${url}\n\n` +
+        ` *${listing.title}*\n` +
+        ` ${rupiah(listing.price)}\n` +
+        ` ${listing.campus === "Semua" ? "Medan" : listing.campus}\n\n` +
+        ` ${url}\n\n` +
         `_Untuk berhenti notifikasi, hubungi admin._`
       ).catch(() => {});
 

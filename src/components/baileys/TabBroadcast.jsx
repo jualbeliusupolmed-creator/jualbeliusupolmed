@@ -25,17 +25,17 @@ export function TabBroadcast() {
   }
 
   async function kirim() {
-    if (!pesan.trim()) { setMsg({ ok: false, text: "⚠️ Isi pesannya dulu." }); return; }
-    if (!dipilih.length) { setMsg({ ok: false, text: "⚠️ Pilih minimal satu tujuan." }); return; }
+    if (!pesan.trim()) { setMsg({ ok: false, text: "Isi pesannya dulu." }); return; }
+    if (!dipilih.length) { setMsg({ ok: false, text: "Pilih minimal satu tujuan." }); return; }
     if (!confirm(`Kirim broadcast ke ${dipilih.length} kontak?`)) return;
     setMengirim(true);
     const r = await apiPost("broadcast", { message: pesan, jids: dipilih });
     if (r.ok) {
-      setMsg({ ok: true, text: `✅ ${r.queued} tujuan masuk antrean kirim${r.rejected?.length ? `, ${r.rejected.length} ditolak` : ""}.` });
+      setMsg({ ok: true, text: `${r.queued} tujuan masuk antrean kirim${r.rejected?.length ? `, ${r.rejected.length} ditolak` : ""}.` });
       setPesan("");
       setDipilih([]);
     } else {
-      setMsg({ ok: false, text: `❌ ${r.error || "Gagal mengirim."}` });
+      setMsg({ ok: false, text: `${r.error || "Gagal mengirim."}` });
     }
     setMengirim(false);
   }
@@ -44,14 +44,14 @@ export function TabBroadcast() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold dark:text-white">Broadcast</h2>
-        <button onClick={refetch} className="btn-outline text-xs">🔄 Muat ulang</button>
+        <button onClick={refetch} className="btn-outline text-xs">Muat ulang</button>
       </div>
 
       {loading && !data && <p className="text-sm text-gray-400">Memuat...</p>}
-      {error && <Alert ok={false} msg={`⚠️ ${error}`} />}
+      {error && <Alert ok={false} msg={error} />}
       <Alert ok={msg?.ok} msg={msg?.text} />
 
-      <Kartu judul="📣 Kirim ke kontak yang pernah chat">
+      <Kartu judul=" Kirim ke kontak yang pernah chat">
         <p className="mb-3 rounded-lg bg-amber-50 p-3 text-xs text-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
           Daftar ini <b>hanya</b> berisi nomor yang pernah mengirim pesan ke bot — mereka menghubungi duluan.
           Nomor dari buku kontak dan anggota grup sengaja tidak bisa dipilih: mengirim pesan borongan ke orang
@@ -91,7 +91,7 @@ export function TabBroadcast() {
 
         <div className="mt-2 flex items-center justify-between">
           <span className="text-xs text-gray-400">
-            {dipilih.length > max ? `⚠️ ${dipilih.length} melebihi batas ${max}` : `${dipilih.length} dipilih`}
+            {dipilih.length > max ? `${dipilih.length} melebihi batas ${max}` : `${dipilih.length} dipilih`}
           </span>
           <button onClick={kirim} disabled={mengirim || !dipilih.length || dipilih.length > max}
             className="btn-primary text-xs disabled:opacity-50">

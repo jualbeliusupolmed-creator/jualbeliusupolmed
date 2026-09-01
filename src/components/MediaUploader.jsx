@@ -69,7 +69,7 @@ export default function MediaUploader({
               className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-black/60 text-xs text-white"
               aria-label="Hapus foto"
             >
-              ✕
+              <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg>
             </button>
             <div className="absolute inset-x-0 bottom-0 flex justify-between bg-black/30 px-1 opacity-0 transition group-hover:opacity-100">
               <button
@@ -96,7 +96,7 @@ export default function MediaUploader({
 
         {media.length < max && (
           <label className="grid aspect-square cursor-pointer place-items-center rounded-xl border-2 border-dashed border-gray-300 text-center hover:border-primary">
-            <span className="text-xs text-gray-400">📷 Tambah</span>
+            <span className="text-xs text-gray-400"> Tambah</span>
             <input
               type="file"
               accept="image/*"

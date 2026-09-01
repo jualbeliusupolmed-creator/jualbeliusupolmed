@@ -51,9 +51,9 @@ export default function OfferButton({ listing }) {
         const finalMessage =
           `Halo ${listing.seller_name || "Penjual"},\n\n` +
           `Saya ingin mengajukan penawaran harga sebesar *${rupiah(priceNum)}* (harga iklan: ${rupiah(listing.price)}) untuk barang:\n` +
-          `📦 *${listing.title}*\n` +
-          (message ? `💬 Catatan: "${message}"\n` : "") +
-          `🔗 ${productLink}\n\n` +
+          ` *${listing.title}*\n` +
+          (message ? ` Catatan: "${message}"\n` : "") +
+          ` ${productLink}\n\n` +
           `Apakah harganya bisa disetujui? Terima kasih!`;
 
         const waUrl = `https://wa.me/${formattedWa}?text=${encodeURIComponent(finalMessage)}`;
@@ -108,7 +108,7 @@ export default function OfferButton({ listing }) {
         onClick={() => setOpen(true)}
         className="btn-outline w-full flex items-center justify-center gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-900 dark:text-indigo-400 dark:hover:bg-indigo-900/30"
       >
-        💰 Ajukan Tawaran Harga
+         Ajukan Tawaran Harga
       </button>
 
       {open && (
@@ -118,8 +118,8 @@ export default function OfferButton({ listing }) {
         >
           <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 shadow-2xl overflow-hidden animate-fade-in">
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-slate-800">
-              <p className="font-bold text-sm text-gray-900 dark:text-white">💰 Tawaran Harga</p>
-              <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-gray-600 text-lg leading-none">✕</button>
+              <p className="font-bold text-sm text-gray-900 dark:text-white"> Tawaran Harga</p>
+              <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-gray-600 text-lg leading-none"></button>
             </div>
 
             <form onSubmit={submit} className="p-4 space-y-3">
@@ -148,8 +148,8 @@ export default function OfferButton({ listing }) {
                 {busy
                   ? "Memproses…"
                   : isWaMode
-                  ? "📱 Kirim Tawaran via WhatsApp"
-                  : "💰 Chat Penjual & Ajukan Tawaran"}
+                  ? " Kirim Tawaran via WhatsApp"
+                  : " Chat Penjual & Ajukan Tawaran"}
               </button>
               <p className="text-[10px] text-center text-gray-400">
                 {isWaMode

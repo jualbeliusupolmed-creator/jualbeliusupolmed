@@ -2,14 +2,14 @@
 // supaya direktori tidak tampil kosong di hari-hari awal — pajangan etalase.
 //
 // Sampai hari ini keenamnya membawa `ukm_verified: true` dan kartu direktori
-// menempelkan lencana "✓ Resmi" pada SEMUA kartu tanpa membaca kolom itu sama
+// menempelkan lencana " Resmi" pada SEMUA kartu tanpa membaca kolom itu sama
 // sekali. Jadi situs menyatakan enam organisasi nyata sudah bergabung dan
 // terverifikasi — padahal tidak ada yang memverifikasi apa pun, dan mereka
 // sendiri tidak tahu namanya dipajang. Dua UKM yang benar-benar mendaftar
 // berdiri di rak yang sama, tak terbedakan.
 //
 // Sekarang keduanya dipisah: contoh ditandai `is_demo` dan kehilangan lencana,
-// lencana "✓ Resmi" hanya untuk yang `ukm_verified === true` (lewat kode
+// lencana " Resmi" hanya untuk yang `ukm_verified === true` (lewat kode
 // undangan atau persetujuan admin).
 //
 // Daftar ini dulu disalin utuh di dua berkas — /api/organisasi dan halaman

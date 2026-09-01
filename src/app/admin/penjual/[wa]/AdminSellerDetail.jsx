@@ -157,7 +157,7 @@ export default function AdminSellerDetail({ profile, listings, stats, wa }) {
               ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300"
               : "bg-gray-200 text-gray-600 dark:bg-slate-700 dark:text-slate-300"}`}
           >
-            {profile?.blog_badge ? "✍️ Berbadge" : "Tanpa badge"}
+            {profile?.blog_badge ? " Berbadge" : "Tanpa badge"}
           </span>
           {profile?.blog_badge_at && (
             <span className="text-xs text-gray-400">

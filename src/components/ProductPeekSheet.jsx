@@ -83,7 +83,7 @@ export default function ProductPeekSheet({ listing, isOpen, onClose }) {
               loading="lazy"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-2xl">📦</div>
+            <div className="flex h-full w-full items-center justify-center text-2xl"><svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg></div>
           )}
         </div>
 
@@ -107,7 +107,7 @@ export default function ProductPeekSheet({ listing, isOpen, onClose }) {
             )}
             {listing.campus && (
               <span className="rounded-full bg-black/[0.05] px-2 py-0.5 text-[10px] font-semibold text-gray-600 dark:bg-white/[0.08] dark:text-slate-300">
-                📍 {listing.campus}
+                 {listing.campus}
               </span>
             )}
           </div>

@@ -479,7 +479,7 @@ export default function HomeBrowser({
                 href="/dicari"
                 className="flex w-36 shrink-0 flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-emerald-200 bg-transparent p-3 text-center transition hover:bg-emerald-50 dark:border-emerald-900/40 dark:hover:bg-emerald-900/10"
               >
-                <span className="text-xl">🔍</span>
+                <Icon.Search className="h-5 w-5" />
                 <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 leading-tight">Lihat semua yang dicari</span>
               </Link>
             </div>
@@ -547,7 +547,7 @@ export default function HomeBrowser({
                     : "border border-gray-200 text-gray-600 hover:border-gray-300 dark:border-slate-800 dark:text-slate-300"
                   }`}
               >
-                Harga{minPrice || maxPrice ? " ✓" : ""}
+                Harga{minPrice || maxPrice ? <Icon.Check className="h-3.5 w-3.5" /> : null}
               </button>
 
               {/* Campus */}
@@ -579,7 +579,7 @@ export default function HomeBrowser({
                     : "border border-gray-200 text-gray-600 hover:border-gray-300 dark:border-slate-800 dark:text-slate-300"
                   }`}
               >
-                Nego{negoFilter ? " ✓" : ""}
+                Nego{negoFilter ? <Icon.Check className="h-3.5 w-3.5" /> : null}
               </button>
 
               {/* Kondisi */}
@@ -597,7 +597,7 @@ export default function HomeBrowser({
                     : "border border-gray-200 text-gray-600 hover:border-gray-300 dark:border-slate-800 dark:text-slate-300"
                   }`}
                 >
-                  {c === "all" ? "Semua Kondisi" : c === "new" ? "✨ Baru" : "Bekas"}
+                  {c === "all" ? "Semua Kondisi" : c === "new" ? <><Icon.Sparkles className="h-3.5 w-3.5" /> Baru</> : "Bekas"}
                 </button>
               ))}
 
@@ -615,7 +615,7 @@ export default function HomeBrowser({
                   : "border border-gray-200 text-gray-600 hover:border-gray-300 dark:border-slate-800 dark:text-slate-300"
                 }`}
                 >
-                  🔑 Sewa{typeFilter === "sewa" ? " ✓" : ""}
+                  <Icon.Key className="h-3.5 w-3.5" /> Sewa{typeFilter === "sewa" ? <Icon.Check className="h-3.5 w-3.5" /> : null}
                 </button>
 
               {/* Reset */}
@@ -770,7 +770,7 @@ export default function HomeBrowser({
                   onClick={() => setShowCatSubModal(true)}
                   className="flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 dark:border-emerald-900/50 dark:bg-emerald-900/10 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/20 transition-colors"
                 >
-                  🔔 Notif saya kalau ada iklan baru di <strong>{catName(cat)}</strong>
+                  <Icon.Bell className="h-4 w-4" /> Notif saya kalau ada iklan baru di <strong>{catName(cat)}</strong>
                 </button>
               </div>
             )}
@@ -783,8 +783,8 @@ export default function HomeBrowser({
               >
                 <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 shadow-2xl overflow-hidden">
                   <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-slate-800">
-                    <p className="font-bold text-sm text-gray-900 dark:text-white">🔔 Notifikasi Kategori</p>
-                    <button onClick={() => setShowCatSubModal(false)} className="text-gray-400 hover:text-gray-600 text-lg">✕</button>
+                    <p className="flex items-center gap-2 font-bold text-sm text-gray-900 dark:text-white"><Icon.Bell className="h-4 w-4" /> Notifikasi Kategori</p>
+                    <button onClick={() => setShowCatSubModal(false)} className="text-gray-400 hover:text-gray-600" aria-label="Tutup"><Icon.X className="h-5 w-5" /></button>
                   </div>
                   <div className="p-4 space-y-3">
                     <p className="text-xs text-gray-500 dark:text-slate-400">
@@ -840,7 +840,7 @@ export default function HomeBrowser({
                       }}
                       className="btn-primary w-full disabled:opacity-50"
                     >
-                      {catSubBusy ? "Menyimpan…" : "🔔 Aktifkan Notifikasi"}
+                      {catSubBusy ? "Menyimpan…" : <><Icon.Bell className="h-4 w-4" /> Aktifkan Notifikasi</>}
                     </button>
                     <p className="text-[10px] text-center text-gray-400">Untuk berhenti langganan, hubungi admin WA.</p>
                   </div>

@@ -1137,7 +1137,7 @@ function DashboardInner() {
               <div className="card p-6 border-2 border-amber-200 bg-amber-50/30 dark:border-amber-900/30 dark:bg-amber-900/10">
                 <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start text-center sm:text-left">
                   <div className="h-24 w-24 shrink-0 rounded-2xl bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center text-4xl">
-                    👑
+                    <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg>
                   </div>
                   <div className="flex-1">
                     <h2 className="text-xl font-extrabold text-amber-900 dark:text-amber-300">Langganan Penjual Pro</h2>
@@ -1147,7 +1147,7 @@ function DashboardInner() {
 
                     {sellerProfile?.subscription_tier === "pro" && new Date(sellerProfile?.subscription_expires_at) > new Date() ? (
                       <div className="mt-4 p-4 rounded-xl bg-green-50 border border-green-200 dark:bg-green-900/20 dark:border-green-900/50">
-                        <p className="text-sm font-bold text-green-700 dark:text-green-400">✅ Anda adalah Penjual Pro</p>
+                        <p className="text-sm font-bold text-green-700 dark:text-green-400"> Anda adalah Penjual Pro</p>
                         <p className="text-xs text-green-600 dark:text-green-500 mt-1">
                           Langganan aktif sampai dengan {new Date(sellerProfile.subscription_expires_at).toLocaleDateString("id-ID", { dateStyle: "long" })}
                         </p>
@@ -1159,7 +1159,7 @@ function DashboardInner() {
                           disabled={busy}
                           className="btn-primary bg-amber-500 hover:bg-amber-600 border-amber-600 text-white shadow-lg shadow-amber-500/30 px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 w-full sm:w-auto justify-center disabled:opacity-50"
                         >
-                          🌟 Beli Paket Pro (Rp 49.000 / 30 Hari)
+                           Beli Paket Pro (Rp 49.000 / 30 Hari)
                         </button>
                       </div>
                     )}
@@ -1172,7 +1172,7 @@ function DashboardInner() {
               <div className="card p-6 border-2 border-indigo-100 bg-indigo-50/30 dark:border-indigo-900/30 dark:bg-indigo-900/10">
                 <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start text-center sm:text-left">
                   <div className="h-24 w-24 shrink-0 rounded-2xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-4xl">
-                    🤝
+                    <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg>
                   </div>
                   <div className="flex-1">
                     <h2 className="text-xl font-extrabold text-indigo-900 dark:text-indigo-300">Program Ajak Teman</h2>
@@ -1193,7 +1193,7 @@ function DashboardInner() {
                           }}
                           className="btn-outline text-sm py-2 px-4"
                         >
-                          📋 Salin Kode
+                           Salin Kode
                         </button>
                       </div>
                     ) : (
@@ -1220,7 +1220,7 @@ function DashboardInner() {
                 <div className="rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 dark:from-amber-900/20 dark:to-orange-900/20 dark:border-amber-900/50 p-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-sm">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 shrink-0 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center text-xl">
-                      ⚠️
+                      <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg>
                     </div>
                     <div>
                       <p className="font-bold text-amber-900 dark:text-amber-300">

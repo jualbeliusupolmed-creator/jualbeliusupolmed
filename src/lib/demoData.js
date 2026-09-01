@@ -36,14 +36,14 @@ const PENJUAL = [
 ];
 
 const KATEGORI = [
-  { id: "k1", name: "Elektronik", slug: "elektronik", icon: "💻", sort_order: 1 },
-  { id: "k2", name: "Buku & Alat Kuliah", slug: "buku", icon: "📚", sort_order: 2 },
-  { id: "k3", name: "Kos & Sewa", slug: "kos", icon: "🏠", sort_order: 3 },
-  { id: "k4", name: "Fashion", slug: "fashion", icon: "👕", sort_order: 4 },
-  { id: "k5", name: "Kendaraan", slug: "kendaraan", icon: "🛵", sort_order: 5 },
-  { id: "k6", name: "Jasa", slug: "jasa", icon: "🛠️", sort_order: 6 },
-  { id: "k7", name: "Perabot", slug: "perabot", icon: "🪑", sort_order: 7 },
-  { id: "k8", name: "Lain-lain", slug: "lain", icon: "📦", sort_order: 8 },
+  { id: "k1", name: "Elektronik", slug: "elektronik", icon: "Laptop", sort_order: 1 },
+  { id: "k2", name: "Buku & Alat Kuliah", slug: "buku", icon: "Books", sort_order: 2 },
+  { id: "k3", name: "Kos & Sewa", slug: "kos", icon: "Home", sort_order: 3 },
+  { id: "k4", name: "Fashion", slug: "fashion", icon: "Fashion", sort_order: 4 },
+  { id: "k5", name: "Kendaraan", slug: "kendaraan", icon: "Motor", sort_order: 5 },
+  { id: "k6", name: "Jasa", slug: "jasa", icon: "Box", sort_order: 6 },
+  { id: "k7", name: "Perabot", slug: "perabot", icon: "Chair", sort_order: 7 },
+  { id: "k8", name: "Lain-lain", slug: "lain", icon: "Box", sort_order: 8 },
 ];
 
 const BARANG = [

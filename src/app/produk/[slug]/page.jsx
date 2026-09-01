@@ -311,7 +311,7 @@ export default async function ProdukPage({ params }) {
           </p>
           {listing.seller_profiles?.distributor && listing.distributor_fee > 0 && (
             <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-lg bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800/50 px-3 py-1.5 text-sm">
-              <span className="text-orange-500">🏪</span>
+              <span className="text-orange-500"><svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg></span>
               <span className="text-orange-700 dark:text-orange-400">
                 Fee Bagi Hasil Distributor: <strong>{rupiah(listing.distributor_fee)}</strong>
               </span>
@@ -319,7 +319,7 @@ export default async function ProdukPage({ params }) {
           )}
           {listing.type === "sewa" && (
             <p className="mt-1 text-sm font-medium text-teal-700 dark:text-teal-400 flex items-center gap-1">
-              🔑 Barang ini disewakan, bukan dijual
+               Barang ini disewakan, bukan dijual
             </p>
           )}
           <p className="mt-1 text-sm text-gray-400">
@@ -344,7 +344,7 @@ export default async function ProdukPage({ params }) {
                 <p className="text-sm font-semibold dark:text-white">{listing.seller_name}</p>
                 {listing.seller_profiles?.distributor && (
                   <span className="inline-flex items-center gap-0.5 rounded-full bg-orange-100 dark:bg-orange-900/40 px-1.5 py-0.5 text-[10px] font-bold text-orange-600 dark:text-orange-400" title="Distributor Resmi">
-                    🏪 Distributor
+                     Distributor
                   </span>
                 )}
                 {listing.seller_profiles?.trusted_seller && (

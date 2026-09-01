@@ -145,7 +145,7 @@ export async function POST(request, { params }) {
           room_id: directRoomId,
           sender_id: "system",
           sender_alias: "Sistem",
-          message: "🎉 Kalian telah saling setuju terhubung di DM Pribadi! Obrolan ini tersimpan permanen di Kotak Masuk akun kalian.",
+          message: " Kalian telah saling setuju terhubung di DM Pribadi! Obrolan ini tersimpan permanen di Kotak Masuk akun kalian.",
         });
       }
 

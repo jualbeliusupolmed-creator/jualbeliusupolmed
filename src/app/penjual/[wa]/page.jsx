@@ -250,7 +250,7 @@ export default async function SellerProfilePage({ params }) {
               {seller.seller_name}
               {isDistributor && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 dark:bg-orange-900/40 px-2.5 py-0.5 text-xs font-bold text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-800/50" title="Distributor Resmi">
-                  🏪 DISTRIBUTOR
+                   DISTRIBUTOR
                 </span>
               )}
               {seller.subscription_tier === "pro" && new Date(seller.subscription_expires_at) > new Date() && (
@@ -268,7 +268,7 @@ export default async function SellerProfilePage({ params }) {
             </h1>
             {soldCount > 0 && (
               <span className="badge bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 font-bold text-[11px]">
-                ✓ Terjual {soldCount}×
+                 Terjual {soldCount}×
               </span>
             )}
           </div>
@@ -298,7 +298,7 @@ export default async function SellerProfilePage({ params }) {
           )}
           {seller.topCategory && (
              <p className="mt-2 text-xs font-semibold text-primary">
-               🏅 Spesialis: {seller.topCategory}
+                Spesialis: {seller.topCategory}
              </p>
           )}
           <div className="flex flex-wrap gap-2 mt-3.5">
@@ -311,7 +311,7 @@ export default async function SellerProfilePage({ params }) {
                 rel="noreferrer"
                 className="btn-wa py-2 px-4 text-xs rounded-xl"
               >
-                💬 Hubungi via WA
+                 Hubungi via WA
               </a>
             )}
             <ShareProfileButton />
@@ -320,7 +320,7 @@ export default async function SellerProfilePage({ params }) {
           {/* Info Distributor */}
           {isDistributor && (
             <div className="mt-4 rounded-xl bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800/50 p-3">
-              <p className="text-xs font-semibold text-orange-700 dark:text-orange-400 mb-1">🏪 Mitra Distributor Resmi</p>
+              <p className="text-xs font-semibold text-orange-700 dark:text-orange-400 mb-1"> Mitra Distributor Resmi</p>
               {seller.distributorCategories?.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-1">
                   {seller.distributorCategories.map((c) => (
@@ -374,7 +374,7 @@ export default async function SellerProfilePage({ params }) {
 
       {listings.length === 0 ? (
         <div className="card mt-4 grid place-items-center py-16 text-center text-gray-400">
-          <p className="text-4xl">🪹</p>
+          <p className="text-4xl"><svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg></p>
           <p className="mt-2">Penjual ini belum punya iklan aktif.</p>
           <Link href="/" className="btn-outline mt-4">
             Jelajahi Marketplace
@@ -397,7 +397,7 @@ export default async function SellerProfilePage({ params }) {
           <ul className="space-y-1.5">
             {soldListings.slice(0, 6).map((l) => (
               <li key={l.id} className="flex items-center justify-between gap-2 text-sm text-gray-500 dark:text-slate-400">
-                <span className="truncate">✓ {l.title}</span>
+                <span className="truncate"> {l.title}</span>
                 <span className="shrink-0 text-xs text-gray-400 dark:text-slate-500">
                   Rp {Number(l.price).toLocaleString("id-ID")}
                 </span>

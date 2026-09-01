@@ -43,7 +43,7 @@ export function TabGrup() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: partForm.action, participants }),
     }).then(r => r.json());
-    setPartStatus(r.ok ? { ok: true, text: `✅ ${partForm.action} berhasil!` } : { ok: false, text: `❌ ${r.error}` });
+    setPartStatus(r.ok ? { ok: true, text: `${partForm.action} berhasil!` } : { ok: false, text: `${r.error}` });
     setPartLoading(false);
   }
 
@@ -60,13 +60,13 @@ export function TabGrup() {
       });
       const r = await res.json();
       if (res.ok && r.ok) {
-        setJapriStatus({ ok: true, text: `✅ Berhasil mengirim japri ke ${r.successCount} anggota. Gagal: ${r.failCount}` });
+        setJapriStatus({ ok: true, text: `Berhasil mengirim japri ke ${r.successCount} anggota. Gagal: ${r.failCount}` });
         setJapriMsg("");
       } else {
-        setJapriStatus({ ok: false, text: `❌ Gagal: ${r.error || "Terjadi kesalahan"}` });
+        setJapriStatus({ ok: false, text: `Gagal: ${r.error || "Terjadi kesalahan"}` });
       }
     } catch (err) {
-      setJapriStatus({ ok: false, text: `❌ Error: ${err.message}` });
+      setJapriStatus({ ok: false, text: `Error: ${err.message}` });
     }
     setJapriLoading(false);
   }
@@ -76,7 +76,7 @@ export function TabGrup() {
     setCreating(true); setCreateStatus(null);
     const participants = createForm.numbers.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
     const r = await apiPost("groups/create", { name: createForm.name, participants });
-    setCreateStatus(r.ok ? { ok: true, text: `✅ Grup "${createForm.name}" berhasil dibuat! JID: ${r.jid}` } : { ok: false, text: `❌ ${r.error}` });
+    setCreateStatus(r.ok ? { ok: true, text: `Grup "${createForm.name}" berhasil dibuat! JID: ${r.jid}` } : { ok: false, text: `${r.error}` });
     if (r.ok) { setCreateForm({ name: "", numbers: "" }); refetch(); }
     setCreating(false);
   }
@@ -87,9 +87,9 @@ export function TabGrup() {
         <h2 className="text-lg font-bold dark:text-white">Grup WhatsApp Bot</h2>
         <div className="flex gap-2">
           <button onClick={() => setShowCreate(s => !s)} className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700">
-            ➕ Buat Grup
+            Buat Grup
           </button>
-          <button onClick={refetch} className="btn-outline text-xs">🔄 Refresh</button>
+          <button onClick={refetch} className="btn-outline text-xs">Refresh</button>
         </div>
       </div>
 
@@ -102,12 +102,12 @@ export function TabGrup() {
             <textarea className="input min-h-[80px]" placeholder="08123456789&#10;08987654321" value={createForm.numbers} onChange={e => setCreateForm(f => ({ ...f, numbers: e.target.value }))} required />
           </div>
           <Alert ok={createStatus?.ok} msg={createStatus?.text} />
-          <button type="submit" disabled={creating} className="btn-primary">{creating ? "⏳ Membuat..." : "✅ Buat Grup"}</button>
+          <button type="submit" disabled={creating} className="btn-primary">{creating ? "Membuat..." : "Buat Grup"}</button>
         </form>
       )}
 
       {loading && <p className="text-sm text-gray-400">Memuat grup...</p>}
-      {error && <Alert ok={false} msg={`⚠️ ${error}`} />}
+      {error && <Alert ok={false} msg={error} />}
 
       <input className="input max-w-sm" placeholder="Cari nama grup / JID..." value={search} onChange={e => setSearch(e.target.value)} />
       <p className="text-xs text-gray-400">{groups.length} grup</p>
@@ -128,7 +128,7 @@ export function TabGrup() {
                 <CopyBtn text={g.jid} />
                 <button onClick={() => { setSelected(selected?.jid === g.jid ? null : g); setInviteLink(null); setPartStatus(null); setJapriStatus(null); }}
                   className={`rounded px-2 py-0.5 text-xs font-medium transition-colors ${selected?.jid === g.jid ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-300"}`}>
-                  ⚙️ Kelola
+                   Kelola
                 </button>
               </div>
             </div>
@@ -138,7 +138,7 @@ export function TabGrup() {
                 {/* Invite Link */}
                 <div>
                   <button onClick={() => getInvite(g.jid)} disabled={inviteLoading} className="rounded bg-blue-100 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-300">
-                    {inviteLoading ? "⏳ Mengambil..." : "🔗 Ambil Invite Link"}
+                    {inviteLoading ? "Mengambil..." : "Ambil Invite Link"}
                   </button>
                   {inviteLink?.link && (
                     <div className="mt-2 rounded bg-gray-50 dark:bg-slate-800 p-2 flex items-center gap-2">
@@ -153,14 +153,14 @@ export function TabGrup() {
                 <form onSubmit={handleParticipants} className="space-y-2">
                   <p className="text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Kelola Anggota</p>
                   <select className="input text-sm" value={partForm.action} onChange={e => setPartForm(f => ({ ...f, action: e.target.value }))}>
-                    <option value="add">➕ Tambah anggota</option>
-                    <option value="remove">➖ Hapus anggota</option>
-                    <option value="promote">⬆️ Jadikan admin</option>
-                    <option value="demote">⬇️ Turunkan dari admin</option>
+                    <option value="add">Tambah anggota</option>
+                    <option value="remove"> Hapus anggota</option>
+                    <option value="promote">⬆ Jadikan admin</option>
+                    <option value="demote">⬇ Turunkan dari admin</option>
                   </select>
                   <textarea className="input min-h-[60px]" placeholder="08123456789, 08987654321" value={partForm.numbers} onChange={e => setPartForm(f => ({ ...f, numbers: e.target.value }))} required />
                   <Alert ok={partStatus?.ok} msg={partStatus?.text} />
-                  <button type="submit" disabled={partLoading} className="btn-primary text-sm">{partLoading ? "⏳ Memproses..." : "✅ Jalankan"}</button>
+                  <button type="submit" disabled={partLoading} className="btn-primary text-sm">{partLoading ? "Memproses..." : "Jalankan"}</button>
                 </form>
 
                 {/* Broadcast Japri */}
@@ -169,7 +169,7 @@ export function TabGrup() {
                   <p className="text-xs text-gray-500 mb-1">Kirim pesan personal (japri) ke semua peserta grup secara bertahap.</p>
                   <textarea className="input min-h-[80px]" placeholder="Pesan untuk semua anggota grup..." value={japriMsg} onChange={e => setJapriMsg(e.target.value)} required />
                   <Alert ok={japriStatus?.ok} msg={japriStatus?.text} />
-                  <button type="submit" disabled={japriLoading || !japriMsg.trim()} className="btn-primary bg-emerald-600 hover:bg-emerald-700 text-sm">{japriLoading ? "⏳ Mengirim..." : `⚡ Kirim ke ${g.participants} anggota`}</button>
+                  <button type="submit" disabled={japriLoading || !japriMsg.trim()} className="btn-primary bg-emerald-600 hover:bg-emerald-700 text-sm">{japriLoading ? "Mengirim..." : `Kirim ke ${g.participants} anggota`}</button>
                 </form>
               </div>
             )}

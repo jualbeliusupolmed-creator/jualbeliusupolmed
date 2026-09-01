@@ -44,7 +44,7 @@ export default function TrenPage() {
         </div>
       ) : !data?.top?.length ? (
         <div className="rounded-2xl border border-gray-100 bg-white p-10 text-center dark:border-slate-800 dark:bg-slate-900/40">
-          <p className="text-2xl">🔍</p>
+          <p className="text-2xl"><svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg></p>
           <p className="mt-2 text-sm text-gray-400">Belum ada data pencarian. Data mulai terekam setelah migration_logs.sql dijalankan.</p>
         </div>
       ) : (

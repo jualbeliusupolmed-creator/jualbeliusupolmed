@@ -68,13 +68,13 @@ export async function POST(req, { params }) {
   const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
   await sendWa(
     invite.wa,
-    `🎊 *Selamat! Anda Resmi Menjadi Distributor!*\n\n` +
+    ` *Selamat! Anda Resmi Menjadi Distributor!*\n\n` +
     `Badge *DISTRIBUTOR* sudah aktif di profil Anda.\n\n` +
     `Mulai sekarang:\n` +
-    `✅ Pasang iklan *GRATIS* tanpa biaya\n` +
-    `✅ Setiap iklan otomatis tampilkan info *Fee Bagi Hasil*\n` +
-    `✅ Postingan Anda akan dirangkum & dikirim setiap hari jam 13.00\n\n` +
-    `👉 Mulai posting: ${baseUrl}/pasang-iklan`
+    ` Pasang iklan *GRATIS* tanpa biaya\n` +
+    ` Setiap iklan otomatis tampilkan info *Fee Bagi Hasil*\n` +
+    ` Postingan Anda akan dirangkum & dikirim setiap hari jam 13.00\n\n` +
+    ` Mulai posting: ${baseUrl}/pasang-iklan`
   ).catch(() => {});
 
   return NextResponse.json({ ok: true });

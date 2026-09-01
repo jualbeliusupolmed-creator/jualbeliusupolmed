@@ -136,13 +136,13 @@ export async function POST(req) {
 
     return NextResponse.json({
       success: true,
-      // Dulu kalimat ini selalu berbunyi "…dan terverifikasi! 🎉" apa pun
+      // Dulu kalimat ini selalu berbunyi "…dan terverifikasi! " apa pun
       // hasilnya. Itu tidak apa-apa selama semua orang lolos; sejak kode
       // undangannya benar-benar diperiksa, sebagian pendaftar TIDAK
       // terverifikasi — dan mereka berhak tahu itu sekarang, bukan nanti saat
       // bertanya-tanya kenapa centangnya tidak muncul.
       message: isVerified
-        ? "Akun Organisasi / UKM berhasil didaftarkan dan terverifikasi! 🎉"
+        ? "Akun Organisasi / UKM berhasil didaftarkan dan terverifikasi! "
         : "Akun Organisasi / UKM berhasil didaftarkan. Centang resmi belum aktif karena kode undangannya tidak cocok — hubungi admin untuk mendapatkan kode yang benar.",
       wa: formattedWa,
       email: cleanEmail,

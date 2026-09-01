@@ -26,7 +26,7 @@ export function TabSapaan() {
   async function simpanSapaan() {
     setSimpan(true);
     const r = await apiPost("settings/greeting", { text: teks });
-    setMsg(r.ok ? { ok: true, text: "✅ Sapaan disimpan — langsung berlaku." } : { ok: false, text: `❌ ${r.error || "Gagal menyimpan."}` });
+    setMsg(r.ok ? { ok: true, text: "Sapaan disimpan - langsung berlaku." } : { ok: false, text: `${r.error || "Gagal menyimpan."}` });
     setSimpan(false);
     refetch();
   }
@@ -35,7 +35,7 @@ export function TabSapaan() {
     if (!confirm("Kembalikan sapaan ke teks bawaan bot?")) return;
     setSimpan(true);
     const r = await apiPost("settings/greeting/reset");
-    setMsg(r.ok ? { ok: true, text: "✅ Sapaan dikembalikan ke bawaan." } : { ok: false, text: `❌ ${r.error || "Gagal reset."}` });
+    setMsg(r.ok ? { ok: true, text: "Sapaan dikembalikan ke bawaan." } : { ok: false, text: `${r.error || "Gagal reset."}` });
     setSimpan(false);
     refetch();
   }
@@ -43,7 +43,7 @@ export function TabSapaan() {
   async function simpanNomor() {
     setSimpan(true);
     const r = await apiPost("settings/nomor", { owner, cadangan });
-    setMsg(r.ok ? { ok: true, text: "✅ Nomor disimpan." } : { ok: false, text: `❌ ${r.error || "Gagal menyimpan nomor."}` });
+    setMsg(r.ok ? { ok: true, text: "Nomor disimpan." } : { ok: false, text: `${r.error || "Gagal menyimpan nomor."}` });
     setSimpan(false);
     refetch();
   }
@@ -54,14 +54,14 @@ export function TabSapaan() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold dark:text-white">Sapaan & Nomor Penting</h2>
-        <button onClick={refetch} className="btn-outline text-xs">🔄 Muat ulang</button>
+        <button onClick={refetch} className="btn-outline text-xs">Muat ulang</button>
       </div>
 
       {loading && !data && <p className="text-sm text-gray-400">Memuat...</p>}
-      {error && <Alert ok={false} msg={`⚠️ ${error}`} />}
+      {error && <Alert ok={false} msg={error} />}
       <Alert ok={msg?.ok} msg={msg?.text} />
 
-      <Kartu judul="💬 Teks sapaan otomatis">
+      <Kartu judul="Teks sapaan otomatis">
         <p className="mb-3 text-xs text-gray-400">
           Dikirim ke pesan tanpa titik (sekali per kontak) dan setiap kali seseorang mengetik {kataMin}.
           Perubahan langsung berlaku, tanpa restart bot.
@@ -81,7 +81,7 @@ export function TabSapaan() {
         </div>
       </Kartu>
 
-      <Kartu judul="📞 Nomor penting">
+      <Kartu judul=" Nomor penting">
         <p className="mb-4 text-xs text-gray-400">
           Dua nomor untuk keadaan bot bermasalah. Berlaku langsung, tanpa restart bot.
           Format bebas — <b>0812…</b> atau <b>62812…</b> sama saja.

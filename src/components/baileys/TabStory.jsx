@@ -33,9 +33,9 @@ export function TabStory() {
         uploadedUrl = upData.url;
       }
       const r = await apiPost("story", { text: form.text, url: uploadedUrl });
-      setMsg(r.ok ? { ok: true, text: "✅ Status WA berhasil dipost!" } : { ok: false, text: `❌ ${r.error}` });
+      setMsg(r.ok ? { ok: true, text: "Status WA berhasil dipost!" } : { ok: false, text: `${r.error}` });
       if (r.ok) { setForm({ text: "" }); setImageFile(null); setImagePreview(""); refetch(); }
-    } catch (e) { setMsg({ ok: false, text: `❌ ${e.message}` }); }
+    } catch (e) { setMsg({ ok: false, text: `${e.message}` }); }
     finally { setSending(false); }
   }
 
@@ -62,7 +62,7 @@ export function TabStory() {
         <div>
           <label className="label">Gambar (opsional — jadi status foto, otomatis WebP)</label>
           <label className="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-dashed border-gray-300 p-3 hover:border-blue-400 dark:border-slate-600">
-            <span className="text-2xl">🖼️</span>
+            <span className="text-2xl"><svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg></span>
             <div className="min-w-0">
               <p className="text-sm font-medium dark:text-gray-300">{imageFile ? imageFile.name : "Klik untuk pilih gambar"}</p>
               <p className="text-xs text-gray-400">JPG, PNG, WebP · Maks 5 MB</p>
@@ -73,23 +73,23 @@ export function TabStory() {
             <div className="relative mt-2 inline-block">
               <img src={imagePreview} alt="preview" className="h-32 w-auto rounded-lg border object-cover" />
               <button type="button" onClick={() => { setImageFile(null); setImagePreview(""); }}
-                className="absolute -right-2 -top-2 rounded-full bg-red-500 p-0.5 text-xs text-white hover:bg-red-600">✕</button>
+                className="absolute -right-2 -top-2 rounded-full bg-red-500 p-0.5 text-xs text-white hover:bg-red-600"></button>
             </div>
           )}
         </div>
         <button type="submit" disabled={sending || !form.text.trim()} className="btn-primary w-full">
-          {sending ? "⏳ Memposting..." : "📱 Post Status WA"}
+          {sending ? "Memposting..." : "Post Status WA"}
         </button>
       </form>
 
       <div className="rounded-lg bg-blue-50 p-3 text-xs text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
-        💡 Status hanya tampil ke kontak yang sudah pernah chat dengan nomor WA bot, dan yang setting privasi-nya mengizinkan.
+         Status hanya tampil ke kontak yang sudah pernah chat dengan nomor WA bot, dan yang setting privasi-nya mengizinkan.
       </div>
 
       <div className="pt-4 border-t dark:border-slate-700">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold dark:text-white">Status Aktif (24 Jam Terakhir)</h3>
-          <button type="button" onClick={refetch} className="btn-outline text-xs">🔄 Refresh</button>
+          <button type="button" onClick={refetch} className="btn-outline text-xs">Refresh</button>
         </div>
         
         {loading && <p className="text-sm text-gray-400">Memuat status...</p>}

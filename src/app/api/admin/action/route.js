@@ -468,14 +468,14 @@ export async function POST(req) {
         
         // 4. Kirim WhatsApp berisi detail kontak pembeli ke pemohon menggunakan Fonnte
         const msg = 
-          `✅ *PEMBAYARAN QRIS MANUAL DISETUJUI*\n\n` +
+          ` *PEMBAYARAN QRIS MANUAL DISETUJUI*\n\n` +
           `Halo, permintaan buka kontak Anda untuk pencarian barang berikut telah disetujui:\n` +
-          `🔍 *Cari Barang:* ${wanted.title}\n\n` +
+          ` *Cari Barang:* ${wanted.title}\n\n` +
           `Berikut adalah kontak pembeli yang mengajukan pencarian:\n` +
-          `👤 *Nama:* ${wanted.buyer_name}\n` +
-          `📱 *No. WhatsApp:* ${wanted.buyer_wa}\n\n` +
+          ` *Nama:* ${wanted.buyer_name}\n` +
+          ` *No. WhatsApp:* ${wanted.buyer_wa}\n\n` +
           `Silakan langsung hubungi pembeli di atas melalui link berikut:\n` +
-          `👉 https://wa.me/${wanted.buyer_wa}?text=${encodeURIComponent(`Halo ${wanted.buyer_name}, saya melihat postingan Anda di Jual Beli USU Polmed mencari "${wanted.title}". Saya ada barangnya.`)}\n\n` +
+          ` https://wa.me/${wanted.buyer_wa}?text=${encodeURIComponent(`Halo ${wanted.buyer_name}, saya melihat postingan Anda di Jual Beli USU Polmed mencari "${wanted.title}". Saya ada barangnya.`)}\n\n` +
           `Terima kasih telah menggunakan Jual Beli USU Polmed!`;
           
         const fonnteRes = await sendWa(requesterWa, msg);
@@ -494,7 +494,7 @@ export async function POST(req) {
         const row = {
           name,
           slug: slugify(body.slug || name),
-          icon: body.icon || "🏷️",
+          icon: body.icon || "Box",
           sort_order: Number(body.sort_order) || 0,
         };
         if (id) {
@@ -544,10 +544,10 @@ export async function POST(req) {
           return "Sewa Lapak";
         })();
         const msg =
-          `📢 *Pembaruan Tarif Marketplace*\n\n` +
+          ` *Pembaruan Tarif Marketplace*\n\n` +
           `Mode: *${modeLabel}*\n\n` +
-          `📦 Pasang iklan: *${fmtRp(np?.adBarang)}*\n` +
-          `🔼 Bump/sundul: *${fmtRp(np?.bump)}*\n` +
+          ` Pasang iklan: *${fmtRp(np?.adBarang)}*\n` +
+          ` Bump/sundul: *${fmtRp(np?.bump)}*\n` +
           `⭐ Featured/hari: *${fmtRp(np?.featuredPerDay)}*\n` +
           `⏳ Durasi iklan: *${np?.listingDays || 14} hari*\n\n` +
           `_Tarif berlaku sekarang. Ketik MENU untuk info lanjut._`;
@@ -576,7 +576,7 @@ export async function POST(req) {
         if (currentPaused.includes(normalizedWa)) {
           currentPaused = currentPaused.filter((p) => p !== normalizedWa);
           await supa.from("settings").update({ value: { paused_users: currentPaused } }).eq("key", "bot");
-          await sendWa(normalizedWa, "🤖 Bot telah diaktifkan kembali oleh Admin. Anda sekarang dapat menggunakan fitur otomatis bot lagi!");
+          await sendWa(normalizedWa, " Bot telah diaktifkan kembali oleh Admin. Anda sekarang dapat menggunakan fitur otomatis bot lagi!");
         }
         break;
       }
@@ -708,11 +708,11 @@ export async function POST(req) {
         sendWa(
           normalizedWa,
           setuju
-            ? `🏪 *Toko kamu sudah aktif!*\n\n` +
+            ? ` *Toko kamu sudah aktif!*\n\n` +
               `*${nama}* sekarang bisa dibuka siapa saja di:\n${alamat}\n\n` +
               `Mulai sekarang semua iklan yang kamu pasang *tayang gratis* — tanpa biaya tayang. ` +
-              `Bagikan alamat tokomu ke pembeli ya! 🚀`
-            : `🏪 *Pengajuan toko belum bisa disetujui*\n\n` +
+              `Bagikan alamat tokomu ke pembeli ya! `
+            : ` *Pengajuan toko belum bisa disetujui*\n\n` +
               `Toko *${nama}* belum kami aktifkan.\n` +
               (catatan ? `\nAlasannya: _${catatan}_\n` : "") +
               `\nPerbaiki dulu di ${(process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim()}/dashboard/toko, ` +
@@ -769,11 +769,11 @@ export async function POST(req) {
           sendWa(
             artikel.author_wa,
             setuju
-              ? `📝 *Artikelmu sudah terbit!*\n\n` +
+              ? ` *Artikelmu sudah terbit!*\n\n` +
                 `*${artikel.title}*\n\n` +
                 `Sudah bisa dibaca siapa saja di:\n${dasar}/blog/${artikel.slug}\n\n` +
-                `Terima kasih sudah menulis 🙌`
-              : `📝 *Artikelmu belum bisa diterbitkan*\n\n` +
+                `Terima kasih sudah menulis `
+              : ` *Artikelmu belum bisa diterbitkan*\n\n` +
                 `*${artikel.title}*\n` +
                 (catatan ? `\nCatatan admin: _${catatan}_\n` : "") +
                 `\nPerbaiki lewat ${dasar}/dashboard (tab Blog), lalu kirim lagi. ` +
@@ -822,10 +822,10 @@ export async function POST(req) {
           sendWa(
             normalizedWa,
             beri
-              ? `✍️ *Kamu dapat badge Penulis!*\n\n` +
+              ? ` *Kamu dapat badge Penulis!*\n\n` +
                 `Mulai sekarang artikel yang kamu kirim *langsung terbit* di ${dasar}/blog — tanpa antre persetujuan.\n\n` +
                 `Tulis lewat ${dasar}/dashboard, tab *Blog*. Dipercaya bukan berarti bebas: tulisan yang menyesatkan atau menyalin punya orang tetap bisa diturunkan.`
-              : `✍️ *Badge Penulis dinonaktifkan*\n\n` +
+              : ` *Badge Penulis dinonaktifkan*\n\n` +
                 `Artikel yang kamu kirim setelah ini akan ditinjau admin dulu sebelum terbit, seperti sedia kala. ` +
                 `Artikel yang sudah tayang tidak diturunkan.`,
             null,
@@ -925,7 +925,7 @@ export async function POST(req) {
 
         // Notifikasi penjual via WA
         const fieldLabel = req.field === "name" ? "nama" : "bio";
-        await sendWa(req.seller_wa, `✅ *Permintaan perubahan ${fieldLabel} profil Anda disetujui!*\n\n${req.field === "name" ? `📛 Nama baru: *${req.requested_value}*` : `📝 Bio baru telah diperbarui.`}\n\nPerubahan sudah berlaku di profil publik Anda.`).catch(() => {});
+        await sendWa(req.seller_wa, ` *Permintaan perubahan ${fieldLabel} profil Anda disetujui!*\n\n${req.field === "name" ? ` Nama baru: *${req.requested_value}*` : ` Bio baru telah diperbarui.`}\n\nPerubahan sudah berlaku di profil publik Anda.`).catch(() => {});
         break;
       }
 
@@ -945,7 +945,7 @@ export async function POST(req) {
 
         const fieldLabelR = reqR.field === "name" ? "nama" : "bio";
         const noteMsg = body.note ? `\n\nAlasan: _${body.note}_` : "";
-        await sendWa(reqR.seller_wa, `❌ *Permintaan perubahan ${fieldLabelR} profil Anda ditolak.*${noteMsg}\n\nHubungi admin jika ada pertanyaan.`).catch(() => {});
+        await sendWa(reqR.seller_wa, ` *Permintaan perubahan ${fieldLabelR} profil Anda ditolak.*${noteMsg}\n\nHubungi admin jika ada pertanyaan.`).catch(() => {});
         break;
       }
 
@@ -968,7 +968,7 @@ export async function POST(req) {
           const expiresAt = new Date(Date.now() + 14 * 864e5).toISOString();
           await supa.from("listings").update({ status: "active", expires_at: expiresAt }).eq("id", id);
           await supa.from("payments").update({ status: "paid" }).eq("listing_id", id).eq("status", "pending");
-          await sendWa(fl.seller_wa, `🎉 *Admin menyetujui tawaranmu!*\n\n📦 *${fl.title}*\n✅ Biaya digratiskan. Iklanmu langsung aktif! 🚀`).catch(() => {});
+          await sendWa(fl.seller_wa, ` *Admin menyetujui tawaranmu!*\n\n *${fl.title}*\n Biaya digratiskan. Iklanmu langsung aktif! `).catch(() => {});
           await autoPublishListingInstagram({
             origin: siteOriginFromRequest(req),
             listingId: id,
@@ -976,7 +976,7 @@ export async function POST(req) {
         } else {
           const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
           await sendWa(fl.seller_wa,
-            `🎉 *Admin menyetujui tawaranmu!*\n\n📦 *${fl.title}*\n💳 Biaya baru: *Rp ${newFee.toLocaleString("id-ID")}*\n\nKirim struk setelah transfer ke sini.`,
+            ` *Admin menyetujui tawaranmu!*\n\n *${fl.title}*\n Biaya baru: *Rp ${newFee.toLocaleString("id-ID")}*\n\nKirim struk setelah transfer ke sini.`,
             `${baseUrl}/qris.png`
           ).catch(() => {});
         }
@@ -990,7 +990,7 @@ export async function POST(req) {
         await supa.from("listings").update({ fee_offer: null, fee_offer_status: "rejected" }).eq("id", id);
         const noteMsg = body.note ? `\n\nAlasan: _${body.note}_` : "";
         await sendWa(flr.seller_wa,
-          `❌ *Tawaran biaya tidak disetujui.*${noteMsg}\n\n📦 *${flr.title}*\n💳 Biaya tetap: *Rp ${Number(pmtR?.amount || 0).toLocaleString("id-ID")}*\n\nSilakan bayar sesuai tagihan awal.`
+          ` *Tawaran biaya tidak disetujui.*${noteMsg}\n\n *${flr.title}*\n Biaya tetap: *Rp ${Number(pmtR?.amount || 0).toLocaleString("id-ID")}*\n\nSilakan bayar sesuai tagihan awal.`
         ).catch(() => {});
         break;
       }

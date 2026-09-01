@@ -33,7 +33,7 @@ export default function MatchModal({
   const cleanWa = (partner.whatsapp || "").replace(/\D/g, "");
   const waUrl = cleanWa
     ? `https://wa.me/${cleanWa.startsWith("0") ? "62" + cleanWa.slice(1) : cleanWa}?text=${encodeURIComponent(
-        `Halo ${partner.display_name || "kak"}! Kita match di Cari Teman Kampus USU & Polmed nih 👋`
+        `Halo ${partner.display_name || "kak"}! Kita match di Cari Teman Kampus USU & Polmed nih `
       )}`
     : null;
 

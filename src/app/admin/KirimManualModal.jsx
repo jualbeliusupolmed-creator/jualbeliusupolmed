@@ -47,7 +47,7 @@ function Salin({ teks, label = "Salin teks" }) {
 
   return (
     <button type="button" onClick={salin} className="g-btn g-btn-sm g-btn-outlined">
-      {tersalin ? "Tersalin ✓" : label}
+      {tersalin ? "Tersalin " : label}
     </button>
   );
 }

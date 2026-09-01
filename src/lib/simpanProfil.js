@@ -183,7 +183,7 @@ async function selaraskanKartuTeman(supa, wa, isian, t = {}, sekarang, peran) {
     campus: ikut.campus || sekarang?.campus || "USU",
     faculty: ikut.faculty || sekarang?.faculty || "Umum",
     batch: ikut.batch || "2024",
-    intent: ikut.intent || "Teman Santai ☕",
+    intent: ikut.intent || "Teman Santai ",
     instagram: ikut.instagram || "",
     whatsapp: peran.tanpaNomor ? "" : wa,
     gender: ikut.gender || "all",

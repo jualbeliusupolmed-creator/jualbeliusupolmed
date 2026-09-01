@@ -67,7 +67,7 @@ export default function MenfessReplySection({ postId, initialCount = 0 }) {
       setReplies((prev) => [...prev, data.reply]);
       setCount((c) => c + 1);
       setReplyText("");
-      toast.success("Balasan terkirim! 💬");
+      toast.success("Balasan terkirim! ");
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -128,7 +128,7 @@ export default function MenfessReplySection({ postId, initialCount = 0 }) {
               ))}
             </div>
           ) : loaded ? (
-            <p className="text-[11px] text-gray-400 py-1">Belum ada balasan. Jadilah yang pertama! 👇</p>
+            <p className="text-[11px] text-gray-400 py-1">Belum ada balasan. Jadilah yang pertama! </p>
           ) : null}
 
           {/* Reply Input */}

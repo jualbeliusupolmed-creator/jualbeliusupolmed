@@ -40,7 +40,7 @@ export default function TransactionModeToggle({ variant = "card" }) {
           }`}
           title="Mode DM Web: Pembeli & penjual chat lewat inbox web"
         >
-          <span>💬</span>
+          <span>DM</span>
           <span className="hidden sm:inline">DM Web</span>
         </button>
 
@@ -55,7 +55,7 @@ export default function TransactionModeToggle({ variant = "card" }) {
           }`}
           title="Mode WA: Pembeli langsung diarahkan ke nomor WhatsApp penjual"
         >
-          <span>📱</span>
+          <span>WA</span>
           <span className="hidden sm:inline">WA Langsung</span>
         </button>
       </div>
@@ -68,7 +68,7 @@ export default function TransactionModeToggle({ variant = "card" }) {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-xl">⚙️</span>
+            <span className="text-xl"><svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg></span>
             <h3 className="text-base font-black tracking-tight text-slate-900 dark:text-white">
               Mode Alur Transaksi Marketplace
             </h3>
@@ -100,7 +100,7 @@ export default function TransactionModeToggle({ variant = "card" }) {
                 : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
-            <span>📱 Mode 1: WhatsApp</span>
+            <span>WA Mode 1: WhatsApp</span>
             {isWaMode && <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
           </button>
 
@@ -115,7 +115,7 @@ export default function TransactionModeToggle({ variant = "card" }) {
                 : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
-            <span>💬 Mode 2: DM Web</span>
+            <span>DM Mode 2: DM Web</span>
             {isChatMode && <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
           </button>
         </div>
@@ -131,7 +131,7 @@ export default function TransactionModeToggle({ variant = "card" }) {
           }`}
         >
           <div className="flex items-center gap-1.5 font-bold text-emerald-800 dark:text-emerald-300">
-            <span>📱 Mode 1: Direct WhatsApp</span>
+            <span>WA Mode 1: Direct WhatsApp</span>
             {isWaMode && <span className="text-[10px] bg-emerald-200 dark:bg-emerald-800 px-1.5 py-0.2 rounded font-extrabold">AKTIF</span>}
           </div>
           <p className="mt-1 text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
@@ -147,7 +147,7 @@ export default function TransactionModeToggle({ variant = "card" }) {
           }`}
         >
           <div className="flex items-center gap-1.5 font-bold text-blue-800 dark:text-blue-300">
-            <span>💬 Mode 2: In-App Direct Message</span>
+            <span>DM Mode 2: In-App Direct Message</span>
             {isChatMode && <span className="text-[10px] bg-blue-200 dark:bg-blue-800 px-1.5 py-0.2 rounded font-extrabold">AKTIF</span>}
           </div>
           <p className="mt-1 text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
