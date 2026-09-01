@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import Image from "next/image";
 import { Icon } from "@/components/Icons";
 import { hapticLight } from "@/lib/haptics";
+import { getTemanIntent, getTemanIntentLabel } from "@/lib/temanIntents";
 
 export default function SwipeCard({
   profile,
@@ -73,6 +74,9 @@ export default function SwipeCard({
 
   if (!profile) return null;
 
+  const intentMeta = getTemanIntent(profile.intent);
+  const IntentIcon = intentMeta?.icon ? Icon[intentMeta.icon] : null;
+
   return (
     <div
       ref={cardRef}
@@ -104,8 +108,8 @@ export default function SwipeCard({
           />
         ) : (
           <div className="flex flex-col h-full w-full items-center justify-center bg-gradient-to-tr from-slate-950 via-primary/20 to-indigo-950/80 text-center p-6 space-y-3 select-none pb-24">
-            <div className="w-24 h-24 rounded-full bg-white/10 border-2 border-white/15 backdrop-blur-xl flex items-center justify-center text-3xl font-black text-white shadow-2xl">
-              {profile.display_name ? profile.display_name.charAt(0).toUpperCase() : "👤"}
+            <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-white/15 bg-white/10 backdrop-blur-xl text-3xl font-black text-white shadow-2xl">
+              {profile.display_name ? profile.display_name.charAt(0).toUpperCase() : <Icon.User className="h-10 w-10" />}
             </div>
             <p className="text-[11px] font-medium text-white/50 tracking-wider">
               {profile.campus} · {profile.faculty || "Mahasiswa"}
@@ -125,8 +129,9 @@ export default function SwipeCard({
               style={{ opacity: likeOpacity }}
               className="pointer-events-none absolute top-8 left-8 -rotate-15 rounded-xl border-3 border-emerald-400 bg-emerald-500/30 backdrop-blur-xs px-4 py-1.5 shadow-lg"
             >
-              <span className="text-xl xs:text-2xl font-black uppercase tracking-wider text-emerald-300">
-                LIKE 💚
+              <span className="inline-flex items-center gap-2 text-xl xs:text-2xl font-black uppercase tracking-wider text-emerald-300">
+                <Icon.HeartFilled className="h-6 w-6" />
+                LIKE
               </span>
             </div>
 
@@ -135,8 +140,9 @@ export default function SwipeCard({
               style={{ opacity: passOpacity }}
               className="pointer-events-none absolute top-8 right-8 rotate-15 rounded-xl border-3 border-rose-400 bg-rose-500/30 backdrop-blur-xs px-4 py-1.5 shadow-lg"
             >
-              <span className="text-xl xs:text-2xl font-black uppercase tracking-wider text-rose-300">
-                PASS ❌
+              <span className="inline-flex items-center gap-2 text-xl xs:text-2xl font-black uppercase tracking-wider text-rose-300">
+                <Icon.X className="h-6 w-6" />
+                PASS
               </span>
             </div>
           </>
@@ -145,12 +151,14 @@ export default function SwipeCard({
         {/* TOP BADGES */}
         <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
           <span className="rounded-full bg-black/60 backdrop-blur-md px-3 py-1 text-[11px] font-bold text-white shadow-xs border border-white/10 flex items-center gap-1">
-            <span>🎓 {profile.campus}</span>
+            <Icon.GraduationCap className="h-3.5 w-3.5 shrink-0" />
+            <span>{profile.campus}</span>
             {profile.faculty && <span>· {profile.faculty}</span>}
           </span>
           {profile.intent && (
-            <span className="rounded-full bg-primary/80 backdrop-blur-md px-3 py-1 text-[11px] font-bold text-white shadow-xs border border-white/15">
-              {profile.intent}
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/80 px-3 py-1 text-[11px] font-bold text-white shadow-xs border border-white/15 backdrop-blur-md">
+              {IntentIcon ? <IntentIcon className="h-3.5 w-3.5 shrink-0" /> : null}
+              {getTemanIntentLabel(profile.intent)}
             </span>
           )}
         </div>
@@ -170,7 +178,10 @@ export default function SwipeCard({
                 )}
               </div>
               <p className="mt-0.5 text-xs text-white/90 drop-shadow-xs flex items-center gap-1.5">
-                <span>📍 Mahasiswa {profile.campus}</span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Icon.GraduationCap className="h-3.5 w-3.5 shrink-0" />
+                  Mahasiswa {profile.campus}
+                </span>
                 <span>•</span>
                 <span>{profile.faculty || "Umum"}</span>
               </p>

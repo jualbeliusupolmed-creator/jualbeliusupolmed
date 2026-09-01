@@ -19,10 +19,10 @@ function waktuRelatif(iso) {
 }
 
 const ICEBREAKERS = [
-  "Halo! Jurusan apa nih? 👋",
-  "Anak kos atau pp dari rumah? 🏠",
-  "Lagi di kampus ga hari ini? 🏫",
-  "Rekomendasi tempat makan murah dong 🤤",
+  "Halo! Jurusan apa nih?",
+  "Anak kos atau pp dari rumah?",
+  "Lagi di kampus ga hari ini?",
+  "Rekomendasi tempat makan murah dong",
 ];
 
 function parseMessageContent(msg) {
@@ -179,7 +179,7 @@ function ChatContent() {
           clearInterval(iv);
         } else if (data.isMatched) {
           clearInterval(iv);
-          toast.success("🎉 Teman ditemukan!");
+          toast.success("Teman ditemukan!");
           playChatSound();
           hapticSuccess();
         } else {
@@ -330,11 +330,15 @@ function ChatContent() {
       }
 
       if (data.status === "matched") {
-        toast.success("🎉 Berhasil terhubung dengan teman!");
+        toast.success("Berhasil terhubung dengan teman!", {
+          icon: <Icon.HeartFilled className="h-4 w-4 text-emerald-600" />,
+        });
         playChatSound();
         hapticSuccess();
       } else if (data.status === "waiting") {
-        toast.info("🔍 Belum ada yang online sekarang — kamu masuk antrean.");
+        toast.info("Belum ada yang online sekarang — kamu masuk antrean.", {
+          icon: <Icon.Search className="h-4 w-4 text-primary" />,
+        });
       }
       if (anonView) muatUtas();
       else router.push("/chat?anon=1");
@@ -352,7 +356,7 @@ function ChatContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "cancel", roomId: waitingRoomId }),
       });
-      toast.info("Pencarian dibatalkan.");
+        toast.info("Pencarian dibatalkan.");
     } catch {}
     if (anonView) muatUtas();
     else refreshAnonInbox();
@@ -406,7 +410,7 @@ function ChatContent() {
 
       toast.dismiss(toastId);
       await handleSendMessage(`[img]${data.url}[/img]`);
-      toast.success("Foto berhasil dikirim 📷");
+      toast.success("Foto berhasil dikirim");
     } catch (err) {
       toast.dismiss(toastId);
       toast.error(err.message || "Gagal mengirim foto");
@@ -499,13 +503,13 @@ function ChatContent() {
         return;
       }
       if (data.status === "revealed") {
-        toast.success("🎉 Saling setuju! Kontak DM Pribadi website terbuka.");
+        toast.success("Saling setuju! Kontak DM Pribadi website terbuka.");
         playSentSound();
         hapticSuccess();
       } else if (data.status === "requested") {
-        toast.info("📩 Ajakan terkirim. Menunggu persetujuan lawan bicara...");
+        toast.info("Ajakan terkirim. Menunggu persetujuan lawan bicara...");
       } else if (data.status === "waiting_partner") {
-        toast.info("⏳ Kamu sudah mengirim ajakan. Menunggu lawan bicara setuju.");
+        toast.info("Kamu sudah mengirim ajakan. Menunggu lawan bicara setuju.");
       }
       if (anonView) muatUtas();
       else fetchRoomData(rId);
@@ -901,7 +905,7 @@ function ChatContent() {
               title="Kirim Foto"
               className="w-9 h-9 shrink-0 rounded-full bg-black/[0.05] dark:bg-white/[0.1] hover:bg-black/[0.08] dark:hover:bg-white/[0.15] text-gray-700 dark:text-gray-200 flex items-center justify-center active:scale-90 transition-all text-sm disabled:opacity-50"
             >
-              {uploadingImg ? "⏳" : "📷"}
+              {uploadingImg ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-current/30 border-t-current" /> : <Icon.Camera className="h-4 w-4" />}
             </button>
             <input
               type="text"
@@ -990,7 +994,9 @@ function ChatContent() {
     if (roomNotFound) {
       return (
         <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4 p-6 text-center">
-          <div className="text-4xl">🔎</div>
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+            <Icon.Search className="h-6 w-6" />
+          </div>
           <p className="text-sm font-bold text-slate-700 dark:text-slate-300">Obrolan ini tidak ditemukan.</p>
           <button
             onClick={() => router.push("/chat")}
@@ -1191,7 +1197,10 @@ function ChatContent() {
                   rel="noopener noreferrer"
                   className="px-4 py-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition-colors"
                 >
-                  Buka Ukuran Asli ↗
+                  <span className="inline-flex items-center gap-1">
+                    <Icon.ExternalLink className="h-3.5 w-3.5" />
+                    Buka Ukuran Asli
+                  </span>
                 </a>
               </div>
             </div>
@@ -1231,14 +1240,25 @@ function ChatContent() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7] flex items-center gap-1.5">
-              🎭 Obrolan Anonim (Teks Langsung)
+              <Icon.MessageCircle className="h-4 w-4 text-primary" />
+              Obrolan Anonim (Teks Langsung)
             </h2>
             <button
               onClick={handleFindPartner}
               disabled={searching}
               className="flex items-center gap-1.5 bg-primary text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow-[0_2px_8px_rgba(83,43,152,0.25)] hover:brightness-105 active:scale-[0.96] transition-all disabled:opacity-60"
             >
-              <span>{searching ? "Mencari..." : "🚀 Cari Partner Teks"}</span>
+              {searching ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                  Mencari...
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5">
+                  <Icon.Search className="h-4 w-4" />
+                  Cari Partner Teks
+                </span>
+              )}
             </button>
           </div>
 
@@ -1251,11 +1271,11 @@ function ChatContent() {
                 className="w-full text-left p-3.5 flex items-center gap-3 hover:bg-black/[0.02] dark:hover:bg-white/[0.04] active:scale-[0.99] transition-all"
               >
                 <div className="w-10 h-10 shrink-0 rounded-full bg-gradient-to-tr from-primary/20 to-purple-500/20 text-primary flex items-center justify-center text-xl shadow-xs">
-                  🎭
+                  <Icon.MessageCircle className="h-5 w-5" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7] truncate">Cari Temen</span>
+                    <span className="text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7] truncate">Cari Teman</span>
                     {anon?.partnerAktif ? (
                       <span className="text-[9px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full shrink-0">
                         {anon.partnerAktif}
@@ -1283,7 +1303,10 @@ function ChatContent() {
 
         {/* ── CHAT JUAL BELI & DM PRIBADI ── */}
         <div>
-          <h2 className="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7] mb-3">💬 Chat Jual Beli & DM Pribadi</h2>
+          <h2 className="mb-3 flex items-center gap-1.5 text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">
+            <Icon.MessageCircle className="h-4 w-4 text-primary" />
+            Chat Jual Beli & DM Pribadi
+          </h2>
           <MarketplaceInbox onSelectRoom={(roomId) => router.push(`/chat?room=${roomId}`)} />
         </div>
       </div>

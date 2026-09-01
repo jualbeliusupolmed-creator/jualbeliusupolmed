@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { rupiah } from "@/lib/fees";
 import { hapticLight } from "@/lib/haptics";
 import { useSesi } from "@/components/SesiProvider";
+import { Icon } from "@/components/Icons";
 
 // Penulis postingan boleh menempelkan SATU iklan miliknya sendiri. Daftarnya
 // diambil dari endpoint dashboard (terkunci sesi), jadi tidak ada cara
@@ -48,7 +49,9 @@ export default function TagProdukPicker({ value, onChange }) {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={gambar} alt="" className="h-full w-full object-cover" />
           ) : (
-            <div className="flex h-full w-full items-center justify-center">📦</div>
+            <div className="flex h-full w-full items-center justify-center text-slate-500">
+              <Icon.Box className="h-5 w-5" />
+            </div>
           )}
         </div>
         <div className="min-w-0 flex-1">
@@ -83,7 +86,8 @@ export default function TagProdukPicker({ value, onChange }) {
         }}
         className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 px-4 py-3 text-xs font-semibold text-slate-500 transition hover:border-primary hover:text-primary dark:border-slate-700 dark:text-slate-400"
       >
-        🛍️ Tandai produk jualanmu (opsional)
+        <Icon.ShoppingCart className="h-4 w-4" />
+        Tandai produk jualanmu (opsional)
       </button>
 
       {terbuka && (
@@ -112,7 +116,9 @@ export default function TagProdukPicker({ value, onChange }) {
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={gambar} alt="" className="h-full w-full object-cover" />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xs">📦</div>
+                    <div className="flex h-full w-full items-center justify-center text-slate-500">
+                      <Icon.Box className="h-4 w-4" />
+                    </div>
                   )}
                 </div>
                 <span className="min-w-0 flex-1">

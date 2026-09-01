@@ -7,6 +7,7 @@ import { Icon } from "@/components/Icons";
 import { toast } from "sonner";
 import imageCompression from "browser-image-compression";
 import { AKSEN, statusToko } from "@/lib/toko";
+import { normalizeTemanIntent } from "@/lib/temanIntents";
 
 /*
  * Satu pintu untuk profil.
@@ -30,8 +31,8 @@ import { AKSEN, statusToko } from "@/lib/toko";
 const INTENTS = [
   { id: "Teman Santai", label: "Teman Santai", icon: Icon.Coffee },
   { id: "Belajar Bareng", label: "Belajar Bareng", icon: Icon.BookOpen },
-  { id: "Teman Olahraga", label: "Teman Olahraga", icon: Icon.Users },
-  { id: "Teman Event / Konser", label: "Teman Event / Konser", icon: Icon.Sparkles },
+  { id: "Teman Olahraga", label: "Teman Olahraga", icon: Icon.Dumbbell },
+  { id: "Teman Event / Konser", label: "Teman Event / Konser", icon: Icon.Ticket },
   { id: "Ngobrol Seru", label: "Ngobrol Seru", icon: Icon.MessageCircle },
   { id: "Cari Relasi Karir", label: "Cari Relasi Karir", icon: Icon.Briefcase },
 ];
@@ -260,7 +261,7 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
             aktif: Boolean(data.profil.teman?.is_active),
             ada: Boolean(data.profil.teman),
             batch: data.profil.teman?.batch || "2024",
-            intent: data.profil.teman?.intent || INTENTS[0],
+            intent: normalizeTemanIntent(data.profil.teman?.intent || INTENTS[0].id),
             instagram: data.profil.teman?.instagram || "",
           },
         });
@@ -309,7 +310,7 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
 
       setProfil(data.profil);
       onProfileUpdated?.(data.profil);
-      toast.success("✅ Profil tersimpan dan tersebar ke semua fitur.");
+      toast.success("Profil tersimpan dan tersebar ke semua fitur.");
     } catch (err) {
       toast.error(err.message || "Gagal menyimpan profil");
     } finally {
@@ -333,44 +334,63 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col items-start justify-between gap-4 rounded-[22px] border border-black/[0.06] bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:border-white/[0.08] dark:bg-[#1c1c1e] sm:flex-row sm:items-center">
-        <div className="space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xl">✨</span>
-            <h2 className="text-base font-black text-[#1d1d1f] dark:text-white">Profil Satu Pintu</h2>
-            {peran.organisasi && (
-              <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">
-                {profil.ukm_verified ? "🏛️ Organisasi Terverifikasi" : "🏛️ Organisasi"}
-              </span>
-            )}
-            {peran.toko && (
-              <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
-                🏪 Punya Toko
-              </span>
-            )}
+      <div className="overflow-hidden rounded-[28px] border border-black/[0.06] bg-white shadow-[0_12px_30px_rgba(15,23,42,0.06)] dark:border-white/[0.08] dark:bg-[#1c1c1e]">
+        <div className="bg-gradient-to-r from-primary/[0.08] via-white to-emerald-500/[0.06] px-5 py-4 dark:from-primary/15 dark:via-[#1c1c1e] dark:to-emerald-500/10">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-primary shadow-sm ring-1 ring-black/[0.05] dark:bg-white/[0.08] dark:ring-white/[0.08]">
+                <Icon.Sparkles className="h-6 w-6" />
+              </div>
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="text-lg font-black tracking-tight text-[#1d1d1f] dark:text-white">Profil Satu Pintu</h2>
+                  {peran.organisasi && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                      <Icon.Landmark className="h-3.5 w-3.5" />
+                      {profil.ukm_verified ? "Organisasi Terverifikasi" : "Organisasi Kampus"}
+                    </span>
+                  )}
+                  {peran.toko && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-100 px-2.5 py-1 text-[10px] font-bold text-sky-700 dark:bg-sky-950/40 dark:text-sky-300">
+                      <Icon.ShoppingBag className="h-3.5 w-3.5" />
+                      Punya Toko
+                    </span>
+                  )}
+                </div>
+                <p className="max-w-2xl text-xs leading-relaxed text-gray-600 dark:text-gray-300">
+                  Satu kali isi, tersebar ke <strong>Marketplace</strong>, <strong>Pusat Obrolan</strong>,{" "}
+                  <strong>Menfess Kampus</strong>
+                  {peran.toko && <>, <strong>halaman toko</strong></>}
+                  {peran.organisasi && <>, <strong>direktori organisasi</strong></>}
+                  {tawarkanCariTeman && <>, dan <strong>Cari Teman</strong></>}.
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {peran.organisasi && (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-white/80 px-3 py-1.5 text-xs font-bold text-primary shadow-sm dark:border-white/[0.08] dark:bg-white/[0.05]">
+                  <Icon.Landmark className="h-4 w-4" />
+                  Portal Organisasi
+                </span>
+              )}
+              {peran.toko && profil.slug && (
+                <Link href={`/toko/${profil.slug}`} target="_blank" className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-bold text-white shadow-xs transition-all hover:brightness-105 active:scale-95">
+                  <Icon.Store className="h-4 w-4" />
+                  <span>Lihat Toko</span>
+                  <Icon.ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              )}
+            </div>
           </div>
-          <p className="max-w-lg text-xs leading-relaxed text-gray-500 dark:text-gray-400">
-            Satu kali isi, tersebar ke <strong>Marketplace</strong>, <strong>Pusat Obrolan</strong>,{" "}
-            <strong>Menfess Kampus</strong>
-            {peran.toko && <>, <strong>halaman toko</strong></>}
-            {peran.organisasi && <>, <strong>direktori organisasi</strong></>}
-            {tawarkanCariTeman && <>, dan <strong>Cari Teman</strong></>}.
-          </p>
         </div>
-        {peran.toko && profil.slug && (
-          <Link href={`/toko/${profil.slug}`} target="_blank" className="flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-bold text-white shadow-xs transition-all hover:brightness-105 active:scale-95">
-            <span>🏪 Lihat Toko</span>
-            <Icon.ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        )}
       </div>
 
       <form onSubmit={simpan} className="space-y-6">
         <div className="flex flex-col items-center justify-center space-y-3 pb-2">
-          <div onClick={() => inputFoto.current?.click()} className="relative h-24 w-24 cursor-pointer overflow-hidden rounded-full bg-black/[0.05] transition-all hover:opacity-80 dark:bg-white/[0.1]">
+          <div onClick={() => inputFoto.current?.click()} className="relative h-24 w-24 cursor-pointer overflow-hidden rounded-full bg-black/[0.05] ring-4 ring-white shadow-lg transition-all hover:opacity-80 dark:bg-white/[0.1] dark:ring-[#1c1c1e]">
             {f.avatar_url
               ? <Image src={f.avatar_url} alt="Foto profil" fill className="object-cover" />
-              : <div className="flex h-full w-full items-center justify-center text-3xl">{peran.organisasi ? "🏛️" : "👤"}</div>}
+              : <div className="flex h-full w-full items-center justify-center text-slate-500 dark:text-slate-300">{peran.organisasi ? <Icon.Landmark className="h-10 w-10" /> : <Icon.User className="h-10 w-10" />}</div>}
             <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-[11px] font-bold text-white opacity-0 transition-opacity hover:opacity-100">Edit</div>
           </div>
           <button type="button" onClick={() => inputFoto.current?.click()} disabled={memampatkan} className="text-[15px] font-medium text-primary transition-colors hover:text-primary/80">
@@ -497,8 +517,9 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
                 iklanmu berkumpul di satu alamat yang bisa disebar.
               </p>
               <button type="button" onClick={() => setBukaToko(true)}
-                className="shrink-0 rounded-full border border-black/[0.08] px-4 py-2 text-center text-xs font-bold text-[#1d1d1f] transition-all hover:bg-black/[0.03] active:scale-95 dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06]">
-                🏪 Buka Toko
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-black/[0.08] px-4 py-2 text-center text-xs font-bold text-[#1d1d1f] transition-all hover:bg-black/[0.03] active:scale-95 dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06]">
+                <Icon.Store className="h-4 w-4" />
+                Buka Toko
               </button>
             </div>
           </Kartu>
@@ -512,8 +533,9 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
                 direktori dan bisa membuka oprec atas namanya.
               </p>
               <button type="button" onClick={() => setDaftarOrg(true)}
-                className="shrink-0 rounded-full border border-black/[0.08] px-4 py-2 text-center text-xs font-bold text-[#1d1d1f] transition-all hover:bg-black/[0.03] active:scale-95 dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06]">
-                🏛️ Daftarkan Organisasi
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-black/[0.08] px-4 py-2 text-center text-xs font-bold text-[#1d1d1f] transition-all hover:bg-black/[0.03] active:scale-95 dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06]">
+                <Icon.Landmark className="h-4 w-4" />
+                Daftarkan Organisasi
               </button>
             </div>
           </Kartu>

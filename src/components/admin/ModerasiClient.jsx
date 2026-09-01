@@ -47,7 +47,7 @@ export default function ModerasiClient({
 
   const tabs = [
     { id: "all", label: "Semua", count: total },
-    { id: "listings", label: "Iklan Pending", count: pendingListings.length, icon: "📦" },
+    { id: "listings", label: "Iklan Pending", count: pendingListings.length, icon: "BOX" },
     { id: "reports", label: "Laporan", count: openReports.length, icon: "⚠️", badgeColor: "bg-rose-500 text-white" },
     { id: "profiles", label: "Ubah Profil", count: pendingProfiles.length, icon: "👤" },
     { id: "fee_offers", label: "Tawaran Biaya", count: pendingFeeOffers.length, icon: "🏷️" },

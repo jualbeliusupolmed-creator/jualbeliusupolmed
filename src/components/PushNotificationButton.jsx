@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Icon } from "./Icons";
 
 // Konversi VAPID public key dari base64url ke Uint8Array
 function urlBase64ToUint8Array(base64String) {
@@ -85,7 +86,22 @@ export default function PushNotificationButton({ wa }) {
           : "bg-gray-100 text-gray-600 hover:bg-sky-50 hover:text-sky-600 dark:bg-slate-800 dark:text-slate-300"
       }`}
     >
-      {loading ? "..." : subscribed ? "🔔 Notif Aktif" : "🔕 Aktifkan Notif"}
+      {loading ? (
+        <>
+          <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current/30 border-t-current" />
+          Menyiapkan Notif
+        </>
+      ) : subscribed ? (
+        <>
+          <Icon.Bell className="h-4 w-4" />
+          Notif Aktif
+        </>
+      ) : (
+        <>
+          <Icon.Bell className="h-4 w-4" />
+          Aktifkan Notif
+        </>
+      )}
     </button>
   );
 }

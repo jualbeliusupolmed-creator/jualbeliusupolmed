@@ -953,7 +953,7 @@ export default function MadingClient({ initialPosts = [] }) {
 
               <form onSubmit={handleCreatePost} className="space-y-4">
                 {/* Type Selection */}
-                <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl">
+              <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl">
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, type: "menfess" })}
@@ -963,7 +963,10 @@ export default function MadingClient({ initialPosts = [] }) {
                         : "text-slate-500"
                     }`}
                   >
-                    💌 Menfess (Curhat)
+                    <span className="inline-flex items-center justify-center gap-1.5">
+                      <Icon.Mail className="h-4 w-4" />
+                      Menfess (Curhat)
+                    </span>
                   </button>
                   <button
                     type="button"
@@ -974,7 +977,10 @@ export default function MadingClient({ initialPosts = [] }) {
                         : "text-slate-500"
                     }`}
                   >
-                    📢 Info Kampus
+                    <span className="inline-flex items-center justify-center gap-1.5">
+                      <Icon.Megaphone className="h-4 w-4" />
+                      Info Kampus
+                    </span>
                   </button>
                 </div>
 
@@ -1132,7 +1138,10 @@ export default function MadingClient({ initialPosts = [] }) {
                       </span>
                     </>
                   ) : (
-                    <span>Terbitkan ke Menfess & Info 🚀</span>
+                    <span className="inline-flex items-center gap-2">
+                      <Icon.Rocket className="h-4 w-4" />
+                      Terbitkan ke Menfess & Info
+                    </span>
                   )}
                 </button>
               </form>
@@ -1155,8 +1164,9 @@ export default function MadingClient({ initialPosts = [] }) {
               {/* Top Action Bar */}
               <div className="w-full flex items-center justify-between text-white/90 mb-3 px-1">
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-xs font-bold bg-white/20 px-3 py-1.5 rounded-full backdrop-blur-sm truncate max-w-[200px] xs:max-w-xs">
-                    📷 Kiriman {zoomImage.sender || "Anonim"}
+                  <span className="inline-flex max-w-[200px] items-center gap-1.5 rounded-full bg-white/20 px-3 py-1.5 text-xs font-bold backdrop-blur-sm truncate xs:max-w-xs">
+                    <Icon.Camera className="h-3.5 w-3.5 shrink-0" />
+                    Kiriman {zoomImage.sender || "Anonim"}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">

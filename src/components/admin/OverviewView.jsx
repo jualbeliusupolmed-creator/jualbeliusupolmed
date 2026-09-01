@@ -70,7 +70,7 @@ export default function OverviewView({ stats }) {
   const totalRev14 = revByDay.reduce((s, d) => s + d.total, 0);
 
   const PAYMENT_TYPES = [
-    { key: "iklan", label: "Pasang Iklan", icon: "📦" },
+    { key: "iklan", label: "Pasang Iklan", icon: "BOX" },
     { key: "bump", label: "Sundul Iklan", icon: "🚀" },
     { key: "featured", label: "Featured", icon: "⭐" },
     { key: "sold_fee", label: "Biaya Terjual", icon: "🤝" },

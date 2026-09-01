@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { Icon } from "@/components/Icons";
 import { playChatSound } from "@/lib/sound";
 import { hapticSuccess } from "@/lib/haptics";
+import { getTemanIntent, getTemanIntentLabel } from "@/lib/temanIntents";
 
 export default function MatchModal({
   isOpen,
@@ -23,6 +25,9 @@ export default function MatchModal({
   }, [isOpen]);
 
   if (!isOpen || !partner) return null;
+
+  const intentMeta = getTemanIntent(partner.intent);
+  const IntentIcon = intentMeta?.icon ? Icon[intentMeta.icon] : null;
 
   // WhatsApp fallback
   const cleanWa = (partner.whatsapp || "").replace(/\D/g, "");
@@ -66,7 +71,9 @@ export default function MatchModal({
         
         {/* Confetti & Title */}
         <div className="space-y-1 my-2">
-          <span className="inline-block animate-bounce text-4xl">🎉</span>
+          <div className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/18 text-emerald-300">
+            <Icon.HeartFilled className="h-7 w-7 animate-pulse" />
+          </div>
           <h2 className="text-3xl font-black italic tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-500">
             IT&apos;S A MATCH!
           </h2>
@@ -87,13 +94,13 @@ export default function MatchModal({
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-slate-800 text-2xl">
-                👤
+                <Icon.User className="h-10 w-10" />
               </div>
             )}
           </div>
 
           <div className="absolute z-20 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg ring-4 ring-black animate-pulse">
-            <span className="text-base">💚</span>
+            <Icon.HeartFilled className="h-5 w-5" />
           </div>
 
           <div className="relative h-24 w-24 overflow-hidden rounded-full border-3 border-emerald-400 shadow-xl -ml-3 z-10">
@@ -106,7 +113,7 @@ export default function MatchModal({
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-slate-800 text-2xl">
-                👤
+                <Icon.User className="h-10 w-10" />
               </div>
             )}
           </div>
@@ -116,11 +123,15 @@ export default function MatchModal({
         <div className="rounded-2xl bg-white/10 p-3.5 backdrop-blur-md border border-white/10 text-xs mb-6">
           <p className="font-bold text-sm text-white">{partner.display_name}</p>
           <p className="text-[11px] text-gray-300 mt-0.5">
-            🎓 {partner.campus} · {partner.faculty || "Umum"} {partner.batch ? `('${partner.batch.slice(-2)})` : ""}
+            <span className="inline-flex items-center gap-1.5">
+              <Icon.GraduationCap className="h-3.5 w-3.5" />
+              {partner.campus} · {partner.faculty || "Umum"} {partner.batch ? `('${partner.batch.slice(-2)})` : ""}
+            </span>
           </p>
           {partner.intent && (
-            <span className="mt-2 inline-block rounded-full bg-primary/40 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-300 border border-emerald-500/30">
-              {partner.intent}
+            <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary/40 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-300 border border-emerald-500/30">
+              {IntentIcon ? <IntentIcon className="h-3.5 w-3.5" /> : null}
+              {getTemanIntentLabel(partner.intent)}
             </span>
           )}
         </div>
@@ -135,9 +146,15 @@ export default function MatchModal({
             className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 py-3.5 text-xs font-bold text-white shadow-lg hover:bg-emerald-600 active:scale-[0.98] transition-all disabled:opacity-60"
           >
             {loadingDm ? (
-              <span>⏳ Membuka DM...</span>
+              <span className="inline-flex items-center gap-2">
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                Membuka DM...
+              </span>
             ) : (
-              <span>💬 Mulai DM Web</span>
+              <span className="inline-flex items-center gap-2">
+                <Icon.MessageCircle className="h-4 w-4" />
+                Mulai DM Web
+              </span>
             )}
           </button>
 
@@ -146,30 +163,33 @@ export default function MatchModal({
             <a
               href={waUrl}
               target="_blank"
-              rel="noopener noreferrer"
-              className="flex w-full items-center justify-center gap-1.5 rounded-2xl bg-white/10 py-2.5 text-xs font-bold text-white hover:bg-white/15 border border-white/15 active:scale-[0.98] transition-all"
-            >
-              <span>📱 Sapa di WhatsApp</span>
-            </a>
+            rel="noopener noreferrer"
+            className="flex w-full items-center justify-center gap-1.5 rounded-2xl bg-white/10 py-2.5 text-xs font-bold text-white hover:bg-white/15 border border-white/15 active:scale-[0.98] transition-all"
+          >
+            <Icon.Phone className="h-4 w-4" />
+            <span>Sapa di WhatsApp</span>
+          </a>
           )}
 
           {partner.instagram && (
             <a
               href={`https://instagram.com/${partner.instagram.replace(/^@/, "")}`}
               target="_blank"
-              rel="noopener noreferrer"
-              className="flex w-full items-center justify-center gap-1.5 rounded-2xl bg-white/10 py-2.5 text-xs font-bold text-white hover:bg-white/15 border border-white/15 active:scale-[0.98] transition-all"
-            >
-              <span>📸 Instagram @{partner.instagram.replace(/^@/, "")}</span>
+            rel="noopener noreferrer"
+            className="flex w-full items-center justify-center gap-1.5 rounded-2xl bg-white/10 py-2.5 text-xs font-bold text-white hover:bg-white/15 border border-white/15 active:scale-[0.98] transition-all"
+          >
+              <Icon.Instagram className="h-4 w-4" />
+              <span>Instagram @{partner.instagram.replace(/^@/, "")}</span>
             </a>
           )}
 
           <button
             type="button"
             onClick={onClose}
-            className="w-full py-2.5 text-xs font-bold text-gray-400 hover:text-white transition-colors"
+            className="inline-flex w-full items-center justify-center gap-2 py-2.5 text-xs font-bold text-gray-400 hover:text-white transition-colors"
           >
-            Lanjut Cari Teman Lain ➔
+            <span>Lanjut Cari Teman Lain</span>
+            <Icon.ArrowRight className="h-4 w-4" />
           </button>
         </div>
       </div>
