@@ -227,8 +227,8 @@ export default async function HalamanToko({ params }) {
             Tentang toko
           </h2>
           <div className="mt-2 divide-y divide-gray-100 dark:divide-slate-800">
-            <Info ikon="📝" label="Deskripsi">{profil.bio}</Info>
-            <Info ikon="📍" label="Wilayah / COD">{profil.store_area}</Info>
+            <Info ikon="Bio" label="Deskripsi">{profil.bio}</Info>
+            <Info ikon="COD" label="Wilayah / COD">{profil.store_area}</Info>
             {profil.store_gmaps && (
               <Info ikon="🗺️" label="Lokasi Maps">
                 <a href={profil.store_gmaps} target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: warna.utama }}>
@@ -236,9 +236,8 @@ export default async function HalamanToko({ params }) {
                 </a>
               </Info>
             )}
-            <Info ikon="🕒" label="Jam buka">{profil.store_hours}</Info>
-            <Info ikon="📱" label="WhatsApp">{profil.wa}</Info>
-            <Info ikon="🔗" label="Alamat toko">{`jualbeliusupolmed.web.id/toko/${profil.slug}`}</Info>
+            <Info ikon="Jam" label="Jam buka">{profil.store_hours}</Info>
+            <Info ikon="Link" label="Alamat toko">{`jualbeliusupolmed.web.id/toko/${profil.slug}`}</Info>
           </div>
         </div>
 
@@ -276,9 +275,9 @@ export default async function HalamanToko({ params }) {
             {ulasan.map((u, i) => (
               <div key={i} className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
                 <p className="text-sm" style={{ color: warna.utama }}>
-                  {"★".repeat(Math.max(1, Math.round(u.rating || 0)))}
+                  {"*".repeat(Math.max(1, Math.round(u.rating || 0)))}
                   <span className="text-gray-300 dark:text-slate-700">
-                    {"★".repeat(Math.max(0, 5 - Math.round(u.rating || 0)))}
+                    {".".repeat(Math.max(0, 5 - Math.round(u.rating || 0)))}
                   </span>
                 </p>
                 {u.comment && (
