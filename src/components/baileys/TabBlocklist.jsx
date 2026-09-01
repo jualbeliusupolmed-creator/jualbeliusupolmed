@@ -15,7 +15,7 @@ export function TabBlocklist() {
     setBlocking(true); setMsg(null);
     const jid = normalizeJid(blockInput.trim());
     const r = await apiPost("blocklist/block", { jid });
-    setMsg(r.ok ? { ok: true, text: `✅ ${jid.split("@")[0]} berhasil diblokir.` } : { ok: false, text: `❌ ${r.error}` });
+    setMsg(r.ok ? { ok: true, text: `${jid.split("@")[0]} berhasil diblokir.` } : { ok: false, text: `${r.error}` });
     if (r.ok) { setBlockInput(""); refetch(); }
     setBlocking(false);
   }
@@ -23,7 +23,7 @@ export function TabBlocklist() {
   async function handleUnblock(jid) {
     if (!confirm(`Unblock ${jid}?`)) return;
     const r = await apiPost("blocklist/unblock", { jid });
-    setMsg(r.ok ? { ok: true, text: `✅ ${jid.split("@")[0]} berhasil di-unblock.` } : { ok: false, text: `❌ ${r.error}` });
+    setMsg(r.ok ? { ok: true, text: `${jid.split("@")[0]} berhasil di-unblock.` } : { ok: false, text: `${r.error}` });
     if (r.ok) refetch();
   }
 
@@ -31,7 +31,7 @@ export function TabBlocklist() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold dark:text-white">Daftar Blokir WA Bot</h2>
-        <button onClick={refetch} className="btn-outline text-xs">🔄 Refresh</button>
+        <button onClick={refetch} className="btn-outline text-xs">Refresh</button>
       </div>
 
       <form onSubmit={handleBlock} className="card p-4 flex gap-3 items-end">
@@ -40,13 +40,13 @@ export function TabBlocklist() {
           <input className="input" placeholder="08xxxxxxxxxx atau 628xxxxxxxxxx" value={blockInput} onChange={e => setBlockInput(e.target.value)} />
         </div>
         <button type="submit" disabled={blocking} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 shrink-0">
-          {blocking ? "⏳" : "🚫 Blokir"}
+          {blocking ? "..." : "Blokir"}
         </button>
       </form>
       <Alert ok={msg?.ok} msg={msg?.text} />
 
       {loading && <p className="text-sm text-gray-400">Memuat blocklist...</p>}
-      {error && <Alert ok={false} msg={`⚠️ ${error}`} />}
+      {error && <Alert ok={false} msg={error} />}
 
       {data && (
         <>
@@ -59,7 +59,7 @@ export function TabBlocklist() {
                 <div className="flex gap-2">
                   <CopyBtn text={jid.split("@")[0]} />
                   <button onClick={() => handleUnblock(jid)} className="rounded bg-green-100 px-2 py-0.5 text-xs text-green-700 hover:bg-green-200 dark:bg-green-900/40 dark:text-green-300">
-                    ✅ Unblock
+                    Unblock
                   </button>
                 </div>
               </div>

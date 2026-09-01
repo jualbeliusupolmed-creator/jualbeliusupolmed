@@ -150,7 +150,7 @@ export async function DELETE(request, { params }) {
       room_id: roomId,
       sender_id: "system",
       sender_alias: "Sistem",
-      message: "👋 Temanmu telah meninggalkan obrolan.",
+      message: " Temanmu telah meninggalkan obrolan.",
     });
 
     await siarkanPesanBaru(supa, roomId);

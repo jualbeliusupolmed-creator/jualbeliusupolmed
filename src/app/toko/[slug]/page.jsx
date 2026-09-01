@@ -175,7 +175,7 @@ export default async function HalamanToko({ params }) {
             style={{ background: warna.utama }}
             aria-hidden
           >
-            📣
+            <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg>
           </span>
           <div className="min-w-0">
             <p className="text-[11px] font-bold uppercase tracking-wide" style={{ color: warna.utama }}>
@@ -230,7 +230,7 @@ export default async function HalamanToko({ params }) {
             <Info ikon="Bio" label="Deskripsi">{profil.bio}</Info>
             <Info ikon="COD" label="Wilayah / COD">{profil.store_area}</Info>
             {profil.store_gmaps && (
-              <Info ikon="🗺️" label="Lokasi Maps">
+              <Info ikon="MapPin" label="Lokasi Maps">
                 <a href={profil.store_gmaps} target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: warna.utama }}>
                   Buka Peta ↗
                 </a>
@@ -270,7 +270,7 @@ export default async function HalamanToko({ params }) {
 
       {ulasan.length > 0 && (
         <section className="mt-8">
-          <Judul jumlah={`${rataUlasan.toFixed(1)}★`} warna={warna}>Kata pembeli</Judul>
+          <Judul jumlah={`${rataUlasan.toFixed(1)}`} warna={warna}>Kata pembeli</Judul>
           <div className="grid gap-3 sm:grid-cols-3">
             {ulasan.map((u, i) => (
               <div key={i} className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">

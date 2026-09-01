@@ -72,7 +72,7 @@ export default async function CaraBergabungPage() {
           Komunitas jual-beli khusus mahasiswa USU & Polmed
         </p>
         <a href={WA_GROUP_LINK} target="_blank" rel="noreferrer" className="btn mt-5 bg-white text-primary hover:bg-white/90">
-          <span aria-hidden="true">🟢</span> Gabung Grup WhatsApp
+          <span aria-hidden="true"></span> Gabung Grup WhatsApp
         </a>
         <p className="mt-2 text-sm text-white/70">
           Gratis, langsung diterima — untuk umum &amp; warga kampus
@@ -81,7 +81,7 @@ export default async function CaraBergabungPage() {
 
       <div className="mt-8 grid gap-6 md:grid-cols-2">
         <div className="card p-6">
-          <h2 className="text-lg font-bold"><span aria-hidden="true">🛒</span> Cara Menjual</h2>
+          <h2 className="text-lg font-bold"><span aria-hidden="true"></span> Cara Menjual</h2>
           <ol className="mt-4 space-y-3">
             {sellSteps.map((s, i) => (
               <li key={i} className="flex gap-3">
@@ -94,7 +94,7 @@ export default async function CaraBergabungPage() {
           </ol>
         </div>
         <div className="card p-6">
-          <h2 className="text-lg font-bold"><span aria-hidden="true">🛍️</span> Cara Membeli</h2>
+          <h2 className="text-lg font-bold"><span aria-hidden="true"></span> Cara Membeli</h2>
           <ol className="mt-4 space-y-3">
             {buySteps.map((s, i) => (
               <li key={i} className="flex gap-3">
@@ -110,7 +110,7 @@ export default async function CaraBergabungPage() {
 
       <div className="mt-6 grid gap-6 md:grid-cols-2">
         <div className="card p-6">
-          <h2 className="text-lg font-bold"><span aria-hidden="true">💰</span> Biaya Layanan &amp; Komisi</h2>
+          <h2 className="text-lg font-bold"><span aria-hidden="true"></span> Biaya Layanan &amp; Komisi</h2>
           <p className="mt-1 text-sm text-gray-500">Biaya Iklan (Di Awal)</p>
           <div className="mt-2 space-y-2">
             <Fee label="Iklan Barang (< Rp 50.000)" value="Rp 2.000" />
@@ -131,11 +131,11 @@ export default async function CaraBergabungPage() {
           </div>
         </div>
         <div className="card p-6">
-          <h2 className="text-lg font-bold"><span aria-hidden="true">⚠️</span> Aturan &amp; Keamanan</h2>
+          <h2 className="text-lg font-bold"><span aria-hidden="true"></span> Aturan &amp; Keamanan</h2>
           <ul className="mt-4 space-y-3">
             {rules.map((r, i) => (
               <li key={i} className="flex gap-2 text-sm text-gray-600">
-                <span className="text-primary">✓</span> {r}
+                <span className="text-primary"></span> {r}
               </li>
             ))}
           </ul>

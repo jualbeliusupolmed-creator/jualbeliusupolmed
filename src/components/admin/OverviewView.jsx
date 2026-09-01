@@ -71,9 +71,9 @@ export default function OverviewView({ stats }) {
 
   const PAYMENT_TYPES = [
     { key: "iklan", label: "Pasang Iklan", icon: "BOX" },
-    { key: "bump", label: "Sundul Iklan", icon: "🚀" },
-    { key: "featured", label: "Featured", icon: "⭐" },
-    { key: "sold_fee", label: "Biaya Terjual", icon: "🤝" },
+    { key: "bump", label: "Sundul Iklan", icon: "UP" },
+    { key: "featured", label: "Featured", icon: "Star" },
+    { key: "sold_fee", label: "Biaya Terjual", icon: "PAY" },
   ];
 
   return (
@@ -93,41 +93,41 @@ export default function OverviewView({ stats }) {
           value={stats.activeTotal || 0} 
           sub={`${stats.listingsTotal || 0} total listing`} 
           href="/admin/listings"
-          icon="📦"
+          icon="BOX"
         />
         <Kpi 
           label="Terjual" 
           value={stats.soldTotal || 0} 
           sub={`${stats.pendingTotal || 0} menunggu`} 
           href="/admin/listings"
-          icon="🤝"
+          icon="PAY"
         />
         <Kpi 
           label="Total Pendapatan" 
           value={rupiah(stats.revenue || 0)} 
           sub={`${stats.pendingPaymentCount || 0} pending`} 
           href="/admin/transaksi"
-          icon="💳"
+          icon="CC"
         />
         <Kpi 
           label="Instalasi PWA" 
           value={stats.pwaInstallsTotal || 0} 
           sub="Aplikasi terpasang" 
-          icon="📱"
+          icon="HP"
         />
         <Kpi 
           label="Rating Kepuasan" 
           value={stats.avgRating || 0} 
           sub={`${stats.totalRatings || 0} ulasan`} 
           href="/admin/rating"
-          icon="⭐"
+          icon="Star"
         />
         <Kpi 
           label="Laporan Terbuka" 
           value={stats.openReportsTotal || 0} 
           sub="Butuh tindakan" 
           href="/admin/reports"
-          icon="⚠️"
+          icon="AlertCircle"
         />
       </div>
 

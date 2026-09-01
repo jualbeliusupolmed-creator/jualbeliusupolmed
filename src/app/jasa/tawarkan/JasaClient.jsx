@@ -338,7 +338,7 @@ export default function JasaClient() {
 
           <div className="card p-4 text-sm text-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800">
             <p className="font-bold flex items-center gap-1.5">
-              <span>✅</span> GRATIS 7 Hari (Khusus Postingan Pertama)
+              <span></span> GRATIS 7 Hari (Khusus Postingan Pertama)
             </p>
             <p className="mt-1.5 leading-relaxed">
               Jika ini adalah iklan Jasa pertamamu, penayangan 100% GRATIS untuk 7 hari pertama.
@@ -363,7 +363,7 @@ export default function JasaClient() {
                 onClick={() => setShowPreviewModal(false)}
                 className="text-gray-500 hover:bg-gray-100 p-2 rounded-full dark:hover:bg-slate-800"
               >
-                ✕
+                <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg>
               </button>
             </div>
             

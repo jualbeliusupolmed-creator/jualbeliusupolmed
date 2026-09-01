@@ -140,7 +140,7 @@ export default function MadingDetailClient({ post: initialPost }) {
     const shareUrl = typeof window !== "undefined" ? window.location.href : "";
     const cleanSnippet = (post.content || "").trim().slice(0, 120);
     const titleText = post.title ? `*${post.title}*\n` : "";
-    const shareText = `🔥 *[Mading & Menfess Kampus]*\n${titleText}"${cleanSnippet}${post.content && post.content.length > 120 ? "..." : ""}"\n\n👀 Baca & tanggapi:\n${shareUrl}`;
+    const shareText = ` *[Mading & Menfess Kampus]*\n${titleText}"${cleanSnippet}${post.content && post.content.length > 120 ? "..." : ""}"\n\n Baca & tanggapi:\n${shareUrl}`;
 
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
@@ -223,7 +223,7 @@ export default function MadingDetailClient({ post: initialPost }) {
                   : "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300"
               }`}
             >
-              {post.type === "info" ? "📢" : post.is_anon ? "👤" : post.sender_name?.charAt(0) || "👤"}
+              {post.type === "info" ? <Icon.Megaphone className="h-4 w-4" /> : post.is_anon ? <Icon.User className="h-4 w-4" /> : post.sender_name?.charAt(0) || "A"}
             </div>
 
             <div className="min-w-0 flex-1">
@@ -345,7 +345,7 @@ export default function MadingDetailClient({ post: initialPost }) {
             {replyingTo && (
               <div className="flex items-center justify-between rounded-xl bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary">
                 <span>Membalas @{replyingTo.sender}</span>
-                <button type="button" onClick={() => setReplyingTo(null)} className="text-sm font-black px-1">✕</button>
+                <button type="button" onClick={() => setReplyingTo(null)} className="text-sm font-black px-1"></button>
               </div>
             )}
             <div className="flex gap-2">
@@ -377,7 +377,7 @@ export default function MadingDetailClient({ post: initialPost }) {
           <div className="space-y-3 pt-2">
             {comments.length === 0 ? (
               <div className="text-center py-8 text-slate-400 text-xs">
-                <p className="text-2xl mb-1">💬</p>
+                <p className="text-2xl mb-1"><svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg></p>
                 <p>Belum ada tanggapan. Jadilah yang pertama berkomentar!</p>
               </div>
             ) : (

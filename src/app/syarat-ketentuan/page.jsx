@@ -78,7 +78,7 @@ export default function SyaratKetentuanPage() {
 
         {/* 6. Informasi Kontak Bisnis (Contact Information) */}
         <div className="border-t pt-5">
-          <h2 className="text-base font-bold text-gray-900 mb-2">📞 Informasi Kontak &amp; Operasional Bisnis</h2>
+          <h2 className="text-base font-bold text-gray-900 mb-2"> Informasi Kontak &amp; Operasional Bisnis</h2>
           <p className="mb-3">
             Apabila Anda memiliki pertanyaan lebih lanjut mengenai Syarat &amp; Ketentuan ini atau memerlukan bantuan teknis transaksi, Anda dapat menghubungi kami melalui saluran resmi berikut:
           </p>

@@ -210,7 +210,7 @@ export function TabAntrean() {
                         className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700 transition-colors shadow-xs"
                         title="Buka chat WhatsApp langsung dari browser/HP untuk kirim manual"
                       >
-                        <span>💬 Chat WA Manual</span>
+                        <span>Chat WA Manual</span>
                         <span className="text-[10px]">↗</span>
                       </a>
                     );
@@ -223,7 +223,7 @@ export function TabAntrean() {
                     className="rounded-lg bg-slate-100 border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-700 disabled:opacity-40"
                     title="Tandai antrean ini sebagai sudah terkirim manual agar bersih dari antrean"
                   >
-                    {sibuk === it.id ? "Memproses…" : "✓ Tandai Terkirim"}
+                    {sibuk === it.id ? "Memproses…" : " Tandai Terkirim"}
                   </button>
 
                   <button

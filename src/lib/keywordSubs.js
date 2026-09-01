@@ -118,13 +118,13 @@ export async function notifyKeywordSubscribers(supa, listing) {
       seenBuyer.add(sub.buyer_wa);
 
       const msg =
-        `🔔 *Iklan Baru Sesuai Pantauanmu!*\n\n` +
+        ` *Iklan Baru Sesuai Pantauanmu!*\n\n` +
         `Ada barang yang cocok dengan kata kunci pantauan *"${sub.keyword}"*:\n\n` +
-        `📦 *${listing.title}*\n` +
-        `💰 ${rupiah(listing.price)}\n` +
-        `📍 Kampus: ${listing.campus || "Semua"}\n` +
-        `👤 Penjual: ${listing.seller_name || "Penjual"}\n\n` +
-        `👉 Lihat detail barang:\n${url}\n\n` +
+        ` *${listing.title}*\n` +
+        ` ${rupiah(listing.price)}\n` +
+        ` Kampus: ${listing.campus || "Semua"}\n` +
+        ` Penjual: ${listing.seller_name || "Penjual"}\n\n` +
+        ` Lihat detail barang:\n${url}\n\n` +
         `_Ingin berhenti memantau? Balas: *.PANTAU OFF ${sub.keyword}*_`;
 
       await sendWa(sub.buyer_wa, msg, imageUrl).catch(() => {});

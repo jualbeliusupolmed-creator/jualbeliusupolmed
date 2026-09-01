@@ -74,14 +74,14 @@ export async function GET(req) {
 
   // Susun pesan digest
   const today = new Date().toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-  let msg = `📦 *RANGKUMAN IKLAN DISTRIBUTOR*\n${today}\n\n`;
+  let msg = ` *RANGKUMAN IKLAN DISTRIBUTOR*\n${today}\n\n`;
 
   let totalItems = 0;
   for (const [wa, { name, items }] of Object.entries(byDist)) {
-    msg += `👤 *${name}* (${items.length} iklan)\n`;
+    msg += ` *${name}* (${items.length} iklan)\n`;
     for (const item of items) {
       const url = `${baseUrl}/produk/${buildSlug(item.title, item.id)}`;
-      msg += `  • ${item.title} — ${rupiah(item.price)}\n    🏷️ ${item.category} | ${url}\n`;
+      msg += `  • ${item.title} — ${rupiah(item.price)}\n     ${item.category} | ${url}\n`;
       totalItems++;
     }
     msg += "\n";

@@ -204,7 +204,7 @@ export async function parseListingFromText(text, aiConfig = {}, imageBuffers = [
         { "title": "iPhone 12 Mulus", "price": 5000000, "description": "Lecet pemakaian", "category": "Elektronik", "condition": "used", "campus": "Semua" },
         { "title": "Helm Bogo Hitam", "price": 150000, "description": "Baru dipakai 2 kali", "category": "Kendaraan", "condition": "used", "campus": "USU" }
       ],
-      "reply_message": "Siap kak! iPhone 12 dan Helm Bogo udah aku catat nih detailnya. Tunggu sebentar ya! 🚀"
+      "reply_message": "Siap kak! iPhone 12 dan Helm Bogo udah aku catat nih detailnya. Tunggu sebentar ya! "
     }
   `;
 
@@ -212,9 +212,9 @@ export async function parseListingFromText(text, aiConfig = {}, imageBuffers = [
 }
 
 /**
- * Parses raw text from a WhatsApp message to determine if it's a general chat or a search query.
+ * Parses raw text and/or images from a WhatsApp message to determine the user's intent.
  */
-export async function processGeneralChat(text, aiConfig = {}, history = []) {
+export async function parseIntentWithAI(text, aiConfig = {}, history = [], imageBuffers = [], mimeTypes = []) {
   const modelsToTry = buildModelsToTry(aiConfig);
   const memoryContext = aiConfig.memory ? `\nPengetahuan Sistem (Memory):\n${aiConfig.memory}\n` : "";
   const personalityContext = aiConfig.personality ? `\nKepribadian & Gaya Bicara Anda:\n${aiConfig.personality}\n` : "";
@@ -226,37 +226,41 @@ export async function processGeneralChat(text, aiConfig = {}, history = []) {
 
   const prompt = `
     Anda adalah asisten cerdas untuk marketplace kampus (Jual Beli USU/Polmed).
-    Tugas Anda adalah merespons chat dari pengguna WhatsApp.
+    Tugas Anda adalah merespons chat dari pengguna WhatsApp dan menentukan NIAT (intent) mereka.
     ${memoryContext}
     ${personalityContext}
     ${historyContext}
 
-    Pesan pengguna saat ini:
+    Pesan pengguna saat ini (bisa berupa teks dan/atau gambar):
     """
-    ${text}
+    ${text || "(Tidak ada teks, hanya gambar)"}
     """
 
-    Analisis pesan tersebut dan tentukan niat (intent) pengguna.
-    Jika pengguna MENCARI barang (contoh: "cari motor", "ada kos kosong?", "jual laptop murah", "WTS/WTB"), intent adalah "search".
-    Jika pengguna SECARA EKSPLISIT minta bicara dengan MANUSIA/ADMIN atau KOMPLAIN serius (contoh: "tolong panggil admin manusia", "saya mau komplain", "saya mau lapor", "minta tolong admin", "hubungi admin", "ada masalah dengan iklan saya"), intent adalah "handoff". JANGAN handoff hanya karena user menyapa dengan "admin", "min", atau "mimin" — itu hanya sapaan biasa ke bot.
-    Jika pengguna HANYA NGOBROL biasa selain di atas (contoh: "halo", "selamat pagi", "cara pasang iklan gimana?"), intent adalah "chat".
+    Tentukan salah satu dari niat (intent) berikut:
+    1. "create_listing": Pengguna ingin MENJUAL barang, MEMASANG IKLAN, atau MENGIRIM FOTO BARANG untuk dijual. (Contoh: "min tolong pasangin ini", "jual 50rb", atau hanya mengirim foto barang dagangan).
+    2. "deal_confirmation": Pengguna mengonfirmasi barangnya SUDAH LAKU, TERJUAL, atau DEAL. (Contoh: "alhamdulillah laku bang", "udah kejual min", "deal").
+    3. "delete_listing": Pengguna ingin MENGHAPUS iklannya (biasanya dengan menyertakan kode iklan). (Contoh: "tolong hapus iklan 88F7", "hapus laku").
+    4. "create_wanted": Pengguna ingin MEMBUAT IKLAN PENCARIAN / DICARI (bukan sekadar nanya ke bot, tapi minta diposting). (Contoh: "min tolong post dicari motor budget 5jt").
+    5. "search": Pengguna sekadar BERTANYA / MENCARI apakah ada barang tertentu yang dijual saat ini. (Contoh: "ada kos kosong ga?", "cari motor bekas", "laptop gaming ada?").
+    6. "handoff": Pengguna EKSPLISIT minta bicara dengan MANUSIA/ADMIN atau KOMPLAIN (contoh: "panggil admin", "saya mau lapor penipuan"). Jangan gunakan ini hanya karena user menyapa "min".
+    7. "chat": Pengguna hanya NGOBROL biasa, menyapa, atau bertanya cara kerja bot. (Contoh: "halo", "selamat pagi", "gimana cara pasang iklan?").
 
     Ekstrak ke format JSON:
     {
-      "intent": "search", "handoff", atau "chat",
-      "keywords": "kata kunci pencarian jika intent=search, HARUS berisi kata benda barangnya saja (bukan kalimat penuh)",
-      "category": "kategori yang paling cocok dari: Elektronik, Fashion, Kendaraan, Properti, Buku, Makanan, Jasa, Lainnya — kosongkan jika tidak jelas",
-      "reply_message": "Balasan ramah sesuai Kepribadian Anda. Jika search, beri pengantar singkat. Jika handoff, balas bahwa pesan diteruskan ke Admin. Jika chat, jawab dengan luwes berdasarkan konteks percakapan."
+      "intent": "<salah satu dari 7 intent di atas>",
+      "data": {
+        "keywords": "<kata kunci pencarian JIKA intent=search atau create_wanted, kosongkan jika tidak relevan>",
+        "category": "<kategori dari: Elektronik, Fashion, Kendaraan, Properti, Buku, Makanan, Jasa, Lainnya — kosongkan jika tidak jelas>",
+        "listing_code": "<kode iklan JIKA intent=delete_listing (contoh: 88F7), kosongkan jika tidak ada>"
+      },
+      "reply_message": "<Balasan ramah sesuai Kepribadian Anda. Jika intent selain 'chat' atau 'search', Anda tidak perlu banyak bicara karena sistem akan mengambil alih. Jika 'chat', jawab dengan luwes. Jika 'search', beri pengantar singkat bahwa Anda sedang mencarikan.>"
     }
 
     Aturan ketat:
     - Kembalikan jawaban Anda HANYA dalam format JSON MURNI tanpa markdown, tanpa teks lain.
-    - Contoh output search: {"intent": "search", "keywords": "motor bekas", "category": "Kendaraan", "reply_message": "Siap kak! Tunggu sebentar ya, aku carikan motor bekas yang lagi dijual."}
-    - Contoh output handoff: {"intent": "handoff", "keywords": "", "category": "", "reply_message": "Baik kak, pesan ini diteruskan ke Admin Manusia. Bot akan diam dulu ya sampai Admin membalas!"}
-    - Contoh output chat: {"intent": "chat", "keywords": "", "category": "", "reply_message": "Halo kak! Aku asisten Jual Beli USU/Polmed. Ada yang bisa aku bantu?"}
   `;
 
-  return executeHybridAI(modelsToTry, prompt, { memoryContext: aiConfig.memory, personalityContext: aiConfig.personality });
+  return executeHybridAI(modelsToTry, prompt, { imageBuffers, mimeTypes, memoryContext: aiConfig.memory, personalityContext: aiConfig.personality });
 }
 
 /**

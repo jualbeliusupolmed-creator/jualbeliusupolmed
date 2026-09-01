@@ -145,7 +145,7 @@ export default function TokoKatalog({ listings, warna }) {
               href="/"
               className="flex min-h-[180px] flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-gray-300 p-4 text-center transition hover:border-gray-400 dark:border-slate-700 dark:hover:border-slate-600"
             >
-              <span className="text-2xl" aria-hidden>🔎</span>
+              <span className="text-2xl" aria-hidden><svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg></span>
               <span className="text-sm font-semibold dark:text-white">Cari barang lain</span>
               <span className="text-xs text-gray-500 dark:text-slate-400">
                 Lihat semua iklan di marketplace

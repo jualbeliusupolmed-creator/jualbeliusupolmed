@@ -66,13 +66,13 @@ export async function POST(req) {
       const buyerLink = buyer_wa; // sudah tervalidasi 628xx oleh formatWaForBaileys
 
       const msg =
-        `👀 *Ada yang Tertarik dengan Iklanmu!*\n\n` +
+        ` *Ada yang Tertarik dengan Iklanmu!*\n\n` +
         `Hei ${listing.seller_name || "Penjual"},\n` +
         `*${buyer_name || "Seseorang"}* baru saja mengklik tombol hubungi di iklanmu:\n\n` +
-        `📦 *${listing.title}*\n\n` +
-        `📞 Hubungi mereka sekarang:\n` +
+        ` *${listing.title}*\n\n` +
+        ` Hubungi mereka sekarang:\n` +
         `wa.me/${buyerLink}\n\n` +
-        `👉 Lihat iklan: ${baseUrl}/produk/${slug}`;
+        ` Lihat iklan: ${baseUrl}/produk/${slug}`;
 
       sendWa(listing.seller_wa, msg, null, null, {
         jenis: "buyer_contact",

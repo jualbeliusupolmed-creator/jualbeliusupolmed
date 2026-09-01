@@ -112,12 +112,12 @@ export default function ApproveUnlockClient({ paymentId, initialPayment, wanted 
                 {submitting ? (
                   <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                 ) : (
-                  <span>✅ Setujui &amp; Kirim Nomor WA Pembeli</span>
+                  <span> Setujui &amp; Kirim Nomor WA Pembeli</span>
                 )}
               </button>
             ) : (
               <div className="w-full py-2.5 text-center text-emerald-700 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-lg select-none">
-                ✓ Transaksi Ini Sudah Lunas
+                 Transaksi Ini Sudah Lunas
               </div>
             )}
             <Link

@@ -44,7 +44,7 @@ export default function OrganisasiClient({ initialOrganisasi = [] }) {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1.5">
               <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-0.5 text-xs font-bold text-primary border border-primary/20">
-                <span>🏛️ Ekosistem Komunitas Mahasiswa</span>
+                <Icon.Landmark className="h-4 w-4" /><span>Ekosistem Komunitas Mahasiswa</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-gray-900 dark:text-white">
                 Direktori UKM & Organisasi Kampus
@@ -73,7 +73,7 @@ export default function OrganisasiClient({ initialOrganisasi = [] }) {
                 placeholder="Cari nama UKM, organisasi, atau fakultas..."
                 className="input py-2.5 pl-9 pr-4 text-xs shadow-sm bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800"
               />
-              <span className="absolute left-3 top-3 text-xs text-gray-400">🔍</span>
+              <Icon.Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
             </div>
 
             {/* Campus Selector */}
@@ -135,7 +135,7 @@ export default function OrganisasiClient({ initialOrganisasi = [] }) {
         ) : organisasi.length === 0 ? (
           <div className="card p-12 text-center max-w-md mx-auto space-y-4">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-3xl text-primary">
-              🏛️
+              <Icon.Landmark className="h-8 w-8" />
             </div>
             <div>
               <h3 className="text-base font-bold text-gray-900 dark:text-white">
@@ -174,7 +174,7 @@ export default function OrganisasiClient({ initialOrganisasi = [] }) {
                           />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center text-2xl">
-                            🏛️
+                            <Icon.Landmark className="h-7 w-7" />
                           </div>
                         )}
                       </div>
@@ -192,7 +192,7 @@ export default function OrganisasiClient({ initialOrganisasi = [] }) {
                           </span>
                         ) : org.ukm_verified ? (
                           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                            ✓ Resmi
+                             Resmi
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-sky-700 dark:bg-sky-950/50 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
@@ -211,7 +211,7 @@ export default function OrganisasiClient({ initialOrganisasi = [] }) {
                         {org.ukm_name}
                       </h2>
                       <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5 flex items-center gap-1.5">
-                        <span>{catObj ? catObj.icon : "🏛️"}</span>
+                        {(() => { const CategoryIcon = Icon[catObj?.icon] || Icon.Box; return <CategoryIcon className="h-4 w-4" />; })()}
                         <span>{org.faculty || "Tingkat Universitas"}</span>
                       </p>
                     </div>
@@ -231,7 +231,7 @@ export default function OrganisasiClient({ initialOrganisasi = [] }) {
                         rel="noopener noreferrer"
                         className="text-xs font-semibold text-gray-700 dark:text-slate-200 hover:text-primary flex items-center gap-1.5 py-1 px-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
                       >
-                        <span>📸</span>
+                        <Icon.Instagram className="h-4 w-4" />
                         <span>@{igClean}</span>
                       </a>
                     ) : (

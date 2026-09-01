@@ -108,13 +108,13 @@ export default function BroadcastPanel({ sellers }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal broadcast");
 
-      setStatus(`✅ Berhasil mengirim ke ${data.successCount} pengguna. Gagal: ${data.failCount}`);
+      setStatus(` Berhasil mengirim ke ${data.successCount} pengguna. Gagal: ${data.failCount}`);
       setMessage("");
       setImageFile(null);
       setImagePreview("");
     } catch (err) {
       console.error(err);
-      setStatus(`❌ Error: ${err.message}`);
+      setStatus(` Error: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -145,14 +145,14 @@ export default function BroadcastPanel({ sellers }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal menjadwalkan");
-      setStatus(`📅 Broadcast dijadwalkan untuk ${new Date(scheduledAt).toLocaleString("id-ID")}`);
+      setStatus(` Broadcast dijadwalkan untuk ${new Date(scheduledAt).toLocaleString("id-ID")}`);
       setMessage("");
       setImageFile(null);
       setImagePreview("");
       setScheduledAt("");
       loadScheduled();
     } catch (err) {
-      setStatus(`❌ Error: ${err.message}`);
+      setStatus(` Error: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -169,7 +169,7 @@ export default function BroadcastPanel({ sellers }) {
 
         <div className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium dark:text-gray-300">Bantu dengan AI ✨</label>
+            <label className="mb-1 block text-sm font-medium dark:text-gray-300">Bantu dengan AI </label>
             <div className="flex gap-2">
               <input
                 type="text"
@@ -209,7 +209,7 @@ export default function BroadcastPanel({ sellers }) {
           <div>
             <label className="mb-1 block text-sm font-medium dark:text-gray-300">Gambar (Opsional — otomatis dikonversi ke WebP)</label>
             <label className="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-dashed border-gray-300 p-3 hover:border-blue-400 dark:border-slate-600 dark:hover:border-blue-500">
-              <span className="text-2xl">🖼️</span>
+              <span className="text-2xl"><svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg></span>
               <div className="min-w-0">
                 <p className="text-sm font-medium dark:text-gray-300">
                   {imageFile ? imageFile.name : "Klik untuk pilih gambar"}
@@ -225,7 +225,7 @@ export default function BroadcastPanel({ sellers }) {
                   type="button"
                   onClick={() => { setImageFile(null); setImagePreview(""); }}
                   className="absolute -right-2 -top-2 rounded-full bg-red-500 p-0.5 text-xs text-white hover:bg-red-600"
-                >✕</button>
+                ></button>
               </div>
             )}
           </div>
@@ -245,7 +245,7 @@ export default function BroadcastPanel({ sellers }) {
           </div>
 
           {status && (
-            <div className={`rounded-md p-3 text-sm ${status.includes("Error") ? "bg-rose-100 text-rose-700" : status.includes("📅") ? "bg-indigo-50 text-indigo-700" : "bg-blue-50 text-blue-700"}`}>
+            <div className={`rounded-md p-3 text-sm ${status.includes("Error") ? "bg-rose-100 text-rose-700" : status.includes("[scheduled]") ? "bg-indigo-50 text-indigo-700" : "bg-blue-50 text-blue-700"}`}>
               {status}
             </div>
           )}
@@ -256,14 +256,14 @@ export default function BroadcastPanel({ sellers }) {
               disabled={loading || !message.trim() || !!scheduledAt}
               className="btn-primary flex-1"
             >
-              {loading && !scheduledAt ? "Mengirim..." : `⚡ Kirim Sekarang (${sellers.length})`}
+              {loading && !scheduledAt ? "Mengirim..." : ` Kirim Sekarang (${sellers.length})`}
             </button>
             <button
               onClick={handleSchedule}
               disabled={loading || !message.trim() || !scheduledAt}
               className="btn-outline flex-1 text-indigo-600 border-indigo-300 hover:bg-indigo-50"
             >
-              {loading && scheduledAt ? "Menjadwalkan..." : "📅 Jadwalkan"}
+              {loading && scheduledAt ? "Menjadwalkan..." : " Jadwalkan"}
             </button>
           </div>
         </div>
@@ -289,7 +289,7 @@ export default function BroadcastPanel({ sellers }) {
                     <p className="text-xs text-gray-500 mt-0.5">
                       {new Date(bc.scheduled_at).toLocaleString("id-ID")} ·{" "}
                       <span className={bc.status === "sent" ? "text-green-600" : bc.status === "failed" ? "text-rose-600" : "text-amber-600"}>
-                        {bc.status === "sent" ? "✅ Terkirim" : bc.status === "failed" ? "❌ Gagal" : "⏳ Terjadwal"}
+                        {bc.status === "sent" ? " Terkirim" : bc.status === "failed" ? " Gagal" : "⏳ Terjadwal"}
                       </span>
                     </p>
                   </div>

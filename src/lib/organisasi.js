@@ -4,13 +4,13 @@
  */
 
 export const UKM_CATEGORIES = [
-  { id: "bem_hima", label: "👑 BEM & Himpunan Mahasiswa (HIMA)", icon: "👑" },
-  { id: "olahraga", label: "🏃 UKM Olahraga & Kebugaran", icon: "🏃" },
-  { id: "seni_budaya", label: "🎨 UKM Seni, Musik & Budaya", icon: "🎨" },
-  { id: "riset_teknologi", label: "🔬 UKM Riset, Penalaran & Teknologi", icon: "🔬" },
-  { id: "keagamaan", label: "🕌 UKM Kerohanian & Keagamaan", icon: "🕌" },
-  { id: "media_pers", label: "📰 Pers, Media & Jurnalistik Kampus", icon: "📰" },
-  { id: "sosial_lingkungan", label: "🌱 Komunitas Sosial & Lingkungan", icon: "🌱" },
+  { id: "bem_hima", label: "BEM & Himpunan Mahasiswa (HIMA)", icon: "BEM" },
+  { id: "olahraga", label: "UKM Olahraga & Kebugaran", icon: "Run" },
+  { id: "seni_budaya", label: "UKM Seni, Musik & Budaya", icon: "Art" },
+  { id: "riset_teknologi", label: "UKM Riset, Penalaran & Teknologi", icon: "Lab" },
+  { id: "keagamaan", label: "UKM Kerohanian & Keagamaan", icon: "Faith" },
+  { id: "media_pers", label: "Pers, Media & Jurnalistik Kampus", icon: "News" },
+  { id: "sosial_lingkungan", label: "Komunitas Sosial & Lingkungan", icon: "Leaf" },
 ];
 
 export const KAMPUS_OPTIONS = ["USU", "POLMED"];

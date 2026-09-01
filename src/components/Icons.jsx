@@ -106,6 +106,11 @@ export const Icon = {
       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
     </svg>
   ),
+  StarFilled: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`fill-current ${p.className||""}`}>
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01L12 2z" />
+    </svg>
+  ),
   Package: (p) => (
     <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
       <line x1="16.5" y1="9.4" x2="7.5" y2="4.21" />
@@ -146,6 +151,23 @@ export const Icon = {
   X: (p) => (
     <svg viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" {...p} className={`${base} ${p.className||""}`}>
       <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  ),
+  Check: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <path d="m5 12 4 4L19 6" />
+    </svg>
+  ),
+  Key: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <circle cx="7.5" cy="15.5" r="4.5" />
+      <path d="m10.7 12.3 8.8-8.8M15 8l2 2M18 5l2 2" />
+    </svg>
+  ),
+  Flame: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <path d="M12 22c4.4 0 8-3.3 8-8 0-3.2-1.7-6-5-8.5.1 2.4-.8 4.1-2.3 5.2.2-3.5-1.6-6.4-4.5-8.7.1 3.1-1.1 5.1-2.3 6.8C4.8 10.4 4 12 4 14c0 4.7 3.6 8 8 8Z" />
+      <path d="M9.5 17.5c0 1.4 1.1 2.5 2.5 2.5s2.5-1.1 2.5-2.5c0-1.2-.7-2.3-2.2-3.5 0 1-.4 1.7-1 2.2-.1-.9-.5-1.7-1.2-2.4-.1 1.5-.6 2.3-.6 3.7Z" />
     </svg>
   ),
   Mail: (p) => (
@@ -298,7 +320,7 @@ export const Icon = {
     </svg>
   ),
   // ─── Tab Mading ───────────────────────────────────────────────────────────
-  // ✨ Semua
+  //  Semua
   Sparkles: (p) => (
     <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
       <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z" />
@@ -306,13 +328,13 @@ export const Icon = {
       <path d="M19 3l.5 1.5L21 5l-1.5.5L19 7l-.5-1.5L17 5l1.5-.5L19 3z" />
     </svg>
   ),
-  // 📢 Info Kampus
+  //  Info Kampus
   Megaphone: (p) => (
     <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
       <path d="M3 11l19-9-9 19-2-8-8-2z" />
     </svg>
   ),
-  // 🏛️ Organisasi
+  //  Organisasi
   Landmark: (p) => (
     <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
       <line x1="3" y1="22" x2="21" y2="22" />
@@ -323,7 +345,7 @@ export const Icon = {
       <polygon points="12 2 20 7 4 7" />
     </svg>
   ),
-  // 👥 Cari Teman
+  //  Cari Teman
   Users: (p) => (
     <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -511,3 +533,16 @@ export const Icon = {
     </svg>
   ),
 };
+
+Icon.ChatBubbleLeftRight = Icon.MessageCircle;
+Icon.PencilSquare = Icon.Edit2;
+Icon.EyeSlash = Icon.EyeOff;
+Icon.ArrowPath = Icon.RefreshCcw;
+Icon.ExclamationCircle = Icon.AlertCircle;
+Icon.Cube = Icon.Package;
+Icon.BuildingStorefront = Icon.Store;
+Icon.AcademicCap = Icon.GraduationCap;
+Icon.Clock = Icon.Clock3;
+Icon.ClipboardDocumentList = Icon.ClipboardList;
+Icon.ArrowPathRoundedSquare = Icon.RefreshCcw;
+Icon.Masks = Icon.TheaterMasks;

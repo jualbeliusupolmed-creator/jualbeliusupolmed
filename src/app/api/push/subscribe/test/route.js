@@ -22,7 +22,7 @@ export async function POST(req) {
   }
   try {
     const body = await req.json().catch(() => ({}));
-    const title = body.title || "🔔 Test Push";
+    const title = body.title || " Test Push";
     const message = body.body || "Notifikasi push berfungsi!";
     const url = body.url || "/";
 

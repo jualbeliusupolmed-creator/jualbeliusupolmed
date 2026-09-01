@@ -11,7 +11,7 @@ export const revalidate = 0;
 //
 // Dulu endpoint ini mengembalikan satu baris per room, dan kotak masuk
 // merendernya apa adanya: lima kali "cari teman" = lima baris dengan lima nama
-// asing, empat di antaranya berisi cuplikan yang sama persis ("🎉 Kalian telah
+// asing, empat di antaranya berisi cuplikan yang sama persis (" Kalian telah
 // terhubung!"). Sekarang seluruh obrolan anonim adalah SATU utas
 // (/api/chat/anon/thread), jadi kotak masuk cuma perlu tahu satu hal: apa yang
 // terakhir terjadi di sana.

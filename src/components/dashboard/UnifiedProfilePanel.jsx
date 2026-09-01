@@ -436,7 +436,7 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
                   berarti apa pun. */}
               Status verifikasi:{" "}
               <strong className={profil.ukm_verified ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}>
-                {profil.ukm_verified ? "Terverifikasi ✓" : "Belum terverifikasi"}
+                {profil.ukm_verified ? "Terverifikasi " : "Belum terverifikasi"}
               </strong>
               . Centang resmi hanya diberikan lewat kode undangan atau oleh admin, bukan dari halaman ini.
             </div>

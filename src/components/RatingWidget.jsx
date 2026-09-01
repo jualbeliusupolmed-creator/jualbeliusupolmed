@@ -115,7 +115,7 @@ export default function RatingWidget({ listing, className = "" }) {
           )}
           {success && (
             <p className="mt-2 text-xs text-green-600 font-medium">
-              ✅ Rating berhasil disimpan!
+               Rating berhasil disimpan!
             </p>
           )}
         </div>

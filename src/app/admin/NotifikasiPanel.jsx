@@ -41,13 +41,13 @@ function PushStatusBanner({ pushCount }) {
         }),
       });
       const d = await res.json();
-      setTestMsg(res.ok ? { ok: true, text: `✅ Berhasil dikirim ke ${d.sent ?? pushCount} peramban.` } : { ok: false, text: `❌ ${d.error}` });
+      setTestMsg(res.ok ? { ok: true, text: ` Berhasil dikirim ke ${d.sent ?? pushCount} peramban.` } : { ok: false, text: ` ${d.error}` });
       if (res.ok) {
         setPushTitle("");
         setPushBody("");
         setPushUrl("/");
       }
-    } catch (e) { setTestMsg({ ok: false, text: `❌ ${e.message}` }); }
+    } catch (e) { setTestMsg({ ok: false, text: ` ${e.message}` }); }
     finally { setTesting(false); }
   }
 
@@ -59,7 +59,7 @@ function PushStatusBanner({ pushCount }) {
           Push Notification Status:
         </span>
         <span className={`text-sm ${vapidOk === null ? "text-gray-400" : vapidOk ? "text-green-700 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
-          {vapidOk === null ? "Memeriksa..." : vapidOk ? `✅ VAPID Terkonfigurasi — ${pushCount} Pelanggan Peramban Aktif` : "❌ VAPID belum dikonfigurasi (tambahkan VAPID_PUBLIC_KEY & VAPID_PRIVATE_KEY di env)"}
+          {vapidOk === null ? "Memeriksa..." : vapidOk ? ` VAPID Terkonfigurasi — ${pushCount} Pelanggan Peramban Aktif` : " VAPID belum dikonfigurasi (tambahkan VAPID_PUBLIC_KEY & VAPID_PRIVATE_KEY di env)"}
         </span>
       </div>
 
@@ -84,7 +84,7 @@ function PushStatusBanner({ pushCount }) {
             {testMsg ? <p className={`text-xs font-medium ${testMsg.ok ? "text-green-600" : "text-red-500"}`}>{testMsg.text}</p> : <span />}
             <button onClick={sendCustomPush} disabled={testing || !pushTitle.trim() || !pushBody.trim()}
               className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50">
-              {testing ? "⏳ Mengirim..." : "🚀 Kirim ke Semua"}
+              {testing ? "⏳ Mengirim..." : " Kirim ke Semua"}
             </button>
           </div>
         </div>

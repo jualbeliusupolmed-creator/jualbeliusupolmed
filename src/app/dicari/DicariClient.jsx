@@ -366,7 +366,7 @@ export default function DicariPage({ initialItems = [] }) {
           <div className="card w-full max-w-lg bg-white p-6 shadow-2xl dark:bg-slate-900 animate-fade-in max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-slate-800">
               <h2 className="text-lg font-bold text-gray-900 dark:text-white">Posting Barang</h2>
-              <button type="button" onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+              <button type="button" onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600" aria-label="Tutup"><Icon.X className="h-5 w-5" /></button>
             </div>
             <form onSubmit={submitWanted} className="mt-4 space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
@@ -498,7 +498,7 @@ export default function DicariPage({ initialItems = [] }) {
                           {a}
                         </option>
                       ))}
-                      <option value="__manual__">✏️ Ketik area lain...</option>
+                      <option value="__manual__">Ketik area lain...</option>
                     </select>
                   ) : (
                     <div className="relative">
@@ -519,13 +519,13 @@ export default function DicariPage({ initialItems = [] }) {
                         className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-gray-600"
                         title="Kembali ke pilihan area"
                       >
-                        ✕
+                        <Icon.X className="h-4 w-4" />
                       </button>
                     </div>
                   )}
                 </div>
               </div>
-
+                <Icon.X className="h-5 w-5" />
               <div className="pt-3 border-t border-gray-100 dark:border-slate-800 flex gap-2 justify-end">
                 <button type="button" onClick={() => setShowModal(false)} className="btn-outline px-4 py-2 text-xs">Batal</button>
                 <button type="submit" disabled={submitting} className="btn-primary px-5 py-2 text-xs">{submitting ? "Mengirim..." : "Post Kebutuhan"}</button>
@@ -548,14 +548,14 @@ export default function DicariPage({ initialItems = [] }) {
                 onClick={() => setQrisModal(null)}
                 className="text-gray-400 hover:text-gray-600"
               >
-                ✕
+                <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg>
               </button>
             </div>
 
             {unlockResult?.pending ? (
               <div className="mt-4 text-center">
                 <div className="p-3 rounded-xl bg-green-50 text-green-700 text-sm font-bold border border-green-200 dark:bg-green-900/20 dark:border-green-800/50 dark:text-green-400">
-                  ✅ Pembayaran diterima!
+                   Pembayaran diterima!
                 </div>
                 <p className="mt-3 text-xs text-gray-500 dark:text-slate-400 leading-relaxed">
                   Nomor pembeli untuk postingan ini sedang diproses admin dan akan dikirim ke WhatsApp Anda segera. Mohon tunggu ya.
@@ -570,7 +570,7 @@ export default function DicariPage({ initialItems = [] }) {
             ) : unlockResult ? (
               <div className="mt-4 text-center">
                 <div className="p-3 rounded-xl bg-green-50 text-green-700 text-sm font-bold border border-green-200 dark:bg-green-900/20 dark:border-green-800/50 dark:text-green-400">
-                  🎉 Struk valid! Pembayaran dikonfirmasi AI.
+                   Struk valid! Pembayaran dikonfirmasi AI.
                 </div>
 
                 <div className="mt-4 border border-gray-100 dark:border-slate-800/80 rounded-xl divide-y divide-gray-100 dark:divide-slate-800 text-left text-xs">
@@ -597,7 +597,7 @@ export default function DicariPage({ initialItems = [] }) {
                     rel="noreferrer"
                     className="btn-primary w-full py-2.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-1.5"
                   >
-                    <span>💬 Chat Pembeli Sekarang</span>
+                    <Icon.MessageCircle className="h-4 w-4" /><span>Chat Pembeli Sekarang</span>
                   </a>
                   <button
                     onClick={() => setQrisModal(null)}
@@ -631,7 +631,7 @@ export default function DicariPage({ initialItems = [] }) {
 
                 <div className="mt-4 text-left">
                   <label className="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
-                    📸 Upload Bukti Transfer
+                    <span className="inline-flex items-center gap-1.5"><Icon.Camera className="h-4 w-4" /> Upload Bukti Transfer</span>
                   </label>
                   <input
                     type="file"
@@ -656,7 +656,7 @@ export default function DicariPage({ initialItems = [] }) {
 
                 {manualError && (
                   <div className="mt-3 p-3 rounded-lg bg-red-50 text-red-600 text-xs text-left border border-red-100 dark:bg-red-900/20 dark:border-red-800/50">
-                    ❌ {manualError}
+                    <span className="inline-flex items-center gap-1.5"><Icon.X className="h-4 w-4" /> {manualError}</span>
                   </div>
                 )}
 
@@ -721,7 +721,7 @@ export default function DicariPage({ initialItems = [] }) {
                         AI Sedang Membaca Struk...
                       </>
                     ) : (
-                      <span>🤖 Kirim &amp; Verifikasi AI</span>
+                      <span className="inline-flex items-center gap-1.5"><Icon.Rocket className="h-4 w-4" /> Kirim &amp; Verifikasi AI</span>
                     )}
                   </button>
                   <button

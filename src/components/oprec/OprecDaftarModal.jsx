@@ -100,7 +100,7 @@ export default function OprecDaftarModal({ oprec, onClose, onSubmitted }) {
       if (!res.ok) throw new Error(data.error || "Gagal mengirim pendaftaran.");
 
       setSubmittedData(data);
-      toast.success("Pendaftaran Oprec Berhasil Dikirimkan! 🎉");
+      toast.success("Pendaftaran Oprec Berhasil Dikirimkan! ");
       if (onSubmitted) onSubmitted();
     } catch (err) {
       toast.error(err.message || "Gagal memproses pendaftaran.");
@@ -115,11 +115,11 @@ export default function OprecDaftarModal({ oprec, onClose, onSubmitted }) {
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
         <div className="relative w-full max-w-md rounded-3xl bg-white p-6 sm:p-8 text-center space-y-5 dark:bg-slate-900 border border-black/[0.06] dark:border-white/[0.08] z-10 shadow-2xl">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 text-3xl text-emerald-600">
-            🎉
+            <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg>
           </div>
           <div>
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 mb-1">
-              ✓ Formulir Diterima
+               Formulir Diterima
             </span>
             <h3 className="text-xl font-bold text-gray-900 dark:text-white">
               Pendaftaran Berhasil!
@@ -132,7 +132,7 @@ export default function OprecDaftarModal({ oprec, onClose, onSubmitted }) {
           {oprec.wa_group_link && (
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4 dark:border-emerald-900/40 dark:bg-emerald-950/30 text-left space-y-2">
               <p className="text-xs font-bold text-emerald-900 dark:text-emerald-200">
-                📲 Gabung Grup WhatsApp Peserta:
+                 Gabung Grup WhatsApp Peserta:
               </p>
               <a
                 href={oprec.wa_group_link}
@@ -162,7 +162,7 @@ export default function OprecDaftarModal({ oprec, onClose, onSubmitted }) {
         <div className="flex items-start justify-between gap-3 border-b border-gray-100 dark:border-slate-800 pb-3">
           <div>
             <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-bold text-primary dark:text-emerald-400">
-              🏛️ {oprec.ukm_name}
+               {oprec.ukm_name}
             </span>
             <h3 className="text-base font-bold text-gray-900 dark:text-white mt-1">
               Formulir Pendaftaran Oprec
@@ -175,7 +175,7 @@ export default function OprecDaftarModal({ oprec, onClose, onSubmitted }) {
             onClick={onClose}
             className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-slate-800 dark:text-slate-400"
           >
-            ✕
+            <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg>
           </button>
         </div>
 
@@ -316,7 +316,7 @@ export default function OprecDaftarModal({ oprec, onClose, onSubmitted }) {
           {Array.isArray(oprec.custom_fields) && oprec.custom_fields.length > 0 && (
             <div className="rounded-2xl border border-primary/20 bg-primary/[0.02] p-3.5 space-y-3 dark:border-primary/30 dark:bg-slate-800/40">
               <p className="font-bold text-primary dark:text-emerald-400 text-xs">
-                📋 Pertanyaan &amp; Berkas Tambahan UKM
+                 Pertanyaan &amp; Berkas Tambahan UKM
               </p>
 
               {oprec.custom_fields.map((cf) => (
@@ -347,7 +347,7 @@ export default function OprecDaftarModal({ oprec, onClose, onSubmitted }) {
                       {customAnswers[cf.id] ? (
                         <div className="flex items-center gap-2">
                           <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                            ✓ Berkas Terunggah
+                             Berkas Terunggah
                           </span>
                           <a
                             href={customAnswers[cf.id]}

@@ -87,7 +87,7 @@ export default function KebijakanPrivasiPage() {
 
         {/* 7. Kontak Layanan Pelanggan */}
         <div className="border-t pt-5 dark:border-slate-800">
-          <h2 className="text-base font-bold text-gray-900 dark:text-white mb-2">📞 Kontak Pengelola Layanan</h2>
+          <h2 className="text-base font-bold text-gray-900 dark:text-white mb-2"> Kontak Pengelola Layanan</h2>
           <p className="mb-3">
             Jika Anda memiliki pertanyaan, kekhawatiran, atau keluhan terkait Kebijakan Privasi ini, silakan hubungi kami di:
           </p>

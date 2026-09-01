@@ -52,8 +52,8 @@ export default function MinatButton({ listing }) {
         const fullMsg =
           `Halo ${listing.seller_name || "Penjual"},\n\n` +
           `${text}\n\n` +
-          `📦 *${listing.title}*\n` +
-          `🔗 ${productLink}`;
+          ` *${listing.title}*\n` +
+          ` ${productLink}`;
 
         const waUrl = `https://wa.me/${formattedWa}?text=${encodeURIComponent(fullMsg)}`;
         window.open(waUrl, "_blank", "noopener,noreferrer");
@@ -101,8 +101,8 @@ export default function MinatButton({ listing }) {
         {busy
           ? "Memproses…"
           : isWaMode
-          ? "📱 Chat Penjual via WhatsApp"
-          : "💬 Minat / Chat Penjual"}
+          ? " Chat Penjual via WhatsApp"
+          : " Minat / Chat Penjual"}
       </button>
 
       {/* Template Picker Modal */}
@@ -115,13 +115,13 @@ export default function MinatButton({ listing }) {
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-slate-800">
               <p className="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-1.5">
-                {isWaMode ? "📱 Chat WhatsApp Penjual" : "💬 Pilih Pesan ke Penjual"}
+                {isWaMode ? " Chat WhatsApp Penjual" : " Pilih Pesan ke Penjual"}
               </p>
               <button
                 onClick={() => setShowPicker(false)}
                 className="text-gray-400 hover:text-gray-600 text-lg leading-none"
               >
-                ✕
+                <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg>
               </button>
             </div>
 

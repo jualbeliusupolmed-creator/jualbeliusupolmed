@@ -20,11 +20,11 @@ export default function ShareWAButton({ listing }) {
       ? `${rupiah(listing.price)}/${listing.rental_period}`
       : rupiah(listing.price);
     return (
-      `📦 *${listing.title}*\n` +
-      (listing.listing_code ? `#️⃣ Kode: ${listing.listing_code}\n` : "") +
-      `💰 ${priceStr}${cond}\n` +
-      (listing.category ? `🏷️ ${listing.category}\n` : "") +
-      `\n👉 ${shareUrl()}\n` +
+      ` *${listing.title}*\n` +
+      (listing.listing_code ? `#⃣ Kode: ${listing.listing_code}\n` : "") +
+      ` ${priceStr}${cond}\n` +
+      (listing.category ? ` ${listing.category}\n` : "") +
+      `\n ${shareUrl()}\n` +
       `_Jual Beli USU Polmed — COD area kampus_`
     );
   }
@@ -49,7 +49,7 @@ export default function ShareWAButton({ listing }) {
 
   return (
     <button onClick={handleShare} className="btn-outline">
-      🟢 Bagikan ke WhatsApp
+       Bagikan ke WhatsApp
     </button>
   );
 }

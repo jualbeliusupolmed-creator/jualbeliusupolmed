@@ -1,10 +1,10 @@
 export const TEMAN_INTENTS = [
-  { value: "Teman Santai", legacy: "Teman Santai ☕", icon: "Coffee" },
-  { value: "Belajar Bareng", legacy: "Belajar Bareng 📚", icon: "BookOpen" },
-  { value: "Teman Olahraga", legacy: "Teman Olahraga 🏃‍♂️", icon: "Dumbbell" },
-  { value: "Teman Event / Konser", legacy: "Teman Event / Konser 🎟️", icon: "Ticket" },
-  { value: "Ngobrol Seru", legacy: "Ngobrol Seru 💬", icon: "MessageCircle" },
-  { value: "Cari Relasi Karir", legacy: "Cari Relasi Karir 💼", icon: "Briefcase" },
+  { value: "Teman Santai", legacy: "Teman Santai ", icon: "Coffee" },
+  { value: "Belajar Bareng", legacy: "Belajar Bareng ", icon: "BookOpen" },
+  { value: "Teman Olahraga", legacy: "Teman Olahraga ‍", icon: "Dumbbell" },
+  { value: "Teman Event / Konser", legacy: "Teman Event / Konser ", icon: "Ticket" },
+  { value: "Ngobrol Seru", legacy: "Ngobrol Seru", icon: "ChatBubbleLeftRight" },
+  { value: "Cari Relasi Karir", legacy: "Cari Relasi Karir ", icon: "Briefcase" },
 ];
 
 const intentLookup = new Map(

@@ -85,11 +85,11 @@ export const DEFAULT_SETTINGS = {
     otpMaxAttempts: 3,
   },
   messages: {
-    reminderH3: "Halo Kak! Iklan *{{title}}* milik Anda akan berakhir dalam *3 hari lagi*. Segera perpanjang agar iklan tetap aktif! 🔄\n\n👉 Balas *PERPANJANG* untuk memperpanjang.",
-    reminderH1: "⚠️ Halo Kak! Iklan *{{title}}* milik Anda akan berakhir *besok*! Segera perpanjang sekarang!\n\n👉 Balas *PERPANJANG*.",
-    qrisInstruction: "Silakan scan QRIS di bawah ini untuk membayar. Setelah bayar, kirimkan foto struk ke bot ini ya! 📸",
-    listingActive: "✅ Iklan *{{title}}* telah aktif dan bisa dilihat di marketplace! Semoga cepat laku ya Kak! 🎉\n\n🌐 {{url}}",
-    notifNewListing: "📢 *Iklan Baru!*\n\n*{{title}}*\nHarga: {{price}}\nPenjual: {{seller}}\n\n{{url}}",
+    reminderH3: "Halo Kak! Iklan *{{title}}* milik Anda akan berakhir dalam *3 hari lagi*. Segera perpanjang agar iklan tetap aktif! \n\n Balas *PERPANJANG* untuk memperpanjang.",
+    reminderH1: " Halo Kak! Iklan *{{title}}* milik Anda akan berakhir *besok*! Segera perpanjang sekarang!\n\n Balas *PERPANJANG*.",
+    qrisInstruction: "Silakan scan QRIS di bawah ini untuk membayar. Setelah bayar, kirimkan foto struk ke bot ini ya! ",
+    listingActive: " Iklan *{{title}}* telah aktif dan bisa dilihat di marketplace! Semoga cepat laku ya Kak! \n\n {{url}}",
+    notifNewListing: " *Iklan Baru!*\n\n*{{title}}*\nHarga: {{price}}\nPenjual: {{seller}}\n\n{{url}}",
   },
   // Turunkan iklan yang tenggatnya lewat, otomatis lewat cron harian.
   //
@@ -131,7 +131,7 @@ export const DEFAULT_SETTINGS = {
   bot_keywords: {
     enabled: true,
     greeting_enabled: false,
-    greeting: "Halo! 👋\n\nPerintah bot diawali tanda titik ( *.* ), contoh: *.MENU*\n\n• *.JUAL* — Pasang iklan\n• *.CARI [nama barang]* — Cari barang\n• *.PERPANJANG* — Perpanjang iklan\n• *.UPGRADE* — Upgrade iklan\n• *.SAYA* — Profil & statistik saya\n• *.MENU* — Lihat semua perintah lengkap\n\nSetelah *.JUAL*, kirim *Foto + Deskripsi + Harga* untuk pasang iklan.\n\nMau ngobrol dengan admin (manusia)? Ketik *ADMIN* tanpa titik.\n\n🌐 Website: jualbeliusupolmed.web.id",
+    greeting: "Halo! \n\nPerintah bot diawali tanda titik ( *.* ), contoh: *.MENU*\n\n• *.JUAL* — Pasang iklan\n• *.CARI [nama barang]* — Cari barang\n• *.PERPANJANG* — Perpanjang iklan\n• *.UPGRADE* — Upgrade iklan\n• *.SAYA* — Profil & statistik saya\n• *.MENU* — Lihat semua perintah lengkap\n\nSetelah *.JUAL*, kirim *Foto + Deskripsi + Harga* untuk pasang iklan.\n\nMau ngobrol dengan admin (manusia)? Ketik *ADMIN* tanpa titik.\n\n Website: jualbeliusupolmed.web.id",
     triggers: "jual,wts,wtb,cari,beli,dicari,admin,min,mimin,perpanjang,upgrade,dijual,ready",
     min_price_digits: 4,
   },

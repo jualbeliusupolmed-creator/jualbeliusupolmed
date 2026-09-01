@@ -51,7 +51,7 @@ export async function GET(request) {
         faculty: sProfile.faculty || "Umum",
         whatsapp: sProfile.wa || sessionWa,
         photo_url: sProfile.avatar_url || "",
-        intent: "Teman Santai ☕",
+        intent: "Teman Santai ",
       };
     } else if (myProfile && sProfile) {
       // Jika keduanya ada, pastikan data yang paling lengkap & baru dipakai
@@ -118,7 +118,7 @@ export async function POST(request) {
       campus = "USU",
       faculty = "Umum",
       batch = "2024",
-      intent = "Teman Santai ☕",
+      intent = "Teman Santai ",
       bio = "",
       instagram = "",
       whatsapp = "",
@@ -140,7 +140,7 @@ export async function POST(request) {
     const cleanCampus = String(campus || "USU").trim();
     const cleanFaculty = String(faculty || "Umum").trim();
     const cleanBatch = String(batch || "2024").trim();
-    const cleanIntent = String(intent || "Teman Santai ☕").trim();
+    const cleanIntent = String(intent || "Teman Santai ").trim();
     const cleanInstagram = String(instagram || "").replace(/^@/, "").trim();
     const cleanWa = sessionWa || String(whatsapp || "").trim();
 

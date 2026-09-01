@@ -79,7 +79,7 @@ export default function AuditPage() {
         <div className="rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
           {!data?.logs?.length ? (
             <div className="p-10 text-center">
-              <p className="text-2xl">📋</p>
+              <p className="text-2xl"><svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg></p>
               <p className="mt-2 text-sm text-gray-400">Belum ada log. Data terekam setelah migration_logs.sql dijalankan.</p>
             </div>
           ) : (
@@ -117,7 +117,7 @@ export default function AuditPage() {
         <div className="rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
           {!data?.errors?.length ? (
             <div className="p-10 text-center">
-              <p className="text-2xl">✅</p>
+              <p className="text-2xl"><svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg></p>
               <p className="mt-2 text-sm text-gray-400">Tidak ada error tercatat. Sistem berjalan normal.</p>
             </div>
           ) : (

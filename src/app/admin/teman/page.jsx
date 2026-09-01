@@ -58,7 +58,7 @@ export default async function AdminTemanPage() {
         <Stat
           label="Mutual Matches"
           value={totalMatches}
-          sub="Pasangan yang saling cocok 🎉"
+          sub="Pasangan yang saling cocok "
         />
       </StatGrid>
 
@@ -101,7 +101,7 @@ export default async function AdminTemanPage() {
                             />
                           ) : (
                             <span className="flex h-full w-full items-center justify-center text-gray-400">
-                              📷
+                              <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg>
                             </span>
                           )}
                         </div>
@@ -129,7 +129,7 @@ export default async function AdminTemanPage() {
                     {/* Intent */}
                     <td className="p-3">
                       <span className="inline-block rounded-full bg-rose-50 px-2.5 py-0.5 text-[10px] font-bold text-rose-600 dark:bg-rose-950/40 dark:text-rose-300">
-                        {p.intent || "Teman Santai ☕"}
+                        {p.intent || "Teman Santai "}
                       </span>
                     </td>
 

@@ -14,7 +14,7 @@ export function TabSaluran() {
     if (!invite.trim()) return;
     setAdding(true); setAddStatus(null);
     const r = await apiPost("newsletters/add", { invite });
-    setAddStatus(r.success ? { ok: true, text: `✅ Saluran "${r.data?.name}" berhasil ditambahkan!` } : { ok: false, text: `❌ ${r.error || "Gagal"}` });
+    setAddStatus(r.success ? { ok: true, text: `Saluran "${r.data?.name}" berhasil ditambahkan!` } : { ok: false, text: `${r.error || "Gagal"}` });
     if (r.success) { setInvite(""); refetch(); }
     setAdding(false);
   }
@@ -23,7 +23,7 @@ export function TabSaluran() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold dark:text-white">Saluran (Newsletter) WA</h2>
-        <button onClick={refetch} className="btn-outline text-xs">🔄 Refresh</button>
+        <button onClick={refetch} className="btn-outline text-xs">Refresh</button>
       </div>
 
       <form onSubmit={handleAdd} className="card p-4 flex gap-3 items-end">
@@ -31,13 +31,13 @@ export function TabSaluran() {
           <label className="label">Tambah via Link Invite</label>
           <input className="input" placeholder="https://whatsapp.com/channel/..." value={invite} onChange={e => setInvite(e.target.value)} />
         </div>
-        <button type="submit" disabled={adding} className="btn-primary shrink-0">{adding ? "⏳" : "➕ Tambah"}</button>
+        <button type="submit" disabled={adding} className="btn-primary shrink-0">{adding ? "..." : "Tambah"}</button>
       </form>
       <Alert ok={addStatus?.ok} msg={addStatus?.text} />
 
       {loading && <p className="text-sm text-gray-400">Memuat saluran...</p>}
-      {error && <Alert ok={false} msg={`⚠️ ${error}`} />}
-      {data?.note && <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">ℹ️ {data.note}</div>}
+      {error && <Alert ok={false} msg={error} />}
+      {data?.note && <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">ℹ {data.note}</div>}
 
       <div className="space-y-2">
         {(data?.newsletters || []).map(n => (

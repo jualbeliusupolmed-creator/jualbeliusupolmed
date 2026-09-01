@@ -28,7 +28,7 @@ export default function DashboardModeToggle({ storeStatus, activeCount }) {
             : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
         }`}
       >
-        <span>📦 Iklan &amp; Jualan</span>
+        <span> Iklan &amp; Jualan</span>
         {activeCount !== undefined && activeCount > 0 && (
           <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-black">
             {activeCount}
@@ -44,7 +44,7 @@ export default function DashboardModeToggle({ storeStatus, activeCount }) {
             : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
         }`}
       >
-        <span>🏬 Toko Saya</span>
+        <span> Toko Saya</span>
         {storeStatus === "aktif" && (
           <span className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-emerald-500/20" title="Toko Aktif" />
         )}

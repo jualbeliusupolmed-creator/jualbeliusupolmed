@@ -91,7 +91,7 @@ export async function POST(req) {
       success: true,
       wa: identifierWa,
       name: name.trim(),
-      message: "Pendaftaran akun berhasil! Selamat datang di Jual Beli USU & POLMED. 🎉",
+      message: "Pendaftaran akun berhasil! Selamat datang di Jual Beli USU & POLMED. ",
     });
   } catch (e) {
     console.error("Email daftar error:", e);

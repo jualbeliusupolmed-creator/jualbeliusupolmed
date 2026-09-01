@@ -16,7 +16,7 @@ const MAKS_ROOM = 60;
 // Pesan sistem ini digantikan oleh garis pemisah di UI. Kalau ikut dirender,
 // tiap pergantian partner muncul dua kali: sekali sebagai garis, sekali lagi
 // sebagai gelembung abu-abu yang isinya sama.
-const SAPAAN_TERHUBUNG = "🎉 Kalian telah terhubung!";
+const SAPAAN_TERHUBUNG = " Kalian telah terhubung!";
 
 // GET /api/chat/anon/thread — SATU utas berisi semua obrolan anonim milikku.
 //
@@ -45,7 +45,7 @@ export async function GET() {
       .select("id, status, user1_id, user1_alias, user1_faculty, user2_id, user2_alias, user2_faculty, created_at, updated_at")
       .eq("type", "random")
       .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
-      .order("created_at", { ascending: true })
+      .order("created_at", { ascending: false })
       .limit(MAKS_ROOM);
 
     if (error) {
@@ -53,7 +53,9 @@ export async function GET() {
       return NextResponse.json({ error: "Gagal memuat obrolan" }, { status: 500 });
     }
 
-    const semua = rooms || [];
+    // Query dibatasi dari yang terbaru agar sesi baru tidak terpotong, lalu
+    // dibalik lagi supaya utas tetap tampil kronologis dari lama ke baru.
+    const semua = [...(rooms || [])].reverse();
     const menunggu = semua.find((r) => r.status === "waiting") || null;
     // Yang aktif seharusnya cuma satu (lihat action "find" di /api/chat/match
     // yang menutup sisanya), tapi data lama masih menyimpan beberapa. Ambil

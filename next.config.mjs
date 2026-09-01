@@ -2,8 +2,10 @@ import withPWAInit from "@ducanh2912/next-pwa";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error"] } : false,
+  },
   images: {
-    unoptimized: true,
     remotePatterns: [
       { protocol: "https", hostname: "**" },
     ],

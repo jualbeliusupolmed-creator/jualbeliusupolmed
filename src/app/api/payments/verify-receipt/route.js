@@ -174,14 +174,14 @@ export async function POST(req) {
           const buyerWaIntl = buyerWa.startsWith("0") ? "62" + buyerWa.slice(1) : buyerWa;
           if (payment.meta?.requester_wa) {
             const msg =
-              `✅ *PEMBAYARAN TERVERIFIKASI OTOMATIS*\n\n` +
+              ` *PEMBAYARAN TERVERIFIKASI OTOMATIS*\n\n` +
               `Halo, struk transfer Anda sudah diverifikasi AI untuk pencarian barang berikut:\n` +
-              `🔍 *Cari Barang:* ${wanted.title}\n\n` +
+              ` *Cari Barang:* ${wanted.title}\n\n` +
               `Berikut adalah kontak pembeli yang mengajukan pencarian:\n` +
-              `👤 *Nama:* ${wanted.buyer_name}\n` +
-              `📱 *No. WhatsApp:* ${buyerWa}\n\n` +
+              ` *Nama:* ${wanted.buyer_name}\n` +
+              ` *No. WhatsApp:* ${buyerWa}\n\n` +
               `Silakan langsung hubungi pembeli di atas melalui link berikut:\n` +
-              `👉 https://wa.me/${buyerWaIntl}?text=${encodeURIComponent(`Halo ${wanted.buyer_name}, saya melihat postingan Anda di Jual Beli USU Polmed mencari "${wanted.title}". Saya ada barangnya.`)}\n\n` +
+              ` https://wa.me/${buyerWaIntl}?text=${encodeURIComponent(`Halo ${wanted.buyer_name}, saya melihat postingan Anda di Jual Beli USU Polmed mencari "${wanted.title}". Saya ada barangnya.`)}\n\n` +
               `Terima kasih telah menggunakan Jual Beli USU Polmed!`;
             sendWa(payment.meta.requester_wa, msg).catch(console.error);
           }
@@ -192,7 +192,7 @@ export async function POST(req) {
           const adminWa = process.env.ADMIN_WA || process.env.SUPER_ADMIN_WA;
           if (adminWa) {
             sendWa(adminWa,
-              `⚠️ *UNLOCK KONTAK TERTAHAN (LID)*\n\n` +
+              ` *UNLOCK KONTAK TERTAHAN (LID)*\n\n` +
               `Pembayaran Rp ${serverAmount.toLocaleString("id-ID")} sudah lunas untuk buka kontak "${wanted.title}", ` +
               `tapi buyer_wa postingan masih LID (${wanted.buyer_wa}) dan belum ada nomornya di wa_state.\n` +
               `Pemohon: ${payment.meta?.requester_wa || (payment.meta?.requester_wa_diklaim ? payment.meta.requester_wa_diklaim + " (diketik sendiri, belum terverifikasi)" : "(tanpa WA)")} — order ${transactionId}.\n` +
@@ -270,14 +270,14 @@ export async function POST(req) {
           : null;
 
         const typeMessages = {
-          iklan:    `✅ *Iklan Kamu Sudah Tayang!* 🎉\n\n📦 *${ls.title}*\n${expDate ? `📅 Aktif hingga: *${expDate}*\n` : ""}🔑 Kode: *${ls.listing_code || "-"}*\n\nIklan sudah disebarkan ke grup WA marketplace!\n\n${productUrl ? `👉 ${productUrl}` : ""}`,
-          bump:     `🔼 *Iklan Berhasil Disundul!*\n\n📦 *${ls.title}* sudah naik ke atas.\n\n${productUrl ? `👉 ${productUrl}` : ""}`,
-          renewal:  `🔄 *Iklan Diperpanjang!*\n\n📦 *${ls.title}*\n${expDate ? `📅 Aktif hingga: *${expDate}*` : ""}`,
-          featured: `⭐ *Featured Aktif!*\n\n📦 *${ls.title}* sekarang tampil sebagai Featured.\n\n${productUrl ? `👉 ${productUrl}` : ""}`,
-          autobump: `🔄 *AutoBump Aktif!*\n\n📦 *${ls.title}* akan otomatis disundul setiap hari.`,
+          iklan:    ` *Iklan Kamu Sudah Tayang!* \n\n *${ls.title}*\n${expDate ? ` Aktif hingga: *${expDate}*\n` : ""} Kode: *${ls.listing_code || "-"}*\n\nIklan sudah disebarkan ke grup WA marketplace!\n\n${productUrl ? ` ${productUrl}` : ""}`,
+          bump:     ` *Iklan Berhasil Disundul!*\n\n *${ls.title}* sudah naik ke atas.\n\n${productUrl ? ` ${productUrl}` : ""}`,
+          renewal:  ` *Iklan Diperpanjang!*\n\n *${ls.title}*\n${expDate ? ` Aktif hingga: *${expDate}*` : ""}`,
+          featured: `⭐ *Featured Aktif!*\n\n *${ls.title}* sekarang tampil sebagai Featured.\n\n${productUrl ? ` ${productUrl}` : ""}`,
+          autobump: ` *AutoBump Aktif!*\n\n *${ls.title}* akan otomatis disundul setiap hari.`,
         };
         const message = typeMessages[payment.type]
-          || `✅ *Pembayaran Sukses*\n\nLayanan untuk *"${ls.title}"* sudah diaktifkan! 🚀`;
+          || ` *Pembayaran Sukses*\n\nLayanan untuk *"${ls.title}"* sudah diaktifkan! `;
 
         sendWa(ls.seller_wa, message).catch(console.error);
       }

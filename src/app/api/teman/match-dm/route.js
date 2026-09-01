@@ -87,7 +87,7 @@ export async function POST(request) {
       room_id: newRoom.id,
       sender_id: "system",
       sender_alias: "Sistem",
-      message: `🎉 ${myAlias} dan ${partnerAlias} match di Cari Teman Kampus! Mulai ngobrol sekarang 👋`,
+      message: ` ${myAlias} dan ${partnerAlias} match di Cari Teman Kampus! Mulai ngobrol sekarang `,
     });
 
     return NextResponse.json({ roomId: newRoom.id });

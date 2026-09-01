@@ -3,6 +3,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { tolakCron } from "@/lib/cronAuth";
 import { sendWa } from "@/lib/fonnte";
 import { jawabGalat } from "@/lib/jawabGalat";
+import { MARKETPLACE_WA } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 // Loop kirim WA berjeda (anti-ban) mudah melewati batas default 10-15 detik —
@@ -44,14 +45,16 @@ export async function GET(req) {
 
     const shortId = c.id.split('-')[0]; // UUID dipotong buat command bot
     const msg =
-      `🤖 *Halo ${c.seller_name || "Penjual"}!*\n\n` +
+      ` *Halo ${c.seller_name || "Penjual"}!*\n\n` +
       `Kemarin ada yang tertarik sama barangmu:\n` +
-      `📦 *${c.listing_title}*\n` +
+      ` *${c.listing_title}*\n` +
       `(Pembeli: ${c.buyer_name || "Seseorang"})\n\n` +
       `Gimana kelanjutannya kak? Udah deal belum?\n\n` +
-      `Balas pesan ini dengan:\n` +
-      `✅ *DEAL ${shortId}*\n` +
-      `❌ *GAGAL ${shortId}*`;
+      `Balas pesan ini dengan perintah, atau klik link otomatis di bawah ini:\n\n` +
+      ` *DEAL ${shortId}*\n` +
+      `wa.me/${MARKETPLACE_WA}?text=DEAL%20${shortId}\n\n` +
+      ` *GAGAL ${shortId}*\n` +
+      `wa.me/${MARKETPLACE_WA}?text=GAGAL%20${shortId}`;
 
     const res = await sendWa(c.seller_wa, msg).catch(() => ({ ok: false }));
     

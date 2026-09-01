@@ -69,13 +69,13 @@ async function checkAndNotifyMilestone(supa, listingId) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
   const slug = buildSlug(listing.title, listing.id);
 
-  const emoji = nextMilestone >= 500 ? "🔥🔥🔥" : nextMilestone >= 100 ? "🚀🚀" : "🎉";
+  const emoji = nextMilestone >= 500 ? "Milestone 500" : nextMilestone >= 100 ? "Milestone 100" : "Milestone";
   const msg =
     `${emoji} *Iklanmu makin dilihat orang!*\n\n` +
     `Hei ${listing.seller_name || "Penjual"},\n` +
     `Iklan *"${listing.title}"* baru saja melewati *${nextMilestone} kali dilihat*!\n\n` +
-    `📈 Makin banyak yang tertarik. Pastikan kamu siap merespon calon pembeli ya!\n\n` +
-    `👉 Lihat iklanmu: ${baseUrl}/produk/${slug}\n\n` +
+    ` Makin banyak yang tertarik. Pastikan kamu siap merespon calon pembeli ya!\n\n` +
+    ` Lihat iklanmu: ${baseUrl}/produk/${slug}\n\n` +
     `_Ketik INFO ke bot ini untuk melihat statistik iklan lengkap._`;
 
   await sendWa(listing.seller_wa, msg, null, null, {

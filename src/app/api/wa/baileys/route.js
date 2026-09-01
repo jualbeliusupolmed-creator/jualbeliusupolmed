@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { parseListingFromText, verifyReceiptImage, processGeneralChat, parseWantedFromText, checkReceiverName } from "@/lib/gemini";
+import { parseListingFromText, verifyReceiptImage, parseIntentWithAI, parseWantedFromText, checkReceiverName } from "@/lib/gemini";
 import { sendWa as _sendWaBase, postToGroup, notifyAdminNewListing, notifyWantedMatch, notifyCategorySubscribers, notifyBuyerOfferResult, postWantedToGroup, notifySellerNewOffer, perangkatBalasan } from "@/lib/fonnte";
 import { pushListingBaru } from "@/lib/webpush";
 import { formatWa } from "@/lib/constants";
@@ -2419,64 +2419,71 @@ export async function POST(req) {
     // ==========================================
     if (!message && !file) return NextResponse.json({ ok: true, ignored: true });
 
-    if (message && !file) {
-      const msgLower = message.toLowerCase().trim();
-
-      // ── Keyword-first mode ──────────────────────────────────────────────────
-      // Hanya proses AI jika pesan mengandung kata kunci marketplace atau angka harga.
-      // Pesan sapaan biasa (tanpa keyword) → balas dengan menu singkat saja.
+    {
+      let msgLower = (message || "").toLowerCase().trim();
       const kwConfig = settings.bot_keywords || {};
-      if (kwConfig.enabled !== false) {
-        const triggerList = (kwConfig.triggers || "jual,dijual,wts,wtb,cari,dicari,beli,dibeli,admin,min,mimin,perpanjang,upgrade")
-          .split(",").map(t => t.trim().toLowerCase()).filter(Boolean);
-        const minDigits = Number(kwConfig.min_price_digits) || 4;
-        const hasNumber = new RegExp(`\\d{${minDigits},}`).test(message);
-        // Cocokkan per KATA UTUH, bukan substring — "min" tidak boleh kena "minat"/
-        // "minggu", "beli" tidak boleh kena "sembelit". Substring bikin bot nyela
-        // obrolan manusia yang kebetulan mengandung potongan keyword.
-        const escRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        const hasTrigger = triggerList.some((kw) =>
-          new RegExp(`(^|[^\\p{L}\\p{N}])${escRe(kw)}($|[^\\p{L}\\p{N}])`, "iu").test(msgLower)
-        );
 
-        if (!hasTrigger && !hasNumber) {
-          // Kontak BARU (pertama kali chat) → sapa hangat SEKALI SEUMUR HIDUP.
-          // Kontak lama tanpa keyword → tetap diam (hindari spam menu).
-          try {
-            const { count: priorMsgs } = await supa
-              .from("wa_conversations")
-              .select("id", { count: "exact", head: true })
-              .eq("wa", normalizedWa)
-              .eq("role", "user");
-            // Pernah disapa sebelumnya? (greeting selalu tercatat role 'bot' berawalan
-            // "Haii") → jangan pernah ulangi, walau hitungan pesan user masih rendah
-            // (identitas LID vs nomor bisa bikin hitungan reset — jangan andalkan itu).
-            const { count: greetedBefore } = await supa
-              .from("wa_conversations")
-              .select("id", { count: "exact", head: true })
-              .eq("wa", normalizedWa)
-              .eq("role", "bot")
-              .like("message", "Haii%");
-            if ((priorMsgs || 0) <= 1 && !(greetedBefore || 0)) {
-              const fn = cleanFirstName(profileNameFromBot);
-              const halo = `Haii${fn ? " " + fn : ""}! 👋 Aku admin *Jual Beli USU/Polmed*. Mau *jual* atau *cari* barang? Ketik *MENU* buat liat semua yang bisa aku bantu ya 😊`;
-              await sendWa(senderJid, halo);
-              return NextResponse.json({ ok: true, state: "greeting_first_contact", bot_reply: halo });
-            }
-          } catch (_) {}
-
-          // Tidak ada keyword & bukan kontak baru → bot diam (kecuali greeting_enabled).
-          if (kwConfig.greeting_enabled) {
-            const greetingMsg = kwConfig.greeting || "Halo! 👋 Ada yang bisa dibantu?";
-            if (await wasSentRecently(supa, normalizedWa, greetingMsg, 10)) {
-              return NextResponse.json({ ok: true, ignored: true, reason: "greeting_dedup" });
-            }
-            await sendWa(senderJid, greetingMsg);
-            return NextResponse.json({ ok: true, state: "greeting_only", bot_reply: greetingMsg });
+      // -- PREPARE FILES --
+      const fileBuffers = [];
+      const imageBuffers = [];
+      const mimeTypes = [];
+      if (files && files.length > 0) {
+        for (const f of files) {
+          const buf = Buffer.from(await f.arrayBuffer());
+          const fType = f.type || "application/octet-stream";
+          fileBuffers.push({ file: f, buffer: buf, type: fType });
+          if (fType.startsWith("image/")) {
+            imageBuffers.push(buf);
+            mimeTypes.push(fType);
           }
-          return NextResponse.json({ ok: true, state: "ignored_no_keyword" });
         }
       }
+
+      const isFastPathCmd = /^(menu|saya|iklanku|admin|min|mimin|deal|gagal|batal|dicari|wtb|cari|lapor|tawar|hapus|nama|edit|setmode|approve|reject|setuju|tolak|broadcast|stats|pause|resume|pantau|daftar pantau|foto|jual|wts|dijual|ready)\\b/i.test(msgLower);
+
+      if (!isFastPathCmd && (message || imageBuffers.length > 0)) {
+        try {
+          const aiConfig = settings.ai_config || {};
+          let conversationHistory = [];
+          
+          const aiRes = await parseIntentWithAI(message, aiConfig, conversationHistory, imageBuffers, mimeTypes);
+          
+          if (aiRes.intent === "deal_confirmation") {
+              msgLower = "deal";
+              message = "DEAL";
+          } else if (aiRes.intent === "delete_listing") {
+              const code = aiRes.data?.listing_code || "";
+              msgLower = `hapus laku ${code}`.trim();
+              message = `HAPUS LAKU ${code}`;
+          } else if (aiRes.intent === "search") {
+              const kw = aiRes.data?.keywords || "";
+              msgLower = `cari ${kw}`.trim();
+              message = `CARI ${kw}`;
+          } else if (aiRes.intent === "create_wanted") {
+              const kw = aiRes.data?.keywords || "";
+              msgLower = `dicari ${kw}`.trim();
+              message = `DICARI ${kw}`;
+          } else if (aiRes.intent === "handoff") {
+              const currentPaused = settings?.bot?.paused_users || [];
+              if (!currentPaused.includes(normalizedWa)) {
+                currentPaused.push(normalizedWa);
+                await supa.from("settings").update({ value: { paused_users: currentPaused } }).eq("key", "bot");
+              }
+              const handoffReply = aiRes.reply_message || "Baik kak, pesan diteruskan ke Admin. Bot diam dulu ya 🙏";
+              await sendWa(senderJid, handoffReply);
+              return NextResponse.json({ ok: true, state: "handoff", bot_reply: handoffReply });
+          } else if (aiRes.intent === "chat") {
+              const chatReply = aiRes.reply_message || "Halo! Ada yang bisa kubantu?";
+              await sendWa(senderJid, chatReply);
+              return NextResponse.json({ ok: true, state: "ai_general_chat", bot_reply: chatReply });
+          } else if (aiRes.intent === "create_listing") {
+              // let it fall through
+          }
+        } catch (err) {
+          console.error("AI Intent Error:", err);
+        }
+      }
+
 
       // "admin" / "min" / "mimin" → sapaan ke bot, balas dengan menu
       if (msgLower === "admin" || msgLower === "min" || msgLower === "mimin" || msgLower === "halo admin" || msgLower === "hai min") {
@@ -2751,130 +2758,7 @@ export async function POST(req) {
         }
       }
 
-      // --- DYNAMIC AI CHAT & SEARCH & HANDOFF ---
-      try {
-        const aiConfig = settings.ai_config || {};
-        const aiRes = await processGeneralChat(message, aiConfig, conversationHistory);
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
 
-        if (aiRes.intent === "search" && aiRes.keywords) {
-          await sendWa(senderJid, aiRes.reply_message || "🔍 Sedang mencari data...");
-
-          // Query dengan title OR description, + filter kategori jika AI berhasil ekstrak
-          let query = supa
-            .from("listings")
-            .select("id, title, price, seller_wa, condition, campus, sponsored_until, bumped_at")
-            .eq("status", "active")
-            .or(`title.ilike.%${cariAman(aiRes.keywords)}%,description.ilike.%${cariAman(aiRes.keywords)}%`);
-
-          if (aiRes.category && aiRes.category !== "Lainnya") {
-            query = query.eq("category", aiRes.category);
-          }
-
-          const { data: results } = await query
-            .order("sponsored_until", { ascending: false, nullsFirst: false })
-            .order("bumped_at", { ascending: false, nullsFirst: false })
-            .limit(5);
-
-          // Fallback tanpa filter kategori jika hasil kosong
-          let finalResults = results || [];
-          if (finalResults.length === 0) {
-            const { data: fallbackResults } = await supa
-              .from("listings")
-              .select("id, title, price, seller_wa, condition, campus, sponsored_until, bumped_at")
-              .eq("status", "active")
-              .or(`title.ilike.%${cariAman(aiRes.keywords)}%,description.ilike.%${cariAman(aiRes.keywords)}%`)
-              .order("bumped_at", { ascending: false, nullsFirst: false })
-              .limit(5);
-            finalResults = fallbackResults || [];
-          }
-
-          // Cari juga dari postingan grup WA
-          const { data: groupResults } = await supa
-            .from("group_posts")
-            .select("id, sender_wa, message, created_at")
-            .ilike("message", `%${aiRes.keywords}%`)
-            .order("created_at", { ascending: false })
-            .limit(3);
-
-          // Cari dari halaman /dicari (wanted_listings) — orang yg lagi cari barang ini
-          const { data: wantedResults } = await supa
-            .from("wanted_listings")
-            .select("id, buyer_name, buyer_wa, title, budget, campus")
-            .eq("status", "active")
-            .or(`title.ilike.%${cariAman(aiRes.keywords)}%,description.ilike.%${cariAman(aiRes.keywords)}%`)
-            .order("created_at", { ascending: false })
-            .limit(3);
-
-          let reply = `🔍 *Hasil Pencarian: ${aiRes.keywords}*\n\n`;
-          let count = 0;
-
-          if (finalResults.length > 0) {
-            reply += `🏪 *Dijual di Website:*\n`;
-            finalResults.forEach((r) => {
-              count++;
-              const condLabel = r.condition === "new" ? "✨ Baru" : "Bekas";
-              const campusLabel = r.campus && r.campus !== "Semua" ? ` | ${r.campus}` : "";
-              const slug = buildSlug(r.title, r.id);
-              reply += `${count}. *${r.title}*\n`;
-              reply += `   💰 Rp ${Number(r.price).toLocaleString("id-ID")} · ${condLabel}${campusLabel}\n`;
-              reply += `   📲 wa.me/${r.seller_wa}\n`;
-              reply += `   👉 ${baseUrl}/produk/${slug}\n\n`;
-            });
-          }
-
-          if (groupResults && groupResults.length > 0) {
-            reply += `💬 *Dijual di Grup WA:*\n`;
-            groupResults.forEach((g) => {
-              count++;
-              const preview = (g.message || "").slice(0, 80);
-              reply += `${count}. ${preview}${g.message?.length > 80 ? "..." : ""}\n`;
-              reply += `   📲 wa.me/${g.sender_wa}\n\n`;
-            });
-          }
-
-          if (wantedResults && wantedResults.length > 0) {
-            reply += `🛒 *Yang Lagi Cari ${aiRes.keywords}:*\n`;
-            wantedResults.forEach((w) => {
-              count++;
-              const budgetLabel = w.budget ? ` · Budget Rp ${Number(w.budget).toLocaleString("id-ID")}` : "";
-              const campusLabel = w.campus && w.campus !== "Semua" ? ` · ${w.campus}` : "";
-              reply += `${count}. *${w.buyer_name}* cari ${w.title}${budgetLabel}${campusLabel}\n`;
-              reply += `   📲 wa.me/${w.buyer_wa}\n\n`;
-            });
-          }
-
-          if (count === 0) {
-            const noResultReply = `❌ Maaf, aku nggak nemuin *"${aiRes.keywords}"* di web, grup, maupun halaman dicari.\n\nCoba kata kunci lain atau ketik *JUAL* untuk pasang iklan!`;
-            await sendWa(senderJid, noResultReply);
-            return NextResponse.json({ ok: true, state: "search_no_results", bot_reply: noResultReply });
-          }
-
-          reply += `Hubungi langsung via WA di atas ya! 😊`;
-          await sendWa(senderJid, reply);
-          return NextResponse.json({ ok: true, state: "search_results_sent", bot_reply: reply });
-
-        } else if (aiRes.intent === "handoff") {
-          const currentPaused = settings?.bot?.paused_users || [];
-          if (!currentPaused.includes(normalizedWa)) {
-            currentPaused.push(normalizedWa);
-            await supa.from("settings").update({ value: { paused_users: currentPaused } }).eq("key", "bot");
-          }
-          const handoffReply = aiRes.reply_message || "Baik kak, pesan diteruskan ke Admin. Bot diam dulu ya 🙏";
-          await sendWa(senderJid, handoffReply);
-          return NextResponse.json({ ok: true, state: "handoff", bot_reply: handoffReply });
-
-        } else {
-          const chatReply = aiRes.reply_message || "Halo! Ada yang bisa kubantu?";
-          await sendWa(senderJid, chatReply);
-          return NextResponse.json({ ok: true, state: "ai_general_chat", bot_reply: chatReply });
-        }
-      } catch (err) {
-        console.error("AI General Chat Error:", err);
-        await sendWa(senderJid, "Duh lagi rame nih kak, coba bentar lagi ya 🙏");
-      }
-      return NextResponse.json({ ok: true, state: "ai_general_chat" });
-    }
 
     // ==========================================
     // FOTO [kode] + foto → tambah foto ke iklan
@@ -2927,21 +2811,7 @@ export async function POST(req) {
     try {
       const settings = await getSettings();
       
-      const fileBuffers = [];
-      const imageBuffers = [];
-      const mimeTypes = [];
-      
-      if (files && files.length > 0) {
-        for (const f of files) {
-          const buf = Buffer.from(await f.arrayBuffer());
-          const fType = f.type || "application/octet-stream";
-          fileBuffers.push({ file: f, buffer: buf, type: fType });
-          if (fType.startsWith("image/")) {
-            imageBuffers.push(buf);
-            mimeTypes.push(fType);
-          }
-        }
-      }
+
 
       const extracted = await parseListingFromText(message, settings.ai_config || {}, imageBuffers, mimeTypes);
 

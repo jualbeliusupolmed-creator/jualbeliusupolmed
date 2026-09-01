@@ -37,17 +37,17 @@ export async function GET(req) {
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
   
-  let digestMsg = `🌟 *Katalog Pilihan Jual Beli USU Polmed Hari Ini!* 🌟\n\n`;
+  let digestMsg = ` *Katalog Pilihan Jual Beli USU Polmed Hari Ini!* \n\n`;
   
   listings.forEach((l, index) => {
     const slug = buildSlug(l.title, l.id);
     const harga = `Rp ${Number(l.price).toLocaleString("id-ID")}`;
-    const campusLabel = l.campus && l.campus !== "Semua" ? ` | 🏫 ${l.campus}` : "";
+    const campusLabel = l.campus && l.campus !== "Semua" ? ` |  ${l.campus}` : "";
     const badge = l.featured ? "⭐ " : "";
     
     digestMsg += `${index + 1}. ${badge}*${l.title}*\n`;
-    digestMsg += `   💰 ${harga}${campusLabel}\n`;
-    digestMsg += `   👉 ${baseUrl}/produk/${slug}\n\n`;
+    digestMsg += `    ${harga}${campusLabel}\n`;
+    digestMsg += `    ${baseUrl}/produk/${slug}\n\n`;
   });
 
   digestMsg += `\n_Ingin barangmu tampil di sini? Ketik *UPGRADE* ke bot WA untuk fitur Featured/AutoBump!_`;

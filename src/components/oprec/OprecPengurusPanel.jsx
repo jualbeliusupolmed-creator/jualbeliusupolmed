@@ -6,9 +6,9 @@ import { formatWa } from "@/lib/constants";
 
 const STATUS_LABEL = {
   pending: { label: "Menunggu", cls: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300" },
-  accepted: { label: "✅ Diterima", cls: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300" },
-  rejected: { label: "❌ Ditolak", cls: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400" },
-  reviewed: { label: "👀 Ditinjau", cls: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" },
+  accepted: { label: " Diterima", cls: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300" },
+  rejected: { label: " Ditolak", cls: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400" },
+  reviewed: { label: " Ditinjau", cls: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" },
 };
 
 function timeAgo(dateStr) {
@@ -151,7 +151,7 @@ export default function OprecPengurusPanel({ oprec, onClose }) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-bold text-primary dark:text-emerald-400">
-                🏛️ Panel Pengurus UKM
+                 Panel Pengurus UKM
               </span>
               <span
                 className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${
@@ -175,7 +175,7 @@ export default function OprecPengurusPanel({ oprec, onClose }) {
             onClick={onClose}
             className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-slate-800 dark:text-slate-400 shrink-0"
           >
-            ✕
+            <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg>
           </button>
         </div>
 
@@ -233,7 +233,7 @@ export default function OprecPengurusPanel({ oprec, onClose }) {
             onClick={exportCSV}
             className="btn-outline py-1.5 px-3 text-xs font-bold shrink-0 flex items-center gap-1.5"
           >
-            ⬇️ Export CSV
+            ⬇ Export CSV
           </button>
 
           <button
@@ -244,7 +244,7 @@ export default function OprecPengurusPanel({ oprec, onClose }) {
                 : "border-emerald-300 text-emerald-600 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400"
             }`}
           >
-            {oprecStatus === "active" ? "🔒 Tutup Oprec" : "🔓 Buka Kembali"}
+            {oprecStatus === "active" ? " Tutup Oprec" : " Buka Kembali"}
           </button>
         </div>
 
@@ -259,7 +259,7 @@ export default function OprecPengurusPanel({ oprec, onClose }) {
             </div>
           ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 gap-2 text-gray-400">
-              <span className="text-4xl">📭</span>
+              <span className="text-4xl"><svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg></span>
               <p className="text-sm font-medium">Belum ada pendaftar{filterDiv !== "Semua" || filterStatus !== "Semua" ? " untuk filter ini" : ""}.</p>
               <p className="text-xs">Bagikan link formulir Oprec kepada calon peserta!</p>
             </div>
@@ -327,7 +327,7 @@ export default function OprecPengurusPanel({ oprec, onClose }) {
                       className="flex items-center justify-center h-7 w-7 rounded-xl bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 transition-all text-sm"
                       title="Hubungi via WhatsApp"
                     >
-                      💬
+                      <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg>
                     </a>
 
                     {sub.portfolio_url && (
@@ -338,7 +338,7 @@ export default function OprecPengurusPanel({ oprec, onClose }) {
                         className="flex items-center justify-center h-7 w-7 rounded-xl bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-950/40 dark:text-blue-300 transition-all text-sm"
                         title="Lihat Portofolio"
                       >
-                        🔗
+                        <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg>
                       </a>
                     )}
 
@@ -348,7 +348,7 @@ export default function OprecPengurusPanel({ oprec, onClose }) {
                         disabled={busy[sub.id]}
                         className="flex items-center gap-1 h-7 px-2 rounded-xl bg-emerald-500 text-white text-[10px] font-bold hover:bg-emerald-600 disabled:opacity-50 transition-all"
                       >
-                        ✅ Terima
+                         Terima
                       </button>
                     )}
 
@@ -358,7 +358,7 @@ export default function OprecPengurusPanel({ oprec, onClose }) {
                         disabled={busy[sub.id]}
                         className="flex items-center gap-1 h-7 px-2 rounded-xl bg-rose-500 text-white text-[10px] font-bold hover:bg-rose-600 disabled:opacity-50 transition-all"
                       >
-                        ❌ Tolak
+                         Tolak
                       </button>
                     )}
                   </div>
@@ -383,7 +383,7 @@ export default function OprecPengurusPanel({ oprec, onClose }) {
           <div className="absolute inset-0 bg-black/60" onClick={() => setNoteModal(null)} />
           <div className="relative w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 p-5 shadow-2xl border border-black/[0.07] dark:border-white/[0.08] space-y-3 z-10">
             <h4 className="font-bold text-gray-900 dark:text-white text-sm">
-              {noteModal.newStatus === "accepted" ? "✅ Konfirmasi Terima" : "❌ Konfirmasi Tolak"} Pendaftar
+              {noteModal.newStatus === "accepted" ? " Konfirmasi Terima" : " Konfirmasi Tolak"} Pendaftar
             </h4>
             <p className="text-xs text-gray-600 dark:text-slate-300">
               <strong>{noteModal.sub.applicant_name}</strong> untuk divisi <strong>{noteModal.sub.division_1}</strong>

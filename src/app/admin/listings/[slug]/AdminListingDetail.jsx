@@ -187,7 +187,7 @@ export default function AdminListingDetail({ listing, payments, reports, ratings
               <Field label="Kampus">{listing.campus || "—"}</Field>
               <Field label="Area">{listing.area || "—"}</Field>
               <Field label="Views">{listing.views || 0}</Field>
-              <Field label="Featured">{listing.featured ? `✅ s/d ${listing.featured_until ? new Date(listing.featured_until).toLocaleDateString("id-ID") : "—"}` : "Tidak"}</Field>
+              <Field label="Featured">{listing.featured ? `Aktif s/d ${listing.featured_until ? new Date(listing.featured_until).toLocaleDateString("id-ID") : "—"}` : "Tidak"}</Field>
               <Field label="Dibuat">{new Date(listing.created_at).toLocaleDateString("id-ID")}</Field>
               <Field label="Berakhir">{listing.expires_at ? new Date(listing.expires_at).toLocaleDateString("id-ID") : "—"}</Field>
               <Field label="Bumped">{listing.bumped_at ? new Date(listing.bumped_at).toLocaleDateString("id-ID") : "—"}</Field>
@@ -281,7 +281,7 @@ export default function AdminListingDetail({ listing, payments, reports, ratings
                 {ratings.map(r => (
                   <div key={r.id} className="rounded-lg border p-3 text-sm dark:border-slate-800">
                     <div className="flex items-center justify-between">
-                      <span className="font-medium text-amber-500">{"★".repeat(r.rating)}<span className="text-gray-300">{"★".repeat(5 - r.rating)}</span></span>
+                      <span className="font-medium text-amber-500">{"*".repeat(r.rating)}<span className="text-gray-300">{".".repeat(5 - r.rating)}</span></span>
                       <span className="text-xs text-gray-400">{r.buyer_name || "Anonim"} · {new Date(r.created_at).toLocaleDateString("id-ID")}</span>
                     </div>
                     {r.comment && <p className="mt-1 text-gray-600 dark:text-slate-400">"{r.comment}"</p>}

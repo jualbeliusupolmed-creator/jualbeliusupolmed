@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import imageCompression from "browser-image-compression";
+import { Icon } from "@/components/Icons";
 
 export default function BuatOprecModal({ onClose, onCreated, isUkmAccount = true }) {
   const [form, setForm] = useState({
@@ -131,7 +132,7 @@ export default function BuatOprecModal({ onClose, onCreated, isUkmAccount = true
         throw new Error(data.error || "Gagal membuat formulir Oprec.");
       }
 
-      toast.success("Formulir Oprec berhasil dipublikasikan! 🎉");
+      toast.success("Formulir Oprec berhasil dipublikasikan! ");
       if (onCreated) onCreated(data.oprec);
       onClose();
     } catch (err) {
@@ -150,7 +151,7 @@ export default function BuatOprecModal({ onClose, onCreated, isUkmAccount = true
         <div className="flex items-center justify-between border-b border-gray-100 dark:border-slate-800 pb-3">
           <div>
             <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mb-1">
-              <span>🏛️ Khusus Pengurus UKM &amp; PIC</span>
+              <Icon.Landmark className="h-3.5 w-3.5" /><span>Khusus Pengurus UKM &amp; PIC</span>
             </div>
             <h3 className="text-base font-bold text-gray-900 dark:text-white">
               Buka Formulir Open Recruitment Baru
@@ -163,7 +164,7 @@ export default function BuatOprecModal({ onClose, onCreated, isUkmAccount = true
             onClick={onClose}
             className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-slate-800 dark:text-slate-400"
           >
-            ✕
+            <Icon.X className="h-4 w-4" />
           </button>
         </div>
 
@@ -264,7 +265,7 @@ export default function BuatOprecModal({ onClose, onCreated, isUkmAccount = true
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
-                  <span>✨ Kolom Inputan Kustom Tambahan</span>
+                  <span> Kolom Inputan Kustom Tambahan</span>
                 </p>
                 <p className="text-[11px] text-gray-500 dark:text-slate-400">
                   Tambahkan pertanyaan teks, essay, atau kolom unggah foto/KTM yang wajib diisi calon pendaftar.
@@ -281,13 +282,7 @@ export default function BuatOprecModal({ onClose, onCreated, isUkmAccount = true
                     className="flex flex-col sm:flex-row items-start sm:items-center gap-2 bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-gray-200 dark:border-slate-800"
                   >
                     <span className="shrink-0 px-2 py-0.5 rounded text-[10px] font-bold bg-primary/10 text-primary">
-                      {field.type === "image"
-                        ? "🖼️ Upload Foto/Gambar"
-                        : field.type === "textarea"
-                        ? "📝 Tulisan Paragraf"
-                        : field.type === "url"
-                        ? "🔗 Link/URL"
-                        : "✏️ Teks Singkat"}
+                      <span className="inline-flex items-center gap-1">{field.type === "image" ? <Icon.Photo className="h-3 w-3" /> : field.type === "url" ? <Icon.ExternalLink className="h-3 w-3" /> : <Icon.PencilSquare className="h-3 w-3" />}{field.type === "image" ? "Upload Foto/Gambar" : field.type === "textarea" ? "Tulisan Paragraf" : field.type === "url" ? "Link/URL" : "Teks Singkat"}</span>
                     </span>
 
                     <input
@@ -315,7 +310,7 @@ export default function BuatOprecModal({ onClose, onCreated, isUkmAccount = true
                         className="text-rose-500 hover:text-rose-700 p-1 font-bold text-xs"
                         title="Hapus kolom ini"
                       >
-                        🗑️
+                        <Icon.Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
@@ -330,28 +325,28 @@ export default function BuatOprecModal({ onClose, onCreated, isUkmAccount = true
                 onClick={() => addCustomField("image")}
                 className="btn-outline py-1 px-2.5 text-[11px] font-bold bg-white dark:bg-slate-900 flex items-center gap-1"
               >
-                <span>+ 🖼️ Upload Foto / Gambar (KTM)</span>
+                <Icon.Photo className="h-4 w-4" /><span>Upload Foto / Gambar (KTM)</span>
               </button>
               <button
                 type="button"
                 onClick={() => addCustomField("text")}
                 className="btn-outline py-1 px-2.5 text-[11px] font-bold bg-white dark:bg-slate-900 flex items-center gap-1"
               >
-                <span>+ ✏️ Teks Singkat</span>
+                <Icon.PencilSquare className="h-4 w-4" /><span>Teks Singkat</span>
               </button>
               <button
                 type="button"
                 onClick={() => addCustomField("textarea")}
                 className="btn-outline py-1 px-2.5 text-[11px] font-bold bg-white dark:bg-slate-900 flex items-center gap-1"
               >
-                <span>+ 📝 Tulisan Panjang / Essay</span>
+                <span>+  Tulisan Panjang / Essay</span>
               </button>
               <button
                 type="button"
                 onClick={() => addCustomField("url")}
                 className="btn-outline py-1 px-2.5 text-[11px] font-bold bg-white dark:bg-slate-900 flex items-center gap-1"
               >
-                <span>+ 🔗 Link / URL</span>
+                <span>+  Link / URL</span>
               </button>
             </div>
           </div>
@@ -418,7 +413,7 @@ export default function BuatOprecModal({ onClose, onCreated, isUkmAccount = true
               </label>
               {form.banner_url && (
                 <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold truncate">
-                  ✓ Poster siap dipasang
+                   Poster siap dipasang
                 </span>
               )}
             </div>
@@ -430,7 +425,7 @@ export default function BuatOprecModal({ onClose, onCreated, isUkmAccount = true
             disabled={submitting || uploadingBanner}
             className="btn-primary w-full py-3 text-xs font-bold shadow-lg shadow-primary/20 flex items-center justify-center gap-2 mt-2"
           >
-            {submitting ? "Mempublikasikan Oprec..." : "🚀 Publikasikan Formulir Oprec"}
+            {submitting ? "Mempublikasikan Oprec..." : " Publikasikan Formulir Oprec"}
           </button>
         </form>
       </div>

@@ -154,7 +154,7 @@ export default function AdminMadingTable({
                             rel="noreferrer"
                             className="inline-flex items-center gap-1 text-[11px] font-bold text-primary dark:text-emerald-400 hover:underline"
                           >
-                            🖼️ Lihat Lampiran Foto ↗
+                             Lihat Lampiran Foto ↗
                           </a>
                         </div>
                       )}
@@ -181,7 +181,7 @@ export default function AdminMadingTable({
                               href={`/admin/penjual/${encodeURIComponent(authorWa)}`}
                               className="text-[11px] font-bold text-primary dark:text-emerald-400 hover:underline flex items-center gap-1 bg-primary/5 dark:bg-primary/10 px-2 py-0.5 rounded-lg border border-primary/20"
                             >
-                              👤 Profil ({cleanWa})
+                               Profil ({cleanWa})
                             </Link>
                             <a
                               href={`https://wa.me/${authorWa.replace(/^0/, "62")}`}
@@ -190,7 +190,7 @@ export default function AdminMadingTable({
                               className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-0.5"
                               title="Chat via WhatsApp"
                             >
-                              💬 WA
+                               WA
                             </a>
                           </div>
                         </div>
@@ -211,11 +211,11 @@ export default function AdminMadingTable({
                             ? "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400"
                             : "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400"
                         }`}>
-                          {post.status === "active" ? "● Aktif" : post.status === "suspended" ? "🚫 Disembunyikan" : `⚠️ ${post.status}`}
+                          {post.status === "active" ? "● Aktif" : post.status === "suspended" ? " Disembunyikan" : ` ${post.status}`}
                         </span>
                         {reportCount > 0 && (
                           <span className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-lg border border-rose-200 dark:border-rose-900/50">
-                            🚩 {reportCount} Laporan
+                             {reportCount} Laporan
                           </span>
                         )}
                         {post.instagram_status && post.instagram_status !== "not_queued" && (
@@ -253,7 +253,7 @@ export default function AdminMadingTable({
                           } disabled:opacity-50`}
                           title={post.status === "active" ? "Sembunyikan dari publik" : "Aktifkan kembali ke feed"}
                         >
-                          {post.status === "active" ? "🚫 Sembunyikan" : "✅ Pulihkan"}
+                          {post.status === "active" ? " Sembunyikan" : " Pulihkan"}
                         </button>
                         <button
                           type="button"
@@ -262,7 +262,7 @@ export default function AdminMadingTable({
                           className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-fuchsia-50 dark:bg-fuchsia-950/40 text-fuchsia-700 dark:text-fuchsia-300 border border-fuchsia-200 dark:border-fuchsia-900/50 hover:bg-fuchsia-100 transition-all disabled:opacity-50"
                           title={post.instagram_status === "published" ? "Sudah terbit di Instagram" : "Terbitkan ke Instagram sekarang"}
                         >
-                          {post.instagram_status === "published" ? "📸 Terbit IG" : post.instagram_status === "processing" ? "⏳ Diproses" : post.instagram_status === "failed" ? "↻ Coba Lagi IG" : post.instagram_status === "queued" ? "▶ Proses IG" : "📸 Terbitkan IG"}
+                          {post.instagram_status === "published" ? " Terbit IG" : post.instagram_status === "processing" ? "⏳ Diproses" : post.instagram_status === "failed" ? "↻ Coba Lagi IG" : post.instagram_status === "queued" ? "▶ Proses IG" : " Terbitkan IG"}
                         </button>
                         <button
                           type="button"
@@ -271,7 +271,7 @@ export default function AdminMadingTable({
                           className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50 hover:bg-rose-100 transition-all disabled:opacity-50"
                           title="Hapus permanen"
                         >
-                          🗑️ Hapus
+                           Hapus
                         </button>
                       </div>
                     </td>

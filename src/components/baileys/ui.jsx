@@ -7,7 +7,7 @@ export function CopyBtn({ text }) {
     <button
       onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
       className="ml-1 rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600 hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
-    >{copied ? "✓" : "Copy"}</button>
+    >{copied ? "OK" : "Copy"}</button>
   );
 }
 
@@ -49,12 +49,12 @@ export function QRDisplay({ perangkat = 1 }) {
     return () => clearInterval(t);
   }, [fetchQr]);
 
-  if (qrLoading) return <p className="text-sm text-amber-600 animate-pulse">⏳ Memuat QR Code...</p>;
+  if (qrLoading) return <p className="text-sm text-amber-600 animate-pulse">Memuat QR Code...</p>;
   // Bot yang tadinya diam menyiapkan socket baru begitu /qr diminta; QR-nya menyusul
   // beberapa detik lagi lewat polling di atas, jadi ini bukan kegagalan.
   if (!qrData?.qr) return (
     <p className="text-sm text-gray-400">
-      {qrData?.menyiapkan ? "⏳ Menyiapkan QR… (±15 detik)" : "QR tidak tersedia."}
+      {qrData?.menyiapkan ? "Menyiapkan QR... (±15 detik)" : "QR tidak tersedia."}
     </p>
   );
 

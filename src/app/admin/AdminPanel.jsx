@@ -1,5 +1,5 @@
 "use client";
-
+import { Icon } from "@/components/Icons";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { rupiah } from "@/lib/fees";
@@ -459,9 +459,9 @@ export default function AdminPanel({
                                     : { label: "Sponsored 7 hari", onClick: () => action({ action: "set_sponsored", id: l.id, days: 7 }, "Sponsored 7 hari") },
                                   { label: "Hapus listing", tone: "bad", onClick: () => confirmThen({ title: "Hapus listing", message: `Hapus "${l.title}"?`, danger: true }, () => action({ action: "delete", id: l.id }, "Dihapus")) },
                                 ]),
-                            { id: "tawaran", label: "Tawaran Harga", icon: "💰" },
-                            { id: "kontak_pembeli", label: "Kontak Pembeli", icon: "👀" },
-                            { id: "broadcast", label: "Broadcast", icon: "📢" },
+                            { id: "tawaran", label: "Tawaran Harga", icon: "TW" },
+                            { id: "kontak_pembeli", label: "Kontak Pembeli", icon: "KP" },
+                            { id: "broadcast", label: "Broadcast", icon: "BC" },
                             { label: "Blacklist penjual", tone: "bad", onClick: () => confirmThen({ title: "Blacklist penjual", message: `Blokir ${l.seller_wa}? Semua iklannya disuspend.`, danger: true }, () => action({ action: "blacklist", wa: l.seller_wa }, "Diblacklist")) },
                           ]}
                         />
@@ -568,7 +568,7 @@ export default function AdminPanel({
               {filteredRatings.slice(0, ratingLimit).map((r) => (
                 <div key={r.id} className="card flex items-start justify-between gap-3 p-4">
                   <div className="min-w-0">
-                    <p className="font-medium text-amber-500">{"★".repeat(r.rating)}<span className="text-gray-300 dark:text-slate-700">{"★".repeat(5 - r.rating)}</span> <span className="text-xs text-gray-400">({r.rating}/5)</span></p>
+                    <p className="font-medium text-amber-500">{"*".repeat(r.rating)}<span className="text-gray-300 dark:text-slate-700">{".".repeat(5 - r.rating)}</span> <span className="text-xs text-gray-400">({r.rating}/5)</span></p>
                     <p className="mt-1 text-sm dark:text-slate-200">{r.listings?.title || "(listing terhapus)"}</p>
                     <p className="text-xs text-gray-400">{r.buyer_name || "Anonim"} → {r.seller_wa} · {new Date(r.created_at).toLocaleDateString("id-ID")}</p>
                     {r.comment && <p className="mt-1 whitespace-pre-wrap text-sm text-gray-600 dark:text-slate-400">"{r.comment}"</p>}
@@ -697,7 +697,7 @@ export default function AdminPanel({
                           <td className="p-3 font-medium dark:text-white">
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span>{s.seller_name}</span>
-                              {s.trusted_seller && <span className="text-[10px] font-bold text-blue-500 bg-blue-50 dark:bg-blue-900/30 rounded px-1">☑ Terpercaya</span>}
+                              {s.trusted_seller && <span className="text-[10px] font-bold text-blue-500 bg-blue-50 dark:bg-blue-900/30 rounded px-1"> Terpercaya</span>}
                               {s.subscription_tier === "pro" && <span className="text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-900/30 rounded px-1">⭐ PRO</span>}
                             </div>
                             <div className="mt-0.5 flex gap-2 text-xs">
@@ -858,7 +858,7 @@ export default function AdminPanel({
                               <div>{t.store_name || <span className="text-gray-400">Tanpa nama toko</span>}</div>
                               {t.tagline && <div className="mt-0.5 text-xs text-gray-400">{t.tagline}</div>}
                               {t.store_announcement && (
-                                <div className="mt-1 text-xs text-amber-600 dark:text-amber-400">📣 {t.store_announcement}</div>
+                                <div className="mt-1 text-xs text-amber-600 dark:text-amber-400"> {t.store_announcement}</div>
                               )}
                             </td>
                             <td className="p-3">
@@ -979,7 +979,7 @@ export default function AdminPanel({
                               onClick={() => confirmThen({ title: "Setujui Perubahan", message: `Setujui perubahan ${fieldLabel(r.field).toLowerCase()} menjadi "${r.requested_value}"?` }, () => action({ action: "approve_profile_change", id: r.id }, "Disetujui & profil diperbarui"))}
                               className="rounded-lg bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 hover:bg-emerald-200 transition-colors"
                             >
-                              ✅ Setujui
+                               Setujui
                             </button>
                             <div className="flex gap-1">
                               <input
@@ -992,7 +992,7 @@ export default function AdminPanel({
                                 onClick={() => confirmThen({ title: "Tolak Permintaan", message: `Tolak perubahan ${fieldLabel(r.field).toLowerCase()} ini?`, danger: true }, () => action({ action: "reject_profile_change", id: r.id, note: rejectNote[r.id] || "" }, "Ditolak"))}
                                 className="rounded-lg bg-rose-100 px-2 py-1.5 text-xs font-semibold text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 hover:bg-rose-200 transition-colors shrink-0"
                               >
-                                ❌
+                                <Icon.X className="h-4 w-4" />
                               </button>
                             </div>
                           </div>
@@ -1026,8 +1026,8 @@ export default function AdminPanel({
                             <td className="p-3 max-w-[180px] truncate">{r.requested_value}</td>
                             <td className="p-3">
                               {r.status === "approved"
-                                ? <span className="text-xs font-semibold text-emerald-600">✅ Disetujui</span>
-                                : <span className="text-xs font-semibold text-rose-600">❌ Ditolak</span>}
+                                ? <span className="text-xs font-semibold text-emerald-600"> Disetujui</span>
+                                : <span className="text-xs font-semibold text-rose-600"> Ditolak</span>}
                             </td>
                             <td className="p-3 text-xs text-gray-400">{formatDate(r.reviewed_at)}</td>
                             <td className="p-3 text-xs text-gray-400">{r.review_note || "-"}</td>
@@ -1063,7 +1063,7 @@ export default function AdminPanel({
               <span className="inline-flex items-center gap-1">
                 <span>{b.author || "Penjual"}</span>
                 {badgeWa.has(b.author_wa) && (
-                  <span title="Penulis berbadge — tulisannya terbit tanpa antre" className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400">✍️</span>
+                  <span title="Penulis berbadge — tulisannya terbit tanpa antre" className="text-indigo-600 dark:text-indigo-400"><Icon.PencilSquare className="h-3.5 w-3.5" /></span>
                 )}
               </span>
             ) : (
@@ -1227,7 +1227,7 @@ export default function AdminPanel({
 
             {penulisBadge.length > 0 && (
               <div className="mt-6 rounded-xl border border-indigo-200 bg-indigo-50/50 p-4 dark:border-indigo-900/60 dark:bg-indigo-900/10">
-                <h3 className="text-sm font-bold text-indigo-700 dark:text-indigo-300">✍️ Penulis berbadge</h3>
+                <h3 className="flex items-center gap-1.5 text-sm font-bold text-indigo-700 dark:text-indigo-300"><Icon.PencilSquare className="h-4 w-4" /> Penulis berbadge</h3>
                 <p className="mt-0.5 text-xs text-gray-500 dark:text-slate-400">
                   Artikel dari nomor-nomor ini terbit tanpa melewati antrean review.
                 </p>
@@ -1458,14 +1458,14 @@ function MenuAksi({ items }) {
 
 // ── Kategori manager ──────────────────────────────────────────────────────────
 function CategoryManager({ categories, action, confirmThen }) {
-  const [form, setForm] = useState({ name: "", icon: "🏷️", sort_order: "" });
+  const [form, setForm] = useState({ name: "", icon: "Box", sort_order: "" });
   return (
     <div className="max-w-2xl">
       <div className="card grid grid-cols-[1fr_auto_auto_auto] items-end gap-2 p-4">
         <div><label className="label">Nama</label><input className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Otomotif" /></div>
         <div><label className="label">Ikon</label><input className="input w-16 text-center" value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })} /></div>
         <div><label className="label">Urutan</label><input type="number" className="input w-20" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: e.target.value })} /></div>
-        <button onClick={() => { if (!form.name.trim()) return; action({ action: "category_upsert", ...form }, "Kategori ditambah"); setForm({ name: "", icon: "🏷️", sort_order: "" }); }} className="btn-primary">Tambah</button>
+        <button onClick={() => { if (!form.name.trim()) return; action({ action: "category_upsert", ...form }, "Kategori ditambah"); setForm({ name: "", icon: "Box", sort_order: "" }); }} className="btn-primary">Tambah</button>
       </div>
       <div className="mt-4 space-y-2">
         {categories.map((c) => <CategoryRow key={c.id || c.slug} c={c} action={action} confirmThen={confirmThen} />)}
@@ -1475,7 +1475,7 @@ function CategoryManager({ categories, action, confirmThen }) {
 }
 function CategoryRow({ c, action, confirmThen }) {
   const [edit, setEdit] = useState(false);
-  const [f, setF] = useState({ name: c.name, icon: c.icon || "🏷️", sort_order: c.sort_order ?? 0 });
+  const [f, setF] = useState({ name: c.name, icon: c.icon || "Box", sort_order: c.sort_order ?? 0 });
   if (edit) {
     return (
       <div className="card flex items-center gap-2 p-3">
@@ -1511,14 +1511,14 @@ function detectMode(p) {
   const hasSold = (p.soldTiers || []).some(t => t.pct > 0 || t.flat > 0);
   const hasAdCost = ad > 0 || (p.adTiers || []).some(t => t.pct > 0 || (t.flat > 0 && t.upto != null));
   if (ad === 0 && bump === 0 && featured === 0 && adPoster === 0 && !hasSold)
-    return { key: "gratis_semua", label: "✅ Gratis Semua", bg: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" };
+    return { key: "gratis_semua", label: " Gratis Semua", bg: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" };
   if (ad === 0 && hasSold && !hasAdCost)
-    return { key: "jual_dulu", label: "💸 Jual Dulu (Komisi)", bg: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300" };
+    return { key: "jual_dulu", label: " Jual Dulu (Komisi)", bg: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300" };
   if (ad === 0 && !hasSold && (bump > 0 || featured > 0))
-    return { key: "freemium", label: "⚡ Freemium (Upsell)", bg: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300" };
+    return { key: "freemium", label: " Freemium (Upsell)", bg: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300" };
   if (hasAdCost || ad > 0)
-    return { key: "sewa_lapak", label: "🏪 Sewa Lapak", bg: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300" };
-  return { key: "custom", label: "⚙️ Custom", bg: "bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-300" };
+    return { key: "sewa_lapak", label: " Sewa Lapak", bg: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300" };
+  return { key: "custom", label: " Custom", bg: "bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-300" };
 }
 
 // ── Settings manager ──────────────────────────────────────────────────────────
@@ -1740,7 +1740,7 @@ Lanjutkan?`
           <div className="mt-4">
             {kadaluarsa.jumlah === 0 ? (
               <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-                ✓ Tidak ada iklan yang menunggak.
+                 Tidak ada iklan yang menunggak.
               </p>
             ) : (
               <>
@@ -1851,7 +1851,7 @@ Lanjutkan?`
               <input type="number" className="input w-24" placeholder="< batas Rp" value={t.upto ?? ""} onChange={(e) => { const c = [...adTiers]; c[i] = { ...t, upto: e.target.value === "" ? null : Number(e.target.value) }; setAdTiers(c); }} />
               <input type="number" className="input w-20" placeholder="flat Rp" value={t.flat ?? ""} onChange={(e) => { const c = [...adTiers]; c[i] = { ...t, flat: e.target.value === "" ? undefined : Number(e.target.value) }; setAdTiers(c); }} />
               <input type="number" className="input w-16" placeholder="%" value={t.pct ?? ""} onChange={(e) => { const c = [...adTiers]; c[i] = { ...t, pct: e.target.value === "" ? undefined : Number(e.target.value) }; setAdTiers(c); }} />
-              <button onClick={() => setAdTiers(adTiers.filter((_, j) => j !== i))} className="rounded-md bg-rose-100 px-2 py-1 text-rose-700">✕</button>
+              <button onClick={() => setAdTiers(adTiers.filter((_, j) => j !== i))} className="rounded-md bg-rose-100 px-2 py-1 text-rose-700" aria-label="Hapus tingkat"><Icon.X className="h-4 w-4" /></button>
             </div>
           ))}
           <p className="text-[11px] text-gray-400">Biaya pasang iklan sesuai harga barang. Kosongkan batas untuk tier akhir. Isi flat (Rp) atau % dari harga.</p>
@@ -1867,7 +1867,7 @@ Lanjutkan?`
               <input type="number" className="input w-24" placeholder="< batas" value={t.upto ?? ""} onChange={(e) => { const c = [...tiers]; c[i] = { ...t, upto: e.target.value === "" ? null : Number(e.target.value) }; setTiers(c); }} />
               <input type="number" className="input w-20" placeholder="flat Rp" value={t.flat ?? ""} onChange={(e) => { const c = [...tiers]; c[i] = { ...t, flat: e.target.value === "" ? undefined : Number(e.target.value) }; setTiers(c); }} />
               <input type="number" className="input w-16" placeholder="%" value={t.pct ?? ""} onChange={(e) => { const c = [...tiers]; c[i] = { ...t, pct: e.target.value === "" ? undefined : Number(e.target.value) }; setTiers(c); }} />
-              <button onClick={() => setTiers(tiers.filter((_, j) => j !== i))} className="rounded-md bg-rose-100 px-2 py-1 text-rose-700">✕</button>
+              <button onClick={() => setTiers(tiers.filter((_, j) => j !== i))} className="rounded-md bg-rose-100 px-2 py-1 text-rose-700" aria-label="Hapus tingkat"><Icon.X className="h-4 w-4" /></button>
             </div>
           ))}
           <p className="text-[11px] text-gray-400">Kosongkan "&lt; batas" untuk tier teratas. Isi flat atau %.</p>
@@ -1881,7 +1881,7 @@ Lanjutkan?`
             onClick={() => setShowPriceConfirm(true)}
             className="btn-primary mt-4 w-full"
           >
-            {saved === "pricing" ? "✓ Tersimpan" : "Simpan Harga"}
+            {saved === "pricing" ? " Tersimpan" : "Simpan Harga"}
           </button>
         ) : (
           <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
@@ -1927,7 +1927,7 @@ Lanjutkan?`
           <Field label="Nomor Telepon Dukungan"><input className="input" value={contact.supportPhone ?? ""} onChange={(e) => setContact({ ...contact, supportPhone: e.target.value })} /></Field>
           <Field label="Alamat Kantor/Dukungan"><textarea className="input min-h-16" value={contact.supportAddress ?? ""} onChange={(e) => setContact({ ...contact, supportAddress: e.target.value })} /></Field>
         </div>
-        <button onClick={() => { action({ action: "save_settings", key: "contact", value: contact }, "Kontak disimpan"); flash("contact"); }} className="btn-primary mt-4 w-full">{saved === "contact" ? "✓ Tersimpan" : "Simpan Kontak"}</button>
+        <button onClick={() => { action({ action: "save_settings", key: "contact", value: contact }, "Kontak disimpan"); flash("contact"); }} className="btn-primary mt-4 w-full">{saved === "contact" ? " Tersimpan" : "Simpan Kontak"}</button>
       </Card>
 
       {/* BRANDING & IDENTITAS VISUAL */}
@@ -2001,7 +2001,7 @@ Lanjutkan?`
                   const newLayout = [...(site.layoutOrder || ["hero", "featured", "main"])];
                   newLayout.splice(i, 1);
                   setSite({ ...site, layoutOrder: newLayout });
-                }} className="text-rose-500 font-bold hover:text-rose-700">✕</button>
+                }} className="text-rose-500 font-bold hover:text-rose-700" aria-label="Hapus bagian"><Icon.X className="h-4 w-4" /></button>
               </span>
             ))}
           </div>
@@ -2019,7 +2019,7 @@ Lanjutkan?`
             }} className="btn-outline text-sm">Tambah Seksi</button>
           </div>
         </div>
-        <button onClick={() => { action({ action: "save_settings", key: "site", value: site }, "Tata Letak disimpan"); flash("layout"); }} className="btn-primary mt-4 w-full sm:w-auto sm:px-10">{saved === "layout" ? "✓ Tersimpan" : "Simpan Tata Letak"}</button>
+        <button onClick={() => { action({ action: "save_settings", key: "site", value: site }, "Tata Letak disimpan"); flash("layout"); }} className="btn-primary mt-4 w-full sm:w-auto sm:px-10">{saved === "layout" ? " Tersimpan" : "Simpan Tata Letak"}</button>
       </Card>
 
       {/* TEKS & SEO SITUS */}
@@ -2045,7 +2045,7 @@ Lanjutkan?`
             </div>
           </div>
         </div>
-        <button onClick={() => { action({ action: "save_settings", key: "site", value: site }, "Teks & SEO disimpan"); flash("site"); }} className="btn-primary mt-4 w-full sm:w-auto sm:px-10">{saved === "site" ? "✓ Tersimpan" : "Simpan Teks & SEO"}</button>
+        <button onClick={() => { action({ action: "save_settings", key: "site", value: site }, "Teks & SEO disimpan"); flash("site"); }} className="btn-primary mt-4 w-full sm:w-auto sm:px-10">{saved === "site" ? " Tersimpan" : "Simpan Teks & SEO"}</button>
       </Card>
 
       {/* KONFIGURASI ADMIN & WA */}
@@ -2071,7 +2071,7 @@ Lanjutkan?`
             <span className="dark:text-slate-200">Gunakan Fonnte sebagai gateway utama (bukan Baileys)</span>
           </label>
         </div>
-        <button onClick={() => { action({ action: "save_settings", key: "admin", value: adminCfg }, "Konfigurasi Admin disimpan"); flash("admin"); }} className="btn-primary mt-4 w-full">{saved === "admin" ? "✓ Tersimpan" : "Simpan Konfigurasi Admin"}</button>
+        <button onClick={() => { action({ action: "save_settings", key: "admin", value: adminCfg }, "Konfigurasi Admin disimpan"); flash("admin"); }} className="btn-primary mt-4 w-full">{saved === "admin" ? " Tersimpan" : "Simpan Konfigurasi Admin"}</button>
       </Card>
 
       {/* KONFIGURASI BOT */}
@@ -2094,7 +2094,7 @@ Lanjutkan?`
           <input className="input font-mono" value={botCfg.webhookUrl ?? ""} onChange={(e) => setBotCfg({ ...botCfg, webhookUrl: e.target.value })} placeholder="https://bot.jualbeliusupolmed.web.id/webhook" />
           <p className="mt-1 text-xs text-gray-400">URL endpoint bot untuk trigger notifikasi langsung. Opsional.</p>
         </Field>
-        <button onClick={() => { action({ action: "save_settings", key: "bot", value: botCfg }, "Konfigurasi Bot disimpan"); flash("bot"); }} className="btn-primary mt-4 w-full">{saved === "bot" ? "✓ Tersimpan" : "Simpan Konfigurasi Bot"}</button>
+        <button onClick={() => { action({ action: "save_settings", key: "bot", value: botCfg }, "Konfigurasi Bot disimpan"); flash("bot"); }} className="btn-primary mt-4 w-full">{saved === "bot" ? " Tersimpan" : "Simpan Konfigurasi Bot"}</button>
       </Card>
 
       {/* KONFIGURASI META (IG & FB) */}
@@ -2113,7 +2113,7 @@ Lanjutkan?`
             </Field>
           </div>
         </div>
-        <button onClick={() => { action({ action: "save_settings", key: "meta", value: metaCfg }, "Konfigurasi Meta disimpan"); flash("meta"); }} className="btn-primary mt-4 w-full">{saved === "meta" ? "✓ Tersimpan" : "Simpan Konfigurasi Meta"}</button>
+        <button onClick={() => { action({ action: "save_settings", key: "meta", value: metaCfg }, "Konfigurasi Meta disimpan"); flash("meta"); }} className="btn-primary mt-4 w-full">{saved === "meta" ? " Tersimpan" : "Simpan Konfigurasi Meta"}</button>
       </Card>
 
       {/* TEMPLATE PESAN BOT */}
@@ -2136,7 +2136,7 @@ Lanjutkan?`
             <textarea className="input min-h-20 text-sm" value={messages.notifNewListing ?? ""} onChange={(e) => setMessages({ ...messages, notifNewListing: e.target.value })} />
           </Field>
         </div>
-        <button onClick={() => { action({ action: "save_settings", key: "messages", value: messages }, "Template pesan disimpan"); flash("messages"); }} className="btn-primary mt-4 w-full sm:w-auto sm:px-10">{saved === "messages" ? "✓ Tersimpan" : "Simpan Template Pesan"}</button>
+        <button onClick={() => { action({ action: "save_settings", key: "messages", value: messages }, "Template pesan disimpan"); flash("messages"); }} className="btn-primary mt-4 w-full sm:w-auto sm:px-10">{saved === "messages" ? " Tersimpan" : "Simpan Template Pesan"}</button>
       </Card>
 
       {/* AREA POPULER */}
@@ -2155,7 +2155,7 @@ Lanjutkan?`
             flash("areas");
           }}
           className="btn-primary mt-4 w-full"
-        >{saved === "areas" ? "✓ Tersimpan" : "Simpan Daftar Area"}</button>
+        >{saved === "areas" ? " Tersimpan" : "Simpan Daftar Area"}</button>
       </Card>
 
       {/* KONTAK & INFO MARKETPLACE */}
@@ -2180,7 +2180,7 @@ Lanjutkan?`
             <input className="input" value={contact.supportAddress ?? ""} onChange={(e) => setContact({ ...contact, supportAddress: e.target.value })} placeholder="Jl. Dr. T. Mansur No. 9, Medan" />
           </Field>
         </div>
-        <button onClick={() => { action({ action: "save_settings", key: "contact", value: contact }, "Kontak disimpan"); flash("contact"); }} className="btn-primary mt-4 w-full sm:w-auto sm:px-10">{saved === "contact" ? "✓ Tersimpan" : "Simpan Kontak"}</button>
+        <button onClick={() => { action({ action: "save_settings", key: "contact", value: contact }, "Kontak disimpan"); flash("contact"); }} className="btn-primary mt-4 w-full sm:w-auto sm:px-10">{saved === "contact" ? " Tersimpan" : "Simpan Kontak"}</button>
       </Card>
 
       {/* KONFIGURASI BOT KEYWORDS */}
@@ -2209,7 +2209,7 @@ Lanjutkan?`
             <p className="mt-1 text-xs text-gray-400">Mendukung format WhatsApp: *tebal*, _miring_. Gunakan \n untuk baris baru.</p>
           </Field>
         </div>
-        <button onClick={() => { action({ action: "save_settings", key: "bot_keywords", value: botKeywords }, "Konfigurasi Bot Keywords disimpan"); flash("bot_keywords"); }} className="btn-primary mt-4 w-full sm:w-auto sm:px-10">{saved === "bot_keywords" ? "✓ Tersimpan" : "Simpan Bot Keywords"}</button>
+        <button onClick={() => { action({ action: "save_settings", key: "bot_keywords", value: botKeywords }, "Konfigurasi Bot Keywords disimpan"); flash("bot_keywords"); }} className="btn-primary mt-4 w-full sm:w-auto sm:px-10">{saved === "bot_keywords" ? " Tersimpan" : "Simpan Bot Keywords"}</button>
       </Card>
 
       {/* KONFIGURASI AI */}
@@ -2245,7 +2245,7 @@ Lanjutkan?`
             <p className="mt-1 text-xs text-gray-400">Fakta tentang marketplace yang diinjeksikan ke konteks AI (kategori, area, harga, dll).</p>
           </Field>
         </div>
-        <button onClick={() => { action({ action: "save_settings", key: "ai_config", value: aiCfg }, "Konfigurasi AI disimpan"); flash("ai_config"); }} className="btn-primary mt-4 w-full sm:w-auto sm:px-10">{saved === "ai_config" ? "✓ Tersimpan" : "Simpan Konfigurasi AI"}</button>
+        <button onClick={() => { action({ action: "save_settings", key: "ai_config", value: aiCfg }, "Konfigurasi AI disimpan"); flash("ai_config"); }} className="btn-primary mt-4 w-full sm:w-auto sm:px-10">{saved === "ai_config" ? " Tersimpan" : "Simpan Konfigurasi AI"}</button>
       </Card>
 
       {/* POPUP IKLAN SPONSOR / EVENT KAMPUS */}
@@ -2275,7 +2275,7 @@ Lanjutkan?`
               className="input"
               value={popupAd.title ?? ""}
               onChange={(e) => setPopupAd({ ...popupAd, title: e.target.value })}
-              placeholder="Contoh: Event Bazaar USU 2025 🎉"
+              placeholder="Contoh: Event Bazaar USU 2025 "
             />
           </Field>
 
@@ -2320,7 +2320,7 @@ Lanjutkan?`
           }}
           className="btn-primary mt-4 w-full sm:w-auto sm:px-10"
         >
-          {saved === "popupAd" ? "✓ Tersimpan" : "Simpan Pengaturan Popup"}
+          {saved === "popupAd" ? " Tersimpan" : "Simpan Pengaturan Popup"}
         </button>
       </Card>
 
@@ -2346,7 +2346,7 @@ Lanjutkan?`
           {/* Link Private Generator */}
           <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 space-y-2">
             <span className="text-xs font-bold text-primary uppercase tracking-wider">
-              🔗 Tautan Pendaftaran Private (Bagikan ke Pengurus UKM)
+               Tautan Pendaftaran Private (Bagikan ke Pengurus UKM)
             </span>
             <div className="flex items-center gap-2">
               <input
@@ -2368,7 +2368,7 @@ Lanjutkan?`
               </button>
             </div>
             <p className="text-[11px] text-gray-500 dark:text-slate-400">
-              Pengurus yang mendaftar melalui tautan ini akan langsung mendapatkan badge <strong>🏛️ Resmi Terverifikasi</strong>.
+              Pengurus yang mendaftar melalui tautan ini akan langsung mendapatkan badge <strong className="inline-flex items-center gap-1"><Icon.Landmark className="h-3.5 w-3.5" /> Resmi Terverifikasi</strong>.
             </p>
           </div>
         </div>
@@ -2380,7 +2380,7 @@ Lanjutkan?`
           }}
           className="btn-primary mt-4 w-full sm:w-auto sm:px-10"
         >
-          {saved === "ukmInviteCode" ? "✓ Tersimpan" : "Simpan Kode Undangan"}
+          {saved === "ukmInviteCode" ? " Tersimpan" : "Simpan Kode Undangan"}
         </button>
       </Card>
     </div>

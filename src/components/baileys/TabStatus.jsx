@@ -62,8 +62,8 @@ export function TabStatus() {
     if (!confirm("Buka kunci sesi? Sesi lama dibuang dan bot minta scan QR baru.")) return;
     setMembukaKunci(true);
     const r = await apiPost("sesi/buka-kunci");
-    setMsg(r.ok ? { ok: true, text: `✅ ${r.message || "Kunci dibuka. Bot restart dan akan menampilkan QR."}` }
-                : { ok: false, text: `❌ ${r.error || "Gagal membuka kunci."}` });
+    setMsg(r.ok ? { ok: true, text: `${r.message || "Kunci dibuka. Bot restart dan akan menampilkan QR."}` }
+                : { ok: false, text: `${r.error || "Gagal membuka kunci."}` });
     setTimeout(() => { setMembukaKunci(false); segarkan(); }, 6000);
   }
 
@@ -71,7 +71,7 @@ export function TabStatus() {
     if (!confirm("HAPUS SESI WA? Bot akan logout dan minta scan QR ulang.")) return;
     setResetting(true);
     const r = await apiPost("reset");
-    setMsg(r.ok ? { ok: true, text: "✅ Sesi dihapus. Bot restart, scan QR baru." } : { ok: false, text: "❌ Gagal reset." });
+    setMsg(r.ok ? { ok: true, text: "Sesi dihapus. Bot restart, scan QR baru." } : { ok: false, text: "Gagal reset." });
     setTimeout(() => { setResetting(false); segarkan(); }, 4000);
   }
 
@@ -79,18 +79,18 @@ export function TabStatus() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold dark:text-white">Status Koneksi Bot</h2>
-        <button onClick={segarkan} className="btn-outline text-xs">🔄 Refresh</button>
+        <button onClick={segarkan} className="btn-outline text-xs">Refresh</button>
       </div>
 
       {/* Hanya saat layar masih kosong. Halaman ini menyegarkan diri tiap 15 detik,
           dan "Memuat..." yang berkedip tiap 15 detik cuma bikin resah. */}
       {loading && !data && <p className="text-sm text-gray-400">Memuat...</p>}
-      {error && <Alert ok={false} msg={`⚠️ ${error}`} />}
+      {error && <Alert ok={false} msg={error} />}
       <Alert ok={msg?.ok} msg={msg?.text} />
 
       {data?.sesiTerkunci && (
         <div className="rounded-xl border border-rose-300 bg-rose-50 p-4 text-sm dark:border-rose-800 dark:bg-rose-900/20">
-          <p className="font-bold text-rose-700 dark:text-rose-400">🔒 Sesi terkunci</p>
+          <p className="font-bold text-rose-700 dark:text-rose-400"> Sesi terkunci</p>
           <p className="mt-1 text-xs text-rose-700/90 dark:text-rose-300/90">
             WhatsApp menolak sesi ini berulang kali. Sesi TIDAK dihapus — bot mencoba lagi tiap{" "}
             {data.kunciRetryMenit || 10} menit dengan sesi yang sama. Cek dulu daftar perangkat tertaut di HP:
@@ -99,7 +99,7 @@ export function TabStatus() {
           </p>
           <button onClick={handleBukaKunci} disabled={membukaKunci}
             className="mt-3 rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50">
-            {membukaKunci ? "⏳ Membuka…" : "Buka kunci & scan QR baru"}
+            {membukaKunci ? "Membuka..." : "Buka kunci & scan QR baru"}
           </button>
         </div>
       )}
@@ -114,18 +114,18 @@ export function TabStatus() {
           tidak ada permintaan tambahan, cuma angka yang selama ini dibuang. */}
       {data && (
         <div className="grid gap-4 sm:grid-cols-2">
-          <Kartu judul="ℹ️ Informasi Bot">
+          <Kartu judul="ℹ Informasi Bot">
             <div className="mb-2 flex items-center gap-2">
               <StatusDot on={data.connected} />
               <span className="font-mono text-lg font-bold dark:text-white">{data.phone ? `+${data.phone}` : "–"}</span>
             </div>
-            <KV k="Status" v={data.connected ? "Terhubung ✅" : "Terputus ❌"} />
+            <KV k="Status" v={data.connected ? "Terhubung" : "Terputus"} />
             <KV k="Uptime" v={data.uptime ? `${Math.floor(data.uptime / 3600)}j ${Math.floor((data.uptime % 3600) / 60)}m ${data.uptime % 60}d` : "–"} />
             <KV k="Terhubung sejak" v={data.connectedAt ? new Date(data.connectedAt).toLocaleString("id-ID") : "–"} />
             <KV k="Webhook" v={<span className="break-all font-mono text-[11px] font-normal">{data.webhookUrl || "–"}</span>} />
           </Kartu>
 
-          <Kartu judul="🩺 Antrean & Kesehatan">
+          <Kartu judul=" Antrean & Kesehatan">
             <div className="mb-1 text-2xl font-black dark:text-white">{data.queueLength ?? 0}</div>
             <p className="mb-3 text-xs text-gray-400">Pesan menunggu dikirim</p>
             <KV k="Putus koneksi (sejak start)" v={data.outageCount ?? 0} />
@@ -137,7 +137,7 @@ export function TabStatus() {
             <KV k="Restart darurat" v={`${data.offlineEscalations ?? 0}× (ambang ${data.escalationThresholdMinutes ?? "–"} mnt)`} />
           </Kartu>
 
-          <Kartu judul="📅 Hari Ini">
+          <Kartu judul=" Hari Ini">
             <KV k="Pesan masuk" v={data.today?.masuk || 0} />
             <KV k="Pesan keluar" v={data.today?.keluar || 0} />
             <KV k="Sapaan terkirim" v={data.today?.sapaan || 0} />
@@ -146,14 +146,14 @@ export function TabStatus() {
             <KV k="Sesi bot dibuka" v={data.today?.sesi_bot || 0} />
           </Kartu>
 
-          <Kartu judul="🗄️ Data">
+          <Kartu judul=" Data">
             <KV k="Chat tersimpan" v={data.chatCount ?? 0} />
             <KV k="Pesan diarsipkan" v={data.archiveCount ?? 0} />
             <KV k="Sapaan kustom" v={data.greetingCustom ? "Ya" : "Bawaan"} />
             <KV k="Sesi terakhir hilang" v={data.sessionLostAt ? new Date(data.sessionLostAt).toLocaleString("id-ID") : "–"} />
             {data2 && data2.adaBot2 !== false && (
-              <KV k="Perangkat 2" v={data2.hidup === false ? "Tidak berjalan ⛔"
-                : data2.connected ? `Terhubung ✅${data2.phone ? ` (+${data2.phone})` : ""}` : "Terputus ❌"} />
+              <KV k="Perangkat 2" v={data2.hidup === false ? "Tidak berjalan "
+                : data2.connected ? `Terhubung${data2.phone ? ` (+${data2.phone})` : ""}` : "Terputus"} />
             )}
           </Kartu>
         </div>
@@ -161,10 +161,10 @@ export function TabStatus() {
 
       <div className="flex flex-wrap gap-2 pt-2">
         <button onClick={handleRestart} disabled={restarting} className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-600 disabled:opacity-50">
-          {restarting ? "⏳ Restarting..." : "🔄 Restart Bot"}
+          {restarting ? "Restarting..." : "Restart Bot"}
         </button>
         <button onClick={handleReset} disabled={resetting} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50">
-          {resetting ? "⏳ Mereset..." : "🗑️ Reset Sesi (Logout WA)"}
+          {resetting ? "Mereset..." : "Reset Sesi (Logout WA)"}
         </button>
       </div>
       <p className="text-xs text-gray-400">

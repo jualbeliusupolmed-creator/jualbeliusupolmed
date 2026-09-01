@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useAdmin } from "./AdminProvider";
 import Image from "next/image";
+import { Icon } from "@/components/Icons";
 
 function rupiah(n) {
   return "Rp " + Number(n || 0).toLocaleString("id-ID");
@@ -35,7 +36,7 @@ export default function ModerasiClient({
     return (
       <div className="rounded-3xl border border-slate-200/80 bg-white p-12 text-center shadow-xs dark:border-slate-800 dark:bg-slate-900">
         <div className="w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center text-3xl mb-3">
-          ✓
+          <Icon.Check className="h-8 w-8" />
         </div>
         <h3 className="text-lg font-black text-slate-900 dark:text-white">Semua Bersih &amp; Terkendali!</h3>
         <p className="mt-1 text-xs text-slate-400 dark:text-slate-500 max-w-sm mx-auto">
@@ -48,10 +49,10 @@ export default function ModerasiClient({
   const tabs = [
     { id: "all", label: "Semua", count: total },
     { id: "listings", label: "Iklan Pending", count: pendingListings.length, icon: "BOX" },
-    { id: "reports", label: "Laporan", count: openReports.length, icon: "⚠️", badgeColor: "bg-rose-500 text-white" },
-    { id: "profiles", label: "Ubah Profil", count: pendingProfiles.length, icon: "👤" },
-    { id: "fee_offers", label: "Tawaran Biaya", count: pendingFeeOffers.length, icon: "🏷️" },
-    { id: "fees", label: "Komisi Terjual", count: pendingFees.length, icon: "💳" },
+    { id: "reports", label: "Laporan", count: openReports.length, icon: "AlertCircle", badgeColor: "bg-rose-500 text-white" },
+    { id: "profiles", label: "Ubah Profil", count: pendingProfiles.length, icon: "USR" },
+    { id: "fee_offers", label: "Tawaran Biaya", count: pendingFeeOffers.length, icon: "CreditCard" },
+    { id: "fees", label: "Komisi Terjual", count: pendingFees.length, icon: "PAY" },
   ].filter((t) => t.id === "all" || t.count > 0);
 
   return (
@@ -87,7 +88,7 @@ export default function ModerasiClient({
         <section className="space-y-3">
           <div className="flex items-center justify-between px-1">
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
-              <span>📦</span> Iklan Menunggu Persetujuan ({pendingListings.length})
+              <Icon.Package className="h-4 w-4" /> Iklan Menunggu Persetujuan ({pendingListings.length})
             </h3>
           </div>
 
@@ -102,7 +103,7 @@ export default function ModerasiClient({
                     {l.image_url ? (
                       <img src={l.image_url} alt="" className="w-full h-full object-cover" loading="lazy" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-xl text-slate-400">📦</div>
+                      <div className="w-full h-full flex items-center justify-center text-slate-400"><Icon.Package className="h-5 w-5" /></div>
                     )}
                   </div>
                   <div className="min-w-0">
@@ -118,7 +119,7 @@ export default function ModerasiClient({
                         rel="noreferrer"
                         className="text-emerald-600 dark:text-emerald-400 hover:underline font-semibold"
                       >
-                        📱 {l.seller_wa}
+                        WA {l.seller_wa}
                       </a>
                       <span>•</span>
                       <span className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md text-[11px] font-bold text-slate-600 dark:text-slate-300">
@@ -141,7 +142,7 @@ export default function ModerasiClient({
                     }
                     className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold shadow-xs active:scale-95 transition-all flex items-center gap-1.5"
                   >
-                    <span>✓</span> Aktifkan
+                    <Icon.Check className="h-4 w-4" /> Aktifkan
                   </button>
                   <button
                     onClick={() =>
@@ -151,7 +152,7 @@ export default function ModerasiClient({
                     }
                     className="px-3.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60 text-xs font-bold active:scale-95 transition-all flex items-center gap-1"
                   >
-                    <span>✕</span> Suspend
+                    <Icon.X className="h-4 w-4" /> Suspend
                   </button>
                 </div>
               </div>
@@ -165,7 +166,7 @@ export default function ModerasiClient({
         <section className="space-y-3">
           <div className="flex items-center justify-between px-1">
             <h3 className="text-xs font-black uppercase tracking-wider text-rose-600 dark:text-rose-400 flex items-center gap-2">
-              <span>⚠️</span> Laporan Masuk ({openReports.length})
+              <span>Laporan</span> Masuk ({openReports.length})
             </h3>
           </div>
 
@@ -194,7 +195,7 @@ export default function ModerasiClient({
                     onClick={() => action({ action: "resolve_report", id: r.id }, "Laporan diselesaikan")}
                     className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs font-bold active:scale-95 transition-all"
                   >
-                    ✓ Selesaikan
+                     Selesaikan
                   </button>
                   {r.listing_id && (
                     <button
@@ -206,7 +207,7 @@ export default function ModerasiClient({
                       }
                       className="px-3.5 py-1.5 rounded-xl bg-rose-50 text-rose-600 border border-rose-200 dark:border-rose-900 dark:bg-rose-950/40 text-xs font-bold active:scale-95 transition-all"
                     >
-                      ⛔ Suspend Iklan
+                       Suspend Iklan
                     </button>
                   )}
                 </div>
@@ -221,7 +222,7 @@ export default function ModerasiClient({
         <section className="space-y-3">
           <div className="flex items-center justify-between px-1">
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
-              <span>👤</span> Permintaan Ubah Profil ({pendingProfiles.length})
+              <Icon.User className="h-4 w-4" /> Permintaan Ubah Profil ({pendingProfiles.length})
             </h3>
           </div>
 
@@ -253,7 +254,7 @@ export default function ModerasiClient({
                     }
                     className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold active:scale-95 transition-all"
                   >
-                    ✓ Setujui
+                     Setujui
                   </button>
                   <input
                     type="text"
@@ -270,7 +271,7 @@ export default function ModerasiClient({
                     }
                     className="px-3.5 py-1.5 rounded-xl bg-rose-50 text-rose-600 border border-rose-200 dark:border-rose-900 dark:bg-rose-950/40 text-xs font-bold active:scale-95 transition-all"
                   >
-                    ✕ Tolak
+                     Tolak
                   </button>
                 </div>
               </div>
@@ -284,7 +285,7 @@ export default function ModerasiClient({
         <section className="space-y-3">
           <div className="flex items-center justify-between px-1">
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
-              <span>🏷️</span> Tawaran Biaya Iklan ({pendingFeeOffers.length})
+              <Icon.Tag className="h-4 w-4" /> Tawaran Biaya Iklan ({pendingFeeOffers.length})
             </h3>
           </div>
 
@@ -322,7 +323,7 @@ export default function ModerasiClient({
                       }
                       className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold active:scale-95 transition-all"
                     >
-                      ✓ Setujui
+                       Setujui
                     </button>
                     <button
                       onClick={() =>
@@ -332,7 +333,7 @@ export default function ModerasiClient({
                       }
                       className="px-3.5 py-1.5 rounded-xl bg-rose-50 text-rose-600 border border-rose-200 dark:border-rose-900 dark:bg-rose-950/40 text-xs font-bold active:scale-95 transition-all"
                     >
-                      ✕ Tolak
+                       Tolak
                     </button>
                   </div>
                 </div>
@@ -347,7 +348,7 @@ export default function ModerasiClient({
         <section className="space-y-3">
           <div className="flex items-center justify-between px-1">
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
-              <span>💳</span> Tagihan Komisi Terjual ({pendingFees.length})
+              <Icon.CreditCard className="h-4 w-4" /> Tagihan Komisi Terjual ({pendingFees.length})
             </h3>
           </div>
 
@@ -373,7 +374,7 @@ export default function ModerasiClient({
                     }
                     className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold active:scale-95 transition-all"
                   >
-                    ✓ Tandai Lunas
+                     Tandai Lunas
                   </button>
                   <button
                     onClick={() =>
@@ -383,7 +384,7 @@ export default function ModerasiClient({
                     }
                     className="px-3.5 py-1.5 rounded-xl bg-rose-50 text-rose-600 border border-rose-200 dark:border-rose-900 dark:bg-rose-950/40 text-xs font-bold active:scale-95 transition-all"
                   >
-                    🗑 Hapus
+                     Hapus
                   </button>
                 </div>
               </div>

@@ -39,7 +39,7 @@ const faqs = [
   },
   {
     q: "Bagaimana cara menyimpan barang ke Favorit?",
-    a: "Tekan ikon hati (♡) di pojok kartu produk atau di halaman detail produk. Barang yang disimpan bisa dilihat kapan saja lewat menu Favorit di navbar. Daftar favorit tersimpan di perangkatmu tanpa perlu login.",
+    a: "Tekan ikon hati () di pojok kartu produk atau di halaman detail produk. Barang yang disimpan bisa dilihat kapan saja lewat menu Favorit di navbar. Daftar favorit tersimpan di perangkatmu tanpa perlu login.",
   },
   {
     q: "Apakah transaksi barang/COD difasilitasi oleh platform?",

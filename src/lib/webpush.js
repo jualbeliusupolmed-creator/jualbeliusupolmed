@@ -154,7 +154,7 @@ export async function pushListingBaru(supa, listing) {
   return pushKeSemua(
     supa,
     {
-      title: `🆕 ${listing.title}`,
+      title: ` ${listing.title}`,
       body: badan || "Barang baru baru saja tayang",
       url: `/produk/${buildSlug(listing.title, listing.id)}`,
       tag: `listing-${listing.id}`,

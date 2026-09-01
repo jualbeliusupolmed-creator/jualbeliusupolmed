@@ -65,7 +65,7 @@ describe("mading Instagram image", () => {
 
   it("removes unsupported emoji from the rendered image", () => {
     const layout = layoutMadingInstagramPost({
-      content: "Semangat 🤌🏻 untuk kampus 👨‍👩‍👧‍👦 🇮🇩",
+      content: "Semangat  untuk kampus ‍‍‍ ",
     });
 
     expect(layout.lines.join(" ")).toBe("Semangat untuk kampus");

@@ -186,7 +186,7 @@ export default function TokoHero({ profil, nama, warna, waLink, statistik }) {
           <Angka
             nilai={statistik.ulasan ? `${statistik.rata.toFixed(1)}` : "–"}
             label={statistik.ulasan ? `${statistik.ulasan} Ulasan` : "Ulasan"}
-            ikon={statistik.ulasan ? "★" : null}
+            ikon={statistik.ulasan ? "*" : null}
             warna={warna}
           />
           <Angka nilai={statistik.sejak || "–"} label="Bergabung" warna={warna} />

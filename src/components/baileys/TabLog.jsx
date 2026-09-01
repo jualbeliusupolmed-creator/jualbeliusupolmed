@@ -34,7 +34,7 @@ export function TabLog() {
     setReplying(true); setReplyStatus(null);
     const num = replyTarget.split("@")[0];
     const r = await apiPost("send", { target: num, message: replyMsg });
-    setReplyStatus(r.status ? { ok: true, text: "✅ Terkirim!" } : { ok: false, text: `❌ ${r.reason || r.error}` });
+    setReplyStatus(r.status ? { ok: true, text: "Terkirim!" } : { ok: false, text: `${r.reason || r.error}` });
     setReplying(false);
     if (r.status) { setReplyMsg(""); setTimeout(() => { setReplyTarget(null); setReplyStatus(null); }, 1500); }
   }
@@ -48,7 +48,7 @@ export function TabLog() {
             <input type="checkbox" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} className="accent-green-500" />
             <span className="text-xs text-gray-500 dark:text-slate-400">Auto (5d)</span>
           </label>
-          <button onClick={refetch} className="btn-outline text-xs">🔄 Refresh</button>
+          <button onClick={refetch} className="btn-outline text-xs">Refresh</button>
         </div>
       </div>
 
@@ -56,12 +56,12 @@ export function TabLog() {
         <div className="card border-2 border-blue-300 p-4 space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold dark:text-white">Balas ke: +{replyTarget.split("@")[0]}</p>
-            <button onClick={() => setReplyTarget(null)} className="text-xs text-gray-400 hover:text-red-500">✕ Tutup</button>
+            <button onClick={() => setReplyTarget(null)} className="text-xs text-gray-400 hover:text-red-500"> Tutup</button>
           </div>
           <textarea className="input min-h-[80px] resize-y" placeholder="Tulis balasan..." value={replyMsg} onChange={e => setReplyMsg(e.target.value)} />
           <Alert ok={replyStatus?.ok} msg={replyStatus?.text} />
           <button onClick={sendReply} disabled={replying || !replyMsg.trim()} className="btn-primary">
-            {replying ? "⏳ Mengirim..." : "🚀 Kirim Balas"}
+            {replying ? "Mengirim..." : "Kirim Balas"}
           </button>
         </div>
       )}
@@ -70,14 +70,14 @@ export function TabLog() {
         <input className="input max-w-xs" placeholder="Cari nomor / pesan..." value={search} onChange={e => setSearch(e.target.value)} />
         <select className="input w-auto" value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
           <option value="all">Semua tipe</option>
-          <option value="conversation">💬 Teks</option>
-          <option value="imageMessage">📷 Foto</option>
-          <option value="extendedTextMessage">📝 Extended</option>
+          <option value="conversation">Teks</option>
+          <option value="imageMessage"> Foto</option>
+          <option value="extendedTextMessage"> Extended</option>
         </select>
       </div>
 
       {loading && <p className="text-sm text-gray-400">Memuat log...</p>}
-      {error && <Alert ok={false} msg={`⚠️ ${error}`} />}
+      {error && <Alert ok={false} msg={error} />}
       <p className="text-xs text-gray-400">{logs.length} dari {(data?.logs || []).length} log</p>
 
       {logs.length > 0 && (
@@ -104,14 +104,14 @@ export function TabLog() {
                   </td>
                   <td className="p-3">
                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${l.type === "imageMessage" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-300"}`}>
-                      {l.type === "imageMessage" ? "📷 Foto" : "💬 Teks"}
+                      {l.type === "imageMessage" ? "Foto" : "Teks"}
                     </span>
                   </td>
                   <td className="max-w-[200px] truncate p-3 text-gray-600 dark:text-slate-400">{l.preview}</td>
                   <td className="p-3">
                     <button onClick={() => { setReplyTarget(l.sender); setReplyMsg(""); setReplyStatus(null); }}
                       className="rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-700 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-300 whitespace-nowrap">
-                      💬 Balas
+                      Balas
                     </button>
                   </td>
                 </tr>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Logo from "@/components/Logo";
 import { Icon } from "@/components/Icons";
 import OTPModal from "@/components/OTPModal";
@@ -20,10 +20,9 @@ const links = [
   { href: "/organisasi", label: "UKM" },
   { href: "/oprec", label: "Oprec" },
   { href: "/dicari", label: "Dicari" },
-  { href: "/teman", label: "Cari Teman 🔥" },
+  { href: "/teman", label: "Cari Teman", icon: "Fire" },
   { href: "/chat", label: "Obrolan" },
 ];
-
 export default function Navbar({ config }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -39,6 +38,7 @@ export default function Navbar({ config }) {
   const [wantedCount, setWantedCount] = useState(0);
   const [notifTerbuka, setNotifTerbuka] = useState(false);
   const [cariTerbuka, setCariTerbuka] = useState(false);
+  const sessionSyncedAtRef = useRef(0);
   // Bilah tidak boleh menyingkir sambil membawa panel yang sedang dibuka.
   const bilahTersembunyi =
     useHideOnScroll({ batasAtas: 96 }) && !notifTerbuka && !cariTerbuka;
@@ -63,24 +63,6 @@ export default function Navbar({ config }) {
     ikutSistem();
     media.addEventListener?.("change", ikutSistem);
 
-    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker
-          .register("/sw.js")
-          .then((reg) => console.log("SW registered:", reg.scope))
-          .catch((err) => console.error("SW registration failed:", err));
-      });
-      // Saat SW baru aktif (skipWaiting + clientsClaim), reload supaya
-      // chunk yang lama tidak crash lagi
-      let swRefreshing = false;
-      navigator.serviceWorker.addEventListener("controllerchange", () => {
-        if (!swRefreshing) {
-          swRefreshing = true;
-          window.location.reload();
-        }
-      });
-    }
-
     // Fetch wanted count for badge
     fetch("/api/wanted?limit=1")
       .then((r) => r.json())
@@ -89,6 +71,7 @@ export default function Navbar({ config }) {
 
     return () => media.removeEventListener?.("change", ikutSistem);
   }, []);
+
 
   const doLogout = async () => {
     await keluar();
@@ -159,7 +142,7 @@ export default function Navbar({ config }) {
                   title="Keluar dari akun"
                   aria-label="Keluar dari akun"
                 >
-                  ✕
+                  <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg>
                 </button>
               </div>
             ) : (

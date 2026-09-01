@@ -41,7 +41,7 @@ export default function ReportButton({ listing, className = "" }) {
   if (done) {
     return (
       <p className={`text-center text-xs text-gray-400 ${className}`}>
-        ✅ Laporan terkirim. Terima kasih sudah menjaga komunitas.
+         Laporan terkirim. Terima kasih sudah menjaga komunitas.
       </p>
     );
   }
@@ -53,7 +53,7 @@ export default function ReportButton({ listing, className = "" }) {
           onClick={() => setOpen(true)}
           className="text-xs text-gray-400 transition-colors hover:text-rose-600 hover:underline"
         >
-          🚩 Laporkan iklan ini
+           Laporkan iklan ini
         </button>
       ) : (
         <div className="card mt-2 space-y-2 p-3 text-left">
