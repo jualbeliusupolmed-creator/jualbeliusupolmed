@@ -52,7 +52,7 @@ export default function InstallPrompt() {
 
   // Render floating banner (hanya muncul di perangkat mobile, tepat di atas BottomNavbar)
   return (
-    <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] left-3.5 right-3.5 z-40 rounded-2xl bg-gray-900/95 backdrop-blur-xl p-3.5 shadow-2xl border border-white/10 flex items-center justify-between md:hidden dark:bg-slate-900/95 dark:border-slate-800 animate-in slide-in-from-bottom-5 duration-300">
+    <div className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom,0px))] left-3.5 right-3.5 z-50 rounded-2xl bg-gray-900/95 backdrop-blur-xl p-3.5 shadow-2xl border border-white/10 flex items-center justify-between md:hidden dark:bg-slate-900/95 dark:border-slate-800 animate-in slide-in-from-bottom-5 duration-300">
       <div className="flex items-center gap-3 min-w-0 pr-2">
         <div className="h-9 w-9 shrink-0 bg-primary/20 text-primary dark:text-emerald-400 rounded-xl flex items-center justify-center">
           <Icon.Download className="h-5 w-5" />

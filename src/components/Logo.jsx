@@ -1,15 +1,20 @@
 import { useId } from "react";
+import Image from "next/image";
 
 export default function Logo({ className = "h-9 w-9", src }) {
   const id = useId();
   if (src) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={src}
-        alt="Logo"
-        className={`${className} object-contain`}
-      />
+      <div className={`relative ${className}`}>
+        <Image
+          src={src}
+          alt="Logo"
+          fill
+          sizes="48px"
+          className="object-contain"
+          priority
+        />
+      </div>
     );
   }
 

@@ -61,8 +61,8 @@ function ItemNav({ n, pathname }) {
       className={cn(
         "group relative flex w-14 xs:w-16 md:w-16 flex-col items-center justify-center gap-0.5 py-1 transition-all duration-200 active:scale-[0.92] touch-manipulation",
         isActive
-          ? "text-primary dark:text-violet-400"
-          : "text-gray-400 hover:text-[#1d1d1f] dark:text-gray-500 dark:hover:text-gray-300"
+          ? "text-primary dark:text-violet-400 font-bold"
+          : "text-slate-600 hover:text-slate-950 dark:text-slate-400 dark:hover:text-slate-200 font-medium"
       )}
     >
       <div
@@ -81,7 +81,7 @@ function ItemNav({ n, pathname }) {
       <span
         className={cn(
           "text-[10px] md:text-[9px] transition-all duration-200 truncate max-w-full tracking-tight",
-          isActive ? "font-bold" : "font-medium"
+          isActive ? "font-bold" : "font-semibold"
         )}
       >
         {n.name}
@@ -131,11 +131,11 @@ function BottomNavbarInner() {
               hapticLight();
               setBukaCari(true);
             }}
-            aria-label="Buka pencarian"
+            aria-label="Buka pencarian barang, jasa, dan kos"
             className="flex w-full items-center gap-2.5 rounded-full border border-black/[0.06] bg-white/92 px-4 py-2.5 text-left shadow-[0_8px_26px_rgba(15,23,42,0.14)] backdrop-blur-2xl transition-all active:scale-[0.98] dark:border-white/[0.1] dark:bg-[#111113]/92"
           >
-            <Icon.Search className="h-4 w-4 shrink-0 text-gray-400" />
-            <span className="truncate text-[13px] font-medium text-gray-400 dark:text-gray-500">
+            <Icon.Search className="h-4 w-4 shrink-0 text-slate-500 dark:text-slate-400" />
+            <span className="truncate text-[13px] font-medium text-slate-600 dark:text-slate-300">
               Cari barang, jasa, kos…
             </span>
           </button>

@@ -321,7 +321,7 @@ export default function SuperAppHome({
         
         <div className="relative">
           <div className="flex gap-3 xs:gap-3.5 overflow-x-auto pb-1.5 pt-0 px-4 sm:px-6 md:px-10 lg:px-16 snap-x snap-mandatory touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {latestListings.slice(0, 20).map((ad) => (
+            {latestListings.slice(0, 20).map((ad, idx) => (
               <Link 
                 key={ad.id} 
                 href={`/produk/${buildSlug(ad.title, ad.id)}`}
@@ -334,6 +334,7 @@ export default function SuperAppHome({
                       alt={ad.title} 
                       fill 
                       sizes="(max-width: 640px) 160px, 180px"
+                      priority={idx < 3}
                       className="object-cover group-hover:scale-104 transition-transform duration-500" 
                     />
                   ) : (
@@ -349,11 +350,11 @@ export default function SuperAppHome({
                   <h4 className="text-[13px] font-bold text-[#1d1d1f] dark:text-[#f5f5f7] line-clamp-1 mb-1 group-hover:text-primary transition-colors">
                     {ad.title}
                   </h4>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                  <p className="text-[10px] font-medium text-slate-600 dark:text-slate-400 truncate">
                     by {ad.seller_name || "Mahasiswa"}
                   </p>
-                  <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 flex items-center gap-1">
-                    <Icon.MapPin className="w-2.5 h-2.5" />
+                  <p className="text-[10px] font-medium text-slate-600 dark:text-slate-400 mt-0.5 flex items-center gap-1">
+                    <Icon.MapPin className="w-2.5 h-2.5 shrink-0 text-slate-500 dark:text-slate-400" />
                     <span className="truncate">{ad.campus === "Semua" ? "Medan" : ad.campus}</span>
                   </p>
                 </div>
@@ -383,7 +384,7 @@ export default function SuperAppHome({
               <h3 className="text-lg sm:text-xl font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">
                 Menfess &amp; Info Kampus
               </h3>
-              <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Cerita, curhat, dan kabar terbaru</p>
+              <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">Cerita, curhat, dan kabar terbaru</p>
             </div>
             <button
               onClick={() => setShowModal(true)}
@@ -407,7 +408,7 @@ export default function SuperAppHome({
               className={`pb-2.5 text-[13px] font-bold border-b-2 transition-colors whitespace-nowrap px-1 ${
                 activeTab === tab.id
                   ? "border-[#1d1d1f] text-[#1d1d1f] dark:border-white dark:text-white"
-                  : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400"
+                  : "border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
               }`}
             >
               {tab.label}
@@ -498,7 +499,7 @@ export default function SuperAppHome({
                           {isInfo ? "Info Kampus" : "Menfess"}
                         </span>
                       </div>
-                      <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                      <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
                         {waktuLalu(post.created_at)}
                       </p>
                     </div>
@@ -520,48 +521,56 @@ export default function SuperAppHome({
                   {post.image_url && (
                     <div 
                       onClick={() => setZoomImage(post.image_url)}
-                      className="mt-3 rounded-[16px] overflow-hidden border border-black/[0.04] dark:border-white/[0.06] bg-black/[0.02] dark:bg-black/30 cursor-zoom-in"
+                      className="mt-3 rounded-[16px] overflow-hidden border border-black/[0.04] dark:border-white/[0.06] bg-black/[0.02] dark:bg-black/30 cursor-zoom-in relative aspect-[16/9] w-full max-h-72"
                     >
-                      <img 
+                      <Image 
                         src={post.image_url} 
-                        alt="Foto menfess" 
-                        className="w-full max-h-72 object-cover hover:scale-[1.01] transition-transform duration-300" 
+                        alt={post.title ? `Foto ${post.title}` : "Foto menfess"} 
+                        fill
+                        sizes="(max-width: 768px) 100vw, 720px"
+                        className="object-cover hover:scale-[1.01] transition-transform duration-300" 
                         loading="lazy" 
                       />
                     </div>
                   )}
 
                   {/* Bottom Action Bar */}
-                  <div className="mt-3.5 flex items-center gap-4 sm:gap-6 text-sm text-gray-500 dark:text-gray-400">
+                  <div className="mt-3.5 flex items-center gap-4 sm:gap-6 text-sm text-slate-600 dark:text-slate-400">
                     <button
+                      type="button"
                       onClick={() => handleLike(post.id)}
-                      className={`flex items-center gap-1 py-1 px-2 rounded-lg transition-colors ${
+                      aria-label={`Sukai postingan, ${post.likes_count || 0} suka`}
+                      className={`flex items-center gap-1.5 py-1 px-2 rounded-lg transition-colors ${
                         post._isLiked ? "text-rose-500 bg-rose-50 dark:bg-rose-950/30" : "hover:text-rose-500"
                       }`}
                     >
                       <Icon.Heart className={`h-3.5 w-3.5 ${post._isLiked ? "fill-current text-rose-500" : ""}`} />
-                      <span className="font-bold">{post.likes_count || 0}</span>
+                      <span className="font-bold text-xs">{post.likes_count || 0}</span>
                     </button>
 
                     <button
+                      type="button"
                       onClick={() => toggleComments(post.id)}
-                      className={`flex items-center gap-1 py-1 px-2 rounded-lg transition-colors ${
+                      aria-label={`Buka komentar, ${post.comments_count || 0} komentar`}
+                      className={`flex items-center gap-1.5 py-1 px-2 rounded-lg transition-colors ${
                         activeCommentsPostId === post.id ? "text-primary bg-primary/10" : "hover:text-primary"
                       }`}
                     >
                       <Icon.MessageCircle className="h-3.5 w-3.5" />
-                      <span className="font-bold">{post.comments_count || 0} Komentar</span>
+                      <span className="font-bold text-xs">{post.comments_count || 0} Komentar</span>
                     </button>
 
                     <button
+                      type="button"
                       onClick={() => handleShare(post)}
-                      className="flex items-center gap-1 py-1 px-2 rounded-lg hover:text-emerald-600 transition-colors ml-auto"
+                      aria-label="Bagikan postingan ini ke WhatsApp"
+                      className="flex items-center gap-1.5 py-1 px-2 rounded-lg hover:text-emerald-600 transition-colors ml-auto"
                     >
                       <Icon.Share className="h-3.5 w-3.5" />
-                      <span className="hidden xs:inline font-bold">Bagikan</span>
+                      <span className="font-bold text-xs">Bagikan</span>
                     </button>
 
-                    <span className="text-[10px] text-gray-400 flex items-center gap-1">
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
                       <Icon.Eye className="h-3 w-3" />
                       <span>{post.views_count || 0}</span>
                     </span>
