@@ -3023,7 +3023,7 @@ export async function POST(req) {
       await sendWa(senderJid, "Waduh, ada kendala pas proses iklanmu: " + err.message);
       return NextResponse.json({ ok: true, error: err.message });
     }
-
+  }
   } catch (error) {
     console.error("Webhook Error Baileys:", error);
     return jawabGalat(error);
