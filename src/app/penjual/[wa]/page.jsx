@@ -70,7 +70,7 @@ async function getSellerData(wa) {
 
     const sellerName = profile?.name || listings?.[0]?.seller_name ||
       allListings?.[0]?.seller_name ||
-      decodedWa;
+      "Penjual Anonim";
 
     // Ambil kategori distributor
     let distributorCategories = [];
