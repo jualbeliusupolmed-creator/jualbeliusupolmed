@@ -254,7 +254,7 @@ export default function NotificationCenter({ onOpenChange }) {
             aria-hidden="true"
           />
 
-          <div className="fixed inset-x-3 top-[58px] mx-auto max-w-[390px] w-auto sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-2 sm:w-[380px] sm:max-w-[92vw] sm:mx-0 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200/80 dark:border-slate-800 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 font-sans">
+          <div className="fixed inset-x-3 top-[56px] mx-auto max-w-[390px] w-auto bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200/80 dark:border-slate-800 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 font-sans">
           
           {/* HEADER */}
           <div className="p-4 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/70 backdrop-blur-md">

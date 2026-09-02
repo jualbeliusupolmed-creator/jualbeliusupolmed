@@ -41,7 +41,7 @@ export default function AdminNav({ counts = {}, onNavigate }) {
         setOpenGroups((prev) => ({ ...prev, [g.label]: true }));
       }
     });
-  }, [currentTab]);
+  }, [currentTab, grup]);
 
   function toggleGroup(label) {
     setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));

@@ -100,31 +100,32 @@ export default function LayoutWrapper({ children }) {
     // memanggilnya sendiri setiap kali alamat berpindah, dan hasilnya tidak
     // pernah sampai ke komponen lain.
     <SesiProvider>
-      {!isImmersive && <Navbar config={config} />}
-      <main className={cn(
-        "flex-1 flex flex-col bg-[#f5f5f7]",
-        isAdmin ? "dark:bg-[#000000]" : isChat || isTeman ? "dark:bg-[#000000]" : "dark:bg-[#0b0b0f]",
-        // Ruang bawah disesuaikan: dock + kolom cari yang menempel di bawah
-        !isAdmin && !isChat && !isTeman ? "pb-36 md:pb-32" : ""
-      )}>
-        {children}
-      </main>
-      {!isImmersive && (
-        <>
-          <GlobalChatNotifier />
-          <SwipeBackGesture />
-          <GlobalPullToRefresh />
-          <InstallPrompt />
-          {/* Ajakan notifikasi peramban. Menahan dirinya sendiri (kunjungan
-              kedua / 25 detik), karena izin notifikasi cuma bisa diminta sekali. */}
-          <NotifPrompt />
-          <PopupSponsor config={config} />
-          <BottomNavbar />
-          {!hideFooter && <Footer config={config} />}
-        </>
-      )}
-      {/* Lightbox global — aktif di semua halaman, dipicu oleh img[data-zoom] */}
-      <GlobalImageLightbox />
+      <div className="mx-auto w-full max-w-md min-h-screen relative bg-[#f5f5f7] dark:bg-[#000000] shadow-2xl overflow-x-hidden flex flex-col">
+        {!isImmersive && <Navbar config={config} />}
+        <main className={cn(
+          "flex-1 flex flex-col",
+          // Ruang bawah disesuaikan: dock + kolom cari yang menempel di bawah
+          !isAdmin && !isChat && !isTeman ? "pb-36 md:pb-32" : ""
+        )}>
+          {children}
+        </main>
+        {!isImmersive && (
+          <>
+            <GlobalChatNotifier />
+            <SwipeBackGesture />
+            <GlobalPullToRefresh />
+            <InstallPrompt />
+            {/* Ajakan notifikasi peramban. Menahan dirinya sendiri (kunjungan
+                kedua / 25 detik), karena izin notifikasi cuma bisa diminta sekali. */}
+            <NotifPrompt />
+            <PopupSponsor config={config} />
+            <BottomNavbar />
+            {!hideFooter && <Footer config={config} />}
+          </>
+        )}
+        {/* Lightbox global — aktif di semua halaman, dipicu oleh img[data-zoom] */}
+        <GlobalImageLightbox />
+      </div>
     </SesiProvider>
   );
 }

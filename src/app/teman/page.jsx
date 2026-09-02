@@ -186,7 +186,7 @@ export default function TemanSwipePage() {
 
   if (!mounted) {
     return (
-      <div className="fixed inset-x-0 bottom-0 top-[52px] z-20 flex flex-col bg-[#f5f5f7] dark:bg-[#000000] font-sans max-w-lg w-full mx-auto px-4 pt-3 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-[calc(4.5rem+env(safe-area-inset-bottom))] overflow-hidden">
+      <div className="flex-1 flex flex-col bg-[#f5f5f7] dark:bg-[#000000] font-sans w-full px-4 pt-3 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-[calc(4.5rem+env(safe-area-inset-bottom))] overflow-hidden">
         <div className="flex flex-col items-center justify-center my-auto py-24 space-y-3">
           <div className="w-10 h-10 border-3 border-primary/30 border-t-primary rounded-full animate-spin" />
           <p className="text-xs text-gray-400 font-medium">Menyiapkan Cari Teman Kampus...</p>
@@ -196,7 +196,7 @@ export default function TemanSwipePage() {
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 top-[52px] z-20 flex flex-col bg-[#f5f5f7] dark:bg-[#000000] font-sans max-w-lg w-full mx-auto px-4 pt-3 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-[calc(4.5rem+env(safe-area-inset-bottom))] select-none overflow-hidden">
+    <div className="flex-1 flex flex-col bg-[#f5f5f7] dark:bg-[#000000] font-sans w-full px-4 pt-3 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-[calc(4.5rem+env(safe-area-inset-bottom))] select-none overflow-hidden">
       
       {/* TOP BAR & FILTER */}
       <div className="flex items-center justify-between gap-2 pb-3">
