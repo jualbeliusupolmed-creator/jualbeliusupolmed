@@ -16,6 +16,8 @@ import { jumlahTokenBot, tokenBotSah } from "@/lib/botTokens";
 import { autoPublishListingInstagram } from "@/lib/listingInstagram";
 import { cariAman } from "@/lib/cariAman";
 import { jawabGalat } from "@/lib/jawabGalat";
+import { loadConversationMemory, mergeConversationHistory } from "@/lib/botMemory";
+import { aiActionNeedsClarification, isFastPathCommand } from "@/lib/botIntent";
 
 export const dynamic = "force-dynamic";
 // Loop kirim WA berjeda (anti-ban) mudah melewati batas default 10-15 detik —
@@ -331,6 +333,9 @@ export async function POST(req) {
       await migrateLidToPhone(getAdminClient(), prevLid, normalizedWa).catch(() => {});
     }
 
+    // Batas waktu ini dibuat SEBELUM insert pesan saat ini. Query memori memakai
+    // `.lt()` terhadap nilai ini agar pesan sekarang tidak muncul dua kali di prompt.
+    const memoryBefore = new Date().toISOString();
     // Catat pesan masuk dari user untuk riwayat chat admin & audit.
     logConvo(senderJid, "user", message, !!file);
 
@@ -2439,14 +2444,33 @@ export async function POST(req) {
         }
       }
 
-      const isFastPathCmd = /^(menu|saya|iklanku|admin|min|mimin|deal|gagal|batal|dicari|wtb|cari|lapor|tawar|hapus|nama|edit|setmode|approve|reject|setuju|tolak|broadcast|stats|pause|resume|pantau|daftar pantau|foto|jual|wts|dijual|ready)\\b/i.test(msgLower);
+      const isFastPathCmd = isFastPathCommand(msgLower);
 
       if (!isFastPathCmd && (message || imageBuffers.length > 0)) {
         try {
           const aiConfig = settings.ai_config || {};
-          let conversationHistory = [];
-          
-          const aiRes = await parseIntentWithAI(message, aiConfig, conversationHistory, imageBuffers, mimeTypes);
+          const persistentHistory = await loadConversationMemory(supa, normalizedWa, {
+            before: memoryBefore,
+            maxEntries: 10,
+            retentionDays: 30,
+          }).catch((error) => {
+            console.warn("[bot-memory] gagal memuat riwayat:", error?.message || error);
+            return [];
+          });
+          const aiHistory = mergeConversationHistory(persistentHistory, conversationHistory, {
+            maxEntries: 10,
+          });
+
+          const aiRes = await parseIntentWithAI(message, aiConfig, aiHistory, imageBuffers, mimeTypes);
+          const confidence = Number(aiRes.confidence) || 0;
+          // AI boleh memahami bahasa, tetapi tidak boleh mengeksekusi aksi jika ia
+          // sendiri ragu. Minta klarifikasi dan biarkan state bisnis tetap utuh.
+          if (aiActionNeedsClarification(aiRes.intent, confidence)) {
+            const clarifyReply = aiRes.reply_message
+              || "Aku belum yakin maksudnya. Kakak mau jual, cari barang, atau panggil admin?";
+            await sendWa(senderJid, clarifyReply);
+            return NextResponse.json({ ok: true, state: "ai_clarify", bot_reply: clarifyReply });
+          }
           
           if (aiRes.intent === "deal_confirmation") {
               msgLower = "deal";
@@ -2463,6 +2487,22 @@ export async function POST(req) {
               const kw = aiRes.data?.keywords || "";
               msgLower = `dicari ${kw}`.trim();
               message = `DICARI ${kw}`;
+          } else if (aiRes.intent === "menu") {
+              msgLower = "menu";
+              message = "MENU";
+          } else if (aiRes.intent === "profile") {
+              msgLower = "saya";
+              message = "SAYA";
+          } else if (aiRes.intent === "extend_listing") {
+              msgLower = "perpanjang";
+              message = "PERPANJANG";
+          } else if (aiRes.intent === "upgrade_listing") {
+              msgLower = "upgrade";
+              message = "UPGRADE";
+          } else if (aiRes.intent === "monitor_search") {
+              const kw = aiRes.data?.keywords || "";
+              msgLower = `pantau ${kw}`.trim();
+              message = `PANTAU ${kw}`.trim();
           } else if (aiRes.intent === "handoff") {
               const currentPaused = settings?.bot?.paused_users || [];
               if (!currentPaused.includes(normalizedWa)) {

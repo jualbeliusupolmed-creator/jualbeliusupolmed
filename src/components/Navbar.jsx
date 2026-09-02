@@ -93,13 +93,13 @@ export default function Navbar({ config }) {
     >
       {/* ── Top bar: Apple Frosted Glass ── */}
       <div className="border-b border-black/[0.06] bg-white/80 backdrop-blur-2xl transition-all duration-300 dark:border-white/[0.08] dark:bg-[#000000]/80">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-2.5">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-3 py-1.5">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group min-w-0 shrink active:scale-[0.98] transition-transform">
+          <Link href="/" className="flex items-center gap-2 group min-w-0 shrink active:scale-[0.98] transition-transform">
             <div className="shrink-0 transition-transform duration-300 group-hover:scale-105">
-              <Logo className="h-7 w-7" src={config?.site?.logoUrl} />
+              <Logo className="h-5 w-5" src={config?.site?.logoUrl} />
             </div>
-            <span className="truncate text-[15px] font-bold leading-none tracking-tight text-[#1d1d1f] transition-colors dark:text-[#f5f5f7]">
+            <span className="truncate text-[13px] font-bold leading-none tracking-tight text-[#1d1d1f] transition-colors dark:text-[#f5f5f7]">
               USUPOLMEDUPDATE
             </span>
           </Link>
@@ -123,13 +123,13 @@ export default function Navbar({ config }) {
               <div className="flex items-center gap-0.5 bg-black/[0.04] dark:bg-white/[0.08] p-0.5 rounded-full border border-black/[0.04] dark:border-white/[0.06]">
                 <Link
                   href="/dashboard"
-                  className="inline-flex items-center gap-1.5 rounded-full bg-white dark:bg-[#1c1c1e] px-3 py-1.5 text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7] hover:text-primary dark:hover:text-emerald-400 transition-all active:scale-[0.96] shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-white dark:bg-[#1c1c1e] px-2.5 py-1 text-[11px] font-bold text-[#1d1d1f] dark:text-[#f5f5f7] hover:text-primary dark:hover:text-emerald-400 transition-all active:scale-[0.96] shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
                   title="Buka Dashboard Akun"
                   aria-label="Buka dashboard"
                 >
                   <Icon.User className="h-3.5 w-3.5 text-primary shrink-0" />
-                  <span className="max-w-[85px] truncate">{session.name || session.wa}</span>
-                  <span className="hidden lg:inline text-[10px] text-gray-400 font-medium">· Dashboard</span>
+                  <span className="max-w-[75px] truncate">{session.name || session.wa}</span>
+                  <span className="hidden lg:inline text-[9px] text-gray-400 font-medium">· Dashboard</span>
                 </Link>
                 <button
                   onClick={() => {
@@ -138,7 +138,7 @@ export default function Navbar({ config }) {
                       cancel: { label: "Batal" },
                     });
                   }}
-                  className="px-2 py-1 text-gray-400 hover:text-rose-500 rounded-full transition-colors text-xs font-bold active:scale-90"
+                  className="px-1.5 py-1 text-gray-400 hover:text-rose-500 rounded-full transition-colors text-[11px] font-bold active:scale-90"
                   title="Keluar dari akun"
                   aria-label="Keluar dari akun"
                 >
@@ -148,10 +148,10 @@ export default function Navbar({ config }) {
             ) : (
               <button
                 onClick={() => setShowOtp(true)}
-                className="inline-flex items-center gap-1.5 rounded-full border border-black/[0.08] bg-black/[0.03] px-3.5 py-1.5 text-xs font-bold text-[#1d1d1f] transition-all duration-200 hover:bg-black/[0.06] active:scale-[0.95] dark:border-white/[0.1] dark:bg-white/[0.06] dark:text-[#f5f5f7] dark:hover:bg-white/[0.1]"
+                className="inline-flex items-center gap-1 rounded-full border border-black/[0.08] bg-black/[0.03] px-3 py-1.5 text-[11px] font-bold text-[#1d1d1f] transition-all duration-200 hover:bg-black/[0.06] active:scale-[0.95] dark:border-white/[0.1] dark:bg-white/[0.06] dark:text-[#f5f5f7] dark:hover:bg-white/[0.1]"
                 title="Masuk / Daftar Akun"
               >
-                <Icon.User className="h-3.5 w-3.5" />
+                <Icon.User className="h-3 w-3" />
                 <span>Masuk</span>
               </button>
             )}
@@ -160,7 +160,7 @@ export default function Navbar({ config }) {
               href="/chat"
               aria-label="Buka pesan"
               title="Pesan"
-              className="rounded-full p-2 text-gray-500 transition-all duration-200 hover:bg-black/[0.05] hover:text-[#1d1d1f] active:scale-90 dark:text-gray-400 dark:hover:bg-white/[0.08] dark:hover:text-white"
+              className="rounded-full p-1.5 text-gray-500 transition-all duration-200 hover:bg-black/[0.05] hover:text-[#1d1d1f] active:scale-90 dark:text-gray-400 dark:hover:bg-white/[0.08] dark:hover:text-white"
             >
               <Icon.MessageCircle className="h-4 w-4" />
             </Link>
@@ -171,7 +171,7 @@ export default function Navbar({ config }) {
               onClick={() => setCariTerbuka(true)}
               aria-label="Cari barang atau jasa"
               title="Cari"
-              className="rounded-full p-2 text-gray-500 transition-all duration-200 hover:bg-black/[0.05] hover:text-[#1d1d1f] active:scale-90 dark:text-gray-400 dark:hover:bg-white/[0.08] dark:hover:text-white"
+              className="rounded-full p-1.5 text-gray-500 transition-all duration-200 hover:bg-black/[0.05] hover:text-[#1d1d1f] active:scale-90 dark:text-gray-400 dark:hover:bg-white/[0.08] dark:hover:text-white"
             >
               <Icon.Search className="h-4 w-4" />
             </button>
@@ -182,7 +182,7 @@ export default function Navbar({ config }) {
             {/* Theme toggle */}
             <button
               onClick={toggleTheme}
-              className="rounded-full p-2 text-gray-500 transition-all duration-200 hover:bg-black/[0.05] hover:text-[#1d1d1f] active:scale-90 dark:text-gray-400 dark:hover:bg-white/[0.08] dark:hover:text-white"
+              className="rounded-full p-1.5 text-gray-500 transition-all duration-200 hover:bg-black/[0.05] hover:text-[#1d1d1f] active:scale-90 dark:text-gray-400 dark:hover:bg-white/[0.08] dark:hover:text-white"
               aria-label="Toggle Theme"
             >
               <div className="relative h-4 w-4 overflow-hidden">

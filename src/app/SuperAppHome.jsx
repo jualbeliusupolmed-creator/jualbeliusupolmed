@@ -303,58 +303,58 @@ export default function SuperAppHome({
     <div className="min-h-screen bg-[#f5f5f7] pb-28 font-sans selection:bg-primary/20 dark:bg-[#000000] overflow-x-hidden">
       
       {/* ── Marketplace carousel ── */}
-      <section className="mt-2 mb-6">
-        <div className="flex items-center justify-between px-4 sm:px-6 md:px-10 lg:px-16 mb-2.5">
-          <div className="flex items-center gap-2">
-            <h3 className="text-base sm:text-lg font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">
-              <span className="inline-flex items-center gap-2"><Icon.ShoppingBag className="h-5 w-5" />Belanja di Marketplace</span>
+      <section className="mt-2 mb-4">
+        <div className="flex items-center justify-between px-4 sm:px-6 md:px-10 lg:px-16 mb-2">
+          <div className="flex items-center gap-1.5">
+            <h3 className="text-[14px] font-bold tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">
+              <span className="inline-flex items-center gap-1.5"><Icon.ShoppingBag className="h-4 w-4" />Belanja di Marketplace</span>
             </h3>
-            <span className="rounded-full bg-black/[0.05] px-2.5 py-0.5 text-[10px] font-semibold text-gray-600 dark:bg-white/[0.08] dark:text-gray-400">
+            <span className="rounded-full bg-black/[0.05] px-2 py-0.5 text-[9px] font-bold text-gray-600 dark:bg-white/[0.08] dark:text-gray-400">
               Geser
             </span>
           </div>
-          <Link href="/jual-beli" className="text-xs sm:text-sm font-bold text-primary hover:underline flex items-center gap-1 active:scale-[0.96] transition-transform">
+          <Link href="/jual-beli" className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1 active:scale-[0.96] transition-transform">
             <span>Lihat Semua</span>
-            <Icon.ArrowRight className="w-3.5 h-3.5" />
+            <Icon.ArrowRight className="w-3 h-3" />
           </Link>
         </div>
         
         <div className="relative">
-          <div className="flex gap-3 xs:gap-3.5 overflow-x-auto pb-1.5 pt-0 px-4 sm:px-6 md:px-10 lg:px-16 snap-x snap-mandatory touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex gap-2.5 overflow-x-auto pb-1.5 pt-0 px-4 sm:px-6 md:px-10 lg:px-16 snap-x snap-mandatory touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {latestListings.slice(0, 20).map((ad, idx) => (
               <Link 
                 key={ad.id} 
                 href={`/produk/${buildSlug(ad.title, ad.id)}`}
-                className="flex-none w-[140px] xs:w-[155px] sm:w-[175px] overflow-hidden apple-card snap-start hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] active:scale-[0.97] group no-tap-highlight"
+                className="flex-none w-[110px] xs:w-[120px] sm:w-[130px] overflow-hidden apple-card snap-start hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] active:scale-[0.97] group no-tap-highlight"
               >
-                <div className="relative aspect-square w-full bg-black/[0.03] dark:bg-black/40 overflow-hidden">
+                <div className="relative aspect-[4/3] w-full bg-black/[0.03] dark:bg-black/40 overflow-hidden">
                   {ad.image_url ? (
                     <Image 
                       src={ad.image_url} 
                       alt={ad.title} 
                       fill 
-                      sizes="(max-width: 640px) 160px, 180px"
+                      sizes="(max-width: 640px) 120px, 140px"
                       priority={idx < 3}
                       className="object-cover group-hover:scale-104 transition-transform duration-500" 
                     />
                   ) : (
                     <div className="flex h-full items-center justify-center text-slate-400">
-                      <Icon.Package className="w-10 h-10 opacity-20" />
+                      <Icon.Package className="w-8 h-8 opacity-20" />
                     </div>
                   )}
-                  <div className="absolute top-2 right-2 bg-[#1d1d1f]/80 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-xs">
+                  <div className="absolute top-1 right-1 bg-[#1d1d1f]/80 backdrop-blur-md text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-xs">
                     {rupiah(ad.price || 0)}
                   </div>
                 </div>
-                <div className="p-3 sm:p-3.5">
-                  <h4 className="text-[13px] font-bold text-[#1d1d1f] dark:text-[#f5f5f7] line-clamp-1 mb-1 group-hover:text-primary transition-colors">
+                <div className="p-2">
+                  <h4 className="text-[11px] font-bold text-[#1d1d1f] dark:text-[#f5f5f7] line-clamp-1 mb-0.5 group-hover:text-primary transition-colors">
                     {ad.title}
                   </h4>
-                  <p className="text-[10px] font-medium text-slate-600 dark:text-slate-400 truncate">
+                  <p className="text-[9px] font-medium text-slate-500 dark:text-slate-400 truncate">
                     by {ad.seller_name || "Mahasiswa"}
                   </p>
-                  <p className="text-[10px] font-medium text-slate-600 dark:text-slate-400 mt-0.5 flex items-center gap-1">
-                    <Icon.MapPin className="w-2.5 h-2.5 shrink-0 text-slate-500 dark:text-slate-400" />
+                  <p className="text-[9px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-0.5">
+                    <Icon.MapPin className="w-2 h-2 shrink-0 text-slate-400 dark:text-slate-500" />
                     <span className="truncate">{ad.campus === "Semua" ? "Medan" : ad.campus}</span>
                   </p>
                 </div>
@@ -364,13 +364,13 @@ export default function SuperAppHome({
             {/* LIHAT SEMUA CARD */}
             <Link 
               href="/jual-beli"
-              className="flex-none w-[125px] xs:w-[145px] sm:w-[170px] rounded-[22px] border border-dashed border-black/10 bg-[#f5f5f7] flex flex-col items-center justify-center snap-start hover:bg-black/[0.04] active:scale-[0.96] transition-all group no-tap-highlight dark:border-white/10 dark:bg-[#1c1c1e] dark:hover:bg-white/[0.04]"
+              className="flex-none w-[110px] xs:w-[120px] sm:w-[130px] rounded-[16px] border border-dashed border-black/10 bg-[#f5f5f7] flex flex-col items-center justify-center snap-start hover:bg-black/[0.04] active:scale-[0.96] transition-all group no-tap-highlight dark:border-white/10 dark:bg-[#1c1c1e] dark:hover:bg-white/[0.04]"
             >
-              <div className="w-11 h-11 bg-white shadow-sm text-[#1d1d1f] rounded-full flex items-center justify-center mb-3 group-hover:scale-105 transition-transform dark:bg-[#2c2c2e] dark:text-white">
-                <Icon.ArrowRight className="w-4 h-4" />
+              <div className="w-8 h-8 bg-white shadow-sm text-[#1d1d1f] rounded-full flex items-center justify-center mb-2 group-hover:scale-105 transition-transform dark:bg-[#2c2c2e] dark:text-white">
+                <Icon.ArrowRight className="w-3.5 h-3.5" />
               </div>
-              <span className="text-xs font-bold text-primary">Lihat Semua</span>
-              <span className="text-[10px] text-primary/70">Jelajahi Pasar</span>
+              <span className="text-[11px] font-bold text-primary">Lihat Semua</span>
+              <span className="text-[9px] text-primary/70">Jelajahi Pasar</span>
             </Link>
           </div>
         </div>
@@ -378,23 +378,7 @@ export default function SuperAppHome({
 
       {/* ── 5. FEED MADING & MENFESS (myfess-like continuous feed) ── */}
       <section className="max-w-3xl mx-auto w-full md:px-6">
-        <div className="sticky top-[70px] z-30 bg-[#f5f5f7]/90 dark:bg-[#000000]/90 backdrop-blur-xl px-4 sm:px-0 pt-2 pb-2 mb-2">
-          <div className="flex items-center justify-between pb-2">
-            <div>
-              <h3 className="text-lg sm:text-xl font-black tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">
-                Menfess &amp; Info Kampus
-              </h3>
-              <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">Cerita, curhat, dan kabar terbaru</p>
-            </div>
-            <button
-              onClick={() => setShowModal(true)}
-              className="flex items-center gap-1.5 bg-[#0071e3] text-white px-3.5 py-1.5 rounded-full text-[13px] font-bold hover:bg-[#0077ed] active:scale-[0.96] transition-all shadow-sm"
-            >
-              <Icon.PlusCircle className="w-4 h-4" />
-              <span>Tulis</span>
-            </button>
-          </div>
-
+        <div className="sticky top-[70px] z-30 bg-[#f5f5f7]/90 dark:bg-[#000000]/90 backdrop-blur-xl px-4 sm:px-0 pt-2 pb-1.5 mb-1.5">
         {/* TABS FILTER (Semua / Menfess / Info Kampus) */}
         <div className="flex gap-4 border-b border-black/[0.06] dark:border-white/[0.08] mt-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {[
@@ -405,10 +389,10 @@ export default function SuperAppHome({
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`pb-2.5 text-[13px] font-bold border-b-2 transition-colors whitespace-nowrap px-1 ${
+              className={`pb-2 text-[12px] font-bold border-b-2 transition-colors whitespace-nowrap px-1 ${
                 activeTab === tab.id
                   ? "border-[#1d1d1f] text-[#1d1d1f] dark:border-white dark:text-white"
-                  : "border-transparent text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                  : "border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
               }`}
             >
               {tab.label}
@@ -416,44 +400,6 @@ export default function SuperAppHome({
           ))}
         </div>
 
-        {/* COMBINED FILTERS (Campus & Sort) */}
-        <div className="flex items-center gap-2 overflow-x-auto py-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <div className="flex gap-1.5 shrink-0 border-r border-black/10 dark:border-white/10 pr-2">
-            {["Semua", "USU", "POLMED", "Bebas"].map((campus) => (
-              <button
-                key={campus}
-                onClick={() => setSelectedCampus(campus)}
-                className={`px-3 py-1.5 rounded-full text-[11px] font-bold shrink-0 transition-colors ${
-                  selectedCampus === campus
-                    ? "bg-[#1d1d1f] text-white dark:bg-white dark:text-slate-900"
-                    : "bg-black/[0.04] text-slate-600 dark:bg-white/[0.06] dark:text-slate-300 hover:bg-black/[0.08] dark:hover:bg-white/[0.1]"
-                }`}
-              >
-                {campus}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex gap-1.5 shrink-0">
-            {[
-              { id: "all", label: "Terbaru" },
-              { id: "popular", label: "Terpopuler" },
-              { id: "photo", label: "Ada Foto" },
-            ].map((st) => (
-              <button
-                key={st.id}
-                onClick={() => setFilterType(st.id)}
-                className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition-colors ${
-                  filterType === st.id
-                    ? "bg-[#1d1d1f] text-white dark:bg-white dark:text-slate-900"
-                    : "bg-black/[0.04] text-slate-600 dark:bg-white/[0.06] dark:text-slate-300 hover:bg-black/[0.08] dark:hover:bg-white/[0.1]"
-                }`}
-              >
-                {st.label}
-              </button>
-            ))}
-          </div>
-        </div>
         </div>
 
         {/* FEED POSTS LIST */}
@@ -480,16 +426,16 @@ export default function SuperAppHome({
                 <div
                   key={post.id}
                   data-mading-post-id={post.id}
-                  className="p-4 sm:p-5 border-b border-black/[0.06] dark:border-white/[0.08] last:border-b-0 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors relative group"
+                  className="p-3 sm:p-4 border-b border-black/[0.06] dark:border-white/[0.08] last:border-b-0 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors relative group"
                 >
                   {/* Top Header */}
-                  <div className="flex items-center gap-2.5 mb-1.5">
-                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg ${isInfo ? "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300" : "bg-slate-100 text-slate-700 dark:bg-white/[0.06] dark:text-slate-300"}`}>
-                    {isInfo ? <Icon.Megaphone className="h-4 w-4" /> : <Icon.User className="h-4 w-4" />}
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm ${isInfo ? "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300" : "bg-slate-100 text-slate-700 dark:bg-white/[0.06] dark:text-slate-300"}`}>
+                    {isInfo ? <Icon.Megaphone className="h-3.5 w-3.5" /> : <Icon.User className="h-3.5 w-3.5" />}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <p className="truncate text-[15px] font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">
+                        <p className="truncate text-[13px] font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">
                           {post.sender_name || "Anonim"}
                         </p>
                         <span className="rounded-md bg-black/[0.04] px-1.5 py-0.5 text-[10px] font-semibold text-gray-600 dark:bg-white/[0.08] dark:text-gray-400">
@@ -499,7 +445,7 @@ export default function SuperAppHome({
                           {isInfo ? "Info Kampus" : "Menfess"}
                         </span>
                       </div>
-                      <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
                         {waktuLalu(post.created_at)}
                       </p>
                     </div>
@@ -507,13 +453,13 @@ export default function SuperAppHome({
 
                   {/* Title (If Info) */}
                   {post.title && (
-                    <h4 className="mt-2 mb-1 text-[15px] font-bold text-[#1d1d1f] dark:text-[#f5f5f7] leading-snug">
+                    <h4 className="mt-1.5 mb-0.5 text-[14px] font-bold text-[#1d1d1f] dark:text-[#f5f5f7] leading-snug">
                       {post.title}
                     </h4>
                   )}
 
                   {/* Content Body */}
-                  <p className="text-[15px] sm:text-base leading-[1.6] text-[#1d1d1f] dark:text-gray-200 whitespace-pre-wrap mt-1">
+                  <p className="text-[13px] leading-[1.5] text-[#1d1d1f] dark:text-gray-200 whitespace-pre-wrap mt-0.5">
                     {post.content}
                   </p>
 

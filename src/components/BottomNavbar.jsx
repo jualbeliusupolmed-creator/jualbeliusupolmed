@@ -73,14 +73,14 @@ function ItemNav({ n, pathname }) {
       >
         <IconComp
           className={cn(
-            "h-5 w-5 md:h-4.5 md:w-4.5 transition-transform duration-200",
+            "h-[18px] w-[18px] transition-transform duration-200",
             isActive ? "scale-105 stroke-[2.4px]" : "scale-100 stroke-[1.8px]"
           )}
         />
       </div>
       <span
         className={cn(
-          "text-[10px] md:text-[9px] transition-all duration-200 truncate max-w-full tracking-tight",
+          "text-[9px] transition-all duration-200 truncate max-w-full tracking-tight",
           isActive ? "font-bold" : "font-semibold"
         )}
       >
@@ -149,14 +149,14 @@ function BottomNavbarInner() {
             ? "translate-y-[160%] opacity-0 pointer-events-none md:translate-y-0 md:opacity-100 md:pointer-events-auto"
             : "translate-y-0 opacity-100",
           isChatRoom
-            ? "bottom-0 w-full max-w-2xl bg-white/90 dark:bg-[#000000]/90 backdrop-blur-2xl border-t border-black/[0.06] dark:border-white/[0.08] pb-[env(safe-area-inset-bottom)] shadow-none"
-            : "bottom-[max(0.75rem,env(safe-area-inset-bottom))] w-[calc(100%-2rem)] max-w-[650px] rounded-[28px] border border-black/[0.06] bg-white/90 shadow-[0_14px_38px_rgba(15,23,42,0.16)] backdrop-blur-2xl dark:border-white/[0.1] dark:bg-[#111113]/90"
+            ? "bottom-0 w-full max-w-md bg-white/90 dark:bg-[#000000]/90 backdrop-blur-2xl border-t border-black/[0.06] dark:border-white/[0.08] pb-[env(safe-area-inset-bottom)] shadow-none"
+            : "bottom-[max(0.75rem,env(safe-area-inset-bottom))] w-[calc(100%-2rem)] max-w-[380px] rounded-[22px] border border-black/[0.06] bg-white/90 shadow-[0_14px_38px_rgba(15,23,42,0.16)] backdrop-blur-2xl dark:border-white/[0.1] dark:bg-[#111113]/90"
         )}
       >
         <div
           className={cn(
             "flex items-center justify-around px-2",
-            isChatRoom ? "h-12 md:h-10" : "h-16 md:h-14 md:px-4 md:gap-2"
+            isChatRoom ? "h-12 md:h-10" : "h-[56px] md:h-12 md:px-4 md:gap-2"
           )}
         >
           {navKiri.map((n) => (
@@ -174,13 +174,13 @@ function BottomNavbarInner() {
             aria-label="Buat postingan atau iklan baru"
             className={cn(
               "flex flex-col items-center justify-center transition-all duration-200 active:scale-[0.9] touch-manipulation",
-              isChatRoom ? "w-12" : "w-14 xs:w-16 md:w-16 -mt-5 md:-mt-4"
+              isChatRoom ? "w-10" : "w-12 xs:w-14 -mt-5"
             )}
           >
             <span
               className={cn(
-                "flex items-center justify-center rounded-full bg-primary text-white shadow-[0_8px_20px_rgba(83,43,152,0.4)] ring-4 ring-white/90 dark:ring-[#111113]/90",
-                isChatRoom ? "h-8 w-8" : "h-12 w-12 md:h-11 md:w-11"
+                "flex items-center justify-center rounded-[16px] bg-[#0071e3] text-white shadow-[0_8px_20px_rgba(0,113,227,0.4)] ring-4 ring-white/90 dark:ring-[#111113]/90",
+                isChatRoom ? "h-8 w-8 rounded-full" : "h-11 w-11 md:h-10 md:w-10"
               )}
             >
               <svg
@@ -189,13 +189,13 @@ function BottomNavbarInner() {
                 stroke="currentColor"
                 strokeWidth="2.6"
                 strokeLinecap="round"
-                className={isChatRoom ? "h-4 w-4" : "h-5 w-5"}
+                className={isChatRoom ? "h-4 w-4" : "h-[18px] w-[18px]"}
               >
                 <path d="M12 5v14M5 12h14" />
               </svg>
             </span>
             {!isChatRoom && (
-              <span className="mt-0.5 text-[10px] md:text-[9px] font-bold tracking-tight text-primary dark:text-violet-400">
+              <span className="mt-0.5 text-[9px] font-bold tracking-tight text-[#0071e3] dark:text-[#0071e3]">
                 Buat
               </span>
             )}
