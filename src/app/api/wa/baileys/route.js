@@ -2445,9 +2445,16 @@ export async function POST(req) {
       }
 
       const isFastPathCmd = isFastPathCommand(msgLower);
+      const isAiTrigger = (message || "").trim().startsWith(".");
 
-      if (!isFastPathCmd && (message || imageBuffers.length > 0)) {
+      // Abaikan teks biasa yang bukan command, bukan awalan titik, dan tidak punya gambar
+      if (!isFastPathCmd && !isAiTrigger && imageBuffers.length === 0) {
+        return NextResponse.json({ ok: true, ignored: true, reason: "needs_dot_for_chat" });
+      }
+
+      if (!isFastPathCmd && (isAiTrigger || imageBuffers.length > 0)) {
         try {
+          const rawMessageForAi = isAiTrigger ? message.trim().slice(1).trim() : message;
           const aiConfig = settings.ai_config || {};
           const persistentHistory = await loadConversationMemory(supa, normalizedWa, {
             before: memoryBefore,
@@ -2461,7 +2468,7 @@ export async function POST(req) {
             maxEntries: 10,
           });
 
-          const aiRes = await parseIntentWithAI(message, aiConfig, aiHistory, imageBuffers, mimeTypes);
+          const aiRes = await parseIntentWithAI(rawMessageForAi, aiConfig, aiHistory, imageBuffers, mimeTypes);
           const confidence = Number(aiRes.confidence) || 0;
           // AI boleh memahami bahasa, tetapi tidak boleh mengeksekusi aksi jika ia
           // sendiri ragu. Minta klarifikasi dan biarkan state bisnis tetap utuh.
