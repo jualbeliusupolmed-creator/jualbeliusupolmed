@@ -84,10 +84,13 @@ async function wasSentRecently(supa, wa, text, minutes = 10) {
 // Cek apakah nomor WA termasuk admin
 // Baca dari ADMIN_WA (bisa koma) + SUPER_ADMIN_WA sebagai var terpisah
 function isAdminWa(wa) {
+  return getAdminNumbers().includes((wa || "").replace(/\D/g, "").replace(/^0/, "62"));
+}
+
+function getAdminNumbers() {
   const to62 = n => (n || "").replace(/\D/g, "").replace(/^0/, "62");
   const raw = [process.env.ADMIN_WA || "", process.env.SUPER_ADMIN_WA || ""].join(",");
-  const admins = raw.split(",").map(a => to62(a.trim())).filter(Boolean);
-  return admins.length > 0 && admins.includes(to62(wa));
+  return [...new Set(raw.split(",").map(a => to62(a.trim())).filter(Boolean))];
 }
 
 function getQrisUrl() {
@@ -593,8 +596,7 @@ export async function POST(req) {
             await sendWa(senderJid, confirmMsg);
 
             const to62 = n => (n || "").replace(/\D/g, "").replace(/^0/, "62");
-            const rawAdmins = [process.env.ADMIN_WA || "", process.env.SUPER_ADMIN_WA || ""].join(",");
-            const adminNumbers = [...new Set(rawAdmins.split(",").map(a => to62(a.trim())).filter(Boolean))];
+            const adminNumbers = getAdminNumbers();
             
             for (const l of updatedListings) {
               const productSlug = buildSlug(l.title, l.id);
@@ -660,8 +662,7 @@ export async function POST(req) {
 
             // Send notification to superadmins
             const to62 = n => (n || "").replace(/\D/g, "").replace(/^0/, "62");
-            const rawAdmins = [process.env.ADMIN_WA || "", process.env.SUPER_ADMIN_WA || ""].join(",");
-            const adminNumbers = [...new Set(rawAdmins.split(",").map(a => to62(a.trim())).filter(Boolean))];
+            const adminNumbers = getAdminNumbers();
             
             for (const adminNum of adminNumbers) {
               await sendWa(adminNum, `📢 *Iklan Baru Tayang*\n\n${shareMsg}`).catch(() => {});
@@ -1055,7 +1056,7 @@ export async function POST(req) {
           const hapusListing = hapusListings[0];
           await supa.from("listings").update({ status: "deletion_pending" }).eq("id", hapusListing.id);
 
-          const adminNumbers = (process.env.ADMIN_WA || "").split(",").map(a => a.trim()).filter(Boolean);
+          const adminNumbers = getAdminNumbers();
           if (adminNumbers.length > 0) {
             const adminMsg =
               `🗑️ *Permintaan Hapus Iklan*\n\n` +
@@ -1818,7 +1819,7 @@ export async function POST(req) {
         await supa.from("listings").update({ fee_offer: tbNominal, fee_offer_status: "pending" }).eq("id", tbListing.id);
 
         // Notif ke semua admin
-        const adminNumbers = [process.env.ADMIN_WA, process.env.SUPER_ADMIN_WA].filter(Boolean);
+        const adminNumbers = getAdminNumbers();
         const { data: tbPayment } = await supa.from("payments").select("amount").eq("listing_id", tbListing.id).eq("status", "pending").maybeSingle();
         const currentFee = tbPayment?.amount || 0;
         const tbAdminMsg =
@@ -1854,6 +1855,7 @@ export async function POST(req) {
         textMsg.startsWith("BROADCAST SETMODE ") ||
         textMsg.startsWith("PAUSE ") ||
         textMsg.startsWith("RESUME ") ||
+        textMsg.startsWith("*") ||
         (textMsg.startsWith("BROADCAST ") && !textMsg.startsWith("BROADCAST SETMODE"))
       )) {
         const adminRes = await handleAdminCmd({ textMsg, message, senderJid, normalizedWa, supa, sendWa, getSettings, isAdminWa });
@@ -2995,8 +2997,7 @@ export async function POST(req) {
         
         // Notify superadmins & post to group
         const to62 = n => (n || "").replace(/\D/g, "").replace(/^0/, "62");
-        const rawAdmins = [process.env.ADMIN_WA || "", process.env.SUPER_ADMIN_WA || ""].join(",");
-        const adminNumbers = [...new Set(rawAdmins.split(",").map(a => to62(a.trim())).filter(Boolean))];
+        const adminNumbers = getAdminNumbers();
         
         for (const l of createdListings) {
           const productSlug = buildSlug(l.title, l.id);
