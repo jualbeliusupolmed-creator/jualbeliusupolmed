@@ -13,6 +13,23 @@ export async function handleAdminCmd(ctx) {
 
   if (!isAdminWa(normalizedWa)) return null;
 
+  // ── SUPERADMIN MEMORY (*) ──────────────────────────────────────────────────
+  if (textMsg.startsWith("*")) {
+    const newMemory = message.trim().substring(1).trim();
+    if (!newMemory) {
+      await sendWa(senderJid, `❌ Format salah. Ketik bintang (*) lalu memori baru untuk bot.\nContoh: *Tolong sapa dengan ramah`);
+      return NextResponse.json({ ok: true, state: "superadmin_memory_error" });
+    }
+    
+    const settings = await getSettings();
+    const currentAiConfig = settings.ai_config || {};
+    const updatedAiConfig = { ...currentAiConfig, memory: newMemory };
+    await supa.from("settings").update({ value: updatedAiConfig }).eq("key", "ai_config");
+    
+    await sendWa(senderJid, `🧠 *Instruksi Sistem AI Diperbarui*\n\n"${newMemory}"\n\nUntuk mengujinya, silakan chat bot dengan awalan titik (contoh: .halo min).`);
+    return NextResponse.json({ ok: true, state: "superadmin_memory_updated" });
+  }
+
   // ── STATS ──────────────────────────────────────────────────────────────────
   if (textMsg === "STATS") {
     const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
