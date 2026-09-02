@@ -26,10 +26,18 @@ function extractJsonFromResponse(text) {
 
 // Build array of models to try based on config
 function buildModelsToTry(aiConfig = {}) {
-  const mode = aiConfig.provider_mode || "hybrid_gemini_first";
-  const geminiModel = aiConfig.gemini_model || aiConfig.model || "gemini-2.5-flash";
+  // Force gemini first due to OpenAI 429 (out of credits causing 10s delay)
+  const mode = "hybrid_gemini_first";
+  
+  // Sanitasi model lama dari database (karena API Gemini meretire model 2.0/2.5)
+  let rawGemini = aiConfig.gemini_model || aiConfig.model || "gemini-3.6-flash";
+  if (rawGemini.includes("gemini-1.") || rawGemini.includes("gemini-2.")) {
+    rawGemini = "gemini-3.6-flash";
+  }
+  
+  const geminiModel = rawGemini;
   const openaiModel = aiConfig.openai_model || "gpt-4o-mini";
-  const geminiFallback = "gemini-2.5-flash-lite";
+  const geminiFallback = "gemini-3.6-flash-lite";
 
   if (mode === "gemini_only") return [{ provider: "gemini", model: geminiModel }, { provider: "gemini", model: geminiFallback }];
   if (mode === "openai_only") return [{ provider: "openai", model: openaiModel }, { provider: "openai", model: "gpt-4o" }];
