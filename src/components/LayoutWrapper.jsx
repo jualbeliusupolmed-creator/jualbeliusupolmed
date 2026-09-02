@@ -100,7 +100,10 @@ export default function LayoutWrapper({ children }) {
     // memanggilnya sendiri setiap kali alamat berpindah, dan hasilnya tidak
     // pernah sampai ke komponen lain.
     <SesiProvider>
-      <div className="mx-auto w-full max-w-md min-h-screen relative bg-[#f5f5f7] dark:bg-[#000000] shadow-2xl overflow-x-hidden flex flex-col">
+      <div className={cn(
+        "w-full min-h-screen relative bg-[#f5f5f7] dark:bg-[#000000] flex flex-col",
+        !isAdmin && "max-w-md mx-auto shadow-2xl overflow-x-hidden"
+      )}>
         {!isImmersive && <Navbar config={config} />}
         <main className={cn(
           "flex-1 flex flex-col",
