@@ -211,40 +211,41 @@ export default function MadingDetailClient({ post: initialPost }) {
       {/* MAIN CONTAINER */}
       <div className="max-w-2xl mx-auto px-4 pt-4 sm:pt-6 space-y-4">
         {/* POST CARD */}
-        <article className="bg-white dark:bg-[#151518] rounded-3xl border border-black/[0.06] dark:border-white/[0.08] p-5 sm:p-6 shadow-xs">
+        <article className="bg-white dark:bg-[#151518] rounded-[24px] border border-slate-100 dark:border-white/[0.05] p-6 shadow-sm transition-all">
           {/* Header: Sender & Badges */}
-          <div className="flex items-center gap-3 mb-3.5">
+          <div className="flex items-start gap-3.5 mb-4">
             <div
-              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-xl font-black shadow-inner ${
+              className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-2xl font-bold ${
                 post.type === "info"
-                  ? "bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300"
+                  ? "bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400"
                   : post.faculty === "POLMED"
-                  ? "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300"
-                  : "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300"
+                  ? "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400"
+                  : "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400"
               }`}
             >
-              {post.type === "info" ? <Icon.Megaphone className="h-4 w-4" /> : post.is_anon ? <Icon.User className="h-4 w-4" /> : post.sender_name?.charAt(0) || "A"}
+              {post.type === "info" ? <Icon.Megaphone className="h-6 w-6" /> : post.is_anon ? <Icon.User className="h-6 w-6" /> : post.sender_name?.charAt(0) || "A"}
             </div>
 
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-base font-black text-[#1d1d1f] dark:text-white">
+            <div className="min-w-0 flex-1 pt-1">
+              <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                <span className="text-[17px] font-bold text-slate-900 dark:text-white">
                   {post.sender_name}
                 </span>
-                <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[10px] font-bold text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700">
+                <span className="rounded-full bg-slate-100/80 dark:bg-slate-800 px-3 py-0.5 text-[12px] font-medium text-slate-600 dark:text-slate-400">
                   {post.faculty}
                 </span>
                 <span
-                  className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                  className={`rounded-full px-3 py-0.5 text-[12px] font-medium flex items-center gap-1.5 ${
                     post.type === "info"
-                      ? "bg-violet-500/10 text-violet-600 dark:text-violet-400"
-                      : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                      ? "bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400 border border-violet-100 dark:border-violet-900/30"
+                      : "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30"
                   }`}
                 >
+                  {post.type === "info" ? <Icon.Megaphone className="h-3.5 w-3.5" /> : <Icon.Mail className="h-3.5 w-3.5" />}
                   {post.type === "info" ? "Info Kampus" : "Menfess"}
                 </span>
               </div>
-              <p className="text-[11px] text-[#86868b] dark:text-slate-400 mt-0.5">
+              <p className="text-sm text-slate-400 dark:text-slate-500" suppressHydrationWarning>
                 {timeAgo(post.created_at)}
               </p>
             </div>
@@ -252,19 +253,19 @@ export default function MadingDetailClient({ post: initialPost }) {
 
           {/* Title if info */}
           {post.title && (
-            <h1 className="text-lg sm:text-xl font-extrabold text-[#1d1d1f] dark:text-white mb-2 leading-snug">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-3 leading-snug">
               {post.title}
             </h1>
           )}
 
           {/* Post Content */}
-          <div className="text-[14px] sm:text-[15px] leading-relaxed text-[#1d1d1f] dark:text-slate-200 whitespace-pre-wrap break-words font-medium py-1">
+          <div className="text-[16px] leading-relaxed text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words py-1">
             {post.content}
           </div>
 
           {/* Attached Photo */}
           {post.image_url && (
-            <div className="mt-3.5 overflow-hidden rounded-2xl border border-black/[0.04] dark:border-white/[0.06] bg-slate-50 dark:bg-slate-900/50">
+            <div className="mt-4 overflow-hidden rounded-2xl border border-black/[0.04] dark:border-white/[0.06] bg-slate-50 dark:bg-slate-900/50">
               <button
                 type="button"
                 onClick={() => setZoomImage(post.image_url)}
@@ -274,55 +275,55 @@ export default function MadingDetailClient({ post: initialPost }) {
                 <img
                   src={post.image_url}
                   alt={post.title || "Foto Menfess"}
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.01]"
                 />
               </button>
             </div>
           )}
 
           {/* Action Toolbar */}
-          <div className="mt-5 pt-3.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1 sm:gap-2">
+          <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between gap-2 text-slate-500 dark:text-slate-400">
+            <div className="flex items-center gap-5 sm:gap-6">
               <button
                 onClick={handleLike}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 ${
+                className={`flex items-center gap-1.5 transition-colors active:scale-95 ${
                   isLiked
-                    ? "bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 shadow-xs"
-                    : "hover:bg-slate-100 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400"
+                    ? "text-rose-500"
+                    : "hover:text-slate-700 dark:hover:text-slate-300"
                 }`}
               >
-                <Icon.Heart className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`} />
-                <span>{post.likes_count || 0}</span>
+                <Icon.Heart className={`h-5 w-5 ${isLiked ? "fill-current scale-110" : ""} transition-transform`} />
+                <span className="text-[14px] sm:text-[15px]">{post.likes_count || 0}</span>
               </button>
 
               <button
                 onClick={() => setUnduhPost(post)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:text-primary transition-all active:scale-95"
+                className="flex items-center gap-1.5 hover:text-slate-700 dark:hover:text-slate-300 transition-colors active:scale-95"
               >
-                <Icon.Download className="h-4 w-4" />
-                <span>Unduh Gambar</span>
+                <Icon.Download className="h-5 w-5" />
+                <span className="text-[14px] sm:text-[15px] hidden sm:inline">Unduh Gambar</span>
               </button>
 
               <button
                 onClick={handleShare}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:text-emerald-600 transition-all active:scale-95"
+                className="flex items-center gap-1.5 hover:text-slate-700 dark:hover:text-slate-300 transition-colors active:scale-95"
               >
-                <Icon.Share className="h-4 w-4" />
-                <span>Bagikan</span>
+                <Icon.Share className="h-5 w-5" />
+                <span className="text-[14px] sm:text-[15px] hidden sm:inline">Bagikan</span>
               </button>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-4 sm:gap-5">
               <button
                 onClick={handleReport}
                 title="Laporkan"
-                className="p-1.5 rounded-full text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors"
+                className="hover:text-amber-500 transition-colors"
               >
-                <Icon.Flag className="h-4 w-4" />
+                <Icon.Flag className="h-5 w-5" />
               </button>
-              <span className="flex items-center gap-1 text-[11px] font-semibold text-slate-400 dark:text-slate-500">
-                <Icon.Eye className="h-3.5 w-3.5" />
-                <span>{post.views_count || 0}</span>
+              <span className="flex items-center gap-1.5">
+                <Icon.Eye className="h-5 w-5" />
+                <span className="text-[14px] sm:text-[15px]">{post.views_count || 0}</span>
               </span>
             </div>
           </div>

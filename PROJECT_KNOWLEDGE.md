@@ -58,9 +58,9 @@ Berjalan dengan PostgreSQL, memiliki tabel-tabel berikut:
 
 ### C. Alur Pengiriman WhatsApp
 1. **Trigger**: Ada data baru di `wa_outbox` (Supabase).
-2. **Proses Bot (VPS)**: Script `index.js` di VPS melakukan *polling* atau mendengar *realtime webhook*.
-3. **Logika**: Bot membaca nomor WA dan pesan, mengirimnya melalui pustaka Baileys.
-4. **Data Berubah**: Status di `wa_outbox` berubah menjadi `terkirim` atau `gagal`.
+2. **Proses Bot (VPS)**: `OutboxWorker` di VPS mem-polling tabel `wa_outbox` Supabase secara otomatis setiap 15 detik (menggunakan kredensial aman dari `/root/.supabase_env`).
+3. **Logika**: Bot membaca nomor WA dan pesan antrean, mengirimnya melalui socket Baileys.
+4. **Data Berubah**: Status di `wa_outbox` otomatis diperbarui menjadi `terkirim` (lengkap dengan timestamp `terkirim_at`). Sesi Baileys tetap stabil diprioritaskan dari filesystem lokal VPS.
 
 
 ### D. Alur Chat (Anonim & Marketplace) — Realtime
@@ -98,7 +98,7 @@ Berjalan dengan PostgreSQL, memiliki tabel-tabel berikut:
 
 - [ ] **Kritis**: Script WA Bot di VPS (`index.js`) berukuran sangat membengkak (~215KB). Ini sangat berisiko (*Spaghetti code*) jika ada logic yang rusak, akan sulit ditelusuri. **Saran perbaikan**: Pecah `index.js` menjadi berbasis *controller/service* per modul (misal: `handler_transaksi.js`, `handler_admin.js`).
 - [x] **Menengah (sebagian)**: Login Admin tetap berbasis `ADMIN_PASSWORD` di `.env`, tapi kini diperkuat: (a) validasi panjang ≥16 karakter, (b) audit log login/logout ke `admin_logs`, (c) `SESSION_SECRET` terpisah dari `ADMIN_PASSWORD`. Migrasi ke SSO Supabase tetap backlog jangka panjang.
-- [ ] **Peningkatan**: Desain panel admin sudah dibersihkan (rute redundan dihapus), namun perlu konsistensi desain (Dark mode / Light mode) yang merata di semua komponen UI.
+- [x] **Peningkatan**: Desain panel admin sudah dibersihkan (rute redundan dihapus) dan konsistensi desain Dark mode / Light mode telah distandardisasi menggunakan token CSS `google.css` (`g-card`, `g-btn`, `g-badge`, `var(--g-line)`).
 
 ---
 
@@ -346,7 +346,7 @@ cuma server.
     - **Panel Moderasi Admin (`/admin/teman`):** Menampilkan metrik real-time profil aktif, total swipe, mutual match, serta kontrol aktifkan/nonaktifkan dan hapus akun.
 
 ### 📌 Roadmap & Backlog Pengembangan Lanjutan (Cari Teman & Swap)
-1. **Notifikasi WhatsApp Otomatis saat Match:** Begitu terjadi mutual like (match), Bot WhatsApp (Fonnte/Baileys) otomatis mengirim pesan WA ke kedua belah pihak dengan link sapaan instan.
+1. **[SELESAI] Notifikasi WhatsApp Otomatis saat Match:** Begitu terjadi mutual like (match), sistem (`src/app/api/teman/swipe/route.js`) otomatis mengirim pesan WA ke kedua belah pihak dengan link sapaan instan (`/chat?room=<id>`) serta fallback otomatis ke antrean `wa_outbox`.
 2. **Centang Biru Verifikasi Mahasiswa (Verified Student Badge):** Verifikasi identitas mahasiswa USU/Polmed via upload KTM atau email institusi (`@students.usu.ac.id` / `@polmed.ac.id`).
 3. **Icebreaker Prompts Khas Kampus:** Kartu pertanyaan interaktif ala Hinge (contoh: *Tempat ngopi favorit sekitar Mansyur/Padang Bulan*, *Red flag anak kampus*, *Lagu Spotify favorit*).
 4. **Modul Tukar Jadwal Kuliah / Praktikum (KRS & Shift Swap Matrix):** Fitur auto-matching jadwal bentrok matkul/kelas saat awal semester.

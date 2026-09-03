@@ -645,43 +645,44 @@ export default function MadingClient({ initialPosts = [] }) {
                   <div
                     key={`post-${post.id}`}
                     data-mading-post-id={post.id}
-                    className="group relative bg-white dark:bg-[#151518] rounded-3xl border border-black/[0.06] dark:border-white/[0.08] p-4 sm:p-5 shadow-xs transition-all hover:border-black/[0.12] dark:hover:border-white/[0.15]"
+                    className="group relative bg-white dark:bg-[#151518] rounded-[24px] border border-slate-100 dark:border-white/[0.05] p-5 transition-all"
                   >
                     {/* Header: Sender & Badges */}
-                    <div className="flex items-center gap-3 mb-2.5">
+                    <div className="flex items-start gap-3.5 mb-3">
                       <div
-                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-lg font-black shadow-inner ${
+                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-xl font-bold ${
                           post.type === "info"
-                            ? "bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300"
+                            ? "bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400"
                             : post.faculty === "POLMED"
-                            ? "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300"
-                            : "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300"
+                            ? "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400"
+                            : "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400"
                         }`}
                       >
-                        {post.type === "info" ? <Icon.Megaphone className="h-4 w-4" /> : post.is_anon ? <Icon.User className="h-4 w-4" /> : post.sender_name?.charAt(0) || "A"}
+                        {post.type === "info" ? <Icon.Megaphone className="h-5 w-5" /> : post.is_anon ? <Icon.User className="h-5 w-5" /> : post.sender_name?.charAt(0) || "A"}
                       </div>
 
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="truncate text-sm font-black text-[#1d1d1f] dark:text-white">
+                      <div className="min-w-0 flex-1 pt-0.5">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className="truncate text-[15px] font-bold text-slate-900 dark:text-white">
                             {post.sender_name}
                           </span>
-                          <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[10px] font-bold text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700">
+                          <span className="rounded-full bg-slate-100/80 dark:bg-slate-800 px-2.5 py-0.5 text-[11px] font-medium text-slate-600 dark:text-slate-400">
                             {post.faculty}
                           </span>
-                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                          <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium flex items-center gap-1 ${
                             post.type === "info"
-                              ? "bg-violet-50 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300 border border-violet-200 dark:border-violet-800"
-                              : "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                              ? "bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400 border border-violet-100 dark:border-violet-900/30"
+                              : "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30"
                           }`}>
-                            {post.type === "info" ? <><Icon.Megaphone className="h-3 w-3" /> Info Kampus</> : <><Icon.Mail className="h-3 w-3" /> Menfess</>}
+                            {post.type === "info" ? <Icon.Megaphone className="h-3 w-3" /> : <Icon.Mail className="h-3 w-3" />}
+                            {post.type === "info" ? "Info Kampus" : "Menfess"}
                           </span>
                         </div>
                         <Link
                           href={`/mading/${post.id}`}
-                          className="inline-block text-[11px] font-medium text-slate-400 dark:text-slate-500 hover:text-primary transition-colors mt-0.5"
+                          className="inline-flex items-center gap-0.5 text-xs text-slate-400 dark:text-slate-500 hover:text-primary transition-colors"
                         >
-                          {timeAgo(post.created_at)} ↗
+                          <span suppressHydrationWarning>{timeAgo(post.created_at)}</span> <span className="text-[10px]">↗</span>
                         </Link>
                       </div>
                     </div>
@@ -689,14 +690,14 @@ export default function MadingClient({ initialPosts = [] }) {
                     {/* Title (If info) */}
                     {post.title && (
                       <Link href={`/mading/${post.id}`}>
-                        <h3 className="mb-1.5 text-sm sm:text-base font-black leading-snug text-[#1d1d1f] dark:text-white hover:text-primary transition-colors">
+                        <h3 className="mb-2 text-base font-bold leading-snug text-slate-900 dark:text-white hover:text-primary transition-colors">
                           {post.title}
                         </h3>
                       </Link>
                     )}
 
                     {/* Content */}
-                    <p className="whitespace-pre-wrap text-sm sm:text-[15px] leading-relaxed text-slate-800 dark:text-slate-200 font-normal">
+                    <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-slate-700 dark:text-slate-300">
                       {post.content}
                     </p>
 
@@ -755,70 +756,70 @@ export default function MadingClient({ initialPosts = [] }) {
                       </button>
                     )}
 
-                    {/* MINIMALIST ACTION TOOLBAR */}
-                    <div className="mt-3.5 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                    {/* ACTION TOOLBAR */}
+                    <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
                       {/* Left: Interactive buttons */}
-                      <div className="flex items-center gap-1 sm:gap-2">
+                      <div className="flex items-center gap-4 sm:gap-5">
                         {/* Like */}
                         <button
                           onClick={() => handleLike(post.id)}
-                          className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-all active:scale-90 ${
+                          className={`flex items-center gap-1.5 transition-colors active:scale-95 ${
                             isLiked
-                              ? "bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400"
-                              : "hover:bg-slate-100 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400"
+                              ? "text-rose-500"
+                              : "hover:text-slate-700 dark:hover:text-slate-300"
                           }`}
                         >
-                          <Icon.Heart className={`h-3.5 w-3.5 ${isLiked ? "fill-rose-500 text-rose-500 scale-110" : ""} transition-transform`} />
-                          <span>{post.likes_count || 0}</span>
+                          <Icon.Heart className={`h-4 w-4 ${isLiked ? "fill-rose-500 scale-110" : ""} transition-transform`} />
+                          <span className="text-[13px]">{post.likes_count || 0}</span>
                         </button>
 
                         {/* Komentar / Thread */}
                         <button
                           onClick={() => toggleComments(post.id)}
-                          className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-all active:scale-95 ${
+                          className={`flex items-center gap-1.5 transition-colors active:scale-95 ${
                             activeCommentsPostId === post.id
-                              ? "bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400"
-                              : "hover:bg-slate-100 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400"
+                              ? "text-blue-500"
+                              : "hover:text-slate-700 dark:hover:text-slate-300"
                           }`}
                         >
-                          <Icon.MessageCircle className="h-3.5 w-3.5" />
-                          <span>{post.comments_count || 0}</span>
+                          <Icon.MessageCircle className="h-4 w-4" />
+                          <span className="text-[13px]">{post.comments_count || 0}</span>
                         </button>
 
                         {/* Unduh Gambar Menfess */}
                         <button
                           onClick={() => setUnduhPost(post)}
                           title="Unduh gambar Instagram Menfess"
-                          className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-emerald-400 transition-all active:scale-95"
+                          className="flex items-center gap-1.5 hover:text-slate-700 dark:hover:text-slate-300 transition-colors active:scale-95"
                         >
-                          <Icon.Download className="h-3.5 w-3.5" />
-                          <span className="hidden sm:inline">Unduh</span>
+                          <Icon.Download className="h-4 w-4" />
+                          <span className="text-[13px] hidden sm:inline">Unduh</span>
                         </button>
 
                         {/* Bagikan */}
                         <button
                           onClick={() => handleShare(post)}
                           title="Bagikan ke WhatsApp"
-                          className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all active:scale-95"
+                          className="flex items-center gap-1.5 hover:text-slate-700 dark:hover:text-slate-300 transition-colors active:scale-95"
                         >
-                          <Icon.Share className="h-3.5 w-3.5" />
-                          <span className="hidden sm:inline">Bagikan</span>
+                          <Icon.Share className="h-4 w-4" />
+                          <span className="text-[13px] hidden sm:inline">Bagikan</span>
                         </button>
                       </div>
 
                       {/* Right: Info & Report */}
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-4">
                         <button
                           onClick={() => handleReport(post.id)}
                           title="Laporkan postingan ini"
-                          className="p-1 rounded-full text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors"
+                          className="hover:text-amber-500 transition-colors"
                         >
-                          <Icon.Flag className="h-3.5 w-3.5" />
+                          <Icon.Flag className="h-4 w-4" />
                         </button>
 
-                        <span className="flex items-center gap-1 text-[11px] font-semibold text-slate-400 dark:text-slate-500">
-                          <Icon.Eye className="h-3 w-3" />
-                          <span>{post.views_count || 0}</span>
+                        <span className="flex items-center gap-1.5">
+                          <Icon.Eye className="h-4 w-4" />
+                          <span className="text-[13px]">{post.views_count || 0}</span>
                         </span>
                       </div>
                     </div>

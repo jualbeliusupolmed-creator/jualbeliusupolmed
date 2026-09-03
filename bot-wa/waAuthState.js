@@ -255,6 +255,35 @@ async function useFileAuthState(folder, opts = {}) {
         }
     }
 
+    // Pembersihan berkala pre-key usang (>3 hari) agar tidak membengkak hingga puluhan ribu file
+    async function pruneOldPreKeys(maxAgeDays = 3) {
+        try {
+            const files = await fsp.readdir(folder);
+            const now = Date.now();
+            const maxAgeMs = maxAgeDays * 24 * 3600 * 1000;
+            let cleaned = 0;
+            for (const file of files) {
+                if (file.startsWith('pre-key-') && file.endsWith('.json')) {
+                    const fullPath = path.join(folder, file);
+                    const stat = await fsp.stat(fullPath).catch(() => null);
+                    if (stat && (now - stat.mtimeMs > maxAgeMs)) {
+                        await fsp.unlink(fullPath).catch(() => {});
+                        cache.delete(file);
+                        cleaned++;
+                    }
+                }
+            }
+            if (cleaned > 0) {
+                console.log(`[auth] Berhasil membersihkan ${cleaned} berkas pre-key usang (> ${maxAgeDays} hari).`);
+            }
+        } catch (e) {
+            console.warn(`[auth] Gagal membersihkan pre-key usang: ${e.message}`);
+        }
+    }
+    // Jadwalkan pembersihan pre-key saat startup dan tiap 24 jam
+    setTimeout(() => pruneOldPreKeys(3).catch(() => {}), 15000).unref();
+    setInterval(() => pruneOldPreKeys(3).catch(() => {}), 24 * 3600 * 1000).unref();
+
     return {
         state: {
             creds,

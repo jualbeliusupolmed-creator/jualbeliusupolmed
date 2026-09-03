@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { identitasTeman } from "@/lib/identitasTeman";
+import { sendWa } from "@/lib/fonnte";
 
 export const dynamic = "force-dynamic";
 
@@ -171,27 +172,15 @@ export async function POST(request) {
             `Sistem telah membuat ruang obrolan anonim spesial untuk kalian. Langsung sapa dia di sini:\n${roomUrl}\n\n` +
             `_Teman baru, peluang baru di kampus! _`;
 
-          await supa.from("wa_outbox").insert({
-            nomor: swiperProfile.whatsapp,
-            pesan: pesanNotif,
-            kategori: "teman_match",
-            status: "tertunda",
-            created_at: new Date().toISOString(),
-          });
-
-          // Notif untuk partner juga
-          const pesanPartner = ` *IT'S A MATCH! — Teman Kampus USU & Polmed*\n\n` +
-            `Hai kak! Profil kamu dan *${swiperProfile.display_name || "Seseorang"}* (${swiperProfile.campus} · ${swiperProfile.faculty}) saling LIKE di fitur Cari Teman!\n\n` +
-            `Yuk balas sapaannya di sini:\n${roomUrl}\n\n` +
-            `_Teman baru, peluang baru di kampus! _`;
-
-          await supa.from("wa_outbox").insert({
-            nomor: partner.whatsapp,
-            pesan: pesanPartner,
-            kategori: "teman_match",
-            status: "tertunda",
-            created_at: new Date().toISOString(),
-          });
+          // Kirim notifikasi WA langsung via sendWa (Baileys/Fonnte) dengan fallback otomatis ke wa_outbox
+          await Promise.allSettled([
+            sendWa(swiperProfile.whatsapp, pesanNotif, null, null, {
+              jenis: "teman_match",
+            }),
+            sendWa(partner.whatsapp, pesanPartner, null, null, {
+              jenis: "teman_match",
+            }),
+          ]);
         }
       } catch (notifErr) {
         console.warn("Outbox/Room creation error (non-fatal):", notifErr?.message);

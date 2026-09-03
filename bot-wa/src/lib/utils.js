@@ -12,7 +12,13 @@
  * atau apa pun yang bisa berubah saat bot berjalan, ia BUKAN milik sini.
  */
 const crypto = require('crypto');
-const { normalizeMessageContent } = require('@whiskeysockets/baileys');
+let normalizeMessageContent = (content) => content;
+try {
+    const baileys = require('@whiskeysockets/baileys');
+    if (baileys && baileys.normalizeMessageContent) {
+        normalizeMessageContent = baileys.normalizeMessageContent;
+    }
+} catch (_) {}
 
 // Baris log libsignal yang dibungkam. Bukan sekadar berisik: empat di antaranya
 // ("Closing session:" dkk) mencetak objek SessionEntry UTUH — termasuk `privKey` —
@@ -44,10 +50,9 @@ function safeStringify(a) {
     } catch (_) { return '[unserializable]'; }
 }
 
-// Karakter tak terlihat (BOM, zero-width, soft hyphen) ikut terbawa dari HP dan
-// bikin FormData/pencocokan keyword meleset. Dulu regex ini disalin di 3 tempat
-// dengan isi yang berbeda-beda — sekarang satu definisi untuk semuanya.
-const INVISIBLE_RE = /[﻿​-‍⁠­]/g;
+// Karakter tak terlihat (BOM, zero-width, soft hyphen, directional formatting)
+// ikut terbawa dari HP dan bikin FormData/pencocokan keyword meleset.
+const INVISIBLE_RE = /[\u200B-\u200D\uFEFF\u00A0\u200E\u200F\u202A-\u202E\u00AD\u2060]/g;
 
 const stripInvisible = (s) => String(s || '').replace(INVISIBLE_RE, '').trim();
 
@@ -92,7 +97,11 @@ const isAdminCall = (s) => ADMIN_CALL_WORDS.has(
 
 // Kata perintah yang sering diketik TANPA titik. Tidak mengubah perilaku gerbang —
 // murni untuk dihitung, supaya keputusan "buka kata polos atau tidak" punya angka.
-const PLAIN_COMMAND_WORDS = new Set(['jual', 'cari', 'menu', 'perpanjang', 'upgrade', 'saya', 'beli', 'pantau']);
+const PLAIN_COMMAND_WORDS = new Set([
+    'jual', 'cari', 'menu', 'perpanjang', 'upgrade', 'saya', 'beli', 'pantau',
+    'info', 'help', 'bantuan', 'list', 'produk', 'iklan', 'cek', 'status',
+    'teman', 'swap', 'mading', 'saldo', 'topup', 'qris', 'halo', 'hai', 'p', 'tes', 'test', 'reset'
+]);
 
 function plainCommandWord(text) {
     const first = String(text || '').trim().toLowerCase().split(/\s+/)[0] || '';

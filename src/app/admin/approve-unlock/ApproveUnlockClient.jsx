@@ -50,79 +50,80 @@ export default function ApproveUnlockClient({ paymentId, initialPayment, wanted 
 
   return (
     <div className="mx-auto max-w-lg">
-      <div className="card bg-white p-6 shadow-xl dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800">
-        <div className="flex items-center gap-2 pb-4 border-b border-gray-100 dark:border-slate-800">
-          <Link href="/admin/overview" className="text-gray-400 hover:text-gray-650 p-1 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800">
+      <div className="g-card p-6 shadow-xl">
+        <div className="flex items-center gap-3 pb-4 border-b border-[var(--g-line)]">
+          <Link href="/admin/overview" className="g-icon-btn text-base" title="Kembali">
             ←
           </Link>
-          <h1 className="text-base font-extrabold text-gray-900 dark:text-white">
-            Persetujuan QRIS Manual (Unlock Kontak)
-          </h1>
+          <div>
+            <h1 className="g-card-title text-base">
+              Persetujuan QRIS Manual (Unlock Kontak)
+            </h1>
+            <p className="g-card-desc">
+              Verifikasi dan rilis nomor kontak pembeli ke pemohon
+            </p>
+          </div>
         </div>
 
         <div className="mt-6 space-y-4 text-xs">
           {/* Status Badge */}
-          <div className="flex justify-between items-center py-2.5 px-3 bg-gray-50 dark:bg-slate-800/50 rounded-xl">
-            <span className="font-semibold text-gray-500 dark:text-slate-400">Status Transaksi</span>
-            <span className={`badge px-2.5 py-1 text-[10px] font-bold uppercase rounded-full ${
-              payment.status === "paid" 
-                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400" 
-                : "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400"
-            }`}>
+          <div className="flex justify-between items-center py-2.5 px-3 bg-[var(--g-surface-2)] rounded-xl border border-[var(--g-line)]">
+            <span className="font-semibold text-[var(--g-ink-soft)]">Status Transaksi</span>
+            <span className={`g-badge ${payment.status === "paid" ? "is-ok" : "is-warn"}`}>
               {payment.status === "paid" ? "Paid (Lunas)" : "Pending (Menunggu Persetujuan)"}
             </span>
           </div>
 
           {/* Details */}
-          <div className="border border-gray-100 dark:border-slate-800/80 rounded-xl divide-y divide-gray-100 dark:divide-slate-800">
+          <div className="border border-[var(--g-line)] rounded-xl divide-y divide-[var(--g-line)] bg-[var(--g-surface)]">
             <div className="p-3 flex justify-between gap-4">
-              <span className="text-gray-400 dark:text-slate-500">ID Pembayaran</span>
-              <span className="font-mono text-gray-700 dark:text-slate-300 select-all">{paymentId}</span>
+              <span className="text-[var(--g-ink-soft)]">ID Pembayaran</span>
+              <span className="font-mono text-[var(--g-ink)] select-all">{paymentId}</span>
             </div>
             <div className="p-3 flex justify-between gap-4">
-              <span className="text-gray-400 dark:text-slate-500">Order ID</span>
-              <span className="font-semibold text-gray-700 dark:text-slate-300">{payment.midtrans_order_id}</span>
+              <span className="text-[var(--g-ink-soft)]">Order ID</span>
+              <span className="font-semibold text-[var(--g-ink)]">{payment.midtrans_order_id}</span>
             </div>
             <div className="p-3 flex justify-between gap-4">
-              <span className="text-gray-400 dark:text-slate-500">Nominal</span>
-              <span className="font-extrabold text-emerald-600 dark:text-emerald-400">Rp 2.000</span>
+              <span className="text-[var(--g-ink-soft)]">Nominal</span>
+              <span className="font-extrabold text-[var(--g-green)]">Rp 2.000</span>
             </div>
             <div className="p-3 flex justify-between gap-4">
-              <span className="text-gray-400 dark:text-slate-500">No. WA Penerima (Pemohon)</span>
-              <span className="font-bold text-gray-700 dark:text-slate-300">{payment.meta?.requester_wa}</span>
+              <span className="text-[var(--g-ink-soft)]">No. WA Penerima (Pemohon)</span>
+              <span className="font-bold text-[var(--g-ink)]">{payment.meta?.requester_wa}</span>
             </div>
           </div>
 
           {wanted && (
-            <div className="mt-4 p-4 bg-blue-50/20 dark:bg-blue-950/10 border border-blue-100 dark:border-blue-900/30 rounded-xl space-y-2">
-              <h3 className="font-bold text-blue-800 dark:text-blue-400 text-xs">Detail Postingan Cari Barang:</h3>
-              <p className="text-gray-700 dark:text-slate-300"><span className="font-medium text-gray-400">Judul:</span> {wanted.title}</p>
-              <p className="text-gray-700 dark:text-slate-300"><span className="font-medium text-gray-400">Pembeli (Target):</span> {wanted.buyer_name} ({wanted.buyer_wa})</p>
+            <div className="mt-4 p-4 bg-[var(--g-surface-2)] border border-[var(--g-line)] rounded-xl space-y-2">
+              <h3 className="font-bold text-[var(--g-ink)] text-xs">Detail Postingan Cari Barang:</h3>
+              <p className="text-[var(--g-ink-soft)]"><span className="font-medium">Judul:</span> <b className="text-[var(--g-ink)]">{wanted.title}</b></p>
+              <p className="text-[var(--g-ink-soft)]"><span className="font-medium">Pembeli (Target):</span> <b className="text-[var(--g-ink)]">{wanted.buyer_name} ({wanted.buyer_wa})</b></p>
             </div>
           )}
 
           {/* Action buttons */}
-          <div className="pt-4 border-t border-gray-100 dark:border-slate-800 flex flex-col gap-2">
+          <div className="pt-4 border-t border-[var(--g-line)] flex flex-col gap-2">
             {payment.status !== "paid" ? (
               <button
                 onClick={handleApprove}
                 disabled={submitting}
-                className="btn-primary w-full py-2.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg flex items-center justify-center gap-1.5"
+                className="g-btn g-btn-wa w-full py-2.5 text-xs font-bold"
               >
                 {submitting ? (
                   <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                 ) : (
-                  <span> Setujui &amp; Kirim Nomor WA Pembeli</span>
+                  <span>✓ Setujui &amp; Kirim Nomor WA Pembeli</span>
                 )}
               </button>
             ) : (
-              <div className="w-full py-2.5 text-center text-emerald-700 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-lg select-none">
-                 Transaksi Ini Sudah Lunas
+              <div className="w-full py-2.5 text-center text-[var(--g-green-ink)] font-bold bg-[var(--g-green-soft)] border border-[var(--g-green)]/30 rounded-lg select-none">
+                ✓ Transaksi Ini Sudah Lunas
               </div>
             )}
             <Link
               href="/admin/overview"
-              className="btn-outline w-full py-2.5 text-center text-xs font-bold bg-white hover:bg-gray-50 dark:bg-slate-950 dark:hover:bg-slate-900 rounded-lg"
+              className="g-btn g-btn-outlined w-full py-2.5 text-center text-xs font-bold"
             >
               Kembali ke Dashboard Admin
             </Link>
