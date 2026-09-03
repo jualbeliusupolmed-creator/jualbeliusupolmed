@@ -1,6 +1,32 @@
 # Progress Log — Jual Beli USU Polmed
 
-_Terakhir diupdate: 2026-06-26_
+_Terakhir diupdate: 2026-09-03_
+
+---
+
+## Sesi 2026-09-03
+
+### 1. Peningkatan UI/UX & Konsistensi Tema Panel Admin
+- Merapikan komponen `ApproveUnlockClient.jsx` (persetujuan QRIS manual unlock kontak) agar mematuhi design system `google.css` (`g-card`, `g-btn`, `g-badge`, `var(--g-line)`), menjamin keterbacaan sempurna di Dark mode dan Light mode.
+
+### 2. Notifikasi WhatsApp Otomatis saat Match (Cari Teman)
+- Endpoint `POST /api/teman/swipe` kini memicu pengiriman pesan WhatsApp otomatis secara asinkron lewat `sendWa()` ke kedua pihak saat terjadi mutual like / match.
+- Dilengkapi deep-link ke ruang chat anonim (`/chat?room=<id>`) dan fallback otomatis ke antrean `wa_outbox`.
+
+### 3. Reliabilitas Bot WhatsApp & Test Suite
+- Menambahkan file `bot-wa/test/smoke.test.js` untuk menguji parsing pesan, sanitasi karakter tak terlihat Unicode, deteksi panggilan admin, dan pemformatan JID.
+- Seluruh 7 unit test bot-wa lulus (100% pass).
+- Membuat panduan operasional komprehensif `docs/bot-runbook-deployment.md` yang merinci prosedur deployment, monitoring restart oleh `penjaga-bot.sh`, penanganan sesi terkunci (401/403), dan runbook rollback.
+
+### 4. Penyempurnaan Gerbang Interaktif Bot & Auto-Pruning Sesi (VPS)
+- **Auto-Open Sesi Interaktif**: Sapaan awal pengguna kini otomatis membuka sesi bot selama 15 menit, sehingga pesan lanjutan apa pun langsung dijawab dan tidak didiamkan lagi.
+- **Dukungan Perintah Polos Tanpa Titik**: Menambahkan dukungan langsung untuk perintah umum (`jual`, `cari`, `menu`, `help`, `produk`, `iklan`, `halo`, dll.) tanpa mewajibkan tanda titik (`.`).
+- **Pembersihan Otomatis Kunci Sesi**: Menghapus 1.776 berkas `pre-key-*.json` usang dan memasang cron pruning harian di `waAuthState.js` untuk mencegah penumpukan puluhan ribu file di disk VPS.
+
+### 5. Verifikasi Kualitas
+- `npm test` lulus 72/72 unit test di seluruh file test suite.
+- Bot unit test (`node --test bot-wa/test/*.test.js`) lulus 7/7 test.
+- Bot WhatsApp berstatus Online di VPS dengan memori terkontrol (~129MB).
 
 ---
 
@@ -188,4 +214,5 @@ In-memory rate limiter di: OTP send/verify, email login, admin login, admin acti
 **Stack:** Next.js 14 App Router · Supabase · Gemini 2.5 Flash · Baileys (VPS DigitalOcean) · Fonnte · Sharp · Tailwind CSS · Vercel
 
 **DB Tables:** listings · seller_profiles · payments · price_offers · seller_ratings · reports · blacklist · settings · blogs · categories · wanted_listings · group_posts · scheduled_broadcasts · category_subscriptions · otps · referrals · profile_change_requests · search_logs · admin_logs · error_logs
-Softe
+Softex123
+itta

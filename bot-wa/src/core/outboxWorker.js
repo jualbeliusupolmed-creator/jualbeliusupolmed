@@ -1,5 +1,5 @@
-const { getAdminClient } = require('@supabase/supabase-js');
-const fetch = require('node-fetch');
+// Menggunakan global fetch bawaan Node 18+
+const _fetch = typeof fetch !== 'undefined' ? fetch : (...args) => import('node-fetch').then(({default: f}) => f(...args));
 
 class OutboxWorker {
     constructor(supabaseUrl, supabaseKey, sendWaFunction, intervalMs = 15000) {
@@ -32,7 +32,7 @@ class OutboxWorker {
 
         try {
             // Kita pakai REST API Supabase langsung agar tidak perlu client tebal
-            const res = await fetch(`${this.supabaseUrl}/rest/v1/wa_outbox?status=eq.tertunda&select=*&order=created_at.asc&limit=10`, {
+            const res = await _fetch(`${this.supabaseUrl}/rest/v1/wa_outbox?status=eq.tertunda&select=*&order=created_at.asc&limit=10`, {
                 headers: {
                     'apikey': this.supabaseKey,
                     'Authorization': `Bearer ${this.supabaseKey}`
@@ -87,7 +87,7 @@ class OutboxWorker {
             body.galat_terakhir = errorMsg ? String(errorMsg).substring(0, 500) : null;
         }
 
-        await fetch(`${this.supabaseUrl}/rest/v1/wa_outbox?id=eq.${id}`, {
+        await _fetch(`${this.supabaseUrl}/rest/v1/wa_outbox?id=eq.${id}`, {
             method: 'PATCH',
             headers: {
                 'apikey': this.supabaseKey,

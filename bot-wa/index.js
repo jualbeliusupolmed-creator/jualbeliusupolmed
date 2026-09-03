@@ -1871,7 +1871,16 @@ function laporAuth(sumber, state) {
 
 async function startBotInner(myGen) {
     let state, saveCreds;
-    if (supabase) {
+    // Utamakan filesystem (AUTH_DIR) jika sudah memiliki kredensial tertaut
+    // agar sesi login aktif di VPS tidak terganggu dan tidak meminta scan QR ulang.
+    const fileAuthState = await useFileAuthState(AUTH_DIR);
+    if (credsTertaut(fileAuthState.state?.creds)) {
+        state = fileAuthState.state;
+        saveCreds = fileAuthState.saveCreds;
+        clearAuthState = fileAuthState.clear;
+        flushAuthState = fileAuthState.flush;
+        laporAuth(`filesystem (${AUTH_DIR})`, state);
+    } else if (supabase) {
         const authState = await useSupabaseAuthState(supabase, WA_SESSION_ID);
         state = authState.state;
         saveCreds = authState.saveCreds;
@@ -1879,13 +1888,10 @@ async function startBotInner(myGen) {
         flushAuthState = authState.flush;
         laporAuth(`Supabase (session_id=${WA_SESSION_ID})`, state);
     } else {
-        // useFileAuthState (bukan useMultiFileAuthState bawaan): tulis atomik +
-        // creds cadangan + cache baca. Format foldernya sama, sesi lama tetap jalan.
-        const authState = await useFileAuthState(AUTH_DIR);
-        state = authState.state;
-        saveCreds = authState.saveCreds;
-        clearAuthState = authState.clear;
-        flushAuthState = authState.flush;
+        state = fileAuthState.state;
+        saveCreds = fileAuthState.saveCreds;
+        clearAuthState = fileAuthState.clear;
+        flushAuthState = fileAuthState.flush;
         laporAuth(`filesystem (${AUTH_DIR})`, state);
     }
     // Dipakai handler 'close' untuk membedakan "jaringan putus" dari "belum
@@ -2711,23 +2717,27 @@ async function startBotInner(myGen) {
                         continue;
                     }
                     if (!hasPrefix && !inSession) {
-                        // Pesan polos yang sebenarnya kata perintah ("jual", "cari sepatu")
-                        // dihitung terpisah. Angka inilah bukti apakah gerbang titik bikin
-                        // pelanggan nyangkut — tanpa itu, melonggarkan gerbang cuma tebakan.
                         const plainCmd = plainCommandWord(gateText);
-                        if (plainCmd) { bump('perintah_polos'); bump(`polos_${plainCmd}`); }
-                        if (!greetedMap.has(gateKey)) {
+                        if (plainCmd) {
+                            bump('perintah_polos');
+                            bump(`polos_${plainCmd}`);
+                            // Perintah polos diizinkan membuka sesi dan diproses langsung tanpa wajib tanda titik '.'
+                            console.log(`[gerbang] ${cleanSender} kirim perintah polos "${plainCmd}" → buka sesi & proses`);
+                        } else if (!greetedMap.has(gateKey)) {
                             greetedMap.set(gateKey, Date.now());
                             saveGreetedMap();
                             rememberBotSent(await sock.sendMessage(sender, { text: greetingText }));
                             recordMessage(cleanSender, 'out', greetingText, 'sapaan');
                             bump('sapaan');
-                            console.log(`[gerbang] ${cleanSender} → chat admin, sapaan dikirim (sekali)`);
+                            // BUKA sesi bot 15 menit agar pesan balasan pengguna berikutnya langsung dijawab!
+                            botSessions.set(gateKey, Date.now() + BOT_SESSION_MS);
+                            console.log(`[gerbang] ${cleanSender} → chat baru, sapaan dikirim & sesi bot aktif ${Math.round(BOT_SESSION_MS / 60000)} menit`);
+                            continue;
                         } else {
                             bump('didiamkan');
-                            console.log(`[gerbang] ${cleanSender} → chat admin, bot diam`);
+                            console.log(`[gerbang] ${cleanSender} → chat admin, bot diam (tanpa titik / perintah)`);
+                            continue;
                         }
-                        continue;
                     }
                     // Lolos gerbang: buka/segarkan sesi supaya pesan lanjutan (jawaban
                     // tanya-jawab, foto tanpa caption) tidak perlu bertitik lagi.
@@ -2919,7 +2929,7 @@ app.listen(PORT, process.env.BIND_HOST || '127.0.0.1', () => {
     // --- Phase 2: Start Outbox Worker ---
     if (supabase) {
         const OutboxWorker = require('./src/core/outboxWorker.js');
-        const outboxWorker = new OutboxWorker(SUPABASE_URL, SUPABASE_KEY, async (target, message, imageUrl, ttlDetik, meta) => {
+        const outboxWorker = new OutboxWorker(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, async (target, message, imageUrl, ttlDetik, meta) => {
             const jid = target.includes('@') ? target : target + '@s.whatsapp.net';
             messageQueue.push({ jid, text: message, image: imageUrl, id: Math.random().toString(36).substring(7), ...meta });
             kickQueue();

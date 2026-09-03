@@ -35,6 +35,13 @@ if [ -s /root/.sandi-panel ]; then
     export PANEL_PASSWORD
 fi
 
+# Kredensial Supabase (jika tersedia di /root/.supabase_env)
+if [ -s /root/.supabase_env ]; then
+    set -a
+    . /root/.supabase_env
+    set +a
+fi
+
 # Token bot kedua, supaya dashboard bot pertama bisa memperlihatkan DUA perangkat
 # lewat /perangkat2/*. Kalau berkasnya belum ada, bot pertama tetap jalan dan
 # panel kedua sekadar tidak muncul.
