@@ -13,13 +13,14 @@ export { angkaSetelan, adFeeFrom, soldFeeFrom, featuredRateFrom };
 
 export const DEFAULT_SETTINGS = {
   pricing: {
-    adBarang: 2000,
+    freeMode: true,
+    adBarang: 0,
     adPoster: 10000,
     bump: 1000,
     featuredPerDay: 5000,
     featuredMaxPerDay: 10000,
     listingDays: 14,
-    renewalFee: 2000,
+    renewalFee: 0,
     // Paket Penjual Pro. Dulu angkanya cuma hidup di dalam
     // api/payments/subscribe/route.js — sumber harga keempat, tidak terlihat
     // dari panel admin dan tidak terbaca halaman Daftar Harga.
@@ -27,16 +28,6 @@ export const DEFAULT_SETTINGS = {
     dicariFreeLimt: 3,
     // tier biaya iklan berdasarkan harga barang; dievaluasi berurutan, `upto` = batas atas (eksklusif)
     adTiers: TARIF_BAWAAN.adTiers,
-    // Penjual yang sudah punya halaman toko (/toko/<slug>) memasang iklan
-    // GRATIS. Keputusan pemilik, 21 Agustus 2026: toko adalah cara orang
-    // berjualan serius di sini, dan menagih biaya tayang untuk tiap barang
-    // membuat toko yang isinya banyak justru paling mahal.
-    //
-    // Sadari akibatnya sebelum mengubah: membuat toko itu gratis dan terbuka,
-    // jadi selama ini bernilai true, praktis SEMUA iklan gratis. Yang tersisa
-    // sebagai pemasukan adalah fee barang terjual, Featured, dan Sponsored.
-    // Setel false di sini (atau lewat panel Pengaturan) untuk mengembalikan
-    // biaya tayang seperti semula.
     tokoGratis: true,
     // tier fee setelah barang terjual; dievaluasi berurutan, `upto` = batas atas (eksklusif)
     soldTiers: TARIF_BAWAAN.soldTiers,
