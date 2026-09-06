@@ -232,8 +232,12 @@ export async function POST(req) {
     else if (isJasa || type === "poster") days = 30; // Jasa berbayar dan poster dapat 30 hari
 
     const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
-    // Distributor langsung aktif tanpa bayar biaya iklan
-    const initialStatus = (isPro || isJasaFree || isDistributor || punyaToko) ? "active" : "pending";
+    
+    // Pasar Bebas: cek apakah iklan gratis
+    const amount = adFeeFrom(settings.pricing, type, price);
+    const isFreeMode = amount === 0 || settings.pricing?.freeMode !== false;
+
+    const initialStatus = (isPro || isJasaFree || isDistributor || punyaToko || isFreeMode) ? "active" : "pending";
     const safeSpecs = sanitizeListingSpecs(category || "Elektronik", specs);
 
     // Hitung fee bagi hasil untuk distributor
@@ -275,7 +279,7 @@ export async function POST(req) {
       await supa.from("listings").update({ images }).eq("id", listing.id);
     }
 
-    if (isPro || isJasaFree || isDistributor || punyaToko) {
+    if (isPro || isJasaFree || isDistributor || punyaToko || isFreeMode) {
       try {
         await postToGroup(listing);
         notifyCategorySubscribers(supa, listing).catch(() => {});
@@ -290,10 +294,18 @@ export async function POST(req) {
         origin: siteOriginFromRequest(req),
         listingId: listing.id,
       });
-      return NextResponse.json({ listing, paymentUrl: null, isPro, isJasaFree, isDistributor, punyaToko, distributorFee });
+      return NextResponse.json({
+        listing,
+        paymentUrl: null,
+        isPro,
+        isJasaFree,
+        isDistributor,
+        punyaToko,
+        isFreeMode,
+        distributorFee
+      });
     }
 
-    const amount = adFeeFrom(settings.pricing, listing.type, listing.price);
     const orderId = `IKLAN-${listing.id.slice(0, 8)}-${Date.now()}`;
 
     await supa.from("payments").insert({

@@ -109,10 +109,13 @@ export default function JualPage() {
   const specConfig = getListingSpecConfig(form.category);
   const specPreview = formatListingSpecs(form.category, form.specs);
   const fee = adFeeFor(form.type, form.price);
-  // Dua sebab berbeda, satu akibat yang sama. Dipisah supaya alasannya bisa
-  // disebut apa adanya di layar — "gratis" tanpa sebab selalu memancing curiga.
-  const gratis = sellerIsDistributor || sellerPunyaToko;
-  const sebabGratis = sellerIsDistributor ? "Distributor" : "punya toko";
+  const isFreeMode = fee === 0 || cfg?.pricing?.freeMode !== false;
+  const gratis = sellerIsDistributor || sellerPunyaToko || isFreeMode;
+  const sebabGratis = sellerIsDistributor
+    ? "Distributor"
+    : sellerPunyaToko
+    ? "punya toko"
+    : "Pasar Bebas Mahasiswa";
 
   const handleAreaOptionChange = (e) => {
     const val = e.target.value;
@@ -219,10 +222,15 @@ export default function JualPage() {
         return;
       }
 
-      if (data.isPro) {
-        toast.success("Iklan berhasil ditayangkan! (Gratis via Paket Pro)");
-        const waParam = encodeURIComponent(formattedWa);
-        router.push(`/dashboard?wa=${waParam}`);
+      if (data.isPro || data.isFreeMode || gratis || !data.paymentUrl) {
+        toast.success("Iklan berhasil ditayangkan! (100% Gratis - Pasar Bebas)");
+        const productSlug = buildSlug(data.listing?.title || form.title, data.listing?.id);
+        if (data.listing?.id) {
+          router.push(`/produk/${productSlug}`);
+        } else {
+          const waParam = encodeURIComponent(formattedWa);
+          router.push(`/dashboard?wa=${waParam}`);
+        }
         return;
       }
 
@@ -250,7 +258,17 @@ export default function JualPage() {
       {/* Punya toko = iklan gratis. Disebut di ATAS, bukan cuma di rincian
           biaya paling bawah: yang belum punya toko masih sempat membuatnya
           sebelum mengetik apa pun. */}
-      {sellerPunyaToko ? (
+      {isFreeMode ? (
+        <div className="mt-3 rounded-2xl border border-emerald-300 bg-emerald-50 px-5 py-4 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200 shadow-sm flex items-start gap-3">
+          <Icon.Sparkles className="h-5 w-5 shrink-0 text-emerald-600 mt-0.5" />
+          <div>
+            <strong>🔥 Mode Pasar Bebas Aktif: Pasang Iklan 100% GRATIS!</strong>
+            <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-300">
+              Khusus mahasiswa USU & POLMED, pasang iklan tanpa biaya tayang dan bebas komisi penjualan. Iklanmu langsung aktif & otomatis disebarkan ke grup WA!
+            </p>
+          </div>
+        </div>
+      ) : sellerPunyaToko ? (
         <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-900/20 dark:text-emerald-300 shadow-sm flex items-start gap-3">
           <Icon.Store className="h-5 w-5 shrink-0" />
           <div>
@@ -503,17 +521,22 @@ export default function JualPage() {
 
           {/* Metode Pembayaran */}
           <div className="card p-5 space-y-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400">Metode Pembayaran</h3>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400">Metode & Biaya</h3>
             <div className="grid gap-3 sm:grid-cols-1">
               <div
-                className="flex flex-col text-left p-4 rounded-xl border-2 border-primary bg-primary/5 dark:border-slate-700 dark:bg-slate-800/50 transition-all"
+                className={`flex flex-col text-left p-4 rounded-xl border-2 transition-all ${
+                  isFreeMode
+                    ? "border-emerald-500 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/20"
+                    : "border-primary bg-primary/5 dark:border-slate-700 dark:bg-slate-800/50"
+                }`}
               >
                 <span className="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-1.5">
-                  QRIS + verifikasi struk
+                  {isFreeMode ? "🎉 100% Gratis (Pasar Bebas Mahasiswa)" : "QRIS + verifikasi struk"}
                 </span>
                 <span className="text-xs text-gray-500 dark:text-slate-400 mt-1.5 leading-relaxed">
-                  Scan QRIS yang muncul setelah ini, lalu unggah foto struknya di layar yang sama.
-                  Strukmu diperiksa otomatis dan iklan langsung aktif kalau cocok.
+                  {isFreeMode
+                    ? "Tidak perlu bayar biaya iklan! Cukup tekan tombol Preview & Pasang Iklan, barangmu langsung tayang dan disebarkan ke grup WhatsApp."
+                    : "Scan QRIS yang muncul setelah ini, lalu unggah foto struknya di layar yang sama. Strukmu diperiksa otomatis dan iklan langsung aktif kalau cocok."}
                 </span>
               </div>
             </div>
@@ -556,9 +579,15 @@ export default function JualPage() {
           <div className="card p-4 text-sm text-gray-500 dark:text-slate-400">
             <p className="font-semibold text-gray-700 dark:text-slate-300">ℹ Fee setelah deal</p>
             <ul className="mt-2 list-disc space-y-1 pl-4">
-              <li>&lt; Rp50.000 → Gratis (Bebas Komisi)</li>
-              <li>&lt; Rp100.000 → 10%</li>
-              <li>≥ Rp100.000 → 5%</li>
+              {isFreeMode ? (
+                <li className="font-semibold text-emerald-600">Semua Transaksi → Bebas Komisi 0% (Pasar Bebas)</li>
+              ) : (
+                <>
+                  <li>&lt; Rp50.000 → Gratis (Bebas Komisi)</li>
+                  <li>&lt; Rp100.000 → 10%</li>
+                  <li>≥ Rp100.000 → 5%</li>
+                </>
+              )}
             </ul>
           </div>
         </div>

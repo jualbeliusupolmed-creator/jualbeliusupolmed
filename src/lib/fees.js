@@ -12,6 +12,7 @@
 // `pricing`; angka di bawah cuma jaring pengaman kalau setelannya belum termuat.
 
 export const TARIF_BAWAAN = {
+  freeMode: false,
   adBarang: 2000,
   adPoster: 10000,
   bump: 1000,
@@ -63,7 +64,9 @@ function dariJenjang(tiers, nilai) {
 }
 
 // Biaya iklan saat memasang (sebelum deal). `pricing` = settings.pricing.
+// Pasar Bebas: gratis jika pricing.freeMode === true.
 export function adFeeFrom(pricing, type, price = 0) {
+  if (pricing?.freeMode === true) return 0;
   if (type === "poster") return angkaSetelan(pricing?.adPoster, TARIF_BAWAAN.adPoster);
   const p = Number(price) || 0;
   const tiers = Array.isArray(pricing?.adTiers) && pricing.adTiers.length
@@ -75,7 +78,9 @@ export function adFeeFrom(pricing, type, price = 0) {
 
 // Biaya admin sesudah barang TERJUAL. Daftar jenjang KOSONG artinya memang
 // tidak ada komisi — bukan "belum diisi", jadi jangan jatuh ke bawaan.
+// Pasar Bebas: bebas komisi jika pricing.freeMode === true.
 export function soldFeeFrom(pricing, price) {
+  if (pricing?.freeMode === true) return 0;
   const p = Number(price) || 0;
   const tiers = Array.isArray(pricing?.soldTiers) ? pricing.soldTiers : TARIF_BAWAAN.soldTiers;
   const hasil = dariJenjang(tiers, p);

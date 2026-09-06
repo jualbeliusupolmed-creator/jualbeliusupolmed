@@ -2367,6 +2367,42 @@ export async function POST(req) {
           }
           const setng = await getSettings();
           const fee = adFeeFrom(setng.pricing, "barang", price);
+          const isFreeMode = fee === 0 || setng.pricing?.freeMode !== false;
+
+          if (isFreeMode) {
+            // Langsung aktifkan iklan
+            const { data: updatedL } = await supa
+              .from("listings")
+              .update({ status: "active", bumped_at: new Date().toISOString() })
+              .eq("id", pl.id)
+              .select()
+              .single();
+
+            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+            const productSlug = buildSlug(pl.title, pl.id);
+            const productUrl = `${baseUrl}/produk/${productSlug}`;
+
+            const successMsg =
+              `🎉 *IKLANMU LANGSUNG TAYANG (100% GRATIS)!*\n` +
+              `_Spesial Promo Pasar Bebas Mahasiswa USU & POLMED_\n\n` +
+              `📦 *${pl.title}* — Rp ${price.toLocaleString("id-ID")}\n` +
+              `🔗 ${productUrl}\n\n` +
+              `Iklanmu sudah disebarkan ke grup WA & aktif di website! 🚀\n` +
+              `_Bagikan link di atas ke teman/grup kelasmu agar cepat laku._`;
+
+            await sendWa(senderJid, successMsg);
+
+            if (updatedL) {
+              postToGroup(updatedL, setng?.admin).catch(() => {});
+              notifyMatchingWanted(supa, updatedL).catch(() => {});
+              notifyCategorySubscribers(supa, updatedL).catch(() => {});
+              pushListingBaru(supa, updatedL).catch(() => {});
+              autoPublishListingInstagram({ origin: baseUrl, listingId: updatedL.id }).catch(() => {});
+            }
+
+            return NextResponse.json({ ok: true, state: "price_set_active_freemode" });
+          }
+
           const orderId = `IKLAN-WA-${pl.listing_code}-${Date.now()}`;
           await supa.from("payments").insert({
             listing_id: pl.id, type: "iklan", amount: fee, status: "pending",
@@ -2957,6 +2993,9 @@ export async function POST(req) {
           if (isAutoAddFee && distFee > 0) finalPrice += distFee;
         }
 
+        const isFreeMode = settings.pricing?.freeMode !== false;
+        const initialStatus = (isDistributor || isFreeMode) ? "active" : "pending";
+
         const { data: newListing, error: listingError } = await supa.from("listings").insert({
           seller_wa: normalizedWa,
           seller_name: profileName,
@@ -2969,7 +3008,7 @@ export async function POST(req) {
           campus: ["USU", "POLMED", "Semua"].includes(item.campus) ? item.campus : "Semua",
           image_url: fileMimeType.startsWith("image/") ? publicUrl : null,
           images: fileMimeType.startsWith("image/") ? uploadedUrls : [],
-          status: isDistributor ? "active" : "pending",
+          status: initialStatus,
           distributor_fee: isDistributor ? distFee : null,
           expires_at: expiresAt,
           bumped_at: new Date().toISOString(),
@@ -2978,7 +3017,7 @@ export async function POST(req) {
         if (listingError) throw new Error("Gagal menyimpan data iklan: " + listingError.message);
         
         createdListings.push(newListing);
-        if (!isDistributor) {
+        if (!isDistributor && !isFreeMode) {
           totalAmount += adFeeFrom(settings.pricing, "barang", newListing.price);
         }
       }
@@ -3030,6 +3069,39 @@ export async function POST(req) {
           `Tinggal *harganya* nih kak — ketik angka harganya aja ya, contoh: *90rb* atau *150000*.\n\n_(Ketik *BATAL* kalau ga jadi)_`
         );
         return NextResponse.json({ ok: true, state: "listing_awaiting_price" });
+      }
+
+      const isFreeMode = settings.pricing?.freeMode !== false;
+      if (isFreeMode || totalAmount === 0) {
+        const namaReminder = (isNewWaUser && profileName === "Pengguna WA") ? `\n💡 Ketik *NAMA [nama kamu]* untuk mengganti nama profil tokomu.\n` : "";
+        
+        let successReply = `🎉 *IKLANMU LANGSUNG TAYANG (100% GRATIS)!*\n_Spesial Promo Pasar Bebas Mahasiswa USU & POLMED_\n\n`;
+        for (const l of createdListings) {
+          const productSlug = buildSlug(l.title, l.id);
+          successReply += `📦 *${l.title}*\n💰 Harga: Rp ${l.price.toLocaleString("id-ID")}\n🔗 ${baseUrl}/produk/${productSlug}\n\n`;
+        }
+        successReply += `${namaReminder}` +
+          `Iklanmu sudah otomatis aktif di website & disebarkan ke grup WA! 🚀\n\n` +
+          `👉 *Tips Cepat Laku:* Bagikan link di atas ke grup WhatsApp kelas atau angkatanmu!`;
+
+        await sendWa(senderJid, successReply);
+
+        for (const l of createdListings) {
+          const productSlug = buildSlug(l.title, l.id);
+          const shareMsg = `📢 *Iklan Baru Tayang (Pasar Bebas)*\n\n🛒 *${l.title}* — Rp ${Number(l.price).toLocaleString("id-ID")}\n👉 ${baseUrl}/produk/${productSlug}`;
+          for (const adminNum of getAdminNumbers()) {
+            await sendWa(adminNum, shareMsg).catch(() => {});
+          }
+          await Promise.all([
+            postToGroup(l, settings?.admin),
+            notifyMatchingWanted(supa, l),
+            notifyCategorySubscribers(supa, l),
+            pushListingBaru(supa, l),
+            autoPublishListingInstagram({ origin: baseUrl, listingId: l.id }),
+          ].map(p => p.catch(() => {})));
+        }
+
+        return NextResponse.json({ ok: true, state: "listing_created_freemode" });
       }
 
       // Non-distributor payment logic

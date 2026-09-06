@@ -302,6 +302,36 @@ export default function SuperAppHome({
   return (
     <div className="min-h-screen bg-[#f5f5f7] pb-28 font-sans selection:bg-primary/20 dark:bg-[#000000] overflow-x-hidden">
       
+      {/* ── Banner Pasar Bebas Mahasiswa ── */}
+      <section className="px-4 sm:px-6 md:px-10 lg:px-16 pt-3 pb-1">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-700 p-3.5 sm:p-4 text-white shadow-sm">
+          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-white backdrop-blur-sm">
+                <Icon.Sparkles className="h-3 w-3 text-amber-300" />
+                Promo Komunitas Kampus
+              </div>
+              <h2 className="text-[14px] sm:text-[16px] font-extrabold tracking-tight">
+                🔥 Pasar Bebas Mahasiswa: Pasang Iklan 100% GRATIS!
+              </h2>
+              <p className="text-[11px] sm:text-xs text-white/90 max-w-xl">
+                Jual barang bekas kos, perlengkapan kuliah, buku, atau jasa tanpa biaya pasang & bebas potongan komisi. COD aman sesama anak USU & POLMED.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Link
+                href="/jual"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-xs font-extrabold text-emerald-800 shadow-sm transition hover:bg-emerald-50 active:scale-95"
+              >
+                <Icon.Plus className="h-3.5 w-3.5" />
+                Pasang Iklan Gratis
+              </Link>
+            </div>
+          </div>
+          <div className="absolute -right-6 -bottom-6 h-28 w-28 rounded-full bg-white/10 blur-xl pointer-events-none" />
+        </div>
+      </section>
+
       {/* ── Marketplace carousel ── */}
       <section className="mt-2 mb-4">
         <div className="flex items-center justify-between px-4 sm:px-6 md:px-10 lg:px-16 mb-2">

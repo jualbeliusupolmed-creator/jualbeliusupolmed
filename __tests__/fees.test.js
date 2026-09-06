@@ -34,6 +34,11 @@ describe('fees.js', () => {
       const customTiers = [{ upto: null, pct: 2 }];
       expect(adFeeFrom({ adTiers: customTiers }, 'barang', 100000)).toBe(2000);
     });
+
+    it('returns 0 when freeMode is active', () => {
+      expect(adFeeFrom({ freeMode: true }, 'barang', 100000)).toBe(0);
+      expect(adFeeFrom({ freeMode: true }, 'poster')).toBe(0);
+    });
   });
 
   describe('soldFeeFrom', () => {
@@ -47,6 +52,11 @@ describe('fees.js', () => {
 
     it('calculates 5% for items above 100k', () => {
       expect(soldFeeFrom(undefined, 200000)).toBe(10000);
+    });
+
+    it('returns 0 when freeMode is active', () => {
+      expect(soldFeeFrom({ freeMode: true }, 80000)).toBe(0);
+      expect(soldFeeFrom({ freeMode: true }, 200000)).toBe(0);
     });
   });
 
