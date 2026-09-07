@@ -89,6 +89,7 @@ export const ADMIN_TABS = [
   "wabot",
   "ai",
   "broadcast",
+  "broadcast_grup",
   "referral",
   "tawaran",
   "grouppost",
