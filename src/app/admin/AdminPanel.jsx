@@ -14,6 +14,7 @@ import { getSupabase } from "@/lib/supabase";
 import BaileysDashboard from "./wabot/BaileysDashboard";
 import AIPanel from "./AIPanel";
 import BroadcastPanel from "./BroadcastPanel";
+import GroupBroadcastPanel from "./GroupBroadcastPanel";
 import ReferralPanel from "./ReferralPanel";
 import TawaranPanel from "./TawaranPanel";
 import GroupPostsPanel from "./GroupPostsPanel";
@@ -88,7 +89,7 @@ export default function AdminPanel({
 }) {
   const basis = useBasisAdmin();
   const router = useRouter();
-  const VALID_TABS = ["overview","listings","transaksi","rating","reports","dicari","kategori","pengaturan","penjual","toko","profil_request","blogs","wabot","ai","broadcast","referral","tawaran","grouppost","notifikasi","distributor","kontak_pembeli"];
+  const VALID_TABS = ["overview","listings","transaksi","rating","reports","dicari","kategori","pengaturan","penjual","toko","profil_request","blogs","wabot","ai","broadcast","broadcast_grup","referral","tawaran","grouppost","notifikasi","distributor","kontak_pembeli"];
   const tab = VALID_TABS.includes(initialTab) ? initialTab : "overview";
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState(null);
@@ -461,7 +462,8 @@ export default function AdminPanel({
                                 ]),
                             { id: "tawaran", label: "Tawaran Harga", icon: "TW" },
                             { id: "kontak_pembeli", label: "Kontak Pembeli", icon: "KP" },
-                            { id: "broadcast", label: "Broadcast", icon: "BC" },
+                            { id: "broadcast", label: "Broadcast User", icon: "BC" },
+                            { id: "broadcast_grup", label: "Broadcast Grup", icon: "BG" },
                             { label: "Blacklist penjual", tone: "bad", onClick: () => confirmThen({ title: "Blacklist penjual", message: `Blokir ${l.seller_wa}? Semua iklannya disuspend.`, danger: true }, () => action({ action: "blacklist", wa: l.seller_wa }, "Diblacklist")) },
                           ]}
                         />
@@ -1267,6 +1269,9 @@ export default function AdminPanel({
 
         {/* BROADCAST */}
         {tab === "broadcast" && <BroadcastPanel sellers={sellersList} />}
+
+        {/* BROADCAST GRUP */}
+        {tab === "broadcast_grup" && <GroupBroadcastPanel />}
 
         {/* AI PANEL */}
         {tab === "ai" && <AIPanel settings={settings} action={action} />}
