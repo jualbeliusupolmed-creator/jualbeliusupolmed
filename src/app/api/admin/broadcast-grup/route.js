@@ -22,7 +22,7 @@ export async function GET(request) {
     } 
     
     if (action === "members" && jid) {
-      const res = await fetch(`${baseUrl}/groups/${encodeURIComponent(jid)}/members`, {
+      const res = await fetch(`${baseUrl}/groups/${encodeURIComponent(jid)}`, {
         headers: { "Authorization": token }
       });
       const data = await res.json();
