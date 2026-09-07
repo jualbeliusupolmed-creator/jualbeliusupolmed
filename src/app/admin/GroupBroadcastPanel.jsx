@@ -18,10 +18,17 @@ export default function GroupBroadcastPanel() {
 
   async function fetchGroups() {
     try {
+      addLog("Memuat daftar grup...");
       const res = await fetch("/api/admin/broadcast-grup?action=groups");
       const data = await res.json();
-      if (data.groups) {
+      if (data.error) {
+        addLog("❌ Gagal memuat grup dari API: " + data.error);
+      } else if (data.groups) {
         setGroups(data.groups);
+        addLog(`✅ Memuat ${data.groups.length} grup.`);
+        if (data.groups.length === 0) {
+          addLog("⚠️ Daftar grup kosong. Jika baru scan QR, WhatsApp butuh beberapa menit untuk menyinkronkan grup.");
+        }
       }
     } catch (e) {
       addLog("❌ Gagal memuat grup: " + e.message);
@@ -122,7 +129,10 @@ export default function GroupBroadcastPanel() {
 
         <div className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium dark:text-gray-300">1. Pilih Grup WhatsApp</label>
+            <div className="mb-1 flex items-center justify-between">
+              <label className="text-sm font-medium dark:text-gray-300">1. Pilih Grup WhatsApp</label>
+              <button onClick={fetchGroups} disabled={sending} className="text-xs text-blue-600 hover:underline">🔄 Segarkan Grup</button>
+            </div>
             <select className="input" value={selectedGroup} onChange={handleGroupChange} disabled={sending}>
               <option value="">-- Pilih Grup --</option>
               {groups.map(g => (
