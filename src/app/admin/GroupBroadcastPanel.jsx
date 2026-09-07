@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function GroupBroadcastPanel() {
   const [groups, setGroups] = useState([]);
@@ -9,8 +9,10 @@ export default function GroupBroadcastPanel() {
   const [selectedMembers, setSelectedMembers] = useState(new Set());
   
   const [message, setMessage] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
   const [logs, setLogs] = useState([]);
   const [sending, setSending] = useState(false);
+  const stopRef = useRef(false);
 
   useEffect(() => {
     fetchGroups();
@@ -23,6 +25,9 @@ export default function GroupBroadcastPanel() {
       const data = await res.json();
       if (data.error) {
         addLog("❌ Gagal memuat grup dari API: " + data.error);
+        if (data.error === "Unauthorized") {
+          addLog("🔑 Tips: Pastikan BAILEYS_API_TOKEN di .env.local / Vercel sesuai dengan token bot WhatsApp.");
+        }
       } else if (data.groups) {
         setGroups(data.groups);
         addLog(`✅ Memuat ${data.groups.length} grup.`);
@@ -45,9 +50,12 @@ export default function GroupBroadcastPanel() {
       addLog("Memuat anggota grup...");
       const res = await fetch(`/api/admin/broadcast-grup?action=members&jid=${encodeURIComponent(jid)}`);
       const data = await res.json();
-      if (data.participants) {
+      if (data.error) {
+        addLog("❌ Gagal memuat anggota: " + data.error);
+      } else if (data.participants) {
         setMembers(data.participants);
-        setSelectedMembers(new Set());
+        // Default pilih semua anggota
+        setSelectedMembers(new Set(data.participants.map(m => m.id)));
         addLog(`✅ Memuat ${data.participants.length} anggota dari grup.`);
       }
     } catch (e) {
@@ -81,50 +89,85 @@ export default function GroupBroadcastPanel() {
     setSelectedMembers(new Set());
   }
 
+  function filterAdminsOnly() {
+    const newSet = new Set(members.filter(m => m.admin).map(m => m.id));
+    setSelectedMembers(newSet);
+  }
+
+  function filterMembersOnly() {
+    const newSet = new Set(members.filter(m => !m.admin).map(m => m.id));
+    setSelectedMembers(newSet);
+  }
+
   async function startBroadcast() {
-    if (!message.trim()) return alert("Pesan tidak boleh kosong");
+    if (!message.trim() && !imageUrl.trim()) return alert("Pesan teks atau URL gambar tidak boleh kosong");
     if (selectedMembers.size === 0) return alert("Pilih minimal 1 anggota");
-    if (!confirm(`Mulai kirim ke ${selectedMembers.size} nomor? (1 pesan per 6 detik)`)) return;
+    if (!confirm(`Mulai kirim ke ${selectedMembers.size} nomor? (Jeda aman: 6 detik/pesan)`)) return;
 
     setSending(true);
+    stopRef.current = false;
     const targetArr = Array.from(selectedMembers);
     addLog(`🚀 Memulai broadcast ke ${targetArr.length} anggota...`);
 
+    let success = 0;
+    let failed = 0;
+
     for (let i = 0; i < targetArr.length; i++) {
+      if (stopRef.current) {
+        addLog("⏹️ Broadcast dihentikan oleh admin.");
+        break;
+      }
+
       const target = targetArr[i];
-      addLog(`[${i+1}/${targetArr.length}] Mengirim ke ${target.split('@')[0]}...`);
+      const phone = target.split('@')[0];
+      addLog(`[${i+1}/${targetArr.length}] Mengirim ke ${phone}...`);
+      
       try {
+        const payload = { target, message: message.trim() };
+        if (imageUrl.trim()) payload.imageUrl = imageUrl.trim();
+
         const res = await fetch("/api/admin/broadcast-grup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ target, message })
+          body: JSON.stringify(payload)
         });
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         if (res.ok || data.ok) {
-          addLog(`[${i+1}/${targetArr.length}] ✅ Berhasil dikirim.`);
+          success++;
+          addLog(`[${i+1}/${targetArr.length}] ✅ Berhasil dikirim ke ${phone}.`);
         } else {
-          addLog(`[${i+1}/${targetArr.length}] ❌ Gagal: ${data.error || 'Unknown error'}`);
+          failed++;
+          addLog(`[${i+1}/${targetArr.length}] ❌ Gagal ke ${phone}: ${data.error || 'Gagal mengirim'}`);
         }
       } catch (e) {
-        addLog(`[${i+1}/${targetArr.length}] ❌ Error: ${e.message}`);
+        failed++;
+        addLog(`[${i+1}/${targetArr.length}] ❌ Error ke ${phone}: ${e.message}`);
       }
 
-      if (i < targetArr.length - 1) {
+      if (i < targetArr.length - 1 && !stopRef.current) {
         await new Promise(r => setTimeout(r, 6000));
       }
     }
 
-    addLog("🎉 Selesai!");
+    addLog(`🎉 Selesai! Berhasil: ${success}, Gagal: ${failed}`);
     setSending(false);
+  }
+
+  function handleStop() {
+    if (!sending) return;
+    if (confirm("Hentikan pengiriman broadcast sekarang?")) {
+      stopRef.current = true;
+      addLog("Mengirim sinyal berhenti...");
+    }
   }
 
   return (
     <div className="max-w-2xl">
       <div className="card p-6">
-        <h2 className="mb-4 text-lg font-bold dark:text-white">Broadcast Member Grup</h2>
+        <h2 className="mb-2 text-lg font-bold dark:text-white">📢 Broadcast Japri Member Grup</h2>
         <p className="mb-4 text-sm text-gray-500">
-          Tarik nomor anggota dari grup dan kirimkan broadcast promosi ke tiap-tiap orang secara massal.
-          <br/><b>Batas aman:</b> Pengiriman diatur otomatis 1 pesan setiap 6 detik (10 pesan per menit).
+          Tarik nomor anggota dari grup WhatsApp dan kirimkan broadcast promosi ke tiap-tiap orang secara otomatis.
+          <br/><b>Batas aman anti-banned:</b> Pengiriman diatur otomatis 1 pesan setiap 6 detik (10 pesan per menit).
         </p>
 
         <div className="space-y-4">
@@ -136,28 +179,37 @@ export default function GroupBroadcastPanel() {
             <select className="input" value={selectedGroup} onChange={handleGroupChange} disabled={sending}>
               <option value="">-- Pilih Grup --</option>
               {groups.map(g => (
-                <option key={g.jid} value={g.jid}>{g.name} ({g.participants} anggota)</option>
+                <option key={g.jid} value={g.jid}>{g.name} ({g.participants} anggota){g.isAdmin ? ' ★ Admin' : ''}</option>
               ))}
             </select>
           </div>
 
           <div>
             <div className="mb-1 flex items-center justify-between">
-              <label className="text-sm font-medium dark:text-gray-300">2. Pilih Anggota</label>
-              <div className="flex gap-2">
-                <button onClick={selectAll} disabled={sending || members.length===0} className="text-xs text-blue-600 hover:underline">Pilih Semua</button>
-                <button onClick={deselectAll} disabled={sending || members.length===0} className="text-xs text-rose-600 hover:underline">Hapus Semua</button>
+              <label className="text-sm font-medium dark:text-gray-300">2. Pilih Anggota Penerima</label>
+              <div className="flex flex-wrap gap-2 text-xs">
+                <button onClick={selectAll} disabled={sending || members.length===0} className="text-blue-600 hover:underline">Semua</button>
+                <button onClick={filterMembersOnly} disabled={sending || members.length===0} className="text-indigo-600 hover:underline">Member Saja</button>
+                <button onClick={filterAdminsOnly} disabled={sending || members.length===0} className="text-amber-600 hover:underline">Admin Saja</button>
+                <button onClick={deselectAll} disabled={sending || members.length===0} className="text-rose-600 hover:underline">Kosongkan</button>
               </div>
             </div>
             
             <div className="h-48 overflow-y-auto border rounded-lg p-2 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
               {members.length === 0 ? (
-                <p className="text-xs text-gray-500 p-2">Pilih grup terlebih dahulu untuk memuat anggota.</p>
+                <p className="text-xs text-gray-500 p-2 text-center">Pilih grup terlebih dahulu untuk memuat anggota.</p>
               ) : (
                 members.map((m, i) => (
-                  <label key={i} className="flex items-center gap-2 p-1 hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer rounded">
-                    <input type="checkbox" disabled={sending} checked={selectedMembers.has(m.id)} onChange={() => toggleMember(m.id)} />
-                    <span className="text-sm dark:text-gray-300">{m.id.split('@')[0]} {m.admin ? '(Admin)' : ''}</span>
+                  <label key={i} className="flex items-center justify-between p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer rounded text-xs">
+                    <div className="flex items-center gap-2">
+                      <input type="checkbox" disabled={sending} checked={selectedMembers.has(m.id)} onChange={() => toggleMember(m.id)} />
+                      <span className="font-mono dark:text-gray-300">{m.id.split('@')[0]}</span>
+                    </div>
+                    {m.admin && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 font-semibold">
+                        {m.admin}
+                      </span>
+                    )}
                   </label>
                 ))
               )}
@@ -166,26 +218,60 @@ export default function GroupBroadcastPanel() {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium dark:text-gray-300">3. Pesan</label>
+            <label className="mb-1 block text-sm font-medium dark:text-gray-300">3. Pesan Broadcast</label>
             <textarea
               className="input min-h-[120px]"
-              placeholder="Tulis pesan..."
+              placeholder="Tulis pesan... Dukung format *tebal*, _miring_, ~coret~"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               disabled={sending}
             />
           </div>
 
-          <button onClick={startBroadcast} disabled={sending || selectedMembers.size===0 || !message} className="btn-primary w-full">
-            {sending ? "Mengirim (Lihat Log di Bawah)..." : `Kirim Sekarang ke ${selectedMembers.size} Nomor`}
-          </button>
+          <div>
+            <label className="mb-1 block text-sm font-medium dark:text-gray-300">URL Gambar (Opsional)</label>
+            <input
+              type="url"
+              className="input"
+              placeholder="https://contoh.com/gambar.jpg"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              disabled={sending}
+            />
+          </div>
+
+          <div className="flex gap-2 pt-2">
+            <button
+              onClick={startBroadcast}
+              disabled={sending || selectedMembers.size === 0 || (!message.trim() && !imageUrl.trim())}
+              className="btn-primary flex-1"
+            >
+              {sending ? `Mengirim... (Lihat Log di Bawah)` : `🚀 Kirim ke ${selectedMembers.size} Nomor`}
+            </button>
+            {sending && (
+              <button
+                onClick={handleStop}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-medium transition"
+              >
+                ⏹️ Hentikan
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
       <div className="card p-6 mt-4">
-        <h3 className="mb-2 font-bold dark:text-white">Log Pengiriman</h3>
-        <div className="h-40 overflow-y-auto bg-slate-900 text-green-400 p-3 rounded-lg text-xs font-mono">
-          {logs.length === 0 ? "Menunggu aksi..." : logs.map((l, i) => <div key={i}>{l}</div>)}
+        <div className="flex justify-between items-center mb-2">
+          <h3 className="font-bold dark:text-white">Terminal Log Pengiriman</h3>
+          <button
+            onClick={() => setLogs([])}
+            className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+          >
+            Bersihkan
+          </button>
+        </div>
+        <div className="h-44 overflow-y-auto bg-slate-900 text-green-400 p-3 rounded-lg text-xs font-mono">
+          {logs.length === 0 ? "Menunggu aksi..." : logs.map((l, i) => <div key={i} className="mb-0.5">{l}</div>)}
         </div>
       </div>
     </div>
