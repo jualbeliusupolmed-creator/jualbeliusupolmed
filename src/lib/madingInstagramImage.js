@@ -127,10 +127,11 @@ function typographyForLength(length, ratio = "portrait") {
     return { fontSize: 36, lineHeight: 52, maxChars: 48, maxLines: 25 };
   }
   // PORTRAIT DEFAULT 4:5
-  if (length <= 80) return { fontSize: 75, lineHeight: 95, maxChars: 22, maxLines: 8 };
-  if (length <= 160) return { fontSize: 62, lineHeight: 82, maxChars: 26, maxLines: 11 };
-  if (length <= 300) return { fontSize: 50, lineHeight: 68, maxChars: 33, maxLines: 14 };
-  return { fontSize: 38, lineHeight: 54, maxChars: 44, maxLines: 17 };
+  if (length <= 60) return { fontSize: 100, lineHeight: 115, maxChars: 18, maxLines: 6 };
+  if (length <= 120) return { fontSize: 80, lineHeight: 95, maxChars: 22, maxLines: 9 };
+  if (length <= 200) return { fontSize: 65, lineHeight: 82, maxChars: 28, maxLines: 12 };
+  if (length <= 350) return { fontSize: 50, lineHeight: 65, maxChars: 36, maxLines: 15 };
+  return { fontSize: 40, lineHeight: 54, maxChars: 45, maxLines: 20 };
 }
 
 export function layoutMadingInstagramPost(post = {}, ratio = "portrait") {
@@ -373,7 +374,7 @@ export function createMadingInstagramTextLayers(
       text: "JUAL BELI USU POLMED",
       fontPath: semiboldFontPath,
       fontName: "Plus Jakarta Sans SemiBold",
-      fontSize: 32,
+      fontSize: 22,
       color: theme.textAccent,
       width: 800,
       left: 80,
@@ -384,11 +385,11 @@ export function createMadingInstagramTextLayers(
       text: "Mading & Menfess Kampus",
       fontPath: regularFontPath,
       fontName: "Plus Jakarta Sans",
-      fontSize: 24,
+      fontSize: 22,
       color: theme.textSecondary,
       width: 800,
       left: 80,
-      top: 125,
+      top: 110,
       align: "left",
     }),
   ];
@@ -412,24 +413,24 @@ export function createMadingInstagramTextLayers(
   layers.push(
     pangoTextLayer({
       text: "@usu.zonafess",
-      fontPath: semiboldFontPath,
-      fontName: "Plus Jakarta Sans SemiBold",
-      fontSize: 28,
+      fontPath: regularFontPath,
+      fontName: "Plus Jakarta Sans",
+      fontSize: 24,
       color: theme.textSecondary,
       width: 400,
       left: 80,
-      top: 1215,
+      top: 1230,
       align: "left",
     }),
     pangoTextLayer({
       text: "save dulu, baca nanti",
       fontPath: regularFontPath,
       fontName: "Plus Jakarta Sans",
-      fontSize: 28,
+      fontSize: 24,
       color: theme.textSecondary,
       width: 400,
-      left: 550,
-      top: 1215,
+      left: 560,
+      top: 1230,
       align: "right",
     }),
   );
@@ -465,9 +466,9 @@ export function createMadingInstagramSvg({ hasPhoto = false, ratio = "portrait",
   } else {
     // PORTRAIT
     svgContent += `
-      <line x1="80" y1="180" x2="1000" y2="180" stroke="${theme.line}" stroke-width="3"/>
-      <line x1="80" y1="1180" x2="1000" y2="1180" stroke="${theme.line}" stroke-width="3"/>
-      <path d="M 975 1250 L 975 1215 C 975 1210 980 1205 985 1205 L 1000 1205 C 1005 1205 1010 1210 1010 1215 L 1010 1250 L 992.5 1240 Z" fill="none" stroke="${theme.line}" stroke-width="3" stroke-linejoin="round"/>
+      <line x1="80" y1="150" x2="1000" y2="150" stroke="${theme.line}" stroke-width="3"/>
+      <line x1="80" y1="1200" x2="1000" y2="1200" stroke="${theme.line}" stroke-width="3"/>
+      <path d="M 970 1260 L 970 1225 C 970 1220 975 1215 980 1215 L 995 1215 C 1000 1215 1005 1220 1005 1225 L 1005 1260 L 987.5 1248 Z" fill="none" stroke="${theme.line}" stroke-width="3" stroke-linejoin="round"/>
     `;
   }
 
