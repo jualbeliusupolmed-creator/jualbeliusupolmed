@@ -116,22 +116,22 @@ export function wrapInstagramTextPages(value, maxChars = 46, maxLinesPerPage = 1
 
 function typographyForLength(length, ratio = "portrait") {
   if (ratio === "landscape") {
-    if (length <= 100) return { fontSize: 34, lineHeight: 50, maxChars: 56, maxLines: 6 };
-    if (length <= 200) return { fontSize: 28, lineHeight: 42, maxChars: 68, maxLines: 7 };
-    return { fontSize: 24, lineHeight: 36, maxChars: 78, maxLines: 8 };
+    if (length <= 100) return { fontSize: 34, lineHeight: 50, maxChars: 50, maxLines: 6 };
+    if (length <= 200) return { fontSize: 28, lineHeight: 42, maxChars: 60, maxLines: 7 };
+    return { fontSize: 24, lineHeight: 36, maxChars: 70, maxLines: 8 };
   }
   if (ratio === "story" || ratio === "9:16") {
-    if (length <= 80) return { fontSize: 75, lineHeight: 95, maxChars: 22, maxLines: 12 };
-    if (length <= 160) return { fontSize: 60, lineHeight: 80, maxChars: 28, maxLines: 16 };
-    if (length <= 300) return { fontSize: 48, lineHeight: 65, maxChars: 36, maxLines: 20 };
-    return { fontSize: 36, lineHeight: 52, maxChars: 48, maxLines: 25 };
+    if (length <= 80) return { fontSize: 75, lineHeight: 95, maxChars: 19, maxLines: 12 };
+    if (length <= 160) return { fontSize: 60, lineHeight: 80, maxChars: 24, maxLines: 16 };
+    if (length <= 300) return { fontSize: 48, lineHeight: 65, maxChars: 30, maxLines: 20 };
+    return { fontSize: 36, lineHeight: 52, maxChars: 40, maxLines: 25 };
   }
   // PORTRAIT DEFAULT 4:5
-  if (length <= 60) return { fontSize: 100, lineHeight: 115, maxChars: 18, maxLines: 6 };
-  if (length <= 120) return { fontSize: 80, lineHeight: 95, maxChars: 22, maxLines: 9 };
-  if (length <= 200) return { fontSize: 65, lineHeight: 82, maxChars: 28, maxLines: 12 };
-  if (length <= 350) return { fontSize: 50, lineHeight: 65, maxChars: 36, maxLines: 15 };
-  return { fontSize: 40, lineHeight: 54, maxChars: 45, maxLines: 20 };
+  if (length <= 60) return { fontSize: 100, lineHeight: 115, maxChars: 14, maxLines: 6 };
+  if (length <= 120) return { fontSize: 80, lineHeight: 95, maxChars: 18, maxLines: 9 };
+  if (length <= 200) return { fontSize: 65, lineHeight: 82, maxChars: 22, maxLines: 12 };
+  if (length <= 350) return { fontSize: 50, lineHeight: 65, maxChars: 28, maxLines: 15 };
+  return { fontSize: 40, lineHeight: 54, maxChars: 36, maxLines: 20 };
 }
 
 export function layoutMadingInstagramPost(post = {}, ratio = "portrait") {
