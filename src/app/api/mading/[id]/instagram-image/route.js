@@ -74,6 +74,9 @@ export async function GET(request, { params }) {
   const rawRatio = searchParams.get("ratio") || "portrait";
   const ratio = rawRatio === "story" || rawRatio === "9:16" ? "story" : rawRatio === "landscape" ? "landscape" : "portrait";
   const isDownload = searchParams.get("download") === "1" || searchParams.get("dl") === "1";
+  
+  // Ambil parameter halaman, default halaman pertama (index 0)
+  const pageIndex = Math.max(0, parseInt(searchParams.get("page") || "0", 10));
 
   const { data: post, error } = await getAdminClient()
     .from("mading_posts")
@@ -84,13 +87,15 @@ export async function GET(request, { params }) {
 
   if (error || !post) return new NextResponse("Not found", { status: 404 });
 
-  const photo = await fetchSafeMadingPhoto(post.image_url, ratio);
-  const renderPost = photo ? post : { ...post, image_url: null };
-  const svg = createMadingInstagramSvg({ hasPhoto: Boolean(photo), ratio });
+  // Foto hanya dirender pada halaman pertama (page 0)
+  const renderPhoto = pageIndex === 0 ? await fetchSafeMadingPhoto(post.image_url, ratio) : null;
+  const renderPost = renderPhoto ? post : { ...post, image_url: null };
+  
+  const svg = createMadingInstagramSvg({ hasPhoto: Boolean(renderPhoto), ratio, postId: post.id });
   const textLayers = createMadingInstagramTextLayers(renderPost, {
     regularFontPath: REGULAR_FONT_PATH,
     semiboldFontPath: SEMIBOLD_FONT_PATH,
-  }, ratio);
+  }, ratio, pageIndex);
 
   const isLandscape = ratio === "landscape";
   const isStory = ratio === "story";
@@ -99,7 +104,7 @@ export async function GET(request, { params }) {
 
   const image = await sharp(Buffer.from(svg))
     .composite([
-      ...(photo ? [{ input: photo, left: photoLeft, top: photoTop }] : []),
+      ...(renderPhoto ? [{ input: renderPhoto, left: photoLeft, top: photoTop }] : []),
       ...textLayers,
     ])
     .jpeg({ quality: 92, mozjpeg: true })
@@ -111,7 +116,7 @@ export async function GET(request, { params }) {
   };
 
   if (isDownload) {
-    const filename = `menfess-usu-${params.id}-${ratio === "story" ? "9-16" : ratio === "portrait" ? "1080x1350" : ratio}.jpg`;
+    const filename = `menfess-usu-${params.id}-${ratio === "story" ? "9-16" : ratio === "portrait" ? "1080x1350" : ratio}-p${pageIndex + 1}.jpg`;
     headers["Content-Disposition"] = `attachment; filename="${filename}"`;
   }
 

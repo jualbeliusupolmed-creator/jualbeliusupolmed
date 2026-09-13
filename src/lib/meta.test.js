@@ -79,3 +79,59 @@ describe("Meta Instagram publisher", () => {
   });
 });
 
+describe("Meta Instagram Caption Generators", () => {
+  it("generates correct Menfess caption without tagged product", async () => {
+    const { captionForMading } = await import("./madingInstagram");
+    const caption = captionForMading({
+      type: "menfess",
+      sender_name: "Mahasiswa USU",
+      faculty: "USU",
+      content: "Halo min, mau tanya info kos terdekat...",
+    });
+    expect(caption).toContain("MENFESS USU POLMED");
+    expect(caption).toContain("Halo min, mau tanya info kos terdekat...");
+    expect(caption).toContain("— Mahasiswa USU · USU");
+    expect(caption).not.toContain("🛒 Tagged Produk Katalog");
+  });
+
+  it("generates correct Menfess caption with tagged product", async () => {
+    const { captionForMading } = await import("./madingInstagram");
+    const caption = captionForMading({
+      type: "menfess",
+      sender_name: "Penjual Laptop",
+      faculty: "POLMED",
+      content: "Laptop Asus i5 mulus banget!",
+      listings: {
+        id: "listing-123",
+        title: "Laptop Asus ROG i5 16GB",
+        price: 7500000,
+      },
+    });
+    expect(caption).toContain("MENFESS USU POLMED");
+    expect(caption).toContain("Laptop Asus i5 mulus banget!");
+    expect(caption).toContain('🛒 Tagged Produk Katalog: "Laptop Asus ROG i5 16GB"');
+  });
+
+  it("generates correct Katalog listing caption", async () => {
+    const { captionForListing } = await import("./listingInstagram");
+    const caption = captionForListing(
+      {
+        id: "item-1",
+        title: "Buku Kalkulus Purcell",
+        price: 50000,
+        category: "Buku",
+        condition: "used",
+        campus: "USU",
+        area: "Pintu 1",
+        description: "Buku masih bagus tidak ada orat-aret",
+      },
+      "https://jualbeliusupolmed.web.id",
+    );
+    expect(caption).toContain("Buku Kalkulus Purcell");
+    expect(caption).toContain("Harga: Rp 50.000");
+    expect(caption).toContain("Kategori: Buku");
+    expect(caption).toContain("Kondisi: Preloved");
+    expect(caption).toContain("https://jualbeliusupolmed.web.id/produk/buku-kalkulus-purcell-item-1");
+  });
+});
+

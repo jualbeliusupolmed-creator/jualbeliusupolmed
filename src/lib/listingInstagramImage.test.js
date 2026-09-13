@@ -38,7 +38,7 @@ describe("listing Instagram image", () => {
     expect(createListingInstagramBaseSvg()).toContain('width="1080" height="1350"');
     expect(layout.titleLines.length).toBeLessThanOrEqual(2);
     expect(layout.price).toBe("Rp 4.500.000");
-    expect(layerText).toContain("@katalogusupolmed");
+    expect(layerText).toContain("@usupolmedkatalog");
     expect(layerText).not.toContain("seller_wa");
   });
 

@@ -156,7 +156,7 @@ export default function AdminListingDetail({ listing, payments, reports, ratings
           <button
             onClick={() => action(
               { action: "publish_listing_instagram", id: listing.id },
-              "Terbit di @katalogusupolmed",
+              "Terbit di @usupolmedkatalog",
             )}
             disabled={busy || instagramStatus === "processing"}
             className="rounded-lg bg-violet-100 px-3 py-1.5 text-sm font-medium text-violet-700 hover:bg-violet-200 disabled:cursor-wait disabled:opacity-60"
@@ -301,7 +301,7 @@ export default function AdminListingDetail({ listing, payments, reports, ratings
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 className="font-bold dark:text-white">Instagram Katalog</h2>
-                <p className="mt-1 text-xs text-gray-400">@katalogusupolmed</p>
+                <p className="mt-1 text-xs text-gray-400">@usupolmedkatalog</p>
               </div>
               <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
                 instagramStatus === "published"

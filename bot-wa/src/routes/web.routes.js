@@ -202,6 +202,14 @@ module.exports = function pasangRuteHalaman(app, ctx) {
         res.sendFile(path.join(AKAR, 'antrean.html'));
     });
 
+    // ── Broadcast japri ke anggota grup (butuh sandi) ─────────────────────────────
+    // Halaman tiga-langkah: pilih grup → pilih anggota → tulis pesan → kirim.
+    // Data anggota diambil dari /groups/:jid (full participant list), pengiriman
+    // dilakukan via POST /broadcast — keduanya sudah bergerbang requireAuth.
+    app.get('/broadcast_grup', requireAuthPage, (req, res) => {
+        res.sendFile(path.join(AKAR, 'halaman', 'broadcast_grup.html'));
+    });
+
     app.get('/riwayat', requireAuthPage, async (req, res) => {
         if (riwayatCache.data && Date.now() - riwayatCache.pada < RIWAYAT_TTL_MS) {
             return res.json({ ...riwayatCache.data, dariCache: true });

@@ -29,24 +29,31 @@ export default function MadingClient({ initialPosts = [] }) {
   // pembaca dari dalam feed.
   const [tagProduk, setTagProduk] = useState(null);
   const [intipProduk, setIntipProduk] = useState(null);
-
-  // Dibuka dari tombol "Buat" di dock bawah: /rute?tulis=1 langsung
-  // membuka form, jadi pengguna tidak perlu mencari tombolnya di halaman.
-  useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("tulis") === "1") {
-      setShowModal(true);
-      window.history.replaceState({}, "", window.location.pathname);
-    }
-  }, []);
+  // Post yang sedang dibuka modal unduh gambar-nya.
   const [unduhPost, setUnduhPost] = useState(null);
 
+  // Dibuka dari tombol "Buat" atau "Promosikan di Menfess": /mading?tulis=1&tag=<id>
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get("tab");
-      // Semua tab yang valid sekarang termasuk 'organisasi'
+      const tagId = params.get("tag");
+
       if (["info", "menfess", "blog", "organisasi"].includes(tab)) setActiveTab(tab);
-      if (params.get("buat") === "1") setShowModal(true);
+      if (params.get("buat") === "1" || params.get("tulis") === "1") setShowModal(true);
+
+      if (tagId) {
+        setShowModal(true);
+        fetch(`/api/listings/browse?q=${encodeURIComponent(tagId)}`)
+          .then((r) => r.json())
+          .then((d) => {
+            if (d?.listings?.length > 0) {
+              const matched = d.listings.find((l) => l.id === tagId) || d.listings[0];
+              setTagProduk(matched);
+            }
+          })
+          .catch(() => {});
+      }
     } catch {
       // Query parameters are a progressive enhancement only.
     }

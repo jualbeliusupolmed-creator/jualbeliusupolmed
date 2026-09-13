@@ -1,9 +1,7 @@
 const PORTRAIT_WIDTH = 1080;
 const PORTRAIT_HEIGHT = 1350;
-
 const STORY_WIDTH = 1080;
 const STORY_HEIGHT = 1920;
-
 const LANDSCAPE_WIDTH = 1200;
 const LANDSCAPE_HEIGHT = 675;
 
@@ -28,7 +26,6 @@ function normalizeText(value = "") {
 function splitLongWord(word, maxChars) {
   const characters = Array.from(word);
   if (characters.length <= maxChars) return [word];
-
   const pieces = [];
   for (let index = 0; index < characters.length; index += maxChars) {
     pieces.push(characters.slice(index, index + maxChars).join(""));
@@ -82,6 +79,41 @@ export function wrapInstagramText(value, maxChars = 46, maxLines = 10) {
   return lines;
 }
 
+export function wrapInstagramTextPages(value, maxChars = 46, maxLinesPerPage = 10) {
+  const normalized = normalizeText(value);
+  if (!normalized) return [[]];
+
+  const words = normalized
+    .split(" ")
+    .flatMap((word) => splitLongWord(word, maxChars));
+  
+  const pages = [];
+  let currentLines = [];
+  let currentLine = "";
+
+  for (let index = 0; index < words.length; index += 1) {
+    const word = words[index];
+    const candidate = currentLine ? `${currentLine} ${word}` : word;
+
+    if (candidate.length <= maxChars) {
+      currentLine = candidate;
+    } else {
+      if (currentLine) currentLines.push(currentLine);
+      currentLine = word;
+
+      if (currentLines.length >= maxLinesPerPage) {
+        pages.push(currentLines);
+        currentLines = [];
+      }
+    }
+  }
+
+  if (currentLine) currentLines.push(currentLine);
+  if (currentLines.length > 0) pages.push(currentLines);
+
+  return pages.slice(0, 10); // Instagram max 10 carousel pages
+}
+
 function typographyForLength(length, ratio = "portrait") {
   if (ratio === "landscape") {
     if (length <= 100) return { fontSize: 34, lineHeight: 50, maxChars: 56, maxLines: 6 };
@@ -116,32 +148,84 @@ export function layoutMadingInstagramPost(post = {}, ratio = "portrait") {
     : typographyForLength(message.length, ratio);
 
   const lines = wrapInstagramText(message, typography.maxChars, typography.maxLines);
+  const pages = wrapInstagramTextPages(message, typography.maxChars, typography.maxLines);
+  
   const messageCenterY = isLandscape
     ? post.image_url ? 440 : 330
     : isStory
     ? post.image_url ? 1240 : 960
     : post.image_url ? 900 : 650;
+
+  const pagesLayout = pages.map((pageLines) => {
+    return {
+      lines: pageLines,
+      firstLineY: messageCenterY - ((pageLines.length - 1) * typography.lineHeight) / 2
+    };
+  });
+
   const firstLineY = messageCenterY - ((lines.length - 1) * typography.lineHeight) / 2;
 
   return {
     ...typography,
     lines,
     firstLineY,
-    handle: "@usupolmedmenfess",
+    pages: pagesLayout,
+    handle: "@usu.zonafess",
     footer: "dikirim lewat jualbeliusupolmed.web.id",
   };
 }
 
+// ---------------- THEMES ---------------- //
+const THEMES = [
+  // 0: Light Classic (USU Default)
+  {
+    bg: "#F8F7F3", card: "#FFFFFF",
+    glow1: "#7C5AC8", glow2: "#14A875",
+    textPrimary: "#24262B", textSecondary: "#96938D", textAccent: "#7050C2",
+    line: "#D8D6D0", photoBg: "#E9E6DE"
+  },
+  // 1: Dark Blue (ITS Style)
+  {
+    bg: "#0F172A", card: "#1E293B",
+    glow1: "#3B82F6", glow2: "#0EA5E9",
+    textPrimary: "#F8FAFC", textSecondary: "#94A3B8", textAccent: "#38BDF8",
+    line: "#334155", photoBg: "#0F172A"
+  },
+  // 2: Lime Green (UINSA Style)
+  {
+    bg: "#D9F99D", card: "#FFFFFF",
+    glow1: "#84CC16", glow2: "#FACC15",
+    textPrimary: "#064E3B", textSecondary: "#166534", textAccent: "#4D7C0F",
+    line: "#BEF264", photoBg: "#ECFCCB"
+  },
+  // 3: Warm Yellow (UNNES Style)
+  {
+    bg: "#FEF08A", card: "#FFFFFF",
+    glow1: "#F59E0B", glow2: "#FCD34D",
+    textPrimary: "#451A03", textSecondary: "#78350F", textAccent: "#B45309",
+    line: "#FDE047", photoBg: "#FEF9C3"
+  },
+  // 4: Clean Sky (ITB Style)
+  {
+    bg: "#E0F2FE", card: "#FFFFFF",
+    glow1: "#0EA5E9", glow2: "#38BDF8",
+    textPrimary: "#0F172A", textSecondary: "#475569", textAccent: "#2563EB",
+    line: "#BAE6FD", photoBg: "#F0F9FF"
+  }
+];
+
+function getTheme(postId) {
+  if (!postId) return THEMES[0];
+  let hash = 0;
+  for (let i = 0; i < String(postId).length; i++) {
+    hash = String(postId).charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % THEMES.length;
+  return THEMES[index];
+}
+
 function pangoTextLayer({
-  text,
-  fontPath,
-  fontName,
-  fontSize,
-  color,
-  width,
-  left,
-  top,
-  align = "center",
+  text, fontPath, fontName, fontSize, color, width, left, top, align = "center",
 }) {
   return {
     input: {
@@ -163,10 +247,20 @@ function pangoTextLayer({
 export function createMadingInstagramTextLayers(
   post = {},
   { regularFontPath, semiboldFontPath },
-  ratio = "portrait"
+  ratio = "portrait",
+  pageIndex = 0
 ) {
   const isLandscape = ratio === "landscape";
+  const isStory = ratio === "story" || ratio === "9:16";
   const layout = layoutMadingInstagramPost(post, ratio);
+  const theme = getTheme(post.id);
+  
+  // Amankan index halaman
+  const safePageIndex = Math.max(0, Math.min(pageIndex, layout.pages.length - 1));
+  const pageData = layout.pages[safePageIndex];
+
+  const totalPages = layout.pages.length;
+  const pageIndicator = totalPages > 1 ? ` (${safePageIndex + 1}/${totalPages})` : "";
 
   if (isLandscape) {
     const layers = [
@@ -175,37 +269,35 @@ export function createMadingInstagramTextLayers(
         fontPath: semiboldFontPath,
         fontName: "Plus Jakarta Sans SemiBold",
         fontSize: 24,
-        color: "#7050C2",
+        color: theme.textAccent,
         width: 600,
         left: 300,
         top: 45,
       }),
     ];
 
-    layout.lines.forEach((line, index) => {
+    pageData.lines.forEach((line, index) => {
       layers.push(
         pangoTextLayer({
           text: line,
           fontPath: regularFontPath,
           fontName: "Plus Jakarta Sans",
           fontSize: layout.fontSize,
-          color: "#24262B",
+          color: theme.textPrimary,
           width: 1040,
           left: 80,
-          top: Math.round(
-            layout.firstLineY + index * layout.lineHeight - layout.fontSize,
-          ),
+          top: Math.round(pageData.firstLineY + index * layout.lineHeight - layout.fontSize),
         }),
       );
     });
 
     layers.push(
       pangoTextLayer({
-        text: layout.footer,
+        text: layout.footer + pageIndicator,
         fontPath: regularFontPath,
         fontName: "Plus Jakarta Sans",
         fontSize: 18,
-        color: "#96938D",
+        color: theme.textSecondary,
         width: 600,
         left: 300,
         top: 600,
@@ -215,58 +307,52 @@ export function createMadingInstagramTextLayers(
         fontPath: semiboldFontPath,
         fontName: "Plus Jakarta Sans SemiBold",
         fontSize: 17,
-        color: "#77746F",
+        color: theme.textSecondary,
         width: 250,
         left: 580,
         top: 630,
         align: "left",
       }),
     );
-
     return layers;
   }
 
-  const isStory = ratio === "story" || ratio === "9:16";
-
   if (isStory) {
-    // STORY 9:16 (1080 x 1920)
     const layers = [
       pangoTextLayer({
         text: layout.handle,
         fontPath: semiboldFontPath,
         fontName: "Plus Jakarta Sans SemiBold",
         fontSize: 28,
-        color: "#7050C2",
+        color: theme.textAccent,
         width: 800,
         left: 140,
         top: 190,
       }),
     ];
 
-    layout.lines.forEach((line, index) => {
+    pageData.lines.forEach((line, index) => {
       layers.push(
         pangoTextLayer({
           text: line,
           fontPath: regularFontPath,
           fontName: "Plus Jakarta Sans",
           fontSize: layout.fontSize,
-          color: "#24262B",
+          color: theme.textPrimary,
           width: 900,
           left: 90,
-          top: Math.round(
-            layout.firstLineY + index * layout.lineHeight - layout.fontSize,
-          ),
+          top: Math.round(pageData.firstLineY + index * layout.lineHeight - layout.fontSize),
         }),
       );
     });
 
     layers.push(
       pangoTextLayer({
-        text: layout.footer,
+        text: layout.footer + pageIndicator,
         fontPath: regularFontPath,
         fontName: "Plus Jakarta Sans",
         fontSize: 23,
-        color: "#96938D",
+        color: theme.textSecondary,
         width: 800,
         left: 140,
         top: 1736,
@@ -276,55 +362,52 @@ export function createMadingInstagramTextLayers(
         fontPath: semiboldFontPath,
         fontName: "Plus Jakarta Sans SemiBold",
         fontSize: 21,
-        color: "#77746F",
+        color: theme.textSecondary,
         width: 370,
         left: 505,
         top: 1808,
         align: "left",
       }),
     );
-
     return layers;
   }
 
-  // PORTRAIT DEFAULT 4:5 (1080 x 1350)
+  // PORTRAIT DEFAULT 4:5
   const layers = [
     pangoTextLayer({
       text: layout.handle,
       fontPath: semiboldFontPath,
       fontName: "Plus Jakarta Sans SemiBold",
       fontSize: 28,
-      color: "#7050C2",
+      color: theme.textAccent,
       width: 800,
       left: 140,
       top: 137,
     }),
   ];
 
-  layout.lines.forEach((line, index) => {
+  pageData.lines.forEach((line, index) => {
     layers.push(
       pangoTextLayer({
         text: line,
         fontPath: regularFontPath,
         fontName: "Plus Jakarta Sans",
         fontSize: layout.fontSize,
-        color: "#24262B",
+        color: theme.textPrimary,
         width: 900,
         left: 90,
-        top: Math.round(
-          layout.firstLineY + index * layout.lineHeight - layout.fontSize,
-        ),
+        top: Math.round(pageData.firstLineY + index * layout.lineHeight - layout.fontSize),
       }),
     );
   });
 
   layers.push(
     pangoTextLayer({
-      text: layout.footer,
+      text: layout.footer + pageIndicator,
       fontPath: regularFontPath,
       fontName: "Plus Jakarta Sans",
       fontSize: 23,
-      color: "#96938D",
+      color: theme.textSecondary,
       width: 800,
       left: 140,
       top: 1166,
@@ -334,98 +417,68 @@ export function createMadingInstagramTextLayers(
       fontPath: semiboldFontPath,
       fontName: "Plus Jakarta Sans SemiBold",
       fontSize: 21,
-      color: "#77746F",
+      color: theme.textSecondary,
       width: 370,
       left: 505,
       top: 1238,
       align: "left",
     }),
   );
-
   return layers;
 }
 
-export function createMadingInstagramSvg({ hasPhoto = false, ratio = "portrait" } = {}) {
+export function createMadingInstagramSvg({ hasPhoto = false, ratio = "portrait", postId = null } = {}) {
   const isLandscape = ratio === "landscape";
   const isStory = ratio === "story" || ratio === "9:16";
   const width = isLandscape ? LANDSCAPE_WIDTH : isStory ? STORY_WIDTH : PORTRAIT_WIDTH;
   const height = isLandscape ? LANDSCAPE_HEIGHT : isStory ? STORY_HEIGHT : PORTRAIT_HEIGHT;
+  
+  const theme = getTheme(postId);
 
+  // Background and glows
+  let svgContent = `
+    <defs>
+      <radialGradient id="glow1" cx="0" cy="0" r="1" gradientTransform="translate(${isLandscape ? '60 60' : isStory ? '80 120' : '80 80'}) rotate(42) scale(${isLandscape ? '400 300' : isStory ? '600 500' : '520 410'})" gradientUnits="userSpaceOnUse">
+        <stop stop-color="${theme.glow1}" stop-opacity=".15"/>
+        <stop offset="1" stop-color="${theme.glow1}" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="glow2" cx="0" cy="0" r="1" gradientTransform="translate(${isLandscape ? '1120 620' : isStory ? '1000 1800' : '1000 1280'}) rotate(-140) scale(${isLandscape ? '400 300' : isStory ? '600 500' : '520 400'})" gradientUnits="userSpaceOnUse">
+        <stop stop-color="${theme.glow2}" stop-opacity=".15"/>
+        <stop offset="1" stop-color="${theme.glow2}" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <rect width="${width}" height="${height}" fill="${theme.bg}"/>
+    <rect width="${width}" height="${height}" fill="url(#glow1)"/>
+    <rect width="${width}" height="${height}" fill="url(#glow2)"/>
+  `;
+
+  // Draw Card Container
   if (isLandscape) {
-    return `
-      <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <radialGradient id="violetGlow" cx="0" cy="0" r="1" gradientTransform="translate(60 60) rotate(42) scale(400 300)" gradientUnits="userSpaceOnUse">
-            <stop stop-color="#7C5AC8" stop-opacity=".06"/>
-            <stop offset="1" stop-color="#7C5AC8" stop-opacity="0"/>
-          </radialGradient>
-          <radialGradient id="greenGlow" cx="0" cy="0" r="1" gradientTransform="translate(1120 620) rotate(-140) scale(400 300)" gradientUnits="userSpaceOnUse">
-            <stop stop-color="#14A875" stop-opacity=".05"/>
-            <stop offset="1" stop-color="#14A875" stop-opacity="0"/>
-          </radialGradient>
-        </defs>
-
-        <rect width="${width}" height="${height}" fill="#F8F7F3"/>
-        <rect width="${width}" height="${height}" fill="url(#violetGlow)"/>
-        <rect width="${width}" height="${height}" fill="url(#greenGlow)"/>
-
-        ${hasPhoto ? '<rect x="350" y="90" width="500" height="230" rx="20" fill="#E9E6DE"/>' : ""}
-
-        <line x1="200" y1="580" x2="1000" y2="580" stroke="#D8D6D0" stroke-width="1.5"/>
-        <circle cx="535" cy="640" r="6" fill="#16B77E"/>
-        <circle cx="558" cy="640" r="6" fill="#7050C2"/>
-      </svg>`;
+    svgContent += `
+      <rect x="20" y="20" width="${width - 40}" height="${height - 40}" rx="30" fill="${theme.card}" stroke="${theme.line}" stroke-width="2"/>
+      ${hasPhoto ? `<rect x="350" y="90" width="500" height="230" rx="20" fill="${theme.photoBg}"/>` : ""}
+      <line x1="200" y1="580" x2="1000" y2="580" stroke="${theme.line}" stroke-width="1.5"/>
+      <circle cx="535" cy="640" r="6" fill="${theme.glow2}"/>
+      <circle cx="558" cy="640" r="6" fill="${theme.textAccent}"/>
+    `;
+  } else if (isStory) {
+    svgContent += `
+      <rect x="40" y="80" width="${width - 80}" height="${height - 160}" rx="60" fill="${theme.card}" stroke="${theme.line}" stroke-width="3"/>
+      ${hasPhoto ? `<rect x="110" y="320" width="860" height="580" rx="30" fill="${theme.photoBg}"/>` : ""}
+      <line x1="164" y1="1708" x2="916" y2="1708" stroke="${theme.line}" stroke-width="1.5"/>
+      <circle cx="454" cy="1824" r="8" fill="${theme.glow2}"/>
+      <circle cx="481" cy="1824" r="8" fill="${theme.textAccent}"/>
+    `;
+  } else {
+    // PORTRAIT
+    svgContent += `
+      <rect x="40" y="40" width="${width - 80}" height="${height - 80}" rx="50" fill="${theme.card}" stroke="${theme.line}" stroke-width="2"/>
+      ${hasPhoto ? `<rect x="122" y="237" width="836" height="476" rx="30" fill="${theme.photoBg}"/>` : ""}
+      <line x1="164" y1="1138" x2="916" y2="1138" stroke="${theme.line}" stroke-width="1.5"/>
+      <circle cx="454" cy="1254" r="8" fill="${theme.glow2}"/>
+      <circle cx="481" cy="1254" r="8" fill="${theme.textAccent}"/>
+    `;
   }
 
-  if (isStory) {
-    // STORY 9:16 (1080 x 1920)
-    return `
-      <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <radialGradient id="violetGlow" cx="0" cy="0" r="1" gradientTransform="translate(80 120) rotate(42) scale(600 500)" gradientUnits="userSpaceOnUse">
-            <stop stop-color="#7C5AC8" stop-opacity=".055"/>
-            <stop offset="1" stop-color="#7C5AC8" stop-opacity="0"/>
-          </radialGradient>
-          <radialGradient id="greenGlow" cx="0" cy="0" r="1" gradientTransform="translate(1000 1800) rotate(-140) scale(600 500)" gradientUnits="userSpaceOnUse">
-            <stop stop-color="#14A875" stop-opacity=".05"/>
-            <stop offset="1" stop-color="#14A875" stop-opacity="0"/>
-          </radialGradient>
-        </defs>
-
-        <rect width="${width}" height="${height}" fill="#F8F7F3"/>
-        <rect width="${width}" height="${height}" fill="url(#violetGlow)"/>
-        <rect width="${width}" height="${height}" fill="url(#greenGlow)"/>
-
-        ${hasPhoto ? '<rect x="110" y="320" width="860" height="580" rx="30" fill="#E9E6DE"/>' : ""}
-
-        <line x1="164" y1="1708" x2="916" y2="1708" stroke="#D8D6D0" stroke-width="1.5"/>
-        <circle cx="454" cy="1824" r="8" fill="#16B77E"/>
-        <circle cx="481" cy="1824" r="8" fill="#7050C2"/>
-      </svg>`;
-  }
-
-  // PORTRAIT 4:5 (1080 x 1350)
-  return `
-    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <radialGradient id="violetGlow" cx="0" cy="0" r="1" gradientTransform="translate(80 80) rotate(42) scale(520 410)" gradientUnits="userSpaceOnUse">
-          <stop stop-color="#7C5AC8" stop-opacity=".055"/>
-          <stop offset="1" stop-color="#7C5AC8" stop-opacity="0"/>
-        </radialGradient>
-        <radialGradient id="greenGlow" cx="0" cy="0" r="1" gradientTransform="translate(1000 1280) rotate(-140) scale(520 400)" gradientUnits="userSpaceOnUse">
-          <stop stop-color="#14A875" stop-opacity=".05"/>
-          <stop offset="1" stop-color="#14A875" stop-opacity="0"/>
-        </radialGradient>
-      </defs>
-
-      <rect width="${width}" height="${height}" fill="#F8F7F3"/>
-      <rect width="${width}" height="${height}" fill="url(#violetGlow)"/>
-      <rect width="${width}" height="${height}" fill="url(#greenGlow)"/>
-
-      ${hasPhoto ? '<rect x="122" y="237" width="836" height="476" rx="30" fill="#E9E6DE"/>' : ""}
-
-      <line x1="164" y1="1138" x2="916" y2="1138" stroke="#D8D6D0" stroke-width="1.5"/>
-      <circle cx="454" cy="1254" r="8" fill="#16B77E"/>
-      <circle cx="481" cy="1254" r="8" fill="#7050C2"/>
-    </svg>`;
+  return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">${svgContent}</svg>`;
 }

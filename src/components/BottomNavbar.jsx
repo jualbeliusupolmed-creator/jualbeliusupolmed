@@ -144,13 +144,13 @@ function BottomNavbarInner() {
 
       <div
         className={cn(
-          "fixed left-1/2 z-40 -translate-x-1/2 select-none no-tap-highlight transition-all duration-300",
+          "fixed left-1/2 z-40 -translate-x-1/2 select-none no-tap-highlight transition-all duration-300 md:hidden",
           menyingkir
-            ? "translate-y-[160%] opacity-0 pointer-events-none md:translate-y-0 md:opacity-100 md:pointer-events-auto"
+            ? "translate-y-[160%] opacity-0 pointer-events-none"
             : "translate-y-0 opacity-100",
           isChatRoom
-            ? "bottom-0 w-full max-w-md bg-white/90 dark:bg-[#000000]/90 backdrop-blur-2xl border-t border-black/[0.06] dark:border-white/[0.08] pb-[env(safe-area-inset-bottom)] shadow-none"
-            : "bottom-[max(0.75rem,env(safe-area-inset-bottom))] w-[calc(100%-2rem)] max-w-[380px] rounded-[22px] border border-black/[0.06] bg-white/90 shadow-[0_14px_38px_rgba(15,23,42,0.16)] backdrop-blur-2xl dark:border-white/[0.1] dark:bg-[#111113]/90"
+            ? "bottom-0 w-full max-w-md bg-white/90 dark:bg-[#0f172a]/90 backdrop-blur-2xl border-t border-black/[0.06] dark:border-white/[0.08] pb-[env(safe-area-inset-bottom)] shadow-none"
+            : "bottom-[max(0.75rem,env(safe-area-inset-bottom))] w-[calc(100%-2rem)] max-w-[380px] rounded-[22px] border border-black/[0.06] bg-white/90 shadow-[0_14px_38px_rgba(15,23,42,0.16)] backdrop-blur-2xl dark:border-white/[0.1] dark:bg-[#0f172a]/90"
         )}
       >
         <div
