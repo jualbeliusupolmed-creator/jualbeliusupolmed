@@ -1,4 +1,4 @@
-﻿# Setup Meta Instagram: Auto-Post Menfess & Katalog
+# Setup Meta Instagram: Auto-Post Menfess & Katalog
 
 Panduan ini menjelaskan cara mendapatkan dan mengisi 4 environment variables
 yang dibutuhkan agar sistem auto-post ke Instagram berfungsi.
@@ -11,10 +11,10 @@ yang dibutuhkan agar sistem auto-post ke Instagram berfungsi.
 
 | Variable | Akun IG | Fungsi |
 |---|---|---|
-| `META_MENFESS_IG_USER_ID` | `@usupolmedmenfess` | ID numerik akun Instagram |
-| `META_MENFESS_IG_ACCESS_TOKEN` | `@usupolmedmenfess` | Token akses posting |
-| `META_KATALOG_IG_USER_ID` | `@katalogusupolmed` | ID numerik akun Instagram |
-| `META_KATALOG_IG_ACCESS_TOKEN` | `@katalogusupolmed` | Token akses posting |
+| `META_MENFESS_IG_USER_ID` | `@usu.zonafess` | ID numerik akun Instagram |
+| `META_MENFESS_IG_ACCESS_TOKEN` | `@usu.zonafess` | Token akses posting |
+| `META_KATALOG_IG_USER_ID` | `@usupolmedkatalog` | ID numerik akun Instagram |
+| `META_KATALOG_IG_ACCESS_TOKEN` | `@usupolmedkatalog` | Token akses posting |
 
 ---
 

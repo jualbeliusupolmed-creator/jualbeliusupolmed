@@ -23,7 +23,7 @@ describe("mading Instagram image", () => {
     expect(svg).toContain('fill="#F8F7F3"');
     expect(svg).not.toContain("<text");
     expect(layers.map((layer) => layer.input.text.text).join(" ")).toContain(
-      "@usupolmedmenfess",
+      "@usu.zonafess",
     );
     expect(layers.map((layer) => layer.input.text.text).join(" ")).toContain(
       "dikirim lewat jualbeliusupolmed.web.id",

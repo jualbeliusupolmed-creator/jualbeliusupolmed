@@ -48,7 +48,7 @@ export function layoutListingInstagram(listing = {}) {
     titleLines,
     price: formatInstagramPrice(listing.price),
     meta: meta || "USU · POLMED",
-    handle: "@katalogusupolmed",
+    handle: "@usupolmedkatalog",
     footer: "Lihat detail di jualbeliusupolmed.web.id",
   };
 }

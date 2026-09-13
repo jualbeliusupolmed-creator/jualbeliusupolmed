@@ -100,15 +100,20 @@ export default function LayoutWrapper({ children }) {
     // memanggilnya sendiri setiap kali alamat berpindah, dan hasilnya tidak
     // pernah sampai ke komponen lain.
     <SesiProvider>
+      {/* 
+        Mobile: max-w-md centered dengan shadow (tampilan "app frame")
+        Desktop (md+): full-width tanpa batasan, shadow dihapus agar memanfaatkan layar lebar
+      */}
       <div className={cn(
-        "w-full min-h-screen relative bg-[#f5f5f7] dark:bg-[#000000] flex flex-col",
-        !isAdmin && "max-w-md mx-auto shadow-2xl overflow-x-hidden"
+        "w-full min-h-screen relative bg-[#f5f5f7] dark:bg-[#0f172a] flex flex-col",
+        !isAdmin && "w-full max-w-md md:max-w-7xl mx-auto shadow-2xl md:shadow-none overflow-x-hidden"
       )}>
         {!isImmersive && <Navbar config={config} />}
         <main className={cn(
           "flex-1 flex flex-col",
-          // Ruang bawah disesuaikan: dock + kolom cari yang menempel di bawah
-          !isAdmin && !isChat && !isTeman ? "pb-36 md:pb-32" : ""
+          // Mobile: padding bawah untuk bottom navbar
+          // Desktop: padding bawah lebih kecil (tidak ada bottom navbar)
+          !isAdmin && !isChat && !isTeman ? "pb-36 md:pb-8" : ""
         )}>
           {children}
         </main>
@@ -122,6 +127,7 @@ export default function LayoutWrapper({ children }) {
                 kedua / 25 detik), karena izin notifikasi cuma bisa diminta sekali. */}
             <NotifPrompt />
             <PopupSponsor config={config} />
+            {/* Bottom navbar hanya untuk mobile — di desktop navigasi ada di Navbar atas */}
             <BottomNavbar />
             {!hideFooter && <Footer config={config} />}
           </>

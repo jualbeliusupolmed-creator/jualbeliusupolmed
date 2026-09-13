@@ -107,14 +107,14 @@ export async function waitForInstagramContainer(
 // `<pageId>/photos` — persis pola postToInstagram di bawah.
 
 /**
- * Membuat container gambar, menunggu FINISHED, lalu menerbitkannya.
+ * Membuat container gambar atau carousel, menunggu FINISHED, lalu menerbitkannya.
  * creationId dapat dipakai ulang setelah proses terputus agar retry tidak
  * membuat post duplikat.
  */
 export async function postToInstagram(
   igUserId,
   token,
-  imageUrl,
+  imageUrl, // Bisa berupa string tunggal atau array of string
   caption,
   {
     creationId: existingCreationId = null,
@@ -126,19 +126,59 @@ export async function postToInstagram(
   if (!igUserId || !token) {
     throw new Error("Konfigurasi akun Instagram belum lengkap.");
   }
-  if (!imageUrl || !/^https:\/\//i.test(imageUrl)) {
-    throw new Error("URL gambar Instagram harus berupa HTTPS publik.");
-  }
 
   let creationId = existingCreationId;
+  const isCarousel = Array.isArray(imageUrl) && imageUrl.length > 1;
+
+  if (isCarousel) {
+    for (const url of imageUrl) {
+      if (!url || !/^https:\/\//i.test(url)) {
+        throw new Error("URL gambar Instagram carousel harus berupa HTTPS publik.");
+      }
+    }
+  } else {
+    const singleUrl = Array.isArray(imageUrl) ? imageUrl[0] : imageUrl;
+    if (!singleUrl || !/^https:\/\//i.test(singleUrl)) {
+      throw new Error("URL gambar Instagram harus berupa HTTPS publik.");
+    }
+    // Normalisasi kembali menjadi string jika tadinya array 1 item
+    imageUrl = singleUrl;
+  }
+
   if (!creationId) {
-    const created = await graphRequest(`${igUserId}/media`, {
-      token,
-      method: "POST",
-      stage: "Pembuatan media Instagram",
-      body: { image_url: imageUrl, caption },
-    });
-    creationId = created.id;
+    if (isCarousel) {
+      // 1. Buat item carousel untuk masing-masing URL
+      const childrenIds = [];
+      for (const url of imageUrl) {
+        const item = await graphRequest(`${igUserId}/media`, {
+          token,
+          method: "POST",
+          stage: "Pembuatan item carousel Instagram",
+          body: { image_url: url, is_carousel_item: "true" },
+        });
+        if (!item.id) throw new Error("Gagal membuat item carousel.");
+        childrenIds.push(item.id);
+      }
+
+      // 2. Buat container utama CAROUSEL
+      const created = await graphRequest(`${igUserId}/media`, {
+        token,
+        method: "POST",
+        stage: "Pembuatan container carousel Instagram",
+        body: { media_type: "CAROUSEL", children: childrenIds.join(","), caption },
+      });
+      creationId = created.id;
+    } else {
+      // Pembuatan container SINGLE IMAGE
+      const created = await graphRequest(`${igUserId}/media`, {
+        token,
+        method: "POST",
+        stage: "Pembuatan media Instagram",
+        body: { image_url: imageUrl, caption },
+      });
+      creationId = created.id;
+    }
+
     if (!creationId) {
       throw new Error("Pembuatan media Instagram: creation_id tidak diterima.");
     }
@@ -146,9 +186,10 @@ export async function postToInstagram(
   }
 
   const containerStatus = await waitForInstagramContainer(creationId, token, {
-    maxPolls,
+    maxPolls: maxPolls || (isCarousel ? 18 : 12), // Carousel bisa lebih lama
     pollIntervalMs,
   });
+  
   if (containerStatus === "PUBLISHED") {
     return { id: null, creation_id: creationId, already_published: true };
   }

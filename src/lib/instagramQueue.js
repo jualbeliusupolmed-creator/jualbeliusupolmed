@@ -75,10 +75,15 @@ export async function processInstagramQueue({
       const target = await loadTarget(supa, item[targetColumn]);
       if (!target) throw new Error("Konten tidak aktif atau tidak ditemukan.");
 
+      const rawImagePath = imagePath(target);
+      const absoluteImageUrl = Array.isArray(rawImagePath)
+        ? rawImagePath.map(p => `${origin}${p}`)
+        : `${origin}${rawImagePath}`;
+
       const result = await postToInstagram(
         credentials.userId,
         credentials.accessToken,
-        `${origin}${imagePath(target)}`,
+        absoluteImageUrl,
         captionFor(target, origin),
         {
           creationId: item.instagram_container_id,

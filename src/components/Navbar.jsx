@@ -92,7 +92,7 @@ export default function Navbar({ config }) {
       }`}
     >
       {/* ── Top bar: Apple Frosted Glass ── */}
-      <div className="border-b border-black/[0.06] bg-white/80 backdrop-blur-2xl transition-all duration-300 dark:border-white/[0.08] dark:bg-[#000000]/80">
+      <div className="border-b border-black/[0.06] bg-white/80 backdrop-blur-2xl transition-all duration-300 dark:border-white/[0.08] dark:bg-[#0f172a]/90">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-3 py-1.5">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group min-w-0 shrink active:scale-[0.98] transition-transform">
@@ -106,8 +106,8 @@ export default function Navbar({ config }) {
 
           {/* Right side: search, unified user account button, notif, theme, cta */}
           <div className="flex shrink-0 items-center gap-2">
-            {/* Search mini — Spotlight style */}
-            <form onSubmit={submitSearch} className="relative hidden">
+            {/* Search mini — di desktop selalu tampil, di mobile tersembunyi */}
+            <form onSubmit={submitSearch} className="relative hidden md:block">
               <Icon.Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400 transition-colors peer-focus:text-primary" />
               <input
                 value={navQ}
@@ -203,10 +203,10 @@ export default function Navbar({ config }) {
         </div>
       </div>
 
-      {/* ── Nav links bar — Apple Segmented Style ── */}
-      <div className="relative hidden border-b border-black/[0.06] bg-white/70 backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#000000]/70">
-        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-[#f5f5f7] to-transparent z-10 dark:from-[#000000]" />
-        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#f5f5f7] to-transparent z-10 dark:from-[#000000]" />
+      {/* ── Nav links bar — tampil di desktop, sembunyikan di mobile ── */}
+      <div className="relative hidden md:block border-b border-black/[0.06] bg-white/70 backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#0f172a]/80">
+        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-[#f5f5f7] to-transparent z-10 dark:from-[#0f172a]" />
+        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#f5f5f7] to-transparent z-10 dark:from-[#0f172a]" />
         
         <nav className="mx-auto flex max-w-6xl items-center gap-1.5 overflow-x-auto px-4 py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {links.map((l) => {

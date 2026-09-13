@@ -1129,7 +1129,7 @@ export async function POST(req) {
           return NextResponse.json({ ok: true });
         }
 
-        await sendWa(senderJid, `⏳ Memproses iklan *${shortId}* ke @katalogusupolmed...`);
+        await sendWa(senderJid, `⏳ Memproses iklan *${shortId}* ke @usupolmedkatalog...`);
         const results = await autoPublishListingInstagram({
           origin: (process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").replace(/\/$/, ""),
           listingId: listingData.id,
@@ -1138,8 +1138,8 @@ export async function POST(req) {
         await sendWa(
           senderJid,
           published
-            ? "✅ Iklan berhasil diterbitkan ke @katalogusupolmed."
-            : "⏳ Iklan sudah masuk antrean @katalogusupolmed dan akan dicoba ulang otomatis.",
+            ? "✅ Iklan berhasil diterbitkan ke @usupolmedkatalog."
+            : "⏳ Iklan sudah masuk antrean @usupolmedkatalog dan akan dicoba ulang otomatis.",
         );
         return NextResponse.json({ ok: true });
 

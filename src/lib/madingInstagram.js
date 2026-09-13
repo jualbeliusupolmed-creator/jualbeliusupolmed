@@ -14,7 +14,10 @@ function menfessCredentials() {
 export function captionForMading(post) {
   const heading = post.type === "info" ? "INFO KAMPUS" : "MENFESS USU POLMED";
   const title = post.title ? `${post.title}\n\n` : "";
-  return `${heading}\n\n${title}${post.content}\n\n— ${post.sender_name || "Anonim"} · ${post.faculty || "USU / POLMED"}\n\n#USU #POLMED #MenfessUSU #MenfessPOLMED`.slice(0, 2200);
+  const productInfo = post.listings?.title
+    ? `\n\n🛒 Tagged Produk Katalog: "${post.listings.title}"`
+    : "";
+  return `${heading}\n\n${title}${post.content}${productInfo}\n\n— ${post.sender_name || "Anonim"} · ${post.faculty || "USU / POLMED"}\n\n#USU #POLMED #MenfessUSU #MenfessPOLMED`.slice(0, 2200);
 }
 
 export async function queueMadingInstagram(postId, { supa = getAdminClient() } = {}) {
@@ -72,13 +75,26 @@ export async function publishQueuedMadingInstagram({
     loadTarget: async (supa, id) => {
       const { data } = await supa
         .from("mading_posts")
-        .select("id, type, sender_name, faculty, title, content, image_url, status")
+        .select("id, type, sender_name, faculty, title, content, image_url, status, listing_id, listings:listing_id (id, title, price)")
         .eq("id", id)
         .eq("status", "active")
         .maybeSingle();
       return data;
     },
-    imagePath: (post) => `/api/mading/${post.id}/instagram-image`,
+    imagePath: (post) => {
+      // Import layout parser dynamically to avoid cyclic deps if any, or just import at top.
+      // Since it's server side, we can just require it or import it at the top.
+      // But it's easier to just calculate it here since we already have the post object.
+      // Because we can't easily top-level import without changing the top of the file, we'll inline require
+      const { layoutMadingInstagramPost } = require("@/lib/madingInstagramImage");
+      const layout = layoutMadingInstagramPost(post, "portrait");
+      const totalPages = layout.pages.length;
+      
+      if (totalPages > 1) {
+        return Array.from({ length: totalPages }).map((_, i) => `/api/mading/${post.id}/instagram-image?page=${i}`);
+      }
+      return `/api/mading/${post.id}/instagram-image?page=0`;
+    },
     captionFor: captionForMading,
     afterStatus: async (supa, id, status, details = {}) => {
       const updates = { instagram_status: status };

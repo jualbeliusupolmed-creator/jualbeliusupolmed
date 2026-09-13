@@ -96,13 +96,21 @@ export default function OwnerFastActions({ listing }) {
           </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
           {/* Edit Button */}
           <Link
             href={`/dashboard?edit=${listing.id}`}
             className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-95 transition-all"
           >
             <span> Edit Iklan</span>
+          </Link>
+
+          {/* Promosikan di Menfess Button */}
+          <Link
+            href={`/mading?tulis=1&tag=${listing.id}`}
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold shadow-sm active:scale-95 transition-all"
+          >
+            <span>📣 Menfess</span>
           </Link>
 
           {/* Mark Sold Button */}

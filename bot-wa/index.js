@@ -728,7 +728,10 @@ async function processQueue() {
     // karena itu dihitung sebagai percobaan gagal, tiga kali kejadian cukup untuk
     // MEMBUANG pesan pelanggan. Sudah pernah terjadi: 21 Agu 2026, satu pesan ke
     // 6288211366083 hilang persis begitu, beberapa detik setelah sesi direset.
-    if (!botSiap()) { scheduleQueue(1000); return; }               // belum login → tahan, jangan buang
+    if (!botSiap()) {
+        const b2Ok = await bot2Siap();
+        if (!b2Ok) { scheduleQueue(1000); return; }               // dua-duanya belum siap → tahan, jangan buang
+    }
     // Kepala antrean sedang dicoba lewat perangkat kedua (lihat notifyOwner):
     // tunggu percobaan itu selesai supaya alarm yang sama tidak berangkat dari
     // dua nomor. Paling lama ~8 detik — timeout teruskanKeBot2.
@@ -756,7 +759,7 @@ async function processQueue() {
     const readyAt = (head.ts || 0) + REPLY_DELAY_MS;
     const replyWait = readyAt - Date.now();
     if (replyWait > 0) {
-        if (!head.composing && modul('antiban').sinyalMengetik) {
+        if (!head.composing && modul('antiban').sinyalMengetik && botSiap()) {
             head.composing = true;
             waSocket.presenceSubscribe(head.jid).catch(() => {});
             waSocket.sendPresenceUpdate('composing', head.jid).catch(() => {});
@@ -782,27 +785,47 @@ async function processQueue() {
             console.warn(`[Queue] Lewati pesan kosong ke ${task.jid}`);
         } else {
             try {
-                // Indikator "mengetik" sengaja TIDAK di-await: dua round-trip ini dulu
-                // duduk persis di jalur kritis tiap balasan, padahal hasilnya kosmetik.
-                if (modul('antiban').sinyalMengetik) {
-                    waSocket.presenceSubscribe(task.jid).catch(() => {});
-                    waSocket.sendPresenceUpdate('composing', task.jid).catch(() => {});
-                }
+                const pakaiBot2 = !botSiap() && (await bot2Siap());
                 let sendResult;
-                if (task.url) {
-                    sendResult = await waSocket.sendMessage(task.jid, { image: { url: task.url }, caption: task.message });
-                } else if (task.poll) {
-                    sendResult = await waSocket.sendMessage(task.jid, { poll: task.poll });
+                if (pakaiBot2) {
+                    const isiPayload = { target: task.jid };
+                    if (task.url) { isiPayload.url = task.url; isiPayload.message = task.message; }
+                    else if (task.poll) { isiPayload.poll = task.poll; }
+                    else { isiPayload.message = task.message; }
+                    const hasil = await teruskanKeBot2('/send', {
+                        method: 'POST',
+                        body: isiPayload,
+                        headers: { 'X-Diteruskan': '1' },
+                    });
+                    if (hasil.status >= 400) {
+                        throw new Error(hasil.body?.error || `Gagal kirim via Perangkat 2 (HTTP ${hasil.status})`);
+                    }
+                    bump('keluar_bot2');
                 } else {
-                    sendResult = await waSocket.sendMessage(task.jid, { text: task.message });
+                    if (modul('antiban').sinyalMengetik) {
+                        waSocket.presenceSubscribe(task.jid).catch(() => {});
+                        waSocket.sendPresenceUpdate('composing', task.jid).catch(() => {});
+                    }
+                    if (task.url) {
+                        sendResult = await waSocket.sendMessage(task.jid, { image: { url: task.url }, caption: task.message });
+                    } else if (task.poll) {
+                        sendResult = await waSocket.sendMessage(task.jid, { poll: task.poll });
+                    } else {
+                        sendResult = await waSocket.sendMessage(task.jid, { text: task.message });
+                    }
+                    rememberBotSent(sendResult);
+                    bump('keluar');
                 }
-                rememberBotSent(sendResult);
                 recordMessage(task.jid, 'out', task.poll ? `[poll] ${task.poll.name || ''}` : (task.message || '[media]'), task.url ? 'image' : 'text');
-                bump('keluar');
-                console.log(`[Queue] Pesan terkirim ke ${task.jid} (antre ${Date.now() - (task.ts || Date.now())}ms)`);
+                // Update broadcast state jika pesan ini bagian dari broadcast
+                if (task.bcId && K.catatBcTerkirim) K.catatBcTerkirim(task.jid);
+                console.log(`[Queue] Pesan terkirim ke ${task.jid} (antre ${Date.now() - (task.ts || Date.now())}ms)${pakaiBot2 ? ' [via Perangkat 2]' : ''}`);
                 jejakKirim.push(Date.now());
                 const ab = modul('antiban');
-                if (ab.jedaAcak && ab.jedaMax > ab.jedaMin) {
+                if (task.delayMs) {
+                    // Custom jeda spesifik untuk tugas ini (misalnya dari broadcast grup)
+                    gap = task.delayMs;
+                } else if (ab.jedaAcak && ab.jedaMax > ab.jedaMin) {
                     // Jeda acak dari panel menggantikan jeda bawaan. Rentangnya
                     // sama untuk penerima yang sama maupun berbeda — panelnya
                     // memang menjanjikan satu rentang, bukan dua.
@@ -821,7 +844,8 @@ async function processQueue() {
                 // Kegagalan karena sesinya yang belum siap bukan salah pesannya:
                 // kalau ini ikut dihitung, pesan yang sah bisa habis jatahnya
                 // hanya karena kebetulan antre saat bot sedang tersambung ulang.
-                const sesiBelumSiap = !botSiap() || /undefined \(reading 'id'\)|Connection Closed|not open/i.test(err.message || '');
+                const b2Aktif = await bot2Siap();
+                const sesiBelumSiap = (!botSiap() && !b2Aktif) || /undefined \(reading 'id'\)|Connection Closed|not open/i.test(err.message || '');
                 if (!sesiBelumSiap) task.attempts = (task.attempts || 0) + 1;
                 // JANGAN menganggap `forbidden` sebagai penolakan tetap. Godaannya
                 // besar — kedengarannya seperti "bot bukan anggota grup ini" — dan
@@ -846,6 +870,8 @@ async function processQueue() {
                           + 'coba kirim ulang dari dashboard sebelum menyimpulkan botnya bukan anggota.'
                         : `gagal ${MAX_SEND_ATTEMPTS}× berturut-turut: ${err.message}`;
                     catatDibuang(task, sebab);
+                    // Update broadcast state jika pesan ini bagian dari broadcast
+                    if (task.bcId && K.catatBcGagal) K.catatBcGagal(task.jid, sebab);
                 }
             }
         }
@@ -1911,6 +1937,33 @@ async function startBotInner(myGen) {
         // membuatnya berputar sia-sia sampai sambungan ada.
         muatOutbox();
         muatDibuang();
+        // Resume broadcast yang terputus saat restart
+        if (K.resumeBroadcastState) {
+            K.resumeBroadcastState();
+        } else if (K.muatBcState) {
+            const bcSt = K.muatBcState();
+            if (bcSt) {
+                const sudah = new Set([...bcSt.terkirim, ...bcSt.gagal.map(g => g.jid)]);
+                const sisa = bcSt.jids.filter(j => !sudah.has(j));
+                if (sisa.length > 0) {
+                    const ttlBroadcast = 48 * 60 * 60 * 1000;
+                    const now = Date.now();
+                    const diantrekan = new Set(messageQueue.map(t => t.jid));
+                    sisa.forEach(jid => {
+                        if (!diantrekan.has(jid)) {
+                            messageQueue.push({
+                                jid, message: bcSt.pesan, ts: now, ttl: ttlBroadcast,
+                                delayMs: bcSt.delayMs, bcId: bcSt.id,
+                            });
+                        }
+                    });
+                    console.log(`[broadcast] Resume: ${sisa.length} pesan dijadwalkan ulang dari broadcast ${bcSt.id}`);
+                    kickQueue();
+                } else {
+                    console.log(`[broadcast] State ditemukan tapi sudah selesai: ${bcSt.id}`);
+                }
+            }
+        }
 
         // Bersihkan nama sampah warisan versi lama (alur tangkap-nama dulu menyimpan
         // kata biasa/kalimat utuh sebagai nama: "min", "Ntar saya kabari...", "Iya").
