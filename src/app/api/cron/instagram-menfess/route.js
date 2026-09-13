@@ -15,8 +15,8 @@ export async function GET(request) {
   try {
     const origin = siteOriginFromRequest(request);
     const [menfess, catalog] = await Promise.allSettled([
-      publishQueuedMadingInstagram({ origin, limit: 5 }),
-      publishQueuedListingInstagram({ origin, limit: 5 }),
+      publishQueuedMadingInstagram({ origin, limit: 15 }),
+      publishQueuedListingInstagram({ origin, limit: 15 }),
     ]);
     const menfessResults = menfess.status === "fulfilled" ? menfess.value : [];
     const catalogResults = catalog.status === "fulfilled" ? catalog.value : [];
