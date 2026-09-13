@@ -121,15 +121,16 @@ function typographyForLength(length, ratio = "portrait") {
     return { fontSize: 24, lineHeight: 36, maxChars: 78, maxLines: 8 };
   }
   if (ratio === "story" || ratio === "9:16") {
-    if (length <= 120) return { fontSize: 42, lineHeight: 66, maxChars: 38, maxLines: 12 };
-    if (length <= 260) return { fontSize: 36, lineHeight: 56, maxChars: 44, maxLines: 16 };
-    if (length <= 450) return { fontSize: 31, lineHeight: 50, maxChars: 52, maxLines: 20 };
-    return { fontSize: 27, lineHeight: 44, maxChars: 60, maxLines: 24 };
+    if (length <= 80) return { fontSize: 75, lineHeight: 95, maxChars: 22, maxLines: 12 };
+    if (length <= 160) return { fontSize: 60, lineHeight: 80, maxChars: 28, maxLines: 16 };
+    if (length <= 300) return { fontSize: 48, lineHeight: 65, maxChars: 36, maxLines: 20 };
+    return { fontSize: 36, lineHeight: 52, maxChars: 48, maxLines: 25 };
   }
-  if (length <= 110) return { fontSize: 40, lineHeight: 62, maxChars: 39, maxLines: 8 };
-  if (length <= 220) return { fontSize: 35, lineHeight: 55, maxChars: 46, maxLines: 11 };
-  if (length <= 380) return { fontSize: 31, lineHeight: 49, maxChars: 53, maxLines: 14 };
-  return { fontSize: 27, lineHeight: 43, maxChars: 61, maxLines: 17 };
+  // PORTRAIT DEFAULT 4:5
+  if (length <= 80) return { fontSize: 75, lineHeight: 95, maxChars: 22, maxLines: 8 };
+  if (length <= 160) return { fontSize: 62, lineHeight: 82, maxChars: 26, maxLines: 11 };
+  if (length <= 300) return { fontSize: 50, lineHeight: 68, maxChars: 33, maxLines: 14 };
+  return { fontSize: 38, lineHeight: 54, maxChars: 44, maxLines: 17 };
 }
 
 export function layoutMadingInstagramPost(post = {}, ratio = "portrait") {
@@ -176,52 +177,18 @@ export function layoutMadingInstagramPost(post = {}, ratio = "portrait") {
 }
 
 // ---------------- THEMES ---------------- //
+// New Clean Minimalist Theme (Reference Style)
 const THEMES = [
-  // 0: Light Classic (USU Default)
   {
-    bg: "#F8F7F3", card: "#FFFFFF",
-    glow1: "#7C5AC8", glow2: "#14A875",
-    textPrimary: "#24262B", textSecondary: "#96938D", textAccent: "#7050C2",
-    line: "#D8D6D0", photoBg: "#E9E6DE"
-  },
-  // 1: Dark Blue (ITS Style)
-  {
-    bg: "#0F172A", card: "#1E293B",
-    glow1: "#3B82F6", glow2: "#0EA5E9",
-    textPrimary: "#F8FAFC", textSecondary: "#94A3B8", textAccent: "#38BDF8",
-    line: "#334155", photoBg: "#0F172A"
-  },
-  // 2: Lime Green (UINSA Style)
-  {
-    bg: "#D9F99D", card: "#FFFFFF",
-    glow1: "#84CC16", glow2: "#FACC15",
-    textPrimary: "#064E3B", textSecondary: "#166534", textAccent: "#4D7C0F",
-    line: "#BEF264", photoBg: "#ECFCCB"
-  },
-  // 3: Warm Yellow (UNNES Style)
-  {
-    bg: "#FEF08A", card: "#FFFFFF",
-    glow1: "#F59E0B", glow2: "#FCD34D",
-    textPrimary: "#451A03", textSecondary: "#78350F", textAccent: "#B45309",
-    line: "#FDE047", photoBg: "#FEF9C3"
-  },
-  // 4: Clean Sky (ITB Style)
-  {
-    bg: "#E0F2FE", card: "#FFFFFF",
-    glow1: "#0EA5E9", glow2: "#38BDF8",
-    textPrimary: "#0F172A", textSecondary: "#475569", textAccent: "#2563EB",
-    line: "#BAE6FD", photoBg: "#F0F9FF"
+    bg: "#FFFFFF", card: "#FFFFFF",
+    glow1: "#FFFFFF", glow2: "#FFFFFF",
+    textPrimary: "#111111", textSecondary: "#444444", textAccent: "#000000",
+    line: "#000000", photoBg: "#F3F4F6"
   }
 ];
 
 function getTheme(postId) {
-  if (!postId) return THEMES[0];
-  let hash = 0;
-  for (let i = 0; i < String(postId).length; i++) {
-    hash = String(postId).charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const index = Math.abs(hash) % THEMES.length;
-  return THEMES[index];
+  return THEMES[0]; // Always use the clean minimalist theme
 }
 
 function pangoTextLayer({
@@ -265,14 +232,26 @@ export function createMadingInstagramTextLayers(
   if (isLandscape) {
     const layers = [
       pangoTextLayer({
-        text: layout.handle,
+        text: "JUAL BELI USU POLMED",
         fontPath: semiboldFontPath,
         fontName: "Plus Jakarta Sans SemiBold",
         fontSize: 24,
         color: theme.textAccent,
         width: 600,
-        left: 300,
-        top: 45,
+        left: 60,
+        top: 60,
+        align: "left",
+      }),
+      pangoTextLayer({
+        text: "Mading & Menfess Kampus",
+        fontPath: regularFontPath,
+        fontName: "Plus Jakarta Sans",
+        fontSize: 18,
+        color: theme.textSecondary,
+        width: 600,
+        left: 60,
+        top: 95,
+        align: "left",
       }),
     ];
 
@@ -284,34 +263,36 @@ export function createMadingInstagramTextLayers(
           fontName: "Plus Jakarta Sans",
           fontSize: layout.fontSize,
           color: theme.textPrimary,
-          width: 1040,
-          left: 80,
+          width: 1080,
+          left: 60,
           top: Math.round(pageData.firstLineY + index * layout.lineHeight - layout.fontSize),
+          align: "left",
         }),
       );
     });
 
     layers.push(
       pangoTextLayer({
-        text: layout.footer + pageIndicator,
-        fontPath: regularFontPath,
-        fontName: "Plus Jakarta Sans",
-        fontSize: 18,
-        color: theme.textSecondary,
-        width: 600,
-        left: 300,
-        top: 600,
-      }),
-      pangoTextLayer({
-        text: "USU · POLMED",
+        text: "@usu.zonafess",
         fontPath: semiboldFontPath,
         fontName: "Plus Jakarta Sans SemiBold",
-        fontSize: 17,
+        fontSize: 20,
         color: theme.textSecondary,
-        width: 250,
-        left: 580,
-        top: 630,
+        width: 400,
+        left: 60,
+        top: 615,
         align: "left",
+      }),
+      pangoTextLayer({
+        text: "save dulu, baca nanti",
+        fontPath: regularFontPath,
+        fontName: "Plus Jakarta Sans",
+        fontSize: 20,
+        color: theme.textSecondary,
+        width: 400,
+        left: 700,
+        top: 615,
+        align: "right",
       }),
     );
     return layers;
@@ -320,14 +301,26 @@ export function createMadingInstagramTextLayers(
   if (isStory) {
     const layers = [
       pangoTextLayer({
-        text: layout.handle,
+        text: "JUAL BELI USU POLMED",
         fontPath: semiboldFontPath,
         fontName: "Plus Jakarta Sans SemiBold",
-        fontSize: 28,
+        fontSize: 32,
         color: theme.textAccent,
         width: 800,
-        left: 140,
-        top: 190,
+        left: 80,
+        top: 140,
+        align: "left",
+      }),
+      pangoTextLayer({
+        text: "Mading & Menfess Kampus",
+        fontPath: regularFontPath,
+        fontName: "Plus Jakarta Sans",
+        fontSize: 24,
+        color: theme.textSecondary,
+        width: 800,
+        left: 80,
+        top: 185,
+        align: "left",
       }),
     ];
 
@@ -339,34 +332,36 @@ export function createMadingInstagramTextLayers(
           fontName: "Plus Jakarta Sans",
           fontSize: layout.fontSize,
           color: theme.textPrimary,
-          width: 900,
-          left: 90,
+          width: 920,
+          left: 80,
           top: Math.round(pageData.firstLineY + index * layout.lineHeight - layout.fontSize),
+          align: "left",
         }),
       );
     });
 
     layers.push(
       pangoTextLayer({
-        text: layout.footer + pageIndicator,
-        fontPath: regularFontPath,
-        fontName: "Plus Jakarta Sans",
-        fontSize: 23,
-        color: theme.textSecondary,
-        width: 800,
-        left: 140,
-        top: 1736,
-      }),
-      pangoTextLayer({
-        text: "USU · POLMED",
+        text: "@usu.zonafess",
         fontPath: semiboldFontPath,
         fontName: "Plus Jakarta Sans SemiBold",
-        fontSize: 21,
+        fontSize: 28,
         color: theme.textSecondary,
-        width: 370,
-        left: 505,
-        top: 1808,
+        width: 400,
+        left: 80,
+        top: 1735,
         align: "left",
+      }),
+      pangoTextLayer({
+        text: "save dulu, baca nanti",
+        fontPath: regularFontPath,
+        fontName: "Plus Jakarta Sans",
+        fontSize: 28,
+        color: theme.textSecondary,
+        width: 400,
+        left: 550,
+        top: 1735,
+        align: "right",
       }),
     );
     return layers;
@@ -375,14 +370,26 @@ export function createMadingInstagramTextLayers(
   // PORTRAIT DEFAULT 4:5
   const layers = [
     pangoTextLayer({
-      text: layout.handle,
+      text: "JUAL BELI USU POLMED",
       fontPath: semiboldFontPath,
       fontName: "Plus Jakarta Sans SemiBold",
-      fontSize: 28,
+      fontSize: 32,
       color: theme.textAccent,
       width: 800,
-      left: 140,
-      top: 137,
+      left: 80,
+      top: 80,
+      align: "left",
+    }),
+    pangoTextLayer({
+      text: "Mading & Menfess Kampus",
+      fontPath: regularFontPath,
+      fontName: "Plus Jakarta Sans",
+      fontSize: 24,
+      color: theme.textSecondary,
+      width: 800,
+      left: 80,
+      top: 125,
+      align: "left",
     }),
   ];
 
@@ -394,34 +401,36 @@ export function createMadingInstagramTextLayers(
         fontName: "Plus Jakarta Sans",
         fontSize: layout.fontSize,
         color: theme.textPrimary,
-        width: 900,
-        left: 90,
+        width: 920,
+        left: 80,
         top: Math.round(pageData.firstLineY + index * layout.lineHeight - layout.fontSize),
+        align: "left", // Reference has left-aligned text!
       }),
     );
   });
 
   layers.push(
     pangoTextLayer({
-      text: layout.footer + pageIndicator,
-      fontPath: regularFontPath,
-      fontName: "Plus Jakarta Sans",
-      fontSize: 23,
-      color: theme.textSecondary,
-      width: 800,
-      left: 140,
-      top: 1166,
-    }),
-    pangoTextLayer({
-      text: "USU · POLMED",
+      text: "@usu.zonafess",
       fontPath: semiboldFontPath,
       fontName: "Plus Jakarta Sans SemiBold",
-      fontSize: 21,
+      fontSize: 28,
       color: theme.textSecondary,
-      width: 370,
-      left: 505,
-      top: 1238,
+      width: 400,
+      left: 80,
+      top: 1215,
       align: "left",
+    }),
+    pangoTextLayer({
+      text: "save dulu, baca nanti",
+      fontPath: regularFontPath,
+      fontName: "Plus Jakarta Sans",
+      fontSize: 28,
+      color: theme.textSecondary,
+      width: 400,
+      left: 550,
+      top: 1215,
+      align: "right",
     }),
   );
   return layers;
@@ -435,48 +444,30 @@ export function createMadingInstagramSvg({ hasPhoto = false, ratio = "portrait",
   
   const theme = getTheme(postId);
 
-  // Background and glows
+  // Minimalist clean background
   let svgContent = `
-    <defs>
-      <radialGradient id="glow1" cx="0" cy="0" r="1" gradientTransform="translate(${isLandscape ? '60 60' : isStory ? '80 120' : '80 80'}) rotate(42) scale(${isLandscape ? '400 300' : isStory ? '600 500' : '520 410'})" gradientUnits="userSpaceOnUse">
-        <stop stop-color="${theme.glow1}" stop-opacity=".15"/>
-        <stop offset="1" stop-color="${theme.glow1}" stop-opacity="0"/>
-      </radialGradient>
-      <radialGradient id="glow2" cx="0" cy="0" r="1" gradientTransform="translate(${isLandscape ? '1120 620' : isStory ? '1000 1800' : '1000 1280'}) rotate(-140) scale(${isLandscape ? '400 300' : isStory ? '600 500' : '520 400'})" gradientUnits="userSpaceOnUse">
-        <stop stop-color="${theme.glow2}" stop-opacity=".15"/>
-        <stop offset="1" stop-color="${theme.glow2}" stop-opacity="0"/>
-      </radialGradient>
-    </defs>
     <rect width="${width}" height="${height}" fill="${theme.bg}"/>
-    <rect width="${width}" height="${height}" fill="url(#glow1)"/>
-    <rect width="${width}" height="${height}" fill="url(#glow2)"/>
   `;
 
-  // Draw Card Container
+  // Draw Lines and Bookmark
   if (isLandscape) {
     svgContent += `
-      <rect x="20" y="20" width="${width - 40}" height="${height - 40}" rx="30" fill="${theme.card}" stroke="${theme.line}" stroke-width="2"/>
-      ${hasPhoto ? `<rect x="350" y="90" width="500" height="230" rx="20" fill="${theme.photoBg}"/>` : ""}
-      <line x1="200" y1="580" x2="1000" y2="580" stroke="${theme.line}" stroke-width="1.5"/>
-      <circle cx="535" cy="640" r="6" fill="${theme.glow2}"/>
-      <circle cx="558" cy="640" r="6" fill="${theme.textAccent}"/>
+      <line x1="60" y1="140" x2="1140" y2="140" stroke="${theme.line}" stroke-width="2"/>
+      <line x1="60" y1="590" x2="1140" y2="590" stroke="${theme.line}" stroke-width="2"/>
+      <path d="M 1120 640 L 1120 610 C 1120 606 1124 602 1128 602 L 1140 602 C 1144 602 1148 606 1148 610 L 1148 640 L 1134 632 Z" fill="none" stroke="${theme.line}" stroke-width="2.5" stroke-linejoin="round"/>
     `;
   } else if (isStory) {
     svgContent += `
-      <rect x="40" y="80" width="${width - 80}" height="${height - 160}" rx="60" fill="${theme.card}" stroke="${theme.line}" stroke-width="3"/>
-      ${hasPhoto ? `<rect x="110" y="320" width="860" height="580" rx="30" fill="${theme.photoBg}"/>` : ""}
-      <line x1="164" y1="1708" x2="916" y2="1708" stroke="${theme.line}" stroke-width="1.5"/>
-      <circle cx="454" cy="1824" r="8" fill="${theme.glow2}"/>
-      <circle cx="481" cy="1824" r="8" fill="${theme.textAccent}"/>
+      <line x1="80" y1="240" x2="1000" y2="240" stroke="${theme.line}" stroke-width="3"/>
+      <line x1="80" y1="1700" x2="1000" y2="1700" stroke="${theme.line}" stroke-width="3"/>
+      <path d="M 975 1770 L 975 1735 C 975 1730 980 1725 985 1725 L 1000 1725 C 1005 1725 1010 1730 1010 1735 L 1010 1770 L 992.5 1760 Z" fill="none" stroke="${theme.line}" stroke-width="3" stroke-linejoin="round"/>
     `;
   } else {
     // PORTRAIT
     svgContent += `
-      <rect x="40" y="40" width="${width - 80}" height="${height - 80}" rx="50" fill="${theme.card}" stroke="${theme.line}" stroke-width="2"/>
-      ${hasPhoto ? `<rect x="122" y="237" width="836" height="476" rx="30" fill="${theme.photoBg}"/>` : ""}
-      <line x1="164" y1="1138" x2="916" y2="1138" stroke="${theme.line}" stroke-width="1.5"/>
-      <circle cx="454" cy="1254" r="8" fill="${theme.glow2}"/>
-      <circle cx="481" cy="1254" r="8" fill="${theme.textAccent}"/>
+      <line x1="80" y1="180" x2="1000" y2="180" stroke="${theme.line}" stroke-width="3"/>
+      <line x1="80" y1="1180" x2="1000" y2="1180" stroke="${theme.line}" stroke-width="3"/>
+      <path d="M 975 1250 L 975 1215 C 975 1210 980 1205 985 1205 L 1000 1205 C 1005 1205 1010 1210 1010 1215 L 1010 1250 L 992.5 1240 Z" fill="none" stroke="${theme.line}" stroke-width="3" stroke-linejoin="round"/>
     `;
   }
 
