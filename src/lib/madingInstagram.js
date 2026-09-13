@@ -1,14 +1,13 @@
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { processInstagramQueue, siteOriginFromRequest } from "@/lib/instagramQueue";
+import { layoutMadingInstagramPost } from "@/lib/madingInstagramImage";
 
 export { siteOriginFromRequest };
 
 function menfessCredentials() {
-  return {
-    accessToken:
-      process.env.META_MENFESS_IG_ACCESS_TOKEN || process.env.META_IG_ACCESS_TOKEN,
-    userId: process.env.META_MENFESS_IG_USER_ID || process.env.META_IG_USER_ID,
-  };
+  const accessToken = String(process.env.META_MENFESS_IG_ACCESS_TOKEN || process.env.META_IG_ACCESS_TOKEN || "").trim();
+  const userId = String(process.env.META_MENFESS_IG_USER_ID || process.env.META_IG_USER_ID || "").trim();
+  return { accessToken, userId };
 }
 
 export function captionForMading(post) {
@@ -82,14 +81,9 @@ export async function publishQueuedMadingInstagram({
       return data;
     },
     imagePath: (post) => {
-      // Import layout parser dynamically to avoid cyclic deps if any, or just import at top.
-      // Since it's server side, we can just require it or import it at the top.
-      // But it's easier to just calculate it here since we already have the post object.
-      // Because we can't easily top-level import without changing the top of the file, we'll inline require
-      const { layoutMadingInstagramPost } = require("@/lib/madingInstagramImage");
       const layout = layoutMadingInstagramPost(post, "portrait");
-      const totalPages = layout.pages.length;
-      
+      const totalPages = layout.pages?.length || 1;
+
       if (totalPages > 1) {
         return Array.from({ length: totalPages }).map((_, i) => `/api/mading/${post.id}/instagram-image?page=${i}`);
       }
@@ -107,10 +101,15 @@ export async function publishQueuedMadingInstagram({
   });
 }
 
-export async function autoPublishMadingInstagram({ origin, postId }) {
+export async function autoPublishMadingInstagram({ origin, postId, timeoutMs = 4000 }) {
   try {
     await queueMadingInstagram(postId);
-    return await publishQueuedMadingInstagram({ origin, postId, limit: 1 });
+    const publishPromise = publishQueuedMadingInstagram({ origin, postId, limit: 1 });
+    if (!timeoutMs) return await publishPromise;
+    return await Promise.race([
+      publishPromise,
+      new Promise((resolve) => setTimeout(() => resolve([]), timeoutMs)),
+    ]);
   } catch {
     // Post website tetap berhasil; antrean tersimpan untuk cron/retry admin.
     return [];

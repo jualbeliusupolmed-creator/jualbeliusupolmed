@@ -19,9 +19,10 @@ function metaUrl(pathname) {
 function safeMetaMessage(data, fallback) {
   const message = String(data?.error?.message || fallback || "Permintaan Meta gagal")
     .replace(/[\r\n]+/g, " ")
-    .slice(0, 240);
+    .slice(0, 300);
   const code = data?.error?.code ? ` [${data.error.code}]` : "";
-  return `${message}${code}`;
+  const subcode = data?.error?.error_subcode ? ` (subcode: ${data.error.error_subcode})` : "";
+  return `${message}${code}${subcode}`;
 }
 
 async function graphRequest(pathname, {
@@ -30,13 +31,15 @@ async function graphRequest(pathname, {
   body,
   stage = "Meta API",
 } = {}) {
-  if (!token) throw new Error(`${stage}: token belum dikonfigurasi.`);
+  const cleanToken = String(token || "").trim();
+  const cleanPath = String(pathname || "").replace(/^\//, "").trim();
+  if (!cleanToken) throw new Error(`${stage}: token belum dikonfigurasi.`);
 
   const options = {
     method,
     headers: {
       Accept: "application/json",
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${cleanToken}`,
     },
     cache: "no-store",
   };
@@ -45,15 +48,17 @@ async function graphRequest(pathname, {
     options.body = new URLSearchParams(body).toString();
   }
   if (typeof AbortSignal !== "undefined" && AbortSignal.timeout) {
-    options.signal = AbortSignal.timeout(20_000);
+    options.signal = AbortSignal.timeout(45_000);
   }
 
+  const targetUrl = `https://graph.facebook.com/${metaApiVersion()}/${cleanPath}`;
   let response;
   try {
-    response = await fetch(metaUrl(pathname), options);
+    response = await fetch(targetUrl, options);
   } catch (error) {
-    const reason = error?.name === "TimeoutError" ? "waktu tunggu habis" : "koneksi gagal";
-    throw new Error(`${stage}: ${reason}.`);
+    const isTimeout = error?.name === "TimeoutError" || error?.name === "AbortError";
+    const detail = isTimeout ? "waktu tunggu habis" : (error?.cause?.message || error?.message || "koneksi gagal");
+    throw new Error(`${stage}: ${detail}.`);
   }
 
   const raw = await response.text();
@@ -123,7 +128,9 @@ export async function postToInstagram(
     pollIntervalMs,
   } = {},
 ) {
-  if (!igUserId || !token) {
+  const cleanUserId = String(igUserId || "").trim();
+  const cleanToken = String(token || "").trim();
+  if (!cleanUserId || !cleanToken) {
     throw new Error("Konfigurasi akun Instagram belum lengkap.");
   }
 
@@ -150,8 +157,8 @@ export async function postToInstagram(
       // 1. Buat item carousel untuk masing-masing URL
       const childrenIds = [];
       for (const url of imageUrl) {
-        const item = await graphRequest(`${igUserId}/media`, {
-          token,
+        const item = await graphRequest(`${cleanUserId}/media`, {
+          token: cleanToken,
           method: "POST",
           stage: "Pembuatan item carousel Instagram",
           body: { image_url: url, is_carousel_item: "true" },
@@ -160,9 +167,14 @@ export async function postToInstagram(
         childrenIds.push(item.id);
       }
 
-      // 2. Buat container utama CAROUSEL
-      const created = await graphRequest(`${igUserId}/media`, {
-        token,
+      // 2. Tunggu semua child container selesai diproses Meta sebelum digabung ke CAROUSEL
+      for (const childId of childrenIds) {
+        await waitForInstagramContainer(childId, cleanToken, { maxPolls: 15, pollIntervalMs: 1500 });
+      }
+
+      // 3. Buat container utama CAROUSEL
+      const created = await graphRequest(`${cleanUserId}/media`, {
+        token: cleanToken,
         method: "POST",
         stage: "Pembuatan container carousel Instagram",
         body: { media_type: "CAROUSEL", children: childrenIds.join(","), caption },
@@ -170,8 +182,8 @@ export async function postToInstagram(
       creationId = created.id;
     } else {
       // Pembuatan container SINGLE IMAGE
-      const created = await graphRequest(`${igUserId}/media`, {
-        token,
+      const created = await graphRequest(`${cleanUserId}/media`, {
+        token: cleanToken,
         method: "POST",
         stage: "Pembuatan media Instagram",
         body: { image_url: imageUrl, caption },
@@ -185,18 +197,18 @@ export async function postToInstagram(
     if (onContainerCreated) await onContainerCreated(creationId);
   }
 
-  const containerStatus = await waitForInstagramContainer(creationId, token, {
+  const containerStatus = await waitForInstagramContainer(creationId, cleanToken, {
     maxPolls: maxPolls || (isCarousel ? 18 : 12), // Carousel bisa lebih lama
     pollIntervalMs,
   });
-  
+
   if (containerStatus === "PUBLISHED") {
     return { id: null, creation_id: creationId, already_published: true };
   }
 
   try {
-    const published = await graphRequest(`${igUserId}/media_publish`, {
-      token,
+    const published = await graphRequest(`${cleanUserId}/media_publish`, {
+      token: cleanToken,
       method: "POST",
       stage: "Publikasi Instagram",
       body: { creation_id: creationId },
@@ -205,7 +217,7 @@ export async function postToInstagram(
   } catch (error) {
     // Jika respons publish terputus tetapi Meta sebenarnya sudah menerima,
     // status PUBLISHED mencegah retry membuat post baru.
-    const status = await waitForInstagramContainer(creationId, token, {
+    const status = await waitForInstagramContainer(creationId, cleanToken, {
       maxPolls: 2,
       pollIntervalMs: 250,
     }).catch(() => null);

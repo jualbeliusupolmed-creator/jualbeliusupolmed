@@ -15,30 +15,30 @@ export default function GroupBroadcastPanel() {
   const stopRef = useRef(false);
 
   useEffect(() => {
+    async function fetchGroups() {
+      try {
+        addLog("Memuat daftar grup...");
+        const res = await fetch("/api/admin/broadcast-grup?action=groups");
+        const data = await res.json();
+        if (data.error) {
+          addLog("❌ Gagal memuat grup dari API: " + data.error);
+          if (data.error === "Unauthorized") {
+            addLog("🔑 Tips: Pastikan BAILEYS_API_TOKEN di .env.local / Vercel sesuai dengan token bot WhatsApp.");
+          }
+        } else if (data.groups) {
+          setGroups(data.groups);
+          addLog(`✅ Memuat ${data.groups.length} grup.`);
+          if (data.groups.length === 0) {
+            addLog("⚠️ Daftar grup kosong. Jika baru scan QR, WhatsApp butuh beberapa menit untuk menyinkronkan grup.");
+          }
+        }
+      } catch (e) {
+        addLog("❌ Gagal memuat grup: " + e.message);
+      }
+    }
+
     fetchGroups();
   }, []);
-
-  async function fetchGroups() {
-    try {
-      addLog("Memuat daftar grup...");
-      const res = await fetch("/api/admin/broadcast-grup?action=groups");
-      const data = await res.json();
-      if (data.error) {
-        addLog("❌ Gagal memuat grup dari API: " + data.error);
-        if (data.error === "Unauthorized") {
-          addLog("🔑 Tips: Pastikan BAILEYS_API_TOKEN di .env.local / Vercel sesuai dengan token bot WhatsApp.");
-        }
-      } else if (data.groups) {
-        setGroups(data.groups);
-        addLog(`✅ Memuat ${data.groups.length} grup.`);
-        if (data.groups.length === 0) {
-          addLog("⚠️ Daftar grup kosong. Jika baru scan QR, WhatsApp butuh beberapa menit untuk menyinkronkan grup.");
-        }
-      }
-    } catch (e) {
-      addLog("❌ Gagal memuat grup: " + e.message);
-    }
-  }
 
   async function fetchMembers(jid) {
     if (!jid) {
