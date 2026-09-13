@@ -8,7 +8,7 @@ function formatRelativeTime(dateString) {
   const date = new Date(dateString);
   const now = new Date();
   const diffInSeconds = Math.floor((now - date) / 1000);
-  
+
   if (diffInSeconds < 60) return "baru saja";
   if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} menit lalu`;
   if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} jam lalu`;
@@ -219,30 +219,32 @@ export function TabInstagram() {
                     <td className="px-6 py-4 text-right">
                       {(item.status === "queued" || item.status === "failed") && (
                         <button
+                          disabled={loadingAction}
                           onClick={async () => {
                             const toastId = toast.loading("Memproses " + item.title + "...");
                             try {
                               const res = await fetch("/api/admin/instagram", {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ 
+                                body: JSON.stringify({
                                   action: "process_single",
                                   source: item.source,
-                                  id: item.post_id || item.listing_id 
+                                  id: item.post_id || item.listing_id
                                 }),
                               });
                               const json = await res.json();
                               if (json.ok) {
-                                toast.success(json.message, { id: toastId });
-                                fetchData();
+                                toast.success(json.message || "Berhasil diproses!", { id: toastId });
                               } else {
                                 toast.error(json.error || "Gagal memproses", { id: toastId });
                               }
                             } catch (err) {
                               toast.error(err.message, { id: toastId });
+                            } finally {
+                              fetchData();
                             }
                           }}
-                          className="px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-400 rounded-md text-xs font-bold transition-colors"
+                          className="px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-400 rounded-md text-xs font-bold transition-colors disabled:opacity-50"
                         >
                           Proses
                         </button>

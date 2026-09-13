@@ -3,6 +3,7 @@ import { isAdmin } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 export async function GET(req) {
   if (!isAdmin()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -98,12 +99,13 @@ export async function POST(req) {
   if (body.action === "process_queue") {
     try {
       const origin = siteOriginFromRequest(req);
-      const resultsMading = await publishQueuedMadingInstagram({ origin, limit: 3 });
-      const resultsListing = await publishQueuedListingInstagram({ origin, limit: 3 });
+      const limit = Math.min(10, Math.max(1, Number(body.limit) || 5));
+      const resultsMading = await publishQueuedMadingInstagram({ origin, limit });
+      const resultsListing = await publishQueuedListingInstagram({ origin, limit });
       const totalProcessed = resultsMading.length + resultsListing.length;
       return NextResponse.json({ ok: true, message: `Berhasil memproses ${totalProcessed} item antrean.` });
     } catch (error) {
-      return NextResponse.json({ error: "Gagal memproses antrean." }, { status: 500 });
+      return NextResponse.json({ error: error.message || "Gagal memproses antrean." }, { status: 500 });
     }
   }
 

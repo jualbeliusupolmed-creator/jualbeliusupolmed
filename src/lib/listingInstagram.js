@@ -4,10 +4,9 @@ import { buildSlug } from "@/lib/slug";
 import { formatInstagramPrice } from "@/lib/listingInstagramImage";
 
 function catalogCredentials() {
-  return {
-    accessToken: process.env.META_KATALOG_IG_ACCESS_TOKEN,
-    userId: process.env.META_KATALOG_IG_USER_ID,
-  };
+  const accessToken = String(process.env.META_KATALOG_IG_ACCESS_TOKEN || "").trim();
+  const userId = String(process.env.META_KATALOG_IG_USER_ID || "").trim();
+  return { accessToken, userId };
 }
 
 export function captionForListing(listing, origin) {
@@ -94,10 +93,15 @@ export async function publishQueuedListingInstagram({
   });
 }
 
-export async function autoPublishListingInstagram({ origin, listingId }) {
+export async function autoPublishListingInstagram({ origin, listingId, timeoutMs = 4000 }) {
   try {
     await queueListingInstagram(listingId);
-    return await publishQueuedListingInstagram({ origin, listingId, limit: 1 });
+    const publishPromise = publishQueuedListingInstagram({ origin, listingId, limit: 1 });
+    if (!timeoutMs) return await publishPromise;
+    return await Promise.race([
+      publishPromise,
+      new Promise((resolve) => setTimeout(() => resolve([]), timeoutMs)),
+    ]);
   } catch {
     // Aktivasi iklan tetap berhasil; antrean tersimpan untuk cron/retry admin.
     return [];

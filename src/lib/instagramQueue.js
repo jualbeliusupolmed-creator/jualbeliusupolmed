@@ -6,11 +6,11 @@ const STALE_PROCESSING_MS = 10 * 60_000;
 
 export function siteOriginFromRequest(request) {
   const configured = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL;
-  if (configured) return configured.replace(/\/$/, "");
+  if (configured) return configured.replace(/\/$/, "").trim();
 
-  const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
-  const proto = request.headers.get("x-forwarded-proto") || "https";
-  return host ? `${proto}://${host}` : "";
+  const host = request?.headers?.get?.("x-forwarded-host") || request?.headers?.get?.("host");
+  const proto = request?.headers?.get?.("x-forwarded-proto") || "https";
+  return host ? `${proto}://${host}` : "https://www.jualbeliusupolmed.web.id";
 }
 
 function retryAt(attempts) {
@@ -30,7 +30,9 @@ export async function processInstagramQueue({
   captionFor,
   afterStatus,
 }) {
-  if (!origin || !credentials?.userId || !credentials?.accessToken) {
+  const cleanUserId = String(credentials?.userId || "").trim();
+  const cleanToken = String(credentials?.accessToken || "").trim();
+  if (!origin || !cleanUserId || !cleanToken) {
     throw new Error("Konfigurasi Instagram belum lengkap.");
   }
 
