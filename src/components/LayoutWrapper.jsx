@@ -14,6 +14,8 @@ import GlobalPullToRefresh from "./GlobalPullToRefresh";
 import { SesiProvider } from "./SesiProvider";
 import { cn } from "@/lib/utils";
 import GlobalImageLightbox from "./GlobalImageLightbox";
+import LeftSidebar from "./LeftSidebar";
+import RightSidebar from "./RightSidebar";
 
 export default function LayoutWrapper({ children }) {
   const pathname = usePathname();
@@ -35,9 +37,7 @@ export default function LayoutWrapper({ children }) {
     }
   }, [isAdmin]);
 
-  // Sinkronisasi Google OAuth:
-  // 1. Query param ?_gwa=<identifier> (dari redirect GET /auth/callback)
-  // 2. Hash fragment #access_token=... (jika Supabase me-redirect langsung ke root URL pada implicit flow)
+  // Sinkronisasi Google OAuth
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -58,7 +58,6 @@ export default function LayoutWrapper({ children }) {
       const hashParams = new URLSearchParams(hash);
       const accessToken = hashParams.get("access_token");
       if (accessToken) {
-        // Segera bersihkan hash dari URL browser agar bersih
         window.history.replaceState(
           null,
           "",
@@ -95,44 +94,50 @@ export default function LayoutWrapper({ children }) {
   }, []);
 
   return (
-    // Sesi dibungkus di sini, bukan di layout.jsx, supaya Navbar dan seluruh
-    // halaman membaca SATU hasil `/api/auth/me` yang sama. Sebelumnya Navbar
-    // memanggilnya sendiri setiap kali alamat berpindah, dan hasilnya tidak
-    // pernah sampai ke komponen lain.
     <SesiProvider>
-      {/* 
-        Mobile: max-w-md centered dengan shadow (tampilan "app frame")
-        Desktop (md+): full-width tanpa batasan, shadow dihapus agar memanfaatkan layar lebar
-      */}
-      <div className={cn(
-        "w-full min-h-screen relative bg-[#f5f5f7] dark:bg-[#0f172a] flex flex-col",
-        !isAdmin && "w-full max-w-md md:max-w-7xl mx-auto shadow-2xl md:shadow-none overflow-x-hidden"
-      )}>
-        {!isImmersive && <Navbar config={config} />}
-        <main className={cn(
-          "flex-1 flex flex-col",
-          // Mobile: padding bawah untuk bottom navbar
-          // Desktop: padding bawah lebih kecil (tidak ada bottom navbar)
-          !isAdmin && !isChat && !isTeman ? "pb-36 md:pb-8" : ""
+      <div className="w-full min-h-screen relative bg-[#f5f5f7] dark:bg-[#0f172a]">
+        <div className={cn(
+          "w-full mx-auto flex justify-center",
+          !isAdmin && "md:max-w-7xl"
         )}>
-          {children}
-        </main>
+          {/* Kiri: Sidebar Menu */}
+          {!isImmersive && <LeftSidebar />}
+
+          {/* Tengah: Main Feed Container */}
+          <div className={cn(
+            "w-full max-w-md md:max-w-[600px] lg:max-w-[680px] flex-1 flex flex-col min-h-screen bg-white dark:bg-black border-x border-black/[0.06] dark:border-white/[0.08]",
+            !isAdmin && "shadow-2xl md:shadow-none"
+          )}>
+            {!isImmersive && (
+              <div className="md:hidden">
+                <Navbar config={config} />
+              </div>
+            )}
+            
+            <main className={cn(
+              "flex-1 flex flex-col",
+              !isAdmin && !isChat && !isTeman ? "pb-36 md:pb-8" : ""
+            )}>
+              {children}
+            </main>
+          </div>
+
+          {/* Kanan: Widget/Trending */}
+          {!isImmersive && <RightSidebar config={config} />}
+        </div>
+
         {!isImmersive && (
           <>
             <GlobalChatNotifier />
             <SwipeBackGesture />
             <GlobalPullToRefresh />
             <InstallPrompt />
-            {/* Ajakan notifikasi peramban. Menahan dirinya sendiri (kunjungan
-                kedua / 25 detik), karena izin notifikasi cuma bisa diminta sekali. */}
             <NotifPrompt />
             <PopupSponsor config={config} />
-            {/* Bottom navbar hanya untuk mobile — di desktop navigasi ada di Navbar atas */}
             <BottomNavbar />
             {!hideFooter && <Footer config={config} />}
           </>
         )}
-        {/* Lightbox global — aktif di semua halaman, dipicu oleh img[data-zoom] */}
         <GlobalImageLightbox />
       </div>
     </SesiProvider>

@@ -179,7 +179,7 @@ function BottomNavbarInner() {
           >
             <span
               className={cn(
-                "flex items-center justify-center rounded-[16px] bg-[#0071e3] text-white shadow-[0_8px_20px_rgba(0,113,227,0.4)] ring-4 ring-white/90 dark:ring-[#111113]/90",
+                "flex items-center justify-center rounded-[16px] bg-primary text-white shadow-[0_8px_20px_rgba(124,58,237,0.4)] ring-4 ring-white/90 dark:ring-[#111113]/90",
                 isChatRoom ? "h-8 w-8 rounded-full" : "h-11 w-11 md:h-10 md:w-10"
               )}
             >
@@ -195,7 +195,7 @@ function BottomNavbarInner() {
               </svg>
             </span>
             {!isChatRoom && (
-              <span className="mt-0.5 text-[9px] font-bold tracking-tight text-[#0071e3] dark:text-[#0071e3]">
+              <span className="mt-0.5 text-[9px] font-bold tracking-tight text-primary dark:text-primary">
                 Buat
               </span>
             )}

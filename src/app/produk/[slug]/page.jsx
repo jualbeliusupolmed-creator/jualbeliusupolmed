@@ -249,7 +249,7 @@ export default async function ProdukPage({ params }) {
         <span className="truncate text-gray-500">{listing.title}</span>
       </nav>
 
-      <div className="mt-5 grid gap-8 md:grid-cols-2 lg:gap-10">
+      <div className="mt-5 flex flex-col gap-6 lg:gap-8">
         {/* Galeri */}
         <div className="card overflow-hidden">
           <ProductGallery
@@ -442,7 +442,7 @@ export default async function ProdukPage({ params }) {
       {related.length > 0 && (
         <section className="mt-10 mb-20 md:mb-0">
           <h2 className="section-title">{listing.type === "jasa" ? "Jasa serupa" : "Barang serupa"}</h2>
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="mt-4 bg-white dark:bg-[#1e293b] sm:rounded-[24px] sm:border border-black/[0.06] dark:border-white/[0.08] overflow-hidden shadow-sm">
             {related.map((r) => (
               <ProductCard key={r.id} listing={r} />
             ))}

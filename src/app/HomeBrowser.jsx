@@ -885,7 +885,7 @@ export default function HomeBrowser({
               </div>
             ) : (
               <>
-                <div className="mt-3 grid grid-cols-2 gap-3">
+                <div className="mt-3 bg-white dark:bg-[#1e293b] sm:rounded-[24px] sm:border border-black/[0.06] dark:border-white/[0.08] overflow-hidden shadow-sm">
                   {listings.map((l) => (
                     <ProductCard key={l.id} listing={l} />
                   ))}

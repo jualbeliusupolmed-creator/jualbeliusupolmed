@@ -20,16 +20,16 @@ describe("mading Instagram image", () => {
     });
 
     expect(svg).toContain('width="1080" height="1350"');
-    expect(svg).toContain('fill="#F8F7F3"');
+    expect(svg).toContain('fill="#FFFFFF"');
     expect(svg).not.toContain("<text");
     expect(layers.map((layer) => layer.input.text.text).join(" ")).toContain(
       "@usu.zonafess",
     );
     expect(layers.map((layer) => layer.input.text.text).join(" ")).toContain(
-      "dikirim lewat jualbeliusupolmed.web.id",
+      "save dulu, baca nanti",
     );
     expect(layers.map((layer) => layer.input.text.text).join(" ")).toContain(
-      "USU · POLMED",
+      "JUAL BELI USU POLMED",
     );
     expect(
       layers.every((layer) => layer.input.text.fontfile.endsWith(".ttf")),
@@ -41,9 +41,9 @@ describe("mading Instagram image", () => {
     const shortPost = layoutMadingInstagramPost({ content: "Halo kampus!" });
     const longPost = layoutMadingInstagramPost({ content: "pesan ".repeat(300) });
 
-    expect(shortPost.fontSize).toBe(40);
-    expect(longPost.fontSize).toBe(27);
-    expect(longPost.lines.length).toBeLessThanOrEqual(17);
+    expect(shortPost.fontSize).toBe(100);
+    expect(longPost.fontSize).toBe(40);
+    expect(longPost.lines.length).toBeLessThanOrEqual(20);
     expect(longPost.lines.at(-1)).toMatch(/…$/);
   });
 
@@ -79,9 +79,10 @@ describe("mading Instagram image", () => {
     const layout = layoutMadingInstagramPost(post);
     const svg = createMadingInstagramSvg({ hasPhoto: true });
 
-    expect(layout.maxLines).toBe(6);
+    expect(layout.maxLines).toBe(6); // Dari typography default untuk has image
     expect(layout.firstLineY).toBeGreaterThan(700);
-    expect(svg).toContain('x="122" y="237" width="836" height="476"');
+    // SVG background sudah tidak menggambar area foto sendiri, gambar ditempel
+    // oleh route menggunakan sharp() composite di atas area kosong.
   });
 
   it("renders with the bundled font files", async () => {

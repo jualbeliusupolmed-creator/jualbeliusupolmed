@@ -12,7 +12,7 @@
   --polmed-light: #7c4fd4;
   --polmed-dark: #3c1c74;
 
-  --primary: var(--polmed);
+  --primary: #7c3aed; /* MyFess Violet */
   --primary-foreground: #ffffff;
   --accent: var(--usu);
   --accent-foreground: #ffffff;
@@ -21,8 +21,8 @@
 }
 
 .dark {
-  --primary: #a78bfa;
-  --primary-foreground: #000000;
+  --primary: #8b5cf6; /* MyFess Violet Lighter */
+  --primary-foreground: #ffffff;
   --accent: #34d399;
   --accent-foreground: #000000;
 }

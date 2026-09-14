@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://www.jualbeliusupolmed.web.id
+
+# Sitemaps
+Sitemap: https://www.jualbeliusupolmed.web.id/sitemap.xml

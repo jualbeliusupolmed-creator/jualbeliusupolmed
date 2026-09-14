@@ -55,6 +55,7 @@ function DashboardInner() {
   const [sellerProfile, setSellerProfile] = useState(null);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
+  const [loadError, setLoadError] = useState(false);
 
   const [wantedItems, setWantedItems] = useState([]);
   const [offers, setOffers] = useState([]);
@@ -146,6 +147,7 @@ function DashboardInner() {
     const n = formatWa(raw) || raw;
     setWa(n);
     setBusy(true);
+    setLoadError(false);
     try {
       const [resListings, resWanted, resOffers, resProfil] = await Promise.all([
         fetch(`/api/listings?seller_wa=${encodeURIComponent(n)}`),
@@ -182,14 +184,22 @@ function DashboardInner() {
       setWantedItems(dataWanted.listings || []);
       setOffers(dataOffers.offers || []);
 
-
-      setLoaded(true);
-      if (mergedProfile?.account_type === "ukm" || mergedProfile?.ukm_verified || mergedProfile?.ukm_name) {
-        setActiveTab("ukm");
+      // Bug #1 + #4 Fix: Hanya set tab ke "ukm" pada load PERTAMA (!loaded),
+      // dan hanya jika user tidak sedang meminta tab tertentu via URL (?tab=...).
+      // Setelah loaded=true, tab tidak boleh direset oleh refresh/aksi apapun.
+      const isUkm = !!(mergedProfile?.account_type === "ukm" || mergedProfile?.ukm_verified || mergedProfile?.ukm_name);
+      if (!loaded && isUkm) {
+        const tabDimintaUrl = params.get("tab");
+        if (!tabDimintaUrl || !TAB_SAH.includes(tabDimintaUrl)) {
+          setActiveTab("ukm");
+        }
       }
+      setLoaded(true);
       localStorage.setItem("seller_wa", n);
     } catch (e) {
       console.error(e);
+      setLoadError(true);
+      toast.error("Gagal memuat data dashboard. Periksa koneksi internet lalu coba lagi.");
     } finally {
       setBusy(false);
     }
@@ -235,7 +245,7 @@ function DashboardInner() {
         body: JSON.stringify({ action: "resolve" }),
       });
       if (!res.ok) throw new Error("Gagal menyelesaikan postingan");
-      load();
+      load(wa);
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -257,7 +267,7 @@ function DashboardInner() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal menghapus iklan");
       toast.success("Iklan berhasil dihapus.");
-      load();
+      load(wa);
     } catch (e) {
       toast.error(e.message);
     } finally {
@@ -280,7 +290,7 @@ function DashboardInner() {
       });
       if (!res.ok) throw new Error("Gagal menghapus postingan");
       toast.success("Postingan dicari berhasil dihapus");
-      load();
+      load(wa);
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -325,7 +335,7 @@ function DashboardInner() {
         setActiveQrisFee(data.finalAmount || data.fee);
         setActiveQrisOrderId(data.orderId || "");
       }
-      load();
+      load(wa);
     } catch (e) {
       toast.error(e.message);
     }
@@ -340,15 +350,19 @@ function DashboardInner() {
   async function doUpdateStock(stockStr) {
     const stock = Number(stockStr);
     if (isNaN(stock)) return;
+    // Bug #3 Fix: Simpan referensi stockModal ke variable lokal SEBELUM di-null-kan,
+    // karena setStockModal(null) bersifat async dan state lama tidak bisa dibaca
+    // setelah null di-set. Mengakses stockModal.id setelah null → TypeError crash.
+    const modalTarget = stockModal;
     setStockModal(null);
     try {
-      const data = await patch(stockModal.id, { action: "update_stock", stock });
+      const data = await patch(modalTarget.id, { action: "update_stock", stock });
       if (stock === 0 && data.fee > 0) {
         toast.success("Barang ditandai terjual. Silakan lunasi komisi sukses di bagian Tagihan Pending.");
       } else {
         toast.success("Stok berhasil diperbarui");
       }
-      load();
+      load(wa);
     } catch (e) {
       toast.error(e.message);
     }
@@ -367,7 +381,7 @@ function DashboardInner() {
 
       if (data.freeBumpUsed) {
         toast.success("Berhasil disundul menggunakan Kuota Free Bump!");
-        load();
+        load(wa);
         return;
       }
 
@@ -674,7 +688,7 @@ function DashboardInner() {
         qrisUrl={activeQrisUrl} 
         fee={activeQrisFee} 
         transactionId={activeQrisOrderId}
-        onClose={() => { setActiveQrisUrl(""); load(); }} 
+        onClose={() => { setActiveQrisUrl(""); load(wa); }} 
       />
 
       {/* ===== UI ===== */}
@@ -790,7 +804,26 @@ function DashboardInner() {
         </div>
       )}
 
+      {/* Bug #2 Fix: Tampilkan UI error yang jelas + tombol retry kalau load() gagal */}
+      {loadError && !busy && (
+        <div className="mb-6 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <Icon.AlertCircle className="h-5 w-5 text-rose-500 shrink-0 mt-0.5 sm:mt-0" />
+          <div className="flex-1">
+            <p className="text-sm font-bold text-rose-700 dark:text-rose-300">Gagal memuat data dashboard</p>
+            <p className="text-xs text-rose-500 dark:text-rose-400 mt-0.5">Periksa koneksi internet lalu coba lagi. Jika masalah berlanjut, coba muat ulang halaman.</p>
+          </div>
+          <button
+            onClick={() => load(wa)}
+            className="px-4 py-2 rounded-xl text-xs font-black bg-rose-600 hover:bg-rose-500 text-white active:scale-95 transition-all shrink-0 flex items-center gap-1.5"
+          >
+            <Icon.RefreshCcw className="h-3.5 w-3.5" />
+            Coba Lagi
+          </button>
+        </div>
+      )}
+
       {busy && !loaded && (
+
         <div className="mt-6 space-y-6">
           <div className="flex gap-2 border-b dark:border-slate-800">
             <div className="h-8 w-32 animate-pulse bg-gray-200 dark:bg-slate-800 rounded-t-md"></div>
@@ -803,6 +836,7 @@ function DashboardInner() {
           </div>
         </div>
       )}
+
 
       {loaded && !busy && (
         <>
@@ -1088,7 +1122,7 @@ function DashboardInner() {
                                           const res = await fetch(`/api/offers/${offer.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "accept" }) });
                                           if (!res.ok) throw new Error((await res.json()).error);
                                           toast.success("Tawaran diterima! Pembeli sudah dinotif via WA.");
-                                          load();
+                                          load(wa);
                                         } catch (e) { toast.error(e.message); }
                                       }}
                                       className="btn-primary text-xs py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 border-emerald-600"
@@ -1104,7 +1138,7 @@ function DashboardInner() {
                                           const res = await fetch(`/api/offers/${offer.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "reject" }) });
                                           if (!res.ok) throw new Error((await res.json()).error);
                                           toast.success("Tawaran ditolak.");
-                                          load();
+                                          load(wa);
                                         } catch (e) { toast.error(e.message); }
                                       }}
                                       className="btn-outline text-xs py-1.5 px-3 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20"
