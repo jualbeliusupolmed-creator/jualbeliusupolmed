@@ -81,12 +81,17 @@ export default function SuperAppHome({
     };
   }, [inView, hasMore, isLoadingMore, page, activeTab, selectedCampus]);
 
+  const isFirstRender = useRef(true);
+
   // When filters change, reset posts
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
     let isMounted = true;
     async function resetAndFetch() {
-      if (page === 1 && activeTab === "all" && selectedCampus === "Semua" && posts.length > 0) return; 
-      
       setIsLoadingMore(true);
       try {
         const query = new URLSearchParams({
@@ -108,9 +113,12 @@ export default function SuperAppHome({
         if (isMounted) setIsLoadingMore(false);
       }
     }
-    if (activeTab !== "all" || selectedCampus !== "Semua" || page > 1) {
-      resetAndFetch();
-    }
+
+    resetAndFetch();
+
+    return () => {
+      isMounted = false;
+    };
   }, [activeTab, selectedCampus]);
 
   // Comments State

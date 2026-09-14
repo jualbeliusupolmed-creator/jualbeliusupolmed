@@ -96,7 +96,7 @@ Berjalan dengan PostgreSQL, memiliki tabel-tabel berikut:
 
 ## 4. Kualitas Kode & Utang Teknis (Tech Debt)
 
-- [ ] **Kritis**: Script WA Bot di VPS (`index.js`) berukuran sangat membengkak (~215KB). Ini sangat berisiko (*Spaghetti code*) jika ada logic yang rusak, akan sulit ditelusuri. **Saran perbaikan**: Pecah `index.js` menjadi berbasis *controller/service* per modul (misal: `handler_transaksi.js`, `handler_admin.js`).
+- [x] **Arsitektur Bot & Modularitas**: Rute Express bot di VPS telah dimodularisasi ke `src/routes/*.routes.js` (`wa`, `panel`, `antrean`, `sesi`, `web`). Logika pengolahan perintah (`.JUAL`, `.HAPUS`, command pengguna) dipusatkan di Webhook Next.js (`src/app/api/wa/baileys/route.js`) dengan handler admin terpisah di `src/lib/bot/adminHandlers.js`.
 - [x] **Menengah (sebagian)**: Login Admin tetap berbasis `ADMIN_PASSWORD` di `.env`, tapi kini diperkuat: (a) validasi panjang ≥16 karakter, (b) audit log login/logout ke `admin_logs`, (c) `SESSION_SECRET` terpisah dari `ADMIN_PASSWORD`. Migrasi ke SSO Supabase tetap backlog jangka panjang.
 - [x] **Peningkatan**: Desain panel admin sudah dibersihkan (rute redundan dihapus) dan konsistensi desain Dark mode / Light mode telah distandardisasi menggunakan token CSS `google.css` (`g-card`, `g-btn`, `g-badge`, `var(--g-line)`).
 
@@ -461,3 +461,9 @@ cuma server.
 - Konteks hidup dari proses Baileys digabung dengan riwayat persisten tanpa menggandakan overlap.
 - Aksi hasil klasifikasi AI hanya diteruskan ke state machine bila confidence minimal 0,68; hasil yang lebih rendah meminta klarifikasi.
 - Tidak ada perubahan skema. `public.wa_conversations` tetap RLS aktif tanpa policy dan tanpa hak SELECT untuk `anon`/`authenticated`; akses server memakai service role.
+
+*   **15 September 2026 — Pembersihan Root Workspace, Linter Clean, dan Penegasan Arsitektur Bot WA**
+    - **Pembersihan Root Workspace:** File sisa testing (`test_auth.js`, `scratch_process_*.js`, `refactor.js`) dan `cron-script.txt` (yang memuat token mentah) dibersihkan tuntas dari root workspace untuk menjaga keamanan sesuai `AGENTS.md`. Panduan jadwal cron yang aman dipindahkan ke `docs/cron-setup.md` dengan placeholder `$CRON_SECRET`.
+    - **Linter Web 100% Bersih:** Memperbaiki peringatan React Hook `exhaustive-deps` pada `src/app/SuperAppHome.jsx` baris 85–114 menggunakan `isFirstRender` ref agar tidak memicu refetch ganda saat mount awal dan tidak meninggalkan warning di `npm run lint`.
+    - **Penegasan Batas Arsitektur Bot WA:** Memverifikasi bahwa file `bot-wa/` di VPS berfungsi sebagai transport bridge Baileys dan rute Express-nya telah terpecah rapi ke `src/routes/*.routes.js` (`wa`, `panel`, `antrean`, `sesi`, `web`). File placeholder rusak `handler_admin.js` dan `handler_transaksi.js` dibersihkan agar repo bot lokal tidak mengalami drift dari upstream kanonikal `jualbeliusupolmed-creator/wa-bot-usu`. Logika pemrosesan perintah bot dipusatkan di Webhook Next.js `/api/wa/baileys` dengan handler modular di `src/lib/bot/adminHandlers.js`.
+
