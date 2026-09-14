@@ -381,7 +381,7 @@ export default async function SellerProfilePage({ params }) {
           </Link>
         </div>
       ) : (
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="mt-4 bg-white dark:bg-[#1e293b] sm:rounded-[24px] sm:border border-black/[0.06] dark:border-white/[0.08] overflow-hidden shadow-sm">
           {listings.map((l) => (
             <ProductCard key={l.id} listing={l} />
           ))}

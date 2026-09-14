@@ -1,72 +1,72 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
-import { getFavorites, toggleFavorite } from "@/lib/favorites";
 import { Icon } from "@/components/Icons";
+import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 
 export default function FavoritPage() {
-  const [items, setItems] = useState([]);
-  const [loaded, setLoaded] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
+  const [favorites, setFavorites] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  async function load() {
-    const saved = getFavorites();
-    setItems(saved);
-    setLoaded(true);
-
-    if (saved.length === 0) return;
-
-    // Re-fetch status terkini dari server (harga, status sold/expired)
-    setRefreshing(true);
+  const load = async () => {
     try {
-      const ids = saved.map((l) => l.id).join(",");
-      const res = await fetch(`/api/listings/batch?ids=${ids}`);
-      if (!res.ok) return;
-      const fresh = await res.json();
-      const freshMap = Object.fromEntries(fresh.map((f) => [f.id, f]));
-
-      setItems(saved.map((l) => ({ ...l, ...(freshMap[l.id] || {}) })));
-    } catch {
-      // Tetap pakai data localStorage kalau fetch gagal
+      const saved = JSON.parse(localStorage.getItem("mading_favorites") || "[]");
+      if (!saved.length) {
+        setFavorites([]);
+        setLoading(false);
+        return;
+      }
+      
+      const { data, error } = await supabase
+        .from("listings")
+        .select("*, seller_profiles!inner(name, verified, avatar_url, subscription_tier, trusted_seller)")
+        .in("id", saved);
+        
+      if (error) throw error;
+      setFavorites(data || []);
+    } catch (error) {
+      toast.error("Gagal memuat favorit");
     } finally {
-      setRefreshing(false);
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
     load();
-    window.addEventListener("favorites-changed", load);
-    return () => window.removeEventListener("favorites-changed", load);
+    const handleStorage = (e) => {
+      if (e.key === "mading_favorites") load();
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
   }, []);
 
-  const active = items.filter((l) => l.status === "active");
-  const sold = items.filter((l) => l.status !== "active");
+  const toggleFavorite = (listing) => {
+    const saved = JSON.parse(localStorage.getItem("mading_favorites") || "[]");
+    const newSaved = saved.filter(id => id !== listing.id);
+    localStorage.setItem("mading_favorites", JSON.stringify(newSaved));
+    window.dispatchEvent(new Event("storage"));
+    toast.success("Dihapus dari favorit");
+  };
+
+  const active = favorites.filter(f => f.status === "active");
+  const sold = favorites.filter(f => f.status !== "active");
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <div className="mb-2 grid h-10 w-10 place-items-center rounded-xl bg-rose-500/10 text-rose-500">
-            <Icon.Heart className="h-5 w-5" />
-          </div>
-          <h1 className="text-[28px] font-semibold tracking-[-0.04em] text-[#1d1d1f] dark:text-white">Favorit</h1>
-          <p className="mt-1 text-sm text-[#6e6e73] dark:text-slate-400">
-            Barang yang kamu simpan. Tersimpan di perangkat ini, tanpa perlu login.
-          </p>
-        </div>
-        {refreshing && (
-          <span className="text-xs text-gray-400 animate-pulse shrink-0">Memperbarui…</span>
-        )}
-      </div>
+    <div className="mx-auto max-w-7xl px-4 pt-6 pb-28 md:px-6 md:pb-12">
+      <h1 className="mb-2 text-2xl font-bold tracking-tight text-[#1d1d1f] dark:text-white sm:text-3xl">
+        Favorit Saya
+      </h1>
+      <p className="mb-8 text-sm text-[#6e6e73] dark:text-slate-400">
+        Barang-barang yang kamu simpan untuk dilihat lagi.
+      </p>
 
-      {!loaded ? (
-        <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4" aria-label="Memuat favorit">
-          {[1, 2, 3, 4].map((item) => <div key={item} className="h-64 animate-pulse rounded-[22px] bg-black/[0.04] dark:bg-white/[0.06]" />)}
-        </div>
-      ) : items.length === 0 ? (
-        <div className="card mt-7 grid place-items-center py-16 text-center text-[#6e6e73] dark:text-slate-400">
+      {loading ? (
+        <div className="flex justify-center py-20"><span className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-primary" /></div>
+      ) : favorites.length === 0 ? (
+        <div className="flex min-h-[40vh] flex-col items-center justify-center text-center">
           <div className="grid h-14 w-14 place-items-center rounded-2xl bg-rose-500/10 text-rose-500"><Icon.Heart className="h-6 w-6" /></div>
           <p className="mt-4 font-medium text-[#1d1d1f] dark:text-white">Belum ada barang favorit.</p>
           <p className="mt-1 text-sm">Simpan barang yang ingin kamu lihat lagi nanti.</p>
@@ -83,7 +83,7 @@ export default function FavoritPage() {
                   Masih Tersedia ({active.length})
                 </h2>
               )}
-              <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              <div className="mt-3 bg-white dark:bg-[#1e293b] sm:rounded-[24px] sm:border border-black/[0.06] dark:border-white/[0.08] overflow-hidden shadow-sm">
                 {active.map((l) => (
                   <ProductCard key={l.id} listing={l} />
                 ))}
@@ -96,7 +96,7 @@ export default function FavoritPage() {
               <h2 className="mt-10 text-sm font-semibold text-[#6e6e73] dark:text-slate-400">
                 Sudah Terjual / Tidak Aktif ({sold.length})
               </h2>
-              <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 opacity-50">
+              <div className="mt-3 bg-white dark:bg-[#1e293b] sm:rounded-[24px] sm:border border-black/[0.06] dark:border-white/[0.08] overflow-hidden shadow-sm opacity-50">
                 {sold.map((l) => (
                   <div key={l.id} className="relative">
                     <ProductCard listing={l} />

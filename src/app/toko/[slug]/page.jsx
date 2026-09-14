@@ -299,7 +299,7 @@ export default async function HalamanToko({ params }) {
           <p className="-mt-2 mb-4 pl-4 text-xs text-gray-500 dark:text-slate-400">
             Bukan untuk dibeli — ini jejak transaksi yang sudah selesai.
           </p>
-          <div className="grid grid-cols-2 gap-3 opacity-70 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="bg-white dark:bg-[#1e293b] sm:rounded-[24px] sm:border border-black/[0.06] dark:border-white/[0.08] overflow-hidden shadow-sm opacity-70">
             {terjual.map((l) => (
               <ProductCard key={l.id} listing={l} tanpaPenjual />
             ))}

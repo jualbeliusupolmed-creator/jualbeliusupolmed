@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useInView } from "react-intersection-observer";
 import { Icon } from "@/components/Icons";
 import { rupiah } from "@/lib/fees";
 import { buildSlug } from "@/lib/slug";
@@ -23,12 +24,94 @@ function waktuLalu(dateStr) {
 export default function SuperAppHome({
   latestListings = [],
   madingPosts: initialMadingPosts = [],
+  heroTitle,
+  heroSubtitle
 }) {
   // Feed States
   const [posts, setPosts] = useState(initialMadingPosts);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(initialMadingPosts.length === 15);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [activeTab, setActiveTab] = useState("all"); // 'all' | 'menfess' | 'info'
   const [selectedCampus, setSelectedCampus] = useState("Semua"); // 'Semua' | 'USU' | 'POLMED' | 'Bebas'
   const [filterType, setFilterType] = useState("all"); // 'all' | 'popular' | 'photo'
+
+  const { ref: loadMoreRef, inView } = useInView({
+    threshold: 0,
+    rootMargin: "200px", // Fetch slightly before it enters screen
+  });
+
+  // Fetch more posts when bottom observer is in view
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchMore() {
+      if (inView && hasMore && !isLoadingMore) {
+        setIsLoadingMore(true);
+        try {
+          const nextPage = page + 1;
+          const query = new URLSearchParams({
+            page: nextPage,
+            limit: 15,
+            ...(activeTab !== "all" && { type: activeTab }),
+            ...(selectedCampus !== "Semua" && { faculty: selectedCampus }),
+          });
+          const res = await fetch(`/api/mading?${query.toString()}`);
+          const data = await res.json();
+          if (isMounted) {
+            if (data.posts && data.posts.length > 0) {
+              setPosts((prev) => [...prev, ...data.posts]);
+              setPage(nextPage);
+              if (data.posts.length < 15) {
+                setHasMore(false);
+              }
+            } else {
+              setHasMore(false);
+            }
+          }
+        } catch (error) {
+          console.error("Gagal load more", error);
+        } finally {
+          if (isMounted) setIsLoadingMore(false);
+        }
+      }
+    }
+    fetchMore();
+    return () => {
+      isMounted = false;
+    };
+  }, [inView, hasMore, isLoadingMore, page, activeTab, selectedCampus]);
+
+  // When filters change, reset posts
+  useEffect(() => {
+    let isMounted = true;
+    async function resetAndFetch() {
+      if (page === 1 && activeTab === "all" && selectedCampus === "Semua" && posts.length > 0) return; 
+      
+      setIsLoadingMore(true);
+      try {
+        const query = new URLSearchParams({
+          page: 1,
+          limit: 15,
+          ...(activeTab !== "all" && { type: activeTab }),
+          ...(selectedCampus !== "Semua" && { faculty: selectedCampus }),
+        });
+        const res = await fetch(`/api/mading?${query.toString()}`);
+        const data = await res.json();
+        if (isMounted) {
+          setPosts(data.posts || []);
+          setPage(1);
+          setHasMore((data.posts || []).length === 15);
+        }
+      } catch (error) {
+        console.error("Gagal filter", error);
+      } finally {
+        if (isMounted) setIsLoadingMore(false);
+      }
+    }
+    if (activeTab !== "all" || selectedCampus !== "Semua" || page > 1) {
+      resetAndFetch();
+    }
+  }, [activeTab, selectedCampus]);
 
   // Comments State
   const [activeCommentsPostId, setActiveCommentsPostId] = useState(null);
@@ -645,6 +728,18 @@ export default function SuperAppHome({
                 </div>
               );
             })
+          )}
+          
+          {/* Intersection Observer target for Infinite Scroll */}
+          {hasMore && (
+            <div ref={loadMoreRef} className="py-8 flex justify-center items-center">
+              <div className="h-6 w-6 rounded-full border-2 border-primary/20 border-t-primary animate-spin"></div>
+            </div>
+          )}
+          {!hasMore && posts.length > 0 && (
+            <div className="py-8 text-center text-xs font-medium text-slate-400">
+              ✓ Anda sudah melihat semua postingan
+            </div>
           )}
         </div>{/* end feed posts list */}
       </section>{/* end feed section */}
