@@ -27,10 +27,6 @@
     {
       "path": "/api/cron/deal-followup",
       "schedule": "0 2 * * *"
-    },
-    {
-      "path": "/api/cron/instagram-menfess",
-      "schedule": "*/30 * * * *"
     }
   ]
 }
