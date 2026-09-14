@@ -389,15 +389,15 @@ export default function SuperAppHome({
   return (
     <div className="min-h-screen bg-[#f5f5f7] pb-28 md:pb-8 font-sans selection:bg-primary/20 dark:bg-[#0f172a] overflow-x-hidden">
       
-      {/* ── Layout Container Desktop: 2 kolom dengan independent scroll ── */}
+      {/* ── Layout Container Desktop: Scroll Natural ── */}
       <div className="md:max-w-7xl md:mx-auto md:px-6 md:pt-3">
-        <div className="md:flex md:gap-6 md:items-start md:h-[calc(100vh-105px)] md:overflow-hidden">
+        <div className="md:flex md:gap-6 md:items-start">
           
           {/* ═══════════════════════════════════════
               KOLOM KIRI — Feed utama (Menfess + Info Kampus)
-              Mobile: full width | Desktop: flex-1 dengan scroll sendiri
+              Mobile: full width | Desktop: flex-1
           ═══════════════════════════════════════ */}
-          <div className="md:flex-1 md:min-w-0 md:h-full md:overflow-y-auto md:pr-2 [scrollbar-width:thin]">
+          <div className="md:flex-1 md:min-w-0 md:pr-2">
       
 
 
@@ -719,9 +719,9 @@ export default function SuperAppHome({
           </div>{/* end kolom kiri */}
 
           {/* ════════════════════════════════════════
-              SIDEBAR KANAN — Marketplace Barang & Fitur (Scroll Mandiri di Desktop)
+              SIDEBAR KANAN — Marketplace Barang & Fitur (Sticky)
           ════════════════════════════════════════ */}
-          <aside className="hidden md:block w-[360px] xl:w-[420px] shrink-0 md:h-full md:overflow-y-auto md:pl-1 md:pr-2 space-y-4 [scrollbar-width:thin]">
+          <aside className="hidden md:block w-[360px] xl:w-[420px] shrink-0 sticky top-24 md:pl-1 md:pr-2 space-y-4">
             
             {/* Marketplace di Desktop */}
             <div className="rounded-2xl bg-white dark:bg-[#1c1c1e] border border-black/[0.06] dark:border-white/[0.08] overflow-hidden shadow-sm">
