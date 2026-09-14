@@ -15,6 +15,8 @@ export default function LeftSidebar() {
     { href: "/dicari", label: "Dicari", icon: Icon.Search },
     { href: "/chat", label: "Chat", icon: Icon.MessageCircle },
     { href: "/jual", label: "Jual Barang", icon: Icon.Plus },
+    { href: "/teman", label: "Cari Teman", icon: Icon.Users },
+    { href: "/?modal=menfess", label: "Buat Menfess", icon: Icon.Edit },
   ];
 
   return (
