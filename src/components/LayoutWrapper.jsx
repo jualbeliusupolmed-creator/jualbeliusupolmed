@@ -93,54 +93,51 @@ export default function LayoutWrapper({ children }) {
     }
   }, []);
 
-  return (
     <SesiProvider>
-      <div className="w-full min-h-screen relative bg-[#f5f5f7] dark:bg-[#0f172a]">
-        <div className={cn(
-          "w-full mx-auto flex justify-center",
-          !isAdmin && "md:max-w-7xl"
-        )}>
-          {/* Kiri: Sidebar Menu */}
-          {!isImmersive && <LeftSidebar />}
-
-          {/* Tengah: Main Feed Container */}
+      {isAdmin ? (
+        children
+      ) : (
+        <div className="w-full min-h-screen relative bg-[#f5f5f7] dark:bg-[#0f172a]">
           <div className={cn(
-            "w-full max-w-md md:max-w-[600px] flex-1 flex flex-col min-h-screen bg-white dark:bg-black border-x border-black/[0.06] dark:border-white/[0.08]",
-            !isAdmin && "shadow-2xl md:shadow-none",
-            isHome ? "lg:max-w-[1050px]" : "lg:max-w-[680px]"
+            "w-full mx-auto flex justify-center",
+            "md:max-w-7xl"
           )}>
-            {!isImmersive && (
+            {/* Kiri: Sidebar Menu */}
+            <LeftSidebar />
+
+            {/* Tengah: Main Feed Container */}
+            <div className={cn(
+              "w-full max-w-md md:max-w-[600px] flex-1 flex flex-col min-h-screen bg-white dark:bg-black border-x border-black/[0.06] dark:border-white/[0.08]",
+              "shadow-2xl md:shadow-none",
+              isHome ? "lg:max-w-[1050px]" : "lg:max-w-[680px]"
+            )}>
               <div className="md:hidden">
                 <Navbar config={config} />
               </div>
-            )}
-            
-            <main className={cn(
-              "flex-1 flex flex-col",
-              !isAdmin && !isChat && !isTeman ? "pb-36 md:pb-8" : ""
-            )}>
-              {children}
-            </main>
+              
+              <main className={cn(
+                "flex-1 flex flex-col",
+                !isChat && !isTeman ? "pb-36 md:pb-8" : ""
+              )}>
+                {children}
+              </main>
+            </div>
+
+            {/* Kanan: Widget/Trending */}
+            {!isHome && <RightSidebar config={config} />}
           </div>
 
-          {/* Kanan: Widget/Trending */}
-          {!isImmersive && !isHome && <RightSidebar config={config} />}
+          <GlobalChatNotifier />
+          <SwipeBackGesture />
+          <GlobalPullToRefresh />
+          <InstallPrompt />
+          <NotifPrompt />
+          <PopupSponsor config={config} />
+          <BottomNavbar />
+          {!hideFooter && <Footer config={config} />}
         </div>
-
-        {!isImmersive && (
-          <>
-            <GlobalChatNotifier />
-            <SwipeBackGesture />
-            <GlobalPullToRefresh />
-            <InstallPrompt />
-            <NotifPrompt />
-            <PopupSponsor config={config} />
-            <BottomNavbar />
-            {!hideFooter && <Footer config={config} />}
-          </>
-        )}
-        <GlobalImageLightbox />
-      </div>
+      )}
+      <GlobalImageLightbox />
     </SesiProvider>
   );
 }
