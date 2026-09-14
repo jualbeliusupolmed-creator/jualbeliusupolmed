@@ -948,11 +948,15 @@ export default function MadingClient({ initialPosts = [] }) {
                 <Icon.X className="h-5 w-5" />
         {/* MODAL BUAT POST BARU */}
         {showModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-[#1c1c1e] rounded-[24px] w-full max-w-md p-6 shadow-2xl border border-black/[0.06] dark:border-white/[0.08] relative max-h-[90vh] overflow-y-auto">
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-[#1c1c1e] rounded-t-[32px] sm:rounded-[24px] w-full max-w-md p-5 sm:p-6 pb-8 sm:pb-6 shadow-2xl border-t sm:border border-black/[0.06] dark:border-white/[0.08] relative max-h-[95vh] overflow-y-auto animate-in slide-in-from-bottom-8 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300">
+              
+              {/* Mobile Drag Handle */}
+              <div className="w-10 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-5 sm:hidden" />
+
               <button
                 onClick={() => setShowModal(false)}
-                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full"
+                className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full font-bold bg-slate-100 dark:bg-slate-800 sm:bg-transparent"
               >
                     <Icon.X className="h-4 w-4" />
               </button>
@@ -1224,6 +1228,15 @@ export default function MadingClient({ initialPosts = [] }) {
           isOpen={!!intipProduk}
           onClose={() => setIntipProduk(null)}
         />
+
+        {/* MOBILE FLOATING ACTION BUTTON */}
+        <button
+          onClick={() => setShowModal(true)}
+          className="fixed z-40 bottom-6 right-4 sm:hidden bg-indigo-600 text-white p-4 rounded-full shadow-lg shadow-indigo-600/30 hover:scale-105 active:scale-95 transition-transform flex items-center justify-center"
+          aria-label="Buat Postingan Baru"
+        >
+          <Icon.Edit className="w-6 h-6" />
+        </button>
       </div>
     </PullToRefresh>
   );

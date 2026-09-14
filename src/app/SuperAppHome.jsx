@@ -142,6 +142,16 @@ export default function SuperAppHome({
 
   useEffect(() => {
     if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("modal") === "menfess") {
+        setShowModal(true);
+      }
+      
+      const campus = params.get("c");
+      if (campus && ["Semua", "USU", "POLMED", "Bebas"].includes(campus)) {
+        setSelectedCampus(campus);
+      }
+
       let uid = localStorage.getItem("mading_user_id");
       if (!uid) {
         uid = "usr_" + Math.random().toString(36).substring(2, 12);
@@ -858,20 +868,24 @@ export default function SuperAppHome({
 
       {/* ── 6. WRITE POST MODAL ── */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-[#1c1c1e] rounded-[24px] w-full max-w-md p-5 sm:p-6 shadow-2xl border border-black/[0.06] dark:border-white/[0.08] relative max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-[#1c1c1e] rounded-t-[32px] sm:rounded-[24px] w-full max-w-md p-5 sm:p-6 pb-8 sm:pb-6 shadow-2xl border-t sm:border border-black/[0.06] dark:border-white/[0.08] relative max-h-[95vh] overflow-y-auto animate-in slide-in-from-bottom-8 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300">
+            
+            {/* Mobile Drag Handle */}
+            <div className="w-10 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-5 sm:hidden" />
+
             <button
               onClick={() => setShowModal(false)}
-              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full font-bold"
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full font-bold bg-slate-100 dark:bg-slate-800 sm:bg-transparent"
             >
-            <Icon.X className="h-4 w-4" />
+              <Icon.X className="h-4 w-4" />
             </button>
 
             <h2 className="text-lg font-bold text-[#1d1d1f] dark:text-white tracking-tight mb-4">
               Kirim Menfess &amp; Info Kampus
             </h2>
 
-            <form onSubmit={handleCreatePost} className="space-y-3.5">
+            <form onSubmit={handleCreatePost} className="space-y-4">
               {/* Type Switcher */}
               <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl">
                 <button
@@ -1021,6 +1035,15 @@ export default function SuperAppHome({
         isOpen={!!intipProduk}
         onClose={() => setIntipProduk(null)}
       />
+
+      {/* ── 9. MOBILE FLOATING ACTION BUTTON ── */}
+      <button
+        onClick={() => setShowModal(true)}
+        className="fixed z-40 bottom-6 right-4 sm:hidden bg-[#0071e3] text-white p-4 rounded-full shadow-lg shadow-blue-500/30 hover:scale-105 active:scale-95 transition-transform flex items-center justify-center"
+        aria-label="Buat Menfess Baru"
+      >
+        <Icon.Edit className="w-6 h-6" />
+      </button>
     </div>
   );
 }
