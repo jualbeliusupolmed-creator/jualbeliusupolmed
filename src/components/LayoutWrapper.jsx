@@ -105,8 +105,9 @@ export default function LayoutWrapper({ children }) {
 
           {/* Tengah: Main Feed Container */}
           <div className={cn(
-            "w-full max-w-md md:max-w-[600px] lg:max-w-[680px] flex-1 flex flex-col min-h-screen bg-white dark:bg-black border-x border-black/[0.06] dark:border-white/[0.08]",
-            !isAdmin && "shadow-2xl md:shadow-none"
+            "w-full max-w-md md:max-w-[600px] flex-1 flex flex-col min-h-screen bg-white dark:bg-black border-x border-black/[0.06] dark:border-white/[0.08]",
+            !isAdmin && "shadow-2xl md:shadow-none",
+            isHome ? "lg:max-w-[1050px]" : "lg:max-w-[680px]"
           )}>
             {!isImmersive && (
               <div className="md:hidden">
@@ -123,7 +124,7 @@ export default function LayoutWrapper({ children }) {
           </div>
 
           {/* Kanan: Widget/Trending */}
-          {!isImmersive && <RightSidebar config={config} />}
+          {!isImmersive && !isHome && <RightSidebar config={config} />}
         </div>
 
         {!isImmersive && (
