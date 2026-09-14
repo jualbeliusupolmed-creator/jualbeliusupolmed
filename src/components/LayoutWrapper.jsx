@@ -92,7 +92,7 @@ export default function LayoutWrapper({ children }) {
       }
     }
   }, []);
-
+  return (
     <SesiProvider>
       {isAdmin ? (
         children
