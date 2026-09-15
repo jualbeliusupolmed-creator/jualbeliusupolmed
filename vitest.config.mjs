@@ -8,7 +8,14 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./vitest.setup.mjs'],
-    exclude: ['bot-wa/**', 'node_modules/**', '.next/**', '.npm-cache/**'],
+    exclude: [
+      'bot-wa/**',
+      'node_modules/**',
+      '.next/**',
+      '.npm-cache/**',
+      '.worktrees/**',
+      'scratch/**',
+    ],
     alias: {
       '@': resolve(import.meta.dirname, './src'),
     },
