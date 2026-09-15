@@ -405,7 +405,7 @@ export default function SuperAppHome({
     });
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] pb-28 md:pb-8 font-sans selection:bg-primary/20 dark:bg-[#0f172a] overflow-x-hidden">
+    <div className="min-h-screen bg-transparent pb-28 md:pb-8 font-sans selection:bg-primary/20 dark:bg-transparent overflow-x-hidden">
       
       {/* ── Layout Container Desktop: Scroll Natural ── */}
       <div className="md:max-w-7xl md:mx-auto md:px-6 md:pt-3">
@@ -495,32 +495,33 @@ export default function SuperAppHome({
 
       {/* ── 5. FEED MADING & MENFESS ── */}
       <section className="w-full md:px-0">
-        <div className="sticky top-[70px] z-30 bg-[#f5f5f7]/90 dark:bg-[#0f172a]/90 backdrop-blur-xl px-4 sm:px-0 pt-2 pb-1.5 mb-1.5">
-        {/* TABS FILTER (Semua / Menfess / Info Kampus) */}
-        <div className="flex gap-4 border-b border-black/[0.06] dark:border-white/[0.08] mt-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {[
-            { id: "all", label: "Semua" },
-            { id: "menfess", label: "Menfess" },
-            { id: "info", label: "Info Kampus" },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`pb-2 text-[12px] font-bold border-b-2 transition-colors whitespace-nowrap px-1 ${
-                activeTab === tab.id
-                  ? "border-[#1d1d1f] text-[#1d1d1f] dark:border-white dark:text-white"
-                  : "border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
+        <div className="sticky top-[70px] z-30 apple-glass sm:rounded-2xl px-4 sm:px-4 pt-2.5 pb-2.5 mb-3 sm:mx-0 -mx-4 sm:border-t-0 border-t-0 shadow-sm transition-all">
+          {/* TABS FILTER (Semua / Menfess / Info Kampus) */}
+          <div className="flex justify-center overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="apple-segmented">
+              {[
+                { id: "all", label: "Semua" },
+                { id: "menfess", label: "Menfess" },
+                { id: "info", label: "Info Kampus" },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-4 py-1.5 text-[12px] font-bold rounded-full transition-all ${
+                    activeTab === tab.id
+                      ? "bg-white dark:bg-[#2c2c2e] text-[#1d1d1f] dark:text-white shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
+                      : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* FEED POSTS LIST */}
-        <div className="bg-white dark:bg-[#1e293b] sm:rounded-[24px] sm:border border-black/[0.06] dark:border-white/[0.08] overflow-hidden mb-12 shadow-sm">
+        <div className="flex flex-col gap-4 mb-12">
           {filteredPosts.length === 0 ? (
             <div className="text-center py-16 px-4">
               <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mx-auto mb-2.5">
@@ -543,7 +544,7 @@ export default function SuperAppHome({
                 <div
                   key={post.id}
                   data-mading-post-id={post.id}
-                  className="p-3 sm:p-4 border-b border-black/[0.06] dark:border-white/[0.08] last:border-b-0 hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors relative group"
+                  className="apple-glass-card p-4 sm:p-5 relative group"
                 >
                   {/* Top Header */}
                   <div className="flex items-center gap-2 mb-1">
@@ -739,11 +740,11 @@ export default function SuperAppHome({
           {/* ════════════════════════════════════════
               SIDEBAR KANAN — Marketplace Barang & Fitur (Sticky)
           ════════════════════════════════════════ */}
-          <aside className="hidden md:block w-[360px] xl:w-[420px] shrink-0 sticky top-24 md:pl-1 md:pr-2 space-y-4">
+          <aside className="hidden md:block w-[360px] xl:w-[420px] shrink-0 sticky top-24 md:pl-1 md:pr-2 space-y-4 max-h-[calc(100vh-7rem)] overflow-y-auto pb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             
             {/* Marketplace di Desktop */}
-            <div className="rounded-2xl bg-white dark:bg-[#1c1c1e] border border-black/[0.06] dark:border-white/[0.08] overflow-hidden shadow-sm">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-black/[0.05] dark:border-white/[0.07] bg-slate-50/50 dark:bg-white/[0.02]">
+            <div className="apple-glass-card overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-black/[0.05] dark:border-white/[0.07] bg-white/50 dark:bg-black/20">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold">
                     <Icon.ShoppingBag className="h-4 w-4" />
@@ -820,7 +821,7 @@ export default function SuperAppHome({
             </div>
 
             {/* Kirim Menfess CTA */}
-            <div className="rounded-2xl bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 p-4 text-white shadow-sm relative overflow-hidden">
+            <div className="apple-glass-card border-none bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 p-4 text-white shadow-[0_8px_24px_-6px_rgba(124,58,237,0.4)] relative overflow-hidden transition-all hover:shadow-[0_12px_32px_-8px_rgba(124,58,237,0.6)]">
               <div className="relative z-10">
                 <div className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur-sm mb-2">
                   <Icon.Heart className="h-3 w-3 text-rose-300 fill-current" />
@@ -839,7 +840,7 @@ export default function SuperAppHome({
             </div>
 
             {/* Link Cepat */}
-            <div className="rounded-2xl bg-white dark:bg-[#1c1c1e] border border-black/[0.06] dark:border-white/[0.08] p-4 shadow-sm">
+            <div className="apple-glass-card p-4">
               <h3 className="font-bold text-[12px] text-[#1d1d1f] dark:text-white mb-3 flex items-center gap-1.5">
                 <Icon.Sparkles className="h-3.5 w-3.5 text-amber-500" />
                 Jelajahi Fitur Kampus
