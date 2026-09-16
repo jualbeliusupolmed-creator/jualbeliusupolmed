@@ -210,42 +210,12 @@ async function send(target, message, fileUrl = null, ttlDetik = null, meta = nul
     // Sampai di sini berarti pesannya TIDAK diterima siapa pun. Bot mengantre
     // sendiri pesan yang berhasil masuk dan menjawab ok=true saat itu juga,
     // jadi yang jatuh ke sini benar-benar tidak punya rumah.
-    idTampungan = await tampungGagal(target, message, fileUrl, ttlDetik, galat, meta);
-
-    console.warn(`[sendWa] ${galat} — mencoba jalur cadangan.`);
-    if (!process.env.FONNTE_TOKEN) {
-      return { ok: false, data: json, noFallback: true, ditampung: true, galat };
-    }
-  }
-
-  // Fallback ke Fonnte (jika Baileys belum siap, atau barusan menolak)
-  const token = process.env.FONNTE_TOKEN;
-  if (!token || !target) {
-    console.warn("[fonnte] token/target kosong — skip kirim WA");
-    // Tanpa BAILEYS_API_URL DAN tanpa token cadangan, pesan ini tidak pernah
-    // punya jalan keluar sama sekali. Dulu ia lenyap di sini juga.
-    if (target) await tampungGagal(target, message, fileUrl, ttlDetik, "tidak ada jalur kirim yang tersedia", meta);
-    return { ok: false, skipped: true, ditampung: !!target };
-  }
-  try {
-    const fd = new FormData();
-    fd.append("target", target);
-    fd.append("message", message);
-    if (fileUrl) {
-      fd.append("url", fileUrl);
-    }
-
-    const res = await fetch(FONNTE_URL, {
-      method: "POST",
-      headers: { Authorization: token },
-      body: fd,
-    });
-    const data = await res.json().catch(() => ({}));
-    if (res.ok) await tandaiTerkirim(idTampungan);
-    return { ok: res.ok, data };
-  } catch (err) {
-    console.error("[fonnte] gagal kirim:", err?.message);
-    return { ok: false, error: err?.message };
+    await tampungGagal(target, message, fileUrl, ttlDetik, galat, meta);
+    return { ok: false, data: json, ditampung: true, galat };
+  } else {
+    // Kalau baileysUrl gak ada
+    await tampungGagal(target, message, fileUrl, ttlDetik, "BAILEYS_API_URL belum di-set", meta);
+    return { ok: false, skipped: true, ditampung: !!target, galat: "BAILEYS_API_URL belum di-set" };
   }
 }
 
