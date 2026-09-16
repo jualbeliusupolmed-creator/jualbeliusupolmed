@@ -405,7 +405,7 @@ export default function SuperAppHome({
     });
 
   return (
-    <div className="min-h-screen bg-transparent pb-28 md:pb-8 font-sans selection:bg-primary/20 dark:bg-transparent overflow-x-hidden">
+    <div className="min-h-screen bg-transparent pb-28 md:pb-8 font-sans selection:bg-primary/20 dark:bg-transparent">
       
       {/* ── Layout Container Desktop: Scroll Natural ── */}
       <div className="md:max-w-7xl md:mx-auto md:px-6 md:pt-3">
