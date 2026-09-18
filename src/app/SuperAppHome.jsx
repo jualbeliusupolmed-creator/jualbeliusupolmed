@@ -408,7 +408,7 @@ export default function SuperAppHome({
     <div className="min-h-screen bg-transparent pb-28 md:pb-8 font-sans selection:bg-primary/20 dark:bg-transparent">
       
       {/* ── Layout Container Desktop: Scroll Natural ── */}
-      <div className="md:max-w-7xl md:mx-auto md:px-6 md:pt-3">
+      <div className="md:max-w-7xl md:mx-auto md:px-6 md:pt-6">
         <div className="md:flex md:gap-6 md:items-start">
           
           {/* ═══════════════════════════════════════
@@ -495,7 +495,7 @@ export default function SuperAppHome({
 
       {/* ── 5. FEED MADING & MENFESS ── */}
       <section className="w-full md:px-0">
-        <div className="sticky top-[70px] z-30 apple-glass sm:rounded-2xl px-4 sm:px-4 pt-2.5 pb-2.5 mb-3 sm:mx-0 -mx-4 sm:border-t-0 border-t-0 shadow-sm transition-all">
+        <div className="sticky top-[70px] md:top-6 z-30 apple-glass sm:rounded-2xl px-4 sm:px-4 pt-2.5 pb-2.5 mb-3 sm:mx-0 -mx-4 sm:border-t-0 border-t-0 shadow-sm transition-all">
           {/* TABS FILTER (Semua / Menfess / Info Kampus) */}
           <div className="flex justify-center overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <div className="apple-segmented">
@@ -740,7 +740,7 @@ export default function SuperAppHome({
           {/* ════════════════════════════════════════
               SIDEBAR KANAN — Marketplace Barang & Fitur (Sticky)
           ════════════════════════════════════════ */}
-          <aside className="hidden md:block w-[360px] xl:w-[420px] shrink-0 sticky top-24 md:pl-1 md:pr-2 space-y-4 max-h-[calc(100vh-7rem)] overflow-y-auto pb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <aside className="hidden md:block w-[360px] xl:w-[420px] shrink-0 sticky top-6 md:pl-1 md:pr-2 space-y-4 max-h-[calc(100vh-1.5rem)] overflow-y-auto pb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             
             {/* Marketplace di Desktop */}
             <div className="apple-glass-card overflow-hidden">
