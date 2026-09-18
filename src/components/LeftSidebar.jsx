@@ -1,16 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Icon } from "./Icons";
 import { useSesi } from "./SesiProvider";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
+import OTPModal from "./OTPModal";
 
 export default function LeftSidebar() {
   const pathname = usePathname();
-  const { nama, wa } = useSesi();
+  const router = useRouter();
+  const { nama, wa, segarkan } = useSesi();
   const [unreadChat, setUnreadChat] = useState(0);
+  const [showOtp, setShowOtp] = useState(false);
 
   useEffect(() => {
     function onUnread(e) { setUnreadChat(e.detail?.count ?? 0); }
@@ -105,9 +108,10 @@ export default function LeftSidebar() {
             <Icon.ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-primary shrink-0" />
           </Link>
         ) : (
-          <Link
-            href="/jual"
-            className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-primary/5 hover:bg-primary/10 transition-colors"
+          <button
+            type="button"
+            onClick={() => setShowOtp(true)}
+            className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-primary/5 hover:bg-primary/10 transition-colors text-left w-full cursor-pointer"
           >
             <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <Icon.User className="w-4 h-4" />
@@ -116,7 +120,7 @@ export default function LeftSidebar() {
               <p className="text-[12px] font-bold text-primary">Login / Daftar</p>
               <p className="text-[10px] text-slate-400">Jual beli di kampus</p>
             </div>
-          </Link>
+          </button>
         )}
         <Link 
           href="/jual"
@@ -126,6 +130,16 @@ export default function LeftSidebar() {
           Pasang Iklan
         </Link>
       </div>
+
+      <OTPModal
+        isOpen={showOtp}
+        onClose={() => setShowOtp(false)}
+        onSuccess={() => {
+          setShowOtp(false);
+          segarkan?.();
+          router.refresh();
+        }}
+      />
     </div>
   );
 }
