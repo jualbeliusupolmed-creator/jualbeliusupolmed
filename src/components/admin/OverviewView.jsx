@@ -10,14 +10,14 @@ import TransactionModeToggle from "./TransactionModeToggle";
 
 function Kpi({ label, value, sub, href, icon, accent = "slate" }) {
   const CardContent = (
-    <div className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all hover:shadow-md hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 h-full">
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-bold text-slate-500 dark:text-slate-400">{label}</p>
-        {icon && <span className="text-lg opacity-80">{icon}</span>}
+    <div className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-5 shadow-xs transition-all hover:shadow-md hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 h-full min-w-0">
+      <div className="flex items-center justify-between gap-2 min-w-0">
+        <p className="text-xs font-bold text-slate-500 dark:text-slate-400 truncate">{label}</p>
+        {icon && <span className="text-base sm:text-lg opacity-80 shrink-0">{icon}</span>}
       </div>
-      <div className="mt-3">
-        <p className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">{value}</p>
-        {sub && <p className="mt-1 text-[11px] font-semibold text-slate-400 dark:text-slate-500">{sub}</p>}
+      <div className="mt-2.5 sm:mt-3 min-w-0">
+        <p className="text-xl sm:text-2xl xl:text-3xl font-black tracking-tight text-slate-900 dark:text-white truncate" title={typeof value === 'string' ? value : undefined}>{value}</p>
+        {sub && <p className="mt-1 text-[11px] font-semibold text-slate-400 dark:text-slate-500 truncate">{sub}</p>}
       </div>
     </div>
   );
@@ -135,22 +135,24 @@ export default function OverviewView({ stats }) {
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Revenue 14 Days */}
         <Card title="Pendapatan 14 Hari Terakhir" subtitle={`Akumulasi: ${rupiah(totalRev14)}`}>
-          <div className="flex h-48 items-end gap-1.5 pt-2">
-            {revByDay.map((d) => {
-              const heightPct = Math.max(6, (d.total / maxRev) * 100);
-              return (
-                <div key={d.key} className="group relative flex flex-1 flex-col items-center justify-end h-full">
-                  <div
-                    className="w-full rounded-t-lg bg-slate-900 transition-all group-hover:bg-primary dark:bg-slate-100 dark:group-hover:bg-emerald-400"
-                    style={{ height: `${heightPct}%` }}
-                    title={`${d.key}: ${rupiah(d.total)}`}
-                  />
-                  <span className="mt-2.5 text-[10px] font-bold text-slate-400 dark:text-slate-500">
-                    {d.key.slice(8)}
-                  </span>
-                </div>
-              );
-            })}
+          <div className="overflow-x-auto [scrollbar-width:none] -mx-1 px-1">
+            <div className="flex h-48 items-end gap-1 sm:gap-1.5 pt-2 min-w-[280px]">
+              {revByDay.map((d) => {
+                const heightPct = Math.max(6, (d.total / maxRev) * 100);
+                return (
+                  <div key={d.key} className="group relative flex flex-1 flex-col items-center justify-end h-full">
+                    <div
+                      className="w-full rounded-t-lg bg-slate-900 transition-all group-hover:bg-primary dark:bg-slate-100 dark:group-hover:bg-emerald-400"
+                      style={{ height: `${heightPct}%` }}
+                      title={`${d.key}: ${rupiah(d.total)}`}
+                    />
+                    <span className="mt-2.5 text-[10px] font-bold text-slate-400 dark:text-slate-500">
+                      {d.key.slice(8)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </Card>
 

@@ -206,7 +206,7 @@ export default function DistributorPanel({ settings: initialSettings, categories
           <div className="mt-4">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">10 Undangan Terakhir</p>
             <div className="overflow-x-auto">
-              <table className="w-full text-xs">
+              <table className="w-full text-xs min-w-[480px]">
                 <thead>
                   <tr className="border-b border-gray-100 dark:border-slate-800 text-gray-400">
                     <th className="text-left pb-2">Nomor WA</th>

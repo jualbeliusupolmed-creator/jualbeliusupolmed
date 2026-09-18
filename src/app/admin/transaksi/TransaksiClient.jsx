@@ -138,7 +138,7 @@ export default function TransaksiClient({ initialPayments = [] }) {
       <p className="mb-2 text-xs" style={{ color: "var(--g-ink-soft)" }}>{filteredPayments.length} transaksi</p>
 
       <div className="g-table-wrap">
-        <table className="g-table">
+        <table className="g-table min-w-[700px]">
           <thead>
             <tr>
               <th>Order ID</th>

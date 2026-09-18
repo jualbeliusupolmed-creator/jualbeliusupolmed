@@ -102,7 +102,7 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
                 {listing.category}
               </span>
               {listing.listing_code && (
-                <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-md bg-white text-gray-600 dark:bg-slate-900 dark:text-slate-300 font-semibold flex items-center gap-0.5 border border-black/[0.06] dark:border-white/[0.08]">
+                <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-md bg-white text-gray-600 dark:bg-slate-900 dark:text-slate-300 font-semibold hidden xs:flex items-center gap-0.5 border border-black/[0.06] dark:border-white/[0.08]">
                   <Icon.Hash className="h-2.5 w-2.5 shrink-0" />
                   {listing.listing_code}
                 </span>
@@ -137,9 +137,9 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
           </div>
 
           {/* Footer Card: Seller info & View/Nego */}
-          <div className="mt-2 pt-2 border-t border-black/[0.04] dark:border-white/[0.06] flex items-center justify-between text-[10px] sm:text-[11px] text-gray-500 dark:text-gray-400">
-            <div className="flex items-center gap-1 min-w-0 pr-1">
-              <span className="truncate max-w-[75px] sm:max-w-[100px]">{!tanpaPenjual ? listing.seller_name || "Penjual" : ""}</span>
+          <div className="mt-2 pt-2 border-t border-black/[0.04] dark:border-white/[0.06] flex items-center justify-between text-[10px] sm:text-[11px] text-gray-500 dark:text-gray-400 gap-1.5">
+            <div className="flex items-center gap-1 min-w-0 flex-1 overflow-hidden">
+              <span className="truncate max-w-[80px] sm:max-w-[120px]">{!tanpaPenjual ? listing.seller_name || "Penjual" : ""}</span>
               {listing.seller_profiles?.subscription_tier === "pro" && (
                 <Icon.Sparkles className="h-2.5 w-2.5 text-amber-500 shrink-0" title="Penjual Pro" />
               )}

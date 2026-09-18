@@ -73,7 +73,7 @@ export default async function AdminTemanPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+            <table className="w-full text-left text-xs min-w-[700px]">
               <thead className="border-b border-gray-100 bg-gray-50/70 text-[11px] font-bold text-gray-500 dark:border-gray-800 dark:bg-gray-800/40">
                 <tr>
                   <th className="p-3">Foto &amp; Nama</th>
