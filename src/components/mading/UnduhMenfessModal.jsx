@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { Icon } from "@/components/Icons";
 import { toast } from "sonner";
@@ -8,8 +9,13 @@ import { toast } from "sonner";
 export default function UnduhMenfessModal({ post, onClose }) {
   const [ratio, setRatio] = useState("portrait"); // 'portrait' (1080x1350) | 'story' (1080x1920)
   const [downloading, setDownloading] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  if (!post) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!post || !mounted) return null;
 
   const imageUrl = `/api/mading/${post.id}/instagram-image?ratio=${ratio}`;
   const downloadUrl = `/api/mading/${post.id}/instagram-image?ratio=${ratio}&download=1`;
@@ -47,8 +53,8 @@ export default function UnduhMenfessModal({ post, onClose }) {
     }
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       
       <div className="relative w-full max-w-lg rounded-3xl bg-white p-5 sm:p-6 shadow-2xl dark:bg-slate-900 border border-black/[0.06] dark:border-white/[0.08] z-10 space-y-4 max-h-[90vh] overflow-y-auto">
@@ -151,6 +157,7 @@ export default function UnduhMenfessModal({ post, onClose }) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

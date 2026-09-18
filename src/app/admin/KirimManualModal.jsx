@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 /*
  * "Kirim manual" — jalan keluar ketika bot mati.
@@ -72,6 +73,11 @@ function Bagian({ judul, keterangan, teks, aksi }) {
 export default function KirimManualModal({ listing, onClose }) {
   const [data, setData] = useState(null);
   const [galat, setGalat] = useState(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     let batal = false;
@@ -99,8 +105,10 @@ export default function KirimManualModal({ listing, onClose }) {
     return () => document.removeEventListener("keydown", esc);
   }, [onClose]);
 
-  return (
-    <div className="g-scrim" onClick={onClose}>
+  if (!mounted) return null;
+
+  return createPortal(
+    <div className="g-scrim" onClick={onClose} role="dialog" aria-modal="true">
       <div className="g-dialog" onClick={(e) => e.stopPropagation()}>
         <div className="g-dialog-head">
           <h2 className="g-dialog-title">Kirim manual lewat WhatsApp</h2>
@@ -193,6 +201,7 @@ export default function KirimManualModal({ listing, onClose }) {
           <button type="button" onClick={onClose} className="g-btn g-btn-text">Tutup</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

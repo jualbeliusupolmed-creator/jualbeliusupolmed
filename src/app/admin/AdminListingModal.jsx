@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import MediaUploader from "@/components/MediaUploader";
 import { uploadMedia } from "@/lib/upload";
 
@@ -32,6 +33,11 @@ export default function AdminListingModal({ listing, categories, onSave, onClose
   const [media, setMedia] = useState(initialImages.map((url) => ({ url, preview: url })));
   const [fileError, setFileError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const set = (k) => (e) =>
     setF((s) => ({
@@ -76,10 +82,14 @@ export default function AdminListingModal({ listing, categories, onSave, onClose
     ? categories.map((c) => c.name)
     : [f.category].filter(Boolean);
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 grid place-items-center bg-gray-900/60 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] grid place-items-center bg-gray-900/60 p-4 backdrop-blur-sm"
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
     >
       <div
         className="max-h-[90vh] w-full max-w-2xl overflow-auto rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl dark:border-slate-800 dark:bg-slate-900"
@@ -209,6 +219,7 @@ export default function AdminListingModal({ listing, categories, onSave, onClose
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 /**
  * InputModal — pengganti window.prompt()
@@ -32,7 +33,12 @@ export default function InputModal({
   hint,
 }) {
   const [value, setValue] = useState(String(defaultValue ?? ""));
+  const [mounted, setMounted] = useState(false);
   const inputRef = useRef(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Reset value tiap kali modal dibuka
   useEffect(() => {
@@ -51,7 +57,7 @@ export default function InputModal({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
   function handleConfirm() {
     if (value.trim() === "") return;
@@ -59,9 +65,9 @@ export default function InputModal({
     onClose?.();
   }
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 sm:p-6"
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 sm:p-6"
       onClick={(e) => e.target === e.currentTarget && onClose?.()}
       role="dialog"
       aria-modal="true"
@@ -110,6 +116,7 @@ export default function InputModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
