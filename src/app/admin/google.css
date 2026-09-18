@@ -104,14 +104,16 @@
 .g-topbar {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   height: 64px;
   flex: 0 0 auto;
-  padding: 0 16px;
+  padding: 0 12px;
   background: var(--g-surface);
   border-bottom: 1px solid var(--g-line);
   position: relative;
   z-index: 40;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 @media (min-width: 768px) {
   .g-topbar {
@@ -132,15 +134,20 @@
   align-items: center;
   gap: 8px;
   flex: 1 1 auto;
-  min-width: 120px;
+  min-width: 0;
   max-width: 520px;
   height: 40px;
-  padding: 0 14px;
+  padding: 0 10px;
   background: var(--g-surface-2);
   border: 1px solid var(--g-line);
   border-radius: 12px;
   color: var(--g-ink-soft);
   transition: all .2s ease;
+}
+@media (min-width: 640px) {
+  .g-searchbar {
+    padding: 0 14px;
+  }
 }
 
 .g-searchbar:focus-within {
@@ -151,6 +158,8 @@
 
 .g-searchbar input {
   flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
   background: transparent;
   border: 0;
   outline: none;
@@ -160,18 +169,25 @@
 
 .g-searchbar input::placeholder {
   color: var(--g-ink-faint);
+  text-overflow: ellipsis;
 }
 
 .g-searchbar-kbd {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 6px;
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: var(--g-ink-faint);
-  background: var(--g-surface);
-  border: 1px solid var(--g-line);
-  border-radius: 6px;
+  display: none;
+}
+@media (min-width: 640px) {
+  .g-searchbar-kbd {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 6px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--g-ink-faint);
+    background: var(--g-surface);
+    border: 1px solid var(--g-line);
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
 }
 
 .g-icon-btn {
