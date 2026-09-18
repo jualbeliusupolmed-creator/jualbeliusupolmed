@@ -95,7 +95,7 @@ export default function TokoClient({ stores = [], storesMigrationMissing = false
             {daftar.length} dari {stores.length} toko · alamatnya publik dan bisa dibuka siapa saja
           </p>
           <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-slate-800">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm min-w-[700px]">
               <thead className="bg-gray-50 text-left text-xs uppercase text-gray-400 dark:bg-slate-900">
                 <tr>
                   <th className="p-3">Toko</th>

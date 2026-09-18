@@ -575,7 +575,6 @@ export default function JualPage() {
             </button>
             {msg && <p className="mt-3 text-sm text-rose-600">{msg}</p>}
           </div>
-                <Icon.X className="h-5 w-5" />
           <div className="card p-4 text-sm text-gray-500 dark:text-slate-400">
             <p className="font-semibold text-gray-700 dark:text-slate-300">ℹ Fee setelah deal</p>
             <ul className="mt-2 list-disc space-y-1 pl-4">

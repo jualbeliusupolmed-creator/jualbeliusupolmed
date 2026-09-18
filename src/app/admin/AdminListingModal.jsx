@@ -197,14 +197,14 @@ export default function AdminListingModal({ listing, categories, onSave, onClose
           </div>
         </div>
 
-        <div className="mt-5 flex gap-2">
+        <div className="mt-5 flex flex-col sm:flex-row gap-2">
           <button onClick={save} disabled={busy} className="btn-primary flex-1">
             {busy ? "Menyimpan…" : "Simpan"}
           </button>
           <button onClick={postMeta} disabled={busy || f.status !== "active"} className="btn-outline flex-1 bg-gradient-to-r from-pink-50 to-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100">
             Post ke IG/FB
           </button>
-          <button onClick={onClose} className="btn-outline">
+          <button onClick={onClose} className="btn-outline sm:flex-none">
             Batal
           </button>
         </div>

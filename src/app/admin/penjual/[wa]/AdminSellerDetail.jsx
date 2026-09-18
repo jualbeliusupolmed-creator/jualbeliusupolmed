@@ -183,7 +183,7 @@ export default function AdminSellerDetail({ profile, listings, stats, wa }) {
       <div className="card p-6">
         <h2 className="text-lg font-bold mb-4">Daftar Iklan Penjual Ini</h2>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm min-w-[600px]">
             <thead className="bg-gray-50 text-left text-xs uppercase text-gray-400 dark:bg-slate-900">
               <tr>
                 <th className="p-3">Judul Iklan</th>
