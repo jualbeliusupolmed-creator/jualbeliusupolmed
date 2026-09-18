@@ -10,6 +10,9 @@ import { buildSlug } from "@/lib/slug";
 import { toast } from "sonner";
 import TagProdukPicker from "@/components/TagProdukPicker";
 import ProductPeekSheet from "@/components/ProductPeekSheet";
+import { useSesi } from "@/components/SesiProvider";
+import UnduhMenfessModal from "@/components/mading/UnduhMenfessModal";
+import { compressImage } from "@/lib/image";
 
 // Haptic feedback for tactile feel on mobile devices
 function triggerHaptic(type = "light") {
@@ -313,6 +316,49 @@ export default function SuperAppHome({
   const [zoomImage, setZoomImage] = useState(null);
   const [tagProduk, setTagProduk] = useState(null);
   const [intipProduk, setIntipProduk] = useState(null);
+  const [unduhPost, setUnduhPost] = useState(null);
+  const [compressingImage, setCompressingImage] = useState(false);
+  const { wa: userWa } = useSesi();
+
+  // Restore Menfess Draft on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const savedDraft = localStorage.getItem("menfess_draft");
+        if (savedDraft) {
+          const parsed = JSON.parse(savedDraft);
+          if (parsed && (parsed.content || parsed.title)) {
+            setFormData((prev) => ({
+              ...prev,
+              type: parsed.type || prev.type,
+              faculty: parsed.faculty || prev.faculty,
+              title: parsed.title || prev.title,
+              content: parsed.content || prev.content,
+            }));
+          }
+        }
+      } catch {}
+    }
+  }, []);
+
+  // Helper to update formData and sync to draft localStorage
+  const updateFormData = (patch) => {
+    setFormData((prev) => {
+      const next = { ...prev, ...patch };
+      try {
+        localStorage.setItem(
+          "menfess_draft",
+          JSON.stringify({
+            type: next.type,
+            faculty: next.faculty,
+            title: next.title,
+            content: next.content,
+          })
+        );
+      } catch {}
+      return next;
+    });
+  };
 
   // User ID identifier for engagement
   const [userId, setUserId] = useState("");
@@ -522,11 +568,44 @@ export default function SuperAppHome({
     window.open(waUrl, "_blank");
   };
 
+  // Handle Image Select with automatic client-side compression
+  const handleImageSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type?.startsWith("image/")) {
+      toast.error("Format file harus berupa gambar (JPG, PNG, WebP).");
+      return;
+    }
+
+    try {
+      setCompressingImage(true);
+      const compressed = await compressImage(file, { maxSizePx: 1200, quality: 0.8 });
+      setImageFile(compressed);
+      setImagePreview(URL.createObjectURL(compressed));
+    } catch (err) {
+      console.warn("Kompresi gagal, mencoba file asli:", err);
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Ukuran gambar terlalu besar (maksimal 5 MB). Silakan pilih foto lain.");
+        return;
+      }
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    } finally {
+      setCompressingImage(false);
+    }
+  };
+
   // Handle Create Post Submit
   const handleCreatePost = async (e) => {
     e.preventDefault();
-    if (!formData.content.trim()) {
-      toast.error("Isi postingan tidak boleh kosong!");
+    if (!userWa) {
+      toast.error("Silakan masuk dengan nomor WhatsApp terlebih dahulu untuk menerbitkan postingan.");
+      return;
+    }
+    const cleanContent = (formData.content || "").trim();
+    if (!cleanContent || cleanContent.length < 5) {
+      toast.error("Isi postingan minimal 5 karakter!");
       return;
     }
     setSubmitting(true);
@@ -539,6 +618,8 @@ export default function SuperAppHome({
         const uploadData = await uploadRes.json();
         if (uploadRes.ok && uploadData.url) {
           imageUrl = uploadData.url;
+        } else {
+          toast.error(uploadData.error || "Gagal mengunggah foto lampiran.");
         }
       }
 
@@ -550,7 +631,7 @@ export default function SuperAppHome({
           sender_name: formData.is_anon ? "Anonim" : formData.sender_name || "Mahasiswa",
           faculty: formData.faculty,
           title: formData.type === "info" ? formData.title : null,
-          content: formData.content,
+          content: cleanContent,
           image_url: imageUrl,
         }),
       });
@@ -558,6 +639,9 @@ export default function SuperAppHome({
       if (data.success) {
         triggerHaptic("success");
         toast.success("Menfess berhasil dikirim!");
+        try {
+          localStorage.removeItem("menfess_draft");
+        } catch {}
         setShowModal(false);
         setFormData({
           type: "menfess",
@@ -570,11 +654,7 @@ export default function SuperAppHome({
         setImageFile(null);
         setImagePreview("");
         // Reload posts
-        fetch(`/api/mading`)
-          .then((r) => r.json())
-          .then((d) => {
-            if (d.posts) setPosts(d.posts);
-          });
+        loadNewPosts();
       } else {
         toast.error(data.error || "Gagal mengirim menfess.");
       }
@@ -884,9 +964,21 @@ export default function SuperAppHome({
                 {searchQuery ? `Tidak ada hasil untuk "${searchQuery}"` : "Belum ada postingan di filter ini"}
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                {searchQuery ? "Coba kata kunci lain atau hapus pencarian." : "Jadilah yang pertama mengirim menfess atau info kampus!"}
+                {searchQuery ? "Coba kata kunci lain atau hapus pencarian untuk menampilkan seluruh postingan." : "Jadilah yang pertama mengirim menfess atau info kampus!"}
               </p>
-              {!searchQuery && (
+              {searchQuery ? (
+                <button
+                  onClick={() => {
+                    triggerHaptic("light");
+                    setSearchQuery("");
+                    setShowSearch(false);
+                  }}
+                  className="mt-3.5 inline-flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs"
+                >
+                  <Icon.X className="w-3.5 h-3.5" />
+                  <span>Hapus Pencarian &amp; Tampilkan Semua</span>
+                </button>
+              ) : (
                 <button
                   onClick={() => setShowModal(true)}
                   className="mt-3.5 inline-flex items-center gap-1.5 bg-[#0071e3] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#0077ed]"
@@ -1026,11 +1118,26 @@ export default function SuperAppHome({
                       <span className="font-bold text-xs">{post.comments_count || 0} Komentar</span>
                     </button>
 
+                    {/* Unduh Menfess Story IG */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic("light");
+                        setUnduhPost(post);
+                      }}
+                      aria-label="Unduh gambar untuk Instagram Story atau Status WhatsApp"
+                      title="Unduh gambar Story / Status"
+                      className="flex items-center gap-1.5 py-1 px-2 rounded-lg text-slate-500 hover:text-primary transition-colors ml-auto active:scale-95"
+                    >
+                      <Icon.Download className="h-3.5 w-3.5" />
+                      <span className="font-bold text-xs hidden xs:inline">Story IG</span>
+                    </button>
+
                     <button
                       type="button"
                       onClick={() => handleShare(post)}
                       aria-label="Bagikan postingan ini ke WhatsApp"
-                      className="flex items-center gap-1.5 py-1 px-2 rounded-lg hover:text-emerald-600 transition-colors ml-auto"
+                      className="flex items-center gap-1.5 py-1 px-2 rounded-lg hover:text-emerald-600 transition-colors"
                     >
                       <Icon.Share className="h-3.5 w-3.5" />
                       <span className="font-bold text-xs">Bagikan</span>
@@ -1263,12 +1370,29 @@ export default function SuperAppHome({
               Kirim Menfess &amp; Info Kampus
             </h2>
 
+            {!userWa && (
+              <div className="flex items-center justify-between p-3 rounded-2xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-xs mb-4">
+                <div className="flex items-center gap-2">
+                  <Icon.User className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                  <span className="text-amber-800 dark:text-amber-300 font-medium">
+                    Masuk via WhatsApp untuk mengirim menfess. Draf ketikanmu tersimpan aman!
+                  </span>
+                </div>
+                <Link
+                  href="/login?kembali=/"
+                  className="shrink-0 ml-2 px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] transition-colors"
+                >
+                  Masuk
+                </Link>
+              </div>
+            )}
+
             <form onSubmit={handleCreatePost} className="space-y-4">
               {/* Type Switcher */}
               <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl">
                 <button
                   type="button"
-                  onClick={() => setFormData({ ...formData, type: "menfess" })}
+                  onClick={() => updateFormData({ type: "menfess" })}
                   className={`py-2 rounded-xl text-xs font-bold transition-all ${
                     formData.type === "menfess"
                       ? "bg-white dark:bg-slate-700 text-amber-600 shadow-xs"
@@ -1279,7 +1403,7 @@ export default function SuperAppHome({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setFormData({ ...formData, type: "info" })}
+                  onClick={() => updateFormData({ type: "info" })}
                   className={`py-2 rounded-xl text-xs font-bold transition-all ${
                     formData.type === "info"
                       ? "bg-white dark:bg-slate-700 text-fuchsia-600 shadow-xs"
@@ -1300,7 +1424,7 @@ export default function SuperAppHome({
                     type="text"
                     required
                     value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    onChange={(e) => updateFormData({ title: e.target.value })}
                     placeholder="Contoh: Oprec Panitia BEM USU 2026"
                     className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none"
                   />
@@ -1314,7 +1438,7 @@ export default function SuperAppHome({
                 </label>
                 <select
                   value={formData.faculty}
-                  onChange={(e) => setFormData({ ...formData, faculty: e.target.value })}
+                  onChange={(e) => updateFormData({ faculty: e.target.value })}
                   className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none"
                 >
                   <option value="USU">USU (Universitas Sumatera Utara)</option>
@@ -1332,7 +1456,7 @@ export default function SuperAppHome({
                   required
                   rows={4}
                   value={formData.content}
-                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                  onChange={(e) => updateFormData({ content: e.target.value })}
                   placeholder={
                     formData.type === "menfess"
                       ? "Tuliskan curhatan, kekaguman, atau pesan anonim kamu…"
@@ -1344,23 +1468,21 @@ export default function SuperAppHome({
 
               {/* Optional Photo Attachment */}
               <div>
-                <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                  Foto Pendukung (Opsional)
+                <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1 flex items-center justify-between">
+                  <span>Foto Pendukung (Opsional)</span>
+                  {compressingImage && (
+                    <span className="text-[10px] text-primary animate-pulse font-medium">Mengompres foto…</span>
+                  )}
                 </label>
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                      setImageFile(file);
-                      setImagePreview(URL.createObjectURL(file));
-                    }
-                  }}
+                  onChange={handleImageSelect}
+                  disabled={compressingImage}
                   className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
                 />
                 {imagePreview && (
-                  <div className="mt-2 relative h-28 w-full rounded-xl overflow-hidden border border-slate-200">
+                  <div className="mt-2 relative h-28 w-full rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700">
                     <img src={imagePreview} alt="Preview" className="h-full w-full object-cover" />
                     <button
                       type="button"
@@ -1368,9 +1490,10 @@ export default function SuperAppHome({
                         setImageFile(null);
                         setImagePreview("");
                       }}
-                      className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 text-[10px]"
+                      className="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white rounded-full p-1 text-[10px] transition-colors"
+                      title="Hapus foto"
                     >
-                      <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg>
+                      <Icon.X className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 )}
@@ -1387,10 +1510,10 @@ export default function SuperAppHome({
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={submitting}
-                className="w-full bg-[#1d1d1f] dark:bg-white text-white dark:text-[#1d1d1f] disabled:opacity-50 py-3 rounded-full text-[13px] font-bold hover:scale-[0.98] transition-transform shadow-md"
+                disabled={submitting || compressingImage}
+                className="w-full bg-[#1d1d1f] dark:bg-white text-white dark:text-[#1d1d1f] disabled:opacity-50 py-3 rounded-full text-[13px] font-bold hover:scale-[0.98] active:scale-95 transition-transform shadow-md"
               >
-                {submitting ? "Mengirimkan…" : "Terbitkan Sekarang"}
+                {submitting ? "Mengirimkan…" : compressingImage ? "Menyiapkan foto…" : "Terbitkan Sekarang"}
               </button>
             </form>
           </div>
@@ -1414,13 +1537,25 @@ export default function SuperAppHome({
         onClose={() => setIntipProduk(null)}
       />
 
-      {/* ── 9. MOBILE FLOATING ACTION BUTTON ── */}
+      {/* ── 9. MODAL UNDUH MENFESS (STORY IG / STATUS WA) ── */}
+      {unduhPost && (
+        <UnduhMenfessModal
+          post={unduhPost}
+          onClose={() => setUnduhPost(null)}
+        />
+      )}
+
+      {/* ── 10. MOBILE FLOATING ACTION BUTTON ── */}
       <button
-        onClick={() => setShowModal(true)}
-        className="fixed z-40 bottom-6 right-4 sm:hidden bg-[#0071e3] text-white p-4 rounded-full shadow-lg shadow-blue-500/30 hover:scale-105 active:scale-95 transition-transform flex items-center justify-center"
+        onClick={() => {
+          triggerHaptic("medium");
+          setShowModal(true);
+        }}
+        className="fixed z-30 bottom-[calc(5.2rem+env(safe-area-inset-bottom,0px))] right-4 sm:hidden bg-[#0071e3] text-white p-3.5 rounded-full shadow-xl shadow-blue-500/30 hover:scale-105 active:scale-95 transition-transform flex items-center justify-center"
         aria-label="Buat Menfess Baru"
+        title="Buat Menfess / Info Kampus"
       >
-        <Icon.Edit className="w-6 h-6" />
+        <Icon.Edit className="w-5 h-5" />
       </button>
     </div>
   );
