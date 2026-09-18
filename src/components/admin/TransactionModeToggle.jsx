@@ -64,16 +64,16 @@ export default function TransactionModeToggle({ variant = "card" }) {
 
   // Variant "card": Untuk tampilan kontrol penuh di Ringkasan / Overview Admin
   return (
-    <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="text-xl"><svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg></span>
-            <h3 className="text-base font-black tracking-tight text-slate-900 dark:text-white">
+    <div className="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xl shrink-0"><svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg></span>
+            <h3 className="text-sm sm:text-base font-black tracking-tight text-slate-900 dark:text-white">
               Mode Alur Transaksi Marketplace
             </h3>
             <span
-              className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+              className={`text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
                 isChatMode
                   ? "bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
                   : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
@@ -88,13 +88,13 @@ export default function TransactionModeToggle({ variant = "card" }) {
         </div>
 
         {/* Switch Selector */}
-        <div className="inline-flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700 w-full sm:w-auto">
+        <div className="inline-flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700 w-full sm:w-auto shrink-0">
           {/* Opsi 1: WhatsApp */}
           <button
             type="button"
             disabled={updating || loading}
             onClick={() => handleSwitch("whatsapp")}
-            className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-extrabold transition-all duration-150 ${
+            className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs font-extrabold transition-all duration-150 whitespace-nowrap ${
               isWaMode
                 ? "bg-emerald-600 text-white shadow-sm"
                 : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
@@ -109,7 +109,7 @@ export default function TransactionModeToggle({ variant = "card" }) {
             type="button"
             disabled={updating || loading}
             onClick={() => handleSwitch("in_app_chat")}
-            className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-extrabold transition-all duration-150 ${
+            className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs font-extrabold transition-all duration-150 whitespace-nowrap ${
               isChatMode
                 ? "bg-blue-600 text-white shadow-sm"
                 : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"

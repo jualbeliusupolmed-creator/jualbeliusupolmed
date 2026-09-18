@@ -10,14 +10,14 @@ import TransactionModeToggle from "./TransactionModeToggle";
 
 function Kpi({ label, value, sub, href, icon, accent = "slate" }) {
   const CardContent = (
-    <div className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-5 shadow-xs transition-all hover:shadow-md hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 h-full min-w-0">
-      <div className="flex items-center justify-between gap-2 min-w-0">
+    <div className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-4 lg:p-5 shadow-xs transition-all hover:shadow-md hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 h-full min-w-0 overflow-hidden">
+      <div className="flex items-center justify-between gap-1.5 min-w-0">
         <p className="text-xs font-bold text-slate-500 dark:text-slate-400 truncate">{label}</p>
-        {icon && <span className="text-base sm:text-lg opacity-80 shrink-0">{icon}</span>}
+        {icon && <span className="text-sm sm:text-base opacity-80 shrink-0">{icon}</span>}
       </div>
-      <div className="mt-2.5 sm:mt-3 min-w-0">
-        <p className="text-xl sm:text-2xl xl:text-3xl font-black tracking-tight text-slate-900 dark:text-white truncate" title={typeof value === 'string' ? value : undefined}>{value}</p>
-        {sub && <p className="mt-1 text-[11px] font-semibold text-slate-400 dark:text-slate-500 truncate">{sub}</p>}
+      <div className="mt-2 sm:mt-2.5 min-w-0">
+        <p className="text-lg sm:text-xl xl:text-2xl font-black tracking-tight text-slate-900 dark:text-white truncate" title={typeof value === 'string' ? value : undefined}>{value}</p>
+        {sub && <p className="mt-0.5 sm:mt-1 text-[11px] font-semibold text-slate-400 dark:text-slate-500 truncate">{sub}</p>}
       </div>
     </div>
   );

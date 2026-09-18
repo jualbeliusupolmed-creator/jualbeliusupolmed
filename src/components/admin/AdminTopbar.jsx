@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
 import { useAdmin } from "./AdminProvider";
 import AdminNav from "./AdminNav";
@@ -28,6 +29,16 @@ export default function AdminTopbar({ counts = {} }) {
 
   const currentTab = pathname.split("/").filter(Boolean)[1] || "overview";
   const judul = labelTab(currentTab);
+
+  // Lock scroll saat laci menu terbuka
+  useEffect(() => {
+    if (buka) {
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = "";
+      };
+    }
+  }, [buka]);
 
   // Pencarian ikut basis: menu yang tidak punya halaman demo tidak boleh
   // muncul sebagai saran di panel demo — jalan pintas ke halaman kosong sama
@@ -182,7 +193,7 @@ export default function AdminTopbar({ counts = {} }) {
         </div>
 
         {/* Toggle Cepat Mode Transaksi */}
-        <div className="hidden sm:block">
+        <div className="hidden xl:block shrink-0">
           <TransactionModeToggle variant="compact" />
         </div>
 
@@ -191,20 +202,20 @@ export default function AdminTopbar({ counts = {} }) {
           href="/"
           target="_blank"
           rel="noreferrer"
-          className="hidden md:inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-xs transition hover:bg-gray-50 hover:border-gray-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+          className="hidden sm:inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-700 shadow-xs transition hover:bg-gray-50 hover:border-gray-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 shrink-0"
           title="Buka Marketplace di Tab Baru"
         >
-          <svg className="h-3.5 w-3.5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg className="h-3.5 w-3.5 text-emerald-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" />
           </svg>
-          <span>Lihat Web</span>
+          <span className="hidden md:inline">Lihat Web</span>
         </a>
 
         {/* Tombol Logout */}
         <button
           type="button"
           onClick={logout}
-          className="g-icon-btn text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30"
+          className="g-icon-btn text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 shrink-0"
           title="Keluar Admin"
           aria-label="Keluar Admin"
         >
@@ -215,11 +226,10 @@ export default function AdminTopbar({ counts = {} }) {
       </header>
 
       {/* Laci menu responsif untuk perangkat mobile / tablet */}
-      {buka && (
-        <div className="g-scrim lg:hidden" style={{ placeItems: "stretch" }} onClick={() => setBuka(false)}>
+      {buka && typeof document !== "undefined" && createPortal(
+        <div className="g-admin g-drawer-scrim lg:hidden" onClick={() => setBuka(false)}>
           <div
-            className="flex h-full w-[280px] flex-col shadow-2xl animate-fade-in"
-            style={{ background: "var(--g-surface)" }}
+            className="g-drawer-content"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="g-rail-brand justify-between">
@@ -251,7 +261,8 @@ export default function AdminTopbar({ counts = {} }) {
             </div>
             <AdminNav counts={counts} onNavigate={() => setBuka(false)} />
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
