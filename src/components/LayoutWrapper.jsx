@@ -97,9 +97,9 @@ export default function LayoutWrapper({ children }) {
       {isAdmin ? (
         children
       ) : (
-        <div className="w-full min-h-screen relative bg-[#f5f5f7] dark:bg-[#0f172a]">
+        <div className="w-full min-h-screen relative overflow-x-clip bg-[#f5f5f7] dark:bg-[#0f172a]">
           <div className={cn(
-            "w-full mx-auto flex justify-center",
+            "w-full min-w-0 mx-auto flex justify-center",
             "md:max-w-7xl"
           )}>
             {/* Kiri: Sidebar Menu */}
@@ -107,7 +107,7 @@ export default function LayoutWrapper({ children }) {
 
             {/* Tengah: Main Feed Container */}
             <div className={cn(
-              "w-full max-w-md md:max-w-[600px] flex-1 flex flex-col min-h-screen bg-white dark:bg-black border-x border-black/[0.06] dark:border-white/[0.08]",
+              "w-full min-w-0 max-w-md md:max-w-[600px] flex-1 flex flex-col min-h-screen bg-white dark:bg-black border-x border-black/[0.06] dark:border-white/[0.08]",
               "shadow-2xl md:shadow-none",
               isHome ? "lg:max-w-[1050px]" : "lg:max-w-[680px]"
             )}>

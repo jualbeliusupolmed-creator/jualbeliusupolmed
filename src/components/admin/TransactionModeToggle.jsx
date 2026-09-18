@@ -41,7 +41,7 @@ export default function TransactionModeToggle({ variant = "card" }) {
           title="Mode DM Web: Pembeli & penjual chat lewat inbox web"
         >
           <span>DM</span>
-          <span className="hidden sm:inline">DM Web</span>
+          <span className="hidden sm:inline"> Web</span>
         </button>
 
         <button
@@ -56,7 +56,7 @@ export default function TransactionModeToggle({ variant = "card" }) {
           title="Mode WA: Pembeli langsung diarahkan ke nomor WhatsApp penjual"
         >
           <span>WA</span>
-          <span className="hidden sm:inline">WA Langsung</span>
+          <span className="hidden sm:inline"> Langsung</span>
         </button>
       </div>
     );
