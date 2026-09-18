@@ -7,9 +7,8 @@ const MOBILE_SUBDOMAIN = "https://m.jualbeliusupolmed.web.id";
 const MOBILE_UA_REGEX =
   /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|CriOS/i;
 
-// Aktifkan redirect mobile ke true jika subdomain m. sudah dikonfigurasi di Vercel
-// Sekarang masih false agar tidak menyebabkan redirect loop sebelum subdomain aktif
-const ENABLE_MOBILE_REDIRECT = true;
+// Subdomain mobile dimatikan karena web ini sudah sepenuhnya responsif (single codebase)
+const ENABLE_MOBILE_REDIRECT = false;
 
 export async function middleware(request) {
   const { pathname, hostname } = request.nextUrl;
