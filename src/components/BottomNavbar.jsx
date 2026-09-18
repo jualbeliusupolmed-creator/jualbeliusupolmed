@@ -56,8 +56,8 @@ function ItemNav({ n, pathname, badge = 0 }) {
       </div>
       <span
         className={cn(
-          "text-[9px] transition-all duration-200 truncate max-w-full tracking-tight",
-          isActive ? "font-bold" : "font-semibold"
+          "text-[10.5px] min-[360px]:text-[11px] leading-tight transition-all duration-200 truncate max-w-full tracking-tight mt-0.5",
+          isActive ? "font-bold text-primary dark:text-violet-400" : "font-semibold text-slate-600 dark:text-slate-300"
         )}
       >
         {n.name}
@@ -69,7 +69,7 @@ function ItemNav({ n, pathname, badge = 0 }) {
     "group relative flex w-12 xs:w-14 flex-col items-center justify-center gap-0.5 py-1 transition-all duration-200 active:scale-[0.92] touch-manipulation",
     isActive
       ? "text-primary dark:text-violet-400 font-bold"
-      : "text-slate-600 hover:text-slate-950 dark:text-slate-400 dark:hover:text-slate-200 font-medium"
+      : "text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white font-semibold"
   );
 
   if (n.onClick) {

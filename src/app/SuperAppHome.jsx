@@ -707,7 +707,7 @@ export default function SuperAppHome({
 
       {/* ── ONBOARDING OVERLAY (first visit only) ── */}
       {showOnboarding && (
-        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div data-mobile-overlay="onboarding" className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-white dark:bg-[#1c1c1e] rounded-[28px] w-full max-w-sm p-6 shadow-2xl border border-black/[0.06] dark:border-white/[0.08]">
             <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
               <Icon.Store className="w-7 h-7" />
