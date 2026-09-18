@@ -107,7 +107,8 @@ export default function LayoutWrapper({ children }) {
 
             {/* Tengah: Main Feed Container */}
             <div className={cn(
-              "w-full min-w-0 max-w-md md:max-w-[600px] flex-1 flex flex-col min-h-screen bg-white dark:bg-black border-x border-black/[0.06] dark:border-white/[0.08]",
+              "w-full min-w-0 max-w-md md:max-w-[600px] flex-1 flex flex-col min-h-screen",
+              !isHome && "bg-white dark:bg-black border-x border-black/[0.06] dark:border-white/[0.08]",
               "shadow-2xl md:shadow-none",
               isHome ? "lg:max-w-[1050px]" : "lg:max-w-[680px]"
             )}>
