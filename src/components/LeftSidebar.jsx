@@ -34,7 +34,7 @@ export default function LeftSidebar() {
     { href: "/dicari", label: "Dicari", icon: Icon.Search },
     { href: "/chat", label: "Chat", icon: Icon.MessageCircle, badge: unreadChat },
     { href: "/teman", label: "Cari Teman", icon: Icon.Users },
-    { href: "/organisasi", label: "UKM Organisasi", icon: Icon.Store },
+    { href: "/organisasi", label: "UKM & Organisasi", icon: Icon.Store },
     { href: "/oprec", label: "Oprec Kampus", icon: Icon.Megaphone },
   ];
 

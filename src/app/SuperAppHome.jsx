@@ -11,6 +11,17 @@ import { toast } from "sonner";
 import TagProdukPicker from "@/components/TagProdukPicker";
 import ProductPeekSheet from "@/components/ProductPeekSheet";
 
+// Haptic feedback for tactile feel on mobile devices
+function triggerHaptic(type = "light") {
+  if (typeof window !== "undefined" && "vibrate" in navigator) {
+    try {
+      if (type === "light") navigator.vibrate(8);
+      else if (type === "medium") navigator.vibrate(20);
+      else if (type === "success") navigator.vibrate([10, 30, 15]);
+    } catch {}
+  }
+}
+
 // Umur relatif singkat untuk kartu feed
 function waktuLalu(dateStr) {
   if (!dateStr) return "baru saja";
@@ -63,6 +74,64 @@ export default function SuperAppHome({
   const [filterType, setFilterType] = useState("all"); // 'all' | 'popular' | 'photo'
   const [searchQuery, setSearchQuery] = useState(""); // keyword search
   const [showSearch, setShowSearch] = useState(false); // toggle search bar
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+
+  // Mobile pull to refresh state
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const touchStartY = useRef(0);
+
+  const handleTouchStart = (e) => {
+    if (typeof window !== "undefined" && window.scrollY <= 0) {
+      touchStartY.current = e.touches[0].clientY;
+    } else {
+      touchStartY.current = 0;
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (!touchStartY.current || isRefreshing) return;
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - touchStartY.current;
+    if (diff > 0 && typeof window !== "undefined" && window.scrollY <= 0) {
+      setPullDistance(Math.min(diff * 0.45, 75));
+    }
+  };
+
+  const handleTouchEnd = async () => {
+    if (pullDistance > 50 && !isRefreshing) {
+      setIsRefreshing(true);
+      triggerHaptic("medium");
+      try {
+        await loadNewPosts();
+      } finally {
+        setIsRefreshing(false);
+        setPullDistance(0);
+      }
+    } else {
+      setPullDistance(0);
+    }
+    touchStartY.current = 0;
+  };
+
+  // Debounce search query 350ms for server-side search
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedQuery(searchQuery.trim());
+    }, 350);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
+  // Live relative timestamp ticker — updates every 60 seconds so "x menit lalu" stays fresh
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (typeof document !== "undefined" && !document.hidden) {
+        setTick((t) => t + 1);
+      }
+    }, 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   // New post banner state
   const [newPostCount, setNewPostCount] = useState(0);
@@ -85,9 +154,10 @@ export default function SuperAppHome({
     rootMargin: "200px", // Fetch slightly before it enters screen
   });
 
-  // Poll every 60s for new posts
+  // Poll every 60s for new posts, pausing when tab is not visible to save data and battery
   useEffect(() => {
     const poll = setInterval(async () => {
+      if (typeof document !== "undefined" && document.hidden) return;
       try {
         const res = await fetch("/api/mading?page=1&limit=1");
         if (!res.ok) return;
@@ -107,20 +177,31 @@ export default function SuperAppHome({
     return () => clearInterval(poll);
   }, []);
 
-  function loadNewPosts() {
+  async function loadNewPosts() {
     setNewPostCount(0);
-    fetch("/api/mading?page=1&limit=15")
-      .then(r => r.json())
-      .then(d => {
-        if (d.posts) {
-          setPosts(d.posts);
-          setPage(1);
-          setHasMore(d.posts.length === 15);
-          latestKnownId.current = d.posts[0]?.id ?? latestKnownId.current;
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        }
-      })
-      .catch(() => {});
+    setIsLoadingMore(true);
+    try {
+      const query = new URLSearchParams({
+        page: "1",
+        limit: "15",
+        ...(activeTab !== "all" && { type: activeTab }),
+        ...(selectedCampus !== "Semua" && { faculty: selectedCampus }),
+        ...(debouncedQuery && { q: debouncedQuery }),
+      });
+      const res = await fetch(`/api/mading?${query.toString()}`);
+      if (!res.ok) return;
+      const d = await res.json();
+      if (d.posts) {
+        setPosts(d.posts);
+        setPage(1);
+        setHasMore(d.posts.length === 15);
+        latestKnownId.current = d.posts[0]?.id ?? latestKnownId.current;
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    } catch {
+    } finally {
+      setIsLoadingMore(false);
+    }
   }
 
   // Fetch more posts when bottom observer is in view
@@ -132,10 +213,11 @@ export default function SuperAppHome({
         try {
           const nextPage = page + 1;
           const query = new URLSearchParams({
-            page: nextPage,
-            limit: 15,
+            page: String(nextPage),
+            limit: "15",
             ...(activeTab !== "all" && { type: activeTab }),
             ...(selectedCampus !== "Semua" && { faculty: selectedCampus }),
+            ...(debouncedQuery && { q: debouncedQuery }),
           });
           const res = await fetch(`/api/mading?${query.toString()}`);
           const data = await res.json();
@@ -164,11 +246,11 @@ export default function SuperAppHome({
     return () => {
       isMounted = false;
     };
-  }, [inView, hasMore, isLoadingMore, page, activeTab, selectedCampus]);
+  }, [inView, hasMore, isLoadingMore, page, activeTab, selectedCampus, debouncedQuery]);
 
   const isFirstRender = useRef(true);
 
-  // When filters change, reset posts
+  // When filters or search query change, reset and fetch from server
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
@@ -178,12 +260,14 @@ export default function SuperAppHome({
     let isMounted = true;
     async function resetAndFetch() {
       setIsLoadingMore(true);
+      setFeedError(false);
       try {
         const query = new URLSearchParams({
-          page: 1,
-          limit: 15,
+          page: "1",
+          limit: "15",
           ...(activeTab !== "all" && { type: activeTab }),
           ...(selectedCampus !== "Semua" && { faculty: selectedCampus }),
+          ...(debouncedQuery && { q: debouncedQuery }),
         });
         const res = await fetch(`/api/mading?${query.toString()}`);
         const data = await res.json();
@@ -194,6 +278,7 @@ export default function SuperAppHome({
         }
       } catch (error) {
         console.error("Gagal filter", error);
+        if (isMounted) setFeedError(true);
       } finally {
         if (isMounted) setIsLoadingMore(false);
       }
@@ -204,7 +289,7 @@ export default function SuperAppHome({
     return () => {
       isMounted = false;
     };
-  }, [activeTab, selectedCampus]);
+  }, [activeTab, selectedCampus, debouncedQuery]);
 
   // Comments State
   const [activeCommentsPostId, setActiveCommentsPostId] = useState(null);
@@ -300,6 +385,7 @@ export default function SuperAppHome({
   // Handle Like
   const handleLike = async (postId) => {
     if (!userId) return;
+    triggerHaptic("light");
     setPosts((prev) =>
       prev.map((p) => {
         if (p.id === postId) {
@@ -321,6 +407,31 @@ export default function SuperAppHome({
         body: JSON.stringify({ user_identifier: userId }),
       });
     } catch {}
+  };
+
+  // Handle Report Post
+  const handleReport = async (postId) => {
+    if (!userId) return;
+    if (!confirm("Laporkan postingan ini ke tim kampus sebagai spam atau konten tidak pantas?")) return;
+    triggerHaptic("medium");
+    try {
+      const res = await fetch(`/api/mading/${postId}/report`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_identifier: userId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(data.pesan || "Laporan diterima. Terima kasih atas kepedulianmu!");
+        if (data.disembunyikan) {
+          setPosts((prev) => prev.filter((p) => p.id !== postId));
+        }
+      } else {
+        toast.error(data.error || "Gagal mengirim laporan.");
+      }
+    } catch {
+      toast.error("Gagal mengirim laporan.");
+    }
   };
 
   // Toggle Comment Accordion
@@ -365,6 +476,7 @@ export default function SuperAppHome({
         setPosts((prev) =>
           prev.map((p) => (p.id === postId ? { ...p, comments_count: (p.comments_count || 0) + 1 } : p))
         );
+        triggerHaptic("success");
         toast.success("Komentar terkirim!");
       } else {
         toast.error(data.error || "Gagal mengirim komentar.");
@@ -444,6 +556,7 @@ export default function SuperAppHome({
       });
       const data = await res.json();
       if (data.success) {
+        triggerHaptic("success");
         toast.success("Menfess berhasil dikirim!");
         setShowModal(false);
         setFormData({
@@ -623,11 +736,32 @@ export default function SuperAppHome({
       </section>
 
       {/* ── 5. FEED MADING & MENFESS ── */}
-      <section className="w-full md:px-0">
+      <section
+        className="w-full md:px-0"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Pull to refresh visual indicator on mobile */}
+        {(pullDistance > 0 || isRefreshing) && (
+          <div
+            style={{ height: `${pullDistance}px` }}
+            className="overflow-hidden transition-[height] duration-150 flex items-center justify-center text-xs font-semibold text-primary mb-2"
+          >
+            <div className="flex items-center gap-2 py-1 px-3.5 bg-primary/10 dark:bg-primary/20 rounded-full text-xs text-primary">
+              <Icon.RefreshCcw className={`w-3.5 h-3.5 ${isRefreshing || pullDistance > 50 ? "animate-spin" : ""}`} />
+              <span>{isRefreshing ? "Menyegarkan feed..." : pullDistance > 50 ? "Lepaskan untuk segarkan" : "Tarik untuk segarkan"}</span>
+            </div>
+          </div>
+        )}
+
         {/* Banner: ada postingan baru */}
         {newPostCount > 0 && (
           <button
-            onClick={loadNewPosts}
+            onClick={() => {
+              triggerHaptic("light");
+              loadNewPosts();
+            }}
             className="w-full mb-2 flex items-center justify-center gap-2 bg-primary text-white text-xs font-bold py-2.5 px-4 rounded-2xl shadow-md hover:brightness-105 transition-all animate-in slide-in-from-top-3 duration-300"
           >
             <Icon.ArrowUp className="w-3.5 h-3.5" />
@@ -646,7 +780,12 @@ export default function SuperAppHome({
                 ].map((tab) => (
                   <button
                     key={tab.id}
-                    onClick={() => { setActiveTab(tab.id); setSearchQuery(""); setShowSearch(false); }}
+                    onClick={() => {
+                      triggerHaptic("light");
+                      setActiveTab(tab.id);
+                      setSearchQuery("");
+                      setShowSearch(false);
+                    }}
                     className={`px-4 py-1.5 text-[12px] font-bold rounded-full transition-all ${
                       activeTab === tab.id
                         ? "bg-white dark:bg-[#2c2c2e] text-[#1d1d1f] dark:text-white shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
@@ -658,9 +797,25 @@ export default function SuperAppHome({
                 ))}
               </div>
             </div>
+            {/* Quick Refresh Button */}
+            <button
+              onClick={() => {
+                triggerHaptic("light");
+                loadNewPosts();
+              }}
+              className="shrink-0 p-1.5 rounded-full transition-colors text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+              aria-label="Segarkan feed"
+              title="Segarkan feed"
+            >
+              <Icon.RefreshCcw className={`w-4 h-4 ${isLoadingMore ? "animate-spin text-primary" : ""}`} />
+            </button>
             {/* Search toggle */}
             <button
-              onClick={() => { setShowSearch(s => !s); if (showSearch) setSearchQuery(""); }}
+              onClick={() => {
+                triggerHaptic("light");
+                setShowSearch(s => !s);
+                if (showSearch) setSearchQuery("");
+              }}
               className={`shrink-0 p-1.5 rounded-full transition-colors ${
                 showSearch || searchQuery ? "bg-primary/10 text-primary" : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
               }`}
@@ -771,6 +926,16 @@ export default function SuperAppHome({
                         {waktuLalu(post.created_at)}
                       </p>
                     </div>
+                    {/* Report post button */}
+                    <button
+                      type="button"
+                      onClick={() => handleReport(post.id)}
+                      title="Laporkan postingan"
+                      aria-label="Laporkan postingan"
+                      className="opacity-30 hover:opacity-100 hover:text-rose-500 text-slate-400 p-1.5 rounded-lg transition-all"
+                    >
+                      <Icon.Flag className="w-3.5 h-3.5" />
+                    </button>
                   </div>
 
                   {/* Title (If Info) */}

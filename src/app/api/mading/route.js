@@ -25,14 +25,12 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type") || "all"; // 'all' | 'menfess' | 'info' | 'organisasi'
     const faculty = searchParams.get("faculty");
+    const q = (searchParams.get("q") || "").trim(); // keyword search
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") || "15", 10)));
     const offset = (page - 1) * limit;
 
     const supa = getAdminClient();
-    // Kolom disebut satu-satu — `author_ip_hash` TIDAK boleh ikut: hash yang
-    // sama di dua postingan menautkan keduanya ke satu penulis, dan itu
-    // membatalkan anonimitasnya bagi siapa pun yang membaca API publik ini.
     const makeQuery = (columns) => {
       let query = supa
         .from("mading_posts")
@@ -42,6 +40,10 @@ export async function GET(request) {
         .range(offset, offset + limit - 1);
       if (type && type !== "all") query = query.eq("type", type);
       if (faculty && faculty !== "Semua") query = query.eq("faculty", faculty);
+      // Server-side full-text keyword search across title, content, sender_name
+      if (q) {
+        query = query.or(`title.ilike.%${q}%,content.ilike.%${q}%,sender_name.ilike.%${q}%`);
+      }
       return query;
     };
 
