@@ -1,13 +1,19 @@
 "use client";
 import { rupiah } from "@/lib/fees";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 export default function QRISModal({ qrisUrl, fee, onClose, transactionId, onSuccess }) {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+  const [mounted, setMounted] = useState(false);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleFileChange = (e) => {
     if (e.target.files?.[0]) {
@@ -47,10 +53,10 @@ export default function QRISModal({ qrisUrl, fee, onClose, transactionId, onSucc
     }
   };
 
-  if (!qrisUrl) return null;
+  if (!qrisUrl || !mounted) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm overflow-y-auto">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm overflow-y-auto" role="dialog" aria-modal="true">
       <div className="card w-full max-w-md bg-white p-6 shadow-2xl dark:bg-slate-900/95 dark:border-slate-800 animate-fade-in relative my-8">
         <button
           onClick={onClose}
@@ -141,6 +147,7 @@ export default function QRISModal({ qrisUrl, fee, onClose, transactionId, onSucc
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
