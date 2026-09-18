@@ -1,34 +1,25 @@
 export function ProductCardSkeleton() {
   return (
-    <div className="p-3 sm:p-4 border-b border-black/[0.06] dark:border-white/[0.08] last:border-b-0 bg-white dark:bg-[#1e293b]">
-      {/* Top Header: Seller & Metadata */}
-      <div className="flex items-center gap-2 mb-1 pr-8">
-        <div className="h-10 w-10 shrink-0 rounded-full bg-black/[0.04] dark:bg-white/[0.05] animate-pulse" />
-        <div className="min-w-0 flex-1 space-y-2">
-          <div className="h-3.5 w-1/3 bg-black/[0.04] dark:bg-white/[0.05] rounded-full animate-pulse" />
-          <div className="h-2.5 w-1/4 bg-black/[0.04] dark:bg-white/[0.05] rounded-full animate-pulse" />
+    <div className="group relative flex flex-col overflow-hidden rounded-[20px] sm:rounded-[24px] bg-white dark:bg-[#1c1c1e] border border-black/[0.05] dark:border-white/[0.07] shadow-[0_2px_8px_rgba(0,0,0,0.03)]">
+      {/* Image placeholder */}
+      <div className="relative aspect-square w-full bg-black/[0.04] dark:bg-white/[0.05] animate-pulse" />
+
+      {/* Content placeholders */}
+      <div className="p-2.5 sm:p-3 space-y-2">
+        <div className="flex gap-1.5">
+          <div className="h-3.5 w-12 bg-black/[0.05] dark:bg-white/[0.06] rounded-md animate-pulse" />
+          <div className="h-3.5 w-14 bg-black/[0.05] dark:bg-white/[0.06] rounded-md animate-pulse" />
         </div>
-      </div>
-
-      {/* Content Body */}
-      <div className="mt-3 space-y-2">
-        <div className="h-4 w-3/4 bg-black/[0.04] dark:bg-white/[0.05] rounded-full animate-pulse" />
-        <div className="h-5 w-1/3 bg-black/[0.04] dark:bg-white/[0.05] rounded-full animate-pulse" />
-      </div>
-
-      {/* Badges / Labels */}
-      <div className="flex flex-wrap gap-1.5 mt-3">
-        <div className="h-4 w-12 bg-black/[0.04] dark:bg-white/[0.05] rounded-md animate-pulse" />
-        <div className="h-4 w-16 bg-black/[0.04] dark:bg-white/[0.05] rounded-md animate-pulse" />
-      </div>
-
-      {/* Attached Image (Feed Style) */}
-      <div className="mt-3 relative aspect-[16/10] sm:aspect-[16/9] w-full max-h-80 rounded-[16px] bg-black/[0.04] dark:bg-white/[0.05] animate-pulse" />
-
-      {/* Bottom Action Bar */}
-      <div className="mt-4 flex items-center justify-between">
-        <div className="h-3 w-20 bg-black/[0.04] dark:bg-white/[0.05] rounded-full animate-pulse" />
-        <div className="h-3 w-16 bg-black/[0.04] dark:bg-white/[0.05] rounded-full animate-pulse" />
+        {/* Title */}
+        <div className="h-3.5 bg-black/[0.05] dark:bg-white/[0.06] rounded-full w-full animate-pulse" />
+        <div className="h-3 bg-black/[0.04] dark:bg-white/[0.05] rounded-full w-3/4 animate-pulse" />
+        {/* Price */}
+        <div className="h-4 bg-black/[0.05] dark:bg-white/[0.06] rounded-full w-1/2 animate-pulse" />
+        {/* Footer */}
+        <div className="pt-2 border-t border-black/[0.04] dark:border-white/[0.05] flex items-center justify-between">
+          <div className="h-2.5 bg-black/[0.04] dark:bg-white/[0.05] rounded-full w-14 animate-pulse" />
+          <div className="h-2.5 bg-black/[0.04] dark:bg-white/[0.05] rounded-full w-8 animate-pulse" />
+        </div>
       </div>
     </div>
   );
@@ -36,7 +27,7 @@ export function ProductCardSkeleton() {
 
 export default function ProductGridSkeleton({ count = 8 }) {
   return (
-    <div className="bg-white dark:bg-[#1e293b] sm:rounded-[24px] sm:border border-black/[0.06] dark:border-white/[0.08] overflow-hidden shadow-sm">
+    <div className="grid grid-cols-2 gap-2.5 xs:gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
       {Array.from({ length: count }).map((_, i) => (
         <ProductCardSkeleton key={i} />
       ))}

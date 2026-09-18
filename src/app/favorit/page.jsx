@@ -83,7 +83,7 @@ export default function FavoritPage() {
                   Masih Tersedia ({active.length})
                 </h2>
               )}
-              <div className="mt-3 bg-white dark:bg-[#1e293b] sm:rounded-[24px] sm:border border-black/[0.06] dark:border-white/[0.08] overflow-hidden shadow-sm">
+              <div className="mt-3 grid grid-cols-2 gap-2.5 xs:gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
                 {active.map((l) => (
                   <ProductCard key={l.id} listing={l} />
                 ))}
@@ -96,7 +96,7 @@ export default function FavoritPage() {
               <h2 className="mt-10 text-sm font-semibold text-[#6e6e73] dark:text-slate-400">
                 Sudah Terjual / Tidak Aktif ({sold.length})
               </h2>
-              <div className="mt-3 bg-white dark:bg-[#1e293b] sm:rounded-[24px] sm:border border-black/[0.06] dark:border-white/[0.08] overflow-hidden shadow-sm opacity-50">
+              <div className="mt-3 grid grid-cols-2 gap-2.5 xs:gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 opacity-50">
                 {sold.map((l) => (
                   <div key={l.id} className="relative">
                     <ProductCard listing={l} />

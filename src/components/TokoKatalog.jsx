@@ -131,7 +131,7 @@ export default function TokoKatalog({ listings, warna }) {
           </button>
         </div>
       ) : (
-        <div className="bg-white dark:bg-[#1e293b] sm:rounded-[24px] sm:border border-black/[0.06] dark:border-white/[0.08] overflow-hidden shadow-sm">
+        <div className="grid grid-cols-2 gap-2.5 xs:gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
           {tampil.map((l) => (
             <ProductCard key={l.id} listing={l} tanpaPenjual />
           ))}
