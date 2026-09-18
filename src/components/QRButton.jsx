@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { rupiah } from "@/lib/fees";
 import { buildSlug } from "@/lib/slug";
 import { buildListingShortPath } from "@/lib/listingCode";
@@ -13,6 +14,11 @@ export default function QRButton({ listing }) {
   const [open, setOpen] = useState(false);
   const [qr, setQr] = useState("");
   const [busy, setBusy] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   function productUrl() {
     const base = typeof window !== "undefined" ? window.location.origin : "https://www.jualbeliusupolmed.web.id";
@@ -65,10 +71,12 @@ export default function QRButton({ listing }) {
         </span>
       </button>
 
-      {open && (
+      {open && mounted && createPortal(
         <div
-          className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
+          className="fixed inset-0 z-[100] grid place-items-center bg-black/60 p-4"
           onClick={() => setOpen(false)}
+          role="dialog"
+          aria-modal="true"
         >
           <div
             className="max-h-[90vh] overflow-auto rounded-2xl bg-white p-4"
@@ -137,7 +145,8 @@ export default function QRButton({ listing }) {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

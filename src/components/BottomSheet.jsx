@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Icon } from "./Icons";
 import { hapticLight } from "@/lib/haptics";
 
@@ -8,7 +9,12 @@ export default function BottomSheet({ isOpen, onClose, title, children }) {
   const sheetRef = useRef(null);
   const closeButtonRef = useRef(null);
   const previousFocusRef = useRef(null);
+  const [mounted, setMounted] = useState(false);
   const titleId = useId();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -54,10 +60,10 @@ export default function BottomSheet({ isOpen, onClose, title, children }) {
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-[8px] transition-opacity duration-300 animate-in fade-in">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/50 backdrop-blur-[8px] transition-opacity duration-300 animate-in fade-in">
       {/* Backdrop tap to close */}
       <button
         type="button"
@@ -100,6 +106,7 @@ export default function BottomSheet({ isOpen, onClose, title, children }) {
           {children}
         </div>
       </section>
-    </div>
+    </div>,
+    document.body
   );
 }

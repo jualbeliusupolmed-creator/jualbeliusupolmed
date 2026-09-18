@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { rupiah } from "@/lib/fees";
 import { buildSlug } from "@/lib/slug";
 import { Icon } from "@/components/Icons";
@@ -17,6 +18,11 @@ export default function ShareModal({ listing, isIconOnly = false }) {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState("story");
   const [busy, setBusy] = useState(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const feedRef  = useRef(null);
   const storyRef = useRef(null);
@@ -85,10 +91,12 @@ export default function ShareModal({ listing, isIconOnly = false }) {
         </button>
       )}
 
-      {open && (
+      {open && mounted && createPortal(
         <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 sm:p-6"
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 sm:p-6"
           onClick={() => setOpen(false)}
+          role="dialog"
+          aria-modal="true"
         >
           {/* Overlay frosted glass */}
           <div className="absolute inset-0 bg-black/40 backdrop-blur-[6px]" />
@@ -212,7 +220,8 @@ export default function ShareModal({ listing, isIconOnly = false }) {
               </p>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
