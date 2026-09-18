@@ -85,6 +85,7 @@
 .g-content {
   flex: 1 1 auto;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 28px 36px 64px;
 }
 @media (max-width: 1024px) {
@@ -195,14 +196,54 @@
 /* ── Sidebar ─────────────────────────────────────────────────────────────── */
 
 .g-rail {
-  flex: 0 0 auto;
-  width: 260px;
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .g-rail {
+    display: flex;
+    flex: 0 0 auto;
+    width: 260px;
+    flex-direction: column;
+    background: var(--g-surface);
+    border-right: 1px solid var(--g-line);
+    overflow: hidden;
+    z-index: 50;
+  }
+}
+
+/* ── Mobile Navigation Drawer ────────────────────────────────────────────── */
+
+.g-drawer-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  overflow: hidden;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.g-drawer-content {
+  width: 280px;
+  max-width: 85vw;
+  height: 100%;
+  background: var(--g-surface);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
-  background: var(--g-surface);
-  border-right: 1px solid var(--g-line);
-  overflow: hidden;
-  z-index: 50;
+  animation: slideInLeft 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .g-rail-brand {
