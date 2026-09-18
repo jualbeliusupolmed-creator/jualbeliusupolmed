@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Icon } from "./Icons";
 import { PIN_MIN, PIN_MAX, validasiPin } from "@/lib/pinRules";
 import { getSupabase } from "@/lib/supabase";
@@ -60,6 +61,11 @@ export default function OTPModal({ isOpen, onClose, onSuccess, initialWa = "" })
   const [error, setError] = useState("");
   const [countdown, setCountdown] = useState(0);
   const [googleBusy, setGoogleBusy] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -302,10 +308,12 @@ export default function OTPModal({ isOpen, onClose, onSuccess, initialWa = "" })
     }
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-[6px]" onClick={onClose} />
-      <div className="relative w-full max-w-sm max-h-[92vh] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden rounded-[28px] bg-white/95 backdrop-blur-xl p-6 shadow-[0_32px_64px_rgba(0,0,0,0.2)] dark:bg-[#1c1c1e]/95 border border-black/[0.05] dark:border-white/[0.08] animate-slide-up">
+  if (!isOpen || !mounted) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6" role="dialog" aria-modal="true">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-[6px]" onClick={onClose} />
+      <div className="relative w-full max-w-sm max-h-[92vh] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden rounded-[28px] bg-white/95 backdrop-blur-xl p-6 shadow-[0_32px_64px_rgba(0,0,0,0.25)] dark:bg-[#1c1c1e]/95 border border-black/[0.05] dark:border-white/[0.08] animate-slide-up">
         <button
           onClick={onClose}
           aria-label="Tutup"
@@ -688,6 +696,7 @@ export default function OTPModal({ isOpen, onClose, onSuccess, initialWa = "" })
           )
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
