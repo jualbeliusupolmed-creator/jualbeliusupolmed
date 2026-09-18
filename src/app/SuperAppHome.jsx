@@ -69,9 +69,12 @@ export default function SuperAppHome({
             }
           }
         } catch (error) {
-          console.error("Gagal load more", error);
+          console.error("Error fetching more mading:", error);
+          if (isMounted) setHasMore(false); // Cegah infinite loop jika fetch error terus menerus
         } finally {
-          if (isMounted) setIsLoadingMore(false);
+          if (isMounted) {
+            setIsLoadingMore(false);
+          }
         }
       }
     }
