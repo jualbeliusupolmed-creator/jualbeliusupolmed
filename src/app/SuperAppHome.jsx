@@ -36,10 +36,64 @@ export default function SuperAppHome({
   const [selectedCampus, setSelectedCampus] = useState("Semua"); // 'Semua' | 'USU' | 'POLMED' | 'Bebas'
   const [filterType, setFilterType] = useState("all"); // 'all' | 'popular' | 'photo'
 
+  // New post banner state
+  const [newPostCount, setNewPostCount] = useState(0);
+  const latestKnownId = useRef(initialMadingPosts[0]?.id ?? null);
+
+  // Onboarding overlay
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  useEffect(() => {
+    if (typeof window !== "undefined" && !localStorage.getItem("onboarding_done")) {
+      setShowOnboarding(true);
+    }
+  }, []);
+  function dismissOnboarding() {
+    localStorage.setItem("onboarding_done", "1");
+    setShowOnboarding(false);
+  }
+
   const { ref: loadMoreRef, inView } = useInView({
     threshold: 0,
     rootMargin: "200px", // Fetch slightly before it enters screen
   });
+
+  // Poll every 60s for new posts
+  useEffect(() => {
+    const poll = setInterval(async () => {
+      try {
+        const res = await fetch("/api/mading?page=1&limit=1");
+        if (!res.ok) return;
+        const data = await res.json();
+        const newestId = data.posts?.[0]?.id;
+        if (newestId && latestKnownId.current && newestId !== latestKnownId.current) {
+          // Count how many are newer
+          const res2 = await fetch("/api/mading?page=1&limit=5");
+          if (!res2.ok) return;
+          const data2 = await res2.json();
+          const knownIdx = data2.posts?.findIndex(p => p.id === latestKnownId.current);
+          const count = knownIdx >= 0 ? knownIdx : data2.posts?.length ?? 1;
+          if (count > 0) setNewPostCount(count);
+        }
+      } catch {}
+    }, 60000);
+    return () => clearInterval(poll);
+  }, []);
+
+  function loadNewPosts() {
+    setNewPostCount(0);
+    fetch("/api/mading?page=1&limit=15")
+      .then(r => r.json())
+      .then(d => {
+        if (d.posts) {
+          setPosts(d.posts);
+          setPage(1);
+          setHasMore(d.posts.length === 15);
+          latestKnownId.current = d.posts[0]?.id ?? latestKnownId.current;
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      })
+      .catch(() => {});
+  }
 
   // Fetch more posts when bottom observer is in view
   useEffect(() => {
@@ -409,6 +463,43 @@ export default function SuperAppHome({
 
   return (
     <div className="min-h-screen bg-transparent pb-28 md:pb-8 font-sans selection:bg-primary/20 dark:bg-transparent">
+
+      {/* ── ONBOARDING OVERLAY (first visit only) ── */}
+      {showOnboarding && (
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-[#1c1c1e] rounded-[28px] w-full max-w-sm p-6 shadow-2xl border border-black/[0.06] dark:border-white/[0.08]">
+            <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
+              <Icon.Store className="w-7 h-7" />
+            </div>
+            <h2 className="text-xl font-extrabold text-center text-[#1d1d1f] dark:text-white mb-1">Selamat Datang! 👋</h2>
+            <p className="text-xs text-center text-slate-500 dark:text-slate-400 mb-5">Platform kampus USU &amp; POLMED — semua dalam satu tempat</p>
+            <div className="space-y-3 mb-5">
+              {[
+                { icon: Icon.ShoppingBag, label: "Marketplace", desc: "Jual &amp; beli barang bekas kampus" },
+                { icon: Icon.Mail, label: "Menfess", desc: "Kirim pesan anonim ke seluruh kampus" },
+                { icon: Icon.MessageCircle, label: "Chat Langsung", desc: "Ngobrol dengan penjual via chat" },
+                { icon: Icon.Search, label: "Barang Dicari", desc: "Posting apa yang kamu butuhkan" },
+              ].map((f) => (
+                <div key={f.label} className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <f.icon className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-[13px] font-bold text-[#1d1d1f] dark:text-white">{f.label}</p>
+                    <p className="text-[11px] text-slate-500" dangerouslySetInnerHTML={{ __html: f.desc }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={dismissOnboarding}
+              className="w-full bg-[#0071e3] text-white font-bold text-sm py-3.5 rounded-2xl hover:bg-[#0077ed] transition-colors shadow-md"
+            >
+              Mulai Jelajahi 🚀
+            </button>
+          </div>
+        </div>
+      )}
       
       {/* ── Layout Container Desktop: Scroll Natural ── */}
       <div className="md:max-w-7xl md:mx-auto md:px-6 md:pt-6">
@@ -498,6 +589,16 @@ export default function SuperAppHome({
 
       {/* ── 5. FEED MADING & MENFESS ── */}
       <section className="w-full md:px-0">
+        {/* Banner: ada postingan baru */}
+        {newPostCount > 0 && (
+          <button
+            onClick={loadNewPosts}
+            className="w-full mb-2 flex items-center justify-center gap-2 bg-primary text-white text-xs font-bold py-2.5 px-4 rounded-2xl shadow-md hover:brightness-105 transition-all animate-in slide-in-from-top-3 duration-300"
+          >
+            <Icon.ArrowUp className="w-3.5 h-3.5" />
+            Ada {newPostCount} postingan baru — klik untuk muat
+          </button>
+        )}
         <div className="sticky top-[70px] md:top-6 z-30 apple-glass sm:rounded-2xl px-4 sm:px-4 pt-2.5 pb-2.5 mb-3 sm:mx-0 -mx-4 sm:border-t-0 border-t-0 shadow-sm transition-all">
           {/* TABS FILTER (Semua / Menfess / Info Kampus) */}
           <div className="flex justify-center overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
