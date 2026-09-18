@@ -754,8 +754,8 @@ export default function SuperAppHome({
       
 
 
-      {/* ── Marketplace carousel — hanya di mobile. Desktop ada di sidebar ── */}
-      <section className="mt-2 mb-4 md:hidden">
+      {/* ── Marketplace carousel — hanya di mobile & tablet. Desktop ada di sidebar ── */}
+      <section className="mt-2 mb-4 lg:hidden">
         <div className="flex items-center justify-between px-4 sm:px-6 mb-2">
           <div className="flex items-center gap-1.5">
             <h3 className="text-[14px] font-bold tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">
@@ -1106,60 +1106,66 @@ export default function SuperAppHome({
                   )}
 
                   {/* Bottom Action Bar */}
-                  <div className="mt-3.5 flex items-center gap-4 sm:gap-6 text-sm text-slate-600 dark:text-slate-400">
-                    <button
-                      type="button"
-                      onClick={() => handleLike(post.id)}
-                      aria-label={`Sukai postingan, ${post.likes_count || 0} suka`}
-                      className={`flex items-center gap-1.5 py-1 px-2 rounded-lg transition-colors ${
-                        post._isLiked ? "text-rose-500 bg-rose-50 dark:bg-rose-950/30" : "hover:text-rose-500"
-                      }`}
-                    >
-                      <Icon.Heart className={`h-3.5 w-3.5 ${post._isLiked ? "fill-current text-rose-500" : ""}`} />
-                      <span className="font-bold text-xs">{post.likes_count || 0}</span>
-                    </button>
+                  <div className="mt-3.5 flex items-center justify-between gap-1 text-slate-600 dark:text-slate-400">
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleLike(post.id)}
+                        aria-label={`Sukai postingan, ${post.likes_count || 0} suka`}
+                        className={`flex items-center gap-1.5 py-1 px-2 rounded-lg transition-colors ${
+                          post._isLiked ? "text-rose-500 bg-rose-50 dark:bg-rose-950/30" : "hover:text-rose-500"
+                        }`}
+                      >
+                        <Icon.Heart className={`h-3.5 w-3.5 ${post._isLiked ? "fill-current text-rose-500" : ""}`} />
+                        <span className="font-bold text-xs">{post.likes_count || 0}</span>
+                      </button>
 
-                    <button
-                      type="button"
-                      onClick={() => toggleComments(post.id)}
-                      aria-label={`Buka komentar, ${post.comments_count || 0} komentar`}
-                      className={`flex items-center gap-1.5 py-1 px-2 rounded-lg transition-colors ${
-                        activeCommentsPostId === post.id ? "text-primary bg-primary/10" : "hover:text-primary"
-                      }`}
-                    >
-                      <Icon.MessageCircle className="h-3.5 w-3.5" />
-                      <span className="font-bold text-xs">{post.comments_count || 0} Komentar</span>
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => toggleComments(post.id)}
+                        aria-label={`Buka komentar, ${post.comments_count || 0} komentar`}
+                        className={`flex items-center gap-1.5 py-1 px-2 rounded-lg transition-colors ${
+                          activeCommentsPostId === post.id ? "text-primary bg-primary/10" : "hover:text-primary"
+                        }`}
+                      >
+                        <Icon.MessageCircle className="h-3.5 w-3.5" />
+                        <span className="font-bold text-xs">
+                          {post.comments_count || 0} <span className="hidden min-[420px]:inline">Komentar</span>
+                        </span>
+                      </button>
+                    </div>
 
-                    {/* Unduh Menfess Story IG */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        triggerHaptic("light");
-                        setUnduhPost(post);
-                      }}
-                      aria-label="Unduh gambar untuk Instagram Story atau Status WhatsApp"
-                      title="Unduh gambar Story / Status"
-                      className="flex items-center gap-1.5 py-1 px-2 rounded-lg text-slate-500 hover:text-primary transition-colors ml-auto active:scale-95"
-                    >
-                      <Icon.Download className="h-3.5 w-3.5" />
-                      <span className="font-bold text-xs hidden xs:inline">Story IG</span>
-                    </button>
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      {/* Unduh Menfess Story IG */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          triggerHaptic("light");
+                          setUnduhPost(post);
+                        }}
+                        aria-label="Unduh gambar untuk Instagram Story atau Status WhatsApp"
+                        title="Unduh gambar Story / Status"
+                        className="flex items-center gap-1.5 py-1 px-2 rounded-lg text-slate-500 hover:text-primary transition-colors active:scale-95"
+                      >
+                        <Icon.Download className="h-3.5 w-3.5" />
+                        <span className="font-bold text-xs hidden sm:inline">Story IG</span>
+                      </button>
 
-                    <button
-                      type="button"
-                      onClick={() => handleShare(post)}
-                      aria-label="Bagikan postingan ini ke WhatsApp"
-                      className="flex items-center gap-1.5 py-1 px-2 rounded-lg hover:text-emerald-600 transition-colors"
-                    >
-                      <Icon.Share className="h-3.5 w-3.5" />
-                      <span className="font-bold text-xs">Bagikan</span>
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => handleShare(post)}
+                        aria-label="Bagikan postingan ini ke WhatsApp"
+                        className="flex items-center gap-1.5 py-1 px-2 rounded-lg hover:text-emerald-600 transition-colors"
+                      >
+                        <Icon.Share className="h-3.5 w-3.5" />
+                        <span className="font-bold text-xs hidden min-[480px]:inline">Bagikan</span>
+                      </button>
 
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                      <Icon.Eye className="h-3 w-3" />
-                      <span>{post.views_count || 0}</span>
-                    </span>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 pl-1">
+                        <Icon.Eye className="h-3 w-3" />
+                        <span>{post.views_count || 0}</span>
+                      </span>
+                    </div>
                   </div>
 
                   {/* Comments Accordion Section */}
@@ -1246,7 +1252,7 @@ export default function SuperAppHome({
           {/* ════════════════════════════════════════
               SIDEBAR KANAN — Marketplace Barang & Fitur (Sticky)
           ════════════════════════════════════════ */}
-          <aside className="hidden md:block w-[360px] xl:w-[420px] shrink-0 sticky top-6 md:pl-1 md:pr-2 space-y-4 max-h-[calc(100vh-1.5rem)] overflow-y-auto pb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <aside className="hidden lg:block w-[320px] xl:w-[380px] shrink-0 sticky top-6 lg:pl-1 lg:pr-2 space-y-4 max-h-[calc(100vh-1.5rem)] overflow-y-auto pb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             
             {/* Marketplace di Desktop */}
             <div className="apple-glass-card overflow-hidden">
