@@ -58,14 +58,14 @@ export default function ModerasiClient({
   return (
     <div className="space-y-6 font-sans">
       {/* FILTER PILLS */}
-      <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900/90 p-1.5 rounded-2xl overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden border border-slate-200/80 dark:border-slate-800">
+      <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900/90 p-1.5 rounded-2xl overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden border border-slate-200/80 dark:border-slate-800 w-full max-w-full min-w-0">
         {tabs.map((t) => {
           const isActive = activeTab === t.id;
           return (
             <button
               key={t.id}
               onClick={() => setActiveTab(t.id)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 whitespace-nowrap active:scale-95 ${
+              className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 whitespace-nowrap active:scale-95 ${
                 isActive
                   ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs font-extrabold"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -85,20 +85,20 @@ export default function ModerasiClient({
 
       {/* 1. IKLAN PENDING */}
       {(activeTab === "all" || activeTab === "listings") && pendingListings.length > 0 && (
-        <section className="space-y-3">
+        <section className="space-y-3 min-w-0">
           <div className="flex items-center justify-between px-1">
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
               <Icon.Package className="h-4 w-4" /> Iklan Menunggu Persetujuan ({pendingListings.length})
             </h3>
           </div>
 
-          <div className="grid gap-3">
+          <div className="grid gap-3 min-w-0">
             {pendingListings.map((l) => (
               <div 
                 key={l.id} 
-                className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 hover:shadow-xs transition-shadow"
+                className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4 p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 hover:shadow-xs transition-shadow min-w-0"
               >
-                <div className="flex items-start sm:items-center gap-3.5 min-w-0">
+                <div className="flex items-start sm:items-center gap-3.5 min-w-0 flex-1">
                   <div className="w-14 h-14 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 relative">
                     {l.image_url ? (
                       <img src={l.image_url} alt="" className="w-full h-full object-cover" loading="lazy" />
@@ -106,11 +106,11 @@ export default function ModerasiClient({
                       <div className="w-full h-full flex items-center justify-center text-slate-400"><Icon.Package className="h-5 w-5" /></div>
                     )}
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <h4 className="font-extrabold text-sm text-slate-900 dark:text-white truncate" title={l.title}>
                       {l.title}
                     </h4>
-                    <div className="flex items-center gap-2 flex-wrap mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap mt-1 text-xs text-slate-500 dark:text-slate-400">
                       <span className="font-bold text-slate-700 dark:text-slate-300">{l.seller_name || "Penjual"}</span>
                       <span>•</span>
                       <a 
@@ -133,7 +133,7 @@ export default function ModerasiClient({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                <div className="flex items-center gap-2 shrink-0 self-end lg:self-center pt-2 sm:pt-0">
                   <button
                     onClick={() =>
                       confirmThen({ title: `Aktifkan iklan "${l.title}"?`, confirmLabel: "Aktifkan" }, () =>
@@ -163,22 +163,22 @@ export default function ModerasiClient({
 
       {/* 2. LAPORAN TERBUKA */}
       {(activeTab === "all" || activeTab === "reports") && openReports.length > 0 && (
-        <section className="space-y-3">
+        <section className="space-y-3 min-w-0">
           <div className="flex items-center justify-between px-1">
             <h3 className="text-xs font-black uppercase tracking-wider text-rose-600 dark:text-rose-400 flex items-center gap-2">
               <span>Laporan</span> Masuk ({openReports.length})
             </h3>
           </div>
 
-          <div className="grid gap-3">
+          <div className="grid gap-3 min-w-0">
             {openReports.map((r) => (
               <div 
                 key={r.id} 
-                className="p-4 rounded-2xl bg-white dark:bg-slate-900/90 border border-rose-200/80 dark:border-rose-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-slate-900/90 border border-rose-200/80 dark:border-rose-900/50 flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4 min-w-0"
               >
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded-md bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 text-[11px] font-black uppercase">
+                    <span className="px-2 py-0.5 rounded-md bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 text-[11px] font-black uppercase shrink-0">
                       {r.reason || "Laporan"}
                     </span>
                     <h4 className="font-extrabold text-sm text-slate-900 dark:text-white truncate">
@@ -190,7 +190,7 @@ export default function ModerasiClient({
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex flex-wrap items-center gap-2 shrink-0 self-end lg:self-center pt-2 sm:pt-0">
                   <button
                     onClick={() => action({ action: "resolve_report", id: r.id }, "Laporan diselesaikan")}
                     className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 text-xs font-bold active:scale-95 transition-all"
@@ -219,24 +219,24 @@ export default function ModerasiClient({
 
       {/* 3. PERMINTAAN PROFIL */}
       {(activeTab === "all" || activeTab === "profiles") && pendingProfiles.length > 0 && (
-        <section className="space-y-3">
+        <section className="space-y-3 min-w-0">
           <div className="flex items-center justify-between px-1">
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
               <Icon.User className="h-4 w-4" /> Permintaan Ubah Profil ({pendingProfiles.length})
             </h3>
           </div>
 
-          <div className="grid gap-3">
+          <div className="grid gap-3 min-w-0">
             {pendingProfiles.map((p) => (
               <div 
                 key={p.id} 
-                className="p-4 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 flex flex-col gap-3"
+                className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 flex flex-col gap-3 min-w-0"
               >
                 <div>
                   <p className="text-xs text-slate-400 font-semibold">
                     WA: {p.seller_wa} • Ubah {p.field === "name" ? "Nama Penjual" : "Biodata"} • {relTime(p.created_at)}
                   </p>
-                  <div className="mt-1.5 flex items-center gap-3 text-sm">
+                  <div className="mt-1.5 flex items-center gap-3 text-sm flex-wrap">
                     <span className="text-slate-400 line-through">{p.current_value || "(Kosong)"}</span>
                     <span className="text-slate-400">→</span>
                     <span className="font-extrabold text-slate-900 dark:text-white bg-primary/10 text-primary px-2.5 py-0.5 rounded-lg">
@@ -282,27 +282,27 @@ export default function ModerasiClient({
 
       {/* 4. TAWARAN BIAYA IKLAN */}
       {(activeTab === "all" || activeTab === "fee_offers") && pendingFeeOffers.length > 0 && (
-        <section className="space-y-3">
+        <section className="space-y-3 min-w-0">
           <div className="flex items-center justify-between px-1">
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
               <Icon.Tag className="h-4 w-4" /> Tawaran Biaya Iklan ({pendingFeeOffers.length})
             </h3>
           </div>
 
-          <div className="grid gap-3">
+          <div className="grid gap-3 min-w-0">
             {pendingFeeOffers.map((f) => {
               const originalFee = f.payments?.[0]?.amount || 0;
               return (
                 <div 
                   key={f.id} 
-                  className="p-4 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4 min-w-0"
                 >
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <h4 className="font-extrabold text-sm text-slate-900 dark:text-white truncate">{f.title}</h4>
                     <p className="text-xs text-slate-400 font-semibold mt-0.5">
                       {f.seller_name || f.seller_wa} • Kode #{f.listing_code} • {relTime(f.created_at)}
                     </p>
-                    <div className="mt-1 flex items-center gap-2 text-xs">
+                    <div className="mt-1 flex items-center gap-2 text-xs flex-wrap">
                       <span className="text-slate-400 line-through">{rupiah(originalFee)}</span>
                       <span>→</span>
                       <span className="font-extrabold text-primary">{rupiah(f.fee_offer)}</span>
@@ -314,7 +314,7 @@ export default function ModerasiClient({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0 self-end lg:self-center pt-2 sm:pt-0">
                     <button
                       onClick={() =>
                         confirmThen({ title: `Setujui biaya ${rupiah(f.fee_offer)}?`, confirmLabel: "Setujui" }, () =>
@@ -345,27 +345,27 @@ export default function ModerasiClient({
 
       {/* 5. SOLD FEE PENDING */}
       {(activeTab === "all" || activeTab === "fees") && pendingFees.length > 0 && (
-        <section className="space-y-3">
+        <section className="space-y-3 min-w-0">
           <div className="flex items-center justify-between px-1">
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
               <Icon.CreditCard className="h-4 w-4" /> Tagihan Komisi Terjual ({pendingFees.length})
             </h3>
           </div>
 
-          <div className="grid gap-3">
+          <div className="grid gap-3 min-w-0">
             {pendingFees.map((f) => (
               <div 
                 key={f.id} 
-                className="p-4 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4 min-w-0"
               >
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <h4 className="font-extrabold text-sm text-slate-900 dark:text-white truncate">{f.listings?.title || "Iklan Terjual"}</h4>
                   <p className="text-xs text-slate-400 font-semibold mt-0.5">
                     {f.listings?.seller_wa || "—"} • Tagihan: <strong className="text-slate-700 dark:text-slate-200">{rupiah(f.amount)}</strong> • {relTime(f.created_at)}
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 shrink-0 self-end lg:self-center pt-2 sm:pt-0">
                   <button
                     onClick={() =>
                       confirmThen({ title: "Tandai komisi sebagai lunas?", confirmLabel: "Lunas" }, () =>

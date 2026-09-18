@@ -137,7 +137,7 @@ export default function AdminTopbar({ counts = {} }) {
             }}
             onFocus={() => setFokus(true)}
             onKeyDown={handleInputKeyDown}
-            placeholder="Cari menu, moderasi, toko, bot… (Ctrl+K)"
+            placeholder="Cari menu admin…"
             aria-label="Cari menu admin"
           />
           
