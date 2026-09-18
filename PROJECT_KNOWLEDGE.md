@@ -458,6 +458,9 @@ cuma server.
 
 - Webhook WhatsApp memakai `wa_conversations` sebagai memori lintas-restart untuk klasifikasi intent AI; konteks dibatasi 10 pesan dan 30 hari.
 - Sebelum dikirim ke provider AI, konteks menyensor nomor telepon, email, URL, serta pesan yang terindikasi memuat OTP/PIN/sandi.
+
+- Webhook WhatsApp memakai `wa_conversations` sebagai memori lintas-restart untuk klasifikasi intent AI; konteks dibatasi 10 pesan dan 30 hari.
+- Sebelum dikirim ke provider AI, konteks menyensor nomor telepon, email, URL, serta pesan yang terindikasi memuat OTP/PIN/sandi.
 - Konteks hidup dari proses Baileys digabung dengan riwayat persisten tanpa menggandakan overlap.
 - Aksi hasil klasifikasi AI hanya diteruskan ke state machine bila confidence minimal 0,68; hasil yang lebih rendah meminta klarifikasi.
 - Tidak ada perubahan skema. `public.wa_conversations` tetap RLS aktif tanpa policy dan tanpa hak SELECT untuk `anon`/`authenticated`; akses server memakai service role.
@@ -467,3 +470,9 @@ cuma server.
     - **Linter Web 100% Bersih:** Memperbaiki peringatan React Hook `exhaustive-deps` pada `src/app/SuperAppHome.jsx` baris 85–114 menggunakan `isFirstRender` ref agar tidak memicu refetch ganda saat mount awal dan tidak meninggalkan warning di `npm run lint`.
     - **Penegasan Batas Arsitektur Bot WA:** Memverifikasi bahwa file `bot-wa/` di VPS berfungsi sebagai transport bridge Baileys dan rute Express-nya telah terpecah rapi ke `src/routes/*.routes.js` (`wa`, `panel`, `antrean`, `sesi`, `web`). File placeholder rusak `handler_admin.js` dan `handler_transaksi.js` dibersihkan agar repo bot lokal tidak mengalami drift dari upstream kanonikal `jualbeliusupolmed-creator/wa-bot-usu`. Logika pemrosesan perintah bot dipusatkan di Webhook Next.js `/api/wa/baileys` dengan handler modular di `src/lib/bot/adminHandlers.js`.
 
+*   **18 September 2026 — Restorasi Grid Responsif & Kartu Produk Kompak Marketplace (/jual-beli)**
+    - **Akar Masalah:** Di commit sebelumnya, kartu produk [ProductCard.jsx](file:///d:/5.RIDHO/1.BISNIS/JUAL%20BELI%20USU/src/components/ProductCard.jsx) sempat diubah menjadi format vertical feed ala Twitter/Facebook berukuran penuh (`aspect-[16/10] sm:aspect-[16/9] w-full max-h-80` + header & footer tebal), dan wrapper container di `HomeBrowser.jsx`, `JasaBrowser.jsx`, `favorit`, `produk/[slug]`, `toko/[slug]`, dan `penjual/[wa]` dibungkus dalam `div` 1 kolom penuh. Hal ini menyebabkan tinggi halaman `/jual-beli` melonjak drastis ke 11.530px untuk 20 barang sehingga terasa sangat besar, melelahkan, dan tidak nyaman untuk ditelusuri.
+    - **Solusi & Perbaikan:**
+      - Merestorasi layout [ProductCard.jsx](file:///d:/5.RIDHO/1.BISNIS/JUAL%20BELI%20USU/src/components/ProductCard.jsx) ke desain modern-kompak Apple HIG dengan gambar `aspect-square`, badge status cerdas (`Sewa`, `Sponsor`, `Unggulan`, `Baru`, `Stok Tipis`, overlay `TERJUAL`), chip kategori & kampus (`Icon.MapPin`), judul ringkas 2-baris (`line-clamp-2`), harga tebal mencolok, serta metadata penjual (Pro/Terpercaya) & counter views.
+      - Memulihkan container daftar produk di [HomeBrowser.jsx](file:///d:/5.RIDHO/1.BISNIS/JUAL%20BELI%20USU/src/app/HomeBrowser.jsx), [JasaBrowser.jsx](file:///d:/5.RIDHO/1.BISNIS/JUAL%20BELI%20USU/src/app/jasa/JasaBrowser.jsx), [TokoKatalog.jsx](file:///d:/5.RIDHO/1.BISNIS/JUAL%20BELI%20USU/src/components/TokoKatalog.jsx), `favorit/page.jsx`, `produk/[slug]/page.jsx`, `penjual/[wa]/page.jsx`, dan [ProductSkeleton.jsx](file:///d:/5.RIDHO/1.BISNIS/JUAL%20BELI%20USU/src/components/ProductSkeleton.jsx) menjadi grid responsif: 2 kolom di HP (`grid-cols-2 gap-2.5 xs:gap-3`), 3 kolom di tablet (`sm:grid-cols-3 sm:gap-4`), dan 4 kolom di desktop (`md:grid-cols-3 lg:grid-cols-4`).
+      - Tinggi dokumen berkurang ~75% (dari 11.530px menjadi 2.808px) dan browsing katalog marketplace kembali ringkas, rapi, dan sangat nyaman.
