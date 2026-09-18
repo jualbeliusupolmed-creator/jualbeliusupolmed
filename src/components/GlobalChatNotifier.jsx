@@ -169,6 +169,12 @@ export default function GlobalChatNotifier() {
               const senderName = partnerAlias || latestMsg.sender_alias || "Teman Chat";
               const cleanText = latestMsg.message?.slice(0, 90) + (latestMsg.message?.length > 90 ? "..." : "");
 
+              // Increment unread badge for LeftSidebar
+              const prevCount = parseInt(localStorage.getItem("chat_unread_count") || "0", 10);
+              const newCount = prevCount + 1;
+              localStorage.setItem("chat_unread_count", String(newCount));
+              window.dispatchEvent(new CustomEvent("chat:unread", { detail: { count: newCount } }));
+
               toast.custom((t) => (
                 <QuickReplyToast
                   senderName={senderName}
