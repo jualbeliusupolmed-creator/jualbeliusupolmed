@@ -21,6 +21,31 @@ function waktuLalu(dateStr) {
   return `${Math.floor(diff / 86400)} hari lalu`;
 }
 
+// Skeleton card for feed loading state
+function PostSkeleton() {
+  return (
+    <div className="apple-glass-card p-4 sm:p-5 animate-pulse">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0" />
+        <div className="flex-1 space-y-1.5">
+          <div className="h-3 w-32 rounded-full bg-slate-200 dark:bg-slate-700" />
+          <div className="h-2 w-20 rounded-full bg-slate-100 dark:bg-slate-800" />
+        </div>
+      </div>
+      <div className="space-y-2 mb-3">
+        <div className="h-3 w-full rounded-full bg-slate-200 dark:bg-slate-700" />
+        <div className="h-3 w-4/5 rounded-full bg-slate-200 dark:bg-slate-700" />
+        <div className="h-3 w-2/3 rounded-full bg-slate-100 dark:bg-slate-800" />
+      </div>
+      <div className="flex gap-4">
+        <div className="h-6 w-12 rounded-full bg-slate-100 dark:bg-slate-800" />
+        <div className="h-6 w-20 rounded-full bg-slate-100 dark:bg-slate-800" />
+        <div className="h-6 w-16 rounded-full bg-slate-100 dark:bg-slate-800 ml-auto" />
+      </div>
+    </div>
+  );
+}
+
 export default function SuperAppHome({
   latestListings = [],
   madingPosts: initialMadingPosts = [],
@@ -32,9 +57,12 @@ export default function SuperAppHome({
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(initialMadingPosts.length === 15);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [feedError, setFeedError] = useState(false);
   const [activeTab, setActiveTab] = useState("all"); // 'all' | 'menfess' | 'info'
   const [selectedCampus, setSelectedCampus] = useState("Semua"); // 'Semua' | 'USU' | 'POLMED' | 'Bebas'
   const [filterType, setFilterType] = useState("all"); // 'all' | 'popular' | 'photo'
+  const [searchQuery, setSearchQuery] = useState(""); // keyword search
+  const [showSearch, setShowSearch] = useState(false); // toggle search bar
 
   // New post banner state
   const [newPostCount, setNewPostCount] = useState(0);
@@ -124,7 +152,7 @@ export default function SuperAppHome({
           }
         } catch (error) {
           console.error("Error fetching more mading:", error);
-          if (isMounted) setHasMore(false); // Cegah infinite loop jika fetch error terus menerus
+          if (isMounted) { setHasMore(false); setFeedError(true); } // Cegah infinite loop
         } finally {
           if (isMounted) {
             setIsLoadingMore(false);
@@ -450,6 +478,13 @@ export default function SuperAppHome({
       if (activeTab !== "all" && post.type !== activeTab) return false;
       if (selectedCampus !== "Semua" && post.faculty !== selectedCampus) return false;
       if (filterType === "photo" && !post.image_url) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const inContent = (post.content || "").toLowerCase().includes(q);
+        const inTitle = (post.title || "").toLowerCase().includes(q);
+        const inName = (post.sender_name || "").toLowerCase().includes(q);
+        if (!inContent && !inTitle && !inName) return false;
+      }
       return true;
     })
     .sort((a, b) => {
@@ -601,45 +636,110 @@ export default function SuperAppHome({
         )}
         <div className="sticky top-[70px] md:top-6 z-30 apple-glass sm:rounded-2xl px-4 sm:px-4 pt-2.5 pb-2.5 mb-3 sm:mx-0 -mx-4 sm:border-t-0 border-t-0 shadow-sm transition-all">
           {/* TABS FILTER (Semua / Menfess / Info Kampus) */}
-          <div className="flex justify-center overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="apple-segmented">
-              {[
-                { id: "all", label: "Semua" },
-                { id: "menfess", label: "Menfess" },
-                { id: "info", label: "Info Kampus" },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-1.5 text-[12px] font-bold rounded-full transition-all ${
-                    activeTab === tab.id
-                      ? "bg-white dark:bg-[#2c2c2e] text-[#1d1d1f] dark:text-white shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
-                      : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
+          <div className="flex items-center gap-2">
+            <div className="flex justify-center flex-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div className="apple-segmented">
+                {[
+                  { id: "all", label: "Semua" },
+                  { id: "menfess", label: "Menfess" },
+                  { id: "info", label: "Info Kampus" },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => { setActiveTab(tab.id); setSearchQuery(""); setShowSearch(false); }}
+                    className={`px-4 py-1.5 text-[12px] font-bold rounded-full transition-all ${
+                      activeTab === tab.id
+                        ? "bg-white dark:bg-[#2c2c2e] text-[#1d1d1f] dark:text-white shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
+                        : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
             </div>
+            {/* Search toggle */}
+            <button
+              onClick={() => { setShowSearch(s => !s); if (showSearch) setSearchQuery(""); }}
+              className={`shrink-0 p-1.5 rounded-full transition-colors ${
+                showSearch || searchQuery ? "bg-primary/10 text-primary" : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+              }`}
+              aria-label="Cari postingan"
+            >
+              <Icon.Search className="w-4 h-4" />
+            </button>
           </div>
+
+          {/* Search input — slide in */}
+          {showSearch && (
+            <div className="mt-2 animate-in slide-in-from-top-2 duration-200">
+              <div className="relative">
+                <Icon.Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                <input
+                  autoFocus
+                  type="text"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Cari postingan, menfess, info..."
+                  className="w-full pl-9 pr-4 py-2 text-xs bg-slate-100 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-primary outline-none text-slate-900 dark:text-white placeholder:text-slate-400"
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700">
+                    <Icon.X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* FEED POSTS LIST */}
         <div className="flex flex-col gap-4 mb-12">
-          {filteredPosts.length === 0 ? (
+          {/* Error state */}
+          {feedError && posts.length === 0 && (
+            <div className="text-center py-16 px-4">
+              <div className="w-12 h-12 bg-rose-50 text-rose-500 dark:bg-rose-900/20 rounded-2xl flex items-center justify-center mx-auto mb-2.5">
+                <Icon.X className="w-5 h-5" />
+              </div>
+              <p className="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Gagal memuat postingan</p>
+              <p className="text-xs text-gray-500 mt-1">Periksa koneksi internet kamu, lalu coba lagi.</p>
+              <button
+                onClick={loadNewPosts}
+                className="mt-3.5 inline-flex items-center gap-1.5 bg-rose-500 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-rose-600"
+              >
+                <Icon.RefreshCcw className="w-3.5 h-3.5" />
+                <span>Coba Lagi</span>
+              </button>
+            </div>
+          )}
+          {/* Skeleton loading saat filter reset */}
+          {isLoadingMore && posts.length === 0 && !feedError && (
+            <>
+              <PostSkeleton />
+              <PostSkeleton />
+              <PostSkeleton />
+            </>
+          )}
+          {filteredPosts.length === 0 && !isLoadingMore && !feedError ? (
             <div className="text-center py-16 px-4">
               <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mx-auto mb-2.5">
-                <Icon.MessageCircle className="w-5 h-5" />
+                {searchQuery ? <Icon.Search className="w-5 h-5" /> : <Icon.MessageCircle className="w-5 h-5" />}
               </div>
-              <p className="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Belum ada postingan di filter ini</p>
-              <p className="text-xs text-gray-500 mt-1">Jadilah yang pertama mengirim menfess atau info kampus!</p>
-              <button
-                onClick={() => setShowModal(true)}
-                className="mt-3.5 inline-flex items-center gap-1.5 bg-[#0071e3] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#0077ed]"
-              >
-                <Icon.PlusCircle className="w-3.5 h-3.5" />
-                <span>Kirim Menfess Sekarang</span>
-              </button>
+              <p className="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">
+                {searchQuery ? `Tidak ada hasil untuk "${searchQuery}"` : "Belum ada postingan di filter ini"}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                {searchQuery ? "Coba kata kunci lain atau hapus pencarian." : "Jadilah yang pertama mengirim menfess atau info kampus!"}
+              </p>
+              {!searchQuery && (
+                <button
+                  onClick={() => setShowModal(true)}
+                  className="mt-3.5 inline-flex items-center gap-1.5 bg-[#0071e3] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#0077ed]"
+                >
+                  <Icon.PlusCircle className="w-3.5 h-3.5" />
+                  <span>Kirim Menfess Sekarang</span>
+                </button>
+              )}
             </div>
           ) : (
             filteredPosts.map((post) => {

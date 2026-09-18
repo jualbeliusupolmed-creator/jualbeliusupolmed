@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Icon } from "./Icons";
@@ -33,7 +33,7 @@ const SOSIAL = {
 // pantas menempel di bawah, dalam jangkauan ibu jari.
 const RUTE_PENCARIAN = ["/", "/jual-beli", "/jasa", "/dicari", "/favorit"];
 
-function ItemNav({ n, pathname }) {
+function ItemNav({ n, pathname, badge = 0 }) {
   const cakupan = n.match || [n.href];
   const isActive =
     pathname === n.href || cakupan.some((c) => c !== "/" && pathname?.startsWith(c));
@@ -53,7 +53,7 @@ function ItemNav({ n, pathname }) {
     >
       <div
         className={cn(
-          "flex items-center justify-center rounded-full p-1 transition-all duration-200",
+          "relative flex items-center justify-center rounded-full p-1 transition-all duration-200",
           isActive ? "bg-primary/10 dark:bg-violet-400/15" : "bg-transparent"
         )}
       >
@@ -63,6 +63,11 @@ function ItemNav({ n, pathname }) {
             isActive ? "scale-105 stroke-[2.4px]" : "scale-100 stroke-[1.8px]"
           )}
         />
+        {badge > 0 && (
+          <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-3.5 bg-rose-500 text-white text-[8px] font-extrabold rounded-full flex items-center justify-center px-0.5 shadow">
+            {badge > 99 ? "99+" : badge}
+          </span>
+        )}
       </div>
       <span
         className={cn(
@@ -82,6 +87,23 @@ function BottomNavbarInner() {
   const [bukaCari, setBukaCari] = useState(false);
   const [bukaBuat, setBukaBuat] = useState(false);
   const tersembunyi = useHideOnScroll();
+  const [unreadChat, setUnreadChat] = useState(0);
+
+  // Listen for unread chat badge events
+  useEffect(() => {
+    function onUnread(e) { setUnreadChat(e.detail?.count ?? 0); }
+    window.addEventListener("chat:unread", onUnread);
+    const stored = parseInt(localStorage.getItem("chat_unread_count") || "0", 10);
+    if (stored > 0) setUnreadChat(stored);
+    return () => window.removeEventListener("chat:unread", onUnread);
+  }, []);
+
+  useEffect(() => {
+    if (pathname?.startsWith("/chat")) {
+      setUnreadChat(0);
+      localStorage.setItem("chat_unread_count", "0");
+    }
+  }, [pathname]);
 
   // Sembunyikan/minimalkan BottomNavbar jika sedang di dalam room chat aktif
   const isChatRoom =
@@ -145,8 +167,7 @@ function BottomNavbarInner() {
             <ItemNav key={n.name} n={n} pathname={pathname} />
           ))}
 
-          {/* Tombol buat — satu-satunya tombol berisi warna penuh di dock,
-              jadi tidak mungkin tertukar dengan tombol suka atau favorit. */}
+          {/* Tombol buat */}
           <button
             type="button"
             onClick={() => {
@@ -184,7 +205,7 @@ function BottomNavbarInner() {
           </button>
 
           {navKanan.map((n) => (
-            <ItemNav key={n.name} n={n} pathname={pathname} />
+            <ItemNav key={n.name} n={n} pathname={pathname} badge={n.name === "Chat" ? unreadChat : 0} />
           ))}
         </div>
       </div>
