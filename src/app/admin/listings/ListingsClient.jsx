@@ -334,7 +334,7 @@ export default function ListingsClient({ initialListings = [] }) {
               onClick={() => setCurrentPage(currentPage - 1)}
               className="g-btn g-btn-sm g-btn-outlined"
             >
-              Sebelummya
+              Sebelumnya
             </button>
             <button
               disabled={currentPage === totalPages}

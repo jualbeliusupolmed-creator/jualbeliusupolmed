@@ -1,4 +1,4 @@
-﻿use client;
+use client;
 
 import Link from next/link;
 import { usePathname } from next/navigation;
@@ -88,12 +88,41 @@ export default function LeftSidebar() {
         </Link>
       </nav>
 
-      <div className=mt-auto>
+      <div className="mt-auto space-y-3">
+        {/* User status */}
+        {wa ? (
+          <Link
+            href={`/dashboard?wa=${encodeURIComponent(wa)}`}
+            className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-black/[0.03] dark:bg-white/[0.04] hover:bg-black/[0.06] dark:hover:bg-white/[0.07] transition-colors group"
+          >
+            <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold text-sm">
+              {(nama || wa).charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[12px] font-bold text-[#1d1d1f] dark:text-white truncate">{nama || "Toko Saya"}</p>
+              <p className="text-[10px] text-slate-400 truncate">Lihat dashboard</p>
+            </div>
+            <Icon.ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-primary transition-colors shrink-0" />
+          </Link>
+        ) : (
+          <Link
+            href="/jual"
+            className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-primary/5 hover:bg-primary/10 transition-colors group"
+          >
+            <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <Icon.User className="w-4 h-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[12px] font-bold text-primary">Login / Daftar</p>
+              <p className="text-[10px] text-slate-400">Jual & beli di kampus</p>
+            </div>
+          </Link>
+        )}
         <Link 
-          href=/jual
-          className=w-full btn-primary text-[17px] py-4 rounded-full shadow-lg flex items-center justify-center gap-2
+          href="/jual"
+          className="w-full btn-primary text-[17px] py-4 rounded-full shadow-lg flex items-center justify-center gap-2"
         >
-          <Icon.Plus className=w-5 h-5 />
+          <Icon.Plus className="w-5 h-5" />
           Pasang Iklan
         </Link>
       </div>
