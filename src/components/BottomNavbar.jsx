@@ -10,11 +10,8 @@ import { useHideOnScroll } from "@/lib/useHideOnScroll";
 import QuickSearchSheet from "./QuickSearchSheet";
 import CreateSheet from "./CreateSheet";
 
-// Dua slot terluar (Beranda dan Chat) tidak pernah pindah tempat, begitu
-// juga tombol buat di tengah. Yang berganti cuma sepasang slot di dalam:
-// biasanya Market + Sosial, tetapi begitu pengguna masuk area sosial,
-// pasangan itu jadi Sosial + Swipe — seperti dock lama, cuma tanpa
-// menggeser tujuan yang sudah dihafal jempol.
+// Lima tujuan utama tidak pernah berpindah. Navigasi yang stabil lebih mudah
+// dihafal jempol daripada dock yang berubah isi ketika pengguna pindah area.
 const BERANDA = { name: "Beranda", href: "/", icon: Icon.Home };
 const CHAT = { name: "Chat", href: "/chat", icon: Icon.MessageCircle };
 
@@ -32,17 +29,6 @@ const SOSIAL = {
   icon: Icon.BookOpen,
 };
 
-const SWIPE = {
-  name: "Teman",
-  href: "/teman",
-  match: ["/teman", "/cari-teman", "/swap"],
-  icon: Icon.Users,
-};
-
-// Chat sengaja tidak dihitung sebagai area sosial: ia dibuka dari mana saja,
-// jadi dock tidak perlu ikut berubah tiap kali orang membalas pesan.
-const RUTE_SOSIAL = ["/sosial", "/mading", "/organisasi", "/oprec", "/teman", "/cari-teman", "/swap"];
-
 // Halaman yang memang untuk menelusuri barang — di sinilah kolom cari
 // pantas menempel di bawah, dalam jangkauan ibu jari.
 const RUTE_PENCARIAN = ["/", "/jual-beli", "/jasa", "/dicari", "/favorit"];
@@ -59,7 +45,7 @@ function ItemNav({ n, pathname }) {
       onClick={() => hapticLight()}
       aria-current={isActive ? "page" : undefined}
       className={cn(
-        "group relative flex w-14 xs:w-16 md:w-16 flex-col items-center justify-center gap-0.5 py-1 transition-all duration-200 active:scale-[0.92] touch-manipulation",
+        "group relative flex w-12 xs:w-14 flex-col items-center justify-center gap-0.5 py-1 transition-all duration-200 active:scale-[0.92] touch-manipulation",
         isActive
           ? "text-primary dark:text-violet-400 font-bold"
           : "text-slate-600 hover:text-slate-950 dark:text-slate-400 dark:hover:text-slate-200 font-medium"
@@ -102,13 +88,8 @@ function BottomNavbarInner() {
     pathname === "/chat" && searchParams && (searchParams.has("anon") || searchParams.has("room"));
 
   const adaPencarian = RUTE_PENCARIAN.includes(pathname || "");
-  // Di area sosial, Market mundur satu langkah (masih sekali ketuk lewat
-  // Beranda) supaya Swipe bisa berdiri di sebelah Sosial.
-  const diAreaSosial = RUTE_SOSIAL.some(
-    (r) => pathname === r || pathname?.startsWith(`${r}/`)
-  );
-  const navKiri = [BERANDA, diAreaSosial ? SOSIAL : MARKET];
-  const navKanan = [diAreaSosial ? SWIPE : SOSIAL, CHAT];
+  const navKiri = [BERANDA, MARKET];
+  const navKanan = [SOSIAL, CHAT];
   // Sheet yang terbuka menahan dock supaya tidak menyingkir di belakangnya.
   const menyingkir = tersembunyi && !bukaCari && !bukaBuat && !isChatRoom;
 
@@ -118,6 +99,7 @@ function BottomNavbarInner() {
           jangkauan ibu jari, ikut menyingkir saat halaman digulir. */}
       {adaPencarian && !isChatRoom && (
         <div
+          data-bottom-search
           className={cn(
             "fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] left-1/2 z-40 w-[calc(100%-2rem)] max-w-[650px] -translate-x-1/2 transition-all duration-300 md:hidden",
             menyingkir
@@ -156,7 +138,7 @@ function BottomNavbarInner() {
         <div
           className={cn(
             "flex items-center justify-around px-2",
-            isChatRoom ? "h-12 md:h-10" : "h-[56px] md:h-12 md:px-4 md:gap-2"
+            isChatRoom ? "h-12" : "h-[56px] px-1"
           )}
         >
           {navKiri.map((n) => (
@@ -174,7 +156,7 @@ function BottomNavbarInner() {
             aria-label="Buat postingan atau iklan baru"
             className={cn(
               "flex flex-col items-center justify-center transition-all duration-200 active:scale-[0.9] touch-manipulation",
-              isChatRoom ? "w-10" : "w-12 xs:w-14 -mt-5"
+              isChatRoom ? "w-10" : "w-10 xs:w-12 -mt-5"
             )}
           >
             <span

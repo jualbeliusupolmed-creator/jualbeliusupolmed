@@ -31,6 +31,18 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Satu prompt mobile pada satu waktu. Saat prompt tampil, search pill disembunyikan
+   agar tidak bertabrakan dengan prompt dan dock navigasi. */
+body:has([data-mobile-overlay]) [data-bottom-search] {
+  display: none;
+}
+
+body:has([data-mobile-overlay="notification"]) [data-mobile-overlay="install"],
+body:has([data-mobile-overlay="sponsor"]) [data-mobile-overlay="install"],
+body:has([data-mobile-overlay="sponsor"]) [data-mobile-overlay="notification"] {
+  display: none;
+}
+
 /* Fokus yang jelas untuk keyboard, tanpa mengganggu interaksi sentuh. */
 :where(a, button, input, select, textarea, summary):focus-visible {
   outline: 3px solid rgba(0, 113, 227, 0.55);

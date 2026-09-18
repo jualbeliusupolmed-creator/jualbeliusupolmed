@@ -2162,45 +2162,69 @@ export async function POST(req) {
       // ==========================================
       // MENU / HELP / BANTUAN — Daftar perintah
       // ==========================================
-      } else if (textMsg === "MENU" || textMsg === "HELP" || textMsg === "BANTUAN") {
-        let menuStr = `📋 *Menu Jual Beli USU*\n_Semua yang bisa aku bantu:_\n\n` +
-          `🛒 *IKLAN*\n` +
-          `• Kirim foto+teks → Pasang iklan baru\n` +
-          `• *IKLANKU* → Semua iklan saya\n` +
-          `• *CEK* → Semua iklan (views & sisa hari)\n` +
+      } else if (textMsg === "MENU IKLAN") {
+        const menuStr = `🛒 *Kelola Iklan*\n\n` +
+          `• *JUAL* → Pasang iklan baru\n` +
+          `• *IKLANKU* / *CEK* → Lihat semua iklanmu\n` +
           `• *CEK [kode]* → Detail satu iklan\n` +
-          `• *BUMP [kode]* → Naikkan ke atas\n` +
-          `• *UPGRADE [kode]* → Featured / AutoBump\n` +
-          `• *AKTIFKAN [kode]* → Aktifkan iklan expired\n` +
-          `• *PERPANJANG [kode]* → Perpanjang masa aktif\n` +
-          `• *EDIT [kode] HARGA [nominal]* → Ubah harga\n` +
-          `• *EDIT [kode] DESC [teks]* → Ubah deskripsi\n` +
+          `• *EDIT [kode] HARGA [nominal]*\n` +
+          `• *EDIT [kode] DESC [teks]*\n` +
           `• *FOTO [kode]* + foto → Tambah foto\n` +
+          `• *BUMP [kode]* → Naikkan iklan\n` +
+          `• *UPGRADE [kode]* → Featured / AutoBump\n` +
+          `• *PERPANJANG [kode]* → Perpanjang\n` +
+          `• *AKTIFKAN [kode]* → Aktifkan lagi\n` +
           `• *HAPUS LAKU [kode]* → Tandai terjual\n` +
-          `• *HAPUS GALAKU [kode]* → Minta hapus ke admin\n` +
-          `\n💬 *TRANSAKSI*\n` +
-          `• *TANYA [kode] [pesan]* → Tanya penjual (nomor aman)\n` +
-          `• *TAWARAN* → Lihat tawaran masuk\n` +
+          `• *HAPUS GALAKU [kode]* → Ajukan hapus\n\n` +
+          `_Ketik *MENU* untuk kembali._`;
+        await sendWa(senderJid, menuStr);
+        return NextResponse.json({ ok: true, state: "menu_ads_shown" });
+
+      } else if (textMsg === "MENU BELI" || textMsg === "MENU CARI") {
+        const menuStr = `🔍 *Cari & Transaksi*\n\n` +
+          `• *CARI [barang]* → Cari barang aktif\n` +
+          `• *IKLAN [kode]* → Detail iklan\n` +
           `• *TAWAR [kode] [harga]* → Tawar harga\n` +
-          `• *TAGIH* → Kirim ulang QRIS\n` +
-          `• *BATAL* → Batalkan tagihan QRIS pending\n` +
-          `• *SHARE [kode]* → Link iklan siap share\n` +
-          `\n🔍 *CARI & PANTAU*\n` +
-          `• *CARI [barang]* → Cari barang aktif (+ foto preview)\n` +
-          `• *PANTAU [kata kunci]* → Notif otomatis saat ada barang baru\n` +
-          `• *DAFTAR PANTAU* → Lihat semua kata kunci yang dipantau\n` +
-          `• *PANTAU OFF [kata kunci]* → Berhenti memantau kata kunci\n` +
-          `• *DICARI [deskripsi]* → Pasang iklan barang dicari (WTB)\n` +
-          `• *LANGGANAN [kategori]* → Notif iklan kategori baru\n` +
-          `• *STOP* → Berhenti semua notifikasi\n` +
-          `• *IKLAN [kode]* → Lihat detail iklan\n` +
-          `\n👤 *PROFIL & RIWAYAT*\n` +
-          `• *SAYA* → Profil & statistik saya\n` +
-          `• *NAMA [nama baru]* → Ajukan ganti nama profil\n` +
-          `• *REFERRAL* → Kode referral & bump gratis\n` +
+          `• *TANYA [kode] [pesan]* → Tanya penjual\n` +
+          `• *PENAWARAN SAYA* → Tawaran terkirim\n` +
+          `• *TAWARAN* → Tawaran masuk\n` +
+          `• *DICARI [deskripsi]* → Pasang kebutuhan\n` +
+          `• *PANTAU [kata kunci]* → Alarm barang baru\n` +
+          `• *DAFTAR PANTAU* → Daftar alarm\n` +
+          `• *PANTAU OFF [kata]* → Hapus alarm\n` +
+          `• *LANGGANAN [kategori]* → Notif kategori\n` +
+          `• *STOP* → Matikan semua notifikasi\n` +
+          `• *LAPOR [kode] [alasan]* → Laporkan iklan\n\n` +
+          `_Ketik *MENU* untuk kembali._`;
+        await sendWa(senderJid, menuStr);
+        return NextResponse.json({ ok: true, state: "menu_buy_shown" });
+
+      } else if (textMsg === "MENU AKUN" || textMsg === "MENU PROFIL") {
+        const menuStr = `👤 *Akun & Pembayaran*\n\n` +
+          `• *SAYA* → Profil dan statistik\n` +
+          `• *NAMA [nama baru]* → Ajukan ganti nama\n` +
+          `• *REFERRAL* → Referral dan bump gratis\n` +
           `• *RIWAYAT* → 10 transaksi terakhir\n` +
-          `• *PENAWARAN SAYA* → Tawaran yang kamu kirim\n` +
-          `• *LAPOR [kode] [alasan]* → Laporkan iklan\n`;
+          `• *TAGIH* → Kirim ulang QRIS\n` +
+          `• *BATAL* → Batalkan tagihan pending\n` +
+          `• *SHARE [kode]* → Salin link iklan\n\n` +
+          `_Ketik *MENU* untuk kembali._`;
+        await sendWa(senderJid, menuStr);
+        return NextResponse.json({ ok: true, state: "menu_account_shown" });
+
+      } else if (textMsg === "MENU" || textMsg === "HELP" || textMsg === "BANTUAN") {
+        let menuStr = `👋 *Mau melakukan apa?*\n\n` +
+          `🛒 *JUAL* — Pasang iklan\n` +
+          `🔍 *CARI [barang]* — Cari barang\n` +
+          `📦 *IKLANKU* — Kelola iklanmu\n` +
+          `🤝 *TAWAR [kode] [harga]* — Tawar barang\n` +
+          `🔔 *PANTAU [kata]* — Alarm barang baru\n` +
+          `👤 *SAYA* — Profil dan statistik\n\n` +
+          `Butuh pilihan lengkap?\n` +
+          `• *MENU IKLAN*\n` +
+          `• *MENU BELI*\n` +
+          `• *MENU AKUN*\n\n` +
+          `_Titik di depan perintah boleh dipakai, tapi tidak wajib._\n`;
           
         if (isAdminWa(normalizedWa)) {
           menuStr += `\n👑 *MENU ADMIN*\n` +

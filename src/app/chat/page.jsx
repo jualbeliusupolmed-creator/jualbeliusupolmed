@@ -1268,18 +1268,18 @@ function ChatContent() {
         </div>
       </div>
 
-      <div className="max-w-2xl w-full mx-auto p-4 space-y-6">
+      <div className="max-w-2xl min-w-0 w-full mx-auto p-3 min-[390px]:p-4 space-y-6">
         {/* ── OBROLAN ANONIM — SATU KARTU UTAMA ── */}
         <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7] flex items-center gap-1.5">
+          <div className="flex min-w-0 items-center justify-between gap-2 mb-3">
+            <h2 className="min-w-0 truncate text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7] flex items-center gap-1.5">
               <Icon.MessageCircle className="h-4 w-4 text-primary" />
-              Obrolan Anonim (Teks Langsung)
+              <span className="truncate">Obrolan Anonim</span>
             </h2>
             <button
               onClick={handleFindPartner}
               disabled={searching}
-              className="flex items-center gap-1.5 bg-primary text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow-[0_2px_8px_rgba(83,43,152,0.25)] hover:brightness-105 active:scale-[0.96] transition-all disabled:opacity-60"
+              className="flex shrink-0 items-center gap-1.5 bg-primary text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-[0_2px_8px_rgba(83,43,152,0.25)] hover:brightness-105 active:scale-[0.96] transition-all disabled:opacity-60"
             >
               {searching ? (
                 <span className="inline-flex items-center gap-1.5">
@@ -1289,7 +1289,8 @@ function ChatContent() {
               ) : (
                 <span className="inline-flex items-center gap-1.5">
                   <Icon.Search className="h-4 w-4" />
-                  Cari Partner Teks
+                  <span className="hidden min-[380px]:inline">Cari Partner</span>
+                  <span className="min-[380px]:hidden">Cari</span>
                 </span>
               )}
             </button>

@@ -93,19 +93,19 @@ export default function Navbar({ config }) {
     >
       {/* ── Top bar: Apple Frosted Glass ── */}
       <div className="border-b border-black/[0.06] bg-white/80 backdrop-blur-2xl transition-all duration-300 dark:border-white/[0.08] dark:bg-[#0f172a]/90">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-3 py-1.5">
+        <div className="mx-auto flex min-w-0 max-w-6xl items-center justify-between gap-1 px-2.5 py-1.5 min-[390px]:px-3">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group min-w-0 shrink active:scale-[0.98] transition-transform">
+          <Link href="/" className="flex min-w-0 shrink items-center gap-1.5 active:scale-[0.98] transition-transform group">
             <div className="shrink-0 transition-transform duration-300 group-hover:scale-105">
               <Logo className="h-5 w-5" src={config?.site?.logoUrl} />
             </div>
-            <span className="truncate text-[13px] font-bold leading-none tracking-tight text-[#1d1d1f] transition-colors dark:text-[#f5f5f7]">
+            <span className="hidden truncate text-[12px] font-bold leading-none tracking-tight text-[#1d1d1f] transition-colors min-[350px]:inline dark:text-[#f5f5f7] min-[390px]:text-[13px]">
               USUPOLMEDUPDATE
             </span>
           </Link>
 
           {/* Right side: search, unified user account button, notif, theme, cta */}
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center gap-0.5 min-[390px]:gap-1.5">
             {/* Search mini — di desktop selalu tampil, di mobile tersembunyi */}
             <form onSubmit={submitSearch} className="relative hidden md:block">
               <Icon.Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400 transition-colors peer-focus:text-primary" />
@@ -160,7 +160,7 @@ export default function Navbar({ config }) {
               href="/chat"
               aria-label="Buka pesan"
               title="Pesan"
-              className="rounded-full p-1.5 text-gray-500 transition-all duration-200 hover:bg-black/[0.05] hover:text-[#1d1d1f] active:scale-90 dark:text-gray-400 dark:hover:bg-white/[0.08] dark:hover:text-white"
+              className="hidden rounded-full p-1.5 text-gray-500 transition-all duration-200 hover:bg-black/[0.05] hover:text-[#1d1d1f] active:scale-90 min-[390px]:inline-flex dark:text-gray-400 dark:hover:bg-white/[0.08] dark:hover:text-white"
             >
               <Icon.MessageCircle className="h-4 w-4" />
             </Link>
@@ -171,7 +171,7 @@ export default function Navbar({ config }) {
               onClick={() => setCariTerbuka(true)}
               aria-label="Cari barang atau jasa"
               title="Cari"
-              className="rounded-full p-1.5 text-gray-500 transition-all duration-200 hover:bg-black/[0.05] hover:text-[#1d1d1f] active:scale-90 dark:text-gray-400 dark:hover:bg-white/[0.08] dark:hover:text-white"
+              className="hidden rounded-full p-1.5 text-gray-500 transition-all duration-200 hover:bg-black/[0.05] hover:text-[#1d1d1f] active:scale-90 min-[360px]:block dark:text-gray-400 dark:hover:bg-white/[0.08] dark:hover:text-white"
             >
               <Icon.Search className="h-4 w-4" />
             </button>

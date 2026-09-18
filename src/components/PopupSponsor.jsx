@@ -49,7 +49,7 @@ export default function PopupSponsor({ config }) {
   if (!isOpen || !popupAd?.enabled || !popupAd?.imageUrl) return null;
 
   return (
-    <div className="fixed inset-0 z-[65] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+    <div data-mobile-overlay="sponsor" className="fixed inset-0 z-[65] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
       <div className="relative w-full max-w-sm overflow-hidden rounded-3xl bg-white shadow-2xl border border-black/[0.06] dark:border-white/[0.1] dark:bg-slate-900 animate-in zoom-in-95 duration-200">
         {/* Tombol Tutup Floating */}
         <button

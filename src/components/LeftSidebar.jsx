@@ -12,15 +12,17 @@ export default function LeftSidebar() {
 
   const links = [
     { href: "/", label: "Beranda", icon: Icon.Home },
+    { href: "/jual-beli", label: "Marketplace", icon: Icon.ShoppingBag },
+    { href: "/mading", label: "Mading Kampus", icon: Icon.BookOpen },
     { href: "/dicari", label: "Dicari", icon: Icon.Search },
     { href: "/chat", label: "Chat", icon: Icon.MessageCircle },
-    { href: "/jual", label: "Jual Barang", icon: Icon.Plus },
     { href: "/teman", label: "Cari Teman", icon: Icon.Users },
-    { href: "/?modal=menfess", label: "Buat Menfess", icon: Icon.Edit },
+    { href: "/organisasi", label: "UKM & Organisasi", icon: Icon.Store },
+    { href: "/oprec", label: "Oprec Kampus", icon: Icon.Megaphone },
   ];
 
   return (
-    <div className="hidden md:flex flex-col w-[250px] sticky top-0 h-screen bg-transparent px-4 py-6 overflow-y-auto">
+    <div className="hidden md:flex min-w-0 flex-col w-[250px] sticky top-0 h-screen bg-transparent px-4 py-6 overflow-y-auto">
       <Link href="/" className="flex items-center gap-2 mb-8 px-2">
         <Icon.Store className="w-8 h-8 text-primary" />
         <span className="font-bold text-xl tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">JualBeli</span>
