@@ -98,46 +98,46 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
           <div>
             {/* Kategori & Lokasi */}
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 bg-black/[0.04] dark:bg-white/[0.08] px-1.5 py-0.5 rounded-md truncate max-w-[85px] sm:max-w-none">
+              <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 bg-black/[0.04] dark:bg-white/[0.08] px-2 py-0.5 rounded-md truncate max-w-[95px] sm:max-w-none">
                 {listing.category}
               </span>
               {listing.listing_code && (
-                <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-md bg-white text-gray-600 dark:bg-slate-900 dark:text-slate-300 font-semibold hidden xs:flex items-center gap-0.5 border border-black/[0.06] dark:border-white/[0.08]">
+                <span className="text-[10px] sm:text-[11px] px-1.5 py-0.5 rounded-md bg-white text-slate-700 dark:bg-slate-900 dark:text-slate-300 font-semibold hidden xs:flex items-center gap-0.5 border border-black/[0.06] dark:border-white/[0.08]">
                   <Icon.Hash className="h-2.5 w-2.5 shrink-0" />
                   {listing.listing_code}
                 </span>
               )}
-              <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-md bg-primary/[0.07] text-primary dark:bg-violet-500/15 dark:text-violet-300 font-semibold max-w-[110px] truncate flex items-center gap-0.5">
+              <span className="text-[10px] sm:text-[11px] px-1.5 py-0.5 rounded-md bg-primary/[0.07] text-primary dark:bg-violet-500/15 dark:text-violet-300 font-semibold max-w-[120px] truncate flex items-center gap-0.5">
                 <Icon.MapPin className="h-2.5 w-2.5 shrink-0" />
                 <span className="truncate">{listing.campus === "Semua" ? "Medan" : listing.campus}</span>
               </span>
             </div>
 
             {/* Judul Produk */}
-            <h3 className="mt-1.5 line-clamp-2 text-[12px] sm:text-[13.5px] font-semibold leading-snug text-[#1d1d1f] dark:text-[#f5f5f7] group-hover:text-primary dark:group-hover:text-violet-400 transition-colors min-h-[2rem] sm:min-h-[2.3rem] tracking-tight">
+            <h3 className="mt-1.5 line-clamp-2 text-[13px] sm:text-[14px] font-semibold leading-snug text-[#1d1d1f] dark:text-[#f5f5f7] group-hover:text-primary dark:group-hover:text-violet-400 transition-colors min-h-[2.1rem] sm:min-h-[2.4rem] tracking-tight">
               {listing.title}
             </h3>
 
             {/* Harga */}
-            <div className="mt-1 text-[14px] sm:text-[16px] font-black tracking-tight text-primary dark:text-violet-400">
+            <div className="mt-1 text-[15px] sm:text-[16px] font-black tracking-tight text-primary dark:text-violet-400">
               {listing.type === "jasa" && (
-                <span className="text-[10px] sm:text-[11px] font-normal text-gray-500 dark:text-gray-400 mr-1">Mulai</span>
+                <span className="text-[11px] font-normal text-slate-500 dark:text-slate-400 mr-1">Mulai</span>
               )}
               {rupiah(listing.price)}
               {isRental && listing.rental_period && (
-                <span className="text-[10px] sm:text-[11px] font-semibold text-teal-600 dark:text-teal-400 ml-1">/{listing.rental_period}</span>
+                <span className="text-[11px] font-semibold text-teal-600 dark:text-teal-400 ml-1">/{listing.rental_period}</span>
               )}
             </div>
 
             {isDistributor && distributorFee > 0 && (
-              <p className="text-[9px] sm:text-[10px] text-orange-500 dark:text-orange-400 font-semibold mt-0.5">
+              <p className="text-[11px] text-orange-600 dark:text-orange-400 font-semibold mt-0.5">
                 Fee: {rupiah(distributorFee)}
               </p>
             )}
           </div>
 
           {/* Footer Card: Seller info & View/Nego */}
-          <div className="mt-2 pt-2 border-t border-black/[0.04] dark:border-white/[0.06] flex items-center justify-between text-[10px] sm:text-[11px] text-gray-500 dark:text-gray-400 gap-1.5">
+          <div className="mt-2 pt-2 border-t border-black/[0.04] dark:border-white/[0.06] flex items-center justify-between text-[11px] sm:text-[12px] text-slate-600 dark:text-slate-300 gap-1.5">
             <div className="flex items-center gap-1 min-w-0 flex-1 overflow-hidden">
               <span className="truncate max-w-[80px] sm:max-w-[120px]">{!tanpaPenjual ? listing.seller_name || "Penjual" : ""}</span>
               {listing.seller_profiles?.subscription_tier === "pro" && (

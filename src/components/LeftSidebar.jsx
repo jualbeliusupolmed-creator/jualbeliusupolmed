@@ -43,9 +43,16 @@ export default function LeftSidebar() {
 
   return (
     <div className="hidden md:flex flex-col w-[250px] sticky top-0 h-screen bg-transparent px-4 py-6 overflow-y-auto z-20">
-      <Link href="/" className="flex items-center gap-2 mb-8 px-2">
-        <Icon.Store className="w-8 h-8 text-primary" />
-        <span className="font-bold text-xl tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">JualBeli</span>
+      <Link href="/" className="flex items-center gap-2.5 mb-8 px-2">
+        <Icon.Store className="w-8 h-8 text-primary shrink-0" />
+        <div className="flex flex-col">
+          <span className="font-extrabold text-xl leading-none tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">
+            Kampusfess
+          </span>
+          <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mt-1">
+            Marketplace USU • POLMED
+          </span>
+        </div>
       </Link>
 
       <nav className="flex-1 space-y-2">

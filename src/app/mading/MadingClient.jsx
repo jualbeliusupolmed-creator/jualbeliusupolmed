@@ -574,7 +574,9 @@ export default function MadingClient({ initialPosts = [] }) {
           ) : posts.length === 0 ? (
             <div className="text-center py-16 px-4 bg-white dark:bg-[#151518] rounded-3xl border border-black/[0.06] dark:border-white/[0.08] shadow-xs">
               <div className="w-14 h-14 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl">
-                <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg>
+                <svg aria-hidden="true" viewBox="0 0 24 24" className="w-7 h-7 fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
               </div>
               <h3 className="font-extrabold text-slate-800 dark:text-slate-200 text-base">Belum Ada Menfess di Sini</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto mt-1">
@@ -1197,7 +1199,7 @@ export default function MadingClient({ initialPosts = [] }) {
                     className="p-2 rounded-xl bg-white/20 hover:bg-white/30 text-white font-bold transition-all text-xs w-8 h-8 flex items-center justify-center"
                     aria-label="Tutup Foto"
                   >
-                    <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg>
+                    <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
                   </button>
                 </div>
               </div>

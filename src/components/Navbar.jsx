@@ -95,9 +95,14 @@ export default function Navbar({ config }) {
             <div className="shrink-0 transition-transform duration-300 group-hover:scale-105">
               <Logo className="h-5 w-5" src={config?.site?.logoUrl} />
             </div>
-            <span className="hidden truncate text-[12px] font-bold leading-none tracking-tight text-[#1d1d1f] transition-colors min-[350px]:inline dark:text-[#f5f5f7] min-[390px]:text-[13px]">
-              USUPOLMEDUPDATE
-            </span>
+            <div className="flex flex-col">
+              <span className="truncate text-[12px] font-extrabold leading-none tracking-tight text-[#1d1d1f] transition-colors min-[350px]:inline dark:text-[#f5f5f7] min-[390px]:text-[13px]">
+                Kampusfess
+              </span>
+              <span className="hidden min-[420px]:block text-[9px] font-semibold text-slate-400 dark:text-slate-500 leading-tight mt-0.5">
+                USU • POLMED
+              </span>
+            </div>
           </Link>
 
           {/* Right side: search, unified user account button, notif, theme, cta */}

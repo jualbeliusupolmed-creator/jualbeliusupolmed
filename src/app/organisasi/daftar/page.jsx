@@ -115,7 +115,7 @@ function DaftarOrganisasiForm() {
       <div className="mx-auto max-w-xl px-4 py-12">
         <div className="card p-8 text-center space-y-6 border-2 border-emerald-500/20 shadow-xl dark:bg-slate-900">
           <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-emerald-500/10 text-4xl text-emerald-600">
-            <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg>
+            <svg aria-hidden="true" viewBox="0 0 24 24" className="w-10 h-10 fill-none stroke-current" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
           </div>
           <div>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 mb-2">
@@ -175,7 +175,16 @@ function DaftarOrganisasiForm() {
               {form.photo_url ? (
                 <Image src={form.photo_url} alt="Logo Preview" fill className="object-cover" />
               ) : (
-                <span className="text-2xl text-gray-400"><svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg></span>
+                <span className="text-2xl text-gray-400">
+                  <svg aria-hidden="true" viewBox="0 0 24 24" className="w-7 h-7 fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="3" y1="22" x2="21" y2="22" />
+                    <line x1="6" y1="18" x2="6" y2="11" />
+                    <line x1="10" y1="18" x2="10" y2="11" />
+                    <line x1="14" y1="18" x2="14" y2="11" />
+                    <line x1="18" y1="18" x2="18" y2="11" />
+                    <polygon points="12 2 20 7 4 7" />
+                  </svg>
+                </span>
               )}
             </div>
             <div className="flex-1">
