@@ -2,16 +2,17 @@
 
 import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { Icon } from "./Icons";
 import { cn } from "@/lib/utils";
 import { hapticLight, hapticMedium } from "@/lib/haptics";
 import { useHideOnScroll } from "@/lib/useHideOnScroll";
+import { useSesi } from "./SesiProvider";
 import QuickSearchSheet from "./QuickSearchSheet";
 import CreateSheet from "./CreateSheet";
+import OTPModal from "./OTPModal";
 
-// Lima tujuan utama tidak pernah berpindah. Navigasi yang stabil lebih mudah
-// dihafal jempol daripada dock yang berubah isi ketika pengguna pindah area.
+// Lima tujuan utama navigasi bawah yang stabil dan mudah dihafal jempol.
 const BERANDA = { name: "Beranda", href: "/", icon: Icon.Home };
 const CHAT = { name: "Chat", href: "/chat", icon: Icon.MessageCircle };
 
@@ -22,13 +23,6 @@ const MARKET = {
   icon: Icon.ShoppingBag,
 };
 
-const SOSIAL = {
-  name: "Sosial",
-  href: "/mading",
-  match: ["/sosial", "/mading", "/organisasi", "/oprec"],
-  icon: Icon.BookOpen,
-};
-
 // Halaman yang memang untuk menelusuri barang — di sinilah kolom cari
 // pantas menempel di bawah, dalam jangkauan ibu jari.
 const RUTE_PENCARIAN = ["/", "/jual-beli", "/jasa", "/dicari", "/favorit"];
@@ -36,21 +30,12 @@ const RUTE_PENCARIAN = ["/", "/jual-beli", "/jasa", "/dicari", "/favorit"];
 function ItemNav({ n, pathname, badge = 0 }) {
   const cakupan = n.match || [n.href];
   const isActive =
-    pathname === n.href || cakupan.some((c) => c !== "/" && pathname?.startsWith(c));
+    n.href !== "#" &&
+    (pathname === n.href || cakupan.some((c) => c !== "/" && pathname?.startsWith(c)));
   const IconComp = n.icon;
 
-  return (
-    <Link
-      href={n.href}
-      onClick={() => hapticLight()}
-      aria-current={isActive ? "page" : undefined}
-      className={cn(
-        "group relative flex w-12 xs:w-14 flex-col items-center justify-center gap-0.5 py-1 transition-all duration-200 active:scale-[0.92] touch-manipulation",
-        isActive
-          ? "text-primary dark:text-violet-400 font-bold"
-          : "text-slate-600 hover:text-slate-950 dark:text-slate-400 dark:hover:text-slate-200 font-medium"
-      )}
-    >
+  const content = (
+    <>
       <div
         className={cn(
           "relative flex items-center justify-center rounded-full p-1 transition-all duration-200",
@@ -77,6 +62,40 @@ function ItemNav({ n, pathname, badge = 0 }) {
       >
         {n.name}
       </span>
+    </>
+  );
+
+  const buttonClasses = cn(
+    "group relative flex w-12 xs:w-14 flex-col items-center justify-center gap-0.5 py-1 transition-all duration-200 active:scale-[0.92] touch-manipulation",
+    isActive
+      ? "text-primary dark:text-violet-400 font-bold"
+      : "text-slate-600 hover:text-slate-950 dark:text-slate-400 dark:hover:text-slate-200 font-medium"
+  );
+
+  if (n.onClick) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          hapticLight();
+          n.onClick();
+        }}
+        aria-label={n.name}
+        className={buttonClasses}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <Link
+      href={n.href}
+      onClick={() => hapticLight()}
+      aria-current={isActive ? "page" : undefined}
+      className={buttonClasses}
+    >
+      {content}
     </Link>
   );
 }
@@ -84,8 +103,11 @@ function ItemNav({ n, pathname, badge = 0 }) {
 function BottomNavbarInner() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const { sesiWa, segarkan } = useSesi();
   const [bukaCari, setBukaCari] = useState(false);
   const [bukaBuat, setBukaBuat] = useState(false);
+  const [bukaOtp, setBukaOtp] = useState(false);
   const tersembunyi = useHideOnScroll();
   const [unreadChat, setUnreadChat] = useState(0);
 
@@ -111,9 +133,24 @@ function BottomNavbarInner() {
 
   const adaPencarian = RUTE_PENCARIAN.includes(pathname || "");
   const navKiri = [BERANDA, MARKET];
-  const navKanan = [SOSIAL, CHAT];
+
+  const AKUN = sesiWa
+    ? {
+        name: "Akun",
+        href: "/dashboard",
+        match: ["/profil", "/dashboard", "/pengaturan"],
+        icon: Icon.User,
+      }
+    : {
+        name: "Masuk",
+        href: "#",
+        icon: Icon.User,
+        onClick: () => setBukaOtp(true),
+      };
+
+  const navKanan = [CHAT, AKUN];
   // Sheet yang terbuka menahan dock supaya tidak menyingkir di belakangnya.
-  const menyingkir = tersembunyi && !bukaCari && !bukaBuat && !isChatRoom;
+  const menyingkir = tersembunyi && !bukaCari && !bukaBuat && !bukaOtp && !isChatRoom;
 
   return (
     <>
@@ -212,6 +249,15 @@ function BottomNavbarInner() {
 
       <QuickSearchSheet isOpen={bukaCari} onClose={() => setBukaCari(false)} />
       <CreateSheet isOpen={bukaBuat} onClose={() => setBukaBuat(false)} />
+      <OTPModal
+        isOpen={bukaOtp}
+        onClose={() => setBukaOtp(false)}
+        onSuccess={() => {
+          setBukaOtp(false);
+          segarkan?.();
+          router.refresh();
+        }}
+      />
     </>
   );
 }

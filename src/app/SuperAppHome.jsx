@@ -139,6 +139,7 @@ export default function SuperAppHome({
   // New post banner state
   const [newPostCount, setNewPostCount] = useState(0);
   const latestKnownId = useRef(initialMadingPosts[0]?.id ?? null);
+  const fetchingMoreRef = useRef(false);
 
   // Onboarding overlay
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -209,47 +210,57 @@ export default function SuperAppHome({
 
   // Fetch more posts when bottom observer is in view
   useEffect(() => {
-    let isMounted = true;
+    if (!inView || !hasMore || fetchingMoreRef.current) return;
+
+    let isSubscribed = true;
     async function fetchMore() {
-      if (inView && hasMore && !isLoadingMore) {
-        setIsLoadingMore(true);
-        try {
-          const nextPage = page + 1;
-          const query = new URLSearchParams({
-            page: String(nextPage),
-            limit: "15",
-            ...(activeTab !== "all" && { type: activeTab }),
-            ...(selectedCampus !== "Semua" && { faculty: selectedCampus }),
-            ...(debouncedQuery && { q: debouncedQuery }),
-          });
-          const res = await fetch(`/api/mading?${query.toString()}`);
-          const data = await res.json();
-          if (isMounted) {
-            if (data.posts && data.posts.length > 0) {
-              setPosts((prev) => [...prev, ...data.posts]);
-              setPage(nextPage);
-              if (data.posts.length < 15) {
-                setHasMore(false);
-              }
-            } else {
+      fetchingMoreRef.current = true;
+      setIsLoadingMore(true);
+      try {
+        const nextPage = page + 1;
+        const query = new URLSearchParams({
+          page: String(nextPage),
+          limit: "15",
+          ...(activeTab !== "all" && { type: activeTab }),
+          ...(selectedCampus !== "Semua" && { faculty: selectedCampus }),
+          ...(debouncedQuery && { q: debouncedQuery }),
+        });
+        const res = await fetch(`/api/mading?${query.toString()}`);
+        if (!res.ok) throw new Error("Gagal mengambil data mading");
+        const data = await res.json();
+        if (isSubscribed) {
+          if (data.posts && data.posts.length > 0) {
+            setPosts((prev) => {
+              const existingIds = new Set(prev.map((p) => p.id));
+              const newUnique = data.posts.filter((p) => !existingIds.has(p.id));
+              return [...prev, ...newUnique];
+            });
+            setPage(nextPage);
+            if (data.posts.length < 15) {
               setHasMore(false);
             }
+          } else {
+            setHasMore(false);
           }
-        } catch (error) {
-          console.error("Error fetching more mading:", error);
-          if (isMounted) { setHasMore(false); setFeedError(true); } // Cegah infinite loop
-        } finally {
-          if (isMounted) {
-            setIsLoadingMore(false);
-          }
+        }
+      } catch (error) {
+        console.error("Error fetching more mading:", error);
+        if (isSubscribed) {
+          setHasMore(false);
+          setFeedError(true);
+        }
+      } finally {
+        fetchingMoreRef.current = false;
+        if (isSubscribed) {
+          setIsLoadingMore(false);
         }
       }
     }
     fetchMore();
     return () => {
-      isMounted = false;
+      isSubscribed = false;
     };
-  }, [inView, hasMore, isLoadingMore, page, activeTab, selectedCampus, debouncedQuery]);
+  }, [inView, hasMore, page, activeTab, selectedCampus, debouncedQuery]);
 
   const isFirstRender = useRef(true);
 
@@ -262,6 +273,7 @@ export default function SuperAppHome({
 
     let isMounted = true;
     async function resetAndFetch() {
+      fetchingMoreRef.current = true;
       setIsLoadingMore(true);
       setFeedError(false);
       try {
@@ -283,6 +295,7 @@ export default function SuperAppHome({
         console.error("Gagal filter", error);
         if (isMounted) setFeedError(true);
       } finally {
+        fetchingMoreRef.current = false;
         if (isMounted) setIsLoadingMore(false);
       }
     }
@@ -1198,13 +1211,30 @@ export default function SuperAppHome({
           )}
           
           {/* Intersection Observer target for Infinite Scroll */}
-          {hasMore && (
-            <div ref={loadMoreRef} className="py-8 flex justify-center items-center">
+          {hasMore && !feedError && (
+            <div ref={loadMoreRef} className="py-8 flex flex-col justify-center items-center gap-2">
               <div className="h-6 w-6 rounded-full border-2 border-primary/20 border-t-primary animate-spin"></div>
+              <span className="text-[11px] text-slate-400 dark:text-slate-500">Memuat postingan lainnya...</span>
             </div>
           )}
-          {!hasMore && posts.length > 0 && (
-            <div className="py-8 text-center text-xs font-medium text-slate-400">
+          {feedError && (
+            <div className="py-8 text-center space-y-2">
+              <p className="text-xs text-rose-500 font-medium">Gagal memuat postingan lanjutan.</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setFeedError(false);
+                  setHasMore(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold hover:bg-primary hover:text-white transition-all active:scale-95"
+              >
+                <Icon.RefreshCcw className="w-3.5 h-3.5" />
+                <span>Coba Lagi</span>
+              </button>
+            </div>
+          )}
+          {!hasMore && posts.length > 0 && !feedError && (
+            <div className="py-8 text-center text-xs font-medium text-slate-400 dark:text-slate-500">
               ✓ Anda sudah melihat semua postingan
             </div>
           )}

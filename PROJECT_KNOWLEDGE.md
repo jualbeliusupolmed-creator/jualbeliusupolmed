@@ -161,6 +161,11 @@ cuma server.
 
 - **28 Agustus 2026**: `npm run build` **BERHASIL** — semua halaman dirender sebagai `ƒ (Dynamic)`, tidak ada static generation failure. Build issue yang dicatat sebelumnya sudah tidak ada.
 
+*   **19 September 2026 — Perbaikan Navigasi Mobile, Infinite Scroll Feed, dan Prominensi Google OAuth**
+    - **Header & Bottom Nav Mobile:** Menghapus `useHideOnScroll` pada header mobile di `Navbar.jsx` dan mengunci wrapper `LayoutWrapper.jsx` menjadi `sticky top-0 z-40` agar header tidak menghilang atau terpotong saat scroll. Mengintegrasikan tombol `Masuk` / `Akun` ke dalam `BottomNavbar.jsx` (dock 5 tombol seimbang: Beranda, Market, +Buat, Chat, Masuk/Akun) dengan aksi langsung membuka modal login tanpa redirect.
+    - **Infinite Scroll Feed (`SuperAppHome.jsx`):** Memperbaiki bug race condition di mana `isLoadingMore` dalam dependency array `useEffect` memicu cleanup (`isMounted = false`) sebelum request API mading selesai, menyebabkan status loading menggantung permanen (*stuck spinner*). Menggantinya dengan `fetchingMoreRef` dan menambahkan UI fallback *"Coba Lagi"* saat error.
+    - **Modal Login (`OTPModal.jsx`):** Memindahkan tombol Google OAuth ke posisi paling atas secara prominen dengan styling 1-klik, merapikan tab WhatsApp & Email, serta menyetel `max-h-[92vh] overflow-y-auto` agar modal tidak terpotong di layar HP kecil.
+
 *   **29 Agustus 2026 — `formatWa()` menolak SETIAP JID; otak WhatsApp situs diam sejak 26 Agustus**
     - **Akarnya satu baris.** Penjaga id sintetis yang dipasang 26 Agustus berbunyi `adalahIdSintetis = (v) => /[a-z]/i.test(v)` dan diterapkan pada string **utuh**. Sebuah JID WhatsApp berbunyi `6289…@s.whatsapp.net` — ia berhuruf, dan hurufnya milik **sufiks**, bukan nomornya. Sejak commit itu `formatWa()` memulangkan `""` untuk setiap JID.
     - **Akibat pertama, yang paling mahal:** `/api/wa/baileys` menghitung `normalizedWa = formatWa(senderJid)` lalu pulang lebih awal kalau kosong. Log bot 29 Agustus memuat dua pesan masuk sungguhan dan **dua-duanya** dijawab `{"ok":true,"ignored":true,"reason":"invalid_number"}`. Sejak lalu lintas pulih 28 Agustus, situs berhenti menjawab siapa pun lewat WhatsApp. Yang menutupi gejalanya: sapaan pertama dikirim **bot sendiri** (`[gerbang] … sapaan dikirim (sekali)` di log bot), jadi dari luar ia tampak "menyapa lalu diam" — bukan mati.
