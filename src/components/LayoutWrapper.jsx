@@ -112,7 +112,7 @@ export default function LayoutWrapper({ children }) {
               "shadow-2xl md:shadow-none",
               isHome ? "lg:max-w-[1050px]" : "lg:max-w-[680px]"
             )}>
-              <div className="md:hidden">
+              <div className="md:hidden sticky top-0 z-40">
                 <Navbar config={config} />
               </div>
               

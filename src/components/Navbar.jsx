@@ -86,13 +86,9 @@ export default function Navbar({ config }) {
   };
 
   return (
-    <header
-      className={`sticky top-0 z-40 transition-transform duration-300 will-change-transform ${
-        bilahTersembunyi ? "-translate-y-full md:translate-y-0" : "translate-y-0"
-      }`}
-    >
+    <header className="sticky top-0 z-40">
       {/* ── Top bar: Apple Frosted Glass ── */}
-      <div className="border-b border-black/[0.06] bg-white/80 backdrop-blur-2xl transition-all duration-300 dark:border-white/[0.08] dark:bg-[#0f172a]/90">
+      <div className="border-b border-black/[0.06] bg-white/85 backdrop-blur-2xl transition-all duration-300 dark:border-white/[0.08] dark:bg-[#0f172a]/95">
         <div className="mx-auto flex min-w-0 max-w-6xl items-center justify-between gap-1 px-2.5 py-1.5 min-[390px]:px-3">
           {/* Logo */}
           <Link href="/" className="flex min-w-0 shrink items-center gap-1.5 active:scale-[0.98] transition-transform group">
@@ -138,20 +134,24 @@ export default function Navbar({ config }) {
                       cancel: { label: "Batal" },
                     });
                   }}
-                  className="px-1.5 py-1 text-gray-400 hover:text-rose-500 rounded-full transition-colors text-[11px] font-bold active:scale-90"
+                  className="p-1 text-gray-400 hover:text-rose-500 rounded-full transition-colors active:scale-90"
                   title="Keluar dari akun"
                   aria-label="Keluar dari akun"
                 >
-                  <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg>
+                  <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
+                  </svg>
                 </button>
               </div>
             ) : (
               <button
                 onClick={() => setShowOtp(true)}
-                className="inline-flex items-center gap-1 rounded-full border border-black/[0.08] bg-black/[0.03] px-3 py-1.5 text-[11px] font-bold text-[#1d1d1f] transition-all duration-200 hover:bg-black/[0.06] active:scale-[0.95] dark:border-white/[0.1] dark:bg-white/[0.06] dark:text-[#f5f5f7] dark:hover:bg-white/[0.1]"
+                className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 text-primary border border-primary/25 px-3 py-1 text-[11px] font-bold transition-all duration-200 hover:bg-primary hover:text-white active:scale-[0.95] dark:bg-primary/20 dark:text-violet-300 dark:border-primary/35 shadow-xs"
                 title="Masuk / Daftar Akun"
               >
-                <Icon.User className="h-3 w-3" />
+                <Icon.User className="h-3.5 w-3.5" />
                 <span>Masuk</span>
               </button>
             )}
