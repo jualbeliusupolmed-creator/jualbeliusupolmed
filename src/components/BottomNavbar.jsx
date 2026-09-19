@@ -104,7 +104,7 @@ function BottomNavbarInner() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { sesiWa, segarkan } = useSesi();
+  const { wa: sesiWa, siap, segarkan } = useSesi();
   const [bukaCari, setBukaCari] = useState(false);
   const [bukaBuat, setBukaBuat] = useState(false);
   const [bukaOtp, setBukaOtp] = useState(false);
@@ -134,7 +134,9 @@ function BottomNavbarInner() {
   const adaPencarian = RUTE_PENCARIAN.includes(pathname || "");
   const navKiri = [BERANDA, MARKET];
 
-  const AKUN = sesiWa
+  // Saat belum siap (server/hydration), selalu pakai tombol Masuk
+  // supaya server HTML dan client HTML sama persis — tidak ada Link vs button mismatch.
+  const AKUN = siap && sesiWa
     ? {
         name: "Akun",
         href: "/dashboard",
@@ -142,10 +144,10 @@ function BottomNavbarInner() {
         icon: Icon.User,
       }
     : {
-        name: "Masuk",
+        name: siap ? "Masuk" : "Akun",
         href: "#",
         icon: Icon.User,
-        onClick: () => setBukaOtp(true),
+        onClick: siap ? () => setBukaOtp(true) : undefined,
       };
 
   const navKanan = [CHAT, AKUN];

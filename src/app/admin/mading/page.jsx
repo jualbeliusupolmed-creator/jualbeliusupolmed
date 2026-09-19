@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { PageHeader } from "@/components/admin/ui";
 import AdminMadingTable from "./AdminMadingTable";
+import MenfessLoginToggle from "@/components/admin/MenfessLoginToggle";
 
 export const dynamic = "force-dynamic";
 

@@ -6,6 +6,7 @@ import { hashIdentitas } from "@/lib/identitasHash";
 import { catatIdentitasWa } from "@/lib/chatIdentity";
 import { getUserSession } from "@/lib/auth";
 import { autoPublishMadingInstagram, siteOriginFromRequest } from "@/lib/madingInstagram";
+import { getSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -85,7 +86,11 @@ export async function POST(request) {
     let { type, sender_name, faculty, title, content, image_url, listing_id } = body;
 
     const wa = getUserSession();
-    if (!wa) {
+    const ip = getClientIp(request);
+    const settings = await getSettings().catch(() => null);
+    const requireLogin = settings?.mading?.requireLogin !== false;
+
+    if (requireLogin && !wa) {
       return NextResponse.json({ error: "Silakan login terlebih dahulu untuk memposting." }, { status: 401 });
     }
 
@@ -103,9 +108,9 @@ export async function POST(request) {
       );
     }
 
-    // Posting kini di-rate-limit berdasarkan sesi WA pengirim, 
-    // agar adil dan tidak memblokir IP publik kampus.
-    const laju = rateLimit(`mading-post:${wa}`, { limit: 5, windowMs: 10 * 60_000 });
+    // Rate-limit: berdasarkan sesi WA pengirim jika login, atau IP jika tanpa login
+    const rateKey = wa ? `mading-post:${wa}` : `mading-post:ip:${ip}`;
+    const laju = rateLimit(rateKey, { limit: 5, windowMs: 10 * 60_000 });
     if (!laju.ok) {
       return NextResponse.json(
         { error: `Terlalu banyak postingan dalam waktu singkat. Coba lagi dalam ${laju.retryAfter} detik.` },
@@ -116,15 +121,17 @@ export async function POST(request) {
     // Whitelist semua type yang valid; selain ini jatuh ke 'menfess'
     const VALID_TYPES = ["menfess", "info", "organisasi"];
     type = VALID_TYPES.includes(type) ? type : "menfess";
-    // Alias komunitas terpusat di profil. Klien tidak boleh menyisipkan nama
-    // lain setiap kali post, dan nama profil marketplace tidak pernah dipakai
-    // secara otomatis agar ruang Menfess tetap anonim.
-    const { data: profile } = await getAdminClient()
-      .from("seller_profiles")
-      .select("anonymous_name")
-      .eq("wa", wa)
-      .maybeSingle();
-    sender_name = (profile?.anonymous_name || "Anonim").trim().slice(0, 30);
+
+    if (wa) {
+      const { data: profile } = await getAdminClient()
+        .from("seller_profiles")
+        .select("anonymous_name")
+        .eq("wa", wa)
+        .maybeSingle();
+      sender_name = (profile?.anonymous_name || sender_name || "Anonim").trim().slice(0, 30);
+    } else {
+      sender_name = (sender_name || "Anonim").trim().slice(0, 30);
+    }
     faculty = (faculty || "Umum").trim().slice(0, 50);
     title = title ? title.trim().slice(0, 150) : null;
 
@@ -148,17 +155,23 @@ export async function POST(request) {
     // Produk yang ditandai harus benar-benar milik penulisnya dan masih
     // aktif. Tanpa pagar ini, siapa pun bisa menempelkan dagangan orang lain
     // (atau iklan yang sudah dihapus) ke postingannya sendiri.
+    // Catatan: fitur tag produk hanya tersedia jika user sudah login (wa ada).
     if (listing_id) {
-      const { data: iklan } = await getAdminClient()
-        .from("listings")
-        .select("id, seller_wa, status")
-        .eq("id", listing_id)
-        .maybeSingle();
-      if (!iklan || iklan.seller_wa !== wa || iklan.status !== "active") {
-        return NextResponse.json(
-          { error: "Iklan yang ditandai tidak ditemukan atau bukan milikmu." },
-          { status: 400 }
-        );
+      if (!wa) {
+        // User tidak login — tag produk tidak bisa diverifikasi, abaikan saja
+        listing_id = null;
+      } else {
+        const { data: iklan } = await getAdminClient()
+          .from("listings")
+          .select("id, seller_wa, status")
+          .eq("id", listing_id)
+          .maybeSingle();
+        if (!iklan || iklan.seller_wa !== wa || iklan.status !== "active") {
+          return NextResponse.json(
+            { error: "Iklan yang ditandai tidak ditemukan atau bukan milikmu." },
+            { status: 400 }
+          );
+        }
       }
     } else {
       listing_id = null;
@@ -176,9 +189,8 @@ export async function POST(request) {
       title: cleanTitle,
       content: cleanContent,
       status: "active",
-      // Menggunakan hash dari WA agar anonim bagi sistem publik tapi tetap unik
-      // dan berbasis login satu pintu, bukan IP yang bisa berubah.
-      author_ip_hash: hashIdentitas(wa),
+      // Menggunakan hash dari WA (atau IP jika posting tanpa login) agar anonim tapi tetap unik
+      author_ip_hash: hashIdentitas(wa || ip || "anon"),
     };
     if (image_url) insertData.image_url = image_url;
     if (listing_id) insertData.listing_id = listing_id;
@@ -218,7 +230,10 @@ export async function POST(request) {
     }
 
     // Catat pemetaan hash -> WA untuk panel admin & push notification
-    await catatIdentitasWa(supa, hashIdentitas(wa), wa);
+    // Hanya jika user login (wa tersedia); posting anonim tanpa sesi tidak perlu dicatat
+    if (wa) {
+      await catatIdentitasWa(supa, hashIdentitas(wa), wa);
+    }
 
     // Auto-post tanpa persetujuan admin. Jika Meta belum siap, postingan web
     // tetap berhasil dan antreannya akan dicoba ulang oleh cron/panel admin.

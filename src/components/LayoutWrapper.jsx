@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import GlobalImageLightbox from "./GlobalImageLightbox";
 import LeftSidebar from "./LeftSidebar";
 import RightSidebar from "./RightSidebar";
+import ThemeToggleFloating from "./ThemeToggleFloating";
 
 export default function LayoutWrapper({ children }) {
   const pathname = usePathname();
@@ -135,6 +136,7 @@ export default function LayoutWrapper({ children }) {
           <NotifPrompt />
           <PopupSponsor config={config} />
           <BottomNavbar />
+          <ThemeToggleFloating />
           {!hideFooter && <Footer config={config} />}
         </div>
       )}

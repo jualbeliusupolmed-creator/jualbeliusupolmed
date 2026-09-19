@@ -134,8 +134,9 @@ export default async function RootLayout({ children }) {
             try {
               var d = document.documentElement;
               var c = localStorage.getItem('theme');
-              var gelap = c === 'dark'
-                || (!c && window.matchMedia('(prefers-color-scheme: dark)').matches);
+              // Default PERTAMA adalah TERANG (Light Mode).
+              // Hanya aktif gelap jika pengguna secara eksplisit memilih 'dark' atau 'gelap'.
+              var gelap = c === 'dark' || c === 'gelap';
               d.classList.toggle('dark', !!gelap);
 
               var skala = { kecil: 0.92, normal: 1, besar: 1.12, jumbo: 1.24 }[

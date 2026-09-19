@@ -46,23 +46,23 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
           {!sold && (
             <div className="absolute left-2 top-2 z-10 pointer-events-none">
               {isRental ? (
-                <span className="rounded-full bg-teal-600/90 backdrop-blur-md px-2 py-0.5 text-[9px] sm:text-[10px] font-bold text-white shadow-sm">
+                <span className="rounded-full bg-teal-600/90 backdrop-blur-md px-2.5 py-0.5 text-[10.5px] sm:text-[11px] font-bold text-white shadow-sm">
                   Sewa
                 </span>
               ) : isSponsored ? (
-                <span className="rounded-full bg-indigo-600/90 backdrop-blur-md px-2 py-0.5 text-[9px] sm:text-[10px] font-bold text-white shadow-sm">
+                <span className="rounded-full bg-indigo-600/90 backdrop-blur-md px-2.5 py-0.5 text-[10.5px] sm:text-[11px] font-bold text-white shadow-sm">
                   Sponsor
                 </span>
               ) : listing.featured ? (
-                <span className="rounded-full bg-white/95 dark:bg-[#1c1c1e]/95 backdrop-blur-md px-2 py-0.5 text-[9px] sm:text-[10px] font-bold text-[#1d1d1f] dark:text-white shadow-sm">
+                <span className="rounded-full bg-white/95 dark:bg-[#1c1c1e]/95 backdrop-blur-md px-2.5 py-0.5 text-[10.5px] sm:text-[11px] font-bold text-[#1d1d1f] dark:text-white shadow-sm">
                   Unggulan
                 </span>
               ) : (isNew || isConditionNew) ? (
-                <span className="rounded-full bg-emerald-500/95 backdrop-blur-md px-2 py-0.5 text-[9px] sm:text-[10px] font-bold text-white shadow-sm flex items-center gap-0.5">
-                  <Icon.Sparkles className="h-2.5 w-2.5" /> Baru
+                <span className="rounded-full bg-emerald-500/95 backdrop-blur-md px-2.5 py-0.5 text-[10.5px] sm:text-[11px] font-bold text-white shadow-sm flex items-center gap-0.5">
+                  <Icon.Sparkles className="h-3 w-3" /> Baru
                 </span>
               ) : isLowStock ? (
-                <span className="rounded-full bg-amber-500/95 backdrop-blur-md px-2 py-0.5 text-[9px] sm:text-[10px] font-bold text-white shadow-sm">
+                <span className="rounded-full bg-amber-500/95 backdrop-blur-md px-2.5 py-0.5 text-[10.5px] sm:text-[11px] font-bold text-white shadow-sm">
                   Stok Tipis
                 </span>
               ) : null}
@@ -90,11 +90,11 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
             {/* Harga */}
             <div className="mt-1 text-[15px] sm:text-[16px] font-black tracking-tight text-primary dark:text-violet-400">
               {listing.type === "jasa" && (
-                <span className="text-[11px] font-normal text-slate-500 dark:text-slate-400 mr-1">Mulai</span>
+                <span className="text-[12px] font-normal text-slate-500 dark:text-slate-400 mr-1">Mulai</span>
               )}
               {rupiah(listing.price)}
               {isRental && listing.rental_period && (
-                <span className="text-[11px] font-semibold text-teal-600 dark:text-teal-400 ml-1">/{listing.rental_period}</span>
+                <span className="text-[12px] font-semibold text-teal-600 dark:text-teal-400 ml-1">/{listing.rental_period}</span>
               )}
             </div>
           </div>
@@ -106,14 +106,14 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
                 {!tanpaPenjual ? listing.seller_name || "Penjual" : ""}
               </span>
               {listing.seller_profiles?.subscription_tier === "pro" && (
-                <Icon.Sparkles className="h-2.5 w-2.5 text-amber-500 shrink-0" title="Penjual Pro" />
+                <Icon.Sparkles className="h-3 w-3 text-amber-500 shrink-0" title="Penjual Pro" />
               )}
               {listing.seller_profiles?.trusted_seller && (
-                <Icon.Check className="h-2.5 w-2.5 text-blue-500 shrink-0" title="Penjual Terpercaya" />
+                <Icon.Check className="h-3 w-3 text-blue-500 shrink-0" title="Penjual Terpercaya" />
               )}
             </div>
-            <span className="shrink-0 flex items-center gap-0.5 text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 max-w-[90px] sm:max-w-[110px] truncate">
-              <Icon.MapPin className="h-2.5 w-2.5 shrink-0 text-slate-400" />
+            <span className="shrink-0 flex items-center gap-0.5 text-[11px] sm:text-[12px] text-slate-500 dark:text-slate-400 max-w-[95px] sm:max-w-[115px] truncate">
+              <Icon.MapPin className="h-3 w-3 shrink-0 text-slate-400" />
               <span className="truncate">{listing.campus === "Semua" ? "Medan" : listing.campus}</span>
             </span>
           </div>

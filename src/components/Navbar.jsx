@@ -10,7 +10,7 @@ import { useSesi } from "@/components/SesiProvider";
 import NotificationCenter from "@/components/NotificationCenter";
 import { toast } from "sonner";
 import { useHideOnScroll } from "@/lib/useHideOnScroll";
-import { bacaTema, terapkanTema } from "@/lib/tampilan";
+import { terapkanTema } from "@/lib/tampilan";
 import QuickSearchSheet from "@/components/QuickSearchSheet";
 
 const links = [
@@ -32,7 +32,7 @@ export default function Navbar({ config }) {
   // /api/auth/me pada SETIAP pindah alamat, dan hasilnya berhenti di
   // komponen ini — nomor yang sudah diketahuinya tidak pernah dikembalikan
   // ke localStorage, padahal delapan berkas lain membacanya dari sana.
-  const { wa: sesiWa, nama: sesiNama, segarkan, keluar } = useSesi();
+  const { wa: sesiWa, nama: sesiNama, siap, segarkan, keluar } = useSesi();
   const session = { wa: sesiWa, name: sesiNama || sesiWa };
   const [navQ, setNavQ] = useState("");
   const [wantedCount, setWantedCount] = useState(0);
@@ -53,15 +53,10 @@ export default function Navbar({ config }) {
   useEffect(() => {
     setDark(document.documentElement.classList.contains("dark"));
 
-    // Kalau pengguna belum memilih tema sendiri, ikuti setelan HP-nya —
-    // termasuk saat ia berganti ke mode gelap sambil halaman terbuka.
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const ikutSistem = () => {
-      if (bacaTema() !== "sistem") return;
-      setDark(!!terapkanTema("sistem"));
+    const handleThemeChange = (e) => {
+      setDark(e.detail?.dark ?? document.documentElement.classList.contains("dark"));
     };
-    ikutSistem();
-    media.addEventListener?.("change", ikutSistem);
+    window.addEventListener("theme:change", handleThemeChange);
 
     // Fetch wanted count for badge
     fetch("/api/wanted?limit=1")
@@ -69,7 +64,7 @@ export default function Navbar({ config }) {
       .then((d) => setWantedCount(d.total || d.listings?.length || 0))
       .catch(() => {});
 
-    return () => media.removeEventListener?.("change", ikutSistem);
+    return () => window.removeEventListener("theme:change", handleThemeChange);
   }, []);
 
 
@@ -120,7 +115,10 @@ export default function Navbar({ config }) {
             </form>
 
             {/* Unified User Account / Dashboard Button */}
-            {session.wa ? (
+            {!siap ? (
+              /* Skeleton netral — sama antara server & client, hindari hydration mismatch */
+              <div className="h-7 w-20 rounded-full bg-black/[0.05] dark:bg-white/[0.08] animate-pulse" />
+            ) : session.wa ? (
               <div className="flex items-center gap-0.5 bg-black/[0.04] dark:bg-white/[0.08] p-0.5 rounded-full border border-black/[0.04] dark:border-white/[0.06]">
                 <Link
                   href="/dashboard"
@@ -187,14 +185,15 @@ export default function Navbar({ config }) {
             {/* Theme toggle */}
             <button
               onClick={toggleTheme}
-              className="rounded-full p-1.5 text-gray-500 transition-all duration-200 hover:bg-black/[0.05] hover:text-[#1d1d1f] active:scale-90 dark:text-gray-400 dark:hover:bg-white/[0.08] dark:hover:text-white"
-              aria-label="Toggle Theme"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-black/[0.08] bg-black/[0.04] text-slate-700 transition-all duration-200 hover:bg-black/[0.08] hover:text-[#1d1d1f] active:scale-90 dark:border-white/[0.12] dark:bg-white/[0.08] dark:text-amber-300 dark:hover:bg-white/[0.14] shadow-xs"
+              aria-label={dark ? "Beralih ke Mode Terang" : "Beralih ke Mode Gelap"}
+              title={dark ? "Mode Terang" : "Mode Gelap"}
             >
               <div className="relative h-4 w-4 overflow-hidden">
-                <svg className={`absolute inset-0 h-4 w-4 transform transition-transform duration-500 ${dark ? 'translate-y-full opacity-0' : 'translate-y-0 opacity-100'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <svg className={`absolute inset-0 h-4 w-4 transform transition-transform duration-500 ${dark ? 'translate-y-full opacity-0' : 'translate-y-0 opacity-100 text-slate-700'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                 </svg>
-                <svg className={`absolute inset-0 h-4 w-4 transform transition-transform duration-500 ${dark ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <svg className={`absolute inset-0 h-4 w-4 transform transition-transform duration-500 ${dark ? 'translate-y-0 opacity-100 text-amber-300' : '-translate-y-full opacity-0'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
                 </svg>
               </div>

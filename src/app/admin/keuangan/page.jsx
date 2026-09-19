@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PageHeader } from "@/components/admin/ui";
+import { PageHeader, Panel, Stat, StatGrid, TableWrap } from "@/components/admin/ui";
 import { useBasisApi } from "@/components/admin/basis";
 
 const TYPES = ["iklan", "bump", "featured", "sold_fee", "subscribe", "renewal", "autobump", "sponsored", "wanted"];
@@ -101,43 +101,28 @@ export default function KeuanganPage() {
       />
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Total Revenue</p>
-          <p className="mt-1 text-2xl font-black dark:text-white">{rupiah(grandTotal)}</p>
-          <p className="text-xs text-gray-400">{payments.length} transaksi</p>
-        </div>
-        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Bulan Ini</p>
-          <p className="mt-1 text-2xl font-black dark:text-white">{rupiah(thisMonth)}</p>
-          {growth !== null && (
-            <p className={`text-xs font-medium ${Number(growth) >= 0 ? "text-emerald-600" : "text-rose-500"}`}>
-              {Number(growth) >= 0 ? "▲" : "▼"} {Math.abs(Number(growth))}% vs bulan lalu
-            </p>
-          )}
-        </div>
-        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Bulan Lalu</p>
-          <p className="mt-1 text-2xl font-black dark:text-white">{rupiah(lastMonth)}</p>
-        </div>
-      </div>
+      <StatGrid>
+        <Stat label="Total Revenue" value={rupiah(grandTotal)} sub={`${payments.length} transaksi`} />
+        <Stat
+          label="Bulan Ini"
+          value={rupiah(thisMonth)}
+          sub={growth !== null ? `${Number(growth) >= 0 ? "▲" : "▼"} ${Math.abs(Number(growth))}% vs bulan lalu` : null}
+          tone={growth !== null ? (Number(growth) >= 0 ? "ok" : "bad") : ""}
+        />
+        <Stat label="Bulan Lalu" value={rupiah(lastMonth)} />
+      </StatGrid>
 
       {/* Revenue per tipe */}
-      <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
-        <h3 className="mb-4 text-sm font-bold dark:text-white">Breakdown per Tipe</h3>
+      <Panel title="Breakdown per Tipe">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {TYPES.filter((t) => totalByType[t] > 0).sort((a, b) => (totalByType[b] || 0) - (totalByType[a] || 0)).map((t) => (
-            <div key={t} className="rounded-xl bg-gray-50 p-3 dark:bg-slate-800/50">
-              <p className="text-xs text-gray-400">{TYPE_LABEL[t] || t}</p>
-              <p className="mt-1 font-bold dark:text-white">{rupiah(totalByType[t])}</p>
-            </div>
+            <Stat key={t} label={TYPE_LABEL[t] || t} value={rupiah(totalByType[t])} />
           ))}
         </div>
-      </div>
+      </Panel>
 
       {/* Bar chart bulanan */}
-      <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
-        <h3 className="mb-4 text-sm font-bold dark:text-white">Revenue 12 Bulan</h3>
+      <Panel title="Revenue 12 Bulan">
         <div className="flex h-36 items-end gap-1">
           {monthlyData.map((m) => (
             <div key={m.month} className="flex flex-1 flex-col items-center justify-end">
@@ -146,45 +131,41 @@ export default function KeuanganPage() {
                 style={{ height: `${(m.total / maxTotal) * 100}%`, minHeight: m.total > 0 ? "4px" : "0" }}
                 title={`${m.month}: ${rupiah(m.total)} (${m.count} transaksi)`}
               />
-              <span className="mt-1 text-[9px] text-gray-400">{m.month.slice(5)}</span>
+              <span className="text-meta text-gray-400 mt-1">{m.month.slice(5)}</span>
             </div>
           ))}
         </div>
-      </div>
+      </Panel>
 
       {/* Tabel detail */}
-      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/40">
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-100 dark:border-slate-800">
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">Bulan</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-400">Transaksi</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-400">Total</th>
+      <Panel title="Rincian per Bulan" padded={false}>
+        <TableWrap>
+          <thead>
+            <tr>
+              <th>Bulan</th>
+              <th className="text-right">Transaksi</th>
+              <th className="text-right">Total</th>
+              {TYPES.filter((t) => totalByType[t] > 0).map((t) => (
+                <th key={t} className="text-right whitespace-nowrap">{TYPE_LABEL[t] || t}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {[...monthlyData].reverse().map((m) => (
+              <tr key={m.month}>
+                <td className="font-medium">{m.month}</td>
+                <td className="text-right text-gray-400">{m.count}</td>
+                <td className="text-right font-semibold">{rupiah(m.total)}</td>
                 {TYPES.filter((t) => totalByType[t] > 0).map((t) => (
-                  <th key={t} className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-400 whitespace-nowrap">
-                    {TYPE_LABEL[t] || t}
-                  </th>
+                  <td key={t} className="text-right">
+                    {m.byType[t] ? rupiah(m.byType[t]) : "—"}
+                  </td>
                 ))}
               </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50 dark:divide-slate-800/50">
-              {[...monthlyData].reverse().map((m) => (
-                <tr key={m.month} className="hover:bg-gray-50 dark:hover:bg-slate-800/30">
-                  <td className="px-4 py-3 font-medium dark:text-white">{m.month}</td>
-                  <td className="px-4 py-3 text-right text-gray-400">{m.count}</td>
-                  <td className="px-4 py-3 text-right font-semibold dark:text-white">{rupiah(m.total)}</td>
-                  {TYPES.filter((t) => totalByType[t] > 0).map((t) => (
-                    <td key={t} className="px-4 py-3 text-right text-gray-500 dark:text-slate-400">
-                      {m.byType[t] ? rupiah(m.byType[t]) : "—"}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            ))}
+          </tbody>
+        </TableWrap>
+      </Panel>
     </div>
   );
 }

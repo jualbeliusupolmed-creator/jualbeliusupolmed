@@ -5,7 +5,27 @@ import { WA_GROUP_LINK } from "@/lib/constants";
 import Logo from "@/components/Logo";
 import { Icon } from "@/components/Icons";
 
+import { useState, useEffect } from "react";
+import { terapkanTema } from "@/lib/tampilan";
+
 export default function Footer({ config }) {
+  const [dark, setDark] = useState(false);
+
+  useEffect(() => {
+    setDark(document.documentElement.classList.contains("dark"));
+    const handleThemeChange = (e) => {
+      setDark(e.detail?.dark ?? document.documentElement.classList.contains("dark"));
+    };
+    window.addEventListener("theme:change", handleThemeChange);
+    return () => window.removeEventListener("theme:change", handleThemeChange);
+  }, []);
+
+  const toggleTheme = () => {
+    const isDark = !dark;
+    setDark(isDark);
+    terapkanTema(isDark ? "gelap" : "terang");
+  };
+
   const contact = config?.contact || {};
   const site = config?.site || {};
 
@@ -80,11 +100,6 @@ export default function Footer({ config }) {
                   Pengembalian Dana
                 </Link>
               </li>
-              {/* /return-policy sudah lama ada dan isinya berbeda dari
-                  /refund-policy — yang satu soal barang, yang satu soal uang —
-                  tapi tidak pernah ditaut dari mana pun, jadi tidak ada yang
-                  bisa menemukannya. Label keduanya dibuat eksplisit supaya
-                  bedanya terbaca tanpa harus dibuka dulu. */}
               <li>
                 <Link href="/return-policy" className="text-gray-600 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white transition-colors">
                   Pengembalian Barang
@@ -132,10 +147,29 @@ export default function Footer({ config }) {
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-12 border-t border-gray-100 pt-6 dark:border-slate-900">
-          <p className="text-center text-xs text-gray-400 dark:text-slate-500">
-            © {new Date().getFullYear()} Jual Beli USU & POLMED. Didedikasikan untuk mahasiswa & komunitas kampus.
+        <div className="mt-12 border-t border-gray-200/70 pt-6 dark:border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-center sm:text-left text-xs text-gray-400 dark:text-slate-500">
+            © {new Date().getFullYear()} Jual Beli USU &amp; POLMED. Didedikasikan untuk mahasiswa &amp; komunitas kampus.
           </p>
+
+          <button
+            type="button"
+            onClick={toggleTheme}
+            aria-label={dark ? "Beralih ke Mode Terang" : "Beralih ke Mode Gelap"}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-black/[0.08] dark:border-white/[0.12] bg-white dark:bg-white/[0.06] text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.1] active:scale-95 transition-all shadow-2xs"
+          >
+            {dark ? (
+              <>
+                <Icon.Sun className="h-3.5 w-3.5 text-amber-400" />
+                <span>Mode Gelap (Ganti ke Terang)</span>
+              </>
+            ) : (
+              <>
+                <Icon.Moon className="h-3.5 w-3.5 text-slate-600" />
+                <span>Mode Terang (Ganti ke Gelap)</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
     </footer>

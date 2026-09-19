@@ -15,7 +15,7 @@ export async function GET(req) {
   const supa = getAdminClient();
   const { data, error } = await supa
     .from("listings")
-    .select("id, status, price, title, stock, image_url, category, seller_name")
+    .select("id, status, price, title, stock, image_url, category, seller_name, campus, type, condition, rental_period, created_at, featured, sponsored_until, seller_profiles(name, verified, avatar_url, subscription_tier, trusted_seller)")
     .in("id", ids);
 
   if (error) return NextResponse.json([], { status: 500 });

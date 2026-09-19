@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { Icon } from "@/components/Icons";
 import { toast } from "sonner";
 import imageCompression from "browser-image-compression";
 import { TEMAN_INTENTS, normalizeTemanIntent, getTemanIntent } from "@/lib/temanIntents";
+import { useFocusTrap } from "@/lib/useFocusTrap";
 
 const INTENT_ICONS = {
   Coffee: Icon.Coffee,
@@ -65,9 +67,21 @@ export default function PhotoUploadModal({
   
   const [compressing, setCompressing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const fileInputRef = useRef(null);
+  const modalRef = useRef(null);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useFocusTrap({
+    isOpen: isOpen && mounted,
+    onClose,
+    containerRef: modalRef,
+  });
+
+  if (!isOpen || !mounted) return null;
 
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
@@ -163,10 +177,15 @@ export default function PhotoUploadModal({
 
   const currentFaculties = campus === "Polmed" ? FACULTIES_POLMED : FACULTIES_USU;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-[28px] bg-white dark:bg-[#1c1c1e] p-6 shadow-2xl border border-black/[0.08] dark:border-white/[0.1]">
-        
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="photo-upload-title"
+        className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-[28px] bg-white dark:bg-[#1c1c1e] p-6 shadow-2xl border border-black/[0.08] dark:border-white/[0.1]"
+      >
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-black/[0.06] dark:border-white/[0.08]">
           <div className="flex items-center gap-2">
@@ -174,7 +193,7 @@ export default function PhotoUploadModal({
               <Icon.TheaterMasks className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-base font-black tracking-tight text-[#1d1d1f] dark:text-white">
+              <h3 id="photo-upload-title" className="text-base font-black tracking-tight text-[#1d1d1f] dark:text-white">
                 {initialProfile ? "Edit Profil Teman" : "Onboarding Teman Kampus"}
               </h3>
               <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -182,14 +201,14 @@ export default function PhotoUploadModal({
               </p>
             </div>
           </div>
-          {initialProfile && (
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-            >
-              <Icon.X className="w-5 h-5" />
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Tutup formulir profil teman"
+            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+          >
+            <Icon.X className="w-5 h-5" />
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
@@ -418,6 +437,7 @@ export default function PhotoUploadModal({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

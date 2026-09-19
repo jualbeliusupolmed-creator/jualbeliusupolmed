@@ -22,6 +22,7 @@ export async function GET() {
       contact: await kontakDenganCadangan(settings.contact),
       categories,
       popupAd: settings.popupAd,
+      mading: settings.mading,
     });
   } catch (e) {
     return jawabGalat(e);

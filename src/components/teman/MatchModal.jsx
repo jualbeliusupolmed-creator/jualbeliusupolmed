@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Icon } from "@/components/Icons";
 import { playChatSound } from "@/lib/sound";
 import { hapticSuccess } from "@/lib/haptics";
-import { getTemanIntent, getTemanIntentLabel } from "@/lib/temanIntents";
+import { getTemanIntent } from "@/lib/temanIntents";
+import { useFocusTrap } from "@/lib/useFocusTrap";
 
 export default function MatchModal({
   isOpen,
@@ -16,6 +18,18 @@ export default function MatchModal({
 }) {
   const router = useRouter();
   const [loadingDm, setLoadingDm] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const modalRef = useRef(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useFocusTrap({
+    isOpen: isOpen && mounted,
+    onClose,
+    containerRef: modalRef,
+  });
 
   useEffect(() => {
     if (isOpen) {
@@ -24,7 +38,7 @@ export default function MatchModal({
     }
   }, [isOpen]);
 
-  if (!isOpen || !partner) return null;
+  if (!isOpen || !partner || !mounted) return null;
 
   const intentMeta = getTemanIntent(partner.intent);
   const IntentIcon = intentMeta?.icon ? Icon[intentMeta.icon] : null;
@@ -65,16 +79,29 @@ export default function MatchModal({
     }
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in zoom-in-95 duration-300">
-      <div className="relative w-full max-w-sm overflow-hidden rounded-[32px] bg-gradient-to-b from-[#1c1c1e] to-black p-6 text-center text-white shadow-2xl border border-white/15">
-        
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="match-modal-title"
+        className="relative w-full max-w-sm overflow-hidden rounded-[32px] bg-gradient-to-b from-[#1c1c1e] to-black p-6 text-center text-white shadow-2xl border border-white/15"
+      >
+        <button
+          onClick={onClose}
+          aria-label="Tutup notifikasi match"
+          className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 active:scale-90 transition-all z-30"
+        >
+          <Icon.X className="h-4 w-4" />
+        </button>
+
         {/* Confetti & Title */}
         <div className="space-y-1 my-2">
           <div className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/18 text-emerald-300">
             <Icon.HeartFilled className="h-7 w-7 animate-pulse" />
           </div>
-          <h2 className="text-3xl font-black italic tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-500">
+          <h2 id="match-modal-title" className="text-3xl font-black italic tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-500">
             IT&apos;S A MATCH!
           </h2>
           <p className="text-xs text-gray-300">
@@ -193,6 +220,7 @@ export default function MatchModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
