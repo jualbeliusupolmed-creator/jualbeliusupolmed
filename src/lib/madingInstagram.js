@@ -1,6 +1,7 @@
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { processInstagramQueue, siteOriginFromRequest } from "@/lib/instagramQueue";
 import { layoutMadingInstagramPost } from "@/lib/madingInstagramImage";
+import { waitUntil } from "@vercel/functions";
 
 export { siteOriginFromRequest };
 
@@ -101,17 +102,28 @@ export async function publishQueuedMadingInstagram({
   });
 }
 
-export async function autoPublishMadingInstagram({ origin, postId, timeoutMs = 4000 }) {
+export async function autoPublishMadingInstagram({ origin, postId, timeoutMs = 15000 }) {
   try {
     await queueMadingInstagram(postId);
-    const publishPromise = publishQueuedMadingInstagram({ origin, postId, limit: 1 });
+    const publishPromise = publishQueuedMadingInstagram({ origin, postId, limit: 1 }).catch((err) => {
+      console.error("[autoPublishMadingInstagram] publish error:", err);
+      return [];
+    });
+
+    // Pertahankan proses background di Vercel Lambda setelah HTTP response terkirim
+    if (typeof waitUntil === "function") {
+      try {
+        waitUntil(publishPromise);
+      } catch (_) {}
+    }
+
     if (!timeoutMs) return await publishPromise;
     return await Promise.race([
       publishPromise,
       new Promise((resolve) => setTimeout(() => resolve([]), timeoutMs)),
     ]);
-  } catch {
-    // Post website tetap berhasil; antrean tersimpan untuk cron/retry admin.
+  } catch (err) {
+    console.error("[autoPublishMadingInstagram] error:", err);
     return [];
   }
 }

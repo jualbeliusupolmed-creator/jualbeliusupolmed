@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabaseAdmin";
+import { publishQueuedListingInstagram } from "@/lib/listingInstagram";
+import { publishQueuedMadingInstagram } from "@/lib/madingInstagram";
+import { siteOriginFromRequest } from "@/lib/instagramQueue";
+import { waitUntil } from "@vercel/functions";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -61,15 +65,24 @@ export async function GET(req) {
       { queued: 0, processing: 0, published: 0, failed: 0, menfess: 0, katalog: 0 }
     );
 
+    // Otomatis picu pemrosesan antrean di background jika ada item yang menunggu
+    if (stats.queued > 0 && typeof waitUntil === "function") {
+      const origin = siteOriginFromRequest(req);
+      try {
+        waitUntil(
+          Promise.allSettled([
+            publishQueuedMadingInstagram({ origin, limit: 5 }),
+            publishQueuedListingInstagram({ origin, limit: 5 }),
+          ])
+        );
+      } catch (_) {}
+    }
+
     return NextResponse.json({ ok: true, stats, items });
   } catch (e) {
     return NextResponse.json({ error: "Gagal memproses data Instagram." }, { status: 500 });
   }
 }
-
-import { publishQueuedListingInstagram } from "@/lib/listingInstagram";
-import { publishQueuedMadingInstagram } from "@/lib/madingInstagram";
-import { siteOriginFromRequest } from "@/lib/instagramQueue";
 
 export async function POST(req) {
   if (!isAdmin()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
