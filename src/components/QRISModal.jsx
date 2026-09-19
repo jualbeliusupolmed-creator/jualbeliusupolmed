@@ -2,6 +2,7 @@
 import { rupiah } from "@/lib/fees";
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { Icon } from "./Icons";
 
 export default function QRISModal({ qrisUrl, fee, onClose, transactionId, onSuccess }) {
   const [file, setFile] = useState(null);
@@ -14,6 +15,23 @@ export default function QRISModal({ qrisUrl, fee, onClose, transactionId, onSucc
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!qrisUrl) return;
+    const previouslyFocused = document.activeElement;
+    function handleKeyDown(e) {
+      if (e.key === "Escape" && !loading && !successMsg) {
+        onClose?.();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      if (previouslyFocused && typeof previouslyFocused.focus === "function") {
+        previouslyFocused.focus();
+      }
+    };
+  }, [qrisUrl, loading, successMsg, onClose]);
 
   const handleFileChange = (e) => {
     if (e.target.files?.[0]) {
@@ -62,9 +80,9 @@ export default function QRISModal({ qrisUrl, fee, onClose, transactionId, onSucc
           onClick={onClose}
           disabled={loading || !!successMsg}
           aria-label="Tutup pembayaran"
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50"
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50 p-1 rounded-lg"
         >
-          <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          <Icon.X className="w-5 h-5" />
         </button>
 
         <div className="text-center mt-2">

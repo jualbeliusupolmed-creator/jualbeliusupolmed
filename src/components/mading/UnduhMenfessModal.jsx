@@ -15,6 +15,23 @@ export default function UnduhMenfessModal({ post, onClose }) {
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    if (!post) return;
+    const previouslyFocused = document.activeElement;
+    function handleKeyDown(e) {
+      if (e.key === "Escape" && !downloading) {
+        onClose?.();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      if (previouslyFocused && typeof previouslyFocused.focus === "function") {
+        previouslyFocused.focus();
+      }
+    };
+  }, [post, downloading, onClose]);
+
   if (!post || !mounted) return null;
 
   const imageUrl = `/api/mading/${post.id}/instagram-image?ratio=${ratio}`;
@@ -78,7 +95,7 @@ export default function UnduhMenfessModal({ post, onClose }) {
             aria-label="Tutup modal unduh"
             className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-slate-800 dark:text-slate-400"
           >
-            <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            <Icon.X className="h-4 w-4" />
           </button>
         </div>
 
