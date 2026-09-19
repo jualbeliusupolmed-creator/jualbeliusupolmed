@@ -22,14 +22,12 @@ export default function AdminNav({ counts = {}, onNavigate }) {
   const demo = useModeDemo();
   const grup = useMemo(() => grupUntuk(demo), [demo]);
   const currentTab = pathname.split("/").filter(Boolean)[1] || "overview";
-
-  const [search, setSearch] = useState("");
   
   // State accordion: buka grup aktif atau grup pertama agar sidebar rapi dan efisien
   const [openGroups, setOpenGroups] = useState(() => {
     const initial = {};
     let matched = false;
-    grup.forEach((g, idx) => {
+    grup.forEach((g) => {
       if (g.items.some((item) => item.key === currentTab)) {
         initial[g.label] = true;
         matched = true;
@@ -60,55 +58,12 @@ export default function AdminNav({ counts = {}, onNavigate }) {
     onNavigate?.();
   }
 
-  // Filter menu berdasarkan input pencarian
-  const filteredGroups = useMemo(() => {
-    if (!search.trim()) return grup;
-    const q = search.toLowerCase();
-    return grup.map((g) => {
-      const matchingItems = g.items.filter(
-        (item) => item.label.toLowerCase().includes(q) || item.key.toLowerCase().includes(q)
-      );
-      return { ...g, items: matchingItems };
-    }).filter((g) => g.items.length > 0);
-  }, [grup, search]);
-
   return (
     <nav className="g-rail-nav flex flex-col font-sans">
-      {/* Quick Search Input */}
-      <div className="px-1 mb-2">
-        <div className="relative flex items-center">
-          <svg
-            className="absolute left-2.5 h-3.5 w-3.5 text-slate-400 dark:text-slate-500 pointer-events-none"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <path d={ICONS.search} />
-          </svg>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cari menu..."
-            className="w-full pl-8 pr-6 py-1.5 text-xs rounded-xl bg-slate-100 dark:bg-slate-900 border border-transparent focus:border-slate-300 dark:focus:border-slate-700 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 outline-none transition-all"
-          />
-          {search && (
-            <button
-              onClick={() => setSearch("")}
-              aria-label="Bersihkan pencarian menu"
-              className="absolute right-2 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-            >
-              <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-            </button>
-          )}
-        </div>
-      </div>
-
       {/* Group List (Collapsible Accordion) */}
       <div className="space-y-1">
-        {filteredGroups.map((group) => {
-          const isOpen = search.trim() ? true : !!openGroups[group.label];
+        {grup.map((group) => {
+          const isOpen = !!openGroups[group.label];
           
           // Hitung total alert / badge di dalam grup ini
           const groupAlertCount = group.items.reduce((sum, item) => {

@@ -89,6 +89,23 @@ export default function OTPModal({ isOpen, onClose, onSuccess, initialWa = "" })
     return () => clearInterval(timer);
   }, [countdown]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const previouslyFocused = document.activeElement;
+    function handleKeyDown(e) {
+      if (e.key === "Escape") {
+        onClose?.();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      if (previouslyFocused && typeof previouslyFocused.focus === "function") {
+        previouslyFocused.focus();
+      }
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   function selesai(nomor) {
