@@ -133,6 +133,9 @@ export const DEFAULT_SETTINGS = {
     targetUrl: "",
     buttonText: "Lihat Sekarang",
   },
+  mading: {
+    requireLogin: true,
+  },
 };
 
 function clone(obj) {

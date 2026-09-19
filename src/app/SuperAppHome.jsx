@@ -332,6 +332,7 @@ export default function SuperAppHome({
   const [unduhPost, setUnduhPost] = useState(null);
   const [compressingImage, setCompressingImage] = useState(false);
   const { wa: userWa } = useSesi();
+  const [requireLoginMenfess, setRequireLoginMenfess] = useState(true);
 
   // Restore Menfess Draft on mount
   useEffect(() => {
@@ -395,6 +396,15 @@ export default function SuperAppHome({
         localStorage.setItem("mading_user_id", uid);
       }
       setUserId(uid);
+
+      fetch("/api/config")
+        .then((r) => r.json())
+        .then((cfg) => {
+          if (cfg?.mading?.requireLogin != null) {
+            setRequireLoginMenfess(!!cfg.mading.requireLogin);
+          }
+        })
+        .catch(() => {});
     }
   }, []);
 
@@ -612,7 +622,7 @@ export default function SuperAppHome({
   // Handle Create Post Submit
   const handleCreatePost = async (e) => {
     e.preventDefault();
-    if (!userWa) {
+    if (requireLoginMenfess && !userWa) {
       toast.error("Silakan masuk dengan nomor WhatsApp terlebih dahulu untuk menerbitkan postingan.");
       return;
     }
@@ -828,6 +838,45 @@ export default function SuperAppHome({
         </div>
       </section>
 
+      {/* ── Quick Features Bar (Mobile & Tablet) ── */}
+      <section className="mb-4 px-4 sm:px-6 lg:hidden">
+        <div className="grid grid-cols-2 gap-2.5">
+          {/* 1. Cari Teman (Swipe) */}
+          <Link
+            href="/teman"
+            className="flex items-center gap-2.5 p-3 rounded-2xl bg-gradient-to-br from-orange-500/10 via-rose-500/10 to-purple-500/10 dark:from-orange-950/30 dark:via-rose-950/20 dark:to-purple-950/30 border border-orange-200/80 dark:border-orange-500/20 active:scale-[0.98] transition-all shadow-2xs group"
+          >
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-orange-500 to-rose-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Icon.Flame className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1">
+                <span className="text-xs font-black text-[#1d1d1f] dark:text-white truncate">Cari Teman</span>
+                <span className="text-[8.5px] font-black uppercase tracking-wider bg-orange-500 text-white px-1.5 py-0.5 rounded-full">Swipe</span>
+              </div>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">Kenalan sesama kampus</p>
+            </div>
+          </Link>
+
+          {/* 2. Chat Anonim */}
+          <Link
+            href="/chat?anon=1"
+            className="flex items-center gap-2.5 p-3 rounded-2xl bg-gradient-to-br from-violet-500/10 via-purple-500/10 to-indigo-500/10 dark:from-violet-950/30 dark:via-purple-950/20 dark:to-indigo-950/30 border border-violet-200/80 dark:border-violet-500/20 active:scale-[0.98] transition-all shadow-2xs group"
+          >
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Icon.MessageCircle className="w-4.5 h-4.5" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1">
+                <span className="text-xs font-black text-[#1d1d1f] dark:text-white truncate">Chat Anonim</span>
+                <span className="text-[8.5px] font-black uppercase tracking-wider bg-violet-600 text-white px-1.5 py-0.5 rounded-full">Live</span>
+              </div>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">Ngobrol 1-on-1 rahasia</p>
+            </div>
+          </Link>
+        </div>
+      </section>
+
       {/* ── 5. FEED MADING & MENFESS ── */}
       <section
         className="w-full md:px-0"
@@ -861,47 +910,63 @@ export default function SuperAppHome({
             Ada {newPostCount} postingan baru — klik untuk muat
           </button>
         )}
-        <div className="sticky top-[70px] md:top-6 z-30 apple-glass sm:rounded-2xl px-4 sm:px-4 pt-2.5 pb-2.5 mb-3 sm:mx-0 -mx-4 sm:border-t-0 border-t-0 shadow-sm transition-all">
-          {/* TABS FILTER (Semua / Menfess / Info Kampus) */}
-          <div className="flex items-center gap-2">
-            <div className="flex justify-center flex-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <div className="apple-segmented">
-                {[
-                  { id: "all", label: "Semua" },
-                  { id: "menfess", label: "Menfess" },
-                  { id: "info", label: "Info Kampus" },
-                ].map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => {
-                      triggerHaptic("light");
-                      setActiveTab(tab.id);
-                      setSearchQuery("");
-                      setShowSearch(false);
-                    }}
-                    className={`px-4 py-1.5 text-[12px] font-bold rounded-full transition-all ${
-                      activeTab === tab.id
-                        ? "bg-white dark:bg-[#2c2c2e] text-[#1d1d1f] dark:text-white shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
-                        : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
+        <div className="sticky top-[70px] md:top-6 z-30 apple-glass rounded-2xl px-2.5 sm:px-4 py-2 mb-3 shadow-xs transition-all">
+          {/* TABS FILTER (Semua / Menfess / Info Kampus) + ACTIONS (Centered) */}
+          <div className="flex items-center justify-center gap-1.5 sm:gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-0.5">
+            {/* Filter Tabs */}
+            <div className="apple-segmented shrink-0">
+              {[
+                { id: "all", label: "Semua" },
+                { id: "menfess", label: "Menfess" },
+                { id: "info", label: "Info Kampus" },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    triggerHaptic("light");
+                    setActiveTab(tab.id);
+                    setSearchQuery("");
+                    setShowSearch(false);
+                  }}
+                  className={`px-3 sm:px-3.5 py-1 text-[11.5px] sm:text-[12px] font-semibold rounded-full transition-all whitespace-nowrap ${
+                    activeTab === tab.id
+                      ? "bg-white dark:bg-[#2c2c2e] text-[#1d1d1f] dark:text-white shadow-2xs font-bold"
+                      : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
+
+            {/* Tombol Tambah Menfess */}
+            <button
+              onClick={() => {
+                triggerHaptic("medium");
+                updateFormData({ type: activeTab === "info" ? "info" : "menfess" });
+                setShowModal(true);
+              }}
+              className="h-[34px] shrink-0 flex items-center gap-1.5 bg-primary hover:bg-primary/90 active:scale-95 text-white px-3 rounded-full text-xs font-bold shadow-xs transition-all whitespace-nowrap"
+              aria-label="Tambah Menfess"
+              title="Tambah Menfess"
+            >
+              <Icon.Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>Menfess</span>
+            </button>
+
             {/* Quick Refresh Button */}
             <button
               onClick={() => {
                 triggerHaptic("light");
                 loadNewPosts();
               }}
-              className="shrink-0 p-1.5 rounded-full transition-colors text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+              className="w-[34px] h-[34px] shrink-0 flex items-center justify-center rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.08] transition-colors"
               aria-label="Segarkan feed"
               title="Segarkan feed"
             >
               <Icon.RefreshCcw className={`w-4 h-4 ${isLoadingMore ? "animate-spin text-primary" : ""}`} />
             </button>
+
             {/* Search toggle */}
             <button
               onClick={() => {
@@ -909,10 +974,13 @@ export default function SuperAppHome({
                 setShowSearch(s => !s);
                 if (showSearch) setSearchQuery("");
               }}
-              className={`shrink-0 p-1.5 rounded-full transition-colors ${
-                showSearch || searchQuery ? "bg-primary/10 text-primary" : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+              className={`w-[34px] h-[34px] shrink-0 flex items-center justify-center rounded-full transition-colors ${
+                showSearch || searchQuery 
+                  ? "bg-primary/10 text-primary dark:bg-primary/20" 
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.08]"
               }`}
               aria-label="Cari postingan"
+              title="Cari postingan"
             >
               <Icon.Search className="w-4 h-4" />
             </button>
@@ -1406,7 +1474,7 @@ export default function SuperAppHome({
               Kirim Menfess &amp; Info Kampus
             </h2>
 
-            {!userWa && (
+            {requireLoginMenfess && !userWa && (
               <div className="flex items-center justify-between p-3 rounded-2xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-xs mb-4">
                 <div className="flex items-center gap-2">
                   <Icon.User className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
@@ -1424,6 +1492,11 @@ export default function SuperAppHome({
             )}
 
             <form onSubmit={handleCreatePost} className="space-y-4">
+              {/* Kunci form jika login diperlukan tapi user belum login */}
+              {(() => {
+                const formLocked = requireLoginMenfess && !userWa;
+                return (
+                  <>
               {/* Type Switcher */}
               <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl">
                 <button
@@ -1546,11 +1619,14 @@ export default function SuperAppHome({
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={submitting || compressingImage}
+                disabled={submitting || compressingImage || formLocked}
                 className="w-full bg-[#1d1d1f] dark:bg-white text-white dark:text-[#1d1d1f] disabled:opacity-50 py-3 rounded-full text-[13px] font-bold hover:scale-[0.98] active:scale-95 transition-transform shadow-md"
               >
-                {submitting ? "Mengirimkan…" : compressingImage ? "Menyiapkan foto…" : "Terbitkan Sekarang"}
+                {submitting ? "Mengirimkan…" : compressingImage ? "Menyiapkan foto…" : formLocked ? "Login dulu untuk kirim" : "Terbitkan Sekarang"}
               </button>
+            </>
+            );
+          })()}
             </form>
           </div>
         </div>
@@ -1581,18 +1657,7 @@ export default function SuperAppHome({
         />
       )}
 
-      {/* ── 10. MOBILE FLOATING ACTION BUTTON ── */}
-      <button
-        onClick={() => {
-          triggerHaptic("medium");
-          setShowModal(true);
-        }}
-        className="fixed z-30 bottom-[calc(5.2rem+env(safe-area-inset-bottom,0px))] right-4 sm:hidden bg-[#0071e3] text-white p-3.5 rounded-full shadow-xl shadow-blue-500/30 hover:scale-105 active:scale-95 transition-transform flex items-center justify-center"
-        aria-label="Buat Menfess Baru"
-        title="Buat Menfess / Info Kampus"
-      >
-        <Icon.Edit className="w-5 h-5" />
-      </button>
+
     </div>
   );
 }

@@ -1258,81 +1258,157 @@ function ChatContent() {
   return (
     <div className="flex-1 flex flex-col w-full overflow-y-auto bg-[#f5f5f7] dark:bg-[#000000] font-sans pb-[calc(6rem+env(safe-area-inset-bottom,0px))] md:pb-28">
       <div className="bg-white/80 dark:bg-[#000000]/80 backdrop-blur-2xl border-b border-black/[0.06] dark:border-white/[0.08] sticky top-0 z-40">
-        <div className="px-4 py-3 max-w-2xl mx-auto flex items-center justify-between">
+        <div className="px-4 py-3 max-w-2xl mx-auto flex items-center justify-between gap-2">
           <div>
             <span className="text-[10px] font-black text-primary uppercase tracking-wider bg-primary/10 px-2 py-0.5 rounded-full">
               OBROLAN KAMPUS
             </span>
             <h1 className="text-xl font-black text-[#1d1d1f] dark:text-[#f5f5f7] tracking-tight mt-0.5">Pusat Obrolan</h1>
           </div>
+          <button
+            onClick={() => router.push("/teman")}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-orange-500 to-rose-500 text-white text-xs font-bold shadow-xs active:scale-95 transition-transform shrink-0"
+          >
+            <Icon.Flame className="w-3.5 h-3.5" />
+            <span>Swipe Teman</span>
+          </button>
         </div>
       </div>
 
       <div className="max-w-2xl min-w-0 w-full mx-auto p-3 min-[390px]:p-4 space-y-6">
-        {/* ── OBROLAN ANONIM — SATU KARTU UTAMA ── */}
-        <div>
-          <div className="flex min-w-0 items-center justify-between gap-2 mb-3">
-            <h2 className="min-w-0 truncate text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7] flex items-center gap-1.5">
-              <Icon.MessageCircle className="h-4 w-4 text-primary" />
-              <span className="truncate">Obrolan Anonim</span>
-            </h2>
-            <button
-              onClick={handleFindPartner}
-              disabled={searching}
-              className="flex shrink-0 items-center gap-1.5 bg-primary text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-[0_2px_8px_rgba(83,43,152,0.25)] hover:brightness-105 active:scale-[0.96] transition-all disabled:opacity-60"
-            >
-              {searching ? (
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                  Mencari...
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5">
-                  <Icon.Search className="h-4 w-4" />
-                  <span className="hidden min-[380px]:inline">Cari Partner</span>
-                  <span className="min-[380px]:hidden">Cari</span>
-                </span>
-              )}
-            </button>
+        {/* ── CARI TEMAN KAMPUS (SWIPE MATCHING) ── */}
+        <div className="relative overflow-hidden rounded-[24px] border border-orange-200/80 dark:border-orange-500/20 bg-gradient-to-br from-orange-500/10 via-rose-500/10 to-purple-500/10 dark:from-orange-950/35 dark:via-rose-950/25 dark:to-purple-950/35 p-4 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 shrink-0 rounded-2xl bg-gradient-to-tr from-orange-500 to-rose-500 text-white flex items-center justify-center shadow-md shadow-orange-500/20">
+                <Icon.Flame className="h-6 w-6" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm font-black text-[#1d1d1f] dark:text-white tracking-tight">
+                    Cari Teman Kampus
+                  </h2>
+                  <span className="text-[9.5px] font-black uppercase tracking-wider bg-gradient-to-r from-orange-500 to-rose-500 text-white px-2 py-0.5 rounded-full shadow-2xs">
+                    Swipe Match
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5 leading-snug">
+                  Swipe kanan untuk like &amp; kenalan sesama mahasiswa USU &amp; POLMED.
+                </p>
+              </div>
+            </div>
           </div>
 
-          {anonLoading ? (
-            <div className="text-center p-6 text-xs text-gray-500">Memuat...</div>
-          ) : (
-            <div className="bg-white dark:bg-[#1c1c1e] rounded-[22px] border border-black/[0.06] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.03)] overflow-hidden">
+          <div className="mt-3.5 flex items-center gap-2">
+            <button
+              onClick={() => router.push("/teman")}
+              className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-600 hover:to-rose-600 text-white py-2.5 px-4 rounded-xl text-xs font-bold shadow-md shadow-orange-500/25 active:scale-[0.98] transition-all"
+            >
+              <span>Mulai Swipe Teman</span>
+              <Icon.ArrowRight className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => router.push("/teman")}
+              className="flex items-center justify-center gap-1.5 bg-white dark:bg-[#1c1c1e] text-[#1d1d1f] dark:text-white border border-black/[0.06] dark:border-white/[0.08] py-2.5 px-3.5 rounded-xl text-xs font-bold active:scale-[0.98] transition-all shadow-2xs"
+            >
+              <Icon.Users className="w-4 h-4 text-orange-500" />
+              <span>Matches</span>
+            </button>
+          </div>
+        </div>
+
+        {/* ── OBROLAN ANONIM KAMPUS (LIVE 1-ON-1) ── */}
+        <div className="relative overflow-hidden rounded-[24px] border border-violet-200/80 dark:border-violet-500/20 bg-gradient-to-br from-violet-500/10 via-purple-500/10 to-indigo-500/10 dark:from-violet-950/35 dark:via-purple-950/25 dark:to-indigo-950/35 p-4 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 shrink-0 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-500 text-white flex items-center justify-center shadow-md shadow-violet-500/20">
+                <Icon.MessageCircle className="h-6 w-6" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm font-black text-[#1d1d1f] dark:text-white tracking-tight">
+                    Obrolan Anonim
+                  </h2>
+                  <span className="text-[9.5px] font-black uppercase tracking-wider bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-2 py-0.5 rounded-full shadow-2xs">
+                    Live Chat
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5 leading-snug">
+                  Ngobrol teks 1-on-1 acak &amp; rahasia tanpa nama dengan mahasiswa USU &amp; POLMED.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Status & cuplikan pesan terkini */}
+          <div className="mt-3 px-3.5 py-2.5 rounded-xl bg-white/70 dark:bg-[#1c1c1e]/70 border border-black/[0.04] dark:border-white/[0.06] flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className={`w-2 h-2 rounded-full shrink-0 ${anon?.partnerAktif ? "bg-emerald-500" : anon?.menunggu ? "bg-amber-500 animate-ping" : "bg-primary"}`} />
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] font-bold text-[#1d1d1f] dark:text-white truncate">
+                    {anon?.partnerAktif ? `Partner: ${anon.partnerAktif}` : anon?.menunggu ? "Sedang mencari partner..." : "Status: Siap Ngobrol"}
+                  </span>
+                  {anon?.partnerAktif && (
+                    <span className="text-[8.5px] font-extrabold uppercase bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.2 rounded-full">
+                      Terhubung
+                    </span>
+                  )}
+                </div>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                  {cuplikan}
+                </p>
+              </div>
+            </div>
+            {anon?.updatedAt && (
+              <span className="text-[9.5px] font-medium text-slate-400 shrink-0">
+                {waktuRelatif(anon.updatedAt)}
+              </span>
+            )}
+          </div>
+
+          {/* Tombol aksi */}
+          <div className="mt-3.5 flex items-center gap-2">
+            <button
+              onClick={anon?.ada ? () => router.push("/chat?anon=1") : handleFindPartner}
+              disabled={searching}
+              className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white py-2.5 px-4 rounded-xl text-xs font-bold shadow-md shadow-violet-500/25 active:scale-[0.98] transition-all disabled:opacity-60"
+            >
+              {searching ? (
+                <>
+                  <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                  <span>Mencari Partner...</span>
+                </>
+              ) : anon?.ada ? (
+                <>
+                  <Icon.MessageCircle className="w-3.5 h-3.5" />
+                  <span>Buka Obrolan Sekarang</span>
+                  <Icon.ArrowRight className="w-3.5 h-3.5" />
+                </>
+              ) : (
+                <>
+                  <Icon.Search className="w-3.5 h-3.5" />
+                  <span>Mulai Cari Partner ⚡</span>
+                </>
+              )}
+            </button>
+
+            {anon?.menunggu && anon?.waitingRoomId ? (
+              <button
+                onClick={() => handleCancelWaiting(anon.waitingRoomId)}
+                className="flex items-center justify-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40 py-2.5 px-3.5 rounded-xl text-xs font-bold active:scale-[0.98] transition-all shadow-2xs"
+              >
+                <span>Batal</span>
+              </button>
+            ) : (
               <button
                 onClick={() => router.push("/chat?anon=1")}
-                className="w-full text-left p-3.5 flex items-center gap-3 hover:bg-black/[0.02] dark:hover:bg-white/[0.04] active:scale-[0.99] transition-all"
+                className="flex items-center justify-center gap-1.5 bg-white dark:bg-[#1c1c1e] text-[#1d1d1f] dark:text-white border border-black/[0.06] dark:border-white/[0.08] py-2.5 px-3.5 rounded-xl text-xs font-bold active:scale-[0.98] transition-all shadow-2xs"
               >
-                <div className="w-10 h-10 shrink-0 rounded-full bg-gradient-to-tr from-primary/20 to-purple-500/20 text-primary flex items-center justify-center text-xl shadow-xs">
-                  <Icon.MessageCircle className="h-5 w-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7] truncate">Cari Teman</span>
-                    {anon?.partnerAktif ? (
-                      <span className="text-[9px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full shrink-0">
-                        {anon.partnerAktif}
-                      </span>
-                    ) : anon?.menunggu ? (
-                      <span className="text-[9px] font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded-full shrink-0 animate-pulse">
-                        Mencari…
-                      </span>
-                    ) : anon?.ada ? (
-                      <span className="text-[9px] font-medium bg-black/[0.05] dark:bg-white/[0.08] text-gray-500 px-2 py-0.5 rounded-full shrink-0">
-                        Tidak aktif
-                      </span>
-                    ) : null}
-                  </div>
-                  <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate mt-0.5">{cuplikan}</p>
-                </div>
-                <div className="flex items-center gap-1 text-gray-400">
-                  <span className="text-[10px] shrink-0">{waktuRelatif(anon?.updatedAt)}</span>
-                  <Icon.ChevronRight className="w-4 h-4" />
-                </div>
+                <span>Riwayat Utas</span>
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* ── CHAT JUAL BELI & DM PRIBADI ── */}

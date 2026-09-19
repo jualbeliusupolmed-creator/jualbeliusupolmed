@@ -105,7 +105,7 @@ export default function HeroLanding({ q, onSearch, stats, total = 0, judul, subj
 
             {/* Pencarian. */}
             <form onSubmit={kirim} role="search" className="mt-6 flex items-center gap-2 rounded-full bg-black/[0.04] p-1.5 transition-shadow focus-within:bg-white focus-within:shadow-[0_8px_24px_rgba(0,0,0,0.06)] focus-within:ring-1 focus-within:ring-black/[0.06] dark:bg-white/[0.06] dark:focus-within:bg-[#1c1c1e] dark:focus-within:ring-white/10">
-              <Icon.Search className="ml-3 h-4.5 w-4.5 shrink-0 text-gray-500" />
+              <Icon.Search className="ml-3 h-4 w-4 shrink-0 text-gray-500" />
               <input
                 value={nilai}
                 onChange={(e) => { setNilai(e.target.value); onSearch?.(e.target.value); }}

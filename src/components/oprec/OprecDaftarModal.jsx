@@ -1,13 +1,29 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { formatWa } from "@/lib/constants";
 import { toast } from "sonner";
 import imageCompression from "browser-image-compression";
 import { useSesi } from "@/components/SesiProvider";
+import { Icon } from "@/components/Icons";
+import { useFocusTrap } from "@/lib/useFocusTrap";
 
 export default function OprecDaftarModal({ oprec, onClose, onSubmitted }) {
+  const [mounted, setMounted] = useState(false);
+  const modalRef = useRef(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useFocusTrap({
+    isOpen: mounted,
+    onClose,
+    containerRef: modalRef,
+  });
+
   const { wa: sesiWa, nama: sesiNama } = useSesi();
   const [form, setForm] = useState({
     applicant_name: "",
@@ -109,11 +125,19 @@ export default function OprecDaftarModal({ oprec, onClose, onSubmitted }) {
     }
   }
 
+  if (!mounted) return null;
+
   if (submittedData) {
-    return (
+    return createPortal(
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-        <div className="relative w-full max-w-md rounded-3xl bg-white p-6 sm:p-8 text-center space-y-5 dark:bg-slate-900 border border-black/[0.06] dark:border-white/[0.08] z-10 shadow-2xl">
+        <div
+          ref={modalRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="oprec-sukses-title"
+          className="relative w-full max-w-md rounded-3xl bg-white p-6 sm:p-8 text-center space-y-5 dark:bg-slate-900 border border-black/[0.06] dark:border-white/[0.08] z-10 shadow-2xl"
+        >
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 text-3xl text-emerald-600">
             <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
           </div>
@@ -121,7 +145,7 @@ export default function OprecDaftarModal({ oprec, onClose, onSubmitted }) {
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 mb-1">
                Formulir Diterima
             </span>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+            <h3 id="oprec-sukses-title" className="text-xl font-bold text-gray-900 dark:text-white">
               Pendaftaran Berhasil!
             </h3>
             <p className="mt-1.5 text-xs text-gray-500 dark:text-slate-400">
@@ -149,22 +173,29 @@ export default function OprecDaftarModal({ oprec, onClose, onSubmitted }) {
             Tutup
           </button>
         </div>
-      </div>
+      </div>,
+      document.body
     );
   }
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       
-      <div className="relative w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl dark:bg-slate-900 border border-black/[0.06] dark:border-white/[0.08] z-10 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="oprec-daftar-title"
+        className="relative w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl dark:bg-slate-900 border border-black/[0.06] dark:border-white/[0.08] z-10 space-y-4 max-h-[90vh] overflow-y-auto"
+      >
         {/* HEADER */}
         <div className="flex items-start justify-between gap-3 border-b border-gray-100 dark:border-slate-800 pb-3">
           <div>
             <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-bold text-primary dark:text-emerald-400">
                {oprec.ukm_name}
             </span>
-            <h3 className="text-base font-bold text-gray-900 dark:text-white mt-1">
+            <h3 id="oprec-daftar-title" className="text-base font-bold text-gray-900 dark:text-white mt-1">
               Formulir Pendaftaran Oprec
             </h3>
             <p className="text-xs text-gray-500 dark:text-slate-400 line-clamp-1">
@@ -176,7 +207,7 @@ export default function OprecDaftarModal({ oprec, onClose, onSubmitted }) {
             aria-label="Tutup formulir pendaftaran"
             className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-slate-800 dark:text-slate-400"
           >
-            <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            <Icon.X className="h-4 w-4" />
           </button>
         </div>
 
@@ -424,6 +455,7 @@ export default function OprecDaftarModal({ oprec, onClose, onSubmitted }) {
           </button>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

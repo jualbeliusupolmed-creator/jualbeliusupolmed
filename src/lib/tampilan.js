@@ -31,35 +31,35 @@ export function terapkanSkala(id) {
   } catch {}
 }
 
-// "sistem" mengikuti setelan HP; "terang"/"gelap" adalah pilihan tegas pengguna.
+// Default pertama: "terang" (Light Mode).
+// Hanya beralih ke "gelap" jika secara tegas dipilih oleh pengguna.
 export function bacaTema() {
-  if (typeof window === "undefined") return "sistem";
+  if (typeof window === "undefined") return "terang";
   try {
     const t = localStorage.getItem(KUNCI_TEMA);
     if (t === "dark" || t === "gelap") return "gelap";
     if (t === "light" || t === "terang") return "terang";
-    return "sistem";
+    return "terang"; // default pertama adalah terang
   } catch {
-    return "sistem";
+    return "terang";
   }
 }
 
 export function temaGelapAktif(mode) {
   if (mode === "gelap") return true;
-  if (mode === "terang") return false;
-  return typeof window !== "undefined"
-    && window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+  return false; // default pertama: false (terang)
 }
 
 export function terapkanTema(mode) {
-  if (typeof document === "undefined") return;
-  const gelap = temaGelapAktif(mode);
-  document.documentElement.classList.toggle("dark", !!gelap);
+  if (typeof document === "undefined") return false;
+  const gelap = mode === "gelap";
+  document.documentElement.classList.toggle("dark", gelap);
   try {
-    // Nilai lama ("dark"/"light") tetap ditulis supaya kode lain yang
-    // membaca kunci ini tidak bingung.
-    if (mode === "sistem") localStorage.removeItem(KUNCI_TEMA);
-    else localStorage.setItem(KUNCI_TEMA, mode === "gelap" ? "dark" : "light");
+    localStorage.setItem(KUNCI_TEMA, gelap ? "dark" : "light");
   } catch {}
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("theme:change", { detail: { dark: gelap, mode: gelap ? "gelap" : "terang" } }));
+  }
   return gelap;
 }
+

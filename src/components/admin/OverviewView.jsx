@@ -7,6 +7,7 @@ import Link from "next/link";
 import { rupiah } from "@/lib/fees";
 import { PageHeader } from "@/components/admin/ui";
 import TransactionModeToggle from "./TransactionModeToggle";
+import MenfessLoginToggle from "./MenfessLoginToggle";
 
 function Kpi({ label, value, sub, href, icon, accent = "slate" }) {
   const CardContent = (
@@ -85,6 +86,9 @@ export default function OverviewView({ stats }) {
 
       {/* Kontrol Utama Mode Transaksi (Mode 1: WA vs Mode 2: DM Web) */}
       <TransactionModeToggle variant="card" />
+
+      {/* Kontrol Kebijakan Login Menfess */}
+      <MenfessLoginToggle variant="card" />
 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 xl:grid-cols-6">

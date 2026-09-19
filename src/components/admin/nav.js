@@ -49,18 +49,25 @@ export const ICONS = {
 
 export const GROUPS = [
   {
-    label: "Utama",
+    label: "Ringkasan",
     items: [
       { key: "overview", label: "Ringkasan" },
-      { key: "moderasi", label: "Moderasi" },
-      { key: "antrean",  label: "Antrean WA" },
+    ],
+  },
+  {
+    label: "Perlu Tindakan",
+    items: [
+      { key: "moderasi",       label: "Moderasi Iklan" },
+      { key: "reports",        label: "Laporan Pengguna" },
+      { key: "toko",           label: "Verifikasi Toko" },
+      { key: "profil_request", label: "Ubah Profil" },
+      { key: "transaksi",      label: "Transaksi & Pembayaran" },
     ],
   },
   {
     label: "Marketplace",
     items: [
       { key: "listings",       label: "Daftar Iklan" },
-      { key: "transaksi",      label: "Transaksi" },
       { key: "tawaran",        label: "Tawaran Harga" },
       { key: "dicari",         label: "Kebutuhan Dicari" },
       { key: "kategori",       label: "Kategori" },
@@ -69,39 +76,42 @@ export const GROUPS = [
     ],
   },
   {
-    label: "Pengguna & Toko",
+    label: "Pengguna",
     items: [
       { key: "penjual",        label: "Penjual" },
-      { key: "toko",           label: "Verifikasi Toko" },
       { key: "distributor",    label: "Distributor" },
-      { key: "profil_request", label: "Ubah Profil" },
-      { key: "referral",       label: "Referral" },
-      { key: "reports",        label: "Laporan" },
+      { key: "referral",       label: "Referral & Komisi" },
+      { key: "teman",          label: "Swipe Teman Kampus", demoOff: true },
     ],
   },
   {
-    label: "Bot & Komunikasi",
+    label: "Komunikasi",
     items: [
-      { key: "teman",      label: "Swipe Teman Kampus" , demoOff: true },
-      { key: "wabot",      label: "WhatsApp Bot" },
-      { key: "obrolan",    label: "Audit Cari Teman" , demoOff: true },
-      { key: "broadcast",  label: "Broadcast User" },
+      { key: "broadcast",      label: "Broadcast User" },
       { key: "broadcast_grup", label: "Broadcast Grup" },
-      { key: "notifikasi", label: "Notifikasi" },
-      { key: "grouppost",  label: "Post Grup" },
-      { key: "ai",         label: "AI & Memori" },
+      { key: "notifikasi",     label: "Notifikasi" },
+      { key: "grouppost",      label: "Post Grup" },
+      { key: "wabot",          label: "WhatsApp Bot" },
+      { key: "antrean",        label: "Antrean WA" },
     ],
   },
   {
-    label: "Analitik & Sistem",
+    label: "Laporan",
     items: [
-      { key: "keuangan",   label: "Keuangan" },
-      { key: "tren",       label: "Tren Pencarian" },
-      { key: "mading",     label: "Analitik Menfess" , demoOff: true },
-      { key: "instagram",  label: "Antrean Instagram" , demoOff: true },
-      { key: "blogs",      label: "Artikel Blog" },
-      { key: "audit",      label: "Audit Trail" },
-      { key: "pengaturan", label: "Pengaturan" },
+      { key: "keuangan",       label: "Keuangan & Fee" },
+      { key: "tren",           label: "Tren Pencarian" },
+      { key: "mading",         label: "Analitik Menfess", demoOff: true },
+      { key: "blogs",          label: "Artikel Blog" },
+    ],
+  },
+  {
+    label: "Sistem",
+    items: [
+      { key: "ai",             label: "AI & Memori" },
+      { key: "audit",          label: "Audit Trail" },
+      { key: "instagram",      label: "Antrean Instagram", demoOff: true },
+      { key: "obrolan",        label: "Audit Cari Teman", demoOff: true },
+      { key: "pengaturan",     label: "Pengaturan" },
     ],
   },
 ];

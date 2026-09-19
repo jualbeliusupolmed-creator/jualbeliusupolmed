@@ -1,12 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { toast } from "sonner";
 import imageCompression from "browser-image-compression";
 import { Icon } from "@/components/Icons";
+import { useFocusTrap } from "@/lib/useFocusTrap";
 
 export default function BuatOprecModal({ onClose, onCreated, isUkmAccount = true }) {
+  const [mounted, setMounted] = useState(false);
+  const modalRef = useRef(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useFocusTrap({
+    isOpen: mounted,
+    onClose,
+    containerRef: modalRef,
+  });
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -142,18 +156,26 @@ export default function BuatOprecModal({ onClose, onCreated, isUkmAccount = true
     }
   }
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       
-      <div className="relative w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl dark:bg-slate-900 border border-black/[0.06] dark:border-white/[0.08] z-10 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="buat-oprec-title"
+        className="relative w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl dark:bg-slate-900 border border-black/[0.06] dark:border-white/[0.08] z-10 space-y-4 max-h-[90vh] overflow-y-auto"
+      >
         {/* HEADER */}
         <div className="flex items-center justify-between border-b border-gray-100 dark:border-slate-800 pb-3">
           <div>
             <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mb-1">
               <Icon.Landmark className="h-3.5 w-3.5" /><span>Khusus Pengurus UKM &amp; PIC</span>
             </div>
-            <h3 className="text-base font-bold text-gray-900 dark:text-white">
+            <h3 id="buat-oprec-title" className="text-base font-bold text-gray-900 dark:text-white">
               Buka Formulir Open Recruitment Baru
             </h3>
             <p className="text-xs text-gray-500 dark:text-slate-400">
@@ -162,6 +184,7 @@ export default function BuatOprecModal({ onClose, onCreated, isUkmAccount = true
           </div>
           <button
             onClick={onClose}
+            aria-label="Tutup formulir oprec"
             className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-slate-800 dark:text-slate-400"
           >
             <Icon.X className="h-4 w-4" />
@@ -429,6 +452,7 @@ export default function BuatOprecModal({ onClose, onCreated, isUkmAccount = true
           </button>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

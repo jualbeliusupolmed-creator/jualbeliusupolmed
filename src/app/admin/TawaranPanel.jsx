@@ -1,20 +1,16 @@
 "use client";
 import { useEffect, useState } from "react";
 import { rupiah } from "@/lib/fees";
+import { StatGrid, Stat, TableWrap, Badge, EmptyState, Notice, Toolbar } from "@/components/admin/ui";
 
 function fmt(d) {
   if (!d) return "-";
   return new Date(d).toLocaleString("id-ID", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
-function Badge({ status }) {
-  const cls = {
-    pending: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-    accepted: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-    rejected: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
-    expired: "bg-gray-100 text-gray-500 dark:bg-slate-800",
-  }[status] || "bg-gray-100 text-gray-500";
-  return <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${cls}`}>{status || "-"}</span>;
+function StatusBadge({ status }) {
+  const toneMap = { pending: "warn", accepted: "ok", rejected: "bad", expired: "netral" };
+  return <Badge tone={toneMap[status] || "netral"}>{status || "-"}</Badge>;
 }
 
 export default function TawaranPanel() {
@@ -60,16 +56,14 @@ export default function TawaranPanel() {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-4 gap-3">
-        {[["Total", stats.total, ""], ["Pending", stats.pending, "text-yellow-600"], ["Diterima", stats.accepted, "text-green-600"], ["Ditolak", stats.rejected, "text-rose-600"]].map(([l, v, cls]) => (
-          <div key={l} className="rounded-xl border border-gray-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900 text-center">
-            <div className={`text-2xl font-bold ${cls || "text-gray-700 dark:text-slate-200"}`}>{v}</div>
-            <div className="text-xs text-gray-500">{l}</div>
-          </div>
-        ))}
-      </div>
+      <StatGrid>
+        <Stat label="Total" value={stats.total} />
+        <Stat label="Pending" value={stats.pending} tone={stats.pending > 0 ? "warn" : ""} />
+        <Stat label="Diterima" value={stats.accepted} tone={stats.accepted > 0 ? "ok" : ""} />
+        <Stat label="Ditolak" value={stats.rejected} tone={stats.rejected > 0 ? "bad" : ""} />
+      </StatGrid>
 
-      <div className="flex gap-2">
+      <Toolbar>
         <input className="input flex-1" placeholder="Cari judul iklan atau nomor WA..." value={q} onChange={e => setQ(e.target.value)} />
         <select className="input w-36" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
           <option value="all">Semua Status</option>
@@ -78,44 +72,44 @@ export default function TawaranPanel() {
           <option value="rejected">Ditolak</option>
           <option value="expired">Expired</option>
         </select>
-        <button onClick={load} className="btn-outline px-4">Refresh</button>
-      </div>
+        <button onClick={load} className="g-btn">Refresh</button>
+      </Toolbar>
 
       {loading && <p className="text-center text-sm text-gray-400">Memuat...</p>}
-      {error && <p className="rounded-lg bg-rose-50 p-3 text-sm text-rose-600 dark:bg-rose-900/20">{error}</p>}
+      {error && <Notice tone="bad">{error}</Notice>}
 
       {!loading && (
-        <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-slate-700">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 dark:bg-slate-800">
-              <tr>
-                {["Iklan", "Harga Iklan", "Tawaran", "Pembeli", "Status", "Waktu"].map(h => (
-                  <th key={h} className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
-              {filtered.length === 0 ? (
-                <tr><td colSpan={6} className="py-8 text-center text-gray-400">Tidak ada tawaran harga</td></tr>
-              ) : filtered.map(o => (
-                <tr key={o.id} className="hover:bg-gray-50 dark:hover:bg-slate-800/50">
-                  <td className="px-3 py-2 max-w-[180px]">
-                    <p className="truncate font-medium">{o.listings?.title || "-"}</p>
-                    <p className="text-[11px] text-gray-400">{o.listings?.seller_name || o.listings?.seller_wa || ""}</p>
-                  </td>
-                  <td className="px-3 py-2 text-xs">{o.original_price ? rupiah(o.original_price) : "-"}</td>
-                  <td className="px-3 py-2 font-semibold text-emerald-600">{o.offer_price ? rupiah(o.offer_price) : "-"}</td>
-                  <td className="px-3 py-2 font-mono text-xs">{o.buyer_wa || "-"}</td>
-                  <td className="px-3 py-2"><Badge status={o.status} /></td>
-                  <td className="px-3 py-2 text-xs text-gray-500">{fmt(o.created_at)}</td>
+        filtered.length === 0
+          ? <EmptyState title="Tidak ada tawaran harga" />
+          : (
+            <TableWrap>
+              <thead>
+                <tr>
+                  {["Iklan", "Harga Iklan", "Tawaran", "Pembeli", "Status", "Waktu"].map(h => (
+                    <th key={h}>{h}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filtered.map(o => (
+                  <tr key={o.id}>
+                    <td className="max-w-[180px]">
+                      <p className="truncate font-medium">{o.listings?.title || "-"}</p>
+                      <p className="text-meta text-gray-400">{o.listings?.seller_name || o.listings?.seller_wa || ""}</p>
+                    </td>
+                    <td>{o.original_price ? rupiah(o.original_price) : "-"}</td>
+                    <td className="font-semibold text-emerald-600">{o.offer_price ? rupiah(o.offer_price) : "-"}</td>
+                    <td className="font-mono text-xs">{o.buyer_wa || "-"}</td>
+                    <td><StatusBadge status={o.status} /></td>
+                    <td>{fmt(o.created_at)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </TableWrap>
+          )
       )}
 
-      <p className="text-xs text-gray-400">Menampilkan {filtered.length} dari {offers.length} tawaran</p>
+      <p className="text-caption text-gray-400">Menampilkan {filtered.length} dari {offers.length} tawaran</p>
     </div>
   );
 }

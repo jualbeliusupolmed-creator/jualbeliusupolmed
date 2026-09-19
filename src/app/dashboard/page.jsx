@@ -1274,10 +1274,10 @@ function DashboardInner() {
               )}
 
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <Stat label="Iklan Aktif" value={active.length} icon={<Icon.Package className="h-4.5 w-4.5" />} />
-                <Stat label="Terjual" value={soldItems.length} icon={<Icon.CheckCircle className="h-4.5 w-4.5" />} />
-                <Stat label="Total Dilihat" value={totalViews} icon={<Icon.Eye className="h-4.5 w-4.5" />} />
-                <Stat label="Fee Dibayar" value={rupiah(totalFee)} icon={<Icon.CreditCard className="h-4.5 w-4.5" />} />
+                <Stat label="Iklan Aktif" value={active.length} icon={<Icon.Package className="h-4 w-4" />} />
+                <Stat label="Terjual" value={soldItems.length} icon={<Icon.CheckCircle className="h-4 w-4" />} />
+                <Stat label="Total Dilihat" value={totalViews} icon={<Icon.Eye className="h-4 w-4" />} />
+                <Stat label="Fee Dibayar" value={rupiah(totalFee)} icon={<Icon.CreditCard className="h-4 w-4" />} />
               </div>
 
               {/* Top 3 Iklan Paling Dilihat */}
@@ -1392,7 +1392,7 @@ function DashboardInner() {
                         <div key={i} className="flex items-center">
                           <div className="flex flex-col items-center gap-1.5">
                             <div className="h-10 w-10 rounded-full bg-primary/10 dark:bg-primary/20 border-2 border-primary/20 flex items-center justify-center text-lg">
-                              <s.IconComponent className="h-4.5 w-4.5 text-primary" />
+                              <s.IconComponent className="h-4 w-4 text-primary" />
                             </div>
                             <span className="text-[10px] text-gray-400 dark:text-slate-500 max-w-[60px] text-center leading-tight">{s.label}</span>
                           </div>

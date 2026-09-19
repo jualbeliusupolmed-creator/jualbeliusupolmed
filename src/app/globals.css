@@ -73,7 +73,7 @@ body::before {
   position: fixed;
   inset: 0;
   z-index: -1;
-  background: 
+  background:
     radial-gradient(circle at 15% 50%, rgba(124, 58, 237, 0.04) 0%, transparent 50%),
     radial-gradient(circle at 85% 30%, rgba(6, 89, 50, 0.03) 0%, transparent 50%);
   background-size: 200% 200%;
@@ -81,7 +81,7 @@ body::before {
   pointer-events: none;
 }
 .dark body::before {
-  background: 
+  background:
     radial-gradient(circle at 15% 50%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
     radial-gradient(circle at 85% 30%, rgba(52, 211, 153, 0.05) 0%, transparent 50%);
 }
@@ -195,6 +195,15 @@ body::before {
   .pb-safe {
     padding-bottom: max(1.25rem, env(safe-area-inset-bottom, 0px));
   }
+
+  /* -- Typography scale untuk UI padat --
+   * text-badge  : 10px — badge, counter, chip, label ikon kecil (dekoratif)
+   * text-meta   : 11px — metadata penting: waktu, ID, label step
+   * text-caption: 12px — caption/deskripsi pendek yang masih perlu dibaca
+   */
+  .text-badge   { font-size: 10px; line-height: 1.4; }
+  .text-meta    { font-size: 11px; line-height: 1.45; }
+  .text-caption { font-size: 12px; line-height: 1.5; }
 }
 
 /* Shimmer animation for skeletons */
@@ -227,4 +236,3 @@ body::before {
 .animate-slide-up {
   animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
-

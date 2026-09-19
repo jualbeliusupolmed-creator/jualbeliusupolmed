@@ -5,7 +5,6 @@ import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
 import { Icon } from "@/components/Icons";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
 import { getFavorites, toggleFavorite } from "@/lib/favorites";
 
 export default function FavoritPage() {
@@ -24,25 +23,27 @@ export default function FavoritPage() {
       // Render data lokal terlebih dahulu agar instan (Zero Layout Shift)
       setFavorites(localFavs);
 
-      // Sinkronkan status terkini dari database
+      // Sinkronkan status terkini dari server endpoint /api/listings/batch
       const ids = localFavs.map((f) => f.id).filter(Boolean);
       if (ids.length > 0) {
-        const { data, error } = await supabase
-          .from("listings")
-          .select("*, seller_profiles(name, verified, avatar_url, subscription_tier, trusted_seller)")
-          .in("id", ids);
-
-        if (!error && data && data.length > 0) {
-          // Pertahankan urutan favorit lokal
-          const map = new Map(data.map((item) => [item.id, item]));
-          const refreshed = localFavs
-            .map((f) => map.get(f.id) || f)
-            .filter(Boolean);
-          setFavorites(refreshed);
+        const res = await fetch(`/api/listings/batch?ids=${encodeURIComponent(ids.join(","))}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            // Pertahankan urutan favorit lokal, perbarui data produk terbaru
+            const map = new Map(data.map((item) => [item.id, item]));
+            const refreshed = localFavs
+              .map((f) => {
+                const live = map.get(f.id);
+                return live ? { ...f, ...live } : f;
+              })
+              .filter(Boolean);
+            setFavorites(refreshed);
+          }
         }
       }
     } catch {
-      // Jika offline, data lokal tetap tampil
+      // Jika offline atau jaringan lambat, snapshot data lokal tetap tampil
     } finally {
       setLoading(false);
     }

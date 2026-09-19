@@ -87,6 +87,7 @@ export default function PengaturanClient({ initialSettings = {} }) {
   const [botKeywords, setBotKeywords] = useState(initialSettings.bot_keywords || { enabled: true, greeting_enabled: false, greeting: "", triggers: "", min_price_digits: 4 });
   const [ukmInviteCode, setUkmInviteCode] = useState(initialSettings.ukmInviteCode || "KAMPUS_USU_POLMED_2026");
   const [autoExpire, setAutoExpire] = useState(!!initialSettings.autoExpire);
+  const [madingCfg, setMadingCfg] = useState(initialSettings.mading || { requireLogin: true });
 
   const [kadaluarsa, setKadaluarsa] = useState(null);
   const [memuatKadaluarsa, setMemuatKadaluarsa] = useState(false);
@@ -554,6 +555,47 @@ export default function PengaturanClient({ initialSettings = {} }) {
               </div>
             </div>
             <button onClick={() => { action({ action: "save_settings", key: "site", value: site }, "Tata Letak disimpan"); flash("layout"); }} className="g-btn g-btn-primary mt-4 w-full sm:w-auto sm:px-10">{saved === "layout" ? " Tersimpan" : "Simpan Tata Letak"}</button>
+          </Card>
+
+          {/* MADING & MENFESS */}
+          <Card title="Fitur Mading & Menfess" className={match("mading menfess login anonim posting kirim") ? "" : "hidden"}>
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/50">
+                <div>
+                  <h4 className="text-sm font-bold text-gray-900 dark:text-white">Kewajiban Login Buat Menfess</h4>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    {madingCfg.requireLogin !== false
+                      ? "Aktif (ON): Mahasiswa wajib login akun WhatsApp sebelum memposting menfess."
+                      : "Nonaktif (OFF): Bebas tanpa login (pengunjung bisa langsung mengirimkan menfess anonim)."}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const updated = { ...madingCfg, requireLogin: !madingCfg.requireLogin };
+                      setMadingCfg(updated);
+                      action(
+                        { action: "save_settings", key: "mading", value: updated },
+                        updated.requireLogin !== false ? "Kewajiban login menfess diaktifkan" : "Kewajiban login menfess dimatikan"
+                      );
+                    }}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      madingCfg.requireLogin !== false ? "bg-primary" : "bg-gray-300 dark:bg-slate-700"
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                        madingCfg.requireLogin !== false ? "translate-x-5" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                  <span className={`text-xs font-bold w-10 text-center ${madingCfg.requireLogin !== false ? "text-primary" : "text-gray-500"}`}>
+                    {madingCfg.requireLogin !== false ? "ON" : "OFF"}
+                  </span>
+                </div>
+              </div>
+            </div>
           </Card>
 
           {/* TEKS & SEO SITUS */}

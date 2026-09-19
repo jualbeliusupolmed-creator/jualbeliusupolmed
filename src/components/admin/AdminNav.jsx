@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { ICONS, grupUntuk } from "./nav";
 import { useBasisAdmin, useModeDemo } from "./basis";
 
-const ALERT_KEYS = new Set(["moderasi", "reports", "profil_request", "toko", "antrean"]);
+const ALERT_KEYS = new Set(["moderasi", "reports", "profil_request", "toko", "transaksi", "antrean"]);
 
 function NavIcon({ name }) {
   return (
@@ -134,12 +134,6 @@ export default function AdminNav({ counts = {}, onNavigate }) {
             </div>
           );
         })}
-
-        {filteredGroups.length === 0 && (
-          <div className="py-6 text-center text-xs text-slate-400">
-            Tidak ada menu yang cocok &quot;{search}&quot;
-          </div>
-        )}
       </div>
     </nav>
   );
