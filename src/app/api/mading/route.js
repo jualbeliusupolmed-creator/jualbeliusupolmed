@@ -5,11 +5,14 @@ import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { hashIdentitas } from "@/lib/identitasHash";
 import { catatIdentitasWa } from "@/lib/chatIdentity";
 import { getUserSession } from "@/lib/auth";
-import { autoPublishMadingInstagram, siteOriginFromRequest } from "@/lib/madingInstagram";
+import { autoPublishMadingInstagram, publishQueuedMadingInstagram, siteOriginFromRequest } from "@/lib/madingInstagram";
 import { getSettings } from "@/lib/settings";
+import { waitUntil } from "@vercel/functions";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
+
+let lastBackgroundSweep = 0;
 
 const POST_COLUMNS = "id, type, sender_name, faculty, title, content, likes_count, comments_count, status, created_at";
 const POST_COLUMNS_WITH_IMAGE = "id, type, sender_name, faculty, title, content, image_url, likes_count, comments_count, status, created_at";
@@ -32,6 +35,20 @@ export async function GET(request) {
     const offset = (page - 1) * limit;
 
     const supa = getAdminClient();
+
+    // Opportunistic worker: Flush antrean Instagram tiap beberapa menit jika ada traffic
+    if (Date.now() - lastBackgroundSweep > 90_000 && typeof waitUntil === "function") {
+      lastBackgroundSweep = Date.now();
+      try {
+        waitUntil(
+          publishQueuedMadingInstagram({
+            origin: siteOriginFromRequest(request),
+            limit: 2,
+          }).catch(() => {})
+        );
+      } catch (_) {}
+    }
+
     const makeQuery = (columns) => {
       let query = supa
         .from("mading_posts")

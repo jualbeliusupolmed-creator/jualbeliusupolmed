@@ -29,22 +29,60 @@ export function TabInstagram() {
   const [data, setData] = useState({ stats: {}, items: [] });
   const [loading, setLoading] = useState(true);
   const [loadingAction, setLoadingAction] = useState(false);
+  const [autoProcessing, setAutoProcessing] = useState(false);
 
   useEffect(() => {
     fetchData();
   }, []);
 
-  const fetchData = async () => {
-    setLoading(true);
+  // Otomatisasi: Jika ada antrean 'queued' atau 'processing', refresh otomatis tiap 4 detik
+  useEffect(() => {
+    const hasActiveQueue = (data.stats?.queued || 0) > 0 || (data.stats?.processing || 0) > 0;
+    if (!hasActiveQueue) return;
+
+    const timer = setInterval(() => {
+      fetchData(true);
+    }, 4000);
+
+    return () => clearInterval(timer);
+  }, [data.stats?.queued, data.stats?.processing]);
+
+  const fetchData = async (options = {}) => {
+    const silent = options === true || options?.silent === true;
+    if (!silent) setLoading(true);
     try {
       const res = await fetch("/api/admin/instagram");
       if (!res.ok) throw new Error("Gagal mengambil data");
       const json = await res.json();
-      if (json.ok) setData({ stats: json.stats, items: json.items });
+      if (json.ok) {
+        setData({ stats: json.stats, items: json.items });
+        // Jika ada yang queued dan belum sedang diproses, jalankan otomatis di latar belakang
+        if (json.stats?.queued > 0 && !autoProcessing) {
+          triggerAutoProcess();
+        }
+      }
     } catch (err) {
-      toast.error(err.message);
+      if (!silent) toast.error(err.message);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
+    }
+  };
+
+  const triggerAutoProcess = async () => {
+    setAutoProcessing(true);
+    try {
+      const res = await fetch("/api/admin/instagram", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "process_queue" }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (json.ok) {
+        fetchData({ silent: true });
+      }
+    } catch (_) {
+    } finally {
+      setAutoProcessing(false);
     }
   };
 
@@ -90,8 +128,18 @@ export function TabInstagram() {
       {/* Header & Actions */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
         <div>
-          <h2 className="text-xl font-black text-slate-900 dark:text-white">Antrean Instagram</h2>
-          <p className="text-sm text-slate-500 mt-1">Pantau proses unggah Menfess dan Katalog ke Instagram.</p>
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h2 className="text-xl font-black text-slate-900 dark:text-white">Antrean Instagram</h2>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              {autoProcessing ? "Mengunggah Otomatis…" : "Otomatisasi Aktif"}
+            </span>
+          </div>
+          <p className="text-sm text-slate-500 mt-1">
+            {autoProcessing 
+              ? "Sistem sedang memproses antrean ke Instagram di latar belakang secara otomatis..."
+              : "Postingan Menfess dan Katalog otomatis diproses langsung ke Instagram Meta API."}
+          </p>
         </div>
         <div className="flex gap-2">
           <button

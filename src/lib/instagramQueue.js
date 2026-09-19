@@ -2,7 +2,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { postToInstagram } from "@/lib/meta";
 
 const MAX_ATTEMPTS = 3;
-const STALE_PROCESSING_MS = 10 * 60_000;
+const STALE_PROCESSING_MS = 2 * 60_000;
 
 export function siteOriginFromRequest(request) {
   const configured = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL;
@@ -14,7 +14,7 @@ export function siteOriginFromRequest(request) {
 }
 
 function retryAt(attempts) {
-  const minutes = Math.min(60, 5 * 2 ** Math.max(0, attempts - 1));
+  const minutes = Math.min(30, 2 * 2 ** Math.max(0, attempts - 1));
   return new Date(Date.now() + minutes * 60_000).toISOString();
 }
 

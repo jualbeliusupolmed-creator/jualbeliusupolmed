@@ -2,6 +2,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { processInstagramQueue } from "@/lib/instagramQueue";
 import { buildSlug } from "@/lib/slug";
 import { formatInstagramPrice } from "@/lib/listingInstagramImage";
+import { waitUntil } from "@vercel/functions";
 
 function catalogCredentials() {
   const accessToken = String(process.env.META_KATALOG_IG_ACCESS_TOKEN || "").trim();
@@ -93,17 +94,28 @@ export async function publishQueuedListingInstagram({
   });
 }
 
-export async function autoPublishListingInstagram({ origin, listingId, timeoutMs = 4000 }) {
+export async function autoPublishListingInstagram({ origin, listingId, timeoutMs = 15000 }) {
   try {
     await queueListingInstagram(listingId);
-    const publishPromise = publishQueuedListingInstagram({ origin, listingId, limit: 1 });
+    const publishPromise = publishQueuedListingInstagram({ origin, listingId, limit: 1 }).catch((err) => {
+      console.error("[autoPublishListingInstagram] publish error:", err);
+      return [];
+    });
+
+    // Pertahankan proses background di Vercel Lambda setelah HTTP response terkirim
+    if (typeof waitUntil === "function") {
+      try {
+        waitUntil(publishPromise);
+      } catch (_) {}
+    }
+
     if (!timeoutMs) return await publishPromise;
     return await Promise.race([
       publishPromise,
       new Promise((resolve) => setTimeout(() => resolve([]), timeoutMs)),
     ]);
-  } catch {
-    // Aktivasi iklan tetap berhasil; antrean tersimpan untuk cron/retry admin.
+  } catch (err) {
+    console.error("[autoPublishListingInstagram] error:", err);
     return [];
   }
 }
