@@ -61,7 +61,26 @@ export async function GET(req) {
     const { count: tertunda } = await supa
       .from("wa_outbox").select("id", { count: "exact", head: true }).eq("status", "tertunda");
 
-    return NextResponse.json({ ok: true, tertunda: tertunda || 0, items: data || [] });
+    // Deteksi kesehatan antrean: hitung pesan tertunda > 5 menit
+    const limaMenitLalu = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    const { count: macet } = await supa
+      .from("wa_outbox")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "tertunda")
+      .lt("created_at", limaMenitLalu);
+
+    const queueHealth = {
+      status: (macet || 0) > 0 ? "warning" : "healthy",
+      stalled_count: macet || 0,
+      stalled_warning: (macet || 0) > 0 ? `${macet} pesan tertunda lebih dari 5 menit. Worker bot VPS mungkin terputus.` : null,
+    };
+
+    return NextResponse.json({
+      ok: true,
+      tertunda: tertunda || 0,
+      queue_health: queueHealth,
+      items: data || [],
+    });
   } catch (e) {
     return jawabGalat(e);
   }

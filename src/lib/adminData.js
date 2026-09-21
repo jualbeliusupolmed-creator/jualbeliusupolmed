@@ -205,7 +205,7 @@ export async function getAdminStats(page = 1, tab = null) {
     ) : Promise.resolve([]),
     
     fetchSellers ? safe(
-      supa.from("seller_profiles").select("wa, name, bio, trusted_seller, subscription_tier, subscription_expires_at, created_at").order("created_at", { ascending: false }).limit(1000), []
+      supa.from("seller_profiles").select("wa, name, bio, trusted_seller, subscription_tier, subscription_expires_at, created_at, student_verified, student_campus, student_verification_status, student_ktm_url").order("created_at", { ascending: false }).limit(1000), []
     ) : Promise.resolve([]),
     
     fetchSellers ? safe(
@@ -242,6 +242,10 @@ export async function getAdminStats(page = 1, tab = null) {
       sold_iklan: stats.sold_iklan,
       trusted_seller: sp.trusted_seller || false,
       subscription_tier: sp.subscription_tier || "free",
+      student_verified: sp.student_verified || false,
+      student_campus: sp.student_campus || null,
+      student_verification_status: sp.student_verification_status || "none",
+      student_ktm_url: sp.student_ktm_url || null,
     };
   }).sort((a, b) => b.total_iklan - a.total_iklan) : [];
 

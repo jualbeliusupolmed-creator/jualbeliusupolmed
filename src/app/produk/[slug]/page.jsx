@@ -354,6 +354,15 @@ export default async function ProdukPage({ params }) {
                     </svg>
                   </span>
                 )}
+                {(listing.seller_profiles?.student_verified || listing.student_verified) && (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full bg-sky-500/10 dark:bg-sky-400/10 border border-sky-500/20 px-2 py-0.5 text-[10.5px] font-bold text-sky-700 dark:text-sky-300"
+                    title="Mahasiswa Terverifikasi"
+                  >
+                    <Icon.CheckCircle className="h-3 w-3 fill-sky-500 text-white dark:fill-sky-400 dark:text-zinc-900" />
+                    <span>Mahasiswa {listing.seller_profiles?.student_campus || "Kampus"}</span>
+                  </span>
+                )}
               </div>
               <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
                 Lihat semua iklan penjual →

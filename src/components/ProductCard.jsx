@@ -111,6 +111,14 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
               {listing.seller_profiles?.trusted_seller && (
                 <Icon.Check className="h-3 w-3 text-blue-500 shrink-0" title="Penjual Terpercaya" />
               )}
+              {(listing.seller_profiles?.student_verified || listing.student_verified) && (
+                <span
+                  className="inline-flex items-center text-[10px] font-bold text-sky-600 dark:text-sky-400 shrink-0"
+                  title={`✓ Mahasiswa ${listing.seller_profiles?.student_campus || "Kampus"} Terverifikasi`}
+                >
+                  <Icon.CheckCircle className="h-3.5 w-3.5 fill-sky-500 text-white dark:fill-sky-400 dark:text-zinc-900" />
+                </span>
+              )}
             </div>
             <span className="shrink-0 flex items-center gap-0.5 text-[11px] sm:text-[12px] text-slate-500 dark:text-slate-400 max-w-[95px] sm:max-w-[115px] truncate">
               <Icon.MapPin className="h-3 w-3 shrink-0 text-slate-400" />

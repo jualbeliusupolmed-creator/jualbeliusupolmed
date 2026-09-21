@@ -34,3 +34,52 @@ export function rateLimit(key, { limit = 5, windowMs = 60_000 } = {}) {
   }
   return { ok: true };
 }
+
+/**
+ * Rate limiter serverless terdistribusi.
+ * Memakai Upstash Redis REST API bila UPSTASH_REDIS_REST_URL & UPSTASH_REDIS_REST_TOKEN tersedia,
+ * dengan fallback aman ke in-memory sliding window bila belum dikonfigurasi.
+ */
+export async function rateLimitDistributed(key, { limit = 5, windowMs = 60_000 } = {}) {
+  const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
+  const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  if (!redisUrl || !redisToken) {
+    return rateLimit(key, { limit, windowMs });
+  }
+
+  try {
+    const windowSec = Math.ceil(windowMs / 1000);
+    const redisKey = `rl:${key}`;
+    // Pipeline INCR & EXPIRE via Upstash REST API
+    const res = await fetch(`${redisUrl}/pipeline`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${redisToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify([
+        ["INCR", redisKey],
+        ["EXPIRE", redisKey, windowSec],
+      ]),
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      return rateLimit(key, { limit, windowMs });
+    }
+
+    const data = await res.json();
+    const count = Number(data?.[0]?.result || 1);
+
+    if (count > limit) {
+      return { ok: false, retryAfter: windowSec };
+    }
+
+    return { ok: true };
+  } catch {
+    // Graceful fallback ke in-memory jika jaringan redis bermasalah
+    return rateLimit(key, { limit, windowMs });
+  }
+}
+

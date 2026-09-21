@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import imageCompression from "browser-image-compression";
 import { AKSEN, statusToko } from "@/lib/toko";
 import { normalizeTemanIntent } from "@/lib/temanIntents";
+import StudentVerificationModal from "@/components/student/StudentVerificationModal";
 
 /*
  * Satu pintu untuk profil.
@@ -218,6 +219,7 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
   const [memampatkan, setMemampatkan] = useState(false);
   const [bukaToko, setBukaToko] = useState(false);
   const [daftarOrg, setDaftarOrg] = useState(false);
+  const [modalVerifikasi, setModalVerifikasi] = useState(false);
   const inputFoto = useRef(null);
 
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
@@ -355,6 +357,26 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
                       <Icon.ShoppingBag className="h-3.5 w-3.5" />
                       Punya Toko
                     </span>
+                  )}
+                  {profil.student_verified ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
+                      <Icon.CheckCircle className="h-3.5 w-3.5" />
+                      Mahasiswa {profil.student_campus || "Kampus"} Terverifikasi
+                    </span>
+                  ) : profil.student_verification_status === "pending" ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+                      <Icon.Clock className="h-3.5 w-3.5" />
+                      KTM Sedang Ditinjau Admin
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setModalVerifikasi(true)}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1 text-[10px] font-bold text-white shadow-xs transition-all"
+                    >
+                      <Icon.CheckCircle className="h-3.5 w-3.5" />
+                      + Verifikasi Mahasiswa (Centang Biru)
+                    </button>
                   )}
                 </div>
                 <p className="max-w-2xl text-xs leading-relaxed text-gray-600 dark:text-gray-300">
@@ -556,6 +578,20 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
           </button>
         </div>
       </form>
+
+      <StudentVerificationModal
+        isOpen={modalVerifikasi}
+        onClose={() => setModalVerifikasi(false)}
+        initialData={profil}
+        onVerified={(res) => {
+          setProfil((prev) => ({
+            ...prev,
+            student_verified: res.is_verified,
+            student_verification_status: res.status,
+          }));
+          onProfileUpdated?.(profil);
+        }}
+      />
     </div>
   );
 }
