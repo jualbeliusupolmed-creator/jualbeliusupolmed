@@ -106,6 +106,8 @@ export default function PenjualClient({ initialSellers = [], initialBlacklist = 
                       <span>{s.seller_name}</span>
                       {s.trusted_seller && <span className="text-[10px] font-bold text-blue-500 bg-blue-50 dark:bg-blue-900/30 rounded px-1"> Terpercaya</span>}
                       {s.subscription_tier === "pro" && <span className="text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-900/30 rounded px-1">⭐ PRO</span>}
+                      {s.student_verified && <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 rounded px-1">✓ Mhs {s.student_campus || "Kampus"}</span>}
+                      {s.student_verification_status === "pending" && <span className="text-[10px] font-bold text-amber-700 bg-amber-100 dark:bg-amber-950/40 rounded px-1 animate-pulse">⏳ Review KTM</span>}
                     </div>
                     <div className="mt-0.5 flex gap-2 text-xs">
                       <a href={`/penjual/${s.seller_wa.replace(/\D/g, "")}`} target="_blank" rel="noreferrer" className="text-gray-400 hover:underline">Profil ↗</a>
@@ -124,6 +126,32 @@ export default function PenjualClient({ initialSellers = [], initialBlacklist = 
                   </td>
                   <td className="p-3">
                     <div className="flex flex-wrap gap-1">
+                      {s.student_verification_status === "pending" && (
+                        <div className="flex gap-1 mr-1">
+                          {s.student_ktm_url && (
+                            <a
+                              href={s.student_ktm_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="rounded-md bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 hover:opacity-80"
+                            >
+                              Lihat KTM ↗
+                            </a>
+                          )}
+                          <button
+                            onClick={() => action({ action: "approve_student", wa: s.seller_wa }, "Verifikasi Mahasiswa disetujui")}
+                            className="rounded-md bg-emerald-600 px-2 py-1 text-xs font-bold text-white hover:bg-emerald-700"
+                          >
+                            ✓ Setujui Mhs
+                          </button>
+                          <button
+                            onClick={() => action({ action: "reject_student", wa: s.seller_wa }, "Verifikasi ditolak")}
+                            className="rounded-md bg-rose-100 px-2 py-1 text-xs text-rose-700 hover:opacity-80"
+                          >
+                            ✕ Tolak
+                          </button>
+                        </div>
+                      )}
                       <button
                         onClick={() => action({ action: "update_seller_profile", wa: s.seller_wa, trusted_seller: !s.trusted_seller }, "Badge diperbarui")}
                         className="rounded-md bg-blue-100 px-2 py-1 text-xs text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 hover:opacity-80 transition"

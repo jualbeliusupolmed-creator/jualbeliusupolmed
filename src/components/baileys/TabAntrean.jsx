@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Megaphone } from "lucide-react";
+import { Megaphone, AlertTriangle } from "lucide-react";
 import { AntreanBot } from "./AntreanBot";
 
 /*
@@ -19,6 +19,7 @@ import { AntreanBot } from "./AntreanBot";
 export function TabAntrean() {
   const [items, setItems] = useState([]);
   const [tertunda, setTertunda] = useState(0);
+  const [queueHealth, setQueueHealth] = useState(null);
   const [status, setStatus] = useState("tertunda");
   const [muat, setMuat] = useState(true);
   const [pesan, setPesan] = useState(null);      // { teks, buruk }
@@ -36,6 +37,7 @@ export function TabAntrean() {
         setPesan(null);
         setItems(j.items || []);
         setTertunda(j.tertunda || 0);
+        setQueueHealth(j.queue_health || null);
       }
     } catch (e) {
       setPesan({ teks: `Gagal memuat: ${e.message}`, buruk: true });
@@ -98,6 +100,22 @@ export function TabAntrean() {
           dan yang menentukan antrean mana adalah di mana pesannya berhenti.
         </p>
       </div>
+
+      {/* Peringatan kesehatan antrean */}
+      {queueHealth?.stalled_warning && (
+        <div className="rounded-2xl border border-rose-300/80 bg-rose-50/90 p-4 text-rose-900 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-200 flex items-start gap-3 shadow-xs">
+          <AlertTriangle className="h-5 w-5 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+          <div className="flex-1 text-sm">
+            <h4 className="font-bold text-rose-950 dark:text-rose-100">Peringatan: Antrean WhatsApp Macet</h4>
+            <p className="mt-0.5 text-xs leading-relaxed text-rose-800 dark:text-rose-300">
+              {queueHealth.stalled_warning}
+            </p>
+            <p className="mt-1.5 text-xs font-semibold text-rose-700 dark:text-rose-400">
+              Saran: Periksa koneksi VPS / status PM2 bot, atau gunakan tombol &quot;Chat WA Manual&quot; pada tabel antrean di bawah.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Antrean di dalam bot: keadaan yang paling sering terjadi (bot hidup,
           WhatsApp putus) dan dulu satu-satunya yang tidak terlihat dari sini. */}

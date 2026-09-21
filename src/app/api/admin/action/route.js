@@ -329,6 +329,25 @@ export async function POST(req) {
         await supa.from("blacklist").delete().eq("id", id);
         break;
 
+      // ── Verifikasi Mahasiswa (Centang Biru) ─────────────────────────────
+      case "approve_student": {
+        const normalizedWa = formatWa(wa) || wa;
+        await supa.from("seller_profiles").update({
+          student_verified: true,
+          student_verification_status: "verified",
+          student_verified_at: new Date().toISOString(),
+        }).eq("wa", normalizedWa);
+        break;
+      }
+      case "reject_student": {
+        const normalizedWa = formatWa(wa) || wa;
+        await supa.from("seller_profiles").update({
+          student_verified: false,
+          student_verification_status: "rejected",
+        }).eq("wa", normalizedWa);
+        break;
+      }
+
       // ── Laporan ────────────────────────────────────────────────────────
       case "resolve_report":
         await supa.from("reports").update({ status: "resolved" }).eq("id", id);

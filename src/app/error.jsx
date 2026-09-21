@@ -9,6 +9,11 @@ export default function Error({ error, reset }) {
     error?.message?.includes("Failed to fetch dynamically imported module");
 
   useEffect(() => {
+    if (error) {
+      import("@/lib/logger").then(({ logger }) => {
+        logger.error("App error boundary caught:", error);
+      });
+    }
     if (!isChunkError) return;
     const key = "chunk_reload_at";
     const last = parseInt(sessionStorage.getItem(key) || "0", 10);

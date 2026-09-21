@@ -161,6 +161,15 @@ cuma server.
 
 - **28 Agustus 2026**: `npm run build` **BERHASIL** — semua halaman dirender sebagai `ƒ (Dynamic)`, tidak ada static generation failure. Build issue yang dicatat sebelumnya sudah tidak ada.
 
+*   **21 September 2026 — Penyempurnaan Platform Menyeluruh (Verifikasi Mahasiswa, Serverless Rate Limiting, Observabilitas & Antrean WA)**
+    - **Trust & Safety (Centang Biru Mahasiswa Kampus):** Menambahkan skema migrasi `20260921181500_student_verification.sql` (`student_verified`, `student_nim`, `student_campus`, `student_faculty`, `student_email`, `student_ktm_url`, `student_verification_status`). Validasi domain email institusi kampus (`@students.usu.ac.id`, `@polmed.ac.id`) via `src/lib/studentVerification.js` memungkinkan verifikasi instan, serta opsi upload foto KTM untuk ditinjau admin.
+    - **UI Kartu & Profil Terverifikasi:** Menampilkan lencana centang biru kampus di `ProductCard.jsx`, halaman detail produk `/produk/[slug]`, modal verifikasi mahasiswa `StudentVerificationModal.jsx`, serta tombol verifikasi & status di `UnifiedProfilePanel.jsx`.
+    - **Review Admin Verifikasi:** Admin dapat meninjau foto KTM dan menyetujui/menolak status verifikasi langsung di panel penjual `PenjualClient.jsx` dan endpoint `action/route.js`.
+    - **Serverless-Safe Rate Limiting:** Memperkuat `src/lib/rateLimit.js` dengan fungsi `rateLimitDistributed` yang otomatis memanfaatkan Upstash Redis REST jika variabel lingkungan tersedia, dengan fallback aman ke in-memory.
+    - **Observabilitas & Redaksi PII:** Modul `src/lib/logger.js` menyensor otomatis nomor telepon, email, kata sandi, dan secret token sesuai standar `AGENTS.md`. Terintegrasi dengan Next.js App Router error boundaries `error.jsx`.
+    - **Monitoring Antrean WhatsApp:** Endpoint `outbox/route.js` mendeteksi penumpukan pesan tertunda (> 5 menit) dan menampilkan banner peringatan otomatis di `TabAntrean.jsx` jika worker bot VPS mengalami disconnect.
+    - **Pengujian Otomatis Menyeluruh:** Menambahkan 3 test suite baru (`studentVerification.test.js`, `rateLimit.test.js`, `logger.test.js`), seluruh 15 test files (98 tes) lulus 100% dan linter ESLint bersih tanpa error.
+
 *   **19 September 2026 — Perbaikan Navigasi Mobile, Infinite Scroll Feed, dan Prominensi Google OAuth**
     - **Header & Bottom Nav Mobile:** Menghapus `useHideOnScroll` pada header mobile di `Navbar.jsx` dan mengunci wrapper `LayoutWrapper.jsx` menjadi `sticky top-0 z-40` agar header tidak menghilang atau terpotong saat scroll. Mengintegrasikan tombol `Masuk` / `Akun` ke dalam `BottomNavbar.jsx` (dock 5 tombol seimbang: Beranda, Market, +Buat, Chat, Masuk/Akun) dengan aksi langsung membuka modal login tanpa redirect.
     - **Infinite Scroll Feed (`SuperAppHome.jsx`):** Memperbaiki bug race condition di mana `isLoadingMore` dalam dependency array `useEffect` memicu cleanup (`isMounted = false`) sebelum request API mading selesai, menyebabkan status loading menggantung permanen (*stuck spinner*). Menggantinya dengan `fetchingMoreRef` dan menambahkan UI fallback *"Coba Lagi"* saat error.
