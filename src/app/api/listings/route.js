@@ -293,6 +293,7 @@ export async function POST(req) {
       await autoPublishListingInstagram({
         origin: siteOriginFromRequest(req),
         listingId: listing.id,
+        timeoutMs: 0,
       });
       return NextResponse.json({
         listing,

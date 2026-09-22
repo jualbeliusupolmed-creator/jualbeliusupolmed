@@ -409,9 +409,9 @@ export default function MadingClient({ initialPosts = [] }) {
         }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (res.status === 401) {
-        toast.error("Masuk dulu ya untuk memposting ke Menfess & Info.");
+        toast.error(data.error || "Masuk dulu ya untuk memposting ke Menfess & Info.");
         window.location.href = "/profil";
         return;
       }
@@ -433,8 +433,8 @@ export default function MadingClient({ initialPosts = [] }) {
       } else {
         toast.error(data.error || "Gagal menerbitkan postingan.");
       }
-    } catch {
-      toast.error("Terjadi gangguan jaringan.");
+    } catch (err) {
+      toast.error(err?.message && err.message !== "Failed to fetch" ? err.message : "Terjadi gangguan jaringan. Coba beberapa saat lagi.");
     } finally {
       setSubmitting(false);
       setUploadStage("");

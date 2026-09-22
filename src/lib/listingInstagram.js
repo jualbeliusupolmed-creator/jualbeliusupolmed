@@ -109,6 +109,7 @@ export async function autoPublishListingInstagram({ origin, listingId, timeoutMs
       } catch (_) {}
     }
 
+    if (timeoutMs <= 0) return [];
     if (!timeoutMs) return await publishPromise;
     return await Promise.race([
       publishPromise,
