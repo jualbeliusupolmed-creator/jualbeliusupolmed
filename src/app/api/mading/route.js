@@ -254,9 +254,12 @@ export async function POST(request) {
 
     // Auto-post tanpa persetujuan admin. Jika Meta belum siap, postingan web
     // tetap berhasil dan antreannya akan dicoba ulang oleh cron/panel admin.
+    // Kami mengatur timeoutMs: 0 agar publish ke Instagram berjalan di background 
+    // tanpa menunda respons API ke pengguna (mencegah "gangguan jaringan"/timeout).
     await autoPublishMadingInstagram({
       origin: siteOriginFromRequest(request),
       postId: data.id,
+      timeoutMs: 0,
     });
 
     return NextResponse.json({ success: true, post: data });

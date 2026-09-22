@@ -658,7 +658,11 @@ export default function SuperAppHome({
           image_url: imageUrl,
         }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 401) {
+        toast.error(data.error || "Silakan masuk dengan WhatsApp terlebih dahulu.");
+        return;
+      }
       if (data.success) {
         triggerHaptic("success");
         toast.success("Menfess berhasil dikirim!");
@@ -681,8 +685,8 @@ export default function SuperAppHome({
       } else {
         toast.error(data.error || "Gagal mengirim menfess.");
       }
-    } catch {
-      toast.error("Gagal mengirim postingan.");
+    } catch (err) {
+      toast.error(err?.message && err.message !== "Failed to fetch" ? err.message : "Gagal mengirim postingan. Periksa koneksi internet lalu coba lagi.");
     } finally {
       setSubmitting(false);
     }

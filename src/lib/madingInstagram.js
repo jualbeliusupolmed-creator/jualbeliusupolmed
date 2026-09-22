@@ -117,6 +117,7 @@ export async function autoPublishMadingInstagram({ origin, postId, timeoutMs = 1
       } catch (_) {}
     }
 
+    if (timeoutMs <= 0) return [];
     if (!timeoutMs) return await publishPromise;
     return await Promise.race([
       publishPromise,
