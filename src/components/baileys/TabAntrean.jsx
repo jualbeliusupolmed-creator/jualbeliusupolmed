@@ -142,6 +142,17 @@ export function TabAntrean() {
         >
           {sibuk === "semua" ? "Mengirim…" : "Kirim semua"}
         </button>
+        <button
+          onClick={() => {
+            if (!confirm("Batalkan SEMUA notifikasi tertunda di situs?")) return;
+            kirim({ batal_semua: true }, "batal_semua");
+          }}
+          disabled={sibuk !== null || !tertunda}
+          className="g-btn"
+          style={{ background: "#fee2e2", color: "#b91c1c", border: "1px solid #fca5a5" }}
+        >
+          {sibuk === "batal_semua" ? "Membatalkan…" : "Batalkan Semua"}
+        </button>
         <button onClick={ambil} disabled={muat} className="g-btn g-btn-outlined">
           Muat ulang
         </button>
