@@ -401,7 +401,8 @@ let currentQR = '';
 let connectedPhone = '';
 let connectedAt = null;
 let reconnectAttempts = 0;
-const messageQueue = [];
+const messageQueue = [];    // Jalur Prioritas: Pesan interaksi pengguna & transaksi website
+const broadcastQueue = [];  // Jalur Latar Belakang: Pesan siaran massal (broadcast)
 
 // ── Jejak putus koneksi ───────────────────────────────────────────────────────
 // Selama ini bot mati cuma ketahuan kalau kebetulan buka `pm2 logs`. Tiga variabel
@@ -691,8 +692,6 @@ function catatDibuang(task, sebab) {
             dibuangAt: Date.now(),
             sebab: String(sebab || 'tidak disebutkan').slice(0, 300),
         });
-        // Daftar terbatas: ini catatan, bukan gudang. Yang paling baru yang
-        // paling mungkin masih bisa ditindaklanjuti.
         if (dibuangList.length > DIBUANG_MAX) dibuangList.length = DIBUANG_MAX;
         simpanDibuang();
     } catch (e) {
@@ -701,47 +700,40 @@ function catatDibuang(task, sebab) {
 }
 
 let queueTimer = null;
-let queueBusy = false;   // processQueue itu async — tanpa ini, kick di tengah
-                         // pengiriman bisa memulai kiriman kedua yang tumpang tindih.
-let nextSendAt = 0;      // kiriman berikutnya tidak boleh mendahului waktu ini
+let queueBusy = false;
+let nextSendAt = 0;
 let lastSentJid = '';
-let remDilaporkan = false;   // supaya peringatan batas per jam tidak diulang tiap detik
+let remDilaporkan = false;
 
 function scheduleQueue(delayMs) {
     if (queueTimer) clearTimeout(queueTimer);
     queueTimer = setTimeout(processQueue, Math.max(0, delayMs));
 }
-// Dipanggil tiap ada pesan baru masuk antrean. Kalau jatah jeda sudah lewat
-// (kasus normal: balasan pertama setelah bot menganggur), delay-nya jadi 0.
+
 function kickQueue() {
-    if (queueBusy) return;   // run yang sedang jalan pasti menjadwalkan lanjutannya
+    if (queueBusy) return;
     scheduleQueue(nextSendAt - Date.now());
 }
 
 async function processQueue() {
     queueTimer = null;
     if (queueBusy) return;
-    if (messageQueue.length === 0) return;                       // menganggur → tunggu kickQueue()
-    // botSiap(), bukan socketAlive(): selama menunggu QR dipindai, WebSocket-nya
-    // SUDAH terbuka tapi belum ada nomor yang tertaut. sendMessage() di keadaan
-    // itu melempar "Cannot read properties of undefined (reading 'id')" — dan
-    // karena itu dihitung sebagai percobaan gagal, tiga kali kejadian cukup untuk
-    // MEMBUANG pesan pelanggan. Sudah pernah terjadi: 21 Agu 2026, satu pesan ke
-    // 6288211366083 hilang persis begitu, beberapa detik setelah sesi direset.
+    if (messageQueue.length === 0 && broadcastQueue.length === 0) return; // menganggur → tunggu kickQueue()
+
     if (!botSiap()) {
         const b2Ok = await bot2Siap();
-        if (!b2Ok) { scheduleQueue(1000); return; }               // dua-duanya belum siap → tahan, jangan buang
+        if (!b2Ok) { scheduleQueue(3000); return; } // dua-duanya belum siap → tahan, jeda 3s
     }
-    // Kepala antrean sedang dicoba lewat perangkat kedua (lihat notifyOwner):
-    // tunggu percobaan itu selesai supaya alarm yang sama tidak berangkat dari
-    // dua nomor. Paling lama ~8 detik — timeout teruskanKeBot2.
-    if (messageQueue[0]?.tahan) { scheduleQueue(2000); return; }
+
+    // Prioritas 1: Antrean Pengguna & Transaksional (messageQueue)
+    // Prioritas 2: Antrean Broadcast Massal (broadcastQueue)
+    const isUserTask = messageQueue.length > 0;
+    const taskHead = isUserTask ? messageQueue[0] : broadcastQueue[0];
+
+    if (taskHead?.tahan) { scheduleQueue(2000); return; }
     const wait = nextSendAt - Date.now();
     if (wait > 0) { scheduleQueue(wait); return; }
 
-    // Batas kirim per jam (modul anti-ban). Pesannya TIDAK dibuang — cuma
-    // ditahan sampai jendela sejam bergeser, karena membuang pesan pelanggan
-    // demi rem laju itu menukar satu masalah dengan masalah yang lebih buruk.
     const tungguJatah = tungguJatahMs();
     if (tungguJatah > 0) {
         if (!remDilaporkan) {
@@ -753,35 +745,43 @@ async function processQueue() {
     }
     remDilaporkan = false;
 
-    // Jeda balasan: pesan paling depan belum berumur REPLY_DELAY_MS → tunda,
-    // dan pasang "mengetik…" (sekali saja) supaya jedanya terlihat manusiawi.
-    const head = messageQueue[0];
-    const readyAt = (head.ts || 0) + REPLY_DELAY_MS;
-    const replyWait = readyAt - Date.now();
-    if (replyWait > 0) {
-        if (!head.composing && modul('antiban').sinyalMengetik && botSiap()) {
-            head.composing = true;
-            waSocket.presenceSubscribe(head.jid).catch(() => {});
-            waSocket.sendPresenceUpdate('composing', head.jid).catch(() => {});
+    // Sinyal mengetik hanya untuk pesan user interaktif
+    if (isUserTask) {
+        const readyAt = (taskHead.ts || 0) + REPLY_DELAY_MS;
+        const replyWait = readyAt - Date.now();
+        if (replyWait > 0) {
+            if (!taskHead.composing && modul('antiban').sinyalMengetik && botSiap()) {
+                taskHead.composing = true;
+                waSocket.presenceSubscribe(taskHead.jid).catch(() => {});
+                waSocket.sendPresenceUpdate('composing', taskHead.jid).catch(() => {});
+            }
+            scheduleQueue(replyWait);
+            return;
         }
-        scheduleQueue(replyWait);
-        return;
     }
 
     queueBusy = true;
     let gap = 0;
+    let currentTask = null;
+    let fromBroadcast = false;
+
     try {
-        const task = messageQueue.shift();
-        // Anti-burst: buang pesan yang sudah terlalu lama menunggu (mis. numpuk saat
-        // bot offline). Kirim borongan pesan basi = pola spam → risiko blokir WA.
-        const ttlTugas = task.ttl || TTL_BALASAN_MS;
+        if (messageQueue.length > 0) {
+            currentTask = messageQueue.shift();
+            fromBroadcast = false;
+        } else if (broadcastQueue.length > 0) {
+            currentTask = broadcastQueue.shift();
+            fromBroadcast = true;
+        }
+        if (!currentTask) return;
+        const task = currentTask;
+
+        const ttlTugas = task.ttl || (fromBroadcast ? 48 * 60 * 60 * 1000 : TTL_BALASAN_MS);
         if (task.ts && Date.now() - task.ts > ttlTugas) {
             console.warn(`[Queue] Buang pesan kedaluwarsa (${Math.round(ttlTugas / 60000)}mnt) ke ${task.jid}`);
             catatDibuang(task, `kedaluwarsa — menunggu lebih dari ${Math.round(ttlTugas / 60000)} menit tanpa bisa dikirim`);
-        }
-        // Jangan kirim gelembung kosong (teks kosong tanpa gambar/poll) — pernah
-        // muncul pesan kosong ke pelanggan.
-        else if (!(task.url || task.poll || (task.message && String(task.message).trim()))) {
+            if (task.bcId && K.catatBcGagal) K.catatBcGagal(task.jid, 'kedaluwarsa');
+        } else if (!(task.url || task.poll || (task.message && String(task.message).trim()))) {
             console.warn(`[Queue] Lewati pesan kosong ke ${task.jid}`);
         } else {
             try {
@@ -817,18 +817,17 @@ async function processQueue() {
                     bump('keluar');
                 }
                 recordMessage(task.jid, 'out', task.poll ? `[poll] ${task.poll.name || ''}` : (task.message || '[media]'), task.url ? 'image' : 'text');
-                // Update broadcast state jika pesan ini bagian dari broadcast
                 if (task.bcId && K.catatBcTerkirim) K.catatBcTerkirim(task.jid);
-                console.log(`[Queue] Pesan terkirim ke ${task.jid} (antre ${Date.now() - (task.ts || Date.now())}ms)${pakaiBot2 ? ' [via Perangkat 2]' : ''}`);
+                console.log(`[Queue] Pesan terkirim ke ${task.jid} [${fromBroadcast ? 'Broadcast' : 'User'}]${pakaiBot2 ? ' [via Perangkat 2]' : ''}`);
                 jejakKirim.push(Date.now());
+
                 const ab = modul('antiban');
-                if (task.delayMs) {
-                    // Custom jeda spesifik untuk tugas ini (misalnya dari broadcast grup)
+                if (fromBroadcast) {
+                    // Broadcast WAJIB jeda aman (minimal 5-10s) agar aman dari anti-spam Meta
+                    gap = Math.max(5000, Number(task.delayMs) || 8000);
+                } else if (task.delayMs) {
                     gap = task.delayMs;
                 } else if (ab.jedaAcak && ab.jedaMax > ab.jedaMin) {
-                    // Jeda acak dari panel menggantikan jeda bawaan. Rentangnya
-                    // sama untuk penerima yang sama maupun berbeda — panelnya
-                    // memang menjanjikan satu rentang, bukan dua.
                     gap = ab.jedaMin + Math.floor(Math.random() * (ab.jedaMax - ab.jedaMin));
                 } else {
                     gap = task.jid === lastSentJid
@@ -837,58 +836,43 @@ async function processQueue() {
                 }
                 lastSentJid = task.jid;
             } catch (err) {
-                // Dulu di sini pesan langsung hilang: task sudah ter-shift dari antrean
-                // dan kegagalan cuma di-log. Tiap "Connection Closed" = satu balasan
-                // yang tidak pernah sampai ke pelanggan, padahal website mengira
-                // sudah terkirim. Sekarang dikembalikan ke depan antrean.
-                // Kegagalan karena sesinya yang belum siap bukan salah pesannya:
-                // kalau ini ikut dihitung, pesan yang sah bisa habis jatahnya
-                // hanya karena kebetulan antre saat bot sedang tersambung ulang.
-                const b2Aktif = await bot2Siap();
-                const sesiBelumSiap = (!botSiap() && !b2Aktif) || /undefined \(reading 'id'\)|Connection Closed|not open/i.test(err.message || '');
-                if (!sesiBelumSiap) task.attempts = (task.attempts || 0) + 1;
-                // JANGAN menganggap `forbidden` sebagai penolakan tetap. Godaannya
-                // besar — kedengarannya seperti "bot bukan anggota grup ini" — dan
-                // sempat ditulis begitu di sini pada 22 Agustus 2026. Buktinya
-                // membantah: tiga iklan hari itu ditolak `forbidden` dari dua grup,
-                // lalu pesan uji ke grup yang SAMA berhasil beberapa jam kemudian,
-                // tanpa ada yang menambahkan nomornya ke mana pun. Yang terjadi:
-                // sesi baru saja ditautkan ulang dan daftar peserta grup belum
-                // selesai disinkronkan. `forbidden` di sini keadaan sementara yang
-                // umurnya jam, bukan detik. Kalau ia dibuang pada percobaan pertama,
-                // yang hilang justru pesan yang beberapa jam lagi bisa berangkat.
-                if (sesiBelumSiap || task.attempts < MAX_SEND_ATTEMPTS) {
-                    messageQueue.unshift(task);
-                    gap = 1000;   // beri napas sebelum coba lagi, jangan loop ketat
-                    console.error(`[Queue] Gagal kirim ke ${task.jid} (${sesiBelumSiap ? 'sesi belum siap, tidak dihitung' : `percobaan ${task.attempts}/${MAX_SEND_ATTEMPTS}`}), diulang:`, err.message);
+                // Selalu hitung percobaan agar tidak nyangkut dalam perulangan tanpa akhir
+                task.attempts = (task.attempts || 0) + 1;
+                const isSocketDisconnect = /undefined \(reading 'id'\)|Connection Closed|not open|rate-overlimit|timed out/i.test(err.message || '');
+
+                if (task.attempts < MAX_SEND_ATTEMPTS) {
+                    if (fromBroadcast) {
+                        broadcastQueue.unshift(task);
+                        // Exponential backoff untuk broadcast: 10s, 30s
+                        gap = Math.max(10000, (task.delayMs || 8000) * task.attempts);
+                    } else {
+                        messageQueue.unshift(task);
+                        // Exponential backoff untuk user: 5s, 10s saat disconnect
+                        gap = isSocketDisconnect ? (task.attempts * 5000) : 2000;
+                    }
+                    console.error(`[Queue] Gagal kirim ke ${task.jid} (percobaan ${task.attempts}/${MAX_SEND_ATTEMPTS}, jeda ${Math.round(gap/1000)}s):`, err.message);
                 } else {
                     bump('kirim_gagal');
                     console.error(`[Queue] Gagal kirim ke ${task.jid} setelah ${MAX_SEND_ATTEMPTS} percobaan, pesan DIBUANG:`, err.message);
                     const sebab = /forbidden|not-authorized/i.test(err.message || '') && task.jid.endsWith('@g.us')
-                        ? `gagal ${MAX_SEND_ATTEMPTS}× berturut-turut: ${err.message} — WhatsApp menolak kirim ke grup ini. `
-                          + 'Sesudah nomor ditautkan ulang, daftar peserta grup bisa perlu berjam-jam untuk sinkron; '
-                          + 'coba kirim ulang dari dashboard sebelum menyimpulkan botnya bukan anggota.'
-                        : `gagal ${MAX_SEND_ATTEMPTS}× berturut-turut: ${err.message}`;
+                        ? `gagal ${MAX_SEND_ATTEMPTS}× berturut-turut: ${err.message} — WhatsApp menolak kirim ke grup ini.`
+                        : `gagal ${MAX_SEND_ATTEMPTS}× berturut-turut: ${err.message || 'koneksi bermasalah'}`;
                     catatDibuang(task, sebab);
-                    // Update broadcast state jika pesan ini bagian dari broadcast
                     if (task.bcId && K.catatBcGagal) K.catatBcGagal(task.jid, sebab);
+                    gap = fromBroadcast ? 5000 : 1500;
                 }
             }
         }
     } finally {
         queueBusy = false;
-        // Menutup satu putaran: entah terkirim, dikembalikan ke antrean, atau
-        // dibuang — keadaan terbaru harus mendarat di disk, kalau tidak restart
-        // berikutnya akan mengirim ulang yang sudah sampai.
         simpanOutbox();
     }
     nextSendAt = Date.now() + gap;
     scheduleQueue(gap);
 }
-// Jaring pengaman: kalau ada satu kickQueue() yang terlewat, antrean tidak boleh
-// menggantung selamanya. Cek longgar, hanya kalau memang ada isinya.
+// Jaring pengaman: periksa antrean user maupun broadcast
 setInterval(() => {
-    if (messageQueue.length && !queueTimer && !queueBusy) kickQueue();
+    if ((messageQueue.length || broadcastQueue.length) && !queueTimer && !queueBusy) kickQueue();
 }, 5000).unref();
 
 const CHATS_FILE = path.join(DATA_DIR, 'chats.json');
@@ -2984,7 +2968,7 @@ app.listen(PORT, process.env.BIND_HOST || '127.0.0.1', () => {
         const OutboxWorker = require('./src/core/outboxWorker.js');
         const outboxWorker = new OutboxWorker(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, async (target, message, imageUrl, ttlDetik, meta) => {
             const jid = target.includes('@') ? target : target + '@s.whatsapp.net';
-            messageQueue.push({ jid, text: message, image: imageUrl, id: Math.random().toString(36).substring(7), ...meta });
+            messageQueue.push({ jid, message, url: imageUrl, ts: Date.now(), ttl: (ttlDetik ? ttlDetik * 1000 : OUTBOX_TTL_MS), id: Math.random().toString(36).substring(7), ...meta });
             kickQueue();
             return { ok: true };
         }, 15000);
@@ -3065,7 +3049,7 @@ const K = {
     bolehMasuk, botSiap, broadcastTargets, bump,
     dgnBatas, enrichDicariMessage, exitAfterFlush, getSavedNewsletters,
     getSavedStatuses, halamanMasuk, idTugas, kickQueue,
-    kukiSah, kunciRetryMs, messageQueue, nomorAlarm,
+    kukiSah, kunciRetryMs, messageQueue, broadcastQueue, nomorAlarm,
     nomorCadangan, normalisasiNomor, noteAuthFail, passwordMatches,
     requireAuth, requireAuthPage, requirePemulihan, requireRelink,
     saveLidResolutionMap, saveNewsletter, saveSettings, saveStatus,

@@ -97,7 +97,20 @@ export function AntreanBot() {
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
-          <span className={`g-badge${jumlah ? " is-warn" : " is-ok"}`}>{jumlah} menunggu</span>
+          <span className={`g-badge${jumlah ? " is-warn" : " is-ok"}`}>
+            {jumlah} user · {data?.broadcastTertunda || 0} broadcast
+          </span>
+          <button
+            onClick={() => {
+              if (!confirm("Hapus SEMUA antrean (User + Broadcast)?")) return;
+              aksi({ hapus_semua: true }, "semua");
+            }}
+            disabled={sibuk !== null || (jumlah === 0 && !data?.broadcastTertunda)}
+            className="g-btn g-btn-sm"
+            style={{ background: "#dc2626", color: "#fff" }}
+          >
+            {sibuk === "semua" ? "Menghapus…" : "Hapus Semua"}
+          </button>
           <button onClick={ambil} disabled={muat} className="g-btn g-btn-sm g-btn-text">
             {muat ? "Memuat…" : "Muat ulang"}
           </button>
@@ -116,61 +129,138 @@ export function AntreanBot() {
           </div>
         ) : null}
 
-        {data && data.siap && jumlah > 0 ? (
-          <div className="g-notice mb-4">WhatsApp tersambung — antrean sedang berjalan sendiri.</div>
+        {data && data.siap && (jumlah > 0 || data?.broadcastTertunda > 0) ? (
+          <div className="g-notice mb-4">
+            WhatsApp tersambung — {jumlah > 0 ? `${jumlah} pesan user diproses prioritas.` : `${data?.broadcastTertunda} broadcast berjalan di latar belakang.`}
+          </div>
         ) : null}
 
-        {data && jumlah === 0 && !galat ? (
-          <p className="text-sm" style={{ color: "var(--g-ink-soft)" }}>
-            Tidak ada pesan yang menunggu di bot.
+        {/* ── Sub-Bagian 1: Pesan Pengguna VIP ───────────────────────── */}
+        <div className="mb-6">
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+              💬 Pesan Pengguna & Transaksional ({jumlah})
+            </h3>
+            {jumlah > 0 && (
+              <button
+                onClick={() => {
+                  if (!confirm("Kosongkan antrean pesan user/pelanggan?")) return;
+                  aksi({ hapus_user: true }, "user");
+                }}
+                disabled={sibuk !== null}
+                className="g-btn g-btn-sm g-btn-text text-rose-600"
+              >
+                {sibuk === "user" ? "Mengosongkan…" : "Kosongkan Pesan User"}
+              </button>
+            )}
+          </div>
+
+          {jumlah === 0 && (
+            <p className="text-xs text-slate-400">Tidak ada pesan pengguna yang menunggu.</p>
+          )}
+
+          <div className="space-y-3">
+            {(data?.items || []).map((it) => (
+              <div key={it.id} className="g-card g-card-pad">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <span className="font-mono text-sm font-medium">{it.jid}</span>
+                  <span className={`g-badge${it.grup ? " is-info" : ""}`}>{it.grup ? "grup" : "pribadi"}</span>
+                  <span className="g-badge is-ok">user VIP</span>
+                  {it.url ? <span className="g-badge">bergambar</span> : null}
+                  {it.percobaan ? <span className="g-badge is-warn">{it.percobaan}× dicoba</span> : null}
+                  <span className="ml-auto text-xs" style={{ color: "var(--g-ink-faint)" }}>
+                    {it.ts ? new Date(it.ts).toLocaleString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}
+                    {" · "}
+                    {sisaUmur(it.kedaluwarsa)}
+                  </span>
+                </div>
+                <pre className="g-pre">{it.message}</pre>
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                  {(() => {
+                    const cleanPhone = String(it.jid || "").replace(/@s\.whatsapp\.net|@g\.us/g, "").replace(/\D/g, "");
+                    const waPhone = cleanPhone.startsWith("0") ? "62" + cleanPhone.slice(1) : cleanPhone;
+                    if (!waPhone || waPhone.length < 5 || it.grup) return <span />;
+                    const waUrl = `https://wa.me/${waPhone}?text=${encodeURIComponent(it.message || "")}`;
+                    return (
+                      <a
+                        href={waUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="g-btn g-btn-sm"
+                        style={{ background: "#16a34a", color: "#fff" }}
+                        title="Buka WhatsApp untuk kirim manual"
+                      >
+                        Chat WA Manual ↗
+                      </a>
+                    );
+                  })()}
+
+                  <button
+                    onClick={() => aksi({ hapus: it.id }, it.id)}
+                    disabled={sibuk !== null}
+                    className="g-btn g-btn-sm g-btn-danger"
+                  >
+                    {sibuk === it.id ? "Menghapus…" : "Hapus"}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Sub-Bagian 2: Broadcast Massal ────────────────────────── */}
+        <div className="mb-6 border-t pt-4" style={{ borderColor: "var(--g-divider)" }}>
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+              📢 Siaran Massal / Broadcast ({data?.broadcastTertunda || 0})
+            </h3>
+            {(data?.broadcastTertunda > 0 || data?.broadcastAktif) && (
+              <button
+                onClick={() => {
+                  if (!confirm("Batalkan siaran dan kosongkan antrean broadcast?")) return;
+                  aksi({ hapus_broadcast: true }, "bc");
+                }}
+                disabled={sibuk !== null}
+                className="g-btn g-btn-sm g-btn-danger"
+                style={{ background: "#ef4444", color: "#fff" }}
+              >
+                {sibuk === "bc" ? "Membatalkan…" : "🛑 Batalkan Broadcast"}
+              </button>
+            )}
+          </div>
+          <p className="g-card-desc mb-3">
+            Pesan broadcast berjalan dengan jeda anti-ban Meta. Bot otomatis memprioritaskan pesan pelanggan jika ada yang masuk.
           </p>
-        ) : null}
 
-        <div className="space-y-3">
-          {(data?.items || []).map((it) => (
-            <div key={it.id} className="g-card g-card-pad">
-              <div className="mb-2 flex flex-wrap items-center gap-2">
-                <span className="font-mono text-sm font-medium">{it.jid}</span>
-                <span className={`g-badge${it.grup ? " is-info" : ""}`}>{it.grup ? "grup" : "pribadi"}</span>
-                {it.url ? <span className="g-badge">bergambar</span> : null}
-                {it.percobaan ? <span className="g-badge is-warn">{it.percobaan}× dicoba</span> : null}
-                <span className="ml-auto text-xs" style={{ color: "var(--g-ink-faint)" }}>
-                  {it.ts ? new Date(it.ts).toLocaleString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}
-                  {" · "}
-                  {sisaUmur(it.kedaluwarsa)}
-                </span>
-              </div>
-              <pre className="g-pre">{it.message}</pre>
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                {(() => {
-                  const cleanPhone = String(it.jid || "").replace(/@s\.whatsapp\.net|@g\.us/g, "").replace(/\D/g, "");
-                  const waPhone = cleanPhone.startsWith("0") ? "62" + cleanPhone.slice(1) : cleanPhone;
-                  if (!waPhone || waPhone.length < 5 || it.grup) return <span />;
-                  const waUrl = `https://wa.me/${waPhone}?text=${encodeURIComponent(it.message || "")}`;
-                  return (
-                    <a
-                      href={waUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="g-btn g-btn-sm"
-                      style={{ background: "#16a34a", color: "#fff" }}
-                      title="Buka WhatsApp untuk kirim manual"
-                    >
-                      Chat WA Manual ↗
-                    </a>
-                  );
-                })()}
+          {(!data?.broadcastItems || data.broadcastItems.length === 0) && (
+            <p className="text-xs text-slate-400">Tidak ada broadcast yang sedang berjalan.</p>
+          )}
 
-                <button
-                  onClick={() => aksi({ hapus: it.id }, it.id)}
-                  disabled={sibuk !== null}
-                  className="g-btn g-btn-sm g-btn-danger"
-                >
-                  {sibuk === it.id ? "Menghapus…" : "Hapus"}
-                </button>
+          <div className="space-y-3">
+            {(data?.broadcastItems || []).map((it) => (
+              <div key={it.id} className="g-card g-card-pad">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <span className="font-mono text-sm font-medium">{it.jid}</span>
+                  <span className={`g-badge${it.grup ? " is-info" : ""}`}>{it.grup ? "grup" : "pribadi"}</span>
+                  <span className="g-badge is-warn">broadcast</span>
+                  {it.percobaan ? <span className="g-badge is-warn">{it.percobaan}× dicoba</span> : null}
+                  <span className="ml-auto text-xs" style={{ color: "var(--g-ink-faint)" }}>
+                    jeda {it.delayMs / 1000}s
+                  </span>
+                </div>
+                <pre className="g-pre">{it.message}</pre>
+                <div className="mt-3 flex justify-end">
+                  <button
+                    onClick={() => aksi({ hapus: it.id }, it.id)}
+                    disabled={sibuk !== null}
+                    className="g-btn g-btn-sm g-btn-danger"
+                  >
+                    {sibuk === it.id ? "Menghapus…" : "Hapus"}
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
         {/*

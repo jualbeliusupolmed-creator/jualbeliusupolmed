@@ -106,7 +106,7 @@ module.exports = function pasangRuteWa(app, K) {
     };
     K.bcStateAktif = () => _bcState && !_bcState.selesai ? _bcState : null;
 
-    // Masukkan sisa antrean broadcast ke messageQueue agar tampil di /antrean/lokal
+    // Masukkan sisa antrean broadcast ke broadcastQueue
     function resumeBroadcastState() {
         const st = muatBcState(K);
         if (st && !st.selesai) {
@@ -115,11 +115,12 @@ module.exports = function pasangRuteWa(app, K) {
             if (sisa.length > 0) {
                 const ttlBroadcast = 48 * 60 * 60 * 1000;
                 const now = Date.now();
-                const diantrekan = new Set((K.messageQueue || []).map(t => t.jid));
+                const bq = K.broadcastQueue || K.messageQueue || [];
+                const diantrekan = new Set(bq.map(t => t.jid));
                 let count = 0;
                 sisa.forEach(jid => {
                     if (!diantrekan.has(jid)) {
-                        K.messageQueue.push({
+                        bq.push({
                             jid, message: st.pesan, ts: now, ttl: ttlBroadcast,
                             delayMs: st.delayMs, bcId: st.id,
                         });
@@ -127,7 +128,7 @@ module.exports = function pasangRuteWa(app, K) {
                     }
                 });
                 if (count > 0) {
-                    console.log(`[broadcast] Resume: ${count} pesan dijadwalkan ulang ke messageQueue dari broadcast ${st.id}`);
+                    console.log(`[broadcast] Resume: ${count} pesan dijadwalkan ulang ke broadcastQueue dari broadcast ${st.id}`);
                     if (K.kickQueue) K.kickQueue();
                 }
             }
@@ -135,6 +136,20 @@ module.exports = function pasangRuteWa(app, K) {
     }
     K.resumeBroadcastState = resumeBroadcastState;
     resumeBroadcastState();
+
+    function batalBroadcastAktif() {
+        const st = _bcState || muatBcState(K);
+        if (st) {
+            st.selesai = true;
+            st.dibatalkan = true;
+            st.selesaiAt = Date.now();
+            _bcState = st;
+            simpanBcState(K);
+        }
+        _bcState = null;
+        try { fs.unlinkSync(bcStateFile(K)); } catch (_) {}
+    }
+    K.batalBroadcastAktif = batalBroadcastAktif;
 
     const { requireAuth, requireAuthPage, requireRelink, requirePemulihan } = K;
     // Yang stabil diambil sekali di sini; yang berubah sepanjang bot hidup
@@ -345,14 +360,15 @@ module.exports = function pasangRuteWa(app, K) {
         // untuk 1500 pesan × 75 detik = ~31 jam.
         const now = Date.now();
         const ttlBroadcast = 48 * 60 * 60 * 1000;
-        accepted.forEach(jid => messageQueue.push({
+        const bq = K.broadcastQueue || messageQueue;
+        accepted.forEach(jid => bq.push({
             jid, message, ts: now, ttl: ttlBroadcast, delayMs,
             bcId,  // tag broadcast agar processQueue bisa update state
         }));
         kickQueue();
         bump('broadcast', accepted.length);
         const etaSec = Math.round(accepted.length * delayMs / 1000);
-        console.log(`[broadcast-grup] ${accepted.length} anggota diantrekan, jeda ${delayMs}ms/pesan, ETA ~${etaSec}s${rejected.length ? `, ${rejected.length} dilewati (bukan JID individual)` : ''}.`);
+        console.log(`[broadcast-grup] ${accepted.length} anggota diantrekan ke antrean broadcast terpisah, jeda ${delayMs}ms/pesan, ETA ~${etaSec}s${rejected.length ? `, ${rejected.length} dilewati (bukan JID individual)` : ''}.`);
         res.json({ ok: true, queued: accepted.length, rejected, delayMs, etaSec, bcId });
     });
 
@@ -372,8 +388,9 @@ module.exports = function pasangRuteWa(app, K) {
         const tertunda = st.jids.filter(j => !sudahDiproses.has(j)).length;
         const pct = total > 0 ? Math.round((terkirim + gagal) / total * 100) : 0;
         const etaMs = tertunda * (st.delayMs || 5000);
-        // Juga sertakan berapa yg masih di messageQueue (real-time)
-        const antreanAktif = messageQueue.filter(t => t.bcId === st.id).length;
+        // Hitung dari broadcastQueue (dan messageQueue sebagai cadangan)
+        const bq = K.broadcastQueue || messageQueue;
+        const antreanAktif = bq.filter(t => t.bcId === st.id).length;
         res.json({
             aktif: !st.selesai,
             selesai: st.selesai || false,
@@ -385,7 +402,7 @@ module.exports = function pasangRuteWa(app, K) {
             gagalList: st.gagal.slice(0, 50),  // max 50 untuk UI
             gagalTotal: gagal,
             tertunda,
-            antreanAktif,   // jumlah di messageQueue saat ini
+            antreanAktif,   // jumlah di broadcastQueue saat ini
             delayMs: st.delayMs,
             mulaiAt: st.mulaiAt,
             selesaiAt: st.selesaiAt || null,
@@ -396,26 +413,32 @@ module.exports = function pasangRuteWa(app, K) {
 
     // ── Broadcast: Batalkan ───────────────────────────────────────────────────────
     app.post('/broadcast/batal', requireAuth, (req, res) => {
-        if (!_bcState || _bcState.selesai) {
+        const st = _bcState || muatBcState(K);
+        if (!st || st.selesai) {
             return res.json({ ok: true, pesan: 'Tidak ada broadcast aktif.' });
         }
-        const bcId = _bcState.id;
-        const tertundaSebelum = messageQueue.filter(t => t.bcId === bcId).length;
-        // Hapus semua item broadcast ini dari messageQueue
-        const sisa = messageQueue.filter(t => t.bcId !== bcId);
-        messageQueue.length = 0;
-        messageQueue.push(...sisa);
-        // Tandai state sebagai selesai (dibatalkan)
-        _bcState.selesai = true;
-        _bcState.dibatalkan = true;
-        _bcState.selesaiAt = Date.now();
-        simpanBcState(K);
+        const bcId = st.id;
+        const bq = K.broadcastQueue || messageQueue;
+        const tertundaSebelum = bq.filter(t => t.bcId === bcId).length;
+        // Hapus semua item broadcast ini dari broadcastQueue
+        const sisaBq = bq.filter(t => t.bcId !== bcId);
+        bq.length = 0;
+        bq.push(...sisaBq);
+
+        // Juga pastikan bersih dari messageQueue jika ada sisa
+        if (K.broadcastQueue && K.messageQueue) {
+            const sisaMq = K.messageQueue.filter(t => t.bcId !== bcId);
+            K.messageQueue.length = 0;
+            K.messageQueue.push(...sisaMq);
+        }
+
+        batalBroadcastAktif();
         console.log(`[broadcast] Dibatalkan. ${tertundaSebelum} pesan dihapus dari antrean.`);
         res.json({
             ok: true,
             pesan: `Broadcast dibatalkan. ${tertundaSebelum} pesan dihapus dari antrean.`,
-            terkirim: _bcState.terkirim.length,
-            gagal: _bcState.gagal.length,
+            terkirim: st.terkirim ? st.terkirim.length : 0,
+            gagal: st.gagal ? st.gagal.length : 0,
         });
     });
 

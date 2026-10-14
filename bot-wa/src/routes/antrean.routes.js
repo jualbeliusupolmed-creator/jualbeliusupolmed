@@ -47,10 +47,25 @@ module.exports = function pasangRuteAntrean(app, K) {
             kedaluwarsa: (t.ts || sekarang) + (t.ttl || TTL_BALASAN_MS),
             percobaan: t.attempts || 0,
             grup: String(t.jid || '').includes('@g.us'),
+            jenis: 'user',
         }));
+
+        const bQueue = K.broadcastQueue || [];
+        const broadcastItems = bQueue.map((t) => ({
+            id: idTugas(t),
+            jid: t.jid,
+            message: t.message || '',
+            url: t.url || null,
+            ts: t.ts || null,
+            delayMs: t.delayMs || 5000,
+            bcId: t.bcId || null,
+            percobaan: t.attempts || 0,
+            grup: String(t.jid || '').includes('@g.us'),
+            jenis: 'broadcast',
+        }));
+
         simpanOutbox();
-        // Buang catatan yang sudah lewat 14 hari sebelum menjawab, supaya daftarnya
-        // tidak pelan-pelan jadi arsip yang tak pernah dibaca.
+        // Buang catatan yang sudah lewat 14 hari sebelum menjawab
         const batasCatatan = Date.now() - DIBUANG_TTL_MS;
         if (K.dibuangList.some((d) => (d.dibuangAt || 0) < batasCatatan)) {
             K.dibuangList = K.dibuangList.filter((d) => (d.dibuangAt || 0) >= batasCatatan);
@@ -61,8 +76,6 @@ module.exports = function pasangRuteAntrean(app, K) {
         const siap = b1Siap || b2Siap;
         res.json({
             ok: true,
-            // Kenapa antreannya belum berangkat — pertanyaan pertama siapa pun yang
-            // melihat daftar ini, dan jawabannya tidak boleh perlu dicari di halaman lain.
             siap,
             tersambung: socketAlive(),
             menungguPindai: K.menungguPindai,
@@ -75,36 +88,73 @@ module.exports = function pasangRuteAntrean(app, K) {
                 : 'WhatsApp belum tersambung.',
             tertunda: items.length,
             items,
-            // Bukan antrean: pesan yang sudah TIDAK akan berangkat sendiri. Dipajang
-            // supaya kehilangan yang sudah terjadi tetap punya jejak yang bisa dilihat.
+            broadcastTertunda: broadcastItems.length,
+            broadcastItems,
+            broadcastAktif: !!(K.bcStateAktif && K.bcStateAktif()),
+            totalTertunda: items.length + broadcastItems.length,
             dibuang: K.dibuangList.slice(0, 50),
             dibuangTotal: K.dibuangList.length,
         });
     });
 
-    // Yang bisa dilakukan di sini cuma dua, dan keduanya jujur soal batasnya:
-    // "kirim sekarang" hanya membangunkan antrean (pengirimannya tetap butuh WA
-    // tersambung — tidak ada tombol yang bisa menyambungkannya), dan "hapus"
-    // membuang pesan yang memang sudah tidak pantas berangkat.
     app.post('/antrean/lokal', requireAuth, (req, res) => {
         const b = req.body || {};
+        const bQueue = K.broadcastQueue || [];
+
+        // Hapus per item (cek di antrean user maupun broadcast)
         if (b.hapus) {
-            const sebelum = messageQueue.length;
-            const sisa = messageQueue.filter((t) => idTugas(t) !== String(b.hapus));
+            const targetId = String(b.hapus);
+            const sebelumUser = messageQueue.length;
+            const sisaUser = messageQueue.filter((t) => idTugas(t) !== targetId);
             messageQueue.length = 0;
-            messageQueue.push(...sisa);
+            messageQueue.push(...sisaUser);
             simpanOutbox();
-            return res.json({ ok: true, dihapus: sebelum - messageQueue.length, sisa: messageQueue.length });
+
+            const sebelumBc = bQueue.length;
+            const sisaBc = bQueue.filter((t) => idTugas(t) !== targetId);
+            bQueue.length = 0;
+            bQueue.push(...sisaBc);
+
+            const terhapus = (sebelumUser - messageQueue.length) + (sebelumBc - bQueue.length);
+            return res.json({ ok: true, dihapus: terhapus, sisa: messageQueue.length + bQueue.length });
         }
-        if (b.hapus_semua) {
+
+        // Hapus antrean user saja
+        if (b.hapus_user) {
             const dihapus = messageQueue.length;
             messageQueue.length = 0;
             simpanOutbox();
-            return res.json({ ok: true, dihapus, sisa: 0 });
+            return res.json({ ok: true, dihapus, sisaUser: 0 });
         }
-        // Kirim ulang satu pesan yang sudah dibuang: masuk ke antrean sebagai pesan
-        // BARU (ts sekarang), karena kalau ts lamanya ikut, ia langsung dibuang lagi
-        // oleh pemeriksaan kedaluwarsa yang sama yang membuangnya pertama kali.
+
+        // Hapus/batalkan antrean broadcast saja
+        if (b.hapus_broadcast || b.batal_broadcast) {
+            const dihapus = bQueue.length;
+            bQueue.length = 0;
+            if (K.batalBroadcastAktif) K.batalBroadcastAktif();
+            return res.json({ ok: true, dihapus, sisaBroadcast: 0 });
+        }
+
+        // Hapus SEMUA (User + Broadcast + Batalkan Broadcast State permanen)
+        if (b.hapus_semua) {
+            const dihapusUser = messageQueue.length;
+            messageQueue.length = 0;
+            simpanOutbox();
+
+            const dihapusBc = bQueue.length;
+            bQueue.length = 0;
+            if (K.batalBroadcastAktif) K.batalBroadcastAktif();
+
+            return res.json({
+                ok: true,
+                dihapus: dihapusUser + dihapusBc,
+                dihapusUser,
+                dihapusBroadcast: dihapusBc,
+                sisa: 0,
+            });
+        }
+
+        // Kirim ulang pesan yang dibuang
         if (b.ulang) {
             const c = K.dibuangList.find((d) => d.id === String(b.ulang));
             if (!c) return res.status(404).json({ error: 'Catatan tidak ditemukan.' });
@@ -118,18 +168,21 @@ module.exports = function pasangRuteAntrean(app, K) {
             kickQueue();
             return res.json({ ok: true, diantrekan: 1, sisa: messageQueue.length, siap: botSiap() });
         }
+
         if (b.hapus_catatan) {
             const sebelum = K.dibuangList.length;
             K.dibuangList = K.dibuangList.filter((d) => d.id !== String(b.hapus_catatan));
             simpanDibuang();
             return res.json({ ok: true, dihapusCatatan: sebelum - K.dibuangList.length });
         }
+
         if (b.bersihkan_catatan) {
             const dihapusCatatan = K.dibuangList.length;
             K.dibuangList = [];
             simpanDibuang();
             return res.json({ ok: true, dihapusCatatan });
         }
+
         if (b.kirim) {
             if (!botSiap()) {
                 return res.status(409).json({
@@ -137,8 +190,9 @@ module.exports = function pasangRuteAntrean(app, K) {
                 });
             }
             kickQueue();
-            return res.json({ ok: true, dibangunkan: true, sisa: messageQueue.length });
+            return res.json({ ok: true, dibangunkan: true, sisa: messageQueue.length + bQueue.length });
         }
-        return res.status(400).json({ error: 'Sebutkan hapus, hapus_semua, kirim, ulang, hapus_catatan, atau bersihkan_catatan.' });
+
+        return res.status(400).json({ error: 'Aksi tidak dikenal. Pilih hapus, hapus_user, hapus_broadcast, hapus_semua, kirim, ulang, hapus_catatan, atau bersihkan_catatan.' });
     });
 };

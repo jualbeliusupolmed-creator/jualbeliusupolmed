@@ -93,6 +93,16 @@ export async function POST(req) {
   const body = await req.json().catch(() => ({}));
   const supa = getAdminClient();
 
+  if (body.batal_semua) {
+    const { data, error } = await supa
+      .from("wa_outbox")
+      .update({ status: "dibatalkan", galat_terakhir: "Dibatalkan massal oleh admin" })
+      .eq("status", "tertunda")
+      .select("id");
+    if (error) return jawabGalat(error);
+    return NextResponse.json({ ok: true, dibatalkan: data?.length || 0 });
+  }
+
   if (body.batal) {
     const { error } = await supa
       .from("wa_outbox").update({ status: "dibatalkan" }).eq("id", body.batal).eq("status", "tertunda");
