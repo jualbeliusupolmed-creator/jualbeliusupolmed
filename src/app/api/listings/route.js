@@ -12,6 +12,7 @@ import { autoPublishListingInstagram } from "@/lib/listingInstagram";
 import { siteOriginFromRequest } from "@/lib/instagramQueue";
 import { jawabGalat } from "@/lib/jawabGalat";
 import { sanitizeListingSpecs } from "@/lib/listingSpecs";
+import { checkProhibitedListing } from "@/lib/profanity";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -136,6 +137,24 @@ export async function POST(req) {
 
     if (!normalizedWa) {
       return NextResponse.json({ error: "Nomor WA tidak valid" }, { status: 400 });
+    }
+
+    // Validasi harga minimum wajar (mencegah spam Rp 0 atau Rp 80)
+    const numPrice = Number(price);
+    if (isNaN(numPrice) || numPrice < 1000) {
+      return NextResponse.json(
+        { error: "Harga tidak wajar. Minimal harga barang yang dicantumkan adalah Rp 1.000." },
+        { status: 400 }
+      );
+    }
+
+    // Validasi barang dilarang (AdSense policy & aturan kampus)
+    const prohibitedCheck = checkProhibitedListing(title, description);
+    if (prohibitedCheck.prohibited) {
+      return NextResponse.json(
+        { error: `Iklan ditolak: ${prohibitedCheck.reason}. Platform tidak mengizinkan vape, rokok, miras, atau obat terlarang.` },
+        { status: 400 }
+      );
     }
 
     const supa = getAdminClient();

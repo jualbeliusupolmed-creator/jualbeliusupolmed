@@ -56,6 +56,7 @@ export default function LeftSidebar() {
   ];
 
   const exploreLinks = [
+    { href: "https://open-po.vercel.app", label: "PO Kampus 🍵", icon: Icon.Store, external: true },
     { href: "/dicari", label: "Dicari", icon: Icon.Search },
     { href: "/teman", label: "Cari Teman", icon: Icon.Users },
     { href: "/organisasi", label: "UKM & Organisasi", icon: Icon.Store },
@@ -130,6 +131,20 @@ export default function LeftSidebar() {
           </p>
           <div className="space-y-1 mt-1">
             {exploreLinks.map((link) => {
+              if (link.external) {
+                return (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3.5 px-4 py-2 rounded-full transition-all group text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 font-medium"
+                  >
+                    <link.icon className="w-4 h-4 shrink-0 text-emerald-500" />
+                    <span className="text-[14px]">{link.label}</span>
+                  </a>
+                );
+              }
               const isActive = pathname?.startsWith(link.href);
               return (
                 <Link
