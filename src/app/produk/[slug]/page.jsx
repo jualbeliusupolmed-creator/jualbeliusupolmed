@@ -227,7 +227,7 @@ export default async function ProdukPage({ params }) {
   };
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6">
+    <div className="mx-auto max-w-5xl px-4 py-6 pb-24 md:pb-6">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: skripJsonLd(productJsonLd) }}
@@ -249,9 +249,9 @@ export default async function ProdukPage({ params }) {
         <span className="truncate text-gray-500">{listing.title}</span>
       </nav>
 
-      <div className="mt-5 flex flex-col gap-6 lg:gap-8">
+      <div className="mt-5 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-start">
         {/* Galeri */}
-        <div className="card overflow-hidden">
+        <div className="card overflow-hidden lg:col-span-6 lg:sticky lg:top-20">
           <ProductGallery
             images={
               listing.images?.length
@@ -265,7 +265,7 @@ export default async function ProdukPage({ params }) {
         </div>
 
         {/* Info */}
-        <div>
+        <div className="lg:col-span-6 flex flex-col gap-4">
           {/* Badges */}
           <div className="flex flex-wrap items-center gap-2">
             <span className="badge bg-gray-100 text-gray-700 dark:bg-slate-900 dark:text-slate-300">
@@ -459,11 +459,22 @@ export default async function ProdukPage({ params }) {
         </section>
       )}
 
-      {/* Mobile Floating Action Bar (Sticky CTA di atas BottomNavbar) */}
+      {/* Mobile Sticky Action Bar */}
       {!sold && (
-        <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] left-3.5 right-3.5 z-30 md:hidden flex justify-center animate-fade-in pointer-events-none">
-          <div className="pointer-events-auto w-full max-w-sm rounded-[20px] bg-white/92 p-1.5 shadow-[0_8px_30px_rgb(0,0,0,0.15)] backdrop-blur-xl border border-black/[0.08] dark:bg-[#1c1c1e]/95 dark:border-white/[0.1] dark:shadow-black/50">
-            <MinatButton listing={listing} className="w-full shadow-md shadow-wa/20 rounded-xl text-[14px] xs:text-[15px] py-2.5" />
+        <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white/95 dark:bg-[#121214]/95 backdrop-blur-2xl border-t border-black/[0.08] dark:border-white/[0.1] px-4 py-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_25px_rgba(0,0,0,0.1)] flex items-center justify-between gap-3 animate-fade-in">
+          <div className="min-w-0 flex-1">
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block leading-tight">Harga Mahasiswa</span>
+            <span className="text-base font-black text-primary dark:text-violet-400 tracking-tight leading-tight block truncate">
+              {rupiah(listing.price)}
+            </span>
+          </div>
+          <div className="shrink-0 flex items-center gap-2">
+            <OfferButton listing={listing} className="!w-auto !px-3 !py-2 !text-xs !rounded-xl border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50/50 dark:bg-indigo-950/30">
+              Nego
+            </OfferButton>
+            <MinatButton listing={listing} className="!w-auto !px-4 !py-2 !text-xs !rounded-xl shadow-md bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-1.5">
+              <span>Beli via WA</span>
+            </MinatButton>
           </div>
         </div>
       )}

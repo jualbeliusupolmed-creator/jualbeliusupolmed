@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useTransactionMode } from "@/lib/useTransactionMode";
 
-export default function OfferButton({ listing }) {
+export default function OfferButton({ listing, className, children }) {
   const [open, setOpen] = useState(false);
   const [offerPrice, setOfferPrice] = useState("");
   const [message, setMessage] = useState("");
@@ -106,9 +106,9 @@ export default function OfferButton({ listing }) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="btn-outline w-full flex items-center justify-center gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-900 dark:text-indigo-400 dark:hover:bg-indigo-900/30"
+        className={className || "btn-outline w-full flex items-center justify-center gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-900 dark:text-indigo-400 dark:hover:bg-indigo-900/30"}
       >
-         Ajukan Tawaran Harga
+        {children || " Ajukan Tawaran Harga"}
       </button>
 
       {open && (
