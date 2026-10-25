@@ -166,12 +166,12 @@ export default function Footer({ config }) {
             {dark ? (
               <>
                 <Icon.Sun className="h-3.5 w-3.5 text-amber-400" />
-                <span>Mode Gelap (Ganti ke Terang)</span>
+                <span>Mode Gelap</span>
               </>
             ) : (
               <>
                 <Icon.Moon className="h-3.5 w-3.5 text-slate-600" />
-                <span>Mode Terang (Ganti ke Gelap)</span>
+                <span>Mode Terang</span>
               </>
             )}
           </button>

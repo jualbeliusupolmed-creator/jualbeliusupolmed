@@ -41,6 +41,11 @@ export async function generateMetadata() {
     description: baseDesc,
     keywords: keywords,
     manifest: "/manifest.json",
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "default",
+      title: "USU Polmed",
+    },
     metadataBase: new URL(BASE_URL),
     alternates: { canonical: "/" },
     openGraph: {

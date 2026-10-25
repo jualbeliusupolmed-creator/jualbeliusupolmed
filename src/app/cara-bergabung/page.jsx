@@ -13,7 +13,7 @@ export const metadata = {
   // ini muncul polos tanpa gambar setiap kali dibagikan di WhatsApp.
   openGraph: {
     title: "Cara Bergabung — Jual Beli USU & Polmed",
-    description: "Gabung grup WhatsApp komunitas, pasang iklan, dan transaksi aman dibantu admin. Fee transparan mulai Rp 2.000.",
+    description: "Gabung grup WhatsApp komunitas, pasang iklan gratis, dan transaksi aman dibantu admin.",
     url: "/cara-bergabung",
     siteName: "Jual Beli USU & Polmed",
     locale: "id_ID",
@@ -22,7 +22,7 @@ export const metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Cara Bergabung — Jual Beli USU & Polmed",
-    description: "Gabung grup WhatsApp komunitas, pasang iklan, dan transaksi aman dibantu admin. Fee transparan mulai Rp 2.000.",
+    description: "Gabung grup WhatsApp komunitas, pasang iklan gratis, dan transaksi aman dibantu admin.",
   },
 };
 
@@ -111,17 +111,14 @@ export default async function CaraBergabungPage() {
       <div className="mt-6 grid gap-6 md:grid-cols-2">
         <div className="card p-6">
           <h2 className="text-lg font-bold"><span aria-hidden="true"></span> Biaya Layanan &amp; Komisi</h2>
-          <p className="mt-1 text-sm text-gray-500">Biaya Iklan (Di Awal)</p>
+          <p className="mt-1 text-sm text-gray-500">Biaya Iklan (Pasar Bebas Mahasiswa)</p>
           <div className="mt-2 space-y-2">
-            <Fee label="Iklan Barang (< Rp 50.000)" value="Rp 2.000" />
-            <Fee label="Iklan Barang (< Rp 100.000)" value="Rp 3.000" />
-            <Fee label="Iklan Barang (< Rp 500.000)" value="Rp 5.000" />
-            <Fee label="Iklan Barang (< Rp 1.000.000)" value="Rp 7.000" />
-            <Fee label="Iklan Barang (≥ Rp 1.000.000)" value="1%" />
-            <Fee label="Pasang Wanted / Cari Barang" value="Gratis 3x (Lalu Rp 1.000)" />
+            <Fee label="Pasang Iklan Barang & Jasa Mahasiswa" value="100% GRATIS" />
+            <Fee label="Pasang Kebutuhan (Dicari)" value="GRATIS" />
+            <Fee label="Posting Menfess Kampus" value="GRATIS" />
             <Fee label="Penawaran Wanted (Unlock WA)" value="Rp 2.000 / Bagi Hasil" />
-            <Fee label="Iklan Poster" value="Rp 10.000" />
-            <Fee label="Bump ke atas" value="Rp 1.000" />
+            <Fee label="Iklan Poster / Banner Sponsor" value="Mulai Rp 10.000" />
+            <Fee label="Sundul (Bump) ke Atas" value="Rp 1.000" />
           </div>
           <p className="mt-4 text-sm text-gray-500">Komisi Setelah Terjual (Sold Fee)</p>
           <div className="mt-2 space-y-2">

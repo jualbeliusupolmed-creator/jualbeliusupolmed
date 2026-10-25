@@ -487,36 +487,38 @@ export default function JualPage() {
               <label htmlFor="form-seller-wa" className="floating-label">Nomor WhatsApp</label>
             </div>
 
-            <div className="sm:col-span-2 rounded-3xl border border-black/[0.06] bg-black/[0.02] p-4 dark:border-white/[0.08] dark:bg-white/[0.03]">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-sm font-bold text-gray-900 dark:text-white">Spesifikasi {form.category}</p>
-                  <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">
-                    Field ini tampil sebagai tabel spesifikasi di halaman produk.
-                  </p>
-                </div>
-                <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 shadow-sm dark:bg-slate-900 dark:text-slate-400">
-                  Terstruktur
-                </span>
-              </div>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {specConfig.fields.map((field) => (
-                  <div key={field.key} className="floating-group">
-                    <input
-                      id={`spec-${field.key}`}
-                      className="floating-input peer"
-                      value={form.specs?.[field.key] || ""}
-                      onChange={handleSpecChange(field.key)}
-                      placeholder=" "
-                    />
-                    <label htmlFor={`spec-${field.key}`} className="floating-label">
-                      {field.label}
-                    </label>
-                    <p className="mt-1 px-1 text-[11px] text-gray-400">{field.placeholder}</p>
+            {specConfig?.fields?.length > 0 && (
+              <div className="sm:col-span-2 rounded-3xl border border-black/[0.06] bg-black/[0.02] p-4 dark:border-white/[0.08] dark:bg-white/[0.03]">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white">Spesifikasi Tambahan ({form.category}) — Opsional</p>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">
+                      Khusus kategori {form.category}. Boleh dikosongkan jika tidak ada info detail.
+                    </p>
                   </div>
-                ))}
+                  <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 shadow-sm dark:bg-slate-900 dark:text-slate-400">
+                    Opsional
+                  </span>
+                </div>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  {specConfig.fields.map((field) => (
+                    <div key={field.key} className="floating-group">
+                      <input
+                        id={`spec-${field.key}`}
+                        className="floating-input peer"
+                        value={form.specs?.[field.key] || ""}
+                        onChange={handleSpecChange(field.key)}
+                        placeholder=" "
+                      />
+                      <label htmlFor={`spec-${field.key}`} className="floating-label">
+                        {field.label}
+                      </label>
+                      <p className="mt-1 px-1 text-[11px] text-gray-400">{field.placeholder}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Metode Pembayaran */}
@@ -554,7 +556,9 @@ export default function JualPage() {
               </div>
               <div className="flex justify-between">
                 <dt className="text-gray-500 dark:text-slate-400">Metode</dt>
-                <dd className="font-medium capitalize dark:text-white">QRIS</dd>
+                <dd className="font-medium capitalize dark:text-white">
+                  {gratis ? "Bebas Biaya (100% Gratis)" : "QRIS"}
+                </dd>
               </div>
               <div className="flex justify-between">
                 <dt className="text-gray-500 dark:text-slate-400">Biaya tayang</dt>
@@ -571,7 +575,7 @@ export default function JualPage() {
               </div>
             </dl>
             <button type="submit" disabled={busy || !!fileError} className="btn-primary mt-4 w-full">
-              Preview Barang
+              Lanjut ke Preview Iklan
             </button>
             {msg && <p className="mt-3 text-sm text-rose-600">{msg}</p>}
           </div>
@@ -686,7 +690,7 @@ export default function JualPage() {
                 disabled={busy}
                 className="btn-primary flex-1"
               >
-                {busy ? "Memproses…" : gratis ? "Konfirmasi & Tayang (Gratis)" : `Konfirmasi & Bayar ${rupiah(fee)}`}
+                {busy ? "Memproses…" : gratis ? "Konfirmasi & Pasang Iklan (Gratis)" : `Konfirmasi & Bayar ${rupiah(fee)}`}
               </button>
             </div>
           </div>
