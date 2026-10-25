@@ -969,7 +969,7 @@ export default function SuperAppHome({
   };
 
   return (
-    <div className="min-h-screen bg-transparent pb-28 md:pb-8 font-sans selection:bg-primary/20 dark:bg-transparent">
+    <div className="min-h-screen bg-transparent pb-36 sm:pb-32 md:pb-8 font-sans selection:bg-primary/20 dark:bg-transparent">
 
       {/* ── ONBOARDING OVERLAY (first visit only) ── */}
       {showOnboarding && (
@@ -1012,7 +1012,7 @@ export default function SuperAppHome({
       <div className="w-full px-3 sm:px-4 md:px-4 md:pt-4">
 
         {/* ── MOBILE TAB SWITCHER: Marketplace vs Menfess (lg:hidden) ── */}
-        <div className="lg:hidden mb-3">
+        <div className="lg:hidden mb-2.5 space-y-2">
           <div className="apple-segmented w-full p-1 bg-black/[0.04] dark:bg-white/[0.06] rounded-2xl flex gap-1">
             <button
               type="button"
@@ -1020,7 +1020,7 @@ export default function SuperAppHome({
                 triggerHaptic("light");
                 setMobileTab("marketplace");
               }}
-              className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                 mobileTab === "marketplace"
                   ? "bg-white dark:bg-[#2c2c2e] text-[#1d1d1f] dark:text-white shadow-2xs font-extrabold"
                   : "text-slate-500 hover:text-slate-900 dark:text-slate-400"
@@ -1035,7 +1035,7 @@ export default function SuperAppHome({
                 triggerHaptic("light");
                 setMobileTab("menfess");
               }}
-              className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                 mobileTab === "menfess"
                   ? "bg-white dark:bg-[#2c2c2e] text-[#1d1d1f] dark:text-white shadow-2xs font-extrabold"
                   : "text-slate-500 hover:text-slate-900 dark:text-slate-400"
@@ -1050,6 +1050,34 @@ export default function SuperAppHome({
               )}
             </button>
           </div>
+
+          {/* Menfess Buzz Live Ticker (hanya saat tab marketplace aktif di mobile) */}
+          {mobileTab === "marketplace" && posts && posts.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic("light");
+                setMobileTab("menfess");
+                if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className="w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-violet-500/10 hover:bg-violet-500/15 border border-violet-500/20 text-left transition-all active:scale-[0.99] group shadow-2xs"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="flex h-2 w-2 relative shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-600" />
+                </span>
+                <span className="text-[10px] font-extrabold text-violet-700 dark:text-violet-300 shrink-0">Menfess:</span>
+                <span className="text-[10.5px] text-slate-600 dark:text-slate-300 truncate">
+                  &ldquo;{posts[0].content}&rdquo;
+                </span>
+              </div>
+              <span className="text-[9.5px] font-bold text-violet-600 dark:text-violet-400 shrink-0 flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
+                <span>Buka</span>
+                <Icon.ArrowRight className="w-2.5 h-2.5" />
+              </span>
+            </button>
+          )}
         </div>
 
         <div className="flex flex-col lg:flex-row gap-5 items-start">
@@ -1062,38 +1090,38 @@ export default function SuperAppHome({
           <div className={`flex-1 min-w-0 space-y-4 w-full ${mobileTab !== "marketplace" ? "hidden lg:block" : ""}`}>
 
             {/* ── 1. MARKETPLACE HEADER WITH OPEN PO & LIHAT SEMUA ── */}
-            <section className="apple-glass-card p-4 sm:p-5">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-black/[0.04] dark:border-white/[0.06]">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-primary/20 via-primary/10 to-transparent text-primary flex items-center justify-center shrink-0 shadow-2xs">
-                    <Icon.ShoppingBag className="w-5 h-5" />
+            <section className="apple-glass-card p-3.5 sm:p-5">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 pb-2.5 sm:pb-3 border-b border-black/[0.04] dark:border-white/[0.06]">
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-primary/20 via-primary/10 to-transparent text-primary flex items-center justify-center shrink-0 shadow-2xs">
+                    <Icon.ShoppingBag className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h1 className="text-base sm:text-lg font-black text-[#1d1d1f] dark:text-white tracking-tight">
+                    <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                      <h1 className="text-sm sm:text-lg font-black text-[#1d1d1f] dark:text-white tracking-tight">
                         Marketplace Kampus
                       </h1>
-                      <span className="rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-extrabold text-[10px] px-2 py-0.5 border border-emerald-500/20">
+                      <span className="rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-extrabold text-[9.5px] sm:text-[10px] px-2 py-0.5 border border-emerald-500/20">
                         COD Kampus
                       </span>
                     </div>
-                    <p className="text-[11px] sm:text-[11.5px] text-slate-500 dark:text-slate-400 truncate sm:whitespace-normal">
+                    <p className="text-[10.5px] sm:text-[11.5px] text-slate-500 dark:text-slate-400 truncate sm:whitespace-normal">
                       Jual beli barang bekas, buku &amp; jasa mahasiswa USU - POLMED
                     </p>
                   </div>
                 </div>
 
                 {/* ACTION BUTTONS: Tombol Open PO persis di samping Lihat Semua */}
-                <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 self-start sm:self-auto">
                   {/* Tombol Open PO */}
                   <a
                     href="https://open-po.vercel.app"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-[11.5px] sm:text-xs font-bold shadow-xs hover:shadow-md active:scale-95 transition-all"
+                    className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-[11px] sm:text-xs font-bold shadow-xs hover:shadow-md active:scale-95 transition-all"
                     title="Open PO Kampus — Makanan, Merchandise & Jastip Mahasiswa"
                   >
-                    <span className="text-sm leading-none">🍵</span>
+                    <span className="text-xs sm:text-sm leading-none">🍵</span>
                     <span>Open PO</span>
                     <Icon.ExternalLink className="w-3 h-3 opacity-90" />
                   </a>
@@ -1101,7 +1129,7 @@ export default function SuperAppHome({
                   {/* Tombol Lihat Semua */}
                   <Link
                     href="/jual-beli"
-                    className="inline-flex items-center gap-1 px-3 sm:px-3.5 py-1.5 rounded-full bg-black/[0.04] dark:bg-white/[0.08] hover:bg-black/[0.08] dark:hover:bg-white/[0.12] text-primary text-[11.5px] sm:text-xs font-bold active:scale-95 transition-all"
+                    className="inline-flex items-center gap-1 px-2.5 sm:px-3.5 py-1.5 rounded-full bg-black/[0.04] dark:bg-white/[0.08] hover:bg-black/[0.08] dark:hover:bg-white/[0.12] text-primary text-[11px] sm:text-xs font-bold active:scale-95 transition-all"
                   >
                     <span>Lihat Semua</span>
                     <Icon.ArrowRight className="w-3 h-3" />
@@ -1110,20 +1138,20 @@ export default function SuperAppHome({
               </div>
 
               {/* Search Bar Input */}
-              <div className="relative mt-3">
-                <Icon.Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <div className="relative mt-2.5 sm:mt-3">
+                <Icon.Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 <input
                   type="text"
                   value={listingSearch}
                   onChange={(e) => setListingSearch(e.target.value)}
                   placeholder="Cari laptop, buku kuliah, kos, jasa..."
-                  className="w-full bg-black/[0.03] dark:bg-white/[0.05] border border-black/[0.04] dark:border-white/[0.06] rounded-xl pl-9 pr-8 py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
+                  className="w-full bg-black/[0.03] dark:bg-white/[0.05] border border-black/[0.04] dark:border-white/[0.06] rounded-xl pl-8.5 pr-8 py-1.5 sm:py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
                 />
                 {listingSearch && (
                   <button
                     type="button"
                     onClick={() => setListingSearch("")}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white p-0.5"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white p-0.5"
                   >
                     <Icon.X className="w-3.5 h-3.5" />
                   </button>
@@ -1131,9 +1159,9 @@ export default function SuperAppHome({
               </div>
 
               {/* Filter Kategori & Kampus */}
-              <div className="flex flex-col gap-2 mt-3 pt-2.5 border-t border-black/[0.04] dark:border-white/[0.06]">
+              <div className="flex flex-col gap-1.5 mt-2.5 pt-2 border-t border-black/[0.04] dark:border-white/[0.06]">
                 {/* Kategori Pills */}
-                <div className="flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pb-0.5">
+                <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-0.5">
                   {["Semua", "Elektronik", "Buku", "Fashion", "Kos", "Jasa", "Makanan"].map((cat) => (
                     <button
                       key={cat}
@@ -1142,7 +1170,7 @@ export default function SuperAppHome({
                         triggerHaptic("light");
                         setListingCategory(cat);
                       }}
-                      className={`px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition-all shrink-0 ${
+                      className={`px-2.5 sm:px-3 py-1 rounded-full text-[10.5px] sm:text-[11px] font-bold whitespace-nowrap transition-all shrink-0 ${
                         listingCategory === cat
                           ? "bg-primary text-white shadow-2xs"
                           : "bg-black/[0.04] text-slate-600 hover:bg-black/[0.08] dark:bg-white/[0.06] dark:text-slate-300"
@@ -1155,7 +1183,7 @@ export default function SuperAppHome({
 
                 {/* Kampus Filter Pills */}
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[10.5px] font-semibold text-slate-400 mr-1 shrink-0">Kampus:</span>
+                  <span className="text-[10px] sm:text-[10.5px] font-semibold text-slate-400 mr-0.5 shrink-0">Kampus:</span>
                   {["Semua", "USU", "POLMED"].map((c) => (
                     <button
                       key={c}
@@ -1164,7 +1192,7 @@ export default function SuperAppHome({
                         triggerHaptic("light");
                         setListingCampus(c);
                       }}
-                      className={`px-2.5 py-0.5 rounded-full text-[10.5px] font-bold transition-all shrink-0 ${
+                      className={`px-2 py-0.5 rounded-full text-[10px] sm:text-[10.5px] font-bold transition-all shrink-0 ${
                         listingCampus === c
                           ? "bg-[#1d1d1f] text-white dark:bg-white dark:text-[#1d1d1f] shadow-2xs"
                           : "bg-black/[0.03] text-slate-500 hover:bg-black/[0.06] dark:bg-white/[0.05] dark:text-slate-400"
@@ -1182,7 +1210,7 @@ export default function SuperAppHome({
                         setListingCampus("Semua");
                         setListingSearch("");
                       }}
-                      className="ml-auto text-[10.5px] font-bold text-rose-500 hover:underline"
+                      className="ml-auto text-[10px] sm:text-[10.5px] font-bold text-rose-500 hover:underline"
                     >
                       Reset Filter
                     </button>

@@ -23,9 +23,7 @@ const MARKET = {
   icon: Icon.ShoppingBag,
 };
 
-// Halaman yang memang untuk menelusuri barang — di sinilah kolom cari
-// pantas menempel di bawah, dalam jangkauan ibu jari.
-const RUTE_PENCARIAN = ["/", "/jual-beli", "/jasa", "/dicari", "/favorit"];
+const RUTE_PENCARIAN = ["/jual-beli", "/jasa", "/dicari", "/favorit"];
 
 function ItemNav({ n, pathname, badge = 0 }) {
   const cakupan = n.match || [n.href];
