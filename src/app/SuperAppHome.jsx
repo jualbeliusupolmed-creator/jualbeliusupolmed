@@ -13,6 +13,7 @@ import ProductPeekSheet from "@/components/ProductPeekSheet";
 import { useSesi } from "@/components/SesiProvider";
 import UnduhMenfessModal from "@/components/mading/UnduhMenfessModal";
 import { compressImage } from "@/lib/image";
+import ProductCard from "@/components/ProductCard";
 
 // Haptic feedback for tactile feel on mobile devices
 function triggerHaptic(type = "light") {
@@ -78,6 +79,11 @@ export default function SuperAppHome({
   const [searchQuery, setSearchQuery] = useState(""); // keyword search
   const [showSearch, setShowSearch] = useState(false); // toggle search bar
   const [debouncedQuery, setDebouncedQuery] = useState("");
+
+  // Marketplace states (Center Showcase)
+  const [listingCampus, setListingCampus] = useState("Semua"); // 'Semua' | 'USU' | 'POLMED'
+  const [listingCategory, setListingCategory] = useState("Semua");
+  const [listingSearch, setListingSearch] = useState("");
 
   // Mobile pull to refresh state
   const [pullDistance, setPullDistance] = useState(0);
@@ -716,6 +722,248 @@ export default function SuperAppHome({
       return new Date(b.created_at || 0) - new Date(a.created_at || 0);
     });
 
+  // Filtered Marketplace Listings for Center Column
+  const filteredListings = latestListings.filter((ad) => {
+    if (listingCampus !== "Semua" && ad.campus !== listingCampus && ad.campus !== "Semua") {
+      return false;
+    }
+    if (listingCategory !== "Semua") {
+      const combined = `${ad.category || ""} ${ad.title || ""} ${ad.description || ""}`.toLowerCase();
+      if (!combined.includes(listingCategory.toLowerCase())) return false;
+    }
+    if (listingSearch.trim()) {
+      const q = listingSearch.toLowerCase();
+      const inTitle = (ad.title || "").toLowerCase().includes(q);
+      const inSeller = (ad.seller_name || "").toLowerCase().includes(q);
+      const inCampus = (ad.campus || "").toLowerCase().includes(q);
+      if (!inTitle && !inSeller && !inCampus) return false;
+    }
+    return true;
+  });
+
+  const renderPostCard = (post, isSidebar = false) => {
+    const isInfo = post.type === "info";
+    return (
+      <div
+        key={post.id}
+        data-mading-post-id={post.id}
+        className={`apple-glass-card ${isSidebar ? "p-3.5 sm:p-4 text-xs" : "p-4 sm:p-5"} relative group`}
+      >
+        {/* Top Header */}
+        <div className="flex items-center gap-2 mb-1">
+          <div
+            className={`flex ${isSidebar ? "h-7 w-7 text-xs" : "h-8 w-8 text-sm"} shrink-0 items-center justify-center rounded-full ${
+              isInfo
+                ? "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300"
+                : "bg-slate-100 text-slate-700 dark:bg-white/[0.06] dark:text-slate-300"
+            }`}
+          >
+            {isInfo ? <Icon.Megaphone className="h-3.5 w-3.5" /> : <Icon.User className="h-3.5 w-3.5" />}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <p className={`truncate ${isSidebar ? "text-[12px]" : "text-[13px]"} font-bold text-[#1d1d1f] dark:text-[#f5f5f7]`}>
+                {post.sender_name || "Anonim"}
+              </p>
+              <span className="rounded-md bg-black/[0.04] px-1.5 py-0.2 text-[10px] font-semibold text-gray-600 dark:bg-white/[0.08] dark:text-gray-400">
+                {post.faculty || "USU"}
+              </span>
+              <span
+                className={`rounded-full px-2 py-0.2 text-[10px] font-semibold ${
+                  isInfo
+                    ? "bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300"
+                    : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
+                }`}
+              >
+                {isInfo ? "Info Kampus" : "Menfess"}
+              </span>
+            </div>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+              {waktuLalu(post.created_at)}
+            </p>
+          </div>
+          {/* Report post button */}
+          <button
+            type="button"
+            onClick={() => handleReport(post.id)}
+            title="Laporkan postingan"
+            aria-label="Laporkan postingan"
+            className="opacity-30 hover:opacity-100 hover:text-rose-500 text-slate-400 p-1 rounded-lg transition-all"
+          >
+            <Icon.Flag className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Title (If Info) */}
+        {post.title && (
+          <h4 className={`mt-1.5 mb-0.5 ${isSidebar ? "text-[13px]" : "text-[14px]"} font-bold text-[#1d1d1f] dark:text-[#f5f5f7] leading-snug`}>
+            {post.title}
+          </h4>
+        )}
+
+        {/* Content Body */}
+        <p className={`${isSidebar ? "text-[12px] leading-[1.45]" : "text-[13px] leading-[1.5]"} text-[#1d1d1f] dark:text-gray-200 whitespace-pre-wrap mt-0.5`}>
+          {post.content}
+        </p>
+
+        {/* Attached Image */}
+        {post.image_url && (
+          <div
+            onClick={() => setZoomImage(post.image_url)}
+            className="mt-2.5 rounded-[14px] sm:rounded-[16px] overflow-hidden border border-black/[0.04] dark:border-white/[0.06] bg-black/[0.02] dark:bg-black/30 cursor-zoom-in relative aspect-[16/9] w-full max-h-64"
+          >
+            <Image
+              src={post.image_url}
+              alt={post.title ? `Foto ${post.title}` : "Foto menfess"}
+              fill
+              sizes="(max-width: 768px) 100vw, 420px"
+              className="object-cover hover:scale-[1.01] transition-transform duration-300"
+              loading="lazy"
+            />
+          </div>
+        )}
+
+        {/* Tagged product */}
+        {post.listings && (
+          <button
+            type="button"
+            onClick={() => setIntipProduk(post.listings)}
+            className="mt-2.5 flex w-full items-center gap-2.5 rounded-xl border border-primary/25 bg-primary/[0.05] p-2 text-left transition-all active:scale-[0.99] hover:bg-primary/[0.09]"
+          >
+            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-black/[0.06] dark:bg-white/[0.08]">
+              {post.listings.image_url || post.listings.images?.[0] ? (
+                <img
+                  src={post.listings.image_url || post.listings.images[0]}
+                  alt=""
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-slate-500">
+                  <Icon.Box className="h-4 w-4" />
+                </div>
+              )}
+            </div>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-[11px] font-bold text-[#1d1d1f] dark:text-white">
+                {post.listings.title}
+              </span>
+              <span className="block text-[10px] font-extrabold text-primary dark:text-violet-400">
+                {rupiah(post.listings.price)}
+              </span>
+            </span>
+            <span className="shrink-0 rounded-full bg-primary px-2.5 py-1 text-[10px] font-bold text-white">
+              Lihat
+            </span>
+          </button>
+        )}
+
+        {/* Bottom Action Bar */}
+        <div className="mt-3 flex items-center justify-between gap-1 text-slate-600 dark:text-slate-400">
+          <div className="flex items-center gap-1 sm:gap-1.5">
+            <button
+              type="button"
+              onClick={() => handleLike(post.id)}
+              aria-label={`Sukai postingan, ${post.likes_count || 0} suka`}
+              className={`flex items-center gap-1 py-1 px-1.5 rounded-lg transition-colors ${
+                post._isLiked ? "text-rose-500 bg-rose-50 dark:bg-rose-950/30" : "hover:text-rose-500"
+              }`}
+            >
+              <Icon.Heart className={`h-3.5 w-3.5 ${post._isLiked ? "fill-current text-rose-500" : ""}`} />
+              <span className="font-bold text-xs">{post.likes_count || 0}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => toggleComments(post.id)}
+              aria-label={`Buka komentar, ${post.comments_count || 0} komentar`}
+              className={`flex items-center gap-1 py-1 px-1.5 rounded-lg transition-colors ${
+                activeCommentsPostId === post.id ? "text-primary bg-primary/10" : "hover:text-primary"
+              }`}
+            >
+              <Icon.MessageCircle className="h-3.5 w-3.5" />
+              <span className="font-bold text-xs">{post.comments_count || 0}</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic("light");
+                setUnduhPost(post);
+              }}
+              aria-label="Unduh gambar untuk Instagram Story atau Status WhatsApp"
+              title="Unduh gambar Story / Status"
+              className="flex items-center gap-1 py-1 px-1.5 rounded-lg text-slate-500 hover:text-primary transition-colors active:scale-95"
+            >
+              <Icon.Download className="h-3.5 w-3.5" />
+              <span className="font-bold text-[11px] hidden sm:inline">Story IG</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleShare(post)}
+              aria-label="Bagikan postingan ini ke WhatsApp"
+              className="flex items-center gap-1 py-1 px-1.5 rounded-lg hover:text-emerald-600 transition-colors"
+            >
+              <Icon.Share className="h-3.5 w-3.5" />
+            </button>
+
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-0.5 pl-1">
+              <Icon.Eye className="h-3 w-3" />
+              <span>{post.views_count || 0}</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Comments Accordion */}
+        {activeCommentsPostId === post.id && (
+          <div className="mt-2.5 pt-2.5 border-t border-dashed border-slate-200 dark:border-slate-800 space-y-2 animate-in fade-in duration-200">
+            <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
+              {(commentsMap[post.id] || []).length === 0 ? (
+                <p className="text-[11px] text-slate-400 italic text-center py-1.5">
+                  Belum ada tanggapan. Balas pertama kali!
+                </p>
+              ) : (
+                commentsMap[post.id].map((c) => (
+                  <div key={c.id} className="bg-slate-50 dark:bg-white/[0.04] p-2.5 rounded-xl text-xs">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="font-bold text-[11px] text-slate-800 dark:text-slate-200">{c.sender_name}</span>
+                      <span className="text-[9px] text-slate-400">{waktuLalu(c.created_at)}</span>
+                    </div>
+                    <p className="text-[11.5px] text-slate-600 dark:text-slate-300 leading-snug">{c.content}</p>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Comment Input */}
+            <div className="flex gap-1.5 pt-1">
+              <input
+                type="text"
+                value={newCommentText}
+                onChange={(e) => setNewCommentText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSendComment(post.id);
+                }}
+                placeholder="Tulis balasan anonim…"
+                className="flex-1 bg-slate-100 dark:bg-slate-800 border-none rounded-full px-3 py-1 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary outline-none"
+              />
+              <button
+                onClick={() => handleSendComment(post.id)}
+                disabled={submittingComment || !newCommentText.trim()}
+                className="bg-primary disabled:opacity-50 text-white px-3 py-1 rounded-full text-xs font-bold hover:brightness-105 transition-all shrink-0"
+              >
+                Kirim
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-transparent pb-28 md:pb-8 font-sans selection:bg-primary/20 dark:bg-transparent">
 
@@ -761,650 +1009,330 @@ export default function SuperAppHome({
         <div className="md:flex md:gap-6 md:items-start">
           
           {/* ═══════════════════════════════════════
-              KOLOM KIRI — Feed utama (Menfess + Info Kampus)
+              KOLOM TENGAH — Marketplace Utama (Jualan di Tengah)
               Mobile: full width | Desktop: flex-1
           ═══════════════════════════════════════ */}
-          <div className="md:flex-1 md:min-w-0 md:pr-2">
-      
+          <div className="md:flex-1 md:min-w-0 md:pr-2 space-y-4">
 
-
-      {/* ── Marketplace carousel — hanya di mobile & tablet. Desktop ada di sidebar ── */}
-      <section className="mt-2 mb-4 lg:hidden">
-        <div className="flex items-center justify-between px-4 sm:px-6 mb-2">
-          <div className="flex items-center gap-1.5">
-            <h3 className="text-[14px] font-bold tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">
-              <span className="inline-flex items-center gap-1.5"><Icon.ShoppingBag className="h-4 w-4" />Belanja di Marketplace</span>
-            </h3>
-            <span className="rounded-full bg-black/[0.05] px-2 py-0.5 text-[9px] font-bold text-gray-600 dark:bg-white/[0.08] dark:text-gray-400">
-              Geser
-            </span>
-          </div>
-          <Link href="/jual-beli" className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1 active:scale-[0.96] transition-transform">
-            <span>Lihat Semua</span>
-            <Icon.ArrowRight className="w-3 h-3" />
-          </Link>
-        </div>
-        
-        <div className="relative">
-          <div className="flex gap-2.5 overflow-x-auto pb-1.5 pt-0 px-4 sm:px-6 snap-x snap-mandatory touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {latestListings.slice(0, 20).map((ad, idx) => (
-              <Link 
-                key={ad.id} 
-                href={`/produk/${buildSlug(ad.title, ad.id)}`}
-                className="flex-none w-[110px] xs:w-[120px] sm:w-[130px] overflow-hidden apple-card snap-start hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] active:scale-[0.97] group no-tap-highlight"
-              >
-                <div className="relative aspect-[4/3] w-full bg-black/[0.03] dark:bg-black/40 overflow-hidden">
-                  {ad.image_url ? (
-                    <Image 
-                      src={ad.image_url} 
-                      alt={ad.title} 
-                      fill 
-                      sizes="(max-width: 640px) 120px, 140px"
-                      priority={idx < 3}
-                      className="object-cover group-hover:scale-104 transition-transform duration-500" 
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-slate-400">
-                      <Icon.Package className="w-8 h-8 opacity-20" />
-                    </div>
-                  )}
-                  <div className="absolute top-1 right-1 bg-[#1d1d1f]/80 backdrop-blur-md text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-xs">
-                    {rupiah(ad.price || 0)}
-                  </div>
-                </div>
-                <div className="p-2">
-                  <h4 className="text-[11px] font-bold text-[#1d1d1f] dark:text-[#f5f5f7] line-clamp-1 mb-0.5 group-hover:text-primary transition-colors">
-                    {ad.title}
-                  </h4>
-                  <p className="text-[9px] font-medium text-slate-500 dark:text-slate-400 truncate">
-                    by {ad.seller_name || "Mahasiswa"}
-                  </p>
-                  <p className="text-[9px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-0.5">
-                    <Icon.MapPin className="w-2 h-2 shrink-0 text-slate-400 dark:text-slate-500" />
-                    <span className="truncate">{ad.campus === "Semua" ? "Medan" : ad.campus}</span>
-                  </p>
-                </div>
-              </Link>
-            ))}
-            
-            {/* LIHAT SEMUA CARD */}
-            <Link 
-              href="/jual-beli"
-              className="flex-none w-[110px] xs:w-[120px] sm:w-[130px] rounded-[16px] border border-dashed border-black/10 bg-[#f5f5f7] flex flex-col items-center justify-center snap-start hover:bg-black/[0.04] active:scale-[0.96] transition-all group no-tap-highlight dark:border-white/10 dark:bg-[#1c1c1e] dark:hover:bg-white/[0.04]"
-            >
-              <div className="w-8 h-8 bg-white shadow-sm text-[#1d1d1f] rounded-full flex items-center justify-center mb-2 group-hover:scale-105 transition-transform dark:bg-[#2c2c2e] dark:text-white">
-                <Icon.ArrowRight className="w-3.5 h-3.5" />
-              </div>
-              <span className="text-[11px] font-bold text-primary">Lihat Semua</span>
-              <span className="text-[9px] text-primary/70">Jelajahi Pasar</span>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Quick Features Bar (Mobile & Tablet) ── */}
-      <section className="mb-4 px-4 sm:px-6 lg:hidden">
-        <div className="grid grid-cols-2 gap-2.5">
-          {/* 1. Cari Teman (Swipe) */}
-          <Link
-            href="/teman"
-            className="flex items-center gap-2.5 p-3 rounded-2xl bg-gradient-to-br from-orange-500/10 via-rose-500/10 to-purple-500/10 dark:from-orange-950/30 dark:via-rose-950/20 dark:to-purple-950/30 border border-orange-200/80 dark:border-orange-500/20 active:scale-[0.98] transition-all shadow-2xs group"
-          >
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-orange-500 to-rose-500 text-white flex items-center justify-center shrink-0 shadow-xs">
-              <Icon.Flame className="w-5 h-5" />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-1">
-                <span className="text-xs font-black text-[#1d1d1f] dark:text-white truncate">Cari Teman</span>
-                <span className="text-[8.5px] font-black uppercase tracking-wider bg-orange-500 text-white px-1.5 py-0.5 rounded-full">Swipe</span>
-              </div>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">Kenalan sesama kampus</p>
-            </div>
-          </Link>
-
-          {/* 2. Chat Anonim */}
-          <Link
-            href="/chat?anon=1"
-            className="flex items-center gap-2.5 p-3 rounded-2xl bg-gradient-to-br from-violet-500/10 via-purple-500/10 to-indigo-500/10 dark:from-violet-950/30 dark:via-purple-950/20 dark:to-indigo-950/30 border border-violet-200/80 dark:border-violet-500/20 active:scale-[0.98] transition-all shadow-2xs group"
-          >
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-500 text-white flex items-center justify-center shrink-0 shadow-xs">
-              <Icon.MessageCircle className="w-4.5 h-4.5" />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-1">
-                <span className="text-xs font-black text-[#1d1d1f] dark:text-white truncate">Chat Anonim</span>
-                <span className="text-[8.5px] font-black uppercase tracking-wider bg-violet-600 text-white px-1.5 py-0.5 rounded-full">Live</span>
-              </div>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">Ngobrol 1-on-1 rahasia</p>
-            </div>
-          </Link>
-        </div>
-      </section>
-
-      {/* ── 5. FEED MADING & MENFESS ── */}
-      <section
-        className="w-full md:px-0"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        {/* Pull to refresh visual indicator on mobile */}
-        {(pullDistance > 0 || isRefreshing) && (
-          <div
-            style={{ height: `${pullDistance}px` }}
-            className="overflow-hidden transition-[height] duration-150 flex items-center justify-center text-xs font-semibold text-primary mb-2"
-          >
-            <div className="flex items-center gap-2 py-1 px-3.5 bg-primary/10 dark:bg-primary/20 rounded-full text-xs text-primary">
-              <Icon.RefreshCcw className={`w-3.5 h-3.5 ${isRefreshing || pullDistance > 50 ? "animate-spin" : ""}`} />
-              <span>{isRefreshing ? "Menyegarkan feed..." : pullDistance > 50 ? "Lepaskan untuk segarkan" : "Tarik untuk segarkan"}</span>
-            </div>
-          </div>
-        )}
-
-        {/* Banner: ada postingan baru */}
-        {newPostCount > 0 && (
-          <button
-            onClick={() => {
-              triggerHaptic("light");
-              loadNewPosts();
-            }}
-            className="w-full mb-2 flex items-center justify-center gap-2 bg-primary text-white text-xs font-bold py-2.5 px-4 rounded-2xl shadow-md hover:brightness-105 transition-all animate-in slide-in-from-top-3 duration-300"
-          >
-            <Icon.ArrowUp className="w-3.5 h-3.5" />
-            Ada {newPostCount} postingan baru — klik untuk muat
-          </button>
-        )}
-        <div className="sticky top-[70px] md:top-6 z-30 apple-glass rounded-2xl px-2.5 sm:px-4 py-2 mb-3 shadow-xs transition-all">
-          {/* TABS FILTER (Semua / Menfess / Info Kampus) + ACTIONS (Centered) */}
-          <div className="flex items-center justify-center gap-1.5 sm:gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-0.5">
-            {/* Filter Tabs */}
-            <div className="apple-segmented shrink-0">
-              {[
-                { id: "all", label: "Semua" },
-                { id: "menfess", label: "Menfess" },
-                { id: "info", label: "Info Kampus" },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    triggerHaptic("light");
-                    setActiveTab(tab.id);
-                    setSearchQuery("");
-                    setShowSearch(false);
-                  }}
-                  className={`px-3 sm:px-3.5 py-1 text-[11.5px] sm:text-[12px] font-semibold rounded-full transition-all whitespace-nowrap ${
-                    activeTab === tab.id
-                      ? "bg-white dark:bg-[#2c2c2e] text-[#1d1d1f] dark:text-white shadow-2xs font-bold"
-                      : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Tombol Tambah Menfess */}
-            <button
-              onClick={() => {
-                triggerHaptic("medium");
-                updateFormData({ type: activeTab === "info" ? "info" : "menfess" });
-                setShowModal(true);
-              }}
-              className="h-[34px] shrink-0 flex items-center gap-1.5 bg-primary hover:bg-primary/90 active:scale-95 text-white px-3 rounded-full text-xs font-bold shadow-xs transition-all whitespace-nowrap"
-              aria-label="Tambah Menfess"
-              title="Tambah Menfess"
-            >
-              <Icon.Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>Menfess</span>
-            </button>
-
-            {/* Quick Refresh Button */}
-            <button
-              onClick={() => {
-                triggerHaptic("light");
-                loadNewPosts();
-              }}
-              className="w-[34px] h-[34px] shrink-0 flex items-center justify-center rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.08] transition-colors"
-              aria-label="Segarkan feed"
-              title="Segarkan feed"
-            >
-              <Icon.RefreshCcw className={`w-4 h-4 ${isLoadingMore ? "animate-spin text-primary" : ""}`} />
-            </button>
-
-            {/* Search toggle */}
-            <button
-              onClick={() => {
-                triggerHaptic("light");
-                setShowSearch(s => !s);
-                if (showSearch) setSearchQuery("");
-              }}
-              className={`w-[34px] h-[34px] shrink-0 flex items-center justify-center rounded-full transition-colors ${
-                showSearch || searchQuery 
-                  ? "bg-primary/10 text-primary dark:bg-primary/20" 
-                  : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.08]"
-              }`}
-              aria-label="Cari postingan"
-              title="Cari postingan"
-            >
-              <Icon.Search className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Search input — slide in */}
-          {showSearch && (
-            <div className="mt-2 animate-in slide-in-from-top-2 duration-200">
-              <div className="relative">
-                <Icon.Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
-                <input
-                  autoFocus
-                  type="text"
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="Cari postingan, menfess, info..."
-                  className="w-full pl-9 pr-4 py-2 text-xs bg-slate-100 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-primary outline-none text-slate-900 dark:text-white placeholder:text-slate-400"
-                />
-                {searchQuery && (
-                  <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700">
-                    <Icon.X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* FEED POSTS LIST */}
-        <div className="flex flex-col gap-4 mb-12">
-          {/* Error state */}
-          {feedError && posts.length === 0 && (
-            <div className="text-center py-16 px-4">
-              <div className="w-12 h-12 bg-rose-50 text-rose-500 dark:bg-rose-900/20 rounded-2xl flex items-center justify-center mx-auto mb-2.5">
-                <Icon.X className="w-5 h-5" />
-              </div>
-              <p className="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">Gagal memuat postingan</p>
-              <p className="text-xs text-gray-500 mt-1">Periksa koneksi internet kamu, lalu coba lagi.</p>
-              <button
-                onClick={loadNewPosts}
-                className="mt-3.5 inline-flex items-center gap-1.5 bg-rose-500 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-rose-600"
-              >
-                <Icon.RefreshCcw className="w-3.5 h-3.5" />
-                <span>Coba Lagi</span>
-              </button>
-            </div>
-          )}
-          {/* Skeleton loading saat filter reset */}
-          {isLoadingMore && posts.length === 0 && !feedError && (
-            <>
-              <PostSkeleton />
-              <PostSkeleton />
-              <PostSkeleton />
-            </>
-          )}
-          {filteredPosts.length === 0 && !isLoadingMore && !feedError ? (
-            <div className="text-center py-16 px-4">
-              <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mx-auto mb-2.5">
-                {searchQuery ? <Icon.Search className="w-5 h-5" /> : <Icon.MessageCircle className="w-5 h-5" />}
-              </div>
-              <p className="text-sm font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">
-                {searchQuery ? `Tidak ada hasil untuk "${searchQuery}"` : "Belum ada postingan di filter ini"}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                {searchQuery ? "Coba kata kunci lain atau hapus pencarian untuk menampilkan seluruh postingan." : "Jadilah yang pertama mengirim menfess atau info kampus!"}
-              </p>
-              {searchQuery ? (
-                <button
-                  onClick={() => {
-                    triggerHaptic("light");
-                    setSearchQuery("");
-                    setShowSearch(false);
-                  }}
-                  className="mt-3.5 inline-flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs"
-                >
-                  <Icon.X className="w-3.5 h-3.5" />
-                  <span>Hapus Pencarian &amp; Tampilkan Semua</span>
-                </button>
-              ) : (
-                <button
-                  onClick={() => setShowModal(true)}
-                  className="mt-3.5 inline-flex items-center gap-1.5 bg-[#0071e3] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#0077ed]"
-                >
-                  <Icon.PlusCircle className="w-3.5 h-3.5" />
-                  <span>Kirim Menfess Sekarang</span>
-                </button>
-              )}
-            </div>
-          ) : (
-            filteredPosts.map((post) => {
-              const isInfo = post.type === "info";
-              return (
-                <div
-                  key={post.id}
-                  data-mading-post-id={post.id}
-                  className="apple-glass-card p-4 sm:p-5 relative group"
-                >
-                  {/* Top Header */}
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm ${isInfo ? "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300" : "bg-slate-100 text-slate-700 dark:bg-white/[0.06] dark:text-slate-300"}`}>
-                    {isInfo ? <Icon.Megaphone className="h-3.5 w-3.5" /> : <Icon.User className="h-3.5 w-3.5" />}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <p className="truncate text-[13px] font-bold text-[#1d1d1f] dark:text-[#f5f5f7]">
-                          {post.sender_name || "Anonim"}
-                        </p>
-                        <span className="rounded-md bg-black/[0.04] px-1.5 py-0.5 text-[10px] font-semibold text-gray-600 dark:bg-white/[0.08] dark:text-gray-400">
-                          {post.faculty || "USU"}
-                        </span>
-                        <span className={`rounded-full px-2 py-0.2 text-[10px] font-semibold ${isInfo ? "bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300" : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"}`}>
-                          {isInfo ? "Info Kampus" : "Menfess"}
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
-                        {waktuLalu(post.created_at)}
-                      </p>
-                    </div>
-                    {/* Report post button */}
-                    <button
-                      type="button"
-                      onClick={() => handleReport(post.id)}
-                      title="Laporkan postingan"
-                      aria-label="Laporkan postingan"
-                      className="opacity-30 hover:opacity-100 hover:text-rose-500 text-slate-400 p-1.5 rounded-lg transition-all"
-                    >
-                      <Icon.Flag className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-
-                  {/* Title (If Info) */}
-                  {post.title && (
-                    <h4 className="mt-1.5 mb-0.5 text-[14px] font-bold text-[#1d1d1f] dark:text-[#f5f5f7] leading-snug">
-                      {post.title}
-                    </h4>
-                  )}
-
-                  {/* Content Body */}
-                  <p className="text-[13px] leading-[1.5] text-[#1d1d1f] dark:text-gray-200 whitespace-pre-wrap mt-0.5">
-                    {post.content}
-                  </p>
-
-                  {/* Attached Image */}
-                  {post.image_url && (
-                    <div 
-                      onClick={() => setZoomImage(post.image_url)}
-                      className="mt-3 rounded-[16px] overflow-hidden border border-black/[0.04] dark:border-white/[0.06] bg-black/[0.02] dark:bg-black/30 cursor-zoom-in relative aspect-[16/9] w-full max-h-72"
-                    >
-                      <Image 
-                        src={post.image_url} 
-                        alt={post.title ? `Foto ${post.title}` : "Foto menfess"} 
-                        fill
-                        sizes="(max-width: 768px) 100vw, 720px"
-                        className="object-cover hover:scale-[1.01] transition-transform duration-300" 
-                        loading="lazy" 
-                      />
-                    </div>
-                  )}
-
-                  {/* Produk yang ditandai */}
-                  {post.listings && (
-                    <button
-                      type="button"
-                      onClick={() => setIntipProduk(post.listings)}
-                      className="mt-3 flex w-full items-center gap-3 rounded-2xl border border-primary/25 bg-primary/[0.05] p-2.5 text-left transition-all active:scale-[0.99] hover:bg-primary/[0.09]"
-                    >
-                      <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-black/[0.06] dark:bg-white/[0.08]">
-                        {post.listings.image_url || post.listings.images?.[0] ? (
-                          <img
-                            src={post.listings.image_url || post.listings.images[0]}
-                            alt=""
-                            className="h-full w-full object-cover"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-slate-500"><Icon.Box className="h-5 w-5" /></div>
-                        )}
-                      </div>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-xs font-bold text-[#1d1d1f] dark:text-white">
-                          {post.listings.title}
-                        </span>
-                        <span className="block text-[11px] font-extrabold text-primary dark:text-violet-400">
-                          {rupiah(post.listings.price)}
-                        </span>
-                      </span>
-                      <span className="shrink-0 rounded-full bg-primary px-3 py-1.5 text-[11px] font-bold text-white">
-                        Lihat
-                      </span>
-                    </button>
-                  )}
-
-                  {/* Bottom Action Bar */}
-                  <div className="mt-3.5 flex items-center justify-between gap-1 text-slate-600 dark:text-slate-400">
-                    <div className="flex items-center gap-1 sm:gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleLike(post.id)}
-                        aria-label={`Sukai postingan, ${post.likes_count || 0} suka`}
-                        className={`flex items-center gap-1.5 py-1 px-2 rounded-lg transition-colors ${
-                          post._isLiked ? "text-rose-500 bg-rose-50 dark:bg-rose-950/30" : "hover:text-rose-500"
-                        }`}
-                      >
-                        <Icon.Heart className={`h-3.5 w-3.5 ${post._isLiked ? "fill-current text-rose-500" : ""}`} />
-                        <span className="font-bold text-xs">{post.likes_count || 0}</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => toggleComments(post.id)}
-                        aria-label={`Buka komentar, ${post.comments_count || 0} komentar`}
-                        className={`flex items-center gap-1.5 py-1 px-2 rounded-lg transition-colors ${
-                          activeCommentsPostId === post.id ? "text-primary bg-primary/10" : "hover:text-primary"
-                        }`}
-                      >
-                        <Icon.MessageCircle className="h-3.5 w-3.5" />
-                        <span className="font-bold text-xs">
-                          {post.comments_count || 0} <span className="hidden min-[420px]:inline">Komentar</span>
-                        </span>
-                      </button>
-                    </div>
-
-                    <div className="flex items-center gap-1 sm:gap-2">
-                      {/* Unduh Menfess Story IG */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          triggerHaptic("light");
-                          setUnduhPost(post);
-                        }}
-                        aria-label="Unduh gambar untuk Instagram Story atau Status WhatsApp"
-                        title="Unduh gambar Story / Status"
-                        className="flex items-center gap-1.5 py-1 px-2 rounded-lg text-slate-500 hover:text-primary transition-colors active:scale-95"
-                      >
-                        <Icon.Download className="h-3.5 w-3.5" />
-                        <span className="font-bold text-xs hidden sm:inline">Story IG</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleShare(post)}
-                        aria-label="Bagikan postingan ini ke WhatsApp"
-                        className="flex items-center gap-1.5 py-1 px-2 rounded-lg hover:text-emerald-600 transition-colors"
-                      >
-                        <Icon.Share className="h-3.5 w-3.5" />
-                        <span className="font-bold text-xs hidden min-[480px]:inline">Bagikan</span>
-                      </button>
-
-                      <span className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 pl-1">
-                        <Icon.Eye className="h-3 w-3" />
-                        <span>{post.views_count || 0}</span>
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Comments Accordion Section */}
-                  {activeCommentsPostId === post.id && (
-                    <div className="mt-3 pt-3 border-t border-dashed border-slate-200 dark:border-slate-800 space-y-2.5 animate-in fade-in duration-200">
-                      <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-                        {(commentsMap[post.id] || []).length === 0 ? (
-                          <p className="text-[11px] text-slate-400 italic text-center py-2">
-                            Belum ada tanggapan. Jadilah yang pertama membalas!
-                          </p>
-                        ) : (
-                          commentsMap[post.id].map((c) => (
-                            <div key={c.id} className="bg-slate-50 dark:bg-white/[0.04] p-3 rounded-2xl text-xs">
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="font-bold text-slate-800 dark:text-slate-200">{c.sender_name}</span>
-                                <span className="text-[9px] text-slate-400">{waktuLalu(c.created_at)}</span>
-                              </div>
-                              <p className="text-slate-600 dark:text-slate-300 leading-snug">{c.content}</p>
-                            </div>
-                          ))
-                        )}
-                      </div>
-
-                      {/* Comment Input */}
-                      <div className="flex gap-2 pt-1">
-                        <input
-                          type="text"
-                          value={newCommentText}
-                          onChange={(e) => setNewCommentText(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") handleSendComment(post.id);
-                          }}
-                          placeholder="Tulis balasan anonim…"
-                          className="flex-1 bg-slate-100 dark:bg-slate-800 border-none rounded-full px-3.5 py-1.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary outline-none"
-                        />
-                        <button
-                          onClick={() => handleSendComment(post.id)}
-                          disabled={submittingComment || !newCommentText.trim()}
-                          className="bg-primary disabled:opacity-50 text-white px-3.5 py-1.5 rounded-full text-xs font-bold hover:brightness-105 transition-all shrink-0"
-                        >
-                          Kirim
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })
-          )}
-          
-          {/* Intersection Observer target for Infinite Scroll */}
-          {hasMore && !feedError && (
-            <div ref={loadMoreRef} className="py-8 flex flex-col justify-center items-center gap-2">
-              <div className="h-6 w-6 rounded-full border-2 border-primary/20 border-t-primary animate-spin"></div>
-              <span className="text-[11px] text-slate-400 dark:text-slate-500">Memuat postingan lainnya...</span>
-            </div>
-          )}
-          {feedError && (
-            <div className="py-8 text-center space-y-2">
-              <p className="text-xs text-rose-500 font-medium">Gagal memuat postingan lanjutan.</p>
-              <button
-                type="button"
-                onClick={() => {
-                  setFeedError(false);
-                  setHasMore(true);
-                }}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold hover:bg-primary hover:text-white transition-all active:scale-95"
-              >
-                <Icon.RefreshCcw className="w-3.5 h-3.5" />
-                <span>Coba Lagi</span>
-              </button>
-            </div>
-          )}
-          {!hasMore && posts.length > 0 && !feedError && (
-            <div className="py-8 text-center text-xs font-medium text-slate-400 dark:text-slate-500">
-              ✓ Anda sudah melihat semua postingan
-            </div>
-          )}
-        </div>{/* end feed posts list */}
-      </section>{/* end feed section */}
-
-          </div>{/* end kolom kiri */}
-
-          {/* ════════════════════════════════════════
-              SIDEBAR KANAN — Marketplace Barang & Fitur (Sticky)
-          ════════════════════════════════════════ */}
-          <aside className="hidden lg:block w-[320px] xl:w-[380px] shrink-0 sticky top-6 lg:pl-1 lg:pr-2 space-y-4 max-h-[calc(100vh-1.5rem)] overflow-y-auto pb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            
-            {/* Marketplace di Desktop */}
-            <div className="apple-glass-card overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-black/[0.05] dark:border-white/[0.07] bg-white/50 dark:bg-black/20">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold">
-                    <Icon.ShoppingBag className="h-4 w-4" />
+            {/* ── 1. MARKETPLACE HEADER WITH OPEN PO & LIHAT SEMUA ── */}
+            <section className="apple-glass-card p-4 sm:p-5">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-primary/20 via-primary/10 to-transparent text-primary flex items-center justify-center shrink-0 shadow-2xs">
+                    <Icon.ShoppingBag className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-[13px] text-[#1d1d1f] dark:text-white leading-tight">
-                      Marketplace Kampus
-                    </h3>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Barang bekas &amp; jasa mahasiswa</p>
+                    <div className="flex items-center gap-2">
+                      <h1 className="text-base sm:text-lg font-black text-[#1d1d1f] dark:text-white tracking-tight">
+                        Marketplace Kampus
+                      </h1>
+                      <span className="rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-extrabold text-[10px] px-2 py-0.5 border border-emerald-500/20">
+                        COD Aman
+                      </span>
+                    </div>
+                    <p className="text-[11.5px] text-slate-500 dark:text-slate-400">
+                      Jual &amp; beli barang bekas, gadget, buku kuliah, kos &amp; jasa mahasiswa USU &amp; POLMED
+                    </p>
                   </div>
                 </div>
-                <Link href="/jual-beli" className="text-[11px] font-bold text-primary hover:underline flex items-center gap-0.5">
-                  <span>Lihat Semua</span>
-                  <Icon.ArrowRight className="h-3 w-3" />
-                </Link>
-              </div>
 
-              {/* Grid 2-kolom barang marketplace */}
-              <div className="grid grid-cols-2 gap-2.5 p-3">
-                {latestListings.slice(0, 10).map((ad) => (
-                  <Link
-                    key={ad.id}
-                    href={`/produk/${buildSlug(ad.title, ad.id)}`}
-                    className="group overflow-hidden rounded-xl border border-black/[0.05] dark:border-white/[0.08] bg-[#f8f9fa] dark:bg-black/40 hover:border-primary/30 hover:shadow-md transition-all flex flex-col"
+                {/* ACTION BUTTONS: Tombol Open PO di samping Lihat Semua */}
+                <div className="flex items-center gap-2 flex-wrap shrink-0">
+                  {/* Tombol Open PO */}
+                  <a
+                    href="https://open-po.vercel.app"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white text-[11.5px] sm:text-xs font-bold shadow-xs hover:shadow-md hover:scale-[1.02] active:scale-95 transition-all"
+                    title="Open PO Kampus — Makanan, Merchandise & Jastip Mahasiswa"
                   >
-                    <div className="relative aspect-[4/3] w-full overflow-hidden bg-black/5 dark:bg-black/30">
-                      {ad.image_url ? (
-                        <Image
-                          src={ad.image_url}
-                          alt={ad.title}
-                          fill
-                          sizes="180px"
-                          className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center">
-                          <Icon.Package className="w-6 h-6 text-slate-300" />
-                        </div>
-                      )}
-                      <div className="absolute top-1.5 right-1.5 bg-[#1d1d1f]/80 backdrop-blur-md text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full shadow-xs">
-                        {rupiah(ad.price || 0)}
-                      </div>
-                    </div>
-                    <div className="p-2 flex-1 flex flex-col justify-between">
-                      <div>
-                        <p className="text-[11px] font-bold text-[#1d1d1f] dark:text-white line-clamp-1 group-hover:text-primary transition-colors">
-                          {ad.title}
-                        </p>
-                        <p className="text-[9px] font-medium text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                          by {ad.seller_name || "Mahasiswa"}
-                        </p>
-                      </div>
-                      <div className="mt-1.5 pt-1 border-t border-black/[0.04] dark:border-white/[0.05] flex items-center justify-between text-[9px] text-slate-500 dark:text-slate-400">
-                        <span className="truncate flex items-center gap-0.5">
-                          <Icon.MapPin className="w-2.5 h-2.5 text-slate-400" />
-                          {ad.campus === "Semua" ? "Medan" : ad.campus}
-                        </span>
-                        <span className="font-semibold text-primary">COD</span>
-                      </div>
-                    </div>
+                    <span className="text-sm leading-none">🍵</span>
+                    <span>Open PO</span>
+                    <Icon.ExternalLink className="w-3 h-3 opacity-90" />
+                  </a>
+
+                  {/* Tombol Lihat Semua */}
+                  <Link
+                    href="/jual-beli"
+                    className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.08] dark:hover:bg-white/[0.12] text-primary text-[11.5px] sm:text-xs font-bold active:scale-95 transition-all"
+                  >
+                    <span>Lihat Semua</span>
+                    <Icon.ArrowRight className="w-3 h-3" />
                   </Link>
-                ))}
+
+                  {/* Tombol Pasang Iklan */}
+                  <Link
+                    href="/jual"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-primary hover:bg-primary/90 text-white text-[11.5px] sm:text-xs font-bold shadow-xs active:scale-95 transition-all"
+                  >
+                    <Icon.Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                    <span className="hidden xs:inline">Pasang Iklan</span>
+                    <span className="xs:hidden">Jual</span>
+                  </Link>
+                </div>
               </div>
 
-              <div className="px-3 pb-3">
-                <Link
-                  href="/jual"
-                  className="flex items-center justify-center gap-1.5 w-full rounded-xl bg-primary text-white py-2 text-xs font-bold shadow-sm hover:brightness-105 transition-all"
+              {/* FILTERS & SEARCH ROW */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-3 border-t border-black/[0.04] dark:border-white/[0.06]">
+                {/* Campus Selector */}
+                <div className="flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  <span className="text-[11px] font-semibold text-slate-400 shrink-0">Kampus:</span>
+                  {["Semua", "USU", "POLMED"].map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic("light");
+                        setListingCampus(c);
+                      }}
+                      className={`px-2.5 py-1 rounded-full text-[11px] font-bold transition-all shrink-0 ${
+                        listingCampus === c
+                          ? "bg-[#1d1d1f] text-white dark:bg-white dark:text-[#1d1d1f] shadow-2xs"
+                          : "bg-black/[0.04] text-slate-600 hover:bg-black/[0.08] dark:bg-white/[0.06] dark:text-slate-300"
+                      }`}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Category Pills */}
+                <div className="flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {["Semua", "Buku", "Elektronik", "Kos", "Jasa", "Fashion"].map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic("light");
+                        setListingCategory(cat);
+                      }}
+                      className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-all shrink-0 ${
+                        listingCategory === cat
+                          ? "bg-primary text-white font-bold shadow-2xs"
+                          : "bg-black/[0.04] text-slate-600 hover:bg-black/[0.08] dark:bg-white/[0.06] dark:text-slate-300"
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            {/* ── 2. PRODUCT GRID (JUALAN DI TENGAH) ── */}
+            <section>
+              {filteredListings.length === 0 ? (
+                <div className="apple-glass-card text-center py-12 px-4">
+                  <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mx-auto mb-2.5">
+                    <Icon.Package className="w-6 h-6" />
+                  </div>
+                  <p className="text-sm font-bold text-[#1d1d1f] dark:text-white">Belum ada barang di filter ini</p>
+                  <p className="text-xs text-slate-500 mt-1">Coba pilih kampus atau kategori lain, atau pasang iklan barangmu sendiri.</p>
+                  <div className="mt-4 flex items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setListingCampus("Semua");
+                        setListingCategory("Semua");
+                        setListingSearch("");
+                      }}
+                      className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200"
+                    >
+                      Reset Filter
+                    </button>
+                    <Link
+                      href="/jual"
+                      className="px-3.5 py-1.5 rounded-xl bg-primary text-white text-xs font-bold hover:brightness-105"
+                    >
+                      + Pasang Iklan Sekarang
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-3.5">
+                  {filteredListings.map((ad) => (
+                    <ProductCard key={ad.id} listing={ad} />
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* ── 3. PASANG IKLAN CALLOUT BANNER ── */}
+            <section className="apple-glass-card p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-3 bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10 border border-blue-500/20">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-primary text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <Icon.Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-xs sm:text-[13px] font-black text-[#1d1d1f] dark:text-white">
+                    Punya barang nganggur di kos atau buku kuliah bekas?
+                  </p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Pasang iklan dalam 1 menit, 100% gratis tanpa potongan biaya admin.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/jual"
+                className="shrink-0 w-full sm:w-auto text-center px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-xs shadow-xs active:scale-95 transition-all"
+              >
+                + Pasang Iklan Sekarang
+              </Link>
+            </section>
+
+            {/* ── 4. QUICK FEATURES BAR (SWIPE & CHAT) ── */}
+            <section className="grid grid-cols-2 gap-2.5">
+              <Link
+                href="/teman"
+                className="flex items-center gap-2.5 p-3 rounded-2xl bg-gradient-to-br from-orange-500/10 via-rose-500/10 to-purple-500/10 dark:from-orange-950/30 dark:via-rose-950/20 dark:to-purple-950/30 border border-orange-200/80 dark:border-orange-500/20 active:scale-[0.98] transition-all shadow-2xs group"
+              >
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-orange-500 to-rose-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <Icon.Flame className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs font-black text-[#1d1d1f] dark:text-white truncate">Cari Teman</span>
+                    <span className="text-[8.5px] font-black uppercase tracking-wider bg-orange-500 text-white px-1.5 py-0.5 rounded-full">Swipe</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">Kenalan sesama kampus</p>
+                </div>
+              </Link>
+
+              <Link
+                href="/chat?anon=1"
+                className="flex items-center gap-2.5 p-3 rounded-2xl bg-gradient-to-br from-violet-500/10 via-purple-500/10 to-indigo-500/10 dark:from-violet-950/30 dark:via-purple-950/20 dark:to-indigo-950/30 border border-violet-200/80 dark:border-violet-500/20 active:scale-[0.98] transition-all shadow-2xs group"
+              >
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <Icon.MessageCircle className="w-4.5 h-4.5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs font-black text-[#1d1d1f] dark:text-white truncate">Chat Anonim</span>
+                    <span className="text-[8.5px] font-black uppercase tracking-wider bg-violet-600 text-white px-1.5 py-0.5 rounded-full">Live</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">Ngobrol 1-on-1 rahasia</p>
+                </div>
+              </Link>
+            </section>
+
+            {/* ── 5. MENFESS & MADING FEED (MOBILE ONLY: lg:hidden) ── */}
+            <section
+              className="w-full lg:hidden pt-2"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
+              {/* Pull to refresh visual indicator */}
+              {(pullDistance > 0 || isRefreshing) && (
+                <div
+                  style={{ height: `${pullDistance}px` }}
+                  className="overflow-hidden transition-[height] duration-150 flex items-center justify-center text-xs font-semibold text-primary mb-2"
                 >
-                  <Icon.Plus className="h-3.5 w-3.5" />
-                  Pasang Iklan Barang / Jasa Gratis
-                </Link>
-              </div>
-            </div>
+                  <div className="flex items-center gap-2 py-1 px-3.5 bg-primary/10 dark:bg-primary/20 rounded-full text-xs text-primary">
+                    <Icon.RefreshCcw className={`w-3.5 h-3.5 ${isRefreshing || pullDistance > 50 ? "animate-spin" : ""}`} />
+                    <span>{isRefreshing ? "Menyegarkan feed..." : pullDistance > 50 ? "Lepaskan untuk segarkan" : "Tarik untuk segarkan"}</span>
+                  </div>
+                </div>
+              )}
 
-            {/* Kirim Menfess CTA */}
+              {/* Banner: ada postingan baru */}
+              {newPostCount > 0 && (
+                <button
+                  onClick={() => {
+                    triggerHaptic("light");
+                    loadNewPosts();
+                  }}
+                  className="w-full mb-3 flex items-center justify-center gap-2 bg-primary text-white text-xs font-bold py-2.5 px-4 rounded-2xl shadow-md hover:brightness-105 transition-all animate-in slide-in-from-top-3 duration-300"
+                >
+                  <Icon.ArrowUp className="w-3.5 h-3.5" />
+                  Ada {newPostCount} postingan baru — klik untuk muat
+                </button>
+              )}
+
+              {/* Section Header Menfess Mobile */}
+              <div className="sticky top-[70px] z-30 apple-glass rounded-2xl px-3 py-2 mb-3 shadow-xs">
+                <div className="flex items-center justify-between gap-1.5">
+                  <div className="apple-segmented shrink-0">
+                    {[
+                      { id: "all", label: "Semua" },
+                      { id: "menfess", label: "Menfess" },
+                      { id: "info", label: "Info" },
+                    ].map((tab) => (
+                      <button
+                        key={tab.id}
+                        onClick={() => {
+                          triggerHaptic("light");
+                          setActiveTab(tab.id);
+                          setSearchQuery("");
+                          setShowSearch(false);
+                        }}
+                        className={`px-3 py-1 text-[11px] font-semibold rounded-full transition-all whitespace-nowrap ${
+                          activeTab === tab.id
+                            ? "bg-white dark:bg-[#2c2c2e] text-[#1d1d1f] dark:text-white shadow-2xs font-bold"
+                            : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => {
+                        triggerHaptic("medium");
+                        updateFormData({ type: activeTab === "info" ? "info" : "menfess" });
+                        setShowModal(true);
+                      }}
+                      className="h-[30px] flex items-center gap-1 bg-primary hover:bg-primary/90 text-white px-2.5 rounded-full text-[11px] font-bold shadow-xs active:scale-95 transition-all"
+                    >
+                      <Icon.Plus className="w-3 h-3 stroke-[2.5]" />
+                      <span>Menfess</span>
+                    </button>
+
+                    <button
+                      onClick={() => setShowSearch((s) => !s)}
+                      className="w-[30px] h-[30px] flex items-center justify-center rounded-full text-slate-500 hover:text-slate-900 hover:bg-black/[0.04] transition-colors"
+                    >
+                      <Icon.Search className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {showSearch && (
+                  <div className="mt-2 animate-in slide-in-from-top-2 duration-200">
+                    <input
+                      autoFocus
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Cari postingan menfess..."
+                      className="w-full px-3 py-1.5 text-xs bg-slate-100 dark:bg-slate-800 border-none rounded-xl outline-none"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Posts list */}
+              <div className="flex flex-col gap-3.5 mb-10">
+                {filteredPosts.map((post) => renderPostCard(post, false))}
+                {hasMore && !feedError && (
+                  <div ref={loadMoreRef} className="py-6 flex flex-col justify-center items-center gap-1.5">
+                    <div className="h-5 w-5 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+                    <span className="text-[10px] text-slate-400">Memuat menfess lainnya...</span>
+                  </div>
+                )}
+              </div>
+            </section>
+
+          </div>{/* end kolom tengah */}
+
+          {/* ════════════════════════════════════════
+              SIDEBAR KANAN — Menfess & Mading Kampus (Di Kanan)
+          ════════════════════════════════════════ */}
+          <aside className="hidden lg:block w-[360px] xl:w-[410px] shrink-0 sticky top-6 lg:pl-1 lg:pr-2 space-y-4 max-h-[calc(100vh-1.5rem)] overflow-y-auto pb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+
+            {/* 1. Kirim Menfess CTA */}
             <div className="apple-glass-card border-none bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 p-4 text-white shadow-[0_8px_24px_-6px_rgba(124,58,237,0.4)] relative overflow-hidden transition-all hover:shadow-[0_12px_32px_-8px_rgba(124,58,237,0.6)]">
               <div className="relative z-10">
                 <div className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur-sm mb-2">
@@ -1412,10 +1340,15 @@ export default function SuperAppHome({
                   Curhat &amp; Menfess
                 </div>
                 <h3 className="font-bold text-sm mb-1">Kirim Menfess Anonim 💌</h3>
-                <p className="text-xs text-white/85 mb-3 leading-relaxed">Ceritakan sesuatu secara anonim ke seluruh komunitas mahasiswa USU &amp; POLMED</p>
+                <p className="text-xs text-white/85 mb-3 leading-relaxed">
+                  Ceritakan sesuatu secara anonim ke seluruh komunitas mahasiswa USU &amp; POLMED
+                </p>
                 <button
-                  onClick={() => setShowModal(true)}
-                  className="w-full bg-white text-violet-800 font-extrabold text-xs py-2.5 rounded-xl hover:bg-violet-50 transition-colors shadow-sm"
+                  onClick={() => {
+                    triggerHaptic("medium");
+                    setShowModal(true);
+                  }}
+                  className="w-full bg-white text-violet-800 font-extrabold text-xs py-2.5 rounded-xl hover:bg-violet-50 transition-colors shadow-sm active:scale-95"
                 >
                   + Tulis Menfess Sekarang
                 </button>
@@ -1423,7 +1356,97 @@ export default function SuperAppHome({
               <div className="absolute -right-6 -bottom-6 h-24 w-24 rounded-full bg-white/10 blur-lg pointer-events-none" />
             </div>
 
-            {/* Link Cepat */}
+            {/* 2. Menfess Feed Card di Kanan */}
+            <div className="apple-glass-card p-3.5 sm:p-4">
+              {/* Header & Filter Tabs */}
+              <div className="flex items-center justify-between pb-3 border-b border-black/[0.05] dark:border-white/[0.07] mb-3">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-6 h-6 rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center font-bold">
+                    <Icon.MessageCircle className="h-3.5 w-3.5" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-xs text-[#1d1d1f] dark:text-white leading-tight">
+                      Menfess &amp; Mading
+                    </h3>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Suara mahasiswa kampus</p>
+                  </div>
+                </div>
+
+                {/* Tabs */}
+                <div className="apple-segmented shrink-0">
+                  {[
+                    { id: "all", label: "Semua" },
+                    { id: "menfess", label: "Menfess" },
+                    { id: "info", label: "Info" },
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => {
+                        triggerHaptic("light");
+                        setActiveTab(tab.id);
+                        setSearchQuery("");
+                        setShowSearch(false);
+                      }}
+                      className={`px-2.5 py-0.5 text-[10.5px] font-semibold rounded-full transition-all whitespace-nowrap ${
+                        activeTab === tab.id
+                          ? "bg-white dark:bg-[#2c2c2e] text-[#1d1d1f] dark:text-white shadow-2xs font-bold"
+                          : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Search toggle & input if active */}
+              {showSearch && (
+                <div className="mb-3 animate-in slide-in-from-top-2 duration-200">
+                  <div className="relative">
+                    <Icon.Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                    <input
+                      autoFocus
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Cari postingan..."
+                      className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-100 dark:bg-slate-800 border-none rounded-xl outline-none text-slate-900 dark:text-white"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Feed Posts List */}
+              <div className="space-y-3">
+                {filteredPosts.length === 0 ? (
+                  <div className="text-center py-8 px-2">
+                    <p className="text-xs font-bold text-slate-600 dark:text-slate-300">Belum ada menfess</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Jadilah yang pertama mengirim curhat atau info!</p>
+                    <button
+                      onClick={() => setShowModal(true)}
+                      className="mt-2.5 inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline"
+                    >
+                      + Tulis Menfess
+                    </button>
+                  </div>
+                ) : (
+                  filteredPosts.slice(0, 10).map((post) => renderPostCard(post, true))
+                )}
+              </div>
+
+              {/* Bottom link to /mading */}
+              <div className="mt-3 pt-3 border-t border-black/[0.04] dark:border-white/[0.06]">
+                <Link
+                  href="/mading"
+                  className="flex items-center justify-center gap-1.5 w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.06] dark:hover:bg-white/[0.1] text-[11px] font-bold text-primary transition-colors"
+                >
+                  <span>Buka Semua Menfess di Mading Kampus</span>
+                  <Icon.ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </div>
+
+            {/* 3. Jelajahi Fitur Kampus */}
             <div className="apple-glass-card p-4">
               <h3 className="font-bold text-[12px] text-[#1d1d1f] dark:text-white mb-3 flex items-center gap-1.5">
                 <Icon.Sparkles className="h-3.5 w-3.5 text-amber-500" />
