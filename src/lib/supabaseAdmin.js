@@ -19,3 +19,14 @@ export function getAdminClient() {
   });
   return _adminClient;
 }
+
+export const supabaseAdmin = new Proxy({}, {
+  get(target, prop) {
+    const client = getAdminClient();
+    const val = client[prop];
+    if (typeof val === "function") {
+      return val.bind(client);
+    }
+    return val;
+  }
+});

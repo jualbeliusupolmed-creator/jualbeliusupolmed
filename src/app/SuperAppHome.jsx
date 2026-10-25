@@ -84,6 +84,7 @@ export default function SuperAppHome({
   const [listingCampus, setListingCampus] = useState("Semua"); // 'Semua' | 'USU' | 'POLMED'
   const [listingCategory, setListingCategory] = useState("Semua");
   const [listingSearch, setListingSearch] = useState("");
+  const [mobileTab, setMobileTab] = useState("marketplace"); // 'marketplace' | 'menfess'
 
   // Mobile pull to refresh state
   const [pullDistance, setPullDistance] = useState(0);
@@ -151,7 +152,9 @@ export default function SuperAppHome({
   const [showOnboarding, setShowOnboarding] = useState(false);
   useEffect(() => {
     if (typeof window !== "undefined" && !localStorage.getItem("onboarding_done")) {
-      setShowOnboarding(true);
+      if (!window.location.search.includes("preview=1")) {
+        setShowOnboarding(true);
+      }
     }
   }, []);
   function dismissOnboarding() {
@@ -736,7 +739,8 @@ export default function SuperAppHome({
       const inTitle = (ad.title || "").toLowerCase().includes(q);
       const inSeller = (ad.seller_name || "").toLowerCase().includes(q);
       const inCampus = (ad.campus || "").toLowerCase().includes(q);
-      if (!inTitle && !inSeller && !inCampus) return false;
+      const inDesc = (ad.description || "").toLowerCase().includes(q);
+      if (!inTitle && !inSeller && !inCampus && !inDesc) return false;
     }
     return true;
   });
@@ -1005,45 +1009,88 @@ export default function SuperAppHome({
       )}
       
       {/* ── Layout Container Desktop: Scroll Natural ── */}
-      <div className="md:max-w-7xl md:mx-auto md:px-6 md:pt-6">
-        <div className="md:flex md:gap-6 md:items-start">
+      <div className="w-full px-3 sm:px-4 md:px-4 md:pt-4">
+
+        {/* ── MOBILE TAB SWITCHER: Marketplace vs Menfess (lg:hidden) ── */}
+        <div className="lg:hidden mb-3">
+          <div className="apple-segmented w-full p-1 bg-black/[0.04] dark:bg-white/[0.06] rounded-2xl flex gap-1">
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic("light");
+                setMobileTab("marketplace");
+              }}
+              className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                mobileTab === "marketplace"
+                  ? "bg-white dark:bg-[#2c2c2e] text-[#1d1d1f] dark:text-white shadow-2xs font-extrabold"
+                  : "text-slate-500 hover:text-slate-900 dark:text-slate-400"
+              }`}
+            >
+              <Icon.ShoppingBag className="w-3.5 h-3.5 text-primary" />
+              <span>Marketplace</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic("light");
+                setMobileTab("menfess");
+              }}
+              className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                mobileTab === "menfess"
+                  ? "bg-white dark:bg-[#2c2c2e] text-[#1d1d1f] dark:text-white shadow-2xs font-extrabold"
+                  : "text-slate-500 hover:text-slate-900 dark:text-slate-400"
+              }`}
+            >
+              <Icon.Heart className="w-3.5 h-3.5 text-rose-500 fill-current" />
+              <span>Curhat &amp; Menfess</span>
+              {newPostCount > 0 && (
+                <span className="text-[9px] py-0.2 px-1 rounded-full bg-rose-500 text-white font-extrabold">
+                  {newPostCount}
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-5 items-start">
           
           {/* ═══════════════════════════════════════
               KOLOM TENGAH — Marketplace Utama (Jualan di Tengah)
-              Mobile: full width | Desktop: flex-1
+              Mobile: visible when mobileTab === 'marketplace'
+              Desktop: flex-1, always visible
           ═══════════════════════════════════════ */}
-          <div className="md:flex-1 md:min-w-0 md:pr-2 space-y-4">
+          <div className={`flex-1 min-w-0 space-y-4 w-full ${mobileTab !== "marketplace" ? "hidden lg:block" : ""}`}>
 
             {/* ── 1. MARKETPLACE HEADER WITH OPEN PO & LIHAT SEMUA ── */}
             <section className="apple-glass-card p-4 sm:p-5">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-                <div className="flex items-center gap-2.5">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-black/[0.04] dark:border-white/[0.06]">
+                <div className="flex items-center gap-3 min-w-0">
                   <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-primary/20 via-primary/10 to-transparent text-primary flex items-center justify-center shrink-0 shadow-2xs">
                     <Icon.ShoppingBag className="w-5 h-5" />
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <h1 className="text-base sm:text-lg font-black text-[#1d1d1f] dark:text-white tracking-tight">
                         Marketplace Kampus
                       </h1>
                       <span className="rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-extrabold text-[10px] px-2 py-0.5 border border-emerald-500/20">
-                        COD Aman
+                        COD Kampus
                       </span>
                     </div>
-                    <p className="text-[11.5px] text-slate-500 dark:text-slate-400">
-                      Jual &amp; beli barang bekas, gadget, buku kuliah, kos &amp; jasa mahasiswa USU &amp; POLMED
+                    <p className="text-[11px] sm:text-[11.5px] text-slate-500 dark:text-slate-400 truncate sm:whitespace-normal">
+                      Jual beli barang bekas, buku &amp; jasa mahasiswa USU - POLMED
                     </p>
                   </div>
                 </div>
 
-                {/* ACTION BUTTONS: Tombol Open PO di samping Lihat Semua */}
-                <div className="flex items-center gap-2 flex-wrap shrink-0">
+                {/* ACTION BUTTONS: Tombol Open PO persis di samping Lihat Semua */}
+                <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
                   {/* Tombol Open PO */}
                   <a
                     href="https://open-po.vercel.app"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white text-[11.5px] sm:text-xs font-bold shadow-xs hover:shadow-md hover:scale-[1.02] active:scale-95 transition-all"
+                    className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-[11.5px] sm:text-xs font-bold shadow-xs hover:shadow-md active:scale-95 transition-all"
                     title="Open PO Kampus — Makanan, Merchandise & Jastip Mahasiswa"
                   >
                     <span className="text-sm leading-none">🍵</span>
@@ -1054,29 +1101,61 @@ export default function SuperAppHome({
                   {/* Tombol Lihat Semua */}
                   <Link
                     href="/jual-beli"
-                    className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.08] dark:hover:bg-white/[0.12] text-primary text-[11.5px] sm:text-xs font-bold active:scale-95 transition-all"
+                    className="inline-flex items-center gap-1 px-3 sm:px-3.5 py-1.5 rounded-full bg-black/[0.04] dark:bg-white/[0.08] hover:bg-black/[0.08] dark:hover:bg-white/[0.12] text-primary text-[11.5px] sm:text-xs font-bold active:scale-95 transition-all"
                   >
                     <span>Lihat Semua</span>
                     <Icon.ArrowRight className="w-3 h-3" />
                   </Link>
-
-                  {/* Tombol Pasang Iklan */}
-                  <Link
-                    href="/jual"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-primary hover:bg-primary/90 text-white text-[11.5px] sm:text-xs font-bold shadow-xs active:scale-95 transition-all"
-                  >
-                    <Icon.Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                    <span className="hidden xs:inline">Pasang Iklan</span>
-                    <span className="xs:hidden">Jual</span>
-                  </Link>
                 </div>
               </div>
 
-              {/* FILTERS & SEARCH ROW */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-3 border-t border-black/[0.04] dark:border-white/[0.06]">
-                {/* Campus Selector */}
-                <div className="flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  <span className="text-[11px] font-semibold text-slate-400 shrink-0">Kampus:</span>
+              {/* Search Bar Input */}
+              <div className="relative mt-3">
+                <Icon.Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <input
+                  type="text"
+                  value={listingSearch}
+                  onChange={(e) => setListingSearch(e.target.value)}
+                  placeholder="Cari laptop, buku kuliah, kos, jasa..."
+                  className="w-full bg-black/[0.03] dark:bg-white/[0.05] border border-black/[0.04] dark:border-white/[0.06] rounded-xl pl-9 pr-8 py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
+                />
+                {listingSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setListingSearch("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white p-0.5"
+                  >
+                    <Icon.X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Filter Kategori & Kampus */}
+              <div className="flex flex-col gap-2 mt-3 pt-2.5 border-t border-black/[0.04] dark:border-white/[0.06]">
+                {/* Kategori Pills */}
+                <div className="flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pb-0.5">
+                  {["Semua", "Elektronik", "Buku", "Fashion", "Kos", "Jasa", "Makanan"].map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic("light");
+                        setListingCategory(cat);
+                      }}
+                      className={`px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition-all shrink-0 ${
+                        listingCategory === cat
+                          ? "bg-primary text-white shadow-2xs"
+                          : "bg-black/[0.04] text-slate-600 hover:bg-black/[0.08] dark:bg-white/[0.06] dark:text-slate-300"
+                      }`}
+                    >
+                      {cat === "Semua" ? "Semua Kategori" : cat}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Kampus Filter Pills */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10.5px] font-semibold text-slate-400 mr-1 shrink-0">Kampus:</span>
                   {["Semua", "USU", "POLMED"].map((c) => (
                     <button
                       key={c}
@@ -1085,36 +1164,29 @@ export default function SuperAppHome({
                         triggerHaptic("light");
                         setListingCampus(c);
                       }}
-                      className={`px-2.5 py-1 rounded-full text-[11px] font-bold transition-all shrink-0 ${
+                      className={`px-2.5 py-0.5 rounded-full text-[10.5px] font-bold transition-all shrink-0 ${
                         listingCampus === c
                           ? "bg-[#1d1d1f] text-white dark:bg-white dark:text-[#1d1d1f] shadow-2xs"
-                          : "bg-black/[0.04] text-slate-600 hover:bg-black/[0.08] dark:bg-white/[0.06] dark:text-slate-300"
+                          : "bg-black/[0.03] text-slate-500 hover:bg-black/[0.06] dark:bg-white/[0.05] dark:text-slate-400"
                       }`}
                     >
-                      {c}
+                      {c === "Semua" ? "Semua Kampus" : c}
                     </button>
                   ))}
-                </div>
 
-                {/* Category Pills */}
-                <div className="flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {["Semua", "Buku", "Elektronik", "Kos", "Jasa", "Fashion"].map((cat) => (
+                  {(listingCategory !== "Semua" || listingCampus !== "Semua" || listingSearch) && (
                     <button
-                      key={cat}
                       type="button"
                       onClick={() => {
-                        triggerHaptic("light");
-                        setListingCategory(cat);
+                        setListingCategory("Semua");
+                        setListingCampus("Semua");
+                        setListingSearch("");
                       }}
-                      className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-all shrink-0 ${
-                        listingCategory === cat
-                          ? "bg-primary text-white font-bold shadow-2xs"
-                          : "bg-black/[0.04] text-slate-600 hover:bg-black/[0.08] dark:bg-white/[0.06] dark:text-slate-300"
-                      }`}
+                      className="ml-auto text-[10.5px] font-bold text-rose-500 hover:underline"
                     >
-                      {cat}
+                      Reset Filter
                     </button>
-                  ))}
+                  )}
                 </div>
               </div>
             </section>
@@ -1127,13 +1199,13 @@ export default function SuperAppHome({
                     <Icon.Package className="w-6 h-6" />
                   </div>
                   <p className="text-sm font-bold text-[#1d1d1f] dark:text-white">Belum ada barang di filter ini</p>
-                  <p className="text-xs text-slate-500 mt-1">Coba pilih kampus atau kategori lain, atau pasang iklan barangmu sendiri.</p>
+                  <p className="text-xs text-slate-500 mt-1">Coba ganti kategori, cari kata kunci lain, atau reset filter.</p>
                   <div className="mt-4 flex items-center justify-center gap-2">
                     <button
                       type="button"
                       onClick={() => {
-                        setListingCampus("Semua");
                         setListingCategory("Semua");
+                        setListingCampus("Semua");
                         setListingSearch("");
                       }}
                       className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200"
@@ -1149,38 +1221,27 @@ export default function SuperAppHome({
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-3.5">
-                  {filteredListings.map((ad) => (
+                <div className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-3.5">
+                  {filteredListings.slice(0, 12).map((ad) => (
                     <ProductCard key={ad.id} listing={ad} />
                   ))}
                 </div>
               )}
+
+              {filteredListings.length > 0 && (
+                <div className="mt-4 text-center">
+                  <Link
+                    href="/jual-beli"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white dark:bg-[#1c1c1e] border border-black/[0.06] dark:border-white/[0.08] text-xs font-bold text-primary shadow-xs hover:shadow-md transition-all active:scale-95"
+                  >
+                    <span>Jelajahi Seluruh {filteredListings.length}+ Produk di Marketplace</span>
+                    <Icon.ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              )}
             </section>
 
-            {/* ── 3. PASANG IKLAN CALLOUT BANNER ── */}
-            <section className="apple-glass-card p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-3 bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10 border border-blue-500/20">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-primary text-white flex items-center justify-center shrink-0 shadow-xs">
-                  <Icon.Sparkles className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-xs sm:text-[13px] font-black text-[#1d1d1f] dark:text-white">
-                    Punya barang nganggur di kos atau buku kuliah bekas?
-                  </p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Pasang iklan dalam 1 menit, 100% gratis tanpa potongan biaya admin.
-                  </p>
-                </div>
-              </div>
-              <Link
-                href="/jual"
-                className="shrink-0 w-full sm:w-auto text-center px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-xs shadow-xs active:scale-95 transition-all"
-              >
-                + Pasang Iklan Sekarang
-              </Link>
-            </section>
-
-            {/* ── 4. QUICK FEATURES BAR (SWIPE & CHAT) ── */}
+            {/* ── 3. QUICK FEATURES BAR (SWIPE & CHAT) ── */}
             <section className="grid grid-cols-2 gap-2.5">
               <Link
                 href="/teman"
@@ -1215,9 +1276,34 @@ export default function SuperAppHome({
               </Link>
             </section>
 
-            {/* ── 5. MENFESS & MADING FEED (MOBILE ONLY: lg:hidden) ── */}
+            {/* Mobile bottom card to jump to Menfess */}
+            <div className="lg:hidden apple-glass-card p-3.5 flex items-center justify-between gap-3">
+              <div>
+                <p className="font-bold text-xs text-[#1d1d1f] dark:text-white">Curhat &amp; Menfess Kampus</p>
+                <p className="text-[10.5px] text-slate-400">Suara anonim, cerita &amp; info mahasiswa</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic("light");
+                  setMobileTab("menfess");
+                  if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className="px-3.5 py-1.5 rounded-full bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold shadow-xs active:scale-95 transition-all shrink-0 flex items-center gap-1"
+              >
+                <span>Buka Menfess</span>
+                <Icon.ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+
+          </div>{/* end kolom tengah */}
+
+          {/* ════════════════════════════════════════
+              MENFESS FEED (MOBILE ONLY when mobileTab === 'menfess')
+          ════════════════════════════════════════ */}
+          <div className={`w-full space-y-3 lg:hidden ${mobileTab !== "menfess" ? "hidden" : ""}`}>
             <section
-              className="w-full lg:hidden pt-2"
+              className="w-full"
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
@@ -1250,70 +1336,60 @@ export default function SuperAppHome({
               )}
 
               {/* Section Header Menfess Mobile */}
-              <div className="sticky top-[70px] z-30 apple-glass rounded-2xl px-3 py-2 mb-3 shadow-xs">
-                <div className="flex items-center justify-between gap-1.5">
-                  <div className="apple-segmented shrink-0">
-                    {[
-                      { id: "all", label: "Semua" },
-                      { id: "menfess", label: "Menfess" },
-                      { id: "info", label: "Info" },
-                    ].map((tab) => (
-                      <button
-                        key={tab.id}
-                        onClick={() => {
-                          triggerHaptic("light");
-                          setActiveTab(tab.id);
-                          setSearchQuery("");
-                          setShowSearch(false);
-                        }}
-                        className={`px-3 py-1 text-[11px] font-semibold rounded-full transition-all whitespace-nowrap ${
-                          activeTab === tab.id
-                            ? "bg-white dark:bg-[#2c2c2e] text-[#1d1d1f] dark:text-white shadow-2xs font-bold"
-                            : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-                        }`}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
+              <div className="apple-glass-card rounded-2xl px-3.5 py-3 mb-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center font-bold">
+                      <Icon.Heart className="h-4 w-4 text-rose-500 fill-current" />
+                    </div>
+                    <div>
+                      <h2 className="font-extrabold text-xs text-[#1d1d1f] dark:text-white">
+                        Curhat &amp; Menfess
+                      </h2>
+                      <p className="text-[10px] text-slate-400">Postingan anonim mahasiswa</p>
+                    </div>
                   </div>
 
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5">
+                    <div className="apple-segmented shrink-0">
+                      {[
+                        { id: "all", label: "Semua" },
+                        { id: "menfess", label: "Menfess" },
+                        { id: "info", label: "Info" },
+                      ].map((tab) => (
+                        <button
+                          key={tab.id}
+                          onClick={() => {
+                            triggerHaptic("light");
+                            setActiveTab(tab.id);
+                          }}
+                          className={`px-2.5 py-0.5 text-[10.5px] font-semibold rounded-full transition-all whitespace-nowrap ${
+                            activeTab === tab.id
+                              ? "bg-white dark:bg-[#2c2c2e] text-[#1d1d1f] dark:text-white shadow-2xs font-bold"
+                              : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                          }`}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+
                     <button
                       onClick={() => {
                         triggerHaptic("medium");
                         updateFormData({ type: activeTab === "info" ? "info" : "menfess" });
                         setShowModal(true);
                       }}
-                      className="h-[30px] flex items-center gap-1 bg-primary hover:bg-primary/90 text-white px-2.5 rounded-full text-[11px] font-bold shadow-xs active:scale-95 transition-all"
+                      className="h-[28px] flex items-center gap-1 bg-violet-600 hover:bg-violet-700 text-white px-2.5 rounded-full text-[11px] font-bold shadow-xs active:scale-95 transition-all"
                     >
                       <Icon.Plus className="w-3 h-3 stroke-[2.5]" />
-                      <span>Menfess</span>
-                    </button>
-
-                    <button
-                      onClick={() => setShowSearch((s) => !s)}
-                      className="w-[30px] h-[30px] flex items-center justify-center rounded-full text-slate-500 hover:text-slate-900 hover:bg-black/[0.04] transition-colors"
-                    >
-                      <Icon.Search className="w-3.5 h-3.5" />
+                      <span>Tulis</span>
                     </button>
                   </div>
                 </div>
-
-                {showSearch && (
-                  <div className="mt-2 animate-in slide-in-from-top-2 duration-200">
-                    <input
-                      autoFocus
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Cari postingan menfess..."
-                      className="w-full px-3 py-1.5 text-xs bg-slate-100 dark:bg-slate-800 border-none rounded-xl outline-none"
-                    />
-                  </div>
-                )}
               </div>
 
-              {/* Posts list */}
+              {/* Mobile Posts list */}
               <div className="flex flex-col gap-3.5 mb-10">
                 {filteredPosts.map((post) => renderPostCard(post, false))}
                 {hasMore && !feedError && (
@@ -1324,55 +1400,44 @@ export default function SuperAppHome({
                 )}
               </div>
             </section>
-
-          </div>{/* end kolom tengah */}
+          </div>
 
           {/* ════════════════════════════════════════
-              SIDEBAR KANAN — Menfess & Mading Kampus (Di Kanan)
+              SIDEBAR KANAN — Menfess & Mading Kampus (DESKTOP)
           ════════════════════════════════════════ */}
-          <aside className="hidden lg:block w-[360px] xl:w-[410px] shrink-0 sticky top-6 lg:pl-1 lg:pr-2 space-y-4 max-h-[calc(100vh-1.5rem)] overflow-y-auto pb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <aside className="hidden lg:block w-[320px] xl:w-[350px] shrink-0 sticky top-6 space-y-4 max-h-[calc(100vh-2rem)] overflow-y-auto pb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
 
-            {/* 1. Kirim Menfess CTA */}
-            <div className="apple-glass-card border-none bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 p-4 text-white shadow-[0_8px_24px_-6px_rgba(124,58,237,0.4)] relative overflow-hidden transition-all hover:shadow-[0_12px_32px_-8px_rgba(124,58,237,0.6)]">
-              <div className="relative z-10">
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white backdrop-blur-sm mb-2">
-                  <Icon.Heart className="h-3 w-3 text-rose-300 fill-current" />
-                  Curhat &amp; Menfess
+            {/* Menfess Feed Widget di Kanan */}
+            <div className="apple-glass-card p-4">
+              {/* Header with Title and Tulis Button */}
+              <div className="flex items-center justify-between gap-2 pb-3 border-b border-black/[0.04] dark:border-white/[0.06] mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center font-bold">
+                    <Icon.Heart className="w-4 h-4 text-rose-500 fill-current" />
+                  </div>
+                  <div>
+                    <h2 className="font-extrabold text-sm text-[#1d1d1f] dark:text-white leading-tight">
+                      Curhat &amp; Menfess
+                    </h2>
+                    <p className="text-[10px] text-slate-400">Suara anonim USU &amp; POLMED</p>
+                  </div>
                 </div>
-                <h3 className="font-bold text-sm mb-1">Kirim Menfess Anonim 💌</h3>
-                <p className="text-xs text-white/85 mb-3 leading-relaxed">
-                  Ceritakan sesuatu secara anonim ke seluruh komunitas mahasiswa USU &amp; POLMED
-                </p>
+
                 <button
                   onClick={() => {
                     triggerHaptic("medium");
                     setShowModal(true);
                   }}
-                  className="w-full bg-white text-violet-800 font-extrabold text-xs py-2.5 rounded-xl hover:bg-violet-50 transition-colors shadow-sm active:scale-95"
+                  className="h-[28px] px-3 rounded-full bg-violet-600 hover:bg-violet-500 active:scale-95 text-white text-[11px] font-bold flex items-center gap-1 shadow-xs transition-all shrink-0"
                 >
-                  + Tulis Menfess Sekarang
+                  <Icon.Plus className="w-3 h-3 stroke-[2.5]" />
+                  <span>Tulis</span>
                 </button>
               </div>
-              <div className="absolute -right-6 -bottom-6 h-24 w-24 rounded-full bg-white/10 blur-lg pointer-events-none" />
-            </div>
 
-            {/* 2. Menfess Feed Card di Kanan */}
-            <div className="apple-glass-card p-3.5 sm:p-4">
-              {/* Header & Filter Tabs */}
-              <div className="flex items-center justify-between pb-3 border-b border-black/[0.05] dark:border-white/[0.07] mb-3">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-6 h-6 rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center font-bold">
-                    <Icon.MessageCircle className="h-3.5 w-3.5" />
-                  </div>
-                  <div>
-                    <h3 className="font-black text-xs text-[#1d1d1f] dark:text-white leading-tight">
-                      Menfess &amp; Mading
-                    </h3>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400">Suara mahasiswa kampus</p>
-                  </div>
-                </div>
-
-                {/* Tabs */}
+              {/* Filter Tabs */}
+              <div className="flex items-center justify-between pb-3 mb-3 border-b border-black/[0.04] dark:border-white/[0.06]">
+                <span className="text-[10.5px] font-semibold text-slate-400">Filter feed:</span>
                 <div className="apple-segmented shrink-0">
                   {[
                     { id: "all", label: "Semua" },
@@ -1384,10 +1449,8 @@ export default function SuperAppHome({
                       onClick={() => {
                         triggerHaptic("light");
                         setActiveTab(tab.id);
-                        setSearchQuery("");
-                        setShowSearch(false);
                       }}
-                      className={`px-2.5 py-0.5 text-[10.5px] font-semibold rounded-full transition-all whitespace-nowrap ${
+                      className={`px-2 py-0.5 text-[10px] font-semibold rounded-full transition-all whitespace-nowrap ${
                         activeTab === tab.id
                           ? "bg-white dark:bg-[#2c2c2e] text-[#1d1d1f] dark:text-white shadow-2xs font-bold"
                           : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
@@ -1399,38 +1462,101 @@ export default function SuperAppHome({
                 </div>
               </div>
 
-              {/* Search toggle & input if active */}
-              {showSearch && (
-                <div className="mb-3 animate-in slide-in-from-top-2 duration-200">
-                  <div className="relative">
-                    <Icon.Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
-                    <input
-                      autoFocus
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Cari postingan..."
-                      className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-100 dark:bg-slate-800 border-none rounded-xl outline-none text-slate-900 dark:text-white"
-                    />
-                  </div>
-                </div>
-              )}
-
               {/* Feed Posts List */}
               <div className="space-y-3">
                 {filteredPosts.length === 0 ? (
-                  <div className="text-center py-8 px-2">
-                    <p className="text-xs font-bold text-slate-600 dark:text-slate-300">Belum ada menfess</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Jadilah yang pertama mengirim curhat atau info!</p>
+                  <div className="text-center py-6 px-2">
+                    <p className="text-xs font-bold text-slate-600 dark:text-slate-300">Belum ada postingan</p>
                     <button
                       onClick={() => setShowModal(true)}
-                      className="mt-2.5 inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline"
+                      className="mt-2 text-xs font-bold text-primary hover:underline"
                     >
-                      + Tulis Menfess
+                      + Kirim yang pertama
                     </button>
                   </div>
                 ) : (
-                  filteredPosts.slice(0, 10).map((post) => renderPostCard(post, true))
+                  filteredPosts.slice(0, 7).map((post) => (
+                    <div
+                      key={post.id}
+                      className="p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.05] hover:border-black/[0.08] dark:hover:border-white/[0.1] transition-all"
+                    >
+                      <div className="flex items-center justify-between gap-1 mb-1.5">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <div className="w-5 h-5 rounded-full bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300 flex items-center justify-center text-[9px] font-bold shrink-0">
+                            {post.type === "info" ? "📢" : "🤫"}
+                          </div>
+                          <span className="font-bold text-[11px] text-[#1d1d1f] dark:text-[#f5f5f7] truncate">
+                            {post.sender_name || "Anonim"}
+                          </span>
+                          <span className="rounded bg-black/[0.04] dark:bg-white/[0.08] px-1 py-0.2 text-[9px] font-semibold text-gray-500">
+                            {post.faculty || "USU"}
+                          </span>
+                        </div>
+                        <span className="text-[9.5px] text-slate-400 shrink-0">
+                          {waktuLalu(post.created_at)}
+                        </span>
+                      </div>
+
+                      {post.title && (
+                        <h4 className="font-bold text-xs text-[#1d1d1f] dark:text-white mb-0.5 line-clamp-1">
+                          {post.title}
+                        </h4>
+                      )}
+
+                      <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed line-clamp-3 mb-2">
+                        {post.content}
+                      </p>
+
+                      {/* Thumbnail image if exists */}
+                      {post.image_url && (
+                        <div
+                          onClick={() => setZoomImage(post.image_url)}
+                          className="mb-2 rounded-xl overflow-hidden aspect-[16/9] w-full max-h-36 relative cursor-zoom-in"
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={post.image_url}
+                            alt=""
+                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                            loading="lazy"
+                          />
+                        </div>
+                      )}
+
+                      {/* Post action bar */}
+                      <div className="flex items-center justify-between text-slate-400 pt-1.5 border-t border-black/[0.03] dark:border-white/[0.04] text-[10px]">
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => handleLike(post.id)}
+                            className={`flex items-center gap-1 hover:text-rose-500 transition-colors ${
+                              post._isLiked ? "text-rose-500 font-bold" : ""
+                            }`}
+                          >
+                            <Icon.Heart className={`w-3.5 h-3.5 ${post._isLiked ? "fill-current text-rose-500" : ""}`} />
+                            <span>{post.likes_count || 0}</span>
+                          </button>
+
+                          <Link
+                            href={`/mading#post-${post.id}`}
+                            className="flex items-center gap-1 hover:text-primary transition-colors"
+                          >
+                            <Icon.MessageCircle className="w-3.5 h-3.5" />
+                            <span>{post.comments_count || 0}</span>
+                          </Link>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleShare(post)}
+                          className="hover:text-emerald-600 transition-colors flex items-center gap-1"
+                        >
+                          <Icon.Share className="w-3 h-3" />
+                          <span>Bagikan</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))
                 )}
               </div>
 
@@ -1438,49 +1564,18 @@ export default function SuperAppHome({
               <div className="mt-3 pt-3 border-t border-black/[0.04] dark:border-white/[0.06]">
                 <Link
                   href="/mading"
-                  className="flex items-center justify-center gap-1.5 w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.06] dark:hover:bg-white/[0.1] text-[11px] font-bold text-primary transition-colors"
+                  className="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.06] dark:hover:bg-white/[0.1] text-xs font-bold text-primary transition-colors active:scale-95"
                 >
-                  <span>Buka Semua Menfess di Mading Kampus</span>
+                  <span>Buka Seluruh Mading &amp; Menfess</span>
                   <Icon.ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
             </div>
 
-            {/* 3. Jelajahi Fitur Kampus */}
-            <div className="apple-glass-card p-4">
-              <h3 className="font-bold text-[12px] text-[#1d1d1f] dark:text-white mb-3 flex items-center gap-1.5">
-                <Icon.Sparkles className="h-3.5 w-3.5 text-amber-500" />
-                Jelajahi Fitur Kampus
-              </h3>
-              <div className="space-y-1.5">
-                {[
-                  { href: "/dicari", icon: Icon.Search, label: "Barang Dicari", desc: "Posting barang yang kamu butuhkan" },
-                  { href: "/teman", icon: Icon.Users, label: "Cari Teman", desc: "Swipe & temukan teman kampus" },
-                  { href: "/organisasi", icon: Icon.BookOpen, label: "UKM & Organisasi", desc: "Info unit kegiatan mahasiswa" },
-                  { href: "/oprec", icon: Icon.Briefcase, label: "Oprec Panitia", desc: "Lowongan organisasi kampus" },
-                ].map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-black/[0.03] dark:hover:bg-white/[0.05] transition-colors group border border-transparent hover:border-black/[0.04] dark:hover:border-white/[0.06]"
-                  >
-                    <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                      <item.icon className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-[12px] font-bold text-[#1d1d1f] dark:text-white">{item.label}</p>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{item.desc}</p>
-                    </div>
-                    <Icon.ArrowRight className="h-3.5 w-3.5 text-slate-400 shrink-0 group-hover:text-primary transition-colors ml-auto" />
-                  </Link>
-                ))}
-              </div>
-            </div>
-
           </aside>
 
-        </div>{/* end md:flex */}
-      </div>{/* end md:max-w-7xl */}
+        </div>{/* end flex */}
+      </div>{/* end container */}
 
       {/* ── 6. WRITE POST MODAL ── */}
       {showModal && (
