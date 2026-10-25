@@ -13,19 +13,25 @@ export default function InstallPrompt() {
     // Jangan tampilkan jika user sudah dismiss sebelumnya
     if (localStorage.getItem("pwa_prompt_dismissed")) return;
 
+    let timer = null;
     const handler = (e) => {
-      // Mencegah Chrome memunculkan mini-infobar bawaan
       e.preventDefault();
-      // Simpan event agar bisa dipanggil nanti
       window.pwaDeferredPrompt = e;
       setDeferredPrompt(e);
-      // Tampilkan banner kustom kita
-      setShowPrompt(true);
+      // Beri waktu user menjelajah dulu, jangan langsung todong popup
+      timer = setTimeout(() => {
+        if (!localStorage.getItem("pwa_prompt_dismissed")) {
+          setShowPrompt(true);
+        }
+      }, 15000);
     };
 
     window.addEventListener("beforeinstallprompt", handler);
 
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+    return () => {
+      if (timer) clearTimeout(timer);
+      window.removeEventListener("beforeinstallprompt", handler);
+    };
   }, []);
 
   const handleInstall = async () => {
