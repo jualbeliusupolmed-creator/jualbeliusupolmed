@@ -99,11 +99,17 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
             </div>
           </div>
 
-          {/* Footer Card: Seller/Trust Indicator & Lokasi */}
+          {/* Footer Card: Seller/Trust Indicator & Lokasi COD */}
           <div className="mt-1 pt-2 border-t border-black/[0.04] dark:border-white/[0.06] flex items-center justify-between text-[11px] sm:text-[12px] text-slate-500 dark:text-slate-400 gap-1.5">
             <div className="flex items-center gap-1 min-w-0 flex-1 overflow-hidden">
               <span className="truncate max-w-[85px] sm:max-w-[125px] font-medium text-slate-700 dark:text-slate-300">
-                {!tanpaPenjual ? listing.seller_name || "Penjual" : ""}
+                {!tanpaPenjual ? (
+                  listing.seller_name && !/^User\s+\d+$/i.test(listing.seller_name)
+                    ? listing.seller_name
+                    : listing.campus && listing.campus !== "Semua"
+                    ? `Mhs ${listing.campus}`
+                    : "Mahasiswa"
+                ) : ""}
               </span>
               {listing.seller_profiles?.subscription_tier === "pro" && (
                 <Icon.Sparkles className="h-3 w-3 text-amber-500 shrink-0" title="Penjual Pro" />
@@ -120,9 +126,9 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
                 </span>
               )}
             </div>
-            <span className="shrink-0 flex items-center gap-0.5 text-[11px] sm:text-[12px] text-slate-500 dark:text-slate-400 max-w-[95px] sm:max-w-[115px] truncate">
+            <span className="shrink-0 flex items-center gap-0.5 text-[11px] sm:text-[12px] text-slate-500 dark:text-slate-400 max-w-[95px] sm:max-w-[115px] truncate" title={listing.area ? `COD: ${listing.area}` : undefined}>
               <Icon.MapPin className="h-3 w-3 shrink-0 text-slate-400" />
-              <span className="truncate">{listing.campus === "Semua" ? "Medan" : listing.campus}</span>
+              <span className="truncate">{listing.area || (listing.campus === "Semua" ? "Medan" : listing.campus)}</span>
             </span>
           </div>
         </div>

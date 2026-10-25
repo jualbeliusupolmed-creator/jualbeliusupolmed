@@ -11,7 +11,7 @@
   "display_override": ["window-controls-overlay", "standalone", "browser"],
   "orientation": "portrait",
   "background_color": "#ffffff",
-  "theme_color": "#16a34a",
+  "theme_color": "#7c3aed",
   "categories": ["shopping", "social", "lifestyle", "education"],
   "prefer_related_applications": false,
   "related_applications": [],

@@ -37,9 +37,9 @@ export default function RightSidebar({ config }) {
           {CATEGORIES.slice(0, 5).map((cat) => (
             <Link key={cat.slug} href={`/jual-beli?cat=${encodeURIComponent(cat.slug)}`} className="block group">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[13px] text-gray-500 dark:text-gray-400">Trending di Kampus</p>
-                  <p className="font-bold text-[15px] text-[#1d1d1f] dark:text-[#f5f5f7] group-hover:text-primary transition-colors">{cat.name}</p>
+                <div className="flex flex-col">
+                  <span className="text-[11px] text-gray-400 dark:text-gray-500 font-medium">Tren Kampus</span>
+                  <span className="font-bold text-[15px] text-[#1d1d1f] dark:text-[#f5f5f7] group-hover:text-primary transition-colors">{cat.name}</span>
                 </div>
                 <Icon.ChevronRight className="w-4 h-4 text-gray-400" />
               </div>

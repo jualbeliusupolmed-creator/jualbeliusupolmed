@@ -111,10 +111,10 @@ export async function generateMetadata({ params }) {
     ? `${rupiah(listing.price)}/${listing.rental_period}`
     : rupiah(listing.price);
   const title = `${listing.title} — ${priceLabel}${condLabel ? ` (${condLabel})` : ""}`;
-  const descBase = listing.description ? listing.description.slice(0, 120) : null;
+  const descBase = listing.description ? listing.description.slice(0, 120).replace(/[\s—\-–]+$/, "").trim() : null;
   const description = descBase
     ? `${descBase} — ${priceLabel}. COD area USU & Polmed Medan.`
-    : `${listing.title}${condLabel ? ` kondisi ${condLabel}` : ""} dijual ${priceLabel} oleh ${listing.seller_name} di ${siteName}. COD kampus USU & Polmed, transaksi aman dibantu admin.`;
+    : `${listing.title}${condLabel ? ` kondisi ${condLabel}` : ""} dijual ${priceLabel} oleh ${listing.seller_name || "Mahasiswa"} di ${siteName}. COD kampus USU & Polmed, transaksi aman dibantu admin.`;
   const canonicalSlug = buildSlug(listing.title, listing.id);
   const url = `${baseUrl}/produk/${canonicalSlug}`;
 
@@ -279,6 +279,11 @@ export default async function ProdukPage({ params }) {
                 <Icon.MapPin className="h-3 w-3" /> {listing.area}
               </span>
             )}
+            {listing.condition && (
+              <span className="badge bg-amber-500/10 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300 font-semibold">
+                {listing.condition === "new" ? "Kondisi: Baru" : listing.condition === "like_new" ? "Kondisi: Seperti Baru" : "Kondisi: Bekas"}
+              </span>
+            )}
             {listing.featured && (
               <span className="badge bg-gray-900 text-white dark:bg-slate-100 dark:text-slate-900">Unggulan</span>
             )}
@@ -294,12 +299,9 @@ export default async function ProdukPage({ params }) {
             <FavoriteButton listing={listing} size="lg" className="shrink-0" />
           </div>
           {listing.listing_code && (
-            <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-black/[0.08] bg-black/[0.02] px-3 py-1.5 text-sm font-medium text-[#1d1d1f] dark:border-white/[0.1] dark:bg-white/[0.05] dark:text-white">
-              <Icon.Hash className="h-4 w-4" />
-              <span>Kode Iklan {listing.listing_code}</span>
-              {shortPath ? (
-                <span className="text-xs text-[#6e6e73] dark:text-slate-400">{shortPath}</span>
-              ) : null}
+            <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-black/[0.08] bg-black/[0.02] px-3.5 py-1.5 text-sm font-medium text-[#1d1d1f] dark:border-white/[0.1] dark:bg-white/[0.05] dark:text-white">
+              <Icon.Hash className="h-4 w-4 text-primary" />
+              <span>Kode Iklan #{listing.listing_code}</span>
             </div>
           )}
           <p className="mt-2.5 text-3xl font-semibold tracking-[-0.04em] text-[#1d1d1f] dark:text-white">
@@ -337,11 +339,20 @@ export default async function ProdukPage({ params }) {
             className="card mt-5 flex items-center gap-3 p-3.5 hover:border-primary/30 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-shadow dark:border-slate-800 dark:bg-slate-900/40"
           >
             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 font-semibold text-primary dark:bg-white/10 dark:text-white">
-              {listing.seller_name?.[0]?.toUpperCase() || "?"}
+              {(listing.seller_name && !/^User\s+\d+$/i.test(listing.seller_name)
+                ? listing.seller_name[0]
+                : "M"
+              ).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <p className="text-sm font-semibold dark:text-white">{listing.seller_name}</p>
+                <p className="text-sm font-semibold dark:text-white">
+                  {listing.seller_name && !/^User\s+\d+$/i.test(listing.seller_name)
+                    ? listing.seller_name
+                    : listing.campus && listing.campus !== "Semua"
+                    ? `Mahasiswa ${listing.campus}`
+                    : "Mahasiswa Kampus"}
+                </p>
                 {listing.seller_profiles?.distributor && (
                   <span className="inline-flex items-center gap-0.5 rounded-full bg-orange-100 dark:bg-orange-900/40 px-1.5 py-0.5 text-[10px] font-bold text-orange-600 dark:text-orange-400" title="Distributor Resmi">
                      Distributor
