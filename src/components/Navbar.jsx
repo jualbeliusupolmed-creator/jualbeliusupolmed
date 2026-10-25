@@ -83,6 +83,22 @@ export default function Navbar({ config }) {
 
   return (
     <header className="sticky top-0 z-40">
+      {/* Universal Ecosystem Top Ribbon: USU x POLMED */}
+      <div className="h-8 bg-gradient-to-r from-purple-800 via-teal-600 to-emerald-600 text-white flex items-center justify-center px-3 text-[11px] font-bold shadow-xs relative z-50">
+        <div className="flex items-center gap-2">
+          <span className="opacity-95">🛍️ Jual Beli &amp; Menfess (Aktif)</span>
+          <span className="w-1 h-1 rounded-full bg-white/60" aria-hidden="true" />
+          <a
+            href="https://open-po.vercel.app"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:underline opacity-95 hover:opacity-100 flex items-center gap-1"
+          >
+            <span>🍵 Buka / Pesan Open PO Kampus ↗</span>
+          </a>
+        </div>
+      </div>
+
       {/* ── Top bar: Apple Frosted Glass ── */}
       <div className="border-b border-black/[0.06] bg-white/85 backdrop-blur-2xl transition-all duration-300 dark:border-white/[0.08] dark:bg-[#0f172a]/95">
         <div className="mx-auto flex min-w-0 max-w-6xl items-center justify-between gap-1 px-2.5 py-1.5 min-[390px]:px-3">
