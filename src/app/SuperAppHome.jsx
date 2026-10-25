@@ -84,7 +84,24 @@ export default function SuperAppHome({
   const [listingCampus, setListingCampus] = useState("Semua"); // 'Semua' | 'USU' | 'POLMED'
   const [listingCategory, setListingCategory] = useState("Semua");
   const [listingSearch, setListingSearch] = useState("");
-  const [mobileTab, setMobileTab] = useState("marketplace"); // 'marketplace' | 'menfess'
+  const [mobileTab, setMobileTab] = useState("marketplace"); // 'marketplace' | 'menfess' | 'openpo'
+
+  // Dynamic Spotlight Content Rotation: 0 = Jualan, 1 = Menfess, 2 = Open PO
+  const [spotlightIndex, setSpotlightIndex] = useState(0);
+  const [isSpotlightPaused, setIsSpotlightPaused] = useState(false);
+
+  useEffect(() => {
+    if (isSpotlightPaused) return;
+    const interval = setInterval(() => {
+      setSpotlightIndex((prev) => (prev + 1) % 3);
+    }, 4500);
+    return () => clearInterval(interval);
+  }, [isSpotlightPaused]);
+
+  const nextSpotlight = () => {
+    triggerHaptic("light");
+    setSpotlightIndex((prev) => (prev + 1) % 3);
+  };
 
   // Mobile pull to refresh state
   const [pullDistance, setPullDistance] = useState(0);
@@ -1107,54 +1124,141 @@ export default function SuperAppHome({
 
             {/* ── 1. MARKETPLACE HEADER WITH OPEN PO & LIHAT SEMUA ── */}
             <section className="apple-glass-card p-3 sm:p-5">
-              <div className="hidden sm:flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 pb-2.5 sm:pb-3 border-b border-black/[0.04] dark:border-white/[0.06]">
-                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-primary/20 via-primary/10 to-transparent text-primary flex items-center justify-center shrink-0 shadow-2xs">
-                    <Icon.ShoppingBag className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                      <h1 className="text-sm sm:text-lg font-black text-[#1d1d1f] dark:text-white tracking-tight">
-                        Marketplace Kampus
-                      </h1>
-                      <span className="rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-extrabold text-[9.5px] sm:text-[10px] px-2 py-0.5 border border-emerald-500/20">
-                        COD Kampus
-                      </span>
+              {/* ── ROTATING SPOTLIGHT HEADER (JUALAN, MENFESS, OPEN PO) ── */}
+              <div
+                className="pb-2.5 sm:pb-3 border-b border-black/[0.04] dark:border-white/[0.06] transition-all"
+                onMouseEnter={() => setIsSpotlightPaused(true)}
+                onMouseLeave={() => setIsSpotlightPaused(false)}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  {/* Spotlight Content */}
+                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+                    {/* Dynamic Icon */}
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-2xs transition-all duration-300">
+                      {spotlightIndex === 0 && (
+                        <div className="w-full h-full rounded-2xl bg-gradient-to-tr from-primary/20 via-primary/10 to-transparent text-primary flex items-center justify-center">
+                          <Icon.ShoppingBag className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
+                        </div>
+                      )}
+                      {spotlightIndex === 1 && (
+                        <div className="w-full h-full rounded-2xl bg-gradient-to-tr from-rose-500/20 via-rose-500/10 to-transparent text-rose-500 flex items-center justify-center">
+                          <Icon.Heart className="w-4.5 h-4.5 sm:w-5 sm:h-5 fill-current" />
+                        </div>
+                      )}
+                      {spotlightIndex === 2 && (
+                        <div className="w-full h-full rounded-2xl bg-gradient-to-tr from-emerald-500/20 via-emerald-500/10 to-transparent text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-base sm:text-lg">
+                          🍵
+                        </div>
+                      )}
                     </div>
-                    <p className="text-[10.5px] sm:text-[11.5px] text-slate-500 dark:text-slate-400 truncate sm:whitespace-normal">
-                      Jual beli barang bekas, buku &amp; jasa mahasiswa USU - POLMED
-                    </p>
+
+                    {/* Dynamic Texts */}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                        <h2 className="text-xs sm:text-sm md:text-base font-black text-[#1d1d1f] dark:text-white tracking-tight truncate">
+                          {spotlightIndex === 0 && "Marketplace Kampus"}
+                          {spotlightIndex === 1 && "Curhat & Menfess Kampus"}
+                          {spotlightIndex === 2 && "Open PO & Jastip Kampus"}
+                        </h2>
+                        <span className={`rounded-full font-extrabold text-[9px] sm:text-[10px] px-2 py-0.5 border transition-colors ${
+                          spotlightIndex === 0
+                            ? "bg-primary/10 text-primary border-primary/20"
+                            : spotlightIndex === 1
+                            ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+                            : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                        }`}>
+                          {spotlightIndex === 0 && "COD Kampus"}
+                          {spotlightIndex === 1 && "Live Suara Mahasiswa"}
+                          {spotlightIndex === 2 && "Pre-Order Aktif"}
+                        </span>
+                      </div>
+                      <p className="text-[10px] sm:text-[11.5px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                        {spotlightIndex === 0 && (latestListings?.[0]?.title ? `Terbaru: ${latestListings[0].title} — COD aman di USU & POLMED` : "Jual beli barang bekas, buku kuliah & jasa mahasiswa USU - POLMED")}
+                        {spotlightIndex === 1 && (posts?.[0]?.content ? `“${posts[0].content.slice(0, 75)}...”` : "Suara hati anonim, info kos, magang & cerita mahasiswa USU - POLMED")}
+                        {spotlightIndex === 2 && "Pesan Risol Mayo, Matcha Latte, Kopi Literan & Merchandise sesama mahasiswa"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Actions & Shuffle Button */}
+                  <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+                    {/* Shuffle / Randomize Button */}
+                    <button
+                      type="button"
+                      onClick={nextSpotlight}
+                      title="Ganti konten highlight (acak)"
+                      className="p-1.5 rounded-full bg-black/[0.04] dark:bg-white/[0.08] hover:bg-black/[0.08] dark:hover:bg-white/[0.12] text-slate-500 dark:text-slate-400 active:rotate-180 transition-all"
+                    >
+                      <Icon.RefreshCw className="w-3.5 h-3.5" />
+                    </button>
+
+                    {/* Contextual Action Button */}
+                    {spotlightIndex === 0 && (
+                      <Link
+                        href="/jual-beli"
+                        className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/15 text-primary text-[10.5px] sm:text-xs font-bold active:scale-95 transition-all"
+                      >
+                        <span>Lihat Semua</span>
+                        <Icon.ArrowRight className="w-3 h-3" />
+                      </Link>
+                    )}
+
+                    {spotlightIndex === 1 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          triggerHaptic("light");
+                          setMobileTab("menfess");
+                          if (typeof window !== "undefined") {
+                            const feed = document.getElementById("menfess-feed-section");
+                            if (feed) feed.scrollIntoView({ behavior: "smooth" });
+                          }
+                        }}
+                        className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-full bg-rose-500/10 hover:bg-rose-500/15 text-rose-600 dark:text-rose-400 text-[10.5px] sm:text-xs font-bold active:scale-95 transition-all"
+                      >
+                        <span>Baca Menfess</span>
+                        <Icon.ArrowRight className="w-3 h-3" />
+                      </button>
+                    )}
+
+                    {spotlightIndex === 2 && (
+                      <a
+                        href={`https://wa.me/62895429126232?text=${encodeURIComponent("Halo Admin Jual Beli USU Polmed, saya mau pesan Open PO Kampus dari jualbeliusupolmed.web.id")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-[10.5px] sm:text-xs font-bold shadow-xs active:scale-95 transition-all"
+                      >
+                        <span className="text-xs leading-none">🍵</span>
+                        <span>Pesan PO</span>
+                        <Icon.ExternalLink className="w-2.5 h-2.5 opacity-90" />
+                      </a>
+                    )}
                   </div>
                 </div>
 
-                {/* ACTION BUTTONS: Tombol Open PO persis di samping Lihat Semua */}
-                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 self-start sm:self-auto">
-                  {/* Tombol Open PO */}
-                  <a
-                    href="https://open-po.vercel.app"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-[11px] sm:text-xs font-bold shadow-xs hover:shadow-md active:scale-95 transition-all"
-                    title="Open PO Kampus — Makanan, Merchandise & Jastip Mahasiswa"
-                  >
-                    <span className="text-xs sm:text-sm leading-none">🍵</span>
-                    <span>Open PO</span>
-                    <Icon.ExternalLink className="w-3 h-3 opacity-90" />
-                  </a>
-
-                  {/* Tombol Lihat Semua */}
-                  <Link
-                    href="/jual-beli"
-                    className="inline-flex items-center gap-1 px-2.5 sm:px-3.5 py-1.5 rounded-full bg-black/[0.04] dark:bg-white/[0.08] hover:bg-black/[0.08] dark:hover:bg-white/[0.12] text-primary text-[11px] sm:text-xs font-bold active:scale-95 transition-all"
-                  >
-                    <span>Lihat Semua</span>
-                    <Icon.ArrowRight className="w-3 h-3" />
-                  </Link>
+                {/* Dot Indicators */}
+                <div className="flex items-center justify-center gap-1.5 mt-2">
+                  {[0, 1, 2].map((idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic("light");
+                        setSpotlightIndex(idx);
+                      }}
+                      className={`h-1 rounded-full transition-all duration-300 ${
+                        spotlightIndex === idx
+                          ? "w-6 bg-primary"
+                          : "w-1.5 bg-black/10 dark:bg-white/20 hover:bg-black/20"
+                      }`}
+                      aria-label={`Highlight ${idx + 1}`}
+                    />
+                  ))}
                 </div>
               </div>
 
               {/* SEARCH INPUT SEJAJAR DENGAN DROPDOWN KATEGORI & KAMPUS */}
-              <div className="flex items-center gap-1 sm:gap-2 mt-0.5 sm:mt-3 w-full">
+              <div className="flex items-center gap-1 sm:gap-2 mt-2 sm:mt-3 w-full">
                 {/* Search Bar Input */}
                 <div className="relative flex-1 min-w-0">
                   <Icon.Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -1217,66 +1321,22 @@ export default function SuperAppHome({
                     <Icon.ChevronDown className="w-2 h-2 sm:w-2.5 sm:h-2.5" />
                   </div>
                 </div>
-              </div>
 
-              {/* Filter Kategori & Kampus Pills (Desktop sm: ke atas) */}
-              <div className="hidden sm:flex flex-col gap-1.5 mt-2.5 pt-2 border-t border-black/[0.04] dark:border-white/[0.06]">
-                {/* Kategori Pills */}
-                <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-0.5">
-                  {["Semua", "Elektronik", "Buku", "Fashion", "Kos", "Jasa", "Makanan"].map((cat) => (
-                    <button
-                      key={cat}
-                      type="button"
-                      onClick={() => {
-                        triggerHaptic("light");
-                        setListingCategory(cat);
-                      }}
-                      className={`px-2.5 sm:px-3 py-1 rounded-full text-[10.5px] sm:text-[11px] font-bold whitespace-nowrap transition-all shrink-0 ${
-                        listingCategory === cat
-                          ? "bg-primary text-white shadow-2xs"
-                          : "bg-black/[0.04] text-slate-600 hover:bg-black/[0.08] dark:bg-white/[0.06] dark:text-slate-300"
-                      }`}
-                    >
-                      {cat === "Semua" ? "Semua Kategori" : cat}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Kampus Filter Pills */}
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[10px] sm:text-[10.5px] font-semibold text-slate-400 mr-0.5 shrink-0">Kampus:</span>
-                  {["Semua", "USU", "POLMED"].map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => {
-                        triggerHaptic("light");
-                        setListingCampus(c);
-                      }}
-                      className={`px-2 py-0.5 rounded-full text-[10px] sm:text-[10.5px] font-bold transition-all shrink-0 ${
-                        listingCampus === c
-                          ? "bg-[#1d1d1f] text-white dark:bg-white dark:text-[#1d1d1f] shadow-2xs"
-                          : "bg-black/[0.03] text-slate-500 hover:bg-black/[0.06] dark:bg-white/[0.05] dark:text-slate-400"
-                      }`}
-                    >
-                      {c === "Semua" ? "Semua Kampus" : c}
-                    </button>
-                  ))}
-
-                  {(listingCategory !== "Semua" || listingCampus !== "Semua" || listingSearch) && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setListingCategory("Semua");
-                        setListingCampus("Semua");
-                        setListingSearch("");
-                      }}
-                      className="ml-auto text-[10px] sm:text-[10.5px] font-bold text-rose-500 hover:underline"
-                    >
-                      Reset Filter
-                    </button>
-                  )}
-                </div>
+                {/* Reset Filter Button (jika ada filter aktif) */}
+                {(listingCategory !== "Semua" || listingCampus !== "Semua" || listingSearch) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setListingCategory("Semua");
+                      setListingCampus("Semua");
+                      setListingSearch("");
+                    }}
+                    className="shrink-0 text-[10px] sm:text-[11px] font-bold text-rose-500 hover:underline px-1"
+                    title="Reset Filter"
+                  >
+                    Reset
+                  </button>
+                )}
               </div>
             </section>
 
@@ -1395,25 +1455,34 @@ export default function SuperAppHome({
             {/* Open PO Banner */}
             <div className="p-4 rounded-3xl bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700 text-white shadow-lg relative overflow-hidden">
               <div className="relative z-10 space-y-2">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-md text-[10.5px] font-extrabold tracking-wide uppercase">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-md text-[10.5px] font-extrabold tracking-wide">
                   <span>🍵</span>
-                  <span>Eksklusif Mahasiswa USU &amp; POLMED</span>
+                  <span>Mitra Resmi Jual Beli USU Polmed</span>
                 </div>
                 <h2 className="text-lg font-black tracking-tight leading-snug">
-                  Open PO Kampus
+                  Open PO Kampus USU &amp; POLMED
                 </h2>
                 <p className="text-xs text-emerald-50 leading-relaxed max-w-sm">
-                  Pesan makanan favorit, minuman viral, kaos angkatan, &amp; jastip antar kampus langsung dari sesama mahasiswa.
+                  Pesan makanan favorit, minuman viral, kaos angkatan, &amp; jastip antar fakultas langsung tersambung ke WhatsApp admin/seller kampus.
                 </p>
-                <div className="pt-1">
+                <div className="pt-1 flex items-center gap-2 flex-wrap">
                   <a
-                    href="https://open-po.vercel.app"
+                    href={`https://wa.me/62895429126232?text=${encodeURIComponent("Halo Admin Jual Beli USU Polmed, saya mau tanya & pesan Open PO Kampus dari jualbeliusupolmed.web.id")}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white text-emerald-800 text-xs font-black shadow-md active:scale-95 transition-all"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-white text-emerald-900 text-xs font-black shadow-md active:scale-95 transition-all"
                   >
-                    <span>Buka Aplikasi Open PO</span>
-                    <Icon.ExternalLink className="w-3.5 h-3.5" />
+                    <span>💬 Pesan via WA</span>
+                    <Icon.ArrowRight className="w-3 h-3" />
+                  </a>
+                  <a
+                    href="https://open-po.vercel.app?utm_source=jualbeliusupolmed&ref=jualbeliusupolmed"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-white/15 hover:bg-white/25 border border-white/30 text-white text-xs font-bold active:scale-95 transition-all"
+                  >
+                    <span>Buka Web PO</span>
+                    <Icon.ExternalLink className="w-3 h-3" />
                   </a>
                 </div>
               </div>
@@ -1430,12 +1499,12 @@ export default function SuperAppHome({
                   Daftar PO yang Sedang Buka
                 </h3>
                 <a
-                  href="https://open-po.vercel.app"
+                  href="https://open-po.vercel.app?utm_source=jualbeliusupolmed&ref=jualbeliusupolmed"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5"
                 >
-                  <span>Buka App</span>
+                  <span>Lihat Semua</span>
                   <Icon.ExternalLink className="w-3 h-3" />
                 </a>
               </div>
@@ -1492,22 +1561,24 @@ export default function SuperAppHome({
                     emoji: "🛍️"
                   }
                 ].map((item, idx) => (
-                  <a
+                  <div
                     key={idx}
-                    href="https://open-po.vercel.app"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-3.5 rounded-2xl bg-white dark:bg-[#18181b] border border-black/[0.06] dark:border-white/[0.08] shadow-xs hover:border-emerald-500/40 active:scale-[0.98] transition-all flex flex-col justify-between gap-2.5 group"
+                    className="p-3.5 rounded-2xl bg-white dark:bg-[#18181b] border border-black/[0.06] dark:border-white/[0.08] shadow-xs flex flex-col justify-between gap-2.5"
                   >
                     <div className="flex items-start gap-3">
                       <div className="w-11 h-11 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl shrink-0">
                         {item.emoji}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight block">
-                          {item.kategori}
-                        </span>
-                        <h4 className="text-xs font-bold text-slate-900 dark:text-white leading-snug truncate group-hover:text-emerald-600 transition-colors">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight">
+                            {item.kategori}
+                          </span>
+                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-extrabold border border-emerald-500/20">
+                            COD Kampus
+                          </span>
+                        </div>
+                        <h4 className="text-xs font-bold text-slate-900 dark:text-white leading-snug truncate mt-0.5">
                           {item.nama}
                         </h4>
                         <p className="text-xs font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
@@ -1515,16 +1586,33 @@ export default function SuperAppHome({
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between pt-2 border-t border-black/[0.04] dark:border-white/[0.05] text-[10.5px]">
-                      <span className="text-slate-500 dark:text-slate-400 font-medium">
+                    <div className="flex items-center justify-between pt-2 border-t border-black/[0.04] dark:border-white/[0.05] text-[10.5px] gap-2">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium truncate">
                         {item.status}
                       </span>
-                      <span className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
-                        <span>Pesan</span>
-                        <Icon.ArrowRight className="w-2.5 h-2.5" />
-                      </span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <a
+                          href={`https://wa.me/62895429126232?text=${encodeURIComponent(`Halo Admin Jual Beli USU Polmed, saya ingin pesan Open PO: ${item.nama} (${item.harga}) via website jualbeliusupolmed.web.id`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-2.5 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] shadow-xs active:scale-95 transition-all flex items-center gap-1"
+                          title="Pesan via WhatsApp Jual Beli USU Polmed"
+                        >
+                          <span>Pesan WA</span>
+                          <Icon.ArrowRight className="w-2.5 h-2.5" />
+                        </a>
+                        <a
+                          href={`https://open-po.vercel.app?item=${encodeURIComponent(item.nama)}&utm_source=jualbeliusupolmed&ref=jualbeliusupolmed`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-1 rounded-lg text-slate-400 hover:text-emerald-600 transition-colors"
+                          title="Buka di Open PO App"
+                        >
+                          <Icon.ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      </div>
                     </div>
-                  </a>
+                  </div>
                 ))}
               </div>
             </div>
@@ -1535,17 +1623,28 @@ export default function SuperAppHome({
                 Mau Jual Makanan atau Merchandise dengan Sistem PO?
               </p>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Buka pesanan tanpa modal nombok, kelola kuota dan pembayaran otomatis.
+                Buka pesanan tanpa modal nombok, kelola kuota dan pembayaran aman dibantu admin Jual Beli USU Polmed.
               </p>
-              <a
-                href="https://open-po.vercel.app"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs active:scale-95 transition-all"
-              >
-                <span>Buka PO Kamu Sekarang</span>
-                <Icon.ExternalLink className="w-3 h-3" />
-              </a>
+              <div className="flex items-center justify-center gap-2 pt-1 flex-wrap">
+                <a
+                  href={`https://wa.me/62895429126232?text=${encodeURIComponent("Halo Admin Jual Beli USU Polmed, saya mahasiswa USU/POLMED ingin mendaftar & buka Open PO makanan/merchandise di platform jualbeliusupolmed.")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs active:scale-95 transition-all"
+                >
+                  <span>Daftar Buka PO via WA</span>
+                  <Icon.ArrowRight className="w-3 h-3" />
+                </a>
+                <a
+                  href="https://open-po.vercel.app?utm_source=jualbeliusupolmed&ref=jualbeliusupolmed"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-black/[0.05] dark:bg-white/[0.08] text-slate-700 dark:text-slate-200 text-xs font-bold active:scale-95 transition-all"
+                >
+                  <span>Buka Aplikasi</span>
+                  <Icon.ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
             </div>
           </div>
 
