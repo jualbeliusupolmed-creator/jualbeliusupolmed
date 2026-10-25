@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { censorProfanity } from "@/lib/profanity";
+import { censorProfanity, detectDoxxingRisk } from "@/lib/profanity";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { hashIdentitas } from "@/lib/identitasHash";
 import { catatIdentitasWa } from "@/lib/chatIdentity";
@@ -121,6 +121,15 @@ export async function POST(request) {
     if (content.length > 1000) {
       return NextResponse.json(
         { error: "Isi postingan maksimal 1000 karakter." },
+        { status: 400 }
+      );
+    }
+
+    // Validasi anti-doxxing: cegah penyebaran kontak pribadi atau NIM spesifik
+    const doxxingCheck = detectDoxxingRisk(content);
+    if (doxxingCheck.risky) {
+      return NextResponse.json(
+        { error: `${doxxingCheck.reason} Harap gunakan inisial tanpa menyertakan nomor identitas pribadi spesifik.` },
         { status: 400 }
       );
     }

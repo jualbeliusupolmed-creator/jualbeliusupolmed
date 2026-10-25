@@ -16,6 +16,7 @@ import QuickSearchSheet from "@/components/QuickSearchSheet";
 const links = [
   { href: "/", label: "Beranda" },
   { href: "/jual-beli", label: "Marketplace" },
+  { href: "https://open-po.vercel.app", label: "PO Kampus 🍵", external: true },
   { href: "/mading", label: "Menfess" },
   { href: "/organisasi", label: "UKM" },
   { href: "/oprec", label: "Oprec" },
@@ -214,6 +215,19 @@ export default function Navbar({ config }) {
         
         <nav className="mx-auto flex max-w-6xl items-center gap-1.5 overflow-x-auto px-4 py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {links.map((l) => {
+            if (l.external) {
+              return (
+                <a
+                  key={l.href}
+                  href={l.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="relative shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-bold tracking-tight transition-all duration-200 active:scale-[0.96] text-emerald-600 bg-emerald-500/10 hover:bg-emerald-500/20 dark:text-emerald-400 dark:bg-emerald-500/15"
+                >
+                  {l.label}
+                </a>
+              );
+            }
             const active = l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
             return (
               <Link

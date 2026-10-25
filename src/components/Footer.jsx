@@ -66,6 +66,11 @@ export default function Footer({ config }) {
                 </Link>
               </li>
               <li>
+                <a href="https://open-po.vercel.app" target="_blank" rel="noopener noreferrer" className="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 font-semibold transition-colors">
+                  PO Kampus 🍵
+                </a>
+              </li>
+              <li>
                 <Link href="/jual" className="text-gray-600 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white transition-colors">
                   Jual Barang
                 </Link>

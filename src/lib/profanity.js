@@ -81,3 +81,62 @@ export const FACULTIES = [
   "Fakultas Kehutanan",
   "POLMED (Politeknik Negeri Medan)",
 ];
+
+// Daftar barang terlarang marketplace (AdSense policy & Kampus Safety)
+export const PROHIBITED_MARKETPLACE_KEYWORDS = [
+  "vape", "vapor", "pod", "pods", "liquid", "relx", "mod vape", "rda", "rta",
+  "rokok", "cerutu", "tembakau", "shisha", "sisha", "hookah",
+  "tramadol", "dumolid", "alprazolam", "obat keras", "obat kuat", "miras", "alkohol", "arak", "tuak",
+  "senjata", "sajam", "celurit", "airsoft"
+];
+
+/**
+ * Memeriksa apakah judul atau deskripsi barang mengandung barang terlarang
+ * @param {string} title
+ * @param {string} description
+ * @returns {{ prohibited: boolean, keyword?: string, reason?: string }}
+ */
+export function checkProhibitedListing(title = "", description = "") {
+  const combined = `${title || ""} ${description || ""}`.toLowerCase();
+  for (const item of PROHIBITED_MARKETPLACE_KEYWORDS) {
+    const regex = new RegExp(`(^|[^a-z0-9])${item}([^a-z0-9]|$)`, "i");
+    if (regex.test(combined)) {
+      return {
+        prohibited: true,
+        keyword: item,
+        reason: `Kata '${item}' dilarang untuk menjaga keamanan akun Google AdSense dan aturan kampus`,
+      };
+    }
+  }
+  return { prohibited: false };
+}
+
+/**
+ * Deteksi risiko doxxing pada teks Menfess (NIM/Stambuk atau nomor kontak pribadi spesifik)
+ * @param {string} text
+ * @returns {{ risky: boolean, reason?: string }}
+ */
+export function detectDoxxingRisk(text = "") {
+  if (!text || typeof text !== "string") return { risky: false };
+
+  // 1. Nomor WhatsApp / ponsel eksplisit di dalam teks
+  const phonePattern = /(?:(?:\+62|62|0)8[1-9][0-9]{7,11})/;
+  if (phonePattern.test(text)) {
+    return {
+      risky: true,
+      reason: "Dilarang menyebarkan nomor telepon/kontak pribadi di publik untuk mencegah doxxing dan spam.",
+    };
+  }
+
+  // 2. Pola pencantuman NIM / Stambuk spesifik (format USU/POLMED biasanya 9-10 digit)
+  const nimExplicitPattern = /\b(?:nim|stambuk|stb|stb:|nim:)\s*[0-9]{7,12}\b/i;
+  const longDigitsPattern = /\b[0-9]{8,12}\b/;
+  if (nimExplicitPattern.test(text) || longDigitsPattern.test(text)) {
+    return {
+      risky: true,
+      reason: "Dilarang mencantumkan nomor induk mahasiswa (NIM/Stambuk) spesifik untuk menjaga privasi mahasiswa.",
+    };
+  }
+
+  return { risky: false };
+}
