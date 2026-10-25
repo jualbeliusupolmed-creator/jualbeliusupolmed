@@ -87,7 +87,30 @@ export default function SuperAppHome({
   const [listingCampus, setListingCampus] = useState("Semua"); // 'Semua' | 'USU' | 'POLMED'
   const [listingCategory, setListingCategory] = useState("Semua");
   const [listingSearch, setListingSearch] = useState("");
-  const [mobileTab, setMobileTab] = useState("marketplace"); // 'marketplace' | 'menfess'
+  const [mobileTab, setMobileTab] = useState("marketplace"); // 'marketplace' | 'openpo' | 'menfess'
+
+  // Realtime Open PO Batches from Open PO Supabase
+  const [poBatches, setPoBatches] = useState([]);
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadPo() {
+      try {
+        const res = await fetch("/api/open-po");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (mounted && data.batches && data.batches.length > 0) {
+          setPoBatches(data.batches);
+        }
+      } catch {}
+    }
+    loadPo();
+    const interval = setInterval(loadPo, 35000);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   // Live dynamic ticker rotation between Menfess, Open PO, and Jual Beli
   const [tickerIndex, setTickerIndex] = useState(0);
@@ -146,8 +169,15 @@ export default function SuperAppHome({
     }
 
     if (tickerType === 1) {
-      // ── KONTEN OPEN PO ──
-      const po = PO_TICKER_ITEMS[Math.floor(tickerIndex / 3) % PO_TICKER_ITEMS.length];
+      // ── KONTEN OPEN PO REALTIME ──
+      const pool = poBatches.length > 0 ? poBatches : PO_TICKER_ITEMS;
+      const po = pool[Math.floor(tickerIndex / 3) % pool.length];
+      const title = po?.name || po?.title || "Open PO Kampus";
+      const info = po?.price
+        ? `${rupiah(po.price)} • ${po.reserved || 0}/${po.quota || 0} terpesan`
+        : po?.sub || "Buka PO Kampus";
+      const targetUrl = po?.url || "https://open-po.vercel.app?utm_source=jualbeliusupolmed&ref=jualbeliusupolmed";
+
       return (
         <button
           type="button"
@@ -157,7 +187,7 @@ export default function SuperAppHome({
               setMobileTab("openpo");
               window.scrollTo({ top: 0, behavior: "smooth" });
             } else {
-              window.open("https://open-po.vercel.app", "_blank", "noopener,noreferrer");
+              window.open(targetUrl, "_blank", "noopener,noreferrer");
             }
           }}
           className="w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/20 text-left transition-all active:scale-[0.99] group shadow-2xs"
@@ -169,7 +199,7 @@ export default function SuperAppHome({
             </span>
             <span className="text-[10px] font-extrabold text-emerald-700 dark:text-emerald-300 shrink-0">Open PO 🍵:</span>
             <span className="text-[10.5px] text-slate-600 dark:text-slate-300 truncate min-w-0 flex-1">
-              &ldquo;{po.title} — {po.sub}&rdquo;
+              &ldquo;{title} — {info}&rdquo;
             </span>
           </div>
           <span className="text-[9.5px] font-bold text-emerald-600 dark:text-emerald-400 shrink-0 flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
@@ -1142,16 +1172,16 @@ export default function SuperAppHome({
       {/* ── Layout Container Desktop: Scroll Natural ── */}
       <div className="w-full px-3 sm:px-4 md:px-4 md:pt-4">
 
-        {/* ── MOBILE TAB SWITCHER: Marketplace vs Menfess (lg:hidden) ── */}
-        <div className="lg:hidden mb-2.5 space-y-2">
-          <div className="apple-segmented w-full p-1 bg-black/[0.04] dark:bg-white/[0.06] rounded-2xl flex gap-1">
+        {/* ── SEGMENTED TAB SWITCHER: Marketplace vs Open PO vs Menfess (Mobile & Desktop) ── */}
+        <div className="w-full max-w-xl mx-auto mb-3 sm:mb-4 space-y-2">
+          <div className="apple-segmented w-full p-1 bg-black/[0.04] dark:bg-white/[0.06] rounded-2xl flex gap-1 shadow-2xs backdrop-blur-md">
             <button
               type="button"
               onClick={() => {
                 triggerHaptic("light");
                 setMobileTab("marketplace");
               }}
-              className={`flex-1 py-1.5 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 min-w-0 ${
+              className={`flex-1 py-1.5 sm:py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 min-w-0 ${
                 mobileTab === "marketplace"
                   ? "bg-white dark:bg-[#2c2c2e] text-[#1d1d1f] dark:text-white shadow-2xs font-extrabold"
                   : "text-slate-500 hover:text-slate-900 dark:text-slate-400"
@@ -1166,7 +1196,7 @@ export default function SuperAppHome({
                 triggerHaptic("light");
                 setMobileTab("openpo");
               }}
-              className={`flex-1 py-1.5 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 min-w-0 ${
+              className={`flex-1 py-1.5 sm:py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 min-w-0 ${
                 mobileTab === "openpo"
                   ? "bg-white dark:bg-[#2c2c2e] text-emerald-600 dark:text-emerald-400 shadow-2xs font-extrabold"
                   : "text-slate-500 hover:text-slate-900 dark:text-slate-400"
@@ -1181,7 +1211,7 @@ export default function SuperAppHome({
                 triggerHaptic("light");
                 setMobileTab("menfess");
               }}
-              className={`flex-1 py-1.5 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 min-w-0 ${
+              className={`flex-1 py-1.5 sm:py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 min-w-0 ${
                 mobileTab === "menfess"
                   ? "bg-white dark:bg-[#2c2c2e] text-[#1d1d1f] dark:text-white shadow-2xs font-extrabold"
                   : "text-slate-500 hover:text-slate-900 dark:text-slate-400"
@@ -1206,15 +1236,9 @@ export default function SuperAppHome({
           
           {/* ═══════════════════════════════════════
               KOLOM TENGAH — Marketplace Utama (Jualan di Tengah)
-              Mobile: visible when mobileTab === 'marketplace'
-              Desktop: flex-1, always visible
+              Visible when mobileTab === 'marketplace'
           ═══════════════════════════════════════ */}
-          <div className={`flex-1 min-w-0 space-y-3 w-full ${mobileTab !== "marketplace" ? "hidden lg:block" : ""}`}>
-
-            {/* Live Campus Buzz Ticker (Tampil di Desktop tepat di atas search bar) */}
-            <div className="hidden lg:block">
-              {renderCampusLiveTicker()}
-            </div>
+          <div className={`flex-1 min-w-0 space-y-3 w-full ${mobileTab !== "marketplace" ? "hidden" : ""}`}>
 
             {/* ── 1. MARKETPLACE SEARCH BAR SEJAJAR KATEGORI & KAMPUS ── */}
             <section className="apple-glass-card p-2 sm:p-2.5">
@@ -1393,171 +1417,226 @@ export default function SuperAppHome({
           </div>{/* end kolom tengah */}
 
           {/* ════════════════════════════════════════
-              OPEN PO SECTION (MOBILE ONLY when mobileTab === 'openpo')
-              "semua konten open po nampak di situ tapi untuk sementara ini proses utama tetap di link"
+          {/* ════════════════════════════════════════
+              OPEN PO SECTION (MOBILE & DESKTOP when mobileTab === 'openpo')
+              "konten open po real dan terintegrasi secara realtime dari Supabase Open PO"
           ════════════════════════════════════════ */}
-          <div className={`w-full space-y-3.5 lg:hidden ${mobileTab !== "openpo" ? "hidden" : ""}`}>
+          <div className={`w-full max-w-4xl mx-auto space-y-4 ${mobileTab !== "openpo" ? "hidden" : "block"}`}>
             {/* Open PO Banner */}
-            <div className="p-4 rounded-3xl bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700 text-white shadow-lg relative overflow-hidden">
-              <div className="relative z-10 space-y-2">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-md text-[10.5px] font-extrabold tracking-wide uppercase">
+            <div className="p-4 sm:p-6 rounded-3xl bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700 text-white shadow-lg relative overflow-hidden">
+              <div className="relative z-10 space-y-2.5 max-w-xl">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-[10.5px] sm:text-xs font-extrabold tracking-wide uppercase">
                   <span>🍵</span>
                   <span>Eksklusif Mahasiswa USU &amp; POLMED</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />
                 </div>
-                <h2 className="text-lg font-black tracking-tight leading-snug">
-                  Open PO Kampus
+                <h2 className="text-xl sm:text-2xl font-black tracking-tight leading-snug">
+                  Open PO Kampus — Pesan Langsung dari Mahasiswa
                 </h2>
-                <p className="text-xs text-emerald-50 leading-relaxed max-w-sm">
-                  Pesan makanan favorit, minuman viral, kaos angkatan, &amp; jastip antar kampus langsung dari sesama mahasiswa.
+                <p className="text-xs sm:text-sm text-emerald-50 leading-relaxed">
+                  Pesan makanan favorit, minuman viral, kaos angkatan, &amp; merchandise langsung dari sesama mahasiswa. Tanpa biaya admin tersembunyi!
                 </p>
-                <div className="pt-1">
+                <div className="pt-1.5 flex flex-wrap items-center gap-2">
                   <a
-                    href="https://open-po.vercel.app"
+                    href="https://open-po.vercel.app?utm_source=jualbeliusupolmed&ref=jualbeliusupolmed"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white text-emerald-800 text-xs font-black shadow-md active:scale-95 transition-all"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white text-emerald-900 text-xs sm:text-sm font-black shadow-md hover:bg-emerald-50 active:scale-95 transition-all"
                   >
-                    <span>Buka Aplikasi Open PO</span>
-                    <Icon.ExternalLink className="w-3.5 h-3.5" />
+                    <span>Buka Web Utama Open PO</span>
+                    <Icon.ExternalLink className="w-3.5 h-3.5 text-emerald-700" />
                   </a>
+                  <span className="text-[11px] text-emerald-100 font-medium">
+                    ⚡ Data batch terintegrasi otomatis
+                  </span>
                 </div>
               </div>
-              <div className="absolute -right-4 -bottom-6 text-7xl opacity-20 pointer-events-none select-none">
+              <div className="absolute -right-4 -bottom-6 text-8xl sm:text-9xl opacity-20 pointer-events-none select-none">
                 🍵
               </div>
             </div>
 
-            {/* List Item PO Populer */}
-            <div className="space-y-2.5">
+            {/* List Item PO Populer Realtime */}
+            <div className="space-y-3">
               <div className="flex items-center justify-between px-1">
-                <h3 className="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  Daftar PO yang Sedang Buka
-                </h3>
+                <div className="flex items-center gap-2">
+                  <span className="flex h-2.5 w-2.5 relative">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                  </span>
+                  <h3 className="text-xs sm:text-sm font-extrabold text-slate-800 dark:text-white uppercase tracking-wider">
+                    Batch PO Aktif Sekarang
+                  </h3>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                    {poBatches.length > 0 ? `${poBatches.length} Batch` : "Live"}
+                  </span>
+                </div>
                 <a
-                  href="https://open-po.vercel.app"
+                  href="https://open-po.vercel.app?utm_source=jualbeliusupolmed&ref=jualbeliusupolmed"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5"
+                  className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
                 >
-                  <span>Buka App</span>
+                  <span>Lihat Semua di Open PO</span>
                   <Icon.ExternalLink className="w-3 h-3" />
                 </a>
               </div>
 
-              {/* Sample Cards PO Kampus */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {[
+              {/* Cards PO Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                {(poBatches.length > 0 ? poBatches : [
                   {
-                    nama: "Risol Mayo Lumer Mba Siti",
-                    kategori: "Kuliner • USU Pintu 2",
-                    harga: "Rp 12.000 / mika (isi 3)",
-                    status: "🟢 Buka PO (Tutup Besok 20:00)",
-                    pesanan: "24/30 porsi terpesan",
-                    emoji: "🥟"
+                    id: "fallback-risol",
+                    name: "Risol Mayo Lumer Mba Siti",
+                    category: "Kuliner",
+                    price: 12000,
+                    quota: 30,
+                    reserved: 24,
+                    pickup_point: "USU Pintu 2",
+                    seller_name: "Nadia Putri",
+                    faculty: "Fakultas Pertanian",
+                    photo: "/images/risol-mayo.jpg",
+                    emoji: "🥟",
+                    url: "https://open-po.vercel.app?utm_source=jualbeliusupolmed&ref=jualbeliusupolmed",
                   },
                   {
-                    nama: "Matcha Latte Creamy USU FIB",
-                    kategori: "Minuman • FIB & FISIP",
-                    harga: "Rp 15.000",
-                    status: "🟢 Buka PO (Ready Rabu)",
-                    pesanan: "18/25 cup terpesan",
-                    emoji: "🍵"
+                    id: "fallback-matcha",
+                    name: "Cold Brew Matcha Latte Creamy",
+                    category: "Minuman",
+                    price: 18000,
+                    quota: 25,
+                    reserved: 18,
+                    pickup_point: "Selasar FIB USU",
+                    seller_name: "Ahmad Zaki",
+                    faculty: "Fakultas Ilmu Budaya",
+                    photo: "/images/matcha-latte.jpg",
+                    emoji: "🍵",
+                    url: "https://open-po.vercel.app?utm_source=jualbeliusupolmed&ref=jualbeliusupolmed",
                   },
-                  {
-                    nama: "Kopi Susu Aren Literan",
-                    kategori: "Minuman • POLMED & USU",
-                    harga: "Rp 45.000 / botol 1L",
-                    status: "🔥 Kuota Hampir Penuh",
-                    pesanan: "8/10 botol terpesan",
-                    emoji: "☕"
-                  },
-                  {
-                    nama: "Fudgy Brownies Panggang Bites",
-                    kategori: "Camilan • Delivery Kampus",
-                    harga: "Rp 25.000",
-                    status: "🟢 Buka PO Batch 6",
-                    pesanan: "15/20 box",
-                    emoji: "🍫"
-                  },
-                  {
-                    nama: "Kaos Angkatan Oversize Katun 24s",
-                    kategori: "Merchandise • Kampus USU",
-                    harga: "Rp 85.000",
-                    status: "🟢 Buka PO s.d 30 Okt",
-                    pesanan: "35 kaos",
-                    emoji: "👕"
-                  },
-                  {
-                    nama: "Jastip Oleh-oleh & Snack Medan",
-                    kategori: "Jasa Titip • Area Kampus",
-                    harga: "Jasa mulai Rp 5.000",
-                    status: "🟢 Siap Titip Tiap Hari",
-                    pesanan: "Aktif",
-                    emoji: "🛍️"
-                  }
-                ].map((item, idx) => (
-                  <a
-                    key={idx}
-                    href="https://open-po.vercel.app"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-3.5 rounded-2xl bg-white dark:bg-[#18181b] border border-black/[0.06] dark:border-white/[0.08] shadow-xs hover:border-emerald-500/40 active:scale-[0.98] transition-all flex flex-col justify-between gap-2.5 group"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="w-11 h-11 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl shrink-0">
-                        {item.emoji}
+                ]).map((item, idx) => {
+                  const quotaNum = Number(item.quota) || 0;
+                  const resNum = Number(item.reserved) || 0;
+                  const pct = quotaNum > 0 ? Math.min(100, Math.round((resNum / quotaNum) * 100)) : 0;
+                  const isHampirPenuh = pct >= 80;
+
+                  return (
+                    <a
+                      key={item.id || idx}
+                      href={item.url || "https://open-po.vercel.app"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="apple-glass-card p-3.5 sm:p-4 rounded-3xl border border-black/[0.06] dark:border-white/[0.08] hover:border-emerald-500/50 hover:shadow-md active:scale-[0.98] transition-all flex flex-col justify-between gap-3 group relative overflow-hidden"
+                    >
+                      {/* Top Header: Image + Details */}
+                      <div className="flex items-start gap-3">
+                        <div className="relative w-20 h-20 sm:w-22 sm:h-22 rounded-2xl overflow-hidden shrink-0 bg-emerald-500/10 border border-black/[0.04] dark:border-white/[0.06]">
+                          {item.photo ? (
+                            <img
+                              src={item.photo}
+                              alt={item.name || item.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-3xl">
+                              {item.emoji || "🍵"}
+                            </div>
+                          )}
+                          <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-md text-white text-[9px] font-bold">
+                            {item.emoji || "🍵"}
+                          </div>
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[9.5px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                              {item.category || "Kampus"}
+                            </span>
+                            {isHampirPenuh && (
+                              <span className="text-[9px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-full">
+                                🔥 Sisa Sedikit
+                              </span>
+                            )}
+                          </div>
+
+                          <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-snug mt-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors line-clamp-1">
+                            {item.name || item.title}
+                          </h4>
+
+                          <p className="text-[10.5px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                            Oleh <span className="font-semibold text-slate-700 dark:text-slate-300">{item.seller_name || "Mahasiswa"}</span> • {item.faculty || "USU/POLMED"}
+                          </p>
+
+                          <p className="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400 mt-1">
+                            {typeof item.price === "number" ? rupiah(item.price) : item.price}
+                          </p>
+                        </div>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight block">
-                          {item.kategori}
+
+                      {/* Middle: Quota Progress Bar */}
+                      <div className="space-y-1 pt-1 border-t border-black/[0.04] dark:border-white/[0.05]">
+                        <div className="flex items-center justify-between text-[10.5px]">
+                          <span className="text-slate-500 dark:text-slate-400">
+                            Kuota: <strong className="text-slate-800 dark:text-white">{resNum}/{quotaNum}</strong>
+                          </span>
+                          <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                            {pct}% Terpesan
+                          </span>
+                        </div>
+                        <div className="w-full h-1.5 bg-black/[0.05] dark:bg-white/[0.08] rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-500"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Bottom Footer: Pickup & CTA */}
+                      <div className="flex items-center justify-between text-[10.5px] pt-1">
+                        <span className="text-slate-500 dark:text-slate-400 truncate max-w-[55%] flex items-center gap-1">
+                          <span>📍</span>
+                          <span className="truncate">{item.pickup_point || "Kampus"}</span>
                         </span>
-                        <h4 className="text-xs font-bold text-slate-900 dark:text-white leading-snug truncate group-hover:text-emerald-600 transition-colors">
-                          {item.nama}
-                        </h4>
-                        <p className="text-xs font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
-                          {item.harga}
-                        </p>
+                        <span className="font-black text-emerald-600 dark:text-emerald-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+                          <span>Pesan di Open PO</span>
+                          <Icon.ArrowRight className="w-3 h-3" />
+                        </span>
                       </div>
-                    </div>
-                    <div className="flex items-center justify-between pt-2 border-t border-black/[0.04] dark:border-white/[0.05] text-[10.5px]">
-                      <span className="text-slate-500 dark:text-slate-400 font-medium">
-                        {item.status}
-                      </span>
-                      <span className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
-                        <span>Pesan</span>
-                        <Icon.ArrowRight className="w-2.5 h-2.5" />
-                      </span>
-                    </div>
-                  </a>
-                ))}
+                    </a>
+                  );
+                })}
               </div>
             </div>
 
             {/* Banner Buka PO Sendiri */}
-            <div className="p-4 rounded-2xl bg-black/[0.03] dark:bg-white/[0.04] border border-dashed border-emerald-500/30 text-center space-y-2">
-              <p className="text-xs font-bold text-slate-800 dark:text-white">
+            <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-emerald-500/5 via-teal-500/5 to-transparent border border-dashed border-emerald-500/30 text-center space-y-2">
+              <div className="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xl mx-auto">
+                📦
+              </div>
+              <p className="text-sm font-bold text-slate-800 dark:text-white">
                 Mau Jual Makanan atau Merchandise dengan Sistem PO?
               </p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Buka pesanan tanpa modal nombok, kelola kuota dan pembayaran otomatis.
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                Buka pesanan tanpa modal nombok, kelola kuota, catatan pickup, dan rekap otomatis bersama komunitas mahasiswa.
               </p>
-              <a
-                href="https://open-po.vercel.app"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs active:scale-95 transition-all"
-              >
-                <span>Buka PO Kamu Sekarang</span>
-                <Icon.ExternalLink className="w-3 h-3" />
-              </a>
+              <div className="pt-1">
+                <a
+                  href="https://open-po.vercel.app?utm_source=jualbeliusupolmed&ref=jualbeliusupolmed"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs active:scale-95 transition-all"
+                >
+                  <span>Buka PO Kamu Sekarang</span>
+                  <Icon.ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </div>
             </div>
           </div>
 
           {/* ════════════════════════════════════════
-              MENFESS FEED (MOBILE ONLY when mobileTab === 'menfess')
+              MENFESS FEED (MOBILE & DESKTOP when mobileTab === 'menfess')
           ════════════════════════════════════════ */}
-          <div className={`w-full space-y-3 lg:hidden ${mobileTab !== "menfess" ? "hidden" : ""}`}>
+          <div className={`w-full max-w-3xl mx-auto space-y-4 ${mobileTab !== "menfess" ? "hidden" : "block"}`}>
             <section
               className="w-full"
               onTouchStart={handleTouchStart}
@@ -1661,7 +1740,7 @@ export default function SuperAppHome({
           {/* ════════════════════════════════════════
               SIDEBAR KANAN — Menfess & Mading Kampus (DESKTOP)
           ════════════════════════════════════════ */}
-          <aside className="hidden lg:block w-[320px] xl:w-[350px] shrink-0 sticky top-6 space-y-4 max-h-[calc(100vh-2rem)] overflow-y-auto pb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <aside className={`w-[320px] xl:w-[350px] shrink-0 sticky top-6 space-y-4 max-h-[calc(100vh-2rem)] overflow-y-auto pb-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${mobileTab === "marketplace" ? "hidden lg:block" : "hidden"}`}>
 
             {/* Menfess Feed Widget di Kanan */}
             <div className="apple-glass-card p-4">

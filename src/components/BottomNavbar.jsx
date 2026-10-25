@@ -24,7 +24,6 @@ const MARKET = {
   icon: Icon.ShoppingBag,
 };
 
-const RUTE_PENCARIAN = ["/jual-beli", "/jasa", "/dicari", "/favorit"];
 
 function ItemNav({ n, pathname, badge = 0 }) {
   const cakupan = n.match || [n.href];
@@ -130,10 +129,7 @@ function BottomNavbarInner() {
   // Sembunyikan/minimalkan BottomNavbar jika sedang di dalam room chat aktif
   const isChatRoom =
     pathname === "/chat" && searchParams && (searchParams.has("anon") || searchParams.has("room"));
-
-  const adaPencarian = RUTE_PENCARIAN.includes(pathname || "");
   const navKiri = [BERANDA, MARKET];
-
   // Saat belum siap (server/hydration), selalu pakai tombol Masuk
   // supaya server HTML dan client HTML sama persis — tidak ada Link vs button mismatch.
   const AKUN = siap && sesiWa
@@ -156,34 +152,6 @@ function BottomNavbarInner() {
 
   return (
     <>
-      {/* Kolom cari yang menempel di bawah — pengganti address bar dalam
-          jangkauan ibu jari, ikut menyingkir saat halaman digulir. */}
-      {adaPencarian && !isChatRoom && (
-        <div
-          data-bottom-search
-          className={cn(
-            "fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] left-1/2 z-40 w-[calc(100%-2rem)] max-w-[650px] -translate-x-1/2 transition-all duration-300 md:hidden",
-            menyingkir
-              ? "translate-y-[220%] opacity-0 pointer-events-none"
-              : "translate-y-0 opacity-100"
-          )}
-        >
-          <button
-            type="button"
-            onClick={() => {
-              hapticLight();
-              setBukaCari(true);
-            }}
-            aria-label="Buka pencarian barang, jasa, dan kos"
-            className="flex w-full items-center gap-2.5 rounded-full border border-black/[0.06] bg-white/92 px-4 py-2.5 text-left shadow-[0_8px_26px_rgba(15,23,42,0.14)] backdrop-blur-2xl transition-all active:scale-[0.98] dark:border-white/[0.1] dark:bg-[#111113]/92"
-          >
-            <Icon.Search className="h-4 w-4 shrink-0 text-slate-500 dark:text-slate-400" />
-            <span className="truncate text-[13px] font-medium text-slate-600 dark:text-slate-300">
-              Cari barang, jasa, kos…
-            </span>
-          </button>
-        </div>
-      )}
 
       {/* Tombol Menu Burger: Nempel di Kiri Agak Bawah Dikit (Khusus Mobile) */}
       {!isChatRoom && (
