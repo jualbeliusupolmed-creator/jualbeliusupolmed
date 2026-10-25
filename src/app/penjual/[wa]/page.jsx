@@ -6,13 +6,14 @@ import ProductCard from "@/components/ProductCard";
 import ShareProfileButton from "@/components/ShareProfileButton";
 import { formatWa, formatWaForBaileys } from "@/lib/constants";
 import { skripJsonLd } from "@/lib/jsonLd";
+import { decodeSellerSlug, encodeSellerSlug, maskPhone } from "@/lib/sellerSlug";
 
 export const revalidate = 300; // ISR 5 menit — cukup segar untuk marketplace
 
 async function getSellerData(wa) {
   try {
-    // Normalize to 628... so /penjual/08... and /penjual/628... resolve to same page
-    const decodedWa = formatWa(decodeURIComponent(wa)) || decodeURIComponent(wa);
+    // Decode obfuscated slug u-... or normalize legacy raw phone
+    const decodedWa = decodeSellerSlug(wa);
     const supa = getAdminClient();
 
     // Ambil semua iklan aktif penjual
@@ -133,7 +134,8 @@ export async function generateMetadata({ params }) {
   const name = data.seller.seller_name;
   const waClean = data.seller.seller_wa?.replace(/\D/g, "") || params.wa;
   const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
-  const pageUrl = `${baseUrl}/penjual/${waClean}`;
+  const sellerSlug = encodeSellerSlug(waClean);
+  const pageUrl = `${baseUrl}/penjual/${sellerSlug}`;
   const firstImage = data.listings[0]?.image_url || null;
   const soldText = data.soldCount > 0 ? ` Sudah terjual ${data.soldCount}× barang.` : "";
   const desc = `Lihat ${data.listings.length} iklan aktif dari ${name} di Jual Beli USU Polmed.${soldText}`;
@@ -205,15 +207,16 @@ export default async function SellerProfilePage({ params }) {
   // Nomor asli untuk URL & link kontak. formatWa menolak LID → link wa.me disembunyikan.
   const waClean = formatWa(seller.seller_wa) || seller.seller_wa?.replace(/\D/g, "") || "";
   const waIntl = formatWaForBaileys(seller.seller_wa); // "62xxx" atau "" jika bukan nomor valid
+  const sellerSlug = encodeSellerSlug(waClean);
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "ProfilePage",
-    "url": `${baseUrl}/penjual/${waClean}`,
+    "url": `${baseUrl}/penjual/${sellerSlug}`,
     "mainEntity": {
       "@type": "Person",
       "name": seller.seller_name,
       "description": seller.bio || `Penjual di Jual Beli USU dengan ${listings.length} iklan aktif`,
-      "url": `${baseUrl}/penjual/${waClean}`,
+      "url": `${baseUrl}/penjual/${sellerSlug}`,
       ...(listings[0]?.image_url && { "image": listings[0].image_url }),
       ...(avgRating !== null && ratings.length > 0 && {
         "aggregateRating": {

@@ -146,8 +146,8 @@ export default async function AuditCariTemanPage({ searchParams }) {
   return (
     <div className="animate-fade-in font-sans">
       <PageHeader
-        title="Audit &amp; Monitoring Percakapan"
-        description={`${count || 0} ruang obrolan (Marketplace &amp; Cari Teman) tercatat di database.`}
+        title="Audit & Monitoring Percakapan"
+        description={`${count || 0} ruang obrolan (Marketplace & Cari Teman) tercatat di database.`}
       />
 
       {/* FILTER TABS & SEARCH BAR */}

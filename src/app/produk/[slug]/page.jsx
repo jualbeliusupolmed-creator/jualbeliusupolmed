@@ -24,6 +24,8 @@ import { Icon } from "@/components/Icons";
 import { skripJsonLd } from "@/lib/jsonLd";
 import { buildListingShortPath } from "@/lib/listingCode";
 import { formatListingSpecs } from "@/lib/listingSpecs";
+import { checkProhibitedListing } from "@/lib/profanity";
+import { encodeSellerSlug } from "@/lib/sellerSlug";
 
 export const revalidate = 300; // ISR 5 menit
 
@@ -84,13 +86,17 @@ async function getData(slug) {
       .from("listings")
       .select("*, seller_wa")
       .eq("status", "active")
+      .gt("price", 0)
       .eq("category", listing.category)
       .neq("id", listing.id)
-      .limit(4);
+      .limit(8);
     
-    const { data: related } = await fetchListingsWithProfiles(queryRelated);
+    const { data: rawRelated } = await fetchListingsWithProfiles(queryRelated);
+    const related = (rawRelated || []).filter(
+      (r) => !checkProhibitedListing(r.title, r.description).prohibited
+    ).slice(0, 4);
 
-    return { listing, related: related || [] };
+    return { listing, related };
   } catch {
     return { listing: null, related: [] };
   }
@@ -167,9 +173,8 @@ export default async function ProdukPage({ params }) {
   const sold = listing.status === "sold";
   const shortPath = buildListingShortPath(listing.listing_code);
   const listingSpecs = formatListingSpecs(listing.category, listing.specs);
-  // Pakai nomor asli untuk URL profil; kalau bukan nomor valid (sisa LID) fallback ke raw
-  // (halaman profil tetap menemukan penjualnya, & tombol wa.me di sana sudah di-guard).
-  const sellerWaEncoded = encodeURIComponent(formatWa(listing.seller_wa) || listing.seller_wa || "");
+  // URL profil penjual yang aman (obfuscated) agar nomor WA tidak ter-expose di URL publik
+  const sellerWaEncoded = encodeSellerSlug(listing.seller_wa);
 
   // JSON-LD Product + BreadcrumbList — agar listing bisa muncul sebagai
   // rich result (harga, ketersediaan) di Google.

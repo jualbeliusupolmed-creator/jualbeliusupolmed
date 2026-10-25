@@ -553,7 +553,17 @@ export default function MadingClient({ initialPosts = [] }) {
               </div>
             </div>
           )}
-                <Icon.Mail className="h-7 w-7" />
+
+          {/* Banner Etika & Komunitas Kampus */}
+          <div className="mb-3 p-3.5 rounded-2xl bg-gradient-to-r from-purple-50 via-white to-emerald-50 dark:from-purple-950/20 dark:via-slate-900/40 dark:to-emerald-950/20 border border-purple-200/60 dark:border-purple-800/40 text-xs shadow-xs">
+            <div className="flex items-center gap-2 font-bold text-purple-900 dark:text-purple-300 mb-1">
+              <span>🛡️ Aturan Komunitas Menfess USU &amp; POLMED</span>
+            </div>
+            <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-[11.5px]">
+              Dilarang menyebut seseorang lewat inisial, prodi, dan angkatan yang menyasar individu, menyebarkan nomor kontak/NIM, atau merundung. Menfess yang melanggar privasi akan otomatis ditolak dan IP diblokir.
+            </p>
+          </div>
+
           {/* FEED LIST */}
           {loading ? (
             <div className="space-y-3 py-2">

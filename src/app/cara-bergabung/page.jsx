@@ -110,21 +110,19 @@ export default async function CaraBergabungPage() {
 
       <div className="mt-6 grid gap-6 md:grid-cols-2">
         <div className="card p-6">
-          <h2 className="text-lg font-bold"><span aria-hidden="true"></span> Biaya Layanan &amp; Komisi</h2>
-          <p className="mt-1 text-sm text-gray-500">Biaya Iklan (Pasar Bebas Mahasiswa)</p>
+          <h2 className="text-lg font-bold"><span aria-hidden="true">🏷️</span> Transparansi Biaya Layanan</h2>
+          <p className="mt-1 text-sm text-gray-500">Pasar Bebas Mahasiswa USU &amp; POLMED</p>
           <div className="mt-2 space-y-2">
-            <Fee label="Pasang Iklan Barang & Jasa Mahasiswa" value="100% GRATIS" />
-            <Fee label="Pasang Kebutuhan (Dicari)" value="GRATIS" />
+            <Fee label="Pasang Iklan Barang & Jasa Mahasiswa" value="100% GRATIS (Rp 0)" />
+            <Fee label="Komisi Penjualan Antar-Mahasiswa" value="BEBAS KOMISI (0%)" />
+            <Fee label="Pasang Kebutuhan (Barang Dicari)" value="GRATIS" />
             <Fee label="Posting Menfess Kampus" value="GRATIS" />
-            <Fee label="Penawaran Wanted (Unlock WA)" value="Rp 2.000 / Bagi Hasil" />
-            <Fee label="Iklan Poster / Banner Sponsor" value="Mulai Rp 10.000" />
-            <Fee label="Sundul (Bump) ke Atas" value="Rp 1.000" />
           </div>
-          <p className="mt-4 text-sm text-gray-500">Komisi Setelah Terjual (Sold Fee)</p>
+          <p className="mt-4 text-sm text-gray-500">Fitur Tambahan Opsional (Tidak Wajib)</p>
           <div className="mt-2 space-y-2">
-            <Fee label="Harga di bawah Rp 50.000" value="Gratis (Bebas Komisi)" />
-            <Fee label="Harga di bawah Rp 100.000" value="10%" />
-            <Fee label="Harga di atas Rp 100.000" value="5%" />
+            <Fee label="Sundul Iklan (Bump ke Urutan Teratas)" value="Rp 1.000" />
+            <Fee label="Iklan Poster / Banner Sponsor Utama" value="Mulai Rp 10.000" />
+            <Fee label="Buka Kontak Wanted (Anti-Spam Filter)" value="Rp 2.000" />
           </div>
         </div>
         <div className="card p-6">

@@ -125,7 +125,7 @@ export default async function AnalitikMadingPage({ searchParams }) {
 
   return (
     <div className="animate-fade-in font-sans">
-      <PageHeader title="Analitik &amp; Moderasi Menfess" description="Ringkasan traffic, isi kiriman, identitas pengirim, dan kontrol moderasi darurat." />
+      <PageHeader title="Analitik & Moderasi Menfess" description="Ringkasan traffic, isi kiriman, identitas pengirim, dan kontrol moderasi darurat." />
 
       {/* SEARCH BAR */}
       <form method="GET" action="/admin/mading" className="mb-5">

@@ -124,12 +124,11 @@ export default function SuperAppHome({
   }, []);
 
   const PO_TICKER_ITEMS = [
-    { title: "Risol Mayo Lumer Mba Siti", sub: "Rp 12.000 • Buka PO USU Pintu 2" },
-    { title: "Matcha Latte Creamy USU FIB", sub: "18/25 cup terpesan • Siap Kirim" },
-    { title: "Kopi Susu Aren Literan", sub: "Rp 45.000 / 1L • Kuota hampir penuh" },
-    { title: "Fudgy Brownies Panggang Bites", sub: "Buka PO Batch 6 • Diskon Mhs" },
-    { title: "Kaos Angkatan Oversize Katun 24s", sub: "Sisa 12 Slot • Eksklusif Kampus" },
-    { title: "Jastip Oleh-oleh & Snack Medan", sub: "Siap titip & antar se-kampus" },
+    { title: "Risol Mayo Spesial", sub: "Rp 12.000 • 17/30 Terpesan • Pintu 2 USU" },
+    { title: "Cold Brew Matcha Latte", sub: "Rp 18.000 • 6/20 Terpesan • Selasar FIB" },
+    { title: "Fudgy Brownies Sekat", sub: "Rp 18.000 • 19/25 Terpesan • Perpus Pusat" },
+    { title: "Kopi Susu Gula Aren", sub: "Rp 10.000 • 29/40 Terpesan • Lobi FT" },
+    { title: "Kaos Acara Angkatan", sub: "Rp 85.000 • 36/50 Terpesan • FEB USU" },
   ];
 
   const renderCampusLiveTicker = () => {

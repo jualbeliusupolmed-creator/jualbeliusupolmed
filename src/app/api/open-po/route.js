@@ -142,16 +142,14 @@ export async function GET() {
       };
     });
 
-    // Gabungkan data real dari database dan item fallback jika data real masih sedikit
-    const existingNames = new Set(realBatches.map((r) => r.name.toLowerCase()));
-    const supplemental = FALLBACK_PO_ITEMS.filter((f) => !existingNames.has(f.name.toLowerCase()));
-    const combined = [...realBatches, ...supplemental];
+    // Kembalikan data batch real dari OpenPO
+    const batchesToReturn = realBatches.length > 0 ? realBatches : FALLBACK_PO_ITEMS;
 
     return NextResponse.json({
       success: true,
-      source: "realtime",
+      source: realBatches.length > 0 ? "realtime" : "fallback",
       realCount: realBatches.length,
-      batches: combined,
+      batches: batchesToReturn,
     });
   } catch (err) {
     return NextResponse.json({

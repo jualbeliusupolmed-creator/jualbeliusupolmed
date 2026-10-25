@@ -125,11 +125,11 @@ export async function POST(request) {
       );
     }
 
-    // Validasi anti-doxxing: cegah penyebaran kontak pribadi atau NIM spesifik
+    // Validasi anti-doxxing & anti-harassment: cegah kontak pribadi, NIM, atau sebutan inisial/prodi/angkatan target
     const doxxingCheck = detectDoxxingRisk(content);
     if (doxxingCheck.risky) {
       return NextResponse.json(
-        { error: `${doxxingCheck.reason} Harap gunakan inisial tanpa menyertakan nomor identitas pribadi spesifik.` },
+        { error: doxxingCheck.reason || "Dilarang menargetkan seseorang lewat inisial, prodi, atau identitas pribadi." },
         { status: 400 }
       );
     }
