@@ -101,7 +101,7 @@ export default function LayoutWrapper({ children }) {
         <div className="w-full min-h-screen relative overflow-x-clip bg-[#f5f5f7] dark:bg-[#0f172a]">
           <div className={cn(
             "w-full min-w-0 mx-auto flex justify-center",
-            "md:max-w-7xl"
+            isHome ? "max-w-[1400px]" : "md:max-w-7xl"
           )}>
             {/* Kiri: Sidebar Menu */}
             <LeftSidebar />
@@ -111,7 +111,7 @@ export default function LayoutWrapper({ children }) {
               "w-full min-w-0 flex-1 flex flex-col min-h-screen",
               !isHome && "bg-white dark:bg-black border-x border-black/[0.06] dark:border-white/[0.08]",
               "shadow-2xl md:shadow-none",
-              isHome ? "max-w-full lg:max-w-[1050px]" : "max-w-md md:max-w-[600px] lg:max-w-[680px]"
+              isHome ? "w-full max-w-full" : "max-w-md md:max-w-[600px] lg:max-w-[680px]"
             )}>
               <div className="md:hidden sticky top-0 z-40">
                 <Navbar config={config} />
