@@ -18,6 +18,15 @@ const PILIHAN = [
     grup: "Marketplace",
   },
   {
+    href: "https://open-po.vercel.app",
+    ikon: <span className="text-xl">🍵</span>,
+    ikonBg: "bg-teal-50 text-teal-600 dark:bg-teal-500/15 dark:text-teal-300",
+    judul: "Buka Open PO",
+    desc: "Buka pesanan makanan, merchandise & jastip",
+    grup: "Marketplace",
+    external: true,
+  },
+  {
     href: "/dicari?tulis=1",
     ikon: <Icon.MapPin className="w-5 h-5" />,
     ikonBg: "bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300",
@@ -54,10 +63,14 @@ const PILIHAN = [
 export default function CreateSheet({ isOpen, onClose }) {
   const router = useRouter();
 
-  const buka = (href) => {
+  const buka = (item) => {
     hapticLight();
     onClose();
-    router.push(href);
+    if (item.external) {
+      window.open(item.href, "_blank", "noopener,noreferrer");
+    } else {
+      router.push(item.href);
+    }
   };
 
   const grup = ["Marketplace", "Sosial"];
@@ -74,7 +87,7 @@ export default function CreateSheet({ isOpen, onClose }) {
               <button
                 key={p.href}
                 type="button"
-                onClick={() => buka(p.href)}
+                onClick={() => buka(p)}
                 className="flex w-full items-center gap-3 rounded-2xl border border-black/[0.06] bg-black/[0.03] p-3 text-left transition-all active:scale-[0.98] dark:border-white/[0.08] dark:bg-white/[0.06]"
               >
                 <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl shadow-sm ${p.ikonBg}`}>

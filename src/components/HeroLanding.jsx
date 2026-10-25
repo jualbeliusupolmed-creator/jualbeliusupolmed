@@ -121,6 +121,35 @@ export default function HeroLanding({ q, onSearch, stats, total = 0, judul, subj
               </button>
             </form>
 
+            {/* Quick Action & Popular Chips */}
+            <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <a
+                href="https://open-po.vercel.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-xs active:scale-95 transition-all shrink-0"
+                title="Open PO Kampus — Makanan, Merchandise & Jastip Mahasiswa"
+              >
+                <span>🍵</span>
+                <span>Open PO</span>
+                <Icon.ExternalLink className="w-3 h-3 opacity-90" />
+              </a>
+              {["Laptop", "iPhone", "Buku", "Kos", "Jasa"].map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => {
+                    setNilai(tag);
+                    onSearch?.(tag);
+                    document.getElementById("daftar-barang")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
+                  className="px-2.5 py-1 rounded-full bg-black/[0.04] dark:bg-white/[0.06] hover:bg-black/[0.08] dark:hover:bg-white/[0.12] text-xs font-semibold text-slate-700 dark:text-slate-300 transition shrink-0 active:scale-95"
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+
             {/* Ilustrasi utuh untuk HP & tablet. Ukuran width/height ditulis apa
                 adanya supaya peramban menyediakan ruangnya lebih dulu — tanpa itu
                 isi di bawahnya melompat begitu gambarnya selesai diunduh. */}
