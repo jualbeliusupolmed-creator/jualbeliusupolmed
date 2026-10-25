@@ -969,7 +969,7 @@ export default function SuperAppHome({
   };
 
   return (
-    <div className="min-h-screen bg-transparent pb-36 sm:pb-32 md:pb-8 font-sans selection:bg-primary/20 dark:bg-transparent">
+    <div className="min-h-screen bg-transparent pb-20 sm:pb-16 md:pb-8 font-sans selection:bg-primary/20 dark:bg-transparent">
 
       {/* ── ONBOARDING OVERLAY (first visit only) ── */}
       {showOnboarding && (
@@ -1020,14 +1020,29 @@ export default function SuperAppHome({
                 triggerHaptic("light");
                 setMobileTab("marketplace");
               }}
-              className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-1.5 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 min-w-0 ${
                 mobileTab === "marketplace"
                   ? "bg-white dark:bg-[#2c2c2e] text-[#1d1d1f] dark:text-white shadow-2xs font-extrabold"
                   : "text-slate-500 hover:text-slate-900 dark:text-slate-400"
               }`}
             >
-              <Icon.ShoppingBag className="w-3.5 h-3.5 text-primary" />
-              <span>Marketplace</span>
+              <Icon.ShoppingBag className="w-3.5 h-3.5 text-primary shrink-0" />
+              <span className="truncate">Marketplace</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic("light");
+                setMobileTab("openpo");
+              }}
+              className={`flex-1 py-1.5 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 min-w-0 ${
+                mobileTab === "openpo"
+                  ? "bg-white dark:bg-[#2c2c2e] text-emerald-600 dark:text-emerald-400 shadow-2xs font-extrabold"
+                  : "text-slate-500 hover:text-slate-900 dark:text-slate-400"
+              }`}
+            >
+              <span className="text-xs sm:text-sm leading-none shrink-0">🍵</span>
+              <span className="truncate">Open PO</span>
             </button>
             <button
               type="button"
@@ -1035,16 +1050,17 @@ export default function SuperAppHome({
                 triggerHaptic("light");
                 setMobileTab("menfess");
               }}
-              className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-1.5 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 min-w-0 ${
                 mobileTab === "menfess"
                   ? "bg-white dark:bg-[#2c2c2e] text-[#1d1d1f] dark:text-white shadow-2xs font-extrabold"
                   : "text-slate-500 hover:text-slate-900 dark:text-slate-400"
               }`}
             >
-              <Icon.Heart className="w-3.5 h-3.5 text-rose-500 fill-current" />
-              <span>Curhat &amp; Menfess</span>
+              <Icon.Heart className="w-3.5 h-3.5 text-rose-500 fill-current shrink-0" />
+              <span className="truncate min-[370px]:hidden">Menfess</span>
+              <span className="hidden min-[370px]:inline truncate">Curhat &amp; Menfess</span>
               {newPostCount > 0 && (
-                <span className="text-[9px] py-0.2 px-1 rounded-full bg-rose-500 text-white font-extrabold">
+                <span className="text-[9px] py-0.2 px-1 rounded-full bg-rose-500 text-white font-extrabold shrink-0">
                   {newPostCount}
                 </span>
               )}
@@ -1068,7 +1084,7 @@ export default function SuperAppHome({
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-600" />
                 </span>
                 <span className="text-[10px] font-extrabold text-violet-700 dark:text-violet-300 shrink-0">Menfess:</span>
-                <span className="text-[10.5px] text-slate-600 dark:text-slate-300 truncate">
+                <span className="text-[10.5px] text-slate-600 dark:text-slate-300 truncate min-w-0 flex-1">
                   &ldquo;{posts[0].content}&rdquo;
                 </span>
               </div>
@@ -1090,8 +1106,8 @@ export default function SuperAppHome({
           <div className={`flex-1 min-w-0 space-y-4 w-full ${mobileTab !== "marketplace" ? "hidden lg:block" : ""}`}>
 
             {/* ── 1. MARKETPLACE HEADER WITH OPEN PO & LIHAT SEMUA ── */}
-            <section className="apple-glass-card p-3.5 sm:p-5">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 pb-2.5 sm:pb-3 border-b border-black/[0.04] dark:border-white/[0.06]">
+            <section className="apple-glass-card p-3 sm:p-5">
+              <div className="hidden sm:flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 pb-2.5 sm:pb-3 border-b border-black/[0.04] dark:border-white/[0.06]">
                 <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                   <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-primary/20 via-primary/10 to-transparent text-primary flex items-center justify-center shrink-0 shadow-2xs">
                     <Icon.ShoppingBag className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
@@ -1137,29 +1153,74 @@ export default function SuperAppHome({
                 </div>
               </div>
 
-              {/* Search Bar Input */}
-              <div className="relative mt-2.5 sm:mt-3">
-                <Icon.Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                <input
-                  type="text"
-                  value={listingSearch}
-                  onChange={(e) => setListingSearch(e.target.value)}
-                  placeholder="Cari laptop, buku kuliah, kos, jasa..."
-                  className="w-full bg-black/[0.03] dark:bg-white/[0.05] border border-black/[0.04] dark:border-white/[0.06] rounded-xl pl-8.5 pr-8 py-1.5 sm:py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
-                />
-                {listingSearch && (
-                  <button
-                    type="button"
-                    onClick={() => setListingSearch("")}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white p-0.5"
+              {/* SEARCH INPUT SEJAJAR DENGAN DROPDOWN KATEGORI & KAMPUS */}
+              <div className="flex items-center gap-1 sm:gap-2 mt-0.5 sm:mt-3 w-full">
+                {/* Search Bar Input */}
+                <div className="relative flex-1 min-w-0">
+                  <Icon.Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={listingSearch}
+                    onChange={(e) => setListingSearch(e.target.value)}
+                    placeholder="Cari barang..."
+                    className="w-full min-w-0 bg-black/[0.03] dark:bg-white/[0.05] border border-black/[0.04] dark:border-white/[0.06] rounded-xl pl-6.5 pr-5 sm:pr-8 py-1.5 sm:py-2 text-[11px] sm:text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
+                  />
+                  {listingSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setListingSearch("")}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white p-0.5"
+                    >
+                      <Icon.X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Dropdown Kategori (Sejajar dengan Search) */}
+                <div className="relative shrink-0 w-[68px] sm:w-[96px]">
+                  <select
+                    value={listingCategory}
+                    onChange={(e) => {
+                      triggerHaptic("light");
+                      setListingCategory(e.target.value);
+                    }}
+                    className="w-full appearance-none bg-black/[0.04] dark:bg-white/[0.06] hover:bg-black/[0.08] dark:hover:bg-white/[0.1] border border-black/[0.05] dark:border-white/[0.08] text-slate-700 dark:text-slate-200 text-[10px] sm:text-xs font-bold rounded-xl pl-1.5 pr-3.5 py-1.5 sm:py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all truncate"
                   >
-                    <Icon.X className="w-3.5 h-3.5" />
-                  </button>
-                )}
+                    <option value="Semua">Kategori</option>
+                    <option value="Elektronik">Elektronik</option>
+                    <option value="Buku">Buku</option>
+                    <option value="Fashion">Fashion</option>
+                    <option value="Kos">Kos</option>
+                    <option value="Jasa">Jasa</option>
+                    <option value="Makanan">Makanan</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-1 flex items-center text-slate-400">
+                    <Icon.ChevronDown className="w-2 h-2 sm:w-2.5 sm:h-2.5" />
+                  </div>
+                </div>
+
+                {/* Dropdown Kampus (Sejajar dengan Search) */}
+                <div className="relative shrink-0 w-[64px] sm:w-[90px]">
+                  <select
+                    value={listingCampus}
+                    onChange={(e) => {
+                      triggerHaptic("light");
+                      setListingCampus(e.target.value);
+                    }}
+                    className="w-full appearance-none bg-black/[0.04] dark:bg-white/[0.06] hover:bg-black/[0.08] dark:hover:bg-white/[0.1] border border-black/[0.05] dark:border-white/[0.08] text-slate-700 dark:text-slate-200 text-[10px] sm:text-xs font-bold rounded-xl pl-1.5 pr-3.5 py-1.5 sm:py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all truncate"
+                  >
+                    <option value="Semua">Kampus</option>
+                    <option value="USU">USU</option>
+                    <option value="POLMED">POLMED</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-1 flex items-center text-slate-400">
+                    <Icon.ChevronDown className="w-2 h-2 sm:w-2.5 sm:h-2.5" />
+                  </div>
+                </div>
               </div>
 
-              {/* Filter Kategori & Kampus */}
-              <div className="flex flex-col gap-1.5 mt-2.5 pt-2 border-t border-black/[0.04] dark:border-white/[0.06]">
+              {/* Filter Kategori & Kampus Pills (Desktop sm: ke atas) */}
+              <div className="hidden sm:flex flex-col gap-1.5 mt-2.5 pt-2 border-t border-black/[0.04] dark:border-white/[0.06]">
                 {/* Kategori Pills */}
                 <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-0.5">
                   {["Semua", "Elektronik", "Buku", "Fashion", "Kos", "Jasa", "Makanan"].map((cat) => (
@@ -1325,6 +1386,168 @@ export default function SuperAppHome({
             </div>
 
           </div>{/* end kolom tengah */}
+
+          {/* ════════════════════════════════════════
+              OPEN PO SECTION (MOBILE ONLY when mobileTab === 'openpo')
+              "semua konten open po nampak di situ tapi untuk sementara ini proses utama tetap di link"
+          ════════════════════════════════════════ */}
+          <div className={`w-full space-y-3.5 lg:hidden ${mobileTab !== "openpo" ? "hidden" : ""}`}>
+            {/* Open PO Banner */}
+            <div className="p-4 rounded-3xl bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700 text-white shadow-lg relative overflow-hidden">
+              <div className="relative z-10 space-y-2">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-md text-[10.5px] font-extrabold tracking-wide uppercase">
+                  <span>🍵</span>
+                  <span>Eksklusif Mahasiswa USU &amp; POLMED</span>
+                </div>
+                <h2 className="text-lg font-black tracking-tight leading-snug">
+                  Open PO Kampus
+                </h2>
+                <p className="text-xs text-emerald-50 leading-relaxed max-w-sm">
+                  Pesan makanan favorit, minuman viral, kaos angkatan, &amp; jastip antar kampus langsung dari sesama mahasiswa.
+                </p>
+                <div className="pt-1">
+                  <a
+                    href="https://open-po.vercel.app"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white text-emerald-800 text-xs font-black shadow-md active:scale-95 transition-all"
+                  >
+                    <span>Buka Aplikasi Open PO</span>
+                    <Icon.ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              </div>
+              <div className="absolute -right-4 -bottom-6 text-7xl opacity-20 pointer-events-none select-none">
+                🍵
+              </div>
+            </div>
+
+            {/* List Item PO Populer */}
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between px-1">
+                <h3 className="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Daftar PO yang Sedang Buka
+                </h3>
+                <a
+                  href="https://open-po.vercel.app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5"
+                >
+                  <span>Buka App</span>
+                  <Icon.ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+
+              {/* Sample Cards PO Kampus */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {[
+                  {
+                    nama: "Risol Mayo Lumer Mba Siti",
+                    kategori: "Kuliner • USU Pintu 2",
+                    harga: "Rp 12.000 / mika (isi 3)",
+                    status: "🟢 Buka PO (Tutup Besok 20:00)",
+                    pesanan: "24/30 porsi terpesan",
+                    emoji: "🥟"
+                  },
+                  {
+                    nama: "Matcha Latte Creamy USU FIB",
+                    kategori: "Minuman • FIB & FISIP",
+                    harga: "Rp 15.000",
+                    status: "🟢 Buka PO (Ready Rabu)",
+                    pesanan: "18/25 cup terpesan",
+                    emoji: "🍵"
+                  },
+                  {
+                    nama: "Kopi Susu Aren Literan",
+                    kategori: "Minuman • POLMED & USU",
+                    harga: "Rp 45.000 / botol 1L",
+                    status: "🔥 Kuota Hampir Penuh",
+                    pesanan: "8/10 botol terpesan",
+                    emoji: "☕"
+                  },
+                  {
+                    nama: "Fudgy Brownies Panggang Bites",
+                    kategori: "Camilan • Delivery Kampus",
+                    harga: "Rp 25.000",
+                    status: "🟢 Buka PO Batch 6",
+                    pesanan: "15/20 box",
+                    emoji: "🍫"
+                  },
+                  {
+                    nama: "Kaos Angkatan Oversize Katun 24s",
+                    kategori: "Merchandise • Kampus USU",
+                    harga: "Rp 85.000",
+                    status: "🟢 Buka PO s.d 30 Okt",
+                    pesanan: "35 kaos",
+                    emoji: "👕"
+                  },
+                  {
+                    nama: "Jastip Oleh-oleh & Snack Medan",
+                    kategori: "Jasa Titip • Area Kampus",
+                    harga: "Jasa mulai Rp 5.000",
+                    status: "🟢 Siap Titip Tiap Hari",
+                    pesanan: "Aktif",
+                    emoji: "🛍️"
+                  }
+                ].map((item, idx) => (
+                  <a
+                    key={idx}
+                    href="https://open-po.vercel.app"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-3.5 rounded-2xl bg-white dark:bg-[#18181b] border border-black/[0.06] dark:border-white/[0.08] shadow-xs hover:border-emerald-500/40 active:scale-[0.98] transition-all flex flex-col justify-between gap-2.5 group"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="w-11 h-11 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl shrink-0">
+                        {item.emoji}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight block">
+                          {item.kategori}
+                        </span>
+                        <h4 className="text-xs font-bold text-slate-900 dark:text-white leading-snug truncate group-hover:text-emerald-600 transition-colors">
+                          {item.nama}
+                        </h4>
+                        <p className="text-xs font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
+                          {item.harga}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between pt-2 border-t border-black/[0.04] dark:border-white/[0.05] text-[10.5px]">
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">
+                        {item.status}
+                      </span>
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
+                        <span>Pesan</span>
+                        <Icon.ArrowRight className="w-2.5 h-2.5" />
+                      </span>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            {/* Banner Buka PO Sendiri */}
+            <div className="p-4 rounded-2xl bg-black/[0.03] dark:bg-white/[0.04] border border-dashed border-emerald-500/30 text-center space-y-2">
+              <p className="text-xs font-bold text-slate-800 dark:text-white">
+                Mau Jual Makanan atau Merchandise dengan Sistem PO?
+              </p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Buka pesanan tanpa modal nombok, kelola kuota dan pembayaran otomatis.
+              </p>
+              <a
+                href="https://open-po.vercel.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs active:scale-95 transition-all"
+              >
+                <span>Buka PO Kamu Sekarang</span>
+                <Icon.ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+          </div>
 
           {/* ════════════════════════════════════════
               MENFESS FEED (MOBILE ONLY when mobileTab === 'menfess')

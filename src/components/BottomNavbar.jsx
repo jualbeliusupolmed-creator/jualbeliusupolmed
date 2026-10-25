@@ -183,28 +183,14 @@ function BottomNavbarInner() {
         </div>
       )}
 
-      <div
-        className={cn(
-          "fixed left-1/2 z-40 -translate-x-1/2 select-none no-tap-highlight transition-all duration-300 md:hidden",
-          menyingkir
-            ? "translate-y-[160%] opacity-0 pointer-events-none"
-            : "translate-y-0 opacity-100",
-          isChatRoom
-            ? "bottom-0 w-full max-w-md bg-white/90 dark:bg-[#0f172a]/90 backdrop-blur-2xl border-t border-black/[0.06] dark:border-white/[0.08] pb-[env(safe-area-inset-bottom)] shadow-none"
-            : "bottom-[max(0.75rem,env(safe-area-inset-bottom))] w-[calc(100%-2rem)] max-w-[380px] rounded-[22px] border border-black/[0.06] bg-white/90 shadow-[0_14px_38px_rgba(15,23,42,0.16)] backdrop-blur-2xl dark:border-white/[0.1] dark:bg-[#0f172a]/90"
-        )}
-      >
+      {/* Tombol Buat Baru: Ikon Plus Melayang di Kiri Bawah (Khusus Mobile) */}
+      {!isChatRoom && (
         <div
           className={cn(
-            "flex items-center justify-around px-2",
-            isChatRoom ? "h-12" : "h-[56px] px-1"
+            "fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] left-4 z-40 md:hidden transition-all duration-300",
+            menyingkir ? "translate-y-24 opacity-0 pointer-events-none" : "translate-y-0 opacity-100"
           )}
         >
-          {navKiri.map((n) => (
-            <ItemNav key={n.name} n={n} pathname={pathname} />
-          ))}
-
-          {/* Tombol buat */}
           <button
             type="button"
             onClick={() => {
@@ -212,40 +198,22 @@ function BottomNavbarInner() {
               setBukaBuat(true);
             }}
             aria-label="Buat postingan atau iklan baru"
-            className={cn(
-              "flex flex-col items-center justify-center transition-all duration-200 active:scale-[0.9] touch-manipulation",
-              isChatRoom ? "w-10" : "w-10 xs:w-12 -mt-5"
-            )}
+            title="Buat Baru"
+            className="group relative flex h-12 w-12 items-center justify-center rounded-full bg-primary hover:bg-primary-hover text-white shadow-[0_10px_25px_rgba(124,58,237,0.45)] ring-4 ring-white/90 dark:ring-[#111113]/90 active:scale-90 transition-all duration-200"
           >
-            <span
-              className={cn(
-                "flex items-center justify-center rounded-[16px] bg-primary text-white shadow-[0_8px_20px_rgba(124,58,237,0.4)] ring-4 ring-white/90 dark:ring-[#111113]/90",
-                isChatRoom ? "h-8 w-8 rounded-full" : "h-11 w-11 md:h-10 md:w-10"
-              )}
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.8"
+              strokeLinecap="round"
+              className="h-6 w-6 transition-transform duration-200 group-hover:rotate-90"
             >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.6"
-                strokeLinecap="round"
-                className={isChatRoom ? "h-4 w-4" : "h-[18px] w-[18px]"}
-              >
-                <path d="M12 5v14M5 12h14" />
-              </svg>
-            </span>
-            {!isChatRoom && (
-              <span className="mt-0.5 text-[9px] font-bold tracking-tight text-primary dark:text-primary">
-                Buat
-              </span>
-            )}
+              <path d="M12 5v14M5 12h14" />
+            </svg>
           </button>
-
-          {navKanan.map((n) => (
-            <ItemNav key={n.name} n={n} pathname={pathname} badge={n.name === "Chat" ? unreadChat : 0} />
-          ))}
         </div>
-      </div>
+      )}
 
       <QuickSearchSheet isOpen={bukaCari} onClose={() => setBukaCari(false)} />
       <CreateSheet isOpen={bukaBuat} onClose={() => setBukaBuat(false)} />
