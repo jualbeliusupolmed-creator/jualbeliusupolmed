@@ -153,11 +153,11 @@ function BottomNavbarInner() {
   return (
     <>
 
-      {/* Tombol Menu Kampus: Melayang di Kiri Bawah */}
+      {/* Tombol Menu Burger: Nempel di Kiri Agak Bawah Dikit (Khusus Mobile) */}
       {!isChatRoom && (
         <div
           className={cn(
-            "fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] left-4 z-40 md:hidden transition-all duration-300",
+            "fixed bottom-[calc(max(1.25rem,env(safe-area-inset-bottom))+3.5rem)] left-4 z-40 md:hidden transition-all duration-300",
             menyingkir ? "translate-y-24 opacity-0 pointer-events-none" : "translate-y-0 opacity-100"
           )}
         >
@@ -187,11 +187,11 @@ function BottomNavbarInner() {
         </div>
       )}
 
-      {/* Tombol Buat Baru: FAB Melayang di Kanan Bawah (Mudah Dijangkau Jempol Kanan) */}
+      {/* Tombol Buat Baru: Ikon Plus Melayang di Kiri Bawah (Khusus Mobile) */}
       {!isChatRoom && (
         <div
           className={cn(
-            "fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-4 z-40 md:hidden transition-all duration-300",
+            "fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] left-4 z-40 md:hidden transition-all duration-300",
             menyingkir ? "translate-y-24 opacity-0 pointer-events-none" : "translate-y-0 opacity-100"
           )}
         >
@@ -203,7 +203,7 @@ function BottomNavbarInner() {
             }}
             aria-label="Buat postingan atau iklan baru"
             title="Buat Baru"
-            className="group relative flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-tr from-primary via-violet-600 to-indigo-500 text-white shadow-[0_10px_25px_rgba(124,58,237,0.45)] ring-4 ring-white/90 dark:ring-[#111113]/90 active:scale-90 transition-all duration-200"
+            className="group relative flex h-12 w-12 items-center justify-center rounded-full bg-primary hover:bg-primary-hover text-white shadow-[0_10px_25px_rgba(124,58,237,0.45)] ring-4 ring-white/90 dark:ring-[#111113]/90 active:scale-90 transition-all duration-200"
           >
             <svg
               viewBox="0 0 24 24"

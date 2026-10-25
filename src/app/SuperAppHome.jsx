@@ -15,7 +15,6 @@ import { useSesi } from "@/components/SesiProvider";
 import UnduhMenfessModal from "@/components/mading/UnduhMenfessModal";
 import { compressImage } from "@/lib/image";
 import ProductCard from "@/components/ProductCard";
-import { cn } from "@/lib/utils";
 
 // Haptic feedback for tactile feel on mobile devices
 function triggerHaptic(type = "light") {
@@ -1171,7 +1170,7 @@ export default function SuperAppHome({
       )}
       
       {/* ── Layout Container Desktop: Scroll Natural ── */}
-      <div className="w-full px-3 sm:px-4 md:px-4 md:pt-4 pb-28 sm:pb-20">
+      <div className="w-full px-3 sm:px-4 md:px-4 md:pt-4">
 
         {/* ── SEGMENTED TAB SWITCHER: Marketplace vs Open PO vs Menfess (Mobile & Desktop) ── */}
         <div className="w-full max-w-xl mx-auto mb-3 sm:mb-4 space-y-2">
@@ -1212,9 +1211,9 @@ export default function SuperAppHome({
                 triggerHaptic("light");
                 setMobileTab("menfess");
               }}
-              className={`flex-1 lg:hidden py-1.5 sm:py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 min-w-0 ${
+              className={`flex-1 py-1.5 sm:py-2 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 min-w-0 ${
                 mobileTab === "menfess"
-                  ? "bg-white dark:bg-[#2c2c2e] text-rose-500 shadow-2xs font-extrabold"
+                  ? "bg-white dark:bg-[#2c2c2e] text-[#1d1d1f] dark:text-white shadow-2xs font-extrabold"
                   : "text-slate-500 hover:text-slate-900 dark:text-slate-400"
               }`}
             >
@@ -1241,83 +1240,72 @@ export default function SuperAppHome({
           ═══════════════════════════════════════ */}
           <div className={`flex-1 min-w-0 space-y-3 w-full ${mobileTab !== "marketplace" ? "hidden" : ""}`}>
 
-            {/* ── 1. MARKETPLACE SEARCH BAR & CHIP KATEGORI ── */}
-            <section className="apple-glass-card p-2.5 sm:p-3 space-y-2.5">
-              {/* Row 1: Search Input (Lega) + Kampus Selector */}
-              <div className="flex items-center gap-2 w-full">
+            {/* ── 1. MARKETPLACE SEARCH BAR SEJAJAR KATEGORI & KAMPUS ── */}
+            <section className="apple-glass-card p-2 sm:p-2.5">
+              {/* SEARCH INPUT SEJAJAR DENGAN DROPDOWN KATEGORI & KAMPUS */}
+              <div className="flex items-center gap-1 sm:gap-2 w-full">
+                {/* Search Bar Input */}
                 <div className="relative flex-1 min-w-0">
-                  <Icon.Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  <Icon.Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                   <input
                     type="text"
                     value={listingSearch}
                     onChange={(e) => setListingSearch(e.target.value)}
-                    placeholder="Cari laptop, buku, kos, kuliner..."
-                    className="w-full min-w-0 bg-black/[0.03] dark:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.08] rounded-xl pl-9 pr-8 py-2 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:bg-white dark:focus:bg-[#18181b] transition-all"
+                    placeholder="Cari barang..."
+                    className="w-full min-w-0 bg-black/[0.03] dark:bg-white/[0.05] border border-black/[0.04] dark:border-white/[0.06] rounded-xl pl-6.5 pr-5 sm:pr-8 py-1.5 sm:py-2 text-[11px] sm:text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
                   />
                   {listingSearch && (
                     <button
                       type="button"
                       onClick={() => setListingSearch("")}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white p-1"
-                      aria-label="Hapus teks pencarian"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white p-0.5"
                     >
-                      <Icon.X className="w-3.5 h-3.5" />
+                      <Icon.X className="w-3 h-3" />
                     </button>
                   )}
                 </div>
 
-                {/* Kampus Selector (USU / POLMED / Semua) */}
-                <div className="relative shrink-0">
+                {/* Dropdown Kategori (Sejajar dengan Search) */}
+                <div className="relative shrink-0 w-[68px] sm:w-[96px]">
+                  <select
+                    value={listingCategory}
+                    onChange={(e) => {
+                      triggerHaptic("light");
+                      setListingCategory(e.target.value);
+                    }}
+                    className="w-full appearance-none bg-black/[0.04] dark:bg-white/[0.06] hover:bg-black/[0.08] dark:hover:bg-white/[0.1] border border-black/[0.05] dark:border-white/[0.08] text-slate-700 dark:text-slate-200 text-[10px] sm:text-xs font-bold rounded-xl pl-1.5 pr-3.5 py-1.5 sm:py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all truncate"
+                  >
+                    <option value="Semua">Kategori</option>
+                    <option value="Elektronik">Elektronik</option>
+                    <option value="Buku">Buku</option>
+                    <option value="Fashion">Fashion</option>
+                    <option value="Kos">Kos</option>
+                    <option value="Jasa">Jasa</option>
+                    <option value="Makanan">Makanan</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-1 flex items-center text-slate-400">
+                    <Icon.ChevronDown className="w-2 h-2 sm:w-2.5 sm:h-2.5" />
+                  </div>
+                </div>
+
+                {/* Dropdown Kampus (Sejajar dengan Search) */}
+                <div className="relative shrink-0 w-[64px] sm:w-[90px]">
                   <select
                     value={listingCampus}
                     onChange={(e) => {
                       triggerHaptic("light");
                       setListingCampus(e.target.value);
                     }}
-                    className="appearance-none bg-black/[0.04] dark:bg-white/[0.06] hover:bg-black/[0.08] dark:hover:bg-white/[0.1] border border-black/[0.06] dark:border-white/[0.08] text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl pl-2.5 pr-7 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
+                    className="w-full appearance-none bg-black/[0.04] dark:bg-white/[0.06] hover:bg-black/[0.08] dark:hover:bg-white/[0.1] border border-black/[0.05] dark:border-white/[0.08] text-slate-700 dark:text-slate-200 text-[10px] sm:text-xs font-bold rounded-xl pl-1.5 pr-3.5 py-1.5 sm:py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all truncate"
                   >
-                    <option value="Semua">🏫 Semua Kampus</option>
-                    <option value="USU">🟢 USU</option>
-                    <option value="POLMED">🔵 POLMED</option>
+                    <option value="Semua">Kampus</option>
+                    <option value="USU">USU</option>
+                    <option value="POLMED">POLMED</option>
                   </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-slate-400">
-                    <Icon.ChevronDown className="w-3 h-3" />
+                  <div className="pointer-events-none absolute inset-y-0 right-1 flex items-center text-slate-400">
+                    <Icon.ChevronDown className="w-2 h-2 sm:w-2.5 sm:h-2.5" />
                   </div>
                 </div>
-              </div>
-
-              {/* Row 2: Horizontal Scrollable Category Chips (Pills dengan Emoji) */}
-              <div className="flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-0.5 -mx-1 px-1">
-                {[
-                  { id: "Semua", label: "Semua", emoji: "✨" },
-                  { id: "Elektronik", label: "Elektronik", emoji: "💻" },
-                  { id: "Buku", label: "Buku", emoji: "📚" },
-                  { id: "Fashion", label: "Fashion", emoji: "👕" },
-                  { id: "Kos", label: "Kos", emoji: "🏠" },
-                  { id: "Jasa", label: "Jasa", emoji: "⚡" },
-                  { id: "Makanan", label: "Kuliner", emoji: "🍱" },
-                ].map((cat) => {
-                  const isActive = listingCategory === cat.id;
-                  return (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => {
-                        triggerHaptic("light");
-                        setListingCategory(cat.id);
-                      }}
-                      className={cn(
-                        "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs whitespace-nowrap transition-all duration-150 shrink-0 font-bold",
-                        isActive
-                          ? "bg-primary text-white shadow-xs scale-[1.02]"
-                          : "bg-black/[0.04] dark:bg-white/[0.06] text-slate-600 dark:text-slate-300 hover:bg-black/[0.08] dark:hover:bg-white/[0.1] active:scale-95"
-                      )}
-                    >
-                      <span className="text-[11px] leading-none">{cat.emoji}</span>
-                      <span>{cat.label}</span>
-                    </button>
-                  );
-                })}
               </div>
             </section>
 
@@ -1405,8 +1393,30 @@ export default function SuperAppHome({
                 </div>
               </Link>
             </section>
+
+            {/* Mobile bottom card to jump to Menfess */}
+            <div className="lg:hidden apple-glass-card p-3.5 flex items-center justify-between gap-3">
+              <div>
+                <p className="font-bold text-xs text-[#1d1d1f] dark:text-white">Curhat &amp; Menfess Kampus</p>
+                <p className="text-[10.5px] text-slate-400">Suara anonim, cerita &amp; info mahasiswa</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic("light");
+                  setMobileTab("menfess");
+                  if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className="px-3.5 py-1.5 rounded-full bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold shadow-xs active:scale-95 transition-all shrink-0 flex items-center gap-1"
+              >
+                <span>Buka Menfess</span>
+                <Icon.ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+
           </div>{/* end kolom tengah */}
 
+          {/* ════════════════════════════════════════
           {/* ════════════════════════════════════════
               OPEN PO SECTION (MOBILE & DESKTOP when mobileTab === 'openpo')
               "konten open po real dan terintegrasi secara realtime dari Supabase Open PO"
