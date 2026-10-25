@@ -151,7 +151,7 @@ export default function TransactionModeToggle({ variant = "card" }) {
             {isChatMode && <span className="text-[10px] bg-blue-200 dark:bg-blue-800 px-1.5 py-0.2 rounded font-extrabold">AKTIF</span>}
           </div>
           <p className="mt-1 text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-            Transaksi &amp; negosiasi berlangsung di ruang <code>/chat</code> internal web. Nomor WhatsApp aman terlindungi sampai sepakat tukar kontak.
+            Transaksi &amp; negosiasi berlangsung di ruang Obrolan internal web. Nomor WhatsApp aman terlindungi sampai sepakat tukar kontak.
           </p>
         </div>
       </div>

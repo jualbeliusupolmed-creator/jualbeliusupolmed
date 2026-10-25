@@ -85,6 +85,7 @@ export const FACULTIES = [
 // Daftar barang terlarang marketplace (AdSense policy & Kampus Safety)
 export const PROHIBITED_MARKETPLACE_KEYWORDS = [
   "vape", "vapor", "pod", "pods", "liquid", "relx", "mod vape", "rda", "rta",
+  "oxva", "xlim", "nexlim", "iqos", "ursa", "caliburn", "vinci", "geekvape", "smok", "voopoo", "lostvape", "lost vape", "centaurus", "fizz", "aladdin",
   "rokok", "cerutu", "tembakau", "shisha", "sisha", "hookah",
   "tramadol", "dumolid", "alprazolam", "obat keras", "obat kuat", "miras", "alkohol", "arak", "tuak",
   "senjata", "sajam", "celurit", "airsoft"
@@ -104,7 +105,7 @@ export function checkProhibitedListing(title = "", description = "") {
       return {
         prohibited: true,
         keyword: item,
-        reason: `Kata '${item}' dilarang untuk menjaga keamanan akun Google AdSense dan aturan kampus`,
+        reason: `Kata '${item}' dilarang untuk menjaga keamanan akun Google AdSense dan aturan kampus (vape, rokok, miras, obat)`,
       };
     }
   }
@@ -135,6 +136,15 @@ export function detectDoxxingRisk(text = "") {
     return {
       risky: true,
       reason: "Dilarang mencantumkan nomor induk mahasiswa (NIM/Stambuk) spesifik untuk menjaga privasi mahasiswa.",
+    };
+  }
+
+  // 3. Pola target individu spesifik: inisial + stambuk / prodi / callout personal
+  const personalCalloutPattern = /\b(?:inisial\s+[a-z]{1,3}|abang\s+inisial|kakak\s+inisial|dek\s+lain\s+kali|circle\s+di\s+prodi)\b/i;
+  if (personalCalloutPattern.test(text)) {
+    return {
+      risky: true,
+      reason: "Dilarang menargetkan individu lewat inisial, prodi, dan angkatan demi mencegah perundungan/doxxing di kampus.",
     };
   }
 

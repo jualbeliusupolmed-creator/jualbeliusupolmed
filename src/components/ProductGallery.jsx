@@ -6,7 +6,7 @@ import { hapticLight } from "@/lib/haptics";
 import { Icon } from "@/components/Icons";
 
 export default function ProductGallery({ images = [], title }) {
-  const imgs = images.filter(Boolean);
+  const imgs = Array.from(new Set(images.filter(Boolean)));
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
   const [active, setActive] = useState(0);
 

@@ -75,7 +75,7 @@ export default async function sitemap() {
     const sellerRoutes = Array.from(sellerMap.entries())
       .filter(([wa]) => !slugPerWa.has(wa))
       .map(([wa, bumpedAt]) => ({
-        url: `${baseUrl}/penjual/${wa}`,
+        url: `${baseUrl}/penjual/u-${Buffer.from(String(wa).replace(/\D/g, "")).toString("base64url")}`,
         lastModified: bumpedAt || new Date().toISOString(),
         changeFrequency: "weekly",
         priority: 0.6,

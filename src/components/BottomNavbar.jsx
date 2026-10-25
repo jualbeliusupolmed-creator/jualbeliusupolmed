@@ -15,7 +15,7 @@ import MobileSidebarDrawer from "./MobileSidebarDrawer";
 
 // Lima tujuan utama navigasi bawah yang stabil dan mudah dihafal jempol.
 const BERANDA = { name: "Beranda", href: "/", icon: Icon.Home };
-const CHAT = { name: "Chat", href: "/chat", icon: Icon.MessageCircle };
+const CHAT = { name: "Obrolan", href: "/chat", icon: Icon.MessageCircle };
 
 const MARKET = {
   name: "Market",

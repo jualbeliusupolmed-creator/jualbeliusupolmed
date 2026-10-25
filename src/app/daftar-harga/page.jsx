@@ -110,30 +110,17 @@ export default async function DaftarHargaPage() {
         </p>
       </div>
 
-      {/* Iklan barang: berjenjang menurut harga, jadi tidak bisa satu angka */}
+      {/* Iklan barang: 100% Gratis untuk mahasiswa */}
       <section className="mt-10">
-        <h2 className="text-xl font-bold text-gray-900 border-b pb-2">1. Iklan Barang</h2>
-        <p className="mt-2 text-sm text-gray-500 leading-relaxed">
-          Biayanya mengikuti harga barangnya — makin murah barangnya, makin murah iklannya.
-        </p>
-        {tokoGratis && (
-          <p className="mt-3 rounded-xl bg-emerald-50 border border-emerald-100 p-3 text-sm text-emerald-800">
-            <strong>Punya halaman toko? Iklannya gratis.</strong> Semua tarif di bawah ini tidak
-            berlaku untuk penjual yang sudah membuka toko — dan membuka toko itu sendiri gratis.
-          </p>
-        )}
-        {tierIklan.length > 0 ? (
-          <div className="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            {tierIklan.map((t, i) => (
-              <div key={i} className="rounded-xl bg-gray-50 p-4 border border-gray-100 flex flex-col justify-between">
-                <span className="text-xs font-semibold text-gray-500">{t.range}</span>
-                <span className="mt-2 text-lg font-bold text-primary">{t.fee}</span>
-              </div>
-            ))}
+        <h2 className="text-xl font-bold text-gray-900 border-b pb-2">1. Iklan Barang &amp; Jasa Mahasiswa</h2>
+        <div className="mt-3 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 p-4 text-emerald-900">
+          <div className="flex items-center gap-2 font-bold text-base text-emerald-800">
+            <span>🎉 100% GRATIS untuk Mahasiswa USU &amp; POLMED</span>
           </div>
-        ) : (
-          <p className="mt-4 text-sm text-gray-500">Iklan barang sedang gratis.</p>
-        )}
+          <p className="mt-1 text-sm text-emerald-700 leading-relaxed">
+            Tidak ada biaya pasang iklan (Rp 0), bebas komisi transaksi antar-mahasiswa (0%), dan dana pembayaran langsung ke tangan penjual via COD atau transfer/QRIS pribadi.
+          </p>
+        </div>
       </section>
 
       {/* Grid Harga Jasa Iklan */}
