@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useInView } from "react-intersection-observer";
 import { Icon } from "@/components/Icons";
@@ -80,11 +81,141 @@ export default function SuperAppHome({
   const [showSearch, setShowSearch] = useState(false); // toggle search bar
   const [debouncedQuery, setDebouncedQuery] = useState("");
 
+  const router = useRouter();
+
   // Marketplace states (Center Showcase)
   const [listingCampus, setListingCampus] = useState("Semua"); // 'Semua' | 'USU' | 'POLMED'
   const [listingCategory, setListingCategory] = useState("Semua");
   const [listingSearch, setListingSearch] = useState("");
   const [mobileTab, setMobileTab] = useState("marketplace"); // 'marketplace' | 'menfess'
+
+  // Live dynamic ticker rotation between Menfess, Open PO, and Jual Beli
+  const [tickerIndex, setTickerIndex] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (typeof document !== "undefined" && document.hidden) return;
+      setTickerIndex((prev) => prev + 1);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, []);
+
+  const PO_TICKER_ITEMS = [
+    { title: "Risol Mayo Lumer Mba Siti", sub: "Rp 12.000 • Buka PO USU Pintu 2" },
+    { title: "Matcha Latte Creamy USU FIB", sub: "18/25 cup terpesan • Siap Kirim" },
+    { title: "Kopi Susu Aren Literan", sub: "Rp 45.000 / 1L • Kuota hampir penuh" },
+    { title: "Fudgy Brownies Panggang Bites", sub: "Buka PO Batch 6 • Diskon Mhs" },
+    { title: "Kaos Angkatan Oversize Katun 24s", sub: "Sisa 12 Slot • Eksklusif Kampus" },
+    { title: "Jastip Oleh-oleh & Snack Medan", sub: "Siap titip & antar se-kampus" },
+  ];
+
+  const renderCampusLiveTicker = () => {
+    // 0: Menfess, 1: Open PO, 2: Jual Beli
+    const tickerType = tickerIndex % 3;
+
+    if (tickerType === 0) {
+      // ── KONTEN MENFESS ──
+      const activePost = posts && posts.length > 0 ? posts[tickerIndex % posts.length] : null;
+      const text = activePost?.content || "Halo, ada rekomendasi kos dekat pintu 2 USU yang bersih & under 1 jt?";
+
+      return (
+        <button
+          type="button"
+          onClick={() => {
+            triggerHaptic("light");
+            setMobileTab("menfess");
+            if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          className="w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-violet-500/10 hover:bg-violet-500/15 border border-violet-500/20 text-left transition-all active:scale-[0.99] group shadow-2xs"
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="flex h-2 w-2 relative shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-600" />
+            </span>
+            <span className="text-[10px] font-extrabold text-violet-700 dark:text-violet-300 shrink-0">Menfess:</span>
+            <span className="text-[10.5px] text-slate-600 dark:text-slate-300 truncate min-w-0 flex-1">
+              &ldquo;{text}&rdquo;
+            </span>
+          </div>
+          <span className="text-[9.5px] font-bold text-violet-600 dark:text-violet-400 shrink-0 flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
+            <span>Buka</span>
+            <Icon.ArrowRight className="w-2.5 h-2.5" />
+          </span>
+        </button>
+      );
+    }
+
+    if (tickerType === 1) {
+      // ── KONTEN OPEN PO ──
+      const po = PO_TICKER_ITEMS[Math.floor(tickerIndex / 3) % PO_TICKER_ITEMS.length];
+      return (
+        <button
+          type="button"
+          onClick={() => {
+            triggerHaptic("light");
+            if (typeof window !== "undefined" && window.innerWidth < 1024) {
+              setMobileTab("openpo");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            } else {
+              window.open("https://open-po.vercel.app", "_blank", "noopener,noreferrer");
+            }
+          }}
+          className="w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/20 text-left transition-all active:scale-[0.99] group shadow-2xs"
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="flex h-2 w-2 relative shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600" />
+            </span>
+            <span className="text-[10px] font-extrabold text-emerald-700 dark:text-emerald-300 shrink-0">Open PO 🍵:</span>
+            <span className="text-[10.5px] text-slate-600 dark:text-slate-300 truncate min-w-0 flex-1">
+              &ldquo;{po.title} — {po.sub}&rdquo;
+            </span>
+          </div>
+          <span className="text-[9.5px] font-bold text-emerald-600 dark:text-emerald-400 shrink-0 flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
+            <span>Pesan</span>
+            <Icon.ArrowRight className="w-2.5 h-2.5" />
+          </span>
+        </button>
+      );
+    }
+
+    // ── KONTEN JUAL BELI (JB) ──
+    const activeListing = latestListings && latestListings.length > 0
+      ? latestListings[Math.floor(tickerIndex / 3) % latestListings.length]
+      : null;
+    const title = activeListing?.title || "MacBook Air M1 2020 Muluss";
+    const harga = activeListing?.price ? rupiah(activeListing.price) : "COD Kampus";
+
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          triggerHaptic("light");
+          setMobileTab("marketplace");
+          if (activeListing?.id) {
+            router.push(`/produk/${activeListing.id}`);
+          }
+        }}
+        className="w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/15 border border-amber-500/20 text-left transition-all active:scale-[0.99] group shadow-2xs"
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="flex h-2 w-2 relative shrink-0">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-600" />
+          </span>
+          <span className="text-[10px] font-extrabold text-amber-700 dark:text-amber-300 shrink-0">Jual Beli 🛍️:</span>
+          <span className="text-[10.5px] text-slate-600 dark:text-slate-300 truncate min-w-0 flex-1">
+            &ldquo;{title} — {harga}&rdquo;
+          </span>
+        </div>
+        <span className="text-[9.5px] font-bold text-amber-600 dark:text-amber-400 shrink-0 flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
+          <span>Cek</span>
+          <Icon.ArrowRight className="w-2.5 h-2.5" />
+        </span>
+      </button>
+    );
+  };
 
   // Mobile pull to refresh state
   const [pullDistance, setPullDistance] = useState(0);
@@ -1067,33 +1198,8 @@ export default function SuperAppHome({
             </button>
           </div>
 
-          {/* Menfess Buzz Live Ticker (hanya saat tab marketplace aktif di mobile) */}
-          {mobileTab === "marketplace" && posts && posts.length > 0 && (
-            <button
-              type="button"
-              onClick={() => {
-                triggerHaptic("light");
-                setMobileTab("menfess");
-                if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-              className="w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-violet-500/10 hover:bg-violet-500/15 border border-violet-500/20 text-left transition-all active:scale-[0.99] group shadow-2xs"
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="flex h-2 w-2 relative shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-600" />
-                </span>
-                <span className="text-[10px] font-extrabold text-violet-700 dark:text-violet-300 shrink-0">Menfess:</span>
-                <span className="text-[10.5px] text-slate-600 dark:text-slate-300 truncate min-w-0 flex-1">
-                  &ldquo;{posts[0].content}&rdquo;
-                </span>
-              </div>
-              <span className="text-[9.5px] font-bold text-violet-600 dark:text-violet-400 shrink-0 flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
-                <span>Buka</span>
-                <Icon.ArrowRight className="w-2.5 h-2.5" />
-              </span>
-            </button>
-          )}
+          {/* Live Campus Buzz Ticker (Berubah-ubah dinamis antara Menfess, Open PO, dan Jual Beli) */}
+          {mobileTab === "marketplace" && renderCampusLiveTicker()}
         </div>
 
         <div className="flex flex-col lg:flex-row gap-5 items-start">
@@ -1103,58 +1209,17 @@ export default function SuperAppHome({
               Mobile: visible when mobileTab === 'marketplace'
               Desktop: flex-1, always visible
           ═══════════════════════════════════════ */}
-          <div className={`flex-1 min-w-0 space-y-4 w-full ${mobileTab !== "marketplace" ? "hidden lg:block" : ""}`}>
+          <div className={`flex-1 min-w-0 space-y-3 w-full ${mobileTab !== "marketplace" ? "hidden lg:block" : ""}`}>
 
-            {/* ── 1. MARKETPLACE HEADER WITH OPEN PO & LIHAT SEMUA ── */}
-            <section className="apple-glass-card p-3 sm:p-5">
-              <div className="hidden sm:flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 pb-2.5 sm:pb-3 border-b border-black/[0.04] dark:border-white/[0.06]">
-                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-primary/20 via-primary/10 to-transparent text-primary flex items-center justify-center shrink-0 shadow-2xs">
-                    <Icon.ShoppingBag className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                      <h1 className="text-sm sm:text-lg font-black text-[#1d1d1f] dark:text-white tracking-tight">
-                        Marketplace Kampus
-                      </h1>
-                      <span className="rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-extrabold text-[9.5px] sm:text-[10px] px-2 py-0.5 border border-emerald-500/20">
-                        COD Kampus
-                      </span>
-                    </div>
-                    <p className="text-[10.5px] sm:text-[11.5px] text-slate-500 dark:text-slate-400 truncate sm:whitespace-normal">
-                      Jual beli barang bekas, buku &amp; jasa mahasiswa USU - POLMED
-                    </p>
-                  </div>
-                </div>
+            {/* Live Campus Buzz Ticker (Tampil di Desktop tepat di atas search bar) */}
+            <div className="hidden lg:block">
+              {renderCampusLiveTicker()}
+            </div>
 
-                {/* ACTION BUTTONS: Tombol Open PO persis di samping Lihat Semua */}
-                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 self-start sm:self-auto">
-                  {/* Tombol Open PO */}
-                  <a
-                    href="https://open-po.vercel.app"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-[11px] sm:text-xs font-bold shadow-xs hover:shadow-md active:scale-95 transition-all"
-                    title="Open PO Kampus — Makanan, Merchandise & Jastip Mahasiswa"
-                  >
-                    <span className="text-xs sm:text-sm leading-none">🍵</span>
-                    <span>Open PO</span>
-                    <Icon.ExternalLink className="w-3 h-3 opacity-90" />
-                  </a>
-
-                  {/* Tombol Lihat Semua */}
-                  <Link
-                    href="/jual-beli"
-                    className="inline-flex items-center gap-1 px-2.5 sm:px-3.5 py-1.5 rounded-full bg-black/[0.04] dark:bg-white/[0.08] hover:bg-black/[0.08] dark:hover:bg-white/[0.12] text-primary text-[11px] sm:text-xs font-bold active:scale-95 transition-all"
-                  >
-                    <span>Lihat Semua</span>
-                    <Icon.ArrowRight className="w-3 h-3" />
-                  </Link>
-                </div>
-              </div>
-
+            {/* ── 1. MARKETPLACE SEARCH BAR SEJAJAR KATEGORI & KAMPUS ── */}
+            <section className="apple-glass-card p-2 sm:p-2.5">
               {/* SEARCH INPUT SEJAJAR DENGAN DROPDOWN KATEGORI & KAMPUS */}
-              <div className="flex items-center gap-1 sm:gap-2 mt-0.5 sm:mt-3 w-full">
+              <div className="flex items-center gap-1 sm:gap-2 w-full">
                 {/* Search Bar Input */}
                 <div className="relative flex-1 min-w-0">
                   <Icon.Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -1216,66 +1281,6 @@ export default function SuperAppHome({
                   <div className="pointer-events-none absolute inset-y-0 right-1 flex items-center text-slate-400">
                     <Icon.ChevronDown className="w-2 h-2 sm:w-2.5 sm:h-2.5" />
                   </div>
-                </div>
-              </div>
-
-              {/* Filter Kategori & Kampus Pills (Desktop sm: ke atas) */}
-              <div className="hidden sm:flex flex-col gap-1.5 mt-2.5 pt-2 border-t border-black/[0.04] dark:border-white/[0.06]">
-                {/* Kategori Pills */}
-                <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-0.5">
-                  {["Semua", "Elektronik", "Buku", "Fashion", "Kos", "Jasa", "Makanan"].map((cat) => (
-                    <button
-                      key={cat}
-                      type="button"
-                      onClick={() => {
-                        triggerHaptic("light");
-                        setListingCategory(cat);
-                      }}
-                      className={`px-2.5 sm:px-3 py-1 rounded-full text-[10.5px] sm:text-[11px] font-bold whitespace-nowrap transition-all shrink-0 ${
-                        listingCategory === cat
-                          ? "bg-primary text-white shadow-2xs"
-                          : "bg-black/[0.04] text-slate-600 hover:bg-black/[0.08] dark:bg-white/[0.06] dark:text-slate-300"
-                      }`}
-                    >
-                      {cat === "Semua" ? "Semua Kategori" : cat}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Kampus Filter Pills */}
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[10px] sm:text-[10.5px] font-semibold text-slate-400 mr-0.5 shrink-0">Kampus:</span>
-                  {["Semua", "USU", "POLMED"].map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => {
-                        triggerHaptic("light");
-                        setListingCampus(c);
-                      }}
-                      className={`px-2 py-0.5 rounded-full text-[10px] sm:text-[10.5px] font-bold transition-all shrink-0 ${
-                        listingCampus === c
-                          ? "bg-[#1d1d1f] text-white dark:bg-white dark:text-[#1d1d1f] shadow-2xs"
-                          : "bg-black/[0.03] text-slate-500 hover:bg-black/[0.06] dark:bg-white/[0.05] dark:text-slate-400"
-                      }`}
-                    >
-                      {c === "Semua" ? "Semua Kampus" : c}
-                    </button>
-                  ))}
-
-                  {(listingCategory !== "Semua" || listingCampus !== "Semua" || listingSearch) && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setListingCategory("Semua");
-                        setListingCampus("Semua");
-                        setListingSearch("");
-                      }}
-                      className="ml-auto text-[10px] sm:text-[10.5px] font-bold text-rose-500 hover:underline"
-                    >
-                      Reset Filter
-                    </button>
-                  )}
                 </div>
               </div>
             </section>

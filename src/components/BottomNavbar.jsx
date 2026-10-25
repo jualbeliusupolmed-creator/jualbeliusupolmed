@@ -11,6 +11,7 @@ import { useSesi } from "./SesiProvider";
 import QuickSearchSheet from "./QuickSearchSheet";
 import CreateSheet from "./CreateSheet";
 import OTPModal from "./OTPModal";
+import MobileSidebarDrawer from "./MobileSidebarDrawer";
 
 // Lima tujuan utama navigasi bawah yang stabil dan mudah dihafal jempol.
 const BERANDA = { name: "Beranda", href: "/", icon: Icon.Home };
@@ -106,6 +107,7 @@ function BottomNavbarInner() {
   const [bukaCari, setBukaCari] = useState(false);
   const [bukaBuat, setBukaBuat] = useState(false);
   const [bukaOtp, setBukaOtp] = useState(false);
+  const [bukaSidebar, setBukaSidebar] = useState(false);
   const tersembunyi = useHideOnScroll();
   const [unreadChat, setUnreadChat] = useState(0);
 
@@ -149,8 +151,8 @@ function BottomNavbarInner() {
       };
 
   const navKanan = [CHAT, AKUN];
-  // Sheet yang terbuka menahan dock supaya tidak menyingkir di belakangnya.
-  const menyingkir = tersembunyi && !bukaCari && !bukaBuat && !bukaOtp && !isChatRoom;
+  // Sheet atau drawer yang terbuka menahan dock supaya tidak menyingkir di belakangnya.
+  const menyingkir = tersembunyi && !bukaCari && !bukaBuat && !bukaOtp && !bukaSidebar && !isChatRoom;
 
   return (
     <>
@@ -179,6 +181,40 @@ function BottomNavbarInner() {
             <span className="truncate text-[13px] font-medium text-slate-600 dark:text-slate-300">
               Cari barang, jasa, kos…
             </span>
+          </button>
+        </div>
+      )}
+
+      {/* Tombol Menu Burger: Nempel di Kiri Agak Bawah Dikit (Khusus Mobile) */}
+      {!isChatRoom && (
+        <div
+          className={cn(
+            "fixed bottom-[calc(max(1.25rem,env(safe-area-inset-bottom))+3.5rem)] left-4 z-40 md:hidden transition-all duration-300",
+            menyingkir ? "translate-y-24 opacity-0 pointer-events-none" : "translate-y-0 opacity-100"
+          )}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              hapticLight();
+              setBukaSidebar(true);
+            }}
+            aria-label="Buka Menu Kampus (Sidebar)"
+            title="Menu Kampus"
+            className="group relative flex h-11 w-11 items-center justify-center rounded-full bg-white/95 dark:bg-[#1c1c1e]/95 text-slate-700 dark:text-slate-200 shadow-[0_8px_20px_rgba(0,0,0,0.12)] border border-black/[0.08] dark:border-white/[0.12] backdrop-blur-xl active:scale-90 transition-all duration-200"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              className="h-5 w-5 transition-transform duration-200 group-hover:scale-105"
+            >
+              <line x1="4" y1="7" x2="20" y2="7" />
+              <line x1="4" y1="12" x2="20" y2="12" />
+              <line x1="4" y1="17" x2="20" y2="17" />
+            </svg>
           </button>
         </div>
       )}
@@ -215,6 +251,7 @@ function BottomNavbarInner() {
         </div>
       )}
 
+      <MobileSidebarDrawer isOpen={bukaSidebar} onClose={() => setBukaSidebar(false)} />
       <QuickSearchSheet isOpen={bukaCari} onClose={() => setBukaCari(false)} />
       <CreateSheet isOpen={bukaBuat} onClose={() => setBukaBuat(false)} />
       <OTPModal
