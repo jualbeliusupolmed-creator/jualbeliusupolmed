@@ -1747,6 +1747,14 @@ export default function SuperAppHome({
                     <span className="text-[10px] text-slate-400">Memuat menfess lainnya...</span>
                   </div>
                 )}
+                {!hasMore && filteredPosts.length > 0 && (
+                  <div className="py-6 text-center">
+                    <p className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-violet-500/10 text-violet-700 dark:text-violet-300 text-xs font-semibold">
+                      <span>✨</span>
+                      <span>Semua menfess terbaru sudah ditampilkan — Kirim menfessmu sekarang!</span>
+                    </p>
+                  </div>
+                )}
               </div>
             </section>
           </div>

@@ -157,6 +157,22 @@ export default function JualPage() {
       toast.error("Lengkapi nama, WA, judul, dan harga.");
       return;
     }
+    const numPrice = Number(form.price);
+    if (form.type !== "gratis") {
+      if (numPrice <= 0) {
+        toast.error("Harga tidak boleh Rp 0. Masukkan minimal Rp 1.000.");
+        return;
+      }
+      if (numPrice < 1000) {
+        const suggested = (numPrice * 1000).toLocaleString("id-ID");
+        const confirmed = window.confirm(`Harga yang kamu ketik (Rp ${numPrice.toLocaleString("id-ID")}) di bawah Rp 1.000. Apakah maksud kamu Rp ${suggested}?`);
+        if (confirmed) {
+          setForm((f) => ({ ...f, price: String(numPrice * 1000) }));
+        } else {
+          return;
+        }
+      }
+    }
     setShowPreviewModal(true);
   }
 
@@ -165,6 +181,23 @@ export default function JualPage() {
     if (!form.seller_name || !formattedWa || !form.title || !form.price) {
       toast.error("Lengkapi nama, WA, judul, dan harga.");
       return;
+    }
+    const numPrice = Number(form.price);
+    if (form.type !== "gratis") {
+      if (numPrice <= 0) {
+        toast.error("Harga tidak boleh Rp 0. Masukkan minimal Rp 1.000.");
+        return;
+      }
+      if (numPrice < 1000) {
+        const suggested = (numPrice * 1000).toLocaleString("id-ID");
+        const confirmed = window.confirm(`Harga yang kamu ketik (Rp ${numPrice.toLocaleString("id-ID")}) di bawah Rp 1.000. Apakah maksud kamu Rp ${suggested}?`);
+        if (confirmed) {
+          setForm((f) => ({ ...f, price: String(numPrice * 1000) }));
+          form.price = String(numPrice * 1000);
+        } else {
+          return;
+        }
+      }
     }
 
     // Cek apakah pengguna sudah login dengan nomor ini.
@@ -445,6 +478,19 @@ export default function JualPage() {
               />
               <label htmlFor="form-price" className="floating-label">{form.type === "sewa" ? `Harga Sewa (Rp) / ${form.rental_period || "hari"}` : "Harga (Rp)"}</label>
             </div>
+            {form.price && Number(form.price) > 0 && Number(form.price) < 1000 && (
+              <div className="sm:col-span-2 -mt-2 flex items-center gap-2 text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-3.5 py-2 rounded-xl border border-amber-300 dark:border-amber-700/50">
+                <span>💡</span>
+                <span>Maksud kamu <strong>Rp {(Number(form.price) * 1000).toLocaleString("id-ID")}</strong>?</span>
+                <button
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, price: String(Number(f.price) * 1000) }))}
+                  className="ml-auto text-xs font-bold text-primary dark:text-emerald-400 underline hover:opacity-80"
+                >
+                  Terapkan Otomatis
+                </button>
+              </div>
+            )}
             
             <div className="floating-group">
               <input 

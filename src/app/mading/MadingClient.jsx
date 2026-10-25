@@ -940,14 +940,17 @@ export default function MadingClient({ initialPosts = [] }) {
                   )}
                 </button>
               ) : (
-                <p className="text-[11px] text-slate-400 dark:text-slate-600 font-medium">
-                  <span className="inline-flex items-center gap-1"><Icon.Check className="h-3.5 w-3.5" /> Semua postingan sudah ditampilkan</span>
-                </p>
+                <div className="py-4 text-center">
+                  <p className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-violet-500/10 text-violet-700 dark:text-violet-300 text-xs font-semibold">
+                    <span>✨</span>
+                    <span>Semua menfess terbaru sudah ditampilkan — Kirim menfessmu sekarang!</span>
+                  </p>
+                </div>
               )}
             </div>
           )}
         </div>
-                <Icon.X className="h-5 w-5" />
+
         {/* MODAL BUAT POST BARU */}
         {showModal && (
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
