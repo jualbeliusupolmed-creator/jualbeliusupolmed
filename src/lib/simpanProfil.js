@@ -67,26 +67,33 @@ export async function simpanProfil(wa, body, { supa = getAdminClient() } = {}) {
   // menuliskan nilai apa pun ke kolom yang menentukan peran.
   if (mendaftarOrganisasi && !peran.organisasi) isian.account_type = "ukm";
 
-  // ── Alamat toko ────────────────────────────────────────────────────────────
-  // Slug tidak lewat saringIsian karena ia bukan sekadar teks: mengubahnya
-  // punya akibat pada status persetujuan, dan bentuknya divalidasi tersendiri.
+  // ── Username / Alamat profil & toko ─────────────────────────────────────────
+  // Sekarang setiap pengguna (penjual biasa maupun pemilik toko) boleh punya username sendiri.
   let gantiAlamat = false;
-  if (body?.slug !== undefined && body.slug !== null && String(body.slug).trim() !== "") {
-    if (!peranEfektif.toko && !sekarang?.store_name) {
-      return { pesanPengguna: "Isi nama toko dulu sebelum menentukan alamatnya.", status: 400 };
-    }
-    const hasil = periksaSlug(body.slug);
+  const rawSlug = body?.slug ?? body?.username;
+  if (rawSlug !== undefined && rawSlug !== null && String(rawSlug).trim() !== "") {
+    const hasil = periksaSlug(rawSlug);
     if (!hasil.ok) return { pesanPengguna: hasil.alasan, status: 400 };
     if (hasil.slug !== sekarang?.slug) {
+      // Cek apakah username/slug sudah dipakai orang lain
+      const { data: bentrok } = await supa
+        .from("seller_profiles")
+        .select("wa, slug")
+        .ilike("slug", hasil.slug)
+        .neq("wa", wa)
+        .maybeSingle();
+      if (bentrok) {
+        return { pesanPengguna: `Username "${hasil.slug}" sudah dipakai pengguna lain. Coba username lain.`, status: 409 };
+      }
       isian.slug = hasil.slug;
-      gantiAlamat = Boolean(sekarang?.slug);
+      if (sekarang?.store_status === "aktif" && sekarang?.store_name) {
+        gantiAlamat = Boolean(sekarang?.slug);
+      }
     }
   }
 
   // Persetujuan admin diberikan untuk sebuah nama di sebuah alamat. Kalau
-  // alamatnya boleh diganti sesudahnya tanpa ditinjau, izin untuk
-  // "warung-ridho" bisa berpindah ke "admin-resmi" tanpa seorang pun melihatnya
-  // lagi. Logo, jam buka, dan pengumuman boleh berubah kapan saja.
+  // alamat toko yang sudah aktif diganti, status toko ditinjau kembali.
   if (gantiAlamat) {
     isian.store_status = "menunggu";
     isian.store_requested_at = new Date().toISOString();
@@ -95,7 +102,7 @@ export async function simpanProfil(wa, body, { supa = getAdminClient() } = {}) {
   if ("name" in isian && !isian.name) {
     return { pesanPengguna: "Nama wajib diisi.", status: 400 };
   }
-  if ((peranEfektif.toko || isian.slug) && "store_name" in isian && !isian.store_name) {
+  if (peranEfektif.toko && "store_name" in isian && !isian.store_name) {
     return { pesanPengguna: "Nama toko wajib diisi.", status: 400 };
   }
 

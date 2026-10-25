@@ -173,8 +173,8 @@ export default async function ProdukPage({ params }) {
   const sold = listing.status === "sold";
   const shortPath = buildListingShortPath(listing.listing_code);
   const listingSpecs = formatListingSpecs(listing.category, listing.specs);
-  // URL profil penjual yang aman (obfuscated) agar nomor WA tidak ter-expose di URL publik
-  const sellerWaEncoded = encodeSellerSlug(listing.seller_wa);
+  // URL profil penjual: utamakan username/slug resmi penjual
+  const sellerUsername = listing.seller_profiles?.slug || encodeSellerSlug(listing.seller_wa);
 
   // JSON-LD Product + BreadcrumbList — agar listing bisa muncul sebagai
   // rich result (harga, ketersediaan) di Google.
@@ -340,7 +340,7 @@ export default async function ProdukPage({ params }) {
 
           {/* Card penjual — link ke halaman profil */}
           <Link
-            href={`/penjual/${sellerWaEncoded}`}
+            href={`/penjual/${sellerUsername}`}
             className="card mt-5 flex items-center gap-3 p-3.5 hover:border-primary/30 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-shadow dark:border-slate-800 dark:bg-slate-900/40"
           >
             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 font-semibold text-primary dark:bg-white/10 dark:text-white">
@@ -351,12 +351,19 @@ export default async function ProdukPage({ params }) {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <p className="text-sm font-semibold dark:text-white">
-                  {listing.seller_name && !/^User\s+\d+$/i.test(listing.seller_name)
-                    ? listing.seller_name
-                    : listing.campus && listing.campus !== "Semua"
-                    ? `Mahasiswa ${listing.campus}`
-                    : "Mahasiswa Kampus"}
+                <p className="text-sm font-semibold dark:text-white flex items-center gap-1.5 flex-wrap">
+                  <span>
+                    {listing.seller_name && !/^User\s+\d+$/i.test(listing.seller_name)
+                      ? listing.seller_name
+                      : listing.campus && listing.campus !== "Semua"
+                      ? `Mahasiswa ${listing.campus}`
+                      : "Mahasiswa Kampus"}
+                  </span>
+                  {listing.seller_profiles?.slug && (
+                    <span className="text-[11px] font-mono font-normal text-gray-400 dark:text-slate-500">
+                      @{listing.seller_profiles.slug}
+                    </span>
+                  )}
                 </p>
                 {listing.seller_profiles?.distributor && (
                   <span className="inline-flex items-center gap-0.5 rounded-full bg-orange-100 dark:bg-orange-900/40 px-1.5 py-0.5 text-[10px] font-bold text-orange-600 dark:text-orange-400" title="Distributor Resmi">

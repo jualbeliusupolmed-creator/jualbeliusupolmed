@@ -188,8 +188,10 @@ export function userIdTeman(wa) {
  */
 export function bentukProfil(sp, tp) {
   const peran = peranProfil(sp);
+  const username = sp?.slug || "";
   return {
     ...sp,
+    username,
     peran,
     teman: tp
       ? {
