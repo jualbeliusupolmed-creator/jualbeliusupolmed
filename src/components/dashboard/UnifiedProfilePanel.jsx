@@ -294,7 +294,14 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
   async function simpan(e) {
     e.preventDefault();
     if (!f.name.trim()) return toast.error("Nama wajib diisi");
-    if ((peran.toko || bukaToko) && !f.store_name.trim()) return toast.error("Nama toko wajib diisi");
+    if (f.slug) {
+      const cleanSlug = f.slug.toLowerCase().trim();
+      if (cleanSlug.length < 3) return toast.error("Username minimal 3 karakter");
+      if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(cleanSlug)) {
+        return toast.error("Username hanya boleh huruf kecil, angka, dan tanda hubung (-)");
+      }
+    }
+    if ((hasToko || bukaToko) && !f.store_name?.trim()) return toast.error("Nama toko wajib diisi");
     if ((peran.organisasi || daftarOrg) && !f.ukm_name.trim()) return toast.error("Nama organisasi wajib diisi");
 
     try {
@@ -330,6 +337,7 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
   }
 
   const peran = profil.peran;
+  const hasToko = Boolean(profil.store_name);
   const fakultas = f.campus === "Polmed" || f.campus === "POLMED" ? FACULTIES_POLMED : FACULTIES_USU;
   // Sebuah lembaga tidak punya angkatan dan tidak sedang mencari teman nongkrong.
   const tawarkanCariTeman = !peran.organisasi && !daftarOrg;
@@ -352,7 +360,7 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
                       {profil.ukm_verified ? "Organisasi Terverifikasi" : "Organisasi Kampus"}
                     </span>
                   )}
-                  {peran.toko && (
+                  {hasToko && (
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-100 px-2.5 py-1 text-[10px] font-bold text-sky-700 dark:bg-sky-950/40 dark:text-sky-300">
                       <Icon.ShoppingBag className="h-3.5 w-3.5" />
                       Punya Toko
@@ -395,7 +403,7 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
                   Portal Organisasi
                 </span>
               )}
-              {peran.toko && profil.slug && (
+              {hasToko && profil.slug && (
                 <Link href={`/toko/${profil.slug}`} target="_blank" className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-bold text-white shadow-xs transition-all hover:brightness-105 active:scale-95">
                   <Icon.Store className="h-4 w-4" />
                   <span>Lihat Toko</span>
@@ -421,10 +429,32 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
           <input ref={inputFoto} type="file" accept="image/*" className="hidden" onChange={unggahFoto} />
         </div>
 
-        <Kartu judul="Identitas" catatan="Dipakai di kartu iklan, obrolan, dan mading.">
+        <Kartu judul="Identitas" catatan="Dipakai di kartu iklan, URL profil penjual, obrolan, dan mading.">
           <Baris label={peran.organisasi ? "Nama pengurus" : "Nama"}>
             <Teks nilai={f.name} ubah={(v) => set("name", v)} required placeholder="Nama lengkap" />
           </Baris>
+          <Baris label="Username">
+            <div className="flex flex-1 items-center justify-end gap-1 text-[15px] text-[#86868b] dark:text-slate-400">
+              <span className="shrink-0 font-mono text-gray-400">@</span>
+              <input
+                type="text"
+                value={f.slug ?? ""}
+                onChange={(e) => {
+                  const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "");
+                  set("slug", val);
+                  set("username", val);
+                }}
+                placeholder="username-kamu"
+                className="w-full min-w-0 bg-transparent text-right font-mono outline-none placeholder:text-gray-300 dark:placeholder:text-gray-600"
+              />
+            </div>
+          </Baris>
+          <div className="flex items-center justify-between border-b border-black/[0.05] bg-black/[0.02] px-4 py-2 text-[11px] text-gray-500 dark:border-white/[0.08] dark:bg-white/[0.02] dark:text-slate-400">
+            <span>Alamat Profil Publik:</span>
+            <span className="max-w-[200px] truncate font-mono font-semibold text-primary sm:max-w-none">
+              /penjual/{f.slug || "username"}
+            </span>
+          </div>
           <Baris label="Nama anonim">
             <Teks nilai={f.anonymous_name} ubah={(v) => set("anonymous_name", v)} placeholder="Dipakai di Menfess" />
           </Baris>
@@ -465,7 +495,7 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
           </Kartu>
         )}
 
-        {(peran.toko || bukaToko) && (
+        {(hasToko || bukaToko) && (
           <>
             <Kartu judul="Toko" catatan="Yang dibaca pembeli di halaman tokomu.">
               <Baris label="Nama toko">
@@ -523,11 +553,11 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
               </div>
             </Kartu>
 
-            {peran.toko && <StatusToko profil={profil} />}
+            {hasToko && <StatusToko profil={profil} />}
           </>
         )}
 
-        {!peran.toko && !bukaToko && (
+        {!hasToko && !bukaToko && (
           <Kartu judul="Toko" catatan="Halaman toko sendiri dengan alamat yang bisa kamu sebar ke pembeli.">
             {/* Dulu satu-satunya jalan adalah menemukan sendiri /dashboard/toko —
                 tidak ditawarkan dari mana pun, jadi fiturnya cuma ketemu kalau

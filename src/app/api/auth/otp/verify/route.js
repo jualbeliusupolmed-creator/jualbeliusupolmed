@@ -99,6 +99,7 @@ export async function POST(req) {
       await tulisProfil(supa, {
         wa: normalizedWa,
         name: `User ${normalizedWa.slice(-4)}`,
+        slug: `user-${normalizedWa.slice(-4)}`,
         referral_code: newRefCode,
         free_bumps: freeBumps,
         pin: hashPin(pin),

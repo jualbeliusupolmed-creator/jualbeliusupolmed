@@ -46,7 +46,7 @@ export function normalisasiSlug(nilai) {
  */
 export function periksaSlug(nilai) {
   const slug = normalisasiSlug(nilai);
-  if (!slug) return { ok: false, alasan: "Alamat toko belum diisi." };
+  if (!slug) return { ok: false, alasan: "Username / alamat belum diisi." };
   if (slug.length < SLUG_MIN) {
     return { ok: false, alasan: `Terlalu pendek — minimal ${SLUG_MIN} huruf.` };
   }
@@ -54,11 +54,32 @@ export function periksaSlug(nilai) {
     return { ok: false, alasan: `"${slug}" sudah dipakai sistem. Pilih yang lain.` };
   }
   // Slug yang seluruhnya angka gampang tertukar dengan nomor HP, dan itu
-  // justru hal yang ingin disembunyikan halaman toko dari URL.
+  // justru hal yang ingin disembunyikan dari URL.
   if (/^\d+$/.test(slug)) {
-    return { ok: false, alasan: "Jangan hanya angka — pakai nama tokomu." };
+    return { ok: false, alasan: "Jangan hanya angka — pakai kombinasi huruf." };
+  }
+  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)) {
+    return { ok: false, alasan: "Gunakan huruf kecil, angka, dan tanda hubung (-) sebagai pemisah." };
   }
   return { ok: true, slug };
+}
+
+/**
+ * Generate default safe slug for new sellers based on name and phone
+ */
+export function generateDefaultSlug(name, wa) {
+  let base = (name || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  if (!base || base.length < SLUG_MIN || /^\d+$/.test(base) || TERLARANG.has(base)) {
+    const digits = String(wa || "").replace(/\D/g, "");
+    const tail = digits.slice(-4) || Math.random().toString(36).slice(2, 6);
+    base = `user-${tail}`;
+  }
+  return base.slice(0, SLUG_MAX).replace(/-+$/, "");
 }
 
 /** Pilihan warna aksen. Terbatas dan sudah dicek kontrasnya, bukan pemilih

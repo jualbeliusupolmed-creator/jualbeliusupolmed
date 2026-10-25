@@ -6,7 +6,7 @@ import { formatWa } from "@/lib/constants";
 import { postToGroup, notifyCategorySubscribers } from "@/lib/fonnte";
 import { pushListingBaru } from "@/lib/webpush";
 import { getDistributorSettings, calcDistributorFee, effectivePrice } from "@/lib/distributor";
-import { tokoAktif } from "@/lib/toko";
+import { tokoAktif, generateDefaultSlug } from "@/lib/toko";
 import { getSellerSession } from "@/lib/auth";
 import { autoPublishListingInstagram } from "@/lib/listingInstagram";
 import { siteOriginFromRequest } from "@/lib/instagramQueue";
@@ -191,8 +191,9 @@ export async function POST(req) {
 
     // Enforce name from seller_profiles
     // 1. Coba masukkan ke seller_profiles. Jika sudah ada (konflik WA), abaikan namanya (DO NOTHING).
+    const defaultSlug = generateDefaultSlug(seller_name, normalizedWa);
     await supa.from("seller_profiles").upsert(
-      { wa: normalizedWa, name: seller_name },
+      { wa: normalizedWa, name: seller_name, slug: profileCheck?.slug || defaultSlug },
       { onConflict: "wa", ignoreDuplicates: true }
     );
     // 2. Ambil nama paten dan status pro dari seller_profiles (sudah punya dari check di atas)

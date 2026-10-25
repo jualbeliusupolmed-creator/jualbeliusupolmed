@@ -12,66 +12,71 @@ export const revalidate = 300; // ISR 5 menit — cukup segar untuk marketplace
 
 async function getSellerData(wa) {
   try {
-    // Decode obfuscated slug u-... or normalize legacy raw phone
-    const decodedWa = decodeSellerSlug(wa);
+    const raw = decodeURIComponent(String(wa || "")).trim();
     const supa = getAdminClient();
+
+    // 1. Coba cari profil berdasarkan username / slug
+    let { data: profile } = await supa
+      .from("seller_profiles")
+      .select("*")
+      .ilike("slug", raw)
+      .maybeSingle();
+
+    let targetWa = profile?.wa;
+
+    // 2. Jika tidak ditemukan lewat slug, coba decode (jika u-xxx atau nomor HP legacy)
+    if (!profile) {
+      const decodedWa = decodeSellerSlug(raw);
+      if (decodedWa) {
+        const { data: p } = await supa
+          .from("seller_profiles")
+          .select("*")
+          .eq("wa", decodedWa)
+          .maybeSingle();
+        if (p) {
+          profile = p;
+          targetWa = p.wa;
+        } else {
+          targetWa = decodedWa;
+        }
+      }
+    }
+
+    if (!targetWa) return null;
 
     // Ambil semua iklan aktif penjual
     const { data: listings } = await supa
       .from("listings")
       .select("*, seller_wa")
-      .eq("seller_wa", decodedWa)
+      .eq("seller_wa", targetWa)
       .eq("status", "active")
       .order("bumped_at", { ascending: false });
 
     // Ambil total terjual + views dari semua iklan
     const { data: allListings } = await supa
       .from("listings")
-      .select("status, views, created_at")
-      .eq("seller_wa", decodedWa)
+      .select("status, views, created_at, seller_name")
+      .eq("seller_wa", targetWa)
       .order("created_at", { ascending: true });
 
-    // Penjaga "penjual ini tidak ada". Dulu berbunyi `!listings && …`, dan itu
-    // tidak pernah benar: supabase-js mengembalikan ARRAY KOSONG saat tak ada
-    // baris, bukan null — jadi `!listings` selalu false dan penjaganya tidak
-    // pernah berjalan. Akibatnya /penjual/<apa pun> menjawab 200 dengan profil
-    // kosong: "000 — Profil Penjual, 0 iklan". Alamat karangan tak terhingga,
-    // semuanya sah di mata mesin pencari.
-    //
-    // `!allListings` sengaja dipertahankan supaya kegagalan query (null, bukan
-    // array kosong) tidak ikut dibaca sebagai "penjualnya tidak ada".
-    if (!allListings || allListings.length === 0) {
-      const { data: any } = await supa
-        .from("listings")
-        .select("seller_name, seller_wa")
-        .eq("seller_wa", decodedWa)
-        .limit(1)
-        .maybeSingle();
-      if (!any) return null;
-      return { seller: any, listings: [], ratings: [], soldCount: 0, totalViews: 0, memberSince: null };
+    if ((!allListings || allListings.length === 0) && !profile) {
+      return null;
     }
 
     const soldCount = (allListings || []).filter((l) => l.status === "sold").length;
     const totalViews = (allListings || []).reduce((s, l) => s + (l.views || 0), 0);
-    const memberSince = allListings?.[0]?.created_at || null;
+    const memberSince = allListings?.[0]?.created_at || profile?.created_at || null;
 
     // Ambil rating penjual
     const { data: ratings } = await supa
       .from("seller_ratings")
       .select("*")
-      .eq("seller_wa", decodedWa)
+      .eq("seller_wa", targetWa)
       .order("created_at", { ascending: false });
-
-    // Ambil bio dari seller_profiles (bisa null jika belum dimigrasi)
-    const { data: profile } = await supa
-      .from("seller_profiles")
-      .select("*")
-      .eq("wa", decodedWa)
-      .maybeSingle();
 
     const sellerName = profile?.name || listings?.[0]?.seller_name ||
       allListings?.[0]?.seller_name ||
-      "Penjual Anonim";
+      "Penjual";
 
     // Ambil kategori distributor
     let distributorCategories = [];
@@ -79,7 +84,7 @@ async function getSellerData(wa) {
       const { data: distCats } = await supa
         .from("distributor_categories")
         .select("category")
-        .eq("seller_wa", decodedWa);
+        .eq("seller_wa", targetWa);
       distributorCategories = (distCats || []).map((r) => r.category);
     }
 
@@ -101,7 +106,7 @@ async function getSellerData(wa) {
     const { data: soldListings } = await supa
       .from("listings")
       .select("*, seller_wa")
-      .eq("seller_wa", decodedWa)
+      .eq("seller_wa", targetWa)
       .eq("status", "sold")
       .order("bumped_at", { ascending: false })
       .limit(12); // Batasi 12 terbaru
@@ -115,7 +120,20 @@ async function getSellerData(wa) {
     }
 
     return {
-      seller: { seller_name: sellerName, seller_wa: decodedWa, slug: profile?.slug || null, bio: profile?.bio || null, topCategory: topCat, trusted_seller: profile?.trusted_seller || false, distributor: profile?.distributor || false, distributorCategories, subscription_tier: profile?.subscription_tier || null, subscription_expires_at: profile?.subscription_expires_at || null },
+      seller: {
+        seller_name: sellerName,
+        seller_wa: targetWa,
+        slug: profile?.slug || null,
+        bio: profile?.bio || null,
+        topCategory: topCat,
+        trusted_seller: profile?.trusted_seller || false,
+        distributor: profile?.distributor || false,
+        distributorCategories,
+        subscription_tier: profile?.subscription_tier || null,
+        subscription_expires_at: profile?.subscription_expires_at || null,
+        store_status: profile?.store_status || null,
+        store_name: profile?.store_name || null,
+      },
       listings: listings || [],
       soldListings: soldListings || [],
       ratings: ratings || [],
@@ -123,7 +141,8 @@ async function getSellerData(wa) {
       totalViews,
       memberSince,
     };
-  } catch {
+  } catch (err) {
+    console.error("[getSellerData] error:", err);
     return null;
   }
 }
@@ -132,21 +151,20 @@ export async function generateMetadata({ params }) {
   const data = await getSellerData(params.wa);
   if (!data) return { title: "Penjual tidak ditemukan" };
   const name = data.seller.seller_name;
-  const waClean = data.seller.seller_wa?.replace(/\D/g, "") || params.wa;
+  const username = data.seller.slug || params.wa;
   const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
-  const sellerSlug = encodeSellerSlug(waClean);
-  const pageUrl = `${baseUrl}/penjual/${sellerSlug}`;
+  const pageUrl = `${baseUrl}/penjual/${username}`;
   const firstImage = data.listings[0]?.image_url || null;
   const soldText = data.soldCount > 0 ? ` Sudah terjual ${data.soldCount}× barang.` : "";
-  const desc = `Lihat ${data.listings.length} iklan aktif dari ${name} di Jual Beli USU Polmed.${soldText}`;
+  const desc = `Lihat ${data.listings.length} iklan aktif dari ${name} (@${username}) di Jual Beli USU Polmed.${soldText}`;
 
   return {
-    title: `${name} — Profil Penjual`,
+    title: `${name} (@${username}) — Profil Penjual`,
     description: desc,
-    keywords: [name, "penjual USU", "jual beli USU", "marketplace Medan", data.seller.topCategory].filter(Boolean),
+    keywords: [name, username, "penjual USU", "jual beli USU", "marketplace Medan", data.seller.topCategory].filter(Boolean),
     alternates: { canonical: pageUrl },
     openGraph: {
-      title: `${name} — Profil Penjual di Jual Beli USU`,
+      title: `${name} (@${username}) — Profil Penjual di Jual Beli USU`,
       description: desc,
       url: pageUrl,
       type: "profile",
@@ -154,7 +172,7 @@ export async function generateMetadata({ params }) {
     },
     twitter: {
       card: firstImage ? "summary_large_image" : "summary",
-      title: `${name} — Profil Penjual`,
+      title: `${name} (@${username}) — Profil Penjual`,
       description: desc,
       ...(firstImage && { images: [firstImage] }),
     },
@@ -190,11 +208,11 @@ export default async function SellerProfilePage({ params }) {
   const data = await getSellerData(params.wa);
   if (!data) notFound();
 
-  // Penjual yang sudah menamai tokonya punya alamat yang lebih layak dibagikan
-  // — dan yang tidak memajang nomor HP-nya di URL. Tautan /penjual/628... lama
-  // sengaja tidak dimatikan, cuma dialihkan, karena ia sudah tersebar di chat
-  // pembeli dan hasil pencarian.
-  if (data.seller.slug) redirect(`/toko/${data.seller.slug}`);
+  // Jika pengunjung datang lewat URL legacy nomor telepon atau u-base64,
+  // tapi penjual punya username resmi, redirect ke /penjual/[username]
+  if (data.seller.slug && params.wa !== data.seller.slug) {
+    redirect(`/penjual/${data.seller.slug}`);
+  }
 
   const { seller, listings, soldListings, ratings, soldCount, totalViews, memberSince } = data;
   const isDistributor = !!seller.distributor;
@@ -204,10 +222,9 @@ export default async function SellerProfilePage({ params }) {
       : null;
 
   const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
-  // Nomor asli untuk URL & link kontak. formatWa menolak LID → link wa.me disembunyikan.
-  const waClean = formatWa(seller.seller_wa) || seller.seller_wa?.replace(/\D/g, "") || "";
-  const waIntl = formatWaForBaileys(seller.seller_wa); // "62xxx" atau "" jika bukan nomor valid
-  const sellerSlug = encodeSellerSlug(waClean);
+  // Nomor asli untuk link kontak WA
+  const waIntl = formatWaForBaileys(seller.seller_wa);
+  const sellerSlug = seller.slug || encodeSellerSlug(seller.seller_wa);
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "ProfilePage",
@@ -215,6 +232,7 @@ export default async function SellerProfilePage({ params }) {
     "mainEntity": {
       "@type": "Person",
       "name": seller.seller_name,
+      "alternateName": seller.slug ? `@${seller.slug}` : undefined,
       "description": seller.bio || `Penjual di Jual Beli USU dengan ${listings.length} iklan aktif`,
       "url": `${baseUrl}/penjual/${sellerSlug}`,
       ...(listings[0]?.image_url && { "image": listings[0].image_url }),
@@ -240,6 +258,9 @@ export default async function SellerProfilePage({ params }) {
         <span className="shrink-0">Profil Penjual</span>
         <span className="shrink-0">/</span>
         <span className="truncate text-gray-500">{seller.seller_name}</span>
+        {seller.slug && (
+          <span className="text-gray-400 font-mono text-xs">(@{seller.slug})</span>
+        )}
       </nav>
 
       {/* Header Penjual */}
@@ -249,8 +270,13 @@ export default async function SellerProfilePage({ params }) {
         </div>
         <div className="flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-extrabold flex items-center gap-2">
-              {seller.seller_name}
+            <h1 className="text-2xl font-extrabold flex items-center gap-2 flex-wrap">
+              <span>{seller.seller_name}</span>
+              {seller.slug && (
+                <span className="text-sm font-semibold text-gray-400 dark:text-slate-500 font-mono bg-black/[0.04] dark:bg-white/[0.08] px-2 py-0.5 rounded-md">
+                  @{seller.slug}
+                </span>
+              )}
               {isDistributor && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 dark:bg-orange-900/40 px-2.5 py-0.5 text-xs font-bold text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-800/50" title="Distributor Resmi">
                    DISTRIBUTOR
@@ -283,6 +309,16 @@ export default async function SellerProfilePage({ params }) {
               </span>
             )}
           </p>
+          {seller.store_status === "aktif" && seller.store_name && (
+            <div className="mt-2">
+              <Link
+                href={`/toko/${seller.slug}`}
+                className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 px-3 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-300 transition-all hover:bg-emerald-100"
+              >
+                🏪 Kunjungi Toko Resmi: {seller.store_name} →
+              </Link>
+            </div>
+          )}
           {avgRating !== null && (
             <div className="mt-2 flex items-center gap-2">
               <StarDisplay value={avgRating} />

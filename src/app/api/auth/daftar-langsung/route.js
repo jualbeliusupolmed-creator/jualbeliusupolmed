@@ -94,6 +94,7 @@ export async function POST(req) {
       galat = await tulisProfil(supa, {
         wa: normalizedWa,
         name: `User ${normalizedWa.slice(-4)}`,
+        slug: `user-${normalizedWa.slice(-4)}`,
         referral_code: Math.random().toString(36).substring(2, 8).toUpperCase(),
         free_bumps: freeBumps,
         pin: hashPin(String(pin)),
