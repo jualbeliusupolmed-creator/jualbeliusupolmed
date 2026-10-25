@@ -126,9 +126,11 @@ function BottomNavbarInner() {
     }
   }, [pathname]);
 
-  // Sembunyikan/minimalkan BottomNavbar jika sedang di dalam room chat aktif
+  // Sembunyikan/minimalkan BottomNavbar jika sedang di dalam room chat aktif atau halaman detail produk
   const isChatRoom =
     pathname === "/chat" && searchParams && (searchParams.has("anon") || searchParams.has("room"));
+  const isProductPage = pathname?.startsWith("/produk/");
+  const hideFloating = isChatRoom || isProductPage;
   const navKiri = [BERANDA, MARKET];
   // Saat belum siap (server/hydration), selalu pakai tombol Masuk
   // supaya server HTML dan client HTML sama persis — tidak ada Link vs button mismatch.
@@ -154,7 +156,7 @@ function BottomNavbarInner() {
     <>
 
       {/* Tombol Menu Burger: Nempel di Kiri Agak Bawah Dikit (Khusus Mobile) */}
-      {!isChatRoom && (
+      {!hideFloating && (
         <div
           className={cn(
             "fixed bottom-[calc(max(1.25rem,env(safe-area-inset-bottom))+3.5rem)] left-4 z-40 md:hidden transition-all duration-300",
@@ -188,7 +190,7 @@ function BottomNavbarInner() {
       )}
 
       {/* Tombol Buat Baru: Ikon Plus Melayang di Kiri Bawah (Khusus Mobile) */}
-      {!isChatRoom && (
+      {!hideFloating && (
         <div
           className={cn(
             "fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] left-4 z-40 md:hidden transition-all duration-300",

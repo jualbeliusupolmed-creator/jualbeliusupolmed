@@ -14,7 +14,7 @@ const TEMPLATES = [
 ];
 
 // Tombol "Minat": Mengikuti mode transaksi global (Mode 1: WA langsung vs Mode 2: In-App DM)
-export default function MinatButton({ listing }) {
+export default function MinatButton({ listing, className, children }) {
   const [busy, setBusy] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
   const [customMsg, setCustomMsg] = useState("");
@@ -96,13 +96,13 @@ export default function MinatButton({ listing }) {
       <button
         onClick={() => setShowPicker(true)}
         disabled={busy}
-        className="btn-wa w-full"
+        className={className || "btn-wa w-full"}
       >
-        {busy
+        {children || (busy
           ? "Memproses…"
           : isWaMode
           ? " Chat Penjual via WhatsApp"
-          : " Minat / Chat Penjual"}
+          : " Minat / Chat Penjual")}
       </button>
 
       {/* Template Picker Modal */}

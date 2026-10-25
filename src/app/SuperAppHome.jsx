@@ -88,6 +88,7 @@ export default function SuperAppHome({
   const [listingCategory, setListingCategory] = useState("Semua");
   const [listingSearch, setListingSearch] = useState("");
   const [mobileTab, setMobileTab] = useState("marketplace"); // 'marketplace' | 'openpo' | 'menfess'
+  const [visibleListingCount, setVisibleListingCount] = useState(12);
 
   // Realtime Open PO Batches from Open PO Supabase
   const [poBatches, setPoBatches] = useState([]);
@@ -1340,20 +1341,33 @@ export default function SuperAppHome({
                 </div>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-3.5">
-                  {filteredListings.slice(0, 12).map((ad) => (
+                  {filteredListings.slice(0, visibleListingCount).map((ad) => (
                     <ProductCard key={ad.id} listing={ad} />
                   ))}
                 </div>
               )}
 
               {filteredListings.length > 0 && (
-                <div className="mt-4 text-center">
+                <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-2.5">
+                  {visibleListingCount < filteredListings.length && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic("light");
+                        setVisibleListingCount((prev) => prev + 12);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-primary/10 hover:bg-primary/15 dark:bg-violet-500/15 border border-primary/20 dark:border-violet-500/25 text-xs font-bold text-primary dark:text-violet-300 shadow-2xs transition-all active:scale-95"
+                    >
+                      <Icon.Plus className="w-3.5 h-3.5" />
+                      <span>Muat 12 Barang Lainnya ({filteredListings.length - visibleListingCount} lagi)</span>
+                    </button>
+                  )}
                   <Link
                     href="/jual-beli"
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white dark:bg-[#1c1c1e] border border-black/[0.06] dark:border-white/[0.08] text-xs font-bold text-primary shadow-xs hover:shadow-md transition-all active:scale-95"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white dark:bg-[#1c1c1e] border border-black/[0.06] dark:border-white/[0.08] text-xs font-bold text-slate-700 dark:text-slate-200 shadow-2xs hover:shadow-xs transition-all active:scale-95"
                   >
-                    <span>Jelajahi Seluruh {filteredListings.length}+ Produk di Marketplace</span>
-                    <Icon.ArrowRight className="w-3.5 h-3.5" />
+                    <span>Jelajahi Seluruh {filteredListings.length}+ Produk</span>
+                    <Icon.ArrowRight className="w-3.5 h-3.5 text-primary" />
                   </Link>
                 </div>
               )}
