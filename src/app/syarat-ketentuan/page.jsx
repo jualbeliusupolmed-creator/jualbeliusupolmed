@@ -31,48 +31,56 @@ export default function SyaratKetentuanPage() {
           </ul>
         </div>
 
-        {/* 2. Pemasangan Iklan & Kelayakan Produk */}
+        {/* 2. Pemasangan Iklan, Aturan Barang Terlarang & Kepatuhan AdSense */}
         <div>
-          <h2 className="text-base font-bold text-gray-900 mb-2">2. Pemasangan Iklan &amp; Kelayakan Produk</h2>
-          <ul className="list-disc pl-5 space-y-1">
-            <li>Penjual bertanggung jawab penuh atas keakuratan deskripsi, kondisi, gambar, dan keaslian produk yang ditawarkan.</li>
-            <li>Semua produk/jasa yang dijual wajib mencantumkan harga yang jelas dalam mata uang <strong>IDR (Indonesian Rupiah)</strong>.</li>
-            <li>Dilarang keras mengiklankan barang yang melanggar hukum Negara Kesatuan Republik Indonesia, termasuk namun tidak terbatas pada: barang ilegal, barang palsu/bajakan, obat-obatan terlarang, senjata tajam, produk yang mengandung pornografi, atau barang hasil tindak kejahatan.</li>
+          <h2 className="text-base font-bold text-gray-900 mb-2">2. Pemasangan Iklan &amp; Daftar Barang Terlarang</h2>
+          <ul className="list-disc pl-5 space-y-1.5">
+            <li>Penjual bertanggung jawab penuh atas keakuratan deskripsi, kondisi, foto riil, dan keaslian produk/jasa yang ditawarkan.</li>
+            <li>Semua produk/jasa yang dijual wajib mencantumkan harga yang jelas dan transparan dalam mata uang <strong>Rupiah (IDR)</strong>.</li>
+            <li>
+              <strong>Barang yang Dilarang Keras (Zero Tolerance):</strong> Demi kepatuhan hukum Negara Kesatuan Republik Indonesia dan standar periklanan Google AdSense, pengguna dilarang keras mengiklankan:
+              <ul className="list-circle pl-5 mt-1 space-y-1 text-rose-700 dark:text-rose-400">
+                <li>Rokok konvensional, rokok elektrik (vape), pod, mod, dan cairan rokok elektrik (e-liquid).</li>
+                <li>Minuman keras, minuman beralkohol, dan zat memabukkan.</li>
+                <li>Obat-obatan terlarang, narkotika, psikotropika, dan obat keras tanpa resep dokter resmi.</li>
+                <li>Senjata tajam, senjata api, amunisi, dan bahan peledak.</li>
+                <li>Produk bermuatan pornografi, jasa asusila, atau konten dewasa sensitif.</li>
+                <li>Barang tiruan/bajakan tanpa izin, barang hasil kejahatan, atau akun peretasan.</li>
+              </ul>
+            </li>
+            <li>Iklan yang memuat barang terlarang di atas akan langsung dihapus seketika oleh tim moderator, dan nomor akun dapat diblokir permanen.</li>
           </ul>
         </div>
 
-        {/* 3. Pembayaran & Biaya Layanan */}
+        {/* 3. Biaya Layanan & Kebijakan Masa Peluncuran */}
         <div>
-          <h2 className="text-base font-bold text-gray-900 mb-2">3. Transaksi Pembayaran &amp; Biaya Layanan</h2>
+          <h2 className="text-base font-bold text-gray-900 mb-2">3. Biaya Layanan &amp; Transparansi Masa Peluncuran</h2>
           <ul className="list-disc pl-5 space-y-1">
-            <li>Layanan jasa periklanan (iklan barang, poster, *bump*, dan *featured ads*) pada platform kami dibayar via QRIS statis — scan, transfer, lalu upload struk untuk verifikasi otomatis.</li>
-            <li>Pembayaran biaya iklan dilakukan secara di muka (upfront) dan iklan otomatis ditayangkan setelah transaksi divalidasi oleh sistem pembayaran kami.</li>
-            <li>Mata uang transaksi yang sah dan digunakan pada seluruh proses pembayaran di platform ini adalah Rupiah (IDR).</li>
+            <li><strong>100% Bebas Biaya (Masa Peluncuran):</strong> Selama masa peluncuran, seluruh mahasiswa USU &amp; POLMED dapat memasang iklan dan membuka kuota Pre-Order secara 100% gratis tanpa potongan komisi (0% komisi).</li>
+            <li>Penjual menerima 100% hasil penjualan secara langsung dari pembeli (COD tunai atau QRIS penjual pribadi).</li>
+            <li><strong>Pemberitahuan Dini:</strong> Jika di masa mendatang diberlakukan opsi fitur berbayar (seperti penonjolan iklan prioritas atau badge distributor pro), perubahan tarif akan diumumkan secara transparan minimal 30 (tiga puluh) hari sebelumnya kepada seluruh pengguna komunitas.</li>
           </ul>
         </div>
 
-        {/* 4. Kebijakan Refund & Pembatalan */}
+        {/* 4. Perlindungan Data Pribadi (UU PDP No. 27/2022) */}
         <div>
-          <h2 className="text-base font-bold text-gray-900 mb-2">4. Kebijakan Pengembalian Dana (Refund) &amp; Pembatalan</h2>
+          <h2 className="text-base font-bold text-gray-900 mb-2">4. Perlindungan Data Pribadi (UU PDP No. 27/2022)</h2>
           <ul className="list-disc pl-5 space-y-1">
-            <li>
-              <strong>Pembatalan:</strong> Transaksi pemasangan iklan yang telah berhasil diproses dan diverifikasi oleh sistem pembayaran tidak dapat dibatalkan secara sepihak setelah iklan ditayangkan secara aktif di platform kami.
-            </li>
-            <li>
-              <strong>Pengembalian Dana (Refund):</strong> Dana yang telah dibayarkan untuk seluruh layanan periklanan bersifat final dan tidak dapat dikembalikan, kecuali terdapat kendala sistem internal kami yang mengakibatkan iklan gagal ditayangkan selama 24 jam berturut-turut setelah konfirmasi pembayaran berhasil.
-            </li>
-            <li>
-              Untuk mengajukan klaim pengembalian akibat kegagalan transaksi teknis, pengguna dapat mengirimkan bukti struk QRIS atau transfer bank ke layanan kontak pelanggan kami.
-            </li>
+            <li>Platform memproses data identitas (nama, fakultas, nomor WhatsApp) semata-mata atas dasar persetujuan (*opt-in consent*) pengguna untuk memfasilitasi transaksi jual-beli dan koordinasi pengambilan barang.</li>
+            <li>Nomor telepon pada tautan profil publik diproteksi dan disamarkan menggunakan slug nama akun untuk mencegah pengikisan (*scraping*) otomatis oleh pihak ketiga yang tidak bertanggung jawab.</li>
+            <li>Pengguna berhak mengajukan penarikan data pribadi atau penutupan iklan kapan saja melalui menu edit atau layanan bantuan admin.</li>
           </ul>
         </div>
 
-        {/* 5. Batasan Tanggung Jawab */}
+        {/* 5. Transaksi COD Aman & Jalur Mediasi Sengketa */}
         <div>
-          <h2 className="text-base font-bold text-gray-900 mb-2">5. Batasan Tanggung Jawab</h2>
+          <h2 className="text-base font-bold text-gray-900 mb-2">5. Titik COD Aman &amp; Jalur Mediasi Sengketa</h2>
           <ul className="list-disc pl-5 space-y-1">
-            <li>Platform kami bertindak sebagai perantara iklan dan tidak bertanggung jawab atas kerugian, kerusakan, cacat produk, atau penipuan yang terjadi dalam transaksi COD (*Cash on Delivery*) langsung antara penjual dan pembeli.</li>
-            <li>Kami mengimbau keras agar transaksi serah terima barang dilakukan secara langsung di area publik demi keamanan bersama.</li>
+            <li>Untuk keselamatan bersama, setiap transaksi tatap muka (*Cash on Delivery*) wajib dilakukan di <strong>Titik Temu Resmi Kampus</strong> (Lobi Perpustakaan USU, Selasar FIB, Hall FT, Kantin Gedung Z POLMED, atau Gazebo Pintu 2).</li>
+            <li>Selalu periksa fisik dan fungsi barang secara langsung sebelum menyelesaikan pembayaran.</li>
+            <li>
+              <strong>Jalur Mediasi Resmi:</strong> Jika terjadi ketidaksesuaian barang, dugaan penipuan, atau sengketa transaksi, kedua belah pihak dapat mengajukan mediasi melalui tombol lapor di halaman iklan atau menghubungi Tim Mediasi Komunitas di WhatsApp. Laporan akan ditindaklanjuti dalam waktu maksimal 1×24 jam.
+            </li>
           </ul>
         </div>
 

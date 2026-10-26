@@ -458,8 +458,14 @@ export default async function ProdukPage({ params }) {
               <li>Selalu minta penjual kirim kode iklan ini sebelum deal: <strong>{listing.listing_code || listing.id?.slice(0, 8)}</strong>.</li>
               <li>Utamakan COD di area ramai kampus seperti fakultas, kantin, atau gerbang utama.</li>
               <li>Cek fisik barang dan kelengkapan sebelum transfer atau menekan tombol barang diterima.</li>
-              <li>Kalau ada perilaku mencurigakan, laporkan lewat tombol lapor pada halaman ini.</li>
+              <li>Kalau ada perilaku mencurigakan atau sengketa barang, gunakan tombol lapor di bawah.</li>
             </ul>
+            <div className="mt-3 pt-3 border-t border-black/[0.04] dark:border-white/[0.06]">
+              <Link href="/panduan-aman" className="text-xs font-bold text-primary dark:text-violet-400 hover:underline flex items-center gap-1">
+                <span>📍 Lihat 5 Titik Temu COD Kampus &amp; Alur Mediasi</span>
+                <span>→</span>
+              </Link>
+            </div>
           </div>
 
           {/* Rating widget — hanya tampil jika barang sudah sold */}

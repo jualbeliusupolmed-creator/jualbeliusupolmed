@@ -7,6 +7,8 @@ import ShareProfileButton from "@/components/ShareProfileButton";
 import { formatWa, formatWaForBaileys } from "@/lib/constants";
 import { skripJsonLd } from "@/lib/jsonLd";
 import { decodeSellerSlug, encodeSellerSlug, maskPhone } from "@/lib/sellerSlug";
+import { Icon } from "@/components/Icons";
+import { fetchOpenPoBatches } from "@/lib/openPo";
 
 export const revalidate = 300; // ISR 5 menit — cukup segar untuk marketplace
 
@@ -119,6 +121,30 @@ async function getSellerData(wa) {
       soldListings.forEach(l => l.seller_profiles = profile || null);
     }
 
+    const campus = profile?.campus || profile?.student_campus || listings?.[0]?.campus || "USU / POLMED";
+    const faculty = profile?.faculty || listings?.[0]?.faculty || null;
+    const isStudentVerified = Boolean(profile?.student_verified || listings?.[0]?.student_verified);
+    const isWaVerified = Boolean(profile?.wa_verified || targetWa);
+
+    // Ambil batch PO aktif dari OpenPO yang terkait dengan penjual ini
+    let poBatches = [];
+    try {
+      const allBatches = await fetchOpenPoBatches();
+      const sNameLower = sellerName.toLowerCase().trim();
+      const sSlugLower = (profile?.slug || "").toLowerCase().trim();
+      poBatches = (allBatches || []).filter((b) => {
+        const bSeller = (b.seller_name || "").toLowerCase().trim();
+        return (
+          bSeller === sNameLower ||
+          (sSlugLower && bSeller === sSlugLower) ||
+          bSeller.includes(sNameLower) ||
+          sNameLower.includes(bSeller)
+        );
+      });
+    } catch (e) {
+      console.warn("[getSellerData] fetchOpenPoBatches error:", e);
+    }
+
     return {
       seller: {
         seller_name: sellerName,
@@ -127,6 +153,10 @@ async function getSellerData(wa) {
         bio: profile?.bio || null,
         topCategory: topCat,
         trusted_seller: profile?.trusted_seller || false,
+        student_verified: isStudentVerified,
+        wa_verified: isWaVerified,
+        campus,
+        faculty,
         distributor: profile?.distributor || false,
         distributorCategories,
         subscription_tier: profile?.subscription_tier || null,
@@ -134,6 +164,7 @@ async function getSellerData(wa) {
         store_status: profile?.store_status || null,
         store_name: profile?.store_name || null,
       },
+      poBatches,
       listings: listings || [],
       soldListings: soldListings || [],
       ratings: ratings || [],
@@ -214,7 +245,7 @@ export default async function SellerProfilePage({ params }) {
     permanentRedirect(`/penjual/${data.seller.slug}`);
   }
 
-  const { seller, listings, soldListings, ratings, soldCount, totalViews, memberSince } = data;
+  const { seller, listings, soldListings, ratings, soldCount, totalViews, memberSince, poBatches = [] } = data;
   const isDistributor = !!seller.distributor;
   const avgRating =
     ratings.length > 0
@@ -301,16 +332,43 @@ export default async function SellerProfilePage({ params }) {
               </span>
             )}
           </div>
-          <p className="mt-0.5 text-sm text-gray-400">
-            Penjual di Medan Marketplace
+          {/* Identitas Kampus & Fakultas */}
+          <p className="mt-1 text-sm font-medium text-gray-600 dark:text-slate-300 flex items-center gap-2 flex-wrap">
+            <span>🎓 Mahasiswa {seller.campus || "USU / POLMED"}</span>
+            {seller.faculty && (
+              <span className="text-gray-400 dark:text-slate-500">· Fakultas {seller.faculty}</span>
+            )}
             {memberSince && (
-              <span className="ml-2 text-gray-300 dark:text-slate-600">
+              <span className="text-gray-400 dark:text-slate-500">
                 · Bergabung {new Date(memberSince).toLocaleDateString("id-ID", { month: "long", year: "numeric" })}
               </span>
             )}
           </p>
+
+          {/* Lencana Verifikasi Transparan */}
+          <div className="mt-3 flex flex-wrap gap-2">
+            {seller.student_verified && (
+              <div className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 px-2.5 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-300" title="Terverifikasi via Kartu Tanda Mahasiswa (KTM) & NIM Resmi">
+                <Icon.CheckCircle className="h-3.5 w-3.5 fill-emerald-600 text-white dark:fill-emerald-400 dark:text-zinc-900" />
+                <span>KTM Terverifikasi</span>
+              </div>
+            )}
+            {seller.wa_verified && (
+              <div className="inline-flex items-center gap-1.5 rounded-lg bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/50 px-2.5 py-1 text-xs font-bold text-sky-700 dark:text-sky-300" title="Nomor WhatsApp aktif dan terkonfirmasi">
+                <Icon.Phone className="h-3.5 w-3.5 text-sky-600 dark:text-sky-400" />
+                <span>WhatsApp Terverifikasi</span>
+              </div>
+            )}
+            {seller.trusted_seller && (
+              <div className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/50 px-2.5 py-1 text-xs font-bold text-blue-700 dark:text-blue-300" title="Penjual Terpercaya dengan track record bersih di komunitas">
+                <Icon.Shield className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                <span>Penjual Terpercaya</span>
+              </div>
+            )}
+          </div>
+
           {seller.store_status === "aktif" && seller.store_name && (
-            <div className="mt-2">
+            <div className="mt-2.5">
               <Link
                 href={`/toko/${seller.slug}`}
                 className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 px-3 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-300 transition-all hover:bg-emerald-100"
@@ -320,13 +378,13 @@ export default async function SellerProfilePage({ params }) {
             </div>
           )}
           {avgRating !== null && (
-            <div className="mt-2 flex items-center gap-2">
+            <div className="mt-2.5 flex items-center gap-2">
               <StarDisplay value={avgRating} />
               <span className="text-sm font-semibold text-amber-500">
                 {avgRating.toFixed(1)} / 5
               </span>
               <span className="text-xs text-gray-400">
-                ({ratings.length} ulasan)
+                ({ratings.length} ulasan terverifikasi)
               </span>
             </div>
           )}
@@ -337,10 +395,10 @@ export default async function SellerProfilePage({ params }) {
           )}
           {seller.topCategory && (
              <p className="mt-2 text-xs font-semibold text-primary">
-                Spesialis: {seller.topCategory}
+                Kategori Utama: {seller.topCategory}
              </p>
           )}
-          <div className="flex flex-wrap gap-2 mt-3.5">
+          <div className="flex flex-wrap gap-2 mt-4">
             {waIntl && (
               <a
                 href={`https://wa.me/${waIntl}?text=${encodeURIComponent(
@@ -354,6 +412,13 @@ export default async function SellerProfilePage({ params }) {
               </a>
             )}
             <ShareProfileButton />
+            <Link
+              href="/panduan-aman"
+              className="btn-outline py-2 px-3 text-xs rounded-xl inline-flex items-center gap-1 text-slate-600 dark:text-slate-300 hover:text-primary"
+            >
+              <Icon.MapPin className="h-3.5 w-3.5 text-primary" />
+              <span>Titik COD Aman</span>
+            </Link>
           </div>
 
           {/* Info Distributor */}
@@ -488,6 +553,89 @@ export default async function SellerProfilePage({ params }) {
           </div>
         </section>
       )}
+
+      {/* Batch Pre-Order Aktif Penjual */}
+      {poBatches.length > 0 && (
+        <section className="mt-10">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold flex items-center gap-2">
+              <span>Batch Pre-Order (PO) Aktif</span>
+              <span className="badge bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 font-bold text-xs">
+                {poBatches.length} PO
+              </span>
+            </h2>
+            <a
+              href="https://open-po.vercel.app?utm_source=jualbeliusupolmed"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-bold text-primary hover:underline"
+            >
+              Buka di OpenPO ↗
+            </a>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {poBatches.map((b) => (
+              <a
+                key={b.id}
+                href={b.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="card p-4 hover:border-primary/40 hover:shadow-md transition-all flex flex-col justify-between group"
+              >
+                <div>
+                  <div className="flex items-center justify-between text-xs text-gray-500 mb-1.5">
+                    <span className="font-bold text-emerald-600 uppercase tracking-wider text-[10px]">
+                      {b.emoji} {b.category}
+                    </span>
+                    <span>Tersisa {b.quota - b.reserved} slot</span>
+                  </div>
+                  <h3 className="font-bold text-sm text-gray-900 dark:text-white group-hover:text-primary transition-colors line-clamp-1">
+                    {b.name}
+                  </h3>
+                  <p className="text-primary font-black text-sm mt-1">
+                    Rp {b.price.toLocaleString("id-ID")}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
+                    <Icon.MapPin className="h-3 w-3 shrink-0 text-gray-400" />
+                    <span className="truncate">{b.pickup_point}</span>
+                  </p>
+                </div>
+                <div className="mt-3 pt-2.5 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-emerald-600">
+                  <span>Pesan Pre-Order</span>
+                  <span>→</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Banner Panduan COD Aman & Mediasi Kampus */}
+      <div className="mt-10 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 border border-emerald-200/80 dark:border-emerald-800/40 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <p className="text-sm font-bold text-emerald-900 dark:text-emerald-300 flex items-center gap-1.5">
+            <Icon.Shield className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            <span>Panduan COD Aman &amp; Mediasi Kampus</span>
+          </p>
+          <p className="text-xs text-emerald-700 dark:text-emerald-400/90 leading-relaxed max-w-xl">
+            Gunakan titik kumpul resmi di kampus (Lobi Perpustakaan USU, Selasar FIB, Hall FT, Kantin Gedung Z POLMED) untuk transaksi langsung. Mengalami kendala atau sengketa transaksi? Tim moderasi kampus siap membantu.
+          </p>
+        </div>
+        <div className="flex gap-2 shrink-0">
+          <Link
+            href="/panduan-aman"
+            className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3.5 py-2 transition-colors shadow-sm"
+          >
+            Titik Pertemuan
+          </Link>
+          <Link
+            href="/panduan-aman#mediasi"
+            className="rounded-xl border border-emerald-300 dark:border-emerald-700 bg-white/80 dark:bg-slate-900/80 hover:bg-white text-emerald-800 dark:text-emerald-300 font-bold text-xs px-3.5 py-2 transition-colors"
+          >
+            Jalur Mediasi
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }
