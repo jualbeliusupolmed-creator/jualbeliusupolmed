@@ -25,6 +25,7 @@ import { skripJsonLd } from "@/lib/jsonLd";
 import { buildListingShortPath } from "@/lib/listingCode";
 import { formatListingSpecs } from "@/lib/listingSpecs";
 import { checkProhibitedListing } from "@/lib/profanity";
+import { evaluateModerationRules } from "@/lib/moderationRules";
 import { encodeSellerSlug } from "@/lib/sellerSlug";
 
 export const revalidate = 300; // ISR 5 menit
@@ -82,19 +83,33 @@ async function getData(slug) {
 
     if (!listing) return { listing: null, related: [] };
 
-    const queryRelated = supa
+    const minPrice = listing.price ? Math.floor(listing.price * 0.5) : 0;
+    const maxPrice = listing.price ? Math.ceil(listing.price * 2.0) : 0;
+
+    let queryRelated = supa
       .from("listings")
       .select("*, seller_wa")
       .eq("status", "active")
-      .gt("price", 0)
       .eq("category", listing.category)
       .neq("id", listing.id)
-      .limit(8);
+      .limit(10);
+
+    if (listing.price > 0) {
+      queryRelated = queryRelated.gte("price", minPrice).lte("price", maxPrice);
+    } else {
+      queryRelated = queryRelated.eq("price", 0);
+    }
     
     const { data: rawRelated } = await fetchListingsWithProfiles(queryRelated);
-    const related = (rawRelated || []).filter(
-      (r) => !checkProhibitedListing(r.title, r.description).prohibited
-    ).slice(0, 4);
+    const related = (rawRelated || []).filter((r) => {
+      const mod = evaluateModerationRules({
+        title: r.title,
+        description: r.description,
+        category: r.category,
+        price: r.price,
+      });
+      return mod.action === "allow" && !checkProhibitedListing(r.title, r.description).prohibited;
+    }).slice(0, 4);
 
     return { listing, related };
   } catch {

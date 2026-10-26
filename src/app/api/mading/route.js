@@ -8,6 +8,7 @@ import { getUserSession } from "@/lib/auth";
 import { autoPublishMadingInstagram, publishQueuedMadingInstagram, siteOriginFromRequest } from "@/lib/madingInstagram";
 import { getSettings } from "@/lib/settings";
 import { waitUntil } from "@vercel/functions";
+import { evaluateModerationRules } from "@/lib/moderationRules";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -137,6 +138,21 @@ export async function POST(request) {
       return NextResponse.json(
         { error: doxxingCheck.reason || "Dilarang menargetkan seseorang lewat inisial, prodi, atau identitas pribadi." },
         { status: 400 }
+      );
+    }
+
+    // Validasi barang dan konten terlarang (vape, miras, obat, joki skripsi, dll)
+    const modCheck = evaluateModerationRules({
+      title: title || "",
+      description: content,
+      category: type === "menfess" ? "Lainnya" : "Info",
+    });
+    if (modCheck.action === "reject" || modCheck.riskScore >= 70) {
+      return NextResponse.json(
+        {
+          error: `Postingan melanggar panduan komunitas (${modCheck.reasons.join(", ")}). Dilarang membahas atau mempromosikan barang terlarang (vape, alkohol, obat-obatan, akun game, atau joki skripsi).`,
+        },
+        { status: 422 }
       );
     }
 

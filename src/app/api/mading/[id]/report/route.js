@@ -6,9 +6,8 @@ import { hashIdentitas } from "@/lib/identitasHash";
 export const dynamic = "force-dynamic";
 
 // Ambang moderasi otomatis: postingan yang dilaporkan orang berbeda sebanyak
-// ini disembunyikan tanpa menunggu admin. Sengaja lebih dari satu-dua: satu
-// orang yang tersinggung tidak boleh bisa menurunkan postingan sendirian.
-const AMBANG_SEMBUNYI = 5;
+// 3 kali disembunyikan tanpa menunggu admin.
+const AMBANG_SEMBUNYI = 3;
 
 // POST /api/mading/[id]/report - Laporkan postingan mading/menfess
 export async function POST(request, { params }) {

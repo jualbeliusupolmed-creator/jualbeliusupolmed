@@ -13,6 +13,8 @@ import { siteOriginFromRequest } from "@/lib/instagramQueue";
 import { jawabGalat } from "@/lib/jawabGalat";
 import { sanitizeListingSpecs } from "@/lib/listingSpecs";
 import { checkProhibitedListing } from "@/lib/profanity";
+import { moderateListing } from "@/lib/moderationRules";
+import { listingInputSchema, normalizePriceInput, sanitizeListingTitle, validateElectronicsSpecs } from "@/lib/listingSchema";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -151,33 +153,65 @@ export async function POST(req) {
       );
     }
 
-    if (!seller_name || !seller_wa || !title || price == null) {
-      return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
+    // 1. Validasi Zod schema bersama
+    const parsedInput = listingInputSchema.safeParse(body);
+    if (!parsedInput.success) {
+      const firstErr = parsedInput.error.issues[0]?.message || "Data iklan tidak lengkap atau tidak valid.";
+      return NextResponse.json({ error: firstErr }, { status: 400 });
     }
 
     if (!normalizedWa) {
       return NextResponse.json({ error: "Nomor WA tidak valid" }, { status: 400 });
     }
 
-    // Validasi harga minimum wajar (mencegah spam Rp 0 atau Rp 80)
-    const numPrice = Number(price);
-    if (isNaN(numPrice) || numPrice < 1000) {
-      return NextResponse.json(
-        { error: "Harga tidak wajar. Minimal harga barang yang dicantumkan adalah Rp 1.000." },
-        { status: 400 }
-      );
+    // 2. Normalisasi harga murni & tolak format anomali ('0m', '1,3jt', '50k', '0')
+    let normalizedPrice;
+    try {
+      normalizedPrice = normalizePriceInput(price, type, category);
+    } catch (err) {
+      return NextResponse.json({ error: err.message }, { status: 400 });
     }
 
-    // Validasi barang dilarang (AdSense policy & aturan kampus)
-    const prohibitedCheck = checkProhibitedListing(title, description);
-    if (prohibitedCheck.prohibited) {
-      return NextResponse.json(
-        { error: `Iklan ditolak: ${prohibitedCheck.reason}. Platform tidak mengizinkan vape, rokok, miras, atau obat terlarang.` },
-        { status: 400 }
-      );
-    }
+    const cleanedTitle = sanitizeListingTitle(title);
+
+    // 3. Validasi spesifikasi elektronik untuk laptop/HP
+    validateElectronicsSpecs(category, cleanedTitle, specs);
+
+    // 4. Engine Moderasi (Deterministik + Gemini AI)
+    const moderation = await moderateListing({
+      title: cleanedTitle,
+      description,
+      price: normalizedPrice,
+      category,
+      type,
+      images,
+      seller_wa: normalizedWa,
+    });
 
     const supa = getAdminClient();
+
+    if (moderation.status === "rejected") {
+      // Simpan catatan iklan yang ditolak untuk audit (tanpa menghapus data pengguna)
+      await supa.from("listings").insert({
+        seller_name: seller_name || "Penjual",
+        seller_wa: normalizedWa,
+        title: cleanedTitle,
+        description: description || "",
+        price: normalizedPrice,
+        category: category || "Elektronik",
+        status: "rejected",
+        moderation_reason: moderation.moderation_reason,
+        risk_score: moderation.risk_score,
+      }).catch(() => {});
+
+      return NextResponse.json(
+        {
+          error: `Iklan tidak dapat ditayangkan: ${moderation.moderation_reason}`,
+          status: "rejected",
+        },
+        { status: 422 }
+      );
+    }
 
     // Cek status distributor
     const { data: profileCheck } = await supa
@@ -277,12 +311,16 @@ export async function POST(req) {
     const amount = adFeeFrom(settings.pricing, type, price);
     const isFreeMode = amount === 0 || settings.pricing?.freeMode !== false;
 
-    const initialStatus = (isPro || isJasaFree || isDistributor || punyaToko || isFreeMode) ? "active" : "pending";
+    // Status tayang: HANYA aktif jika lolos moderasi otomatis ('approved')
+    // Jika meragukan ('pending'), iklan masuk antrean peninjauan admin kampus
+    const isAutoApproved = moderation.status === "approved";
+    const initialStatus = isAutoApproved ? "active" : "pending";
+    const modReason = isAutoApproved ? "Lolos moderasi otomatis" : moderation.moderation_reason;
     const safeSpecs = sanitizeListingSpecs(category || "Elektronik", specs);
 
     // Hitung fee bagi hasil untuk distributor
     let distributorFee = 0;
-    let finalPrice = Math.round(Number(price)) || 0;
+    let finalPrice = Math.round(Number(normalizedPrice)) || 0;
     if (isDistributor && distSettings) {
       distributorFee = calcDistributorFee(finalPrice, distSettings.rules);
       finalPrice = effectivePrice(finalPrice, distributorFee, distSettings.autoAddPrice);
@@ -293,16 +331,18 @@ export async function POST(req) {
       .insert({
         seller_name: enforcedName,
         seller_wa: normalizedWa,
-        title,
+        title: cleanedTitle,
         description: description || "",
         price: finalPrice,
         distributor_fee: distributorFee || null,
         stock: Math.max(1, Number(stock) || 1),
         category: category || "Elektronik",
-        type: ["poster", "jasa", "sewa"].includes(type) ? type : "barang",
+        type: ["poster", "jasa", "sewa", "gratis"].includes(type) ? type : "barang",
         rental_period: type === "sewa" ? (rental_period || "harian") : null,
         image_url: image_url || null,
         status: initialStatus,
+        moderation_reason: modReason,
+        risk_score: moderation.risk_score || 0.0,
         campus: campus || "Semua",
         area: area || "Sekitar Kampus",
         condition: (type === "barang" && condition) ? condition : "used",
@@ -319,13 +359,11 @@ export async function POST(req) {
       await supa.from("listings").update({ images }).eq("id", listing.id);
     }
 
-    if (isPro || isJasaFree || isDistributor || punyaToko || isFreeMode) {
+    // HANYA disebarkan ke grup WA & notifikasi jika sudah AKTIF (approved)
+    if (initialStatus === "active") {
       try {
         await postToGroup(listing);
         notifyCategorySubscribers(supa, listing).catch(() => {});
-        // Push peramban ke SEMUA pelanggan, bukan cuma pelanggan kategori:
-        // yang paling ingin tahu ada barang baru adalah pembeli, dan pembeli
-        // tidak perlu punya akun di sini untuk membeli.
         pushListingBaru(supa, listing).catch(() => {});
       } catch (err) {
         console.error("Fonnte postToGroup error:", err?.message);
@@ -343,9 +381,16 @@ export async function POST(req) {
         isDistributor,
         punyaToko,
         isFreeMode,
-        distributorFee
       });
     }
+
+    // Response jika berstatus pending
+    return NextResponse.json({
+      listing,
+      pending_review: true,
+      message: "Iklan berhasil dikirim dan masuk antrean peninjauan moderator kampus sebelum tayang dan disebarkan ke WhatsApp.",
+      isFreeMode,
+    });
 
     const orderId = `IKLAN-${listing.id.slice(0, 8)}-${Date.now()}`;
 

@@ -97,13 +97,16 @@ export async function POST(req) {
           .eq("id", id)
           .maybeSingle();
 
-        // Aktifkan + perpanjang masa tayang
+        // Aktifkan + perpanjang masa tayang + catat audit moderasi
         const settings = await getSettings().catch(() => null);
         const days = Math.max(1, Number(settings?.pricing?.listingDays) || 14);
         await supa
           .from("listings")
           .update({
             status: "active",
+            moderation_reason: "Disetujui manual oleh admin/moderator",
+            moderated_at: new Date().toISOString(),
+            moderated_by: "admin",
             expires_at: new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString(),
           })
           .eq("id", id);
@@ -133,11 +136,41 @@ export async function POST(req) {
         });
         break;
       }
+      case "reject": {
+        const rejectReason = body.reason?.trim() || "Iklan tidak memenuhi pedoman komunitas kampus.";
+        await supa
+          .from("listings")
+          .update({
+            status: "rejected",
+            moderation_reason: rejectReason,
+            moderated_at: new Date().toISOString(),
+            moderated_by: "admin",
+          })
+          .eq("id", id);
+        break;
+      }
       case "suspend":
-        await supa.from("listings").update({ status: "suspended" }).eq("id", id);
+        await supa
+          .from("listings")
+          .update({
+            status: "suspended",
+            moderation_reason: body.reason?.trim() || "Ditangguhkan oleh admin",
+            moderated_at: new Date().toISOString(),
+            moderated_by: "admin",
+          })
+          .eq("id", id);
         break;
       case "delete":
-        await supa.from("listings").delete().eq("id", id);
+        // Soft-hide: Jangan menghapus data pengguna secara permanen
+        await supa
+          .from("listings")
+          .update({
+            status: "hidden",
+            moderation_reason: body.reason?.trim() || "Dihapus/disembunyikan oleh admin",
+            moderated_at: new Date().toISOString(),
+            moderated_by: "admin",
+          })
+          .eq("id", id);
         break;
 
       // ── Listing: aksi massal (bulk) ─────────────────────────────────────

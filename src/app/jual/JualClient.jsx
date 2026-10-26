@@ -574,18 +574,22 @@ export default function JualPage() {
             <div className="grid gap-3 sm:grid-cols-1">
               <div
                 className={`flex flex-col text-left p-4 rounded-xl border-2 transition-all ${
-                  isFreeMode
+                  isFreeMode || gratis
                     ? "border-emerald-500 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/20"
                     : "border-primary bg-primary/5 dark:border-slate-700 dark:bg-slate-800/50"
                 }`}
               >
                 <span className="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-1.5">
-                  {isFreeMode ? "🎉 100% Gratis (Pasar Bebas Mahasiswa)" : "QRIS + verifikasi struk"}
+                  {isFreeMode || gratis ? "🎉 100% Gratis (Masa Promo Mahasiswa)" : "QRIS + verifikasi struk"}
                 </span>
                 <span className="text-xs text-gray-500 dark:text-slate-400 mt-1.5 leading-relaxed">
-                  {isFreeMode
-                    ? "Tidak perlu bayar biaya iklan! Cukup tekan tombol Preview & Pasang Iklan, barangmu langsung tayang dan disebarkan ke grup WhatsApp."
-                    : "Scan QRIS yang muncul setelah ini, lalu unggah foto struknya di layar yang sama. Strukmu diperiksa otomatis dan iklan langsung aktif kalau cocok."}
+                  {isFreeMode || gratis ? (
+                    <>
+                      Biaya normal <span className="line-through text-gray-400">Rp 5.000</span> menjadi <strong className="text-emerald-600 dark:text-emerald-400">Rp 0</strong>. Pratinjau iklanmu, lalu klik Tayangkan. Iklan akan ditinjau tim moderasi sebelum tayang dan disebarkan ke grup WhatsApp.
+                    </>
+                  ) : (
+                    "Scan QRIS yang muncul setelah ini, lalu unggah foto struknya di layar yang sama. Strukmu diperiksa otomatis dan iklan langsung aktif kalau cocok."
+                  )}
                 </span>
               </div>
             </div>
@@ -610,17 +614,28 @@ export default function JualPage() {
               <div className="flex justify-between">
                 <dt className="text-gray-500 dark:text-slate-400">Biaya tayang</dt>
                 <dd className="font-medium dark:text-white">
-                  {gratis ? <span className="inline-flex items-center gap-1 font-bold text-emerald-600">GRATIS <Icon.Store className="h-4 w-4" /> <span className="font-normal text-xs">({sebabGratis})</span></span> : rupiah(fee)}
+                  {gratis ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="line-through text-gray-400 text-xs">Rp 5.000</span>
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400">Gratis selama masa promo</span>
+                    </span>
+                  ) : (
+                    rupiah(fee)
+                  )}
                 </dd>
               </div>
               <div className="my-2 border-t dark:border-slate-800" />
               <div className="flex justify-between text-base">
                 <dt className="font-semibold dark:text-white">Total bayar</dt>
                 <dd className="font-extrabold text-primary dark:text-white">
-                  {gratis ? <span className="text-emerald-600">Rp 0</span> : rupiah(fee)}
+                  {gratis ? <span className="text-emerald-600 dark:text-emerald-400">Rp 0</span> : rupiah(fee)}
                 </dd>
               </div>
             </dl>
+
+            <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50/70 p-3 text-xs text-blue-800 dark:border-blue-900/40 dark:bg-blue-950/30 dark:text-blue-300">
+              <span className="font-semibold">🛡️ Peninjauan Iklan:</span> Iklan akan ditinjau terlebih dahulu sebelum tayang dan disebarkan ke grup WhatsApp.
+            </div>
 
             <div className="mt-4 pt-3 border-t border-gray-100 dark:border-slate-800">
               <label className="flex items-start gap-2.5 text-xs text-gray-600 dark:text-slate-400 cursor-pointer select-none">
@@ -642,7 +657,7 @@ export default function JualPage() {
             </div>
 
             <button type="submit" disabled={busy || !!fileError || !agreedPdp} className="btn-primary mt-4 w-full">
-              Lanjut ke Preview Iklan
+              Pratinjau Iklan
             </button>
             {msg && <p className="mt-3 text-sm text-rose-600">{msg}</p>}
           </div>
@@ -749,7 +764,7 @@ export default function JualPage() {
                 disabled={busy}
                 className="btn-primary flex-1"
               >
-                {busy ? "Memproses…" : gratis ? "Konfirmasi & Pasang Iklan (Gratis)" : `Konfirmasi & Bayar ${rupiah(fee)}`}
+                {busy ? "Memproses…" : gratis ? "Tayangkan Sekarang (Gratis)" : `Bayar & Tayangkan ${rupiah(fee)}`}
               </button>
             </div>
           </div>
