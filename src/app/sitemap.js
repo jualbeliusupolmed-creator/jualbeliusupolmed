@@ -2,6 +2,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { buildSlug } from "@/lib/slug";
 import { formatWa } from "@/lib/constants";
 import { encodeSellerSlug } from "@/lib/sellerSlug";
+import { evaluateModerationRules } from "@/lib/moderationRules";
 
 export const revalidate = 3600;
 
@@ -55,12 +56,14 @@ export default async function sitemap() {
         .not("slug", "is", null),
     ]);
 
-    const listingRoutes = ((listingsRes?.data) || []).map((l) => ({
-      url: `${baseUrl}/produk/${buildSlug(l.title, l.id)}`,
-      lastModified: l.updated_at || new Date().toISOString(),
-      changeFrequency: "weekly",
-      priority: 0.8,
-    }));
+    const listingRoutes = ((listingsRes?.data) || [])
+      .filter((l) => evaluateModerationRules({ title: l.title }).action === "allow")
+      .map((l) => ({
+        url: `${baseUrl}/produk/${buildSlug(l.title, l.id)}`,
+        lastModified: l.updated_at || new Date().toISOString(),
+        changeFrequency: "weekly",
+        priority: 0.8,
+      }));
 
     const sellerMap = new Map();
     for (const s of (sellersRes?.data || [])) {

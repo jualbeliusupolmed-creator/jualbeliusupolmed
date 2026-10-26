@@ -6,12 +6,12 @@ export const dynamic = "force-dynamic";
 export const revalidate = 60;
 
 export const metadata = {
-  title: "Cari Barang & Jasa Mahasiswa — Tulis Kebutuhanmu, Penjual Datang",
+  title: "Cari Barang & Jasa Mahasiswa",
   description:
     "Lagi cari laptop bekas, buku kuliah, kos, motor, atau jasa di sekitar USU & POLMED? Posting kebutuhanmu gratis di halaman Cari Barang — penjual yang punya barangnya akan menghubungimu langsung via WhatsApp.",
   alternates: { canonical: "/dicari" },
   openGraph: {
-    title: "Cari Barang Mahasiswa — Jual Beli USU & POLMED",
+    title: "Cari Barang & Jasa Mahasiswa",
     description:
       "Posting barang atau jasa yang kamu cari secara gratis. Penjual datang menawarkan langsung ke WhatsApp-mu.",
     url: "/dicari",
