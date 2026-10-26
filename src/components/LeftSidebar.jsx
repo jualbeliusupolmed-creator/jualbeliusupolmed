@@ -49,6 +49,8 @@ export default function LeftSidebar() {
 
   const mainLinks = [
     { href: "/", label: "Beranda", icon: Icon.Home },
+    { href: "/jual-beli", label: "Marketplace", icon: Icon.ShoppingBag },
+    { href: "https://open-po.vercel.app", label: "OpenPO Kampus", icon: Icon.Coffee, external: true },
     { href: "/mading", label: "Menfess & Info", icon: Icon.BookOpen },
     { href: "/chat", label: "Obrolan", icon: Icon.MessageCircle, badge: unreadChat },
     { href: "/favorit", label: "Favorit", icon: Icon.Heart },
@@ -65,13 +67,13 @@ export default function LeftSidebar() {
     <div className="hidden md:flex flex-col w-[250px] sticky top-0 h-screen bg-transparent px-4 py-6 overflow-y-auto z-20">
       <div className="flex items-center justify-between mb-6 px-2">
         <Link href="/" className="flex items-center gap-2.5 group">
-          <Icon.Store className="w-8 h-8 text-primary shrink-0 transition-transform duration-300 group-hover:scale-105" />
+          <Icon.Store className="w-8 h-8 text-[#126B49] shrink-0 transition-transform duration-300 group-hover:scale-105" />
           <div className="flex flex-col">
             <span className="font-extrabold text-xl leading-none tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">
               Kampusfess
             </span>
             <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mt-1">
-              Marketplace USU • POLMED
+              USU • POLMED Ecosystem
             </span>
           </div>
         </Link>
@@ -97,27 +99,44 @@ export default function LeftSidebar() {
       <nav className="flex-1 space-y-4">
         <div className="space-y-1">
           {mainLinks.map((link) => {
+            if (link.external) {
+              return (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3.5 px-4 py-2.5 rounded-lg transition-all group text-emerald-800 dark:text-emerald-300 bg-emerald-50/70 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-950 font-bold"
+                >
+                  <link.icon className="w-5 h-5 text-[#126B49] dark:text-emerald-400" />
+                  <span className="text-[14.5px]">{link.label}</span>
+                  <span className="ml-auto text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-600 text-white">
+                    PO
+                  </span>
+                </a>
+              );
+            }
             const isActive = pathname === link.href || (link.href !== "/" && pathname?.startsWith(link.href));
             return (
               <Link
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "flex items-center gap-3.5 px-4 py-2.5 rounded-full transition-all group",
+                  "flex items-center gap-3.5 px-4 py-2.5 rounded-lg transition-all group",
                   isActive 
-                    ? "bg-black/[0.05] dark:bg-white/[0.08] font-bold text-[#1d1d1f] dark:text-white" 
-                    : "text-gray-600 dark:text-gray-400 hover:bg-black/[0.03] dark:hover:bg-white/[0.04] font-medium"
+                    ? "bg-slate-100 dark:bg-white/[0.08] font-bold text-slate-900 dark:text-white" 
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] font-medium"
                 )}
               >
                 <span className="relative shrink-0">
-                  <link.icon className={cn("w-5 h-5", isActive && "text-primary")} />
+                  <link.icon className={cn("w-5 h-5", isActive && "text-[#126B49] dark:text-emerald-400")} />
                   {link.badge > 0 && (
                     <span className="absolute -top-1 -right-1 min-w-[16px] h-4 bg-rose-500 text-white text-[9px] font-extrabold rounded-full flex items-center justify-center px-0.5 shadow-sm">
                       {link.badge > 99 ? "99+" : link.badge}
                     </span>
                   )}
                 </span>
-                <span className="text-[15px]">{link.label}</span>
+                <span className="text-[14.5px]">{link.label}</span>
               </Link>
             );
           })}

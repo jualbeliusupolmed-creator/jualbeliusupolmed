@@ -21,49 +21,49 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
   const isConditionNew = listing.condition === "new";
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-[20px] sm:rounded-[24px] bg-white dark:bg-[#1c1c1e] border border-black/[0.06] dark:border-white/[0.08] shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-300 no-tap-highlight">
+    <div className="group relative flex flex-col overflow-hidden rounded-xl bg-white dark:bg-[#18181b] border border-slate-200/90 dark:border-white/[0.08] shadow-[0_1px_4px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_18px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 active:scale-[0.99] transition-all duration-200 no-tap-highlight">
       {/* Floating favorite button */}
-      <FavoriteButton listing={listing} className="absolute right-2 top-2 z-10 !bg-white/85 dark:!bg-black/60 backdrop-blur-md hover:!bg-white dark:hover:!bg-black shadow-sm" />
+      <FavoriteButton listing={listing} className="absolute right-2 top-2 z-10 !bg-white/90 dark:!bg-black/60 shadow-xs hover:!bg-white dark:hover:!bg-black" />
 
       <Link href={`/produk/${buildSlug(listing.title, listing.id)}`} className="flex flex-col flex-1">
         {/* Gambar Produk: Aspect Square */}
-        <div className="relative aspect-square w-full overflow-hidden bg-black/[0.02] dark:bg-black/40">
+        <div className="relative aspect-square w-full overflow-hidden bg-slate-100 dark:bg-black/40 rounded-t-[11px]">
           {listing.image_url ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={listing.image_url}
               alt={listing.title}
               loading="lazy"
-              className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
             />
           ) : (
-            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 text-slate-300 dark:text-slate-600">
+            <div className="absolute inset-0 flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-300 dark:text-slate-600">
               <Icon.Package className="h-10 w-10 opacity-60" />
             </div>
           )}
 
-          {/* Satu Badge Prioritas */}
+          {/* Satu Badge Prioritas — Rectangular Tokopedia Micro-Badge */}
           {!sold && (
             <div className="absolute left-2 top-2 z-10 pointer-events-none">
               {isRental ? (
-                <span className="rounded-full bg-teal-600/90 backdrop-blur-md px-2.5 py-0.5 text-[10.5px] sm:text-[11px] font-bold text-white shadow-sm">
+                <span className="rounded-[4px] bg-teal-600 px-2 py-0.5 text-[10.5px] font-bold text-white shadow-xs">
                   Sewa
                 </span>
               ) : isSponsored ? (
-                <span className="rounded-full bg-indigo-600/90 backdrop-blur-md px-2.5 py-0.5 text-[10.5px] sm:text-[11px] font-bold text-white shadow-sm">
+                <span className="rounded-[4px] bg-indigo-600 px-2 py-0.5 text-[10.5px] font-bold text-white shadow-xs">
                   Sponsor
                 </span>
               ) : listing.featured ? (
-                <span className="rounded-full bg-white/95 dark:bg-[#1c1c1e]/95 backdrop-blur-md px-2.5 py-0.5 text-[10.5px] sm:text-[11px] font-bold text-[#1d1d1f] dark:text-white shadow-sm">
+                <span className="rounded-[4px] bg-slate-900 text-white px-2 py-0.5 text-[10.5px] font-bold shadow-xs">
                   Unggulan
                 </span>
               ) : (isNew || isConditionNew) ? (
-                <span className="rounded-full bg-emerald-500/95 backdrop-blur-md px-2.5 py-0.5 text-[10.5px] sm:text-[11px] font-bold text-white shadow-sm flex items-center gap-0.5">
+                <span className="rounded-[4px] bg-emerald-600 px-2 py-0.5 text-[10.5px] font-bold text-white shadow-xs flex items-center gap-0.5">
                   <Icon.Sparkles className="h-3 w-3" /> Baru
                 </span>
               ) : isLowStock ? (
-                <span className="rounded-full bg-amber-500/95 backdrop-blur-md px-2.5 py-0.5 text-[10.5px] sm:text-[11px] font-bold text-white shadow-sm">
-                  Stok Tipis
+                <span className="rounded-[4px] bg-amber-600 px-2 py-0.5 text-[10.5px] font-bold text-white shadow-xs">
+                  Sisa {listing.stock}
                 </span>
               ) : null}
             </div>
@@ -71,8 +71,8 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
 
           {/* Overlay Terjual */}
           {sold && (
-            <span className="absolute inset-0 grid place-items-center bg-black/45 backdrop-blur-[2px]">
-              <span className="rounded-full bg-white dark:bg-[#1c1c1e] px-3.5 py-1 text-[11px] font-black tracking-wider text-[#1d1d1f] dark:text-white shadow-lg">
+            <span className="absolute inset-0 grid place-items-center bg-black/50">
+              <span className="rounded-[4px] bg-white dark:bg-[#1c1c1e] px-3 py-1 text-[11px] font-black tracking-wider text-[#1d1d1f] dark:text-white shadow-md">
                 TERJUAL
               </span>
             </span>
@@ -83,12 +83,12 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
         <div className="p-2.5 sm:p-3 flex flex-col flex-1 justify-between gap-1.5">
           <div>
             {/* Judul Produk */}
-            <h3 className="line-clamp-2 text-[13px] sm:text-[14px] font-semibold leading-snug text-[#1d1d1f] dark:text-[#f5f5f7] group-hover:text-primary dark:group-hover:text-violet-400 transition-colors min-h-[2.1rem] sm:min-h-[2.4rem] tracking-tight">
+            <h3 className="line-clamp-2 text-[13px] sm:text-[14px] font-semibold leading-snug text-slate-800 dark:text-slate-100 group-hover:text-[#126B49] dark:group-hover:text-emerald-400 transition-colors min-h-[2.1rem] sm:min-h-[2.4rem] tracking-tight">
               {listing.title}
             </h3>
 
             {/* Harga */}
-            <div className="mt-1 text-[15px] sm:text-[16px] font-black tracking-tight text-primary dark:text-violet-400">
+            <div className="mt-1 text-[15px] sm:text-[16px] font-black tracking-tight text-[#126B49] dark:text-emerald-400">
               {listing.type === "jasa" && (
                 <span className="text-[12px] font-normal text-slate-500 dark:text-slate-400 mr-1">Mulai</span>
               )}

@@ -15,15 +15,18 @@ import MobileSidebarDrawer from "./MobileSidebarDrawer";
 
 // Lima tujuan utama navigasi bawah yang stabil dan mudah dihafal jempol.
 const BERANDA = { name: "Beranda", href: "/", icon: Icon.Home };
-const CHAT = { name: "Obrolan", href: "/chat", icon: Icon.MessageCircle };
-
 const MARKET = {
   name: "Market",
   href: "/jual-beli",
   match: ["/jual-beli", "/produk", "/jasa", "/favorit", "/dicari", "/toko", "/penjual", "/distributor"],
   icon: Icon.ShoppingBag,
 };
-
+const KOMUNITAS = {
+  name: "Menfess",
+  href: "/mading",
+  match: ["/mading", "/organisasi", "/oprec"],
+  icon: Icon.Heart,
+};
 
 function ItemNav({ n, pathname, badge = 0 }) {
   const cakupan = n.match || [n.href];
@@ -37,13 +40,13 @@ function ItemNav({ n, pathname, badge = 0 }) {
       <div
         className={cn(
           "relative flex items-center justify-center rounded-full p-1 transition-all duration-200",
-          isActive ? "bg-primary/10 dark:bg-violet-400/15" : "bg-transparent"
+          isActive ? "bg-emerald-50 dark:bg-emerald-950/60 text-[#126B49] dark:text-emerald-400" : "bg-transparent text-slate-500 dark:text-slate-400"
         )}
       >
         <IconComp
           className={cn(
-            "h-[18px] w-[18px] transition-transform duration-200",
-            isActive ? "scale-105 stroke-[2.4px]" : "scale-100 stroke-[1.8px]"
+            "h-[19px] w-[19px] transition-transform duration-200",
+            isActive ? "scale-105 stroke-[2.3px]" : "scale-100 stroke-[1.8px]"
           )}
         />
         {badge > 0 && (
@@ -54,8 +57,8 @@ function ItemNav({ n, pathname, badge = 0 }) {
       </div>
       <span
         className={cn(
-          "text-[10.5px] min-[360px]:text-[11px] leading-tight transition-all duration-200 truncate max-w-full tracking-tight mt-0.5",
-          isActive ? "font-bold text-primary dark:text-violet-400" : "font-semibold text-slate-600 dark:text-slate-300"
+          "text-[10px] leading-tight transition-all duration-200 truncate max-w-full tracking-tight",
+          isActive ? "font-extrabold text-[#126B49] dark:text-emerald-400" : "font-semibold text-slate-500 dark:text-slate-400"
         )}
       >
         {n.name}
@@ -66,8 +69,8 @@ function ItemNav({ n, pathname, badge = 0 }) {
   const buttonClasses = cn(
     "group relative flex w-12 xs:w-14 flex-col items-center justify-center gap-0.5 py-1 transition-all duration-200 active:scale-[0.92] touch-manipulation",
     isActive
-      ? "text-primary dark:text-violet-400 font-bold"
-      : "text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white font-semibold"
+      ? "text-[#126B49] dark:text-emerald-400 font-bold"
+      : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white font-semibold"
   );
 
   if (n.onClick) {
@@ -138,9 +141,7 @@ function BottomNavbarInner() {
     pathname === "/chat" && searchParams && (searchParams.has("anon") || searchParams.has("room"));
   const isProductPage = pathname?.startsWith("/produk/");
   const hideFloating = isChatRoom || isProductPage;
-  const navKiri = [BERANDA, MARKET];
-  // Saat belum siap (server/hydration), selalu pakai tombol Masuk
-  // supaya server HTML dan client HTML sama persis — tidak ada Link vs button mismatch.
+
   const AKUN = siap && sesiWa
     ? {
         name: "Akun",
@@ -155,42 +156,47 @@ function BottomNavbarInner() {
         onClick: siap ? () => setBukaOtp(true) : undefined,
       };
 
-  const navKanan = [CHAT, AKUN];
   // Sheet atau drawer yang terbuka menahan dock supaya tidak menyingkir di belakangnya.
   const menyingkir = tersembunyi && !bukaCari && !bukaBuat && !bukaOtp && !bukaSidebar && !isChatRoom;
 
   return (
     <>
-      {/* Tombol Pasang Iklan Baru: Floating Action Button di Kiri Bawah (Khusus Mobile) */}
+      {/* ── MOBILE BOTTOM NAVIGATION DOCK (5 DESTINATIONS) ── */}
       {!hideFloating && (
-        <div
+        <nav
+          aria-label="Navigasi bawah mobile"
           className={cn(
-            "fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] left-4 z-40 md:hidden transition-all duration-300",
-            menyingkir ? "translate-y-24 opacity-0 pointer-events-none" : "translate-y-0 opacity-100"
+            "fixed bottom-0 inset-x-0 z-40 md:hidden bg-white/95 dark:bg-[#18181b]/95 backdrop-blur-md border-t border-slate-200/90 dark:border-white/[0.08] shadow-[0_-2px_10px_rgba(0,0,0,0.03)] transition-all duration-300",
+            menyingkir ? "translate-y-full opacity-0 pointer-events-none" : "translate-y-0 opacity-100"
           )}
+          style={{ paddingBottom: "max(6px, env(safe-area-inset-bottom, 0px))" }}
         >
-          <button
-            type="button"
-            onClick={() => {
-              hapticMedium();
-              setBukaBuat(true);
-            }}
-            aria-label="Pasang Iklan Baru"
-            title="Pasang Iklan"
-            className="group relative flex h-12 w-12 items-center justify-center rounded-full bg-primary hover:bg-primary-hover text-white shadow-[0_10px_25px_rgba(124,58,237,0.45)] ring-4 ring-white/90 dark:ring-[#111113]/90 active:scale-90 transition-all duration-200"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.8"
-              strokeLinecap="round"
-              className="h-6 w-6 transition-transform duration-200 group-hover:rotate-90"
+          <div className="flex items-center justify-around h-13 px-2 max-w-md mx-auto">
+            <ItemNav n={BERANDA} pathname={pathname} />
+            <ItemNav n={MARKET} pathname={pathname} />
+
+            {/* Center Create Action Button */}
+            <button
+              type="button"
+              onClick={() => {
+                hapticMedium();
+                setBukaBuat(true);
+              }}
+              aria-label="Pasang Iklan Baru"
+              className="flex flex-col items-center justify-center -mt-3 group active:scale-95 transition-transform"
             >
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-          </button>
-        </div>
+              <div className="w-10 h-10 rounded-full bg-[#126B49] text-white flex items-center justify-center shadow-md shadow-emerald-800/25 ring-3 ring-white dark:ring-[#18181b]">
+                <Icon.Plus className="w-5 h-5 stroke-[2.8]" />
+              </div>
+              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 mt-0.5">
+                Pasang
+              </span>
+            </button>
+
+            <ItemNav n={KOMUNITAS} pathname={pathname} />
+            <ItemNav n={AKUN} pathname={pathname} />
+          </div>
+        </nav>
       )}
 
       <MobileSidebarDrawer isOpen={bukaSidebar} onClose={() => setBukaSidebar(false)} />

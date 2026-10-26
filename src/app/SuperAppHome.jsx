@@ -198,7 +198,7 @@ export default function SuperAppHome({
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600" />
             </span>
-            <span className="text-[10px] font-extrabold text-emerald-700 dark:text-emerald-300 shrink-0">Open PO 🍵:</span>
+            <span className="text-[10px] font-extrabold text-emerald-700 dark:text-emerald-300 shrink-0">Open PO:</span>
             <span className="text-[10.5px] text-slate-600 dark:text-slate-300 truncate min-w-0 flex-1">
               &ldquo;{title} — {info}&rdquo;
             </span>
@@ -235,7 +235,7 @@ export default function SuperAppHome({
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-600" />
           </span>
-          <span className="text-[10px] font-extrabold text-amber-700 dark:text-amber-300 shrink-0">Jual Beli 🛍️:</span>
+          <span className="text-[10px] font-extrabold text-amber-700 dark:text-amber-300 shrink-0">Jual Beli:</span>
           <span className="text-[10.5px] text-slate-600 dark:text-slate-300 truncate min-w-0 flex-1">
             &ldquo;{title} — {harga}&rdquo;
           </span>
@@ -1203,7 +1203,7 @@ export default function SuperAppHome({
                   : "text-slate-500 hover:text-slate-900 dark:text-slate-400"
               }`}
             >
-              <span className="text-xs sm:text-sm leading-none shrink-0">🍵</span>
+              <Icon.Coffee className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
               <span className="truncate">Open PO</span>
             </button>
             <button
@@ -1310,6 +1310,87 @@ export default function SuperAppHome({
               </div>
             </section>
 
+            {/* ── 1.5. OPEN PO HIGHLIGHTS (DISCOVERY HUB) ── */}
+            {poBatches && poBatches.length > 0 && !listingSearch && listingCategory === "Semua" && (
+              <section className="bg-white dark:bg-[#18181b] rounded-xl p-3 sm:p-3.5 border border-slate-200/90 dark:border-white/[0.08] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+                <div className="flex items-center justify-between mb-2.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className="flex h-2 w-2 relative">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600" />
+                    </span>
+                    <h3 className="text-xs sm:text-sm font-extrabold text-slate-800 dark:text-slate-100">
+                      Pre-Order Kampus Sedang Buka
+                    </h3>
+                    <span className="rounded-[4px] bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 px-1.5 py-0.2 text-[10px] font-bold">
+                      {poBatches.length} Batch Aktif
+                    </span>
+                  </div>
+                  <a
+                    href="https://open-po.vercel.app?utm_source=jualbeliusupolmed&ref=jualbeliusupolmed"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[11px] font-bold text-[#126B49] dark:text-emerald-400 hover:underline flex items-center gap-0.5"
+                  >
+                    <span>Lihat Semua</span>
+                    <Icon.ChevronRight className="w-3 h-3" />
+                  </a>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5">
+                  {poBatches.slice(0, 4).map((po, idx) => {
+                    const quotaNum = Number(po.quota) || 1;
+                    const resNum = Number(po.reserved) || 0;
+                    const pct = Math.min(100, Math.round((resNum / quotaNum) * 100));
+                    return (
+                      <a
+                        key={po.id || idx}
+                        href={po.url || "https://open-po.vercel.app"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group flex flex-col justify-between p-2 rounded-lg border border-slate-200/80 dark:border-white/[0.06] hover:border-emerald-600/40 bg-slate-50/60 dark:bg-slate-900/40 transition-all hover:-translate-y-0.5"
+                      >
+                        <div className="space-y-1.5">
+                          <div className="relative aspect-4/3 w-full rounded-md overflow-hidden bg-slate-200 dark:bg-slate-800">
+                            {po.photo ? (
+                              <img
+                                src={po.photo}
+                                alt={po.name || po.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-slate-400">
+                                <Icon.Coffee className="w-6 h-6" />
+                              </div>
+                            )}
+                            <span className="absolute bottom-1 left-1 rounded-[3px] bg-black/70 text-white text-[9px] font-bold px-1 py-0.2">
+                              {po.pickup_point || "Kampus"}
+                            </span>
+                          </div>
+                          <h4 className="text-[11.5px] font-bold text-slate-800 dark:text-slate-100 line-clamp-1 group-hover:text-[#126B49]">
+                            {po.name || po.title}
+                          </h4>
+                          <p className="text-[12px] font-black text-[#126B49] dark:text-emerald-400">
+                            {typeof po.price === "number" ? rupiah(po.price) : po.price}
+                          </p>
+                        </div>
+                        <div className="mt-2 pt-1 border-t border-slate-200/60 dark:border-white/[0.04]">
+                          <div className="flex justify-between text-[9.5px] text-slate-500 mb-0.5">
+                            <span>Sisa {Math.max(0, quotaNum - resNum)}</span>
+                            <span className="font-bold text-emerald-700">{pct}%</span>
+                          </div>
+                          <div className="w-full h-1 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div className="h-full bg-emerald-600 rounded-full" style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+                      </a>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
             {/* ── 2. PRODUCT GRID (JUALAN DI TENGAH) ── */}
             <section>
               {filteredListings.length === 0 ? (
@@ -1410,42 +1491,34 @@ export default function SuperAppHome({
 
           </div>{/* end kolom tengah */}
 
-          {/* ════════════════════════════════════════
-              OPEN PO SECTION (MOBILE & DESKTOP when mobileTab === 'openpo')
-              "konten open po real dan terintegrasi secara realtime dari Supabase Open PO"
-          ════════════════════════════════════════ */}
           <div className={`w-full max-w-4xl mx-auto space-y-4 ${mobileTab !== "openpo" ? "hidden" : "block"}`}>
             {/* Open PO Banner */}
-            <div className="p-4 sm:p-6 rounded-3xl bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700 text-white shadow-lg relative overflow-hidden">
+            <div className="p-4 sm:p-6 rounded-xl bg-[#126B49] text-white shadow-xs border border-emerald-800/30 relative overflow-hidden">
               <div className="relative z-10 space-y-2.5 max-w-xl">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-[10.5px] sm:text-xs font-extrabold tracking-wide uppercase">
-                  <span>🍵</span>
-                  <span>Eksklusif Mahasiswa USU &amp; POLMED</span>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[4px] bg-white/20 text-[10.5px] sm:text-xs font-bold tracking-wide uppercase">
+                  <span>Pre-Order Mahasiswa USU &amp; POLMED</span>
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />
                 </div>
-                <h2 className="text-xl sm:text-2xl font-black tracking-tight leading-snug">
-                  Open PO Kampus — Pesan Langsung dari Mahasiswa
+                <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight leading-snug">
+                  OpenPO Kampus — Pesan Langsung dari Mahasiswa
                 </h2>
-                <p className="text-xs sm:text-sm text-emerald-50 leading-relaxed">
-                  Pesan makanan favorit, minuman viral, kaos angkatan, &amp; merchandise langsung dari sesama mahasiswa. Tanpa biaya admin tersembunyi!
+                <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed">
+                  Pesan makanan favorit, minuman, kaos angkatan, dan merchandise langsung dari sesama mahasiswa. Kuota transparan, jadwal ambil pasti, dan rekap pesanan otomatis.
                 </p>
                 <div className="pt-1.5 flex flex-wrap items-center gap-2">
                   <a
                     href="https://open-po.vercel.app?utm_source=jualbeliusupolmed&ref=jualbeliusupolmed"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white text-emerald-900 text-xs sm:text-sm font-black shadow-md hover:bg-emerald-50 active:scale-95 transition-all"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white text-[#126B49] text-xs sm:text-sm font-extrabold shadow-xs hover:bg-slate-100 active:scale-98 transition-all"
                   >
                     <span>Buka Web Utama Open PO</span>
-                    <Icon.ExternalLink className="w-3.5 h-3.5 text-emerald-700" />
+                    <Icon.ExternalLink className="w-3.5 h-3.5 text-[#126B49]" />
                   </a>
                   <span className="text-[11px] text-emerald-100 font-medium">
-                    ⚡ Data batch terintegrasi otomatis
+                    Sinkronisasi kuota real-time
                   </span>
                 </div>
-              </div>
-              <div className="absolute -right-4 -bottom-6 text-8xl sm:text-9xl opacity-20 pointer-events-none select-none">
-                🍵
               </div>
             </div>
 
@@ -1454,22 +1527,22 @@ export default function SuperAppHome({
               {/* Header Box PO */}
               <div className="flex items-center justify-between px-1">
                 <div className="flex items-center gap-2">
-                  <span className="flex h-2.5 w-2.5 relative">
+                  <span className="flex h-2 w-2 relative">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                   </span>
                   <h3 className="text-xs sm:text-sm font-extrabold text-slate-800 dark:text-white uppercase tracking-wider">
                     Batch PO Aktif Sekarang
                   </h3>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                    {(poBatches || []).slice(0, 4).length > 0 ? `${(poBatches || []).slice(0, 4).length} Batch` : "Live"}
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-[4px] bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50">
+                    {(poBatches || []).length > 0 ? `${(poBatches || []).length} Batch Aktif` : "Live"}
                   </span>
                 </div>
                 <a
                   href="https://open-po.vercel.app?utm_source=jualbeliusupolmed&ref=jualbeliusupolmed"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
+                  className="text-xs font-bold text-[#126B49] dark:text-emerald-400 hover:underline flex items-center gap-1"
                 >
                   <span>Lihat Semua di OpenPO</span>
                   <Icon.ExternalLink className="w-3 h-3" />
@@ -1478,10 +1551,10 @@ export default function SuperAppHome({
 
               {/* Cards PO Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                {(poBatches || []).slice(0, 4).map((item, idx) => {
-                  const quotaNum = Number(item.quota) || 0;
+                {(poBatches || []).map((item, idx) => {
+                  const quotaNum = Number(item.quota) || 1;
                   const resNum = Number(item.reserved) || 0;
-                  const pct = quotaNum > 0 ? Math.min(100, Math.round((resNum / quotaNum) * 100)) : 0;
+                  const pct = Math.min(100, Math.round((resNum / quotaNum) * 100));
                   const isHampirPenuh = pct >= 80;
 
                   return (
@@ -1490,11 +1563,11 @@ export default function SuperAppHome({
                       href={item.url || "https://open-po.vercel.app"}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="apple-glass-card p-3.5 sm:p-4 rounded-3xl border border-black/[0.06] dark:border-white/[0.08] hover:border-emerald-500/50 hover:shadow-md active:scale-[0.98] transition-all flex flex-col justify-between gap-3 group relative overflow-hidden"
+                      className="p-3.5 sm:p-4 rounded-xl bg-white dark:bg-[#18181b] border border-slate-200/90 dark:border-white/[0.08] shadow-[0_1px_4px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_18px_rgba(0,0,0,0.08)] hover:border-emerald-600/40 active:scale-[0.99] transition-all flex flex-col justify-between gap-3 group relative overflow-hidden"
                     >
                       {/* Top Header: Image + Details */}
                       <div className="flex items-start gap-3">
-                        <div className="relative w-20 h-20 sm:w-22 sm:h-22 rounded-2xl overflow-hidden shrink-0 bg-emerald-500/10 border border-black/[0.04] dark:border-white/[0.06]">
+                        <div className="relative w-20 h-20 sm:w-22 sm:h-22 rounded-lg overflow-hidden shrink-0 bg-slate-100 dark:bg-slate-800 border border-slate-200/70 dark:border-white/[0.06]">
                           {item.photo ? (
                             <img
                               src={item.photo}
@@ -1503,66 +1576,66 @@ export default function SuperAppHome({
                               loading="lazy"
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-3xl">
-                              {item.emoji || "🍵"}
+                            <div className="w-full h-full flex items-center justify-center text-slate-400">
+                              <Icon.Package className="w-8 h-8 opacity-60" />
                             </div>
                           )}
-                          <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-md text-white text-[9px] font-bold">
-                            {item.emoji || "🍵"}
+                          <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded-[3px] bg-slate-900/80 text-white text-[9px] font-bold">
+                            PO
                           </div>
                         </div>
 
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-[9.5px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                            <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-[4px]">
                               {item.category || "Kampus"}
                             </span>
                             {isHampirPenuh && (
-                              <span className="text-[9px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-full">
-                                🔥 Sisa Sedikit
+                              <span className="text-[9.5px] font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/40 px-1.5 py-0.5 rounded-[4px]">
+                                Sisa Sedikit
                               </span>
                             )}
                           </div>
 
-                          <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-snug mt-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors line-clamp-1">
+                          <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-snug mt-1 group-hover:text-[#126B49] dark:group-hover:text-emerald-400 transition-colors line-clamp-1">
                             {item.name || item.title}
                           </h4>
 
-                          <p className="text-[10.5px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
                             Oleh <span className="font-semibold text-slate-700 dark:text-slate-300">{item.seller_name || "Mahasiswa"}</span> • {item.faculty || "USU/POLMED"}
                           </p>
 
-                          <p className="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400 mt-1">
+                          <p className="text-sm sm:text-base font-black text-[#126B49] dark:text-emerald-400 mt-1">
                             {typeof item.price === "number" ? rupiah(item.price) : item.price}
                           </p>
                         </div>
                       </div>
 
                       {/* Middle: Quota Progress Bar */}
-                      <div className="space-y-1 pt-1 border-t border-black/[0.04] dark:border-white/[0.05]">
-                        <div className="flex items-center justify-between text-[10.5px]">
+                      <div className="space-y-1 pt-1 border-t border-slate-100 dark:border-white/[0.05]">
+                        <div className="flex items-center justify-between text-[11px]">
                           <span className="text-slate-500 dark:text-slate-400">
                             Kuota: <strong className="text-slate-800 dark:text-white">{resNum}/{quotaNum}</strong>
                           </span>
-                          <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                          <span className="font-bold text-[#126B49] dark:text-emerald-400">
                             {pct}% Terpesan
                           </span>
                         </div>
-                        <div className="w-full h-1.5 bg-black/[0.05] dark:bg-white/[0.08] rounded-full overflow-hidden">
+                        <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-500"
+                            className="h-full bg-[#126B49] rounded-full transition-all duration-300"
                             style={{ width: `${pct}%` }}
                           />
                         </div>
                       </div>
 
                       {/* Bottom Footer: Pickup & CTA */}
-                      <div className="flex items-center justify-between text-[10.5px] pt-1">
-                        <span className="text-slate-500 dark:text-slate-400 truncate max-w-[55%] flex items-center gap-1">
-                          <span>📍</span>
+                      <div className="flex items-center justify-between text-[11px] pt-1">
+                        <span className="text-slate-500 dark:text-slate-400 truncate max-w-[60%] flex items-center gap-1">
+                          <Icon.MapPin className="w-3 h-3 text-slate-400 shrink-0" />
                           <span className="truncate">{item.pickup_point || "Kampus"}</span>
                         </span>
-                        <span className="font-black text-emerald-600 dark:text-emerald-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+                        <span className="font-bold text-[#126B49] dark:text-emerald-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-1 text-[11px]">
                           <span>Pesan di Open PO</span>
                           <Icon.ArrowRight className="w-3 h-3" />
                         </span>
@@ -1571,8 +1644,8 @@ export default function SuperAppHome({
                   );
                 })}
                 {(!poBatches || poBatches.length === 0) && (
-                  <div className="col-span-full py-8 text-center rounded-3xl border border-dashed border-black/10 dark:border-white/10 p-6 bg-slate-50/50 dark:bg-white/[0.02]">
-                    <span className="text-3xl block mb-2">🛍️</span>
+                  <div className="col-span-full py-8 text-center rounded-xl border border-dashed border-slate-200 dark:border-white/10 p-6 bg-slate-50 dark:bg-white/[0.02]">
+                    <Icon.Package className="w-8 h-8 mx-auto mb-2 text-slate-400" />
                     <p className="text-sm font-semibold text-slate-800 dark:text-white">
                       Belum ada batch PO aktif saat ini
                     </p>
@@ -1580,10 +1653,10 @@ export default function SuperAppHome({
                       Punya produk makanan, minuman, kaos, atau merchandise untuk mahasiswa USU &amp; POLMED?
                     </p>
                     <a
-                      href="https://open-po.vercel.app/jual"
+                      href="https://open-po.vercel.app/penjual"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-3.5 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-all"
+                      className="mt-3.5 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold text-white bg-[#126B49] hover:bg-[#0e5238] shadow-xs transition-all"
                     >
                       <span>+ Buka PO Sendiri</span>
                       <Icon.ArrowRight className="w-3.5 h-3.5" />
@@ -1594,9 +1667,9 @@ export default function SuperAppHome({
             </div>
 
             {/* Banner Buka PO Sendiri */}
-            <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-emerald-500/5 via-teal-500/5 to-transparent border border-dashed border-emerald-500/30 text-center space-y-2">
-              <div className="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xl mx-auto">
-                📦
+            <div className="p-4 sm:p-5 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 text-center space-y-2">
+              <div className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-[#126B49] dark:text-emerald-400 mx-auto">
+                <Icon.Package className="w-5 h-5" />
               </div>
               <p className="text-sm font-bold text-slate-800 dark:text-white">
                 Mau Jual Makanan atau Merchandise dengan Sistem PO?
@@ -1606,10 +1679,10 @@ export default function SuperAppHome({
               </p>
               <div className="pt-1">
                 <a
-                  href="https://open-po.vercel.app?utm_source=jualbeliusupolmed&ref=jualbeliusupolmed"
+                  href="https://open-po.vercel.app/penjual"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs active:scale-95 transition-all"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#126B49] hover:bg-[#0e5238] text-white text-xs font-bold shadow-xs active:scale-98 transition-all"
                 >
                   <span>Buka PO Kamu Sekarang</span>
                   <Icon.ExternalLink className="w-3.5 h-3.5" />

@@ -3,21 +3,21 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Palet kampus: Hijau #065932 (USU), Ungu #532b98 (Polmed) */
+/* Palet kampus: Hijau #126B49 (USU), Ungu #532b98 (Polmed) */
 :root {
-  --usu: #065932;
-  --usu-light: #0d8348;
-  --usu-dark: #03411f;
+  --usu: #126B49;
+  --usu-light: #168057;
+  --usu-dark: #0e5238;
   --polmed: #532b98;
   --polmed-light: #7c4fd4;
   --polmed-dark: #3c1c74;
 
-  --primary: #7c3aed; /* MyFess Violet */
+  --primary: #126B49; /* Unified Campus Forest Green */
   --primary-foreground: #ffffff;
   --accent: var(--usu);
   --accent-foreground: #ffffff;
   --wa: #25d366;
-  --page: #f5f5f7;
+  --page: #f8fafc;
 }
 
 .dark {
