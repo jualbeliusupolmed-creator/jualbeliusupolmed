@@ -626,18 +626,10 @@ export default function JualPage() {
             {msg && <p className="mt-3 text-sm text-rose-600">{msg}</p>}
           </div>
           <div className="card p-4 text-sm text-gray-500 dark:text-slate-400">
-            <p className="font-semibold text-gray-700 dark:text-slate-300">ℹ Fee setelah deal</p>
-            <ul className="mt-2 list-disc space-y-1 pl-4">
-              {isFreeMode ? (
-                <li className="font-semibold text-emerald-600">Semua Transaksi → Bebas Komisi 0% (Pasar Bebas)</li>
-              ) : (
-                <>
-                  <li>&lt; Rp50.000 → Gratis (Bebas Komisi)</li>
-                  <li>&lt; Rp100.000 → 10%</li>
-                  <li>≥ Rp100.000 → 5%</li>
-                </>
-              )}
-            </ul>
+            <p className="font-semibold text-gray-700 dark:text-slate-300">ℹ Transaksi Bebas Komisi 0%</p>
+            <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              Semua pemasangan iklan dan hasil penjualan 100% milik penjual. Transaksi COD langsung dibayar oleh pembeli tanpa potongan fee platform.
+            </p>
           </div>
         </div>
       </form>

@@ -58,8 +58,8 @@ export default function MobileSidebarDrawer({ isOpen, onClose }) {
   const mainLinks = [
     { href: "/", label: "Beranda Utama", icon: Icon.Home },
     { href: "/jual-beli", label: "Marketplace Kampus", icon: Icon.ShoppingBag },
-    { href: "/mading", label: "Mading & Menfess", icon: Icon.BookOpen },
-    { href: "/chat", label: "Chat & Pesan", icon: Icon.MessageCircle, badge: unreadChat },
+    { href: "/mading", label: "Menfess & Info Kampus", icon: Icon.BookOpen },
+    { href: "/chat", label: "Obrolan Mahasiswa", icon: Icon.MessageCircle, badge: unreadChat },
     { href: "/favorit", label: "Barang Favorit", icon: Icon.Heart },
   ];
 

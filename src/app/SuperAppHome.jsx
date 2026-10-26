@@ -65,6 +65,7 @@ function PostSkeleton() {
 export default function SuperAppHome({
   latestListings = [],
   madingPosts: initialMadingPosts = [],
+  initialPoBatches = [],
   heroTitle,
   heroSubtitle
 }) {
@@ -90,8 +91,8 @@ export default function SuperAppHome({
   const [mobileTab, setMobileTab] = useState("marketplace"); // 'marketplace' | 'openpo' | 'menfess'
   const [visibleListingCount, setVisibleListingCount] = useState(12);
 
-  // Realtime Open PO Batches from Open PO Supabase
-  const [poBatches, setPoBatches] = useState([]);
+  // Realtime Open PO Batches from Open PO Supabase (SSR hydrated with initialPoBatches)
+  const [poBatches, setPoBatches] = useState(initialPoBatches);
 
   useEffect(() => {
     let mounted = true;
@@ -1497,36 +1498,7 @@ export default function SuperAppHome({
 
               {/* Cards PO Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                {(poBatches.length > 0 ? poBatches : [
-                  {
-                    id: "fallback-risol",
-                    name: "Risol Mayo Lumer Mba Siti",
-                    category: "Kuliner",
-                    price: 12000,
-                    quota: 30,
-                    reserved: 24,
-                    pickup_point: "USU Pintu 2",
-                    seller_name: "Nadia Putri",
-                    faculty: "Fakultas Pertanian",
-                    photo: "/images/risol-mayo.jpg",
-                    emoji: "🥟",
-                    url: "https://open-po.vercel.app?utm_source=jualbeliusupolmed&ref=jualbeliusupolmed",
-                  },
-                  {
-                    id: "fallback-matcha",
-                    name: "Cold Brew Matcha Latte Creamy",
-                    category: "Minuman",
-                    price: 18000,
-                    quota: 25,
-                    reserved: 18,
-                    pickup_point: "Selasar FIB USU",
-                    seller_name: "Ahmad Zaki",
-                    faculty: "Fakultas Ilmu Budaya",
-                    photo: "/images/matcha-latte.jpg",
-                    emoji: "🍵",
-                    url: "https://open-po.vercel.app?utm_source=jualbeliusupolmed&ref=jualbeliusupolmed",
-                  },
-                ]).map((item, idx) => {
+                {(poBatches || []).slice(0, 4).map((item, idx) => {
                   const quotaNum = Number(item.quota) || 0;
                   const resNum = Number(item.reserved) || 0;
                   const pct = quotaNum > 0 ? Math.min(100, Math.round((resNum / quotaNum) * 100)) : 0;
@@ -1618,6 +1590,26 @@ export default function SuperAppHome({
                     </a>
                   );
                 })}
+                {(!poBatches || poBatches.length === 0) && (
+                  <div className="col-span-full py-8 text-center rounded-3xl border border-dashed border-black/10 dark:border-white/10 p-6 bg-slate-50/50 dark:bg-white/[0.02]">
+                    <span className="text-3xl block mb-2">🛍️</span>
+                    <p className="text-sm font-semibold text-slate-800 dark:text-white">
+                      Belum ada batch PO aktif saat ini
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
+                      Punya produk makanan, minuman, kaos, atau merchandise untuk mahasiswa USU &amp; POLMED?
+                    </p>
+                    <a
+                      href="https://open-po.vercel.app/jual"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-3.5 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-all"
+                    >
+                      <span>+ Buka PO Sendiri</span>
+                      <Icon.ArrowRight className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                )}
               </div>
             </div>
 

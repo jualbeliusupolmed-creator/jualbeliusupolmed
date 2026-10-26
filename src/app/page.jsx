@@ -2,6 +2,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getSettings } from "@/lib/settings";
 import { fetchListingsWithProfiles } from "@/lib/dbHelpers";
 import { buildSlug } from "@/lib/slug";
+import { fetchOpenPoBatches } from "@/lib/openPo";
 import SuperAppHome from "./SuperAppHome";
 import { skripJsonLd } from "@/lib/jsonLd";
 
@@ -43,27 +44,29 @@ async function getInitialData() {
       .order("bumped_at", { ascending: false, nullsFirst: false })
       .range(0, PAGE_SIZE - 1);
       
-    const { data } = await fetchListingsWithProfiles(query);
+    const [listingsResult, madingResult, poBatches] = await Promise.all([
+      fetchListingsWithProfiles(query),
+      supa
+        .from("mading_posts")
+        .select("id, type, sender_name, faculty, title, content, image_url, likes_count, comments_count, views_count, shares_count, created_at")
+        .eq("status", "active")
+        .order("created_at", { ascending: false })
+        .limit(15),
+      fetchOpenPoBatches().catch(() => []),
+    ]);
 
-    // Cuplikan mading untuk beranda — POSTINGAN SUNGGUHAN. Dulu bagian ini
-    // mockup hardcode, termasuk pengumuman karangan atas nama BEM KM USU;
-    // barang karangan di halaman depan adalah jenis kebohongan yang audit
-    // 22 Agu sudah bersihkan dari /lomba, jangan tumbuh lagi di sini.
-    const { data: mading } = await supa
-      .from("mading_posts")
-      .select("id, type, sender_name, faculty, title, content, image_url, likes_count, comments_count, views_count, shares_count, created_at")
-      .eq("status", "active")
-      .order("created_at", { ascending: false })
-      .limit(15);
-
-    return { listings: data || [], madingPosts: mading || [] };
+    return {
+      listings: listingsResult?.data || [],
+      madingPosts: madingResult?.data || [],
+      poBatches: poBatches || [],
+    };
   } catch (e) {
-    return { listings: [], madingPosts: [] };
+    return { listings: [], madingPosts: [], poBatches: [] };
   }
 }
 
 export default async function HomePage() {
-  const [{ listings, madingPosts }, settings] = await Promise.all([
+  const [{ listings, madingPosts, poBatches }, settings] = await Promise.all([
     getInitialData(),
     getSettings(),
   ]);
@@ -88,6 +91,7 @@ export default async function HomePage() {
       <SuperAppHome
         latestListings={listings}
         madingPosts={madingPosts}
+        initialPoBatches={poBatches}
         heroTitle={settings.site?.heroTitle === "Marketplace Mahasiswa USU & POLMED" ? "" : settings.site?.heroTitle}
         heroSubtitle={settings.site?.heroSubtitle?.includes("dibantu admin") ? "" : settings.site?.heroSubtitle}
       />

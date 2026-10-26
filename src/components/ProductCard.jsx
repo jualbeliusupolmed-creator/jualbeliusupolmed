@@ -104,7 +104,7 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
             <div className="flex items-center gap-1 min-w-0 flex-1 overflow-hidden">
               <span className="truncate max-w-[85px] sm:max-w-[125px] font-medium text-slate-700 dark:text-slate-300">
                 {!tanpaPenjual ? (
-                  listing.seller_name && !/^User\s+\d+$/i.test(listing.seller_name)
+                  listing.seller_name && listing.seller_name.trim().length > 2 && !/^User\s+\d+$/i.test(listing.seller_name)
                     ? listing.seller_name
                     : listing.campus && listing.campus !== "Semua"
                     ? `Mhs ${listing.campus}`
