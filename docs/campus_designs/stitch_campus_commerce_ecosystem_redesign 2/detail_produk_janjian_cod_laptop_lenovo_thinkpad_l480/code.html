@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+
+<html lang="id"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><title>Kampus Kita - Ekosistem Mahasiswa USU &amp; POLMED</title><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@500;600;700;800&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "secondary": "#712ae2", "error-container": "#ffdad6", "surface": "#faf8ff", "surface-container": "#eaedff", "primary": "#005d42", "secondary-container": "#8a4cfc", "on-tertiary-fixed": "#2a1700", "surface-container-high": "#e2e7ff", "surface-dim": "#d2d9f4", "primary-container": "#047857", "on-surface": "#131b2e", "surface-container-highest": "#dae2fd", "tertiary-fixed": "#ffddb8", "outline-variant": "#bdc9c1", "on-error-container": "#93000a", "tertiary-fixed-dim": "#ffb95f", "surface-container-lowest": "#ffffff", "background": "#faf8ff", "inverse-surface": "#283044", "on-surface-variant": "#3e4943", "on-error": "#ffffff", "inverse-primary": "#7bd8b1", "tertiary": "#734700", "tertiary-container": "#945d00", "on-tertiary": "#ffffff", "outline": "#6e7a73", "on-primary-container": "#9ffdd3", "on-secondary-container": "#fffbff", "on-secondary-fixed": "#25005a", "on-background": "#131b2e", "surface-variant": "#dae2fd", "surface-bright": "#faf8ff", "surface-container-low": "#f2f3ff", "on-secondary-fixed-variant": "#5a00c6", "on-primary": "#ffffff", "on-tertiary-fixed-variant": "#653e00", "on-primary-fixed-variant": "#00513a", "error": "#ba1a1a", "secondary-fixed": "#eaddff", "primary-fixed-dim": "#7bd8b1", "surface-tint": "#006c4e", "primary-fixed": "#97f5cc", "inverse-on-surface": "#eef0ff", "on-secondary": "#ffffff", "on-tertiary-container": "#ffe6cc", "on-primary-fixed": "#002115", "secondary-fixed-dim": "#d2bbff" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-sm": "0.5rem", "space-md": "1rem", "margin-desktop": "3rem", "margin": "1rem", "gutter": "1rem", "space-xl": "2.5rem", "gutter-desktop": "1.5rem", "margin-tablet": "2rem", "space-lg": "1.5rem", "space-xs": "0.25rem" }, "fontFamily": { "headline-xl-mobile": [ "Plus Jakarta Sans" ], "headline-md": [ "Plus Jakarta Sans" ], "label-lg": [ "Plus Jakarta Sans" ], "body-lg": [ "Inter" ], "label-sm": [ "Plus Jakarta Sans" ], "headline-lg-mobile": [ "Plus Jakarta Sans" ], "label-md": [ "Plus Jakarta Sans" ], "headline-lg": [ "Plus Jakarta Sans" ], "headline-xl": [ "Plus Jakarta Sans" ], "body-sm": [ "Inter" ], "body-md": [ "Inter" ], "headline-sm": [ "Plus Jakarta Sans" ] }, "fontSize": { "headline-xl-mobile": [ "28px", { "lineHeight": "36px", "fontWeight": "700" } ], "headline-md": [ "20px", { "lineHeight": "28px", "fontWeight": "600" } ], "label-lg": [ "14px", { "lineHeight": "20px", "fontWeight": "600" } ], "body-lg": [ "16px", { "lineHeight": "24px", "fontWeight": "400" } ], "label-sm": [ "10px", { "lineHeight": "14px", "fontWeight": "700" } ], "headline-lg-mobile": [ "22px", { "lineHeight": "30px", "fontWeight": "700" } ], "label-md": [ "12px", { "lineHeight": "16px", "fontWeight": "600" } ], "headline-lg": [ "28px", { "lineHeight": "36px", "fontWeight": "700" } ], "headline-xl": [ "36px", { "lineHeight": "44px", "fontWeight": "700" } ], "body-sm": [ "12px", { "lineHeight": "18px", "fontWeight": "400" } ], "body-md": [ "14px", { "lineHeight": "20px", "fontWeight": "400" } ], "headline-sm": [ "16px", { "lineHeight": "24px", "fontWeight": "600" } ] } } } };</script></head><body class="bg-background font-body-md text-on-surface antialiased min-h-screen flex flex-col"><header class="fixed top-0 left-0 right-0 z-50 bg-surface/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-20 w-full max-w-[1280px] mx-auto px-margin md:px-margin-tablet lg:px-margin-desktop flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-md flex-shrink-0"><a class="flex items-center gap-space-sm group" data-path="beranda" href="#"><div class="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-on-primary shadow-sm"><span class="material-symbols-outlined text-[20px]">school</span></div><div class="flex flex-col"><div class="flex items-center gap-space-xs"><span class="font-headline-sm text-headline-sm text-primary tracking-tight font-bold">Kampus Kita</span><span class="px-space-xs py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm uppercase">USU • POLMED</span></div><span class="font-label-sm text-label-sm text-outline hidden sm:block">Sentra Komunitas &amp; Niaga Kampus</span></div></a><div class="hidden xl:flex items-center bg-surface-container-low px-space-sm py-1 rounded-full cursor-pointer hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-primary text-[18px] mr-1">near_me</span><span class="font-label-md text-label-md text-on-surface font-semibold">Kampus: USU</span><span class="material-symbols-outlined text-outline text-[16px] ml-1">expand_more</span></div></div><div class="hidden lg:flex items-center justify-center flex-1"><nav class="flex items-center gap-space-xs p-1 bg-surface-container-low rounded-full" data-active-classes="bg-primary text-on-primary font-semibold shadow-sm"><a class="px-space-md py-1.5 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-all" data-path="beranda" href="#">Beranda</a><a aria-current="page" class="px-space-md py-1.5 rounded-full transition-all bg-primary text-on-primary font-semibold shadow-sm" data-path="marketplace" href="#">Marketplace</a><a class="px-space-md py-1.5 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-all relative flex items-center" data-path="open-po" href="#"><span>Open PO</span><span class="ml-1.5 px-1.5 py-0.2 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm uppercase font-bold leading-tight">PO</span></a><a class="px-space-md py-1.5 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-all" data-path="menfess" href="#">Menfess</a><a class="px-space-md py-1.5 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-all relative flex items-center" data-path="obrolan" href="#"><span>Obrolan</span><span class="ml-1.5 px-1.5 py-0.2 rounded-full bg-secondary text-on-secondary font-label-sm text-label-sm leading-tight font-bold">3</span></a></nav></div><div class="flex items-center gap-space-sm flex-shrink-0"><button aria-label="Notifikasi Kampus" class="relative w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-error ring-2 ring-surface"></span></button><a class="hidden sm:inline-flex items-center gap-space-xs px-space-md py-2 rounded-lg bg-primary-container text-on-primary hover:bg-primary transition-all font-label-md text-label-md font-semibold shadow-sm" data-path="pasang-iklan" href="#"><span class="material-symbols-outlined text-[18px]">add_circle</span><span>+ Pasang Iklan</span></a><a class="flex items-center gap-space-xs pl-space-xs pr-space-sm py-1 rounded-full bg-surface-container-low hover:bg-surface-container transition-colors group" data-path="profil-saya" href="#"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 shadow-sm"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="flex flex-col text-left"><span class="font-label-md text-label-md font-bold text-on-surface group-hover:text-primary transition-colors leading-none">Faris</span><span class="font-label-sm text-label-sm text-outline-variant font-medium leading-tight">FK '22</span></div></a></div></div></header><main class="w-full flex-grow pt-20 bg-background"><div class="flex flex-col w-full">
+<!-- Top Breadcrumb & Quick Actions Bar -->
+<section class="w-full bg-surface-container-low/70 py-space-sm">
+<div class="max-w-[1280px] mx-auto px-margin md:px-margin-tablet lg:px-margin-desktop flex flex-wrap items-center justify-between gap-space-sm">
+<nav aria-label="Breadcrumb" class="flex items-center flex-wrap gap-1.5 text-on-surface-variant font-label-md text-label-md">
+<a class="hover:text-primary transition-colors flex items-center gap-1" data-path="beranda" href="#">
+<span class="material-symbols-outlined text-[16px]">home</span>
+<span>Beranda</span>
+</a>
+<span class="text-outline-variant font-semibold">/</span>
+<a class="hover:text-primary transition-colors" data-path="marketplace" href="#">Marketplace</a>
+<span class="text-outline-variant font-semibold">/</span>
+<span class="hover:text-primary transition-colors">Elektronik &amp; Gadget</span>
+<span class="text-outline-variant font-semibold">/</span>
+<span class="text-on-surface font-semibold truncate max-w-[200px] sm:max-w-xs md:max-w-md">Laptop Lenovo Thinkpad L480 Core i5</span>
+</nav>
+<div class="flex items-center gap-space-xs font-label-sm text-label-sm">
+<span class="inline-flex items-center gap-1 px-space-sm py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-semibold">
+<span class="material-symbols-outlined text-[14px]">verified</span> Terverifikasi Stambuk USU
+        </span>
+<span class="text-outline">ID Iklan: #KK-88219</span>
+</div>
+</div>
+</section>
+<!-- Main Content Grid -->
+<section class="w-full py-space-md md:py-space-lg">
+<div class="max-w-[1280px] mx-auto px-margin md:px-margin-tablet lg:px-margin-desktop">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
+<!-- KOLOM KIRI: GALERI FOTO & TAG STATUS (lg:col-span-7) -->
+<div class="lg:col-span-7 flex flex-col gap-space-md">
+<!-- Foto Utama Display Card -->
+<div class="relative w-full rounded-2xl bg-surface-container-lowest shadow-sm overflow-hidden p-space-sm">
+<!-- Badges Overlay -->
+<div class="absolute top-4 left-4 z-10 flex flex-wrap gap-1.5">
+<span class="px-space-sm py-1 rounded-full bg-primary-container text-on-primary font-label-sm text-label-sm font-bold flex items-center gap-1 shadow-sm">
+<span class="w-2 h-2 rounded-full bg-on-primary-container animate-pulse"></span>
+                Tersedia / Aktif Tayang
+              </span>
+<span class="px-space-sm py-1 rounded-full bg-surface-container-highest text-on-surface font-label-sm text-label-sm font-semibold shadow-sm">
+                Kondisi 92% Mulus
+              </span>
+<span class="px-space-sm py-1 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-semibold shadow-sm">
+                Pemakaian 1 Tahun Kuliah
+              </span>
+</div>
+<!-- Favorite & Watermark Button -->
+<div class="absolute top-4 right-4 z-10 flex items-center gap-1.5">
+<span class="hidden sm:inline-flex px-2 py-1 rounded-md bg-inverse-surface/80 text-inverse-on-surface backdrop-blur-md font-label-sm text-label-sm">
+                Stambuk 2022 Owned
+              </span>
+</div>
+<!-- Big Image Container -->
+<div class="w-full aspect-[4/3] rounded-xl overflow-hidden bg-surface-container relative group">
+<img alt="Laptop Lenovo Thinkpad L480 Tampak Utama" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]" data-alt="High resolution clean product photograph of a Lenovo Thinkpad L480 laptop on a clean wooden study desk in Universitas Sumatera Utara campus library, matte black finish with iconic red TrackPoint, screen illuminated displaying system specs, professional commercial product lighting, crisp details" id="main-preview-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD58lYo3iOl__D5WWmRkJ6ePSexN3SO5vHqf3YMvLk-_bGe6OioZfE6rFAKDsxgaM0vRJRpT7aVmIIq54ZZlnqZ16xuimXbaA4TemT3_XS1qEiGdQ_xrBHoYwgshrDvldXdWIxvLo_mhlm5S4Y6AwrGhnikbECl__6Wh7pXbZrZkwqPT7YMi_RVYHAe7FrXH53kSIVSTR3AbsqhDI4emZp20iF9J3bnlI1K6lAXHdYd"/>
+<div class="absolute bottom-3 right-3 px-space-sm py-0.5 rounded-full bg-inverse-surface/75 text-inverse-on-surface font-label-sm text-label-sm backdrop-blur-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">photo_library</span>
+<span id="img-indicator">1 / 4 Foto Asli Mahasiswa</span>
+</div>
+</div>
+</div>
+<!-- Thumbnails Selector -->
+<div class="grid grid-cols-4 gap-space-xs sm:gap-space-sm">
+<button class="thumbnail-btn rounded-xl overflow-hidden bg-surface-container-lowest p-1 shadow-sm transition-all focus:outline-none ring-2 ring-primary" onclick="changePhoto(0, this)">
+<div class="w-full aspect-video sm:aspect-square rounded-lg overflow-hidden bg-surface-container">
+<img alt="Kondisi Fisik Thinkpad" class="w-full h-full object-cover" data-alt="Close-up detail of Lenovo Thinkpad L480 chassis and exterior casing, pristine matte black texture, faint negligible hairline scuffs on the bottom corner, bright natural daylight on university campus bench" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDeOmQieJxllLrO_yaBcim6kkYPF8IhQkSgqKwlI6g78AezoqIBzLPCa6beqBro0yPsa2uKOO6j9Y1gHyETH-5kR7awrqlkec38RtYeA_ljsQx8ONX7V4JvQimP_hZ9olseUkN5RTlOlmKdJtkFN811hhMIUwRsxOA-ni0lWlb0RMSOhOskxvcvs6V0LKZOZioiUJp7f5YStN-8v21OmCanJAehjVx6omEeFFPdm4rf"/>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface text-center mt-1 truncate">Kondisi Fisik</p>
+</button>
+<button class="thumbnail-btn rounded-xl overflow-hidden bg-surface-container-lowest p-1 shadow-sm opacity-80 hover:opacity-100 transition-all focus:outline-none" onclick="changePhoto(1, this)">
+<div class="w-full aspect-video sm:aspect-square rounded-lg overflow-hidden bg-surface-container">
+<img alt="Layar Nyala &amp; Spec" class="w-full h-full object-cover" data-alt="Close up view of illuminated matte anti-glare laptop screen displaying Windows 11 device specifications Core i5 8th Gen 8GB RAM 256GB SSD, no dead pixels, perfectly balanced colors" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbW0QqOz_lXOif6WHxopFdQrKAC_OEQXnSYHJGLH-frqbdTREqYLRI3Rq2PVtk5x7s3QbkFzEfPoj6DVz4g52e1jZegsibDe_qIdpTs7Q79-VCCxjV8tiJi_kmcmGpmUaTUpToozJckKgL8aznebgw5xj8RHHvkXOt636V92u-P1Ip5rjeOMMNqpwE78-LGXcMW5lBKa7WKcTYkXxNjpkfETgEGbJyshTzeYmuMzeW"/>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant text-center mt-1 truncate">Layar &amp; Spek</p>
+</button>
+<button class="thumbnail-btn rounded-xl overflow-hidden bg-surface-container-lowest p-1 shadow-sm opacity-80 hover:opacity-100 transition-all focus:outline-none" onclick="changePhoto(2, this)">
+<div class="w-full aspect-video sm:aspect-square rounded-lg overflow-hidden bg-surface-container">
+<img alt="Keyboard &amp; Baterai" class="w-full h-full object-cover" data-alt="Top down ergonomic angle of Thinkpad ergonomic keyboard layout, functional trackpad and red trackpoint nub, clean keys without shiny gloss oil residue, battery report screen" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbjlCF6nXZLGlF4ISrRtgXwroq5zbRx4oX9i93Igo5Y85mjrTSLL_cF6t_dnLSOlJKC_6lySWJKOSJ3Xo0o63rD6ASSY8HQPUHttfqiKgq47BjJePQyZq4chBqFcLg23kpVmZLJmeYtl88UXTNfDUjNl1aLmRrrCKmWqSlqdkUUJ5qMJ24Ef6pxZbZEfAAf0EHIvQa7D2L4FwYos9dpCvg33ys2YYbfhIt-KlDiH_f"/>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant text-center mt-1 truncate">Keyboard &amp; Baterai</p>
+</button>
+<button class="thumbnail-btn rounded-xl overflow-hidden bg-surface-container-lowest p-1 shadow-sm opacity-80 hover:opacity-100 transition-all focus:outline-none" onclick="changePhoto(3, this)">
+<div class="w-full aspect-video sm:aspect-square rounded-lg overflow-hidden bg-surface-container">
+<img alt="Charger Original Type-C" class="w-full h-full object-cover" data-alt="Original Lenovo 65W USB Type-C fast charger adapter neatly coiled with velcro strap next to laptop, safety labels legible, bundled with neoprene protective laptop sleeve" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD1U1I5ddovcJG2D30rlXwSxyjxP7ymSIOjrNx7H-1TMkzCzXwv-F8QcOOlMwe30Qrp0JDBrds4fbMQ_ORl2Wa4hnNm5kgTFFZXvE6DRHFKAPpRlcL-spXkEkEvOKlD_FuP3mA4NV0pVl08aw6cIrJ9MB0M5X0Eu6AgeP88aorhERARCWc7nuiJxdOyk7fYsz9-L-Gj5m_eiPWKeejng9W1125Vcm1SDSrF5RjooaTE"/>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant text-center mt-1 truncate">Charger Ori</p>
+</button>
+</div>
+<!-- Quick Inspection Checklist -->
+<div class="p-space-md rounded-2xl bg-surface-container-lowest shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md font-bold text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[18px]">verified</span>
+                Checklist Kejujuran Kondisi (Self-Declared)
+              </span>
+<span class="font-label-sm text-label-sm text-outline">Diperiksa Faris (Penjual)</span>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+<div class="flex items-center gap-1.5 p-2 rounded-lg bg-surface-container-low">
+<span class="material-symbols-outlined text-primary text-[18px]">check_circle</span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">Layar No Spot</span>
+<span class="font-body-sm text-body-sm text-outline truncate">Anti-glare jernih</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5 p-2 rounded-lg bg-surface-container-low">
+<span class="material-symbols-outlined text-primary text-[18px]">check_circle</span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">Keyboard Normal</span>
+<span class="font-body-sm text-body-sm text-outline truncate">Semua tuts empuk</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5 p-2 rounded-lg bg-surface-container-low">
+<span class="material-symbols-outlined text-primary text-[18px]">check_circle</span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">Port Type-C OK</span>
+<span class="font-body-sm text-body-sm text-outline truncate">Charging lancar</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5 p-2 rounded-lg bg-surface-container-low">
+<span class="material-symbols-outlined text-primary text-[18px]">check_circle</span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">Baterai Awet</span>
+<span class="font-body-sm text-body-sm text-outline truncate">3-4 jam kuliah</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- KOLOM KANAN: INFORMASI, HARGA, PENJUAL & CTA (lg:col-span-5) -->
+<div class="lg:col-span-5 flex flex-col gap-space-md">
+<!-- Primary Info Card -->
+<div class="p-space-lg rounded-2xl bg-surface-container-lowest shadow-sm flex flex-col gap-space-md">
+<!-- Category and Posted time -->
+<div class="flex items-center justify-between">
+<span class="px-space-sm py-0.5 rounded-full bg-surface-container text-primary font-label-sm text-label-sm font-bold uppercase tracking-wider">
+                Elektronik Mahasiswa
+              </span>
+<span class="font-label-sm text-label-sm text-outline flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px]">schedule</span> Tayang 3 jam lalu
+              </span>
+</div>
+<!-- Product Title -->
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight leading-snug">
+              Laptop Lenovo Thinkpad L480 Core i5 (RAM 8GB SSD 256GB)
+            </h1>
+<!-- Price Container -->
+<div class="p-space-md rounded-xl bg-surface-container-low flex flex-col gap-1">
+<span class="font-label-sm text-label-sm text-outline font-semibold uppercase tracking-wider">Harga Kesepakatan Kampus</span>
+<div class="flex flex-wrap items-baseline gap-space-sm">
+<span class="font-headline-xl text-headline-xl text-primary font-extrabold tracking-tight">
+                  Rp 2.850.000
+                </span>
+<span class="px-space-sm py-0.5 rounded-md bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-bold">
+                  Bisa Nego Tipis di Tempat
+                </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-primary text-[16px]">price_check</span>
+                Rata-rata pasar second laptop spek sejenis di Medan: Rp 3,1jt - 3,4jt
+              </p>
+</div>
+<!-- COD Location Info -->
+<div class="flex flex-col gap-space-xs p-space-md rounded-xl bg-surface-container-lowest shadow-sm">
+<span class="font-label-sm text-label-sm font-bold text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[18px]">location_on</span>
+                Titik Temu COD Resmi Terpilih
+              </span>
+<p class="font-body-md text-body-md text-on-surface font-semibold">
+                Pendopo USU &amp; Pintu 2 Padang Bulan
+              </p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                Alternatif lokasi penjual: Lobby Gedung Fasilkom-TI USU atau Kantin Teknik (Fleksibel sesuai jadwal kuliah).
+              </p>
+<div class="flex items-center gap-2 mt-1 pt-2 bg-surface-container-high/40 px-2 py-1.5 rounded-lg text-on-surface">
+<span class="material-symbols-outlined text-primary text-[18px]">schedule</span>
+<span class="font-label-sm text-label-sm">Jam Aman Transaksi: <strong class="font-semibold">10:00 - 17:30 WIB</strong> (Senin - Jumat)</span>
+</div>
+</div>
+<!-- Verified Seller Card -->
+<div class="p-space-md rounded-xl bg-surface-container-low flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm font-bold text-outline uppercase tracking-wider">Identitas Penjual Mahasiswa</span>
+<span class="px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">badge</span> KTM Aktif Terverifikasi
+                </span>
+</div>
+<div class="flex items-center gap-space-md">
+<div class="relative flex-shrink-0">
+<div class="w-14 h-14 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center text-primary font-bold text-headline-sm">
+                    FK
+                  </div>
+<div class="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-primary-container ring-2 ring-surface-container-low flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[10px]">check</span>
+</div>
+</div>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center gap-1.5 flex-wrap">
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-bold truncate">Faris Kurniawan</h3>
+<span class="px-1.5 py-0.2 rounded bg-surface-container-highest text-on-surface font-label-sm text-label-sm font-semibold">USU '22</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">
+                    Fasilkom-TI • S1 Ilmu Komputer (NIM 221401088)
+                  </p>
+<div class="flex items-center gap-space-sm mt-1 text-on-surface">
+<span class="font-label-sm text-label-sm flex items-center gap-1 font-bold text-tertiary">
+<span class="material-symbols-outlined text-[16px] text-tertiary-fixed-dim" style="font-variation-settings: 'FILL' 1;">star</span>
+                      4.9
+                      <span class="text-outline font-normal">(42 COD Sukses)</span>
+</span>
+<span class="text-outline-variant">•</span>
+<span class="font-label-sm text-label-sm text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">bolt</span> Respon &lt; 15 mnt
+                    </span>
+</div>
+</div>
+</div>
+</div>
+<!-- Primary CTAs -->
+<div class="flex flex-col gap-space-xs pt-1">
+<!-- WA Direct Button with Reveal / Action -->
+<a class="w-full py-3.5 px-space-md rounded-xl bg-primary-container hover:bg-primary text-on-primary font-label-lg text-label-lg font-bold flex items-center justify-center gap-2 shadow-sm transition-all group" href="https://wa.me/6281234567890?text=Halo%20Faris%2C%20saya%20tertarik%20dengan%20Laptop%20Lenovo%20Thinkpad%20L480%20(Rp%202.850.000)%20di%20Kampus%20Kita.%20Apakah%20bisa%20cek%20kondisi%20dan%20COD%20di%20Pendopo%20USU%3F" rel="noopener noreferrer" target="_blank">
+<span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">chat</span>
+<span>Chat WhatsApp Penjual</span>
+<span class="ml-1 text-on-primary/75 font-normal text-body-sm">(+62 812-****-7890)</span>
+</a>
+<!-- Secondary Chat In-App -->
+<button class="w-full py-3 px-space-md rounded-xl bg-secondary-fixed text-on-secondary-fixed hover:bg-secondary-fixed-dim font-label-lg text-label-lg font-semibold flex items-center justify-center gap-2 transition-colors" onclick="alert('Membuka sesi pesan aman in-app dengan Faris Kurniawan (Fasilkom-TI)...')">
+<span class="material-symbols-outlined text-[20px]">forum</span>
+<span>Kirim Pesan In-App (Chat Kampus)</span>
+</button>
+</div>
+<!-- Auxiliary Actions: Save Favorite & Share -->
+<div class="flex items-center gap-space-sm pt-2">
+<button class="flex-1 py-2.5 px-space-sm rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center justify-center gap-1.5 transition-colors" id="btn-fav" onclick="toggleFavorite()">
+<span class="material-symbols-outlined text-[20px] text-error" id="fav-icon">favorite_border</span>
+<span id="fav-label">Simpan ke Favorit</span>
+</button>
+<button class="flex-1 py-2.5 px-space-sm rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold flex items-center justify-center gap-1.5 transition-colors" onclick="shareItem()">
+<span class="material-symbols-outlined text-[20px] text-primary">share</span>
+<span id="share-label">Bagikan Barang</span>
+</button>
+</div>
+<!-- Safe Trade Prompt -->
+<div class="p-space-sm rounded-lg bg-surface-container-high/50 flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-primary text-[18px]">verified_user</span>
+<span>Bebas penipuan: Ketemu fisik dulu, periksa unit sepuasnya, baru bayar tunai / QRIS.</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- BAGIAN BAWAH: TAB DETAIL & SPESIFIKASI + PANDUAN COD AMAN (Full Width Grid) -->
+<section class="w-full py-space-lg">
+<div class="max-w-[1280px] mx-auto px-margin md:px-margin-tablet lg:px-margin-desktop">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg">
+<!-- Tab Content & Deskripsi Detail (lg:col-span-8) -->
+<div class="lg:col-span-8 flex flex-col gap-space-lg">
+<div class="bg-surface-container-lowest rounded-2xl p-space-lg shadow-sm flex flex-col gap-space-md">
+<!-- Nav Tabs -->
+<div class="flex items-center gap-2 pb-space-sm overflow-x-auto">
+<button class="px-space-md py-2 rounded-xl bg-primary text-on-primary font-label-md text-label-md font-bold transition-all" id="tab-specs-btn" onclick="switchTab('specs')">
+                Spesifikasi &amp; Minus
+              </button>
+<button class="px-space-md py-2 rounded-xl bg-surface-container-low text-on-surface-variant hover:text-on-surface font-label-md text-label-md font-semibold transition-all" id="tab-desc-btn" onclick="switchTab('desc')">
+                Deskripsi &amp; Riwayat Pemakaian
+              </button>
+<button class="px-space-md py-2 rounded-xl bg-surface-container-low text-on-surface-variant hover:text-on-surface font-label-md text-label-md font-semibold transition-all" id="tab-kelengkapan-btn" onclick="switchTab('kelengkapan')">
+                Kelengkapan Unit
+              </button>
+</div>
+<!-- TAB PANE 1: Spesifikasi & Minus -->
+<div class="flex flex-col gap-space-md" id="pane-specs">
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-bold">Rincian Hardware &amp; Kondisi Asli</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-sm font-body-sm text-body-sm">
+<div class="flex justify-between items-center p-3 rounded-xl bg-surface-container-low">
+<span class="text-outline font-medium">Prosesor</span>
+<span class="font-bold text-on-surface">Intel Core i5-8250U Quad-Core</span>
+</div>
+<div class="flex justify-between items-center p-3 rounded-xl bg-surface-container-low">
+<span class="text-outline font-medium">RAM</span>
+<span class="font-bold text-on-surface">8 GB DDR4 (1 Slot Kosong)</span>
+</div>
+<div class="flex justify-between items-center p-3 rounded-xl bg-surface-container-low">
+<span class="text-outline font-medium">Penyimpanan (SSD)</span>
+<span class="font-bold text-on-surface">256 GB NVMe M.2 Fast Boot</span>
+</div>
+<div class="flex justify-between items-center p-3 rounded-xl bg-surface-container-low">
+<span class="text-outline font-medium">Layar</span>
+<span class="font-bold text-on-surface">14.0 inch IPS Full HD (1920x1080)</span>
+</div>
+<div class="flex justify-between items-center p-3 rounded-xl bg-surface-container-low">
+<span class="text-outline font-medium">Kesehatan Baterai</span>
+<span class="font-bold text-primary">Tahan 3.5 - 4 Jam (Koleksi Kuliah)</span>
+</div>
+<div class="flex justify-between items-center p-3 rounded-xl bg-surface-container-low">
+<span class="text-outline font-medium">Sistem Operasi</span>
+<span class="font-bold text-on-surface">Windows 11 Pro 64-bit Original</span>
+</div>
+<div class="flex justify-between items-center p-3 rounded-xl bg-surface-container-low">
+<span class="text-outline font-medium">Konektivitas Port</span>
+<span class="font-bold text-on-surface">2x Type-C, 2x USB 3.0, HDMI, RJ45</span>
+</div>
+<div class="flex justify-between items-center p-3 rounded-xl bg-surface-container-low">
+<span class="text-outline font-medium">Audio &amp; Webcam</span>
+<span class="font-bold text-on-surface">Webcam HD + ThinkShutter Cover</span>
+</div>
+</div>
+<!-- Minus Pemakaian Box -->
+<div class="p-space-md rounded-xl bg-tertiary-fixed/30 flex flex-col gap-1.5">
+<div class="flex items-center gap-1.5 text-tertiary font-label-md text-label-md font-bold">
+<span class="material-symbols-outlined text-[20px]">info</span>
+<span>Catatan Kejujuran Minus Unit:</span>
+</div>
+<ul class="font-body-sm text-body-sm text-on-surface list-disc pl-5 space-y-1">
+<li>Hanya ada baret halus pemakaian wajar di bagian casing luar (sudut kiri bawah) akibat gesekan di dalam tas ransel ransel kuliah.</li>
+<li>Tidak pernah jatuh, engsel layar kokoh 180 derajat tidak goyang.</li>
+<li>Layar bersih mulus tanpa white spot, dead pixel, ataupun goresan kunci.</li>
+<li>Semua tuts keyboard, trackpoint merah, dan touchpad berfungsi 100% normal.</li>
+</ul>
+</div>
+<!-- Alasan Jual Box -->
+<div class="p-space-md rounded-xl bg-surface-container-low flex flex-col gap-1">
+<span class="font-label-sm text-label-sm font-bold text-primary uppercase">Alasan Penjualan</span>
+<p class="font-body-md text-body-md text-on-surface">
+                  "Udah beres seminar proposal dan upgrade ke laptop GPU untuk kebutuhan olah dataset skripsi kecerdasan buatan di Fasilkom. Laptop Thinkpad ini super andal buat ngetik laporan, coding Python/Java ringan, dan kuliah sehari-hari di kampus."
+                </p>
+</div>
+</div>
+<!-- TAB PANE 2: Deskripsi & Riwayat (Hidden by default) -->
+<div class="hidden flex flex-col gap-space-md" id="pane-desc">
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-bold">Deskripsi Lengkap dari Pemilik</h2>
+<div class="font-body-md text-body-md text-on-surface-variant leading-relaxed space-y-3">
+<p>Halo kawan-kawan USU &amp; POLMED! Dijual santai laptop kesayangan Lenovo ThinkPad L480 yang saya pakai selama 1 tahun aktif kuliah di Fasilkom-TI USU. Thinkpad seri ini terkenal dengan durabilitas militer dan keyboard yang sangat nyaman untuk bikin makalah berlembar-lembar maupun coding lama.</p>
+<p>Kondisi mesin sangat sehat, kipas hening, thermal paste baru diganti bulan lalu. Baterai masih sangat prima untuk dibawa nongkrong nugas di Perpustakaan Pusat USU atau di Kantin Tanpa Colokan (rata-rata 3 sampai 4 jam penggunaan mengetik + browsing WiFi aktif).</p>
+<p>Khusus buat sesama mahasiswa USU atau anak POLMED, dipersilakan janjian langsung pas jam istirahat kuliah untuk coba run program, cek kesehatan SSD, atau test ketik keyboard.</p>
+</div>
+</div>
+<!-- TAB PANE 3: Kelengkapan (Hidden by default) -->
+<div class="hidden flex flex-col gap-space-md" id="pane-kelengkapan">
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-bold">Kelengkapan Pembelian</h2>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm">
+<div class="flex items-center gap-3 p-space-sm rounded-xl bg-surface-container-low">
+<span class="material-symbols-outlined text-primary text-[24px]">laptop_chromebook</span>
+<div>
+<p class="font-label-md text-label-md font-bold text-on-surface">Unit ThinkPad L480</p>
+<p class="font-body-sm text-body-sm text-outline">Kondisi siap pakai, Windows 11 aktif</p>
+</div>
+</div>
+<div class="flex items-center gap-3 p-space-sm rounded-xl bg-surface-container-low">
+<span class="material-symbols-outlined text-primary text-[24px]">power</span>
+<div>
+<p class="font-label-md text-label-md font-bold text-on-surface">Charger Original Lenovo 65W</p>
+<p class="font-body-sm text-body-sm text-outline">Port USB Type-C Fast Charge bawaan</p>
+</div>
+</div>
+<div class="flex items-center gap-3 p-space-sm rounded-xl bg-surface-container-low">
+<span class="material-symbols-outlined text-primary text-[24px]">shopping_bag</span>
+<div>
+<p class="font-label-md text-label-md font-bold text-on-surface">Bonus Softcase Laptop</p>
+<p class="font-body-sm text-body-sm text-outline">Bahan busa tebal warna abu-abu</p>
+</div>
+</div>
+<div class="flex items-center gap-3 p-space-sm rounded-xl bg-surface-container-low">
+<span class="material-symbols-outlined text-primary text-[24px]">apps</span>
+<div>
+<p class="font-label-md text-label-md font-bold text-on-surface">Software Siap Kuliah</p>
+<p class="font-body-sm text-body-sm text-outline">MS Office, VS Code, Browser sudah siap</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Kolom Kanan Bawah: Panduan COD Aman Kampus (lg:col-span-4) -->
+<div class="lg:col-span-4 flex flex-col gap-space-md">
+<div class="bg-surface-container-lowest rounded-2xl p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center gap-2">
+<div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[22px]">shield_with_heart</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-bold">Protokol COD Aman</h3>
+<span class="font-label-sm text-label-sm text-outline">Kampus Kita USU &amp; POLMED</span>
+</div>
+</div>
+<div class="space-y-3 font-body-sm text-body-sm">
+<div class="flex items-start gap-2.5">
+<span class="w-6 h-6 rounded-full bg-primary-fixed text-on-primary-fixed flex items-center justify-center font-bold text-label-sm flex-shrink-0 mt-0.5">1</span>
+<div>
+<p class="font-bold text-on-surface">Pilih Titik Temu Publik Terang</p>
+<p class="text-on-surface-variant">Utamakan Pendopo USU, Gazebo Perpus Pusat, Kantin Bersama Fasilkom, atau Kantin Gedung Z POLMED.</p>
+</div>
+</div>
+<div class="flex items-start gap-2.5">
+<span class="w-6 h-6 rounded-full bg-primary-fixed text-on-primary-fixed flex items-center justify-center font-bold text-label-sm flex-shrink-0 mt-0.5">2</span>
+<div>
+<p class="font-bold text-on-surface">Wajib Cek Unit Bersama</p>
+<p class="text-on-surface-variant">Nyalakan laptop, tes ketik keyboard, cek charger bekerja, dan pastikan akun penjual sudah di-logout.</p>
+</div>
+</div>
+<div class="flex items-start gap-2.5">
+<span class="w-6 h-6 rounded-full bg-primary-fixed text-on-primary-fixed flex items-center justify-center font-bold text-label-sm flex-shrink-0 mt-0.5">3</span>
+<div>
+<p class="font-bold text-on-surface">Jangan Transfer Sebelum Bertemu</p>
+<p class="text-on-surface-variant">Dilarang mengirim uang muka/DP dalam bentuk apapun sebelum barang dipegang dan diperiksa langsung.</p>
+</div>
+</div>
+<div class="flex items-start gap-2.5">
+<span class="w-6 h-6 rounded-full bg-primary-fixed text-on-primary-fixed flex items-center justify-center font-bold text-label-sm flex-shrink-0 mt-0.5">4</span>
+<div>
+<p class="font-bold text-on-surface">Verifikasi KTM / NIM</p>
+<p class="text-on-surface-variant">Cocokkan nama penjual dengan kartu identitas mahasiswa fisik atau portal kampus saat serah terima.</p>
+</div>
+</div>
+</div>
+<!-- Mini Map Illustration Box -->
+<div class="w-full h-36 rounded-xl overflow-hidden relative shadow-inner bg-surface-container flex items-end p-2.5" data-location="Universitas Sumatera Utara Pendopo" style="">
+<div class="px-2.5 py-1.5 rounded-lg bg-surface/90 backdrop-blur-md flex items-center gap-1.5 shadow-sm text-on-surface">
+<span class="material-symbols-outlined text-primary text-[16px]">pin_drop</span>
+<span class="font-label-sm text-label-sm font-bold">Zona COD Aman: Area Pendopo USU</span>
+</div>
+</div>
+<div class="pt-2">
+<a class="font-label-sm text-label-sm text-primary hover:underline flex items-center gap-1" data-path="bantuan-kampus" href="#">
+<span>Pelajari SOP Keamanan Transaksi Mahasiswa</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</a>
+</div>
+</div>
+<!-- Fast Report Flag -->
+<div class="p-space-md rounded-2xl bg-surface-container-low flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[20px]">flag</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Merasa ada ketidaksesuaian barang?</span>
+</div>
+<button class="font-label-sm text-label-sm font-bold text-error hover:underline" onclick="alert('Laporan diteruskan ke moderator komite mahasiswa Kampus Kita')">
+              Lapor Iklan
+            </button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- REKOMENDASI BARANG SEJENIS DARI MAHASISWA LAIN DI KAMPUS -->
+<section class="w-full py-space-xl bg-surface-container-low/50 mt-space-md">
+<div class="max-w-[1280px] mx-auto px-margin md:px-margin-tablet lg:px-margin-desktop flex flex-col gap-space-lg">
+<!-- Section Header -->
+<div class="flex flex-col sm:flex-row sm:items-end justify-between gap-space-xs">
+<div>
+<div class="flex items-center gap-1.5 text-primary font-label-sm text-label-sm font-bold uppercase tracking-wider mb-1">
+<span class="material-symbols-outlined text-[16px]">devices</span>
+            Pilihan Lainnya
+          </div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight">
+            Rekomendasi Laptop &amp; Gadget dari Mahasiswa
+          </h2>
+<p class="font-body-md text-body-md text-on-surface-variant">
+            Barang preloved terverifikasi sekitar USU &amp; POLMED siap COD hari ini
+          </p>
+</div>
+<a class="font-label-md text-label-md text-primary font-bold hover:underline flex items-center gap-1 flex-shrink-0" data-path="marketplace" href="#">
+<span>Lihat 40+ Gadget Lainnya</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</a>
+</div>
+<!-- 4 Cards Responsive Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
+<!-- Kartu 1: Laptop ASUS Vivobook -->
+<a class="group flex flex-col rounded-2xl bg-surface-container-lowest p-space-sm shadow-sm hover:shadow-md transition-all" data-path="produk/laptop-asus-vivobook" href="#">
+<div class="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-surface-container mb-space-sm">
+<img alt="Laptop ASUS Vivobook" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="ASUS Vivobook slim silver laptop sitting on a library table at Universitas Sumatera Utara with soft ambient indoor light, pristine condition keyboard visible" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDM8Xng6oH6Ld1b-KRINb2rqUY3fUqZtDsDHvE6WzOkyPIm4ErZJsLsAC_d3Lra5a4cwGJtfbNKXv2vnBsQMqaw7y3rYfciNjTUPUH5ll_3YAlf6ir4sZ-XOT6ISDbf3MCYqk_t9RSiXYAhW624TuH4c7OZWJAK_WFePlslArmIiBF9yUNt9sYdI6Y-zXPQMnMQRhf6VgfaVlRzy7wcjUG8tREUVSc4sV2VKCsNsrBf"/>
+<div class="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-primary-container text-on-primary font-label-sm text-label-sm font-bold">
+              Siap COD
+            </div>
+<div class="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-inverse-surface/75 text-inverse-on-surface font-label-sm text-label-sm backdrop-blur-sm">
+              USU • Teknik '21
+            </div>
+</div>
+<div class="flex flex-col flex-1 px-1">
+<span class="font-label-sm text-label-sm text-outline truncate">Elektronik • Laptop</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-bold group-hover:text-primary transition-colors line-clamp-1 mt-0.5">
+              Laptop ASUS Vivobook 14
+            </h3>
+<p class="font-headline-md text-headline-md text-primary font-extrabold mt-1">
+              Rp 4.500.000
+            </p>
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm mt-3 pt-2 bg-surface-container-low p-2 rounded-lg">
+<span class="flex items-center gap-1 truncate">
+<span class="material-symbols-outlined text-primary text-[15px]">location_on</span>
+                Gedung Bersama USU
+              </span>
+<span class="text-outline flex-shrink-0">3 jam lalu</span>
+</div>
+</div>
+</a>
+<!-- Kartu 2: Laptop ASUS Ryzen 3 -->
+<a class="group flex flex-col rounded-2xl bg-surface-container-lowest p-space-sm shadow-sm hover:shadow-md transition-all" data-path="produk/laptop-asus-ryzen" href="#">
+<div class="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-surface-container mb-space-sm">
+<img alt="Laptop ASUS Ryzen 3" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="ASUS Ryzen 3 notebook dark grey color placed beside a spiral college notebook on student desk at Politeknik Negeri Medan, clean setup" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmw4M9-6xOXaJcpVGkGVC7Eseni3KnC8EP-QopnU0pCa7rY0N_u7jPOTuVwxN5Z_vXy7FV8o6EGzhpYVXtNWMKQ6THILDF5s_5ZcYht_gRSx_F-TzeJ8eAPG1TIBG50fmts19_wUdbVGLBBm6rfVioysGRHwSwo8AEPDjkSUipAaRvwCJgTMrTo5xZmDksaAs2xMxmCxKFWWFi9HKSu7xiTMZTQIVMTjSBYtTjf__7"/>
+<div class="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-secondary text-on-secondary font-label-sm text-label-sm font-bold">
+              POLMED
+            </div>
+<div class="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-inverse-surface/75 text-inverse-on-surface font-label-sm text-label-sm backdrop-blur-sm">
+              Richard • TI POLMED
+            </div>
+</div>
+<div class="flex flex-col flex-1 px-1">
+<span class="font-label-sm text-label-sm text-outline truncate">Elektronik • Laptop</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-bold group-hover:text-primary transition-colors line-clamp-1 mt-0.5">
+              Laptop ASUS Ryzen 3 Slim
+            </h3>
+<p class="font-headline-md text-headline-md text-primary font-extrabold mt-1">
+              Rp 3.000.000
+            </p>
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm mt-3 pt-2 bg-surface-container-low p-2 rounded-lg">
+<span class="flex items-center gap-1 truncate">
+<span class="material-symbols-outlined text-primary text-[15px]">location_on</span>
+                Kantin Gedung Z POLMED
+              </span>
+<span class="text-outline flex-shrink-0">5 jam lalu</span>
+</div>
+</div>
+</a>
+<!-- Kartu 3: Laptop Lenovo Core i5 6200u Budget -->
+<a class="group flex flex-col rounded-2xl bg-surface-container-lowest p-space-sm shadow-sm hover:shadow-md transition-all" data-path="produk/laptop-lenovo-budget" href="#">
+<div class="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-surface-container mb-space-sm">
+<img alt="Laptop Lenovo Core i5" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Budget friendly black Lenovo laptop on student study table, screen showing office suite, neat condition for college study, warm soft room lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5Iln6GmxwBNd2339oHW9jEazVXBBbIfI2PYxag13r471itn5M-EwfWaNtzdAptOBCwlnABJ3W1pNXjsNKt6QjnKDextjcGFU-KT6DETMrs4d0r-TyEGBY5aoynSq0ElTu8qk4XINkrn-cHR7zSqev4Y2tCatqfkmbClODvGpzgmo3Uam7exVb1DBCytiB2rMWDgas7tSFYIH8umUtGLcbgLgGtBdwmWingOMYeueV"/>
+<div class="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-bold">
+              Budget Kuliah
+            </div>
+<div class="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-inverse-surface/75 text-inverse-on-surface font-label-sm text-label-sm backdrop-blur-sm">
+              Azuri • FEB '23
+            </div>
+</div>
+<div class="flex flex-col flex-1 px-1">
+<span class="font-label-sm text-label-sm text-outline truncate">Elektronik • Laptop</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-bold group-hover:text-primary transition-colors line-clamp-1 mt-0.5">
+              Lenovo Core i5 6200U 8GB
+            </h3>
+<p class="font-headline-md text-headline-md text-primary font-extrabold mt-1">
+              Rp 1.300.000
+            </p>
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm mt-3 pt-2 bg-surface-container-low p-2 rounded-lg">
+<span class="flex items-center gap-1 truncate">
+<span class="material-symbols-outlined text-primary text-[15px]">location_on</span>
+                Pintu 1 Padang Bulan
+              </span>
+<span class="text-outline flex-shrink-0">1 hari lalu</span>
+</div>
+</div>
+</a>
+<!-- Kartu 4: iPhone 12 Beacukai -->
+<a class="group flex flex-col rounded-2xl bg-surface-container-lowest p-space-sm shadow-sm hover:shadow-md transition-all" data-path="produk/iphone-12-beacukai" href="#">
+<div class="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-surface-container mb-space-sm">
+<img alt="iPhone 12 Beacukai" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Blue iPhone 12 smartphone with original box on wooden surface, battery health 88 percent displayed on screen, verified Indonesian customs IMEI paper visible beside it" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4Xed34TKCjiCqX8dwAbIYnNvXfOwd1UElwiXEAjZA9aG4FnYhGgtQkjJGKDM0OjlofjugoTONuNFeIk4ZY__nuD7QOddcuPS5hK9WtIvbz6asjHtcfgY_-aeFQCv1oeu79kLm-GipGMWpX1Z2BffIgOPxLusc9Z5RscvAb7Xs1aqbhwxXPGSeLobX3nlpjKSOB7zxDV8ahiv04TWf1f6oiexvDqIn9uyUFYL7LQIA"/>
+<div class="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-primary-container text-on-primary font-label-sm text-label-sm font-bold">
+              IMEI Aman
+            </div>
+<div class="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-inverse-surface/75 text-inverse-on-surface font-label-sm text-label-sm backdrop-blur-sm">
+              Siti • FK '21
+            </div>
+</div>
+<div class="flex flex-col flex-1 px-1">
+<span class="font-label-sm text-label-sm text-outline truncate">Gadget • Ponsel</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-bold group-hover:text-primary transition-colors line-clamp-1 mt-0.5">
+              iPhone 12 256GB Beacukai
+            </h3>
+<p class="font-headline-md text-headline-md text-primary font-extrabold mt-1">
+              Rp 6.500.000
+            </p>
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm mt-3 pt-2 bg-surface-container-low p-2 rounded-lg">
+<span class="flex items-center gap-1 truncate">
+<span class="material-symbols-outlined text-primary text-[15px]">location_on</span>
+                Gelanggang USU
+              </span>
+<span class="text-outline flex-shrink-0">Kemarin</span>
+</div>
+</div>
+</a>
+</div>
+</div>
+</section>
+<!-- Interactive JavaScript -->
+<script>
+    const photoCaptions = [
+      "1 / 4 Foto Asli Mahasiswa (Kondisi Keseluruhan)",
+      "2 / 4 Foto Asli Mahasiswa (Layar Menyala & Spec Speccy)",
+      "3 / 4 Foto Asli Mahasiswa (Keyboard Ergonomis & Touchpad)",
+      "4 / 4 Foto Asli Mahasiswa (Charger Original 65W & Port)"
+    ];
+
+    function changePhoto(index, el) {
+      const previewImg = document.getElementById('main-preview-img');
+      const indicator = document.getElementById('img-indicator');
+      const buttons = document.querySelectorAll('.thumbnail-btn');
+      
+      buttons.forEach(btn => {
+        btn.classList.remove('ring-2', 'ring-primary');
+        btn.classList.add('opacity-80');
+      });
+      
+      el.classList.add('ring-2', 'ring-primary');
+      el.classList.remove('opacity-80');
+      
+      const thumbImg = el.querySelector('img');
+      if (thumbImg) {
+        previewImg.src = thumbImg.src;
+        previewImg.setAttribute('data-alt', thumbImg.getAttribute('data-alt') || '');
+      }
+      
+      if (indicator && photoCaptions[index]) {
+        indicator.textContent = photoCaptions[index];
+      }
+    }
+
+    function switchTab(tab) {
+      const panes = ['specs', 'desc', 'kelengkapan'];
+      panes.forEach(p => {
+        const paneEl = document.getElementById('pane-' + p);
+        const btnEl = document.getElementById('tab-' + p + '-btn');
+        if (paneEl && btnEl) {
+          if (p === tab) {
+            paneEl.classList.remove('hidden');
+            btnEl.className = 'px-space-md py-2 rounded-xl bg-primary text-on-primary font-label-md text-label-md font-bold transition-all';
+          } else {
+            paneEl.classList.add('hidden');
+            btnEl.className = 'px-space-md py-2 rounded-xl bg-surface-container-low text-on-surface-variant hover:text-on-surface font-label-md text-label-md font-semibold transition-all';
+          }
+        }
+      });
+    }
+
+    let isFav = false;
+    function toggleFavorite() {
+      isFav = !isFav;
+      const favIcon = document.getElementById('fav-icon');
+      const favLabel = document.getElementById('fav-label');
+      if (isFav) {
+        favIcon.textContent = 'favorite';
+        favIcon.style.fontVariationSettings = "'FILL' 1";
+        favLabel.textContent = 'Tersimpan';
+      } else {
+        favIcon.textContent = 'favorite_border';
+        favIcon.style.fontVariationSettings = "'FILL' 0";
+        favLabel.textContent = 'Simpan ke Favorit';
+      }
+    }
+
+    function shareItem() {
+      if (navigator.share) {
+        navigator.share({
+          title: 'Laptop Lenovo Thinkpad L480 Core i5 - Kampus Kita USU/POLMED',
+          text: 'Lihat laptop preloved ini di Kampus Kita: Rp 2.850.000 COD Pendopo USU',
+          url: window.location.href
+        }).catch(() => {});
+      } else {
+        navigator.clipboard.writeText(window.location.href);
+        const label = document.getElementById('share-label');
+        if (label) {
+          const old = label.textContent;
+          label.textContent = 'Link Disalin!';
+          setTimeout(() => { label.textContent = old; }, 2000);
+        }
+      }
+    }
+  </script>
+</div></main><footer class="w-full bg-surface-container-lowest mt-space-xl border-t border-surface-container-high/60"><div class="max-w-[1280px] mx-auto px-margin md:px-margin-tablet lg:px-margin-desktop py-space-xl"><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-space-lg mb-space-xl"><div class="lg:col-span-4 flex flex-col gap-space-sm"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-on-primary"><span class="material-symbols-outlined text-[18px]">school</span></div><span class="font-headline-sm text-headline-sm text-primary font-bold">Kampus Kita</span></div><p class="font-body-sm text-body-sm text-on-surface-variant max-w-sm">Platform digital mandiri terverifikasi stambuk dan fakultas untuk jual-beli aman, pemesanan katering kolektif (Open PO), dan ruang bertukar suara mahasiswa USU &amp; POLMED.</p><div class="flex items-center gap-space-xs mt-space-xs"><span class="inline-flex items-center gap-1 px-space-sm py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed-variant font-label-sm text-label-sm font-semibold"><span class="material-symbols-outlined text-[14px]">verified</span>Terverifikasi NIM</span><span class="inline-flex items-center gap-1 px-space-sm py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm font-semibold"><span class="material-symbols-outlined text-[14px]">place</span>Padang Bulan Hub</span></div></div><div class="lg:col-span-4 flex flex-col gap-space-sm"><span class="font-label-lg text-label-lg font-bold text-on-surface flex items-center gap-1.5"><span class="material-symbols-outlined text-primary text-[18px]">share_location</span>Zona Titik COD Resmi</span><p class="font-body-sm text-body-sm text-on-surface-variant">Pertemuan tatap muka terjadwal di lokasi publik dan berkeamanan aktif:</p><ul class="font-body-sm text-body-sm text-on-surface space-y-1.5"><li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span><span class="font-medium">Zona USU 1:</span><span class="text-on-surface-variant">Pendopo, Gelanggang Mahasiswa, Pintu 1 Padang Bulan</span></li><li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span><span class="font-medium">Zona USU 2:</span><span class="text-on-surface-variant">Kantin Fasilkom-TI, Perpus Pusat, Gedung Pancasila</span></li><li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-secondary-container"></span><span class="font-medium">Zona POLMED:</span><span class="text-on-surface-variant">Kantin Gedung Z, Lapangan Utama, Pintu Belakang</span></li></ul></div><div class="lg:col-span-4 flex flex-col gap-space-sm"><span class="font-label-lg text-label-lg font-bold text-on-surface flex items-center gap-1.5"><span class="material-symbols-outlined text-primary text-[18px]">verified_user</span>Protokol Keamanan COD</span><div class="p-space-md rounded-xl bg-surface-container-low flex flex-col gap-space-xs"><div class="flex items-start gap-2"><span class="material-symbols-outlined text-primary text-[20px] mt-0.5">shield</span><div><p class="font-label-md text-label-md font-bold text-on-surface">Verifikasi Identitas Kampus</p><p class="font-body-sm text-body-sm text-on-surface-variant">Pastikan stambuk lawan transaksi terkonfirmasi aktif di portal sebelum serah terima.</p></div></div><div class="flex items-start gap-2 mt-1"><span class="material-symbols-outlined text-tertiary-container text-[20px] mt-0.5">schedule</span><div><p class="font-label-md text-label-md font-bold text-on-surface">Batas Waktu Titik Kumpul</p><p class="font-body-sm text-body-sm text-on-surface-variant">Transaksi disarankan hanya pada jam operasional kampus (08:00 - 18:30 WIB).</p></div></div></div></div></div><div class="pt-space-md border-t border-surface-container-high/40 flex flex-col sm:flex-row items-center justify-between gap-space-sm"><p class="font-body-sm text-body-sm text-outline text-center sm:text-left">© 2024 Kampus Kita (Inisiatif Kolaboratif USU &amp; POLMED). Hak cipta dilindungi.</p><div class="flex items-center gap-space-md font-label-sm text-label-sm text-on-surface-variant"><a class="hover:text-primary transition-colors" data-path="kebijakan-privasi" href="#">Panduan Aman COD</a><a class="hover:text-primary transition-colors" data-path="syarat-ketentuan" href="#">Ketentuan Komunitas</a><a class="hover:text-primary transition-colors" data-path="bantuan-kampus" href="#">Lapor Pelanggaran</a></div></div></div></footer></body></html>

@@ -23,10 +23,7 @@ export default function LayoutWrapper({ children }) {
   const isAdmin = pathname?.startsWith("/admin");
   const isChat = pathname?.startsWith("/chat");
   const isTeman = pathname?.startsWith("/teman");
-  const isDashboard = pathname?.startsWith("/dashboard");
-  const isHome = pathname === "/";
-  const hideFooter = isAdmin || isChat || isTeman || isDashboard || isHome;
-  const isImmersive = isAdmin;
+  const hideFooter = isAdmin || isChat;
   const [config, setConfig] = useState(null);
 
   useEffect(() => {
@@ -93,40 +90,24 @@ export default function LayoutWrapper({ children }) {
       }
     }
   }, []);
+
   return (
     <SesiProvider>
       {isAdmin ? (
         children
       ) : (
-        <div className="w-full min-h-screen relative overflow-x-clip bg-[#f5f5f7] dark:bg-[#0f172a]">
-          <div className={cn(
-            "w-full min-w-0 mx-auto flex justify-center",
-            isHome ? "w-full max-w-full" : "md:max-w-7xl"
-          )}>
-            {/* Kiri: Sidebar Menu (hanya di halaman internal) */}
-            {!isHome && <LeftSidebar />}
+        <div className="w-full min-h-screen relative overflow-x-clip bg-[#F8FAFC] dark:bg-[#0f172a] text-[#0F172A] dark:text-slate-100 flex flex-col justify-between font-sans">
+          {/* Universal Sticky Top Navbar (Desktop 64px h-16, Mobile 56px h-14) */}
+          <Navbar config={config} />
 
-            {/* Tengah: Main Feed Container */}
-            <div className={cn(
-              "w-full min-w-0 flex-1 flex flex-col min-h-screen",
-              !isHome ? "bg-white dark:bg-black border-x border-black/[0.06] dark:border-white/[0.08] shadow-2xl md:shadow-none max-w-md md:max-w-[600px] lg:max-w-[680px]" : "w-full max-w-full"
+          {/* Main Content Area without vertical sidebar constraints */}
+          <div className="w-full min-w-0 flex-1 flex flex-col">
+            <main className={cn(
+              "flex-1 flex flex-col w-full",
+              !isChat && !isTeman ? "pb-24 lg:pb-0" : ""
             )}>
-              {!isHome && (
-                <div className="md:hidden sticky top-0 z-40">
-                  <Navbar config={config} />
-                </div>
-              )}
-              
-              <main className={cn(
-                "flex-1 flex flex-col",
-                !isChat && !isTeman ? "pb-36 md:pb-8" : ""
-              )}>
-                {children}
-              </main>
-            </div>
-
-            {/* Kanan: Widget/Trending */}
-            {!isHome && <RightSidebar config={config} />}
+              {children}
+            </main>
           </div>
 
           <GlobalChatNotifier />

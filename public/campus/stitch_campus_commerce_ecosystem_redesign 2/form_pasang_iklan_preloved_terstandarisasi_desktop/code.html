@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+
+<html lang="id"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><title>Kampus Kita - Ekosistem Mahasiswa USU &amp; POLMED</title><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@500;600;700;800&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "secondary": "#712ae2", "error-container": "#ffdad6", "surface": "#faf8ff", "surface-container": "#eaedff", "primary": "#005d42", "secondary-container": "#8a4cfc", "on-tertiary-fixed": "#2a1700", "surface-container-high": "#e2e7ff", "surface-dim": "#d2d9f4", "primary-container": "#047857", "on-surface": "#131b2e", "surface-container-highest": "#dae2fd", "tertiary-fixed": "#ffddb8", "outline-variant": "#bdc9c1", "on-error-container": "#93000a", "tertiary-fixed-dim": "#ffb95f", "surface-container-lowest": "#ffffff", "background": "#faf8ff", "inverse-surface": "#283044", "on-surface-variant": "#3e4943", "on-error": "#ffffff", "inverse-primary": "#7bd8b1", "tertiary": "#734700", "tertiary-container": "#945d00", "on-tertiary": "#ffffff", "outline": "#6e7a73", "on-primary-container": "#9ffdd3", "on-secondary-container": "#fffbff", "on-secondary-fixed": "#25005a", "on-background": "#131b2e", "surface-variant": "#dae2fd", "surface-bright": "#faf8ff", "surface-container-low": "#f2f3ff", "on-secondary-fixed-variant": "#5a00c6", "on-primary": "#ffffff", "on-tertiary-fixed-variant": "#653e00", "on-primary-fixed-variant": "#00513a", "error": "#ba1a1a", "secondary-fixed": "#eaddff", "primary-fixed-dim": "#7bd8b1", "surface-tint": "#006c4e", "primary-fixed": "#97f5cc", "inverse-on-surface": "#eef0ff", "on-secondary": "#ffffff", "on-tertiary-container": "#ffe6cc", "on-primary-fixed": "#002115", "secondary-fixed-dim": "#d2bbff" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-sm": "0.5rem", "space-md": "1rem", "margin-desktop": "3rem", "margin": "1rem", "gutter": "1rem", "space-xl": "2.5rem", "gutter-desktop": "1.5rem", "margin-tablet": "2rem", "space-lg": "1.5rem", "space-xs": "0.25rem" }, "fontFamily": { "headline-xl-mobile": [ "Plus Jakarta Sans" ], "headline-md": [ "Plus Jakarta Sans" ], "label-lg": [ "Plus Jakarta Sans" ], "body-lg": [ "Inter" ], "label-sm": [ "Plus Jakarta Sans" ], "headline-lg-mobile": [ "Plus Jakarta Sans" ], "label-md": [ "Plus Jakarta Sans" ], "headline-lg": [ "Plus Jakarta Sans" ], "headline-xl": [ "Plus Jakarta Sans" ], "body-sm": [ "Inter" ], "body-md": [ "Inter" ], "headline-sm": [ "Plus Jakarta Sans" ] }, "fontSize": { "headline-xl-mobile": [ "28px", { "lineHeight": "36px", "fontWeight": "700" } ], "headline-md": [ "20px", { "lineHeight": "28px", "fontWeight": "600" } ], "label-lg": [ "14px", { "lineHeight": "20px", "fontWeight": "600" } ], "body-lg": [ "16px", { "lineHeight": "24px", "fontWeight": "400" } ], "label-sm": [ "10px", { "lineHeight": "14px", "fontWeight": "700" } ], "headline-lg-mobile": [ "22px", { "lineHeight": "30px", "fontWeight": "700" } ], "label-md": [ "12px", { "lineHeight": "16px", "fontWeight": "600" } ], "headline-lg": [ "28px", { "lineHeight": "36px", "fontWeight": "700" } ], "headline-xl": [ "36px", { "lineHeight": "44px", "fontWeight": "700" } ], "body-sm": [ "12px", { "lineHeight": "18px", "fontWeight": "400" } ], "body-md": [ "14px", { "lineHeight": "20px", "fontWeight": "400" } ], "headline-sm": [ "16px", { "lineHeight": "24px", "fontWeight": "600" } ] } } } };</script></head><body class="bg-background font-body-md text-on-surface antialiased min-h-screen flex flex-col"><header class="fixed top-0 left-0 right-0 z-50 bg-surface/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 w-full max-w-[1280px] mx-auto px-margin md:px-margin-tablet lg:px-margin-desktop flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-md flex-shrink-0"><a class="flex items-center gap-space-sm group" data-path="beranda" href="#"><div class="w-9 h-9 rounded-xl bg-primary-container flex items-center justify-center text-on-primary shadow-sm font-bold font-headline-sm">KK</div><div class="flex flex-col"><div class="flex items-center gap-space-xs"><span class="font-headline-sm text-headline-sm text-primary-container tracking-tight font-bold">Kampus Kita</span><span class="px-space-xs py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm uppercase font-semibold">USU • POLMED</span></div><span class="font-label-sm text-label-sm text-outline hidden sm:block">Sentra Komunitas &amp; Niaga Kampus</span></div></a><div class="hidden xl:flex items-center bg-surface-container-low px-space-sm py-1 rounded-full cursor-pointer hover:bg-surface-container transition-colors"><span class="mr-1 text-[16px]">🎓</span><span class="font-label-md text-label-md text-on-surface font-semibold">Kampus: USU</span><span class="material-symbols-outlined text-outline text-[16px] ml-1">expand_more</span></div></div><div class="hidden lg:flex items-center justify-center flex-1"><nav class="flex items-center gap-space-xs p-1 bg-surface-container-low rounded-full"><a class="px-space-md py-1.5 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-all" data-path="beranda" href="#">Beranda</a><a class="px-space-md py-1.5 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-all" data-path="marketplace" href="#">Marketplace</a><a class="px-space-md py-1.5 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-all relative flex items-center" data-path="open-po" href="#"><span>Open PO</span><span class="ml-1.5 px-1.5 py-0.2 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm uppercase font-bold leading-tight">PO</span></a><a class="px-space-md py-1.5 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-all" data-path="menfess" href="#">Menfess</a><a class="px-space-md py-1.5 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-all relative flex items-center" data-path="obrolan" href="#"><span>Obrolan</span><span class="ml-1.5 px-1.5 py-0.2 rounded-full bg-primary-container text-on-primary font-label-sm text-label-sm leading-tight font-bold">3</span></a></nav></div><div class="flex items-center gap-space-sm flex-shrink-0"><button aria-label="Notifikasi Kampus" class="relative w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-error ring-2 ring-surface"></span></button><a class="inline-flex items-center gap-space-xs px-space-md py-2 rounded-lg bg-primary-container text-on-primary hover:bg-primary transition-all font-label-md text-label-md font-semibold shadow-sm ring-2 ring-primary-container/20" data-path="pasang-iklan" href="#"><span class="material-symbols-outlined text-[18px]">add_circle</span><span>+ Pasang Iklan</span></a><a class="flex items-center gap-space-xs pl-space-xs pr-space-sm py-1 rounded-full bg-surface-container-low hover:bg-surface-container transition-colors group" data-path="profil-saya" href="#"><div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center flex-shrink-0 shadow-sm"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="flex flex-col text-left"><span class="font-label-md text-label-md font-bold text-on-surface group-hover:text-primary transition-colors leading-none">Faris</span><span class="font-label-sm text-label-sm text-outline-variant font-medium leading-tight">FK '22</span></div></a></div></div></header><main class="w-full flex-grow bg-background pt-16"><div class="flex flex-col w-full">
+<!-- Sub-header Breadcrumb & Safety Notice Ribbon -->
+<div class="w-full bg-surface-container-low py-space-sm">
+<div class="max-w-[1280px] mx-auto px-margin md:px-margin-tablet lg:px-margin-desktop flex items-center justify-between">
+<div class="flex items-center gap-space-xs font-label-md text-label-md text-on-surface-variant">
+<a class="hover:text-primary transition-colors flex items-center gap-1" data-path="beranda" href="#">
+<span class="material-symbols-outlined text-[16px]">storefront</span>
+<span>Marketplace</span>
+</a>
+<span>/</span>
+<span class="text-on-surface font-semibold">Pasang Iklan Preloved</span>
+</div>
+<div class="hidden sm:flex items-center gap-space-xs px-space-sm py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed-variant font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[14px]">verified</span>
+<span>Akun Terverifikasi: Faris (NIM Aktif FK '22)</span>
+</div>
+</div>
+</div>
+<div class="max-w-[1280px] w-full mx-auto px-margin md:px-margin-tablet lg:px-margin-desktop py-space-lg lg:py-space-xl">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-space-md mb-space-xl">
+<div class="flex flex-col gap-space-xs max-w-2xl">
+<div class="inline-flex items-center gap-1.5 px-space-sm py-0.5 rounded-full bg-primary/10 text-primary font-label-sm text-label-sm font-bold w-fit">
+<span class="material-symbols-outlined text-[14px]">local_mall</span>
+<span>MARKETPLACE MAHASISWA KAMPUS KITA</span>
+</div>
+<h1 class="font-headline-xl text-headline-xl text-on-surface font-extrabold tracking-tight">
+          Pasang Iklan Barang Preloved
+        </h1>
+<p class="font-body-md text-body-md text-on-surface-variant">
+          Jual barang cepat &amp; aman ke sesama mahasiswa aktif USU &amp; POLMED. 100% bebas biaya admin dan transaksi langsung via COD.
+        </p>
+</div>
+<!-- Live Quick Metric Pill -->
+<div class="flex items-center gap-space-sm p-space-sm rounded-2xl bg-surface-container-low self-start md:self-auto">
+<div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-on-primary shadow-sm">
+<span class="material-symbols-outlined text-[20px]">bolt</span>
+</div>
+<div class="flex flex-col pr-space-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-semibold">Rata-rata Terjual</span>
+<span class="font-headline-sm text-headline-sm text-primary font-bold">12–48 Jam</span>
+</div>
+</div>
+</div>
+<!-- Multi-step Horizontal Progression Indicator -->
+<div class="w-full bg-surface-container-lowest p-space-md rounded-2xl shadow-sm mb-space-xl"><div class="grid grid-cols-2 md:grid-cols-4 gap-space-sm"><div class="flex items-center gap-space-sm p-space-sm rounded-xl bg-primary-fixed/30 border-surface-container-high/60 transition-all"><div class="w-8 h-8 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-label-md text-label-md font-bold shadow-sm">1</div><div class="flex flex-col min-w-0"><span class="font-label-md text-label-md font-bold text-primary truncate">Foto Produk</span><span class="font-label-sm text-label-sm text-on-surface-variant truncate">1-5 foto riil</span></div><span class="material-symbols-outlined text-primary ml-auto text-[18px]">check_circle</span></div><div class="flex items-center gap-space-sm p-space-sm rounded-xl bg-surface-container-low transition-all"><div class="w-8 h-8 rounded-full bg-primary-container/20 text-primary-container flex items-center justify-center font-label-md text-label-md font-bold">2</div><div class="flex flex-col min-w-0"><span class="font-label-md text-label-md font-bold text-on-surface truncate">Spesifikasi &amp; Kondisi</span><span class="font-label-sm text-label-sm text-on-surface-variant truncate">Kategori &amp; catatan</span></div><span class="material-symbols-outlined text-outline ml-auto text-[18px]">more_horiz</span></div><div class="flex items-center gap-space-sm p-space-sm rounded-xl bg-surface-container-low transition-all"><div class="w-8 h-8 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center font-label-md text-label-md font-bold">3</div><div class="flex flex-col min-w-0"><span class="font-label-md text-label-md font-bold text-on-surface truncate">Penentuan Harga &amp; Nego</span><span class="font-label-sm text-label-sm text-on-surface-variant truncate">Nominal &amp; skema net</span></div><span class="material-symbols-outlined text-outline ml-auto text-[18px]">payments</span></div><div class="flex items-center gap-space-sm p-space-sm rounded-xl bg-surface-container-low transition-all"><div class="w-8 h-8 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center font-label-md text-label-md font-bold">4</div><div class="flex flex-col min-w-0"><span class="font-label-md text-label-md font-bold text-on-surface truncate">Titik COD Kampus Terdaftar</span><span class="font-label-sm text-label-sm text-on-surface-variant truncate">Landmark resmi USU &amp; POLMED</span></div><span class="material-symbols-outlined text-outline ml-auto text-[18px]">pin_drop</span></div></div></div>
+<!-- Main Content Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
+<!-- Left Column: Form Fields (Cols 1-8) -->
+<form class="lg:col-span-8 flex flex-col gap-space-lg" id="form-jual" onsubmit="event.preventDefault();">
+<!-- SECTION 1: UPLOAD FOTO -->
+<div class="bg-surface-container-lowest p-space-lg md:p-space-xl rounded-2xl shadow-sm flex flex-col gap-space-md">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-xs">
+<div>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<h2 class="font-headline-md text-headline-md font-bold text-on-surface">1. Upload Foto Produk</h2>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                Gunakan pencahayaan terang &amp; foto kondisi riil barang (Maksimal 5 foto).
+              </p>
+</div>
+<span class="font-label-sm text-label-sm font-semibold px-space-sm py-1 rounded-full bg-surface-container-high text-on-surface-variant self-start sm:self-auto" id="photo-counter">
+              1 / 5 Terunggah
+            </span>
+</div>
+<!-- Photo Drag & Drop / Preview Grid -->
+<div class="grid grid-cols-2 sm:grid-cols-5 gap-space-sm pt-space-xs">
+<!-- Slot 1 (Primary / Pre-filled preview) -->
+<div class="relative group aspect-square rounded-xl overflow-hidden bg-surface-container-low shadow-inner flex items-center justify-center">
+<img class="w-full h-full object-cover" data-alt="High quality close up product photograph of a clean textbook Purcell Calculus edition 9 sitting on a student desk in university library under soft daylight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDoaPy0z9nV9smE98icDhzMJJVsTJDW9ccN_YUOi99XlibpitoK4v3AXcT-8ADYThLW856zj7C0bKIOQ2iViAIMBHS-cIL-qOP_tfKGJGxaMWUYuXkbfug_NNi0PDkS0Z7dqrXqon3gMuxFQyJvTSL1-VdEZ3RJzUJqCzjQJw44MpMHOZbwXMufh5PrAvhIZC0UBF5V5SyhflUGNrjzGvoRDs3VJCM45CP3KrYd4WPl"/>
+<div class="absolute inset-0 bg-inverse-surface/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+<button class="w-7 h-7 rounded-full bg-surface-container-lowest text-on-surface flex items-center justify-center hover:bg-error hover:text-on-error transition-colors" title="Hapus Foto" type="button">
+<span class="material-symbols-outlined text-[16px]">delete</span>
+</button>
+</div>
+<span class="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-primary text-on-primary font-label-sm text-label-sm font-bold">
+                Cover Utama
+              </span>
+</div>
+<!-- Slot 2 (Upload Target) -->
+<label class="cursor-pointer aspect-square rounded-xl bg-surface-container-low hover:bg-surface-container-high/80 transition-all flex flex-col items-center justify-center gap-1 p-2 text-center group">
+<input accept="image/*" class="hidden" type="file"/>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest group-hover:bg-primary group-hover:text-on-primary text-on-surface-variant flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-[20px]">add_a_photo</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Foto 2</span>
+</label>
+<!-- Slot 3 (Upload Target) -->
+<label class="cursor-pointer aspect-square rounded-xl bg-surface-container-low hover:bg-surface-container-high/80 transition-all flex flex-col items-center justify-center gap-1 p-2 text-center group">
+<input accept="image/*" class="hidden" type="file"/>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest group-hover:bg-primary group-hover:text-on-primary text-on-surface-variant flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Foto 3</span>
+</label>
+<!-- Slot 4 (Upload Target) -->
+<label class="cursor-pointer aspect-square rounded-xl bg-surface-container-low hover:bg-surface-container-high/80 transition-all flex flex-col items-center justify-center gap-1 p-2 text-center group">
+<input accept="image/*" class="hidden" type="file"/>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest group-hover:bg-primary group-hover:text-on-primary text-on-surface-variant flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Foto 4</span>
+</label>
+<!-- Slot 5 (Upload Target) -->
+<label class="cursor-pointer aspect-square rounded-xl bg-surface-container-low hover:bg-surface-container-high/80 transition-all flex flex-col items-center justify-center gap-1 p-2 text-center group">
+<input accept="image/*" class="hidden" type="file"/>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest group-hover:bg-primary group-hover:text-on-primary text-on-surface-variant flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Foto 5</span>
+</label>
+</div>
+<!-- Micro Tip Box -->
+<div class="flex items-start gap-space-sm p-space-sm rounded-xl bg-surface-container-low mt-space-xs">
+<span class="material-symbols-outlined text-primary text-[20px] flex-shrink-0 mt-0.5">lightbulb</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+<strong class="text-on-surface">Tips Cepat Laku:</strong> Foto bagian sudut, sampul asli, dan detail minus fisik (misal: coretan pulpen/lecet). Transparansi visual membuat pembeli USU &amp; POLMED langsung checkout tanpa ragu.
+            </p>
+</div>
+</div>
+<!-- SECTION 2: DETAIL BARANG -->
+<div class="bg-surface-container-lowest p-space-lg md:p-space-xl rounded-2xl shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<h2 class="font-headline-md text-headline-md font-bold text-on-surface">2. Detail Barang</h2>
+</div>
+<!-- Field: Judul Iklan -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md font-bold text-on-surface flex items-center justify-between" for="input-judul">
+<span>Judul Iklan Preloved <span class="text-error">*</span></span>
+<span class="font-label-sm text-label-sm text-outline font-normal">Maks. 70 Karakter</span>
+</label>
+<input class="w-full px-space-md py-2.5 rounded-xl bg-surface-container-low text-on-surface placeholder:text-outline focus:bg-surface-container-lowest focus:shadow-[0_0_0_2px_#047857] transition-all outline-none font-body-md text-body-md" id="input-judul" maxlength="70" placeholder="Contoh: Buku Kalkulus Purcell Edisi 9 / Kemeja Sidang / iPad Air" type="text" value="Buku Kalkulus Purcell Edisi 9 (Original Erlangga Lengkap)"/>
+</div>
+<!-- Field: Kategori Barang (Pills selector) -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md font-bold text-on-surface">
+              Kategori Kampus <span class="text-error">*</span>
+</label>
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-space-xs">
+<button class="flex items-center gap-2 px-space-md py-2 rounded-xl bg-surface-container-low text-on-surface hover:bg-surface-container-high transition-colors text-left group" type="button">
+<span class="material-symbols-outlined text-[18px] text-primary group-hover:scale-110 transition-transform">laptop_mac</span>
+<span class="font-label-md text-label-md font-semibold">Elektronik &amp; Gadget</span>
+</button>
+<button class="flex items-center gap-2 px-space-md py-2 rounded-xl bg-primary text-on-primary shadow-sm text-left" type="button">
+<span class="material-symbols-outlined text-[18px]">menu_book</span>
+<span class="font-label-md text-label-md font-semibold">Buku &amp; Diktat</span>
+</button>
+<button class="flex items-center gap-2 px-space-md py-2 rounded-xl bg-surface-container-low text-on-surface hover:bg-surface-container-high transition-colors text-left group" type="button">
+<span class="material-symbols-outlined text-[18px] text-primary-container group-hover:scale-110 transition-transform">apparel</span>
+<span class="font-label-md text-label-md font-semibold">Fashion Mahasiswa</span>
+</button>
+<button class="flex items-center gap-2 px-space-md py-2 rounded-xl bg-surface-container-low text-on-surface hover:bg-surface-container-high transition-colors text-left group" type="button">
+<span class="material-symbols-outlined text-[18px] text-tertiary group-hover:scale-110 transition-transform">science</span>
+<span class="font-label-md text-label-md font-semibold">Alat Praktikum Lab</span>
+</button>
+<button class="flex items-center gap-2 px-space-md py-2 rounded-xl bg-surface-container-low text-on-surface hover:bg-surface-container-high transition-colors text-left group" type="button">
+<span class="material-symbols-outlined text-[18px] text-outline group-hover:scale-110 transition-transform">chair</span>
+<span class="font-label-md text-label-md font-semibold">Kebutuhan Kos</span>
+</button>
+<button class="flex items-center gap-2 px-space-md py-2 rounded-xl bg-surface-container-low text-on-surface hover:bg-surface-container-high transition-colors text-left group" type="button">
+<span class="material-symbols-outlined text-[18px] text-primary-container group-hover:scale-110 transition-transform">handyman</span>
+<span class="font-label-md text-label-md font-semibold">Jasa &amp; Rental</span>
+</button>
+</div>
+</div>
+<!-- Field: Kondisi Barang (Segmented Choice) -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md font-bold text-on-surface">
+              Kondisi Barang <span class="text-error">*</span>
+</label>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-space-sm">
+<label class="cursor-pointer p-space-sm rounded-xl bg-surface-container-low hover:bg-surface-container-high transition-colors flex items-start gap-space-sm">
+<input class="mt-1 accent-primary" name="kondisi" type="radio" value="baru"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-on-surface">Baru / Segel</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Belum pernah dipakai</span>
+</div>
+</label>
+<label class="cursor-pointer p-space-sm rounded-xl bg-primary/10 shadow-sm flex items-start gap-space-sm">
+<input checked="" class="mt-1 accent-primary" name="kondisi" type="radio" value="seperti-baru"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-primary">Seperti Baru (9.5/10)</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Fungsi 100%, mulus terawat</span>
+</div>
+</label>
+<label class="cursor-pointer p-space-sm rounded-xl bg-surface-container-low hover:bg-surface-container-high transition-colors flex items-start gap-space-sm">
+<input class="mt-1 accent-primary" name="kondisi" type="radio" value="bekas"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-on-surface">Bekas Layak Pakai</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Ada jejak pemakaian wajar</span>
+</div>
+</label>
+</div>
+</div>
+<!-- Field: Deskripsi Lengkap -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md font-bold text-on-surface flex items-center justify-between" for="input-deskripsi">
+<span>Deskripsi Lengkap &amp; Catatan Minus <span class="text-error">*</span></span>
+<span class="font-label-sm text-label-sm text-outline font-normal">Minimal 20 Karakter</span>
+</label>
+<textarea class="w-full px-space-md py-2.5 rounded-xl bg-surface-container-low text-on-surface placeholder:text-outline focus:bg-surface-container-lowest focus:shadow-[0_0_0_2px_#047857] transition-all outline-none font-body-md text-body-md" id="input-deskripsi" placeholder="Jelaskan alasan jual, kelengkapan aksesoris, apakah ada coretan stabilo/catatan, kondisi fungsional baterai/kertas..." rows="4">Buku dipakai hanya saat semester 1 di Fasilkom USU. Kondisi kertas masih bersih, tidak ada robekan atau basah. Ada sedikit coretan pensil di halaman bab Integral yang sudah dihapus. Alasan jual: sudah lulus mata kuliah kalkulus dan mau ganti buku praktikum lain.</textarea>
+</div>
+</div>
+<!-- SECTION 3: PENENTUAN HARGA -->
+<div class="bg-surface-container-lowest p-space-lg md:p-space-xl rounded-2xl shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<h2 class="font-headline-md text-headline-md font-bold text-on-surface">3. Penentuan Harga</h2>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-12 gap-space-md items-center">
+<!-- Nominal Input -->
+<div class="sm:col-span-7 flex flex-col gap-1.5">
+<label class="font-label-md text-label-md font-bold text-on-surface" for="input-harga">
+                Harga Jual Bersih (IDR) <span class="text-error">*</span>
+</label>
+<div class="relative flex items-center">
+<span class="absolute left-space-md font-headline-sm text-headline-sm font-bold text-primary">Rp</span>
+<input class="w-full pl-12 pr-space-md py-3 rounded-xl bg-surface-container-low font-headline-sm text-headline-sm font-bold text-on-surface placeholder:text-outline focus:bg-surface-container-lowest focus:shadow-[0_0_0_2px_#047857] transition-all outline-none" id="input-harga" type="text" value="85.000"/>
+</div>
+<span class="font-label-sm text-label-sm text-outline">Estimasi harga pasaran buku ini di USU: Rp 75.000 - Rp 110.000</span>
+</div>
+<!-- Nego or Net Toggle Switch -->
+<div class="sm:col-span-5 flex flex-col gap-1.5">
+<label class="font-label-md text-label-md font-bold text-on-surface">Skema Transaksi</label>
+<div class="p-space-sm rounded-xl bg-surface-container-low flex flex-col gap-2">
+<label class="cursor-pointer flex items-center gap-2">
+<input checked="" class="accent-primary" name="skema-nego" type="radio"/>
+<span class="font-label-md text-label-md font-semibold text-on-surface">Boleh Nego Tipis (Fast Deal)</span>
+</label>
+<label class="cursor-pointer flex items-center gap-2">
+<input class="accent-primary" name="skema-nego" type="radio"/>
+<span class="font-label-md text-label-md font-semibold text-on-surface-variant">Harga Pas / Net (No Nego)</span>
+</label>
+</div>
+</div>
+</div>
+</div>
+<!-- SECTION 4: LOKASI COD RESMI & KONTAK -->
+<div class="bg-surface-container-lowest p-space-lg md:p-space-xl rounded-2xl shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<h2 class="font-headline-md text-headline-md font-bold text-on-surface">4. Lokasi COD Resmi Kampus &amp; Kontak</h2>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed-variant font-label-sm text-label-sm font-bold uppercase">
+              100% Bebas Ongkir
+            </span>
+</div>
+<!-- Pilihan Kampus Utama -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md font-bold text-on-surface">Pilih Kampus Domisili Transaksi <span class="text-error">*</span></label>
+<div class="grid grid-cols-2 gap-space-sm">
+<label class="cursor-pointer p-space-md rounded-xl bg-primary/10 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<input checked="" class="accent-primary" name="kampus" type="radio" value="USU"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-primary">Universitas Sumatera Utara (USU)</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Kawasan Padang Bulan, Dr. Mansyur</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-primary text-[20px]">school</span>
+</label>
+<label class="cursor-pointer p-space-md rounded-xl bg-surface-container-low hover:bg-surface-container-high transition-colors flex items-center justify-between">
+<div class="flex items-center gap-2">
+<input class="accent-primary" name="kampus" type="radio" value="POLMED"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-on-surface">Politeknik Negeri Medan (POLMED)</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Gedung Z &amp; Gerbang Belakang</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline text-[20px]">domain</span>
+</label>
+</div>
+</div>
+<!-- Titik Temu COD Favorit Checklist -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md font-bold text-on-surface">
+              Titik Temu COD Favorit di Area Kampus (Pilih Minimal 1) <span class="text-error">*</span>
+</label>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-xs">
+<label class="cursor-pointer p-space-sm rounded-xl bg-surface-container-low hover:bg-surface-container-high flex items-center gap-space-sm transition-colors">
+<input checked="" class="accent-primary w-4 h-4 rounded" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-on-surface">Pendopo USU (Pusat Kegiatan)</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Area terbuka, dekat Gelanggang</span>
+</div>
+</label>
+<label class="cursor-pointer p-space-sm rounded-xl bg-surface-container-low hover:bg-surface-container-high flex items-center gap-space-sm transition-colors">
+<input checked="" class="accent-primary w-4 h-4 rounded" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-on-surface">Pintu 1 - 4 Jl. Dr. Mansyur</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Gerbang utama akses keluar-masuk</span>
+</div>
+</label>
+<label class="cursor-pointer p-space-sm rounded-xl bg-surface-container-low hover:bg-surface-container-high flex items-center gap-space-sm transition-colors">
+<input checked="" class="accent-primary w-4 h-4 rounded" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-on-surface">Kantin FEB / Kantin Fasilkom-TI</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Titik nyaman saat istirahat siang</span>
+</div>
+</label>
+<label class="cursor-pointer p-space-sm rounded-xl bg-surface-container-low hover:bg-surface-container-high flex items-center gap-space-sm transition-colors">
+<input class="accent-primary w-4 h-4 rounded" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-on-surface">Gazebo FIB &amp; Perpustakaan Pusat</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Lokasi tenang teduh berkanopi</span>
+</div>
+</label>
+<label class="cursor-pointer p-space-sm rounded-xl bg-surface-container-low hover:bg-surface-container-high flex items-center gap-space-sm transition-colors sm:col-span-2">
+<input class="accent-primary w-4 h-4 rounded" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-on-surface">Gedung Z &amp; Lapangan Utama POLMED</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Akses mudah mahasiswa POLMED</span>
+</div>
+</label>
+</div>
+</div>
+<!-- Field: WhatsApp Kontak Terverifikasi -->
+<div class="flex flex-col gap-1.5 pt-space-xs">
+<label class="font-label-md text-label-md font-bold text-on-surface flex items-center justify-between" for="input-wa">
+<span>Nomor WhatsApp Aktif Mahasiswa <span class="text-error">*</span></span>
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm text-primary font-semibold">
+<span class="material-symbols-outlined text-[14px]">lock</span>
+                Terhubung Stambuk Anda
+              </span>
+</label>
+<div class="flex items-center gap-space-sm">
+<div class="relative flex-1">
+<span class="absolute left-space-md top-2.5 font-label-md text-label-md text-on-surface-variant font-bold">+62</span>
+<input class="w-full pl-14 pr-space-md py-2.5 rounded-xl bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:shadow-[0_0_0_2px_#047857] outline-none transition-all" id="input-wa" type="tel" value="821-6543-9821"/>
+</div>
+<div class="px-space-md py-2 rounded-xl bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">verified</span>
+<span>Terverifikasi</span>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-outline">
+              Nomor ini hanya akan ditampilkan tombol chat WhatsApp langsung kepada sesama mahasiswa yang sudah masuk ke sistem Kampus Kita.
+            </p>
+</div>
+</div>
+<!-- Banner Edukasi: Aman COD Kampus -->
+<div class="p-space-lg rounded-2xl bg-surface-container-low flex flex-col sm:flex-row items-start sm:items-center gap-space-md">
+<div class="w-12 h-12 rounded-xl bg-tertiary-fixed text-on-tertiary-fixed flex items-center justify-center flex-shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[24px]">verified_user</span>
+</div>
+<div class="flex flex-col flex-1">
+<span class="font-label-lg text-label-lg font-bold text-on-surface">Protokol Transaksi Aman Mahasiswa</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+              Transaksi 100% COD tatap muka di area kampus resmi. Hindari transfer sebelum cek fisik barang secara langsung. Jangan pernah bertransaksi di luar jam aman kampus (08:00 - 18:30 WIB).
+            </p>
+</div>
+</div>
+<!-- Form Action Buttons -->
+<div class="flex flex-col-reverse sm:flex-row items-center justify-between gap-space-md pt-space-xs pb-space-lg">
+<a class="w-full sm:w-auto px-space-lg py-3 rounded-xl bg-surface-container-low hover:bg-surface-container text-on-surface-variant font-label-lg text-label-lg font-semibold text-center transition-colors" data-path="marketplace" href="#">
+            Batal &amp; Kembali
+          </a>
+<div class="flex items-center gap-space-sm w-full sm:w-auto">
+<button class="w-full sm:w-auto px-space-md py-3 rounded-xl bg-surface-container-highest text-on-surface font-label-lg text-label-lg font-semibold hover:bg-surface-container-high transition-colors" type="button">
+              Simpan Draf
+            </button>
+<button class="w-full sm:w-auto px-space-xl py-3 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-label-lg text-label-lg font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 group" type="submit">
+<span class="material-symbols-outlined text-[20px] group-hover:rotate-12 transition-transform">send</span>
+<span>+ Tayangkan Iklan Sekarang</span>
+</button>
+</div>
+</div>
+</form>
+<!-- Right Column: Live Card Preview & Guideline Bento (Cols 9-12) -->
+<aside class="lg:col-span-4 flex flex-col gap-space-md sticky top-24">
+<!-- Live Listing Preview Box -->
+<div class="bg-surface-container-lowest p-space-md rounded-2xl shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-primary font-bold uppercase tracking-wider flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+              Pratinjau Live Card Mahasiswa
+            </span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-mono">
+              Live Preview
+            </span>
+</div>
+<!-- Miniature Product Card Mockup -->
+<div class="rounded-xl bg-surface-container-low overflow-hidden flex flex-col shadow-inner">
+<div class="relative w-full aspect-video bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Close up realistic photograph of a university calculus textbook with clean cover sitting on a wooden library study desk with sunlight beam" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCEwYFpEMkFxMindPdpHdUs6g83awOdWYu_G5PyonkfAbuYuDzd7yo6FO3KjsG8u-sFGsmmBFDEYPA_NIL-hqkzFmX5MvrdRRY0QvJb57eyiuYV-XKz8o0rcnFNSs_ZnTfcz73hpvcCdChJvRNlR8V-Gx87IdSxHo9XuDtEtm9zf7o1zr0byPJDnfov3u2MpAPnn9CSkO_APLFEea0lgwmOTsWq4gUDuN0bVi1AJ_1T"/>
+<span class="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-primary text-on-primary font-label-sm text-label-sm font-bold shadow-sm">
+                Buku Kuliah
+              </span>
+<span class="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-surface/90 backdrop-blur-sm text-on-surface font-label-sm text-label-sm font-semibold">
+                Seperti Baru
+              </span>
+</div>
+<div class="p-space-sm flex flex-col gap-1.5">
+<div class="flex items-center justify-between text-outline font-label-sm text-label-sm">
+<span class="flex items-center gap-1 text-primary font-semibold">
+<span class="material-symbols-outlined text-[14px]">school</span>
+                  USU Padang Bulan
+                </span>
+<span>Baru saja</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface line-clamp-1">
+                Buku Kalkulus Purcell Edisi 9
+              </h3>
+<div class="flex items-baseline justify-between">
+<span class="font-headline-md text-headline-md font-extrabold text-primary">
+                  Rp 85.000
+                </span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.2 rounded bg-tertiary-fixed text-on-tertiary-fixed font-bold">
+                  Bisa Nego
+                </span>
+</div>
+<div class="pt-2 mt-1 border-t border-surface-container-high/40 flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<div class="w-6 h-6 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-sm text-label-sm font-bold">
+                    F
+                  </div>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Faris • FK '22</span>
+</div>
+<div class="flex items-center gap-1 text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px] text-primary">pin_drop</span>
+<span>Pendopo</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Campus Safety Card -->
+<div class="bg-surface-container-lowest p-space-md rounded-2xl shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center gap-space-xs text-primary">
+<span class="material-symbols-outlined text-[20px]">format_image_left</span>
+<span class="font-label-md text-label-md font-bold text-on-surface">Jaminan Aman Ekosistem Kampus</span>
+</div>
+<ul class="space-y-2 font-body-sm text-body-sm text-on-surface-variant">
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-primary text-[16px] mt-0.5 flex-shrink-0">check</span>
+<span><strong>Verifikasi Mahasiswa:</strong> Iklan hanya bisa ditayangkan oleh akun dengan NIM/Stambuk aktif USU &amp; POLMED.</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-primary text-[16px] mt-0.5 flex-shrink-0">check</span>
+<span><strong>Tanpa Biaya Admin:</strong> Uang hasil jualan 100% diterima penuh di tangan Anda saat serah terima.</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="material-symbols-outlined text-primary text-[16px] mt-0.5 flex-shrink-0">check</span>
+<span><strong>Anti Penipuan Kirim Ekspedisi:</strong> Wajib COD di zona landmark publik kampus yang terpantau satpam.</span>
+</li>
+</ul>
+</div>
+<!-- Campus Landmark Quick Guide Card -->
+<div class="bg-surface-container-low p-space-md rounded-2xl flex flex-col gap-space-xs">
+<span class="font-label-md text-label-md font-bold text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[18px]">location_on</span>
+            Pusat Titik Kumpul Terpopuler
+          </span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+            Paling sering dipakai mahasiswa saat jeda kuliah:
+          </p>
+<div class="flex flex-wrap gap-1.5 pt-1">
+<span class="px-2 py-1 rounded-lg bg-surface-container-lowest text-on-surface font-label-sm text-label-sm font-semibold">
+              🏛️ Pendopo USU
+            </span>
+<span class="px-2 py-1 rounded-lg bg-surface-container-lowest text-on-surface font-label-sm text-label-sm font-semibold">
+              📚 Perpus Pusat
+            </span>
+<span class="px-2 py-1 rounded-lg bg-surface-container-lowest text-on-surface font-label-sm text-label-sm font-semibold">
+              🏢 Gedung Z POLMED
+            </span>
+<span class="px-2 py-1 rounded-lg bg-surface-container-lowest text-on-surface font-label-sm text-label-sm font-semibold">
+              🍜 Kantin Fasilkom
+            </span>
+</div>
+</div>
+</aside>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    // Dynamic preview synchronization logic
+    const titleInput = document.getElementById('input-judul');
+    const priceInput = document.getElementById('input-harga');
+    
+    if (titleInput) {
+      titleInput.addEventListener('input', function(e) {
+        const previewTitle = document.querySelector('aside h3');
+        if (previewTitle) {
+          previewTitle.textContent = e.target.value.trim() || 'Judul Barang Preloved';
+        }
+      });
+    }
+
+    if (priceInput) {
+      priceInput.addEventListener('input', function(e) {
+        const previewPrice = document.querySelector('aside .text-headline-md');
+        if (previewPrice) {
+          const val = e.target.value.trim();
+          previewPrice.textContent = val.startsWith('Rp') ? val : ('Rp ' + (val || '0'));
+        }
+      });
+    }
+  })();
+</script></main><footer class="w-full bg-surface-container-lowest mt-space-xl border-t border-surface-container-high/60"><div class="max-w-[1280px] mx-auto px-margin md:px-margin-tablet lg:px-margin-desktop py-space-xl"><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-space-lg mb-space-xl"><div class="lg:col-span-3 flex flex-col gap-space-sm"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center text-on-primary font-bold font-headline-sm">KK</div><span class="font-headline-sm text-headline-sm text-primary-container font-bold">Kampus Kita</span></div><p class="font-body-sm text-body-sm text-on-surface-variant">Platform sentra komunitas dan marketplace terverifikasi stambuk &amp; fakultas untuk sesama mahasiswa aktif USU &amp; POLMED. Bebas biaya admin, aman via COD tatap muka.</p><div class="flex items-center gap-space-xs mt-space-xs"><span class="inline-flex items-center gap-1 px-space-sm py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed-variant font-label-sm text-label-sm font-semibold"><span class="material-symbols-outlined text-[14px]">verified</span>USU • POLMED</span><span class="inline-flex items-center gap-1 px-space-sm py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm font-semibold"><span class="material-symbols-outlined text-[14px]">place</span>Padang Bulan Hub</span></div></div><div class="lg:col-span-3 flex flex-col gap-space-sm"><span class="font-label-lg text-label-lg font-bold text-on-surface flex items-center gap-1.5"><span class="material-symbols-outlined text-primary text-[18px]">share_location</span>Titik Kumpul COD Resmi</span><p class="font-body-sm text-body-sm text-on-surface-variant">Zona pertemuan publik berkeamanan aktif satpam kampus:</p><ul class="font-body-sm text-body-sm text-on-surface space-y-1.5"><li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span><span class="font-medium">Zona USU 1:</span><span class="text-on-surface-variant">Pendopo &amp; Gelanggang</span></li><li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span><span class="font-medium">Zona USU 2:</span><span class="text-on-surface-variant">Pintu 1-4 Jl. Dr. Mansyur</span></li><li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span><span class="font-medium">Zona USU 3:</span><span class="text-on-surface-variant">Kantin Fasilkom &amp; Perpus</span></li><li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span><span class="font-medium">Zona POLMED:</span><span class="text-on-surface-variant">Gedung Z &amp; Gerbang Belakang</span></li></ul></div><div class="lg:col-span-3 flex flex-col gap-space-sm"><span class="font-label-lg text-label-lg font-bold text-on-surface flex items-center gap-1.5"><span class="material-symbols-outlined text-primary text-[18px]">verified_user</span>Protokol Keamanan COD</span><div class="p-space-md rounded-xl bg-surface-container-low flex flex-col gap-space-xs"><div class="flex items-start gap-2"><span class="material-symbols-outlined text-primary text-[18px] mt-0.5">shield</span><div><p class="font-label-md text-label-md font-bold text-on-surface">Verifikasi Stambuk</p><p class="font-body-sm text-body-sm text-on-surface-variant">Cek profil stambuk penjual/pembeli sebelum janjian bertemu.</p></div></div><div class="flex items-start gap-2 mt-1"><span class="material-symbols-outlined text-primary text-[18px] mt-0.5">schedule</span><div><p class="font-label-md text-label-md font-bold text-on-surface">Jam Aman Kampus</p><p class="font-body-sm text-body-sm text-on-surface-variant">08.00 - 18.30 WIB di ruang publik berkanopi/terang.</p></div></div></div></div><div class="lg:col-span-3 flex flex-col gap-space-sm"><span class="font-label-lg text-label-lg font-bold text-on-surface flex items-center gap-1.5"><span class="material-symbols-outlined text-primary text-[18px]">help_center</span>Panduan &amp; Bantuan</span><p class="font-body-sm text-body-sm text-on-surface-variant">Layanan bantuan mahasiswa dan pusat regulasi ekosistem:</p><div class="flex flex-col gap-1.5"><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1.5" href="#"><span class="material-symbols-outlined text-[16px]">menu_book</span>Panduan Pasang Iklan Preloved</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1.5" href="#"><span class="material-symbols-outlined text-[16px]">flag</span>Lapor Penipuan / Pelanggaran</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1.5" href="#"><span class="material-symbols-outlined text-[16px]">support_agent</span>Helpdesk Satgas Kemahasiswaan</a></div><div class="p-space-sm rounded-xl bg-primary-fixed/20 text-on-primary-fixed-variant text-label-sm font-label-sm font-semibold flex items-center gap-1 mt-1"><span class="material-symbols-outlined text-[16px]">check_circle</span>Sistem Terhubung SSO USU &amp; POLMED</div></div></div><div class="pt-space-md border-t border-surface-container-high/40 flex flex-col sm:flex-row items-center justify-between gap-space-sm"><p class="font-body-sm text-body-sm text-outline text-center sm:text-left">© 2026 Kampus Kita (USU • POLMED). Kolaborasi Mahasiswa Sumatera Utara.</p><div class="flex items-center gap-space-md font-label-sm text-label-sm text-on-surface-variant"><a class="hover:text-primary transition-colors" data-path="kebijakan-privasi" href="#">Panduan Aman COD</a><a class="hover:text-primary transition-colors" data-path="syarat-ketentuan" href="#">Ketentuan Komunitas</a><a class="hover:text-primary transition-colors" data-path="bantuan-kampus" href="#">Lapor Pelanggaran</a></div></div></div></footer></body></html>

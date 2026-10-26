@@ -1,11 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { WA_GROUP_LINK } from "@/lib/constants";
-import Logo from "@/components/Logo";
-import { Icon } from "@/components/Icons";
-
 import { useState, useEffect } from "react";
+import { Icon } from "@/components/Icons";
 import { terapkanTema } from "@/lib/tampilan";
 
 export default function Footer({ config }) {
@@ -26,155 +23,168 @@ export default function Footer({ config }) {
     terapkanTema(isDark ? "gelap" : "terang");
   };
 
-  const contact = config?.contact || {};
-  const site = config?.site || {};
-
-  const waGroupLink = contact.waGroupLink || "https://bit.ly/jualbeliusupolmed";
-  const tagline = site.footerTagline || "Marketplace mahasiswa USU & POLMED. Jual-beli aman, dibantu admin.";
-  
-  const supportEmail = contact.supportEmail || "admin@jualbeliusupolmed.web.id";
-  const supportPhone = contact.supportPhone || "+6289502472594";
-  const supportAddress = contact.supportAddress || "Jl. Dr. T. Mansur No. 9, Medan 20155";
-  const logoUrl = site.logoUrl || "https://autgrnrqeqdpqwkbolyh.supabase.co/storage/v1/object/public/listings/site/logo-1781175724233.jpg";
-
   return (
-    <footer className="mt-20 border-t border-black/[0.06] bg-[#f5f5f7] dark:border-white/[0.06] dark:bg-[#111113]">
-      <div className="mx-auto max-w-6xl px-6 py-12 md:py-16">
-        <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-3 lg:gap-12">
-          {/* Brand section */}
-          <div className="space-y-4">
-            <Link href="/" className="inline-flex items-center gap-2.5">
-              <Logo className="h-8 w-8" src={logoUrl} />
-              <span className="text-lg font-extrabold tracking-tight text-gray-900 dark:text-white">
-                jualbeli<span className="text-primary font-bold">.usupolmed</span>
-              </span>
-            </Link>
-            <p className="max-w-xs text-sm leading-relaxed text-gray-500 dark:text-slate-400">
-              {tagline}
+    <footer className="w-full bg-white dark:bg-[#0f172a] border-t border-[#E2E8F0] dark:border-white/[0.08] mt-16 transition-colors">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+        {/* 4-Column Master Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10 mb-12">
+          {/* Kolom 1: Identitas & Visi */}
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-[#047857] flex items-center justify-center text-white shadow-sm font-bold text-sm">
+                <Icon.GraduationCap className="w-5 h-5 text-emerald-200" />
+              </div>
+              <div className="flex flex-col">
+                <span className="font-bold text-lg text-[#0F172A] dark:text-white tracking-tight leading-none font-sans">
+                  Kampus Kita
+                </span>
+                <span className="text-[11px] font-semibold text-[#047857] dark:text-emerald-400 tracking-wider uppercase leading-tight mt-0.5">
+                  USU • POLMED
+                </span>
+              </div>
+            </div>
+            <p className="text-sm text-[#64748B] dark:text-slate-400 leading-relaxed font-sans">
+              Platform ekosistem digital mandiri mahasiswa USU &amp; POLMED Padang Bulan untuk jual-beli preloved terpercaya, pemesanan katering (Open PO), dan ruang suara komunitas kampus.
             </p>
+            <div className="flex flex-wrap items-center gap-2 mt-1">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#ECFDF5] dark:bg-emerald-950/60 text-[#047857] dark:text-emerald-300 text-xs font-semibold border border-emerald-600/20">
+                <Icon.ShieldCheck className="w-3.5 h-3.5" />
+                Terverifikasi NIM
+              </span>
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-[#64748B] dark:text-slate-400 text-xs font-medium">
+                <Icon.MapPin className="w-3.5 h-3.5" />
+                Padang Bulan Hub
+              </span>
+            </div>
           </div>
 
-          {/* Quick links */}
-          <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-slate-200">
-              Navigasi
-            </h4>
-            <ul className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2.5 text-sm">
-              <li>
-                <Link href="/" className="text-gray-600 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white transition-colors">
-                  Beranda
-                </Link>
+          {/* Kolom 2: Titik Kumpul COD Resmi */}
+          <div className="flex flex-col gap-3">
+            <span className="text-sm font-bold text-[#0F172A] dark:text-white flex items-center gap-1.5 font-sans">
+              <Icon.MapPin className="text-[#047857] w-4 h-4" />
+              Titik Kumpul COD Resmi
+            </span>
+            <p className="text-xs text-[#64748B] dark:text-slate-400">
+              Zona publik terbuka terpantau keamanan kampus:
+            </p>
+            <ul className="text-xs text-[#0F172A] dark:text-slate-300 space-y-2">
+              <li className="flex items-start gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#047857] mt-1.5 shrink-0" />
+                <div>
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">Zona USU 1:</span>{" "}
+                  <span className="text-[#64748B] dark:text-slate-400">Pendopo, Pintu 1-4 Dr. Mansyur, Gelanggang</span>
+                </div>
               </li>
-              <li>
-                <a href="https://open-po.vercel.app" target="_blank" rel="noopener noreferrer" className="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 font-semibold transition-colors">
-                  PO Kampus 🍵
-                </a>
+              <li className="flex items-start gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#047857] mt-1.5 shrink-0" />
+                <div>
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">Zona USU 2:</span>{" "}
+                  <span className="text-[#64748B] dark:text-slate-400">Gazebo FIB, Kantin FEB, Perpustakaan Pusat</span>
+                </div>
               </li>
-              <li>
-                <Link href="/jual" className="text-gray-600 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white transition-colors">
-                  Jual Barang
-                </Link>
-              </li>
-              <li>
-                <Link href="/dicari" className="text-gray-600 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white transition-colors">
-                  Cari Barang
-                </Link>
-              </li>
-              <li>
-                <Link href="/cara-bergabung" className="text-gray-600 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white transition-colors">
-                  Cara Bergabung
-                </Link>
-              </li>
-              <li>
-                <Link href="/daftar-harga" className="text-gray-600 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white transition-colors">
-                  Daftar Harga
-                </Link>
-              </li>
-              <li>
-                <Link href="/syarat-ketentuan" className="text-gray-600 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white transition-colors">
-                  Syarat &amp; Ketentuan
-                </Link>
-              </li>
-              <li>
-                <Link href="/kebijakan-privasi" className="text-gray-600 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white transition-colors">
-                  Kebijakan Privasi
-                </Link>
-              </li>
-              <li>
-                <Link href="/refund-policy" className="text-gray-600 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white transition-colors">
-                  Pengembalian Dana
-                </Link>
-              </li>
-              <li>
-                <Link href="/return-policy" className="text-gray-600 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white transition-colors">
-                  Pengembalian Barang
-                </Link>
-              </li>
-              <li>
-                <Link href="/faq" className="text-gray-600 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white transition-colors">
-                  FAQ / Bantuan
-                </Link>
+              <li className="flex items-start gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#F59E0B] mt-1.5 shrink-0" />
+                <div>
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">Zona POLMED:</span>{" "}
+                  <span className="text-[#64748B] dark:text-slate-400">Kantin Gedung Z &amp; Kantin Teknik POLMED</span>
+                </div>
               </li>
             </ul>
           </div>
 
-          {/* Contact info */}
-          <div className="space-y-4 sm:col-span-2 md:col-span-1">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-slate-200">
-              Hubungi Kami
-            </h4>
-            <div className="space-y-2.5 text-sm text-gray-600 dark:text-slate-400">
-              <a href={`mailto:${supportEmail}`} className="flex items-center gap-2.5 hover:text-gray-900 dark:hover:text-white transition-colors">
-                <Icon.Mail className="h-4 w-4 shrink-0 text-gray-400" />
-                <span className="truncate">{supportEmail}</span>
-              </a>
-              <a href={`https://wa.me/${supportPhone.replace(/\D/g, "")}`} className="flex items-center gap-2.5 hover:text-gray-900 dark:hover:text-white transition-colors">
-                <Icon.Phone className="h-4 w-4 shrink-0 text-gray-400" />
-                <span>{supportPhone}</span>
-              </a>
-              <div className="flex items-start gap-2.5">
-                <Icon.MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
-                <span className="leading-relaxed">{supportAddress}</span>
+          {/* Kolom 3: Protokol Keamanan */}
+          <div className="flex flex-col gap-3">
+            <span className="text-sm font-bold text-[#0F172A] dark:text-white flex items-center gap-1.5 font-sans">
+              <Icon.ShieldCheck className="text-[#047857] w-4 h-4" />
+              Protokol Keamanan COD
+            </span>
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-[#E2E8F0] dark:border-white/[0.06] flex flex-col gap-2">
+              <div className="flex items-start gap-2">
+                <Icon.User className="text-[#047857] w-4 h-4 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-xs font-bold text-[#0F172A] dark:text-white">Verifikasi Fisik &amp; KTM</p>
+                  <p className="text-[11px] text-[#64748B] dark:text-slate-400 leading-snug">
+                    Cek status mahasiswa penjual sebelum serah terima unit barang.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <Icon.CheckCircle className="text-[#047857] w-4 h-4 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-xs font-bold text-[#0F172A] dark:text-white">Cek Barang Sebelum Bayar</p>
+                  <p className="text-[11px] text-[#64748B] dark:text-slate-400 leading-snug">
+                    Uji fungsi barang secara langsung sebelum pembayaran via tunai / QRIS.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <Icon.Clock className="text-[#F59E0B] w-4 h-4 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-xs font-bold text-[#0F172A] dark:text-white">Jam COD Aman</p>
+                  <p className="text-[11px] text-[#64748B] dark:text-slate-400 leading-snug">
+                    08:00 – 18:30 WIB di tempat umum kampus.
+                  </p>
+                </div>
               </div>
             </div>
-            <a
-              href={waGroupLink}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-500 hover:shadow-emerald-500/10 active:scale-[0.98] transition-all"
-            >
-              <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24">
-                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.73-1.45L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.864-9.799.002-2.63-1.023-5.101-2.885-6.963C16.588 2.017 14.12 1.01 11.5 1.01c-5.44 0-9.866 4.372-9.87 9.802 0 1.698.45 3.35 1.303 4.806L1.93 20.315l4.717-1.16z" />
-              </svg>
-              Gabung Grup WhatsApp
-            </a>
+          </div>
+
+          {/* Kolom 4: Legalitas & Komunitas */}
+          <div className="flex flex-col gap-3">
+            <span className="text-sm font-bold text-[#0F172A] dark:text-white flex items-center gap-1.5 font-sans">
+              <Icon.HelpCircle className="text-[#047857] w-4 h-4" />
+              Bantuan &amp; Panduan
+            </span>
+            <p className="text-xs text-[#64748B] dark:text-slate-400">
+              Rujukan keselamatan &amp; etika komunitas:
+            </p>
+            <div className="flex flex-col gap-2 text-xs">
+              <Link href="/panduan-aman" className="text-[#047857] dark:text-emerald-400 hover:underline flex items-center gap-1.5 font-medium">
+                <Icon.ArrowRight className="w-3.5 h-3.5" />
+                Panduan Aman Transaksi COD
+              </Link>
+              <Link href="/syarat-ketentuan" className="text-[#64748B] dark:text-slate-400 hover:text-[#0F172A] dark:hover:text-white flex items-center gap-1.5 transition-colors">
+                <Icon.FileText className="w-3.5 h-3.5" />
+                Ketentuan &amp; Etika Menfess
+              </Link>
+              <Link href="/kebijakan-privasi" className="text-[#64748B] dark:text-slate-400 hover:text-[#0F172A] dark:hover:text-white flex items-center gap-1.5 transition-colors">
+                <Icon.ShieldCheck className="w-3.5 h-3.5" />
+                Kebijakan Privasi
+              </Link>
+              <Link href="/faq" className="text-[#64748B] dark:text-slate-400 hover:text-[#0F172A] dark:hover:text-white flex items-center gap-1.5 transition-colors">
+                <Icon.HelpCircle className="w-3.5 h-3.5" />
+                Pusat Bantuan / FAQ
+              </Link>
+            </div>
           </div>
         </div>
 
-        {/* Bottom bar */}
-        <div className="mt-12 border-t border-gray-200/70 pt-6 dark:border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-center sm:text-left text-xs text-gray-400 dark:text-slate-500">
-            © {new Date().getFullYear()} Jual Beli USU &amp; POLMED. Didedikasikan untuk mahasiswa &amp; komunitas kampus.
+        {/* Bottom Bar */}
+        <div className="pt-6 border-t border-[#E2E8F0] dark:border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-[#64748B] dark:text-slate-500 text-center sm:text-left">
+            © 2026 Inisiatif Kolaboratif Mahasiswa USU &amp; POLMED. Hak cipta dilindungi.
           </p>
 
-          <button
-            type="button"
-            onClick={toggleTheme}
-            aria-label={dark ? "Beralih ke Mode Terang" : "Beralih ke Mode Gelap"}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-black/[0.08] dark:border-white/[0.12] bg-white dark:bg-white/[0.06] text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.1] active:scale-95 transition-all shadow-2xs"
-          >
-            {dark ? (
-              <>
-                <Icon.Sun className="h-3.5 w-3.5 text-amber-400" />
-                <span>Mode Gelap</span>
-              </>
-            ) : (
-              <>
-                <Icon.Moon className="h-3.5 w-3.5 text-slate-600" />
-                <span>Mode Terang</span>
-              </>
-            )}
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label={dark ? "Beralih ke Mode Terang" : "Beralih ke Mode Gelap"}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#E2E8F0] dark:border-white/[0.12] bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-95 transition-all shadow-xs"
+            >
+              {dark ? (
+                <>
+                  <Icon.Sun className="h-3.5 w-3.5 text-amber-400" />
+                  <span>Mode Terang</span>
+                </>
+              ) : (
+                <>
+                  <Icon.Moon className="h-3.5 w-3.5 text-slate-600" />
+                  <span>Mode Gelap</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </footer>

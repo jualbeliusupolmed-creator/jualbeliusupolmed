@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+
+<html lang="id"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Akun &amp; Profil Mahasiswa - Kampus Kita</title><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { primary: "#047857", "primary-dark": "#065f46", "primary-light": "#ecfdf5", "on-primary": "#ffffff" }, fontFamily: { sans: ["'Plus Jakarta Sans'", "Inter", "sans-serif"], body: ["Inter", "sans-serif"] } } } };</script></head><body class="bg-slate-50 font-sans text-slate-800 antialiased min-h-screen flex flex-col">
+<!-- 1. TOP NAVBAR (Tinggi 64px h-16, Sticky z-50, bg-white/95 backdrop-blur, border-b border-slate-200, px-8) -->
+<header class="sticky top-0 z-50 h-16 w-full bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm transition-all"><div class="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+<!-- Kiri: Brand Identity & Kampus Selector -->
+<div class="flex items-center gap-4 shrink-0">
+<a class="flex items-center gap-3 group" href="#">
+<div class="w-10 h-10 rounded-xl bg-emerald-700 text-white font-extrabold flex items-center justify-center shadow-sm text-base group-hover:bg-emerald-800 transition">KK</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="text-[18px] font-bold text-slate-900 tracking-tight leading-none">Kampus Kita</span>
+<span class="text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 leading-none">USU • POLMED</span>
+</div>
+<span class="text-[11px] text-slate-500 font-medium leading-none mt-1">Ekosistem Digital Mahasiswa</span>
+</div>
+</a>
+<div class="h-6 w-px bg-slate-200 ml-1"></div>
+<!-- Selector Kampus dropdown pill -->
+<div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200/80 text-slate-700 text-xs font-semibold cursor-pointer border border-slate-200 transition">
+<span>🎓 Kampus: <strong class="text-slate-900 font-bold">USU</strong></span>
+<span class="material-symbols-outlined text-[16px] text-slate-500">keyboard_arrow_down</span>
+</div>
+</div>
+<!-- Tengah: 5 Menu Baku Navigasi Utama -->
+<nav class="hidden lg:flex items-center gap-1">
+<a class="px-3.5 py-2 text-sm font-medium text-slate-600 hover:text-emerald-700 hover:bg-slate-100/70 rounded-xl transition" href="#">Beranda</a>
+<a class="px-3.5 py-2 text-sm font-medium text-slate-600 hover:text-emerald-700 hover:bg-slate-100/70 rounded-xl transition" href="#">Marketplace</a>
+<a class="px-3.5 py-2 text-sm font-medium text-slate-600 hover:text-emerald-700 hover:bg-slate-100/70 rounded-xl transition flex items-center gap-1.5" href="#">
+<span>Open PO</span>
+<span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-1.5 py-0.5 rounded-md leading-none border border-amber-200">PO</span>
+</a>
+<a class="px-3.5 py-2 text-sm font-medium text-slate-600 hover:text-emerald-700 hover:bg-slate-100/70 rounded-xl transition" href="#">Menfess</a>
+<a class="px-3.5 py-2 text-sm font-medium text-slate-600 hover:text-emerald-700 hover:bg-slate-100/70 rounded-xl transition flex items-center gap-1.5" href="#">
+<span>Obrolan</span>
+<span class="w-4 h-4 rounded-full bg-emerald-700 text-white text-[10px] font-bold flex items-center justify-center leading-none">3</span>
+</a>
+</nav>
+<!-- Kanan: Aksi & User Profile Aktif Faris -->
+<div class="flex items-center gap-3 shrink-0">
+<button class="relative w-9 h-9 rounded-xl flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition" title="Notifikasi" type="button">
+<span class="material-symbols-outlined text-[22px]">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white"></span>
+</button>
+<button class="bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold px-4 py-2 rounded-xl shadow-sm transition flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>
+<span>+ Pasang Iklan</span>
+</button>
+<!-- Profile Chip Faris (Active Ring state) -->
+<a class="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 ring-2 ring-emerald-600/30 transition hover:bg-emerald-100/70" href="#">
+<div class="w-9 h-9 rounded-full bg-emerald-100 text-emerald-800 ring-2 ring-emerald-600 font-bold text-xs flex items-center justify-center shadow-inner">
+        FK
+      </div>
+<div class="flex flex-col text-left">
+<span class="font-semibold text-xs text-slate-800 leading-none">Faris</span>
+<span class="text-[10px] text-emerald-700 font-medium leading-none mt-1">FK '22 • Terverifikasi</span>
+</div>
+</a>
+</div>
+</div></header>
+<!-- MAIN CONTENT WRAPPER -->
+<main class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
+<!-- 2. SUB-BANNER / HEADER PROFIL MAHASISWA -->
+<section class="w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-6 lg:p-8 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+<div class="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+<div class="relative shrink-0">
+<div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-800 text-white flex items-center justify-center font-extrabold text-2xl sm:text-3xl shadow-md border-2 border-white">
+          FK
+        </div>
+<div class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-sm border-2 border-white" title="KTM Terverifikasi">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<div class="flex flex-wrap items-center gap-2.5">
+<h1 class="text-2xl font-bold text-slate-900 tracking-tight">Faris Kurniawan</h1>
+<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold">
+<span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">school</span>
+            KTM Terverifikasi NIM 220100... Fakultas Kedokteran USU
+          </span>
+</div>
+<p class="text-xs sm:text-sm text-slate-600 font-body flex items-center gap-2">
+<span>Stambuk '22</span>
+<span>•</span>
+<span>Titik Favorit: <strong>Pendopo USU &amp; Pintu 1</strong></span>
+</p>
+<div class="flex flex-wrap items-center gap-3 mt-1 text-xs">
+<div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-900 font-semibold border border-amber-200">
+<span class="material-symbols-outlined text-amber-500 text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span>5.0 (14 COD Berhasil, 0 Pembatalan)</span>
+</div>
+<span class="text-emerald-700 bg-emerald-50/80 px-2.5 py-1 rounded-md font-medium text-[11px] border border-emerald-100">
+            ⚡ Respon Cepat (&lt; 10 Menit)
+          </span>
+</div>
+</div>
+</div>
+<!-- Tombol Aksi Header Profil -->
+<div class="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full lg:w-auto shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-100">
+<button class="flex-1 lg:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs sm:text-sm transition" type="button">
+<span class="material-symbols-outlined text-[18px]">edit_square</span>
+<span>Edit Profil Mahasiswa</span>
+</button>
+<button class="flex-1 lg:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs sm:text-sm transition" type="button">
+<span class="material-symbols-outlined text-[18px]">settings</span>
+<span>Pengaturan Akun</span>
+</button>
+</div>
+</section>
+<!-- QUICK STAT CARDS -->
+<section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+<div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-100">
+<span class="material-symbols-outlined text-[24px]">storefront</span>
+</div>
+<div>
+<span class="text-xl font-bold text-slate-900 block leading-tight">2 Barang</span>
+<span class="text-xs text-slate-500 font-medium">Iklan Aktif Tayang</span>
+</div>
+</div>
+<div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center shrink-0 border border-blue-100">
+<span class="material-symbols-outlined text-[24px]">check_circle</span>
+</div>
+<div>
+<span class="text-xl font-bold text-slate-900 block leading-tight">1 Barang</span>
+<span class="text-xs text-slate-500 font-medium">Barang Terjual</span>
+</div>
+</div>
+<div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0 border border-amber-100">
+<span class="material-symbols-outlined text-[24px]">shopping_bag</span>
+</div>
+<div>
+<span class="text-xl font-bold text-slate-900 block leading-tight">2 Batch</span>
+<span class="text-xs text-slate-500 font-medium">Pemesanan Open PO</span>
+</div>
+</div>
+<div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center shrink-0 border border-purple-100">
+<span class="material-symbols-outlined text-[24px]">account_balance_wallet</span>
+</div>
+<div>
+<span class="text-xl font-bold text-slate-900 block leading-tight">Rp 2.850.000</span>
+<span class="text-xs text-slate-500 font-medium">Estimasi Transaksi COD</span>
+</div>
+</div>
+</section>
+<!-- 3. KONTEN UTAMA - KELOLA IKLAN & AKTIVITAS -->
+<section class="flex flex-col gap-6">
+<!-- Filter Tabs & Refresh Banner Info -->
+<div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+<div class="flex flex-wrap items-center gap-2">
+<button class="px-4 py-2 rounded-xl bg-emerald-700 text-white font-semibold text-xs sm:text-sm shadow-sm transition">
+          Semua Iklan (3)
+        </button>
+<button class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 font-semibold text-xs sm:text-sm transition">
+          Sedang Tayang (2)
+        </button>
+<button class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 font-semibold text-xs sm:text-sm transition">
+          Terjual (1)
+        </button>
+<button class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 font-semibold text-xs sm:text-sm transition">
+          Pesanan Open PO (2)
+        </button>
+</div>
+<div class="flex items-center gap-2 text-xs text-slate-500 bg-emerald-50/60 px-3.5 py-2 rounded-xl border border-emerald-100">
+<span class="material-symbols-outlined text-emerald-700 text-[16px]">info</span>
+<span>💡 Iklan otomatis di-refresh tiap 7 hari agar selalu relevan di pencarian kampus Padang Bulan.</span>
+</div>
+</div>
+<!-- Grid Kartu Listing Barang Preloved -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Product Card 1 (Active) -->
+<article class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col">
+<div class="relative w-full h-48 bg-slate-100">
+<img alt="Laptop Lenovo Thinkpad L480" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAWedXTL_5VNV_6z3_BFzTKjhn0ntqN13mWpKPbw1Rnmpa0bxHdcIRny4-8HbkOuXgHI-_-mqaq_eboOLcZpYkHaSgBbNLYjPPtxtNqASVAejz8uEeWWrk-zm4-hae4ZMem7cXjq1BKAv-fsyekW5tXhy-5NhLTHqFtmP2G8kvvKpN69VOkFk62PlbTO1HS0DsizxdvsMvF00TEuDHiFbQJRtwt7JtePIyk-mcXjcBl"/>
+<span class="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-emerald-600 text-white text-[11px] font-bold shadow-sm">
+            Aktif Tayang
+          </span>
+<span class="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-white/90 backdrop-blur text-slate-700 text-[11px] font-semibold shadow-sm">
+            Dilihat 134×
+          </span>
+<div class="absolute bottom-3 left-3 px-2.5 py-1 rounded-full bg-slate-900/80 backdrop-blur text-white text-[11px] font-medium flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[13px] text-emerald-400">location_on</span>
+<span>COD Pendopo USU</span>
+</div>
+</div>
+<div class="p-5 flex-1 flex flex-col justify-between gap-4">
+<div>
+<div class="flex items-center justify-between text-xs text-slate-500 mb-2">
+<span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-semibold">Elektronik &amp; Laptop</span>
+<span class="font-medium">Fasilkom '22</span>
+</div>
+<h3 class="text-base font-bold text-slate-900 line-clamp-1">Laptop Lenovo Thinkpad L480 Core i5</h3>
+<p class="text-xs text-slate-500 mt-1.5 font-body line-clamp-2">
+              RAM 8GB SSD 256GB, mulus 92%, baterai 3-4 jam untuk ngoding &amp; tugas akhir. Bonus charger original dan pouch.
+            </p>
+<div class="text-xl font-extrabold text-emerald-700 mt-3">
+              Rp 2.850.000
+            </div>
+</div>
+<div class="pt-3 border-t border-slate-100 flex items-center gap-2">
+<button class="flex-1 py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition" type="button">
+              Ubah Harga
+            </button>
+<button class="flex-1 py-2 px-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold transition shadow-sm" type="button">
+              Tandai Terjual
+            </button>
+<button class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-red-50 hover:text-red-600 text-slate-500 flex items-center justify-center transition" title="Hapus Listing" type="button">
+<span class="material-symbols-outlined text-[17px]">delete</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Product Card 2 (Active) -->
+<article class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col">
+<div class="relative w-full h-48 bg-slate-100">
+<img alt="Buku Kalkulus Purcell Jilid 1" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCU5_sh7W_te4w0GrBJmMiZjMJBv56hyjOPqztG7jagudThN73GEqnJGQrO4xzjU2dm07Jm2e_m4f9se8vZ3ERKYQeVetAXDc7VM0zKCXy6tsUWJY_dPywfy5cFU3yht0kg5yH4SAzWBt-NixJHNQkCd871n2f7bmywHNbquRATeMd_HjgOVnjq1fO3iEdhq5QDhMsb9lfRoBen44CFFp_3dw3mVubcIZfPdGp8aFQV"/>
+<span class="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-emerald-600 text-white text-[11px] font-bold shadow-sm">
+            Aktif Tayang
+          </span>
+<span class="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-white/90 backdrop-blur text-slate-700 text-[11px] font-semibold shadow-sm">
+            Dilihat 62×
+          </span>
+<div class="absolute bottom-3 left-3 px-2.5 py-1 rounded-full bg-slate-900/80 backdrop-blur text-white text-[11px] font-medium flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[13px] text-emerald-400">location_on</span>
+<span>COD Pintu 1 Padang Bulan</span>
+</div>
+</div>
+<div class="p-5 flex-1 flex flex-col justify-between gap-4">
+<div>
+<div class="flex items-center justify-between text-xs text-slate-500 mb-2">
+<span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-semibold">Buku &amp; Diktat Kuliah</span>
+<span class="font-medium">Fasilkom '22</span>
+</div>
+<h3 class="text-base font-bold text-slate-900 line-clamp-1">Kalkulus Purcell Jilid 1 (Edisi 9)</h3>
+<p class="text-xs text-slate-500 mt-1.5 font-body line-clamp-2">
+              Halaman lengkap bersih tanpa coretan stabilo acak, sudah disampul mika bening tebal, pas untuk Maba semester ganjil.
+            </p>
+<div class="text-xl font-extrabold text-emerald-700 mt-3">
+              Rp 45.000
+            </div>
+</div>
+<div class="pt-3 border-t border-slate-100 flex items-center gap-2">
+<button class="flex-1 py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition" type="button">
+              Ubah Harga
+            </button>
+<button class="flex-1 py-2 px-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold transition shadow-sm" type="button">
+              Tandai Terjual
+            </button>
+<button class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-red-50 hover:text-red-600 text-slate-500 flex items-center justify-center transition" title="Hapus Listing" type="button">
+<span class="material-symbols-outlined text-[17px]">delete</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Product Card 3 (Sold Out) -->
+<article class="bg-white rounded-2xl border border-slate-200 shadow-sm transition-all overflow-hidden flex flex-col opacity-90 hover:opacity-100">
+<div class="relative w-full h-48 bg-slate-100">
+<img alt="Multimeter Digital Sanwa" class="w-full h-full object-cover grayscale-[20%]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDGU1KILY-0Mquh_cK0P3WYvcSX7yvGDTmdP20fbc-C-d8qHnQiPdMDUbj8NdLDYAu_vndZZpwg9WWzAThHWKxn0YvgvbyS7CMZ4V8hfGKeqWPLx8iR8l6_eZyQ4-HkrQZEiLKNCLtRnIj06neAHEmKipcXdyqcIsSgTvshpOchaKKX5_2u-m0zIvNTctFsRNgTejo7qy1Q3lZeSdbl11EqUALTbnrnte54ryoR2Vs_"/>
+<span class="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-slate-700 text-white text-[11px] font-bold shadow-sm">
+            Terjual (COD Selesai)
+          </span>
+<div class="absolute bottom-3 left-3 px-2.5 py-1 rounded-full bg-slate-900/80 backdrop-blur text-white text-[11px] font-medium flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[13px] text-emerald-400">check_circle</span>
+<span>Terjual ke Stambuk '23</span>
+</div>
+</div>
+<div class="p-5 flex-1 flex flex-col justify-between gap-4">
+<div>
+<div class="flex items-center justify-between text-xs text-slate-500 mb-2">
+<span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-semibold">Alat Praktikum Lab</span>
+<span class="font-medium text-emerald-700">Terjual 3 Hari Lalu</span>
+</div>
+<h3 class="text-base font-bold text-slate-900 line-clamp-1">Multimeter Digital Sanwa + Probe</h3>
+<p class="text-xs text-slate-500 mt-1.5 font-body line-clamp-2">
+              Dipakai 1 semester praktikum fisika dasar &amp; rangkaian listrik. Baterai 9V baru ganti.
+            </p>
+<div class="text-xl font-bold text-slate-400 mt-3 line-through">
+              Rp 85.000
+            </div>
+</div>
+<div class="pt-3 border-t border-slate-100 flex items-center gap-2">
+<button class="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition text-center" type="button">
+              Pasang Ulang / Duplikat Iklan
+            </button>
+</div>
+</div>
+</article>
+</div>
+</section>
+</main>
+<!-- 4. MASTER FOOTER 4-KOLOM (Identik Standar Baku Beranda Kampus Kita) -->
+<footer class="w-full bg-white border-t border-slate-200 mt-16 pt-12 pb-8">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 pb-10 border-b border-slate-100">
+<!-- Kolom 1: Identitas & Visi -->
+<div class="flex flex-col gap-3">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-emerald-700 text-white font-extrabold flex items-center justify-center text-sm shadow-sm">KK</div>
+<span class="text-lg font-bold text-slate-900 tracking-tight">Kampus Kita</span>
+<span class="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">Terverifikasi NIM</span>
+</div>
+<p class="text-xs text-slate-600 leading-relaxed font-body">
+          Platform nirlaba independen komunitas mahasiswa Universitas Sumatera Utara (USU) &amp; Politeknik Negeri Medan (POLMED) di kawasan Padang Bulan. Mewadahi jual-beli aman, open PO kuliner, dan interaksi kampus.
+        </p>
+<div class="flex items-center gap-2 mt-1 text-xs text-slate-500">
+<span class="material-symbols-outlined text-emerald-700 text-[16px]">verified_user</span>
+<span>Aman, Terpantau &amp; Terpercaya</span>
+</div>
+</div>
+<!-- Kolom 2: Titik Kumpul COD Resmi -->
+<div class="flex flex-col gap-3">
+<h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Titik Kumpul COD Resmi</h4>
+<ul class="text-xs text-slate-600 space-y-1.5 font-body">
+<li class="flex items-start gap-1.5"><span class="text-emerald-700 font-bold">•</span><strong>Zona USU:</strong> Pendopo Utama, Pintu 1 - 4, Gazebo FIB, Kantin FEB</li>
+<li class="flex items-start gap-1.5"><span class="text-emerald-700 font-bold">•</span><strong>Zona POLMED:</strong> Gazebo Gedung Z, Kantin Teknik, Lapangan Utama</li>
+<li class="flex items-start gap-1.5"><span class="text-emerald-700 font-bold">•</span>Dipantau Satpam &amp; Penerangan Memadai</li>
+</ul>
+</div>
+<!-- Kolom 3: Protokol Keamanan Transaksi -->
+<div class="flex flex-col gap-3">
+<h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Protokol Keamanan</h4>
+<ul class="text-xs text-slate-600 space-y-1.5 font-body">
+<li class="flex items-start gap-1.5"><span class="material-symbols-outlined text-emerald-700 text-[14px]">shield</span>Verifikasi identitas fisik &amp; KTM sebelum transaksi</li>
+<li class="flex items-start gap-1.5"><span class="material-symbols-outlined text-emerald-700 text-[14px]">visibility</span>Wajib cek kondisi fisik barang sebelum serah terima uang</li>
+<li class="flex items-start gap-1.5"><span class="material-symbols-outlined text-emerald-700 text-[14px]">schedule</span>Batas waktu COD aman: 08:00 - 18:30 WIB</li>
+</ul>
+</div>
+<!-- Kolom 4: Legalitas & Hak Cipta -->
+<div class="flex flex-col gap-3">
+<h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Panduan &amp; Bantuan</h4>
+<ul class="text-xs text-slate-600 space-y-2 font-body">
+<li><a class="hover:text-emerald-700 transition" href="#">Panduan Lengkap Aman COD</a></li>
+<li><a class="hover:text-emerald-700 transition" href="#">Etika Menfess &amp; Komunitas Mahasiswa</a></li>
+<li><a class="hover:text-emerald-700 transition text-red-600 flex items-center gap-1" href="#"><span class="material-symbols-outlined text-[14px]">report</span>Lapor Indikasi Penipuan</a></li>
+</ul>
+</div>
+</div>
+<div class="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 font-body">
+<p>© 2026 Inisiatif Kolaboratif Mahasiswa USU &amp; POLMED Padang Bulan. Hak Cipta Dilindungi.</p>
+<div class="flex items-center gap-4">
+<a class="hover:text-slate-800 transition" href="#">Privasi</a>
+<a class="hover:text-slate-800 transition" href="#">Syarat Layanan</a>
+<a class="hover:text-slate-800 transition" href="#">Pedoman Komunitas</a>
+</div>
+</div>
+</div>
+</footer>
+</body></html>

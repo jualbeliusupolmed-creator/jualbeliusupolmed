@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+
+<html lang="id"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_tab" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "background": "#faf8ff", "secondary-fixed": "#eaddff", "surface-bright": "#faf8ff", "outline-variant": "#bdc9c1", "surface-dim": "#d2d9f4", "secondary": "#712ae2", "inverse-on-surface": "#eef0ff", "inverse-surface": "#283044", "error-container": "#ffdad6", "on-primary": "#ffffff", "on-surface": "#131b2e", "surface-tint": "#006c4e", "surface": "#faf8ff", "surface-container-lowest": "#ffffff", "surface-container-highest": "#dae2fd", "secondary-container": "#8a4cfc", "surface-container-high": "#e2e7ff", "on-background": "#131b2e", "on-tertiary": "#ffffff", "tertiary-fixed": "#ffddb8", "on-primary-container": "#9ffdd3", "primary": "#005d42", "outline": "#6e7a73", "secondary-fixed-dim": "#d2bbff", "on-surface-variant": "#3e4943", "surface-container": "#eaedff", "inverse-primary": "#7bd8b1", "primary-container": "#047857", "on-tertiary-fixed-variant": "#653e00", "primary-fixed": "#97f5cc", "on-secondary-fixed-variant": "#5a00c6", "on-tertiary-fixed": "#2a1700", "tertiary-container": "#945d00", "on-primary-fixed-variant": "#00513a", "tertiary": "#734700", "on-primary-fixed": "#002115", "on-tertiary-container": "#ffe6cc", "on-secondary-container": "#fffbff", "on-secondary": "#ffffff", "surface-container-low": "#f2f3ff", "tertiary-fixed-dim": "#ffb95f", "on-secondary-fixed": "#25005a", "on-error-container": "#93000a", "primary-fixed-dim": "#7bd8b1", "surface-variant": "#dae2fd", "on-error": "#ffffff", "error": "#ba1a1a" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-lg": "1.5rem", "space-xs": "0.25rem", "gutter": "1rem", "margin-desktop": "3rem", "gutter-desktop": "1.5rem", "space-md": "1rem", "margin-tablet": "2rem", "space-sm": "0.5rem", "margin": "1rem", "space-xl": "2.5rem" }, fontFamily: { "label-sm": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "headline-sm": ["Plus Jakarta Sans"], "headline-lg-mobile": ["Plus Jakarta Sans"], "label-lg": ["Plus Jakarta Sans"], "body-sm": ["Inter"], "label-md": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "body-lg": ["Inter"], "headline-xl": ["Plus Jakarta Sans"], "body-md": ["Inter"], "headline-xl-mobile": ["Plus Jakarta Sans"] }, fontSize: { "label-sm": ["10px", { "lineHeight": "14px", "fontWeight": "700" }], "headline-lg": ["28px", { "lineHeight": "36px", "fontWeight": "700" }], "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }], "headline-lg-mobile": ["22px", { "lineHeight": "30px", "fontWeight": "700" }], "label-lg": ["14px", { "lineHeight": "20px", "fontWeight": "600" }], "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }], "label-md": ["12px", { "lineHeight": "16px", "fontWeight": "600" }], "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }], "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }], "headline-xl": ["36px", { "lineHeight": "44px", "fontWeight": "700" }], "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }], "headline-xl-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "700" }] } } } };</script><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style></head><body class="bg-background font-body-md text-on-surface min-h-screen flex flex-col antialiased selection:bg-primary-fixed"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 px-gutter flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-sm min-w-0"><span class="font-headline-sm text-headline-sm text-primary truncate tracking-tight">Kampus Kita</span><button class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm active:scale-95 transition-transform" type="button"><span class="material-symbols-outlined text-[14px]">school</span><span class="uppercase">USU</span><span class="material-symbols-outlined text-[14px]">unfold_more</span></button></div><div class="flex items-center gap-1 flex-shrink-0"><button aria-label="Pencarian" class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" type="button"><span class="material-symbols-outlined text-[22px]">search</span></button><button aria-label="Notifikasi" class="relative w-11 h-11 flex items-center justify-center rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" type="button"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-secondary"></span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center ml-1 flex-shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-24 bg-background"><div class="flex flex-col w-full">
+<!-- Sticky Top Quick Search & Faculty Filters -->
+<section class="sticky top-16 z-40 bg-surface/95 backdrop-blur-md px-margin pt-space-xs pb-space-sm shadow-sm">
+<!-- Search Input & Filter Button -->
+<div class="flex items-center gap-space-xs mb-space-xs">
+<div class="flex-1 flex items-center bg-surface-container-low rounded-xl px-3 py-2 text-on-surface shadow-xs">
+<span class="material-symbols-outlined text-outline text-[20px] mr-2">search</span>
+<input class="w-full bg-transparent font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none" placeholder="Cari laptop, kalkulus, jas lab..." type="text"/>
+<button aria-label="Bersihkan pencarian" class="text-outline hover:text-on-surface ml-1 p-0.5" type="button">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<button aria-label="Filter Lengkap" class="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl bg-surface-container-high text-on-surface-variant active:scale-95 transition-transform" id="filter-trigger" type="button">
+<span class="material-symbols-outlined text-[20px]">tune</span>
+</button>
+</div>
+<!-- Quick Micro-Pills / Filter Dropdowns Bar -->
+<div class="flex items-center gap-space-xs overflow-x-auto pb-1 text-label-md font-label-md">
+<!-- Campus Pill -->
+<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary-fixed text-on-primary-fixed whitespace-nowrap active:scale-95 shadow-xs" type="button">
+<span class="material-symbols-outlined text-[15px]">location_on</span>
+<span>Kampus: USU</span>
+<span class="material-symbols-outlined text-[14px]">expand_more</span>
+</button>
+<!-- Category Filter -->
+<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-surface-container text-on-surface-variant whitespace-nowrap active:scale-95" type="button">
+<span>Kategori</span>
+<span class="material-symbols-outlined text-[14px]">expand_more</span>
+</button>
+<!-- Sort Filter -->
+<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-surface-container text-on-surface-variant whitespace-nowrap active:scale-95" type="button">
+<span class="material-symbols-outlined text-[15px]">swap_vert</span>
+<span>Terbaru</span>
+</button>
+<!-- Quick Fast COD Toggle Pill -->
+<button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-surface-container text-on-surface-variant whitespace-nowrap active:scale-95" type="button">
+<span class="material-symbols-outlined text-[15px]">bolt</span>
+<span>Siap COD</span>
+</button>
+</div>
+</section>
+<!-- WTB (Want to Buy) Interactive Student Ticker -->
+<section class="px-margin my-space-xs">
+<div class="flex items-center justify-between bg-secondary-fixed/40 rounded-xl px-3 py-2 text-on-surface">
+<div class="flex items-center gap-2 min-w-0 pr-2">
+<span class="px-1.5 py-0.5 rounded-md bg-secondary text-on-secondary font-label-sm text-label-sm uppercase tracking-wider flex-shrink-0">
+          WTB
+        </span>
+<div class="overflow-hidden whitespace-nowrap">
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">
+<span class="font-label-sm text-on-surface font-semibold">Kalkulator fx-991EX</span> (Teknik '23) • <span class="font-label-sm text-on-surface font-semibold">Buku Purcell Kalkulus 9</span> • Jas Lab M
+          </p>
+</div>
+</div>
+<button class="flex-shrink-0 font-label-sm text-label-sm text-secondary font-bold hover:underline flex items-center" type="button">
+        + Pasang WTB
+      </button>
+</div>
+</section>
+<!-- Section Header Info & Fast Counter -->
+<div class="px-margin pt-space-xs pb-space-xs flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="font-headline-sm text-headline-sm text-on-surface">Etalase Kampus</span>
+<span class="px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm">48 Aktif</span>
+</div>
+<span class="font-body-sm text-body-sm text-outline">Terverifikasi NIM</span>
+</div>
+<!-- Product Catalog 2-Column Responsive Mobile Grid -->
+<div class="px-margin grid grid-cols-2 gap-space-sm pb-space-lg">
+<!-- Card 1: Laptop Lenovo Core i5 -->
+<article class="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-xs flex flex-col justify-between">
+<div>
+<div class="relative w-full aspect-[4/3] bg-surface-container-low overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Modern sleek slim grey laptop Lenovo on clean university study table with calculus notebook and ballpoint, bright natural library lighting, campus setting, university student aesthetic, high resolution photography" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBck7iLmFlwfXwBY2tBbKfj7mALJn6uT6K3-4gh1IBsybpLYN1f0Iy7F5kQSe1pFB6mOyyYvH_-rgXcL4lv_2sGEzcv4LrEsdvO55lkmqfXQzkMiYc5AgOD7ckIr-UEDi5-JYMdGydS11J3ixLoIQKu6GbslqfG2w4czDWRN1QMb1gjSKFHQU3HKNGFpj5Eia6OXf6x1EeCjUDi0Ugj04KYLGTmYblXZVusr-eXCtph"/>
+<button aria-label="Simpan ke favorit" class="favorite-toggle absolute top-2 right-2 w-7 h-7 rounded-full bg-surface/80 backdrop-blur-md flex items-center justify-center text-on-surface active:scale-90 transition-transform" type="button">
+<span class="material-symbols-outlined text-[16px]">favorite_border</span>
+</button>
+<span class="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-inverse-surface/80 backdrop-blur-sm text-inverse-on-surface font-label-sm text-label-sm">
+            Siap Pakai
+          </span>
+</div>
+<div class="p-2.5">
+<p class="font-headline-sm text-headline-sm text-primary mb-0.5">Rp 3.850.000</p>
+<h2 class="font-label-lg text-label-lg text-on-surface line-clamp-1 mb-1">Laptop Lenovo Core i5</h2>
+<!-- Seller micro chip -->
+<div class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-surface-container text-on-surface-variant font-label-sm text-label-sm mb-1.5">
+<span class="material-symbols-outlined text-[12px] text-primary">verified</span>
+<span class="truncate max-w-[100px]">Rizky • Fasilkom '21</span>
+</div>
+<!-- Verified COD Location -->
+<div class="flex items-center gap-1 text-outline font-body-sm text-body-sm mb-2">
+<span class="material-symbols-outlined text-[13px] text-primary flex-shrink-0">location_on</span>
+<span class="truncate">Lobi FT / Fasilkom</span>
+</div>
+</div>
+</div>
+<!-- Action Footer -->
+<div class="px-2.5 pb-2.5 pt-0 flex items-center gap-1.5">
+<button class="flex-1 py-1.5 px-2 rounded-lg bg-surface-container text-on-surface font-label-sm text-label-sm active:scale-95 transition-transform text-center" type="button">
+          Detail
+        </button>
+<button class="py-1.5 px-2.5 rounded-lg bg-primary-container text-on-primary font-label-sm text-label-sm active:scale-95 transition-transform flex items-center justify-center" type="button">
+<span class="material-symbols-outlined text-[15px]">chat</span>
+</button>
+</div>
+</article>
+<!-- Card 2: Helm Bogo Retro Murah -->
+<article class="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-xs flex flex-col justify-between">
+<div>
+<div class="relative w-full aspect-[4/3] bg-surface-container-low overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Retro vintage cream and pastel green open face motorcycle scooter helmet with bubble visor, sitting on clean wooden campus bench, soft natural sunlight, campus morning vibe, commercial product angle" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqRXMMObfIyvFr9s_MZFsfm8VY7_7fv2YjQ6SAX4YiCp1ZpGrMAE3qlqXQsZHAoXLRD9QLwHYLP065CQX888JiS5gCi7XIc6CdeuQ3EGWSF1u5ZMVRwWmEWg9z0kFwS4ZAAQHraj3C9ZxVIsjDbzciH5R5d-8v7cwr8UgjrM6EASD58iaGFjePUiA__IjLTkfYTGFOAd1wVL8y3cGBEUxkhqRcXBEqfWpXC2XgMyke"/>
+<button aria-label="Simpan ke favorit" class="favorite-toggle absolute top-2 right-2 w-7 h-7 rounded-full bg-surface/80 backdrop-blur-md flex items-center justify-center text-on-surface active:scale-90 transition-transform" type="button">
+<span class="material-symbols-outlined text-[16px]">favorite_border</span>
+</button>
+<span class="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-tertiary-container text-on-tertiary-container font-label-sm text-label-sm">
+            Stok Tipis
+          </span>
+</div>
+<div class="p-2.5">
+<p class="font-headline-sm text-headline-sm text-primary mb-0.5">Rp 85.000</p>
+<h2 class="font-label-lg text-label-lg text-on-surface line-clamp-1 mb-1">Helm Bogo Retro Pastel</h2>
+<div class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-surface-container text-on-surface-variant font-label-sm text-label-sm mb-1.5">
+<span class="material-symbols-outlined text-[12px] text-primary">verified</span>
+<span class="truncate max-w-[100px]">Nanda • Kehutanan '22</span>
+</div>
+<div class="flex items-center gap-1 text-outline font-body-sm text-body-sm mb-2">
+<span class="material-symbols-outlined text-[13px] text-primary flex-shrink-0">location_on</span>
+<span class="truncate">Pendopo USU / Pintu 2</span>
+</div>
+</div>
+</div>
+<div class="px-2.5 pb-2.5 pt-0 flex items-center gap-1.5">
+<button class="flex-1 py-1.5 px-2 rounded-lg bg-surface-container text-on-surface font-label-sm text-label-sm active:scale-95 transition-transform text-center" type="button">
+          Detail
+        </button>
+<button class="py-1.5 px-2.5 rounded-lg bg-primary-container text-on-primary font-label-sm text-label-sm active:scale-95 transition-transform flex items-center justify-center" type="button">
+<span class="material-symbols-outlined text-[15px]">chat</span>
+</button>
+</div>
+</article>
+<!-- Card 3: Sepeda Lipat Kampus 20 Inch -->
+<article class="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-xs flex flex-col justify-between">
+<div>
+<div class="relative w-full aspect-[4/3] bg-surface-container-low overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Compact foldable 20 inch commuter bicycle in sage green parked under green tropical tree at Universitas Sumatera Utara campus walkway, clear bright daylight, clean campus pavement background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9fyIMow2btwXM4EYCLFWxF2izoQs2itDELZsjxasDbiHpU2FlNSkvbWqr2Cb_E7JCak7biCeDmFeuK_gy5MkmmIwTw5UeYAFM4rITrEPAKu2J2HuyHLy-E_dIcjG7oScD4sw9FaHgO_cz6EZzdoLqYAkNZ9cWbpZkfQ_O9qdtEGVjHDbCbw1SbpeOaMg4BWpuPA1lR-bQpFq61BV-_JNYV2mCo5SKv-8kTlV0iKPU"/>
+<button aria-label="Simpan ke favorit" class="favorite-toggle absolute top-2 right-2 w-7 h-7 rounded-full bg-surface/80 backdrop-blur-md flex items-center justify-center text-on-surface active:scale-90 transition-transform" type="button">
+<span class="material-symbols-outlined text-[16px]">favorite_border</span>
+</button>
+<span class="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm">
+            Mulus 95%
+          </span>
+</div>
+<div class="p-2.5">
+<p class="font-headline-sm text-headline-sm text-primary mb-0.5">Rp 650.000</p>
+<h2 class="font-label-lg text-label-lg text-on-surface line-clamp-1 mb-1">Sepeda Lipat Kampus 20"</h2>
+<div class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-surface-container text-on-surface-variant font-label-sm text-label-sm mb-1.5">
+<span class="material-symbols-outlined text-[12px] text-primary">verified</span>
+<span class="truncate max-w-[100px]">Ahmad • FEB '20</span>
+</div>
+<div class="flex items-center gap-1 text-outline font-body-sm text-body-sm mb-2">
+<span class="material-symbols-outlined text-[13px] text-primary flex-shrink-0">location_on</span>
+<span class="truncate">Kantin FEB USU</span>
+</div>
+</div>
+</div>
+<div class="px-2.5 pb-2.5 pt-0 flex items-center gap-1.5">
+<button class="flex-1 py-1.5 px-2 rounded-lg bg-surface-container text-on-surface font-label-sm text-label-sm active:scale-95 transition-transform text-center" type="button">
+          Detail
+        </button>
+<button class="py-1.5 px-2.5 rounded-lg bg-primary-container text-on-primary font-label-sm text-label-sm active:scale-95 transition-transform flex items-center justify-center" type="button">
+<span class="material-symbols-outlined text-[15px]">chat</span>
+</button>
+</div>
+</article>
+<!-- Card 4: Papan LED Laprak / Tracing Board -->
+<article class="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-xs flex flex-col justify-between">
+<div>
+<div class="relative w-full aspect-[4/3] bg-surface-container-low overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Slim glowing A4 LED light box tracing board with millimeter grid paper and technical mechanical pencil for engineering drafting, student dorm workspace aesthetic, studio flatlay illumination" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA73K9ykaiZF9dgUROqySMyeK4Y854vmUQHcNAcDCwk_cIMFmNqvV4IA49zxIa1GHDM8Z00OryESIeaLp1LX9XEIOGKnXJtPSFPebmOd9XA9U6WlsQPf8mapgPJPf-vblou2a7KakYmvkL0jCE-zqZAEkw43pWJvzHpGXVd4HC5DXxGKasuARhKbyNRu0y5CgdZIrh02G8R_0iUkHDSWEVEHIzUyicmW59SHv1ESdHA"/>
+<button aria-label="Simpan ke favorit" class="favorite-toggle absolute top-2 right-2 w-7 h-7 rounded-full bg-surface/80 backdrop-blur-md flex items-center justify-center text-on-surface active:scale-90 transition-transform" type="button">
+<span class="material-symbols-outlined text-[16px]">favorite_border</span>
+</button>
+<span class="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm">
+            Baru
+          </span>
+</div>
+<div class="p-2.5">
+<p class="font-headline-sm text-headline-sm text-primary mb-0.5">Rp 45.000</p>
+<h2 class="font-label-lg text-label-lg text-on-surface line-clamp-1 mb-1">Papan LED Laprak A4</h2>
+<div class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-surface-container text-on-surface-variant font-label-sm text-label-sm mb-1.5">
+<span class="material-symbols-outlined text-[12px] text-primary">verified</span>
+<span class="truncate max-w-[100px]">Farhan • POLMED '22</span>
+</div>
+<div class="flex items-center gap-1 text-outline font-body-sm text-body-sm mb-2">
+<span class="material-symbols-outlined text-[13px] text-primary flex-shrink-0">location_on</span>
+<span class="truncate">Gedung Z POLMED</span>
+</div>
+</div>
+</div>
+<div class="px-2.5 pb-2.5 pt-0 flex items-center gap-1.5">
+<button class="flex-1 py-1.5 px-2 rounded-lg bg-surface-container text-on-surface font-label-sm text-label-sm active:scale-95 transition-transform text-center" type="button">
+          Detail
+        </button>
+<button class="py-1.5 px-2.5 rounded-lg bg-primary-container text-on-primary font-label-sm text-label-sm active:scale-95 transition-transform flex items-center justify-center" type="button">
+<span class="material-symbols-outlined text-[15px]">chat</span>
+</button>
+</div>
+</article>
+<!-- Card 5: Kemeja Sidang Putih Katun Oxford -->
+<article class="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-xs flex flex-col justify-between">
+<div>
+<div class="relative w-full aspect-[4/3] bg-surface-container-low overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Crisp clean white formal cotton oxford shirt neatly hung on natural wood hanger with subtle black necktie, clean neutral wall background, college graduation thesis defense attire, studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6jabJsEvPsm2rVoEKN9Zv9Qtuq9YwzluayfVcE_NNzlXuGS00ftZU5Bav7L9MNsHqQrH9eTA17hZ1Z_LsTEAIqWUyHA79g7TEXZ-T0djqQoux44SQnAJRBJqHVDGSyVKrDL90uTuQDHBHFGurGwa5oW1dyGf2vYisJnY4xCaKYVMIt6jBq2JEntf9i-Why858H-jMZ9CHFwHHiQ6_PxWVokzEHPPDjs8n0EizmgdH"/>
+<button aria-label="Simpan ke favorit" class="favorite-toggle absolute top-2 right-2 w-7 h-7 rounded-full bg-surface/80 backdrop-blur-md flex items-center justify-center text-on-surface active:scale-90 transition-transform" type="button">
+<span class="material-symbols-outlined text-[16px]">favorite_border</span>
+</button>
+<span class="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-inverse-surface/80 backdrop-blur-sm text-inverse-on-surface font-label-sm text-label-sm">
+            Sisa 1
+          </span>
+</div>
+<div class="p-2.5">
+<p class="font-headline-sm text-headline-sm text-primary mb-0.5">Rp 35.000</p>
+<h2 class="font-label-lg text-label-lg text-on-surface line-clamp-1 mb-1">Kemeja Sidang Putih L</h2>
+<div class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-surface-container text-on-surface-variant font-label-sm text-label-sm mb-1.5">
+<span class="material-symbols-outlined text-[12px] text-primary">verified</span>
+<span class="truncate max-w-[100px]">Dinda • Hukum '20</span>
+</div>
+<div class="flex items-center gap-1 text-outline font-body-sm text-body-sm mb-2">
+<span class="material-symbols-outlined text-[13px] text-primary flex-shrink-0">location_on</span>
+<span class="truncate">Perpus Pusat USU</span>
+</div>
+</div>
+</div>
+<div class="px-2.5 pb-2.5 pt-0 flex items-center gap-1.5">
+<button class="flex-1 py-1.5 px-2 rounded-lg bg-surface-container text-on-surface font-label-sm text-label-sm active:scale-95 transition-transform text-center" type="button">
+          Detail
+        </button>
+<button class="py-1.5 px-2.5 rounded-lg bg-primary-container text-on-primary font-label-sm text-label-sm active:scale-95 transition-transform flex items-center justify-center" type="button">
+<span class="material-symbols-outlined text-[15px]">chat</span>
+</button>
+</div>
+</article>
+<!-- Card 6: Knit Cardigan Rajut Tebal -->
+<article class="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-xs flex flex-col justify-between">
+<div>
+<div class="relative w-full aspect-[4/3] bg-surface-container-low overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Cozy oversized warm knit cardigan sweater in soft matcha green color folded neatly over a campus canvas tote bag, aesthetic student dorm room sunlight, minimalist collegiate fashion" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDIu7AOWnqh2ngrH3nbBI44xlNivHJTNOYrxsyJOqO8JXnBQPAA4YqS2vFGcdHBzrNfMPfdv6KJsjPOl9q6qxGCjDcUx4QlrwCRes4arOxzbgDsxxtEXk-AMjUAtZmhvTssoZJE5bHGKQ2iexiuBtPZYklucsxnWOtnAvtgGEPndvSP1fdkqXckI9dyQdiBEuvr68OPVEct-cT5ZoabivBEPuZWYxCsFYkJz6fordXI"/>
+<button aria-label="Simpan ke favorit" class="favorite-toggle absolute top-2 right-2 w-7 h-7 rounded-full bg-surface/80 backdrop-blur-md flex items-center justify-center text-on-surface active:scale-90 transition-transform" type="button">
+<span class="material-symbols-outlined text-[16px]">favorite_border</span>
+</button>
+<span class="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm">
+            Like New
+          </span>
+</div>
+<div class="p-2.5">
+<p class="font-headline-sm text-headline-sm text-primary mb-0.5">Rp 55.000</p>
+<h2 class="font-label-lg text-label-lg text-on-surface line-clamp-1 mb-1">Knit Cardigan Matcha</h2>
+<div class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-surface-container text-on-surface-variant font-label-sm text-label-sm mb-1.5">
+<span class="material-symbols-outlined text-[12px] text-primary">verified</span>
+<span class="truncate max-w-[100px]">Putri • FIB '23</span>
+</div>
+<div class="flex items-center gap-1 text-outline font-body-sm text-body-sm mb-2">
+<span class="material-symbols-outlined text-[13px] text-primary flex-shrink-0">location_on</span>
+<span class="truncate">Gelanggang USU</span>
+</div>
+</div>
+</div>
+<div class="px-2.5 pb-2.5 pt-0 flex items-center gap-1.5">
+<button class="flex-1 py-1.5 px-2 rounded-lg bg-surface-container text-on-surface font-label-sm text-label-sm active:scale-95 transition-transform text-center" type="button">
+          Detail
+        </button>
+<button class="py-1.5 px-2.5 rounded-lg bg-primary-container text-on-primary font-label-sm text-label-sm active:scale-95 transition-transform flex items-center justify-center" type="button">
+<span class="material-symbols-outlined text-[15px]">chat</span>
+</button>
+</div>
+</article>
+</div>
+<!-- Bottom Pagination / Load More Hub -->
+<section class="px-margin mb-space-lg flex flex-col items-center">
+<button class="w-full py-3 px-4 rounded-xl bg-surface-container text-on-surface font-label-lg text-label-lg active:scale-98 transition-transform flex items-center justify-center gap-2 shadow-xs" type="button">
+<span>Muat Lebih Banyak Barang</span>
+<span class="material-symbols-outlined text-[18px]">expand_more</span>
+</button>
+<p class="font-body-sm text-body-sm text-outline mt-2 text-center">
+      Menampilkan 6 dari 48 barang aktif di USU &amp; POLMED
+    </p>
+</section>
+<!-- Sticky Floating Action Button: + Jual Barang -->
+<aside class="fixed bottom-24 right-4 z-40">
+<button class="flex items-center gap-2 pl-3.5 pr-4 py-3 rounded-full bg-primary-container text-on-primary shadow-xl active:scale-95 transition-all" type="button">
+<span class="material-symbols-outlined text-[20px]">add_circle</span>
+<span class="font-label-lg text-label-lg tracking-tight">Jual Barang</span>
+</button>
+</aside>
+</div>
+<script>
+  // Interactive client micro-interactions for favorite bookmark toggles
+  document.querySelectorAll('.favorite-toggle').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const icon = btn.querySelector('.material-symbols-outlined');
+      if (icon.innerText === 'favorite_border') {
+        icon.innerText = 'favorite';
+        btn.classList.add('text-error');
+        icon.setAttribute('style', "font-variation-settings: 'FILL' 1;");
+      } else {
+        icon.innerText = 'favorite_border';
+        btn.classList.remove('text-error');
+        icon.removeAttribute('style');
+      }
+    });
+  });
+</script></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/85 backdrop-blur-xl shadow-[0_-4px_16px_rgba(0,93,66,0.06)]" data-active-classes="text-primary font-label-md"><div class="flex justify-around items-center h-20 px-2"><a class="flex flex-col items-center justify-center gap-1 w-14 h-14 rounded-xl text-on-surface-variant hover:text-on-surface transition-colors" data-path="beranda" href="#"><span class="material-symbols-outlined text-[22px]">home</span><span class="font-label-sm text-label-sm">Beranda</span></a><a aria-current="page" class="flex flex-col items-center justify-center gap-1 w-14 h-14 rounded-xl transition-colors text-primary font-label-md" data-path="marketplace" href="#"><span class="material-symbols-outlined text-[22px]">storefront</span><span class="font-label-sm text-label-sm">Pasar</span></a><a class="flex flex-col items-center justify-center gap-1 w-14 h-14 rounded-xl text-on-surface-variant hover:text-on-surface transition-colors" data-path="open-po" href="#"><span class="material-symbols-outlined text-[22px]">inventory_2</span><span class="font-label-sm text-label-sm">Open PO</span></a><a class="flex flex-col items-center justify-center gap-1 w-14 h-14 rounded-xl text-on-surface-variant hover:text-on-surface transition-colors" data-path="menfess" href="#"><span class="material-symbols-outlined text-[22px]">forum</span><span class="font-label-sm text-label-sm">Menfess</span></a><a class="flex flex-col items-center justify-center gap-1 w-14 h-14 rounded-xl text-on-surface-variant hover:text-on-surface transition-colors" data-path="pesan-dan-akun" href="#"><span class="material-symbols-outlined text-[22px]">chat_bubble</span><span class="font-label-sm text-label-sm">Pesan</span></a></div></nav></body></html>
