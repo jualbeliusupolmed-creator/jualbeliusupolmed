@@ -11,16 +11,16 @@ export const metadata = {
   keywords: ["menfess usu", "menfess polmed", "mading kampus", "suara mahasiswa", "info usu", "info polmed"],
   alternates: { canonical: "/mading" },
   openGraph: {
-    title: "Mading & Menfess Kampus — USU & POLMED",
+    title: "Mading & Menfess Kampus — Suara Mahasiswa USU & POLMED | Kampus Kita",
     description: "Ruang curhat & mading digital mahasiswa USU & POLMED. Baca curhatan terpanas dan info kampus terbaru.",
     url: "/mading",
     type: "website",
     locale: "id_ID",
-    siteName: "Jual Beli & Komunitas Mahasiswa USU POLMED",
+    siteName: "Kampus Kita",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Mading & Menfess Kampus — USU & POLMED",
+    title: "Mading & Menfess Kampus — Suara Mahasiswa USU & POLMED | Kampus Kita",
     description: "Ruang curhat & mading digital mahasiswa USU & POLMED. Baca curhatan terpanas dan info kampus terbaru.",
   },
 };

@@ -6,24 +6,24 @@ export const dynamic = "force-dynamic";
 export const revalidate = 60;
 
 export const metadata = {
-  title: "Cari Barang & Jasa Mahasiswa",
+  title: "WTB Hub Mahasiswa — Kebutuhan Kuliah & Barang Dicari | Kampus Kita",
   description:
-    "Lagi cari laptop bekas, buku kuliah, kos, motor, atau jasa di sekitar USU & POLMED? Posting kebutuhanmu gratis di halaman Cari Barang — penjual yang punya barangnya akan menghubungimu langsung via WhatsApp.",
+    "Pusat permintaan barang & jasa (Want to Buy / WTB) mahasiswa USU & POLMED. Posting kebutuhan kuliahmu, dapatkan penawaran harga mahasiswa tercepat dengan COD aman titik kumpul kampus.",
   alternates: { canonical: "/dicari" },
   openGraph: {
-    title: "Cari Barang & Jasa Mahasiswa",
+    title: "WTB Hub Mahasiswa — Kebutuhan Kuliah & Barang Dicari | Kampus Kita",
     description:
-      "Posting barang atau jasa yang kamu cari secara gratis. Penjual datang menawarkan langsung ke WhatsApp-mu.",
+      "Posting kebutuhan kuliahmu secara gratis. Penjual mahasiswa langsung memberikan penawaran cepat dan COD aman.",
     url: "/dicari",
     type: "website",
     locale: "id_ID",
-    siteName: "Jual Beli & Komunitas Mahasiswa USU POLMED",
+    siteName: "Kampus Kita",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Cari Barang Mahasiswa — Jual Beli USU & POLMED",
+    title: "WTB Hub Mahasiswa — Kebutuhan Kuliah | Kampus Kita",
     description:
-      "Posting barang atau jasa yang kamu cari secara gratis. Penjual datang menawarkan langsung ke WhatsApp-mu.",
+      "Posting kebutuhan kuliahmu secara gratis. Penjual mahasiswa langsung memberikan penawaran cepat dan COD aman.",
   },
 };
 
