@@ -1,6 +1,7 @@
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { buildSlug } from "@/lib/slug";
 import { formatWa } from "@/lib/constants";
+import { encodeSellerSlug } from "@/lib/sellerSlug";
 
 export const revalidate = 3600;
 
@@ -75,7 +76,7 @@ export default async function sitemap() {
     const sellerRoutes = Array.from(sellerMap.entries())
       .map(([wa, bumpedAt]) => {
         const t = slugPerWa.get(wa);
-        const username = t?.slug || `u-${Buffer.from(String(wa).replace(/\D/g, "")).toString("base64url")}`;
+        const username = t?.slug || encodeSellerSlug(wa);
         return {
           url: `${baseUrl}/penjual/${username}`,
           lastModified: bumpedAt || new Date().toISOString(),
