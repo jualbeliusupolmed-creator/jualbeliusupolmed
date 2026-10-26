@@ -13,15 +13,22 @@ import CreateSheet from "./CreateSheet";
 import OTPModal from "./OTPModal";
 import MobileSidebarDrawer from "./MobileSidebarDrawer";
 
-// Lima tujuan utama navigasi bawah yang stabil dan mudah dihafal jempol.
 const BERANDA = { name: "Beranda", href: "/", icon: Icon.Home };
 const MARKET = {
-  name: "Market",
+  name: "Marketplace",
   href: "/jual-beli",
   match: ["/jual-beli", "/produk", "/jasa", "/favorit", "/dicari", "/toko", "/penjual", "/distributor"],
   icon: Icon.ShoppingBag,
 };
-const KOMUNITAS = {
+const OPEN_PO = {
+  name: "Open PO",
+  href: "https://open-po.vercel.app",
+  match: ["/open-po"],
+  icon: Icon.Coffee,
+  badgeText: "PO",
+  external: true,
+};
+const MENFESS = {
   name: "Menfess",
   href: "/mading",
   match: ["/mading", "/organisasi", "/oprec"],
@@ -54,6 +61,11 @@ function ItemNav({ n, pathname, badge = 0 }) {
             {badge > 99 ? "99+" : badge}
           </span>
         )}
+        {n.badgeText && (
+          <span className="absolute -top-1 -right-2 px-1 py-0.2 bg-amber-500 text-white font-extrabold text-[8px] rounded-full leading-none shadow-xs">
+            {n.badgeText}
+          </span>
+        )}
       </div>
       <span
         className={cn(
@@ -72,6 +84,21 @@ function ItemNav({ n, pathname, badge = 0 }) {
       ? "text-[#126B49] dark:text-emerald-400 font-bold"
       : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white font-semibold"
   );
+
+  if (n.external) {
+    return (
+      <a
+        href={n.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={() => hapticLight()}
+        aria-label={n.name}
+        className={buttonClasses}
+      >
+        {content}
+      </a>
+    );
+  }
 
   if (n.onClick) {
     return (
@@ -193,8 +220,8 @@ function BottomNavbarInner() {
               </span>
             </button>
 
-            <ItemNav n={KOMUNITAS} pathname={pathname} />
-            <ItemNav n={AKUN} pathname={pathname} />
+            <ItemNav n={OPEN_PO} pathname={pathname} />
+            <ItemNav n={MENFESS} pathname={pathname} />
           </div>
         </nav>
       )}
