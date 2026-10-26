@@ -15,7 +15,7 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
   const sold = listing.status === "sold";
   const isNew = listing.created_at &&
     (Date.now() - new Date(listing.created_at).getTime()) < 24 * 60 * 60 * 1000;
-  const isLowStock = listing.stock === 1;
+  const isLowStock = typeof listing.stock === "number" && listing.stock > 1 && listing.stock <= 3;
   const isSponsored = listing.sponsored_until && new Date(listing.sponsored_until) > new Date();
   const isRental = listing.type === "sewa";
   const isConditionNew = listing.condition === "new";

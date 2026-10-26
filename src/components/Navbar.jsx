@@ -16,7 +16,7 @@ import QuickSearchSheet from "@/components/QuickSearchSheet";
 const links = [
   { href: "/", label: "Beranda" },
   { href: "/jual-beli", label: "Marketplace" },
-  { href: "https://open-po.vercel.app", label: "PO Kampus 🍵", external: true },
+  { href: "https://open-po.vercel.app", label: "PO Kampus", external: true },
   { href: "/mading", label: "Menfess" },
   { href: "/organisasi", label: "UKM" },
   { href: "/oprec", label: "Oprec" },
@@ -86,15 +86,15 @@ export default function Navbar({ config }) {
       {/* Universal Ecosystem Top Ribbon: USU x POLMED */}
       <div className="h-8 bg-gradient-to-r from-purple-800 via-teal-600 to-emerald-600 text-white flex items-center justify-center px-3 text-[11px] font-bold shadow-xs relative z-50">
         <div className="flex items-center gap-2">
-          <span className="opacity-95">🛍️ Jual Beli &amp; Menfess (Aktif)</span>
+          <span className="opacity-95 font-semibold">Jual Beli &amp; Menfess (Aktif)</span>
           <span className="w-1 h-1 rounded-full bg-white/60" aria-hidden="true" />
           <a
             href="https://open-po.vercel.app"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:underline opacity-95 hover:opacity-100 flex items-center gap-1"
+            className="hover:underline opacity-95 hover:opacity-100 flex items-center gap-1 font-semibold"
           >
-            <span>🍵 Buka / Pesan Open PO Kampus ↗</span>
+            <span>Buka / Pesan OpenPO Kampus ↗</span>
           </a>
         </div>
       </div>
@@ -102,20 +102,48 @@ export default function Navbar({ config }) {
       {/* ── Top bar: Apple Frosted Glass ── */}
       <div className="border-b border-black/[0.06] bg-white/85 backdrop-blur-2xl transition-all duration-300 dark:border-white/[0.08] dark:bg-[#0f172a]/95">
         <div className="mx-auto flex min-w-0 max-w-6xl items-center justify-between gap-1 px-2.5 py-1.5 min-[390px]:px-3">
-          {/* Logo */}
-          <Link href="/" className="flex min-w-0 shrink items-center gap-1.5 active:scale-[0.98] transition-transform group">
-            <div className="shrink-0 transition-transform duration-300 group-hover:scale-105">
-              <Logo className="h-5 w-5" src={config?.site?.logoUrl} />
-            </div>
-            <div className="flex flex-col">
-              <span className="truncate text-[12px] font-extrabold leading-none tracking-tight text-[#1d1d1f] transition-colors min-[350px]:inline dark:text-[#f5f5f7] min-[390px]:text-[13px]">
-                Kampusfess
-              </span>
-              <span className="hidden min-[420px]:block text-[9px] font-semibold text-slate-400 dark:text-slate-500 leading-tight mt-0.5">
-                USU • POLMED
-              </span>
-            </div>
-          </Link>
+          <div className="flex items-center gap-1 min-w-0">
+            {/* Mobile Hamburger Menu Button */}
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  window.dispatchEvent(new CustomEvent("drawer:open"));
+                }
+              }}
+              aria-label="Buka Menu Kampus"
+              title="Menu Kampus"
+              className="md:hidden flex h-10 w-10 items-center justify-center rounded-full text-slate-700 dark:text-slate-200 hover:bg-black/[0.05] dark:hover:bg-white/[0.08] active:scale-90 transition-all shrink-0"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                className="h-5 w-5"
+              >
+                <line x1="4" y1="7" x2="20" y2="7" />
+                <line x1="4" y1="12" x2="20" y2="12" />
+                <line x1="4" y1="17" x2="20" y2="17" />
+              </svg>
+            </button>
+
+            {/* Logo */}
+            <Link href="/" className="flex min-w-0 shrink items-center gap-1.5 active:scale-[0.98] transition-transform group">
+              <div className="shrink-0 transition-transform duration-300 group-hover:scale-105">
+                <Logo className="h-5 w-5" src={config?.site?.logoUrl} />
+              </div>
+              <div className="flex flex-col">
+                <span className="truncate text-[12px] font-extrabold leading-none tracking-tight text-[#1d1d1f] transition-colors min-[350px]:inline dark:text-[#f5f5f7] min-[390px]:text-[13px]">
+                  Kampusfess
+                </span>
+                <span className="hidden min-[420px]:block text-[9px] font-semibold text-slate-400 dark:text-slate-500 leading-tight mt-0.5">
+                  USU • POLMED
+                </span>
+              </div>
+            </Link>
+          </div>
 
           {/* Right side: search, unified user account button, notif, theme, cta */}
           <div className="flex shrink-0 items-center gap-0.5 min-[390px]:gap-1.5">
@@ -203,8 +231,8 @@ export default function Navbar({ config }) {
             <button
               onClick={toggleTheme}
               className="flex h-8 w-8 items-center justify-center rounded-full border border-black/[0.08] bg-black/[0.04] text-slate-700 transition-all duration-200 hover:bg-black/[0.08] hover:text-[#1d1d1f] active:scale-90 dark:border-white/[0.12] dark:bg-white/[0.08] dark:text-amber-300 dark:hover:bg-white/[0.14] shadow-xs"
-              aria-label={dark ? "Beralih ke Mode Terang" : "Beralih ke Mode Gelap"}
-              title={dark ? "Mode Terang" : "Mode Gelap"}
+              aria-label={dark ? "Tema: Gelap (Beralih ke Terang)" : "Tema: Terang (Beralih ke Gelap)"}
+              title={dark ? "Tema: Gelap" : "Tema: Terang"}
             >
               <div className="relative h-4 w-4 overflow-hidden">
                 <svg className={`absolute inset-0 h-4 w-4 transform transition-transform duration-500 ${dark ? 'translate-y-full opacity-0' : 'translate-y-0 opacity-100 text-slate-700'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">

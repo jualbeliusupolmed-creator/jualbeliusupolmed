@@ -62,10 +62,10 @@ export async function GET(req) {
       )
       .eq("status", "active");
 
-    if (typeStr && typeStr !== "all") {
+    if (typeStr && typeStr !== "all" && typeStr !== "default") {
       query = query.in("type", typeStr.split(","));
-    } else if (typeStr !== "all") {
-      query = query.in("type", ["barang", "poster", "sewa"]);
+    } else {
+      query = query.in("type", ["barang", "poster", "sewa", "gratis"]);
     }
 
     if (cat) query = query.eq("category", cat);

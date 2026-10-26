@@ -1408,29 +1408,8 @@ export default function SuperAppHome({
               </Link>
             </section>
 
-            {/* Mobile bottom card to jump to Menfess */}
-            <div className="lg:hidden apple-glass-card p-3.5 flex items-center justify-between gap-3">
-              <div>
-                <p className="font-bold text-xs text-[#1d1d1f] dark:text-white">Curhat &amp; Menfess Kampus</p>
-                <p className="text-[10.5px] text-slate-400">Suara anonim, cerita &amp; info mahasiswa</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  triggerHaptic("light");
-                  setMobileTab("menfess");
-                  if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-                className="px-3.5 py-1.5 rounded-full bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold shadow-xs active:scale-95 transition-all shrink-0 flex items-center gap-1"
-              >
-                <span>Buka Menfess</span>
-                <Icon.ArrowRight className="w-3 h-3" />
-              </button>
-            </div>
-
           </div>{/* end kolom tengah */}
 
-          {/* ════════════════════════════════════════
           {/* ════════════════════════════════════════
               OPEN PO SECTION (MOBILE & DESKTOP when mobileTab === 'openpo')
               "konten open po real dan terintegrasi secara realtime dari Supabase Open PO"

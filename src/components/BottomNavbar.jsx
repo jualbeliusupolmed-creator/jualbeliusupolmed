@@ -126,6 +126,13 @@ function BottomNavbarInner() {
     }
   }, [pathname]);
 
+  // Listen for drawer:open event from header hamburger button
+  useEffect(() => {
+    function onOpenDrawer() { setBukaSidebar(true); }
+    window.addEventListener("drawer:open", onOpenDrawer);
+    return () => window.removeEventListener("drawer:open", onOpenDrawer);
+  }, []);
+
   // Sembunyikan/minimalkan BottomNavbar jika sedang di dalam room chat aktif atau halaman detail produk
   const isChatRoom =
     pathname === "/chat" && searchParams && (searchParams.has("anon") || searchParams.has("room"));
@@ -154,42 +161,7 @@ function BottomNavbarInner() {
 
   return (
     <>
-
-      {/* Tombol Menu Burger: Nempel di Kiri Agak Bawah Dikit (Khusus Mobile) */}
-      {!hideFloating && (
-        <div
-          className={cn(
-            "fixed bottom-[calc(max(1.25rem,env(safe-area-inset-bottom))+3.5rem)] left-4 z-40 md:hidden transition-all duration-300",
-            menyingkir ? "translate-y-24 opacity-0 pointer-events-none" : "translate-y-0 opacity-100"
-          )}
-        >
-          <button
-            type="button"
-            onClick={() => {
-              hapticLight();
-              setBukaSidebar(true);
-            }}
-            aria-label="Buka Menu Kampus (Sidebar)"
-            title="Menu Kampus"
-            className="group relative flex h-11 w-11 items-center justify-center rounded-full bg-white/95 dark:bg-[#1c1c1e]/95 text-slate-700 dark:text-slate-200 shadow-[0_8px_20px_rgba(0,0,0,0.12)] border border-black/[0.08] dark:border-white/[0.12] backdrop-blur-xl active:scale-90 transition-all duration-200"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              className="h-5 w-5 transition-transform duration-200 group-hover:scale-105"
-            >
-              <line x1="4" y1="7" x2="20" y2="7" />
-              <line x1="4" y1="12" x2="20" y2="12" />
-              <line x1="4" y1="17" x2="20" y2="17" />
-            </svg>
-          </button>
-        </div>
-      )}
-
-      {/* Tombol Buat Baru: Ikon Plus Melayang di Kiri Bawah (Khusus Mobile) */}
+      {/* Tombol Pasang Iklan Baru: Floating Action Button di Kiri Bawah (Khusus Mobile) */}
       {!hideFloating && (
         <div
           className={cn(
@@ -203,8 +175,8 @@ function BottomNavbarInner() {
               hapticMedium();
               setBukaBuat(true);
             }}
-            aria-label="Buat postingan atau iklan baru"
-            title="Buat Baru"
+            aria-label="Pasang Iklan Baru"
+            title="Pasang Iklan"
             className="group relative flex h-12 w-12 items-center justify-center rounded-full bg-primary hover:bg-primary-hover text-white shadow-[0_10px_25px_rgba(124,58,237,0.45)] ring-4 ring-white/90 dark:ring-[#111113]/90 active:scale-90 transition-all duration-200"
           >
             <svg
