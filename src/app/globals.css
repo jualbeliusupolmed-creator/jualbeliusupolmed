@@ -62,34 +62,14 @@ body:has([data-mobile-overlay="sponsor"]) [data-mobile-overlay="notification"] {
 }
 
 body {
-  @apply bg-[#f8f9fa] text-[#1d1d1f] antialiased transition-colors duration-500 dark:bg-[#09090b] dark:text-slate-200;
+  @apply bg-[#f8f9fa] text-[#1f2937] antialiased transition-colors duration-300 dark:bg-[#09090b] dark:text-slate-200;
   font-family: var(--font-jakarta), "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  letter-spacing: -0.015em;
+  letter-spacing: -0.01em;
 }
 
-/* Subtle Animated Mesh Background */
+/* Purge AI floating background gradient for clean real-world e-commerce feel */
 body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  background:
-    radial-gradient(circle at 15% 50%, rgba(124, 58, 237, 0.04) 0%, transparent 50%),
-    radial-gradient(circle at 85% 30%, rgba(6, 89, 50, 0.03) 0%, transparent 50%);
-  background-size: 200% 200%;
-  animation: meshGradient 15s ease infinite alternate;
-  pointer-events: none;
-}
-.dark body::before {
-  background:
-    radial-gradient(circle at 15% 50%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 85% 30%, rgba(52, 211, 153, 0.05) 0%, transparent 50%);
-}
-
-@keyframes meshGradient {
-  0% { background-position: 0% 0%; }
-  50% { background-position: 100% 100%; }
-  100% { background-position: 0% 100%; }
+  display: none !important;
 }
 
 ::selection {
