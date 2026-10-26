@@ -134,6 +134,15 @@ export default function SuperAppHome({
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [campusDropdownOpen, setCampusDropdownOpen] = useState(false);
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+  const [wtbIndex, setWtbIndex] = useState(0);
+  const searchInputRef = useRef(null);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setWtbIndex((prev) => (prev + 1) % 4);
+    }, 3200);
+    return () => clearInterval(timer);
+  }, []);
 
   // Realtime Open PO Batches
   const [poBatches, setPoBatches] = useState(initialPoBatches);
@@ -536,26 +545,86 @@ export default function SuperAppHome({
         </div>
       )}
 
-      {/* ── TOP HEADER NAVIGATION (Modern Unified Bar) ── */}
-      <header className="sticky top-0 z-50 bg-white/85 dark:bg-[#18181b]/90 backdrop-blur-md border-b border-slate-200/70 dark:border-white/[0.08] shadow-xs">
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-6">
+      {/* ── TOP HEADER NAVIGATION (Responsive: Mobile Shell < lg, Desktop Bar >= lg) ── */}
+      <header className="sticky top-0 z-50 bg-white/95 dark:bg-[#18181b]/95 backdrop-blur-xl border-b border-slate-200/80 dark:border-white/[0.08] shadow-xs">
+        {/* Mobile Header (< lg) */}
+        <div className="lg:hidden h-14 px-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Link href="/" className="w-9 h-9 rounded-xl bg-emerald-800 text-white flex items-center justify-center shrink-0 shadow-xs ring-2 ring-emerald-600/20">
+              <Icon.GraduationCap className="w-5 h-5 text-emerald-300" />
+            </Link>
+            <div className="flex flex-col min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="font-extrabold text-[15px] text-slate-900 dark:text-white tracking-tight truncate">
+                  Kampus Kita
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setCampusDropdownOpen(!campusDropdownOpen)}
+                  className="px-2 py-0.5 rounded-full bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-950/80 text-emerald-900 dark:text-emerald-300 text-[10px] uppercase font-bold tracking-wide shrink-0 flex items-center gap-0.5 transition-colors"
+                >
+                  {selectedCampus === "Semua" ? "USU • POLMED" : selectedCampus}
+                  <Icon.ChevronDown className="w-3 h-3" />
+                </button>
+              </div>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate font-medium">
+                Komunitas &amp; Marketplace Kampus
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => searchInputRef.current?.focus()}
+              aria-label="Pencarian"
+              className="w-8 h-8 flex items-center justify-center rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-95"
+            >
+              <Icon.Search className="w-[18px] h-[18px]" />
+            </button>
+            <Link
+              href="/chat"
+              aria-label="Pesan"
+              className="relative w-8 h-8 flex items-center justify-center rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-95"
+            >
+              <Icon.MessageCircle className="w-[18px] h-[18px]" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-600 ring-2 ring-white dark:ring-[#18181b]" />
+            </Link>
+            {userWa ? (
+              <Link
+                href="/dashboard"
+                className="w-8 h-8 rounded-full bg-emerald-800 text-white flex items-center justify-center ring-2 ring-emerald-600/30 text-xs font-bold shadow-xs cursor-pointer active:scale-95"
+              >
+                {userWa.slice(-2)}
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowOtpModal(true)}
+                className="w-8 h-8 rounded-full bg-emerald-800 text-white flex items-center justify-center ring-2 ring-emerald-600/30 shadow-xs cursor-pointer active:scale-95"
+              >
+                <Icon.User className="w-4 h-4 text-emerald-100" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Desktop Header (>= lg) */}
+        <div className="hidden lg:block max-w-[1440px] mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-16 gap-3">
             {/* Brand Logo */}
             <Link href="/" className="flex items-center gap-3 shrink-0 group">
               <div className="w-9 h-9 rounded-xl bg-emerald-800 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
-                <svg className="w-5 h-5 text-emerald-300 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M9 22V12h6v10" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <Icon.GraduationCap className="w-5 h-5 text-emerald-300" />
               </div>
               <div className="flex flex-col">
                 <span className="font-extrabold text-lg tracking-tight text-slate-900 dark:text-white leading-tight">Kampus Kita</span>
-                <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 tracking-tight leading-none hidden sm:inline">USU • POLMED Ecosystem</span>
+                <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 tracking-tight leading-none">USU • POLMED Ecosystem</span>
               </div>
             </Link>
 
             {/* Center Navigation Pill */}
-            <nav className="hidden lg:flex items-center gap-1 p-1 bg-slate-100/80 dark:bg-slate-800/80 rounded-full border border-slate-200/60 dark:border-white/[0.08] shrink-0 overflow-x-auto">
+            <nav className="flex items-center gap-1 p-1 bg-slate-100/80 dark:bg-slate-800/80 rounded-full border border-slate-200/60 dark:border-white/[0.08] shrink-0 overflow-x-auto">
               <Link href="/" className="flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold text-emerald-900 bg-white dark:bg-slate-700 dark:text-emerald-300 rounded-full shadow-xs transition-colors shrink-0">
                 <Icon.Home className="w-3.5 h-3.5 text-emerald-700" />
                 <span>Beranda</span>
@@ -662,9 +731,7 @@ export default function SuperAppHome({
                 onClick={() => setShowCreateSheet(true)}
                 className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-800 hover:bg-emerald-900 text-white font-semibold text-xs rounded-full shadow-xs hover:shadow transition duration-150 shrink-0 whitespace-nowrap active:scale-95"
               >
-                <svg className="w-3.5 h-3.5 text-emerald-300 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 4v16m8-8H4" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <Icon.Plus className="w-3.5 h-3.5 text-emerald-300 stroke-[2.5]" />
                 <span>+ Jual Barang</span>
               </button>
             </div>
@@ -698,37 +765,37 @@ export default function SuperAppHome({
           </div>
         </div>
 
-        {/* SearchBar + Jelajah Quick Chips Bar */}
-        <div className="mb-6 space-y-3">
-          <div className="flex flex-col sm:flex-row items-center gap-3">
-            <div className="relative flex-1 w-full">
+        {/* SearchBar + Quick Chips */}
+        <div className="mb-4 space-y-2.5">
+          <div className="flex flex-col sm:flex-row items-center gap-2.5">
+            <div className="relative flex-1 w-full shadow-xs rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-white/10 transition-all focus-within:ring-2 focus-within:ring-emerald-600/30">
               <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                 <Icon.Search className="w-4 h-4" />
               </span>
               <input
-                type="text"
+                ref={searchInputRef}
+                type="search"
                 value={listingSearch}
                 onChange={(e) => setListingSearch(e.target.value)}
-                placeholder="Cari laptop, kost, buku, jastip, or teman seprodi..."
-                className="w-full pl-10 pr-4 py-2.5 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-full focus:bg-white focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 transition shadow-xs placeholder-slate-400 text-slate-900 dark:text-white"
+                placeholder="Cari diktat, kos, risol mayo, PO..."
+                className="w-full h-11 pl-10 pr-10 bg-transparent text-slate-900 dark:text-white text-[13px] placeholder:text-slate-400 rounded-2xl focus:outline-none"
               />
-              {listingSearch && (
-                <button
-                  type="button"
-                  onClick={() => setListingSearch("")}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-white"
-                >
-                  <Icon.X className="w-4 h-4" />
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
+                aria-label="Filter Kategori"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-700 dark:hover:text-white"
+              >
+                <Icon.Filter className="w-4 h-4" />
+              </button>
             </div>
 
-            <div className="w-full sm:w-auto flex gap-2">
-              <div className="relative flex-1 sm:flex-none">
+            <div className="hidden sm:flex items-center gap-2">
+              <div className="relative">
                 <button
                   type="button"
                   onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
-                  className="w-full sm:w-auto flex items-center justify-between gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-700 dark:text-slate-200 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700/50 transition shadow-xs"
+                  className="flex items-center justify-between gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-700 dark:text-slate-200 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700/50 transition shadow-xs"
                 >
                   <span>{listingCategory === "Semua" ? "Kategori" : listingCategory}</span>
                   <Icon.ChevronDown className="w-3.5 h-3.5 text-slate-400" />
@@ -760,7 +827,7 @@ export default function SuperAppHome({
                   setSelectedCampus(next);
                   setListingCampus(next);
                 }}
-                className="flex-1 sm:flex-none flex items-center justify-between gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-700 dark:text-slate-200 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700/50 transition shadow-xs whitespace-nowrap"
+                className="flex items-center justify-between gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-700 dark:text-slate-200 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700/50 transition shadow-xs whitespace-nowrap"
               >
                 <span>Kampus: {selectedCampus === "Semua" ? "Semua" : selectedCampus}</span>
                 <Icon.ChevronDown className="w-3.5 h-3.5 text-slate-400" />
@@ -768,51 +835,111 @@ export default function SuperAppHome({
             </div>
           </div>
 
-          {/* Quick Chips Row */}
-          <div className="flex items-center gap-2 overflow-x-auto py-1 text-xs [scrollbar-width:none]">
-            <span className="text-emerald-800 dark:text-emerald-400 font-bold text-[11px] uppercase tracking-wider shrink-0 flex items-center gap-1.5">
-              <Icon.Zap className="w-3.5 h-3.5 text-emerald-600" />
-              Jelajah Kampus:
-            </span>
+          {/* Category Chips Bar */}
+          <div className="flex items-center gap-2 overflow-x-auto py-1 text-xs [scrollbar-width:none] -mx-4 px-4 sm:mx-0 sm:px-0">
             <button
               type="button"
-              onClick={() => { setListingSearch("kos"); setListingCategory("Kos"); }}
-              className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-emerald-50/50 border border-slate-200 dark:border-white/10 hover:border-emerald-300 rounded-full text-slate-700 dark:text-slate-300 hover:text-emerald-900 transition font-medium text-xs shadow-xs"
+              onClick={() => { setListingCategory("Semua"); setListingSearch(""); }}
+              className={`px-3.5 py-1.5 rounded-full text-[12px] font-semibold shrink-0 shadow-xs flex items-center gap-1.5 transition active:scale-95 ${
+                listingCategory === "Semua" && !listingSearch
+                  ? "bg-emerald-800 text-white"
+                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10"
+              }`}
             >
-              <Icon.Home className="w-3.5 h-3.5 text-slate-500" />
-              <span>Cari Kos Sekitar USU</span>
+              <Icon.Grid className="w-3.5 h-3.5" />
+              Semua
             </button>
-            <Link
-              href="/oprec"
-              className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-emerald-50/50 border border-slate-200 dark:border-white/10 hover:border-emerald-300 rounded-full text-slate-700 dark:text-slate-300 hover:text-emerald-900 transition font-medium text-xs shadow-xs"
-            >
-              <Icon.Megaphone className="w-3.5 h-3.5 text-slate-500" />
-              <span>Oprec &amp; Kepanitiaan</span>
-            </Link>
-            <Link
-              href="/organisasi"
-              className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-emerald-50/50 border border-slate-200 dark:border-white/10 hover:border-emerald-300 rounded-full text-slate-700 dark:text-slate-300 hover:text-emerald-900 transition font-medium text-xs shadow-xs"
-            >
-              <Icon.Users className="w-3.5 h-3.5 text-slate-500" />
-              <span>Komunitas &amp; UKM</span>
-            </Link>
             <button
               type="button"
-              onClick={() => { setListingSearch("buku"); setListingCategory("Buku"); }}
-              className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-emerald-50/50 border border-slate-200 dark:border-white/10 hover:border-emerald-300 rounded-full text-slate-700 dark:text-slate-300 hover:text-emerald-900 transition font-medium text-xs shadow-xs"
+              onClick={() => { setListingCategory("Buku"); setListingSearch(""); }}
+              className={`px-3.5 py-1.5 rounded-full text-[12px] shrink-0 border flex items-center gap-1.5 transition active:scale-95 ${
+                listingCategory === "Buku"
+                  ? "bg-emerald-800 text-white border-emerald-800 font-semibold"
+                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 font-medium"
+              }`}
             >
-              <Icon.BookOpen className="w-3.5 h-3.5 text-slate-500" />
-              <span>Bank Soal &amp; Diktat</span>
+              <Icon.BookOpen className="w-3.5 h-3.5" />
+              Buku &amp; Diktat
             </button>
-            <a
-              href="#wtb-section"
-              onClick={(e) => { e.preventDefault(); document.getElementById('wtb-section')?.scrollIntoView({ behavior: 'smooth' }); }}
-              className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-emerald-900 hover:bg-slate-900 border border-emerald-950 rounded-full text-white transition font-medium text-xs shadow-xs cursor-pointer"
+            <button
+              type="button"
+              onClick={() => { setListingCategory("Makanan"); setListingSearch(""); }}
+              className={`px-3.5 py-1.5 rounded-full text-[12px] shrink-0 border flex items-center gap-1.5 transition active:scale-95 ${
+                listingCategory === "Makanan"
+                  ? "bg-emerald-800 text-white border-emerald-800 font-semibold"
+                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 font-medium"
+              }`}
             >
-              <Icon.Search className="w-3.5 h-3.5 text-emerald-300" />
-              <span>Papan Barang Dicari (WTB)</span>
-            </a>
+              <Icon.Coffee className="w-3.5 h-3.5" />
+              Kuliner PO
+            </button>
+            <button
+              type="button"
+              onClick={() => { setListingCategory("Kos"); setListingSearch("kos"); }}
+              className={`px-3.5 py-1.5 rounded-full text-[12px] shrink-0 border flex items-center gap-1.5 transition active:scale-95 ${
+                listingCategory === "Kos"
+                  ? "bg-emerald-800 text-white border-emerald-800 font-semibold"
+                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 font-medium"
+              }`}
+            >
+              <Icon.Home className="w-3.5 h-3.5" />
+              Kos Mahasiswa
+            </button>
+            <button
+              type="button"
+              onClick={() => { setListingCategory("Elektronik"); setListingSearch(""); }}
+              className={`px-3.5 py-1.5 rounded-full text-[12px] shrink-0 border flex items-center gap-1.5 transition active:scale-95 ${
+                listingCategory === "Elektronik"
+                  ? "bg-emerald-800 text-white border-emerald-800 font-semibold"
+                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 font-medium"
+              }`}
+            >
+              <Icon.Laptop className="w-3.5 h-3.5" />
+              Elektronik
+            </button>
+            <button
+              type="button"
+              onClick={() => { setListingCategory("Fashion"); setListingSearch(""); }}
+              className={`px-3.5 py-1.5 rounded-full text-[12px] shrink-0 border flex items-center gap-1.5 transition active:scale-95 ${
+                listingCategory === "Fashion"
+                  ? "bg-emerald-800 text-white border-emerald-800 font-semibold"
+                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 font-medium"
+              }`}
+            >
+              <Icon.Shirt className="w-3.5 h-3.5" />
+              Fashion Preloved
+            </button>
           </div>
+        </div>
+
+        {/* WTB LIVE TICKER (BARANG DICARI MAHASISWA) */}
+        <div className="mb-5 flex items-center justify-between p-2.5 rounded-2xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/70 dark:border-amber-900/40 shadow-xs">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <span className="px-2 py-0.5 rounded-md bg-amber-600 text-white text-[10px] uppercase tracking-wider shrink-0 font-extrabold flex items-center gap-1">
+              <Icon.Megaphone className="w-3 h-3" />
+              WTB
+            </span>
+            <div className="overflow-hidden relative h-5 flex-1 min-w-0">
+              <div
+                className="flex flex-col transition-transform duration-500 ease-out"
+                style={{ transform: `translateY(-${wtbIndex * 20}px)` }}
+              >
+                {WTB_ITEMS.map((w, idx) => (
+                  <span key={idx} className="h-5 flex items-center text-[12px] text-slate-800 dark:text-slate-200 truncate font-medium">
+                    {w.item} ({w.campus}) — Budget: {w.budget}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowCreateSheet(true)}
+            className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-[12px] text-emerald-800 dark:text-emerald-300 font-bold shrink-0 flex items-center gap-0.5 shadow-xs border border-amber-200/80 dark:border-amber-900/40 transition-all active:scale-95"
+          >
+            <Icon.Plus className="w-3.5 h-3.5" />
+            Pasang
+          </button>
         </div>
 
         {/* Reorganized 2-Column Desktop Grid */}
@@ -966,39 +1093,39 @@ export default function SuperAppHome({
             </section>
 
             {/* 3. Marketplace Grid (Diletakkan di bawah PO & WTB) */}
-            <section id="marketplace-section" className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">
-                    Marketplace <span className="font-serif italic font-normal text-emerald-700 dark:text-emerald-400">Jual-Beli Terverifikasi</span>
-                  </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Barang preloved &amp; kebutuhan mahasiswa sekitar kampus USU &amp; POLMED
-                  </p>
+            <section id="marketplace-section" className="space-y-3.5">
+              <div className="flex flex-col space-y-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-[17px] font-bold text-slate-900 dark:text-white tracking-tight">
+                      Marketplace Preloved
+                    </h2>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      COD langsung di area kampus bebas ongkir
+                    </p>
+                  </div>
+                  <span className="text-[11px] text-emerald-800 dark:text-emerald-300 font-bold flex items-center gap-1 bg-emerald-100/70 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full">
+                    <Icon.CheckCircle className="w-3.5 h-3.5 text-emerald-700" />
+                    Aman COD
+                  </span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setListingSort("termurah")}
-                    className={`text-xs px-3 py-1 rounded-full transition shadow-xs ${
-                      listingSort === "termurah"
-                        ? "font-bold bg-emerald-900 border border-emerald-950 text-white"
-                        : "font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-50"
-                    }`}
-                  >
-                    Termurah
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setListingSort("terbaru")}
-                    className={`text-xs px-3 py-1 rounded-full transition shadow-xs ${
-                      listingSort === "terbaru"
-                        ? "font-bold bg-emerald-900 border border-emerald-950 text-white"
-                        : "font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-50"
-                    }`}
-                  >
-                    Terbaru
-                  </button>
+
+                {/* Campus Segment Filter */}
+                <div className="flex p-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-center">
+                  {["Semua", "USU", "POLMED"].map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => { setListingCampus(c); setSelectedCampus(c); }}
+                      className={`flex-1 py-1 rounded-lg text-[12px] font-bold transition ${
+                        listingCampus === c
+                          ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs"
+                          : "text-slate-500 hover:text-slate-900 dark:text-slate-400 font-medium"
+                      }`}
+                    >
+                      {c}
+                    </button>
+                  ))}
                 </div>
               </div>
 
@@ -1020,7 +1147,7 @@ export default function SuperAppHome({
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {filteredListings.slice(0, visibleListingCount).map((ad) => (
                     <ProductCard key={ad.id} listing={ad} />
                   ))}
@@ -1032,9 +1159,10 @@ export default function SuperAppHome({
                   <button
                     type="button"
                     onClick={() => setVisibleListingCount((prev) => prev + 12)}
-                    className="px-5 py-2.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 shadow-xs transition"
+                    className="w-full py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-800 dark:text-slate-200 text-[12px] font-semibold flex items-center justify-center gap-1.5 border border-slate-200/80 dark:border-white/10 shadow-xs transition active:scale-[0.99]"
                   >
-                    Muat Lebih Banyak ({filteredListings.length - visibleListingCount} tersisa)
+                    <Icon.RefreshCcw className="w-3.5 h-3.5" />
+                    Muat Lebih Banyak Barang
                   </button>
                 </div>
               )}
@@ -1188,6 +1316,23 @@ export default function SuperAppHome({
             </div>
           </aside>
         </div>
+
+        {/* SAFETY & ETHICS BANNER (TRANSAKSI AMAN MAHASISWA) */}
+        <section className="mt-6 pt-1">
+          <div className="p-3.5 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-900/40 flex items-start gap-3 shadow-xs">
+            <div className="w-8 h-8 rounded-xl bg-emerald-800 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Icon.Shield className="w-4 h-4 text-emerald-200" />
+            </div>
+            <div className="space-y-0.5 min-w-0">
+              <h4 className="text-[13px] text-emerald-950 dark:text-emerald-200 leading-tight font-extrabold">
+                Transaksi Aman Mahasiswa
+              </h4>
+              <p className="text-[11px] text-emerald-900/80 dark:text-emerald-300/80 leading-relaxed font-normal">
+                Selalu utamakan COD di titik temu resmi kampus (Pendopo, Pintu 1-4 Dr. Mansyur, Gedung Z POLMED) untuk kenyamanan dan keamanan bersama.
+              </p>
+            </div>
+          </div>
+        </section>
       </main>
 
       {/* ── 6. WRITE POST MODAL ── */}
