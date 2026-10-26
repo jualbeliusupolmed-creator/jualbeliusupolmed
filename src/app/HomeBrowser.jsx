@@ -803,7 +803,7 @@ export default function HomeBrowser({
                   href={`https://open-po.vercel.app?utm_source=jualbeliusupolmed&ref=search${q ? `&q=${encodeURIComponent(q)}` : ""}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="shrink-0 px-3.5 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition active:scale-95 flex items-center gap-1"
+                  className="shrink-0 px-3.5 py-1.5 rounded-lg bg-[#126B49] hover:bg-[#0e5238] text-white text-xs font-bold shadow-xs transition active:scale-98 flex items-center gap-1"
                 >
                   <span>Cek OpenPO</span>
                   <Icon.ExternalLink className="w-3.5 h-3.5" />
@@ -909,7 +909,7 @@ export default function HomeBrowser({
                 <div className="flex flex-wrap items-center justify-center gap-3">
                   <Link
                     href="/jual"
-                    className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-bold text-white bg-primary hover:brightness-105 active:scale-95 shadow-md shadow-primary/25 transition-all"
+                    className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-bold text-white bg-[#126B49] hover:bg-[#0e5238] active:scale-98 shadow-xs transition-all"
                   >
                     <span>+ Pasang Iklan Sekarang</span>
                   </Link>
@@ -917,7 +917,7 @@ export default function HomeBrowser({
                     href={`https://open-po.vercel.app?utm_source=jualbeliusupolmed&ref=empty_state${q ? `&q=${encodeURIComponent(q)}` : ""}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/25 active:scale-95 transition-all"
+                    className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-bold text-emerald-900 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-950 border border-emerald-200 dark:border-emerald-800/40 active:scale-98 transition-all"
                   >
                     <span>Cari PO di OpenPO ↗</span>
                   </a>

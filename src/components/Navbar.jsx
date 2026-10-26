@@ -83,19 +83,42 @@ export default function Navbar({ config }) {
 
   return (
     <header className="sticky top-0 z-40">
-      {/* Universal Ecosystem Top Ribbon: USU x POLMED */}
-      <div className="h-8 bg-gradient-to-r from-purple-800 via-teal-600 to-emerald-600 text-white flex items-center justify-center px-3 text-[11px] font-bold shadow-xs relative z-50">
-        <div className="flex items-center gap-2">
-          <span className="opacity-95 font-semibold">Jual Beli &amp; Menfess (Aktif)</span>
-          <span className="w-1 h-1 rounded-full bg-white/60" aria-hidden="true" />
-          <a
-            href="https://open-po.vercel.app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:underline opacity-95 hover:opacity-100 flex items-center gap-1 font-semibold"
-          >
-            <span>Buka / Pesan OpenPO Kampus ↗</span>
-          </a>
+      {/* Universal Ecosystem Switcher: USU & POLMED Student Ecosystem */}
+      <div className="h-8 bg-slate-100/90 dark:bg-[#18181b] border-b border-slate-200/80 dark:border-white/[0.08] flex items-center justify-between px-3 sm:px-4 text-[11px] font-medium relative z-50">
+        <div className="flex items-center gap-1.5 max-w-7xl mx-auto w-full justify-between">
+          <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto [scrollbar-width:none]">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 mr-1 hidden sm:inline">
+              Ekosistem:
+            </span>
+            <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 border border-emerald-600/30 text-emerald-800 dark:text-emerald-300 font-bold text-[10.5px] shadow-2xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400" />
+              <span>Jual Beli</span>
+              <span className="text-[9px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950 px-1 rounded">Aktif</span>
+            </div>
+            <a
+              href="https://open-po.vercel.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-white/60 dark:hover:bg-slate-800/60 font-semibold text-[10.5px] transition-colors"
+            >
+              <span>OpenPO Kampus</span>
+              <Icon.ExternalLink className="w-2.5 h-2.5 opacity-60" />
+            </a>
+            <Link
+              href="/mading"
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-800/60 font-semibold text-[10.5px] transition-colors hidden xs:inline-flex"
+            >
+              <span>Menfess</span>
+            </Link>
+          </div>
+
+          <div className="flex items-center gap-2 text-[10.5px] text-slate-500 dark:text-slate-400 shrink-0">
+            <span className="hidden sm:inline">Komunitas Mahasiswa USU &amp; POLMED</span>
+            <span className="text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>COD Kampus</span>
+            </span>
+          </div>
         </div>
       </div>
 
