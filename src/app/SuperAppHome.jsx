@@ -1472,6 +1472,7 @@ export default function SuperAppHome({
 
             {/* List Item PO Populer Realtime */}
             <div className="space-y-3">
+              {/* Header Box PO */}
               <div className="flex items-center justify-between px-1">
                 <div className="flex items-center gap-2">
                   <span className="flex h-2.5 w-2.5 relative">
@@ -1482,7 +1483,7 @@ export default function SuperAppHome({
                     Batch PO Aktif Sekarang
                   </h3>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                    {poBatches.length > 0 ? `${poBatches.length} Batch` : "Live"}
+                    {(poBatches || []).slice(0, 4).length > 0 ? `${(poBatches || []).slice(0, 4).length} Batch` : "Live"}
                   </span>
                 </div>
                 <a
@@ -1491,7 +1492,7 @@ export default function SuperAppHome({
                   rel="noopener noreferrer"
                   className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
                 >
-                  <span>Lihat Semua di Open PO</span>
+                  <span>Lihat Semua di OpenPO</span>
                   <Icon.ExternalLink className="w-3 h-3" />
                 </a>
               </div>
