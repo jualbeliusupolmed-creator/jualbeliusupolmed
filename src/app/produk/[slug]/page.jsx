@@ -362,6 +362,45 @@ export default async function ProdukPage({ params }) {
             )}
           </p>
 
+          {/* Bebas Ongkir & Temu di Kampus (SCREEN_15 Blueprint) */}
+          <div className="rounded-2xl p-4 bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-800/40 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#047857] text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Icon.ShoppingBag className="w-5 h-5 text-emerald-100" />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-bold text-xs sm:text-sm text-[#047857] dark:text-emerald-400 leading-snug">
+                Bebas Ongkir &amp; Temu di Kampus
+              </span>
+              <span className="text-[11px] text-slate-600 dark:text-slate-400">
+                Transaksi tatap muka langsung (COD) di titik kumpul resmi USU &amp; POLMED.
+              </span>
+            </div>
+          </div>
+
+          {/* Titik Temu COD Kampus Disepakati */}
+          <div className="rounded-2xl p-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 flex flex-col gap-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                <Icon.MapPin className="w-4 h-4 text-[#047857]" />
+                Titik Kumpul COD Kampus
+              </span>
+              <span className="text-[11px] text-[#047857] font-semibold">Area Aman &amp; Ramai</span>
+            </div>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-xs">
+                <span className="text-[#047857] font-bold mt-0.5">📍</span>
+                <div>
+                  <span className="font-bold text-slate-800 dark:text-slate-200 block">
+                    {listing.campus === "POLMED" ? "Gedung Z / Parkiran POLMED" : "Pendopo USU (Zona Utama)"}
+                  </span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                    {listing.campus === "POLMED" ? "Area lobi dan kantin mahasiswa Polmed yang ramai." : "Teduh, stopkontak tengah, aman & ramai mahasiswa."}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Card penjual — link ke halaman profil */}
           <Link
             href={`/penjual/${sellerUsername}`}
@@ -485,7 +524,7 @@ export default async function ProdukPage({ params }) {
               <li>Kalau ada perilaku mencurigakan atau sengketa barang, gunakan tombol lapor di bawah.</li>
             </ul>
             <div className="mt-3 pt-3 border-t border-black/[0.04] dark:border-white/[0.06]">
-              <Link href="/panduan-aman" className="text-xs font-bold text-primary dark:text-violet-400 hover:underline flex items-center gap-1">
+              <Link href="/panduan-aman" className="text-xs font-bold text-[#047857] dark:text-emerald-400 hover:underline flex items-center gap-1">
                 <span>📍 Lihat 5 Titik Temu COD Kampus &amp; Alur Mediasi</span>
                 <span>→</span>
               </Link>
@@ -517,7 +556,7 @@ export default async function ProdukPage({ params }) {
         <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white/95 dark:bg-[#121214]/95 backdrop-blur-2xl border-t border-black/[0.08] dark:border-white/[0.1] px-4 py-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_25px_rgba(0,0,0,0.1)] flex items-center justify-between gap-3 animate-fade-in">
           <div className="min-w-0 flex-1">
             <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block leading-tight">Harga Mahasiswa</span>
-            <span className="text-base font-black text-primary dark:text-violet-400 tracking-tight leading-tight block truncate">
+            <span className="text-base font-black text-[#047857] dark:text-emerald-400 tracking-tight leading-tight block truncate">
               {rupiah(listing.price)}
             </span>
           </div>

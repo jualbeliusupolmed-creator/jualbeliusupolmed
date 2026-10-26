@@ -1,7 +1,7 @@
 export const metadata = {
-  title: "Dashboard Penjual",
+  title: "Akun & Profil Mahasiswa — Kampus Kita USU • POLMED",
   description:
-    "Kelola iklanmu di Jual Beli USU Polmed: tandai terjual, bump ke atas, edit, atau hapus.",
+    "Kelola iklan preloved, pesanan Open PO, verifikasi identitas mahasiswa (KTM), dan transaksi COD di Kampus Kita USU • POLMED.",
   robots: { index: false, follow: false },
 };
 

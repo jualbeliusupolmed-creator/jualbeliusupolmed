@@ -67,7 +67,7 @@ export default function Navbar({ config }) {
   const navMenus = [
     { name: "Beranda", href: "/", match: pathname === "/" },
     { name: "Marketplace", href: "/jual-beli", match: pathname?.startsWith("/jual-beli") || pathname?.startsWith("/produk/") },
-    { name: "Open PO", href: "https://open-po.vercel.app", match: pathname?.startsWith("/open-po"), badge: "PO", external: true },
+    { name: "Open PO", href: "/open-po", match: pathname?.startsWith("/open-po"), badge: "PO" },
     { name: "Menfess", href: "/mading", match: pathname?.startsWith("/mading") },
     { name: "Obrolan", href: "/chat", match: pathname?.startsWith("/chat"), badgeCount: unreadChat },
   ];
