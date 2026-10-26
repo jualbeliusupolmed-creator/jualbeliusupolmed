@@ -601,22 +601,32 @@ export default function HomeBrowser({
                 </button>
               ))}
 
-              {/* Tipe Sewa */}
-              <button
-                type="button"
-                onClick={() => {
-                  const next = typeFilter === "sewa" ? "default" : "sewa";
-                  setTypeFilter(next);
-                  applyFilters({ newType: next });
-                  syncToUrl({ typeFilter: next });
-                }}
-                className={`shrink-0 rounded-full px-3.5 py-1.5 min-h-[34px] text-xs font-semibold transition-all active:scale-95 ${typeFilter === "sewa"
-                  ? "bg-teal-600 text-white shadow-sm"
-                  : "border border-gray-200 text-gray-600 hover:border-gray-300 dark:border-slate-800 dark:text-slate-300"
-                }`}
+              {/* Tipe Transaksi: Jual | Sewa | Gratis */}
+              {[
+                { id: "barang", label: "Jual" },
+                { id: "sewa", label: "Sewa", icon: Icon.Key },
+                { id: "gratis", label: "Gratis" },
+              ].map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => {
+                    const next = typeFilter === t.id ? "default" : t.id;
+                    setTypeFilter(next);
+                    applyFilters({ newType: next });
+                    syncToUrl({ typeFilter: next });
+                  }}
+                  className={`shrink-0 rounded-full px-3.5 py-1.5 min-h-[34px] text-xs font-semibold transition-all active:scale-95 flex items-center gap-1.5 ${
+                    typeFilter === t.id
+                      ? "bg-teal-600 text-white shadow-sm"
+                      : "border border-gray-200 text-gray-600 hover:border-gray-300 dark:border-slate-800 dark:text-slate-300"
+                  }`}
                 >
-                  <Icon.Key className="h-3.5 w-3.5" /> Sewa{typeFilter === "sewa" ? <Icon.Check className="h-3.5 w-3.5" /> : null}
+                  {t.icon && <t.icon className="h-3.5 w-3.5" />}
+                  <span>{t.label}</span>
+                  {typeFilter === t.id ? <Icon.Check className="h-3.5 w-3.5" /> : null}
                 </button>
+              ))}
 
               {/* Reset */}
               {hasActiveFilter && (

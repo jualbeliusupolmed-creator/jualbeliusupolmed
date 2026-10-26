@@ -60,7 +60,7 @@ export default function ThemeToggleFloating() {
           )}
         </div>
         <span className="text-[11.5px] font-bold tracking-tight pr-1 select-none">
-          {dark ? "Gelap" : "Terang"}
+          Tema: {dark ? "Gelap" : "Terang"}
         </span>
       </button>
     </aside>

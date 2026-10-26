@@ -10,14 +10,14 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata = {
-  title: "Jual Beli USU & Polmed — Kampus Hub",
+  title: "Jual Beli USU & Polmed — Kampusfess",
   description:
-    "Marketplace mahasiswa USU dan Polmed, info kampus, menfess, dan cari teman anonim. Pusat kampus untuk mahasiswa Medan.",
-  keywords: ["jual beli USU", "jual beli Polmed", "menfess usu", "info kampus", "mahasiswa Medan", "cari teman", "marketplace mahasiswa"],
+    "Marketplace mahasiswa USU dan Polmed, info kampus, menfess, dan cari teman anonim. Bagian dari ekosistem Kampusfess Medan.",
+  keywords: ["jual beli USU", "jual beli Polmed", "menfess usu", "info kampus", "mahasiswa Medan", "cari teman", "marketplace mahasiswa", "kampusfess"],
   alternates: { canonical: "/" },
   openGraph: {
-    title: "Jual Beli USU & Polmed — Kampus Hub",
-    description: "Marketplace mahasiswa USU dan Polmed, info kampus, menfess, dan cari teman anonim. Pusat kampus untuk mahasiswa Medan.",
+    title: "Jual Beli USU & Polmed — Kampusfess",
+    description: "Marketplace mahasiswa USU dan Polmed, info kampus, menfess, dan cari teman anonim. Bagian dari ekosistem Kampusfess Medan.",
     url: "/",
     siteName: "Jual Beli USU & Polmed",
     locale: "id_ID",
@@ -25,7 +25,7 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Jual Beli USU & Polmed — Kampus Hub",
+    title: "Jual Beli USU & Polmed — Kampusfess",
     description: "Marketplace mahasiswa USU dan Polmed, info kampus, menfess, dan cari teman anonim.",
   },
 };

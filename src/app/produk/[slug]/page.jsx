@@ -22,7 +22,7 @@ import FavoriteButton from "@/components/FavoriteButton";
 import OwnerFastActions from "@/components/OwnerFastActions";
 import { Icon } from "@/components/Icons";
 import { skripJsonLd } from "@/lib/jsonLd";
-import { buildListingShortPath } from "@/lib/listingCode";
+import { buildListingShortPath, looksLikeListingCode, normalizeListingCode } from "@/lib/listingCode";
 import { formatListingSpecs } from "@/lib/listingSpecs";
 import { checkProhibitedListing } from "@/lib/profanity";
 import { evaluateModerationRules } from "@/lib/moderationRules";
@@ -47,6 +47,15 @@ async function getData(slug) {
         .select("*, seller_wa")
         .eq("id", slug)
         .single();
+      const { data } = await fetchSingleListingWithProfile(query);
+      listing = data;
+    } else if (looksLikeListingCode(slug)) {
+      const code = normalizeListingCode(slug);
+      const query = supa
+        .from("listings")
+        .select("*, seller_wa")
+        .eq("listing_code", code)
+        .maybeSingle();
       const { data } = await fetchSingleListingWithProfile(query);
       listing = data;
     } else {
@@ -180,8 +189,8 @@ export default async function ProdukPage({ params }) {
   const { listing, related } = await getData(params.slug);
   if (!listing) notFound();
 
-  // If someone visits old UUID link, redirect to clean slug URL
-  if (isUUID(params.slug)) {
+  // If someone visits old UUID link or numeric listing code, redirect to clean canonical slug URL
+  if (isUUID(params.slug) || looksLikeListingCode(params.slug)) {
     redirect(`/produk/${buildSlug(listing.title, listing.id)}`);
   }
 
