@@ -13,25 +13,25 @@ export const metadata = {
   // Judul & deskripsi beranda ditulis di sini (bukan dari pengaturan admin),
   // jadi inilah yang muncul di tab peramban, hasil Google, dan pratinjau tautan
   // saat alamatnya dibagikan di grup WhatsApp — jalur masuk utama situs ini.
-  title: "Jual Beli USU & Polmed — Marketplace Mahasiswa Medan",
+  title: "Marketplace Kampus — Jual Beli Mahasiswa Terpadu USU • POLMED | Kampus Kita",
   description:
-    "Marketplace mahasiswa USU dan Polmed: laptop, HP, buku, fashion, makanan, kos, sampai jasa. Barangnya dari sesama mahasiswa, COD di sekitar kampus, dibantu admin.",
-  keywords: ["jual beli USU", "jual beli Polmed", "marketplace mahasiswa Medan", "laptop bekas USU", "barang bekas mahasiswa Polmed", "kos dekat USU", "COD kampus", "preloved mahasiswa Medan"],
-  alternates: { canonical: "/" },
+    "Marketplace mahasiswa resmi USU dan Polmed: laptop, HP, buku kuliah, fashion, makanan, kos, sampai jasa. Transaksi aman COD titik kumpul kampus dengan proteksi identitas terverifikasi.",
+  keywords: ["marketplace mahasiswa Medan", "jual beli USU", "jual beli Polmed", "Kampus Kita", "laptop bekas USU", "buku kuliah bekas", "kos dekat USU", "COD kampus"],
+  alternates: { canonical: "/jual-beli" },
   openGraph: {
-    title: "Jual Beli USU & Polmed — Marketplace Mahasiswa Medan",
+    title: "Marketplace Kampus — Jual Beli Mahasiswa Terpadu USU • POLMED | Kampus Kita",
     description:
-      "Marketplace mahasiswa USU dan Polmed: laptop, HP, buku, fashion, makanan, kos, sampai jasa. COD di sekitar kampus, dibantu admin.",
-    url: "/",
-    siteName: "Jual Beli USU & Polmed",
+      "Marketplace mahasiswa resmi USU dan Polmed: laptop, HP, buku kuliah, kos, jasa, dan kebutuhan kuliah. COD aman di titik kumpul resmi kampus.",
+    url: "/jual-beli",
+    siteName: "Kampus Kita",
     locale: "id_ID",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Jual Beli USU & Polmed — Marketplace Mahasiswa Medan",
+    title: "Marketplace Kampus — Jual Beli Mahasiswa Terpadu USU • POLMED | Kampus Kita",
     description:
-      "Marketplace mahasiswa USU dan Polmed: laptop, HP, buku, fashion, makanan, kos, sampai jasa. COD di sekitar kampus, dibantu admin.",
+      "Marketplace mahasiswa resmi USU dan Polmed: laptop, HP, buku kuliah, kos, jasa. COD aman titik kumpul kampus.",
   },
 };
 const PAGE_SIZE = 20;
