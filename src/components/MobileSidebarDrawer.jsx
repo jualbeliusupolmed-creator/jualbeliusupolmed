@@ -56,26 +56,17 @@ export default function MobileSidebarDrawer({ isOpen, onClose }) {
   }, [isOpen]);
 
   const mainLinks = [
-    { href: "/", label: "Beranda Utama", icon: Icon.Home },
-    { href: "/jual-beli", label: "Marketplace Kampus", icon: Icon.ShoppingBag },
-    { href: "/mading", label: "Menfess & Info Kampus", icon: Icon.BookOpen },
-    { href: "/chat", label: "Obrolan Mahasiswa", icon: Icon.MessageCircle, badge: unreadChat },
-    { href: "/favorit", label: "Barang Favorit", icon: Icon.Heart },
+    { href: "/", label: "Beranda", icon: Icon.Home },
+    { href: "/mading", label: "Menfess & Info", icon: Icon.BookOpen },
+    { href: "/chat", label: "Obrolan", icon: Icon.MessageCircle, badge: unreadChat },
+    { href: "/favorit", label: "Favorit", icon: Icon.Heart },
   ];
 
   const exploreLinks = [
-    {
-      href: "https://open-po.vercel.app?utm_source=jualbeliusupolmed&ref=jualbeliusupolmed",
-      label: "Open PO Kampus",
-      badge: "LIVE 🍵",
-      icon: Icon.Store,
-      external: true,
-      highlight: true,
-    },
-    { href: "/dicari", label: "Dicari Mahasiswa (WTS/WTB)", icon: Icon.Search },
-    { href: "/teman", label: "Cari Teman Kampus (Swipe)", icon: Icon.Users },
+    { href: "/dicari", label: "Dicari Mahasiswa", icon: Icon.Search },
+    { href: "/teman", label: "Cari Teman", icon: Icon.Users },
     { href: "/organisasi", label: "UKM & Organisasi", icon: Icon.Briefcase },
-    { href: "/oprec", label: "Oprec & Kepanitiaan", icon: Icon.Megaphone },
+    { href: "/oprec", label: "Oprec Kampus", icon: Icon.Megaphone },
   ];
 
   if (!isOpen) return null;
@@ -230,53 +221,10 @@ export default function MobileSidebarDrawer({ isOpen, onClose }) {
             })}
           </div>
 
-          {/* Quick Actions (Kirim Menfess & Pasang Dicari) */}
-          <div className="pt-2 border-t border-black/[0.05] dark:border-white/[0.06] grid grid-cols-2 gap-2">
-            <Link
-              href="/mading?tulis=1"
-              onClick={() => {
-                hapticLight();
-                onClose();
-              }}
-              className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl bg-violet-500/10 text-violet-700 dark:text-violet-300 border border-violet-500/20 text-[11px] font-bold active:scale-95 transition-all"
-            >
-              <Icon.Heart className="w-3.5 h-3.5 text-violet-500 fill-current" />
-              <span>Curhat Menfess</span>
-            </Link>
-            <Link
-              href="/dicari?tulis=1"
-              onClick={() => {
-                hapticLight();
-                onClose();
-              }}
-              className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 text-[11px] font-bold active:scale-95 transition-all"
-            >
-              <Icon.Search className="w-3.5 h-3.5 text-amber-500" />
-              <span>Cari Barang</span>
-            </Link>
-          </div>
         </div>
 
-        {/* Footer Drawer: Theme Toggle & Status Akun */}
-        <div className="p-3 border-t border-black/[0.06] dark:border-white/[0.06] space-y-2 bg-slate-50/70 dark:bg-[#18181b]/70 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
-          {/* Theme Toggle */}
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className="w-full flex items-center justify-between px-3 py-1.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.05] hover:bg-black/[0.06] dark:hover:bg-white/[0.08] transition-all"
-          >
-            <div className="flex items-center gap-2 text-[11px] font-bold text-slate-700 dark:text-slate-200">
-              {dark ? <Icon.Moon className="w-3.5 h-3.5 text-violet-400" /> : <Icon.Sun className="w-3.5 h-3.5 text-amber-500" />}
-              <span>{dark ? "Mode Gelap (Dark)" : "Mode Terang (Light)"}</span>
-            </div>
-            <div className={cn(
-              "w-7.5 h-4.5 rounded-full p-0.5 transition-colors flex items-center",
-              dark ? "bg-primary justify-end" : "bg-slate-300 dark:bg-slate-700 justify-start"
-            )}>
-              <div className="w-3.5 h-3.5 rounded-full bg-white shadow-xs" />
-            </div>
-          </button>
-
+        {/* Footer Drawer: Status Akun, Pasang Iklan & Theme Toggle */}
+        <div className="p-3 border-t border-black/[0.06] dark:border-white/[0.06] space-y-2.5 bg-slate-50/70 dark:bg-[#18181b]/70 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
           {/* User Account / Login */}
           {!siap ? (
             <div className="h-9 w-full rounded-xl bg-black/[0.05] dark:bg-white/[0.08] animate-pulse" />
@@ -287,18 +235,18 @@ export default function MobileSidebarDrawer({ isOpen, onClose }) {
                 hapticLight();
                 onClose();
               }}
-              className="flex items-center justify-between p-2.5 rounded-xl bg-primary/10 border border-primary/20 text-primary hover:bg-primary/15 transition-all"
+              className="flex items-center justify-between p-2.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.05] hover:bg-black/[0.06] dark:hover:bg-white/[0.08] transition-all group"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <div className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-[10px] font-black shrink-0">
+                <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[11px] font-black shrink-0">
                   {(nama || "U")[0].toUpperCase()}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[11px] font-extrabold truncate leading-tight">{nama || wa}</p>
-                  <p className="text-[9.5px] text-primary/70 leading-tight">Dashboard Mahasiswa</p>
+                  <p className="text-[11.5px] font-extrabold text-[#1d1d1f] dark:text-white truncate leading-tight">{nama || wa}</p>
+                  <p className="text-[9.5px] text-slate-400 leading-tight">Dashboard Mahasiswa</p>
                 </div>
               </div>
-              <Icon.ArrowRight className="w-3 h-3 shrink-0" />
+              <Icon.ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-primary shrink-0" />
             </Link>
           ) : (
             <button
@@ -308,12 +256,43 @@ export default function MobileSidebarDrawer({ isOpen, onClose }) {
                 onClose();
                 setShowOtp(true);
               }}
-              className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold shadow-xs active:scale-95 transition-all"
+              className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-primary/10 hover:bg-primary/15 text-primary text-xs font-bold transition-all active:scale-95"
             >
               <Icon.User className="w-3.5 h-3.5" />
               <span>Masuk via WhatsApp</span>
             </button>
           )}
+
+          {/* Primary CTA: Pasang Iklan Jual */}
+          <Link
+            href="/jual"
+            onClick={() => {
+              hapticMedium();
+              onClose();
+            }}
+            className="w-full btn-primary py-2.5 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all text-white"
+          >
+            <Icon.Plus className="w-4 h-4" />
+            <span>Pasang Iklan</span>
+          </Link>
+
+          {/* Theme Toggle Compact */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg bg-black/[0.02] dark:bg-white/[0.03] hover:bg-black/[0.05] dark:hover:bg-white/[0.06] transition-all text-slate-500 dark:text-slate-400"
+          >
+            <div className="flex items-center gap-2 text-[10.5px] font-semibold">
+              {dark ? <Icon.Moon className="w-3 h-3 text-violet-400" /> : <Icon.Sun className="w-3 h-3 text-amber-500" />}
+              <span>{dark ? "Mode Gelap" : "Mode Terang"}</span>
+            </div>
+            <div className={cn(
+              "w-6 h-3.5 rounded-full p-0.5 transition-colors flex items-center",
+              dark ? "bg-primary justify-end" : "bg-slate-300 dark:bg-slate-700 justify-start"
+            )}>
+              <div className="w-2.5 h-2.5 rounded-full bg-white shadow-xs" />
+            </div>
+          </button>
         </div>
       </div>
 

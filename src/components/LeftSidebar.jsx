@@ -49,17 +49,15 @@ export default function LeftSidebar() {
 
   const mainLinks = [
     { href: "/", label: "Beranda", icon: Icon.Home },
-    { href: "/jual-beli", label: "Marketplace", icon: Icon.ShoppingBag },
     { href: "/mading", label: "Menfess & Info", icon: Icon.BookOpen },
     { href: "/chat", label: "Obrolan", icon: Icon.MessageCircle, badge: unreadChat },
     { href: "/favorit", label: "Favorit", icon: Icon.Heart },
   ];
 
   const exploreLinks = [
-    { href: "https://open-po.vercel.app", label: "PO Kampus 🍵", icon: Icon.Store, external: true },
-    { href: "/dicari", label: "Dicari", icon: Icon.Search },
+    { href: "/dicari", label: "Dicari Mahasiswa", icon: Icon.Search },
     { href: "/teman", label: "Cari Teman", icon: Icon.Users },
-    { href: "/organisasi", label: "UKM & Organisasi", icon: Icon.Store },
+    { href: "/organisasi", label: "UKM & Organisasi", icon: Icon.Briefcase },
     { href: "/oprec", label: "Oprec Kampus", icon: Icon.Megaphone },
   ];
 
@@ -166,55 +164,7 @@ export default function LeftSidebar() {
         </div>
       </nav>
 
-      <div className="mt-auto space-y-3">
-        {/* Quick actions */}
-        <div className="flex gap-2">
-          <Link
-            href="/mading?tulis=1"
-            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-full border border-black/[0.08] dark:border-white/[0.1] text-[13px] font-medium text-gray-600 dark:text-gray-400 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-all"
-          >
-            <Icon.Mail className="w-3.5 h-3.5 shrink-0" />
-            Menfess
-          </Link>
-          <Link
-            href="/dicari?tulis=1"
-            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-full border border-black/[0.08] dark:border-white/[0.1] text-[13px] font-medium text-gray-600 dark:text-gray-400 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-all"
-          >
-            <Icon.MapPin className="w-3.5 h-3.5 shrink-0" />
-            Dicari
-          </Link>
-        </div>
-
-        {/* Tombol Tema Mode Terang / Gelap yang jelas & mudah dilihat */}
-        <button
-          type="button"
-          onClick={toggleTheme}
-          aria-label={dark ? "Beralih ke Mode Terang" : "Beralih ke Mode Gelap"}
-          className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white/90 dark:bg-white/[0.05] hover:bg-slate-50 dark:hover:bg-white/[0.08] transition-all text-left shadow-xs group"
-        >
-          <div className="flex items-center gap-2.5">
-            <div className={cn(
-              "w-7 h-7 rounded-xl flex items-center justify-center shrink-0 transition-colors",
-              dark ? "bg-violet-500/15 text-violet-300" : "bg-amber-500/15 text-amber-600"
-            )}>
-              {dark ? <Icon.Moon className="w-4 h-4" /> : <Icon.Sun className="w-4 h-4" />}
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[12.5px] font-bold text-slate-800 dark:text-white leading-tight">
-                {dark ? "Mode Gelap" : "Mode Terang"}
-              </span>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                Ganti tema tampilan
-              </span>
-            </div>
-          </div>
-          <div className={cn(
-            "w-9 h-5 rounded-full p-0.5 transition-colors duration-200 flex items-center",
-            dark ? "bg-primary justify-end" : "bg-slate-300 justify-start"
-          )}>
-            <div className="w-4 h-4 rounded-full bg-white shadow-xs" />
-          </div>
-        </button>
+      <div className="mt-auto pt-4 border-t border-black/[0.06] dark:border-white/[0.06] space-y-3">
 
         {!siap ? (
           /* Skeleton netral saat hydration — sama antara server & client */
