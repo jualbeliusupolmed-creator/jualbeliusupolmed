@@ -196,6 +196,18 @@ export default function HomeBrowser({
     router.replace(`${pathname}${str ? `?${str}` : ""}`, { scroll: false });
   }, [campusFilter, cat, catName, conditionFilter, maxPrice, minPrice, negoFilter, pathname, q, router, selectedSpecFilters, sort, typeFilter]);
 
+  // Listen to global campus changes from Top Navbar
+  useEffect(() => {
+    const handleCampusChange = (e) => {
+      const newCampus = e.detail?.campus || "Semua";
+      setCampusFilter(newCampus);
+      applyFilters({ newCampus });
+      syncToUrl({ campusFilter: newCampus });
+    };
+    window.addEventListener("campus:change", handleCampusChange);
+    return () => window.removeEventListener("campus:change", handleCampusChange);
+  }, [applyFilters, syncToUrl]);
+
   // Terapkan filter dari URL (?q= dari search navbar / SearchAction Google,
   // ?cat= dari breadcrumb halaman produk) — juga saat URL berubah tanpa remount.
   useEffect(() => {
@@ -543,8 +555,8 @@ export default function HomeBrowser({
                 type="button"
                 onClick={() => setShowPriceFilter((v) => !v)}
                 className={`shrink-0 rounded-full px-3.5 py-1.5 min-h-[34px] text-xs font-semibold transition-all active:scale-95 ${showPriceFilter || minPrice || maxPrice
-                    ? "bg-gray-900 text-white shadow-sm dark:bg-white dark:text-gray-900"
-                    : "border border-gray-200 text-gray-600 hover:border-gray-300 dark:border-slate-800 dark:text-slate-300"
+                    ? "bg-[#047857] text-white shadow-sm shadow-[#047857]/20 dark:bg-emerald-600 dark:text-white"
+                    : "border border-slate-200 text-slate-600 hover:border-slate-300 dark:border-white/10 dark:text-slate-300"
                   }`}
               >
                 Harga{minPrice || maxPrice ? <Icon.Check className="h-3.5 w-3.5" /> : null}
@@ -557,8 +569,8 @@ export default function HomeBrowser({
                   type="button"
                   onClick={() => handleCampus(c)}
                   className={`shrink-0 rounded-full px-3.5 py-1.5 min-h-[34px] text-xs font-semibold transition-all active:scale-95 ${campusFilter === c
-                      ? "bg-gray-900 text-white shadow-sm dark:bg-white dark:text-gray-900"
-                      : "border border-gray-200 text-gray-600 hover:border-gray-300 dark:border-slate-800 dark:text-slate-300"
+                      ? "bg-[#047857] text-white shadow-sm shadow-[#047857]/20 dark:bg-emerald-600 dark:text-white"
+                      : "border border-slate-200 text-slate-600 hover:border-slate-300 dark:border-white/10 dark:text-slate-300"
                     }`}
                 >
                   {c}
@@ -575,8 +587,8 @@ export default function HomeBrowser({
                   syncToUrl({ negoFilter: next });
                 }}
                 className={`shrink-0 rounded-full px-3.5 py-1.5 min-h-[34px] text-xs font-semibold transition-all active:scale-95 ${negoFilter
-                    ? "bg-gray-900 text-white shadow-sm dark:bg-white dark:text-gray-900"
-                    : "border border-gray-200 text-gray-600 hover:border-gray-300 dark:border-slate-800 dark:text-slate-300"
+                    ? "bg-[#047857] text-white shadow-sm shadow-[#047857]/20 dark:bg-emerald-600 dark:text-white"
+                    : "border border-slate-200 text-slate-600 hover:border-slate-300 dark:border-white/10 dark:text-slate-300"
                   }`}
               >
                 Nego{negoFilter ? <Icon.Check className="h-3.5 w-3.5" /> : null}
@@ -593,8 +605,8 @@ export default function HomeBrowser({
                     syncToUrl({ conditionFilter: c });
                   }}
                   className={`shrink-0 rounded-full px-3.5 py-1.5 min-h-[34px] text-xs font-semibold transition-all active:scale-95 ${conditionFilter === c
-                    ? "bg-gray-900 text-white shadow-sm dark:bg-white dark:text-gray-900"
-                    : "border border-gray-200 text-gray-600 hover:border-gray-300 dark:border-slate-800 dark:text-slate-300"
+                    ? "bg-[#047857] text-white shadow-sm shadow-[#047857]/20 dark:bg-emerald-600 dark:text-white"
+                    : "border border-slate-200 text-slate-600 hover:border-slate-300 dark:border-white/10 dark:text-slate-300"
                   }`}
                 >
                   {c === "all" ? "Semua Kondisi" : c === "new" ? <><Icon.Sparkles className="h-3.5 w-3.5" /> Baru</> : "Bekas"}
@@ -618,8 +630,8 @@ export default function HomeBrowser({
                   }}
                   className={`shrink-0 rounded-full px-3.5 py-1.5 min-h-[34px] text-xs font-semibold transition-all active:scale-95 flex items-center gap-1.5 ${
                     typeFilter === t.id
-                      ? "bg-teal-600 text-white shadow-sm"
-                      : "border border-gray-200 text-gray-600 hover:border-gray-300 dark:border-slate-800 dark:text-slate-300"
+                      ? "bg-[#047857] text-white shadow-sm shadow-[#047857]/20 dark:bg-emerald-600 dark:text-white"
+                      : "border border-slate-200 text-slate-600 hover:border-slate-300 dark:border-white/10 dark:text-slate-300"
                   }`}
                 >
                   {t.icon && <t.icon className="h-3.5 w-3.5" />}
