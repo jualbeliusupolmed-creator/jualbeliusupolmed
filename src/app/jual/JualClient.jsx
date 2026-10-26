@@ -49,6 +49,7 @@ export default function JualPage() {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [areaOption, setAreaOption] = useState("");
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [agreedPdp, setAgreedPdp] = useState(true);
 
   const [cfg, setCfg] = useState(null);
   const [sellerIsDistributor, setSellerIsDistributor] = useState(false);
@@ -620,7 +621,27 @@ export default function JualPage() {
                 </dd>
               </div>
             </dl>
-            <button type="submit" disabled={busy || !!fileError} className="btn-primary mt-4 w-full">
+
+            <div className="mt-4 pt-3 border-t border-gray-100 dark:border-slate-800">
+              <label className="flex items-start gap-2.5 text-xs text-gray-600 dark:text-slate-400 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  required
+                  checked={agreedPdp}
+                  onChange={(e) => setAgreedPdp(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary shrink-0"
+                />
+                <span className="leading-relaxed">
+                  Saya menyetujui{" "}
+                  <Link href="/syarat-ketentuan" target="_blank" className="font-semibold text-primary underline">Syarat &amp; Ketentuan</Link>
+                  {" "}serta{" "}
+                  <Link href="/kebijakan-privasi" target="_blank" className="font-semibold text-primary underline">Kebijakan Privasi</Link>
+                  {" "}sesuai UU PDP No. 27/2022, menyatakan barang bukan barang terlarang (bebas rokok/vape/alkohol/obat), serta menyetujui nomor WhatsApp dihubungi calon pembeli.
+                </span>
+              </label>
+            </div>
+
+            <button type="submit" disabled={busy || !!fileError || !agreedPdp} className="btn-primary mt-4 w-full">
               Lanjut ke Preview Iklan
             </button>
             {msg && <p className="mt-3 text-sm text-rose-600">{msg}</p>}

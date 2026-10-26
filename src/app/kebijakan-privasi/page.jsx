@@ -68,12 +68,16 @@ export default function KebijakanPrivasiPage() {
           </ul>
         </div>
 
-        {/* 5. Hak Pengguna */}
+        {/* 5. Hak Pengguna Sesuai UU PDP No. 27/2022 */}
         <div>
-          <h2 className="text-base font-bold text-gray-900 dark:text-white mb-2">5. Hak Pengguna (Kontrol atas Data Anda)</h2>
+          <h2 className="text-base font-bold text-gray-900 dark:text-white mb-2">5. Hak Pemilik Data Pribadi (UU PDP No. 27/2022)</h2>
+          <p className="mb-2">Sesuai dengan Undang-Undang Pelindungan Data Pribadi (UU PDP No. 27 Tahun 2022), Anda sebagai subjek data pribadi memiliki hak-hak hukum berikut:</p>
           <ul className="list-disc pl-5 space-y-1">
-            <li>Anda dapat memperbarui, mengubah status menjadi "Terjual" (sold), atau menghapus iklan Anda kapan saja melalui platform kami menggunakan tautan edit iklan yang Anda miliki.</li>
-            <li>Anda berhak meminta kami untuk menghapus seluruh data kontak WhatsApp Anda dari sistem database kami secara permanen dengan menghubungi admin kami melalui WhatsApp resmi.</li>
+            <li><strong>Hak Akses &amp; Informasi:</strong> Mengetahui tujuan pemrosesan data, jenis data yang disimpan (nama, fakultas, nomor WhatsApp, foto iklan), dan bagaimana data digunakan.</li>
+            <li><strong>Hak Koreksi (Perbaikan Data):</strong> Memperbarui atau membetulkan data pribadi yang salah atau tidak akurat melalui menu edit iklan atau profil toko.</li>
+            <li><strong>Hak Penghapusan (*Right to Erasure / Forgotten*):</strong> Meminta penghapusan permanen atas nomor kontak, foto barang, atau seluruh riwayat iklan Anda dari basis data kami kapan saja melalui admin resmi.</li>
+            <li><strong>Hak Penarikan Persetujuan (*Withdraw Consent*):</strong> Menarik persetujuan atas penerimaan notifikasi atau publikasi nomor kontak dengan menandai barang sebagai "Terjual" (sold) atau menghapus iklan.</li>
+            <li><strong>Proteksi Penyamaran Nomor (*Phone Masking*):</strong> Tautan profil publik menggunakan username/slug unik untuk melindungi nomor telepon pengguna agar tidak terindeks atau diekstraksi secara otomatis oleh crawler liar.</li>
           </ul>
         </div>
 
