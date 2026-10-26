@@ -50,8 +50,8 @@ export default function LeftSidebar() {
   const mainLinks = [
     { href: "/", label: "Beranda", icon: Icon.Home },
     { href: "/jual-beli", label: "Marketplace", icon: Icon.ShoppingBag },
-    { href: "/mading", label: "Mading", icon: Icon.BookOpen },
-    { href: "/chat", label: "Chat", icon: Icon.MessageCircle, badge: unreadChat },
+    { href: "/mading", label: "Menfess & Info", icon: Icon.BookOpen },
+    { href: "/chat", label: "Obrolan", icon: Icon.MessageCircle, badge: unreadChat },
     { href: "/favorit", label: "Favorit", icon: Icon.Heart },
   ];
 

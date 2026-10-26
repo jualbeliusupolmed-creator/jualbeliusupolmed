@@ -353,7 +353,7 @@ export default async function ProdukPage({ params }) {
               <div className="flex items-center gap-1.5 flex-wrap">
                 <p className="text-sm font-semibold dark:text-white flex items-center gap-1.5 flex-wrap">
                   <span>
-                    {listing.seller_name && !/^User\s+\d+$/i.test(listing.seller_name)
+                    {listing.seller_name && listing.seller_name.trim().length > 2 && !/^User\s+\d+$/i.test(listing.seller_name)
                       ? listing.seller_name
                       : listing.campus && listing.campus !== "Semua"
                       ? `Mahasiswa ${listing.campus}`

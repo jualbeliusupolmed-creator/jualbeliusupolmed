@@ -50,6 +50,26 @@ export default function ProductGallery({ images = [], title }) {
     );
   }
 
+  if (imgs.length === 1) {
+    return (
+      <div className="relative overflow-hidden bg-black/[0.03] dark:bg-black/40 sm:rounded-[24px] aspect-square">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={imgs[0]}
+          alt={title}
+          className="h-full w-full object-cover transition-all duration-500 hover:scale-105 cursor-zoom-in"
+          data-zoom
+          data-zoom-alt={title}
+        />
+        <span className="pointer-events-none absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white opacity-60 backdrop-blur-sm transition-opacity group-hover:opacity-100">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+            <circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35M11 8v6M8 11h6"/>
+          </svg>
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div className="group relative">
       {/* Main Image View */}

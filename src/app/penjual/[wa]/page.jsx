@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound, redirect, permanentRedirect } from "next/navigation";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rupiah } from "@/lib/fees";
 import ProductCard from "@/components/ProductCard";
@@ -211,7 +211,7 @@ export default async function SellerProfilePage({ params }) {
   // Jika pengunjung datang lewat URL legacy nomor telepon atau u-base64,
   // tapi penjual punya username resmi, redirect ke /penjual/[username]
   if (data.seller.slug && params.wa !== data.seller.slug) {
-    redirect(`/penjual/${data.seller.slug}`);
+    permanentRedirect(`/penjual/${data.seller.slug}`);
   }
 
   const { seller, listings, soldListings, ratings, soldCount, totalViews, memberSince } = data;
