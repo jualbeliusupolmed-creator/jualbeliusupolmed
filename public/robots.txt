@@ -1,10 +1,6 @@
-# Robots.txt for Jual Beli USU Polmed
+# *
 User-agent: *
 Allow: /
-Disallow: /admin
-Disallow: /dashboard
-Disallow: /edit
-Disallow: /api/
 
 # Host
 Host: https://www.jualbeliusupolmed.web.id

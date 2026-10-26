@@ -19,8 +19,8 @@ const PILIHAN = [
   },
   {
     href: "https://open-po.vercel.app",
-    ikon: <span className="text-xl">🍵</span>,
-    ikonBg: "bg-teal-50 text-teal-600 dark:bg-teal-500/15 dark:text-teal-300",
+    ikon: <Icon.Coffee className="w-5 h-5" />,
+    ikonBg: "bg-emerald-50 text-[#126B49] dark:bg-emerald-950/40 dark:text-emerald-300",
     judul: "Buka Open PO",
     desc: "Buka pesanan makanan, merchandise & jastip",
     grup: "Marketplace",
