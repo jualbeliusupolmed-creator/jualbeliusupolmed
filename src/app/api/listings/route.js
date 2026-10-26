@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { rateLimit, rateLimitDistributed, getClientIp } from "@/lib/rateLimit";
 import { getSettings, adFeeFrom, listingExpiresAt, hasUnpaidSoldFees } from "@/lib/settings";
 import { formatWa } from "@/lib/constants";
 import { postToGroup, notifyCategorySubscribers } from "@/lib/fonnte";
@@ -97,15 +97,22 @@ export async function GET(req) {
 // POST /api/listings -> buat listing (pending) + payment + snap token
 export async function POST(req) {
   try {
-    const rl = rateLimit(`listing:${getClientIp(req)}`, { limit: 8, windowMs: 60_000 });
-    if (!rl.ok) {
+    const ip = getClientIp(req);
+    const ipRl = await rateLimitDistributed(`listing:ip:${ip}`, { limit: 10, windowMs: 600_000 });
+    if (!ipRl.ok) {
       return NextResponse.json(
-        { error: `Terlalu banyak permintaan. Coba lagi dalam ${rl.retryAfter} detik.` },
+        { error: `Terlalu banyak permintaan pasang iklan. Coba lagi dalam ${ipRl.retryAfter} detik.` },
         { status: 429 }
       );
     }
 
     const body = await req.json();
+
+    // Honeypot anti-spam check
+    if (body.website || body.honeypot) {
+      return NextResponse.json({ error: "Permintaan tidak dapat diproses." }, { status: 400 });
+    }
+
     const {
       seller_name,
       seller_wa,
@@ -129,6 +136,19 @@ export async function POST(req) {
 
     if (!sessionWa || sessionWa !== normalizedWa) {
       return NextResponse.json({ error: "Sesi tidak valid atau telah berakhir. Silakan login kembali." }, { status: 401 });
+    }
+
+    // Rate limit per nomor WA (maks 5 iklan per hari)
+    const maxAdsPerDay = Number(process.env.RATE_LIMIT_ADS_PER_DAY || 5);
+    const waRl = await rateLimitDistributed(`listing:wa:${normalizedWa}`, {
+      limit: maxAdsPerDay,
+      windowMs: 86_400_000,
+    });
+    if (!waRl.ok) {
+      return NextResponse.json(
+        { error: `Batas harian tercapai: maksimal ${maxAdsPerDay} iklan per nomor WhatsApp per hari.` },
+        { status: 429 }
+      );
     }
 
     if (!seller_name || !seller_wa || !title || price == null) {

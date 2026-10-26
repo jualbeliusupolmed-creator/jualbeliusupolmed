@@ -1,15 +1,22 @@
-// Rate limiter sederhana berbasis memory. Cukup sebagai lapisan pertahanan
-// pertama untuk skala Marketplace.
-//
-// Catatan: di serverless (Vercel) memory TIDAK dibagi antar-instance, jadi ini
-// bukan jaminan ketat — untuk batas keras gunakan Vercel Firewall / Upstash.
+// Rate limiter terdistribusi untuk Next.js Serverless (Vercel).
+// 1. Upstash Redis REST API (jika UPSTASH_REDIS_REST_URL & UPSTASH_REDIS_REST_TOKEN ada)
+// 2. Supabase atomic RPC hit_rate_limit (menyimpan ke tabel rate_limit_hits)
+// 3. Fallback ke in-memory Map (sliding window)
+
+import { getAdminClient } from "@/lib/supabaseAdmin";
 
 const hits = new Map(); // key -> array timestamp (ms)
 
 export function getClientIp(req) {
-  const xff = req.headers.get("x-forwarded-for");
-  if (xff) return xff.split(",")[0].trim();
-  return req.headers.get("x-real-ip") || "unknown";
+  if (!req) return "unknown";
+  const headers = req.headers;
+  if (!headers) return "unknown";
+
+  const xff = typeof headers.get === "function" ? headers.get("x-forwarded-for") : headers["x-forwarded-for"];
+  if (xff) return String(xff).split(",")[0].trim();
+
+  const realIp = typeof headers.get === "function" ? headers.get("x-real-ip") : headers["x-real-ip"];
+  return realIp ? String(realIp).trim() : "unknown";
 }
 
 // { ok: true } atau { ok: false, retryAfter: <detik> }
@@ -37,49 +44,62 @@ export function rateLimit(key, { limit = 5, windowMs = 60_000 } = {}) {
 
 /**
  * Rate limiter serverless terdistribusi.
- * Memakai Upstash Redis REST API bila UPSTASH_REDIS_REST_URL & UPSTASH_REDIS_REST_TOKEN tersedia,
- * dengan fallback aman ke in-memory sliding window bila belum dikonfigurasi.
  */
 export async function rateLimitDistributed(key, { limit = 5, windowMs = 60_000 } = {}) {
+  const windowSec = Math.max(1, Math.ceil(windowMs / 1000));
   const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
   const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
 
-  if (!redisUrl || !redisToken) {
-    return rateLimit(key, { limit, windowMs });
+  // 1. Upstash Redis REST API
+  if (redisUrl && redisToken) {
+    try {
+      const redisKey = `jb_rl:${key}`;
+      const res = await fetch(`${redisUrl}/pipeline`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${redisToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify([
+          ["INCR", redisKey],
+          ["EXPIRE", redisKey, windowSec],
+        ]),
+        cache: "no-store",
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const count = Number(data?.[0]?.result || 1);
+        if (count > limit) {
+          return { ok: false, retryAfter: windowSec };
+        }
+        return { ok: true };
+      }
+    } catch {
+      // lanjut ke Supabase
+    }
   }
 
+  // 2. Supabase atomic RPC hit_rate_limit
   try {
-    const windowSec = Math.ceil(windowMs / 1000);
-    const redisKey = `rl:${key}`;
-    // Pipeline INCR & EXPIRE via Upstash REST API
-    const res = await fetch(`${redisUrl}/pipeline`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${redisToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify([
-        ["INCR", redisKey],
-        ["EXPIRE", redisKey, windowSec],
-      ]),
-      cache: "no-store",
-    });
+    const supa = getAdminClient();
+    if (supa) {
+      const { data, error } = await supa.rpc("hit_rate_limit", {
+        p_key: key,
+        p_window_seconds: windowSec,
+      });
 
-    if (!res.ok) {
-      return rateLimit(key, { limit, windowMs });
+      if (!error && typeof data === "number") {
+        if (data > limit) {
+          return { ok: false, retryAfter: windowSec };
+        }
+        return { ok: true };
+      }
     }
-
-    const data = await res.json();
-    const count = Number(data?.[0]?.result || 1);
-
-    if (count > limit) {
-      return { ok: false, retryAfter: windowSec };
-    }
-
-    return { ok: true };
   } catch {
-    // Graceful fallback ke in-memory jika jaringan redis bermasalah
-    return rateLimit(key, { limit, windowMs });
+    // lanjut ke in-memory
   }
-}
 
+  // 3. Graceful fallback ke in-memory
+  return rateLimit(key, { limit, windowMs });
+}
