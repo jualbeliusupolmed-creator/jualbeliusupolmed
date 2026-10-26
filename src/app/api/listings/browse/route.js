@@ -139,9 +139,13 @@ export async function GET(req) {
       const profileMap = new Map((profiles || []).map((p) => [p.wa, p]));
       data.forEach((d) => {
         d.seller_profiles = profileMap.get(d.seller_wa) || null;
-        delete d.seller_wa; // SECURITY: Don't leak to public
       });
     }
+
+    // SECURITY: Unconditionally strip seller_wa from every record
+    (data || []).forEach((d) => {
+      delete d.seller_wa;
+    });
 
     return NextResponse.json({
       listings: data || [],
