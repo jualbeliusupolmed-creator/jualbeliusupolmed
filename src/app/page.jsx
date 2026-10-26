@@ -10,23 +10,23 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata = {
-  title: "Jual Beli USU & Polmed — Kampusfess",
+  title: "Kampus Kita — Ekosistem Digital & Super-App Mahasiswa USU • POLMED",
   description:
-    "Marketplace mahasiswa USU dan Polmed, info kampus, menfess, dan cari teman anonim. Bagian dari ekosistem Kampusfess Medan.",
-  keywords: ["jual beli USU", "jual beli Polmed", "menfess usu", "info kampus", "mahasiswa Medan", "cari teman", "marketplace mahasiswa", "kampusfess"],
+    "Ekosistem digital dan super-app mahasiswa terpadu Universitas Sumatera Utara (USU) & Politeknik Negeri Medan (POLMED): marketplace preloved, open PO katering kampus, suara menfess anonim, dan janjian COD aman.",
+  keywords: ["Kampus Kita", "jual beli USU", "jual beli Polmed", "open po usu", "menfess usu", "info kampus usu", "mahasiswa Medan", "marketplace mahasiswa"],
   alternates: { canonical: "/" },
   openGraph: {
-    title: "Jual Beli USU & Polmed — Kampusfess",
-    description: "Marketplace mahasiswa USU dan Polmed, info kampus, menfess, dan cari teman anonim. Bagian dari ekosistem Kampusfess Medan.",
+    title: "Kampus Kita — Ekosistem Digital & Super-App Mahasiswa USU • POLMED",
+    description: "Ekosistem digital dan super-app mahasiswa terpadu Universitas Sumatera Utara (USU) & Politeknik Negeri Medan (POLMED): marketplace preloved, open PO katering kampus, suara menfess anonim, dan janjian COD aman.",
     url: "/",
-    siteName: "Jual Beli USU & Polmed",
+    siteName: "Kampus Kita",
     locale: "id_ID",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Jual Beli USU & Polmed — Kampusfess",
-    description: "Marketplace mahasiswa USU dan Polmed, info kampus, menfess, dan cari teman anonim.",
+    title: "Kampus Kita — Ekosistem Digital & Super-App Mahasiswa USU • POLMED",
+    description: "Ekosistem digital dan super-app mahasiswa terpadu Universitas Sumatera Utara (USU) & Politeknik Negeri Medan (POLMED).",
   },
 };
 
