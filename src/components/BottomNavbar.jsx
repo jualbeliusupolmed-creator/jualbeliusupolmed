@@ -22,11 +22,10 @@ const MARKET = {
 };
 const OPEN_PO = {
   name: "Open PO",
-  href: "https://open-po.vercel.app",
+  href: "/open-po",
   match: ["/open-po"],
   icon: Icon.Coffee,
   badgeText: "PO",
-  external: true,
 };
 const MENFESS = {
   name: "Menfess",
