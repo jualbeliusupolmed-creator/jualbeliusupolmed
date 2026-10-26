@@ -85,10 +85,8 @@ export const viewport = {
   // Cubit-untuk-perbesar dibiarkan hidup: mengunci zoom bikin teks kecil
   // mustahil dibaca sebagian orang, dan itu pelanggaran aksesibilitas.
   maximumScale: 5,
-  userScalable: true,
-  // Warna bilah peramban di Android/iOS. Ungu Polmed, sama dengan tombol
-  // ajakan utama — supaya jendela aplikasi menyatu dengan halamannya.
-  themeColor: "#532b98",
+  // Warna bilah peramban di Android/iOS: Forest Emerald #047857 resmi Kampus Kita
+  themeColor: "#047857",
 };
 
 export default async function RootLayout({ children }) {

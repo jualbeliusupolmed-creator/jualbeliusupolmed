@@ -3,27 +3,33 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Palet kampus: Hijau #126B49 (USU), Ungu #532b98 (Polmed) */
+/* Palet resmi Kampus Kita: Forest Emerald #047857 & Amber #F59E0B */
 :root {
-  --usu: #126B49;
-  --usu-light: #168057;
-  --usu-dark: #0e5238;
-  --polmed: #532b98;
-  --polmed-light: #7c4fd4;
-  --polmed-dark: #3c1c74;
+  --usu: #047857;
+  --usu-light: #059669;
+  --usu-dark: #065f46;
+  --polmed: #047857;
+  --polmed-light: #059669;
+  --polmed-dark: #065f46;
 
-  --primary: #126B49; /* Unified Campus Forest Green */
+  --primary: #047857; /* Forest Emerald */
+  --primary-hover: #065f46;
+  --primary-light: #ecfdf5;
   --primary-foreground: #ffffff;
-  --accent: var(--usu);
+  --accent: #047857;
+  --accent-secondary: #f59e0b;
   --accent-foreground: #ffffff;
   --wa: #25d366;
   --page: #f8fafc;
 }
 
 .dark {
-  --primary: #8b5cf6; /* MyFess Violet Lighter */
+  --primary: #10b981; /* Emerald Lighter for dark mode */
+  --primary-hover: #059669;
+  --primary-light: #064e3b;
   --primary-foreground: #ffffff;
-  --accent: #34d399;
+  --accent: #10b981;
+  --accent-secondary: #f59e0b;
   --accent-foreground: #000000;
 }
 

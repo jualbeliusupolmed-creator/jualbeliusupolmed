@@ -3,327 +3,362 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import Logo from "@/components/Logo";
 import { Icon } from "@/components/Icons";
 import OTPModal from "@/components/OTPModal";
 import { useSesi } from "@/components/SesiProvider";
 import NotificationCenter from "@/components/NotificationCenter";
-import { toast } from "sonner";
-import { useHideOnScroll } from "@/lib/useHideOnScroll";
-import { terapkanTema } from "@/lib/tampilan";
 import QuickSearchSheet from "@/components/QuickSearchSheet";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
-const links = [
-  { href: "/", label: "Beranda" },
-  { href: "/jual-beli", label: "Marketplace" },
-  { href: "https://open-po.vercel.app", label: "PO Kampus", external: true },
-  { href: "/mading", label: "Menfess" },
-  { href: "/organisasi", label: "UKM" },
-  { href: "/oprec", label: "Oprec" },
-  { href: "/dicari", label: "Dicari" },
-  { href: "/teman", label: "Cari Teman", icon: "Fire" },
-  { href: "/chat", label: "Obrolan" },
-];
 export default function Navbar({ config }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [dark, setDark] = useState(false);
-  const [showOtp, setShowOtp] = useState(false);
-  // Sesi tidak lagi diambil sendiri di sini. Dulu Navbar memanggil
-  // /api/auth/me pada SETIAP pindah alamat, dan hasilnya berhenti di
-  // komponen ini — nomor yang sudah diketahuinya tidak pernah dikembalikan
-  // ke localStorage, padahal delapan berkas lain membacanya dari sana.
   const { wa: sesiWa, nama: sesiNama, siap, segarkan, keluar } = useSesi();
   const session = { wa: sesiWa, name: sesiNama || sesiWa };
-  const [navQ, setNavQ] = useState("");
-  const [wantedCount, setWantedCount] = useState(0);
+  
+  const [selectedCampus, setSelectedCampus] = useState("USU");
+  const [campusDropdownOpen, setCampusDropdownOpen] = useState(false);
+  const [unreadChat, setUnreadChat] = useState(3);
   const [notifTerbuka, setNotifTerbuka] = useState(false);
   const [cariTerbuka, setCariTerbuka] = useState(false);
-  const sessionSyncedAtRef = useRef(0);
-  // Bilah tidak boleh menyingkir sambil membawa panel yang sedang dibuka.
-  const bilahTersembunyi =
-    useHideOnScroll({ batasAtas: 96 }) && !notifTerbuka && !cariTerbuka;
+  const [showOtp, setShowOtp] = useState(false);
+  const dropdownRef = useRef(null);
 
-  const submitSearch = (e) => {
-    e.preventDefault();
-    const term = navQ.trim();
-    // Beranda tidak membaca ?q= — hasil pencarian ada di halaman marketplace.
-    router.push(term ? `/jual-beli?q=${encodeURIComponent(term)}` : "/jual-beli");
-  };
-
+  // Load campus preference
   useEffect(() => {
-    setDark(document.documentElement.classList.contains("dark"));
+    const saved = localStorage.getItem("preferred_campus");
+    if (saved) setSelectedCampus(saved);
 
-    const handleThemeChange = (e) => {
-      setDark(e.detail?.dark ?? document.documentElement.classList.contains("dark"));
+    const onChatUnread = (e) => setUnreadChat(e.detail?.count ?? 3);
+    window.addEventListener("chat:unread", onChatUnread);
+
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setCampusDropdownOpen(false);
+      }
     };
-    window.addEventListener("theme:change", handleThemeChange);
+    document.addEventListener("mousedown", handleClickOutside);
 
-    // Fetch wanted count for badge
-    fetch("/api/wanted?limit=1")
-      .then((r) => r.json())
-      .then((d) => setWantedCount(d.total || d.listings?.length || 0))
-      .catch(() => {});
-
-    return () => window.removeEventListener("theme:change", handleThemeChange);
+    return () => {
+      window.removeEventListener("chat:unread", onChatUnread);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
-
-  const doLogout = async () => {
-    await keluar();
-    toast.success("Berhasil keluar.");
-    router.refresh();
+  const changeCampus = (camp) => {
+    setSelectedCampus(camp);
+    localStorage.setItem("preferred_campus", camp);
+    setCampusDropdownOpen(false);
+    window.dispatchEvent(new CustomEvent("campus:change", { detail: { campus: camp } }));
+    toast.success(`Kampus aktif: ${camp}`);
   };
 
-  const toggleTheme = () => {
-    const isDark = !dark;
-    setDark(isDark);
-    terapkanTema(isDark ? "gelap" : "terang");
+  const isSubPage = pathname?.startsWith("/produk/") || pathname === "/jual" || pathname?.startsWith("/edit/") || pathname?.startsWith("/penjual/");
+  
+  const getSubPageTitle = () => {
+    if (pathname?.startsWith("/produk/")) return "Detail Produk";
+    if (pathname === "/jual") return "Pasang Iklan";
+    if (pathname?.startsWith("/edit/")) return "Edit Iklan";
+    if (pathname?.startsWith("/penjual/")) return "Profil Penjual";
+    return "Kampus Kita";
   };
+
+  const navMenus = [
+    { name: "Beranda", href: "/", match: pathname === "/" },
+    { name: "Marketplace", href: "/jual-beli", match: pathname?.startsWith("/jual-beli") || pathname?.startsWith("/produk/") },
+    { name: "Open PO", href: "https://open-po.vercel.app", match: pathname?.startsWith("/open-po"), badge: "PO", external: true },
+    { name: "Menfess", href: "/mading", match: pathname?.startsWith("/mading") },
+    { name: "Obrolan", href: "/chat", match: pathname?.startsWith("/chat"), badgeCount: unreadChat },
+  ];
 
   return (
-    <header className="sticky top-0 z-40">
-      {/* Universal Ecosystem Switcher: USU & POLMED Student Ecosystem */}
-      <div className="h-8 bg-slate-100/90 dark:bg-[#18181b] border-b border-slate-200/80 dark:border-white/[0.08] flex items-center justify-between px-3 sm:px-4 text-[11px] font-medium relative z-50">
-        <div className="flex items-center gap-1.5 max-w-7xl mx-auto w-full justify-between">
-          <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto [scrollbar-width:none]">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 mr-1 hidden sm:inline">
-              Ekosistem:
-            </span>
-            <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 border border-emerald-600/30 text-emerald-800 dark:text-emerald-300 font-bold text-[10.5px] shadow-2xs">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400" />
-              <span>Jual Beli</span>
-              <span className="text-[9px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950 px-1 rounded">Aktif</span>
-            </div>
-            <a
-              href="https://open-po.vercel.app"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-white/60 dark:hover:bg-slate-800/60 font-semibold text-[10.5px] transition-colors"
-            >
-              <span>OpenPO Kampus</span>
-              <Icon.ExternalLink className="w-2.5 h-2.5 opacity-60" />
-            </a>
-            <Link
-              href="/mading"
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-800/60 font-semibold text-[10.5px] transition-colors hidden xs:inline-flex"
-            >
-              <span>Menfess</span>
-            </Link>
-          </div>
-
-          <div className="flex items-center gap-2 text-[10.5px] text-slate-500 dark:text-slate-400 shrink-0">
-            <span className="hidden sm:inline">Komunitas Mahasiswa USU &amp; POLMED</span>
-            <span className="text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>COD Kampus</span>
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Top bar: Apple Frosted Glass ── */}
-      <div className="border-b border-black/[0.06] bg-white/85 backdrop-blur-2xl transition-all duration-300 dark:border-white/[0.08] dark:bg-[#0f172a]/95">
-        <div className="mx-auto flex min-w-0 max-w-6xl items-center justify-between gap-1 px-2.5 py-1.5 min-[390px]:px-3">
-          <div className="flex items-center gap-1 min-w-0">
-            {/* Mobile Hamburger Menu Button */}
-            <button
-              type="button"
-              onClick={() => {
-                if (typeof window !== "undefined") {
-                  window.dispatchEvent(new CustomEvent("drawer:open"));
-                }
-              }}
-              aria-label="Buka Menu Kampus"
-              title="Menu Kampus"
-              className="md:hidden flex h-10 w-10 items-center justify-center rounded-full text-slate-700 dark:text-slate-200 hover:bg-black/[0.05] dark:hover:bg-white/[0.08] active:scale-90 transition-all shrink-0"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                className="h-5 w-5"
-              >
-                <line x1="4" y1="7" x2="20" y2="7" />
-                <line x1="4" y1="12" x2="20" y2="12" />
-                <line x1="4" y1="17" x2="20" y2="17" />
-              </svg>
-            </button>
-
-            {/* Logo */}
-            <Link href="/" className="flex min-w-0 shrink items-center gap-1.5 active:scale-[0.98] transition-transform group">
-              <div className="shrink-0 transition-transform duration-300 group-hover:scale-105">
-                <Logo className="h-5 w-5" src={config?.site?.logoUrl} />
+    <header className="sticky top-0 z-50 bg-white/95 dark:bg-[#0f172a]/95 backdrop-blur-md border-b border-[#E2E8F0] dark:border-white/[0.08] shadow-xs">
+      {/* ── DESKTOP NAVBAR (Tinggi 64px — h-16) ── */}
+      <div className="hidden lg:block w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 gap-4">
+          {/* Brand Identity (Kiri) */}
+          <div className="flex items-center gap-3 shrink-0">
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <div className="w-10 h-10 rounded-xl bg-[#047857] flex items-center justify-center text-white shadow-sm group-hover:bg-[#065F46] transition-colors">
+                <Icon.GraduationCap className="w-5 h-5 text-emerald-200" />
               </div>
               <div className="flex flex-col">
-                <span className="truncate text-[12px] font-extrabold leading-none tracking-tight text-[#1d1d1f] transition-colors min-[350px]:inline dark:text-[#f5f5f7] min-[390px]:text-[13px]">
-                  Kampusfess
+                <span className="font-bold text-[18px] text-[#0F172A] dark:text-white tracking-tight leading-none">
+                  Kampus Kita
                 </span>
-                <span className="hidden min-[420px]:block text-[9px] font-semibold text-slate-400 dark:text-slate-500 leading-tight mt-0.5">
+                <span className="text-[11px] font-semibold text-[#047857] dark:text-emerald-400 tracking-wider uppercase leading-tight mt-0.5">
                   USU • POLMED
                 </span>
               </div>
             </Link>
+
+            {/* Selector Kampus Dropdown */}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                type="button"
+                onClick={() => setCampusDropdownOpen(!campusDropdownOpen)}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[#0F172A] dark:text-slate-200 text-xs font-semibold transition-colors cursor-pointer border border-[#E2E8F0] dark:border-white/[0.08]"
+                aria-label="Pilih Kampus"
+              >
+                <span>🎓</span>
+                <span>Kampus: <strong>{selectedCampus}</strong></span>
+                <Icon.ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+              </button>
+
+              {campusDropdownOpen && (
+                <div className="absolute left-0 mt-1.5 w-44 rounded-xl bg-white dark:bg-slate-800 border border-[#E2E8F0] dark:border-white/[0.1] shadow-lg py-1 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                  <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    Pilih Kampus
+                  </div>
+                  {["USU", "POLMED", "Semua"].map((camp) => (
+                    <button
+                      key={camp}
+                      type="button"
+                      onClick={() => changeCampus(camp)}
+                      className={cn(
+                        "w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors",
+                        selectedCampus === camp ? "text-[#047857] dark:text-emerald-400 font-bold bg-[#ECFDF5] dark:bg-emerald-950/40" : "text-slate-700 dark:text-slate-300 font-medium"
+                      )}
+                    >
+                      <span>{camp === "Semua" ? "Semua Kampus" : `Kampus ${camp}`}</span>
+                      {selectedCampus === camp && <span className="text-[#047857] font-bold">✓</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Right side: search, unified user account button, notif, theme, cta */}
-          <div className="flex shrink-0 items-center gap-0.5 min-[390px]:gap-1.5">
-            {/* Search mini — di desktop selalu tampil, di mobile tersembunyi */}
-            <form onSubmit={submitSearch} className="relative hidden md:block">
-              <Icon.Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400 transition-colors peer-focus:text-primary" />
-              <input
-                value={navQ}
-                onChange={(e) => setNavQ(e.target.value)}
-                placeholder="Cari di kampus…"
-                aria-label="Cari barang"
-                className="peer w-36 rounded-full border border-black/[0.06] bg-black/[0.04] py-1.5 pl-8.5 pr-3 text-xs text-[#1d1d1f] outline-none transition-all duration-300 focus:w-52 focus:border-primary/30 focus:bg-white focus:ring-4 focus:ring-primary/10 dark:border-white/[0.08] dark:bg-white/[0.08] dark:text-[#f5f5f7] dark:focus:border-primary/40 dark:focus:bg-[#1c1c1e]"
-              />
-            </form>
+          {/* Navigasi Utama (Tengah — 5 Menu Resmi) */}
+          <nav className="flex items-center gap-1 p-1 bg-slate-50 dark:bg-slate-800/60 rounded-full border border-[#E2E8F0] dark:border-white/[0.06]">
+            {navMenus.map((m) => {
+              const active = m.match;
+              const linkClasses = cn(
+                "relative flex items-center gap-1.5 px-3.5 py-1.5 text-xs rounded-full transition-all duration-150",
+                active
+                  ? "text-[#047857] dark:text-emerald-300 bg-[#ECFDF5] dark:bg-emerald-950/70 font-semibold shadow-xs"
+                  : "text-[#64748B] dark:text-slate-300 hover:text-[#0F172A] dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60 font-medium"
+              );
 
-            {/* Unified User Account / Dashboard Button */}
-            {!siap ? (
-              /* Skeleton netral — sama antara server & client, hindari hydration mismatch */
-              <div className="h-7 w-20 rounded-full bg-black/[0.05] dark:bg-white/[0.08] animate-pulse" />
-            ) : session.wa ? (
-              <div className="flex items-center gap-0.5 bg-black/[0.04] dark:bg-white/[0.08] p-0.5 rounded-full border border-black/[0.04] dark:border-white/[0.06]">
-                <Link
-                  href="/dashboard"
-                  className="inline-flex items-center gap-1.5 rounded-full bg-white dark:bg-[#1c1c1e] px-2.5 py-1 text-[11px] font-bold text-[#1d1d1f] dark:text-[#f5f5f7] hover:text-primary dark:hover:text-emerald-400 transition-all active:scale-[0.96] shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
-                  title="Buka Dashboard Akun"
-                  aria-label="Buka dashboard"
-                >
-                  <Icon.User className="h-3.5 w-3.5 text-primary shrink-0" />
-                  <span className="max-w-[75px] truncate">{session.name || session.wa}</span>
-                  <span className="hidden lg:inline text-[9px] text-gray-400 font-medium">· Dashboard</span>
+              if (m.external) {
+                return (
+                  <a
+                    key={m.name}
+                    href={m.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={linkClasses}
+                  >
+                    <span>{m.name}</span>
+                    {m.badge && (
+                      <span className="px-1.5 py-0.2 rounded-full bg-[#F59E0B] text-white text-[9px] font-bold uppercase leading-tight shadow-xs">
+                        {m.badge}
+                      </span>
+                    )}
+                  </a>
+                );
+              }
+
+              return (
+                <Link key={m.name} href={m.href} className={linkClasses}>
+                  <span>{m.name}</span>
+                  {m.badgeCount > 0 && (
+                    <span className="w-4 h-4 rounded-full bg-[#047857] text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                      {m.badgeCount}
+                    </span>
+                  )}
                 </Link>
-                <button
-                  onClick={() => {
-                    toast("Keluar dari akun ini?", {
-                      action: { label: "Keluar", onClick: doLogout },
-                      cancel: { label: "Batal" },
-                    });
-                  }}
-                  className="p-1 text-gray-400 hover:text-rose-500 rounded-full transition-colors active:scale-90"
-                  title="Keluar dari akun"
-                  aria-label="Keluar dari akun"
-                >
-                  <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                    <polyline points="16 17 21 12 16 7" />
-                    <line x1="21" y1="12" x2="9" y2="12" />
-                  </svg>
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowOtp(true)}
-                className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 text-primary border border-primary/25 px-3 py-1 text-[11px] font-bold transition-all duration-200 hover:bg-primary hover:text-white active:scale-[0.95] dark:bg-primary/20 dark:text-violet-300 dark:border-primary/35 shadow-xs"
-                title="Masuk / Daftar Akun"
-              >
-                <Icon.User className="h-3.5 w-3.5" />
-                <span>Masuk</span>
-              </button>
-            )}
+              );
+            })}
+          </nav>
 
-            <Link
-              href="/chat"
-              aria-label="Buka pesan"
-              title="Pesan"
-              className="hidden rounded-full p-1.5 text-gray-500 transition-all duration-200 hover:bg-black/[0.05] hover:text-[#1d1d1f] active:scale-90 min-[390px]:inline-flex dark:text-gray-400 dark:hover:bg-white/[0.08] dark:hover:text-white"
-            >
-              <Icon.MessageCircle className="h-4 w-4" />
-            </Link>
-
-            {/* Cari — pil di bawah hanya ada di halaman telusur, jadi ikon
-                ini yang menjamin pencarian tetap terjangkau di halaman lain. */}
+          {/* Aksi & Profil (Kanan) */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            {/* Search Trigger Button */}
             <button
+              type="button"
               onClick={() => setCariTerbuka(true)}
               aria-label="Cari barang atau jasa"
-              title="Cari"
-              className="hidden rounded-full p-1.5 text-gray-500 transition-all duration-200 hover:bg-black/[0.05] hover:text-[#1d1d1f] active:scale-90 min-[360px]:block dark:text-gray-400 dark:hover:bg-white/[0.08] dark:hover:text-white"
+              className="w-9 h-9 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
-              <Icon.Search className="h-4 w-4" />
+              <Icon.Search className="w-4 h-4" />
             </button>
 
-            {/* Notification Center */}
-            <NotificationCenter onOpenChange={setNotifTerbuka} />
+            {/* Icon Notifikasi Lonceng */}
+            <div className="relative">
+              <NotificationCenter onOpenChange={setNotifTerbuka} />
+            </div>
 
-            {/* Theme toggle */}
-            <button
-              onClick={toggleTheme}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-black/[0.08] bg-black/[0.04] text-slate-700 transition-all duration-200 hover:bg-black/[0.08] hover:text-[#1d1d1f] active:scale-90 dark:border-white/[0.12] dark:bg-white/[0.08] dark:text-amber-300 dark:hover:bg-white/[0.14] shadow-xs"
-              aria-label={dark ? "Tema: Gelap (Beralih ke Terang)" : "Tema: Terang (Beralih ke Gelap)"}
-              title={dark ? "Tema: Gelap" : "Tema: Terang"}
+            {/* Primary Action Button: + Pasang Iklan */}
+            <Link
+              href="/jual"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#047857] hover:bg-[#065F46] text-white text-xs font-semibold shadow-xs hover:shadow-sm active:scale-95 transition-all"
             >
-              <div className="relative h-4 w-4 overflow-hidden">
-                <svg className={`absolute inset-0 h-4 w-4 transform transition-transform duration-500 ${dark ? 'translate-y-full opacity-0' : 'translate-y-0 opacity-100 text-slate-700'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                </svg>
-                <svg className={`absolute inset-0 h-4 w-4 transform transition-transform duration-500 ${dark ? 'translate-y-0 opacity-100 text-amber-300' : '-translate-y-full opacity-0'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
-                </svg>
-              </div>
-            </button>
-
-            {/* Jual Barang CTA */}
-            <Link href="/jual" className="hidden lg:inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-bold text-white shadow-[0_2px_8px_rgba(83,43,152,0.25)] transition-all duration-200 hover:brightness-105 active:scale-[0.95]">
-              <span>+ Jual</span>
+              <Icon.Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>+ Pasang Iklan</span>
             </Link>
+
+            {/* User Profile Chip */}
+            {siap && session.wa ? (
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-[#E2E8F0] dark:border-white/[0.08] transition-colors group"
+                title="Buka Dashboard Akun"
+              >
+                <div className="w-7 h-7 rounded-full bg-[#047857] text-white flex items-center justify-center text-xs font-bold shrink-0 shadow-xs">
+                  {session.name ? session.name[0].toUpperCase() : "U"}
+                </div>
+                <div className="flex flex-col text-left">
+                  <span className="text-xs font-bold text-[#0F172A] dark:text-white group-hover:text-[#047857] dark:group-hover:text-emerald-400 transition-colors leading-none truncate max-w-[80px]">
+                    {session.name || "Mahasiswa"}
+                  </span>
+                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium leading-tight">
+                    KTM Aktif ✓
+                  </span>
+                </div>
+              </Link>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <Link
+                  href="/dashboard"
+                  className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-[#E2E8F0] dark:border-white/[0.08] transition-colors group"
+                  title="Demo Profil Mahasiswa"
+                >
+                  <div className="w-7 h-7 rounded-full bg-[#047857] text-white flex items-center justify-center text-xs font-bold shrink-0 shadow-xs">
+                    F
+                  </div>
+                  <div className="flex flex-col text-left">
+                    <span className="text-xs font-bold text-[#0F172A] dark:text-white leading-none">
+                      Faris
+                    </span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium leading-tight">
+                      FK '22
+                    </span>
+                  </div>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setShowOtp(true)}
+                  className="px-2.5 py-1 text-xs font-semibold text-[#047857] hover:underline"
+                >
+                  Masuk
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* ── Nav links bar — tampil di desktop, sembunyikan di mobile ── */}
-      <div className="relative hidden md:block border-b border-black/[0.06] bg-white/70 backdrop-blur-2xl dark:border-white/[0.08] dark:bg-[#0f172a]/80">
-        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-[#f5f5f7] to-transparent z-10 dark:from-[#0f172a]" />
-        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#f5f5f7] to-transparent z-10 dark:from-[#0f172a]" />
-        
-        <nav className="mx-auto flex max-w-6xl items-center gap-1.5 overflow-x-auto px-4 py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {links.map((l) => {
-            if (l.external) {
-              return (
-                <a
-                  key={l.href}
-                  href={l.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="relative shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-bold tracking-tight transition-all duration-200 active:scale-[0.96] text-emerald-600 bg-emerald-500/10 hover:bg-emerald-500/20 dark:text-emerald-400 dark:bg-emerald-500/15"
-                >
-                  {l.label}
-                </a>
-              );
-            }
-            const active = l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
-            return (
-              <Link
-                key={l.href}
-                href={l.href}
-                className={`relative shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-bold tracking-tight transition-all duration-200 active:scale-[0.96] ${
-                  active
-                    ? "bg-black/[0.08] text-[#1d1d1f] dark:bg-white/[0.14] dark:text-[#f5f5f7] shadow-xs"
-                    : "text-gray-500 hover:text-[#1d1d1f] hover:bg-black/[0.03] dark:text-gray-400 dark:hover:text-[#f5f5f7] dark:hover:bg-white/[0.05]"
-                }`}
+      {/* ── MOBILE TOP APP BAR (Tinggi 56px — h-14) ── */}
+      <div className="lg:hidden h-14 px-3 sm:px-4 flex items-center justify-between gap-2.5">
+        {isSubPage ? (
+          /* Sub/Detail Pages: Back + Centered Title + Share/Action */
+          <>
+            <button
+              type="button"
+              onClick={() => router.back()}
+              aria-label="Kembali"
+              className="w-9 h-9 rounded-full flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-90 transition-all shrink-0"
+            >
+              <Icon.ArrowLeft className="w-5 h-5" />
+            </button>
+            <h1 className="text-sm font-bold text-[#0F172A] dark:text-white truncate flex-1 text-center">
+              {getSubPageTitle()}
+            </h1>
+            <div className="flex items-center gap-1 shrink-0">
+              <button
+                type="button"
+                onClick={() => setCariTerbuka(true)}
+                aria-label="Cari"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
-                {l.label}
-                {l.href === "/dicari" && wantedCount > 0 && (
-                  <span className="ml-1.5 rounded-full bg-rose-500 px-1.5 py-0.5 text-[9px] font-bold text-white leading-none">
-                    {wantedCount}
+                <Icon.Search className="w-4 h-4" />
+              </button>
+              <Link
+                href="/jual"
+                aria-label="Pasang Iklan"
+                className="w-8 h-8 rounded-full bg-[#047857] text-white flex items-center justify-center shadow-xs active:scale-90 transition-all"
+              >
+                <Icon.Plus className="w-4 h-4 stroke-[2.5]" />
+              </Link>
+            </div>
+          </>
+        ) : (
+          /* Root Pages: Logo + USU • POLMED + Actions */
+          <>
+            <div className="flex items-center gap-2 min-w-0">
+              <Link href="/" className="w-8 h-8 rounded-xl bg-[#047857] text-white flex items-center justify-center shrink-0 shadow-xs">
+                <Icon.GraduationCap className="w-4.5 h-4.5 text-emerald-200" />
+              </Link>
+              <div className="flex flex-col min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-extrabold text-sm text-[#0F172A] dark:text-white tracking-tight truncate">
+                    Kampus Kita
                   </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = selectedCampus === "USU" ? "POLMED" : selectedCampus === "POLMED" ? "Semua" : "USU";
+                      changeCampus(next);
+                    }}
+                    className="px-1.5 py-0.2 rounded-full bg-[#ECFDF5] dark:bg-emerald-950/80 text-[#047857] dark:text-emerald-300 text-[9px] uppercase font-bold tracking-wide shrink-0 border border-emerald-600/20"
+                  >
+                    {selectedCampus === "Semua" ? "USU • POLMED" : selectedCampus} ▾
+                  </button>
+                </div>
+                <span className="text-[10px] text-[#64748B] dark:text-slate-400 truncate font-medium">
+                  Ekosistem Kampus Terpadu
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1 shrink-0">
+              <button
+                type="button"
+                onClick={() => setCariTerbuka(true)}
+                aria-label="Cari"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-95"
+              >
+                <Icon.Search className="w-4 h-4" />
+              </button>
+              <Link
+                href="/chat"
+                aria-label="Pesan & Obrolan"
+                className="relative w-8 h-8 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-95"
+              >
+                <Icon.MessageCircle className="w-4 h-4" />
+                {unreadChat > 0 && (
+                  <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#047857] ring-2 ring-white dark:ring-[#0f172a]" />
                 )}
               </Link>
-            );
-          })}
-        </nav>
+              {siap && session.wa ? (
+                <Link
+                  href="/dashboard"
+                  className="w-7 h-7 rounded-full bg-[#047857] text-white flex items-center justify-center text-xs font-bold shadow-xs active:scale-95"
+                >
+                  {session.name ? session.name[0].toUpperCase() : "U"}
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowOtp(true)}
+                  aria-label="Masuk Akun"
+                  className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-[#E2E8F0] dark:border-white/[0.08] flex items-center justify-center active:scale-95"
+                >
+                  <Icon.User className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       <QuickSearchSheet isOpen={cariTerbuka} onClose={() => setCariTerbuka(false)} />
-
       <OTPModal
         isOpen={showOtp}
         onClose={() => setShowOtp(false)}
-        onSuccess={(wa) => {
+        onSuccess={() => {
           setShowOtp(false);
           segarkan();
           router.refresh();

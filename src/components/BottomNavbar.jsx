@@ -198,30 +198,12 @@ function BottomNavbarInner() {
           )}
           style={{ paddingBottom: "max(6px, env(safe-area-inset-bottom, 0px))" }}
         >
-          <div className="flex items-center justify-around h-13 px-2 max-w-md mx-auto">
+          <div className="flex items-center justify-around h-16 px-1 max-w-md mx-auto">
             <ItemNav n={BERANDA} pathname={pathname} />
             <ItemNav n={MARKET} pathname={pathname} />
-
-            {/* Center Create Action Button */}
-            <button
-              type="button"
-              onClick={() => {
-                hapticMedium();
-                setBukaBuat(true);
-              }}
-              aria-label="Pasang Iklan Baru"
-              className="flex flex-col items-center justify-center -mt-3 group active:scale-95 transition-transform"
-            >
-              <div className="w-10 h-10 rounded-full bg-[#126B49] text-white flex items-center justify-center shadow-md shadow-emerald-800/25 ring-3 ring-white dark:ring-[#18181b]">
-                <Icon.Plus className="w-5 h-5 stroke-[2.8]" />
-              </div>
-              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 mt-0.5">
-                Pasang
-              </span>
-            </button>
-
             <ItemNav n={OPEN_PO} pathname={pathname} />
             <ItemNav n={MENFESS} pathname={pathname} />
+            <ItemNav n={AKUN} pathname={pathname} />
           </div>
         </nav>
       )}
