@@ -7,7 +7,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    testTimeout: 15000,
+    testTimeout: 30000,
     setupFiles: ['./vitest.setup.mjs'],
     exclude: [
       'bot-wa/**',

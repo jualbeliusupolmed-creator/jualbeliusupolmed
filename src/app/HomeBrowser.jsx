@@ -785,14 +785,14 @@ export default function HomeBrowser({
               </div>
             )}
 
-            {/* Rekomendasi OpenPO saat memilih kategori Makanan */}
-            {cat === "makanan" && (
+            {/* Rekomendasi OpenPO saat memilih kategori Makanan atau mencari kata kunci kuliner */}
+            {(cat === "makanan" || (q && /risol|kopi|brownies|dimsum|matcha|makanan|snack|cemilan|minuman|jus|catering|nasi|cake|kue|kuliner/i.test(q))) && (
               <div className="mt-3 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-emerald-500/5 border border-emerald-500/20 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <span className="text-xl shrink-0">🍵</span>
                   <div className="min-w-0">
                     <p className="text-xs sm:text-sm font-bold text-emerald-950 dark:text-emerald-200">
-                      Mau Pesan Pre-Order Makanan &amp; Minuman Kampus?
+                      {q ? `Mencari jajanan/minuman "${q}"?` : "Mau Pesan Pre-Order Makanan & Minuman Kampus?"}
                     </p>
                     <p className="text-[11px] sm:text-xs text-emerald-800/80 dark:text-emerald-300/80 truncate">
                       Pesan risol, brownies, kopi susu langsung dari sesama mahasiswa di OpenPO.
@@ -800,12 +800,12 @@ export default function HomeBrowser({
                   </div>
                 </div>
                 <a
-                  href="https://open-po.vercel.app?utm_source=jualbeliusupolmed&ref=makanan_cat"
+                  href={`https://open-po.vercel.app?utm_source=jualbeliusupolmed&ref=search${q ? `&q=${encodeURIComponent(q)}` : ""}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="shrink-0 px-3.5 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition active:scale-95 flex items-center gap-1"
                 >
-                  <span>Buka OpenPO</span>
+                  <span>Cek OpenPO</span>
                   <Icon.ExternalLink className="w-3.5 h-3.5" />
                 </a>
               </div>
@@ -906,18 +906,22 @@ export default function HomeBrowser({
                 <p className="max-w-md text-sm text-gray-500 dark:text-slate-400 mb-8 leading-relaxed">
                   Belum ada yang jual di kategori ini — kamu duluan yuk!
                 </p>
-                <Link
-                  href="/jual"
-                  className="group relative inline-flex items-center justify-center overflow-hidden rounded-full p-4 px-8 font-bold text-white bg-primary hover:bg-primary-dark transition-all duration-300 active:scale-95 shadow-lg shadow-primary/30"
-                >
-                  <span className="absolute inset-0 w-full h-full -mt-1 rounded-lg opacity-30 bg-gradient-to-b from-transparent via-transparent to-black"></span>
-                  <span className="relative flex items-center gap-2">
-                    <svg className="w-5 h-5 transition-transform group-hover:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                    </svg>
-                        + Jual Barang Sekarang
-                  </span>
-                </Link>
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  <Link
+                    href="/jual"
+                    className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-bold text-white bg-primary hover:brightness-105 active:scale-95 shadow-md shadow-primary/25 transition-all"
+                  >
+                    <span>+ Pasang Iklan Sekarang</span>
+                  </Link>
+                  <a
+                    href={`https://open-po.vercel.app?utm_source=jualbeliusupolmed&ref=empty_state${q ? `&q=${encodeURIComponent(q)}` : ""}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/25 active:scale-95 transition-all"
+                  >
+                    <span>Cari PO di OpenPO ↗</span>
+                  </a>
+                </div>
               </div>
             ) : (
               <>
