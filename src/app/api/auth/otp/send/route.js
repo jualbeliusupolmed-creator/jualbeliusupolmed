@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { rateLimit, rateLimitDistributed, getClientIp } from "@/lib/rateLimit";
 import { hashOtp } from "@/lib/otp";
 import { formatWa } from "@/lib/constants";
 import { sendWa as send } from "@/lib/fonnte";
@@ -14,18 +14,14 @@ export const dynamic = "force-dynamic";
  * Pendaftaran tidak lewat sini lagi (lihat /api/auth/daftar-langsung). Yang
  * tersisa cuma satu pertanyaan yang benar-benar butuh bukti: "nomor ini memang
  * milikmu?" — dan itu baru berarti kalau ada akun yang mau direbut kembali.
- *
- * Karena itu rute ini menolak nomor yang tidak punya apa-apa. Kalau tidak, ia
- * jadi alat kirim pesan WhatsApp gratis ke nomor mana pun di Indonesia: cukup
- * ketik nomor orang, dan bot kami yang mengetuk pintunya. Yang kena getahnya
- * nomor WhatsApp kami sendiri.
  */
 export async function POST(req) {
   try {
-    const rl = rateLimit(`otp_send:${getClientIp(req)}`, { limit: 3, windowMs: 60_000 });
-    if (!rl.ok) {
+    const ip = getClientIp(req);
+    const ipRl = await rateLimitDistributed(`otp_send:ip:${ip}`, { limit: 5, windowMs: 900_000 });
+    if (!ipRl.ok) {
       return NextResponse.json(
-        { error: `Terlalu banyak permintaan. Coba lagi dalam ${rl.retryAfter} detik.` },
+        { error: `Terlalu banyak permintaan OTP dari jaringan ini. Coba lagi dalam ${ipRl.retryAfter} detik.` },
         { status: 429 }
       );
     }
@@ -34,6 +30,24 @@ export async function POST(req) {
     const normalizedWa = formatWa(wa);
     if (!normalizedWa) {
       return NextResponse.json({ error: "Nomor WA tidak valid" }, { status: 400 });
+    }
+
+    // Cooldown 60 detik per nomor WA
+    const cooldownRl = await rateLimitDistributed(`otp_cooldown:${normalizedWa}`, { limit: 1, windowMs: 60_000 });
+    if (!cooldownRl.ok) {
+      return NextResponse.json(
+        { error: `Mohon tunggu ${cooldownRl.retryAfter} detik sebelum meminta kode OTP kembali.` },
+        { status: 429 }
+      );
+    }
+
+    // Batas 3 OTP per nomor per jam
+    const hourlyRl = await rateLimitDistributed(`otp_hourly:${normalizedWa}`, { limit: 3, windowMs: 3600_000 });
+    if (!hourlyRl.ok) {
+      return NextResponse.json(
+        { error: "Batas pengiriman OTP tercapai (maksimal 3 kali per nomor per jam). Silakan coba lagi nanti." },
+        { status: 429 }
+      );
     }
 
     // Akun Testing — hanya aktif jika TEST_ACCOUNT_ENABLED=true di env

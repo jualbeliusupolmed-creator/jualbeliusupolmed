@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { censorProfanity, detectDoxxingRisk } from "@/lib/profanity";
-import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { rateLimit, rateLimitDistributed, getClientIp } from "@/lib/rateLimit";
 import { hashIdentitas } from "@/lib/identitasHash";
 import { catatIdentitasWa } from "@/lib/chatIdentity";
 import { getUserSession } from "@/lib/auth";
@@ -100,6 +100,12 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const body = await request.json();
+
+    // Honeypot check: bot otomatis mengisi input ini
+    if (body.website || body.fax) {
+      return NextResponse.json({ error: "Permintaan tidak dapat diproses." }, { status: 400 });
+    }
+
     let { type, sender_name, faculty, title, content, image_url, listing_id } = body;
 
     const wa = getUserSession();
@@ -134,12 +140,13 @@ export async function POST(request) {
       );
     }
 
-    // Rate-limit: berdasarkan sesi WA pengirim jika login, atau IP jika tanpa login
-    const rateKey = wa ? `mading-post:${wa}` : `mading-post:ip:${ip}`;
-    const laju = rateLimit(rateKey, { limit: 5, windowMs: 10 * 60_000 });
+    // Rate-limit terdistribusi: 10 menfess per jam per sesi atau IP (configurable)
+    const maxMenfessPerHour = Number(process.env.RATE_LIMIT_MENFESS_PER_HOUR || 10);
+    const rateKey = wa ? `mading-post:wa:${wa}` : `mading-post:ip:${ip}`;
+    const laju = await rateLimitDistributed(rateKey, { limit: maxMenfessPerHour, windowMs: 3600_000 });
     if (!laju.ok) {
       return NextResponse.json(
-        { error: `Terlalu banyak postingan dalam waktu singkat. Coba lagi dalam ${laju.retryAfter} detik.` },
+        { error: `Batas postingan tercapai (${maxMenfessPerHour} menfess per jam). Coba lagi dalam ${laju.retryAfter} detik.` },
         { status: 429 }
       );
     }

@@ -25,4 +25,13 @@ describe("rateLimit", () => {
     const res = await rateLimitDistributed(key, { limit: 5, windowMs: 10_000 });
     expect(res.ok).toBe(true);
   });
+
+  it("rateLimitDistributed menolak jika request melebihi limit", async () => {
+    const key = `test-ip-${Date.now()}-4`;
+    await rateLimitDistributed(key, { limit: 2, windowMs: 10_000 });
+    await rateLimitDistributed(key, { limit: 2, windowMs: 10_000 });
+    const blocked = await rateLimitDistributed(key, { limit: 2, windowMs: 10_000 });
+    expect(blocked.ok).toBe(false);
+    expect(blocked.retryAfter).toBeGreaterThan(0);
+  });
 });
