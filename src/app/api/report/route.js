@@ -44,9 +44,27 @@ export async function POST(req) {
     });
     if (error) throw new Error(error.message);
 
-    // Notif WA ke admin (aman-gagal)
+    // Auto-hide threshold: jika listing mendapat >= 3 laporan, sembunyikan otomatis
+    const { count: reportCount } = await supa
+      .from("reports")
+      .select("id", { count: "exact", head: true })
+      .eq("listing_id", listing_id);
 
-    return NextResponse.json({ ok: true });
+    let autoHidden = false;
+    if ((reportCount || 0) >= 3 && listing.status !== "hidden") {
+      await supa
+        .from("listings")
+        .update({
+          status: "hidden",
+          moderation_reason: `Disembunyikan otomatis: menerima ${reportCount} laporan komunitas (${cleanReason})`,
+          moderated_by: "system:auto_report_threshold",
+          moderated_at: new Date().toISOString(),
+        })
+        .eq("id", listing_id);
+      autoHidden = true;
+    }
+
+    return NextResponse.json({ ok: true, auto_hidden: autoHidden, report_count: reportCount || 1 });
   } catch (e) {
     return jawabGalat(e);
   }
