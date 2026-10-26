@@ -785,6 +785,32 @@ export default function HomeBrowser({
               </div>
             )}
 
+            {/* Rekomendasi OpenPO saat memilih kategori Makanan */}
+            {cat === "makanan" && (
+              <div className="mt-3 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-emerald-500/5 border border-emerald-500/20 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className="text-xl shrink-0">🍵</span>
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm font-bold text-emerald-950 dark:text-emerald-200">
+                      Mau Pesan Pre-Order Makanan &amp; Minuman Kampus?
+                    </p>
+                    <p className="text-[11px] sm:text-xs text-emerald-800/80 dark:text-emerald-300/80 truncate">
+                      Pesan risol, brownies, kopi susu langsung dari sesama mahasiswa di OpenPO.
+                    </p>
+                  </div>
+                </div>
+                <a
+                  href="https://open-po.vercel.app?utm_source=jualbeliusupolmed&ref=makanan_cat"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shrink-0 px-3.5 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition active:scale-95 flex items-center gap-1"
+                >
+                  <span>Buka OpenPO</span>
+                  <Icon.ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </div>
+            )}
+
             {/* Modal subscribe kategori */}
             {showCatSubModal && (
               <div
