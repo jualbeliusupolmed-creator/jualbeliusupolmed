@@ -7,6 +7,7 @@ import { formatWa } from "@/lib/constants";
 import { getSettings, adFeeFrom, angkaSetelan } from "@/lib/settings";
 import { buildSlug } from "@/lib/slug";
 import { rateLimit } from "@/lib/rateLimit";
+import { encodeSellerSlug } from "@/lib/sellerSlug";
 import { handleAdminCmd } from "@/lib/bot/adminHandlers";
 import { migrateLidToPhone } from "@/lib/lidMigrate";
 import { computeImageHash, checkReceiptHashDuplicate, saveReceiptHash } from "@/lib/receiptHash";
@@ -2042,7 +2043,8 @@ export async function POST(req) {
         }
 
         if (sayaPhone) {
-          sayaMsg += `\n🔗 Profil toko kamu:\n${sayaBaseUrl}/penjual/${sayaPhone}\n`;
+          const sayaSlug = sayaProfile?.slug || encodeSellerSlug(normalizedWa || sayaPhone);
+          sayaMsg += `\n🔗 Profil toko kamu:\n${sayaBaseUrl}/penjual/${sayaSlug}\n`;
         }
         sayaMsg += `\n_Ketik *MENU* untuk daftar semua perintah bantuan._`;
 

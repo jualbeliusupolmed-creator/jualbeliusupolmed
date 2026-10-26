@@ -6,7 +6,7 @@ import ProductCard from "@/components/ProductCard";
 import ShareProfileButton from "@/components/ShareProfileButton";
 import { formatWa, formatWaForBaileys } from "@/lib/constants";
 import { skripJsonLd } from "@/lib/jsonLd";
-import { decodeSellerSlug, encodeSellerSlug, maskPhone } from "@/lib/sellerSlug";
+import { decodeSellerSlug, encodeSellerSlug, maskPhone, parseSellerParam } from "@/lib/sellerSlug";
 import { Icon } from "@/components/Icons";
 import { fetchOpenPoBatches } from "@/lib/openPo";
 
@@ -16,31 +16,54 @@ async function getSellerData(wa) {
   try {
     const raw = decodeURIComponent(String(wa || "")).trim();
     const supa = getAdminClient();
+    const parsed = parseSellerParam(raw);
 
-    // 1. Coba cari profil berdasarkan username / slug
-    let { data: profile } = await supa
-      .from("seller_profiles")
-      .select("*")
-      .ilike("slug", raw)
-      .maybeSingle();
+    let profile = null;
+    let targetWa = null;
 
-    let targetWa = profile?.wa;
+    if (parsed.type === "slug") {
+      // 1. Coba cari profil berdasarkan username / slug
+      const { data: p } = await supa
+        .from("seller_profiles")
+        .select("*")
+        .ilike("slug", parsed.value)
+        .maybeSingle();
 
-    // 2. Jika tidak ditemukan lewat slug, coba decode (jika u-xxx atau nomor HP legacy)
-    if (!profile) {
-      const decodedWa = decodeSellerSlug(raw);
-      if (decodedWa) {
-        const { data: p } = await supa
+      if (p) {
+        profile = p;
+        targetWa = p.wa;
+      } else if (parsed.value.startsWith("p_")) {
+        // Cek jika ada kecocokan opaque hash
+        const { data: profiles } = await supa
           .from("seller_profiles")
           .select("*")
-          .eq("wa", decodedWa)
-          .maybeSingle();
-        if (p) {
-          profile = p;
-          targetWa = p.wa;
+          .limit(300);
+        const matched = (profiles || []).find((pr) => encodeSellerSlug(pr.wa) === parsed.value);
+        if (matched) {
+          profile = matched;
+          targetWa = matched.wa;
         } else {
-          targetWa = decodedWa;
+          // Cari di listings jika profil belum dibuat
+          const { data: listingsSample } = await supa
+            .from("listings")
+            .select("seller_wa")
+            .limit(300);
+          const found = (listingsSample || []).find((l) => encodeSellerSlug(l.seller_wa) === parsed.value);
+          if (found) targetWa = found.seller_wa;
         }
+      }
+    } else if (parsed.type === "legacy_phone") {
+      // Akses legacy lewat nomor HP langsung atau u-base64
+      const { data: p } = await supa
+        .from("seller_profiles")
+        .select("*")
+        .eq("wa", parsed.value)
+        .maybeSingle();
+      if (p) {
+        profile = p;
+        targetWa = p.wa;
+      } else {
+        targetWa = parsed.value;
       }
     }
 
@@ -182,7 +205,7 @@ export async function generateMetadata({ params }) {
   const data = await getSellerData(params.wa);
   if (!data) return { title: "Penjual tidak ditemukan" };
   const name = data.seller.seller_name;
-  const username = data.seller.slug || params.wa;
+  const username = data.seller.slug || encodeSellerSlug(data.seller.seller_wa);
   const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
   const pageUrl = `${baseUrl}/penjual/${username}`;
   const firstImage = data.listings[0]?.image_url || null;
@@ -239,10 +262,10 @@ export default async function SellerProfilePage({ params }) {
   const data = await getSellerData(params.wa);
   if (!data) notFound();
 
-  // Jika pengunjung datang lewat URL legacy nomor telepon atau u-base64,
-  // tapi penjual punya username resmi, redirect ke /penjual/[username]
-  if (data.seller.slug && params.wa !== data.seller.slug) {
-    permanentRedirect(`/penjual/${data.seller.slug}`);
+  // Redirect 301 jika diakses lewat URL legacy nomor HP (08/62/u-) atau jika slug canonical berbeda
+  const canonicalSlug = data.seller.slug || encodeSellerSlug(data.seller.seller_wa);
+  if (params.wa !== canonicalSlug) {
+    permanentRedirect(`/penjual/${canonicalSlug}`);
   }
 
   const { seller, listings, soldListings, ratings, soldCount, totalViews, memberSince, poBatches = [] } = data;
