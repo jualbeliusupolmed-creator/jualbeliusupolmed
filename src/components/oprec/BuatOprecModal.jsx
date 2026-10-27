@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import imageCompression from "browser-image-compression";
 import { Icon } from "@/components/Icons";
 import { useFocusTrap } from "@/lib/useFocusTrap";
+import CampusSelect from "@/components/CampusSelect";
 
 export default function BuatOprecModal({ onClose, onCreated, isUkmAccount = true }) {
   const [mounted, setMounted] = useState(false);
@@ -225,14 +226,7 @@ export default function BuatOprecModal({ onClose, onCreated, isUkmAccount = true
               <label className="block font-bold text-gray-700 dark:text-slate-300 mb-1">
                 Kampus
               </label>
-              <select
-                value={form.campus}
-                onChange={(e) => setForm({ ...form, campus: e.target.value })}
-                className="input py-2 text-xs font-medium"
-              >
-                <option value="USU">USU</option>
-                <option value="POLMED">POLMED</option>
-              </select>
+              <CampusSelect value={form.campus} onChange={(value) => setForm({ ...form, campus: value })} className="input py-2 text-xs font-medium" includeAll={false} required />
             </div>
           </div>
 

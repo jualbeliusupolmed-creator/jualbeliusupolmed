@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimit, rateLimitDistributed, getClientIp } from "@/lib/rateLimit";
-import { getSettings, adFeeFrom, listingExpiresAt, hasUnpaidSoldFees } from "@/lib/settings";
+import { getSettings, adFeeFrom, listingExpiresAt, hasUnpaidSoldFees, isAllowedCampus } from "@/lib/settings";
 import { formatWa } from "@/lib/constants";
 import { postToGroup, notifyCategorySubscribers } from "@/lib/fonnte";
 import { pushListingBaru } from "@/lib/webpush";
@@ -276,6 +276,9 @@ export async function POST(req) {
 
     // FIXED: Fetch settings BEFORE insert so expires_at uses configurable listingDays
     const settings = await getSettings();
+    if (!isAllowedCampus(campus || "Semua", settings, { allowAll: true })) {
+      return NextResponse.json({ error: "Kampus iklan tidak valid atau sudah tidak tersedia." }, { status: 400 });
+    }
     const distSettings = isDistributor ? await getDistributorSettings(supa) : null;
     const isJasa = type === "jasa";
     let isJasaFree = false;

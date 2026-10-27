@@ -4,6 +4,7 @@ import { getUserSession } from "@/lib/auth";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { formatWa } from "@/lib/constants";
 import { jawabGalat } from "@/lib/jawabGalat";
+import { getSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -158,8 +159,12 @@ export async function POST(req) {
       return NextResponse.json({ error: "Batas waktu pendaftaran (deadline) wajib diisi." }, { status: 400 });
     }
 
+    const kampusAktif = (await getSettings()).campuses || [];
     const ukmName = profile?.ukm_name || profile?.name || "Organisasi Mahasiswa";
-    const ukmCampus = campus || profile?.campus || "USU";
+    const ukmCampus = campus || profile?.campus || kampusAktif[0]?.shortName || "Kampus";
+    if (!kampusAktif.some((item) => item?.active !== false && String(item.shortName).toLowerCase() === String(ukmCampus).toLowerCase())) {
+      return NextResponse.json({ error: "Kampus Oprec tidak tersedia." }, { status: 400 });
+    }
     const ukmFaculty = faculty || profile?.faculty || "Universitas";
 
     const insertPayload = {

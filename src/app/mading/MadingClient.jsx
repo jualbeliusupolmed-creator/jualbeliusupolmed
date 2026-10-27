@@ -11,9 +11,6 @@ import { rupiah } from "@/lib/fees";
 import UnduhMenfessModal from "@/components/mading/UnduhMenfessModal";
 import MenfessReplySection from "@/components/mading/MenfessReplySection";
 
-const CAMPUSES = ["USU", "POLMED", "Bebas"];
-const FILTER_CAMPUSES = ["Semua", "USU", "POLMED", "Bebas"];
-
 export default function MadingClient({ initialPosts = [] }) {
   const [activeTab, setActiveTab] = useState("all"); // 'all' | 'menfess' | 'info' | 'organisasi' | 'blog'
 
@@ -31,6 +28,16 @@ export default function MadingClient({ initialPosts = [] }) {
   const [intipProduk, setIntipProduk] = useState(null);
   // Post yang sedang dibuka modal unduh gambar-nya.
   const [unduhPost, setUnduhPost] = useState(null);
+  const [campuses, setCampuses] = useState([]);
+
+  useEffect(() => {
+    fetch("/api/kampus", { cache: "no-store" })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (Array.isArray(data?.campuses)) setCampuses(data.campuses);
+      })
+      .catch(() => {});
+  }, []);
 
   // Dibuka dari tombol "Buat" atau "Promosikan di Menfess": /mading?tulis=1&tag=<id>
   useEffect(() => {
@@ -69,7 +76,7 @@ export default function MadingClient({ initialPosts = [] }) {
   const [formData, setFormData] = useState({
     type: "menfess",
     sender_name: "Anonim",
-    faculty: "USU",
+    faculty: "Bebas",
     title: "",
     content: "",
     is_anon: true,
@@ -421,7 +428,7 @@ export default function MadingClient({ initialPosts = [] }) {
         setFormData({
           type: "menfess",
           sender_name: "Anonim",
-          faculty: "USU",
+          faculty: "Bebas",
           title: "",
           content: "",
           is_anon: true,
@@ -514,7 +521,7 @@ export default function MadingClient({ initialPosts = [] }) {
             <div className="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar py-0.5">
               {/* Campus Selector */}
               <div className="flex items-center gap-1 shrink-0">
-                {FILTER_CAMPUSES.map((f) => (
+                {["Semua", ...campuses.map((campus) => campus.shortName), "Bebas"].map((f) => (
                   <button
                     key={f}
                     onClick={() => setSelectedFaculty(f)}
@@ -555,8 +562,8 @@ export default function MadingClient({ initialPosts = [] }) {
           )}
 
           {/* Banner Etika & Komunitas Kampus */}
-          <div className="mb-3 p-3.5 rounded-2xl bg-gradient-to-r from-purple-50 via-white to-emerald-50 dark:from-purple-950/20 dark:via-slate-900/40 dark:to-emerald-950/20 border border-purple-200/60 dark:border-purple-800/40 text-xs shadow-xs">
-            <div className="flex items-center gap-2 font-bold text-purple-900 dark:text-purple-300 mb-1">
+          <div className="mb-3 p-3.5 rounded-2xl bg-gradient-to-r from-emerald-50 via-white to-teal-50 dark:from-emerald-950/20 dark:via-slate-900/40 dark:to-teal-950/20 border border-emerald-200/60 dark:border-emerald-800/40 text-xs shadow-xs">
+            <div className="flex items-center gap-2 font-bold text-emerald-900 dark:text-emerald-300 mb-1">
               <span>🛡️ Aturan Komunitas Menfess USU &amp; POLMED</span>
             </div>
             <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-[11.5px]">
@@ -671,10 +678,10 @@ export default function MadingClient({ initialPosts = [] }) {
                       <div
                         className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-xl font-bold ${
                           post.type === "info"
-                            ? "bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400"
+                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
                             : post.faculty === "POLMED"
                             ? "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400"
-                            : "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400"
+                            : "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
                         }`}
                       >
                         {post.type === "info" ? <Icon.Megaphone className="h-5 w-5" /> : post.is_anon ? <Icon.User className="h-5 w-5" /> : post.sender_name?.charAt(0) || "A"}
@@ -690,7 +697,7 @@ export default function MadingClient({ initialPosts = [] }) {
                           </span>
                           <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium flex items-center gap-1 ${
                             post.type === "info"
-                              ? "bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400 border border-violet-100 dark:border-violet-900/30"
+                              ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30"
                               : "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30"
                           }`}>
                             {post.type === "info" ? <Icon.Megaphone className="h-3 w-3" /> : <Icon.Mail className="h-3 w-3" />}
@@ -765,7 +772,7 @@ export default function MadingClient({ initialPosts = [] }) {
                           <span className="block truncate text-xs font-bold text-[#1d1d1f] dark:text-white">
                             {post.listings.title}
                           </span>
-                          <span className="block text-[11px] font-extrabold text-primary dark:text-violet-400">
+                          <span className="block text-[11px] font-extrabold text-primary dark:text-emerald-400">
                             {rupiah(post.listings.price)}
                           </span>
                         </span>
@@ -951,7 +958,7 @@ export default function MadingClient({ initialPosts = [] }) {
                 </button>
               ) : (
                 <div className="py-4 text-center">
-                  <p className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-violet-500/10 text-violet-700 dark:text-violet-300 text-xs font-semibold">
+                  <p className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-xs font-semibold">
                     <span>✨</span>
                     <span>Semua menfess terbaru sudah ditampilkan — Kirim menfessmu sekarang!</span>
                   </p>
@@ -1040,7 +1047,7 @@ export default function MadingClient({ initialPosts = [] }) {
                     onChange={(e) => setFormData({ ...formData, faculty: e.target.value })}
                     className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none"
                   >
-                    {CAMPUSES.map((fac) => (
+                    {["Bebas", ...campuses.map((campus) => campus.shortName)].map((fac) => (
                       <option key={fac} value={fac}>
                         {fac}
                       </option>
@@ -1247,7 +1254,7 @@ export default function MadingClient({ initialPosts = [] }) {
         {/* MOBILE FLOATING ACTION BUTTON */}
         <button
           onClick={() => setShowModal(true)}
-          className="fixed z-40 bottom-6 right-4 sm:hidden bg-indigo-600 text-white p-4 rounded-full shadow-lg shadow-indigo-600/30 hover:scale-105 active:scale-95 transition-transform flex items-center justify-center"
+          className="fixed z-40 bottom-6 right-4 sm:hidden bg-emerald-700 text-white p-4 rounded-full shadow-lg shadow-emerald-700/30 hover:scale-105 active:scale-95 transition-transform flex items-center justify-center"
           aria-label="Buat Postingan Baru"
         >
           <Icon.Edit className="w-6 h-6" />

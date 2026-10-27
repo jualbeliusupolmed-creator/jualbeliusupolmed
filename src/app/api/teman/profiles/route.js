@@ -3,6 +3,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { identitasTeman } from "@/lib/identitasTeman";
 import { simpanProfil } from "@/lib/simpanProfil";
 import { jawabGalat } from "@/lib/jawabGalat";
+import { getSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -115,7 +116,7 @@ export async function POST(request) {
       photo_url,
       photo_urls = [],
       display_name,
-      campus = "USU",
+      campus,
       faculty = "Umum",
       batch = "2024",
       intent = "Teman Santai ",
@@ -137,7 +138,11 @@ export async function POST(request) {
     const cleanName = String(display_name || "Anak Kampus").trim();
     const cleanPhoto = photo_url || "";
     const cleanBio = String(bio || "").trim();
-    const cleanCampus = String(campus || "USU").trim();
+    const kampusAktif = (await getSettings()).campuses || [];
+    const cleanCampus = String(campus || kampusAktif[0]?.shortName || "Kampus").trim();
+    if (!kampusAktif.some((item) => item?.active !== false && String(item.shortName).toLowerCase() === cleanCampus.toLowerCase())) {
+      return NextResponse.json({ error: "Kampus tidak tersedia." }, { status: 400 });
+    }
     const cleanFaculty = String(faculty || "Umum").trim();
     const cleanBatch = String(batch || "2024").trim();
     const cleanIntent = String(intent || "Teman Santai ").trim();

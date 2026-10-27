@@ -12,6 +12,10 @@ import { DEFAULT_INVITE_CODE } from "@/lib/organisasi";
 export { angkaSetelan, adFeeFrom, soldFeeFrom, featuredRateFrom };
 
 export const DEFAULT_SETTINGS = {
+  campuses: [
+    { id: "usu", name: "Universitas Sumatera Utara", shortName: "USU", emailDomains: ["usu.ac.id"], active: true },
+    { id: "polmed", name: "Politeknik Negeri Medan", shortName: "POLMED", emailDomains: ["polmed.ac.id"], active: true },
+  ],
   pricing: {
     freeMode: true,
     adBarang: 0,
@@ -46,18 +50,18 @@ export const DEFAULT_SETTINGS = {
     heroTitle: "",
     heroSubtitle: "",
     footerTagline:
-      "Marketplace mahasiswa USU & Polmed. Jual-beli aman, dibantu admin.",
+      "Marketplace mahasiswa lintas kampus. Jual-beli aman, dibantu admin.",
     logoUrl: "",
     faviconUrl: "",
-    metaTitle: "Jual Beli USU & Polmed — Marketplace Mahasiswa Medan",
+    metaTitle: "Kampus Kita — Marketplace Mahasiswa",
     metaDescription:
-      "Marketplace jual-beli mahasiswa USU dan Polmed: laptop bekas, HP, buku, fashion, makanan, kos, dan jasa. Transaksi aman & COD di sekitar kampus, dibantu admin.",
+      "Marketplace jual-beli mahasiswa lintas kampus: laptop bekas, HP, buku, fashion, makanan, kos, dan jasa. Transaksi aman dan praktis, dibantu admin.",
     metaKeywords:
-      "jual beli USU, jual beli Polmed, marketplace mahasiswa Medan, laptop bekas USU, barang bekas mahasiswa Polmed, kos dekat USU, COD kampus",
+      "marketplace mahasiswa, jual beli kampus, barang bekas mahasiswa, jasa mahasiswa, COD kampus",
   },
   ai_config: {
     model: "gemini-2.0-flash",
-    memory: "Pasar target adalah mahasiswa USU dan Polmed di Kota Medan. Pembayaran bisa pakai QRIS atau bayar tunai (COD). Kategori yang tersedia: Elektronik, Fashion, Kendaraan, Properti, Buku, Makanan, Jasa, Lainnya.",
+    memory: "Pasar target adalah mahasiswa dari kampus-kampus yang terdaftar di katalog platform. Pembayaran bisa pakai QRIS atau bayar tunai (COD). Kategori yang tersedia: Elektronik, Fashion, Kendaraan, Properti, Buku, Makanan, Jasa, Lainnya.",
     personality: "Kamu adalah asisten marketplace yang profesional tapi santai. Gunakan bahasa Indonesia sehari-hari, sopan, sedikit gaul (seperti pakai kata 'Kak' atau 'Agan'). Selalu berikan semangat untuk cepat berjualan.",
   },
   admin: {
@@ -115,8 +119,6 @@ export const DEFAULT_SETTINGS = {
     "Medan Tembung",
     "Binjai",
     "Deli Serdang",
-    "Kampus USU",
-    "Kampus Polmed",
     "Semua Area",
   ],
   bot_keywords: {
@@ -157,11 +159,27 @@ export async function getSettings() {
       } else {
         merged[row.key] = row.value;
       }
+
     }
     return merged;
   } catch {
     return clone(DEFAULT_SETTINGS);
   }
+}
+
+export function getActiveCampuses(settings) {
+  return (Array.isArray(settings?.campuses) ? settings.campuses : [])
+    .filter((campus) => campus && campus.active !== false && String(campus.shortName || "").trim())
+    .map((campus) => ({ ...campus, shortName: String(campus.shortName).trim() }));
+}
+
+export function isAllowedCampus(value, settings, { allowAll = false, allowGeneral = false } = {}) {
+  const normalized = String(value || "").trim();
+  if (allowAll && normalized.toLowerCase() === "semua") return true;
+  if (allowGeneral && ["bebas", "umum"].includes(normalized.toLowerCase())) return true;
+  return getActiveCampuses(settings).some(
+    (campus) => campus.shortName.toLowerCase() === normalized.toLowerCase()
+  );
 }
 
 // Mengecek apakah penjual memiliki tagihan komisi penjualan (sold_fee) yang belum lunas
@@ -190,4 +208,3 @@ export function listingExpiresAt(pricing) {
   const days = Math.max(1, Number(pricing?.listingDays) || 14);
   return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 }
-

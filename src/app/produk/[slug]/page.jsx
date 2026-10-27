@@ -136,7 +136,7 @@ export async function generateMetadata({ params }) {
   }
 
   const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
-  const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "Jual Beli USU Polmed";
+  const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "Kampus Kita";
   const condLabel = listing.condition === "new" ? "Baru" : listing.condition === "used" ? "Bekas" : null;
   const isRental = listing.type === "sewa";
   const priceLabel = isRental && listing.rental_period
@@ -145,8 +145,8 @@ export async function generateMetadata({ params }) {
   const title = `${listing.title} — ${priceLabel}${condLabel ? ` (${condLabel})` : ""}`;
   const descBase = listing.description ? listing.description.slice(0, 120).replace(/[\s—\-–]+$/, "").trim() : null;
   const description = descBase
-    ? `${descBase} — ${priceLabel}. COD area USU & Polmed Medan.`
-    : `${listing.title}${condLabel ? ` kondisi ${condLabel}` : ""} dijual ${priceLabel} oleh ${listing.seller_name || "Mahasiswa"} di ${siteName}. COD kampus USU & Polmed, transaksi aman dibantu admin.`;
+    ? `${descBase} — ${priceLabel}. COD di sekitar kampus.`
+    : `${listing.title}${condLabel ? ` kondisi ${condLabel}` : ""} dijual ${priceLabel} oleh ${listing.seller_name || "Mahasiswa"} di ${siteName}. COD kampus, transaksi aman dibantu admin.`;
   const canonicalSlug = buildSlug(listing.title, listing.id);
   const url = `${baseUrl}/produk/${canonicalSlug}`;
 
@@ -163,9 +163,7 @@ export async function generateMetadata({ params }) {
   const keywords = [
     listing.title, listing.category, listing.seller_name,
     condLabel, listing.listing_code ? `kode ${listing.listing_code}` : null,
-    "jual beli USU", "jual beli Polmed", "marketplace kampus Medan",
-    "Universitas Sumatera Utara", "Politeknik Negeri Medan",
-    "COD Medan", "preloved mahasiswa",
+    "jual beli kampus", "marketplace mahasiswa", "COD kampus", "preloved mahasiswa",
   ].filter(Boolean);
 
   return {
@@ -206,7 +204,7 @@ export default async function ProdukPage({ params }) {
   // rich result (harga, ketersediaan) di Google.
   const baseUrl =
     (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
-  const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "Jual Beli USU Polmed";
+  const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "Kampus Kita";
   const productUrl = `${baseUrl}/produk/${buildSlug(listing.title, listing.id)}`;
   const productJsonLd = {
     "@context": "https://schema.org",
@@ -308,7 +306,7 @@ export default async function ProdukPage({ params }) {
           <h2 className="text-lg font-bold text-slate-900 dark:text-white">
             {listing.type === "jasa"
               ? "Jasa Serupa di Kampus"
-              : "Rekomendasi Barang Sejenis (USU • POLMED)"}
+              : "Rekomendasi Barang Sejenis"}
           </h2>
           <div className="mt-4 grid grid-cols-2 gap-2.5 xs:gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
             {related.map((r) => (

@@ -23,16 +23,17 @@ import UkmDashboardView from "@/components/dashboard/UkmDashboardView";
 import OprecPengurusPanel from "@/components/oprec/OprecPengurusPanel";
 import BuatOprecModal from "@/components/oprec/BuatOprecModal";
 import { useSesi } from "@/components/SesiProvider";
+import { StatusBadge } from "@/components/ui/DesignSystem";
 
 function statusBadge(s) {
   const map = {
-    active: "bg-green-100 text-green-700",
-    pending: "bg-amber-100 text-amber-700",
-    sold: "bg-gray-200 text-gray-700",
-    expired: "bg-rose-100 text-rose-700",
-    suspended: "bg-rose-100 text-rose-700",
+    active: "success",
+    pending: "warning",
+    sold: "neutral",
+    expired: "danger",
+    suspended: "danger",
   };
-  return map[s] || "bg-gray-100 text-gray-600";
+  return map[s] || "neutral";
 }
 
 function daysLeft(expiredAt) {
@@ -1472,7 +1473,7 @@ function DashboardInner() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className={`badge ${statusBadge(i.status)}`}>{i.status}</span>
+                            <StatusBadge tone={statusBadge(i.status)}>{i.status}</StatusBadge>
                             <span className="badge bg-primary/10 text-primary">{i.category}</span>
                             <span className="badge bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-slate-300 flex items-center gap-1">
                               <Icon.MapPin className="h-3 w-3" /> {i.campus}
@@ -1725,7 +1726,7 @@ function DashboardInner() {
                           </div>
                           <div>
                             <div className="flex items-center gap-1.5">
-                              <span className={`badge ${statusBadge(i.status)}`}>{i.status}</span>
+                              <StatusBadge tone={statusBadge(i.status)}>{i.status}</StatusBadge>
                               <span className="badge bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-slate-400">{i.category}</span>
                             </div>
                             <p className="font-semibold text-sm mt-0.5 dark:text-white">{i.title}</p>

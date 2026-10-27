@@ -10,14 +10,14 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata = {
-  title: "Kampus Kita — Ekosistem Digital & Super-App Mahasiswa USU • POLMED",
+  title: "Kampus Kita — Ekosistem Digital Mahasiswa",
   description:
-    "Ekosistem digital dan super-app mahasiswa terpadu Universitas Sumatera Utara (USU) & Politeknik Negeri Medan (POLMED): marketplace preloved, open PO katering kampus, suara menfess anonim, dan janjian COD aman.",
-  keywords: ["Kampus Kita", "jual beli USU", "jual beli Polmed", "open po usu", "menfess usu", "info kampus usu", "mahasiswa Medan", "marketplace mahasiswa"],
+    "Ekosistem digital mahasiswa lintas kampus: marketplace preloved, open PO, suara menfess anonim, dan janjian COD aman.",
+  keywords: ["Kampus Kita", "marketplace mahasiswa", "jual beli kampus", "open PO kampus", "menfess mahasiswa", "marketplace mahasiswa"],
   alternates: { canonical: "/" },
   openGraph: {
-    title: "Kampus Kita — Ekosistem Digital & Super-App Mahasiswa USU • POLMED",
-    description: "Ekosistem digital dan super-app mahasiswa terpadu Universitas Sumatera Utara (USU) & Politeknik Negeri Medan (POLMED): marketplace preloved, open PO katering kampus, suara menfess anonim, dan janjian COD aman.",
+    title: "Kampus Kita — Ekosistem Digital Mahasiswa",
+    description: "Ekosistem digital mahasiswa lintas kampus: marketplace preloved, open PO, suara menfess anonim, dan janjian COD aman.",
     url: "/",
     siteName: "Kampus Kita",
     locale: "id_ID",
@@ -25,8 +25,8 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Kampus Kita — Ekosistem Digital & Super-App Mahasiswa USU • POLMED",
-    description: "Ekosistem digital dan super-app mahasiswa terpadu Universitas Sumatera Utara (USU) & Politeknik Negeri Medan (POLMED).",
+    title: "Kampus Kita — Ekosistem Digital Mahasiswa",
+    description: "Ekosistem digital mahasiswa lintas kampus dengan marketplace, open PO, mading, dan chat.",
   },
 };
 
@@ -92,7 +92,7 @@ export default async function HomePage() {
         latestListings={listings}
         madingPosts={madingPosts}
         initialPoBatches={poBatches}
-        heroTitle={settings.site?.heroTitle === "Marketplace Mahasiswa USU & POLMED" ? "" : settings.site?.heroTitle}
+        heroTitle={settings.site?.heroTitle}
         heroSubtitle={settings.site?.heroSubtitle?.includes("dibantu admin") ? "" : settings.site?.heroSubtitle}
       />
     </>

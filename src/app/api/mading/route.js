@@ -6,7 +6,7 @@ import { hashIdentitas } from "@/lib/identitasHash";
 import { catatIdentitasWa } from "@/lib/chatIdentity";
 import { getUserSession } from "@/lib/auth";
 import { autoPublishMadingInstagram, publishQueuedMadingInstagram, siteOriginFromRequest } from "@/lib/madingInstagram";
-import { getSettings } from "@/lib/settings";
+import { getSettings, isAllowedCampus } from "@/lib/settings";
 import { waitUntil } from "@vercel/functions";
 import { evaluateModerationRules } from "@/lib/moderationRules";
 
@@ -182,6 +182,9 @@ export async function POST(request) {
       sender_name = (sender_name || "Anonim").trim().slice(0, 30);
     }
     faculty = (faculty || "Umum").trim().slice(0, 50);
+    if (!isAllowedCampus(faculty, settings, { allowGeneral: true })) {
+      return NextResponse.json({ error: "Kampus posting tidak valid atau sudah tidak tersedia." }, { status: 400 });
+    }
     title = title ? title.trim().slice(0, 150) : null;
 
     // Foto harus berasal dari Storage Supabase proyek ini; jangan jadikan feed

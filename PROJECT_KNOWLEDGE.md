@@ -511,3 +511,14 @@ cuma server.
         - Halaman antrean bot (`bot.jualbeliusupolmed.web.id/antrean` / `bot-wa/antrean.html`) kini menampilkan 2 bagian terpisah: *Antrean Pengguna & Percakapan (Prioritas VIP)* dan *Antrean Siaran Massal (Broadcast Latar Belakang)* dengan tombol pembersihan spesifik: "Kosongkan Antrean User", "🛑 Batalkan & Hapus Broadcast", dan "🗑 Hapus Semua Total".
         - Menambahkan tombol "🛑 Batalkan Semua" pada antrean `wa_outbox` website di halaman web admin dan bot page untuk membatalkan semua baris pending di tabel database Supabase secara instan (`POST /api/admin/outbox` dengan `{ batal_semua: true }`).
 
+*   **28 Oktober 2026 — Katalog Universitas Terpusat**
+        - Pilihan universitas disimpan sebagai konfigurasi `campuses` yang dikelola superadmin, bukan daftar hardcoded di profil atau chat.
+        - Profil hanya menerima kampus aktif dari `GET /api/kampus`; API penyimpanan profil dan verifikasi mahasiswa memvalidasi ulang pilihan tersebut di server.
+        - Domain email institusi untuk auto-verifikasi mengikuti `emailDomains` pada katalog kampus. Migrasi `202610280001_multi_university_student_verification.sql` menghapus constraint lama yang hanya menerima USU/POLMED.
+        - Fallback UI tetap mempertahankan USU/POLMED untuk kompatibilitas data lama, tetapi kampus baru dapat ditambahkan tanpa perubahan kode.
+        - Filter kampus Mading, Oprec, WTB, beranda, dan form menfess kini membaca katalog aktif. Copy publik dan metadata SEO utama digeneralisasi agar tidak mengunci platform pada dua institusi.
+        - Data contoh lama boleh tetap menyimpan label legacy, tetapi tidak boleh dipakai sebagai sumber pilihan kampus atau validasi produksi.
+        - Validasi server bersama (`isAllowedCampus`) kini dipakai pada listing, WTB, dan Mading; pilihan kampus verifikasi menyimpan `shortName`, bukan objek katalog.
+        - Selector admin kampus memakai draft teks terpisah sehingga baris parsial tidak hilang saat diketik. Preferensi kampus lama di browser dibersihkan bila kampus sudah dinonaktifkan.
+        - Kartu produk memisahkan tautan detail dari tombol favorit, label `featured` menjadi “Unggulan”, dan fallback lokasi tidak lagi mengklaim kampus tertentu.
+        - Audit UI lanjutan menaikkan keterbacaan kartu produk/WTB/Open PO, menjaga target sentuh minimum, menampilkan sisa slot Open PO, memulihkan kontak WhatsApp pada kartu produk, membuat header Open PO responsif di mobile, dan menambahkan state loading/error/retry pada `CampusSelect`.

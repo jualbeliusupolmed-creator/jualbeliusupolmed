@@ -21,8 +21,8 @@ module.exports = {
         primary: {
           DEFAULT: "var(--primary)",
           foreground: "var(--primary-foreground)",
-          dark: "#3c1c74",
-          light: "#7c4fd4",
+          dark: "#065f46",
+          light: "#10b981",
         },
         secondary: {
           DEFAULT: "var(--secondary)",
@@ -51,10 +51,10 @@ module.exports = {
           soft: "#e3efe7",
         },
         polmed: {
-          DEFAULT: "#532b98",
-          light: "#7c4fd4",
-          dark: "#3c1c74",
-          soft: "#ece2f2",
+          DEFAULT: "#047857",
+          light: "#059669",
+          dark: "#065f46",
+          soft: "#d1fae5",
         },
         popover: {
           DEFAULT: "var(--popover)",

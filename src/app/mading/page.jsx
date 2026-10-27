@@ -6,13 +6,13 @@ export const dynamic = "force-dynamic";
 export const revalidate = 60; // ISR revalidate 60 detik
 
 export const metadata = {
-  title: "Mading & Menfess Kampus — Suara Mahasiswa USU & POLMED",
-  description: "Mading digital mahasiswa USU & POLMED. Bagikan curhat, info seputar kampus, cari barang hilang, dan dengarkan suara kampus secara anonim, aman, dan real-time.",
-  keywords: ["menfess usu", "menfess polmed", "mading kampus", "suara mahasiswa", "info usu", "info polmed"],
+  title: "Mading & Menfess Kampus — Suara Mahasiswa",
+  description: "Mading digital mahasiswa lintas kampus. Bagikan curhat, info seputar kampus, cari barang hilang, dan dengarkan suara komunitas secara anonim, aman, dan real-time.",
+  keywords: ["menfess kampus", "mading kampus", "suara mahasiswa", "info kampus"],
   alternates: { canonical: "/mading" },
   openGraph: {
-    title: "Mading & Menfess Kampus — Suara Mahasiswa USU & POLMED | Kampus Kita",
-    description: "Ruang curhat & mading digital mahasiswa USU & POLMED. Baca curhatan terpanas dan info kampus terbaru.",
+    title: "Mading & Menfess Kampus — Suara Mahasiswa | Kampus Kita",
+    description: "Ruang curhat dan mading digital mahasiswa. Baca curhatan terhangat dan info kampus terbaru.",
     url: "/mading",
     type: "website",
     locale: "id_ID",
@@ -20,8 +20,8 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Mading & Menfess Kampus — Suara Mahasiswa USU & POLMED | Kampus Kita",
-    description: "Ruang curhat & mading digital mahasiswa USU & POLMED. Baca curhatan terpanas dan info kampus terbaru.",
+    title: "Mading & Menfess Kampus — Suara Mahasiswa | Kampus Kita",
+    description: "Ruang curhat dan mading digital mahasiswa. Baca curhatan terhangat dan info kampus terbaru.",
   },
 };
 
@@ -62,8 +62,8 @@ export default async function MadingPage() {
   const itemListJsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": "Mading & Menfess Mahasiswa USU & POLMED",
-    "description": "Daftar postingan terbaru mading digital dan menfess mahasiswa USU & POLMED.",
+    "name": "Mading & Menfess Mahasiswa",
+    "description": "Daftar postingan terbaru mading digital dan menfess mahasiswa.",
     "itemListElement": initialPosts.slice(0, 10).map((post, index) => ({
       "@type": "ListItem",
       "position": index + 1,
