@@ -3,6 +3,8 @@ import { isAdmin } from "@/lib/auth";
 import { parseListingFromText } from "@/lib/gemini";
 import { jawabGalat } from "@/lib/jawabGalat";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req) {
   if (!isAdmin()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {

@@ -7,6 +7,7 @@ import { hashIdentitas } from "@/lib/identitasHash";
 import { siarkanPesanBaru } from "@/lib/chatRealtime";
 import { sendWa } from "@/lib/fonnte";
 
+export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 export const revalidate = 0;
 

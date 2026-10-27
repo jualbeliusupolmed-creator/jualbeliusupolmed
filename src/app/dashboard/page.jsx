@@ -796,6 +796,51 @@ function DashboardInner() {
             )}
           </div>
         </div>
+
+        {/* Metric Badges Strip (15.html & 19.html blueprint) */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-4 mt-4 border-t border-slate-100 dark:border-slate-800">
+          <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-white/5 flex items-center gap-2.5">
+            <Icon.Star className="w-5 h-5 text-amber-500 fill-amber-500 shrink-0" />
+            <div>
+              <span className="text-xs font-bold text-slate-900 dark:text-white block leading-none">
+                {sellerProfile?.avg_rating || "4.9"} / 5.0
+              </span>
+              <span className="text-[10px] text-slate-400 mt-0.5 block">Rating COD Sukses</span>
+            </div>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-white/5 flex items-center gap-2.5">
+            <Icon.CheckCircle className="w-5 h-5 text-[#047857] shrink-0" />
+            <div>
+              <span className="text-xs font-bold text-slate-900 dark:text-white block leading-none">
+                {soldItems.length > 0 ? `${soldItems.length} Transaksi` : `${items.length} Iklan`}
+              </span>
+              <span className="text-[10px] text-slate-400 mt-0.5 block">Aktivitas Niaga</span>
+            </div>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-white/5 flex items-center gap-2.5">
+            <Icon.Clock className="w-5 h-5 text-[#047857] shrink-0" />
+            <div>
+              <span className="text-xs font-bold text-slate-900 dark:text-white block leading-none">
+                &lt; 10 Menit
+              </span>
+              <span className="text-[10px] text-slate-400 mt-0.5 block">Kecepatan Balas</span>
+            </div>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-white/5 flex items-center gap-2.5">
+            <Icon.ShieldCheck className="w-5 h-5 text-sky-500 shrink-0" />
+            <div>
+              <span className="text-xs font-bold text-slate-900 dark:text-white block leading-none">
+                {sellerProfile?.student_verified ? "KTM Aktif" : "Mahasiswa"}
+              </span>
+              <span className="text-[10px] text-slate-400 mt-0.5 block">
+                {sellerProfile?.student_campus || "USU • POLMED"}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {note && (
