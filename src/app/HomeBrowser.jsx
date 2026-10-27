@@ -501,6 +501,79 @@ export default function HomeBrowser({
       case "main":
         return (
           <div key="main" id="daftar-barang" className="scroll-mt-20">
+            {/* Real-time WTB Announcement Ticker (from 118.html & 121.html) */}
+            <div className="w-full bg-slate-100/90 dark:bg-slate-800/60 rounded-2xl px-3.5 py-2.5 mb-3.5 flex items-center justify-between gap-3 shadow-2xs border border-slate-200/70 dark:border-slate-700/60">
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-600 text-white font-bold text-[11px] shadow-2xs">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-200 animate-ping" />
+                  WTB Ticker
+                </span>
+                <span className="hidden md:inline text-[11px] text-slate-500 font-bold uppercase tracking-wider">
+                  Cari Cepat:
+                </span>
+              </div>
+
+              {/* Marquee Viewport */}
+              <div className="wtb-marquee-container flex-1 overflow-hidden relative select-none">
+                <div className="wtb-marquee-track flex items-center gap-8 text-xs font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                  <Link href="/dicari" className="inline-flex items-center gap-1.5 hover:text-emerald-700 transition-colors">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#047857]" />
+                    <strong>Kalkulator Casio fx-991EX</strong> <span className="text-slate-400 text-[10px]">[Teknik Sipil &apos;23]</span> Max 250rb COD FT
+                  </Link>
+                  <Link href="/dicari" className="inline-flex items-center gap-1.5 hover:text-emerald-700 transition-colors">
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-600" />
+                    <strong>Buku Purcell Kalkulus Edisi 9</strong> <span className="text-slate-400 text-[10px]">[MIPA USU]</span> Butuh cepat sebelum kuis
+                  </Link>
+                  <Link href="/dicari" className="inline-flex items-center gap-1.5 hover:text-emerald-700 transition-colors">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                    <strong>Papan Gambar Segitiga A3 Rotring</strong> <span className="text-slate-400 text-[10px]">[Arsitektur POLMED]</span> Budget 150k
+                  </Link>
+                  <Link href="/dicari" className="inline-flex items-center gap-1.5 hover:text-emerald-700 transition-colors">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-600" />
+                    <strong>Jas Lab Kimia Ukuran L / XL</strong> <span className="text-slate-400 text-[10px]">[Farmasi USU]</span> Siap ambil di Pendopo
+                  </Link>
+                </div>
+              </div>
+
+              {/* Pasang WTB CTA Action Button */}
+              <Link
+                href="/dicari"
+                className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-900 hover:bg-slate-50 text-emerald-800 dark:text-emerald-300 font-bold text-xs rounded-full shadow-2xs transition-colors border border-slate-200 dark:border-slate-700"
+              >
+                <Icon.Plus className="w-3.5 h-3.5 text-emerald-600" />
+                <span className="hidden sm:inline">Pasang WTB</span>
+              </Link>
+            </div>
+
+            {/* Campus COD Trust Banner (from 118.html & 121.html) */}
+            <div className="w-full mb-4 px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50/60 to-slate-50 dark:from-emerald-950/40 dark:via-slate-900/40 dark:to-slate-900/40 border border-emerald-100 dark:border-emerald-800/40 flex items-center justify-between gap-3 shadow-2xs">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-[#047857] text-white flex items-center justify-center shrink-0 shadow-2xs">
+                  <Icon.ShieldCheck className="w-4 h-4 text-emerald-200" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-xs font-black text-slate-900 dark:text-white truncate">
+                      Titik Temu COD Resmi Terverifikasi Kampus
+                    </p>
+                    <span className="px-1.5 py-0.2 rounded-full bg-emerald-100 dark:bg-emerald-950 text-[#047857] dark:text-emerald-300 text-[9px] font-black uppercase tracking-wider">
+                      Aman
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                    Zona publik terpantau keamanan kampus: Pendopo USU, Pintu 2, Gazebo FIB, Kantin POLMED
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/panduan-aman"
+                className="text-xs font-bold text-[#047857] dark:text-emerald-400 hover:underline shrink-0 flex items-center gap-1"
+              >
+                <span>Panduan COD</span>
+                <Icon.ArrowRight className="w-3 h-3" />
+              </Link>
+            </div>
+
             <div className="relative mb-5">
               <svg
                 className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#86868b] dark:text-slate-400"
