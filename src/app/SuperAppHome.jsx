@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -181,6 +181,119 @@ export default function SuperAppHome({
       clearInterval(interval);
     };
   }, []);
+
+  // Dynamic Rotating Ticker: Randomize across Jual Beli, Open PO, and Menfess
+  const tickerItems = useMemo(() => {
+    const items = [];
+
+    // 1. Menfess items
+    if (posts && posts.length > 0) {
+      posts.slice(0, 5).forEach((p) => {
+        items.push({
+          type: "menfess",
+          label: "Menfess Terkini:",
+          dotColor: "bg-rose-500",
+          pingColor: "bg-rose-400",
+          textColor: "text-rose-900 dark:text-rose-300",
+          text: `“${p.content}”`,
+          url: "#menfess-section",
+          isAnchor: true,
+        });
+      });
+    } else {
+      items.push({
+        type: "menfess",
+        label: "Menfess Terkini:",
+        dotColor: "bg-rose-500",
+        pingColor: "bg-rose-400",
+        textColor: "text-rose-900 dark:text-rose-300",
+        text: "“Halo, mohon bantuannya banget. Ada ga kos sekitar usu yg ready di Januari 2027 under 1 jt?...”",
+        url: "#menfess-section",
+        isAnchor: true,
+      });
+    }
+
+    // 2. Jual Beli items
+    if (latestListings && latestListings.length > 0) {
+      latestListings.slice(0, 5).forEach((l) => {
+        items.push({
+          type: "jual-beli",
+          label: "Jual Beli Terkini:",
+          dotColor: "bg-emerald-600",
+          pingColor: "bg-emerald-400",
+          textColor: "text-emerald-900 dark:text-emerald-300",
+          text: `“${l.title} — ${rupiah(l.price)} (${l.area || l.campus || "Sekitar Kampus"})”`,
+          url: `/produk/${buildSlug(l.title, l.id)}`,
+          isAnchor: false,
+        });
+      });
+    } else {
+      items.push({
+        type: "jual-beli",
+        label: "Jual Beli Terkini:",
+        dotColor: "bg-emerald-600",
+        pingColor: "bg-emerald-400",
+        textColor: "text-emerald-900 dark:text-emerald-300",
+        text: "“Laptop Lenovo ThinkPad L480 Core i5 — Rp 2.800.000 (Fasilkom TI USU)”",
+        url: "/jual-beli",
+        isAnchor: false,
+      });
+    }
+
+    // 3. Open PO items
+    if (activeBatches && activeBatches.length > 0) {
+      activeBatches.slice(0, 5).forEach((b) => {
+        items.push({
+          type: "open-po",
+          label: "Open PO Terkini:",
+          dotColor: "bg-amber-500",
+          pingColor: "bg-amber-400",
+          textColor: "text-amber-900 dark:text-amber-300",
+          text: `“${b.name || b.title} — ${rupiah(b.price || 15000)} • ${b.location_summary || "Titik Kumpul Kampus"}”`,
+          url: b.url || "/open-po",
+          isAnchor: false,
+        });
+      });
+    } else {
+      items.push({
+        type: "open-po",
+        label: "Open PO Terkini:",
+        dotColor: "bg-amber-500",
+        pingColor: "bg-amber-400",
+        textColor: "text-amber-900 dark:text-amber-300",
+        text: "“Risol Mayo Spesial Daging Asap — Rp 12.000 (Batch Siang FIB & Teknik)”",
+        url: "/open-po",
+        isAnchor: false,
+      });
+    }
+
+    // Interleave them: Jual Beli -> Open PO -> Menfess -> Jual Beli ...
+    const interleaved = [];
+    const menfessList = items.filter((i) => i.type === "menfess");
+    const jbList = items.filter((i) => i.type === "jual-beli");
+    const poList = items.filter((i) => i.type === "open-po");
+    const maxLen = Math.max(menfessList.length, jbList.length, poList.length);
+
+    for (let i = 0; i < maxLen; i++) {
+      if (jbList[i]) interleaved.push(jbList[i]);
+      if (poList[i]) interleaved.push(poList[i]);
+      if (menfessList[i]) interleaved.push(menfessList[i]);
+    }
+
+    return interleaved.length > 0 ? interleaved : items;
+  }, [posts, latestListings, activeBatches]);
+
+  const [tickerIndex, setTickerIndex] = useState(0);
+
+  useEffect(() => {
+    if (!tickerItems.length) return;
+    const timer = setInterval(() => {
+      setTickerIndex((prev) => (prev + 1) % tickerItems.length);
+    }, 4200);
+    return () => clearInterval(timer);
+  }, [tickerItems.length]);
+
+  const currentTicker = tickerItems[tickerIndex] || tickerItems[0];
 
   // Comments State
   const [activeCommentsPostId, setActiveCommentsPostId] = useState(null);
@@ -561,27 +674,42 @@ export default function SuperAppHome({
 
       {/* ── MAIN CONTENT AREA ── */}
       <main className="max-w-[1440px] mx-auto px-4 sm:px-6 py-5 flex-1 w-full">
-        {/* Violet / Emerald Notification Bar & Quick Ticker */}
+        {/* Dynamic Multi-Category Notification Bar & Quick Ticker (Alternates across Jual Beli, PO, and Menfess) */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-4">
-          <div className="w-full py-2.5 px-4 bg-gradient-to-r from-emerald-50/90 via-white to-slate-50 dark:from-slate-800/80 dark:via-slate-800/40 dark:to-slate-900/80 text-slate-800 dark:text-slate-200 rounded-2xl text-xs flex items-center justify-between gap-2 border border-emerald-100 dark:border-emerald-950/40 shadow-xs">
+          <div className="w-full py-2.5 px-4 bg-gradient-to-r from-emerald-50/90 via-white to-slate-50 dark:from-slate-800/80 dark:via-slate-800/40 dark:to-slate-900/80 text-slate-800 dark:text-slate-200 rounded-2xl text-xs flex items-center justify-between gap-2 border border-emerald-100 dark:border-emerald-950/40 shadow-xs transition-all duration-300">
             <div className="flex items-center gap-2.5 flex-1 min-w-0">
               <span className="flex h-2 w-2 relative shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600" />
+                <span className={cn("animate-ping absolute inline-flex h-full w-full rounded-full opacity-75", currentTicker?.pingColor || "bg-emerald-400")} />
+                <span className={cn("relative inline-flex rounded-full h-2 w-2", currentTicker?.dotColor || "bg-emerald-600")} />
               </span>
-              <span className="font-bold text-emerald-900 dark:text-emerald-300 shrink-0 text-xs tracking-tight">Menfess Terkini:</span>
-              <span className="truncate text-slate-600 dark:text-slate-300 min-w-0 font-normal">
-                {posts && posts.length > 0 ? `“${posts[0].content}”` : "“Halo, mohon bantuannya banget. Ada ga kos sekitar usu yg ready di Januari 2027 under 1 jt?...”"}
+              <span className={cn("font-bold shrink-0 text-xs tracking-tight", currentTicker?.textColor || "text-emerald-900 dark:text-emerald-300")}>
+                {currentTicker?.label}
+              </span>
+              <span key={tickerIndex} className="truncate text-slate-600 dark:text-slate-300 min-w-0 font-normal animate-fade-in">
+                {currentTicker?.text}
               </span>
             </div>
-            <a
-              href="#menfess-section"
-              onClick={(e) => { e.preventDefault(); document.getElementById('menfess-section')?.scrollIntoView({ behavior: 'smooth' }); }}
-              className="text-emerald-800 dark:text-emerald-300 hover:text-emerald-950 font-bold hover:underline shrink-0 flex items-center gap-1 text-xs px-2.5 py-1 bg-white dark:bg-slate-800 rounded-full border border-emerald-200/70 dark:border-emerald-800/40 shadow-xs cursor-pointer"
-            >
-              <span>Buka</span>
-              <span>→</span>
-            </a>
+            {currentTicker?.isAnchor ? (
+              <a
+                href={currentTicker.url}
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById("menfess-section")?.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="text-emerald-800 dark:text-emerald-300 hover:text-emerald-950 font-bold hover:underline shrink-0 flex items-center gap-1 text-xs px-2.5 py-1 bg-white dark:bg-slate-800 rounded-full border border-emerald-200/70 dark:border-emerald-800/40 shadow-xs cursor-pointer"
+              >
+                <span>Buka</span>
+                <span>→</span>
+              </a>
+            ) : (
+              <Link
+                href={currentTicker?.url || "/"}
+                className="text-emerald-800 dark:text-emerald-300 hover:text-emerald-950 font-bold hover:underline shrink-0 flex items-center gap-1 text-xs px-2.5 py-1 bg-white dark:bg-slate-800 rounded-full border border-emerald-200/70 dark:border-emerald-800/40 shadow-xs cursor-pointer"
+              >
+                <span>Buka</span>
+                <span>→</span>
+              </Link>
+            )}
           </div>
         </div>
 
