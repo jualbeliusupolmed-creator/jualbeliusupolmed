@@ -146,7 +146,6 @@ export default function MarketplaceBrowser({
         if (!aVer && bVer) return 1;
         return new Date(b.bumped_at || b.created_at) - new Date(a.bumped_at || a.created_at);
       }
-      // default: newest / bumped
       return new Date(b.bumped_at || b.created_at) - new Date(a.bumped_at || a.created_at);
     });
 
@@ -195,33 +194,32 @@ export default function MarketplaceBrowser({
   }
 
   return (
-    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 py-6 flex-1 w-full text-slate-800 antialiased selection:bg-emerald-100 selection:text-emerald-900">
-      {/* BEGIN: Real-time WTB Announcement Ticker */}
-      <div className="w-full bg-slate-100/80 dark:bg-slate-800/60 rounded-2xl px-3 py-2.5 sm:py-3 mb-6 flex items-center justify-between gap-3 border border-slate-200/80 dark:border-white/10 shadow-xs">
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 py-4 flex-1 w-full text-slate-800 antialiased selection:bg-emerald-100 selection:text-emerald-900">
+      {/* BEGIN: Real-time WTB Announcement Ticker (Padat & Ringkas) */}
+      <div className="w-full bg-slate-100/90 dark:bg-slate-800/60 rounded-xl px-3 py-2 mb-3.5 flex items-center justify-between gap-2.5 border border-slate-200/80 dark:border-white/10 shadow-xs">
         <div className="flex items-center gap-2 shrink-0">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 font-bold text-xs border border-amber-200 dark:border-amber-800/60">
-            <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 font-bold text-[11px] border border-amber-200 dark:border-amber-800/60">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
             WTB Ticker
           </span>
-          <span className="hidden md:inline font-bold text-xs text-slate-500 uppercase tracking-wider">
+          <span className="hidden md:inline font-bold text-[11px] text-slate-500 uppercase tracking-wider">
             Cari Cepat:
           </span>
         </div>
 
         {/* WTB Marquee Viewport */}
         <div className="wtb-marquee-container flex-1 overflow-hidden relative select-none">
-          <div className="wtb-marquee-track flex items-center gap-8 text-slate-700 dark:text-slate-200 text-xs whitespace-nowrap">
-            {/* Duplicated set for seamless infinite animation */}
+          <div className="wtb-marquee-track flex items-center gap-6 text-slate-700 dark:text-slate-200 text-xs whitespace-nowrap">
             {[...WTB_TICKER_ITEMS, ...WTB_TICKER_ITEMS].map((item, idx) => (
               <Link
                 key={idx}
                 href="/dicari"
-                className="inline-flex items-center gap-2 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
+                className="inline-flex items-center gap-1.5 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
               >
                 <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", item.tagColor)}></span>
                 <strong className="font-bold text-slate-900 dark:text-white">{item.title}</strong>
-                <span className="text-slate-400 text-[11px] font-semibold">{item.meta}</span>
-                <span className="text-slate-600 dark:text-slate-300">{item.desc}</span>
+                <span className="text-slate-400 text-[10px] font-semibold">{item.meta}</span>
+                <span className="text-slate-600 dark:text-slate-300 text-xs">{item.desc}</span>
               </Link>
             ))}
           </div>
@@ -230,31 +228,31 @@ export default function MarketplaceBrowser({
         {/* Pasang WTB CTA Action Button */}
         <Link
           href="/dicari"
-          className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-900 hover:bg-slate-50 text-emerald-800 dark:text-emerald-300 font-bold text-xs rounded-full border border-slate-200 dark:border-white/10 shadow-xs transition-colors"
+          className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 bg-white dark:bg-slate-900 hover:bg-slate-50 text-emerald-800 dark:text-emerald-300 font-bold text-xs rounded-full border border-slate-200 dark:border-white/10 shadow-xs transition-colors"
         >
-          <span className="material-symbols-outlined text-[16px]">add_circle</span>
+          <span className="material-symbols-outlined text-[15px]">add_circle</span>
           <span className="hidden sm:inline">Pasang WTB</span>
         </Link>
       </div>
       {/* END: Real-time WTB Announcement Ticker */}
 
-      {/* BEGIN: Marketplace Header & Filter Controls */}
-      <div className="flex flex-col gap-4 mb-6">
+      {/* BEGIN: Marketplace Header & Filter Controls (Lebih Padat) */}
+      <div className="flex flex-col gap-3 mb-4">
         {/* Header Banner Title & Counter */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
-            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2 flex-wrap">
+            <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2 flex-wrap">
               <span>Marketplace Preloved Mahasiswa</span>
-              <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-full">
+              <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-full">
                 Verified COD
               </span>
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Jual-beli aman &amp; terverifikasi stambuk antar sesama mahasiswa USU &amp; POLMED Padang Bulan.
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-bold text-xs border border-emerald-200/80 dark:border-emerald-800/80 shadow-xs">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-bold text-xs border border-emerald-200/80 dark:border-emerald-800/80 shadow-xs">
               <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
               {filteredListings.length} Barang Aktif Hari Ini
             </span>
@@ -262,11 +260,11 @@ export default function MarketplaceBrowser({
         </div>
 
         {/* Search Bar & Integrated Filter Hub */}
-        <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-xs flex flex-col gap-3">
-          <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2.5">
+        <div className="bg-white dark:bg-slate-900 p-2.5 sm:p-3 rounded-xl border border-slate-200/80 dark:border-white/10 shadow-xs flex flex-col gap-2.5">
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2">
             {/* Search Input */}
-            <div className="relative flex-1 flex items-center bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 focus-within:border-emerald-600 focus-within:bg-white dark:focus-within:bg-slate-800 transition-all">
-              <span className="material-symbols-outlined text-slate-400 mr-2 text-[20px]">
+            <div className="relative flex-1 flex items-center bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5 sm:py-2 focus-within:border-emerald-600 focus-within:bg-white dark:focus-within:bg-slate-800 transition-all">
+              <span className="material-symbols-outlined text-slate-400 mr-2 text-[18px]">
                 search
               </span>
               <input
@@ -279,44 +277,44 @@ export default function MarketplaceBrowser({
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
-                  className="text-slate-400 hover:text-slate-600 p-1 mr-1"
+                  className="text-slate-400 hover:text-slate-600 p-0.5 mr-1"
                   title="Hapus pencarian"
                 >
-                  <span className="material-symbols-outlined text-[16px]">close</span>
+                  <span className="material-symbols-outlined text-[15px]">close</span>
                 </button>
               )}
               <button
-                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1"
+                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-0.5"
                 title="Filter lanjutan"
               >
-                <span className="material-symbols-outlined text-[18px]">tune</span>
+                <span className="material-symbols-outlined text-[17px]">tune</span>
               </button>
             </div>
 
             {/* Selectors Group */}
             <div className="flex items-center gap-2">
               {/* Campus Selector Dropdown */}
-              <div className="relative min-w-[140px] flex-1 sm:flex-none">
+              <div className="relative min-w-[130px] flex-1 sm:flex-none">
                 <select
                   value={selectedCampus}
                   onChange={(e) => setSelectedCampus(e.target.value)}
-                  className="w-full appearance-none bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 pr-8 focus:outline-none focus:border-emerald-600 cursor-pointer"
+                  className="w-full appearance-none bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 pr-7 focus:outline-none focus:border-emerald-600 cursor-pointer"
                 >
                   <option value="all">Semua Kampus</option>
                   <option value="usu">Kampus USU</option>
                   <option value="polmed">Kampus POLMED</option>
                 </select>
-                <span className="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-[18px] text-slate-400 pointer-events-none">
+                <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[16px] text-slate-400 pointer-events-none">
                   expand_more
                 </span>
               </div>
 
               {/* Category Selector Dropdown */}
-              <div className="relative min-w-[160px] flex-1 sm:flex-none">
+              <div className="relative min-w-[150px] flex-1 sm:flex-none">
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full appearance-none bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 pr-8 focus:outline-none focus:border-emerald-600 cursor-pointer"
+                  className="w-full appearance-none bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 pr-7 focus:outline-none focus:border-emerald-600 cursor-pointer"
                 >
                   <option value="all">Semua Kategori</option>
                   <option value="laptop">Elektronik &amp; Laptop</option>
@@ -326,24 +324,24 @@ export default function MarketplaceBrowser({
                   <option value="kos">Perlengkapan Kos</option>
                   <option value="transportasi">Transportasi Mahasiswa</option>
                 </select>
-                <span className="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-[18px] text-slate-400 pointer-events-none">
+                <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[16px] text-slate-400 pointer-events-none">
                   expand_more
                 </span>
               </div>
 
               {/* Sort Dropdown */}
-              <div className="relative min-w-[150px] hidden sm:block">
+              <div className="relative min-w-[140px] hidden sm:block">
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full appearance-none bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 pr-8 focus:outline-none focus:border-emerald-600 cursor-pointer"
+                  className="w-full appearance-none bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 pr-7 focus:outline-none focus:border-emerald-600 cursor-pointer"
                 >
                   <option value="newest">Urutkan: Terbaru</option>
                   <option value="price_asc">Harga: Terendah</option>
                   <option value="price_desc">Harga: Tertinggi</option>
                   <option value="verified">Prioritas Terverifikasi</option>
                 </select>
-                <span className="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-[18px] text-slate-400 pointer-events-none">
+                <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[16px] text-slate-400 pointer-events-none">
                   expand_more
                 </span>
               </div>
@@ -359,7 +357,7 @@ export default function MarketplaceBrowser({
                   key={chip.id}
                   onClick={() => handleQuickCategory(chip.filterVal)}
                   className={cn(
-                    "px-3 py-1.5 rounded-full text-xs font-semibold shrink-0 transition-all",
+                    "px-2.5 py-1 rounded-full text-xs font-semibold shrink-0 transition-all",
                     active
                       ? "bg-emerald-800 text-white shadow-xs"
                       : "bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300"
@@ -374,45 +372,16 @@ export default function MarketplaceBrowser({
       </div>
       {/* END: Marketplace Header & Filter Controls */}
 
-      {/* BEGIN: Campus COD Trust Banner */}
-      <div className="mb-6 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-xs">
-            <span className="material-symbols-outlined text-[22px]">verified_user</span>
-          </div>
-          <div>
-            <h4 className="text-sm font-bold text-emerald-950 dark:text-emerald-100 flex items-center gap-2">
-              <span>Jual Beli Aman Bebas Tipu di Kampus Kita</span>
-              <span className="text-[10px] font-extrabold uppercase bg-emerald-200/70 dark:bg-emerald-800/80 text-emerald-900 dark:text-emerald-200 px-2 py-0.5 rounded-full">
-                Zona Resmi
-              </span>
-            </h4>
-            <p className="text-xs text-emerald-800 dark:text-emerald-300 mt-0.5 leading-relaxed">
-              Bertemu langsung di titik temu resmi mahasiswa yang ramai &amp; berpenerangan:{" "}
-              <strong>Pendopo USU, Pintu 1-4 Dr. Mansyur, Gazebo FIB, Kantin FEB, atau Gedung Z POLMED</strong>.
-            </p>
-          </div>
-        </div>
-        <Link
-          href="/panduan-aman"
-          className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white dark:bg-slate-900 hover:bg-emerald-100/60 text-emerald-800 dark:text-emerald-300 text-xs font-bold rounded-xl border border-emerald-300 dark:border-emerald-700 transition-colors shadow-xs"
-        >
-          <span className="material-symbols-outlined text-[16px]">local_police</span>
-          <span>Panduan COD Mahasiswa</span>
-        </Link>
-      </div>
-      {/* END: Campus COD Trust Banner */}
-
-      {/* BEGIN: Products 4-Column Grid */}
+      {/* BEGIN: Products 4-Column Grid (Lebih Padat & Bersih Tanpa Banner) */}
       {filteredListings.length === 0 ? (
-        <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-white/10 shadow-xs mb-8">
-          <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3 text-slate-400">
-            <span className="material-symbols-outlined text-[32px]">inventory_2</span>
+        <div className="p-10 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-xs mb-6">
+          <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-2.5 text-slate-400">
+            <span className="material-symbols-outlined text-[28px]">inventory_2</span>
           </div>
-          <h3 className="font-bold text-base text-slate-900 dark:text-white mb-1">
+          <h3 className="font-bold text-sm text-slate-900 dark:text-white mb-1">
             Tidak ada barang yang cocok
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-4">
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-3">
             Coba ubah kata kunci pencarian atau ganti kategori untuk menemukan barang preloved mahasiswa.
           </p>
           <button
@@ -421,13 +390,13 @@ export default function MarketplaceBrowser({
               setSelectedCategory("all");
               setSelectedCampus("all");
             }}
-            className="px-4 py-2 bg-emerald-800 hover:bg-emerald-900 text-white rounded-full text-xs font-bold shadow-xs transition"
+            className="px-3.5 py-1.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-full text-xs font-bold shadow-xs transition"
           >
             Reset Semua Filter
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-3.5 mb-6">
           {filteredListings.map((item) => {
             const slug = buildSlug(item.title, item.id);
             const detailUrl = `/produk/${slug}`;
@@ -452,11 +421,11 @@ export default function MarketplaceBrowser({
             return (
               <div
                 key={item.id}
-                className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200/80 dark:border-white/10 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group"
+                className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-200/80 dark:border-white/10 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group"
               >
                 <div>
-                  {/* Image container: 4:3 Aspect Ratio */}
-                  <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 mb-3">
+                  {/* Image container: 4:3 Aspect Ratio (Lebih Rapi) */}
+                  <div className="relative w-full aspect-[4/3] rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 mb-2">
                     {item.image_url ? (
                       /* eslint-disable-next-line @next/next/no-img-element */
                       <img
@@ -467,8 +436,8 @@ export default function MarketplaceBrowser({
                       />
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
-                        <Icon.Package className="w-10 h-10 text-slate-300 stroke-[1.2]" />
-                        <span className="text-[10px] font-medium text-slate-400 mt-1">
+                        <Icon.Package className="w-8 h-8 text-slate-300 stroke-[1.2]" />
+                        <span className="text-[9px] font-medium text-slate-400 mt-1">
                           Foto dari Penjual
                         </span>
                       </div>
@@ -477,62 +446,62 @@ export default function MarketplaceBrowser({
                     {/* Favorite Button in Top-Right */}
                     <FavoriteButton
                       listing={item}
-                      className="!absolute !top-2 !right-2 !w-7 !h-7 !rounded-full !bg-white/90 dark:!bg-black/60 shadow-xs hover:!bg-white dark:hover:!bg-black flex items-center justify-center text-slate-400 hover:text-rose-500 z-10"
+                      className="!absolute !top-1.5 !right-1.5 !w-6 !h-6 !rounded-full !bg-white/90 dark:!bg-black/60 shadow-xs hover:!bg-white dark:hover:!bg-black flex items-center justify-center text-slate-400 hover:text-rose-500 z-10"
                     />
 
                     {/* Status Badge in Bottom-Left */}
                     {isSold ? (
-                      <span className="absolute bottom-2 left-2 px-2.5 py-0.5 rounded-full bg-slate-900/90 text-white font-extrabold text-[10px] tracking-wider shadow-xs">
+                      <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-full bg-slate-900/90 text-white font-extrabold text-[9px] tracking-wider shadow-xs">
                         TERJUAL
                       </span>
                     ) : item.featured ? (
-                      <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded-full bg-emerald-800 text-white font-semibold text-[10px] flex items-center gap-1 shadow-xs">
-                        <span className="material-symbols-outlined text-[12px]">verified</span>
+                      <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-full bg-emerald-800 text-white font-semibold text-[9px] flex items-center gap-1 shadow-xs">
+                        <span className="material-symbols-outlined text-[11px]">verified</span>
                         Stambuk Terverifikasi
                       </span>
                     ) : (
-                      <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded-full bg-emerald-800/90 text-white font-semibold text-[10px] flex items-center gap-1 shadow-xs">
-                        <span className="material-symbols-outlined text-[12px]">verified</span>
+                      <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-full bg-emerald-800/90 text-white font-semibold text-[9px] flex items-center gap-1 shadow-xs">
+                        <span className="material-symbols-outlined text-[11px]">verified</span>
                         Terverifikasi COD
                       </span>
                     )}
                   </div>
 
                   {/* Price & Condition Badge */}
-                  <div className="flex items-baseline justify-between mb-1">
-                    <span className="text-base sm:text-lg font-extrabold text-emerald-800 dark:text-emerald-400">
+                  <div className="flex items-baseline justify-between mb-0.5">
+                    <span className="text-sm sm:text-base font-extrabold text-emerald-800 dark:text-emerald-400">
                       {rupiah(item.price)}
                     </span>
-                    <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+                    <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full">
                       {condLabel}
                     </span>
                   </div>
 
                   {/* Product Title */}
                   <Link href={detailUrl}>
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
+                    <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white line-clamp-1 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
                       {item.title}
                     </h3>
                   </Link>
 
-                  {/* Seller Box */}
-                  <div className="flex items-center gap-2 mt-2 pt-2 bg-slate-50 dark:bg-slate-800/60 p-2 rounded-xl border border-slate-100 dark:border-white/5">
-                    <div className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200 flex items-center justify-center text-xs font-bold shrink-0">
+                  {/* Seller Box (Kompak & Padat) */}
+                  <div className="flex items-center gap-1.5 mt-1.5 pt-1.5 bg-slate-50 dark:bg-slate-800/60 p-1.5 rounded-lg border border-slate-100 dark:border-white/5">
+                    <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200 flex items-center justify-center text-[10px] font-bold shrink-0">
                       {sellerInitial}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
+                      <p className="text-[11px] font-bold text-slate-900 dark:text-slate-100 truncate leading-tight">
                         {item.seller_name || "Mahasiswa USU"}
                       </p>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                      <p className="text-[9px] text-slate-500 dark:text-slate-400 truncate leading-tight">
                         {item.area || "Kampus USU"} • {item.campus === "polmed" ? "POLMED" : "USU"}
                       </p>
                     </div>
                   </div>
 
                   {/* COD Location */}
-                  <div className="flex items-center gap-1.5 mt-2.5 text-slate-500 dark:text-slate-400 text-xs">
-                    <span className="material-symbols-outlined text-[16px] text-emerald-700 dark:text-emerald-400 shrink-0">
+                  <div className="flex items-center gap-1 mt-1.5 text-slate-500 dark:text-slate-400 text-[11px]">
+                    <span className="material-symbols-outlined text-[14px] text-emerald-700 dark:text-emerald-400 shrink-0">
                       location_on
                     </span>
                     <span className="truncate">
@@ -542,10 +511,10 @@ export default function MarketplaceBrowser({
                 </div>
 
                 {/* Card Action Buttons (Detail & Tanya WA) */}
-                <div className="grid grid-cols-2 gap-2 mt-3.5 pt-2.5 border-t border-slate-100 dark:border-white/10">
+                <div className="grid grid-cols-2 gap-1.5 mt-2.5 pt-2 border-t border-slate-100 dark:border-white/10">
                   <Link
                     href={detailUrl}
-                    className="py-2 px-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs transition-colors text-center font-bold"
+                    className="py-1.5 px-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs transition-colors text-center font-bold"
                   >
                     Detail
                   </Link>
@@ -553,9 +522,9 @@ export default function MarketplaceBrowser({
                     href={waLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="py-2 px-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-xs transition-colors text-center flex items-center justify-center gap-1 font-bold shadow-xs"
+                    className="py-1.5 px-2 rounded-lg bg-emerald-800 hover:bg-emerald-900 text-white text-xs transition-colors text-center flex items-center justify-center gap-1 font-bold shadow-xs"
                   >
-                    <span className="material-symbols-outlined text-[15px]">chat</span>
+                    <span className="material-symbols-outlined text-[13px]">chat</span>
                     <span>Tanya</span>
                   </a>
                 </div>
@@ -566,24 +535,24 @@ export default function MarketplaceBrowser({
       )}
       {/* END: Products 4-Column Grid */}
 
-      {/* BEGIN: Pagination & Infinite Stream Controller */}
-      <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 py-4 px-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-xs mb-10">
+      {/* BEGIN: Pagination & Infinite Stream Controller (Padat) */}
+      <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-3 py-3 px-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-white/10 shadow-xs mb-8">
         <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 text-xs">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+          <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
           <span>
             Menampilkan <strong>{filteredListings.length}</strong> dari <strong>{totalCount}</strong> barang preloved aktif di USU &amp; POLMED
           </span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           {hasMore && (
             <button
               onClick={handleLoadMore}
               disabled={isLoadingMore}
-              className="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-emerald-800 dark:text-emerald-300 font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-2 disabled:opacity-50"
+              className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-emerald-800 dark:text-emerald-300 font-bold text-xs rounded-lg shadow-xs transition-colors flex items-center gap-1.5 disabled:opacity-50"
             >
               <span
                 className={cn(
-                  "material-symbols-outlined text-[18px]",
+                  "material-symbols-outlined text-[16px]",
                   isLoadingMore && "animate-spin"
                 )}
               >
@@ -592,12 +561,12 @@ export default function MarketplaceBrowser({
               <span>
                 {isLoadingMore
                   ? "Memuat..."
-                  : `Muat Lebih Banyak Barang (${Math.max(0, totalCount - filteredListings.length)} lagi)`}
+                  : `Muat Lebih Banyak (${Math.max(0, totalCount - filteredListings.length)} lagi)`}
               </span>
             </button>
           )}
           <div className="hidden md:flex items-center gap-1">
-            <span className="w-8 h-8 rounded-lg bg-emerald-800 text-white text-xs flex items-center justify-center font-bold">
+            <span className="w-7 h-7 rounded-lg bg-emerald-800 text-white text-xs flex items-center justify-center font-bold">
               {page}
             </span>
           </div>
@@ -609,9 +578,9 @@ export default function MarketplaceBrowser({
       <div className="fixed bottom-4 right-4 z-40 lg:hidden">
         <Link
           href="/jual"
-          className="flex items-center gap-2 px-4 py-2.5 bg-emerald-800 text-white font-bold text-xs rounded-full shadow-lg hover:shadow-xl active:scale-95 transition-all"
+          className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-800 text-white font-bold text-xs rounded-full shadow-lg hover:shadow-xl active:scale-95 transition-all"
         >
-          <span className="material-symbols-outlined text-[20px]">add_shopping_cart</span>
+          <span className="material-symbols-outlined text-[18px]">add_shopping_cart</span>
           <span>+ Jual Cepat</span>
         </Link>
       </div>
