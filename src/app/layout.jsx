@@ -129,6 +129,9 @@ export default async function RootLayout({ children }) {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="google-adsense-account" content="ca-pub-6730561722094443" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
         <link rel="preconnect" href="https://autgrnrqeqdpqwkbolyh.supabase.co" crossOrigin="" />
         <link rel="dns-prefetch" href="https://autgrnrqeqdpqwkbolyh.supabase.co" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
