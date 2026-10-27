@@ -122,7 +122,8 @@ async function getData(slug) {
     }).slice(0, 4);
 
     return { listing, related };
-  } catch {
+  } catch (err) {
+    console.error("getData error:", err);
     return { listing: null, related: [] };
   }
 }
