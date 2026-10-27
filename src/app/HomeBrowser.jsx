@@ -196,39 +196,6 @@ export default function HomeBrowser({
     router.replace(`${pathname}${str ? `?${str}` : ""}`, { scroll: false });
   }, [campusFilter, cat, catName, conditionFilter, maxPrice, minPrice, negoFilter, pathname, q, router, selectedSpecFilters, sort, typeFilter]);
 
-  // Listen to global campus changes from Top Navbar
-  useEffect(() => {
-    const handleCampusChange = (e) => {
-      const newCampus = e.detail?.campus || "Semua";
-      setCampusFilter(newCampus);
-      applyFilters({ newCampus });
-      syncToUrl({ campusFilter: newCampus });
-    };
-    window.addEventListener("campus:change", handleCampusChange);
-    return () => window.removeEventListener("campus:change", handleCampusChange);
-  }, [applyFilters, syncToUrl]);
-
-  // Terapkan filter dari URL (?q= dari search navbar / SearchAction Google,
-  // ?cat= dari breadcrumb halaman produk) — juga saat URL berubah tanpa remount.
-  useEffect(() => {
-    const urlQ = searchParams.get("q");
-    const urlCat = searchParams.get("cat");
-    const urlSpecs = searchParams.getAll("spec").map(parseSpecFilterToken).filter(Boolean);
-    const catSlug = urlCat
-      ? CATEGORIES.find((c) => c.name === urlCat || c.slug === urlCat)?.slug || null
-      : null;
-    if (urlQ === null && !catSlug && urlSpecs.length === 0) return;
-    if (urlQ !== null) setQ(urlQ);
-    if (catSlug) setCat(catSlug);
-    setSelectedSpecFilters(urlSpecs);
-    applyFilters({
-      ...(urlQ !== null ? { newQ: urlQ } : {}),
-      ...(catSlug ? { newCat: catSlug } : {}),
-      newSpecs: urlSpecs,
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
-
   // Saat filter berubah, fetch ulang dari page 1
   const applyFilters = useCallback(
     async ({
@@ -272,6 +239,39 @@ export default function HomeBrowser({
     },
     [cat, q, sort, minPrice, maxPrice, campusFilter, negoFilter, conditionFilter, typeFilter, selectedSpecFilters, catName]
   );
+
+  // Listen to global campus changes from Top Navbar
+  useEffect(() => {
+    const handleCampusChange = (e) => {
+      const newCampus = e.detail?.campus || "Semua";
+      setCampusFilter(newCampus);
+      applyFilters({ newCampus });
+      syncToUrl({ campusFilter: newCampus });
+    };
+    window.addEventListener("campus:change", handleCampusChange);
+    return () => window.removeEventListener("campus:change", handleCampusChange);
+  }, [applyFilters, syncToUrl]);
+
+  // Terapkan filter dari URL (?q= dari search navbar / SearchAction Google,
+  // ?cat= dari breadcrumb halaman produk) — juga saat URL berubah tanpa remount.
+  useEffect(() => {
+    const urlQ = searchParams.get("q");
+    const urlCat = searchParams.get("cat");
+    const urlSpecs = searchParams.getAll("spec").map(parseSpecFilterToken).filter(Boolean);
+    const catSlug = urlCat
+      ? CATEGORIES.find((c) => c.name === urlCat || c.slug === urlCat)?.slug || null
+      : null;
+    if (urlQ === null && !catSlug && urlSpecs.length === 0) return;
+    if (urlQ !== null) setQ(urlQ);
+    if (catSlug) setCat(catSlug);
+    setSelectedSpecFilters(urlSpecs);
+    applyFilters({
+      ...(urlQ !== null ? { newQ: urlQ } : {}),
+      ...(catSlug ? { newCat: catSlug } : {}),
+      newSpecs: urlSpecs,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   function handleCampus(newCampus) {
     setCampusFilter(newCampus);
