@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+
+<html lang="id"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><title>Kampus Kita - Ekosistem Mahasiswa USU &amp; POLMED</title><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@500;600;700;800&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "secondary": "#712ae2", "error-container": "#ffdad6", "surface": "#faf8ff", "surface-container": "#eaedff", "primary": "#005d42", "secondary-container": "#8a4cfc", "on-tertiary-fixed": "#2a1700", "surface-container-high": "#e2e7ff", "surface-dim": "#d2d9f4", "primary-container": "#047857", "on-surface": "#131b2e", "surface-container-highest": "#dae2fd", "tertiary-fixed": "#ffddb8", "outline-variant": "#bdc9c1", "on-error-container": "#93000a", "tertiary-fixed-dim": "#ffb95f", "surface-container-lowest": "#ffffff", "background": "#faf8ff", "inverse-surface": "#283044", "on-surface-variant": "#3e4943", "on-error": "#ffffff", "inverse-primary": "#7bd8b1", "tertiary": "#734700", "tertiary-container": "#945d00", "on-tertiary": "#ffffff", "outline": "#6e7a73", "on-primary-container": "#9ffdd3", "on-secondary-container": "#fffbff", "on-secondary-fixed": "#25005a", "on-background": "#131b2e", "surface-variant": "#dae2fd", "surface-bright": "#faf8ff", "surface-container-low": "#f2f3ff", "on-secondary-fixed-variant": "#5a00c6", "on-primary": "#ffffff", "on-tertiary-fixed-variant": "#653e00", "on-primary-fixed-variant": "#00513a", "error": "#ba1a1a", "secondary-fixed": "#eaddff", "primary-fixed-dim": "#7bd8b1", "surface-tint": "#006c4e", "primary-fixed": "#97f5cc", "inverse-on-surface": "#eef0ff", "on-secondary": "#ffffff", "on-tertiary-container": "#ffe6cc", "on-primary-fixed": "#002115", "secondary-fixed-dim": "#d2bbff" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-sm": "0.5rem", "space-md": "1rem", "margin-desktop": "3rem", "margin": "1rem", "gutter": "1rem", "space-xl": "2.5rem", "gutter-desktop": "1.5rem", "margin-tablet": "2rem", "space-lg": "1.5rem", "space-xs": "0.25rem" }, "fontFamily": { "headline-xl-mobile": [ "Plus Jakarta Sans" ], "headline-md": [ "Plus Jakarta Sans" ], "label-lg": [ "Plus Jakarta Sans" ], "body-lg": [ "Inter" ], "label-sm": [ "Plus Jakarta Sans" ], "headline-lg-mobile": [ "Plus Jakarta Sans" ], "label-md": [ "Plus Jakarta Sans" ], "headline-lg": [ "Plus Jakarta Sans" ], "headline-xl": [ "Plus Jakarta Sans" ], "body-sm": [ "Inter" ], "body-md": [ "Inter" ], "headline-sm": [ "Plus Jakarta Sans" ] }, "fontSize": { "headline-xl-mobile": [ "28px", { "lineHeight": "36px", "fontWeight": "700" } ], "headline-md": [ "20px", { "lineHeight": "28px", "fontWeight": "600" } ], "label-lg": [ "14px", { "lineHeight": "20px", "fontWeight": "600" } ], "body-lg": [ "16px", { "lineHeight": "24px", "fontWeight": "400" } ], "label-sm": [ "10px", { "lineHeight": "14px", "fontWeight": "700" } ], "headline-lg-mobile": [ "22px", { "lineHeight": "30px", "fontWeight": "700" } ], "label-md": [ "12px", { "lineHeight": "16px", "fontWeight": "600" } ], "headline-lg": [ "28px", { "lineHeight": "36px", "fontWeight": "700" } ], "headline-xl": [ "36px", { "lineHeight": "44px", "fontWeight": "700" } ], "body-sm": [ "12px", { "lineHeight": "18px", "fontWeight": "400" } ], "body-md": [ "14px", { "lineHeight": "20px", "fontWeight": "400" } ], "headline-sm": [ "16px", { "lineHeight": "24px", "fontWeight": "600" } ] } } } };</script></head><body class="bg-background font-body-md text-on-surface antialiased min-h-screen flex flex-col"><header class="fixed top-0 left-0 right-0 z-50 bg-surface/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-20 w-full max-w-[1280px] mx-auto px-margin md:px-margin-tablet lg:px-margin-desktop flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-md flex-shrink-0"><a class="flex items-center gap-space-sm group" data-path="beranda" href="#"><div class="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-on-primary shadow-sm"><span class="material-symbols-outlined text-[20px]">school</span></div><div class="flex flex-col"><div class="flex items-center gap-space-xs"><span class="font-headline-sm text-headline-sm text-primary tracking-tight font-bold">Kampus Kita</span><span class="px-space-xs py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm uppercase">USU • POLMED</span></div><span class="font-label-sm text-label-sm text-outline hidden sm:block">Sentra Komunitas &amp; Niaga Kampus</span></div></a><div class="hidden xl:flex items-center bg-surface-container-low px-space-sm py-1 rounded-full cursor-pointer hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-primary text-[18px] mr-1">near_me</span><span class="font-label-md text-label-md text-on-surface font-semibold">Kampus: USU</span><span class="material-symbols-outlined text-outline text-[16px] ml-1">expand_more</span></div></div><div class="hidden lg:flex items-center justify-center flex-1"><nav class="flex items-center gap-space-xs p-1 bg-surface-container-low rounded-full" data-active-classes="bg-primary text-on-primary font-semibold shadow-sm"><a aria-current="page" class="px-space-md py-1.5 rounded-full transition-all bg-primary text-on-primary font-semibold shadow-sm" data-path="beranda" href="#">Beranda</a><a class="px-space-md py-1.5 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-all" data-path="marketplace" href="#">Marketplace</a><a class="px-space-md py-1.5 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-all relative flex items-center" data-path="open-po" href="#"><span>Open PO</span><span class="ml-1.5 px-1.5 py-0.2 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm uppercase font-bold leading-tight">PO</span></a><a class="px-space-md py-1.5 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-all" data-path="menfess" href="#">Menfess</a><a class="px-space-md py-1.5 rounded-full font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-all relative flex items-center" data-path="obrolan" href="#"><span>Obrolan</span><span class="ml-1.5 px-1.5 py-0.2 rounded-full bg-secondary text-on-secondary font-label-sm text-label-sm leading-tight font-bold">3</span></a></nav></div><div class="flex items-center gap-space-sm flex-shrink-0"><button aria-label="Notifikasi Kampus" class="relative w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-error ring-2 ring-surface"></span></button><a class="hidden sm:inline-flex items-center gap-space-xs px-space-md py-2 rounded-lg bg-primary-container text-on-primary hover:bg-primary transition-all font-label-md text-label-md font-semibold shadow-sm" data-path="pasang-iklan" href="#"><span class="material-symbols-outlined text-[18px]">add_circle</span><span>+ Pasang Iklan</span></a><a class="flex items-center gap-space-xs pl-space-xs pr-space-sm py-1 rounded-full bg-surface-container-low hover:bg-surface-container transition-colors group" data-path="profil-saya" href="#"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 shadow-sm"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="flex flex-col text-left"><span class="font-label-md text-label-md font-bold text-on-surface group-hover:text-primary transition-colors leading-none">Faris</span><span class="font-label-sm text-label-sm text-outline-variant font-medium leading-tight">FK '22</span></div></a></div></div></header><main class="w-full flex-grow pt-20 bg-background"><div class="flex flex-col w-full">
+<!-- Top Visual Accent / Breadcrumb Tracker -->
+<div class="w-full max-w-[1280px] mx-auto px-margin md:px-margin-tablet lg:px-margin-desktop pt-space-lg pb-space-sm">
+<div class="flex flex-wrap items-center justify-between gap-space-sm pb-space-sm border-b border-surface-container-high/60">
+<div class="flex items-center gap-space-xs text-on-surface-variant font-label-md text-label-md">
+<a class="hover:text-primary transition-colors flex items-center gap-1" data-path="beranda" href="#">
+<span class="material-symbols-outlined text-[16px]">home</span>
+<span>Beranda</span>
+</a>
+<span class="text-outline">/</span>
+<span class="text-on-surface font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-primary text-[16px]">search_check</span>
+<span>Dicari Mahasiswa (WTB)</span>
+</span>
+</div>
+<div class="flex items-center gap-space-sm text-outline font-label-sm text-label-sm">
+<span class="inline-flex items-center gap-1 px-space-sm py-1 rounded-full bg-surface-container-low text-primary font-semibold">
+<span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span>
+          24 Permintaan Aktif Minggu Ini
+        </span>
+<span class="hidden sm:inline-block">•</span>
+<span class="hidden sm:inline-flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]">format_image_left</span>
+          COD Hanya di Titik Resmi Kampus
+        </span>
+</div>
+</div>
+</div>
+<!-- Page Header & Action Bar -->
+<div class="w-full max-w-[1280px] mx-auto px-margin md:px-margin-tablet lg:px-margin-desktop py-space-md">
+<div class="bg-surface-container-lowest rounded-2xl p-space-lg md:p-space-xl shadow-sm relative overflow-hidden">
+<!-- Ambient Graphic Glow -->
+<div class="absolute -right-16 -top-16 w-80 h-80 rounded-full bg-primary-fixed/30 blur-3xl pointer-events-none"></div>
+<div class="absolute right-48 -bottom-20 w-64 h-64 rounded-full bg-secondary-fixed/20 blur-3xl pointer-events-none"></div>
+<div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-space-lg">
+<div class="max-w-2xl">
+<div class="inline-flex items-center gap-space-xs px-space-sm py-1 rounded-full bg-surface-container-high text-primary font-label-sm text-label-sm uppercase font-bold tracking-wider mb-space-xs">
+<span class="material-symbols-outlined text-[15px]">front_hand</span>
+<span>Permintaan Mahasiswa • Want To Buy (WTB)</span>
+</div>
+<h1 class="font-headline-xl text-headline-xl text-on-surface font-bold tracking-tight">
+            Dicari Mahasiswa <span class="text-primary">(WTB)</span>
+</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-space-xs leading-relaxed">
+            Lagi butuh barang kuliah, kosan, atau peralatan praktikum? Posting di sini agar mahasiswa lain yang punya bisa langsung chat kamu. Praktis, murah, dan COD aman di lingkungan kampus.
+          </p>
+</div>
+<div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-space-sm flex-shrink-0">
+<button class="inline-flex items-center justify-center gap-space-xs px-space-lg py-3 rounded-xl bg-primary text-on-primary hover:bg-primary-container font-label-lg text-label-lg font-bold shadow-md transition-all active:scale-[0.98]" id="open-wtb-modal">
+<span class="material-symbols-outlined text-[20px]">add_circle</span>
+<span>+ Buat Permintaan Barang (WTB)</span>
+</button>
+<a class="inline-flex items-center justify-center gap-space-xs px-space-md py-3 rounded-xl bg-surface-container-low text-on-surface hover:bg-surface-container font-label-md text-label-md font-semibold transition-colors" data-path="obrolan" href="#">
+<span class="material-symbols-outlined text-[18px] text-secondary">forum</span>
+<span>Tawaran Masuk (3)</span>
+</a>
+</div>
+</div>
+<!-- Quick Search Bar -->
+<div class="relative z-10 mt-space-lg pt-space-md border-t border-surface-container-high/50">
+<form class="grid grid-cols-1 md:grid-cols-12 gap-space-sm" onsubmit="event.preventDefault();">
+<div class="md:col-span-8 lg:col-span-9 relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline text-[22px]">search</span>
+<input class="w-full pl-12 pr-4 py-3 rounded-xl bg-surface-container-low text-on-surface placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest font-body-md text-body-md transition-all shadow-inner" id="search-input" placeholder="Cari barang yang sedang dicari mahasiswa (misal: papan laprak, kalkulus, jemuran, jas lab)..." type="text"/>
+<button class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface p-1" id="clear-search" type="button">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<div class="md:col-span-4 lg:col-span-3">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[20px]">sort</span>
+<select class="w-full pl-10 pr-8 py-3 rounded-xl bg-surface-container-low text-on-surface font-label-md text-label-md font-semibold appearance-none focus:outline-none focus:ring-2 focus:ring-primary transition-all cursor-pointer" id="sort-select">
+<option value="terbaru">Urutkan: Paling Baru</option>
+<option value="mendesak">Urutkan: Mendesak (Prioritas)</option>
+<option value="budget-tinggi">Urutkan: Budget Tertinggi</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[18px]">expand_more</span>
+</div>
+</div>
+</form>
+</div>
+</div>
+</div>
+<!-- Interactive Filter Section -->
+<div class="w-full max-w-[1280px] mx-auto px-margin md:px-margin-tablet lg:px-margin-desktop py-space-sm">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md bg-surface-container-lowest p-space-md rounded-2xl shadow-sm">
+<!-- Category Filter Pills -->
+<div class="flex items-center gap-space-xs overflow-x-auto pb-1 lg:pb-0 scrollbar-none" id="category-filters">
+<span class="font-label-md text-label-md font-bold text-on-surface-variant mr-1 flex items-center gap-1 flex-shrink-0">
+<span class="material-symbols-outlined text-[18px] text-primary">category</span>
+<span>Kategori:</span>
+</span>
+<button class="cat-pill active px-space-md py-1.5 rounded-full font-label-md text-label-md font-semibold transition-all bg-primary text-on-primary shadow-sm flex-shrink-0" data-cat="all">Semua</button>
+<button class="cat-pill px-space-md py-1.5 rounded-full font-label-md text-label-md font-semibold transition-all bg-surface-container-low text-on-surface-variant hover:bg-surface-container flex-shrink-0" data-cat="elektronik">Elektronik</button>
+<button class="cat-pill px-space-md py-1.5 rounded-full font-label-md text-label-md font-semibold transition-all bg-surface-container-low text-on-surface-variant hover:bg-surface-container flex-shrink-0" data-cat="buku">Buku Kuliah</button>
+<button class="cat-pill px-space-md py-1.5 rounded-full font-label-md text-label-md font-semibold transition-all bg-surface-container-low text-on-surface-variant hover:bg-surface-container flex-shrink-0" data-cat="praktikum">Alat Praktikum</button>
+<button class="cat-pill px-space-md py-1.5 rounded-full font-label-md text-label-md font-semibold transition-all bg-surface-container-low text-on-surface-variant hover:bg-surface-container flex-shrink-0" data-cat="kos">Kebutuhan Kos</button>
+</div>
+<!-- Campus Segment Filter -->
+<div class="flex items-center gap-space-xs flex-shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-surface-container-high/60" id="campus-filters">
+<span class="font-label-md text-label-md font-bold text-on-surface-variant mr-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px] text-secondary">domain</span>
+<span>Kampus:</span>
+</span>
+<div class="inline-flex p-1 bg-surface-container-low rounded-xl">
+<button class="campus-btn px-space-md py-1 rounded-lg font-label-md text-label-md font-bold transition-all bg-primary text-on-primary shadow-sm" data-campus="all">Semua</button>
+<button class="campus-btn px-space-md py-1 rounded-lg font-label-md text-label-md font-semibold transition-all text-on-surface-variant hover:text-on-surface" data-campus="usu">USU</button>
+<button class="campus-btn px-space-md py-1 rounded-lg font-label-md text-label-md font-semibold transition-all text-on-surface-variant hover:text-on-surface" data-campus="polmed">POLMED</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Content Layout (12-Column Grid) -->
+<div class="w-full max-w-[1280px] mx-auto px-margin md:px-margin-tablet lg:px-margin-desktop py-space-md mb-space-xl">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
+<!-- Core WTB Feed (Left / Primary 8-Cols) -->
+<div class="lg:col-span-8 flex flex-col gap-space-md">
+<!-- Results Counter & Live Indicator -->
+<div class="flex items-center justify-between px-space-xs">
+<div class="flex items-center gap-2">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface">Daftar Kebutuhan Mahasiswa</span>
+<span class="px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm font-bold">6 Menunggu Penawaran</span>
+</div>
+<span class="font-body-sm text-body-sm text-outline hidden sm:inline">Diperbarui setiap menit</span>
+</div>
+<!-- Cards Container -->
+<div class="flex flex-col gap-space-md" id="wtb-cards-grid">
+<!-- Card 1: Papan LED Laprak -->
+<article class="wtb-card bg-surface-container-lowest rounded-2xl p-space-md md:p-space-lg shadow-sm hover:shadow-md transition-all relative overflow-hidden group" data-budget="50000" data-campus="usu" data-category="praktikum" data-urgent="true">
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-error"></div>
+<div class="flex flex-col md:flex-row md:items-start justify-between gap-space-md">
+<div class="flex-1">
+<!-- Top Tags & Meta -->
+<div class="flex flex-wrap items-center gap-space-xs mb-space-xs">
+<span class="inline-flex items-center gap-1 px-space-sm py-0.5 rounded-full bg-error-container text-on-error-container font-label-sm text-label-sm font-bold animate-pulse">
+<span class="material-symbols-outlined text-[14px]">alarm</span>
+<span>MENDESAK (Butuh H-1 Praktikum)</span>
+</span>
+<span class="px-space-sm py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm font-semibold">Alat Praktikum</span>
+<span class="text-outline text-body-sm">• Diposting 35 mnt lalu</span>
+</div>
+<!-- Item Title -->
+<h3 class="font-headline-md text-headline-md text-on-surface font-bold group-hover:text-primary transition-colors">
+                  Papan LED Laprak / Tracing Board A4
+                </h3>
+<!-- Description Snippet -->
+<p class="font-body-md text-body-md text-on-surface-variant mt-1 leading-relaxed">
+                  Dibutuhkan segera untuk menyalin grafik osilasi praktikum Fisika Dasar besok pagi. Kabel power USB masih lengkap dan nyala normal ya. Baret pemakaian halus tidak masalah.
+                </p>
+<!-- Student & Pickup Meta -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm mt-space-md pt-space-sm border-t border-surface-container-high/40">
+<div class="flex items-center gap-space-xs">
+<div class="w-8 h-8 rounded-full bg-primary-fixed text-primary flex items-center justify-center font-bold font-label-md text-label-md">
+                      FS
+                    </div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-on-surface">Mahasiswa Fisika FMIPA USU '23</span>
+<span class="font-label-sm text-label-sm text-primary flex items-center gap-1 font-semibold">
+<span class="material-symbols-outlined text-[13px]">verified</span> Terverifikasi Stambuk
+                      </span>
+</div>
+</div>
+<div class="flex items-center gap-space-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-primary text-[20px] flex-shrink-0">pin_drop</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline font-semibold">Titik COD / Serah Terima:</span>
+<span class="font-label-md text-label-md font-medium text-on-surface">Lab Fisika / Pintu 2 Padang Bulan</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Price Box & Action (Right / Bottom) -->
+<div class="flex md:flex-col items-center md:items-end justify-between md:justify-center gap-space-sm p-space-sm md:p-space-md rounded-xl bg-surface-container-low min-w-[210px] flex-shrink-0">
+<div class="text-left md:text-right">
+<span class="font-label-sm text-label-sm text-outline block">Budget Mahasiswa:</span>
+<span class="font-headline-md text-headline-md font-bold text-primary">Max Rp 50.000</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant block mt-0.5">Bisa nego tipis di tempat</span>
+</div>
+<button class="w-full md:w-auto px-space-md py-2.5 rounded-xl bg-primary text-on-primary hover:bg-primary-container font-label-md text-label-md font-bold shadow-sm flex items-center justify-center gap-1.5 transition-transform active:scale-95" onclick="handleOffer('Papan LED Laprak / Tracing Board A4', 'Mahasiswa Fisika FMIPA USU \'23')">
+<span class="material-symbols-outlined text-[18px]">chat</span>
+<span>Saya Punya Barang Ini (Chat)</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Card 2: Jemuran Baju Lipat Preloved Besi -->
+<article class="wtb-card bg-surface-container-lowest rounded-2xl p-space-md md:p-space-lg shadow-sm hover:shadow-md transition-all group" data-budget="60000" data-campus="usu" data-category="kos" data-urgent="false">
+<div class="flex flex-col md:flex-row md:items-start justify-between gap-space-md">
+<div class="flex-1">
+<div class="flex flex-wrap items-center gap-space-xs mb-space-xs">
+<span class="px-space-sm py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm font-semibold">Kebutuhan Kos</span>
+<span class="px-space-sm py-0.5 rounded-full bg-primary-fixed/50 text-on-primary-fixed font-label-sm text-label-sm font-semibold">Santai</span>
+<span class="text-outline text-body-sm">• Diposting 2 jam lalu</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface font-bold group-hover:text-primary transition-colors">
+                  Jemuran Baju Lipat Preloved Besi
+                </h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1 leading-relaxed">
+                  Cari jemuran lipat mini/sedang yang muat di balkon kamar kos. Besi atau aluminium ga patah, sendi lipatan masih kokoh. Kalau ada yang mau pindahan kos dan ga dibawa, langsung tawari ya!
+                </p>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm mt-space-md pt-space-sm border-t border-surface-container-high/40">
+<div class="flex items-center gap-space-xs">
+<div class="w-8 h-8 rounded-full bg-secondary-fixed text-secondary flex items-center justify-center font-bold font-label-md text-label-md">
+                      EB
+                    </div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-on-surface">Mahasiswi FEB USU '24</span>
+<span class="font-label-sm text-label-sm text-primary flex items-center gap-1 font-semibold">
+<span class="material-symbols-outlined text-[13px]">verified</span> Terverifikasi Stambuk
+                      </span>
+</div>
+</div>
+<div class="flex items-center gap-space-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-primary text-[20px] flex-shrink-0">pin_drop</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline font-semibold">Titik COD / Serah Terima:</span>
+<span class="font-label-md text-label-md font-medium text-on-surface">Sekitar Pintu 1 Padang Bulan</span>
+</div>
+</div>
+</div>
+</div>
+<div class="flex md:flex-col items-center md:items-end justify-between md:justify-center gap-space-sm p-space-sm md:p-space-md rounded-xl bg-surface-container-low min-w-[210px] flex-shrink-0">
+<div class="text-left md:text-right">
+<span class="font-label-sm text-label-sm text-outline block">Rentang Budget:</span>
+<span class="font-headline-md text-headline-md font-bold text-primary">Rp 30k - Rp 60k</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant block mt-0.5">Sesuai kondisi barang</span>
+</div>
+<button class="w-full md:w-auto px-space-md py-2.5 rounded-xl bg-surface-container-highest text-primary hover:bg-primary hover:text-on-primary font-label-md text-label-md font-bold shadow-sm flex items-center justify-center gap-1.5 transition-all" onclick="handleOffer('Jemuran Baju Lipat Preloved Besi', 'Mahasiswi FEB USU \'24')">
+<span class="material-symbols-outlined text-[18px]">handshake</span>
+<span>Tawarkan Barang</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Card 3: Kalkulus Purcell Edisi 9 -->
+<article class="wtb-card bg-surface-container-lowest rounded-2xl p-space-md md:p-space-lg shadow-sm hover:shadow-md transition-all group" data-budget="45000" data-campus="usu" data-category="buku" data-urgent="false">
+<div class="flex flex-col md:flex-row md:items-start justify-between gap-space-md">
+<div class="flex-1">
+<div class="flex flex-wrap items-center gap-space-xs mb-space-xs">
+<span class="px-space-sm py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm font-semibold">Buku Kuliah</span>
+<span class="px-space-sm py-0.5 rounded-full bg-surface-container-low text-outline font-label-sm text-label-sm font-semibold">Mata Kuliah Wajib</span>
+<span class="text-outline text-body-sm">• Diposting 4 jam lalu</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface font-bold group-hover:text-primary transition-colors">
+                  Kalkulus Purcell Edisi 9 Bahasa Indonesia
+                </h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1 leading-relaxed">
+                  Cari jilid 1 atau lengkap (terjemahan Erlangga/repro bersih). Yang penting coretan stabilo masih rapi dan halaman latihan soal lengkap ga ada yang sobek buat persiapan kuis kalkulus minggu depan.
+                </p>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm mt-space-md pt-space-sm border-t border-surface-container-high/40">
+<div class="flex items-center gap-space-xs">
+<div class="w-8 h-8 rounded-full bg-primary-fixed text-primary flex items-center justify-center font-bold font-label-md text-label-md">
+                      TM
+                    </div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-on-surface">Maba Teknik Mesin USU '24</span>
+<span class="font-label-sm text-label-sm text-primary flex items-center gap-1 font-semibold">
+<span class="material-symbols-outlined text-[13px]">verified</span> Terverifikasi Stambuk
+                      </span>
+</div>
+</div>
+<div class="flex items-center gap-space-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-primary text-[20px] flex-shrink-0">pin_drop</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline font-semibold">Titik COD / Serah Terima:</span>
+<span class="font-label-md text-label-md font-medium text-on-surface">Pendopo USU / Gazebo Mesin</span>
+</div>
+</div>
+</div>
+</div>
+<div class="flex md:flex-col items-center md:items-end justify-between md:justify-center gap-space-sm p-space-sm md:p-space-md rounded-xl bg-surface-container-low min-w-[210px] flex-shrink-0">
+<div class="text-left md:text-right">
+<span class="font-label-sm text-label-sm text-outline block">Budget Mahasiswa:</span>
+<span class="font-headline-md text-headline-md font-bold text-primary">Max Rp 45.000</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant block mt-0.5">Siap jemput ke fakultas</span>
+</div>
+<button class="w-full md:w-auto px-space-md py-2.5 rounded-xl bg-surface-container-highest text-primary hover:bg-primary hover:text-on-primary font-label-md text-label-md font-bold shadow-sm flex items-center justify-center gap-1.5 transition-all" onclick="handleOffer('Kalkulus Purcell Edisi 9 Bahasa Indonesia', 'Maba Teknik Mesin USU \'24')">
+<span class="material-symbols-outlined text-[18px]">handshake</span>
+<span>Tawarkan Barang</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Card 4: Meja Belajar Lipat Kayu (POLMED) -->
+<article class="wtb-card bg-surface-container-lowest rounded-2xl p-space-md md:p-space-lg shadow-sm hover:shadow-md transition-all group" data-budget="70000" data-campus="polmed" data-category="kos" data-urgent="false">
+<div class="flex flex-col md:flex-row md:items-start justify-between gap-space-md">
+<div class="flex-1">
+<div class="flex flex-wrap items-center gap-space-xs mb-space-xs">
+<span class="px-space-sm py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm font-bold">POLMED</span>
+<span class="px-space-sm py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm font-semibold">Kebutuhan Kos</span>
+<span class="text-outline text-body-sm">• Diposting 6 jam lalu</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface font-bold group-hover:text-primary transition-colors">
+                  Meja Belajar Lipat Kayu untuk Kosan
+                </h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1 leading-relaxed">
+                  Butuh meja lesehan lipat yang ada slot tempat minum / tablet holder. Bahan kayu MDF atau kayu solid ringan. Diutamakan kawan POLMED biar gampang angkut naik motor ke kos.
+                </p>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm mt-space-md pt-space-sm border-t border-surface-container-high/40">
+<div class="flex items-center gap-space-xs">
+<div class="w-8 h-8 rounded-full bg-surface-container-high text-secondary flex items-center justify-center font-bold font-label-md text-label-md">
+                      TE
+                    </div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-on-surface">Mahasiswa POLMED Teknik Elektro '22</span>
+<span class="font-label-sm text-label-sm text-secondary font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">verified</span> Terverifikasi POLMED
+                      </span>
+</div>
+</div>
+<div class="flex items-center gap-space-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-[20px] flex-shrink-0">pin_drop</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline font-semibold">Titik COD / Serah Terima:</span>
+<span class="font-label-md text-label-md font-medium text-on-surface">Gedung Z POLMED / Pintu Belakang</span>
+</div>
+</div>
+</div>
+</div>
+<div class="flex md:flex-col items-center md:items-end justify-between md:justify-center gap-space-sm p-space-sm md:p-space-md rounded-xl bg-surface-container-low min-w-[210px] flex-shrink-0">
+<div class="text-left md:text-right">
+<span class="font-label-sm text-label-sm text-outline block">Budget Mahasiswa:</span>
+<span class="font-headline-md text-headline-md font-bold text-primary">Max Rp 70.000</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant block mt-0.5">Kondisi normal oke</span>
+</div>
+<button class="w-full md:w-auto px-space-md py-2.5 rounded-xl bg-surface-container-highest text-primary hover:bg-primary hover:text-on-primary font-label-md text-label-md font-bold shadow-sm flex items-center justify-center gap-1.5 transition-all" onclick="handleOffer('Meja Belajar Lipat Kayu untuk Kosan', 'Mahasiswa POLMED Teknik Elektro \'22')">
+<span class="material-symbols-outlined text-[18px]">handshake</span>
+<span>Tawarkan Barang</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Card 5: Jas Lab Kimia Bersih Ukuran L -->
+<article class="wtb-card bg-surface-container-lowest rounded-2xl p-space-md md:p-space-lg shadow-sm hover:shadow-md transition-all relative overflow-hidden group" data-budget="40000" data-campus="usu" data-category="praktikum" data-urgent="true">
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-tertiary"></div>
+<div class="flex flex-col md:flex-row md:items-start justify-between gap-space-md">
+<div class="flex-1">
+<div class="flex flex-wrap items-center gap-space-xs mb-space-xs">
+<span class="inline-flex items-center gap-1 px-space-sm py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-bold">
+<span class="material-symbols-outlined text-[14px]">bolt</span>
+<span>Dibutuhkan Pekan Ini</span>
+</span>
+<span class="px-space-sm py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm font-semibold">Alat Praktikum</span>
+<span class="text-outline text-body-sm">• Diposting 7 jam lalu</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface font-bold group-hover:text-primary transition-colors">
+                  Jas Lab Kimia Bersih Ukuran L
+                </h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1 leading-relaxed">
+                  Jas lab warna putih polos lengan panjang dengan kancing lengkap. Tidak ada noda zat kimia membandel. Mau dipakai untuk praktikum Kimia Organik semester ini.
+                </p>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm mt-space-md pt-space-sm border-t border-surface-container-high/40">
+<div class="flex items-center gap-space-xs">
+<div class="w-8 h-8 rounded-full bg-primary-fixed text-primary flex items-center justify-center font-bold font-label-md text-label-md">
+                      FP
+                    </div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-on-surface">Mahasiswi Pertanian USU '23</span>
+<span class="font-label-sm text-label-sm text-primary flex items-center gap-1 font-semibold">
+<span class="material-symbols-outlined text-[13px]">verified</span> Terverifikasi Stambuk
+                      </span>
+</div>
+</div>
+<div class="flex items-center gap-space-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-primary text-[20px] flex-shrink-0">pin_drop</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline font-semibold">Titik COD / Serah Terima:</span>
+<span class="font-label-md text-label-md font-medium text-on-surface">Fakultas Pertanian / Pintu 3 Kampus</span>
+</div>
+</div>
+</div>
+</div>
+<div class="flex md:flex-col items-center md:items-end justify-between md:justify-center gap-space-sm p-space-sm md:p-space-md rounded-xl bg-surface-container-low min-w-[210px] flex-shrink-0">
+<div class="text-left md:text-right">
+<span class="font-label-sm text-label-sm text-outline block">Budget Mahasiswa:</span>
+<span class="font-headline-md text-headline-md font-bold text-primary">Max Rp 40.000</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant block mt-0.5">Sudah cuci bersih</span>
+</div>
+<button class="w-full md:w-auto px-space-md py-2.5 rounded-xl bg-surface-container-highest text-primary hover:bg-primary hover:text-on-primary font-label-md text-label-md font-bold shadow-sm flex items-center justify-center gap-1.5 transition-all" onclick="handleOffer('Jas Lab Kimia Bersih Ukuran L', 'Mahasiswi Pertanian USU \'23')">
+<span class="material-symbols-outlined text-[18px]">handshake</span>
+<span>Tawarkan Barang</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Card 6: Kipas Angin Berdiri / Meja Second -->
+<article class="wtb-card bg-surface-container-lowest rounded-2xl p-space-md md:p-space-lg shadow-sm hover:shadow-md transition-all group" data-budget="100000" data-campus="usu" data-category="elektronik" data-urgent="false">
+<div class="flex flex-col md:flex-row md:items-start justify-between gap-space-md">
+<div class="flex-1">
+<div class="flex flex-wrap items-center gap-space-xs mb-space-xs">
+<span class="px-space-sm py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm font-semibold">Elektronik</span>
+<span class="px-space-sm py-0.5 rounded-full bg-surface-container-low text-outline font-label-sm text-label-sm font-semibold">Kebutuhan Kamar</span>
+<span class="text-outline text-body-sm">• Diposting 9 jam lalu</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface font-bold group-hover:text-primary transition-colors">
+                  Kipas Angin Berdiri / Meja Second
+                </h3>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1 leading-relaxed">
+                  Medan lagi gerah kali we. Butuh kipas angin yang hembusannya kencang dan ga bunyi berisik pas swing. Boleh merk Cosmos, Miyako, atau Sanex. Siap dites dulu pas serah terima.
+                </p>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm mt-space-md pt-space-sm border-t border-surface-container-high/40">
+<div class="flex items-center gap-space-xs">
+<div class="w-8 h-8 rounded-full bg-primary-fixed text-primary flex items-center justify-center font-bold font-label-md text-label-md">
+                      TI
+                    </div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-on-surface">Mahasiswa Fasilkom-TI '22</span>
+<span class="font-label-sm text-label-sm text-primary flex items-center gap-1 font-semibold">
+<span class="material-symbols-outlined text-[13px]">verified</span> Terverifikasi Stambuk
+                      </span>
+</div>
+</div>
+<div class="flex items-center gap-space-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-primary text-[20px] flex-shrink-0">pin_drop</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline font-semibold">Titik COD / Serah Terima:</span>
+<span class="font-label-md text-label-md font-medium text-on-surface">Gang Rasmi / Selasar Fasilkom USU</span>
+</div>
+</div>
+</div>
+</div>
+<div class="flex md:flex-col items-center md:items-end justify-between md:justify-center gap-space-sm p-space-sm md:p-space-md rounded-xl bg-surface-container-low min-w-[210px] flex-shrink-0">
+<div class="text-left md:text-right">
+<span class="font-label-sm text-label-sm text-outline block">Budget Mahasiswa:</span>
+<span class="font-headline-md text-headline-md font-bold text-primary">Max Rp 100.000</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant block mt-0.5">Bayar cash / QRIS langsung</span>
+</div>
+<button class="w-full md:w-auto px-space-md py-2.5 rounded-xl bg-surface-container-highest text-primary hover:bg-primary hover:text-on-primary font-label-md text-label-md font-bold shadow-sm flex items-center justify-center gap-1.5 transition-all" onclick="handleOffer('Kipas Angin Berdiri / Meja Second', 'Mahasiswa Fasilkom-TI \'22')">
+<span class="material-symbols-outlined text-[18px]">handshake</span>
+<span>Tawarkan Barang</span>
+</button>
+</div>
+</div>
+</article>
+</div>
+<!-- Empty State (hidden by default) -->
+<div class="hidden bg-surface-container-lowest rounded-2xl p-space-xl text-center shadow-sm" id="no-results">
+<div class="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center text-outline mx-auto mb-space-sm">
+<span class="material-symbols-outlined text-[32px]">manage_search</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm font-bold text-on-surface">Tidak Ditemukan Permintaan WTB</h4>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-md mx-auto mt-1">
+            Belum ada mahasiswa yang mencari barang dengan kata kunci atau filter ini. Coba ganti kata kunci atau buat postingan baru.
+          </p>
+<button class="mt-space-md px-space-lg py-2 rounded-xl bg-primary text-on-primary font-label-md text-label-md font-semibold hover:bg-primary-container transition-colors" id="reset-filters">
+            Reset Semua Filter
+          </button>
+</div>
+<!-- Pagination / Load More -->
+<div class="flex items-center justify-center pt-space-md">
+<button class="px-space-xl py-3 rounded-full bg-surface-container-low hover:bg-surface-container text-on-surface font-label-md text-label-md font-bold transition-all shadow-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">autorenew</span>
+<span>Muat Permintaan WTB Terdahulu (18 lagi)</span>
+</button>
+</div>
+</div>
+<!-- Right Column: Context, Community Assist, & Official Spots (4-Cols) -->
+<aside class="lg:col-span-4 flex flex-col gap-space-lg sticky top-24">
+<!-- Side Card 1: Punya Barang Nganggur di Kosan? -->
+<div class="bg-gradient-to-br from-primary via-primary to-primary-container rounded-2xl p-space-lg text-on-primary shadow-md relative overflow-hidden">
+<div class="absolute -right-8 -bottom-8 w-36 h-36 rounded-full bg-on-primary/10 blur-xl pointer-events-none"></div>
+<div class="flex items-center gap-space-sm mb-space-sm">
+<div class="w-10 h-10 rounded-xl bg-on-primary/20 backdrop-blur-md flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-on-primary text-[24px]">savings</span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm uppercase font-bold tracking-wider text-on-primary-container">Cuan Dari Kosan</span>
+<h4 class="font-headline-sm text-headline-sm font-bold leading-tight">Punya Barang Nganggur?</h4>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-primary/90 leading-relaxed mb-space-md">
+            Punya barang nganggur di kosan? Cek daftar permintaan di samping dan bantu kawan kampusmu sekaligus dapat cuan tambahan tanpa ribet packaging!
+          </p>
+<!-- Micro Stats of successful WTB -->
+<div class="grid grid-cols-2 gap-space-xs p-space-sm rounded-xl bg-on-primary/10 backdrop-blur-sm mb-space-md">
+<div>
+<span class="font-label-sm text-label-sm block text-on-primary/80">Rata-rata Deal:</span>
+<span class="font-headline-sm text-headline-sm font-bold text-on-primary">2.4 Jam</span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm block text-on-primary/80">Barang Terbantu:</span>
+<span class="font-headline-sm text-headline-sm font-bold text-on-primary">140+ Unit</span>
+</div>
+</div>
+<a class="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-surface-container-lowest text-primary hover:bg-surface-container-low font-label-md text-label-md font-bold transition-all shadow-sm" data-path="pasang-iklan" href="#">
+<span class="material-symbols-outlined text-[18px]">storefront</span>
+<span>Jual Barang Preloved Kamu</span>
+</a>
+</div>
+<!-- Side Card 2: Alur Singkat WTB di Kampus Kita -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-lg shadow-sm">
+<div class="flex items-center gap-2 mb-space-md pb-space-xs border-b border-surface-container-high/60">
+<span class="material-symbols-outlined text-primary text-[22px]">checklist</span>
+<h4 class="font-headline-sm text-headline-sm font-bold text-on-surface">Cara Kerja Fitur WTB</h4>
+</div>
+<div class="flex flex-col gap-space-md">
+<div class="flex items-start gap-space-sm">
+<span class="w-6 h-6 rounded-full bg-primary-fixed text-primary font-bold font-label-md text-label-md flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+<div>
+<p class="font-label-md text-label-md font-bold text-on-surface">Posting Kebutuhan Spesifik</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Tulis nama barang, batas maksimal budget, dan tanggal barang harus ada.</p>
+</div>
+</div>
+<div class="flex items-start gap-space-sm">
+<span class="w-6 h-6 rounded-full bg-primary-fixed text-primary font-bold font-label-md text-label-md flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+<div>
+<p class="font-label-md text-label-md font-bold text-on-surface">Terima Penawaran Lewat Obrolan</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Kawan yang memiliki barang akan mengirim foto kondisi aktual dan harga yang ditawarkan.</p>
+</div>
+</div>
+<div class="flex items-start gap-space-sm">
+<span class="w-6 h-6 rounded-full bg-primary-fixed text-primary font-bold font-label-md text-label-md flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+<div>
+<p class="font-label-md text-label-md font-bold text-on-surface">COD &amp; Cek Fungsi di Kampus</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Bertemu di Pendopo, Lab, atau Kantin resmi tanpa ongkos kirim ekspedisi.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Side Card 3: Hot WTB Trends this Week -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-lg shadow-sm">
+<div class="flex items-center justify-between mb-space-sm">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-secondary text-[20px]">trending_up</span>
+<h4 class="font-label-lg text-label-lg font-bold text-on-surface">Paling Sering Dicari</h4>
+</div>
+<span class="font-label-sm text-label-sm text-outline">Bulan Praktikum</span>
+</div>
+<div class="flex flex-wrap gap-1.5">
+<span class="px-space-sm py-1 rounded-lg bg-surface-container-low text-on-surface font-label-sm text-label-sm hover:bg-surface-container transition-colors cursor-pointer">#PapanLaprakA4</span>
+<span class="px-space-sm py-1 rounded-lg bg-surface-container-low text-on-surface font-label-sm text-label-sm hover:bg-surface-container transition-colors cursor-pointer">#JasLabUSU</span>
+<span class="px-space-sm py-1 rounded-lg bg-surface-container-low text-on-surface font-label-sm text-label-sm hover:bg-surface-container transition-colors cursor-pointer">#KalkulusPurcell</span>
+<span class="px-space-sm py-1 rounded-lg bg-surface-container-low text-on-surface font-label-sm text-label-sm hover:bg-surface-container transition-colors cursor-pointer">#HelmBogoPreloved</span>
+<span class="px-space-sm py-1 rounded-lg bg-surface-container-low text-on-surface font-label-sm text-label-sm hover:bg-surface-container transition-colors cursor-pointer">#KipasAnginKos</span>
+<span class="px-space-sm py-1 rounded-lg bg-surface-container-low text-on-surface font-label-sm text-label-sm hover:bg-surface-container transition-colors cursor-pointer">#StethoscopeLittmann</span>
+</div>
+</div>
+</aside>
+</div>
+</div>
+<!-- MODAL: Buat Permintaan Barang (WTB) -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-on-surface/50 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-200" id="wtb-modal">
+<div class="bg-surface-container-lowest rounded-2xl w-full max-w-xl max-h-[921px] overflow-y-auto shadow-2xl p-space-lg md:p-space-xl relative">
+<!-- Close Button -->
+<button class="absolute top-5 right-5 text-outline hover:text-on-surface p-1.5 rounded-full hover:bg-surface-container-low transition-colors" id="close-wtb-modal">
+<span class="material-symbols-outlined text-[24px]">close</span>
+</button>
+<!-- Modal Header -->
+<div class="flex items-center gap-space-sm mb-space-md">
+<div class="w-10 h-10 rounded-xl bg-primary-fixed text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">post_add</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md font-bold text-on-surface">Buat Permintaan WTB</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Isi detail barang yang kamu butuhkan agar kawan kampus mudah membantu.</p>
+</div>
+</div>
+<!-- Form Inputs -->
+<form class="space-y-space-md" id="wtb-form" onsubmit="event.preventDefault(); submitWtbForm();">
+<div>
+<label class="block font-label-md text-label-md font-bold text-on-surface mb-1">
+            Nama Barang yang Dicari <span class="text-error">*</span>
+</label>
+<input class="w-full px-4 py-2.5 rounded-xl bg-surface-container-low text-on-surface placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest font-body-md text-body-md transition-all" id="wtb-item-name" placeholder="Contoh: Papan LED Laprak A4 / Jas Lab Ukuran L" required="" type="text"/>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+<div>
+<label class="block font-label-md text-label-md font-bold text-on-surface mb-1">
+              Kategori <span class="text-error">*</span>
+</label>
+<select class="w-full px-4 py-2.5 rounded-xl bg-surface-container-low text-on-surface font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary transition-all" id="wtb-category" required="">
+<option value="praktikum">Alat Praktikum</option>
+<option value="elektronik">Elektronik</option>
+<option value="buku">Buku Kuliah</option>
+<option value="kos">Kebutuhan Kos</option>
+</select>
+</div>
+<div>
+<label class="block font-label-md text-label-md font-bold text-on-surface mb-1">
+              Kampus Utama <span class="text-error">*</span>
+</label>
+<select class="w-full px-4 py-2.5 rounded-xl bg-surface-container-low text-on-surface font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary transition-all" id="wtb-campus" required="">
+<option value="usu">USU (Universitas Sumatera Utara)</option>
+<option value="polmed">POLMED (Politeknik Negeri Medan)</option>
+</select>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+<div>
+<label class="block font-label-md text-label-md font-bold text-on-surface mb-1">
+              Maksimal Budget Kamu (Rp) <span class="text-error">*</span>
+</label>
+<div class="relative">
+<span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-outline font-semibold font-label-md text-label-md">Rp</span>
+<input class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-surface-container-low text-on-surface placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest font-body-md text-body-md transition-all" id="wtb-budget" placeholder="50000" required="" type="number"/>
+</div>
+</div>
+<div>
+<label class="block font-label-md text-label-md font-bold text-on-surface mb-1">
+              Tingkat Urgensi
+            </label>
+<select class="w-full px-4 py-2.5 rounded-xl bg-surface-container-low text-on-surface font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary transition-all" id="wtb-urgency">
+<option value="santai">Santai (1 - 2 Minggu)</option>
+<option value="pekan-ini">Pekan Ini (Dalam 3 - 5 Hari)</option>
+<option value="mendesak">MENDESAK (Besok / H-1)</option>
+</select>
+</div>
+</div>
+<div>
+<label class="block font-label-md text-label-md font-bold text-on-surface mb-1">
+            Titik Titik COD Pilihan di Kampus
+          </label>
+<input class="w-full px-4 py-2.5 rounded-xl bg-surface-container-low text-on-surface placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest font-body-md text-body-md transition-all" id="wtb-cod-point" placeholder="Misal: Pendopo USU, Pintu 1 Padang Bulan, Kantin Gedung Z" type="text"/>
+</div>
+<div>
+<label class="block font-label-md text-label-md font-bold text-on-surface mb-1">
+            Deskripsi Kebutuhan &amp; Spesifikasi
+          </label>
+<textarea class="w-full px-4 py-2.5 rounded-xl bg-surface-container-low text-on-surface placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest font-body-md text-body-md transition-all" id="wtb-desc" placeholder="Jelaskan kondisi minimal yang diterima, warna, atau kelengkapan yang dicari..." rows="3"></textarea>
+</div>
+<!-- Verification Reminder Callout -->
+<div class="p-space-sm rounded-xl bg-surface-container-low flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-primary text-[18px]">verified_user</span>
+<span>Postingan kamu akan menampilkan identitas stambuk Faris (FK '22) secara otomatis.</span>
+</div>
+<div class="flex items-center justify-end gap-space-sm pt-space-xs">
+<button class="px-space-md py-2.5 rounded-xl bg-surface-container-low text-on-surface hover:bg-surface-container font-label-md text-label-md font-semibold transition-colors" id="cancel-wtb-modal" type="button">
+            Batal
+          </button>
+<button class="px-space-lg py-2.5 rounded-xl bg-primary text-on-primary hover:bg-primary-container font-label-md text-label-md font-bold transition-all shadow-md" type="submit">
+            Terbitkan Permintaan WTB
+          </button>
+</div>
+</form>
+</div>
+</div>
+<!-- Notification Toast Container -->
+<div class="fixed bottom-6 right-6 z-50 flex items-center gap-space-sm px-space-md py-3 rounded-xl bg-inverse-surface text-inverse-on-surface shadow-xl transform translate-y-20 opacity-0 pointer-events-none transition-all duration-300" id="toast">
+<span class="material-symbols-outlined text-primary-fixed-dim text-[20px]" id="toast-icon">check_circle</span>
+<span class="font-label-md text-label-md font-medium" id="toast-message">Pesan notifikasi</span>
+</div>
+<!-- Client Side Scripting for Interactivity -->
+<script>
+    (function() {
+      // Elements
+      const searchInput = document.getElementById('search-input');
+      const clearSearchBtn = document.getElementById('clear-search');
+      const sortSelect = document.getElementById('sort-select');
+      const categoryPills = document.querySelectorAll('.cat-pill');
+      const campusBtns = document.querySelectorAll('.campus-btn');
+      const cardsGrid = document.getElementById('wtb-cards-grid');
+      const cards = Array.from(document.querySelectorAll('.wtb-card'));
+      const noResults = document.getElementById('no-results');
+      const resetFiltersBtn = document.getElementById('reset-filters');
+
+      // Modal Elements
+      const openModalBtn = document.getElementById('open-wtb-modal');
+      const closeModalBtn = document.getElementById('close-wtb-modal');
+      const cancelModalBtn = document.getElementById('cancel-wtb-modal');
+      const modal = document.getElementById('wtb-modal');
+      const wtbForm = document.getElementById('wtb-form');
+
+      // Toast Element
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-message');
+
+      let currentCategory = 'all';
+      let currentCampus = 'all';
+
+      // Toast helper
+      window.showToast = function(msg, icon = 'check_circle') {
+        toastMsg.textContent = msg;
+        document.getElementById('toast-icon').textContent = icon;
+        toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+        setTimeout(() => {
+          toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+        }, 3200);
+      };
+
+      // Handle offer chat click
+      window.handleOffer = function(itemName, requester) {
+        showToast('Membuka ruang obrolan dengan ' + requester + ' untuk ' + itemName + '...', 'chat');
+      };
+
+      // Modal open/close logic
+      function openModal() {
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+      }
+      function closeModal() {
+        modal.classList.add('opacity-0', 'pointer-events-none');
+      }
+
+      if (openModalBtn) openModalBtn.addEventListener('click', openModal);
+      if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+      if (cancelModalBtn) cancelModalBtn.addEventListener('click', closeModal);
+
+      // Close modal on click outside
+      modal.addEventListener('click', function(e) {
+        if (e.target === modal) closeModal();
+      });
+
+      // Form submission
+      window.submitWtbForm = function() {
+        const title = document.getElementById('wtb-item-name').value;
+        const budget = document.getElementById('wtb-budget').value;
+        const campus = document.getElementById('wtb-campus').value.toUpperCase();
+        
+        closeModal();
+        wtbForm.reset();
+        showToast('Berhasil! Permintaan WTB "' + title + '" (Budget: Rp ' + parseInt(budget).toLocaleString('id-ID') + ') telah ditayangkan ke komunitas ' + campus + '.', 'verified');
+      };
+
+      // Filtering Function
+      function filterAndSortCards() {
+        const query = (searchInput.value || '').toLowerCase().trim();
+        const sortVal = sortSelect.value;
+        let visibleCount = 0;
+
+        // Toggle clear search button
+        if (query.length > 0) {
+          clearSearchBtn.classList.remove('hidden');
+        } else {
+          clearSearchBtn.classList.add('hidden');
+        }
+
+        cards.forEach(card => {
+          const cardCat = card.getAttribute('data-category');
+          const cardCampus = card.getAttribute('data-campus');
+          const cardText = card.innerText.toLowerCase();
+
+          const matchCat = (currentCategory === 'all' || cardCat === currentCategory);
+          const matchCampus = (currentCampus === 'all' || cardCampus === currentCampus);
+          const matchQuery = (query === '' || cardText.includes(query));
+
+          if (matchCat && matchCampus && matchQuery) {
+            card.classList.remove('hidden');
+            visibleCount++;
+          } else {
+            card.classList.add('hidden');
+          }
+        });
+
+        // Handle empty state
+        if (visibleCount === 0) {
+          noResults.classList.remove('hidden');
+          cardsGrid.classList.add('hidden');
+        } else {
+          noResults.classList.add('hidden');
+          cardsGrid.classList.remove('hidden');
+        }
+
+        // Handle sorting in DOM
+        const visibleCards = cards.filter(c => !c.classList.contains('hidden'));
+        visibleCards.sort((a, b) => {
+          if (sortVal === 'budget-tinggi') {
+            const bA = parseInt(a.getAttribute('data-budget') || 0);
+            const bB = parseInt(b.getAttribute('data-budget') || 0);
+            return bB - bA;
+          } else if (sortVal === 'mendesak') {
+            const uA = a.getAttribute('data-urgent') === 'true' ? 1 : 0;
+            const uB = b.getAttribute('data-urgent') === 'true' ? 1 : 0;
+            return uB - uA;
+          }
+          return 0; // Default order
+        });
+
+        visibleCards.forEach(card => cardsGrid.appendChild(card));
+      }
+
+      // Event listeners for Categories
+      categoryPills.forEach(pill => {
+        pill.addEventListener('click', function() {
+          categoryPills.forEach(p => {
+            p.classList.remove('bg-primary', 'text-on-primary', 'shadow-sm');
+            p.classList.add('bg-surface-container-low', 'text-on-surface-variant');
+          });
+          this.classList.add('bg-primary', 'text-on-primary', 'shadow-sm');
+          this.classList.remove('bg-surface-container-low', 'text-on-surface-variant');
+          currentCategory = this.getAttribute('data-cat');
+          filterAndSortCards();
+        });
+      });
+
+      // Event listeners for Campus filter
+      campusBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+          campusBtns.forEach(b => {
+            b.classList.remove('bg-primary', 'text-on-primary', 'shadow-sm', 'font-bold');
+            b.classList.add('text-on-surface-variant', 'font-semibold');
+          });
+          this.classList.add('bg-primary', 'text-on-primary', 'shadow-sm', 'font-bold');
+          this.classList.remove('text-on-surface-variant', 'font-semibold');
+          currentCampus = this.getAttribute('data-campus');
+          filterAndSortCards();
+        });
+      });
+
+      // Search input typing
+      searchInput.addEventListener('input', filterAndSortCards);
+      clearSearchBtn.addEventListener('click', function() {
+        searchInput.value = '';
+        filterAndSortCards();
+      });
+
+      // Sort change
+      sortSelect.addEventListener('change', filterAndSortCards);
+
+      // Reset filters button
+      if (resetFiltersBtn) {
+        resetFiltersBtn.addEventListener('click', function() {
+          searchInput.value = '';
+          currentCategory = 'all';
+          currentCampus = 'all';
+          
+          categoryPills.forEach((p, idx) => {
+            if (idx === 0) {
+              p.classList.add('bg-primary', 'text-on-primary', 'shadow-sm');
+              p.classList.remove('bg-surface-container-low', 'text-on-surface-variant');
+            } else {
+              p.classList.remove('bg-primary', 'text-on-primary', 'shadow-sm');
+              p.classList.add('bg-surface-container-low', 'text-on-surface-variant');
+            }
+          });
+
+          campusBtns.forEach((b, idx) => {
+            if (idx === 0) {
+              b.classList.add('bg-primary', 'text-on-primary', 'shadow-sm', 'font-bold');
+              b.classList.remove('text-on-surface-variant');
+            } else {
+              b.classList.remove('bg-primary', 'text-on-primary', 'shadow-sm', 'font-bold');
+              b.classList.add('text-on-surface-variant');
+            }
+          });
+
+          filterAndSortCards();
+        });
+      }
+
+    })();
+  </script>
+</div></main><footer class="w-full bg-surface-container-lowest mt-space-xl border-t border-surface-container-high/60"><div class="max-w-[1280px] mx-auto px-margin md:px-margin-tablet lg:px-margin-desktop py-space-xl"><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-space-lg mb-space-xl"><div class="lg:col-span-4 flex flex-col gap-space-sm"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-on-primary"><span class="material-symbols-outlined text-[18px]">school</span></div><span class="font-headline-sm text-headline-sm text-primary font-bold">Kampus Kita</span></div><p class="font-body-sm text-body-sm text-on-surface-variant max-w-sm">Platform digital mandiri terverifikasi stambuk dan fakultas untuk jual-beli aman, pemesanan katering kolektif (Open PO), dan ruang bertukar suara mahasiswa USU &amp; POLMED.</p><div class="flex items-center gap-space-xs mt-space-xs"><span class="inline-flex items-center gap-1 px-space-sm py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed-variant font-label-sm text-label-sm font-semibold"><span class="material-symbols-outlined text-[14px]">verified</span>Terverifikasi NIM</span><span class="inline-flex items-center gap-1 px-space-sm py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm font-semibold"><span class="material-symbols-outlined text-[14px]">place</span>Padang Bulan Hub</span></div></div><div class="lg:col-span-4 flex flex-col gap-space-sm"><span class="font-label-lg text-label-lg font-bold text-on-surface flex items-center gap-1.5"><span class="material-symbols-outlined text-primary text-[18px]">share_location</span>Zona Titik COD Resmi</span><p class="font-body-sm text-body-sm text-on-surface-variant">Pertemuan tatap muka terjadwal di lokasi publik dan berkeamanan aktif:</p><ul class="font-body-sm text-body-sm text-on-surface space-y-1.5"><li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span><span class="font-medium">Zona USU 1:</span><span class="text-on-surface-variant">Pendopo, Gelanggang Mahasiswa, Pintu 1 Padang Bulan</span></li><li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span><span class="font-medium">Zona USU 2:</span><span class="text-on-surface-variant">Kantin Fasilkom-TI, Perpus Pusat, Gedung Pancasila</span></li><li class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-secondary-container"></span><span class="font-medium">Zona POLMED:</span><span class="text-on-surface-variant">Kantin Gedung Z, Lapangan Utama, Pintu Belakang</span></li></ul></div><div class="lg:col-span-4 flex flex-col gap-space-sm"><span class="font-label-lg text-label-lg font-bold text-on-surface flex items-center gap-1.5"><span class="material-symbols-outlined text-primary text-[18px]">verified_user</span>Protokol Keamanan COD</span><div class="p-space-md rounded-xl bg-surface-container-low flex flex-col gap-space-xs"><div class="flex items-start gap-2"><span class="material-symbols-outlined text-primary text-[20px] mt-0.5">shield</span><div><p class="font-label-md text-label-md font-bold text-on-surface">Verifikasi Identitas Kampus</p><p class="font-body-sm text-body-sm text-on-surface-variant">Pastikan stambuk lawan transaksi terkonfirmasi aktif di portal sebelum serah terima.</p></div></div><div class="flex items-start gap-2 mt-1"><span class="material-symbols-outlined text-tertiary-container text-[20px] mt-0.5">schedule</span><div><p class="font-label-md text-label-md font-bold text-on-surface">Batas Waktu Titik Kumpul</p><p class="font-body-sm text-body-sm text-on-surface-variant">Transaksi disarankan hanya pada jam operasional kampus (08:00 - 18:30 WIB).</p></div></div></div></div></div><div class="pt-space-md border-t border-surface-container-high/40 flex flex-col sm:flex-row items-center justify-between gap-space-sm"><p class="font-body-sm text-body-sm text-outline text-center sm:text-left">© 2024 Kampus Kita (Inisiatif Kolaboratif USU &amp; POLMED). Hak cipta dilindungi.</p><div class="flex items-center gap-space-md font-label-sm text-label-sm text-on-surface-variant"><a class="hover:text-primary transition-colors" data-path="kebijakan-privasi" href="#">Panduan Aman COD</a><a class="hover:text-primary transition-colors" data-path="syarat-ketentuan" href="#">Ketentuan Komunitas</a><a class="hover:text-primary transition-colors" data-path="bantuan-kampus" href="#">Lapor Pelanggaran</a></div></div></div></footer></body></html>

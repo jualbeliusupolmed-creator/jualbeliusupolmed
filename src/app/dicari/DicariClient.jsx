@@ -166,25 +166,43 @@ export default function DicariPage({ initialItems = [] }) {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 pb-[calc(7rem+env(safe-area-inset-bottom))]">
-      {/* Hero compact */}
-      <section className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-gray-50/60 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/20">
-        <div>
-          <p className="text-[9px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Gratis · Penjual datang ke kamu</p>
-          <h1 className="mt-0.5 text-sm font-extrabold tracking-tight text-gray-900 dark:text-white">
-            Cari Barang{!loading && items.length > 0 && <span className="ml-1.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">· {items.length} aktif</span>}
-          </h1>
+      {/* Header Section with Heroic Micro-Stats (14.html blueprint) */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 sm:p-8 shadow-xs border border-slate-200/80 dark:border-white/10 mb-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <span className="px-3 py-1 rounded-full bg-emerald-50 text-[#047857] dark:bg-emerald-950/60 dark:text-emerald-400 text-xs font-bold inline-flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#047857] animate-pulse"></span>
+              WTB Hub • Permintaan Barang Kampus
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+              Dicari Mahasiswa (WTB Hub)
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-2xl leading-relaxed">
+              Lagi butuh barang mendesak untuk kuliah, praktikum, atau kosan? Pasang permintaanmu di sini — penjual mahasiswa yang punya barang langsung menghubungi kamu tanpa perantara calo.
+            </p>
+          </div>
+
+          <button
+            onClick={() => {
+              const savedWa = sesiWa || "";
+              setForm((f) => ({ ...f, buyer_wa: savedWa }));
+              setShowModal(true);
+            }}
+            className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#047857] hover:bg-[#065F46] text-white text-xs sm:text-sm font-bold shadow-sm transition active:scale-95 shrink-0"
+          >
+            <Icon.PlusCircle className="w-4 h-4" />
+            <span>+ Posting Kebutuhan WTB</span>
+          </button>
         </div>
-        <button
-          onClick={() => {
-            const savedWa = sesiWa || "";
-            setForm((f) => ({ ...f, buyer_wa: savedWa }));
-            setShowModal(true);
-          }}
-          className="shrink-0 whitespace-nowrap rounded-full bg-gray-900 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-gray-700 dark:bg-white dark:text-gray-900"
-        >
-          + Posting
-        </button>
-      </section>
+
+        {/* Live Alert Banner */}
+        <div className="mt-6 flex items-center gap-3 p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40 text-amber-900 dark:text-amber-200 text-xs">
+          <Icon.AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+          <span>
+            <strong>Musim Laprak &amp; Sidang:</strong> WTB perlengkapan praktikum dan modul buku kuliah meningkat minggu ini. Cek barang tak terpakai di kosanmu untuk ditawarkan!
+          </span>
+        </div>
+      </div>
 
       {/* Filter Bar */}
       <div className="mt-3 flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

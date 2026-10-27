@@ -1,0 +1,362 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"><meta content="mobile_tab" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "surface-variant": "#dae2fd", "surface-container-high": "#e2e7ff", "on-secondary-fixed-variant": "#5a00c6", "inverse-primary": "#7bd8b1", "primary": "#005d42", "on-tertiary-container": "#ffe6cc", "on-tertiary-fixed-variant": "#653e00", "surface-container": "#eaedff", "outline": "#6e7a73", "error": "#ba1a1a", "on-background": "#131b2e", "on-primary": "#ffffff", "error-container": "#ffdad6", "on-primary-container": "#9ffdd3", "secondary": "#712ae2", "secondary-fixed": "#eaddff", "on-error": "#ffffff", "on-primary-fixed-variant": "#00513a", "surface-container-highest": "#dae2fd", "on-secondary": "#ffffff", "inverse-on-surface": "#eef0ff", "on-tertiary": "#ffffff", "on-primary-fixed": "#002115", "surface-dim": "#d2d9f4", "secondary-container": "#8a4cfc", "primary-fixed": "#97f5cc", "primary-container": "#047857", "on-error-container": "#93000a", "surface-bright": "#faf8ff", "secondary-fixed-dim": "#d2bbff", "tertiary-fixed": "#ffddb8", "outline-variant": "#bdc9c1", "surface-container-low": "#f2f3ff", "tertiary-fixed-dim": "#ffb95f", "on-surface": "#131b2e", "tertiary-container": "#945d00", "inverse-surface": "#283044", "on-surface-variant": "#3e4943", "on-secondary-container": "#fffbff", "on-secondary-fixed": "#25005a", "tertiary": "#734700", "on-tertiary-fixed": "#2a1700", "surface-tint": "#006c4e", "surface": "#faf8ff", "surface-container-lowest": "#ffffff", "primary-fixed-dim": "#7bd8b1", "background": "#faf8ff" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-xs": "0.25rem", "margin-desktop": "3rem", "space-xl": "2.5rem", "space-lg": "1.5rem", "gutter": "1rem", "gutter-desktop": "1.5rem", "space-md": "1rem", "margin": "1rem", "space-sm": "0.5rem", "margin-tablet": "2rem" }, fontFamily: { "headline-lg-mobile": ["Plus Jakarta Sans"], "body-md": ["Inter"], "body-sm": ["Inter"], "headline-xl-mobile": ["Plus Jakarta Sans"], "headline-sm": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "label-md": ["Plus Jakarta Sans"], "headline-xl": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "label-sm": ["Plus Jakarta Sans"], "body-lg": ["Inter"], "label-lg": ["Plus Jakarta Sans"] }, fontSize: { "headline-lg-mobile": ["22px", { "lineHeight": "30px", "fontWeight": "700" }], "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }], "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }], "headline-xl-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "700" }], "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }], "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }], "label-md": ["12px", { "lineHeight": "16px", "fontWeight": "600" }], "headline-xl": ["36px", { "lineHeight": "44px", "fontWeight": "700" }], "headline-lg": ["28px", { "lineHeight": "36px", "fontWeight": "700" }], "label-sm": ["10px", { "lineHeight": "14px", "fontWeight": "700" }], "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }], "label-lg": ["14px", { "lineHeight": "20px", "fontWeight": "600" }] } } } };</script></head><body class="bg-surface text-on-surface antialiased flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.03)]"><div class="h-16 px-gutter flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-sm min-w-0 flex-1"><button aria-label="Filter Percakapan" class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container transition-colors" type="button"><span class="material-symbols-outlined text-[22px]">tune</span></button><div class="flex flex-col min-w-0"><div class="flex items-center gap-space-xs"><h1 class="font-headline-md text-headline-md text-on-surface truncate">Obrolan</h1><span class="px-2 py-0.5 rounded-full bg-primary-fixed text-primary font-label-sm text-label-sm leading-none">USU • POLMED</span></div></div></div><div class="flex items-center gap-space-xs"><button aria-label="Cari obrolan" class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container transition-colors relative" type="button"><span class="material-symbols-outlined text-[22px]">search</span></button><button aria-label="Pesan belum dibaca" class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container transition-colors relative" type="button"><span class="material-symbols-outlined text-[22px]">mark_chat_unread</span><span class="absolute top-2 right-2 w-4 h-4 bg-tertiary-container text-on-tertiary-container rounded-full flex items-center justify-center font-label-sm text-[9px] font-bold">3</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center ml-space-xs shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-20 bg-surface"><div class="flex flex-col w-full">
+<!-- Top Stats Banner & Search Section -->
+<section class="px-gutter pt-space-sm pb-space-xs flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="font-headline-sm text-headline-sm text-on-surface">Obrolan &amp; Teman</span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+</div>
+<div class="px-2.5 py-1 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm shadow-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px] text-primary" style="font-variation-settings: 'FILL' 1;">forum</span>
+<span class="">4 Percakapan • 3 Match Baru</span>
+</div>
+</div>
+<!-- Clean Search Bar -->
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input class="w-full h-11 pl-10 pr-10 rounded-xl bg-surface-container text-on-surface placeholder:text-outline text-body-md font-body-md focus:bg-surface-container-lowest focus:outline-none transition-all shadow-sm" placeholder="Cari teman, pesan, stambuk..." type="text">
+<button aria-label="Bersihkan pencarian" class="absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">mic</span>
+</button>
+</div>
+<!-- Segmented Filter Pills -->
+<div class="flex items-center gap-space-xs overflow-x-auto pb-1 -mx-gutter px-gutter no-scrollbar" id="chat-filter-group">
+<button class="chat-filter-btn shrink-0 px-3.5 py-1.5 rounded-full bg-primary text-on-primary font-label-md text-label-md shadow-sm transition-all flex items-center gap-1.5" data-filter="semua" type="button">
+<span class="">Semua</span>
+<span class="px-1.5 py-0.2 rounded-full bg-on-primary/20 text-on-primary text-[10px]">7</span>
+</button>
+<button class="chat-filter-btn shrink-0 px-3.5 py-1.5 rounded-full bg-surface-container text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-high transition-all flex items-center gap-1.5" data-filter="teman" type="button">
+<span class="material-symbols-outlined text-[15px] text-secondary">handshake</span>
+<span class="">Teman Kampus</span>
+</button>
+<button class="chat-filter-btn shrink-0 px-3.5 py-1.5 rounded-full bg-surface-container text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-high transition-all flex items-center gap-1.5" data-filter="po" type="button">
+<span class="material-symbols-outlined text-[15px] text-primary">local_shipping</span>
+<span class="">Open PO</span>
+</button>
+<button class="chat-filter-btn shrink-0 px-3.5 py-1.5 rounded-full bg-surface-container text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-high transition-all flex items-center gap-1.5" data-filter="market" type="button">
+<span class="material-symbols-outlined text-[15px] text-tertiary">storefront</span>
+<span class="">Marketplace</span>
+</button>
+</div>
+</section>
+<!-- Horizontal Story / Match Baru Bar -->
+<section class="py-space-xs flex flex-col gap-1.5">
+<div class="px-gutter flex items-center justify-between">
+<div class="flex items-center gap-1">
+<span class="font-label-md text-label-md text-on-surface">Match Baru Kampus</span>
+<span class="px-1.5 py-0.5 rounded-full bg-primary-fixed text-primary font-label-sm text-[9px] font-bold">USU • POLMED</span>
+</div>
+<button class="text-primary font-label-sm text-label-sm flex items-center gap-0.5 hover:underline" type="button">
+<span class="">Lihat Semua</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+</button>
+</div>
+<div class="flex items-center gap-space-md overflow-x-auto px-gutter py-1 no-scrollbar">
+<!-- Swipe More Circle -->
+<button class="flex flex-col items-center gap-1 shrink-0 group" type="button">
+<div class="w-14 h-14 rounded-full bg-gradient-to-tr from-primary to-primary-fixed flex items-center justify-center p-0.5 shadow-sm group-active:scale-95 transition-transform">
+<div class="w-full h-full rounded-full bg-surface-container-lowest flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-[24px]">style</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-primary font-bold">Swipe +</span>
+</button>
+<!-- Match 1: Dimas -->
+<div class="flex flex-col items-center gap-1 shrink-0 cursor-pointer group">
+<div class="relative w-14 h-14 rounded-full p-0.5 bg-gradient-to-br from-primary-fixed to-primary group-active:scale-95 transition-transform shadow-sm">
+<img class="w-full h-full object-cover rounded-full" data-alt="A portrait photograph of Dimas, a cheerful 21-year-old male Indonesian mechanical engineering student from Universitas Sumatera Utara, wearing a neat casual dark polo shirt and smiling warmly outdoors against soft green campus foliage." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDYivoy1FViLB5ahjTYc2odXtlY7p1N5seM0LXGPDFTuLgHBuD-i87mEuEfUrWRVt9AGhGc9JnSprvpOe2tOvg24uq0KroMDrtYxiiv03S1lVElQK-43M8LGjv8iVKVjM4NaoSXqwWmav2aLdYZBB-zYu3VC8ts4wCfD2uPjhY-t1q6fTaGTsBZ_VuspH0ityC1Imp0HCyU43X0pWrAabK1oDB5pbeKH5Mjv-5r6M0W">
+<span class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-primary rounded-full ring-2 ring-surface-container-lowest shadow-xs"></span>
+</div>
+<span class="font-label-md text-label-md text-on-surface truncate max-w-[56px] text-center">Dimas</span>
+</div>
+<!-- Match 2: Sarah -->
+<div class="flex flex-col items-center gap-1 shrink-0 cursor-pointer group">
+<div class="relative w-14 h-14 rounded-full p-0.5 bg-gradient-to-br from-secondary-fixed to-secondary group-active:scale-95 transition-transform shadow-sm">
+<img class="w-full h-full object-cover rounded-full" data-alt="A candid profile photo of Sarah, a 20-year-old Indonesian female university student wearing modern pastel hijab, smiling in bright natural indoor library sunlight with soft bokeh books in the background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBG1O0IwD3NW-Z5ati5CbSoTVCRDA5yhIJwLWgHROFtGOD7SVTOs4eupCeTSAX2xtXgfk3RdvXHpg_LkDRA2i-ktOqiKwFHXTSwQWSlgBgcqLAAT1SfgI6Lqx98p7-f_Pe939agwpE7Xgb3N5NvDwe_5mZhfzuLy1CmmyNX7UapOvfRICIdRcI0PsfQqkH7eADMnSmjOtIJwnWyytd9LIZ_e94QzXEILwG7jVziXNEJ">
+<span class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-primary rounded-full ring-2 ring-surface-container-lowest shadow-xs"></span>
+</div>
+<span class="font-label-md text-label-md text-on-surface truncate max-w-[56px] text-center">Sarah</span>
+</div>
+<!-- Match 3: Kevin -->
+<div class="flex flex-col items-center gap-1 shrink-0 cursor-pointer group">
+<div class="relative w-14 h-14 rounded-full p-0.5 bg-gradient-to-br from-primary to-primary-container group-active:scale-95 transition-transform shadow-sm">
+<img class="w-full h-full object-cover rounded-full" data-alt="A professional candid shot of Kevin, a 22-year-old Batak Indonesian male computer engineering student at Politeknik Negeri Medan, wearing campus lanyard and dark casual shirt in a vibrant modern campus maker-space." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-HQZ5nHhaspJ3RswW7kJg9VjNE2iAHp0M0DRyD4QAoy2hDbk5bvgjCOi96Y-OZ28WZZaRIp6Ck7B1QzU9vsj-S8AnvUo6UVvj8n2usdDrLB8t2GNU2Uf4BBSQm1g5Q_QsAi_LhDKhQETOho278p75aJHos38iXxA5WRtTtt8F5YMt5hjUwqa-5BQX1vSFDJDHwHukU-5yyJzW32uL-DwdZUivX0dqgVlfQVg-ZIDk">
+<span class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-primary rounded-full ring-2 ring-surface-container-lowest shadow-xs"></span>
+</div>
+<span class="font-label-md text-label-md text-on-surface truncate max-w-[56px] text-center">Kevin</span>
+</div>
+<!-- Match 4: Alya -->
+<div class="flex flex-col items-center gap-1 shrink-0 cursor-pointer group opacity-80">
+<div class="relative w-14 h-14 rounded-full p-0.5 bg-surface-variant group-active:scale-95 transition-transform">
+<img class="w-full h-full object-cover rounded-full" data-alt="Close-up portrait of Alya, a friendly 19-year-old Indonesian female dental medicine student from Medan with natural smile and gentle morning sunlight in an academic setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpkcplKEnQnt_uPZoaGS0YAyfaXmJklF2T29WSynKjpT--QAKBk5_7rjHZF-4MRbzGohx7w15hXCyGhPaD2EyxgDgiBDCzGNwyEF0kSPxjyV8lQO_2YmRl8GZ7fUbN1WFxLx32WJrPwTEx78sHNhyuuQoxvQLXlMktZNKAX11AJSBw6t44n3yZnzz6KaDL73IOGbjX9RuR4wUi7zUImv3ep5IBc2HPgFH6vHuOsVO3">
+<span class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-outline rounded-full ring-2 ring-surface-container-lowest"></span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant truncate max-w-[56px] text-center">Alya</span>
+</div>
+</div>
+</section>
+<!-- SPECIAL PINNED ROOM: Swipe & Match Room -->
+<section class="px-gutter my-space-xs">
+<div class="w-full rounded-2xl bg-gradient-to-br from-primary to-primary-container p-4 text-on-primary shadow-md relative overflow-hidden">
+<!-- Decorative ambient corner glow -->
+<div class="absolute -right-8 -bottom-8 w-32 h-32 bg-primary-fixed/20 rounded-full blur-2xl pointer-events-none"></div>
+<!-- Room Header -->
+<div class="flex items-center justify-between mb-3 relative z-10">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-xl bg-on-primary/15 backdrop-blur-sm flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px] text-primary-fixed">style</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-primary leading-tight">Cari Teman &amp; Swipe</h2>
+<p class="font-body-sm text-body-sm text-on-primary-container leading-none mt-0.5">Kenalan Mahasiswa Sekitar</p>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-primary-fixed text-primary font-label-sm text-label-sm font-bold flex items-center gap-1 shadow-xs">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-ping"></span>
+          Mode Live
+        </span>
+</div>
+<!-- Micro Card Preview: Faris Kurniawan -->
+<div class="rounded-xl bg-surface-container-lowest p-3 text-on-surface shadow-sm relative z-10 transition-transform active:scale-[0.99]" id="swipe-card-preview">
+<div class="flex items-start gap-3">
+<div class="relative w-16 h-20 rounded-lg overflow-hidden shrink-0 shadow-xs">
+<img class="w-full h-full object-cover" data-alt="Vertical portrait of Faris, a 20-year-old Indonesian male student from Fasilkom-TI USU wearing stylish dark glasses and hoodie, sitting with a laptop on modern university library desk." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7QBInD78RVIzXjoYB5M6XKqVayKj_niFq0DHzkwraYDqJPkiA_umJNTCR2ip7OiCq8FJ_Sy-rsTV7pfupHW3nidM72RfX8qgm6WaBnGwlX41k4AuPLHboSzBC5y_wiV5vAfOBHzm6NAyDggkEVIsEPsmN_ngoJQX_B3Y5s1DblmpGfZIASnKyfWaY3JU4wsK5PqFgzwh1qQl2oPmCeVdJr3mPUhIoW0xiITXLgdTA">
+<span class="absolute top-1 left-1 px-1 py-0.2 rounded bg-surface/90 backdrop-blur-xs text-on-surface font-label-sm text-[8px] font-bold">20 thn</span>
+</div>
+<div class="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Faris Kurniawan</span>
+<span class="material-symbols-outlined text-primary text-[16px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<p class="font-label-sm text-label-sm text-primary font-semibold mt-0.5 truncate">Fasilkom-TI USU '22</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-1 mt-1">"Lagi cari partner nugas Hackathon &amp; ngopi di FIB!"</p>
+</div>
+<div class="flex items-center gap-1 mt-2 text-outline font-label-sm text-[10px]">
+<span class="material-symbols-outlined text-[13px] text-tertiary-container">location_on</span>
+<span class="truncate">Perpus Pusat Lt. 2 • 350m</span>
+</div>
+</div>
+</div>
+<!-- 3 Quick Ergonomic Actions -->
+<div class="flex items-center justify-between gap-2 mt-3 pt-2.5 bg-surface-container-low rounded-lg px-2 py-1.5">
+<button class="flex-1 h-9 rounded-lg bg-surface-container-high hover:bg-surface-variant text-on-surface-variant flex items-center justify-center gap-1 font-label-md text-label-md transition-colors" id="btn-skip-swipe" type="button">
+<span class="material-symbols-outlined text-[17px] text-outline">close</span>
+<span class="">Lewati</span>
+</button>
+<button aria-label="Bintang Super Like" class="w-9 h-9 rounded-lg bg-tertiary-fixed text-on-tertiary-fixed-variant flex items-center justify-center shrink-0 hover:bg-tertiary-fixed-dim transition-colors shadow-xs" id="btn-super-star" type="button">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">star</span>
+</button>
+<button class="flex-[1.4] h-9 rounded-lg bg-primary hover:bg-primary-container text-on-primary flex items-center justify-center gap-1 font-label-md text-label-md transition-all shadow-xs" id="btn-match-chat" type="button">
+<span class="material-symbols-outlined text-[17px]" style="font-variation-settings: 'FILL' 1;">favorite</span>
+<span class="">Kenalan &amp; Chat</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Pinned & Active Conversations List -->
+<section class="flex flex-col mt-space-xs pb-4">
+<div class="px-gutter py-2 flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Pesan Masuk</span>
+<span class="font-label-sm text-label-sm text-outline">Terbaru</span>
+</div>
+<!-- Chat Item 1: Nadia Putri (PO Risol Mayo) - PINNED & UNREAD -->
+<a class="chat-row flex items-start gap-3 px-gutter py-3 hover:bg-surface-container transition-colors relative bg-surface-container-low/50" href="#">
+<div class="relative shrink-0">
+<div class="w-12 h-12 rounded-full overflow-hidden shadow-xs">
+<img class="w-full h-full object-cover" data-alt="Indonesian female student Nadia Putri wearing yellow pastel scarf, cheerful expression on bright university campus veranda holding baked snack package." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7rnGQ15UW2jg8IboR0Spt8NRXz98mx37rOJyBb9fU27WyRGzZ4GtAQPc4wNnxWEGK4KlcUpxPaLGbMxkxZkJM1KZX4zdTfcwmbVkD2lIYLHSzFYHJW07a82MgzBCHqNMseJO3GFgEmVSh_7YiJtnMadn7C1UkBIbjJuEAepYb1XITIbkbqgRDwzINO_U-D_lSY7pNxwNltLmg_nFgWQxkwX4BCNsUYumzWXU522KC">
+</div>
+<span class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary-fixed text-primary flex items-center justify-center shadow-xs">
+<span class="material-symbols-outlined text-[11px]" style="font-variation-settings: 'FILL' 1;">push_pin</span>
+</span>
+</div>
+<div class="flex-1 min-w-0 flex flex-col gap-0.5">
+<div class="flex items-center justify-between gap-1">
+<div class="flex items-center gap-1.5 min-w-0">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Nadia Putri</span>
+<span class="px-1.5 py-0.2 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-[10px] shrink-0">F. Pertanian</span>
+</div>
+<span class="font-label-sm text-label-sm text-primary font-bold shrink-0">11:42</span>
+</div>
+<!-- Tag Context Chip -->
+<div class="flex items-center gap-1 my-0.5">
+<span class="px-1.5 py-0.2 rounded bg-primary-fixed text-primary font-label-sm text-[10px] font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[11px]">local_shipping</span>
+            PO: Risol Mayo Spesial
+          </span>
+</div>
+<div class="flex items-center justify-between gap-2">
+<p class="font-body-md text-body-md text-on-surface font-semibold truncate">"Kantin Gedung Bersama jam 12.30 ya kak"</p>
+<span class="w-5 h-5 rounded-full bg-primary text-on-primary font-label-sm text-[11px] font-bold flex items-center justify-center shrink-0 shadow-xs">1</span>
+</div>
+</div>
+</a>
+<!-- Chat Item 2: Kevin Siregar (Match Teman - Polmed) -->
+<a class="chat-row flex items-start gap-3 px-gutter py-3 hover:bg-surface-container transition-colors" href="#">
+<div class="relative shrink-0">
+<div class="w-12 h-12 rounded-full overflow-hidden shadow-xs">
+<img class="w-full h-full object-cover" data-alt="Kevin Siregar, Batak student from POLMED smiling friendly wearing tech club lanyard outdoors on campus lawn." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAgfc0wsLeJDnFHRPLj9TBe2xjQGe90HgS8pz9F9EcwBAoJQ_D6zUsCgOtbyHq5T6isOPR3pBiOubiWHKTpsG5W81XYr6i8ImqHKUX3sz2YAYAY-NZYbGQRl4FwitOiqxmlbDUNn6nbNvpzSaT9oo77lOQsEXLYOWcUA_OeCVImb6pgZetYWmsjUUhKTLaxfIzeCOhxyTUrBPWNu3nhLRy4AdCDHVnFdE33LKUowMqG">
+</div>
+<span class="absolute bottom-0 right-0 w-3 h-3 bg-primary rounded-full ring-2 ring-surface"></span>
+</div>
+<div class="flex-1 min-w-0 flex flex-col gap-0.5">
+<div class="flex items-center justify-between gap-1">
+<div class="flex items-center gap-1.5 min-w-0">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Kevin Siregar</span>
+<span class="px-1.5 py-0.2 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-[10px] shrink-0">POLMED</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline shrink-0">Kemarin</span>
+</div>
+<!-- Match Chip -->
+<div class="flex items-center gap-1 my-0.5">
+<span class="px-1.5 py-0.2 rounded bg-secondary-fixed text-on-secondary-fixed font-label-sm text-[10px] font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[11px]">handshake</span>
+            Match Teman • Tek. Komputer
+          </span>
+</div>
+<div class="flex items-center justify-between gap-2">
+<p class="font-body-md text-body-md text-on-surface-variant truncate">"Boleh banget bro, nanti kita ngerjain project bareng..."</p>
+<span class="material-symbols-outlined text-[15px] text-primary shrink-0" style="font-variation-settings: 'FILL' 1;">done_all</span>
+</div>
+</div>
+</a>
+<!-- Chat Item 3: Sarah Lubis (Match Teman - FEB USU) -->
+<a class="chat-row flex items-start gap-3 px-gutter py-3 hover:bg-surface-container transition-colors" href="#">
+<div class="relative shrink-0">
+<div class="w-12 h-12 rounded-full overflow-hidden shadow-xs">
+<img class="w-full h-full object-cover" data-alt="Portrait of Sarah Lubis smiling wearing beige pastel hijab and spectacles in university library cafe setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-oUTfM_qfLD2fbusIEh7kAPbza4-kIVGySkeysmGzMzL4R7VT44Mp0x6B90SdOlNlrvQjX7dhxzbpqEaZ4tfJLGEC6qrBdvTf1pe_QAWglXTHyFazR0Yec_R8U9Yfkixj9WZLSSCqWGualmyr-PVotMgnXEki5tlNnTtGkK76j0t-Ad3cqoxNhVcbIryVJLhkusjoCzw9dU4wB_Riu6LENCU9uDng4Jf131cpf3Gu">
+</div>
+<span class="absolute bottom-0 right-0 w-3 h-3 bg-primary rounded-full ring-2 ring-surface"></span>
+</div>
+<div class="flex-1 min-w-0 flex flex-col gap-0.5">
+<div class="flex items-center justify-between gap-1">
+<div class="flex items-center gap-1.5 min-w-0">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Sarah Lubis</span>
+<span class="px-1.5 py-0.2 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-[10px] shrink-0">FEB USU</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline shrink-0">08:30</span>
+</div>
+<!-- Match Chip -->
+<div class="flex items-center gap-1 my-0.5">
+<span class="px-1.5 py-0.2 rounded bg-secondary-fixed text-on-secondary-fixed font-label-sm text-[10px] font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[11px]">handshake</span>
+            Match Teman • Akuntansi '21
+          </span>
+</div>
+<div class="flex items-center justify-between gap-2">
+<p class="font-body-md text-body-md text-on-surface-variant truncate">"Boleh kak, nanti kita ketemuan di Perpus USU ya."</p>
+<span class="material-symbols-outlined text-[15px] text-outline shrink-0">done</span>
+</div>
+</div>
+</a>
+<!-- Chat Item 4: Dimas Adrian (Match Teman - FT USU) -->
+<a class="chat-row flex items-start gap-3 px-gutter py-3 hover:bg-surface-container transition-colors" href="#">
+<div class="relative shrink-0">
+<div class="w-12 h-12 rounded-full overflow-hidden shadow-xs">
+<img class="w-full h-full object-cover" data-alt="Dimas Adrian student avatar wearing black collared shirt smiling with campus mechanical workshop backdrop." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYA_7aHnd1ODghCXk8Ffjda5AazUSO6PJmS5xrtbcbp4bQka1x69zYEBx88LqemfLMMhd4Hc_FRb-8bEJuZMBPo9LMOCxoyrGBPiHOh0G7EI0_TEEvdAF-c2Wto354CxAZ8at0wC-iBDaOBMi1HW1c7QQvJQobx5uDiR9X9_RBBvFbwxOQWyRPYT-M3Eg059SWhKypGCv7HVMEMXZjhHdXsPkbkMdH2YFvYTT44Y3w">
+</div>
+<span class="absolute bottom-0 right-0 w-3 h-3 bg-outline-variant rounded-full ring-2 ring-surface"></span>
+</div>
+<div class="flex-1 min-w-0 flex flex-col gap-0.5">
+<div class="flex items-center justify-between gap-1">
+<div class="flex items-center gap-1.5 min-w-0">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Dimas Adrian</span>
+<span class="px-1.5 py-0.2 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-[10px] shrink-0">FT USU</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline shrink-0">Senin</span>
+</div>
+<!-- Match Chip -->
+<div class="flex items-center gap-1 my-0.5">
+<span class="px-1.5 py-0.2 rounded bg-secondary-fixed text-on-secondary-fixed font-label-sm text-[10px] font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[11px]">handshake</span>
+            Match Teman • Teknik Mesin
+          </span>
+</div>
+<div class="flex items-center justify-between gap-2">
+<p class="font-body-md text-body-md text-on-surface-variant truncate">"Siap bro, kabarin aja kalau udah di kantin FT."</p>
+<span class="material-symbols-outlined text-[15px] text-primary shrink-0" style="font-variation-settings: 'FILL' 1;">done_all</span>
+</div>
+</div>
+</a>
+<!-- Chat Item 5: Ranti Safitri (Marketplace COD) -->
+<a class="chat-row flex items-start gap-3 px-gutter py-3 hover:bg-surface-container transition-colors" href="#">
+<div class="relative shrink-0">
+<div class="w-12 h-12 rounded-full overflow-hidden shadow-xs">
+<img class="w-full h-full object-cover" data-alt="Ranti Safitri female Indonesian university student smiling holding spiral bound calculus handbook in campus garden." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQ7nCj94hT6PNwU9RG6auemPB0li7gg8bxXj3F0WNkVAY5auh6blW2BV_IGmFVySo2dDsncE-feRdE_Zz9t2ICCeJPmkMM62TkWxk96Wtbo-T7P6v_Iwf44lPM2rN_Me_Jcl8nMaZTNF8jHiJ_RYYpa7TwpH0MComtfEVVF25rVB_-YNet6xrBLXdkn4QDohou9jtlx65n77wJ70sPd_jEKsOfVThrDdnnXMXpuQ3e">
+</div>
+<span class="absolute bottom-0 right-0 w-3 h-3 bg-primary rounded-full ring-2 ring-surface"></span>
+</div>
+<div class="flex-1 min-w-0 flex flex-col gap-0.5">
+<div class="flex items-center justify-between gap-1">
+<div class="flex items-center gap-1.5 min-w-0">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Ranti Safitri</span>
+<span class="px-1.5 py-0.2 rounded-full bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-sm text-[10px] shrink-0">Buku Kalkulus</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline shrink-0">10:15</span>
+</div>
+<div class="flex items-center justify-between gap-2 mt-1">
+<p class="font-body-md text-body-md text-on-surface-variant truncate">"Bisa COD di Pendopo USU sore ini jam 4 kak?"</p>
+<span class="material-symbols-outlined text-[15px] text-primary shrink-0" style="font-variation-settings: 'FILL' 1;">done_all</span>
+</div>
+</div>
+</a>
+</section>
+<!-- Campus Safe Meeting Micro-Banner -->
+
+</div>
+<script>
+  (function() {
+    // Interactive Segment Filter Pills
+    const filterButtons = document.querySelectorAll('.chat-filter-btn');
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterButtons.forEach(b => {
+          b.classList.remove('bg-primary', 'text-on-primary');
+          b.classList.add('bg-surface-container', 'text-on-surface-variant');
+        });
+        btn.classList.remove('bg-surface-container', 'text-on-surface-variant');
+        btn.classList.add('bg-primary', 'text-on-primary');
+      });
+    });
+
+    // Quick Micro Swipe Interactions inside Special Room
+    const skipBtn = document.getElementById('btn-skip-swipe');
+    const starBtn = document.getElementById('btn-super-star');
+    const matchBtn = document.getElementById('btn-match-chat');
+    const previewCard = document.getElementById('swipe-card-preview');
+
+    if (skipBtn && previewCard) {
+      skipBtn.addEventListener('click', () => {
+        previewCard.style.transform = 'translateX(-24px) scale(0.96)';
+        previewCard.style.opacity = '0.5';
+        setTimeout(() => {
+          previewCard.style.transform = 'translateX(0) scale(1)';
+          previewCard.style.opacity = '1';
+        }, 220);
+      });
+    }
+
+    if (matchBtn && previewCard) {
+      matchBtn.addEventListener('click', () => {
+        previewCard.style.transform = 'scale(0.97)';
+        setTimeout(() => {
+          previewCard.style.transform = 'scale(1)';
+          alert('Terkoneksi! Mengalihkan ke ruang obrolan dengan Faris...');
+        }, 150);
+      });
+    }
+
+    if (starBtn) {
+      starBtn.addEventListener('click', () => {
+        starBtn.style.transform = 'scale(1.2)';
+        setTimeout(() => {
+          starBtn.style.transform = 'scale(1)';
+        }, 180);
+      });
+    }
+  })();
+</script></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-2px_12px_rgba(0,0,0,0.04)]" data-active-classes="text-primary-container font-label-md"><div class="h-16 px-space-xs flex items-center justify-around"><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] py-1 text-on-surface-variant transition-colors" data-path="beranda" href="#"><span class="material-symbols-outlined text-[22px]">home</span><span class="font-label-sm text-label-sm mt-0.5">Beranda</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] py-1 text-on-surface-variant transition-colors" data-path="marketplace" href="#"><span class="material-symbols-outlined text-[22px]">storefront</span><span class="font-label-sm text-label-sm mt-0.5">Market</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] py-1 text-on-surface-variant transition-colors" data-path="open-po" href="#"><span class="material-symbols-outlined text-[22px]">local_shipping</span><span class="font-label-sm text-label-sm mt-0.5">Open PO</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] py-1 text-on-surface-variant transition-colors" data-path="menfess" href="#"><span class="material-symbols-outlined text-[22px]">forum</span><span class="font-label-sm text-label-sm mt-0.5">Menfess</span></a><a aria-current="page" class="flex flex-col items-center justify-center min-w-[56px] min-h-[44px] py-1 transition-colors text-primary-container font-label-md" data-path="obrolan" href="#"><span class="material-symbols-outlined text-[22px]">chat_bubble</span><span class="font-label-sm text-label-sm mt-0.5">Obrolan</span></a></div></nav>
+
+</body></html>

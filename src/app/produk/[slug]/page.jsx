@@ -24,6 +24,7 @@ import { Icon } from "@/components/Icons";
 import { skripJsonLd } from "@/lib/jsonLd";
 import { buildListingShortPath, looksLikeListingCode, normalizeListingCode } from "@/lib/listingCode";
 import { formatListingSpecs } from "@/lib/listingSpecs";
+import ProductDetailInteractive from "@/components/ProductDetailInteractive";
 import { checkProhibitedListing } from "@/lib/profanity";
 import { evaluateModerationRules } from "@/lib/moderationRules";
 import { encodeSellerSlug } from "@/lib/sellerSlug";
@@ -278,297 +279,42 @@ export default async function ProdukPage({ params }) {
         <span className="truncate text-gray-500">{listing.title}</span>
       </nav>
 
-      <div className="mt-5 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-start">
-        {/* Galeri */}
-        <div className="card overflow-hidden lg:col-span-6 lg:sticky lg:top-20">
-          <ProductGallery
-            images={
-              listing.images?.length
-                ? listing.images
-                : listing.image_url
-                ? [listing.image_url]
-                : []
-            }
-            title={listing.title}
-          />
-        </div>
-
-        {/* Info */}
-        <div className="lg:col-span-6 flex flex-col gap-4">
-          {/* Badges */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="badge bg-gray-100 text-gray-700 dark:bg-slate-900 dark:text-slate-300">
-              {listing.category}
-            </span>
-            <span className="badge bg-primary/5 text-primary dark:bg-white/10 dark:text-white font-medium flex items-center gap-1">
-              <Icon.MapPin className="h-3 w-3" /> {listing.campus === "Semua" ? "Medan" : listing.campus}
-            </span>
-            {listing.area && (
-              <span className="badge bg-primary/5 text-primary dark:bg-white/10 dark:text-white font-medium flex items-center gap-1">
-                <Icon.MapPin className="h-3 w-3" /> {listing.area}
-              </span>
-            )}
-            {listing.condition && (
-              <span className="badge bg-amber-500/10 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300 font-semibold">
-                {listing.condition === "new" ? "Kondisi: Baru" : listing.condition === "like_new" ? "Kondisi: Seperti Baru" : "Kondisi: Bekas"}
-              </span>
-            )}
-            {listing.featured && (
-              <span className="badge bg-gray-900 text-white dark:bg-slate-100 dark:text-slate-900">Unggulan</span>
-            )}
-            {sold && (
-              <span className="badge border border-gray-200 text-gray-500 dark:border-slate-800 dark:text-slate-500">
-                Terjual
-              </span>
-            )}
-          </div>
-
-          <div className="mt-2 flex items-start justify-between gap-3">
-            <h1 className="text-[28px] font-semibold leading-tight tracking-[-0.04em] text-[#1d1d1f] dark:text-white">{listing.title}</h1>
-            <FavoriteButton listing={listing} size="lg" className="shrink-0" />
-          </div>
-          {listing.listing_code && (
-            <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-black/[0.08] bg-black/[0.02] px-3.5 py-1.5 text-sm font-medium text-[#1d1d1f] dark:border-white/[0.1] dark:bg-white/[0.05] dark:text-white">
-              <Icon.Hash className="h-4 w-4 text-primary" />
-              <span>Kode Iklan #{listing.listing_code}</span>
-            </div>
-          )}
-          <p className="mt-2.5 text-3xl font-semibold tracking-[-0.04em] text-[#1d1d1f] dark:text-white">
-            {listing.type === "jasa" && <span className="text-xl text-gray-500 font-medium">Mulai dari </span>}
-            {rupiah(listing.price)}
-            {listing.type === "sewa" && listing.rental_period && (
-              <span className="text-lg font-medium text-teal-600 ml-1">/{listing.rental_period}</span>
-            )}
-          </p>
-          {listing.seller_profiles?.distributor && listing.distributor_fee > 0 && (
-            <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-lg bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800/50 px-3 py-1.5 text-sm">
-              <span className="text-orange-500"><svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg></span>
-              <span className="text-orange-700 dark:text-orange-400">
-                Fee Bagi Hasil Distributor: <strong>{rupiah(listing.distributor_fee)}</strong>
-              </span>
-            </div>
-          )}
-          {listing.type === "sewa" && (
-            <p className="mt-1 text-sm font-medium text-teal-700 dark:text-teal-400 flex items-center gap-1">
-               Barang ini disewakan, bukan dijual
-            </p>
-          )}
-          <p className="mt-1 text-sm text-gray-400">
-            {listing.type !== "jasa" && <span>Stok: {listing.stock}</span>}
-            {listing.views > 0 && (
-              <span className="ml-2 inline-flex items-center gap-1.5 align-middle text-orange-500 font-medium bg-orange-50 dark:bg-orange-900/20 px-2 py-0.5 rounded-md">
-                · <Icon.Eye className="h-3.5 w-3.5" /> Sedang dilihat {Math.max(1, Math.floor(listing.views / 5) + 1)} orang lainnya
-              </span>
-            )}
-          </p>
-
-          {/* Bebas Ongkir & Temu di Kampus (SCREEN_15 Blueprint) */}
-          <div className="rounded-2xl p-4 bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-800/40 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#047857] text-white flex items-center justify-center shrink-0 shadow-xs">
-              <Icon.ShoppingBag className="w-5 h-5 text-emerald-100" />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-bold text-xs sm:text-sm text-[#047857] dark:text-emerald-400 leading-snug">
-                Bebas Ongkir &amp; Temu di Kampus
-              </span>
-              <span className="text-[11px] text-slate-600 dark:text-slate-400">
-                Transaksi tatap muka langsung (COD) di titik kumpul resmi USU &amp; POLMED.
-              </span>
-            </div>
-          </div>
-
-          {/* Titik Temu COD Kampus Disepakati */}
-          <div className="rounded-2xl p-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 flex flex-col gap-2.5">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                <Icon.MapPin className="w-4 h-4 text-[#047857]" />
-                Titik Kumpul COD Kampus
-              </span>
-              <span className="text-[11px] text-[#047857] font-semibold">Area Aman &amp; Ramai</span>
-            </div>
-            <div className="flex flex-col gap-2">
-              <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-xs">
-                <span className="text-[#047857] font-bold mt-0.5">📍</span>
-                <div>
-                  <span className="font-bold text-slate-800 dark:text-slate-200 block">
-                    {listing.campus === "POLMED" ? "Gedung Z / Parkiran POLMED" : "Pendopo USU (Zona Utama)"}
-                  </span>
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                    {listing.campus === "POLMED" ? "Area lobi dan kantin mahasiswa Polmed yang ramai." : "Teduh, stopkontak tengah, aman & ramai mahasiswa."}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Card penjual — link ke halaman profil */}
-          <Link
-            href={`/penjual/${sellerUsername}`}
-            className="card mt-5 flex items-center gap-3 p-3.5 hover:border-primary/30 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-shadow dark:border-slate-800 dark:bg-slate-900/40"
-          >
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 font-semibold text-primary dark:bg-white/10 dark:text-white">
-              {(listing.seller_name && !/^User\s+\d+$/i.test(listing.seller_name)
-                ? listing.seller_name[0]
-                : "M"
-              ).toUpperCase()}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <p className="text-sm font-semibold dark:text-white flex items-center gap-1.5 flex-wrap">
-                  <span>
-                    {listing.seller_name && listing.seller_name.trim().length > 2 && !/^User\s+\d+$/i.test(listing.seller_name)
-                      ? listing.seller_name
-                      : listing.campus && listing.campus !== "Semua"
-                      ? `Mahasiswa ${listing.campus}`
-                      : "Mahasiswa Kampus"}
-                  </span>
-                  {listing.seller_profiles?.slug && (
-                    <span className="text-[11px] font-mono font-normal text-gray-400 dark:text-slate-500">
-                      @{listing.seller_profiles.slug}
-                    </span>
-                  )}
-                </p>
-                {listing.seller_profiles?.distributor && (
-                  <span className="inline-flex items-center gap-0.5 rounded-full bg-orange-100 dark:bg-orange-900/40 px-1.5 py-0.5 text-[10px] font-bold text-orange-600 dark:text-orange-400" title="Distributor Resmi">
-                     Distributor
-                  </span>
-                )}
-                {listing.seller_profiles?.trusted_seller && (
-                  <span className="inline-flex items-center justify-center rounded-full bg-blue-100 p-0.5 text-blue-500" title="Penjual Terpercaya">
-                    <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  </span>
-                )}
-                {(listing.seller_profiles?.student_verified || listing.student_verified) && (
-                  <span
-                    className="inline-flex items-center gap-1 rounded-full bg-sky-500/10 dark:bg-sky-400/10 border border-sky-500/20 px-2 py-0.5 text-[10.5px] font-bold text-sky-700 dark:text-sky-300"
-                    title="Mahasiswa Terverifikasi"
-                  >
-                    <Icon.CheckCircle className="h-3 w-3 fill-sky-500 text-white dark:fill-sky-400 dark:text-zinc-900" />
-                    <span>Mahasiswa {listing.seller_profiles?.student_campus || "Kampus"}</span>
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
-                Lihat semua iklan penjual →
-              </p>
-            </div>
-          </Link>
-          {/* Panel Kontrol Khusus Pemilik Iklan */}
-          <OwnerFastActions listing={listing} />
-
-          {/* Aksi (Desktop: inline, Mobile: sticky bottom bar) */}
-          <div className="mt-4 space-y-2">
-            {/* CTA utama desktop saja — di mobile sudah ada floating pill di bawah */}
-            {!sold && (
-              <div className="hidden md:block space-y-2">
-                <MinatButton listing={listing} />
-                <OfferButton listing={listing} />
-              </div>
-            )}
-            <div className="grid grid-cols-2 gap-2">
-              <div className="col-span-2 block md:hidden">
-                <NativeShareButton listing={listing} />
-              </div>
-              <div className="hidden md:block">
-                <ShareWAButton listing={listing} />
-              </div>
-              <div className="col-span-1">
-                <CopyLinkButton listing={listing} />
-              </div>
-              <div className="col-span-1">
-                <QRButton listing={listing} />
-              </div>
-              <div className="col-span-2">
-                <ShareModal listing={listing} />
-              </div>
-            </div>
-          </div>
-
-          {/* Catatan: CTA mobile ada di floating pill di bawah (line ~420), bukan di sini */}
-
-          {/* Deskripsi */}
-          {listingSpecs.length > 0 && (
-            <div className="card mt-5 p-5">
-              <h3 className="text-base font-semibold tracking-[-0.02em] text-[#1d1d1f] dark:text-white">Spesifikasi</h3>
-              <dl className="mt-3 space-y-2">
-                {listingSpecs.map((item) => (
-                  <div
-                    key={item.key}
-                    className="flex items-start justify-between gap-4 rounded-2xl bg-black/[0.02] px-3 py-2.5 dark:bg-white/[0.04]"
-                  >
-                    <dt className="text-sm text-[#6e6e73] dark:text-slate-400">{item.label}</dt>
-                    <dd className="text-right text-sm font-medium text-[#1d1d1f] dark:text-white">{item.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
-          )}
-          <div className="card mt-5 p-5">
-            <h3 className="text-base font-semibold tracking-[-0.02em] text-[#1d1d1f] dark:text-white">Deskripsi</h3>
-            <p className="mt-2.5 whitespace-pre-wrap text-sm leading-relaxed text-[#424245] dark:text-slate-300">
-              {listing.description || "Tidak ada deskripsi."}
-            </p>
-          </div>
-
-          <div className="card mt-4 p-5">
-            <div className="flex items-center gap-2">
-              <Icon.Shield className="h-5 w-5 text-amber-500" />
-              <h3 className="text-base font-semibold tracking-[-0.02em] text-[#1d1d1f] dark:text-white">Transaksi Aman di Kampus</h3>
-            </div>
-            <ul className="mt-3 space-y-2 text-sm leading-relaxed text-[#424245] dark:text-slate-300">
-              <li>Selalu minta penjual kirim kode iklan ini sebelum deal: <strong>{listing.listing_code || listing.id?.slice(0, 8)}</strong>.</li>
-              <li>Utamakan COD di area ramai kampus seperti fakultas, kantin, atau gerbang utama.</li>
-              <li>Cek fisik barang dan kelengkapan sebelum transfer atau menekan tombol barang diterima.</li>
-              <li>Kalau ada perilaku mencurigakan atau sengketa barang, gunakan tombol lapor di bawah.</li>
-            </ul>
-            <div className="mt-3 pt-3 border-t border-black/[0.04] dark:border-white/[0.06]">
-              <Link href="/panduan-aman" className="text-xs font-bold text-[#047857] dark:text-emerald-400 hover:underline flex items-center gap-1">
-                <span>📍 Lihat 5 Titik Temu COD Kampus &amp; Alur Mediasi</span>
-                <span>→</span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Rating widget — hanya tampil jika barang sudah sold */}
-          <RatingWidget listing={listing} className="mt-4" />
-
-          {/* Lapor iklan */}
-          <ReportButton listing={listing} className="mt-4" />
-        </div>
+      {/* 12-Column Grid Matching 12.html blueprint */}
+      <div className="mt-5 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+        <ProductDetailInteractive
+          listing={listing}
+          listingSpecs={listingSpecs}
+          sellerUsername={sellerUsername}
+          sold={sold}
+          gallery={
+            <ProductGallery
+              images={
+                listing.images?.length
+                  ? listing.images
+                  : listing.image_url
+                  ? [listing.image_url]
+                  : []
+              }
+              title={listing.title}
+            />
+          }
+        />
       </div>
 
       {/* Produk serupa */}
       {related.length > 0 && (
-        <section className="mt-10 mb-20 md:mb-0">
-          <h2 className="section-title">{listing.type === "jasa" ? "Jasa serupa" : "Barang serupa"}</h2>
+        <section className="mt-12 mb-20 md:mb-6">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+            {listing.type === "jasa"
+              ? "Jasa Serupa di Kampus"
+              : "Rekomendasi Barang Sejenis (USU • POLMED)"}
+          </h2>
           <div className="mt-4 grid grid-cols-2 gap-2.5 xs:gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
             {related.map((r) => (
               <ProductCard key={r.id} listing={r} />
             ))}
           </div>
         </section>
-      )}
-
-      {/* Mobile Sticky Action Bar */}
-      {!sold && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white/95 dark:bg-[#121214]/95 backdrop-blur-2xl border-t border-black/[0.08] dark:border-white/[0.1] px-4 py-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_25px_rgba(0,0,0,0.1)] flex items-center justify-between gap-3 animate-fade-in">
-          <div className="min-w-0 flex-1">
-            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block leading-tight">Harga Mahasiswa</span>
-            <span className="text-base font-black text-[#047857] dark:text-emerald-400 tracking-tight leading-tight block truncate">
-              {rupiah(listing.price)}
-            </span>
-          </div>
-          <div className="shrink-0 flex items-center gap-2">
-            <OfferButton listing={listing} className="!w-auto !px-3 !py-2 !text-xs !rounded-xl border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50/50 dark:bg-indigo-950/30">
-              Nego
-            </OfferButton>
-            <MinatButton listing={listing} className="!w-auto !px-4 !py-2 !text-xs !rounded-xl shadow-md bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-1.5">
-              <span>Beli via WA</span>
-            </MinatButton>
-          </div>
-        </div>
       )}
     </div>
   );

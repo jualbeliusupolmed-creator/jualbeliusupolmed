@@ -1,0 +1,743 @@
+<!DOCTYPE html><html lang="id" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Kampus Kita - USU • POLMED Ecosystem</title>
+<!-- Google Font: Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS CDN with forms and container-queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#134e4a',
+              deep: '#0f5b38'
+            },
+            surface: {
+              DEFAULT: '#faf8ff',
+              container: '#f3f4f8'
+            }
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-scrollbars-and-tweaks">
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #f7f9fc;
+      color: #1e293b;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+
+    /* Seamless Horizontal Marquee for WTB Bar */
+    @keyframes marqueeScroll {
+      0% {
+        transform: translateX(0);
+      }
+      100% {
+        transform: translateX(-50%);
+      }
+    }
+    .wtb-marquee-container:hover .wtb-marquee-track {
+      animation-play-state: paused;
+    }
+    .wtb-marquee-track {
+      display: flex;
+      width: max-content;
+      animation: marqueeScroll 28s linear infinite;
+    }
+  </style>
+<meta content="web_dashboard" name="shell-type"></head>
+<body class="min-h-screen flex flex-col text-slate-800 antialiased selection:bg-emerald-100 selection:text-emerald-900" style="background-color: #fbfbfa;">
+<!-- BEGIN: TopHeaderNavigation -->
+<!-- Converted strictly from the sidebar items into a modern, unified top bar -->
+<header class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/70 shadow-xs"><div class="max-w-[1440px] mx-auto px-4 sm:px-6"><div class="flex items-center justify-between h-16 gap-3"><div class="flex items-center gap-3 shrink-0"><div class="w-9 h-9 rounded-xl bg-emerald-800 text-white flex items-center justify-center shadow-xs"><svg class="w-5 h-5 text-emerald-300 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke-linecap="round" stroke-linejoin="round"></path><path d="M9 22V12h6v10" stroke-linecap="round" stroke-linejoin="round"></path></svg></div><span class="font-extrabold text-lg tracking-tight text-slate-900">Kampus Kita</span></div><nav class="hidden lg:flex items-center gap-1 p-1 bg-slate-100/80 rounded-full border border-slate-200/60 shrink-0 overflow-x-auto"><a class="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/60 rounded-full transition-colors shrink-0" href="#"><svg class="w-3.5 h-3.5 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg><span class="">Beranda</span></a><a class="flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold text-emerald-900 bg-white rounded-full shadow-xs transition-colors shrink-0" href="#"><svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg><span class="">Marketplace</span></a><a class="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/60 rounded-full transition-colors shrink-0" href="#"><svg class="w-3.5 h-3.5 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg><span class="">Open PO</span><span class="text-[9px] font-extrabold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded-full leading-none">PO</span></a><a class="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/60 rounded-full transition-colors shrink-0" href="#"><svg class="w-3.5 h-3.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg><span class="">Menfess</span></a><a class="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/60 rounded-full transition-colors shrink-0 relative" href="#"><svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg><span class="">Obrolan</span><span class="text-[9px] font-bold text-white bg-emerald-700 px-1.5 py-0.5 rounded-full leading-none">3</span></a></nav><div class="flex items-center gap-2.5 shrink-0 whitespace-nowrap"><div class="relative group shrink-0"><button class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 rounded-full transition-colors border border-slate-200 shadow-xs whitespace-nowrap"><span class="w-2 h-2 rounded-full bg-emerald-600"></span><span class="">Kampus: <strong class="font-bold text-slate-900">USU</strong></span><svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></button><div class="absolute right-0 mt-1 w-48 bg-white rounded-2xl shadow-xl border border-slate-200/80 py-1.5 hidden group-hover:block transition-all z-50"><a class="flex items-center justify-between px-3.5 py-2 text-xs font-bold text-emerald-800 bg-emerald-50/80" href="#"><span class="">USU (Padang Bulan)</span><span class="">✓</span></a><a class="flex items-center justify-between px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50" href="#"><span class="">POLMED</span></a><a class="flex items-center justify-between px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50" href="#"><span class="">UNIMED</span></a><a class="flex items-center justify-between px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50" href="#"><span class="">UINSU</span></a></div></div><div class="h-5 w-px bg-slate-200 shrink-0"></div><a class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full hover:bg-slate-100 transition-colors shrink-0 whitespace-nowrap text-slate-700 hover:text-slate-900" href="#"><div class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 shrink-0 border border-slate-200/80"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></div><span class="hidden md:inline-block text-xs font-bold text-slate-800 whitespace-nowrap">Masuk</span></a><button class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-800 hover:bg-emerald-900 text-white font-semibold text-xs rounded-full shadow-xs hover:shadow transition duration-150 shrink-0 whitespace-nowrap"><svg class="w-3.5 h-3.5 text-emerald-300 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round"></path></svg><span class="">+ Jual Barang</span></button></div></div></div></header>
+<!-- END: TopHeaderNavigation -->
+<!-- BEGIN: MainContentArea -->
+<main class="max-w-[1440px] mx-auto px-4 sm:px-6 py-5 flex-1 w-full"><div class="flex flex-col w-full">
+<!-- Interactive Navigation Tab Sync -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Synchronize active header nav tab to Marketplace
+      const navLinks = document.querySelectorAll('header nav a');
+      navLinks.forEach(link => {
+        if (link.textContent.includes('Marketplace')) {
+          link.className = 'flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold text-emerald-900 bg-white rounded-full shadow-xs transition-colors shrink-0';
+          const icon = link.querySelector('svg');
+          if (icon) icon.className = 'w-3.5 h-3.5 text-emerald-700';
+        } else if (link.textContent.includes('Beranda')) {
+          link.className = 'flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/60 rounded-full transition-colors shrink-0';
+          const icon = link.querySelector('svg');
+          if (icon) icon.className = 'w-3.5 h-3.5 text-slate-500';
+        }
+      });
+    });
+  </script>
+<!-- BEGIN: Real-time WTB Announcement Ticker -->
+<div class="w-full bg-surface-container-low rounded-xl px-3 py-2 sm:py-2.5 mb-5 flex items-center justify-between gap-3 shadow-xs">
+<div class="flex items-center gap-2 shrink-0">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-tertiary-container text-on-tertiary font-label-md text-label-md">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-fixed-dim animate-ping"></span>
+        WTB Ticker
+      </span>
+<span class="hidden md:inline font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Cari Cepat:</span>
+</div>
+<!-- WTB Marquee Viewport -->
+<div class="wtb-marquee-container flex-1 overflow-hidden relative select-none">
+<div class="wtb-marquee-track flex items-center gap-8 text-on-surface font-body-sm text-body-sm whitespace-nowrap">
+<span class="inline-flex items-center gap-2 cursor-pointer hover:text-primary">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+<strong>Kalkulator Casio fx-991EX</strong> <span class="text-on-surface-variant font-label-sm">[Teknik Sipil '23]</span> Max 250rb COD FT
+        </span>
+<span class="inline-flex items-center gap-2 cursor-pointer hover:text-primary">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<strong>Buku Purcell Kalkulus Edisi 9</strong> <span class="text-on-surface-variant font-label-sm">[MIPA USU]</span> Butuh cepat sebelum kuis
+        </span>
+<span class="inline-flex items-center gap-2 cursor-pointer hover:text-primary">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<strong>Papan Gambar Segitiga A3 Rotring</strong> <span class="text-on-surface-variant font-label-sm">[Arsitektur POLMED]</span> Budget 150k
+        </span>
+<span class="inline-flex items-center gap-2 cursor-pointer hover:text-primary">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+<strong>Jas Lab Kimia Ukuran L / XL</strong> <span class="text-on-surface-variant font-label-sm">[Farmasi USU]</span> Siap ambil di Pendopo
+        </span>
+<span class="inline-flex items-center gap-2 cursor-pointer hover:text-primary">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+<strong>Kalkulator Casio fx-991EX</strong> <span class="text-on-surface-variant font-label-sm">[Teknik Sipil '23]</span> Max 250rb COD FT
+        </span>
+<span class="inline-flex items-center gap-2 cursor-pointer hover:text-primary">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<strong>Buku Purcell Kalkulus Edisi 9</strong> <span class="text-on-surface-variant font-label-sm">[MIPA USU]</span> Butuh cepat sebelum kuis
+        </span>
+</div>
+</div>
+<!-- Pasang WTB CTA Action Button -->
+<button class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface-container-lowest hover:bg-surface-container text-primary font-label-md text-label-md rounded-full shadow-xs transition-colors">
+<span class="material-symbols-outlined text-[16px]">add_circle</span>
+<span class="hidden sm:inline">Pasang WTB</span>
+</button>
+</div>
+<!-- END: Real-time WTB Announcement Ticker -->
+<!-- BEGIN: Marketplace Header & Filter Controls -->
+<div class="flex flex-col gap-4 mb-6">
+
+<!-- Search Bar & Integrated Filter Hub -->
+<div class="bg-surface-container-lowest p-3 sm:p-4 rounded-xl shadow-xs flex flex-col gap-3">
+<div class="flex flex-col lg:flex-row items-stretch lg:items-center gap-2.5">
+<!-- Search Input -->
+<div class="relative flex-1 flex items-center bg-surface-container-low rounded-lg px-3 py-2">
+<span class="material-symbols-outlined text-outline mr-2 text-[20px]">search</span>
+<input class="bg-transparent w-full text-on-surface font-body-md text-body-md placeholder:text-outline focus:outline-none" placeholder="Cari laptop, buku kalkulus, jas lab, kemeja sidang, papan gambar..." type="text">
+<button class="text-outline hover:text-on-surface p-1">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+</button>
+</div>
+<!-- Campus Selector Dropdown -->
+<div class="flex items-center gap-2">
+<div class="relative min-w-[150px] flex-1 sm:flex-none">
+<select class="w-full appearance-none bg-surface-container-low text-on-surface font-label-md text-label-md px-3.5 py-2.5 rounded-lg pr-8 focus:outline-none cursor-pointer">
+<option value="all">Semua Kampus</option>
+<option selected="" value="usu">Kampus USU</option>
+<option value="polmed">Kampus POLMED</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-[18px] text-outline pointer-events-none">expand_more</span>
+</div>
+<!-- Category Selector Dropdown -->
+<div class="relative min-w-[170px] flex-1 sm:flex-none">
+<select class="w-full appearance-none bg-surface-container-low text-on-surface font-label-md text-label-md px-3.5 py-2.5 rounded-lg pr-8 focus:outline-none cursor-pointer">
+<option value="all">Semua Kategori</option>
+<option value="laptop">Elektronik &amp; Laptop</option>
+<option value="buku">Buku &amp; Diktat</option>
+<option value="fashion">Fashion Preloved</option>
+<option value="lab">Alat Praktikum &amp; Lab</option>
+<option value="kos">Kos &amp; Furniture</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-[18px] text-outline pointer-events-none">expand_more</span>
+</div>
+<!-- Sort Dropdown -->
+<div class="relative min-w-[150px] hidden sm:block">
+<select class="w-full appearance-none bg-surface-container-low text-on-surface font-label-md text-label-md px-3.5 py-2.5 rounded-lg pr-8 focus:outline-none cursor-pointer">
+<option value="newest">Urutkan: Terbaru</option>
+<option value="price_asc">Harga: Terendah</option>
+<option value="price_desc">Harga: Tertinggi</option>
+<option value="verified">Prioritas Terverifikasi</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-[18px] text-outline pointer-events-none">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Quick Category Chips & COD Filter Row -->
+
+</div>
+</div>
+<!-- END: Marketplace Header & Filter Controls -->
+<!-- BEGIN: Campus COD Trust Banner -->
+
+<!-- END: Campus COD Trust Banner -->
+<!-- BEGIN: Products 4-Column Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"><!-- PRODUCT CARD 1 -->
+<div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+  <div>
+    <div class="relative w-full aspect-4/3 rounded-xl overflow-hidden bg-slate-100 mb-3">
+      <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Black matte Lenovo ThinkPad laptop placed neatly on an academic study desk with clean ambient indoor daylight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBinVB6U5DAdofmfPi-aZjfEKydPV1cq1fouWFx8G-M3GRlJCy7_Bg5ojlNeuGdjb6kkjIYn29bowebJxq-pV5evkGJi6RtH2SVEw1Wp6pJLUUsenopFgGvZz7ELJInUxgvhSrrGAni9rcqUVYsxRfb5Y9GV7XFwhhrcZdqnzDLRzS1g7udFMi_4Ht_hKkdpB7uSUwVPLUq05pMwOsDRumZ-P-4gis2JzrvVHC4TC5u">
+      <button class="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-slate-400 hover:text-error transition-colors shadow-xs">
+        <span class="material-symbols-outlined text-[16px]">favorite</span>
+      </button>
+      <span class="absolute bottom-2 left-2 px-2 py-0.5 rounded-full bg-emerald-800 text-white font-label-sm text-label-sm flex items-center gap-1 shadow-xs">
+        <span class="material-symbols-outlined text-[12px]">verified</span>
+        Stambuk Terverifikasi
+      </span>
+    </div>
+    <div class="flex items-baseline justify-between mb-1">
+      <span class="font-headline-sm text-headline-sm font-bold text-emerald-800">Rp 2.800.000</span>
+      <span class="font-label-sm text-label-sm text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">Mulus 95%</span>
+    </div>
+    <h3 class="text-body-md font-bold text-slate-900 line-clamp-1 group-hover:text-primary transition-colors">
+      Laptop Lenovo Thinkpad Core i5
+    </h3>
+    <div class="flex items-center gap-2 mt-2 pt-2 bg-slate-50 p-2 rounded-xl border border-slate-100">
+      <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-900 flex items-center justify-center font-label-sm text-label-sm font-bold">
+        R
+      </div>
+      <div class="min-w-0 flex-1">
+        <p class="font-label-md text-label-md text-slate-900 truncate">Ranti Saftri</p>
+        <p class="font-body-sm text-body-sm text-slate-500 truncate">Fasilkom TI '21 • USU</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-1.5 mt-2.5 text-slate-500 font-body-sm text-body-sm">
+      <span class="material-symbols-outlined text-[16px] text-emerald-700">location_on</span>
+      <span class="truncate">Perpustakaan USU / Dr. Mansyur</span>
+    </div>
+  </div>
+  <div class="grid grid-cols-2 gap-2 mt-3.5 pt-2 border-t border-slate-100">
+    <button class="py-2 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-label-md text-label-md transition-colors text-center font-semibold">
+      Detail
+    </button>
+    <button class="py-2 px-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-label-md text-label-md transition-colors text-center flex items-center justify-center gap-1 font-semibold shadow-xs">
+      <span class="material-symbols-outlined text-[15px]">chat</span>
+      Tanya
+    </button>
+  </div>
+</div>
+
+<!-- PRODUCT CARD 2 -->
+<div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+  <div>
+    <div class="relative w-full aspect-4/3 rounded-xl overflow-hidden bg-slate-100 mb-3">
+      <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Cozy soft knit sweater neatly folded on an aesthetic wooden campus bench" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZOgUEozq3HpLaerfLPoZKKMr1nbqhpKLOyPMFeholqbdrDyc5MK0tPBHkbh6ZTZQxtQqKbvh3c7ZhoT2XVjfw-k7zHvfU0FRo1-5etW5IFUc0ZmjvHcGc7Rjsm-m8gAnO61CkAePYw5hw4VO1mdiNkCNWjsWLzk0bFPjKcNG0l8GVSaFLW2vF4rOwvEuRr9jXDv8IT2tpgkCPdKKaolRoJcibVFCTwg70hCtgBpeq">
+      <button class="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-slate-400 hover:text-error transition-colors shadow-xs">
+        <span class="material-symbols-outlined text-[16px]">favorite</span>
+      </button>
+      <span class="absolute bottom-2 left-2 px-2 py-0.5 rounded-full bg-tertiary-container text-on-tertiary font-label-sm text-label-sm flex items-center gap-1 shadow-xs">
+        <span class="material-symbols-outlined text-[12px]">schedule</span>
+        Sisa 2!
+      </span>
+    </div>
+    <div class="flex items-baseline justify-between mb-1">
+      <span class="font-headline-sm text-headline-sm font-bold text-emerald-800">Rp 25.000</span>
+      <span class="font-label-sm text-label-sm text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">Preloved</span>
+    </div>
+    <h3 class="text-body-md font-bold text-slate-900 line-clamp-1 group-hover:text-primary transition-colors">
+      Knit Tebal Hangat Lembut
+    </h3>
+    <div class="flex items-center gap-2 mt-2 pt-2 bg-slate-50 p-2 rounded-xl border border-slate-100">
+      <div class="w-6 h-6 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center font-label-sm text-label-sm font-bold">
+        M
+      </div>
+      <div class="min-w-0 flex-1">
+        <p class="font-label-md text-label-md text-slate-900 truncate">Mahasiswa FIB</p>
+        <p class="font-body-sm text-body-sm text-slate-500 truncate">Sastra Inggris '22 • USU</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-1.5 mt-2.5 text-slate-500 font-body-sm text-body-sm">
+      <span class="material-symbols-outlined text-[16px] text-emerald-700">location_on</span>
+      <span class="truncate">Gazebo FIB / Medan Baru</span>
+    </div>
+  </div>
+  <div class="grid grid-cols-2 gap-2 mt-3.5 pt-2 border-t border-slate-100">
+    <button class="py-2 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-label-md text-label-md transition-colors text-center font-semibold">
+      Detail
+    </button>
+    <button class="py-2 px-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-label-md text-label-md transition-colors text-center flex items-center justify-center gap-1 font-semibold shadow-xs">
+      <span class="material-symbols-outlined text-[15px]">chat</span>
+      Tanya
+    </button>
+  </div>
+</div>
+
+<!-- PRODUCT CARD 3 -->
+<div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+  <div>
+    <div class="relative w-full aspect-4/3 rounded-xl overflow-hidden bg-slate-100 mb-3">
+      <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Oversized sage green knitted cardigan hanging on a minimalist wooden hanger" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqJR4Kw-ctkEbXAZ_2aToq09apcnSOG6dBPNd1RIEYP3Pc4XsnWZlHRPO9XkUUGYAqUvCjhjrX-Cz18HV54f9IptlrCWyqfBhC608A7GLx3na3a4OI3sq5vZpU5iiPVsngMXdPMUhKtLJcbYmwA0imTX3lRibZ6cN_s14bW7PiqDe0bySQpZIzH4OZ0fm288QegTZDHaJYlCdsWOhAUf2PTPyfkdou-kS-edBLYGDr">
+      <button class="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-slate-400 hover:text-error transition-colors shadow-xs">
+        <span class="material-symbols-outlined text-[16px]">favorite</span>
+      </button>
+    </div>
+    <div class="flex items-baseline justify-between mb-1">
+      <span class="font-headline-sm text-headline-sm font-bold text-emerald-800">Rp 35.000</span>
+      <span class="font-label-sm text-label-sm text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">Like New</span>
+    </div>
+    <h3 class="text-body-md font-bold text-slate-900 line-clamp-1 group-hover:text-primary transition-colors">
+      Cardigan Rajut Tebal Oversize
+    </h3>
+    <div class="flex items-center gap-2 mt-2 pt-2 bg-slate-50 p-2 rounded-xl border border-slate-100">
+      <div class="w-6 h-6 rounded-full bg-tertiary-fixed text-on-tertiary-fixed flex items-center justify-center font-label-sm text-label-sm font-bold">
+        A
+      </div>
+      <div class="min-w-0 flex-1">
+        <p class="font-label-md text-label-md text-slate-900 truncate">Alya Putri</p>
+        <p class="font-body-sm text-body-sm text-slate-500 truncate">FISIP '23 • USU</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-1.5 mt-2.5 text-slate-500 font-body-sm text-body-sm">
+      <span class="material-symbols-outlined text-[16px] text-emerald-700">location_on</span>
+      <span class="truncate">Medan Baru / Pintu 2 USU</span>
+    </div>
+  </div>
+  <div class="grid grid-cols-2 gap-2 mt-3.5 pt-2 border-t border-slate-100">
+    <button class="py-2 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-label-md text-label-md transition-colors text-center font-semibold">
+      Detail
+    </button>
+    <button class="py-2 px-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-label-md text-label-md transition-colors text-center flex items-center justify-center gap-1 font-semibold shadow-xs">
+      <span class="material-symbols-outlined text-[15px]">chat</span>
+      Tanya
+    </button>
+  </div>
+</div>
+
+<!-- PRODUCT CARD 4 -->
+<div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+  <div>
+    <div class="relative w-full aspect-4/3 rounded-xl overflow-hidden bg-slate-100 mb-3">
+      <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Clean iPhone 12 in white finish showing pristine screen and edges" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5-DC_6B14wqfVPXzVzoJohohazcBJJcb2tJbGRPT7x2KvudQ4C-JDUsGBHPx29LFZ58h-sAyF2VU-EofdMtTxNrecV9Zl8CzdY6CbFryiSPvPUoj6-UVMtsecY8F5WwZerAq0vPJ_ekqDqP_wa52kFaZZjGVSHvNmrz31se0jD-SGxgEQVsDlNiH8SH9dxcAGwlrTYrYcCf3OhO_obQVjPAzgCUpTIeq5ho6G5O5z">
+      <button class="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-slate-400 hover:text-error transition-colors shadow-xs">
+        <span class="material-symbols-outlined text-[16px]">favorite</span>
+      </button>
+      <span class="absolute bottom-2 left-2 px-2 py-0.5 rounded-full bg-emerald-800 text-white font-label-sm text-label-sm flex items-center gap-1 shadow-xs">
+        <span class="material-symbols-outlined text-[12px]">verified</span>
+        BH 88% Ori
+      </span>
+    </div>
+    <div class="flex items-baseline justify-between mb-1">
+      <span class="font-headline-sm text-headline-sm font-bold text-emerald-800">Rp 6.500.000</span>
+      <span class="font-label-sm text-label-sm text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">128 GB</span>
+    </div>
+    <h3 class="text-body-md font-bold text-slate-900 line-clamp-1 group-hover:text-primary transition-colors">
+      iPhone 12 128GB White Inter
+    </h3>
+    <div class="flex items-center gap-2 mt-2 pt-2 bg-slate-50 p-2 rounded-xl border border-slate-100">
+      <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-900 flex items-center justify-center font-label-sm text-label-sm font-bold">
+        F
+      </div>
+      <div class="min-w-0 flex-1">
+        <p class="font-label-md text-label-md text-slate-900 truncate">Fajar Nugraha</p>
+        <p class="font-body-sm text-body-sm text-slate-500 truncate">FEB Akuntansi '20</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-1.5 mt-2.5 text-slate-500 font-body-sm text-body-sm">
+      <span class="material-symbols-outlined text-[16px] text-emerald-700">location_on</span>
+      <span class="truncate">Kantin FEB USU / Pendopo</span>
+    </div>
+  </div>
+  <div class="grid grid-cols-2 gap-2 mt-3.5 pt-2 border-t border-slate-100">
+    <button class="py-2 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-label-md text-label-md transition-colors text-center font-semibold">
+      Detail
+    </button>
+    <button class="py-2 px-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-label-md text-label-md transition-colors text-center flex items-center justify-center gap-1 font-semibold shadow-xs">
+      <span class="material-symbols-outlined text-[15px]">chat</span>
+      Tanya
+    </button>
+  </div>
+</div>
+
+<!-- PRODUCT CARD 5 -->
+<div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+  <div>
+    <div class="relative w-full aspect-4/3 rounded-xl overflow-hidden bg-slate-100 mb-3">
+      <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Pastel lilac wool knit sweater displayed neatly" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZ2lFeebXPZBeoj_yJDfQRIvy7NUrbLd6-2CMAoT42jFkSoLz3edLWYKzt0jhelyir8w6afyH7h20lpxZJ34uctvqJ8GbWsiVCD2bPkIBTAjiZiidL_u5kHhjcZfmUZDqtLBbZVxd2zKRE0tPMBa3uFJXzkAWg6_1Bjfwv5wihc3mGLz-fQZi_dP5HWDI2YCR3Xdd3yJc9-sDRC0BSVRZgo8r2BPlm5Qt73aLeJSfg">
+      <button class="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-slate-400 hover:text-error transition-colors shadow-xs">
+        <span class="material-symbols-outlined text-[16px]">favorite</span>
+      </button>
+    </div>
+    <div class="flex items-baseline justify-between mb-1">
+      <span class="font-headline-sm text-headline-sm font-bold text-emerald-800">Rp 30.000</span>
+      <span class="font-label-sm text-label-sm text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">Preloved</span>
+    </div>
+    <h3 class="text-body-md font-bold text-slate-900 line-clamp-1 group-hover:text-primary transition-colors">
+      Sweater Rajut Lilac Lembut
+    </h3>
+    <div class="flex items-center gap-2 mt-2 pt-2 bg-slate-50 p-2 rounded-xl border border-slate-100">
+      <div class="w-6 h-6 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-label-sm text-label-sm font-bold">
+        D
+      </div>
+      <div class="min-w-0 flex-1">
+        <p class="font-label-md text-label-md text-slate-900 truncate">Dina Alumni USU</p>
+        <p class="font-body-sm text-body-sm text-slate-500 truncate">Fakultas Hukum '19</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-1.5 mt-2.5 text-slate-500 font-body-sm text-body-sm">
+      <span class="material-symbols-outlined text-[16px] text-emerald-700">location_on</span>
+      <span class="truncate">Padang Bulan / Pintu 3</span>
+    </div>
+  </div>
+  <div class="grid grid-cols-2 gap-2 mt-3.5 pt-2 border-t border-slate-100">
+    <button class="py-2 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-label-md text-label-md transition-colors text-center font-semibold">
+      Detail
+    </button>
+    <button class="py-2 px-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-label-md text-label-md transition-colors text-center flex items-center justify-center gap-1 font-semibold shadow-xs">
+      <span class="material-symbols-outlined text-[15px]">chat</span>
+      Tanya
+    </button>
+  </div>
+</div>
+
+<!-- PRODUCT CARD 6 -->
+<div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+  <div>
+    <div class="relative w-full aspect-4/3 rounded-xl overflow-hidden bg-slate-100 mb-3">
+      <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Original Apple silicone case in Sierra Blue color for smartphone" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8id8iYlUcIFjWonHZJooIXRgxzsbfTFebQ6gGVtROMjDZmdzYlDy3XUnQajl0l9gi0mHUEdmmI9JWM79GvMe7cPxH6wil9Ag5OClKsmN7AP6dVVq3BW6KWuWI_saNW8YNR078wZK3aDLXk7y2MiqAL8o0LIRnuOnaIPzpvIWow_E2XFHx_e5YYkC5K9HFIWGtr_Lsn7bp0vW6CxEg8f0qT7fBobjFQ3ZUyh1ajoPL">
+      <button class="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-slate-400 hover:text-error transition-colors shadow-xs">
+        <span class="material-symbols-outlined text-[16px]">favorite</span>
+      </button>
+    </div>
+    <div class="flex items-baseline justify-between mb-1">
+      <span class="font-headline-sm text-headline-sm font-bold text-emerald-800">Rp 45.000</span>
+      <span class="font-label-sm text-label-sm text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">Mulus</span>
+    </div>
+    <h3 class="text-body-md font-bold text-slate-900 line-clamp-1 group-hover:text-primary transition-colors">
+      Case iPhone Sierra Blue Ori
+    </h3>
+    <div class="flex items-center gap-2 mt-2 pt-2 bg-slate-50 p-2 rounded-xl border border-slate-100">
+      <div class="w-6 h-6 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center font-label-sm text-label-sm font-bold">
+        B
+      </div>
+      <div class="min-w-0 flex-1">
+        <p class="font-label-md text-label-md text-slate-900 truncate">Bagus Saputra</p>
+        <p class="font-body-sm text-body-sm text-slate-500 truncate">POLMED Elektro '22</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-1.5 mt-2.5 text-slate-500 font-body-sm text-body-sm">
+      <span class="material-symbols-outlined text-[16px] text-emerald-700">location_on</span>
+      <span class="truncate">Gedung Z POLMED / Komp. USU</span>
+    </div>
+  </div>
+  <div class="grid grid-cols-2 gap-2 mt-3.5 pt-2 border-t border-slate-100">
+    <button class="py-2 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-label-md text-label-md transition-colors text-center font-semibold">
+      Detail
+    </button>
+    <button class="py-2 px-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-label-md text-label-md transition-colors text-center flex items-center justify-center gap-1 font-semibold shadow-xs">
+      <span class="material-symbols-outlined text-[15px]">chat</span>
+      Tanya
+    </button>
+  </div>
+</div>
+
+<!-- PRODUCT CARD 7 -->
+<div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+  <div>
+    <div class="relative w-full aspect-4/3 rounded-xl overflow-hidden bg-slate-100 mb-3">
+      <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="DDR4 RAM memory module and Intel Core desktop processor" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBlTp8v3xzjIvwxV9PoN4Ri_Ya0B7oZlzmg47p-NdW0Aw_AK8ipUgXw01JTC4hnjjmnuENpYlgmt-C7t4Y4imLUgvYZbxyiNtqCMR8CdRzKamUZR7AwXY6RUSei7vlqdWfIe-dLgTH2ZRvY7uf-DrAHSf-iOnMiRuWvNwAAwfKSI-I_1yGbT0Oem7hWfSttkI5PsxTxCPCA82uB4_y0Wy49u8uzJqjG2Y0B-Zg2qq7C">
+      <button class="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-slate-400 hover:text-error transition-colors shadow-xs">
+        <span class="material-symbols-outlined text-[16px]">favorite</span>
+      </button>
+    </div>
+    <div class="flex items-baseline justify-between mb-1">
+      <span class="font-headline-sm text-headline-sm font-bold text-emerald-800">Rp 120.000</span>
+      <span class="font-label-sm text-label-sm text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">Normal</span>
+    </div>
+    <h3 class="text-body-md font-bold text-slate-900 line-clamp-1 group-hover:text-primary transition-colors">
+      RAM 8GB &amp; Processor Core PC
+    </h3>
+    <div class="flex items-center gap-2 mt-2 pt-2 bg-slate-50 p-2 rounded-xl border border-slate-100">
+      <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-900 flex items-center justify-center font-label-sm text-label-sm font-bold">
+        T
+      </div>
+      <div class="min-w-0 flex-1">
+        <p class="font-label-md text-label-md text-slate-900 truncate">Teguh Prakoso</p>
+        <p class="font-body-sm text-body-sm text-slate-500 truncate">Fasilkom TI '21</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-1.5 mt-2.5 text-slate-500 font-body-sm text-body-sm">
+      <span class="material-symbols-outlined text-[16px] text-emerald-700">location_on</span>
+      <span class="truncate">Gedung Lab TI / Dr. Mansyur</span>
+    </div>
+  </div>
+  <div class="grid grid-cols-2 gap-2 mt-3.5 pt-2 border-t border-slate-100">
+    <button class="py-2 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-label-md text-label-md transition-colors text-center font-semibold">
+      Detail
+    </button>
+    <button class="py-2 px-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-label-md text-label-md transition-colors text-center flex items-center justify-center gap-1 font-semibold shadow-xs">
+      <span class="material-symbols-outlined text-[15px]">chat</span>
+      Tanya
+    </button>
+  </div>
+</div>
+
+<!-- PRODUCT CARD 8 -->
+<div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+  <div>
+    <div class="relative w-full aspect-4/3 rounded-xl overflow-hidden bg-slate-100 mb-3">
+      <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Calculus textbook by Dale Varberg and Edwin Purcell" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUdFa121rx-URcWejlZb9HLC0w6aVsCQLd5LAJl2AHT0Au0oDnD-LsqQmAvHLg4O0BrP7soRPlJY5Nr9eurx9dtuoGxh_KBOUbUWcUTpF_ACT1TEsZC7O-D_5dSdFPW9oRLayac4jIlVDBtZZlbELqZcqv3gOolWD6-OAWK3WM26Onjb55R6YqB0xDnJcg6ej4Mxr6QYtbdulb-AqYapIdFK8xQBkHA4OzKDoyuRW7">
+      <button class="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-slate-400 hover:text-error transition-colors shadow-xs">
+        <span class="material-symbols-outlined text-[16px]">favorite</span>
+      </button>
+      <span class="absolute bottom-2 left-2 px-2 py-0.5 rounded-full bg-emerald-800 text-white font-label-sm text-label-sm flex items-center gap-1 shadow-xs">
+        <span class="material-symbols-outlined text-[12px]">menu_book</span>
+        Buku Wajib TPB
+      </span>
+    </div>
+    <div class="flex items-baseline justify-between mb-1">
+      <span class="font-headline-sm text-headline-sm font-bold text-emerald-800">Rp 45.000</span>
+      <span class="font-label-sm text-label-sm text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">Jilid 1</span>
+    </div>
+    <h3 class="text-body-md font-bold text-slate-900 line-clamp-1 group-hover:text-primary transition-colors">
+      Buku Kalkulus Purcell Jilid 1
+    </h3>
+    <div class="flex items-center gap-2 mt-2 pt-2 bg-slate-50 p-2 rounded-xl border border-slate-100">
+      <div class="w-6 h-6 rounded-full bg-tertiary-fixed text-on-tertiary-fixed flex items-center justify-center font-label-sm text-label-sm font-bold">
+        K
+      </div>
+      <div class="min-w-0 flex-1">
+        <p class="font-label-md text-label-md text-slate-900 truncate">Kevin MIPA</p>
+        <p class="font-body-sm text-body-sm text-slate-500 truncate">Matematika '22 • USU</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-1.5 mt-2.5 text-slate-500 font-body-sm text-body-sm">
+      <span class="material-symbols-outlined text-[16px] text-emerald-700">location_on</span>
+      <span class="truncate">Lab Fisika / Pintu 4 USU</span>
+    </div>
+  </div>
+  <div class="grid grid-cols-2 gap-2 mt-3.5 pt-2 border-t border-slate-100">
+    <button class="py-2 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-label-md text-label-md transition-colors text-center font-semibold">
+      Detail
+    </button>
+    <button class="py-2 px-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-label-md text-label-md transition-colors text-center flex items-center justify-center gap-1 font-semibold shadow-xs">
+      <span class="material-symbols-outlined text-[15px]">chat</span>
+      Tanya
+    </button>
+  </div>
+</div>
+
+<!-- PRODUCT CARD 9 -->
+<div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+  <div>
+    <div class="relative w-full aspect-4/3 rounded-xl overflow-hidden bg-slate-100 mb-3">
+      <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Architectural A3 technical drawing board and parallel ruler setup" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCoJYjKSPZNAJBloLN8pRWbZ6Hc9wzEMGJrbQqNGm6wpFJ10QzzSdWO7BKcYg1e9mttdwFn4VBxHWPrvaK7_6zNvHmDqatB-gy9mxsiopRG40JR5wfPMLlsECBPk7wAkBem2g-xptflaiZIpD_ORWVyb6r4QVTkT3Vof7ikGV5F9dL2L-rZHRNO11F4ZAv_tlBz-DTPpqZVH0r366Ahv7yU3qi-_SpP5bbYKEB7nMne">
+      <button class="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-slate-400 hover:text-error transition-colors shadow-xs">
+        <span class="material-symbols-outlined text-[16px]">favorite</span>
+      </button>
+    </div>
+    <div class="flex items-baseline justify-between mb-1">
+      <span class="font-headline-sm text-headline-sm font-bold text-emerald-800">Rp 210.000</span>
+      <span class="font-label-sm text-label-sm text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">+ Penggaris T</span>
+    </div>
+    <h3 class="text-body-md font-bold text-slate-900 line-clamp-1 group-hover:text-primary transition-colors">
+      Papan Gambar A3 Lab &amp; Tracing
+    </h3>
+    <div class="flex items-center gap-2 mt-2 pt-2 bg-slate-50 p-2 rounded-xl border border-slate-100">
+      <div class="w-6 h-6 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center font-label-sm text-label-sm font-bold">
+        S
+      </div>
+      <div class="min-w-0 flex-1">
+        <p class="font-label-md text-label-md text-slate-900 truncate">Siti Rahma</p>
+        <p class="font-body-sm text-body-sm text-slate-500 truncate">Teknik Sipil '21 • POLMED</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-1.5 mt-2.5 text-slate-500 font-body-sm text-body-sm">
+      <span class="material-symbols-outlined text-[16px] text-emerald-700">location_on</span>
+      <span class="truncate">Gedung Z POLMED / Bengkel</span>
+    </div>
+  </div>
+  <div class="grid grid-cols-2 gap-2 mt-3.5 pt-2 border-t border-slate-100">
+    <button class="py-2 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-label-md text-label-md transition-colors text-center font-semibold">
+      Detail
+    </button>
+    <button class="py-2 px-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-label-md text-label-md transition-colors text-center flex items-center justify-center gap-1 font-semibold shadow-xs">
+      <span class="material-symbols-outlined text-[15px]">chat</span>
+      Tanya
+    </button>
+  </div>
+</div>
+
+<!-- PRODUCT CARD 10 -->
+<div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+  <div>
+    <div class="relative w-full aspect-4/3 rounded-xl overflow-hidden bg-slate-100 mb-3">
+      <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Crisp ironed formal long sleeve white shirt hanging against a campus wardrobe door" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDAr6_fP9G-pLO3qhZqwhlNxm8tIlw-HU8vGvCOM8vViTgBxF2bvo6jzNAQOu3l_uWboBf7GHk5mM6U_lu4KUqmuUpZjOHLvxl93VUI1nIz-oyRIp7aX8whyZdnnazyVvh8o3850hNWr4Usp2CY0otows2iSOp6JWuxRV76WbAKPHyp7QHwKBOT4BUavUAQHzLFDUG8ILOVsFaekPOCiaNEDtNIy4MH4raWbr7zrrkq">
+      <button class="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-slate-400 hover:text-error transition-colors shadow-xs">
+        <span class="material-symbols-outlined text-[16px]">favorite</span>
+      </button>
+    </div>
+    <div class="flex items-baseline justify-between mb-1">
+      <span class="font-headline-sm text-headline-sm font-bold text-emerald-800">Rp 50.000</span>
+      <span class="font-label-sm text-label-sm text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">Size L / Katun</span>
+    </div>
+    <h3 class="text-body-md font-bold text-slate-900 line-clamp-1 group-hover:text-primary transition-colors">
+      Kemeja Putih Sidang / Ospek
+    </h3>
+    <div class="flex items-center gap-2 mt-2 pt-2 bg-slate-50 p-2 rounded-xl border border-slate-100">
+      <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-900 flex items-center justify-center font-label-sm text-label-sm font-bold">
+        I
+      </div>
+      <div class="min-w-0 flex-1">
+        <p class="font-label-md text-label-md text-slate-900 truncate">Ilham Siregar</p>
+        <p class="font-body-sm text-body-sm text-slate-500 truncate">FIB USU '20</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-1.5 mt-2.5 text-slate-500 font-body-sm text-body-sm">
+      <span class="material-symbols-outlined text-[16px] text-emerald-700">location_on</span>
+      <span class="truncate">Gerbang Pintu 2 / Pendopo</span>
+    </div>
+  </div>
+  <div class="grid grid-cols-2 gap-2 mt-3.5 pt-2 border-t border-slate-100">
+    <button class="py-2 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-label-md text-label-md transition-colors text-center font-semibold">
+      Detail
+    </button>
+    <button class="py-2 px-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-label-md text-label-md transition-colors text-center flex items-center justify-center gap-1 font-semibold shadow-xs">
+      <span class="material-symbols-outlined text-[15px]">chat</span>
+      Tanya
+    </button>
+  </div>
+</div>
+
+<!-- PRODUCT CARD 11 -->
+<div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+  <div>
+    <div class="relative w-full aspect-4/3 rounded-xl overflow-hidden bg-slate-100 mb-3">
+      <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Retro cream and black motorcycle Bogo helmet with clean tinted bubble visor" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBz9UCxVl1Uu4299dbCA-Xz1L8W04xfZYPl5bNTNEEpqZlZInSfzQ370E5KG6tDZvtYCnOQpVPIfHgJ9P61dUQ2UQVopSTZEVfL9ILyMSU7HHu2SRjsaiI-2VXthSzn56jUYzmO986KidsmVO0OLEU3-Hszjjc-YS4rabGTd1edJ2vwQmPMel0JEIbj48ls3wp3sl9CwGLIah0dlZ_bOlCEGnrd5XjGgfPe_WTVaww7">
+      <button class="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-slate-400 hover:text-error transition-colors shadow-xs">
+        <span class="material-symbols-outlined text-[16px]">favorite</span>
+      </button>
+    </div>
+    <div class="flex items-baseline justify-between mb-1">
+      <span class="font-headline-sm text-headline-sm font-bold text-emerald-800">Rp 85.000</span>
+      <span class="font-label-sm text-label-sm text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">SNI Busa Bersih</span>
+    </div>
+    <h3 class="text-body-md font-bold text-slate-900 line-clamp-1 group-hover:text-primary transition-colors">
+      Helm Bogo Retro Murah
+    </h3>
+    <div class="flex items-center gap-2 mt-2 pt-2 bg-slate-50 p-2 rounded-xl border border-slate-100">
+      <div class="w-6 h-6 rounded-full bg-tertiary-fixed text-on-tertiary-fixed flex items-center justify-center font-label-sm text-label-sm font-bold">
+        N
+      </div>
+      <div class="min-w-0 flex-1">
+        <p class="font-label-md text-label-md text-slate-900 truncate">Nanda Pratama</p>
+        <p class="font-body-sm text-body-sm text-slate-500 truncate">Kehutanan USU '22</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-1.5 mt-2.5 text-slate-500 font-body-sm text-body-sm">
+      <span class="material-symbols-outlined text-[16px] text-emerald-700">location_on</span>
+      <span class="truncate">Pendopo USU / Parkir Utama</span>
+    </div>
+  </div>
+  <div class="grid grid-cols-2 gap-2 mt-3.5 pt-2 border-t border-slate-100">
+    <button class="py-2 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-label-md text-label-md transition-colors text-center font-semibold">
+      Detail
+    </button>
+    <button class="py-2 px-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-label-md text-label-md transition-colors text-center flex items-center justify-center gap-1 font-semibold shadow-xs">
+      <span class="material-symbols-outlined text-[15px]">chat</span>
+      Tanya
+    </button>
+  </div>
+</div>
+
+<!-- PRODUCT CARD 12 -->
+<div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+  <div>
+    <div class="relative w-full aspect-4/3 rounded-xl overflow-hidden bg-slate-100 mb-3">
+      <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Compact foldable urban commuter bicycle parked near the entrance lobby" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgt2gfzqVk28hAr5FIR0kkKXgqAW9UI0xX1VdFHMufOfICxUP5NYFJDVplyuSUX4FeOtOnSNyI-H2jsGFjtbH12FitXbHURtnSwMLQm-WNmJJ76f_4mpfjfeDO9-cETV1qU1eEppLtKjK-j8-XmjvruUzji8prLfTr_dzbZQ6pouFsSzydMgLZBIwV_qyMVWhi0a4yKt30dhoOFBQuOAgXKlLSvHrSQnUSoqdLCu08">
+      <button class="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-slate-400 hover:text-error transition-colors shadow-xs">
+        <span class="material-symbols-outlined text-[16px]">favorite</span>
+      </button>
+      <span class="absolute bottom-2 left-2 px-2 py-0.5 rounded-full bg-emerald-800 text-white font-label-sm text-label-sm flex items-center gap-1 shadow-xs">
+        <span class="material-symbols-outlined text-[12px]">directions_bike</span>
+        Siap Gowes
+      </span>
+    </div>
+    <div class="flex items-baseline justify-between mb-1">
+      <span class="font-headline-sm text-headline-sm font-bold text-emerald-800">Rp 650.000</span>
+      <span class="font-label-sm text-label-sm text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">Ban Tebal</span>
+    </div>
+    <h3 class="text-body-md font-bold text-slate-900 line-clamp-1 group-hover:text-primary transition-colors">
+      Sepeda Lipat Kampus 20 Inch
+    </h3>
+    <div class="flex items-center gap-2 mt-2 pt-2 bg-slate-50 p-2 rounded-xl border border-slate-100">
+      <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-900 flex items-center justify-center font-label-sm text-label-sm font-bold">
+        M
+      </div>
+      <div class="min-w-0 flex-1">
+        <p class="font-label-md text-label-md text-slate-900 truncate">M. Rizky</p>
+        <p class="font-body-sm text-body-sm text-slate-500 truncate">Teknik Mesin USU '21</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-1.5 mt-2.5 text-slate-500 font-body-sm text-body-sm">
+      <span class="material-symbols-outlined text-[16px] text-emerald-700">location_on</span>
+      <span class="truncate">Lobi FT USU / Pendopo</span>
+    </div>
+  </div>
+  <div class="grid grid-cols-2 gap-2 mt-3.5 pt-2 border-t border-slate-100">
+    <button class="py-2 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-label-md text-label-md transition-colors text-center font-semibold">
+      Detail
+    </button>
+    <button class="py-2 px-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-label-md text-label-md transition-colors text-center flex items-center justify-center gap-1 font-semibold shadow-xs">
+      <span class="material-symbols-outlined text-[15px]">chat</span>
+      Tanya
+    </button>
+  </div>
+</div></div>
+<!-- END: Products 4-Column Grid -->
+<!-- BEGIN: Pagination & Infinite Stream Controller -->
+<div class="w-full flex flex-col sm:flex-row items-center justify-between gap-4 py-4 px-5 bg-surface-container-lowest rounded-xl shadow-xs">
+<div class="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm">
+<span class="w-2.5 h-2.5 rounded-full bg-primary-container"></span>
+<span class="">Menampilkan <strong>12</strong> dari <strong>48</strong> barang preloved aktif di USU &amp; POLMED</span>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-5 py-2.5 bg-surface-container-low hover:bg-surface-container text-primary font-label-md text-label-md rounded-xl shadow-xs transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">sync</span>
+<span class="">Muat Lebih Banyak Barang (8 lagi)</span>
+</button>
+<div class="hidden md:flex items-center gap-1">
+<button class="w-8 h-8 rounded-lg bg-primary-container text-on-primary font-label-sm text-label-sm flex items-center justify-center font-bold">1</button>
+<button class="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-label-sm text-label-sm flex items-center justify-center">2</button>
+<button class="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-label-sm text-label-sm flex items-center justify-center">3</button>
+<button class="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-label-sm text-label-sm flex items-center justify-center">4</button>
+</div>
+</div>
+</div>
+<!-- END: Pagination & Infinite Stream Controller -->
+<!-- Floating Sticky Bar for Quick COD Inquiry in Mobile -->
+<div class="fixed bottom-4 right-4 z-40 lg:hidden">
+<button class="flex items-center gap-2 px-4 py-2.5 bg-primary-container text-on-primary font-label-md text-label-md rounded-full shadow-lg hover:shadow-xl active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[20px]">add_shopping_cart</span>
+<span class="">+ Jual Cepat</span>
+</button>
+</div>
+</div></main>
+<!-- END: MainContentArea -->
+
+
+</body></html>
