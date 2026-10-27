@@ -194,7 +194,7 @@ export default function MarketplaceBrowser({
   }
 
   return (
-    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 py-4 flex-1 w-full text-slate-800 antialiased selection:bg-emerald-100 selection:text-emerald-900">
+    <main className="max-w-[1440px] mx-auto px-4 sm:px-6 py-4 pb-24 md:pb-6 flex-1 w-full text-slate-800 antialiased selection:bg-emerald-100 selection:text-emerald-900">
       {/* BEGIN: Real-time WTB Announcement Ticker (Padat & Ringkas) */}
       <div className="w-full bg-slate-100/90 dark:bg-slate-800/60 rounded-xl px-3 py-2 mb-3.5 flex items-center justify-between gap-2.5 border border-slate-200/80 dark:border-white/10 shadow-xs">
         <div className="flex items-center gap-2 shrink-0">
@@ -372,9 +372,9 @@ export default function MarketplaceBrowser({
       </div>
       {/* END: Marketplace Header & Filter Controls */}
 
-      {/* BEGIN: Products 4-Column Grid (Lebih Padat & Bersih Tanpa Banner) */}
+      {/* BEGIN: Products 2-Column Mobile & 4-Column Desktop Grid */}
       {filteredListings.length === 0 ? (
-        <div className="p-10 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-xs mb-6">
+        <div className="p-8 sm:p-10 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-xs mb-6">
           <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-2.5 text-slate-400">
             <span className="material-symbols-outlined text-[28px]">inventory_2</span>
           </div>
@@ -396,7 +396,7 @@ export default function MarketplaceBrowser({
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-3.5 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 xs:gap-2.5 sm:gap-3.5 mb-6">
           {filteredListings.map((item) => {
             const slug = buildSlug(item.title, item.id);
             const detailUrl = `/produk/${slug}`;
@@ -416,16 +416,16 @@ export default function MarketplaceBrowser({
             }
 
             const isSold = item.status === "sold";
-            const condLabel = item.condition === "new" ? "Baru 100%" : item.condition || "Preloved";
+            const condLabel = item.condition === "new" ? "Baru" : item.condition || "Preloved";
 
             return (
               <div
                 key={item.id}
-                className="bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-200/80 dark:border-white/10 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group"
+                className="bg-white dark:bg-slate-900 rounded-xl p-2 sm:p-3 border border-slate-200/80 dark:border-white/10 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group"
               >
                 <div>
-                  {/* Image container: 4:3 Aspect Ratio (Lebih Rapi) */}
-                  <div className="relative w-full aspect-[4/3] rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 mb-2">
+                  {/* Image container: 4:3 Aspect Ratio (Lebih Rapi & Pas 2 Kolom) */}
+                  <div className="relative w-full aspect-[4/3] rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 mb-1.5 sm:mb-2">
                     {item.image_url ? (
                       /* eslint-disable-next-line @next/next/no-img-element */
                       <img
@@ -436,9 +436,9 @@ export default function MarketplaceBrowser({
                       />
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
-                        <Icon.Package className="w-8 h-8 text-slate-300 stroke-[1.2]" />
-                        <span className="text-[9px] font-medium text-slate-400 mt-1">
-                          Foto dari Penjual
+                        <Icon.Package className="w-6 h-6 sm:w-8 sm:h-8 text-slate-300 stroke-[1.2]" />
+                        <span className="text-[8px] sm:text-[9px] font-medium text-slate-400 mt-0.5">
+                          Foto Penjual
                         </span>
                       </div>
                     )}
@@ -446,33 +446,33 @@ export default function MarketplaceBrowser({
                     {/* Favorite Button in Top-Right */}
                     <FavoriteButton
                       listing={item}
-                      className="!absolute !top-1.5 !right-1.5 !w-6 !h-6 !rounded-full !bg-white/90 dark:!bg-black/60 shadow-xs hover:!bg-white dark:hover:!bg-black flex items-center justify-center text-slate-400 hover:text-rose-500 z-10"
+                      className="!absolute !top-1 !right-1 sm:!top-1.5 sm:!right-1.5 !w-5 !h-5 sm:!w-6 sm:!h-6 !rounded-full !bg-white/90 dark:!bg-black/60 shadow-xs hover:!bg-white dark:hover:!bg-black flex items-center justify-center text-slate-400 hover:text-rose-500 z-10"
                     />
 
                     {/* Status Badge in Bottom-Left */}
                     {isSold ? (
-                      <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-full bg-slate-900/90 text-white font-extrabold text-[9px] tracking-wider shadow-xs">
+                      <span className="absolute bottom-1 left-1 sm:bottom-1.5 sm:left-1.5 px-1.5 py-0.5 rounded-full bg-slate-900/90 text-white font-extrabold text-[8px] sm:text-[9px] tracking-wider shadow-xs">
                         TERJUAL
                       </span>
                     ) : item.featured ? (
-                      <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-full bg-emerald-800 text-white font-semibold text-[9px] flex items-center gap-1 shadow-xs">
-                        <span className="material-symbols-outlined text-[11px]">verified</span>
-                        Stambuk Terverifikasi
+                      <span className="absolute bottom-1 left-1 sm:bottom-1.5 sm:left-1.5 px-1.5 py-0.5 rounded-full bg-emerald-800 text-white font-semibold text-[8px] sm:text-[9px] flex items-center gap-0.5 sm:gap-1 shadow-xs">
+                        <span className="material-symbols-outlined text-[10px] sm:text-[11px]">verified</span>
+                        Terverifikasi
                       </span>
                     ) : (
-                      <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-full bg-emerald-800/90 text-white font-semibold text-[9px] flex items-center gap-1 shadow-xs">
-                        <span className="material-symbols-outlined text-[11px]">verified</span>
-                        Terverifikasi COD
+                      <span className="absolute bottom-1 left-1 sm:bottom-1.5 sm:left-1.5 px-1.5 py-0.5 rounded-full bg-emerald-800/90 text-white font-semibold text-[8px] sm:text-[9px] flex items-center gap-0.5 sm:gap-1 shadow-xs">
+                        <span className="material-symbols-outlined text-[10px] sm:text-[11px]">verified</span>
+                        COD
                       </span>
                     )}
                   </div>
 
                   {/* Price & Condition Badge */}
-                  <div className="flex items-baseline justify-between mb-0.5">
-                    <span className="text-sm sm:text-base font-extrabold text-emerald-800 dark:text-emerald-400">
+                  <div className="flex items-baseline justify-between mb-0.5 gap-1">
+                    <span className="text-xs sm:text-base font-extrabold text-emerald-800 dark:text-emerald-400 truncate">
                       {rupiah(item.price)}
                     </span>
-                    <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full">
+                    <span className="text-[9px] sm:text-[10px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-1 sm:px-1.5 py-0.5 rounded-full shrink-0">
                       {condLabel}
                     </span>
                   </div>
@@ -484,37 +484,37 @@ export default function MarketplaceBrowser({
                     </h3>
                   </Link>
 
-                  {/* Seller Box (Kompak & Padat) */}
-                  <div className="flex items-center gap-1.5 mt-1.5 pt-1.5 bg-slate-50 dark:bg-slate-800/60 p-1.5 rounded-lg border border-slate-100 dark:border-white/5">
-                    <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200 flex items-center justify-center text-[10px] font-bold shrink-0">
+                  {/* Seller Box (Kompak & Pas 2 Kolom) */}
+                  <div className="flex items-center gap-1 sm:gap-1.5 mt-1 sm:mt-1.5 pt-1 sm:pt-1.5 bg-slate-50 dark:bg-slate-800/60 p-1 sm:p-1.5 rounded-md sm:rounded-lg border border-slate-100 dark:border-white/5">
+                    <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200 flex items-center justify-center text-[8px] sm:text-[10px] font-bold shrink-0">
                       {sellerInitial}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[11px] font-bold text-slate-900 dark:text-slate-100 truncate leading-tight">
-                        {item.seller_name || "Mahasiswa USU"}
+                      <p className="text-[9px] sm:text-[11px] font-bold text-slate-900 dark:text-slate-100 truncate leading-tight">
+                        {item.seller_name || "Mahasiswa"}
                       </p>
-                      <p className="text-[9px] text-slate-500 dark:text-slate-400 truncate leading-tight">
-                        {item.area || "Kampus USU"} • {item.campus === "polmed" ? "POLMED" : "USU"}
+                      <p className="text-[8px] sm:text-[9px] text-slate-500 dark:text-slate-400 truncate leading-tight">
+                        {item.area || "USU"} • {item.campus === "polmed" ? "POLMED" : "USU"}
                       </p>
                     </div>
                   </div>
 
                   {/* COD Location */}
-                  <div className="flex items-center gap-1 mt-1.5 text-slate-500 dark:text-slate-400 text-[11px]">
-                    <span className="material-symbols-outlined text-[14px] text-emerald-700 dark:text-emerald-400 shrink-0">
+                  <div className="flex items-center gap-1 mt-1 sm:mt-1.5 text-slate-500 dark:text-slate-400 text-[10px] sm:text-[11px]">
+                    <span className="material-symbols-outlined text-[12px] sm:text-[14px] text-emerald-700 dark:text-emerald-400 shrink-0">
                       location_on
                     </span>
                     <span className="truncate">
-                      {item.area || "Titik COD Resmi Kampus Kita"}
+                      {item.area || "Titik COD Kampus"}
                     </span>
                   </div>
                 </div>
 
                 {/* Card Action Buttons (Detail & Tanya WA) */}
-                <div className="grid grid-cols-2 gap-1.5 mt-2.5 pt-2 border-t border-slate-100 dark:border-white/10">
+                <div className="grid grid-cols-2 gap-1 sm:gap-1.5 mt-2 sm:mt-2.5 pt-1.5 sm:pt-2 border-t border-slate-100 dark:border-white/10">
                   <Link
                     href={detailUrl}
-                    className="py-1.5 px-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs transition-colors text-center font-bold"
+                    className="py-1 sm:py-1.5 px-1 sm:px-2 rounded-md sm:rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-[10px] sm:text-xs transition-colors text-center font-bold"
                   >
                     Detail
                   </Link>
@@ -522,9 +522,9 @@ export default function MarketplaceBrowser({
                     href={waLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="py-1.5 px-2 rounded-lg bg-emerald-800 hover:bg-emerald-900 text-white text-xs transition-colors text-center flex items-center justify-center gap-1 font-bold shadow-xs"
+                    className="py-1 sm:py-1.5 px-1 sm:px-2 rounded-md sm:rounded-lg bg-emerald-800 hover:bg-emerald-900 text-white text-[10px] sm:text-xs transition-colors text-center flex items-center justify-center gap-0.5 sm:gap-1 font-bold shadow-xs"
                   >
-                    <span className="material-symbols-outlined text-[13px]">chat</span>
+                    <span className="material-symbols-outlined text-[12px] sm:text-[13px]">chat</span>
                     <span>Tanya</span>
                   </a>
                 </div>
@@ -533,7 +533,7 @@ export default function MarketplaceBrowser({
           })}
         </div>
       )}
-      {/* END: Products 4-Column Grid */}
+      {/* END: Products Grid */}
 
       {/* BEGIN: Pagination & Infinite Stream Controller (Padat) */}
       <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-3 py-3 px-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-white/10 shadow-xs mb-8">
@@ -574,13 +574,13 @@ export default function MarketplaceBrowser({
       </div>
       {/* END: Pagination & Infinite Stream Controller */}
 
-      {/* Floating Sticky Bar for Quick COD Inquiry in Mobile */}
-      <div className="fixed bottom-4 right-4 z-40 lg:hidden">
+      {/* Floating Sticky Bar for Quick COD Inquiry in Mobile - Elevated above mobile nav dock */}
+      <div className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] right-3.5 z-40 md:hidden">
         <Link
           href="/jual"
-          className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-800 text-white font-bold text-xs rounded-full shadow-lg hover:shadow-xl active:scale-95 transition-all"
+          className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-800 text-white font-bold text-xs rounded-full shadow-lg hover:shadow-xl active:scale-95 transition-all border border-emerald-700/60"
         >
-          <span className="material-symbols-outlined text-[18px]">add_shopping_cart</span>
+          <span className="material-symbols-outlined text-[17px]">add_shopping_cart</span>
           <span>+ Jual Cepat</span>
         </Link>
       </div>
