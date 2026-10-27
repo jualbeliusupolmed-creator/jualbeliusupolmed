@@ -15,6 +15,7 @@ export function buildListingShortPath(code) {
 }
 
 export function looksLikeListingCode(value) {
-  const cleaned = buildListingCode(value);
-  return /^\d{1,12}$/.test(cleaned);
+  if (value === null || value === undefined) return false;
+  const str = String(value).trim();
+  return /^(#|kode-?|c\/)?\d{1,12}$/i.test(str);
 }
