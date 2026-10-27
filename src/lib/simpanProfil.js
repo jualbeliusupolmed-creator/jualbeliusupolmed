@@ -1,4 +1,5 @@
 import { getAdminClient } from "@/lib/supabaseAdmin";
+import { getSettings } from "@/lib/settings";
 import { periksaSlug } from "@/lib/toko";
 import {
   KOLOM_PROFIL, peranProfil, saringIsian, normalisasiIsian, bentukProfil, userIdTeman,
@@ -60,6 +61,17 @@ export async function simpanProfil(wa, body, { supa = getAdminClient() } = {}) {
   };
 
   const isian = normalisasiIsian(saringIsian(body, peranEfektif));
+
+  if ("campus" in isian) {
+    const campuses = (await getSettings()).campuses || [];
+    const allowed = campuses
+      .filter((campus) => campus?.active !== false)
+      .map((campus) => String(campus.shortName || "").trim().toLowerCase())
+      .filter(Boolean);
+    if (!allowed.includes(String(isian.campus).trim().toLowerCase())) {
+      return { pesanPengguna: "Pilihan kampus sudah tidak tersedia. Pilih kampus yang masih aktif.", status: 400 };
+    }
+  }
 
   // `account_type` tidak pernah dibaca dari body apa adanya — satu-satunya
   // nilai yang boleh dituliskan sendiri adalah "ukm", dan hanya sebagai akibat
@@ -187,7 +199,7 @@ async function selaraskanKartuTeman(supa, wa, isian, t = {}, sekarang, peran) {
     photo_urls: [foto],
     display_name: ikut.display_name || sekarang?.name || "Anak Kampus",
     bio: ikut.bio ?? sekarang?.bio ?? "",
-    campus: ikut.campus || sekarang?.campus || "USU",
+    campus: ikut.campus || sekarang?.campus || "Kampus",
     faculty: ikut.faculty || sekarang?.faculty || "Umum",
     batch: ikut.batch || "2024",
     intent: ikut.intent || "Teman Santai ",

@@ -217,10 +217,10 @@ export default function MadingDetailClient({ post: initialPost }) {
             <div
               className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-2xl font-bold ${
                 post.type === "info"
-                  ? "bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400"
+                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
                   : post.faculty === "POLMED"
                   ? "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400"
-                  : "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400"
+                  : "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
               }`}
             >
               {post.type === "info" ? <Icon.Megaphone className="h-6 w-6" /> : post.is_anon ? <Icon.User className="h-6 w-6" /> : post.sender_name?.charAt(0) || "A"}
@@ -237,7 +237,7 @@ export default function MadingDetailClient({ post: initialPost }) {
                 <span
                   className={`rounded-full px-3 py-0.5 text-[12px] font-medium flex items-center gap-1.5 ${
                     post.type === "info"
-                      ? "bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400 border border-violet-100 dark:border-violet-900/30"
+                      ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30"
                       : "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30"
                   }`}
                 >

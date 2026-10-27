@@ -26,45 +26,13 @@ export default function ProductDetailInteractive({
 }) {
   const [activeTab, setActiveTab] = useState("specs"); // 'specs' | 'usage' | 'diagnostic'
   
-  // Default COD points based on campus
-  const defaultCodPoints = listing.campus === "POLMED" ? [
-    {
-      id: "polmed-z",
-      title: "Gedung Z / Parkiran POLMED",
-      tag: "Rekomendasi",
-      desc: "Lobi utama dan kantin mahasiswa Polmed yang ramai dan aman.",
-      icon: "storefront",
-    },
-    {
-      id: "polmed-kantin",
-      title: "Kantin Pusat POLMED",
-      tag: "Alternatif",
-      desc: "Spot santai dekat musholla dan area makan ramai jam istirahat.",
-      icon: "location_on",
-    },
-  ] : [
-    {
-      id: "pendopo-usu",
-      title: "Pendopo USU (Zona Utama)",
-      tag: "Rekomendasi",
-      desc: "Area teduh, stopkontak dekat tiang tengah, aman & ramai mahasiswa.",
-      icon: "location_on",
-    },
-    {
-      id: "pintu2-usu",
-      title: "Pintu 2 USU / Padang Bulan",
-      tag: "Alternatif",
-      desc: "Akses gerbang strategis dekat warung kopi, mudah parkir motor.",
-      icon: "storefront",
-    },
-    {
-      id: "gazebo-fib",
-      title: "Gazebo FIB / Kantin Teknik",
-      tag: "Kawasan Fakultas",
-      desc: "Cocok untuk mahasiswa rumpun saintek / humaniora terdekat.",
-      icon: "school",
-    },
-  ];
+  const defaultCodPoints = [{
+    id: "campus-public",
+    title: listing.campus && listing.campus !== "Semua" ? `Area aman sekitar ${listing.campus}` : "Area kampus yang disepakati",
+    tag: "Rekomendasi",
+    desc: "Pilih titik temu publik yang ramai, terang, dan mudah dijangkau kedua pihak.",
+    icon: "location_on",
+  }];
 
   const [selectedCodPoint, setSelectedCodPoint] = useState(defaultCodPoints[0]);
 
@@ -82,7 +50,7 @@ export default function ProductDetailInteractive({
   );
   const sellerCampus =
     listing.seller_profiles?.student_campus ||
-    (listing.campus !== "Semua" ? listing.campus : "USU • POLMED");
+    (listing.campus !== "Semua" ? listing.campus : "Semua Kampus");
   const sellerFaculty =
     listing.seller_profiles?.student_faculty ||
     listing.seller_profiles?.faculty ||
@@ -184,7 +152,7 @@ export default function ProductDetailInteractive({
                     Kampus &amp; Wilayah
                   </span>
                   <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                    {listing.campus === "Semua" ? "USU • POLMED" : listing.campus} {listing.area ? `· ${listing.area}` : ""}
+                    {listing.campus === "Semua" ? "Semua Kampus" : listing.campus} {listing.area ? `· ${listing.area}` : ""}
                   </span>
                   <span className="text-xs text-slate-500">
                     Siap temu langsung tatap muka COD.
@@ -368,7 +336,7 @@ export default function ProductDetailInteractive({
                 Bebas Ongkir &amp; Janjian di Kampus
               </span>
               <span className="text-[11px] text-slate-600 dark:text-slate-400">
-                Tatap muka langsung sesama mahasiswa USU &amp; POLMED.
+                Tatap muka langsung sesama mahasiswa di lingkungan kampus.
               </span>
             </div>
           </div>

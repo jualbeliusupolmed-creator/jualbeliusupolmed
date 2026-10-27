@@ -6,22 +6,22 @@ export const dynamic = "force-dynamic";
 export const revalidate = 60;
 
 export const metadata = {
-  title: "Pusat Open Recruitment & Kepanitiaan Kampus — USU & POLMED",
-  description: "Daftar lowongan open recruitment (oprec) panitia konser, seminar, volunteer, staff BEM, dan anggota UKM di USU & POLMED. Daftar online langsung dalam hitungan detik.",
-  keywords: ["oprec usu", "oprec polmed", "oprec panitia", "lowongan kepanitiaan usu", "volunteer medan", "kepanitiaan mahasiswa"],
+  title: "Pusat Open Recruitment & Kepanitiaan Kampus",
+  description: "Daftar lowongan open recruitment panitia, volunteer, staf organisasi, dan anggota UKM kampus. Daftar online langsung dalam hitungan detik.",
+  keywords: ["oprec kampus", "oprec panitia", "lowongan kepanitiaan", "volunteer mahasiswa", "kepanitiaan mahasiswa"],
   alternates: { canonical: "/oprec" },
   openGraph: {
-    title: "Pusat Open Recruitment & Kepanitiaan Kampus — USU & POLMED",
-    description: "Temukan dan daftar lowongan kepanitiaan acara, staff BEM/HIMA, dan keanggotaan UKM di USU & POLMED.",
+    title: "Pusat Open Recruitment & Kepanitiaan Kampus",
+    description: "Temukan dan daftar lowongan kepanitiaan acara, staf organisasi, dan keanggotaan UKM kampus.",
     url: "/oprec",
     type: "website",
     locale: "id_ID",
-    siteName: "Jual Beli & Komunitas Mahasiswa USU POLMED",
+    siteName: "Kampus Kita",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Pusat Open Recruitment & Kepanitiaan Kampus — USU & POLMED",
-    description: "Temukan dan daftar lowongan kepanitiaan acara, staff BEM/HIMA, dan keanggotaan UKM di USU & POLMED.",
+    title: "Pusat Open Recruitment & Kepanitiaan Kampus",
+    description: "Temukan dan daftar lowongan kepanitiaan acara, staf organisasi, dan keanggotaan UKM kampus.",
   },
 };
 
@@ -52,8 +52,8 @@ export default async function OprecPage() {
   const itemListJsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": "Open Recruitment Kepanitiaan & UKM Kampus USU POLMED",
-    "description": "Daftar rekrutmen panitia acara, volunteer, dan staf organisasi mahasiswa USU & POLMED.",
+    "name": "Open Recruitment Kepanitiaan & UKM Kampus",
+    "description": "Daftar rekrutmen panitia acara, volunteer, dan staf organisasi mahasiswa.",
     "itemListElement": initialOprecs.map((op, index) => ({
       "@type": "ListItem",
       "position": index + 1,

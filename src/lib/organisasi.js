@@ -13,7 +13,7 @@ export const UKM_CATEGORIES = [
   { id: "sosial_lingkungan", label: "Komunitas Sosial & Lingkungan", icon: "Leaf" },
 ];
 
-export const KAMPUS_OPTIONS = ["USU", "POLMED"];
+export const KAMPUS_OPTIONS = [];
 
 export const DEFAULT_INVITE_CODE = "KAMPUS_USU_POLMED_2026";
 
@@ -28,6 +28,7 @@ export function validateOrganisasiForm({
   contact_name,
   contact_wa,
   bio,
+  validCampuses = KAMPUS_OPTIONS,
 }) {
   if (!ukm_name || ukm_name.trim().length < 3) {
     return "Nama Organisasi / UKM minimal 3 karakter.";
@@ -35,8 +36,8 @@ export function validateOrganisasiForm({
   if (!ukm_category) {
     return "Silakan pilih kategori organisasi.";
   }
-  if (!campus || !KAMPUS_OPTIONS.includes(campus)) {
-    return "Pilih kampus yang valid (USU atau POLMED).";
+  if (!campus || !validCampuses.some((item) => String(item).toLowerCase() === String(campus).toLowerCase())) {
+    return "Pilih kampus yang masih tersedia.";
   }
   if (!contact_name || contact_name.trim().length < 2) {
     return "Nama penanggung jawab (PIC) wajib diisi.";
@@ -46,4 +47,3 @@ export function validateOrganisasiForm({
   }
   return null;
 }
-

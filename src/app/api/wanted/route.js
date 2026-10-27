@@ -6,6 +6,7 @@ import { postWantedToGroup } from "@/lib/fonnte";
 import { getSellerSession } from "@/lib/auth";
 import { cariAman } from "@/lib/cariAman";
 import { jawabGalat } from "@/lib/jawabGalat";
+import { getSettings, isAllowedCampus } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -103,6 +104,10 @@ export async function POST(req) {
 
 
     const supa = getAdminClient();
+    const settings = await getSettings();
+    if (!isAllowedCampus(campus || "Semua", settings, { allowAll: true })) {
+      return NextResponse.json({ error: "Kampus permintaan tidak valid atau sudah tidak tersedia." }, { status: 400 });
+    }
 
     // Cek blacklist — normalized
     const { data: bl } = await supa

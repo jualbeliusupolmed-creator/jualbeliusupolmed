@@ -39,6 +39,8 @@ export async function POST(req) {
     } = body;
 
     // Validasi kelengkapan data
+    const setelan = await getSettings();
+    const kampusAktif = (setelan.campuses || []).filter((item) => item?.active !== false);
     const validationError = validateOrganisasiForm({
       ukm_name,
       ukm_category,
@@ -47,6 +49,7 @@ export async function POST(req) {
       contact_name,
       contact_wa,
       bio,
+      validCampuses: kampusAktif.map((item) => item.shortName),
     });
 
     if (validationError) {
@@ -83,7 +86,6 @@ export async function POST(req) {
     // Kolomnya sudah lama ada di panel (dan panel bahkan membuatkan tautan
     // undangan dari nilainya), tapi tidak ada rute yang pernah membacanya —
     // menggantinya di sana tidak mengubah apa pun. Sekarang mengubahnya berarti.
-    const setelan = await getSettings();
     const kodeSah = String(setelan.ukmInviteCode || DEFAULT_INVITE_CODE).trim().toUpperCase();
     const isVerified = Boolean(
       invite_code && String(invite_code).trim().toUpperCase() === kodeSah
@@ -100,14 +102,15 @@ export async function POST(req) {
     // lewat formulir mana pun. Yang berhak memberikannya adalah rute ini —
     // satu-satunya yang memeriksa kode undangan — dan ia melakukannya di
     // langkah terpisah di bawah, sesudah profilnya tersimpan.
+    const kampusPilihan = campus || kampusAktif[0]?.shortName || "Kampus";
     const hasil = await simpanProfil(formattedWa, {
       name: ukm_name,
       ukm_name,
       ukm_category: ukm_category || "bem_hima",
       ukm_instagram: cleanIg,
-      campus: campus || "USU",
+      campus: kampusPilihan,
       faculty: faculty ? faculty.trim() : "Universitas",
-      bio: bio ? bio.trim() : `Akun Resmi ${ukm_name.trim()} (${campus || "USU"}).`,
+      bio: bio ? bio.trim() : `Akun Resmi ${ukm_name.trim()} (${kampusPilihan}).`,
       avatar_url: photo_url || undefined,
     }, { supa });
 
@@ -148,7 +151,7 @@ export async function POST(req) {
       email: cleanEmail,
       organization: {
         ukm_name: ukm_name.trim(),
-        campus: campus || "USU",
+        campus: kampusPilihan,
         ukm_category: ukm_category || "bem_hima",
         ukm_instagram: cleanIg,
         ukm_verified: isVerified,

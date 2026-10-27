@@ -17,7 +17,8 @@ export default function Navbar({ config }) {
   const { wa: sesiWa, nama: sesiNama, siap, segarkan, keluar } = useSesi();
   const session = { wa: sesiWa, name: sesiNama || sesiWa };
   
-  const [selectedCampus, setSelectedCampus] = useState("USU");
+  const [selectedCampus, setSelectedCampus] = useState("Semua");
+  const [campuses, setCampuses] = useState([]);
   const [campusDropdownOpen, setCampusDropdownOpen] = useState(false);
   const [unreadChat, setUnreadChat] = useState(3);
   const [notifTerbuka, setNotifTerbuka] = useState(false);
@@ -27,8 +28,18 @@ export default function Navbar({ config }) {
 
   // Load campus preference
   useEffect(() => {
-    const saved = localStorage.getItem("preferred_campus");
-    if (saved) setSelectedCampus(saved);
+    fetch("/api/kampus", { cache: "no-store" })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (Array.isArray(data?.campuses)) {
+          setCampuses(data.campuses);
+          const saved = localStorage.getItem("preferred_campus");
+          const valid = saved === "Semua" || data.campuses.some((campus) => campus.shortName === saved);
+          if (valid && saved) setSelectedCampus(saved);
+          else if (saved) localStorage.removeItem("preferred_campus");
+        }
+      })
+      .catch(() => {});
 
     const onChatUnread = (e) => setUnreadChat(e.detail?.count ?? 3);
     window.addEventListener("chat:unread", onChatUnread);
@@ -201,13 +212,7 @@ export default function Navbar({ config }) {
 
               {campusDropdownOpen && (
                 <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200/80 dark:border-white/10 py-1.5 z-50">
-                  {[
-                    { key: "USU", label: "USU (Padang Bulan)" },
-                    { key: "POLMED", label: "POLMED" },
-                    { key: "UNIMED", label: "UNIMED" },
-                    { key: "UINSU", label: "UINSU" },
-                    { key: "Semua", label: "Semua Kampus" },
-                  ].map((camp) => (
+                  {[...campuses.map((camp) => ({ key: camp.shortName, label: `${camp.name} (${camp.shortName})` })), { key: "Semua", label: "Semua Kampus" }].map((camp) => (
                     <button
                       key={camp.key}
                       type="button"

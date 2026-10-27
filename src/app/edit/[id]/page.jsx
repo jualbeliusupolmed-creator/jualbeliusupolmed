@@ -6,6 +6,7 @@ import { CATEGORIES, POPULAR_AREAS } from "@/lib/constants";
 import { rupiah } from "@/lib/fees";
 import { uploadMedia } from "@/lib/upload";
 import MediaUploader from "@/components/MediaUploader";
+import CampusSelect from "@/components/CampusSelect";
 import { useSesi } from "@/components/SesiProvider";
 
 export default function EditPage() {
@@ -187,11 +188,7 @@ export default function EditPage() {
             </div>
             <div>
               <label className="label">Target Area</label>
-              <select className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.campus} onChange={set("campus")}>
-                <option value="Semua">Semua (Medan)</option>
-                <option value="USU">USU</option>
-                <option value="POLMED">POLMED</option>
-              </select>
+              <CampusSelect className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.campus} onChange={(value) => setForm((current) => ({ ...current, campus: value }))} />
             </div>
             <div>
               <label className="label">Lokasi COD</label>

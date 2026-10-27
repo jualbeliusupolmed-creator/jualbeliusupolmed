@@ -50,6 +50,7 @@ export default function JasaBrowser({
   const [maxPrice, setMaxPrice] = useState(() => searchParams.get("maxPrice") || "");
   const [showPriceFilter, setShowPriceFilter] = useState(false);
   const [campusFilter, setCampusFilter] = useState(() => searchParams.get("campus") || "Semua");
+  const [campuses, setCampuses] = useState([]);
   const [negoFilter, setNegoFilter] = useState(() => searchParams.get("nego") === "1");
 
   // Pagination state
@@ -65,6 +66,22 @@ export default function JasaBrowser({
   // PWA Install prompt state
   const [pwaReady, setPwaReady] = useState(false);
   const searchTimerRef = useRef(null);
+
+  useEffect(() => {
+    fetch("/api/kampus", { cache: "no-store" })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (Array.isArray(data?.campuses)) {
+          setCampuses(data.campuses);
+          setCampusFilter((current) => (
+            current === "Semua" || data.campuses.some((campus) => campus.shortName === current)
+              ? current
+              : "Semua"
+          ));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -461,7 +478,7 @@ export default function JasaBrowser({
               </button>
 
               {/* Campus */}
-              {["Semua", "USU", "POLMED"].map((c) => (
+              {["Semua", ...campuses.map((campus) => campus.shortName)].map((c) => (
                 <button
                   key={c}
                   type="button"

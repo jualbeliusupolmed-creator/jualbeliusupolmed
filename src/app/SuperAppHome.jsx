@@ -73,7 +73,7 @@ const FALLBACK_PO_BATCHES = [
     price: 18000,
     quota: 25,
     reserved: 19,
-    pickup_point: "Perpustakaan Pusat USU & Gazebo",
+    pickup_point: "Titik temu kampus",
     badge: "Sisa 4 Slot!",
     closing_time: "Tutup 20.00",
     photo: "https://lh3.googleusercontent.com/aida-public/AB6AXuDFrff8GN-PoHF2O1JGwm3yz2izA753sB2Ojcylt30as8i8W213IPddQNPlmfgfiefeAmGj4Ut96STTtAAD-M84bxdE9gSaOkUZGi8wdy2ecBdQ-Cy4NttFlG1zC3mjygCTVeujiO0D8OewD5TfV2p7cLzre9Rq4nmi5upMY8nWtq3R6xL7kHqzaM6UY0lSXSPp_Zek7SrW4PnmCWp_6ZTlWs_eiuXq6M8WtR3k0toV",
@@ -95,11 +95,11 @@ const FALLBACK_PO_BATCHES = [
 ];
 
 const WTB_ITEMS = [
-  { title: "Papan LED Laprak Arsi", price: "< 150 Rb", faculty: "Arsitektur USU", href: "/dicari" },
+  { title: "Papan LED Laprak Arsi", price: "< 150 Rb", faculty: "Arsitektur", href: "/dicari" },
   { title: "Buku Kalkulus Purcell Jilid 1 & 2", price: "50-80 Rb", faculty: "Fasilkom / Teknik", href: "/dicari" },
   { title: "Kosan Pintu 2 under 800rb", price: "< 800 Rb/bln", faculty: "Padang Bulan", href: "/dicari" },
-  { title: "Kalkulator Saintifik Casio fx-991EX", price: "< 200 Rb", faculty: "POLMED / Teknik", href: "/dicari" },
-  { title: "Jas Lab MIPA Ukuran L", price: "35 Rb", faculty: "FMIPA USU", href: "/dicari" },
+  { title: "Kalkulator Saintifik Casio fx-991EX", price: "< 200 Rb", faculty: "Teknik", href: "/dicari" },
+  { title: "Jas Lab MIPA Ukuran L", price: "35 Rb", faculty: "MIPA", href: "/dicari" },
 ];
 
 export default function SuperAppHome({
@@ -116,7 +116,8 @@ export default function SuperAppHome({
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [feedError, setFeedError] = useState(false);
   const [activeTab, setActiveTab] = useState("all"); // 'all' | 'menfess' | 'info'
-  const [selectedCampus, setSelectedCampus] = useState("Semua"); // 'Semua' | 'USU' | 'POLMED' | 'Bebas'
+  const [selectedCampus, setSelectedCampus] = useState("Semua");
+  const [campuses, setCampuses] = useState([]);
   const [filterType, setFilterType] = useState("all"); // 'all' | 'popular' | 'photo'
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -125,7 +126,7 @@ export default function SuperAppHome({
   const { wa: userWa } = useSesi();
 
   // Marketplace states
-  const [listingCampus, setListingCampus] = useState("Semua"); // 'Semua' | 'USU' | 'POLMED'
+  const [listingCampus, setListingCampus] = useState("Semua");
   const [listingCategory, setListingCategory] = useState("Semua");
   const [listingSearch, setListingSearch] = useState("");
   const [listingSort, setListingSort] = useState("terbaru"); // 'terbaru' | 'termurah'
@@ -150,6 +151,12 @@ export default function SuperAppHome({
         setListingCampus(e.detail.campus);
       }
     };
+    fetch("/api/kampus", { cache: "no-store" })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (Array.isArray(data?.campuses)) setCampuses(data.campuses);
+      })
+      .catch(() => {});
     window.addEventListener("campus:change", onCampus);
 
     return () => {
@@ -207,7 +214,7 @@ export default function SuperAppHome({
         dotColor: "bg-rose-500",
         pingColor: "bg-rose-400",
         textColor: "text-rose-900 dark:text-rose-300",
-        text: "“Halo, mohon bantuannya banget. Ada ga kos sekitar usu yg ready di Januari 2027 under 1 jt?...”",
+        text: "“Halo, ada yang tahu kos sekitar kampus yang masih tersedia bulan depan?...”",
         url: "#menfess-section",
         isAnchor: true,
       });
@@ -234,7 +241,7 @@ export default function SuperAppHome({
         dotColor: "bg-emerald-600",
         pingColor: "bg-emerald-400",
         textColor: "text-emerald-900 dark:text-emerald-300",
-        text: "“Laptop Lenovo ThinkPad L480 Core i5 — Rp 2.800.000 (Fasilkom TI USU)”",
+        text: "“Laptop Lenovo ThinkPad L480 Core i5 — Rp 2.800.000 (Fasilkom TI)”",
         url: "/jual-beli",
         isAnchor: false,
       });
@@ -306,7 +313,7 @@ export default function SuperAppHome({
   const [formData, setFormData] = useState({
     type: "menfess",
     sender_name: "Anonim",
-    faculty: "USU",
+    faculty: "Bebas",
     title: "",
     content: "",
     is_anon: true,
@@ -643,7 +650,7 @@ export default function SuperAppHome({
               <Icon.Store className="w-7 h-7" />
             </div>
             <h2 className="text-xl font-extrabold text-center text-slate-900 dark:text-white mb-1">Selamat Datang! 👋</h2>
-            <p className="text-xs text-center text-slate-500 dark:text-slate-400 mb-5">Platform kampus USU &amp; POLMED — semua dalam satu tempat</p>
+            <p className="text-xs text-center text-slate-500 dark:text-slate-400 mb-5">Komunitas mahasiswa lintas kampus — semua dalam satu tempat</p>
             <div className="space-y-3 mb-5">
               {[
                 { icon: Icon.ShoppingBag, label: "Marketplace", desc: "Jual &amp; beli barang bekas kampus" },
@@ -776,7 +783,7 @@ export default function SuperAppHome({
                 </button>
                 {campusDropdownOpen && (
                   <div className="absolute right-0 mt-1 w-44 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200/80 dark:border-white/10 py-1.5 z-50">
-                    {["USU", "POLMED", "UNIMED", "UINSU", "Semua"].map((camp) => (
+                    {["Semua", ...campuses.map((campus) => campus.shortName)].map((camp) => (
                       <button
                         key={camp}
                         type="button"
@@ -812,7 +819,7 @@ export default function SuperAppHome({
               <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
               </svg>
-              <span>Cari Kos Sekitar USU</span>
+              <span>Cari Kos Sekitar Kampus</span>
             </button>
             <Link
               href="/mading?tab=oprec"
@@ -1012,7 +1019,7 @@ export default function SuperAppHome({
                     Marketplace <span className="font-serif italic font-normal text-emerald-700 dark:text-emerald-400">Jual-Beli Terverifikasi</span>
                   </h2>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Barang preloved &amp; kebutuhan mahasiswa sekitar kampus USU
+                    Barang preloved &amp; kebutuhan mahasiswa sekitar kampus
                   </p>
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -1096,7 +1103,7 @@ export default function SuperAppHome({
                   <h2 className="text-sm font-bold text-slate-900 dark:text-white leading-tight tracking-tight">
                     Menfess <span className="font-serif italic font-normal text-emerald-700 dark:text-emerald-400">Kampus Kita</span>
                   </h2>
-                  <p className="text-[10px] text-slate-400 font-medium">Suara anonim USU &amp; POLMED</p>
+                  <p className="text-[10px] text-slate-400 font-medium">Suara anonim mahasiswa</p>
                 </div>
               </div>
               <button
@@ -1242,7 +1249,7 @@ export default function SuperAppHome({
                 Transaksi Aman Mahasiswa
               </h4>
               <p className="text-[11px] text-emerald-900/80 dark:text-emerald-300/80 leading-relaxed font-normal">
-                Selalu utamakan COD di titik temu resmi kampus (Pendopo, Pintu 1-4 Dr. Mansyur, Gedung Z POLMED) untuk kenyamanan dan keamanan bersama.
+                Selalu utamakan COD di titik temu resmi kampus untuk kenyamanan dan keamanan bersama.
               </p>
             </div>
           </div>
@@ -1342,9 +1349,12 @@ export default function SuperAppHome({
                         onChange={(e) => updateFormData({ faculty: e.target.value })}
                         className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-600 outline-none"
                       >
-                        <option value="USU">USU (Universitas Sumatera Utara)</option>
-                        <option value="POLMED">POLMED (Politeknik Negeri Medan)</option>
                         <option value="Bebas">Umum / Bebas</option>
+                        {campuses.map((campus) => (
+                          <option key={campus.shortName} value={campus.shortName}>
+                            {campus.shortName} ({campus.name})
+                          </option>
+                        ))}
                       </select>
                     </div>
 

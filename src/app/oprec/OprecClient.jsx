@@ -12,8 +12,18 @@ export default function OprecClient({ initialOprecs = [] }) {
   const [oprecs, setOprecs] = useState(initialOprecs);
   const [loading, setLoading] = useState(initialOprecs.length === 0);
   const [selectedCampus, setSelectedCampus] = useState("Semua");
+  const [campuses, setCampuses] = useState([]);
   const [activeDaftarModal, setActiveDaftarModal] = useState(null);
   const [showBuatModal, setShowBuatModal] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/kampus", { cache: "no-store" })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (Array.isArray(data?.campuses)) setCampuses(data.campuses);
+      })
+      .catch(() => {});
+  }, []);
 
   // Dibuka dari tombol "Buat" di dock bawah: /rute?tulis=1 langsung
   // membuka form, jadi pengguna tidak perlu mencari tombolnya di halaman.
@@ -76,7 +86,7 @@ export default function OprecClient({ initialOprecs = [] }) {
                 Pusat Open Recruitment Mahasiswa
               </h1>
               <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400 max-w-2xl">
-                Temukan peluang kepanitiaan acara kampus, staf BEM & Himpunan, serta pendaftaran anggota baru UKM di Universitas Sumatera Utara & Politeknik Negeri Medan.
+                Temukan peluang kepanitiaan acara kampus, staf BEM & Himpunan, serta pendaftaran anggota baru UKM di komunitas kampusmu.
               </p>
             </div>
 
@@ -98,7 +108,7 @@ export default function OprecClient({ initialOprecs = [] }) {
 
           {/* CAMPUS SELECTOR */}
           <div className="mt-6 flex items-center gap-2">
-            {["Semua", "USU", "POLMED"].map((c) => (
+            {["Semua", ...campuses.map((campus) => campus.shortName)].map((c) => (
               <button
                 key={c}
                 onClick={() => setSelectedCampus(c)}

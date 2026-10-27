@@ -22,12 +22,22 @@ export default function DicariPage({ initialItems = [] }) {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("all");
   const [campus, setCampus] = useState("Semua");
+  const [campuses, setCampuses] = useState([]);
 
   // Form modal
   const [showModal, setShowModal] = useState(false);
 
   // Dibuka dari tombol "Buat" di dock bawah: /rute?tulis=1 langsung
   // membuka form, jadi pengguna tidak perlu mencari tombolnya di halaman.
+  useEffect(() => {
+    fetch("/api/kampus", { cache: "no-store" })
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => {
+        if (Array.isArray(d?.campuses)) setCampuses(d.campuses);
+      })
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get("tulis") === "1") {
       setShowModal(true);
@@ -234,8 +244,9 @@ export default function DicariPage({ initialItems = [] }) {
           className="shrink-0 cursor-pointer rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
         >
           <option value="Semua">Semua Kampus</option>
-          <option value="USU">USU</option>
-          <option value="POLMED">POLMED</option>
+          {campuses.map((item) => (
+            <option key={item.shortName} value={item.shortName}>{item.shortName}</option>
+          ))}
         </select>
 
         {/* Category Filter */}
@@ -315,74 +326,63 @@ export default function DicariPage({ initialItems = [] }) {
                 return (
                   <article
                     key={item.id}
-                    className={`card flex flex-col justify-between p-2.5 sm:p-4 bg-white dark:bg-slate-900/40 rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-white/10 hover:shadow-md transition-all relative overflow-hidden ${
-                      isUrgent ? "border-l-3 sm:border-l-4 border-l-rose-500" : ""
+                    className={`card flex flex-col justify-between p-3 sm:p-4 bg-white dark:bg-slate-900/40 rounded-2xl border border-slate-200/80 dark:border-white/10 hover:shadow-md transition-all relative overflow-hidden ${
+                      isUrgent ? "border-l-3 border-l-rose-500" : ""
                     } ${item.status === "resolved" ? "opacity-60 grayscale-[30%]" : ""}`}
                   >
                     <div>
-                      {/* Top Badges */}
-                      <div className="flex flex-wrap items-center justify-between gap-1 mb-1.5">
-                        <div className="flex items-center gap-1 flex-wrap">
+                      {/* Top Badges & Budget */}
+                      <div className="flex items-center justify-between gap-1 mb-1">
+                        <div className="flex items-center gap-1 flex-wrap min-w-0">
                           {isUrgent && (
-                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 text-[8px] sm:text-[10px] font-bold">
-                              🚨 MENDESAK
+                            <span className="inline-flex items-center px-1.5 py-0.2 rounded-full bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 text-[8px] font-bold shrink-0">
+                              🚨 Mendesak
                             </span>
                           )}
-                          <span className="badge bg-emerald-50 text-[#047857] dark:bg-emerald-950/40 dark:text-emerald-400 font-bold text-[8px] sm:text-[10px] px-1.5 py-0.5">
+                          <span className="badge bg-emerald-50 text-[#047857] dark:bg-emerald-950/40 dark:text-emerald-400 font-bold text-[8px] px-1 py-0.2 shrink-0">
                             {item.category}
                           </span>
-                          {itemCondition && (
-                            <span className="badge bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 text-[8px] sm:text-[10px] px-1.5 py-0.5">
-                              {itemCondition}
-                            </span>
-                          )}
                         </div>
-                      </div>
-
-                      <h3 className="font-bold text-slate-900 dark:text-white leading-tight text-xs sm:text-sm line-clamp-1 sm:line-clamp-2">
-                        {item.title}
-                      </h3>
-
-                      <div className="mt-1 flex items-center gap-1 text-[9px] sm:text-[11px] text-slate-500 dark:text-slate-400">
-                        <Icon.MapPin className="h-3 w-3 shrink-0 text-[#047857]" />
-                        <span className="truncate">{item.campus} · {item.area || "Kampus"}</span>
-                      </div>
-
-                      <p className="mt-1 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 leading-snug line-clamp-1 sm:line-clamp-2">
-                        {cleanDesc}
-                      </p>
-                    </div>
-
-                    <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-white/10">
-                      <div className="flex items-center justify-between gap-1 mb-2 text-[9px] sm:text-xs">
-                        <span className="text-slate-400 truncate">Budget:</span>
-                        <span className="font-extrabold text-[#047857] dark:text-emerald-400 text-right truncate">
+                        <span className="font-extrabold text-[#047857] dark:text-emerald-400 text-[10px] sm:text-xs shrink-0 tracking-tight">
                           {item.budget > 0 ? rupiah(item.budget) : "Nego"}
                         </span>
                       </div>
 
-                      <button
-                        onClick={() => {
-                          setManualOrderId(null);
-                          setManualFile(null);
-                          setManualError("");
-                          setUnlockResult(null);
-                          setQrisModal(item);
-                          fetch("/api/payments/unlock-wanted", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ wanted_id: item.id, check: true }),
-                          })
-                            .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
-                            .then(({ ok, d }) => { if (!ok) setManualError(d.error || "Kontak postingan ini belum bisa dibuka."); })
-                            .catch(() => {});
-                        }}
-                        className="w-full py-1.5 px-2 rounded-lg bg-slate-100 hover:bg-[#047857] text-slate-700 hover:text-white dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-[#047857] dark:hover:text-white text-[10px] sm:text-xs font-bold transition flex items-center justify-center gap-1 active:scale-95"
-                      >
-                        <Icon.MessageCircle className="h-3 w-3 shrink-0" />
-                        <span className="truncate">Tawari Barang</span>
-                      </button>
+                      <h3 className="font-bold text-slate-900 dark:text-white leading-snug text-xs sm:text-sm line-clamp-2">
+                        {item.title}
+                      </h3>
+
+                      <div className="mt-2 flex items-center gap-1 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
+                        <Icon.MapPin className="h-2.5 w-2.5 shrink-0 text-[#047857]" />
+                        <span className="truncate">{item.campus} · {item.area || "Kampus"}</span>
+                      </div>
+
+                      <p className="mt-1 text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 leading-snug line-clamp-1">
+                        {cleanDesc}
+                      </p>
                     </div>
+
+                    <button
+                      onClick={() => {
+                        setManualOrderId(null);
+                        setManualFile(null);
+                        setManualError("");
+                        setUnlockResult(null);
+                        setQrisModal(item);
+                        fetch("/api/payments/unlock-wanted", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ wanted_id: item.id, check: true }),
+                        })
+                          .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+                          .then(({ ok, d }) => { if (!ok) setManualError(d.error || "Kontak postingan ini belum bisa dibuka."); })
+                          .catch(() => {});
+                      }}
+                      className="w-full mt-2 py-1 px-1.5 rounded-lg bg-slate-100 hover:bg-[#047857] text-slate-700 hover:text-white dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-[#047857] dark:hover:text-white text-[10px] sm:text-xs font-bold transition flex items-center justify-center gap-1 active:scale-95"
+                    >
+                      <Icon.MessageCircle className="h-3 w-3 shrink-0" />
+                      <span className="truncate">Tawari Barang</span>
+                    </button>
                   </article>
                 );
               })}
@@ -551,9 +551,10 @@ export default function DicariPage({ initialItems = [] }) {
                     value={form.campus}
                     onChange={handleInputChange("campus")}
                   >
-                    <option value="Semua">Semua (USU &amp; POLMED)</option>
-                    <option value="USU">USU</option>
-                    <option value="POLMED">POLMED</option>
+                    <option value="Semua">Semua Kampus</option>
+                    {campuses.map((item) => (
+                      <option key={item.shortName} value={item.shortName}>{item.shortName} — {item.name}</option>
+                    ))}
                   </select>
                 </div>
 

@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { rupiah } from "@/lib/fees";
 import { buildSlug } from "@/lib/slug";
 import FavoriteButton from "@/components/FavoriteButton";
+import ProductCard from "@/components/ProductCard";
 import { Icon } from "@/components/Icons";
 import { cn } from "@/lib/utils";
 
@@ -279,18 +280,13 @@ export default function MarketplaceBrowser({
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
-                  className="text-slate-400 hover:text-slate-600 p-0.5 mr-0.5"
+                  aria-label="Hapus pencarian"
+                  className="min-h-10 min-w-10 text-slate-400 hover:text-slate-600"
                   title="Hapus pencarian"
                 >
                   <span className="material-symbols-outlined text-[14px]">close</span>
                 </button>
               )}
-              <button
-                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-0.5"
-                title="Filter lanjutan"
-              >
-                <span className="material-symbols-outlined text-[16px]">tune</span>
-              </button>
             </div>
 
             {/* Selectors Group */}
@@ -399,140 +395,9 @@ export default function MarketplaceBrowser({
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 xs:gap-2.5 sm:gap-3.5 mb-6">
-          {filteredListings.map((item) => {
-            const slug = buildSlug(item.title, item.id);
-            const detailUrl = `/produk/${slug}`;
-            const sellerInitial = (item.seller_name || "M").charAt(0).toUpperCase();
-
-            // WhatsApp inquiry link generator
-            let waLink = detailUrl;
-            if (item.seller_wa) {
-              const numOnly = item.seller_wa.replace(/\D/g, "");
-              const cleanWa = numOnly.startsWith("0")
-                ? "62" + numOnly.slice(1)
-                : numOnly.startsWith("62")
-                ? numOnly
-                : "62" + numOnly;
-              const waText = `Halo kak ${item.seller_name || ""}, saya lihat "${item.title}" di Kampus Kita. Apakah masih tersedia?`;
-              waLink = `https://wa.me/${cleanWa}?text=${encodeURIComponent(waText)}`;
-            }
-
-            const isSold = item.status === "sold";
-            const condLabel = item.condition === "new" ? "Baru" : item.condition || "Preloved";
-
-            return (
-              <div
-                key={item.id}
-                className="group relative flex flex-col justify-between overflow-hidden rounded-xl sm:rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-white/10 shadow-xs hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-700 transition-all duration-200 p-2 sm:p-3"
-              >
-                <div>
-                  {/* Image container: 4:3 Aspect Ratio (Mantap & Presisi) */}
-                  <div className="relative w-full aspect-[4/3] rounded-lg sm:rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 mb-1.5 sm:mb-2 border border-slate-100 dark:border-white/5">
-                    {item.image_url ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img
-                        src={item.image_url}
-                        alt={item.title}
-                        loading="lazy"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
-                        <Icon.Package className="w-6 h-6 sm:w-8 sm:h-8 text-slate-300 stroke-[1.2]" />
-                        <span className="text-[8px] sm:text-[9px] font-medium text-slate-400 mt-0.5">
-                          Foto Penjual
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Favorite Button in Top-Right */}
-                    <FavoriteButton
-                      listing={item}
-                      className="!absolute !top-1.5 !right-1.5 !w-6 !h-6 sm:!w-7 sm:!h-7 !rounded-full !bg-white/90 dark:!bg-black/70 shadow-xs hover:scale-110 flex items-center justify-center text-slate-400 hover:text-rose-500 z-10 transition-transform"
-                    />
-
-                    {/* Status Badge in Bottom-Left */}
-                    {isSold ? (
-                      <span className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded-full bg-slate-900/90 text-white font-extrabold text-[8px] sm:text-[9px] tracking-wider shadow-xs backdrop-blur-xs">
-                        TERJUAL
-                      </span>
-                    ) : item.featured ? (
-                      <span className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded-full bg-emerald-900/90 text-white font-bold text-[8px] sm:text-[9px] flex items-center gap-0.5 sm:gap-1 shadow-xs backdrop-blur-xs">
-                        <span className="material-symbols-outlined text-[10px] sm:text-[11px]">verified</span>
-                        Terverifikasi
-                      </span>
-                    ) : (
-                      <span className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded-full bg-emerald-800/90 text-white font-semibold text-[8px] sm:text-[9px] flex items-center gap-0.5 sm:gap-1 shadow-xs backdrop-blur-xs">
-                        <span className="material-symbols-outlined text-[10px] sm:text-[11px]">verified</span>
-                        COD
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Price & Condition Badge */}
-                  <div className="flex items-baseline justify-between mb-0.5 gap-1">
-                    <span className="text-xs sm:text-base font-extrabold text-emerald-800 dark:text-emerald-400 truncate tracking-tight">
-                      {rupiah(item.price)}
-                    </span>
-                    <span className="text-[9px] sm:text-[10px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/80 px-1.5 py-0.5 rounded-md border border-emerald-200/60 dark:border-emerald-800/50 shrink-0">
-                      {condLabel}
-                    </span>
-                  </div>
-
-                  {/* Product Title */}
-                  <Link href={detailUrl}>
-                    <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white line-clamp-1 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors leading-tight">
-                      {item.title}
-                    </h3>
-                  </Link>
-
-                  {/* Seller Micro-Pill (Kompak & Elegan) */}
-                  <div className="flex items-center gap-1.5 mt-1 sm:mt-1.5 py-1 px-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-white/5">
-                    <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200 flex items-center justify-center text-[8px] sm:text-[9px] font-extrabold shrink-0">
-                      {sellerInitial}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[9px] sm:text-[11px] font-bold text-slate-900 dark:text-slate-100 truncate leading-tight">
-                        {item.seller_name || "Mahasiswa"}
-                      </p>
-                      <p className="text-[8px] sm:text-[9px] text-slate-400 truncate leading-tight">
-                        {item.area || "USU"} • {item.campus === "polmed" ? "POLMED" : "USU"}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* COD Location */}
-                  <div className="flex items-center gap-1 mt-1 text-slate-500 dark:text-slate-400 text-[10px] sm:text-[11px]">
-                    <span className="material-symbols-outlined text-[12px] sm:text-[13px] text-emerald-600 dark:text-emerald-400 shrink-0">
-                      location_on
-                    </span>
-                    <span className="truncate">
-                      {item.area || "Titik COD Kampus"}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Card Action Buttons (Detail & Tanya WA Mantap) */}
-                <div className="grid grid-cols-2 gap-1 sm:gap-1.5 mt-2 sm:mt-2.5 pt-1.5 sm:pt-2 border-t border-slate-100 dark:border-white/10">
-                  <Link
-                    href={detailUrl}
-                    className="py-1.5 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-[10px] sm:text-xs font-bold text-center transition-colors"
-                  >
-                    Detail
-                  </Link>
-                  <a
-                    href={waLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="py-1.5 px-2 rounded-lg bg-emerald-800 hover:bg-emerald-900 text-white text-[10px] sm:text-xs font-bold text-center flex items-center justify-center gap-1 shadow-xs transition-all active:scale-95"
-                  >
-                    <span className="material-symbols-outlined text-[12px] sm:text-[13px]">chat</span>
-                    <span>Tanya</span>
-                  </a>
-                </div>
-              </div>
-            );
-          })}
+          {filteredListings.map((item) => (
+            <ProductCard key={item.id} listing={item} />
+          ))}
         </div>
       )}
       {/* END: Products Grid */}

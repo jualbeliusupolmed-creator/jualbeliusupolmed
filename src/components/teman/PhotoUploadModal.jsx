@@ -18,36 +18,6 @@ const INTENT_ICONS = {
   Briefcase: Icon.Briefcase,
 };
 
-const FACULTIES_USU = [
-  "Kedokteran",
-  "Hukum",
-  "Pertanian",
-  "Teknik",
-  "Ekonomi & Bisnis",
-  "Kedokteran Gigi",
-  "Ilmu Budaya",
-  "MIPA",
-  "ISIP",
-  "Kesehatan Masyarakat",
-  "Farmasi",
-  "Psikologi",
-  "Keperawatan",
-  "Fasilkom-TI",
-  "Kehutanan",
-  "Vokasi",
-  "Umum",
-];
-
-const FACULTIES_POLMED = [
-  "Teknik Mesin",
-  "Teknik Sipil",
-  "Teknik Elektro",
-  "Akuntansi",
-  "Administrasi Niaga",
-  "Teknik Komputer & Informatika",
-  "Umum",
-];
-
 export default function PhotoUploadModal({
   isOpen,
   onClose,
@@ -57,7 +27,8 @@ export default function PhotoUploadModal({
 }) {
   const [photoUrl, setPhotoUrl] = useState(initialProfile?.photo_url || "");
   const [displayName, setDisplayName] = useState(initialProfile?.display_name || "");
-  const [campus, setCampus] = useState(initialProfile?.campus || "USU");
+  const [campus, setCampus] = useState(initialProfile?.campus || "");
+  const [campuses, setCampuses] = useState([]);
   const [faculty, setFaculty] = useState(initialProfile?.faculty || "Umum");
   const [batch, setBatch] = useState(initialProfile?.batch || "2024");
   const [intent, setIntent] = useState(normalizeTemanIntent(initialProfile?.intent || "Teman Santai"));
@@ -73,6 +44,15 @@ export default function PhotoUploadModal({
 
   useEffect(() => {
     setMounted(true);
+    fetch("/api/kampus", { cache: "no-store" })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (Array.isArray(data?.campuses)) {
+          setCampuses(data.campuses);
+          setCampus((current) => current || data.campuses[0]?.shortName || "");
+        }
+      })
+      .catch(() => {});
   }, []);
 
   useFocusTrap({
@@ -174,8 +154,6 @@ export default function PhotoUploadModal({
       setSaving(false);
     }
   };
-
-  const currentFaculties = campus === "Polmed" ? FACULTIES_POLMED : FACULTIES_USU;
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -297,9 +275,9 @@ export default function PhotoUploadModal({
                 }}
                 className="w-full rounded-xl border border-black/[0.1] bg-black/[0.02] dark:border-white/[0.1] dark:bg-white/[0.04] px-3 py-2 text-xs text-[#1d1d1f] dark:text-white outline-none focus:border-primary"
               >
-                <option value="USU">Universitas Sumatera Utara (USU)</option>
-                <option value="Polmed">Politeknik Negeri Medan (Polmed)</option>
-                <option value="Semua">Kampus Lainnya di Medan</option>
+                {campuses.map((item) => (
+                  <option key={item.shortName} value={item.shortName}>{item.name} ({item.shortName})</option>
+                ))}
               </select>
             </div>
           </div>
@@ -310,15 +288,13 @@ export default function PhotoUploadModal({
               <label className="block text-xs font-bold text-[#1d1d1f] dark:text-[#f5f5f7] mb-1">
                 Fakultas / Jurusan
               </label>
-              <select
+              <input
+                type="text"
                 value={faculty}
                 onChange={(e) => setFaculty(e.target.value)}
+                placeholder="Fakultas atau program studi"
                 className="w-full rounded-xl border border-black/[0.1] bg-black/[0.02] dark:border-white/[0.1] dark:bg-white/[0.04] px-3 py-2 text-xs text-[#1d1d1f] dark:text-white outline-none focus:border-primary"
-              >
-                {currentFaculties.map((f) => (
-                  <option key={f} value={f}>{f}</option>
-                ))}
-              </select>
+              />
             </div>
 
             <div>

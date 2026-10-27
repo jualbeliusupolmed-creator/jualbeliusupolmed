@@ -49,6 +49,8 @@ const FACULTIES_POLMED = [
   "Administrasi Niaga", "Teknik Komputer & Informatika", "Umum",
 ];
 
+const FACULTIES_GENERIC = ["Umum"];
+
 const KATEGORI_UKM = [
   { id: "bem_hima", label: "BEM & Himpunan" },
   { id: "olahraga", label: "Olahraga" },
@@ -220,6 +222,10 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
   const [bukaToko, setBukaToko] = useState(false);
   const [daftarOrg, setDaftarOrg] = useState(false);
   const [modalVerifikasi, setModalVerifikasi] = useState(false);
+  const [kampusTersedia, setKampusTersedia] = useState([
+    { shortName: "USU", name: "Universitas Sumatera Utara" },
+    { shortName: "POLMED", name: "Politeknik Negeri Medan" },
+  ]);
   const inputFoto = useRef(null);
 
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
@@ -242,7 +248,7 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
           name: data.profil.name || "",
           anonymous_name: data.profil.anonymous_name || "",
           bio: data.profil.bio || "",
-          campus: data.profil.campus || "USU",
+          campus: data.profil.campus || "",
           faculty: data.profil.faculty || "Umum",
           store_name: data.profil.store_name || "",
           tagline: data.profil.tagline || "",
@@ -276,6 +282,23 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
     return () => { hidup = false; };
   }, []);
 
+  useEffect(() => {
+    fetch("/api/kampus", { cache: "no-store" })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (Array.isArray(data?.campuses) && data.campuses.length) {
+          setKampusTersedia(data.campuses);
+          setF((current) => {
+            if (!current?.campus || !data.campuses.some((campus) => campus.shortName === current.campus)) {
+              return { ...current, campus: data.campuses[0].shortName, faculty: "Umum" };
+            }
+            return current;
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   async function unggahFoto(e) {
     const berkas = e.target.files?.[0];
     if (!berkas) return;
@@ -294,6 +317,9 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
   async function simpan(e) {
     e.preventDefault();
     if (!f.name.trim()) return toast.error("Nama wajib diisi");
+    if (!f.campus || !kampusTersedia.some((kampus) => kampus.shortName === f.campus)) {
+      return toast.error("Pilih kampus yang tersedia terlebih dahulu");
+    }
     if (f.slug) {
       const cleanSlug = f.slug.toLowerCase().trim();
       if (cleanSlug.length < 3) return toast.error("Username minimal 3 karakter");
@@ -338,7 +364,12 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
 
   const peran = profil.peran;
   const hasToko = Boolean(profil.store_name);
-  const fakultas = f.campus === "Polmed" || f.campus === "POLMED" ? FACULTIES_POLMED : FACULTIES_USU;
+  const kampusAktif = kampusTersedia.find((kampus) => kampus.shortName === f.campus);
+  const fakultas = kampusAktif?.shortName === "POLMED"
+    ? FACULTIES_POLMED
+    : kampusAktif?.shortName === "USU"
+      ? FACULTIES_USU
+      : FACULTIES_GENERIC;
   // Sebuah lembaga tidak punya angkatan dan tidak sedang mencari teman nongkrong.
   const tawarkanCariTeman = !peran.organisasi && !daftarOrg;
 
@@ -459,7 +490,11 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
             <Teks nilai={f.anonymous_name} ubah={(v) => set("anonymous_name", v)} placeholder="Dipakai di Menfess" />
           </Baris>
           <Baris label="Kampus">
-            <Pilih nilai={f.campus} ubah={(v) => { set("campus", v); set("faculty", "Umum"); }} opsi={["USU", "POLMED"]} />
+            <Pilih
+              nilai={f.campus}
+              ubah={(v) => { set("campus", v); set("faculty", "Umum"); }}
+              opsi={kampusTersedia.map((kampus) => kampus.shortName)}
+            />
           </Baris>
           <Baris label="Fakultas">
             <Pilih nilai={f.faculty} ubah={(v) => set("faculty", v)} opsi={fakultas} />

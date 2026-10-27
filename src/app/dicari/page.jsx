@@ -8,7 +8,7 @@ export const revalidate = 60;
 export const metadata = {
   title: "WTB Hub Mahasiswa — Kebutuhan Kuliah & Barang Dicari | Kampus Kita",
   description:
-    "Pusat permintaan barang & jasa (Want to Buy / WTB) mahasiswa USU & POLMED. Posting kebutuhan kuliahmu, dapatkan penawaran harga mahasiswa tercepat dengan COD aman titik kumpul kampus.",
+    "Pusat permintaan barang dan jasa (Want to Buy / WTB) mahasiswa lintas kampus. Posting kebutuhan kuliahmu dan dapatkan penawaran cepat dengan COD aman.",
   alternates: { canonical: "/dicari" },
   openGraph: {
     title: "WTB Hub Mahasiswa — Kebutuhan Kuliah & Barang Dicari | Kampus Kita",
@@ -55,7 +55,7 @@ export default async function DicariPage() {
   const itemListJsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": "Barang & Jasa Yang Dicari Mahasiswa USU & POLMED",
+    "name": "Barang & Jasa Yang Dicari Mahasiswa",
     "description": "Daftar kebutuhan barang dan jasa yang dicari mahasiswa.",
     "itemListElement": initialItems.slice(0, 15).map((item, index) => ({
       "@type": "ListItem",

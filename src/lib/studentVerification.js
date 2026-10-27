@@ -1,21 +1,25 @@
-// Helper & Validator Verifikasi Mahasiswa Kampus USU & POLMED
+// Helper & Validator Verifikasi Mahasiswa lintas kampus.
 
-export const VALID_CAMPUSES = ['USU', 'POLMED', 'LAINNYA'];
-
-// Pola domain email resmi mahasiswa
-const USU_EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@(?:students\.)?usu\.ac\.id$/i;
-const POLMED_EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@(?:students\.)?polmed\.ac\.id$/i;
+export const VALID_CAMPUSES = [];
 
 /**
  * Mendeteksi kampus berdasarkan akhiran email institusi.
  * @param {string} email
  * @returns {'USU' | 'POLMED' | null}
  */
-export function detectCampusFromEmail(email) {
+export function detectCampusFromEmail(email, campuses = [
+  { shortName: "USU", emailDomains: ["usu.ac.id"] },
+  { shortName: "POLMED", emailDomains: ["polmed.ac.id"] },
+]) {
   if (!email || typeof email !== 'string') return null;
-  const trimmed = email.trim();
-  if (USU_EMAIL_REGEX.test(trimmed)) return 'USU';
-  if (POLMED_EMAIL_REGEX.test(trimmed)) return 'POLMED';
+  const domain = email.trim().toLowerCase().split("@").pop();
+  const campus = campuses.find((item) =>
+    item?.active !== false && (item.emailDomains || []).some((allowed) => {
+      const normalized = String(allowed).toLowerCase().replace(/^@/, "");
+      return domain === normalized || domain.endsWith(`.${normalized}`);
+    })
+  );
+  if (campus?.shortName) return campus.shortName;
   return null;
 }
 
@@ -45,16 +49,13 @@ export function getStudentBadge(seller) {
   const isVerified = seller.student_verified === true || seller.student_verification_status === 'verified';
   if (!isVerified) return null;
 
-  const campus = (seller.student_campus || 'USU').toUpperCase();
-  const campusLabel = campus === 'POLMED' ? 'POLMED' : 'USU';
+  const campusLabel = String(seller.student_campus || 'Kampus').trim();
 
   return {
     isVerified: true,
     campus: campusLabel,
     badgeText: `Mahasiswa ${campusLabel}`,
     fullLabel: `✓ Mahasiswa ${campusLabel} Terverifikasi`,
-    badgeClass: campusLabel === 'POLMED' 
-      ? 'bg-amber-500/10 text-amber-700 border-amber-500/20 dark:bg-amber-400/10 dark:text-amber-300 dark:border-amber-400/20'
-      : 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20 dark:bg-emerald-400/10 dark:text-emerald-300 dark:border-emerald-400/20',
+    badgeClass: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20 dark:bg-emerald-400/10 dark:text-emerald-300 dark:border-emerald-400/20',
   };
 }

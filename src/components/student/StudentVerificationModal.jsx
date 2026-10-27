@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Icon } from "@/components/Icons";
 import { toast } from "sonner";
 import { detectCampusFromEmail } from "@/lib/studentVerification";
 import { useFocusTrap } from "@/lib/useFocusTrap";
 
 export default function StudentVerificationModal({ isOpen, onClose, onVerified, initialData = null }) {
-  const [campus, setCampus] = useState(initialData?.student_campus || "USU");
+  const [campus, setCampus] = useState(initialData?.student_campus || "");
+  const [campuses, setCampuses] = useState([]);
   const [nim, setNim] = useState(initialData?.student_nim || "");
   const [faculty, setFaculty] = useState(initialData?.student_faculty || "");
   const [email, setEmail] = useState(initialData?.student_email || "");
@@ -17,9 +18,22 @@ export default function StudentVerificationModal({ isOpen, onClose, onVerified, 
 
   const containerRef = useFocusTrap(isOpen, onClose);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    fetch("/api/kampus", { cache: "no-store" })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (Array.isArray(data?.campuses)) {
+          setCampuses(data.campuses);
+          setCampus((current) => current || data.campuses[0]?.shortName || "");
+        }
+      })
+      .catch(() => {});
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
-  const isEmailCampus = Boolean(detectCampusFromEmail(email));
+  const isEmailCampus = Boolean(detectCampusFromEmail(email, campuses));
 
   const handleUploadKtm = async (e) => {
     const file = e.target.files?.[0];
@@ -136,19 +150,19 @@ export default function StudentVerificationModal({ isOpen, onClose, onVerified, 
               Pilih Kampus <span className="text-rose-500">*</span>
             </label>
             <div className="mt-1.5 grid grid-cols-2 gap-2.5">
-              {["USU", "POLMED"].map((c) => (
+              {campuses.map((c) => (
                 <button
-                  key={c}
+                  key={c.shortName}
                   type="button"
-                  onClick={() => setCampus(c)}
+                  onClick={() => setCampus(c.shortName)}
                   className={`flex items-center justify-center gap-2 rounded-2xl border py-2.5 font-medium transition-all ${
-                    campus === c
+                    campus === c.shortName
                       ? "border-emerald-600 bg-emerald-50 font-bold text-emerald-700 dark:border-emerald-500 dark:bg-emerald-500/10 dark:text-emerald-300"
                       : "border-gray-200 bg-gray-50/50 text-gray-600 hover:bg-gray-100 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-300"
                   }`}
                 >
                   <Icon.Building className="h-4 w-4" />
-                  {c === "USU" ? "Univ. Sumatera Utara" : "Politeknik Negeri Medan"}
+                  {c.name}
                 </button>
               ))}
             </div>
@@ -196,7 +210,7 @@ export default function StudentVerificationModal({ isOpen, onClose, onVerified, 
               </label>
               <input
                 type="email"
-                placeholder="nama@students.usu.ac.id / nama@polmed.ac.id"
+                placeholder="nama@kampus.ac.id"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="mt-1 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 focus:border-emerald-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"

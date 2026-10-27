@@ -82,6 +82,10 @@ export default function PengaturanClient({ initialSettings = {} }) {
   const [botCfg, setBotCfg] = useState(initialSettings.bot || {});
   const [messages, setMessages] = useState(initialSettings.messages || {});
   const [areas, setAreas] = useState((initialSettings.areas || []).join("\n"));
+  const [campuses, setCampuses] = useState(initialSettings.campuses || []);
+  const [campusesDraft, setCampusesDraft] = useState(
+    (initialSettings.campuses || []).map((campus) => `${campus.shortName || ""}|${campus.name || ""}|${campus.active !== false ? "aktif" : "nonaktif"}`).join("\n")
+  );
   const [popupAd, setPopupAd] = useState(initialSettings.popupAd || { enabled: false, title: "", imageUrl: "", targetUrl: "", buttonText: "Lihat Selengkapnya" });
   const [aiCfg, setAiCfg] = useState(initialSettings.ai_config || { model: "gemini-2.0-flash", memory: "", personality: "" });
   const [botKeywords, setBotKeywords] = useState(initialSettings.bot_keywords || { enabled: true, greeting_enabled: false, greeting: "", triggers: "", min_price_digits: 4 });
@@ -732,6 +736,43 @@ export default function PengaturanClient({ initialSettings = {} }) {
               }}
               className="g-btn g-btn-primary mt-4 w-full"
             >{saved === "areas" ? " Tersimpan" : "Simpan Daftar Area"}</button>
+          </Card>
+
+          <Card title="Pilihan Kampus" className={match("kampus universitas perguruan tinggi profil komunitas") ? "" : "hidden"}>
+            <p className="mb-2 text-xs text-gray-400">
+              Daftar ini dipakai di profil, pencarian teman, dan filter komunitas. Satu baris satu kampus.
+            </p>
+            <textarea
+              className="g-field w-full min-h-32 font-mono text-sm"
+              value={campusesDraft}
+              onChange={(e) => setCampusesDraft(e.target.value)}
+              placeholder={"USU|Universitas Sumatera Utara|aktif\nPOLMED|Politeknik Negeri Medan|aktif"}
+            />
+            <p className="mt-1 text-[11px] text-gray-400">Format: singkatan|nama lengkap|aktif atau nonaktif</p>
+            <button
+              onClick={() => {
+                const parsed = campusesDraft.split("\n").map((line) => {
+                  const [shortName = "", name = "", status = "aktif"] = line.split("|").map((part) => part.trim());
+                  return {
+                    id: shortName.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+                    shortName,
+                    name,
+                    active: status.toLowerCase() !== "nonaktif",
+                  };
+                });
+                const invalid = parsed.some((campus) => !campus.shortName || !campus.name);
+                if (invalid) {
+                  setToast({ type: "err", msg: "Setiap baris kampus harus berisi singkatan dan nama lengkap." });
+                  return;
+                }
+                setCampuses(parsed);
+                action({ action: "save_settings", key: "campuses", value: parsed }, "Pilihan kampus disimpan");
+                flash("campuses");
+              }}
+              className="g-btn g-btn-primary mt-4 w-full sm:w-auto sm:px-10"
+            >
+              {saved === "campuses" ? "Tersimpan" : "Simpan Pilihan Kampus"}
+            </button>
           </Card>
 
           {/* KONTAK & INFO MARKETPLACE */}

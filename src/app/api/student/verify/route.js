@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { detectCampusFromEmail, validateNim } from "@/lib/studentVerification";
 import { logger } from "@/lib/logger";
 import { rateLimitDistributed, getClientIp } from "@/lib/rateLimit";
+import { getSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -112,23 +113,25 @@ export async function POST(req) {
       return NextResponse.json({ error: nimValidation.error }, { status: 400 });
     }
 
-    const selectedCampus = campus ? String(campus).toUpperCase().trim() : null;
-    if (!["USU", "POLMED", "LAINNYA"].includes(selectedCampus)) {
-      return NextResponse.json({ error: "Pilihan kampus tidak valid (harus USU atau POLMED)" }, { status: 400 });
+    const campuses = (await getSettings()).campuses || [];
+    const selectedCampus = campus ? String(campus).trim() : null;
+    const selected = campuses.find((item) => item?.active !== false && String(item.shortName).toLowerCase() === selectedCampus?.toLowerCase());
+    if (!selected) {
+      return NextResponse.json({ error: "Pilihan kampus tidak valid atau sudah tidak tersedia." }, { status: 400 });
     }
 
     let isAutoVerified = false;
     let newStatus = "pending";
 
     // Cek auto-verifikasi via email institusi
-    const detectedCampus = detectCampusFromEmail(email);
+    const detectedCampus = detectCampusFromEmail(email, campuses);
     if (detectedCampus) {
       // Jika email adalah email resmi kampus, verifikasi otomatis
       isAutoVerified = true;
       newStatus = "verified";
     } else if (!ktm_url) {
       return NextResponse.json(
-        { error: "Gunakan email resmi mahasiswa (@students.usu.ac.id / @polmed.ac.id) atau lampirkan foto KTM." },
+        { error: "Gunakan email resmi kampus yang terdaftar atau lampirkan foto KTM." },
         { status: 400 }
       );
     }

@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Icon } from "@/components/Icons";
 import { rupiah } from "@/lib/fees";
 import { toast } from "sonner";
+import { PageContainer, PageHeader, SearchInput } from "@/components/ui/DesignSystem";
 
 const CURATED_DEFAULT_BATCHES = [
   {
@@ -118,9 +119,23 @@ const CURATED_DEFAULT_BATCHES = [
   },
 ];
 
+function formatBatchBadge(batch) {
+  if (batch.badge) return batch.badge;
+  if (batch.closes_at && !Number.isNaN(Date.parse(batch.closes_at))) {
+    return new Date(batch.closes_at).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+  return batch.closes_at || "Batch Aktif";
+}
+
 export default function OpenPoClient({ initialBatches = [] }) {
   const [search, setSearch] = useState("");
   const [campusFilter, setCampusFilter] = useState("all");
+  const [campuses, setCampuses] = useState([]);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [sortFilter, setSortFilter] = useState("urgent");
   const [selectedBatch, setSelectedBatch] = useState(null);
@@ -129,6 +144,15 @@ export default function OpenPoClient({ initialBatches = [] }) {
   const [buyerName, setBuyerName] = useState("");
   const [buyerWa, setBuyerWa] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/kampus", { cache: "no-store" })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (Array.isArray(data?.campuses)) setCampuses(data.campuses);
+      })
+      .catch(() => {});
+  }, []);
 
   const allBatches = useMemo(() => {
     if (initialBatches && initialBatches.length > 0) {
@@ -184,7 +208,7 @@ export default function OpenPoClient({ initialBatches = [] }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 pb-20">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20">
       {/* Live Campus Ticker Bar */}
       <div className="bg-emerald-50 dark:bg-emerald-950/40 border-b border-emerald-100 dark:border-emerald-900/40 py-2 px-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between text-xs text-emerald-800 dark:text-emerald-300">
@@ -193,7 +217,7 @@ export default function OpenPoClient({ initialBatches = [] }) {
               📢 BATCH LIVE
             </span>
             <span className="truncate">
-              [USU &amp; POLMED] Pre-order kuliner &amp; jastip sesama mahasiswa • Titik Pickup Resmi: Pendopo USU, Fasilkom &amp; Kantin Z Polmed
+              Pre-order kuliner, jastip, dan merchandise sesama mahasiswa • Titik pickup mengikuti detail batch
             </span>
           </div>
           <span className="hidden md:inline font-semibold text-[11px] shrink-0">
@@ -202,27 +226,21 @@ export default function OpenPoClient({ initialBatches = [] }) {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6">
+      <PageContainer className="max-w-7xl flex flex-col gap-6">
         {/* Header Block & Search */}
         <div className="flex flex-col gap-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-                Open PO Kampus
-              </h1>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-                Batch makanan, minuman, dan merchandise buatan mahasiswa USU &amp; POLMED dengan kuota slot transparan.
-              </p>
-            </div>
-            <a
+          <PageHeader
+            title="Open PO Kampus"
+            description="Batch makanan, minuman, dan merchandise buatan mahasiswa dengan kuota slot transparan."
+            action={<a
               href="https://open-po.vercel.app/buat"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#047857] hover:bg-[#065F46] text-white text-xs sm:text-sm font-bold shadow-sm transition active:scale-95 shrink-0"
+              className="btn-accent text-xs sm:text-sm"
             >
               <span>+ Buka Open PO Baru</span>
-            </a>
-          </div>
+            </a>}
+          />
 
           {/* Search & Filter Bar */}
           <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-xs border border-slate-200 dark:border-white/10 flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
@@ -230,12 +248,12 @@ export default function OpenPoClient({ initialBatches = [] }) {
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
                 <Icon.Search className="w-4 h-4" />
               </span>
-              <input
+              <SearchInput
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Cari risol mayo, matcha, kopi, brownies, kaos angkatan..."
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#047857] transition"
+                className="pl-10 text-xs sm:text-sm"
               />
             </div>
 
@@ -247,8 +265,11 @@ export default function OpenPoClient({ initialBatches = [] }) {
                   className="w-full appearance-none bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold py-2.5 pl-3.5 pr-8 rounded-xl border border-slate-200/80 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-[#047857]"
                 >
                   <option value="all">Kampus: Semua</option>
-                  <option value="usu">USU Saja</option>
-                  <option value="polmed">POLMED Saja</option>
+                  {campuses.map((campus) => (
+                    <option key={campus.shortName} value={campus.shortName.toLowerCase()}>
+                      {campus.shortName} Saja
+                    </option>
+                  ))}
                 </select>
                 <Icon.ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
@@ -295,101 +316,70 @@ export default function OpenPoClient({ initialBatches = [] }) {
             return (
               <article
                 key={batch.id}
-                className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl overflow-hidden shadow-xs hover:shadow-md border border-slate-200/80 dark:border-white/10 transition-all flex flex-col justify-between group p-2 sm:p-3"
+                className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-xs hover:shadow-md border border-slate-200/80 dark:border-white/10 transition-all flex flex-col justify-between group p-1.5 sm:p-2.5"
               >
                 <div>
                   {/* Photo Container 4:3 Aspect Ratio */}
-                  <div className="relative w-full aspect-[4/3] rounded-lg sm:rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-100 dark:border-white/5">
+                  <div className="relative w-full aspect-[4/3] rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-100 dark:border-white/5">
                     <img
                       src={batch.photo || "/images/risol-mayo.jpg"}
                       alt={batch.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
-                    <div className="absolute top-1.5 left-1.5 flex flex-wrap gap-1">
-                      <span className="bg-white/95 dark:bg-slate-900/95 backdrop-blur text-[#047857] dark:text-emerald-400 font-extrabold text-[8px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full shadow-xs">
-                        {batch.badge || batch.closes_at || "Batch Aktif"}
+                    <div className="absolute top-1 left-1 flex flex-wrap gap-1">
+                      <span className="bg-white/95 dark:bg-slate-900/95 backdrop-blur text-[#047857] dark:text-emerald-400 font-extrabold text-[8px] sm:text-[9px] px-1.5 py-0.5 rounded-full shadow-xs">
+                        {formatBatchBadge(batch)}
                       </span>
                     </div>
-                    <div className="absolute bottom-1.5 right-1.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur px-1.5 sm:px-2 py-0.5 rounded-md text-[#047857] dark:text-emerald-400 font-extrabold text-[10px] sm:text-xs shadow-xs">
+                    <div className="absolute bottom-1 right-1 bg-white/95 dark:bg-slate-900/95 backdrop-blur px-1.5 py-0.5 rounded-md text-[#047857] dark:text-emerald-400 font-extrabold text-[9px] sm:text-[11px] shadow-xs">
                       {rupiah(batch.price)}
-                      {batch.unit && <span className="text-[8px] sm:text-[9px] font-normal text-slate-500"> {batch.unit}</span>}
+                      {batch.unit && <span className="text-[8px] font-normal text-slate-500"> {batch.unit}</span>}
                     </div>
                   </div>
 
                   {/* Body Content */}
-                  <div className="pt-2 flex flex-col gap-1.5 sm:gap-2">
-                    {/* Seller Chip */}
-                    <div className="flex items-center gap-1.5 py-1 px-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-white/5">
-                      <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-[#ECFDF5] dark:bg-emerald-950/60 text-[#047857] dark:text-emerald-400 font-extrabold text-[8px] sm:text-[9px] flex items-center justify-center shrink-0">
-                        {batch.seller_name ? batch.seller_name.slice(0, 2).toUpperCase() : "PO"}
-                      </div>
-                      <div className="flex flex-col min-w-0 flex-1">
-                        <div className="flex items-center gap-0.5">
-                          <span className="text-[9px] sm:text-[11px] font-bold text-slate-900 dark:text-slate-100 truncate leading-tight">
-                            {batch.seller_name}
-                          </span>
-                          <span className="text-[#047857] text-[9px] font-bold">✓</span>
-                        </div>
-                        <span className="text-[8px] sm:text-[9px] text-slate-400 truncate leading-tight">
-                          {batch.faculty}
-                        </span>
-                      </div>
-                    </div>
-
-                    <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white group-hover:text-[#047857] transition-colors leading-tight line-clamp-1">
+                  <div className="pt-1.5 px-0.5">
+                    <h3 className="font-bold text-[11px] sm:text-xs text-slate-900 dark:text-white group-hover:text-[#047857] transition-colors leading-tight line-clamp-1">
                       {batch.title || batch.name}
                     </h3>
 
-                    {/* Quota Progress Bar */}
-                    <div className="bg-slate-50 dark:bg-slate-800/60 p-1.5 sm:p-2 rounded-lg sm:rounded-xl flex flex-col gap-1 border border-slate-100 dark:border-white/5">
-                      <div className="flex justify-between items-center text-[9px] sm:text-[11px]">
-                        <span className="text-slate-600 dark:text-slate-300 truncate">
-                          Slot: <strong className="text-[#047857] dark:text-emerald-400">{reserved}/{quota}</strong>
-                        </span>
-                        <span className="text-[#047857] dark:text-emerald-400 font-bold text-[9px] sm:text-[10px] shrink-0">{percent}%</span>
-                      </div>
-                      <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                    {/* Progress Bar 1 Baris */}
+                    <div className="flex items-center gap-2 mt-2 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400">
+                      <div className="flex-1 bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
                         <div
                           className="bg-[#047857] h-full rounded-full transition-all duration-500"
                           style={{ width: `${percent}%` }}
                         />
                       </div>
-                      <span className="text-[8px] sm:text-[9px] text-slate-400 truncate">
-                        {remaining > 0 ? `Sisa ${remaining} slot` : "Batch penuh"}
+                      <span className="shrink-0 font-bold text-[#047857] dark:text-emerald-400">
+                        {reserved}/{quota} terisi · sisa {remaining}
                       </span>
                     </div>
 
-                    {/* Pickup Point */}
-                    <div className="flex items-center gap-1 text-[9px] sm:text-[11px] text-slate-500 dark:text-slate-400">
-                      <Icon.MapPin className="w-3 h-3 text-[#047857] shrink-0" />
-                      <span className="truncate">{batch.pickup_point}</span>
+                    {/* Lokasi & Penjual 1 Baris */}
+                    <div className="flex items-center justify-between text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-2 gap-1">
+                      <span className="truncate flex items-center gap-0.5 min-w-0">
+                        <Icon.MapPin className="w-2.5 h-2.5 text-[#047857] shrink-0" />
+                        <span className="truncate">{batch.pickup_point || batch.faculty}</span>
+                      </span>
+                      <span className="shrink-0 font-medium text-slate-500 truncate max-w-[65px]">
+                        {batch.seller_name}
+                      </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Card Action Buttons */}
-                <div className="grid grid-cols-2 gap-1 sm:gap-1.5 mt-2 pt-1.5 sm:pt-2 border-t border-slate-100 dark:border-white/10">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedBatch(batch);
-                      setOrderModalOpen(true);
-                    }}
-                    className="py-1.5 px-1.5 sm:px-2 rounded-lg bg-[#047857] hover:bg-[#065F46] text-white font-bold text-[10px] sm:text-xs text-center transition shadow-xs active:scale-95 flex items-center justify-center"
-                  >
-                    <span>Pesan Slot</span>
-                  </button>
-                  <a
-                    href={`https://wa.me/${(batch.wa || "62895429126232").replace(/\D/g, "")}?text=${encodeURIComponent(`Halo ${batch.seller_name}, mau tanya tentang Open PO ${batch.title}...`)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="py-1.5 px-1.5 sm:px-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-[10px] sm:text-xs text-center transition flex items-center justify-center gap-0.5 sm:gap-1"
-                    title="Chat Penjual"
-                  >
-                    <Icon.MessageCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#047857]" />
-                    <span>Chat WA</span>
-                  </a>
-                </div>
+                {/* Single Compact Action Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedBatch(batch);
+                    setOrderModalOpen(true);
+                  }}
+                  className="w-full mt-3 min-h-11 px-3 rounded-xl bg-[#047857] hover:bg-[#065F46] text-white font-bold text-xs sm:text-sm text-center transition shadow-xs active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2"
+                >
+                  Pesan Slot
+                </button>
               </article>
             );
           })}
@@ -407,7 +397,7 @@ export default function OpenPoClient({ initialBatches = [] }) {
             </p>
           </div>
         )}
-      </div>
+      </PageContainer>
 
       {/* Order Slot Modal */}
       {orderModalOpen && selectedBatch && (

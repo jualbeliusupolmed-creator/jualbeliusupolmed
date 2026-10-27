@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { UKM_CATEGORIES, KAMPUS_OPTIONS, DEFAULT_INVITE_CODE } from "@/lib/organisasi";
+import { UKM_CATEGORIES, DEFAULT_INVITE_CODE } from "@/lib/organisasi";
 import { toast } from "sonner";
 import imageCompression from "browser-image-compression";
 import { useSesi } from "@/components/SesiProvider";
@@ -16,7 +16,7 @@ function DaftarOrganisasiForm() {
   const [form, setForm] = useState({
     ukm_name: "",
     ukm_category: "bem_hima",
-    campus: "USU",
+    campus: "",
     faculty: "",
     ukm_instagram: "",
     contact_name: "",
@@ -32,6 +32,19 @@ function DaftarOrganisasiForm() {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [successData, setSuccessData] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [campuses, setCampuses] = useState([]);
+
+  useEffect(() => {
+    fetch("/api/kampus", { cache: "no-store" })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (Array.isArray(data?.campuses)) {
+          setCampuses(data.campuses);
+          setForm((prev) => ({ ...prev, campus: prev.campus || data.campuses[0]?.shortName || "" }));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const invite = searchParams.get("invite") || searchParams.get("code") || DEFAULT_INVITE_CODE;
@@ -39,9 +52,9 @@ function DaftarOrganisasiForm() {
     setForm((prev) => ({
       ...prev,
       invite_code: invite,
-      campus: campus && KAMPUS_OPTIONS.includes(campus.toUpperCase()) ? campus.toUpperCase() : prev.campus,
+      campus: campus && campuses.some((item) => item.shortName === campus.toUpperCase()) ? campus.toUpperCase() : prev.campus,
     }));
-  }, [searchParams]);
+  }, [searchParams, campuses]);
 
   async function handleLogoUpload(e) {
     const file = e.target.files?.[0];
@@ -225,18 +238,18 @@ function DaftarOrganisasiForm() {
               Kampus <span className="text-rose-500">*</span>
             </label>
             <div className="grid grid-cols-2 gap-2">
-              {KAMPUS_OPTIONS.map((c) => (
+              {campuses.map((c) => (
                 <button
-                  key={c}
+                  key={c.shortName}
                   type="button"
-                  onClick={() => setForm({ ...form, campus: c })}
+                  onClick={() => setForm({ ...form, campus: c.shortName })}
                   className={`py-2 px-3 text-xs font-bold rounded-xl border transition-all ${
-                    form.campus === c
+                    form.campus === c.shortName
                       ? "bg-primary text-white border-primary shadow-sm"
                       : "border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-300"
                   }`}
                 >
-                  {c}
+                  {c.name} ({c.shortName})
                 </button>
               ))}
             </div>
