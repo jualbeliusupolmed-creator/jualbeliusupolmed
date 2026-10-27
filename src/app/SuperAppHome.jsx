@@ -1061,7 +1061,7 @@ export default function SuperAppHome({
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-2 xs:gap-2.5 sm:gap-3.5">
                   {filteredListings.slice(0, visibleListingCount).map((ad) => (
                     <ProductCard key={ad.id} listing={ad} />
                   ))}

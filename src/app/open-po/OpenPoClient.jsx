@@ -284,8 +284,8 @@ export default function OpenPoClient({ initialBatches = [] }) {
           </div>
         </div>
 
-        {/* PO Catalog Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* PO Catalog Grid: 2 Kolom di HP, 3 Kolom di Desktop (Rapat, Efisien & Mantap) */}
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 xs:gap-2.5 sm:gap-4">
           {filteredBatches.map((batch) => {
             const quota = batch.quota || 20;
             const reserved = batch.reserved || 0;
@@ -295,87 +295,87 @@ export default function OpenPoClient({ initialBatches = [] }) {
             return (
               <article
                 key={batch.id}
-                className="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-xs hover:shadow-md border border-slate-200/70 dark:border-white/10 transition-all flex flex-col justify-between group"
+                className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl overflow-hidden shadow-xs hover:shadow-md border border-slate-200/80 dark:border-white/10 transition-all flex flex-col justify-between group p-2 sm:p-3"
               >
                 <div>
-                  {/* Photo Container */}
-                  <div className="relative h-48 w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+                  {/* Photo Container 4:3 Aspect Ratio */}
+                  <div className="relative w-full aspect-[4/3] rounded-lg sm:rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-100 dark:border-white/5">
                     <img
                       src={batch.photo || "/images/risol-mayo.jpg"}
                       alt={batch.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
-                    <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
-                      <span className="bg-white/90 dark:bg-slate-900/90 backdrop-blur text-[#047857] dark:text-emerald-400 font-bold text-[11px] px-2.5 py-1 rounded-full shadow-xs">
+                    <div className="absolute top-1.5 left-1.5 flex flex-wrap gap-1">
+                      <span className="bg-white/95 dark:bg-slate-900/95 backdrop-blur text-[#047857] dark:text-emerald-400 font-extrabold text-[8px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full shadow-xs">
                         {batch.badge || batch.closes_at || "Batch Aktif"}
                       </span>
                     </div>
-                    <div className="absolute bottom-3 right-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur px-2.5 py-1 rounded-lg text-[#047857] dark:text-emerald-400 font-bold text-sm shadow-xs">
+                    <div className="absolute bottom-1.5 right-1.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur px-1.5 sm:px-2 py-0.5 rounded-md text-[#047857] dark:text-emerald-400 font-extrabold text-[10px] sm:text-xs shadow-xs">
                       {rupiah(batch.price)}
-                      {batch.unit && <span className="text-[11px] font-normal text-slate-500"> {batch.unit}</span>}
+                      {batch.unit && <span className="text-[8px] sm:text-[9px] font-normal text-slate-500"> {batch.unit}</span>}
                     </div>
                   </div>
 
                   {/* Body Content */}
-                  <div className="p-4 flex flex-col gap-3">
+                  <div className="pt-2 flex flex-col gap-1.5 sm:gap-2">
                     {/* Seller Chip */}
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-[#ECFDF5] dark:bg-emerald-950/60 text-[#047857] dark:text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0">
+                    <div className="flex items-center gap-1.5 py-1 px-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-white/5">
+                      <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-[#ECFDF5] dark:bg-emerald-950/60 text-[#047857] dark:text-emerald-400 font-extrabold text-[8px] sm:text-[9px] flex items-center justify-center shrink-0">
                         {batch.seller_name ? batch.seller_name.slice(0, 2).toUpperCase() : "PO"}
                       </div>
-                      <div className="flex flex-col min-w-0">
-                        <div className="flex items-center gap-1">
-                          <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                      <div className="flex flex-col min-w-0 flex-1">
+                        <div className="flex items-center gap-0.5">
+                          <span className="text-[9px] sm:text-[11px] font-bold text-slate-900 dark:text-slate-100 truncate leading-tight">
                             {batch.seller_name}
                           </span>
-                          <span className="text-[#047857] text-xs">✓</span>
+                          <span className="text-[#047857] text-[9px] font-bold">✓</span>
                         </div>
-                        <span className="text-[10px] text-slate-400 truncate">
+                        <span className="text-[8px] sm:text-[9px] text-slate-400 truncate leading-tight">
                           {batch.faculty}
                         </span>
                       </div>
                     </div>
 
-                    <h3 className="font-bold text-slate-900 dark:text-white group-hover:text-[#047857] transition-colors leading-snug line-clamp-1">
+                    <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white group-hover:text-[#047857] transition-colors leading-tight line-clamp-1">
                       {batch.title || batch.name}
                     </h3>
 
                     {/* Quota Progress Bar */}
-                    <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl flex flex-col gap-1.5 border border-slate-100 dark:border-white/5">
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="text-slate-600 dark:text-slate-300">
-                          Kuota Terisi: <strong className="text-[#047857] dark:text-emerald-400">{reserved} / {quota} Slot</strong>
+                    <div className="bg-slate-50 dark:bg-slate-800/60 p-1.5 sm:p-2 rounded-lg sm:rounded-xl flex flex-col gap-1 border border-slate-100 dark:border-white/5">
+                      <div className="flex justify-between items-center text-[9px] sm:text-[11px]">
+                        <span className="text-slate-600 dark:text-slate-300 truncate">
+                          Slot: <strong className="text-[#047857] dark:text-emerald-400">{reserved}/{quota}</strong>
                         </span>
-                        <span className="text-[#047857] dark:text-emerald-400 font-bold text-[11px]">{percent}%</span>
+                        <span className="text-[#047857] dark:text-emerald-400 font-bold text-[9px] sm:text-[10px] shrink-0">{percent}%</span>
                       </div>
-                      <div className="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                      <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
                         <div
                           className="bg-[#047857] h-full rounded-full transition-all duration-500"
                           style={{ width: `${percent}%` }}
                         />
                       </div>
-                      <span className="text-[10px] text-slate-400">
-                        {remaining > 0 ? `Sisa ${remaining} slot sebelum batch diproduksi` : "Batch kuota telah penuh"}
+                      <span className="text-[8px] sm:text-[9px] text-slate-400 truncate">
+                        {remaining > 0 ? `Sisa ${remaining} slot` : "Batch penuh"}
                       </span>
                     </div>
 
                     {/* Pickup Point */}
-                    <div className="flex items-start gap-1.5 text-xs text-slate-500 dark:text-slate-400 pt-0.5">
-                      <Icon.MapPin className="w-3.5 h-3.5 text-[#047857] shrink-0 mt-0.5" />
-                      <span className="line-clamp-1">{batch.pickup_point}</span>
+                    <div className="flex items-center gap-1 text-[9px] sm:text-[11px] text-slate-500 dark:text-slate-400">
+                      <Icon.MapPin className="w-3 h-3 text-[#047857] shrink-0" />
+                      <span className="truncate">{batch.pickup_point}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Card Action Buttons */}
-                <div className="p-4 pt-0 flex items-center gap-2 mt-2">
+                <div className="grid grid-cols-2 gap-1 sm:gap-1.5 mt-2 pt-1.5 sm:pt-2 border-t border-slate-100 dark:border-white/10">
                   <button
                     type="button"
                     onClick={() => {
                       setSelectedBatch(batch);
                       setOrderModalOpen(true);
                     }}
-                    className="flex-1 bg-[#047857] hover:bg-[#065F46] text-white py-2.5 px-3 rounded-xl font-bold text-xs text-center transition shadow-xs flex items-center justify-center gap-1.5 active:scale-95"
+                    className="py-1.5 px-1.5 sm:px-2 rounded-lg bg-[#047857] hover:bg-[#065F46] text-white font-bold text-[10px] sm:text-xs text-center transition shadow-xs active:scale-95 flex items-center justify-center"
                   >
                     <span>Pesan Slot</span>
                   </button>
@@ -383,10 +383,11 @@ export default function OpenPoClient({ initialBatches = [] }) {
                     href={`https://wa.me/${(batch.wa || "62895429126232").replace(/\D/g, "")}?text=${encodeURIComponent(`Halo ${batch.seller_name}, mau tanya tentang Open PO ${batch.title}...`)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+                    className="py-1.5 px-1.5 sm:px-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-[10px] sm:text-xs text-center transition flex items-center justify-center gap-0.5 sm:gap-1"
                     title="Chat Penjual"
                   >
-                    <Icon.MessageCircle className="w-4 h-4 text-[#047857]" />
+                    <Icon.MessageCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#047857]" />
+                    <span>Chat WA</span>
                   </a>
                 </div>
               </article>
