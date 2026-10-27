@@ -21,48 +21,52 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
   const isConditionNew = listing.condition === "new";
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-xl bg-white dark:bg-[#18181b] border border-slate-200/90 dark:border-white/[0.08] shadow-[0_1px_4px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_18px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 active:scale-[0.99] transition-all duration-200 no-tap-highlight">
+    <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 hover:shadow-md transition-all duration-200">
       {/* Floating favorite button */}
-      <FavoriteButton listing={listing} className="absolute right-2 top-2 z-10 !bg-white/90 dark:!bg-black/60 shadow-xs hover:!bg-white dark:hover:!bg-black" />
+      <FavoriteButton
+        listing={listing}
+        className="absolute right-2.5 top-2.5 z-10 !w-7 !h-7 !rounded-full !bg-white/90 dark:!bg-black/60 shadow-xs hover:!bg-white dark:hover:!bg-black flex items-center justify-center"
+      />
 
       <Link href={`/produk/${buildSlug(listing.title, listing.id)}`} className="flex flex-col flex-1">
-        {/* Gambar Produk: Aspect Square */}
-        <div className="relative aspect-square w-full overflow-hidden bg-slate-100 dark:bg-black/40 rounded-t-[11px]">
+        {/* Gambar Produk: h-48 */}
+        <div className="relative h-48 w-full overflow-hidden bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
           {listing.image_url ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={listing.image_url}
               alt={listing.title}
               loading="lazy"
-              className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
-            <div className="absolute inset-0 flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-300 dark:text-slate-600">
-              <Icon.Package className="h-10 w-10 opacity-60" />
+            <div className="flex flex-col items-center justify-center text-slate-400">
+              <Icon.Package className="w-10 h-10 text-slate-300 stroke-[1.2]" />
+              <span className="text-[10px] font-medium text-slate-400 mt-1">Foto dari Penjual</span>
             </div>
           )}
 
-          {/* Satu Badge Prioritas — Rectangular Tokopedia Micro-Badge */}
+          {/* Badge Prioritas */}
           {!sold && (
-            <div className="absolute left-2 top-2 z-10 pointer-events-none">
+            <div className="absolute left-2.5 top-2.5 z-10 pointer-events-none">
               {isRental ? (
-                <span className="rounded-[4px] bg-teal-600 px-2 py-0.5 text-[10.5px] font-bold text-white shadow-xs">
+                <span className="bg-teal-700/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-xs backdrop-blur-xs">
                   Sewa
                 </span>
               ) : isSponsored ? (
-                <span className="rounded-[4px] bg-indigo-600 px-2 py-0.5 text-[10.5px] font-bold text-white shadow-xs">
+                <span className="bg-indigo-700/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-xs backdrop-blur-xs">
                   Sponsor
                 </span>
               ) : listing.featured ? (
-                <span className="rounded-[4px] bg-slate-900 text-white px-2 py-0.5 text-[10.5px] font-bold shadow-xs">
+                <span className="bg-slate-900/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-xs backdrop-blur-xs">
                   Unggulan
                 </span>
               ) : (isNew || isConditionNew) ? (
-                <span className="rounded-[4px] bg-emerald-600 px-2 py-0.5 text-[10.5px] font-bold text-white shadow-xs flex items-center gap-0.5">
-                  <Icon.Sparkles className="h-3 w-3" /> Baru
+                <span className="bg-emerald-900/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-xs backdrop-blur-xs flex items-center gap-0.5">
+                  Baru
                 </span>
               ) : isLowStock ? (
-                <span className="rounded-[4px] bg-amber-600 px-2 py-0.5 text-[10.5px] font-bold text-white shadow-xs">
+                <span className="bg-amber-700/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-xs backdrop-blur-xs">
                   Sisa {listing.stock}
                 </span>
               ) : null}
@@ -71,8 +75,8 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
 
           {/* Overlay Terjual */}
           {sold && (
-            <span className="absolute inset-0 grid place-items-center bg-black/50">
-              <span className="rounded-[4px] bg-white dark:bg-[#1c1c1e] px-3 py-1 text-[11px] font-black tracking-wider text-[#1d1d1f] dark:text-white shadow-md">
+            <span className="absolute inset-0 grid place-items-center bg-black/50 z-20">
+              <span className="rounded-full bg-white dark:bg-slate-900 px-3 py-1 text-[11px] font-extrabold tracking-wider text-slate-900 dark:text-white shadow-md">
                 TERJUAL
               </span>
             </span>
@@ -80,15 +84,15 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
         </div>
 
         {/* Info Konten: Judul, Harga, Seller & Lokasi */}
-        <div className="p-2.5 sm:p-3 flex flex-col flex-1 justify-between gap-1.5">
+        <div className="p-3.5 flex-1 flex flex-col justify-between">
           <div>
             {/* Judul Produk */}
-            <h3 className="line-clamp-2 text-[13px] sm:text-[14px] font-semibold leading-snug text-slate-800 dark:text-slate-100 group-hover:text-[#126B49] dark:group-hover:text-emerald-400 transition-colors min-h-[2.1rem] sm:min-h-[2.4rem] tracking-tight">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white truncate group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
               {listing.title}
             </h3>
 
             {/* Harga */}
-            <div className="mt-1 text-[15px] sm:text-[16px] font-black tracking-tight text-[#126B49] dark:text-emerald-400">
+            <p className="text-base font-extrabold text-slate-900 dark:text-emerald-400 mt-1">
               {listing.type === "jasa" && (
                 <span className="text-[12px] font-normal text-slate-500 dark:text-slate-400 mr-1">Mulai</span>
               )}
@@ -96,13 +100,18 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
               {isRental && listing.rental_period && (
                 <span className="text-[12px] font-semibold text-teal-600 dark:text-teal-400 ml-1">/{listing.rental_period}</span>
               )}
-            </div>
+            </p>
           </div>
 
-          {/* Footer Card: Seller/Trust Indicator & Lokasi COD */}
-          <div className="mt-1 pt-2 border-t border-black/[0.04] dark:border-white/[0.06] flex items-center justify-between text-[11px] sm:text-[12px] text-slate-500 dark:text-slate-400 gap-1.5">
-            <div className="flex items-center gap-1 min-w-0 flex-1 overflow-hidden">
-              <span className="truncate max-w-[85px] sm:max-w-[125px] font-medium text-slate-700 dark:text-slate-300">
+          {/* Footer Card: Seller & Lokasi COD */}
+          <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-white/10 flex items-center justify-between text-xs text-slate-500 gap-2">
+            <div className="flex items-center gap-1.5 min-w-0 shrink">
+              {!tanpaPenjual && (
+                <span className="w-4 h-4 rounded-full bg-emerald-900 text-emerald-300 flex items-center justify-center text-[9px] font-bold shrink-0">
+                  {(listing.seller_name || "M").charAt(0).toUpperCase()}
+                </span>
+              )}
+              <span className="truncate font-medium text-slate-700 dark:text-slate-300 text-xs">
                 {!tanpaPenjual ? (
                   listing.seller_name && listing.seller_name.trim().length > 2 && !/^User\s+\d+$/i.test(listing.seller_name)
                     ? listing.seller_name
@@ -111,24 +120,10 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
                     : "Mahasiswa"
                 ) : ""}
               </span>
-              {listing.seller_profiles?.subscription_tier === "pro" && (
-                <Icon.Sparkles className="h-3 w-3 text-amber-500 shrink-0" title="Penjual Pro" />
-              )}
-              {listing.seller_profiles?.trusted_seller && (
-                <Icon.Check className="h-3 w-3 text-blue-500 shrink-0" title="Penjual Terpercaya" />
-              )}
-              {(listing.seller_profiles?.student_verified || listing.student_verified) && (
-                <span
-                  className="inline-flex items-center text-[10px] font-bold text-sky-600 dark:text-sky-400 shrink-0"
-                  title={`✓ Mahasiswa ${listing.seller_profiles?.student_campus || "Kampus"} Terverifikasi`}
-                >
-                  <Icon.CheckCircle className="h-3.5 w-3.5 fill-sky-500 text-white dark:fill-sky-400 dark:text-zinc-900" />
-                </span>
-              )}
             </div>
-            <span className="shrink-0 flex items-center gap-0.5 text-[11px] sm:text-[12px] text-slate-500 dark:text-slate-400 max-w-[95px] sm:max-w-[115px] truncate" title={listing.area ? `COD: ${listing.area}` : undefined}>
-              <Icon.MapPin className="h-3 w-3 shrink-0 text-slate-400" />
-              <span className="truncate">{listing.area || (listing.campus === "Semua" ? "Medan" : listing.campus)}</span>
+            <span className="flex items-center gap-1 shrink-0 text-slate-400 text-[11px]" title={listing.area ? `COD: ${listing.area}` : undefined}>
+              <Icon.MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+              <span className="truncate max-w-[90px]">{listing.area || (listing.campus === "Semua" ? "USU" : listing.campus)}</span>
             </span>
           </div>
         </div>
