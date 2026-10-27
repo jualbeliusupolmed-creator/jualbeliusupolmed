@@ -16,6 +16,7 @@ import { compressImage } from "@/lib/image";
 import ProductCard from "@/components/ProductCard";
 import CreateSheet from "@/components/CreateSheet";
 import OTPModal from "@/components/OTPModal";
+import { cn } from "@/lib/utils";
 
 // Haptic feedback for tactile feel on mobile devices
 function triggerHaptic(type = "light") {
@@ -584,43 +585,38 @@ export default function SuperAppHome({
           </div>
         </div>
 
-        {/* SearchBar + Quick Chips */}
-        <div className="mb-4 space-y-2.5">
-          <div className="flex flex-col sm:flex-row items-center gap-2.5">
-            <div className="relative flex-1 w-full shadow-xs rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-white/10 transition-all focus-within:ring-2 focus-within:ring-emerald-600/30">
+        {/* BEGIN: SearchBar + Jelajah Quick Chips Bar */}
+        <div className="mb-6 space-y-3">
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <div className="relative flex-1 w-full">
               <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                <Icon.Search className="w-4 h-4" />
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+                </svg>
               </span>
               <input
                 ref={searchInputRef}
-                type="search"
+                type="text"
                 value={listingSearch}
                 onChange={(e) => setListingSearch(e.target.value)}
-                placeholder="Cari diktat, kos, risol mayo, PO..."
-                className="w-full h-11 pl-10 pr-10 bg-transparent text-slate-900 dark:text-white text-[13px] placeholder:text-slate-400 rounded-2xl focus:outline-none"
+                placeholder="Cari laptop, kost, buku, jastip, or teman seprodi..."
+                className="w-full pl-10 pr-4 py-2.5 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-full focus:bg-white focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 transition shadow-xs placeholder-slate-400 dark:placeholder-slate-500 text-slate-900 dark:text-white"
               />
-              <button
-                type="button"
-                onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
-                aria-label="Filter Kategori"
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-700 dark:hover:text-white"
-              >
-                <Icon.Filter className="w-4 h-4" />
-              </button>
             </div>
-
-            <div className="hidden sm:flex items-center gap-2">
-              <div className="relative">
+            <div className="w-full sm:w-auto flex gap-2">
+              <div className="relative flex-1 sm:flex-none">
                 <button
                   type="button"
                   onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
-                  className="flex items-center justify-between gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-700 dark:text-slate-200 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700/50 transition shadow-xs"
+                  className="w-full sm:w-auto flex items-center justify-between gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-700 dark:text-slate-200 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700/60 transition shadow-xs"
                 >
                   <span>{listingCategory === "Semua" ? "Kategori" : listingCategory}</span>
-                  <Icon.ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                  <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+                  </svg>
                 </button>
                 {categoryDropdownOpen && (
-                  <div className="absolute left-0 mt-1 w-44 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200/80 dark:border-white/10 py-1.5 z-50">
+                  <div className="absolute left-0 sm:right-0 sm:left-auto mt-1 w-44 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200/80 dark:border-white/10 py-1.5 z-50">
                     {["Semua", "Elektronik", "Buku", "Fashion", "Kos", "Jasa", "Makanan"].map((cat) => (
                       <button
                         key={cat}
@@ -632,133 +628,102 @@ export default function SuperAppHome({
                         className="w-full px-3.5 py-2 text-xs text-left font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center justify-between"
                       >
                         <span>{cat}</span>
-                        {listingCategory === cat && <span className="text-emerald-700">✓</span>}
+                        {listingCategory === cat && <span className="text-emerald-700 font-bold">✓</span>}
                       </button>
                     ))}
                   </div>
                 )}
               </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  const next = selectedCampus === "USU" ? "POLMED" : selectedCampus === "POLMED" ? "Semua" : "USU";
-                  setSelectedCampus(next);
-                  setListingCampus(next);
-                }}
-                className="flex items-center justify-between gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-700 dark:text-slate-200 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700/50 transition shadow-xs whitespace-nowrap"
-              >
-                <span>Kampus: {selectedCampus === "Semua" ? "Semua" : selectedCampus}</span>
-                <Icon.ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-              </button>
-            </div>
-          </div>
-
-          {/* Category Chips Bar */}
-          <div className="flex items-center gap-2 overflow-x-auto py-1 text-xs [scrollbar-width:none] -mx-4 px-4 sm:mx-0 sm:px-0">
-            <button
-              type="button"
-              onClick={() => { setListingCategory("Semua"); setListingSearch(""); }}
-              className={`px-3.5 py-1.5 rounded-full text-[12px] font-semibold shrink-0 shadow-xs flex items-center gap-1.5 transition active:scale-95 ${
-                listingCategory === "Semua" && !listingSearch
-                  ? "bg-emerald-800 text-white"
-                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10"
-              }`}
-            >
-              <Icon.Grid className="w-3.5 h-3.5" />
-              Semua
-            </button>
-            <button
-              type="button"
-              onClick={() => { setListingCategory("Buku"); setListingSearch(""); }}
-              className={`px-3.5 py-1.5 rounded-full text-[12px] shrink-0 border flex items-center gap-1.5 transition active:scale-95 ${
-                listingCategory === "Buku"
-                  ? "bg-emerald-800 text-white border-emerald-800 font-semibold"
-                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 font-medium"
-              }`}
-            >
-              <Icon.BookOpen className="w-3.5 h-3.5" />
-              Buku &amp; Diktat
-            </button>
-            <button
-              type="button"
-              onClick={() => { setListingCategory("Makanan"); setListingSearch(""); }}
-              className={`px-3.5 py-1.5 rounded-full text-[12px] shrink-0 border flex items-center gap-1.5 transition active:scale-95 ${
-                listingCategory === "Makanan"
-                  ? "bg-emerald-800 text-white border-emerald-800 font-semibold"
-                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 font-medium"
-              }`}
-            >
-              <Icon.Coffee className="w-3.5 h-3.5" />
-              Kuliner PO
-            </button>
-            <button
-              type="button"
-              onClick={() => { setListingCategory("Kos"); setListingSearch("kos"); }}
-              className={`px-3.5 py-1.5 rounded-full text-[12px] shrink-0 border flex items-center gap-1.5 transition active:scale-95 ${
-                listingCategory === "Kos"
-                  ? "bg-emerald-800 text-white border-emerald-800 font-semibold"
-                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 font-medium"
-              }`}
-            >
-              <Icon.Home className="w-3.5 h-3.5" />
-              Kos Mahasiswa
-            </button>
-            <button
-              type="button"
-              onClick={() => { setListingCategory("Elektronik"); setListingSearch(""); }}
-              className={`px-3.5 py-1.5 rounded-full text-[12px] shrink-0 border flex items-center gap-1.5 transition active:scale-95 ${
-                listingCategory === "Elektronik"
-                  ? "bg-emerald-800 text-white border-emerald-800 font-semibold"
-                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 font-medium"
-              }`}
-            >
-              <Icon.Laptop className="w-3.5 h-3.5" />
-              Elektronik
-            </button>
-            <button
-              type="button"
-              onClick={() => { setListingCategory("Fashion"); setListingSearch(""); }}
-              className={`px-3.5 py-1.5 rounded-full text-[12px] shrink-0 border flex items-center gap-1.5 transition active:scale-95 ${
-                listingCategory === "Fashion"
-                  ? "bg-emerald-800 text-white border-emerald-800 font-semibold"
-                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/10 font-medium"
-              }`}
-            >
-              <Icon.Shirt className="w-3.5 h-3.5" />
-              Fashion Preloved
-            </button>
-          </div>
-        </div>
-
-        {/* WTB LIVE TICKER (BARANG DICARI MAHASISWA) */}
-        <div className="mb-5 flex items-center justify-between p-2.5 rounded-2xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/70 dark:border-amber-900/40 shadow-xs">
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            <span className="px-2 py-0.5 rounded-md bg-amber-600 text-white text-[10px] uppercase tracking-wider shrink-0 font-extrabold flex items-center gap-1">
-              <Icon.Megaphone className="w-3 h-3" />
-              WTB
-            </span>
-            <div className="overflow-hidden relative h-5 flex-1 min-w-0">
-              <div
-                className="flex flex-col transition-transform duration-500 ease-out"
-                style={{ transform: `translateY(-${wtbIndex * 20}px)` }}
-              >
-                {WTB_ITEMS.map((w, idx) => (
-                  <span key={idx} className="h-5 flex items-center text-[12px] text-slate-800 dark:text-slate-200 truncate font-medium">
-                    {w.item} ({w.campus}) — Budget: {w.budget}
-                  </span>
-                ))}
+              <div className="relative flex-1 sm:flex-none">
+                <button
+                  type="button"
+                  onClick={() => setCampusDropdownOpen(!campusDropdownOpen)}
+                  className="w-full sm:w-auto flex items-center justify-between gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-700 dark:text-slate-200 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700/60 transition shadow-xs whitespace-nowrap"
+                >
+                  <span>Kampus: {selectedCampus === "Semua" ? "Semua" : selectedCampus}</span>
+                  <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+                  </svg>
+                </button>
+                {campusDropdownOpen && (
+                  <div className="absolute right-0 mt-1 w-44 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200/80 dark:border-white/10 py-1.5 z-50">
+                    {["USU", "POLMED", "UNIMED", "UINSU", "Semua"].map((camp) => (
+                      <button
+                        key={camp}
+                        type="button"
+                        onClick={() => {
+                          setSelectedCampus(camp);
+                          setListingCampus(camp);
+                          setCampusDropdownOpen(false);
+                        }}
+                        className="w-full px-3.5 py-2 text-xs text-left font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center justify-between"
+                      >
+                        <span>{camp === "Semua" ? "Semua Kampus" : camp}</span>
+                        {selectedCampus === camp && <span className="text-emerald-700 font-bold">✓</span>}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => setShowCreateSheet(true)}
-            className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-[12px] text-emerald-800 dark:text-emerald-300 font-bold shrink-0 flex items-center gap-0.5 shadow-xs border border-amber-200/80 dark:border-amber-900/40 transition-all active:scale-95"
-          >
-            <Icon.Plus className="w-3.5 h-3.5" />
-            Pasang
-          </button>
+
+          <div className="flex items-center gap-2 overflow-x-auto py-1 text-xs [scrollbar-width:none]">
+            <span className="text-emerald-800 dark:text-emerald-400 font-bold text-[11px] uppercase tracking-wider shrink-0 flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M13 10V3L4 14h7v7l9-11h-7z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+              </svg>
+              Jelajah Kampus:
+            </span>
+            <button
+              type="button"
+              onClick={() => { setListingCategory("Kos"); setListingSearch("kos"); }}
+              className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-emerald-50/50 dark:hover:bg-slate-700 border border-slate-200 dark:border-white/10 hover:border-emerald-300 rounded-full text-slate-700 dark:text-slate-200 hover:text-emerald-900 transition font-medium text-xs shadow-xs"
+            >
+              <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+              </svg>
+              <span>Cari Kos Sekitar USU</span>
+            </button>
+            <Link
+              href="/mading?tab=oprec"
+              className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-emerald-50/50 dark:hover:bg-slate-700 border border-slate-200 dark:border-white/10 hover:border-emerald-300 rounded-full text-slate-700 dark:text-slate-200 hover:text-emerald-900 transition font-medium text-xs shadow-xs"
+            >
+              <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+              </svg>
+              <span>Oprec &amp; Kepanitiaan</span>
+            </Link>
+            <Link
+              href="/mading?tab=komunitas"
+              className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-emerald-50/50 dark:hover:bg-slate-700 border border-slate-200 dark:border-white/10 hover:border-emerald-300 rounded-full text-slate-700 dark:text-slate-200 hover:text-emerald-900 transition font-medium text-xs shadow-xs"
+            >
+              <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+              </svg>
+              <span>Komunitas &amp; UKM</span>
+            </Link>
+            <button
+              type="button"
+              onClick={() => { setListingCategory("Buku"); setListingSearch("diktat"); }}
+              className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-emerald-50/50 dark:hover:bg-slate-700 border border-slate-200 dark:border-white/10 hover:border-emerald-300 rounded-full text-slate-700 dark:text-slate-200 hover:text-emerald-900 transition font-medium text-xs shadow-xs"
+            >
+              <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+              </svg>
+              <span>Bank Soal &amp; Diktat</span>
+            </button>
+            <Link
+              href="/dicari"
+              className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-emerald-900 hover:bg-slate-900 border border-emerald-950 rounded-full text-white transition font-medium text-xs shadow-xs"
+            >
+              <svg className="w-3.5 h-3.5 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+              </svg>
+              <span>Papan Barang Dicari (WTB)</span>
+            </Link>
+          </div>
         </div>
 
         {/* Reorganized 2-Column Desktop Grid */}
@@ -912,39 +877,41 @@ export default function SuperAppHome({
             </section>
 
             {/* 3. Marketplace Grid (Diletakkan di bawah PO & WTB) */}
-            <section id="marketplace-section" className="space-y-3.5">
-              <div className="flex flex-col space-y-2">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-[17px] font-bold text-slate-900 dark:text-white tracking-tight">
-                      Marketplace Preloved
-                    </h2>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                      COD langsung di area kampus bebas ongkir
-                    </p>
-                  </div>
-                  <span className="text-[11px] text-emerald-800 dark:text-emerald-300 font-bold flex items-center gap-1 bg-emerald-100/70 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full">
-                    <Icon.CheckCircle className="w-3.5 h-3.5 text-emerald-700" />
-                    Aman COD
-                  </span>
+            <section id="marketplace-section" className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">
+                    Marketplace <span className="font-serif italic font-normal text-emerald-700 dark:text-emerald-400">Jual-Beli Terverifikasi</span>
+                  </h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Barang preloved &amp; kebutuhan mahasiswa sekitar kampus USU
+                  </p>
                 </div>
-
-                {/* Campus Segment Filter */}
-                <div className="flex p-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-center">
-                  {["Semua", "USU", "POLMED"].map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => { setListingCampus(c); setSelectedCampus(c); }}
-                      className={`flex-1 py-1 rounded-lg text-[12px] font-bold transition ${
-                        listingCampus === c
-                          ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs"
-                          : "text-slate-500 hover:text-slate-900 dark:text-slate-400 font-medium"
-                      }`}
-                    >
-                      {c}
-                    </button>
-                  ))}
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setListingSort("termurah")}
+                    className={cn(
+                      "text-xs px-3 py-1 rounded-full transition shadow-xs",
+                      listingSort === "termurah"
+                        ? "bg-emerald-900 border border-emerald-950 text-white font-bold"
+                        : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-semibold hover:bg-slate-50 dark:hover:bg-slate-700/60"
+                    )}
+                  >
+                    Termurah
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setListingSort("terbaru")}
+                    className={cn(
+                      "text-xs px-3 py-1 rounded-full transition shadow-xs",
+                      listingSort === "terbaru"
+                        ? "bg-emerald-900 border border-emerald-950 text-white font-bold"
+                        : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-semibold hover:bg-slate-50 dark:hover:bg-slate-700/60"
+                    )}
+                  >
+                    Terbaru
+                  </button>
                 </div>
               </div>
 
@@ -966,7 +933,7 @@ export default function SuperAppHome({
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {filteredListings.slice(0, visibleListingCount).map((ad) => (
                     <ProductCard key={ad.id} listing={ad} />
                   ))}
