@@ -3,7 +3,7 @@ import { getSettings } from "@/lib/settings";
 import { getCategories } from "@/lib/categories";
 import { fetchListingsWithProfiles } from "@/lib/dbHelpers";
 import { buildSlug } from "@/lib/slug";
-import HomeBrowser from "../HomeBrowser";
+import MarketplaceBrowser from "./MarketplaceBrowser";
 import { skripJsonLd } from "@/lib/jsonLd";
 
 export const dynamic = "force-dynamic";
@@ -149,16 +149,11 @@ export default async function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: skripJsonLd(itemListJsonLd) }}
       />
-      <HomeBrowser
+      <MarketplaceBrowser
         initialListings={listings}
         initialTotal={total}
-        featured={featured}
-        trending={trending}
         categories={categories}
         stats={stats}
-        heroTitle={settings.site?.heroTitle}
-        heroSubtitle={settings.site?.heroSubtitle}
-        layoutOrder={["main"]}
       />
     </>
   );
