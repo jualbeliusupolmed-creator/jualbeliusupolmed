@@ -21,7 +21,7 @@ export default function Error({ error, reset }) {
       sessionStorage.setItem(key, String(Date.now()));
       window.location.reload();
     }
-  }, [isChunkError]);
+  }, [error, isChunkError]);
 
   if (isChunkError) {
     return (
