@@ -33,6 +33,8 @@ export function TabInstagram() {
 
   useEffect(() => {
     fetchData();
+    // fetchData is intentionally defined in the component to access current queue state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Otomatisasi: Jika ada antrean 'queued' atau 'processing', refresh otomatis tiap 4 detik
@@ -45,6 +47,8 @@ export function TabInstagram() {
     }, 4000);
 
     return () => clearInterval(timer);
+    // fetchData is intentionally defined in the component to access current queue state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.stats?.queued, data.stats?.processing]);
 
   const fetchData = async (options = {}) => {
