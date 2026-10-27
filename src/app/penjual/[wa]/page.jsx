@@ -596,35 +596,35 @@ export default async function SellerProfilePage({ params }) {
               Buka di OpenPO ↗
             </a>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
             {poBatches.map((b) => (
               <a
                 key={b.id}
                 href={b.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="card p-4 hover:border-primary/40 hover:shadow-md transition-all flex flex-col justify-between group"
+                className="card p-2.5 sm:p-4 hover:border-primary/40 hover:shadow-md transition-all flex flex-col justify-between group rounded-xl sm:rounded-2xl"
               >
                 <div>
-                  <div className="flex items-center justify-between text-xs text-gray-500 mb-1.5">
-                    <span className="font-bold text-emerald-600 uppercase tracking-wider text-[10px]">
+                  <div className="flex items-center justify-between text-[9px] sm:text-xs text-gray-500 mb-1 sm:mb-1.5">
+                    <span className="font-bold text-emerald-600 uppercase tracking-wider text-[8px] sm:text-[10px]">
                       {b.emoji} {b.category}
                     </span>
-                    <span>Tersisa {b.quota - b.reserved} slot</span>
+                    <span className="text-[8px] sm:text-[10px]">Sisa {b.quota - b.reserved}</span>
                   </div>
-                  <h3 className="font-bold text-sm text-gray-900 dark:text-white group-hover:text-primary transition-colors line-clamp-1">
+                  <h3 className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white group-hover:text-primary transition-colors line-clamp-1">
                     {b.name}
                   </h3>
-                  <p className="text-primary font-black text-sm mt-1">
+                  <p className="text-primary font-black text-xs sm:text-sm mt-0.5 sm:mt-1">
                     Rp {b.price.toLocaleString("id-ID")}
                   </p>
-                  <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
+                  <p className="text-[9px] sm:text-xs text-gray-400 mt-1 sm:mt-2 flex items-center gap-1">
                     <Icon.MapPin className="h-3 w-3 shrink-0 text-gray-400" />
                     <span className="truncate">{b.pickup_point}</span>
                   </p>
                 </div>
-                <div className="mt-3 pt-2.5 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-emerald-600">
-                  <span>Pesan Pre-Order</span>
+                <div className="mt-2 sm:mt-3 pt-1.5 sm:pt-2.5 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between text-[10px] sm:text-xs font-bold text-emerald-600">
+                  <span>Pesan Slot</span>
                   <span>→</span>
                 </div>
               </a>

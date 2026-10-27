@@ -272,13 +272,13 @@ export default function DicariPage({ initialItems = [] }) {
           </div>
 
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="card animate-pulse p-4 space-y-3 bg-white dark:border-slate-800 dark:bg-slate-900/30 rounded-2xl">
-                  <div className="h-4 w-1/4 rounded bg-gray-100 dark:bg-slate-800" />
-                  <div className="h-5 w-3/4 rounded bg-gray-100 dark:bg-slate-800" />
-                  <div className="h-3 w-5/6 rounded bg-gray-100 dark:bg-slate-800" />
-                  <div className="h-5 w-1/3 rounded bg-gray-200 dark:bg-slate-700" />
+                <div key={i} className="card animate-pulse p-2.5 sm:p-4 space-y-2 sm:space-y-3 bg-white dark:border-slate-800 dark:bg-slate-900/30 rounded-xl sm:rounded-2xl">
+                  <div className="h-3 w-1/3 rounded bg-gray-100 dark:bg-slate-800" />
+                  <div className="h-4 w-3/4 rounded bg-gray-100 dark:bg-slate-800" />
+                  <div className="h-2.5 w-5/6 rounded bg-gray-100 dark:bg-slate-800" />
+                  <div className="h-4 w-1/2 rounded bg-gray-200 dark:bg-slate-700" />
                 </div>
               ))}
             </div>
@@ -305,7 +305,7 @@ export default function DicariPage({ initialItems = [] }) {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
               {items.map((item) => {
                 const condMatch = item.description?.match(/^\[Kondisi:\s*(Baru|Bekas)\]\n?/i);
                 const itemCondition = condMatch ? condMatch[1] : null;
@@ -315,48 +315,48 @@ export default function DicariPage({ initialItems = [] }) {
                 return (
                   <article
                     key={item.id}
-                    className={`card flex flex-col justify-between p-4 bg-white dark:bg-slate-900/40 rounded-2xl border border-slate-200/80 dark:border-white/10 hover:shadow-md transition-all relative overflow-hidden ${
-                      isUrgent ? "border-l-4 border-l-rose-500" : ""
+                    className={`card flex flex-col justify-between p-2.5 sm:p-4 bg-white dark:bg-slate-900/40 rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-white/10 hover:shadow-md transition-all relative overflow-hidden ${
+                      isUrgent ? "border-l-3 sm:border-l-4 border-l-rose-500" : ""
                     } ${item.status === "resolved" ? "opacity-60 grayscale-[30%]" : ""}`}
                   >
                     <div>
                       {/* Top Badges */}
-                      <div className="flex flex-wrap items-center justify-between gap-1 mb-2">
-                        <div className="flex items-center gap-1.5 flex-wrap">
+                      <div className="flex flex-wrap items-center justify-between gap-1 mb-1.5">
+                        <div className="flex items-center gap-1 flex-wrap">
                           {isUrgent && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 text-[10px] font-bold">
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 text-[8px] sm:text-[10px] font-bold">
                               🚨 MENDESAK
                             </span>
                           )}
-                          <span className="badge bg-emerald-50 text-[#047857] dark:bg-emerald-950/40 dark:text-emerald-400 font-bold text-[10px]">
+                          <span className="badge bg-emerald-50 text-[#047857] dark:bg-emerald-950/40 dark:text-emerald-400 font-bold text-[8px] sm:text-[10px] px-1.5 py-0.5">
                             {item.category}
                           </span>
                           {itemCondition && (
-                            <span className="badge bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 text-[10px]">
+                            <span className="badge bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 text-[8px] sm:text-[10px] px-1.5 py-0.5">
                               {itemCondition}
                             </span>
                           )}
                         </div>
                       </div>
 
-                      <h3 className="font-bold text-slate-900 dark:text-white leading-snug text-sm sm:text-base line-clamp-2">
+                      <h3 className="font-bold text-slate-900 dark:text-white leading-tight text-xs sm:text-sm line-clamp-1 sm:line-clamp-2">
                         {item.title}
                       </h3>
 
-                      <div className="mt-1.5 flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
+                      <div className="mt-1 flex items-center gap-1 text-[9px] sm:text-[11px] text-slate-500 dark:text-slate-400">
                         <Icon.MapPin className="h-3 w-3 shrink-0 text-[#047857]" />
-                        <span className="truncate">{item.campus} · {item.area || "Area Kampus"}</span>
+                        <span className="truncate">{item.campus} · {item.area || "Kampus"}</span>
                       </div>
 
-                      <p className="mt-2 text-xs text-slate-600 dark:text-slate-400 whitespace-pre-wrap leading-relaxed line-clamp-2">
+                      <p className="mt-1 text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 leading-snug line-clamp-1 sm:line-clamp-2">
                         {cleanDesc}
                       </p>
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/10">
-                      <div className="flex items-center justify-between gap-1 mb-2.5 text-xs">
-                        <span className="text-slate-400">Batas Budget:</span>
-                        <span className="font-extrabold text-[#047857] dark:text-emerald-400 text-right">
+                    <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-white/10">
+                      <div className="flex items-center justify-between gap-1 mb-2 text-[9px] sm:text-xs">
+                        <span className="text-slate-400 truncate">Budget:</span>
+                        <span className="font-extrabold text-[#047857] dark:text-emerald-400 text-right truncate">
                           {item.budget > 0 ? rupiah(item.budget) : "Nego"}
                         </span>
                       </div>
@@ -377,10 +377,10 @@ export default function DicariPage({ initialItems = [] }) {
                             .then(({ ok, d }) => { if (!ok) setManualError(d.error || "Kontak postingan ini belum bisa dibuka."); })
                             .catch(() => {});
                         }}
-                        className="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-[#047857] text-slate-700 hover:text-white dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-[#047857] dark:hover:text-white text-xs font-bold transition flex items-center justify-center gap-1.5 active:scale-95"
+                        className="w-full py-1.5 px-2 rounded-lg bg-slate-100 hover:bg-[#047857] text-slate-700 hover:text-white dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-[#047857] dark:hover:text-white text-[10px] sm:text-xs font-bold transition flex items-center justify-center gap-1 active:scale-95"
                       >
-                        <Icon.MessageCircle className="h-3.5 w-3.5 shrink-0" />
-                        <span>Saya Punya Barang Ini</span>
+                        <Icon.MessageCircle className="h-3 w-3 shrink-0" />
+                        <span className="truncate">Tawari Barang</span>
                       </button>
                     </div>
                   </article>
