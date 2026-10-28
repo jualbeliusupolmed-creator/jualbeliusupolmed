@@ -1,4 +1,4 @@
-import { isAdmin } from "@/lib/auth";
+import { getAdminActor, hasAdminPermission } from "@/lib/admin-access";
 import { getAdminStats, DEFAULT_DATA } from "@/lib/adminData";
 import AdminLogin from "../AdminLogin";
 import BroadcastClient from "./BroadcastClient";
@@ -7,7 +7,8 @@ import { LoadError } from "@/components/admin/ui";
 export const dynamic = "force-dynamic";
 
 export default async function AdminBroadcastPage() {
-  if (!isAdmin()) {
+  const actor = await getAdminActor();
+  if (!hasAdminPermission(actor, "whatsapp", "read")) {
     return <AdminLogin />;
   }
 

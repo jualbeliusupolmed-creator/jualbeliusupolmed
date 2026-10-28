@@ -1,4 +1,6 @@
 import { TabAntrean } from "@/components/baileys/TabAntrean";
+import { getAdminActor, hasAdminPermission } from "@/lib/admin-access";
+import AdminLogin from "../AdminLogin";
 
 /*
  * Antrean notifikasi WhatsApp — halamannya sendiri.
@@ -20,7 +22,9 @@ export const dynamic = "force-dynamic";
 
 export const metadata = { title: "Antrean Notifikasi — Admin" };
 
-export default function AntreanPage() {
+export default async function AntreanPage() {
+  const actor = await getAdminActor();
+  if (!hasAdminPermission(actor, "whatsapp", "read")) return <AdminLogin />;
   // Tanpa PageHeader: komponennya sudah membawa judul, penjelasan, dan lencana
   // "n tertunda" sendiri. Menambah satu judul lagi cuma menghasilkan dua judul.
   return (
