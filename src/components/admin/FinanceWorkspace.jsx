@@ -24,11 +24,11 @@ function approvalConsequence(payment) {
   return consequences[payment.type] || "Tipe pembayaran ini tidak dapat disetujui dari workspace.";
 }
 
-export default function FinanceWorkspace({ canManage = false }) {
-  const [days, setDays] = useState(30);
+export default function FinanceWorkspace({ canManage = false, initialOrderId = "" }) {
+  const [days, setDays] = useState(initialOrderId ? 365 : 30);
   const [type, setType] = useState("all");
   const [status, setStatus] = useState("all");
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialOrderId);
   const [busyId, setBusyId] = useState("");
   const [notice, setNotice] = useState("");
   const [data, setData] = useState({ payments: [], summary: { paidAmount: 0, paidCount: 0 }, total: 0 });

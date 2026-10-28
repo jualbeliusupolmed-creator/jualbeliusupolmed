@@ -1547,7 +1547,7 @@ export async function POST(req) {
             `Balas:\n` +
             `✅ *SETUJUI NAMA ${normalizedWa}*\n` +
             `❌ *TOLAK NAMA ${normalizedWa}*\n\n` +
-            `Atau kelola di /admin/profil_request`
+            `Tinjau di panel admin: /admin/users?view=profile-requests`
           ).catch(() => {});
         }
 

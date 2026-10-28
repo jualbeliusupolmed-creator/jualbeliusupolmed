@@ -179,7 +179,7 @@ export async function POST(req) {
         ` *Artikel menunggu review*\n\n` +
           `*${isi.title}*\n` +
           `Penulis: ${isi.author} (${penulis.wa})\n\n` +
-          `Tinjau di panel:\n${dasar}/admin/blogs`,
+          `Tinjau di panel:\n${dasar}/admin/content`,
         null,
         null,
         { jenis: "blog_menunggu" }

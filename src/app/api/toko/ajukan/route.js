@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
  * Yang dikembalikan bukan cuma "ok": ia menyiapkan TAUTAN WHATSAPP ke admin,
  * lengkap dengan isi pesannya dan satu tautan persetujuan di dalamnya.
  *
- * Kenapa tautan persetujuannya mengarah ke /admin/approve-toko dan BUKAN ke
+ * Kenapa tautan persetujuannya mengarah ke tab Toko di workspace admin dan BUKAN ke
  * sebuah token sakti yang langsung mengaktifkan:
  *
  *   Pesan ini mendarat di chat WhatsApp — dan chat diteruskan, dikutip,
@@ -83,7 +83,7 @@ export async function POST() {
     formatWaForBaileys(settings?.contact?.marketplaceWa || "");
 
   const nama = namaToko(profil);
-  const tautanPersetujuan = `${dasar}/admin/approve-toko?wa=${encodeURIComponent(profil.wa)}`;
+  const tautanPersetujuan = `${dasar}/admin/marketplace?mode=stores`;
 
   const pesan =
     ` *Permohonan Aktivasi Toko*\n\n` +
