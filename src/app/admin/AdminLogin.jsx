@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function AdminLogin() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -45,18 +47,18 @@ export default function AdminLogin() {
             </svg>
           </span>
           <div>
-            <p className="text-[11px] font-extrabold uppercase tracking-[.17em] text-emerald-800">Kampus Kita</p>
-            <h1 className="text-xl font-black tracking-tight">Workspace owner</h1>
+            <p className="text-[11px] font-extrabold uppercase tracking-[.17em] text-emerald-800">Jual Beli USU · POLMED</p>
+            <h1 className="text-xl font-black tracking-tight">Masuk ke panel admin</h1>
           </div>
         </div>
-        <p className="mb-6 text-sm leading-relaxed text-slate-500">Masuk dengan akun Auth yang sudah diberi akses oleh superadmin.</p>
+        <p className="mb-6 text-sm leading-relaxed text-slate-500">Gunakan akun admin atau owner yang aksesnya sudah diberikan.</p>
         <form onSubmit={submit} className="space-y-4">
           <label className="block text-xs font-bold text-slate-700">
             Email akun
             <input
               type="email"
-              autoComplete="username"
-              autoFocus
+              name="email"
+              autoComplete="email"
               required
               value={email}
               onChange={(event) => setEmail(event.target.value)}
@@ -66,15 +68,27 @@ export default function AdminLogin() {
           </label>
           <label className="block text-xs font-bold text-slate-700">
             Kata sandi
-            <input
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="mt-1.5 min-h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-medium outline-none transition focus:border-emerald-600 focus:bg-white focus:ring-4 focus:ring-emerald-100"
-              placeholder="Kata sandi akun Auth"
-            />
+            <div className="relative mt-1.5">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                className="min-h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 pr-12 text-sm font-medium outline-none transition focus:border-emerald-600 focus:bg-white focus:ring-4 focus:ring-emerald-100"
+                placeholder="Kata sandi akun"
+              />
+              <button
+                type="button"
+                aria-label={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+                aria-pressed={showPassword}
+                onClick={() => setShowPassword((value) => !value)}
+                className="absolute inset-y-0 right-1 grid w-11 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
+              </button>
+            </div>
           </label>
           {error ? <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-semibold leading-relaxed text-rose-700">{error}</p> : null}
           <button disabled={busy} className="flex min-h-12 w-full items-center justify-center rounded-full bg-emerald-800 px-5 text-sm font-extrabold text-white transition hover:bg-emerald-900 disabled:cursor-wait disabled:opacity-60">
