@@ -1,12 +1,130 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { setSellerCookie } from "@/lib/auth";
+import { setAdminCookieOnResponse, setSellerCookie } from "@/lib/auth";
+import { isGoogleAuthIdentity, resolveAdminLoginRole } from "@/lib/admin-auth-policy";
+import {
+  ADMIN_GOOGLE_FLOW_COOKIE,
+  ADMIN_GOOGLE_FLOW_PATH,
+  ADMIN_GOOGLE_FLOW_TTL,
+  createAdminGoogleAuthClient,
+  getAdminGoogleVerifierCookieName,
+} from "@/lib/admin-google-oauth";
 
 export const dynamic = "force-dynamic";
 
+function finishAdminGoogleCallback(request, redirectPath, pendingCookies = [], userId = null) {
+  const response = NextResponse.redirect(new URL(redirectPath, request.url));
+  response.headers.set("Cache-Control", "no-store, max-age=0");
+  response.headers.set("Referrer-Policy", "no-referrer");
+  for (const cookie of pendingCookies) response.cookies.set(cookie.name, cookie.value, cookie.options);
+  response.cookies.set(ADMIN_GOOGLE_FLOW_COOKIE, "", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: ADMIN_GOOGLE_FLOW_PATH,
+    maxAge: 0,
+  });
+  const verifierCookie = getAdminGoogleVerifierCookieName();
+  if (verifierCookie) {
+    response.cookies.set(verifierCookie, "", {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: ADMIN_GOOGLE_FLOW_PATH,
+      maxAge: 0,
+    });
+  }
+  if (userId) setAdminCookieOnResponse(response, userId);
+  return response;
+}
+
+async function handleAdminGoogleCallback(request) {
+  const { searchParams } = new URL(request.url);
+  const code = searchParams.get("code");
+  const pendingCookies = [];
+  const adapter = {
+    get: (name) => request.cookies?.get(name)?.value || null,
+    set: (name, value) => pendingCookies.push({
+      name,
+      value,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: ADMIN_GOOGLE_FLOW_PATH,
+        maxAge: ADMIN_GOOGLE_FLOW_TTL,
+      },
+    }),
+    remove: (name) => pendingCookies.push({
+      name,
+      value: "",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: ADMIN_GOOGLE_FLOW_PATH,
+        maxAge: 0,
+      },
+    }),
+  };
+
+  if (!code || searchParams.has("error")) {
+    return finishAdminGoogleCallback(request, "/admin?auth_error=google_failed", pendingCookies);
+  }
+
+  try {
+    const supabase = createAdminGoogleAuthClient(adapter);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    const user = data?.user;
+    if (error || !user?.id || !isGoogleAuthIdentity(user)) {
+      return finishAdminGoogleCallback(request, "/admin?auth_error=google_failed", pendingCookies);
+    }
+    if (user.banned_until && new Date(user.banned_until) > new Date()) {
+      return finishAdminGoogleCallback(request, "/admin?auth_error=not_authorized", pendingCookies);
+    }
+
+    const userId = user.id.toLowerCase();
+    const superadminId = String(process.env.SUPERADMIN_AUTH_USER_ID || "").toLowerCase();
+    let hasActiveMembership = false;
+    if (!superadminId || userId !== superadminId) {
+      const { data: membership, error: membershipError } = await getAdminClient()
+        .from("admin_memberships")
+        .select("user_id")
+        .eq("user_id", userId)
+        .eq("status", "active")
+        .maybeSingle();
+      if (membershipError) {
+        return finishAdminGoogleCallback(request, "/admin?auth_error=google_failed", pendingCookies);
+      }
+      hasActiveMembership = !!membership;
+    }
+
+    const role = resolveAdminLoginRole(userId, superadminId, hasActiveMembership);
+    if (!role) {
+      return finishAdminGoogleCallback(request, "/admin?auth_error=not_authorized", pendingCookies);
+    }
+
+    try {
+      await getAdminClient().from("admin_audit_events").insert({
+        actor_id: userId,
+        action: "admin_login_google",
+        target_id: userId,
+        metadata: { role },
+      });
+    } catch {
+      // Audit logging must not prevent a valid login.
+    }
+    return finishAdminGoogleCallback(request, "/admin/overview", pendingCookies, userId);
+  } catch (error) {
+    console.error("[admin-google-callback] OAuth verification failed:", error?.message || "unknown error");
+    return finishAdminGoogleCallback(request, "/admin?auth_error=google_failed", pendingCookies);
+  }
+}
+
 /**
- * Callback OAuth Google (via Supabase Auth).
+ * Callback OAuth Google (via Supabase Auth). Admin PKCE is completed first and
+ * uses its own server-side authorization path; regular buyers follow the flow below.
  *
  * Alur:
  * 1. Supabase menukar `code` → sesi (access_token + refresh_token)
@@ -19,6 +137,9 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(request) {
   const { searchParams, origin } = new URL(request.url);
+  if (request.cookies?.get(ADMIN_GOOGLE_FLOW_COOKIE)?.value === "1") {
+    return handleAdminGoogleCallback(request);
+  }
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/";
 

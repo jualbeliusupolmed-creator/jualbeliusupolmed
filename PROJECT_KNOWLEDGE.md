@@ -543,3 +543,9 @@ cuma server.
 - `SUPERADMIN_AUTH_USER_ID` dan `ADMIN_SESSION_SECRET` tersimpan sebagai variabel sensitif di Vercel untuk target production. Nilai UID dan kunci sesi tidak dicatat di repo.
 - Smoke check akhir: `/admin/analytics` merespons HTTP 200 di domain `m`, `www`, dan domain utama; `/open-po` HTTP 200; API Pengguna tanpa sesi HTTP 403; API Open PO tanpa sesi HTTP 401.
 - Agregat log runtime deployment final pada 15 menit pascarilis tidak berisi baris error/fatal. Deployment sebelumnya `dpl_F2Na1GFGNA2TcdgWnW2urpDy74PA` tetap menjadi jalur rollback langsung.
+
+### 28 Oktober 2026 — Login Google untuk panel admin
+
+- Login Google admin memakai Supabase Auth PKCE dengan pertukaran kode di server dan memakai callback `/auth/callback` yang telah digunakan login pengguna, sehingga URL callback baru tidak perlu ditambahkan ke allow-list Supabase.
+- Verifier PKCE disimpan sementara dalam cookie `HttpOnly`, `SameSite=Lax`, dibatasi pada callback dan kedaluwarsa setelah 10 menit. Callback admin tidak menyimpan token Supabase di browser dan tidak menjalankan sinkronisasi profil penjual.
+- Akses tetap dibatasi ke UUID `SUPERADMIN_AUTH_USER_ID` atau owner dengan membership aktif. Domain email kampus bukan syarat; cookie sesi admin bertanda tangan tetap berlaku satu jam dan setiap request workspace memeriksa ulang Auth serta izin.

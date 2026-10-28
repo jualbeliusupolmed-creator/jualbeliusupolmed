@@ -120,6 +120,17 @@ export function setAdminCookie(userId) {
   });
 }
 
+export function setAdminCookieOnResponse(response, userId) {
+  response.cookies.set(COOKIE, buatTokenAdmin(userId), {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60,
+  });
+  return response;
+}
+
 export function clearAdminCookie() {
   cookies().set(COOKIE, "", { path: "/", maxAge: 0, httpOnly: true, sameSite: "lax" });
   cookies().set(LEGACY_COOKIE, "", { path: "/", maxAge: 0, httpOnly: true, sameSite: "lax" });
