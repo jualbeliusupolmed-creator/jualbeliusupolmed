@@ -24,6 +24,21 @@ const ADMIN_WORKSPACE_PATHS = [
   "/admin/owners",
 ];
 const ADMIN_WHATSAPP_PATHS = ["/admin/wabot", "/admin/antrean", "/admin/notifikasi", "/admin/broadcast", "/admin/broadcast_grup", "/admin/grouppost"];
+const ADMIN_LEGACY_REDIRECTS = [
+  ["/admin/approve-payment", "/admin/finance"],
+  ["/admin/approve-unlock", "/admin/finance"],
+  ["/admin/keuangan", "/admin/finance"],
+  ["/admin/transaksi", "/admin/finance"],
+  ["/admin/approve-toko", "/admin/marketplace?mode=stores"],
+  ["/admin/toko", "/admin/marketplace?mode=stores"],
+  ["/admin/profil_request", "/admin/users?view=profile-requests"],
+  ["/admin/penjual", "/admin/users"],
+  ["/admin/kontak_pembeli", "/admin/users"],
+  ["/admin/blogs", "/admin/content"],
+  ["/admin/listings", "/admin/marketplace"],
+  ["/admin/moderasi", "/admin/marketplace"],
+  ["/admin/dicari", "/admin/marketplace?mode=wanted"],
+];
 
 function matchesAdminPath(pathname, paths) {
   return paths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
@@ -81,7 +96,12 @@ export async function middleware(request) {
     const isWorkspacePage = pathname === "/admin" || matchesAdminPath(pathname, ADMIN_WORKSPACE_PATHS);
     const isWhatsAppPage = matchesAdminPath(pathname, ADMIN_WHATSAPP_PATHS);
     if (!isWorkspacePage && !isWhatsAppPage) {
-      const workspaceUrl = new URL("/admin/overview?panel=legacy-disabled", request.url);
+      const legacy = ADMIN_LEGACY_REDIRECTS.find(([path]) => pathname === path || pathname.startsWith(`${path}/`));
+      const workspaceUrl = new URL(legacy?.[1] || "/admin/overview?panel=legacy-disabled", request.url);
+      if (workspaceUrl.pathname === "/admin/finance") {
+        const orderId = request.nextUrl.searchParams.get("orderId") || request.nextUrl.searchParams.get("payment_id");
+        if (orderId) workspaceUrl.searchParams.set("orderId", orderId.slice(0, 120));
+      }
       return NextResponse.redirect(workspaceUrl, { status: 307 });
     }
 

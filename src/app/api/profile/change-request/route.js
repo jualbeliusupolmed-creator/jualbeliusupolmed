@@ -114,7 +114,7 @@ export async function POST(req) {
         `Balas dengan:\n` +
         ` *SETUJUI NAMA ${sellerWa}* → setujui\n` +
         ` *TOLAK NAMA ${sellerWa}* → tolak\n\n` +
-        `Atau kelola di panel admin (/admin/profil_request)`;
+        `Tinjau di panel admin: /admin/users?view=profile-requests`;
       sendWa(adminWa.split(",")[0].trim(), msg).catch(() => {});
     }
 

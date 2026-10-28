@@ -1,7 +1,8 @@
 import FinanceWorkspace from "@/components/admin/FinanceWorkspace";
-import { getAdminActor } from "@/lib/admin-access";
+import { getAdminActor, hasAdminPermission } from "@/lib/admin-access";
 
-export default async function AdminFinancePage() {
+export default async function AdminFinancePage({ searchParams }) {
   const actor = await getAdminActor();
-  return <FinanceWorkspace canManage={actor?.role === "superadmin"} />;
+  const initialOrderId = String(searchParams?.orderId || "").slice(0, 120);
+  return <FinanceWorkspace canManage={hasAdminPermission(actor, "finance", "manage")} initialOrderId={initialOrderId} />;
 }
