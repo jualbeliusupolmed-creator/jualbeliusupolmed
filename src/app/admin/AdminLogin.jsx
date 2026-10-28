@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
@@ -12,6 +12,23 @@ export default function AdminLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
+
+  async function signInWithGoogle() {
+    setGoogleBusy(true);
+    setError("");
+    try {
+      const response = await fetch("/api/admin/google-auth/start", { method: "POST" });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.url) {
+        throw new Error(result.error || "Login Google belum dapat dimulai.");
+      }
+      window.location.assign(result.url);
+    } catch (cause) {
+      setError(cause.message || "Gagal masuk dengan Google. Coba lagi.");
+      setGoogleBusy(false);
+    }
+  }
 
   async function submit(event) {
     event.preventDefault();
@@ -34,6 +51,20 @@ export default function AdminLogin() {
     }
   }
 
+  useEffect(() => {
+    const authError = new URLSearchParams(window.location.search).get("auth_error");
+    if (authError === "not_authorized") {
+      setError("Akun Google ini belum diberi akses panel admin. Minta superadmin menambahkan akun tersebut.");
+    } else if (authError === "google_failed") {
+      setError("Login Google gagal atau dibatalkan. Silakan coba lagi.");
+    }
+    if (authError) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("auth_error");
+      window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+    }
+  }, []);
+
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#f6faf8] px-4 py-10 text-slate-950">
       <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-emerald-200/60 blur-3xl" />
@@ -52,6 +83,25 @@ export default function AdminLogin() {
           </div>
         </div>
         <p className="mb-6 text-sm leading-relaxed text-slate-500">Gunakan akun admin atau owner yang aksesnya sudah diberikan.</p>
+        <button
+          type="button"
+          onClick={signInWithGoogle}
+          disabled={googleBusy || busy}
+          className="flex min-h-12 w-full items-center justify-center gap-3 rounded-full border border-slate-200 bg-white px-5 text-sm font-extrabold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60"
+        >
+          <svg viewBox="0 0 48 48" className="h-5 w-5" aria-hidden="true">
+            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.74 7.18l7.66 5.94c4.47-4.13 7.12-10.2 7.12-17.59Z" />
+            <path fill="#34A853" d="M24 48c6.48 0 11.92-2.14 15.86-5.86l-7.66-5.94c-2.14 1.43-4.88 2.28-8.2 2.28-6.3 0-11.64-4.25-13.54-9.97l-7.91 6.1C6.5 42.6 14.62 48 24 48Z" />
+            <path fill="#FBBC05" d="M10.46 28.51a14.5 14.5 0 0 1 0-9.02l-7.91-6.1a24 24 0 0 0 0 21.22l7.91-6.1Z" />
+            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.5 5.4 2.55 13.39l7.91 6.1C12.36 13.75 17.7 9.5 24 9.5Z" />
+          </svg>
+          {googleBusy ? "Menghubungkan ke Google…" : "Masuk dengan Google"}
+        </button>
+        <div className="my-5 flex items-center gap-3 text-[10px] font-bold uppercase tracking-[.14em] text-slate-400">
+          <span className="h-px flex-1 bg-slate-200" />
+          atau pakai email
+          <span className="h-px flex-1 bg-slate-200" />
+        </div>
         <form onSubmit={submit} className="space-y-4">
           <label className="block text-xs font-bold text-slate-700">
             Email akun
@@ -91,7 +141,7 @@ export default function AdminLogin() {
             </div>
           </label>
           {error ? <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-semibold leading-relaxed text-rose-700">{error}</p> : null}
-          <button disabled={busy} className="flex min-h-12 w-full items-center justify-center rounded-full bg-emerald-800 px-5 text-sm font-extrabold text-white transition hover:bg-emerald-900 disabled:cursor-wait disabled:opacity-60">
+          <button disabled={busy || googleBusy} className="flex min-h-12 w-full items-center justify-center rounded-full bg-emerald-800 px-5 text-sm font-extrabold text-white transition hover:bg-emerald-900 disabled:cursor-wait disabled:opacity-60">
             {busy ? "Memeriksa akun…" : "Masuk ke workspace"}
           </button>
         </form>
