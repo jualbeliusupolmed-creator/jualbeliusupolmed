@@ -124,7 +124,7 @@ export default function HeroLanding({ q, onSearch, stats, total = 0, judul, subj
             {/* Quick Action & Popular Chips */}
             <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <a
-                href="https://open-po.vercel.app"
+                href="/open-po"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-xs active:scale-95 transition-all shrink-0"
@@ -132,7 +132,7 @@ export default function HeroLanding({ q, onSearch, stats, total = 0, judul, subj
               >
                 <span>🍵</span>
                 <span>Open PO</span>
-                <Icon.ExternalLink className="w-3 h-3 opacity-90" />
+
               </a>
               {["Laptop", "iPhone", "Buku", "Kos", "Jasa"].map((tag) => (
                 <button

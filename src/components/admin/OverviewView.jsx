@@ -1,220 +1,69 @@
 "use client";
 
-/*
- * Tampilan halaman Ringkasan (Overview) — Desain Modern & Minimalis.
- */
 import Link from "next/link";
+import { ArrowRight, Boxes, CircleDollarSign, ClipboardCheck, Plus, ShieldCheck, ShoppingBag, Users } from "lucide-react";
 import { rupiah } from "@/lib/fees";
-import { PageHeader } from "@/components/admin/ui";
-import TransactionModeToggle from "./TransactionModeToggle";
-import MenfessLoginToggle from "./MenfessLoginToggle";
 
-function Kpi({ label, value, sub, href, icon, accent = "slate" }) {
-  const CardContent = (
-    <div className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-4 lg:p-5 shadow-xs transition-all hover:shadow-md hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 h-full min-w-0 overflow-hidden">
-      <div className="flex items-center justify-between gap-1.5 min-w-0">
-        <p className="text-xs font-bold text-slate-500 dark:text-slate-400 truncate">{label}</p>
-        {icon && <span className="text-sm sm:text-base opacity-80 shrink-0">{icon}</span>}
-      </div>
-      <div className="mt-2 sm:mt-2.5 min-w-0">
-        <p className="text-lg sm:text-xl xl:text-2xl font-black tracking-tight text-slate-900 dark:text-white truncate" title={typeof value === 'string' ? value : undefined}>{value}</p>
-        {sub && <p className="mt-0.5 sm:mt-1 text-[11px] font-semibold text-slate-400 dark:text-slate-500 truncate">{sub}</p>}
-      </div>
-    </div>
-  );
-
-  if (href) {
-    return (
-      <Link href={href} className="block transition-transform active:scale-98">
-        {CardContent}
-      </Link>
-    );
-  }
-
-  return CardContent;
-}
-
-function Card({ title, subtitle, children, className = "" }) {
+function Metric({ label, value, detail, href, icon: Icon, accent = "emerald" }) {
+  const accents = {
+    emerald: "bg-emerald-50 text-emerald-800",
+    amber: "bg-amber-50 text-amber-800",
+    blue: "bg-sky-50 text-sky-800",
+    violet: "bg-violet-50 text-violet-800",
+  };
   return (
-    <div className={`rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 ${className}`}>
-      <div className="mb-5 flex items-center justify-between">
-        <div>
-          <h3 className="text-base font-black tracking-tight text-slate-900 dark:text-white">{title}</h3>
-          {subtitle && <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{subtitle}</p>}
-        </div>
-      </div>
-      {children}
-    </div>
+    <Link href={href} className="group rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_4px_18px_-16px_rgba(15,23,42,.3)] transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md sm:p-5">
+      <div className="flex items-start justify-between gap-3"><span className={`grid h-10 w-10 place-items-center rounded-xl ${accents[accent]}`}><Icon className="h-[18px] w-[18px]" strokeWidth={1.8} /></span><ArrowRight className="h-4 w-4 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-emerald-700" /></div>
+      <p className="mt-5 text-xs font-semibold text-slate-500">{label}</p>
+      <p className="mt-1 text-2xl font-black tracking-tight text-slate-950">{value ?? 0}</p>
+      <p className="mt-1 text-[11px] font-medium text-slate-400">{detail}</p>
+    </Link>
   );
 }
 
-function localDay(d) {
-  const x = new Date(d);
-  return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(
-    x.getDate()
-  ).padStart(2, "0")}`;
-}
-
-export default function OverviewView({ stats }) {
-  const revByDay = [];
-  for (let i = 13; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    revByDay.push({ key: localDay(d), total: 0 });
-  }
-  const idx = Object.fromEntries(revByDay.map((d, i) => [d.key, i]));
-  (stats.paidPayments || []).forEach((p) => {
-    const k = localDay(p.created_at);
-    if (k in idx) revByDay[idx[k]].total += p.amount || 0;
-  });
-  const maxRev = Math.max(1, ...revByDay.map((d) => d.total));
-  const totalRev14 = revByDay.reduce((s, d) => s + d.total, 0);
-
-  const PAYMENT_TYPES = [
-    { key: "iklan", label: "Pasang Iklan", icon: "BOX" },
-    { key: "bump", label: "Sundul Iklan", icon: "UP" },
-    { key: "featured", label: "Featured", icon: "Star" },
-    { key: "sold_fee", label: "Biaya Terjual", icon: "PAY" },
+export default function OverviewView({ stats = {}, actor, legacyNotice = false }) {
+  const isSuperadmin = actor?.role === "superadmin";
+  const canPo = isSuperadmin || actor?.permissions?.po?.includes?.("read") || actor?.permissions?.po?.includes?.("manage");
+  const canReports = isSuperadmin || actor?.permissions?.reports?.includes?.("read") || actor?.permissions?.reports?.includes?.("manage");
+  const metrics = [
+    { label: "Iklan aktif", value: stats.activeTotal, detail: "Sedang tampil di marketplace", href: "/admin/marketplace", icon: ShoppingBag, accent: "emerald" },
+    { label: "Menunggu review", value: stats.pendingTotal, detail: "Perlu ditinjau", href: "/admin/marketplace", icon: ClipboardCheck, accent: "amber" },
+    { label: "Iklan terjual", value: stats.soldTotal, detail: "Dalam cakupan kerja", href: "/admin/marketplace", icon: CircleDollarSign, accent: "blue" },
   ];
+  if (isSuperadmin) metrics.push({ label: "Laporan terbuka", value: stats.openReportsTotal, detail: "Perlu ditindaklanjuti", href: "/admin/reports", icon: ShieldCheck, accent: "violet" });
+
+  const quickLinks = isSuperadmin
+    ? [
+      { title: "Kelola akses owner", detail: "Atur akun, cakupan kampus, dan izin modul.", href: "/admin/owners", icon: Users },
+      { title: "Review marketplace", detail: "Tinjau iklan yang menunggu persetujuan.", href: "/admin/marketplace", icon: ClipboardCheck },
+      { title: "Laporan pengguna", detail: "Tinjau laporan yang perlu ditindaklanjuti.", href: "/admin/reports", icon: ShieldCheck },
+      { title: "Kelola Open PO", detail: "Pantau batch, kuota, dan reservasi baru.", href: "/admin/po", icon: Boxes },
+      { title: "WhatsApp", detail: "Buka status bot dan operasional pesan.", href: "/admin/wabot", icon: ShieldCheck },
+    ]
+    : [
+      { title: "Marketplace wilayah saya", detail: `${stats.campuses?.join(", ") || "Cakupan kampus belum diatur"}.`, href: "/admin/marketplace", icon: ShoppingBag },
+      ...(canReports ? [{ title: "Laporan pengguna", detail: "Tindak lanjuti laporan dari kampus dalam cakupan Anda.", href: "/admin/reports", icon: ShieldCheck }] : []),
+      ...(canPo ? [{ title: "Open PO", detail: "Kelola batch dan reservasi pada cakupan Anda.", href: "/admin/po", icon: Boxes }] : []),
+    ];
 
   return (
-    <div className="space-y-6 max-w-7xl font-sans">
-      <PageHeader
-        title="Ringkasan Eksekutif"
-        description="Pantauan performa, transaksi, dan aktivitas marketplace USU & POLMED."
-      />
+    <div className="space-y-6 sm:space-y-7">
+      {legacyNotice ? <div role="status" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-900">Halaman admin yang lama sudah tidak digunakan. Pilih fitur yang tersedia pada menu workspace.</div> : null}
+      <section className="overflow-hidden rounded-[26px] bg-[linear-gradient(118deg,#064e3b_0%,#047857_58%,#10a46b_100%)] p-5 text-white shadow-lg shadow-emerald-950/10 sm:p-7">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <div className="max-w-2xl"><p className="text-[10px] font-extrabold uppercase tracking-[.18em] text-emerald-100/75">{isSuperadmin ? "Kontrol proyek" : "Ruang kerja owner"}</p><h2 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">Selamat datang, {isSuperadmin ? "Superadmin" : actor?.label?.split(" ")[0] || "Owner"}</h2><p className="mt-2 text-sm leading-relaxed text-emerald-50/85">{isSuperadmin ? "Pantau operasional platform dan buka area kerja yang perlu ditangani." : `Cakupan kerja: ${stats.campuses?.join(", ") || "belum ditetapkan"}. Ringkasan hanya memuat data di wilayah yang diberikan.`}</p></div>
+          {isSuperadmin ? <Link href="/admin/owners" className="inline-flex min-h-11 items-center justify-center gap-2 self-start rounded-full bg-white px-5 text-xs font-extrabold text-emerald-950 transition hover:bg-emerald-50 sm:self-auto"><Plus className="h-4 w-4" />Tambah akses owner</Link> : null}
+        </div>
+      </section>
 
-      {/* Kontrol Utama Mode Transaksi (Mode 1: WA vs Mode 2: DM Web) */}
-      <TransactionModeToggle variant="card" />
+      <section aria-label="Ringkasan kinerja" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {metrics.map((metric) => <Metric key={metric.label} {...metric} />)}
+      </section>
 
-      {/* Kontrol Kebijakan Login Menfess */}
-      <MenfessLoginToggle variant="card" />
-
-      {/* KPI Cards Grid */}
-      <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 xl:grid-cols-6">
-        <Kpi 
-          label="Iklan Aktif" 
-          value={stats.activeTotal || 0} 
-          sub={`${stats.listingsTotal || 0} total listing`} 
-          href="/admin/listings"
-          icon="BOX"
-        />
-        <Kpi 
-          label="Terjual" 
-          value={stats.soldTotal || 0} 
-          sub={`${stats.pendingTotal || 0} menunggu`} 
-          href="/admin/listings"
-          icon="PAY"
-        />
-        <Kpi 
-          label="Total Pendapatan" 
-          value={rupiah(stats.revenue || 0)} 
-          sub={`${stats.pendingPaymentCount || 0} pending`} 
-          href="/admin/transaksi"
-          icon="CC"
-        />
-        <Kpi 
-          label="Instalasi PWA" 
-          value={stats.pwaInstallsTotal || 0} 
-          sub="Aplikasi terpasang" 
-          icon="HP"
-        />
-        <Kpi 
-          label="Rating Kepuasan" 
-          value={stats.avgRating || 0} 
-          sub={`${stats.totalRatings || 0} ulasan`} 
-          href="/admin/rating"
-          icon="Star"
-        />
-        <Kpi 
-          label="Laporan Terbuka" 
-          value={stats.openReportsTotal || 0} 
-          sub="Butuh tindakan" 
-          href="/admin/reports"
-          icon="AlertCircle"
-        />
-      </div>
-
-      {/* Graphs & Details */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Revenue 14 Days */}
-        <Card title="Pendapatan 14 Hari Terakhir" subtitle={`Akumulasi: ${rupiah(totalRev14)}`}>
-          <div className="overflow-x-auto [scrollbar-width:none] -mx-1 px-1">
-            <div className="flex h-48 items-end gap-1 sm:gap-1.5 pt-2 min-w-[280px]">
-              {revByDay.map((d) => {
-                const heightPct = Math.max(6, (d.total / maxRev) * 100);
-                return (
-                  <div key={d.key} className="group relative flex flex-1 flex-col items-center justify-end h-full">
-                    <div
-                      className="w-full rounded-t-lg bg-slate-900 transition-all group-hover:bg-primary dark:bg-slate-100 dark:group-hover:bg-emerald-400"
-                      style={{ height: `${heightPct}%` }}
-                      title={`${d.key}: ${rupiah(d.total)}`}
-                    />
-                    <span className="mt-2.5 text-[10px] font-bold text-slate-400 dark:text-slate-500">
-                      {d.key.slice(8)}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </Card>
-
-        {/* Listing per Category */}
-        <Card title="Sebaran Kategori Iklan" subtitle="Distribusi produk di marketplace">
-          {!stats.perCat || Object.entries(stats.perCat).length === 0 ? (
-            <div className="py-12 text-center text-xs text-slate-400">Belum ada data kategori.</div>
-          ) : (
-            <div className="max-h-48 space-y-3.5 overflow-y-auto pr-1 [scrollbar-width:thin]">
-              {Object.entries(stats.perCat)
-                .sort((a, b) => b[1] - a[1])
-                .map(([name, count]) => {
-                  const max = Math.max(1, ...Object.values(stats.perCat));
-                  const pct = Math.round((count / max) * 100);
-                  return (
-                    <div key={name} className="space-y-1">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold text-slate-800 dark:text-slate-200">{name}</span>
-                        <span className="text-xs font-extrabold text-slate-500 dark:text-slate-400">{count}</span>
-                      </div>
-                      <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-slate-900 dark:bg-white transition-all duration-500"
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-          )}
-        </Card>
-
-        {/* Revenue by Type */}
-        <Card title="Pendapatan per Sumber Transaksi" className="lg:col-span-2">
-          <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-4">
-            {PAYMENT_TYPES.map((t) => {
-              const sum = (stats.paidPayments || [])
-                .filter((p) => p.type === t.key)
-                .reduce((s, p) => s + (p.amount || 0), 0);
-              return (
-                <div
-                  key={t.key}
-                  className="rounded-2xl border border-slate-150 bg-slate-50/70 p-4 transition-all hover:bg-white hover:shadow-xs dark:border-slate-800 dark:bg-slate-800/40"
-                >
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400">{t.label}</p>
-                    <span className="text-base">{t.icon}</span>
-                  </div>
-                  <p className="mt-2 text-lg sm:text-xl font-black text-slate-900 dark:text-white">
-                    {rupiah(sum)}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </Card>
-      </div>
+      {isSuperadmin ? <section className="grid gap-4 lg:grid-cols-[1.25fr_.75fr]">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6"><div><p className="text-[10px] font-extrabold uppercase tracking-[.15em] text-slate-400">Area kerja</p><h3 className="mt-1 text-lg font-black tracking-tight">Aksi yang sering dipakai</h3></div><div className="mt-4 grid gap-2.5 sm:grid-cols-2">{quickLinks.map(({ title, detail, href, icon: Icon }) => <Link key={href} href={href} className="group flex min-h-[92px] items-start gap-3 rounded-xl border border-slate-100 p-3.5 transition hover:border-emerald-200 hover:bg-emerald-50/35"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-slate-50 text-slate-600 group-hover:bg-white group-hover:text-emerald-800"><Icon className="h-4 w-4" /></span><span className="min-w-0 flex-1"><span className="block text-sm font-extrabold">{title}</span><span className="mt-1 block text-xs leading-relaxed text-slate-500">{detail}</span></span><ArrowRight className="mt-1 h-4 w-4 shrink-0 text-slate-300 group-hover:text-emerald-700" /></Link>)}</div></div>
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-5 sm:p-6"><p className="text-[10px] font-extrabold uppercase tracking-[.15em] text-emerald-800/70">Cakupan kontrol</p><h3 className="mt-1 text-lg font-black tracking-tight text-emerald-950">Operasional utama</h3><p className="mt-3 text-sm leading-relaxed text-emerald-900/70">Workspace baru menyediakan akses owner, moderasi marketplace, dan pengelolaan Open PO dari satu panel.</p><Link href="/admin/owners" className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-full border border-emerald-200 bg-white/70 px-4 text-xs font-extrabold text-emerald-900 hover:bg-white">Kelola akses owner <ArrowRight className="h-3.5 w-3.5" /></Link></div>
+      </section> : <section className="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6"><p className="text-[10px] font-extrabold uppercase tracking-[.15em] text-slate-400">Area yang diizinkan</p><div className="mt-3 grid gap-3 sm:grid-cols-2">{quickLinks.map(({ title, detail, href, icon: Icon }) => <Link key={href} href={href} className="group flex min-h-[88px] items-start gap-3 rounded-xl border border-slate-100 p-4 transition hover:border-emerald-200 hover:bg-emerald-50/35"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-50 text-emerald-800"><Icon className="h-4 w-4" /></span><span className="min-w-0 flex-1"><span className="block text-sm font-extrabold">{title}</span><span className="mt-1 block text-xs leading-relaxed text-slate-500">{detail}</span></span><ArrowRight className="mt-1 h-4 w-4 shrink-0 text-slate-300 group-hover:text-emerald-700" /></Link>)}</div></section>}
     </div>
   );
 }

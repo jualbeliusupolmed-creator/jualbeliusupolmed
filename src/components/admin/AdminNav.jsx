@@ -54,7 +54,8 @@ export default function AdminNav({ counts = {}, onNavigate }) {
   }
 
   function go(key) {
-    router.push(`${basis}/${key}`);
+    const item = grup.flatMap((group) => group.items).find((entry) => entry.key === key);
+    router.push(item?.href || `${basis}/${key}`);
     onNavigate?.();
   }
 

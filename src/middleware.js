@@ -10,6 +10,25 @@ const MOBILE_UA_REGEX =
 // Subdomain mobile dimatikan karena web ini sudah sepenuhnya responsif (single codebase)
 const ENABLE_MOBILE_REDIRECT = false;
 
+const ADMIN_WORKSPACE_PATHS = [
+  "/admin/overview",
+  "/admin/marketplace",
+  "/admin/users",
+  "/admin/finance",
+  "/admin/analytics",
+  "/admin/content",
+  "/admin/settings",
+  "/admin/audit",
+  "/admin/reports",
+  "/admin/po",
+  "/admin/owners",
+];
+const ADMIN_WHATSAPP_PATHS = ["/admin/wabot", "/admin/antrean", "/admin/notifikasi", "/admin/broadcast", "/admin/broadcast_grup", "/admin/grouppost"];
+
+function matchesAdminPath(pathname, paths) {
+  return paths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+}
+
 export async function middleware(request) {
   const { pathname, hostname } = request.nextUrl;
 
@@ -52,11 +71,24 @@ export async function middleware(request) {
     // misalnya menyimpan IP ke edge config/Supabase. Karena kita tidak menggunakan Redis,
     // kita asumsikan Vercel WAF atau Supabase API gateway akan menangani rate limit global.
 
-    // Otorisasi admin dilakukan oleh setiap handler melalui isAdmin(), yang
-    // memverifikasi tanda tangan dan expiry token. Middleware hanya menangani
-    // header lintas API agar tidak ada pemeriksaan cookie yang tampak aman
-    // tetapi hanya mengecek keberadaannya.
+    // Setiap handler admin memeriksa sesi bertanda tangan, status akun Auth,
+    // izin modul, dan cakupan yang relevan. Middleware hanya menambahkan
+    // header dasar dan tidak menganggap cookie yang hadir sebagai otorisasi.
     return res;
+  }
+
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
+    const isWorkspacePage = pathname === "/admin" || matchesAdminPath(pathname, ADMIN_WORKSPACE_PATHS);
+    const isWhatsAppPage = matchesAdminPath(pathname, ADMIN_WHATSAPP_PATHS);
+    if (!isWorkspacePage && !isWhatsAppPage) {
+      const workspaceUrl = new URL("/admin/overview?panel=legacy-disabled", request.url);
+      return NextResponse.redirect(workspaceUrl, { status: 307 });
+    }
+
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.delete("x-admin-path");
+    requestHeaders.set("x-admin-path", pathname);
+    return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
   return NextResponse.next();

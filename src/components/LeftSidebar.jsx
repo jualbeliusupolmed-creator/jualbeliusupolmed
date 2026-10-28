@@ -50,7 +50,7 @@ export default function LeftSidebar() {
   const mainLinks = [
     { href: "/", label: "Beranda", icon: Icon.Home },
     { href: "/jual-beli", label: "Marketplace", icon: Icon.ShoppingBag },
-    { href: "https://open-po.vercel.app", label: "OpenPO Kampus", icon: Icon.Coffee, external: true },
+    { href: "/open-po", label: "Open PO", icon: Icon.Coffee },
     { href: "/mading", label: "Menfess & Info", icon: Icon.BookOpen },
     { href: "/chat", label: "Obrolan", icon: Icon.MessageCircle, badge: unreadChat },
     { href: "/favorit", label: "Favorit", icon: Icon.Heart },

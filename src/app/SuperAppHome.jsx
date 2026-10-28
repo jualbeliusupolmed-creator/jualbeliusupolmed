@@ -39,61 +39,6 @@ function waktuLalu(dateStr) {
   return `${Math.floor(diff / 86400)} hari lalu`;
 }
 
-const FALLBACK_PO_BATCHES = [
-  {
-    id: "po-risol-mayo",
-    title: "Risol Mayo Spesial",
-    name: "Risol Mayo Spesial",
-    price: 12000,
-    quota: 30,
-    reserved: 17,
-    pickup_point: "Kantin Gedung Bersama / Pintu 2",
-    badge: "Batch Hari Ini",
-    closing_time: "Tutup 21.00",
-    photo: "https://lh3.googleusercontent.com/aida-public/AB6AXuDoHfCf6ehNDwRVE_gipNCYRAPQxjQkgWQZEWN3RTW5ZvExDAPLofgUoGd6WWm8rxg5DZiOj4dGUbRmUNdKzImXKXSXtTKqFJFMoCz44GBl8LagKAJWRXyI4aUlDzJ81yTtC7h55mwIQ614tm7Rjn42S6AzoFiIw7nXJEu-XGBW-Rpm32LM35lbSP_blDb5KMXvuJ-V0if4t15WY6hskc21l3U_2c7PqVRJr52o-RhI",
-    url: "https://open-po.vercel.app",
-  },
-  {
-    id: "po-matcha-latte",
-    title: "Cold Brew Matcha Latte",
-    name: "Cold Brew Matcha Latte",
-    price: 18000,
-    quota: 20,
-    reserved: 2,
-    pickup_point: "Selasar FIB & Lab Industri",
-    badge: "Siap Diantar",
-    closing_time: "Tutup 17.00",
-    photo: "https://lh3.googleusercontent.com/aida-public/AB6AXuD8Z3GIfWHER6Bo9PWTe2cQwMix8Fh0eRTRm-0BdqlT6Teus3rGGm_0Yh_LO0jFfycmGPiVcDDTmq3FOigI4hHHaCI5PiPT_-xMD6Cysp88k6vDeyaG38VwrNOBsqV3uc9Sk0GSYTmhYDjFnV2QZMHZ1YLf54J6K3nF0QsXH2bVqDkfewaELaaMIdyXfy_nSjrv6datrxlkdW6u7Bv7czJaaFMlXv2JojrMOZpBQ0Y2",
-    url: "https://open-po.vercel.app",
-  },
-  {
-    id: "po-brownies",
-    title: "Fudgy Brownies Sekat",
-    name: "Fudgy Brownies Sekat",
-    price: 18000,
-    quota: 25,
-    reserved: 19,
-    pickup_point: "Titik temu kampus",
-    badge: "Sisa 4 Slot!",
-    closing_time: "Tutup 20.00",
-    photo: "https://lh3.googleusercontent.com/aida-public/AB6AXuDFrff8GN-PoHF2O1JGwm3yz2izA753sB2Ojcylt30as8i8W213IPddQNPlmfgfiefeAmGj4Ut96STTtAAD-M84bxdE9gSaOkUZGi8wdy2ecBdQ-Cy4NttFlG1zC3mjygCTVeujiO0D8OewD5TfV2p7cLzre9Rq4nmi5upMY8nWtq3R6xL7kHqzaM6UY0lSXSPp_Zek7SrW4PnmCWp_6ZTlWs_eiuXq6M8WtR3k0toV",
-    url: "https://open-po.vercel.app",
-  },
-  {
-    id: "po-kopi-aren",
-    title: "Kopi Susu Gula Aren",
-    name: "Kopi Susu Gula Aren",
-    price: 10000,
-    quota: 40,
-    reserved: 29,
-    pickup_point: "Lobi Bersama Fak. Teknik",
-    badge: "Batch Sore",
-    closing_time: "Tutup 18.00",
-    photo: "https://lh3.googleusercontent.com/aida-public/AB6AXuCsFVpViE_n7P_Mq8O3g84vV9Xb_HNGxhzzusJuyjEzEKUBWRewsNldysMWy74TOo--bSzqNMR7WaIgJgnCTposTvR3rBXX4gO5Qakhne-g7VZXQXpIhof-0VdYuOe4hVLAPdOGS5gjy7mTmpEldQRMc8oIprN0v9Tu6kTvBbgSnnpIz5X3oznGAU1T_DsO9EDiZzzVWhc86D6rriwW6j5suZLc_xZPb4umsHqfiwhi",
-    url: "https://open-po.vercel.app",
-  },
-];
-
 const WTB_ITEMS = [
   { title: "Papan LED Laprak Arsi", price: "< 150 Rb", faculty: "Arsitektur", href: "/dicari" },
   { title: "Buku Kalkulus Purcell Jilid 1 & 2", price: "50-80 Rb", faculty: "Fasilkom / Teknik", href: "/dicari" },
@@ -166,8 +111,8 @@ export default function SuperAppHome({
   }, []);
 
   // Realtime Open PO Batches
-  const [poBatches, setPoBatches] = useState(initialPoBatches);
-  const activeBatches = poBatches && poBatches.length > 0 ? poBatches : FALLBACK_PO_BATCHES;
+  const [poBatches, setPoBatches] = useState(Array.isArray(initialPoBatches) ? initialPoBatches : []);
+  const activeBatches = poBatches;
 
   useEffect(() => {
     let mounted = true;
@@ -176,7 +121,7 @@ export default function SuperAppHome({
         const res = await fetch("/api/open-po");
         if (!res.ok) return;
         const data = await res.json();
-        if (mounted && data.batches && data.batches.length > 0) {
+        if (mounted && Array.isArray(data.batches)) {
           setPoBatches(data.batches);
         }
       } catch {}
@@ -260,17 +205,6 @@ export default function SuperAppHome({
           url: b.url || "/open-po",
           isAnchor: false,
         });
-      });
-    } else {
-      items.push({
-        type: "open-po",
-        label: "Open PO Terkini:",
-        dotColor: "bg-amber-500",
-        pingColor: "bg-amber-400",
-        textColor: "text-amber-900 dark:text-amber-300",
-        text: "“Risol Mayo Spesial Daging Asap — Rp 12.000 (Batch Siang FIB & Teknik)”",
-        url: "/open-po",
-        isAnchor: false,
       });
     }
 
@@ -883,7 +817,7 @@ export default function SuperAppHome({
                     Geser untuk melihat
                   </span>
                   <a
-                    href="https://open-po.vercel.app?ref=jualbeliusupolmed"
+                    href="/open-po"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs font-semibold text-emerald-800 dark:text-emerald-300 hover:text-emerald-950 flex items-center gap-1 ml-2 transition-colors"
@@ -947,7 +881,7 @@ export default function SuperAppHome({
                             <div className="bg-emerald-600 h-full rounded-full transition-all duration-300" style={{ width: `${pct}%` }} />
                           </div>
                           <a
-                            href={item.url || `https://open-po.vercel.app/po/${item.id}`}
+                            href={item.url || "/open-po"}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="w-full block mt-3 py-1.5 text-center bg-emerald-800 hover:bg-emerald-900 text-white text-[11px] font-semibold rounded-xl transition shadow-xs"

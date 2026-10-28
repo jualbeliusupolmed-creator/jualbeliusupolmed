@@ -1,5 +1,5 @@
 import "./globals.css";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/next";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import BackToTop from "@/components/BackToTop";
@@ -14,9 +14,11 @@ import { skripJsonLd } from "@/lib/jsonLd";
 const BASE_URL =
   (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
 
-const jakartaSans = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+const jakartaSans = localFont({
+  src: [
+    { path: "../assets/fonts/plus-jakarta-sans/PlusJakartaSans-Regular.ttf", weight: "400" },
+    { path: "../assets/fonts/plus-jakarta-sans/PlusJakartaSans-SemiBold.ttf", weight: "600" },
+  ],
   display: "swap",
   preload: true,
   variable: "--font-jakarta",
