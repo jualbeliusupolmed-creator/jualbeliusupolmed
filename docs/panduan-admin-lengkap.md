@@ -30,24 +30,25 @@
 
 Buka: `jualbeliusupolmed.web.id/admin`
 
-Login menggunakan password admin. Session berlaku 8 jam.
+Login menggunakan Supabase Auth email/password atau Google OAuth. Session
+workspace ditandatangani server dan berlaku singkat.
 
-> Password disimpan di environment variable `ADMIN_PASSWORD` di Vercel.
+Superadmin ditentukan oleh `SUPERADMIN_AUTH_USER_ID`. Owner lain harus memiliki
+row aktif di `admin_memberships`. `ADMIN_PASSWORD` bukan mekanisme login
+workspace baru dan hanya dipertahankan untuk kompatibilitas sesi lama.
 
 ---
 
 ## 2. Panel Admin — Navigasi
 
-Sidebar dibagi menjadi 6 seksi:
+Sidebar workspace dibagi menjadi:
 
 | Seksi | Halaman |
 |---|---|
-| **Utama** | Ringkasan, Moderasi |
-| **Marketplace** | Listings, Penjual, Transaksi, Tawaran, Dicari, Rating |
-| **Konten** | Blog, Kategori, Group Post |
-| **Analitik** | Keuangan, Tren, Audit |
-| **Bot & Komunikasi** | WA Bot, Broadcast, Notifikasi, AI, Referral |
-| **Pengaturan** | Pengaturan, Profil Request, Reports, Blacklist |
+| **Workspace** | Ringkasan, Marketplace, Pengguna, Laporan, Open PO, Keuangan |
+| **Pemantauan** | Analitik, Konten |
+| **Administrasi** | Pengaturan, Akses owner, Jejak perubahan |
+| **WhatsApp** | Bot, antrean, notifikasi, broadcast sesuai permission |
 
 Gunakan **search bar** di atas sidebar untuk cari halaman. Badge merah di Moderasi menunjukkan jumlah item yang perlu ditinjau.
 
@@ -57,7 +58,7 @@ Pada mobile: sticky bar di atas + navigasi horizontal scrollable.
 
 ## 3. Moderasi
 
-Halaman `/admin/moderasi` adalah pusat review semua item yang butuh tindakan:
+Halaman `/admin/marketplace` adalah pusat review semua item yang butuh tindakan:
 
 ### Antrian Listing Pending
 Iklan baru yang sudah dibayar oleh penjual dan menunggu approval.

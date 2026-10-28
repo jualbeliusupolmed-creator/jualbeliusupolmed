@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, Clock3, LoaderCircle, PackageSearch, RefreshCw, Search, X, SearchCheck, Trash2, Store } from "lucide-react";
 import { rupiah } from "@/lib/fees";
+import { useAdmin } from "./AdminProvider";
 
 const FILTERS = [
   ["pending", "Menunggu review"], ["active", "Aktif"], ["sold", "Terjual"], ["suspended", "Ditangguhkan"], ["rejected", "Ditolak"], ["all", "Semua status"],
@@ -20,6 +21,7 @@ function ActionButton({ busy, onClick, label, icon: Icon, tone = "neutral" }) {
 }
 
 export default function MarketplaceWorkspace({ initialMode = "listings", canReview = false, canManage = false, superadmin = false }) {
+  const { confirmThen, promptThen } = useAdmin();
   const [items, setItems] = useState([]);
   const [mode, setMode] = useState(initialMode);
   const [status, setStatus] = useState(initialMode === "stores" ? "menunggu" : initialMode === "wanted" ? "active" : "pending");
@@ -54,59 +56,74 @@ export default function MarketplaceWorkspace({ initialMode = "listings", canRevi
   const pendingCount = useMemo(() => items.filter((item) => mode === "stores" ? item.status === "menunggu" : mode === "wanted" ? item.status === "active" || item.status === "pending" : item.status === "pending").length, [items, mode]);
 
   async function reviewStore(item, action) {
-    const reason = action === "reject" ? window.prompt("Alasan penolakan wajib diisi:", "") : "";
-    if (action === "reject" && (reason === null || !reason.trim())) return;
-    if (action === "approve" && !window.confirm("Aktifkan toko ini? Toko yang disetujui memberi penjual hak memasang iklan tanpa biaya.")) return;
-    setBusyId(item.storeToken);
-    setNotice("");
-    setError("");
-    try {
-      const response = await fetch("/api/admin/stores", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ storeToken: item.storeToken, action, reason }),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || "Pengajuan toko gagal diproses.");
-      setNotice(action === "approve" ? "Toko diaktifkan dan penjual diberi kabar." : "Pengajuan toko ditolak dan penjual diberi alasan.");
-      await load(0);
-    } catch (cause) { setError(cause.message); }
-    finally { setBusyId(""); }
+    const execute = async (reason = "") => {
+      setBusyId(item.storeToken);
+      setNotice("");
+      setError("");
+      try {
+        const response = await fetch("/api/admin/stores", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ storeToken: item.storeToken, action, reason }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || "Pengajuan toko gagal diproses.");
+        setNotice(action === "approve" ? "Toko diaktifkan dan penjual diberi kabar." : "Pengajuan toko ditolak dan penjual diberi alasan.");
+        await load(0);
+      } catch (cause) { setError(cause.message); }
+      finally { setBusyId(""); }
+    };
+    if (action === "reject") {
+      promptThen({ title: "Tolak pengajuan toko?", label: "Alasan penolakan", hint: "Alasan wajib diisi dan akan dikirim kepada penjual.", confirmLabel: "Tolak pengajuan" }, execute);
+    } else {
+      confirmThen({ title: "Aktifkan toko?", message: "Toko yang disetujui memberi penjual hak memasang iklan tanpa biaya.", confirmLabel: "Aktifkan toko" }, execute);
+    }
   }
 
   async function review(item, action) {
     const needsReason = action === "reject" || action === "suspend";
-    const reason = needsReason ? window.prompt(action === "suspend" ? "Alasan penangguhan (opsional):" : "Alasan penolakan (opsional):", "") : "";
-    if (needsReason && reason === null) return;
-    setBusyId(String(item.id));
-    setNotice("");
-    try {
-      const response = await fetch("/api/admin/marketplace", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: item.id, action, reason }),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || "Iklan gagal diproses.");
-      const messages = { approve: "Iklan disetujui.", reject: "Iklan ditolak.", suspend: "Iklan ditangguhkan.", restore: "Iklan dipulihkan." };
-      setNotice(messages[action]);
-      await load(0);
-    } catch (cause) { setError(cause.message); }
-    finally { setBusyId(""); }
+    const execute = async (reason = "") => {
+      setBusyId(String(item.id));
+      setNotice("");
+      try {
+        const response = await fetch("/api/admin/marketplace", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: item.id, action, reason }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || "Iklan gagal diproses.");
+        const messages = { approve: "Iklan disetujui.", reject: "Iklan ditolak.", suspend: "Iklan ditangguhkan.", restore: "Iklan dipulihkan." };
+        setNotice(messages[action]);
+        await load(0);
+      } catch (cause) { setError(cause.message); }
+      finally { setBusyId(""); }
+    };
+    if (needsReason) {
+      promptThen({ title: action === "suspend" ? "Tangguhkan iklan?" : "Tolak iklan?", label: action === "suspend" ? "Alasan penangguhan (opsional)" : "Alasan penolakan (opsional)", allowEmpty: true, confirmLabel: action === "suspend" ? "Tangguhkan" : "Tolak" }, execute);
+    } else {
+      execute();
+    }
   }
 
   async function handleWanted(item, action) {
-    if (action === "remove" && !window.confirm("Hapus kebutuhan “" + item.title + "” secara permanen?")) return;
-    setBusyId(String(item.id));
-    setNotice("");
-    try {
-      const response = await fetch("/api/admin/marketplace", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ entityType: "wanted", id: item.id, action }) });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || "Kebutuhan gagal diproses.");
-      setNotice(action === "resolve" ? "Kebutuhan ditandai selesai." : "Kebutuhan dihapus.");
-      await load(0);
-    } catch (cause) { setError(cause.message); }
-    finally { setBusyId(""); }
+    const execute = async () => {
+      setBusyId(String(item.id));
+      setNotice("");
+      try {
+        const response = await fetch("/api/admin/marketplace", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ entityType: "wanted", id: item.id, action }) });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || "Kebutuhan gagal diproses.");
+        setNotice(action === "resolve" ? "Kebutuhan ditandai selesai." : "Kebutuhan dihapus.");
+        await load(0);
+      } catch (cause) { setError(cause.message); }
+      finally { setBusyId(""); }
+    };
+    if (action === "remove") {
+      confirmThen({ title: "Hapus kebutuhan?", message: `Hapus kebutuhan “${item.title}” secara permanen?`, danger: true, confirmLabel: "Hapus kebutuhan" }, execute);
+    } else {
+      execute();
+    }
   }
 
   return (

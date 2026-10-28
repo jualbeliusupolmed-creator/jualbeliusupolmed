@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 
 export default function Error({ error, reset }) {
+  const reference = error?.digest || "ERR-" + String(error?.name || "APP").slice(0, 12).toUpperCase();
   const isChunkError =
     error?.name === "ChunkLoadError" ||
     error?.message?.includes("Loading chunk") ||
@@ -38,7 +39,7 @@ export default function Error({ error, reset }) {
       <div className="text-center space-y-4 max-w-sm">
         <h2 className="text-base font-bold text-gray-900 dark:text-white">Terjadi kesalahan</h2>
         <p className="text-sm text-gray-500 dark:text-slate-400">
-          {error?.message || "Silakan coba lagi."}
+          Silakan coba lagi. Jika masalah berlanjut, sampaikan kode {reference}.
         </p>
         <button
           onClick={reset}

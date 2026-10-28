@@ -1,6 +1,6 @@
-# Jual Beli USU Polmed 🛒
+# Kampus Kita 🛒
 
-Marketplace mahasiswa **USU & POLMED** — jual-beli laptop, HP, buku, fashion, makanan, kos, dan jasa. Dibangun dengan Next.js 14 App Router, Supabase, Gemini AI, dan Baileys (WhatsApp). Web di-deploy di Vercel; bot WhatsApp jalan sebagai proses pm2 di VPS.
+Marketplace mahasiswa lintas kampus — jual-beli laptop, HP, buku, fashion, makanan, kos, dan jasa. Dibangun dengan Next.js 14 App Router, Supabase, Gemini AI, dan Baileys (WhatsApp). Web di-deploy di Vercel; bot WhatsApp jalan sebagai proses pm2 di VPS.
 
 ---
 
@@ -109,7 +109,9 @@ cp .env.example .env.local
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role (server-only) |
-| `ADMIN_PASSWORD` | Password login `/admin` |
+| `SUPERADMIN_AUTH_USER_ID` | UUID akun Supabase Auth superadmin |
+| `ADMIN_SESSION_SECRET` | Kunci sesi workspace admin |
+| `ADMIN_PASSWORD` | Fallback sesi lama; bukan login workspace baru |
 | `ADMIN_WA` | Nomor superadmin (terima notif iklan baru) |
 | `SUPER_ADMIN_WA` | Nomor superadmin alternatif |
 | `MARKETPLACE_WA` | Nomor publik marketplace |
@@ -188,12 +190,14 @@ src/
     profil/[wa]/                Profil publik penjual
     mading/                     Halaman Mading (gabungan Blog & Iklan Dicari)
     admin/
-      (new)/                    Admin panel utama (layout terpisah)
-        overview/               Ringkasan & statistik
-        moderasi/               Antrian moderasi iklan + laporan
-        keuangan/               Laporan keuangan bulanan
-        tren/                   Tren pencarian
-        audit/                  Audit trail & error log
+      overview/                 Ringkasan & statistik
+      marketplace/              Moderasi iklan, toko, dan Dicari
+      users/                    Direktori pengguna & perubahan profil
+      finance/                  Transaksi dan pembayaran
+      reports/                  Laporan pengguna
+      po/                       Open PO
+      owners/                   Akses owner dan scope kampus/provinsi
+      audit/                    Jejak perubahan administratif
       listings/                 Kelola iklan
       penjual/                  Kelola penjual
       transaksi/                Kelola pembayaran

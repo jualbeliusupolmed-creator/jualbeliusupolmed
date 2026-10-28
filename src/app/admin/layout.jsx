@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import OwnerWorkspaceShell from "@/components/admin/OwnerWorkspaceShell";
+import { AdminProvider } from "@/components/admin/AdminProvider";
 import { getAdminActor, hasAdminPermission } from "@/lib/admin-access";
 import AdminLogin from "./AdminLogin";
 import "./google.css";
@@ -39,15 +40,15 @@ export default async function AdminLayout({ children }) {
 
   const pathname = headers().get("x-admin-path") || "/admin/overview";
   const moduleName = moduleForPath(pathname);
-  const allowed = moduleName === "whatsapp"
-    ? actor.role === "superadmin"
-    : moduleName !== "legacy" && hasAdminPermission(actor, moduleName, "read");
+  const allowed = moduleName !== "legacy" && hasAdminPermission(actor, moduleName, "read");
 
   return (
     <div className="g-admin min-h-screen font-sans">
-      <OwnerWorkspaceShell actor={actor}>
-        {allowed ? children : <AccessNotice actor={actor} />}
-      </OwnerWorkspaceShell>
+      <AdminProvider>
+        <OwnerWorkspaceShell actor={actor}>
+          {allowed ? children : <AccessNotice actor={actor} />}
+        </OwnerWorkspaceShell>
+      </AdminProvider>
     </div>
   );
 }

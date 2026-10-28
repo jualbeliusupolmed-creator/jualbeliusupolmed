@@ -2,6 +2,21 @@
 
 Dokumen ini berisi peta pemahaman sistem, alur bisnis, daftar masalah, dan riwayat audit untuk proyek **Jual Beli USU Polmed**.
 
+### Pembaruan 28 Oktober 2026 — workspace admin
+
+- Workspace admin baru memakai Supabase Auth, membership aktif, permission
+  modul, dan scope kampus/provinsi. Password lama bukan mekanisme login utama.
+- Permission `whatsapp.read` dan `whatsapp.manage` dapat diberikan kepada
+  operator tepercaya; pengaturan platform tetap khusus superadmin.
+- Penentuan provinsi kampus dipusatkan di `getCampusProvinceId()` agar scope
+  authorization dan menu Akses owner menggunakan aturan yang sama.
+- Semua dialog aksi workspace memakai koordinator `AdminProvider`; prompt dan
+  konfirmasi native tidak digunakan lagi pada komponen workspace baru.
+- Route legacy admin dipertahankan sementara dan diarahkan melalui middleware;
+  inventaris tujuan ada di `docs/admin-route-inventory.md`.
+- Migration atau perubahan RLS Supabase produksi tidak dijalankan otomatis dari
+  pekerjaan ini. Jalankan setelah backup, advisor, dan persetujuan operasional.
+
 ---
 
 ## 1. Peta Struktur Proyek & Inventarisasi

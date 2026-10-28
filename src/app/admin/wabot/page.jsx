@@ -1,11 +1,12 @@
-import { isAdmin } from "@/lib/auth";
+import { getAdminActor, hasAdminPermission } from "@/lib/admin-access";
 import AdminLogin from "../AdminLogin";
 import BaileysDashboard from "./BaileysDashboard";
 
 export const dynamic = "force-dynamic";
 
-export default function AdminWabotPage() {
-  if (!isAdmin()) {
+export default async function AdminWabotPage() {
+  const actor = await getAdminActor();
+  if (!hasAdminPermission(actor, "whatsapp", "read")) {
     return <AdminLogin />;
   }
 

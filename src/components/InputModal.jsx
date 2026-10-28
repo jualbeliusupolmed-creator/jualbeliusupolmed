@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useFocusTrap } from "@/lib/useFocusTrap";
 
 /**
  * InputModal — pengganti window.prompt()
@@ -31,10 +32,14 @@ export default function InputModal({
   onConfirm,
   onClose,
   hint,
+  allowEmpty = false,
 }) {
   const [value, setValue] = useState(String(defaultValue ?? ""));
   const [mounted, setMounted] = useState(false);
   const inputRef = useRef(null);
+  const dialogRef = useRef(null);
+  const titleId = useId();
+  const hintId = useId();
 
   useEffect(() => {
     setMounted(true);
@@ -47,6 +52,7 @@ export default function InputModal({
       setTimeout(() => inputRef.current?.select(), 50);
     }
   }, [open, defaultValue]);
+  useFocusTrap({ isOpen: open, onClose, containerRef: dialogRef, initialFocusRef: inputRef });
 
   useEffect(() => {
     function onKey(e) {
@@ -60,7 +66,7 @@ export default function InputModal({
   if (!open || !mounted) return null;
 
   function handleConfirm() {
-    if (value.trim() === "") return;
+    if (!allowEmpty && value.trim() === "") return;
     onConfirm?.(value);
     onClose?.();
   }
@@ -71,14 +77,15 @@ export default function InputModal({
       onClick={(e) => e.target === e.currentTarget && onClose?.()}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="input-modal-title"
+      aria-labelledby={titleId}
+      aria-describedby={hint ? hintId : undefined}
     >
       {/* Overlay — frosted glass Apple style */}
       <div className="absolute inset-0 bg-black/40 backdrop-blur-[6px]" />
 
       {/* Card */}
-      <div className="relative w-full max-w-sm rounded-[28px] bg-white/95 backdrop-blur-xl p-6 shadow-[0_32px_64px_rgba(0,0,0,0.2)] border border-black/[0.05] animate-slide-up dark:bg-[#1c1c1e]/95 dark:border-white/[0.08]">
-        <h2 id="input-modal-title" className="text-[17px] font-bold tracking-tight text-[#1d1d1f] dark:text-white">
+      <div ref={dialogRef} className="relative w-full max-w-sm rounded-[28px] bg-white/95 backdrop-blur-xl p-6 shadow-[0_32px_64px_rgba(0,0,0,0.2)] border border-black/[0.05] animate-slide-up dark:bg-[#1c1c1e]/95 dark:border-white/[0.08]">
+        <h2 id={titleId} className="text-[17px] font-bold tracking-tight text-[#1d1d1f] dark:text-white">
           {title}
         </h2>
 
@@ -99,7 +106,7 @@ export default function InputModal({
             placeholder={placeholder}
             className="input rounded-[14px] bg-black/[0.04] border-black/[0.05] focus:bg-white dark:bg-white/[0.08] dark:border-white/[0.05] dark:focus:bg-[#2c2c2e]"
           />
-          {hint && <p className="mt-1.5 text-xs text-[#6e6e73] dark:text-slate-400">{hint}</p>}
+          {hint && <p id={hintId} className="mt-1.5 text-xs text-[#6e6e73] dark:text-slate-400">{hint}</p>}
         </div>
 
         <div className="mt-5 flex justify-end gap-2">
@@ -109,7 +116,7 @@ export default function InputModal({
           <button
             type="button"
             onClick={handleConfirm}
-            disabled={!value.trim()}
+            disabled={!allowEmpty && !value.trim()}
             className="btn-primary text-[13px] font-bold"
           >
             {confirmLabel}

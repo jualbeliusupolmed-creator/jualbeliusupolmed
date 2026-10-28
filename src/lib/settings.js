@@ -173,6 +173,16 @@ export function getActiveCampuses(settings) {
     .map((campus) => ({ ...campus, shortName: String(campus.shortName).trim() }));
 }
 
+export function getCampusProvinceId(campus) {
+  const explicit = String(campus?.provinceId || campus?.province_id || "").trim().toLowerCase();
+  if (explicit) return explicit;
+  const campusId = String(campus?.id || "").trim().toLowerCase();
+  const shortName = String(campus?.shortName || "").trim().toLowerCase();
+  return ["usu", "polmed"].includes(campusId) || ["usu", "polmed"].includes(shortName)
+    ? "sumatera-utara"
+    : "";
+}
+
 export function isAllowedCampus(value, settings, { allowAll = false, allowGeneral = false } = {}) {
   const normalized = String(value || "").trim();
   if (allowAll && normalized.toLowerCase() === "semua") return true;
