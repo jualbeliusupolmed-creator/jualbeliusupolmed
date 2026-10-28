@@ -716,6 +716,15 @@ function DashboardInner() {
         <div className="flex items-center gap-2 self-end sm:self-auto">
           {wa && <PushNotificationButton wa={wa} />}
           {loaded && (
+            <Link
+              href="/dashboard/open-po"
+              className="px-3.5 py-2 rounded-2xl text-xs font-black bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 active:scale-95 transition-all flex items-center gap-1.5"
+            >
+              <Icon.Coffee className="w-3.5 h-3.5" />
+              <span>Open PO</span>
+            </Link>
+          )}
+          {loaded && (
             <Link 
               href={isUkmAccount ? "/jual?type=danus" : "/jual"} 
               className="px-4 py-2 rounded-2xl text-xs font-black bg-primary hover:bg-primary/95 text-white shadow-md shadow-primary/20 active:scale-95 transition-all flex items-center gap-1.5"

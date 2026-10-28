@@ -1,10 +1,11 @@
 import { jawabGalat } from "@/lib/jawabGalat";
 import { iklanKadaluarsa, turunkanKadaluarsa } from "@/lib/kadaluarsa";
 import { NextResponse } from "next/server";
-import { isAdmin } from "@/lib/auth";
+import { getAdminSession, isAdmin } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { formatWa } from "@/lib/constants";
 import { getSettings } from "@/lib/settings";
+import { approveWantedContactUnlock, updateAdminPayment } from "@/lib/admin-finance-actions";
 import { notifyAdminNewListing, postToGroup, sendWa } from "@/lib/fonnte";
 import { pushListingBaru } from "@/lib/webpush";
 import { logError } from "@/lib/logError";
@@ -66,6 +67,7 @@ export async function POST(req) {
     const body = await req.json();
     const { action, id, wa } = body;
     const supa = getAdminClient();
+    const adminActorId = getAdminSession()?.sub || process.env.SUPERADMIN_AUTH_USER_ID || null;
     // Info tambahan (mis. peringatan broadcast gagal) yang ikut dikirim ke UI admin
     let warning = null;
 
@@ -404,65 +406,15 @@ export async function POST(req) {
 
       // ── Transaksi / payment ────────────────────────────────────────────
       case "update_payment": {
-        const status = body.status;
-        if (!["pending", "paid", "failed", "expired"].includes(status)) {
-          return NextResponse.json({ error: "Status tidak valid" }, { status: 400 });
-        }
-        const { data: payment } = await supa.from("payments").update({ status }).eq("id", id).select().single();
-        
-        // Auto-activate listing and send notifications if marked as paid
-        if (payment && status === "paid" && payment.listing_id) {
-          if (payment.type === "iklan" || payment.type === "bump") {
-            const { data: listing } = await supa
-              .from("listings")
-              .update({ status: "active", bumped_at: new Date().toISOString() })
-              .eq("id", payment.listing_id)
-              .select()
-              .single();
-
-            if (listing && payment.type === "iklan") {
-              const paySettings = await getSettings().catch(() => null);
-              pushListingBaru(supa, listing).catch(() => {});
-              await Promise.allSettled([
-                postToGroup(listing, paySettings?.admin),
-              ]);
-              await autoPublishListingInstagram({
-                origin: siteOriginFromRequest(req),
-                listingId: listing.id,
-              });
-            }
-          } else if (payment.type === "featured") {
-            const days = payment.meta?.days || 1;
-            const until = new Date(Date.now() + days * 864e5).toISOString();
-            await supa
-              .from("listings")
-              .update({ featured: true, featured_until: until, bumped_at: new Date().toISOString() })
-              .eq("id", payment.listing_id);
-          } else if (payment.type === "autobump") {
-            const until = new Date(Date.now() + 7 * 864e5).toISOString();
-            await supa
-              .from("listings")
-              .update({ auto_bump_until: until, bumped_at: new Date().toISOString() })
-              .eq("id", payment.listing_id);
-          } else if (payment.type === "subscribe") {
-            const wa = payment.meta?.wa;
-            if (wa) {
-              const until = new Date(Date.now() + 30 * 864e5).toISOString();
-              await supa
-                .from("seller_profiles")
-                .update({ 
-                  subscription_tier: "pro", 
-                  subscription_expires_at: until 
-                })
-                .eq("wa", wa);
-            }
-          } else if (payment.type === "sold_fee") {
-            await supa
-              .from("listings")
-              .update({ status: "sold", stock: 0 })
-              .eq("id", payment.listing_id);
-          }
-        }
+        const result = await updateAdminPayment({
+          supa,
+          paymentId: id,
+          status: body.status,
+          actorId: adminActorId,
+          request: req,
+        });
+        if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status || 400 });
+        warning = result.warning || warning;
         break;
       }
       case "delete_payment":
@@ -470,72 +422,13 @@ export async function POST(req) {
         break;
 
       case "approve_unlock_manual": {
-        const { payment_id } = body;
-        if (!payment_id) {
-          return NextResponse.json({ error: "payment_id wajib diisi" }, { status: 400 });
-        }
-        
-        // 1. Ambil data payment
-        const { data: payment, error: pErr } = await supa
-          .from("payments")
-          .select("*")
-          .eq("id", payment_id)
-          .single();
-          
-        if (pErr || !payment) {
-          return NextResponse.json({ error: "Transaksi pembayaran tidak ditemukan" }, { status: 404 });
-        }
-        
-        if (payment.status === "paid") {
-          return NextResponse.json({ error: "Transaksi sudah berstatus lunas sebelumnya" }, { status: 400 });
-        }
-        
-        const wantedId = payment.meta?.unlock_wanted_id;
-        const requesterWa = payment.meta?.requester_wa;
-        
-        if (!wantedId || !requesterWa) {
-          return NextResponse.json({ error: "Data pencarian atau nomor pemohon tidak lengkap di transaksi" }, { status: 400 });
-        }
-        
-        // 2. Ambil detail postingan Cari Barang (wanted_listings)
-        const { data: wanted, error: wErr } = await supa
-          .from("wanted_listings")
-          .select("*")
-          .eq("id", wantedId)
-          .single();
-          
-        if (wErr || !wanted) {
-          return NextResponse.json({ error: "Postingan Cari Barang tidak ditemukan" }, { status: 404 });
-        }
-        
-        // 3. Update status payment menjadi paid
-        const { error: uErr } = await supa
-          .from("payments")
-          .update({ status: "paid" })
-          .eq("id", payment_id);
-          
-        if (uErr) {
-          return NextResponse.json({ error: "Gagal memperbarui transaksi pembayaran" }, { status: 500 });
-        }
-        
-        // 4. Kirim WhatsApp berisi detail kontak pembeli ke pemohon menggunakan Fonnte
-        const msg = 
-          ` *PEMBAYARAN QRIS MANUAL DISETUJUI*\n\n` +
-          `Halo, permintaan buka kontak Anda untuk pencarian barang berikut telah disetujui:\n` +
-          ` *Cari Barang:* ${wanted.title}\n\n` +
-          `Berikut adalah kontak pembeli yang mengajukan pencarian:\n` +
-          ` *Nama:* ${wanted.buyer_name}\n` +
-          ` *No. WhatsApp:* ${wanted.buyer_wa}\n\n` +
-          `Silakan langsung hubungi pembeli di atas melalui link berikut:\n` +
-          ` https://wa.me/${wanted.buyer_wa}?text=${encodeURIComponent(`Halo ${wanted.buyer_name}, saya melihat postingan Anda di Jual Beli USU Polmed mencari "${wanted.title}". Saya ada barangnya.`)}\n\n` +
-          `Terima kasih telah menggunakan Jual Beli USU Polmed!`;
-          
-        const fonnteRes = await sendWa(requesterWa, msg);
-        if (!fonnteRes?.ok) {
-          console.error("[approve_unlock_manual] Gagal kirim WA ke pemohon:", fonnteRes);
-          warning = `Pembayaran disetujui, namun gagal mengirim pesan WhatsApp ke pemohon: ${fonnteRes?.error || "cek log server"}`;
-        }
-        
+        const result = await approveWantedContactUnlock({
+          supa,
+          paymentId: body.payment_id,
+          actorId: adminActorId,
+        });
+        if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status || 400 });
+        warning = result.warning || warning;
         break;
       }
 

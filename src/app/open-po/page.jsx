@@ -1,8 +1,9 @@
 import { fetchOpenPoBatches } from "@/lib/openPo";
 import OpenPoClient from "./OpenPoClient";
+import { getSellerSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
-export const revalidate = 60; // Cache 1 menit
+export const revalidate = 0;
 
 export const metadata = {
   title: "Etalase Open PO Kampus — Kuliner, Jastip & Merchandise Mahasiswa | Kampus Kita",
@@ -26,11 +27,12 @@ export const metadata = {
 
 export default async function OpenPoPage() {
   let batches = [];
+  let initialError = "";
   try {
     batches = await fetchOpenPoBatches();
-  } catch (e) {
-    console.error("OpenPoPage fetch error:", e?.message);
+  } catch {
+    initialError = "Open PO belum tersedia karena database baru belum disiapkan.";
   }
 
-  return <OpenPoClient initialBatches={batches || []} />;
+  return <OpenPoClient initialBatches={batches || []} isAuthenticated={!!getSellerSession()} initialError={initialError} />;
 }

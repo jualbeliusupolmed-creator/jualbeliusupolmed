@@ -87,9 +87,8 @@ Berjalan dengan PostgreSQL, memiliki tabel-tabel berikut:
 1. **Exposure Sensitif**: Kredensial aman (tidak ter-commit). Disimpan di `.env.local` dan dikelola di Vercel/VPS.
 2. **Validasi Input & Otorisasi**: 
    - Row Level Security (RLS) di Supabase mencegah klien membaca data yang bukan haknya (misalnya, pembeli tidak bisa baca orderan penjual lain).
-   - Akses admin di-handle via JWT dan secret environment `ADMIN_PASSWORD`. Login/logout admin kini **dicatat ke `admin_logs`** (IP + timestamp + hasil) sejak 28 Agustus 2026.
-   - `ADMIN_PASSWORD` wajib minimal 16 karakter di production (divalidasi startup).
-   - `SESSION_SECRET` tersedia sebagai kunci terpisah untuk sesi penjual — **wajib diisi di Vercel** agar ganti `ADMIN_PASSWORD` tidak membatalkan sesi penjual.
+   - **Historis (28 Agustus 2026):** akses admin memakai `ADMIN_PASSWORD` dan mencatat login ke `admin_logs`. Pada 28 Oktober, login workspace diganti ke akun Supabase Auth per orang; `ADMIN_PASSWORD` kini hanya fallback tanda tangan sesi JB lama.
+   - `SESSION_SECRET` tetap menjadi kunci sesi penjual yang terpisah. Isi `SESSION_SECRET` di Vercel agar rotasi nilai fallback lama tidak membatalkan sesi penjual.
 3. **Rate Limiting**: Endpoint kritikal seperti pembuat iklan telah dilengkapi proteksi anti-spam lokal (*in-memory*).
 
 ---
@@ -97,8 +96,8 @@ Berjalan dengan PostgreSQL, memiliki tabel-tabel berikut:
 ## 4. Kualitas Kode & Utang Teknis (Tech Debt)
 
 - [x] **Arsitektur Bot & Modularitas**: Rute Express bot di VPS telah dimodularisasi ke `src/routes/*.routes.js` (`wa`, `panel`, `antrean`, `sesi`, `web`). Logika pengolahan perintah (`.JUAL`, `.HAPUS`, command pengguna) dipusatkan di Webhook Next.js (`src/app/api/wa/baileys/route.js`) dengan handler admin terpisah di `src/lib/bot/adminHandlers.js`.
-- [x] **Menengah (sebagian)**: Login Admin tetap berbasis `ADMIN_PASSWORD` di `.env`, tapi kini diperkuat: (a) validasi panjang ≥16 karakter, (b) audit log login/logout ke `admin_logs`, (c) `SESSION_SECRET` terpisah dari `ADMIN_PASSWORD`. Migrasi ke SSO Supabase tetap backlog jangka panjang.
-- [x] **Peningkatan**: Desain panel admin sudah dibersihkan (rute redundan dihapus) dan konsistensi desain Dark mode / Light mode telah distandardisasi menggunakan token CSS `google.css` (`g-card`, `g-btn`, `g-badge`, `var(--g-line)`).
+- [x] **Admin Auth (28 Okt 2026)**: login memakai akun Supabase Auth per orang, ID superadmin eksplisit, sesi bertanda tangan berumur satu jam, pemeriksaan status akun/izin di server, dan audit login/logout ke `admin_audit_events` setelah migrasi tersedia.
+- [x] **Workspace admin (28 Okt 2026)**: UI baru memakai shell responsif dan gaya beranda; komponen `google.css` dipertahankan untuk alat WhatsApp yang belum dirombak.
 
 ---
 
@@ -522,3 +521,25 @@ cuma server.
         - Selector admin kampus memakai draft teks terpisah sehingga baris parsial tidak hilang saat diketik. Preferensi kampus lama di browser dibersihkan bila kampus sudah dinonaktifkan.
         - Kartu produk memisahkan tautan detail dari tombol favorit, label `featured` menjadi “Unggulan”, dan fallback lokasi tidak lagi mengklaim kampus tertentu.
         - Audit UI lanjutan menaikkan keterbacaan kartu produk/WTB/Open PO, menjaga target sentuh minimum, menampilkan sisa slot Open PO, memulihkan kontak WhatsApp pada kartu produk, membuat header Open PO responsif di mobile, dan menambahkan state loading/error/retry pada `CampusSelect`.
+        - 28 Oktober 2026: workspace admin memakai shell baru yang responsif dengan tipografi Plus Jakarta Sans dan palet emerald/putih sesuai beranda. Menu baru memusatkan Ringkasan, Marketplace, Pengguna, Keuangan, Analitik, Konten, Pengaturan, Audit, Laporan, Open PO, dan Akses Owner; area operasional WhatsApp tetap dipertahankan. Route panel lama di luar WhatsApp dikunci dari shell baru.
+        - Admin login memakai Supabase Auth per orang dan menerima akun email Auth biasa; domain email kampus bukan syarat login. `SUPERADMIN_AUTH_USER_ID` menetapkan satu UUID Auth sebagai superadmin; owner lain harus punya row aktif di `admin_memberships`. `ADMIN_SESSION_SECRET` disarankan sebagai kunci sesi bertanda tangan; sesi admin berlaku satu jam. Kunci service-role server menjadi fallback internal bila secret khusus belum diisi.
+        - `admin_scope_grants` mendukung gabungan cakupan provinsi dan kampus, sedangkan `permissions` menyimpan izin modul tiap owner. UI dan API baru untuk ringkasan, moderasi marketplace, laporan, pengelolaan akses owner, dan Open PO memeriksa izin/cakupan di server.
+        - Open PO baru memakai sesi `seller_session` yang sama dengan akun JB. Batch dan reservasi disimpan pada `open_po_products`, `open_po_batches`, dan `open_po_orders` di proyek ini; tabel baru tidak mengambil data dari proyek OPEN PO lama. Tabel `po_*` lama yang sudah ada di proyek utama dipertahankan karena memakai skema/Auth/RLS berbeda. Reservasi kuota dan perubahan status pesanan berjalan lewat fungsi SQL transaksional.
+        - Nomor WhatsApp penjual/pembeli tidak ditampilkan pada etalase. Dashboard menampilkan nomor lawan transaksi hanya jika pemilik nomor memberi persetujuan pada alur reservasi/batch.
+        - Migrasi `20261028043654_admin_workspace_open_po.sql` diterapkan ke proyek utama Supabase pada 28 Oktober 2026. RLS aktif pada semua tabel baru; tabel dan fungsi hanya dapat diakses role `service_role`. Migrasi baru tidak mengubah tabel, RPC, atau kebijakan `po_*` lama. Siapkan `SUPERADMIN_AUTH_USER_ID` dan `ADMIN_SESSION_SECRET` di secret manager sebelum login admin dipakai, dan jangan membuka tabel baru ke `anon` atau `authenticated`.
+        - Migrasi `20261028053801_admin_listing_moderation_statuses.sql` menambahkan status `rejected` dan `hidden` ke constraint `listings.status`, sesuai hasil moderasi pada workspace baru. Ini perubahan constraint saja; tidak mengubah isi baris atau RLS.
+        - Advisori setelah migrasi mencatat 51 tabel publik dengan RLS tanpa policy (INFO), 7 SECURITY DEFINER RPC `po_*` lama yang tetap bisa dipanggil `authenticated` (WARN), dan perlindungan kata sandi bocor Auth nonaktif (WARN). Performance advisor juga menandai indeks baru belum terpakai; wajar sebelum data baru masuk. Tinjau RPC lama dan setelan Auth secara terpisah sebelum mengklaim seluruh proyek aman.
+        - Ekspansi workspace admin: menu sekarang mencakup Pengguna, Keuangan, Analitik, Konten, Pengaturan Platform, dan Jejak Perubahan selain Ringkasan, Marketplace, Laporan, Open PO, Akses Owner, serta operasi WhatsApp. Izin modul disimpan per owner dan API memeriksa ulang role serta cakupan kampus/provinsi.
+        - Direktori pengguna mengambil profil penjual dengan nomor WhatsApp tersamarkan. Token identitas untuk aksi dibungkus AES-GCM dengan turunan secret server; endpoint pembatasan membuka token hanya di server lalu memeriksa ulang campus scope. Pembatasan memakai tabel `blacklist` dan tidak otomatis menurunkan iklan yang sudah aktif. Ringkasan iklan per halaman dibatasi 2.000 baris dan memberi penanda bila terpotong.
+        - Marketplace mencakup iklan jual dan kebutuhan “Dicari”. Owner hanya melihat catatan kampus dalam cakupannya; penghapusan kebutuhan dibatasi untuk superadmin. Konten artikel owner dicakup lewat kampus profil penulis; nomor WhatsApp penulis tidak dikirim ke UI baru.
+        - Keuangan menampilkan 200 pembayaran terbaru per periode (7/30/90/365 hari), dengan filter dan ekspor CSV. Aksi persetujuan hanya ditampilkan untuk superadmin dan meminta konfirmasi dampak; UI memakai endpoint Keuangan baru dan layanan server transaksi bersama, bukan endpoint aksi panel lama. Perubahan status memakai compare-and-set dan dicatat di audit event; tipe tanpa alur aktivasi yang didukung tidak dapat disetujui dari layar ini. Perpanjangan, sponsor, dan paket Pro punya aktivasi khusus; buka kontak Dicari mengirim detail kontak melalui WhatsApp. Owner tetap baca saja.
+        - Analitik menampilkan hitungan status iklan exact, sementara grafik aktivitas dan kategori dibatasi sampai 1.000 baris terbaru; teks pencarian hanya tersedia untuk superadmin. Pengaturan platform mengubah teks/identitas situs, biaya inti, area, serta katalog kampus. Domain email kampus bersifat opsional untuk verifikasi mahasiswa, bukan syarat akun/login; kampus terdaftar dinonaktifkan alih-alih dihapus. Pengaturan bot/WhatsApp tetap berada pada operasi WhatsApp.
+        - Middleware mengizinkan semua route workspace baru dan tetap mengalihkan route admin lama di luar WhatsApp. Jejak perubahan hanya menampilkan metadata yang diizinkan dan target yang disamarkan.
+        - Ekspansi UI/API memakai klien `service_role` pada endpoint server, sedangkan akses browser ke tabel tetap tidak dibuka. Migrasi status moderasi hanya memperbarui constraint dan tidak mengubah RLS.
+
+### 28 Oktober 2026 — Rebuild admin live
+
+- Deployment produksi `dpl_91WFS3SRopBAA384GUi2W8Lzc89G` berstatus READY dan melayani `m.jualbeliusupolmed.web.id`; alias `www` dan domain utama juga terverifikasi pada route workspace admin.
+- `SUPERADMIN_AUTH_USER_ID` dan `ADMIN_SESSION_SECRET` tersimpan sebagai variabel sensitif di Vercel untuk target production. Nilai UID dan kunci sesi tidak dicatat di repo.
+- Smoke check akhir: `/admin/analytics` merespons HTTP 200 di domain `m`, `www`, dan domain utama; `/open-po` HTTP 200; API Pengguna tanpa sesi HTTP 403; API Open PO tanpa sesi HTTP 401.
+- Agregat log runtime deployment final pada 15 menit pascarilis tidak berisi baris error/fatal. Deployment sebelumnya `dpl_F2Na1GFGNA2TcdgWnW2urpDy74PA` tetap menjadi jalur rollback langsung.

@@ -85,7 +85,8 @@ export default function AdminTopbar({ counts = {} }) {
   }, [pathname]);
 
   function pilih(key) {
-    router.push(`${basis}/${key}`);
+    const item = navUntuk(demo).find((entry) => entry.key === key);
+    router.push(item?.href || `${basis}/${key}`);
     setQ("");
     setFokus(false);
   }
@@ -267,4 +268,3 @@ export default function AdminTopbar({ counts = {} }) {
     </>
   );
 }
-

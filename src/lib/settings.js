@@ -13,8 +13,8 @@ export { angkaSetelan, adFeeFrom, soldFeeFrom, featuredRateFrom };
 
 export const DEFAULT_SETTINGS = {
   campuses: [
-    { id: "usu", name: "Universitas Sumatera Utara", shortName: "USU", emailDomains: ["usu.ac.id"], active: true },
-    { id: "polmed", name: "Politeknik Negeri Medan", shortName: "POLMED", emailDomains: ["polmed.ac.id"], active: true },
+    { id: "usu", name: "Universitas Sumatera Utara", shortName: "USU", provinceId: "sumatera-utara", emailDomains: ["usu.ac.id"], active: true },
+    { id: "polmed", name: "Politeknik Negeri Medan", shortName: "POLMED", provinceId: "sumatera-utara", emailDomains: ["polmed.ac.id"], active: true },
   ],
   pricing: {
     freeMode: true,

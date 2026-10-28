@@ -1,24 +1,9 @@
-import { isAdmin } from "@/lib/auth";
-import { getAdminStats, DEFAULT_DATA } from "@/lib/adminData";
-import AdminLogin from "../AdminLogin";
-import ReportsClient from "./ReportsClient";
-import { LoadError } from "@/components/admin/ui";
+import ReportsWorkspace from "@/components/admin/ReportsWorkspace";
+import { getAdminActor, hasAdminPermission } from "@/lib/admin-access";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminReportsPage() {
-  if (!isAdmin()) {
-    return <AdminLogin />;
-  }
-
-  let data = DEFAULT_DATA;
-  try {
-    data = await getAdminStats(1, "reports");
-  } catch (e) {
-    return (
-      <LoadError message={`${e.message}. Cek konfigurasi Supabase.`} />
-    );
-  }
-
-  return <ReportsClient initialReports={data.reports || []} />;
+export default async function ReportsPage() {
+  const actor = await getAdminActor();
+  return <ReportsWorkspace canManage={hasAdminPermission(actor, "reports", "manage")} />;
 }

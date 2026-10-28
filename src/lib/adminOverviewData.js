@@ -69,3 +69,28 @@ export async function getOverviewStats() {
     totalRatings: ratings.length
   };
 }
+
+export async function getWorkspaceOverview(actor) {
+  if (actor?.role === "superadmin") return getOverviewStats();
+  const [{ getAdminClient }, { getAdminCampusScope }] = await Promise.all([
+    import("@/lib/supabaseAdmin"),
+    import("@/lib/admin-access"),
+  ]);
+  const campuses = await getAdminCampusScope(actor);
+  if (!campuses?.length) return { activeTotal: 0, pendingTotal: 0, soldTotal: 0, listingsTotal: 0, campuses: [] };
+
+  const supa = getAdminClient();
+  const [total, active, pending, sold] = await Promise.all([
+    supa.from("listings").select("id", { count: "exact", head: true }).in("campus", campuses),
+    supa.from("listings").select("id", { count: "exact", head: true }).eq("status", "active").in("campus", campuses),
+    supa.from("listings").select("id", { count: "exact", head: true }).eq("status", "pending").in("campus", campuses),
+    supa.from("listings").select("id", { count: "exact", head: true }).eq("status", "sold").in("campus", campuses),
+  ]);
+  return {
+    listingsTotal: total.count || 0,
+    activeTotal: active.count || 0,
+    pendingTotal: pending.count || 0,
+    soldTotal: sold.count || 0,
+    campuses,
+  };
+}

@@ -1,88 +1,53 @@
-import { Roboto } from "next/font/google";
-import { AdminProvider } from "@/components/admin/AdminProvider";
-import AdminSidebar from "@/components/admin/AdminSidebar";
-import AdminTopbar from "@/components/admin/AdminTopbar";
-import { isAdmin } from "@/lib/auth";
-import { getAdminClient } from "@/lib/supabaseAdmin";
+import { headers } from "next/headers";
+import OwnerWorkspaceShell from "@/components/admin/OwnerWorkspaceShell";
+import { getAdminActor, hasAdminPermission } from "@/lib/admin-access";
 import AdminLogin from "./AdminLogin";
 import "./google.css";
 
-/**
- * Satu cangkang untuk SELURUH /admin.
- *
- * Dulu cangkangnya ada dua: halaman baru (Ringkasan, Moderasi, Keuangan, Tren,
- * Audit) memakai sidebar penuh-layar ini, sedangkan halaman lama menggambar
- * sidebar-nya sendiri di dalam AdminPanel. Akibatnya menu berpindah tempat,
- * berganti label, dan kadang hilang begitu admin membuka tab lain — padahal
- * semuanya satu panel yang sama.
- *
- * Sekarang layout ini membungkus semua rute /admin/*, jadi tidak ada halaman
- * yang bisa punya kerangka sendiri. Bentuk rupanya mengikuti konsol Google
- * (rel kiri berpil, bilah atas dengan kotak cari, kartu bersudut 8px) dan
- * seluruh aturannya ada di ./google.css, dikurung di dalam kelas `.g-admin`
- * supaya situs publiknya tidak ikut berubah.
- */
+export const dynamic = "force-dynamic";
 
-// Roboto: muka huruf Google. "Google Sans" tidak dibagikan untuk umum, jadi
-// Roboto adalah yang paling dekat dan memang dipakai Google sendiri di seluruh
-// permukaan konsolnya. Situs publik tetap memakai Plus Jakarta Sans.
-const roboto = Roboto({
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-  display: "swap",
-  variable: "--font-google-sans",
-});
+function moduleForPath(pathname) {
+  if (pathname === "/admin" || pathname === "/admin/overview") return "overview";
+  if (pathname === "/admin/marketplace" || pathname.startsWith("/admin/marketplace/")) return "marketplace";
+  if (pathname === "/admin/users" || pathname.startsWith("/admin/users/")) return "users";
+  if (pathname === "/admin/finance" || pathname.startsWith("/admin/finance/")) return "finance";
+  if (pathname === "/admin/analytics" || pathname.startsWith("/admin/analytics/")) return "analytics";
+  if (pathname === "/admin/content" || pathname.startsWith("/admin/content/")) return "content";
+  if (pathname === "/admin/settings" || pathname.startsWith("/admin/settings/")) return "settings";
+  if (pathname === "/admin/audit" || pathname.startsWith("/admin/audit/")) return "audit";
+  if (pathname === "/admin/po" || pathname.startsWith("/admin/po/")) return "po";
+  if (pathname === "/admin/owners" || pathname.startsWith("/admin/owners/")) return "owners";
+  if (pathname === "/admin/reports" || pathname.startsWith("/admin/reports/")) return "reports";
+  if (["/admin/wabot", "/admin/antrean", "/admin/notifikasi", "/admin/broadcast", "/admin/broadcast_grup", "/admin/grouppost"].some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) return "whatsapp";
+  return "legacy";
+}
+
+function AccessNotice({ actor }) {
+  return (
+    <div className="mx-auto max-w-xl rounded-3xl border border-amber-200 bg-white p-7 text-slate-900 shadow-sm">
+      <p className="text-xs font-black uppercase tracking-[.15em] text-amber-700">Akses belum diberikan</p>
+      <h1 className="mt-2 text-xl font-black">{actor.role === "superadmin" ? "Bagian ini belum tersedia di workspace baru." : "Halaman ini tidak termasuk izin akun Anda."}</h1>
+      <p className="mt-2 text-sm leading-relaxed text-slate-600">{actor.role === "superadmin" ? "Gunakan Ringkasan, Marketplace, Open PO, atau akses WhatsApp yang tersedia di menu." : "Minta superadmin memperbarui izin workspace atau cakupan kampus Anda."}</p>
+      {actor.role !== "superadmin" ? <p className="mt-5 break-all text-xs font-semibold text-slate-400">{actor.email}</p> : null}
+    </div>
+  );
+}
 
 export default async function AdminLayout({ children }) {
-  if (!isAdmin()) {
-    return <AdminLogin />;
-  }
+  const actor = await getAdminActor();
+  if (!actor) return <AdminLogin />;
 
-  const supa = getAdminClient();
-  const [pendingRes, reportsRes, profilesRes, payRes, outboxRes, tokoRes] = await Promise.all([
-    supa.from("listings").select("id", { count: "exact", head: true }).eq("status", "pending"),
-    supa.from("reports").select("id", { count: "exact", head: true }).eq("status", "open"),
-    supa.from("profile_change_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
-    supa.from("payments").select("id", { count: "exact", head: true }).eq("status", "pending"),
-    // wa_outbox lahir belakangan lewat migrasi terpisah. Kalau tabelnya belum
-    // ada di sebuah lingkungan, supabase-js menjawab dengan error di dalam
-    // hasilnya (bukan melempar), jadi seluruh sidebar tidak ikut mati — count
-    // tinggal null dan lencananya tidak muncul. Itu perilaku yang diinginkan:
-    // menu boleh kehilangan satu lencana, tidak boleh kehilangan seluruh menu.
-    supa.from("wa_outbox").select("id", { count: "exact", head: true }).eq("status", "tertunda"),
-    // Toko yang menunggu persetujuan. Alasannya sama dengan wa_outbox: kolomnya
-    // lahir lewat migrasi terpisah (BAGIAN 26), dan lencana yang hilang lebih
-    // baik daripada seluruh menu yang hilang.
-    supa.from("seller_profiles").select("wa", { count: "exact", head: true }).eq("store_status", "menunggu"),
-  ]);
-
-  const counts = {
-    moderasi: (pendingRes.count || 0) + (reportsRes.count || 0) + (profilesRes.count || 0),
-    reports: reportsRes.count || 0,
-    profil_request: profilesRes.count || 0,
-    transaksi: payRes.count || 0,
-    antrean: outboxRes.count || 0,
-    toko: tokoRes.count || 0,
-  };
-  // Angka nol tidak perlu dipajang — lencana kosong cuma jadi noise.
-  for (const k of Object.keys(counts)) if (!counts[k]) delete counts[k];
+  const pathname = headers().get("x-admin-path") || "/admin/overview";
+  const moduleName = moduleForPath(pathname);
+  const allowed = moduleName === "whatsapp"
+    ? actor.role === "superadmin"
+    : moduleName !== "legacy" && hasAdminPermission(actor, moduleName, "read");
 
   return (
-    // `.g-admin` di LUAR AdminProvider, bukan di dalam: toast dan dialog
-    // konfirmasi digambar oleh provider sebagai saudara dari isi halaman, dan
-    // kalau kurungannya di dalam, keduanya kehilangan seluruh token warna
-    // Google — muncul sebagai kotak tanpa warna di pojok layar.
-    <div className={`${roboto.variable} g-admin g-shell`}>
-      <AdminProvider>
-        <AdminSidebar counts={counts} />
-
-        <div className="g-main">
-          <AdminTopbar counts={counts} />
-          <div className="g-content">
-            <div className="mx-auto w-full max-w-[1280px]">{children}</div>
-          </div>
-        </div>
-      </AdminProvider>
+    <div className="g-admin min-h-screen font-sans">
+      <OwnerWorkspaceShell actor={actor}>
+        {allowed ? children : <AccessNotice actor={actor} />}
+      </OwnerWorkspaceShell>
     </div>
   );
 }

@@ -24,10 +24,10 @@ export default function AdminSidebar({ counts = {} }) {
           </div>
           <div className="flex flex-col">
             <span className="text-sm font-black text-slate-900 dark:text-white leading-none tracking-tight">
-              Kampusfess Admin
+              Kampus Kita Console
             </span>
             <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">
-              USU • POLMED
+              Owner workspace
             </span>
           </div>
         </Link>

@@ -1,4 +1,3 @@
-import { Roboto } from "next/font/google";
 import { AdminProvider } from "@/components/admin/AdminProvider";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminTopbar from "@/components/admin/AdminTopbar";
@@ -28,13 +27,6 @@ import "../admin/google.css";
  * halaman login di sini. Itu memang gunanya.
  */
 
-const roboto = Roboto({
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-  display: "swap",
-  variable: "--font-google-sans",
-});
-
 export const metadata = {
   // Tanpa sufiks: template di layout akar yang menambahkannya.
   title: "Panel Admin (Demo)",
@@ -61,7 +53,7 @@ export default function AdminDemoLayout({ children }) {
   for (const k of Object.keys(counts)) if (!counts[k]) delete counts[k];
 
   return (
-    <div className={`${roboto.variable} g-admin g-shell`}>
+    <div className="g-admin g-shell">
       <AdminProvider>
         <AdminSidebar counts={counts} />
 

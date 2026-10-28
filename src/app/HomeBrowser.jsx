@@ -885,7 +885,7 @@ export default function HomeBrowser({
                   </div>
                 </div>
                 <a
-                  href={`https://open-po.vercel.app?utm_source=jualbeliusupolmed&ref=search${q ? `&q=${encodeURIComponent(q)}` : ""}`}
+                  href={`/open-po?utm_source=jualbeliusupolmed&ref=search${q ? `&q=${encodeURIComponent(q)}` : ""}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="shrink-0 px-3.5 py-1.5 rounded-lg bg-[#126B49] hover:bg-[#0e5238] text-white text-xs font-bold shadow-xs transition active:scale-98 flex items-center gap-1"
@@ -999,7 +999,7 @@ export default function HomeBrowser({
                     <span>+ Pasang Iklan Sekarang</span>
                   </Link>
                   <a
-                    href={`https://open-po.vercel.app?utm_source=jualbeliusupolmed&ref=empty_state${q ? `&q=${encodeURIComponent(q)}` : ""}`}
+                    href={`/open-po?utm_source=jualbeliusupolmed&ref=empty_state${q ? `&q=${encodeURIComponent(q)}` : ""}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-bold text-emerald-900 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-950 border border-emerald-200 dark:border-emerald-800/40 active:scale-98 transition-all"

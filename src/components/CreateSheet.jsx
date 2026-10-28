@@ -18,13 +18,13 @@ const PILIHAN = [
     grup: "Marketplace",
   },
   {
-    href: "https://open-po.vercel.app",
+    href: "/dashboard/open-po",
     ikon: <Icon.Coffee className="w-5 h-5" />,
     ikonBg: "bg-emerald-50 text-[#126B49] dark:bg-emerald-950/40 dark:text-emerald-300",
     judul: "Buka Open PO",
     desc: "Buka pesanan makanan, merchandise & jastip",
     grup: "Marketplace",
-    external: true,
+    external: false,
   },
   {
     href: "/dicari?tulis=1",

@@ -1,95 +1,52 @@
-const OPEN_PO_SUPABASE_URL = "https://endvossmhulujxexssfp.supabase.co";
-const OPEN_PO_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVuZHZvc3NtaHVsdWp4ZXhzc2ZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI2MTUyNDIsImV4cCI6MjEwODE5MTI0Mn0.Mj15CDJVO06DsExL2LV3gePWKcFfBr47o4IU6DLMGz0";
+import { getAdminClient } from "@/lib/supabaseAdmin";
 
-export function resolvePhoto(name = "") {
-  const n = (name || "").toLowerCase();
-  if (n.includes("kaos") || n.includes("baju")) return "/images/kaos-angkatan.jpg";
-  if (n.includes("brownies") || n.includes("cokelat")) return "/images/brownies.jpg";
-  if (n.includes("risol")) return "/images/risol-mayo.jpg";
-  if (n.includes("matcha")) return "/images/matcha-latte.jpg";
-  if (n.includes("kopi")) return "/images/kopi-susu.jpg";
-  if (n.includes("dimsum")) return "/images/dimsum.png";
-  if (n.includes("buket") || n.includes("bunga")) return "/images/bouquet.png";
-  if (n.includes("charm") || n.includes("manik")) return "/images/phone-charm.png";
-  if (n.includes("tote") || n.includes("bag")) return "/images/tote-bag.png";
-  return "/images/kopi-susu.jpg";
+function labelPhoto(url) {
+  const value = String(url || "").trim();
+  return /^https:\/\//i.test(value) || value.startsWith("/") ? value : "";
 }
 
-export function resolveEmoji(cat = "") {
-  const c = (cat || "").toLowerCase();
-  if (c.includes("minum")) return "🍵";
-  if (c.includes("makan")) return "🍫";
-  if (c.includes("fash")) return "👕";
-  if (c.includes("kera")) return "💐";
-  return "🛍️";
-}
+export async function fetchOpenPoBatches({ sellerWa } = {}) {
+  const supa = getAdminClient();
+  let query = supa
+    .from("open_po_batches")
+    .select("id,seller_wa,title,price_idr,quota,reserved_count,closes_at,pickup_point,pickup_note,status,created_at,product:open_po_products(name,description,category,unit,image_url,campus,active)")
+    .eq("status", "open")
+    .gt("closes_at", new Date().toISOString())
+    .order("closes_at", { ascending: true })
+    .limit(60);
+  if (sellerWa) query = query.eq("seller_wa", sellerWa);
+  const { data, error } = await query;
+  if (error) throw new Error("Open PO belum dapat dimuat. Pastikan migrasi PO di proyek utama sudah diterapkan.");
 
-/**
- * Mengambil daftar batch PO yang aktif langsung dari database Supabase OpenPO.
- * Menjamin 100% data nyata tanpa data tiruan / mock / URL 404.
- */
-export async function fetchOpenPoBatches() {
-  try {
-    const query = new URLSearchParams({
-      select:
-        "id,title,quota,reserved_quantity,closes_at,pickup_at,pickup_point,pickup_note,status," +
-        "product:po_products(id,name,description,category,price_idr," +
-        "seller:po_sellers(display_name,faculty,avatar_path))",
-      status: "eq.open",
-      order: "closes_at.asc",
-    });
-
-    const res = await fetch(`${OPEN_PO_SUPABASE_URL}/rest/v1/po_batches?${query.toString()}`, {
-      headers: {
-        apikey: OPEN_PO_ANON_KEY,
-        Authorization: `Bearer ${OPEN_PO_ANON_KEY}`,
-      },
-      next: { revalidate: 60 },
-    });
-
-    if (!res.ok) {
-      return [];
-    }
-
-    const rawBatches = await res.json();
-    if (!Array.isArray(rawBatches)) return [];
-
-    const now = new Date();
-
-    return rawBatches
-      .filter((b) => {
-        // Hanya tampilkan yang statusnya open dan belum lewat waktu tutup
-        if (b.status !== "open") return false;
-        if (b.closes_at && new Date(b.closes_at) <= now) return false;
-        return true;
-      })
-      .map((b) => {
-        const prod = b.product || {};
-        const seller = prod.seller || {};
-        const prodName = prod.name || b.title;
-        return {
-          id: b.id,
-          title: b.title,
-          name: prodName,
-          category: prod.category || "Kampus",
-          price: prod.price_idr || 0,
-          quota: b.quota || 0,
-          reserved: b.reserved_quantity || 0,
-          closes_at: b.closes_at,
-          pickup_at: b.pickup_at,
-          pickup_point: b.pickup_point || "Area Kampus",
-          pickup_note: b.pickup_note || "",
-          seller_name: seller.display_name || "Mahasiswa",
-          faculty: seller.faculty || "USU & POLMED",
-          photo: resolvePhoto(prodName),
-          emoji: resolveEmoji(prod.category || ""),
-          status: b.status,
-          url: `https://open-po.vercel.app/po/${b.id}?utm_source=jualbeliusupolmed&ref=jualbeliusupolmed`,
-        };
-      });
-  } catch (err) {
-    console.error("[fetchOpenPoBatches] Error:", err);
-    return [];
+  const rows = data || [];
+  const sellerWas = [...new Set(rows.map((row) => row.seller_wa).filter(Boolean))];
+  const sellers = new Map();
+  if (sellerWas.length) {
+    const { data: profiles } = await supa.from("seller_profiles").select("wa,name,faculty").in("wa", sellerWas);
+    for (const profile of profiles || []) sellers.set(profile.wa, profile);
   }
+
+  return rows.filter((batch) => batch.product?.active !== false && batch.reserved_count < batch.quota).map((batch) => {
+    const seller = sellers.get(batch.seller_wa);
+    return {
+      id: batch.id,
+      title: batch.title,
+      name: batch.product?.name || batch.title,
+      description: batch.product?.description || "",
+      category: batch.product?.category || "Lainnya",
+      unit: batch.product?.unit || "pcs",
+      price: Number(batch.price_idr || 0),
+      quota: batch.quota,
+      reserved: batch.reserved_count,
+      closes_at: batch.closes_at,
+      pickup_point: batch.pickup_point,
+      pickup_note: batch.pickup_note,
+      seller_name: seller?.name || "Penjual JB",
+      faculty: seller?.faculty || "",
+      photo: labelPhoto(batch.product?.image_url),
+      campus: batch.product?.campus || "",
+      status: batch.status,
+      url: `/open-po?batch=${encodeURIComponent(batch.id)}`,
+    };
+  });
 }

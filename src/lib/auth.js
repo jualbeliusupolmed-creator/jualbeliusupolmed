@@ -1,13 +1,14 @@
 import { cookies } from "next/headers";
 import crypto from "crypto";
 
-const COOKIE = "admin_session";
+const COOKIE = "kk_admin_session";
+const LEGACY_COOKIE = "admin_session";
 
 function secret() {
   const pw = process.env.ADMIN_PASSWORD;
   if (!pw) {
-    // Fail loudly in production on Vercel deployment — a missing password is a security hole.
-    // In local development or local preview builds, fall back to a safe default with a warning.
+    // ADMIN_PASSWORD is retained only as a migration fallback for existing JB user sessions.
+    // Admin login itself is handled by individual Supabase Auth accounts.
     if (process.env.NODE_ENV === "production" && process.env.VERCEL === "1") {
       throw new Error(
         "ADMIN_PASSWORD environment variable is not set. " +
@@ -40,7 +41,7 @@ function secret() {
   return pw;
 }
 
-// Kunci penanda tangan kuki, terpisah dari sandi admin.
+// Kunci penanda tangan kuki akun JB.
 //
 // Sampai 21 Agustus 2026 kuki penjual ditandatangani dengan ADMIN_PASSWORD.
 // Akibatnya tidak kelihatan sampai sandinya benar-benar diganti: mengganti
@@ -66,61 +67,71 @@ function samaAman(a, b) {
   return crypto.timingSafeEqual(ha, hb);
 }
 
-// Kuki admin: payload bertanda tangan + kedaluwarsa, bukan nilai tetap.
-//
-// Sebelumnya isinya sha256(ADMIN_PASSWORD) — satu nilai yang sama untuk
-// selamanya. Artinya kuki yang pernah bocor tidak pernah basi, dan kuki itu
-// bisa dihitung sendiri oleh siapa pun yang tahu sandinya tanpa perlu melewati
-// halaman login (dan karenanya tanpa kena rate limit). Sekarang tiap sesi
-// membawa nonce acak dan batas waktunya sendiri.
-//
-// Yang TIDAK diperbaiki oleh ini: siapa pun yang tahu ADMIN_PASSWORD tetap bisa
-// masuk. Kalau sandinya pernah bocor, satu-satunya obat adalah menggantinya.
-function buatTokenAdmin() {
+// Sesi admin berumur pendek, berisi ID akun Auth, dan ditandatangani server.
+// Setiap permintaan workspace memeriksa lagi status akun serta izin dari database.
+function adminSessionSecret() {
+  const value = process.env.ADMIN_SESSION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!value || value.length < 32) {
+    throw new Error("Set ADMIN_SESSION_SECRET (minimal 32 karakter) untuk mengaktifkan sesi admin.");
+  }
+  return crypto.createHmac("sha256", value).update("kampus-kita-admin-session-v1").digest();
+}
+
+function buatTokenAdmin(userId) {
   const payload = {
     n: crypto.randomBytes(16).toString("base64url"),
-    exp: Date.now() + 1000 * 60 * 60 * 8, // 8 jam
+    sub: userId,
+    exp: Date.now() + 1000 * 60 * 60, // satu jam; perubahan izin segera berlaku pada permintaan baru
   };
   const p = Buffer.from(JSON.stringify(payload)).toString("base64url");
-  const sig = crypto.createHmac("sha256", secret()).update(p).digest("base64url");
+  const sig = crypto.createHmac("sha256", adminSessionSecret()).update(p).digest("base64url");
   return `${p}.${sig}`;
 }
 
-function tokenAdminSah(nilai) {
+function bacaSesiAdmin(nilai) {
   if (!nilai || typeof nilai !== "string") return false;
   const bagian = nilai.split(".");
   if (bagian.length !== 2) return false;
   const [p, sig] = bagian;
-  const diharapkan = crypto.createHmac("sha256", secret()).update(p).digest("base64url");
+  let diharapkan;
+  try {
+    diharapkan = crypto.createHmac("sha256", adminSessionSecret()).update(p).digest("base64url");
+  } catch {
+    return null;
+  }
   if (!samaAman(sig, diharapkan)) return false;
   try {
     const payload = JSON.parse(Buffer.from(p, "base64url").toString("utf-8"));
-    return typeof payload.exp === "number" && payload.exp > Date.now();
+    return typeof payload.sub === "string" && typeof payload.exp === "number" && payload.exp > Date.now()
+      ? payload
+      : null;
   } catch {
-    return false;
+    return null;
   }
 }
 
-export function checkPassword(pw) {
-  return typeof pw === "string" && samaAman(pw, secret());
-}
-
-export function setAdminCookie() {
-  cookies().set(COOKIE, buatTokenAdmin(), {
+export function setAdminCookie(userId) {
+  cookies().set(COOKIE, buatTokenAdmin(userId), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 60 * 60 * 8, // 8 jam
+    maxAge: 60 * 60,
   });
 }
 
 export function clearAdminCookie() {
-  cookies().set(COOKIE, "", { path: "/", maxAge: 0 });
+  cookies().set(COOKIE, "", { path: "/", maxAge: 0, httpOnly: true, sameSite: "lax" });
+  cookies().set(LEGACY_COOKIE, "", { path: "/", maxAge: 0, httpOnly: true, sameSite: "lax" });
 }
 
 export function isAdmin() {
-  return tokenAdminSah(cookies().get(COOKIE)?.value);
+  const session = bacaSesiAdmin(cookies().get(COOKIE)?.value);
+  return !!session && !!process.env.SUPERADMIN_AUTH_USER_ID && session.sub === process.env.SUPERADMIN_AUTH_USER_ID.toLowerCase();
+}
+
+export function getAdminSession() {
+  return bacaSesiAdmin(cookies().get(COOKIE)?.value);
 }
 
 // --- USER AUTH (Unified) ---

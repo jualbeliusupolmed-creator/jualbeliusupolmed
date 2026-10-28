@@ -149,23 +149,12 @@ async function getSellerData(wa) {
     const isStudentVerified = Boolean(profile?.student_verified || listings?.[0]?.student_verified);
     const isWaVerified = Boolean(profile?.wa_verified || targetWa);
 
-    // Ambil batch PO aktif dari OpenPO yang terkait dengan penjual ini
+    // Ambil batch PO baru milik akun JB ini.
     let poBatches = [];
     try {
-      const allBatches = await fetchOpenPoBatches();
-      const sNameLower = sellerName.toLowerCase().trim();
-      const sSlugLower = (profile?.slug || "").toLowerCase().trim();
-      poBatches = (allBatches || []).filter((b) => {
-        const bSeller = (b.seller_name || "").toLowerCase().trim();
-        return (
-          bSeller === sNameLower ||
-          (sSlugLower && bSeller === sSlugLower) ||
-          bSeller.includes(sNameLower) ||
-          sNameLower.includes(bSeller)
-        );
-      });
-    } catch (e) {
-      console.warn("[getSellerData] fetchOpenPoBatches error:", e);
+      poBatches = await fetchOpenPoBatches({ sellerWa: formatWa(targetWa) });
+    } catch {
+      poBatches = [];
     }
 
     return {
@@ -588,7 +577,7 @@ export default async function SellerProfilePage({ params }) {
               </span>
             </h2>
             <a
-              href="https://open-po.vercel.app?utm_source=jualbeliusupolmed"
+              href="/open-po"
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs font-bold text-primary hover:underline"
@@ -600,7 +589,7 @@ export default async function SellerProfilePage({ params }) {
             {poBatches.map((b) => (
               <a
                 key={b.id}
-                href={b.url}
+                href={b.url || "/open-po"}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="card p-2.5 sm:p-4 hover:border-primary/40 hover:shadow-md transition-all flex flex-col justify-between group rounded-xl sm:rounded-2xl"
