@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useFocusTrap } from "@/lib/useFocusTrap";
 
 /**
  * ConfirmModal — pengganti window.confirm()
@@ -27,6 +28,9 @@ export default function ConfirmModal({
   onClose,
 }) {
   const btnRef = useRef(null);
+  const dialogRef = useRef(null);
+  const titleId = useId();
+  const messageId = useId();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -36,6 +40,7 @@ export default function ConfirmModal({
   useEffect(() => {
     if (open) btnRef.current?.focus();
   }, [open]);
+  useFocusTrap({ isOpen: open, onClose, containerRef: dialogRef, initialFocusRef: btnRef });
 
   useEffect(() => {
     function onKey(e) {
@@ -54,18 +59,19 @@ export default function ConfirmModal({
       onClick={(e) => e.target === e.currentTarget && onClose?.()}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="confirm-modal-title"
+      aria-labelledby={titleId}
+      aria-describedby={message ? messageId : undefined}
     >
       {/* Overlay — frosted glass Apple style */}
       <div className="absolute inset-0 bg-black/40 backdrop-blur-[6px]" />
 
       {/* Card */}
-      <div className="relative w-full max-w-sm rounded-[28px] bg-white/95 backdrop-blur-xl p-6 shadow-[0_32px_64px_rgba(0,0,0,0.2)] border border-black/[0.05] animate-slide-up dark:bg-[#1c1c1e]/95 dark:border-white/[0.08]">
-        <h2 id="confirm-modal-title" className="text-[17px] font-bold tracking-tight text-[#1d1d1f] dark:text-white">
+      <div ref={dialogRef} className="relative w-full max-w-sm rounded-[28px] bg-white/95 backdrop-blur-xl p-6 shadow-[0_32px_64px_rgba(0,0,0,0.2)] border border-black/[0.05] animate-slide-up dark:bg-[#1c1c1e]/95 dark:border-white/[0.08]">
+        <h2 id={titleId} className="text-[17px] font-bold tracking-tight text-[#1d1d1f] dark:text-white">
           {title}
         </h2>
         {message && (
-          <div className="mt-2 text-[15px] text-[#6e6e73] leading-relaxed dark:text-slate-400">
+          <div id={messageId} className="mt-2 text-[15px] text-[#6e6e73] leading-relaxed dark:text-slate-400">
             {message}
           </div>
         )}

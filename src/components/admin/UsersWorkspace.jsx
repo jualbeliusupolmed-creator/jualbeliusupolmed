@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, CircleAlert, LoaderCircle, RefreshCw, Search, ShieldAlert, ShieldCheck, Store, Users, X } from "lucide-react";
+import { useAdmin } from "./AdminProvider";
 
 async function readJson(response) {
   const body = await response.json().catch(() => ({}));
@@ -10,6 +11,7 @@ async function readJson(response) {
 }
 
 function ProfileChangeRequests({ canManage }) {
+  const { confirmThen, promptThen } = useAdmin();
   const [status, setStatus] = useState("pending");
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -29,24 +31,26 @@ function ProfileChangeRequests({ canManage }) {
   useEffect(() => { load(); }, [load]);
 
   async function review(item, action) {
-    let note = "";
+    const execute = async (note = "") => {
+      setBusyId(item.id);
+      setError("");
+      setNotice("");
+      try {
+        await readJson(await fetch("/api/admin/profile-requests", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: item.id, action, note }),
+        }));
+        setNotice(action === "approve" ? "Perubahan profil disetujui dan penjual diberi kabar." : "Permintaan ditolak dan penjual diberi alasan.");
+        await load();
+      } catch (cause) { setError(cause.message); }
+      finally { setBusyId(""); }
+    };
     if (action === "reject") {
-      note = window.prompt("Alasan penolakan wajib diisi:", "") || "";
-      if (!note.trim()) return;
-    } else if (!window.confirm("Setujui perubahan profil ini? Perubahan nama juga akan diterapkan ke iklan aktif penjual.")) return;
-    setBusyId(item.id);
-    setError("");
-    setNotice("");
-    try {
-      await readJson(await fetch("/api/admin/profile-requests", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: item.id, action, note }),
-      }));
-      setNotice(action === "approve" ? "Perubahan profil disetujui dan penjual diberi kabar." : "Permintaan ditolak dan penjual diberi alasan.");
-      await load();
-    } catch (cause) { setError(cause.message); }
-    finally { setBusyId(""); }
+      promptThen({ title: "Tolak perubahan profil?", label: "Alasan penolakan", hint: "Alasan wajib diisi dan akan dikirim kepada penjual.", confirmLabel: "Tolak permintaan" }, execute);
+    } else {
+      confirmThen({ title: "Setujui perubahan profil?", message: "Perubahan nama juga akan diterapkan ke iklan aktif penjual.", confirmLabel: "Setujui perubahan" }, execute);
+    }
   }
 
   const tabs = [["pending", "Menunggu"], ["approved", "Disetujui"], ["rejected", "Ditolak"], ["all", "Semua"]];
@@ -59,6 +63,7 @@ function ProfileChangeRequests({ canManage }) {
 }
 
 export default function UsersWorkspace({ canManage = false, initialView = "users" }) {
+  const { confirmThen } = useAdmin();
   const [view, setView] = useState(initialView);
   const [items, setItems] = useState([]);
   const [offset, setOffset] = useState(0);
@@ -95,22 +100,28 @@ export default function UsersWorkspace({ canManage = false, initialView = "users
 
   async function changeRestriction(item, action) {
     if (action === "restrict" && !reason.trim()) { setError("Tuliskan alasan pembatasan akun terlebih dahulu."); return; }
-    if (action === "restore" && !window.confirm("Hapus pembatasan untuk akun " + item.name + "?")) return;
-    setBusyId(item.id);
-    setError("");
-    setNotice("");
-    try {
-      await readJson(await fetch("/api/admin/users", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userToken: item.id, action, reason }),
-      }));
-      setRestrictingId("");
-      setReason("");
-      setNotice(action === "restrict" ? "Akun dibatasi. Iklan aktif tidak diturunkan." : "Pembatasan akun dihapus.");
-      await load(0);
-    } catch (cause) { setError(cause.message); }
-    finally { setBusyId(""); }
+    const execute = async () => {
+      setBusyId(item.id);
+      setError("");
+      setNotice("");
+      try {
+        await readJson(await fetch("/api/admin/users", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userToken: item.id, action, reason }),
+        }));
+        setRestrictingId("");
+        setReason("");
+        setNotice(action === "restrict" ? "Akun dibatasi. Iklan aktif tidak diturunkan." : "Pembatasan akun dihapus.");
+        await load(0);
+      } catch (cause) { setError(cause.message); }
+      finally { setBusyId(""); }
+    };
+    if (action === "restore") {
+      confirmThen({ title: "Hapus pembatasan akun?", message: `Hapus pembatasan untuk akun ${item.name}?`, confirmLabel: "Hapus pembatasan" }, execute);
+      return;
+    }
+    execute();
   }
 
   return <div className="space-y-5">

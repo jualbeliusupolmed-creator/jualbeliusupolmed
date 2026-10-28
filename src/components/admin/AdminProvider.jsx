@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import ConfirmModal from "@/components/ConfirmModal";
+import InputModal from "@/components/InputModal";
 import { useModeDemo } from "./basis";
 
 const AdminContext = createContext();
@@ -13,6 +14,7 @@ export function AdminProvider({ children }) {
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState(null);
   const [confirmState, setConfirmState] = useState(null);
+  const [inputState, setInputState] = useState(null);
 
   useEffect(() => {
     if (!toast) return;
@@ -55,13 +57,17 @@ export function AdminProvider({ children }) {
     setConfirmState({ ...opts, onConfirm: fn });
   }
 
+  function promptThen(opts, fn) {
+    setInputState({ ...opts, onConfirm: fn });
+  }
+
   async function logout() {
     await fetch("/api/admin/login", { method: "DELETE" });
     router.refresh();
   }
 
   return (
-    <AdminContext.Provider value={{ busy, action, confirmThen, logout, setToast, demo }}>
+    <AdminContext.Provider value={{ busy, action, confirmThen, promptThen, logout, setToast, demo }}>
       {children}
       
       <ConfirmModal
@@ -72,6 +78,19 @@ export function AdminProvider({ children }) {
         confirmLabel={confirmState?.confirmLabel}
         onConfirm={() => confirmState?.onConfirm?.()}
         onClose={() => setConfirmState(null)}
+      />
+
+      <InputModal
+        open={!!inputState}
+        title={inputState?.title}
+        label={inputState?.label}
+        defaultValue={inputState?.defaultValue}
+        placeholder={inputState?.placeholder}
+        hint={inputState?.hint}
+        confirmLabel={inputState?.confirmLabel}
+        allowEmpty={inputState?.allowEmpty}
+        onConfirm={(value) => inputState?.onConfirm?.(value)}
+        onClose={() => setInputState(null)}
       />
 
       {/* Roti bakar Google: kotak gelap di KIRI bawah, bukan kanan — di sana

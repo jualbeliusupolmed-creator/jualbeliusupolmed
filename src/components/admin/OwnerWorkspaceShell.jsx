@@ -35,12 +35,12 @@ const ADMIN_GROUPS = [
     { key: "audit", label: "Jejak perubahan", href: "/admin/audit", superadmin: true },
   ] },
   { label: "WhatsApp", items: [
-    { key: "wabot", label: "WhatsApp", href: "/admin/wabot", superadmin: true },
-    { key: "antrean", label: "Antrean pesan", href: "/admin/antrean", superadmin: true },
-    { key: "notifikasi", label: "Notifikasi", href: "/admin/notifikasi", superadmin: true },
-    { key: "broadcast", label: "Broadcast", href: "/admin/broadcast", superadmin: true },
-    { key: "broadcast_grup", label: "Broadcast grup", href: "/admin/broadcast_grup", superadmin: true },
-    { key: "grouppost", label: "Post grup", href: "/admin/grouppost", superadmin: true },
+    { key: "wabot", label: "WhatsApp", href: "/admin/wabot", permission: "whatsapp" },
+    { key: "antrean", label: "Antrean pesan", href: "/admin/antrean", permission: "whatsapp" },
+    { key: "notifikasi", label: "Notifikasi", href: "/admin/notifikasi", permission: "whatsapp" },
+    { key: "broadcast", label: "Broadcast", href: "/admin/broadcast", permission: "whatsapp" },
+    { key: "broadcast_grup", label: "Broadcast grup", href: "/admin/broadcast_grup", permission: "whatsapp" },
+    { key: "grouppost", label: "Post grup", href: "/admin/grouppost", permission: "whatsapp" },
   ] },
 ];
 

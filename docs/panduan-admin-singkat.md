@@ -7,7 +7,8 @@
 
 ## Login Admin
 
-Buka `/admin` → masuk dengan password admin (env `ADMIN_PASSWORD`).
+Buka `/admin` → masuk dengan akun Supabase Auth. Superadmin memakai
+`SUPERADMIN_AUTH_USER_ID`; owner lain harus memiliki membership aktif.
 
 ---
 
@@ -42,7 +43,7 @@ Gunakan **search bar** di sidebar untuk cari halaman dengan cepat.
 ```
 Penjual kirim foto → AI baca → Penjual bayar QRIS
 → Penjual kirim struk → AI verifikasi → Status: pending
-→ Admin approve di /admin/moderasi → Iklan tayang ✅
+→ Admin review di `/admin/marketplace` → Iklan tayang ✅
 ```
 
 Pada mode **Gratis Semua** atau **Jual Dulu**, iklan langsung aktif tanpa moderasi.

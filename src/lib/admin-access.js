@@ -1,6 +1,6 @@
 import { getAdminSession } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { getSettings, getActiveCampuses } from "@/lib/settings";
+import { getSettings, getActiveCampuses, getCampusProvinceId } from "@/lib/settings";
 
 const SUPERADMIN_ID = () => String(process.env.SUPERADMIN_AUTH_USER_ID || "").toLowerCase();
 
@@ -48,7 +48,10 @@ export async function getAdminActor() {
       permissions: membership.permissions && typeof membership.permissions === "object" ? membership.permissions : {},
       scopes: scopes || [],
     };
-  } catch {
+  } catch (error) {
+    console.error("[admin-access] Failed to resolve admin actor.", {
+      name: error instanceof Error ? error.name : "UnknownError",
+    });
     return null;
   }
 }
@@ -76,10 +79,7 @@ export function resolveAdminCampusScope(scopes, campuses) {
     if (scope.scope_type === "province") {
       const wanted = String(scope.scope_id || "").toLowerCase();
       for (const campus of campuses || []) {
-        const campusId = String(campus.id || "").toLowerCase();
-        const campusAlias = String(campus.shortName || "").toLowerCase();
-        const provinceId = String(campus.provinceId || campus.province_id || (["usu", "polmed"].includes(campusAlias) || ["usu", "polmed"].includes(campusId) ? "sumatera-utara" : "")).toLowerCase();
-        if (provinceId === wanted) granted.add(campus.shortName);
+        if (getCampusProvinceId(campus) === wanted) granted.add(campus.shortName);
       }
     }
   }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminActor } from "@/lib/admin-access";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { getSettings, getActiveCampuses } from "@/lib/settings";
+import { getSettings, getActiveCampuses, getCampusProvinceId } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +14,7 @@ const MODULE_ACTIONS = {
   finance: new Set(["read"]),
   analytics: new Set(["read"]),
   content: new Set(["read", "review", "manage"]),
+  whatsapp: new Set(["read", "manage"]),
 };
 
 async function superadmin() {
@@ -87,7 +88,7 @@ export async function GET() {
     id: campus.id || campus.shortName.toLowerCase(),
     name: campus.name,
     shortName: campus.shortName,
-    provinceId: campus.provinceId || campus.province_id || (["usu", "polmed"].includes(String(campus.shortName || "").toLowerCase()) || ["usu", "polmed"].includes(String(campus.id || "").toLowerCase()) ? "sumatera-utara" : ""),
+    provinceId: getCampusProvinceId(campus),
   }));
   const provinces = [...new Map(campuses.filter((campus) => campus.provinceId).map((campus) => [campus.provinceId, { id: campus.provinceId, name: campus.provinceId.replaceAll("-", " ").replace(/\b\w/g, (letter) => letter.toUpperCase()) }])).values()];
   return NextResponse.json({ owners, campuses, provinces });
@@ -126,7 +127,7 @@ export async function PUT(req) {
   const campuses = getActiveCampuses(settings).map((campus) => ({
     id: campus.id || campus.shortName.toLowerCase(),
     shortName: campus.shortName,
-    provinceId: campus.provinceId || campus.province_id || (["usu", "polmed"].includes(String(campus.shortName || "").toLowerCase()) || ["usu", "polmed"].includes(String(campus.id || "").toLowerCase()) ? "sumatera-utara" : ""),
+    provinceId: getCampusProvinceId(campus),
   }));
   const provinces = new Set(campuses.map((campus) => campus.provinceId).filter(Boolean));
   const validScopes = [];

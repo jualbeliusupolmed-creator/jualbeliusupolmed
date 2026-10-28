@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { hasAdminPermission, resolveAdminCampusScope } from "./admin-access";
+import { getCampusProvinceId } from "./settings";
 
 describe("otorisasi workspace owner", () => {
   it("membatasi setiap aksi sesuai izin yang diberikan", () => {
@@ -30,6 +31,14 @@ describe("otorisasi workspace owner", () => {
     expect(hasAdminPermission(actor, "settings", "read")).toBe(false);
   });
 
+  it("mendukung operator WhatsApp tanpa memberi akses platform lain", () => {
+    const actor = { role: "owner", permissions: { whatsapp: ["read", "manage"] } };
+    expect(hasAdminPermission(actor, "whatsapp", "read")).toBe(true);
+    expect(hasAdminPermission(actor, "whatsapp", "manage")).toBe(true);
+    expect(hasAdminPermission(actor, "marketplace", "read")).toBe(false);
+    expect(hasAdminPermission(actor, "settings", "read")).toBe(false);
+  });
+
   it("memperluas scope provinsi ke kampus di provinsi itu dan menggabungkan grant", () => {
     const campuses = [
       { id: "usu", shortName: "USU", name: "Universitas Sumatera Utara" },
@@ -41,5 +50,11 @@ describe("otorisasi workspace owner", () => {
       { scope_type: "campus", scope_id: "ugm" },
       { scope_type: "campus", scope_id: "unknown" },
     ], campuses)).toEqual(["USU", "POLMED", "UGM"]);
+  });
+
+  it("menggunakan provinceId eksplisit dan fallback legacy yang sama", () => {
+    expect(getCampusProvinceId({ id: "kampus-baru", shortName: "BARU", provinceId: "Jawa-Barat" })).toBe("jawa-barat");
+    expect(getCampusProvinceId({ id: "usu", shortName: "USU" })).toBe("sumatera-utara");
+    expect(getCampusProvinceId({ id: "kampus-tanpa-provinsi", shortName: "BARU" })).toBe("");
   });
 });

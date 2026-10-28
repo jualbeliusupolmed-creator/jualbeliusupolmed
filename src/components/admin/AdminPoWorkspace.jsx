@@ -3,11 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { Boxes, CalendarClock, CheckCircle2, Clock3, LoaderCircle, MapPin, Pause, Play, RefreshCw, Search, ShoppingBag } from "lucide-react";
 import { rupiah } from "@/lib/fees";
+import { useAdmin } from "./AdminProvider";
 
 const FILTERS = [["all", "Semua"], ["open", "Menerima pesanan"], ["closed", "Ditutup"], ["draft", "Draft"], ["cancelled", "Dibatalkan"]];
 const dateLabel = (value) => value ? new Date(value).toLocaleString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "-";
 
 export default function AdminPoWorkspace() {
+  const { confirmThen } = useAdmin();
   const [batches, setBatches] = useState([]);
   const [filter, setFilter] = useState("all");
   const [query, setQuery] = useState("");
@@ -38,17 +40,23 @@ export default function AdminPoWorkspace() {
 
   async function updateStatus(batch) {
     const status = batch.status === "open" ? "closed" : "open";
-    if (status === "closed" && !window.confirm(`Tutup batch “${batch.title}” agar tidak menerima reservasi baru?`)) return;
-    setBusyId(batch.id);
-    setError("");
-    try {
-      const response = await fetch("/api/admin/po", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: batch.id, status }) });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(result.error || "Status batch gagal diubah.");
-      setNotice(status === "closed" ? "Batch ditutup." : "Batch dibuka kembali.");
-      await load();
-    } catch (cause) { setError(cause.message); }
-    finally { setBusyId(""); }
+    const execute = async () => {
+      setBusyId(batch.id);
+      setError("");
+      try {
+        const response = await fetch("/api/admin/po", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: batch.id, status }) });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || "Status batch gagal diubah.");
+        setNotice(status === "closed" ? "Batch ditutup." : "Batch dibuka kembali.");
+        await load();
+      } catch (cause) { setError(cause.message); }
+      finally { setBusyId(""); }
+    };
+    if (status === "closed") {
+      confirmThen({ title: "Tutup batch?", message: `Tutup batch “${batch.title}” agar tidak menerima reservasi baru?`, danger: true, confirmLabel: "Tutup batch" }, execute);
+      return;
+    }
+    await execute();
   }
 
   return <div className="space-y-5 sm:space-y-6">

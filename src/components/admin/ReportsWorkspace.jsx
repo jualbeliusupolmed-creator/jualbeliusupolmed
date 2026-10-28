@@ -2,11 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Check, CircleAlert, Clock3, LoaderCircle, RefreshCw, Search } from "lucide-react";
+import { useAdmin } from "./AdminProvider";
 
 const FILTERS = [["open", "Terbuka"], ["resolved", "Selesai"], ["all", "Semua"]];
 const REASONS = { penipuan: "Dugaan penipuan", barang_terlarang: "Barang terlarang", spam: "Spam", salah_kategori: "Salah kategori", lainnya: "Lainnya" };
 
 export default function ReportsWorkspace({ canManage = false }) {
+  const { confirmThen } = useAdmin();
   const [items, setItems] = useState([]);
   const [status, setStatus] = useState("open");
   const [query, setQuery] = useState("");
@@ -31,18 +33,19 @@ export default function ReportsWorkspace({ canManage = false }) {
   const visible = items.filter((item) => `${item.listing?.title || ""} ${item.detail || ""} ${item.reason || ""}`.toLowerCase().includes(query.trim().toLowerCase()));
 
   async function resolve(item) {
-    if (!window.confirm(`Tandai laporan untuk “${item.listing?.title || "iklan"}” sebagai selesai?`)) return;
-    setBusyId(item.id);
-    setError("");
-    setNotice("");
-    try {
-      const response = await fetch("/api/admin/reports", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: item.id, action: "resolve" }) });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || "Laporan gagal diperbarui.");
-      setNotice("Laporan ditandai selesai.");
-      await load();
-    } catch (cause) { setError(cause.message); }
-    finally { setBusyId(""); }
+    confirmThen({ title: "Selesaikan laporan?", message: `Tandai laporan untuk “${item.listing?.title || "iklan"}” sebagai selesai?`, confirmLabel: "Tandai selesai" }, async () => {
+      setBusyId(item.id);
+      setError("");
+      setNotice("");
+      try {
+        const response = await fetch("/api/admin/reports", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: item.id, action: "resolve" }) });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || "Laporan gagal diperbarui.");
+        setNotice("Laporan ditandai selesai.");
+        await load();
+      } catch (cause) { setError(cause.message); }
+      finally { setBusyId(""); }
+    });
   }
 
   return <div className="space-y-5">

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { CircleAlert, CreditCard, LoaderCircle, RefreshCw, WalletCards } from "lucide-react";
 import { downloadCSV } from "@/lib/csv";
 import { SETTLEABLE_PAYMENT_TYPES } from "@/lib/admin-finance-policy";
+import { useAdmin } from "./AdminProvider";
 
 const PERIODS = [[7, "7 hari"], [30, "30 hari"], [90, "90 hari"], [365, "1 tahun"]];
 const APPROVABLE_TYPES = new Set(SETTLEABLE_PAYMENT_TYPES);
@@ -25,6 +26,7 @@ function approvalConsequence(payment) {
 }
 
 export default function FinanceWorkspace({ canManage = false, initialOrderId = "" }) {
+  const { confirmThen } = useAdmin();
   const [days, setDays] = useState(initialOrderId ? 365 : 30);
   const [type, setType] = useState("all");
   const [status, setStatus] = useState("all");
@@ -63,21 +65,22 @@ export default function FinanceWorkspace({ canManage = false, initialOrderId = "
     const prompt = status === "paid"
       ? "Setujui pembayaran " + (payment.midtrans_order_id || payment.id) + "? " + consequence
       : "Tandai pembayaran " + (payment.midtrans_order_id || payment.id) + " sebagai gagal?";
-    if (!window.confirm(prompt)) return;
-    setBusyId(payment.id);
-    setError("");
-    setNotice("");
-    try {
-      const payload = unlock && status === "paid"
-        ? { action: "approve_unlock_manual", payment_id: payment.id }
-        : { action: "update_payment", id: payment.id, status };
-      const response = await fetch("/api/admin/finance", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-      const body = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(body.error || "Pembayaran gagal diperbarui.");
-      setNotice(body.warning || (status === "paid" ? "Pembayaran disetujui dan layanan diproses." : "Pembayaran ditandai gagal."));
-      await load(days);
-    } catch (cause) { setError(cause.message); }
-    finally { setBusyId(""); }
+    confirmThen({ title: status === "paid" ? "Setujui pembayaran?" : "Tandai pembayaran gagal?", message: prompt, danger: status !== "paid", confirmLabel: status === "paid" ? "Setujui" : "Tandai gagal" }, async () => {
+      setBusyId(payment.id);
+      setError("");
+      setNotice("");
+      try {
+        const payload = unlock && status === "paid"
+          ? { action: "approve_unlock_manual", payment_id: payment.id }
+          : { action: "update_payment", id: payment.id, status };
+        const response = await fetch("/api/admin/finance", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(body.error || "Pembayaran gagal diperbarui.");
+        setNotice(body.warning || (status === "paid" ? "Pembayaran disetujui dan layanan diproses." : "Pembayaran ditandai gagal."));
+        await load(days);
+      } catch (cause) { setError(cause.message); }
+      finally { setBusyId(""); }
+    });
   }
   return <div className="space-y-5">
     <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><h2 className="text-2xl font-black tracking-tight">Transaksi dan keuangan</h2><p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-500">Riwayat pembayaran yang terhubung dengan iklan dalam cakupan akun.</p></div><button onClick={() => load(days)} className="inline-flex min-h-10 items-center justify-center gap-2 self-start rounded-full border border-slate-200 bg-white px-4 text-xs font-bold text-slate-600 hover:border-emerald-300 hover:text-emerald-800"><RefreshCw className="h-3.5 w-3.5" />Segarkan</button></header>
