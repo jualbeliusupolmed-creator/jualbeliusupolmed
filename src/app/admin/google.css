@@ -974,3 +974,20 @@ textarea.g-field {
   max-height: 200px;
   overflow-y: auto;
 }
+
+/* Keyboard focus stays visible across the rebuilt workspace and legacy WhatsApp UI. */
+.g-admin :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid #047857;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .g-admin *,
+  .g-admin *::before,
+  .g-admin *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
