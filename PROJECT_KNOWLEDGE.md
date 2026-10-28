@@ -546,6 +546,7 @@ cuma server.
 
 ### 28 Oktober 2026 — Login Google untuk panel admin
 
-- Login Google admin memakai Supabase Auth PKCE dengan pertukaran kode di server dan memakai callback `/auth/callback` yang telah digunakan login pengguna, sehingga URL callback baru tidak perlu ditambahkan ke allow-list Supabase.
+- Login Google admin memakai Supabase Auth PKCE dengan pertukaran kode di server dan callback `/auth/callback`. Supabase Auth Redirect URLs mengizinkan callback exact `https://m.jualbeliusupolmed.web.id/auth/callback` dan `https://www.jualbeliusupolmed.web.id/auth/callback`; URL `m.` ditambahkan pada 28 Oktober 2026, sedangkan `www.` sudah terdaftar. Site URL tetap `https://jualbeliusupolmed.web.id`.
 - Verifier PKCE disimpan sementara dalam cookie `HttpOnly`, `SameSite=Lax`, dibatasi pada callback dan kedaluwarsa setelah 10 menit. Callback admin tidak menyimpan token Supabase di browser dan tidak menjalankan sinkronisasi profil penjual.
 - Akses tetap dibatasi ke UUID `SUPERADMIN_AUTH_USER_ID` atau owner dengan membership aktif. Domain email kampus bukan syarat; cookie sesi admin bertanda tangan tetap berlaku satu jam dan setiap request workspace memeriksa ulang Auth serta izin.
+- Smoke check produksi 28 Oktober 2026: login Google dari domain `m.` kembali ke `/admin/overview`, dikenali sebagai superadmin, dan sesi tetap aktif setelah reload. Nilai UUID dan token tidak dicatat.
