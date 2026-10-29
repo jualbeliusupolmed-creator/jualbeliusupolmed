@@ -10,7 +10,6 @@ export default function OrganisasiClient({ initialOrganisasi = [] }) {
   const [organisasi, setOrganisasi] = useState(initialOrganisasi);
   const [loading, setLoading] = useState(initialOrganisasi.length === 0);
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedCampus, setSelectedCampus] = useState("Semua");
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -19,7 +18,6 @@ export default function OrganisasiClient({ initialOrganisasi = [] }) {
       try {
         const params = new URLSearchParams();
         if (selectedCategory !== "all") params.set("category", selectedCategory);
-        if (selectedCampus !== "Semua") params.set("campus", selectedCampus);
         if (searchQuery) params.set("q", searchQuery);
 
         const res = await fetch(`/api/organisasi?${params.toString()}`);
@@ -34,7 +32,7 @@ export default function OrganisasiClient({ initialOrganisasi = [] }) {
 
     const timer = setTimeout(loadData, 200);
     return () => clearTimeout(timer);
-  }, [selectedCategory, selectedCampus, searchQuery]);
+  }, [selectedCategory, searchQuery]);
 
   return (
     <div className="min-h-screen bg-[#f5f5f7] dark:bg-[#0b0b0f] pb-[calc(6.5rem+env(safe-area-inset-bottom))] font-sans selection:bg-primary/20">
@@ -50,7 +48,7 @@ export default function OrganisasiClient({ initialOrganisasi = [] }) {
                 Direktori UKM & Organisasi Kampus
               </h1>
               <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400 max-w-2xl">
-                Temukan dan ikuti kegiatan BEM, HIMA, lembaga, dan Unit Kegiatan Mahasiswa resmi di Universitas Sumatera Utara (USU) & Politeknik Negeri Medan (POLMED).
+                Temukan dan ikuti kegiatan BEM, HIMA, lembaga, dan Unit Kegiatan Mahasiswa dari berbagai perguruan tinggi.
               </p>
             </div>
 
@@ -70,27 +68,10 @@ export default function OrganisasiClient({ initialOrganisasi = [] }) {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari nama UKM, organisasi, atau fakultas..."
+                placeholder="Cari organisasi, kampus, atau fakultas..."
                 className="input py-2.5 pl-9 pr-4 text-xs shadow-sm bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800"
               />
               <Icon.Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-            </div>
-
-            {/* Campus Selector */}
-            <div className="flex items-center gap-1.5 bg-gray-100 dark:bg-slate-800/80 p-1 rounded-xl shrink-0">
-              {["Semua", "USU", "POLMED"].map((c) => (
-                <button
-                  key={c}
-                  onClick={() => setSelectedCampus(c)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                    selectedCampus === c
-                      ? "bg-white dark:bg-slate-900 text-gray-900 dark:text-white shadow-sm"
-                      : "text-gray-500 dark:text-slate-400 hover:text-gray-900"
-                  }`}
-                >
-                  {c}
-                </button>
-              ))}
             </div>
           </div>
 
@@ -218,7 +199,7 @@ export default function OrganisasiClient({ initialOrganisasi = [] }) {
 
                     {/* Bio / Description */}
                     <p className="text-xs text-gray-600 dark:text-slate-300 line-clamp-3 leading-relaxed">
-                      {org.bio || "Organisasi mahasiswa resmi di lingkungan kampus USU & POLMED."}
+                      {org.bio || "Organisasi mahasiswa di lingkungan kampus."}
                     </p>
                   </div>
 

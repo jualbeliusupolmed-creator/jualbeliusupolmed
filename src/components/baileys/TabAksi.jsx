@@ -321,7 +321,7 @@ function PanelMedia() {
             <Field label="Latitude"><input className="input" type="number" step="any" placeholder="3.595" value={lat} onChange={e => setLat(e.target.value)} /></Field>
             <Field label="Longitude"><input className="input" type="number" step="any" placeholder="98.672" value={lng} onChange={e => setLng(e.target.value)} /></Field>
           </div>
-          <Field label="Nama Lokasi (opsional)"><input className="input" placeholder="Kampus USU Medan" value={locName} onChange={e => setLocName(e.target.value)} /></Field>
+          <Field label="Nama Lokasi (opsional)"><input className="input" placeholder="Nama kampus atau area" value={locName} onChange={e => setLocName(e.target.value)} /></Field>
           <button disabled={busy || !lat || !lng || !target} onClick={() => uploadAndSend("send-location", { latitude: Number(lat), longitude: Number(lng), name: locName })} className="btn-primary">{busy ? "..." : "Kirim Lokasi"}</button>
         </Section>
       )}

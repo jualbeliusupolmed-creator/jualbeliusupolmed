@@ -65,7 +65,7 @@ export default function BagikanIklan({ listing, onClose }) {
     ` ${harga}${kondisi}\n` +
     (listing.category ? ` ${listing.category}\n` : "") +
     `\n ${url}\n` +
-    `_Jual Beli USU Polmed — COD area kampus_`;
+    `_Kampus Kita — marketplace mahasiswa lintas kampus_`;
 
   async function salin(nilai, tanda) {
     try {
@@ -123,7 +123,7 @@ export default function BagikanIklan({ listing, onClose }) {
       >
         <div className="mb-3 flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="text-lg font-extrabold text-gray-900 dark:text-white">Bagikan iklan</h2>
+            <h2 className="text-lg font-extrabold text-gray-900 dark:text-white">Bagikan barang</h2>
             <p className="truncate text-xs text-gray-500 dark:text-slate-400">{listing.title}</p>
           </div>
           <button onClick={onClose} aria-label="Tutup" className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800">
@@ -164,7 +164,7 @@ export default function BagikanIklan({ listing, onClose }) {
           />
           <Baris
             icon={(p) => <Icon.Clipboard {...p} />}
-            judul={tersalin === "teks" ? "Teks tersalin " : "Salin teks iklan"}
+            judul={tersalin === "teks" ? "Teks tersalin " : "Salin informasi barang"}
             sub="Untuk ditempel di mana saja"
             onClick={() => salin(teks, "teks")}
           />

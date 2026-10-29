@@ -726,7 +726,7 @@ export default function PengaturanClient({ initialSettings = {} }) {
               className="g-field w-full min-h-48 font-mono text-sm"
               value={areas}
               onChange={(e) => setAreas(e.target.value)}
-              placeholder={"Medan Baru\nMedan Selayang\nKampus USU\n..."}
+              placeholder={"Area sekitar kampus\nKawasan pusat kota\n..."}
             />
             <button
               onClick={() => {
@@ -746,7 +746,7 @@ export default function PengaturanClient({ initialSettings = {} }) {
               className="g-field w-full min-h-32 font-mono text-sm"
               value={campusesDraft}
               onChange={(e) => setCampusesDraft(e.target.value)}
-              placeholder={"USU|Universitas Sumatera Utara|aktif\nPOLMED|Politeknik Negeri Medan|aktif"}
+              placeholder={"KAMPUS|Nama Perguruan Tinggi|aktif\nKAMPUS_LAIN|Nama Perguruan Tinggi Lain|aktif"}
             />
             <p className="mt-1 text-[11px] text-gray-400">Format: singkatan|nama lengkap|aktif atau nonaktif</p>
             <button
@@ -794,7 +794,7 @@ export default function PengaturanClient({ initialSettings = {} }) {
                 </Field>
               </div>
               <Field label="Alamat Fisik (tampil di footer)">
-                <input className="g-field w-full" value={contact.supportAddress ?? ""} onChange={(e) => setContact({ ...contact, supportAddress: e.target.value })} placeholder="Jl. Dr. T. Mansur No. 9, Medan" />
+                <input className="g-field w-full" value={contact.supportAddress ?? ""} onChange={(e) => setContact({ ...contact, supportAddress: e.target.value })} placeholder="Alamat kantor atau kontak dukungan" />
               </Field>
             </div>
             <button onClick={() => { action({ action: "save_settings", key: "contact", value: contact }, "Kontak disimpan"); flash("contact"); }} className="g-btn g-btn-primary mt-4 w-full sm:w-auto sm:px-10">{saved === "contact" ? " Tersimpan" : "Simpan Kontak"}</button>
@@ -857,7 +857,7 @@ export default function PengaturanClient({ initialSettings = {} }) {
                   className="g-field w-full min-h-28 text-sm"
                   value={aiCfg.memory ?? ""}
                   onChange={(e) => setAiCfg({ ...aiCfg, memory: e.target.value })}
-                  placeholder="Pasar target adalah mahasiswa USU dan Polmed. Pembayaran via QRIS atau COD..."
+                  placeholder="Pasar target adalah mahasiswa lintas kampus. Pembayaran mengikuti metode yang disepakati..."
                 />
                 <p className="mt-1 text-xs text-gray-400">Fakta tentang marketplace yang diinjeksikan ke konteks AI (kategori, area, harga, dll).</p>
               </Field>
@@ -892,7 +892,7 @@ export default function PengaturanClient({ initialSettings = {} }) {
                   className="g-field w-full"
                   value={popupAd.title ?? ""}
                   onChange={(e) => setPopupAd({ ...popupAd, title: e.target.value })}
-                  placeholder="Contoh: Event Bazaar USU 2025 "
+                  placeholder="Contoh: Festival Kampus 2026"
                 />
               </Field>
 
@@ -944,7 +944,7 @@ export default function PengaturanClient({ initialSettings = {} }) {
           {/* AKUN RESMI ORGANISASI & UKM KAMPUS */}
           <Card title="Akun Resmi UKM & Organisasi Kampus" className={`lg:col-span-2 ${match("organisasi ukm hima bem komunitas kampus resmi private invite pendaftaran link") ? "" : "hidden"}`}>
             <p className="mb-4 text-xs text-gray-500 dark:text-slate-400">
-              Kelola kode undangan dan tautan pendaftaran private untuk pengurus BEM, HIMA, dan UKM di USU & POLMED agar mendapatkan lencana resmi terverifikasi.
+              Kelola kode undangan dan tautan pendaftaran private untuk pengurus BEM, HIMA, dan UKM dari berbagai kampus agar mendapatkan lencana resmi terverifikasi.
             </p>
 
             <div className="space-y-4">
@@ -953,7 +953,7 @@ export default function PengaturanClient({ initialSettings = {} }) {
                   className="g-input w-full font-mono text-sm uppercase"
                   value={ukmInviteCode}
                   onChange={(e) => setUkmInviteCode(e.target.value.toUpperCase())}
-                  placeholder="KAMPUS_USU_POLMED_2026"
+                  placeholder="KAMPUS_KITA_2026"
                 />
                 <p className="mt-1 text-xs text-gray-400">
                   Kode ini otomatis memverifikasi akun organisasi saat mendaftar lewat formulir private.

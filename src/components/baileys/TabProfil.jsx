@@ -53,7 +53,7 @@ export function TabProfil() {
         <div>
           <label className="label">Status / Bio WA</label>
           <div className="flex gap-2">
-            <input className="input flex-1" value={status} onChange={e => setStatus(e.target.value)} placeholder="Contoh: Bot Jual Beli USU" />
+            <input className="input flex-1" value={status} onChange={e => setStatus(e.target.value)} placeholder="Contoh: Bot Kampus Kita" />
             <button onClick={() => save("status", status)} disabled={saving === "status"} className="btn-primary shrink-0">
               {saving === "status" ? "..." : "Simpan"}
             </button>

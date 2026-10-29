@@ -58,6 +58,7 @@ export default function HomeBrowser({
   const [maxPrice, setMaxPrice] = useState(() => searchParams.get("maxPrice") || "");
   const [showPriceFilter, setShowPriceFilter] = useState(false);
   const [campusFilter, setCampusFilter] = useState(() => searchParams.get("campus") || "Semua");
+  const [campuses, setCampuses] = useState([]);
   const [negoFilter, setNegoFilter] = useState(() => searchParams.get("nego") === "1");
   const [conditionFilter, setConditionFilter] = useState(() => searchParams.get("condition") || "all");
   const [typeFilter, setTypeFilter] = useState(() => searchParams.get("type") || "default");
@@ -86,6 +87,23 @@ export default function HomeBrowser({
   // PWA Install prompt state
   const [pwaReady, setPwaReady] = useState(false);
   const searchTimerRef = useRef(null);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/kampus", { cache: "no-store" })
+      .then((response) => {
+        if (!response.ok) throw new Error("Gagal memuat daftar kampus.");
+        return response.json();
+      })
+      .then((data) => {
+        if (active && Array.isArray(data?.campuses)) setCampuses(data.campuses);
+      })
+      .catch((error) => console.error("[Home] Gagal memuat daftar kampus:", error));
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -522,15 +540,15 @@ export default function HomeBrowser({
                   </Link>
                   <Link href="/dicari" className="inline-flex items-center gap-1.5 hover:text-emerald-700 transition-colors">
                     <span className="w-1.5 h-1.5 rounded-full bg-purple-600" />
-                    <strong>Buku Purcell Kalkulus Edisi 9</strong> <span className="text-slate-400 text-[10px]">[MIPA USU]</span> Butuh cepat sebelum kuis
+                    <strong>Buku Purcell Kalkulus Edisi 9</strong> <span className="text-slate-400 text-[10px]">[Mahasiswa]</span> Butuh cepat sebelum kuis
                   </Link>
                   <Link href="/dicari" className="inline-flex items-center gap-1.5 hover:text-emerald-700 transition-colors">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
-                    <strong>Papan Gambar Segitiga A3 Rotring</strong> <span className="text-slate-400 text-[10px]">[Arsitektur POLMED]</span> Budget 150k
+                    <strong>Papan Gambar Segitiga A3 Rotring</strong> <span className="text-slate-400 text-[10px]">[Mahasiswa]</span> Budget 150k
                   </Link>
                   <Link href="/dicari" className="inline-flex items-center gap-1.5 hover:text-emerald-700 transition-colors">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-600" />
-                    <strong>Jas Lab Kimia Ukuran L / XL</strong> <span className="text-slate-400 text-[10px]">[Farmasi USU]</span> Siap ambil di Pendopo
+                    <strong>Jas Lab Kimia Ukuran L / XL</strong> <span className="text-slate-400 text-[10px]">[Mahasiswa]</span> Siap ambil sesuai kesepakatan
                   </Link>
                 </div>
               </div>
@@ -561,7 +579,7 @@ export default function HomeBrowser({
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                    Zona publik terpantau keamanan kampus: Pendopo USU, Pintu 2, Gazebo FIB, Kantin POLMED
+                    Pilih tempat umum yang ramai dan sepakati titik temu bersama.
                   </p>
                 </div>
               </div>
@@ -636,7 +654,7 @@ export default function HomeBrowser({
               </button>
 
               {/* Campus */}
-              {["Semua", "USU", "POLMED"].map((c) => (
+              {["Semua", ...campuses.map((campus) => campus.shortName)].map((c) => (
                 <button
                   key={c}
                   type="button"
@@ -865,7 +883,7 @@ export default function HomeBrowser({
                   onClick={() => setShowCatSubModal(true)}
                   className="flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 dark:border-emerald-900/50 dark:bg-emerald-900/10 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/20 transition-colors"
                 >
-                  <Icon.Bell className="h-4 w-4" /> Notif saya kalau ada iklan baru di <strong>{catName(cat)}</strong>
+                  <Icon.Bell className="h-4 w-4" /> Notif saya kalau ada barang baru di <strong>{catName(cat)}</strong>
                 </button>
               </div>
             )}
@@ -909,7 +927,7 @@ export default function HomeBrowser({
                   </div>
                   <div className="p-4 space-y-3">
                     <p className="text-xs text-gray-500 dark:text-slate-400">
-                      Dapatkan notifikasi WA otomatis setiap ada iklan baru di kategori <strong className="text-gray-700 dark:text-slate-200">{catName(cat)}</strong>
+                      Dapatkan notifikasi WA otomatis setiap ada barang baru di kategori <strong className="text-gray-700 dark:text-slate-200">{catName(cat)}</strong>
                     </p>
                     <div>
                       <label className="label text-xs">Namamu</label>
@@ -949,7 +967,7 @@ export default function HomeBrowser({
                             }),
                           });
                           if (!res.ok) throw new Error((await res.json()).error);
-                          t.success("Berhasil! Kamu akan dapat notif WA kalau ada iklan baru.");
+                          t.success("Berhasil! Kamu akan dapat notif WA kalau ada barang baru.");
                           setShowCatSubModal(false);
                           setCatSubForm({ name: "", wa: "" });
                         } catch (err) {
@@ -971,7 +989,7 @@ export default function HomeBrowser({
 
             {/* Count */}
             <p className="mt-3 text-xs text-gray-500 dark:text-slate-400">
-              {searching ? "Mencari…" : `${total} iklan`}
+              {searching ? "Mencari…" : `${total} barang`}
             </p>
 
             {/* Grid */}
@@ -996,7 +1014,7 @@ export default function HomeBrowser({
                     href="/jual"
                     className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-bold text-white bg-[#126B49] hover:bg-[#0e5238] active:scale-98 shadow-xs transition-all"
                   >
-                    <span>+ Pasang Iklan Sekarang</span>
+                    <span>+ Jual Barang Sekarang</span>
                   </Link>
                   <a
                     href={`/open-po?utm_source=jualbeliusupolmed&ref=empty_state${q ? `&q=${encodeURIComponent(q)}` : ""}`}

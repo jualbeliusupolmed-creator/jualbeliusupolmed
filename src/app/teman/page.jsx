@@ -29,6 +29,7 @@ export default function TemanSwipePage() {
   const [deck, setDeck] = useState([]);
   const [loading, setLoading] = useState(true);
   const [campusFilter, setCampusFilter] = useState("Semua");
+  const [campuses, setCampuses] = useState([]);
   
   // History for rewind
   const [history, setHistory] = useState([]);
@@ -44,6 +45,23 @@ export default function TemanSwipePage() {
     setMounted(true);
     const cid = getClientId();
     setUserId(cid);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/kampus", { cache: "no-store" })
+      .then((response) => {
+        if (!response.ok) throw new Error("Gagal memuat daftar kampus.");
+        return response.json();
+      })
+      .then((data) => {
+        if (active && Array.isArray(data?.campuses)) setCampuses(data.campuses);
+      })
+      .catch((error) => console.error("[Teman] Gagal memuat daftar kampus:", error));
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   // Fetch Deck & Profile
@@ -252,7 +270,7 @@ export default function TemanSwipePage() {
 
       {/* CAMPUS FILTER CAPSULES */}
       <div className="flex items-center gap-1.5 pb-3 overflow-x-auto [scrollbar-width:none]">
-        {["Semua", "USU", "Polmed"].map((c) => (
+        {["Semua", ...campuses.map((campus) => campus.shortName).filter(Boolean)].map((c) => (
           <button
             key={c}
             onClick={() => setCampusFilter(c)}

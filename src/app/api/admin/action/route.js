@@ -128,7 +128,7 @@ export async function POST(req) {
           if (!broadcast?.ok) {
             console.error("[activate] Broadcast grup gagal:", JSON.stringify(broadcast));
             warning = broadcast?.skipped
-              ? "Iklan aktif, tapi broadcast grup TIDAK terkirim: FONNTE_TOKEN/FONNTE_WA_GROUP_ID belum di-set di server."
+              ? "Iklan aktif, tetapi tujuan grup belum dikonfigurasi. Atur FONNTE_WA_GROUP_ID atau BAILEYS_BROADCAST_GROUPS."
               : `Iklan aktif, tapi broadcast grup gagal: ${broadcast?.error || broadcast?.data?.reason || "cek log server"}.`;
           }
         }

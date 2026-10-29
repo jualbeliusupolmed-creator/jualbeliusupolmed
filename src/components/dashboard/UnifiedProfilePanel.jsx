@@ -9,6 +9,7 @@ import imageCompression from "browser-image-compression";
 import { AKSEN, statusToko } from "@/lib/toko";
 import { normalizeTemanIntent } from "@/lib/temanIntents";
 import StudentVerificationModal from "@/components/student/StudentVerificationModal";
+import AccountAccessMethods from "@/components/dashboard/AccountAccessMethods";
 
 /*
  * Satu pintu untuk profil.
@@ -37,19 +38,6 @@ const INTENTS = [
   { id: "Ngobrol Seru", label: "Ngobrol Seru", icon: Icon.MessageCircle },
   { id: "Cari Relasi Karir", label: "Cari Relasi Karir", icon: Icon.Briefcase },
 ];
-
-const FACULTIES_USU = [
-  "Kedokteran", "Hukum", "Pertanian", "Teknik", "Ekonomi & Bisnis",
-  "Kedokteran Gigi", "Ilmu Budaya", "MIPA", "ISIP", "Kesehatan Masyarakat",
-  "Farmasi", "Psikologi", "Keperawatan", "Fasilkom-TI", "Kehutanan", "Vokasi", "Umum",
-];
-
-const FACULTIES_POLMED = [
-  "Teknik Mesin", "Teknik Sipil", "Teknik Elektro", "Akuntansi",
-  "Administrasi Niaga", "Teknik Komputer & Informatika", "Umum",
-];
-
-const FACULTIES_GENERIC = ["Umum"];
 
 const KATEGORI_UKM = [
   { id: "bem_hima", label: "BEM & Himpunan" },
@@ -222,10 +210,7 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
   const [bukaToko, setBukaToko] = useState(false);
   const [daftarOrg, setDaftarOrg] = useState(false);
   const [modalVerifikasi, setModalVerifikasi] = useState(false);
-  const [kampusTersedia, setKampusTersedia] = useState([
-    { shortName: "USU", name: "Universitas Sumatera Utara" },
-    { shortName: "POLMED", name: "Politeknik Negeri Medan" },
-  ]);
+  const [kampusTersedia, setKampusTersedia] = useState([]);
   const inputFoto = useRef(null);
 
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
@@ -243,13 +228,16 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
         if (!hidup) return;
         if (!res.ok || !data.ok) throw new Error(data.error || "Gagal memuat profil");
         setProfil(data.profil);
+        setKampusTersedia((current) => current.length || !data.profil.campus
+          ? current
+          : [{ shortName: data.profil.campus, name: data.profil.campus }]);
         setF({
           avatar_url: data.profil.avatar_url || "",
           name: data.profil.name || "",
           anonymous_name: data.profil.anonymous_name || "",
           bio: data.profil.bio || "",
           campus: data.profil.campus || "",
-          faculty: data.profil.faculty || "Umum",
+          faculty: data.profil.faculty || "",
           store_name: data.profil.store_name || "",
           tagline: data.profil.tagline || "",
           store_area: data.profil.store_area || "",
@@ -290,7 +278,7 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
           setKampusTersedia(data.campuses);
           setF((current) => {
             if (!current?.campus || !data.campuses.some((campus) => campus.shortName === current.campus)) {
-              return { ...current, campus: data.campuses[0].shortName, faculty: "Umum" };
+              return { ...current, campus: data.campuses[0].shortName, faculty: "" };
             }
             return current;
           });
@@ -364,12 +352,6 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
 
   const peran = profil.peran;
   const hasToko = Boolean(profil.store_name);
-  const kampusAktif = kampusTersedia.find((kampus) => kampus.shortName === f.campus);
-  const fakultas = kampusAktif?.shortName === "POLMED"
-    ? FACULTIES_POLMED
-    : kampusAktif?.shortName === "USU"
-      ? FACULTIES_USU
-      : FACULTIES_GENERIC;
   // Sebuah lembaga tidak punya angkatan dan tidak sedang mencari teman nongkrong.
   const tawarkanCariTeman = !peran.organisasi && !daftarOrg;
 
@@ -460,7 +442,9 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
           <input ref={inputFoto} type="file" accept="image/*" className="hidden" onChange={unggahFoto} />
         </div>
 
-        <Kartu judul="Identitas" catatan="Dipakai di kartu iklan, URL profil penjual, obrolan, dan mading.">
+        <AccountAccessMethods profil={profil} />
+
+        <Kartu judul="Identitas" catatan="Dipakai di kartu barang jualan, URL profil penjual, obrolan, dan mading.">
           <Baris label={peran.organisasi ? "Nama pengurus" : "Nama"}>
             <Teks nilai={f.name} ubah={(v) => set("name", v)} required placeholder="Nama lengkap" />
           </Baris>
@@ -492,12 +476,12 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
           <Baris label="Kampus">
             <Pilih
               nilai={f.campus}
-              ubah={(v) => { set("campus", v); set("faculty", "Umum"); }}
+              ubah={(v) => { set("campus", v); set("faculty", ""); }}
               opsi={kampusTersedia.map((kampus) => kampus.shortName)}
             />
           </Baris>
           <Baris label="Fakultas">
-            <Pilih nilai={f.faculty} ubah={(v) => set("faculty", v)} opsi={fakultas} />
+            <Teks nilai={f.faculty} ubah={(v) => set("faculty", v)} placeholder="Fakultas / program studi" />
           </Baris>
           <div className="px-4 py-3">
             <label className="mb-1.5 block text-[15px] text-[#1d1d1f] dark:text-white">Bio</label>
@@ -508,7 +492,7 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
         {(peran.organisasi || daftarOrg) && (
           <Kartu judul="Organisasi" catatan="Tampil di direktori /organisasi dan pada setiap oprec yang kamu buka.">
             <Baris label="Nama organisasi">
-              <Teks nilai={f.ukm_name} ubah={(v) => set("ukm_name", v)} placeholder="mis. BEM Fasilkom-TI USU" />
+              <Teks nilai={f.ukm_name} ubah={(v) => set("ukm_name", v)} placeholder="mis. BEM Fakultas Teknik" />
             </Baris>
             <Baris label="Kategori">
               <Pilih nilai={f.ukm_category} ubah={(v) => set("ukm_category", v)} opsi={KATEGORI_UKM} />
@@ -546,7 +530,7 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
                 <Teks nilai={f.tagline} ubah={(v) => set("tagline", v)} placeholder="Satu kalimat: kamu jualan apa" />
               </Baris>
               <Baris label="Area COD">
-                <Teks nilai={f.store_area} ubah={(v) => set("store_area", v)} placeholder="mis. Padang Bulan, USU" />
+                <Teks nilai={f.store_area} ubah={(v) => set("store_area", v)} placeholder="mis. area sekitar kampus" />
               </Baris>
               <Baris label="Jam buka">
                 <Teks nilai={f.store_hours} ubah={(v) => set("store_hours", v)} placeholder="mis. 09.00–21.00" />
@@ -601,7 +585,7 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
             <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-[13px] leading-relaxed text-gray-500 dark:text-slate-400">
                 Belum punya toko. Kalau kamu berjualan rutin, halaman toko membuat semua
-                iklanmu berkumpul di satu alamat yang bisa disebar.
+                semua barang jualanmu berkumpul di satu alamat yang bisa dibagikan.
               </p>
               <button type="button" onClick={() => setBukaToko(true)}
                 className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-black/[0.08] px-4 py-2 text-center text-xs font-bold text-[#1d1d1f] transition-all hover:bg-black/[0.03] active:scale-95 dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06]">

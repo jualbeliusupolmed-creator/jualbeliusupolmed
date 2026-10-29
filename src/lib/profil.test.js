@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { peranProfil, saringIsian, normalisasiIsian, bentukProfil, bersihkanGambar } from "./profil";
+import {
+  KOLOM_PROFIL,
+  peranProfil,
+  saringIsian,
+  normalisasiIsian,
+  bentukProfil,
+  bersihkanGambar,
+} from "./profil";
 import { formatWa, adalahIdSintetis } from "./constants";
 
 /*
@@ -99,6 +106,23 @@ describe("bentukProfil — nomor yang tidak bisa dihubungi tidak disodorkan", ()
   it("mengosongkan nomor untuk akun sintetis", () => {
     expect(bentukProfil({ wa: "google_ridho_l2k9" }, null).nomor).toBe("");
     expect(bentukProfil({ wa: "081234567890" }, null).nomor).toBe("081234567890");
+  });
+
+  it("menggunakan nomor WhatsApp tertaut tanpa mengganti identitas profil Google", () => {
+    const profile = bentukProfil(
+      { wa: "google_ridho_l2k9", phone_wa: "081234567890" },
+      null
+    );
+    expect(profile.wa).toBe("google_ridho_l2k9");
+    expect(profile.nomor).toBe("081234567890");
+    expect(profile.peran.tanpaNomor).toBe(false);
+  });
+
+  it("membawa email Google tertaut melalui profil sesi", () => {
+    expect(KOLOM_PROFIL).toContain("email_google");
+    expect(
+      bentukProfil({ wa: "081234567890", email_google: "seller@example.com" }, null).email_google
+    ).toBe("seller@example.com");
   });
 });
 

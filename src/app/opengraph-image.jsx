@@ -4,7 +4,7 @@ import { ImageResponse } from "next/og";
 // saat path proyek mengandung spasi (fileURLToPath "Invalid URL").
 export const runtime = "edge";
 export const alt =
-  "Jual Beli USU & Polmed — marketplace mahasiswa USU dan Polmed di Medan";
+  "Kampus Kita — marketplace dan komunitas mahasiswa Indonesia";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -62,7 +62,7 @@ export default function OgImage() {
             textTransform: "uppercase",
           }}
         >
-          Marketplace Mahasiswa · Medan
+          Marketplace Mahasiswa Indonesia
         </div>
 
         <div
@@ -76,7 +76,7 @@ export default function OgImage() {
             letterSpacing: -2,
           }}
         >
-          Jual Beli USU & Polmed
+          Kampus Kita
         </div>
 
         <div

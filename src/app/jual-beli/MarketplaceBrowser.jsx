@@ -20,20 +20,20 @@ const WTB_TICKER_ITEMS = [
   },
   {
     title: "Buku Purcell Kalkulus Edisi 9",
-    meta: "[MIPA USU]",
+    meta: "[Kampus Sains]",
     desc: "Butuh cepat sebelum kuis",
     tagColor: "bg-amber-500",
   },
   {
     title: "Papan Gambar Segitiga A3 Rotring",
-    meta: "[Arsitektur POLMED]",
+    meta: "[Kampus Teknik]",
     desc: "Budget 150k",
     tagColor: "bg-emerald-800",
   },
   {
     title: "Jas Lab Kimia Ukuran L / XL",
-    meta: "[Farmasi USU]",
-    desc: "Siap ambil di Pendopo",
+    meta: "[Kampus Kesehatan]",
+    desc: "Siap ambil di area kampus",
     tagColor: "bg-teal-600",
   },
 ];
@@ -63,10 +63,35 @@ export default function MarketplaceBrowser({
   const [selectedCampus, setSelectedCampus] = useState(
     searchParams.get("campus") || "all"
   );
+  const [campuses, setCampuses] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(
     searchParams.get("cat") || "all"
   );
   const [sortBy, setSortBy] = useState(searchParams.get("sort") || "newest");
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/kampus", { cache: "no-store" })
+      .then((response) => {
+        if (!response.ok) throw new Error("Gagal memuat daftar kampus.");
+        return response.json();
+      })
+      .then((data) => {
+        if (active && Array.isArray(data?.campuses)) setCampuses(data.campuses);
+      })
+      .catch((error) => console.error("[Marketplace] Gagal memuat daftar kampus:", error));
+
+    const handleCampusChange = (event) => {
+      const campus = event.detail?.campus;
+      setSelectedCampus(!campus || campus === "Semua" ? "all" : String(campus).toLowerCase());
+    };
+    window.addEventListener("campus:change", handleCampusChange);
+
+    return () => {
+      active = false;
+      window.removeEventListener("campus:change", handleCampusChange);
+    };
+  }, []);
 
   // Pagination state
   const [listings, setListings] = useState(initialListings);
@@ -99,15 +124,24 @@ export default function MarketplaceBrowser({
     }
 
     if (selectedCampus !== "all") {
+      const selectedCampusInfo = campuses.find(
+        (campus) =>
+          campus.shortName?.toLowerCase() === selectedCampus ||
+          campus.id?.toLowerCase() === selectedCampus
+      );
+      const campusValues = [
+        selectedCampus,
+        selectedCampusInfo?.shortName,
+        selectedCampusInfo?.name,
+        selectedCampusInfo?.id,
+      ].filter(Boolean).map((value) => value.toLowerCase());
       result = result.filter((item) => {
-        const itemCampus = (item.campus || "").toLowerCase();
-        if (selectedCampus === "usu") {
-          return itemCampus.includes("usu") || itemCampus === "" || itemCampus === "semua";
-        }
-        if (selectedCampus === "polmed") {
-          return itemCampus.includes("polmed") || itemCampus === "semua";
-        }
-        return true;
+        const itemCampuses = [
+          item.campus,
+          item.seller_profiles?.student_campus,
+        ].filter(Boolean).map((value) => String(value).toLowerCase());
+        if (itemCampuses.includes("semua")) return true;
+        return itemCampuses.some((campus) => campusValues.includes(campus));
       });
     }
 
@@ -151,7 +185,7 @@ export default function MarketplaceBrowser({
     });
 
     return result;
-  }, [listings, searchQuery, selectedCampus, selectedCategory, sortBy]);
+  }, [campuses, listings, searchQuery, selectedCampus, selectedCategory, sortBy]);
 
   // Load more pagination function
   async function handleLoadMore() {
@@ -251,7 +285,7 @@ export default function MarketplaceBrowser({
               </span>
             </div>
             <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
-              Jual-beli aman mahasiswa USU &amp; POLMED Padang Bulan.
+              Jual-beli untuk mahasiswa lintas kampus.
             </p>
           </div>
           <div className="shrink-0">
@@ -299,8 +333,11 @@ export default function MarketplaceBrowser({
                   className="w-full appearance-none bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 pr-6 focus:outline-none focus:border-emerald-600 cursor-pointer"
                 >
                   <option value="all">Semua Kampus</option>
-                  <option value="usu">Kampus USU</option>
-                  <option value="polmed">POLMED</option>
+                  {campuses.map((campus) => (
+                    <option key={campus.id} value={campus.shortName.toLowerCase()}>
+                      {campus.name}
+                    </option>
+                  ))}
                 </select>
                 <span className="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 text-[15px] text-slate-400 pointer-events-none">
                   expand_more
@@ -407,7 +444,7 @@ export default function MarketplaceBrowser({
         <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 text-xs">
           <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
           <span>
-            Menampilkan <strong>{filteredListings.length}</strong> dari <strong>{totalCount}</strong> barang preloved aktif di USU &amp; POLMED
+            Menampilkan <strong>{filteredListings.length}</strong> dari <strong>{totalCount}</strong> barang preloved aktif di marketplace
           </span>
         </div>
         <div className="flex items-center gap-2.5">

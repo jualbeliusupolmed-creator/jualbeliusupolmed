@@ -1,12 +1,12 @@
 export const metadata = {
-  title: "Pasang Iklan",
+  title: "Jual Barang",
   description:
-    "Pasang iklan jual barang atau tawarkan jasa ke mahasiswa USU & Polmed 100% Gratis. Iklanmu langsung tayang dan disebarkan ke jaringan kampus.",
+    "Jual barang atau tawarkan jasa kepada mahasiswa lintas kampus. Barang jualanmu dapat ditemukan oleh komunitas Kampus Kita.",
   alternates: { canonical: "/jual" },
   openGraph: {
-    title: "Pasang Iklan",
+    title: "Jual Barang",
     description:
-      "Jual barang atau tawarkan jasa ke ribuan mahasiswa USU & Polmed 100% Gratis dan aman.",
+      "Jual barang atau tawarkan jasa kepada mahasiswa lintas kampus melalui Kampus Kita.",
     url: "/jual",
   },
 };

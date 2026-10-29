@@ -1,28 +1,28 @@
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import OrganisasiClient from "./OrganisasiClient";
-import { bentukOrganisasi, gabungDenganContoh, ORGANISASI_CONTOH } from "@/lib/organisasiDemo";
+import { bentukOrganisasi } from "@/lib/organisasiDemo";
 import { skripJsonLd } from "@/lib/jsonLd";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 120;
 
 export const metadata = {
-  title: "Direktori UKM, BEM & Organisasi Kampus — USU & POLMED",
-  description: "Eksplorasi daftar BEM, HIMA, dan Unit Kegiatan Mahasiswa (UKM) resmi di Universitas Sumatera Utara (USU) & Politeknik Negeri Medan (POLMED). Info oprec dan kegiatan kampus.",
-  keywords: ["ukm usu", "ukm polmed", "bem usu", "bem polmed", "hima usu", "organisasi mahasiswa medan", "oprec ukm usu"],
+  title: "Direktori UKM, BEM & Organisasi Kampus",
+  description: "Jelajahi organisasi mahasiswa, UKM, informasi open recruitment, dan kegiatan kampus dari berbagai perguruan tinggi.",
+  keywords: ["ukm kampus", "bem mahasiswa", "hima", "organisasi mahasiswa", "oprec ukm"],
   alternates: { canonical: "/organisasi" },
   openGraph: {
-    title: "Direktori UKM, BEM & Organisasi Kampus — USU & POLMED",
-    description: "Temukan BEM, HIMA, dan Unit Kegiatan Mahasiswa (UKM) resmi di USU & POLMED. Info open recruitment dan kegiatan kepanitiaan.",
+    title: "Direktori UKM, BEM & Organisasi Kampus",
+    description: "Temukan organisasi mahasiswa, informasi open recruitment, dan kegiatan kepanitiaan dari berbagai kampus.",
     url: "/organisasi",
     type: "website",
     locale: "id_ID",
-    siteName: "Jual Beli & Komunitas Mahasiswa USU POLMED",
+    siteName: "Kampus Kita",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Direktori UKM, BEM & Organisasi Kampus — USU & POLMED",
-    description: "Temukan BEM, HIMA, dan Unit Kegiatan Mahasiswa (UKM) resmi di USU & POLMED.",
+    title: "Direktori UKM, BEM & Organisasi Kampus",
+    description: "Temukan organisasi mahasiswa dan kegiatan kampus dari berbagai perguruan tinggi.",
   },
 };
 
@@ -36,11 +36,12 @@ async function getInitialOrganisasi() {
       .or("account_type.eq.ukm,ukm_verified.eq.true")
       .order("created_at", { ascending: false });
 
-    const orgList = (dbOrgs || []).map(bentukOrganisasi);
-    return gabungDenganContoh(orgList);
+    return (dbOrgs || [])
+      .map(bentukOrganisasi)
+      .filter((org) => org.ukm_category !== "Platform");
   } catch (err) {
     console.error("getInitialOrganisasi error:", err?.message);
-    return ORGANISASI_CONTOH;
+    return [];
   }
 }
 
@@ -51,8 +52,8 @@ export default async function DirektoriOrganisasiPage() {
   const itemListJsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "name": "Direktori UKM & Organisasi Kampus USU POLMED",
-    "description": "Daftar resmi Unit Kegiatan Mahasiswa, BEM, dan HIMA di USU & POLMED.",
+    "name": "Direktori UKM & Organisasi Kampus",
+    "description": "Daftar organisasi mahasiswa dari berbagai perguruan tinggi.",
     "itemListElement": initialOrganisasi.map((org, index) => ({
       "@type": "ListItem",
       "position": index + 1,

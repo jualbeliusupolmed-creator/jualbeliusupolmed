@@ -117,7 +117,7 @@ export async function PATCH(req, { params }) {
           (data.reviewer_note ? `Catatan Pengurus:\n_${data.reviewer_note}_\n\n` : "") +
           (isAccepted ? `Selamat bergabung di ${oprec.ukm_name}! ` : `Tetap semangat dan coba lagi tahun depan! `);
         
-        // Fire and forget, biarkan Fonnte / Baileys fallback yang menangani
+        // Fire and forget; sendWa mengelola pengiriman Baileys dan antrean notifikasi.
         sendWa(data.applicant_wa, msg).catch(() => {});
       }
 

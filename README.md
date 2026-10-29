@@ -42,7 +42,7 @@ Marketplace mahasiswa lintas kampus — jual-beli laptop, HP, buku, fashion, mak
 | WA Bot | Node.js + Baileys (VPS, dikelola pm2) |
 | Database | Supabase (PostgreSQL + Storage) |
 | AI | Google Gemini 2.5 Flash |
-| WA Gateway | Baileys (utama) + Fonnte (fallback) |
+| WA Gateway | Baileys melalui layanan bot |
 | CSS | Tailwind CSS |
 | Upload | Sharp (konversi WebP otomatis) |
 | Image | next/image + OG image dinamis |
@@ -87,18 +87,14 @@ npm install
 2. Set env: `WEBHOOK_URL` (URL Vercel `/api/wa/baileys`), `API_TOKEN`
 3. Scan QR nomor WA bot saat pertama kali — sesi disimpan di `auth_info_baileys/`,
    jadi restart berikutnya tidak minta scan ulang
-4. Salin URL bot → `BAILEYS_API_URL` di Vercel
+4. Set `BAILEYS_API_URL` ke URL bot dan `BAILEYS_API_TOKEN` ke token yang
+   sama dengan `API_TOKEN` di bot, baik di Vercel maupun `.env.local` untuk dev
 
 ### 4. Gemini AI
 1. Buat API key di [aistudio.google.com](https://aistudio.google.com)
 2. Isi `GEMINI_API_KEY`
 
-### 5. Fonnte (opsional, fallback)
-1. Daftar di [fonnte.com](https://fonnte.com), connect device
-2. Salin token → `FONNTE_TOKEN`
-3. `FONNTE_WA_GROUP_ID` = JID grup marketplace
-
-### 6. Environment Variables
+### 5. Environment Variables
 Salin `.env.example` → `.env.local`:
 ```bash
 cp .env.example .env.local
@@ -117,8 +113,7 @@ cp .env.example .env.local
 | `MARKETPLACE_WA` | Nomor publik marketplace |
 | `NEXT_PUBLIC_MARKETPLACE_WA` | Sama, dipakai di frontend |
 | `BAILEYS_API_URL` | URL bot WhatsApp (endpoint `/send`) |
-| `BAILEYS_API_TOKEN` | Token webhook — harus sama persis dengan `API_TOKEN` di bot |
-| `FONNTE_TOKEN` | Token Fonnte (fallback jika Baileys mati) |
+| `BAILEYS_API_TOKEN` | Token server — harus sama persis dengan `API_TOKEN` di bot |
 | `FONNTE_WA_GROUP_ID` | JID grup utama marketplace |
 | `BAILEYS_BROADCAST_GROUPS` | JID grup tambahan (comma-separated) |
 | `GEMINI_API_KEY` | Google Gemini API key |
@@ -220,7 +215,7 @@ src/
     ...                         Navbar, Footer, ProductCard, dll
   lib/
     auth.js                     Cookie auth (seller + admin, HMAC signed)
-    fonnte.js                   WA sending (Baileys utama + Fonnte fallback)
+    fonnte.js                   WA sending melalui API bot Baileys
     supabaseAdmin.js            Supabase service role client
     settings.js                 DEFAULT_SETTINGS + DB-backed settings
     rateLimit.js                In-memory rate limiter

@@ -215,13 +215,7 @@ export default function MadingDetailClient({ post: initialPost }) {
           {/* Header: Sender & Badges */}
           <div className="flex items-start gap-3.5 mb-4">
             <div
-              className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-2xl font-bold ${
-                post.type === "info"
-                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
-                  : post.faculty === "POLMED"
-                  ? "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400"
-                  : "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
-              }`}
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-2xl font-bold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
             >
               {post.type === "info" ? <Icon.Megaphone className="h-6 w-6" /> : post.is_anon ? <Icon.User className="h-6 w-6" /> : post.sender_name?.charAt(0) || "A"}
             </div>

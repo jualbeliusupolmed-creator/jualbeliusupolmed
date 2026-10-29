@@ -4,6 +4,7 @@ import {
   ADMIN_GOOGLE_FLOW_COOKIE,
   ADMIN_GOOGLE_FLOW_PATH,
   ADMIN_GOOGLE_FLOW_TTL,
+  appendExpiredCookie,
   canonicalizeUrlOrigin,
   createAdminGoogleAuthClient,
   getAdminGoogleVerifierCookieName,
@@ -20,6 +21,12 @@ function cookieOptions() {
     path: "/",
     maxAge: ADMIN_GOOGLE_FLOW_TTL,
   };
+}
+
+function clearLegacyFlowCookies(response) {
+  const verifierCookie = getAdminGoogleVerifierCookieName();
+  appendExpiredCookie(response, ADMIN_GOOGLE_FLOW_COOKIE, ADMIN_GOOGLE_FLOW_PATH);
+  if (verifierCookie) appendExpiredCookie(response, verifierCookie, ADMIN_GOOGLE_FLOW_PATH);
 }
 
 export async function POST(request) {
@@ -57,6 +64,7 @@ export async function POST(request) {
     const response = NextResponse.json({ url: data.url });
     for (const cookie of pendingCookies) response.cookies.set(cookie.name, cookie.value, cookie.options);
     response.cookies.set(ADMIN_GOOGLE_FLOW_COOKIE, "1", cookieOptions());
+    clearLegacyFlowCookies(response);
     response.headers.set("Cache-Control", "no-store");
     return response;
   } catch (error) {
@@ -66,6 +74,7 @@ export async function POST(request) {
     const verifierCookie = getAdminGoogleVerifierCookieName();
     if (verifierCookie) response.cookies.set(verifierCookie, "", { ...cookieOptions(), maxAge: 0 });
     response.cookies.set(ADMIN_GOOGLE_FLOW_COOKIE, "", { ...cookieOptions(), maxAge: 0 });
+    clearLegacyFlowCookies(response);
     response.headers.set("Cache-Control", "no-store");
     return response;
   }

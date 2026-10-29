@@ -9,11 +9,11 @@ const REASONS = [
   ["barang_terlarang", "🚫 Barang Terlarang (Vape/Rokok/Alkohol/Obat)"],
   ["sengketa_cod", "⚖️ Sengketa COD / Barang Tidak Sesuai"],
   ["blokir", "⛔ Blokir & Laporkan Pengguna Ini"],
-  ["spam", "🔁 Spam / Iklan Ganda"],
+  ["spam", "🔁 Spam / Barang Duplikat"],
   ["lainnya", "📝 Lainnya"],
 ];
 
-// Tombol "Laporkan iklan" untuk pembeli. Mengirim ke /api/report.
+// Tombol laporan untuk pembeli. Mengirim ke /api/report.
 export default function ReportButton({ listing, className = "" }) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState(REASONS[0][0]);
@@ -59,12 +59,12 @@ export default function ReportButton({ listing, className = "" }) {
           onClick={() => setOpen(true)}
           className="text-xs text-gray-400 transition-colors hover:text-rose-600 hover:underline"
         >
-          Laporkan iklan atau minta mediasi
+          Laporkan barang atau minta mediasi
         </button>
       ) : (
         <div className="card mt-2 space-y-3 p-4 text-left border-rose-200 dark:border-rose-900/50">
           <div>
-            <p className="text-sm font-bold text-gray-900 dark:text-white">Laporkan Iklan / Sengketa</p>
+            <p className="text-sm font-bold text-gray-900 dark:text-white">Laporkan Barang / Sengketa</p>
             <p className="text-[11px] text-gray-500 dark:text-slate-400 mt-0.5">
               Pilih alasan pelaporan atau kendala transaksi dengan penjual ini.
             </p>

@@ -43,6 +43,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from "rea
 
 const KUNCI_WA = "seller_wa";
 const KUNCI_NAMA = "seller_name";
+const JEDA_PERPANJANG_SESI = 12 * 60 * 60 * 1000;
 
 const SesiCtx = createContext(null);
 
@@ -104,11 +105,32 @@ export function SesiProvider({ children }) {
 
   useEffect(() => {
     let hidup = true;
+    let pemeriksaanTerakhir = Date.now();
     ambilSesi().then((d) => {
       if (hidup) terapkan(d);
     });
+
+    const periksaLagiJikaPerlu = () => {
+      if (
+        document.visibilityState === "hidden" ||
+        Date.now() - pemeriksaanTerakhir < JEDA_PERPANJANG_SESI
+      ) {
+        return;
+      }
+
+      pemeriksaanTerakhir = Date.now();
+      ambilSesi({ paksa: true }).then((d) => {
+        if (hidup && d) terapkan(d);
+      });
+    };
+
+    const interval = window.setInterval(periksaLagiJikaPerlu, JEDA_PERPANJANG_SESI);
+    document.addEventListener("visibilitychange", periksaLagiJikaPerlu);
+
     return () => {
       hidup = false;
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", periksaLagiJikaPerlu);
     };
   }, [terapkan]);
 

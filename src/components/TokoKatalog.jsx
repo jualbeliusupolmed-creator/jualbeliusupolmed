@@ -152,7 +152,7 @@ export default function TokoKatalog({ listings, warna }) {
               </span>
               <span className="text-sm font-semibold dark:text-white">Cari barang lain</span>
               <span className="text-xs text-gray-500 dark:text-slate-400">
-                Lihat semua iklan di marketplace
+                Lihat semua barang di marketplace
               </span>
             </Link>
           )}

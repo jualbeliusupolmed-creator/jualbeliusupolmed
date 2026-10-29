@@ -22,6 +22,14 @@ export function canonicalizeUrlOrigin(urlOrOrigin) {
   }
 }
 
+export function appendExpiredCookie(response, name, path) {
+  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
+  response.headers.append(
+    "Set-Cookie",
+    `${name}=; Path=${path}; Max-Age=0; HttpOnly; SameSite=Lax${secure}`
+  );
+}
+
 export function isSameOriginOrLocalEquivalent(origin, requestUrl) {
   if (!origin) return true;
   try {

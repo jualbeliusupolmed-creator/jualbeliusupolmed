@@ -3,6 +3,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getSellerSession } from "@/lib/auth";
 import { jawabGalat } from "@/lib/jawabGalat";
 import { simpanProfil, muatProfil } from "@/lib/simpanProfil";
+import { findSellerProfileBySession } from "@/lib/seller-profile-identity";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -30,9 +31,13 @@ export const fetchCache = "force-no-store";
 // lain. Itu persis yang terjadi pada /api/teman/profiles sebelum hari ini.
 export async function GET() {
   try {
-    const wa = getSellerSession();
-    if (!wa) return NextResponse.json({ error: "Belum masuk." }, { status: 401 });
-    return NextResponse.json({ ok: true, profil: await muatProfil(getAdminClient(), wa) });
+    const identity = getSellerSession();
+    if (!identity) return NextResponse.json({ error: "Belum masuk." }, { status: 401 });
+    const supa = getAdminClient();
+    const { data: seller, error } = await findSellerProfileBySession(supa, identity, "wa");
+    if (error) return jawabGalat(error, { pesan: "Gagal memuat profil." });
+    const profileWa = seller?.wa || identity;
+    return NextResponse.json({ ok: true, profil: await muatProfil(supa, profileWa) });
   } catch (e) {
     return jawabGalat(e);
   }
@@ -44,14 +49,17 @@ export async function GET() {
 // field lebih tetap bekerja, tanpa pernah bisa menembus batas perannya.
 export async function PUT(req) {
   try {
-    const wa = getSellerSession();
-    if (!wa) return NextResponse.json({ error: "Belum masuk." }, { status: 401 });
+    const identity = getSellerSession();
+    if (!identity) return NextResponse.json({ error: "Belum masuk." }, { status: 401 });
 
     let body;
     try { body = await req.json(); }
     catch { return NextResponse.json({ error: "Isian tidak terbaca." }, { status: 400 }); }
 
-    const hasil = await simpanProfil(wa, body);
+    const supa = getAdminClient();
+    const { data: seller, error } = await findSellerProfileBySession(supa, identity, "wa");
+    if (error) return jawabGalat(error, { pesan: "Gagal memuat profil." });
+    const hasil = await simpanProfil(seller?.wa || identity, body, { supa });
     if (hasil.pesanPengguna) {
       return NextResponse.json({ error: hasil.pesanPengguna }, { status: hasil.status || 400 });
     }

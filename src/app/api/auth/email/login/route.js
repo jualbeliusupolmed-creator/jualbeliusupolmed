@@ -49,7 +49,7 @@ export async function POST(req) {
     // 2. Cari profil berdasarkan email atau email_google
     const { data: user, error: userErr } = await supa
       .from("seller_profiles")
-      .select("wa, name, email, email_google, pin, account_type")
+      .select("wa, phone_wa, name, email, email_google, pin, account_type")
       .or(`email.ilike.${cleanEmail},email_google.ilike.${cleanEmail}`)
       .maybeSingle();
 
@@ -74,11 +74,11 @@ export async function POST(req) {
     }
 
     // 4. Set kuki sesi login (HMAC 30 hari)
-    setSellerCookie(user.wa);
+    setSellerCookie(user.phone_wa || user.wa);
 
     return NextResponse.json({
       success: true,
-      wa: user.wa,
+      wa: user.phone_wa || user.wa,
       name: user.name || user.wa,
       account_type: user.account_type || "personal",
       message: "Login berhasil!",

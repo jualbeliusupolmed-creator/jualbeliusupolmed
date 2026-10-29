@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { CATEGORIES, POPULAR_AREAS, formatWa, MARKETPLACE_WA } from "@/lib/constants";
+import { CATEGORIES, formatWa, MARKETPLACE_WA } from "@/lib/constants";
 import { rupiah } from "@/lib/fees";
 import { Icon } from "@/components/Icons";
 import QRISModal from "@/components/QRISModal";
@@ -68,8 +68,6 @@ export default function DicariPage({ initialItems = [] }) {
 
   // Budget masking
   const [budgetRaw, setBudgetRaw] = useState("");
-  // Area dropdown
-  const [areaMode, setAreaMode] = useState("dropdown"); // "dropdown" | "manual"
 
   useEffect(() => {
     fetch("/api/config")
@@ -572,50 +570,13 @@ export default function DicariPage({ initialItems = [] }) {
 
                 <div>
                   <label className="text-xs font-semibold text-gray-700 dark:text-slate-300 block mb-1">Area COD</label>
-                  {areaMode === "dropdown" ? (
-                    <select
-                      className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-xs font-medium text-gray-800 outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-white"
-                      value={form.area}
-                      onChange={(e) => {
-                        if (e.target.value === "__manual__") {
-                          setAreaMode("manual");
-                          setForm((f) => ({ ...f, area: "" }));
-                        } else {
-                          setForm((f) => ({ ...f, area: e.target.value }));
-                        }
-                      }}
-                    >
-                      <option value="">Sekitar Kampus (Default)</option>
-                      {POPULAR_AREAS.map((a) => (
-                        <option key={a} value={a}>
-                          {a}
-                        </option>
-                      ))}
-                      <option value="__manual__">Ketik area lain...</option>
-                    </select>
-                  ) : (
-                    <div className="relative">
-                      <input
-                        type="text"
-                        className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 pr-8 text-xs font-medium text-gray-800 outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-white"
-                        value={form.area}
-                        onChange={handleInputChange("area")}
-                        placeholder="Contoh: Jl. Dr. Mansyur"
-                        autoFocus
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAreaMode("dropdown");
-                          setForm((f) => ({ ...f, area: "" }));
-                        }}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-gray-600"
-                        title="Kembali ke pilihan area"
-                      >
-                        <Icon.X className="h-4 w-4" />
-                      </button>
-                    </div>
-                  )}
+                  <input
+                    type="text"
+                    className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-xs font-medium text-gray-800 outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                    value={form.area}
+                    onChange={handleInputChange("area")}
+                    placeholder="Contoh: area kampus atau lokasi umum"
+                  />
                 </div>
               </div>
                 <Icon.X className="h-5 w-5" />

@@ -205,7 +205,7 @@ export default function FormToko({ onTersimpan }) {
         </Bagian>
 
         <Bagian judul="Informasi">
-          <Isian label="Area" petunjuk="Contoh: Padang Bulan, dekat pintu 4 USU">
+          <Isian label="Area" petunjuk="Contoh: area sekitar kampus atau pusat kota">
             <input value={form.store_area} onChange={ubah("store_area")}
               maxLength={BATAS.store_area} className="input" />
           </Isian>

@@ -167,12 +167,12 @@ export async function POST(request) {
 
           const roomUrl = finalRoomId ? `https://usupolmed.com/chat?room=${finalRoomId}` : `https://usupolmed.com/chat`;
 
-          const pesanNotif = ` *IT'S A MATCH! — Teman Kampus USU & Polmed*\n\n` +
+          const pesanNotif = ` *IT'S A MATCH! — Teman Kampus Kita*\n\n` +
             `Hai kak! Profil kamu dan *${partner.display_name || "Seseorang"}* (${partner.campus} · ${partner.faculty}) saling LIKE di fitur Cari Teman!\n\n` +
             `Sistem telah membuat ruang obrolan anonim spesial untuk kalian. Langsung sapa dia di sini:\n${roomUrl}\n\n` +
             `_Teman baru, peluang baru di kampus! _`;
 
-          // Kirim notifikasi WA langsung via sendWa (Baileys/Fonnte) dengan fallback otomatis ke wa_outbox
+          // Kirim notifikasi WA melalui Baileys; pesan gagal yang masih relevan masuk wa_outbox.
           await Promise.allSettled([
             sendWa(swiperProfile.whatsapp, pesanNotif, null, null, {
               jenis: "teman_match",

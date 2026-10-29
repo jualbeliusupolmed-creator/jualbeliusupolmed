@@ -3,33 +3,33 @@ import { getSettings } from "@/lib/settings";
 import { kontakDenganCadangan } from "@/lib/kontakAdmin";
 
 export const metadata = {
-  title: "Cara Bergabung — Komunitas Jual Beli Mahasiswa USU & Polmed",
-  description: "Panduan bergabung di komunitas jual-beli mahasiswa USU dan Polmed: cara menjual, cara membeli, rincian fee admin yang transparan, dan aturan keamanan transaksi.",
-  keywords: ["cara bergabung jual beli USU", "komunitas whatsapp USU", "jual beli Polmed", "aturan jual beli POLMED", "fee admin jual beli usu"],
+  title: "Cara Bergabung — Komunitas Jual Beli Mahasiswa",
+  description: "Panduan bergabung di komunitas jual-beli mahasiswa: cara menjual, membeli, memahami biaya, dan menjaga keamanan transaksi.",
+  keywords: ["cara bergabung marketplace mahasiswa", "komunitas mahasiswa", "jual beli kampus", "aturan jual beli mahasiswa"],
   alternates: { canonical: "/cara-bergabung" },
   // Tanpa daftar images sendiri: halaman ini mewarisi gambar pratinjau dari
   // src/app/opengraph-image.jsx. Sebelumnya di sini ditulis "/og-image.png",
   // berkas yang tidak pernah ada di public/ — hasilnya 404, dan tautan halaman
   // ini muncul polos tanpa gambar setiap kali dibagikan di WhatsApp.
   openGraph: {
-    title: "Cara Bergabung — Jual Beli USU & Polmed",
-    description: "Gabung grup WhatsApp komunitas, pasang iklan gratis, dan transaksi aman dibantu admin.",
+    title: "Cara Bergabung — Kampus Kita",
+    description: "Gabung grup WhatsApp komunitas, jual barang gratis, dan transaksi aman dibantu admin.",
     url: "/cara-bergabung",
-    siteName: "Jual Beli USU & Polmed",
+    siteName: "Kampus Kita",
     locale: "id_ID",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Cara Bergabung — Jual Beli USU & Polmed",
-    description: "Gabung grup WhatsApp komunitas, pasang iklan gratis, dan transaksi aman dibantu admin.",
+    title: "Cara Bergabung — Kampus Kita",
+    description: "Gabung grup WhatsApp komunitas, jual barang gratis, dan transaksi aman dibantu admin.",
   },
 };
 
 const sellSteps = [
   "Masuk ke komunitas WhatsApp lewat link di bawah.",
   "Masuk ke salah satu grup yang tersedia.",
-  "Pasang iklan di website atau kirim request barang ke admin.",
+  "Jual barang lewat website atau kirim permintaan barang ke admin.",
   "Admin yang memposting & membantu transaksi.",
   "Setelah deal, bayar fee admin sesuai harga barang.",
 ];
@@ -69,7 +69,7 @@ export default async function CaraBergabungPage() {
       <div className="rounded-3xl bg-gradient-to-br from-primary to-primary-dark p-8 text-center text-white">
         <h1 className="text-3xl font-extrabold">Cara Bergabung</h1>
         <p className="mt-2 text-white/80">
-          Komunitas jual-beli khusus mahasiswa USU & Polmed
+          Komunitas jual-beli untuk mahasiswa lintas kampus
         </p>
         <a href={WA_GROUP_LINK} target="_blank" rel="noreferrer" className="btn mt-5 bg-white text-primary hover:bg-white/90">
           <span aria-hidden="true"></span> Gabung Grup WhatsApp
@@ -111,16 +111,16 @@ export default async function CaraBergabungPage() {
       <div className="mt-6 grid gap-6 md:grid-cols-2">
         <div className="card p-6">
           <h2 className="text-lg font-bold"><span aria-hidden="true">🏷️</span> Transparansi Biaya Layanan</h2>
-          <p className="mt-1 text-sm text-gray-500">Pasar Bebas Mahasiswa USU &amp; POLMED</p>
+          <p className="mt-1 text-sm text-gray-500">Pasar Bebas Mahasiswa</p>
           <div className="mt-2 space-y-2">
-            <Fee label="Pasang Iklan Barang & Jasa Mahasiswa" value="100% GRATIS (Rp 0)" />
+            <Fee label="Jual Barang & Tawarkan Jasa Mahasiswa" value="100% GRATIS (Rp 0)" />
             <Fee label="Komisi Penjualan Antar-Mahasiswa" value="BEBAS KOMISI (0%)" />
             <Fee label="Pasang Kebutuhan (Barang Dicari)" value="GRATIS" />
             <Fee label="Posting Menfess Kampus" value="GRATIS" />
           </div>
           <p className="mt-4 text-sm text-gray-500">Fitur Tambahan Opsional (Tidak Wajib)</p>
           <div className="mt-2 space-y-2">
-            <Fee label="Sundul Iklan (Bump ke Urutan Teratas)" value="Rp 1.000" />
+            <Fee label="Naikkan Barang (Bump ke Urutan Teratas)" value="Rp 1.000" />
             <Fee label="Iklan Poster / Banner Sponsor Utama" value="Mulai Rp 10.000" />
             <Fee label="Buka Kontak Wanted (Anti-Spam Filter)" value="Rp 2.000" />
           </div>

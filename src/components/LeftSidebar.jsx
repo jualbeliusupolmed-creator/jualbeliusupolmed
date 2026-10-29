@@ -70,10 +70,10 @@ export default function LeftSidebar() {
           <Icon.Store className="w-8 h-8 text-[#126B49] shrink-0 transition-transform duration-300 group-hover:scale-105" />
           <div className="flex flex-col">
             <span className="font-extrabold text-xl leading-none tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">
-              Kampusfess
+              Kampus Kita
             </span>
             <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mt-1">
-              USU • POLMED Ecosystem
+              Ekosistem Mahasiswa
             </span>
           </div>
         </Link>
@@ -231,7 +231,7 @@ export default function LeftSidebar() {
           className="w-full btn-primary text-[17px] py-4 rounded-full shadow-lg flex items-center justify-center gap-2"
         >
           <Icon.Plus className="w-5 h-5" />
-          Pasang Iklan
+          Jual Barang
         </Link>
       </div>
 

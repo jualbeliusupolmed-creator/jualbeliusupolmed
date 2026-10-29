@@ -8,6 +8,7 @@ import { verifyOtp } from "@/lib/otp";
 import { validasiPin } from "@/lib/pinRules";
 import { tulisProfil } from "@/lib/tulisProfil";
 import { jawabGalat } from "@/lib/jawabGalat";
+import { findSellerProfileByPhone } from "@/lib/seller-profile-identity";
 
 export const dynamic = "force-dynamic";
 
@@ -74,11 +75,16 @@ export async function POST(req) {
       return NextResponse.json({ error: "Kode OTP salah." }, { status: 400 });
     }
 
-    // OTP Correct! Delete record and set session
-    await supa.from("otps").delete().eq("wa", normalizedWa);
-    
     // Referral & Profile Logic
-    const { data: profile } = await supa.from("seller_profiles").select("wa, referral_code").eq("wa", normalizedWa).maybeSingle();
+    const { data: profile, error: profileError } = await findSellerProfileByPhone(
+      supa,
+      normalizedWa,
+      "wa,phone_wa,referral_code"
+    );
+    if (profileError) return jawabGalat(profileError, { pesan: "Akun belum dapat diperiksa." });
+    const { error: deleteOtpError } = await supa.from("otps").delete().eq("wa", normalizedWa);
+    if (deleteOtpError) return jawabGalat(deleteOtpError, { pesan: "Kode verifikasi belum dapat digunakan." });
+
     let isNewUser = !profile;
 
     if (isNewUser) {
@@ -125,7 +131,7 @@ export async function POST(req) {
       if (!profile.referral_code) {
         updatePayload.referral_code = Math.random().toString(36).substring(2, 8).toUpperCase();
       }
-      await tulisProfil(supa, updatePayload, normalizedWa);
+      await tulisProfil(supa, updatePayload, profile.wa);
     }
 
     setSellerCookie(normalizedWa);

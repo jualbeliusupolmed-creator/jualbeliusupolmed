@@ -3,6 +3,8 @@ import { rupiah } from "@/lib/fees";
 import { formatWa } from "@/lib/constants";
 import FavoriteButton from "@/components/FavoriteButton";
 import { buildSlug } from "@/lib/slug";
+import { Icon } from "@/components/Icons";
+import { cn } from "@/lib/utils";
 
 /**
  * ProductCard: Kartu produk marketplace yang ultra-efisien, ringkas, padat, dan cepat di-scroll.
@@ -17,118 +19,158 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
   const isSold = listing.status === "sold";
   const condLabel = listing.condition === "new" ? "Baru" : "Preloved";
   const detailUrl = `/produk/${buildSlug(listing.title, listing.id)}`;
-
   const sellerName =
     listing.seller_name && listing.seller_name.trim().length > 2 && !/^User\s+\d+$/i.test(listing.seller_name)
       ? listing.seller_name
       : listing.campus && listing.campus !== "Semua"
       ? `Mhs ${listing.campus}`
       : "Mhs";
+  const sellerCampus = listing.seller_profiles?.student_campus ||
+    (listing.campus && listing.campus !== "Semua" ? listing.campus : "");
+  const sellerMeta = listing.seller_profiles?.student_faculty ||
+    listing.seller_profiles?.faculty ||
+    sellerCampus;
+  const sellerInitial = sellerName.trim().charAt(0).toUpperCase() || "M";
+  const isStudentVerified = listing.seller_profiles?.student_verified || listing.student_verified;
+  const isNegotiable = /nego/i.test(listing.description || "");
+  const sellerWa = formatWa(listing.seller_wa);
 
   return (
-    <div className="group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-2 transition-all hover:border-emerald-500/40 hover:shadow-md active:scale-[0.99] dark:border-white/10 dark:bg-slate-900 sm:p-2.5">
-      <Link href={detailUrl} className="flex h-full flex-col justify-between rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2">
-      <div>
-        {/* Gambar Produk: 4:3 Aspect Ratio (Kompak, Ramping & Ringan) */}
-        <div className="relative w-full aspect-[4/3] rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-100 dark:border-white/5">
+    <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white transition-all hover:border-emerald-500/40 hover:shadow-md active:scale-[0.99] dark:border-white/10 dark:bg-slate-900">
+      <Link href={detailUrl} className="rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-inset">
+        <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
           {listing.image_url ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={listing.image_url}
               alt={listing.title}
               loading="lazy"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              className="h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
-              <span className="material-symbols-outlined text-[20px] sm:text-[24px] text-slate-300">
+            <div className="flex h-full w-full flex-col items-center justify-center text-slate-400">
+              <span className="material-symbols-outlined text-[20px] text-slate-300 sm:text-[24px]">
                 inventory_2
               </span>
-              <span className="text-[10px] font-medium text-slate-400 mt-0.5">
+              <span className="mt-0.5 text-[10px] font-medium text-slate-400">
                 Foto Penjual
               </span>
             </div>
           )}
 
-          {/* Favorite Button in Top-Right */}
-          {/* Status Badge in Bottom-Left */}
-          {isSold ? (
-            <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded-full bg-slate-900/90 text-white font-extrabold text-[8px] tracking-wider shadow-xs backdrop-blur-xs">
-              TERJUAL
-            </span>
-          ) : listing.type === "sewa" ? (
-            <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded-full bg-teal-800/90 text-white font-bold text-[8px] shadow-xs backdrop-blur-xs">
-              Sewa
-            </span>
-          ) : listing.featured ? (
-            <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded-full bg-emerald-900/90 text-white font-bold text-[8px] flex items-center gap-0.5 shadow-xs backdrop-blur-xs">
-              <span className="material-symbols-outlined text-[9px]">verified</span>
-              Unggulan
-            </span>
-          ) : (
-            <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded-full bg-emerald-800/90 text-white font-semibold text-[8px] flex items-center gap-0.5 shadow-xs backdrop-blur-xs">
-              <span className="material-symbols-outlined text-[9px]">verified</span>
-              COD
-            </span>
-          )}
-        </div>
-
-        {/* Info Konten: Harga, Kondisi, Judul & Lokasi Ringkas */}
-        <div className="pt-1.5 px-0.5">
-          {/* Baris Harga & Kondisi */}
-          <div className="flex items-baseline justify-between gap-1 mb-0.5">
-            <span className="text-sm sm:text-base font-extrabold text-emerald-800 dark:text-emerald-400 truncate tracking-tight">
-              {rupiah(listing.price)}
-              {listing.type === "sewa" && listing.rental_period && (
-                <span className="text-[10px] font-normal text-slate-500 dark:text-slate-400 ml-0.5">
-                  /{listing.rental_period}
-                </span>
-              )}
-            </span>
-            <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-200/60 dark:border-emerald-800/50 shrink-0">
+          <div className="absolute left-2 top-2 flex flex-col items-start gap-1">
+            <span className="rounded-full bg-slate-900/75 px-2 py-0.5 text-[9px] font-semibold text-white shadow-sm backdrop-blur-sm">
               {condLabel}
             </span>
-          </div>
-
-          {/* Judul Produk */}
-          <h3
-            className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white line-clamp-2 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors leading-snug"
-            title={listing.title}
-          >
-            {listing.title}
-          </h3>
-
-          {/* Lokasi & Penjual (1 Baris Bersih Tanpa Box Berat) */}
-          <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-2 gap-1">
-            <span className="truncate flex items-center gap-0.5 min-w-0">
-              <span className="material-symbols-outlined text-[13px] text-emerald-600 shrink-0">
-                location_on
+            {isStudentVerified && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-800/95 px-2 py-0.5 text-[9px] font-semibold text-white shadow-sm">
+                <Icon.Check className="h-2.5 w-2.5" />
+                KTM Valid
               </span>
-              <span className="truncate">{listing.area || (listing.campus === "Semua" ? "Sekitar Kampus" : listing.campus) || "Sekitar Kampus"}</span>
-            </span>
-            {!tanpaPenjual && (
-              <span               className="shrink-0 font-medium text-slate-400 text-[10px] truncate max-w-[90px]">
-                {sellerName}
+            )}
+            {isSold && (
+              <span className="rounded-full bg-slate-900/85 px-2 py-0.5 text-[9px] font-bold text-white shadow-sm">
+                TERJUAL
+              </span>
+            )}
+            {listing.type === "sewa" && (
+              <span className="rounded-full bg-teal-800/95 px-2 py-0.5 text-[9px] font-bold text-white shadow-sm">
+                Sewa
+              </span>
+            )}
+            {listing.featured && !isSold && (
+              <span className="rounded-full bg-emerald-900/90 px-2 py-0.5 text-[9px] font-bold text-white shadow-sm">
+                Unggulan
               </span>
             )}
           </div>
         </div>
-      </div>
+
+        <div className="space-y-1 px-2 py-2 sm:space-y-1.5 sm:px-3.5 sm:py-3">
+          {!tanpaPenjual && (
+            <div className="flex min-w-0 items-center gap-1 text-[9px] leading-none sm:text-[10px]">
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[8px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 sm:h-[18px] sm:w-[18px] sm:text-[9px]">
+                {sellerInitial}
+              </span>
+              <span className="min-w-0 truncate font-bold text-slate-800 dark:text-slate-100">
+                {sellerName}
+              </span>
+              {sellerMeta && (
+                <>
+                  <span className="shrink-0 text-slate-300">•</span>
+                  <span className="min-w-0 truncate text-slate-500 dark:text-slate-400">
+                    {sellerMeta}
+                  </span>
+                </>
+              )}
+            </div>
+          )}
+
+          <div className="space-y-0.5">
+            <h3
+              className="line-clamp-1 text-xs font-bold leading-tight tracking-tight text-slate-900 transition-colors group-hover:text-emerald-700 dark:text-white dark:group-hover:text-emerald-400 sm:text-sm"
+              title={listing.title}
+            >
+              {listing.title}
+            </h3>
+            {listing.description && (
+              <p className="line-clamp-1 text-[9px] leading-3 text-slate-500 dark:text-slate-400 sm:text-[10px]">
+                {listing.description}
+              </p>
+            )}
+          </div>
+
+          <div className="flex min-w-0 items-center justify-between gap-1.5">
+            <div className="min-w-0">
+              <span className="block truncate text-[13px] font-extrabold leading-tight text-emerald-800 dark:text-emerald-400 sm:text-base">
+                {rupiah(listing.price)}
+              </span>
+              {listing.type === "sewa" && listing.rental_period && (
+                <span className="block text-[9px] leading-tight text-slate-400">
+                  per {listing.rental_period}
+                </span>
+              )}
+            </div>
+            {isNegotiable && (
+              <span className="shrink-0 rounded-md bg-blue-50 px-1.5 py-1 text-[9px] font-bold leading-none text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
+                Bisa Nego
+              </span>
+            )}
+          </div>
+
+          <div className="flex min-w-0 items-center gap-1.5 rounded-lg bg-slate-50 px-1.5 py-1 text-[9px] font-medium leading-tight text-slate-600 dark:bg-slate-800 dark:text-slate-300 sm:text-[10px]">
+            <Icon.MapPin className="h-3 w-3 shrink-0 text-emerald-700 dark:text-emerald-400 sm:h-3.5 sm:w-3.5" />
+            <span className="truncate">{listing.area || (listing.campus === "Semua" ? "Sekitar Kampus" : listing.campus) || "Sekitar Kampus"}</span>
+          </div>
+        </div>
       </Link>
-      {formatWa(listing.seller_wa) && !isSold && (
-        <a
-          href={`https://wa.me/${formatWa(listing.seller_wa)}?text=${encodeURIComponent(`Halo, saya tertarik dengan ${listing.title}.`)}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-2 inline-flex min-h-10 items-center justify-center rounded-xl bg-emerald-50 px-3 text-xs font-bold text-emerald-800 transition hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-300 dark:hover:bg-emerald-950"
+      <div className="mt-auto grid grid-cols-2 gap-1.5 px-2 pb-2 sm:gap-2 sm:px-3.5 sm:pb-3.5">
+        <Link
+          href={detailUrl}
+          className={cn(
+            "inline-flex min-h-7 items-center justify-center gap-1 rounded-lg bg-slate-100 px-1.5 text-[9px] font-bold text-slate-700 transition hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 sm:min-h-9 sm:px-2 sm:text-[11px]",
+            !sellerWa || isSold ? "col-span-2" : ""
+          )}
         >
-          Tanya lewat WhatsApp
-        </a>
-      )}
+          <Icon.Eye className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+          Detail
+        </Link>
+        {sellerWa && !isSold && (
+          <a
+            href={`https://wa.me/${sellerWa}?text=${encodeURIComponent(`Halo, saya tertarik dengan ${listing.title}.`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-7 items-center justify-center gap-1 rounded-lg bg-emerald-800 px-1.5 text-[9px] font-bold text-white transition hover:bg-emerald-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 sm:min-h-9 sm:px-2 sm:text-[11px]"
+          >
+            <Icon.WhatsApp className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+            Chat WA
+          </a>
+        )}
+      </div>
       <FavoriteButton
         listing={listing}
-        className="!absolute !right-2 !top-2 !z-10 !flex !h-10 !w-10 !items-center !justify-center !rounded-full !bg-white/95 text-slate-400 shadow-xs transition-transform hover:scale-110 hover:text-rose-500 dark:!bg-black/70"
+        className="!absolute !right-2 !top-2 !z-10 !flex !h-8 !w-8 !items-center !justify-center !bg-white/90 !shadow-sm text-slate-700 backdrop-blur-sm transition-all active:scale-95 hover:!bg-white [&_svg]:!h-4 [&_svg]:!w-4"
       />
-    </div>
+    </article>
   );
 }

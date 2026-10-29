@@ -146,7 +146,7 @@ export default function BlogPenulisPanel() {
                 value={form.title}
                 maxLength={120}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
-                placeholder="Mis. Cara Memilih Kos Dekat Pintu 1 USU"
+                placeholder="Mis. Cara Memilih Kos Dekat Kampus"
               />
               <p className="mt-1 text-[11px] text-gray-400">{form.title.length}/120</p>
             </div>

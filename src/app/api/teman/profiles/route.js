@@ -4,6 +4,8 @@ import { identitasTeman } from "@/lib/identitasTeman";
 import { simpanProfil } from "@/lib/simpanProfil";
 import { jawabGalat } from "@/lib/jawabGalat";
 import { getSettings } from "@/lib/settings";
+import { findSellerProfileBySession } from "@/lib/seller-profile-identity";
+import { formatWa } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -34,11 +36,11 @@ export async function GET(request) {
     // 2. Ambil data dari seller_profiles untuk sinkronisasi Satu Pintu
     let sProfile = null;
     if (sessionWa) {
-      const { data } = await supa
-        .from("seller_profiles")
-        .select("wa, name, bio, campus, faculty, avatar_url, anonymous_name")
-        .eq("wa", sessionWa)
-        .maybeSingle();
+      const { data } = await findSellerProfileBySession(
+        supa,
+        sessionWa,
+        "wa,phone_wa,name,bio,campus,faculty,avatar_url,anonymous_name"
+      );
       sProfile = data;
     }
 
@@ -48,9 +50,9 @@ export async function GET(request) {
         user_id: userId,
         display_name: sProfile.name || "Anak Kampus",
         bio: sProfile.bio || "",
-        campus: sProfile.campus || "USU",
+        campus: sProfile.campus || "Kampus",
         faculty: sProfile.faculty || "Umum",
-        whatsapp: sProfile.wa || sessionWa,
+        whatsapp: formatWa(sProfile.phone_wa || sProfile.wa) || "",
         photo_url: sProfile.avatar_url || "",
         intent: "Teman Santai ",
       };
@@ -213,7 +215,8 @@ export async function POST(request) {
     // `seller_name` di semua iklan — berhasil. Nama di kartu iklan berubah,
     // profil penjualnya tidak, dan gejalanya terbaca seperti "kadang tersimpan".
     if (sessionWa) {
-      const hasil = await simpanProfil(sessionWa, {
+      const { data: sellerProfile } = await findSellerProfileBySession(supa, sessionWa, "wa,phone_wa");
+      const hasil = await simpanProfil(sellerProfile?.wa || sessionWa, {
         name: cleanName,
         bio: cleanBio,
         campus: cleanCampus,

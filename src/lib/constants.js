@@ -14,17 +14,6 @@ export const WA_GROUP_LINK =
 export const MARKETPLACE_WA =
   process.env.NEXT_PUBLIC_MARKETPLACE_WA || "62895429126232";
 
-export const POPULAR_AREAS = [
-  "Medan Baru",
-  "Medan Selayang",
-  "Medan Kota",
-  "Medan Petisah",
-  "Medan Sunggal",
-  "Medan Helvetia",
-  "Medan Johor",
-  "Medan Tembung"
-];
-
 // Normalisasi nomor ke format lokal (08xxx) untuk disimpan di DB
 // Return "" jika bukan nomor HP Indonesia yang valid → diabaikan webhook
 // Pengenal yang BUKAN nomor telepon.

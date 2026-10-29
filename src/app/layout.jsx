@@ -27,10 +27,21 @@ const jakartaSans = localFont({
 export async function generateMetadata() {
   const settings = await getSettings();
   const site = settings.site || {};
-  
-  const baseTitle = site.metaTitle || "Jual Beli USU & Polmed — Marketplace Mahasiswa Medan";
-  const baseDesc = site.metaDescription || "Marketplace jual-beli khusus mahasiswa USU & Polmed: laptop bekas, HP, buku, fashion, makanan, kos, dan jasa. Transaksi aman & COD di area yang disepakati, dibantu admin.";
-  const keywordsString = site.metaKeywords || "jual beli USU, jual beli Polmed, marketplace mahasiswa Medan, laptop bekas USU, barang bekas mahasiswa Polmed, kos dekat USU, COD kampus";
+  const isCampusSpecific = (value) =>
+    /\b(?:USU|POLMED|Medan|Padang Bulan)\b/i.test(value || "");
+  const configuredTitle = typeof site.metaTitle === "string" ? site.metaTitle.trim() : "";
+  const configuredDescription = typeof site.metaDescription === "string" ? site.metaDescription.trim() : "";
+  const configuredKeywords = typeof site.metaKeywords === "string" ? site.metaKeywords.trim() : "";
+  const baseTitle = configuredTitle && !isCampusSpecific(configuredTitle)
+    ? configuredTitle
+    : "Kampus Kita — Marketplace dan Komunitas Mahasiswa Indonesia";
+  const baseDesc = configuredDescription && !isCampusSpecific(configuredDescription)
+    ? configuredDescription
+    : "Platform digital untuk mahasiswa lintas kampus di Indonesia: jual-beli, Open PO, komunitas, dan transaksi COD di lokasi yang disepakati.";
+  const keywordsString = configuredKeywords && !isCampusSpecific(configuredKeywords)
+    ? configuredKeywords
+    : "marketplace mahasiswa Indonesia, jual beli mahasiswa, komunitas kampus, open PO mahasiswa, COD kampus";
+  const siteName = "Kampus Kita";
   const keywords = keywordsString.split(",").map(k => k.trim()).filter(Boolean);
 
   const faviconUrl = site.faviconUrl;
@@ -38,7 +49,7 @@ export async function generateMetadata() {
   const metadataObj = {
     title: {
       default: baseTitle,
-      template: `%s — ${baseTitle.split("—")[0].trim()}`,
+      template: `%s — ${siteName}`,
     },
     description: baseDesc,
     keywords: keywords,
@@ -46,7 +57,7 @@ export async function generateMetadata() {
     appleWebApp: {
       capable: true,
       statusBarStyle: "default",
-      title: "USU Polmed",
+      title: "Kampus Kita",
     },
     metadataBase: new URL(BASE_URL),
     alternates: { canonical: "/" },
@@ -55,7 +66,7 @@ export async function generateMetadata() {
       description: baseDesc,
       type: "website",
       url: "/",
-      siteName: baseTitle.split("—")[0].trim(),
+      siteName,
       locale: "id_ID",
     },
     twitter: {
@@ -94,7 +105,7 @@ export const viewport = {
 export default async function RootLayout({ children }) {
   const settings = await getSettings();
   const site = settings.site || {};
-  const baseTitle = site.metaTitle || "Jual Beli USU & Polmed — Marketplace Mahasiswa Medan";
+  const baseTitle = site.metaTitle || "Kampus Kita — Marketplace dan Komunitas Mahasiswa Indonesia";
   const siteName = baseTitle.split("—")[0].trim();
   const logoUrl = site.logoUrl || `${BASE_URL}/icons/icon-512x512.png`;
 
@@ -106,7 +117,7 @@ export default async function RootLayout({ children }) {
         "@id": `${BASE_URL}/#website`,
         url: BASE_URL,
         name: siteName,
-        description: site.metaDescription || "Marketplace jual-beli khusus mahasiswa USU & Polmed.",
+        description: site.metaDescription || "Platform digital untuk mahasiswa lintas kampus di Indonesia.",
         inLanguage: "id-ID",
         potentialAction: {
           "@type": "SearchAction",
@@ -120,7 +131,7 @@ export default async function RootLayout({ children }) {
         name: siteName,
         url: BASE_URL,
         logo: logoUrl,
-        areaServed: "Medan, Sumatera Utara, Indonesia",
+        areaServed: "Indonesia",
       },
     ],
   };

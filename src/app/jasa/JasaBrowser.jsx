@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import ProductCard from "@/components/ProductCard";
 import CategoryFilter from "@/components/CategoryFilter";
-import { CATEGORIES as DEFAULT_CATEGORIES, POPULAR_AREAS } from "@/lib/constants";
+import { CATEGORIES as DEFAULT_CATEGORIES } from "@/lib/constants";
 import { rupiah } from "@/lib/fees";
 import { Icon } from "@/components/Icons";
 import { buildSlug } from "@/lib/slug";
@@ -299,7 +299,7 @@ export default function JasaBrowser({
         return (
           <section key="hero" className="pb-5 pt-0">
             <h1 className="whitespace-nowrap text-xs font-extrabold uppercase tracking-widest text-gray-900 dark:text-white">
-              Marketplace Jasa · Medan
+              Marketplace Jasa Mahasiswa
             </h1>
             <p className="mt-1 text-[11px] text-gray-400 dark:text-slate-500">
               Temukan berbagai Jasa Mahasiswa (Tugas, Desain, IT, dll).
@@ -332,11 +332,11 @@ export default function JasaBrowser({
             {/* Stats — inline compact */}
             {(() => {
               const proof = [
-                total > 0 && { v: total, l: "iklan" },
+                total > 0 && { v: total, l: "jasa" },
                 stats?.sellers > 1 && { v: stats.sellers, l: "penjual" },
                 stats?.wanted > 0 && { v: stats.wanted, l: "dicari" },
                 stats?.sold > 0 && { v: stats.sold, l: "terjual" },
-                { v: POPULAR_AREAS.length, l: "lokasi COD" },
+                campuses.length > 0 && { v: campuses.length, l: "kampus" },
               ].filter(Boolean);
               if (!proof.length) return null;
               return (
@@ -584,7 +584,7 @@ export default function JasaBrowser({
 
             {/* Count */}
             <p className="mt-3 text-xs text-gray-500 dark:text-slate-400">
-              {searching ? "Mencari…" : `${total} iklan`}
+              {searching ? "Mencari…" : `${total} jasa`}
             </p>
 
             {/* Grid */}

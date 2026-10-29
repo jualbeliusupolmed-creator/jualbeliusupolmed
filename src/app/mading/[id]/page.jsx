@@ -35,7 +35,7 @@ export async function generateMetadata({ params }) {
   const post = await getPost(params.id);
   if (!post) {
     return {
-      title: "Postingan Tidak Ditemukan — Mading USU POLMED",
+      title: "Postingan Tidak Ditemukan — Mading Mahasiswa",
       description: "Postingan mading atau menfess tidak ditemukan atau telah dihapus.",
     };
   }
@@ -48,17 +48,17 @@ export async function generateMetadata({ params }) {
   const ogImageUrl = `${baseUrl}/api/mading/${post.id}/instagram-image?ratio=landscape`;
 
   return {
-    title: `${titleText} — Mading & Menfess Kampus USU POLMED`,
+    title: `${titleText} — Mading & Menfess Kampus`,
     description,
     keywords: ["menfess usu", "menfess polmed", "mading kampus", post.faculty, post.type],
     alternates: { canonical: url },
     openGraph: {
-      title: `${titleText} — Mading USU POLMED`,
+      title: `${titleText} — Mading Kampus`,
       description,
       url,
       type: "article",
       locale: "id_ID",
-      siteName: "Jual Beli & Komunitas Mahasiswa USU POLMED",
+      siteName: "Kampus Kita",
       images: [
         {
           url: ogImageUrl,
@@ -70,7 +70,7 @@ export async function generateMetadata({ params }) {
     },
     twitter: {
       card: "summary_large_image",
-      title: `${titleText} — Mading USU POLMED`,
+      title: `${titleText} — Mading Kampus`,
       description,
       images: [ogImageUrl],
     },
@@ -109,7 +109,7 @@ export default async function MadingDetailPage({ params }) {
     "url": `${baseUrl}/mading/${post.id}`,
     "publisher": {
       "@type": "Organization",
-      "name": "Jual Beli USU Polmed",
+      "name": "Kampus Kita",
       "url": baseUrl,
     },
   };

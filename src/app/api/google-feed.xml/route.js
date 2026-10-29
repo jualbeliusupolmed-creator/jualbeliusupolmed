@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic"; // Update automatically
 export async function GET() {
   const supa = getAdminClient();
   const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
-  const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "Jual Beli USU Polmed";
+  const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "Kampus Kita";
 
   // Fetch all active products (exclude services 'jasa' if you only want physical products for GMC)
   const { data: listings, error } = await supa

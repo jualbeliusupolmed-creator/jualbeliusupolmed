@@ -73,8 +73,8 @@ export default function NotificationCenter({ onOpenChange }) {
       const listingItems = (resListings.listings || []).map((l) => ({
         id: `listing-${l.id}`,
         type: "listing",
-        title: `Iklan Baru: ${l.title}`,
-        desc: `Rp ${(l.price || 0).toLocaleString("id-ID")} • di ${l.campus || "Medan"}`,
+        title: `Barang Baru: ${l.title}`,
+        desc: `Rp ${(l.price || 0).toLocaleString("id-ID")} • ${l.campus || l.area || "Lokasi belum diatur"}`,
         time: l.created_at,
         url: `/produk/${l.slug || l.id}`,
         icon: "shopping-bag",
@@ -84,8 +84,8 @@ export default function NotificationCenter({ onOpenChange }) {
         {
           id: "sys-welcome",
           type: "system",
-          title: "Selamat datang di Kampusfess!",
-          desc: "Marketplace, Menfess & Media Komunitas USU & POLMED.",
+          title: "Selamat datang di Kampus Kita!",
+          desc: "Marketplace, menfess, dan komunitas mahasiswa lintas kampus.",
           time: new Date().toISOString(),
           url: "/cara-bergabung",
           icon: "landmark",

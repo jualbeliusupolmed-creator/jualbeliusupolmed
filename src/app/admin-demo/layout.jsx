@@ -31,7 +31,7 @@ export const metadata = {
   // Tanpa sufiks: template di layout akar yang menambahkannya.
   title: "Panel Admin (Demo)",
   description:
-    "Salinan terbuka panel admin Jual Beli USU Polmed, berisi data contoh. Dibuat supaya cara kerja sistemnya bisa dipelajari tanpa membuka data siapa pun.",
+    "Salinan terbuka panel admin Kampus Kita, berisi data contoh untuk mempelajari cara kerja sistem tanpa membuka data siapa pun.",
   // Salinan demo tidak boleh bersaing dengan halaman sungguhan di hasil
   // pencarian, dan tidak ada gunanya diindeks.
   robots: { index: false, follow: false },

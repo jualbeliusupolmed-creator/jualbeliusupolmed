@@ -54,6 +54,12 @@ export const Icon = {
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
     </svg>
   ),
+  WhatsApp: (p) => (
+    <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
+      <path d="M20.5 11.7a8.5 8.5 0 0 1-12.6 7.4L3 20.5l1.5-4.7A8.5 8.5 0 1 1 20.5 11.7Z" />
+      <path d="M8.5 7.8c.2-.4.4-.4.7-.4h.5c.2 0 .4.1.5.4l.8 1.9c.1.2.1.4 0 .6l-.6.7c-.2.2-.2.4-.1.6.4.7 1 1.3 1.7 1.7.2.1.4.1.6-.1l.7-.6c.2-.2.4-.2.6-.1l1.9.9c.2.1.3.3.3.5 0 .3-.2 1.1-.6 1.4-.4.4-1 .6-1.6.6-.5 0-1.2-.2-2.2-.6-1.2-.5-2.2-1.4-3-2.3-.8-.9-1.3-1.9-1.4-2.7-.1-.8.2-1.4.6-1.9Z" />
+    </svg>
+  ),
   Lock: (p) => (
     <svg viewBox="0 0 24 24" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p} className={`${base} ${p.className||""}`}>
       <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />

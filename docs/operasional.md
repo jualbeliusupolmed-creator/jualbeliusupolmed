@@ -59,15 +59,16 @@ export DATABASE_URL="postgresql://postgres:[PASSWORD]@[HOST]:6543/postgres"
    npm run build
    ```
 
-#### Skenario C: Gangguan Gateway WhatsApp (Baileys / Fonnte Down)
-1. **Baileys Server VPS Terputus:**
-   - Masuk ke terminal VPS: `pm2 status`.
-   - Restart proses Baileys: `pm2 restart wa-bot`.
-   - Cek QR pairing jika sesi logout: buka endpoint web dashboard QR bot.
-2. **Failover Otomatis ke Fonnte:**
-   - Sistem `src/lib/fonnte.js` secara otomatis mendeteksi kegagalan Baileys dan mengalihkan pengiriman ke Fonnte API (`FONNTE_TOKEN`).
-   - Pesan yang tertunda ditampung di tabel `public.wa_outbox`.
-   - Setelah bot pulih, buka admin outbox `/admin/outbox` dan tekan tombol **Kirim Semua Antrean**.
+#### Skenario C: Gangguan Gateway WhatsApp Baileys
+1. Periksa status PM2 dan log yang sudah disunting dari data pribadi sebelum
+   mengambil tindakan. Jangan restart layanan produksi tanpa persetujuan.
+2. Pastikan `BAILEYS_API_URL` menunjuk ke endpoint bot dan
+   `BAILEYS_API_TOKEN` cocok dengan `API_TOKEN` bot. Sistem tidak memakai
+   Fonnte sebagai fallback.
+3. Notifikasi biasa yang masih berguna ditampung di `public.wa_outbox`.
+   OTP berumur lima menit sengaja tidak diantrekan; setelah gateway pulih,
+   pengguna harus meminta kode baru.
+4. Setelah bot pulih, tinjau antrean di `/admin/outbox` sebelum mengirim ulang.
 
 ---
 

@@ -50,7 +50,7 @@ export default function OfferButton({ listing, className, children }) {
 
         const finalMessage =
           `Halo ${listing.seller_name || "Penjual"},\n\n` +
-          `Saya ingin mengajukan penawaran harga sebesar *${rupiah(priceNum)}* (harga iklan: ${rupiah(listing.price)}) untuk barang:\n` +
+          `Saya ingin mengajukan penawaran harga sebesar *${rupiah(priceNum)}* (harga yang tercantum: ${rupiah(listing.price)}) untuk barang:\n` +
           ` *${listing.title}*\n` +
           (message ? ` Catatan: "${message}"\n` : "") +
           ` ${productLink}\n\n` +

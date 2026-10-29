@@ -4,7 +4,7 @@ import { getSettings } from "@/lib/settings";
 
 export const metadata = {
   title: "Daftar Harga Layanan & Kebijakan",
-  description: "Daftar tarif iklan, biaya layanan transaksi, dan kebijakan pengembalian dana di Jual Beli USU Polmed.",
+  description: "Daftar tarif jual barang, biaya layanan transaksi, dan kebijakan pengembalian dana di Kampus Kita.",
   alternates: { canonical: "/daftar-harga" },
 };
 
@@ -20,7 +20,7 @@ const nomor = (v, bawaan) => {
   return Number.isFinite(n) ? n : bawaan;
 };
 
-// "Iklan Barang" itu berjenjang menurut harga barangnya, jadi tidak bisa
+// Biaya tayang barang berjenjang menurut harganya, jadi tidak bisa
 // diringkas jadi satu angka tanpa berbohong. Yang ditampilkan: jenjangnya.
 function jenjangIklan(pricing) {
   const tiers = Array.isArray(pricing?.adTiers) && pricing.adTiers.length
@@ -39,26 +39,26 @@ function layananIklan(pricing) {
   const hariTayang = nomor(pricing?.listingDays, 14);
   const daftar = [
     {
-      title: "Iklan Poster",
+      title: "Promosi Poster",
       price: nomor(pricing?.adPoster, 10000),
       unit: "per postingan",
       desc: "Tayangkan poster acara, promosi jasa, atau produk digital dengan visual yang lebih besar.",
-      features: ["Ukuran Poster Penuh", "Tampil di Grid Utama", "Bisa Edit Iklan", `Aktif ${hariTayang} Hari`],
+      features: ["Ukuran Poster Penuh", "Tampil di Grid Utama", "Bisa Edit Poster", `Aktif ${hariTayang} Hari`],
       popular: true,
     },
     {
-      title: "Sundul Iklan (Bump)",
+      title: "Naikkan Barang (Bump)",
       price: nomor(pricing?.bump, 1000),
       unit: "per kali sundul",
-      desc: "Naikkan kembali posisi iklan Anda ke baris paling atas agar dilihat oleh lebih banyak calon pembeli.",
+      desc: "Naikkan kembali posisi barang jualan Anda ke baris paling atas agar dilihat lebih banyak calon pembeli.",
       features: ["Naik ke Urutan Pertama", "Instan & Real-time", "Tanpa Batas Penggunaan"],
       popular: false,
     },
     {
-      title: "Iklan Unggulan (Featured)",
+      title: "Promosi Unggulan (Featured)",
       price: nomor(pricing?.featuredPerDay, 5000),
       unit: "per hari",
-      desc: "Sematkan iklan Anda pada banner utama paling atas (horizontal scroll) agar menjadi pusat perhatian.",
+      desc: "Sematkan barang jualan Anda pada banner utama agar lebih mudah ditemukan calon pembeli.",
       features: ["Tampil di Banner Utama", "Prioritas Dilihat Pertama", `Sampai ${rupiah(nomor(pricing?.featuredMaxPerDay, 10000))}/hari kalau mau lebih di atas`],
       popular: false,
     },
@@ -66,16 +66,16 @@ function layananIklan(pricing) {
       title: "Paket Penjual Pro (Bulanan)",
       price: nomor(pricing?.proMonthly, 49000),
       unit: "per bulan",
-      desc: "Bebas pasang iklan standar sepuasnya tanpa bayar per postingan selama 30 hari penuh.",
-      features: ["Gratis Pasang Iklan Unlimited", "Badge Penjual Pro", "Lebih Hemat untuk Toko/Usaha"],
+      desc: "Jual barang sepuasnya tanpa biaya tayang per barang selama 30 hari penuh.",
+      features: ["Jual Barang Tanpa Batas", "Badge Penjual Pro", "Lebih Hemat untuk Toko/Usaha"],
       popular: true,
     },
     {
-      title: "Perpanjang Iklan",
+      title: "Perpanjang Masa Tayang Barang",
       price: nomor(pricing?.renewalFee, 2000),
       unit: "per perpanjangan",
-      desc: `Lanjutkan masa tayang iklan yang hampir habis, tanpa memasang ulang dari awal.`,
-      features: [`Tambah ${hariTayang} Hari`, "Balas PERPANJANG di WhatsApp", "Statistik iklan tetap"],
+      desc: `Lanjutkan masa tayang barang yang hampir habis, tanpa mengisi ulang detail dari awal.`,
+      features: [`Tambah ${hariTayang} Hari`, "Balas PERPANJANG di WhatsApp", "Statistik tetap tersedia"],
       popular: false,
     },
   ];
@@ -106,26 +106,26 @@ export default async function DaftarHargaPage() {
           Daftar Harga Layanan &amp; Kebijakan
         </h1>
         <p className="mx-auto mt-3 max-w-2xl text-gray-500 text-sm sm:text-base">
-          Transparan dan terjangkau untuk komunitas mahasiswa USU & Polmed. Seluruh biaya iklan digunakan untuk pemeliharaan server dan pengembangan platform.
+          Transparan dan terjangkau untuk komunitas mahasiswa. Seluruh biaya layanan digunakan untuk pemeliharaan server dan pengembangan platform.
         </p>
       </div>
 
-      {/* Iklan barang: 100% Gratis untuk mahasiswa */}
+      {/* Jual barang: 100% Gratis untuk mahasiswa */}
       <section className="mt-10">
-        <h2 className="text-xl font-bold text-gray-900 border-b pb-2">1. Iklan Barang &amp; Jasa Mahasiswa</h2>
+        <h2 className="text-xl font-bold text-gray-900 border-b pb-2">1. Jual Barang &amp; Tawarkan Jasa Mahasiswa</h2>
         <div className="mt-3 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 p-4 text-emerald-900">
           <div className="flex items-center gap-2 font-bold text-base text-emerald-800">
-            <span>🎉 100% GRATIS untuk Mahasiswa USU &amp; POLMED</span>
+            <span>🎉 Gratis untuk Mahasiswa</span>
           </div>
           <p className="mt-1 text-sm text-emerald-700 leading-relaxed">
-            Tidak ada biaya pasang iklan (Rp 0), bebas komisi transaksi antar-mahasiswa (0%), dan dana pembayaran langsung ke tangan penjual via COD atau transfer/QRIS pribadi.
+            Tidak ada biaya tayang barang (Rp 0), bebas komisi transaksi antar-mahasiswa (0%), dan pembayaran langsung ke tangan penjual via COD atau transfer/QRIS pribadi.
           </p>
         </div>
       </section>
 
-      {/* Grid Harga Jasa Iklan */}
+      {/* Grid harga layanan promosi */}
       <section className="mt-10">
-        <h2 className="text-xl font-bold text-gray-900 border-b pb-2">2. Layanan Iklan Lainnya</h2>
+        <h2 className="text-xl font-bold text-gray-900 border-b pb-2">2. Layanan Promosi Lainnya</h2>
         <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {advertisingServices.map((s, idx) => (
             <div
@@ -188,17 +188,17 @@ export default async function DaftarHargaPage() {
         <div className="card p-6">
           <h3 className="text-lg font-bold text-gray-900"> Kebijakan Pembatalan Layanan</h3>
           <p className="mt-2 text-sm text-gray-500 leading-relaxed">
-            Pengguna dapat melakukan pembatalan pengajuan iklan barang sebelum iklan dikonfirmasi oleh sistem. Apabila iklan telah diverifikasi dan ditayangkan secara aktif di platform, maka pembatalan iklan yang mengakibatkan penghentian layanan tidak dapat dilakukan di tengah jalan.
+            Pengguna dapat membatalkan pengajuan jual barang sebelum dikonfirmasi oleh sistem. Setelah barang diverifikasi dan ditampilkan secara aktif di platform, penayangan tidak dapat dibatalkan di tengah jalan.
           </p>
           <p className="mt-2 text-sm text-gray-500 leading-relaxed">
-            Jika stok barang yang Anda iklankan habis sebelum masa aktif 14 hari selesai, Anda disarankan untuk mengubah status barang menjadi <strong>"Terjual" (Sold)</strong> melalui dasbor penjual untuk menghentikan kontak masuk dari calon pembeli.
+            Jika stok barang jualan Anda habis sebelum masa aktif 14 hari selesai, ubah statusnya menjadi <strong>"Terjual" (Sold)</strong> melalui dasbor penjual untuk menghentikan kontak masuk dari calon pembeli.
           </p>
         </div>
 
         <div className="card p-6">
           <h3 className="text-lg font-bold text-gray-900"> Kebijakan Pengembalian Dana (Refund)</h3>
           <p className="mt-2 text-sm text-gray-500 leading-relaxed">
-            Seluruh transaksi pembayaran untuk biaya pemasangan iklan standar, iklan poster, *bump*, dan *featured ads* bersifat final dan tidak dapat dikembalikan dana (*non-refundable*), kecuali terjadi kondisi kegagalan sistematis dari pihak kami yang menyebabkan layanan iklan sama sekali tidak tayang/aktif dalam waktu 24 jam setelah pembayaran sukses.
+            Seluruh pembayaran untuk biaya layanan promosi poster, *bump*, dan *featured* bersifat final dan tidak dapat dikembalikan dana (*non-refundable*), kecuali terjadi kegagalan sistem dari pihak kami yang menyebabkan layanan tidak aktif dalam waktu 24 jam setelah pembayaran sukses.
           </p>
           <p className="mt-2 text-sm text-gray-500 leading-relaxed">
             Untuk klaim pengembalian dana akibat kesalahan teknis pembayaran, silakan hubungi admin melalui nomor WhatsApp resmi yang tertera pada platform dengan melampirkan bukti struk pembayaran QRIS.
@@ -209,7 +209,7 @@ export default async function DaftarHargaPage() {
       {/* Footer Call to Action */}
       <div className="mt-12 text-center">
         <Link href="/jual" className="btn-primary px-8 py-3 rounded-2xl text-base shadow-lg shadow-primary/20">
-          Mulai Pasang Iklan Sekarang
+          Mulai Jual Barang Sekarang
         </Link>
         <p className="mt-3 text-xs text-gray-400">
           Ada pertanyaan? <Link href="/cara-bergabung" className="text-primary underline">Hubungi Hubungan Pelanggan (Contact Information)</Link>

@@ -320,8 +320,8 @@ export default async function HalamanToko({ params }) {
           Punya toko fisik? Gabung jadi Toko Mitra
         </p>
         <p className="mx-auto mt-1.5 max-w-md text-sm" style={{ color: warna.teks, opacity: 0.85 }}>
-          Khusus pemilik toko fisik di sekitar USU & Polmed dengan paket langganan aktif.
-          Semua barang tayang tanpa biaya per iklan, punya etalase digital & alamat website sendiri.
+          Khusus pemilik toko fisik dengan paket langganan aktif.
+          Semua barang ditampilkan tanpa biaya tayang, punya etalase digital & alamat website sendiri.
         </p>
         <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
           <Link

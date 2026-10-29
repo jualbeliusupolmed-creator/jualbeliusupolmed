@@ -1,5 +1,5 @@
-// Integrasi Fonnte (WhatsApp gateway). Semua fungsi aman-gagal:
-// jika token belum di-set / request error, hanya log, tidak melempar.
+// Integrasi gateway WhatsApp Baileys. Pengiriman gagal dikembalikan sebagai
+// hasil terstruktur; pemanggil memutuskan cara menampilkan kegagalannya.
 
 import { AsyncLocalStorage } from "async_hooks";
 import { buildSlug } from "@/lib/slug";
@@ -16,12 +16,9 @@ import { tokenBotUtama } from "@/lib/botTokens";
 // pelanggan, tanpa satu pun pemanggil sendWa perlu tahu-menahu.
 export const perangkatBalasan = new AsyncLocalStorage();
 
-const FONNTE_URL = "https://api.fonnte.com/send";
-
-// Catat SEMUA kiriman bot ke chat pribadi di wa_conversations (role 'bot'),
-// apa pun rutenya (webhook, OTP, unlock, notif). Krusial: webhook memakai catatan
-// ini untuk membedakan echo kiriman bot vs balasan MANUAL owner (mode senyap
-// otomatis) — kiriman yang tak tercatat bisa salah dikira balasan manual.
+// Catat kiriman bot ke chat pribadi di wa_conversations (role 'bot'), kecuali
+// isi pesan berumur pendek yang dirahasiakan sebelum fungsi ini dipanggil.
+// Webhook memakai catatan untuk membedakan echo bot vs balasan manual owner.
 // Fire-and-forget: gagal insert tidak boleh mengganggu pengiriman.
 function logBotSend(target, message, hasMedia) {
   try {
@@ -107,32 +104,11 @@ async function tampungGagal(target, message, fileUrl, ttlDetik, sebab, meta) {
   }
 }
 
-/**
- * Tandai baris antrean sebagai sudah terkirim.
- *
- * Dipakai kalau jalur cadangan (Fonnte) BERHASIL setelah barisnya terlanjur
- * ditampung. Tanpa ini barisnya tetap "tertunda" selamanya, dan penekanan
- * tombol Kirim berikutnya mengirim pesan yang SUDAH sampai — pesan ganda ke
- * orang yang sama.
- */
-async function tandaiTerkirim(id) {
-  if (!id) return;
-  try {
-    await getAdminClient().from("wa_outbox").update({
-      status: "terkirim",
-      terkirim_at: new Date().toISOString(),
-      galat_terakhir: "terkirim lewat jalur cadangan (Fonnte)",
-    }).eq("id", id);
-  } catch (e) {
-    console.error("[wa_outbox] gagal menandai terkirim:", e?.message);
-  }
-}
-
 // ttlDetik: berapa lama pesan ini masih berguna kalau terlambat. Bot memakainya
 // untuk memutuskan antara menyimpan (notifikasi penjualan — terlambat masih jauh
 // lebih baik daripada tidak sampai) dan menolak cepat (OTP — kode yang datang
-// sejam kemudian cuma membingungkan, dan penolakan cepat membuka jalur cadangan
-// di bawah). Kosong = pesan boleh menunggu selama bot menyimpannya.
+// terlambat cuma membingungkan, jadi pemanggil harus meminta kode baru).
+// Kosong = pesan boleh menunggu selama bot menyimpannya.
 async function send(target, message, fileUrl = null, ttlDetik = null, meta = null) {
   // Jangan kirim pesan kosong (teks kosong tanpa lampiran) — pernah muncul
   // gelembung kosong ke pelanggan.
@@ -141,19 +117,35 @@ async function send(target, message, fileUrl = null, ttlDetik = null, meta = nul
     return { ok: false, skipped: true, reason: "empty" };
   }
 
-  logBotSend(target, message, !!fileUrl);
+  const pesanLog = ttlDetik && Number(ttlDetik) <= 300
+    ? "[konten pesan berumur pendek dirahasiakan]"
+    : message;
+  logBotSend(target, pesanLog, !!fileUrl);
 
-  // Id baris wa_outbox kalau pesan ini sempat ditampung — dipakai di bawah untuk
-  // menutup barisnya kalau jalur cadangan ternyata berhasil.
-  let idTampungan = null;
-
-  const baileysUrl = process.env.BAILEYS_API_URL;
+  const baileysUrl = String(process.env.BAILEYS_API_URL || "")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .trim();
   const baileysToken = tokenBotUtama();   // token bot yang ditunjuk BAILEYS_API_URL
 
-  // Jika BAILEYS_API_URL diset di Vercel, kita tembak Baileys Railway
-  if (baileysUrl) {
-    const cleanUrl = baileysUrl.replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
-    const baseUrl = cleanUrl.replace(/\/(send|story)\/?$/, '').replace(/\/$/, '');
+  if (!baileysUrl || !baileysToken) {
+    const missing = [
+      !baileysUrl && "BAILEYS_API_URL",
+      !baileysToken && "BAILEYS_API_TOKEN",
+    ].filter(Boolean);
+    const reason = `konfigurasi ${missing.join(" dan ")} belum diatur`;
+    console.error(`[sendWa] Gateway WhatsApp belum dikonfigurasi (${missing.join(", ")}).`);
+    const idTampungan = await tampungGagal(target, message, fileUrl, ttlDetik, reason, meta);
+    return {
+      ok: false,
+      skipped: true,
+      ditampung: !!idTampungan,
+      code: "gateway_not_configured",
+      galat: reason,
+    };
+  }
+
+  {
+    const baseUrl = baileysUrl.replace(/\/(send|story)\/?$/, '').replace(/\/$/, '');
 
     // status@broadcast harus pakai /story \u2014 endpoint khusus WA Status
     if (target === "status@broadcast") {
@@ -211,11 +203,13 @@ async function send(target, message, fileUrl = null, ttlDetik = null, meta = nul
     // sendiri pesan yang berhasil masuk dan menjawab ok=true saat itu juga,
     // jadi yang jatuh ke sini benar-benar tidak punya rumah.
     await tampungGagal(target, message, fileUrl, ttlDetik, galat, meta);
-    return { ok: false, data: json, ditampung: true, galat };
-  } else {
-    // Kalau baileysUrl gak ada
-    await tampungGagal(target, message, fileUrl, ttlDetik, "BAILEYS_API_URL belum di-set", meta);
-    return { ok: false, skipped: true, ditampung: !!target, galat: "BAILEYS_API_URL belum di-set" };
+    return {
+      ok: false,
+      data: json,
+      ditampung: true,
+      code: res ? "gateway_rejected" : "gateway_unreachable",
+      galat,
+    };
   }
 }
 
@@ -319,7 +313,7 @@ export async function postToGroup(listing, adminSettings) {
     )
   );
 
-  // Kirim WA Story (status@broadcast) — hanya via Baileys karena Fonnte tidak support.
+  // Kirim WA Story (status@broadcast) lewat endpoint khusus Baileys.
   // Tidak ikut menentukan ok: Status itu bonus, bukan janji ke penjual.
   if (process.env.BAILEYS_API_URL) {
     await send("status@broadcast", msg, gambar).catch(() => {});
@@ -491,4 +485,3 @@ export async function notifyAdminNewListing(listing, overrideAdminWa) {
 // kode iklan, tanggal berakhir yang pasti, dan pintasan `PERPANJANG <kode>`.
 // Menyatukan ke arah helper ini berarti menurunkan mutu pesannya, jadi yang
 // dibuang justru helper-nya. Teks reminder H-3/H-1 tinggal satu tempat.
-

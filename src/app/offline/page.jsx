@@ -2,7 +2,7 @@
 // (lihat `fallbacks.document` di next.config.mjs) dan disajikan menggantikan
 // halaman apa pun yang diminta saat tidak ada koneksi.
 export const metadata = {
-  title: "Sedang Offline — Jual Beli USU & POLMED",
+  title: "Sedang Offline — Kampus Kita",
 };
 
 export default function OfflinePage() {
@@ -24,7 +24,7 @@ export default function OfflinePage() {
       </h1>
       <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs mb-6">
         Tidak ada koneksi internet. Periksa jaringanmu, lalu coba muat ulang —
-        iklan, menfess, dan info kampus akan kembali begitu kamu online.
+        barang jualan, menfess, dan info kampus akan kembali begitu kamu online.
       </p>
       <a
         href="/"

@@ -77,7 +77,7 @@ export async function POST(req, { params }) {
       applicant_wa: formattedWa,
       applicant_name: applicant_name.trim(),
       nim: nim ? nim.trim() : null,
-      campus: campus || "USU",
+      campus: campus || "Kampus",
       faculty: faculty ? faculty.trim() : "Umum",
       batch: batch ? batch.trim() : "2024",
       division_1,

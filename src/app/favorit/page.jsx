@@ -92,7 +92,7 @@ export default function FavoritPage() {
             Belum ada barang favorit
           </h2>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-xs leading-relaxed">
-            Ketuk ikon hati pada iklan apa pun di marketplace untuk menyimpannya di sini.
+            Ketuk ikon hati pada barang apa pun di marketplace untuk menyimpannya di sini.
           </p>
           <Link
             href="/jual-beli"

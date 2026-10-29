@@ -9,7 +9,7 @@ export default function NativeShareButton({ listing }) {
       try {
         await navigator.share({
           title: listing.title,
-          text: `Cek ${listing.title} di Jual Beli USU Polmed`,
+          text: `Cek ${listing.title} di Kampus Kita`,
           url: window.location.href,
         });
       } catch (err) {

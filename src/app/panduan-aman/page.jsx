@@ -1,66 +1,60 @@
 import Link from "next/link";
 import { Icon } from "@/components/Icons";
+import { MARKETPLACE_WA } from "@/lib/constants";
 
 export const metadata = {
-  title: "Panduan Transaksi Aman & Titik COD Kampus — USU × POLMED",
+  title: "Panduan Transaksi Aman",
   description:
-    "Panduan resmi bertransaksi aman, daftar 5 titik temu COD terverifikasi di area kampus USU dan POLMED, serta jalur mediasi sengketa mahasiswa.",
+    "Panduan transaksi aman untuk mahasiswa: cara memilih titik temu, memeriksa barang, dan melaporkan kendala.",
   alternates: { canonical: "/panduan-aman" },
 };
 
 const SAFE_COD_SPOTS = [
   {
-    name: "Lobi Perpustakaan Pusat USU",
-    campus: "USU",
-    desc: "Area ber-AC, banyak tempat duduk santai, dan selalu dijaga satpam kampus. Sangat cocok untuk cek fungsi laptop, tablet, atau gadget.",
-    time: "Senin – Jumat: 08.30 – 16.30 WIB",
-    features: ["CCTV Kampus", "Banyak Stopkontak", "Parkir Luas"],
+    name: "Pilih tempat umum yang ramai",
+    campus: "Saran umum",
+    desc: "Utamakan area terbuka dengan pengunjung lain dan petugas di sekitar. Hindari tempat sepi atau berpindah ke lokasi yang tidak disepakati.",
+    time: "Sebelum berangkat: pastikan lokasi dan waktu disepakati kedua pihak.",
+    features: ["Area publik", "Mudah dijangkau"],
   },
   {
-    name: "Selasar Fakultas Ilmu Budaya (FIB) USU",
-    campus: "USU",
-    desc: "Titik temu favorit mahasiswa untuk COD makanan, buku kuliah, novel, atau pakaian. Suasana rindang dan dekat kantin FIB.",
-    time: "Setiap hari perkuliahan: 09.00 – 17.30 WIB",
-    features: ["Banyak Meja Duduk", "Area Terbuka Ramai", "Akses Mudah"],
+    name: "Ajak teman menemani",
+    campus: "Saran umum",
+    desc: "Beri tahu teman atau keluarga tentang rencana transaksi. Untuk barang bernilai tinggi, pertimbangkan datang bersama orang lain.",
+    time: "Saat bertemu: tetap di area ramai dan jangan terburu-buru.",
+    features: ["Beritahu orang terdekat", "Utamakan keselamatan"],
   },
   {
-    name: "Hall Gedung Kuliah Bersama Fakultas Teknik USU",
-    campus: "USU",
-    desc: "Dekat pintu gerbang Dr. Mansur dan kantin teknik. Titik temu strategis bagi mahasiswa teknik, MIPA, dan Fasilkom-TI.",
-    time: "Senin – Jumat: 08.00 – 17.00 WIB",
-    features: ["Pusat Mobilitas Mahasiswa", "Dekat ATM Center"],
+    name: "Periksa barang sebelum membayar",
+    campus: "Saran umum",
+    desc: "Cocokkan barang dengan deskripsi dan uji fungsi yang memungkinkan. Pastikan harga serta cara pembayaran sudah disepakati.",
+    time: "Sebelum pembayaran: simpan bukti percakapan dan kesepakatan.",
+    features: ["Cek kondisi", "Simpan bukti"],
   },
   {
-    name: "Kantin Gedung Z Politeknik Negeri Medan (POLMED)",
-    campus: "POLMED",
-    desc: "Pusat keramaian utama mahasiswa Polmed. Sangat aman untuk COD barang kecil, perkakas kuliah, atau ambil pesanan Pre-Order makanan.",
-    time: "Senin – Jumat: 08.00 – 16.00 WIB",
-    features: ["Kantin Ramai", "Pusat Mahasiswa Polmed"],
-  },
-  {
-    name: "Gazebo Pintu 2 Kampus USU (Jl. Dr. Mansur)",
-    campus: "USU / POLMED",
-    desc: "Titik temu netral di gerbang utama perbatasan. Cocok untuk transaksi cepat tanpa perlu masuk jauh ke dalam area fakultas.",
-    time: "Setiap hari: 08.00 – 18.00 WIB",
-    features: ["Pos Keamanan Pintu 2", "Akses Transportasi Umum"],
+    name: "Sepakati titik temu yang mudah dikenali",
+    campus: "Saran umum",
+    desc: "Pilih lokasi yang diketahui kedua pihak dan memiliki akses transportasi yang sesuai. Platform tidak menetapkan lokasi COD resmi.",
+    time: "Jika rencana berubah: kabari pihak lain dan sepakati ulang.",
+    features: ["Mudah dikenali", "Akses transportasi"],
   },
 ];
 
 const MEDIATION_STEPS = [
   {
     step: "1",
-    title: "Cek Kelengkapan & Kode Iklan Saat Bertemu",
-    desc: "Minta penjual menunjukkan kode iklan atau profil StudentPlace miliknya. Periksa kondisi fisik, garansi, kelengkapan, dan kecocokan dengan deskripsi SEBELUM membayar.",
+    title: "Cek Kelengkapan & Kode Barang Saat Bertemu",
+    desc: "Periksa profil penjual dan kode barang. Periksa kondisi fisik, garansi, kelengkapan, dan kecocokan dengan deskripsi sebelum membayar.",
   },
   {
     step: "2",
     title: "Gunakan Pembayaran Tunai atau Transfer Langsung",
-    desc: "Jangan pernah mentransfer uang muka (DP) kepada penjual yang belum Anda kenal atau belum bertemu langsung di kampus.",
+    desc: "Berhati-hati terhadap permintaan uang muka sebelum identitas dan kesepakatan transaksi jelas.",
   },
   {
     step: "3",
-    title: "Jalur Mediasi Tim StudentPlace & Kampus",
-    desc: "Jika barang terbukti rusak atau tidak sesuai dalam waktu 1x24 jam setelah deal, hubungi admin mediasi dengan melampirkan screenshot chat WhatsApp dan bukti COD. Akun penjual nakal akan langsung dibekukan dan dilaporkan ke pangkalan data mahasiswa.",
+    title: "Laporkan kendala melalui saluran bantuan",
+    desc: "Simpan bukti transaksi dan percakapan, lalu hubungi pihak terkait melalui saluran bantuan yang tersedia. Tim akan meninjau laporan sesuai kebijakan platform; penyelesaian atau waktu respons tidak dijamin.",
   },
 ];
 
@@ -78,26 +72,26 @@ export default function PanduanAmanPage() {
       <div className="text-center max-w-2xl mx-auto mb-10">
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 mb-3 border border-emerald-500/20">
           <Icon.Shield className="w-3.5 h-3.5 text-emerald-600" />
-          Kampus Aman &amp; Bebas Penipuan
+          Panduan untuk Semua Kampus
         </span>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1d1d1f] dark:text-white tracking-tight">
-          Panduan Transaksi Aman &amp; Titik COD Kampus
+          Panduan Transaksi Aman &amp; Titik Temu
         </h1>
         <p className="mt-2.5 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-          Sistem keamanan transaksi komunitas mahasiswa Universitas Sumatera Utara (USU) &amp; Politeknik Negeri Medan (POLMED).
+          Gunakan langkah berikut saat bertransaksi dengan mahasiswa dari kampus mana pun.
         </p>
       </div>
 
-      {/* 5 Titik COD Resmi */}
+      {/* Panduan memilih titik temu COD */}
       <section className="mb-12">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-lg font-bold text-[#1d1d1f] dark:text-white flex items-center gap-2">
               <Icon.MapPin className="w-5 h-5 text-emerald-600" />
-              5 Rekomendasi Titik Temu COD Resmi Kampus
+              Panduan Memilih Titik Temu COD
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Pilih lokasi ramai dan berpenerangan baik di bawah pengawasan kampus.
+              Tidak ada lokasi resmi universal. Pilih tempat yang aman dan disepakati bersama.
             </p>
           </div>
         </div>
@@ -173,10 +167,10 @@ export default function PanduanAmanPage() {
           Perlu Bantuan Mediasi Langsung?
         </h3>
         <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto mb-4">
-          Tim satgas moderasi StudentPlace siap membantu menengahi sengketa transaksi mahasiswa setiap hari pukul 08.00 – 21.00 WIB.
+          Jika memerlukan bantuan, hubungi pengelola melalui WhatsApp. Waktu respons dapat bervariasi.
         </p>
         <a
-          href="https://wa.me/62895429126232?text=Halo%20Admin%20StudentPlace%2C%20saya%20butuh%20bantuan%20mediasi%20transaksi."
+          href={`https://wa.me/${MARKETPLACE_WA}?text=${encodeURIComponent("Halo admin Kampus Kita, saya membutuhkan bantuan terkait transaksi.")}`}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all"

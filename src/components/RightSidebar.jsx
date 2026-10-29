@@ -64,7 +64,7 @@ export default function RightSidebar({ config }) {
         <Link href="/cara-bergabung" className="hover:underline">Cara bergabung</Link>
         <Link href="/kebijakan-privasi" className="hover:underline">Privasi</Link>
         <Link href="/syarat-ketentuan" className="hover:underline">Syarat & Ketentuan</Link>
-        <span>© {new Date().getFullYear()} JualBeli USU Polmed</span>
+        <span>© {new Date().getFullYear()} Kampus Kita</span>
       </div>
     </div>
   );

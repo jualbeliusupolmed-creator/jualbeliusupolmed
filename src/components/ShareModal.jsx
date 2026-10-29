@@ -63,7 +63,7 @@ export default function ShareModal({ listing, isIconOnly = false }) {
       downloadTemplate(p.format, p.id);
     } else if (p.id === "wa") {
       const cond = listing.condition === "new" ? " · Baru" : listing.condition === "used" ? " · Bekas" : "";
-      const text = `*${listing.title}*\nHarga: ${rupiah(listing.price)}${cond}\n${listing.category ? `Kategori: ${listing.category}\n` : ""}\n${getUrl()}\n_Jual Beli USU Polmed — COD area kampus_`;
+      const text = `*${listing.title}*\nHarga: ${rupiah(listing.price)}${cond}\n${listing.category ? `Kategori: ${listing.category}\n` : ""}\n${getUrl()}\n_Kampus Kita — marketplace mahasiswa lintas kampus_`;
       window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener");
     } else if (p.id === "fb") {
       window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(getUrl())}`, "_blank", "noopener");
@@ -155,7 +155,7 @@ export default function ShareModal({ listing, isIconOnly = false }) {
                     <div className="w-6 h-6 rounded-full bg-[#111] flex items-center justify-center">
                       <span className="text-white text-[10px] font-black">JB</span>
                     </div>
-                    <span className="text-white text-xs font-bold tracking-wide drop-shadow">JUAL BELI USU</span>
+                    <span className="text-white text-xs font-bold tracking-wide drop-shadow">KAMPUS KITA</span>
                   </div>
                   {/* Bottom info */}
                   <div className="absolute inset-x-0 bottom-0 p-4">
@@ -183,7 +183,7 @@ export default function ShareModal({ listing, isIconOnly = false }) {
                   )}
                   {/* Top brand */}
                   <div className="absolute inset-x-0 top-0 px-4 pt-4 text-center">
-                    <span className="text-white text-xs font-extrabold tracking-widest uppercase drop-shadow">JUAL BELI USU</span>
+                    <span className="text-white text-xs font-extrabold tracking-widest uppercase drop-shadow">KAMPUS KITA</span>
                   </div>
                   {/* Bottom info */}
                   <div className="absolute inset-x-0 bottom-0 p-4 text-center">

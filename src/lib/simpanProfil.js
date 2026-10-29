@@ -4,6 +4,7 @@ import { periksaSlug } from "@/lib/toko";
 import {
   KOLOM_PROFIL, peranProfil, saringIsian, normalisasiIsian, bentukProfil, userIdTeman,
 } from "@/lib/profil";
+import { formatWa } from "@/lib/constants";
 
 /*
  * Satu-satunya penulis profil.
@@ -139,8 +140,9 @@ export async function simpanProfil(wa, body, { supa = getAdminClient() } = {}) {
 
   // Satu identitas, satu nama — di profil maupun di setiap kartu iklannya.
   if (isian.name) {
+    const listingOwner = formatWa(sekarang?.phone_wa || sekarang?.wa) || wa;
     const { error } = await supa
-      .from("listings").update({ seller_name: isian.name }).eq("seller_wa", wa);
+      .from("listings").update({ seller_name: isian.name }).eq("seller_wa", listingOwner);
     if (error) console.error("[profil] gagal menyeragamkan seller_name:", error.message);
   }
 
@@ -160,7 +162,8 @@ export async function simpanProfil(wa, body, { supa = getAdminClient() } = {}) {
  * kalau sakelarnya dinyalakan sendiri.
  */
 async function selaraskanKartuTeman(supa, wa, isian, t = {}, sekarang, peran) {
-  const userId = userIdTeman(wa);
+  const phoneIdentity = formatWa(sekarang?.phone_wa || sekarang?.wa) || wa;
+  const userId = userIdTeman(phoneIdentity);
   const { data: kartu } = await supa
     .from("teman_profiles").select("id").eq("user_id", userId).maybeSingle();
   if (!kartu && t?.aktif !== true) return null;
@@ -204,7 +207,7 @@ async function selaraskanKartuTeman(supa, wa, isian, t = {}, sekarang, peran) {
     batch: ikut.batch || "2024",
     intent: ikut.intent || "Teman Santai ",
     instagram: ikut.instagram || "",
-    whatsapp: peran.tanpaNomor ? "" : wa,
+    whatsapp: peran.tanpaNomor ? "" : phoneIdentity,
     gender: ikut.gender || "all",
     target_gender: ikut.target_gender || "all",
     is_active: true,
@@ -216,7 +219,8 @@ async function selaraskanKartuTeman(supa, wa, isian, t = {}, sekarang, peran) {
 export async function muatProfil(supa, wa) {
   const { data: sp } = await supa
     .from("seller_profiles").select(KOLOM_PROFIL).eq("wa", wa).maybeSingle();
+  const phoneIdentity = formatWa(sp?.phone_wa || sp?.wa) || wa;
   const { data: tp } = await supa
-    .from("teman_profiles").select("*").eq("user_id", userIdTeman(wa)).maybeSingle();
+    .from("teman_profiles").select("*").eq("user_id", userIdTeman(phoneIdentity)).maybeSingle();
   return bentukProfil(sp || { wa }, tp);
 }

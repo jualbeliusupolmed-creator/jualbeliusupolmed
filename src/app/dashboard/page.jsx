@@ -16,12 +16,12 @@ import QRISModal from "@/components/QRISModal";
 import PushNotificationButton from "@/components/PushNotificationButton";
 import BagikanIklan from "@/components/BagikanIklan";
 import BlogPenulisPanel from "@/components/BlogPenulisPanel";
-import DashboardModeToggle from "@/components/DashboardModeToggle";
 import UnifiedProfilePanel from "@/components/dashboard/UnifiedProfilePanel";
 import SellerAnalyticsView from "@/components/dashboard/SellerAnalyticsView";
 import UkmDashboardView from "@/components/dashboard/UkmDashboardView";
 import OprecPengurusPanel from "@/components/oprec/OprecPengurusPanel";
 import BuatOprecModal from "@/components/oprec/BuatOprecModal";
+import UserOpenPoWorkspace from "@/components/open-po/UserOpenPoWorkspace";
 import { useSesi } from "@/components/SesiProvider";
 import { StatusBadge } from "@/components/ui/DesignSystem";
 
@@ -101,6 +101,14 @@ function DashboardInner() {
 
   const router = useRouter();
 
+  function selectTab(tab) {
+    setActiveTab(tab);
+    router.push(tab === "jual" ? "/dashboard" : `/dashboard?tab=${tab}`, { scroll: false });
+
+    if (tab === "statistik" && !analytics) loadAnalytics();
+    if (tab === "ukm" && !oprecLoaded) loadOprec();
+  }
+
   useEffect(() => {
     setMounted(true);
     fetch("/api/config")
@@ -113,9 +121,9 @@ function DashboardInner() {
     // membuka ke ruangan yang salah.
     const tabDiminta = params.get("tab");
     if (tabDiminta && TAB_SAH.includes(tabDiminta)) setActiveTab(tabDiminta);
-    if (params.get("paid")) setNote("Pembayaran sukses! Iklan tayang sebentar lagi.");
+    if (params.get("paid")) setNote("Pembayaran sukses! Barang segera ditampilkan.");
     if (params.get("pending")) setNote("Pembayaran pending. Selesaikan ya.");
-    if (params.get("edited")) setNote("Iklan berhasil diperbarui!");
+    if (params.get("edited")) setNote("Detail jual barang berhasil diperbarui!");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params, router]);
 
@@ -175,7 +183,7 @@ function DashboardInner() {
         // Nama kolomnya `avatar_url`; `photo_url` dipertahankan di sini karena
         // itulah yang dibaca header dashboard dan beberapa komponen lain.
         photo_url: p.avatar_url || p.teman?.photo_url || "",
-        campus: p.campus || "USU",
+        campus: p.campus || "Umum",
         faculty: p.faculty || "Umum",
         bio: p.bio || "",
       };
@@ -266,8 +274,8 @@ function DashboardInner() {
     try {
       const res = await fetch(`/api/listings/${id}`, { method: "DELETE" });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Gagal menghapus iklan");
-      toast.success("Iklan berhasil dihapus.");
+      if (!res.ok) throw new Error(data.error || "Gagal menghapus barang jualan");
+      toast.success("Barang jualan berhasil dihapus.");
       load(wa);
     } catch (e) {
       toast.error(e.message);
@@ -452,7 +460,6 @@ function DashboardInner() {
   const otherItems = items.filter((i) => i.status === "expired" || i.status === "suspended");
   const totalFee = soldItems.reduce((s, i) => s + (i.sold_fee || 0), 0);
   const totalViews = items.reduce((s, i) => s + (i.views || 0), 0);
-  const topViewed = [...items].filter((i) => i.status === "active" && (i.views || 0) > 0).sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 3);
 
   if (!mounted) {
     return (
@@ -506,7 +513,7 @@ function DashboardInner() {
                 <div className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200 dark:bg-amber-900/20 dark:border-amber-900/50 text-sm">
                   <p className="inline-flex items-center gap-1.5 font-bold text-amber-800 dark:text-amber-300">
                     <Icon.AlertCircle className="h-4 w-4" />
-                    Iklan langsung diturunkan
+                    Barang langsung diturunkan
                   </p>
                   <p className="text-amber-700 dark:text-amber-400 mt-1">
                     Fee komisi <strong>{rupiah(soldPriceModal.fee)}</strong> akan muncul sebagai tagihan. Bayar via QRIS sekarang atau nanti.
@@ -539,7 +546,7 @@ function DashboardInner() {
       {/* Input hari featured */}
       <InputModal
         open={!!featuredModal}
-        title="Featured Iklan"
+        title="Unggulkan Barang"
         label="Berapa hari featured?"
         type="number"
         min={1}
@@ -548,7 +555,7 @@ function DashboardInner() {
         confirmLabel="Lanjut"
         onConfirm={onFeaturedDaysEntered}
         onClose={() => setFeaturedModal(null)}
-        hint="Rp5.000 / hari — iklan tampil di banner utama"
+        hint="Rp5.000 / hari — barang tampil di banner utama"
       />
 
       {/* Konfirmasi bayar featured */}
@@ -576,7 +583,7 @@ function DashboardInner() {
       {/* Input hari sponsored */}
       <InputModal
         open={!!sponsoredModal}
-        title="Sponsored Iklan"
+        title="Promosikan Barang"
         label="Berapa hari ingin disponsori?"
         type="number"
         min={1}
@@ -590,7 +597,7 @@ function DashboardInner() {
           setSponsoredConfirm({ item: sponsoredModal, days, total: days * 7000 });
         }}
         onClose={() => setSponsoredModal(null)}
-        hint="Rp7.000 / hari — iklan tampil paling atas dengan label Sponsor"
+        hint="Rp7.000 / hari — barang tampil paling atas dengan label Sponsor"
       />
       <ConfirmModal
         open={!!sponsoredConfirm}
@@ -598,7 +605,7 @@ function DashboardInner() {
         message={
           sponsoredConfirm && (
             <div>
-              <p>Sponsor iklan <strong>{sponsoredConfirm.item.title}</strong> selama <strong>{sponsoredConfirm.days} hari</strong>?</p>
+              <p>Promosikan barang <strong>{sponsoredConfirm.item.title}</strong> selama <strong>{sponsoredConfirm.days} hari</strong>?</p>
               <p className="mt-2 text-gray-500">Total: <strong className="text-primary">{rupiah(sponsoredConfirm.total)}</strong></p>
             </div>
           )
@@ -623,7 +630,7 @@ function DashboardInner() {
                 Aktifkan Auto-Bump untuk <strong>{autobumpConfirm.item.title}</strong>?
               </p>
               <ul className="mt-2 list-inside list-disc text-sm text-gray-500 space-y-1">
-                <li>Iklan otomatis naik ke atas setiap jam 8 pagi.</li>
+                <li>Barang otomatis naik ke atas setiap jam 8 pagi.</li>
                 <li>Berlaku selama 7 hari berturut-turut.</li>
               </ul>
               <p className="mt-3 text-gray-500">
@@ -640,15 +647,15 @@ function DashboardInner() {
       {/* Konfirmasi bayar perpanjang (renew) */}
       <ConfirmModal
         open={!!renewConfirm}
-        title="Konfirmasi Perpanjang Iklan"
+        title="Konfirmasi Perpanjang Masa Tayang"
         message={
           renewConfirm && (
             <div>
               <p>
-                Perpanjang masa tayang iklan <strong>{renewConfirm.item.title}</strong>?
+                Perpanjang masa tayang barang <strong>{renewConfirm.item.title}</strong>?
               </p>
               <ul className="mt-2 list-inside list-disc text-sm text-gray-500 space-y-1">
-                <li>Iklan akan kembali aktif dan naik ke atas feed.</li>
+                <li>Barang akan kembali aktif dan naik ke atas feed.</li>
                 <li>Masa tayang bertambah.</li>
               </ul>
             </div>
@@ -659,14 +666,14 @@ function DashboardInner() {
         onClose={() => setRenewConfirm(null)}
       />
 
-      {/* Konfirmasi hapus iklan */}
+      {/* Konfirmasi hapus barang jualan */}
       <ConfirmModal
         open={!!deleteListingConfirm}
-        title="Hapus Iklan Permanen"
+        title="Hapus Barang Jualan Permanen"
         message={
           deleteListingConfirm && (
             <p>
-              Hapus iklan <strong>&ldquo;{deleteListingConfirm.title}&rdquo;</strong> secara permanen? Aksi ini tidak dapat dibatalkan.
+              Hapus barang <strong>&ldquo;{deleteListingConfirm.title}&rdquo;</strong> secara permanen? Aksi ini tidak dapat dibatalkan.
             </p>
           )
         }
@@ -694,52 +701,30 @@ function DashboardInner() {
 
       {/* ===== UI ===== */}
 
-      {/* ===== UI HEADER & PROFILE ===== */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-        {isUkmAccount ? (
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 px-3.5 py-1.5 text-xs font-black text-indigo-700 dark:text-indigo-300">
-              <Icon.Landmark className="h-3.5 w-3.5" />
-              Portal Resmi Organisasi Kampus
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 px-2.5 py-0.5 text-[10px] font-black text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
-              <Icon.Check className="h-3.5 w-3.5" />
-              Terverifikasi
-            </span>
-          </div>
-        ) : (
-          <DashboardModeToggle 
-            storeStatus={sellerProfile?.store_status} 
-            activeCount={(items || []).filter(l => l.status === "active").length} 
-          />
-        )}
-        <div className="flex items-center gap-2 self-end sm:self-auto">
+      {/* ===== DASHBOARD HEADER ===== */}
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Ruang akun</p>
+          <h1 className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">Dashboard</h1>
+        </div>
+        <div className="flex items-center gap-2">
           {wa && <PushNotificationButton wa={wa} />}
-          {loaded && (
-            <Link
-              href="/dashboard/open-po"
-              className="px-3.5 py-2 rounded-2xl text-xs font-black bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 active:scale-95 transition-all flex items-center gap-1.5"
-            >
-              <Icon.Coffee className="w-3.5 h-3.5" />
-              <span>Open PO</span>
-            </Link>
-          )}
           {loaded && (
             <Link 
               href={isUkmAccount ? "/jual?type=danus" : "/jual"} 
               className="px-4 py-2 rounded-2xl text-xs font-black bg-primary hover:bg-primary/95 text-white shadow-md shadow-primary/20 active:scale-95 transition-all flex items-center gap-1.5"
             >
               <Icon.PlusCircle className="w-3.5 h-3.5" />
-              <span>{isUkmAccount ? "Tambah Danus / Merch" : "Tambah Iklan"}</span>
+              <span>{isUkmAccount ? "Tambah Danus / Merch" : "Jual Barang"}</span>
             </Link>
           )}
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900/90 rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm mb-6">
+      <div className="mb-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="relative w-14 h-14 rounded-2xl overflow-hidden bg-gradient-to-br from-primary/20 via-purple-400/10 to-indigo-500/20 dark:from-purple-950 dark:to-slate-900 border border-primary/20 flex items-center justify-center text-2xl font-black text-primary dark:text-violet-300 shadow-inner shrink-0">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-primary/20 bg-primary/10 text-lg font-black text-primary dark:text-violet-300 flex items-center justify-center">
               {sellerProfile?.photo_url ? (
                 <Image
                   src={sellerProfile.photo_url}
@@ -755,9 +740,9 @@ function DashboardInner() {
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white">
                   {sellerProfile?.ukm_name || sellerProfile?.name || "Dashboard Penjual"}
-                </h1>
+                </h2>
                 {isUkmAccount && (
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 px-2.5 py-0.5 text-[10px] font-black text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800">
                     <Icon.Landmark className="h-3.5 w-3.5" />
@@ -777,8 +762,8 @@ function DashboardInner() {
                   </span>
                 )}
               </div>
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5">
+              <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500 dark:text-slate-400">
+                <span className="inline-flex items-center gap-1">
                   <Icon.Phone className="h-3.5 w-3.5" />
                   {wa || "Nomor terhubung"}
                 </span>
@@ -792,65 +777,19 @@ function DashboardInner() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-slate-800">
-            {sellerProfile?.slug && (
-              <a
-                href={isUkmAccount ? `/organisasi` : `/toko/${sellerProfile.slug}`}
-                target="_blank"
-                rel="noreferrer"
-                className="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 transition-all flex items-center gap-1"
-              >
-                <span>{isUkmAccount ? "Lihat Direktori Organisasi" : "Lihat Profil Publik"}</span>
-                <Icon.ArrowRight className="h-3.5 w-3.5" />
-              </a>
-            )}
-          </div>
+          {sellerProfile?.slug && (
+            <a
+              href={isUkmAccount ? "/organisasi" : `/toko/${sellerProfile.slug}`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1 rounded-lg bg-slate-100 px-3 py-2 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-200 active:scale-95 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            >
+              <span>{isUkmAccount ? "Lihat Direktori Organisasi" : "Lihat Profil Publik"}</span>
+              <Icon.ArrowRight className="h-3.5 w-3.5" />
+            </a>
+          )}
         </div>
 
-        {/* Metric Badges Strip (15.html & 19.html blueprint) */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-4 mt-4 border-t border-slate-100 dark:border-slate-800">
-          <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-white/5 flex items-center gap-2.5">
-            <Icon.Star className="w-5 h-5 text-amber-500 fill-amber-500 shrink-0" />
-            <div>
-              <span className="text-xs font-bold text-slate-900 dark:text-white block leading-none">
-                {sellerProfile?.avg_rating || "4.9"} / 5.0
-              </span>
-              <span className="text-[10px] text-slate-400 mt-0.5 block">Rating COD Sukses</span>
-            </div>
-          </div>
-
-          <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-white/5 flex items-center gap-2.5">
-            <Icon.CheckCircle className="w-5 h-5 text-[#047857] shrink-0" />
-            <div>
-              <span className="text-xs font-bold text-slate-900 dark:text-white block leading-none">
-                {soldItems.length > 0 ? `${soldItems.length} Transaksi` : `${items.length} Iklan`}
-              </span>
-              <span className="text-[10px] text-slate-400 mt-0.5 block">Aktivitas Niaga</span>
-            </div>
-          </div>
-
-          <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-white/5 flex items-center gap-2.5">
-            <Icon.Clock className="w-5 h-5 text-[#047857] shrink-0" />
-            <div>
-              <span className="text-xs font-bold text-slate-900 dark:text-white block leading-none">
-                &lt; 10 Menit
-              </span>
-              <span className="text-[10px] text-slate-400 mt-0.5 block">Kecepatan Balas</span>
-            </div>
-          </div>
-
-          <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-white/5 flex items-center gap-2.5">
-            <Icon.ShieldCheck className="w-5 h-5 text-sky-500 shrink-0" />
-            <div>
-              <span className="text-xs font-bold text-slate-900 dark:text-white block leading-none">
-                {sellerProfile?.student_verified ? "KTM Aktif" : "Mahasiswa"}
-              </span>
-              <span className="text-[10px] text-slate-400 mt-0.5 block">
-                {sellerProfile?.student_campus || "USU • POLMED"}
-              </span>
-            </div>
-          </div>
-        </div>
       </div>
 
       {note && (
@@ -895,119 +834,89 @@ function DashboardInner() {
 
       {loaded && !busy && (
         <>
-          {/* PRIMARY HUBS */}
-          <div className={`grid gap-2 mb-4 bg-slate-100 dark:bg-slate-900/90 p-1.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 ${
-            isUkmAccount ? "grid-cols-2 sm:grid-cols-5" : "grid-cols-2 sm:grid-cols-4"
-          }`}>
+          {/* One navigation layer for every dashboard workspace. */}
+          <nav
+            aria-label="Bagian dashboard"
+            className={`mb-4 grid gap-1 rounded-xl border border-slate-200/80 bg-slate-100 p-1 dark:border-slate-800 dark:bg-slate-900/90 ${
+              isUkmAccount ? "grid-cols-6" : "grid-cols-5"
+            }`}
+          >
             {(isUkmAccount ? [
-              { 
-                id: "organisasi", 
-                label: "Panel Organisasi", 
+              {
+                id: "ukm",
+                label: "UKM",
                 IconComponent: Icon.Landmark,
                 active: activeTab === "ukm",
-                count: oprecList.filter(o => o.status === "active").length || undefined,
-                badgeColor: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-                onClick: () => { setActiveTab("ukm"); if (!oprecLoaded) loadOprec(); }
+                count: oprecList.filter((item) => item.status === "active").length,
+                onClick: () => selectTab("ukm"),
               },
-              { 
-                id: "iklan", 
-                label: "Danus & Merch", 
-                IconComponent: Icon.ShoppingBag,
-                active: activeTab === "jual" || activeTab === "dicari",
-                count: items.length,
-                onClick: () => setActiveTab(activeTab === "dicari" ? "dicari" : "jual")
-              },
-              { 
-                id: "tawaran", 
-                label: "Tawaran Masuk", 
-                IconComponent: Icon.MessageCircle,
-                active: activeTab === "tawaran",
-                count: offers.filter((o) => o.status === "pending").length,
-                badgeColor: "bg-rose-500 text-white",
-                onClick: () => setActiveTab("tawaran")
-              },
-              { 
-                id: "performa", 
-                label: "Performa & PRO", 
-                IconComponent: Icon.Eye,
-                active: activeTab === "statistik" || activeTab === "pro" || activeTab === "referral",
-                onClick: () => {
-                  const target = ["statistik", "pro", "referral"].includes(activeTab) ? activeTab : "statistik";
-                  setActiveTab(target);
-                  if (target === "statistik" && !analytics) loadAnalytics();
-                }
-              },
-              { 
-                id: "akun", 
-                label: "Biodata & Profil", 
-                IconComponent: Icon.User,
-                active: activeTab === "profil" || activeTab === "blog",
-                onClick: () => setActiveTab(["profil", "blog"].includes(activeTab) ? activeTab : "profil")
-              },
-            ] : [
-              { 
-                id: "iklan", 
-                label: "Iklan & Dagangan", 
+            ] : []).concat([
+              {
+                id: "jual",
+                label: isUkmAccount ? "Danus" : "Barang",
                 IconComponent: Icon.Package,
                 active: activeTab === "jual" || activeTab === "dicari",
-                count: items.length,
-                onClick: () => setActiveTab(activeTab === "dicari" ? "dicari" : "jual")
+                count: active.length,
+                onClick: () => selectTab(activeTab === "dicari" ? "dicari" : "jual"),
               },
-              { 
-                id: "tawaran", 
-                label: "Tawaran Masuk", 
+              {
+                id: "open-po",
+                label: "Open PO",
+                IconComponent: Icon.ShoppingBag,
+                active: activeTab === "open-po",
+                onClick: () => selectTab("open-po"),
+              },
+              {
+                id: "tawaran",
+                label: "Tawaran",
                 IconComponent: Icon.MessageCircle,
                 active: activeTab === "tawaran",
-                count: offers.filter((o) => o.status === "pending").length,
+                count: offers.filter((offer) => offer.status === "pending").length,
                 badgeColor: "bg-rose-500 text-white",
-                onClick: () => setActiveTab("tawaran")
+                onClick: () => selectTab("tawaran"),
               },
-              { 
-                id: "performa", 
-                label: "Performa & PRO", 
+              {
+                id: "performa",
+                label: "Performa",
                 IconComponent: Icon.Eye,
-                active: activeTab === "statistik" || activeTab === "pro" || activeTab === "referral",
-                onClick: () => {
-                  const target = ["statistik", "pro", "referral"].includes(activeTab) ? activeTab : "statistik";
-                  setActiveTab(target);
-                  if (target === "statistik" && !analytics) loadAnalytics();
-                }
+                active: ["statistik", "pro", "referral"].includes(activeTab),
+                onClick: () => selectTab(["statistik", "pro", "referral"].includes(activeTab) ? activeTab : "statistik"),
               },
-              { 
-                id: "akun", 
-                label: "Biodata & Profil", 
+              {
+                id: "akun",
+                label: "Profil",
                 IconComponent: Icon.User,
                 active: activeTab === "profil" || activeTab === "blog",
-                onClick: () => setActiveTab(["profil", "blog"].includes(activeTab) ? activeTab : "profil")
+                onClick: () => selectTab(["profil", "blog"].includes(activeTab) ? activeTab : "profil"),
               },
             ]).map((hub) => (
               <button
                 key={hub.id}
                 onClick={hub.onClick}
-                className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-black transition-all active:scale-95 text-center ${
+                type="button"
+                aria-pressed={hub.active}
+                className={`relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-1 py-2 text-center text-[10px] font-semibold transition-colors ${
                   hub.active
-                    ? "bg-white dark:bg-slate-800 text-primary dark:text-emerald-400 shadow-sm border border-slate-200/50 dark:border-slate-700"
+                    ? "bg-white text-primary shadow-sm dark:bg-slate-800 dark:text-emerald-400"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
                 <hub.IconComponent className="h-4 w-4 shrink-0" />
-                <span className="truncate">{hub.label}</span>
+                <span className="max-w-full truncate">{hub.label}</span>
                 {typeof hub.count === "number" && hub.count > 0 && (
-                  <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-black ${
-                    hub.badgeColor || "bg-primary/10 dark:bg-emerald-950 text-primary dark:text-emerald-400"
-                  }`}>
+                  <span className={`absolute right-1 top-1 rounded-full px-1 py-0.5 text-[8px] font-bold ${hub.badgeColor || "bg-primary/10 text-primary dark:bg-emerald-950 dark:text-emerald-400"}`}>
                     {hub.count}
                   </span>
                 )}
               </button>
             ))}
-          </div>
+          </nav>
 
           {/* SUB-TABS ROW (Contextual inside active category) */}
           {(activeTab === "jual" || activeTab === "dicari") && (
             <div className="flex items-center gap-2 mb-6 border-b border-slate-100 dark:border-slate-800 pb-3">
               <button
-                onClick={() => setActiveTab("jual")}
+                onClick={() => selectTab("jual")}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
                   activeTab === "jual"
                     ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
@@ -1016,11 +925,11 @@ function DashboardInner() {
               >
                 <span className="inline-flex items-center gap-1.5">
                   <Icon.Package className="h-3.5 w-3.5" />
-                  Iklan Jual ({items.length})
+                  Barang Dijual ({items.length})
                 </span>
               </button>
               <button
-                onClick={() => setActiveTab("dicari")}
+                onClick={() => selectTab("dicari")}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
                   activeTab === "dicari"
                     ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
@@ -1038,7 +947,7 @@ function DashboardInner() {
           {(activeTab === "statistik" || activeTab === "pro" || activeTab === "referral") && (
             <div className="flex items-center gap-2 mb-6 border-b border-slate-100 dark:border-slate-800 pb-3 overflow-x-auto [scrollbar-width:none]">
               <button
-                onClick={() => { setActiveTab("statistik"); if (!analytics) loadAnalytics(); }}
+                onClick={() => selectTab("statistik")}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 ${
                   activeTab === "statistik"
                     ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
@@ -1051,7 +960,7 @@ function DashboardInner() {
                 </span>
               </button>
               <button
-                onClick={() => setActiveTab("pro")}
+                onClick={() => selectTab("pro")}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 ${
                   activeTab === "pro"
                     ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
@@ -1064,7 +973,7 @@ function DashboardInner() {
                 </span>
               </button>
               <button
-                onClick={() => setActiveTab("referral")}
+                onClick={() => selectTab("referral")}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 ${
                   activeTab === "referral"
                     ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
@@ -1082,7 +991,7 @@ function DashboardInner() {
           {(activeTab === "profil" || activeTab === "blog") && (
             <div className="flex items-center gap-2 mb-6 border-b border-slate-100 dark:border-slate-800 pb-3">
               <button
-                onClick={() => setActiveTab("profil")}
+                onClick={() => selectTab("profil")}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
                   activeTab === "profil"
                     ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
@@ -1095,7 +1004,7 @@ function DashboardInner() {
                 </span>
               </button>
               <button
-                onClick={() => setActiveTab("blog")}
+                onClick={() => selectTab("blog")}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
                   activeTab === "blog"
                     ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
@@ -1121,6 +1030,8 @@ function DashboardInner() {
               onOpenBagikanModal={(item) => setBagikan(item)}
             />
           )}
+
+          {activeTab === "open-po" && <UserOpenPoWorkspace embedded />}
 
           {activeTab === "tawaran" ? (
 
@@ -1225,7 +1136,7 @@ function DashboardInner() {
                   <div className="flex-1">
                     <h2 className="text-xl font-extrabold text-amber-900 dark:text-amber-300">Langganan Penjual Pro</h2>
                     <p className="mt-2 text-sm text-gray-600 dark:text-slate-400 leading-relaxed max-w-lg">
-                      Dengan Paket Pro, Anda bisa memasang iklan standar sepuasnya (0 Rp per iklan) selama 30 hari penuh. Sangat cocok untuk Anda yang memiliki toko atau sering berjualan!
+                      Dengan Paket Pro, Anda bisa menjual barang standar sepuasnya (Rp 0 per barang) selama 30 hari penuh. Sangat cocok untuk Anda yang memiliki toko atau sering berjualan!
                     </p>
 
                     {sellerProfile?.subscription_tier === "pro" && new Date(sellerProfile?.subscription_expires_at) > new Date() ? (
@@ -1260,7 +1171,7 @@ function DashboardInner() {
                   <div className="flex-1">
                     <h2 className="text-xl font-extrabold text-indigo-900 dark:text-indigo-300">Program Ajak Teman</h2>
                     <p className="mt-2 text-sm text-gray-600 dark:text-slate-400 leading-relaxed max-w-lg">
-                      Bagikan kode referral Anda ke teman-teman yang belum menggunakan Jual Beli USU Polmed. Setiap teman yang mendaftar menggunakan kode Anda, Anda berdua akan mendapatkan <strong className="text-indigo-600 dark:text-indigo-400">1x Kuota Bump Iklan Gratis!</strong>
+                      Bagikan kode referral Anda kepada teman yang belum menggunakan Kampus Kita. Setiap teman yang mendaftar menggunakan kode Anda, Anda berdua akan mendapatkan <strong className="text-indigo-600 dark:text-indigo-400">1x Kuota Naikkan Barang Gratis!</strong>
                     </p>
                     
                     {sellerProfile?.referral_code ? (
@@ -1280,7 +1191,7 @@ function DashboardInner() {
                         </button>
                       </div>
                     ) : (
-                      <p className="mt-4 text-sm text-amber-600 font-medium">Buat iklan pertamamu untuk mendapatkan kode referral!</p>
+                      <p className="mt-4 text-sm text-amber-600 font-medium">Jual barang pertamamu untuk mendapatkan kode referral!</p>
                     )}
                   </div>
                 </div>
@@ -1290,7 +1201,7 @@ function DashboardInner() {
                 <div className="card p-5">
                   <h3 className="text-gray-500 text-sm font-semibold mb-1">Kuota Free Bump Anda</h3>
                   <div className="text-4xl font-black text-indigo-600 dark:text-indigo-400">{sellerProfile?.free_bumps || 0}</div>
-                  <p className="mt-2 text-xs text-gray-400">Gunakan kuota ini saat menaikkan iklan (sundul) agar gratis.</p>
+                  <p className="mt-2 text-xs text-gray-400">Gunakan kuota ini untuk menaikkan barang (sundul) secara gratis.</p>
                 </div>
               </div>
             </div>
@@ -1307,17 +1218,17 @@ function DashboardInner() {
                     </div>
                     <div>
                       <p className="font-bold text-amber-900 dark:text-amber-300">
-                        {active.length >= 15 
-                          ? "Batas iklan gratis tercapai!" 
-                          : `Kamu sisa ${15 - active.length} slot iklan gratis.`}
+                        {active.length >= 15
+                          ? "Batas jual barang gratis tercapai!"
+                          : `Kamu punya sisa ${15 - active.length} slot jual barang gratis.`}
                       </p>
                       <p className="text-sm text-amber-700 dark:text-amber-500 mt-0.5">
-                        Upgrade ke Paket PRO untuk pasang iklan tanpa batas.
+                        Upgrade ke Paket PRO untuk menjual barang tanpa batas.
                       </p>
                     </div>
                   </div>
                   <button
-                    onClick={() => setActiveTab("pro")}
+                    onClick={() => selectTab("pro")}
                     className="btn-primary whitespace-nowrap bg-amber-500 hover:bg-amber-600 border-amber-600 text-white shadow-md shadow-amber-500/20 px-4 py-2 text-sm rounded-lg"
                   >
                     <span className="inline-flex items-center gap-1.5">
@@ -1329,45 +1240,21 @@ function DashboardInner() {
               )}
 
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <Stat label="Iklan Aktif" value={active.length} icon={<Icon.Package className="h-4 w-4" />} />
+                <Stat label="Barang Aktif" value={active.length} icon={<Icon.Package className="h-4 w-4" />} />
                 <Stat label="Terjual" value={soldItems.length} icon={<Icon.CheckCircle className="h-4 w-4" />} />
                 <Stat label="Total Dilihat" value={totalViews} icon={<Icon.Eye className="h-4 w-4" />} />
                 <Stat label="Fee Dibayar" value={rupiah(totalFee)} icon={<Icon.CreditCard className="h-4 w-4" />} />
               </div>
 
-              {/* Top 3 Iklan Paling Dilihat */}
-              {topViewed.length > 0 && (
-                <div className="card p-4 border border-indigo-100 bg-indigo-50/30 dark:border-indigo-900/30 dark:bg-indigo-900/10 space-y-3">
-                  <h2 className="text-sm font-bold text-indigo-700 dark:text-indigo-400 flex items-center gap-1.5">
-                    <Icon.Eye className="h-4 w-4" /> Iklan Paling Banyak Dilihat
-                  </h2>
-                  <div className="space-y-2">
-                    {topViewed.map((i, idx) => (
-                      <Link key={i.id} href={`/produk/${buildSlug(i.title, i.id)}`} className="flex items-center gap-3 rounded-lg bg-white dark:bg-slate-900 border border-indigo-100 dark:border-slate-800 p-2.5 hover:border-indigo-300 transition-colors">
-                        <span className="text-lg font-black text-indigo-300 dark:text-indigo-700 w-5 shrink-0 text-center">{idx + 1}</span>
-                        {i.image_url && <Image src={i.image_url} alt={i.title || "Foto produk"} width={36} height={36} data-zoom data-zoom-alt={i.title || "Foto produk"} className="h-9 w-9 rounded-lg object-cover shrink-0" />}
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold dark:text-white">{i.title}</p>
-                          <p className="text-xs text-gray-400">{rupiah(i.price)}</p>
-                        </div>
-                        <span className="flex items-center gap-1 text-xs font-bold text-indigo-600 dark:text-indigo-400 shrink-0">
-                          <Icon.Eye className="h-3.5 w-3.5" /> {i.views}×
-                        </span>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Iklan Pending / Menunggu Pembayaran */}
+              {/* Barang menunggu pembayaran */}
               {pendingItems.length > 0 && (
                 <div className="card p-4 border border-amber-200 bg-amber-500/5 dark:border-amber-950/40 dark:bg-amber-950/5 space-y-3">
                   <h2 className="inline-flex items-center gap-1.5 text-base font-bold text-amber-700 dark:text-amber-400">
                     <Icon.AlertCircle className="h-4 w-4" />
-                    Iklan Menunggu Pembayaran ({pendingItems.length})
+                    Barang Menunggu Pembayaran ({pendingItems.length})
                   </h2>
                   <p className="text-xs text-amber-600 dark:text-amber-500">
-                    Iklan Anda belum aktif di marketplace. Silakan selesaikan pembayaran agar iklan dapat ditayangkan.
+                    Barang jualan belum aktif di marketplace. Silakan selesaikan pembayaran agar barang dapat ditampilkan.
                   </p>
                   <div className="space-y-3 mt-2">
                     {pendingItems.map((i) => (
@@ -1425,46 +1312,14 @@ function DashboardInner() {
               )}
 
               <div>
-                <h2 className="text-base font-bold dark:text-white">Iklan Aktif</h2>
+                <h2 className="text-base font-bold dark:text-white">Daftar Barang</h2>
                 {active.length === 0 ? (
-                  <div className="mt-6 flex flex-col items-center justify-center py-12 px-4 text-center bg-gray-50/50 dark:bg-slate-900/20 rounded-3xl border border-gray-100 dark:border-slate-800/60">
-                    <div className="relative mb-6">
-                      <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full w-24 h-24 -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2"></div>
-                      <Icon.Package className="w-24 h-24 text-gray-300 dark:text-slate-700 relative z-10" />
+                  <div className="mt-3 flex items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 dark:border-slate-800 dark:bg-slate-900/40">
+                    <Icon.Package className="h-5 w-5 shrink-0 text-slate-400" />
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Belum ada barang aktif</p>
+                      <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Mulai jual barang lewat tombol di bagian atas.</p>
                     </div>
-                    <h3 className="text-xl font-extrabold text-gray-900 dark:text-white mb-2">Belum ada iklan aktif</h3>
-                    <p className="max-w-md text-sm text-gray-500 dark:text-slate-400 mb-6 leading-relaxed">
-                      Barang tidak terpakai? Ubah jadi uang jajan! Ikuti 3 langkah mudah ini:
-                    </p>
-
-                    {/* Step tracker */}
-                    <div className="flex items-center justify-center mb-7">
-                        {[
-                        { IconComponent: Icon.Camera, label: "Foto & deskripsi" },
-                        { IconComponent: Icon.CreditCard, label: "Harga & lokasi" },
-                        { IconComponent: Icon.Rocket, label: "Bayar & tayang" },
-                      ].map((s, i, arr) => (
-                        <div key={i} className="flex items-center">
-                          <div className="flex flex-col items-center gap-1.5">
-                            <div className="h-10 w-10 rounded-full bg-primary/10 dark:bg-primary/20 border-2 border-primary/20 flex items-center justify-center text-lg">
-                              <s.IconComponent className="h-4 w-4 text-primary" />
-                            </div>
-                            <span className="text-[10px] text-gray-400 dark:text-slate-500 max-w-[60px] text-center leading-tight">{s.label}</span>
-                          </div>
-                          {i < arr.length - 1 && <div className="w-8 sm:w-12 h-px bg-gray-200 dark:bg-slate-800 mb-4 mx-1" />}
-                        </div>
-                      ))}
-                    </div>
-
-                    <Link
-                      href="/jual"
-                      className="group relative inline-flex items-center justify-center overflow-hidden rounded-full p-3 px-6 font-bold text-white bg-primary hover:bg-primary-dark transition-all duration-300 active:scale-95 shadow-lg shadow-primary/30"
-                    >
-                      <span className="absolute inset-0 w-full h-full -mt-1 rounded-lg opacity-30 bg-gradient-to-b from-transparent via-transparent to-black"></span>
-                      <span className="relative flex items-center gap-2">
-                        + Jual Barang Sekarang
-                      </span>
-                    </Link>
                   </div>
                 ) : (
                   <div className="mt-3 space-y-3">
@@ -1534,7 +1389,7 @@ function DashboardInner() {
                                 Tagihan Komisi Terjual Belum Lunas
                               </p>
                               <p className="text-xs text-rose-600 dark:text-rose-500 mb-3">
-                                Lunasi tagihan sebesar <strong className="font-bold">{rupiah(i.pending_sold_fee_amount)}</strong> agar iklan ini diturunkan dari beranda dan Anda tidak diganggu pembeli lagi.
+                                Lunasi tagihan sebesar <strong className="font-bold">{rupiah(i.pending_sold_fee_amount)}</strong> agar barang ini diturunkan dari beranda dan Anda tidak diganggu pembeli lagi.
                               </p>
                               <div className="flex gap-2">
                                 <button
@@ -1578,7 +1433,7 @@ function DashboardInner() {
                             <button
                               onClick={() => bump(i)}
                               className="btn-outline border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900 dark:text-emerald-400 dark:hover:bg-emerald-900/30 flex-1 text-xs px-3 py-1.5"
-                              title="Sundul iklan ke atas"
+                              title="Naikkan barang ke atas"
                             >
                               <span className="inline-flex items-center gap-1.5">
                                 <Icon.Rocket className="h-3.5 w-3.5" />
@@ -1589,9 +1444,9 @@ function DashboardInner() {
                               <Icon.CheckCircle className="h-3 w-3 inline mr-1" /> Mark Sold
                             </button>
                             {/* Bagikan: satu-satunya cara penjual menyebarkan
-                                iklannya sendiri tanpa menunggu bot. Sengaja
+                                barangnya sendiri tanpa menunggu bot. Sengaja
                                 sejajar dengan Sundul dan Mark Sold, bukan
-                                disembunyikan di menu "•••" — menyebarkan iklan
+                                disembunyikan di menu "•••" — menyebarkan barang
                                 adalah hal yang paling sering ingin dilakukan
                                 penjual sesudah memasangnya. */}
                             <button
@@ -1646,7 +1501,7 @@ function DashboardInner() {
                                       onClick={() => setOpenActionMenu(null)}
                                       className="block px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
                                     >
-                                      <span className="inline-flex items-center gap-1.5"><Icon.Edit2 className="h-3.5 w-3.5" />Edit Iklan</span>
+                                      <span className="inline-flex items-center gap-1.5"><Icon.Edit2 className="h-3.5 w-3.5" />Edit Barang</span>
                                     </Link>
                                   </div>
                                 </>
@@ -1679,7 +1534,7 @@ function DashboardInner() {
                               Tagihan Komisi Belum Lunas
                             </p>
                             <p className="text-xs text-rose-600 dark:text-rose-500 mb-2">
-                              Bayar <strong>{rupiah(i.pending_sold_fee_amount)}</strong> agar akun tidak diblokir dari pasang iklan baru.
+                              Bayar <strong>{rupiah(i.pending_sold_fee_amount)}</strong> agar akun tidak diblokir dari jual barang baru.
                             </p>
                             <button
                               onClick={async () => {
@@ -1717,10 +1572,10 @@ function DashboardInner() {
                 </div>
               )}
 
-              {/* Iklan Tidak Aktif (Expired / Suspended) */}
+              {/* Barang tidak aktif */}
               {otherItems.length > 0 && (
                 <div className="space-y-3 mt-6">
-                  <h2 className="text-base font-bold text-gray-500 dark:text-slate-400">Iklan Tidak Aktif (Expired / Suspended)</h2>
+                  <h2 className="text-base font-bold text-gray-500 dark:text-slate-400">Barang Tidak Aktif (Kedaluwarsa / Ditangguhkan)</h2>
                   <div className="space-y-3">
                     {otherItems.map((i) => (
                       <div
@@ -1752,12 +1607,12 @@ function DashboardInner() {
                               <button
                                 onClick={() => setRenewConfirm({ item: i })}
                                 className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1 w-fit"
-                                aria-label={`Perpanjang iklan ${i.title}`}
+                                aria-label={`Perpanjang masa tayang barang ${i.title}`}
                               >
-                                <Icon.RefreshCcw className="h-3.5 w-3.5" /> Perpanjang Iklan
+                                <Icon.RefreshCcw className="h-3.5 w-3.5" /> Perpanjang Masa Tayang
                               </button>
                               <p className="text-[10px] text-gray-400 max-w-[180px]">
-                                Aktifkan kembali iklan ini
+                                Tampilkan kembali barang ini
                               </p>
                             </div>
                           )}
@@ -1896,11 +1751,11 @@ function DashboardInner() {
               <div className="mt-4 bg-white p-3 rounded-2xl inline-block border border-gray-100 shadow-sm mx-auto">
                 <Image 
                   src="/qris.png" 
-                  alt="QRIS Jual Beli USU Polmed"
+                  alt="QRIS Kampus Kita"
                   width={400}
                   height={400}
                   data-zoom
-                  data-zoom-alt="QRIS Jual Beli USU Polmed"
+                  data-zoom-alt="QRIS Kampus Kita"
                   className="max-h-[240px] object-contain"
                 />
               </div>
@@ -1920,8 +1775,8 @@ function DashboardInner() {
                 <a
                   href={`https://wa.me/${cfg?.contact?.marketplaceWa || "62895429126232"}?text=${encodeURIComponent(
                     qrisModalItem.payment_type === "sold_fee"
-                      ? `Halo Admin, saya sudah melunasi Komisi Terjual sebesar ${rupiah(qrisModalItem.pending_sold_fee_amount)} untuk produk "${qrisModalItem.title}".\n\nDetail Iklan:\n- Penjual: ${qrisModalItem.seller_name}\n- WA: ${qrisModalItem.seller_wa}\n\nTolong disetujui agar iklan diturunkan:\n${typeof window !== "undefined" ? window.location.origin : ""}/admin/finance?orderId=${qrisModalItem.pending_sold_fee_order_id || ""}`
-                      : `Halo Admin, saya sudah membayar biaya pendaftaran iklan manual sebesar ${rupiah(qrisModalItem.pending_amount || (qrisModalItem.type === "poster" ? 10000 : 5000))} untuk produk "${qrisModalItem.title}".\n\nDetail Iklan:\n- Penjual: ${qrisModalItem.seller_name}\n- WA: ${qrisModalItem.seller_wa}\n\nTolong disetujui di link ini ya:\n${typeof window !== "undefined" ? window.location.origin : ""}/admin/finance?orderId=${qrisModalItem.pending_order_id || ""}`
+                      ? `Halo Admin, saya sudah melunasi Komisi Terjual sebesar ${rupiah(qrisModalItem.pending_sold_fee_amount)} untuk produk "${qrisModalItem.title}".\n\nDetail Barang:\n- Penjual: ${qrisModalItem.seller_name}\n- WA: ${qrisModalItem.seller_wa}\n\nTolong disetujui agar barang diturunkan:\n${typeof window !== "undefined" ? window.location.origin : ""}/admin/finance?orderId=${qrisModalItem.pending_sold_fee_order_id || ""}`
+                      : `Halo Admin, saya sudah membayar biaya pemasangan barang sebesar ${rupiah(qrisModalItem.pending_amount || (qrisModalItem.type === "poster" ? 10000 : 5000))} untuk produk "${qrisModalItem.title}".\n\nDetail Barang:\n- Penjual: ${qrisModalItem.seller_name}\n- WA: ${qrisModalItem.seller_wa}\n\nTolong disetujui di link ini ya:\n${typeof window !== "undefined" ? window.location.origin : ""}/admin/finance?orderId=${qrisModalItem.pending_order_id || ""}`
                   )}`}
                   target="_blank"
                   rel="noreferrer"
@@ -1958,7 +1813,7 @@ function Stat({ label, value, icon }) {
   );
 }
 
-const TAB_SAH = ["jual", "dicari", "tawaran", "statistik", "pro", "referral", "profil", "blog", "ukm"];
+const TAB_SAH = ["jual", "dicari", "tawaran", "statistik", "pro", "referral", "profil", "blog", "ukm", "open-po"];
 
 function pathAsli() {
   if (typeof window === "undefined") return "/dashboard";

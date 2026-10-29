@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { fetchOpenPoBatches } from "@/lib/openPo";
-import { getSellerSession } from "@/lib/auth";
-import { formatWa } from "@/lib/constants";
+import { getOpenPoSession } from "@/lib/openPoSession";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getSettings, isAllowedCampus } from "@/lib/settings";
 import { rateLimit } from "@/lib/rateLimit";
@@ -19,9 +18,9 @@ export async function GET() {
 }
 
 export async function POST(req) {
-  const sessionWa = getSellerSession();
-  const sellerWa = formatWa(sessionWa || "");
-  if (!sellerWa) return NextResponse.json({ error: "Masuk dengan akun JB untuk membuka batch PO." }, { status: 401 });
+  const session = getOpenPoSession();
+  if (!session.wa) return NextResponse.json({ error: session.error }, { status: session.status });
+  const sellerWa = session.wa;
   const limit = rateLimit(`open-po-create:${sellerWa}`, { limit: 8, windowMs: 60 * 60 * 1000 });
   if (!limit.ok) return NextResponse.json({ error: "Batas pembuatan batch tercapai. Coba lagi nanti." }, { status: 429 });
 

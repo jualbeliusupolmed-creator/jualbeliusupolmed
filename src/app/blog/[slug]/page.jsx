@@ -29,7 +29,7 @@ export async function generateMetadata({ params }) {
   if (!blog) return { title: "Artikel tidak ditemukan" };
 
   const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
-  const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "Jual Beli USU Polmed";
+  const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "Kampus Kita";
   const url = `${baseUrl}/blog/${blog.slug}`;
 
   // Excerpt: gunakan excerpt field jika ada, else strip markdown dan potong
@@ -41,7 +41,7 @@ export async function generateMetadata({ params }) {
       .trim()
       .slice(0, 155);
   const description = rawExcerpt || `Baca artikel "${blog.title}" di ${siteName}.`;
-  const keywords = blog.keywords ? blog.keywords.split(",").map(k => k.trim()) : ["blog USU", "artikel polmed", blog.title];
+  const keywords = blog.keywords ? blog.keywords.split(",").map(k => k.trim()) : ["blog mahasiswa", "artikel kampus", blog.title];
 
   // Dynamic OG image via /api/og
   const ogParams = new URLSearchParams({ title: blog.title, type: "blog", ...(blog.image_url ? { image: blog.image_url } : {}) });
@@ -79,7 +79,7 @@ export default async function BlogPost({ params }) {
   if (!blog || blog.status !== "published") notFound();
 
   const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
-  const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "Jual Beli USU Polmed";
+  const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "Kampus Kita";
   const url = `${baseUrl}/blog/${blog.slug}`;
   const rawExcerpt = blog.excerpt ||
     (blog.content_markdown || "")
@@ -175,7 +175,7 @@ export default async function BlogPost({ params }) {
       <div className="rounded-2xl bg-primary/10 p-6 text-center dark:bg-primary/5">
         <h3 className="mb-2 text-xl font-bold dark:text-white">Mau Jual atau Cari Barang?</h3>
         <p className="mb-4 text-gray-600 dark:text-slate-300">
-          Banyak mahasiswa USU & Polmed sudah jual & beli di sini — giliran kamu?
+          Banyak mahasiswa dari berbagai kampus sudah jual & beli di sini — giliran kamu?
         </p>
         <div className="flex justify-center gap-3">
           <Link href="/" className="btn-primary inline-flex px-6">Mulai Belanja</Link>

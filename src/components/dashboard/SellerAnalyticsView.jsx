@@ -107,10 +107,10 @@ export default function SellerAnalyticsView({
         </div>
         <div>
           <h3 className="text-base font-bold text-gray-900 dark:text-white">
-            Statistik Toko & Iklan
+            Statistik Toko & Barang
           </h3>
           <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
-            Pantau jumlah tayangan, omset penjualan, dan efektivitas iklanmu secara real-time.
+            Pantau jumlah tayangan, omset penjualan, dan performa barang jualan secara real-time.
           </p>
         </div>
         <button onClick={onRefresh} className="btn-primary inline-flex items-center gap-2">
@@ -164,7 +164,7 @@ export default function SellerAnalyticsView({
               {(summary.totalViews || 0).toLocaleString("id-ID")}
             </div>
             <p className="text-[11px] text-gray-400 mt-0.5">
-              Dari {summary.totalListings} iklan
+              Dari {summary.totalListings} barang
             </p>
           </div>
         </div>
@@ -288,7 +288,7 @@ export default function SellerAnalyticsView({
                 <span className="inline-flex items-center gap-1.5"><Icon.Tag className="h-4 w-4" /> Distribusi Kategori Barang</span>
               </h3>
               <p className="text-xs text-gray-400 mt-0.5">
-                Perbandingan jumlah iklan dan tayangan yang diperoleh di tiap kategori.
+                Perbandingan jumlah barang dan tayangan yang diperoleh di tiap kategori.
               </p>
             </div>
           </div>
@@ -326,7 +326,7 @@ export default function SellerAnalyticsView({
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div>
             <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <span> Performa Detail Per Iklan</span>
+              <span> Performa Detail Barang</span>
               <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600 dark:bg-slate-800 dark:text-slate-300">
                 {filteredAndSortedListings.length}
               </span>
@@ -343,7 +343,7 @@ export default function SellerAnalyticsView({
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Cari judul iklan..."
+                placeholder="Cari nama barang..."
                 className="input py-1.5 pl-8 pr-3 text-xs w-40 sm:w-48 shadow-sm"
               />
               <Icon.Search className="absolute left-2.5 top-2 h-4 w-4 text-gray-400" />
@@ -379,7 +379,7 @@ export default function SellerAnalyticsView({
 
         {filteredAndSortedListings.length === 0 ? (
           <div className="py-12 text-center text-xs text-gray-400">
-            Tidak ada iklan yang cocok dengan pencarian atau filter.
+            Tidak ada barang yang cocok dengan pencarian atau filter.
           </div>
         ) : (
           <div className="divide-y divide-gray-100 dark:divide-slate-800">
@@ -480,7 +480,7 @@ export default function SellerAnalyticsView({
                           type="button"
                           onClick={() => onOpenBumpModal(l)}
                           className="btn-outline py-1 px-2 text-xs text-primary border-primary/30 hover:bg-primary/5 rounded-lg"
-                          title="Sundul Iklan"
+                          title="Naikkan Barang"
                         >
                            Sundul
                         </button>
@@ -490,7 +490,7 @@ export default function SellerAnalyticsView({
                           type="button"
                           onClick={() => onOpenBagikanModal(l)}
                           className="btn-outline py-1 px-2 text-xs rounded-lg"
-                          title="Bagikan Iklan"
+                          title="Bagikan Barang"
                         >
                           <Icon.Share className="h-4 w-4" />
                         </button>

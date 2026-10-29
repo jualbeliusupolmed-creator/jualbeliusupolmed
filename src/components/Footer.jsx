@@ -39,55 +39,46 @@ export default function Footer({ config }) {
                   Kampus Kita
                 </span>
                 <span className="text-[11px] font-semibold text-[#047857] dark:text-emerald-400 tracking-wider uppercase leading-tight mt-0.5">
-                  USU • POLMED
+                  Untuk Mahasiswa Indonesia
                 </span>
               </div>
             </div>
             <p className="text-sm text-[#64748B] dark:text-slate-400 leading-relaxed font-sans">
-              Platform ekosistem digital mandiri mahasiswa USU &amp; POLMED Padang Bulan untuk jual-beli preloved terpercaya, pemesanan katering (Open PO), dan ruang suara komunitas kampus.
+              Platform digital untuk mahasiswa lintas kampus di Indonesia: jual-beli preloved, Open PO, dan ruang berbagi komunitas.
             </p>
             <div className="flex flex-wrap items-center gap-2 mt-1">
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#ECFDF5] dark:bg-emerald-950/60 text-[#047857] dark:text-emerald-300 text-xs font-semibold border border-emerald-600/20">
                 <Icon.ShieldCheck className="w-3.5 h-3.5" />
-                Terverifikasi NIM
+                Komunitas Mahasiswa
               </span>
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-[#64748B] dark:text-slate-400 text-xs font-medium">
                 <Icon.MapPin className="w-3.5 h-3.5" />
-                Padang Bulan Hub
+                Lintas Kampus
               </span>
             </div>
           </div>
 
-          {/* Kolom 2: Titik Kumpul COD Resmi */}
+          {/* Kolom 2: Panduan Titik Temu COD */}
           <div className="flex flex-col gap-3">
             <span className="text-sm font-bold text-[#0F172A] dark:text-white flex items-center gap-1.5 font-sans">
               <Icon.MapPin className="text-[#047857] w-4 h-4" />
-              Titik Kumpul COD Resmi
+              Pilih Titik Temu COD
             </span>
             <p className="text-xs text-[#64748B] dark:text-slate-400">
-              Zona publik terbuka terpantau keamanan kampus:
+              Saat bertemu, utamakan lokasi yang:
             </p>
             <ul className="text-xs text-[#0F172A] dark:text-slate-300 space-y-2">
               <li className="flex items-start gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#047857] mt-1.5 shrink-0" />
-                <div>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">Zona USU 1:</span>{" "}
-                  <span className="text-[#64748B] dark:text-slate-400">Pendopo, Pintu 1-4 Dr. Mansyur, Gelanggang</span>
-                </div>
+                <span className="text-[#64748B] dark:text-slate-400">Ramai dan terbuka untuk umum</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#047857] mt-1.5 shrink-0" />
-                <div>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">Zona USU 2:</span>{" "}
-                  <span className="text-[#64748B] dark:text-slate-400">Gazebo FIB, Kantin FEB, Perpustakaan Pusat</span>
-                </div>
+                <span className="text-[#64748B] dark:text-slate-400">Mudah dijangkau kedua pihak</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#F59E0B] mt-1.5 shrink-0" />
-                <div>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">Zona POLMED:</span>{" "}
-                  <span className="text-[#64748B] dark:text-slate-400">Kantin Gedung Z &amp; Kantin Teknik POLMED</span>
-                </div>
+                <span className="text-[#64748B] dark:text-slate-400">Disepakati melalui chat sebelum berangkat</span>
               </li>
             </ul>
           </div>
@@ -102,9 +93,9 @@ export default function Footer({ config }) {
               <div className="flex items-start gap-2">
                 <Icon.User className="text-[#047857] w-4 h-4 mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-xs font-bold text-[#0F172A] dark:text-white">Verifikasi Fisik &amp; KTM</p>
+                  <p className="text-xs font-bold text-[#0F172A] dark:text-white">Periksa Profil Penjual</p>
                   <p className="text-[11px] text-[#64748B] dark:text-slate-400 leading-snug">
-                    Cek status mahasiswa penjual sebelum serah terima unit barang.
+                    Tinjau informasi dan riwayat akun sebelum menyepakati transaksi.
                   </p>
                 </div>
               </div>
@@ -113,7 +104,7 @@ export default function Footer({ config }) {
                 <div>
                   <p className="text-xs font-bold text-[#0F172A] dark:text-white">Cek Barang Sebelum Bayar</p>
                   <p className="text-[11px] text-[#64748B] dark:text-slate-400 leading-snug">
-                    Uji fungsi barang secara langsung sebelum pembayaran via tunai / QRIS.
+                    Periksa kondisi dan fungsi barang sebelum melakukan pembayaran.
                   </p>
                 </div>
               </div>
@@ -122,7 +113,7 @@ export default function Footer({ config }) {
                 <div>
                   <p className="text-xs font-bold text-[#0F172A] dark:text-white">Jam COD Aman</p>
                   <p className="text-[11px] text-[#64748B] dark:text-slate-400 leading-snug">
-                    08:00 – 18:30 WIB di tempat umum kampus.
+                    Pilih waktu yang nyaman dan lokasi publik yang ramai.
                   </p>
                 </div>
               </div>
@@ -162,7 +153,7 @@ export default function Footer({ config }) {
         {/* Bottom Bar */}
         <div className="pt-6 border-t border-[#E2E8F0] dark:border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-[#64748B] dark:text-slate-500 text-center sm:text-left">
-            © 2026 Inisiatif Kolaboratif Mahasiswa USU &amp; POLMED. Hak cipta dilindungi.
+            © 2026 Kampus Kita. Hak cipta dilindungi.
           </p>
 
           <div className="flex items-center gap-4">

@@ -8,7 +8,7 @@ export default function AIPanel({ settings, action }) {
     provider_mode: initialAiConfig.provider_mode || "hybrid_gemini_first",
     gemini_model: initialAiConfig.gemini_model || initialAiConfig.model || "gemini-2.5-flash",
     openai_model: initialAiConfig.openai_model || "gpt-4o-mini",
-    memory: initialAiConfig.memory || "Pasar target adalah mahasiswa USU dan Polmed di Kota Medan. Pembayaran bisa pakai QRIS atau bayar tunai (COD). Kategori yang tersedia: Elektronik, Fashion, Kendaraan, Properti, Buku, Makanan, Jasa, Lainnya.",
+    memory: initialAiConfig.memory || "Pasar target adalah mahasiswa dari berbagai kampus di Indonesia. Pengguna dapat menyepakati transaksi dan cara pembayaran secara langsung. Kategori yang tersedia: Elektronik, Fashion, Kendaraan, Properti, Buku, Makanan, Jasa, Lainnya.",
     personality: initialAiConfig.personality || "Kamu adalah asisten marketplace yang profesional tapi santai. Gunakan bahasa Indonesia sehari-hari, sopan, sedikit gaul (seperti pakai kata 'Kak' atau 'Agan'). Selalu berikan semangat untuk cepat berjualan."
   });
   const [saved, setSaved] = useState("");
@@ -192,8 +192,8 @@ export default function AIPanel({ settings, action }) {
           
           <label className="block">
             <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300">Memori Bot (Konteks Fakta)</span>
-            <textarea className="input min-h-[120px]" value={aiConfig.memory} onChange={(e) => setAiConfig({...aiConfig, memory: e.target.value})} placeholder="Contoh: Kami adalah marketplace untuk mahasiswa USU. COD bisa di Pendopo." />
-            <p className="mt-1 text-xs text-gray-400">Tulis fakta-fakta spesifik yang AI harus "ingat" tentang Jual Beli USU saat ia merespons pengguna.</p>
+            <textarea className="input min-h-[120px]" value={aiConfig.memory} onChange={(e) => setAiConfig({...aiConfig, memory: e.target.value})} placeholder="Contoh: Kami adalah marketplace untuk mahasiswa lintas kampus. Tentukan lokasi COD sesuai kampus pengguna." />
+            <p className="mt-1 text-xs text-gray-400">Tulis fakta-fakta spesifik yang AI harus "ingat" tentang Kampus Kita saat ia merespons pengguna.</p>
           </label>
 
           <label className="block">

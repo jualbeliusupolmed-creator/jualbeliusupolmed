@@ -13,15 +13,15 @@ export const metadata = {
   // Judul & deskripsi beranda ditulis di sini (bukan dari pengaturan admin),
   // jadi inilah yang muncul di tab peramban, hasil Google, dan pratinjau tautan
   // saat alamatnya dibagikan di grup WhatsApp — jalur masuk utama situs ini.
-  title: "Marketplace Kampus — Jual Beli Mahasiswa Terpadu USU • POLMED | Kampus Kita",
+  title: "Marketplace Mahasiswa | Kampus Kita",
   description:
-    "Marketplace mahasiswa resmi USU dan Polmed: laptop, HP, buku kuliah, fashion, makanan, kos, sampai jasa. Transaksi aman COD titik kumpul kampus dengan proteksi identitas terverifikasi.",
-  keywords: ["marketplace mahasiswa Medan", "jual beli USU", "jual beli Polmed", "Kampus Kita", "laptop bekas USU", "buku kuliah bekas", "kos dekat USU", "COD kampus"],
+    "Marketplace untuk mahasiswa lintas kampus di Indonesia: barang, buku, fashion, makanan, kos, dan jasa. Sepakati transaksi dan titik temu secara langsung.",
+  keywords: ["marketplace mahasiswa", "jual beli mahasiswa", "Kampus Kita", "barang bekas mahasiswa", "jasa mahasiswa", "COD kampus"],
   alternates: { canonical: "/jual-beli" },
   openGraph: {
-    title: "Marketplace Kampus — Jual Beli Mahasiswa Terpadu USU • POLMED | Kampus Kita",
+    title: "Marketplace Mahasiswa | Kampus Kita",
     description:
-      "Marketplace mahasiswa resmi USU dan Polmed: laptop, HP, buku kuliah, kos, jasa, dan kebutuhan kuliah. COD aman di titik kumpul resmi kampus.",
+      "Marketplace untuk mahasiswa lintas kampus di Indonesia. Temukan barang dan jasa, lalu sepakati transaksi secara langsung.",
     url: "/jual-beli",
     siteName: "Kampus Kita",
     locale: "id_ID",
@@ -29,9 +29,9 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Marketplace Kampus — Jual Beli Mahasiswa Terpadu USU • POLMED | Kampus Kita",
+    title: "Marketplace Mahasiswa | Kampus Kita",
     description:
-      "Marketplace mahasiswa resmi USU dan Polmed: laptop, HP, buku kuliah, kos, jasa. COD aman titik kumpul kampus.",
+      "Marketplace untuk mahasiswa lintas kampus di Indonesia: barang, buku, kos, dan jasa.",
   },
 };
 const PAGE_SIZE = 20;

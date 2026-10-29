@@ -172,7 +172,7 @@ function DaftarOrganisasiForm() {
           Pendaftaran Akun Resmi Organisasi
         </h1>
         <p className="text-sm text-gray-500 dark:text-slate-400 max-w-lg mx-auto">
-          Dapatkan lencana resmi terverifikasi, publikasikan oprec kepanitiaan, info lomba, tiket konser kampus, dan merchandise resmi UKM di USU &amp; POLMED.
+          Dapatkan lencana resmi terverifikasi, publikasikan oprec kepanitiaan, info lomba, tiket konser kampus, dan merchandise resmi organisasi di kampus Anda.
         </p>
       </div>
 
@@ -226,7 +226,7 @@ function DaftarOrganisasiForm() {
             required
             value={form.ukm_name}
             onChange={(e) => setForm({ ...form, ukm_name: e.target.value })}
-            placeholder="Contoh: BEM Fasilkom-TI USU / UKM Robotika USU"
+            placeholder="Contoh: BEM Fakultas Teknik / UKM Robotika"
             className="input text-sm font-medium"
           />
         </div>

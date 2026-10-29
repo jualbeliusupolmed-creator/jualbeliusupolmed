@@ -6,10 +6,10 @@ import MediaUploader from "@/components/MediaUploader";
 import { uploadMedia } from "@/lib/upload";
 
 const STATUSES = ["pending", "active", "expired", "sold", "suspended"];
-const CAMPUS = ["Semua", "USU", "POLMED"];
 
 // Modal edit penuh sebuah listing dari admin.
 export default function AdminListingModal({ listing, categories, onSave, onClose }) {
+  const [campuses, setCampuses] = useState([]);
   const [f, setF] = useState({
     title: listing.title || "",
     seller_name: listing.seller_name || "",
@@ -37,6 +37,23 @@ export default function AdminListingModal({ listing, categories, onSave, onClose
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/kampus", { cache: "no-store" })
+      .then((response) => {
+        if (!response.ok) throw new Error("Gagal memuat daftar kampus.");
+        return response.json();
+      })
+      .then((data) => {
+        if (active && Array.isArray(data?.campuses)) setCampuses(data.campuses);
+      })
+      .catch((error) => console.error("[AdminListingModal] Gagal memuat daftar kampus:", error));
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   const set = (k) => (e) =>
@@ -181,7 +198,10 @@ export default function AdminListingModal({ listing, categories, onSave, onClose
           <div>
             <label className="label">Kampus</label>
             <select className="input" value={f.campus} onChange={set("campus")}>
-              {CAMPUS.map((c) => (
+              {["Semua", ...new Set([
+                ...campuses.map((campus) => campus.shortName).filter(Boolean),
+                ...(f.campus && f.campus !== "Semua" ? [f.campus] : []),
+              ])].map((c) => (
                 <option key={c} value={c}>
                   {c}
                 </option>
