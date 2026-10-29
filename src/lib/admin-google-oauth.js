@@ -4,6 +4,40 @@ export const ADMIN_GOOGLE_FLOW_COOKIE = "admin_google_oauth_flow";
 export const ADMIN_GOOGLE_FLOW_PATH = "/auth/callback";
 export const ADMIN_GOOGLE_FLOW_TTL = 10 * 60;
 
+export function normalizeLoopbackHostname(hostname) {
+  if (!hostname) return "";
+  const normalized = hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  if (["localhost", "127.0.0.1", "0.0.0.0", "::1"].includes(normalized)) return "localhost";
+  return normalized;
+}
+
+export function canonicalizeUrlOrigin(urlOrOrigin) {
+  if (!urlOrOrigin) return "";
+  try {
+    const url = new URL(urlOrOrigin);
+    url.hostname = normalizeLoopbackHostname(url.hostname);
+    return url.origin;
+  } catch {
+    return String(urlOrOrigin || "").trim();
+  }
+}
+
+export function isSameOriginOrLocalEquivalent(origin, requestUrl) {
+  if (!origin) return true;
+  try {
+    const currentOrigin = canonicalizeUrlOrigin(requestUrl);
+    const candidate = canonicalizeUrlOrigin(origin);
+    if (!currentOrigin || !candidate) return true;
+    const current = new URL(currentOrigin);
+    const next = new URL(candidate);
+    if (next.origin === current.origin) return true;
+    if (next.protocol !== current.protocol || next.port !== current.port) return false;
+    return normalizeLoopbackHostname(next.hostname) === normalizeLoopbackHostname(current.hostname);
+  } catch {
+    return false;
+  }
+}
+
 export function getAdminGoogleVerifierCookieName() {
   try {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

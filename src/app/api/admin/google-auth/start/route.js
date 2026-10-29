@@ -4,8 +4,10 @@ import {
   ADMIN_GOOGLE_FLOW_COOKIE,
   ADMIN_GOOGLE_FLOW_PATH,
   ADMIN_GOOGLE_FLOW_TTL,
+  canonicalizeUrlOrigin,
   createAdminGoogleAuthClient,
   getAdminGoogleVerifierCookieName,
+  isSameOriginOrLocalEquivalent,
 } from "@/lib/admin-google-oauth";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +17,7 @@ function cookieOptions() {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
-    path: ADMIN_GOOGLE_FLOW_PATH,
+    path: "/",
     maxAge: ADMIN_GOOGLE_FLOW_TTL,
   };
 }
@@ -26,7 +28,8 @@ export async function POST(request) {
     return NextResponse.json({ error: "Terlalu banyak percobaan. Coba lagi sebentar." }, { status: 429 });
   }
 
-  if (request.headers.get("origin") !== new URL(request.url).origin) {
+  const requestOrigin = request.headers.get("origin");
+  if (!isSameOriginOrLocalEquivalent(requestOrigin, request.url)) {
     return NextResponse.json({ error: "Permintaan login tidak valid." }, { status: 403 });
   }
 
@@ -39,7 +42,7 @@ export async function POST(request) {
 
   try {
     const supabase = createAdminGoogleAuthClient(adapter);
-    const origin = new URL(request.url).origin;
+    const origin = canonicalizeUrlOrigin(request.url) || new URL(request.url).origin;
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {

@@ -7,6 +7,7 @@ import {
   ADMIN_GOOGLE_FLOW_COOKIE,
   ADMIN_GOOGLE_FLOW_PATH,
   ADMIN_GOOGLE_FLOW_TTL,
+  canonicalizeUrlOrigin,
   createAdminGoogleAuthClient,
   getAdminGoogleVerifierCookieName,
 } from "@/lib/admin-google-oauth";
@@ -22,7 +23,7 @@ function finishAdminGoogleCallback(request, redirectPath, pendingCookies = [], u
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
-    path: ADMIN_GOOGLE_FLOW_PATH,
+    path: "/",
     maxAge: 0,
   });
   const verifierCookie = getAdminGoogleVerifierCookieName();
@@ -31,7 +32,7 @@ function finishAdminGoogleCallback(request, redirectPath, pendingCookies = [], u
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
-      path: ADMIN_GOOGLE_FLOW_PATH,
+      path: "/",
       maxAge: 0,
     });
   }
@@ -136,7 +137,8 @@ async function handleAdminGoogleCallback(request) {
  * 5. Redirect ke beranda
  */
 export async function GET(request) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
+  const origin = canonicalizeUrlOrigin(request.url) || new URL(request.url).origin;
   if (request.cookies?.get(ADMIN_GOOGLE_FLOW_COOKIE)?.value === "1") {
     return handleAdminGoogleCallback(request);
   }

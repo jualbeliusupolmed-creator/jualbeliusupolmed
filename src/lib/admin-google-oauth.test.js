@@ -3,8 +3,10 @@ import {
   ADMIN_GOOGLE_FLOW_COOKIE,
   ADMIN_GOOGLE_FLOW_PATH,
   ADMIN_GOOGLE_FLOW_TTL,
+  canonicalizeUrlOrigin,
   createAdminGoogleAuthClient,
   getAdminGoogleVerifierCookieName,
+  isSameOriginOrLocalEquivalent,
 } from "./admin-google-oauth";
 
 afterEach(() => vi.unstubAllEnvs());
@@ -46,5 +48,17 @@ describe("server-side Google OAuth for admin", () => {
     expect(ADMIN_GOOGLE_FLOW_TTL).toBe(600);
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://project-ref.supabase.co");
     expect(getAdminGoogleVerifierCookieName()).toBe("sb-project-ref-auth-token-code-verifier");
+  });
+
+  it("treats localhost aliases as the same origin for local OAuth requests", () => {
+    expect(isSameOriginOrLocalEquivalent("http://localhost:3000", "http://0.0.0.0:3000/api/admin/google-auth/start")).toBe(true);
+    expect(isSameOriginOrLocalEquivalent("http://127.0.0.1:3000", "http://localhost:3000/api/admin/google-auth/start")).toBe(true);
+    expect(isSameOriginOrLocalEquivalent("http://localhost:3001", "http://localhost:3000/api/admin/google-auth/start")).toBe(false);
+    expect(isSameOriginOrLocalEquivalent(null, "http://localhost:3000/api/admin/google-auth/start")).toBe(true);
+  });
+
+  it("normalizes local loopback origins before redirecting OAuth back to app", () => {
+    expect(canonicalizeUrlOrigin("http://0.0.0.0:3000/auth/callback?code=test")).toBe("http://localhost:3000");
+    expect(canonicalizeUrlOrigin("http://127.0.0.1:3000/auth/callback")).toBe("http://localhost:3000");
   });
 });
