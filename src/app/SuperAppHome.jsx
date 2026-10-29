@@ -42,7 +42,7 @@ function waktuLalu(dateStr) {
 const WTB_ITEMS = [
   { title: "Papan LED Laprak Arsi", price: "< 150 Rb", faculty: "Arsitektur", href: "/dicari" },
   { title: "Buku Kalkulus Purcell Jilid 1 & 2", price: "50-80 Rb", faculty: "Fasilkom / Teknik", href: "/dicari" },
-  { title: "Kosan Pintu 2 under 800rb", price: "< 800 Rb/bln", faculty: "Padang Bulan", href: "/dicari" },
+  { title: "Kos dekat kampus", price: "Mulai dari", faculty: "Lokasi fleksibel", href: "/dicari" },
   { title: "Kalkulator Saintifik Casio fx-991EX", price: "< 200 Rb", faculty: "Teknik", href: "/dicari" },
   { title: "Jas Lab MIPA Ukuran L", price: "35 Rb", faculty: "MIPA", href: "/dicari" },
 ];
@@ -73,17 +73,14 @@ export default function SuperAppHome({
   // Marketplace states
   const [listingCampus, setListingCampus] = useState("Semua");
   const [listingCategory, setListingCategory] = useState("Semua");
-  const [listingSearch, setListingSearch] = useState("");
   const [listingSort, setListingSort] = useState("terbaru"); // 'terbaru' | 'termurah'
   const [visibleListingCount, setVisibleListingCount] = useState(12);
 
   // UI Modals & Dropdowns
   const [showCreateSheet, setShowCreateSheet] = useState(false);
   const [showOtpModal, setShowOtpModal] = useState(false);
-  const [campusDropdownOpen, setCampusDropdownOpen] = useState(false);
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const [wtbIndex, setWtbIndex] = useState(0);
-  const searchInputRef = useRef(null);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -99,7 +96,15 @@ export default function SuperAppHome({
     fetch("/api/kampus", { cache: "no-store" })
       .then((res) => res.ok ? res.json() : null)
       .then((data) => {
-        if (Array.isArray(data?.campuses)) setCampuses(data.campuses);
+        if (Array.isArray(data?.campuses)) {
+          setCampuses(data.campuses);
+          const savedCampus = localStorage.getItem("preferred_campus");
+          const validCampus = savedCampus === "Semua" || data.campuses.some((campus) => campus.shortName === savedCampus);
+          if (validCampus && savedCampus) {
+            setSelectedCampus(savedCampus);
+            setListingCampus(savedCampus);
+          }
+        }
       })
       .catch(() => {});
     window.addEventListener("campus:change", onCampus);
@@ -134,24 +139,21 @@ export default function SuperAppHome({
     };
   }, []);
 
-  // Dynamic Rotating Ticker: Randomize across Jual Beli, Open PO, and Menfess
+  // Dynamic ticker rotates through marketplace, Open PO, and Menfess updates.
   const tickerItems = useMemo(() => {
     const items = [];
 
-    // 1. Menfess items
-    if (posts && posts.length > 0) {
-      posts.slice(0, 5).forEach((p) => {
-        items.push({
-          type: "menfess",
-          label: "Menfess Terkini:",
-          dotColor: "bg-rose-500",
-          pingColor: "bg-rose-400",
-          textColor: "text-rose-900 dark:text-rose-300",
-          text: `“${p.content}”`,
-          url: "#menfess-section",
-          isAnchor: true,
-        });
-      });
+    if (posts?.length) {
+      posts.slice(0, 5).forEach((post) => items.push({
+        type: "menfess",
+        label: "Menfess Terkini:",
+        dotColor: "bg-rose-500",
+        pingColor: "bg-rose-400",
+        textColor: "text-rose-900 dark:text-rose-300",
+        text: `“${post.content}”`,
+        url: "#menfess-section",
+        isAnchor: true,
+      }));
     } else {
       items.push({
         type: "menfess",
@@ -165,20 +167,17 @@ export default function SuperAppHome({
       });
     }
 
-    // 2. Jual Beli items
-    if (latestListings && latestListings.length > 0) {
-      latestListings.slice(0, 5).forEach((l) => {
-        items.push({
-          type: "jual-beli",
-          label: "Jual Beli Terkini:",
-          dotColor: "bg-emerald-600",
-          pingColor: "bg-emerald-400",
-          textColor: "text-emerald-900 dark:text-emerald-300",
-          text: `“${l.title} — ${rupiah(l.price)} (${l.area || l.campus || "Sekitar Kampus"})”`,
-          url: `/produk/${buildSlug(l.title, l.id)}`,
-          isAnchor: false,
-        });
-      });
+    if (latestListings?.length) {
+      latestListings.slice(0, 5).forEach((listing) => items.push({
+        type: "jual-beli",
+        label: "Jual Beli Terkini:",
+        dotColor: "bg-emerald-600",
+        pingColor: "bg-emerald-400",
+        textColor: "text-emerald-900 dark:text-emerald-300",
+        text: `“${listing.title} — ${rupiah(listing.price)} (${listing.area || listing.campus || "Sekitar Kampus"})”`,
+        url: `/produk/${buildSlug(listing.title, listing.id)}`,
+        isAnchor: false,
+      }));
     } else {
       items.push({
         type: "jual-beli",
@@ -192,33 +191,27 @@ export default function SuperAppHome({
       });
     }
 
-    // 3. Open PO items
-    if (activeBatches && activeBatches.length > 0) {
-      activeBatches.slice(0, 5).forEach((b) => {
-        items.push({
-          type: "open-po",
-          label: "Open PO Terkini:",
-          dotColor: "bg-amber-500",
-          pingColor: "bg-amber-400",
-          textColor: "text-amber-900 dark:text-amber-300",
-          text: `“${b.name || b.title} — ${rupiah(b.price || 15000)} • ${b.location_summary || "Titik Kumpul Kampus"}”`,
-          url: b.url || "/open-po",
-          isAnchor: false,
-        });
-      });
-    }
+    activeBatches.slice(0, 5).forEach((batch) => items.push({
+      type: "open-po",
+      label: "Open PO Terkini:",
+      dotColor: "bg-amber-500",
+      pingColor: "bg-amber-400",
+      textColor: "text-amber-900 dark:text-amber-300",
+      text: `“${batch.name || batch.title} — ${rupiah(batch.price || 15000)} • ${batch.location_summary || "Titik Kumpul Kampus"}”`,
+      url: batch.url || "/open-po",
+      isAnchor: false,
+    }));
 
-    // Interleave them: Jual Beli -> Open PO -> Menfess -> Jual Beli ...
     const interleaved = [];
-    const menfessList = items.filter((i) => i.type === "menfess");
-    const jbList = items.filter((i) => i.type === "jual-beli");
-    const poList = items.filter((i) => i.type === "open-po");
-    const maxLen = Math.max(menfessList.length, jbList.length, poList.length);
+    const menfess = items.filter((item) => item.type === "menfess");
+    const marketplace = items.filter((item) => item.type === "jual-beli");
+    const openPo = items.filter((item) => item.type === "open-po");
+    const maxLength = Math.max(menfess.length, marketplace.length, openPo.length);
 
-    for (let i = 0; i < maxLen; i++) {
-      if (jbList[i]) interleaved.push(jbList[i]);
-      if (poList[i]) interleaved.push(poList[i]);
-      if (menfessList[i]) interleaved.push(menfessList[i]);
+    for (let index = 0; index < maxLength; index++) {
+      if (marketplace[index]) interleaved.push(marketplace[index]);
+      if (openPo[index]) interleaved.push(openPo[index]);
+      if (menfess[index]) interleaved.push(menfess[index]);
     }
 
     return interleaved.length > 0 ? interleaved : items;
@@ -235,6 +228,7 @@ export default function SuperAppHome({
   }, [tickerItems.length]);
 
   const currentTicker = tickerItems[tickerIndex] || tickerItems[0];
+  const currentWtbItem = WTB_ITEMS[wtbIndex] || WTB_ITEMS[0];
 
   // Comments State
   const [activeCommentsPostId, setActiveCommentsPostId] = useState(null);
@@ -508,7 +502,7 @@ export default function SuperAppHome({
       setFormData({
         type: "menfess",
         sender_name: "Anonim",
-        faculty: "USU",
+        faculty: "Umum",
         title: "",
         content: "",
         is_anon: true,
@@ -554,14 +548,6 @@ export default function SuperAppHome({
       if (listingCategory !== "Semua") {
         const combined = `${ad.category || ""} ${ad.title || ""} ${ad.description || ""}`.toLowerCase();
         if (!combined.includes(listingCategory.toLowerCase())) return false;
-      }
-      if (listingSearch.trim()) {
-        const q = listingSearch.toLowerCase();
-        const inTitle = (ad.title || "").toLowerCase().includes(q);
-        const inSeller = (ad.seller_name || "").toLowerCase().includes(q);
-        const inCampus = (ad.campus || "").toLowerCase().includes(q);
-        const inDesc = (ad.description || "").toLowerCase().includes(q);
-        if (!inTitle && !inSeller && !inCampus && !inDesc) return false;
       }
       return true;
     })
@@ -615,10 +601,10 @@ export default function SuperAppHome({
 
       {/* ── MAIN CONTENT AREA ── */}
       <main className="max-w-[1440px] mx-auto w-full flex-1 px-3 py-3 sm:px-6 sm:py-5">
-        {/* Dynamic Multi-Category Notification Bar & Quick Ticker (Alternates across Jual Beli, PO, and Menfess) */}
-        <div className="mb-3 hidden flex-col items-center justify-between gap-3 sm:mb-4 sm:flex sm:flex-row">
-          <div className="w-full py-2.5 px-4 bg-gradient-to-r from-emerald-50/90 via-white to-slate-50 dark:from-slate-800/80 dark:via-slate-800/40 dark:to-slate-900/80 text-slate-800 dark:text-slate-200 rounded-2xl text-xs flex items-center justify-between gap-2 border border-emerald-100 dark:border-emerald-950/40 shadow-xs transition-all duration-300">
-            <div className="flex items-center gap-2.5 flex-1 min-w-0">
+        {/* Dynamic multi-category notification ticker */}
+        <div className="mb-2 flex flex-col items-center justify-between gap-2 sm:mb-4 sm:flex-row sm:gap-3">
+          <div className="w-full py-1.5 px-2.5 bg-gradient-to-r from-emerald-50/90 via-white to-slate-50 dark:from-slate-800/80 dark:via-slate-800/40 dark:to-slate-900/80 text-slate-800 dark:text-slate-200 rounded-xl text-[11px] flex items-center justify-between gap-1.5 border border-emerald-100 dark:border-emerald-950/40 shadow-xs transition-all duration-300 sm:rounded-2xl sm:py-2.5 sm:px-4 sm:text-xs sm:gap-2">
+            <div className="flex items-center gap-1.5 flex-1 min-w-0 sm:gap-2.5">
               <span className="flex h-2 w-2 relative shrink-0">
                 <span className={cn("animate-ping absolute inline-flex h-full w-full rounded-full opacity-75", currentTicker?.pingColor || "bg-emerald-400")} />
                 <span className={cn("relative inline-flex rounded-full h-2 w-2", currentTicker?.dotColor || "bg-emerald-600")} />
@@ -633,8 +619,8 @@ export default function SuperAppHome({
             {currentTicker?.isAnchor ? (
               <a
                 href={currentTicker.url}
-                onClick={(e) => {
-                  e.preventDefault();
+                onClick={(event) => {
+                  event.preventDefault();
                   document.getElementById("menfess-section")?.scrollIntoView({ behavior: "smooth" });
                 }}
                 className="text-emerald-800 dark:text-emerald-300 hover:text-emerald-950 font-bold hover:underline shrink-0 flex items-center gap-1 text-xs px-2.5 py-1 bg-white dark:bg-slate-800 rounded-full border border-emerald-200/70 dark:border-emerald-800/40 shadow-xs cursor-pointer"
@@ -654,91 +640,14 @@ export default function SuperAppHome({
           </div>
         </div>
 
-        {/* BEGIN: SearchBar + Jelajah Quick Chips Bar */}
-        <div className="mb-4 space-y-2 sm:mb-6 sm:space-y-3">
-          <div className="flex flex-col sm:flex-row items-center gap-3">
-            <div className="relative flex-1 w-full">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-                </svg>
-              </span>
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={listingSearch}
-                onChange={(e) => setListingSearch(e.target.value)}
-                placeholder="Cari barang, kos, buku, jasa..."
-                className="w-full pl-10 pr-4 py-2.5 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-full focus:bg-white focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 transition shadow-xs placeholder-slate-400 dark:placeholder-slate-500 text-slate-900 dark:text-white"
-              />
-            </div>
-            <div className="w-full sm:w-auto flex gap-2">
-              <div className="relative flex-1 sm:flex-none">
-                <button
-                  type="button"
-                  onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
-                  className="w-full sm:w-auto flex items-center justify-between gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-700 dark:text-slate-200 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700/60 transition shadow-xs"
-                >
-                  <span>{listingCategory === "Semua" ? "Kategori" : listingCategory}</span>
-                  <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-                  </svg>
-                </button>
-                {categoryDropdownOpen && (
-                  <div className="absolute left-0 sm:right-0 sm:left-auto mt-1 w-44 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200/80 dark:border-white/10 py-1.5 z-50">
-                    {["Semua", "Elektronik", "Buku", "Fashion", "Kos", "Jasa", "Makanan"].map((cat) => (
-                      <button
-                        key={cat}
-                        type="button"
-                        onClick={() => {
-                          setListingCategory(cat);
-                          setCategoryDropdownOpen(false);
-                        }}
-                        className="w-full px-3.5 py-2 text-xs text-left font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center justify-between"
-                      >
-                        <span>{cat}</span>
-                        {listingCategory === cat && <span className="text-emerald-700 font-bold">✓</span>}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="relative flex-1 sm:flex-none">
-                <button
-                  type="button"
-                  onClick={() => setCampusDropdownOpen(!campusDropdownOpen)}
-                  className="w-full sm:w-auto flex items-center justify-between gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-700 dark:text-slate-200 rounded-full hover:bg-slate-50 dark:hover:bg-slate-700/60 transition shadow-xs whitespace-nowrap"
-                >
-                  <span>Kampus: {selectedCampus === "Semua" ? "Semua" : selectedCampus}</span>
-                  <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-                  </svg>
-                </button>
-                {campusDropdownOpen && (
-                  <div className="absolute right-0 mt-1 w-44 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200/80 dark:border-white/10 py-1.5 z-50">
-                    {["Semua", ...campuses.map((campus) => campus.shortName)].map((camp) => (
-                      <button
-                        key={camp}
-                        type="button"
-                        onClick={() => {
-                          setSelectedCampus(camp);
-                          setListingCampus(camp);
-                          setCampusDropdownOpen(false);
-                        }}
-                        className="w-full px-3.5 py-2 text-xs text-left font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center justify-between"
-                      >
-                        <span>{camp === "Semua" ? "Semua Kampus" : camp}</span>
-                        {selectedCampus === camp && <span className="text-emerald-700 font-bold">✓</span>}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+        {/* Search, filters, and direct WTB access */}
+        <div className="hidden">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
             </div>
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto py-1 text-xs [scrollbar-width:none]">
+          <div className="hidden items-center gap-2 overflow-x-auto py-1 text-xs [scrollbar-width:none]">
             <span className="text-emerald-800 dark:text-emerald-400 font-bold text-[11px] uppercase tracking-wider shrink-0 flex items-center gap-1.5">
               <svg className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path d="M13 10V3L4 14h7v7l9-11h-7z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
@@ -747,7 +656,7 @@ export default function SuperAppHome({
             </span>
             <button
               type="button"
-              onClick={() => { setListingCategory("Kos"); setListingSearch("kos"); }}
+              onClick={() => setListingCategory("Kos")}
               className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-emerald-50/50 dark:hover:bg-slate-700 border border-slate-200 dark:border-white/10 hover:border-emerald-300 rounded-full text-slate-700 dark:text-slate-200 hover:text-emerald-900 transition font-medium text-xs shadow-xs"
             >
               <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -775,7 +684,7 @@ export default function SuperAppHome({
             </Link>
             <button
               type="button"
-              onClick={() => { setListingCategory("Buku"); setListingSearch("diktat"); }}
+              onClick={() => setListingCategory("Buku")}
               className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-emerald-50/50 dark:hover:bg-slate-700 border border-slate-200 dark:border-white/10 hover:border-emerald-300 rounded-full text-slate-700 dark:text-slate-200 hover:text-emerald-900 transition font-medium text-xs shadow-xs"
             >
               <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -800,9 +709,36 @@ export default function SuperAppHome({
           {/* LEFT MAIN COLUMN: Open PO Swipeable + WTB + Marketplace (8 cols) */}
           <div className="lg:col-span-8 flex flex-col gap-6">
             {/* 1. Open PO Section */}
+            <section id="po-section" className="flex min-w-0 items-center gap-2 overflow-hidden rounded-xl border border-emerald-100 bg-white px-3 py-2 shadow-xs dark:border-emerald-900/50 dark:bg-slate-800/90">
+              <div className="flex shrink-0 items-center gap-1.5 text-xs font-bold text-emerald-900 dark:text-emerald-300">
+                <Icon.Coffee className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
+                <span>Open PO</span>
+                {activeBatches.length > 0 && (
+                  <span className="rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                    {activeBatches.length}
+                  </span>
+                )}
+              </div>
+              <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto [scrollbar-width:none]">
+                {activeBatches.length > 0 ? activeBatches.slice(0, 3).map((item, idx) => (
+                  <Link
+                    key={item.id || idx}
+                    href={item.url || "/open-po"}
+                    className="max-w-40 shrink-0 truncate rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-900 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-emerald-950 dark:hover:text-emerald-300"
+                  >
+                    {item.name || item.title}
+                  </Link>
+                )) : (
+                  <span className="truncate text-[11px] text-slate-500 dark:text-slate-400">Belum ada batch aktif</span>
+                )}
+              </div>
+              <Link href="/open-po" className="shrink-0 text-[11px] font-semibold text-emerald-800 hover:text-emerald-950 dark:text-emerald-300">
+                Lihat
+              </Link>
+            </section>
             {activeBatches.length > 0 && <Link
               href="/open-po"
-              className="inline-flex min-h-10 items-center justify-between gap-3 rounded-xl border border-emerald-100 bg-white px-3 text-xs font-bold text-emerald-900 shadow-xs sm:hidden"
+              className="hidden"
             >
               <span className="inline-flex items-center gap-2">
                 <Icon.Coffee className="h-4 w-4 text-emerald-700" />
@@ -813,7 +749,7 @@ export default function SuperAppHome({
               </span>
               <span aria-hidden="true">Lihat →</span>
             </Link>}
-            <section id="po-section" className="hidden rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-slate-800/90 sm:block">
+            <section className="hidden">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2.5">
                   <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse" />
@@ -910,7 +846,7 @@ export default function SuperAppHome({
             </section>
 
             {/* 2. Papan Strategis: Barang Dicari Mahasiswa (WTB - Want To Buy) with Smooth Horizontal Marquee Animation */}
-            <section id="wtb-section" className="hidden overflow-hidden rounded-2xl border border-slate-200/80 bg-white px-4 py-3 shadow-xs dark:border-white/10 dark:bg-slate-800/90 sm:flex sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+            <section id="wtb-section" className="hidden">
               <div className="flex items-center gap-2 shrink-0 z-10 bg-white dark:bg-slate-800 sm:pr-2">
                 <span className="flex h-2 w-2 relative">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -961,20 +897,61 @@ export default function SuperAppHome({
             {/* 3. Marketplace Grid (Diletakkan di bawah PO & WTB) */}
             <section id="marketplace-section" className="space-y-4">
               <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white">
-                    Marketplace <span className="hidden font-serif font-normal italic text-emerald-700 dark:text-emerald-400 sm:inline">Jual-Beli Terverifikasi</span>
-                  </h2>
-                  <p className="hidden text-xs text-slate-500 dark:text-slate-400 sm:block">
-                    Barang preloved &amp; kebutuhan mahasiswa sekitar kampus
-                  </p>
-                </div>
-                <div className="flex items-center gap-1.5">
+                <Link
+                  href="/dicari"
+                  aria-label={`WTB: ${currentWtbItem?.title || "Buka papan barang dicari"}`}
+                  className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden rounded-xl border border-emerald-100 bg-gradient-to-r from-emerald-50/90 via-white to-slate-50 px-2 py-1.5 text-[10px] text-slate-700 shadow-xs transition hover:border-emerald-300 dark:border-emerald-900/50 dark:from-slate-800 dark:via-slate-800/80 dark:to-slate-900 dark:text-slate-200 sm:gap-2 sm:rounded-2xl sm:px-3"
+                >
+                  <span className="relative flex h-2 w-2 shrink-0">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-600" />
+                  </span>
+                  <span className="shrink-0 font-bold text-emerald-900 dark:text-emerald-300">WTB:</span>
+                  <span key={wtbIndex} className="min-w-0 truncate font-medium animate-fade-in">
+                    {currentWtbItem?.title}
+                  </span>
+                  <span className="hidden shrink-0 text-slate-500 dark:text-slate-400 sm:inline">
+                    · {currentWtbItem?.price}
+                  </span>
+                  <span aria-hidden="true" className="shrink-0 font-bold text-emerald-800 dark:text-emerald-300">→</span>
+                </Link>
+                <div className="flex shrink-0 items-center gap-1">
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
+                      aria-expanded={categoryDropdownOpen}
+                      className="flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 dark:border-white/10 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700/60"
+                    >
+                      <span>{listingCategory === "Semua" ? "Kategori" : listingCategory}</span>
+                      <svg className="h-3 w-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+                      </svg>
+                    </button>
+                    {categoryDropdownOpen && (
+                      <div className="absolute right-0 z-30 mt-1 w-44 rounded-2xl border border-slate-200/80 bg-white py-1.5 shadow-xl dark:border-white/10 dark:bg-slate-800">
+                        {["Semua", "Elektronik", "Buku", "Fashion", "Kos", "Jasa", "Makanan"].map((cat) => (
+                          <button
+                            key={cat}
+                            type="button"
+                            onClick={() => {
+                              setListingCategory(cat);
+                              setCategoryDropdownOpen(false);
+                            }}
+                            className="flex w-full items-center justify-between px-3.5 py-2 text-left text-xs font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700/50"
+                          >
+                            <span>{cat}</span>
+                            {listingCategory === cat && <span className="font-bold text-emerald-700">✓</span>}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <button
                     type="button"
                     onClick={() => setListingSort("termurah")}
                     className={cn(
-                      "text-xs px-3 py-1 rounded-full transition shadow-xs",
+                      "rounded-full px-2 py-1 text-[11px] transition shadow-xs",
                       listingSort === "termurah"
                         ? "bg-emerald-900 border border-emerald-950 text-white font-bold"
                         : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-semibold hover:bg-slate-50 dark:hover:bg-slate-700/60"
@@ -986,7 +963,7 @@ export default function SuperAppHome({
                     type="button"
                     onClick={() => setListingSort("terbaru")}
                     className={cn(
-                      "text-xs px-3 py-1 rounded-full transition shadow-xs",
+                      "rounded-full px-2 py-1 text-[11px] transition shadow-xs",
                       listingSort === "terbaru"
                         ? "bg-emerald-900 border border-emerald-950 text-white font-bold"
                         : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-semibold hover:bg-slate-50 dark:hover:bg-slate-700/60"
@@ -1001,13 +978,12 @@ export default function SuperAppHome({
                 <div className="bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-white/10 rounded-2xl p-8 text-center space-y-2">
                   <Icon.Package className="w-10 h-10 mx-auto text-slate-400" />
                   <p className="text-sm font-bold text-slate-800 dark:text-white">Belum ada barang di filter ini</p>
-                  <p className="text-xs text-slate-500">Coba ganti kategori, cari kata kunci lain, atau reset filter.</p>
+                  <p className="text-xs text-slate-500">Coba ganti kategori atau kampus, atau reset filter.</p>
                   <button
                     type="button"
                     onClick={() => {
                       setListingCategory("Semua");
                       setListingCampus("Semua");
-                      setListingSearch("");
                     }}
                     className="mt-2 px-4 py-1.5 rounded-full bg-emerald-800 text-white text-xs font-bold"
                   >
@@ -1105,7 +1081,7 @@ export default function SuperAppHome({
                         {post.sender_name || "Anonim"}
                       </span>
                       <span className="text-[9px] font-semibold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full">
-                        {post.faculty || "USU"}
+                        {post.faculty || "Mahasiswa"}
                       </span>
                     </div>
                     <time className="text-[10px] text-slate-400">{waktuLalu(post.created_at)}</time>
@@ -1280,7 +1256,7 @@ export default function SuperAppHome({
                           required
                           value={formData.title}
                           onChange={(e) => updateFormData({ title: e.target.value })}
-                          placeholder="Contoh: Oprec Panitia BEM USU 2026"
+                          placeholder="Contoh: Oprec Panitia Kampus 2026"
                           className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-600 outline-none"
                         />
                       </div>

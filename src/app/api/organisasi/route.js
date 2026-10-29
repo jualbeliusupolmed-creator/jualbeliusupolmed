@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
-import { bentukOrganisasi, gabungDenganContoh, ORGANISASI_CONTOH } from "@/lib/organisasiDemo";
+import { bentukOrganisasi } from "@/lib/organisasiDemo";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +16,6 @@ export async function GET(req) {
 
     const { searchParams } = new URL(req.url);
     const category = searchParams.get("category");
-    const campus = searchParams.get("campus");
     const q = searchParams.get("q")?.toLowerCase();
 
     const supa = getAdminClient();
@@ -28,23 +27,18 @@ export async function GET(req) {
       .or("account_type.eq.ukm,ukm_verified.eq.true")
       .order("created_at", { ascending: false });
 
-    let orgList = [];
-
-    if (!error && dbOrgs && dbOrgs.length > 0) {
-      orgList = dbOrgs.map(bentukOrganisasi);
+    if (error) {
+      console.error("GET /api/organisasi query error:", error.message);
+      return NextResponse.json({ error: "Gagal memuat direktori organisasi." }, { status: 500 });
     }
 
-    // Contoh etalase ikut, tapi sebagai contoh — lihat lib/organisasiDemo.js
-    let results = gabungDenganContoh(orgList);
+    let results = (dbOrgs || [])
+      .map(bentukOrganisasi)
+      .filter((org) => org.ukm_category !== "Platform");
 
     // Filter Kategori
     if (category && category !== "all") {
       results = results.filter((o) => o.ukm_category === category);
-    }
-
-    // Filter Kampus
-    if (campus && campus !== "Semua") {
-      results = results.filter((o) => o.campus === campus);
     }
 
     // Filter Pencarian
@@ -52,6 +46,7 @@ export async function GET(req) {
       results = results.filter(
         (o) =>
           o.ukm_name?.toLowerCase().includes(q) ||
+          o.campus?.toLowerCase().includes(q) ||
           o.bio?.toLowerCase().includes(q) ||
           o.faculty?.toLowerCase().includes(q)
       );
@@ -107,4 +102,3 @@ export async function PATCH(req) {
     return NextResponse.json({ error: "Gagal menyimpan perubahan organisasi." }, { status: 500 });
   }
 }
-

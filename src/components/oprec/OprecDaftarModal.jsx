@@ -30,7 +30,7 @@ export default function OprecDaftarModal({ oprec, onClose, onSubmitted }) {
     applicant_name: "",
     applicant_wa: "",
     nim: "",
-    campus: oprec?.campus || "USU",
+    campus: oprec?.campus || "",
     faculty: "",
     batch: "2024",
     division_1: oprec?.divisions?.[0] || "Acara",

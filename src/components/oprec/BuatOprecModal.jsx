@@ -25,7 +25,7 @@ export default function BuatOprecModal({ onClose, onCreated, isUkmAccount = true
   const [form, setForm] = useState({
     title: "",
     description: "",
-    campus: "USU",
+    campus: "",
     faculty: "Universitas",
     deadline: "",
     requirements: "",
@@ -390,7 +390,7 @@ export default function BuatOprecModal({ onClose, onCreated, isUkmAccount = true
               rows={2}
               value={form.requirements}
               onChange={(e) => setForm({ ...form, requirements: e.target.value })}
-              placeholder="Contoh: 1. Mahasiswa aktif USU/Polmed, 2. Komitmen, 3. Mau belajar..."
+              placeholder="Contoh: 1. Mahasiswa aktif, 2. Berkomitmen, 3. Mau belajar..."
               className="input py-2 text-xs"
             />
           </div>

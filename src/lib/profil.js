@@ -1,5 +1,5 @@
 import { hashIdentitas } from "@/lib/identitasHash";
-import { adalahIdSintetis } from "@/lib/constants";
+import { formatWa } from "@/lib/constants";
 import { censorProfanity } from "@/lib/profanity";
 import { BATAS, potong, normalisasiInstagram, normalisasiGmaps, aksenAman } from "@/lib/toko";
 
@@ -24,13 +24,13 @@ import { BATAS, potong, normalisasiInstagram, normalisasiGmaps, aksenAman } from
 // pernah dipakai kode dan tidak satu pun ada di tabel. Nomor pemilik adalah
 // kunci utama `wa`; fotonya `avatar_url`.
 export const KOLOM_PROFIL =
-  "wa, name, bio, campus, faculty, avatar_url, anonymous_name, " +
+  "wa, phone_wa, name, bio, campus, faculty, avatar_url, anonymous_name, " +
   "account_type, ukm_name, ukm_category, ukm_instagram, ukm_verified, " +
   "slug, store_name, tagline, logo_url, banner_url, store_area, store_hours, " +
   "store_instagram, store_gmaps, store_accent, store_open, store_announcement, " +
   "store_status, store_requested_at, store_approved_at, store_reject_note, " +
   "store_updated_at, trusted_seller, distributor, subscription_tier, " +
-  "subscription_expires_at, referral_code, free_bumps, email, auth_provider, created_at";
+  "subscription_expires_at, referral_code, free_bumps, email, email_google, auth_provider, created_at";
 
 /*
  * Peran bukan satu pilihan, melainkan lapisan yang bisa menumpuk.
@@ -58,7 +58,7 @@ export function peranProfil(p) {
     // Akun tanpa nomor telepon (daftar lewat email). Bukan peran, tapi ikut
     // menentukan apa yang boleh ditampilkan: tombol "chat via WhatsApp" pada
     // akun begini menunjuk nomor yang tidak ada.
-    tanpaNomor: adalahIdSintetis(p?.wa),
+    tanpaNomor: !formatWa(p?.phone_wa || p?.wa || ""),
   };
 }
 
@@ -187,7 +187,10 @@ export function userIdTeman(wa) {
  * dari dua tabel, dan tidak perlu menebak sendiri "ini akun toko atau bukan".
  */
 export function bentukProfil(sp, tp) {
-  const peran = peranProfil(sp);
+  const peran = {
+    ...peranProfil(sp),
+    tanpaNomor: !formatWa(sp?.phone_wa || sp?.wa || ""),
+  };
   const username = sp?.slug || "";
   return {
     ...sp,
@@ -209,6 +212,6 @@ export function bentukProfil(sp, tp) {
       : null,
     // Nomor yang bisa dihubungi — kosong untuk akun daftar-lewat-email, supaya
     // pemakainya tidak menampilkan tombol WhatsApp ke nomor yang tidak ada.
-    nomor: peran.tanpaNomor ? "" : sp?.wa || "",
+    nomor: peran.tanpaNomor ? "" : formatWa(sp?.phone_wa || sp?.wa || ""),
   };
 }

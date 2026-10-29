@@ -1,17 +1,13 @@
 import { NextResponse } from "next/server";
-import { getSellerSession } from "@/lib/auth";
-import { formatWa } from "@/lib/constants";
+import { getOpenPoSession } from "@/lib/openPoSession";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 
 export const dynamic = "force-dynamic";
 
-function currentWa() {
-  return formatWa(getSellerSession() || "");
-}
-
 export async function GET() {
-  const wa = currentWa();
-  if (!wa) return NextResponse.json({ error: "Sesi JB berakhir." }, { status: 401 });
+  const session = getOpenPoSession();
+  if (!session.wa) return NextResponse.json({ error: session.error }, { status: session.status });
+  const wa = session.wa;
   const supa = getAdminClient();
   const [profileRes, batchesRes, outgoingRes] = await Promise.all([
     supa.from("seller_profiles").select("name,campus,faculty").eq("wa", wa).maybeSingle(),
@@ -62,8 +58,9 @@ export async function GET() {
 }
 
 export async function PATCH(req) {
-  const wa = currentWa();
-  if (!wa) return NextResponse.json({ error: "Sesi JB berakhir." }, { status: 401 });
+  const session = getOpenPoSession();
+  if (!session.wa) return NextResponse.json({ error: session.error }, { status: session.status });
+  const wa = session.wa;
   const body = await req.json().catch(() => ({}));
   const id = String(body.id || "").trim();
   if (!id || !["open", "closed"].includes(body.status)) return NextResponse.json({ error: "Perubahan status batch tidak valid." }, { status: 400 });

@@ -295,7 +295,7 @@ SETMODE custom          → Mode custom
                     │ semua business logic
                     ├─→ Supabase (listings, payments, dll)
                     ├─→ Gemini AI (parse listing, verifikasi struk)
-                    └─→ Baileys/Fonnte (kirim WA balik ke user)
+                    └─→ Baileys melalui API bot (kirim WA balik ke user)
 
 [User Browser] ──→ [Next.js / Vercel]
                     ├─→ Supabase
@@ -437,9 +437,8 @@ Setiap hari 00:00 — /api/cron/broadcast:
 | `SUPER_ADMIN_WA` | Nomor superadmin alternatif |
 | `MARKETPLACE_WA` | Nomor publik marketplace |
 | `NEXT_PUBLIC_MARKETPLACE_WA` | Sama, dipakai di frontend |
-| `BAILEYS_API_URL` | URL bot di VPS, mis. `https://bot.jualbeliusupolmed.web.id` |
-| `BAILEYS_API_TOKEN` | Token auth bot. Boleh berisi beberapa token dipisah koma bila ada lebih dari satu perangkat; yang PERTAMA milik bot yang ditunjuk `BAILEYS_API_URL`. |
-| `FONNTE_TOKEN` | Token Fonnte (fallback jika Baileys mati) |
+| `BAILEYS_API_URL` | URL endpoint `/send` bot yang dapat dijangkau server website |
+| `BAILEYS_API_TOKEN` | Token bot utama; harus cocok dengan `API_TOKEN` bot yang ditunjuk URL |
 | `FONNTE_WA_GROUP_ID` | JID grup utama marketplace |
 | `BAILEYS_BROADCAST_GROUPS` | JID grup tambahan (comma-separated) |
 | `GEMINI_API_KEY` | Google Gemini API key |

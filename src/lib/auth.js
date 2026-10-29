@@ -49,13 +49,28 @@ function secret() {
 // 30 hari sesi yang seharusnya tidak ada hubungannya dengan panel admin ikut
 // hangus. Dua rahasia yang berbeda tugasnya tidak boleh berbagi satu nilai.
 //
-// `SESSION_SECRET` yang memutusnya. Kalau belum diset, ia jatuh kembali ke
-// ADMIN_PASSWORD supaya tidak ada yang mendadak keluar sendiri saat rilis ini
-// mendarat — jadi mengisinya di Vercel adalah langkah terpisah yang boleh
-// diambil kapan saja. Sekali diisi, ganti sandi admin tidak lagi menyentuh
-// sesi penjual.
+// `SESSION_SECRET` memisahkan kedua fungsi itu. Verifier tetap menerima kunci
+// lama (`ADMIN_PASSWORD`) agar pengisian kunci baru tidak memutus sesi aktif;
+// `SESSION_SECRET_PREVIOUS` tersedia untuk rotasi kunci yang direncanakan.
 function kunciTandaTangan() {
   return process.env.SESSION_SECRET || secret();
+}
+
+function kunciVerifikasiPenjual() {
+  const keys = [
+    process.env.SESSION_SECRET,
+    process.env.SESSION_SECRET_PREVIOUS,
+    process.env.ADMIN_PASSWORD,
+  ];
+
+  if (!process.env.ADMIN_PASSWORD && process.env.NODE_ENV !== "production") {
+    keys.push(kunciTandaTangan());
+  }
+  if (!keys.some(Boolean)) {
+    keys.push(kunciTandaTangan());
+  }
+
+  return [...new Set(keys.filter(Boolean))];
 }
 
 // Perbandingan tahan-waktu. `===` pada string keluar di karakter pertama yang
@@ -163,11 +178,22 @@ function verifySellerToken(token) {
   const parts = token.split(".");
   if (parts.length !== 2) return null;
   const [payloadB64, signature] = parts;
-  const expectedSig = crypto.createHmac("sha256", kunciTandaTangan()).update(payloadB64).digest("base64url");
-  if (!samaAman(signature, expectedSig)) return null;
+  const validSignature = kunciVerifikasiPenjual().some((key) => {
+    const expectedSig = crypto.createHmac("sha256", key).update(payloadB64).digest("base64url");
+    return samaAman(signature, expectedSig);
+  });
+  if (!validSignature) return null;
   try {
     const payload = JSON.parse(Buffer.from(payloadB64, "base64url").toString("utf-8"));
-    if (payload.exp < Date.now()) return null; // expired
+    if (
+      typeof payload.wa !== "string" ||
+      !payload.wa ||
+      typeof payload.exp !== "number" ||
+      !Number.isFinite(payload.exp) ||
+      payload.exp <= Date.now()
+    ) {
+      return null;
+    }
     return payload.wa;
   } catch {
     return null;
@@ -196,4 +222,3 @@ export function getSellerSession() {
 export function getUserSession() {
   return getSellerSession();
 }
-

@@ -25,7 +25,7 @@ export default function ShareWAButton({ listing }) {
       ` ${priceStr}${cond}\n` +
       (listing.category ? ` ${listing.category}\n` : "") +
       `\n ${shareUrl()}\n` +
-      `_Jual Beli USU Polmed — COD area kampus_`
+      `_Kampus Kita — komunitas mahasiswa lintas kampus_`
     );
   }
 
@@ -48,7 +48,7 @@ export default function ShareWAButton({ listing }) {
   }
 
   return (
-    <button onClick={handleShare} className="btn-outline flex items-center justify-center gap-1.5" title="Bagikan tautan iklan ini">
+    <button onClick={handleShare} className="btn-outline flex items-center justify-center gap-1.5" title="Bagikan tautan barang ini">
       <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 shrink-0 fill-none stroke-current" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="18" cy="5" r="3" />
         <circle cx="6" cy="12" r="3" />

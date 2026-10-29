@@ -2,6 +2,70 @@
 
 Dokumen ini berisi peta pemahaman sistem, alur bisnis, daftar masalah, dan riwayat audit untuk proyek **Jual Beli USU Polmed**.
 
+### Pembaruan 30 Oktober 2026 — diagnostik OTP WhatsApp
+
+- OTP penautan akun hanya dikirim melalui API bot Baileys: `BAILEYS_API_URL`
+  dan `BAILEYS_API_TOKEN` di environment situs harus mengarah/cocok dengan bot.
+  Fonnte bukan fallback sejak commit `ccf789e`; dokumentasi lama yang
+  menyebut fallback sudah dikoreksi.
+- Jika konfigurasi gateway belum lengkap, endpoint mengembalikan error 503
+  yang menyebut pengaturan yang perlu diperiksa. Jika bot tidak tersedia,
+  OTP berumur lima menit dihapus dan tidak masuk antrean kirim ulang.
+- Isi pesan dengan TTL paling lama lima menit (termasuk OTP) disamarkan di
+  `wa_conversations`. Checkout lokal `/Users/ayhoo/Projects/wa-bot-usu` saat
+  diperiksa belum memiliki `HEAD`, berisi perubahan staged, dan modul route
+  yang dirujuk entrypoint tidak ada di working tree; jangan jadikan checkout
+  itu sumber untuk perubahan/deploy sebelum baseline dan commit sumber
+  kebenarannya dipastikan.
+
+### Pembaruan 30 Oktober 2026 — antarmuka lintas kampus
+
+- Copy dan identitas frontend publik/admin memakai brand Kampus Kita dan tidak
+  mengunci platform pada USU/POLMED. Filter kampus di halaman terkait membaca
+  daftar aktif dari `/api/kampus`.
+- Direktori organisasi publik hanya menampilkan profil organisasi nyata, bukan
+  kartu contoh berlabel kampus lokal atau akun platform; halaman mencari kampus
+  lewat kolom pencarian dan tidak menampilkan filter kampus lokal.
+- Ini perubahan antarmuka, bukan aktivasi operasional nasional: daftar bawaan
+  `src/lib/settings.js` masih USU dan POLMED. Kampus baru harus ditambahkan dan
+  proses verifikasinya ditinjau sebelum layanan diklaim tersedia di kampus itu.
+- Tidak ada perubahan skema, RLS, atau data Supabase pada pekerjaan ini.
+
+### Pembaruan 30 Oktober 2026 — workspace Open PO pengguna
+
+- Pengelolaan batch dan pesanan Open PO pengguna sekarang menjadi tab di
+  `/dashboard?tab=open-po`, bersama workspace akun lainnya. Rute lama
+  `/dashboard/open-po` tetap menjadi alias yang mengarahkan ke tab tersebut;
+  etalase publik `/open-po` tidak berubah.
+- Akun Google/email tanpa nomor WhatsApp tetap merupakan sesi JB yang sah,
+  tetapi skema Open PO saat ini hanya menerima nomor sebagai identitas akun.
+  API membedakan kondisi itu dari sesi kedaluwarsa; dukungan penuh untuk ID
+  non-telepon memerlukan desain dan migrasi skema terpisah.
+
+### Pembaruan 30 Oktober 2026 — metode masuk profil
+
+- Kedua arah penautan identitas memakai bukti kepemilikan: Google ke WhatsApp
+  memerlukan OTP WhatsApp tujuan, sedangkan WhatsApp ke Google memerlukan OTP
+  ke nomor akun sebelum OAuth Google.
+- Jika identitas tujuan sudah memiliki profil terpisah, data profil disatukan
+  secara transaksional ke profil WhatsApp sebagai profil kanonis. Data sumber
+  hanya mengisi field profil yang kosong; merge ditolak bila kedua profil
+  memiliki PIN berbeda atau kartu Cari Teman yang sama-sama aktif.
+- Migrasi `seller_google_identity_unique` menambahkan indeks unik email Google
+  untuk mencegah satu identitas digunakan oleh lebih dari satu profil. Migrasi
+  belum diterapkan; ia akan berhenti dengan pesan jelas bila data lama memiliki
+  email Google duplikat yang perlu ditinjau terlebih dahulu.
+- Profil Google kini dapat menautkan WhatsApp dengan kode OTP tanpa mengganti
+  `seller_profiles.wa` (identitas profil stabil). Nomor yang sudah memiliki
+  profil kini diproses lewat merge aman, bukan ditolak.
+- Migrasi `seller_profile_phone_link` menambahkan `phone_wa` unik dan tabel OTP
+  privat dengan RLS aktif. Migrasi belum diterapkan; deploy fitur ini harus
+  menunggu peninjauan dan penerapan migrasi identitas secara terurut.
+- Migrasi `merge_seller_identities` menambah alias profil privat dan RPC merge
+  terbatas ke `service_role`; semua migrasi identitas terkait belum diterapkan
+  atau diverifikasi terhadap database produksi. Terapkan hanya setelah
+  peninjauan skema, backup, dan persetujuan operasional.
+
 ### Pembaruan 28 Oktober 2026 — workspace admin
 
 - Workspace admin baru memakai Supabase Auth, membership aktif, permission
@@ -103,7 +167,7 @@ Berjalan dengan PostgreSQL, memiliki tabel-tabel berikut:
 2. **Validasi Input & Otorisasi**: 
    - Row Level Security (RLS) di Supabase mencegah klien membaca data yang bukan haknya (misalnya, pembeli tidak bisa baca orderan penjual lain).
    - **Historis (28 Agustus 2026):** akses admin memakai `ADMIN_PASSWORD` dan mencatat login ke `admin_logs`. Pada 28 Oktober, login workspace diganti ke akun Supabase Auth per orang; `ADMIN_PASSWORD` kini hanya fallback tanda tangan sesi JB lama.
-   - `SESSION_SECRET` tetap menjadi kunci sesi penjual yang terpisah. Isi `SESSION_SECRET` di Vercel agar rotasi nilai fallback lama tidak membatalkan sesi penjual.
+   - `SESSION_SECRET` menjadi kunci utama sesi penjual; verifier juga menerima `ADMIN_PASSWORD` lama agar penambahan kunci terpisah tidak langsung mengeluarkan semua pengguna. Saat merotasi kunci sesi, isi `SESSION_SECRET_PREVIOUS` dengan kunci lama selama masa transisi. `/api/auth/me` memperpanjang kuki aktif 30 hari dan menandatangani ulang token yang masih sah dengan kunci utama.
 3. **Rate Limiting**: Endpoint kritikal seperti pembuat iklan telah dilengkapi proteksi anti-spam lokal (*in-memory*).
 
 ---
@@ -119,9 +183,9 @@ Berjalan dengan PostgreSQL, memiliki tabel-tabel berikut:
 ### F. Sesi Pengguna — Satu Sumber, Satu Kali Masuk (28 Agu 2026)
 
 Kebenaran sesi ada di kuki `seller_session`: httpOnly, bertanda tangan HMAC,
-**30 hari** (`lib/auth.js`). Tapi yang dibaca antarmuka selama ini
-`localStorage.seller_wa` — sepuluh berkas membacanya untuk menentukan "siapa
-yang sedang memakai ini".
+berumur 30 hari dan diperpanjang saat `/api/auth/me` berhasil memvalidasinya
+(`lib/auth.js`). Tapi yang dibaca antarmuka selama ini `localStorage.seller_wa`
+— sepuluh berkas membacanya untuk menentukan "siapa yang sedang memakai ini".
 
 **Akar keluhan "disuruh login berkali-kali".** Kedua nilai itu bisa berbeda,
 dan yang paling sering: kuki masih sah, localStorage kosong (peranti baru,
@@ -565,3 +629,8 @@ cuma server.
 - Verifier PKCE disimpan sementara dalam cookie `HttpOnly`, `SameSite=Lax`, dibatasi pada callback dan kedaluwarsa setelah 10 menit. Callback admin tidak menyimpan token Supabase di browser dan tidak menjalankan sinkronisasi profil penjual.
 - Akses tetap dibatasi ke UUID `SUPERADMIN_AUTH_USER_ID` atau owner dengan membership aktif. Domain email kampus bukan syarat; cookie sesi admin bertanda tangan tetap berlaku satu jam dan setiap request workspace memeriksa ulang Auth serta izin.
 - Smoke check produksi 28 Oktober 2026: login Google dari domain `m.` kembali ke `/admin/overview`, dikenali sebagai superadmin, dan sesi tetap aktif setelah reload. Nilai UUID dan token tidak dicatat.
+
+### 30 Oktober 2026 — Penataan dashboard akun
+
+- Dashboard akun memakai satu navigasi utama untuk Jual Barang, Open PO, Tawaran, Performa, Profil, dan panel Organisasi bila akun terkait. Tab tetap bisa dibuka langsung lewat `?tab=...`; panel Open PO dan profil toko tidak lagi punya navigasi terpisah yang menduplikasi navigasi dashboard.
+- Ringkasan kepercayaan yang sebelumnya memakai nilai default/tetap dihapus. Statistik barang ditampilkan satu kali di workspace Jual Barang; daftar “paling banyak dilihat” yang mengulang barang dari daftar aktif dihapus. Tampilan kosong memakai satu ajakan utama di header.

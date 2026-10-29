@@ -11,15 +11,15 @@ import { skripJsonLd } from "@/lib/jsonLd";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Jasa Mahasiswa USU Polmed — Joki, Desain, IT",
-  description: "Temukan jasa dari mahasiswa USU & Polmed. Mulai dari pekerjaan lepas, desain grafis, service laptop, hingga jasa angkut barang.",
-  keywords: ["Jasa Mahasiswa", "pekerjaan lepas usu", "service laptop polmed", "desain grafis medan", "jasa angkut medan", "freelance warga"],
+  title: "Jasa Mahasiswa — Freelance, Desain & IT",
+  description: "Temukan jasa dari mahasiswa lintas kampus: pekerjaan lepas, desain grafis, servis perangkat, hingga jasa angkut.",
+  keywords: ["jasa mahasiswa", "pekerjaan lepas", "servis perangkat", "desain grafis", "freelance"],
   alternates: { canonical: "/jasa" },
   openGraph: {
-    title: "Jasa Mahasiswa USU Polmed",
-    description: "Marketplace jasa khusus mahasiswa USU & Polmed.",
+    title: "Jasa Mahasiswa",
+    description: "Marketplace jasa mahasiswa lintas kampus.",
     url: "/jasa",
-    siteName: "Jual Beli USU Polmed",
+    siteName: "Kampus Kita",
     locale: "id_ID",
     type: "website",
   },

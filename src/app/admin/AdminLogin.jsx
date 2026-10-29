@@ -78,7 +78,7 @@ export default function AdminLogin() {
             </svg>
           </span>
           <div>
-            <p className="text-[11px] font-extrabold uppercase tracking-[.17em] text-emerald-800">Jual Beli USU · POLMED</p>
+            <p className="text-[11px] font-extrabold uppercase tracking-[.17em] text-emerald-800">Kampus Kita</p>
             <h1 className="text-xl font-black tracking-tight">Masuk ke panel admin</h1>
           </div>
         </div>

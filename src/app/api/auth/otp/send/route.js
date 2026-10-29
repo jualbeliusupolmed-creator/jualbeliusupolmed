@@ -5,6 +5,7 @@ import { hashOtp } from "@/lib/otp";
 import { formatWa } from "@/lib/constants";
 import { sendWa as send } from "@/lib/fonnte";
 import { jawabGalat } from "@/lib/jawabGalat";
+import { findSellerProfileByPhone } from "@/lib/seller-profile-identity";
 
 export const dynamic = "force-dynamic";
 
@@ -63,8 +64,8 @@ export async function POST(req) {
     // Ada yang bisa dikembalikan? Profil apa pun, atau iklan atas nama nomor itu
     // (akun lama yang sandinya dihapus admin tetap punya iklan). Kalau dua-duanya
     // kosong, yang dibutuhkan si pengetik bukan OTP — tapi mendaftar.
-    const { data: profil } = await supa
-      .from("seller_profiles").select("wa").eq("wa", normalizedWa).maybeSingle();
+    const { data: profil, error: profileError } = await findSellerProfileByPhone(supa, normalizedWa, "wa");
+    if (profileError) return jawabGalat(profileError, { pesan: "Akun belum dapat diperiksa." });
     if (!profil) {
       const { count } = await supa
         .from("listings").select("id", { count: "exact", head: true }).eq("seller_wa", normalizedWa);

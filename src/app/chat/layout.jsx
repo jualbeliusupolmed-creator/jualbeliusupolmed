@@ -1,10 +1,10 @@
 export const metadata = {
   title: "Obrolan Mahasiswa — Chat COD & Diskusi Kampus | Kampus Kita",
   description:
-    "Ruang obrolan mahasiswa USU & POLMED. Hubungi penjual, diskusikan titik temu COD aman di kampus, atau ngobrol santai dengan sesama mahasiswa terverifikasi.",
+    "Ruang obrolan mahasiswa lintas kampus. Hubungi penjual, sepakati titik temu COD yang aman, atau berbincang dengan komunitas.",
   openGraph: {
     title: "Obrolan Mahasiswa — Chat COD & Diskusi Kampus | Kampus Kita",
-    description: "Ruang obrolan mahasiswa USU & POLMED. Diskusi titik temu COD aman kampus.",
+    description: "Ruang obrolan mahasiswa lintas kampus untuk transaksi dan komunitas.",
     siteName: "Kampus Kita",
   },
 };

@@ -141,7 +141,7 @@ export default function NotifPrompt() {
             <>
               <p className="text-sm font-bold text-gray-900 dark:text-white">Mau dikabari kalau ada barang baru?</p>
               <p className="mt-0.5 text-xs text-gray-500 dark:text-slate-400">
-                Notifikasi langsung ke HP kamu tiap ada iklan baru tayang. Tanpa akun, bisa dimatikan kapan saja.
+                Notifikasi langsung ke HP kamu tiap ada barang baru. Tanpa akun, bisa dimatikan kapan saja.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <button onClick={aktifkan} disabled={sibuk} className="btn-primary px-4 py-2 text-xs">

@@ -5,7 +5,7 @@ import NavbarProgres from "@/components/ui/NavbarProgres";
 import { CheckCircle2, AlertTriangle, ShieldCheck } from "lucide-react";
 
 export const metadata = {
-  title: "Sistem Progres & Audit Jual Beli USU",
+  title: "Sistem Progres & Audit Kampus Kita",
   description: "Halaman dokumentasi status dan kesehatan sistem.",
 };
 

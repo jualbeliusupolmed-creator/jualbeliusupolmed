@@ -8,7 +8,7 @@ import { uploadMedia } from "@/lib/upload";
 import MediaUploader from "@/components/MediaUploader";
 import CampusSelect from "@/components/CampusSelect";
 import QRISModal from "@/components/QRISModal";
-import { CATEGORIES, MARKETPLACE_WA, POPULAR_AREAS, formatWa } from "@/lib/constants";
+import { CATEGORIES, MARKETPLACE_WA, formatWa } from "@/lib/constants";
 import { buildSlug } from "@/lib/slug";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -133,7 +133,7 @@ export default function JasaClient() {
       localStorage.setItem("seller_name", form.seller_name);
 
       if (data.isPro) {
-        toast.success("Iklan berhasil ditayangkan! (Gratis via Paket Pro)");
+        toast.success("Jasa berhasil ditawarkan! (Gratis via Paket Pro)");
         const waParam = encodeURIComponent(formattedWa);
         router.push(`/dashboard?wa=${waParam}`);
         return;
@@ -338,8 +338,8 @@ export default function JasaClient() {
               <span></span> GRATIS 7 Hari (Khusus Postingan Pertama)
             </p>
             <p className="mt-1.5 leading-relaxed">
-              Jika ini adalah iklan Jasa pertamamu, penayangan 100% GRATIS untuk 7 hari pertama.
-              Untuk iklan Jasa kedua dan seterusnya, atau jika masa aktif habis, biayanya hanya <strong>Rp 10.000/bulan</strong>.
+              Jika ini adalah tawaran jasa pertamamu, penayangan 100% GRATIS untuk 7 hari pertama.
+              Untuk tawaran jasa kedua dan seterusnya, atau jika masa aktif habis, biayanya hanya <strong>Rp 10.000/bulan</strong>.
             </p>
           </div>
         </div>

@@ -564,7 +564,7 @@ export default function MadingClient({ initialPosts = [] }) {
           {/* Banner Etika & Komunitas Kampus */}
           <div className="mb-3 p-3.5 rounded-2xl bg-gradient-to-r from-emerald-50 via-white to-teal-50 dark:from-emerald-950/20 dark:via-slate-900/40 dark:to-teal-950/20 border border-emerald-200/60 dark:border-emerald-800/40 text-xs shadow-xs">
             <div className="flex items-center gap-2 font-bold text-emerald-900 dark:text-emerald-300 mb-1">
-              <span>🛡️ Aturan Komunitas Menfess USU &amp; POLMED</span>
+              <span>🛡️ Aturan Komunitas Menfess</span>
             </div>
             <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-[11.5px]">
               Dilarang menyebut seseorang lewat inisial, prodi, dan angkatan yang menyasar individu, menyebarkan nomor kontak/NIM, atau merundung. Menfess yang melanggar privasi akan otomatis ditolak dan IP diblokir.
@@ -676,13 +676,7 @@ export default function MadingClient({ initialPosts = [] }) {
                     {/* Header: Sender & Badges */}
                     <div className="flex items-start gap-3.5 mb-3">
                       <div
-                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-xl font-bold ${
-                          post.type === "info"
-                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
-                            : post.faculty === "POLMED"
-                            ? "bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400"
-                            : "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
-                        }`}
+                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xl font-bold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
                       >
                         {post.type === "info" ? <Icon.Megaphone className="h-5 w-5" /> : post.is_anon ? <Icon.User className="h-5 w-5" /> : post.sender_name?.charAt(0) || "A"}
                       </div>

@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
-import { getSellerSession } from "@/lib/auth";
-import { formatWa } from "@/lib/constants";
+import { getOpenPoSession } from "@/lib/openPoSession";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimit } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req) {
-  const buyerWa = formatWa(getSellerSession() || "");
-  if (!buyerWa) return NextResponse.json({ error: "Masuk dengan akun JB untuk memesan." }, { status: 401 });
+  const session = getOpenPoSession();
+  if (!session.wa) return NextResponse.json({ error: session.error }, { status: session.status });
+  const buyerWa = session.wa;
   const limit = rateLimit(`open-po-order:${buyerWa}`, { limit: 20, windowMs: 60 * 60 * 1000 });
   if (!limit.ok) return NextResponse.json({ error: "Batas reservasi tercapai. Coba lagi nanti." }, { status: 429 });
 
@@ -51,8 +51,9 @@ export async function POST(req) {
 }
 
 export async function PATCH(req) {
-  const actorWa = formatWa(getSellerSession() || "");
-  if (!actorWa) return NextResponse.json({ error: "Sesi JB berakhir." }, { status: 401 });
+  const session = getOpenPoSession();
+  if (!session.wa) return NextResponse.json({ error: session.error }, { status: session.status });
+  const actorWa = session.wa;
   const body = await req.json().catch(() => ({}));
   const orderId = String(body.orderId || "").trim();
   const status = body.status;

@@ -3,7 +3,7 @@ import { MARKETPLACE_WA } from "@/lib/constants";
 
 export const metadata = {
   title: "Kebijakan Pengembalian Dana (Refund Policy)",
-  description: "Kebijakan pengembalian dana dan pembatalan transaksi di Jual Beli USU Polmed.",
+  description: "Kebijakan pengembalian dana dan pembatalan transaksi di Kampus Kita.",
   alternates: { canonical: "/refund-policy" },
 };
 
@@ -19,14 +19,14 @@ export default function RefundPolicyPage() {
 
       <div className="card mt-8 p-6 sm:p-8 space-y-6 text-sm text-gray-600 leading-relaxed">
         <p>
-          Kebijakan Pengembalian Dana (Refund Policy) ini mengatur prosedur pembatalan dan pengembalian dana untuk seluruh layanan berbayar (seperti pemasangan iklan, fitur Sundul (Bump), Sundul Otomatis (Auto-Bump), dan iklan unggulan (featured)) di platform <strong>Jual Beli USU Polmed</strong>.
+          Kebijakan Pengembalian Dana (Refund Policy) ini mengatur prosedur pembatalan dan pengembalian dana untuk seluruh layanan berbayar (seperti biaya penayangan barang, fitur Sundul (Bump), Sundul Otomatis (Auto-Bump), dan promosi unggulan (featured)) di platform <strong>Kampus Kita</strong>.
         </p>
 
         <div>
           <h2 className="text-base font-bold text-gray-900 mb-2">1. Kebijakan Pembatalan</h2>
           <ul className="list-disc pl-5 space-y-1">
-            <li>Transaksi pembayaran layanan periklanan yang telah berhasil diproses oleh sistem (pembayaran telah dikonfirmasi dan layanan telah aktif) <strong>tidak dapat dibatalkan secara sepihak</strong> oleh pengguna.</li>
-            <li>Jika pengguna memilih untuk menghapus iklan secara mandiri sebelum masa aktifnya berakhir, dana tidak akan dikembalikan.</li>
+            <li>Transaksi pembayaran layanan penayangan dan promosi yang telah berhasil diproses oleh sistem (pembayaran telah dikonfirmasi dan layanan telah aktif) <strong>tidak dapat dibatalkan secara sepihak</strong> oleh pengguna.</li>
+            <li>Jika pengguna memilih untuk menghapus barang jualan sebelum masa aktifnya berakhir, dana tidak akan dikembalikan.</li>
           </ul>
         </div>
 
@@ -34,8 +34,8 @@ export default function RefundPolicyPage() {
           <h2 className="text-base font-bold text-gray-900 mb-2">2. Syarat Pengembalian Dana (Refund)</h2>
           <ul className="list-disc pl-5 space-y-1">
             <li>Dana yang telah dibayarkan bersifat <strong>final dan tidak dapat dikembalikan</strong> dalam kondisi normal.</li>
-            <li>Pengembalian dana <strong>hanya dapat diberikan</strong> apabila terjadi kesalahan teknis dari sistem kami, misalnya: Anda telah melakukan pembayaran via QRIS yang berhasil terverifikasi oleh sistem, namun layanan (seperti fitur sundul atau penayangan iklan) gagal diaktifkan dalam waktu 1x24 jam.</li>
-            <li>Pengembalian dana tidak berlaku jika iklan Anda diturunkan (take-down) secara paksa oleh administrator karena melanggar Syarat dan Ketentuan platform (misalnya menjual barang ilegal, penipuan, atau spam).</li>
+            <li>Pengembalian dana <strong>hanya dapat diberikan</strong> apabila terjadi kesalahan teknis dari sistem kami, misalnya: Anda telah melakukan pembayaran via QRIS yang berhasil terverifikasi oleh sistem, namun layanan (seperti fitur sundul atau penayangan barang) gagal diaktifkan dalam waktu 1x24 jam.</li>
+            <li>Pengembalian dana tidak berlaku jika barang jualan Anda diturunkan (take-down) oleh administrator karena melanggar Syarat dan Ketentuan platform (misalnya menjual barang ilegal, penipuan, atau spam).</li>
           </ul>
         </div>
 
@@ -52,7 +52,7 @@ export default function RefundPolicyPage() {
         <div className="border-t pt-5">
           <h2 className="text-base font-bold text-gray-900 mb-2">Persetujuan</h2>
           <p>
-            Dengan menggunakan layanan berbayar di Jual Beli USU Polmed, Anda secara otomatis dianggap telah membaca, memahami, dan menyetujui seluruh ketentuan yang tercantum dalam Refund Policy ini.
+            Dengan menggunakan layanan berbayar di Kampus Kita, Anda secara otomatis dianggap telah membaca, memahami, dan menyetujui seluruh ketentuan yang tercantum dalam Refund Policy ini.
           </p>
         </div>
       </div>

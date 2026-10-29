@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { CATEGORIES, POPULAR_AREAS } from "@/lib/constants";
+import { CATEGORIES } from "@/lib/constants";
 import { rupiah } from "@/lib/fees";
 import { uploadMedia } from "@/lib/upload";
 import MediaUploader from "@/components/MediaUploader";
@@ -20,7 +20,6 @@ export default function EditPage() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(true);
-  const [areaOption, setAreaOption] = useState("");
   const [fileError, setFileError] = useState("");
   const [cats, setCats] = useState(CATEGORIES);
 
@@ -39,7 +38,7 @@ export default function EditPage() {
         const res = await fetch(`/api/listings/${id}`);
         const data = await res.json();
         if (!res.ok || !data.listing) {
-          setMsg("Iklan tidak ditemukan.");
+          setMsg("Barang tidak ditemukan.");
           setLoading(false);
           return;
         }
@@ -55,15 +54,6 @@ export default function EditPage() {
           campus: l.campus || "Semua",
           area: l.area || "",
         });
-        if (l.area) {
-          if (POPULAR_AREAS.includes(l.area)) {
-            setAreaOption(l.area);
-          } else {
-            setAreaOption("Lainnya");
-          }
-        } else {
-          setAreaOption("");
-        }
         const existing = l.images?.length
           ? l.images
           : l.image_url
@@ -71,7 +61,7 @@ export default function EditPage() {
           : [];
         setMedia(existing.map((url) => ({ url, preview: url })));
       } catch {
-        setMsg("Gagal memuat data iklan.");
+        setMsg("Gagal memuat data barang.");
       } finally {
         setLoading(false);
       }
@@ -80,14 +70,6 @@ export default function EditPage() {
   }, [id]);
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
-
-  const handleAreaOptionChange = (e) => {
-    const val = e.target.value;
-    setAreaOption(val);
-    if (val !== "Lainnya") {
-      setForm((f) => ({ ...f, area: val }));
-    }
-  };
 
   async function submit(e) {
     e.preventDefault();
@@ -121,7 +103,7 @@ export default function EditPage() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Gagal update iklan");
+      if (!res.ok) throw new Error(data.error || "Gagal memperbarui barang");
       router.push("/dashboard?edited=1");
     } catch (err) {
       setMsg(err.message);
@@ -134,7 +116,7 @@ export default function EditPage() {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10 text-center text-gray-400">
         <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        <p className="mt-3">Memuat data iklan…</p>
+        <p className="mt-3">Memuat data barang…</p>
       </div>
     );
   }
@@ -149,16 +131,16 @@ export default function EditPage() {
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
         </p>
-        <p className="mt-3">{msg || "Iklan tidak ditemukan."}</p>
+        <p className="mt-3">{msg || "Barang tidak ditemukan."}</p>
       </div>
     );
   }
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-6">
-      <h1 className="text-2xl font-extrabold">Edit Iklan</h1>
+      <h1 className="text-2xl font-extrabold">Edit Barang</h1>
       <p className="mt-1 text-gray-500">
-        Perbarui detail iklan <strong>{original?.title}</strong>.
+        Perbarui detail barang <strong>{original?.title}</strong>.
       </p>
 
       <form onSubmit={submit} className="mt-6 grid gap-6 lg:grid-cols-3">
@@ -192,20 +174,7 @@ export default function EditPage() {
             </div>
             <div>
               <label className="label">Lokasi COD</label>
-              <select
-                className="input focus:ring-4 focus:ring-accent/10 focus:border-accent"
-                value={areaOption}
-                onChange={handleAreaOptionChange}
-              >
-                <option value="">Pilih Lokasi COD</option>
-                {POPULAR_AREAS.map((a) => (
-                  <option key={a} value={a}>{a}</option>
-                ))}
-                <option value="Lainnya">Lainnya (Ketik Manual)</option>
-              </select>
-            </div>
-            {areaOption === "Lainnya" && (
-              <div className="floating-group mt-5">
+              <div className="floating-group">
                 <input
                   id="edit-area"
                   className="floating-input peer"
@@ -214,9 +183,9 @@ export default function EditPage() {
                   placeholder=" "
                   required
                 />
-                <label htmlFor="edit-area" className="floating-label">Ketik Manual Lokasi COD (misal: Fasilkom, Gedung C)</label>
+                <label htmlFor="edit-area" className="floating-label">Lokasi COD (kota, area, atau titik temu)</label>
               </div>
-            )}
+            </div>
             
             <div className="floating-group">
               <input
@@ -240,9 +209,9 @@ export default function EditPage() {
                 required
                 disabled={original?.status === "active"}
               />
-              <label htmlFor="edit-title" className="floating-label">Judul Iklan</label>
+              <label htmlFor="edit-title" className="floating-label">Nama / Judul Barang</label>
               {original?.status === "active" && (
-                <p className="mt-1 text-[10px] text-rose-500">Judul & Kategori dikunci setelah iklan tayang untuk mencegah daur ulang.</p>
+                <p className="mt-1 text-[10px] text-rose-500">Nama & kategori dikunci setelah barang ditampilkan untuk mencegah daur ulang.</p>
               )}
             </div>
             
@@ -324,7 +293,7 @@ export default function EditPage() {
             <p className="font-semibold text-gray-700 dark:text-slate-300">ℹ Info</p>
             <ul className="mt-2 list-disc space-y-1 pl-4">
               <li>Edit gratis, tidak ada biaya tambahan.</li>
-              <li>Status iklan tidak berubah.</li>
+              <li>Status barang tidak berubah.</li>
               <li>Perubahan langsung tayang.</li>
             </ul>
           </div>

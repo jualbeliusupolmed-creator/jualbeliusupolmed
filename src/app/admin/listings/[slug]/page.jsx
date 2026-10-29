@@ -107,7 +107,7 @@ export async function generateMetadata({ params }) {
   if (!isAdmin()) return { title: "Admin" };
   const result = await getData(params.slug);
   const title = result?.listing?.title || "Listing";
-  return { title: `${title} — Admin Jual Beli USU` };
+  return { title: `${title} — Admin Kampus Kita` };
 }
 
 export default async function AdminListingPage({ params }) {

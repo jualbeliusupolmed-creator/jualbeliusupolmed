@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 
 /**
- * Pemindah mode: Iklan & Jualan ⟷ Toko Saya.
+ * Pemindah mode dashboard: Jual Barang, Open PO, dan Toko Saya.
  *
  * Dulu keduanya halaman terpisah dan tombol ini membandingkan `pathname`.
  * Sejak penyuntingan toko pindah ke Profil Satu Pintu, "Toko Saya" bukan lagi
@@ -17,18 +17,19 @@ export default function DashboardModeToggle({ storeStatus, activeCount }) {
   const pathname = usePathname();
   const params = useSearchParams();
   const isToko = pathname?.startsWith("/dashboard/toko") || params.get("tab") === "profil";
+  const isOpenPo = params.get("tab") === "open-po";
 
   return (
-    <div className="inline-flex items-center p-1 bg-slate-100 dark:bg-slate-800/90 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 shadow-inner w-full sm:w-auto">
+    <div className="inline-flex items-center gap-0.5 p-1 bg-slate-100 dark:bg-slate-800/90 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 shadow-inner w-full sm:w-auto">
       <Link
         href="/dashboard"
-        className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold transition-all duration-150 ${
-          !isToko
+        className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs font-extrabold transition-all duration-150 ${
+          !isToko && !isOpenPo
             ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm"
             : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
         }`}
       >
-        <span> Iklan &amp; Jualan</span>
+        <span> Jual Barang</span>
         {activeCount !== undefined && activeCount > 0 && (
           <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-black">
             {activeCount}
@@ -37,8 +38,19 @@ export default function DashboardModeToggle({ storeStatus, activeCount }) {
       </Link>
 
       <Link
+        href="/dashboard?tab=open-po"
+        className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs font-extrabold transition-all duration-150 ${
+          isOpenPo
+            ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm"
+            : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+        }`}
+      >
+        <span>Open PO</span>
+      </Link>
+
+      <Link
         href="/dashboard?tab=profil"
-        className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold transition-all duration-150 ${
+        className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs font-extrabold transition-all duration-150 ${
           isToko
             ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm"
             : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"

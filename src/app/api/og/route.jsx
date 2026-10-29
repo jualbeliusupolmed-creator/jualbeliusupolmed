@@ -28,7 +28,7 @@ function isAllowedImageHost(raw) {
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
-  const title    = (searchParams.get("title")    || "Jual Beli USU Polmed").slice(0, 90);
+  const title    = (searchParams.get("title")    || "Kampus Kita").slice(0, 90);
   const price    = searchParams.get("price")    || "";
   const image    = searchParams.get("image")    || "";
   const seller   = (searchParams.get("seller")   || "").slice(0, 40);
@@ -78,7 +78,7 @@ export async function GET(request) {
             <div style={{ width: 36, height: 36, borderRadius: 8, background: accentColor, display: "flex", alignItems: "center", justifyContent: "center" }}>
               <span style={{ color: "white", fontSize: 20, fontWeight: 800 }}>J</span>
             </div>
-            <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 20, fontWeight: 700, letterSpacing: -0.5 }}>Jual Beli USU Polmed</span>
+            <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 20, fontWeight: 700, letterSpacing: -0.5 }}>Kampus Kita</span>
           </div>
 
           {/* Middle: content */}

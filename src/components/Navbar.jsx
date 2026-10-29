@@ -25,6 +25,7 @@ export default function Navbar({ config }) {
   const [cariTerbuka, setCariTerbuka] = useState(false);
   const [showOtp, setShowOtp] = useState(false);
   const dropdownRef = useRef(null);
+  const mobileDropdownRef = useRef(null);
 
   // Load campus preference
   useEffect(() => {
@@ -45,7 +46,10 @@ export default function Navbar({ config }) {
     window.addEventListener("chat:unread", onChatUnread);
 
     const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+      if (
+        (dropdownRef.current && !dropdownRef.current.contains(e.target)) ||
+        (mobileDropdownRef.current && !mobileDropdownRef.current.contains(e.target))
+      ) {
         setCampusDropdownOpen(false);
       }
     };
@@ -69,8 +73,8 @@ export default function Navbar({ config }) {
   
   const getSubPageTitle = () => {
     if (pathname?.startsWith("/produk/")) return "Detail Produk";
-    if (pathname === "/jual") return "Pasang Iklan";
-    if (pathname?.startsWith("/edit/")) return "Edit Iklan";
+    if (pathname === "/jual") return "Jual Barang";
+    if (pathname?.startsWith("/edit/")) return "Edit Barang";
     if (pathname?.startsWith("/penjual/")) return "Profil Penjual";
     return "Kampus Kita";
   };
@@ -280,7 +284,7 @@ export default function Navbar({ config }) {
       </div>
 
       {/* ── MOBILE TOP APP BAR (Tinggi 56px — h-14) ── */}
-      <div className="lg:hidden h-14 px-3 sm:px-4 flex items-center justify-between gap-2.5">
+      <div className={cn("lg:hidden px-3 sm:px-4 flex items-center justify-between gap-2.5", isSubPage ? "h-14" : "min-h-14 py-1.5")}>
         {isSubPage ? (
           /* Sub/Detail Pages: Back + Centered Title + Share/Action */
           <>
@@ -305,8 +309,15 @@ export default function Navbar({ config }) {
                 <Icon.Search className="w-4 h-4" />
               </button>
               <Link
+                href="/favorit"
+                aria-label="Wishlist favorit"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+              >
+                <Icon.Heart className="w-4 h-4" />
+              </Link>
+              <Link
                 href="/jual"
-                aria-label="Pasang Iklan"
+                aria-label="Jual Barang"
                 className="w-8 h-8 rounded-full bg-[#047857] text-white flex items-center justify-center shadow-xs active:scale-90 transition-all"
               >
                 <Icon.Plus className="w-4 h-4 stroke-[2.5]" />
@@ -314,31 +325,48 @@ export default function Navbar({ config }) {
             </div>
           </>
         ) : (
-          /* Root Pages: Logo + USU • POLMED + Actions */
+          /* Root Pages: Brand + campus selector + actions */
           <>
             <div className="flex items-center gap-2 min-w-0">
               <Link href="/" className="w-8 h-8 rounded-xl bg-[#047857] text-white flex items-center justify-center shrink-0 shadow-xs">
                 <Icon.GraduationCap className="w-4.5 h-4.5 text-emerald-200" />
               </Link>
-              <div className="flex flex-col min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-extrabold text-sm text-[#0F172A] dark:text-white tracking-tight truncate">
-                    Kampus Kita
-                  </span>
+              <div className="flex min-w-0 items-center gap-1.5">
+                <span className="flex flex-col text-sm font-extrabold leading-[0.95] tracking-tight text-[#0F172A] dark:text-white">
+                  <span>Kampus</span>
+                  <span>Kita</span>
+                </span>
+                <div className="relative flex items-center" ref={mobileDropdownRef}>
                   <button
                     type="button"
-                    onClick={() => {
-                      const next = selectedCampus === "USU" ? "POLMED" : selectedCampus === "POLMED" ? "Semua" : "USU";
-                      changeCampus(next);
-                    }}
-                    className="px-1.5 py-0.2 rounded-full bg-[#ECFDF5] dark:bg-emerald-950/80 text-[#047857] dark:text-emerald-300 text-[9px] uppercase font-bold tracking-wide shrink-0 border border-emerald-600/20"
+                    onClick={() => setCampusDropdownOpen(!campusDropdownOpen)}
+                    aria-label={`Pilih kampus, saat ini ${selectedCampus === "Semua" ? "Semua kampus" : selectedCampus}`}
+                    aria-expanded={campusDropdownOpen}
+                    className="inline-flex items-center gap-1 rounded-full border border-emerald-600/20 bg-[#ECFDF5] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#047857] dark:bg-emerald-950/80 dark:text-emerald-300"
                   >
-                    {selectedCampus === "Semua" ? "USU • POLMED" : selectedCampus} ▾
+                    {selectedCampus === "Semua" ? "Semua" : selectedCampus} ▾
                   </button>
+                  {campusDropdownOpen && (
+                    <div className="absolute left-0 top-full z-[60] mt-1 w-48 rounded-2xl border border-slate-200/80 bg-white py-1.5 shadow-xl dark:border-white/10 dark:bg-slate-800">
+                      {[...campuses.map((camp) => ({ key: camp.shortName, label: `${camp.name} (${camp.shortName})` })), { key: "Semua", label: "Semua Kampus" }].map((camp) => (
+                        <button
+                          key={camp.key}
+                          type="button"
+                          onClick={() => changeCampus(camp.key)}
+                          className={cn(
+                            "flex w-full items-center justify-between px-3.5 py-2 text-left text-xs transition-colors",
+                            selectedCampus === camp.key
+                              ? "bg-emerald-50/80 font-bold text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
+                              : "font-semibold text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700/50"
+                          )}
+                        >
+                          <span>{camp.label}</span>
+                          {selectedCampus === camp.key && <span>✓</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <span className="text-[10px] text-[#64748B] dark:text-slate-400 truncate font-medium">
-                  Ekosistem Kampus Terpadu
-                </span>
               </div>
             </div>
 
@@ -351,6 +379,13 @@ export default function Navbar({ config }) {
               >
                 <Icon.Search className="w-4 h-4" />
               </button>
+              <Link
+                href="/favorit"
+                aria-label="Wishlist favorit"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors active:scale-95"
+              >
+                <Icon.Heart className="w-4 h-4" />
+              </Link>
               <Link
                 href="/chat"
                 aria-label="Pesan & Obrolan"

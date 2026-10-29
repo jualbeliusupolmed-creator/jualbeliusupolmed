@@ -7,6 +7,7 @@ import { hashPin } from "@/lib/pin";
 import { validasiPin } from "@/lib/pinRules";
 import { tulisProfil } from "@/lib/tulisProfil";
 import { jawabGalat } from "@/lib/jawabGalat";
+import { findSellerProfileByPhone } from "@/lib/seller-profile-identity";
 
 export const dynamic = "force-dynamic";
 
@@ -49,8 +50,18 @@ export async function POST(req) {
 
     const supa = getAdminClient();
 
-    const { data: profile } = await supa
-      .from("seller_profiles").select("wa, pin").eq("wa", normalizedWa).maybeSingle();
+    const { data: profile, error: profileError } = await findSellerProfileByPhone(
+      supa,
+      normalizedWa,
+      "wa,pin,phone_wa"
+    );
+    if (profileError) return jawabGalat(profileError, { pesan: "Akun belum dapat diperiksa." });
+    if (profile && profile.wa !== normalizedWa) {
+      return NextResponse.json(
+        { error: "Nomor ini sudah ditautkan ke profil lain. Masuk dengan Google atau gunakan kode WhatsApp untuk mengatur PIN." },
+        { status: 409 }
+      );
+    }
     if (profile?.pin) {
       return NextResponse.json(
         { error: "Nomor ini sudah punya akun. Masuk dengan PIN / sandi, atau pakai \"Lupa PIN\" kalau lupa." },

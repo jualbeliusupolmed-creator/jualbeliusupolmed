@@ -32,12 +32,12 @@ const PROFIL_SWIPE_DEFAULT = [
     age: 20,
     avatar: "FK",
     stambuk: "2023",
-    campus: "USU",
-    faculty: "Fasilkom-TI",
-    major: "Ilmu Komputer • USU Padang Bulan",
-    bio: "Lagi cari partner buat ikut Hackathon USU / PKM-KC. Suka ngoding React, riset AI & ngopi di Warkop Harapan atau FIB. Gas saling sapa dan nugas bareng!",
-    favSpot: "Perpus Pusat USU Lt. 2",
-    tags: ["#HackathonUSU", "#WebDev", "#NugasBareng", "#NgopiSantai"],
+    campus: "Kampus",
+    faculty: "Teknologi Informasi",
+    major: "Ilmu Komputer",
+    bio: "Mencari teman untuk kolaborasi proyek dan belajar teknologi. Suka ngoding, riset, dan diskusi santai.",
+    favSpot: "Ruang publik kampus",
+    tags: ["#WebDev", "#BelajarBareng", "#Teknologi"],
   },
   {
     id: "da-2",
@@ -45,12 +45,12 @@ const PROFIL_SWIPE_DEFAULT = [
     age: 21,
     avatar: "DA",
     stambuk: "2022",
-    campus: "USU",
-    faculty: "Fakultas Teknik",
-    major: "Teknik Mesin • FT USU",
-    bio: "Butuh temen sharing praktikum thermo & tugas CAD. Santai, suka nongkrong di Kantin Teknik atau Pintu 2 sehabis ashar.",
-    favSpot: "Kantin FT & Gazebo Teknik",
-    tags: ["#TeknikMesin", "#AutoCAD", "#Pintu2USU", "#FutsalKampus"],
+    campus: "Kampus",
+    faculty: "Teknik",
+    major: "Teknik Mesin",
+    bio: "Mencari teman belajar dan berdiskusi tentang praktikum serta desain teknik.",
+    favSpot: "Area umum kampus",
+    tags: ["#TeknikMesin", "#BelajarBareng", "#Olahraga"],
   },
   {
     id: "sl-3",
@@ -58,12 +58,12 @@ const PROFIL_SWIPE_DEFAULT = [
     age: 20,
     avatar: "SL",
     stambuk: "2023",
-    campus: "USU",
-    faculty: "FEB USU",
-    major: "Akuntansi • FEB USU",
-    bio: "Lagi ngejar skripsi akuntansi & butuh teman belajar bareng di perpustakaan. Suka matcha dingin & diskusi bisnis kampus.",
-    favSpot: "Perpustakaan Pusat USU & Gazebo FEB",
-    tags: ["#AkuntansiUSU", "#StudyWithMe", "#PerpusUSU", "#BisnisMahasiswa"],
+    campus: "Kampus",
+    faculty: "Ekonomi dan Bisnis",
+    major: "Akuntansi",
+    bio: "Mencari teman belajar dan berdiskusi tentang akuntansi serta bisnis.",
+    favSpot: "Perpustakaan kampus",
+    tags: ["#Akuntansi", "#BelajarBareng", "#Bisnis"],
   },
   {
     id: "ks-4",
@@ -71,27 +71,27 @@ const PROFIL_SWIPE_DEFAULT = [
     age: 22,
     avatar: "KS",
     stambuk: "2021",
-    campus: "POLMED",
+    campus: "Kampus",
     faculty: "Teknik Komputer",
-    major: "Teknik Komputer • POLMED",
-    bio: "Anak IT Polmed, hobi oprek IoT dan mikrokontroler. Terbuka kolaborasi lintas kampus USU-POLMED buat proyek tugas akhir.",
-    favSpot: "Kantin Gedung Z POLMED",
-    tags: ["#AnakPOLMED", "#IoTMedan", "#CodingBareng", "#MedanTech"],
+    major: "Teknik Komputer",
+    bio: "Tertarik dengan IoT dan mikrokontroler. Terbuka untuk kolaborasi lintas kampus.",
+    favSpot: "Area umum kampus",
+    tags: ["#IoT", "#CodingBareng", "#Teknologi"],
   },
 ];
 
 const MATCH_HARI_INI = [
-  { name: "Dimas Adrian", initials: "DA", faculty: "Teknik Mesin FT USU", campus: "USU", time: "10:15" },
-  { name: "Sarah Lubis", initials: "SL", faculty: "Akuntansi FEB USU", campus: "USU", time: "08:30" },
-  { name: "Kevin Siregar", initials: "KS", faculty: "Teknik Komputer POLMED", campus: "POLMED", time: "Kemarin" },
+  { name: "Dimas Adrian", initials: "DA", faculty: "Teknik Mesin", campus: "Kampus", time: "10:15" },
+  { name: "Sarah Lubis", initials: "SL", faculty: "Akuntansi", campus: "Kampus", time: "08:30" },
+  { name: "Kevin Siregar", initials: "KS", faculty: "Teknik Komputer", campus: "Kampus", time: "Kemarin" },
 ];
 
 const BASECAMP_SPOTS = [
-  "Perpustakaan Pusat USU",
-  "Pendopo USU",
-  "Kantin Gedung Z POLMED",
-  "Pintu 2 USU",
-  "Gazebo FIB USU",
+  "Area publik yang ramai",
+  "Perpustakaan kampus",
+  "Kantin kampus",
+  "Ruang terbuka kampus",
+  "Titik temu yang disepakati",
 ];
 
 function parseMessageContent(msg) {
@@ -118,10 +118,7 @@ function ChatContent() {
   const [desktopMode, setDesktopMode] = useState(roomQuery || anonView ? "chat" : "swipe");
   const [sidebarFilter, setSidebarFilter] = useState("semua"); // "semua" | "teman" | "po" | "market"
   const [searchFilter, setSearchFilter] = useState("");
-  const [kampusTersedia, setKampusTersedia] = useState([
-    { shortName: "USU" },
-    { shortName: "POLMED" },
-  ]);
+  const [kampusTersedia, setKampusTersedia] = useState([]);
 
   // Swipe Deck state
   const [swipeIndex, setSwipeIndex] = useState(0);
@@ -952,7 +949,7 @@ function ChatContent() {
                   <div className="flex items-center justify-between gap-1 mb-0.5">
                     <div className="flex items-center gap-1.5 min-w-0">
                       <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                        {ringkasAnon.partnerAktif ? ringkasAnon.partnerAktif : "Obrolan Anonim USU"}
+                        {ringkasAnon.partnerAktif ? ringkasAnon.partnerAktif : "Obrolan Anonim Kampus"}
                       </span>
                       <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 truncate shrink-0">
                         Anon 1-on-1
@@ -985,7 +982,7 @@ function ChatContent() {
                 const isDirect = room.type === "direct";
                 const isUser1 = room.user1_id === myWa;
                 const partnerAlias = (isUser1 ? room.user2_alias : room.user1_alias) || "Anak Kampus";
-                const partnerFaculty = (isUser1 ? room.user2_faculty : room.user1_faculty) || "USU";
+                const partnerFaculty = (isUser1 ? room.user2_faculty : room.user1_faculty) || "Umum";
                 const listing = room.listings;
                 const isSelected = roomQuery === room.id;
 

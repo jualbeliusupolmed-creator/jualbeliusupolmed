@@ -9,7 +9,7 @@ import Image from "next/image";
 import { adFeeFrom, rupiah } from "@/lib/fees";
 import { uploadMedia } from "@/lib/upload";
 import MediaUploader from "@/components/MediaUploader";
-import { CATEGORIES, MARKETPLACE_WA, POPULAR_AREAS, formatWa } from "@/lib/constants";
+import { CATEGORIES, MARKETPLACE_WA, formatWa } from "@/lib/constants";
 import { buildSlug } from "@/lib/slug";
 import {
   buildListingDescriptionTemplate,
@@ -48,7 +48,6 @@ export default function JualPage() {
   const [qrisUrl, setQrisUrl] = useState("");
   const [qrisFinalAmount, setQrisFinalAmount] = useState(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const [areaOption, setAreaOption] = useState("");
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [agreedPdp, setAgreedPdp] = useState(true);
 
@@ -118,14 +117,6 @@ export default function JualPage() {
     : sellerPunyaToko
     ? "punya toko"
     : "Pasar Bebas Mahasiswa";
-
-  const handleAreaOptionChange = (e) => {
-    const val = e.target.value;
-    setAreaOption(val);
-    if (val !== "Lainnya") {
-      setForm((f) => ({ ...f, area: val }));
-    }
-  };
 
   const handleCategoryChange = (e) => {
     const nextCategory = e.target.value;
@@ -245,20 +236,20 @@ export default function JualPage() {
 
       if (data.isDistributor) {
         const feeInfo = data.distributorFee > 0 ? ` Fee bagi hasil: ${rupiah(data.distributorFee)}` : "";
-        toast.success(`Iklan berhasil ditayangkan! (Gratis via Distributor)${feeInfo}`);
+        toast.success(`Barang berhasil ditayangkan! (Gratis via Distributor)${feeInfo}`);
         const waParam = encodeURIComponent(formattedWa);
         router.push(`/dashboard?wa=${waParam}`);
         return;
       }
 
       if (data.punyaToko) {
-        toast.success("Iklan langsung tayang — gratis karena kamu punya toko! ");
+        toast.success("Barang langsung ditayangkan — gratis karena kamu punya toko! ");
         router.push(`/dashboard?wa=${encodeURIComponent(formattedWa)}`);
         return;
       }
 
       if (data.isPro || data.isFreeMode || gratis || !data.paymentUrl) {
-        toast.success("Iklan berhasil ditayangkan! (100% Gratis - Pasar Bebas)");
+        toast.success("Barang berhasil ditayangkan! (100% Gratis - Pasar Bebas)");
         const productSlug = buildSlug(data.listing?.title || form.title, data.listing?.id);
         if (data.listing?.id) {
           router.push(`/produk/${productSlug}`);
@@ -290,16 +281,16 @@ export default function JualPage() {
 
       <h1 className="text-2xl font-extrabold">{form.type === "sewa" ? "Sewakan Barang" : "Jual Barang"}</h1>
 
-      {/* Punya toko = iklan gratis. Disebut di ATAS, bukan cuma di rincian
+      {/* Punya toko = biaya tayang gratis. Disebut di ATAS, bukan cuma di rincian
           biaya paling bawah: yang belum punya toko masih sempat membuatnya
           sebelum mengetik apa pun. */}
       {isFreeMode ? (
         <div className="mt-3 rounded-2xl border border-emerald-300 bg-emerald-50 px-5 py-4 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200 shadow-sm flex items-start gap-3">
           <Icon.Sparkles className="h-5 w-5 shrink-0 text-emerald-600 mt-0.5" />
           <div>
-            <strong>🔥 Mode Pasar Bebas Aktif: Pasang Iklan 100% GRATIS!</strong>
+            <strong>🔥 Mode Pasar Bebas Aktif: Jual Barang 100% GRATIS!</strong>
             <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-300">
-              Khusus mahasiswa USU & POLMED, pasang iklan tanpa biaya tayang dan bebas komisi penjualan. Iklanmu langsung aktif & otomatis disebarkan ke grup WA!
+              Jual barang untuk komunitas kampus yang terdaftar. Barangmu dapat ditemukan mahasiswa lintas kampus.
             </p>
           </div>
         </div>
@@ -307,7 +298,7 @@ export default function JualPage() {
         <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-900/20 dark:text-emerald-300 shadow-sm flex items-start gap-3">
           <Icon.Store className="h-5 w-5 shrink-0" />
           <div>
-            <strong>Iklanmu gratis</strong> — kamu sudah punya toko, jadi tidak ada biaya tayang.
+            <strong>Jual barang gratis</strong> — kamu sudah punya toko, jadi tidak ada biaya tayang.
           </div>
         </div>
       ) : (
@@ -315,14 +306,14 @@ export default function JualPage() {
           <Icon.Store className="h-5 w-5 shrink-0" />
           <div>
             Punya toko fisik di sekitar kampus? <strong>Daftar Toko Mitra & Berlangganan.</strong>{" "}
-            <Link href="/dashboard?tab=profil" className="font-semibold underline hover:text-amber-700 dark:hover:text-amber-100 transition">Daftarkan tokomu</Link> (syarat: memiliki toko fisik & paket langganan aktif) untuk pasang iklan sepuasnya tanpa biaya tayang per barang.
+            <Link href="/dashboard?tab=profil" className="font-semibold underline hover:text-amber-700 dark:hover:text-amber-100 transition">Daftarkan tokomu</Link> (syarat: memiliki toko fisik & paket langganan aktif) untuk jual barang sepuasnya tanpa biaya tayang.
           </div>
         </div>
       )}
       <p className="mt-1 text-gray-500">
         {gratis
-          ? `Isi detail ${form.type === "sewa" ? "barang sewaan" : "barang"}, tekan kirim, iklan langsung tayang — tanpa biaya.`
-          : `Isi detail ${form.type === "sewa" ? "barang sewaan" : "barang"}, bayar biaya tayang, iklan langsung tampil setelah pembayaran sukses.`}
+          ? `Isi detail ${form.type === "sewa" ? "barang sewaan" : "barang"}, tekan kirim, barang langsung ditampilkan — tanpa biaya.`
+          : `Isi detail ${form.type === "sewa" ? "barang sewaan" : "barang"}, bayar biaya tayang, barang langsung ditampilkan setelah pembayaran sukses.`}
       </p>
 
       {/* Quick Trust Indicators Banner (18.html blueprint) */}
@@ -372,7 +363,7 @@ export default function JualPage() {
 
           <div className="card grid gap-5 p-5 sm:grid-cols-2">
             <div>
-              <label className="label">Tipe Iklan</label>
+              <label className="label">Jenis Jual Barang</label>
               <select className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.type} onChange={set("type")}>
                 <option value="barang">Barang — {rupiah(adFeeFor("barang", form.price))}</option>
                 <option value="sewa">Sewa — {rupiah(adFeeFor("barang", form.price))}</option>
@@ -426,20 +417,7 @@ export default function JualPage() {
             </div>
             <div>
               <label className="label">Lokasi COD</label>
-              <select
-                className="input focus:ring-4 focus:ring-accent/10 focus:border-accent"
-                value={areaOption}
-                onChange={handleAreaOptionChange}
-              >
-                <option value="">Pilih Lokasi COD</option>
-                {POPULAR_AREAS.map((a) => (
-                  <option key={a} value={a}>{a}</option>
-                ))}
-                <option value="Lainnya">Lainnya (Ketik Manual)</option>
-              </select>
-            </div>
-            {areaOption === "Lainnya" && (
-              <div className="floating-group mt-5">
+              <div className="floating-group">
                 <input 
                   id="form-area"
                   className="floating-input peer" 
@@ -448,9 +426,9 @@ export default function JualPage() {
                   placeholder=" "
                   required
                 />
-                <label htmlFor="form-area" className="floating-label">Ketik Manual Lokasi COD (misal: Fasilkom, Gedung C)</label>
+                <label htmlFor="form-area" className="floating-label">Lokasi COD (kota, area, atau titik temu)</label>
               </div>
-            )}
+            </div>
             
             {/* Floating Input Groups */}
             <div className="sm:col-span-2 floating-group">
@@ -479,7 +457,7 @@ export default function JualPage() {
               <div>
                 <p className="font-semibold text-gray-900 dark:text-white">Template deskripsi kategori</p>
                 <p className="text-xs text-gray-500 dark:text-slate-400">
-                  Bikin format iklan lebih rapi dan seragam untuk pembeli maupun bot WA.
+                  Bikin format detail barang lebih rapi dan seragam untuk pembeli maupun bot WA.
                 </p>
               </div>
               <button
@@ -613,10 +591,10 @@ export default function JualPage() {
                 <span className="text-xs text-gray-500 dark:text-slate-400 mt-1.5 leading-relaxed">
                   {isFreeMode || gratis ? (
                     <>
-                      Biaya normal <span className="line-through text-gray-400">Rp 5.000</span> menjadi <strong className="text-emerald-600 dark:text-emerald-400">Rp 0</strong>. Pratinjau iklanmu, lalu klik Tayangkan. Iklan akan ditinjau tim moderasi sebelum tayang dan disebarkan ke grup WhatsApp.
+                      Biaya normal <span className="line-through text-gray-400">Rp 5.000</span> menjadi <strong className="text-emerald-600 dark:text-emerald-400">Rp 0</strong>. Pratinjau barangmu, lalu klik Tayangkan. Barang akan ditinjau tim moderasi sebelum ditampilkan dan disebarkan ke grup WhatsApp.
                     </>
                   ) : (
-                    "Scan QRIS yang muncul setelah ini, lalu unggah foto struknya di layar yang sama. Strukmu diperiksa otomatis dan iklan langsung aktif kalau cocok."
+                    "Scan QRIS yang muncul setelah ini, lalu unggah foto struknya di layar yang sama. Strukmu diperiksa otomatis dan barang langsung ditampilkan kalau cocok."
                   )}
                 </span>
               </div>
@@ -674,7 +652,7 @@ export default function JualPage() {
                 <div className="flex items-center gap-1.5 mt-2 text-[10.5px] text-slate-500">
                   <Icon.MapPin className="w-3 h-3 text-[#047857]" />
                   <span className="truncate">
-                    {form.campus === "Semua" ? "USU • POLMED" : form.campus}
+                    {form.campus === "Semua" ? "Semua Kampus" : form.campus}
                     {form.area ? ` · ${form.area}` : ""}
                   </span>
                 </div>
@@ -718,7 +696,7 @@ export default function JualPage() {
             </dl>
 
             <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50/70 p-3 text-xs text-blue-800 dark:border-blue-900/40 dark:bg-blue-950/30 dark:text-blue-300">
-              <span className="font-semibold">🛡️ Peninjauan Iklan:</span> Iklan akan ditinjau terlebih dahulu sebelum tayang dan disebarkan ke grup WhatsApp.
+              <span className="font-semibold">🛡️ Peninjauan Barang:</span> Barang akan ditinjau terlebih dahulu sebelum ditampilkan dan disebarkan ke grup WhatsApp.
             </div>
 
             <div className="mt-4 pt-3 border-t border-gray-100 dark:border-slate-800">
@@ -741,14 +719,14 @@ export default function JualPage() {
             </div>
 
             <button type="submit" disabled={busy || !!fileError || !agreedPdp} className="btn-primary mt-4 w-full">
-              Pratinjau Iklan
+              Pratinjau Barang
             </button>
             {msg && <p className="mt-3 text-sm text-rose-600">{msg}</p>}
           </div>
           <div className="card p-4 text-sm text-gray-500 dark:text-slate-400">
             <p className="font-semibold text-gray-700 dark:text-slate-300">ℹ Transaksi Bebas Komisi 0%</p>
             <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Semua pemasangan iklan dan hasil penjualan 100% milik penjual. Transaksi COD langsung dibayar oleh pembeli tanpa potongan fee platform.
+              Semua barang jualan dan hasil penjualan 100% milik penjual. Transaksi COD langsung dibayar oleh pembeli tanpa potongan fee platform.
             </p>
           </div>
 
@@ -762,7 +740,7 @@ export default function JualPage() {
               <li>• <strong>Foto di spot kampus:</strong> Foto dekat Gazebo, Kantin, atau Perpus bikin pembeli lebih yakin.</li>
               <li>• <strong>Harga Mahasiswa:</strong> Pasang harga bersaing agar cepat dihubungi calon pembeli.</li>
               <li>• <strong>Jelaskan Kondisi Jujur:</strong> Sebutkan kelengkapan &amp; alasan jual di deskripsi.</li>
-              <li>• <strong>Titik COD Aman:</strong> Sepakati COD di Pendopo USU atau Gedung Z POLMED.</li>
+              <li>• <strong>Titik COD Aman:</strong> Pilih tempat umum yang ramai dan sepakati titik temu bersama.</li>
             </ul>
           </div>
         </div>

@@ -144,7 +144,7 @@ async function getSellerData(wa) {
       soldListings.forEach(l => l.seller_profiles = profile || null);
     }
 
-    const campus = profile?.campus || profile?.student_campus || listings?.[0]?.campus || "USU / POLMED";
+    const campus = profile?.campus || profile?.student_campus || listings?.[0]?.campus || "Kampus";
     const faculty = profile?.faculty || listings?.[0]?.faculty || null;
     const isStudentVerified = Boolean(profile?.student_verified || listings?.[0]?.student_verified);
     const isWaVerified = Boolean(profile?.wa_verified || targetWa);
@@ -199,15 +199,15 @@ export async function generateMetadata({ params }) {
   const pageUrl = `${baseUrl}/penjual/${username}`;
   const firstImage = data.listings[0]?.image_url || null;
   const soldText = data.soldCount > 0 ? ` Sudah terjual ${data.soldCount}× barang.` : "";
-  const desc = `Lihat ${data.listings.length} iklan aktif dari ${name} (@${username}) di Jual Beli USU Polmed.${soldText}`;
+  const desc = `Lihat ${data.listings.length} barang jualan dari ${name} (@${username}) di Kampus Kita.${soldText}`;
 
   return {
     title: `${name} (@${username}) — Profil Penjual`,
     description: desc,
-    keywords: [name, username, "penjual USU", "jual beli USU", "marketplace Medan", data.seller.topCategory].filter(Boolean),
+    keywords: [name, username, "penjual mahasiswa", "marketplace mahasiswa", data.seller.topCategory].filter(Boolean),
     alternates: { canonical: pageUrl },
     openGraph: {
-      title: `${name} (@${username}) — Profil Penjual di Jual Beli USU`,
+      title: `${name} (@${username}) — Profil Penjual di Kampus Kita`,
       description: desc,
       url: pageUrl,
       type: "profile",
@@ -276,7 +276,7 @@ export default async function SellerProfilePage({ params }) {
       "@type": "Person",
       "name": seller.seller_name,
       "alternateName": seller.slug ? `@${seller.slug}` : undefined,
-      "description": seller.bio || `Penjual di Jual Beli USU dengan ${listings.length} iklan aktif`,
+      "description": seller.bio || `Penjual di Kampus Kita dengan ${listings.length} barang jualan`,
       "url": `${baseUrl}/penjual/${sellerSlug}`,
       ...(listings[0]?.image_url && { "image": listings[0].image_url }),
       ...(avgRating !== null && ratings.length > 0 && {
@@ -346,7 +346,7 @@ export default async function SellerProfilePage({ params }) {
           </div>
           {/* Identitas Kampus & Fakultas */}
           <p className="mt-1 text-sm font-medium text-gray-600 dark:text-slate-300 flex items-center gap-2 flex-wrap">
-            <span>🎓 Mahasiswa {seller.campus || "USU / POLMED"}</span>
+            <span>🎓 Mahasiswa {seller.campus || "Kampus"}</span>
             {seller.faculty && (
               <span className="text-gray-400 dark:text-slate-500">· Fakultas {seller.faculty}</span>
             )}
@@ -414,7 +414,7 @@ export default async function SellerProfilePage({ params }) {
             {waIntl && (
               <a
                 href={`https://wa.me/${waIntl}?text=${encodeURIComponent(
-                  `Halo Kak ${seller.seller_name}, saya lihat profil Kakak di Jual Beli USU Polmed.`
+                  `Halo Kak ${seller.seller_name}, saya lihat profil Kakak di Kampus Kita.`
                 )}`}
                 target="_blank"
                 rel="noreferrer"
@@ -447,7 +447,7 @@ export default async function SellerProfilePage({ params }) {
                 </div>
               )}
               <p className="text-[11px] text-orange-500 dark:text-orange-500 mt-1.5">
-                Setiap iklan distributor mencantumkan info fee bagi hasil yang transparan.
+                Setiap barang jualan distributor mencantumkan info fee bagi hasil yang transparan.
               </p>
             </div>
           )}
@@ -458,7 +458,7 @@ export default async function SellerProfilePage({ params }) {
       <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="card p-4 text-center">
           <p className="text-2xl font-extrabold text-primary">{listings.length}</p>
-          <p className="text-xs text-gray-400 mt-0.5">Iklan Aktif</p>
+          <p className="text-xs text-gray-400 mt-0.5">Barang Aktif</p>
         </div>
         <div className="card p-4 text-center">
           <p className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">{soldCount}</p>
@@ -483,9 +483,9 @@ export default async function SellerProfilePage({ params }) {
         </div>
       </div>
 
-      {/* Grid Iklan */}
+      {/* Grid barang jualan */}
       <h2 className="mt-8 text-lg font-bold">
-        Iklan Aktif <span className="text-gray-400 font-normal text-base">({listings.length})</span>
+        Barang Aktif <span className="text-gray-400 font-normal text-base">({listings.length})</span>
       </h2>
 
       {listings.length === 0 ? (
@@ -497,7 +497,7 @@ export default async function SellerProfilePage({ params }) {
               <line x1="12" y1="22.08" x2="12" y2="12" />
             </svg>
           </p>
-          <p className="mt-2">Penjual ini belum punya iklan aktif.</p>
+          <p className="mt-2">Penjual ini belum punya barang aktif.</p>
           <Link href="/" className="btn-outline mt-4">
             Jelajahi Marketplace
           </Link>
@@ -510,7 +510,7 @@ export default async function SellerProfilePage({ params }) {
         </div>
       )}
 
-      {/* Riwayat Terjual — list kompak, tidak mengganggu iklan aktif */}
+      {/* Riwayat barang terjual — list kompak, tidak mengganggu barang aktif */}
       {soldListings.length > 0 && (
         <div className="mt-8 border-t border-gray-100 dark:border-slate-800 pt-6">
           <p className="text-sm font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wide mb-3">
@@ -630,7 +630,7 @@ export default async function SellerProfilePage({ params }) {
             <span>Panduan COD Aman &amp; Mediasi Kampus</span>
           </p>
           <p className="text-xs text-emerald-700 dark:text-emerald-400/90 leading-relaxed max-w-xl">
-            Gunakan titik kumpul resmi di kampus (Lobi Perpustakaan USU, Selasar FIB, Hall FT, Kantin Gedung Z POLMED) untuk transaksi langsung. Mengalami kendala atau sengketa transaksi? Tim moderasi kampus siap membantu.
+            Pilih tempat umum yang ramai di sekitar kampus dan sepakati titik pertemuan terlebih dahulu. Periksa barang sebelum membayar; jika mengalami kendala, hubungi tim dukungan melalui panduan keamanan.
           </p>
         </div>
         <div className="flex gap-2 shrink-0">

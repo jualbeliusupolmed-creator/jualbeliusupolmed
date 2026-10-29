@@ -4,34 +4,34 @@ import { skripJsonLd } from "@/lib/jsonLd";
 export const metadata = {
   title: "Pertanyaan Umum (FAQ)",
   description:
-    "Jawaban pertanyaan seputar Jual Beli USU Polmed: cara pasang iklan, durasi tayang, fitur Sundul (Bump), pembayaran, COD, favorit, dan refund.",
+    "Jawaban pertanyaan seputar Kampus Kita: cara jual barang, masa tayang, fitur Naikkan Barang (Bump), pembayaran, COD, favorit, dan refund.",
   alternates: { canonical: "/faq" },
 };
 
 const faqs = [
   {
-    q: "Apa itu Jual Beli USU Polmed?",
-    a: "Jual Beli USU Polmed adalah platform marketplace khusus untuk warga Universitas Sumatera Utara (USU) dan Politeknik Negeri Medan (POLMED) untuk melakukan transaksi jual beli barang bekas, buku, fashion, makanan, mencari kos, hingga menawarkan jasa.",
+    q: "Apa itu Kampus Kita?",
+    a: "Kampus Kita adalah platform marketplace dan komunitas untuk mahasiswa dari berbagai kampus di Indonesia. Pengguna dapat menawarkan barang dan jasa, mencari kebutuhan, serta terhubung dengan komunitas.",
   },
   {
-    q: "Apakah harus gabung grup WhatsApp dulu untuk pasang iklan?",
-    a: "Tidak harus. Kamu bisa langsung pasang iklan lewat halaman Pasang Iklan di website ini tanpa bergabung ke grup. Namun kami menyarankan ikut grup WhatsApp komunitas agar iklanmu juga dilihat anggota grup dan kamu mendapat info barang terbaru lebih cepat.",
+    q: "Apakah harus gabung grup WhatsApp dulu untuk jual barang?",
+    a: "Tidak harus. Kamu bisa langsung jual barang lewat halaman Jual Barang di website ini tanpa bergabung ke grup. Namun kami menyarankan ikut grup WhatsApp komunitas agar barang jualanmu juga dilihat anggota grup dan kamu mendapat info barang terbaru lebih cepat.",
   },
   {
-    q: "Berapa lama iklan saya akan tayang?",
-    a: "Iklan standar dan iklan poster tayang selama 14 hari sejak diaktifkan. Setelah masa tayang habis, kamu bisa memperpanjang dengan memasang ulang, atau gunakan fitur Sundul (Bump) selama masa tayang agar iklan kembali naik ke urutan paling atas.",
+    q: "Berapa lama barang jualan saya ditampilkan?",
+    a: "Barang jualan ditampilkan selama 14 hari sejak diaktifkan. Setelah masa tayang habis, kamu bisa memperpanjang atau gunakan fitur Naikkan Barang (Bump) agar barangmu kembali ke urutan paling atas.",
   },
   {
     q: "Apa itu fitur Sundul (Bump) dan Sundul Otomatis (Auto-Bump)?",
-    a: "Sundul (Bump) menaikkan posisi iklanmu kembali ke baris paling atas beranda seketika — biayanya Rp 1.000 per sundul. Sundul Otomatis (Auto-Bump) menyundul iklanmu secara otomatis setiap hari selama 7 hari tanpa perlu kamu lakukan manual. Keduanya bisa diaktifkan dari Dashboard penjual.",
+    a: "Naikkan Barang (Bump) menaikkan posisi barang jualanmu ke baris paling atas beranda seketika — biayanya Rp 1.000 per penggunaan. Naikkan Otomatis (Auto-Bump) menaikkan barangmu secara otomatis setiap hari selama 7 hari. Keduanya bisa diaktifkan dari Dashboard penjual.",
   },
   {
-    q: "Bagaimana cara tahu iklan saya sudah tayang?",
-    a: "Setelah pembayaran berhasil, iklan otomatis berstatus Aktif dan langsung muncul di beranda — biasanya kurang dari 1 menit. Kamu bisa memastikannya lewat Dashboard (status badge hijau \"active\") atau mencari iklanmu di beranda. Admin juga akan membantu mempostingkan iklanmu ke grup WhatsApp komunitas.",
+    q: "Bagaimana cara tahu barang jualan saya sudah tampil?",
+    a: "Setelah pembayaran berhasil, barang otomatis berstatus Aktif dan muncul di beranda — biasanya kurang dari 1 menit. Kamu bisa memastikannya lewat Dashboard (status badge hijau \"active\") atau mencari barangmu di beranda. Admin juga akan membantu membagikan barangmu ke grup WhatsApp komunitas.",
   },
   {
     q: "Bagaimana cara melakukan pembayaran?",
-    a: "Pembayaran dilakukan via QRIS statis — scan kode QR yang tampil di halaman pembayaran, transfer sesuai nominal, lalu upload foto struk. Iklan aktif otomatis setelah struk diverifikasi oleh AI kami, biasanya dalam hitungan detik.",
+    a: "Pembayaran dilakukan via QRIS statis — scan kode QR yang tampil di halaman pembayaran, transfer sesuai nominal, lalu upload foto struk. Barang akan aktif setelah struk diverifikasi oleh AI kami, biasanya dalam hitungan detik.",
   },
   {
     q: "Bagaimana penjual tahu kalau ada yang minat dengan barangnya?",
@@ -43,15 +43,15 @@ const faqs = [
   },
   {
     q: "Apakah transaksi barang/COD difasilitasi oleh platform?",
-    a: "Tidak. Platform ini berfungsi sebagai papan iklan digital (classified ads). Transaksi serah terima barang (COD) dilakukan langsung antara penjual dan pembeli. Kami sangat menyarankan COD di titik ramai sekitar kampus seperti Pintu 1 USU, Perpustakaan USU, atau Polmed Gedung Z — lokasi-lokasi ini juga tersedia sebagai pilihan saat memasang iklan.",
+    a: "Tidak. Platform ini mempertemukan penjual dan pembeli. Transaksi serah terima barang (COD) dilakukan langsung antara penjual dan pembeli. Pilih tempat umum yang ramai, sepakati lokasi terlebih dahulu, dan periksa barang sebelum membayar.",
   },
   {
     q: "Bagaimana jika barang yang saya terima tidak sesuai?",
     a: "Karena transaksi COD dilakukan langsung antara pembeli dan penjual, perselisihan kualitas barang berada di luar tanggung jawab platform. Selalu periksa barang dengan teliti sebelum menyerahkan uang. Jika menemukan penjual yang menipu, laporkan lewat tombol Lapor di halaman produk — pelanggar akan di-blacklist.",
   },
   {
-    q: "Apakah saya bisa membatalkan iklan dan meminta refund?",
-    a: "Sesuai Refund Policy kami, iklan yang sudah dibayar dan ditayangkan tidak dapat dibatalkan sepihak dan dananya tidak dapat dikembalikan. Pengembalian dana hanya diproses jika terjadi kegagalan teknis dari sistem kami yang menyebabkan iklan tidak tayang sama sekali dalam 1x24 jam setelah pembayaran sukses.",
+    q: "Apakah saya bisa membatalkan penjualan barang dan meminta refund?",
+    a: "Sesuai kebijakan refund kami, barang yang sudah dibayar untuk ditampilkan tidak dapat dibatalkan sepihak dan dananya tidak dapat dikembalikan. Pengembalian dana hanya diproses jika terjadi kegagalan teknis dari sistem kami sehingga barang tidak tampil sama sekali dalam 1x24 jam setelah pembayaran sukses.",
   },
 ];
 
@@ -98,7 +98,7 @@ export default function FaqPage() {
 
       <div className="mt-10 flex flex-wrap justify-center gap-3 text-center">
         <Link href="/jual" className="btn-primary px-6">
-          Pasang Iklan Sekarang
+          Jual Barang Sekarang
         </Link>
         <Link href="/" className="btn bg-gray-200 text-gray-700 hover:bg-gray-300">
           Kembali ke Beranda

@@ -19,7 +19,7 @@ function ChatRoom({ chat, onClose }) {
     return error ? [
       { id: 1, text: "Halo kak, barangnya masih ada?", fromMe: false, timestamp: Date.now()/1000 - 300 },
       { id: 2, text: "Masih ada kak, silakan ", fromMe: true, timestamp: Date.now()/1000 - 240 },
-      { id: 3, text: "Bisa COD di USU?", fromMe: false, timestamp: Date.now()/1000 - 60 },
+      { id: 3, text: "Bisa COD di kampus?", fromMe: false, timestamp: Date.now()/1000 - 60 },
     ] : (data?.messages || []);
   }, [error, data?.messages]);
 
@@ -187,7 +187,7 @@ function ChatRoom({ chat, onClose }) {
 
 const DUMMY_CHATS = [
   { jid: "6281234567890@s.whatsapp.net", name: "Budi Santoso", preview: "Barangnya masih ada kak?" },
-  { jid: "6285678901234@s.whatsapp.net", name: "Siti Rahayu", preview: "Bisa COD di kampus USU?" },
+  { jid: "6285678901234@s.whatsapp.net", name: "Siti Rahayu", preview: "Bisa COD di kampus?" },
   { jid: "6287890123456@s.whatsapp.net", name: "Rizky Pratama", preview: "Harga bisa nego gak?" },
 ];
 

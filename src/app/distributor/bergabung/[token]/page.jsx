@@ -59,7 +59,7 @@ export default function BergabungDistributorPage({ params }) {
             redirect di next.config.mjs. Tombol ajakan utama di ujung funnel
             undangan distributor berakhir di 404. Halaman pasang iklan yang
             sebenarnya adalah /jual. */}
-        <Link href="/jual" className="btn-primary">Mulai Pasang Iklan Gratis</Link>
+        <Link href="/jual" className="btn-primary">Mulai Jual Barang Gratis</Link>
       </div>
     );
   }
@@ -88,15 +88,15 @@ export default function BergabungDistributorPage({ params }) {
           <div className="flex gap-3">
             <span className="shrink-0 w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-600 font-bold text-sm"><svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg></span>
             <div>
-              <p className="font-semibold text-sm">Posting Iklan GRATIS</p>
-              <p className="text-xs text-gray-400">Tidak perlu bayar biaya iklan, apapun mode yang diatur admin.</p>
+              <p className="font-semibold text-sm">Jual Barang GRATIS</p>
+              <p className="text-xs text-gray-400">Tidak perlu bayar biaya tayang, apa pun mode yang diatur admin.</p>
             </div>
           </div>
           <div className="flex gap-3">
             <span className="shrink-0 w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center text-orange-600 font-bold text-sm">₿</span>
             <div>
               <p className="font-semibold text-sm">Fee Bagi Hasil Transparan</p>
-              <p className="text-xs text-gray-400">Setiap iklan otomatis menampilkan info fee bagi hasil sesuai kategori dan harga barang.</p>
+              <p className="text-xs text-gray-400">Setiap barang jualan otomatis menampilkan info fee bagi hasil sesuai kategori dan harga.</p>
             </div>
           </div>
           <div className="flex gap-3">
@@ -110,7 +110,7 @@ export default function BergabungDistributorPage({ params }) {
             <span className="shrink-0 w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center text-purple-600 font-bold text-sm"><svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg></span>
             <div>
               <p className="font-semibold text-sm">Digest Harian Otomatis</p>
-              <p className="text-xs text-gray-400">Semua iklan distributor dikumpulkan & disebarkan ke grup setiap hari pukul 13.00.</p>
+              <p className="text-xs text-gray-400">Semua barang jualan distributor dikumpulkan & disebarkan ke grup setiap hari pukul 13.00.</p>
             </div>
           </div>
         </div>

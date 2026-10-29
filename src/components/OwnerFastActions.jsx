@@ -46,7 +46,7 @@ export default function OwnerFastActions({ listing }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal mengubah status terjual");
 
-      toast.success("Selamat! Iklan berhasil ditandai Terjual ");
+      toast.success("Selamat! Barang berhasil ditandai Terjual ");
       setShowSoldModal(false);
       router.refresh();
     } catch (err) {
@@ -65,7 +65,7 @@ export default function OwnerFastActions({ listing }) {
         body: JSON.stringify({ listing_id: listing.id }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Gagal menyundul iklan");
+      if (!res.ok) throw new Error(data.error || "Gagal menaikkan barang");
 
       if (data.freeBumpUsed) {
         toast.success(" Berhasil disundul ke posisi atas menggunakan Free Bump!");
@@ -73,7 +73,7 @@ export default function OwnerFastActions({ listing }) {
       } else if (data.paymentUrl) {
         window.location.href = data.paymentUrl;
       } else {
-        toast.success(" Iklan berhasil dinaikkan ke atas!");
+        toast.success(" Barang berhasil dinaikkan ke atas!");
         router.refresh();
       }
     } catch (err) {
@@ -92,7 +92,7 @@ export default function OwnerFastActions({ listing }) {
             <span>Panel Aksi Cepat Pemilik</span>
           </div>
           <span className="text-[10px] bg-primary/20 text-primary dark:text-emerald-400 font-bold px-2 py-0.5 rounded-full">
-            Iklan Milikmu
+            Barang Jualanmu
           </span>
         </div>
 
@@ -102,7 +102,7 @@ export default function OwnerFastActions({ listing }) {
             href={`/dashboard?edit=${listing.id}`}
             className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-95 transition-all"
           >
-            <span> Edit Iklan</span>
+            <span> Edit Barang</span>
           </Link>
 
           {/* Promosikan di Menfess Button */}
@@ -153,7 +153,7 @@ export default function OwnerFastActions({ listing }) {
           <div className="w-full max-w-sm rounded-3xl bg-white dark:bg-slate-900 p-5 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-1.5">
-                <span></span> Tandai Iklan Terjual
+                <span></span> Tandai Barang Terjual
               </h4>
               <button
                 onClick={() => setShowSoldModal(false)}

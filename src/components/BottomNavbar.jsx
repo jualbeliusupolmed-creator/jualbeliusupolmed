@@ -197,7 +197,7 @@ function BottomNavbarInner() {
           )}
           style={{ paddingBottom: "max(6px, env(safe-area-inset-bottom, 0px))" }}
         >
-          <div className="flex items-center justify-around h-16 px-1 max-w-md mx-auto">
+          <div className="flex items-center justify-around h-14 px-1 max-w-md mx-auto">
             <ItemNav n={BERANDA} pathname={pathname} />
             <ItemNav n={MARKET} pathname={pathname} />
             <ItemNav n={OPEN_PO} pathname={pathname} />

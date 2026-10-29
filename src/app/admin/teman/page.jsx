@@ -40,7 +40,7 @@ export default async function AdminTemanPage() {
     <div className="space-y-6 pb-12">
       <PageHeader
         title="Moderasi & Tracking Swipe Teman Kampus"
-        description="Pantau profil aktif, aktivitas swipe, dan interaksi mutual match mahasiswa USU & Polmed."
+        description="Pantau profil aktif, aktivitas swipe, dan interaksi mutual match mahasiswa lintas kampus."
       />
 
       {/* METRICS ROW */}

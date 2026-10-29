@@ -158,7 +158,7 @@ export default function BlogEditor({ initialBlog }) {
             className="input"
             value={form.keywords}
             onChange={(e) => set("keywords", e.target.value)}
-            placeholder="tips jual beli, mahasiswa USU, barang bekas Medan"
+            placeholder="tips jual beli, mahasiswa, barang bekas"
           />
           {form.keywords && (
             <div className="mt-2 flex flex-wrap gap-1">

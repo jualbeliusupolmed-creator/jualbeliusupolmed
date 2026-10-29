@@ -216,7 +216,7 @@ export default function UkmDashboardView({
                 </span>
                 <span className="inline-flex items-center gap-1.5 bg-white/10 px-2.5 py-0.5 rounded-lg border border-white/10 font-semibold">
                   <Icon.MapPin className="h-3.5 w-3.5" />
-                  {sellerProfile?.campus || "USU & POLMED"}
+                  {sellerProfile?.campus || "Kampus"}
                 </span>
                 {sellerProfile?.ukm_instagram && (
                   <a 
@@ -484,7 +484,7 @@ export default function UkmDashboardView({
                   </label>
                   <input
                     type="text"
-                    placeholder="Contoh: [PENGUMUMAN] Pendaftaran Lomba Debat Nasional BEM USU 2026 Dibuka!"
+                    placeholder="Contoh: [PENGUMUMAN] Pendaftaran Lomba Debat Nasional 2026 Dibuka!"
                     value={madingForm.title}
                     onChange={(e) => setMadingForm(prev => ({ ...prev, title: e.target.value }))}
                     className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -705,7 +705,7 @@ export default function UkmDashboardView({
                     <label className="text-[10px] font-bold text-slate-400 block mb-0.5">Jurusan / Fakultas</label>
                     <input
                       type="text"
-                      placeholder="Contoh: Ilmu Komputer USU '23"
+                      placeholder="Contoh: Fakultas / Program Studi"
                       value={bph.major || ""}
                       onChange={(e) => updateAnggotaBph(idx, "major", e.target.value)}
                       className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 py-1.5 text-xs text-slate-900 dark:text-white"

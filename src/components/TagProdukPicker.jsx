@@ -92,10 +92,10 @@ export default function TagProdukPicker({ value, onChange }) {
 
       {terbuka && (
         <div className="mt-2 max-h-44 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-800/60">
-          {memuat && <p className="p-2 text-[11px] text-slate-400">Memuat iklanmu…</p>}
+          {memuat && <p className="p-2 text-[11px] text-slate-400">Memuat barang jualanmu…</p>}
           {!memuat && iklan.length === 0 && (
             <p className="p-2 text-[11px] text-slate-400">
-              Belum ada iklan aktif. Pasang iklan dulu lewat tombol Buat → Jual Barang.
+              Belum ada barang aktif. Jual barang dulu lewat tombol Buat → Jual Barang.
             </p>
           )}
           {iklan.map((l) => {

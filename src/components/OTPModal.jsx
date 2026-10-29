@@ -309,6 +309,11 @@ export default function OTPModal({ isOpen, onClose, onSuccess, initialWa = "" })
     setGoogleBusy(true);
     setError("");
     try {
+      const cleanup = await fetch("/api/auth/google-flow/clear", { method: "POST" });
+      if (!cleanup.ok) {
+        const result = await cleanup.json().catch(() => ({}));
+        throw new Error(result.error || "Tidak dapat menyiapkan login Google.");
+      }
       const supabase = getSupabase();
       const { error: oauthErr } = await supabase.auth.signInWithOAuth({
         provider: "google",

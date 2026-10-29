@@ -89,7 +89,7 @@ export default function QRButton({ listing }) {
               className="rounded-xl border border-gray-100 p-5 text-center"
             >
               <p className="text-sm font-extrabold tracking-wide text-primary">
-                Jual Beli USU Polmed
+                Kampus Kita
               </p>
               {listing.listing_code && (
                 <p className="mt-1 text-xs font-semibold uppercase tracking-[0.24em] text-gray-500">

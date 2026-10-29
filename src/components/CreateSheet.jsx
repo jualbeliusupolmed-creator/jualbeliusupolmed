@@ -14,11 +14,11 @@ const PILIHAN = [
     ikon: <Icon.ShoppingBag className="w-5 h-5" />,
     ikonBg: "bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300",
     judul: "Jual Barang / Jasa",
-    desc: "Pasang iklan di marketplace",
+    desc: "Jual barang di marketplace",
     grup: "Marketplace",
   },
   {
-    href: "/dashboard/open-po",
+    href: "/dashboard?tab=open-po",
     ikon: <Icon.Coffee className="w-5 h-5" />,
     ikonBg: "bg-emerald-50 text-[#126B49] dark:bg-emerald-950/40 dark:text-emerald-300",
     judul: "Buka Open PO",
@@ -55,7 +55,7 @@ const PILIHAN = [
     ikon: <Icon.Users className="w-5 h-5" />,
     ikonBg: "bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300",
     judul: "Cari Teman Kampus",
-    desc: "Swipe kenalan baru di USU & Polmed",
+    desc: "Kenalan dengan mahasiswa lintas kampus",
     grup: "Sosial",
   },
 ];

@@ -3,6 +3,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { formatWa } from "@/lib/constants";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { jawabGalat } from "@/lib/jawabGalat";
+import { findSellerProfileByPhone } from "@/lib/seller-profile-identity";
 
 export const dynamic = "force-dynamic";
 
@@ -29,14 +30,18 @@ export async function POST(req) {
     }
 
     const supa = getAdminClient();
-    const { data: profile } = await supa
-      .from("seller_profiles")
-      .select("wa, pin")
-      .eq("wa", normalizedWa)
-      .maybeSingle();
+    const { data: profile, error: profileError } = await findSellerProfileByPhone(
+      supa,
+      normalizedWa,
+      "wa,pin,phone_wa"
+    );
+    if (profileError) return jawabGalat(profileError, { pesan: "Akun belum dapat diperiksa." });
 
     if (profile && profile.pin) {
       return NextResponse.json({ hasPin: true, nomorBaru: false });
+    }
+    if (profile) {
+      return NextResponse.json({ hasPin: false, nomorBaru: false });
     }
 
     // "Nomor baru" = tidak ada yang bisa dicuri dengan mengklaimnya: belum punya

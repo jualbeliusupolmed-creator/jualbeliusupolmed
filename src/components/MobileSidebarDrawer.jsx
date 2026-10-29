@@ -96,14 +96,14 @@ export default function MobileSidebarDrawer({ isOpen, onClose }) {
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
                 <span className="font-black text-sm leading-none tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">
-                  Kampusfess
+                  Kampus Kita
                 </span>
                 <span className="rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-extrabold text-[8.5px] px-1.5 py-0.2 border border-emerald-500/20">
                   COD
                 </span>
               </div>
               <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mt-0.5">
-                USU • POLMED Community
+                Komunitas Mahasiswa
               </span>
             </div>
           </Link>
@@ -223,7 +223,7 @@ export default function MobileSidebarDrawer({ isOpen, onClose }) {
 
         </div>
 
-        {/* Footer Drawer: Status Akun, Pasang Iklan & Theme Toggle */}
+        {/* Footer Drawer: Status Akun, Jual Barang & Theme Toggle */}
         <div className="p-3 border-t border-black/[0.06] dark:border-white/[0.06] space-y-2.5 bg-slate-50/70 dark:bg-[#18181b]/70 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
           {/* User Account / Login */}
           {!siap ? (
@@ -263,7 +263,7 @@ export default function MobileSidebarDrawer({ isOpen, onClose }) {
             </button>
           )}
 
-          {/* Primary CTA: Pasang Iklan Jual */}
+          {/* Primary CTA: Jual Barang */}
           <Link
             href="/jual"
             onClick={() => {
@@ -273,7 +273,7 @@ export default function MobileSidebarDrawer({ isOpen, onClose }) {
             className="w-full btn-primary py-2.5 rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all text-white"
           >
             <Icon.Plus className="w-4 h-4" />
-            <span>Pasang Iklan</span>
+            <span>Jual Barang</span>
           </Link>
 
           {/* Theme Toggle Compact */}

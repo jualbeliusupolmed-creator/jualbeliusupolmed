@@ -197,18 +197,17 @@ User ──form+foto──→ Browser (Next.js)
 
 ## Cara WA Bot Mengirim Pesan Kembali
 
-Semua balasan bot menggunakan `src/lib/fonnte.js`:
+Semua pesan dari website dikirim melalui `src/lib/fonnte.js` ke API bot:
 
 ```
-1. Coba kirim via Baileys (Railway)
-   → POST ke BAILEYS_API_URL/send dengan BAILEYS_API_TOKEN
-   
-2. Jika Baileys gagal/timeout:
-   → Fallback ke Fonnte API
-   → POST ke api.fonnte.com/send dengan FONNTE_TOKEN
+1. Website mengirim ke BAILEYS_API_URL/send dengan BAILEYS_API_TOKEN.
+2. Bot menerima dan mengirim lewat sesi Baileys.
+3. Jika bot tidak tersedia, notifikasi biasa yang masih relevan dapat masuk ke
+   wa_outbox. OTP berumur lima menit tidak diantrekan dan harus diminta ulang.
 ```
 
-Ini memastikan bot tetap bisa kirim pesan meski Railway sedang restart atau ada masalah koneksi.
+Fonnte bukan fallback. Kedua variabel Baileys harus disetel di environment
+server website, dan tokennya harus cocok dengan `API_TOKEN` bot.
 
 ---
 
@@ -217,7 +216,8 @@ Ini memastikan bot tetap bisa kirim pesan meski Railway sedang restart atau ada 
 ### Autentikasi
 - **Admin web**: Cookie HMAC-SHA256 dari `ADMIN_PASSWORD`, expire 8 jam
 - **Seller web**: Cookie HMAC-signed token `{ wa, exp }`, expire 30 hari, sandi bcrypt (OTP via WA hanya untuk pemulihan)
-- **WA bot**: Token `BAILEYS_API_TOKEN` di header setiap request dari Railway ke Vercel
+- **Website → bot**: `BAILEYS_API_TOKEN` mengautentikasi request dari situs ke bot.
+- **Bot → website**: `API_TOKEN` mengautentikasi webhook bot ke Vercel.
 - **Cron**: Bearer `CRON_SECRET` atau header `x-vercel-cron` dari Vercel infrastructure
 
 ### Rate Limiting
