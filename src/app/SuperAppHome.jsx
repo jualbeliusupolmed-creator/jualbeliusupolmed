@@ -614,9 +614,9 @@ export default function SuperAppHome({
       )}
 
       {/* ── MAIN CONTENT AREA ── */}
-      <main className="max-w-[1440px] mx-auto px-4 sm:px-6 py-5 flex-1 w-full">
+      <main className="max-w-[1440px] mx-auto w-full flex-1 px-3 py-3 sm:px-6 sm:py-5">
         {/* Dynamic Multi-Category Notification Bar & Quick Ticker (Alternates across Jual Beli, PO, and Menfess) */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-4">
+        <div className="mb-3 hidden flex-col items-center justify-between gap-3 sm:mb-4 sm:flex sm:flex-row">
           <div className="w-full py-2.5 px-4 bg-gradient-to-r from-emerald-50/90 via-white to-slate-50 dark:from-slate-800/80 dark:via-slate-800/40 dark:to-slate-900/80 text-slate-800 dark:text-slate-200 rounded-2xl text-xs flex items-center justify-between gap-2 border border-emerald-100 dark:border-emerald-950/40 shadow-xs transition-all duration-300">
             <div className="flex items-center gap-2.5 flex-1 min-w-0">
               <span className="flex h-2 w-2 relative shrink-0">
@@ -655,7 +655,7 @@ export default function SuperAppHome({
         </div>
 
         {/* BEGIN: SearchBar + Jelajah Quick Chips Bar */}
-        <div className="mb-6 space-y-3">
+        <div className="mb-4 space-y-2 sm:mb-6 sm:space-y-3">
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <div className="relative flex-1 w-full">
               <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -668,7 +668,7 @@ export default function SuperAppHome({
                 type="text"
                 value={listingSearch}
                 onChange={(e) => setListingSearch(e.target.value)}
-                placeholder="Cari laptop, kost, buku, jastip, or teman seprodi..."
+                placeholder="Cari barang, kos, buku, jasa..."
                 className="w-full pl-10 pr-4 py-2.5 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-full focus:bg-white focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 transition shadow-xs placeholder-slate-400 dark:placeholder-slate-500 text-slate-900 dark:text-white"
               />
             </div>
@@ -800,7 +800,20 @@ export default function SuperAppHome({
           {/* LEFT MAIN COLUMN: Open PO Swipeable + WTB + Marketplace (8 cols) */}
           <div className="lg:col-span-8 flex flex-col gap-6">
             {/* 1. Open PO Section */}
-            <section id="po-section" className="bg-white dark:bg-slate-800/90 border border-slate-200/80 dark:border-white/10 rounded-3xl p-5 shadow-xs">
+            {activeBatches.length > 0 && <Link
+              href="/open-po"
+              className="inline-flex min-h-10 items-center justify-between gap-3 rounded-xl border border-emerald-100 bg-white px-3 text-xs font-bold text-emerald-900 shadow-xs sm:hidden"
+            >
+              <span className="inline-flex items-center gap-2">
+                <Icon.Coffee className="h-4 w-4 text-emerald-700" />
+                Open PO
+                <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] text-emerald-800">
+                  {activeBatches.length} aktif
+                </span>
+              </span>
+              <span aria-hidden="true">Lihat →</span>
+            </Link>}
+            <section id="po-section" className="hidden rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-white/10 dark:bg-slate-800/90 sm:block">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2.5">
                   <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse" />
@@ -897,7 +910,7 @@ export default function SuperAppHome({
             </section>
 
             {/* 2. Papan Strategis: Barang Dicari Mahasiswa (WTB - Want To Buy) with Smooth Horizontal Marquee Animation */}
-            <section id="wtb-section" className="bg-white dark:bg-slate-800/90 border border-slate-200/80 dark:border-white/10 rounded-2xl px-4 py-3 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 overflow-hidden">
+            <section id="wtb-section" className="hidden overflow-hidden rounded-2xl border border-slate-200/80 bg-white px-4 py-3 shadow-xs dark:border-white/10 dark:bg-slate-800/90 sm:flex sm:flex-row sm:items-center sm:justify-between sm:gap-3">
               <div className="flex items-center gap-2 shrink-0 z-10 bg-white dark:bg-slate-800 sm:pr-2">
                 <span className="flex h-2 w-2 relative">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -949,10 +962,10 @@ export default function SuperAppHome({
             <section id="marketplace-section" className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">
-                    Marketplace <span className="font-serif italic font-normal text-emerald-700 dark:text-emerald-400">Jual-Beli Terverifikasi</span>
+                  <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white">
+                    Marketplace <span className="hidden font-serif font-normal italic text-emerald-700 dark:text-emerald-400 sm:inline">Jual-Beli Terverifikasi</span>
                   </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="hidden text-xs text-slate-500 dark:text-slate-400 sm:block">
                     Barang preloved &amp; kebutuhan mahasiswa sekitar kampus
                   </p>
                 </div>
