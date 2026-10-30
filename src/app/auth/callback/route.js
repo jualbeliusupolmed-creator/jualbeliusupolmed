@@ -6,6 +6,7 @@ import { formatWa } from "@/lib/constants";
 import { isGoogleAuthIdentity, resolveAdminLoginRole } from "@/lib/admin-auth-policy";
 import {
   SELLER_GOOGLE_LINK_COOKIE,
+  isSellerGoogleLinkFlow,
   verifySellerGoogleLinkToken,
 } from "@/lib/seller-google-link";
 import { findSellerProfileBySession, mergeSellerProfiles } from "@/lib/seller-profile-identity";
@@ -258,10 +259,10 @@ export async function GET(request) {
   }
   const googleLinkToken = request.cookies?.get(SELLER_GOOGLE_LINK_COOKIE)?.value;
   const googleLinkWa = formatWa(getSellerSession() || "");
-  const isGoogleLinkFlow = Boolean(googleLinkToken);
+  const isGoogleLinkFlow = isSellerGoogleLinkFlow(searchParams, googleLinkToken);
   if (
     isGoogleLinkFlow &&
-    (!googleLinkWa || !verifySellerGoogleLinkToken(googleLinkToken, googleLinkWa))
+    (!googleLinkToken || !googleLinkWa || !verifySellerGoogleLinkToken(googleLinkToken, googleLinkWa))
   ) {
     return googleLinkRedirect(request, "failed");
   }
@@ -356,7 +357,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const { origin } = new URL(request.url);
-    const { access_token, next, google_link: isGoogleLinkFlow } = await request.json();
+    const { access_token, next, google_link: requestedGoogleLinkFlow } = await request.json();
 
     if (!access_token) {
       return NextResponse.json({ success: false, error: "No access token" }, { status: 400 });
@@ -375,10 +376,11 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: "Invalid token" }, { status: 401 });
     }
 
+    const googleLinkToken = request.cookies?.get(SELLER_GOOGLE_LINK_COOKIE)?.value;
+    const isGoogleLinkFlow = Boolean(requestedGoogleLinkFlow || googleLinkToken);
     if (isGoogleLinkFlow) {
-      const token = request.cookies?.get(SELLER_GOOGLE_LINK_COOKIE)?.value;
       const wa = formatWa(getSellerSession() || "");
-      if (!token || !wa || !verifySellerGoogleLinkToken(token, wa)) {
+      if (!googleLinkToken || !wa || !verifySellerGoogleLinkToken(googleLinkToken, wa)) {
         return googleLinkJson(
           { success: false, redirectUrl: `${origin}/dashboard?tab=profil&google_link=failed` },
           403

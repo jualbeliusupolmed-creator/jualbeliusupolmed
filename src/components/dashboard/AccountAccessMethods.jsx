@@ -26,7 +26,9 @@ export default function AccountAccessMethods({ profil }) {
     if (result === "success") toast.success("Akun Google berhasil ditautkan ke profil ini.");
     else if (result === "merge_conflict") {
       toast.error("Akun tidak dapat digabung otomatis karena ada data atau PIN yang berbeda. Hubungi bantuan.");
-    } else toast.error("Akun Google belum dapat ditautkan. Pastikan Google belum terhubung ke nomor lain.");
+    } else {
+      toast.error("Penautan Google tidak selesai. Sesi WhatsApp tetap aman; coba tautkan kembali.");
+    }
 
     url.searchParams.delete("google_link");
     window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
