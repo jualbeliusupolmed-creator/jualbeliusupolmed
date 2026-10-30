@@ -72,7 +72,7 @@ export async function POST(request) {
     const { error: saveError } = await supa.from("seller_phone_link_otps").upsert(
       {
         phone_wa: phone,
-        profile_wa: phone,
+        profile_wa: profile.wa,
         otp_hash: hashOtp(otp),
         expires_at: new Date(Date.now() + 5 * 60_000).toISOString(),
         attempts: 0,
@@ -94,7 +94,7 @@ export async function POST(request) {
         .from("seller_phone_link_otps")
         .delete()
         .eq("phone_wa", phone)
-        .eq("profile_wa", phone);
+        .eq("profile_wa", profile.wa);
       if (cleanupError) {
         console.error("[google-link] Failed to clean up undelivered OTP.", cleanupError.code || "database_error");
       }

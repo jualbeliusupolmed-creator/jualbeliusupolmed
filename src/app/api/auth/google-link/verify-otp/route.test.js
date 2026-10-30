@@ -50,7 +50,7 @@ beforeEach(() => {
       if (table === "seller_phone_link_otps") {
         return query({
           data: {
-            profile_wa: phone,
+            profile_wa: "google_account_abc123",
             otp_hash: "hashed-code",
             expires_at: new Date(Date.now() + 60_000).toISOString(),
             attempts: 0,

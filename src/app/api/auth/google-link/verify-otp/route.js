@@ -62,7 +62,7 @@ export async function POST(request) {
       .eq("phone_wa", phone)
       .maybeSingle();
     if (otpError) return jawabGalat(otpError, { pesan: "Kode verifikasi belum dapat diperiksa." });
-    if (!record || record.profile_wa !== phone || new Date(record.expires_at) <= new Date()) {
+    if (!record || record.profile_wa !== profile.wa || new Date(record.expires_at) <= new Date()) {
       return NextResponse.json({ error: "Kode verifikasi tidak valid atau sudah kedaluwarsa." }, { status: 400 });
     }
     if (record.attempts >= 5) {
@@ -73,7 +73,7 @@ export async function POST(request) {
         .from("seller_phone_link_otps")
         .update({ attempts: record.attempts + 1 })
         .eq("phone_wa", phone)
-        .eq("profile_wa", phone);
+        .eq("profile_wa", profile.wa);
       if (attemptError) return jawabGalat(attemptError, { pesan: "Percobaan kode belum dapat dicatat." });
       return NextResponse.json({ error: "Kode verifikasi salah." }, { status: 400 });
     }
@@ -82,7 +82,7 @@ export async function POST(request) {
       .from("seller_phone_link_otps")
       .delete()
       .eq("phone_wa", phone)
-      .eq("profile_wa", phone);
+      .eq("profile_wa", profile.wa);
     if (deleteError) return jawabGalat(deleteError, { pesan: "Kode verifikasi belum dapat digunakan." });
 
     const response = NextResponse.json({ ok: true }, { headers: { "Cache-Control": "no-store" } });
