@@ -28,7 +28,7 @@ function request(origin = "http://localhost:3000") {
 
 function query(result) {
   const builder = {};
-  for (const method of ["select", "eq", "upsert", "delete"]) {
+  for (const method of ["select", "eq", "or", "upsert", "delete"]) {
     builder[method] = vi.fn(() => builder);
   }
   builder.maybeSingle = vi.fn(async () => result);
@@ -44,7 +44,7 @@ beforeEach(() => {
   mocks.getAdminClient.mockReturnValue({
     from: vi.fn((table) => {
       if (table === "seller_profiles") {
-        return query({ data: { wa: phone, phone_wa: phone, email_google: null }, error: null });
+        return query({ data: { wa: "google_account_abc123", phone_wa: phone, email_google: null }, error: null });
       }
       if (table === "seller_phone_link_otps") return query({ data: null, error: null });
       throw new Error(`Unexpected table: ${table}`);
@@ -63,6 +63,12 @@ describe("POST /api/auth/google-link/send-otp", () => {
       null,
       300
     );
+  });
+
+  it("finds a profile whose WhatsApp number is linked through phone_wa", async () => {
+    const response = await POST(request());
+
+    expect(response.status).toBe(200);
   });
 
   it("rejects requests from a different origin", async () => {

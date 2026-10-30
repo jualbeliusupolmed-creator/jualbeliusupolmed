@@ -8,7 +8,7 @@ import {
   SELLER_GOOGLE_LINK_COOKIE,
   verifySellerGoogleLinkToken,
 } from "@/lib/seller-google-link";
-import { mergeSellerProfiles } from "@/lib/seller-profile-identity";
+import { findSellerProfileBySession, mergeSellerProfiles } from "@/lib/seller-profile-identity";
 import {
   ADMIN_GOOGLE_FLOW_COOKIE,
   ADMIN_GOOGLE_FLOW_PATH,
@@ -61,6 +61,15 @@ async function linkGoogleToSeller(user, wa) {
   const email = user.email.trim().toLowerCase();
   const emailPattern = email.replace(/[\\%_]/g, "\\$&");
   const supa = getAdminClient();
+  const { data: targetProfile, error: targetProfileError } = await findSellerProfileBySession(
+    supa,
+    wa,
+    "wa,phone_wa,email_google"
+  );
+  if (targetProfileError || !targetProfile || formatWa(targetProfile.phone_wa || targetProfile.wa) !== wa) {
+    return { status: 404, error: "Profil WhatsApp utama tidak ditemukan." };
+  }
+
   const { data: byGoogle, error: googleLookupError } = await supa
     .from("seller_profiles")
     .select("wa,phone_wa,email_google,email")
@@ -79,14 +88,14 @@ async function linkGoogleToSeller(user, wa) {
     return { status: 409, error: "Email Google ini ditemukan pada lebih dari satu profil. Hubungi bantuan." };
   }
   const existing = linkedProfiles?.[0] || null;
-  if (existing && existing.wa !== wa) {
-    if (existing.phone_wa && existing.phone_wa !== wa) {
+  if (existing && existing.wa !== targetProfile.wa) {
+    if (existing.phone_wa && formatWa(existing.phone_wa) !== wa) {
       return { status: 409, error: "Akun Google ini sudah tertaut ke nomor WhatsApp lain." };
     }
     if (formatWa(existing.wa) && existing.wa !== wa) {
       return { status: 409, error: "Akun ini sudah memiliki profil WhatsApp lain. Hubungi bantuan untuk menggabungkannya dengan aman." };
     }
-    const merged = await mergeSellerProfiles(supa, existing.wa, wa);
+    const merged = await mergeSellerProfiles(supa, existing.wa, targetProfile.wa);
     if (merged.error) {
       return {
         status: ["23505", "23514"].includes(merged.error.code) ? 409 : 503,
@@ -96,11 +105,11 @@ async function linkGoogleToSeller(user, wa) {
     return { status: 200, email, merged: true };
   }
 
-  if (!existing || (existing.wa === wa && !existing.email_google)) {
+  if (!existing || (existing.wa === targetProfile.wa && !existing.email_google)) {
     const { data: updated, error: updateError } = await supa
       .from("seller_profiles")
       .update({ email_google: email, auth_provider: "wa_google" })
-      .eq("wa", wa)
+      .eq("wa", targetProfile.wa)
       .is("email_google", null)
       .select("wa")
       .maybeSingle();

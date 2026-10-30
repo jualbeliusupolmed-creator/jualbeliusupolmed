@@ -29,7 +29,7 @@ function request(body, origin = "http://localhost:3000") {
 
 function query(result) {
   const builder = {};
-  for (const method of ["select", "eq", "update", "delete"]) {
+  for (const method of ["select", "eq", "or", "update", "delete"]) {
     builder[method] = vi.fn(() => builder);
   }
   builder.maybeSingle = vi.fn(async () => result);
@@ -45,7 +45,7 @@ beforeEach(() => {
   mocks.getAdminClient.mockReturnValue({
     from: vi.fn((table) => {
       if (table === "seller_profiles") {
-        return query({ data: { wa: phone, phone_wa: phone, email_google: null }, error: null });
+        return query({ data: { wa: "google_account_abc123", phone_wa: phone, email_google: null }, error: null });
       }
       if (table === "seller_phone_link_otps") {
         return query({
