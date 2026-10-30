@@ -4,6 +4,10 @@ export const SELLER_GOOGLE_LINK_COOKIE = "seller_google_link";
 export const SELLER_GOOGLE_OTP_PROOF_COOKIE = "seller_google_otp_proof";
 export const SELLER_GOOGLE_LINK_TTL = 10 * 60;
 
+export function isSellerGoogleLinkFlow(searchParams, linkToken) {
+  return searchParams?.get("link_google") === "1" || Boolean(linkToken);
+}
+
 function signingKey() {
   const key = process.env.SESSION_SECRET || process.env.ADMIN_PASSWORD;
   if (key) return key;

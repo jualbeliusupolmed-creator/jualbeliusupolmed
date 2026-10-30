@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
   createSellerGoogleLinkToken,
+  isSellerGoogleLinkFlow,
   verifySellerGoogleLinkToken,
 } from "./seller-google-link";
 
@@ -12,6 +13,17 @@ afterEach(() => {
 });
 
 describe("seller Google-link challenge", () => {
+  it("keeps Google OAuth in link mode when the callback intent exists but its cookie is missing", () => {
+    const searchParams = new URLSearchParams("link_google=1");
+
+    expect(isSellerGoogleLinkFlow(searchParams, undefined)).toBe(true);
+    expect(isSellerGoogleLinkFlow(new URLSearchParams(), undefined)).toBe(false);
+  });
+
+  it("recognizes an active link cookie even if the callback query is absent", () => {
+    expect(isSellerGoogleLinkFlow(new URLSearchParams(), "signed-link-token")).toBe(true);
+  });
+
   it("binds the short-lived challenge to the signed-in phone account", () => {
     process.env.SESSION_SECRET = "test-google-link-secret";
     const token = createSellerGoogleLinkToken("081234567890");
