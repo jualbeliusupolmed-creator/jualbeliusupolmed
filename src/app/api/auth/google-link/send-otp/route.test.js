@@ -41,15 +41,20 @@ beforeEach(() => {
   mocks.getSellerSession.mockReturnValue(phone);
   mocks.rateLimitDistributed.mockResolvedValue({ ok: true });
   mocks.sendWa.mockResolvedValue({ ok: true });
+  let otpQuery;
   mocks.getAdminClient.mockReturnValue({
     from: vi.fn((table) => {
       if (table === "seller_profiles") {
         return query({ data: { wa: "google_account_abc123", phone_wa: phone, email_google: null }, error: null });
       }
-      if (table === "seller_phone_link_otps") return query({ data: null, error: null });
+      if (table === "seller_phone_link_otps") {
+        otpQuery = query({ data: null, error: null });
+        return otpQuery;
+      }
       throw new Error(`Unexpected table: ${table}`);
     }),
   });
+  mocks.otpQuery = () => otpQuery;
 });
 
 describe("POST /api/auth/google-link/send-otp", () => {
@@ -69,6 +74,10 @@ describe("POST /api/auth/google-link/send-otp", () => {
     const response = await POST(request());
 
     expect(response.status).toBe(200);
+    expect(mocks.otpQuery().upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ phone_wa: phone, profile_wa: "google_account_abc123" }),
+      { onConflict: "phone_wa" }
+    );
   });
 
   it("rejects requests from a different origin", async () => {
