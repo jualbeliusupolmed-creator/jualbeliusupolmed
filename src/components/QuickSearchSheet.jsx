@@ -16,7 +16,7 @@ import {
 const KUNCI_RIWAYAT = "riwayat_cari";
 const PINTASAN = [
   { href: "/dicari", label: "Barang Dicari", ikon: Icon.Pin },
-  { href: "/favorit", label: "Favorit", ikon: Icon.Heart },
+  { href: "/keranjang", label: "Keranjang", ikon: Icon.ShoppingCart },
   { href: "/jasa", label: "Jasa", ikon: Icon.Briefcase },
   { href: "/chat", label: "Obrolan", ikon: Icon.MessageCircle },
 ];

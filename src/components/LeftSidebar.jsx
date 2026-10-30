@@ -53,7 +53,7 @@ export default function LeftSidebar() {
     { href: "/open-po", label: "Open PO", icon: Icon.Coffee },
     { href: "/mading", label: "Menfess & Info", icon: Icon.BookOpen },
     { href: "/chat", label: "Obrolan", icon: Icon.MessageCircle, badge: unreadChat },
-    { href: "/favorit", label: "Favorit", icon: Icon.Heart },
+    { href: "/keranjang", label: "Keranjang", icon: Icon.ShoppingCart },
   ];
 
   const exploreLinks = [

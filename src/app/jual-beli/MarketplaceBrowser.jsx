@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { rupiah } from "@/lib/fees";
 import { buildSlug } from "@/lib/slug";
-import FavoriteButton from "@/components/FavoriteButton";
 import ProductCard from "@/components/ProductCard";
 import { Icon } from "@/components/Icons";
 import { cn } from "@/lib/utils";

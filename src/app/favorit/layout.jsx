@@ -1,8 +1,8 @@
 export const metadata = {
-  title: "Favorit Saya",
+  title: "Keranjang Saya",
   description:
-    "Daftar barang yang kamu simpan di Kampus Kita. Tersimpan di perangkat ini, tanpa perlu login.",
-  alternates: { canonical: "/favorit" },
+    "Barang yang disimpan dan progres pesanan Open PO di Kampus Kita.",
+  alternates: { canonical: "/keranjang" },
   robots: { index: false, follow: true },
 };
 

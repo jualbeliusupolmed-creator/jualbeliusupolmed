@@ -12,7 +12,7 @@ export async function GET() {
   const [profileRes, batchesRes, outgoingRes] = await Promise.all([
     supa.from("seller_profiles").select("name,campus,faculty").eq("wa", wa).maybeSingle(),
     supa.from("open_po_batches").select("id,title,price_idr,quota,reserved_count,closes_at,pickup_point,pickup_note,status,created_at,product:open_po_products(name,description,category,unit,image_url,campus)").eq("seller_wa", wa).order("created_at", { ascending: false }).limit(100),
-    supa.from("open_po_orders").select("id,buyer_name,quantity,unit_price_idr,total_idr,status,created_at,batch:open_po_batches!inner(id,title,pickup_point,seller_wa,product:open_po_products(name,campus,seller_contact_consent))").eq("buyer_wa", wa).order("created_at", { ascending: false }).limit(100),
+    supa.from("open_po_orders").select("id,buyer_name,quantity,unit_price_idr,total_idr,status,created_at,batch:open_po_batches!inner(id,title,pickup_point,seller_wa,product:open_po_products(name,campus,unit,seller_contact_consent))").eq("buyer_wa", wa).order("created_at", { ascending: false }).limit(100),
   ]);
   if (profileRes.error || batchesRes.error || outgoingRes.error) {
     return NextResponse.json({ error: "Data Open PO belum dapat dimuat. Pastikan migrasi sudah diterapkan." }, { status: 503 });
@@ -45,7 +45,7 @@ export async function GET() {
         id: batch.id,
         title: batch.title,
         pickup_point: batch.pickup_point,
-        product: { name: product.name, campus: product.campus },
+        product: { name: product.name, campus: product.campus, unit: product.unit },
       },
     };
   });

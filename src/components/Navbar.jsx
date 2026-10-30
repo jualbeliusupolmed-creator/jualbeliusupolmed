@@ -10,6 +10,7 @@ import NotificationCenter from "@/components/NotificationCenter";
 import QuickSearchSheet from "@/components/QuickSearchSheet";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { getCartItems } from "@/lib/cart";
 
 export default function Navbar({ config }) {
   const pathname = usePathname();
@@ -21,6 +22,7 @@ export default function Navbar({ config }) {
   const [campuses, setCampuses] = useState([]);
   const [campusDropdownOpen, setCampusDropdownOpen] = useState(false);
   const [unreadChat, setUnreadChat] = useState(3);
+  const [cartCount, setCartCount] = useState(0);
   const [notifTerbuka, setNotifTerbuka] = useState(false);
   const [cariTerbuka, setCariTerbuka] = useState(false);
   const [showOtp, setShowOtp] = useState(false);
@@ -28,6 +30,17 @@ export default function Navbar({ config }) {
   const mobileDropdownRef = useRef(null);
 
   // Load campus preference
+  useEffect(() => {
+    const updateCartCount = () => setCartCount(getCartItems().length);
+    updateCartCount();
+    window.addEventListener("cart-changed", updateCartCount);
+    window.addEventListener("storage", updateCartCount);
+    return () => {
+      window.removeEventListener("cart-changed", updateCartCount);
+      window.removeEventListener("storage", updateCartCount);
+    };
+  }, []);
+
   useEffect(() => {
     fetch("/api/kampus", { cache: "no-store" })
       .then((res) => res.ok ? res.json() : null)
@@ -309,11 +322,12 @@ export default function Navbar({ config }) {
                 <Icon.Search className="w-4 h-4" />
               </button>
               <Link
-                href="/favorit"
-                aria-label="Wishlist favorit"
-                className="w-8 h-8 rounded-full flex items-center justify-center text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                href="/keranjang"
+                aria-label={`Keranjang${cartCount ? `, ${cartCount} barang` : ""}`}
+                className="relative w-8 h-8 rounded-full flex items-center justify-center text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/40 transition-colors"
               >
-                <Icon.Heart className="w-4 h-4" />
+                <Icon.ShoppingCart className="w-4 h-4" />
+                {cartCount > 0 && <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[9px] font-extrabold leading-none text-white shadow-sm">{cartCount > 99 ? "99+" : cartCount}</span>}
               </Link>
               <Link
                 href="/jual"
@@ -380,11 +394,12 @@ export default function Navbar({ config }) {
                 <Icon.Search className="w-4 h-4" />
               </button>
               <Link
-                href="/favorit"
-                aria-label="Wishlist favorit"
-                className="w-8 h-8 rounded-full flex items-center justify-center text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors active:scale-95"
+                href="/keranjang"
+                aria-label={`Keranjang${cartCount ? `, ${cartCount} barang` : ""}`}
+                className="relative w-8 h-8 rounded-full flex items-center justify-center text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/40 transition-colors active:scale-95"
               >
-                <Icon.Heart className="w-4 h-4" />
+                <Icon.ShoppingCart className="w-4 h-4" />
+                {cartCount > 0 && <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[9px] font-extrabold leading-none text-white shadow-sm">{cartCount > 99 ? "99+" : cartCount}</span>}
               </Link>
               <Link
                 href="/chat"

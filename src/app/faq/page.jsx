@@ -4,7 +4,7 @@ import { skripJsonLd } from "@/lib/jsonLd";
 export const metadata = {
   title: "Pertanyaan Umum (FAQ)",
   description:
-    "Jawaban pertanyaan seputar Kampus Kita: cara jual barang, masa tayang, fitur Naikkan Barang (Bump), pembayaran, COD, favorit, dan refund.",
+    "Jawaban pertanyaan seputar Kampus Kita: cara jual barang, masa tayang, fitur Naikkan Barang (Bump), pembayaran, COD, keranjang, dan refund.",
   alternates: { canonical: "/faq" },
 };
 
@@ -38,8 +38,8 @@ const faqs = [
     a: "Saat calon pembeli menekan tombol Minat / Chat Penjual di halaman produk, sistem otomatis mengirim notifikasi WhatsApp ke nomor penjual. Pembeli juga bisa langsung chat penjual via WhatsApp dari halaman produk atau profil penjual.",
   },
   {
-    q: "Bagaimana cara menyimpan barang ke Favorit?",
-    a: "Tekan ikon hati () di pojok kartu produk atau di halaman detail produk. Barang yang disimpan bisa dilihat kapan saja lewat menu Favorit di navbar. Daftar favorit tersimpan di perangkatmu tanpa perlu login.",
+    q: "Bagaimana cara menyimpan barang ke Keranjang?",
+    a: "Tekan ikon keranjang di pojok kartu produk atau di halaman detail produk. Barang tersimpan di menu Keranjang tanpa perlu login. Progres pesanan Open PO juga bisa dilihat pada tab Pesanan Open PO di halaman Keranjang.",
   },
   {
     q: "Apakah transaksi barang/COD difasilitasi oleh platform?",
