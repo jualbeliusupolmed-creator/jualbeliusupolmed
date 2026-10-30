@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { rupiah } from "@/lib/fees";
 import { formatWa } from "@/lib/constants";
-import FavoriteButton from "@/components/FavoriteButton";
+import CartButton from "@/components/CartButton";
 import { buildSlug } from "@/lib/slug";
 import { Icon } from "@/components/Icons";
 import { cn } from "@/lib/utils";
@@ -167,9 +167,9 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
           </a>
         )}
       </div>
-      <FavoriteButton
+      <CartButton
         listing={listing}
-        className="!absolute !right-2 !top-2 !z-10 !flex !h-8 !w-8 !items-center !justify-center !bg-white/90 !shadow-sm text-slate-700 backdrop-blur-sm transition-all active:scale-95 hover:!bg-white [&_svg]:!h-4 [&_svg]:!w-4"
+        className="!absolute !right-2 !top-2 !z-10 !flex !h-8 !w-8 !items-center !justify-center !shadow-sm text-slate-700 backdrop-blur-sm transition-all active:scale-95 [&_svg]:!h-4 [&_svg]:!w-4"
       />
     </article>
   );

@@ -2,6 +2,19 @@
 
 Dokumen ini berisi peta pemahaman sistem, alur bisnis, daftar masalah, dan riwayat audit untuk proyek **Jual Beli USU Polmed**.
 
+### Pembaruan 30 Oktober 2026 — keranjang pembeli dan progres Open PO
+
+- `/keranjang` menyatukan barang marketplace yang disimpan di perangkat dengan
+  status reservasi Open PO pembeli. Tab PO memakai data akun dari
+  `/api/open-po/mine`; setelah reservasi, CTA mengarah ke tab progres ini.
+- Item lama pada localStorage `favorites` dimigrasikan saat pertama kali
+  membuka keranjang ke `cart_items`. URL `/favorit` tetap mengarahkan ke
+  `/keranjang` agar bookmark lama tidak putus.
+- Tombol simpan pada kartu dan detail produk sekarang memakai ikon keranjang.
+  Badge jumlah di navbar ikut tersinkron saat keranjang berubah atau berubah di
+  tab lain. Tab progres PO menampilkan timeline status dan tombol perbarui.
+  Tidak ada perubahan skema atau data Supabase.
+
 ### Pembaruan 30 Oktober 2026 — diagnostik OTP WhatsApp
 
 - OTP penautan akun hanya dikirim melalui API bot Baileys: `BAILEYS_API_URL`

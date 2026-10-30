@@ -17,7 +17,7 @@ const BERANDA = { name: "Beranda", href: "/", icon: Icon.Home };
 const MARKET = {
   name: "Marketplace",
   href: "/jual-beli",
-  match: ["/jual-beli", "/produk", "/jasa", "/favorit", "/dicari", "/toko", "/penjual", "/distributor"],
+  match: ["/jual-beli", "/produk", "/jasa", "/keranjang", "/dicari", "/toko", "/penjual", "/distributor"],
   icon: Icon.ShoppingBag,
 };
 const OPEN_PO = {

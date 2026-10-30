@@ -7,7 +7,7 @@ import { rupiah } from "@/lib/fees";
 import { formatWa } from "@/lib/constants";
 import MinatButton from "@/components/MinatButton";
 import OfferButton from "@/components/OfferButton";
-import FavoriteButton from "@/components/FavoriteButton";
+import CartButton from "@/components/CartButton";
 import ShareModal from "@/components/ShareModal";
 import CopyLinkButton from "@/components/CopyLinkButton";
 import QRButton from "@/components/QRButton";
@@ -475,7 +475,7 @@ export default function ProductDetailInteractive({
               </OfferButton>
 
               <div className="grid grid-cols-4 gap-2 pt-1">
-                <FavoriteButton listing={listing} className="col-span-1 !w-full justify-center" />
+                <CartButton listing={listing} className="col-span-1 !w-full justify-center" />
                 <CopyLinkButton listing={listing} className="col-span-1 !w-full justify-center" />
                 <QRButton listing={listing} className="col-span-1 !w-full justify-center" />
                 <div className="col-span-1">

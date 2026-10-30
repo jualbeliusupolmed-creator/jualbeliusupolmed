@@ -18,7 +18,6 @@ import RatingWidget from "@/components/RatingWidget";
 import ReportButton from "@/components/ReportButton";
 import ViewTracker from "@/components/ViewTracker";
 import RecentlyViewedSaver from "@/components/RecentlyViewedSaver";
-import FavoriteButton from "@/components/FavoriteButton";
 import OwnerFastActions from "@/components/OwnerFastActions";
 import { Icon } from "@/components/Icons";
 import { skripJsonLd } from "@/lib/jsonLd";
