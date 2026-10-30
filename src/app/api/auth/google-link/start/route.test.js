@@ -32,8 +32,8 @@ function request(origin = "http://localhost:3000") {
 
 function profileQuery(profile) {
   const maybeSingle = vi.fn().mockResolvedValue({ data: profile, error: null });
-  const eq = vi.fn(() => ({ maybeSingle }));
-  const select = vi.fn(() => ({ eq }));
+  const or = vi.fn(() => ({ maybeSingle }));
+  const select = vi.fn(() => ({ or }));
   const from = vi.fn(() => ({ select }));
   mocks.getAdminClient.mockReturnValue({ from });
 }
@@ -55,7 +55,7 @@ describe("POST /api/auth/google-link/start", () => {
     mocks.proofCookie.mockReturnValue({
       value: createSellerGoogleLinkToken("081234567890"),
     });
-    profileQuery({ wa: "081234567890", email_google: null });
+    profileQuery({ wa: "google_account_abc123", phone_wa: "081234567890", email_google: null });
 
     const response = await POST(request());
 

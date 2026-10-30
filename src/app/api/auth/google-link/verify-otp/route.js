@@ -11,6 +11,7 @@ import {
   SELLER_GOOGLE_LINK_TTL,
 } from "@/lib/seller-google-link";
 import { jawabGalat } from "@/lib/jawabGalat";
+import { findSellerProfileBySession } from "@/lib/seller-profile-identity";
 
 export const dynamic = "force-dynamic";
 
@@ -42,13 +43,13 @@ export async function POST(request) {
     }
 
     const supa = getAdminClient();
-    const { data: profile, error: profileError } = await supa
-      .from("seller_profiles")
-      .select("wa,phone_wa,email_google")
-      .eq("wa", phone)
-      .maybeSingle();
+    const { data: profile, error: profileError } = await findSellerProfileBySession(
+      supa,
+      phone,
+      "wa,phone_wa,email_google"
+    );
     if (profileError) return jawabGalat(profileError, { pesan: "Profil akun belum dapat diverifikasi." });
-    if (!profile || profile.phone_wa !== phone) {
+    if (!profile || formatWa(profile.phone_wa || profile.wa) !== phone) {
       return NextResponse.json({ error: "Profil WhatsApp utama tidak ditemukan." }, { status: 404 });
     }
     if (profile.email_google) {
