@@ -1,6 +1,55 @@
 import crypto from "crypto";
+import { getAdminClient } from "@/lib/supabaseAdmin";
 
 const DEFAULT_META_API_VERSION = "v24.0";
+
+let cachedCredentials = null;
+let lastCacheTime = 0;
+
+export async function fetchMetaCredentials() {
+  if (cachedCredentials && Date.now() - lastCacheTime < 60_000) {
+    return cachedCredentials;
+  }
+  try {
+    const supa = getAdminClient();
+    const { data } = await supa
+      .from("system_settings")
+      .select("value")
+      .eq("key", "meta_instagram_credentials")
+      .maybeSingle();
+
+    if (data?.value) {
+      cachedCredentials = data.value;
+      lastCacheTime = Date.now();
+      return cachedCredentials;
+    }
+  } catch {
+    // fallback jika gagal baca database
+  }
+  return null;
+}
+
+export async function resolveInstagramToken(accountId = "katalog") {
+  const creds = await fetchMetaCredentials();
+  if (accountId === "menfess" && creds?.menfess_access_token) {
+    return creds.menfess_access_token;
+  }
+  if (creds?.katalog_access_token) {
+    return creds.katalog_access_token;
+  }
+  return getInstagramToken(accountId);
+}
+
+export async function resolveInstagramUserId(accountId = "katalog") {
+  const creds = await fetchMetaCredentials();
+  if (accountId === "menfess" && creds?.menfess_user_id) {
+    return creds.menfess_user_id;
+  }
+  if (creds?.katalog_user_id) {
+    return creds.katalog_user_id;
+  }
+  return getInstagramUserId(accountId);
+}
 
 export function getMetaApiVersion() {
   const configured = String(process.env.META_GRAPH_API_VERSION || "").trim();
@@ -69,7 +118,7 @@ export function verifyMetaSignature(rawBody, signatureHeader, appSecret) {
  * Kirim payload pesan langsung ke Meta Instagram Send API
  */
 export async function sendInstagramMessage(recipientId, messagePayload, options = {}) {
-  const token = options.token || getInstagramToken(options.account || "katalog");
+  const token = options.token || (await resolveInstagramToken(options.account || "katalog"));
   if (!token) {
     console.warn("sendInstagramMessage: token Meta belum diset, pesan diabaikan.");
     return { ok: false, skipped: true, error: "token_missing" };
@@ -81,7 +130,7 @@ export async function sendInstagramMessage(recipientId, messagePayload, options 
   }
 
   const version = getMetaApiVersion();
-  const userId = options.userId || getInstagramUserId(options.account || "katalog");
+  const userId = options.userId || (await resolveInstagramUserId(options.account || "katalog"));
   const endpointPath = userId ? `${userId}/messages` : "me/messages";
   const url = `https://graph.facebook.com/${version}/${endpointPath}`;
 
