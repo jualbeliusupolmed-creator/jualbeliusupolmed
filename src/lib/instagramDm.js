@@ -130,8 +130,8 @@ export async function sendInstagramMessage(recipientId, messagePayload, options 
   }
 
   const version = getMetaApiVersion();
-  const userId = options.userId || (await resolveInstagramUserId(options.account || "katalog"));
-  const endpointPath = userId ? `${userId}/messages` : "me/messages";
+  // Gunakan 'me/messages' secara default untuk Page Access Token, atau custom endpoint jika dispesifikasikan
+  const endpointPath = options.endpoint || "me/messages";
   const url = `https://graph.facebook.com/${version}/${endpointPath}`;
 
   const body = {
