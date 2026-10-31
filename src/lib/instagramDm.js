@@ -22,6 +22,21 @@ export function getInstagramToken(accountId = "katalog") {
   ).trim();
 }
 
+export function getInstagramUserId(accountId = "katalog") {
+  if (accountId === "menfess") {
+    return String(
+      process.env.META_MENFESS_IG_USER_ID ||
+      process.env.META_IG_USER_ID ||
+      ""
+    ).trim();
+  }
+  return String(
+    process.env.META_KATALOG_IG_USER_ID ||
+    process.env.META_IG_USER_ID ||
+    ""
+  ).trim();
+}
+
 /**
  * Validasi cryptographic signature dari Meta webhook payload (HMAC-SHA256)
  */
@@ -66,7 +81,9 @@ export async function sendInstagramMessage(recipientId, messagePayload, options 
   }
 
   const version = getMetaApiVersion();
-  const url = `https://graph.facebook.com/${version}/me/messages`;
+  const userId = options.userId || getInstagramUserId(options.account || "katalog");
+  const endpointPath = userId ? `${userId}/messages` : "me/messages";
+  const url = `https://graph.facebook.com/${version}/${endpointPath}`;
 
   const body = {
     recipient: { id: cleanRecipient },
@@ -85,6 +102,25 @@ export async function sendInstagramMessage(recipientId, messagePayload, options 
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok || data.error) {
+    // Coba fallback ke graph.instagram.com jika endpoint facebook Graph gagal
+    if (data?.error?.code === 100 && url.includes("/me/messages")) {
+      const fallbackUrl = `https://graph.instagram.com/${version}/me/messages`;
+      const fallbackRes = await fetch(fallbackUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+        cache: "no-store",
+      }).catch(() => null);
+
+      const fallbackData = await fallbackRes?.json()?.catch(() => ({}));
+      if (fallbackRes?.ok && !fallbackData?.error) {
+        return { ok: true, recipientId: cleanRecipient, messageId: fallbackData.message_id || null };
+      }
+    }
+
     const errorMsg = data?.error?.message || `HTTP ${response.status}`;
     console.error("Meta Instagram Send API Error:", errorMsg, data);
     return { ok: false, error: errorMsg, data };
