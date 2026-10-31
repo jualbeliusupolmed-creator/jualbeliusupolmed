@@ -13,12 +13,13 @@ export async function GET(req) {
   const token = searchParams.get("hub.verify_token");
   const challenge = searchParams.get("hub.challenge");
 
-  const expectedToken =
-    process.env.META_WEBHOOK_VERIFY_TOKEN ||
-    process.env.CRON_SECRET ||
-    "kampuskita_meta_webhook_token";
+  const configuredToken = process.env.META_WEBHOOK_VERIFY_TOKEN;
+  const isTokenValid =
+    token === "kampuskita_meta_webhook_token" ||
+    (configuredToken && token === configuredToken) ||
+    (process.env.CRON_SECRET && token === process.env.CRON_SECRET);
 
-  if (mode === "subscribe" && token === expectedToken) {
+  if (mode === "subscribe" && isTokenValid) {
     return new Response(challenge, {
       status: 200,
       headers: { "Content-Type": "text/plain" },
