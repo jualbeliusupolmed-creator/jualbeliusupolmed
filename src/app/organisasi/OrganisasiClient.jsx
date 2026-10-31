@@ -68,6 +68,7 @@ export default function OrganisasiClient({ initialOrganisasi = [] }) {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                aria-label="Cari organisasi, kampus, atau fakultas"
                 placeholder="Cari organisasi, kampus, atau fakultas..."
                 className="input py-2.5 pl-9 pr-4 text-xs shadow-sm bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800"
               />

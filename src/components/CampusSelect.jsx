@@ -2,7 +2,15 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-export default function CampusSelect({ value, onChange, className = "", includeAll = true, required = false }) {
+export default function CampusSelect({
+  value,
+  onChange,
+  className = "",
+  includeAll = true,
+  required = false,
+  id,
+  ariaLabel = "Pilih kampus",
+}) {
   const [campuses, setCampuses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -30,7 +38,7 @@ export default function CampusSelect({ value, onChange, className = "", includeA
   const known = campuses.some((campus) => campus.shortName === value);
   return (
     <div className="space-y-1">
-      <select value={value || ""} onChange={(event) => onChange(event.target.value)} className={className} required={required} disabled={loading || Boolean(error)}>
+      <select id={id} aria-label={ariaLabel} value={value || ""} onChange={(event) => onChange(event.target.value)} className={className} required={required} disabled={loading || Boolean(error)}>
         {loading && <option value="">Memuat kampus…</option>}
         {!loading && error && <option value="">Kampus belum tersedia</option>}
         {!loading && !error && !value && !includeAll && <option value="">Pilih kampus</option>}

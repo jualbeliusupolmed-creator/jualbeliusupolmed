@@ -9,6 +9,7 @@ import { Icon } from "@/components/Icons";
 import { getCartItems, toggleCartItem } from "@/lib/cart";
 import { rupiah } from "@/lib/fees";
 import { useSesi } from "@/components/SesiProvider";
+import { isListingAvailable } from "@/lib/listingAvailability";
 
 const ORDER_STATUS = {
   pending: { label: "Menunggu konfirmasi", style: "bg-amber-50 text-amber-800" },
@@ -133,8 +134,8 @@ export default function KeranjangPage() {
     setOrdersReload((current) => current + 1);
   }
 
-  const activeItems = items.filter((item) => !item.status || item.status === "active");
-  const inactiveItems = items.filter((item) => item.status && item.status !== "active");
+  const activeItems = items.filter(isListingAvailable);
+  const inactiveItems = items.filter((item) => !isListingAvailable(item));
 
   return (
     <main className="mx-auto min-h-[70vh] max-w-7xl px-4 pb-28 pt-6 md:px-6 md:pb-12">

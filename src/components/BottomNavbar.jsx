@@ -11,7 +11,6 @@ import { useSesi } from "./SesiProvider";
 import QuickSearchSheet from "./QuickSearchSheet";
 import CreateSheet from "./CreateSheet";
 import OTPModal from "./OTPModal";
-import MobileSidebarDrawer from "./MobileSidebarDrawer";
 
 const BERANDA = { name: "Beranda", href: "/", icon: Icon.Home };
 const MARKET = {
@@ -135,7 +134,6 @@ function BottomNavbarInner() {
   const [bukaCari, setBukaCari] = useState(false);
   const [bukaBuat, setBukaBuat] = useState(false);
   const [bukaOtp, setBukaOtp] = useState(false);
-  const [bukaSidebar, setBukaSidebar] = useState(false);
   const tersembunyi = useHideOnScroll();
   const [unreadChat, setUnreadChat] = useState(0);
 
@@ -154,13 +152,6 @@ function BottomNavbarInner() {
       localStorage.setItem("chat_unread_count", "0");
     }
   }, [pathname]);
-
-  // Listen for drawer:open event from header hamburger button
-  useEffect(() => {
-    function onOpenDrawer() { setBukaSidebar(true); }
-    window.addEventListener("drawer:open", onOpenDrawer);
-    return () => window.removeEventListener("drawer:open", onOpenDrawer);
-  }, []);
 
   // Sembunyikan/minimalkan BottomNavbar jika sedang di dalam room chat aktif atau halaman detail produk
   const isChatRoom =
@@ -182,8 +173,8 @@ function BottomNavbarInner() {
         onClick: siap ? () => setBukaOtp(true) : undefined,
       };
 
-  // Sheet atau drawer yang terbuka menahan dock supaya tidak menyingkir di belakangnya.
-  const menyingkir = tersembunyi && !bukaCari && !bukaBuat && !bukaOtp && !bukaSidebar && !isChatRoom;
+  // Sheet yang terbuka menahan dock supaya tidak menyingkir di belakangnya.
+  const menyingkir = tersembunyi && !bukaCari && !bukaBuat && !bukaOtp && !isChatRoom;
 
   return (
     <>
@@ -192,7 +183,7 @@ function BottomNavbarInner() {
         <nav
           aria-label="Navigasi bawah mobile"
           className={cn(
-            "fixed bottom-0 inset-x-0 z-40 md:hidden bg-white/95 dark:bg-[#18181b]/95 backdrop-blur-md border-t border-slate-200/90 dark:border-white/[0.08] shadow-[0_-2px_10px_rgba(0,0,0,0.03)] transition-all duration-300",
+            "fixed bottom-0 inset-x-0 z-40 lg:hidden bg-white/95 dark:bg-[#18181b]/95 backdrop-blur-md border-t border-slate-200/90 dark:border-white/[0.08] shadow-[0_-2px_10px_rgba(0,0,0,0.03)] transition-all duration-300",
             menyingkir ? "translate-y-full opacity-0 pointer-events-none" : "translate-y-0 opacity-100"
           )}
           style={{ paddingBottom: "max(6px, env(safe-area-inset-bottom, 0px))" }}
@@ -207,7 +198,6 @@ function BottomNavbarInner() {
         </nav>
       )}
 
-      <MobileSidebarDrawer isOpen={bukaSidebar} onClose={() => setBukaSidebar(false)} />
       <QuickSearchSheet isOpen={bukaCari} onClose={() => setBukaCari(false)} />
       <CreateSheet isOpen={bukaBuat} onClose={() => setBukaBuat(false)} />
       <OTPModal

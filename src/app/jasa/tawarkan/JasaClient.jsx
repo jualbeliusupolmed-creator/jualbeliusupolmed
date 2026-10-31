@@ -195,8 +195,8 @@ export default function JasaClient() {
 
           <div className="card grid gap-5 p-5 sm:grid-cols-2">
             <div>
-              <label className="label">Kategori Jasa</label>
-              <select className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.category} onChange={set("category")}>
+              <label htmlFor="jasa-category" className="label">Kategori Jasa</label>
+              <select id="jasa-category" className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.category} onChange={set("category")}>
                 {cats.map((c) => (
                   <option key={c} value={c}>
                     {c}
@@ -205,12 +205,13 @@ export default function JasaClient() {
               </select>
             </div>
             <div>
-              <label className="label">Target Area</label>
-              <CampusSelect className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.campus} onChange={(value) => setForm((current) => ({ ...current, campus: value }))} />
+              <label htmlFor="jasa-campus" className="label">Target Area</label>
+              <CampusSelect id="jasa-campus" ariaLabel="Target Area" className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.campus} onChange={(value) => setForm((current) => ({ ...current, campus: value }))} />
             </div>
             <div>
-              <label className="label">Sistem Kerja</label>
+              <label htmlFor="jasa-work-system" className="label">Sistem Kerja</label>
               <select
+                id="jasa-work-system"
                 className="input focus:ring-4 focus:ring-accent/10 focus:border-accent"
                 value={areaOption}
                 onChange={handleAreaOptionChange}

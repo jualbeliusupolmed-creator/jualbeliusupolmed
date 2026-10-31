@@ -7,6 +7,7 @@ import { censorProfanity } from "@/lib/profanity";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { siarkanPesanBaru } from "@/lib/chatRealtime";
 import { jawabGalat } from "@/lib/jawabGalat";
+import { isListingAvailable } from "@/lib/listingAvailability";
 
 export const dynamic = "force-dynamic";
 
@@ -72,6 +73,13 @@ export async function POST(req) {
 
     if (listingError || !listing) {
       return NextResponse.json({ error: "Barang tidak ditemukan" }, { status: 404 });
+    }
+
+    if (!isListingAvailable(listing)) {
+      return NextResponse.json(
+        { error: "Barang sudah tidak tersedia atau stoknya habis." },
+        { status: 409 }
+      );
     }
 
     const sellerWa = listing.seller_wa;

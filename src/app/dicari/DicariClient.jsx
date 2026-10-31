@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { CATEGORIES, formatWa, MARKETPLACE_WA } from "@/lib/constants";
@@ -26,6 +26,10 @@ export default function DicariPage({ initialItems = [] }) {
 
   // Form modal
   const [showModal, setShowModal] = useState(false);
+  const [qrisModal, setQrisModal] = useState(null);
+  const postingDialogRef = useRef(null);
+  const paymentDialogRef = useRef(null);
+  const previousModalFocusRef = useRef(null);
 
   // Dibuka dari tombol "Buat" di dock bawah: /rute?tulis=1 langsung
   // membuka form, jadi pengguna tidak perlu mencari tombolnya di halaman.
@@ -44,6 +48,50 @@ export default function DicariPage({ initialItems = [] }) {
       window.history.replaceState({}, "", window.location.pathname);
     }
   }, []);
+
+  useEffect(() => {
+    const dialog = showModal
+      ? postingDialogRef.current
+      : qrisModal
+      ? paymentDialogRef.current
+      : null;
+    if (!dialog) return;
+
+    previousModalFocusRef.current = document.activeElement;
+    const focusable = Array.from(
+      dialog.querySelectorAll(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )
+    );
+    focusable[0]?.focus();
+
+    function handleDialogKeyDown(event) {
+      if (event.key === "Escape") {
+        if (showModal) setShowModal(false);
+        else setQrisModal(null);
+        return;
+      }
+
+      if (event.key !== "Tab" || focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !dialog.contains(document.activeElement))) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener("keydown", handleDialogKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleDialogKeyDown);
+      if (previousModalFocusRef.current?.isConnected) {
+        previousModalFocusRef.current.focus?.();
+      }
+    };
+  }, [showModal, qrisModal]);
   const [activeQrisUrl, setActiveQrisUrl] = useState("");
   const [activeQrisFee, setActiveQrisFee] = useState(0);
   const [activeQrisOrderId, setActiveQrisOrderId] = useState("");
@@ -59,7 +107,6 @@ export default function DicariPage({ initialItems = [] }) {
     item_condition: "Bekas",
   });
   const [submitting, setSubmitting] = useState(false);
-  const [qrisModal, setQrisModal] = useState(null);
   const [manualOrderId, setManualOrderId] = useState(null);
   const [manualLoading, setManualLoading] = useState(false);
   const [manualFile, setManualFile] = useState(null);
@@ -230,6 +277,7 @@ export default function DicariPage({ initialItems = [] }) {
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
+            aria-label="Cari kebutuhan mahasiswa"
             placeholder="Cari kebutuhan..."
             className="w-full rounded-full border border-gray-200 bg-white py-1.5 pl-9 pr-3 text-xs text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-400 focus:ring-2 focus:ring-gray-900/5 dark:border-slate-800 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500"
           />
@@ -239,6 +287,7 @@ export default function DicariPage({ initialItems = [] }) {
         <select
           value={campus}
           onChange={(e) => setCampus(e.target.value)}
+          aria-label="Filter berdasarkan kampus"
           className="shrink-0 cursor-pointer rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
         >
           <option value="Semua">Semua Kampus</option>
@@ -251,6 +300,7 @@ export default function DicariPage({ initialItems = [] }) {
         <select
           value={cat}
           onChange={(e) => setCat(e.target.value)}
+          aria-label="Filter berdasarkan kategori"
           className="shrink-0 cursor-pointer rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
         >
           <option value="all">Semua Kategori</option>
@@ -453,9 +503,9 @@ export default function DicariPage({ initialItems = [] }) {
       {/* Posting Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="card w-full max-w-lg bg-white p-6 shadow-2xl dark:bg-slate-900 animate-fade-in max-h-[90vh] overflow-y-auto">
+          <div ref={postingDialogRef} role="dialog" aria-modal="true" aria-labelledby="wanted-dialog-title" className="card w-full max-w-lg bg-white p-6 shadow-2xl dark:bg-slate-900 animate-fade-in max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center pb-3 border-b border-gray-100 dark:border-slate-800">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Posting Barang</h2>
+              <h2 id="wanted-dialog-title" className="text-lg font-bold text-gray-900 dark:text-white">Posting Barang</h2>
               <button type="button" onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600" aria-label="Tutup"><Icon.X className="h-5 w-5" /></button>
             </div>
             <form onSubmit={submitWanted} className="mt-4 space-y-4">
@@ -526,8 +576,9 @@ export default function DicariPage({ initialItems = [] }) {
                   <label htmlFor="wanted-budget" className="floating-label">Budget Maks (Rp) — kosongkan jika nego</label>
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-gray-700 dark:text-slate-300 block mb-1">Kategori</label>
+                  <label htmlFor="wanted-category" className="text-xs font-semibold text-gray-700 dark:text-slate-300 block mb-1">Kategori</label>
                   <select
+                    id="wanted-category"
                     className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-xs font-medium text-gray-800 outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                     value={form.category}
                     onChange={handleInputChange("category")}
@@ -543,8 +594,9 @@ export default function DicariPage({ initialItems = [] }) {
 
               <div className="grid gap-4 sm:grid-cols-3">
                 <div>
-                  <label className="text-xs font-semibold text-gray-700 dark:text-slate-300 block mb-1">Target Kampus</label>
+                  <label htmlFor="wanted-campus" className="text-xs font-semibold text-gray-700 dark:text-slate-300 block mb-1">Target Kampus</label>
                   <select
+                    id="wanted-campus"
                     className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-xs font-medium text-gray-800 outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                     value={form.campus}
                     onChange={handleInputChange("campus")}
@@ -557,8 +609,9 @@ export default function DicariPage({ initialItems = [] }) {
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-gray-700 dark:text-slate-300 block mb-1">Kondisi Barang</label>
+                  <label htmlFor="wanted-condition" className="text-xs font-semibold text-gray-700 dark:text-slate-300 block mb-1">Kondisi Barang</label>
                   <select
+                    id="wanted-condition"
                     className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-xs font-medium text-gray-800 outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                     value={form.item_condition}
                     onChange={handleInputChange("item_condition")}
@@ -569,8 +622,9 @@ export default function DicariPage({ initialItems = [] }) {
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-gray-700 dark:text-slate-300 block mb-1">Area COD</label>
+                  <label htmlFor="wanted-area" className="text-xs font-semibold text-gray-700 dark:text-slate-300 block mb-1">Area COD</label>
                   <input
+                    id="wanted-area"
                     type="text"
                     className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-xs font-medium text-gray-800 outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                     value={form.area}
@@ -592,9 +646,9 @@ export default function DicariPage({ initialItems = [] }) {
       {/* Modal Buka Kontak — Transfer Manual */}
       {qrisModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm overflow-y-auto">
-          <div className="card w-full max-w-sm bg-white p-6 shadow-2xl dark:bg-slate-900 animate-fade-in my-8">
+          <div ref={paymentDialogRef} role="dialog" aria-modal="true" aria-labelledby="wanted-payment-title" className="card w-full max-w-sm bg-white p-6 shadow-2xl dark:bg-slate-900 animate-fade-in my-8">
             <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-slate-800">
-              <h2 className="text-base font-extrabold text-gray-900 dark:text-white">
+              <h2 id="wanted-payment-title" className="text-base font-extrabold text-gray-900 dark:text-white">
                 Buka Kontak (Transfer Manual)
               </h2>
               <button
@@ -685,10 +739,11 @@ export default function DicariPage({ initialItems = [] }) {
                 </div>
 
                 <div className="mt-4 text-left">
-                  <label className="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
+                  <label htmlFor="wanted-payment-proof" className="block text-xs font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
                     <span className="inline-flex items-center gap-1.5"><Icon.Camera className="h-4 w-4" /> Upload Bukti Transfer</span>
                   </label>
                   <input
+                    id="wanted-payment-proof"
                     type="file"
                     accept="image/*"
                     onChange={(e) => {

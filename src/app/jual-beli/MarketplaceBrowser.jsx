@@ -306,6 +306,7 @@ export default function MarketplaceBrowser({
               <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                aria-label="Cari barang di marketplace"
                 className="bg-transparent w-full text-slate-800 dark:text-slate-100 text-xs placeholder:text-slate-400 focus:outline-none"
                 placeholder="Cari laptop, buku kalkulus, jas lab, kemeja, kos..."
                 type="text"
@@ -329,6 +330,7 @@ export default function MarketplaceBrowser({
                 <select
                   value={selectedCampus}
                   onChange={(e) => setSelectedCampus(e.target.value)}
+                  aria-label="Filter berdasarkan kampus"
                   className="w-full appearance-none bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 pr-6 focus:outline-none focus:border-emerald-600 cursor-pointer"
                 >
                   <option value="all">Semua Kampus</option>
@@ -348,6 +350,7 @@ export default function MarketplaceBrowser({
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
+                  aria-label="Filter berdasarkan kategori"
                   className="w-full appearance-none bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 pr-6 focus:outline-none focus:border-emerald-600 cursor-pointer"
                 >
                   <option value="all">Semua Kategori</option>
@@ -368,6 +371,7 @@ export default function MarketplaceBrowser({
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
+                  aria-label="Urutkan barang"
                   className="w-full appearance-none bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 pr-6 focus:outline-none focus:border-emerald-600 cursor-pointer"
                 >
                   <option value="newest">Urut: Terbaru</option>

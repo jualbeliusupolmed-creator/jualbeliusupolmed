@@ -4,7 +4,8 @@ import { formatWa } from "@/lib/constants";
 import CartButton from "@/components/CartButton";
 import { buildSlug } from "@/lib/slug";
 import { Icon } from "@/components/Icons";
-import { cn } from "@/lib/utils";
+import { cn, firstCodePoint } from "@/lib/utils";
+import { isListingAvailable } from "@/lib/listingAvailability";
 
 /**
  * ProductCard: Kartu produk marketplace yang ultra-efisien, ringkas, padat, dan cepat di-scroll.
@@ -16,7 +17,12 @@ import { cn } from "@/lib/utils";
 export default function ProductCard({ listing, tanpaPenjual = false }) {
   if (!listing) return null;
 
-  const isSold = listing.status === "sold";
+  const isAvailable = isListingAvailable(listing);
+  const unavailableLabel =
+    listing.status === "sold" ||
+    (listing.stock !== null && listing.stock !== undefined && Number(listing.stock) <= 0)
+      ? "STOK HABIS"
+      : "TIDAK AKTIF";
   const condLabel = listing.condition === "new" ? "Baru" : "Preloved";
   const detailUrl = `/produk/${buildSlug(listing.title, listing.id)}`;
   const sellerName =
@@ -30,7 +36,7 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
   const sellerMeta = listing.seller_profiles?.student_faculty ||
     listing.seller_profiles?.faculty ||
     sellerCampus;
-  const sellerInitial = sellerName.trim().charAt(0).toUpperCase() || "M";
+  const sellerInitial = firstCodePoint(sellerName).toUpperCase() || "M";
   const isStudentVerified = listing.seller_profiles?.student_verified || listing.student_verified;
   const isNegotiable = /nego/i.test(listing.description || "");
   const sellerWa = formatWa(listing.seller_wa);
@@ -68,9 +74,9 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
                 KTM Valid
               </span>
             )}
-            {isSold && (
+            {!isAvailable && (
               <span className="rounded-full bg-slate-900/85 px-2 py-0.5 text-[9px] font-bold text-white shadow-sm">
-                TERJUAL
+                {unavailableLabel}
               </span>
             )}
             {listing.type === "sewa" && (
@@ -78,7 +84,7 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
                 Sewa
               </span>
             )}
-            {listing.featured && !isSold && (
+            {listing.featured && isAvailable && (
               <span className="rounded-full bg-emerald-900/90 px-2 py-0.5 text-[9px] font-bold text-white shadow-sm">
                 Unggulan
               </span>
@@ -149,13 +155,13 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
           href={detailUrl}
           className={cn(
             "inline-flex min-h-7 items-center justify-center gap-1 rounded-lg bg-slate-100 px-1.5 text-[9px] font-bold text-slate-700 transition hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 sm:min-h-9 sm:px-2 sm:text-[11px]",
-            !sellerWa || isSold ? "col-span-2" : ""
+            !sellerWa || !isAvailable ? "col-span-2" : ""
           )}
         >
           <Icon.Eye className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
           Detail
         </Link>
-        {sellerWa && !isSold && (
+        {sellerWa && isAvailable && (
           <a
             href={`https://wa.me/${sellerWa}?text=${encodeURIComponent(`Halo, saya tertarik dengan ${listing.title}.`)}`}
             target="_blank"

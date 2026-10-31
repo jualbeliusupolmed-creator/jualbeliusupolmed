@@ -249,6 +249,25 @@ export default function Navbar({ config }) {
               )}
             </div>
 
+            <Link
+              href="/keranjang"
+              aria-label={`Keranjang${cartCount ? `, ${cartCount} barang` : ""}`}
+              title="Keranjang"
+              className={cn(
+                "relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors",
+                pathname?.startsWith("/keranjang")
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300"
+                  : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700/60"
+              )}
+            >
+              <Icon.ShoppingCart className="h-4 w-4" />
+              {cartCount > 0 && (
+                <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[9px] font-extrabold leading-none text-white shadow-sm">
+                  {cartCount > 99 ? "99+" : cartCount}
+                </span>
+              )}
+            </Link>
+
             <div className="h-5 w-px bg-slate-200 dark:bg-white/10 shrink-0" />
 
             {/* Masuk / Profil */}
@@ -342,7 +361,7 @@ export default function Navbar({ config }) {
           /* Root Pages: Brand + campus selector + actions */
           <>
             <div className="flex items-center gap-2 min-w-0">
-              <Link href="/" className="w-8 h-8 rounded-xl bg-[#047857] text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Link href="/" aria-label="Kampus Kita - Beranda" className="w-8 h-8 rounded-xl bg-[#047857] text-white flex items-center justify-center shrink-0 shadow-xs">
                 <Icon.GraduationCap className="w-4.5 h-4.5 text-emerald-200" />
               </Link>
               <div className="flex min-w-0 items-center gap-1.5">
@@ -350,7 +369,7 @@ export default function Navbar({ config }) {
                   <span>Kampus</span>
                   <span>Kita</span>
                 </span>
-                <div className="relative flex items-center" ref={mobileDropdownRef}>
+                <div className="relative hidden min-[380px]:flex items-center" ref={mobileDropdownRef}>
                   <button
                     type="button"
                     onClick={() => setCampusDropdownOpen(!campusDropdownOpen)}

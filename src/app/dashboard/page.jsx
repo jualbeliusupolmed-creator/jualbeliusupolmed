@@ -24,6 +24,7 @@ import BuatOprecModal from "@/components/oprec/BuatOprecModal";
 import UserOpenPoWorkspace from "@/components/open-po/UserOpenPoWorkspace";
 import { useSesi } from "@/components/SesiProvider";
 import { StatusBadge } from "@/components/ui/DesignSystem";
+import { DASHBOARD_TABS, resolveDashboardTab } from "@/lib/dashboardTabs";
 
 function statusBadge(s) {
   const map = {
@@ -102,11 +103,17 @@ function DashboardInner() {
   const router = useRouter();
 
   function selectTab(tab) {
+    if (!DASHBOARD_TABS.includes(tab)) return;
+    const currentTabParam = params.get("tab");
+    if (
+      activeTab === tab &&
+      (tab === "jual" ? !currentTabParam : currentTabParam === tab)
+    ) {
+      return;
+    }
+
     setActiveTab(tab);
     router.push(tab === "jual" ? "/dashboard" : `/dashboard?tab=${tab}`, { scroll: false });
-
-    if (tab === "statistik" && !analytics) loadAnalytics();
-    if (tab === "ukm" && !oprecLoaded) loadOprec();
   }
 
   useEffect(() => {
@@ -115,17 +122,23 @@ function DashboardInner() {
       .then((r) => r.json())
       .then((d) => setCfg(d))
       .catch(() => {});
+  }, []);
 
-    // `?tab=` sengaja dihormati: tanpa ini, "satu pintu" /profil mendarat di
-    // tab jualan dan orang harus mencari sendiri tab profilnya — pintu yang
-    // membuka ke ruangan yang salah.
-    const tabDiminta = params.get("tab");
-    if (tabDiminta && TAB_SAH.includes(tabDiminta)) setActiveTab(tabDiminta);
+  useEffect(() => {
+    // Keep browser history, direct links, and the selected workspace in sync.
+    setActiveTab(resolveDashboardTab(params.get("tab"), { isUkmAccount, loaded }));
     if (params.get("paid")) setNote("Pembayaran sukses! Barang segera ditampilkan.");
     if (params.get("pending")) setNote("Pembayaran pending. Selesaikan ya.");
     if (params.get("edited")) setNote("Detail jual barang berhasil diperbarui!");
+  }, [params, loaded, isUkmAccount]);
+
+  useEffect(() => {
+    if (!wa) return;
+    if (activeTab === "statistik" && !analytics) loadAnalytics(wa);
+    if (activeTab === "ukm" && isUkmAccount && !oprecLoaded) loadOprec(wa);
+    // Load tab-specific data for direct links and browser history navigation too.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params, router]);
+  }, [activeTab, wa, isUkmAccount]);
 
   // Identitas dashboard datang dari sesi bersama.
   //
@@ -193,15 +206,9 @@ function DashboardInner() {
       setWantedItems(dataWanted.listings || []);
       setOffers(dataOffers.offers || []);
 
-      // Bug #1 + #4 Fix: Hanya set tab ke "ukm" pada load PERTAMA (!loaded),
-      // dan hanya jika user tidak sedang meminta tab tertentu via URL (?tab=...).
-      // Setelah loaded=true, tab tidak boleh direset oleh refresh/aksi apapun.
       const isUkm = !!(mergedProfile?.account_type === "ukm" || mergedProfile?.ukm_verified || mergedProfile?.ukm_name);
-      if (!loaded && isUkm) {
-        const tabDimintaUrl = params.get("tab");
-        if (!tabDimintaUrl || !TAB_SAH.includes(tabDimintaUrl)) {
-          setActiveTab("ukm");
-        }
+      if (!loaded) {
+        setActiveTab(resolveDashboardTab(params.get("tab"), { isUkmAccount: isUkm, loaded: true }));
       }
       setLoaded(true);
       localStorage.setItem("seller_wa", n);
@@ -702,29 +709,30 @@ function DashboardInner() {
       {/* ===== UI ===== */}
 
       {/* ===== DASHBOARD HEADER ===== */}
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <header className="page-header mb-5 border-0 pb-0">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Ruang akun</p>
-          <h1 className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">Dashboard</h1>
+          <p className="page-eyebrow">Ruang akun</p>
+          <h1 className="page-title">Dashboard</h1>
+          <p className="page-description">Kelola barang, pesanan, performa, dan profil akunmu.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-col-reverse gap-2 sm:w-auto sm:flex-row sm:items-center">
           {wa && <PushNotificationButton wa={wa} />}
           {loaded && (
             <Link 
               href={isUkmAccount ? "/jual?type=danus" : "/jual"} 
-              className="px-4 py-2 rounded-2xl text-xs font-black bg-primary hover:bg-primary/95 text-white shadow-md shadow-primary/20 active:scale-95 transition-all flex items-center gap-1.5"
+              className="btn-primary min-h-11 w-full rounded-full px-4 py-2 text-xs font-extrabold shadow-sm sm:w-auto"
             >
               <Icon.PlusCircle className="w-3.5 h-3.5" />
               <span>{isUkmAccount ? "Tambah Danus / Merch" : "Jual Barang"}</span>
             </Link>
           )}
         </div>
-      </div>
+      </header>
 
-      <div className="mb-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <section className="card-shell mb-5 rounded-3xl p-4 shadow-sm sm:p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-primary/20 bg-primary/10 text-lg font-black text-primary dark:text-violet-300 flex items-center justify-center">
+            <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-emerald-200 bg-emerald-50 text-lg font-black text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-300">
               {sellerProfile?.photo_url ? (
                 <Image
                   src={sellerProfile.photo_url}
@@ -740,7 +748,7 @@ function DashboardInner() {
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white">
+                <h2 className="text-base font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-lg">
                   {sellerProfile?.ukm_name || sellerProfile?.name || "Dashboard Penjual"}
                 </h2>
                 {isUkmAccount && (
@@ -762,13 +770,13 @@ function DashboardInner() {
                   </span>
                 )}
               </div>
-              <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500 dark:text-slate-400">
+              <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
                 <span className="inline-flex items-center gap-1">
                   <Icon.Phone className="h-3.5 w-3.5" />
                   {wa || "Nomor terhubung"}
                 </span>
                 {sellerProfile?.free_bumps > 0 && (
-                  <span className="inline-flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full text-[10px] font-bold border border-indigo-200 dark:border-indigo-800">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
                     <Icon.RefreshCcw className="h-3 w-3" />
                     {sellerProfile.free_bumps}x Free Bump
                   </span>
@@ -782,15 +790,14 @@ function DashboardInner() {
               href={isUkmAccount ? "/organisasi" : `/toko/${sellerProfile.slug}`}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-1 rounded-lg bg-slate-100 px-3 py-2 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-200 active:scale-95 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              className="btn-outline min-h-10 self-start px-3 text-xs sm:self-auto"
             >
               <span>{isUkmAccount ? "Lihat Direktori Organisasi" : "Lihat Profil Publik"}</span>
               <Icon.ArrowRight className="h-3.5 w-3.5" />
             </a>
           )}
         </div>
-
-      </div>
+      </section>
 
       {note && (
         <div className="mb-6 rounded-2xl bg-primary/10 border border-primary/20 px-4 py-3 text-xs font-semibold text-primary">
@@ -832,14 +839,12 @@ function DashboardInner() {
       )}
 
 
-      {loaded && !busy && (
+      {loaded && (
         <>
           {/* One navigation layer for every dashboard workspace. */}
           <nav
             aria-label="Bagian dashboard"
-            className={`mb-4 grid gap-1 rounded-xl border border-slate-200/80 bg-slate-100 p-1 dark:border-slate-800 dark:bg-slate-900/90 ${
-              isUkmAccount ? "grid-cols-6" : "grid-cols-5"
-            }`}
+            className="sticky top-14 z-30 mb-5 flex min-w-0 gap-1 overflow-x-auto rounded-2xl border border-slate-200/80 bg-slate-100/95 p-1.5 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/95 lg:top-16 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {(isUkmAccount ? [
               {
@@ -895,10 +900,10 @@ function DashboardInner() {
                 onClick={hub.onClick}
                 type="button"
                 aria-pressed={hub.active}
-                className={`relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-1 py-2 text-center text-[10px] font-semibold transition-colors ${
+                className={`relative flex min-h-12 min-w-[68px] flex-1 shrink-0 flex-col items-center justify-center gap-1 rounded-xl px-1.5 py-2 text-center text-[10px] font-bold transition-colors sm:min-w-0 sm:py-2.5 ${
                   hub.active
-                    ? "bg-white text-primary shadow-sm dark:bg-slate-800 dark:text-emerald-400"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    ? "bg-white text-emerald-800 shadow-sm dark:bg-slate-800 dark:text-emerald-300"
+                    : "text-slate-600 hover:bg-white/70 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/70 dark:hover:text-white"
                 }`}
               >
                 <hub.IconComponent className="h-4 w-4 shrink-0" />
@@ -914,13 +919,14 @@ function DashboardInner() {
 
           {/* SUB-TABS ROW (Contextual inside active category) */}
           {(activeTab === "jual" || activeTab === "dicari") && (
-            <div className="flex items-center gap-2 mb-6 border-b border-slate-100 dark:border-slate-800 pb-3">
+            <div role="group" aria-label="Barang dan kebutuhan" className="mb-5 flex min-w-0 items-center gap-1 overflow-x-auto rounded-2xl bg-slate-100 p-1.5 dark:bg-slate-900 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <button
                 onClick={() => selectTab("jual")}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                aria-pressed={activeTab === "jual"}
+                className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-xl px-3.5 text-xs font-bold transition-all ${
                   activeTab === "jual"
-                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
-                    : "bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
+                    ? "bg-white text-emerald-800 shadow-sm dark:bg-slate-800 dark:text-emerald-300"
+                    : "text-slate-600 hover:bg-white/70 dark:text-slate-400 dark:hover:bg-slate-800/70"
                 }`}
               >
                 <span className="inline-flex items-center gap-1.5">
@@ -930,10 +936,11 @@ function DashboardInner() {
               </button>
               <button
                 onClick={() => selectTab("dicari")}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                aria-pressed={activeTab === "dicari"}
+                className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-xl px-3.5 text-xs font-bold transition-all ${
                   activeTab === "dicari"
-                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
-                    : "bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
+                    ? "bg-white text-emerald-800 shadow-sm dark:bg-slate-800 dark:text-emerald-300"
+                    : "text-slate-600 hover:bg-white/70 dark:text-slate-400 dark:hover:bg-slate-800/70"
                 }`}
               >
                 <span className="inline-flex items-center gap-1.5">
@@ -945,13 +952,14 @@ function DashboardInner() {
           )}
 
           {(activeTab === "statistik" || activeTab === "pro" || activeTab === "referral") && (
-            <div className="flex items-center gap-2 mb-6 border-b border-slate-100 dark:border-slate-800 pb-3 overflow-x-auto [scrollbar-width:none]">
+            <div role="group" aria-label="Performa akun" className="mb-5 flex min-w-0 items-center gap-1 overflow-x-auto rounded-2xl bg-slate-100 p-1.5 dark:bg-slate-900 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <button
                 onClick={() => selectTab("statistik")}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 ${
+                aria-pressed={activeTab === "statistik"}
+                className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-xl px-3.5 text-xs font-bold transition-all ${
                   activeTab === "statistik"
-                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
-                    : "bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
+                    ? "bg-white text-emerald-800 shadow-sm dark:bg-slate-800 dark:text-emerald-300"
+                    : "text-slate-600 hover:bg-white/70 dark:text-slate-400 dark:hover:bg-slate-800/70"
                 }`}
               >
                 <span className="inline-flex items-center gap-1.5">
@@ -961,10 +969,11 @@ function DashboardInner() {
               </button>
               <button
                 onClick={() => selectTab("pro")}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 ${
+                aria-pressed={activeTab === "pro"}
+                className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-xl px-3.5 text-xs font-bold transition-all ${
                   activeTab === "pro"
-                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
-                    : "bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
+                    ? "bg-white text-emerald-800 shadow-sm dark:bg-slate-800 dark:text-emerald-300"
+                    : "text-slate-600 hover:bg-white/70 dark:text-slate-400 dark:hover:bg-slate-800/70"
                 }`}
               >
                 <span className="inline-flex items-center gap-1.5">
@@ -974,10 +983,11 @@ function DashboardInner() {
               </button>
               <button
                 onClick={() => selectTab("referral")}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 ${
+                aria-pressed={activeTab === "referral"}
+                className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-xl px-3.5 text-xs font-bold transition-all ${
                   activeTab === "referral"
-                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
-                    : "bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
+                    ? "bg-white text-emerald-800 shadow-sm dark:bg-slate-800 dark:text-emerald-300"
+                    : "text-slate-600 hover:bg-white/70 dark:text-slate-400 dark:hover:bg-slate-800/70"
                 }`}
               >
                 <span className="inline-flex items-center gap-1.5">
@@ -989,13 +999,14 @@ function DashboardInner() {
           )}
 
           {(activeTab === "profil" || activeTab === "blog") && (
-            <div className="flex items-center gap-2 mb-6 border-b border-slate-100 dark:border-slate-800 pb-3">
+            <div role="group" aria-label="Profil dan tulisan" className="mb-5 flex min-w-0 items-center gap-1 overflow-x-auto rounded-2xl bg-slate-100 p-1.5 dark:bg-slate-900 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <button
                 onClick={() => selectTab("profil")}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                aria-pressed={activeTab === "profil"}
+                className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-xl px-3.5 text-xs font-bold transition-all ${
                   activeTab === "profil"
-                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
-                    : "bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
+                    ? "bg-white text-emerald-800 shadow-sm dark:bg-slate-800 dark:text-emerald-300"
+                    : "text-slate-600 hover:bg-white/70 dark:text-slate-400 dark:hover:bg-slate-800/70"
                 }`}
               >
                 <span className="inline-flex items-center gap-1.5">
@@ -1005,10 +1016,11 @@ function DashboardInner() {
               </button>
               <button
                 onClick={() => selectTab("blog")}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
+                aria-pressed={activeTab === "blog"}
+                className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-xl px-3.5 text-xs font-bold transition-all ${
                   activeTab === "blog"
-                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
-                    : "bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
+                    ? "bg-white text-emerald-800 shadow-sm dark:bg-slate-800 dark:text-emerald-300"
+                    : "text-slate-600 hover:bg-white/70 dark:text-slate-400 dark:hover:bg-slate-800/70"
                 }`}
               >
                 <span className="inline-flex items-center gap-1.5">
@@ -1035,10 +1047,10 @@ function DashboardInner() {
 
           {activeTab === "tawaran" ? (
 
-            <div className="space-y-4 mt-6">
-              <h2 className="text-base font-bold dark:text-white">Tawaran Harga Masuk</h2>
+            <div className="space-y-5">
+              <h2 className="section-heading">Tawaran Harga Masuk</h2>
               {offers.length === 0 ? (
-                <div className="mt-6 flex flex-col items-center justify-center py-12 px-4 text-center bg-gray-50/50 dark:bg-slate-900/20 rounded-3xl border border-gray-100 dark:border-slate-800/60">
+                <div className="card-shell mt-3 flex flex-col items-center justify-center rounded-3xl px-4 py-12 text-center">
                   <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
                     <Icon.MessageCircle className="h-8 w-8" />
                   </div>
@@ -1127,7 +1139,7 @@ function DashboardInner() {
               )}
             </div>
           ) : activeTab === "pro" ? (
-            <div className="space-y-6 mt-6">
+            <div className="space-y-6">
               <div className="card p-6 border-2 border-amber-200 bg-amber-50/30 dark:border-amber-900/30 dark:bg-amber-900/10">
                 <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start text-center sm:text-left">
                   <div className="h-24 w-24 shrink-0 rounded-2xl bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center text-4xl">
@@ -1162,7 +1174,7 @@ function DashboardInner() {
               </div>
             </div>
           ) : activeTab === "referral" ? (
-            <div className="space-y-6 mt-6">
+            <div className="space-y-6">
               <div className="card p-6 border-2 border-indigo-100 bg-indigo-50/30 dark:border-indigo-900/30 dark:bg-indigo-900/10">
                 <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start text-center sm:text-left">
                   <div className="h-24 w-24 shrink-0 rounded-2xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-4xl">
@@ -1208,7 +1220,7 @@ function DashboardInner() {
           ) : activeTab === "blog" ? (
             <BlogPenulisPanel />
           ) : activeTab === "jual" ? (
-            <div className="space-y-6 mt-6">
+            <div className="space-y-6">
               {/* Peringatan Batas PRO */}
               {sellerProfile && (!sellerProfile.subscription_tier || sellerProfile.subscription_tier !== "pro" || new Date(sellerProfile.subscription_expires_at) < new Date()) && active.length >= 12 && (
                 <div className="rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 dark:from-amber-900/20 dark:to-orange-900/20 dark:border-amber-900/50 p-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-sm">
@@ -1312,7 +1324,7 @@ function DashboardInner() {
               )}
 
               <div>
-                <h2 className="text-base font-bold dark:text-white">Daftar Barang</h2>
+                <h2 className="section-heading">Daftar Barang</h2>
                 {active.length === 0 ? (
                   <div className="mt-3 flex items-center gap-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 dark:border-slate-800 dark:bg-slate-900/40">
                     <Icon.Package className="h-5 w-5 shrink-0 text-slate-400" />
@@ -1518,7 +1530,7 @@ function DashboardInner() {
 
               {soldItems.length > 0 && (
                 <div>
-                  <h2 className="text-base font-bold dark:text-white">Riwayat Terjual</h2>
+                  <h2 className="section-heading">Riwayat Terjual</h2>
                   <div className="mt-3 space-y-2">
                     {soldItems.map((i) => (
                       <div key={i.id} className="card p-3 text-sm dark:border-slate-800 space-y-2">
@@ -1575,7 +1587,7 @@ function DashboardInner() {
               {/* Barang tidak aktif */}
               {otherItems.length > 0 && (
                 <div className="space-y-3 mt-6">
-                  <h2 className="text-base font-bold text-gray-500 dark:text-slate-400">Barang Tidak Aktif (Kedaluwarsa / Ditangguhkan)</h2>
+                  <h2 className="section-heading text-slate-600 dark:text-slate-300">Barang Tidak Aktif (Kedaluwarsa / Ditangguhkan)</h2>
                   <div className="space-y-3">
                     {otherItems.map((i) => (
                       <div
@@ -1637,10 +1649,10 @@ function DashboardInner() {
 
             </div>
           ) : activeTab === "dicari" ? (
-            <div className="mt-6 space-y-4">
-              <h2 className="text-base font-bold dark:text-white">Postingan Kebutuhan Dicari</h2>
+            <div className="space-y-4">
+              <h2 className="section-heading">Postingan Kebutuhan Dicari</h2>
               {wantedItems.length === 0 ? (
-                <div className="mt-6 flex flex-col items-center justify-center py-12 px-4 text-center bg-gray-50/50 dark:bg-slate-900/20 rounded-3xl border border-gray-100 dark:border-slate-800/60">
+                <div className="card-shell mt-3 flex flex-col items-center justify-center rounded-3xl px-4 py-12 text-center">
                   <div className="relative mb-6">
                     <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full w-24 h-24 -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2"></div>
                     <Icon.Search className="w-24 h-24 text-gray-300 dark:text-slate-700 relative z-10" />
@@ -1708,7 +1720,7 @@ function DashboardInner() {
               onOpenBagikanModal={(item) => setBagikan(item)}
             />
           ) : activeTab === "profil" ? (
-            <div className="space-y-6 mt-6">
+            <div className="space-y-6">
               {/* Tanpa prop identitas: panel memuat profilnya sendiri dari
                   /api/profil, yang menentukan "siapa ini" dari sesi. Mengoper
                   `wa` dari state peramban berarti identitas ikut berpindah
@@ -1803,7 +1815,7 @@ function DashboardInner() {
 
 function Stat({ label, value, icon }) {
   return (
-    <div className="bg-white dark:bg-slate-900/90 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:border-primary/40 transition-colors">
+    <div className="card-shell rounded-2xl p-4 shadow-xs transition-colors hover:border-emerald-300 dark:hover:border-emerald-800">
       <div className="flex items-center justify-between">
         <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400">{label}</p>
         {icon && <span className="text-base opacity-80 text-primary dark:text-emerald-400">{icon}</span>}
@@ -1812,8 +1824,6 @@ function Stat({ label, value, icon }) {
     </div>
   );
 }
-
-const TAB_SAH = ["jual", "dicari", "tawaran", "statistik", "pro", "referral", "profil", "blog", "ukm", "open-po"];
 
 function pathAsli() {
   if (typeof window === "undefined") return "/dashboard";

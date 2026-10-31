@@ -22,8 +22,12 @@ export default function OfferButton({ listing, className, children }) {
       toast.error("Masukkan harga tawaran.");
       return;
     }
-    setBusy(true);
     const priceNum = Number(offerPrice.replace(/\D/g, ""));
+    if (!Number.isSafeInteger(priceNum) || priceNum <= 0) {
+      toast.error("Harga tawaran harus lebih dari Rp0.");
+      return;
+    }
+    setBusy(true);
 
     // MODE 1: DIRECT WHATSAPP
     if (isWaMode) {
