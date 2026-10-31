@@ -22,7 +22,9 @@ const getCategoryIcon = (slug) => {
 
 export default function CategoryFilter({ active, onChange, categories }) {
   const list = categories && categories.length ? categories : DEFAULT_CATEGORIES;
-  const all = [{ name: "Semua", slug: "all" }, ...list];
+  const all = list.some((category) => category.slug === "all")
+    ? list
+    : [{ name: "Semua", slug: "all" }, ...list];
   return (
     <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden no-tap-highlight">
       {all.map((c) => (

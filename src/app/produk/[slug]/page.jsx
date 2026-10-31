@@ -24,8 +24,8 @@ import { skripJsonLd } from "@/lib/jsonLd";
 import { buildListingShortPath, looksLikeListingCode, normalizeListingCode } from "@/lib/listingCode";
 import { formatListingSpecs } from "@/lib/listingSpecs";
 import ProductDetailInteractive from "@/components/ProductDetailInteractive";
-import { checkProhibitedListing } from "@/lib/profanity";
-import { evaluateModerationRules } from "@/lib/moderationRules";
+import { isListingAvailable } from "@/lib/listingAvailability";
+import { selectProductRecommendations } from "@/lib/productRecommendations";
 import { encodeSellerSlug } from "@/lib/sellerSlug";
 
 export const revalidate = 300; // ISR 5 menit
@@ -110,15 +110,27 @@ async function getData(slug) {
     }
     
     const { data: rawRelated } = await fetchListingsWithProfiles(queryRelated);
-    const related = (rawRelated || []).filter((r) => {
-      const mod = evaluateModerationRules({
-        title: r.title,
-        description: r.description,
-        category: r.category,
-        price: r.price,
-      });
-      return mod.action === "allow" && !checkProhibitedListing(r.title, r.description).prohibited;
-    }).slice(0, 4);
+    let related = selectProductRecommendations(listing, rawRelated || []);
+
+    if (related.length < 4) {
+      try {
+        let queryFallback = supa
+          .from("listings")
+          .select("*, seller_wa")
+          .eq("status", "active")
+          .eq("type", listing.type || "barang")
+          .neq("id", listing.id)
+          .order("created_at", { ascending: false, nullsFirst: false })
+          .limit(24);
+        const { data: fallbackListings } = await fetchListingsWithProfiles(queryFallback);
+        related = selectProductRecommendations(
+          listing,
+          [...(rawRelated || []), ...(fallbackListings || [])]
+        );
+      } catch (error) {
+        console.error("Gagal memuat fallback rekomendasi produk:", error);
+      }
+    }
 
     return { listing, related };
   } catch (err) {
@@ -193,7 +205,7 @@ export default async function ProdukPage({ params }) {
     redirect(`/produk/${buildSlug(listing.title, listing.id)}`);
   }
 
-  const sold = listing.status === "sold";
+  const available = isListingAvailable(listing);
   const shortPath = buildListingShortPath(listing.listing_code);
   const listingSpecs = formatListingSpecs(listing.category, listing.specs);
   // URL profil penjual: utamakan username/slug resmi penjual
@@ -226,9 +238,9 @@ export default async function ProdukPage({ params }) {
       itemCondition: listing.condition === "new"
         ? "https://schema.org/NewCondition"
         : "https://schema.org/UsedCondition",
-      availability: sold
-        ? "https://schema.org/SoldOut"
-        : "https://schema.org/InStock",
+      availability: available
+        ? "https://schema.org/InStock"
+        : "https://schema.org/SoldOut",
       priceValidUntil: listing.expires_at
         ? new Date(listing.expires_at).toISOString().split("T")[0]
         : new Date(Date.now() + 14 * 86400000).toISOString().split("T")[0],
@@ -255,7 +267,7 @@ export default async function ProdukPage({ params }) {
   };
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6 pb-24 md:pb-6">
+    <div className="mx-auto max-w-7xl px-4 py-6 pb-24 md:pb-6">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: skripJsonLd(productJsonLd) }}
@@ -283,7 +295,7 @@ export default async function ProdukPage({ params }) {
           listing={listing}
           listingSpecs={listingSpecs}
           sellerUsername={sellerUsername}
-          sold={sold}
+          available={available}
           gallery={
             <ProductGallery
               images={
@@ -299,21 +311,42 @@ export default async function ProdukPage({ params }) {
         />
       </div>
 
-      {/* Produk serupa */}
-      {related.length > 0 && (
-        <section className="mt-12 mb-20 md:mb-6">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-            {listing.type === "jasa"
-              ? "Jasa Serupa di Kampus"
-              : "Rekomendasi Barang Sejenis"}
-          </h2>
+      <section className="mt-12 mb-20 md:mb-6">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-400">
+              Pilihan untukmu
+            </p>
+            <h2 className="mt-1 text-lg font-bold text-slate-900 dark:text-white">
+              {listing.type === "jasa"
+                ? "Jasa Serupa & Rekomendasi"
+                : "Produk Serupa & Rekomendasi"}
+            </h2>
+          </div>
+          <Link
+            href={listing.type === "jasa" ? "/jasa" : "/jual-beli"}
+            className="text-xs font-bold text-emerald-800 hover:underline dark:text-emerald-400"
+          >
+            Lihat lainnya
+          </Link>
+        </div>
+        {related.length > 0 ? (
           <div className="mt-4 grid grid-cols-2 gap-2.5 xs:gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
             {related.map((r) => (
               <ProductCard key={r.id} listing={r} />
             ))}
           </div>
-        </section>
-      )}
+        ) : (
+          <div className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-white px-5 py-8 text-center dark:border-slate-700 dark:bg-slate-900">
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+              Belum ada rekomendasi lain untuk saat ini.
+            </p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Coba lihat pilihan lainnya di {listing.type === "jasa" ? "halaman jasa" : "marketplace"}.
+            </p>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

@@ -45,18 +45,29 @@ export default function MobileSidebarDrawer({ isOpen, onClose }) {
 
   // Kunci scroll halaman saat drawer terbuka
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    if (!isOpen) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = previousOverflow;
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
   const mainLinks = [
     { href: "/", label: "Beranda", icon: Icon.Home },
+    { href: "/jual-beli", label: "Marketplace", icon: Icon.ShoppingBag },
+    { href: "/open-po", label: "Open PO", icon: Icon.Coffee },
     { href: "/mading", label: "Menfess & Info", icon: Icon.BookOpen },
     { href: "/chat", label: "Obrolan", icon: Icon.MessageCircle, badge: unreadChat },
     { href: "/keranjang", label: "Keranjang", icon: Icon.ShoppingCart },

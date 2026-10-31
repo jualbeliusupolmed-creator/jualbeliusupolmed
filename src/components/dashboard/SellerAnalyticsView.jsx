@@ -87,7 +87,7 @@ export default function SellerAnalyticsView({
 
   if (loading) {
     return (
-      <div className="space-y-6 mt-6 animate-pulse">
+      <div className="space-y-6 animate-pulse">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="h-28 rounded-2xl bg-gray-100 dark:bg-slate-800" />
@@ -101,7 +101,7 @@ export default function SellerAnalyticsView({
 
   if (!analytics) {
     return (
-      <div className="card p-12 text-center mt-6 space-y-4">
+      <div className="card p-12 text-center space-y-4">
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-3xl text-primary">
           <Icon.TrendingUp className="h-8 w-8" />
         </div>
@@ -121,7 +121,7 @@ export default function SellerAnalyticsView({
   }
 
   return (
-    <div className="space-y-6 mt-6">
+    <div className="space-y-6">
       {/* HEADER CONTROLS */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>

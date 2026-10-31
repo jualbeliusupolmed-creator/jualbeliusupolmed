@@ -446,6 +446,7 @@ export default function JasaBrowser({
               <input
                 value={q}
                 onChange={(e) => handleSearch(e.target.value)}
+                aria-label="Cari jasa mahasiswa"
                 placeholder="Cari jasa… joki, desain, service laptop"
                 className="w-full rounded-full border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-400 focus:ring-2 focus:ring-gray-900/5 dark:border-slate-800 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-slate-600"
               />
@@ -537,8 +538,9 @@ export default function JasaBrowser({
             {showPriceFilter && (
               <div className="mt-2 flex flex-wrap items-end gap-3 rounded-2xl border border-gray-100 bg-gray-50 p-4 dark:border-slate-800 dark:bg-slate-900/50">
                 <div>
-                  <label className="label text-xs">Min (Rp)</label>
+                  <label htmlFor="jasa-min-price" className="label text-xs">Min (Rp)</label>
                   <input
+                    id="jasa-min-price"
                     type="number"
                     min="0"
                     value={minPrice}
@@ -548,8 +550,9 @@ export default function JasaBrowser({
                   />
                 </div>
                 <div>
-                  <label className="label text-xs">Max (Rp)</label>
+                  <label htmlFor="jasa-max-price" className="label text-xs">Max (Rp)</label>
                   <input
+                    id="jasa-max-price"
                     type="number"
                     min="0"
                     value={maxPrice}

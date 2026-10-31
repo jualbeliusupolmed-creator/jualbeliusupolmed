@@ -2,6 +2,17 @@
 
 Dokumen ini berisi peta pemahaman sistem, alur bisnis, daftar masalah, dan riwayat audit untuk proyek **Jual Beli USU Polmed**.
 
+### Pembaruan 31 Oktober 2026 — alur iklan penjual baru
+
+- Halaman `/jual` membagi pembuatan iklan menjadi foto, detail, dan pemeriksaan.
+  Akun/WhatsApp diminta sebelum penjual mengisi detail; foto tetap opsional.
+- Detail form tersimpan otomatis hanya di browser lokal. Foto, nama, dan nomor
+  WhatsApp tidak disertakan; persetujuan selalu dimulai dalam keadaan kosong.
+- Biaya ditampilkan sebagai total yang berlaku, tanpa harga coret. Salinan
+  status membedakan iklan yang aktif setelah pemeriksaan otomatis dari iklan
+  yang memerlukan peninjauan tambahan.
+- Tidak ada perubahan skema atau data Supabase.
+
 ### Pembaruan 30 Oktober 2026 — keranjang pembeli dan progres Open PO
 
 - `/keranjang` menyatukan barang marketplace yang disimpan di perangkat dengan
@@ -14,6 +25,16 @@ Dokumen ini berisi peta pemahaman sistem, alur bisnis, daftar masalah, dan riway
   Badge jumlah di navbar ikut tersinkron saat keranjang berubah atau berubah di
   tab lain. Tab progres PO menampilkan timeline status dan tombol perbarui.
   Tidak ada perubahan skema atau data Supabase.
+
+### Pembaruan 31 Oktober 2026 — validasi ketersediaan transaksi marketplace
+
+- Halaman detail, kartu keranjang, dan endpoint awal chat transaksi memakai
+  aturan ketersediaan yang sama: iklan harus aktif dan stok eksplisit harus
+  lebih dari nol. Endpoint menolak iklan tidak aktif/stok habis dengan HTTP 409.
+- Tawaran harga nol atau di luar rentang integer aman ditolak di antarmuka.
+- Marketplace tetap menggunakan kesepakatan COD melalui WhatsApp atau chat;
+  belum ada pencatatan pesanan/pembatalan marketplace. Tidak ada perubahan
+  skema atau data Supabase.
 
 ### Pembaruan 30 Oktober 2026 — diagnostik OTP WhatsApp
 
@@ -647,3 +668,13 @@ cuma server.
 
 - Dashboard akun memakai satu navigasi utama untuk Jual Barang, Open PO, Tawaran, Performa, Profil, dan panel Organisasi bila akun terkait. Tab tetap bisa dibuka langsung lewat `?tab=...`; panel Open PO dan profil toko tidak lagi punya navigasi terpisah yang menduplikasi navigasi dashboard.
 - Ringkasan kepercayaan yang sebelumnya memakai nilai default/tetap dihapus. Statistik barang ditampilkan satu kali di workspace Jual Barang; daftar “paling banyak dilihat” yang mengulang barang dari daftar aktif dihapus. Tampilan kosong memakai satu ajakan utama di header.
+
+### 31 Oktober 2026 — Konsistensi UI dashboard akun
+
+- Header dashboard memakai skala judul dan tombol utama yang sama dengan sistem
+  desain aplikasi; kartu identitas dan statistik memakai treatment kartu yang
+  seragam.
+- Navigasi utama dan tab konteks dapat digulir horizontal di layar sempit,
+  memakai target sentuh yang lebih besar, dan berbagi gaya state aktif yang sama.
+- Margin atas ganda di antara tab dan konten dihilangkan agar ritme vertikal
+  konsisten. Perubahan ini hanya menyentuh tampilan, bukan alur akun atau data.

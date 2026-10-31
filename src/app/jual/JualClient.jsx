@@ -20,23 +20,32 @@ import { toast } from "sonner";
 import OTPModal from "@/components/OTPModal";
 import QRISModal from "@/components/QRISModal";
 import { useSesi } from "@/components/SesiProvider";
+
+const DRAFT_KEY = "jual_listing_draft";
+const INITIAL_FORM = {
+  seller_name: "",
+  seller_wa: "",
+  title: "",
+  description: "",
+  price: "",
+  stock: 1,
+  category: CATEGORIES[0].name,
+  type: "barang",
+  campus: "Semua",
+  area: "",
+  condition: "used",
+  rental_period: "harian",
+  specs: {},
+};
+const LISTING_STEPS = [
+  { id: 1, title: "Foto", description: "Foto utama" },
+  { id: 2, title: "Detail", description: "Informasi barang" },
+  { id: 3, title: "Periksa", description: "Biaya & persetujuan" },
+];
+
 export default function JualPage() {
   const router = useRouter();
-  const [form, setForm] = useState({
-    seller_name: "",
-    seller_wa: "",
-    title: "",
-    description: "",
-    price: "",
-    stock: 1,
-    category: CATEGORIES[0].name,
-    type: "barang",
-    campus: "Semua",
-    area: "",
-    condition: "used",
-    rental_period: "harian",
-    specs: {},
-  });
+  const [form, setForm] = useState(() => ({ ...INITIAL_FORM, specs: {} }));
   const [media, setMedia] = useState([]);
   const [busy, setBusy] = useState(false);
   const [fileError, setFileError] = useState("");
@@ -49,7 +58,12 @@ export default function JualPage() {
   const [qrisFinalAmount, setQrisFinalAmount] = useState(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [agreedPdp, setAgreedPdp] = useState(true);
+  const [agreedPdp, setAgreedPdp] = useState(false);
+  const [step, setStep] = useState(1);
+  const [authIntent, setAuthIntent] = useState(null);
+  const [draftReady, setDraftReady] = useState(false);
+  const [draftStatus, setDraftStatus] = useState("");
+  const [hasRecoveredDraft, setHasRecoveredDraft] = useState(false);
 
   const [cfg, setCfg] = useState(null);
   const [sellerIsDistributor, setSellerIsDistributor] = useState(false);
@@ -67,6 +81,61 @@ export default function JualPage() {
   // tebakan lalu menimpanya sedetik kemudian membuat kolom yang sedang
   // diketik berkedip.
   const { wa: sesiWa, nama: sesiNama, siap: sesiSiap, segarkan: segarkanSesi, tunggu: tungguSesi } = useSesi();
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(DRAFT_KEY);
+      if (saved) {
+        const draft = JSON.parse(saved);
+        if (draft?.form && typeof draft.form === "object") {
+          setForm((current) => ({
+            ...current,
+            ...draft.form,
+            seller_name: current.seller_name,
+            seller_wa: current.seller_wa,
+            specs: { ...current.specs, ...(draft.form.specs || {}) },
+          }));
+          if (LISTING_STEPS.some((item) => item.id === draft.step)) {
+            setStep(draft.step);
+          }
+          setHasRecoveredDraft(true);
+          setDraftStatus("Draft ditemukan dan dipulihkan dari browser ini.");
+        }
+      }
+    } catch (error) {
+      console.error("Gagal memulihkan draft iklan:", error);
+      setDraftStatus("Draft sebelumnya tidak bisa dibaca. Kamu tetap bisa membuat iklan baru.");
+    } finally {
+      setDraftReady(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!draftReady) return undefined;
+    const timeout = window.setTimeout(() => {
+      try {
+        const draftForm = { ...form, seller_name: "", seller_wa: "" };
+        const hasDraftContent =
+          step !== 1 ||
+          Object.keys(INITIAL_FORM).some(
+            (key) => JSON.stringify(draftForm[key]) !== JSON.stringify(INITIAL_FORM[key])
+          );
+        if (hasDraftContent) {
+          localStorage.setItem(
+            DRAFT_KEY,
+            JSON.stringify({ step, form: draftForm, savedAt: new Date().toISOString() })
+          );
+          setDraftStatus("Draft tersimpan otomatis di browser ini.");
+        } else {
+          localStorage.removeItem(DRAFT_KEY);
+        }
+      } catch (error) {
+        console.error("Gagal menyimpan draft iklan:", error);
+        setDraftStatus("Draft tidak bisa disimpan. Jangan tutup halaman sebelum selesai.");
+      }
+    }, 350);
+    return () => window.clearTimeout(timeout);
+  }, [draftReady, form, step]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -117,6 +186,64 @@ export default function JualPage() {
     : sellerPunyaToko
     ? "punya toko"
     : "Pasar Bebas Mahasiswa";
+  const totalBiaya = gratis ? 0 : fee;
+
+  function validateListingDetails() {
+    const requiredFields = [
+      ["form-title", form.title, "Nama / judul barang"],
+      ["form-area", form.area, "Lokasi COD"],
+      ["form-price", form.price, "Harga"],
+      ["form-stock", form.stock, "Stok"],
+      ["form-seller-name", form.seller_name, "Nama penjual"],
+      ["form-seller-wa", form.seller_wa, "Nomor WhatsApp"],
+    ];
+    for (const [id, value, label] of requiredFields) {
+      const field = document.getElementById(id);
+      if (!String(value || "").trim()) {
+        if (field) field.reportValidity();
+        else toast.error(`${label} wajib diisi.`);
+        return false;
+      }
+    }
+    if (Number(form.stock) < 1) {
+      toast.error("Stok harus minimal 1.");
+      return false;
+    }
+    if (!formatWa(form.seller_wa)) {
+      toast.error("Masukkan nomor WhatsApp yang valid.");
+      return false;
+    }
+    return true;
+  }
+
+  async function continueStep() {
+    if (step === 1) {
+      const sessionWa = sesiSiap ? sesiWa : await tungguSesi();
+      if (!sessionWa) {
+        setAuthIntent("start");
+        setShowAuthModal(true);
+        return;
+      }
+      setStep(2);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    if (step === 2) {
+      if (!validateListingDetails()) return;
+      setStep(3);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }
+
+  function clearSavedDraft() {
+    try {
+      localStorage.removeItem(DRAFT_KEY);
+      setDraftReady(false);
+    } catch (error) {
+      console.error("Gagal menghapus draft iklan setelah diproses:", error);
+    }
+  }
 
   const handleCategoryChange = (e) => {
     const nextCategory = e.target.value;
@@ -145,6 +272,14 @@ export default function JualPage() {
 
   function handlePreviewClick(e) {
     e.preventDefault();
+    if (step !== 3) {
+      void continueStep();
+      return;
+    }
+    if (!validateListingDetails()) {
+      setStep(2);
+      return;
+    }
     const formattedWa = formatWa(form.seller_wa);
     if (!form.seller_name || !formattedWa || !form.title || !form.price) {
       toast.error("Lengkapi nama, WA, judul, dan harga.");
@@ -170,6 +305,14 @@ export default function JualPage() {
   }
 
   async function submit() {
+    if (!agreedPdp) {
+      toast.error("Setujui pernyataan sebelum melanjutkan.");
+      return;
+    }
+    if (!validateListingDetails()) {
+      setStep(2);
+      return;
+    }
     const formattedWa = formatWa(form.seller_wa);
     if (!form.seller_name || !formattedWa || !form.title || !form.price) {
       toast.error("Lengkapi nama, WA, judul, dan harga.");
@@ -209,6 +352,7 @@ export default function JualPage() {
     const waSesi = sesiSiap ? sesiWa : await tungguSesi();
     if (formatWa(waSesi || "") !== formattedWa) {
       setShowPreviewModal(false);
+      setAuthIntent("submit");
       setShowAuthModal(true);
       return;
     }
@@ -231,8 +375,17 @@ export default function JualPage() {
 
       if (!res.ok) throw new Error(data.error || "Gagal membuat listing");
 
+      clearSavedDraft();
       localStorage.setItem("seller_wa", formattedWa);
       localStorage.setItem("seller_name", form.seller_name);
+
+      if (data.pending_review || data.listing?.status === "pending") {
+        toast.success(
+          data.message || "Iklan dikirim dan sedang menunggu peninjauan. Pantau statusnya di Dashboard."
+        );
+        router.push(`/dashboard?wa=${encodeURIComponent(formattedWa)}`);
+        return;
+      }
 
       if (data.isDistributor) {
         const feeInfo = data.distributorFee > 0 ? ` Fee bagi hasil: ${rupiah(data.distributorFee)}` : "";
@@ -248,7 +401,7 @@ export default function JualPage() {
         return;
       }
 
-      if (data.isPro || data.isFreeMode || gratis || !data.paymentUrl) {
+      if (data.isPro || data.isFreeMode || gratis) {
         toast.success("Barang berhasil ditayangkan! (100% Gratis - Pasar Bebas)");
         const productSlug = buildSlug(data.listing?.title || form.title, data.listing?.id);
         if (data.listing?.id) {
@@ -264,6 +417,10 @@ export default function JualPage() {
       if (data.paymentUrl) {
         setQrisUrl(data.paymentUrl);
         setQrisFinalAmount(data.finalAmount || null);
+      } else {
+        toast.warning("Iklan diterima, tetapi informasi pembayaran belum tersedia. Periksa statusnya di Dashboard atau hubungi Bantuan.");
+        router.push(`/dashboard?wa=${encodeURIComponent(formattedWa)}`);
+        return;
       }
       setCreatedListing(data.listing || data);
       setCreatedOrderId(data.orderId || "");
@@ -276,82 +433,121 @@ export default function JualPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6">
+    <div className="mx-auto max-w-7xl px-4 py-6">
+      <header className="mx-auto max-w-4xl">
+        <h1 className="text-2xl font-extrabold">{form.type === "sewa" ? "Sewakan Barang" : "Jual Barang"}</h1>
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+          Buat iklan langkah demi langkah. Biaya tayang saat ini{" "}
+          <strong className="text-slate-900 dark:text-white">{rupiah(totalBiaya)}</strong>.
+          {" "}Iklan aktif setelah lolos pemeriksaan otomatis; iklan yang perlu pemeriksaan tambahan akan menunggu peninjauan.
+        </p>
 
-
-      <h1 className="text-2xl font-extrabold">{form.type === "sewa" ? "Sewakan Barang" : "Jual Barang"}</h1>
-
-      {/* Punya toko = biaya tayang gratis. Disebut di ATAS, bukan cuma di rincian
-          biaya paling bawah: yang belum punya toko masih sempat membuatnya
-          sebelum mengetik apa pun. */}
-      {isFreeMode ? (
-        <div className="mt-3 rounded-2xl border border-emerald-300 bg-emerald-50 px-5 py-4 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200 shadow-sm flex items-start gap-3">
-          <Icon.Sparkles className="h-5 w-5 shrink-0 text-emerald-600 mt-0.5" />
+        <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <strong>🔥 Mode Pasar Bebas Aktif: Jual Barang 100% GRATIS!</strong>
-            <p className="mt-0.5 text-xs text-emerald-700 dark:text-emerald-300">
-              Jual barang untuk komunitas kampus yang terdaftar. Barangmu dapat ditemukan mahasiswa lintas kampus.
+            <p className="text-sm font-bold text-slate-900 dark:text-white">
+              {!sesiSiap
+                ? "Memeriksa status akun…"
+                : sesiWa
+                ? "Akun siap untuk memasang iklan"
+                : "Masuk atau verifikasi WhatsApp sebelum mengisi detail"}
+            </p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Nomor WhatsApp akun digunakan untuk mengelola iklan dan dihubungi calon pembeli.
             </p>
           </div>
+          {!sesiWa && (
+            <button
+              type="button"
+              onClick={() => {
+                setAuthIntent("start");
+                setShowAuthModal(true);
+              }}
+              disabled={!sesiSiap}
+              className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-full bg-emerald-800 px-5 text-xs font-bold text-white transition hover:bg-emerald-900 disabled:cursor-wait disabled:opacity-50"
+            >
+              Masuk / verifikasi
+            </button>
+          )}
         </div>
-      ) : sellerPunyaToko ? (
-        <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-900/20 dark:text-emerald-300 shadow-sm flex items-start gap-3">
-          <Icon.Store className="h-5 w-5 shrink-0" />
-          <div>
-            <strong>Jual barang gratis</strong> — kamu sudah punya toko, jadi tidak ada biaya tayang.
-          </div>
-        </div>
-      ) : (
-        <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50/70 px-5 py-4 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-900/20 dark:text-amber-300 shadow-sm flex items-start gap-3">
-          <Icon.Store className="h-5 w-5 shrink-0" />
-          <div>
-            Punya toko fisik di sekitar kampus? <strong>Daftar Toko Mitra & Berlangganan.</strong>{" "}
-            <Link href="/dashboard?tab=profil" className="font-semibold underline hover:text-amber-700 dark:hover:text-amber-100 transition">Daftarkan tokomu</Link> (syarat: memiliki toko fisik & paket langganan aktif) untuk jual barang sepuasnya tanpa biaya tayang.
-          </div>
-        </div>
-      )}
-      <p className="mt-1 text-gray-500">
-        {gratis
-          ? `Isi detail ${form.type === "sewa" ? "barang sewaan" : "barang"}, tekan kirim, barang langsung ditampilkan — tanpa biaya.`
-          : `Isi detail ${form.type === "sewa" ? "barang sewaan" : "barang"}, bayar biaya tayang, barang langsung ditampilkan setelah pembayaran sukses.`}
-      </p>
 
-      {/* Quick Trust Indicators Banner (18.html blueprint) */}
-      <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-white/10">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-[#047857] dark:text-emerald-400 flex items-center justify-center shrink-0">
-            <Icon.ShieldCheck className="w-5 h-5" />
-          </div>
-          <div className="flex flex-col min-w-0">
-            <span className="text-[11px] text-slate-500 leading-none">Terverifikasi</span>
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate mt-0.5">Mahasiswa Aktif</span>
-          </div>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+          <p aria-live="polite" className="text-xs text-slate-500 dark:text-slate-400">
+            {draftReady ? draftStatus || "Draft akan tersimpan otomatis di browser ini." : "Menyiapkan draft…"}
+            {" "}Foto, nama, dan nomor WhatsApp tidak disimpan dalam draft.
+          </p>
+          {draftReady && hasRecoveredDraft && (
+            <button
+              type="button"
+              onClick={() => {
+                try {
+                  localStorage.removeItem(DRAFT_KEY);
+                  setForm((current) => ({
+                    ...INITIAL_FORM,
+                    seller_name: current.seller_name,
+                    seller_wa: current.seller_wa,
+                    specs: {},
+                  }));
+                  setMedia([]);
+                  setStep(1);
+                  setAgreedPdp(false);
+                  setHasRecoveredDraft(false);
+                  setDraftStatus("Draft sebelumnya dihapus.");
+                } catch (error) {
+                  console.error("Gagal menghapus draft iklan:", error);
+                  setDraftStatus("Draft tidak bisa dihapus dari browser ini.");
+                }
+              }}
+              className="text-xs font-semibold text-slate-500 underline hover:text-slate-800 dark:hover:text-white"
+            >
+              Hapus draft
+            </button>
+          )}
         </div>
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 flex items-center justify-center shrink-0">
-            <Icon.Clock className="w-5 h-5" />
-          </div>
-          <div className="flex flex-col min-w-0">
-            <span className="text-[11px] text-slate-500 leading-none">Rerata Terjual</span>
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate mt-0.5">&lt; 36 Jam</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-[#047857] dark:text-emerald-400 flex items-center justify-center shrink-0">
-            <Icon.Sparkles className="w-5 h-5" />
-          </div>
-          <div className="flex flex-col min-w-0">
-            <span className="text-[11px] text-slate-500 leading-none">Admin Fee</span>
-            <span className="text-xs font-bold text-[#047857] dark:text-emerald-400 truncate mt-0.5">Gratis 100% (0% Komisi)</span>
-          </div>
-        </div>
-      </div>
 
-      <form onSubmit={handlePreviewClick} className="mt-6 grid gap-6 lg:grid-cols-3">
+        <ol aria-label="Langkah membuat iklan" className="mt-5 grid grid-cols-3 gap-2">
+          {LISTING_STEPS.map((item) => {
+            const current = item.id === step;
+            const complete = item.id < step;
+            return (
+              <li
+                key={item.id}
+                aria-current={current ? "step" : undefined}
+                className={`rounded-xl border px-3 py-2 ${
+                  current
+                    ? "border-emerald-700 bg-emerald-50 dark:border-emerald-500 dark:bg-emerald-950/40"
+                    : complete
+                    ? "border-emerald-200 bg-white dark:border-emerald-900 dark:bg-slate-900"
+                    : "border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/50"
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <span className={`grid h-6 w-6 place-items-center rounded-full text-xs font-bold ${
+                    current || complete ? "bg-emerald-800 text-white" : "bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
+                  }`}>
+                    {complete ? <Icon.Check className="h-3.5 w-3.5" /> : item.id}
+                  </span>
+                  <span>
+                    <span className="block text-xs font-bold text-slate-900 dark:text-white">{item.title}</span>
+                    <span className="hidden text-[10px] text-slate-500 sm:block">{item.description}</span>
+                  </span>
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+      </header>
+
+      <form onSubmit={handlePreviewClick} className="mx-auto mt-5 grid max-w-6xl gap-5 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
-          {/* Upload */}
-          <div className="card p-4">
-            <label className="label">Foto Barang</label>
+          {step === 1 && (
+            <div className="card p-4">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <label className="label mb-0">Foto Barang <span className="font-normal text-slate-500">(opsional, sangat disarankan)</span></label>
+              <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-bold text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">Foto membantu lebih dipercaya</span>
+            </div>
+            <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
+              Tambahkan foto asli yang jelas. Tanpa foto pun kamu tetap bisa lanjut. Maksimal 5 foto; foto pertama jadi sampul.
+            </p>
             <MediaUploader
               media={media}
               setMedia={setMedia}
@@ -360,11 +556,13 @@ export default function JualPage() {
               setError={setFileError}
             />
           </div>
+          )}
 
+          {step === 2 && (
           <div className="card grid gap-5 p-5 sm:grid-cols-2">
             <div>
-              <label className="label">Jenis Jual Barang</label>
-              <select className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.type} onChange={set("type")}>
+              <label htmlFor="form-type" className="label">Jenis Jual Barang</label>
+              <select id="form-type" className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.type} onChange={set("type")}>
                 <option value="barang">Barang — {rupiah(adFeeFor("barang", form.price))}</option>
                 <option value="sewa">Sewa — {rupiah(adFeeFor("barang", form.price))}</option>
                 <option value="poster">Poster — {rupiah(adFeeFor("poster"))}</option>
@@ -372,8 +570,8 @@ export default function JualPage() {
             </div>
             {form.type === "sewa" && (
               <div>
-                <label className="label">Periode Sewa</label>
-                <select className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.rental_period} onChange={set("rental_period")}>
+                <label htmlFor="form-rental-period" className="label">Periode Sewa</label>
+                <select id="form-rental-period" className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.rental_period} onChange={set("rental_period")}>
                   <option value="harian">Per Hari</option>
                   <option value="mingguan">Per Minggu</option>
                   <option value="bulanan">Per Bulan</option>
@@ -402,8 +600,8 @@ export default function JualPage() {
               </div>
             )}
             <div>
-              <label className="label">Kategori</label>
-              <select className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.category} onChange={handleCategoryChange}>
+              <label htmlFor="form-category" className="label">Kategori</label>
+              <select id="form-category" className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.category} onChange={handleCategoryChange}>
                 {cats.map((c) => (
                   <option key={c.slug} value={c.name}>
                     {c.name}
@@ -412,8 +610,8 @@ export default function JualPage() {
               </select>
             </div>
             <div>
-              <label className="label">Target Area</label>
-              <CampusSelect className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.campus} onChange={(value) => setForm((current) => ({ ...current, campus: value }))} />
+              <label htmlFor="form-campus" className="label">Target Area</label>
+              <CampusSelect id="form-campus" ariaLabel="Target Area" className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.campus} onChange={(value) => setForm((current) => ({ ...current, campus: value }))} />
             </div>
             <div>
               <label className="label">Lokasi COD</label>
@@ -574,35 +772,75 @@ export default function JualPage() {
             )}
           </div>
 
-          {/* Metode Pembayaran */}
-          <div className="card p-5 space-y-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400">Metode & Biaya</h3>
-            <div className="grid gap-3 sm:grid-cols-1">
-              <div
-                className={`flex flex-col text-left p-4 rounded-xl border-2 transition-all ${
-                  isFreeMode || gratis
-                    ? "border-emerald-500 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/20"
-                    : "border-primary bg-primary/5 dark:border-slate-700 dark:bg-slate-800/50"
-                }`}
-              >
-                <span className="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-1.5">
-                  {isFreeMode || gratis ? "🎉 100% Gratis (Masa Promo Mahasiswa)" : "QRIS + verifikasi struk"}
-                </span>
-                <span className="text-xs text-gray-500 dark:text-slate-400 mt-1.5 leading-relaxed">
-                  {isFreeMode || gratis ? (
-                    <>
-                      Biaya normal <span className="line-through text-gray-400">Rp 5.000</span> menjadi <strong className="text-emerald-600 dark:text-emerald-400">Rp 0</strong>. Pratinjau barangmu, lalu klik Tayangkan. Barang akan ditinjau tim moderasi sebelum ditampilkan dan disebarkan ke grup WhatsApp.
-                    </>
-                  ) : (
-                    "Scan QRIS yang muncul setelah ini, lalu unggah foto struknya di layar yang sama. Strukmu diperiksa otomatis dan barang langsung ditampilkan kalau cocok."
-                  )}
-                </span>
+          )}
+
+          {step === 3 && (
+            <div className="card space-y-3 p-5">
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">Biaya dan proses tayang</h2>
+              <div className="flex items-center justify-between rounded-xl bg-emerald-50 px-4 py-3 dark:bg-emerald-950/30">
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Biaya tayang</span>
+                <span className="text-lg font-extrabold text-emerald-800 dark:text-emerald-300">{rupiah(totalBiaya)}</span>
               </div>
+              <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+                {gratis
+                  ? `Gratis untuk ${sebabGratis.toLowerCase()}. Tidak ada biaya tayang yang perlu dibayar.`
+                  : "Biaya dibayar melalui QRIS sebelum iklan diproses."}
+                {" "}Semua iklan diperiksa. Iklan yang lolos otomatis dapat langsung aktif; iklan yang perlu pemeriksaan tambahan akan berstatus menunggu peninjauan.
+              </p>
             </div>
+          )}
+
+          <div className="flex items-center justify-between gap-3">
+            {step > 1 ? (
+              <button
+                type="button"
+                onClick={() => setStep((current) => current - 1)}
+                className="btn-outline min-h-11 px-5"
+              >
+                Kembali
+              </button>
+            ) : <span />}
+            {step < 3 && (
+              <button
+                type="button"
+                onClick={continueStep}
+                disabled={busy || (step === 1 && !sesiSiap)}
+                className="btn-primary min-h-11 px-6 disabled:cursor-wait disabled:opacity-50"
+              >
+                {step === 1 && !sesiWa ? "Masuk & lanjut ke detail" : "Lanjut"}
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Right Column: Live Preview, Ringkasan, & Tips Cepat Laku (18.html blueprint) */}
+        {/* Right column: step guidance or final preview and consent. */}
+        {step < 3 ? (
+          <aside className="space-y-4 lg:sticky lg:top-20">
+            <div className="card space-y-4 p-5">
+              <div className="flex items-center gap-3">
+                <span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
+                  {step === 1 ? <Icon.Camera className="h-5 w-5" /> : <Icon.FileText className="h-5 w-5" />}
+                </span>
+                <div>
+                  <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                    {step === 1 ? "Mulai dari foto" : "Isi detail dengan jelas"}
+                  </h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Langkah {step} dari 3
+                  </p>
+                </div>
+              </div>
+              <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+                {step === 1
+                  ? "Foto bersifat opsional, tetapi foto asli yang terang membantu calon pembeli memahami kondisi barang."
+                  : "Judul, harga, stok, area COD, nama, dan WhatsApp wajib diisi. Spesifikasi tambahan boleh dikosongkan."}
+              </p>
+              <p className="rounded-xl bg-slate-50 p-3 text-xs leading-relaxed text-slate-600 dark:bg-slate-800/70 dark:text-slate-300">
+                Detail iklan tersimpan otomatis di browser ini. Foto, nama, dan nomor WhatsApp tidak ikut disimpan.
+              </p>
+            </div>
+          </aside>
+        ) : (
         <div className="space-y-4 lg:sticky lg:top-20">
           {/* Real-time Live Preview Card */}
           <div className="card p-4 space-y-3">
@@ -627,7 +865,7 @@ export default function JualPage() {
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 gap-1.5">
                     <Icon.Camera className="w-7 h-7 opacity-40" />
-                    <span className="text-[11px] font-medium">Unggah foto di samping</span>
+                    <span className="text-[11px] font-medium">Belum ada foto (opsional)</span>
                   </div>
                 )}
                 <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-white/90 dark:bg-slate-900/90 text-[10px] font-bold text-slate-800 dark:text-slate-200 shadow-2xs backdrop-blur-xs">
@@ -675,28 +913,22 @@ export default function JualPage() {
               </div>
               <div className="flex justify-between">
                 <dt className="text-gray-500 dark:text-slate-400">Biaya tayang</dt>
-                <dd className="font-medium dark:text-white">
-                  {gratis ? (
-                    <span className="inline-flex items-center gap-1.5">
-                      <span className="line-through text-gray-400 text-xs">Rp 5.000</span>
-                      <span className="font-bold text-emerald-600 dark:text-emerald-400">Gratis selama masa promo</span>
-                    </span>
-                  ) : (
-                    rupiah(fee)
-                  )}
-                </dd>
+                <dd className="font-bold text-slate-900 dark:text-white">{rupiah(totalBiaya)}</dd>
               </div>
               <div className="my-2 border-t dark:border-slate-800" />
               <div className="flex justify-between text-base">
                 <dt className="font-semibold dark:text-white">Total bayar</dt>
                 <dd className="font-extrabold text-primary dark:text-white">
-                  {gratis ? <span className="text-emerald-600 dark:text-emerald-400">Rp 0</span> : rupiah(fee)}
+                  {rupiah(totalBiaya)}
                 </dd>
               </div>
             </dl>
 
             <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50/70 p-3 text-xs text-blue-800 dark:border-blue-900/40 dark:bg-blue-950/30 dark:text-blue-300">
-              <span className="font-semibold">🛡️ Peninjauan Barang:</span> Barang akan ditinjau terlebih dahulu sebelum ditampilkan dan disebarkan ke grup WhatsApp.
+              <span className="font-semibold">Setelah dikirim:</span>{" "}
+              {gratis
+                ? "Iklan gratis. Iklan yang lolos pemeriksaan otomatis langsung aktif; jika perlu pemeriksaan tambahan, statusnya menunggu peninjauan."
+                : "Selesaikan pembayaran QRIS. Iklan yang lolos pemeriksaan otomatis langsung aktif; jika perlu pemeriksaan tambahan, statusnya menunggu peninjauan."}
             </div>
 
             <div className="mt-4 pt-3 border-t border-gray-100 dark:border-slate-800">
@@ -706,44 +938,30 @@ export default function JualPage() {
                   required
                   checked={agreedPdp}
                   onChange={(e) => setAgreedPdp(e.target.checked)}
+                  aria-describedby="listing-consent-help"
                   className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary shrink-0"
                 />
                 <span className="leading-relaxed">
-                  Saya menyetujui{" "}
+                  Saya menyatakan informasi iklan benar, barang bukan barang terlarang, dan menyetujui{" "}
                   <Link href="/syarat-ketentuan" target="_blank" className="font-semibold text-primary underline">Syarat &amp; Ketentuan</Link>
                   {" "}serta{" "}
                   <Link href="/kebijakan-privasi" target="_blank" className="font-semibold text-primary underline">Kebijakan Privasi</Link>
-                  {" "}sesuai UU PDP No. 27/2022, menyatakan barang bukan barang terlarang (bebas rokok/vape/alkohol/obat), serta menyetujui nomor WhatsApp dihubungi calon pembeli.
+                  . Calon pembeli dapat menghubungimu melalui WhatsApp.
                 </span>
               </label>
+              <p id="listing-consent-help" className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                Nomor WhatsApp akun digunakan untuk mengelola iklan dan menerima pesan calon pembeli.
+              </p>
             </div>
 
-            <button type="submit" disabled={busy || !!fileError || !agreedPdp} className="btn-primary mt-4 w-full">
+            {!agreedPdp && <p className="text-xs text-amber-800 dark:text-amber-300">Centang persetujuan di atas setelah membaca sebelum melihat pratinjau.</p>}
+            <button type="submit" disabled={busy || !!fileError || !agreedPdp} className="btn-primary mt-4 w-full disabled:cursor-not-allowed disabled:opacity-50">
               Pratinjau Barang
             </button>
             {msg && <p className="mt-3 text-sm text-rose-600">{msg}</p>}
           </div>
-          <div className="card p-4 text-sm text-gray-500 dark:text-slate-400">
-            <p className="font-semibold text-gray-700 dark:text-slate-300">ℹ Transaksi Bebas Komisi 0%</p>
-            <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Semua barang jualan dan hasil penjualan 100% milik penjual. Transaksi COD langsung dibayar oleh pembeli tanpa potongan fee platform.
-            </p>
-          </div>
-
-          {/* Tips Cepat Laku di Kampus Kita (18.html blueprint) */}
-          <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/70 dark:border-amber-800/40 text-xs space-y-2">
-            <span className="font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
-              <Icon.Sparkles className="w-4 h-4 text-amber-600" />
-              Tips Cepat Laku di Kampus Kita:
-            </span>
-            <ul className="space-y-1.5 text-amber-800/90 dark:text-amber-300/90 pl-1">
-              <li>• <strong>Foto di spot kampus:</strong> Foto dekat Gazebo, Kantin, atau Perpus bikin pembeli lebih yakin.</li>
-              <li>• <strong>Harga Mahasiswa:</strong> Pasang harga bersaing agar cepat dihubungi calon pembeli.</li>
-              <li>• <strong>Jelaskan Kondisi Jujur:</strong> Sebutkan kelengkapan &amp; alasan jual di deskripsi.</li>
-              <li>• <strong>Titik COD Aman:</strong> Pilih tempat umum yang ramai dan sepakati titik temu bersama.</li>
-            </ul>
-          </div>
         </div>
+        )}
       </form>
 
       {/* Modal QRIS */}
@@ -850,20 +1068,34 @@ export default function JualPage() {
       {/* Modal Auth OTP */}
       <OTPModal
         isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
+        onClose={() => {
+          setShowAuthModal(false);
+          setAuthIntent(null);
+        }}
         initialWa={formatWa(form.seller_wa) || ""}
         onSuccess={(verifiedWa) => {
           setShowAuthModal(false);
+          const verifiedNumber = formatWa(verifiedWa || "");
+          if (!verifiedNumber) {
+            toast.error("Nomor WhatsApp terverifikasi tidak valid. Silakan coba lagi.");
+            return;
+          }
           // Auto-fill form jika WA berubah saat di modal
-          if (verifiedWa && formatWa(form.seller_wa) !== verifiedWa) {
-             setForm(f => ({ ...f, seller_wa: verifiedWa }));
+          if (formatWa(form.seller_wa) !== verifiedNumber) {
+            setForm((f) => ({ ...f, seller_wa: verifiedNumber }));
           }
           // Sesi bersama ikut disegarkan, supaya halaman lain (dan gerbang
           // di atas) langsung tahu orang ini sudah masuk — tanpa menunggu
           // pemuatan ulang.
           segarkanSesi();
-          // Setelah berhasil auth, lanjutkan proses listing
-          processListing(verifiedWa);
+          const intent = authIntent;
+          setAuthIntent(null);
+          if (intent === "submit") {
+            processListing(verifiedNumber);
+          } else {
+            setStep(2);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }
         }}
       />
     </div>

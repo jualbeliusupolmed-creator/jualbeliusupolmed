@@ -218,10 +218,11 @@ function DaftarOrganisasiForm() {
 
         {/* NAMA ORGANISASI */}
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-300 mb-1.5">
+          <label htmlFor="org-name" className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-300 mb-1.5">
             Nama Resmi Organisasi / UKM <span className="text-rose-500">*</span>
           </label>
           <input
+            id="org-name"
             type="text"
             required
             value={form.ukm_name}
@@ -234,14 +235,15 @@ function DaftarOrganisasiForm() {
         {/* KAMPUS & KATEGORI */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-300 mb-1.5">
+            <label id="org-campus-label" className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-300 mb-1.5">
               Kampus <span className="text-rose-500">*</span>
             </label>
-            <div className="grid grid-cols-2 gap-2">
+            <div role="group" aria-labelledby="org-campus-label" className="grid grid-cols-2 gap-2">
               {campuses.map((c) => (
                 <button
                   key={c.shortName}
                   type="button"
+                  aria-pressed={form.campus === c.shortName}
                   onClick={() => setForm({ ...form, campus: c.shortName })}
                   className={`py-2 px-3 text-xs font-bold rounded-xl border transition-all ${
                     form.campus === c.shortName
@@ -256,10 +258,11 @@ function DaftarOrganisasiForm() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-300 mb-1.5">
+            <label htmlFor="org-category" className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-300 mb-1.5">
               Kategori Organisasi <span className="text-rose-500">*</span>
             </label>
             <select
+              id="org-category"
               value={form.ukm_category}
               onChange={(e) => setForm({ ...form, ukm_category: e.target.value })}
               className="input text-xs font-medium"
@@ -276,10 +279,11 @@ function DaftarOrganisasiForm() {
         {/* FAKULTAS & INSTAGRAM */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-300 mb-1.5">
+            <label htmlFor="org-faculty" className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-300 mb-1.5">
               Fakultas / Tingkat Unit
             </label>
             <input
+              id="org-faculty"
               type="text"
               value={form.faculty}
               onChange={(e) => setForm({ ...form, faculty: e.target.value })}
@@ -289,12 +293,13 @@ function DaftarOrganisasiForm() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-300 mb-1.5">
+            <label htmlFor="org-instagram" className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-300 mb-1.5">
               Instagram Resmi (@username)
             </label>
             <div className="relative">
               <span className="absolute left-3 top-2.5 text-xs text-gray-400">@</span>
               <input
+                id="org-instagram"
                 type="text"
                 value={form.ukm_instagram}
                 onChange={(e) => setForm({ ...form, ukm_instagram: e.target.value })}
@@ -312,10 +317,11 @@ function DaftarOrganisasiForm() {
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+              <label htmlFor="org-email" className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
                 Email Organisasi / Akun
               </label>
               <input
+                id="org-email"
                 type="email"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -325,11 +331,12 @@ function DaftarOrganisasiForm() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+              <label htmlFor="org-password" className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
                 Password Akun (Min 6 Karakter)
               </label>
               <div className="relative">
                 <input
+                  id="org-password"
                   type={showPassword ? "text" : "password"}
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
@@ -354,10 +361,11 @@ function DaftarOrganisasiForm() {
 
         {/* DESKRIPSI SINGKAT */}
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-300 mb-1.5">
+          <label htmlFor="org-bio" className="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-slate-300 mb-1.5">
             Deskripsi / Profil Singkat Organisasi
           </label>
           <textarea
+            id="org-bio"
             rows={3}
             value={form.bio}
             onChange={(e) => setForm({ ...form, bio: e.target.value })}
@@ -376,10 +384,11 @@ function DaftarOrganisasiForm() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+              <label htmlFor="org-contact-name" className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
                 Nama Lengkap PIC / Jabatan <span className="text-rose-500">*</span>
               </label>
               <input
+                id="org-contact-name"
                 type="text"
                 required
                 value={form.contact_name}
@@ -390,10 +399,11 @@ function DaftarOrganisasiForm() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
+              <label htmlFor="org-contact-wa" className="block text-xs font-bold text-gray-700 dark:text-slate-300 mb-1">
                 Nomor WhatsApp PIC <span className="text-rose-500">*</span>
               </label>
               <input
+                id="org-contact-wa"
                 type="tel"
                 required
                 value={form.contact_wa}
@@ -407,10 +417,11 @@ function DaftarOrganisasiForm() {
 
         {/* KODE UNDANGAN PRIVATE */}
         <div>
-          <label className="block text-xs font-bold text-gray-600 dark:text-slate-400 mb-1">
+          <label htmlFor="org-invite-code" className="block text-xs font-bold text-gray-600 dark:text-slate-400 mb-1">
             Kode Undangan / Token Akses Private
           </label>
           <input
+            id="org-invite-code"
             type="text"
             value={form.invite_code}
             onChange={(e) => setForm({ ...form, invite_code: e.target.value })}
