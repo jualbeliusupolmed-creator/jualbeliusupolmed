@@ -1,6 +1,6 @@
 # Panduan Cepat Admin — Jual Beli USU Polmed
 
-**Panel Admin:** jualbeliusupolmed.web.id/admin  
+**Panel Admin:** kampuskita.my.id/admin  
 **WA Admin:** 62895429126232
 
 ---

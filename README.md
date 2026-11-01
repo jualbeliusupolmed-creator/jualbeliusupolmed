@@ -117,7 +117,7 @@ cp .env.example .env.local
 | `FONNTE_WA_GROUP_ID` | JID grup utama marketplace |
 | `BAILEYS_BROADCAST_GROUPS` | JID grup tambahan (comma-separated) |
 | `GEMINI_API_KEY` | Google Gemini API key |
-| `NEXT_PUBLIC_BASE_URL` | URL situs (mis. `https://www.jualbeliusupolmed.web.id`) |
+| `NEXT_PUBLIC_BASE_URL` | URL situs (mis. `https://www.kampuskita.my.id`) |
 | `NEXT_PUBLIC_WA_GROUP_LINK` | Link grup WA |
 | `CRON_SECRET` | Secret auth cron endpoints |
 | `TEST_ACCOUNT_ENABLED` | `true` = aktifkan test account QA (jangan di-set di prod) |

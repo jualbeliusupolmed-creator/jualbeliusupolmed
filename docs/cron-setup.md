@@ -15,7 +15,7 @@ Tambahkan konfigurasi berikut ke crontab server VPS (`crontab -e`):
 ```bash
 # Pastikan variabel CRON_SECRET sudah diekspor atau didefinisikan di awal crontab:
 CRON_SECRET="ganti_dengan_CRON_SECRET_anda"
-DOMAIN="https://www.jualbeliusupolmed.web.id"
+DOMAIN="https://www.kampuskita.my.id"
 
 # 1. Menandai iklan kedaluwarsa (setiap hari pkl 08.00 WIB)
 0 8 * * * curl -s -H "Authorization: Bearer $CRON_SECRET" "$DOMAIN/api/cron/expire" > /dev/null

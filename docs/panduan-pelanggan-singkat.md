@@ -1,6 +1,6 @@
 # Panduan Cepat — Jual Beli USU Polmed
 
-**Website:** jualbeliusupolmed.web.id  
+**Website:** kampuskita.my.id  
 **WhatsApp Bot:** hubungi nomor yang tertera di website
 
 ---
@@ -15,7 +15,7 @@
 5. Kirim **screenshot struk** → iklan langsung tayang ✅
 
 ### Via Website
-1. Buka **jualbeliusupolmed.web.id/jual**
+1. Buka **kampuskita.my.id/jual**
 2. Login dengan nomor WA + PIN / sandi (nomor baru: langsung buat sandi)
 3. Isi form iklan + upload foto
 4. Bayar QRIS + upload screenshot struk
@@ -59,4 +59,4 @@
 - Set nama profilmu dengan `NAMA [nama]` agar pembeli percaya
 - Ketik `BUMP 1001` kalau iklan mau naik ke atas lagi
 - Balas tawaran pembeli lewat link WA yang dikirim bot
-- Cek dashboard di website untuk statistik lengkap: **jualbeliusupolmed.web.id/dashboard**
+- Cek dashboard di website untuk statistik lengkap: **kampuskita.my.id/dashboard**

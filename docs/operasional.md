@@ -42,7 +42,7 @@ export DATABASE_URL="postgresql://postgres:[PASSWORD]@[HOST]:6543/postgres"
 
 #### Skenario A: Downtime Vercel / Masalah DNS
 1. Cek status di [vercel-status.com](https://www.vercel-status.com).
-2. Bila DNS utama `jualbeliusupolmed.web.id` tidak merespon:
+2. Bila DNS utama `kampuskita.my.id` tidak merespon:
    - Arahkan sementara trafik CNAME ke domain backup Vercel (`*.vercel.app`).
    - Berikan banner informasi status melalui Instagram Story kampus `@kampusfess.id`.
 
