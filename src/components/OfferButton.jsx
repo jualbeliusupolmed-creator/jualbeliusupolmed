@@ -45,7 +45,11 @@ export default function OfferButton({ listing, className, children }) {
         fetch("/api/minat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ listing_id: listing.id }),
+          body: JSON.stringify({
+            listing_id: listing.id,
+            offer_price: priceNum,
+            notes: message || undefined,
+          }),
         }).catch(() => {});
 
         const slug = buildSlug(listing.title, listing.id);
