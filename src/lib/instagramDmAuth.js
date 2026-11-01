@@ -307,19 +307,29 @@ export async function verifyLinkChallenge({ wa, otpInput, igSenderId = null }) {
   // 3. Sukses Verifikasi!
   const targetSenderId = challenge.ig_sender_id;
 
-  // Tautkan hanya ke profil JB yang sudah ada. OTP membuktikan kepemilikan WA,
-  // tetapi tidak membuat akun web baru atau menetapkan kata sandi lewat DM.
+  // Tautkan atau siapkan profil JB. OTP membuktikan kepemilikan WA,
+  // dan alur DM selanjutnya memungkinkan penjual mengatur kata sandinya langsung.
   let profile;
   try {
     let profileResult = await findSellerProfileByPhone(supa, cleanWa, "*");
     if (profileResult.error) {
-      // Compatibilitas untuk skema lama yang belum memiliki phone_wa.
+      // Kompatibilitas untuk skema yang belum memiliki phone_wa.
       profileResult = await supa.from("seller_profiles").select("*").eq("wa", cleanWa).maybeSingle();
     }
-    if (profileResult.error) return { ok: false, message: "Profil akun belum dapat diperiksa. Coba lagi nanti." };
-    profile = profileResult.data;
+    profile = profileResult?.data;
     if (!profile) {
-      return { ok: false, message: "Nomor ini belum terhubung ke akun Jual Beli. Daftar atau masuk di situs resmi, lalu ulangi penautan." };
+      const defaultName = `User ${cleanWa.slice(-4)}`;
+      const slugSuffix = Math.random().toString(36).substring(2, 6);
+      profile = {
+        wa: cleanWa,
+        name: defaultName,
+        slug: `user-${cleanWa.slice(-4)}-${slugSuffix}`,
+        campus: challenge.campus || "Semua",
+        wa_verified: true,
+        referral_code: Math.random().toString(36).substring(2, 8).toUpperCase(),
+        free_bumps: 0,
+      };
+      await supa.from("seller_profiles").insert(profile);
     }
   } catch {
     return { ok: false, message: "Profil akun belum dapat diperiksa. Coba lagi nanti." };
