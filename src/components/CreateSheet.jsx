@@ -51,7 +51,7 @@ const PILIHAN = [
     grup: "Sosial",
   },
   {
-    href: "/teman",
+    href: "/chat?mode=teman",
     ikon: <Icon.Users className="w-5 h-5" />,
     ikonBg: "bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300",
     judul: "Cari Teman Kampus",

@@ -58,7 +58,7 @@ export default function LeftSidebar() {
 
   const exploreLinks = [
     { href: "/dicari", label: "Dicari Mahasiswa", icon: Icon.Search },
-    { href: "/teman", label: "Cari Teman", icon: Icon.Users },
+    { href: "/chat?mode=teman", label: "Cari Teman", icon: Icon.Users },
     { href: "/organisasi", label: "UKM & Organisasi", icon: Icon.Briefcase },
     { href: "/oprec", label: "Oprec Kampus", icon: Icon.Megaphone },
   ];

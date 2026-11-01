@@ -695,3 +695,11 @@ cuma server.
   memakai target sentuh yang lebih besar, dan berbagi gaya state aktif yang sama.
 - Margin atas ganda di antara tab dan konten dihilangkan agar ritme vertikal
   konsisten. Perubahan ini hanya menyentuh tampilan, bukan alur akun atau data.
+
+### 2 November 2026 — Draft audit dan rebuild panel bot WhatsApp
+
+- Sumber bot yang diaudit adalah checkout VPS `/home/ubuntu/wa-bot-usu` pada commit `8a29f9b`; salinan lokal `bot-wa/` tidak dipakai sebagai sumber perubahan karena berpotensi berbeda.
+- Paket rebuild terisolasi disiapkan di `bot-panel-rebuild/`. Navigasi baru mengelompokkan ringkasan, inbox, antrean, broadcast, perangkat, pengaturan, alat bot, dan aktivitas; tampilannya mengikuti identitas Kampus Kita. Paket belum diterapkan atau diuji browser terhadap VPS.
+- Draft route membedakan respons `/status?panel=1` agar QR mentah tidak dikirim ke panel baru, mengurangi nilai nomor pada log perubahan pengaturan, dan meneruskan mode status aman untuk perangkat kedua. Perubahan ini belum diterapkan ke produksi.
+- Checkout VPS memiliki perubahan lokal pengguna pada aset panel dan file tak terlacak. Penerapan harus selektif per file dan tidak boleh menimpa perubahan tersebut.
+- Audit terbatas: implementasi middleware autentikasi belum ditinjau karena pemeriksaan otomatis menolak penayangan cuplikan yang berpotensi memuat informasi kredensial. Endpoint story juga perlu mitigasi SSRF sebelum panel mengirim media. Rincian temuan dan batas pemeriksaan ada di `bot-panel-rebuild/AUDIT.md`.
