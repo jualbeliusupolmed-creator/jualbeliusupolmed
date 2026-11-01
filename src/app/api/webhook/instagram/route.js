@@ -1,33 +1,80 @@
 import { NextResponse } from "next/server";
+import { getAdminClient } from "@/lib/supabaseAdmin";
 import { verifyMetaSignature } from "@/lib/instagramDm";
 import { handleInstagramDmEvent } from "@/lib/instagramDmRouter";
 
 export const dynamic = "force-dynamic";
 
-// In-memory cache untuk deduplikasi event Meta (mencegah double-execution saat Meta retry)
+// Cache hanya untuk test lokal. Produksi memakai RPC PostgreSQL yang atomik.
 const PROCESSED_EVENT_TTL_MS = 10 * 60 * 1000; // 10 menit
 const processedEvents = new Map();
 
-function isDuplicateEvent(eventId) {
-  if (!eventId) return false;
+async function claimEvent(eventId) {
+  if (!eventId) return { ok: true, duplicate: false, key: null };
+
+  if (process.env.NODE_ENV === "test") {
+    const now = Date.now();
+    pruneTestEventCache();
+    const seenAt = processedEvents.get(eventId);
+    if (seenAt && now - seenAt < PROCESSED_EVENT_TTL_MS) return { ok: true, duplicate: true, key: eventId };
+    return { ok: true, duplicate: false, key: eventId, testOnly: true };
+  }
+
+  const key = `ig_webhook:${eventId}`;
+  try {
+    const { data, error } = await getAdminClient().rpc("hit_rate_limit", {
+      p_key: key,
+      p_window_seconds: Math.floor(PROCESSED_EVENT_TTL_MS / 1000),
+    });
+    if (error || !Number.isInteger(Number(data))) return { ok: false, key };
+    return { ok: true, duplicate: Number(data) > 1, key };
+  } catch {
+    return { ok: false, key };
+  }
+}
+
+async function completeEvent(claim) {
+  if (!claim?.key) return;
+  if (claim.testOnly) {
+    processedEvents.set(claim.key, Date.now());
+    return;
+  }
+  // hit_rate_limit created the durable idempotency claim; keep it until TTL.
+}
+
+async function releaseEvent(claim) {
+  if (!claim?.key) return;
+  if (claim.testOnly) {
+    processedEvents.delete(claim.key);
+    return;
+  }
+  try {
+    const { error } = await getAdminClient().from("rate_limit_hits").delete().eq("key", claim.key);
+    if (error) console.error("[Instagram Webhook] Could not release failed event claim.");
+  } catch {
+    console.error("[Instagram Webhook] Could not release failed event claim.");
+  }
+}
+
+async function cleanupExpiredEventClaims() {
+  if (process.env.NODE_ENV === "test") return;
+  try {
+    await getAdminClient()
+      .from("rate_limit_hits")
+      .delete()
+      .like("key", "ig_webhook:%")
+      .lt("expires_at", new Date().toISOString());
+  } catch {
+    // Cleanup is best-effort; event processing itself still fails closed on RPC errors.
+  }
+}
+
+function pruneTestEventCache() {
   const now = Date.now();
-
-  // Bersihkan cache jika sudah menampung lebih dari 2000 event
-  if (processedEvents.size > 2000) {
-    for (const [id, ts] of processedEvents.entries()) {
-      if (now - ts > PROCESSED_EVENT_TTL_MS) processedEvents.delete(id);
-    }
+  if (processedEvents.size <= 2000) return;
+  for (const [id, ts] of processedEvents.entries()) {
+    if (now - ts > PROCESSED_EVENT_TTL_MS) processedEvents.delete(id);
   }
-
-  if (processedEvents.has(eventId)) {
-    const ts = processedEvents.get(eventId);
-    if (now - ts < PROCESSED_EVENT_TTL_MS) {
-      return true;
-    }
-  }
-
-  processedEvents.set(eventId, now);
-  return false;
 }
 
 /**
@@ -92,6 +139,7 @@ export async function POST(req) {
     // Pastikan event dari objek instagram atau page
     if (payload.object === "instagram" || payload.object === "page") {
       const entries = Array.isArray(payload.entry) ? payload.entry : [];
+      let processingFailed = false;
 
       for (const entry of entries) {
         const messagingEvents = Array.isArray(entry.messaging) ? entry.messaging : [];
@@ -107,8 +155,13 @@ export async function POST(req) {
 
           // Idempotensi: deteksi duplikasi ID pesan Meta
           const messageId = event.message?.mid || `${senderId}:${event.timestamp}`;
-          if (messageId && isDuplicateEvent(messageId)) {
-            console.log(`[Instagram Webhook] Event duplikat diabaikan: ${messageId}`);
+          const eventClaim = await claimEvent(messageId);
+          if (!eventClaim.ok) {
+            processingFailed = true;
+            continue;
+          }
+          if (eventClaim.duplicate) {
+            console.log("[Instagram Webhook] Event duplikat diabaikan.");
             continue;
           }
 
@@ -130,19 +183,29 @@ export async function POST(req) {
               quickReplyPayload,
               attachments,
             });
+            await completeEvent(eventClaim);
           } catch (eventErr) {
-            console.error("[Instagram Webhook] Gagal memproses event Instagram DM:", eventErr);
+            processingFailed = true;
+            console.error("[Instagram Webhook] Gagal memproses event Instagram DM:", eventErr?.name || "Error");
+            await releaseEvent(eventClaim);
           }
         }
       }
 
+      await cleanupExpiredEventClaims();
+
       // Meta mengharuskan HTTP 200 respon cepat agar tidak mengirim ulang
-      return NextResponse.json({ status: "EVENT_RECEIVED" }, { status: 200 });
+      // Minta Meta mengirim ulang bila penanganan event gagal. Event sukses pada
+      // instance ini sudah ditandai; dedupe lintas instance memerlukan inbox DB.
+      return NextResponse.json(
+        { status: processingFailed ? "EVENT_PROCESSING_FAILED" : "EVENT_RECEIVED" },
+        { status: processingFailed ? 500 : 200 }
+      );
     }
 
     return NextResponse.json({ status: "IGNORED" }, { status: 200 });
   } catch (err) {
-    console.error("[Instagram Webhook] Handler Error:", err);
+    console.error("[Instagram Webhook] Handler error:", err?.name || "Error");
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

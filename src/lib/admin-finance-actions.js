@@ -66,6 +66,34 @@ export async function updateAdminPayment({ supa, paymentId, status, actorId, req
   if (!payment.listing_id) return { ok: true, warning: "Pembayaran lunas, tetapi iklan terkait tidak ditemukan." };
 
   if (payment.type === "iklan" || payment.type === "bump") {
+    // Untuk listing yang masih memerlukan review (terutama kiriman DM IG),
+    // pembayaran saja tidak boleh melewati moderasi. Moderator mengaktifkannya
+    // setelah tagihan berstatus paid.
+    if (payment.type === "iklan" && payment.meta?.source === "instagram_dm") {
+      const { data: pendingListing, error: pendingListingError } = await supa
+        .from("listings")
+        .select("id,status")
+        .eq("id", payment.listing_id)
+        .maybeSingle();
+      if (pendingListingError || !pendingListing) {
+        return { ok: true, warning: "Pembayaran lunas, tetapi iklan belum dapat diperiksa." };
+      }
+      return { ok: true, warning: "Pembayaran lunas. Iklan DM tetap menunggu persetujuan moderator." };
+    }
+    if (payment.type === "iklan" && payment.meta?.moderation_status === "pending") {
+      const { data: pendingListing, error: pendingListingError } = await supa
+        .from("listings")
+        .select("id,status")
+        .eq("id", payment.listing_id)
+        .maybeSingle();
+      if (pendingListingError || !pendingListing) {
+        return { ok: true, warning: "Pembayaran lunas, tetapi iklan belum dapat diperiksa." };
+      }
+      if (pendingListing.status === "pending") {
+        return { ok: true, warning: "Pembayaran lunas. Iklan tetap menunggu persetujuan moderator." };
+      }
+    }
+
     const { data: listing, error } = await supa.from("listings")
       .update({ status: "active", bumped_at: new Date().toISOString() })
       .eq("id", payment.listing_id)

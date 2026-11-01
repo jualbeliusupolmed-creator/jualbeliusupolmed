@@ -49,3 +49,4 @@ DO $$ BEGIN
       FOR ALL USING (auth.role() = 'service_role');
   END IF;
 END $$;
+

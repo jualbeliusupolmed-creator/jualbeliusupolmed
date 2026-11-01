@@ -15,6 +15,11 @@ const mockTables = {
   system_settings: [],
 };
 
+// OTP unit tests must never call the live WhatsApp bridge.
+vi.mock("@/lib/fonnte", () => ({
+  sendWa: vi.fn(async () => ({ ok: true })),
+}));
+
 vi.mock("@/lib/supabaseAdmin", () => {
   return {
     getAdminClient: vi.fn(() => ({
@@ -22,17 +27,29 @@ vi.mock("@/lib/supabaseAdmin", () => {
         const table = mockTables[tableName] || [];
         let filters = [];
         let selectedFields = "*";
+        let countHead = false;
 
         const chain = {
-          select: vi.fn((fields = "*") => {
+          select: vi.fn((fields = "*", options = {}) => {
             selectedFields = fields;
+            countHead = !!options.head;
             return chain;
           }),
           eq: vi.fn((col, val) => {
             filters.push((row) => row[col] === val);
             return chain;
           }),
-          or: vi.fn(() => chain),
+          or: vi.fn((expression) => {
+            const alternatives = [...String(expression).matchAll(/(wa|phone_wa)\.eq\.([^,]+)/g)];
+            if (alternatives.length) {
+              filters.push((row) => alternatives.some(([, column, value]) => String(row[column] || "") === value));
+            }
+            return chain;
+          }),
+          in: vi.fn((col, values) => {
+            filters.push((row) => values.includes(row[col]));
+            return chain;
+          }),
           gte: vi.fn(() => chain),
           ilike: vi.fn((col, pattern) => {
             const clean = pattern.replace(/%/g, "").toLowerCase();
@@ -44,6 +61,13 @@ vi.mock("@/lib/supabaseAdmin", () => {
             const res = table.filter((r) => filters.every((f) => f(r))).slice(0, n);
             return Promise.resolve({ data: res, error: null });
           }),
+          then: (resolve, reject) => {
+            const rows = table.filter((row) => filters.every((filter) => filter(row)));
+            const result = countHead
+              ? { count: rows.length, error: null }
+              : { data: rows, error: null };
+            return Promise.resolve(result).then(resolve, reject);
+          },
           maybeSingle: vi.fn(() => {
             const res = table.find((r) => filters.every((f) => f(r)));
             return Promise.resolve({ data: res || null, error: null });
@@ -64,13 +88,22 @@ vi.mock("@/lib/supabaseAdmin", () => {
             };
           }),
           update: vi.fn((data) => {
-            return {
-              eq: vi.fn((col, val) => {
-                const target = table.find((r) => r[col] === val);
-                if (target) Object.assign(target, data);
-                return Promise.resolve({ data: target, error: null });
-              }),
+            const updateFilters = [];
+            let result;
+            const apply = () => {
+              if (result) return result;
+              const targets = table.filter((row) => updateFilters.every((filter) => filter(row)));
+              targets.forEach((row) => Object.assign(row, data));
+              result = { data: targets[0] || null, error: null };
+              return result;
             };
+            const updater = {
+              eq: vi.fn((col, val) => { updateFilters.push((row) => row[col] === val); return updater; }),
+              select: vi.fn(() => updater),
+              maybeSingle: vi.fn(() => Promise.resolve(apply())),
+              then: (resolve, reject) => Promise.resolve(apply()).then(resolve, reject),
+            };
+            return updater;
           }),
           upsert: vi.fn((data, opts = {}) => {
             const conflictCol = opts.onConflict || "id";
@@ -83,13 +116,23 @@ vi.mock("@/lib/supabaseAdmin", () => {
             }
             return Promise.resolve({ data: row, error: null });
           }),
-          delete: vi.fn(() => ({
-            eq: vi.fn((col, val) => {
-              const idx = table.findIndex((r) => r[col] === val);
-              if (idx >= 0) table.splice(idx, 1);
-              return Promise.resolve({ data: null, error: null });
-            }),
-          })),
+          delete: vi.fn(() => {
+            const deleteFilters = [];
+            let result;
+            const apply = () => {
+              if (result) return result;
+              for (let i = table.length - 1; i >= 0; i--) {
+                if (deleteFilters.every((filter) => filter(table[i]))) table.splice(i, 1);
+              }
+              result = { data: null, error: null };
+              return result;
+            };
+            const deleter = {
+              eq: vi.fn((col, val) => { deleteFilters.push((row) => row[col] === val); return deleter; }),
+              then: (resolve, reject) => Promise.resolve(apply()).then(resolve, reject),
+            };
+            return deleter;
+          }),
         };
 
         return chain;
@@ -200,6 +243,7 @@ describe("Tahap 2 - Penautan Akun WhatsApp & Instagram (OTP)", () => {
   const sellerWa = "081234567899";
 
   it("creates challenge and verifies OTP successfully", async () => {
+    mockTables.seller_profiles.push({ wa: sellerWa, phone_wa: null, name: "Tester" });
     // 1. Buat tantangan
     const challenge = await createLinkChallenge({ igSenderId, wa: sellerWa, campus: "USU / POLMED" });
     expect(challenge.ok).toBe(true);
@@ -288,6 +332,7 @@ describe("Tahap 1 & 3 - Conversational Router & Pipeline Moderasi", () => {
 
   it("walks through complete Jual flow from unlinked to OTP, details, and review submission", async () => {
     const freshSender = "fresh_user_ig_" + Date.now();
+    mockTables.seller_profiles.push({ wa: "081234567888", phone_wa: null, name: "Tester DM" });
     await dmSession.clearDmSession(freshSender);
 
     // 1. Mulai jual
@@ -321,17 +366,21 @@ describe("Tahap 1 & 3 - Conversational Router & Pipeline Moderasi", () => {
 
     // 5. Masukkan judul
     const stepTitle = await handleInstagramDmEvent({ senderId: freshSender, text: "Kalkulator Ilmiah Casio" });
-    expect(stepTitle.step).toBe("jual_ask_price");
+    expect(stepTitle.step).toBe("jual_ask_category");
 
-    // 6. Masukkan harga
+    // 6. Pilih kategori
+    const stepCategory = await handleInstagramDmEvent({ senderId: freshSender, quickReplyPayload: "CATEGORY_ELEKTRONIK" });
+    expect(stepCategory.step).toBe("jual_ask_price");
+
+    // 7. Masukkan harga
     const stepPrice = await handleInstagramDmEvent({ senderId: freshSender, text: "150rb" });
     expect(stepPrice.step).toBe("jual_ask_desc");
 
-    // 7. Masukkan deskripsi
+    // 8. Masukkan deskripsi
     const stepDesc = await handleInstagramDmEvent({ senderId: freshSender, text: "Mulus, COD di Pintu 2" });
     expect(stepDesc.step).toBe("jual_confirm");
 
-    // 8. Konfirmasi tayang
+    // 9. Konfirmasi tayang
     const stepConfirm = await handleInstagramDmEvent({ senderId: freshSender, quickReplyPayload: "ACTION_CONFIRM_PUBLISH" });
     expect(stepConfirm.ok).toBe(true);
     expect(stepConfirm.action).toBe("submitted_for_review");
