@@ -3,6 +3,7 @@ import { isAdmin } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import sharp from "sharp";
 import { jawabGalat } from "@/lib/jawabGalat";
+import { uploadMedia } from "@/lib/mediaStorage";
 
 export const dynamic = "force-dynamic";
 
@@ -37,20 +38,9 @@ export async function POST(req) {
       .toBuffer();
 
     const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
+    const { url, provider } = await uploadMedia(webpBuffer, fileName, "image/webp");
 
-    const supa = getAdminClient();
-    const { error: uploadError } = await supa.storage
-      .from("listings")
-      .upload(fileName, webpBuffer, {
-        contentType: "image/webp",
-        cacheControl: "31536000",
-        upsert: false,
-      });
-
-    if (uploadError) throw new Error(uploadError.message);
-
-    const { data } = supa.storage.from("listings").getPublicUrl(fileName);
-    return NextResponse.json({ ok: true, url: data.publicUrl });
+    return NextResponse.json({ ok: true, url, provider });
   } catch (e) {
     return jawabGalat(e);
   }

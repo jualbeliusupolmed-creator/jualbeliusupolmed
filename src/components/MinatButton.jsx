@@ -42,7 +42,10 @@ export default function MinatButton({ listing, className, children }) {
         fetch("/api/minat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ listing_id: listing.id }),
+          body: JSON.stringify({
+            listing_id: listing.id,
+            notes: text || undefined,
+          }),
         }).catch(() => {});
 
         const slug = buildSlug(listing.title, listing.id);
