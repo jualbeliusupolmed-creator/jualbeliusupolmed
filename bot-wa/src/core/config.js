@@ -12,7 +12,7 @@ const ADMIN_CALL_WORDS = new Set(
 const ADMIN_CALL_COOLDOWN_MS = Number(process.env.ADMIN_CALL_COOLDOWN_SECONDS || 60) * 1000;
 const PLAIN_COMMAND_WORDS = new Set([
   'jual', 'cari', 'menu', 'perpanjang', 'upgrade', 'saya', 'beli',
-  'deal', 'gagal', 'hapus', 'pantau', 'menfess', 'curhat'
+  'deal', 'gagal', 'hapus', 'pantau', 'menfess', 'curhat', 'po', 'openpo'
 ]);
 
 const WEBHOOK_URL = process.env.WEBHOOK_URL || 'https://www.kampuskita.my.id/api/wa/baileys';
