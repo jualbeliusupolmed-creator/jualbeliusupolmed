@@ -363,7 +363,7 @@ export async function handleInstagramDmEvent({
 
       await sendInstagramQuickReplies(
         cleanSender,
-        "✅ *Kata Sandi Berhasil Disimpan!*\n\nAkunmu kini aktif. Kamu bisa login di https://www.kampuskita.my.id menggunakan nomor WhatsApp dan kata sandi tersebut kapan saja.\n\n📸 **Langkah 1:** Kirimkan 1 foto barang yang ingin kamu jual (atau ketik 'skip' jika tanpa foto):",
+        "✅ *Kata Sandi Berhasil Disimpan!*\n\nAkunmu kini aktif. Kamu bisa login di https://www.kampuskita.my.id menggunakan nomor WhatsApp dan kata sandi tersebut kapan saja.\n\n📸 **Langkah 1:** Kirimkan foto barang yang ingin kamu jual (bisa 1 s/d 5 foto), atau ketik 'skip' jika tanpa foto:",
         [
           { title: "⏩ Lewati Foto", payload: "ACTION_SKIP_PHOTO" },
           { title: "❌ Batal", payload: "ACTION_CANCEL" },
@@ -372,33 +372,97 @@ export async function handleInstagramDmEvent({
       return { ok: true, step: "jual_ask_photo" };
     }
 
-    // Step 1: Menerima Foto Barang (atau skip)
+    // Step 1: Menerima Foto Barang (bisa lebih dari 1 foto, maks 5 foto)
     if (session.step === "jual_ask_photo") {
       const isSkip = payload === "ACTION_SKIP_PHOTO" || lowerText === "skip" || lowerText === "lewati";
-      let imageUrl = null;
+      const isDone = payload === "ACTION_DONE_PHOTOS" || lowerText === "lanjut" || lowerText === "selesai" || lowerText === "done";
 
-      if (!isSkip) {
-        const imgAttachment = attachments.find((a) => a.type === "image");
-        if (imgAttachment?.payload?.url) {
-          imageUrl = imgAttachment.payload.url;
-        }
+      // 1. Jika pengguna memilih lewati foto
+      if (isSkip) {
+        await setDmSession(cleanSender, {
+          ...session,
+          step: "jual_ask_title",
+          data: {
+            ...session.data,
+            image_url: null,
+            images: [],
+          },
+        });
+
+        await sendInstagramQuickReplies(
+          cleanSender,
+          "📝 **Langkah 2:** Apa *Nama / Judul Barang* yang kamu jual?\n\n(Contoh: Kalkulator Casio fx-991EX Bekas)",
+          [{ title: "❌ Batal", payload: "ACTION_CANCEL" }]
+        );
+        return { ok: true, step: "jual_ask_title" };
       }
 
-      await setDmSession(cleanSender, {
-        ...session,
-        step: "jual_ask_title",
-        data: {
-          ...session.data,
-          image_url: imageUrl,
-        },
-      });
+      // 2. Ambil gambar dari attachments (mendukung multiple foto sekaligus)
+      const imgAttachments = attachments.filter((a) => a.type === "image" && a.payload?.url);
+      const newUrls = imgAttachments.map((a) => a.payload.url);
 
+      if (newUrls.length > 0) {
+        const currentImages = Array.isArray(session.data?.images)
+          ? session.data.images
+          : (session.data?.image_url ? [session.data.image_url] : []);
+        const combinedImages = [...currentImages, ...newUrls].slice(0, 5);
+        const primaryImage = combinedImages[0] || null;
+
+        await setDmSession(cleanSender, {
+          ...session,
+          step: "jual_ask_photo",
+          data: {
+            ...session.data,
+            image_url: primaryImage,
+            images: combinedImages,
+          },
+        });
+
+        const photoCount = combinedImages.length;
+        const remaining = 5 - photoCount;
+        const msg = [
+          `📸 *${photoCount} foto barang berhasil disimpan!*`,
+          "",
+          remaining > 0
+            ? `Kamu masih bisa kirim hingga ${remaining} foto lagi, atau tekan tombol **Lanjut ke Judul**:`
+            : "Kapasitas maksimal (5 foto) sudah tercapai. Tekan tombol **Lanjut ke Judul**:",
+        ].join("\n");
+
+        await sendInstagramQuickReplies(cleanSender, msg, [
+          { title: "➡️ Lanjut ke Judul", payload: "ACTION_DONE_PHOTOS" },
+          { title: "❌ Batal", payload: "ACTION_CANCEL" },
+        ]);
+        return { ok: true, step: "jual_ask_photo", photoCount };
+      }
+
+      // 3. Jika pengguna menekan tombol selesai / lanjut atau sudah punya foto tersimpan
+      if (isDone || (Array.isArray(session.data?.images) && session.data.images.length > 0)) {
+        await setDmSession(cleanSender, {
+          ...session,
+          step: "jual_ask_title",
+          data: {
+            ...session.data,
+          },
+        });
+
+        await sendInstagramQuickReplies(
+          cleanSender,
+          "📝 **Langkah 2:** Apa *Nama / Judul Barang* yang kamu jual?\n\n(Contoh: Kalkulator Casio fx-991EX Bekas)",
+          [{ title: "❌ Batal", payload: "ACTION_CANCEL" }]
+        );
+        return { ok: true, step: "jual_ask_title" };
+      }
+
+      // 4. Jika pesan bukan foto dan belum ada foto tersimpan
       await sendInstagramQuickReplies(
         cleanSender,
-        "📝 **Langkah 2:** Apa *Nama / Judul Barang* yang kamu jual?\n\n(Contoh: Kalkulator Casio fx-991EX Bekas)",
-        [{ title: "❌ Batal", payload: "ACTION_CANCEL" }]
+        "⚠️ Silakan kirimkan 1 s/d 5 foto barang, atau tekan **Lewati Foto** jika tanpa foto:",
+        [
+          { title: "⏩ Lewati Foto", payload: "ACTION_SKIP_PHOTO" },
+          { title: "❌ Batal", payload: "ACTION_CANCEL" },
+        ]
       );
-      return { ok: true, step: "jual_ask_title" };
+      return { ok: false, error: "photo_required_or_skip" };
     }
 
     // Step 2: Menerima Judul Barang -> otomatis tentukan kategori dan langsung minta Harga
@@ -506,12 +570,16 @@ export async function handleInstagramDmEvent({
         data: listingData,
       });
 
+      const photoCount = Array.isArray(listingData.images) && listingData.images.length > 0
+        ? listingData.images.length
+        : (listingData.image_url ? 1 : 0);
+
       const konfirmasi = [
         "🔎 *Pratinjau Iklanmu:*",
         "",
         `📌 *Barang:* ${listingData.title}`,
-        `🗂️ *Kategori:* ${listingData.category || "Lainnya"}`,
         `💰 *Harga:* ${rupiah(listingData.price)}`,
+        `📸 *Foto:* ${photoCount > 0 ? `${photoCount} foto terlampir` : "Tanpa foto"}`,
         `📋 *Deskripsi:* ${listingData.description || "Tidak ada deskripsi"}`,
         `📍 *Kampus:* ${listingData.campus || "USU / POLMED"}`,
         `📱 *WhatsApp:* +${listingData.seller_wa}`,
@@ -632,6 +700,11 @@ export async function handleInstagramDmEvent({
         const initialStatus = "pending";
         const modReason = "Menunggu peninjauan moderator kampus (Instagram DM)";
 
+        const finalImages = Array.isArray(item.images) && item.images.length > 0
+          ? item.images
+          : (item.image_url ? [item.image_url] : []);
+        const primaryImage = finalImages[0] || item.image_url || null;
+
         const insertPayload = {
           title: item.title,
           price: item.price,
@@ -640,7 +713,8 @@ export async function handleInstagramDmEvent({
           stock: 1,
           seller_name: linked.profile?.name || `Penjual IG (${cleanSender.slice(-4)})`,
           seller_wa: linked.wa,
-          image_url: item.image_url || null,
+          image_url: primaryImage,
+          images: finalImages,
           status: initialStatus,
           type: "barang",
           campus: linked.campus || "Semua",
@@ -658,13 +732,18 @@ export async function handleInstagramDmEvent({
           .select()
           .single();
 
-        // Fallback jika skema database produksi belum punya kolom moderasi (PGRST204)
+        // Fallback jika skema database produksi belum punya kolom moderasi atau images (PGRST204)
         if (insertErr && (insertErr.code === "PGRST204" || String(insertErr.message || "").includes("column"))) {
           delete insertPayload.moderation_reason;
           delete insertPayload.risk_score;
+          delete insertPayload.images;
           const retry = await supa.from("listings").insert(insertPayload).select().single();
           newListing = retry.data;
           insertErr = retry.error;
+        }
+
+        if (newListing && finalImages.length > 0) {
+          await supa.from("listings").update({ images: finalImages }).eq("id", newListing.id).catch(() => {});
         }
 
         if (insertErr || !newListing) {
@@ -769,7 +848,7 @@ export async function handleInstagramDmEvent({
         `Halo kak! 👋`,
         `Akun Instagram kamu sudah terhubung dengan WhatsApp (${maskedWa}).`,
         "",
-        "📸 **Langkah 1:** Kirimkan 1 foto barang yang mau kamu jual (atau ketik 'skip' jika tanpa foto):",
+        "📸 **Langkah 1:** Kirimkan foto barang yang mau kamu jual (bisa 1 s/d 5 foto), atau ketik 'skip' jika tanpa foto:",
       ].join("\n");
 
       await sendInstagramQuickReplies(cleanSender, promptLinked, [
