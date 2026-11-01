@@ -97,12 +97,22 @@ export async function notifyKeywordSubscribers(supa, listing) {
 
     if (error || !subs?.length) return;
 
-    // Filter yang cocok dengan kata kunci
-    const matchedSubs = subs.filter(s => {
+    const cleanSellerWa = formatWa(listing.seller_wa) || listing.seller_wa;
+
+    // Filter yang cocok dengan kata kunci (pencarian fleksibel multi-kata)
+    const matchedSubs = subs.filter((s) => {
       if (!s.keyword) return false;
       // Jangan notif ke penjualnya sendiri
-      if (s.buyer_wa === listing.seller_wa) return false;
-      return fullText.includes(s.keyword.toLowerCase());
+      const cleanBuyerWa = formatWa(s.buyer_wa) || s.buyer_wa;
+      if (cleanBuyerWa && cleanSellerWa && cleanBuyerWa === cleanSellerWa) return false;
+
+      const kwWords = s.keyword
+        .toLowerCase()
+        .split(/\s+/)
+        .filter((w) => w.length >= 2);
+      if (!kwWords.length) return false;
+
+      return kwWords.every((w) => fullText.includes(w));
     });
 
     if (!matchedSubs.length) return;

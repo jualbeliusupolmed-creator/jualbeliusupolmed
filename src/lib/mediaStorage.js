@@ -86,3 +86,4 @@ export async function uploadMedia(buffer, path, contentType = "image/webp") {
     provider: "supabase",
   };
 }
+

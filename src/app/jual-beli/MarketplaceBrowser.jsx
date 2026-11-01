@@ -432,6 +432,33 @@ export default function MarketplaceBrowser({
           >
             Reset Semua Filter
           </button>
+
+          {searchQuery && searchQuery.trim().length >= 2 && (
+            <div className="mt-5 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 max-w-md mx-auto text-left shadow-xs">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center shrink-0 text-emerald-700 dark:text-emerald-300">
+                  <span className="material-symbols-outlined text-[18px]">notifications_active</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-xs font-bold text-emerald-950 dark:text-emerald-200">
+                    Nyalakan Alarm Pantau untuk &ldquo;{searchQuery.trim()}&rdquo;?
+                  </h4>
+                  <p className="text-[11px] text-emerald-700 dark:text-emerald-300/80 mt-0.5 mb-2.5 leading-relaxed">
+                    Begitu ada mahasiswa yang pasang iklan barang ini, bot WhatsApp KampusKita langsung kirim pesan ke HP kamu!
+                  </p>
+                  <a
+                    href={`https://wa.me/${process.env.NEXT_PUBLIC_MARKETPLACE_WA || "62895429126232"}?text=${encodeURIComponent(`PANTAU ${searchQuery.trim()}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold shadow-xs transition"
+                  >
+                    <span>Pasang Alarm WhatsApp</span>
+                    <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 xs:gap-2.5 sm:gap-3.5 mb-6">

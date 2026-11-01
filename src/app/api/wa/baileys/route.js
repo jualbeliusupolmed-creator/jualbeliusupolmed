@@ -2761,9 +2761,12 @@ export async function POST(req) {
         if (!results || results.length === 0) {
           const notFoundMsg =
             `❌ Tidak ditemukan barang dengan kata kunci *"${query}"* di katalog aktif saat ini.\n\n` +
-            `💡 *Solusi:*\n` +
-            `• Pasang alarm pantau otomatis: ketik *.PANTAU ${query}* (bot akan WA kamu begitu ada barang baru!)\n` +
-            `• Atau pasang iklan dicari: ketik *.DICARI ${query}*`;
+            `💡 *Solusi: Pasang Alarm Otomatis*\n` +
+            `Begitu ada mahasiswa yang pasang iklan baru untuk *"${query}"*, bot akan langsung kirim WA ke kamu!\n\n` +
+            `👉 Klik untuk pasang alarm:\n` +
+            `wa.me/${MARKETPLACE_WA}?text=PANTAU%20${encodeURIComponent(query)}\n\n` +
+            `Atau pasang iklan dicari:\n` +
+            `wa.me/${MARKETPLACE_WA}?text=DICARI%20${encodeURIComponent(query)}`;
           await sendWa(senderJid, notFoundMsg);
           return NextResponse.json({ ok: true, state: "cari_empty", bot_reply: notFoundMsg });
         }
