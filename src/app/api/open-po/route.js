@@ -4,6 +4,7 @@ import { getOpenPoSession } from "@/lib/openPoSession";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getSettings, isAllowedCampus } from "@/lib/settings";
 import { rateLimit } from "@/lib/rateLimit";
+import { sendWa } from "@/lib/fonnte";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -69,5 +70,17 @@ export async function POST(req) {
     console.error("[open-po] Batch creation failed:", error.code || "database_error");
     return NextResponse.json({ error: "Batch gagal dibuat. Periksa isian dan kesiapan migrasi PO." }, { status: 503 });
   }
+
+  // Auto-post ke Status / Story WhatsApp Bot (status@broadcast)
+  const closesFormatted = closesAt.toLocaleDateString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  const storyMsg =
+    `📦 *OPEN PO KAMPUS DIBUKA!* 🚀\n\n` +
+    `*${name}* (${title})\n` +
+    `💰 Rp ${price.toLocaleString("id-ID")} / ${unit}\n` +
+    `📊 Kuota: ${quota} ${unit} | 📍 ${pickupPoint}\n` +
+    `⏰ Tutup: ${closesFormatted} WIB\n\n` +
+    `👉 Pesan & amankan kuota: https://www.kampuskita.my.id/open-po`;
+  sendWa("status@broadcast", storyMsg, imageUrl || null).catch(() => {});
+
   return NextResponse.json({ ok: true, id: data }, { status: 201 });
 }

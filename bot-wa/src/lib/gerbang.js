@@ -42,8 +42,9 @@ module.exports = function buatGerbang({ API_TOKEN, AUTH_DIR, keadaan }) {
     // sama sudah dipakai tokenBotSah() dan tolakCron() di sisi web.
     function tokenMatches(given) {
         if (!API_TOKEN) return false;
-        const a = crypto.createHash('sha256').update(String(given ?? '')).digest();
-        const b = crypto.createHash('sha256').update(String(API_TOKEN)).digest();
+        const cleaned = String(given ?? '').replace(/^Bearer\s+/i, '').trim();
+        const a = crypto.createHash('sha256').update(cleaned).digest();
+        const b = crypto.createHash('sha256').update(String(API_TOKEN).trim()).digest();
         return crypto.timingSafeEqual(a, b);
     }
 

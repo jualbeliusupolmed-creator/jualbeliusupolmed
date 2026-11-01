@@ -9,6 +9,7 @@ import { autoPublishMadingInstagram, publishQueuedMadingInstagram, siteOriginFro
 import { getSettings, isAllowedCampus } from "@/lib/settings";
 import { waitUntil } from "@vercel/functions";
 import { evaluateModerationRules } from "@/lib/moderationRules";
+import { sendWa } from "@/lib/fonnte";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -297,6 +298,15 @@ export async function POST(request) {
       postId: data.id,
       timeoutMs: 0,
     });
+
+    // Auto-post cuplikan ke Status / Story WhatsApp Bot (status@broadcast)
+    const storyCaption =
+      `💌 *Mading KampusKita* 🎓\n\n` +
+      `"${cleanContent.slice(0, 300)}${cleanContent.length > 300 ? "..." : ""}"\n\n` +
+      `— ${sender_name || "Anonim"} · Mading Kampus\n` +
+      `👉 ${(process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").replace(/\/$/, "")}/mading#post-${data.id}`;
+
+    sendWa("status@broadcast", storyCaption, image_url || null).catch(() => {});
 
     return NextResponse.json({ success: true, post: data });
   } catch (err) {

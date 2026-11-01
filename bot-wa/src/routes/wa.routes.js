@@ -568,17 +568,20 @@ module.exports = function pasangRuteWa(app, K) {
         const { text, url } = req.body;
         if (!text?.trim()) return res.status(400).json({ error: 'text required' });
         try {
-            const jidsSet = new Set([...chatMap.keys(), ...contactMap.keys()]);
+            const cMap = K.chatMap || new Map();
+            const ctMap = K.contactMap || new Map();
+            const jidsSet = new Set([...cMap.keys(), ...ctMap.keys()]);
             if (K.connectedPhone) jidsSet.add(K.connectedPhone + '@s.whatsapp.net');
-            const jids = Array.from(jidsSet).filter(jid => jid.endsWith('@s.whatsapp.net'));
+            const jids = Array.from(jidsSet).filter(jid => jid && jid.endsWith('@s.whatsapp.net') && !jid.includes('-'));
             
             let result;
+            const sendOptions = jids.length > 0 ? { statusJidList: jids } : {};
             if (url) {
                 const imgRes = await fetch(url);
                 const buf = Buffer.from(await imgRes.arrayBuffer());
-                result = await K.waSocket.sendMessage('status@broadcast', { image: buf, caption: text }, { statusJidList: jids });
+                result = await K.waSocket.sendMessage('status@broadcast', { image: buf, caption: text }, sendOptions);
             } else {
-                result = await K.waSocket.sendMessage('status@broadcast', { text, backgroundColor: '#075E54', font: 3 }, { statusJidList: jids });
+                result = await K.waSocket.sendMessage('status@broadcast', { text, backgroundColor: '#075E54', font: 3 }, sendOptions);
             }
         
             const now = Date.now();

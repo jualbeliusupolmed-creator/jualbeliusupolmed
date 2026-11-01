@@ -2872,6 +2872,17 @@ export async function POST(req) {
           timeoutMs: 0,
         }).catch((err) => console.error("[menfess-ig] auto publish error:", err?.message));
 
+        // Auto-post cuplikan ke Status / Story WhatsApp Bot (status@broadcast)
+        const storyCaption =
+          `💌 *Menfess Mahasiswa KampusKita* 🎓\n\n` +
+          `"${censoredContent.slice(0, 300)}${censoredContent.length > 300 ? "..." : ""}"\n\n` +
+          `— Anonim · Mading Kampus\n` +
+          `👉 https://www.kampuskita.my.id/mading#post-${newPost.id}`;
+
+        sendWa("status@broadcast", storyCaption, uploadedImageUrl || null).catch((err) => {
+          console.warn("[menfess-story] gagal broadcast ke status WA:", err?.message);
+        });
+
         const reply =
           `💌 *Menfess Berhasil Terkirim!* 🎉\n\n` +
           `Pesanmu sudah tayang di Mading Kampus dan masuk antrean Instagram @usupolmedmenfess 🚀\n\n` +
