@@ -15,6 +15,12 @@ import { addKeywordSubscription, removeKeywordSubscription, listKeywordSubscript
 import sharp from "sharp";
 import { jumlahTokenBot, tokenBotSah } from "@/lib/botTokens";
 import { autoPublishListingInstagram } from "@/lib/listingInstagram";
+import { autoPublishMadingInstagram } from "@/lib/madingInstagram";
+import { censorProfanity, detectDoxxingRisk } from "@/lib/profanity";
+import { evaluateModerationRules } from "@/lib/moderationRules";
+import { hashIdentitas } from "@/lib/identitasHash";
+import { catatIdentitasWa } from "@/lib/chatIdentity";
+import { uploadMedia } from "@/lib/mediaStorage";
 import { cariAman } from "@/lib/cariAman";
 import { jawabGalat } from "@/lib/jawabGalat";
 import { loadConversationMemory, mergeConversationHistory } from "@/lib/botMemory";
@@ -424,8 +430,8 @@ export async function POST(req) {
     if (ownerActive && !isForcedAd && !isAdminCommand) {
       const tCmd = (message || "").toLowerCase().trim();
       const explicitCmd =
-        ["menu", "jual", "wts", "dijual", "ready", "saya", "iklanku", "perpanjang", "upgrade", "batal", "cancel", "pantau", "daftar pantau", "tawaran", "referral", "riwayat"].includes(tCmd) ||
-        tCmd.startsWith("cari ") || tCmd.startsWith("dicari ") || tCmd.startsWith("wtb ") || tCmd.startsWith("pantau ") || tCmd.startsWith("nama ") || isTawarBiaya;
+        ["menu", "jual", "wts", "dijual", "ready", "saya", "iklanku", "perpanjang", "upgrade", "batal", "cancel", "pantau", "daftar pantau", "tawaran", "referral", "riwayat", "menfess", "curhat"].includes(tCmd) ||
+        tCmd.startsWith("cari ") || tCmd.startsWith("dicari ") || tCmd.startsWith("wtb ") || tCmd.startsWith("pantau ") || tCmd.startsWith("nama ") || tCmd.startsWith("menfess ") || tCmd.startsWith("curhat ") || isTawarBiaya;
       const isReceiptFlow = !!file && (pendingPayment || pendingWantedPayment);
       // User sedang di alur pasang-iklan (sudah ketik JUAL → draft aktif) → JANGAN
       // bisukan foto/teks lanjutannya. Tanpa ini, "JUAL → kirim foto" mati di tengah
@@ -2195,6 +2201,7 @@ export async function POST(req) {
           `• *PANTAU [kata kunci]* → Alarm barang baru\n` +
           `• *DAFTAR PANTAU* → Daftar alarm\n` +
           `• *PANTAU OFF [kata]* → Hapus alarm\n` +
+          `• *MENFESS [pesan]* → Kirim menfess kampus anonim\n` +
           `• *LANGGANAN [kategori]* → Notif kategori\n` +
           `• *STOP* → Matikan semua notifikasi\n` +
           `• *LAPOR [kode] [alasan]* → Laporkan iklan\n\n` +
@@ -2222,6 +2229,7 @@ export async function POST(req) {
           `📦 *IKLANKU* — Kelola iklanmu\n` +
           `🤝 *TAWAR [kode] [harga]* — Tawar barang\n` +
           `🔔 *PANTAU [kata]* — Alarm barang baru\n` +
+          `💌 *MENFESS [pesan]* — Curhat / info kampus anonim\n` +
           `👤 *SAYA* — Profil dan statistik\n\n` +
           `Butuh pilihan lengkap?\n` +
           `• *MENU IKLAN*\n` +
@@ -2734,6 +2742,147 @@ export async function POST(req) {
         }
 
         return NextResponse.json({ ok: true, state: "deal_status_updated", status: newStatus });
+      }
+
+      // ── Command MENFESS: Kirim pesan anonim ke Mading & Instagram @usupolmedmenfess ──
+      if (
+        msgLower === "menfess" ||
+        msgLower.startsWith("menfess ") ||
+        msgLower === "curhat" ||
+        msgLower.startsWith("curhat ")
+      ) {
+        const rawContent = message.replace(/^[.!]?\s*(menfess|curhat)\s*/i, "").trim();
+
+        if (!rawContent) {
+          const guide =
+            `💌 *Kirim Menfess Kampus (Anonim)*\n\n` +
+            `Mau kirim pesan/curhat/tanya info kampus secara anonim ke Mading & Instagram @usupolmedmenfess?\n\n` +
+            `👉 *Cara kirim:*\n` +
+            `Ketik: *MENFESS [pesan kamu]*\n\n` +
+            `*Contoh:*\n` +
+            `_MENFESS Ada yang tau kosan putri dekat pintu 4 USU budget 500rb per bulan?_\n\n` +
+            `🔒 _Identitas nomor WhatsApp kamu 100% dirahasiakan._`;
+          await sendWa(senderJid, guide);
+          return NextResponse.json({ ok: true, state: "menfess_guide", bot_reply: guide });
+        }
+
+        if (rawContent.length < 5) {
+          const reply = "❌ Pesan menfess terlalu pendek kak (minimal 5 karakter).";
+          await sendWa(senderJid, reply);
+          return NextResponse.json({ ok: true, state: "menfess_too_short", bot_reply: reply });
+        }
+
+        if (rawContent.length > 1000) {
+          const reply = "❌ Pesan menfess terlalu panjang kak (maksimal 1000 karakter).";
+          await sendWa(senderJid, reply);
+          return NextResponse.json({ ok: true, state: "menfess_too_long", bot_reply: reply });
+        }
+
+        // Pengecekan anti-doxxing & perlindungan privasi
+        const doxxingCheck = detectDoxxingRisk(rawContent);
+        if (doxxingCheck.risky) {
+          const reply = `❌ Menfess tidak dapat dikirim karena terdeteksi menyebut identitas pribadi/kontak/target: ${doxxingCheck.reason || "Dilarang menyebut identitas pribadi atau menargetkan seseorang."}`;
+          await sendWa(senderJid, reply);
+          return NextResponse.json({ ok: true, state: "menfess_doxxing_blocked", bot_reply: reply });
+        }
+
+        // Pengecekan moderasi komunitas
+        const modCheck = evaluateModerationRules({
+          title: "",
+          description: rawContent,
+          category: "Lainnya",
+        });
+        if (modCheck.action === "reject" || (modCheck.riskScore || 0) >= 70) {
+          const reply = `❌ Menfess ditolak karena melanggar panduan komunitas (${(modCheck.reasons || []).join(", ")}). Dilarang membahas narkoba, judi, vape, joki skripsi, atau konten terlarang.`;
+          await sendWa(senderJid, reply);
+          return NextResponse.json({ ok: true, state: "menfess_moderation_rejected", bot_reply: reply });
+        }
+
+        // Rate limit: maksimal 5 menfess per jam per nomor
+        const rl = rateLimit(`wa-menfess:${normalizedWa}`, { limit: 5, windowMs: 3600_000 });
+        if (!rl.ok) {
+          const reply = `⏳ Kamu sudah mencapai batas kirim menfess (maksimal 5 menfess per jam). Coba lagi nanti ya kak.`;
+          await sendWa(senderJid, reply);
+          return NextResponse.json({ ok: true, state: "menfess_rate_limited", bot_reply: reply });
+        }
+
+        // Upload foto lampiran jika ada
+        let uploadedImageUrl = null;
+        if (file) {
+          try {
+            const buf = Buffer.from(await file.arrayBuffer());
+            const webpBuf = await sharp(buf).webp({ quality: 80 }).toBuffer();
+            const fName = `mading/wa-${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
+            const upRes = await uploadMedia(webpBuf, fName, "image/webp");
+            uploadedImageUrl = upRes.url;
+          } catch (err) {
+            console.error("[menfess-upload] Gagal upload foto menfess:", err?.message);
+          }
+        }
+
+        // Sensor kata-kata kasar otomatis
+        const cleanContent = censorProfanity(rawContent);
+
+        // Ambil profil pengirim jika ada untuk nama anonim & kampus
+        const { data: profile } = await supa
+          .from("seller_profiles")
+          .select("anonymous_name, campus, faculty")
+          .eq("wa", normalizedWa)
+          .maybeSingle();
+
+        const sender_name = (profile?.anonymous_name || "Anonim").trim().slice(0, 30);
+        const faculty = (profile?.campus || profile?.faculty || "Umum").trim().slice(0, 50);
+
+        const insertPayload = {
+          type: "menfess",
+          sender_name,
+          faculty,
+          title: null,
+          content: cleanContent,
+          status: "active",
+          author_ip_hash: hashIdentitas(normalizedWa),
+        };
+        if (uploadedImageUrl) {
+          insertPayload.image_url = uploadedImageUrl;
+        }
+
+        const { data: newPost, error: insertErr } = await supa
+          .from("mading_posts")
+          .insert(insertPayload)
+          .select("id, created_at")
+          .single();
+
+        if (insertErr || !newPost) {
+          console.error("[menfess-insert] error:", insertErr?.message);
+          const reply = "❌ Gagal memproses menfess ke sistem. Silakan coba sesaat lagi ya kak.";
+          await sendWa(senderJid, reply);
+          return NextResponse.json({ ok: false, error: insertErr?.message });
+        }
+
+        // Catat relasi hash -> WA agar admin tahu jika ada laporan darurat
+        await catatIdentitasWa(supa, hashIdentitas(normalizedWa), normalizedWa);
+
+        // Publikasikan atau antrekan ke Instagram Menfess
+        autoPublishMadingInstagram({
+          origin: "https://www.kampuskita.my.id",
+          postId: newPost.id,
+          timeoutMs: 0,
+        }).catch((err) => console.error("[menfess-ig] auto publish error:", err?.message));
+
+        const reply =
+          `💌 *Menfess Berhasil Terkirim!* 🎉\n\n` +
+          `Pesanmu sudah tayang di Mading Kampus dan masuk antrean Instagram @usupolmedmenfess 🚀\n\n` +
+          `🔗 *Lihat di Mading:*\n` +
+          `https://www.kampuskita.my.id/mading#post-${newPost.id}\n\n` +
+          `🔒 _Identitas nomor WhatsApp kamu 100% dirahasiakan._`;
+
+        await sendWa(senderJid, reply);
+        return NextResponse.json({
+          ok: true,
+          state: "menfess_created",
+          post_id: newPost.id,
+          bot_reply: reply,
+        });
       }
 
       // ── Command CARI: Cari barang di katalog aktif (dengan foto preview) ──
