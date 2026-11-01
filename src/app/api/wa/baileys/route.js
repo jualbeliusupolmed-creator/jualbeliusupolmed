@@ -1035,10 +1035,9 @@ export async function POST(req) {
           const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").replace(/\/$/, "");
           const qrisUrl = `${baseUrl}/qris.png`;
           const soldMsg =
-            `🎉 *Selamat! Barang Terjual!*\n\n` +
-            `📦 *${hapusListing.title}* sudah ditandai sebagai *terjual*.\n\n` +
-            `Boleh donasi seikhlasnya via QRIS di atas untuk bantu biaya server ya kak 🙏\n\n` +
-            `Makasih banyak, berkah selalu usahanya! ✨`;
+            `🎉 *Barang Terjual!*\n\n` +
+            `📦 *${hapusListing.title}* sudah ditandai terjual.\n\n` +
+            `Boleh donasi seikhlasnya via QRIS di atas untuk biaya server ya kak 🙏 Makasih!`;
           await sendWa(senderJid, soldMsg, qrisUrl);
           return NextResponse.json({ ok: true, state: "hapus_sold", bot_reply: soldMsg });
 
@@ -2726,9 +2725,8 @@ export async function POST(req) {
           const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").replace(/\/$/, "");
           const qrisUrl = `${baseUrl}/qris.png`;
           const dealMsg =
-            `Alhamdulillah, mantap transaksi DEAL kak! 🎉\n\n` +
-            `Boleh donasi seikhlasnya via QRIS di atas untuk bantu biaya server ya kak 🙏\n\n` +
-            `Makasih banyak, berkah selalu usahanya! ✨`;
+            `Mantap, transaksi DEAL kak! 🎉\n\n` +
+            `Boleh donasi seikhlasnya via QRIS di atas untuk bantu biaya server ya kak 🙏 Makasih!`;
 
           await sendWa(senderJid, dealMsg, qrisUrl);
         } else {
