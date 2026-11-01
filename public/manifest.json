@@ -1,18 +1,27 @@
 {
   "id": "/",
-  "name": "Jual Beli USU Polmed",
-  "short_name": "USU Polmed",
-  "description": "Pusat jual beli, menfess & info kampus, dan obrolan sesama mahasiswa USU & POLMED Medan.",
+  "name": "Kampus Kita",
+  "short_name": "Kampus Kita",
+  "description": "Pusat jual beli, menfess & info kampus, dan obrolan sesama mahasiswa.",
   "lang": "id",
   "dir": "ltr",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone", "browser"],
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "browser"
+  ],
   "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#7c3aed",
-  "categories": ["shopping", "social", "lifestyle", "education"],
+  "categories": [
+    "shopping",
+    "social",
+    "lifestyle",
+    "education"
+  ],
   "prefer_related_applications": false,
   "related_applications": [],
   "share_target": {
@@ -66,21 +75,39 @@
       "short_name": "Pasar",
       "description": "Buka katalog jual beli barang",
       "url": "/jual-beli",
-      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png" }]
+      "icons": [
+        {
+          "src": "/icons/icon-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
     },
     {
       "name": "Menfess & Info",
       "short_name": "Menfess",
       "description": "Lihat curhatan & info kampus",
       "url": "/mading",
-      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png" }]
+      "icons": [
+        {
+          "src": "/icons/icon-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
     },
     {
       "name": "Obrolan",
       "short_name": "Chat",
       "description": "Cari teman ngobrol anonim",
       "url": "/chat",
-      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png" }]
+      "icons": [
+        {
+          "src": "/icons/icon-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }

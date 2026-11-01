@@ -87,7 +87,7 @@ export async function POST() {
 
   const pesan =
     ` *Permohonan Aktivasi Toko*\n\n` +
-    `Halo Admin, saya ingin mengaktifkan toko saya di Jual Beli USU Polmed.\n\n` +
+    `Halo Admin, saya ingin mengaktifkan toko saya di Kampus Kita.\n\n` +
     ` Nama toko: *${nama}*\n` +
     ` Alamat: ${dasar}/toko/${profil.slug}\n` +
     ` Penjual: ${profil.name || "-"}\n` +

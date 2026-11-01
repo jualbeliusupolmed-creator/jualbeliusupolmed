@@ -36,7 +36,7 @@ export async function POST(req) {
   // Kirim link via WA
   const msg =
     ` *Undangan Bergabung sebagai Distributor*\n\n` +
-    `Halo! Anda diundang bergabung sebagai *Distributor Resmi* di Jual Beli USU Polmed.\n\n` +
+    `Halo! Anda diundang bergabung sebagai *Distributor Resmi* di Kampus Kita.\n\n` +
     `Sebagai Distributor, Anda mendapatkan:\n` +
     ` Badge khusus *DISTRIBUTOR* di profil\n` +
     ` Posting iklan *GRATIS* tanpa biaya iklan\n` +

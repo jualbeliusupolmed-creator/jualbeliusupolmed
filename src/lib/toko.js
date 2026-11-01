@@ -14,7 +14,7 @@
 // sendiri di masa depan di bawah /toko/.
 const TERLARANG = new Set([
   "admin", "administrator", "api", "official", "resmi", "support", "bantuan",
-  "jualbeliusupolmed", "usu", "polmed", "pandi", "new", "baru", "daftar",
+  "jualbeliusupolmed", "kampuskita", "usu", "polmed", "pandi", "new", "baru", "daftar",
   "login", "logout", "masuk", "keluar", "dashboard", "dasbor", "toko",
   "settings", "pengaturan", "edit", "buat", "cari", "search", "null",
   "undefined", "index", "sitemap", "robots", "favicon", "static", "assets",

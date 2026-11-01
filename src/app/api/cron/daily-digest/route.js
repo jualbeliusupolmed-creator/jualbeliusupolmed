@@ -37,7 +37,7 @@ export async function GET(req) {
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id";
   
-  let digestMsg = ` *Katalog Pilihan Jual Beli USU Polmed Hari Ini!* \n\n`;
+  let digestMsg = ` *Katalog Pilihan Kampus Kita Hari Ini!* \n\n`;
   
   listings.forEach((l, index) => {
     const slug = buildSlug(l.title, l.id);

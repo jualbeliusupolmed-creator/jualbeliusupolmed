@@ -167,8 +167,8 @@ export async function approveWantedContactUnlock({ supa, paymentId, actorId }) {
     ` *Nama:* ${wanted.buyer_name}\n` +
     ` *No. WhatsApp:* ${wanted.buyer_wa}\n\n` +
     `Silakan hubungi pembeli melalui tautan berikut:\n` +
-    ` https://wa.me/${wanted.buyer_wa}?text=${encodeURIComponent(`Halo ${wanted.buyer_name}, saya melihat postingan Anda mencari "${wanted.title}" di Jual Beli USU Polmed. Saya ada barangnya.`)}\n\n` +
-    `Terima kasih telah menggunakan Jual Beli USU Polmed!`;
+    ` https://wa.me/${wanted.buyer_wa}?text=${encodeURIComponent(`Halo ${wanted.buyer_name}, saya melihat postingan Anda mencari "${wanted.title}" di Kampus Kita. Saya ada barangnya.`)}\n\n` +
+    `Terima kasih telah menggunakan Kampus Kita!`;
   const delivery = await sendWa(requesterWa, message).catch(() => null);
   if (!delivery?.ok) {
     console.error("[admin-finance] Wanted contact notification failed.");
