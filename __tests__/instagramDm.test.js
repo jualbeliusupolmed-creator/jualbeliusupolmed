@@ -470,4 +470,52 @@ describe("Tahap 1 & 3 - Conversational Router & Pipeline Moderasi", () => {
     expect(stepValid.ok).toBe(true);
     expect(stepValid.step).toBe("jual_ask_photo");
   });
+
+  it("supports multiple image uploads in Jual flow", async () => {
+    const multiSender = "multi_img_sender_" + Date.now();
+    await dmSession.clearDmSession(multiSender);
+
+    mockTables.ig_seller_links.push({
+      ig_sender_id: multiSender,
+      wa: "081299996666",
+      campus: "USU / POLMED",
+    });
+    mockTables.seller_profiles.push({
+      wa: "081299996666",
+      name: "Tester Multi Photo",
+    });
+
+    // 1. Mulai jual
+    const stepStart = await handleInstagramDmEvent({ senderId: multiSender, text: "jual" });
+    expect(stepStart.step).toBe("jual_ask_photo");
+
+    // 2. Kirim 2 foto pertama
+    const stepPhoto1 = await handleInstagramDmEvent({
+      senderId: multiSender,
+      attachments: [
+        { type: "image", payload: { url: "https://example.com/foto1.jpg" } },
+        { type: "image", payload: { url: "https://example.com/foto2.jpg" } },
+      ],
+    });
+    expect(stepPhoto1.ok).toBe(true);
+    expect(stepPhoto1.photoCount).toBe(2);
+
+    // 3. Kirim 1 foto tambahan
+    const stepPhoto2 = await handleInstagramDmEvent({
+      senderId: multiSender,
+      attachments: [
+        { type: "image", payload: { url: "https://example.com/foto3.jpg" } },
+      ],
+    });
+    expect(stepPhoto2.ok).toBe(true);
+    expect(stepPhoto2.photoCount).toBe(3);
+
+    // 4. Tekan tombol selesai kirim foto (ACTION_DONE_PHOTOS)
+    const stepDonePhotos = await handleInstagramDmEvent({
+      senderId: multiSender,
+      quickReplyPayload: "ACTION_DONE_PHOTOS",
+    });
+    expect(stepDonePhotos.ok).toBe(true);
+    expect(stepDonePhotos.step).toBe("jual_ask_title");
+  });
 });
