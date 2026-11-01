@@ -27,8 +27,33 @@ describe("WhatsApp Menfess Validator & Guard", () => {
       title: "",
       description: text,
       category: "Lainnya",
+      type: "menfess",
     });
     expect(check.action === "reject" || (check.riskScore || 0) >= 70).toBe(true);
+  });
+
+  it("menerima pesan menfess / curhat wajar tanpa menolak harga nol", () => {
+    const text = "Menfess ya Allah ini kemana arahnya";
+    const check = evaluateModerationRules({
+      title: "",
+      description: text,
+      category: "Lainnya",
+      type: "menfess",
+    });
+    expect(check.action).toBe("allow");
+    expect(check.riskScore).toBeLessThan(70);
+  });
+
+  it("menerima pertanyaan info kampus wajar di mading/menfess", () => {
+    const text = "Ada yang tau kosan putri dekat pintu 4 USU budget 500rb per bulan?";
+    const check = evaluateModerationRules({
+      title: "",
+      description: text,
+      category: "Lainnya",
+      type: "menfess",
+    });
+    expect(check.action).toBe("allow");
+    expect(check.riskScore).toBeLessThan(70);
   });
 });
 
