@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { parseInstagramPrice, handleInstagramDmEvent } from "@/lib/instagramDmRouter";
+import { parseInstagramPrice, handleInstagramDmEvent, inferCategoryFromTitle } from "@/lib/instagramDmRouter";
 import { verifyMetaSignature } from "@/lib/instagramDm";
 import { createLinkChallenge, verifyLinkChallenge, getLinkedSeller, hashOtp } from "@/lib/instagramDmAuth";
 import * as dmApi from "@/lib/instagramDm";
@@ -177,6 +177,17 @@ describe("Tahap 4 - Price Parser", () => {
   it("returns 0 for empty or invalid inputs", () => {
     expect(parseInstagramPrice("")).toBe(0);
     expect(parseInstagramPrice("gratis")).toBe(0);
+  });
+
+  it("infers category automatically from title keywords", () => {
+    expect(inferCategoryFromTitle("Kalkulator Casio fx-991EX")).toBe("Elektronik");
+    expect(inferCategoryFromTitle("Laptop Asus Vivobook")).toBe("Elektronik");
+    expect(inferCategoryFromTitle("Buku Kalkulus Edisi 9")).toBe("Buku Kuliah");
+    expect(inferCategoryFromTitle("Helm Bogo Hitam Doff")).toBe("Kendaraan");
+    expect(inferCategoryFromTitle("Sepatu Sneakers Compass 42")).toBe("Fashion");
+    expect(inferCategoryFromTitle("Kost Putri Dekat Pintu 2")).toBe("Kos");
+    expect(inferCategoryFromTitle("Kue Brownies Coklat")).toBe("Makanan");
+    expect(inferCategoryFromTitle("Meja Kayu Unik")).toBe("Lainnya");
   });
 });
 
@@ -369,15 +380,11 @@ describe("Tahap 1 & 3 - Conversational Router & Pipeline Moderasi", () => {
     const stepPhoto = await handleInstagramDmEvent({ senderId: freshSender, text: "skip" });
     expect(stepPhoto.step).toBe("jual_ask_title");
 
-    // 5. Masukkan judul
+    // 5. Masukkan judul -> otomatis kategori & langsung lanjut ke harga
     const stepTitle = await handleInstagramDmEvent({ senderId: freshSender, text: "Kalkulator Ilmiah Casio" });
-    expect(stepTitle.step).toBe("jual_ask_category");
+    expect(stepTitle.step).toBe("jual_ask_price");
 
-    // 6. Pilih kategori
-    const stepCategory = await handleInstagramDmEvent({ senderId: freshSender, quickReplyPayload: "CATEGORY_ELEKTRONIK" });
-    expect(stepCategory.step).toBe("jual_ask_price");
-
-    // 7. Masukkan harga
+    // 6. Masukkan harga
     const stepPrice = await handleInstagramDmEvent({ senderId: freshSender, text: "150rb" });
     expect(stepPrice.step).toBe("jual_ask_desc");
 
