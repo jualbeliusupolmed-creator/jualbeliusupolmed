@@ -5,7 +5,8 @@ import { buildSlug } from "@/lib/slug";
 import { checkProhibitedListing } from "@/lib/profanity";
 import { moderateListing } from "@/lib/moderationRules";
 import { sanitizeListingTitle, normalizePriceInput } from "@/lib/listingSchema";
-import { getSettings, adFeeFrom } from "@/lib/settings";
+import { getSettings, DEFAULT_SETTINGS, adFeeFrom } from "@/lib/settings";
+import { tokoAktif } from "@/lib/toko";
 import {
   sendInstagramQuickReplies,
   sendInstagramText,
@@ -19,6 +20,7 @@ import {
   getLinkedSeller,
   createLinkChallenge,
   verifyLinkChallenge,
+  resolveInstagramCampus,
 } from "@/lib/instagramDmAuth";
 
 function siteBaseUrl() {
@@ -27,6 +29,35 @@ function siteBaseUrl() {
     process.env.NEXT_PUBLIC_BASE_URL ||
     "https://www.kampuskita.my.id"
   ).replace(/\/$/, "");
+}
+
+const DM_PRODUCT_CATEGORIES = [
+  ["CATEGORY_ELEKTRONIK", "Elektronik"],
+  ["CATEGORY_FASHION", "Fashion"],
+  ["CATEGORY_KENDARAAN", "Kendaraan"],
+  ["CATEGORY_PROPERTI", "Properti"],
+  ["CATEGORY_BUKU", "Buku Kuliah"],
+  ["CATEGORY_MAKANAN", "Makanan"],
+  ["CATEGORY_LAINNYA", "Lainnya"],
+];
+
+async function sellerHasUnpaidSoldFees(supa, sellerWa) {
+  const { data: listings, error: listingError } = await supa
+    .from("listings")
+    .select("id")
+    .eq("seller_wa", sellerWa);
+  if (listingError) throw new Error("seller_listing_lookup_failed");
+  const listingIds = (listings || []).map((listing) => listing.id).filter(Boolean);
+  if (!listingIds.length) return false;
+
+  const { count, error: paymentError } = await supa
+    .from("payments")
+    .select("id", { count: "exact", head: true })
+    .in("listing_id", listingIds)
+    .eq("type", "sold_fee")
+    .eq("status", "pending");
+  if (paymentError) throw new Error("seller_payment_lookup_failed");
+  return (count || 0) > 0;
 }
 
 /**
@@ -146,7 +177,7 @@ export async function handleInstagramDmEvent({
       const challengeRes = await createLinkChallenge({
         igSenderId: cleanSender,
         wa: waFormatted,
-        campus: "Semua",
+        campus: session.data?.campus || "Semua",
       });
 
       if (!challengeRes.ok) {
@@ -169,9 +200,8 @@ export async function handleInstagramDmEvent({
         "",
         `Kami telah mengirim 6 digit kode OTP ke WhatsApp kamu (${maskedWa}).`,
         "",
-        "Pilih salah satu cara verifikasi:",
-        "1. Buka WhatsApp dan balas pesan bot dengan: *VERIF <kode>*",
-        "2. ATAU ketik 6 digit kodenya langsung di sini:",
+        "Buka DM Instagram ini lalu ketik 6 digit kode yang kamu terima di WhatsApp.",
+        "Kode hanya berlaku 5 menit dan hanya untuk penautan akun yang kamu mulai.",
       ].join("\n");
 
       await sendInstagramQuickReplies(cleanSender, otpPrompt, [
@@ -195,7 +225,7 @@ export async function handleInstagramDmEvent({
             data: {
               ...session.data,
               seller_wa: linkCheck.wa,
-              campus: linkCheck.campus || "Semua",
+              campus: session.data?.campus || linkCheck.campus || "Semua",
             },
           });
 
@@ -211,7 +241,7 @@ export async function handleInstagramDmEvent({
         } else {
           await sendInstagramQuickReplies(
             cleanSender,
-            "⏳ Belum terverifikasi nih kak. Pastikan kamu sudah membalas *VERIF <kode>* di WhatsApp, atau ketik 6 digit kodenya langsung di sini ya:",
+            "⏳ Belum tertaut. Ketik 6 digit kode yang dikirim ke WhatsApp di DM ini, atau minta kode baru jika sudah kedaluwarsa.",
             [
               { title: "🔄 Cek Lagi", payload: "ACTION_CHECK_LINK_STATUS" },
               { title: "❌ Batal", payload: "ACTION_CANCEL" },
@@ -235,7 +265,7 @@ export async function handleInstagramDmEvent({
             data: {
               ...session.data,
               seller_wa: verifRes.wa,
-              campus: verifRes.campus || "Semua",
+              campus: session.data?.campus || verifRes.campus || "Semua",
             },
           });
 
@@ -254,7 +284,7 @@ export async function handleInstagramDmEvent({
         }
       }
 
-      await sendInstagramText(cleanSender, "⚠️ Masukkan 6 digit kode OTP yang kamu terima di WhatsApp, atau balas di WA dengan format: VERIF <kode>:");
+      await sendInstagramText(cleanSender, "⚠️ Masukkan 6 digit kode OTP yang kamu terima di WhatsApp ke DM ini:");
       return { ok: false, error: "invalid_otp_input" };
     }
 
@@ -306,29 +336,57 @@ export async function handleInstagramDmEvent({
         return { ok: false, error: "prohibited_item" };
       }
 
+      await sendInstagramQuickReplies(
+        cleanSender,
+        `🗂️ **Langkah 3:** Pilih kategori untuk "${cleanedTitle}".`,
+        [
+          { title: "Elektronik", payload: "CATEGORY_ELEKTRONIK" },
+          { title: "Fashion", payload: "CATEGORY_FASHION" },
+          { title: "Kendaraan", payload: "CATEGORY_KENDARAAN" },
+          { title: "Properti", payload: "CATEGORY_PROPERTI" },
+          { title: "Buku", payload: "CATEGORY_BUKU" },
+          { title: "Makanan", payload: "CATEGORY_MAKANAN" },
+          { title: "Lainnya", payload: "CATEGORY_LAINNYA" },
+          { title: "❌ Batal", payload: "ACTION_CANCEL" },
+        ]
+      );
+      await setDmSession(cleanSender, {
+        ...session,
+        step: "jual_ask_category",
+        data: { ...session.data, title: cleanedTitle },
+      });
+      return { ok: true, step: "jual_ask_category" };
+    }
+
+    if (session.step === "jual_ask_category") {
+      const category = DM_PRODUCT_CATEGORIES.find(([categoryPayload, name]) =>
+        payload === categoryPayload || lowerText === name.toLowerCase() ||
+        (name === "Buku Kuliah" && lowerText === "buku")
+      )?.[1];
+      if (!category) {
+        await sendInstagramText(cleanSender, "Pilih satu kategori dari tombol yang tersedia agar iklan masuk ke bagian yang tepat.");
+        return { ok: false, error: "invalid_category" };
+      }
+
       await setDmSession(cleanSender, {
         ...session,
         step: "jual_ask_price",
-        data: {
-          ...session.data,
-          title: cleanedTitle,
-        },
+        data: { ...session.data, category },
       });
-
       await sendInstagramQuickReplies(
         cleanSender,
-        `💰 **Langkah 3:** Berapa *Harga* untuk "${cleanedTitle}"?\n\n(Contoh: 180000 atau ketik 180rb)`,
+        `💰 **Langkah 4:** Berapa *Harga* untuk "${session.data.title}"?\n\n(Contoh: 180000 atau ketik 180rb)`,
         [{ title: "❌ Batal", payload: "ACTION_CANCEL" }]
       );
       return { ok: true, step: "jual_ask_price" };
     }
 
-    // Step 3: Menerima Harga Barang
+    // Step 4: Menerima Harga Barang
     if (session.step === "jual_ask_price") {
       const parsedPrice = parseInstagramPrice(rawText);
       let normalizedPrice;
       try {
-        normalizedPrice = normalizePriceInput(parsedPrice, "barang", "Elektronik");
+        normalizedPrice = normalizePriceInput(parsedPrice, "barang", session.data?.category || "Elektronik");
       } catch (err) {
         await sendInstagramText(
           cleanSender,
@@ -348,7 +406,7 @@ export async function handleInstagramDmEvent({
 
       await sendInstagramQuickReplies(
         cleanSender,
-        "📋 **Langkah 4:** Tuliskan *Deskripsi singkat* (kondisi fisik, kelengkapan, titik temu COD):\n\n(Contoh: Mulus 95%, lengkap dus, COD di Pendopo USU)",
+        "📋 **Langkah 5:** Tuliskan *Deskripsi singkat* (kondisi fisik, kelengkapan, titik temu COD):\n\n(Contoh: Mulus 95%, lengkap dus, COD di Pendopo USU)",
         [
           { title: "⏩ Lewati Deskripsi", payload: "ACTION_SKIP_DESC" },
           { title: "❌ Batal", payload: "ACTION_CANCEL" },
@@ -377,6 +435,7 @@ export async function handleInstagramDmEvent({
         "🔎 *Pratinjau Iklanmu:*",
         "",
         `📌 *Barang:* ${listingData.title}`,
+        `🗂️ *Kategori:* ${listingData.category || "Lainnya"}`,
         `💰 *Harga:* ${rupiah(listingData.price)}`,
         `📋 *Deskripsi:* ${listingData.description || "Tidak ada deskripsi"}`,
         `📍 *Kampus:* ${listingData.campus || "USU / POLMED"}`,
@@ -405,12 +464,59 @@ export async function handleInstagramDmEvent({
           return { ok: false, error: "session_expired" };
         }
 
+        const supa = getAdminClient();
+        const isPro = linked.profile?.subscription_tier === "pro" &&
+          new Date(linked.profile?.subscription_expires_at) > new Date();
+        const isDistributor = !!linked.profile?.distributor;
+        const hasStore = tokoAktif(linked.profile);
+        if (!isPro && !isDistributor && !hasStore) {
+          const { count: activeCount, error: activeCountError } = await supa
+            .from("listings")
+            .select("id", { count: "exact", head: true })
+            .eq("seller_wa", linked.wa)
+            .in("status", ["active", "pending"]);
+          if (activeCountError) {
+            await sendInstagramText(cleanSender, "⚠️ Batas iklan akun belum dapat diperiksa. Coba lagi nanti.");
+            return { ok: false, error: "listing_limit_unavailable" };
+          }
+          if ((activeCount || 0) >= 15) {
+            await sendInstagramText(cleanSender, "⚠️ Akun sudah mencapai batas 15 iklan aktif/menunggu. Kelola iklan lama atau hubungi admin.");
+            return { ok: false, error: "listing_limit_reached" };
+          }
+        }
+
+        let hasUnpaidFee;
+        try {
+          hasUnpaidFee = await sellerHasUnpaidSoldFees(supa, linked.wa);
+        } catch {
+          await sendInstagramText(cleanSender, "⚠️ Status tagihan akun belum dapat diperiksa. Coba lagi nanti.");
+          return { ok: false, error: "seller_payment_lookup_unavailable" };
+        }
+        if (hasUnpaidFee) {
+          await sendInstagramText(cleanSender, "⚠️ Akun memiliki biaya penjualan yang belum lunas. Silakan selesaikan tagihan di dashboard sebelum memasang iklan baru.");
+          return { ok: false, error: "unpaid_sold_fee" };
+        }
+
+        const { data: blacklist, error: blacklistError } = await supa
+          .from("blacklist")
+          .select("id")
+          .eq("wa", linked.wa)
+          .maybeSingle();
+        if (blacklistError) {
+          await sendInstagramText(cleanSender, "⚠️ Status akun belum dapat diperiksa. Coba lagi nanti.");
+          return { ok: false, error: "seller_status_unavailable" };
+        }
+        if (blacklist) {
+          await sendInstagramText(cleanSender, "Nomor WhatsApp ini tidak dapat memasang iklan. Hubungi admin jika kamu merasa ini keliru.");
+          return { ok: false, error: "seller_blocked" };
+        }
+
         // Moderasi Lengkap (Deterministik + Gemini)
         const moderation = await moderateListing({
           title: item.title,
           description: item.description,
           price: item.price,
-          category: "Elektronik",
+          category: item.category || "Elektronik",
           type: "barang",
           seller_wa: linked.wa,
         });
@@ -425,10 +531,27 @@ export async function handleInstagramDmEvent({
           return { ok: false, error: "moderation_rejected" };
         }
 
-        const supa = getAdminClient();
-        const settings = await getSettings().catch(() => ({ pricing: {} }));
+        let settings;
+        try {
+          const { data: pricingRow, error: pricingError } = await supa
+            .from("settings")
+            .select("value")
+            .eq("key", "pricing")
+            .maybeSingle();
+          if (pricingError) throw pricingError;
+          settings = await getSettings();
+          settings = {
+            ...settings,
+            pricing: { ...DEFAULT_SETTINGS.pricing, ...(pricingRow?.value || {}) },
+          };
+        } catch {
+          await sendInstagramText(cleanSender, "⚠️ Pengaturan iklan belum dapat diperiksa. Data kamu tersimpan di sesi ini; coba kirim ulang sebentar lagi.");
+          return { ok: false, error: "settings_unavailable" };
+        }
         const amount = adFeeFrom(settings.pricing, "barang", item.price);
-        const isFreeMode = amount === 0 || settings.pricing?.freeMode !== false;
+        const isFreeMode = amount === 0 || settings.pricing?.freeMode === true;
+        const hasPaidStore = hasStore && settings.pricing?.tokoGratis !== false;
+        const requiresPayment = !isFreeMode && amount > 0 && !isPro && !hasPaidStore;
 
         // Pilot policy: status 'pending' agar moderator meninjau sebelum siaran WhatsApp
         const initialStatus = "pending";
@@ -438,12 +561,14 @@ export async function handleInstagramDmEvent({
           title: item.title,
           price: item.price,
           description: item.description || "",
+          category: item.category || "Elektronik",
+          stock: 1,
           seller_name: linked.profile?.name || `Penjual IG (${cleanSender.slice(-4)})`,
           seller_wa: linked.wa,
           image_url: item.image_url || null,
           status: initialStatus,
           type: "barang",
-          campus: linked.campus || "USU / POLMED",
+          campus: linked.campus || "Semua",
           area: "Sekitar Kampus",
           condition: "used",
           moderation_reason: modReason,
@@ -474,20 +599,28 @@ export async function handleInstagramDmEvent({
           return { ok: false, error: insertErr?.message };
         }
 
-        await clearDmSession(cleanSender);
-
         const detailUrl = `${siteBaseUrl()}/produk/${buildSlug(newListing.title, newListing.id)}`;
 
         // Mode Berbayar: buat order pembayaran jika berlaku
-        if (!isFreeMode && amount > 0) {
+        if (requiresPayment) {
           const orderId = `IKLAN-IG-${newListing.id.slice(0, 8)}-${Date.now()}`;
-          await supa.from("payments").insert({
+          const { error: paymentError } = await supa.from("payments").insert({
             listing_id: newListing.id,
             type: "iklan",
             amount,
             status: "pending",
             midtrans_order_id: orderId,
-          }).catch(() => {});
+            meta: { source: "instagram_dm", moderation_status: "pending" },
+          });
+
+          if (paymentError) {
+            const { error: cleanupError } = await supa.from("listings").delete().eq("id", newListing.id);
+            if (cleanupError) console.error("[Instagram DM] Failed to remove listing without payment record.", cleanupError.code || "database_error");
+            await sendInstagramText(cleanSender, "⚠️ Tagihan belum dapat dibuat, jadi iklan belum dikirim. Silakan coba konfirmasi lagi nanti.");
+            return { ok: false, error: "payment_record_failed" };
+          }
+
+          await clearDmSession(cleanSender);
 
           const payMsg = [
             "📋 *Iklan Berhasil Dibuat!*",
@@ -509,6 +642,7 @@ export async function handleInstagramDmEvent({
         }
 
         // Mode Gratis / Pilot: Masuk Antrean Moderasi
+        await clearDmSession(cleanSender);
         const successMsg = [
           "🎉 *Iklanmu Berhasil Terkirim!*",
           "",
@@ -536,6 +670,12 @@ export async function handleInstagramDmEvent({
     lowerText === "pasang iklan" ||
     lowerText === "iklan"
   ) {
+    const campus = await resolveInstagramCampus(recipientId);
+    if (!campus) {
+      await sendInstagramText(cleanSender, "⚠️ Akun Instagram ini belum terhubung ke kampus yang aktif. Hubungi admin kampus untuk menyelesaikan pengaturannya.");
+      return { ok: false, error: "instagram_account_unmapped" };
+    }
+
     // Periksa apakah Instagram sender sudah ditautkan ke akun WhatsApp
     const linked = await getLinkedSeller(cleanSender);
 
@@ -545,7 +685,7 @@ export async function handleInstagramDmEvent({
         step: "jual_ask_photo",
         data: {
           seller_wa: linked.wa,
-          campus: linked.campus || "Semua",
+          campus,
         },
       });
 
@@ -566,7 +706,7 @@ export async function handleInstagramDmEvent({
       await setDmSession(cleanSender, {
         flow: "jual",
         step: "jual_ask_wa",
-        data: {},
+        data: { campus },
       });
 
       const promptWa = [

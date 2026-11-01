@@ -2,17 +2,50 @@ import crypto from "crypto";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { formatWa } from "@/lib/constants";
 import { sendWa } from "@/lib/fonnte";
-import { generateDefaultSlug } from "@/lib/toko";
+import { findSellerProfileByPhone } from "@/lib/seller-profile-identity";
+import { rateLimitDistributed } from "@/lib/rateLimit";
+import { resolveInstagramUserId } from "@/lib/instagramDm";
+import { getSettings, isAllowedCampus } from "@/lib/settings";
 
 const OTP_TTL_MS = 5 * 60 * 1000; // 5 menit
 const MAX_ATTEMPTS = 3;
 
-// In-memory fallback challenge store jika tabel belum dibuat di database lokal/test
+// In-memory state dipakai hanya oleh test terisolasi. Production selalu fail closed.
 const fallbackChallenges = new Map();
 const fallbackLinks = new Map();
 
+/** Resolve the campus from the signed webhook recipient, never from chat input. */
+export async function resolveInstagramCampus(recipientId) {
+  const recipient = String(recipientId || "").trim();
+  if (!recipient) return process.env.NODE_ENV === "test" ? "Semua" : null;
+
+  try {
+    const supa = getAdminClient();
+    const { data: accountMap, error } = await supa
+      .from("system_settings")
+      .select("value")
+      .eq("key", "instagram_campus_accounts")
+      .maybeSingle();
+    if (error) return null;
+
+    const mappedCampus = accountMap?.value?.[recipient];
+    if (mappedCampus) {
+      const settings = await getSettings();
+      return isAllowedCampus(mappedCampus, settings) ? mappedCampus : null;
+    }
+
+    // Compatibilitas sementara untuk akun katalog gabungan yang sudah ada.
+    const catalogId = await resolveInstagramUserId("katalog");
+    return catalogId && recipient === String(catalogId) ? "Semua" : null;
+  } catch {
+    return null;
+  }
+}
+
 function getSecret() {
-  return process.env.SESSION_SECRET || process.env.ADMIN_PASSWORD || "kampuskita-ig-link-salt";
+  if (process.env.SESSION_SECRET) return process.env.SESSION_SECRET;
+  if (process.env.NODE_ENV === "test") return "test-only-ig-link-secret";
+  throw new Error("SESSION_SECRET belum dikonfigurasi untuk OTP penautan Instagram.");
 }
 
 export function hashOtp(otp) {
@@ -22,8 +55,15 @@ export function hashOtp(otp) {
     .digest("hex");
 }
 
+function matchesOtpHash(actual, expected) {
+  const actualBuffer = Buffer.from(String(actual || ""), "hex");
+  const expectedBuffer = Buffer.from(String(expected || ""), "hex");
+  return actualBuffer.length === expectedBuffer.length && actualBuffer.length > 0 &&
+    crypto.timingSafeEqual(actualBuffer, expectedBuffer);
+}
+
 export function generateNumericOtp() {
-  return String(crypto.randomInt(100000, 999999));
+  return String(crypto.randomInt(100000, 1_000_000));
 }
 
 /**
@@ -33,8 +73,8 @@ export async function getLinkedSeller(igSenderId) {
   const cleanSender = String(igSenderId || "").trim();
   if (!cleanSender) return { linked: false };
 
-  // 1. Cek memory fallback
-  if (fallbackLinks.has(cleanSender)) {
+  // Memory hanya untuk unit test; jangan pernah menganggap cache proses sebagai tautan produksi.
+  if (process.env.NODE_ENV === "test" && fallbackLinks.has(cleanSender)) {
     const mem = fallbackLinks.get(cleanSender);
     return { linked: true, wa: mem.wa, campus: mem.campus || "Semua", profile: mem.profile };
   }
@@ -47,9 +87,8 @@ export async function getLinkedSeller(igSenderId) {
       .eq("ig_sender_id", cleanSender)
       .maybeSingle();
 
-    if (linkErr || !link) {
-      return { linked: false };
-    }
+    if (linkErr) return { linked: false, error: "storage_unavailable" };
+    if (!link) return { linked: false };
 
     const { data: profile } = await supa
       .from("seller_profiles")
@@ -57,15 +96,21 @@ export async function getLinkedSeller(igSenderId) {
       .eq("wa", link.wa)
       .maybeSingle();
 
+    if (!profile) return { linked: false, error: "profile_unavailable" };
+    const sellerWa = formatWa(profile.phone_wa || profile.wa);
+    if (!sellerWa) return { linked: false, error: "profile_phone_unavailable" };
+
     return {
       linked: true,
-      wa: link.wa,
+      // wa untuk listing/kontak; profileWa adalah identitas kanonis profil JB.
+      wa: sellerWa,
+      profileWa: profile.wa,
       campus: link.campus || "Semua",
-      profile: profile || { wa: link.wa, name: "Penjual Kampus" },
+      profile,
     };
   } catch (err) {
-    console.warn("[getLinkedSeller] database query error:", err?.message);
-    return { linked: false };
+    console.error("[getLinkedSeller] Database lookup failed.");
+    return { linked: false, error: "storage_unavailable" };
   }
 }
 
@@ -81,31 +126,40 @@ export async function createLinkChallenge({ igSenderId, wa, campus = "Semua" }) 
 
   const supa = getAdminClient();
 
-  // Rate limit: cek permintaan pending dalam 10 menit terakhir
-  try {
-    const tenMinsAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-    const { count } = await supa
-      .from("ig_link_challenges")
-      .select("id", { count: "exact", head: true })
-      .or(`ig_sender_id.eq.${cleanSender},wa.eq.${cleanWa}`)
-      .gte("created_at", tenMinsAgo);
+  if (process.env.NODE_ENV !== "test" && !process.env.SESSION_SECRET) {
+    return { ok: false, message: "Layanan verifikasi belum siap. Silakan coba lagi nanti." };
+  }
 
-    if ((count || 0) >= 3) {
+  // Jangan izinkan penggantian identitas IG yang sudah ditautkan lewat alur OTP biasa.
+  try {
+    const { data: existingLink, error: linkError } = await supa
+      .from("ig_seller_links")
+      .select("ig_sender_id")
+      .eq("ig_sender_id", cleanSender)
+      .maybeSingle();
+    if (linkError) return { ok: false, message: "Status akun belum dapat diperiksa." };
+    if (existingLink) return { ok: false, message: "Akun Instagram ini sudah tertaut. Hubungi admin jika perlu mengganti akun." };
+
+    const [igLimit, waLimit] = await Promise.all([
+      rateLimitDistributed(`ig_link:sender:${cleanSender}`, { limit: 3, windowMs: 600_000 }),
+      rateLimitDistributed(`ig_link:phone:${cleanWa}`, { limit: 3, windowMs: 600_000 }),
+    ]);
+    if (!igLimit.ok || !waLimit.ok) {
       return {
         ok: false,
         message: "Terlalu banyak permintaan verifikasi. Silakan tunggu 10 menit sebelum mencoba lagi.",
       };
     }
   } catch {
-    // Non-fatal jika tabel belum ada
+    return { ok: false, message: "Layanan verifikasi sedang tidak tersedia." };
   }
 
   const otp = generateNumericOtp();
   const otpHash = hashOtp(otp);
   const expiresAt = new Date(Date.now() + OTP_TTL_MS).toISOString();
 
-  // Simpan challenge ke DB
-  let dbSaved = false;
+  // Simpan challenge ke database sebelum mengirim kode. Production tidak memakai cache proses.
+  let savedChallenge = false;
   try {
     const { error: insErr } = await supa.from("ig_link_challenges").insert({
       ig_sender_id: cleanSender,
@@ -117,24 +171,13 @@ export async function createLinkChallenge({ igSenderId, wa, campus = "Semua" }) 
       expires_at: expiresAt,
       status: "pending",
     });
-    if (!insErr) dbSaved = true;
-  } catch (err) {
-    console.warn("[createLinkChallenge] DB insert error, using fallback memory:", err?.message);
+    if (!insErr) savedChallenge = true;
   }
-
-  // Fallback memory jika DB belum dimigrasikan
-  if (!dbSaved) {
-    fallbackChallenges.set(`${cleanWa}`, {
-      ig_sender_id: cleanSender,
-      wa: cleanWa,
-      otp_hash: otpHash,
-      attempts: 0,
-      max_attempts: MAX_ATTEMPTS,
-      campus,
-      expires_at: expiresAt,
-      status: "pending",
-      created_at: new Date().toISOString(),
-    });
+  catch {
+    savedChallenge = false;
+  }
+  if (!savedChallenge) {
+    return { ok: false, message: "Kode verifikasi belum dapat disiapkan. Coba lagi nanti." };
   }
 
   // Kirim OTP via WhatsApp
@@ -145,22 +188,27 @@ export async function createLinkChallenge({ igSenderId, wa, campus = "Semua" }) 
     "Masa berlaku: 5 menit.",
     "",
     `Balas pesan ini dengan: *VERIF ${otp}*`,
-    "Atau ketik 6 digit kode di atas pada Instagram DM.",
+    "Masukkan 6 digit kode ini hanya pada proses verifikasi di Instagram DM yang kamu mulai.",
     "",
     "⚠️ *PENTING:* Jangan berikan kode ini kepada siapa pun. Admin Kampus Kita tidak pernah meminta kode rahasia atau kata sandi Anda.",
   ].join("\n");
 
   try {
-    await sendWa(cleanWa, waMsg);
-  } catch (sendErr) {
-    console.error("[createLinkChallenge] sendWa error:", sendErr?.message);
+    const delivery = await sendWa(cleanWa, waMsg, null, 300);
+    if (!delivery?.ok) {
+      await supa.from("ig_link_challenges").delete().eq("ig_sender_id", cleanSender).eq("wa", cleanWa).eq("otp_hash", otpHash);
+      return { ok: false, message: "Kode verifikasi gagal dikirim. Coba lagi nanti." };
+    }
+  } catch {
+    await supa.from("ig_link_challenges").delete().eq("ig_sender_id", cleanSender).eq("wa", cleanWa).eq("otp_hash", otpHash);
+    return { ok: false, message: "Layanan WhatsApp sedang tidak tersedia. Coba lagi nanti." };
   }
 
   return { ok: true, wa: cleanWa, expiresAt, _debugOtp: process.env.NODE_ENV === "test" ? otp : undefined };
 }
 
 /**
- * Verifikasi kode OTP (baik dibalas lewat bot WA atau diketik di IG DM)
+ * Verifikasi OTP yang diketik pengguna di DM IG setelah kode dikirim ke WA.
  */
 export async function verifyLinkChallenge({ wa, otpInput, igSenderId = null }) {
   const cleanWa = formatWa(wa);
@@ -199,22 +247,22 @@ export async function verifyLinkChallenge({ wa, otpInput, igSenderId = null }) {
     // Non-fatal
   }
 
-  // 2. Fallback memory
-  if (!challenge && fallbackChallenges.has(cleanWa)) {
+  // In-memory challenge hanya aktif untuk unit test.
+  if (process.env.NODE_ENV === "test" && !challenge && fallbackChallenges.has(cleanWa)) {
     const mem = fallbackChallenges.get(cleanWa);
     if (mem.status === "pending" && (!igSenderId || mem.ig_sender_id === igSenderId)) {
       challenge = mem;
     }
   }
 
-  if (!challenge) {
+  if (!challenge && !isFromDb) {
     return { ok: false, message: "Tidak ada permintaan verifikasi aktif untuk nomor ini atau kode telah kedaluwarsa." };
   }
 
   // Cek masa berlaku
   if (new Date(challenge.expires_at) < now) {
     if (isFromDb) {
-      await supa.from("ig_link_challenges").update({ status: "expired" }).eq("id", challenge.id);
+      await supa.from("ig_link_challenges").update({ status: "expired" }).eq("id", challenge.id).eq("status", "pending");
     } else {
       challenge.status = "expired";
     }
@@ -232,16 +280,23 @@ export async function verifyLinkChallenge({ wa, otpInput, igSenderId = null }) {
   }
 
   // Validasi hash OTP
-  if (challenge.otp_hash !== inputHash) {
+  if (!matchesOtpHash(inputHash, challenge.otp_hash)) {
     const newAttempts = (challenge.attempts || 0) + 1;
     if (isFromDb) {
-      await supa
+      const { data: attemptUpdate, error: attemptError } = await supa
         .from("ig_link_challenges")
         .update({
           attempts: newAttempts,
           status: newAttempts >= challenge.max_attempts ? "failed" : "pending",
         })
-        .eq("id", challenge.id);
+        .eq("id", challenge.id)
+        .eq("status", "pending")
+        .eq("attempts", challenge.attempts)
+        .select("id")
+        .maybeSingle();
+      if (attemptError || !attemptUpdate) {
+        return { ok: false, message: "Percobaan OTP sedang diproses. Coba lagi sebentar." };
+      }
     } else {
       challenge.attempts = newAttempts;
       if (newAttempts >= challenge.max_attempts) challenge.status = "failed";
@@ -252,51 +307,69 @@ export async function verifyLinkChallenge({ wa, otpInput, igSenderId = null }) {
   // 3. Sukses Verifikasi!
   const targetSenderId = challenge.ig_sender_id;
 
+  // Tautkan hanya ke profil JB yang sudah ada. OTP membuktikan kepemilikan WA,
+  // tetapi tidak membuat akun web baru atau menetapkan kata sandi lewat DM.
+  let profile;
+  try {
+    let profileResult = await findSellerProfileByPhone(supa, cleanWa, "*");
+    if (profileResult.error) {
+      // Compatibilitas untuk skema lama yang belum memiliki phone_wa.
+      profileResult = await supa.from("seller_profiles").select("*").eq("wa", cleanWa).maybeSingle();
+    }
+    if (profileResult.error) return { ok: false, message: "Profil akun belum dapat diperiksa. Coba lagi nanti." };
+    profile = profileResult.data;
+    if (!profile) {
+      return { ok: false, message: "Nomor ini belum terhubung ke akun Jual Beli. Daftar atau masuk di situs resmi, lalu ulangi penautan." };
+    }
+  } catch {
+    return { ok: false, message: "Profil akun belum dapat diperiksa. Coba lagi nanti." };
+  }
+
   if (isFromDb) {
-    await supa.from("ig_link_challenges").update({ status: "verified" }).eq("id", challenge.id);
+    const { data: consumed, error: consumeError } = await supa
+      .from("ig_link_challenges")
+      .update({ status: "verified" })
+      .eq("id", challenge.id)
+      .eq("status", "pending")
+      .eq("attempts", challenge.attempts)
+      .select("id")
+      .maybeSingle();
+    if (consumeError || !consumed) {
+      return { ok: false, message: "Kode sudah digunakan atau perlu diminta ulang." };
+    }
   } else {
     challenge.status = "verified";
   }
 
-  // Pastikan seller_profiles ada
-  let profileName = `Pengguna IG (${targetSenderId.slice(-4)})`;
+  const profileName = profile.name || "Penjual Kampus";
   try {
-    const defaultSlug = generateDefaultSlug(profileName, cleanWa);
-    await supa.from("seller_profiles").upsert(
-      { wa: cleanWa, name: profileName, slug: defaultSlug },
-      { onConflict: "wa", ignoreDuplicates: true }
-    );
-    const { data: p } = await supa.from("seller_profiles").select("name").eq("wa", cleanWa).maybeSingle();
-    if (p?.name) profileName = p.name;
-  } catch (err) {
-    console.warn("[verifyLinkChallenge] seller_profiles upsert:", err?.message);
-  }
-
-  // Tautkan IG ke WA
-  try {
-    await supa.from("ig_seller_links").upsert({
+    const { error: linkError } = await supa.from("ig_seller_links").insert({
       ig_sender_id: targetSenderId,
-      wa: cleanWa,
+      wa: profile.wa,
       campus: challenge.campus || "Semua",
       linked_at: new Date().toISOString(),
-    }, { onConflict: "ig_sender_id" });
-  } catch (err) {
-    console.warn("[verifyLinkChallenge] ig_seller_links upsert fallback to memory:", err?.message);
+    });
+    if (linkError) return { ok: false, message: "Akun belum dapat ditautkan. Minta kode baru dan coba lagi." };
+
+    if (process.env.NODE_ENV === "test") {
+      fallbackLinks.set(targetSenderId, {
+        ig_sender_id: targetSenderId,
+        wa: formatWa(profile.phone_wa || profile.wa),
+        profileWa: profile.wa,
+        campus: challenge.campus || "Semua",
+        profile,
+      });
+    }
+
+    return {
+      ok: true,
+      igSenderId: targetSenderId,
+      wa: formatWa(profile.phone_wa || profile.wa),
+      profileWa: profile.wa,
+      profileName,
+      campus: challenge.campus || "Semua",
+    };
+  } catch {
+    return { ok: false, message: "Profil akun belum dapat ditautkan. Coba lagi nanti." };
   }
-
-  // Simpan juga di memory fallback
-  fallbackLinks.set(targetSenderId, {
-    ig_sender_id: targetSenderId,
-    wa: cleanWa,
-    campus: challenge.campus || "Semua",
-    profile: { wa: cleanWa, name: profileName },
-  });
-
-  return {
-    ok: true,
-    igSenderId: targetSenderId,
-    wa: cleanWa,
-    profileName,
-    campus: challenge.campus || "Semua",
-  };
 }

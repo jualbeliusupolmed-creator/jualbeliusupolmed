@@ -93,6 +93,22 @@ export async function PATCH(req) {
   if (targetError) return NextResponse.json({ error: "Data iklan belum dapat diperiksa." }, { status: 503 });
   if (!target) return NextResponse.json({ error: "Iklan tidak ditemukan dalam cakupan akun atau statusnya sudah berubah." }, { status: 404 });
 
+  if (action === "approve") {
+    const { data: unpaidPayments, error: paymentLookupError } = await supa
+      .from("payments")
+      .select("id")
+      .eq("listing_id", id)
+      .eq("type", "iklan")
+      .eq("status", "pending")
+      .limit(1);
+    if (paymentLookupError) {
+      return NextResponse.json({ error: "Status biaya tayang belum dapat diperiksa." }, { status: 503 });
+    }
+    if (unpaidPayments?.length) {
+      return NextResponse.json({ error: "Iklan belum dapat disetujui karena biaya tayangnya belum lunas." }, { status: 409 });
+    }
+  }
+
   const reason = String(body.reason || "").trim().slice(0, 300);
   let change;
   if (action === "approve" || action === "restore") {

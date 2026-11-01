@@ -1,8 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { POST as listingsPost } from "@/app/api/listings/route";
 import * as settingsLib from "@/lib/settings";
 import * as authLib from "@/lib/auth";
 import * as fonnteLib from "@/lib/fonnte";
+
+vi.mock("@/lib/settings", async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    getSettings: vi.fn(),
+  };
+});
+
+import { POST as listingsPost } from "@/app/api/listings/route";
 
 const mockListing = {
   id: "listing-pay-12345678",
@@ -15,9 +24,20 @@ const mockListing = {
 
 const mockPayments = [];
 
+let mockSettingsPricing = null;
+
 vi.mock("@/lib/supabaseAdmin", () => ({
   getAdminClient: vi.fn(() => ({
     from: (table) => {
+      if (table === "settings") {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              maybeSingle: vi.fn(() => Promise.resolve({ data: mockSettingsPricing ? { value: mockSettingsPricing } : null, error: null })),
+            })),
+          })),
+        };
+      }
       if (table === "payments") {
         return {
           insert: vi.fn((data) => {
@@ -48,7 +68,7 @@ vi.mock("@/lib/supabaseAdmin", () => ({
         return {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
-              maybeSingle: vi.fn(() => Promise.resolve({ data: { wa: "081234567890", name: "Ahmad Dani" }, error: null })),
+              maybeSingle: vi.fn(() => Promise.resolve({ data: { wa: "081234567890", name: "Ahmad Dani", store_status: "draf" }, error: null })),
             })),
           })),
           upsert: vi.fn(() => Promise.resolve({ data: null, error: null })),
@@ -100,8 +120,8 @@ describe("Tahap 4 - Listing Route Paid vs Free Path Integrity", () => {
   });
 
   it("handles paid mode correctly without dead code: creates payment record and returns paymentUrl", async () => {
-    // Mode berbayar aktif: freeMode = false, tarif = Rp 5.000
-    vi.spyOn(settingsLib, "getSettings").mockResolvedValue({
+    mockSettingsPricing = { freeMode: false, adFee: 5000, listingDays: 14 };
+    vi.mocked(settingsLib.getSettings).mockResolvedValue({
       pricing: { freeMode: false, adFee: 5000, listingDays: 14 },
     });
 
@@ -122,18 +142,17 @@ describe("Tahap 4 - Listing Route Paid vs Free Path Integrity", () => {
     });
 
     const res = await listingsPost(req);
-    expect(res.status).toBe(200);
-
     const json = await res.json();
+    expect(res.status).toBe(200);
     expect(json.isFreeMode).toBe(false);
     expect(json.paymentUrl).toBe("/qris.png");
-    expect(json.amount).toBe(2000);
+    expect(json.amount).toBe(5000);
     expect(json.orderId).toBeDefined();
 
     // Pastikan record payments terbuat
     expect(mockPayments.length).toBe(1);
     expect(mockPayments[0].type).toBe("iklan");
-    expect(mockPayments[0].amount).toBe(2000);
+    expect(mockPayments[0].amount).toBe(5000);
     expect(mockPayments[0].status).toBe("pending");
 
     // Pastikan belum disebarkan ke grup WA sebelum dibayar
@@ -142,7 +161,8 @@ describe("Tahap 4 - Listing Route Paid vs Free Path Integrity", () => {
 
   it("handles free mode correctly: activates listing and broadcasts immediately", async () => {
     // Mode gratis aktif
-    vi.spyOn(settingsLib, "getSettings").mockResolvedValue({
+    mockSettingsPricing = { freeMode: true, adFee: 0, listingDays: 14 };
+    vi.mocked(settingsLib.getSettings).mockResolvedValue({
       pricing: { freeMode: true, adFee: 0, listingDays: 14 },
     });
 
@@ -163,9 +183,8 @@ describe("Tahap 4 - Listing Route Paid vs Free Path Integrity", () => {
     });
 
     const res = await listingsPost(req);
-    expect(res.status).toBe(200);
-
     const json = await res.json();
+    expect(res.status).toBe(200);
     expect(json.isFreeMode).toBe(true);
     expect(json.paymentUrl).toBeNull();
     expect(mockPayments.length).toBe(0);

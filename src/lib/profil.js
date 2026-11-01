@@ -130,7 +130,7 @@ export function bersihkanGambar(nilai) {
     if (u.protocol !== "https:") return null;
     let hostSah = null;
     try { hostSah = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname; } catch {}
-    const sah = hostSah ? u.hostname === hostSah : u.hostname.endsWith(".supabase.co");
+    const sah = (hostSah && u.hostname === hostSah) || u.hostname.endsWith(".supabase.co");
     return sah ? u.toString() : null;
   } catch { return null; }
 }

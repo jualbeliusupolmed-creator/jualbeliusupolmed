@@ -1,13 +1,13 @@
 # Rencana: Jual Barang lewat Instagram DM
 
 Tanggal: 2 November 2026  
-Status: perencanaan berdasarkan audit kode; belum ada perubahan database atau konfigurasi produksi.
+Status: review implementasi lokal; perubahan kode belum dikirim atau diterapkan ke produksi.
 
 ## Tujuan dan keputusan yang sudah disepakati
 
 - Fase awal Instagram DM hanya untuk **membuat iklan jual barang**. Pencarian barang dan pembelian lewat DM tidak termasuk.
-- Penjual memberikan nomor WhatsApp dan membuktikan kepemilikannya dengan OTP. Penautan IG ke akun Jual Beli cukup sekali.
-- Kata sandi web tidak pernah diminta atau dikirim lewat Instagram/WhatsApp. Kata sandi hanya dimasukkan pada halaman login resmi.
+- Penjual memberikan nomor WhatsApp, menerima OTP di WA, lalu mengetik OTP itu di DM IG yang sedang dipakai. Penautan IG ke akun Jual Beli cukup sekali.
+- Kata sandi web tidak diminta atau dikirim lewat Instagram/WhatsApp. Pengguna membuat atau memasukkan kata sandi hanya di situs resmi; OTP penautan tidak membuat atau mengganti kata sandi.
 - Akun IG kampus menentukan kampus iklan. Website tetap menjadi sumber utama status iklan dan transaksi.
 - AI boleh membantu membaca foto/teks, menyarankan judul/deskripsi/kategori, dan memberi sinyal moderasi. Penjual mengonfirmasi detailnya; AI bukan bukti pembayaran dan tidak boleh sendirian mengaktifkan iklan yang berisiko.
 - Jika mode berbayar aktif, biaya listing mengikuti pengaturan dan aturan perhitungan yang sama dengan web. QRIS biaya platform berbeda dari pembayaran harga barang oleh pembeli.
@@ -23,12 +23,21 @@ Status: perencanaan berdasarkan audit kode; belum ada perubahan database atau ko
 - `src/app/api/listings/route.js` perlu dibereskan dan diuji khusus untuk alur berbayar: pada jalur yang diperiksa, respons iklan aktif/pending dikirim sebelum bagian pencatatan pembayaran di bawahnya.
 - Dokumen setup Meta yang ada berfokus pada publikasi Instagram dan belum menjelaskan izin, webhook subscription, serta akun IG per kampus untuk fitur DM.
 
+## Hasil review implementasi lokal
+
+- OTP kini harus memakai secret server, tantangan tidak memakai cache proses di production, kegagalan kirim WA dibalas sebagai gagal, dan OTP menautkan nomor ke profil JB yang sudah ada. Akun yang belum terdaftar harus membuat/mengakses password lewat situs resmi.
+- Routing kampus membaca mapping recipient IG dari `system_settings.instagram_campus_accounts`; akun katalog gabungan yang sudah ada tetap menggunakan `Semua`. Belum ada layar admin untuk mengelola mapping akun-kampus.
+- Webhook memakai RPC `hit_rate_limit` yang sudah ada untuk klaim event lintas instance; event gagal dilepas agar retry bisa diproses, lalu endpoint mengembalikan 500. Ini perlu fungsi/migrasi `rate_limit_hits` aktif di Supabase produksi.
+- Biaya listing dibaca eksplisit, iklan berbayar ditahan dari status aktif, kegagalan membuat pembayaran tidak dilaporkan sukses, dan pembayaran DM tidak mengaktifkan iklan tanpa moderasi.
+- Flow DM meminta kategori produk dan menyimpan kategori tersebut ke listing. Moderasi gambar belum dipastikan karena `moderateListing` saat ini hanya mengirim teks ke pemeriksaan AI.
+- Skrip uji live yang memakai service-role dan dapat memicu kiriman WA/penulisan database telah dibuang dari working tree. Tes biasa dibuat memakai mock kiriman WA; belum dijalankan pada sesi ini.
+
 ## Alur produk yang dituju
 
 1. Pengguna mengirim `JUAL` ke akun IG kampus.
 2. Bot menjelaskan bahwa nomor WA akan dipakai untuk menautkan akun JB dan meminta persetujuan.
 3. Pengguna memasukkan nomor WA. Sistem membuat tantangan OTP sekali pakai yang terikat pada IG sender dan nomor tujuan, lalu mengirim OTP ke WA.
-4. Pengguna membalas OTP ke bot WA. Server memverifikasi kode, masa berlaku, batas percobaan, dan konflik nomor; setelah valid, identitas IG dan profil JB ditautkan sekali.
+4. Pengguna mengetik OTP di DM IG. Server memverifikasi kode yang dikirim ke nomor WA tersebut, masa berlaku, batas percobaan, dan profil JB yang sudah ada; setelah valid, identitas IG ditautkan sekali.
 5. Bot mengumpulkan foto dan detail barang. AI membantu menyusun isian, lalu penjual melihat dan mengonfirmasi ringkasan.
 6. Server memvalidasi akun, kampus, harga, foto, aturan bisnis, duplikasi, pembatasan spam, dan tarif dari sumber kebenaran web.
 7. Mode gratis: iklan masuk moderasi. Mode berbayar: buat tagihan biaya platform yang terikat pada draft; iklan menunggu verifikasi pembayaran dan moderasi.
@@ -54,8 +63,8 @@ Status: perencanaan berdasarkan audit kode; belum ada perubahan database atau ko
 
 - Rancang tabel privat untuk tantangan penautan dan pemetaan identitas IG, dengan kunci unik, expiry, jumlah percobaan, status pemakaian, dan audit minimal.
 - Jangan gunakan tabel OTP login/pemulihan yang ada tanpa desain terpisah. Simpan hash OTP saja, kirim melalui gateway WA yang disetujui, batasi laju per IP/IG/nomor, dan cegah satu nomor mengklaim beberapa profil.
-- Balasan OTP diterima hanya dari nomor WA tujuan melalui bot; jangan meminta kata sandi di chat.
-- **Gerbang:** migrasi ditinjau, RLS diuji, dan alur OTP tidak dapat membuat sesi web atau mengganti PIN/sandi.
+- OTP diketik di DM IG setelah dikirim ke WA tujuan; jangan meminta atau menyimpan kata sandi di chat.
+- **Gerbang:** migrasi ditinjau, RLS diuji, OTP hanya menautkan ke profil JB yang benar, dan alur ini tidak membuat sesi web atau mengganti PIN/sandi.
 
 ### 3. Draft listing dan AI
 

@@ -6,9 +6,18 @@ Dokumen ini berisi peta pemahaman sistem, alur bisnis, daftar masalah, dan riway
 
 - **Keamanan Webhook (Tahap 0)**: `GET /api/webhook/instagram` mewajibkan `META_WEBHOOK_VERIFY_TOKEN` dari environment; token hardcoded dan fallback cron secret dibuang. `POST` mewajibkan `META_APP_SECRET` serta signature HMAC-SHA256 yang sah, dengan deduplikasi ID pesan Meta in-memory untuk mencegah eksekusi ganda saat retry jaringan.
 - **Isolasi Alur Jual (Tahap 1)**: Entry point DM difokuskan 100% pada `JUAL` dan `Panduan COD`. Perintah `MENFESS` dan `CARI` dialihkan secara sopan ke website resmi dan bot WA.
-- **Penautan Akun WA/IG satu kali (Tahap 2)**: Menggunakan tabel terisolasi `ig_seller_links` dan `ig_link_challenges` (migration `202611020001_instagram_dm_seller_links.sql`). OTP 6-digit diamankan dengan HMAC-SHA256, TTL 5 menit, maks 3 percobaan. Pengguna dapat membalas `VERIF <kode>` ke bot WA atau mengetik kode di DM.
+- **Penautan Akun WA/IG satu kali (Tahap 2)**: Menggunakan tabel terisolasi `ig_seller_links` dan `ig_link_challenges` (migration `202611020001_instagram_dm_seller_links.sql`). OTP 6-digit diamankan dengan HMAC-SHA256, TTL 5 menit, maks 3 percobaan. Implementasi awal menerima OTP dari WA atau DM; review lanjutan di bawah menetapkan verifikasi dilakukan di DM Instagram setelah OTP dikirim ke WA.
 - **Pipeline Validasi & Moderasi (Tahap 3)**: Router DM menggunakan sanitasi judul, normalisasi harga, deteksi kata terlarang, dan pipeline `moderateListing`. Seluruh kiriman DM pada fase pilot diset `status: "pending"` untuk tinjauan moderator kampus sebelum disebarkan ke WhatsApp.
 - **Integritas Pembayaran & Dead Code Fix (Tahap 4)**: Urutan alur berbayar di `src/app/api/listings/route.js` diperbaiki. Jalur berbayar membuat entri pembayaran dan QRIS sebelum mengembalikan respon, tanpa memotong aliran secara prematur. Diverifikasi dengan tes unit khusus.
+
+### Review lanjutan 2 November 2026 — perbaikan lokal setelah audit
+
+- OTP yang diminta penjual dikirim ke WA lalu diketik di DM IG. Password JB tidak diminta atau disimpan lewat chat. OTP hanya boleh menautkan nomor ke profil JB yang sudah ada; pembuatan/password akun dilakukan di situs resmi.
+- Secret OTP bawaan, fallback tantangan/tautan memori di production, dan laporan sukses saat pengiriman WA gagal sudah dihapus. Upaya verifikasi salah memakai pembaruan bersyarat agar percobaan bersamaan tidak melewati batas.
+- Webhook menggunakan RPC atomik `hit_rate_limit` dengan key berprefix `ig_webhook:`; klaim dilepas saat handler gagal, dan respons gagal meminta retry Meta. Fungsi ini bergantung pada migrasi `rate_limit_hits`; penerapannya ke Supabase production belum diverifikasi.
+- Listing berbayar tidak dibuat aktif sebelum pembayaran. Approval pembayaran untuk DM hanya menandai tagihan lunas; moderator masih harus menyetujui iklan. Persetujuan moderasi juga ditolak selama tagihan biaya tayang masih pending.
+- DM meminta kategori dan menentukan kampus dari recipient ID melalui `system_settings.instagram_campus_accounts`. Akun katalog gabungan yang sudah tersedia tetap dipetakan ke `Semua`; pengelolaan mapping akun per kampus belum punya UI admin.
+- `npm run lint` lulus setelah perubahan lokal ini. Tes tidak dijalankan; skrip uji live yang dapat mengirim WA dan menulis database dibuang dari working tree. Tidak ada migrasi atau konfigurasi production yang dijalankan.
 
 ### Pembaruan 31 Oktober 2026 — alur iklan penjual baru
 

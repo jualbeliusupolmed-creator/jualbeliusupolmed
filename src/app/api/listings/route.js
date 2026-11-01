@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimit, rateLimitDistributed, getClientIp } from "@/lib/rateLimit";
-import { getSettings, adFeeFrom, listingExpiresAt, hasUnpaidSoldFees, isAllowedCampus } from "@/lib/settings";
+import { getSettings, DEFAULT_SETTINGS, adFeeFrom, listingExpiresAt, hasUnpaidSoldFees, isAllowedCampus } from "@/lib/settings";
 import { formatWa } from "@/lib/constants";
 import { postToGroup, notifyCategorySubscribers } from "@/lib/fonnte";
 import { pushListingBaru } from "@/lib/webpush";
@@ -290,8 +290,18 @@ export async function POST(req) {
       }
     }
 
-    // FIXED: Fetch settings BEFORE insert so expires_at uses configurable listingDays
+    // Tarif harus berhasil dibaca eksplisit. getSettings() memang fail-safe untuk
+    // tampilan, tetapi fallback diam-diam ke mode gratis tidak aman saat membuat iklan.
+    const { data: pricingRow, error: pricingError } = await supa
+      .from("settings")
+      .select("value")
+      .eq("key", "pricing")
+      .maybeSingle();
+    if (pricingError) {
+      return NextResponse.json({ error: "Pengaturan biaya iklan belum dapat diperiksa. Coba lagi nanti." }, { status: 503 });
+    }
     const settings = await getSettings();
+    settings.pricing = { ...DEFAULT_SETTINGS.pricing, ...(pricingRow?.value || {}) };
     if (!isAllowedCampus(campus || "Semua", settings, { allowAll: true })) {
       return NextResponse.json({ error: "Kampus iklan tidak valid atau sudah tidak tersedia." }, { status: 400 });
     }
@@ -327,14 +337,16 @@ export async function POST(req) {
     const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
     
     // Pasar Bebas: cek apakah iklan gratis
-    const amount = adFeeFrom(settings.pricing, type, price);
+    const amount = adFeeFrom(settings.pricing, type, normalizedPrice);
     const isFreeMode = amount === 0 || settings.pricing?.freeMode !== false;
+    const requiresPayment = !isFreeMode && amount > 0 && !isPro && !isJasaFree && !punyaToko;
 
-    // Status tayang: HANYA aktif jika lolos moderasi otomatis ('approved')
-    // Jika meragukan ('pending'), iklan masuk antrean peninjauan admin kampus
+    // Iklan berbayar tidak boleh terlihat aktif sebelum tagihan dibuat dan lunas.
     const isAutoApproved = moderation.status === "approved";
-    const initialStatus = isAutoApproved ? "active" : "pending";
-    const modReason = isAutoApproved ? "Lolos moderasi otomatis" : moderation.moderation_reason;
+    const initialStatus = isAutoApproved && !requiresPayment ? "active" : "pending";
+    const modReason = requiresPayment
+      ? (isAutoApproved ? "Menunggu pembayaran biaya tayang." : moderation.moderation_reason)
+      : (isAutoApproved ? "Lolos moderasi otomatis" : moderation.moderation_reason);
     const safeSpecs = sanitizeListingSpecs(category || "Elektronik", specs);
 
     // Hitung fee bagi hasil untuk distributor
@@ -354,15 +366,15 @@ export async function POST(req) {
       distributor_fee: distributorFee || null,
       stock: Math.max(1, Number(stock) || 1),
       category: category || "Elektronik",
-      type: ["poster", "jasa", "sewa", "gratis"].includes(type) ? type : "barang",
+      type: ["poster", "jasa", "sewa"].includes(type) ? type : "barang",
       rental_period: type === "sewa" ? (rental_period || "harian") : null,
       image_url: image_url || null,
       status: initialStatus,
       moderation_reason: modReason,
       risk_score: moderation.risk_score || 0.0,
-      campus: campus || "Semua",
+      campus: ["USU", "POLMED", "Semua"].includes(campus) ? campus : "Semua",
       area: area || "Sekitar Kampus",
-      condition: (type === "barang" && condition) ? condition : "used",
+      condition: condition === "new" ? "new" : "used",
       specs: safeSpecs,
       bumped_at: new Date().toISOString(),
       expires_at: expiresAt, // FIXED: from settings.pricing.listingDays
@@ -395,18 +407,21 @@ export async function POST(req) {
       await supa.from("listings").update({ images }).eq("id", listing.id);
     }
 
-    // Cek apakah iklan ini membutuhkan pembayaran biaya tayang platform (mode berbayar aktif)
-    const requiresPayment = !isFreeMode && amount > 0 && !isPro && !isJasaFree && !punyaToko;
-
     if (requiresPayment) {
       const orderId = `IKLAN-${listing.id.slice(0, 8)}-${Date.now()}`;
-      await supa.from("payments").insert({
+      const { error: paymentError } = await supa.from("payments").insert({
         listing_id: listing.id,
         type: "iklan",
         amount,
         status: "pending",
         midtrans_order_id: orderId,
+        meta: { source: "web", moderation_status: moderation.status },
       });
+      if (paymentError) {
+        console.error("[POST /api/listings] Payment record creation failed:", paymentError.code || "database_error");
+        await supa.from("listings").delete().eq("id", listing.id);
+        return NextResponse.json({ error: "Tagihan belum dapat dibuat. Coba kirim iklan lagi nanti." }, { status: 503 });
+      }
 
       const paymentUrl = "/qris.png";
       return NextResponse.json({
@@ -425,14 +440,14 @@ export async function POST(req) {
         notifyCategorySubscribers(supa, listing).catch(() => {});
         notifyKeywordSubscribers(supa, listing).catch(() => {});
         pushListingBaru(supa, listing).catch(() => {});
+        await autoPublishListingInstagram({
+          origin: siteOriginFromRequest(req),
+          listingId: listing.id,
+          timeoutMs: 0,
+        }).catch((err) => console.error("[POST /api/listings] IG publish error:", err?.message));
       } catch (err) {
         console.error("Fonnte postToGroup error:", err?.message);
       }
-      await autoPublishListingInstagram({
-        origin: siteOriginFromRequest(req),
-        listingId: listing.id,
-        timeoutMs: 0,
-      });
       return NextResponse.json({
         listing,
         paymentUrl: null,
