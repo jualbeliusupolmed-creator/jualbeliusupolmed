@@ -363,7 +363,7 @@ export async function handleInstagramDmEvent({
 
       await sendInstagramQuickReplies(
         cleanSender,
-        "✅ *Kata Sandi Berhasil Disimpan!*\n\nAkunmu kini aktif. Kamu bisa login di https://www.kampuskita.my.id menggunakan nomor WhatsApp dan kata sandi tersebut kapan saja.\n\n📸 **Langkah 1:** Kirimkan foto barang yang ingin kamu jual (bisa 1 s/d 5 foto), atau ketik 'skip' jika tanpa foto:",
+        "✅ *Kata Sandi Berhasil Disimpan!*\n\nAkunmu kini aktif. Kamu bisa login di https://www.kampuskita.my.id menggunakan nomor WhatsApp dan kata sandi tersebut kapan saja.\n\n📸 **Langkah 1:** Masukkan 1 atau lebih gambar, maks 5 (atau ketik 'skip' jika tanpa foto):",
         [
           { title: "⏩ Lewati Foto", payload: "ACTION_SKIP_PHOTO" },
           { title: "❌ Batal", payload: "ACTION_CANCEL" },
@@ -456,7 +456,7 @@ export async function handleInstagramDmEvent({
       // 4. Jika pesan bukan foto dan belum ada foto tersimpan
       await sendInstagramQuickReplies(
         cleanSender,
-        "⚠️ Silakan kirimkan 1 s/d 5 foto barang, atau tekan **Lewati Foto** jika tanpa foto:",
+        "⚠️ Silakan masukkan 1 atau lebih gambar, maks 5 (atau tekan **Lewati Foto** jika tanpa foto):",
         [
           { title: "⏩ Lewati Foto", payload: "ACTION_SKIP_PHOTO" },
           { title: "❌ Batal", payload: "ACTION_CANCEL" },
@@ -848,7 +848,7 @@ export async function handleInstagramDmEvent({
         `Halo kak! 👋`,
         `Akun Instagram kamu sudah terhubung dengan WhatsApp (${maskedWa}).`,
         "",
-        "📸 **Langkah 1:** Kirimkan foto barang yang mau kamu jual (bisa 1 s/d 5 foto), atau ketik 'skip' jika tanpa foto:",
+        "📸 **Langkah 1:** Masukkan 1 atau lebih gambar, maks 5 (atau ketik 'skip' jika tanpa foto):",
       ].join("\n");
 
       await sendInstagramQuickReplies(cleanSender, promptLinked, [
