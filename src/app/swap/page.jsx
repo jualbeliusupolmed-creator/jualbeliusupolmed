@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function SwapPage() {
-  redirect("/teman");
+  redirect("/chat?mode=teman");
 }
