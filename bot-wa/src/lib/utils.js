@@ -98,7 +98,8 @@ const isAdminCall = (s) => ADMIN_CALL_WORDS.has(
 // Kata perintah yang sering diketik TANPA titik. Tidak mengubah perilaku gerbang —
 // murni untuk dihitung, supaya keputusan "buka kata polos atau tidak" punya angka.
 const PLAIN_COMMAND_WORDS = new Set([
-    'jual', 'cari', 'menu', 'perpanjang', 'upgrade', 'saya', 'beli', 'pantau',
+    'jual', 'cari', 'menu', 'perpanjang', 'upgrade', 'saya', 'beli', 'pantau', 'menfess', 'curhat',
+    'deal', 'gagal', 'hapus',
     'info', 'help', 'bantuan', 'list', 'produk', 'iklan', 'cek', 'status',
     'teman', 'swap', 'mading', 'saldo', 'topup', 'qris', 'halo', 'hai', 'p', 'tes', 'test', 'reset'
 ]);

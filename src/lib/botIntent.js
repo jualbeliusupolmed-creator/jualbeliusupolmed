@@ -3,7 +3,7 @@ const FAST_PATH_COMMANDS = [
   "batal", "dicari", "wtb", "cari", "lapor", "tawar", "hapus", "nama",
   "edit", "setmode", "approve", "reject", "setuju", "tolak", "broadcast",
   "stats", "pause", "resume", "pantau", "daftar pantau", "foto", "jual",
-  "wts", "dijual", "ready",
+  "wts", "dijual", "ready", "menfess", "curhat",
 ];
 
 const FAST_PATH_RE = new RegExp(

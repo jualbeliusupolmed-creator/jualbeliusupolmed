@@ -67,6 +67,7 @@ describe("bot intent guard", () => {
     expect(isFastPathCommand("MENU")).toBe(true);
     expect(isFastPathCommand("cari laptop bekas")).toBe(true);
     expect(isFastPathCommand("daftar pantau")).toBe(true);
+    expect(isFastPathCommand("menfess halo kampus")).toBe(true);
     expect(isFastPathCommand("carikan laptop dong")).toBe(false);
   });
 

@@ -1,4 +1,4 @@
-﻿// bot-wa/src/core/config.js
+// bot-wa/src/core/config.js
 require('dotenv').config();
 const path = require('path');
 
@@ -10,7 +10,10 @@ const ADMIN_CALL_WORDS = new Set(
         .split(',').map((s) => s.trim().toLowerCase()).filter(Boolean)
 );
 const ADMIN_CALL_COOLDOWN_MS = Number(process.env.ADMIN_CALL_COOLDOWN_SECONDS || 60) * 1000;
-const PLAIN_COMMAND_WORDS = new Set(['jual', 'cari', 'menu', 'perpanjang', 'upgrade', 'saya', 'beli']);
+const PLAIN_COMMAND_WORDS = new Set([
+  'jual', 'cari', 'menu', 'perpanjang', 'upgrade', 'saya', 'beli',
+  'deal', 'gagal', 'hapus', 'pantau', 'menfess', 'curhat'
+]);
 
 const WEBHOOK_URL = process.env.WEBHOOK_URL || 'https://www.kampuskita.my.id/api/wa/baileys';
 const API_TOKEN = process.env.API_TOKEN;
