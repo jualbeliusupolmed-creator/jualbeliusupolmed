@@ -9,6 +9,7 @@ import { getDistributorSettings, calcDistributorFee, effectivePrice } from "@/li
 import { tokoAktif, generateDefaultSlug } from "@/lib/toko";
 import { getSellerSession } from "@/lib/auth";
 import { autoPublishListingInstagram } from "@/lib/listingInstagram";
+import { notifyKeywordSubscribers } from "@/lib/keywordSubs";
 import { siteOriginFromRequest } from "@/lib/instagramQueue";
 import { jawabGalat } from "@/lib/jawabGalat";
 import { sanitizeListingSpecs } from "@/lib/listingSpecs";
@@ -367,6 +368,7 @@ export async function POST(req) {
       try {
         await postToGroup(listing);
         notifyCategorySubscribers(supa, listing).catch(() => {});
+        notifyKeywordSubscribers(supa, listing).catch(() => {});
         pushListingBaru(supa, listing).catch(() => {});
       } catch (err) {
         console.error("Fonnte postToGroup error:", err?.message);
