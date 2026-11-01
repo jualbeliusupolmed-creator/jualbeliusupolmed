@@ -53,7 +53,7 @@ export async function GET() {
     return NextResponse.json(data);
   } catch (error) {
     if (error.name === "TimeoutError") {
-      return NextResponse.json({ error: "Bot tidak merespons (timeout 8 detik). Cek https://bot.jualbeliusupolmed.web.id/health." }, { status: 504 });
+      return NextResponse.json({ error: "Bot tidak merespons (timeout 8 detik). Cek https://bot.kampuskita.my.id/health." }, { status: 504 });
     }
     console.error("Bot Logs fetch error:", error);
     return jawabGalat(error);

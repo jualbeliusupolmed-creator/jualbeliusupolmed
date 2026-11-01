@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
  * Antrean notifikasi WhatsApp yang belum sampai.
  *
  * Diisi src/lib/fonnte.js saat pengiriman gagal total, dibaca dua panel:
- * panel admin situs, dan dashboard bot di bot.jualbeliusupolmed.web.id yang
+ * panel admin situs, dan dashboard bot di bot.kampuskita.my.id yang
  * memanggil rute ini lewat proxy karena VPS tidak punya kredensial Supabase.
  *
  * Karena itu penjaganya menerima DUA identitas: cookie admin situs, atau token

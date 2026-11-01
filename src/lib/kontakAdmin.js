@@ -14,7 +14,7 @@
 // arah lebih berbahaya daripada tidak mengalihkan.
 
 const URL_KONTAK_BOT =
-  process.env.BOT_KONTAK_URL || "https://bot.jualbeliusupolmed.web.id/kontak-admin";
+  process.env.BOT_KONTAK_URL || "https://bot.kampuskita.my.id/kontak-admin";
 
 export async function kontakDenganCadangan(contact) {
   const utama = String(contact?.marketplaceWa || "").replace(/\D/g, "");

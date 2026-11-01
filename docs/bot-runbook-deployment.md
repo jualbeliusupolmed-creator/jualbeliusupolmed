@@ -87,7 +87,7 @@ curl -s http://127.0.0.1:3000/health
 ### Kasus B: Sesi Terkunci (`"terkunci": true`)
 - **Gejala:** Dashboard bot menampilkan indikator terkunci, dan log penjaga mencatat `Sesi TERKUNCI`.
 - **Solusi:** 
-  1. Buka dashboard bot di browser: `https://bot.jualbeliusupolmed.web.id/masuk`.
+  1. Buka dashboard bot di browser: `https://bot.kampuskita.my.id/masuk`.
   2. Masukkan sandi panel admin.
   3. Buka tab sesi dan tekan **Buka Kunci**.
   4. Pindai ulang QR Code dari aplikasi WhatsApp di HP (Perangkat Tertaut).

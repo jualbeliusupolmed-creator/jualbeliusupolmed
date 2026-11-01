@@ -3,7 +3,7 @@
 **Panel Admin:** kampuskita.my.id/admin  
 **WA Admin:** 62895429126232  
 **Supabase:** supabase.com  
-**Bot WA:** bot.jualbeliusupolmed.web.id (DigitalOcean VPS, dashboard bot)  
+**Bot WA:** bot.kampuskita.my.id (Azure VPS, dashboard bot)  
 **Vercel:** vercel.com (website)
 
 ---
@@ -460,9 +460,9 @@ Setiap hari 00:00 — /api/cron/broadcast:
 ### Bot tidak merespons
 
 Bot **tidak lagi di Railway** — sejak pertengahan Juli 2026 ia jalan di
-DigitalOcean VPS, di belakang `https://bot.jualbeliusupolmed.web.id`.
+Azure VPS, di belakang `https://bot.kampuskita.my.id`.
 
-1. Cek kesehatannya dulu — buka `https://bot.jualbeliusupolmed.web.id/health`.
+1. Cek kesehatannya dulu — buka `https://bot.kampuskita.my.id/health`.
    Jawabannya menjelaskan sendiri apa yang salah:
    - `{"ok":true,...}` → bot sehat, masalahnya di tempat lain.
    - `"menungguPindai":true` → sesi WhatsApp lepas, **perlu scan QR ulang**.
