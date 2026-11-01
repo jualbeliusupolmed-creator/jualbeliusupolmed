@@ -430,8 +430,8 @@ export async function POST(req) {
     if (ownerActive && !isForcedAd && !isAdminCommand) {
       const tCmd = (message || "").toLowerCase().trim();
       const explicitCmd =
-        ["menu", "jual", "wts", "dijual", "ready", "saya", "iklanku", "perpanjang", "upgrade", "batal", "cancel", "pantau", "daftar pantau", "tawaran", "referral", "riwayat", "menfess", "curhat"].includes(tCmd) ||
-        tCmd.startsWith("cari ") || tCmd.startsWith("dicari ") || tCmd.startsWith("wtb ") || tCmd.startsWith("pantau ") || tCmd.startsWith("nama ") || tCmd.startsWith("menfess ") || tCmd.startsWith("curhat ") || isTawarBiaya;
+        ["menu", "jual", "wts", "dijual", "ready", "saya", "iklanku", "perpanjang", "upgrade", "batal", "cancel", "pantau", "daftar pantau", "tawaran", "referral", "riwayat", "menfess", "curhat", "po", "open po", "openpo"].includes(tCmd) ||
+        tCmd.startsWith("cari ") || tCmd.startsWith("dicari ") || tCmd.startsWith("wtb ") || tCmd.startsWith("pantau ") || tCmd.startsWith("nama ") || tCmd.startsWith("menfess ") || tCmd.startsWith("curhat ") || tCmd.startsWith("po ") || tCmd.startsWith("open po ") || isTawarBiaya;
       const isReceiptFlow = !!file && (pendingPayment || pendingWantedPayment);
       // User sedang di alur pasang-iklan (sudah ketik JUAL → draft aktif) → JANGAN
       // bisukan foto/teks lanjutannya. Tanpa ini, "JUAL → kirim foto" mati di tengah
@@ -2202,6 +2202,7 @@ export async function POST(req) {
           `• *DAFTAR PANTAU* → Daftar alarm\n` +
           `• *PANTAU OFF [kata]* → Hapus alarm\n` +
           `• *MENFESS [pesan]* → Kirim menfess kampus anonim\n` +
+          `• *PO* → Pre-order kuliner/merch kampus\n` +
           `• *LANGGANAN [kategori]* → Notif kategori\n` +
           `• *STOP* → Matikan semua notifikasi\n` +
           `• *LAPOR [kode] [alasan]* → Laporkan iklan\n\n` +
@@ -2230,6 +2231,7 @@ export async function POST(req) {
           `🤝 *TAWAR [kode] [harga]* — Tawar barang\n` +
           `🔔 *PANTAU [kata]* — Alarm barang baru\n` +
           `💌 *MENFESS [pesan]* — Curhat / info kampus anonim\n` +
+          `🍱 *PO* — Pre-order kuliner & merch kampus\n` +
           `👤 *SAYA* — Profil dan statistik\n\n` +
           `Butuh pilihan lengkap?\n` +
           `• *MENU IKLAN*\n` +
@@ -2883,6 +2885,51 @@ export async function POST(req) {
           post_id: newPost.id,
           bot_reply: reply,
         });
+      }
+
+      // ── Command OPEN PO: Cek batch Pre-Order makanan / merch aktif di kampus ──
+      if (
+        msgLower === "po" ||
+        msgLower === "open po" ||
+        msgLower === "openpo" ||
+        msgLower.startsWith("po ") ||
+        msgLower.startsWith("open po ")
+      ) {
+        const { data: batches, error: poErr } = await supa
+          .from("open_po_batches")
+          .select("id, title, price_idr, quota, reserved_count, pickup_point, closes_at, product:open_po_products(name, unit, campus)")
+          .eq("status", "open")
+          .gt("closes_at", new Date().toISOString())
+          .order("closes_at", { ascending: true })
+          .limit(5);
+
+        if (poErr || !batches || batches.length === 0) {
+          const emptyMsg =
+            `📦 *Open PO Kampus*\n\n` +
+            `Saat ini belum ada batch Pre-Order kuliner atau merchandise yang sedang buka kuota.\n\n` +
+            `💡 Mau buka Open PO untuk jualan makanan/merch di kampus? Buka dashboard kamu:\n` +
+            `https://www.kampuskita.my.id/dashboard/open-po`;
+          await sendWa(senderJid, emptyMsg);
+          return NextResponse.json({ ok: true, state: "open_po_empty", bot_reply: emptyMsg });
+        }
+
+        let reply = `📦 *Open PO Kampus yang Sedang Buka Kuota:* 🚀\n\n`;
+        batches.forEach((b, idx) => {
+          const pName = b.product?.name || b.title;
+          const sisaKuota = Math.max(0, (b.quota || 0) - (b.reserved_count || 0));
+          const unit = b.product?.unit || "pcs";
+          reply += `${idx + 1}. *${pName}*\n`;
+          reply += `   💰 ${rupiah(b.price_idr)} / ${unit}\n`;
+          reply += `   📊 Sisa Kuota: *${sisaKuota}* dari ${b.quota}\n`;
+          reply += `   📍 Ambil: ${b.pickup_point || "-"}\n\n`;
+        });
+
+        reply += `👉 *Pesan & Reservasi Kuota Sekarang:*\n` +
+          `https://www.kampuskita.my.id/open-po\n\n` +
+          `_Ketik *MENU* untuk pilihan perintah lainnya._`;
+
+        await sendWa(senderJid, reply);
+        return NextResponse.json({ ok: true, state: "open_po_listed", bot_reply: reply });
       }
 
       // ── Command CARI: Cari barang di katalog aktif (dengan foto preview) ──
