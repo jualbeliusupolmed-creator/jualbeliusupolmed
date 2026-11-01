@@ -1,5 +1,7 @@
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { formatWa } from "@/lib/constants";
+import { hashPin } from "@/lib/pin";
+import { tulisProfil } from "@/lib/tulisProfil";
 import { rupiah } from "@/lib/fees";
 import { buildSlug } from "@/lib/slug";
 import { checkProhibitedListing } from "@/lib/profanity";
@@ -221,7 +223,7 @@ export async function handleInstagramDmEvent({
         if (linkCheck.linked) {
           await setDmSession(cleanSender, {
             ...session,
-            step: "jual_ask_photo",
+            step: "jual_set_password",
             data: {
               ...session.data,
               seller_wa: linkCheck.wa,
@@ -231,13 +233,10 @@ export async function handleInstagramDmEvent({
 
           await sendInstagramQuickReplies(
             cleanSender,
-            "✅ *Akun Berhasil Ditautkan!*\n\n📸 **Langkah 1:** Kirimkan 1 foto barang yang ingin kamu jual (atau ketik 'skip' jika tanpa foto):",
-            [
-              { title: "⏩ Lewati Foto", payload: "ACTION_SKIP_PHOTO" },
-              { title: "❌ Batal", payload: "ACTION_CANCEL" },
-            ]
+            "✅ *Akun WhatsApp Terverifikasi!*\n\n🔐 **Buat Kata Sandi Akun Web:**\nKetik kata sandi (minimal 6 karakter) yang ingin kamu gunakan untuk akunmu di https://www.kampuskita.my.id:",
+            [{ title: "❌ Batal", payload: "ACTION_CANCEL" }]
           );
-          return { ok: true, step: "jual_ask_photo" };
+          return { ok: true, step: "jual_set_password" };
         } else {
           await sendInstagramQuickReplies(
             cleanSender,
@@ -261,7 +260,7 @@ export async function handleInstagramDmEvent({
         if (verifRes.ok) {
           await setDmSession(cleanSender, {
             ...session,
-            step: "jual_ask_photo",
+            step: "jual_set_password",
             data: {
               ...session.data,
               seller_wa: verifRes.wa,
@@ -271,13 +270,10 @@ export async function handleInstagramDmEvent({
 
           await sendInstagramQuickReplies(
             cleanSender,
-            "✅ *Akun Berhasil Ditautkan!*\n\n📸 **Langkah 1:** Kirimkan 1 foto barang yang ingin kamu jual (atau ketik 'skip' jika tanpa foto):",
-            [
-              { title: "⏩ Lewati Foto", payload: "ACTION_SKIP_PHOTO" },
-              { title: "❌ Batal", payload: "ACTION_CANCEL" },
-            ]
+            "✅ *Nomor WhatsApp Berhasil Diverifikasi!*\n\n🔐 **Buat Kata Sandi Akun Web:**\nKetik kata sandi (minimal 6 karakter) yang ingin kamu gunakan untuk akunmu di https://www.kampuskita.my.id:",
+            [{ title: "❌ Batal", payload: "ACTION_CANCEL" }]
           );
-          return { ok: true, step: "jual_ask_photo" };
+          return { ok: true, step: "jual_set_password" };
         } else {
           await sendInstagramText(cleanSender, `❌ ${verifRes.message}`);
           return { ok: false, error: "invalid_otp" };
@@ -286,6 +282,46 @@ export async function handleInstagramDmEvent({
 
       await sendInstagramText(cleanSender, "⚠️ Masukkan 6 digit kode OTP yang kamu terima di WhatsApp ke DM ini:");
       return { ok: false, error: "invalid_otp_input" };
+    }
+
+    // Step 0C: Mengatur Kata Sandi Akun di Instagram DM
+    if (session.step === "jual_set_password") {
+      const password = rawText.trim();
+      if (!password || password.length < 6) {
+        await sendInstagramText(
+          cleanSender,
+          "⚠️ Kata sandi minimal 6 karakter. Silakan ketik kata sandi yang kamu inginkan:"
+        );
+        return { ok: false, error: "password_too_short" };
+      }
+
+      const supa = getAdminClient();
+      const hashedPassword = hashPin(password);
+
+      // Simpan hash kata sandi ke profil penjual (sellers / seller_profiles)
+      const sellerWa = session.data?.seller_wa || session.data?.pending_wa;
+      if (sellerWa) {
+        await tulisProfil(supa, { pin: hashedPassword, wa_verified: true }, sellerWa);
+      }
+
+      await setDmSession(cleanSender, {
+        ...session,
+        step: "jual_ask_photo",
+        data: {
+          ...session.data,
+          seller_wa: sellerWa,
+        },
+      });
+
+      await sendInstagramQuickReplies(
+        cleanSender,
+        "✅ *Kata Sandi Berhasil Disimpan!*\n\nAkunmu kini aktif. Kamu bisa login di https://www.kampuskita.my.id menggunakan nomor WhatsApp dan kata sandi tersebut kapan saja.\n\n📸 **Langkah 1:** Kirimkan 1 foto barang yang ingin kamu jual (atau ketik 'skip' jika tanpa foto):",
+        [
+          { title: "⏩ Lewati Foto", payload: "ACTION_SKIP_PHOTO" },
+          { title: "❌ Batal", payload: "ACTION_CANCEL" },
+        ]
+      );
+      return { ok: true, step: "jual_ask_photo" };
     }
 
     // Step 1: Menerima Foto Barang (atau skip)
@@ -722,6 +758,40 @@ export async function handleInstagramDmEvent({
       ]);
       return { ok: true, flow: "jual", step: "jual_ask_wa" };
     }
+  }
+
+  // Trigger: Atur atau Ganti Kata Sandi Akun
+  if (
+    payload === "ACTION_SET_PASSWORD" ||
+    lowerText === "ganti password" ||
+    lowerText === "ubah password" ||
+    lowerText === "set password"
+  ) {
+    const linked = await getLinkedSeller(cleanSender);
+    if (!linked.linked) {
+      await sendInstagramQuickReplies(
+        cleanSender,
+        "⚠️ Akun Instagram kamu belum terhubung ke WhatsApp. Mulai alur jual untuk menautkan akun dan mengatur kata sandi.",
+        [{ title: "🛍️ Jual Barang", payload: "ACTION_JUAL" }, { title: "❌ Batal", payload: "ACTION_CANCEL" }]
+      );
+      return { ok: false, error: "not_linked" };
+    }
+
+    await setDmSession(cleanSender, {
+      flow: "jual",
+      step: "jual_set_password",
+      data: {
+        seller_wa: linked.wa,
+        campus: linked.campus || "Semua",
+      },
+    });
+
+    await sendInstagramQuickReplies(
+      cleanSender,
+      "🔐 **Atur / Ganti Kata Sandi Akun Web**\n\nKetik kata sandi baru (minimal 6 karakter) yang ingin kamu gunakan untuk login di https://www.kampuskita.my.id:",
+      [{ title: "❌ Batal", payload: "ACTION_CANCEL" }]
+    );
+    return { ok: true, step: "jual_set_password" };
   }
 
   // Trigger: Panduan COD Aman

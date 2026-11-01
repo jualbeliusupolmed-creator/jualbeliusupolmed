@@ -355,10 +355,15 @@ describe("Tahap 1 & 3 - Conversational Router & Pipeline Moderasi", () => {
     const testOtp = "123456";
     latestChallenge.otp_hash = hashOtp(testOtp);
 
-    // 3. Masukkan OTP di DM
+    // 3. Masukkan OTP di DM -> lanjut ke atur kata sandi akun
     const stepOtp = await handleInstagramDmEvent({ senderId: freshSender, text: testOtp });
     expect(stepOtp.ok).toBe(true);
-    expect(stepOtp.step).toBe("jual_ask_photo");
+    expect(stepOtp.step).toBe("jual_set_password");
+
+    // 3B. Atur kata sandi di DM
+    const stepPassword = await handleInstagramDmEvent({ senderId: freshSender, text: "sandiAman123" });
+    expect(stepPassword.ok).toBe(true);
+    expect(stepPassword.step).toBe("jual_ask_photo");
 
     // 4. Skip foto
     const stepPhoto = await handleInstagramDmEvent({ senderId: freshSender, text: "skip" });
@@ -426,5 +431,36 @@ describe("Tahap 1 & 3 - Conversational Router & Pipeline Moderasi", () => {
 
     expect(cancelResult.ok).toBe(true);
     expect(cancelResult.action).toBe("cancelled");
+  });
+
+  it("supports setting and changing password directly via Instagram DM", async () => {
+    const pwSender = "user_pw_test_" + Date.now();
+    await dmSession.clearDmSession(pwSender);
+
+    mockTables.ig_seller_links.push({
+      ig_sender_id: pwSender,
+      wa: "081299997777",
+      campus: "USU / POLMED",
+    });
+    mockTables.seller_profiles.push({
+      wa: "081299997777",
+      name: "Tester Password",
+      pin: null,
+    });
+
+    // 1. Ketik 'ganti password'
+    const stepChange = await handleInstagramDmEvent({ senderId: pwSender, text: "ganti password" });
+    expect(stepChange.ok).toBe(true);
+    expect(stepChange.step).toBe("jual_set_password");
+
+    // 2. Ketik password terlalu pendek (< 6 karakter)
+    const stepShort = await handleInstagramDmEvent({ senderId: pwSender, text: "123" });
+    expect(stepShort.ok).toBe(false);
+    expect(stepShort.error).toBe("password_too_short");
+
+    // 3. Ketik password valid (>= 6 karakter)
+    const stepValid = await handleInstagramDmEvent({ senderId: pwSender, text: "kampuskita2026" });
+    expect(stepValid.ok).toBe(true);
+    expect(stepValid.step).toBe("jual_ask_photo");
   });
 });
