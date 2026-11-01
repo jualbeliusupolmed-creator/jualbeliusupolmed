@@ -153,7 +153,7 @@ $$;
 -- BAGIAN 3: SEED — Akun UKM "UP Admin" (Super Admin Platform)
 --
 -- Login: Email & Password
--- Email    : admin@jualbeliusupolmed.web.id
+-- Email    : admin@kampuskita.my.id
 -- Password : upadmin2026   ← GANTI SETELAH LOGIN PERTAMA
 -- ══════════════════════════════════════════════════════════════════════════════
 
@@ -203,7 +203,7 @@ BEGIN
       AND table_name   = 'seller_email_accounts'
   ) THEN
     INSERT INTO public.seller_email_accounts (email, seller_wa, created_at)
-    VALUES ('admin@jualbeliusupolmed.web.id', 'email_up_admin', now())
+    VALUES ('admin@kampuskita.my.id', 'email_up_admin', now())
     ON CONFLICT (email) DO NOTHING;
   END IF;
 END
