@@ -43,6 +43,54 @@ const DM_PRODUCT_CATEGORIES = [
   ["CATEGORY_LAINNYA", "Lainnya"],
 ];
 
+export function inferCategoryFromTitle(title = "") {
+  const t = String(title || "").toLowerCase();
+
+  // Buku / Kuliah
+  if (/\b(buku|diktat|modul|kalkulus|novel|komik|catatan|skripsi|jurnal|kamus|binder)\b/i.test(t)) {
+    return "Buku Kuliah";
+  }
+
+  // Elektronik
+  if (
+    /\b(hp|handphone|ponsel|iphone|ipad|samsung|xiaomi|redmi|oppo|vivo|realme|infinix|laptop|macbook|asus|lenovo|acer|dell|kalkulator|casio|tws|headset|earphone|headphone|mouse|keyboard|monitor|charger|kabel|powerbank|ps3|ps4|ps5|nintendo|pc|ram|ssd|vga)\b/i.test(
+      t
+    )
+  ) {
+    return "Elektronik";
+  }
+
+  // Kendaraan
+  if (
+    /\b(motor|sepeda|helm|bogo|kyt|nhk|ink|agv|honda|yamaha|suzuki|beat|vario|scoopy|nmax|aerox|vespa|spion|jas hujan)\b/i.test(
+      t
+    )
+  ) {
+    return "Kendaraan";
+  }
+
+  // Fashion
+  if (
+    /\b(baju|kaos|kemeja|celana|jaket|hoodie|sweater|sepatu|sneakers|sandal|tas|ransel|tote bag|totebag|dompet|jam tangan|gamis|hijab|jilbab|rok)\b/i.test(
+      t
+    )
+  ) {
+    return "Fashion";
+  }
+
+  // Kos / Properti
+  if (/\b(kos|kost|kontrakan|kamar|sewa kamar|paviliun)\b/i.test(t)) {
+    return "Kos";
+  }
+
+  // Makanan
+  if (/\b(makanan|snack|kue|roti|kopi|minuman|nasi|mie|frozen food|cemilan)\b/i.test(t)) {
+    return "Makanan";
+  }
+
+  return "Lainnya";
+}
+
 async function sellerHasUnpaidSoldFees(supa, sellerWa) {
   const { data: listings, error: listingError } = await supa
     .from("listings")
@@ -353,7 +401,7 @@ export async function handleInstagramDmEvent({
       return { ok: true, step: "jual_ask_title" };
     }
 
-    // Step 2: Menerima Judul Barang
+    // Step 2: Menerima Judul Barang -> otomatis tentukan kategori dan langsung minta Harga
     if (session.step === "jual_ask_title") {
       if (!rawText || rawText.length < 3) {
         await sendInstagramText(cleanSender, "⚠️ Judul barang terlalu pendek. Tuliskan nama barang yang jelas ya kak:");
@@ -372,46 +420,37 @@ export async function handleInstagramDmEvent({
         return { ok: false, error: "prohibited_item" };
       }
 
-      await sendInstagramQuickReplies(
-        cleanSender,
-        `🗂️ **Langkah 3:** Pilih kategori untuk "${cleanedTitle}".`,
-        [
-          { title: "Elektronik", payload: "CATEGORY_ELEKTRONIK" },
-          { title: "Fashion", payload: "CATEGORY_FASHION" },
-          { title: "Kendaraan", payload: "CATEGORY_KENDARAAN" },
-          { title: "Properti", payload: "CATEGORY_PROPERTI" },
-          { title: "Buku", payload: "CATEGORY_BUKU" },
-          { title: "Makanan", payload: "CATEGORY_MAKANAN" },
-          { title: "Lainnya", payload: "CATEGORY_LAINNYA" },
-          { title: "❌ Batal", payload: "ACTION_CANCEL" },
-        ]
-      );
-      await setDmSession(cleanSender, {
-        ...session,
-        step: "jual_ask_category",
-        data: { ...session.data, title: cleanedTitle },
-      });
-      return { ok: true, step: "jual_ask_category" };
-    }
-
-    if (session.step === "jual_ask_category") {
-      const category = DM_PRODUCT_CATEGORIES.find(([categoryPayload, name]) =>
-        payload === categoryPayload || lowerText === name.toLowerCase() ||
-        (name === "Buku Kuliah" && lowerText === "buku")
-      )?.[1];
-      if (!category) {
-        await sendInstagramText(cleanSender, "Pilih satu kategori dari tombol yang tersedia agar iklan masuk ke bagian yang tepat.");
-        return { ok: false, error: "invalid_category" };
-      }
+      const autoCategory = inferCategoryFromTitle(cleanedTitle);
 
       await setDmSession(cleanSender, {
         ...session,
         step: "jual_ask_price",
-        data: { ...session.data, category },
+        data: {
+          ...session.data,
+          title: cleanedTitle,
+          category: autoCategory,
+        },
+      });
+
+      await sendInstagramQuickReplies(
+        cleanSender,
+        `💰 **Langkah 3:** Berapa *Harga* untuk "${cleanedTitle}"?\n\n(Contoh: 180000 atau ketik 180rb)`,
+        [{ title: "❌ Batal", payload: "ACTION_CANCEL" }]
+      );
+      return { ok: true, step: "jual_ask_price" };
+    }
+
+    // Kompatibilitas jika sesi lama masih berada di step kategori
+    if (session.step === "jual_ask_category") {
+      const autoCategory = session.data?.category || inferCategoryFromTitle(session.data?.title || "");
+      await setDmSession(cleanSender, {
+        ...session,
+        step: "jual_ask_price",
+        data: { ...session.data, category: autoCategory },
       });
       await sendInstagramQuickReplies(
         cleanSender,
-        `💰 **Langkah 4:** Berapa *Harga* untuk "${session.data.title}"?\n\n(Contoh: 180000 atau ketik 180rb)`,
+        `💰 **Langkah 3:** Berapa *Harga* untuk "${session.data?.title || "barang"}"?\n\n(Contoh: 180000 atau ketik 180rb)`,
         [{ title: "❌ Batal", payload: "ACTION_CANCEL" }]
       );
       return { ok: true, step: "jual_ask_price" };
