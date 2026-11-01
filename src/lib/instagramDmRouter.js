@@ -1,11 +1,11 @@
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { formatWa, MARKETPLACE_WA } from "@/lib/constants";
+import { formatWa } from "@/lib/constants";
 import { rupiah } from "@/lib/fees";
 import { buildSlug } from "@/lib/slug";
-import { postToGroup } from "@/lib/fonnte";
-import { autoPublishListingInstagram } from "@/lib/listingInstagram";
-import { pushListingBaru } from "@/lib/webpush";
 import { checkProhibitedListing } from "@/lib/profanity";
+import { moderateListing } from "@/lib/moderationRules";
+import { sanitizeListingTitle, normalizePriceInput } from "@/lib/listingSchema";
+import { getSettings, adFeeFrom } from "@/lib/settings";
 import {
   sendInstagramQuickReplies,
   sendInstagramText,
@@ -15,6 +15,11 @@ import {
   setDmSession,
   clearDmSession,
 } from "@/lib/instagramDmSession";
+import {
+  getLinkedSeller,
+  createLinkChallenge,
+  verifyLinkChallenge,
+} from "@/lib/instagramDmAuth";
 
 function siteBaseUrl() {
   return (
@@ -57,6 +62,10 @@ export function parseInstagramPrice(rawText) {
   return num;
 }
 
+/**
+ * Router DM Utama Instagram Kampus Kita
+ * Mengisolasi alur pada fase Jual Barang dengan verifikasi identitas (OTP WA).
+ */
 export async function handleInstagramDmEvent({
   senderId,
   recipientId,
@@ -84,20 +93,172 @@ export async function handleInstagramDmEvent({
       "❌ Proses dibatalkan. Ada yang bisa dibantu lagi kak?",
       [
         { title: "🛍️ Jual Barang", payload: "ACTION_JUAL" },
-        { title: "💬 Kirim Menfess", payload: "ACTION_MENFESS" },
-        { title: "🔍 Cari Barang", payload: "ACTION_SEARCH" },
-        { title: "📋 Menu Utama", payload: "ACTION_MENU" },
+        { title: "🛡️ Panduan COD", payload: "ACTION_PANDUAN_COD" },
       ]
     );
     return { ok: true, action: "cancelled" };
   }
 
-  // Ambil sesi obrolan yang sedang berjalan
+  // ── 2. PENGALIHAN FITUR DI LUAR FASE JUAL (MENFESS & CARI BARANG) ──
+  if (
+    payload === "ACTION_MENFESS" ||
+    payload === "ACTION_SEARCH" ||
+    lowerText.startsWith("menfess") ||
+    lowerText.startsWith("curhat") ||
+    lowerText.startsWith("cari ") ||
+    lowerText.startsWith("harga ") ||
+    lowerText.startsWith("cek ")
+  ) {
+    const infoText = [
+      "ℹ️ *Informasi Fitur*",
+      "",
+      "Untuk saat ini, fitur **Menfess Kampus** dan **Pencarian Barang** dapat kamu akses langsung melalui:",
+      `🌐 Website Resmi: ${siteBaseUrl()}`,
+      "💬 Bot WhatsApp Kampus Kita",
+      "",
+      "Instagram DM saat ini difokuskan khusus untuk **memasang iklan jual barang** mahasiswa.",
+    ].join("\n");
+
+    await sendInstagramQuickReplies(cleanSender, infoText, [
+      { title: "🛍️ Pasang Iklan Jual", payload: "ACTION_JUAL" },
+      { title: "🛡️ Panduan COD", payload: "ACTION_PANDUAN_COD" },
+    ]);
+    return { ok: true, action: "feature_redirected" };
+  }
+
+  // Ambil sesi DM pengguna
   const session = await getDmSession(cleanSender);
 
-  // ── 2. STATE MACHINE: JUAL BARANG ──
+  // ── 3. STATE MACHINE: JUAL BARANG ──
   if (session?.flow === "jual") {
-    // Step 1: Menerima foto barang (atau skip)
+    // Step 0A: Meminta Nomor WhatsApp (jika belum tertaut)
+    if (session.step === "jual_ask_wa") {
+      const waFormatted = formatWa(rawText);
+      if (!waFormatted || waFormatted.length < 10) {
+        await sendInstagramText(
+          cleanSender,
+          "⚠️ Format nomor WhatsApp kurang tepat. Pastikan minimal 10 digit (contoh: 081234567890):"
+        );
+        return { ok: false, error: "invalid_wa" };
+      }
+
+      // Buat tantangan OTP
+      const challengeRes = await createLinkChallenge({
+        igSenderId: cleanSender,
+        wa: waFormatted,
+        campus: "Semua",
+      });
+
+      if (!challengeRes.ok) {
+        await sendInstagramText(cleanSender, `⚠️ ${challengeRes.message}`);
+        return { ok: false, error: "challenge_failed" };
+      }
+
+      await setDmSession(cleanSender, {
+        ...session,
+        step: "jual_ask_otp",
+        data: {
+          ...session.data,
+          pending_wa: waFormatted,
+        },
+      });
+
+      const maskedWa = `+${waFormatted.slice(0, 4)}...${waFormatted.slice(-3)}`;
+      const otpPrompt = [
+        "🔐 *Verifikasi Keamanan Akun*",
+        "",
+        `Kami telah mengirim 6 digit kode OTP ke WhatsApp kamu (${maskedWa}).`,
+        "",
+        "Pilih salah satu cara verifikasi:",
+        "1. Buka WhatsApp dan balas pesan bot dengan: *VERIF <kode>*",
+        "2. ATAU ketik 6 digit kodenya langsung di sini:",
+      ].join("\n");
+
+      await sendInstagramQuickReplies(cleanSender, otpPrompt, [
+        { title: "🔄 Cek Status", payload: "ACTION_CHECK_LINK_STATUS" },
+        { title: "❌ Batal", payload: "ACTION_CANCEL" },
+      ]);
+      return { ok: true, step: "jual_ask_otp" };
+    }
+
+    // Step 0B: Verifikasi Kode OTP (lewat DM atau tombol cek status)
+    if (session.step === "jual_ask_otp") {
+      const isCheckStatus = payload === "ACTION_CHECK_LINK_STATUS" || lowerText === "cek";
+      const cleanDigits = rawText.replace(/\D/g, "");
+
+      if (isCheckStatus) {
+        const linkCheck = await getLinkedSeller(cleanSender);
+        if (linkCheck.linked) {
+          await setDmSession(cleanSender, {
+            ...session,
+            step: "jual_ask_photo",
+            data: {
+              ...session.data,
+              seller_wa: linkCheck.wa,
+              campus: linkCheck.campus || "Semua",
+            },
+          });
+
+          await sendInstagramQuickReplies(
+            cleanSender,
+            "✅ *Akun Berhasil Ditautkan!*\n\n📸 **Langkah 1:** Kirimkan 1 foto barang yang ingin kamu jual (atau ketik 'skip' jika tanpa foto):",
+            [
+              { title: "⏩ Lewati Foto", payload: "ACTION_SKIP_PHOTO" },
+              { title: "❌ Batal", payload: "ACTION_CANCEL" },
+            ]
+          );
+          return { ok: true, step: "jual_ask_photo" };
+        } else {
+          await sendInstagramQuickReplies(
+            cleanSender,
+            "⏳ Belum terverifikasi nih kak. Pastikan kamu sudah membalas *VERIF <kode>* di WhatsApp, atau ketik 6 digit kodenya langsung di sini ya:",
+            [
+              { title: "🔄 Cek Lagi", payload: "ACTION_CHECK_LINK_STATUS" },
+              { title: "❌ Batal", payload: "ACTION_CANCEL" },
+            ]
+          );
+          return { ok: false, error: "otp_not_verified_yet" };
+        }
+      }
+
+      if (cleanDigits.length === 6) {
+        const verifRes = await verifyLinkChallenge({
+          wa: session.data?.pending_wa,
+          otpInput: cleanDigits,
+          igSenderId: cleanSender,
+        });
+
+        if (verifRes.ok) {
+          await setDmSession(cleanSender, {
+            ...session,
+            step: "jual_ask_photo",
+            data: {
+              ...session.data,
+              seller_wa: verifRes.wa,
+              campus: verifRes.campus || "Semua",
+            },
+          });
+
+          await sendInstagramQuickReplies(
+            cleanSender,
+            "✅ *Akun Berhasil Ditautkan!*\n\n📸 **Langkah 1:** Kirimkan 1 foto barang yang ingin kamu jual (atau ketik 'skip' jika tanpa foto):",
+            [
+              { title: "⏩ Lewati Foto", payload: "ACTION_SKIP_PHOTO" },
+              { title: "❌ Batal", payload: "ACTION_CANCEL" },
+            ]
+          );
+          return { ok: true, step: "jual_ask_photo" };
+        } else {
+          await sendInstagramText(cleanSender, `❌ ${verifRes.message}`);
+          return { ok: false, error: "invalid_otp" };
+        }
+      }
+
+      await sendInstagramText(cleanSender, "⚠️ Masukkan 6 digit kode OTP yang kamu terima di WhatsApp, atau balas di WA dengan format: VERIF <kode>:");
+      return { ok: false, error: "invalid_otp_input" };
+    }
+
+    // Step 1: Menerima Foto Barang (atau skip)
     if (session.step === "jual_ask_photo") {
       const isSkip = payload === "ACTION_SKIP_PHOTO" || lowerText === "skip" || lowerText === "lewati";
       let imageUrl = null;
@@ -106,10 +267,6 @@ export async function handleInstagramDmEvent({
         const imgAttachment = attachments.find((a) => a.type === "image");
         if (imgAttachment?.payload?.url) {
           imageUrl = imgAttachment.payload.url;
-        } else if (!isSkip && rawText) {
-          // Pengguna mengetik teks alih-alih mengirim foto
-          // Izinkan lanjut dengan teks sebagai judul jika pengguna langsung menulis nama barang
-          imageUrl = null;
         }
       }
 
@@ -124,7 +281,7 @@ export async function handleInstagramDmEvent({
 
       await sendInstagramQuickReplies(
         cleanSender,
-        "📝 Apa *Nama / Judul Barang* yang mau kamu jual?\n\n(Contoh: Kalkulator Casio fx-991EX Bekas)",
+        "📝 **Langkah 2:** Apa *Nama / Judul Barang* yang kamu jual?\n\n(Contoh: Kalkulator Casio fx-991EX Bekas)",
         [{ title: "❌ Batal", payload: "ACTION_CANCEL" }]
       );
       return { ok: true, step: "jual_ask_title" };
@@ -137,11 +294,12 @@ export async function handleInstagramDmEvent({
         return { ok: false, error: "title_too_short" };
       }
 
-      const mod = checkProhibitedListing(rawText, "");
+      const cleanedTitle = sanitizeListingTitle(rawText);
+      const mod = checkProhibitedListing(cleanedTitle, "");
       if (mod.prohibited) {
         await sendInstagramQuickReplies(
           cleanSender,
-          `⛔ Maaf kak, barang ini terdeteksi barang yang tidak diizinkan (${mod.reason}). Coba jual barang lain ya.`,
+          `⛔ Maaf kak, barang ini terdeteksi barang terlarang (${mod.reason}). Dilarang demi keselamatan kampus dan kebijakan AdSense.`,
           [{ title: "🛍️ Jual Lainnya", payload: "ACTION_JUAL" }, { title: "❌ Batal", payload: "ACTION_CANCEL" }]
         );
         await clearDmSession(cleanSender);
@@ -153,13 +311,13 @@ export async function handleInstagramDmEvent({
         step: "jual_ask_price",
         data: {
           ...session.data,
-          title: rawText,
+          title: cleanedTitle,
         },
       });
 
       await sendInstagramQuickReplies(
         cleanSender,
-        `💰 Berapa *Harga* untuk "${rawText}"?\n\n(Contoh: 180000 atau ketik 180rb)`,
+        `💰 **Langkah 3:** Berapa *Harga* untuk "${cleanedTitle}"?\n\n(Contoh: 180000 atau ketik 180rb)`,
         [{ title: "❌ Batal", payload: "ACTION_CANCEL" }]
       );
       return { ok: true, step: "jual_ask_price" };
@@ -167,11 +325,14 @@ export async function handleInstagramDmEvent({
 
     // Step 3: Menerima Harga Barang
     if (session.step === "jual_ask_price") {
-      const price = parseInstagramPrice(rawText);
-      if (!price || price < 1000) {
+      const parsedPrice = parseInstagramPrice(rawText);
+      let normalizedPrice;
+      try {
+        normalizedPrice = normalizePriceInput(parsedPrice, "barang", "Elektronik");
+      } catch (err) {
         await sendInstagramText(
           cleanSender,
-          "⚠️ Masukkan nominal harga yang wajar ya kak (minimal Rp 1.000). Contoh: 50rb atau 50000:"
+          `⚠️ ${err.message || "Masukkan nominal harga yang wajar (minimal Rp 1.000)."}`
         );
         return { ok: false, error: "invalid_price" };
       }
@@ -181,57 +342,29 @@ export async function handleInstagramDmEvent({
         step: "jual_ask_desc",
         data: {
           ...session.data,
-          price,
+          price: normalizedPrice,
         },
       });
 
       await sendInstagramQuickReplies(
         cleanSender,
-        `📋 Tuliskan *Deskripsi singkat* barang (kondisi fisik, kelengkapan, titik temu COD):\n\n(Contoh: Kondisi 95% mulus, tombol empuk, COD di Pendopo USU)`,
+        "📋 **Langkah 4:** Tuliskan *Deskripsi singkat* (kondisi fisik, kelengkapan, titik temu COD):\n\n(Contoh: Mulus 95%, lengkap dus, COD di Pendopo USU)",
         [
-          { title: "⏩ Lewati deskripsi", payload: "ACTION_SKIP_DESC" },
+          { title: "⏩ Lewati Deskripsi", payload: "ACTION_SKIP_DESC" },
           { title: "❌ Batal", payload: "ACTION_CANCEL" },
         ]
       );
       return { ok: true, step: "jual_ask_desc" };
     }
 
-    // Step 4: Menerima Deskripsi Barang
+    // Step 4: Menerima Deskripsi Barang & Pratinjau
     if (session.step === "jual_ask_desc") {
       const isSkipDesc = payload === "ACTION_SKIP_DESC" || lowerText === "skip" || lowerText === "lewati";
       const description = isSkipDesc ? "" : rawText;
 
-      await setDmSession(cleanSender, {
-        ...session,
-        step: "jual_ask_wa",
-        data: {
-          ...session.data,
-          description,
-        },
-      });
-
-      await sendInstagramQuickReplies(
-        cleanSender,
-        "📱 Terakhir, masukkan *Nomor WhatsApp* kamu agar pembeli bisa langsung menghubungi:\n\n(Contoh: 081234567890)",
-        [{ title: "❌ Batal", payload: "ACTION_CANCEL" }]
-      );
-      return { ok: true, step: "jual_ask_wa" };
-    }
-
-    // Step 5: Menerima Nomor WhatsApp & Konfirmasi
-    if (session.step === "jual_ask_wa") {
-      const waFormatted = formatWa(rawText);
-      if (!waFormatted || waFormatted.length < 10) {
-        await sendInstagramText(
-          cleanSender,
-          "⚠️ Format nomor WhatsApp kurang tepat. Pastikan minimal 10 digit (contoh: 081234567890):"
-        );
-        return { ok: false, error: "invalid_wa" };
-      }
-
       const listingData = {
         ...session.data,
-        seller_wa: waFormatted,
+        description,
       };
 
       await setDmSession(cleanSender, {
@@ -241,50 +374,98 @@ export async function handleInstagramDmEvent({
       });
 
       const konfirmasi = [
-        "🔎 *Cek Detail Iklanmu:*",
+        "🔎 *Pratinjau Iklanmu:*",
         "",
         `📌 *Barang:* ${listingData.title}`,
         `💰 *Harga:* ${rupiah(listingData.price)}`,
         `📋 *Deskripsi:* ${listingData.description || "Tidak ada deskripsi"}`,
+        `📍 *Kampus:* ${listingData.campus || "USU / POLMED"}`,
         `📱 *WhatsApp:* +${listingData.seller_wa}`,
         "",
-        "Siap ditayangkan langsung ke Web, Grup WA, dan Katalog Instagram?",
+        "Siap dikirim untuk peninjauan moderator kampus?",
       ].join("\n");
 
       await sendInstagramQuickReplies(cleanSender, konfirmasi, [
-        { title: "✅ Tayangkan Sekarang", payload: "ACTION_CONFIRM_PUBLISH" },
+        { title: "✅ Tayangkan Iklan", payload: "ACTION_CONFIRM_PUBLISH" },
         { title: "❌ Batal", payload: "ACTION_CANCEL" },
       ]);
       return { ok: true, step: "jual_confirm" };
     }
 
-    // Step 6: Eksekusi Publikasi Iklan
+    // Step 5: Eksekusi Publikasi / Pengiriman Iklan
     if (session.step === "jual_confirm") {
       if (payload === "ACTION_CONFIRM_PUBLISH" || lowerText === "ya" || lowerText === "tayangkan") {
         const item = session.data;
-        const supa = getAdminClient();
 
-        // 1. Simpan ke Database Web (listings)
-        const { data: newListing, error: insertErr } = await supa
+        // Pastikan akun penjual masih tertaut sah
+        const linked = await getLinkedSeller(cleanSender);
+        if (!linked.linked || linked.wa !== item.seller_wa) {
+          await sendInstagramText(cleanSender, "⚠️ Sesi penautan akun berakhir. Silakan mulai ulang penautan WhatsApp.");
+          await clearDmSession(cleanSender);
+          return { ok: false, error: "session_expired" };
+        }
+
+        // Moderasi Lengkap (Deterministik + Gemini)
+        const moderation = await moderateListing({
+          title: item.title,
+          description: item.description,
+          price: item.price,
+          category: "Elektronik",
+          type: "barang",
+          seller_wa: linked.wa,
+        });
+
+        if (moderation.status === "rejected") {
+          await sendInstagramQuickReplies(
+            cleanSender,
+            `⛔ Iklan tidak dapat ditayangkan: ${moderation.moderation_reason}`,
+            [{ title: "🛍️ Jual Lainnya", payload: "ACTION_JUAL" }, { title: "❌ Batal", payload: "ACTION_CANCEL" }]
+          );
+          await clearDmSession(cleanSender);
+          return { ok: false, error: "moderation_rejected" };
+        }
+
+        const supa = getAdminClient();
+        const settings = await getSettings().catch(() => ({ pricing: {} }));
+        const amount = adFeeFrom(settings.pricing, "barang", item.price);
+        const isFreeMode = amount === 0 || settings.pricing?.freeMode !== false;
+
+        // Pilot policy: status 'pending' agar moderator meninjau sebelum siaran WhatsApp
+        const initialStatus = "pending";
+        const modReason = "Menunggu peninjauan moderator kampus (Instagram DM)";
+
+        const insertPayload = {
+          title: item.title,
+          price: item.price,
+          description: item.description || "",
+          seller_name: linked.profile?.name || `Penjual IG (${cleanSender.slice(-4)})`,
+          seller_wa: linked.wa,
+          image_url: item.image_url || null,
+          status: initialStatus,
+          type: "barang",
+          campus: linked.campus || "USU / POLMED",
+          area: "Sekitar Kampus",
+          condition: "used",
+          moderation_reason: modReason,
+          risk_score: moderation.risk_score || 0.0,
+          bumped_at: new Date().toISOString(),
+          expires_at: new Date(Date.now() + 14 * 86400000).toISOString(),
+        };
+
+        let { data: newListing, error: insertErr } = await supa
           .from("listings")
-          .insert({
-            title: item.title,
-            price: item.price,
-            description: item.description || "",
-            seller_name: `Penjual IG (${cleanSender.slice(-4)})`,
-            seller_wa: item.seller_wa,
-            image_url: item.image_url || null,
-            status: "active",
-            type: "barang",
-            campus: "Semua",
-            area: "Sekitar Kampus",
-            condition: "used",
-            moderation_reason: "Lolos moderasi otomatis via Instagram DM",
-            bumped_at: new Date().toISOString(),
-            expires_at: new Date(Date.now() + 14 * 86400000).toISOString(),
-          })
+          .insert(insertPayload)
           .select()
           .single();
+
+        // Fallback jika skema database produksi belum punya kolom moderasi (PGRST204)
+        if (insertErr && (insertErr.code === "PGRST204" || String(insertErr.message || "").includes("column"))) {
+          delete insertPayload.moderation_reason;
+          delete insertPayload.risk_score;
+          const retry = await supa.from("listings").insert(insertPayload).select().single();
+          newListing = retry.data;
+          insertErr = retry.error;
+        }
 
         if (insertErr || !newListing) {
           console.error("Gagal simpan listing via IG DM:", insertErr);
@@ -293,272 +474,114 @@ export async function handleInstagramDmEvent({
           return { ok: false, error: insertErr?.message };
         }
 
-        // 2. Siarkan ke WhatsApp Group & Channel
-        try {
-          await postToGroup(newListing);
-        } catch (err) {
-          console.warn("postToGroup via IG DM warning:", err?.message);
-        }
-
-        // 3. Masukkan ke Antrean Instagram Feed
-        try {
-          await autoPublishListingInstagram({
-            origin: siteBaseUrl(),
-            listingId: newListing.id,
-            timeoutMs: 0,
-          });
-        } catch (err) {
-          console.warn("autoPublishListingInstagram via IG DM warning:", err?.message);
-        }
-
-        // 4. Kirim Web Push
-        try {
-          await pushListingBaru(supa, newListing);
-        } catch (err) {}
-
         await clearDmSession(cleanSender);
 
         const detailUrl = `${siteBaseUrl()}/produk/${buildSlug(newListing.title, newListing.id)}`;
+
+        // Mode Berbayar: buat order pembayaran jika berlaku
+        if (!isFreeMode && amount > 0) {
+          const orderId = `IKLAN-IG-${newListing.id.slice(0, 8)}-${Date.now()}`;
+          await supa.from("payments").insert({
+            listing_id: newListing.id,
+            type: "iklan",
+            amount,
+            status: "pending",
+            midtrans_order_id: orderId,
+          }).catch(() => {});
+
+          const payMsg = [
+            "📋 *Iklan Berhasil Dibuat!*",
+            "",
+            `📌 *Judul:* ${newListing.title}`,
+            `💰 *Biaya Tayang:* ${rupiah(amount)}`,
+            "",
+            `Silakan selesaikan pembayaran biaya pasang iklan di:`,
+            `${siteBaseUrl()}/dashboard`,
+            "",
+            "Setelah pembayaran terverifikasi, iklan akan segera ditinjau dan ditayangkan.",
+          ].join("\n");
+
+          await sendInstagramQuickReplies(cleanSender, payMsg, [
+            { title: "🛍️ Pasang Iklan Lain", payload: "ACTION_JUAL" },
+            { title: "📋 Menu Utama", payload: "ACTION_MENU" },
+          ]);
+          return { ok: true, action: "payment_required", listingId: newListing.id };
+        }
+
+        // Mode Gratis / Pilot: Masuk Antrean Moderasi
         const successMsg = [
-          "🎉 *Iklanmu BERHASIL Ditayangkan!*",
+          "🎉 *Iklanmu Berhasil Terkirim!*",
           "",
-          `🌐 *Lihat di Web:* ${detailUrl}`,
-          "📲 *WhatsApp:* Otomatis disiarkan ke Grup & Channel Kampus",
-          "📸 *Instagram:* Dalam antrean tayang feed @usupolmedkatalog",
+          `📌 *Judul:* ${newListing.title}`,
+          `⏳ *Status:* Menunggu peninjauan moderator kampus`,
+          `🌐 *Pratinjau Web:* ${detailUrl}`,
           "",
-          "Semoga cepat laku ya kak! ✨",
+          "Setelah disetujui moderator, iklanmu akan otomatis aktif dan disiarkan ke WhatsApp Kampus Kita.",
         ].join("\n");
 
         await sendInstagramQuickReplies(cleanSender, successMsg, [
-          { title: "🛍️ Jual Barang Lagi", payload: "ACTION_JUAL" },
-          { title: "🔍 Cari Barang", payload: "ACTION_SEARCH" },
+          { title: "🛍️ Pasang Iklan Lain", payload: "ACTION_JUAL" },
           { title: "📋 Menu Utama", payload: "ACTION_MENU" },
         ]);
-        return { ok: true, action: "published", listingId: newListing.id };
+        return { ok: true, action: "submitted_for_review", listingId: newListing.id };
       }
     }
   }
 
-  // ── 3. STATE MACHINE: MENFESS KAMPUS (SESUAI GAMBAR) ──
-  if (session?.flow === "menfess") {
-    // Step 1: Menerima foto menfess (atau skip)
-    if (session.step === "menfess_ask_photo") {
-      const isSkip = payload === "ACTION_SKIP_PHOTO" || lowerText === "skip" || lowerText === "lewati";
-      let imageUrl = null;
-
-      if (!isSkip) {
-        const imgAttachment = attachments.find((a) => a.type === "image");
-        if (imgAttachment?.payload?.url) {
-          imageUrl = imgAttachment.payload.url;
-        }
-      }
-
-      const supa = getAdminClient();
-      const content = session.data?.content || "";
-
-      // Simpan menfess ke database mading_posts
-      const { data: post, error: insertErr } = await supa
-        .from("mading_posts")
-        .insert({
-          content,
-          sender_name: "Anonim IG",
-          faculty: "Semua",
-          type: "menfess",
-          status: "approved",
-          image_url: imageUrl,
-          is_anon: true,
-          created_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
-
-      await clearDmSession(cleanSender);
-
-      if (insertErr || !post) {
-        await sendInstagramText(cleanSender, "❌ Terjadi kendala saat menyimpan menfess. Coba lagi sebentar ya kak.");
-        return { ok: false, error: insertErr?.message };
-      }
-
-      const successMenfessMsg = [
-        "✅ *Menfess kamu berhasil diterima!*",
-        "",
-        `Nomor antrean: #${post.id ? String(post.id).slice(-4) : "FESS"}`,
-        `🌐 Tayang di web: ${siteBaseUrl()}/mading`,
-        "📸 Segera diproses ke feed & story Instagram!",
-        "",
-        "Terima kasih sudah berbagi! 💌",
-      ].join("\n");
-
-      await sendInstagramQuickReplies(cleanSender, successMenfessMsg, [
-        { title: "💬 Kirim Menfess Lagi", payload: "ACTION_MENFESS" },
-        { title: "🛍️ Jual Barang", payload: "ACTION_JUAL" },
-        { title: "📋 Menu Utama", payload: "ACTION_MENU" },
-      ]);
-      return { ok: true, action: "menfess_published", postId: post.id };
-    }
-
-    if (session.step === "menfess_ask_text") {
-      if (!rawText || rawText.length < 5) {
-        await sendInstagramText(cleanSender, "⚠️ Pesan menfess terlalu pendek. Tuliskan curhatanmu minimal beberapa kata ya:");
-        return { ok: false, error: "menfess_too_short" };
-      }
-
-      await setDmSession(cleanSender, {
-        flow: "menfess",
-        step: "menfess_ask_photo",
-        data: { content: rawText },
-      });
-
-      // Balasan persis seperti tangkapan layar pengguna
-      const replyPrompt = [
-        "📷 Selanjutnya, kirim foto untuk menfess kamu, maks 5 foto.",
-        "",
-        '"skip" untuk melanjutkan tanpa gambar',
-        '"batal" untuk membatalkan',
-      ].join("\n");
-
-      await sendInstagramQuickReplies(cleanSender, replyPrompt, [
-        { title: "⏩ Skip, tanpa gambar", payload: "ACTION_SKIP_PHOTO" },
-        { title: "❌ Batal", payload: "ACTION_CANCEL" },
-      ]);
-      return { ok: true, step: "menfess_ask_photo" };
-    }
-  }
-
-  // ── 4. PERINTAH AWAL / MENU UTAMA (IDLE) ──
-
-  // Trigger: Jual Barang
+  // ── 4. ENTRY POINT ALUR JUAL (JUAL / PASANG IKLAN / ACTION_JUAL) ──
   if (
     payload === "ACTION_JUAL" ||
+    payload === "ACTION_CONTINUE_PHOTO" ||
     lowerText === "jual" ||
-    lowerText.startsWith("jual ") ||
-    lowerText === "wts"
+    lowerText === "pasang iklan" ||
+    lowerText === "iklan"
   ) {
-    await setDmSession(cleanSender, {
-      flow: "jual",
-      step: "jual_ask_photo",
-      data: {},
-    });
+    // Periksa apakah Instagram sender sudah ditautkan ke akun WhatsApp
+    const linked = await getLinkedSeller(cleanSender);
 
-    await sendInstagramQuickReplies(
-      cleanSender,
-      "📸 *Mulai Pasang Iklan di Kampus Kita!*\n\nKirimkan *foto barang* yang mau kamu jual (bisa foto langsung atau dari galeri):\n\nAtau ketuk tombol di bawah jika tanpa foto:",
-      [
-        { title: "⏩ Lewati, tanpa foto", payload: "ACTION_SKIP_PHOTO" },
-        { title: "❌ Batal", payload: "ACTION_CANCEL" },
-      ]
-    );
-    return { ok: true, flow: "jual", step: "jual_ask_photo" };
-  }
-
-  // Trigger: Menfess
-  if (
-    payload === "ACTION_MENFESS" ||
-    lowerText === "menfess" ||
-    lowerText.startsWith("menfess ") ||
-    lowerText.startsWith("#menfess")
-  ) {
-    const directContent = rawText.replace(/^(#?menfess)\s*/i, "").trim();
-
-    if (directContent.length >= 5) {
+    if (linked.linked) {
       await setDmSession(cleanSender, {
-        flow: "menfess",
-        step: "menfess_ask_photo",
-        data: { content: directContent },
+        flow: "jual",
+        step: "jual_ask_photo",
+        data: {
+          seller_wa: linked.wa,
+          campus: linked.campus || "Semua",
+        },
       });
 
-      // Balasan persis seperti tangkapan layar pengguna
-      const replyPrompt = [
-        "📷 Selanjutnya, kirim foto untuk menfess kamu, maks 5 foto.",
+      const maskedWa = `+${linked.wa.slice(0, 4)}...${linked.wa.slice(-3)}`;
+      const promptLinked = [
+        `Halo kak! 👋`,
+        `Akun Instagram kamu sudah terhubung dengan WhatsApp (${maskedWa}).`,
         "",
-        '"skip" untuk melanjutkan tanpa gambar',
-        '"batal" untuk membatalkan',
+        "📸 **Langkah 1:** Kirimkan 1 foto barang yang mau kamu jual (atau ketik 'skip' jika tanpa foto):",
       ].join("\n");
 
-      await sendInstagramQuickReplies(cleanSender, replyPrompt, [
-        { title: "⏩ Skip, tanpa gambar", payload: "ACTION_SKIP_PHOTO" },
+      await sendInstagramQuickReplies(cleanSender, promptLinked, [
+        { title: "⏩ Lewati Foto", payload: "ACTION_SKIP_PHOTO" },
         { title: "❌ Batal", payload: "ACTION_CANCEL" },
       ]);
-      return { ok: true, flow: "menfess", step: "menfess_ask_photo" };
-    }
+      return { ok: true, flow: "jual", step: "jual_ask_photo" };
+    } else {
+      await setDmSession(cleanSender, {
+        flow: "jual",
+        step: "jual_ask_wa",
+        data: {},
+      });
 
-    await setDmSession(cleanSender, {
-      flow: "menfess",
-      step: "menfess_ask_text",
-      data: {},
-    });
-
-    await sendInstagramQuickReplies(
-      cleanSender,
-      "💌 Tuliskan pesan curhat / menfess kampus kamu di sini:\n\n(Identitasmu dijamin 100% anonim)",
-      [{ title: "❌ Batal", payload: "ACTION_CANCEL" }]
-    );
-    return { ok: true, flow: "menfess", step: "menfess_ask_text" };
-  }
-
-  // Trigger: Cari Barang / Tanya Harga
-  if (
-    payload === "ACTION_SEARCH" ||
-    lowerText.startsWith("cari ") ||
-    lowerText.startsWith("harga ") ||
-    lowerText.startsWith("cek ")
-  ) {
-    const query = rawText.replace(/^(cari|harga|cek)\s*/i, "").trim();
-    if (!query) {
-      await sendInstagramQuickReplies(
-        cleanSender,
-        "🔍 Mau cari barang apa kak?\n\nKetik: *cari [nama barang]*\nContoh: _cari kalkulator_ atau _cari laptop_",
-        [{ title: "📋 Menu Utama", payload: "ACTION_MENU" }]
-      );
-      return { ok: true, prompt: "ask_search_query" };
-    }
-
-    const supa = getAdminClient();
-    const { data: results } = await supa
-      .from("listings")
-      .select("id, title, price, campus, area, seller_wa")
-      .eq("status", "active")
-      .ilike("title", `%${query}%`)
-      .order("created_at", { ascending: false })
-      .limit(3);
-
-    if (results && results.length > 0) {
-      const itemsText = results
-        .map(
-          (r, idx) =>
-            `${idx + 1}. *${r.title}*\n   💰 ${rupiah(r.price)} • 📍 ${r.campus || "Kampus"}\n   🔗 ${siteBaseUrl()}/produk/${buildSlug(r.title, r.id)}`
-        )
-        .join("\n\n");
-
-      const responseText = [
-        `🔎 Ditemukan ${results.length} barang untuk "*${query}*":`,
+      const promptWa = [
+        "🛍️ *Pasang Iklan via Instagram DM*",
         "",
-        itemsText,
+        "Sebelum mulai, masukkan **Nomor WhatsApp** aktif kamu untuk menautkan akun (cukup sekali di awal):",
         "",
-        `Lihat semua di: ${siteBaseUrl()}/jual-beli?q=${encodeURIComponent(query)}`,
+        "(Contoh: 081234567890)",
       ].join("\n");
 
-      await sendInstagramQuickReplies(cleanSender, responseText, [
-        { title: "🛍️ Jual Barang", payload: "ACTION_JUAL" },
-        { title: "🔍 Cari Lagi", payload: "ACTION_SEARCH" },
-        { title: "📋 Menu Utama", payload: "ACTION_MENU" },
+      await sendInstagramQuickReplies(cleanSender, promptWa, [
+        { title: "❌ Batal", payload: "ACTION_CANCEL" },
       ]);
-      return { ok: true, resultsCount: results.length };
+      return { ok: true, flow: "jual", step: "jual_ask_wa" };
     }
-
-    const notFoundText = [
-      `Belum ada yang menjual "*${query}*" saat ini kak.`,
-      "",
-      `💡 Kamu bisa buat permintaan di Papan Dicari (WTB) lewat web:`,
-      `${siteBaseUrl()}/dicari`,
-    ].join("\n");
-
-    await sendInstagramQuickReplies(cleanSender, notFoundText, [
-      { title: "🛍️ Pasang Iklan Jual", payload: "ACTION_JUAL" },
-      { title: "🔍 Cari Barang Lain", payload: "ACTION_SEARCH" },
-      { title: "📋 Menu Utama", payload: "ACTION_MENU" },
-    ]);
-    return { ok: true, resultsCount: 0 };
   }
 
   // Trigger: Panduan COD Aman
@@ -572,31 +595,28 @@ export async function handleInstagramDmEvent({
       "   • Gedung Z POLMED",
       "2. Ajak teman menemani.",
       "3. Periksa kondisi barang sebelum membayar.",
-      "4. Jangan transfer uang muka (DP) kepada orang asing.",
+      "4. Jangan pernah transfer uang muka (DP) kepada orang asing.",
       "",
       `Baca panduan lengkap: ${siteBaseUrl()}/panduan-aman`,
     ].join("\n");
 
     await sendInstagramQuickReplies(cleanSender, codTips, [
       { title: "🛍️ Jual Barang", payload: "ACTION_JUAL" },
-      { title: "💬 Kirim Menfess", payload: "ACTION_MENFESS" },
       { title: "📋 Menu Utama", payload: "ACTION_MENU" },
     ]);
     return { ok: true, action: "sent_cod_tips" };
   }
 
-  // ── 5. DEFAULT / GREETING MENU ──
+  // ── 5. DEFAULT / GREETING MENU (FOKUS FASE JUAL) ──
   const greeting = [
     "Halo kak! 👋",
-    "Selamat datang di bot resmi *Kampus Kita* (USU & POLMED).",
+    "Selamat datang di asisten resmi *Kampus Kita* (USU & POLMED).",
     "",
-    "Mau ngapain hari ini?",
+    "Ketik *JUAL* untuk memasang iklan barang langsung dari Instagram DM.",
   ].join("\n");
 
   await sendInstagramQuickReplies(cleanSender, greeting, [
     { title: "🛍️ Jual Barang", payload: "ACTION_JUAL" },
-    { title: "💬 Kirim Menfess", payload: "ACTION_MENFESS" },
-    { title: "🔍 Cari Barang / Harga", payload: "ACTION_SEARCH" },
     { title: "🛡️ Panduan COD", payload: "ACTION_PANDUAN_COD" },
   ]);
 

@@ -2,6 +2,14 @@
 
 Dokumen ini berisi peta pemahaman sistem, alur bisnis, daftar masalah, dan riwayat audit untuk proyek **Jual Beli USU Polmed**.
 
+### Pembaruan 2 November 2026 — implementasi arsitektur Jual Barang via Instagram DM (Tahap 0–4)
+
+- **Keamanan Webhook (Tahap 0)**: `GET /api/webhook/instagram` mewajibkan `META_WEBHOOK_VERIFY_TOKEN` dari environment; token hardcoded dan fallback cron secret dibuang. `POST` mewajibkan `META_APP_SECRET` serta signature HMAC-SHA256 yang sah, dengan deduplikasi ID pesan Meta in-memory untuk mencegah eksekusi ganda saat retry jaringan.
+- **Isolasi Alur Jual (Tahap 1)**: Entry point DM difokuskan 100% pada `JUAL` dan `Panduan COD`. Perintah `MENFESS` dan `CARI` dialihkan secara sopan ke website resmi dan bot WA.
+- **Penautan Akun WA/IG satu kali (Tahap 2)**: Menggunakan tabel terisolasi `ig_seller_links` dan `ig_link_challenges` (migration `202611020001_instagram_dm_seller_links.sql`). OTP 6-digit diamankan dengan HMAC-SHA256, TTL 5 menit, maks 3 percobaan. Pengguna dapat membalas `VERIF <kode>` ke bot WA atau mengetik kode di DM.
+- **Pipeline Validasi & Moderasi (Tahap 3)**: Router DM menggunakan sanitasi judul, normalisasi harga, deteksi kata terlarang, dan pipeline `moderateListing`. Seluruh kiriman DM pada fase pilot diset `status: "pending"` untuk tinjauan moderator kampus sebelum disebarkan ke WhatsApp.
+- **Integritas Pembayaran & Dead Code Fix (Tahap 4)**: Urutan alur berbayar di `src/app/api/listings/route.js` diperbaiki. Jalur berbayar membuat entri pembayaran dan QRIS sebelum mengembalikan respon, tanpa memotong aliran secara prematur. Diverifikasi dengan tes unit khusus.
+
 ### Pembaruan 31 Oktober 2026 — alur iklan penjual baru
 
 - Halaman `/jual` membagi pembuatan iklan menjadi foto, detail, dan pemeriksaan.
