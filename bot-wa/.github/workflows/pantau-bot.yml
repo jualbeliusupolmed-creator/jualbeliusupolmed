@@ -35,7 +35,7 @@ jobs:
       - name: Periksa /health
         id: periksa
         run: |
-          URL="https://bot.jualbeliusupolmed.web.id/health"
+          URL="https://bot.kampuskita.my.id/health"
 
           # Dua kali dengan jeda: satu kegagalan sekejap (deploy, restart pm2,
           # jaringan batuk) bukan alasan membangunkan orang. Yang dilaporkan
@@ -96,7 +96,7 @@ jobs:
               echo
               echo "- **Alasan:** $ALASAN"
               echo "- **Waktu (UTC):** $(date -u '+%Y-%m-%d %H:%M:%S')"
-              echo "- **Alamat:** https://bot.jualbeliusupolmed.web.id/health"
+              echo "- **Alamat:** https://bot.kampuskita.my.id/health"
               echo
               echo "Langkah pertama yang biasanya menjawab:"
               echo

@@ -620,7 +620,7 @@ cuma server.
       - **Eliminasi Infinite Loop & Exponential Backoff:** Setiap kegagalan pengiriman (termasuk putus socket/koneksi) kini secara konsisten menaikkan counter `task.attempts`. Sistem menerapkan backoff eksponensial dinamis: `Math.max(10000, delayMs * attempts)` untuk siaran dan `5000 * attempts` untuk pesan user. Setelah mencapai batas maksimal `MAX_SEND_ATTEMPTS` (3 kali), pesan dievakuasi ke `catatDibuang()` alih-alih menyandera antrean selamanya.
       - **Pembersihan Bersih & Pembatalan Permanen:** Menambahkan `batalBroadcastAktif()` yang menghapus memory array `broadcastQueue` sekaligus membersihkan file `broadcast-state.json` dari disk secara permanen.
       - **Kontrol Antrean Terpisah di UI & API:** 
-        - Halaman antrean bot (`bot.jualbeliusupolmed.web.id/antrean` / `bot-wa/antrean.html`) kini menampilkan 2 bagian terpisah: *Antrean Pengguna & Percakapan (Prioritas VIP)* dan *Antrean Siaran Massal (Broadcast Latar Belakang)* dengan tombol pembersihan spesifik: "Kosongkan Antrean User", "🛑 Batalkan & Hapus Broadcast", dan "🗑 Hapus Semua Total".
+        - Halaman antrean bot (`bot.kampuskita.my.id/antrean` / `bot-wa/antrean.html`) kini menampilkan 2 bagian terpisah: *Antrean Pengguna & Percakapan (Prioritas VIP)* dan *Antrean Siaran Massal (Broadcast Latar Belakang)* dengan tombol pembersihan spesifik: "Kosongkan Antrean User", "🛑 Batalkan & Hapus Broadcast", dan "🗑 Hapus Semua Total".
         - Menambahkan tombol "🛑 Batalkan Semua" pada antrean `wa_outbox` website di halaman web admin dan bot page untuk membatalkan semua baris pending di tabel database Supabase secara instan (`POST /api/admin/outbox` dengan `{ batal_semua: true }`).
 
 *   **28 Oktober 2026 — Katalog Universitas Terpusat**

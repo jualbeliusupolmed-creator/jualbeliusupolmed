@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Perkakas tampilan bersama — bot.jualbeliusupolmed.web.id
+   Perkakas tampilan bersama — bot.kampuskita.my.id
 
    Tiga tugas, semuanya supaya tiap halaman tidak perlu mengulang dirinya:
      1. menyuntik bilah navigasi yang sama persis di semua halaman,
