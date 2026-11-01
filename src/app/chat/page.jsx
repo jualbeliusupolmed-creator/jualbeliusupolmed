@@ -114,8 +114,10 @@ function ChatContent() {
   const roomQuery = searchParams.get("room");
   const anonView = searchParams.get("anon") === "1";
 
-  // Desktop sub-view mode: "chat" | "swipe"
-  const [desktopMode, setDesktopMode] = useState(roomQuery || anonView ? "chat" : "swipe");
+  // Desktop sub-view mode: "chat" (default transaksi) | "swipe" (teman)
+  const [desktopMode, setDesktopMode] = useState(
+    searchParams.get("mode") === "teman" ? "swipe" : "chat"
+  );
   const [sidebarFilter, setSidebarFilter] = useState("semua"); // "semua" | "teman" | "po" | "market"
   const [searchFilter, setSearchFilter] = useState("");
   const [kampusTersedia, setKampusTersedia] = useState([]);
@@ -693,8 +695,25 @@ function ChatContent() {
           <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl">
             <button
               onClick={() => {
+                setDesktopMode("chat");
+                if (searchParams.get("mode")) router.push("/chat");
+              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-all ${
+                desktopMode === "chat"
+                  ? "bg-[#047857] text-white shadow-xs"
+                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+              }`}
+            >
+              <Icon.MessageCircle className="w-4 h-4" />
+              <span>Obrolan Transaksi</span>
+              <span className="px-1.5 py-0.2 rounded-full bg-white/20 text-white text-[10px] font-black">
+                {inboxRooms.length + (ringkasAnon?.ada ? 1 : 0)}
+              </span>
+            </button>
+            <button
+              onClick={() => {
                 setDesktopMode("swipe");
-                if (roomQuery || anonView) router.push("/chat");
+                if (roomQuery || anonView) router.push("/chat?mode=teman");
               }}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-all ${
                 desktopMode === "swipe" && !roomQuery && !anonView
@@ -703,24 +722,7 @@ function ChatContent() {
               }`}
             >
               <Icon.Users className="w-4 h-4 text-emerald-300" />
-              <span>Cari Teman &amp; Swipe</span>
-              <span className="px-1.5 py-0.2 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 text-[10px] font-black">
-                Live
-              </span>
-            </button>
-            <button
-              onClick={() => setDesktopMode("chat")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-all ${
-                desktopMode === "chat" || roomQuery || anonView
-                  ? "bg-[#047857] text-white shadow-xs"
-                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              <Icon.MessageCircle className="w-4 h-4" />
-              <span>Semua Percakapan</span>
-              <span className="px-1.5 py-0.2 rounded-full bg-white/20 text-white text-[10px] font-black">
-                {inboxRooms.length + (ringkasAnon?.ada ? 1 : 0)}
-              </span>
+              <span>Teman Kampus</span>
             </button>
           </div>
 
@@ -799,51 +801,7 @@ function ChatContent() {
               )}
             </div>
 
-            {/* Horizontal Story / Match Baru Avatars (hanya tampil jika sudah masuk dan ada match) */}
-            {isLoggedIn && MATCH_HARI_INI.length > 0 && (
-              <div className="flex flex-col gap-1.5 pt-1">
-                <div className="flex items-center justify-between text-xs text-slate-400">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Teman Baru</span>
-                  <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
-                    {MATCH_HARI_INI.length} Teman
-                  </span>
-                </div>
-                <div className="flex items-center gap-2.5 overflow-x-auto py-1 scrollbar-none [scrollbar-width:none]">
-                  {/* Swipe shortcut */}
-                  <button
-                    onClick={() => {
-                      setDesktopMode("swipe");
-                      router.push("/chat");
-                    }}
-                    className="w-11 h-11 rounded-full border-2 border-dashed border-emerald-600/60 dark:border-emerald-500/60 flex flex-col items-center justify-center text-emerald-700 dark:text-emerald-400 shrink-0 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors"
-                    title="Cari Teman Baru"
-                  >
-                    <Icon.Plus className="w-4 h-4" />
-                  </button>
-
-                  {MATCH_HARI_INI.map((m, idx) => (
-                    <div
-                      key={idx}
-                      onClick={() => {
-                        setDesktopMode("swipe");
-                        setSwipeIndex(idx % PROFIL_SWIPE_DEFAULT.length);
-                        router.push("/chat");
-                      }}
-                      className="flex flex-col items-center gap-1 shrink-0 cursor-pointer group"
-                    >
-                      <div className="w-11 h-11 rounded-full p-0.5 bg-gradient-to-tr from-emerald-700 to-teal-500 flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
-                        <div className="w-full h-full rounded-full bg-white dark:bg-slate-900 flex items-center justify-center text-xs font-bold text-emerald-800 dark:text-emerald-300">
-                          {m.initials}
-                        </div>
-                      </div>
-                      <span className="text-[10px] font-semibold text-slate-700 dark:text-slate-300 truncate max-w-[50px] text-center">
-                        {m.name.split(" ")[0]}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Horizontal Story / Match Baru Avatars sengaja dihilangkan untuk menjaga kejujuran data — hanya obrolan riil yang ditampilkan */}
 
             {/* Segmented Filter Pills */}
             <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 scrollbar-none [scrollbar-width:none]">
@@ -870,49 +828,51 @@ function ChatContent() {
 
           {/* Chat List Scroll Area */}
           <div className="flex-1 overflow-y-auto divide-y-0 p-2 space-y-1.5 scrollbar-none [scrollbar-width:none]">
-            {/* Pinned Item: Cari Teman & Swipe (from 16.html) */}
-            <article
-              onClick={() => {
-                setDesktopMode("swipe");
-                router.push("/chat");
-              }}
-              className={`p-2.5 rounded-xl border flex items-start gap-3 cursor-pointer transition-all relative ${
-                desktopMode === "swipe" && !roomQuery && !anonView
-                  ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 shadow-sm"
-                  : "bg-white dark:bg-slate-900/60 border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40"
-              }`}
-            >
-              <div className="relative shrink-0">
-                <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-emerald-700 to-teal-500 text-white flex items-center justify-center font-bold text-sm shadow-xs">
-                  <Icon.Users className="w-5 h-5 text-emerald-200" />
+            {/* Pinned Item: Cari Teman & Swipe (hanya tampil jika memilih filter teman atau mode teman aktif) */}
+            {(sidebarFilter === "teman" || desktopMode === "swipe") && (
+              <article
+                onClick={() => {
+                  setDesktopMode("swipe");
+                  router.push("/chat?mode=teman");
+                }}
+                className={`p-2.5 rounded-xl border flex items-start gap-3 cursor-pointer transition-all relative ${
+                  desktopMode === "swipe" && !roomQuery && !anonView
+                    ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 shadow-sm"
+                    : "bg-white dark:bg-slate-900/60 border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                }`}
+              >
+                <div className="relative shrink-0">
+                  <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-emerald-700 to-teal-500 text-white flex items-center justify-center font-bold text-sm shadow-xs">
+                    <Icon.Users className="w-5 h-5 text-emerald-200" />
+                  </div>
+                  <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-black animate-pulse" />
                 </div>
-                <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-black animate-pulse" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-1 mb-0.5">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-xs font-black text-emerald-800 dark:text-emerald-300 truncate">
-                      Cari Teman &amp; Swipe
-                    </span>
-                    <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-[#047857] text-white truncate shrink-0">
-                      Mode Aktif ⚡
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1 mb-0.5">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="text-xs font-black text-emerald-800 dark:text-emerald-300 truncate">
+                        Cari Teman &amp; Kenalan
+                      </span>
+                      <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-[#047857] text-white truncate shrink-0">
+                        Mode Aktif ⚡
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 shrink-0">Online</span>
+                  </div>
+                  <div className="flex items-center gap-1 mb-1">
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold">
+                      <Icon.Flame className="w-3 h-3" />
+                      <span className="truncate max-w-[130px]">Teman Kampus</span>
                     </span>
                   </div>
-                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 shrink-0">Online</span>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[11px] text-slate-600 dark:text-slate-400 truncate">
+                      Buka untuk mencari partner nugas atau teman nongkrong
+                    </p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1 mb-1">
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold">
-                    <Icon.Flame className="w-3 h-3" />
-                    <span className="truncate max-w-[130px]">Swipe Kenalan Kampus</span>
-                  </span>
-                </div>
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-[11px] text-slate-600 dark:text-slate-400 truncate">
-                    Buka untuk cari teman di sekitarmu
-                  </p>
-                </div>
-              </div>
-            </article>
+              </article>
+            )}
 
             {/* Pinned Label */}
             <div className="px-2 pt-2 pb-0.5 flex items-center justify-between text-slate-400">
@@ -1199,43 +1159,23 @@ function ChatContent() {
                 {/* Sisi Kanan: Match Hari Ini & Basecamp Favorit (from 16.html) */}
                 <div className="w-full xl:w-72 shrink-0 flex flex-col gap-4">
                   <div className="bg-white dark:bg-[#1c1c1e] rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4 shadow-xs">
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">
-                        Match Hari Ini
-                      </h4>
-                      <span className="px-2 py-0.2 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 text-[10px] font-bold">
-                        3 Teman
-                      </span>
-                    </div>
-                    <div className="space-y-2.5">
-                      {MATCH_HARI_INI.map((m, idx) => (
-                        <div
-                          key={idx}
-                          className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
-                        >
-                          <div className="w-9 h-9 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-bold flex items-center justify-center text-xs shrink-0">
-                            {m.initials}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                              {m.name}
-                            </p>
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
-                              {m.faculty}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => {
-                              toast.success(`Membuka percakapan dengan ${m.name}`);
-                              router.push("/chat?anon=1");
-                            }}
-                            className="px-2.5 py-1 rounded-lg bg-[#047857] text-white text-[10px] font-black shrink-0 hover:bg-emerald-800 transition-colors"
-                          >
-                            Chat
-                          </button>
-                        </div>
-                      ))}
-                    </div>
+                    <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                      <Icon.ShieldCheck className="w-4 h-4 text-emerald-600" />
+                      Panduan Kenalan Aman
+                    </h4>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed mb-2.5">
+                      Teman Kampus menghubungkan sesama mahasiswa aktif untuk partner belajar, tugas kelompok, atau kolaborasi lomba.
+                    </p>
+                    <ul className="text-[10px] text-slate-500 dark:text-slate-400 space-y-1.5">
+                      <li className="flex items-start gap-1.5">
+                        <span className="text-emerald-600 font-bold">•</span>
+                        <span>Selalu janjian bertemu di area publik kampus yang ramai.</span>
+                      </li>
+                      <li className="flex items-start gap-1.5">
+                        <span className="text-emerald-600 font-bold">•</span>
+                        <span>Jangan membagikan data pribadi sensitif atau rekening bank.</span>
+                      </li>
+                    </ul>
                   </div>
 
                   <div className="bg-slate-100 dark:bg-slate-900/60 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4">
@@ -1652,6 +1592,76 @@ function ChatContent() {
                   )}
                 </>
               )}
+            </div>
+          )}
+
+          {/* ── SUB-VIEW D: KOTAK MASUK OBROLAN TRANSAKSI (Default saat buka /chat) ── */}
+          {desktopMode === "chat" && !roomQuery && !anonView && (
+            <div className="flex-1 flex flex-col h-full overflow-y-auto bg-slate-50 dark:bg-black p-4 sm:p-8">
+              <div className="max-w-xl mx-auto w-full my-auto flex flex-col items-center text-center space-y-5">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-700 to-teal-500 text-white flex items-center justify-center shadow-lg shadow-emerald-700/20">
+                  <Icon.MessageCircle className="w-7 h-7" />
+                </div>
+
+                <div className="space-y-1.5">
+                  <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+                    Obrolan Transaksi &amp; COD Kampus
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-md mx-auto leading-relaxed">
+                    Hubungi penjual langsung dari iklan barang di Marketplace. Tawar harga secara wajar dan sepakati titik temu COD yang aman.
+                  </p>
+                </div>
+
+                {/* 3 Panduan Transaksi Aman */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full text-left">
+                  <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1 shadow-xs">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-[#047857] dark:text-emerald-400 flex items-center justify-center">
+                      <Icon.ShieldCheck className="w-4 h-4" />
+                    </div>
+                    <p className="text-xs font-bold text-slate-900 dark:text-white">Privasi Terjaga</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Nomor WhatsApp kamu tidak dibocorkan di antarmuka obrolan.</p>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1 shadow-xs">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-[#047857] dark:text-emerald-400 flex items-center justify-center">
+                      <Icon.MapPin className="w-4 h-4" />
+                    </div>
+                    <p className="text-xs font-bold text-slate-900 dark:text-white">COD Tempat Ramai</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Sepakati ketemuan di Pendopo, Pintu 1-4, atau Kantin kampus.</p>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1 shadow-xs">
+                    <div className="w-7 h-7 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 flex items-center justify-center">
+                      <Icon.AlertTriangle className="w-4 h-4" />
+                    </div>
+                    <p className="text-xs font-bold text-slate-900 dark:text-white">Dilarang Transfer DP</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Jangan kirim uang muka sebelum melihat fisik barang langsung.</p>
+                  </div>
+                </div>
+
+                {/* Status Percakapan / Tombol CTA */}
+                <div className="p-4 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 w-full flex flex-col sm:flex-row items-center justify-between gap-3 text-left">
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-bold text-emerald-950 dark:text-emerald-200">
+                      {inboxRooms.length > 0
+                        ? `Ada ${inboxRooms.length} percakapan aktif di kotak masukmu`
+                        : "Belum ada obrolan transaksi aktif"}
+                    </p>
+                    <p className="text-[11px] text-emerald-800/80 dark:text-emerald-300/80">
+                      {inboxRooms.length > 0
+                        ? "Pilih salah satu percakapan di bilah sisi kiri untuk membaca dan membalas pesan."
+                        : "Untuk memulai obrolan baru dengan penjual, tekan tombol 'Chat Penjual' pada iklan barang di Marketplace."}
+                    </p>
+                  </div>
+
+                  <Link
+                    href="/jual-beli"
+                    className="px-4 py-2 rounded-xl bg-[#047857] hover:bg-emerald-800 text-white text-xs font-bold shrink-0 transition-colors shadow-xs"
+                  >
+                    Buka Marketplace
+                  </Link>
+                </div>
+              </div>
             </div>
           )}
         </section>
