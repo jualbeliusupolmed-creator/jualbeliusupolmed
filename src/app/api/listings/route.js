@@ -395,6 +395,29 @@ export async function POST(req) {
       await supa.from("listings").update({ images }).eq("id", listing.id);
     }
 
+    // Cek apakah iklan ini membutuhkan pembayaran biaya tayang platform (mode berbayar aktif)
+    const requiresPayment = !isFreeMode && amount > 0 && !isPro && !isJasaFree && !punyaToko;
+
+    if (requiresPayment) {
+      const orderId = `IKLAN-${listing.id.slice(0, 8)}-${Date.now()}`;
+      await supa.from("payments").insert({
+        listing_id: listing.id,
+        type: "iklan",
+        amount,
+        status: "pending",
+        midtrans_order_id: orderId,
+      });
+
+      const paymentUrl = "/qris.png";
+      return NextResponse.json({
+        listing,
+        paymentUrl,
+        orderId,
+        amount,
+        isFreeMode: false,
+      });
+    }
+
     // HANYA disebarkan ke grup WA & notifikasi jika sudah AKTIF (approved)
     if (initialStatus === "active") {
       try {
@@ -417,30 +440,17 @@ export async function POST(req) {
         isJasaFree,
         isDistributor,
         punyaToko,
-        isFreeMode,
+        isFreeMode: true,
       });
     }
 
-    // Response jika berstatus pending
+    // Response jika berstatus pending (antrean peninjauan moderasi kampus)
     return NextResponse.json({
       listing,
       pending_review: true,
       message: "Iklan berhasil dikirim dan masuk antrean peninjauan moderator kampus sebelum tayang dan disebarkan ke WhatsApp.",
-      isFreeMode,
+      isFreeMode: true,
     });
-
-    const orderId = `IKLAN-${listing.id.slice(0, 8)}-${Date.now()}`;
-
-    await supa.from("payments").insert({
-      listing_id: listing.id,
-      type: "iklan",
-      amount,
-      status: "pending",
-      midtrans_order_id: orderId,
-    });
-
-    const paymentUrl = "/qris.png";
-    return NextResponse.json({ listing, paymentUrl, orderId, amount });
   } catch (e) {
     return jawabGalat(e);
   }

@@ -1870,6 +1870,46 @@ export async function POST(req) {
         if (adminRes) return adminRes;
 
       // ==========================================
+      // VERIF [kode] — Verifikasi Penautan Akun Instagram DM
+      // ==========================================
+      } else if (textMsg.startsWith("VERIF ") || textMsg.startsWith("VERIFIKASI ") || textMsg === "VERIF" || textMsg === "VERIFIKASI") {
+        const parts = textMsg.split(/\s+/);
+        const otpCode = parts[1]?.trim();
+        if (!otpCode || otpCode.length !== 6) {
+          await sendWa(senderJid, "Format verifikasi: *VERIF [6-digit-kode]*\nContoh: *VERIF 123456*");
+          return NextResponse.json({ ok: true, state: "verif_invalid_format" });
+        }
+        const { verifyLinkChallenge } = await import("@/lib/instagramDmAuth");
+        const resVerif = await verifyLinkChallenge({ wa: normalizedWa, otpInput: otpCode });
+        if (resVerif.ok) {
+          await sendWa(senderJid,
+            `🎉 *Penautan Berhasil!*\n\n` +
+            `Akun Instagram kamu telah berhasil ditautkan ke akun Kampus Kita (+${normalizedWa}).\n\n` +
+            `Silakan buka Instagram DM kamu dan lanjutkan pemasangan iklan sekarang ✨`
+          );
+          if (resVerif.igSenderId) {
+            try {
+              const { sendInstagramQuickReplies } = await import("@/lib/instagramDm");
+              await sendInstagramQuickReplies(
+                resVerif.igSenderId,
+                `✅ *Nomor WhatsApp Berhasil Diverifikasi!*\n\nNomor +${normalizedWa} telah ditautkan. Yuk lanjutkan pasang iklanmu:`,
+                [
+                  { title: "📸 Kirim Foto Barang", payload: "ACTION_CONTINUE_PHOTO" },
+                  { title: "⏩ Lewati Foto", payload: "ACTION_SKIP_PHOTO" },
+                  { title: "❌ Batal", payload: "ACTION_CANCEL" },
+                ]
+              );
+            } catch (dmErr) {
+              console.warn("[VERIF WA] Gagal kirim notif DM:", dmErr?.message);
+            }
+          }
+          return NextResponse.json({ ok: true, state: "ig_link_verified" });
+        } else {
+          await sendWa(senderJid, `❌ ${resVerif.message}`);
+          return NextResponse.json({ ok: true, state: "ig_link_failed" });
+        }
+
+      // ==========================================
       // CEK — Ringkasan semua iklanku (views + sisa hari)
       // ==========================================
       } else if (textMsg === "CEK") {
