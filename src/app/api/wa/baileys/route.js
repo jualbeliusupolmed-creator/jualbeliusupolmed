@@ -2702,13 +2702,17 @@ export async function POST(req) {
         const isDeal = msgLower.startsWith("deal ");
         const shortId = msgLower.replace(/^(deal|gagal)\s+/i, "").trim();
         
-        // Cari di buyer_contacts menggunakan awalan uuid
-        const { data: contact } = await supa
+        // Cari di buyer_contacts menggunakan awalan uuid (UUID di Postgres tidak bisa LIKE langsung)
+        const { data: contacts } = await supa
           .from("buyer_contacts")
           .select("id, listing_id")
           .eq("seller_wa", normalizedWa)
-          .like("id", `${shortId}%`)
-          .single();
+          .order("created_at", { ascending: false })
+          .limit(20);
+
+        const contact = contacts?.find((c) =>
+          String(c.id).toLowerCase().startsWith(shortId.toLowerCase())
+        );
 
         if (!contact) {
           await sendWa(senderJid, `❌ Kode kontak tidak ditemukan atau pesanan bukan milik Anda.`);
