@@ -22,7 +22,8 @@ import crypto from "crypto";
 // terlihat di log lebih baik daripada cron yang bisa dipicu orang luar.
 export function tolakCron(req) {
   const rahasia = process.env.CRON_SECRET;
-  if (!rahasia) {
+  const tokenBot = process.env.BAILEYS_API_TOKEN;
+  if (!rahasia && !tokenBot) {
     return NextResponse.json(
       {
         error:
@@ -35,14 +36,18 @@ export function tolakCron(req) {
   }
 
   const dikirim = req.headers.get("authorization") || "";
-  const diharapkan = `Bearer ${rahasia}`;
-  // Bandingkan lewat hash supaya panjang yang berbeda tidak melempar, dan
-  // supaya lamanya menjawab tidak membocorkan berapa banyak awalan yang cocok.
-  const a = crypto.createHash("sha256").update(dikirim).digest();
-  const b = crypto.createHash("sha256").update(diharapkan).digest();
-  if (!crypto.timingSafeEqual(a, b)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const cocok = (expectedToken) => {
+    if (!expectedToken) return false;
+    const diharapkan = `Bearer ${expectedToken}`;
+    const a = crypto.createHash("sha256").update(dikirim).digest();
+    const b = crypto.createHash("sha256").update(diharapkan).digest();
+    return crypto.timingSafeEqual(a, b);
+  };
+
+  if (cocok(rahasia) || cocok(tokenBot)) {
+    return null;
   }
 
-  return null;
+  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 }
