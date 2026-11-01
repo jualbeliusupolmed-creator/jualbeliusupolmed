@@ -168,18 +168,32 @@ export async function POST(request) {
           const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").replace(/\/$/, "");
           const roomUrl = finalRoomId ? `${baseUrl}/chat?room=${finalRoomId}` : `${baseUrl}/chat`;
 
-          const pesanNotif = ` *IT'S A MATCH! — Teman Kampus Kita*\n\n` +
-            `Hai kak! Profil kamu dan *${partner.display_name || "Seseorang"}* (${partner.campus} · ${partner.faculty}) saling LIKE di fitur Cari Teman!\n\n` +
-            `Sistem telah membuat ruang obrolan anonim spesial untuk kalian. Langsung sapa dia di sini:\n${roomUrl}\n\n` +
-            `_Teman baru, peluang baru di kampus! _`;
+          const partnerNama = partner.display_name || "Seseorang";
+          const swiperNama = swiperProfile.display_name || "Seseorang";
+          const partnerKampus = [partner.campus, partner.faculty].filter(Boolean).join(" · ") || "Mahasiswa";
+          const swiperKampus = [swiperProfile.campus, swiperProfile.faculty].filter(Boolean).join(" · ") || "Mahasiswa";
+
+          const pesanSwiper =
+            `🎉 *IT'S A MATCH! — Teman KampusKita*\n\n` +
+            `Hai ${swiperNama}! Profil kamu dan *${partnerNama}* (${partnerKampus}) baru saja saling cocok di Teman Kampus!\n\n` +
+            `💬 Ruang obrolan sudah siap. Yuk saling sapa di sini:\n${roomUrl}\n\n` +
+            `_Tetap jaga etika dan privasi saat mengobrol ya!_`;
+
+          const pesanPartner =
+            `🎉 *IT'S A MATCH! — Teman KampusKita*\n\n` +
+            `Hai ${partnerNama}! Profil kamu dan *${swiperNama}* (${swiperKampus}) baru saja saling cocok di Teman Kampus!\n\n` +
+            `💬 Ruang obrolan sudah siap. Yuk saling sapa di sini:\n${roomUrl}\n\n` +
+            `_Tetap jaga etika dan privasi saat mengobrol ya!_`;
 
           // Kirim notifikasi WA melalui Baileys; pesan gagal yang masih relevan masuk wa_outbox.
           await Promise.allSettled([
-            sendWa(swiperProfile.whatsapp, pesanNotif, null, null, {
+            sendWa(swiperProfile.whatsapp, pesanSwiper, null, null, {
               jenis: "teman_match",
+              roomId: finalRoomId,
             }),
             sendWa(partner.whatsapp, pesanPartner, null, null, {
               jenis: "teman_match",
+              roomId: finalRoomId,
             }),
           ]);
         }

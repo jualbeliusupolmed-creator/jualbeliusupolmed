@@ -52,6 +52,9 @@ export async function GET(req) {
 
   digestMsg += `\n_Ingin barangmu tampil di sini? Ketik *UPGRADE* ke bot WA untuk fitur Featured/AutoBump!_`;
 
+  // Kirim cuplikan katalog harian ke Status/Story WhatsApp Bot (status@broadcast)
+  await sendWa("status@broadcast", digestMsg).catch(() => {});
+
   // Kirim ke grup utama (dan grup tambahan jika ada)
   const tujuanGrup = daftarGrup(settings?.admin);
   
