@@ -165,7 +165,8 @@ export async function POST(request) {
             }
           }
 
-          const roomUrl = finalRoomId ? `https://usupolmed.com/chat?room=${finalRoomId}` : `https://usupolmed.com/chat`;
+          const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").replace(/\/$/, "");
+          const roomUrl = finalRoomId ? `${baseUrl}/chat?room=${finalRoomId}` : `${baseUrl}/chat`;
 
           const pesanNotif = ` *IT'S A MATCH! — Teman Kampus Kita*\n\n` +
             `Hai kak! Profil kamu dan *${partner.display_name || "Seseorang"}* (${partner.campus} · ${partner.faculty}) saling LIKE di fitur Cari Teman!\n\n` +
