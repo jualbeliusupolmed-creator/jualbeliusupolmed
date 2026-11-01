@@ -671,7 +671,7 @@ export default function PengaturanClient({ initialSettings = {} }) {
               </Field>
             </div>
             <Field label="Webhook URL Bot (untuk kirim notif ke bot)">
-              <input className="g-field w-full font-mono" value={botCfg.webhookUrl ?? ""} onChange={(e) => setBotCfg({ ...botCfg, webhookUrl: e.target.value })} placeholder="https://bot.jualbeliusupolmed.web.id/webhook" />
+              <input className="g-field w-full font-mono" value={botCfg.webhookUrl ?? ""} onChange={(e) => setBotCfg({ ...botCfg, webhookUrl: e.target.value })} placeholder="https://bot.kampuskita.my.id/webhook" />
               <p className="mt-1 text-xs text-gray-400">URL endpoint bot untuk trigger notifikasi langsung. Opsional.</p>
             </Field>
             <button onClick={() => { action({ action: "save_settings", key: "bot", value: botCfg }, "Konfigurasi Bot disimpan"); flash("bot"); }} className="g-btn g-btn-primary mt-4 w-full">{saved === "bot" ? " Tersimpan" : "Simpan Konfigurasi Bot"}</button>

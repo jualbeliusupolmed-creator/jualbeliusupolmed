@@ -24,7 +24,7 @@ const nextConfig = {
       {
         source: "/(.*)",
         headers: [
-          { key: "Content-Security-Policy", value: "frame-ancestors 'self' https://bot.jualbeliusupolmed.web.id" },
+          { key: "Content-Security-Policy", value: "frame-ancestors 'self' https://bot.kampuskita.my.id https://bot.jualbeliusupolmed.web.id" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
