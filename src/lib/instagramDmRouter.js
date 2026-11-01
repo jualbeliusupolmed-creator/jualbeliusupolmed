@@ -20,7 +20,7 @@ function siteBaseUrl() {
   return (
     process.env.NEXT_PUBLIC_SITE_URL ||
     process.env.NEXT_PUBLIC_BASE_URL ||
-    "https://www.jualbeliusupolmed.web.id"
+    "https://www.kampuskita.my.id"
   ).replace(/\/$/, "");
 }
 

@@ -3,7 +3,7 @@ import { buildSlug } from "@/lib/slug";
 
 const vapidPublicKey = process.env.VAPID_PUBLIC_KEY || "";
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || "";
-const vapidSubject = `mailto:${process.env.VAPID_EMAIL || "admin@jualbeliusupolmed.web.id"}`;
+const vapidSubject = `mailto:${process.env.VAPID_EMAIL || "admin@kampuskita.my.id"}`;
 
 if (vapidPublicKey && vapidPrivateKey) {
   webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);

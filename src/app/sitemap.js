@@ -7,7 +7,7 @@ import { evaluateModerationRules } from "@/lib/moderationRules";
 export const revalidate = 3600;
 
 export default async function sitemap() {
-  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").trim();
 
   // Catatan: `/blog` SENGAJA tidak ada di sini. Indeks blog pindah ke
   // `/mading?tab=blog` dan `/blog` cuma menjawab 307 ke sana — alamat yang

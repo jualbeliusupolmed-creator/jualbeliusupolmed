@@ -22,7 +22,7 @@ function isAllowedImageHost(raw) {
     try { if (envUrl) allowed.push(new URL(envUrl).hostname.toLowerCase()); } catch {}
   }
   // Fallback statis kalau env tak tersedia di runtime edge.
-  allowed.push("jualbeliusupolmed.web.id", "www.jualbeliusupolmed.web.id");
+  allowed.push("kampuskita.my.id", "www.kampuskita.my.id");
   return allowed.some((h) => host === h || host.endsWith(".supabase.co") || host.endsWith("." + h));
 }
 
@@ -111,7 +111,7 @@ export async function GET(request) {
 
           {/* Bottom: URL */}
           <p style={{ margin: 0, fontSize: 18, color: "rgba(255,255,255,0.35)", letterSpacing: 0.5 }}>
-            jualbeliusupolmed.web.id
+            kampuskita.my.id
           </p>
         </div>
 

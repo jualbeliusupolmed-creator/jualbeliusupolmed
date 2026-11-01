@@ -173,7 +173,7 @@ export function layoutMadingInstagramPost(post = {}, ratio = "portrait") {
     firstLineY,
     pages: pagesLayout,
     handle: "@usu.zonafess",
-    footer: "dikirim lewat jualbeliusupolmed.web.id",
+    footer: "dikirim lewat kampuskita.my.id",
   };
 }
 

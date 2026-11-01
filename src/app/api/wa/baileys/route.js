@@ -95,7 +95,7 @@ function getAdminNumbers() {
 }
 
 function getQrisUrl() {
-  return `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id"}/qris.png`;
+  return `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id"}/qris.png`;
 }
 
 // Parse harga dari teks Indonesia: "90rb"/"90 ribu"/"1.5jt"/"150000"/"150.000".
@@ -537,7 +537,7 @@ export async function POST(req) {
           amount: pendingPayment.amount,
         });
 
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id";
 
         // Handle berbeda tergantung tipe payment
         if (pendingPayment.type === "renewal") {
@@ -766,7 +766,7 @@ export async function POST(req) {
           amount: pendingWantedPayment.amount,
         });
         await supa.from("wanted_listings").update({ status: "active" }).eq("id", pendingWantedPayment.wanted.id);
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id";
         const confirmMsg =
           `🎉 *Pembayaran Berhasil!*\n\n` +
           `🔍 Permintaan *"${pendingWantedPayment.wanted.title}"* sekarang aktif tayang.\n\n` +
@@ -966,7 +966,7 @@ export async function POST(req) {
           return NextResponse.json({ ok: true, state: "iklanku_empty", bot_reply: noListMsg });
         }
 
-        const baseUrlIklanku = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+        const baseUrlIklanku = process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id";
         let listMsg = `📋 *Iklanmu (${myListings.length})*\n\n`;
         myListings.forEach((l, i) => {
           const emo = l.status === "active" ? "✅" : l.status === "sold" ? "🎉" : l.status === "deletion_pending" ? "🗑️" : "⏳";
@@ -1132,7 +1132,7 @@ export async function POST(req) {
 
         await sendWa(senderJid, `⏳ Memproses iklan *${shortId}* ke @usupolmedkatalog...`);
         const results = await autoPublishListingInstagram({
-          origin: (process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").replace(/\/$/, ""),
+          origin: (process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").replace(/\/$/, ""),
           listingId: listingData.id,
         });
         const published = results.some((result) => result.status === "published");
@@ -1410,7 +1410,7 @@ export async function POST(req) {
         }
 
         const shareListing = shareListings[0];
-        const shareBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+        const shareBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id";
         const shareSlug = buildSlug(shareListing.title, shareListing.id);
         const condLabel = shareListing.condition === "new" ? "✨ Baru" : "Bekas";
         const shareMsg =
@@ -1765,7 +1765,7 @@ export async function POST(req) {
         }
 
         const iklanDetail = iklanResults[0];
-        const iklanBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+        const iklanBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id";
         const iklanSlug = buildSlug(iklanDetail.title, iklanDetail.id);
         const condLbl = iklanDetail.condition === "new" ? "✨ Baru" : "Bekas";
         const campusLbl = iklanDetail.campus && iklanDetail.campus !== "Semua" ? iklanDetail.campus : "Medan";
@@ -1926,7 +1926,7 @@ export async function POST(req) {
           ? new Date(cek.bumped_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })
           : "Belum pernah";
         const statusEmoji = { active: "✅", pending: "⏳", sold: "🎉", expired: "❌", suspended: "⛔", deletion_pending: "🗑️" }[cek.status] || "❓";
-        const cekBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+        const cekBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id";
 
         const cekNow = new Date();
         const cekFeatured = cek.featured && cek.featured_until && new Date(cek.featured_until) > cekNow;
@@ -2018,7 +2018,7 @@ export async function POST(req) {
           ? (sayaRatings.reduce((s, r) => s + r.rating, 0) / sayaRatings.length).toFixed(1)
           : null;
         const tierLabel = { free: "Free", pro: "⭐ PRO" }[sayaProfile?.subscription_tier] || "Free";
-        const sayaBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+        const sayaBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id";
         const sayaPhone = formatWa(normalizedWa);
 
         let sayaMsg =
@@ -2069,7 +2069,7 @@ export async function POST(req) {
         }
 
         const freeBumpsRef = refProfile?.free_bumps || 0;
-        const refBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+        const refBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id";
         const refMsg =
           `🎯 *Kode Referral Kamu*\n\n` +
           `🔑 Kode: *${refCode}*\n` +
@@ -2404,7 +2404,7 @@ export async function POST(req) {
               .select()
               .single();
 
-            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id";
             const productSlug = buildSlug(pl.title, pl.id);
             const productUrl = `${baseUrl}/produk/${productSlug}`;
 
@@ -2745,7 +2745,7 @@ export async function POST(req) {
           .order("bumped_at", { ascending: false })
           .limit(5);
 
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id";
 
         if (!results || results.length === 0) {
           const notFoundMsg =
@@ -2833,7 +2833,7 @@ export async function POST(req) {
 
         const budgetStr = parsed.budget > 0 ? `\n💵 Budget: Rp ${Number(parsed.budget).toLocaleString("id-ID")}` : "";
         const campusStr = parsed.campus ? `\n📍 Area: ${parsed.campus}` : "";
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id";
 
         if (isFree) {
           await postWantedToGroup(wanted).catch(() => {});
@@ -3048,7 +3048,7 @@ export async function POST(req) {
         }
       }
 
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id";
 
       if (isDistributor) {
         let botReply = `✅ *Iklan Otomatis Tayang (Distributor)*\n\n`;

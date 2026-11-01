@@ -35,7 +35,7 @@ export async function GET(req) {
     return NextResponse.json({ sent: 0, message: "Tidak ada iklan aktif untuk di-broadcast" });
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id";
   
   let digestMsg = ` *Katalog Pilihan Jual Beli USU Polmed Hari Ini!* \n\n`;
   

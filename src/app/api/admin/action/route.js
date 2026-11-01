@@ -649,7 +649,7 @@ export async function POST(req) {
         }
 
         const nama = profil.store_name || profil.name || "Tokomu";
-        const alamat = `${(process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim()}/toko/${profil.slug}`;
+        const alamat = `${(process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").trim()}/toko/${profil.slug}`;
         sendWa(
           normalizedWa,
           setuju
@@ -660,7 +660,7 @@ export async function POST(req) {
             : ` *Pengajuan toko belum bisa disetujui*\n\n` +
               `Toko *${nama}* belum kami aktifkan.\n` +
               (catatan ? `\nAlasannya: _${catatan}_\n` : "") +
-              `\nPerbaiki dulu di ${(process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim()}/dashboard/toko, ` +
+              `\nPerbaiki dulu di ${(process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").trim()}/dashboard/toko, ` +
               `lalu ajukan lagi. Kami akan meninjaunya kembali.`,
           null,
           null,
@@ -710,7 +710,7 @@ export async function POST(req) {
 
         // Penulis admin (author_wa NULL) tidak punya siapa pun untuk dikabari.
         if (artikel.author_wa) {
-          const dasar = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+          const dasar = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").trim();
           sendWa(
             artikel.author_wa,
             setuju
@@ -763,7 +763,7 @@ export async function POST(req) {
         // Hanya kabari kalau nilainya benar-benar berubah — menekan tombol dua
         // kali tidak boleh mengirim dua pesan yang sama ke orangnya.
         if (profil.blog_badge !== beri) {
-          const dasar = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+          const dasar = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").trim();
           sendWa(
             normalizedWa,
             beri
@@ -919,7 +919,7 @@ export async function POST(req) {
             listingId: id,
           });
         } else {
-          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id";
           await sendWa(fl.seller_wa,
             ` *Admin menyetujui tawaranmu!*\n\n *${fl.title}*\n Biaya baru: *Rp ${newFee.toLocaleString("id-ID")}*\n\nKirim struk setelah transfer ke sini.`,
             `${baseUrl}/qris.png`

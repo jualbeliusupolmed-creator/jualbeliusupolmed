@@ -136,7 +136,7 @@ export default function FormToko({ onTersimpan }) {
 
   const slugPratinjau = normalisasiSlug(form.slug);
   const alamatPenuh = slugPratinjau
-    ? `jualbeliusupolmed.web.id/toko/${slugPratinjau}`
+    ? `kampuskita.my.id/toko/${slugPratinjau}`
     : "belum diatur";
 
   return (

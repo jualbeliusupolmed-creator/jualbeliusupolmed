@@ -4,7 +4,7 @@ import { rupiah } from "@/lib/fees";
 import { sendWa } from "@/lib/fonnte";
 
 function baseUrl() {
-  return process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+  return process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id";
 }
 
 /**

@@ -125,13 +125,13 @@ describe("Meta Instagram Caption Generators", () => {
         area: "Pintu 1",
         description: "Buku masih bagus tidak ada orat-aret",
       },
-      "https://jualbeliusupolmed.web.id",
+      "https://www.kampuskita.my.id",
     );
     expect(caption).toContain("Buku Kalkulus Purcell");
     expect(caption).toContain("Harga: Rp 50.000");
     expect(caption).toContain("Kategori: Buku");
     expect(caption).toContain("Kondisi: Preloved");
-    expect(caption).toContain("https://jualbeliusupolmed.web.id/produk/buku-kalkulus-purcell-item-1");
+    expect(caption).toContain("https://www.kampuskita.my.id/produk/buku-kalkulus-purcell-item-1");
   });
 });
 

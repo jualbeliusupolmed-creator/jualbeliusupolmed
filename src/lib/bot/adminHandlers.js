@@ -251,7 +251,7 @@ export async function handleAdminCmd(ctx) {
       await supa.from("listings").update({ status: "active", expires_at: expiresAt, fee_offer_status: "approved" }).eq("id", listing.id);
       await supa.from("payments").update({ status: "paid" }).eq("listing_id", listing.id).eq("status", "pending");
       await autoPublishListingInstagram({
-        origin: (process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").replace(/\/$/, ""),
+        origin: (process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").replace(/\/$/, ""),
         listingId: listing.id,
       });
       await sendWa(sellerJid,
@@ -264,7 +264,7 @@ export async function handleAdminCmd(ctx) {
       // QRIS statis + verifikasi struk oleh AI (sama seperti alur normal, tanpa gateway).
       // Pakai payment pending yang sudah ada (amount-nya baru diupdate ke newFee di atas)
       // + tandai final_amount agar verify-receipt/bot bisa mencocokkan nominal.
-      const qrisUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id"}/qris.png`;
+      const qrisUrl = `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id"}/qris.png`;
       await supa.from("payments")
         .update({ meta: { final_amount: newFee } })
         .eq("listing_id", listing.id).eq("status", "pending");

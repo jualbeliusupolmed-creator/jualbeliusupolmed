@@ -172,7 +172,7 @@ export async function POST(req) {
   // Antrean moderasi tidak berguna kalau tidak ada yang tahu isinya bertambah.
   if (status === "menunggu") {
     const admin = nomorAdmin();
-    const dasar = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+    const dasar = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").trim();
     if (admin) {
       sendWa(
         admin,

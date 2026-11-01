@@ -47,7 +47,7 @@ async function getInitialOprecs() {
 
 export default async function OprecPage() {
   const initialOprecs = await getInitialOprecs();
-  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").trim();
 
   const itemListJsonLd = {
     "@context": "https://schema.org",

@@ -28,7 +28,7 @@ export async function generateMetadata({ params }) {
   const blog = await getBlog(params.slug);
   if (!blog) return { title: "Artikel tidak ditemukan" };
 
-  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").trim();
   const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "Kampus Kita";
   const url = `${baseUrl}/blog/${blog.slug}`;
 
@@ -78,7 +78,7 @@ export default async function BlogPost({ params }) {
   const blog = await getBlog(params.slug);
   if (!blog || blog.status !== "published") notFound();
 
-  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").trim();
   const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "Kampus Kita";
   const url = `${baseUrl}/blog/${blog.slug}`;
   const rawExcerpt = blog.excerpt ||

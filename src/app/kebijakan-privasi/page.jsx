@@ -106,7 +106,7 @@ export default function KebijakanPrivasiPage() {
             </div>
             <div>
               <dt className="font-semibold text-gray-900 dark:text-white">Email Dukungan:</dt>
-              <dd>admin@jualbeliusupolmed.web.id</dd>
+              <dd>admin@kampuskita.my.id</dd>
             </div>
           </dl>
         </div>

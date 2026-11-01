@@ -61,7 +61,7 @@ export async function POST(req) {
 
     // Kirim notif ke penjual jika ada buyer_wa (berarti user sudah isi data)
     if (buyer_wa && listing.seller_wa) {
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id";
       const slug = buildSlug(listing.title, listing.id);
       const buyerLink = buyer_wa; // sudah tervalidasi 628xx oleh formatWaForBaileys
 

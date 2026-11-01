@@ -146,7 +146,7 @@ export async function generateMetadata({ params }) {
     return { title: "Produk tidak ditemukan" };
   }
 
-  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").trim();
   const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "Kampus Kita";
   const condLabel = listing.condition === "new" ? "Baru" : listing.condition === "used" ? "Bekas" : null;
   const isRental = listing.type === "sewa";
@@ -214,7 +214,7 @@ export default async function ProdukPage({ params }) {
   // JSON-LD Product + BreadcrumbList — agar listing bisa muncul sebagai
   // rich result (harga, ketersediaan) di Google.
   const baseUrl =
-    (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+    (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").trim();
   const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "Kampus Kita";
   const productUrl = `${baseUrl}/produk/${buildSlug(listing.title, listing.id)}`;
   const productJsonLd = {

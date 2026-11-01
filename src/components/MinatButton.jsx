@@ -46,7 +46,7 @@ export default function MinatButton({ listing, className, children }) {
         }).catch(() => {});
 
         const slug = buildSlug(listing.title, listing.id);
-        const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://www.jualbeliusupolmed.web.id";
+        const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://www.kampuskita.my.id";
         const productLink = `${baseUrl}/produk/${slug}`;
 
         const fullMsg =

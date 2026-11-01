@@ -263,7 +263,7 @@ export async function POST(req) {
       if (payment.listings?.seller_wa) {
         const ls = payment.listings;
         const productUrl = ls.id && ls.title
-          ? `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id"}/produk/${buildSlug(ls.title, ls.id)}`
+          ? `${process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id"}/produk/${buildSlug(ls.title, ls.id)}`
           : null;
         const expDate = ls.expires_at
           ? new Date(ls.expires_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })

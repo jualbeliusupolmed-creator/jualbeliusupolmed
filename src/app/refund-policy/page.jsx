@@ -44,7 +44,7 @@ export default function RefundPolicyPage() {
           <ul className="list-disc pl-5 space-y-1">
             <li>Klaim pengembalian dana harus diajukan maksimal <strong>3x24 jam</strong> sejak transaksi dilakukan.</li>
             <li>Pengajuan klaim harus disertai dengan: <br/>- Bukti pembayaran sah (struk/screenshot QRIS atau transfer bank)<br/>- Nomor WhatsApp yang terdaftar pada transaksi<br/>- Penjelasan detail mengenai kendala teknis yang dialami.</li>
-            <li>Silakan ajukan klaim dengan menghubungi Admin kami melalui WhatsApp ke nomor <strong>{waDisplay}</strong> atau email ke <strong>admin@jualbeliusupolmed.web.id</strong>.</li>
+            <li>Silakan ajukan klaim dengan menghubungi Admin kami melalui WhatsApp ke nomor <strong>{waDisplay}</strong> atau email ke <strong>admin@kampuskita.my.id</strong>.</li>
             <li>Proses investigasi dan pengembalian dana akan memakan waktu hingga <strong>7-14 hari kerja</strong>, dan dana akan dikembalikan melalui metode transfer bank.</li>
           </ul>
         </div>

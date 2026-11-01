@@ -30,7 +30,7 @@ export default function ShareModal({ listing, isIconOnly = false }) {
   function getUrl() {
     const base = typeof window !== "undefined"
       ? window.location.origin
-      : (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id");
+      : (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id");
     return `${base}/produk/${buildSlug(listing.title, listing.id)}`;
   }
 
@@ -161,7 +161,7 @@ export default function ShareModal({ listing, isIconOnly = false }) {
                   <div className="absolute inset-x-0 bottom-0 p-4">
                     <p className="line-clamp-2 text-sm font-bold text-white drop-shadow">{listing.title}</p>
                     <p className="mt-1 text-xl font-extrabold text-white drop-shadow">{priceLabel}</p>
-                    <p className="mt-2 text-[10px] text-white/70">jualbeliusupolmed.web.id</p>
+                    <p className="mt-2 text-[10px] text-white/70">kampuskita.my.id</p>
                   </div>
                 </div>
 
@@ -190,7 +190,7 @@ export default function ShareModal({ listing, isIconOnly = false }) {
                     <p className="line-clamp-2 text-sm font-bold text-white drop-shadow">{listing.title}</p>
                     <p className="mt-1 text-lg font-extrabold text-white drop-shadow">{priceLabel}</p>
                     <div className="mt-3 mx-auto inline-block rounded-full bg-white px-4 py-1.5">
-                      <span className="text-[10px] font-bold text-[#111]">jualbeliusupolmed.web.id</span>
+                      <span className="text-[10px] font-bold text-[#111]">kampuskita.my.id</span>
                     </div>
                   </div>
                 </div>

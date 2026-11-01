@@ -1475,7 +1475,7 @@ dibatasi jalur internal, dan kelayakan target broadcast ditegakkan di server.
 | `PANEL_PASSWORD` | Sandi panel untuk manusia. Kosong → hanya token yang bisa dipakai. |
 
 ### Bot — penting
-`WEBHOOK_URL` (default `https://www.jualbeliusupolmed.web.id/api/wa/baileys`) ·
+`WEBHOOK_URL` (default `https://www.kampuskita.my.id/api/wa/baileys`) ·
 `PORT` (3000) · `BIND_HOST` (127.0.0.1, semua trafik lewat nginx) ·
 `DATA_DIR` / `AUTH_DIR` (**wajib berbeda untuk instans kedua**) ·
 `GROUP_JID` (grup marketplace) · `OWNER_JID` (penerima alarm) ·

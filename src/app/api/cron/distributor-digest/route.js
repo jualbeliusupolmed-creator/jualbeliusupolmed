@@ -60,7 +60,7 @@ export async function GET(req) {
     return NextResponse.json({ ok: true, count: 0, msg: "Tidak ada postingan distributor hari ini" });
   }
 
-  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").trim();
 
   // Kelompokkan per distributor
   const byDist = {};

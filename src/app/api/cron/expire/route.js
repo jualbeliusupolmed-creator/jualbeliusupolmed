@@ -20,7 +20,7 @@ export async function GET(req) {
 
   const supa = getAdminClient();
   const now = new Date();
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id";
   let reminded = 0;
 
   // ── Reminder H-3: window 2.5 – 3.5 hari dari sekarang ───────────────────────

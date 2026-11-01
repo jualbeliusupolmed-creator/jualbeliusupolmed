@@ -162,7 +162,7 @@ export default function DistributorPanel({ settings: initialSettings, categories
     setFeeRules((prev) => prev.filter((_, i) => i !== idx));
   }
 
-  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id");
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id");
 
   return (
     <div className="space-y-6">

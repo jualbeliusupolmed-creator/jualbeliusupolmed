@@ -66,7 +66,7 @@ async function checkAndNotifyMilestone(supa, listingId) {
 
   if (updateErr) return; // Race condition: milestone sudah diupdate di tempat lain
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id";
   const slug = buildSlug(listing.title, listing.id);
 
   const emoji = nextMilestone >= 500 ? "Milestone 500" : nextMilestone >= 100 ? "Milestone 100" : "Milestone";

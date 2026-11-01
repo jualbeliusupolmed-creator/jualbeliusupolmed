@@ -150,7 +150,7 @@ export async function POST(req) {
 
     // 7. Notifikasi WhatsApp ke Penjual — HANYA sekali saat pertama kali dihubungi (ruang baru dibuat)
     if (!existingRoom) {
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id";
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id";
       const kutipan = message.replace(/[\r\n*_~`]/g, " ").replace(/\s+/g, " ").trim().slice(0, 200);
       let waMsg = `*Pesan Baru dari Pembeli!* \n\n`;
       waMsg += `Ada yang tertarik dengan barang *${listing.title}*.\n\n`;

@@ -49,7 +49,7 @@ export default function BagikanIklan({ listing, onClose }) {
 
   const asal = typeof window !== "undefined"
     ? window.location.origin
-    : "https://www.jualbeliusupolmed.web.id";
+    : "https://www.kampuskita.my.id";
   const shortPath = buildListingShortPath(listing.listing_code);
   const url = shortPath ? `${asal}${shortPath}` : `${asal}/produk/${buildSlug(listing.title, listing.id)}`;
 
