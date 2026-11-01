@@ -10,7 +10,7 @@ Ada **2 cara termudah** untuk mengubah website ini menjadi file `.aab` / `.apk` 
 ## 🌟 Cara 1: Menggunakan PWABuilder (Paling Mudah & Rekomendasi 2 Menit)
 
 1. Buka [https://www.pwabuilder.com](https://www.pwabuilder.com).
-2. Masukkan URL website produksi Abang: `https://www.jualbeliusupolmed.web.id` (atau URL Vercel).
+2. Masukkan URL website produksi Abang: `https://www.kampuskita.my.id` (atau URL Vercel).
 3. Klik tombol **Start**. PWABuilder akan mengecek audit PWA (skor kita sudah 100%).
 4. Klik tombol **Package for Stores** $\rightarrow$ pilih **Android (Google Play)**.
 5. Isi data nama aplikasi:
@@ -30,7 +30,7 @@ Jika ingin build langsung dari terminal komputer:
 npm install -g @bubblewrap/cli
 
 # 2. Inisialisasi dari manifest website
-bubblewrap init --manifest="https://www.jualbeliusupolmed.web.id/manifest.json"
+bubblewrap init --manifest="https://www.kampuskita.my.id/manifest.json"
 
 # 3. Build file AAB & APK
 bubblewrap build

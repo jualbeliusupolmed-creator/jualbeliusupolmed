@@ -1,6 +1,6 @@
 # Panduan Lengkap Admin — Jual Beli USU Polmed
 
-**Panel Admin:** jualbeliusupolmed.web.id/admin  
+**Panel Admin:** kampuskita.my.id/admin  
 **WA Admin:** 62895429126232  
 **Supabase:** supabase.com  
 **Bot WA:** bot.jualbeliusupolmed.web.id (DigitalOcean VPS, dashboard bot)  
@@ -28,7 +28,7 @@
 
 ## 1. Login Admin
 
-Buka: `jualbeliusupolmed.web.id/admin`
+Buka: `kampuskita.my.id/admin`
 
 Login menggunakan Supabase Auth email/password atau Google OAuth. Session
 workspace ditandatangani server dan berlaku singkat.

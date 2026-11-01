@@ -1,6 +1,6 @@
 # Panduan Lengkap Pelanggan — Jual Beli USU Polmed
 
-**Website:** jualbeliusupolmed.web.id  
+**Website:** kampuskita.my.id  
 **WhatsApp Bot:** nomor tertera di website
 
 ---
@@ -27,7 +27,7 @@
 Tidak perlu daftar akun secara manual. Cukup dengan nomor WhatsApp.
 
 ### Login via Website
-1. Buka **jualbeliusupolmed.web.id** → klik **Login**
+1. Buka **kampuskita.my.id** → klik **Login**
 2. Masukkan nomor WhatsApp aktif
 3. **Nomor baru?** Langsung buat PIN / sandi — tidak ada kode OTP yang perlu ditunggu
 4. **Sudah punya akun?** Masukkan PIN / sandi kamu
@@ -79,7 +79,7 @@ Bisa lewat **WhatsApp** (lebih simpel) atau **Website** (lebih lengkap).
 
 ### Via Website
 
-1. Buka **jualbeliusupolmed.web.id/jual**
+1. Buka **kampuskita.my.id/jual**
 2. Login dengan nomor WA + PIN / sandi (jika belum login)
 3. Isi form: judul, kategori, harga, kondisi, deskripsi
 4. Upload foto (otomatis dikonversi ke WebP)
@@ -234,7 +234,7 @@ Menampilkan:
 - Rating dari pembeli
 - Tawaran yang belum dibalas
 
-Profil publik tersedia di: **jualbeliusupolmed.web.id/profil/[nomor_wa]**
+Profil publik tersedia di: **kampuskita.my.id/profil/[nomor_wa]**
 
 ---
 
@@ -254,7 +254,7 @@ Admin akan meninjau laporan.
 
 ## 10. Dashboard Web
 
-Login ke **jualbeliusupolmed.web.id/dashboard** untuk:
+Login ke **kampuskita.my.id/dashboard** untuk:
 - Melihat semua iklan aktif, pending, expired
 - Statistik views dan tawaran
 - Riwayat pembayaran
