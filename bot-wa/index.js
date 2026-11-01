@@ -58,7 +58,7 @@ console.warn = function(...args) { if (isSignalNoise(args)) return; originalWarn
 
 
 
-const WEBHOOK_URL = process.env.WEBHOOK_URL || 'https://www.jualbeliusupolmed.web.id/api/wa/baileys';
+const WEBHOOK_URL = process.env.WEBHOOK_URL || 'https://www.kampuskita.my.id/api/wa/baileys';
 const API_TOKEN = process.env.API_TOKEN;
 if (!API_TOKEN) {
     console.error('[FATAL] API_TOKEN wajib di-set di environment. Bot berhenti (fail-closed) '
@@ -191,9 +191,9 @@ const DEFAULT_GREETING = process.env.GREETING_TEXT || [
     `• *${BOT_PREFIX}MENU* — Lihat semua perintah`,
     '',
     'Atau lebih mudah lewat website:',
-    '*Lihat Barang* jualbeliusupolmed.web.id',
-    '*Jual Barang* jualbeliusupolmed.web.id/jual',
-    '*Cari Barang* jualbeliusupolmed.web.id/dicari',
+    '*Lihat Barang* kampuskita.my.id',
+    '*Jual Barang* kampuskita.my.id/jual',
+    '*Cari Barang* kampuskita.my.id/dicari',
     '*Instagram* instagram.com/usupolmedupdate',
     '',
     'Terima kasih 🙏',
@@ -1628,8 +1628,8 @@ function swapLegacyGreeting(text, jid) {
 // sapaan lama di atas. Pencocokan teks juga: kalau website mengubah kalimat
 // "Punya barangnya? 👉 …/dicari", penanda di bawah tidak cocok lagi dan tambahan
 // diam-diam berhenti — pantau baris '[dicari]' di log.
-const DICARI_LINK_MARK = 'Punya barangnya? 👉 https://www.jualbeliusupolmed.web.id/dicari';
-const DICARI_JUAL_SUFFIX = ', Atau kalau mau lebih cepat langsung jual di https://www.jualbeliusupolmed.web.id/jual';
+const DICARI_LINK_MARK = 'Punya barangnya? 👉 https://www.kampuskita.my.id/dicari';
+const DICARI_JUAL_SUFFIX = ', Atau kalau mau lebih cepat langsung jual di https://www.kampuskita.my.id/jual';
 let dicariEnrichCount = 0;
 function enrichDicariMessage(text, jid) {
     if (!text || typeof text !== 'string') return text;

@@ -214,7 +214,7 @@ async function send(target, message, fileUrl = null, ttlDetik = null, meta = nul
 }
 
 const baseUrl = () =>
-  (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+  (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").trim();
 
 function rupiah(n) {
   return "Rp " + (Number(n) || 0).toLocaleString("id-ID");

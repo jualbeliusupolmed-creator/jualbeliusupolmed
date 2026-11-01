@@ -12,7 +12,7 @@ import { skripJsonLd } from "@/lib/jsonLd";
 
 
 const BASE_URL =
-  (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+  (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").trim();
 
 const jakartaSans = localFont({
   src: [

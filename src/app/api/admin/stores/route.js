@@ -105,7 +105,7 @@ export async function PATCH(request) {
   if (error || !updated) return NextResponse.json({ error: "Status toko berubah saat diproses. Muat ulang daftar." }, { status: 409 });
 
   const storeName = profile.store_name || profile.name || "Tokomu";
-  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").replace(/\/$/, "");
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").replace(/\/$/, "");
   const message = action === "approve"
     ? `*Toko kamu sudah aktif!*\n\n*${storeName}* sekarang bisa dibuka di:\n${baseUrl}/toko/${profile.slug}\n\nMulai sekarang iklanmu tayang gratis. Bagikan alamat tokomu ke pembeli ya!`
     : `*Pengajuan toko belum bisa disetujui.*\n\nToko *${storeName}* belum kami aktifkan.\n\nAlasan: _${reason}_\n\nPerbaiki di ${baseUrl}/dashboard/toko, lalu ajukan kembali.`;

@@ -21,7 +21,7 @@ export default function QRButton({ listing }) {
   }, []);
 
   function productUrl() {
-    const base = typeof window !== "undefined" ? window.location.origin : "https://www.jualbeliusupolmed.web.id";
+    const base = typeof window !== "undefined" ? window.location.origin : "https://www.kampuskita.my.id";
     const shortPath = buildListingShortPath(listing.listing_code);
     return shortPath ? `${base}${shortPath}` : `${base}/produk/${buildSlug(listing.title, listing.id)}`;
   }

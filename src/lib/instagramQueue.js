@@ -10,7 +10,7 @@ export function siteOriginFromRequest(request) {
 
   const host = request?.headers?.get?.("x-forwarded-host") || request?.headers?.get?.("host");
   const proto = request?.headers?.get?.("x-forwarded-proto") || "https";
-  return host ? `${proto}://${host}` : "https://www.jualbeliusupolmed.web.id";
+  return host ? `${proto}://${host}` : "https://www.kampuskita.my.id";
 }
 
 function retryAt(attempts) {

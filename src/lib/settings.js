@@ -40,7 +40,7 @@ export const DEFAULT_SETTINGS = {
     marketplaceWa: process.env.NEXT_PUBLIC_MARKETPLACE_WA || "62895429126232",
     waGroupLink:
       process.env.NEXT_PUBLIC_WA_GROUP_LINK || "https://chat.whatsapp.com/DQMZK2qSgq2D0WvH7BlBSA",
-    supportEmail: "admin@jualbeliusupolmed.web.id",
+    supportEmail: "admin@kampuskita.my.id",
     supportPhone: "+62 895-4291-26232",
     supportAddress: "Jl. Dr. T. Mansur No. 9, Medan 20155",
   },
@@ -124,7 +124,7 @@ export const DEFAULT_SETTINGS = {
   bot_keywords: {
     enabled: true,
     greeting_enabled: false,
-    greeting: "Halo! \n\nPerintah bot diawali tanda titik ( *.* ), contoh: *.MENU*\n\n• *.JUAL* — Pasang iklan\n• *.CARI [nama barang]* — Cari barang\n• *.PERPANJANG* — Perpanjang iklan\n• *.UPGRADE* — Upgrade iklan\n• *.SAYA* — Profil & statistik saya\n• *.MENU* — Lihat semua perintah lengkap\n\nSetelah *.JUAL*, kirim *Foto + Deskripsi + Harga* untuk pasang iklan.\n\nMau ngobrol dengan admin (manusia)? Ketik *ADMIN* tanpa titik.\n\n Website: jualbeliusupolmed.web.id",
+    greeting: "Halo! \n\nPerintah bot diawali tanda titik ( *.* ), contoh: *.MENU*\n\n• *.JUAL* — Pasang iklan\n• *.CARI [nama barang]* — Cari barang\n• *.PERPANJANG* — Perpanjang iklan\n• *.UPGRADE* — Upgrade iklan\n• *.SAYA* — Profil & statistik saya\n• *.MENU* — Lihat semua perintah lengkap\n\nSetelah *.JUAL*, kirim *Foto + Deskripsi + Harga* untuk pasang iklan.\n\nMau ngobrol dengan admin (manusia)? Ketik *ADMIN* tanpa titik.\n\n Website: kampuskita.my.id",
     triggers: "jual,wts,wtb,cari,beli,dicari,admin,min,mimin,perpanjang,upgrade,dijual,ready",
     min_price_digits: 4,
   },

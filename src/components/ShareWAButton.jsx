@@ -8,7 +8,7 @@ export default function ShareWAButton({ listing }) {
   function shareUrl() {
     const base = typeof window !== "undefined"
       ? window.location.origin
-      : (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id");
+      : (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id");
     const shortPath = buildListingShortPath(listing.listing_code);
     return shortPath ? `${base}${shortPath}` : `${base}/produk/${buildSlug(listing.title, listing.id)}`;
   }

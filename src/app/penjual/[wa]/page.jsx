@@ -195,7 +195,7 @@ export async function generateMetadata({ params }) {
   if (!data) return { title: "Penjual tidak ditemukan" };
   const name = data.seller.seller_name;
   const username = data.seller.slug || encodeSellerSlug(data.seller.seller_wa);
-  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").trim();
   const pageUrl = `${baseUrl}/penjual/${username}`;
   const firstImage = data.listings[0]?.image_url || null;
   const soldText = data.soldCount > 0 ? ` Sudah terjual ${data.soldCount}× barang.` : "";
@@ -264,7 +264,7 @@ export default async function SellerProfilePage({ params }) {
       ? ratings.reduce((s, r) => s + r.rating, 0) / ratings.length
       : null;
 
-  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").trim();
   // Nomor asli untuk link kontak WA
   const waIntl = formatWaForBaileys(seller.seller_wa);
   const sellerSlug = seller.slug || encodeSellerSlug(seller.seller_wa);

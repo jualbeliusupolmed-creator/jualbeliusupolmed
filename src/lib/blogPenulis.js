@@ -67,7 +67,7 @@ export function statusSetelahKirim(profil) {
 
 /** Alamat publik artikel. */
 export function urlArtikel(slug) {
-  const dasar = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+  const dasar = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").trim();
   return `${dasar}/blog/${slug}`;
 }
 

@@ -76,7 +76,7 @@ export async function POST() {
   }
 
   const settings = await getSettings().catch(() => null);
-  const dasar = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+  const dasar = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").trim();
   const nomorAdmin =
     formatWaForBaileys(settings?.admin?.adminWa || "") ||
     formatWaForBaileys(process.env.ADMIN_WA || "") ||

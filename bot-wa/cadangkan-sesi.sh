@@ -139,9 +139,9 @@ kirim_ke_github() {
         cd "$kerja" || exit 1
         git init -q
         git symbolic-ref HEAD refs/heads/main
-        git -c user.name='cadangan-sesi' -c user.email='bot@jualbeliusupolmed.web.id' \
+        git -c user.name='cadangan-sesi' -c user.email='bot@kampuskita.my.id' \
             add -A >/dev/null 2>&1
-        git -c user.name='cadangan-sesi' -c user.email='bot@jualbeliusupolmed.web.id' \
+        git -c user.name='cadangan-sesi' -c user.email='bot@kampuskita.my.id' \
             commit -q -m "Cadangan sesi $(date '+%Y-%m-%d %H:%M') — $n arsip terenkripsi" >/dev/null 2>&1
         # Keluaran git bisa memuat ulang URL berikut tokennya; disaring sebelum
         # sempat mendarat di log yang dibaca orang lain.

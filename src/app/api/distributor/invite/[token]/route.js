@@ -65,7 +65,7 @@ export async function POST(req, { params }) {
   }).eq("token", token);
 
   // Kirim konfirmasi WA
-  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").trim();
   await sendWa(
     invite.wa,
     ` *Selamat! Anda Resmi Menjadi Distributor!*\n\n` +

@@ -71,7 +71,7 @@ export async function generateMetadata({ params }) {
 
   const { profil, aktif } = data;
   const nama = namaToko(profil);
-  const dasar = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+  const dasar = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").trim();
   const alamat = `${dasar}/toko/${profil.slug}`;
   const gambar = profil.banner_url || profil.logo_url || aktif[0]?.image_url || null;
   const ringkas = profil.tagline
@@ -140,7 +140,7 @@ export default async function HalamanToko({ params }) {
   const warna = AKSEN[aksenAman(profil.store_accent)];
   const waIntl = formatWaForBaileys(profil.wa); // "" kalau bukan nomor sungguhan
   const buka = profil.store_open !== false;
-  const sapaan = `Halo ${nama}, saya lihat tokonya di jualbeliusupolmed.web.id`;
+  const sapaan = `Halo ${nama}, saya lihat tokonya di kampuskita.my.id`;
   const waLink = waIntl ? `https://wa.me/${waIntl}?text=${encodeURIComponent(sapaan)}` : null;
 
   const sejak = profil.created_at
@@ -237,7 +237,7 @@ export default async function HalamanToko({ params }) {
               </Info>
             )}
             <Info ikon="Jam" label="Jam buka">{profil.store_hours}</Info>
-            <Info ikon="Link" label="Alamat toko">{`jualbeliusupolmed.web.id/toko/${profil.slug}`}</Info>
+            <Info ikon="Link" label="Alamat toko">{`kampuskita.my.id/toko/${profil.slug}`}</Info>
           </div>
         </div>
 

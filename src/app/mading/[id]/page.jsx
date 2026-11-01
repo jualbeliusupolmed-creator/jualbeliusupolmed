@@ -40,7 +40,7 @@ export async function generateMetadata({ params }) {
     };
   }
 
-  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").trim();
   const titleText = post.title || (post.type === "info" ? "Info Kampus" : `Menfess dari ${post.sender_name} (${post.faculty})`);
   const rawSnippet = (post.content || "").replace(/\n+/g, " ").trim();
   const description = rawSnippet.slice(0, 160) + (rawSnippet.length > 160 ? "..." : "");
@@ -81,7 +81,7 @@ export default async function MadingDetailPage({ params }) {
   const post = await getPost(params.id);
   if (!post) notFound();
 
-  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").trim();
   const titleText = post.title || `Menfess dari ${post.sender_name} (${post.faculty})`;
 
   const jsonLd = {

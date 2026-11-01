@@ -146,7 +146,7 @@
   ];
 
   var HALAMAN_TAMU = [
-    { u: 'https://www.jualbeliusupolmed.web.id', t: 'Situs utama', ic: 'link' },
+    { u: 'https://www.kampuskita.my.id', t: 'Situs utama', ic: 'link' },
     { u: '#presentasi', t: 'Presentasi', ic: 'clipboard-list' },
     { u: '#demo',       t: 'Demo',       ic: 'gauge' },
     { u: 'https://github.com/jualbeliusupolmed-creator', t: 'Kode', ic: 'terminal' }

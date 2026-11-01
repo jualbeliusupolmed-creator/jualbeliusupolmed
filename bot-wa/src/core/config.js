@@ -12,7 +12,7 @@ const ADMIN_CALL_WORDS = new Set(
 const ADMIN_CALL_COOLDOWN_MS = Number(process.env.ADMIN_CALL_COOLDOWN_SECONDS || 60) * 1000;
 const PLAIN_COMMAND_WORDS = new Set(['jual', 'cari', 'menu', 'perpanjang', 'upgrade', 'saya', 'beli']);
 
-const WEBHOOK_URL = process.env.WEBHOOK_URL || 'https://www.jualbeliusupolmed.web.id/api/wa/baileys';
+const WEBHOOK_URL = process.env.WEBHOOK_URL || 'https://www.kampuskita.my.id/api/wa/baileys';
 const API_TOKEN = process.env.API_TOKEN;
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = process.env.DATA_DIR || '.'; 

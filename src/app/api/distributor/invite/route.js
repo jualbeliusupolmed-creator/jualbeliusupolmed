@@ -24,7 +24,7 @@ export async function POST(req) {
 
   const supa = getAdminClient();
   const token = generateToken(normalizedWa);
-  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.jualbeliusupolmed.web.id").trim();
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").trim();
   const link = `${baseUrl}/distributor/bergabung/${token}`;
 
   await supa.from("distributor_invites").insert({

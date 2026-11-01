@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 // ── Subdomain mobile — ganti ke domain yang sudah live ──
-const MOBILE_SUBDOMAIN = "https://m.jualbeliusupolmed.web.id";
+const MOBILE_SUBDOMAIN = "https://m.kampuskita.my.id";
 
 // Regex User-Agent untuk mendeteksi perangkat mobile
 const MOBILE_UA_REGEX =
@@ -47,7 +47,7 @@ function matchesAdminPath(pathname, paths) {
 export async function middleware(request) {
   const { pathname, hostname } = request.nextUrl;
 
-  // ── Redirect Mobile ke m.jualbeliusupolmed.web.id ──
+  // ── Redirect Mobile ke m.kampuskita.my.id ──
   // Syarat aktif: ENABLE_MOBILE_REDIRECT = true DAN subdomain m. sudah dikonfigurasi
   if (
     ENABLE_MOBILE_REDIRECT &&
