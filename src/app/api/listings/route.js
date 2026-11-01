@@ -245,14 +245,29 @@ export async function POST(req) {
     }
 
     // Enforce name from seller_profiles
-    // 1. Coba masukkan ke seller_profiles. Jika sudah ada (konflik WA), abaikan namanya (DO NOTHING).
-    const defaultSlug = generateDefaultSlug(seller_name, normalizedWa);
-    await supa.from("seller_profiles").upsert(
-      { wa: normalizedWa, name: seller_name, slug: profileCheck?.slug || defaultSlug },
-      { onConflict: "wa", ignoreDuplicates: true }
-    );
-    // 2. Ambil nama paten dan status pro dari seller_profiles (sudah punya dari check di atas)
-    const profile = profileCheck;
+    // Pastikan profil penjual tersimpan agar tidak melanggar foreign key constraint
+    let profile = profileCheck;
+    if (!profile) {
+      const defaultSlug = generateDefaultSlug(seller_name, normalizedWa);
+      let { error: profErr } = await supa.from("seller_profiles").upsert(
+        { wa: normalizedWa, name: seller_name, slug: defaultSlug },
+        { onConflict: "wa", ignoreDuplicates: true }
+      );
+      if (profErr) {
+        // Fallback jika slug mengalami konflik unik
+        const uniqueSlug = `user-${normalizedWa.replace(/\D/g, "").slice(-4)}-${Math.random().toString(36).slice(2, 6)}`;
+        await supa.from("seller_profiles").upsert(
+          { wa: normalizedWa, name: seller_name, slug: uniqueSlug },
+          { onConflict: "wa", ignoreDuplicates: true }
+        );
+      }
+      const { data: refreshedProfile } = await supa
+        .from("seller_profiles")
+        .select("distributor, name, subscription_tier, subscription_expires_at, slug")
+        .eq("wa", normalizedWa)
+        .maybeSingle();
+      profile = refreshedProfile;
+    }
     const enforcedName = profile?.name || seller_name;
     const isPro = profile?.subscription_tier === "pro" && new Date(profile?.subscription_expires_at) > new Date();
 
@@ -330,32 +345,49 @@ export async function POST(req) {
       finalPrice = effectivePrice(finalPrice, distributorFee, distSettings.autoAddPrice);
     }
 
-    const { data: listing, error } = await supa
+    const insertPayload = {
+      seller_name: enforcedName,
+      seller_wa: normalizedWa,
+      title: cleanedTitle,
+      description: description || "",
+      price: finalPrice,
+      distributor_fee: distributorFee || null,
+      stock: Math.max(1, Number(stock) || 1),
+      category: category || "Elektronik",
+      type: ["poster", "jasa", "sewa", "gratis"].includes(type) ? type : "barang",
+      rental_period: type === "sewa" ? (rental_period || "harian") : null,
+      image_url: image_url || null,
+      status: initialStatus,
+      moderation_reason: modReason,
+      risk_score: moderation.risk_score || 0.0,
+      campus: campus || "Semua",
+      area: area || "Sekitar Kampus",
+      condition: (type === "barang" && condition) ? condition : "used",
+      specs: safeSpecs,
+      bumped_at: new Date().toISOString(),
+      expires_at: expiresAt, // FIXED: from settings.pricing.listingDays
+    };
+
+    let { data: listing, error } = await supa
       .from("listings")
-      .insert({
-        seller_name: enforcedName,
-        seller_wa: normalizedWa,
-        title: cleanedTitle,
-        description: description || "",
-        price: finalPrice,
-        distributor_fee: distributorFee || null,
-        stock: Math.max(1, Number(stock) || 1),
-        category: category || "Elektronik",
-        type: ["poster", "jasa", "sewa", "gratis"].includes(type) ? type : "barang",
-        rental_period: type === "sewa" ? (rental_period || "harian") : null,
-        image_url: image_url || null,
-        status: initialStatus,
-        moderation_reason: modReason,
-        risk_score: moderation.risk_score || 0.0,
-        campus: campus || "Semua",
-        area: area || "Sekitar Kampus",
-        condition: (type === "barang" && condition) ? condition : "used",
-        specs: safeSpecs,
-        bumped_at: new Date().toISOString(),
-        expires_at: expiresAt, // FIXED: from settings.pricing.listingDays
-      })
+      .insert(insertPayload)
       .select()
       .single();
+
+    // Fallback otomatis jika kolom moderasi belum ada di skema database produksi (PGRST204)
+    if (error && (error.code === "PGRST204" || String(error.message || "").includes("column"))) {
+      console.warn("[POST /api/listings] Kolom belum ada di skema database, fallback insert tanpa field opsional:", error.message);
+      delete insertPayload.moderation_reason;
+      delete insertPayload.risk_score;
+      const retry = await supa
+        .from("listings")
+        .insert(insertPayload)
+        .select()
+        .single();
+      listing = retry.data;
+      error = retry.error;
+    }
+
     if (error) throw new Error(error.message);
 
     // Simpan galeri (kolom `images`) — non-fatal jika migration belum dijalankan.
