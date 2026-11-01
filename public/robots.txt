@@ -3,7 +3,7 @@ User-agent: *
 Allow: /
 
 # Host
-Host: https://www.jualbeliusupolmed.web.id
+Host: https://www.kampuskita.my.id
 
 # Sitemaps
-Sitemap: https://www.jualbeliusupolmed.web.id/sitemap.xml
+Sitemap: https://www.kampuskita.my.id/sitemap.xml

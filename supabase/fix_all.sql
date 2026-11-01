@@ -48,7 +48,7 @@ INSERT INTO public.seller_profiles (
 SELECT
   '08000000001',           -- wa placeholder untuk UP Admin (format valid, tidak dipakai login)
   'UP Admin',
-  'admin@jualbeliusupolmed.web.id',
+  'admin@kampuskita.my.id',
   '$2a$10$ECGSauzTPYw3gVCL3nJ5NuLcZg27/k18x7V2pvBaunrRsVsIfV7Ki',  -- bcrypt hash of 'upadmin2026'
   'ukm',
   'USU POLMED UPDATE',
@@ -59,7 +59,7 @@ SELECT
   now()
 WHERE NOT EXISTS (
   SELECT 1 FROM public.seller_profiles
-  WHERE wa = '08000000001' OR email = 'admin@jualbeliusupolmed.web.id'
+  WHERE wa = '08000000001' OR email = 'admin@kampuskita.my.id'
 );
 
 -- Hapus entry lama jika ada (wa = 'email_up_admin' dari seed sebelumnya)
@@ -70,7 +70,7 @@ UPDATE public.seller_profiles
 SET
   name          = 'UP Admin',
   ukm_name      = 'UP — Jual Beli USU & POLMED',
-  email         = 'admin@jualbeliusupolmed.web.id',
+  email         = 'admin@kampuskita.my.id',
   pin           = '$2a$10$ECGSauzTPYw3gVCL3nJ5NuLcZg27/k18x7V2pvBaunrRsVsIfV7Ki',
   account_type  = 'ukm',
   ukm_verified  = true,
@@ -80,4 +80,4 @@ WHERE wa = '08000000001';
 -- Verifikasi hasil
 SELECT wa, name, email, account_type, ukm_verified
 FROM public.seller_profiles
-WHERE email = 'admin@jualbeliusupolmed.web.id';
+WHERE email = 'admin@kampuskita.my.id';

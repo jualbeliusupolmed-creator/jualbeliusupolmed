@@ -411,7 +411,7 @@ a{color:inherit}
 code{font-size:.85em;background:var(--bg);padding:1px 5px;border-radius:4px}
 </style></head>
 <body><div class="kartu ${nada}">
-  <div class="atas">Bot WhatsApp · jualbeliusupolmed</div>
+  <div class="atas">Bot WhatsApp · Kampus Kita</div>
   <h1><span class="titik"></span>${judul}</h1>
   <p class="jelas">${jelas}</p>
   <dl>

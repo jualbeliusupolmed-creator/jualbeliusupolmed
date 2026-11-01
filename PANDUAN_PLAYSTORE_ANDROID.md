@@ -15,7 +15,7 @@ Ada **2 cara termudah** untuk mengubah website ini menjadi file `.aab` / `.apk` 
 4. Klik tombol **Package for Stores** $\rightarrow$ pilih **Android (Google Play)**.
 5. Isi data nama aplikasi:
    * **App Name:** Jual Beli USU Polmed
-   * **Package ID:** `id.web.jualbeliusupolmed`
+   * **Package ID:** `id.my.kampuskita`
 6. Klik **Generate / Download Package**.
 7. Abang akan mendapatkan file **`.aab` (Android App Bundle)** dan **`.apk`** yang sudah ditandatangani dan siap diunggah ke Google Play Console!
 

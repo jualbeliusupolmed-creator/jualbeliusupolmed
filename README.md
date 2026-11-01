@@ -55,7 +55,7 @@ Marketplace mahasiswa lintas kampus — jual-beli laptop, HP, buku, fashion, mak
 ### 1. Clone & Install
 ```bash
 git clone https://github.com/jualbeliusupolmed-creator/jualbeliusupolmed.git
-cd jualbeliusupolmed
+cd kampuskita # (atau folder projek)
 npm install
 ```
 

@@ -3,7 +3,7 @@
 -- Jual Beli USU & POLMED
 --
 -- Identifier: email (bisa login via Email & Password)
--- Email: admin@jualbeliusupolmed.web.id
+-- Email: admin@kampuskita.my.id
 -- Password default: upadmin2026 (GANTI SETELAH LOGIN PERTAMA)
 --
 -- PENTING: Jalankan migration_email.sql TERLEBIH DAHULU
@@ -38,7 +38,7 @@ VALUES (
   '@jualbeliusupolmed',
   'Platform resmi komunitas jual beli, mading, dan kegiatan mahasiswa USU & POLMED.',
   '$2a$10$ECGSauzTPYw3gVCL3nJ5NuLcZg27/k18x7V2pvBaunrRsVsIfV7Ki',
-  'admin@jualbeliusupolmed.web.id',
+  'admin@kampuskita.my.id',
   'email',
   now()
 )
