@@ -93,3 +93,4 @@ export async function GET(request, { params }) {
     return NextResponse.redirect(new URL("/jual-beli", request.url), { status: 307 });
   }
 }
+

@@ -12,3 +12,4 @@ Prinsip utama: **Jika sebuah fitur belum memiliki kode nyata dan tes yang membuk
 | J5 | "Iklan AdSense tidak dimuat di ruang percakapan privat" | `src/app/layout.jsx` | `src/components/AdSenseScript.jsx` (hanya memuat skrip jika bukan rute privat) | `__tests__/adsenseFilter.test.js` | Terverifikasi |
 | J6 | "Janjian COD aman di titik ramai sekitar kampus" | `src/app/chat/page.jsx` & `/chat-wa/[id]` | `src/lib/constants.js` (titik COD resmi) | `__tests__/codPoints.test.js` | Dalam Pengembangan (Fase D) |
 | J7 | "Peringatan otomatis saat ada permintaan transfer uang muka / DP" | `src/app/chat/page.jsx` | `src/lib/chatSafety.js` | `__tests__/chatSafety.test.js` | Dalam Pengembangan (Fase C) |
+

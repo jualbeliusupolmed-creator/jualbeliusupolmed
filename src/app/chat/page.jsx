@@ -25,67 +25,6 @@ const ICEBREAKERS = [
   "Rekomendasi tempat makan murah dong",
 ];
 
-const PROFIL_SWIPE_DEFAULT = [
-  {
-    id: "fk-1",
-    name: "Faris Kurniawan",
-    age: 20,
-    avatar: "FK",
-    stambuk: "2023",
-    campus: "Kampus",
-    faculty: "Teknologi Informasi",
-    major: "Ilmu Komputer",
-    bio: "Mencari teman untuk kolaborasi proyek dan belajar teknologi. Suka ngoding, riset, dan diskusi santai.",
-    favSpot: "Ruang publik kampus",
-    tags: ["#WebDev", "#BelajarBareng", "#Teknologi"],
-  },
-  {
-    id: "da-2",
-    name: "Dimas Adrian",
-    age: 21,
-    avatar: "DA",
-    stambuk: "2022",
-    campus: "Kampus",
-    faculty: "Teknik",
-    major: "Teknik Mesin",
-    bio: "Mencari teman belajar dan berdiskusi tentang praktikum serta desain teknik.",
-    favSpot: "Area umum kampus",
-    tags: ["#TeknikMesin", "#BelajarBareng", "#Olahraga"],
-  },
-  {
-    id: "sl-3",
-    name: "Sarah Lubis",
-    age: 20,
-    avatar: "SL",
-    stambuk: "2023",
-    campus: "Kampus",
-    faculty: "Ekonomi dan Bisnis",
-    major: "Akuntansi",
-    bio: "Mencari teman belajar dan berdiskusi tentang akuntansi serta bisnis.",
-    favSpot: "Perpustakaan kampus",
-    tags: ["#Akuntansi", "#BelajarBareng", "#Bisnis"],
-  },
-  {
-    id: "ks-4",
-    name: "Kevin Siregar",
-    age: 22,
-    avatar: "KS",
-    stambuk: "2021",
-    campus: "Kampus",
-    faculty: "Teknik Komputer",
-    major: "Teknik Komputer",
-    bio: "Tertarik dengan IoT dan mikrokontroler. Terbuka untuk kolaborasi lintas kampus.",
-    favSpot: "Area umum kampus",
-    tags: ["#IoT", "#CodingBareng", "#Teknologi"],
-  },
-];
-
-const MATCH_HARI_INI = [
-  { name: "Dimas Adrian", initials: "DA", faculty: "Teknik Mesin", campus: "Kampus", time: "10:15" },
-  { name: "Sarah Lubis", initials: "SL", faculty: "Akuntansi", campus: "Kampus", time: "08:30" },
-  { name: "Kevin Siregar", initials: "KS", faculty: "Teknik Komputer", campus: "Kampus", time: "Kemarin" },
-];
-
 const BASECAMP_SPOTS = [
   "Area publik yang ramai",
   "Perpustakaan kampus",
@@ -122,7 +61,9 @@ function ChatContent() {
   const [searchFilter, setSearchFilter] = useState("");
   const [kampusTersedia, setKampusTersedia] = useState([]);
 
-  // Swipe Deck state
+  // Swipe Deck state (Profil Riil Teman Kampus)
+  const [temanDeck, setTemanDeck] = useState([]);
+  const [temanLoading, setTemanLoading] = useState(false);
   const [swipeIndex, setSwipeIndex] = useState(0);
 
   // Kotak Masuk Marketplace
@@ -185,6 +126,31 @@ function ChatContent() {
       setDesktopMode("chat");
     }
   }, [roomQuery, anonView]);
+
+  // Muat profil teman kampus riil dari database saat mode swipe aktif
+  const fetchTemanDeck = useCallback(async () => {
+    setTemanLoading(true);
+    try {
+      const res = await fetch(`/api/teman/profiles?userId=${myWa || "anon"}&campus=Semua`);
+      const data = await res.json();
+      if (data.ok && Array.isArray(data.profiles)) {
+        setTemanDeck(data.profiles);
+      } else {
+        setTemanDeck([]);
+      }
+    } catch (e) {
+      console.warn("Gagal memuat profil teman:", e);
+      setTemanDeck([]);
+    } finally {
+      setTemanLoading(false);
+    }
+  }, [myWa]);
+
+  useEffect(() => {
+    if (desktopMode === "swipe") {
+      fetchTemanDeck();
+    }
+  }, [desktopMode, fetchTemanDeck]);
 
   // Scroll on new messages
   useEffect(() => {
@@ -625,21 +591,22 @@ function ChatContent() {
     else router.push("/chat");
   };
 
-  // Swipe Action
-  const currentSwipeProfile = PROFIL_SWIPE_DEFAULT[swipeIndex % PROFIL_SWIPE_DEFAULT.length];
+  // Swipe Action (Profil Riil)
+  const currentSwipeProfile = temanDeck.length > 0 ? temanDeck[swipeIndex % temanDeck.length] : null;
 
   const handleNextSwipe = (action = "pass") => {
+    if (!currentSwipeProfile) return;
     if (action === "super") {
-      toast.success(`Super Match dengan ${currentSwipeProfile.name}! 🌟`);
+      toast.success(`Menyimpan kontak ${currentSwipeProfile.display_name}! 🌟`);
       playChatSound();
       hapticSuccess();
     } else if (action === "like") {
-      toast.success(`Kamu menyapa ${currentSwipeProfile.name}! 🙌`);
+      toast.success(`Kamu menyapa ${currentSwipeProfile.display_name}! 🙌`);
       hapticSuccess();
     } else {
       hapticLight();
     }
-    setSwipeIndex((prev) => (prev + 1) % PROFIL_SWIPE_DEFAULT.length);
+    setSwipeIndex((prev) => (prev + 1) % (temanDeck.length || 1));
   };
 
   // Filtered rooms in sidebar
@@ -1068,92 +1035,126 @@ function ChatContent() {
               <div className="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col xl:flex-row gap-6 items-stretch justify-center scrollbar-none [scrollbar-width:none]">
                 {/* Kartu Swipe Utama (Pusat Perhatian) */}
                 <div className="flex-1 flex flex-col items-center justify-center max-w-xl mx-auto w-full">
-                  <div className="w-full bg-white dark:bg-[#1c1c1e] rounded-3xl border border-emerald-500/20 shadow-md p-6 flex flex-col justify-between transition-all relative overflow-hidden">
-                    {/* Top verified banner */}
-                    <div className="flex items-center justify-between gap-2 pb-4 border-b border-slate-100 dark:border-slate-800">
-                      <div className="flex items-center gap-2">
-                        <span className="px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 text-xs font-bold flex items-center gap-1">
-                          <Icon.CheckCircle className="w-3.5 h-3.5" />
-                          NIM Terverifikasi {currentSwipeProfile.campus}
-                        </span>
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold">
-                          Rekomendasi Hari Ini
-                        </span>
-                      </div>
-                      <span className="text-xs text-slate-400 font-medium">
-                        Stambuk {currentSwipeProfile.stambuk}
-                      </span>
+                  {temanLoading ? (
+                    <div className="w-full bg-white dark:bg-[#1c1c1e] rounded-3xl border border-slate-200 dark:border-slate-800 shadow-md p-8 flex flex-col items-center justify-center text-center animate-pulse min-h-[380px]">
+                      <div className="w-20 h-20 rounded-2xl bg-slate-100 dark:bg-slate-800 mb-4" />
+                      <div className="h-5 bg-slate-100 dark:bg-slate-800 rounded w-1/2 mb-2" />
+                      <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded w-1/3 mb-4" />
+                      <div className="h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl w-full max-w-sm" />
                     </div>
-
-                    {/* Profile body */}
-                    <div className="py-5 flex flex-col md:flex-row items-center md:items-start gap-5">
-                      <div className="relative shrink-0">
-                        <div className="w-24 h-24 rounded-2xl bg-gradient-to-tr from-emerald-700 to-teal-500 text-white flex items-center justify-center text-3xl font-black shadow-md">
-                          {currentSwipeProfile.avatar}
-                        </div>
-                        <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#047857] ring-2 ring-white dark:ring-black flex items-center justify-center text-[12px] text-white font-bold">
-                          ✓
-                        </span>
+                  ) : !currentSwipeProfile || temanDeck.length === 0 ? (
+                    <div className="w-full bg-white dark:bg-[#1c1c1e] rounded-3xl border border-slate-200 dark:border-slate-800 shadow-md p-8 flex flex-col items-center justify-center text-center min-h-[380px]">
+                      <div className="w-16 h-16 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center mb-4">
+                        <Icon.Users className="w-8 h-8" />
                       </div>
-
-                      <div className="flex-1 text-center md:text-left min-w-0">
-                        <h3 className="text-xl font-black text-slate-900 dark:text-white">
-                          {currentSwipeProfile.name}, {currentSwipeProfile.age} thn
-                        </h3>
-                        <p className="text-xs text-[#047857] dark:text-emerald-400 font-bold flex items-center justify-center md:justify-start gap-1 mb-3 mt-0.5">
-                          <Icon.BookOpen className="w-3.5 h-3.5" />
-                          <span>{currentSwipeProfile.major}</span>
-                        </p>
-
-                        <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl mb-3 border border-slate-100 dark:border-slate-800">
-                          <p className="text-xs text-slate-700 dark:text-slate-300 italic leading-relaxed">
-                            “{currentSwipeProfile.bio}”
-                          </p>
-                        </div>
-
-                        <div className="flex flex-wrap items-center justify-center md:justify-start gap-1.5">
-                          <span className="px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-[11px] font-bold flex items-center gap-1 border border-emerald-200/60 dark:border-emerald-800/60">
-                            <Icon.MapPin className="w-3.5 h-3.5 text-emerald-600" />
-                            Spot: {currentSwipeProfile.favSpot}
+                      <h3 className="text-base font-black text-slate-900 dark:text-white mb-2">
+                        Belum Ada Profil Teman di Sekitarmu
+                      </h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-sm mb-6">
+                        Belum ada mahasiswa yang memasang profil Teman Kampus. Pasang profilmu sekarang agar teman sefakultas atau seangkatan bisa mengajakmu kolaborasi atau belajar bareng!
+                      </p>
+                      <Link
+                        href="/teman"
+                        className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#047857] hover:bg-emerald-800 text-white text-xs font-black shadow-md shadow-emerald-700/25 transition-all"
+                      >
+                        <Icon.Plus className="w-4 h-4" />
+                        <span>Pasang Profil Teman Kampus</span>
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="w-full bg-white dark:bg-[#1c1c1e] rounded-3xl border border-emerald-500/20 shadow-md p-6 flex flex-col justify-between transition-all relative overflow-hidden">
+                      {/* Top verified banner */}
+                      <div className="flex items-center justify-between gap-2 pb-4 border-b border-slate-100 dark:border-slate-800">
+                        <div className="flex items-center gap-2">
+                          <span className="px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 text-xs font-bold flex items-center gap-1">
+                            <Icon.CheckCircle className="w-3.5 h-3.5" />
+                            Mahasiswa {currentSwipeProfile.campus || "Kampus"}
                           </span>
-                          {currentSwipeProfile.tags.map((t, idx) => (
-                            <span
-                              key={idx}
-                              className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[10px] font-semibold"
-                            >
-                              {t}
+                          {currentSwipeProfile.intent && (
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold">
+                              {currentSwipeProfile.intent}
                             </span>
-                          ))}
+                          )}
+                        </div>
+                        {currentSwipeProfile.batch && (
+                          <span className="text-xs text-slate-400 font-medium">
+                            Stambuk {currentSwipeProfile.batch}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Profile body */}
+                      <div className="py-5 flex flex-col md:flex-row items-center md:items-start gap-5">
+                        <div className="relative shrink-0">
+                          {currentSwipeProfile.photo_url ? (
+                            <img
+                              src={currentSwipeProfile.photo_url}
+                              alt={currentSwipeProfile.display_name}
+                              className="w-24 h-24 rounded-2xl object-cover shadow-md"
+                            />
+                          ) : (
+                            <div className="w-24 h-24 rounded-2xl bg-gradient-to-tr from-emerald-700 to-teal-500 text-white flex items-center justify-center text-3xl font-black shadow-md">
+                              {(currentSwipeProfile.display_name || "AK").slice(0, 2).toUpperCase()}
+                            </div>
+                          )}
+                          <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#047857] ring-2 ring-white dark:ring-black flex items-center justify-center text-[12px] text-white font-bold">
+                            ✓
+                          </span>
+                        </div>
+
+                        <div className="flex-1 text-center md:text-left min-w-0">
+                          <h3 className="text-xl font-black text-slate-900 dark:text-white">
+                            {currentSwipeProfile.display_name}
+                          </h3>
+                          <p className="text-xs text-[#047857] dark:text-emerald-400 font-bold flex items-center justify-center md:justify-start gap-1 mb-3 mt-0.5">
+                            <Icon.BookOpen className="w-3.5 h-3.5" />
+                            <span>
+                              {currentSwipeProfile.faculty || "Umum"} · {currentSwipeProfile.campus || "Kampus"}
+                            </span>
+                          </p>
+
+                          <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl mb-3 border border-slate-100 dark:border-slate-800">
+                            <p className="text-xs text-slate-700 dark:text-slate-300 italic leading-relaxed">
+                              “{currentSwipeProfile.bio || "Mencari teman untuk belajar bareng, nugas, atau diskusi santai di kampus."}”
+                            </p>
+                          </div>
+
+                          <div className="flex flex-wrap items-center justify-center md:justify-start gap-1.5">
+                            <span className="px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-[11px] font-bold flex items-center gap-1 border border-emerald-200/60 dark:border-emerald-800/60">
+                              <Icon.MapPin className="w-3.5 h-3.5 text-emerald-600" />
+                              Kampus: {currentSwipeProfile.campus || "Kampus"}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Action buttons panel */}
-                    <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-center gap-4">
-                      <button
-                        onClick={() => handleNextSwipe("pass")}
-                        className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-slate-400 hover:text-rose-500 flex items-center justify-center transition-all shadow-xs active:scale-90"
-                        title="Lewati (Next Profil)"
-                      >
-                        <Icon.X className="w-6 h-6" />
-                      </button>
-                      <button
-                        onClick={() => handleNextSwipe("super")}
-                        className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-600 hover:text-white flex items-center justify-center transition-all shadow-xs active:scale-90"
-                        title="Super Match / Simpan Teman"
-                      >
-                        <Icon.StarFilled className="w-6 h-6 text-emerald-600 group-hover:text-white" />
-                      </button>
-                      <button
-                        onClick={() => handleNextSwipe("like")}
-                        className="px-6 py-3 rounded-full bg-[#047857] hover:bg-emerald-800 text-white text-xs font-black flex items-center gap-2 shadow-md shadow-emerald-700/25 transition-all active:scale-95"
-                        title="Ajak Kenalan Sekarang"
-                      >
-                        <Icon.HeartFilled className="w-4 h-4 text-emerald-200" />
-                        <span>Ajak Kenalan &amp; Mulai Chat</span>
-                      </button>
+                      {/* Action buttons panel */}
+                      <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-center gap-4">
+                        <button
+                          onClick={() => handleNextSwipe("pass")}
+                          className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-slate-400 hover:text-rose-500 flex items-center justify-center transition-all shadow-xs active:scale-90"
+                          title="Lewati (Next Profil)"
+                        >
+                          <Icon.X className="w-6 h-6" />
+                        </button>
+                        <button
+                          onClick={() => handleNextSwipe("super")}
+                          className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-600 hover:text-white flex items-center justify-center transition-all shadow-xs active:scale-90"
+                          title="Simpan Teman"
+                        >
+                          <Icon.StarFilled className="w-6 h-6 text-emerald-600 group-hover:text-white" />
+                        </button>
+                        <button
+                          onClick={() => handleNextSwipe("like")}
+                          className="px-6 py-3 rounded-full bg-[#047857] hover:bg-emerald-800 text-white text-xs font-black flex items-center gap-2 shadow-md shadow-emerald-700/25 transition-all active:scale-95"
+                          title="Ajak Kenalan Sekarang"
+                        >
+                          <Icon.HeartFilled className="w-4 h-4 text-emerald-200" />
+                          <span>Ajak Kenalan &amp; Mulai Chat</span>
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Sisi Kanan: Match Hari Ini & Basecamp Favorit (from 16.html) */}

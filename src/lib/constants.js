@@ -82,3 +82,15 @@ export function formatWaForBaileys(num) {
   if (!local) return "";
   return "62" + local.slice(1); // 08xxx → 628xxx
 }
+
+/**
+ * Mengembalikan domain dasar yang valid, bersih, dan bebas dari domain lama (jualbeliusupolmed).
+ */
+export function getCleanBaseUrl() {
+  const envUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || "https://www.kampuskita.my.id";
+  let clean = String(envUrl).trim().replace(/\/$/, "");
+  if (clean.includes("jualbeliusupolmed.web.id")) {
+    clean = "https://www.kampuskita.my.id";
+  }
+  return clean || "https://www.kampuskita.my.id";
+}

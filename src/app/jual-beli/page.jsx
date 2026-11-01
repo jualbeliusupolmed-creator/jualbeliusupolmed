@@ -122,8 +122,23 @@ async function getStats() {
   }
 }
 
+async function getWantedItems() {
+  try {
+    const supa = getAdminClient();
+    const { data } = await supa
+      .from("wanted_listings")
+      .select("id, title, budget, campus, area")
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(8);
+    return data || [];
+  } catch {
+    return [];
+  }
+}
+
 export default async function HomePage() {
-  const [{ listings, total }, featured, trending, settings, categories, stats] =
+  const [{ listings, total }, featured, trending, settings, categories, stats, wantedItems] =
     await Promise.all([
       getInitialData(),
       getFeatured(),
@@ -131,6 +146,7 @@ export default async function HomePage() {
       getSettings(),
       getCategories(),
       getStats(),
+      getWantedItems(),
     ]);
   const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").trim();
   const itemListJsonLd = {
@@ -154,6 +170,7 @@ export default async function HomePage() {
         initialTotal={total}
         categories={categories}
         stats={stats}
+        wantedItems={wantedItems}
       />
     </>
   );
