@@ -1032,12 +1032,14 @@ export async function POST(req) {
 
           const hapusListing = hapusListings[0];
           await supa.from("listings").update({ status: "sold" }).eq("id", hapusListing.id);
+          const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").replace(/\/$/, "");
+          const qrisUrl = `${baseUrl}/qris.png`;
           const soldMsg =
             `🎉 *Selamat! Barang Terjual!*\n\n` +
             `📦 *${hapusListing.title}* sudah ditandai sebagai *terjual*.\n\n` +
-            `Terima kasih telah berjualan di Jual Beli USU! 🙌\n` +
-            `Pasang iklan baru kapan saja ya!`;
-          await sendWa(senderJid, soldMsg);
+            `Boleh donasi seikhlasnya via QRIS di atas untuk bantu biaya server ya kak 🙏\n\n` +
+            `Makasih banyak, berkah selalu usahanya! ✨`;
+          await sendWa(senderJid, soldMsg, qrisUrl);
           return NextResponse.json({ ok: true, state: "hapus_sold", bot_reply: soldMsg });
 
         } else if (hapusSubCmd === "GALAKU" && hapusParts[2]) {
@@ -2717,7 +2719,14 @@ export async function POST(req) {
         await supa.from("buyer_contacts").update({ deal_status: newStatus }).eq("id", contact.id);
 
         if (isDeal) {
-          await sendWa(senderJid, `✅ Mantap! Status transaksi telah diperbarui menjadi *DEAL* 🎉\nTerima kasih atas konfirmasinya. Jangan lupa tandai barang Anda sebagai TERJUAL jika stok sudah habis dengan membalas pesan iklan Anda.`);
+          const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").replace(/\/$/, "");
+          const qrisUrl = `${baseUrl}/qris.png`;
+          const dealMsg =
+            `Alhamdulillah, mantap transaksi DEAL kak! 🎉\n\n` +
+            `Boleh donasi seikhlasnya via QRIS di atas untuk bantu biaya server ya kak 🙏\n\n` +
+            `Makasih banyak, berkah selalu usahanya! ✨`;
+
+          await sendWa(senderJid, dealMsg, qrisUrl);
         } else {
           await sendWa(senderJid, `✅ Siap kak, status diperbarui menjadi *GAGAL*. Semoga cepat laku ya!`);
         }
