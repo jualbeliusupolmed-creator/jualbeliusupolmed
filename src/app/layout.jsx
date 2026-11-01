@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/next";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import BackToTop from "@/components/BackToTop";
+import AdSenseScript from "@/components/AdSenseScript";
 import { Toaster } from "sonner";
 import Script from "next/script";
 import { getSettings } from "@/lib/settings";
@@ -168,12 +169,7 @@ export default async function RootLayout({ children }) {
         ` }} />
       </head>
       <body className={cn(jakartaSans.className, "min-h-screen flex flex-col font-sans antialiased overflow-x-hidden")}>
-        <Script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6730561722094443"
-          crossOrigin="anonymous"
-          strategy="lazyOnload"
-        />
+        <AdSenseScript />
         <Script
           strategy="lazyOnload"
           src="https://www.googletagmanager.com/gtag/js?id=G-SQFZJPXSW2"

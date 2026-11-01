@@ -51,3 +51,4 @@ describe("Teman Kampus Match Notification & WA Story", () => {
     expect(storyMsg.length).toBeGreaterThan(10);
   });
 });
+

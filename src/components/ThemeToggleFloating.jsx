@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { Icon } from "./Icons";
 import { bacaTema, terapkanTema } from "@/lib/tampilan";
 import { cn } from "@/lib/utils";
 
 export default function ThemeToggleFloating() {
+  const pathname = usePathname();
   const [dark, setDark] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -26,7 +28,7 @@ export default function ThemeToggleFloating() {
     terapkanTema(isDark ? "gelap" : "terang");
   };
 
-  if (!mounted) return null;
+  if (!mounted || pathname?.startsWith("/chat")) return null;
 
   return (
     <aside

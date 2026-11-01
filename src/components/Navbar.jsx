@@ -21,7 +21,7 @@ export default function Navbar({ config }) {
   const [selectedCampus, setSelectedCampus] = useState("Semua");
   const [campuses, setCampuses] = useState([]);
   const [campusDropdownOpen, setCampusDropdownOpen] = useState(false);
-  const [unreadChat, setUnreadChat] = useState(3);
+  const [unreadChat, setUnreadChat] = useState(0);
   const [cartCount, setCartCount] = useState(0);
   const [notifTerbuka, setNotifTerbuka] = useState(false);
   const [cariTerbuka, setCariTerbuka] = useState(false);
@@ -203,9 +203,11 @@ export default function Navbar({ config }) {
                 <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
               </svg>
               <span>Obrolan</span>
-              <span className="text-[9px] font-bold text-white bg-emerald-700 px-1.5 py-0.5 rounded-full leading-none">
-                {unreadChat}
-              </span>
+              {unreadChat > 0 && session?.wa && (
+                <span className="text-[9px] font-bold text-white bg-emerald-700 px-1.5 py-0.5 rounded-full leading-none">
+                  {unreadChat > 99 ? "99+" : unreadChat}
+                </span>
+              )}
             </Link>
           </nav>
 
@@ -426,13 +428,14 @@ export default function Navbar({ config }) {
                 className="relative w-8 h-8 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-95"
               >
                 <Icon.MessageCircle className="w-4 h-4" />
-                {unreadChat > 0 && (
+                {unreadChat > 0 && Boolean(session?.wa) && (
                   <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#047857] ring-2 ring-white dark:ring-[#0f172a]" />
                 )}
               </Link>
               {siap && session.wa ? (
                 <Link
                   href="/dashboard"
+                  aria-label="Dashboard Akun"
                   className="w-7 h-7 rounded-full bg-[#047857] text-white flex items-center justify-center text-xs font-bold shadow-xs active:scale-95"
                 >
                   {session.name ? session.name[0].toUpperCase() : "U"}

@@ -799,47 +799,51 @@ function ChatContent() {
               )}
             </div>
 
-            {/* Horizontal Story / Match Baru Avatars (from 16.html & 13.html) */}
-            <div className="flex flex-col gap-1.5 pt-1">
-              <div className="flex items-center justify-between text-xs text-slate-400">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Match Baru</span>
-                <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400">3 Teman</span>
-              </div>
-              <div className="flex items-center gap-2.5 overflow-x-auto py-1 scrollbar-none [scrollbar-width:none]">
-                {/* Swipe shortcut */}
-                <button
-                  onClick={() => {
-                    setDesktopMode("swipe");
-                    router.push("/chat");
-                  }}
-                  className="w-11 h-11 rounded-full border-2 border-dashed border-emerald-600/60 dark:border-emerald-500/60 flex flex-col items-center justify-center text-emerald-700 dark:text-emerald-400 shrink-0 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors"
-                  title="Cari Teman Baru"
-                >
-                  <Icon.Plus className="w-4 h-4" />
-                </button>
-
-                {MATCH_HARI_INI.map((m, idx) => (
-                  <div
-                    key={idx}
+            {/* Horizontal Story / Match Baru Avatars (hanya tampil jika sudah masuk dan ada match) */}
+            {isLoggedIn && MATCH_HARI_INI.length > 0 && (
+              <div className="flex flex-col gap-1.5 pt-1">
+                <div className="flex items-center justify-between text-xs text-slate-400">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Teman Baru</span>
+                  <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
+                    {MATCH_HARI_INI.length} Teman
+                  </span>
+                </div>
+                <div className="flex items-center gap-2.5 overflow-x-auto py-1 scrollbar-none [scrollbar-width:none]">
+                  {/* Swipe shortcut */}
+                  <button
                     onClick={() => {
                       setDesktopMode("swipe");
-                      setSwipeIndex(idx % PROFIL_SWIPE_DEFAULT.length);
                       router.push("/chat");
                     }}
-                    className="flex flex-col items-center gap-1 shrink-0 cursor-pointer group"
+                    className="w-11 h-11 rounded-full border-2 border-dashed border-emerald-600/60 dark:border-emerald-500/60 flex flex-col items-center justify-center text-emerald-700 dark:text-emerald-400 shrink-0 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors"
+                    title="Cari Teman Baru"
                   >
-                    <div className="w-11 h-11 rounded-full p-0.5 bg-gradient-to-tr from-emerald-700 to-teal-500 flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
-                      <div className="w-full h-full rounded-full bg-white dark:bg-slate-900 flex items-center justify-center text-xs font-bold text-emerald-800 dark:text-emerald-300">
-                        {m.initials}
+                    <Icon.Plus className="w-4 h-4" />
+                  </button>
+
+                  {MATCH_HARI_INI.map((m, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => {
+                        setDesktopMode("swipe");
+                        setSwipeIndex(idx % PROFIL_SWIPE_DEFAULT.length);
+                        router.push("/chat");
+                      }}
+                      className="flex flex-col items-center gap-1 shrink-0 cursor-pointer group"
+                    >
+                      <div className="w-11 h-11 rounded-full p-0.5 bg-gradient-to-tr from-emerald-700 to-teal-500 flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+                        <div className="w-full h-full rounded-full bg-white dark:bg-slate-900 flex items-center justify-center text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                          {m.initials}
+                        </div>
                       </div>
+                      <span className="text-[10px] font-semibold text-slate-700 dark:text-slate-300 truncate max-w-[50px] text-center">
+                        {m.name.split(" ")[0]}
+                      </span>
                     </div>
-                    <span className="text-[10px] font-semibold text-slate-700 dark:text-slate-300 truncate max-w-[50px] text-center">
-                      {m.name.split(" ")[0]}
-                    </span>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Segmented Filter Pills */}
             <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 scrollbar-none [scrollbar-width:none]">
@@ -904,11 +908,8 @@ function ChatContent() {
                 </div>
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-[11px] text-slate-600 dark:text-slate-400 truncate">
-                    Buka untuk swipe teman baru di sekitarmu
+                    Buka untuk cari teman di sekitarmu
                   </p>
-                  <span className="w-4 h-4 rounded-full bg-emerald-600 text-white text-[10px] font-bold flex items-center justify-center shrink-0">
-                    3
-                  </span>
                 </div>
               </div>
             </article>
@@ -920,7 +921,7 @@ function ChatContent() {
                 <span>Obrolan Kamu</span>
               </div>
               <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold">
-                {filteredRooms.length} Kamar
+                {filteredRooms.length} Percakapan
               </span>
             </div>
 
