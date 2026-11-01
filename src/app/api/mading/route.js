@@ -146,6 +146,7 @@ export async function POST(request) {
       title: title || "",
       description: content,
       category: type === "menfess" ? "Lainnya" : "Info",
+      type: type || "menfess",
     });
     if (modCheck.action === "reject" || modCheck.riskScore >= 70) {
       return NextResponse.json(

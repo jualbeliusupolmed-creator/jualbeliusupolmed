@@ -1989,9 +1989,9 @@ export async function POST(req) {
         return NextResponse.json({ ok: true, state: "tawaran_listed", count: tawaranList.length });
 
       // ==========================================
-      // SAYA — Lihat profil & statistik diri sendiri
+      // SAYA / INFO — Lihat profil & statistik diri sendiri
       // ==========================================
-      } else if (textMsg === "SAYA") {
+      } else if (textMsg === "SAYA" || textMsg === "INFO") {
         // Ambil listing IDs dulu, baru query price_offers (subquery tidak support di Supabase JS)
         const { data: myListings } = await supa
           .from("listings")
@@ -2793,6 +2793,7 @@ export async function POST(req) {
           title: "",
           description: rawContent,
           category: "Lainnya",
+          type: "menfess",
         });
         if (modCheck.action === "reject" || (modCheck.riskScore || 0) >= 70) {
           const reply = `❌ Menfess ditolak karena melanggar panduan komunitas (${(modCheck.reasons || []).join(", ")}). Dilarang membahas narkoba, judi, vape, joki skripsi, atau konten terlarang.`;

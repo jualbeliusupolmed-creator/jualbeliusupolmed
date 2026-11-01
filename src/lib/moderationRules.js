@@ -124,10 +124,18 @@ export function checkDeterministicModeration({ title = "", description = "", pri
     }
   }
 
-  // 2. Cek Nomor Telepon / WA di Judul atau Deskripsi
+  const isNonCommerce =
+    type === "gratis" ||
+    type === "menfess" ||
+    type === "info" ||
+    type === "mading" ||
+    type === "curhat" ||
+    category === "Hibah";
+
+  // 2. Cek Nomor Telepon / WA di Judul atau Deskripsi (khusus transaksi barang/jasa)
   // Format nomor HP Indonesia: 08xx atau +628xx atau 628xx (minimal 9 digit berturut-turut)
   const phoneInTextRegex = /(?:(?:\+62|62|0)8[0-9][0-9\s.-]{6,12}[0-9])/;
-  if (phoneInTextRegex.test(title) || phoneInTextRegex.test(description)) {
+  if (!isNonCommerce && (phoneInTextRegex.test(title) || phoneInTextRegex.test(description))) {
     return {
       status: "pending",
       risk_score: 0.65,
@@ -135,9 +143,9 @@ export function checkDeterministicModeration({ title = "", description = "", pri
     };
   }
 
-  // 3. Validasi Harga
-  const numPrice = Number(price);
-  if (type !== "gratis" && category !== "Hibah") {
+  // 3. Validasi Harga (hanya untuk barang/jasa komersial dan jika harga disertakan)
+  if (!isNonCommerce && price !== null && price !== undefined) {
+    const numPrice = Number(price);
     if (isNaN(numPrice) || numPrice <= 0) {
       return {
         status: "rejected",
@@ -305,7 +313,7 @@ export async function moderateListing({ title, description, price, category, typ
 /**
  * Adapter helper for evaluateModerationRules compatibility
  */
-export function evaluateModerationRules({ title = "", description = "", price = 0, category = "", type = "barang" } = {}) {
+export function evaluateModerationRules({ title = "", description = "", price = null, category = "", type = "barang" } = {}) {
   const res = checkDeterministicModeration({ title, description, price, category, type });
   return {
     ...res,
