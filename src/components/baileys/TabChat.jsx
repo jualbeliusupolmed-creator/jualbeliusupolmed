@@ -185,18 +185,12 @@ function ChatRoom({ chat, onClose }) {
   );
 }
 
-const DUMMY_CHATS = [
-  { jid: "6281234567890@s.whatsapp.net", name: "Budi Santoso", preview: "Barangnya masih ada kak?" },
-  { jid: "6285678901234@s.whatsapp.net", name: "Siti Rahayu", preview: "Bisa COD di kampus?" },
-  { jid: "6287890123456@s.whatsapp.net", name: "Rizky Pratama", preview: "Harga bisa nego gak?" },
-];
-
 export function TabChat() {
   const { data, loading, error, refetch } = useApi("chats");
   const [search, setSearch] = useState("");
   const [activeChat, setActiveChat] = useState(null);
 
-  const rawChats = error ? DUMMY_CHATS : (data?.chats || []);
+  const rawChats = data?.chats || [];
   const chats = rawChats.filter(c =>
     c.name?.toLowerCase().includes(search.toLowerCase()) || c.jid?.includes(search)
   );

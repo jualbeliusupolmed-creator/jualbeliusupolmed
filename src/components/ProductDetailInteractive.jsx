@@ -54,11 +54,7 @@ export default function ProductDetailInteractive({
   const sellerFaculty =
     listing.seller_profiles?.student_faculty ||
     listing.seller_profiles?.faculty ||
-    "Fakultas / Prodi";
-  const sellerStambuk =
-    listing.seller_profiles?.student_stambuk ||
-    listing.seller_profiles?.stambuk ||
-    "'22";
+    "";
   const sellerNIM = listing.seller_profiles?.student_nim
     ? `NIM ${listing.seller_profiles.student_nim.slice(0, 4)}****`
     : "";
@@ -119,7 +115,7 @@ export default function ProductDetailInteractive({
               }`}
             >
               <Icon.CheckCircle className="w-4 h-4" />
-              <span>Cek Fungsi Hardware</span>
+              <span>Panduan Cek Fisik COD</span>
             </button>
           </div>
 
@@ -212,26 +208,26 @@ export default function ProductDetailInteractive({
             </div>
           )}
 
-          {/* TAB 3: LAPORAN CEK FUNGSI HARDWARE (TESTED) */}
+          {/* TAB 3: PANDUAN CEK FISIK MANDIRI SAAT COD */}
           {activeTab === "diagnostic" && (
             <div className="space-y-4 animate-fade-in">
               <div className="flex items-center justify-between">
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                  Laporan Cek Fungsi (Pra-COD Verified)
+                  Panduan Periksa Mandiri saat COD
                 </h3>
                 <span className="text-[11px] text-[#047857] dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full">
-                  Normal &amp; Teruji
+                  Panduan Pembeli
                 </span>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                 {[
-                  { label: "Fisik & Engsel / Bodi", status: "Mulus & Kokoh" },
-                  { label: "Layar / Tampilan", status: "Jernih Normal" },
-                  { label: "Koneksi & Wi-Fi", status: "Cepat Terhubung" },
-                  { label: "Tombol & Keyboard", status: "100% Responsif" },
-                  { label: "Port / Colokan", status: "Berfungsi Baik" },
-                  { label: "Baterai / Daya", status: "Tahan Normal" },
+                  { label: "Bodi & Fisik", status: "Cek goresan, retak, atau jahitan" },
+                  { label: "Layar & Tampilan", status: "Uji kecerahan & pixel layar" },
+                  { label: "Koneksi & Jaringan", status: "Coba hubungkan ke Wi-Fi / Hotspot" },
+                  { label: "Tombol & Fungsi", status: "Coba seluruh tuts & fungsi utama" },
+                  { label: "Port & Colokan", status: "Periksa slot colokan & kabel daya" },
+                  { label: "Baterai & Daya", status: "Periksa sisa persentase baterai" },
                 ].map((item, idx) => (
                   <div
                     key={idx}
@@ -247,8 +243,8 @@ export default function ProductDetailInteractive({
                   </div>
                 ))}
               </div>
-              <p className="text-[11px] text-slate-400 italic">
-                *Pembeli sangat dianjurkan mencoba kembali item ini langsung saat bertemu di titik kumpul kampus.
+              <p className="text-[11px] text-slate-500 italic">
+                *Demi kenyamanan bersama, selalu periksa dan coba barang secara langsung di lokasi titik temu kampus sebelum melakukan pembayaran.
               </p>
             </div>
           )}

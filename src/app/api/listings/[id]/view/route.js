@@ -3,6 +3,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { sendWa } from "@/lib/fonnte";
 import { buildSlug } from "@/lib/slug";
+import { getCleanBaseUrl } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
@@ -66,7 +67,7 @@ async function checkAndNotifyMilestone(supa, listingId) {
 
   if (updateErr) return; // Race condition: milestone sudah diupdate di tempat lain
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id";
+  const baseUrl = getCleanBaseUrl();
   const slug = buildSlug(listing.title, listing.id);
 
   const emoji = nextMilestone >= 500 ? "Milestone 500" : nextMilestone >= 100 ? "Milestone 100" : "Milestone";

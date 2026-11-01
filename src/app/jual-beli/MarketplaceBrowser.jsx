@@ -9,34 +9,6 @@ import ProductCard from "@/components/ProductCard";
 import { Icon } from "@/components/Icons";
 import { cn } from "@/lib/utils";
 
-// Mock ticker items as defined in desktop marketplace blueprint
-const WTB_TICKER_ITEMS = [
-  {
-    title: "Kalkulator Casio fx-991EX",
-    meta: "[Teknik Sipil '23]",
-    desc: "Max 250rb COD FT",
-    tagColor: "bg-emerald-600",
-  },
-  {
-    title: "Buku Purcell Kalkulus Edisi 9",
-    meta: "[Kampus Sains]",
-    desc: "Butuh cepat sebelum kuis",
-    tagColor: "bg-amber-500",
-  },
-  {
-    title: "Papan Gambar Segitiga A3 Rotring",
-    meta: "[Kampus Teknik]",
-    desc: "Budget 150k",
-    tagColor: "bg-emerald-800",
-  },
-  {
-    title: "Jas Lab Kimia Ukuran L / XL",
-    meta: "[Kampus Kesehatan]",
-    desc: "Siap ambil di area kampus",
-    tagColor: "bg-teal-600",
-  },
-];
-
 const QUICK_CATEGORIES = [
   { id: "all", label: "Semua", filterVal: "all" },
   { id: "elektronik", label: "💻 Elektronik", filterVal: "laptop" },
@@ -52,6 +24,7 @@ export default function MarketplaceBrowser({
   initialTotal = 0,
   categories = [],
   stats = { wanted: 0, sold: 0, sellers: 0 },
+  wantedItems = [],
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -105,6 +78,26 @@ export default function MarketplaceBrowser({
     setTotalCount(initialTotal);
     setHasMore(initialListings.length < initialTotal);
   }, [initialListings, initialTotal]);
+
+  // Ticker WTB Riil dari database
+  const tickerItems = useMemo(() => {
+    if (wantedItems && wantedItems.length > 0) {
+      return wantedItems.map((w) => ({
+        title: w.title,
+        meta: `[${w.campus || "Kampus"}]`,
+        desc: w.budget > 0 ? `Maks Rp ${Number(w.budget).toLocaleString("id-ID")}` : "Butuh cepat",
+        tagColor: "bg-emerald-600",
+      }));
+    }
+    return [
+      {
+        title: "Pasang barang yang sedang kamu cari di Kampus Kita",
+        meta: "[WTB Hub]",
+        desc: "Gratis untuk mahasiswa",
+        tagColor: "bg-emerald-700",
+      },
+    ];
+  }, [wantedItems]);
 
   // Client-side quick filter & sort over current listings
   const filteredListings = useMemo(() => {
@@ -244,7 +237,7 @@ export default function MarketplaceBrowser({
         {/* WTB Marquee Viewport */}
         <div className="wtb-marquee-container flex-1 overflow-hidden relative select-none">
           <div className="wtb-marquee-track flex items-center gap-5 text-slate-700 dark:text-slate-200 text-xs whitespace-nowrap">
-            {[...WTB_TICKER_ITEMS, ...WTB_TICKER_ITEMS].map((item, idx) => (
+            {[...tickerItems, ...tickerItems].map((item, idx) => (
               <Link
                 key={idx}
                 href="/dicari"
