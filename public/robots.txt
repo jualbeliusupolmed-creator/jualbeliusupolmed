@@ -1,6 +1,11 @@
 # *
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /edit
+Disallow: /api/
+Disallow: /chat
 
 # Host
 Host: https://www.kampuskita.my.id

@@ -163,7 +163,7 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
         </Link>
         {sellerWa && isAvailable && (
           <a
-            href={`https://wa.me/${sellerWa}?text=${encodeURIComponent(`Halo, saya tertarik dengan ${listing.title}.`)}`}
+            href={`/chat-wa/${listing.id}`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex min-h-7 items-center justify-center gap-1 rounded-lg bg-emerald-800 px-1.5 text-[9px] font-bold text-white transition hover:bg-emerald-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 sm:min-h-9 sm:px-2 sm:text-[11px]"

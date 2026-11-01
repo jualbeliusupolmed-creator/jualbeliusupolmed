@@ -47,6 +47,12 @@ function matchesAdminPath(pathname, paths) {
 export async function middleware(request) {
   const { pathname, hostname } = request.nextUrl;
 
+  // ── Canonical Domain 301 Redirect (jualbeliusupolmed.web.id -> kampuskita.my.id) ──
+  if (hostname && hostname.includes("jualbeliusupolmed.web.id")) {
+    const targetUrl = new URL(`https://www.kampuskita.my.id${pathname}${request.nextUrl.search}`);
+    return NextResponse.redirect(targetUrl, { status: 301 });
+  }
+
   // ── Redirect Mobile ke m.kampuskita.my.id ──
   // Syarat aktif: ENABLE_MOBILE_REDIRECT = true DAN subdomain m. sudah dikonfigurasi
   if (

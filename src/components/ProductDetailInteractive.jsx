@@ -67,12 +67,8 @@ export default function ProductDetailInteractive({
   const sellerDeals = listing.seller_profiles?.total_deals || 42;
   const sellerResponse = listing.seller_profiles?.response_time || "< 10 Menit";
 
-  // Build WhatsApp URL with selected COD point
-  const cleanWa = formatWa(listing.seller_wa || "");
-  const waMessage = encodeURIComponent(
-    `Halo ${listing.seller_name || "Kak"}, saya tertarik dengan barang "${listing.title}" di Kampus Kita (Kode: #${listing.listing_code || listing.id?.slice(0, 8)}).\nBisa janjian COD di ${selectedCodPoint.title}? Terima kasih!`
-  );
-  const waUrl = cleanWa ? `https://wa.me/${cleanWa}?text=${waMessage}` : "#";
+  // Rute aman WhatsApp via server tanpa membocorkan nomor penjual ke HTML
+  const waUrl = `/chat-wa/${listing.id}?cod=${encodeURIComponent(selectedCodPoint.title || "")}`;
 
   return (
     <>
