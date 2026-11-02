@@ -98,11 +98,38 @@ export default function SuperAppHome({
       .then((data) => {
         if (Array.isArray(data?.campuses)) {
           setCampuses(data.campuses);
-          const savedCampus = localStorage.getItem("preferred_campus");
-          const validCampus = savedCampus === "Semua" || data.campuses.some((campus) => campus.shortName === savedCampus);
-          if (validCampus && savedCampus) {
-            setSelectedCampus(savedCampus);
-            setListingCampus(savedCampus);
+
+          // 1. Prioritaskan URL Query Parameter (?campus=ui atau ?univ=itb)
+          const urlParams = new URLSearchParams(window.location.search);
+          const urlCampusParam = urlParams.get("campus") || urlParams.get("univ");
+          let initialCampus = null;
+
+          if (urlCampusParam) {
+            const cleanParam = urlCampusParam.trim().toLowerCase();
+            const matchedFromUrl = data.campuses.find(
+              (c) => c.shortName.toLowerCase() === cleanParam ||
+                     c.id.toLowerCase() === cleanParam ||
+                     c.name.toLowerCase().includes(cleanParam)
+            );
+            if (matchedFromUrl) {
+              initialCampus = matchedFromUrl.shortName;
+              localStorage.setItem("preferred_campus", initialCampus);
+              toast.success(`Kampus aktif: ${matchedFromUrl.shortName} (${matchedFromUrl.name})`);
+            }
+          }
+
+          // 2. Fallback ke savedCampus di localStorage
+          if (!initialCampus) {
+            const savedCampus = localStorage.getItem("preferred_campus");
+            const validCampus = savedCampus === "Semua" || data.campuses.some((campus) => campus.shortName === savedCampus);
+            if (validCampus && savedCampus) {
+              initialCampus = savedCampus;
+            }
+          }
+
+          if (initialCampus) {
+            setSelectedCampus(initialCampus);
+            setListingCampus(initialCampus);
           }
         }
       })
@@ -535,15 +562,28 @@ export default function SuperAppHome({
   // Filtered & Sorted Feed
   const filteredPosts = posts.filter((post) => {
     if (activeTab !== "all" && post.type !== activeTab) return false;
-    if (selectedCampus !== "Semua" && post.faculty !== selectedCampus) return false;
+    if (selectedCampus !== "Semua") {
+      const target = selectedCampus.toLowerCase();
+      const matchFaculty = String(post.faculty || "").toLowerCase() === target;
+      const matchCampus = String(post.campus || "").toLowerCase() === target;
+      const isGeneral = !post.faculty || post.faculty === "Semua";
+      if (!matchFaculty && !matchCampus && !isGeneral) return false;
+    }
     return true;
   });
 
   // Filtered Marketplace Listings for Center Column
   const filteredListings = latestListings
     .filter((ad) => {
-      if (listingCampus !== "Semua" && ad.campus !== listingCampus && ad.campus !== "Semua") {
-        return false;
+      if (listingCampus !== "Semua") {
+        const target = listingCampus.toLowerCase();
+        const matchCampus = String(ad.campus || "").toLowerCase() === target;
+        const matchUnivId = String(ad.university_id || "").toLowerCase() === target;
+        const matchProfileUniv = String(ad.seller_profiles?.home_university_id || "").toLowerCase() === target;
+        const isAll = String(ad.campus || "").toLowerCase() === "semua";
+        if (!matchCampus && !matchUnivId && !matchProfileUniv && !isAll) {
+          return false;
+        }
       }
       if (listingCategory !== "Semua") {
         const combined = `${ad.category || ""} ${ad.title || ""} ${ad.description || ""}`.toLowerCase();

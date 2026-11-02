@@ -144,6 +144,25 @@ export default async function CaraBergabungPage() {
           </a>
         </div>
       </div>
+
+      {/* Banner Pendaftaran Mitra & Admin Kampus */}
+      <div className="mt-8 rounded-3xl border border-emerald-900/10 bg-gradient-to-r from-emerald-900 to-slate-900 p-6 sm:p-8 text-white shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-0.5 text-[11px] font-bold text-emerald-200">
+            Ekspansi Jaringan Nasional
+          </span>
+          <h3 className="mt-2 text-xl font-black">Ingin Mengelola Kampusmu Sendiri?</h3>
+          <p className="mt-1 text-xs text-emerald-100/80 max-w-xl">
+            Buka marketplace resmi, kelola akun Instagram, dan saluran WhatsApp di universitasmu. Terbuka untuk BEM, HIMA, dan mahasiswa.
+          </p>
+        </div>
+        <a
+          href="/gabung-admin"
+          className="shrink-0 rounded-full bg-white px-5 py-2.5 text-xs font-black text-emerald-900 shadow transition hover:bg-emerald-50 active:scale-95"
+        >
+          Daftar Jadi Admin Kampus →
+        </a>
+      </div>
     </div>
   );
 }

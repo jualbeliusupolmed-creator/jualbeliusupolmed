@@ -211,6 +211,8 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
   const [daftarOrg, setDaftarOrg] = useState(false);
   const [modalVerifikasi, setModalVerifikasi] = useState(false);
   const [kampusTersedia, setKampusTersedia] = useState([]);
+  const [provinsiTersedia, setProvinsiTersedia] = useState([]);
+  const [selectedProvince, setSelectedProvince] = useState("semua");
   const inputFoto = useRef(null);
 
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
@@ -278,12 +280,22 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
       .then((data) => {
         if (Array.isArray(data?.campuses) && data.campuses.length) {
           setKampusTersedia(data.campuses);
+          if (Array.isArray(data?.provinces) && data.provinces.length) {
+            setProvinsiTersedia(data.provinces);
+          }
           setF((current) => {
-            if (!current?.campus || !data.campuses.some((campus) => campus.shortName === current.campus)) {
+            const activeCampusName = current?.campus;
+            const matchedCampus = data.campuses.find((c) => c.shortName === activeCampusName || c.id === current?.home_university_id);
+            if (matchedCampus?.provinceId) {
+              setSelectedProvince(matchedCampus.provinceId);
+            }
+            if (!activeCampusName || !data.campuses.some((campus) => campus.shortName === activeCampusName)) {
+              const defaultCampus = data.campuses[0];
+              if (defaultCampus.provinceId) setSelectedProvince(defaultCampus.provinceId);
               return {
                 ...current,
-                campus: data.campuses[0].shortName,
-                home_university_id: data.campuses[0].id,
+                campus: defaultCampus.shortName,
+                home_university_id: defaultCampus.id,
                 faculty: "",
               };
             }
@@ -493,7 +505,28 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
           <Baris label="Nama anonim">
             <Teks nilai={f.anonymous_name} ubah={(v) => set("anonymous_name", v)} placeholder="Dipakai di Menfess" />
           </Baris>
-          <Baris label="Kampus Utama">
+          <Baris label="Provinsi">
+            <Pilih
+              nilai={selectedProvince || "semua"}
+              ubah={(pId) => {
+                setSelectedProvince(pId);
+                if (pId !== "semua") {
+                  const filtered = kampusTersedia.filter((k) => (k.provinceId || "sumatera-utara") === pId);
+                  if (filtered.length > 0 && !filtered.some((k) => k.shortName === f.campus)) {
+                    const first = filtered[0];
+                    set("campus", first.shortName);
+                    set("home_university_id", first.id);
+                    set("faculty", "");
+                  }
+                }
+              }}
+              opsi={[
+                { id: "semua", label: "Semua Wilayah / Provinsi" },
+                ...provinsiTersedia.map((p) => ({ id: p.id, label: p.name })),
+              ]}
+            />
+          </Baris>
+          <Baris label="Universitas / Kampus">
             <Pilih
               nilai={f.campus}
               ubah={(v) => {
@@ -502,9 +535,13 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
                 const target = kampusTersedia.find((k) => k.shortName === v || k.id === v);
                 if (target?.id) {
                   set("home_university_id", target.id);
+                  if (target.provinceId) setSelectedProvince(target.provinceId);
                 }
               }}
-              opsi={kampusTersedia.map((kampus) => ({
+              opsi={(selectedProvince && selectedProvince !== "semua"
+                ? kampusTersedia.filter((k) => (k.provinceId || "sumatera-utara") === selectedProvince)
+                : kampusTersedia
+              ).map((kampus) => ({
                 id: kampus.shortName,
                 label: kampus.name && kampus.name !== kampus.shortName
                   ? `${kampus.shortName} — ${kampus.name}`

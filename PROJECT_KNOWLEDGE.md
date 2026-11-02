@@ -1070,6 +1070,34 @@ cuma server.
      - Vitest: **59 berkas pengujian (294 tes) lulus 100%**.
      - Next.js Production Build (`npm run build`): **95 rute terkompilasi optimal tanpa peringatan maupun error**.
 
+### 2 November 2026 — Penyempurnaan Deep Linking, Profil Multi-Wilayah, Pendaftaran Admin Kampus & Integrasi Instagram Regional
+
+1. **Deep Linking & Personalisasi Kampus di Beranda (`SuperAppHome.jsx` & `Navbar.jsx`)**:
+   - Mendukung parameter URL `?campus=...` dan `?univ=...` pada beranda (`/` dan `/jual-beli`). Pengunjung dari link bio Instagram kampus (misal `jualbelidikampus.ui` atau link produk UI) otomatis mengeset `preferred_campus`, memicu event sinkronisasi `campus:change`, dan menampilkan notifikasi kampus aktif.
+   - Filter listing di `SuperAppHome.jsx` ditingkatkan menjadi pencocokan ganda (`university_id`, `campus`, dan `seller_profiles.home_university_id`) yang kebal terhadap variasi huruf besar/kecil.
+   - Filter feed mading kampus mendukung pencocokan `post.faculty` dan `post.campus` secara fleksibel.
+
+2. **Profil Satu Pintu: Pilihan Provinsi & Universitas Bertingkat (`UnifiedProfilePanel.jsx`)**:
+   - Endpoint `/api/kampus` kini mengembalikan katalog `campuses` (dengan atribut `provinceId`) dan `provinces` dari database relasional.
+   - Antarmuka profil satu pintu pengguna ([`UnifiedProfilePanel.jsx`](file:///Users/ayhoo/Projects/JUAL%20BELI%20USU/src/components/dashboard/UnifiedProfilePanel.jsx)) diperkaya dengan pemilih **Provinsi** dan **Universitas/Kampus** bertingkat:
+     - Memilih Provinsi otomatis menyaring daftar universitas yang relevan.
+     - Memilih Universitas otomatis menyelaraskan provinsi induk dan mengunci `home_university_id` relasional saat disimpan.
+
+3. **Pendaftaran Admin Kampus Mandiri (Self-Serve Campus Admin Application)**:
+   - Dibuat halaman publik resmi [`/gabung-admin`](file:///Users/ayhoo/Projects/JUAL%20BELI%20USU/src/app/gabung-admin/page.jsx) dan tautan aksi di `/cara-bergabung` untuk BEM, HIMA, dan mahasiswa yang ingin memimpin bursa di kampusnya.
+   - Endpoint publik `POST /api/admin-requests/apply` dengan proteksi *distributed rate limit* dan validasi katalog universitas aktif. Pengajuan mandiri otomatis dicatat ke tabel `university_admin_requests` berstatus `pending` dan langsung tampil di konsol admin [`/admin/admin-requests`](file:///Users/ayhoo/Projects/JUAL%20BELI%20USU/src/app/admin/admin-requests).
+
+4. **Integrasi Instagram Multi-Wilayah & Multi-Kampus di Panel Admin (`SocialWorkspace.jsx`)**:
+   - Migrasi `20261102220000_seed_national_social_accounts.sql` diterapkan ke Supabase produksi: menginisialisasi 20 akun Instagram resmi standar untuk 14 universitas anchor dan 4 provinsi ekspansi (DKI Jakarta, Jawa Barat, DI Yogyakarta, Jawa Timur).
+   - Di konsol admin ([`SocialWorkspace.jsx`](file:///Users/ayhoo/Projects/JUAL%20BELI%20USU/src/components/admin/SocialWorkspace.jsx)), ditambahkan bar filter wilayah (cakupan provinsi vs kampus, filter per provinsi, dan pencarian handle/kampus).
+   - Ditambahkan modal panduan setup Meta Graph API resmi (konfigurasi Webhook URL, Verify Token, dan Instagram Business Account ID) untuk menghubungkan otomatis pesan DM dan publikasi multi-kampus.
+
+5. **Hasil Verifikasi & Kualitas**:
+   - Berkas pengujian baru `__tests__/campusAdminApplication.test.js` dibuat dan lulus 100%.
+   - Seluruh **60 berkas pengujian (297 tes)** vitest lulus 100%.
+   - Next.js production build (`npm run build`) sukses 100% (**96 rute terkompilasi optimal**).
+
+
 
 
 
