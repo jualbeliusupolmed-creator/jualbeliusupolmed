@@ -191,7 +191,7 @@ export async function getSettings() {
           }
         }
       }
-    } catch {}
+    } catch { }
 
     return merged;
   } catch {
@@ -230,18 +230,18 @@ export async function hasUnpaidSoldFees(supa, sellerWa) {
     .from("listings")
     .select("id")
     .eq("seller_wa", sellerWa);
-  
+
   if (!listings || listings.length === 0) return false;
-  
+
   const listingIds = listings.map((l) => l.id);
-  
+
   const { count } = await supa
     .from("payments")
     .select("id", { count: "exact", head: true })
     .in("listing_id", listingIds)
     .eq("type", "sold_fee")
     .eq("status", "pending");
-    
+
   return (count || 0) > 0;
 }
 

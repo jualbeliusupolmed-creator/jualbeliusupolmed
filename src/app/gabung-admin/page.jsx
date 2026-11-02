@@ -27,3 +27,4 @@ export const metadata = {
 export default function GabungAdminPage() {
   return <GabungAdminClient />;
 }
+

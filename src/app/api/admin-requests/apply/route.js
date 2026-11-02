@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimitDistributed, getClientIp } from "@/lib/rateLimit";
 import { logger } from "@/lib/logger";
+import { sendWa, nomorAdmin } from "@/lib/fonnte";
 
 export const dynamic = "force-dynamic";
 
@@ -113,6 +114,19 @@ export async function POST(request) {
       );
     }
 
+    // Kirim notifikasi konfirmasi ke WhatsApp pendaftar (fire-and-forget)
+    const applicantMsg = `Halo *${name}*, terima kasih sudah mendaftar sebagai Pengelola Kampus resmi untuk *${university.name} (${university.code})* di Kampus Kita! 🎓\n\nPengajuanmu telah kami terima dan sedang ditinjau oleh tim regional. Tautan undangan aktivasi akun admin akan dikirimkan ke email *${email}* setelah disetujui.\n\nSalam hangat,\n*Tim Kampus Kita*`;
+    sendWa(wa, applicantMsg).catch(() => {});
+
+    // Kirim alert notifikasi ke WhatsApp admin nasional
+    try {
+      const adminNum = await nomorAdmin();
+      if (adminNum) {
+        const alertMsg = `🔔 *Pendaftaran Admin Kampus Baru!*\n\n• Nama: *${name}*\n• Kampus: *${university.name} (${university.code})*\n• Provinsi: *${provinceId}*\n• Email: *${email}*\n• WhatsApp: *${wa}*\n${instagram ? `• Instagram: @${instagram}\n` : ""}\nSilakan tinjau dan putuskan di:\nhttps://www.kampuskita.my.id/admin/admin-requests`;
+        sendWa(adminNum, alertMsg).catch(() => {});
+      }
+    } catch {}
+
     return NextResponse.json({
       ok: true,
       message: `Terima kasih! Pengajuanmu untuk mengelola ${university.name} (${university.code}) telah kami terima dan akan ditinjau oleh tim regional.`,
@@ -123,3 +137,4 @@ export async function POST(request) {
     return NextResponse.json({ error: "Terjadi kesalahan internal server." }, { status: 500 });
   }
 }
+
