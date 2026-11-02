@@ -803,6 +803,17 @@ cuma server.
     - **Performa & Sinkronisasi Favorit:** Mengalihkan revalidasi favorit pengguna di `/favorit` dari query client-side langsung ke endpoint batch `/api/listings/batch` dengan preservasi urutan lokal dan Zero Layout Shift.
     - **Typography & Icon Token:** Membersihkan artefak UTF-8 BOM pada `globals.css` serta mendefinisikan token skala teks padat (`.text-badge`, `.text-meta`, `.text-caption`) dan standardisasi dimensi ikon UI (`h-4 w-4`).
 
+*   **2 November 2026 — Kebijakan Nasionalisasi Identitas Pengguna & Sanitasi Keamanan Log DM**
+    - **Sanitasi Kredensial Instagram DM (Security Fix):** Memperbaiki celah pencatatan teks mentah pada log DM di `src/lib/instagramDmRouter.js` dan `src/lib/instagramDmLogger.js`. Menambahkan `sanitizeDmMessageText` yang secara otomatis menyamarkan password, PIN, dan kode OTP (baik berbasis session step `jual_ask_password`, `jual_ask_otp`, `jual_set_password`, maupun deteksi digit OTP 4–8 angka). Seluruh pengujian otomatis di `__tests__/instagramDmLogger.test.js` (6 pengujian) lulus 100%, dan data log historis sensitif di database produksi telah dibersihkan.
+    - **Adopsi 7 Pilar Kebijakan Nasionalisasi Identitas Pengguna (`docs/kebijakan-nasionalisasi-identitas-pengguna.md`):**
+        1. **Satu Akun Seluruh Indonesia:** Akun pengguna memiliki satu identitas kanonikal (`auth_user_id`), di mana Google dan WhatsApp bertindak sebagai faktor otentikasi yang terhubung.
+        2. **Afiliasi Terpisah dari Identitas Akun:** Preferensi kampus (`home_university_id`) dipisahkan dari status kemahasiswaan (`self_selected`, `pending_verification`, `verified_student`, `alumni`, `faculty_staff`).
+        3. **Email Kampus Bersifat Opsional:** Marketplace tetap terbuka penuh untuk semua pengguna tanpa kewajiban memiliki email `.ac.id`. Email kampus murni instrumen penambah kepercayaan.
+        4. **Kampus Sumber Wilayah Tunggal:** Provinsi diturunkan otomatis dari universitas terpilih (`universities.province_id`), mencegah konflik wilayah.
+        5. **Listing Berbasis Organisasi Nasional:** Listing mengacu pada `university_id` resmi dengan fallback teks `campus` lama untuk kompatibilitas.
+        6. **Pemisahan Ketat Hak Admin:** Verifikasi mahasiswa atau status penjual tidak mewariskan hak admin apapun; hak admin hanya melalui penugasan eksplisit di `admin_role_assignments`.
+        7. **Migrasi Hati-Hati & Deterministik:** Penggabungan akun lama hanya dilakukan berdasarkan kecocokan kriptografis pasti (nomor WA atau email OAuth), tanpa menebak berdasarkan nama.
+
 *   **2 November 2026 — Perbaikan Workspace Marketplace Admin (/admin/marketplace) & Status Badge Visibility**
     - **Akar Masalah Halaman Kosong:** Sebelumnya, halaman workspace `/admin/marketplace` dan komponen `MarketplaceWorkspace.jsx` mendefaultkan status filter ke `status = "pending"` ("Menunggu review"). Pada database produksi, 109 listing produk saat ini berstatus `active` dan 0 listing berstatus `pending`. Akibatnya, saat admin membuka halaman `/admin/marketplace`, antarmuka langsung memuat `status=pending`, menghasilkan 0 baris, dan menampilkan pesan *"Tidak ada iklan pada filter ini"*. Selain itu, filter kampus untuk admin regional (`actor.role !== "superadmin"`) sebelumnya hanya mencakup `campus IN (campuses)` sehingga tidak menyertakan 94 listing umum yang berkampus `"Semua"`.
     - **Solusi & Penyempurnaan:**
