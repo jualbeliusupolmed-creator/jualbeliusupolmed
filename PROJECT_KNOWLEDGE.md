@@ -2,6 +2,15 @@
 
 Dokumen ini berisi peta pemahaman sistem, alur bisnis, daftar masalah, dan riwayat audit untuk proyek **Jual Beli USU Polmed**.
 
+### Verifikasi pasca-migrasi organisasi nasional — 2 November 2026
+
+- Supabase mencatat seluruh migrasi lokal sampai `20261102150001_backfill_unambiguous_open_po_university.sql`; migrasi backfill tambahan menautkan satu produk Open PO yang label kampusnya hanya cocok dengan satu universitas. Setelah penerapan, produk Open PO tertaut 1/1. Listing dan permintaan barang berkategori umum tetap tidak ditautkan: 22/172 listing tertaut, 150 lainnya umum; 41/41 wanted listing umum.
+- Katalog relasional berisi 1 provinsi, 2 universitas, 2 unit/cabang, dan 3 akun sosial. Belum ada `admin_memberships`, grant cakupan legacy, role assignment, atau permintaan admin; akun provinsi/universitas nyata belum tersedia untuk uji login lintas peran.
+- Keenam tabel organisasi/admin memiliki RLS aktif. Pemeriksaan privilege memastikan `anon` dan `authenticated` tidak memiliki akses SELECT langsung; `service_role` memiliki akses server yang diperlukan. Keenam RPC RBAC yang diperiksa memakai `SECURITY INVOKER`; grant EXECUTE tercatat untuk `service_role` dan owner database.
+- Verifikasi aplikasi lokal: `npm test` lulus (52 berkas, 251 tes), `npm run lint` lulus, `npm run build` sukses. Build lokal memberi peringatan fetch font Google dan DNS host bot, tetapi tetap selesai.
+- Vercel produksi berstatus READY pada commit `f8ec040` (`main`). Agregat log runtime produksi 30 menit terakhir tidak menunjukkan error/fatal. Rentang 24 jam tidak tersedia pada paket observability saat ini. Browser lokal dinonaktifkan di pengaturan Work, sehingga login nyata dan alur UI terautentikasi belum diuji; akses publik langsung ke API juga tidak dapat diverifikasi lewat alat browser web.
+- Supabase Security Advisor CLI tidak menghasilkan respons dan dihentikan; belum ada hasil Advisor. Jangan menyebut audit keamanan menyeluruh selesai sebelum Advisor dan alur peran nyata diverifikasi.
+
 ### Pembaruan 2 November 2026 — implementasi arsitektur Jual Barang via Instagram DM (Tahap 0–4)
 
 - **Keamanan Webhook (Tahap 0)**: `GET /api/webhook/instagram` mewajibkan `META_WEBHOOK_VERIFY_TOKEN` dari environment; token hardcoded dan fallback cron secret dibuang. `POST` mewajibkan `META_APP_SECRET` serta signature HMAC-SHA256 yang sah, dengan deduplikasi ID pesan Meta in-memory untuk mencegah eksekusi ganda saat retry jaringan.
