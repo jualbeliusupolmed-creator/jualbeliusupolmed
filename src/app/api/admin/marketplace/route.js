@@ -14,13 +14,15 @@ export async function GET(req) {
   const mode = params.get("mode") === "wanted" ? "wanted" : "listings";
   const status = mode === "wanted"
     ? (new Set(["active", "pending", "resolved", "all"]).has(params.get("status")) ? params.get("status") : "active")
-    : (STATUSES.has(params.get("status")) ? params.get("status") : "pending");
+    : (STATUSES.has(params.get("status")) ? params.get("status") : "active");
   const q = String(params.get("q") || "").trim().slice(0, 80);
   const requestedOffset = Number.parseInt(params.get("offset") || "0", 10);
   const offset = Number.isSafeInteger(requestedOffset) && requestedOffset > 0 ? Math.min(requestedOffset, 1_000_000_000) : 0;
   const supa = getAdminClient();
   const campuses = await getAdminCampusScope(actor);
-  if (actor.role !== "superadmin" && !campuses.length) return NextResponse.json({ items: [], campuses: [], total: 0, nextOffset: null });
+  if (actor.role !== "superadmin" && !campuses.length) return NextResponse.json({ items: [], campuses: [], total: 0, statusCounts: {}, nextOffset: null });
+
+  const allowedCampuses = actor.role === "superadmin" ? null : [...new Set([...campuses, "Semua", "semua"])];
 
   if (mode === "wanted") {
     let wantedQuery = supa.from("wanted_listings")
@@ -29,11 +31,22 @@ export async function GET(req) {
       .range(offset, offset + 99);
     if (status !== "all") wantedQuery = wantedQuery.eq("status", status);
     if (q) wantedQuery = wantedQuery.ilike("title", `%${q.replace(/[%_,]/g, " ")}%`);
-    if (actor.role !== "superadmin") wantedQuery = wantedQuery.in("campus", campuses);
-    const { data, count, error } = await wantedQuery;
+    if (allowedCampuses) wantedQuery = wantedQuery.in("campus", allowedCampuses);
+
+    let countsQuery = supa.from("wanted_listings").select("status");
+    if (allowedCampuses) countsQuery = countsQuery.in("campus", allowedCampuses);
+
+    const [{ data, count, error }, { data: statusRows }] = await Promise.all([
+      wantedQuery,
+      countsQuery,
+    ]);
     if (error) return NextResponse.json({ error: "Daftar kebutuhan belum dapat dimuat." }, { status: 503 });
+
+    const statusCounts = { all: (statusRows || []).length };
+    for (const r of statusRows || []) statusCounts[r.status] = (statusCounts[r.status] || 0) + 1;
+
     const items = data || [];
-    return NextResponse.json({ items, campuses, mode, total: count || 0, nextOffset: count > offset + items.length ? offset + items.length : null });
+    return NextResponse.json({ items, campuses, mode, total: count || 0, statusCounts, nextOffset: count > offset + items.length ? offset + items.length : null });
   }
 
   let query = supa.from("listings")
@@ -42,11 +55,22 @@ export async function GET(req) {
     .range(offset, offset + 99);
   if (status !== "all") query = query.eq("status", status);
   if (q) query = query.ilike("title", `%${q.replace(/[%_,]/g, " ")}%`);
-  if (actor.role !== "superadmin") query = query.in("campus", campuses);
-  const { data, count, error } = await query;
+  if (allowedCampuses) query = query.in("campus", allowedCampuses);
+
+  let countsQuery = supa.from("listings").select("status");
+  if (allowedCampuses) countsQuery = countsQuery.in("campus", allowedCampuses);
+
+  const [{ data, count, error }, { data: statusRows }] = await Promise.all([
+    query,
+    countsQuery,
+  ]);
   if (error) return NextResponse.json({ error: "Data marketplace belum dapat dimuat." }, { status: 503 });
+
+  const statusCounts = { all: (statusRows || []).length };
+  for (const r of statusRows || []) statusCounts[r.status] = (statusCounts[r.status] || 0) + 1;
+
   const items = data || [];
-  return NextResponse.json({ items, campuses, mode, total: count || 0, nextOffset: count > offset + items.length ? offset + items.length : null });
+  return NextResponse.json({ items, campuses, mode, total: count || 0, statusCounts, nextOffset: count > offset + items.length ? offset + items.length : null });
 }
 
 export async function PATCH(req) {
