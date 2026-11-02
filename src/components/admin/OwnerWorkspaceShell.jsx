@@ -31,7 +31,7 @@ const ADMIN_GROUPS = [
     { key: "content", label: "Konten", href: "/admin/content", permission: "content" },
   ] },
   { label: "Administrasi", items: [
-    { key: "organization", label: "Struktur wilayah", href: "/admin/organization", superadmin: true },
+    { key: "organization", label: "Struktur wilayah", href: "/admin/organization", superadmin: true, roles: ["province_admin"] },
     { key: "owners", label: "Akses owner", href: "/admin/owners", superadmin: true },
     { key: "admin_requests", label: "Permintaan admin kampus", href: "/admin/admin-requests", superadmin: true, roles: ["province_admin"] },
     { key: "settings", label: "Pengaturan platform", href: "/admin/settings", permission: "settings" },
@@ -48,7 +48,8 @@ const ADMIN_GROUPS = [
 function canShow(actor, item) {
   if (actor.role === "superadmin") return true;
   if (item.roles?.some((roleCode) => actor.roles?.some((role) => role.role_code === roleCode))) return true;
-  if (item.superadmin || !item.permission) return false;
+  if (item.superadmin) return false;
+  if (!item.permission) return true;
   const grant = actor.permissions?.[item.permission];
   return Array.isArray(grant) ? grant.includes("read") || grant.includes("manage") : !!grant?.read || !!grant?.manage;
 }

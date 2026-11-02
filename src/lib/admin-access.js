@@ -76,6 +76,12 @@ export function hasAdminPermission(actor, module, action = "read") {
   if (!actor) return false;
   if (actor.role === "superadmin") return true;
   if (module === "admin_requests") return actor.roles?.some((role) => role.role_code === "province_admin") === true;
+  if (module === "organization") {
+    return (
+      actor.roles?.some((role) => role.role_code === "province_admin") === true ||
+      Boolean(actor.permissions?.organization)
+    );
+  }
   if (module === "social") {
     return (
       actor.role === "superadmin" ||

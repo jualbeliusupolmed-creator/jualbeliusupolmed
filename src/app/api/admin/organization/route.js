@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAdminActor } from "@/lib/admin-access";
+import { getAdminActor, hasAdminPermission } from "@/lib/admin-access";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getSettings } from "@/lib/settings";
 
@@ -13,8 +13,12 @@ const asText = (value, max, label) => {
   return value.trim().slice(0, max);
 };
 
-function onlySuperadmin(actor) {
-  return actor?.role === "superadmin";
+function canAccessOrganization(actor) {
+  return (
+    actor?.role === "superadmin" ||
+    actor?.roles?.some((r) => r.role_code === "province_admin") === true ||
+    hasAdminPermission(actor, "organization", "read")
+  );
 }
 
 function legacyCatalog(settings) {
@@ -52,7 +56,7 @@ function accountMap(rows) {
 
 export async function GET() {
   const actor = await getAdminActor();
-  if (!onlySuperadmin(actor)) return NextResponse.json({ error: "Struktur nasional hanya dapat dikelola superadmin." }, { status: 403 });
+  if (!canAccessOrganization(actor)) return NextResponse.json({ error: "Struktur wilayah hanya dapat diakses admin berwenang." }, { status: 403 });
   const admin = getAdminClient();
   const [provinceResult, universityResult, unitResult, accountResult] = await Promise.all([
     admin.from("provinces").select("id,name,status").order("name"),
@@ -146,7 +150,7 @@ function legacyUniversities(universities) {
 
 export async function PUT(request) {
   const actor = await getAdminActor();
-  if (!onlySuperadmin(actor)) return NextResponse.json({ error: "Struktur nasional hanya dapat dikelola superadmin." }, { status: 403 });
+  if (!canAccessOrganization(actor)) return NextResponse.json({ error: "Struktur wilayah hanya dapat dikelola admin berwenang." }, { status: 403 });
   const body = await request.json().catch(() => ({}));
   let catalog;
   try { catalog = normalizePayload(body); }
