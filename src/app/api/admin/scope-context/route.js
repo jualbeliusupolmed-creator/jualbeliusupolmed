@@ -110,3 +110,4 @@ export async function POST(request) {
 
   return NextResponse.json({ ok: true, activeScope: requestedScope });
 }
+

@@ -76,6 +76,13 @@ export function hasAdminPermission(actor, module, action = "read") {
   if (!actor) return false;
   if (actor.role === "superadmin") return true;
   if (module === "admin_requests") return actor.roles?.some((role) => role.role_code === "province_admin") === true;
+  if (module === "social") {
+    return (
+      actor.role === "superadmin" ||
+      actor.roles?.some((role) => ["province_admin", "university_admin"].includes(role.role_code)) === true ||
+      Boolean(actor.permissions?.social || actor.permissions?.content)
+    );
+  }
   const permissions = actor.permissions?.[module];
   if (Array.isArray(permissions)) return permissions.includes(action) || permissions.includes("manage");
   if (permissions && typeof permissions === "object") return permissions[action] === true || permissions.manage === true;

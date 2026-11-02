@@ -39,6 +39,18 @@ describe("otorisasi workspace owner", () => {
     expect(hasAdminPermission(universityAdmin, "admin_requests", "read")).toBe(false);
   });
 
+  it("membuka modul social untuk superadmin, admin provinsi, dan admin universitas", () => {
+    const superadmin = { role: "superadmin" };
+    const provinceAdmin = { role: "province_admin", roles: [{ role_code: "province_admin" }], permissions: {} };
+    const universityAdmin = { role: "university_admin", roles: [{ role_code: "university_admin" }], permissions: {} };
+    const regularOwner = { role: "owner", permissions: {} };
+
+    expect(hasAdminPermission(superadmin, "social", "read")).toBe(true);
+    expect(hasAdminPermission(provinceAdmin, "social", "read")).toBe(true);
+    expect(hasAdminPermission(universityAdmin, "social", "read")).toBe(true);
+    expect(hasAdminPermission(regularOwner, "social", "read")).toBe(false);
+  });
+
   it("mendukung operator WhatsApp tanpa memberi akses platform lain", () => {
     const actor = { role: "owner", permissions: { whatsapp: ["read", "manage"] } };
     expect(hasAdminPermission(actor, "whatsapp", "read")).toBe(true);

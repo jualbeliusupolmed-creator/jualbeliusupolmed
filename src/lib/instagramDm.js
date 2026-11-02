@@ -31,24 +31,38 @@ export async function fetchMetaCredentials() {
 
 export async function resolveInstagramToken(accountId = "katalog") {
   const creds = await fetchMetaCredentials();
-  if (accountId === "menfess" && creds?.menfess_access_token) {
+  const cleanAccount = String(accountId || "").trim().toLowerCase();
+  const menfessId = getInstagramUserId("menfess");
+  const isMenfess =
+    cleanAccount === "menfess" ||
+    cleanAccount === "usu.menfes" ||
+    (menfessId && cleanAccount === menfessId);
+
+  if (isMenfess && creds?.menfess_access_token) {
     return creds.menfess_access_token;
   }
-  if (creds?.katalog_access_token) {
+  if (!isMenfess && creds?.katalog_access_token) {
     return creds.katalog_access_token;
   }
-  return getInstagramToken(accountId);
+  return getInstagramToken(isMenfess ? "menfess" : "katalog");
 }
 
 export async function resolveInstagramUserId(accountId = "katalog") {
   const creds = await fetchMetaCredentials();
-  if (accountId === "menfess" && creds?.menfess_user_id) {
+  const cleanAccount = String(accountId || "").trim().toLowerCase();
+  const menfessId = getInstagramUserId("menfess");
+  const isMenfess =
+    cleanAccount === "menfess" ||
+    cleanAccount === "usu.menfes" ||
+    (menfessId && cleanAccount === menfessId);
+
+  if (isMenfess && creds?.menfess_user_id) {
     return creds.menfess_user_id;
   }
-  if (creds?.katalog_user_id) {
+  if (!isMenfess && creds?.katalog_user_id) {
     return creds.katalog_user_id;
   }
-  return getInstagramUserId(accountId);
+  return getInstagramUserId(isMenfess ? "menfess" : "katalog");
 }
 
 export function getMetaApiVersion() {

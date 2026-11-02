@@ -2,14 +2,36 @@
 
 Dokumen ini berisi peta pemahaman sistem, alur bisnis, daftar masalah, dan riwayat audit untuk proyek **Jual Beli USU Polmed**.
 
+### Pembaruan 2 November 2026 — Fase 3: Social & Communication Management (Instagram Multi-Account & DM Inbound Router)
+
+- **Instagram Multi-Account & Scope Isolation**:
+  - Tabel `organization_social_accounts` terintegrasi dengan Meta Graph API untuk akun Instagram provinsi (`@jualbelidikampus`, external ID `17841430977104943`) dan universitas (`@usu.menfes`, external ID `17841430423153964`), serta WhatsApp Channels.
+  - Modul routing DM (`src/lib/instagramDmRouter.js`) diperbarui secara dinamis menggunakan `resolveInstagramOrganizationScope(recipientId)` untuk memetakan pesan masuk langsung ke universitas/provinsi relasional kanonikal (menghapus batasan hardcoded kampus).
+  - Pemasangan listing produk via Instagram DM secara otomatis mengisi `university_id` dan `campus` yang terisolasi sesuai akun Instagram tujuan.
+- **Instagram DM Inbox & Routing Logs**:
+  - Diterapkan migrasi `20261102163000_instagram_dm_inbox_and_logs.sql` yang menambahkan tabel `instagram_dm_logs` dengan RLS dan pengindeksan scope (`recipient_account_id`, `province_id`, `university_id`, `sender_id`).
+  - Helper `src/lib/instagramDmLogger.js` mencatat setiap interaksi inbound/outbound DM, status alur, tindakan (`published_live`, `cancelled`, `feature_redirected`), dan referensi produk yang diterbitkan.
+- **Social & Communication Management Workspace**:
+  - Dibuat workspace terpadu `/admin/social` (`SocialWorkspace.jsx`) yang memuat 3 tab:
+    1. *Daftar Akun Sosmed*: Manajemen multi-account Instagram dan WhatsApp, status koneksi, modal tambah/sunting akun, dan uji koneksi langsung ke Meta Graph API node (`/v24.0/{externalAccountId}`).
+    2. *Instagram DM Inbox & Routing*: Monitoring interaksi pesan DM per wilayah/kampus terisolasi sesuai scope admin aktif, filter aksi, pencarian pesan/pengirim, dan modal inspeksi detail pesan.
+    3. *Antrean Publikasi Konten*: Terintegrasi dengan pemantau antrean mading/menfess & katalog feed/story.
+  - Rute `/admin/social` dan `/admin/instagram` terdaftar di `ADMIN_WORKSPACE_PATHS` (`src/middleware.js`), `ADMIN_GROUPS` (`OwnerWorkspaceShell.jsx`), dan modul otorisasi admin (`src/lib/admin-access.js`).
+- **Verifikasi Kualitas & Stabilitas**:
+  - Dibuat suite tes unit baru `__tests__/socialManagement.test.js` (5 tes) yang menguji endpoint `/api/admin/social/accounts`, isolasi scope, otorisasi RBAC, dan uji koneksi Meta.
+  - Seluruh 54 file pengujian vitest lulus 100% (259 tes lulus).
+  - Next.js production build (`npm run build`) sukses tanpa error (95/95 static & dynamic pages generated).
+
 ### Verifikasi pasca-migrasi organisasi nasional — 2 November 2026
 
 - Supabase mencatat seluruh migrasi lokal sampai `20261102150001_backfill_unambiguous_open_po_university.sql`; migrasi backfill tambahan menautkan satu produk Open PO yang label kampusnya hanya cocok dengan satu universitas. Setelah penerapan, produk Open PO tertaut 1/1. Listing dan permintaan barang berkategori umum tetap tidak ditautkan: 22/172 listing tertaut, 150 lainnya umum; 41/41 wanted listing umum.
 - Katalog relasional berisi 1 provinsi, 2 universitas, 2 unit/cabang, dan 3 akun sosial. Belum ada `admin_memberships`, grant cakupan legacy, role assignment, atau permintaan admin; akun provinsi/universitas nyata belum tersedia untuk uji login lintas peran.
 - Keenam tabel organisasi/admin memiliki RLS aktif. Pemeriksaan privilege memastikan `anon` dan `authenticated` tidak memiliki akses SELECT langsung; `service_role` memiliki akses server yang diperlukan. Keenam RPC RBAC yang diperiksa memakai `SECURITY INVOKER`; grant EXECUTE tercatat untuk `service_role` dan owner database.
 - Verifikasi aplikasi lokal terbaru: `npm test` lulus (53 berkas, 253 tes), `npm run lint` lulus, `npm run build` sukses. Build lokal memberi peringatan fetch font Google dan DNS host bot, tetapi tetap selesai.
-- Vercel produksi terakhir yang dikonfirmasi READY pada commit `ae6301c` (`main`). Smoke check publik pasca-deploy menghasilkan HTTP 200 untuk `/` dan `/jual-beli`, tanpa field `seller_wa` atau nomor profil numerik pada HTML yang diperiksa. Agregat log runtime 30 menit terakhir tidak menunjukkan error. Browser lokal dinonaktifkan di pengaturan Work, sehingga login nyata dan alur UI terautentikasi belum diuji; akses halaman admin tidak diperiksa.
-- Supabase Security Advisor CLI tidak menghasilkan respons dan dihentikan; belum ada hasil Advisor. Jangan menyebut audit keamanan menyeluruh selesai sebelum Advisor dan alur peran nyata diverifikasi.
+- Vercel produksi terakhir yang dikonfirmasi READY pada commit `e3500b1` (`main`), dengan perbaikan aplikasi dan proteksi admin di leluhur `af58930`. Smoke check publik menghasilkan HTTP 200 untuk `/` dan `/jual-beli`, tanpa field `seller_wa` atau nomor profil numerik pada HTML yang diperiksa; API admin menolak akses tanpa sesi dengan 403. Agregat log runtime 30 menit terakhir tidak menunjukkan error. Browser lokal dinonaktifkan di pengaturan Work, sehingga login UI admin yang terautentikasi belum diuji.
+- Percobaan pertama Supabase Security Advisor CLI tidak menghasilkan respons; pemeriksaan ulang dan temuan terkininya tercatat di bawah.
+- Pembaruan Advisor 2 November: pemeriksaan ulang menghasilkan 11 peringatan SECURITY level WARN dan sejumlah INFO `RLS Enabled No Policy`. Fungsi Open PO yang ditandai memakai `auth.uid()` untuk membatasi pemesan/pembeli/penjual; peringatan ini tetap perlu dibedakan dari pemeriksaan logika aplikasinya. `hit_rate_limit` adalah temuan yang perlu ditindaklanjuti: SECURITY DEFINER, `search_path` tidak ditetapkan, dan dapat dipanggil role publik walau kode aplikasi hanya memanggilnya lewat `service_role`. Auth Leaked Password Protection juga nonaktif.
+- Draft migrasi `20261102163100_harden_rate_limit_rpc.sql` menyiapkan perubahan RPC `hit_rate_limit` ke SECURITY INVOKER, `search_path` kosong, validasi argumen, dan grant hanya ke `service_role`. Belum diterapkan; perubahan migrasi produksi memerlukan persetujuan eksplisit menurut `AGENTS.md`. Pemeriksaan RBAC produksi masih belum dapat end-to-end karena belum ada assignment admin provinsi/kampus; pengujian scope lokal ada di `src/lib/admin-access.test.js`.
 
 ### Perbaikan kebocoran nomor WA di payload publik — 2 November 2026
 
@@ -820,14 +842,14 @@ cuma server.
 - `/admin/owners` kini mengambil daftar provinsi eksplisit bila ada, sehingga owner dapat diberi cakupan untuk provinsi kosong yang sudah disiapkan. Penyimpanan katalog menolak penghapusan entitas tersimpan, kode duplikat, induk lintas provinsi, dan hubungan kampus induk yang berputar. Pengaturan kampus lama menjaga metadata cabang/Instagram ketika disimpan.
 - Ini fondasi kendali organisasi, bukan penyelesaian jaringan nasional: integrasi status/login tiap akun Instagram, antrian publikasi per kampus, kurasi FYP provinsi, serta atribusi trafik belum dibangun. Perubahan belum dipush atau dideploy. `npm run lint -- --no-cache` lulus tanpa warning/error; tidak ada broadcast atau pengiriman pesan yang dilakukan.
 
-### 2 November 2026 — RBAC relasional dan workflow Admin Universitas (lokal, belum dirilis)
+### 2 November 2026 — RBAC relasional dan workflow Admin Universitas (catatan sebelum rilis)
 
 - Dibuat migrasi terurut `20261102150000_national_organization_rbac_requests.sql` untuk katalog provinsi, universitas, unit/cabang, domain email universitas, penugasan role dengan banyak scope, direktori identitas akun sosial, dan permintaan Admin Universitas. Migrasi mempertahankan field kampus lama untuk kompatibilitas dan menautkan listing/PO yang dapat dipetakan secara pasti.
 - Dibuat menu Struktur Wilayah superadmin dan Permintaan Admin Universitas. Admin provinsi dapat meminta admin untuk universitas dalam scope-nya; superadmin menyetujui/menolak; persetujuan sendiri ditolak; akun baru menerima undangan Supabase Auth dan cakupan role hanya universitas yang disetujui. Link undangan memakai URL situs konfigurasi.
 - Tabel baru dirancang untuk hanya diakses server melalui service role dengan RLS aktif dan akses client publik dicabut. Katalog akun sosial hanya mencatat identitas/status, bukan token OAuth. Penyimpanan dan penerbitan lewat Meta/WhatsApp, inbox DM, distribusi konten, FYP provinsi, analitik kanal, serta dashboard nasional terukur belum diimplementasikan.
 - Preflight metadata produksi mengonfirmasi versi `20261102150000` belum tercatat, tabel katalog baru belum ada, constraint unik katalog yang diperlukan tersedia, dan fungsi `replace_admin_membership` lama berstatus `SECURITY DEFINER`. Migrasi sengaja menggantinya dengan `SECURITY INVOKER`; RPC aplikasi memakai `service_role` yang memiliki grant tabel eksplisit sehingga fungsi tidak mewarisi hak pemilik dan tidak melewati RLS.
 - Sebelum penerapan, migrasi diperbaiki agar `parentCampusId` menjadi unit/cabang universitas induk, unit bersarang ikut diimpor, alias cabang yang tidak ambigu dipakai untuk tautan data lama dan scope admin, serta handle Instagram dan kanal WhatsApp dari katalog legacy dipertahankan sebagai akun belum tersambung. Parsing status aktif dibuat toleran terhadap nilai teks legacy. API penyimpanan tetap mencerminkan akun provinsi ke JSON lama untuk kompatibilitas.
-- Migration tetap belum diterapkan ke Supabase. Pemeriksaan preflight tidak membaca isi `settings`, sehingga konflik kode/data legacy belum dapat dipastikan; migrasi akan gagal secara atomik bila constraint unik atau foreign key tidak terpenuhi. Tidak ada perubahan RLS produksi, undangan email, push, atau deployment yang dilakukan. `npm test` lulus (51 file, 247 tes), `npm run lint -- --no-cache` lulus. SQL belum dieksekusi pada instance PostgreSQL/Supabase.
+- Catatan preflight saat itu: migration belum diterapkan dan pemeriksaan tidak membaca isi `settings`, sehingga konflik kode/data legacy belum dapat dipastikan. Status akhirnya serta hasil validasi setelah penerapan ada pada bagian "Verifikasi pasca-migrasi organisasi nasional" di awal dokumen.
 - Alur `/admin/owners` kini dapat mengundang alamat email baru melalui Supabase Auth saat superadmin menambahkan admin provinsi/universitas; akun Auth yang sudah ada tetap langsung dapat diberi cakupan. Undangan diarahkan ke callback admin, hanya dikirim setelah cakupan divalidasi, dan hasil simpan membedakan undangan terkirim dari pemberian akses pada akun lama. Tidak ada undangan nyata yang dikirim saat pengembangan. Tes helper lulus (4/4) dan lint lulus.
 
 

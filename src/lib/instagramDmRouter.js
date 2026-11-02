@@ -26,7 +26,9 @@ import {
   verifyLinkChallenge,
   linkSellerWithPassword,
   resolveInstagramCampus,
+  resolveInstagramOrganizationScope,
 } from "@/lib/instagramDmAuth";
+import { logInstagramDmMessage } from "@/lib/instagramDmLogger";
 
 function siteBaseUrl() {
   return (
@@ -164,6 +166,19 @@ export async function handleInstagramDmEvent({
   const lowerText = rawText.toLowerCase();
   const payload = String(quickReplyPayload || "").toUpperCase();
 
+  // Catat interaksi DM masuk untuk Inbox terisolasi multi-scope
+  logInstagramDmMessage({
+    recipientAccountId: recipientId,
+    senderId: cleanSender,
+    direction: "inbound",
+    messageText: rawText,
+    quickReplyPayload: payload || null,
+    metadata: {
+      hasAttachments: attachments.length > 0,
+      attachmentCount: attachments.length,
+    },
+  }).catch(() => {});
+
   // ── 1. BATAL / RESET GLOBAL ──
   if (
     payload === "ACTION_CANCEL" ||
@@ -172,6 +187,14 @@ export async function handleInstagramDmEvent({
     lowerText === "reset"
   ) {
     await clearDmSession(cleanSender);
+    logInstagramDmMessage({
+      recipientAccountId: recipientId,
+      senderId: cleanSender,
+      direction: "inbound",
+      messageText: rawText,
+      quickReplyPayload: payload || null,
+      actionTaken: "cancelled",
+    }).catch(() => {});
     await sendInstagramQuickReplies(
       cleanSender,
       "❌ Proses dibatalkan. Ada yang bisa dibantu lagi kak?",
@@ -193,6 +216,14 @@ export async function handleInstagramDmEvent({
     lowerText.startsWith("harga ") ||
     lowerText.startsWith("cek ")
   ) {
+    logInstagramDmMessage({
+      recipientAccountId: recipientId,
+      senderId: cleanSender,
+      direction: "inbound",
+      messageText: rawText,
+      quickReplyPayload: payload || null,
+      actionTaken: "feature_redirected",
+    }).catch(() => {});
     const infoText = [
       "ℹ️ *Informasi Fitur*",
       "",
@@ -898,8 +929,41 @@ export async function handleInstagramDmEvent({
           : (item.image_url ? [item.image_url] : []);
         const primaryImage = finalImages[0] || item.image_url || null;
 
-        const campusLower = String(linked.campus || "").trim().toLowerCase();
-        const resolvedUnivId = ["usu", "polmed"].includes(campusLower) ? campusLower : null;
+        const targetRecipientId = recipientId || item.recipient_id || null;
+        let orgScope = null;
+        if (targetRecipientId) {
+          try {
+            orgScope = await resolveInstagramOrganizationScope(targetRecipientId);
+          } catch {
+            // graceful fallback
+          }
+        }
+
+        const candidateCampus = String(orgScope?.campus || item.campus || linked.campus || "Semua").trim();
+        const campusLower = candidateCampus.toLowerCase();
+        let resolvedUnivId = orgScope?.universityId || null;
+        let resolvedCampus = candidateCampus;
+
+        if (!resolvedUnivId && resolvedCampus && resolvedCampus !== "Semua") {
+          if (["usu", "polmed"].includes(campusLower)) {
+            resolvedUnivId = campusLower;
+            resolvedCampus = campusLower.toUpperCase();
+          } else {
+            try {
+              const { data: matchedUniv } = await supa
+                .from("universities")
+                .select("id, code")
+                .or(`id.eq.${campusLower},code.ilike.${campusLower}`)
+                .maybeSingle();
+              if (matchedUniv?.id) {
+                resolvedUnivId = matchedUniv.id;
+                resolvedCampus = matchedUniv.code;
+              }
+            } catch {
+              // fallback
+            }
+          }
+        }
 
         const insertPayload = {
           title: item.title,
@@ -913,7 +977,7 @@ export async function handleInstagramDmEvent({
           images: finalImages,
           status: initialStatus,
           type: "barang",
-          campus: linked.campus || "Semua",
+          campus: resolvedCampus,
           university_id: resolvedUnivId,
           area: "Sekitar Kampus",
           condition: "used",
@@ -1031,6 +1095,21 @@ export async function handleInstagramDmEvent({
           { title: "🛍️ Pasang Iklan Lain", payload: "ACTION_JUAL" },
           { title: "📋 Menu Utama", payload: "ACTION_MENU" },
         ]);
+
+        logInstagramDmMessage({
+          recipientAccountId: targetRecipientId,
+          senderId: cleanSender,
+          direction: "inbound",
+          messageText: rawText,
+          actionTaken: "published_live",
+          listingId: newListing.id,
+          metadata: {
+            title: item.title,
+            campus: resolvedCampus,
+            university_id: resolvedUnivId,
+          },
+        }).catch(() => {});
+
         return { ok: true, action: "published_live", listingId: newListing.id };
       }
     }
@@ -1060,6 +1139,7 @@ export async function handleInstagramDmEvent({
         data: {
           seller_wa: linked.wa,
           campus,
+          recipient_id: recipientId || null,
         },
       });
 
@@ -1080,7 +1160,10 @@ export async function handleInstagramDmEvent({
       await setDmSession(cleanSender, {
         flow: "jual",
         step: "jual_ask_wa",
-        data: { campus },
+        data: {
+          campus,
+          recipient_id: recipientId || null,
+        },
       });
 
       const promptWa = [
