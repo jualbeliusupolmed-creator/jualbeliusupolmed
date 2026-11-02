@@ -1032,6 +1032,45 @@ cuma server.
    - Seluruh 58 berkas pengujian (291 tests) lulus 100%.
    - Build Next.js produksi (95 rute) terkompilasi sukses.
 
+### 2 November 2026 — Fase 3, 4, & 5: Penyelarasan Transaksi Nasional, Kurasi Multi-Wilayah & Verifikasi Go-Live
+
+1. **Fase 3: Penyelarasan Transaksi & Produk Nasional**:
+   - **Migrasi Skema Relasional (`20261102210000_national_transactions_and_product_alignment.sql`)**:
+     - Ditambahkan kolom relasional `university_id varchar(32) references universities(id)` dan `user_id uuid references auth.users(id)` ke tabel:
+       - `listings`: Indeks `idx_listings_university_id` dan `idx_listings_user_id`.
+       - `wanted_listings`: Indeks `idx_wanted_listings_university_id` dan `idx_wanted_listings_user_id`.
+       - `open_po_products`: Indeks `idx_open_po_products_university_id` dan `idx_open_po_products_user_id`.
+       - `open_po_orders`: Indeks `idx_open_po_orders_university_id` dan `idx_open_po_orders_user_id`.
+       - `ig_seller_links`: Indeks `idx_ig_seller_links_university_id` dan `idx_ig_seller_links_user_id`.
+     - **Backfill Remote Supabase 100% Sukses**:
+       - `listings`: 171/171 data (100%) memiliki `university_id` valid; 149 listing berlabel "Semua" dipetakan deterministik ke `usu` berbasis relasi nomor WA penjual ke `seller_profiles.home_university_id`. 15 listing ditautkan langsung ke `user_id` Supabase Auth.
+       - `wanted_listings`: 18/41 data berhasil ditautkan ke `university_id` dan `user_id` dari profil pembeli.
+       - `open_po_products`: 1/1 data ditautkan ke `user_id` dan `university_id: 'usu'`.
+       - `ig_seller_links`: 1/1 data ditautkan ke `user_id` dan `university_id: 'usu'`.
+   - **Pembaruan Logika Backend & API**:
+     - `src/app/api/listings/route.js`: Menghapus pembatasan hardcoded `["USU", "POLMED", "Semua"]`. Mengintegrasikan `getActiveCampuses()` dari katalog nasional, menyelesaikan `resolvedUniversityId`, mewarisi `home_university_id` dari profil penjual, dan menyimpan `user_id: profile.user_id`.
+     - `src/app/api/wanted/route.js`: Menyelesaikan `university_id` dan `user_id` dari profil pembeli saat membuat WTB, serta mendukung filter query `university_id`.
+     - `src/app/api/open-po/route.js` & `src/app/api/open-po/orders/route.js`: Mengunci relasi kanonikal `user_id` dan `university_id` saat pembuatan produk Open PO dan pesanan PO.
+     - `src/lib/instagramDmAuth.js` & `src/lib/instagramDmRouter.js`: Menyematkan `user_id` dan `university_id` ke dalam tabel `ig_seller_links` dan payload listing yang dibuat dari Instagram DM.
+     - `src/app/api/listings/[id]/route.js`: Menyelesaikan pembaruan `university_id` secara atomik saat data listing diedit.
+
+2. **Fase 4: Penemuan & Kurasi Wilayah (FYP & Discovery Multi-Wilayah)**:
+   - `src/app/api/listings/browse/route.js`:
+     - Menambahkan kolom `university_id` pada query select.
+     - Menambahkan filter query multi-wilayah: `province_id` dan `university_id`.
+     - Memperkaya join `seller_profiles` dengan metadata `home_university_id` dan `affiliation_status`.
+   - `src/app/jual-beli/MarketplaceBrowser.jsx`:
+     - Logika filter sisi klien diperluas untuk mencocokkan `item.university_id` dan `seller_profiles.home_university_id` dengan toleransi kompatibilitas mundur.
+   - `src/app/api/admin/marketplace/route.js`:
+     - Scope resolving admin kini menggunakan pencocokan ganda (`campus.in(...)` OR `university_id.in(...)`), sehingga admin provinsi maupun admin kampus selalu dapat mengakses seluruh listing di wilayah cakupannya tanpa risiko ketidakcocokan format huruf (case-sensitive) atau format lama.
+
+3. **Fase 5: Audit Go-Live & Verifikasi Menyeluruh**:
+   - Ditambahkan unit test suite baru: `__tests__/nationalProductAlignment.test.js` mencakup pembuatan listing nasional (UI/ITB/UGM/dll.), resolusi otomatis `university_id`, pewarisan dari profil penjual, dan pembuatan WTB dengan filter wilayah.
+   - **Hasil Pengujian Otomatis**:
+     - Vitest: **59 berkas pengujian (294 tes) lulus 100%**.
+     - Next.js Production Build (`npm run build`): **95 rute terkompilasi optimal tanpa peringatan maupun error**.
+
+
 
 
 

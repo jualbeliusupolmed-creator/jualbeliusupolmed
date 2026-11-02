@@ -129,7 +129,7 @@ export async function getLinkedSeller(igSenderId) {
     const supa = getAdminClient();
     const { data: link, error: linkErr } = await supa
       .from("ig_seller_links")
-      .select("ig_sender_id, wa, campus, linked_at")
+      .select("ig_sender_id, wa, campus, linked_at, user_id, university_id")
       .eq("ig_sender_id", cleanSender)
       .maybeSingle();
 
@@ -403,6 +403,8 @@ export async function verifyLinkChallenge({ wa, otpInput, igSenderId = null }) {
       {
         ig_sender_id: targetSenderId,
         wa: profile.wa,
+        user_id: profile.user_id || null,
+        university_id: profile.home_university_id || null,
         campus: challenge.campus || "Semua",
         linked_at: new Date().toISOString(),
       },
@@ -465,6 +467,8 @@ export async function linkSellerWithPassword({ igSenderId, wa, pin, campus = "Se
     {
       ig_sender_id: cleanSender,
       wa: profile.wa,
+      user_id: profile.user_id || null,
+      university_id: profile.home_university_id || null,
       campus: campus || profile.campus || "Semua",
       linked_at: new Date().toISOString(),
     },

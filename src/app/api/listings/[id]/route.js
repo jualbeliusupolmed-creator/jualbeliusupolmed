@@ -96,7 +96,20 @@ export async function PATCH(req, { params }) {
       if (body.stock !== undefined) updates.stock = Math.min(9999, Math.max(0, Number(body.stock) || 0));
       if (body.seller_name !== undefined) updates.seller_name = String(body.seller_name).trim();
       if (body.image_url !== undefined) updates.image_url = body.image_url || null;
-      if (body.campus !== undefined) updates.campus = body.campus;
+      if (body.campus !== undefined) {
+        updates.campus = body.campus;
+        if (body.campus && body.campus !== "Semua") {
+          const settings = await getSettings();
+          const targetUni = (settings?.campuses || []).find(
+            (c) => String(c.shortName || "").trim().toLowerCase() === String(body.campus).trim().toLowerCase() ||
+                   String(c.id || "").trim().toLowerCase() === String(body.campus).trim().toLowerCase()
+          );
+          if (targetUni?.id) {
+            updates.university_id = targetUni.id;
+            updates.campus = targetUni.shortName;
+          }
+        }
+      }
       if (body.area !== undefined) updates.area = String(body.area || "").trim();
       if (body.specs !== undefined) {
         updates.specs = sanitizeListingSpecs(updates.category || oldListing?.category || "Elektronik", body.specs);

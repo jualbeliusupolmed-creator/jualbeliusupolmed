@@ -26,15 +26,21 @@ export async function GET(req) {
 
   if (mode === "wanted") {
     let wantedQuery = supa.from("wanted_listings")
-      .select("id,buyer_name,title,description,budget,category,campus,area,status,created_at", { count: "exact" })
+      .select("id,buyer_name,title,description,budget,category,campus,university_id,area,status,created_at", { count: "exact" })
       .order("created_at", { ascending: false })
       .range(offset, offset + 99);
     if (status !== "all") wantedQuery = wantedQuery.eq("status", status);
     if (q) wantedQuery = wantedQuery.ilike("title", `%${q.replace(/[%_,]/g, " ")}%`);
-    if (allowedCampuses) wantedQuery = wantedQuery.in("campus", allowedCampuses);
+    if (allowedCampuses) {
+      const allowedLower = allowedCampuses.map((c) => c.toLowerCase());
+      wantedQuery = wantedQuery.or(`campus.in.(${allowedCampuses.join(",")}),university_id.in.(${allowedLower.join(",")})`);
+    }
 
     let countsQuery = supa.from("wanted_listings").select("status");
-    if (allowedCampuses) countsQuery = countsQuery.in("campus", allowedCampuses);
+    if (allowedCampuses) {
+      const allowedLower = allowedCampuses.map((c) => c.toLowerCase());
+      countsQuery = countsQuery.or(`campus.in.(${allowedCampuses.join(",")}),university_id.in.(${allowedLower.join(",")})`);
+    }
 
     const [{ data, count, error }, { data: statusRows }] = await Promise.all([
       wantedQuery,
@@ -50,15 +56,21 @@ export async function GET(req) {
   }
 
   let query = supa.from("listings")
-    .select("id, title, description, price, category, campus, area, image_url, status, created_at", { count: "exact" })
+    .select("id, title, description, price, category, campus, university_id, area, image_url, status, created_at", { count: "exact" })
     .order("created_at", { ascending: false })
     .range(offset, offset + 99);
   if (status !== "all") query = query.eq("status", status);
   if (q) query = query.ilike("title", `%${q.replace(/[%_,]/g, " ")}%`);
-  if (allowedCampuses) query = query.in("campus", allowedCampuses);
+  if (allowedCampuses) {
+    const allowedLower = allowedCampuses.map((c) => c.toLowerCase());
+    query = query.or(`campus.in.(${allowedCampuses.join(",")}),university_id.in.(${allowedLower.join(",")})`);
+  }
 
   let countsQuery = supa.from("listings").select("status");
-  if (allowedCampuses) countsQuery = countsQuery.in("campus", allowedCampuses);
+  if (allowedCampuses) {
+    const allowedLower = allowedCampuses.map((c) => c.toLowerCase());
+    countsQuery = countsQuery.or(`campus.in.(${allowedCampuses.join(",")}),university_id.in.(${allowedLower.join(",")})`);
+  }
 
   const [{ data, count, error }, { data: statusRows }] = await Promise.all([
     query,
@@ -85,9 +97,12 @@ export async function PATCH(req) {
     const supa = getAdminClient();
     const campuses = await getAdminCampusScope(actor);
     if (actor?.role !== "superadmin" && !campuses.length) return NextResponse.json({ error: "Cakupan kampus belum ditetapkan." }, { status: 403 });
-    let targetQuery = supa.from("wanted_listings").select("id,campus,status").eq("id", id);
+    let targetQuery = supa.from("wanted_listings").select("id,campus,university_id,status").eq("id", id);
     if (action === "resolve") targetQuery = targetQuery.in("status", ["active", "pending"]);
-    if (actor?.role !== "superadmin") targetQuery = targetQuery.in("campus", campuses);
+    if (actor?.role !== "superadmin") {
+      const campusesLower = campuses.map((c) => c.toLowerCase());
+      targetQuery = targetQuery.or(`campus.in.(${campuses.join(",")}),university_id.in.(${campusesLower.join(",")})`);
+    }
     const { data: target, error: targetError } = await targetQuery.maybeSingle();
     if (targetError) return NextResponse.json({ error: "Kebutuhan belum dapat diperiksa." }, { status: 503 });
     if (!target) return NextResponse.json({ error: "Kebutuhan tidak ditemukan dalam cakupan atau statusnya sudah berubah." }, { status: 404 });
@@ -108,11 +123,14 @@ export async function PATCH(req) {
   const campuses = await getAdminCampusScope(actor);
   if (actor.role !== "superadmin" && !campuses.length) return NextResponse.json({ error: "Cakupan kampus belum ditetapkan." }, { status: 403 });
 
-  let targetQuery = supa.from("listings").select("id, campus, status").eq("id", id);
+  let targetQuery = supa.from("listings").select("id, campus, university_id, status").eq("id", id);
   if (reviewAction) targetQuery = targetQuery.eq("status", "pending");
   if (action === "suspend") targetQuery = targetQuery.eq("status", "active");
   if (action === "restore") targetQuery = targetQuery.in("status", ["suspended", "hidden", "rejected"]);
-  if (actor.role !== "superadmin") targetQuery = targetQuery.in("campus", campuses);
+  if (actor.role !== "superadmin") {
+    const campusesLower = campuses.map((c) => c.toLowerCase());
+    targetQuery = targetQuery.or(`campus.in.(${campuses.join(",")}),university_id.in.(${campusesLower.join(",")})`);
+  }
   const { data: target, error: targetError } = await targetQuery.maybeSingle();
   if (targetError) return NextResponse.json({ error: "Data iklan belum dapat diperiksa." }, { status: 503 });
   if (!target) return NextResponse.json({ error: "Iklan tidak ditemukan dalam cakupan akun atau statusnya sudah berubah." }, { status: 404 });

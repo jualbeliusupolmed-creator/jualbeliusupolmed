@@ -981,6 +981,7 @@ export async function handleInstagramDmEvent({
           stock: 1,
           seller_name: linked.profile?.name || `Penjual IG (${cleanSender.slice(-4)})`,
           seller_wa: linked.wa,
+          user_id: linked.profile?.user_id || null,
           image_url: primaryImage,
           images: finalImages,
           status: initialStatus,
