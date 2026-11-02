@@ -26,7 +26,6 @@ import { formatListingSpecs } from "@/lib/listingSpecs";
 import ProductDetailInteractive from "@/components/ProductDetailInteractive";
 import { isListingAvailable } from "@/lib/listingAvailability";
 import { selectProductRecommendations } from "@/lib/productRecommendations";
-import { encodeSellerSlug } from "@/lib/sellerSlug";
 
 export const revalidate = 300; // ISR 5 menit
 
@@ -209,7 +208,7 @@ export default async function ProdukPage({ params }) {
   const shortPath = buildListingShortPath(listing.listing_code);
   const listingSpecs = formatListingSpecs(listing.category, listing.specs);
   // URL profil penjual: utamakan username/slug resmi penjual
-  const sellerUsername = listing.seller_profiles?.slug || encodeSellerSlug(listing.seller_wa);
+  const sellerUsername = listing.seller_profiles?.slug || "";
 
   // JSON-LD Product + BreadcrumbList — agar listing bisa muncul sebagai
   // rich result (harga, ketersediaan) di Google.
@@ -247,7 +246,6 @@ export default async function ProdukPage({ params }) {
       seller: {
         "@type": "Person",
         name: listing.seller_name,
-        identifier: listing.seller_wa,
       },
     },
   };

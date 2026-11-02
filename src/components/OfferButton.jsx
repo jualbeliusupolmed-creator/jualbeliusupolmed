@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import { rupiah } from "@/lib/fees";
-import { formatWaForBaileys } from "@/lib/constants";
 import { buildSlug } from "@/lib/slug";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useTransactionMode } from "@/lib/useTransactionMode";
+import { openWhatsAppContact } from "@/lib/openWhatsAppContact";
 
 export default function OfferButton({ listing, className, children }) {
   const [open, setOpen] = useState(false);
@@ -32,15 +32,6 @@ export default function OfferButton({ listing, className, children }) {
     // MODE 1: DIRECT WHATSAPP
     if (isWaMode) {
       try {
-        const rawWa = listing.seller_wa;
-        const formattedWa = formatWaForBaileys(rawWa);
-
-        if (!formattedWa) {
-          toast.error("Nomor WhatsApp penjual tidak tersedia.");
-          setBusy(false);
-          return;
-        }
-
         // Catat interaksi ke backend
         fetch("/api/minat", {
           method: "POST",
@@ -56,16 +47,8 @@ export default function OfferButton({ listing, className, children }) {
         const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://www.kampuskita.my.id";
         const productLink = `${baseUrl}/produk/${slug}`;
 
-        const finalMessage =
-          `Halo ${listing.seller_name || "Penjual"},\n\n` +
-          `Saya ingin mengajukan penawaran harga sebesar *${rupiah(priceNum)}* (harga yang tercantum: ${rupiah(listing.price)}) untuk barang:\n` +
-          ` *${listing.title}*\n` +
-          (message ? ` Catatan: "${message}"\n` : "") +
-          ` ${productLink}\n\n` +
-          `Apakah harganya bisa disetujui? Terima kasih!`;
-
-        const waUrl = `https://wa.me/${formattedWa}?text=${encodeURIComponent(finalMessage)}`;
-        window.open(waUrl, "_blank", "noopener,noreferrer");
+        const finalMessage = `Halo ${listing.seller_name || "Penjual"},\n\nSaya ingin mengajukan penawaran harga sebesar *${rupiah(priceNum)}* (harga yang tercantum: ${rupiah(listing.price)}) untuk barang:\n*${listing.title}*\n${message ? `Catatan: "${message}"\n` : ""}${productLink}\n\nApakah harganya bisa disetujui? Terima kasih!`;
+        if (!openWhatsAppContact(listing.id, finalMessage)) throw new Error("Izinkan pop-up untuk membuka WhatsApp penjual.");
         toast.success("Membuka WhatsApp untuk mengirim tawaran...");
         setOpen(false);
       } catch (err) {

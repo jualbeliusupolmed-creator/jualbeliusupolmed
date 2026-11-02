@@ -1,4 +1,18 @@
 import { getAdminClient } from "@/lib/supabaseAdmin";
+import { encodeSellerSlug } from "@/lib/sellerSlug";
+
+export function toPublicListing(listing) {
+  if (!listing || typeof listing !== "object") return listing;
+  const { seller_wa: sellerWa, ...publicListing } = listing;
+  if (publicListing.seller_profiles && typeof publicListing.seller_profiles === "object") {
+    const { wa: _profileWa, ...publicProfile } = publicListing.seller_profiles;
+    publicListing.seller_profiles = {
+      ...publicProfile,
+      slug: publicProfile.slug || encodeSellerSlug(_profileWa || sellerWa),
+    };
+  }
+  return publicListing;
+}
 
 /**
  * Fetches listings and manually joins seller_profiles to avoid PostgREST foreign key errors.
@@ -23,7 +37,7 @@ export async function fetchListingsWithProfiles(queryPromise) {
     });
   }
   
-  return { data: listings, count };
+  return { data: listings.map(toPublicListing), count };
 }
 
 export async function fetchSingleListingWithProfile(queryPromise) {
@@ -42,5 +56,5 @@ export async function fetchSingleListingWithProfile(queryPromise) {
     data.seller_profiles = profile || null;
   }
   
-  return { data };
+  return { data: toPublicListing(data) };
 }

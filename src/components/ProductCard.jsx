@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { rupiah } from "@/lib/fees";
-import { formatWa } from "@/lib/constants";
 import CartButton from "@/components/CartButton";
 import { buildSlug } from "@/lib/slug";
 import { Icon } from "@/components/Icons";
@@ -39,7 +38,6 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
   const sellerInitial = firstCodePoint(sellerName).toUpperCase() || "M";
   const isStudentVerified = listing.seller_profiles?.student_verified || listing.student_verified;
   const isNegotiable = /nego/i.test(listing.description || "");
-  const sellerWa = formatWa(listing.seller_wa);
 
   return (
     <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white transition-all hover:border-emerald-500/40 hover:shadow-md active:scale-[0.99] dark:border-white/10 dark:bg-slate-900">
@@ -155,13 +153,13 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
           href={detailUrl}
           className={cn(
             "inline-flex min-h-7 items-center justify-center gap-1 rounded-lg bg-slate-100 px-1.5 text-[9px] font-bold text-slate-700 transition hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 sm:min-h-9 sm:px-2 sm:text-[11px]",
-            !sellerWa || !isAvailable ? "col-span-2" : ""
+            !isAvailable ? "col-span-2" : ""
           )}
         >
           <Icon.Eye className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
           Detail
         </Link>
-        {sellerWa && isAvailable && (
+        {isAvailable && (
           <a
             href={`/chat-wa/${listing.id}`}
             target="_blank"

@@ -22,6 +22,8 @@ const ADMIN_WORKSPACE_PATHS = [
   "/admin/reports",
   "/admin/po",
   "/admin/owners",
+  "/admin/organization",
+  "/admin/admin-requests",
 ];
 const ADMIN_WHATSAPP_PATHS = ["/admin/wabot", "/admin/antrean", "/admin/notifikasi", "/admin/broadcast", "/admin/broadcast_grup", "/admin/grouppost"];
 const ADMIN_LEGACY_REDIRECTS = [

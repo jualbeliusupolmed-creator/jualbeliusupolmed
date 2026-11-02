@@ -63,9 +63,9 @@ export async function POST(req) {
     }
 
     const body = await req.json();
-    const { listing_id, seller_wa, rating, comment, buyer_name } = body;
+    const { listing_id, rating, comment, buyer_name } = body;
 
-    if (!listing_id || !seller_wa || !rating) {
+    if (!listing_id || !rating) {
       return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
     }
     if (rating < 1 || rating > 5) {
