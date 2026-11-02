@@ -24,6 +24,8 @@ const ADMIN_WORKSPACE_PATHS = [
   "/admin/owners",
   "/admin/organization",
   "/admin/admin-requests",
+  "/admin/social",
+  "/admin/instagram",
   "/admin/kategori",
   "/admin/ai",
 ];

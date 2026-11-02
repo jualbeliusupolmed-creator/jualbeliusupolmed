@@ -37,7 +37,8 @@ const ADMIN_GROUPS = [
     { key: "settings", label: "Pengaturan platform", href: "/admin/settings", permission: "settings" },
     { key: "audit", label: "Jejak perubahan", href: "/admin/audit", superadmin: true },
   ] },
-  { label: "WhatsApp & Siaran", items: [
+  { label: "Saluran & Komunikasi", items: [
+    { key: "social", label: "Instagram & Sosmed", href: "/admin/social", roles: ["province_admin", "university_admin"], permission: "social" },
     { key: "wabot", label: "Status Bot & Koneksi", href: "/admin/wabot", permission: "whatsapp" },
     { key: "broadcast", label: "Broadcast & Siaran", href: "/admin/broadcast", permission: "whatsapp" },
     { key: "antrean", label: "Antrean Pesan", href: "/admin/antrean", permission: "whatsapp" },

@@ -20,6 +20,7 @@ function moduleForPath(pathname) {
   if (pathname === "/admin/owners" || pathname.startsWith("/admin/owners/")) return "owners";
   if (pathname === "/admin/organization" || pathname.startsWith("/admin/organization/")) return "organization";
   if (pathname === "/admin/admin-requests" || pathname.startsWith("/admin/admin-requests/")) return "admin_requests";
+  if (pathname === "/admin/social" || pathname.startsWith("/admin/social/") || pathname === "/admin/instagram" || pathname.startsWith("/admin/instagram/")) return "social";
   if (pathname === "/admin/reports" || pathname.startsWith("/admin/reports/")) return "reports";
   if (["/admin/wabot", "/admin/antrean", "/admin/notifikasi", "/admin/broadcast", "/admin/broadcast_grup", "/admin/grouppost"].some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) return "whatsapp";
   return "legacy";
