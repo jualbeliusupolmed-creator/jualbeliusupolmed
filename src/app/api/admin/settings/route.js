@@ -30,6 +30,11 @@ export async function GET() {
   const actor = await getAdminActor();
   if (!isSuperadmin(actor)) return NextResponse.json({ error: "Pengaturan platform hanya untuk superadmin." }, { status: 403 });
   const settings = await getSettings();
+  const admin = getAdminClient();
+  const { error: organizationCatalogError } = await admin.from("provinces").select("id").limit(1);
+  if (organizationCatalogError && !["42P01", "PGRST205"].includes(organizationCatalogError.code)) {
+    return NextResponse.json({ error: "Status katalog struktur organisasi tidak dapat diperiksa." }, { status: 503 });
+  }
   return NextResponse.json({
     admin: {
       adminWa: settings.admin?.adminWa || "",
@@ -61,6 +66,7 @@ export async function GET() {
       proMonthly: Number(settings.pricing?.proMonthly) || 0,
     },
     areas: Array.isArray(settings.areas) ? settings.areas : [],
+    organizationManagedRelationally: !organizationCatalogError,
     campuses: (Array.isArray(settings.campuses) ? settings.campuses : []).map((campus) => ({
       id: campus.id || String(campus.shortName || "").toLowerCase(),
       name: campus.name || "",
@@ -81,6 +87,12 @@ export async function PUT(req) {
   const current = await getSettings();
   const rows = [];
   try {
+    if (body.campuses !== undefined) {
+      const admin = getAdminClient();
+      const { error: catalogError } = await admin.from("provinces").select("id").limit(1);
+      if (!catalogError) throw new Error("Katalog kampus sudah dikelola dari menu Struktur wilayah. Pengaturan ini tidak dapat menimpa struktur nasional.");
+      if (catalogError.code !== "42P01" && catalogError.code !== "PGRST205") throw new Error("Status katalog wilayah tidak dapat diperiksa.");
+    }
     if (body.admin && typeof body.admin === "object") {
       const admin = { ...current.admin };
       if (body.admin.adminWa !== undefined) admin.adminWa = safeText(String(body.admin.adminWa || ""), 30, "Nomor WA Admin");

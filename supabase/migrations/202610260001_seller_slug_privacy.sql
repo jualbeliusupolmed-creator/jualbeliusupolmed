@@ -16,9 +16,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_seller_profiles_slug_lower
   WHERE slug IS NOT NULL;
 
 -- 3. Backfill missing slugs with safe deterministic opaque identifier if null
--- Format: 'p_' + substring of md5(wa || 'jb_usu_seller_salt') (first 10 chars)
+-- Format: 'p-' + substring of md5(wa || 'jb_usu_seller_salt') (first 10 chars)
 UPDATE public.seller_profiles
-SET slug = 'p_' || SUBSTRING(MD5(wa || 'jb_usu_seller_salt_2026'), 1, 10)
+SET slug = 'p-' || SUBSTRING(MD5(wa || 'jb_usu_seller_salt_2026'), 1, 10)
 WHERE slug IS NULL OR TRIM(slug) = '';
 
 COMMIT;

@@ -31,6 +31,14 @@ describe("otorisasi workspace owner", () => {
     expect(hasAdminPermission(actor, "settings", "read")).toBe(false);
   });
 
+  it("membuka pengajuan admin universitas untuk admin provinsi saja", () => {
+    const provinceAdmin = { role: "province_admin", roles: [{ role_code: "province_admin" }], permissions: {} };
+    const universityAdmin = { role: "university_admin", roles: [{ role_code: "university_admin" }], permissions: {} };
+    expect(hasAdminPermission(provinceAdmin, "admin_requests", "read")).toBe(true);
+    expect(hasAdminPermission(provinceAdmin, "admin_requests", "manage")).toBe(true);
+    expect(hasAdminPermission(universityAdmin, "admin_requests", "read")).toBe(false);
+  });
+
   it("mendukung operator WhatsApp tanpa memberi akses platform lain", () => {
     const actor = { role: "owner", permissions: { whatsapp: ["read", "manage"] } };
     expect(hasAdminPermission(actor, "whatsapp", "read")).toBe(true);
@@ -47,7 +55,7 @@ describe("otorisasi workspace owner", () => {
     ];
     expect(resolveAdminCampusScope([
       { scope_type: "province", scope_id: "sumatera-utara" },
-      { scope_type: "campus", scope_id: "ugm" },
+      { scope_type: "university", scope_id: "ugm" },
       { scope_type: "campus", scope_id: "unknown" },
     ], campuses)).toEqual(["USU", "POLMED", "UGM"]);
   });

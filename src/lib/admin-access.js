@@ -3,6 +3,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getSettings, getActiveCampuses, getCampusProvinceId } from "@/lib/settings";
 
 const SUPERADMIN_ID = () => String(process.env.SUPERADMIN_AUTH_USER_ID || "").toLowerCase();
+const isMissingRoleAssignments = (error) => ["42P01", "PGRST205"].includes(error?.code);
 
 export async function getAdminActor() {
   try {
@@ -15,14 +16,25 @@ export async function getAdminActor() {
     const authUser = authResult?.user;
     if (authError || !authUser || (authUser.banned_until && new Date(authUser.banned_until) > new Date())) return null;
 
+    const assignmentResult = await admin.from("admin_role_assignments")
+      .select("role_code, province_id, university_id, status")
+      .eq("user_id", userId)
+      .eq("status", "active");
+    if (assignmentResult.error && !isMissingRoleAssignments(assignmentResult.error)) return null;
+    const assignments = assignmentResult.data || [];
+    const assignmentScopes = assignments.map((assignment) => assignment.role_code === "province_admin"
+      ? { scope_type: "province", scope_id: assignment.province_id }
+      : { scope_type: "campus", scope_id: assignment.university_id });
+
     if (SUPERADMIN_ID() && userId === SUPERADMIN_ID()) {
       return {
         userId,
         email: authUser.email || "",
         label: authUser.user_metadata?.display_name || authUser.email || "Superadmin",
         role: "superadmin",
+        roles: [{ role_code: "superadmin", province_id: null, university_id: null }, ...assignments],
         permissions: { "*": ["read", "manage", "review"] },
-        scopes: [],
+        scopes: assignmentScopes,
       };
     }
 
@@ -34,17 +46,21 @@ export async function getAdminActor() {
       .maybeSingle();
     if (membershipError || !membership) return null;
 
-    const { data: scopes, error: scopesError } = await admin
+    const { data: legacyScopes, error: scopesError } = await admin
       .from("admin_scope_grants")
       .select("scope_type, scope_id")
       .eq("user_id", userId);
     if (scopesError) return null;
+    const scopes = isMissingRoleAssignments(assignmentResult.error) ? legacyScopes || [] : assignmentScopes;
 
     return {
       userId,
       email: authUser.email || "",
       label: membership.display_name || authUser.user_metadata?.display_name || authUser.email || "Owner",
-      role: "owner",
+      role: assignments.some((assignment) => assignment.role_code === "province_admin")
+        ? "province_admin"
+        : assignments.some((assignment) => assignment.role_code === "university_admin") ? "university_admin" : "owner",
+      roles: assignments.length ? assignments : [{ role_code: "owner", province_id: null, university_id: null }],
       permissions: membership.permissions && typeof membership.permissions === "object" ? membership.permissions : {},
       scopes: scopes || [],
     };
@@ -59,6 +75,7 @@ export async function getAdminActor() {
 export function hasAdminPermission(actor, module, action = "read") {
   if (!actor) return false;
   if (actor.role === "superadmin") return true;
+  if (module === "admin_requests") return actor.roles?.some((role) => role.role_code === "province_admin") === true;
   const permissions = actor.permissions?.[module];
   if (Array.isArray(permissions)) return permissions.includes(action) || permissions.includes("manage");
   if (permissions && typeof permissions === "object") return permissions[action] === true || permissions.manage === true;
@@ -68,7 +85,7 @@ export function hasAdminPermission(actor, module, action = "read") {
 export function resolveAdminCampusScope(scopes, campuses) {
   const granted = new Set();
   for (const scope of scopes || []) {
-    if (scope.scope_type === "campus") {
+    if (scope.scope_type === "campus" || scope.scope_type === "university") {
       const wanted = String(scope.scope_id || "").toLowerCase();
       for (const campus of campuses || []) {
         if ([campus.id, campus.shortName, campus.name].some((value) => String(value || "").toLowerCase() === wanted)) {

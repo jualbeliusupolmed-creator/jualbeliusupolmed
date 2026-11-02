@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminActor } from "@/lib/admin-access";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getSettings, getActiveCampuses, getCampusProvinceId } from "@/lib/settings";
+import { findOrInviteOwner } from "@/lib/admin-owner-invite";
 
 export const dynamic = "force-dynamic";
 
@@ -20,23 +21,6 @@ const MODULE_ACTIONS = {
 async function superadmin() {
   const actor = await getAdminActor();
   return actor?.role === "superadmin" ? actor : null;
-}
-
-async function findAuthUser(admin, account) {
-  const value = String(account || "").trim();
-  if (UUID.test(value)) {
-    const { data, error } = await admin.auth.admin.getUserById(value);
-    return error ? null : data?.user || null;
-  }
-  if (!value || value.length > 254 || !value.includes("@")) return null;
-  for (let page = 1; page <= 10; page += 1) {
-    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
-    if (error) return null;
-    const match = data?.users?.find((user) => user.email?.toLowerCase() === value.toLowerCase());
-    if (match) return match;
-    if (!data?.users || data.users.length < 1000) break;
-  }
-  return null;
 }
 
 function normalizePermissions(input) {
@@ -122,12 +106,6 @@ export async function PUT(req) {
   if (!displayName) return NextResponse.json({ error: "Nama penanggung jawab wajib diisi." }, { status: 400 });
 
   const admin = getAdminClient();
-  const user = await findAuthUser(admin, body.account);
-  if (!user) return NextResponse.json({ error: "Akun Auth tidak ditemukan. Buat akun terlebih dahulu atau masukkan ID akun yang benar." }, { status: 404 });
-  if (user.id.toLowerCase() === String(process.env.SUPERADMIN_AUTH_USER_ID || "").toLowerCase()) {
-    return NextResponse.json({ error: "Akun superadmin utama tidak dapat diubah sebagai owner." }, { status: 400 });
-  }
-
   const settings = await getSettings();
   const campuses = getActiveCampuses(settings).map((campus) => ({
     id: campus.id || campus.shortName.toLowerCase(),
@@ -151,6 +129,22 @@ export async function PUT(req) {
   if (!validScopes.length) return NextResponse.json({ error: "Pilih sekurangnya satu provinsi atau kampus." }, { status: 400 });
 
   const permissions = normalizePermissions(body.permissions);
+  let invited;
+  try {
+    invited = await findOrInviteOwner(
+      admin,
+      body.account,
+      displayName,
+      process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_BASE_URL,
+    );
+  } catch (error) {
+    const status = error.message === "Akun Auth dengan ID itu tidak ditemukan." ? 404 : 400;
+    return NextResponse.json({ error: error.message || "Akun Auth tidak dapat disiapkan." }, { status });
+  }
+  const { user, invitationSent } = invited;
+  if (user.id.toLowerCase() === String(process.env.SUPERADMIN_AUTH_USER_ID || "").toLowerCase()) {
+    return NextResponse.json({ error: "Akun superadmin utama tidak dapat diubah sebagai admin cakupan." }, { status: 400 });
+  }
   const { error: saveError } = await admin.rpc("replace_admin_membership", {
     p_user_id: user.id,
     p_display_name: displayName,
@@ -158,8 +152,10 @@ export async function PUT(req) {
     p_scopes: validScopes.map((scope) => ({ scope_type: scope.scope_type, scope_id: scope.scope_id })),
     p_actor_id: actor.userId,
   });
-  if (saveError) return NextResponse.json({ error: "Gagal menyimpan akses owner. Pastikan migrasi workspace sudah diterapkan." }, { status: 500 });
-  return NextResponse.json({ ok: true, userId: user.id });
+  if (saveError) return NextResponse.json({ error: invitationSent
+    ? "Undangan sudah dikirim, tetapi cakupan belum tersimpan. Coba simpan lagi memakai email yang sama setelah akun muncul di Supabase Auth."
+    : "Gagal menyimpan akses admin. Pastikan migrasi workspace sudah diterapkan." }, { status: 500 });
+  return NextResponse.json({ ok: true, userId: user.id, invitationSent });
 }
 
 export async function PATCH(req) {
