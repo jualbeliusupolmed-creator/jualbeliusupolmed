@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import {
   Globe,
-  Instagram,
+  Camera,
   MessageSquare,
   Clock,
   CheckCircle2,
@@ -15,7 +15,7 @@ import {
   Layers,
   Sparkles,
 } from "lucide-react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 export default function OmnichannelPublishModal({
   listing,
@@ -36,6 +36,7 @@ export default function OmnichannelPublishModal({
     if (isOpen && listing?.id) {
       loadDistributionData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, listing?.id]);
 
   const loadDistributionData = async () => {
@@ -147,7 +148,7 @@ export default function OmnichannelPublishModal({
   if (!isOpen) return null;
 
   const getChannelIcon = (type) => {
-    if (type.includes("instagram")) return <Instagram className="h-5 w-5 text-pink-600" />;
+    if (type.includes("instagram")) return <Camera className="h-5 w-5 text-pink-600" />;
     if (type.includes("whatsapp")) return <MessageSquare className="h-5 w-5 text-emerald-600" />;
     return <Globe className="h-5 w-5 text-blue-600" />;
   };
