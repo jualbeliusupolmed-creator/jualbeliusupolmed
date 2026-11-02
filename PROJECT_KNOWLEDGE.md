@@ -2,6 +2,38 @@
 
 Dokumen ini berisi peta pemahaman sistem, alur bisnis, daftar masalah, dan riwayat audit untuk proyek **Jual Beli USU Polmed**.
 
+### Pembaruan 2 November 2026 — Fase 6: National Analytics & Multi-Provincial Rollout
+
+- **Skema Database & Seeding Roadmap Multi-Provinsi**:
+  - Diterapkan migrasi `20261102190000_national_analytics_and_multi_provincial_rollout.sql` ke database remote Supabase.
+  - Menambahkan data provinsi dan kampus anchor nasional untuk 6 tahap peluncuran:
+    - *Tahap 1 (Pilot)*: Sumatera Utara (USU, POLMED) - Status `fully_launched`.
+    - *Tahap 2*: DKI Jakarta (UI, UNJ, Trisakti) - Status `onboarding`.
+    - *Tahap 3*: Jawa Barat (ITB, UNPAD, IPB) - Status `onboarding`.
+    - *Tahap 4*: DI Yogyakarta (UGM, UNY, UII) - Status `draft`.
+    - *Tahap 5*: Jawa Timur (ITS, UNAIR, UB) - Status `draft`.
+    - *Tahap 6*: Banten, Jawa Tengah, Bali, Sulawesi Selatan - Status `draft`.
+  - Dibuat tabel `provincial_rollout_checklists` yang melacak 7 poin SOP wajib per provinsi (Setup Instagram Resmi, Setup WhatsApp Channel, Penunjukan Admin Provinsi, Verifikasi Universitas Pertama, Pengujian DM Routing, Pengujian Siaran Saluran, Uji Coba Transaksi).
+- **Mesin Agregasi Analitik Nasional (National Analytics Engine)**:
+  - Dibuat modul `src/lib/nationalAnalytics.js`:
+    - Mengagregasi metrik nasional secara real-time: Total Provinsi Aktif, Universitas Terdaftar, Total Produk Aktif, Estimasi GMV & Transaksi Berhasil, dan Kesehatan Integrasi Akun Sosial.
+    - Analisis breakdown komparatif per provinsi dan per universitas (kategori terlaris dan produk paling populer).
+    - Analisis konversi omnichannel per kanal (Website vs Instagram Kampus/Provinsi vs WhatsApp Channels/Groups) dengan tracking tingkat keberhasilan siaran.
+- **API Endpoint & Manajemen Checklist Rollout**:
+  - Endpoint `GET` & `POST` di `/api/admin/analytics/national/route.js`:
+    - Menyajikan dataset analitik tersaring sesuai hierarki peran admin (Superadmin / Admin Provinsi / Admin Universitas).
+    - Aksi `update_checklist` dan `update_stage_status` untuk mengelola kematangan peluncuran wilayah.
+- **Frontend Dashboard Analitik Nasional**:
+  - Halaman `/admin/analytics` diperbarui menggunakan komponen `NationalAnalyticsWorkspace.jsx` yang memuat 4 tab terpadu:
+    1. *Performa Saluran (Omnichannel)*: Tingkat keberhasilan siaran dan konversi ke 6 kanal.
+    2. *Peta & Distribusi Wilayah*: Tabel perbandingan bursa kampus dan kategori terlaris per provinsi/universitas.
+    3. *Health Check Integrasi Sosial*: Monitoring live status API Meta Graph dan Baileys WhatsApp Gateway.
+    4. *Roadmap Rollout Nasional (6 Tahap)*: Checklist interaktif 7 poin operasional peluncuran wilayah.
+- **Verifikasi Kualitas**:
+  - Ditambahkan berkas pengujian `__tests__/nationalAnalytics.test.js` (4 tes lulus).
+  - 100% tes vitest lulus (57 berkas, 277 tes lulus tanpa regresi).
+  - Next.js production build (`npm run build`) sukses 100% (95 rute).
+
 ### Pembaruan 2 November 2026 — Fase 5: Central Distribution Manager (Omnichannel Product Publishing)
 
 - **Skema Database Omnichannel Publishing**:
