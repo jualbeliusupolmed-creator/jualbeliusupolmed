@@ -2,6 +2,29 @@
 
 Dokumen ini berisi peta pemahaman sistem, alur bisnis, daftar masalah, dan riwayat audit untuk proyek **Jual Beli USU Polmed**.
 
+### Pembaruan 2 November 2026 — Fase 5: Central Distribution Manager (Omnichannel Product Publishing)
+
+- **Skema Database Omnichannel Publishing**:
+  - Diterapkan migrasi `20261102180000_omnichannel_distribution_manager.sql` ke database remote Supabase.
+  - Tabel `omnichannel_distributions` melacak siklus hidup penerbitan (`draft`, `pending_review`, `approved`, `scheduled`, `publishing`, `published`, `failed`, `cancelled`) ke seluruh 6 kanal: `website`, `instagram_province`, `instagram_university`, `whatsapp_channel_province`, `whatsapp_channel_university`, dan `whatsapp_group_community`.
+  - Dilengkapi RLS ketat, pengindeksan unik pencegah duplikasi kiriman (`uq_omnichannel_listing_target`), dan tracking `attempts`, `max_attempts`, serta `last_error`.
+- **Mesin Distribusi Terpusat (Omnichannel Engine)**:
+  - Dibuat pustaka `src/lib/omnichannelDistribution.js`:
+    - `buildOmnichannelCaption`: Template caption dinamis berbasis wilayah, kampus, dan kategori lengkap dengan hashtag otomatis (`#JualBeliDiKampus`, `#{univCode}`, `#{provinceName}`).
+    - `resolveOmnichannelTargets`: Resolusi otomatis matriks target saluran untuk produk tertentu.
+    - `executeOmnichannelPublish`: Eksekusi atomik ke Website, Instagram Graph API, WhatsApp Channels (@newsletter), dan WhatsApp Groups (@g.us).
+    - `retryOmnichannelDistribution` & `processScheduledOmnichannelJobs`: Penanganan retry instan dan cron background processing untuk siaran terjadwal.
+- **API Distribusi & Endpoint Terjadwal**:
+  - Endpoint `GET` & `POST` di `/api/admin/distribution/route.js`:
+    - Mengambil matriks target produk atau antrean pekerjaan distribusi sistem per cakupan scope admin.
+    - Aksi `publish_channels`, `schedule_channels`, `retry_job`, `cancel_job`, dan `process_scheduled`.
+- **Integrasi Antarmuka Admin (UI)**:
+  - Modal interaktif `OmnichannelPublishModal.jsx` yang dipasang langsung pada etalase admin `MarketplaceWorkspace.jsx` (tombol *Distribusi*).
+  - Tab ke-4 `/admin/social` (`SocialWorkspace.jsx`) diperluas menjadi **Central Distribution Manager (Omnichannel Dispatcher)** dengan ringkasan metrik live, filter status, dan tombol eksekusi antrean terjadwal.
+- **Verifikasi Kualitas**:
+  - Ditambahkan berkas pengujian `__tests__/omnichannelDistribution.test.js` (8 tes lulus).
+  - 100% tes vitest lulus (56 berkas, 273 pengujian lulus tanpa regresi).
+
 ### Pembaruan 2 November 2026 — Fase 4: WhatsApp Multi-Channel Architecture (3-Tier Pemisahan Saluran, Bisnis, & Komunitas)
 
 - **Pemisahan Tegas 3 Tier Arsitektur WhatsApp**:

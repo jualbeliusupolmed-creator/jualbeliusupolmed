@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, Clock3, LoaderCircle, PackageSearch, RefreshCw, Search, X, SearchCheck, Trash2, Store } from "lucide-react";
+import { Check, Clock3, LoaderCircle, PackageSearch, RefreshCw, Search, X, SearchCheck, Trash2, Store, Layers } from "lucide-react";
 import { rupiah } from "@/lib/fees";
 import { useAdmin } from "./AdminProvider";
+import OmnichannelPublishModal from "./OmnichannelPublishModal";
 
 const FILTERS = [
   ["pending", "Menunggu review"], ["active", "Aktif"], ["sold", "Terjual"], ["suspended", "Ditangguhkan"], ["rejected", "Ditolak"], ["all", "Semua status"],
@@ -33,6 +34,7 @@ export default function MarketplaceWorkspace({ initialMode = "listings", canRevi
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [publishListing, setPublishListing] = useState(null);
 
   const load = useCallback(async (offset = 0, append = false) => {
     setLoading(true);
@@ -144,17 +146,33 @@ export default function MarketplaceWorkspace({ initialMode = "listings", canRevi
           const busy = busyId === String(item.id);
           const buttons = mode === "wanted"
             ? <>{canManage && ["active", "pending"].includes(item.status) ? <ActionButton busy={busy} onClick={() => handleWanted(item, "resolve")} label="Tandai selesai" icon={Check} tone="primary" /> : null}{superadmin ? <ActionButton busy={busy} onClick={() => handleWanted(item, "remove")} label="Hapus" icon={Trash2} tone="danger" /> : null}</>
-            : item.status === "pending" && canReview
-            ? <><ActionButton busy={busy} onClick={() => review(item, "reject")} label="Tolak" icon={X} tone="danger" /><ActionButton busy={busy} onClick={() => review(item, "approve")} label="Setujui" icon={Check} tone="primary" /></>
-            : canManage && item.status === "active"
-              ? <ActionButton busy={busy} onClick={() => review(item, "suspend")} label="Tangguhkan" icon={X} tone="danger" />
-              : canManage && ["suspended", "hidden", "rejected"].includes(item.status)
-                ? <ActionButton busy={busy} onClick={() => review(item, "restore")} label="Pulihkan" icon={Check} tone="primary" />
-                : null;
+            : <div className="flex flex-wrap items-center gap-1.5">
+                {canManage && <ActionButton busy={busy} onClick={() => setPublishListing(item)} label="Distribusi" icon={Layers} tone="neutral" />}
+                {item.status === "pending" && canReview && (
+                  <>
+                    <ActionButton busy={busy} onClick={() => review(item, "reject")} label="Tolak" icon={X} tone="danger" />
+                    <ActionButton busy={busy} onClick={() => review(item, "approve")} label="Setujui" icon={Check} tone="primary" />
+                  </>
+                )}
+                {canManage && item.status === "active" && (
+                  <ActionButton busy={busy} onClick={() => review(item, "suspend")} label="Tangguhkan" icon={X} tone="danger" />
+                )}
+                {canManage && ["suspended", "hidden", "rejected"].includes(item.status) && (
+                  <ActionButton busy={busy} onClick={() => review(item, "restore")} label="Pulihkan" icon={Check} tone="primary" />
+                )}
+              </div>;
           return <article key={item.id} className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:px-5"><div className="grid h-20 w-24 shrink-0 place-items-center overflow-hidden rounded-xl bg-slate-100 text-emerald-800">{mode === "wanted" ? <SearchCheck className="h-6 w-6" /> : item.image_url ? <img src={item.image_url} alt="" loading="lazy" className="h-full w-full object-cover" /> : <PackageSearch className="h-6 w-6 text-slate-300" />}</div><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h3 className="truncate text-sm font-extrabold">{item.title}</h3><span className={`rounded-full px-2 py-1 text-[10px] font-extrabold ${item.status === "pending" ? "bg-amber-50 text-amber-800" : item.status === "active" ? "bg-emerald-50 text-emerald-800" : "bg-slate-100 text-slate-600"}`}>{item.status}</span></div><p className="mt-1 text-xs font-bold text-slate-700">{mode === "wanted" ? "Anggaran " + rupiah(item.budget || 0) : rupiah(item.price || 0)} <span className="font-medium text-slate-400">· {item.category || "Tanpa kategori"}</span></p><p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-500">{item.description || "Tidak ada deskripsi."}</p><div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-semibold text-slate-400"><span>{item.campus || "Kampus tidak diisi"}</span>{item.area ? <span>{item.area}</span> : null}{mode === "wanted" && item.buyer_name ? <span>{item.buyer_name}</span> : null}<span>{new Date(item.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</span></div></div>{buttons ? <div className="flex shrink-0 gap-2 self-end sm:self-auto">{buttons}</div> : null}</article>;
         })}</div> : <div className="grid min-h-56 place-items-center px-5 text-center"><div><PackageSearch className="mx-auto h-7 w-7 text-slate-300" /><p className="mt-3 text-sm font-bold text-slate-600">Tidak ada iklan pada filter ini</p><p className="mt-1 text-xs text-slate-400">Coba ubah status atau kata pencarian.</p></div></div>}
         {nextOffset !== null ? <div className="flex flex-col items-center gap-2 border-t border-slate-100 p-3"><p className="text-[10px] text-slate-400">Menampilkan {items.length.toLocaleString("id-ID")} dari {total.toLocaleString("id-ID")}</p><button onClick={() => load(nextOffset, true)} disabled={loading} className="inline-flex min-h-9 items-center justify-center gap-2 rounded-full bg-slate-100 px-4 text-xs font-bold text-slate-700 hover:bg-slate-200 disabled:opacity-50">{loading ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : null}Muat berikutnya</button></div> : null}
       </section>
+
+      {/* Modal Omnichannel Distribution */}
+      <OmnichannelPublishModal
+        listing={publishListing}
+        isOpen={!!publishListing}
+        onClose={() => setPublishListing(null)}
+        onSuccess={() => load(0)}
+      />
     </div>
   );
 }
