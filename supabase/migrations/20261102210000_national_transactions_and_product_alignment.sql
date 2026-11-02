@@ -136,3 +136,4 @@ where ig.university_id is null
     ig.wa = sp.wa
     or ig.wa = sp.phone_wa
   );
+

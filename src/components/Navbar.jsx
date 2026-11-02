@@ -47,13 +47,32 @@ export default function Navbar({ config }) {
       .then((data) => {
         if (Array.isArray(data?.campuses)) {
           setCampuses(data.campuses);
-          const saved = localStorage.getItem("preferred_campus");
-          const valid = saved === "Semua" || data.campuses.some((campus) => campus.shortName === saved);
-          if (valid && saved) setSelectedCampus(saved);
-          else if (saved) localStorage.removeItem("preferred_campus");
+          const urlParams = new URLSearchParams(window.location.search);
+          const urlCampus = urlParams.get("campus") || urlParams.get("univ");
+          let initial = null;
+
+          if (urlCampus) {
+            const clean = urlCampus.trim().toLowerCase();
+            const matched = data.campuses.find((c) => c.shortName.toLowerCase() === clean || c.id.toLowerCase() === clean);
+            if (matched) initial = matched.shortName;
+          }
+
+          if (!initial) {
+            const saved = localStorage.getItem("preferred_campus");
+            const valid = saved === "Semua" || data.campuses.some((campus) => campus.shortName === saved);
+            if (valid && saved) initial = saved;
+            else if (saved) localStorage.removeItem("preferred_campus");
+          }
+
+          if (initial) setSelectedCampus(initial);
         }
       })
       .catch(() => {});
+
+    const onCampusSync = (e) => {
+      if (e.detail?.campus) setSelectedCampus(e.detail.campus);
+    };
+    window.addEventListener("campus:change", onCampusSync);
 
     const onChatUnread = (e) => setUnreadChat(e.detail?.count ?? 3);
     window.addEventListener("chat:unread", onChatUnread);
@@ -69,6 +88,7 @@ export default function Navbar({ config }) {
     document.addEventListener("mousedown", handleClickOutside);
 
     return () => {
+      window.removeEventListener("campus:change", onCampusSync);
       window.removeEventListener("chat:unread", onChatUnread);
       document.removeEventListener("mousedown", handleClickOutside);
     };

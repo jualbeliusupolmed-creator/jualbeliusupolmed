@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition, useMemo } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { TabInstagram } from "@/components/admin/TabInstagram";
+import { Icon } from "@/components/Icons";
+import { HelpCircle, CheckCircle, ExternalLink, ShieldCheck, Sparkles, X, Filter, Search } from "lucide-react";
 
 function formatRelativeTime(dateString) {
   if (!dateString) return "-";
@@ -64,6 +66,31 @@ export default function SocialWorkspace() {
   // Testing connection state
   const [testingId, setTestingId] = useState(null);
   const [isPending, startTransition] = useTransition();
+
+  // Wilayah & Filter state
+  const [accountScopeFilter, setAccountScopeFilter] = useState("all"); // 'all' | 'province' | 'university'
+  const [accountProvinceFilter, setAccountProvinceFilter] = useState("all");
+  const [searchAccountQuery, setSearchAccountQuery] = useState("");
+  const [showMetaGuideModal, setShowMetaGuideModal] = useState(false);
+
+  const filteredDisplayAccounts = useMemo(() => {
+    return accounts.filter((acc) => {
+      if (accountScopeFilter !== "all" && acc.scope_type !== accountScopeFilter) return false;
+      if (accountProvinceFilter !== "all") {
+        const accProv = acc.province_id || acc.universities?.province_id;
+        if (accProv !== accountProvinceFilter) return false;
+      }
+      if (searchAccountQuery.trim()) {
+        const q = searchAccountQuery.trim().toLowerCase();
+        const handleMatch = String(acc.handle || "").toLowerCase().includes(q);
+        const univCodeMatch = String(acc.universities?.code || "").toLowerCase().includes(q);
+        const univNameMatch = String(acc.universities?.name || "").toLowerCase().includes(q);
+        const provNameMatch = String(acc.provinces?.name || "").toLowerCase().includes(q);
+        if (!handleMatch && !univCodeMatch && !univNameMatch && !provNameMatch) return false;
+      }
+      return true;
+    });
+  }, [accounts, accountScopeFilter, accountProvinceFilter, searchAccountQuery]);
 
   useEffect(() => {
     fetchAccounts();
@@ -496,6 +523,64 @@ export default function SocialWorkspace() {
             </div>
           </div>
 
+          {/* Bar Filter Wilayah & Panduan Integrasi Meta */}
+          <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between shadow-xs">
+            <div className="flex flex-1 flex-wrap items-center gap-2">
+              <div className="relative flex-1 sm:max-w-xs">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Cari handle / univ / provinsi..."
+                  value={searchAccountQuery}
+                  onChange={(e) => setSearchAccountQuery(e.target.value)}
+                  className="h-9 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-xs font-semibold text-slate-800 outline-none focus:border-indigo-500 focus:bg-white"
+                />
+              </div>
+              <select
+                value={accountScopeFilter}
+                onChange={(e) => setAccountScopeFilter(e.target.value)}
+                className="h-9 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-bold text-slate-700 outline-none focus:border-indigo-500"
+              >
+                <option value="all">Semua Cakupan</option>
+                <option value="province">Tingkat Provinsi</option>
+                <option value="university">Tingkat Kampus</option>
+              </select>
+              <select
+                value={accountProvinceFilter}
+                onChange={(e) => setAccountProvinceFilter(e.target.value)}
+                className="h-9 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-bold text-slate-700 outline-none focus:border-indigo-500"
+              >
+                <option value="all">Semua Provinsi</option>
+                {provincesList.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+              {(searchAccountQuery || accountScopeFilter !== "all" || accountProvinceFilter !== "all") && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchAccountQuery("");
+                    setAccountScopeFilter("all");
+                    setAccountProvinceFilter("all");
+                  }}
+                  className="h-9 rounded-xl px-2.5 text-xs font-bold text-rose-600 hover:bg-rose-50"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowMetaGuideModal(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-indigo-500/10 border border-pink-200 px-3.5 py-2 text-xs font-extrabold text-pink-700 transition hover:bg-pink-100/50 shadow-xs"
+            >
+              <Icon.Instagram className="h-4 w-4 text-pink-600" />
+              Panduan Setup Meta Graph API
+            </button>
+          </div>
+
           {loadingAccounts ? (
             <div className="flex h-48 items-center justify-center rounded-3xl border border-slate-200 bg-white">
               <span className="text-sm font-semibold text-slate-400 animate-pulse">Memuat konfigurasi akun sosial...</span>
@@ -505,9 +590,25 @@ export default function SocialWorkspace() {
               <p className="text-base font-bold text-slate-800">Belum ada akun sosial yang terdaftar.</p>
               <p className="mt-1 text-sm text-slate-500">Klik "Hubungkan Kanal Baru" di atas untuk mendaftarkan akun Instagram atau WhatsApp.</p>
             </div>
+          ) : filteredDisplayAccounts.length === 0 ? (
+            <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center">
+              <Filter className="mx-auto h-8 w-8 text-slate-300" />
+              <p className="mt-3 text-sm font-bold text-slate-700">Tidak ada akun yang sesuai dengan filter pencarian.</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchAccountQuery("");
+                  setAccountScopeFilter("all");
+                  setAccountProvinceFilter("all");
+                }}
+                className="mt-3 rounded-full bg-slate-100 px-4 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-200"
+              >
+                Tampilkan Semua Akun
+              </button>
+            </div>
           ) : (
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-              {accounts.map((acc) => {
+              {filteredDisplayAccounts.map((acc) => {
                 const isIg = acc.provider === "instagram";
                 const isConn = acc.status === "connected";
                 const isUniv = acc.scope_type === "university";
@@ -1354,6 +1455,88 @@ export default function SocialWorkspace() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Modal Panduan Setup Meta Graph API */}
+      {showMetaGuideModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm animate-fade-in">
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-6 sm:p-8 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="grid h-10 w-10 place-items-center rounded-xl bg-pink-100 text-pink-700">
+                  <Icon.Instagram className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-slate-900">
+                    Integrasi Meta Instagram Graph API
+                  </h3>
+                  <p className="text-xs font-semibold text-slate-500">
+                    Pengaturan Akun Resmi per-Wilayah & per-Kampus
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowMetaGuideModal(false)}
+                className="grid h-8 w-8 place-items-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="mt-6 space-y-6 text-xs text-slate-700 leading-relaxed">
+              {/* Step 1 */}
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-2">
+                <div className="flex items-center gap-2 font-bold text-slate-900">
+                  <span className="grid h-5 w-5 place-items-center rounded-full bg-slate-900 text-[10px] text-white">1</span>
+                  Konfigurasi Webhook Meta Developer
+                </div>
+                <p className="text-slate-600">
+                  Daftarkan endpoint webhook di dasbor aplikasi Meta Developers Anda:
+                </p>
+                <div className="rounded-xl bg-slate-900 p-3 font-mono text-[11px] text-emerald-400 space-y-1">
+                  <div><span className="text-slate-400">Callback URL:</span> https://www.kampuskita.my.id/api/webhook/instagram</div>
+                  <div><span className="text-slate-400">Verify Token:</span> (Lihat INSTAGRAM_WEBHOOK_VERIFY_TOKEN di .env)</div>
+                  <div><span className="text-slate-400">Subscription:</span> messages, messaging_postbacks</div>
+                </div>
+              </div>
+
+              {/* Step 2 */}
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-2">
+                <div className="flex items-center gap-2 font-bold text-slate-900">
+                  <span className="grid h-5 w-5 place-items-center rounded-full bg-slate-900 text-[10px] text-white">2</span>
+                  Penghubungan Akun Bisnis & Facebook Page
+                </div>
+                <p className="text-slate-600">
+                  Pastikan akun Instagram yang didaftarkan (misal <span className="font-mono font-bold text-pink-700">@jualbelidikampus.ui</span>) merupakan <strong>Akun Profesional / Bisnis</strong> yang terhubung ke satu Facebook Page resmi wilayah terkait.
+                </p>
+              </div>
+
+              {/* Step 3 */}
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-2">
+                <div className="flex items-center gap-2 font-bold text-slate-900">
+                  <span className="grid h-5 w-5 place-items-center rounded-full bg-slate-900 text-[10px] text-white">3</span>
+                  Pendaftaran Identifier di Panel Admin
+                </div>
+                <p className="text-slate-600">
+                  Buka tombol <strong>Sunting</strong> pada kartu akun di bawah, lalu masukkan <strong>Instagram Business Account ID</strong> (angka 17 digit) ke kolom <em>Identifier / External ID</em>.
+                </p>
+                <p className="text-slate-500 text-[11px]">
+                  💡 <strong>Otomasi Multi-Kampus:</strong> Saat pesan DM masuk dari pengguna, router inbound sistem secara otomatis membaca akun tujuan dan mengaitkan listing ke universitas yang bersangkutan tanpa salah wilayah.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-8 flex justify-end border-t border-slate-100 pt-4">
+              <button
+                type="button"
+                onClick={() => setShowMetaGuideModal(false)}
+                className="rounded-xl bg-slate-900 px-5 py-2.5 text-xs font-bold text-white hover:bg-slate-800"
+              >
+                Saya Mengerti
+              </button>
+            </div>
           </div>
         </div>
       )}
