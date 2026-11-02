@@ -110,10 +110,47 @@ export async function authorizeAdmin(module, action = "read") {
 
 export async function getAdminCampusScope(actor) {
   if (!actor) return [];
-  if (actor.role === "superadmin") return null;
+
+  let activeScope = "all";
+  try {
+    const { cookies } = await import("next/headers");
+    activeScope = cookies().get("kk_admin_active_scope")?.value || "all";
+  } catch {
+    activeScope = "all";
+  }
 
   const settings = await getSettings();
-  return resolveAdminCampusScope(actor.scopes, getActiveCampuses(settings));
+  const allCampuses = getActiveCampuses(settings);
+
+  if (actor.role === "superadmin" && (!activeScope || activeScope === "all")) {
+    return null;
+  }
+
+  const permittedCampuses = actor.role === "superadmin"
+    ? allCampuses.map((c) => c.shortName)
+    : resolveAdminCampusScope(actor.scopes, allCampuses);
+
+  if (activeScope && activeScope !== "all") {
+    if (activeScope.startsWith("province:")) {
+      const provinceId = activeScope.slice("province:".length).toLowerCase();
+      const matched = allCampuses
+        .filter((c) => getCampusProvinceId(c) === provinceId && (actor.role === "superadmin" || permittedCampuses.includes(c.shortName)))
+        .map((c) => c.shortName);
+      return matched.length ? matched : (actor.role === "superadmin" ? null : permittedCampuses);
+    }
+
+    if (activeScope.startsWith("campus:") || activeScope.startsWith("university:")) {
+      const wanted = activeScope.split(":")[1].toLowerCase();
+      const target = allCampuses.find(
+        (c) => [c.id, c.shortName, c.name].some((v) => String(v || "").toLowerCase() === wanted)
+      );
+      if (target && (actor.role === "superadmin" || permittedCampuses.includes(target.shortName))) {
+        return [target.shortName];
+      }
+    }
+  }
+
+  return actor.role === "superadmin" ? null : permittedCampuses;
 }
 
 export async function isActiveAdminSession() {
