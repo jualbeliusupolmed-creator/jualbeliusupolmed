@@ -94,6 +94,7 @@ export async function POST(req) {
           tautanPilihChat: `https://wa.me/?text=${encodeURIComponent(teksGrup)}`,
           tautanGrup: settings?.contact?.waGroupLink || null,
         },
+        saluran: admin.channelJid ? { jid: admin.channelJid, teks: teksGrup } : null,
         penjual: {
           nama: listing.seller_name || null,
           wa: listing.seller_wa || null,
@@ -125,15 +126,17 @@ export async function POST(req) {
     const grup = nilai(grupRes);
     const adm = nilai(adminRes);
     const penjual = nilai(penjualRes);
+    const saluran = Array.isArray(grup.saluran) ? grup.saluran : grup.saluran ? [grup.saluran] : [];
+    const saluranTerkirim = saluran.filter((item) => item.ok).length;
 
     const hasil = [
       {
         tujuan: "Grup WA",
-        ok: !!grup.ok,
-        detail: grup.skipped
-          ? "Tidak ada grup tujuan — isi Group JID di Pengaturan."
-          : `${grup.terkirim || 0}/${(grup.terkirim || 0) + (grup.gagal || 0)} grup`,
-        error: grup.ok ? null : grup.error || null,
+        ok: grup.grupTujuan ? !!grup.grupOk : saluranTerkirim > 0,
+        detail: grup.grupTujuan
+          ? `${grup.grupTerkirim || 0}/${grup.grupTujuan} grup`
+          : saluranTerkirim ? `Grup tidak diatur; ${saluranTerkirim}/${saluran.length} saluran aktif.` : "Tidak ada grup tujuan — atur di Pengaturan.",
+        error: grup.grupTujuan && !grup.grupOk ? grup.rincian?.filter((item) => !item.ok).map((item) => `${item.target}: ${item.error || "gagal"}`).join("; ") || null : null,
       },
       {
         tujuan: "Admin",
@@ -148,6 +151,15 @@ export async function POST(req) {
         error: penjual.ok ? null : penjual.error || penjual.galat || null,
       },
     ];
+
+    if (saluran.length) {
+      hasil.push({
+        tujuan: "Saluran WA",
+        ok: saluranTerkirim === saluran.length,
+        detail: `${saluranTerkirim}/${saluran.length} saluran terkirim.`,
+        error: saluran.filter((item) => !item.ok).map((item) => `${item.jid}: ${item.error || "gagal"}`).join("; ") || null,
+      });
+    }
 
     const push = nilai(pushRes);
     hasil.push({
@@ -168,7 +180,7 @@ export async function POST(req) {
       // sendiri dan berisiko menyebut "berhasil" untuk kiriman yang separuh.
       ringkas:
         berhasil === hasil.length
-          ? `Terkirim ke grup, admin, penjual, dan ${push.terkirim || 0} peramban.`
+          ? `Terkirim ke grup${saluran.length ? " dan saluran" : ""}, admin, penjual, dan ${push.terkirim || 0} peramban.`
           : `${berhasil}/${hasil.length} tujuan berhasil — ` +
             hasil.filter((h) => !h.ok).map((h) => `${h.tujuan}: ${h.error || h.detail || "gagal"}`).join("; "),
     });
