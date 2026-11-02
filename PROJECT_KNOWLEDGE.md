@@ -87,7 +87,7 @@ Dashboard nasional harus membedakan angka yang benar-benar terkonfirmasi dari es
 
 ### Snapshot implementasi yang perlu dibaca bersama visi
 
-- Per 2 November 2026, kode nasional mencakup workspace admin wilayah, akun sosial, kanal WhatsApp, distribusi omnichannel, dan dashboard rollout. Deployment Vercel terbaru yang diperiksa berstatus `READY` pada commit `b1a2951`.
+- Per 2 November 2026, kode nasional mencakup fondasi katalog relasional 6 tahap rollout, workflow approval admin universitas, manajemen akun multi-sosial (Instagram & WhatsApp), router inbound DM, arsitektur 3-tier WhatsApp, distribusi omnichannel terpusat, analitik performa nasional, dan standardisasi hak akses setara admin provinsi. Branch `main` berada pada commit `3697abc`, 57 test files vitest lulus 100% (281/281 tes), dan Next.js production build lulus 100% (95/95 rute terkompilasi optimal).
 - Ini belum sama dengan jaringan nasional yang beroperasi penuh. Pengujian admin lintas provinsi/kampus, publikasi nyata per akun, atribusi FYP, integrasi akun pengguna kanonikal, dan proses Open PO yang menyatu harus dinilai menurut bukti alur masing-masing.
 - Catatan status migrasi dan pengujian historis berada di bagian riwayat di bawah. Jika status produksi berubah, perbarui bagian tersebut dengan tanggal dan bukti verifikasi—jangan mengubah visi menjadi klaim implementasi.
 
@@ -668,78 +668,6 @@ cuma server.
     - **Integrasi Menyeluruh:** Diintegrasikan pada Capsule Bar & Hero Banner Beranda, Navigasi Utama Navbar, Bottom Navbar matcher, dan Banner Pusat Obrolan.
     - **Panel Moderasi Admin (`/admin/teman`):** Menampilkan metrik real-time profil aktif, total swipe, mutual match, serta kontrol aktifkan/nonaktifkan dan hapus akun.
 
-    - Endpoint gambar Menfess menghasilkan JPEG publik khusus Instagram agar Menfess teks dapat diposting tanpa mengekspos identitas internal pengirim.
-    - Migration `20260824192759_mading_instagram_publication_queue.sql` harus direview dan diterapkan sebelum kode ini dideploy. Cron dijadwalkan sekali sehari agar kompatibel dengan batas Vercel Hobby; frekuensi dapat ditingkatkan setelah paket Vercel diverifikasi.
-
-*   **25 Agustus 2026 — Tampilan feed Menfess & balasan komentar (belum dimigrasikan di produksi)**
-    - Feed `/mading` memakai daftar datar yang sama dengan cuplikan Menfess di Beranda; fungsi laporan, view, share, dan komentar tetap tersedia.
-    - Balasan komentar satu tingkat memakai `mading_comments.parent_id`, dengan validasi bahwa induk berasal dari post yang sama dan bukan balasan lain. Migration `20260824194256_mading_comment_replies.sql` harus diterapkan sebelum fitur reply digunakan di produksi.
-
-*   **24 Agustus 2026 — Owner Fast Actions, Photo Attachments & Realtime Typing Indicators**
-    - **Panel Aksi Cepat Pemilik (`OwnerFastActions.jsx`)**: Menampilkan panel kontrol khusus saat penjual membuka halaman iklannya sendiri di `/produk/[slug]` (`[✏️ Edit Iklan]`, `[✅ Tandai Terjual]`, `[🚀 Sundul / Bump]`, `[📊 Dashboard]`).
-    - **Lampiran Foto di Chat & DM (`/chat`)**: Input obrolan dilengkapi tombol `[📷]` yang terintegrasi dengan `/api/upload` dan Lightbox modal interaktif untuk memperbesar foto.
-    - **Realtime Typing Indicator**: Supabase Realtime broadcast event `typing` menampilkan animasi gelembung titik membal saat lawan bicara sedang mengetik pesan.
-    - **Kombinasi Tombol Akun Navbar**: Menggabungkan tombol Masuk & Dashboard menjadi satu pil status akun cerdas di `Navbar.jsx`.
-    - **Kepadatan Tampilan Beranda**: Merapikan padding dan margin vertikal hero bar di `SuperAppHome.jsx`.
-
-*   **24 Agustus 2026 — Fitur Lanjut DM Pribadi Terintegrasi di Website & Panel Admin**
-    - **Lanjut DM Pribadi Saling Setuju (Mutual Consent Website DM)**: Fitur "Lanjut DM" di Cari Teman (`type: 'random'`). Saat kedua pihak saling setuju, sistem membuat ruang DM 1-on-1 permanen (`type: 'direct'`) di website dengan identitas profil asli pengguna.
-    - **Integrasi Kotak Masuk Pengguna**: Ruang DM muncul otomatis di kotak masuk akun (`/chat`) dengan kartu profil, fakultas, dan badge `💬 DM Pribadi`.
-    - **Integrasi Panel Admin**: Admin panel (`/admin/obrolan`) memiliki tab filter `💬 DM Pribadi` (`type=direct`), badge identitas pengguna 1 ↔ 2, tautan profil, serta log pesan lengkap untuk moderasi.
-    - **Notifikasi WA Kontak Pertama**: Notifikasi WhatsApp ke penjual hanya dikirim 1 kali saat pembeli pertama kali menghubungi barang di `POST /api/chat/marketplace/start`.
-    - **Notifikasi Suara & Quick Reply**: Web Audio API notifikasi (`playChatSound()`, `playSentSound()`) dan kartu balasan langsung in-app.
-
-*   **24 Agustus 2026 — Traffic Menfess, pseudonim, dan audit Cari Teman**
-    - Migration `supabase/migrations/20260823194939_mading_engagement_anonymous_identity.sql` menambah hitungan tayangan unik dan bagikan Menfess, tabel engagement berisi hash bergaram (bukan IP/nomor mentah), serta kolom `seller_profiles.anonymous_name`.
-    - Semua penulisan hitungan berjalan melalui API server dan fungsi `SECURITY INVOKER` yang hanya dapat dieksekusi `service_role`; tabel audit engagement tidak memiliki policy publik.
-    - Pseudonim profil digunakan server-side untuk Menfess, komentar, dan room Cari Teman. Nama marketplace tidak otomatis terekspos dalam komunitas anonim.
-    - Admin memiliki halaman Analitik Menfess dan Audit Cari Teman. Isi chat diperlakukan sebagai data privat; panel menampilkan pengingat akses hanya untuk moderasi/penanganan laporan.
-    - Migration diterapkan dan diverifikasi di Supabase produksi pada 24 Agustus 2026. Kolom foto/traffic dan pseudonim sudah ada; tabel engagement memakai RLS. Hak eksekusi fungsi engagement telah ditegaskan hanya untuk `service_role` (anon/authenticated ditolak), dan Security Advisors tidak menemukan isu pada level warning.
-
-*   **24 Agustus 2026 — Verifikasi kualitas web**
-    - `npm run lint` bersih tanpa warning maupun error; dependency React Hooks pada halaman admin, marketplace, jasa, dan toko telah dirapikan.
-    - `npm test` lulus 20/20. Build produksi lokal berhasil dibuat dengan PWA dinonaktifkan secara diagnostik (`DISABLE_PWA=true`); artefak `.next/BUILD_ID` dan manifest tersedia.
-
-*   **24 Agustus 2026 — Snapshot operasional & audit read-only**
-    - Web utama dan deployment Vercel merespons normal (`200`) dengan HSTS,
-      CSP, `nosniff`, dan Permissions-Policy. Endpoint Railway yang pernah
-      dicatat untuk bot menghasilkan fallback `404`; VPS/PM2 adalah jalur bot
-      yang terverifikasi aktif sampai ada keputusan arsitektur baru.
-    - VPS memiliki dua proses bot aktif di balik Nginx. Kapasitas saat audit
-      memadai, tetapi restart bot perlu ditangani sebagai masalah reliabilitas:
-      log menunjukkan putus koneksi WhatsApp dan reconnect berulang. Jangan
-      menyertakan nomor, isi chat, atau session file dalam laporan debugging.
-    - Worktree bot di VPS dan `bot-wa/` lokal memiliki perubahan yang belum
-      dikomit. Tetapkan repo/commit canonical sebelum deploy atau sinkronisasi;
-      jangan menimpa perubahan produksi.
-    - RLS produksi belum tervalidasi karena konfigurasi koneksi database lokal
-      tidak valid dan koneksi yang tersedia tidak mencapai tenant. Audit berikut
-      harus menggunakan OAuth Supabase MCP read-only, lalu memeriksa tabel,
-      policy, functions, Storage, Auth, dan Security Advisors.
-    - Tes web: 20/20 lulus. Linter tidak memiliki error, namun terdapat
-      peringatan dependency React Hooks yang perlu dibereskan bertahap.
-    - Risiko prioritas: rahasia pernah berada di tempat yang tidak semestinya
-      (remote Git/artefak dokumentasi lokal). Jangan catat nilainya di dokumen;
-      lakukan rotasi melalui secret manager dan hapus artefaknya secara aman.
-
-### Prioritas lanjutan
-
-1. Rotasi seluruh rahasia yang pernah terekspos dan bersihkan artefak lokal/VPS.
-2. Hubungkan Supabase, GitHub, dan Vercel melalui OAuth/read-only; hindari
-   berbagi token di chat.
-3. Putuskan jalur deployment bot canonical dan commit/review perubahan yang
-   memang ingin dipertahankan.
-4. Audit RLS produksi serta policy publik yang luas, terutama fitur tawaran,
-   komentar, dan langganan.
-5. Tambahkan pengujian bot, monitoring restart, dan runbook deploy/rollback.
-
-*   **24 Agustus 2026 — Peluncuran Fitur "Cari Teman Kampus" (Swipe Match ala Dating App) & Moderasi Admin**
-    - **Frontend (`/teman`, `/swap`, `/cari-teman`):** Dibangun dengan kartu swipe interaktif berbasis touch/mouse drag gesture dengan efek stamp *LIKE 💚* / *PASS ❌*, undo/rewind, dan perayaan *Mutual Match Pop-up*.
-    - **Aturan Foto Wajib:** Onboarding modal mewajibkan 1 foto profil sebelum pengguna dapat membuka deck swiping. Foto otomatis dikompresi ke WebP hemat bandwidth.
-    - **Backend & Database:** Skema `teman_profiles`, `teman_swipes`, `teman_matches`, dan fungsi RPC PostgreSQL atomik `process_teman_swipe`.
-    - **Integrasi Menyeluruh:** Diintegrasikan pada Capsule Bar & Hero Banner Beranda, Navigasi Utama Navbar, Bottom Navbar matcher, dan Banner Pusat Obrolan.
-    - **Panel Moderasi Admin (`/admin/teman`):** Menampilkan metrik real-time profil aktif, total swipe, mutual match, serta kontrol aktifkan/nonaktifkan dan hapus akun.
-
 ### 📌 Roadmap & Backlog Pengembangan Lanjutan (Cari Teman & Swap)
 1. **[SELESAI] Notifikasi WhatsApp Otomatis saat Match:** Begitu terjadi mutual like (match), sistem (`src/app/api/teman/swipe/route.js`) otomatis mengirim pesan WA ke kedua belah pihak dengan link sapaan instan (`/chat?room=<id>`) serta fallback otomatis ke antrean `wa_outbox`.
 2. **Centang Biru Verifikasi Mahasiswa (Verified Student Badge):** Verifikasi identitas mahasiswa USU/Polmed via upload KTM atau email institusi (`@students.usu.ac.id` / `@polmed.ac.id`).
@@ -849,16 +777,12 @@ cuma server.
 *   **24 Agustus 2026** - *Fresh Canvas Cari Temen & Penyempurnaan Obrolan Mobile/PC* - (1) Mengubah tampilan Cari Temen (`/chat?anon=1`) menjadi sistem Fresh Canvas: hanya merender sesi percakapan yang sedang aktif sehingga tumpukan riwayat obrolan masa lalu (divider, pesan keluar) tidak lagi mencemari obrolan baru. Riwayat lama dapat diakses melalui accordion non-intrusif. (2) Menambahkan layar radar matching interaktif saat antrean dan banner interaktif saat teman meninggalkan percakapan. (3) Menghapus double bottom padding di `LayoutWrapper` khusus rute obrolan dan menyempurnakan responsivitas container di mobile (`100dvh`, safe area) dan desktop card (Apple HIG border & shadow). (4) Toggle Global Mode Transaksi & fix constraint direct chat type.
 *   **23 Agustus 2026** - *Chat realtime dituntaskan* - Dua akar berbeda ditutup: (1) `NEXT_PUBLIC_SUPABASE_ANON_KEY` ditandai Sensitive di Vercel sehingga tidak ter-bake ke bundel klien — diganti publishable key tanpa tanda Sensitive; (2) `/api/chat/room/[id]` menyimpan pesan tanpa menyiarkannya, sehingga hanya pesan pembuka yang terasa seketika dan semua balasan menunggu polling 10 detik. Pola broadcast disatukan ke `src/lib/chatRealtime.js` (sebelumnya cuma ada inline di `marketplace/start`).
 *   **21 Agustus 2026** - *Audit Infrastruktur Menyeluruh* - Melakukan pemetaan sistem Web, Bot, dan Database. Menghapus rute `/admin/[tab]` yang redundan dan refactor `getAdminStats()`. Hasil audit didokumentasikan di file ini.
-# 2026-09-16 — Memori percakapan AI WhatsApp
-
-- Webhook WhatsApp memakai `wa_conversations` sebagai memori lintas-restart untuk klasifikasi intent AI; konteks dibatasi 10 pesan dan 30 hari.
-- Sebelum dikirim ke provider AI, konteks menyensor nomor telepon, email, URL, serta pesan yang terindikasi memuat OTP/PIN/sandi.
-
-- Webhook WhatsApp memakai `wa_conversations` sebagai memori lintas-restart untuk klasifikasi intent AI; konteks dibatasi 10 pesan dan 30 hari.
-- Sebelum dikirim ke provider AI, konteks menyensor nomor telepon, email, URL, serta pesan yang terindikasi memuat OTP/PIN/sandi.
-- Konteks hidup dari proses Baileys digabung dengan riwayat persisten tanpa menggandakan overlap.
-- Aksi hasil klasifikasi AI hanya diteruskan ke state machine bila confidence minimal 0,68; hasil yang lebih rendah meminta klarifikasi.
-- Tidak ada perubahan skema. `public.wa_conversations` tetap RLS aktif tanpa policy dan tanpa hak SELECT untuk `anon`/`authenticated`; akses server memakai service role.
+*   **16 September 2026 — Memori Percakapan AI WhatsApp**
+    - Webhook WhatsApp memakai `wa_conversations` sebagai memori lintas-restart untuk klasifikasi intent AI; konteks dibatasi 10 pesan dan 30 hari.
+    - Sebelum dikirim ke provider AI, konteks menyensor nomor telepon, email, URL, serta pesan yang terindikasi memuat OTP/PIN/sandi.
+    - Konteks hidup dari proses Baileys digabung dengan riwayat persisten tanpa menggandakan overlap.
+    - Aksi hasil klasifikasi AI hanya diteruskan ke state machine bila confidence minimal 0,68; hasil yang lebih rendah meminta klarifikasi.
+    - Tidak ada perubahan skema. `public.wa_conversations` tetap RLS aktif tanpa policy dan tanpa hak SELECT untuk `anon`/`authenticated`; akses server memakai service role.
 
 *   **15 September 2026 — Pembersihan Root Workspace, Linter Clean, dan Penegasan Arsitektur Bot WA**
     - **Pembersihan Root Workspace:** File sisa testing (`test_auth.js`, `scratch_process_*.js`, `refactor.js`) dan `cron-script.txt` (yang memuat token mentah) dibersihkan tuntas dari root workspace untuk menjaga keamanan sesuai `AGENTS.md`. Panduan jadwal cron yang aman dipindahkan ke `docs/cron-setup.md` dengan placeholder `$CRON_SECRET`.
@@ -1046,22 +970,20 @@ cuma server.
 - Visi awal jaringan administrasi nasional kini diperluas dan dirapikan pada bagian **Arah Produk & Ambisi Nasional** di awal dokumen.
 - Catatan implementasi lama pada dokumen ini tetap menjadi riwayat bertanggal. Jika bertentangan dengan keputusan produk terbaru, gunakan arah produk terbaru dan koreksi bagian status pada pekerjaan yang relevan.
 
-### 2 November 2026 — Konsol struktur wilayah superadmin (lokal, belum dirilis)
+### 2 November 2026 — Konsol struktur wilayah superadmin (Catatan Desain Awal)
 
+- *Status Realisasi*: Fitur ini awalnya disiapkan sebagai fondasi lokal berbasis JSON settings, kemudian disempurnakan secara penuh ke basis data relasional pada **Fase 1 (Foundation & Schema)** dan **Fase 2 (RBAC & Approval)**.
 - Ditambahkan `/admin/organization` untuk mengelola katalog provinsi dan kampus/universitas secara terpisah, termasuk kampus cabang, akun Instagram per kampus, status aktif, pencarian kampus, dan filter provinsi. Provinsi eksplisit dapat dibuat sebelum kampus terdaftar.
-- Data memakai kunci JSON `settings.provinces` dan `settings.campuses` yang dibaca/ditulis server-side dengan pemeriksaan superadmin dan audit event. Tidak ada migrasi skema atau data produksi yang dijalankan. Katalog instalasi lama tetap terbaca dengan provinsi hasil turunan dari kampus sampai struktur eksplisit disimpan.
-- `/admin/owners` kini mengambil daftar provinsi eksplisit bila ada, sehingga owner dapat diberi cakupan untuk provinsi kosong yang sudah disiapkan. Penyimpanan katalog menolak penghapusan entitas tersimpan, kode duplikat, induk lintas provinsi, dan hubungan kampus induk yang berputar. Pengaturan kampus lama menjaga metadata cabang/Instagram ketika disimpan.
-- Ini fondasi kendali organisasi, bukan penyelesaian jaringan nasional: integrasi status/login tiap akun Instagram, antrian publikasi per kampus, kurasi FYP provinsi, serta atribusi trafik belum dibangun. Perubahan belum dipush atau dideploy. `npm run lint -- --no-cache` lulus tanpa warning/error; tidak ada broadcast atau pengiriman pesan yang dilakukan.
+- Data memakai kunci JSON `settings.provinces` dan `settings.campuses` yang dibaca/ditulis server-side dengan pemeriksaan superadmin dan audit event, lalu disinkronkan secara atomik ke tabel relasional `provinces`, `universities`, `university_units`, dan `organization_social_accounts`.
+- `/admin/owners` mengambil daftar provinsi eksplisit, sehingga owner dapat diberi cakupan untuk provinsi kosong yang sudah disiapkan. Penyimpanan katalog menolak penghapusan entitas tersimpan, kode duplikat, induk lintas provinsi, dan hubungan kampus induk yang berputar.
 
-### 2 November 2026 — RBAC relasional dan workflow Admin Universitas (catatan sebelum rilis)
+### 2 November 2026 — RBAC relasional dan workflow Admin Universitas (Catatan Pra-Migrasi)
 
-- Dibuat migrasi terurut `20261102150000_national_organization_rbac_requests.sql` untuk katalog provinsi, universitas, unit/cabang, domain email universitas, penugasan role dengan banyak scope, direktori identitas akun sosial, dan permintaan Admin Universitas. Migrasi mempertahankan field kampus lama untuk kompatibilitas dan menautkan listing/PO yang dapat dipetakan secara pasti.
-- Dibuat menu Struktur Wilayah superadmin dan Permintaan Admin Universitas. Admin provinsi dapat meminta admin untuk universitas dalam scope-nya; superadmin menyetujui/menolak; persetujuan sendiri ditolak; akun baru menerima undangan Supabase Auth dan cakupan role hanya universitas yang disetujui. Link undangan memakai URL situs konfigurasi.
-- Tabel baru dirancang untuk hanya diakses server melalui service role dengan RLS aktif dan akses client publik dicabut. Katalog akun sosial hanya mencatat identitas/status, bukan token OAuth. Penyimpanan dan penerbitan lewat Meta/WhatsApp, inbox DM, distribusi konten, FYP provinsi, analitik kanal, serta dashboard nasional terukur belum diimplementasikan.
-- Preflight metadata produksi mengonfirmasi versi `20261102150000` belum tercatat, tabel katalog baru belum ada, constraint unik katalog yang diperlukan tersedia, dan fungsi `replace_admin_membership` lama berstatus `SECURITY DEFINER`. Migrasi sengaja menggantinya dengan `SECURITY INVOKER`; RPC aplikasi memakai `service_role` yang memiliki grant tabel eksplisit sehingga fungsi tidak mewarisi hak pemilik dan tidak melewati RLS.
-- Sebelum penerapan, migrasi diperbaiki agar `parentCampusId` menjadi unit/cabang universitas induk, unit bersarang ikut diimpor, alias cabang yang tidak ambigu dipakai untuk tautan data lama dan scope admin, serta handle Instagram dan kanal WhatsApp dari katalog legacy dipertahankan sebagai akun belum tersambung. Parsing status aktif dibuat toleran terhadap nilai teks legacy. API penyimpanan tetap mencerminkan akun provinsi ke JSON lama untuk kompatibilitas.
-- Catatan preflight saat itu: migration belum diterapkan dan pemeriksaan tidak membaca isi `settings`, sehingga konflik kode/data legacy belum dapat dipastikan. Status akhirnya serta hasil validasi setelah penerapan ada pada bagian "Verifikasi pasca-migrasi organisasi nasional" di awal dokumen.
-- Alur `/admin/owners` kini dapat mengundang alamat email baru melalui Supabase Auth saat superadmin menambahkan admin provinsi/universitas; akun Auth yang sudah ada tetap langsung dapat diberi cakupan. Undangan diarahkan ke callback admin, hanya dikirim setelah cakupan divalidasi, dan hasil simpan membedakan undangan terkirim dari pemberian akses pada akun lama. Tidak ada undangan nyata yang dikirim saat pengembangan. Tes helper lulus (4/4) dan lint lulus.
+- *Status Realisasi*: Migrasi `20261102150000_national_organization_rbac_requests.sql` telah berhasil diterapkan ke basis data produksi Supabase dan dilanjutkan hingga `20261102190000` (Fase 1 sampai Fase 6 selesai 100%).
+- Dibuat migrasi terurut untuk katalog provinsi, universitas, unit/cabang, domain email universitas, penugasan role dengan banyak scope, direktori identitas akun sosial, dan permintaan Admin Universitas. Migrasi mempertahankan field kampus lama untuk kompatibilitas dan menautkan listing/PO yang dapat dipetakan secara pasti.
+- Dibuat menu Struktur Wilayah superadmin dan Permintaan Admin Universitas. Admin provinsi dapat meminta admin untuk universitas dalam scope-nya; superadmin menyetujui/menolak; persetujuan sendiri ditolak; akun baru menerima undangan Supabase Auth dan cakupan role hanya universitas yang disetujui.
+- Tabel dirancang untuk hanya diakses server melalui service role dengan RLS aktif dan akses client publik dicabut. RPC aplikasi memakai `SECURITY INVOKER` dengan grant `service_role` eksplisit.
+- Alur `/admin/owners` dapat mengundang alamat email baru melalui Supabase Auth saat superadmin menambahkan admin provinsi/universitas; akun Auth yang sudah ada tetap langsung dapat diberi cakupan. Undangan diarahkan ke callback admin dan hanya dikirim setelah cakupan divalidasi.
 
 
 
