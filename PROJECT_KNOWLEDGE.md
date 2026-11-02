@@ -775,4 +775,20 @@ cuma server.
    - Seluruh 51 test files (246 tests) di Next.js dan 7 tests di `bot-wa` lulus 100%.
    - Build produksi Next.js sukses tanpa error.
 
+### 2 November 2026 — Rebuild Menu WhatsApp & Penyatuan Pusat Siaran (Broadcast Hub)
+
+1. **Penyatuan Menu Sidebar**:
+   - Bagian menu WhatsApp di `OwnerWorkspaceShell.jsx` dan `nav.js` yang sebelumnya memuat 6 item terfragmentasi dengan ikon seragam (`WhatsApp`, `Antrean pesan`, `Notifikasi`, `Broadcast`, `Broadcast grup`, `Post grup`) dirampingkan menjadi 3 menu utama yang profesional dan bersih:
+     - 📱 **Status Bot & Koneksi** (`/admin/wabot`): Status device, scan QR, server health, sapaan, dan log bot.
+     - 📢 **Broadcast & Siaran** (`/admin/broadcast`): Pusat siaran terpadu berbasis tab.
+     - ⏱️ **Antrean Pesan** (`/admin/antrean`): Pemantauan antrean `wa_outbox`.
+2. **Pusat Siaran Terpadu (`/admin/broadcast`)**:
+   - Menggabungkan siaran kontak pelanggan, siaran grup kampus, moderasi posting grup, dan pelanggan notifikasi ke dalam 1 tampilan segmented control:
+     - Tab 1: *Siaran Kontak* (Kirim ke penjual/kontak aktif dengan AI & jadwal)
+     - Tab 2: *Siaran Grup WA* (Kirim pesan/gambar langsung ke grup WhatsApp kampus)
+     - Tab 3: *Moderasi Post Grup* (Daftar dan moderasi postingan yang masuk ke grup)
+     - Tab 4: *Pelanggan Notifikasi* (Subscriber notifikasi kategori dan web push browser)
+   - URL lama (`/admin/broadcast_grup`, `/admin/grouppost`, `/admin/notifikasi`) tetap berfungsi penuh dan langsung membuka tab yang relevan tanpa breaking change.
+
+
 

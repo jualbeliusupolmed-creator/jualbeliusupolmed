@@ -5,14 +5,14 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFocusTrap } from "@/lib/useFocusTrap";
 import {
-  ArrowUpRight, Boxes, ChartNoAxesCombined, Flag, LayoutDashboard, LogOut, Menu, MessageCircle, MessagesSquare,
-  PanelLeftClose, Settings2, ShieldCheck, ShoppingBag, Users, WalletCards, BookOpen, X,
+  ArrowUpRight, Boxes, ChartNoAxesCombined, Clock, Flag, LayoutDashboard, LogOut, Megaphone, Menu, MessageCircle, MessagesSquare,
+  PanelLeftClose, Settings2, ShieldCheck, ShoppingBag, Smartphone, Users, WalletCards, BookOpen, X,
 } from "lucide-react";
 
 const iconByKey = {
   overview: LayoutDashboard, marketplace: ShoppingBag, reports: Flag, po: Boxes, owners: ShieldCheck,
   users: Users, finance: WalletCards, analytics: ChartNoAxesCombined, content: BookOpen, settings: Settings2, audit: ShieldCheck,
-  wabot: MessageCircle, antrean: MessagesSquare, notifikasi: MessageCircle, broadcast: MessageCircle,
+  wabot: Smartphone, antrean: Clock, notifikasi: MessageCircle, broadcast: Megaphone,
   broadcast_grup: MessagesSquare, grouppost: MessagesSquare,
 };
 
@@ -34,13 +34,10 @@ const ADMIN_GROUPS = [
     { key: "settings", label: "Pengaturan platform", href: "/admin/settings", permission: "settings" },
     { key: "audit", label: "Jejak perubahan", href: "/admin/audit", superadmin: true },
   ] },
-  { label: "WhatsApp", items: [
-    { key: "wabot", label: "WhatsApp", href: "/admin/wabot", permission: "whatsapp" },
-    { key: "antrean", label: "Antrean pesan", href: "/admin/antrean", permission: "whatsapp" },
-    { key: "notifikasi", label: "Notifikasi", href: "/admin/notifikasi", permission: "whatsapp" },
-    { key: "broadcast", label: "Broadcast", href: "/admin/broadcast", permission: "whatsapp" },
-    { key: "broadcast_grup", label: "Broadcast grup", href: "/admin/broadcast_grup", permission: "whatsapp" },
-    { key: "grouppost", label: "Post grup", href: "/admin/grouppost", permission: "whatsapp" },
+  { label: "WhatsApp & Siaran", items: [
+    { key: "wabot", label: "Status Bot & Koneksi", href: "/admin/wabot", permission: "whatsapp" },
+    { key: "broadcast", label: "Broadcast & Siaran", href: "/admin/broadcast", permission: "whatsapp" },
+    { key: "antrean", label: "Antrean Pesan", href: "/admin/antrean", permission: "whatsapp" },
   ] },
 ];
 
