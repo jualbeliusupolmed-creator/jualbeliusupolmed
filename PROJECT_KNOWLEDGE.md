@@ -22,17 +22,17 @@ Dokumen ini berisi peta pemahaman sistem, alur bisnis, daftar masalah, dan riway
 - **API Endpoint & Manajemen Checklist Rollout**:
   - Endpoint `GET` & `POST` di `/api/admin/analytics/national/route.js`:
     - Menyajikan dataset analitik tersaring sesuai hierarki peran admin (Superadmin / Admin Provinsi / Admin Universitas).
-    - Aksi `update_checklist` dan `update_stage_status` untuk mengelola kematangan peluncuran wilayah.
+    - Aksi `update_checklist`, `update_stage_status`, `mark_all_sop` (tandai/reset semua SOP sekali klik), dan `update_notes` (catatan lapangan & partnership).
 - **Frontend Dashboard Analitik Nasional**:
-  - Halaman `/admin/analytics` diperbarui menggunakan komponen `NationalAnalyticsWorkspace.jsx` yang memuat 4 tab terpadu:
-    1. *Performa Saluran (Omnichannel)*: Tingkat keberhasilan siaran dan konversi ke 6 kanal.
-    2. *Peta & Distribusi Wilayah*: Tabel perbandingan bursa kampus dan kategori terlaris per provinsi/universitas.
+  - Halaman `/admin/analytics` didukung oleh `NationalAnalyticsWorkspace.jsx` dengan 6 KPI Cards (Provinsi Aktif, Kampus Terdaftar, Produk Aktif, Estimasi GMV, Integrasi Sosial, dan Kesiapan Rollout Nasional %) dan 4 tab terpadu:
+    1. *Performa Saluran (Omnichannel)*: Tingkat keberhasilan siaran dan konversi ke 6 kanal penyiaran.
+    2. *Peta & Distribusi Wilayah*: Filter wilayah cepat per provinsi, cetak/ekspor PDF langsung (`window.print()`), tabel bursa komparatif, dan produk unggulan per kampus.
     3. *Health Check Integrasi Sosial*: Monitoring live status API Meta Graph dan Baileys WhatsApp Gateway.
-    4. *Roadmap Rollout Nasional (6 Tahap)*: Checklist interaktif 7 poin operasional peluncuran wilayah.
+    4. *Roadmap Rollout Nasional (6 Tahap)*: Checklist interaktif 7 poin operasional, progress bar kesiapan wilayah, chip universitas anchor (UI, UNJ, Trisakti, ITB, UNPAD, IPB, UGM, UNY, UII, ITS, UNAIR, UB), bulk action SOP superadmin, serta editor catatan lapangan.
 - **Verifikasi Kualitas**:
-  - Ditambahkan berkas pengujian `__tests__/nationalAnalytics.test.js` (4 tes lulus).
-  - 100% tes vitest lulus (57 berkas, 277 tes lulus tanpa regresi).
-  - Next.js production build (`npm run build`) sukses 100% (95 rute).
+  - Berkas pengujian `__tests__/nationalAnalytics.test.js` mencakup 6 skenario komprehensif.
+  - 100% tes vitest lulus (57 berkas, 280 tes lulus tanpa regresi).
+  - Next.js production build (`npm run build`) sukses 100% (95/95 rute static & dynamic terkompilasi optimal).
 
 ### Pembaruan 2 November 2026 — Fase 5: Central Distribution Manager (Omnichannel Product Publishing)
 

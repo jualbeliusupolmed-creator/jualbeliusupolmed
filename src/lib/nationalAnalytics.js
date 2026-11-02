@@ -217,6 +217,33 @@ export async function getNationalAnalyticsData(actor) {
     isHealthy: acc.status === "connected",
   }));
 
+  // 7. Agregasi Roadmap & Anchor Universities per Tahap
+  const rolloutRoadmap = rolloutChecklists.map((stage) => {
+    const anchorUniversities = universities.filter((u) => u.province_id === stage.province_id);
+    const checklistItems = [
+      stage.instagram_setup,
+      stage.whatsapp_channel_setup,
+      stage.admin_assigned,
+      stage.first_university_verified,
+      stage.dm_routing_tested,
+      stage.channel_posting_tested,
+      stage.bursa_transaction_tested,
+    ];
+    const completedSopCount = checklistItems.filter(Boolean).length;
+    const readinessPercentage = Math.round((completedSopCount / 7) * 100);
+
+    return {
+      ...stage,
+      anchorUniversities,
+      completedSopCount,
+      readinessPercentage,
+    };
+  });
+
+  const totalSopPoints = rolloutRoadmap.length * 7;
+  const fulfilledSopPoints = rolloutRoadmap.reduce((sum, s) => sum + s.completedSopCount, 0);
+  const nationalRolloutReadiness = totalSopPoints > 0 ? Math.round((fulfilledSopPoints / totalSopPoints) * 100) : 0;
+
   return {
     isSuperadmin,
     campusScopes,
@@ -230,12 +257,13 @@ export async function getNationalAnalyticsData(actor) {
       totalTransactions,
       socialAccountsCount: socialAccounts.length,
       healthyAccountsCount: socialHealth.filter((s) => s.isHealthy).length,
+      nationalRolloutReadiness,
     },
     provincesBreakdown,
     universitiesBreakdown,
     channelPerformance,
     socialHealth,
-    rolloutRoadmap: rolloutChecklists,
+    rolloutRoadmap,
   };
 }
 
