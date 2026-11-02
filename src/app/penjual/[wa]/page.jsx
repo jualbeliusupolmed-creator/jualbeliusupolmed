@@ -9,6 +9,7 @@ import { skripJsonLd } from "@/lib/jsonLd";
 import { decodeSellerSlug, encodeSellerSlug, maskPhone, parseSellerParam } from "@/lib/sellerSlug";
 import { Icon } from "@/components/Icons";
 import { fetchOpenPoBatches } from "@/lib/openPo";
+import { toPublicListing } from "@/lib/dbHelpers";
 
 export const revalidate = 300; // ISR 5 menit — cukup segar untuk marketplace
 
@@ -177,8 +178,8 @@ async function getSellerData(wa) {
         store_name: profile?.store_name || null,
       },
       poBatches,
-      listings: listings || [],
-      soldListings: soldListings || [],
+      listings: (listings || []).map(toPublicListing),
+      soldListings: (soldListings || []).map(toPublicListing),
       ratings: ratings || [],
       soldCount,
       totalViews,

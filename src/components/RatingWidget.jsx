@@ -30,7 +30,7 @@ function StarDisplay({ value }) {
 /**
  * RatingWidget
  * Props:
- *   listing   : { id, status, seller_wa }
+ *   listing   : { id, status }
  *   className : string (optional)
  */
 export default function RatingWidget({ listing, className = "" }) {
@@ -74,7 +74,6 @@ export default function RatingWidget({ listing, className = "" }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           listing_id: listing.id,
-          seller_wa: listing.seller_wa,
           rating: selected,
           comment,
           buyer_name: buyerName,

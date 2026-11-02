@@ -6,6 +6,7 @@ import { AKSEN, aksenAman, namaToko, tokoAktif } from "@/lib/toko";
 import ProductCard from "@/components/ProductCard";
 import TokoHero from "@/components/TokoHero";
 import TokoKatalog from "@/components/TokoKatalog";
+import { toPublicListing } from "@/lib/dbHelpers";
 
 export const revalidate = 300; // ISR 5 menit, sama dengan halaman penjual
 
@@ -54,8 +55,8 @@ async function ambilToko(slug) {
 
     return {
       profil,
-      aktif: aktif || [],
-      terjual: terjual || [],
+      aktif: (aktif || []).map(toPublicListing),
+      terjual: (terjual || []).map(toPublicListing),
       jumlahTerjual: jumlahTerjual || 0,
       ulasan: daftarUlasan,
       rataUlasan: rata,

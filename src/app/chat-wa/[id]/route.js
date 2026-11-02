@@ -16,10 +16,20 @@ function normalisasiNomorWa(wa) {
 }
 
 export async function GET(request, { params }) {
+  return contactListing(request, params, null, false);
+}
+
+export async function POST(request, { params }) {
+  const form = await request.formData().catch(() => null);
+  const message = typeof form?.get("message") === "string" ? form.get("message") : "";
+  return contactListing(request, params, message, true);
+}
+
+async function contactListing(request, params, requestedMessage, isPost) {
   try {
     const listingId = params?.id;
     if (!listingId) {
-      return NextResponse.redirect(new URL("/jual-beli", request.url), { status: 307 });
+      return NextResponse.redirect(new URL("/jual-beli", request.url), { status: isPost ? 303 : 307 });
     }
 
     // Rate limiting: cegah crawler/bot memanen atau membombardir redirect WA
@@ -41,14 +51,14 @@ export async function GET(request, { params }) {
 
     if (error || !listing) {
       return NextResponse.redirect(new URL("/jual-beli?pesan=Barang+tidak+ditemukan", request.url), {
-        status: 307,
+        status: isPost ? 303 : 307,
       });
     }
 
     if (!isListingAvailable(listing)) {
       return NextResponse.redirect(
         new URL("/jual-beli?pesan=Barang+sudah+terjual+atau+tidak+tersedia", request.url),
-        { status: 307 }
+        { status: isPost ? 303 : 307 }
       );
     }
 
@@ -56,7 +66,7 @@ export async function GET(request, { params }) {
     if (!normalizedWa || normalizedWa.length < 10) {
       return NextResponse.redirect(
         new URL(`/produk/${listing.id}?error=Kontak+penjual+tidak+valid`, request.url),
-        { status: 307 }
+        { status: isPost ? 303 : 307 }
       );
     }
 
@@ -64,7 +74,8 @@ export async function GET(request, { params }) {
     const { searchParams } = new URL(request.url);
     const codSpot = searchParams.get("cod")?.trim();
 
-    let pesanText = `Halo ${listing.seller_name || "Kak"}, saya tertarik dengan barang "${listing.title}" di Kampus Kita (Kode: #${listing.listing_code || listing.id.slice(0, 8)}).`;
+    const defaultMessage = `Halo ${listing.seller_name || "Kak"}, saya tertarik dengan barang "${listing.title}" di Kampus Kita (Kode: #${listing.listing_code || listing.id.slice(0, 8)}).`;
+    let pesanText = String(requestedMessage || defaultMessage).replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 1000) || defaultMessage;
     if (codSpot) {
       pesanText += `\nBisa janjian COD di ${codSpot}? Terima kasih!`;
     } else {
@@ -87,10 +98,10 @@ export async function GET(request, { params }) {
     }
 
     const targetWaUrl = `https://wa.me/${normalizedWa}?text=${encodeURIComponent(pesanText)}`;
-    return NextResponse.redirect(targetWaUrl, { status: 307 });
+    return NextResponse.redirect(targetWaUrl, { status: isPost ? 303 : 307 });
   } catch (err) {
-    console.error("GET /chat-wa/[id] error:", err);
-    return NextResponse.redirect(new URL("/jual-beli", request.url), { status: 307 });
+    console.error("/chat-wa/[id] error:", err);
+    return NextResponse.redirect(new URL("/jual-beli", request.url), { status: isPost ? 303 : 307 });
   }
 }
 

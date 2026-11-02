@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { formatWaForBaileys } from "@/lib/constants";
 import { buildSlug } from "@/lib/slug";
 import { useRouter } from "next/navigation";
 import { useTransactionMode } from "@/lib/useTransactionMode";
+import { openWhatsAppContact } from "@/lib/openWhatsAppContact";
 import { toast } from "sonner";
 
 const TEMPLATES = [
@@ -29,15 +29,6 @@ export default function MinatButton({ listing, className, children }) {
     // MODE 1: DIRECT WHATSAPP
     if (isWaMode) {
       try {
-        const rawWa = listing.seller_wa;
-        const formattedWa = formatWaForBaileys(rawWa);
-
-        if (!formattedWa) {
-          toast.error("Nomor WhatsApp penjual tidak tersedia.");
-          setBusy(false);
-          return;
-        }
-
         // Catat interaksi minat ke backend (fire-and-forget)
         fetch("/api/minat", {
           method: "POST",
@@ -52,14 +43,8 @@ export default function MinatButton({ listing, className, children }) {
         const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://www.kampuskita.my.id";
         const productLink = `${baseUrl}/produk/${slug}`;
 
-        const fullMsg =
-          `Halo ${listing.seller_name || "Penjual"},\n\n` +
-          `${text}\n\n` +
-          ` *${listing.title}*\n` +
-          ` ${productLink}`;
-
-        const waUrl = `https://wa.me/${formattedWa}?text=${encodeURIComponent(fullMsg)}`;
-        window.open(waUrl, "_blank", "noopener,noreferrer");
+        const fullMsg = `Halo ${listing.seller_name || "Penjual"},\n\n${text}\n\n*${listing.title}*\n${productLink}`;
+        if (!openWhatsAppContact(listing.id, fullMsg)) throw new Error("Izinkan pop-up untuk membuka WhatsApp penjual.");
         toast.success("Membuka WhatsApp penjual...");
       } catch (err) {
         toast.error("Gagal membuka WhatsApp.");
