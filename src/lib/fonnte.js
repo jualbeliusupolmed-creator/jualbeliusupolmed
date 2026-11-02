@@ -387,7 +387,10 @@ async function getBotCatalogDistribution() {
     const channels = Array.isArray(data.channels)
       ? data.channels.map((item) => String(item?.jid || "").trim()).filter((jid) => /^[a-zA-Z0-9._-]{1,128}@newsletter$/.test(jid))
       : [];
-    return { enabled: data.enabled !== false, channels: [...new Set(channels)] };
+    const groups = Array.isArray(data.groups)
+      ? data.groups.map((item) => String(item?.jid || "").trim()).filter((jid) => /^[0-9-]{1,128}@g\.us$/.test(jid))
+      : [];
+    return { enabled: data.enabled !== false, groupsConfigured: data.groupsConfigured === true, groups: [...new Set(groups)], channels: [...new Set(channels)] };
   } catch {
     return null;
   }
@@ -408,7 +411,10 @@ export function nomorAdmin(overrideAdminWa) {
 export async function postToGroup(listing, adminSettings) {
   const msg = pesanGrupIklan(listing);
   const gambar = listing.image_url || null;
-  const tujuan = daftarGrup(adminSettings);
+  const botDistribution = await getBotCatalogDistribution();
+  const tujuan = botDistribution
+    ? (botDistribution.enabled ? (botDistribution.groupsConfigured ? botDistribution.groups : daftarGrup(adminSettings)) : [])
+    : daftarGrup(adminSettings);
 
   const hasil = await Promise.all(
     tujuan.map((jid) =>
@@ -418,7 +424,6 @@ export async function postToGroup(listing, adminSettings) {
     )
   );
 
-  const botDistribution = await getBotCatalogDistribution();
   const channelJids = botDistribution
     ? (botDistribution.enabled ? botDistribution.channels : [])
     : (String(adminSettings?.channelJid || "").trim() ? [String(adminSettings.channelJid).trim()] : []);
