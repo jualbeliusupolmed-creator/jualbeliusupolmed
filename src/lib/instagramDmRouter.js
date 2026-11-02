@@ -898,6 +898,9 @@ export async function handleInstagramDmEvent({
           : (item.image_url ? [item.image_url] : []);
         const primaryImage = finalImages[0] || item.image_url || null;
 
+        const campusLower = String(linked.campus || "").trim().toLowerCase();
+        const resolvedUnivId = ["usu", "polmed"].includes(campusLower) ? campusLower : null;
+
         const insertPayload = {
           title: item.title,
           price: item.price,
@@ -911,6 +914,7 @@ export async function handleInstagramDmEvent({
           status: initialStatus,
           type: "barang",
           campus: linked.campus || "Semua",
+          university_id: resolvedUnivId,
           area: "Sekitar Kampus",
           condition: "used",
           moderation_reason: modReason,
@@ -925,11 +929,12 @@ export async function handleInstagramDmEvent({
           .select()
           .single();
 
-        // Fallback jika skema database produksi belum punya kolom moderasi atau images (PGRST204)
+        // Fallback jika skema database produksi belum punya kolom moderasi, university_id, atau images (PGRST204)
         if (insertErr && (insertErr.code === "PGRST204" || String(insertErr.message || "").includes("column"))) {
           delete insertPayload.moderation_reason;
           delete insertPayload.risk_score;
           delete insertPayload.images;
+          delete insertPayload.university_id;
           const retry = await supa.from("listings").insert(insertPayload).select().single();
           newListing = retry.data;
           insertErr = retry.error;
