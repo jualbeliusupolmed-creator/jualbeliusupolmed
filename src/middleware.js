@@ -24,6 +24,8 @@ const ADMIN_WORKSPACE_PATHS = [
   "/admin/owners",
   "/admin/organization",
   "/admin/admin-requests",
+  "/admin/kategori",
+  "/admin/ai",
 ];
 const ADMIN_WHATSAPP_PATHS = ["/admin/wabot", "/admin/antrean", "/admin/notifikasi", "/admin/broadcast", "/admin/broadcast_grup", "/admin/grouppost"];
 const ADMIN_LEGACY_REDIRECTS = [
@@ -40,6 +42,8 @@ const ADMIN_LEGACY_REDIRECTS = [
   ["/admin/listings", "/admin/marketplace"],
   ["/admin/moderasi", "/admin/marketplace"],
   ["/admin/dicari", "/admin/marketplace?mode=wanted"],
+  ["/admin/tren", "/admin/analytics"],
+  ["/admin/pengaturan", "/admin/settings"],
 ];
 
 function matchesAdminPath(pathname, paths) {
