@@ -75,12 +75,11 @@ export const GROUPS = [
     ],
   },
   {
-    label: "Komunikasi",
+    label: "WhatsApp & Siaran",
     items: [
-      { key: "wabot", label: "WhatsApp" },
-      { key: "antrean", label: "Antrean WhatsApp" },
-      { key: "notifikasi", label: "Notifikasi" },
-      { key: "broadcast", label: "Broadcast" },
+      { key: "wabot", label: "Status Bot & Koneksi" },
+      { key: "broadcast", label: "Broadcast & Siaran" },
+      { key: "antrean", label: "Antrean Pesan" },
     ],
   },
   {

@@ -1,6 +1,7 @@
 import { getAdminActor, hasAdminPermission } from "@/lib/admin-access";
+import { getAdminStats, DEFAULT_DATA } from "@/lib/adminData";
 import AdminLogin from "../AdminLogin";
-import NotifikasiClient from "./NotifikasiClient";
+import BroadcastClient from "../broadcast/BroadcastClient";
 
 export const dynamic = "force-dynamic";
 
@@ -10,5 +11,10 @@ export default async function AdminNotifikasiPage() {
     return <AdminLogin />;
   }
 
-  return <NotifikasiClient />;
+  let data = DEFAULT_DATA;
+  try {
+    data = await getAdminStats(1, "broadcast");
+  } catch (_) {}
+
+  return <BroadcastClient sellers={data.sellersList || []} initialTab="notifikasi" />;
 }
