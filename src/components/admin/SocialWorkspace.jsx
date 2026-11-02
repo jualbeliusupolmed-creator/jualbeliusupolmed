@@ -54,6 +54,13 @@ export default function SocialWorkspace() {
   const [universitiesList, setUniversitiesList] = useState([]);
   const [resolvingChannel, setResolvingChannel] = useState(false);
 
+  // Central Distribution Manager state
+  const [distJobs, setDistJobs] = useState([]);
+  const [loadingDist, setLoadingDist] = useState(false);
+  const [distStatusFilter, setDistStatusFilter] = useState("all");
+  const [processingScheduled, setProcessingScheduled] = useState(false);
+  const [subQueueTab, setSubQueueTab] = useState("omnichannel"); // 'omnichannel' | 'legacy_media'
+
   // Testing connection state
   const [testingId, setTestingId] = useState(null);
   const [isPending, startTransition] = useTransition();
@@ -68,9 +75,11 @@ export default function SocialWorkspace() {
       fetchDmLogs();
     } else if (activeTab === "whatsapp") {
       fetchWhatsAppChannels();
+    } else if (activeTab === "queue") {
+      fetchDistributionJobs();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, actionFilter]);
+  }, [activeTab, actionFilter, distStatusFilter]);
 
   const fetchAccounts = async () => {
     setLoadingAccounts(true);
@@ -138,6 +147,84 @@ export default function SocialWorkspace() {
       toast.error("Gagal memuat log DM Instagram.");
     } finally {
       setLoadingLogs(false);
+    }
+  };
+
+  const fetchDistributionJobs = async () => {
+    setLoadingDist(true);
+    try {
+      const q = distStatusFilter !== "all" ? `?status=${distStatusFilter}` : "";
+      const res = await fetch(`/api/admin/distribution${q}`);
+      const json = await res.json();
+      if (json.ok) {
+        setDistJobs(json.jobs || []);
+      } else {
+        toast.error(json.error || "Gagal memuat antrean distribusi.");
+      }
+    } catch {
+      toast.error("Gagal terhubung ke server.");
+    } finally {
+      setLoadingDist(false);
+    }
+  };
+
+  const handleRetryDistribution = async (distributionId) => {
+    try {
+      const res = await fetch("/api/admin/distribution", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "retry_job", distributionId }),
+      });
+      const json = await res.json();
+      if (json.ok) {
+        toast.success("Job berhasil dikirim ulang.");
+        fetchDistributionJobs();
+      } else {
+        toast.error(json.error || "Gagal mengirim ulang job.");
+      }
+    } catch {
+      toast.error("Gagal terhubung ke server.");
+    }
+  };
+
+  const handleCancelDistribution = async (distributionId) => {
+    try {
+      const res = await fetch("/api/admin/distribution", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "cancel_job", distributionId }),
+      });
+      const json = await res.json();
+      if (json.ok) {
+        toast.success(json.message || "Jadwal berhasil dibatalkan.");
+        fetchDistributionJobs();
+      } else {
+        toast.error(json.error || "Gagal membatalkan jadwal.");
+      }
+    } catch {
+      toast.error("Gagal terhubung ke server.");
+    }
+  };
+
+  const handleProcessScheduledJobs = async () => {
+    setProcessingScheduled(true);
+    try {
+      const res = await fetch("/api/admin/distribution", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "process_scheduled" }),
+      });
+      const json = await res.json();
+      if (json.ok) {
+        toast.success(`Berhasil memproses ${json.processed || 0} pekerjaan terjadwal.`);
+        fetchDistributionJobs();
+      } else {
+        toast.error(json.error || "Gagal memproses antrean terjadwal.");
+      }
+    } catch {
+      toast.error("Gagal terhubung ke server.");
+    } finally {
+      setProcessingScheduled(false);
     }
   };
 
@@ -381,9 +468,9 @@ export default function SocialWorkspace() {
           }`}
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
           </svg>
-          Antrean Publikasi Konten
+          Central Distribution Manager (Omnichannel)
         </button>
       </div>
 
@@ -766,10 +853,221 @@ export default function SocialWorkspace() {
         </div>
       )}
 
-      {/* Tab 4: Antrean Publikasi Konten (Integrated) */}
+      {/* Tab 4: Central Distribution Manager (Omnichannel Dispatcher) */}
       {activeTab === "queue" && (
-        <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
-          <TabInstagram />
+        <div className="space-y-6">
+          {/* Sub-tab switcher */}
+          <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setSubQueueTab("omnichannel")}
+                className={`rounded-xl px-4 py-2 text-xs font-bold transition ${
+                  subQueueTab === "omnichannel"
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                Omnichannel Dispatcher ({distJobs.length})
+              </button>
+              <button
+                onClick={() => setSubQueueTab("legacy_media")}
+                className={`rounded-xl px-4 py-2 text-xs font-bold transition ${
+                  subQueueTab === "legacy_media"
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                Antrean Generator Media IG Feed & Story
+              </button>
+            </div>
+
+            {subQueueTab === "omnichannel" && (
+              <button
+                onClick={handleProcessScheduledJobs}
+                disabled={processingScheduled}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 active:scale-95 disabled:opacity-50"
+              >
+                <svg className={`h-3.5 w-3.5 ${processingScheduled ? "animate-spin" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span>{processingScheduled ? "Memproses..." : "Eksekusi Antrean Terjadwal"}</span>
+              </button>
+            )}
+          </div>
+
+          {subQueueTab === "legacy_media" ? (
+            <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
+              <TabInstagram />
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Ringkasan Status Omnichannel */}
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <span className="text-xs font-semibold text-slate-500">Total Distribusi</span>
+                  <p className="mt-1 text-2xl font-black text-slate-900">{distJobs.length}</p>
+                </div>
+                <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5 shadow-sm">
+                  <span className="text-xs font-semibold text-emerald-700">Berhasil Terbit</span>
+                  <p className="mt-1 text-2xl font-black text-emerald-800">
+                    {distJobs.filter((j) => j.status === "published").length}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-5 shadow-sm">
+                  <span className="text-xs font-semibold text-blue-700">Terjadwal (Scheduled)</span>
+                  <p className="mt-1 text-2xl font-black text-blue-800">
+                    {distJobs.filter((j) => j.status === "scheduled").length}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-rose-100 bg-rose-50/50 p-5 shadow-sm">
+                  <span className="text-xs font-semibold text-rose-700">Gagal / Butuh Retry</span>
+                  <p className="mt-1 text-2xl font-black text-rose-800">
+                    {distJobs.filter((j) => j.status === "failed").length}
+                  </p>
+                </div>
+              </div>
+
+              {/* Filter Status */}
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex flex-wrap gap-2 text-xs font-bold">
+                  {[
+                    { id: "all", label: "Semua Status" },
+                    { id: "scheduled", label: "Terjadwal" },
+                    { id: "published", label: "Terbit" },
+                    { id: "failed", label: "Gagal" },
+                  ].map((f) => (
+                    <button
+                      key={f.id}
+                      onClick={() => setDistStatusFilter(f.id)}
+                      className={`rounded-xl px-3 py-1.5 transition ${
+                        distStatusFilter === f.id
+                          ? "bg-slate-900 text-white"
+                          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  onClick={fetchDistributionJobs}
+                  className="rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50"
+                >
+                  Segarkan
+                </button>
+              </div>
+
+              {/* Daftar Pekerjaan Distribusi Omnichannel */}
+              <div className="rounded-3xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
+                {loadingDist ? (
+                  <div className="grid min-h-64 place-items-center text-slate-400">
+                    <p className="text-xs font-medium">Memuat log antrean distribusi...</p>
+                  </div>
+                ) : distJobs.length === 0 ? (
+                  <div className="grid min-h-56 place-items-center px-6 text-center">
+                    <div>
+                      <p className="text-sm font-bold text-slate-700">Belum ada aktivitas distribusi</p>
+                      <p className="mt-1 text-xs text-slate-400">
+                        Buka tab Marketplace/Moderasi untuk menyetujui produk dan mendistribusikannya secara omnichannel.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-slate-100">
+                    {distJobs.map((job) => {
+                      const getChannelBadge = (type) => {
+                        switch (type) {
+                          case "website":
+                            return <span className="rounded-lg bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-blue-700">🌐 Website</span>;
+                          case "instagram_university":
+                            return <span className="rounded-lg bg-pink-50 px-2 py-0.5 text-[11px] font-bold text-pink-700">📸 IG Kampus</span>;
+                          case "instagram_province":
+                            return <span className="rounded-lg bg-purple-50 px-2 py-0.5 text-[11px] font-bold text-purple-700">📸 IG Provinsi</span>;
+                          case "whatsapp_channel_university":
+                            return <span className="rounded-lg bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700">📢 WA Chan Kampus</span>;
+                          case "whatsapp_channel_province":
+                            return <span className="rounded-lg bg-teal-50 px-2 py-0.5 text-[11px] font-bold text-teal-700">📢 WA Chan Prov</span>;
+                          case "whatsapp_group_community":
+                            return <span className="rounded-lg bg-green-50 px-2 py-0.5 text-[11px] font-bold text-green-700">👥 WA Group</span>;
+                          default:
+                            return <span className="rounded-lg bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-600">{type}</span>;
+                        }
+                      };
+
+                      const getStatusPill = (status) => {
+                        switch (status) {
+                          case "published":
+                            return <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700">✓ Terbit</span>;
+                          case "scheduled":
+                            return <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-700">🕒 Terjadwal</span>;
+                          case "publishing":
+                            return <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-700 animate-pulse">⚙️ Menerbitkan</span>;
+                          case "failed":
+                            return <span className="rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-bold text-rose-700">✕ Gagal</span>;
+                          default:
+                            return <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-600">{status}</span>;
+                        }
+                      };
+
+                      return (
+                        <div key={job.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:px-6 hover:bg-slate-50 transition">
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-slate-100 border border-slate-200">
+                              {job.listings?.image_url ? (
+                                <img src={job.listings.image_url} alt="" className="h-full w-full object-cover" />
+                              ) : (
+                                <div className="grid h-full w-full place-items-center text-[10px] font-bold text-slate-400">Foto</div>
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <h4 className="truncate text-xs font-extrabold text-slate-900">
+                                  {job.listings?.title || "Produk #" + job.listing_id.slice(0, 8)}
+                                </h4>
+                                {getChannelBadge(job.channel_type)}
+                                {getStatusPill(job.status)}
+                              </div>
+                              <p className="mt-0.5 text-[11px] font-semibold text-slate-500">
+                                Target: <span className="font-mono text-slate-700">{job.target_destination || "Sistem"}</span> · {job.listings?.campus || "Nasional"}
+                              </p>
+                              {job.last_error && (
+                                <p className="mt-1 text-[11px] font-medium text-rose-600">
+                                  ⚠️ {job.last_error} (Percobaan: {job.attempts}/{job.max_attempts})
+                                </p>
+                              )}
+                              <p className="mt-0.5 text-[10px] text-slate-400">
+                                {job.scheduled_at ? `Jadwal: ${new Date(job.scheduled_at).toLocaleString("id-ID")}` : `Dibuat: ${formatRelativeTime(job.created_at)}`}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 self-end sm:self-auto">
+                            {job.status === "failed" && (
+                              <button
+                                onClick={() => handleRetryDistribution(job.id)}
+                                className="rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-800 hover:bg-amber-100 transition"
+                              >
+                                Kirim Ulang
+                              </button>
+                            )}
+                            {job.status === "scheduled" && (
+                              <button
+                                onClick={() => handleCancelDistribution(job.id)}
+                                className="rounded-lg bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-100 transition"
+                              >
+                                Batalkan
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
