@@ -629,7 +629,7 @@ export default function PengaturanClient({ initialSettings = {} }) {
           </Card>
 
           {/* KONFIGURASI ADMIN & WA */}
-          <Card title="Konfigurasi Admin & WhatsApp" className={match("konfigurasi admin whatsapp nomor hp wa superadmin super") ? "" : "hidden"}>
+          <Card title="Konfigurasi Admin & WhatsApp" className={match("konfigurasi admin whatsapp nomor hp wa superadmin super siaran broadcast saluran channel instagram story feed notifikasi seller penjual otomasi") ? "" : "hidden"}>
             <div className="space-y-3">
               <Field label="Nomor WA Admin (Superadmin)">
                 <input className="g-field font-mono w-full" value={adminCfg.adminWa ?? ""} onChange={(e) => setAdminCfg({ ...adminCfg, adminWa: e.target.value })} placeholder="628xxxxxxxxxx" />
