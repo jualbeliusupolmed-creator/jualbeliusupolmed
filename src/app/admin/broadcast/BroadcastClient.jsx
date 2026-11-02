@@ -31,9 +31,11 @@ export default function BroadcastClient({ sellers = [], initialTab = "kontak" })
 
   function handleTabChange(tabId) {
     setActiveTab(tabId);
-    const params = new URLSearchParams(window.location.search);
-    params.set("tab", tabId);
-    router.replace(`/admin/broadcast?${params.toString()}`, { scroll: false });
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      params.set("tab", tabId);
+      router.replace(`/admin/broadcast?${params.toString()}`, { scroll: false });
+    }
   }
 
   async function action(body, okMsg) {

@@ -66,6 +66,8 @@ export async function GET() {
       name: campus.name || "",
       shortName: campus.shortName || "",
       provinceId: campus.provinceId || campus.province_id || "",
+      parentCampusId: campus.parentCampusId || "",
+      instagramHandle: campus.instagramHandle || "",
       active: campus.active !== false,
       emailDomains: Array.isArray(campus.emailDomains) ? campus.emailDomains : [],
     })),
@@ -137,7 +139,11 @@ export async function PUT(req) {
         if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id) || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(provinceId) || !name || !shortName) throw new Error("Kode kampus, nama, nama singkat, dan kode provinsi wajib valid.");
         const domains = Array.isArray(campus.emailDomains) ? [...new Set(campus.emailDomains.map((value) => safeText(String(value || ""), 120, "Domain email").toLowerCase()).filter(Boolean))] : [];
         if (domains.some((domain) => !/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i.test(domain))) throw new Error("Domain email harus berupa nama domain tanpa tanda @.");
-        return { id, name, shortName, provinceId, active: campus.active !== false, emailDomains: domains };
+        const previous = (Array.isArray(current.campuses) ? current.campuses : []).find((item) => String(item.id || item.shortName || "").toLowerCase() === id);
+        const parentCampusId = safeText(String(campus.parentCampusId ?? previous?.parentCampusId ?? ""), 60, "Kampus induk").toLowerCase();
+        const instagramHandle = safeText(String(campus.instagramHandle ?? previous?.instagramHandle ?? ""), 30, "Akun Instagram").replace(/^@/, "").toLowerCase();
+        if (instagramHandle && !/^[a-z0-9._]{1,30}$/.test(instagramHandle)) throw new Error("Nama akun Instagram kampus tidak valid.");
+        return { id, name, shortName, provinceId, parentCampusId, instagramHandle, active: campus.active !== false, emailDomains: domains };
       });
       const ids = campuses.map((campus) => campus.id);
       const shortNames = campuses.map((campus) => campus.shortName.toLowerCase());
@@ -146,6 +152,12 @@ export async function PUT(req) {
       const submittedIds = new Set(ids);
       if ([...existingIds].some((id) => !submittedIds.has(id))) throw new Error("Kampus yang sudah ada tidak dihapus. Nonaktifkan kampus jika tidak digunakan.");
       rows.push({ key: "campuses", value: campuses, updated_at: new Date().toISOString() });
+      const currentProvinces = Array.isArray(current.provinces) ? current.provinces : [];
+      const byProvince = new Map(currentProvinces.map((province) => [String(province.id || "").toLowerCase(), province]));
+      for (const provinceId of new Set(campuses.map((campus) => campus.provinceId))) {
+        if (!byProvince.has(provinceId)) byProvince.set(provinceId, { id: provinceId, name: provinceId.replaceAll("-", " ").replace(/\b\w/g, (letter) => letter.toUpperCase()), active: true });
+      }
+      if (byProvince.size) rows.push({ key: "provinces", value: [...byProvince.values()], updated_at: new Date().toISOString() });
     }
   } catch (error) {
     return NextResponse.json({ error: error.message || "Pengaturan tidak valid." }, { status: 400 });

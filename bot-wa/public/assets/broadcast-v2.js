@@ -6,7 +6,7 @@
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
   const state = {
-    token: '', tab: 'groups', groups: [], groupLoaded: false, groupJid: '', members: [],
+    token: '', tab: 'groups', groups: [], groupLoaded: false, groupsLoading: false, groupsError: '', groupJid: '', members: [],
     selectedMembers: new Set(), memberSearch: '', memberPage: 0, max: 1500,
     xlsxRows: null, xlsxPreview: null, broadcast: null, queue: null, status: null,
     catalogDistribution: null, catalogGroupsTouched: false,
@@ -139,7 +139,9 @@
     const catalogGroups = current?.groups || [];
     const groupChoices = state.groups.map((group) => `<option value="${escapeHtml(group.jid)}">${escapeHtml(group.name || group.jid)} · ${number(group.participants)} anggota</option>`).join('');
     const groupRows = catalogGroups.map((group) => `<li class="catalog-destination"><span><strong>${escapeHtml(group.name || group.jid)}</strong><small>${escapeHtml(group.jid)}</small></span><button class="button button-quiet button-small" type="button" data-action="remove-catalog-group" data-jid="${escapeHtml(group.jid)}" aria-label="Hapus ${escapeHtml(group.name || group.jid)}">Hapus</button></li>`).join('');
-    $('#broadcast-view').innerHTML = `<section class="surface broadcast-card"><div class="surface-head"><div><h3>Ke mana katalog dikirim?</h3><p>Atur grup dan saluran untuk pengumuman barang yang berhasil tayang.</p></div><span class="badge ${current?.enabled ? 'good' : 'warn'}">${current ? current.enabled ? 'Aktif' : 'Dijeda' : 'Memuat'}</span></div><div class="surface-body"><label class="plain-check"><input id="catalog-enabled" type="checkbox" ${current?.enabled === false ? '' : 'checked'}> Kirim katalog otomatis</label><p class="field-help">Pesan berisi nama barang, harga, kategori, dan tautan produk. Pengaturan grup situs yang lama tetap berlaku sampai daftar grup di sini disimpan.</p><div class="catalog-destination-section"><div><h4>Grup WhatsApp</h4><p class="field-help">Pilih grup yang sudah diikuti bot. Grup tersimpan akan menerima pengumuman listing otomatis.</p></div><div class="inline-actions"><select class="field" id="catalog-group-select"><option value="">${state.groups.length ? 'Pilih grup WhatsApp' : 'Memuat daftar grup…'}</option>${groupChoices}</select><button class="button button-small" type="button" data-action="add-catalog-group" ${state.groups.length ? '' : 'disabled'}>Tambahkan</button></div><ul class="catalog-destination-list">${groupRows || '<li class="catalog-destination-empty">Belum ada grup tujuan tersimpan.</li>'}</ul><p class="field-help">${current?.groupsConfigured ? `${number(catalogGroups.length)} grup tersimpan di panel bot.` : 'Daftar grup situs yang sudah ada tetap dipakai sampai kamu menambah atau menghapus grup di sini lalu menyimpan.'}</p></div><div class="catalog-destination-section"><div><h4>Saluran WhatsApp</h4><p class="field-help">Masukkan satu tautan undangan atau JID saluran per baris.</p></div><label class="field-label" for="catalog-channels">Tautan undangan atau JID saluran</label><textarea class="textarea-field" id="catalog-channels" rows="4" placeholder="https://whatsapp.com/channel/…&#10;atau: 120363…@newsletter">${escapeHtml(channels.map((item) => item.name ? `${item.name} | ${item.jid}` : item.jid).join('\n'))}</textarea><p class="field-help">Bot akan memeriksa tautan undangan sebelum menyimpannya.</p><div class="member-count"><span class="count-chip">${number(channels.length)} saluran tersimpan</span>${channels.length ? `<span>${channels.map((item) => escapeHtml(item.name || item.jid)).join(' · ')}</span>` : '<span>Belum ada saluran tujuan.</span>'}</div></div><div id="catalog-result" aria-live="polite"></div><div class="broadcast-sendbar"><p>Simpan setelah selesai mengubah grup atau saluran.</p><button class="button button-primary" type="button" data-action="save-catalog" ${current ? '' : 'disabled'}>Simpan pengaturan</button></div></div></section><div class="warning-note">Bot harus terhubung saat tautan saluran diperiksa. Pengiriman otomatis berjalan setelah listing berhasil diaktifkan.</div>`;
+    const groupPlaceholder = state.groups.length ? 'Pilih grup WhatsApp' : state.groupsLoading ? 'Memuat daftar grup…' : state.groupsError ? 'Daftar grup gagal dimuat' : 'Belum ada grup tersedia';
+    const groupLoadHint = state.groupsLoading ? 'Sedang memuat grup yang diikuti bot…' : state.groupsError ? `Grup untuk ditambahkan gagal dimuat: ${escapeHtml(state.groupsError)}` : state.groupsStale ? 'Menampilkan cache grup terakhir; muat ulang untuk mencoba lagi.' : '';
+    $('#broadcast-view').innerHTML = `<section class="surface broadcast-card"><div class="surface-head"><div><h3>Ke mana katalog dikirim?</h3><p>Atur grup dan saluran untuk pengumuman barang yang berhasil tayang.</p></div><span class="badge ${current?.enabled ? 'good' : 'warn'}">${current ? current.enabled ? 'Aktif' : 'Dijeda' : 'Memuat'}</span></div><div class="surface-body"><label class="plain-check"><input id="catalog-enabled" type="checkbox" ${current?.enabled === false ? '' : 'checked'}> Kirim katalog otomatis</label><p class="field-help">Pesan berisi nama barang, harga, kategori, dan tautan produk. Pengaturan grup situs yang lama tetap berlaku sampai daftar grup di sini disimpan.</p><div class="catalog-destination-section"><div><h4>Grup WhatsApp</h4><p class="field-help">Pilih grup yang sudah diikuti bot. Grup tersimpan akan menerima pengumuman listing otomatis.</p></div><div class="inline-actions"><select class="field" id="catalog-group-select"><option value="">${groupPlaceholder}</option>${groupChoices}</select><button class="button button-small" type="button" data-action="add-catalog-group" ${state.groups.length ? '' : 'disabled'}>Tambahkan</button><button class="button button-small" type="button" data-action="refresh-groups" ${state.groupsLoading ? 'disabled' : ''}>${state.groupsLoading ? 'Memuat…' : 'Muat ulang grup'}</button></div>${groupLoadHint ? `<p class="field-help" role="status">${groupLoadHint}</p>` : ''}<ul class="catalog-destination-list">${groupRows || '<li class="catalog-destination-empty">Belum ada grup tujuan tersimpan.</li>'}</ul><p class="field-help">${current?.groupsConfigured ? `${number(catalogGroups.length)} grup tersimpan di panel bot.` : 'Daftar grup situs yang sudah ada tetap dipakai sampai kamu menambah atau menghapus grup di sini lalu menyimpan.'}</p></div><div class="catalog-destination-section"><div><h4>Saluran WhatsApp</h4><p class="field-help">Masukkan satu tautan undangan atau JID saluran per baris.</p></div><label class="field-label" for="catalog-channels">Tautan undangan atau JID saluran</label><textarea class="textarea-field" id="catalog-channels" rows="4" placeholder="https://whatsapp.com/channel/…&#10;atau: 120363…@newsletter">${escapeHtml(channels.map((item) => item.name ? `${item.name} | ${item.jid}` : item.jid).join('\n'))}</textarea><p class="field-help">Bot akan memeriksa tautan undangan sebelum menyimpannya.</p><div class="member-count"><span class="count-chip">${number(channels.length)} saluran tersimpan</span>${channels.length ? `<span>${channels.map((item) => escapeHtml(item.name || item.jid)).join(' · ')}</span>` : '<span>Belum ada saluran tujuan.</span>'}</div></div><div id="catalog-result" aria-live="polite"></div><div class="broadcast-sendbar"><p>Simpan setelah selesai mengubah grup atau saluran.</p><button class="button button-primary" type="button" data-action="save-catalog" ${current ? '' : 'disabled'}>Simpan pengaturan</button></div></div></section><div class="warning-note">Bot harus terhubung saat tautan saluran diperiksa. Pengiriman otomatis berjalan setelah listing berhasil diaktifkan.</div>`;
   }
   async function loadCatalogDistribution() {
     try {
@@ -207,18 +209,31 @@
     return Math.min(300, Math.max(1, Number(input?.value) || 5));
   }
   async function loadGroups() {
+    if (state.groupsLoading) return;
+    state.groupsLoading = true;
+    state.groupsError = '';
+    if (state.tab === 'catalog') renderCatalogFrame();
     try {
-      const data = await api('/groups');
+      const data = await api('/groups', { signal: AbortSignal.timeout(15000) });
       state.groups = (data.groups || []).map((group) => ({ ...group, participants: Number(group.participants) || 0 })).sort((a, b) => b.participants - a.participants);
       state.groupsStale = !!data.stale;
+      state.groupsError = data.error ? 'Koneksi grup lambat; daftar cache lama digunakan.' : '';
       state.groupLoaded = true;
-      const targets = await api('/broadcast/targets').catch(() => null);
-      if (targets?.max) state.max = Number(targets.max);
+      state.groupsLoading = false;
       if (state.tab === 'groups') renderGroupsView();
+      else if (state.tab === 'catalog') renderCatalogFrame();
+      api('/broadcast/targets', { signal: AbortSignal.timeout(8000) })
+        .then((targets) => { if (targets?.max) state.max = Number(targets.max); })
+        .catch(() => {});
     } catch (error) {
       state.groupLoaded = true;
+      state.groupsError = error.name === 'TimeoutError' || error.name === 'AbortError' ? 'Waktu tunggu habis. Coba muat ulang.' : error.message;
       const root = $('#broadcast-view');
       if (root && state.tab === 'groups') root.innerHTML = `${emptyState('Daftar grup gagal dimuat', error.message)}<div class="heading-actions" style="justify-content:center"><button class="button" type="button" data-action="refresh-groups">Coba lagi</button></div>`;
+      else if (state.tab === 'catalog') renderCatalogFrame();
+    } finally {
+      state.groupsLoading = false;
+      if (state.tab === 'catalog') renderCatalogFrame();
     }
   }
   async function loadMembers(jid) {

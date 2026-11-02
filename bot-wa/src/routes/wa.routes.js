@@ -175,7 +175,18 @@ module.exports = function pasangRuteWa(app, K) {
             return res.status(503).json({ error: 'Bot not connected' });
         }
         try {
-            const chats = await K.waSocket.groupFetchAllParticipating();
+            let groupFetchTimer;
+            const chats = await Promise.race([
+                K.waSocket.groupFetchAllParticipating(),
+                new Promise((_, reject) => {
+                    groupFetchTimer = setTimeout(() => {
+                        const error = new Error('Waktu tunggu daftar grup habis. Coba muat ulang.');
+                        error.code = 'GROUP_FETCH_TIMEOUT';
+                        reject(error);
+                    }, 12000);
+                    groupFetchTimer.unref?.();
+                }),
+            ]).finally(() => clearTimeout(groupFetchTimer));
             const groups = Object.entries(chats).map(([jid, meta]) => ({
                 jid,
                 name: meta.subject || 'Tanpa Nama',
@@ -191,7 +202,7 @@ module.exports = function pasangRuteWa(app, K) {
             if (K.groupsCache.data) {
                 return res.json({ groups: K.groupsCache.data, cached: true, stale: true, error: err.message, age: Date.now() - K.groupsCache.at });
             }
-            res.status(500).json({ error: err.message });
+            res.status(err.code === 'GROUP_FETCH_TIMEOUT' ? 504 : 500).json({ error: err.message });
         }
     });
 

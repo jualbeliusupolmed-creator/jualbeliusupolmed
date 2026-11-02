@@ -789,6 +789,23 @@ cuma server.
      - Tab 3: *Moderasi Post Grup* (Daftar dan moderasi postingan yang masuk ke grup)
      - Tab 4: *Pelanggan Notifikasi* (Subscriber notifikasi kategori dan web push browser)
    - URL lama (`/admin/broadcast_grup`, `/admin/grouppost`, `/admin/notifikasi`) tetap berfungsi penuh dan langsung membuka tab yang relevan tanpa breaking change.
+   - Perbaikan ReferenceError (`fetchGroups` di `GroupBroadcastPanel.jsx`) dan penataan styling tab Baileys di `/admin/wabot` agar responsive dan berpenampilan modern dengan Tailwind pills.
+
+
+### 2 November 2026 — Visi jaringan admin kampus nasional (belum lengkap)
+
+- Model organisasi yang disepakati: **Indonesia → Provinsi → Kampus/Universitas**. Universitas dan kampus adalah satu entitas; jangan membuat lapisan admin universitas terpisah. Satu provinsi menampung semua universitas/kampus dan cabangnya di wilayah itu.
+- Setiap kampus dapat memiliki kanal Instagram resmi `jualbelidikampus.<identitas-kampus>`. Superadmin mengelola seluruh provinsi/kampus; admin provinsi mengelola kampus dalam provinsinya sekaligus kurasi FYP provinsi; admin kampus mengelola kanal dan konten yang ditugaskan. Satu orang boleh mendapat beberapa cakupan.
+- Alur jualan: listing marketplace menjadi sumber data utama. Penjual dapat mengajukan promosi listing ke kanal Instagram kampus; materi ditinjau/diantrekan, tautan kembali ke listing. Kiriman dari Instagram dapat menjadi draft listing untuk dikonfirmasi dan ditinjau sebelum tayang. Integrasi DM hanya untuk alur jualan yang dimulai oleh pengguna; hindari DM promosi massal.
+- Fondasi parsial yang sudah ada: `/admin/owners` mengatur akun Auth, izin modul, dan scope `province`/`campus`; provinsi saat ini diturunkan dari `settings.campuses`. Pengaturan Instagram dan penerbitan konten/listing yang ada masih berlingkup global, belum menjadi direktori kanal per kampus. Belum ada konsol master provinsi/kampus, kurasi FYP per provinsi, antrean promosi lintas akun kampus, atau atribusi klik/kunjungan per kanal.
+- Ini adalah pekerjaan produk berikutnya, bukan fitur yang boleh dianggap selesai hanya karena scope owner dasar tersedia. Tahapan: (1) konsol organisasi dan penugasan admin, (2) direktori kanal Instagram kampus dan status integrasi, (3) antrean/moderasi/publikasi listing per kanal, (4) FYP yang dikurasi per provinsi, (5) atribusi kinerja. Perubahan skema Supabase harus dibuat sebagai migrasi SQL terurut dan ditinjau sebelum diterapkan ke produksi.
+
+### 2 November 2026 — Konsol struktur wilayah superadmin (lokal, belum dirilis)
+
+- Ditambahkan `/admin/organization` untuk mengelola katalog provinsi dan kampus/universitas secara terpisah, termasuk kampus cabang, akun Instagram per kampus, status aktif, pencarian kampus, dan filter provinsi. Provinsi eksplisit dapat dibuat sebelum kampus terdaftar.
+- Data memakai kunci JSON `settings.provinces` dan `settings.campuses` yang dibaca/ditulis server-side dengan pemeriksaan superadmin dan audit event. Tidak ada migrasi skema atau data produksi yang dijalankan. Katalog instalasi lama tetap terbaca dengan provinsi hasil turunan dari kampus sampai struktur eksplisit disimpan.
+- `/admin/owners` kini mengambil daftar provinsi eksplisit bila ada, sehingga owner dapat diberi cakupan untuk provinsi kosong yang sudah disiapkan. Penyimpanan katalog menolak penghapusan entitas tersimpan, kode duplikat, induk lintas provinsi, dan hubungan kampus induk yang berputar. Pengaturan kampus lama menjaga metadata cabang/Instagram ketika disimpan.
+- Ini fondasi kendali organisasi, bukan penyelesaian jaringan nasional: integrasi status/login tiap akun Instagram, antrian publikasi per kampus, kurasi FYP provinsi, serta atribusi trafik belum dibangun. Perubahan belum dipush atau dideploy. `npm run lint -- --no-cache` lulus tanpa warning/error; tidak ada broadcast atau pengiriman pesan yang dilakukan.
 
 
 
