@@ -12,9 +12,12 @@ import { DEFAULT_INVITE_CODE } from "@/lib/organisasi";
 export { angkaSetelan, adFeeFrom, soldFeeFrom, featuredRateFrom };
 
 export const DEFAULT_SETTINGS = {
+  // Katalog organisasi eksplisit: provinsi tetap bisa ada sebelum kampusnya
+  // terdaftar. Untuk instalasi lama, API masih menurunkan provinsi dari kampus.
+  provinces: [],
   campuses: [
-    { id: "usu", name: "Universitas Sumatera Utara", shortName: "USU", provinceId: "sumatera-utara", emailDomains: ["usu.ac.id"], active: true },
-    { id: "polmed", name: "Politeknik Negeri Medan", shortName: "POLMED", provinceId: "sumatera-utara", emailDomains: ["polmed.ac.id"], active: true },
+    { id: "usu", name: "Universitas Sumatera Utara", shortName: "USU", provinceId: "sumatera-utara", parentCampusId: "", instagramHandle: "", emailDomains: ["usu.ac.id"], active: true },
+    { id: "polmed", name: "Politeknik Negeri Medan", shortName: "POLMED", provinceId: "sumatera-utara", parentCampusId: "", instagramHandle: "", emailDomains: ["polmed.ac.id"], active: true },
   ],
   pricing: {
     freeMode: true,

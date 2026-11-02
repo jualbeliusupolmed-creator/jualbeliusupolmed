@@ -20,27 +20,29 @@ import { TabSapaan } from "@/components/baileys/TabSapaan";
 import { TabBroadcast } from "@/components/baileys/TabBroadcast";
 import { TabAntrean } from "@/components/baileys/TabAntrean";
 
+const TABS = [
+  "status", "statistik", "sapaan", "aksi", "antrean", "kapabilitas", "profil", "story", "chat", "grup",
+  "saluran", "kirim", "broadcast", "blocklist", "lid", "konteks", "log"
+];
 
-const TABS = ["status", "statistik", "sapaan", "aksi", "antrean", "kapabilitas", "profil", "story", "chat", "grup",
-              "saluran", "kirim", "broadcast", "blocklist", "lid", "konteks", "log"];
 const TAB_LABELS = {
-  status:    " Status",
-  statistik: " Statistik",
-  sapaan:    " Sapaan & Nomor",
-  aksi:      " Aksi",
-  antrean:   " Antrean",
-  kapabilitas: "Kemampuan",
-  profil:    " Profil Bot",
-  story:     " Status WA",
-  chat:      " Chat",
-  grup:      " Grup",
-  saluran:   " Saluran",
-  kirim:     " Kirim",
-  broadcast: " Broadcast",
-  blocklist: " Blocklist",
-  lid:       " LID Map",
-  konteks:   " Sesi Aktif",
-  log:       " Log",
+  status:      "⚡ Status",
+  statistik:   "📊 Statistik",
+  sapaan:      "💬 Sapaan & Nomor",
+  aksi:        "⚙️ Aksi Cepat",
+  antrean:     "⏳ Antrean",
+  kapabilitas: "🧩 Kemampuan",
+  profil:      "👤 Profil Bot",
+  story:       "📸 Status WA",
+  chat:        "✉️ Percakapan",
+  grup:        "👥 Grup",
+  saluran:     "📣 Saluran",
+  kirim:       "📤 Kirim Pesan",
+  broadcast:   "📢 Broadcast",
+  blocklist:   "🚫 Blocklist",
+  lid:         "📇 LID Map",
+  konteks:     "🔄 Sesi Aktif",
+  log:         "📜 Log Sistem",
 };
 
 export default function BaileysDashboard() {
@@ -48,33 +50,48 @@ export default function BaileysDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Tujuh belas sub-tab dalam satu baris yang bisa digeser — bentuk tab
-          Material: garis biru di bawah yang aktif, bukan blok hitam penuh. */}
-      <div className="g-tabbar -mx-1 rounded-lg">
-        {TABS.map(t => (
-          <button key={t} onClick={() => setTab(t)} className={`g-tab${tab === t ? " is-active" : ""}`}>
-            {TAB_LABELS[t]}
-          </button>
-        ))}
+      {/* Tab Navigasi Bot Responsif & Modern */}
+      <div className="border-b border-slate-200/80 pb-3 dark:border-white/10">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
+          {TABS.map((t) => {
+            const isActive = tab === t;
+            return (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTab(t)}
+                className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-bold transition-all ${
+                  isActive
+                    ? "bg-emerald-800 text-white shadow-md shadow-emerald-950/15"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                }`}
+              >
+                <span>{TAB_LABELS[t]}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {tab === "status"    && <TabStatus />}
-      {tab === "statistik" && <TabStatistik />}
-      {tab === "sapaan"    && <TabSapaan />}
-      {tab === "aksi"      && <TabAksi />}
-      {tab === "antrean" && <TabAntrean />}
-      {tab === "kapabilitas" && <TabKapabilitas />}
-      {tab === "profil"    && <TabProfil />}
-      {tab === "story"     && <TabStory />}
-      {tab === "chat"      && <TabChat />}
-      {tab === "grup"      && <TabGrup />}
-      {tab === "saluran"   && <TabSaluran />}
-      {tab === "kirim"     && <TabKirim />}
-      {tab === "broadcast" && <TabBroadcast />}
-      {tab === "blocklist" && <TabBlocklist />}
-      {tab === "lid"       && <TabLidMap />}
-      {tab === "konteks"   && <TabKonteks />}
-      {tab === "log"       && <TabLog />}
+      <div className="min-h-[400px]">
+        {tab === "status"      && <TabStatus />}
+        {tab === "statistik"   && <TabStatistik />}
+        {tab === "sapaan"      && <TabSapaan />}
+        {tab === "aksi"        && <TabAksi />}
+        {tab === "antrean"     && <TabAntrean />}
+        {tab === "kapabilitas" && <TabKapabilitas />}
+        {tab === "profil"      && <TabProfil />}
+        {tab === "story"       && <TabStory />}
+        {tab === "chat"        && <TabChat />}
+        {tab === "grup"        && <TabGrup />}
+        {tab === "saluran"     && <TabSaluran />}
+        {tab === "kirim"       && <TabKirim />}
+        {tab === "broadcast"   && <TabBroadcast />}
+        {tab === "blocklist"   && <TabBlocklist />}
+        {tab === "lid"         && <TabLidMap />}
+        {tab === "konteks"     && <TabKonteks />}
+        {tab === "log"         && <TabLog />}
+      </div>
     </div>
   );
 }

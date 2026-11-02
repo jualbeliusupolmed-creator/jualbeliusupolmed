@@ -89,8 +89,13 @@ export async function GET() {
     name: campus.name,
     shortName: campus.shortName,
     provinceId: getCampusProvinceId(campus),
+    parentCampusId: campus.parentCampusId || "",
+    instagramHandle: campus.instagramHandle || "",
   }));
-  const provinces = [...new Map(campuses.filter((campus) => campus.provinceId).map((campus) => [campus.provinceId, { id: campus.provinceId, name: campus.provinceId.replaceAll("-", " ").replace(/\b\w/g, (letter) => letter.toUpperCase()) }])).values()];
+  const derivedProvinces = [...new Map(campuses.filter((campus) => campus.provinceId).map((campus) => [campus.provinceId, { id: campus.provinceId, name: campus.provinceId.replaceAll("-", " ").replace(/\b\w/g, (letter) => letter.toUpperCase()) }])).values()];
+  const provinces = Array.isArray(settings.provinces) && settings.provinces.length
+    ? settings.provinces.filter((province) => province?.active !== false)
+    : derivedProvinces;
   return NextResponse.json({ owners, campuses, provinces });
 }
 
@@ -129,7 +134,9 @@ export async function PUT(req) {
     shortName: campus.shortName,
     provinceId: getCampusProvinceId(campus),
   }));
-  const provinces = new Set(campuses.map((campus) => campus.provinceId).filter(Boolean));
+  const provinces = new Set((Array.isArray(settings.provinces) && settings.provinces.length
+    ? settings.provinces.filter((province) => province?.active !== false).map((province) => String(province.id || "").toLowerCase())
+    : campuses.map((campus) => campus.provinceId)).filter(Boolean));
   const validScopes = [];
   for (const entry of scopesInput) {
     if (!entry || !["province", "campus"].includes(entry.type)) continue;
