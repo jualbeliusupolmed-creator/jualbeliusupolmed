@@ -15,10 +15,55 @@ const MAX_ATTEMPTS = 3;
 const fallbackChallenges = new Map();
 const fallbackLinks = new Map();
 
-/** Resolve the campus from the signed webhook recipient, never from chat input. */
+/** Resolve the campus and national organization scope from the signed webhook recipient, never from chat input. */
+export async function resolveInstagramOrganizationScope(recipientId) {
+  const recipient = String(recipientId || "").trim();
+  if (!recipient) return process.env.NODE_ENV === "test" ? { scopeType: "national", scopeId: null, campus: "Semua" } : null;
+
+  try {
+    const supa = getAdminClient();
+    const { data: socialAccount, error } = await supa
+      .from("organization_social_accounts")
+      .select("id, provider, scope_type, scope_id, province_id, university_id, universities(id, code, name)")
+      .eq("provider", "instagram")
+      .eq("external_account_id", recipient)
+      .neq("status", "inactive")
+      .maybeSingle();
+
+    if (!error && socialAccount) {
+      if (socialAccount.scope_type === "university" && socialAccount.universities?.code) {
+        return {
+          scopeType: "university",
+          scopeId: socialAccount.university_id,
+          universityId: socialAccount.university_id,
+          provinceId: socialAccount.province_id,
+          campus: socialAccount.universities.code,
+        };
+      }
+      if (socialAccount.scope_type === "province" && socialAccount.province_id) {
+        return {
+          scopeType: "province",
+          scopeId: socialAccount.province_id,
+          provinceId: socialAccount.province_id,
+          campus: "Semua",
+        };
+      }
+    }
+  } catch {
+    // Graceful fallback to legacy resolution below
+  }
+  return null;
+}
+
 export async function resolveInstagramCampus(recipientId) {
   const recipient = String(recipientId || "").trim();
   if (!recipient) return process.env.NODE_ENV === "test" ? "Semua" : null;
+
+  // 1. Coba resolusi relasional kanonikal terlebih dahulu
+  const orgScope = await resolveInstagramOrganizationScope(recipient);
+  if (orgScope?.campus) {
+    return orgScope.campus;
+  }
 
   try {
     const supa = getAdminClient();
@@ -35,7 +80,7 @@ export async function resolveInstagramCampus(recipientId) {
       return isAllowedCampus(mappedCampus, settings) ? mappedCampus : null;
     }
 
-    // Compatibilitas sementara untuk akun katalog gabungan yang sudah ada.
+    // Kompatibilitas sementara untuk akun katalog gabungan yang sudah ada.
     const catalogId = await resolveInstagramUserId("katalog");
     return catalogId && recipient === String(catalogId) ? "Semua" : null;
   } catch {
