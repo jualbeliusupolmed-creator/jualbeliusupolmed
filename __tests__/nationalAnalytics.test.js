@@ -221,6 +221,91 @@ describe("Phase 6: National Analytics & Multi-Provincial Rollout", () => {
       expect(json.ok).toBe(true);
       expect(json.checklist.instagram_setup).toBe(true);
     });
+
+    it("POST mark_all_sop marks all 7 checklist items true or false", async () => {
+      vi.mocked(getAdminActor).mockResolvedValueOnce({
+        role: "superadmin",
+        id: "admin-super",
+      });
+
+      const mockSupabase = {
+        from: vi.fn(() => ({
+          update: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          select: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({
+            data: {
+              province_id: "jawa-barat",
+              instagram_setup: true,
+              whatsapp_channel_setup: true,
+              admin_assigned: true,
+              first_university_verified: true,
+              dm_routing_tested: true,
+              channel_posting_tested: true,
+              bursa_transaction_tested: true,
+            },
+            error: null,
+          }),
+        })),
+      };
+
+      vi.mocked(getAdminClient).mockReturnValue(mockSupabase);
+
+      const res = await POST(
+        new Request("http://localhost/api/admin/analytics/national", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "mark_all_sop",
+            provinceId: "jawa-barat",
+            value: true,
+          }),
+        })
+      );
+
+      const json = await res.json();
+      expect(res.status).toBe(200);
+      expect(json.ok).toBe(true);
+      expect(json.checklist.first_university_verified).toBe(true);
+    });
+
+    it("POST update_notes updates notes on provincial rollout stage", async () => {
+      vi.mocked(getAdminActor).mockResolvedValueOnce({
+        role: "superadmin",
+        id: "admin-super",
+      });
+
+      const mockSupabase = {
+        from: vi.fn(() => ({
+          update: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          select: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({
+            data: { province_id: "dki-jakarta", notes: "Kolaborasi BEM UI dan Trisakti aktif" },
+            error: null,
+          }),
+        })),
+      };
+
+      vi.mocked(getAdminClient).mockReturnValue(mockSupabase);
+
+      const res = await POST(
+        new Request("http://localhost/api/admin/analytics/national", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "update_notes",
+            provinceId: "dki-jakarta",
+            notes: "Kolaborasi BEM UI dan Trisakti aktif",
+          }),
+        })
+      );
+
+      const json = await res.json();
+      expect(res.status).toBe(200);
+      expect(json.ok).toBe(true);
+      expect(json.checklist.notes).toContain("BEM UI");
+    });
   });
 });
 

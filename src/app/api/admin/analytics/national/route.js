@@ -114,6 +114,50 @@ export async function POST(req) {
       return NextResponse.json({ ok: true, checklist: data });
     }
 
+    if (action === "mark_all_sop") {
+      if (!provinceId) {
+        return NextResponse.json({ error: "Province ID wajib disertakan." }, { status: 400 });
+      }
+
+      const markValue = Boolean(value);
+      const updateData = {
+        instagram_setup: markValue,
+        whatsapp_channel_setup: markValue,
+        admin_assigned: markValue,
+        first_university_verified: markValue,
+        dm_routing_tested: markValue,
+        channel_posting_tested: markValue,
+        bursa_transaction_tested: markValue,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { data, error } = await supa
+        .from("provincial_rollout_checklists")
+        .update(updateData)
+        .eq("province_id", provinceId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return NextResponse.json({ ok: true, checklist: data });
+    }
+
+    if (action === "update_notes") {
+      if (!provinceId) {
+        return NextResponse.json({ error: "Province ID wajib disertakan." }, { status: 400 });
+      }
+
+      const { data, error } = await supa
+        .from("provincial_rollout_checklists")
+        .update({ notes: body.notes || null, updated_at: new Date().toISOString() })
+        .eq("province_id", provinceId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return NextResponse.json({ ok: true, checklist: data });
+    }
+
     return NextResponse.json({ error: "Aksi tidak dikenal" }, { status: 400 });
   } catch (err) {
     console.error("[POST /api/admin/analytics/national] Error:", err);

@@ -93,7 +93,7 @@ export const GROUPS = [
     label: "Keuangan & insight",
     items: [
       { key: "keuangan", label: "Keuangan" },
-      { key: "tren", label: "Tren & analitik", href: "/admin/analytics" },
+      { key: "tren", label: "Analitik Nasional & Rollout", href: "/admin/analytics" },
       { key: "audit", label: "Audit aktivitas" },
     ],
   },
