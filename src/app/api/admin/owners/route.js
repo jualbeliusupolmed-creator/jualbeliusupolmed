@@ -12,10 +12,30 @@ const MODULE_ACTIONS = {
   reports: new Set(["read", "manage"]),
   po: new Set(["read", "manage"]),
   users: new Set(["read", "manage"]),
-  finance: new Set(["read"]),
+  finance: new Set(["read", "manage"]),
   analytics: new Set(["read"]),
   content: new Set(["read", "review", "manage"]),
   whatsapp: new Set(["read", "manage"]),
+  social: new Set(["read", "manage"]),
+  distribution: new Set(["read", "manage"]),
+  organization: new Set(["read", "manage"]),
+  admin_requests: new Set(["read", "manage", "review"]),
+};
+
+export const DEFAULT_PROVINCE_PERMISSIONS = {
+  overview: ["read", "manage"],
+  marketplace: ["read", "review", "manage"],
+  users: ["read", "manage"],
+  reports: ["read", "manage"],
+  po: ["read", "manage"],
+  finance: ["read", "manage"],
+  analytics: ["read"],
+  content: ["read", "review", "manage"],
+  whatsapp: ["read", "manage"],
+  social: ["read", "manage"],
+  distribution: ["read", "manage"],
+  organization: ["read", "manage"],
+  admin_requests: ["read", "manage", "review"],
 };
 
 async function superadmin() {
@@ -23,15 +43,19 @@ async function superadmin() {
   return actor?.role === "superadmin" ? actor : null;
 }
 
-function normalizePermissions(input) {
-  const result = { overview: ["read"] };
+function normalizePermissions(input, isProvinceAdmin = false) {
+  const result = { overview: ["read", "manage"] };
   for (const [module, allowed] of Object.entries(MODULE_ACTIONS)) {
     const values = Array.isArray(input?.[module]) ? input[module] : [];
     const valid = [...new Set(values.filter((value) => allowed.has(value)))];
     if (valid.includes("manage") || valid.includes("review")) {
       if (!valid.includes("read")) valid.push("read");
     }
-    if (valid.length) result[module] = valid;
+    if (valid.length) {
+      result[module] = valid;
+    } else if (isProvinceAdmin && DEFAULT_PROVINCE_PERMISSIONS[module]) {
+      result[module] = [...DEFAULT_PROVINCE_PERMISSIONS[module]];
+    }
   }
   return result;
 }
@@ -128,7 +152,8 @@ export async function PUT(req) {
   }
   if (!validScopes.length) return NextResponse.json({ error: "Pilih sekurangnya satu provinsi atau kampus." }, { status: 400 });
 
-  const permissions = normalizePermissions(body.permissions);
+  const isProvinceAdmin = validScopes.some((scope) => scope.scope_type === "province");
+  const permissions = normalizePermissions(body.permissions, isProvinceAdmin);
   let invited;
   try {
     invited = await findOrInviteOwner(

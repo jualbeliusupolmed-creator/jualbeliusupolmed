@@ -72,9 +72,46 @@ export async function getAdminActor() {
   }
 }
 
+export const PROVINCE_ADMIN_MODULES = [
+  "overview",
+  "marketplace",
+  "users",
+  "reports",
+  "po",
+  "finance",
+  "analytics",
+  "content",
+  "whatsapp",
+  "social",
+  "distribution",
+  "organization",
+  "admin_requests",
+];
+
+export const UNIVERSITY_ADMIN_MODULES = [
+  "overview",
+  "marketplace",
+  "users",
+  "reports",
+  "content",
+  "social",
+];
+
 export function hasAdminPermission(actor, module, action = "read") {
   if (!actor) return false;
   if (actor.role === "superadmin") return true;
+
+  // Standar Otoritas Admin Provinsi Nasional:
+  // Semua admin provinsi otomatis memegang otoritas operasional, analitik, komunikasi & struktur wilayah untuk provinsinya
+  if (actor.roles?.some((role) => role.role_code === "province_admin")) {
+    if (PROVINCE_ADMIN_MODULES.includes(module)) return true;
+  }
+
+  // Standar Otoritas Admin Kampus / Universitas:
+  if (actor.roles?.some((role) => role.role_code === "university_admin")) {
+    if (UNIVERSITY_ADMIN_MODULES.includes(module)) return true;
+  }
+
   if (module === "admin_requests") return actor.roles?.some((role) => role.role_code === "province_admin") === true;
   if (module === "organization") {
     return (
