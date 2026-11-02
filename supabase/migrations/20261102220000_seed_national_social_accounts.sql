@@ -47,3 +47,4 @@ values
   ('instagram', 'ub', 'jualbelidikampus.ub', 'not_connected')
 on conflict (provider, scope_type, scope_id, handle) do update set
   updated_at = now();
+

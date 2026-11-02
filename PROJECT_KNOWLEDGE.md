@@ -87,9 +87,28 @@ Dashboard nasional harus membedakan angka yang benar-benar terkonfirmasi dari es
 
 ### Snapshot implementasi yang perlu dibaca bersama visi
 
-- Per 2 November 2026, kode nasional mencakup fondasi katalog relasional 6 tahap rollout, workflow approval admin universitas, manajemen akun multi-sosial (Instagram & WhatsApp), router inbound DM, arsitektur 3-tier WhatsApp, distribusi omnichannel terpusat, analitik performa nasional, dan standardisasi hak akses setara admin provinsi. Branch `main` berada pada commit `3697abc`, 57 test files vitest lulus 100% (281/281 tes), dan Next.js production build lulus 100% (95/95 rute terkompilasi optimal).
+- Per 2 November 2026, kode nasional mencakup fondasi katalog relasional 6 tahap rollout, workflow approval admin universitas, manajemen akun multi-sosial (Instagram & WhatsApp), router inbound DM, arsitektur 3-tier WhatsApp, distribusi omnichannel terpusat, analitik performa nasional, standardisasi hak akses setara admin provinsi, serta integrasi 20 WhatsApp Channel resmi dan notifikasi WhatsApp transaksional pendaftaran admin kampus. 60 test files vitest lulus 100% (297/297 tes), dan Next.js production build lulus 100% (96/96 rute terkompilasi optimal).
 - Ini belum sama dengan jaringan nasional yang beroperasi penuh. Pengujian admin lintas provinsi/kampus, publikasi nyata per akun, atribusi FYP, integrasi akun pengguna kanonikal, dan proses Open PO yang menyatu harus dinilai menurut bukti alur masing-masing.
 - Catatan status migrasi dan pengujian historis berada di bagian riwayat di bawah. Jika status produksi berubah, perbarui bagian tersebut dengan tanggal dan bukti verifikasi—jangan mengubah visi menjadi klaim implementasi.
+
+### Pembaruan 2 November 2026 — Integrasi WhatsApp Multi-Channel Nasional & Notifikasi Pendaftaran Admin Kampus
+
+- **Seeding 20 Akun WhatsApp Channel Resmi Nasional**:
+  - Diterapkan migrasi `20261102223000_seed_national_whatsapp_channels.sql` ke database remote Supabase.
+  - Mempersiapkan dan mendaftarkan 20 akun WhatsApp Channel (`whatsapp_channel`) resmi untuk seluruh 4 provinsi ekspansi (`dki-jakarta`, `jawa-barat`, `di-yogyakarta`, `jawa-timur`) dan 13 universitas target (`usu`, `ui`, `unj`, `trisakti`, `itb`, `unpad`, `ipb`, `ugm`, `uny`, `uii`, `its`, `unair`, `ub`).
+  - Total akun sosial relasional nasional kini mencakup 20 akun Instagram, 20 WhatsApp Channels, dan 1 WhatsApp Group Komunitas.
+  - Admin kampus dan provinsi dapat langsung menautkan JID live (`...@newsletter`) melalui tab WhatsApp di panel admin (`/admin/social`).
+- **Notifikasi WhatsApp Transaksional Pendaftaran Admin Kampus**:
+  - Endpoint `POST /api/admin-requests/apply` (`src/app/api/admin-requests/apply/route.js`) kini mengintegrasikan pengiriman WhatsApp otomatis via `sendWa`:
+    - Mengirim pesan konfirmasi resmi instan kepada calon admin kampus ke nomor WhatsApp yang didaftarkan.
+    - Mengirim pesan peringatan (alert) instan kepada superadmin nasional (`nomorAdmin`) memuat nama pendaftar, kampus, provinsi, email, WA, IG, serta tautan langsung ke dashboard review `/admin/admin-requests`.
+    - Dilengkapi penanganan fallback non-blocking (`.catch(() => {})`) sehingga ketiadaan gateway bot WhatsApp tidak menghalangi proses pengajuan pendaftaran.
+- **Penyempurnaan Filter Wilayah Tab WhatsApp Konsol Admin**:
+  - Tab 2 (WhatsApp) di `src/components/admin/SocialWorkspace.jsx` kini mendukung pemilihan wilayah/provinsi (`accountProvinceFilter`) dan pencarian saluran terintegrasi, menyelaraskan UX dengan tab Instagram.
+- **Verifikasi Kualitas & Produksi**:
+  - Penambahan mock `@/lib/fonnte` pada berkas pengujian `__tests__/campusAdminApplication.test.js`.
+  - 100% tes vitest lulus: 60 berkas pengujian, 297 tes berhasil tanpa regresi.
+  - Next.js production build (`npm run build`) sukses 100% (96/96 rute static & dynamic terkompilasi optimal).
 
 ### Pembaruan 2 November 2026 — Standardisasi Nasional Otoritas Setara Admin Seluruh Provinsi
 

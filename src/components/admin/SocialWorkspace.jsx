@@ -748,26 +748,52 @@ export default function SocialWorkspace() {
             </div>
           </div>
 
-          {/* Sub Filters */}
-          <div className="flex gap-2">
-            {[
-              { id: "all", label: "Semua Kanal" },
-              { id: "whatsapp_channel", label: "Saluran Resmi (Channels)" },
-              { id: "whatsapp_group", label: "Grup Komunitas (@g.us)" },
-              { id: "whatsapp_business", label: "Gateway Bisnis / Bot" },
-            ].map((f) => (
-              <button
-                key={f.id}
-                onClick={() => setWaFilter(f.id)}
-                className={`rounded-xl px-4 py-2 text-xs font-bold transition ${
-                  waFilter === f.id
-                    ? "bg-slate-900 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                }`}
+          {/* Sub Filters & Filter Wilayah WhatsApp */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap gap-2">
+              {[
+                { id: "all", label: "Semua Kanal" },
+                { id: "whatsapp_channel", label: "Saluran Resmi (Channels)" },
+                { id: "whatsapp_group", label: "Grup Komunitas (@g.us)" },
+                { id: "whatsapp_business", label: "Gateway Bisnis / Bot" },
+              ].map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => setWaFilter(f.id)}
+                  className={`rounded-xl px-4 py-2 text-xs font-bold transition ${
+                    waFilter === f.id
+                      ? "bg-slate-900 text-white"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                value={accountProvinceFilter}
+                onChange={(e) => setAccountProvinceFilter(e.target.value)}
+                className="h-9 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-bold text-slate-700 outline-none focus:border-indigo-500"
               >
-                {f.label}
-              </button>
-            ))}
+                <option value="all">Semua Provinsi</option>
+                {provincesList.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+              {accountProvinceFilter !== "all" && (
+                <button
+                  type="button"
+                  onClick={() => setAccountProvinceFilter("all")}
+                  className="h-9 rounded-xl px-2.5 text-xs font-bold text-rose-600 hover:bg-rose-50"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Channels Grid */}
@@ -778,7 +804,23 @@ export default function SocialWorkspace() {
           ) : (
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
               {waAccounts
-                .filter((a) => waFilter === "all" || a.provider === waFilter)
+                .filter((a) => {
+                  if (waFilter !== "all" && a.provider !== waFilter) return false;
+                  if (accountProvinceFilter !== "all") {
+                    const accProv = a.province_id || a.universities?.province_id;
+                    if (accProv !== accountProvinceFilter) return false;
+                  }
+                  if (searchAccountQuery.trim()) {
+                    const q = searchAccountQuery.trim().toLowerCase();
+                    const handleMatch = String(a.handle || "").toLowerCase().includes(q);
+                    const liveNameMatch = String(a.liveName || "").toLowerCase().includes(q);
+                    const univCodeMatch = String(a.universities?.code || "").toLowerCase().includes(q);
+                    const univNameMatch = String(a.universities?.name || "").toLowerCase().includes(q);
+                    const provNameMatch = String(a.provinces?.name || "").toLowerCase().includes(q);
+                    if (!handleMatch && !liveNameMatch && !univCodeMatch && !univNameMatch && !provNameMatch) return false;
+                  }
+                  return true;
+                })
                 .map((acc) => {
                   const isChannel = acc.provider === "whatsapp_channel";
                   const isGroup = acc.provider === "whatsapp_group";

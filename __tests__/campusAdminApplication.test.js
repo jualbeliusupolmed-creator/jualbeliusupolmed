@@ -13,6 +13,11 @@ vi.mock("@/lib/rateLimit", () => ({
   getClientIp: vi.fn(() => "127.0.0.1"),
 }));
 
+vi.mock("@/lib/fonnte", () => ({
+  sendWa: vi.fn(() => Promise.resolve({ ok: true })),
+  nomorAdmin: vi.fn(() => Promise.resolve("6281234567890")),
+}));
+
 const mockSingle = vi.fn();
 const mockMaybeSingle = vi.fn();
 const mockSelect = vi.fn(() => ({
@@ -182,3 +187,4 @@ describe("Formulir Pendaftaran Admin Kampus Mandiri & API Kampus", () => {
     expect(json.provinces.some((p) => p.id === "dki-jakarta")).toBe(true);
   });
 });
+
