@@ -803,6 +803,14 @@ cuma server.
     - **Performa & Sinkronisasi Favorit:** Mengalihkan revalidasi favorit pengguna di `/favorit` dari query client-side langsung ke endpoint batch `/api/listings/batch` dengan preservasi urutan lokal dan Zero Layout Shift.
     - **Typography & Icon Token:** Membersihkan artefak UTF-8 BOM pada `globals.css` serta mendefinisikan token skala teks padat (`.text-badge`, `.text-meta`, `.text-caption`) dan standardisasi dimensi ikon UI (`h-4 w-4`).
 
+*   **2 November 2026 — Perbaikan Workspace Marketplace Admin (/admin/marketplace) & Status Badge Visibility**
+    - **Akar Masalah Halaman Kosong:** Sebelumnya, halaman workspace `/admin/marketplace` dan komponen `MarketplaceWorkspace.jsx` mendefaultkan status filter ke `status = "pending"` ("Menunggu review"). Pada database produksi, 109 listing produk saat ini berstatus `active` dan 0 listing berstatus `pending`. Akibatnya, saat admin membuka halaman `/admin/marketplace`, antarmuka langsung memuat `status=pending`, menghasilkan 0 baris, dan menampilkan pesan *"Tidak ada iklan pada filter ini"*. Selain itu, filter kampus untuk admin regional (`actor.role !== "superadmin"`) sebelumnya hanya mencakup `campus IN (campuses)` sehingga tidak menyertakan 94 listing umum yang berkampus `"Semua"`.
+    - **Solusi & Penyempurnaan:**
+        - **Default Tampilan Aktif:** Mengubah initial view `/admin/marketplace` menjadi `active` (atau `aktif` untuk tab Toko) sehingga langsung memuat katalog iklan aktif saat dibuka.
+        - **Cakupan Kampus Regional & Umum:** Memperbarui query non-superadmin di `src/app/api/admin/marketplace/route.js` dan `src/app/api/admin/stores/route.js` agar menyertakan kampus umum (`Semua`) selain kampus yang ditugaskan kepada admin.
+        - **Live Count Badges:** Menambahkan penghitungan real-time per status (`statusCounts`) yang dikembalikan oleh API dan dirender sebagai chip angka pada setiap tab filter (`Aktif (109)`, `Semua status (172)`, `Menunggu review (0)`, dll.).
+        - **Header Dinamis:** Memperbarui indikator status header agar menampilkan badge hijau total iklan aktif jika tidak ada iklan yang menunggu review, dan badge kuning peringatan hanya ketika ada item pending.
+
 *   **15 Oktober 2026 — Pemisahan Antrean Pesan WA User & Broadcast Massal, Eliminasi Loop Nyangkut, dan Kontrol Pembatalan**
     - **Akar Masalah Ban & Loop Nyangkut:** 
       - Pada `bot-wa/index.js`, saat koneksi socket terputus atau terkena rate-limit sementara, `sesiBelumSiap` bernilai true. Logika lama melakukan `messageQueue.unshift(task)` berulang kali dengan delay statis 1 detik tanpa menaikkan counter `task.attempts`. Hal ini menimbulkan badai pengiriman berulang (infinite reconnect/resend storm) ribuan kali per jam yang memicu pemblokiran nomor WhatsApp oleh sistem anti-spam Meta.
