@@ -50,6 +50,26 @@ function googleLinkJson(body, status = 200) {
   return response;
 }
 
+async function isAuthorizedAdminInvite(user) {
+  if (!user?.id || !user.email_confirmed_at || (user.banned_until && new Date(user.banned_until) > new Date())) return false;
+  const userId = user.id.toLowerCase();
+  const superadminId = String(process.env.SUPERADMIN_AUTH_USER_ID || "").toLowerCase();
+  if (superadminId && userId === superadminId) return true;
+  const { data, error } = await getAdminClient().from("admin_memberships")
+    .select("user_id").eq("user_id", userId).eq("status", "active").maybeSingle();
+  return !error && !!data;
+}
+
+async function finishAdminInviteGet(request, user) {
+  if (!(await isAuthorizedAdminInvite(user))) return NextResponse.redirect(new URL("/admin?auth_error=not_authorized", request.url));
+  const response = NextResponse.redirect(new URL("/admin/overview", request.url));
+  response.headers.set("Cache-Control", "no-store, max-age=0");
+  response.headers.set("Referrer-Policy", "no-referrer");
+  setAdminCookieOnResponse(response, user.id.toLowerCase());
+  await getAdminClient().from("admin_audit_events").insert({ actor_id: user.id, action: "admin_invitation_accepted", target_id: user.id, metadata: {} });
+  return response;
+}
+
 async function linkGoogleToSeller(user, wa) {
   const providerList = user.app_metadata?.providers || [];
   if (
@@ -273,6 +293,7 @@ export async function GET(request) {
   // Fragment tidak pernah dikirim ke server. Jadi kita render HTML untuk memprosesnya
   // dan mengirimkannya ke endpoint POST kita sendiri.
   if (!code) {
+    const isAdminInvite = searchParams.get("admin_invite") === "1";
     return new NextResponse(`
       <!DOCTYPE html>
       <html lang="id">
@@ -298,7 +319,7 @@ export async function GET(request) {
               fetch("${origin}/auth/callback", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ access_token: accessToken, next: "${next}", google_link: ${isGoogleLinkFlow} })
+                body: JSON.stringify({ access_token: accessToken, next: "${next}", google_link: ${isGoogleLinkFlow}, admin_invite: ${isAdminInvite} })
               }).then(res => res.json()).then(data => {
                 if (data.success) {
                   window.location.href = data.redirectUrl || "${origin}${next}";
@@ -345,6 +366,8 @@ export async function GET(request) {
       return googleLinkRedirect(request, "success");
     }
 
+    if (searchParams.get("admin_invite") === "1") return finishAdminInviteGet(request, data.user);
+
     return await syncUserAndSetSession(data.user, origin, next);
   } catch (err) {
     console.error("[auth/callback GET] error:", err.message);
@@ -357,7 +380,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const { origin } = new URL(request.url);
-    const { access_token, next, google_link: requestedGoogleLinkFlow } = await request.json();
+    const { access_token, next, google_link: requestedGoogleLinkFlow, admin_invite: requestedAdminInvite } = await request.json();
 
     if (!access_token) {
       return NextResponse.json({ success: false, error: "No access token" }, { status: 400 });
@@ -399,6 +422,17 @@ export async function POST(request) {
         success: true,
         redirectUrl: `${origin}/dashboard?tab=profil&google_link=success`,
       });
+    }
+
+    if (requestedAdminInvite) {
+      if (!(await isAuthorizedAdminInvite(data.user))) {
+        return NextResponse.json({ success: false, redirectUrl: `${origin}/admin?auth_error=not_authorized` }, { status: 403 });
+      }
+      const response = NextResponse.json({ success: true, redirectUrl: `${origin}/admin/overview` });
+      setAdminCookieOnResponse(response, data.user.id.toLowerCase());
+      response.headers.set("Cache-Control", "no-store, max-age=0");
+      await getAdminClient().from("admin_audit_events").insert({ actor_id: data.user.id, action: "admin_invitation_accepted", target_id: data.user.id, metadata: {} });
+      return response;
     }
 
     const result = await syncUserAndSetSession(data.user, origin, next || "/");

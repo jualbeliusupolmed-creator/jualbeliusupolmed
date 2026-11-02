@@ -730,10 +730,7 @@ cuma server.
 
 - Aplikasi Meta Developer dibuat ulang (Type: Bisnis) dengan nama **KampusKita** (`3682182505281187`) tanpa mengaktifkan Marketing API yang mewajibkan verifikasi NIB.
 - Endpoint Webhook Instagram: `https://www.kampuskita.my.id/api/webhook/instagram`.
-- Token verifikasi: `META_WEBHOOK_VERIFY_TOKEN=kampuskita_webhook_2026` telah diuji (HTTP 200) dan tersimpan di Vercel & `.env.local`.
-- Kunci Rahasia Aplikasi: `META_APP_SECRET` tersimpan di Vercel & `.env.local`.
-- Akun Instagram terhubung: `@jualbelidikampus` (`17841430977104943`).
-- Token akses: System User Access Token permanen (never expires) dengan cakupan `instagram_basic`, `instagram_manage_messages`, `instagram_manage_comments`, dan `instagram_content_publish` tersimpan di `META_KATALOG_IG_ACCESS_TOKEN` dan `system_settings` Supabase.
+- Detail nilai verifikasi, app secret, access token, akun, dan lokasi penyimpanan kredensial dihapus dari dokumen proyek. Audit penyimpanan dan rotasi kredensial Meta perlu dilakukan di secret manager terkait; jangan menaruh nilainya di repo atau catatan proyek.
 - Webhook Meta diverifikasi sukses dan berlangganan field `messages`. Toggle langganan akun `@jualbelidikampus` diaktifkan.
 - Penyempurnaan alur pasang iklan Instagram DM:
   1. Moderasi otomatis dihilangkan: Iklan langsung berstatus `active` dan tayang di website seketika setelah dikonfirmasi pengguna tanpa penolakan AI.
@@ -806,6 +803,16 @@ cuma server.
 - Data memakai kunci JSON `settings.provinces` dan `settings.campuses` yang dibaca/ditulis server-side dengan pemeriksaan superadmin dan audit event. Tidak ada migrasi skema atau data produksi yang dijalankan. Katalog instalasi lama tetap terbaca dengan provinsi hasil turunan dari kampus sampai struktur eksplisit disimpan.
 - `/admin/owners` kini mengambil daftar provinsi eksplisit bila ada, sehingga owner dapat diberi cakupan untuk provinsi kosong yang sudah disiapkan. Penyimpanan katalog menolak penghapusan entitas tersimpan, kode duplikat, induk lintas provinsi, dan hubungan kampus induk yang berputar. Pengaturan kampus lama menjaga metadata cabang/Instagram ketika disimpan.
 - Ini fondasi kendali organisasi, bukan penyelesaian jaringan nasional: integrasi status/login tiap akun Instagram, antrian publikasi per kampus, kurasi FYP provinsi, serta atribusi trafik belum dibangun. Perubahan belum dipush atau dideploy. `npm run lint -- --no-cache` lulus tanpa warning/error; tidak ada broadcast atau pengiriman pesan yang dilakukan.
+
+### 2 November 2026 — RBAC relasional dan workflow Admin Universitas (lokal, belum dirilis)
+
+- Dibuat migrasi terurut `20261102150000_national_organization_rbac_requests.sql` untuk katalog provinsi, universitas, unit/cabang, domain email universitas, penugasan role dengan banyak scope, direktori identitas akun sosial, dan permintaan Admin Universitas. Migrasi mempertahankan field kampus lama untuk kompatibilitas dan menautkan listing/PO yang dapat dipetakan secara pasti.
+- Dibuat menu Struktur Wilayah superadmin dan Permintaan Admin Universitas. Admin provinsi dapat meminta admin untuk universitas dalam scope-nya; superadmin menyetujui/menolak; persetujuan sendiri ditolak; akun baru menerima undangan Supabase Auth dan cakupan role hanya universitas yang disetujui. Link undangan memakai URL situs konfigurasi.
+- Tabel baru dirancang untuk hanya diakses server melalui service role dengan RLS aktif dan akses client publik dicabut. Katalog akun sosial hanya mencatat identitas/status, bukan token OAuth. Penyimpanan dan penerbitan lewat Meta/WhatsApp, inbox DM, distribusi konten, FYP provinsi, analitik kanal, serta dashboard nasional terukur belum diimplementasikan.
+- Preflight metadata produksi mengonfirmasi versi `20261102150000` belum tercatat, tabel katalog baru belum ada, constraint unik katalog yang diperlukan tersedia, dan fungsi `replace_admin_membership` lama berstatus `SECURITY DEFINER`. Migrasi sengaja menggantinya dengan `SECURITY INVOKER`; RPC aplikasi memakai `service_role` yang memiliki grant tabel eksplisit sehingga fungsi tidak mewarisi hak pemilik dan tidak melewati RLS.
+- Sebelum penerapan, migrasi diperbaiki agar `parentCampusId` menjadi unit/cabang universitas induk, unit bersarang ikut diimpor, alias cabang yang tidak ambigu dipakai untuk tautan data lama dan scope admin, serta handle Instagram dan kanal WhatsApp dari katalog legacy dipertahankan sebagai akun belum tersambung. Parsing status aktif dibuat toleran terhadap nilai teks legacy. API penyimpanan tetap mencerminkan akun provinsi ke JSON lama untuk kompatibilitas.
+- Migration tetap belum diterapkan ke Supabase. Pemeriksaan preflight tidak membaca isi `settings`, sehingga konflik kode/data legacy belum dapat dipastikan; migrasi akan gagal secara atomik bila constraint unik atau foreign key tidak terpenuhi. Tidak ada perubahan RLS produksi, undangan email, push, atau deployment yang dilakukan. `npm test` lulus (51 file, 247 tes), `npm run lint -- --no-cache` lulus. SQL belum dieksekusi pada instance PostgreSQL/Supabase.
+- Alur `/admin/owners` kini dapat mengundang alamat email baru melalui Supabase Auth saat superadmin menambahkan admin provinsi/universitas; akun Auth yang sudah ada tetap langsung dapat diberi cakupan. Undangan diarahkan ke callback admin, hanya dikirim setelah cakupan divalidasi, dan hasil simpan membedakan undangan terkirim dari pemberian akses pada akun lama. Tidak ada undangan nyata yang dikirim saat pengembangan. Tes helper lulus (4/4) dan lint lulus.
 
 
 

@@ -17,6 +17,7 @@ const EMPTY = {
   pricing: { freeMode: true, listingDays: 14, adBarang: 0, adPoster: 0, bump: 0, featuredPerDay: 0, featuredMaxPerDay: 0, renewalFee: 0, proMonthly: 0 },
   areas: [],
   campuses: [],
+  organizationManagedRelationally: false,
 };
 const MONEY_FIELDS = [["adBarang", "Biaya iklan barang"], ["adPoster", "Biaya iklan poster"], ["bump", "Biaya naikkan iklan"], ["featuredPerDay", "Sorotan per hari"], ["featuredMaxPerDay", "Batas sorotan per hari"], ["renewalFee", "Biaya perpanjangan"], ["proMonthly", "Paket Pro bulanan"]];
 
@@ -53,10 +54,15 @@ export default function SettingsWorkspace() {
     setError("");
     setNotice("");
     try {
+      const { organizationManagedRelationally, campuses, ...settingsToSave } = form;
       await requestJson("/api/admin/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, areas: areasText.split(",").map((value) => value.trim()).filter(Boolean) }),
+        body: JSON.stringify({
+          ...settingsToSave,
+          ...(!organizationManagedRelationally ? { campuses } : {}),
+          areas: areasText.split(",").map((value) => value.trim()).filter(Boolean),
+        }),
       });
       setNotice("Pengaturan platform tersimpan.");
       await load();
@@ -92,7 +98,7 @@ export default function SettingsWorkspace() {
         <label className="text-xs font-bold text-slate-700">URL logo<input type="url" value={form.site.logoUrl} onChange={(event) => updateSite("logoUrl", event.target.value)} placeholder="https://..." className={inputClass} /></label>
         <label className="text-xs font-bold text-slate-700">URL favicon<input type="url" value={form.site.faviconUrl} onChange={(event) => updateSite("faviconUrl", event.target.value)} placeholder="https://..." className={inputClass} /></label>
       </div></section>
-      <section className="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5">
+      {form.organizationManagedRelationally ? <section className="rounded-2xl border border-slate-200/80 bg-emerald-50 p-4 sm:p-5"><h3 className="text-sm font-black text-emerald-950">Katalog provinsi dan universitas dipindahkan</h3><p className="mt-1 text-xs leading-relaxed text-emerald-900">Kelola provinsi, kanal sosial, universitas, dan unit/cabang melalui <a href="/admin/organization" className="font-extrabold underline">Struktur wilayah</a>. Pemisahan ini mencegah pengaturan umum menimpa data organisasi nasional.</p></section> : <section className="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div><h3 className="text-sm font-black">Katalog kampus</h3><p className="mt-1 max-w-2xl text-[11px] leading-relaxed text-slate-500">Atur nama kampus dan provinsi yang dipakai marketplace serta cakupan owner. Kampus yang sudah terdaftar dapat dinonaktifkan, tetapi tidak dihapus.</p><p className="mt-1 text-[11px] leading-relaxed text-slate-500">Domain email bersifat opsional dan hanya untuk verifikasi mahasiswa. Email kampus bukan syarat membuat akun atau masuk ke platform.</p></div>
           <button type="button" onClick={addCampus} className="inline-flex min-h-9 shrink-0 items-center justify-center rounded-full border border-emerald-200 px-3 text-[11px] font-extrabold text-emerald-800 hover:bg-emerald-50">Tambah kampus</button>
@@ -110,7 +116,7 @@ export default function SettingsWorkspace() {
           </article>)}
           {!form.campuses.length ? <div className="rounded-xl border border-dashed border-slate-300 px-4 py-8 text-center text-xs text-slate-400">Belum ada kampus. Tambahkan minimal satu kampus untuk mengatur cakupan.</div> : null}
         </div>
-      </section>
+      </section>}
       <section className="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5"><div className="mb-4"><h3 className="text-sm font-black">Biaya dan masa tayang</h3><p className="mt-1 text-[11px] text-slate-500">Nominal dalam rupiah. Biaya tersimpan mengikuti pengaturan aktif platform.</p></div><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <label className="flex min-h-11 items-center justify-between gap-3 rounded-xl bg-[#f5f8f6] px-3 text-xs font-bold text-slate-700 sm:col-span-2 lg:col-span-3"><span>Mode gratis</span><input type="checkbox" checked={form.pricing.freeMode} onChange={(event) => updatePricing("freeMode", event.target.checked)} className="h-4 w-4 accent-emerald-700" /></label>
         <label className="text-xs font-bold text-slate-700">Masa tayang iklan (hari)<input type="number" min="1" max="365" value={form.pricing.listingDays} onChange={(event) => updatePricing("listingDays", Number(event.target.value))} className={inputClass} /></label>

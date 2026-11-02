@@ -6,11 +6,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFocusTrap } from "@/lib/useFocusTrap";
 import {
   ArrowUpRight, Boxes, ChartNoAxesCombined, Clock, Flag, LayoutDashboard, LogOut, Megaphone, Menu, MessageCircle, MessagesSquare,
-  PanelLeftClose, Settings2, ShieldCheck, ShoppingBag, Smartphone, Users, WalletCards, BookOpen, X, MapPinned,
+  PanelLeftClose, Settings2, ShieldCheck, ShoppingBag, Smartphone, Users, WalletCards, BookOpen, X, MapPinned, ClipboardList,
 } from "lucide-react";
 
 const iconByKey = {
-  overview: LayoutDashboard, marketplace: ShoppingBag, reports: Flag, po: Boxes, owners: ShieldCheck, organization: MapPinned,
+  overview: LayoutDashboard, marketplace: ShoppingBag, reports: Flag, po: Boxes, owners: ShieldCheck, organization: MapPinned, admin_requests: ClipboardList,
   users: Users, finance: WalletCards, analytics: ChartNoAxesCombined, content: BookOpen, settings: Settings2, audit: ShieldCheck,
   wabot: Smartphone, antrean: Clock, notifikasi: MessageCircle, broadcast: Megaphone,
   broadcast_grup: MessagesSquare, grouppost: MessagesSquare,
@@ -32,6 +32,7 @@ const ADMIN_GROUPS = [
   { label: "Administrasi", items: [
     { key: "organization", label: "Struktur wilayah", href: "/admin/organization", superadmin: true },
     { key: "owners", label: "Akses owner", href: "/admin/owners", superadmin: true },
+    { key: "admin_requests", label: "Permintaan admin kampus", href: "/admin/admin-requests", superadmin: true, roles: ["province_admin"] },
     { key: "settings", label: "Pengaturan platform", href: "/admin/settings", permission: "settings" },
     { key: "audit", label: "Jejak perubahan", href: "/admin/audit", superadmin: true },
   ] },
@@ -44,6 +45,7 @@ const ADMIN_GROUPS = [
 
 function canShow(actor, item) {
   if (actor.role === "superadmin") return true;
+  if (item.roles?.some((roleCode) => actor.roles?.some((role) => role.role_code === roleCode))) return true;
   if (item.superadmin || !item.permission) return false;
   const grant = actor.permissions?.[item.permission];
   return Array.isArray(grant) ? grant.includes("read") || grant.includes("manage") : !!grant?.read || !!grant?.manage;
