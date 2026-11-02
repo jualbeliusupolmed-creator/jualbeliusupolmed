@@ -2,6 +2,30 @@
 
 Dokumen ini berisi peta pemahaman sistem, alur bisnis, daftar masalah, dan riwayat audit untuk proyek **Jual Beli USU Polmed**.
 
+### Pembaruan 2 November 2026 — Integrasi Penuh Admin Wilayah Sumatera Utara (USU & POLMED)
+
+- **Otoritas Regional Resmi Sumatera Utara**:
+  - Ditetapkan akun `ridhorobbipasi@gmail.com` (nama tampilan: `obi`, ID pengguna: `72065eca-3c8d-49df-b925-2b2f1bc8ae5c`) sebagai Admin Provinsi resmi Sumatera Utara dengan wewenang regional penuh.
+  - Memegang penugasan peran aktif (`admin_role_assignments`) bertingkat:
+    - `province_admin` untuk Provinsi Sumatera Utara (`sumatera-utara`).
+    - `university_admin` untuk Universitas Sumatera Utara (`usu`).
+    - `university_admin` untuk Politeknik Negeri Medan (`polmed`).
+  - Diberikan izin granular `["read", "manage", "review"]` di tabel `admin_memberships` untuk seluruh 13 modul: `overview`, `marketplace`, `content`, `po`, `finance`, `users`, `reports`, `whatsapp`, `social`, `distribution`, `organization`, `admin_requests`, dan `analytics`.
+- **Integrasi Akun Sosial & Kanal Komunikasi Regional**:
+  - Diperkaya data relasional `organization_social_accounts` untuk cakupan Sumatera Utara:
+    - Instagram Provinsi: `@jualbeli.usu` (scope: `province:sumatera-utara`).
+    - Instagram Kampus POLMED: `@polmed.menfes` (scope: `university:polmed`).
+    - WhatsApp Channel Provinsi: `https://whatsapp.com/channel/0029Vausu` (scope: `province:sumatera-utara`).
+    - WhatsApp Channel Kampus POLMED: `https://whatsapp.com/channel/0029Vapolmed` (scope: `university:polmed`).
+    - WhatsApp Group Komunitas: `Bursa Mahasiswa USU-POLMED` (`120363028192837192@g.us`, scope: `province:sumatera-utara`).
+  - Pembaruan catatan resmi pada checklist SOP peluncuran provinsi (`provincial_rollout_checklists` untuk `sumatera-utara`).
+- **Penyempurnaan Navigasi Workspace & Hak Akses Admin (`OwnerWorkspaceShell` & Otorisasi)**:
+  - Pembaharuan `src/lib/admin-access.js`: fungsi `hasAdminPermission` memperbolehkan `province_admin` mengakses dan mengelola modul `organization`.
+  - Pembaharuan `src/app/api/admin/organization/route.js`: endpoint `GET` dan `PUT` kini menggunakan `canAccessOrganization(actor)` yang mengizinkan `province_admin` membaca dan memutakhirkan struktur organisasi tanpa rintangan 403.
+  - Pembaharuan `src/components/admin/OwnerWorkspaceShell.jsx`:
+    - Menu `Struktur wilayah` (`/admin/organization`) dibuka untuk `province_admin`.
+    - Logika `canShow(actor, item)` diperbaiki agar menu tanpa pembatas izin khusus (seperti dashboard `overview`) otomatis tampil untuk seluruh admin terautentikasi.
+
 ### Pembaruan 2 November 2026 — Fase 6: National Analytics & Multi-Provincial Rollout
 
 - **Skema Database & Seeding Roadmap Multi-Provinsi**:
