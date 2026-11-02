@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   findSellerProfileByPhone,
   findSellerProfileBySession,
+  findSellerProfileByUserId,
 } from "./seller-profile-identity";
 
 function createSupabaseQuery() {
@@ -25,6 +26,26 @@ describe("seller profile identity lookup", () => {
 
     expect(supa.from).toHaveBeenCalledWith("seller_profiles");
     expect(supa.query.or).toHaveBeenCalledWith("wa.eq.081234567890,phone_wa.eq.081234567890");
+  });
+
+  it("resolves a UUID session against user_id and wa", async () => {
+    const supa = createSupabaseQuery();
+    const testUuid = "123e4567-e89b-12d3-a456-426614174000";
+
+    await findSellerProfileBySession(supa, testUuid, "wa,user_id");
+
+    expect(supa.from).toHaveBeenCalledWith("seller_profiles");
+    expect(supa.query.or).toHaveBeenCalledWith(`wa.eq.${testUuid},user_id.eq.${testUuid}`);
+  });
+
+  it("resolves directly by canonical user_id", async () => {
+    const supa = createSupabaseQuery();
+    const testUuid = "123e4567-e89b-12d3-a456-426614174000";
+
+    await findSellerProfileByUserId(supa, testUuid, "wa,user_id");
+
+    expect(supa.from).toHaveBeenCalledWith("seller_profiles");
+    expect(supa.query.eq).toHaveBeenCalledWith("user_id", testUuid);
   });
 
   it("keeps a Google profile session pinned to its stable profile identity", async () => {

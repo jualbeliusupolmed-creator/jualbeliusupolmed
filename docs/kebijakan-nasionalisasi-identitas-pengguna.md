@@ -104,3 +104,4 @@ erDiagram
 3. **Fase 3**: Pemutakhiran alur login Google dan verifikasi nomor WhatsApp untuk menautkan `user_id` secara deterministik ke `seller_profiles`.
 4. **Fase 4**: Penyelarasan modul verifikasi mahasiswa (`src/lib/studentVerification.js` & `/api/student/verify`) agar mencatat `verified_university_id` resmi dari katalog.
 5. **Fase 5**: Pemutakhiran UI profil pengguna (`UnifiedProfilePanel.jsx`) untuk menampilkan pemilihan kampus berbasis katalog nasional dengan pencarian cerdas.
+

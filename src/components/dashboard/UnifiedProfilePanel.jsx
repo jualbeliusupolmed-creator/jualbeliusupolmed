@@ -230,13 +230,15 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
         setProfil(data.profil);
         setKampusTersedia((current) => current.length || !data.profil.campus
           ? current
-          : [{ shortName: data.profil.campus, name: data.profil.campus }]);
+          : [{ shortName: data.profil.campus, name: data.profil.campus, id: data.profil.home_university_id || data.profil.campus.toLowerCase() }]);
         setF({
           avatar_url: data.profil.avatar_url || "",
           name: data.profil.name || "",
           anonymous_name: data.profil.anonymous_name || "",
           bio: data.profil.bio || "",
           campus: data.profil.campus || "",
+          home_university_id: data.profil.home_university_id || "",
+          home_unit_id: data.profil.home_unit_id || "",
           faculty: data.profil.faculty || "",
           store_name: data.profil.store_name || "",
           tagline: data.profil.tagline || "",
@@ -278,7 +280,12 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
           setKampusTersedia(data.campuses);
           setF((current) => {
             if (!current?.campus || !data.campuses.some((campus) => campus.shortName === current.campus)) {
-              return { ...current, campus: data.campuses[0].shortName, faculty: "" };
+              return {
+                ...current,
+                campus: data.campuses[0].shortName,
+                home_university_id: data.campuses[0].id,
+                faculty: "",
+              };
             }
             return current;
           });
@@ -379,25 +386,38 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
                       Punya Toko
                     </span>
                   )}
-                  {profil.student_verified ? (
+                  {profil.student_verified || profil.affiliation_status === "verified_student" ? (
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
                       <Icon.CheckCircle className="h-3.5 w-3.5" />
-                      Mahasiswa {profil.student_campus || "Kampus"} Terverifikasi
+                      Mahasiswa {profil.student_campus || profil.campus || "Kampus"} Terverifikasi
                     </span>
-                  ) : profil.student_verification_status === "pending" ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
-                      <Icon.Clock className="h-3.5 w-3.5" />
-                      KTM Sedang Ditinjau Admin
+                  ) : profil.affiliation_status === "alumni" ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-purple-100 px-2.5 py-1 text-[10px] font-bold text-purple-800 dark:bg-purple-950/40 dark:text-purple-300">
+                      <Icon.GraduationCap className="h-3.5 w-3.5" />
+                      Alumni {profil.campus || "Kampus"}
                     </span>
                   ) : (
-                    <button
-                      type="button"
-                      onClick={() => setModalVerifikasi(true)}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1 text-[10px] font-bold text-white shadow-xs transition-all"
-                    >
-                      <Icon.CheckCircle className="h-3.5 w-3.5" />
-                      + Verifikasi Mahasiswa (Centang Biru)
-                    </button>
+                    <>
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-2.5 py-1 text-[10px] font-medium text-sky-700 border border-sky-200/60 dark:bg-sky-950/30 dark:text-sky-300 dark:border-sky-800/40">
+                        <Icon.Building className="h-3.5 w-3.5" />
+                        Warga Komunitas {profil.campus || "Kampus"}
+                      </span>
+                      {profil.student_verification_status === "pending" ? (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+                          <Icon.Clock className="h-3.5 w-3.5" />
+                          KTM Sedang Ditinjau Admin
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setModalVerifikasi(true)}
+                          className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1 text-[10px] font-bold text-white shadow-xs transition-all"
+                        >
+                          <Icon.CheckCircle className="h-3.5 w-3.5" />
+                          + Verifikasi Mahasiswa (Centang Biru)
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
                 <p className="max-w-2xl text-xs leading-relaxed text-gray-600 dark:text-gray-300">
@@ -473,11 +493,23 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
           <Baris label="Nama anonim">
             <Teks nilai={f.anonymous_name} ubah={(v) => set("anonymous_name", v)} placeholder="Dipakai di Menfess" />
           </Baris>
-          <Baris label="Kampus">
+          <Baris label="Kampus Utama">
             <Pilih
               nilai={f.campus}
-              ubah={(v) => { set("campus", v); set("faculty", ""); }}
-              opsi={kampusTersedia.map((kampus) => kampus.shortName)}
+              ubah={(v) => {
+                set("campus", v);
+                set("faculty", "");
+                const target = kampusTersedia.find((k) => k.shortName === v || k.id === v);
+                if (target?.id) {
+                  set("home_university_id", target.id);
+                }
+              }}
+              opsi={kampusTersedia.map((kampus) => ({
+                id: kampus.shortName,
+                label: kampus.name && kampus.name !== kampus.shortName
+                  ? `${kampus.shortName} — ${kampus.name}`
+                  : kampus.shortName,
+              }))}
             />
           </Baris>
           <Baris label="Fakultas">
@@ -637,6 +669,9 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
             ...prev,
             student_verified: res.is_verified,
             student_verification_status: res.status,
+            affiliation_status: res.is_verified ? "verified_student" : (prev?.affiliation_status || "self_selected"),
+            verified_university_id: res.verified_university_id || prev?.verified_university_id,
+            home_university_id: res.home_university_id || prev?.home_university_id,
           }));
           onProfileUpdated?.(profil);
         }}

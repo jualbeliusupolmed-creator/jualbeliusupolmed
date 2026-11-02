@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSellerSession, isAdmin } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { detectCampusFromEmail, validateNim } from "@/lib/studentVerification";
+import { detectCampusFromEmail, resolveUniversityFromEmail, validateNim } from "@/lib/studentVerification";
 import { logger } from "@/lib/logger";
 import { rateLimitDistributed, getClientIp } from "@/lib/rateLimit";
 import { getSettings } from "@/lib/settings";
@@ -21,7 +21,7 @@ export async function GET() {
     const { data: profile, error } = await supabaseAdmin
       .from("seller_profiles")
       .select(
-        "student_verified, student_nim, student_campus, student_faculty, student_email, student_ktm_url, student_verification_status, student_verified_at"
+        "student_verified, student_nim, student_campus, student_faculty, student_email, student_ktm_url, student_verification_status, student_verified_at, home_university_id, home_unit_id, affiliation_status, verified_university_id"
       )
       .eq("wa", wa)
       .maybeSingle();
@@ -36,6 +36,7 @@ export async function GET() {
       data: profile || {
         student_verified: false,
         student_verification_status: "none",
+        affiliation_status: "self_selected",
       },
     });
   } catch (err) {
@@ -76,12 +77,27 @@ export async function POST(req) {
       }
 
       if (admin_action === "approve") {
+        const { data: targetProfile } = await supabaseAdmin
+          .from("seller_profiles")
+          .select("student_campus, campus, home_university_id")
+          .eq("wa", target_wa)
+          .maybeSingle();
+
+        let verifiedUnivId = targetProfile?.home_university_id || null;
+        if (!verifiedUnivId) {
+          const c = String(targetProfile?.student_campus || targetProfile?.campus || "").toLowerCase();
+          if (c === "usu") verifiedUnivId = "usu";
+          else if (c === "polmed") verifiedUnivId = "polmed";
+        }
+
         const { error } = await supabaseAdmin
           .from("seller_profiles")
           .update({
             student_verified: true,
             student_verification_status: "verified",
             student_verified_at: new Date().toISOString(),
+            affiliation_status: "verified_student",
+            verified_university_id: verifiedUnivId || null,
           })
           .eq("wa", target_wa);
 
@@ -96,6 +112,8 @@ export async function POST(req) {
           .update({
             student_verified: false,
             student_verification_status: "rejected",
+            affiliation_status: "self_selected",
+            verified_university_id: null,
           })
           .eq("wa", target_wa);
 
@@ -120,13 +138,26 @@ export async function POST(req) {
       return NextResponse.json({ error: "Pilihan kampus tidak valid atau sudah tidak tersedia." }, { status: 400 });
     }
 
+    // Ambil katalog universitas resmi untuk resolusi university_id kanonikal
+    const { data: univList } = await supabaseAdmin
+      .from("universities")
+      .select("id, code, name, email_domains, province_id, status")
+      .eq("status", "active");
+
+    const matchedUniv = (univList || []).find(
+      (u) =>
+        u.id.toLowerCase() === selectedCampus?.toLowerCase() ||
+        u.code.toLowerCase() === selectedCampus?.toLowerCase() ||
+        u.name.toLowerCase() === selectedCampus?.toLowerCase()
+    );
+
     let isAutoVerified = false;
     let newStatus = "pending";
 
     // Cek auto-verifikasi via email institusi
     const detectedCampus = detectCampusFromEmail(email, campuses);
-    if (detectedCampus) {
-      // Jika email adalah email resmi kampus, verifikasi otomatis
+    const detectedUniv = resolveUniversityFromEmail(email, univList || []);
+    if (detectedCampus || detectedUniv) {
       isAutoVerified = true;
       newStatus = "verified";
     } else if (!ktm_url) {
@@ -136,15 +167,20 @@ export async function POST(req) {
       );
     }
 
+    const resolvedUnivId = detectedUniv?.id || matchedUniv?.id || (detectedCampus ? detectedCampus.toLowerCase() : null);
+
     const updatePayload = {
       student_nim: nimValidation.sanitized,
-      student_campus: detectedCampus || selectedCampus,
+      student_campus: detectedCampus || matchedUniv?.code || selectedCampus,
       student_faculty: faculty ? String(faculty).trim().slice(0, 100) : null,
       student_email: email ? String(email).trim().toLowerCase() : null,
       student_ktm_url: ktm_url || null,
       student_verification_status: newStatus,
       student_verified: isAutoVerified,
       student_verified_at: isAutoVerified ? new Date().toISOString() : null,
+      home_university_id: resolvedUnivId || undefined,
+      verified_university_id: isAutoVerified ? resolvedUnivId : null,
+      affiliation_status: isAutoVerified ? "verified_student" : "pending_verification",
     };
 
     const { error: updateError } = await supabaseAdmin

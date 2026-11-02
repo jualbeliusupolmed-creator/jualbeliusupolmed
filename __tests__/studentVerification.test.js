@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   detectCampusFromEmail,
+  resolveUniversityFromEmail,
   validateNim,
   getStudentBadge,
 } from "@/lib/studentVerification";
@@ -25,6 +26,32 @@ describe("studentVerification helper", () => {
       expect(detectCampusFromEmail("budi@students.ui.ac.id")).toBeNull();
       expect(detectCampusFromEmail("")).toBeNull();
       expect(detectCampusFromEmail(null)).toBeNull();
+    });
+  });
+
+  describe("resolveUniversityFromEmail", () => {
+    const mockUniversities = [
+      { id: "usu", code: "USU", name: "Universitas Sumatera Utara", email_domains: ["usu.ac.id"] },
+      { id: "polmed", code: "POLMED", name: "Politeknik Negeri Medan", email_domains: ["polmed.ac.id"] },
+      { id: "ui", code: "UI", name: "Universitas Indonesia", email_domains: ["ui.ac.id"] },
+      { id: "inactive-univ", code: "INACT", status: "inactive", email_domains: ["inact.ac.id"] },
+    ];
+
+    it("resolves canonical university record from email", () => {
+      const usu = resolveUniversityFromEmail("mhs@students.usu.ac.id", mockUniversities);
+      expect(usu).not.toBeNull();
+      expect(usu.id).toBe("usu");
+      expect(usu.code).toBe("USU");
+
+      const ui = resolveUniversityFromEmail("mahasiswa@ui.ac.id", mockUniversities);
+      expect(ui).not.toBeNull();
+      expect(ui.id).toBe("ui");
+    });
+
+    it("ignores inactive universities or unrelated emails", () => {
+      expect(resolveUniversityFromEmail("user@inact.ac.id", mockUniversities)).toBeNull();
+      expect(resolveUniversityFromEmail("user@gmail.com", mockUniversities)).toBeNull();
+      expect(resolveUniversityFromEmail("", mockUniversities)).toBeNull();
     });
   });
 

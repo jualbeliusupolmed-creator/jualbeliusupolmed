@@ -51,3 +51,4 @@ describe("Instagram DM Logger Security - Sensitive Credential Sanitization", () 
     expect(sanitizeDmMessageText(null)).toBeNull();
   });
 });
+

@@ -5,8 +5,11 @@ export async function findSellerProfileBySession(supa, sessionIdentity, columns)
   const identifier = String(sessionIdentity || "").trim();
   if (!identifier) return { data: null, error: null };
   const phone = formatWa(identifier);
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(identifier);
   const filter = phone
     ? `wa.eq.${phone},phone_wa.eq.${phone}`
+    : isUuid
+    ? `wa.eq.${identifier},user_id.eq.${identifier}`
     : `wa.eq.${identifier}`;
   const result = await supa.from("seller_profiles").select(columns).or(filter).maybeSingle();
   if (result.error || result.data || phone) return result;
@@ -18,6 +21,12 @@ export async function findSellerProfileBySession(supa, sessionIdentity, columns)
     .maybeSingle();
   if (aliasError || !alias) return { data: null, error: aliasError || null };
   return supa.from("seller_profiles").select(columns).eq("wa", alias.canonical_wa).maybeSingle();
+}
+
+export async function findSellerProfileByUserId(supa, userId, columns) {
+  const id = String(userId || "").trim();
+  if (!id) return { data: null, error: null };
+  return supa.from("seller_profiles").select(columns).eq("user_id", id).maybeSingle();
 }
 
 export async function findSellerProfileByPhone(supa, phone, columns) {
