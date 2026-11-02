@@ -1,10 +1,37 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Building2, Check, CircleAlert, Camera, LoaderCircle, MapPin, Plus, Save, Search, ShieldCheck, X } from "lucide-react";
+import {
+  Building2, Check, CircleAlert, Camera, LoaderCircle, MapPin, Plus, Search,
+  ShieldCheck, X, Pencil, Layers, Radio, ExternalLink, ChevronRight, CheckCircle2,
+  AlertCircle, School, Eye
+} from "lucide-react";
 
-const EMPTY = { provinces: [], universities: [], catalogSource: "relational" };
-const inputClass = "mt-1.5 h-10 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none transition focus:border-emerald-600 focus:bg-white focus:ring-4 focus:ring-emerald-500/10";
+const EMPTY_CATALOG = { provinces: [], universities: [], catalogSource: "relational" };
+
+const inputStyle =
+  "mt-1.5 h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs outline-none transition focus:border-emerald-600 focus:bg-white focus:ring-4 focus:ring-emerald-500/10";
+
+function slugify(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function accountHandle(account) {
+  return typeof account === "string" ? account : account?.handle || "";
+}
+
+function connectionStatus(account) {
+  if (typeof account === "string") return account ? "Tercatat" : "Belum diatur";
+  if (account?.status === "connected") return "Terhubung";
+  if (account?.handle) return "Tercatat";
+  return "Belum diatur";
+}
 
 async function requestJson(url, options) {
   const response = await fetch(url, options);
@@ -13,123 +40,1222 @@ async function requestJson(url, options) {
   return body;
 }
 
-function slug(value) {
-  return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-}
-
-function accountHandle(account) {
-  return typeof account === "string" ? account : account?.handle || "";
-}
-
-function connectionStatus(account) {
-  if (typeof account === "string") return account ? "Belum terhubung" : "Belum diatur";
-  if (account?.status === "connected") return "Terhubung";
-  if (account?.handle) return "Tercatat, belum terhubung";
-  return "Belum diatur";
-}
-
 export default function OrganizationWorkspace() {
-  const [data, setData] = useState(EMPTY);
+  const [data, setData] = useState(EMPTY_CATALOG);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+
+  // Tabs: "overview" (Ringkasan Hierarki), "campuses" (Universitas & Cabang), "provinces" (Provinsi)
+  const [activeTab, setActiveTab] = useState("overview");
+
+  // Filters & Search
   const [campusQuery, setCampusQuery] = useState("");
   const [provinceFilter, setProvinceFilter] = useState("all");
 
-  async function load() {
+  // Modal State: null | { type: "add_campus" | "edit_campus" | "add_province" | "edit_province" | "manage_units", payload }
+  const [modal, setModal] = useState(null);
+  const [modalError, setModalError] = useState("");
+
+  async function loadData() {
     setLoading(true);
     setError("");
-    try { setData(await requestJson("/api/admin/organization", { cache: "no-store" })); }
-    catch (cause) { setError(cause.message); }
-    finally { setLoading(false); }
-  }
-  useEffect(() => { load(); }, []);
-
-  const activeProvinces = useMemo(() => data.provinces.filter((item) => item.active !== false), [data.provinces]);
-  const activeUniversities = useMemo(() => data.universities.filter((item) => item.active !== false), [data.universities]);
-  const activeUnits = useMemo(() => data.universities.reduce((count, item) => count + (item.units || []).filter((unit) => unit.active !== false).length, 0), [data.universities]);
-  const filteredUniversities = useMemo(() => data.universities.map((university, index) => ({ university, index })).filter(({ university }) => {
-    const matchesProvince = provinceFilter === "all" || university.provinceId === provinceFilter;
-    const haystack = `${university.name} ${university.code} ${accountHandle(university.accounts?.instagram)}`.toLowerCase();
-    return matchesProvince && haystack.includes(campusQuery.trim().toLowerCase());
-  }), [campusQuery, data.universities, provinceFilter]);
-  const provincesMissingChannels = data.provinces.filter((province) => province.active !== false && (!accountHandle(province.accounts?.instagram) || !accountHandle(province.accounts?.whatsapp_channel)));
-
-  function updateProvince(index, key, value) {
-    setData((current) => ({ ...current, provinces: current.provinces.map((item, i) => i === index ? { ...item, [key]: value } : item) }));
-  }
-  function updateProvinceAccount(index, key, value) {
-    setData((current) => ({ ...current, provinces: current.provinces.map((item, i) => i === index ? { ...item, accounts: { ...(item.accounts || {}), [key]: value } } : item) }));
-  }
-  function updateUniversity(index, key, value) {
-    setData((current) => ({ ...current, universities: current.universities.map((item, i) => i === index ? { ...item, [key]: value } : item) }));
-  }
-  function updateUniversityAccount(index, key, value) {
-    setData((current) => ({ ...current, universities: current.universities.map((item, i) => i === index ? { ...item, accounts: { ...(item.accounts || {}), [key]: value } } : item) }));
-  }
-  function updateUnit(universityIndex, unitIndex, key, value) {
-    setData((current) => ({ ...current, universities: current.universities.map((item, i) => i === universityIndex ? { ...item, units: item.units.map((unit, j) => j === unitIndex ? { ...unit, [key]: value } : unit) } : item) }));
-  }
-  function addProvince() {
-    setData((current) => ({ ...current, provinces: [...current.provinces, { id: "", name: "", active: false, accounts: { instagram: "", whatsapp_channel: "" }, _new: true }] }));
-  }
-  function addUniversity() {
-    setData((current) => ({ ...current, universities: [...current.universities, { id: "", code: "", name: "", provinceId: activeProvinces[0]?.id || "", active: true, accounts: { instagram: "", whatsapp_channel: "" }, units: [], emailDomains: [], _new: true }] }));
-  }
-  function addUnit(universityIndex) {
-    setData((current) => ({ ...current, universities: current.universities.map((item, i) => i === universityIndex ? { ...item, units: [...(item.units || []), { id: `${slug(item.id || item.code || "unit")}-unit-${Date.now()}`, code: "", name: "", active: true, _new: true }] } : item) }));
-  }
-  function removeNew(kind, index) {
-    setData((current) => ({ ...current, [kind]: current[kind].filter((item, i) => i !== index || !item._new) }));
-  }
-  function removeNewUnit(universityIndex, unitIndex) {
-    setData((current) => ({ ...current, universities: current.universities.map((item, i) => i === universityIndex ? { ...item, units: item.units.filter((unit, j) => j !== unitIndex || !unit._new) } : item) }));
+    try {
+      const res = await requestJson("/api/admin/organization", { cache: "no-store" });
+      setData(res);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  async function save(event) {
-    event.preventDefault();
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const activeProvinces = useMemo(
+    () => data.provinces.filter((p) => p.active !== false),
+    [data.provinces]
+  );
+  const activeUniversities = useMemo(
+    () => data.universities.filter((u) => u.active !== false),
+    [data.universities]
+  );
+  const totalUnits = useMemo(
+    () =>
+      data.universities.reduce(
+        (sum, u) => sum + (u.units || []).filter((un) => un.active !== false).length,
+        0
+      ),
+    [data.universities]
+  );
+
+  const filteredUniversities = useMemo(() => {
+    return data.universities.filter((u) => {
+      const matchesProvince = provinceFilter === "all" || u.provinceId === provinceFilter;
+      const haystack = `${u.name} ${u.code} ${accountHandle(u.accounts?.instagram)}`.toLowerCase();
+      return matchesProvince && haystack.includes(campusQuery.trim().toLowerCase());
+    });
+  }, [data.universities, provinceFilter, campusQuery]);
+
+  // Simpan perubahan ke backend
+  async function persistCatalog(nextProvinces, nextUniversities, successMsg = "Struktur organisasi diperbarui.") {
     setSaving(true);
     setError("");
     setNotice("");
     try {
-      const provinces = data.provinces.map((item) => ({ id: item.id, name: item.name, active: item.active !== false, accounts: { instagram: accountHandle(item.accounts?.instagram), whatsapp_channel: accountHandle(item.accounts?.whatsapp_channel) } }));
-      const universities = data.universities.map((item) => ({
-        id: item.id, code: item.code, name: item.name, provinceId: item.provinceId, active: item.active !== false,
-        accounts: { instagram: accountHandle(item.accounts?.instagram), whatsapp_channel: accountHandle(item.accounts?.whatsapp_channel) },
-        emailDomains: item.emailDomains || [],
-        units: (item.units || []).map((unit) => ({ id: unit.id, code: unit.code, name: unit.name, active: unit.active !== false })),
+      const payload = {
+        provinces: nextProvinces.map((p) => ({
+          id: p.id,
+          name: p.name,
+          active: p.active !== false,
+          accounts: {
+            instagram: accountHandle(p.accounts?.instagram),
+            whatsapp_channel: accountHandle(p.accounts?.whatsapp_channel),
+          },
+        })),
+        universities: nextUniversities.map((u) => ({
+          id: u.id,
+          code: u.code,
+          name: u.name,
+          provinceId: u.provinceId,
+          active: u.active !== false,
+          accounts: {
+            instagram: accountHandle(u.accounts?.instagram),
+            whatsapp_channel: accountHandle(u.accounts?.whatsapp_channel),
+          },
+          emailDomains: u.emailDomains || [],
+          units: (u.units || []).map((un) => ({
+            id: un.id,
+            code: un.code,
+            name: un.name,
+            active: un.active !== false,
+          })),
+        })),
+      };
+
+      await requestJson("/api/admin/organization", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      setData((prev) => ({
+        ...prev,
+        provinces: nextProvinces,
+        universities: nextUniversities,
       }));
-      await requestJson("/api/admin/organization", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ provinces, universities }) });
-      setNotice("Struktur organisasi tersimpan. Fitur lama tetap memakai nama kampus yang sama.");
-      await load();
-    } catch (cause) { setError(cause.message); }
-    finally { setSaving(false); }
+      setNotice(successMsg);
+      setModal(null);
+      await loadData();
+    } catch (err) {
+      if (modal) {
+        setModalError(err.message);
+      } else {
+        setError(err.message);
+      }
+    } finally {
+      setSaving(false);
+    }
   }
 
-  return <form onSubmit={save} className="space-y-5">
-    <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-[10px] font-extrabold uppercase tracking-[.16em] text-emerald-700">Kendali jaringan nasional</p><h2 className="mt-1 text-2xl font-black tracking-tight">Provinsi, universitas & kanal</h2><p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-500">Atur jaringan Indonesia → provinsi → universitas → unit/cabang. Akun provinsi wajib dicatat untuk Instagram dan WhatsApp; akun universitas opsional. Nama akun yang dicatat belum berarti integrasinya sudah terhubung.</p></div><span className="inline-flex min-h-9 items-center gap-2 self-start rounded-full bg-emerald-50 px-3 text-xs font-extrabold text-emerald-900 sm:self-auto"><ShieldCheck className="h-4 w-4" />Superadmin</span></header>
-    <div className="grid gap-3 sm:grid-cols-3">{[{ label: "Provinsi aktif", value: activeProvinces.length, icon: MapPin }, { label: "Universitas aktif", value: activeUniversities.length, icon: Building2 }, { label: "Unit/cabang aktif", value: activeUnits, icon: Building2 }].map(({ label, value, icon: Icon }) => <div key={label} className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm"><span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-50 text-emerald-800"><Icon className="h-5 w-5" /></span><div><p className="text-xl font-black">{value}</p><p className="text-xs font-semibold text-slate-500">{label}</p></div></div>)}</div>
-    {data.catalogSource === "legacy-settings" ? <div className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-xs leading-relaxed text-sky-900"><b>Data lama terdeteksi.</b> Daftar kampus dibaca dari pengaturan yang ada. Data baru akan disimpan ke katalog relasional setelah migrasi diterapkan.</div> : null}
-    {provincesMissingChannels.length ? <div className="flex gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-950"><CircleAlert className="mt-0.5 h-4 w-4 shrink-0" /><span><b>Penyiapan kanal provinsi belum lengkap.</b> Isi Instagram dan kanal WhatsApp untuk: {provincesMissingChannels.map((item) => item.name).join(", ")}. Akun yang dicatat tetap berstatus belum terhubung sampai integrasi resminya disiapkan.</span></div> : null}
-    {notice ? <div role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-bold text-emerald-800">{notice}</div> : null}
-    {error ? <div role="alert" className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-bold text-rose-800"><CircleAlert className="h-4 w-4 shrink-0" />{error}</div> : null}
-    {loading ? <div className="grid min-h-64 place-items-center text-slate-400"><LoaderCircle className="h-5 w-5 animate-spin" /></div> : <>
-      <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5"><div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><h3 className="text-sm font-black">1. Provinsi</h3><p className="mt-1 text-xs text-slate-500">Wilayah pusat. Setiap provinsi menyiapkan satu identitas Instagram dan kanal WhatsApp.</p></div><button type="button" onClick={addProvince} className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-full border border-emerald-200 px-3 text-xs font-extrabold text-emerald-800 hover:bg-emerald-50"><Plus className="h-4 w-4" />Tambah provinsi</button></div>
-        <div className="grid gap-3 md:grid-cols-2">{data.provinces.map((province, index) => <article key={`${province.id}-${index}`} className="rounded-xl border border-slate-200 bg-[#fbfcfb] p-3"><div className="mb-2 flex items-center justify-between"><span className="text-[10px] font-extrabold uppercase tracking-wide text-slate-400">Wilayah {index + 1}</span><div className="flex items-center gap-2"><label className="inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-600"><input type="checkbox" checked={province.active !== false} onChange={(event) => updateProvince(index, "active", event.target.checked)} className="h-4 w-4 accent-emerald-700" />Aktif</label>{province._new ? <button type="button" onClick={() => removeNew("provinces", index)} className="rounded-lg p-1.5 text-rose-600 hover:bg-rose-50" aria-label="Hapus baris provinsi"><X className="h-4 w-4" /></button> : null}</div></div><div className="grid gap-3 sm:grid-cols-2"><label className="text-[10px] font-bold text-slate-600">Kode provinsi<input required pattern="[a-z0-9]+(-[a-z0-9]+)*" value={province.id} disabled={!province._new} onChange={(event) => updateProvince(index, "id", event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))} placeholder="sumatera-utara" className={inputClass} /></label><label className="text-[10px] font-bold text-slate-600">Nama provinsi<input required maxLength={100} value={province.name} onChange={(event) => { updateProvince(index, "name", event.target.value); if (province._new && !province.id) updateProvince(index, "id", slug(event.target.value)); }} placeholder="Sumatera Utara" className={inputClass} /></label><label className="text-[10px] font-bold text-slate-600"><span className="inline-flex items-center gap-1"><Camera className="h-3.5 w-3.5" />Instagram provinsi</span><input required={province.active !== false} maxLength={31} value={accountHandle(province.accounts?.instagram)} onChange={(event) => updateProvinceAccount(index, "instagram", event.target.value.replace(/^@/, "").toLowerCase())} placeholder="jualbelidikampus.sumut" className={inputClass} /><span className="mt-1 block font-normal text-slate-400">{connectionStatus(province.accounts?.instagram)}</span></label><label className="text-[10px] font-bold text-slate-600">Kanal WhatsApp provinsi<input required={province.active !== false} maxLength={200} value={accountHandle(province.accounts?.whatsapp_channel)} onChange={(event) => updateProvinceAccount(index, "whatsapp_channel", event.target.value)} placeholder="Tautan undangan atau JID @newsletter" className={inputClass} /><span className="mt-1 block font-normal text-slate-400">{connectionStatus(province.accounts?.whatsapp_channel)}</span></label></div></article>)}{!data.provinces.length ? <div className="rounded-xl border border-dashed border-slate-300 px-4 py-8 text-center text-xs text-slate-400 md:col-span-2">Belum ada provinsi. Tambahkan wilayah untuk memulai.</div> : null}</div>
-      </section>
-      <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5"><div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><h3 className="text-sm font-black">2. Universitas dan unit/cabang</h3><p className="mt-1 text-xs text-slate-500">Universitas hanya didaftarkan sekali. Cabang menjadi unit di bawah universitas, bukan universitas duplikat.</p></div><button type="button" onClick={addUniversity} disabled={!activeProvinces.length} className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-full border border-emerald-200 px-3 text-xs font-extrabold text-emerald-800 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"><Plus className="h-4 w-4" />Tambah universitas</button></div>
-        {!activeProvinces.length ? <div className="mb-3 rounded-xl bg-amber-50 p-3 text-xs font-semibold text-amber-900">Aktifkan satu provinsi terlebih dahulu.</div> : null}
-        <div className="mb-3 grid gap-2 sm:grid-cols-[1fr_240px]"><label className="relative block"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input value={campusQuery} onChange={(event) => setCampusQuery(event.target.value)} placeholder="Cari universitas, kode, atau Instagram" className={`${inputClass} pl-9`} /></label><select value={provinceFilter} onChange={(event) => setProvinceFilter(event.target.value)} className={inputClass}><option value="all">Semua provinsi ({data.universities.length})</option>{data.provinces.map((province) => <option key={province.id} value={province.id}>{province.name}</option>)}</select></div>
-        <div className="space-y-3">{filteredUniversities.map(({ university, index }) => {
-          const province = data.provinces.find((item) => item.id === university.provinceId);
-          return <article key={`${university.id}-${index}`} className="rounded-xl border border-slate-200 bg-[#fbfcfb] p-3 sm:p-4"><div className="mb-3 flex flex-wrap items-center justify-between gap-2"><div className="flex min-w-0 items-center gap-2"><span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-emerald-50 text-[10px] font-black text-emerald-800">{index + 1}</span><p className="truncate text-xs font-extrabold text-slate-700">{university.name || "Universitas baru"}</p></div><div className="flex items-center gap-3"><label className="inline-flex items-center gap-2 text-[10px] font-bold text-slate-600"><input type="checkbox" checked={university.active !== false} onChange={(event) => updateUniversity(index, "active", event.target.checked)} className="h-4 w-4 accent-emerald-700" />Aktif</label>{university._new ? <button type="button" onClick={() => removeNew("universities", index)} className="rounded-lg px-2 py-1 text-[10px] font-bold text-rose-700 hover:bg-rose-50">Hapus baris</button> : null}</div></div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><label className="text-[10px] font-bold text-slate-600">Kode universitas<input required pattern="[a-z0-9]+(-[a-z0-9]+)*" value={university.id} disabled={!university._new} onChange={(event) => updateUniversity(index, "id", event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))} placeholder="usu" className={inputClass} /></label><label className="text-[10px] font-bold text-slate-600">Nama resmi<input required maxLength={160} value={university.name} onChange={(event) => { updateUniversity(index, "name", event.target.value); if (university._new && !university.id) updateUniversity(index, "id", slug(event.target.value)); }} placeholder="Universitas ..." className={inputClass} /></label><label className="text-[10px] font-bold text-slate-600">Kode singkat<input required maxLength={32} value={university.code} onChange={(event) => updateUniversity(index, "code", event.target.value.toUpperCase())} placeholder="USU" className={inputClass} /></label><label className="text-[10px] font-bold text-slate-600">Provinsi<select required value={university.provinceId} onChange={(event) => updateUniversity(index, "provinceId", event.target.value)} className={inputClass}><option value="">Pilih provinsi</option>{activeProvinces.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label><label className="text-[10px] font-bold text-slate-600"><span className="inline-flex items-center gap-1"><Camera className="h-3.5 w-3.5" />Instagram universitas (opsional)</span><input maxLength={31} value={accountHandle(university.accounts?.instagram)} onChange={(event) => updateUniversityAccount(index, "instagram", event.target.value.replace(/^@/, "").toLowerCase())} placeholder="jualbelidikampus.usu" className={inputClass} /><span className="mt-1 block font-normal text-slate-400">{connectionStatus(university.accounts?.instagram)}</span></label><label className="text-[10px] font-bold text-slate-600">Kanal WhatsApp universitas (opsional)<input maxLength={200} value={accountHandle(university.accounts?.whatsapp_channel)} onChange={(event) => updateUniversityAccount(index, "whatsapp_channel", event.target.value)} placeholder="Tautan atau JID kanal" className={inputClass} /><span className="mt-1 block font-normal text-slate-400">{connectionStatus(university.accounts?.whatsapp_channel)}</span></label><div className="sm:col-span-2 lg:col-span-3"><div className="mb-2 flex items-center justify-between"><p className="text-[10px] font-extrabold uppercase tracking-wide text-slate-500">Unit / cabang · {province?.name || "provinsi belum dipilih"}</p><button type="button" onClick={() => addUnit(index)} className="inline-flex min-h-8 items-center gap-1 rounded-full px-2 text-[10px] font-extrabold text-emerald-800 hover:bg-emerald-50"><Plus className="h-3.5 w-3.5" />Tambah unit</button></div>{(university.units || []).length ? <div className="space-y-2">{university.units.map((unit, unitIndex) => <div key={`${unit.id}-${unitIndex}`} className="grid items-end gap-2 rounded-lg border border-slate-200 bg-white p-2 sm:grid-cols-[1fr_1fr_auto_auto]"><label className="text-[10px] font-bold text-slate-600">Kode unit<input required pattern="[a-z0-9]+(-[a-z0-9]+)*" value={unit.id} disabled={!unit._new} onChange={(event) => updateUnit(index, unitIndex, "id", event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))} placeholder={`${university.id || "universitas"}-cabang`} className={inputClass} /></label><label className="text-[10px] font-bold text-slate-600">Nama cabang<input required maxLength={160} value={unit.name} onChange={(event) => { updateUnit(index, unitIndex, "name", event.target.value); if (unit._new && !unit.code) updateUnit(index, unitIndex, "code", slug(event.target.value).toUpperCase().replaceAll("-", "_")); }} placeholder="Kampus ..." className={inputClass} /></label><label className="mb-2 inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-600"><input type="checkbox" checked={unit.active !== false} onChange={(event) => updateUnit(index, unitIndex, "active", event.target.checked)} className="h-4 w-4 accent-emerald-700" />Aktif</label>{unit._new ? <button type="button" onClick={() => removeNewUnit(index, unitIndex)} className="mb-1 grid h-8 w-8 place-items-center rounded-lg text-rose-600 hover:bg-rose-50" aria-label="Hapus unit baru"><X className="h-4 w-4" /></button> : <span />}</div>)}</div> : <p className="rounded-lg border border-dashed border-slate-200 bg-white px-3 py-4 text-center text-[10px] text-slate-400">Belum ada cabang/unit terdaftar.</p>}</div><label className="text-[10px] font-bold text-slate-600 sm:col-span-2 lg:col-span-3">Domain email kampus (opsional)<input value={(university.emailDomains || []).join(", ")} onChange={(event) => updateUniversity(index, "emailDomains", event.target.value.split(",").map((domain) => domain.trim()).filter(Boolean))} placeholder="contoh.ac.id" className={inputClass} /><span className="mt-1 block font-normal text-slate-400">Bukan syarat pendaftaran akun.</span></label></div>
-          </article>;
-        })}{!data.universities.length ? <div className="rounded-xl border border-dashed border-slate-300 px-4 py-8 text-center text-xs text-slate-400">Belum ada universitas terdaftar.</div> : null}{data.universities.length && !filteredUniversities.length ? <div className="rounded-xl border border-dashed border-slate-300 px-4 py-8 text-center text-xs text-slate-400">Tidak ada universitas yang cocok.</div> : null}</div>
-      </section>
-      <section className="rounded-2xl border border-sky-200 bg-sky-50 p-4 sm:p-5"><h3 className="text-sm font-black text-sky-950">Status yang ditampilkan</h3><div className="mt-3 grid gap-3 text-xs leading-relaxed text-sky-900 sm:grid-cols-3"><p><b>Identitas tercatat:</b> nama akun atau kanal sudah tersimpan sebagai tujuan.</p><p><b>Belum terhubung:</b> publikasi otomatis belum diotorisasi melalui integrasi resmi.</p><p><b>Akses owner:</b> cakupan provinsi dan universitas dikelola terpisah melalui menu Akses owner.</p></div></section>
-      <div className="sticky bottom-3 z-10 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:px-4"><p className="text-[11px] leading-relaxed text-slate-500">Provinsi, universitas, dan cabang tersimpan tidak dihapus; nonaktifkan jika tidak digunakan.</p><button disabled={saving} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-emerald-800 px-5 text-xs font-extrabold text-white hover:bg-emerald-900 disabled:opacity-60">{saving ? <LoaderCircle className="h-4 w-4 animate-spin" /> : notice ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}{saving ? "Menyimpan…" : "Simpan struktur"}</button></div>
-    </>}
-  </form>;
+  // Toggle Aktif Provinsi
+  function toggleProvinceStatus(provinceId) {
+    const updated = data.provinces.map((p) =>
+      p.id === provinceId ? { ...p, active: !p.active } : p
+    );
+    persistCatalog(updated, data.universities, "Status provinsi diperbarui.");
+  }
+
+  // Toggle Aktif Universitas
+  function toggleUniversityStatus(uniId) {
+    const updated = data.universities.map((u) =>
+      u.id === uniId ? { ...u, active: !u.active } : u
+    );
+    persistCatalog(data.provinces, updated, "Status universitas diperbarui.");
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* ── HEADER ── */}
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-[10px] font-extrabold uppercase tracking-[.16em] text-emerald-700">
+            Kendali Jaringan Nasional
+          </p>
+          <h1 className="mt-1 text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+            Struktur Wilayah & Kampus
+          </h1>
+          <p className="mt-1 text-xs text-slate-500 max-w-2xl">
+            Hierarki terstruktur Indonesia ➔ Provinsi ➔ Universitas ➔ Unit/Cabang. Pusat Single Source of Truth
+            untuk penempatan produk, multi-account Instagram, dan routing komunikasi.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex min-h-8 items-center gap-1.5 rounded-full bg-emerald-50 px-3 text-xs font-extrabold text-emerald-900 border border-emerald-200/60">
+            <ShieldCheck className="h-3.5 w-3.5 text-emerald-700" /> Superadmin Pusat
+          </span>
+        </div>
+      </header>
+
+      {/* ── STATS RINGKAS ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs">
+          <span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-50 text-emerald-800">
+            <MapPin className="h-5 w-5" />
+          </span>
+          <div>
+            <p className="text-xl font-black text-slate-900">{activeProvinces.length}</p>
+            <p className="text-[11px] font-bold text-slate-500">Provinsi Aktif</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs">
+          <span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-50 text-emerald-800">
+            <Building2 className="h-5 w-5" />
+          </span>
+          <div>
+            <p className="text-xl font-black text-slate-900">{activeUniversities.length}</p>
+            <p className="text-[11px] font-bold text-slate-500">Universitas Terdaftar</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs">
+          <span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-50 text-emerald-800">
+            <Layers className="h-5 w-5" />
+          </span>
+          <div>
+            <p className="text-xl font-black text-slate-900">{totalUnits}</p>
+            <p className="text-[11px] font-bold text-slate-500">Unit / Cabang Kampus</p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── NOTIFIKASI / ALERTS ── */}
+      {notice && (
+        <div role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-bold text-emerald-900 flex items-center justify-between">
+          <span>{notice}</span>
+          <button onClick={() => setNotice("")} className="text-emerald-700 hover:text-emerald-950 p-1">
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+
+      {error && (
+        <div role="alert" className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-bold text-rose-800">
+          <CircleAlert className="h-4 w-4 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* ── TAB NAVIGATION ── */}
+      <div className="flex border-b border-slate-200 text-xs font-bold">
+        <button
+          onClick={() => setActiveTab("overview")}
+          className={`flex items-center gap-2 border-b-2 px-4 py-2.5 transition ${
+            activeTab === "overview"
+              ? "border-emerald-700 text-emerald-800"
+              : "border-transparent text-slate-500 hover:text-slate-800"
+          }`}
+        >
+          <Layers className="h-4 w-4" />
+          Hierarki Nasional
+        </button>
+        <button
+          onClick={() => setActiveTab("campuses")}
+          className={`flex items-center gap-2 border-b-2 px-4 py-2.5 transition ${
+            activeTab === "campuses"
+              ? "border-emerald-700 text-emerald-800"
+              : "border-transparent text-slate-500 hover:text-slate-800"
+          }`}
+        >
+          <School className="h-4 w-4" />
+          Universitas & Unit ({data.universities.length})
+        </button>
+        <button
+          onClick={() => setActiveTab("provinces")}
+          className={`flex items-center gap-2 border-b-2 px-4 py-2.5 transition ${
+            activeTab === "provinces"
+              ? "border-emerald-700 text-emerald-800"
+              : "border-transparent text-slate-500 hover:text-slate-800"
+          }`}
+        >
+          <MapPin className="h-4 w-4" />
+          Provinsi & Kanal ({data.provinces.length})
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="grid min-h-60 place-items-center rounded-2xl border border-slate-200/80 bg-white p-8">
+          <div className="flex flex-col items-center gap-2 text-slate-400">
+            <LoaderCircle className="h-6 w-6 animate-spin text-emerald-700" />
+            <p className="text-xs font-bold">Memuat struktur wilayah...</p>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* ══════════════════════════════════════════════════
+              TAB 1: HIERARKI NASIONAL (VISUAL TREE VIEW)
+             ══════════════════════════════════════════════════ */}
+          {activeTab === "overview" && (
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-sm font-black text-slate-900">Peta Jaringan Kampus Nasional</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Struktur pohon organisasi dari tingkat provinsi hingga unit cabang kampus.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab("campuses")}
+                    className="text-xs font-bold text-emerald-700 hover:underline inline-flex items-center gap-1"
+                  >
+                    Kelola Kampus <ChevronRight className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {data.provinces.map((province) => {
+                    const uniList = data.universities.filter((u) => u.provinceId === province.id);
+                    const igProv = accountHandle(province.accounts?.instagram);
+                    const waProv = accountHandle(province.accounts?.whatsapp_channel);
+
+                    return (
+                      <div
+                        key={province.id}
+                        className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 transition hover:border-slate-300"
+                      >
+                        {/* Provinsi Header Bar */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200">
+                          <div className="flex items-center gap-2.5">
+                            <span className="grid h-7 w-7 place-items-center rounded-lg bg-emerald-800 text-white font-black text-xs">
+                              {province.name.slice(0, 2).toUpperCase()}
+                            </span>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h4 className="text-sm font-black text-slate-900">{province.name}</h4>
+                                <span className="text-[10px] font-mono text-slate-400">({province.id})</span>
+                                <span
+                                  className={`rounded-full px-2 py-0.5 text-[9px] font-black ${
+                                    province.active !== false
+                                      ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                                      : "bg-slate-200 text-slate-600"
+                                  }`}
+                                >
+                                  {province.active !== false ? "Aktif" : "Nonaktif"}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Sosmed Provinsi */}
+                          <div className="flex flex-wrap items-center gap-2 text-xs">
+                            <span className="inline-flex items-center gap-1 rounded-md bg-white border border-slate-200 px-2 py-1 text-[11px] font-bold text-slate-700">
+                              <Camera className="h-3 w-3 text-pink-600" />
+                              {igProv ? `@${igProv}` : <span className="text-slate-400">IG Belum diatur</span>}
+                            </span>
+                            <span className="inline-flex items-center gap-1 rounded-md bg-white border border-slate-200 px-2 py-1 text-[11px] font-bold text-slate-700">
+                              <Radio className="h-3 w-3 text-emerald-600" />
+                              {waProv ? "Kanal WA Aktif" : <span className="text-slate-400">WA Belum diatur</span>}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Kampus-kampus dalam provinsi */}
+                        <div className="mt-3 pl-2 sm:pl-4 space-y-2.5">
+                          {uniList.length === 0 ? (
+                            <p className="text-xs text-slate-400 italic py-2">
+                              Belum ada universitas yang terdaftar pada provinsi ini.
+                            </p>
+                          ) : (
+                            uniList.map((uni) => {
+                              const igUni = accountHandle(uni.accounts?.instagram);
+                              const waUni = accountHandle(uni.accounts?.whatsapp_channel);
+                              const activeUnitsList = (uni.units || []).filter((un) => un.active !== false);
+
+                              return (
+                                <div
+                                  key={uni.id}
+                                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl bg-white p-3 border border-slate-200/80 shadow-xs"
+                                >
+                                  <div className="flex items-start gap-2.5 min-w-0">
+                                    <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-slate-100 text-[11px] font-black text-slate-800">
+                                      {uni.code || uni.id.toUpperCase().slice(0, 3)}
+                                    </span>
+                                    <div className="min-w-0">
+                                      <div className="flex flex-wrap items-center gap-1.5">
+                                        <p className="text-xs font-black text-slate-900 truncate">{uni.name}</p>
+                                        <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-600">
+                                          {uni.code}
+                                        </span>
+                                        {!uni.active && (
+                                          <span className="rounded bg-rose-50 px-1.5 py-0.5 text-[9px] font-bold text-rose-700">
+                                            Nonaktif
+                                          </span>
+                                        )}
+                                      </div>
+                                      {/* Unit list */}
+                                      <div className="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-slate-500">
+                                        <span className="font-semibold text-slate-600">Cabang/Unit:</span>
+                                        {activeUnitsList.length ? (
+                                          activeUnitsList.map((un) => (
+                                            <span
+                                              key={un.id}
+                                              className="rounded-sm bg-slate-50 border border-slate-200/60 px-1.5 py-0.2 text-[10px]"
+                                            >
+                                              {un.name}
+                                            </span>
+                                          ))
+                                        ) : (
+                                          <span className="italic text-slate-400">Hanya kampus utama</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-2 text-xs shrink-0 self-end sm:self-auto">
+                                    {igUni && (
+                                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
+                                        <Camera className="h-2.5 w-2.5 text-pink-500" />
+                                        @{igUni}
+                                      </span>
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={() => setModal({ type: "edit_campus", payload: { ...uni } })}
+                                      className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-800"
+                                      title="Sunting data kampus"
+                                    >
+                                      <Pencil className="h-3.5 w-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════
+              TAB 2: KELOLA UNIVERSITAS & UNIT
+             ══════════════════════════════════════════════════ */}
+          {activeTab === "campuses" && (
+            <div className="space-y-4">
+              {/* Toolbar */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+                <div className="flex flex-1 items-center gap-2">
+                  <div className="relative flex-1 max-w-sm">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                    <input
+                      value={campusQuery}
+                      onChange={(e) => setCampusQuery(e.target.value)}
+                      placeholder="Cari universitas, kode, atau IG..."
+                      className="h-9 w-full rounded-xl border border-slate-200 bg-white pl-8.5 pr-3 text-xs outline-none focus:border-emerald-600"
+                    />
+                  </div>
+                  <select
+                    value={provinceFilter}
+                    onChange={(e) => setProvinceFilter(e.target.value)}
+                    className="h-9 rounded-xl border border-slate-200 bg-white px-2.5 text-xs outline-none focus:border-emerald-600"
+                  >
+                    <option value="all">Semua Provinsi ({data.universities.length})</option>
+                    {data.provinces.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setModal({
+                      type: "add_campus",
+                      payload: {
+                        id: "",
+                        code: "",
+                        name: "",
+                        provinceId: activeProvinces[0]?.id || "",
+                        active: true,
+                        accounts: { instagram: "", whatsapp_channel: "" },
+                        emailDomains: [],
+                        units: [],
+                      },
+                    })
+                  }
+                  className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-xl bg-emerald-800 px-3.5 text-xs font-extrabold text-white hover:bg-emerald-900 shadow-xs"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Tambah Universitas
+                </button>
+              </div>
+
+              {/* List Kartu Universitas Terbungkus */}
+              <div className="grid grid-cols-1 gap-3">
+                {filteredUniversities.map((uni) => {
+                  const province = data.provinces.find((p) => p.id === uni.provinceId);
+                  const ig = accountHandle(uni.accounts?.instagram);
+                  const wa = accountHandle(uni.accounts?.whatsapp_channel);
+                  const units = uni.units || [];
+
+                  return (
+                    <article
+                      key={uni.id}
+                      className="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs transition hover:border-slate-300"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                        <div className="flex items-start gap-3 min-w-0">
+                          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-50 text-emerald-800 font-black text-xs">
+                            {uni.code || uni.id.toUpperCase().slice(0, 3)}
+                          </span>
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h4 className="text-sm font-black text-slate-900">{uni.name}</h4>
+                              <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-black text-slate-700">
+                                {uni.code}
+                              </span>
+                              <span
+                                className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${
+                                  uni.active !== false
+                                    ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                                    : "bg-rose-50 text-rose-700 border border-rose-200"
+                                }`}
+                              >
+                                {uni.active !== false ? "Aktif" : "Nonaktif"}
+                              </span>
+                            </div>
+                            <p className="mt-0.5 text-xs text-slate-500">
+                              Provinsi: <span className="font-semibold text-slate-700">{province?.name || uni.provinceId}</span> · ID:{" "}
+                              <span className="font-mono">{uni.id}</span>
+                            </p>
+
+                            {/* Integrasi Sosmed & Kanal */}
+                            <div className="mt-3 flex flex-wrap items-center gap-2">
+                              <span className="inline-flex items-center gap-1 rounded-md bg-slate-50 border border-slate-200 px-2 py-1 text-[11px] font-medium text-slate-700">
+                                <Camera className="h-3 w-3 text-pink-600" />
+                                {ig ? `@${ig}` : <span className="text-slate-400">IG opsional (belum ada)</span>}
+                              </span>
+                              <span className="inline-flex items-center gap-1 rounded-md bg-slate-50 border border-slate-200 px-2 py-1 text-[11px] font-medium text-slate-700">
+                                <Radio className="h-3 w-3 text-emerald-600" />
+                                {wa ? "Kanal WA Khusus" : <span className="text-slate-400">WA opsional (belum ada)</span>}
+                              </span>
+                              {uni.emailDomains?.length ? (
+                                <span className="rounded-md bg-slate-50 border border-slate-200 px-2 py-1 text-[11px] font-mono text-slate-600">
+                                  {uni.emailDomains.join(", ")}
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="flex flex-wrap sm:flex-col items-end gap-1.5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                          <button
+                            type="button"
+                            onClick={() => setModal({ type: "edit_campus", payload: { ...uni } })}
+                            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50"
+                          >
+                            <Pencil className="h-3 w-3" /> Sunting
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setModal({ type: "manage_units", payload: { ...uni } })}
+                            className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50/50 px-2.5 py-1.5 text-xs font-bold text-emerald-800 hover:bg-emerald-50"
+                          >
+                            <Layers className="h-3 w-3" /> Kelola Cabang ({units.length})
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => toggleUniversityStatus(uni.id)}
+                            className={`text-[10px] font-bold px-2 py-1 transition hover:underline ${
+                              uni.active !== false ? "text-slate-500" : "text-emerald-700"
+                            }`}
+                          >
+                            {uni.active !== false ? "Nonaktifkan" : "Aktifkan"}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Display Units */}
+                      {units.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-slate-100">
+                          <p className="text-[10px] font-extrabold uppercase tracking-wide text-slate-400 mb-1.5">
+                            Daftar Unit Kampus / Cabang ({units.length}):
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {units.map((unit) => (
+                              <span
+                                key={unit.id}
+                                className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs border ${
+                                  unit.active !== false
+                                    ? "bg-slate-50 border-slate-200 text-slate-700"
+                                    : "bg-slate-100 border-slate-200 text-slate-400 line-through"
+                                }`}
+                              >
+                                <span className="font-bold">{unit.name}</span>
+                                <span className="text-[10px] font-mono text-slate-400">({unit.code})</span>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
+
+                {filteredUniversities.length === 0 && (
+                  <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-xs text-slate-400">
+                    Tidak ada universitas yang cocok dengan filter.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════
+              TAB 3: KELOLA PROVINSI & KANAL
+             ══════════════════════════════════════════════════ */}
+          {activeTab === "provinces" && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-black text-slate-900">Daftar Provinsi Resmi</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Setiap provinsi wajib memiliki akun Instagram resmi dan tautan/JID WhatsApp channel.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setModal({
+                      type: "add_province",
+                      payload: {
+                        id: "",
+                        name: "",
+                        active: true,
+                        accounts: { instagram: "", whatsapp_channel: "" },
+                      },
+                    })
+                  }
+                  className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-xl bg-emerald-800 px-3.5 text-xs font-extrabold text-white hover:bg-emerald-900 shadow-xs"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Tambah Provinsi
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {data.provinces.map((prov) => {
+                  const ig = accountHandle(prov.accounts?.instagram);
+                  const wa = accountHandle(prov.accounts?.whatsapp_channel);
+                  const campusCount = data.universities.filter((u) => u.provinceId === prov.id).length;
+
+                  return (
+                    <article
+                      key={prov.id}
+                      className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs space-y-3"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2.5">
+                          <span className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-100/60 font-black text-emerald-800 text-xs">
+                            {prov.name.slice(0, 2).toUpperCase()}
+                          </span>
+                          <div>
+                            <h4 className="text-sm font-black text-slate-900">{prov.name}</h4>
+                            <p className="text-[11px] font-mono text-slate-400">Kode: {prov.id}</p>
+                          </div>
+                        </div>
+
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[9px] font-black ${
+                            prov.active !== false
+                              ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                              : "bg-slate-100 text-slate-500"
+                          }`}
+                        >
+                          {prov.active !== false ? "Aktif" : "Nonaktif"}
+                        </span>
+                      </div>
+
+                      <div className="rounded-xl bg-slate-50 p-3 space-y-2 border border-slate-100 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="flex items-center gap-1.5 font-bold text-slate-700">
+                            <Camera className="h-3.5 w-3.5 text-pink-600" /> Instagram:
+                          </span>
+                          <span className="font-mono text-slate-800">
+                            {ig ? `@${ig}` : <span className="text-rose-500 font-sans">Belum diisi</span>}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="flex items-center gap-1.5 font-bold text-slate-700">
+                            <Radio className="h-3.5 w-3.5 text-emerald-600" /> Kanal WA:
+                          </span>
+                          <span className="truncate max-w-[200px] text-right font-mono text-slate-800">
+                            {wa || <span className="text-rose-500 font-sans">Belum diisi</span>}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 text-[11px] text-slate-500">
+                          <span>Universitas di provinsi:</span>
+                          <span className="font-bold text-slate-800">{campusCount} Kampus</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1">
+                        <button
+                          type="button"
+                          onClick={() => toggleProvinceStatus(prov.id)}
+                          className="text-[11px] font-bold text-slate-500 hover:text-slate-800"
+                        >
+                          {prov.active !== false ? "Nonaktifkan" : "Aktifkan"}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setModal({ type: "edit_province", payload: { ...prov } })}
+                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50"
+                        >
+                          <Pencil className="h-3 w-3" /> Sunting
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ══════════════════════════════════════════════════
+          MODAL: TAMBAH / SUNTING UNIVERSITAS
+         ══════════════════════════════════════════════════ */}
+      {(modal?.type === "add_campus" || modal?.type === "edit_campus") && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-5 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="text-sm font-black text-slate-900">
+                {modal.type === "add_campus" ? "Tambah Universitas Baru" : "Sunting Data Universitas"}
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setModal(null);
+                  setModalError("");
+                }}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {modalError && (
+              <div className="mt-3 rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs font-bold text-rose-800">
+                {modalError}
+              </div>
+            )}
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const form = modal.payload;
+                const nextUni =
+                  modal.type === "add_campus"
+                    ? [...data.universities, form]
+                    : data.universities.map((u) => (u.id === form.id ? form : u));
+                persistCatalog(data.provinces, nextUni, "Data universitas berhasil disimpan.");
+              }}
+              className="mt-4 space-y-3"
+            >
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block text-[11px] font-bold text-slate-700">
+                  Kode ID (Slug)
+                  <input
+                    required
+                    pattern="[a-z0-9]+(-[a-z0-9]+)*"
+                    value={modal.payload.id}
+                    disabled={modal.type === "edit_campus"}
+                    onChange={(e) =>
+                      setModal({
+                        ...modal,
+                        payload: { ...modal.payload, id: slugify(e.target.value) },
+                      })
+                    }
+                    placeholder="usu"
+                    className={inputStyle}
+                  />
+                </label>
+
+                <label className="block text-[11px] font-bold text-slate-700">
+                  Nama Singkat
+                  <input
+                    required
+                    maxLength={32}
+                    value={modal.payload.code}
+                    onChange={(e) =>
+                      setModal({
+                        ...modal,
+                        payload: { ...modal.payload, code: e.target.value.toUpperCase() },
+                      })
+                    }
+                    placeholder="USU"
+                    className={inputStyle}
+                  />
+                </label>
+              </div>
+
+              <label className="block text-[11px] font-bold text-slate-700">
+                Nama Resmi Universitas
+                <input
+                  required
+                  maxLength={160}
+                  value={modal.payload.name}
+                  onChange={(e) => {
+                    const name = e.target.value;
+                    const id = modal.type === "add_campus" && !modal.payload.id ? slugify(name) : modal.payload.id;
+                    setModal({ ...modal, payload: { ...modal.payload, name, id } });
+                  }}
+                  placeholder="Universitas Sumatera Utara"
+                  className={inputStyle}
+                />
+              </label>
+
+              <label className="block text-[11px] font-bold text-slate-700">
+                Provinsi Wilayah
+                <select
+                  required
+                  value={modal.payload.provinceId}
+                  onChange={(e) =>
+                    setModal({
+                      ...modal,
+                      payload: { ...modal.payload, provinceId: e.target.value },
+                    })
+                  }
+                  className={inputStyle}
+                >
+                  <option value="">Pilih Provinsi</option>
+                  {activeProvinces.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <label className="block text-[11px] font-bold text-slate-700">
+                  Instagram (Opsional)
+                  <input
+                    maxLength={31}
+                    value={accountHandle(modal.payload.accounts?.instagram)}
+                    onChange={(e) =>
+                      setModal({
+                        ...modal,
+                        payload: {
+                          ...modal.payload,
+                          accounts: {
+                            ...(modal.payload.accounts || {}),
+                            instagram: e.target.value.replace(/^@/, "").toLowerCase(),
+                          },
+                        },
+                      })
+                    }
+                    placeholder="usu.menfes"
+                    className={inputStyle}
+                  />
+                </label>
+
+                <label className="block text-[11px] font-bold text-slate-700">
+                  Kanal WhatsApp (Opsional)
+                  <input
+                    maxLength={200}
+                    value={accountHandle(modal.payload.accounts?.whatsapp_channel)}
+                    onChange={(e) =>
+                      setModal({
+                        ...modal,
+                        payload: {
+                          ...modal.payload,
+                          accounts: {
+                            ...(modal.payload.accounts || {}),
+                            whatsapp_channel: e.target.value,
+                          },
+                        },
+                      })
+                    }
+                    placeholder="https://whatsapp.com/channel/..."
+                    className={inputStyle}
+                  />
+                </label>
+              </div>
+
+              <label className="block text-[11px] font-bold text-slate-700">
+                Domain Email Kampus (Dipisah Koma)
+                <input
+                  value={(modal.payload.emailDomains || []).join(", ")}
+                  onChange={(e) =>
+                    setModal({
+                      ...modal,
+                      payload: {
+                        ...modal.payload,
+                        emailDomains: e.target.value
+                          .split(",")
+                          .map((d) => d.trim())
+                          .filter(Boolean),
+                      },
+                    })
+                  }
+                  placeholder="usu.ac.id, students.usu.ac.id"
+                  className={inputStyle}
+                />
+              </label>
+
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setModal(null);
+                    setModalError("");
+                  }}
+                  className="rounded-xl px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="rounded-xl bg-emerald-800 px-5 py-2 text-xs font-extrabold text-white hover:bg-emerald-900 disabled:opacity-60 inline-flex items-center gap-1.5"
+                >
+                  {saving && <LoaderCircle className="h-3.5 w-3.5 animate-spin" />}
+                  {saving ? "Menyimpan..." : "Simpan Kampus"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════
+          MODAL: TAMBAH / SUNTING PROVINSI
+         ══════════════════════════════════════════════════ */}
+      {(modal?.type === "add_province" || modal?.type === "edit_province") && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl border border-slate-200">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="text-sm font-black text-slate-900">
+                {modal.type === "add_province" ? "Tambah Provinsi Baru" : "Sunting Data Provinsi"}
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setModal(null);
+                  setModalError("");
+                }}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {modalError && (
+              <div className="mt-3 rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs font-bold text-rose-800">
+                {modalError}
+              </div>
+            )}
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const form = modal.payload;
+                const nextProv =
+                  modal.type === "add_province"
+                    ? [...data.provinces, form]
+                    : data.provinces.map((p) => (p.id === form.id ? form : p));
+                persistCatalog(nextProv, data.universities, "Data provinsi berhasil disimpan.");
+              }}
+              className="mt-4 space-y-3"
+            >
+              <label className="block text-[11px] font-bold text-slate-700">
+                Kode ID Provinsi (Slug)
+                <input
+                  required
+                  pattern="[a-z0-9]+(-[a-z0-9]+)*"
+                  value={modal.payload.id}
+                  disabled={modal.type === "edit_province"}
+                  onChange={(e) =>
+                    setModal({
+                      ...modal,
+                      payload: { ...modal.payload, id: slugify(e.target.value) },
+                    })
+                  }
+                  placeholder="sumatera-utara"
+                  className={inputStyle}
+                />
+              </label>
+
+              <label className="block text-[11px] font-bold text-slate-700">
+                Nama Resmi Provinsi
+                <input
+                  required
+                  maxLength={100}
+                  value={modal.payload.name}
+                  onChange={(e) => {
+                    const name = e.target.value;
+                    const id = modal.type === "add_province" && !modal.payload.id ? slugify(name) : modal.payload.id;
+                    setModal({ ...modal, payload: { ...modal.payload, name, id } });
+                  }}
+                  placeholder="Sumatera Utara"
+                  className={inputStyle}
+                />
+              </label>
+
+              <label className="block text-[11px] font-bold text-slate-700">
+                Instagram Resmi Provinsi (Wajib untuk Akun Aktif)
+                <input
+                  required={modal.payload.active !== false}
+                  maxLength={31}
+                  value={accountHandle(modal.payload.accounts?.instagram)}
+                  onChange={(e) =>
+                    setModal({
+                      ...modal,
+                      payload: {
+                        ...modal.payload,
+                        accounts: {
+                          ...(modal.payload.accounts || {}),
+                          instagram: e.target.value.replace(/^@/, "").toLowerCase(),
+                        },
+                      },
+                    })
+                  }
+                  placeholder="jualbelidikampus"
+                  className={inputStyle}
+                />
+              </label>
+
+              <label className="block text-[11px] font-bold text-slate-700">
+                Kanal WhatsApp Provinsi (Wajib untuk Akun Aktif)
+                <input
+                  required={modal.payload.active !== false}
+                  maxLength={200}
+                  value={accountHandle(modal.payload.accounts?.whatsapp_channel)}
+                  onChange={(e) =>
+                    setModal({
+                      ...modal,
+                      payload: {
+                        ...modal.payload,
+                        accounts: {
+                          ...(modal.payload.accounts || {}),
+                          whatsapp_channel: e.target.value,
+                        },
+                      },
+                    })
+                  }
+                  placeholder="https://whatsapp.com/channel/... atau @newsletter"
+                  className={inputStyle}
+                />
+              </label>
+
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setModal(null);
+                    setModalError("");
+                  }}
+                  className="rounded-xl px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="rounded-xl bg-emerald-800 px-5 py-2 text-xs font-extrabold text-white hover:bg-emerald-900 disabled:opacity-60 inline-flex items-center gap-1.5"
+                >
+                  {saving && <LoaderCircle className="h-3.5 w-3.5 animate-spin" />}
+                  {saving ? "Menyimpan..." : "Simpan Provinsi"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════
+          MODAL: KELOLA UNIT / CABANG KAMPUS
+         ══════════════════════════════════════════════════ */}
+      {modal?.type === "manage_units" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-5 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div>
+                <h3 className="text-sm font-black text-slate-900">
+                  Kelola Cabang / Unit · {modal.payload.name}
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Cabang kampus menjadi unit di bawah universitas, bukan entitas duplikat.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setModal(null);
+                  setModalError("");
+                }}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {modalError && (
+              <div className="mt-3 rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs font-bold text-rose-800">
+                {modalError}
+              </div>
+            )}
+
+            <div className="mt-4 space-y-3">
+              {/* List unit yang sudah ada */}
+              <div className="space-y-2">
+                {(modal.payload.units || []).map((unit, uIdx) => (
+                  <div
+                    key={unit.id || uIdx}
+                    className="flex items-center justify-between gap-2 rounded-xl bg-slate-50 p-2.5 border border-slate-200"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-slate-800">{unit.name}</p>
+                      <p className="text-[10px] font-mono text-slate-400">
+                        Kode: {unit.code} · ID: {unit.id}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updatedUnits = modal.payload.units.map((un, i) =>
+                            i === uIdx ? { ...un, active: !un.active } : un
+                          );
+                          setModal({
+                            ...modal,
+                            payload: { ...modal.payload, units: updatedUnits },
+                          });
+                        }}
+                        className={`rounded px-2 py-0.5 text-[10px] font-bold ${
+                          unit.active !== false
+                            ? "bg-emerald-100 text-emerald-800"
+                            : "bg-slate-200 text-slate-600"
+                        }`}
+                      >
+                        {unit.active !== false ? "Aktif" : "Nonaktif"}
+                      </button>
+
+                      {unit._isNew && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updatedUnits = modal.payload.units.filter((_, i) => i !== uIdx);
+                            setModal({
+                              ...modal,
+                              payload: { ...modal.payload, units: updatedUnits },
+                            });
+                          }}
+                          className="text-rose-600 hover:text-rose-800 p-1"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                {(modal.payload.units || []).length === 0 && (
+                  <p className="text-center py-4 text-xs text-slate-400 italic">
+                    Belum ada unit/cabang terdaftar. Tambahkan cabang pertama di bawah.
+                  </p>
+                )}
+              </div>
+
+              {/* Form tambah cabang baru */}
+              <div className="rounded-xl border border-dashed border-emerald-300 bg-emerald-50/30 p-3 space-y-2">
+                <p className="text-[11px] font-extrabold text-emerald-900">+ Tambah Cabang Baru</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    id="newUnitName"
+                    placeholder="Nama Cabang (misal: Kampus Padang Bulan)"
+                    className="h-8 rounded-lg border border-slate-200 bg-white px-2.5 text-xs outline-none focus:border-emerald-600"
+                  />
+                  <input
+                    id="newUnitCode"
+                    placeholder="Kode (misal: PADANG_BULAN)"
+                    className="h-8 rounded-lg border border-slate-200 bg-white px-2.5 text-xs outline-none focus:border-emerald-600 uppercase"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const nameInput = document.getElementById("newUnitName");
+                    const codeInput = document.getElementById("newUnitCode");
+                    const name = nameInput.value.trim();
+                    const code = (codeInput.value.trim() || slugify(name)).toUpperCase().replaceAll("-", "_");
+                    if (!name) return;
+
+                    const id = `${modal.payload.id}-${slugify(code || name)}`;
+                    const newUnit = { id, code, name, active: true, _isNew: true };
+
+                    setModal({
+                      ...modal,
+                      payload: {
+                        ...modal.payload,
+                        units: [...(modal.payload.units || []), newUnit],
+                      },
+                    });
+
+                    nameInput.value = "";
+                    codeInput.value = "";
+                  }}
+                  className="rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-800"
+                >
+                  Tambahkan ke Daftar
+                </button>
+              </div>
+
+              {/* Save changes to backend */}
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setModal(null);
+                    setModalError("");
+                  }}
+                  className="rounded-xl px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => {
+                    const nextUniversities = data.universities.map((u) =>
+                      u.id === modal.payload.id ? modal.payload : u
+                    );
+                    persistCatalog(data.provinces, nextUniversities, "Cabang/Unit kampus berhasil diperbarui.");
+                  }}
+                  className="rounded-xl bg-emerald-800 px-5 py-2 text-xs font-extrabold text-white hover:bg-emerald-900 disabled:opacity-60 inline-flex items-center gap-1.5"
+                >
+                  {saving && <LoaderCircle className="h-3.5 w-3.5 animate-spin" />}
+                  {saving ? "Menyimpan..." : "Simpan Perubahan Unit"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
