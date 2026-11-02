@@ -288,6 +288,111 @@ export function daftarGrup(adminSettings) {
   return [...new Set(semua)];
 }
 
+/** Terima JID saluran atau tautan undangan WhatsApp dan simpan metadata di bot. */
+export async function resolveWhatsAppChannelJid(value) {
+  const input = String(value || "").trim();
+  if (!input) return "";
+  if (input.length > 500) throw new Error("JID atau tautan saluran terlalu panjang.");
+  if (/^[a-zA-Z0-9._-]{1,128}@newsletter$/.test(input)) return input;
+
+  let invite;
+  try {
+    const url = new URL(input);
+    const match = url.pathname.match(/^\/channel\/([a-zA-Z0-9_-]+)\/?$/);
+    if (url.protocol !== "https:" || url.username || url.password || !["whatsapp.com", "www.whatsapp.com"].includes(url.hostname) || !match) {
+      throw new Error("Gunakan JID yang berakhiran @newsletter atau tautan https://whatsapp.com/channel/….");
+    }
+    invite = url.toString();
+  } catch (error) {
+    if (error instanceof TypeError) throw new Error("Masukkan JID saluran atau tautan undangan WhatsApp yang valid.");
+    throw error;
+  }
+
+  const baileysUrl = String(process.env.BAILEYS_API_URL || "").trim();
+  const token = tokenBotUtama();
+  if (!baileysUrl || !token) throw new Error("Bot WhatsApp belum terhubung untuk membaca tautan saluran. Masukkan JID @newsletter atau pastikan bot aktif.");
+  const baseUrl = baileysUrl.replace(/\/(send|story)\/?$/, "").replace(/\/$/, "");
+  let response;
+  try {
+    response = await fetch(`${baseUrl}/newsletters/add`, {
+      method: "POST",
+      headers: { Authorization: token, "Content-Type": "application/json" },
+      body: JSON.stringify({ invite }),
+      signal: AbortSignal.timeout(15000),
+    });
+  } catch {
+    throw new Error("Bot tidak dapat membaca tautan saluran sekarang. Masukkan JID @newsletter atau coba lagi saat bot online.");
+  }
+  const body = await response.json().catch(() => ({}));
+  const jid = String(body?.data?.jid || "").trim();
+  if (!response.ok || !/^[a-zA-Z0-9._-]+@newsletter$/.test(jid)) {
+    throw new Error(body?.error || "Tautan tidak dapat diubah menjadi JID. Pastikan bot dapat membuka tautan saluran.");
+  }
+  return jid;
+}
+
+/** Kirim katalog teks ke saluran lewat endpoint khusus Baileys. */
+export async function sendChannelWa(jid, message, meta = null) {
+  const target = String(jid || "").trim();
+  if (!/^[a-zA-Z0-9._-]{1,128}@newsletter$/.test(target)) {
+    return { ok: false, error: "JID saluran harus berakhiran @newsletter." };
+  }
+  if (!String(message || "").trim()) return { ok: false, error: "Pesan saluran kosong." };
+
+  const baileysUrl = String(process.env.BAILEYS_API_URL || "").trim();
+  const token = tokenBotUtama();
+  if (!baileysUrl || !token) {
+    const error = "Gateway WhatsApp belum dikonfigurasi.";
+    await tampungGagal(target, message, null, null, error, { ...meta, jenis: "saluran" });
+    return { ok: false, error, ditampung: true };
+  }
+  const baseUrl = baileysUrl.replace(/\/(send|story)\/?$/, "").replace(/\/$/, "");
+  let response = null;
+  let body = {};
+  let error = "";
+  try {
+    response = await fetch(`${baseUrl}/channel/send`, {
+      method: "POST",
+      headers: { Authorization: token, "Content-Type": "application/json" },
+      body: JSON.stringify({ jid: target, message: String(message).trim() }),
+      signal: AbortSignal.timeout(20000),
+    });
+    body = await response.json().catch(() => ({}));
+    if (response.ok && body?.ok) return { ok: true, id: body.id || null };
+    error = body?.error || `Bot menolak pengiriman (HTTP ${response.status}).`;
+  } catch (cause) {
+    error = cause?.name === "TimeoutError" ? "Bot tidak menjawab dalam batas waktu." : "Bot tidak dapat dihubungi.";
+  }
+  await tampungGagal(target, message, null, null, error, { ...meta, jenis: "saluran" });
+  return { ok: false, error, ditampung: true };
+}
+
+// Pengaturan tujuan katalog berasal dari panel bot. Kalau bot belum memiliki
+// konfigurasi baru, tetap gunakan tujuan situs yang sudah ada agar penerbitan
+// listing lama tidak terputus saat migrasi.
+async function getBotCatalogDistribution() {
+  const rawUrl = String(process.env.BAILEYS_API_URL || "").trim();
+  const token = tokenBotUtama();
+  if (!rawUrl || !token) return null;
+  const baseUrl = rawUrl.replace(/\/(send|story)\/?$/, "").replace(/\/$/, "");
+  try {
+    const response = await fetch(`${baseUrl}/settings/catalog-distribution`, {
+      headers: { Authorization: token, Accept: "application/json" },
+      cache: "no-store",
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!response.ok) return null;
+    const data = await response.json().catch(() => null);
+    if (!data || data.configured !== true) return null;
+    const channels = Array.isArray(data.channels)
+      ? data.channels.map((item) => String(item?.jid || "").trim()).filter((jid) => /^[a-zA-Z0-9._-]{1,128}@newsletter$/.test(jid))
+      : [];
+    return { enabled: data.enabled !== false, channels: [...new Set(channels)] };
+  } catch {
+    return null;
+  }
+}
+
 /** Nomor admin yang dipakai untuk notifikasi internal. */
 export function nomorAdmin(overrideAdminWa) {
   const bersih = (val) => (val || "").replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
@@ -313,6 +418,15 @@ export async function postToGroup(listing, adminSettings) {
     )
   );
 
+  const botDistribution = await getBotCatalogDistribution();
+  const channelJids = botDistribution
+    ? (botDistribution.enabled ? botDistribution.channels : [])
+    : (String(adminSettings?.channelJid || "").trim() ? [String(adminSettings.channelJid).trim()] : []);
+  const saluran = await Promise.all(channelJids.map(async (jid) => ({
+    jid,
+    ...await sendChannelWa(jid, msg, { listingId: listing.id }).catch((e) => ({ ok: false, error: e?.message || "gagal" })),
+  })));
+
   // Kirim WA Story (status@broadcast) lewat endpoint khusus Baileys.
   // Tidak ikut menentukan ok: Status itu bonus, bukan janji ke penjual.
   if (process.env.BAILEYS_API_URL) {
@@ -320,14 +434,26 @@ export async function postToGroup(listing, adminSettings) {
   }
 
   const terkirim = hasil.filter((h) => h.ok).length;
+  const grupOk = tujuan.length > 0 && terkirim === tujuan.length;
+  const semuaTujuan = hasil.length + saluran.length;
+  const semuaTerkirim = terkirim + saluran.filter((item) => item.ok).length;
+  const errors = [
+    ...hasil.filter((h) => !h.ok).map((h) => `${h.target}: ${h.error || "gagal"}`),
+    ...saluran.filter((item) => !item.ok).map((item) => `saluran ${item.jid}: ${item.error || "gagal"}`),
+  ];
   return {
-    ok: tujuan.length > 0 && terkirim === tujuan.length,
-    skipped: tujuan.length === 0,
+    ok: semuaTujuan > 0 && semuaTerkirim === semuaTujuan,
+    skipped: semuaTujuan === 0,
+    grupOk,
+    grupTerkirim: terkirim,
+    grupGagal: hasil.length - terkirim,
+    grupTujuan: tujuan.length,
     terkirim,
     gagal: hasil.length - terkirim,
     rincian: hasil,
-    error: tujuan.length === 0 ? "Tidak ada grup tujuan (groupJid/extraGroups kosong)"
-      : hasil.filter((h) => !h.ok).map((h) => `${h.target}: ${h.error || "gagal"}`).join("; ") || null,
+    saluran: saluran.length ? saluran : null,
+    error: semuaTujuan === 0 ? "Tidak ada grup atau saluran tujuan yang dikonfigurasi."
+      : errors.join("; ") || null,
   };
 }
 

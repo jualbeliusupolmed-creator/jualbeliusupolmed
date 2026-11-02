@@ -68,6 +68,7 @@ export const DEFAULT_SETTINGS = {
     adminWa: process.env.ADMIN_WA || process.env.SUPER_ADMIN_WA || "",
     groupJid: process.env.GROUP_JID || "",
     extraGroups: process.env.BAILEYS_BROADCAST_GROUPS || "",
+    channelJid: "",
     qrisUrl: process.env.QRIS_URL || "",
     fonnteFirst: false,
   },
