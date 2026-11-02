@@ -2,6 +2,36 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { resolveInstagramOrganizationScope } from "@/lib/instagramDmAuth";
 
 /**
+ * Redact sensitive content (passwords, PINs, OTP codes, credentials) before persisting to log.
+ */
+export function sanitizeDmMessageText(text, metadata = {}) {
+  if (!text) return null;
+  const str = String(text).trim();
+
+  // If flagged as sensitive explicitly or step is a credential input step
+  const step = metadata?.step || "";
+  if (
+    metadata?.isSensitive ||
+    ["jual_ask_password", "jual_ask_otp", "jual_set_password"].includes(step)
+  ) {
+    return "[REDACTED_CREDENTIAL]";
+  }
+
+  // Exact 4 to 8 digit numbers (typical OTP, PIN, verification codes)
+  if (/^\d{4,8}$/.test(str)) {
+    return "[REDACTED_OTP]";
+  }
+
+  // Phrases containing OTP, PIN, Password, Kata Sandi with codes
+  const credentialPattern = /((?:otp|kode(?:\s+otp)?|pin|password|sandi)(?:\s+(?:saya|kamu|anda|nya|adalah|berikut))*[:=]?\s*)\b\d{4,8}\b/gi;
+  if (credentialPattern.test(str)) {
+    return str.replace(credentialPattern, "$1[REDACTED]");
+  }
+
+  return str.slice(0, 4000);
+}
+
+/**
  * Log Instagram DM inbound/outbound interaction with multi-tenant scope isolation.
  */
 export async function logInstagramDmMessage({
@@ -16,6 +46,8 @@ export async function logInstagramDmMessage({
   status = "processed",
   metadata = {},
 }) {
+  const cleanMessageText = sanitizeDmMessageText(messageText, metadata);
+
   // During tests, we fail silently or log in memory
   if (process.env.NODE_ENV === "test") {
     return "test-log-id";
@@ -47,7 +79,7 @@ export async function logInstagramDmMessage({
       province_id: provinceId,
       university_id: universityId,
       direction,
-      message_text: messageText ? String(messageText).slice(0, 4000) : null,
+      message_text: cleanMessageText,
       quick_reply_payload: quickReplyPayload ? String(quickReplyPayload).slice(0, 1000) : null,
       action_taken: actionTaken ? String(actionTaken).slice(0, 100) : null,
       listing_id: listingId || null,

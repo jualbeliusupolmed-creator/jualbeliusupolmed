@@ -166,14 +166,22 @@ export async function handleInstagramDmEvent({
   const lowerText = rawText.toLowerCase();
   const payload = String(quickReplyPayload || "").toUpperCase();
 
-  // Catat interaksi DM masuk untuk Inbox terisolasi multi-scope
+  // Dapatkan konteks sesi aktif untuk mengidentifikasi apakah pesan mengandung kredensial (OTP / password)
+  const currentSession = await getDmSession(cleanSender);
+  const currentStep = currentSession?.step || null;
+  const isCredentialStep = ["jual_ask_password", "jual_ask_otp", "jual_set_password"].includes(currentStep);
+  const safeMessageText = isCredentialStep ? "[REDACTED_CREDENTIAL]" : rawText;
+
+  // Catat interaksi DM masuk untuk Inbox terisolasi multi-scope (isi rahasia disanitasi)
   logInstagramDmMessage({
     recipientAccountId: recipientId,
     senderId: cleanSender,
     direction: "inbound",
-    messageText: rawText,
+    messageText: safeMessageText,
     quickReplyPayload: payload || null,
     metadata: {
+      step: currentStep,
+      isSensitive: isCredentialStep,
       hasAttachments: attachments.length > 0,
       attachmentCount: attachments.length,
     },
@@ -191,7 +199,7 @@ export async function handleInstagramDmEvent({
       recipientAccountId: recipientId,
       senderId: cleanSender,
       direction: "inbound",
-      messageText: rawText,
+      messageText: safeMessageText,
       quickReplyPayload: payload || null,
       actionTaken: "cancelled",
     }).catch(() => {});
@@ -220,7 +228,7 @@ export async function handleInstagramDmEvent({
       recipientAccountId: recipientId,
       senderId: cleanSender,
       direction: "inbound",
-      messageText: rawText,
+      messageText: safeMessageText,
       quickReplyPayload: payload || null,
       actionTaken: "feature_redirected",
     }).catch(() => {});
@@ -1100,7 +1108,7 @@ export async function handleInstagramDmEvent({
           recipientAccountId: targetRecipientId,
           senderId: cleanSender,
           direction: "inbound",
-          messageText: rawText,
+          messageText: safeMessageText,
           actionTaken: "published_live",
           listingId: newListing.id,
           metadata: {
