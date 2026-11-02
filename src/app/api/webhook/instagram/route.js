@@ -9,33 +9,45 @@ export const dynamic = "force-dynamic";
 const PROCESSED_EVENT_TTL_MS = 10 * 60 * 1000; // 10 menit
 const processedEvents = new Map();
 
+function claimInMemory(eventId) {
+  const now = Date.now();
+  pruneTestEventCache();
+  const seenAt = processedEvents.get(eventId);
+  if (seenAt && now - seenAt < PROCESSED_EVENT_TTL_MS) {
+    return { ok: true, duplicate: true, key: eventId, inMemory: true };
+  }
+  return { ok: true, duplicate: false, key: eventId, inMemory: true };
+}
+
 async function claimEvent(eventId) {
   if (!eventId) return { ok: true, duplicate: false, key: null };
 
   if (process.env.NODE_ENV === "test") {
-    const now = Date.now();
-    pruneTestEventCache();
-    const seenAt = processedEvents.get(eventId);
-    if (seenAt && now - seenAt < PROCESSED_EVENT_TTL_MS) return { ok: true, duplicate: true, key: eventId };
-    return { ok: true, duplicate: false, key: eventId, testOnly: true };
+    return claimInMemory(eventId);
   }
 
   const key = `ig_webhook:${eventId}`;
   try {
-    const { data, error } = await getAdminClient().rpc("hit_rate_limit", {
-      p_key: key,
-      p_window_seconds: Math.floor(PROCESSED_EVENT_TTL_MS / 1000),
-    });
-    if (error || !Number.isInteger(Number(data))) return { ok: false, key };
-    return { ok: true, duplicate: Number(data) > 1, key };
+    const admin = getAdminClient();
+    if (admin) {
+      const { data, error } = await admin.rpc("hit_rate_limit", {
+        p_key: key,
+        p_window_seconds: Math.floor(PROCESSED_EVENT_TTL_MS / 1000),
+      });
+      if (!error && Number.isInteger(Number(data))) {
+        return { ok: true, duplicate: Number(data) > 1, key };
+      }
+    }
   } catch {
-    return { ok: false, key };
+    // Graceful fallback ke in-memory cache bila RPC database tidak tersedia
   }
+
+  return claimInMemory(eventId);
 }
 
 async function completeEvent(claim) {
   if (!claim?.key) return;
-  if (claim.testOnly) {
+  if (claim.inMemory || claim.testOnly) {
     processedEvents.set(claim.key, Date.now());
     return;
   }
@@ -44,26 +56,33 @@ async function completeEvent(claim) {
 
 async function releaseEvent(claim) {
   if (!claim?.key) return;
-  if (claim.testOnly) {
+  if (claim.inMemory || claim.testOnly) {
     processedEvents.delete(claim.key);
     return;
   }
   try {
-    const { error } = await getAdminClient().from("rate_limit_hits").delete().eq("key", claim.key);
-    if (error) console.error("[Instagram Webhook] Could not release failed event claim.");
+    const admin = getAdminClient();
+    if (admin) {
+      await admin.from("rate_limit_hits").delete().eq("key", claim.key).catch(() => {});
+    }
   } catch {
     console.error("[Instagram Webhook] Could not release failed event claim.");
   }
 }
 
 async function cleanupExpiredEventClaims() {
+  pruneTestEventCache();
   if (process.env.NODE_ENV === "test") return;
   try {
-    await getAdminClient()
-      .from("rate_limit_hits")
-      .delete()
-      .like("key", "ig_webhook:%")
-      .lt("expires_at", new Date().toISOString());
+    const admin = getAdminClient();
+    if (admin) {
+      await admin
+        .from("rate_limit_hits")
+        .delete()
+        .like("key", "ig_webhook:%")
+        .lt("expires_at", new Date().toISOString())
+        .catch(() => {});
+    }
   } catch {
     // Cleanup is best-effort; event processing itself still fails closed on RPC errors.
   }
