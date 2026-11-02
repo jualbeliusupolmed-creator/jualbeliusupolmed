@@ -142,7 +142,7 @@ export async function sendInstagramMessage(recipientId, messagePayload, options 
   const response = await fetch(url, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": "application/json; charset=utf-8",
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(body),
@@ -157,7 +157,7 @@ export async function sendInstagramMessage(recipientId, messagePayload, options 
       const fallbackRes = await fetch(fallbackUrl, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/json; charset=utf-8",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(body),
