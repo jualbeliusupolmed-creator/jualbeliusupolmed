@@ -30,7 +30,8 @@ export const KOLOM_PROFIL =
   "store_instagram, store_gmaps, store_accent, store_open, store_announcement, " +
   "store_status, store_requested_at, store_approved_at, store_reject_note, " +
   "store_updated_at, trusted_seller, distributor, subscription_tier, " +
-  "subscription_expires_at, referral_code, free_bumps, email, email_google, auth_provider, created_at";
+  "subscription_expires_at, referral_code, free_bumps, email, email_google, auth_provider, " +
+  "user_id, home_university_id, home_unit_id, affiliation_status, verified_university_id, created_at";
 
 /*
  * Peran bukan satu pilihan, melainkan lapisan yang bisa menumpuk.
@@ -70,7 +71,7 @@ export function peranProfil(p) {
  * server dan formulir tidak bisa lagi punya pendapat yang berbeda tentang apa
  * yang boleh disimpan.
  */
-export const FIELD_DASAR = ["name", "bio", "campus", "faculty", "avatar_url", "anonymous_name"];
+export const FIELD_DASAR = ["name", "bio", "campus", "faculty", "avatar_url", "anonymous_name", "home_university_id", "home_unit_id"];
 
 export const FIELD_TOKO = [
   "store_name", "tagline", "logo_url", "banner_url", "store_area", "store_hours",
@@ -141,6 +142,7 @@ const BATAS_IDENTITAS = {
   name: 60, bio: BATAS.bio, campus: 30, faculty: 60,
   anonymous_name: 24, avatar_url: 500, logo_url: 500, banner_url: 500,
   ukm_name: 80, ukm_category: 40,
+  home_university_id: 32, home_unit_id: 40,
 };
 
 // Teks yang dibaca orang lain lewat sensor yang sama dengan mading & obrolan.

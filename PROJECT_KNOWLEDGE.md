@@ -1004,5 +1004,34 @@ cuma server.
 - Tabel dirancang untuk hanya diakses server melalui service role dengan RLS aktif dan akses client publik dicabut. RPC aplikasi memakai `SECURITY INVOKER` dengan grant `service_role` eksplisit.
 - Alur `/admin/owners` dapat mengundang alamat email baru melalui Supabase Auth saat superadmin menambahkan admin provinsi/universitas; akun Auth yang sudah ada tetap langsung dapat diberi cakupan. Undangan diarahkan ke callback admin dan hanya dikirim setelah cakupan divalidasi.
 
+### 2 November 2026 — Fase 2: Nasionalisasi Identitas Pengguna & Pemisahan Afiliasi Kampus
+
+1. **Sanitasi Kredensial Instagram DM**:
+   - Penambahan `sanitizeDmMessageText` pada `src/lib/instagramDmLogger.js` dan filter langkah sensitif pada `src/lib/instagramDmRouter.js` (`jual_ask_password`, `jual_ask_otp`, `jual_set_password`) untuk mencegah kebocoran password, PIN, dan kode OTP ke dalam tabel `instagram_dm_logs`. Seluruh kredensial otomatis dimaskir menjadi `[REDACTED_CREDENTIAL]` / `[REDACTED_OTP]`.
+   - Pembersihan data historis plain-text OTP pada database produksi Supabase.
+2. **Migrasi Database Relasional (`20261102200000_national_user_identity_and_affiliations.sql`)**:
+   - Kolom `user_id uuid references auth.users(id)` ditambahkan ke `seller_profiles` dengan indeks parsial unik `idx_seller_profiles_unique_user_id` untuk memastikan hubungan 1-ke-1 kanonikal antara Supabase Auth dan profil penjual/pengguna.
+   - Penambahan kolom relasi afiliasi:
+     - `home_university_id varchar(32) references universities(id)`
+     - `home_unit_id varchar(40) references university_units(id)`
+     - `affiliation_status varchar(32) check (affiliation_status in ('self_selected', 'verified_student', 'alumni'))`
+     - `verified_university_id varchar(32) references universities(id)`
+   - Backfill deterministik sukses dijalankan di remote Supabase: 330 profil penjual termigrasi (326 USU, 2 POLMED, 2 null), 6 akun Google ditautkan langsung ke `user_id` Supabase Auth.
+3. **Penyelarasan Identitas & Logika Backend**:
+   - `src/lib/seller-profile-identity.js`: Ditambahkan fungsi `findSellerProfileByUserId` dan resolusi UUID session untuk pencarian profil kanonikal.
+   - `src/app/auth/callback/route.js`: Pengecekan `user_id` diutamakan sebelum fallback ke email Google / nomor WA, dan penautan otomatis mengunci `user_id: user.id`.
+   - `src/lib/studentVerification.js` & `src/app/api/student/verify/route.js`: Ditambahkan `resolveUniversityFromEmail` yang membaca domain email resmi dari tabel `universities`, menetapkan `verified_university_id`, dan memperbarui `affiliation_status = 'verified_student'`.
+   - `src/lib/settings.js` & `src/lib/simpanProfil.js`: Sinkronisasi otomatis katalog 14 kampus nasional dari basis data relasional ke `getSettings().campuses`, validasi penyimpanan profil, dan pemetaan otomatis `home_university_id`.
+4. **Antarmuka Profil Pengguna (`UnifiedProfilePanel.jsx`)**:
+   - Menampilkan pilihan kampus utama nasional dari katalog resmi yang mencakup seluruh universitas aktif di Indonesia (USU, POLMED, UI, ITB, UGM, UNAIR, ITS, UB, UNPAD, UNJ, IPB, UII, UNY, TRISAKTI).
+   - Pemisahan visual status afiliasi:
+     - Mahasiswa Terverifikasi (`verified_student`): Lencana centang hijau/biru resmi.
+     - Alumni (`alumni`): Lencana ungu.
+     - Warga Komunitas (`self_selected`): Lencana biru komunitas, dengan tombol verifikasi mahasiswa terbuka bagi yang ingin mendaftarkan KTM/email kampus.
+5. **Verifikasi Kualitas**:
+   - Seluruh 58 berkas pengujian (291 tests) lulus 100%.
+   - Build Next.js produksi (95 rute) terkompilasi sukses.
+
+
 
 

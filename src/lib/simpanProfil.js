@@ -69,9 +69,23 @@ export async function simpanProfil(wa, body, { supa = getAdminClient() } = {}) {
       .filter((campus) => campus?.active !== false)
       .map((campus) => String(campus.shortName || "").trim().toLowerCase())
       .filter(Boolean);
-    if (!allowed.includes(String(isian.campus).trim().toLowerCase())) {
+    const selectedCampus = String(isian.campus).trim().toLowerCase();
+    if (!allowed.includes(selectedCampus)) {
       return { pesanPengguna: "Pilihan kampus sudah tidak tersedia. Pilih kampus yang masih aktif.", status: 400 };
     }
+    if (!isian.home_university_id) {
+      const matched = campuses.find(
+        (c) => String(c.shortName || "").trim().toLowerCase() === selectedCampus ||
+               String(c.id || "").trim().toLowerCase() === selectedCampus
+      );
+      if (matched?.id) {
+        isian.home_university_id = matched.id;
+      }
+    }
+  }
+
+  if (!sekarang?.affiliation_status && !isian.affiliation_status) {
+    isian.affiliation_status = sekarang?.student_verified ? "verified_student" : "self_selected";
   }
 
   // `account_type` tidak pernah dibaca dari body apa adanya — satu-satunya

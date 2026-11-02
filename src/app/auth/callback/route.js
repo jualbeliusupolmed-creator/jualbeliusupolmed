@@ -129,7 +129,7 @@ async function linkGoogleToSeller(user, wa) {
   if (!existing || (existing.wa === targetProfile.wa && !existing.email_google)) {
     const { data: updated, error: updateError } = await supa
       .from("seller_profiles")
-      .update({ email_google: email, auth_provider: "wa_google" })
+      .update({ email_google: email, auth_provider: "wa_google", user_id: user.id })
       .eq("wa", targetProfile.wa)
       .is("email_google", null)
       .select("wa")
@@ -143,6 +143,8 @@ async function linkGoogleToSeller(user, wa) {
     if (!updated) {
       return { status: 409, error: "Profil ini sudah memiliki metode Google atau berubah saat proses berlangsung." };
     }
+  } else if (existing && existing.wa === targetProfile.wa && !existing.user_id) {
+    await supa.from("seller_profiles").update({ user_id: user.id }).eq("wa", targetProfile.wa);
   }
   return { status: 200, email };
 }
@@ -464,31 +466,41 @@ async function syncUserAndSetSession(user, origin, next) {
   const supa = getAdminClient();
   const emailPattern = email.replace(/[\\%_]/g, "\\$&");
 
-  // Cari profil: cek email_google ATAU kolom email
+  // Cari profil: cek user_id (canonical identity) terlebih dahulu
   let existing = null;
-  try {
-    const { data: byGoogleEmail } = await supa
-      .from("seller_profiles")
-      .select("wa, phone_wa, name, email_google")
-      .ilike("email_google", emailPattern)
-      .maybeSingle();
-    existing = byGoogleEmail;
-  } catch (_) {
-    // Abaikan jika kolom email_google belum ada
+  if (user?.id) {
+    try {
+      const { data: byUserId } = await supa
+        .from("seller_profiles")
+        .select("wa, phone_wa, name, email_google, user_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      existing = byUserId;
+    } catch (_) {}
   }
 
-  // Fallback: cek kolom email jika tidak ditemukan via email_google
+  // Fallback 1: cek email_google
+  if (!existing) {
+    try {
+      const { data: byGoogleEmail } = await supa
+        .from("seller_profiles")
+        .select("wa, phone_wa, name, email_google, user_id")
+        .ilike("email_google", emailPattern)
+        .maybeSingle();
+      existing = byGoogleEmail;
+    } catch (_) {}
+  }
+
+  // Fallback 2: cek kolom email jika tidak ditemukan via email_google
   if (!existing) {
     try {
       const { data: byEmail } = await supa
         .from("seller_profiles")
-        .select("wa, phone_wa, name")
+        .select("wa, phone_wa, name, user_id")
         .ilike("email", emailPattern)
         .maybeSingle();
       existing = byEmail;
-    } catch (_) {
-      // Kolom email belum ada — abaikan
-    }
+    } catch (_) {}
   }
 
   let waIdentifier;
@@ -500,6 +512,7 @@ async function syncUserAndSetSession(user, origin, next) {
       if (name && !existing.name) updates.name = name;
       if (avatar) updates.avatar_url = avatar;
       if (!existing.email_google) updates.email_google = email;
+      if (user?.id && !existing.user_id) updates.user_id = user.id;
       if (Object.keys(updates).length > 0) {
         await supa.from("seller_profiles").update(updates).eq("wa", waIdentifier);
       }
@@ -517,6 +530,7 @@ async function syncUserAndSetSession(user, origin, next) {
       email_google: email,
       avatar_url: avatar || null,
       auth_provider: "google",
+      user_id: user?.id || null,
     });
     if (insertError) {
       console.error("[auth/callback] Google profile insert failed:", insertError.code || "database_error");

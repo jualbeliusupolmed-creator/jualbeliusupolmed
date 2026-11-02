@@ -166,8 +166,33 @@ export async function getSettings() {
       } else {
         merged[row.key] = row.value;
       }
-
     }
+
+    try {
+      const { data: dbUniversities } = await supa
+        .from("universities")
+        .select("id, code, name, province_id, email_domains, status")
+        .eq("status", "active")
+        .order("name");
+
+      if (Array.isArray(dbUniversities) && dbUniversities.length > 0) {
+        const existingShortNames = new Set((merged.campuses || []).map((c) => String(c.shortName || "").toLowerCase()));
+        const existingIds = new Set((merged.campuses || []).map((c) => String(c.id || "").toLowerCase()));
+        for (const u of dbUniversities) {
+          if (!existingIds.has(String(u.id).toLowerCase()) && !existingShortNames.has(String(u.code).toLowerCase())) {
+            merged.campuses.push({
+              id: u.id,
+              name: u.name,
+              shortName: u.code,
+              provinceId: u.province_id,
+              emailDomains: u.email_domains || [],
+              active: true,
+            });
+          }
+        }
+      }
+    } catch {}
+
     return merged;
   } catch {
     return clone(DEFAULT_SETTINGS);

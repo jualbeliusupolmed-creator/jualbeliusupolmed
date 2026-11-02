@@ -3,6 +3,25 @@
 export const VALID_CAMPUSES = [];
 
 /**
+ * Resolves a full university catalog match from an institutional email address.
+ * Matches against either shortName/emailDomains (settings) or code/email_domains (universities table).
+ */
+export function resolveUniversityFromEmail(email, universities = []) {
+  if (!email || typeof email !== "string" || !Array.isArray(universities)) return null;
+  const domain = email.trim().toLowerCase().split("@").pop();
+  return (
+    universities.find((u) => {
+      if (u?.status === "inactive" || u?.active === false) return false;
+      const domains = u.email_domains || u.emailDomains || [];
+      return domains.some((allowed) => {
+        const normalized = String(allowed).toLowerCase().replace(/^@/, "");
+        return domain === normalized || domain.endsWith(`.${normalized}`);
+      });
+    }) || null
+  );
+}
+
+/**
  * Mendeteksi kampus berdasarkan akhiran email institusi.
  * @param {string} email
  * @returns {'USU' | 'POLMED' | null}
