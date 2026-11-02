@@ -130,7 +130,9 @@ export default function MarketplaceBrowser({
       result = result.filter((item) => {
         const itemCampuses = [
           item.campus,
+          item.university_id,
           item.seller_profiles?.student_campus,
+          item.seller_profiles?.home_university_id,
         ].filter(Boolean).map((value) => String(value).toLowerCase());
         if (itemCampuses.includes("semua")) return true;
         return itemCampuses.some((campus) => campusValues.includes(campus));

@@ -57,7 +57,7 @@ export async function GET(req) {
       .from("listings")
       // SECURITY: We fetch seller_wa internally to map profiles, then delete it before returning
       .select(
-        "id, listing_code, title, description, price, stock, category, type, campus, area, status, featured, bumped_at, created_at, views, image_url, images, seller_name, seller_wa, condition, sponsored_until, rental_period, distributor_fee, specs",
+        "id, listing_code, title, description, price, stock, category, type, campus, university_id, area, status, featured, bumped_at, created_at, views, image_url, images, seller_name, seller_wa, condition, sponsored_until, rental_period, distributor_fee, specs",
         { count: "exact" }
       )
       .eq("status", "active");
@@ -69,7 +69,25 @@ export async function GET(req) {
     }
 
     if (cat) query = query.eq("category", cat);
-    if (campus && campus !== "Semua") query = query.eq("campus", campus);
+
+    const provinceId = sp.get("province_id") || sp.get("province");
+    const universityId = sp.get("university_id");
+
+    if (provinceId && provinceId !== "all" && provinceId !== "Semua") {
+      const { data: provUnis } = await supa
+        .from("universities")
+        .select("id, code")
+        .eq("province_id", provinceId);
+      if (provUnis && provUnis.length > 0) {
+        const uniIds = provUnis.map((u) => u.id);
+        const uniCodes = provUnis.map((u) => u.code);
+        query = query.or(`university_id.in.(${uniIds.join(",")}),campus.in.(${uniCodes.join(",")})`);
+      }
+    } else if (universityId && universityId !== "all" && universityId !== "Semua") {
+      query = query.or(`university_id.eq.${universityId},campus.ilike.${universityId}`);
+    } else if (campus && campus !== "Semua" && campus !== "all") {
+      query = query.or(`campus.ilike.${campus},university_id.ilike.${campus}`);
+    }
     if (exactCode.length >= 6) {
       query = query.eq("listing_code", exactCode);
     } else if (q) {
@@ -133,7 +151,7 @@ export async function GET(req) {
     if (sellerWas.length > 0) {
       const { data: profiles } = await supa
         .from("seller_profiles")
-        .select("wa, trusted_seller, distributor, subscription_tier, subscription_expires_at")
+        .select("wa, trusted_seller, distributor, subscription_tier, subscription_expires_at, home_university_id, affiliation_status")
         .in("wa", sellerWas);
       
       const profileMap = new Map((profiles || []).map((p) => [p.wa, p]));

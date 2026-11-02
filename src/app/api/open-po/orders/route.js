@@ -41,6 +41,24 @@ export async function POST(req) {
     return NextResponse.json({ error: message }, { status: 409 });
   }
 
+  // Tautkan user_id kanonikal pembeli ke open_po_orders
+  try {
+    const { data: buyerProfile } = await supa
+      .from("seller_profiles")
+      .select("user_id, home_university_id")
+      .eq("wa", formatWa(buyerWa) || buyerWa)
+      .maybeSingle();
+
+    if (reserved?.id && buyerProfile) {
+      await supa.from("open_po_orders").update({
+        user_id: buyerProfile.user_id || null,
+        university_id: buyerProfile.home_university_id || null,
+      }).eq("id", reserved.id);
+    }
+  } catch (err) {
+    console.warn("[open-po-orders] Gagal menautkan user_id ke pesanan:", err?.message);
+  }
+
   const { data: batch } = await supa.from("open_po_batches")
     .select("id, title, price_idr, quota, reserved_count, closes_at, pickup_point, pickup_note, seller_wa, product:open_po_products(name, unit, image_url, campus, seller_contact_consent)")
     .eq("id", batchId)

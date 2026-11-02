@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimit, rateLimitDistributed, getClientIp } from "@/lib/rateLimit";
-import { getSettings, DEFAULT_SETTINGS, adFeeFrom, listingExpiresAt, hasUnpaidSoldFees, isAllowedCampus } from "@/lib/settings";
+import { getSettings, DEFAULT_SETTINGS, adFeeFrom, listingExpiresAt, hasUnpaidSoldFees, isAllowedCampus, getActiveCampuses } from "@/lib/settings";
 import { formatWa } from "@/lib/constants";
 import { postToGroup, notifyCategorySubscribers } from "@/lib/fonnte";
 import { pushListingBaru } from "@/lib/webpush";
@@ -217,7 +217,7 @@ export async function POST(req) {
     // Cek status distributor
     const { data: profileCheck } = await supa
       .from("seller_profiles")
-      .select("distributor, name, subscription_tier, subscription_expires_at")
+      .select("distributor, name, subscription_tier, subscription_expires_at, user_id, home_university_id")
       .eq("wa", normalizedWa)
       .maybeSingle();
     const isDistributor = !!profileCheck?.distributor;
@@ -263,7 +263,7 @@ export async function POST(req) {
       }
       const { data: refreshedProfile } = await supa
         .from("seller_profiles")
-        .select("distributor, name, subscription_tier, subscription_expires_at, slug")
+        .select("distributor, name, subscription_tier, subscription_expires_at, slug, user_id, home_university_id")
         .eq("wa", normalizedWa)
         .maybeSingle();
       profile = refreshedProfile;
@@ -357,7 +357,31 @@ export async function POST(req) {
       finalPrice = effectivePrice(finalPrice, distributorFee, distSettings.autoAddPrice);
     }
 
+    const activeCampuses = getActiveCampuses(settings);
+    let resolvedCampus = "Semua";
+    let resolvedUniversityId = profile?.home_university_id || null;
+
+    if (campus && campus !== "Semua") {
+      const targetUni = activeCampuses.find(
+        (c) => String(c.shortName || "").trim().toLowerCase() === String(campus).trim().toLowerCase() ||
+               String(c.id || "").trim().toLowerCase() === String(campus).trim().toLowerCase()
+      );
+      if (targetUni) {
+        resolvedCampus = targetUni.shortName;
+        resolvedUniversityId = targetUni.id;
+      } else {
+        resolvedCampus = campus;
+      }
+    } else if (resolvedUniversityId) {
+      const matchingUni = activeCampuses.find((c) => c.id === resolvedUniversityId);
+      if (matchingUni) {
+        resolvedCampus = matchingUni.shortName;
+      }
+    }
+
     const insertPayload = {
+      user_id: profile?.user_id || null,
+      university_id: resolvedUniversityId,
       seller_name: enforcedName,
       seller_wa: normalizedWa,
       title: cleanedTitle,
@@ -372,7 +396,7 @@ export async function POST(req) {
       status: initialStatus,
       moderation_reason: modReason,
       risk_score: moderation.risk_score || 0.0,
-      campus: ["USU", "POLMED", "Semua"].includes(campus) ? campus : "Semua",
+      campus: resolvedCampus,
       area: area || "Sekitar Kampus",
       condition: condition === "new" ? "new" : "used",
       specs: safeSpecs,

@@ -6,7 +6,7 @@ import { postWantedToGroup } from "@/lib/fonnte";
 import { getSellerSession } from "@/lib/auth";
 import { cariAman } from "@/lib/cariAman";
 import { jawabGalat } from "@/lib/jawabGalat";
-import { getSettings, isAllowedCampus } from "@/lib/settings";
+import { getSettings, isAllowedCampus, getActiveCampuses } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +17,7 @@ export async function GET(req) {
     const sp = req.nextUrl.searchParams;
     const buyer_wa = sp.get("buyer_wa");
     const campus = sp.get("campus");
+    const university_id = sp.get("university_id");
     const cat = sp.get("cat");
     const q = sp.get("q");
 
@@ -44,8 +45,10 @@ export async function GET(req) {
       .gte("created_at", thirtyDaysAgo.toISOString())
       .order("created_at", { ascending: false });
 
-    if (campus && campus !== "Semua") {
-      query = query.eq("campus", campus);
+    if (university_id) {
+      query = query.eq("university_id", university_id);
+    } else if (campus && campus !== "Semua") {
+      query = query.or(`campus.eq.${campus},university_id.eq.${campus.toLowerCase()}`);
     }
     if (cat && cat !== "all") {
       query = query.eq("category", cat);
@@ -122,6 +125,35 @@ export async function POST(req) {
       );
     }
 
+    // Profil pembeli & resolusi afiliasi kampus kanonikal
+    const { data: buyerProfile } = await supa
+      .from("seller_profiles")
+      .select("user_id, home_university_id")
+      .eq("wa", normalizedBuyerWa)
+      .maybeSingle();
+
+    const activeCampuses = getActiveCampuses(settings);
+    let resolvedCampus = "Semua";
+    let resolvedUniversityId = buyerProfile?.home_university_id || null;
+
+    if (campus && campus !== "Semua") {
+      const targetUni = activeCampuses.find(
+        (c) => String(c.shortName || "").trim().toLowerCase() === String(campus).trim().toLowerCase() ||
+               String(c.id || "").trim().toLowerCase() === String(campus).trim().toLowerCase()
+      );
+      if (targetUni) {
+        resolvedCampus = targetUni.shortName;
+        resolvedUniversityId = targetUni.id;
+      } else {
+        resolvedCampus = campus;
+      }
+    } else if (resolvedUniversityId) {
+      const matchingUni = activeCampuses.find((c) => c.id === resolvedUniversityId);
+      if (matchingUni) {
+        resolvedCampus = matchingUni.shortName;
+      }
+    }
+
     // Cek jumlah wanted listing sebelumnya dari nomor WA pembeli ini
     const { count: pastWantedCount, error: countError } = await supa
       .from("wanted_listings")
@@ -136,13 +168,15 @@ export async function POST(req) {
     const { data: listing, error } = await supa
       .from("wanted_listings")
       .insert({
+        user_id: buyerProfile?.user_id || null,
+        university_id: resolvedUniversityId,
         buyer_name,
         buyer_wa: normalizedBuyerWa,
         title,
         description: description || "",
         budget: Math.round(Number(budget)) || 0,
         category,
-        campus: campus || "Semua",
+        campus: resolvedCampus,
         area: area || "Sekitar Kampus",
         status: status,
       })

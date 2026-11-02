@@ -71,6 +71,37 @@ export async function POST(req) {
     return NextResponse.json({ error: "Batch gagal dibuat. Periksa isian dan kesiapan migrasi PO." }, { status: 503 });
   }
 
+  // Tautkan user_id kanonikal dan university_id ke produk Open PO
+  try {
+    const { data: sellerProfile } = await admin
+      .from("seller_profiles")
+      .select("user_id, home_university_id")
+      .eq("wa", sellerWa)
+      .maybeSingle();
+
+    const activeCampuses = settings.campuses || [];
+    const matchedUni = activeCampuses.find(
+      (c) => String(c.shortName || "").trim().toLowerCase() === campus.toLowerCase() ||
+             String(c.id || "").trim().toLowerCase() === campus.toLowerCase()
+    );
+    const resolvedUniId = matchedUni?.id || sellerProfile?.home_university_id || null;
+
+    const { data: batchRow } = await admin
+      .from("open_po_batches")
+      .select("product_id")
+      .eq("id", data)
+      .maybeSingle();
+
+    if (batchRow?.product_id) {
+      await admin.from("open_po_products").update({
+        user_id: sellerProfile?.user_id || null,
+        university_id: resolvedUniId,
+      }).eq("id", batchRow.product_id);
+    }
+  } catch (err) {
+    console.warn("[open-po] Gagal menautkan user_id/university_id ke produk:", err?.message);
+  }
+
   // Auto-post ke Status / Story WhatsApp Bot (status@broadcast)
   const closesFormatted = closesAt.toLocaleDateString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
   const storyMsg =
