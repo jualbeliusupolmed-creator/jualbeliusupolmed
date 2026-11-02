@@ -416,18 +416,35 @@ export async function postToGroup(listing, adminSettings) {
     ? (botDistribution.enabled ? (botDistribution.groupsConfigured ? botDistribution.groups : daftarGrup(adminSettings)) : [])
     : daftarGrup(adminSettings);
 
+  const channelJids = botDistribution
+    ? (botDistribution.enabled ? botDistribution.channels : [])
+    : (String(adminSettings?.channelJid || "").trim() ? [String(adminSettings.channelJid).trim()] : []);
+
+  // Resolusi target multi-channel dinamis sesuai scope kampus/provinsi listing
+  let finalTujuan = tujuan;
+  let finalChannels = channelJids;
+  try {
+    const { resolveListingWhatsAppTargets } = await import("@/lib/whatsappDistribution");
+    const scopedTargets = await resolveListingWhatsAppTargets(listing, adminSettings);
+    if (scopedTargets?.groupJids?.length > 0) {
+      finalTujuan = [...new Set([...tujuan, ...scopedTargets.groupJids])];
+    }
+    if (scopedTargets?.channelJids?.length > 0) {
+      finalChannels = [...new Set([...channelJids, ...scopedTargets.channelJids])];
+    }
+  } catch {
+    // Graceful fallback ke konfigurasi default
+  }
+
   const hasil = await Promise.all(
-    tujuan.map((jid) =>
+    finalTujuan.map((jid) =>
       send(jid, msg, gambar)
         .then((r) => ({ target: jid, ok: !!r?.ok, error: r?.galat || r?.error || null }))
         .catch((e) => ({ target: jid, ok: false, error: e?.message || "gagal" }))
     )
   );
 
-  const channelJids = botDistribution
-    ? (botDistribution.enabled ? botDistribution.channels : [])
-    : (String(adminSettings?.channelJid || "").trim() ? [String(adminSettings.channelJid).trim()] : []);
-  const saluran = await Promise.all(channelJids.map(async (jid) => ({
+  const saluran = await Promise.all(finalChannels.map(async (jid) => ({
     jid,
     ...await sendChannelWa(jid, msg, { listingId: listing.id }).catch((e) => ({ ok: false, error: e?.message || "gagal" })),
   })));

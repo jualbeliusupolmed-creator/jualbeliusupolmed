@@ -2,6 +2,31 @@
 
 Dokumen ini berisi peta pemahaman sistem, alur bisnis, daftar masalah, dan riwayat audit untuk proyek **Jual Beli USU Polmed**.
 
+### Pembaruan 2 November 2026 — Fase 4: WhatsApp Multi-Channel Architecture (3-Tier Pemisahan Saluran, Bisnis, & Komunitas)
+
+- **Pemisahan Tegas 3 Tier Arsitektur WhatsApp**:
+  - *Tier 1 — WhatsApp Channels (@newsletter)*: Siaran satu arah untuk etalase katalog produk baru dan pengumuman resmi provinsi / universitas.
+  - *Tier 2 — WhatsApp Business / Baileys Gateway*: Komunikasi dua arah, OTP verifikasi penautan akun (Google/IG/WA), dan notifikasi transaksi pribadi.
+  - *Tier 3 — WhatsApp Groups (@g.us)*: Komunitas diskusi interaktif mahasiswa, bursa jual beli terbuka, dan interaksi sosial kampus.
+- **Migrasi Skema Database**:
+  - Diterapkan migrasi `20261102170000_whatsapp_multi_channel_architecture.sql` ke database remote Supabase.
+  - Memperbarui constraint check pada `organization_social_accounts` agar mendukung `whatsapp_group`, `whatsapp_channel`, `whatsapp_business`, dan `instagram`.
+- **Mesin Resolusi Multi-Channel Otomatis & Distribusi Hierarkis**:
+  - Dibuat pustaka `src/lib/whatsappDistribution.js` (`resolveListingWhatsAppTargets` dan `distributeListingToWhatsApp`).
+  - Hierarki penargetan: Saat produk diterbitkan di suatu kampus (misal: USU), mesin otomatis memetakan Channel & Grup WhatsApp kampus terkait + Channel WhatsApp provinsi (Sumut), dengan fallback aman ke legacy admin settings jika belum ada kanal terdaftar.
+  - Mengintegrasikan pemetaan dinamis ke dalam fungsi broadcast utama `postToGroup` di `src/lib/fonnte.js` tanpa memutus kompatibilitas sistem lama.
+- **API Saluran WhatsApp & Sinkronisasi Live Gateway**:
+  - Endpoint `GET` & `POST` di `/api/admin/whatsapp/channels/route.js`:
+    - Mengambil daftar saluran per cakupan scope RBAC admin, diperkaya status live Baileys (`newsletters` & `groups`, jumlah subscriber/anggota).
+    - Mendukung aksi `resolve_channel_link` (mengonversi URL `https://whatsapp.com/channel/...` menjadi JID sah via Baileys), `upsert_channel`, `test_broadcast`, dan `delete_channel`.
+- **Frontend Tab WhatsApp Multi-Channel di Workspace Admin**:
+  - Diintegrasikan ke `/admin/social` (`SocialWorkspace.jsx`) sebagai tab ke-2.
+  - Dilengkapi ringkasan visual 3 tier, indikator status bot gateway, tombol uji coba siaran, serta modal penambahan saluran dengan tombol deteksi JID instan.
+- **Verifikasi Kualitas**:
+  - Ditambahkan berkas pengujian `__tests__/whatsappDistribution.test.js` (6 pengujian lulus).
+  - 100% tes vitest lulus (55 berkas, 265 tes lulus tanpa regresi).
+  - Next.js production build (`npm run build`) sukses 100% (95 rute).
+
 ### Pembaruan 2 November 2026 — Fase 3: Social & Communication Management (Instagram Multi-Account & DM Inbound Router)
 
 - **Instagram Multi-Account & Scope Isolation**:
@@ -24,21 +49,21 @@ Dokumen ini berisi peta pemahaman sistem, alur bisnis, daftar masalah, dan riway
 
 ### Verifikasi pasca-migrasi organisasi nasional — 2 November 2026
 
-- Supabase mencatat seluruh migrasi lokal sampai `20261102150001_backfill_unambiguous_open_po_university.sql`; migrasi backfill tambahan menautkan satu produk Open PO yang label kampusnya hanya cocok dengan satu universitas. Setelah penerapan, produk Open PO tertaut 1/1. Listing dan permintaan barang berkategori umum tetap tidak ditautkan: 22/172 listing tertaut, 150 lainnya umum; 41/41 wanted listing umum.
+- Supabase mencatat migrasi sampai `20261102163100_harden_rate_limit_rpc.sql`; `db push --dry-run` terverifikasi up-to-date. Migrasi backfill menautkan satu produk Open PO yang label kampusnya hanya cocok dengan satu universitas. Listing dan permintaan barang berkategori umum tetap tidak ditautkan: 22/172 listing tertaut, 150 lainnya umum; 41/41 wanted listing umum.
 - Katalog relasional berisi 1 provinsi, 2 universitas, 2 unit/cabang, dan 3 akun sosial. Belum ada `admin_memberships`, grant cakupan legacy, role assignment, atau permintaan admin; akun provinsi/universitas nyata belum tersedia untuk uji login lintas peran.
 - Keenam tabel organisasi/admin memiliki RLS aktif. Pemeriksaan privilege memastikan `anon` dan `authenticated` tidak memiliki akses SELECT langsung; `service_role` memiliki akses server yang diperlukan. Keenam RPC RBAC yang diperiksa memakai `SECURITY INVOKER`; grant EXECUTE tercatat untuk `service_role` dan owner database.
-- Verifikasi aplikasi lokal terbaru: `npm test` lulus (53 berkas, 253 tes), `npm run lint` lulus, `npm run build` sukses. Build lokal memberi peringatan fetch font Google dan DNS host bot, tetapi tetap selesai.
-- Vercel produksi terakhir yang dikonfirmasi READY pada commit `e3500b1` (`main`), dengan perbaikan aplikasi dan proteksi admin di leluhur `af58930`. Smoke check publik menghasilkan HTTP 200 untuk `/` dan `/jual-beli`, tanpa field `seller_wa` atau nomor profil numerik pada HTML yang diperiksa; API admin menolak akses tanpa sesi dengan 403. Agregat log runtime 30 menit terakhir tidak menunjukkan error. Browser lokal dinonaktifkan di pengaturan Work, sehingga login UI admin yang terautentikasi belum diuji.
+- Verifikasi aplikasi lokal terbaru: `npm test` lulus (54 berkas, 259 tes), `npm run lint` dan `npm run build` selesai. Lint memberi satu warning dependency `fetchDmLogs` di `SocialWorkspace.jsx`; build mencatat peringatan font eksternal dan DNS host bot lokal yang tidak tersedia.
+- Vercel produksi terakhir yang dikonfirmasi READY pada commit `fc3f404` (`main`). Sebelumnya, smoke check `/` dan `/jual-beli` menghasilkan HTTP 200 tanpa field nomor penjual di HTML; API admin menolak akses tanpa sesi dengan 403. Agregat log runtime terakhir yang diperiksa tidak menunjukkan error. Login admin terautentikasi tidak diuji karena pilihanmu adalah pengujian lokal saja.
 - Percobaan pertama Supabase Security Advisor CLI tidak menghasilkan respons; pemeriksaan ulang dan temuan terkininya tercatat di bawah.
-- Pembaruan Advisor 2 November: pemeriksaan ulang menghasilkan 11 peringatan SECURITY level WARN dan sejumlah INFO `RLS Enabled No Policy`. Fungsi Open PO yang ditandai memakai `auth.uid()` untuk membatasi pemesan/pembeli/penjual; peringatan ini tetap perlu dibedakan dari pemeriksaan logika aplikasinya. `hit_rate_limit` adalah temuan yang perlu ditindaklanjuti: SECURITY DEFINER, `search_path` tidak ditetapkan, dan dapat dipanggil role publik walau kode aplikasi hanya memanggilnya lewat `service_role`. Auth Leaked Password Protection juga nonaktif.
-- Draft migrasi `20261102163100_harden_rate_limit_rpc.sql` menyiapkan perubahan RPC `hit_rate_limit` ke SECURITY INVOKER, `search_path` kosong, validasi argumen, dan grant hanya ke `service_role`. Belum diterapkan; perubahan migrasi produksi memerlukan persetujuan eksplisit menurut `AGENTS.md`. Pemeriksaan RBAC produksi masih belum dapat end-to-end karena belum ada assignment admin provinsi/kampus; pengujian scope lokal ada di `src/lib/admin-access.test.js`.
+- Pembaruan Advisor 2 November: pemeriksaan awal menemukan 11 WARN. Setelah mitigasi `hit_rate_limit`, pemeriksaan ulang menunjukkan 8 WARN tersisa: tujuh temuan EXECUTE pada fungsi Open PO `SECURITY DEFINER` dan satu pengaturan Auth Leaked Password Protection nonaktif. Source dan definisi produksi Open PO memeriksa `auth.uid()` untuk pemesan/pembeli/penjual; fungsi-fungsi itu belum diubah. Advisor juga memberi temuan INFO `RLS Enabled No Policy` pada tabel tertentu.
+- Migrasi `20261102163100_harden_rate_limit_rpc.sql` diterapkan setelah persetujuan. Verifikasi katalog menunjukkan RPC menjadi SECURITY INVOKER, `search_path` kosong, EXECUTE ditolak untuk `anon`/`authenticated` dan diberikan untuk `service_role`; Advisor tidak lagi menampilkan `hit_rate_limit`. Pengujian scope nyata provinsi/kampus tidak dijalankan sesuai pilihan "uji lokal saja"; uji helper scope lokal lulus.
 
 ### Perbaikan kebocoran nomor WA di payload publik — 2 November 2026
 
 - Audit respons HTML beranda produksi menemukan nomor WhatsApp penjual ikut terserialisasi pada data awal Next.js, walaupun endpoint browse sudah menghapus field itu. `fetchListingsWithProfiles` dan `fetchSingleListingWithProfile` sekarang menghapus `seller_wa` serta `seller_profiles.wa` sebelum data dikirim sebagai props; slug penjual buram tetap dibuat server-side jika belum ada.
 - Tombol kontak/penawaran memakai POST same-origin ke `/chat-wa/[id]`; server memeriksa listing dan membuat redirect WhatsApp setelah tindakan pengguna, tanpa menyisipkan nomor pada payload halaman awal atau query URL. Schema publik juga tidak lagi mengirim identifier nomor penjual. Rating tetap mengambil nomor dari listing di server.
 - Tes regresi `dbHelpers.test.js` memastikan nomor hilang dari bentuk data publik dan slug buram tetap tersedia. Penyaring yang sama kini diterapkan di halaman profil penjual dan toko yang meneruskan listing ke komponen browser. `npm test` lulus (53 berkas, 253 tes), `npm run lint` dan `npm run build` sukses. Build tetap mencatat peringatan font eksternal dan DNS bot lokal yang tidak tersedia.
-- Perbaikan dipush sebagai `ae6301c` dan deployment produksi READY. Smoke check `/` dan `/jual-beli` mengembalikan HTTP 200 serta tidak memuat field nomor penjual pada HTML yang diperiksa; log runtime 30 menit pasca-rilis tidak menunjukkan error. Pengujian login admin per cakupan masih menunggu akun uji provinsi dan universitas; Supabase Security Advisor juga belum menghasilkan laporan.
+- Perbaikan dipush sebagai `ae6301c` dan deployment produksi READY. Smoke check `/` dan `/jual-beli` mengembalikan HTTP 200 serta tidak memuat field nomor penjual pada HTML yang diperiksa; log runtime 30 menit pasca-rilis tidak menunjukkan error. Login admin per cakupan belum diuji di produksi sesuai pilihan "uji lokal saja".
 
 ### Pembaruan 2 November 2026 — implementasi arsitektur Jual Barang via Instagram DM (Tahap 0–4)
 

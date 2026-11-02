@@ -18,10 +18,16 @@ function formatRelativeTime(dateString) {
 }
 
 export default function SocialWorkspace() {
-  const [activeTab, setActiveTab] = useState("accounts"); // 'accounts' | 'inbox' | 'queue'
+  const [activeTab, setActiveTab] = useState("accounts"); // 'accounts' | 'whatsapp' | 'inbox' | 'queue'
   const [accounts, setAccounts] = useState([]);
   const [stats, setStats] = useState({ total: 0, instagram: 0, whatsapp: 0, connected: 0 });
   const [loadingAccounts, setLoadingAccounts] = useState(true);
+
+  // WhatsApp Multi-Channel state
+  const [waAccounts, setWaAccounts] = useState([]);
+  const [waStats, setWaStats] = useState({ channels: 0, business: 0, groups: 0, gatewayOnline: false });
+  const [loadingWa, setLoadingWa] = useState(false);
+  const [waFilter, setWaFilter] = useState("all"); // 'all' | 'channel' | 'business' | 'group'
 
   // DM Inbox state
   const [dmLogs, setDmLogs] = useState([]);
@@ -29,6 +35,11 @@ export default function SocialWorkspace() {
   const [actionFilter, setActionFilter] = useState("all");
   const [searchLog, setSearchLog] = useState("");
   const [selectedLog, setSelectedLog] = useState(null);
+
+  // Modal Test Broadcast
+  const [broadcastModalTarget, setBroadcastModalTarget] = useState(null);
+  const [broadcastMsg, setBroadcastMsg] = useState("");
+  const [sendingBroadcast, setSendingBroadcast] = useState(false);
 
   // Modal Account Form
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -41,6 +52,7 @@ export default function SocialWorkspace() {
   const [formExternalId, setFormExternalId] = useState("");
   const [provincesList, setProvincesList] = useState([]);
   const [universitiesList, setUniversitiesList] = useState([]);
+  const [resolvingChannel, setResolvingChannel] = useState(false);
 
   // Testing connection state
   const [testingId, setTestingId] = useState(null);
@@ -54,7 +66,10 @@ export default function SocialWorkspace() {
   useEffect(() => {
     if (activeTab === "inbox") {
       fetchDmLogs();
+    } else if (activeTab === "whatsapp") {
+      fetchWhatsAppChannels();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, actionFilter]);
 
   const fetchAccounts = async () => {
@@ -68,10 +83,28 @@ export default function SocialWorkspace() {
       } else {
         toast.error(json.error || "Gagal memuat akun sosial.");
       }
-    } catch (err) {
+    } catch {
       toast.error("Gagal terhubung ke server.");
     } finally {
       setLoadingAccounts(false);
+    }
+  };
+
+  const fetchWhatsAppChannels = async () => {
+    setLoadingWa(true);
+    try {
+      const res = await fetch("/api/admin/whatsapp/channels");
+      const json = await res.json();
+      if (json.ok) {
+        setWaAccounts(json.accounts || []);
+        setWaStats(json.stats || {});
+      } else {
+        toast.error(json.error || "Gagal memuat saluran WhatsApp.");
+      }
+    } catch {
+      toast.error("Gagal memuat data WhatsApp.");
+    } finally {
+      setLoadingWa(false);
     }
   };
 
@@ -82,7 +115,6 @@ export default function SocialWorkspace() {
       if (json.provinces) setProvincesList(json.provinces);
       if (json.universities) setUniversitiesList(json.universities);
     } catch {
-      // Fallback data default
       setProvincesList([{ id: "sumatera-utara", name: "Sumatera Utara" }]);
       setUniversitiesList([
         { id: "usu", code: "USU", name: "Universitas Sumatera Utara", province_id: "sumatera-utara" },
@@ -129,16 +161,76 @@ export default function SocialWorkspace() {
       } else {
         toast.error(json.error || "Uji koneksi gagal.");
       }
-    } catch (err) {
+    } catch {
       toast.error("Gagal menghubungi Meta API.");
     } finally {
       setTestingId(null);
     }
   };
 
-  const handleOpenAddModal = () => {
+  const handleResolveChannelLink = async () => {
+    if (!formHandle.includes("whatsapp.com/channel/")) {
+      toast.error("Masukkan link saluran WhatsApp resmi (https://whatsapp.com/channel/...)");
+      return;
+    }
+    setResolvingChannel(true);
+    try {
+      const res = await fetch("/api/admin/whatsapp/channels", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "resolve_channel_link",
+          invite: formHandle.trim(),
+        }),
+      });
+      const json = await res.json();
+      if (json.ok && json.channel?.jid) {
+        setFormExternalId(json.channel.jid);
+        toast.success(`Saluran terverifikasi: "${json.channel.name}" (${json.channel.subscribers} subscriber)`);
+      } else {
+        toast.error(json.error || "Gagal memverifikasi saluran via gateway WhatsApp.");
+      }
+    } catch (err) {
+      toast.error("Kendala jaringan saat menghubungi gateway WhatsApp.");
+    } finally {
+      setResolvingChannel(false);
+    }
+  };
+
+  const handleSendTestBroadcast = async (e) => {
+    e.preventDefault();
+    if (!broadcastModalTarget) return;
+
+    setSendingBroadcast(true);
+    try {
+      const res = await fetch("/api/admin/whatsapp/channels", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "test_broadcast",
+          targetJid: broadcastModalTarget.external_account_id || broadcastModalTarget.handle,
+          provider: broadcastModalTarget.provider,
+          message: broadcastMsg.trim() || undefined,
+        }),
+      });
+      const json = await res.json();
+      if (json.ok) {
+        toast.success(json.message || "Pesan uji coba berhasil dikirim!");
+        setBroadcastModalTarget(null);
+        setBroadcastMsg("");
+      } else {
+        toast.error(json.error || "Gagal mengirim pesan uji coba.");
+      }
+    } catch (err) {
+      toast.error("Terjadi galat saat mengirim pesan.");
+    } finally {
+      setSendingBroadcast(false);
+    }
+  };
+
+  const handleOpenAddModal = (presetProvider = "instagram") => {
     setEditingAccount(null);
-    setFormProvider("instagram");
+    setFormProvider(presetProvider);
     setFormScopeType("university");
     setFormProvinceId(provincesList[0]?.id || "sumatera-utara");
     setFormUniversityId(universitiesList[0]?.id || "usu");
@@ -161,37 +253,41 @@ export default function SocialWorkspace() {
   const handleSaveAccount = async (e) => {
     e.preventDefault();
     if (!formHandle.trim()) {
-      toast.error("Handle akun wajib diisi.");
+      toast.error("Handle / Tautan akun wajib diisi.");
       return;
     }
 
     startTransition(async () => {
       try {
         const payload = {
-          action: "upsert_account",
+          action: "upsert_channel",
           id: editingAccount?.id,
           provider: formProvider,
           provinceId: formScopeType === "province" ? formProvinceId : null,
           universityId: formScopeType === "university" ? formUniversityId : null,
           handle: formHandle.trim(),
           externalAccountId: formExternalId.trim() || null,
-          status: formExternalId ? "connected" : "not_connected",
         };
 
-        const res = await fetch("/api/admin/social/accounts", {
+        const endpoint = formProvider.startsWith("whatsapp")
+          ? "/api/admin/whatsapp/channels"
+          : "/api/admin/social/accounts";
+
+        const res = await fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
         const json = await res.json();
         if (json.ok) {
-          toast.success("Akun sosial berhasil disimpan.");
+          toast.success("Akun / Kanal sosial berhasil disimpan.");
           setIsModalOpen(false);
           fetchAccounts();
+          if (activeTab === "whatsapp") fetchWhatsAppChannels();
         } else {
           toast.error(json.error || "Gagal menyimpan akun.");
         }
-      } catch (err) {
+      } catch {
         toast.error("Terjadi kendala saat menyimpan data.");
       }
     });
@@ -203,37 +299,42 @@ export default function SocialWorkspace() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-3xl border border-slate-200/80 bg-white/80 p-6 shadow-sm backdrop-blur-md">
         <div>
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-pink-50 px-3 py-1 text-xs font-bold text-pink-700 ring-1 ring-inset ring-pink-600/20">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
               <svg className="h-3.5 w-3.5 fill-current" viewBox="0 0 24 24">
-                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14H7l4-8 4 6-2-2-2 4z" />
               </svg>
               Social & Communication Management
             </span>
+            <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-[11px] font-bold text-indigo-700">
+              Fase 4: WhatsApp Multi-Channel
+            </span>
           </div>
           <h1 className="mt-2 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
-            Integrasi Multi-Account Sosmed
+            Arsitektur Komunikasi Nasional
           </h1>
           <p className="mt-1 text-sm text-slate-600">
-            Kelola akun resmi Instagram & WhatsApp provinsi/kampus, pantau DM masuk terisolasi per wilayah, dan kendalikan antrean publikasi otomatis.
+            Kelola kanal WhatsApp resmi (Channels, Gateway Baileys & Komunitas Grup) dan multi-account Instagram terisolasi per kampus & provinsi.
           </p>
         </div>
 
-        <button
-          onClick={handleOpenAddModal}
-          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-700 active:scale-[0.98]"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
-          </svg>
-          Hubungkan Akun Baru
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => handleOpenAddModal(activeTab === "whatsapp" ? "whatsapp_channel" : "instagram")}
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-700 active:scale-[0.98]"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
+            </svg>
+            Hubungkan Kanal Baru
+          </button>
+        </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="flex border-b border-slate-200">
+      {/* Navigation Tabs (4 Pillars) */}
+      <div className="flex overflow-x-auto border-b border-slate-200">
         <button
           onClick={() => setActiveTab("accounts")}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold transition-all ${
+          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold whitespace-nowrap transition-all ${
             activeTab === "accounts"
               ? "border-indigo-600 text-indigo-600"
               : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700"
@@ -242,12 +343,24 @@ export default function SocialWorkspace() {
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
           </svg>
-          Daftar Akun Sosmed ({stats.total || 0})
+          Semua Akun Sosmed ({stats.total || 0})
+        </button>
+
+        <button
+          onClick={() => setActiveTab("whatsapp")}
+          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold whitespace-nowrap transition-all ${
+            activeTab === "whatsapp"
+              ? "border-emerald-600 text-emerald-600"
+              : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700"
+          }`}
+        >
+          <span className="flex h-2 w-2 rounded-full bg-emerald-500" />
+          WhatsApp Multi-Channel (3 Tier)
         </button>
 
         <button
           onClick={() => setActiveTab("inbox")}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold transition-all ${
+          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold whitespace-nowrap transition-all ${
             activeTab === "inbox"
               ? "border-indigo-600 text-indigo-600"
               : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700"
@@ -261,7 +374,7 @@ export default function SocialWorkspace() {
 
         <button
           onClick={() => setActiveTab("queue")}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold transition-all ${
+          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold whitespace-nowrap transition-all ${
             activeTab === "queue"
               ? "border-indigo-600 text-indigo-600"
               : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700"
@@ -274,10 +387,9 @@ export default function SocialWorkspace() {
         </button>
       </div>
 
-      {/* Tab 1: Akun Sosmed */}
+      {/* Tab 1: Akun Sosmed Gabungan */}
       {activeTab === "accounts" && (
         <div className="space-y-6">
-          {/* Quick Metrics */}
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <span className="text-xs font-semibold text-slate-500">Total Akun Terdaftar</span>
@@ -288,7 +400,7 @@ export default function SocialWorkspace() {
               <p className="mt-1 text-2xl font-black text-pink-700">{stats.instagram || 0}</p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <span className="text-xs font-semibold text-emerald-600">WhatsApp Channels</span>
+              <span className="text-xs font-semibold text-emerald-600">WhatsApp Multi-Channel</span>
               <p className="mt-1 text-2xl font-black text-emerald-700">{stats.whatsapp || 0}</p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -297,7 +409,6 @@ export default function SocialWorkspace() {
             </div>
           </div>
 
-          {/* Cards Grid */}
           {loadingAccounts ? (
             <div className="flex h-48 items-center justify-center rounded-3xl border border-slate-200 bg-white">
               <span className="text-sm font-semibold text-slate-400 animate-pulse">Memuat konfigurasi akun sosial...</span>
@@ -305,7 +416,7 @@ export default function SocialWorkspace() {
           ) : accounts.length === 0 ? (
             <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center">
               <p className="text-base font-bold text-slate-800">Belum ada akun sosial yang terdaftar.</p>
-              <p className="mt-1 text-sm text-slate-500">Klik "Hubungkan Akun Baru" di atas untuk mendaftarkan akun Instagram atau WhatsApp.</p>
+              <p className="mt-1 text-sm text-slate-500">Klik "Hubungkan Kanal Baru" di atas untuk mendaftarkan akun Instagram atau WhatsApp.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
@@ -317,28 +428,28 @@ export default function SocialWorkspace() {
                   ? `${acc.universities?.code || acc.university_id?.toUpperCase()} — ${acc.universities?.name || ""}`
                   : `Provinsi: ${acc.provinces?.name || acc.province_id}`;
 
+                let providerBadge = { label: "Instagram Official", color: "bg-pink-50 text-pink-700 ring-pink-600/20" };
+                if (acc.provider === "whatsapp_channel") {
+                  providerBadge = { label: "WhatsApp Channel", color: "bg-emerald-50 text-emerald-700 ring-emerald-600/20" };
+                } else if (acc.provider === "whatsapp_group") {
+                  providerBadge = { label: "WhatsApp Group", color: "bg-blue-50 text-blue-700 ring-blue-600/20" };
+                } else if (acc.provider === "whatsapp_business") {
+                  providerBadge = { label: "WhatsApp Gateway", color: "bg-amber-50 text-amber-700 ring-amber-600/20" };
+                }
+
                 return (
                   <div
                     key={acc.id}
                     className="flex flex-col justify-between rounded-3xl border border-slate-200/90 bg-white p-6 shadow-sm transition hover:shadow-md"
                   >
                     <div>
-                      {/* Badge Top */}
                       <div className="flex items-center justify-between">
-                        <span
-                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
-                            isIg
-                              ? "bg-pink-50 text-pink-700 ring-1 ring-inset ring-pink-600/20"
-                              : "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20"
-                          }`}
-                        >
-                          {isIg ? "Instagram Official" : "WhatsApp Channel"}
+                        <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ring-1 ring-inset ${providerBadge.color}`}>
+                          {providerBadge.label}
                         </span>
                         <span
                           className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${
-                            isConn
-                              ? "bg-emerald-100 text-emerald-800"
-                              : "bg-amber-100 text-amber-800"
+                            isConn ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
                           }`}
                         >
                           <span className={`h-1.5 w-1.5 rounded-full ${isConn ? "bg-emerald-600" : "bg-amber-600"}`} />
@@ -346,9 +457,8 @@ export default function SocialWorkspace() {
                         </span>
                       </div>
 
-                      {/* Main Handle */}
                       <div className="mt-4">
-                        <h3 className="text-lg font-black text-slate-900">
+                        <h3 className="text-lg font-black text-slate-900 break-all">
                           {isIg ? `@${acc.handle}` : acc.handle}
                         </h3>
                         <p className="mt-0.5 text-xs font-semibold text-slate-500">
@@ -356,32 +466,31 @@ export default function SocialWorkspace() {
                         </p>
                       </div>
 
-                      {/* External ID */}
                       <div className="mt-4 rounded-xl bg-slate-50 p-3 text-xs">
                         <div className="flex justify-between text-slate-500">
-                          <span>External ID:</span>
-                          <span className="font-mono font-bold text-slate-700">
+                          <span>Identifier / JID:</span>
+                          <span className="font-mono font-bold text-slate-700 truncate max-w-[180px]">
                             {acc.external_account_id || "(Belum Disetel)"}
                           </span>
                         </div>
-                        {acc.last_checked_at && (
-                          <div className="mt-1 flex justify-between text-slate-400">
-                            <span>Pengecekan Terakhir:</span>
-                            <span>{formatRelativeTime(acc.last_checked_at)}</span>
-                          </div>
-                        )}
                       </div>
                     </div>
 
-                    {/* Actions */}
                     <div className="mt-6 flex items-center gap-2 border-t border-slate-100 pt-4">
-                      {isIg && (
+                      {isIg ? (
                         <button
                           onClick={() => handleTestConnection(acc)}
                           disabled={testingId === acc.id}
                           className="flex-1 rounded-xl bg-slate-100 px-3 py-2 text-center text-xs font-bold text-slate-700 transition hover:bg-slate-200 disabled:opacity-50"
                         >
                           {testingId === acc.id ? "Memeriksa..." : "Uji Koneksi Meta"}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setBroadcastModalTarget(acc)}
+                          className="flex-1 rounded-xl bg-emerald-50 px-3 py-2 text-center text-xs font-bold text-emerald-700 transition hover:bg-emerald-100"
+                        >
+                          Kirim Uji Coba
                         </button>
                       )}
                       <button
@@ -399,10 +508,161 @@ export default function SocialWorkspace() {
         </div>
       )}
 
-      {/* Tab 2: Instagram DM Inbox & Routing Logs */}
+      {/* Tab 2: WhatsApp Multi-Channel Architecture (Pemisahan 3 Tier) */}
+      {activeTab === "whatsapp" && (
+        <div className="space-y-6">
+          {/* Quick Metrics & Gateway Status */}
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <span className="text-xs font-semibold text-slate-500">Kanal WhatsApp Aktif</span>
+              <p className="mt-1 text-2xl font-black text-slate-900">{waStats.channels + waStats.groups + waStats.business}</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <span className="text-xs font-semibold text-emerald-600">WhatsApp Channels (Broadcast)</span>
+              <p className="mt-1 text-2xl font-black text-emerald-700">{waStats.channels}</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <span className="text-xs font-semibold text-blue-600">Grup Komunitas Kampus</span>
+              <p className="mt-1 text-2xl font-black text-blue-700">{waStats.groups}</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-slate-500">Gateway Bot Baileys</span>
+                <span className={`inline-flex h-2.5 w-2.5 rounded-full ${waStats.gatewayOnline ? "bg-emerald-500 animate-pulse" : "bg-rose-500"}`} />
+              </div>
+              <p className="mt-1 text-base font-black text-slate-800">
+                {waStats.gatewayOnline ? "Online (Siap Kirim)" : "Offline / Standby"}
+              </p>
+            </div>
+          </div>
+
+          {/* Explanation 3 Tier Card */}
+          <div className="rounded-3xl border border-emerald-200/80 bg-emerald-50/40 p-6 backdrop-blur-sm">
+            <h3 className="text-sm font-black text-emerald-950 flex items-center gap-2">
+              <svg className="h-4 w-4 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+              Standar Pemisahan Arsitektur 3 Tier WhatsApp
+            </h3>
+            <div className="mt-3 grid grid-cols-1 gap-4 text-xs text-emerald-900 md:grid-cols-3">
+              <div className="rounded-2xl bg-white/80 p-4 border border-emerald-100">
+                <p className="font-bold text-slate-900">1. WhatsApp Channels</p>
+                <p className="mt-1 text-slate-600">Siaran katalog produk dan pengumuman resmi tanpa batasan waktu interaksi pengikut (@newsletter).</p>
+              </div>
+              <div className="rounded-2xl bg-white/80 p-4 border border-emerald-100">
+                <p className="font-bold text-slate-900">2. Gateway Bisnis & Transaksi</p>
+                <p className="mt-1 text-slate-600">Pesan otomatis dua arah: OTP verifikasi nomor, notifikasi pesanan, dan konfirmasi pembayaran.</p>
+              </div>
+              <div className="rounded-2xl bg-white/80 p-4 border border-emerald-100">
+                <p className="font-bold text-slate-900">3. Grup Komunitas Kampus</p>
+                <p className="mt-1 text-slate-600">Wadah diskusi mahasiswa, fakultas, dan bursa jual beli per kampus/cabang (@g.us).</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Sub Filters */}
+          <div className="flex gap-2">
+            {[
+              { id: "all", label: "Semua Kanal" },
+              { id: "whatsapp_channel", label: "Saluran Resmi (Channels)" },
+              { id: "whatsapp_group", label: "Grup Komunitas (@g.us)" },
+              { id: "whatsapp_business", label: "Gateway Bisnis / Bot" },
+            ].map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setWaFilter(f.id)}
+                className={`rounded-xl px-4 py-2 text-xs font-bold transition ${
+                  waFilter === f.id
+                    ? "bg-slate-900 text-white"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Channels Grid */}
+          {loadingWa ? (
+            <div className="flex h-48 items-center justify-center rounded-3xl border border-slate-200 bg-white">
+              <span className="text-sm font-semibold text-slate-400 animate-pulse">Memuat saluran WhatsApp...</span>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+              {waAccounts
+                .filter((a) => waFilter === "all" || a.provider === waFilter)
+                .map((acc) => {
+                  const isChannel = acc.provider === "whatsapp_channel";
+                  const isGroup = acc.provider === "whatsapp_group";
+                  const isUniv = acc.scope_type === "university";
+                  const scopeLabel = isUniv
+                    ? `${acc.universities?.code || acc.university_id?.toUpperCase()} — ${acc.universities?.name || ""}`
+                    : `Provinsi: ${acc.provinces?.name || acc.province_id}`;
+
+                  return (
+                    <div
+                      key={acc.id}
+                      className="flex flex-col justify-between rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <span
+                            className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                              isChannel
+                                ? "bg-emerald-100 text-emerald-800"
+                                : isGroup
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-amber-100 text-amber-800"
+                            }`}
+                          >
+                            {isChannel ? "Saluran (Channel)" : isGroup ? "Grup Komunitas" : "Gateway Bot"}
+                          </span>
+                          {acc.subscribers !== null && (
+                            <span className="text-xs font-semibold text-slate-500">
+                              {acc.subscribers.toLocaleString("id-ID")} {isChannel ? "pengikut" : "anggota"}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="mt-4">
+                          <h4 className="text-base font-black text-slate-900 break-all">
+                            {acc.liveName || acc.handle}
+                          </h4>
+                          <p className="mt-0.5 text-xs font-semibold text-slate-500">{scopeLabel}</p>
+                        </div>
+
+                        <div className="mt-3 rounded-xl bg-slate-50 p-3 text-xs">
+                          <p className="font-mono text-slate-600 break-all">
+                            JID: {acc.external_account_id || acc.handle}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-6 flex items-center gap-2 border-t border-slate-100 pt-4">
+                        <button
+                          onClick={() => setBroadcastModalTarget(acc)}
+                          className="flex-1 rounded-xl bg-emerald-600 px-3 py-2 text-center text-xs font-bold text-white transition hover:bg-emerald-700"
+                        >
+                          Kirim Pesan Uji Coba
+                        </button>
+                        <button
+                          onClick={() => handleOpenEditModal(acc)}
+                          className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50"
+                        >
+                          Sunting
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tab 3: Instagram DM Inbox & Routing Logs */}
       {activeTab === "inbox" && (
         <div className="space-y-6">
-          {/* Controls & Filter */}
           <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-slate-600">Filter Aksi:</span>
@@ -436,7 +696,6 @@ export default function SocialWorkspace() {
             </div>
           </div>
 
-          {/* DM Logs List */}
           {loadingLogs ? (
             <div className="flex h-48 items-center justify-center rounded-3xl border border-slate-200 bg-white">
               <span className="text-sm font-semibold text-slate-400 animate-pulse">Memuat log pesan DM...</span>
@@ -507,10 +766,66 @@ export default function SocialWorkspace() {
         </div>
       )}
 
-      {/* Tab 3: Antrean Publikasi Konten (Integrated) */}
+      {/* Tab 4: Antrean Publikasi Konten (Integrated) */}
       {activeTab === "queue" && (
         <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
           <TabInstagram />
+        </div>
+      )}
+
+      {/* Modal Kirim Uji Coba Pesan WhatsApp */}
+      {broadcastModalTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <h3 className="text-base font-black text-slate-900">
+                Uji Coba Siaran: {broadcastModalTarget.handle}
+              </h3>
+              <button
+                onClick={() => setBroadcastModalTarget(null)}
+                className="rounded-xl p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSendTestBroadcast} className="mt-4 space-y-4 text-xs">
+              <div>
+                <span className="font-semibold text-slate-500">Target JID:</span>
+                <p className="font-mono font-bold text-emerald-800 break-all">
+                  {broadcastModalTarget.external_account_id || broadcastModalTarget.handle}
+                </p>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700">Isi Pesan Uji Coba</label>
+                <textarea
+                  rows={4}
+                  value={broadcastMsg}
+                  onChange={(e) => setBroadcastMsg(e.target.value)}
+                  placeholder="Ketik pesan tes di sini..."
+                  className="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 p-3 font-medium text-slate-800"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setBroadcastModalTarget(null)}
+                  className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={sendingBroadcast}
+                  className="rounded-xl bg-emerald-600 px-5 py-2 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  {sendingBroadcast ? "Mengirim..." : "Kirim Sekarang"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
@@ -587,7 +902,7 @@ export default function SocialWorkspace() {
           <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <h3 className="text-base font-black text-slate-900">
-                {editingAccount ? "Sunting Akun Sosial" : "Hubungkan Akun Sosial Baru"}
+                {editingAccount ? "Sunting Kanal Komunikasi" : "Hubungkan Kanal Baru"}
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -599,15 +914,16 @@ export default function SocialWorkspace() {
 
             <form onSubmit={handleSaveAccount} className="mt-4 space-y-4 text-xs">
               <div>
-                <label className="block font-bold text-slate-700">Jenis Layanan / Platform</label>
+                <label className="block font-bold text-slate-700">Jenis Layanan / Kanal</label>
                 <select
                   value={formProvider}
                   onChange={(e) => setFormProvider(e.target.value)}
                   className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 font-bold text-slate-800"
                 >
+                  <option value="whatsapp_channel">WhatsApp Channel (Siaran Resmi / Newsletter)</option>
+                  <option value="whatsapp_group">WhatsApp Group (Komunitas Kampus @g.us)</option>
+                  <option value="whatsapp_business">WhatsApp Business Platform (Gateway Transaksional)</option>
                   <option value="instagram">Instagram Official</option>
-                  <option value="whatsapp_channel">WhatsApp Channel (Broadcast)</option>
-                  <option value="whatsapp_business">WhatsApp Business Platform</option>
                 </select>
               </div>
 
@@ -668,28 +984,58 @@ export default function SocialWorkspace() {
               )}
 
               <div>
-                <label className="block font-bold text-slate-700">Handle / Akun Username</label>
-                <input
-                  type="text"
-                  placeholder="contoh: usu.menfes atau link channel"
-                  value={formHandle}
-                  onChange={(e) => setFormHandle(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 font-bold text-slate-800"
-                  required
-                />
+                <label className="block font-bold text-slate-700">
+                  {formProvider === "whatsapp_channel"
+                    ? "Tautan Undangan Saluran (Invite Link)"
+                    : formProvider === "whatsapp_group"
+                    ? "Nama Grup / Tautan Undangan"
+                    : "Username / Handle Akun"}
+                </label>
+                <div className="mt-1 flex gap-2">
+                  <input
+                    type="text"
+                    placeholder={
+                      formProvider === "whatsapp_channel"
+                        ? "https://whatsapp.com/channel/..."
+                        : formProvider === "whatsapp_group"
+                        ? "Jual Beli USU / 120363...@g.us"
+                        : "usu.menfes"
+                    }
+                    value={formHandle}
+                    onChange={(e) => setFormHandle(e.target.value)}
+                    className="flex-1 rounded-xl border border-slate-200 bg-slate-50 p-2.5 font-bold text-slate-800"
+                    required
+                  />
+                  {formProvider === "whatsapp_channel" && (
+                    <button
+                      type="button"
+                      onClick={handleResolveChannelLink}
+                      disabled={resolvingChannel}
+                      className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-50"
+                    >
+                      {resolvingChannel ? "Membaca..." : "🔍 Deteksi JID"}
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700">External Account ID (Meta IG User ID / WA ID)</label>
+                <label className="block font-bold text-slate-700">
+                  Target JID / External Identifier
+                </label>
                 <input
                   type="text"
-                  placeholder="contoh: 17841430423153964"
+                  placeholder="contoh: 1203633...@newsletter atau 120363...@g.us"
                   value={formExternalId}
                   onChange={(e) => setFormExternalId(e.target.value)}
                   className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 font-mono text-slate-800"
                 />
                 <p className="mt-1 text-[11px] text-slate-400">
-                  Dibutuhkan untuk routing DM otomatis ke inbox kampus/provinsi yang bersangkutan.
+                  {formProvider === "whatsapp_channel"
+                    ? "JID @newsletter untuk pengiriman pengumuman katalog."
+                    : formProvider === "whatsapp_group"
+                    ? "JID @g.us untuk pengiriman bursa komunitas."
+                    : "ID akun eksternal / nomor bot."}
                 </p>
               </div>
 
@@ -706,7 +1052,7 @@ export default function SocialWorkspace() {
                   disabled={isPending}
                   className="rounded-xl bg-indigo-600 px-5 py-2 text-xs font-bold text-white hover:bg-indigo-700 disabled:opacity-50"
                 >
-                  {isPending ? "Menyimpan..." : "Simpan Akun"}
+                  {isPending ? "Menyimpan..." : "Simpan Kanal"}
                 </button>
               </div>
             </form>
