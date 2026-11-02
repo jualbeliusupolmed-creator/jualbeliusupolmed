@@ -14,9 +14,9 @@ export default function GroupBroadcastPanel() {
   const [sending, setSending] = useState(false);
   const stopRef = useRef(false);
 
-  function addLog(text) {
-    setLogs((prev) => [...prev, `[${new Date().toLocaleTimeString("id-ID")}] ${text}`]);
-  }
+  const addLog = useCallback((msg) => {
+    setLogs((prev) => [`[${new Date().toLocaleTimeString("id-ID")}] ${msg}`, ...prev].slice(0, 50));
+  }, []);
 
   const fetchGroups = useCallback(async () => {
     try {
@@ -38,7 +38,7 @@ export default function GroupBroadcastPanel() {
     } catch (e) {
       addLog("❌ Gagal memuat grup: " + e.message);
     }
-  }, []);
+  }, [addLog]);
 
   useEffect(() => {
     fetchGroups();
@@ -65,10 +65,6 @@ export default function GroupBroadcastPanel() {
     } catch (e) {
       addLog("❌ Gagal memuat anggota: " + e.message);
     }
-  }
-
-  function addLog(msg) {
-    setLogs(prev => [`[${new Date().toLocaleTimeString()}] ${msg}`, ...prev].slice(0, 50));
   }
 
   function handleGroupChange(e) {
