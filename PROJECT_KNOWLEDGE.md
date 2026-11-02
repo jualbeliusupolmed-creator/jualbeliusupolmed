@@ -699,7 +699,28 @@ cuma server.
 ### 2 November 2026 — Draft audit dan rebuild panel bot WhatsApp
 
 - Sumber bot yang diaudit adalah checkout VPS `/home/ubuntu/wa-bot-usu` pada commit `8a29f9b`; salinan lokal `bot-wa/` tidak dipakai sebagai sumber perubahan karena berpotensi berbeda.
-- Paket rebuild terisolasi disiapkan di `bot-panel-rebuild/`. Navigasi baru mengelompokkan ringkasan, inbox, antrean, broadcast, perangkat, pengaturan, alat bot, dan aktivitas; tampilannya mengikuti identitas Kampus Kita. Paket belum diterapkan atau diuji browser terhadap VPS.
-- Draft route membedakan respons `/status?panel=1` agar QR mentah tidak dikirim ke panel baru, mengurangi nilai nomor pada log perubahan pengaturan, dan meneruskan mode status aman untuk perangkat kedua. Perubahan ini belum diterapkan ke produksi.
+- Paket rebuild terisolasi disiapkan di `bot-panel-rebuild/` dan diterapkan selektif ke VPS pada 2 November 2026. Navigasi baru mengelompokkan ringkasan, inbox, antrean, broadcast, perangkat, pengaturan, alat bot, dan aktivitas; tampilannya mengikuti identitas Kampus Kita.
+- Route membedakan respons `/status?panel=1` agar QR mentah tidak dikirim ke panel baru, mengurangi nilai nomor pada log perubahan pengaturan, dan meneruskan mode status aman untuk perangkat kedua. Enam file diterapkan setelah target diverifikasi bersih; proses `wa-bot-usu` direstart, sedangkan bot cadangan dan Instagram tetap berjalan tanpa restart. Cadangan lama ada di `/home/ubuntu/wa-bot-panel-backups/panel-rebuild-20261102`.
 - Checkout VPS memiliki perubahan lokal pengguna pada aset panel dan file tak terlacak. Penerapan harus selektif per file dan tidak boleh menimpa perubahan tersebut.
 - Audit terbatas: implementasi middleware autentikasi belum ditinjau karena pemeriksaan otomatis menolak penayangan cuplikan yang berpotensi memuat informasi kredensial. Endpoint story juga perlu mitigasi SSRF sebelum panel mengirim media. Rincian temuan dan batas pemeriksaan ada di `bot-panel-rebuild/AUDIT.md`.
+- Revisi UI memusatkan profil WhatsApp, sapaan, opsi modul (panggilan, jeda/anti-ban, forensik), pengaturan privasi akun, nomor operasional, dan informasi konfigurasi server pada satu halaman Pengaturan. Privasi akun dapat ditulis tetapi tidak dapat dibaca melalui API saat ini, jadi formulir hanya menerapkan nilai yang dipilih dan memiliki opsi “Jangan ubah”. Endpoint kesehatan, perlindungan API tanpa autentikasi, dan aset publik diperiksa setelah restart; alur login terautentikasi belum diuji di browser.
+- Revisi 2 November: navigasi panel mengembalikan pintasan Antrean situs, Broadcast Grup, Laporan penuh, dan Infrastruktur. Broadcast Grup tetap mencakup siaran anggota grup dan Japri manual. Broadcast utama dan tab Japri menerima nomor `.xlsx` melalui pembaca browser lokal; file dibatasi 20 MB, lembar pertama dipakai, kolom dipilih, nomor dinormalisasi ke awalan `62`, dan duplikat dibuang. Pengiriman tetap memakai API broadcast yang ada.
+- Revisi statis diterapkan selektif pada lima file panel; backup ada di `/home/ubuntu/wa-bot-panel-backups/panel-xlsx-20261102`. Tidak ada restart bot. Checksum cocok dan dua aset JS memberi HTTP 200; halaman memberi 302 tanpa sesi. Pada pemeriksaan PM2 berikutnya bot online dengan restart count 11, naik satu dari catatan sebelumnya; penyebab belum diketahui dan tidak diasumsikan terkait pembaruan statis.
+
+### 2 November 2026 — Tujuan katalog grup dan saluran
+
+- Tujuan grup katalog sudah diatur di Admin situs → Pengaturan Admin & WhatsApp → JID Grup WA Utama / Grup WA Tambahan. `postToGroup` mengirim listing ke grup ketika admin mengaktifkan iklan; cron katalog harian memakai grup yang sama. Ini pemicu publikasi iklan, bukan status transaksi yang berubah menjadi “terjual”.
+- Pengaturan `admin.channelJid` ditambahkan ke konfigurasi settings JSON untuk saluran WhatsApp. Field menerima JID `@newsletter` atau tautan undangan; tautan diresolusikan lewat endpoint metadata `/newsletters/add` milik bot dan JID hasilnya disimpan.
+- Publikasi listing yang diaktifkan dan katalog harian kini dapat mengirim teks + tautan produk ke saluran melalui endpoint bot `/channel/send`. Pengiriman gambar ke saluran belum didukung route bot; pengiriman grup tetap memakai dukungan gambar yang ada. Kegagalan saluran ditampung di `wa_outbox` dan retry satu-per-satu menggunakan endpoint saluran.
+- Perubahan ini hanya ada di checkout web saat ini; belum dideploy atau diuji dengan pengiriman nyata. Tidak perlu migrasi database karena pengaturan disimpan dalam JSON `settings`; bot harus terhubung dan memiliki akses mengikuti saluran.
+
+### 2 November 2026 — Pembaruan Aplikasi Meta Developer & Webhook Instagram DM
+
+- Aplikasi Meta Developer dibuat ulang (Type: Bisnis) dengan nama **KampusKita** (`3682182505281187`) tanpa mengaktifkan Marketing API yang mewajibkan verifikasi NIB.
+- Endpoint Webhook Instagram: `https://www.kampuskita.my.id/api/webhook/instagram`.
+- Token verifikasi: `META_WEBHOOK_VERIFY_TOKEN=kampuskita_webhook_2026` telah diuji (HTTP 200) dan tersimpan di Vercel & `.env.local`.
+- Kunci Rahasia Aplikasi: `META_APP_SECRET` tersimpan di Vercel & `.env.local`.
+- Akun Instagram terhubung: `@jualbelidikampus` (`17841430977104943`).
+- Token akses: System User Access Token permanen (never expires) dengan cakupan `instagram_basic`, `instagram_manage_messages`, `instagram_manage_comments`, dan `instagram_content_publish` tersimpan di `META_KATALOG_IG_ACCESS_TOKEN`.
+- Webhook Meta diverifikasi sukses dan berlangganan field `messages`. Toggle langganan akun `@jualbelidikampus` diaktifkan.
+
