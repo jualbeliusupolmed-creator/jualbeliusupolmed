@@ -14,6 +14,12 @@ import {
   X,
   Layers,
   Sparkles,
+  Download,
+  Copy,
+  Check,
+  ExternalLink,
+  Smartphone,
+  Square,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -30,7 +36,9 @@ export default function OmnichannelPublishModal({
   const [distributionLogs, setDistributionLogs] = useState([]);
   const [isScheduled, setIsScheduled] = useState(false);
   const [scheduledTime, setScheduledTime] = useState("");
-  const [activeTab, setActiveTab] = useState("channels"); // 'channels' | 'logs'
+  const [activeTab, setActiveTab] = useState("channels"); // 'channels' | 'visual' | 'logs'
+  const [posterRatio, setPosterRatio] = useState("portrait"); // 'portrait' | 'story'
+  const [copiedLink, setCopiedLink] = useState(false);
 
   useEffect(() => {
     if (isOpen && listing?.id) {
@@ -145,6 +153,19 @@ export default function OmnichannelPublishModal({
     }
   };
 
+  const posterUrl = listing?.id
+    ? `/api/listings/${listing.id}/instagram-image?ratio=${posterRatio}`
+    : "";
+
+  const handleCopyPosterLink = () => {
+    if (!posterUrl) return;
+    const fullUrl = `${window.location.origin}${posterUrl}`;
+    navigator.clipboard.writeText(fullUrl);
+    setCopiedLink(true);
+    toast.success("Link poster HD berhasil disalin ke clipboard!");
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
   if (!isOpen) return null;
 
   const getChannelIcon = (type) => {
@@ -255,6 +276,17 @@ export default function OmnichannelPublishModal({
               }`}
             >
               Matriks Kanal ({channels.length})
+            </button>
+            <button
+              onClick={() => setActiveTab("visual")}
+              className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 transition ${
+                activeTab === "visual"
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <Camera className="h-3.5 w-3.5 text-pink-600" />
+              <span>Poster Visual</span>
             </button>
             <button
               onClick={() => setActiveTab("logs")}
@@ -401,6 +433,119 @@ export default function OmnichannelPublishModal({
                 </div>
               </div>
             </>
+          ) : activeTab === "visual" ? (
+            /* Tab Poster Visual Studio (Feed 4:5 & Story 9:16) */
+            <div className="space-y-5">
+              {/* Toolbar Rasio & Aksi Cepat */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-xs font-bold text-slate-700">Format Poster:</span>
+                  <div className="flex rounded-lg bg-slate-200 p-0.5 text-xs font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setPosterRatio("portrait")}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md transition ${
+                        posterRatio === "portrait"
+                          ? "bg-white text-slate-900 shadow-sm"
+                          : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      <Square className="h-3.5 w-3.5 text-purple-600" />
+                      <span>Feed (4:5 · 1080×1350)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPosterRatio("story")}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md transition ${
+                        posterRatio === "story"
+                          ? "bg-white text-slate-900 shadow-sm"
+                          : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      <Smartphone className="h-3.5 w-3.5 text-pink-600" />
+                      <span>Story (9:16 · 1080×1920)</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleCopyPosterLink}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition shadow-xs"
+                  >
+                    {copiedLink ? (
+                      <>
+                        <Check className="h-3.5 w-3.5 text-emerald-600" />
+                        <span>Tersalin!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3.5 w-3.5 text-slate-500" />
+                        <span>Salin Link</span>
+                      </>
+                    )}
+                  </button>
+                  <a
+                    href={`/api/listings/${listing.id}/instagram-image?ratio=${posterRatio}&download=1`}
+                    download
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-slate-800 transition shadow-xs"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    <span>Unduh HD</span>
+                  </a>
+                  <a
+                    href={`/api/listings/${listing.id}/instagram-image?ratio=${posterRatio}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-slate-800 transition"
+                    title="Buka Tab Baru"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                </div>
+              </div>
+
+              {/* Preview Box Studio */}
+              <div className="rounded-2xl bg-slate-950 p-6 flex flex-col items-center justify-center border border-slate-800 relative overflow-hidden shadow-inner">
+                <div className="w-full flex items-center justify-between text-[11px] font-mono text-slate-400 bg-slate-900/90 px-3 py-1.5 rounded-lg border border-slate-800 mb-4">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>
+                      {posterRatio === "story"
+                        ? "1080 × 1920 px (Instagram Story / Status WhatsApp)"
+                        : "1080 × 1350 px (Instagram Feed Potret 4:5)"}
+                    </span>
+                  </div>
+                  <span className="text-emerald-400 font-bold uppercase">
+                    HD JPEG · MozJPEG Engine
+                  </span>
+                </div>
+
+                <div className="max-w-md w-full flex items-center justify-center py-2">
+                  <img
+                    key={`${listing.id}-${posterRatio}`}
+                    src={`/api/listings/${listing.id}/instagram-image?ratio=${posterRatio}`}
+                    alt={`Poster ${listing.title}`}
+                    className="max-h-[460px] w-auto rounded-xl shadow-2xl border border-slate-700/60 object-contain hover:scale-[1.01] transition-transform duration-200"
+                    loading="eager"
+                  />
+                </div>
+
+                <div className="w-full flex flex-wrap items-center justify-between text-[11px] text-slate-400 border-t border-slate-800/80 pt-3 mt-4 gap-2">
+                  <span>
+                    Branding Kampus:{" "}
+                    <strong className="text-white">
+                      {listing.campus || "KAMPUS KITA"}
+                    </strong>
+                  </span>
+                  <span>Watermark &amp; Tipografi Plus Jakarta Sans</span>
+                  <span className="text-emerald-400 font-bold">
+                    🛡️ Bebas Kontak Pribadi (Zero PII Leak)
+                  </span>
+                </div>
+              </div>
+            </div>
           ) : (
             /* Tab Riwayat Siaran (Logs) */
             <div className="space-y-3">
@@ -474,6 +619,17 @@ export default function OmnichannelPublishModal({
           >
             Tutup
           </button>
+
+          {activeTab === "visual" && (
+            <button
+              type="button"
+              onClick={() => setActiveTab("channels")}
+              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 active:scale-95 transition"
+            >
+              <Send className="h-4 w-4" />
+              <span>Lanjut ke Penyiaran Omnichannel</span>
+            </button>
+          )}
 
           {activeTab === "channels" && (
             <button

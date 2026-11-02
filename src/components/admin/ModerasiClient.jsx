@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useAdmin } from "./AdminProvider";
 import Image from "next/image";
 import { Icon } from "@/components/Icons";
+import { Share2 } from "lucide-react";
+import OmnichannelPublishModal from "./OmnichannelPublishModal";
 
 function rupiah(n) {
   return "Rp " + Number(n || 0).toLocaleString("id-ID");
@@ -29,6 +31,7 @@ export default function ModerasiClient({
   const { action, confirmThen } = useAdmin();
   const [activeTab, setActiveTab] = useState("all"); // 'all' | 'listings' | 'reports' | 'profiles' | 'fee_offers' | 'fees'
   const [rejectNote, setRejectNote] = useState({});
+  const [selectedListingForDistribution, setSelectedListingForDistribution] = useState(null);
 
   const total = pendingListings.length + openReports.length + pendingProfiles.length + pendingFees.length + pendingFeeOffers.length;
 
@@ -134,6 +137,14 @@ export default function ModerasiClient({
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0 self-end lg:self-center pt-2 sm:pt-0">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedListingForDistribution(l)}
+                    className="px-3.5 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/40 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 text-xs font-bold active:scale-95 transition-all flex items-center gap-1.5 shadow-xs"
+                    title="Siarkan ke IG Kampus/Provinsi & WA Channel"
+                  >
+                    <Share2 className="h-3.5 w-3.5" /> Distribusi
+                  </button>
                   <button
                     onClick={() =>
                       confirmThen({ title: `Aktifkan iklan "${l.title}"?`, confirmLabel: "Aktifkan" }, () =>
@@ -391,6 +402,18 @@ export default function ModerasiClient({
             ))}
           </div>
         </section>
+      )}
+
+      {/* Modal Distribusi Omnichannel */}
+      {selectedListingForDistribution && (
+        <OmnichannelPublishModal
+          listing={selectedListingForDistribution}
+          isOpen={Boolean(selectedListingForDistribution)}
+          onClose={() => setSelectedListingForDistribution(null)}
+          onSuccess={() => {
+            setSelectedListingForDistribution(null);
+          }}
+        />
       )}
 
     </div>

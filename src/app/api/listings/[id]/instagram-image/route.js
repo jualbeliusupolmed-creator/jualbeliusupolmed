@@ -24,7 +24,7 @@ function firstPhoto(listing) {
   return listing.image_url || null;
 }
 
-async function fetchSafeListingPhoto(url) {
+async function fetchSafeListingPhoto(url, isStory = false) {
   if (!url) return null;
   try {
     const parsed = new URL(url);
@@ -43,9 +43,10 @@ async function fetchSafeListingPhoto(url) {
     }
     const source = Buffer.from(await response.arrayBuffer());
     if (source.length > MAX_SOURCE_BYTES) return null;
+    const photoHeight = isStory ? 1080 : 720;
     return sharp(source)
       .rotate()
-      .resize(1080, 720, { fit: "cover", position: "attention" })
+      .resize(1080, photoHeight, { fit: "cover", position: "attention" })
       .jpeg({ quality: 90, mozjpeg: true })
       .toBuffer();
   } catch {
@@ -53,36 +54,46 @@ async function fetchSafeListingPhoto(url) {
   }
 }
 
-// JPEG publik untuk Meta. Data privat penjual tidak pernah dirender.
-export async function GET(_request, { params }) {
+// JPEG publik & admin untuk Meta Story / Feed. Data privat penjual tidak pernah dirender.
+export async function GET(request, { params }) {
+  const { searchParams } = new URL(request.url);
+  const ratio = searchParams.get("ratio") === "story" ? "story" : "portrait";
+  const isDownload = searchParams.get("download") === "1";
+
   const { data: listing, error } = await getAdminClient()
     .from("listings")
     .select("id, title, price, category, type, campus, area, image_url, images, status")
     .eq("id", params.id)
-    .eq("status", "active")
+    .in("status", ["active", "pending", "sold"])
     .maybeSingle();
+
   if (error || !listing) return new NextResponse("Not found", { status: 404 });
 
-  const photo = await fetchSafeListingPhoto(firstPhoto(listing));
+  const isStory = ratio === "story";
+  const photo = await fetchSafeListingPhoto(firstPhoto(listing), isStory);
   const composites = [];
   if (photo) composites.push({ input: photo, left: 0, top: 0 });
   composites.push(
-    { input: Buffer.from(createListingInstagramOverlaySvg(Boolean(photo))), left: 0, top: 0 },
+    { input: Buffer.from(createListingInstagramOverlaySvg(Boolean(photo), ratio)), left: 0, top: 0 },
     ...createListingInstagramTextLayers(listing, {
       regularFontPath: REGULAR_FONT_PATH,
       semiboldFontPath: SEMIBOLD_FONT_PATH,
-    }),
+    }, ratio),
   );
 
-  const image = await sharp(Buffer.from(createListingInstagramBaseSvg()))
+  const image = await sharp(Buffer.from(createListingInstagramBaseSvg(ratio)))
     .composite(composites)
     .jpeg({ quality: 92, mozjpeg: true })
     .toBuffer();
-  return new NextResponse(image, {
-    headers: {
-      "Content-Type": "image/jpeg",
-      "Cache-Control": "public, max-age=300, s-maxage=300",
-    },
-  });
-}
 
+  const headers = {
+    "Content-Type": "image/jpeg",
+    "Cache-Control": "public, max-age=300, s-maxage=300",
+  };
+
+  if (isDownload) {
+    headers["Content-Disposition"] = `attachment; filename="poster-${listing.id}-${ratio}.jpg"`;
+  }
+
+  return new NextResponse(image, { headers });
+}

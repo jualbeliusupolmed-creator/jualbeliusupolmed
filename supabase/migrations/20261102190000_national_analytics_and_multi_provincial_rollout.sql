@@ -92,3 +92,4 @@ on conflict (province_id) do update set
 alter table public.provincial_rollout_checklists enable row level security;
 revoke all on public.provincial_rollout_checklists from anon, authenticated;
 grant all on public.provincial_rollout_checklists to service_role;
+

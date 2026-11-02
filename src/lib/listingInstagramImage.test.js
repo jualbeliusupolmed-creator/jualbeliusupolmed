@@ -67,4 +67,32 @@ describe("listing Instagram image", () => {
     expect(metadata.format).toBe("jpeg");
     expect(rendered.length).toBeGreaterThan(10_000);
   });
+
+  it("lays out and renders a 9:16 story card (1080x1920) with dynamic campus branding", async () => {
+    const listing = {
+      title: "iPad Air 5 M1 64GB Space Grey Like New",
+      price: 7800000,
+      category: "Elektronik",
+      campus: "UI",
+      area: "Kukusan",
+    };
+    const layout = layoutListingInstagram(listing, "story");
+    expect(layout.campusTag).toBe("UI");
+    expect(layout.handle).toBe("@ui.menfes");
+    expect(createListingInstagramBaseSvg("story")).toContain('width="1080" height="1920"');
+
+    const rendered = await sharp(Buffer.from(createListingInstagramBaseSvg("story")))
+      .composite([
+        { input: Buffer.from(createListingInstagramOverlaySvg(false, "story")), left: 0, top: 0 },
+        ...createListingInstagramTextLayers(listing, fonts, "story"),
+      ])
+      .jpeg()
+      .toBuffer();
+    const metadata = await sharp(rendered).metadata();
+
+    expect(metadata.width).toBe(1080);
+    expect(metadata.height).toBe(1920);
+    expect(metadata.format).toBe("jpeg");
+    expect(rendered.length).toBeGreaterThan(10_000);
+  });
 });
