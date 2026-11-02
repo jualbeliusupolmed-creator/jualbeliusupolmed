@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFocusTrap } from "@/lib/useFocusTrap";
+import ScopeSwitcher from "@/components/admin/ScopeSwitcher";
 import {
   ArrowUpRight, Boxes, ChartNoAxesCombined, Clock, Flag, LayoutDashboard, LogOut, Megaphone, Menu, MessageCircle, MessagesSquare,
   PanelLeftClose, Settings2, ShieldCheck, ShoppingBag, Smartphone, Users, WalletCards, BookOpen, X, MapPinned, ClipboardList,
@@ -136,7 +137,7 @@ export default function OwnerWorkspaceShell({ actor, children }) {
         <header className="sticky top-0 z-30 flex h-[72px] items-center gap-3 border-b border-slate-200/70 bg-white/90 px-4 backdrop-blur-xl sm:px-7">
           <button type="button" onClick={() => setMobileOpen(true)} className="grid h-10 w-10 place-items-center rounded-xl text-slate-600 hover:bg-slate-100 lg:hidden" aria-label="Buka navigasi admin" aria-haspopup="dialog" aria-expanded={mobileOpen} aria-controls="admin-mobile-navigation"><Menu className="h-5 w-5" /></button>
           <div className="min-w-0 flex-1"><p className="hidden text-[10px] font-extrabold uppercase tracking-[.14em] text-emerald-700 sm:block">Kampus Kita Workspace</p><h1 className="truncate text-base font-black tracking-tight sm:mt-0.5 sm:text-lg">{currentTitle}</h1></div>
-          <span className="hidden max-w-[220px] truncate rounded-full bg-emerald-50 px-3 py-2 text-[11px] font-bold text-emerald-900 md:block">{actor.role === "superadmin" ? "Semua kampus" : scopeText}</span>
+          <ScopeSwitcher actor={actor} />
           <Link href="/" target="_blank" className="inline-flex min-h-10 items-center gap-1.5 rounded-full border border-slate-200 px-3 text-xs font-bold text-slate-600 transition hover:border-emerald-300 hover:text-emerald-800 sm:px-4">Lihat web <ArrowUpRight className="h-3.5 w-3.5" /></Link>
         </header>
         <div className="mx-auto max-w-[1480px] px-4 py-5 sm:px-7 sm:py-7">{children}</div>
