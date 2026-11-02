@@ -7,10 +7,25 @@ import { useAdmin } from "./AdminProvider";
 import OmnichannelPublishModal from "./OmnichannelPublishModal";
 
 const FILTERS = [
-  ["pending", "Menunggu review"], ["active", "Aktif"], ["sold", "Terjual"], ["suspended", "Ditangguhkan"], ["rejected", "Ditolak"], ["all", "Semua status"],
+  ["active", "Aktif"],
+  ["all", "Semua status"],
+  ["pending", "Menunggu review"],
+  ["sold", "Terjual"],
+  ["suspended", "Ditangguhkan"],
+  ["rejected", "Ditolak"],
 ];
-const WANTED_FILTERS = [["active", "Aktif"], ["pending", "Menunggu"], ["resolved", "Selesai"], ["all", "Semua status"]];
-const STORE_FILTERS = [["menunggu", "Menunggu review"], ["aktif", "Aktif"], ["ditolak", "Ditolak"], ["all", "Semua status"]];
+const WANTED_FILTERS = [
+  ["active", "Aktif"],
+  ["all", "Semua status"],
+  ["pending", "Menunggu"],
+  ["resolved", "Selesai"],
+];
+const STORE_FILTERS = [
+  ["aktif", "Aktif"],
+  ["all", "Semua status"],
+  ["menunggu", "Menunggu review"],
+  ["ditolak", "Ditolak"],
+];
 
 function ActionButton({ busy, onClick, label, icon: Icon, tone = "neutral" }) {
   const colors = {
@@ -21,11 +36,12 @@ function ActionButton({ busy, onClick, label, icon: Icon, tone = "neutral" }) {
   return <button disabled={busy} onClick={onClick} className={`inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-[11px] font-extrabold disabled:opacity-50 ${colors[tone]}`}>{busy ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <Icon className="h-3.5 w-3.5" />}{label}</button>;
 }
 
-export default function MarketplaceWorkspace({ initialMode = "listings", canReview = false, canManage = false, superadmin = false }) {
+export default function MarketplaceWorkspace({ initialMode = "listings", initialStatus = "active", canReview = false, canManage = false, superadmin = false }) {
   const { confirmThen, promptThen } = useAdmin();
   const [items, setItems] = useState([]);
   const [mode, setMode] = useState(initialMode);
-  const [status, setStatus] = useState(initialMode === "stores" ? "menunggu" : initialMode === "wanted" ? "active" : "pending");
+  const [status, setStatus] = useState(initialStatus || (initialMode === "stores" ? "aktif" : "active"));
+  const [statusCounts, setStatusCounts] = useState({});
   const [nextOffset, setNextOffset] = useState(null);
   const [total, setTotal] = useState(0);
   const [query, setQuery] = useState("");
@@ -50,12 +66,27 @@ export default function MarketplaceWorkspace({ initialMode = "listings", canRevi
       setItems((current) => append ? [...current, ...(data.items || [])] : (data.items || []));
       setNextOffset(data.nextOffset ?? null);
       setTotal(data.total || 0);
+      if (data.statusCounts) setStatusCounts(data.statusCounts);
     } catch (cause) { setError(cause.message); }
     finally { setLoading(false); }
   }, [status, query, mode]);
   useEffect(() => { load(); }, [load]);
 
-  const pendingCount = useMemo(() => items.filter((item) => mode === "stores" ? item.status === "menunggu" : mode === "wanted" ? item.status === "active" || item.status === "pending" : item.status === "pending").length, [items, mode]);
+  const pendingCount = useMemo(() => {
+    if (typeof statusCounts?.pending === "number" && mode !== "stores") {
+      return statusCounts.pending;
+    }
+    if (typeof statusCounts?.menunggu === "number" && mode === "stores") {
+      return statusCounts.menunggu;
+    }
+    return items.filter((item) =>
+      mode === "stores"
+        ? item.status === "menunggu"
+        : mode === "wanted"
+        ? item.status === "active" || item.status === "pending"
+        : item.status === "pending"
+    ).length;
+  }, [items, mode, statusCounts]);
 
   async function reviewStore(item, action) {
     const execute = async (reason = "") => {
@@ -130,13 +161,91 @@ export default function MarketplaceWorkspace({ initialMode = "listings", canRevi
 
   return (
     <div className="space-y-5">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><h2 className="text-2xl font-black tracking-tight">Marketplace</h2><p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-500">Tinjau iklan dan kebutuhan jual-beli di kampus dalam cakupan akun.</p></div><div className="flex items-center gap-2 self-start sm:self-auto"><div className="inline-flex min-h-10 items-center gap-2 rounded-full bg-amber-50 px-3 text-xs font-extrabold text-amber-900"><Clock3 className="h-4 w-4" />{pendingCount} {mode === "wanted" ? "belum selesai pada daftar" : "menunggu pada daftar"}</div><button onClick={() => load(0)} aria-label="Segarkan daftar" className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 bg-white text-slate-500 hover:border-emerald-200 hover:text-emerald-800"><RefreshCw className="h-4 w-4" /></button></div></header>
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 className="text-2xl font-black tracking-tight">Marketplace</h2>
+          <p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-500">Tinjau iklan dan kebutuhan jual-beli di kampus dalam cakupan akun.</p>
+        </div>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          {pendingCount > 0 ? (
+            <div className="inline-flex min-h-10 items-center gap-2 rounded-full bg-amber-50 px-3 text-xs font-extrabold text-amber-900">
+              <Clock3 className="h-4 w-4" />
+              {pendingCount} menunggu review
+            </div>
+          ) : (
+            <div className="inline-flex min-h-10 items-center gap-2 rounded-full bg-emerald-50 px-3 text-xs font-extrabold text-emerald-900">
+              <PackageSearch className="h-4 w-4" />
+              {total.toLocaleString("id-ID")} {mode === "wanted" ? "kebutuhan" : mode === "stores" ? "toko" : "iklan"} {status === "all" ? "total" : status === "active" || status === "aktif" ? "aktif" : status}
+            </div>
+          )}
+          <button onClick={() => load(0)} aria-label="Segarkan daftar" className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 bg-white text-slate-500 hover:border-emerald-200 hover:text-emerald-800">
+            <RefreshCw className="h-4 w-4" />
+          </button>
+        </div>
+      </header>
       {notice ? <div role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-bold text-emerald-800">{notice}</div> : null}
       {error ? <div role="alert" className="flex items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-bold text-rose-800"><span>{error}</span><button onClick={() => load(0)} className="shrink-0 underline">Coba lagi</button></div> : null}
       <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
         <div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-          <div className="flex flex-col gap-3"><div className="flex gap-1">{[["listings", "Iklan jual"], ["wanted", "Dicari"], ["stores", "Toko"]].map(([key, label]) => <button key={key} onClick={() => { setMode(key); setStatus(key === "stores" ? "menunggu" : key === "wanted" ? "active" : "pending"); }} aria-pressed={mode === key} className={`min-h-9 rounded-full px-3 text-[11px] font-extrabold ${mode === key ? "bg-emerald-50 text-emerald-900" : "text-slate-500 hover:bg-slate-100"}`}>{label}</button>)}</div><div className="flex gap-1 overflow-x-auto pb-1 sm:pb-0">{(mode === "stores" ? STORE_FILTERS : mode === "wanted" ? WANTED_FILTERS : FILTERS).map(([key, label]) => <button key={key} onClick={() => setStatus(key)} aria-pressed={status === key} className={`min-h-9 shrink-0 rounded-full px-3 text-[11px] font-extrabold transition ${status === key ? "bg-emerald-800 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}>{label}</button>)}</div></div>
-          <label className="relative block w-full sm:max-w-[250px]"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input aria-label="Cari iklan atau kebutuhan" value={searchInput} onChange={(event) => setSearchInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); setQuery(searchInput.trim()); } }} placeholder="Cari judul iklan · Enter" className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-xs outline-none focus:border-emerald-600" /></label>
+          <div className="flex flex-col gap-3">
+            <div className="flex gap-1">
+              {[["listings", "Iklan jual"], ["wanted", "Dicari"], ["stores", "Toko"]].map(([key, label]) => (
+                <button
+                  key={key}
+                  onClick={() => {
+                    setMode(key);
+                    setStatus(key === "stores" ? "aktif" : "active");
+                  }}
+                  aria-pressed={mode === key}
+                  className={`min-h-9 rounded-full px-3 text-[11px] font-extrabold ${mode === key ? "bg-emerald-50 text-emerald-900" : "text-slate-500 hover:bg-slate-100"}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+              {(mode === "stores" ? STORE_FILTERS : mode === "wanted" ? WANTED_FILTERS : FILTERS).map(([key, label]) => {
+                const count = statusCounts?.[key];
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setStatus(key)}
+                    aria-pressed={status === key}
+                    className={`inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-[11px] font-extrabold transition ${
+                      status === key ? "bg-emerald-800 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                  >
+                    <span>{label}</span>
+                    {typeof count === "number" ? (
+                      <span
+                        className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                          status === key ? "bg-emerald-900/80 text-emerald-100" : "bg-slate-200 text-slate-700"
+                        }`}
+                      >
+                        {count.toLocaleString("id-ID")}
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <label className="relative block w-full sm:max-w-[250px]">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              aria-label="Cari iklan atau kebutuhan"
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  setQuery(searchInput.trim());
+                }
+              }}
+              placeholder="Cari judul iklan · Enter"
+              className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-xs outline-none focus:border-emerald-600"
+            />
+          </label>
         </div>
         {loading ? <div className="grid min-h-56 place-items-center text-slate-400"><LoaderCircle className="h-5 w-5 animate-spin" /></div> : items.length ? <div className="divide-y divide-slate-100">{items.map((item) => {
           if (mode === "stores") {

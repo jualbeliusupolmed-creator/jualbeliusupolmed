@@ -23,13 +23,15 @@ export async function GET(request) {
   }
 
   const params = new URL(request.url).searchParams;
-  const status = STORE_STATUSES.has(params.get("status")) ? params.get("status") : "menunggu";
+  const status = STORE_STATUSES.has(params.get("status")) ? params.get("status") : "aktif";
   const offset = offsetFrom(request.url);
   const q = String(params.get("q") || "").trim().slice(0, 80).replace(/[%_,]/g, " ");
   const campuses = await getAdminCampusScope(actor);
   if (actor.role !== "superadmin" && !campuses.length) {
-    return NextResponse.json({ items: [], total: 0, nextOffset: null });
+    return NextResponse.json({ items: [], total: 0, nextOffset: null, statusCounts: { all: 0, aktif: 0, menunggu: 0, ditolak: 0 } });
   }
+
+  const allowedCampuses = actor.role === "superadmin" ? null : [...new Set([...campuses, "Semua", "semua"])];
 
   let query = getAdminClient().from("seller_profiles")
     .select("wa,name,slug,store_name,store_area,store_hours,store_status,store_requested_at,store_reject_note,bio,campus", { count: "exact" })
@@ -37,10 +39,25 @@ export async function GET(request) {
     .range(offset, offset + 99);
   if (status !== "all") query = query.eq("store_status", status);
   if (q) query = query.ilike("store_name", `%${q}%`);
-  if (actor.role !== "superadmin") query = query.in("campus", campuses);
+  if (allowedCampuses) query = query.in("campus", allowedCampuses);
 
-  const { data, count, error } = await query;
+  let countQuery = getAdminClient().from("seller_profiles").select("store_status");
+  if (allowedCampuses) countQuery = countQuery.in("campus", allowedCampuses);
+
+  const [{ data, count, error }, { data: allStatuses }] = await Promise.all([
+    query,
+    countQuery,
+  ]);
   if (error) return NextResponse.json({ error: "Daftar toko belum dapat dimuat." }, { status: 503 });
+
+  const statusCounts = { all: allStatuses?.length || 0, aktif: 0, menunggu: 0, ditolak: 0 };
+  (allStatuses || []).forEach((row) => {
+    const s = row.store_status;
+    if (s && Object.prototype.hasOwnProperty.call(statusCounts, s)) {
+      statusCounts[s] = (statusCounts[s] || 0) + 1;
+    }
+  });
+
   const items = (data || []).map((profile) => ({
     storeToken: sealAdminUserToken(formatWa(profile.wa) || profile.wa),
     name: profile.name || "Pengguna",
@@ -56,7 +73,7 @@ export async function GET(request) {
     maskedPhone: maskPhone(profile.wa),
   }));
   const total = count || 0;
-  return NextResponse.json({ items, total, nextOffset: total > offset + items.length ? offset + items.length : null });
+  return NextResponse.json({ items, total, nextOffset: total > offset + items.length ? offset + items.length : null, statusCounts });
 }
 
 export async function PATCH(request) {
