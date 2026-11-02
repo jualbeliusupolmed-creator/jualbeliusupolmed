@@ -31,6 +31,15 @@ export async function GET() {
   if (!isSuperadmin(actor)) return NextResponse.json({ error: "Pengaturan platform hanya untuk superadmin." }, { status: 403 });
   const settings = await getSettings();
   return NextResponse.json({
+    admin: {
+      adminWa: settings.admin?.adminWa || "",
+      groupJid: settings.admin?.groupJid || "",
+      extraGroups: settings.admin?.extraGroups || "",
+      channelJid: settings.admin?.channelJid || "",
+      broadcastToWa: settings.admin?.broadcastToWa !== false,
+      broadcastToInstagram: settings.admin?.broadcastToInstagram !== false,
+      notifySellerOnPublish: settings.admin?.notifySellerOnPublish !== false,
+    },
     site: {
       heroTitle: settings.site?.heroTitle || "",
       heroSubtitle: settings.site?.heroSubtitle || "",
@@ -70,6 +79,17 @@ export async function PUT(req) {
   const current = await getSettings();
   const rows = [];
   try {
+    if (body.admin && typeof body.admin === "object") {
+      const admin = { ...current.admin };
+      if (body.admin.adminWa !== undefined) admin.adminWa = safeText(String(body.admin.adminWa || ""), 30, "Nomor WA Admin");
+      if (body.admin.groupJid !== undefined) admin.groupJid = safeText(String(body.admin.groupJid || ""), 100, "JID Grup");
+      if (body.admin.extraGroups !== undefined) admin.extraGroups = safeText(String(body.admin.extraGroups || ""), 500, "Grup Tambahan");
+      if (body.admin.channelJid !== undefined) admin.channelJid = safeText(String(body.admin.channelJid || ""), 200, "Saluran WA");
+      if (body.admin.broadcastToWa !== undefined) admin.broadcastToWa = Boolean(body.admin.broadcastToWa);
+      if (body.admin.broadcastToInstagram !== undefined) admin.broadcastToInstagram = Boolean(body.admin.broadcastToInstagram);
+      if (body.admin.notifySellerOnPublish !== undefined) admin.notifySellerOnPublish = Boolean(body.admin.notifySellerOnPublish);
+      rows.push({ key: "admin", value: admin, updated_at: new Date().toISOString() });
+    }
     if (body.site && typeof body.site === "object") {
       const site = { ...current.site };
       const textFields = { heroTitle: 160, heroSubtitle: 300, footerTagline: 300, metaTitle: 160, metaDescription: 320 };

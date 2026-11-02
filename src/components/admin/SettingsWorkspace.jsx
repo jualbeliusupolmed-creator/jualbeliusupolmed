@@ -4,6 +4,15 @@ import { useCallback, useEffect, useState } from "react";
 import { CircleAlert, LoaderCircle, Save, Settings2 } from "lucide-react";
 
 const EMPTY = {
+  admin: {
+    adminWa: "",
+    groupJid: "",
+    extraGroups: "",
+    channelJid: "",
+    broadcastToWa: true,
+    broadcastToInstagram: true,
+    notifySellerOnPublish: true,
+  },
   site: { heroTitle: "", heroSubtitle: "", footerTagline: "", metaTitle: "", metaDescription: "", logoUrl: "", faviconUrl: "" },
   pricing: { freeMode: true, listingDays: 14, adBarang: 0, adPoster: 0, bump: 0, featuredPerDay: 0, featuredMaxPerDay: 0, renewalFee: 0, proMonthly: 0 },
   areas: [],
@@ -56,6 +65,7 @@ export default function SettingsWorkspace() {
   }
 
   function updateSite(key, value) { setForm((current) => ({ ...current, site: { ...current.site, [key]: value } })); }
+  function updateAdmin(key, value) { setForm((current) => ({ ...current, admin: { ...(current.admin || {}), [key]: value } })); }
   function updatePricing(key, value) { setForm((current) => ({ ...current, pricing: { ...current.pricing, [key]: value } })); }
   function updateCampus(index, key, value) {
     setForm((current) => ({ ...current, campuses: current.campuses.map((campus, campusIndex) => campusIndex === index ? { ...campus, [key]: value } : campus) }));
@@ -106,6 +116,86 @@ export default function SettingsWorkspace() {
         <label className="text-xs font-bold text-slate-700">Masa tayang iklan (hari)<input type="number" min="1" max="365" value={form.pricing.listingDays} onChange={(event) => updatePricing("listingDays", Number(event.target.value))} className={inputClass} /></label>
         {MONEY_FIELDS.map(([key, label]) => <label key={key} className="text-xs font-bold text-slate-700">{label}<input type="number" min="0" max="100000000" step="1" value={form.pricing[key]} onChange={(event) => updatePricing(key, Number(event.target.value))} className={inputClass} /></label>)}
       </div></section>
+      <section className="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5">
+        <div className="mb-4">
+          <h3 className="text-sm font-black">Otomasi Siaran Katalog &amp; WhatsApp</h3>
+          <p className="mt-1 text-[11px] text-slate-500">
+            Atur siaran otomatis katalog saat iklan tayang (via Instagram DM atau aktifasi admin) dan integrasi Saluran WhatsApp (@newsletter).
+          </p>
+        </div>
+        <div className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="text-xs font-bold text-slate-700 sm:col-span-2">
+              Saluran WhatsApp untuk katalog iklan
+              <input
+                value={form.admin?.channelJid || ""}
+                onChange={(event) => updateAdmin("channelJid", event.target.value)}
+                placeholder="https://whatsapp.com/channel/... atau 120...@newsletter"
+                className={inputClass}
+              />
+              <span className="mt-1 block text-[10px] font-normal text-slate-400">
+                Tautan undangan atau JID saluran WhatsApp (@newsletter). Saat iklan tayang, katalog teks dan link produk otomatis dikirim ke saluran ini.
+              </span>
+            </label>
+            <label className="text-xs font-bold text-slate-700">
+              JID Grup WhatsApp Utama
+              <input
+                value={form.admin?.groupJid || ""}
+                onChange={(event) => updateAdmin("groupJid", event.target.value)}
+                placeholder="628xxx@g.us"
+                className={inputClass}
+              />
+              <span className="mt-1 block text-[10px] font-normal text-slate-400">
+                Format: 628xxx@g.us
+              </span>
+            </label>
+            <label className="text-xs font-bold text-slate-700">
+              Nomor WhatsApp Superadmin
+              <input
+                value={form.admin?.adminWa || ""}
+                onChange={(event) => updateAdmin("adminWa", event.target.value)}
+                placeholder="628xxxxxxxxxx"
+                className={inputClass}
+              />
+              <span className="mt-1 block text-[10px] font-normal text-slate-400">
+                Nomor penerima notifikasi sistem.
+              </span>
+            </label>
+          </div>
+
+          <div className="space-y-2 pt-3 border-t border-slate-100">
+            <p className="text-[11px] font-black uppercase tracking-wider text-slate-600">Kontrol Otomasi Saat Iklan Tayang</p>
+            <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.admin?.broadcastToWa !== false}
+                onChange={(event) => updateAdmin("broadcastToWa", event.target.checked)}
+                className="h-4 w-4 accent-emerald-700 rounded"
+              />
+              <span>Otomatis siarkan iklan ke Grup &amp; Saluran WhatsApp saat tayang</span>
+            </label>
+            <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.admin?.broadcastToInstagram !== false}
+                onChange={(event) => updateAdmin("broadcastToInstagram", event.target.checked)}
+                className="h-4 w-4 accent-emerald-700 rounded"
+              />
+              <span>Otomatis terbitkan iklan ke Story / Feed Instagram (@jualbelidikampus)</span>
+            </label>
+            <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.admin?.notifySellerOnPublish !== false}
+                onChange={(event) => updateAdmin("notifySellerOnPublish", event.target.checked)}
+                className="h-4 w-4 accent-emerald-700 rounded"
+              />
+              <span>Kirim notifikasi WhatsApp ke Penjual saat iklannya resmi tayang</span>
+            </label>
+          </div>
+        </div>
+      </section>
+
       <section className="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5"><div className="mb-3"><h3 className="text-sm font-black">Area layanan</h3><p className="mt-1 text-[11px] text-slate-500">Pisahkan tiap area dengan koma. Maksimal 60 area.</p></div><textarea rows={4} value={areasText} onChange={(event) => setAreasText(event.target.value)} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm leading-relaxed outline-none focus:border-emerald-600 focus:bg-white focus:ring-4 focus:ring-emerald-500/10" /></section>
       <div className="sticky bottom-3 flex justify-end"><button disabled={saving} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-emerald-800 px-5 text-xs font-extrabold text-white shadow-lg shadow-emerald-950/10 hover:bg-emerald-900 disabled:opacity-60">{saving ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}{saving ? "Menyimpan…" : "Simpan pengaturan"}</button></div>
     </>}

@@ -28,6 +28,30 @@ module.exports = function pasangRutePanel(app, K) {
         systemLogs,
     } = K;
 
+    async function grupTujuanSitusLama() {
+        const base = String(WEBHOOK_URL || '').replace(/\/api\/wa\/baileys\/?$/, '').replace(/\/$/, '');
+        if (!base || !K.API_TOKEN) return { available: false, groups: [] };
+        try {
+            const response = await fetch(`${base}/api/wa/bot-catalog-groups`, {
+                headers: { Authorization: K.API_TOKEN, Accept: 'application/json' },
+                signal: AbortSignal.timeout(8000),
+            });
+            if (!response.ok) return { available: false, groups: [] };
+            const body = await response.json().catch(() => ({}));
+            const groups = Array.isArray(body.groups) ? body.groups : [];
+            return {
+                available: true,
+                groups: [...new Set(groups.map((jid) => String(jid || '').trim()).filter((jid) => /^[0-9-]{1,128}@g\.us$/.test(jid)))],
+            };
+        } catch {
+            return { available: false, groups: [] };
+        }
+    }
+
+    function namaGrup(jid) {
+        return K.groupsCache?.data?.find((group) => group.jid === jid)?.name || jid;
+    }
+
     // ── Health check (public, untuk Railway health check) ────────────────────────
     app.get('/health', (req, res) => {
         // Definisinya disamakan persis dengan /status — dulu /health cuma cek `waSocket`
@@ -312,14 +336,19 @@ module.exports = function pasangRutePanel(app, K) {
     // Tujuan katalog yang dipakai situs saat listing berhasil aktif. Nilainya
     // hidup di proses bot agar bisa diatur dari panel bot dan dibaca situs
     // melalui gateway yang sudah memakai token server-ke-server.
-    app.get('/settings/catalog-distribution', requireAuth, (req, res) => {
+    app.get('/settings/catalog-distribution', requireAuth, async (req, res) => {
         const saved = K.settings.catalogDistribution || {};
+        const legacy = saved.groupsConfigured ? { available: true, groups: [] } : await grupTujuanSitusLama();
+        const groups = saved.groupsConfigured
+            ? (Array.isArray(saved.groups) ? saved.groups : [])
+            : (legacy.available ? legacy.groups.map((jid) => ({ jid, name: namaGrup(jid) })) : (Array.isArray(saved.groups) ? saved.groups : []));
         res.set('Cache-Control', 'no-store');
         res.json({
             configured: !!saved.configured,
             enabled: saved.enabled !== false,
             groupsConfigured: saved.groupsConfigured === true,
-            groups: Array.isArray(saved.groups) ? saved.groups : [],
+            groups,
+            legacyGroupsAvailable: saved.groupsConfigured === true || legacy.available,
             channels: Array.isArray(saved.channels) ? saved.channels : [],
         });
     });
@@ -371,12 +400,16 @@ module.exports = function pasangRutePanel(app, K) {
         const previous = K.settings.catalogDistribution || {};
         const groupsConfigured = masuk.groupsConfigured === true || (masuk.groupsConfigured === undefined && previous.groupsConfigured === true);
         const groups = masuk.groupsConfigured === true
-            ? [...new Set(masuk.groups.map((jid) => jid.trim()))].map((jid) => ({ jid, name: K.groupsCache?.data?.find((group) => group.jid === jid)?.name || jid }))
+            ? [...new Set(masuk.groups.map((jid) => jid.trim()))].map((jid) => ({ jid, name: namaGrup(jid) }))
             : (Array.isArray(previous.groups) ? previous.groups : []);
         K.settings.catalogDistribution = { configured: true, enabled: masuk.enabled, groupsConfigured, groups, channels };
         saveSettings();
         console.log(`[settings] Tujuan katalog diperbarui (aktif: ${masuk.enabled}, grup: ${groupsConfigured ? groups.length : 'situs'}, saluran: ${channels.length}).`);
-        res.json({ ok: true, configured: true, enabled: masuk.enabled, groupsConfigured, groups, channels });
+        const legacy = groupsConfigured ? { available: true, groups: [] } : await grupTujuanSitusLama();
+        const responseGroups = groupsConfigured
+            ? groups
+            : (legacy.available ? legacy.groups.map((jid) => ({ jid, name: namaGrup(jid) })) : groups);
+        res.json({ ok: true, configured: true, enabled: masuk.enabled, groupsConfigured, groups: responseGroups, legacyGroupsAvailable: groupsConfigured || legacy.available, channels });
     });
 
     app.get('/newsletters', requireAuth, async (req, res) => {
