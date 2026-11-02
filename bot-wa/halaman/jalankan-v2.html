@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><meta name="theme-color" content="#f8fafc">
+  <title>Alat migrasi database · Kampus Kita</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/bot-panel-v2.css?v=3"><link rel="stylesheet" href="/assets/jalankan-v2.css?v=2">
+  <script src="/assets/jalankan-v2.js?v=2" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <div id="mobile-scrim" class="mobile-scrim" hidden></div>
+    <aside id="sidebar" class="sidebar" aria-label="Navigasi panel bot"><a class="sidebar-brand" href="/" aria-label="Ringkasan bot"><span class="brand-mark">KK</span><span class="brand-copy"><strong>Kampus Kita</strong><small>BOT CONSOLE</small></span><button id="mobile-close" class="icon-button close-nav" type="button" aria-label="Tutup navigasi">×</button></a>
+      <nav class="side-nav"><p class="nav-heading">KONTROL</p><a class="nav-item shortcut-link" href="/"><span class="nav-icon">⌂</span>Ringkasan bot</a><a class="nav-item shortcut-link" href="/antrean"><span class="nav-icon">≡</span>Antrean situs & bot</a><a class="nav-item shortcut-link" href="/broadcast_grup"><span class="nav-icon">↗</span>Broadcast grup</a><p class="nav-heading nav-heading-spaced">PINTASAN</p><a class="nav-item shortcut-link active" href="/jalankan" aria-current="page"><span class="nav-icon">⌘</span>Alat migrasi DB</a><a class="nav-item shortcut-link" href="/infrastruktur"><span class="nav-icon">⌁</span>Infrastruktur</a></nav>
+      <div class="sidebar-bottom"><div class="sidebar-status"><span class="status-dot online"></span><span>Gerbang aktif</span></div><a class="nav-item shortcut-link logout-button" href="/keluar"><span class="nav-icon">↪</span>Keluar</a></div>
+    </aside>
+    <main class="main-area"><header class="topbar"><button id="mobile-menu" class="icon-button mobile-menu" type="button" aria-label="Buka navigasi" aria-expanded="false">☰</button><div class="topbar-title"><p class="topbar-kicker">Kampus Kita · Pengelolaan</p><h1>Alat migrasi database</h1></div><div class="topbar-actions"><a class="site-link" href="/">Panel utama <span aria-hidden="true">↗</span></a></div></header>
+      <div class="page-content">
+        <header class="page-heading"><div><h2>Jalankan migrasi dengan tertib</h2><p>Muat skrip dari server ini, tinjau petunjuknya, lalu jalankan di SQL Editor proyek database.</p></div></header>
+        <div class="migration-warning"><strong>Gunakan hanya untuk database yang benar.</strong><span>File SQL membawa perubahan skema. Baca ringkasan, verifikasi proyek Supabase yang sedang dipilih, dan periksa hasil setelah menjalankan.</span></div>
+        <section class="migration-section surface"><div class="surface-head"><div><h3>01 · Migrasi skema utama</h3><p>Perubahan skema yang disusun berurutan dan dirancang aman dijalankan ulang.</p></div><span class="badge good">Transaksi utama</span></div><div class="surface-body"><div class="migration-actions"><button class="button button-primary" type="button" data-load="main">Muat dan tinjau SQL</button><button class="button" type="button" data-copy="main" disabled>Salin semua SQL</button><a class="button" data-download="/migrasi.sql" download="migrasi.sql">Unduh berkas</a><a class="button button-quiet" href="https://supabase.com/dashboard/project/_/sql/new" target="_blank" rel="noreferrer">Buka SQL Editor ↗</a><span class="migration-size" id="main-size">Belum dimuat</span></div><p class="migration-note">Migrasi ini tidak menyertakan seed data contoh. Periksa ringkasan yang dicetak setelah Run dan pastikan setiap hasil menunjukkan sukses.</p><label class="field-label" for="main-sql">Pratinjau SQL</label><textarea id="main-sql" class="textarea-field sql-preview" readonly placeholder="Tekan “Muat dan tinjau SQL” untuk mengambil file dari server."></textarea><div id="main-message" class="migration-message" role="status"></div></div></section>
+        <section class="migration-section surface"><div class="surface-head"><div><h3>02 · Pengencangan akses</h3><p>Skrip terpisah untuk perubahan izin baca database.</p></div><span class="badge warn">Tinjau khusus</span></div><div class="surface-body"><div class="migration-warning migration-warning-soft"><strong>Perubahan izin dapat memengaruhi akses aplikasi.</strong><span>Jalankan setelah meninjau hasil audit dan ikuti pemeriksaan pascamigrasi di lingkungan yang benar.</span></div><div class="migration-actions"><button class="button" type="button" data-load="security">Muat dan tinjau SQL</button><button class="button" type="button" data-copy="security" disabled>Salin SQL keamanan</button><a class="button" data-download="/migrasi-keamanan.sql" download="migrasi-keamanan.sql">Unduh berkas</a><span class="migration-size" id="security-size">Belum dimuat</span></div><label class="field-label" for="security-sql">Pratinjau SQL</label><textarea id="security-sql" class="textarea-field sql-preview" readonly placeholder="File terpisah ini tidak digabung dengan migrasi utama."></textarea><div id="security-message" class="migration-message" role="status"></div></div></section>
+      </div>
+    </main>
+  </div>
+  <div id="toast-region" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+</body>
+</html>

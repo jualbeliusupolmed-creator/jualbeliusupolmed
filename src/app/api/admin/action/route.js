@@ -6,7 +6,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { formatWa } from "@/lib/constants";
 import { getSettings } from "@/lib/settings";
 import { approveWantedContactUnlock, updateAdminPayment } from "@/lib/admin-finance-actions";
-import { notifyAdminNewListing, postToGroup, sendWa } from "@/lib/fonnte";
+import { notifyAdminNewListing, notifySellerListingLive, postToGroup, resolveWhatsAppChannelJid, sendWa } from "@/lib/fonnte";
 import { pushListingBaru } from "@/lib/webpush";
 import { logError } from "@/lib/logError";
 import {
@@ -113,29 +113,41 @@ export async function POST(req) {
           })
           .eq("id", id);
 
-        // Broadcast to WA Group when admin activates manually
+        // Broadcast to WA Group / Channel & Notifikasi saat admin aktifkan manual
         if (listingInfo) {
           const activateSettings = await getSettings().catch(() => null);
           // Push peramban ke semua pelanggan (bukan cuma pelanggan kategori).
           pushListingBaru(supa, { ...listingInfo, id }).catch(() => {});
-          const [groupRes] = await Promise.allSettled([
-            postToGroup(listingInfo, activateSettings?.admin),
-          ]);
-          const broadcast =
-            groupRes.status === "fulfilled"
-              ? groupRes.value
-              : { ok: false, error: groupRes.reason?.message };
-          if (!broadcast?.ok) {
-            console.error("[activate] Broadcast grup gagal:", JSON.stringify(broadcast));
-            warning = broadcast?.skipped
-              ? "Iklan aktif, tetapi tujuan grup belum dikonfigurasi. Atur FONNTE_WA_GROUP_ID atau BAILEYS_BROADCAST_GROUPS."
-              : `Iklan aktif, tapi broadcast grup gagal: ${broadcast?.error || broadcast?.data?.reason || "cek log server"}.`;
+
+          if (activateSettings?.admin?.broadcastToWa !== false) {
+            const [groupRes] = await Promise.allSettled([
+              postToGroup(listingInfo, activateSettings?.admin),
+            ]);
+            const broadcast =
+              groupRes.status === "fulfilled"
+                ? groupRes.value
+                : { ok: false, error: groupRes.reason?.message };
+            if (!broadcast?.ok) {
+              console.error("[activate] Broadcast grup gagal:", JSON.stringify(broadcast));
+              warning = broadcast?.skipped
+                ? "Iklan aktif, tetapi tujuan katalog belum dikonfigurasi. Atur grup atau saluran di Pengaturan Admin."
+                : `Iklan aktif, tapi pengiriman katalog ke grup/saluran gagal: ${broadcast?.error || broadcast?.data?.reason || "cek log server"}.`;
+            }
+          }
+
+          if (activateSettings?.admin?.broadcastToInstagram !== false) {
+            await autoPublishListingInstagram({
+              origin: siteOriginFromRequest(req),
+              listingId: id,
+            }).catch((e) => console.error("[activate] autoPublishListingInstagram error:", e?.message || e));
+          }
+
+          if (activateSettings?.admin?.notifySellerOnPublish !== false && listingInfo.seller_wa) {
+            await notifySellerListingLive(listingInfo).catch((e) =>
+              console.error("[activate] notifySellerListingLive error:", e?.message || e)
+            );
           }
         }
-        await autoPublishListingInstagram({
-          origin: siteOriginFromRequest(req),
-          listingId: id,
-        });
         break;
       }
       case "reject": {
@@ -458,9 +470,13 @@ export async function POST(req) {
 
       // ── Pengaturan situs ───────────────────────────────────────────────
       case "save_settings": {
-        const { key, value } = body;
+        const { key } = body;
+        let { value } = body;
         if (!key || value == null || typeof value !== "object") {
           return NextResponse.json({ error: "key/value tidak valid" }, { status: 400 });
+        }
+        if (key === "admin" && Object.hasOwn(value, "channelJid")) {
+          value = { ...value, channelJid: await resolveWhatsAppChannelJid(value.channelJid) };
         }
         const { error } = await supa
           .from("settings")

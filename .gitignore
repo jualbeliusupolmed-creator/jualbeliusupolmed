@@ -77,6 +77,7 @@ testDeal.js
 __read_lighthouse.mjs
 .lighthouse-*.json
 .npm-cache/
+bot-panel-rebuild/
 
 # Arsip salinan env lama — berisi kredensial, jangan pernah di-commit.
 arsip-env/

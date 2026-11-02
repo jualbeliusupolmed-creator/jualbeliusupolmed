@@ -1,0 +1,12 @@
+.migration-section { margin-top: 16px; }
+.migration-warning { display: grid; gap: 4px; padding: 15px 17px; border: 1px solid #edd9aa; border-radius: 13px; background: #fff9eb; color: #725112; font-size: 11px; line-height: 1.6; }
+.migration-warning strong { color: #5c410d; font-weight: 800; }
+.migration-warning-soft { margin-bottom: 15px; border-color: #f0d8ab; }
+.migration-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 12px; }
+.migration-actions .button { min-height: 35px; font-size: 10px; }
+.migration-size { margin-left: auto; color: var(--muted); font-size: 10px; }
+.migration-note { margin: 0 0 15px; color: var(--muted); font-size: 11px; line-height: 1.6; }
+.sql-preview { min-height: 250px; margin-top: 7px; font-family: ui-monospace,SFMono-Regular,Menlo,monospace; font-size: 10px; line-height: 1.5; white-space: pre; }
+.migration-message { min-height: 18px; margin-top: 7px; color: var(--muted); font-size: 10px; }
+.migration-message.error { color: var(--red); }
+@media (max-width: 600px) { .migration-size { width: 100%; margin-left: 0; } .sql-preview { min-height: 180px; } }

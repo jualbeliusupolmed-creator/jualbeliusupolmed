@@ -71,6 +71,9 @@ export const DEFAULT_SETTINGS = {
     channelJid: "",
     qrisUrl: process.env.QRIS_URL || "",
     fonnteFirst: false,
+    broadcastToWa: true,
+    broadcastToInstagram: true,
+    notifySellerOnPublish: true,
   },
   bot: {
     paused_users: [],

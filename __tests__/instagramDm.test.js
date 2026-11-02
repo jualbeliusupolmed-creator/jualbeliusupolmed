@@ -16,8 +16,18 @@ const mockTables = {
 };
 
 // OTP unit tests must never call the live WhatsApp bridge.
-vi.mock("@/lib/fonnte", () => ({
-  sendWa: vi.fn(async () => ({ ok: true })),
+vi.mock("@/lib/fonnte", async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    sendWa: vi.fn(async () => ({ ok: true })),
+    postToGroup: vi.fn(async () => ({ ok: true })),
+    notifySellerListingLive: vi.fn(async () => ({ ok: true })),
+  };
+});
+
+vi.mock("@/lib/listingInstagram", () => ({
+  autoPublishListingInstagram: vi.fn(async () => []),
 }));
 
 vi.mock("@/lib/supabaseAdmin", () => {
@@ -145,6 +155,7 @@ vi.mock("@/lib/supabaseAdmin", () => {
 vi.mock("@/lib/fonnte", () => ({
   sendWa: vi.fn(() => Promise.resolve({ ok: true })),
   postToGroup: vi.fn(() => Promise.resolve({ ok: true })),
+  notifySellerListingLive: vi.fn(() => Promise.resolve({ ok: true })),
 }));
 
 vi.mock("@/lib/listingInstagram", () => ({

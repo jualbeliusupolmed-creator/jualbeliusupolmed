@@ -642,11 +642,33 @@ export default function PengaturanClient({ initialSettings = {} }) {
               <Field label="Grup WA Tambahan (pisah koma)">
                 <textarea className="g-field w-full min-h-16 font-mono text-xs" value={adminCfg.extraGroups ?? ""} onChange={(e) => setAdminCfg({ ...adminCfg, extraGroups: e.target.value })} placeholder="628xxx@g.us,628yyy@g.us" />
               </Field>
+              <Field label="Saluran WA untuk katalog iklan">
+                <input className="g-field font-mono w-full" value={adminCfg.channelJid ?? ""} onChange={(e) => setAdminCfg({ ...adminCfg, channelJid: e.target.value })} placeholder="https://whatsapp.com/channel/… atau 120…@newsletter" />
+                <p className="mt-1 text-xs text-gray-400">Saat iklan diaktifkan, katalog teks dan tautan produk ikut dikirim ke saluran ini. Tautan undangan diubah menjadi JID saat disimpan; nomor bot harus mengikuti saluran. Gambar tetap dikirim ke grup, belum ke saluran.</p>
+              </Field>
               <Field label="URL / Link Gambar QRIS">
                 <input className="g-field w-full" value={adminCfg.qrisUrl ?? ""} onChange={(e) => setAdminCfg({ ...adminCfg, qrisUrl: e.target.value })} placeholder="https://..." />
                 <p className="mt-1 text-xs text-gray-400">URL gambar QRIS yang dikirim ke user saat checkout. Kosongkan untuk pakai default env.</p>
               </Field>
-              <label className="flex items-center gap-2 text-sm">
+
+              {/* OTOMASI SIARAN & NOTIFIKASI */}
+              <div className="pt-3 border-t border-slate-200 dark:border-white/10 space-y-2">
+                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Otomasi Siaran Katalog & Notifikasi</p>
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={adminCfg.broadcastToWa !== false} onChange={(e) => setAdminCfg({ ...adminCfg, broadcastToWa: e.target.checked })} className="h-4 w-4 rounded" />
+                  <span className="dark:text-slate-200">Otomatis siarkan iklan ke Grup &amp; Saluran WhatsApp saat tayang</span>
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={adminCfg.broadcastToInstagram !== false} onChange={(e) => setAdminCfg({ ...adminCfg, broadcastToInstagram: e.target.checked })} className="h-4 w-4 rounded" />
+                  <span className="dark:text-slate-200">Otomatis terbitkan iklan ke Story / Feed Instagram (@jualbelidikampus)</span>
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={adminCfg.notifySellerOnPublish !== false} onChange={(e) => setAdminCfg({ ...adminCfg, notifySellerOnPublish: e.target.checked })} className="h-4 w-4 rounded" />
+                  <span className="dark:text-slate-200">Kirim notifikasi WhatsApp ke Penjual saat iklannya resmi tayang</span>
+                </label>
+              </div>
+
+              <label className="flex items-center gap-2 text-sm pt-2">
                 <input type="checkbox" checked={!!adminCfg.fonnteFirst} onChange={(e) => setAdminCfg({ ...adminCfg, fonnteFirst: e.target.checked })} className="h-4 w-4 rounded" />
                 <span className="dark:text-slate-200">Gunakan Fonnte sebagai gateway utama (bukan Baileys)</span>
               </label>

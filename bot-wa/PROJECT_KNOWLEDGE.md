@@ -1723,3 +1723,6 @@ Berkas asli tidak disimpan di repo; ia ada di scratchpad sesi ini saja.
 ### Sebelum audit ini
 Riwayat perubahan lengkap kedua repo ada di **`/update`**, dirakit langsung dari
 git — bukan ditulis tangan, jadi tidak bisa ketinggalan.
+
+### 2 November 2026 — Pengaturan tujuan katalog
+Halaman Broadcast Grup menambahkan tab **Katalog otomatis** untuk mengatur saluran WhatsApp tujuan listing aktif. Bot menyimpan JID saluran di `settings.json`; tautan undangan divalidasi lewat koneksi WhatsApp bot. Endpoint `/settings/catalog-distribution` menggunakan gerbang autentikasi panel yang sama. Patch aditif diterapkan ke VPS; backup tersedia di `/home/ubuntu/wa-bot-panel-backups/catalog-dist-20261102`. Proses bot dimuat ulang dan `/health` pulih ke HTTP 200. Tidak ada pesan uji yang dikirim; admin tetap perlu menyimpan saluran tujuan melalui panel.

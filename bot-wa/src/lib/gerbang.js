@@ -237,34 +237,26 @@ module.exports = function buatGerbang({ API_TOKEN, AUTH_DIR, keadaan }) {
         const tujuan = amanTujuan(next);
         const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
             .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-        return `<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        return `<!doctype html><html lang="id"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex,nofollow">
+    <meta name="theme-color" content="#f4f8f5">
     <title>Masuk — Bot USU Polmed</title>
-    <meta name="robots" content="noindex, nofollow">
-    <link rel="stylesheet" href="/assets/ui.css">
-    <script>try{var t=localStorage.getItem('tema');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
-    </head><body>
-    <div class="wrap doc" style="max-width:26rem;margin-top:14vh">
-      <header style="text-align:center">
-        <div class="kicker">Panel Bot</div>
-        <h1 style="font-size:1.4rem">Masuk</h1>
-        <p class="muted">Satu sandi untuk semua halaman panel.</p>
-      </header>
-      <div class="card">
-        <form method="POST" action="/masuk">
-          <input type="hidden" name="next" value="${esc(tujuan)}">
-          <label for="sandi" class="muted" style="display:block;margin-bottom:6px;font-size:.85rem">Sandi</label>
-          <input id="sandi" name="sandi" type="password" autocomplete="current-password" autofocus required
-                 style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;
-                        background:var(--sunk);color:var(--ink);font-size:1rem">
-          ${galat ? `<p style="color:var(--bad);font-size:.85rem;margin:10px 0 0">${esc(galat)}</p>` : ''}
-          <button class="btn primary wide" type="submit" style="margin-top:14px">Masuk</button>
-        </form>
-      </div>
-      <p class="muted tiny" style="text-align:center">
-        Satu-satunya halaman yang bisa dibuka tanpa sandi: <a href="/lomba">/lomba</a>.
-      </p>
-    </div>
+    <link rel="stylesheet" href="/assets/bot-panel-content-v3.css?v=4">
+    </head><body class="content-login">
+    <main class="login-wrap">
+      <div class="login-brand"><span class="content-brand-mark" aria-hidden="true">KK</span><span><strong>Kampus Kita</strong><small>BOT CONSOLE</small></span></div>
+      <h1>Masuk panel bot</h1>
+      <p class="login-description">Masukkan sandi panel untuk membuka kontrol operasional WhatsApp.</p>
+      <form method="POST" action="/masuk">
+        <input type="hidden" name="next" value="${esc(tujuan)}">
+        <label for="sandi">Sandi panel</label>
+        <input id="sandi" name="sandi" type="password" autocomplete="current-password" autofocus required>
+        ${galat ? `<p class="login-error" role="alert">${esc(galat)}</p>` : ''}
+        <button type="submit">Masuk</button>
+      </form>
+      <p class="login-foot">Halaman publik: <a href="/lomba">presentasi proyek</a>.</p>
+    </main>
     </body></html>`;
     }
 

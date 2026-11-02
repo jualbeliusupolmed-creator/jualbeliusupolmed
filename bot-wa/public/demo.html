@@ -6,13 +6,10 @@
   <title>Tutorial &amp; Demo Penggunaan — Jual Beli USU Polmed</title>
   <meta name="description" content="Pusat tutorial dan live demo interaktif sistem informasi marketplace & bot WhatsApp mahasiswa Jual Beli USU Polmed.">
   <meta name="theme-color" content="#5926a9">
-  <link rel="canonical" href="https://bot.kampuskita.my.id/demo">
+  <link rel="canonical" href="https://bot.jualbeliusupolmed.web.id/demo">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
-  <link rel="stylesheet" href="/assets/ui.css?v=20260825">
-  <script>try{var t=localStorage.getItem('tema');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
-  <script src="/assets/ui.js?v=20260825" defer></script>
   <style>
     :root {
       --brand-purple: #5926a9;
@@ -414,8 +411,11 @@
       color: var(--brand-purple);
     }
   </style>
+
+  <link rel="stylesheet" href="/assets/bot-panel-content-v3.css?v=4">
+  <script src="/assets/bot-panel-content-v3.js?v=4" defer></script>
 </head>
-<body>
+<body data-panel-shell="false">
 
 <div class="demo-wrap">
 
@@ -425,7 +425,7 @@
     <h1>Jual Beli USU Polmed</h1>
     <p>Marketplace komunitas mahasiswa yang menghubungkan web aplikasi pintar dengan bot WhatsApp berbasis serverless &amp; socket database Supabase.</p>
     <div class="hero-btn-group">
-      <a href="https://www.kampuskita.my.id" target="_blank" rel="noreferrer" class="h-btn white">
+      <a href="https://www.jualbeliusupolmed.web.id" target="_blank" rel="noreferrer" class="h-btn white">
         🌐 Buka Website Utama
       </a>
       <a href="https://wa.me/6285141094056?text=.MENU" target="_blank" rel="noreferrer" class="h-btn emerald">
@@ -446,7 +446,7 @@
         <h3>Web Marketplace</h3>
         <p>Aplikasi utama Next.js 14 untuk pencarian barang, jasa tugas, kos, curhat Menfess, dan Swipe Cari Teman.</p>
       </div>
-      <a href="https://www.kampuskita.my.id" target="_blank" rel="noreferrer" class="card-link">
+      <a href="https://www.jualbeliusupolmed.web.id" target="_blank" rel="noreferrer" class="card-link">
         Kunjungi Website &rarr;
       </a>
     </div>
@@ -468,7 +468,7 @@
         <h3>Panel Admin Web</h3>
         <p>Panel moderasi terpusat untuk kurasi postingan menfess, iklan marketplace, laporan scam, dan broadcast.</p>
       </div>
-      <a href="https://www.kampuskita.my.id/admin" target="_blank" rel="noreferrer" class="card-link">
+      <a href="https://www.jualbeliusupolmed.web.id/admin" target="_blank" rel="noreferrer" class="card-link">
         Buka Admin Web &rarr;
       </a>
     </div>
@@ -596,7 +596,7 @@
     <div class="step-card">
       <span class="step-num">Langkah 1</span>
       <h4>Cari Barang / Jasa di Kampus</h4>
-      <p>Buka <a href="https://www.kampuskita.my.id" target="_blank">kampuskita.my.id</a>. Gunakan bilah pencarian atau filter kampus (USU / Polmed) dan kategori (Elektronik, Buku, Kos, Jasa).</p>
+      <p>Buka <a href="https://www.jualbeliusupolmed.web.id" target="_blank">jualbeliusupolmed.web.id</a>. Gunakan bilah pencarian atau filter kampus (USU / Polmed) dan kategori (Elektronik, Buku, Kos, Jasa).</p>
     </div>
     <div class="step-card">
       <span class="step-num">Langkah 2</span>
@@ -658,7 +658,7 @@
   <div class="copy-box">
     <div>
       <strong style="display: block; font-size: 0.9rem; margin-bottom: 2px;">📋 Format Teks Siap Salin untuk Formulir Lomba / Laporan:</strong>
-      <code>https://bot.kampuskita.my.id/demo (Tutorial Interaktif, Demo Web, WA Bot &amp; Admin Panel)</code>
+      <code>https://bot.jualbeliusupolmed.web.id/demo (Tutorial Interaktif, Demo Web, WA Bot &amp; Admin Panel)</code>
     </div>
     <button class="h-btn white" style="border: 1px solid var(--line); font-size: 0.8rem; padding: 6px 14px;" onclick="copyInfoLink()">
       Salin Teks Link
@@ -721,7 +721,7 @@
         botReply = `🔍 <em>Hasil pencarian untuk "${escapeHtml(query)}":</em><br><br>` +
           `1. <strong>Laptop ASUS Vivobook 14</strong> - Rp4.200.000 (Fakultas Teknik)<br>` +
           `2. <strong>Buku Kalkulus Purcel Edisi 9</strong> - Rp45.000 (FMIPA)<br><br>` +
-          `👉 Buka foto lengkap di: <a href="https://www.kampuskita.my.id" target="_blank">kampuskita.my.id</a>`;
+          `👉 Buka foto lengkap di: <a href="https://www.jualbeliusupolmed.web.id" target="_blank">jualbeliusupolmed.web.id</a>`;
       } else if (upper === '.MENFESS') {
         botReply = `💌 <strong>Kirim Menfess / Info Kampus</strong><br><br>` +
           `Ketik pesanmu. Privasi terjamin 100% anonim dengan hash identitas tanpa menyimpan nomor.`;
@@ -742,7 +742,7 @@
   }
 
   function copyInfoLink() {
-    const txt = "https://bot.kampuskita.my.id/demo (Tutorial Interaktif, Demo Web, WA Bot & Admin Panel)";
+    const txt = "https://bot.jualbeliusupolmed.web.id/demo (Tutorial Interaktif, Demo Web, WA Bot & Admin Panel)";
     navigator.clipboard.writeText(txt).then(() => {
       alert("Tautan demo berhasil disalin ke clipboard!");
     });

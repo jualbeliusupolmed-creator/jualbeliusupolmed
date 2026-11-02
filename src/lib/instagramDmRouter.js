@@ -9,6 +9,8 @@ import { sanitizeListingTitle, normalizePriceInput } from "@/lib/listingSchema";
 import { getSettings, DEFAULT_SETTINGS, adFeeFrom } from "@/lib/settings";
 import { tokoAktif } from "@/lib/toko";
 import { findSellerProfileByPhone } from "@/lib/seller-profile-identity";
+import { postToGroup, notifySellerListingLive } from "@/lib/fonnte";
+import { autoPublishListingInstagram } from "@/lib/listingInstagram";
 import {
   sendInstagramQuickReplies,
   sendInstagramText,
@@ -987,6 +989,28 @@ export async function handleInstagramDmEvent({
         }
 
         // Mode Gratis / Normal: Langsung Tayang Aktif
+        // Otomasi Siaran ke Grup/Saluran WA, Story/Feed Instagram, dan Notifikasi WA ke Penjual
+        if (settings?.admin?.broadcastToWa !== false) {
+          postToGroup(newListing, settings?.admin).catch((err) =>
+            console.error("[IG DM] postToGroup broadcast error:", err?.message || err)
+          );
+        }
+
+        if (settings?.admin?.broadcastToInstagram !== false) {
+          autoPublishListingInstagram({
+            origin: siteBaseUrl(),
+            listingId: newListing.id,
+          }).catch((err) =>
+            console.error("[IG DM] autoPublishListingInstagram error:", err?.message || err)
+          );
+        }
+
+        if (settings?.admin?.notifySellerOnPublish !== false && newListing.seller_wa) {
+          notifySellerListingLive(newListing).catch((err) =>
+            console.error("[IG DM] notifySellerListingLive error:", err?.message || err)
+          );
+        }
+
         await clearDmSession(cleanSender);
         const successMsg = [
           "🎉 *Iklanmu Berhasil Ditayangkan!*",
