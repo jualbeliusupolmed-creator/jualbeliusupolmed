@@ -3,6 +3,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { formatWa } from "@/lib/constants";
 import { sendWa } from "@/lib/fonnte";
 import { findSellerProfileByPhone } from "@/lib/seller-profile-identity";
+import { verifyPin } from "@/lib/pin";
 import { rateLimitDistributed } from "@/lib/rateLimit";
 import { resolveInstagramUserId } from "@/lib/instagramDm";
 import { getSettings, isAllowedCampus } from "@/lib/settings";
@@ -353,12 +354,15 @@ export async function verifyLinkChallenge({ wa, otpInput, igSenderId = null }) {
 
   const profileName = profile.name || "Penjual Kampus";
   try {
-    const { error: linkError } = await supa.from("ig_seller_links").insert({
-      ig_sender_id: targetSenderId,
-      wa: profile.wa,
-      campus: challenge.campus || "Semua",
-      linked_at: new Date().toISOString(),
-    });
+    const { error: linkError } = await supa.from("ig_seller_links").upsert(
+      {
+        ig_sender_id: targetSenderId,
+        wa: profile.wa,
+        campus: challenge.campus || "Semua",
+        linked_at: new Date().toISOString(),
+      },
+      { onConflict: "ig_sender_id" }
+    );
     if (linkError) return { ok: false, message: "Akun belum dapat ditautkan. Minta kode baru dan coba lagi." };
 
     if (process.env.NODE_ENV === "test") {
@@ -378,8 +382,71 @@ export async function verifyLinkChallenge({ wa, otpInput, igSenderId = null }) {
       profileWa: profile.wa,
       profileName,
       campus: challenge.campus || "Semua",
+      hasPin: Boolean(profile.pin),
     };
   } catch {
     return { ok: false, message: "Profil akun belum dapat ditautkan. Coba lagi nanti." };
   }
+}
+
+/**
+ * Tautkan akun Instagram secara instan menggunakan kata sandi/PIN akun yang sudah terdaftar
+ */
+export async function linkSellerWithPassword({ igSenderId, wa, pin, campus = "Semua" }) {
+  const cleanSender = String(igSenderId || "").trim();
+  const cleanWa = formatWa(wa);
+  if (!cleanSender || !cleanWa) return { ok: false, message: "Data tidak valid." };
+
+  const supa = getAdminClient();
+  let profileResult = await findSellerProfileByPhone(supa, cleanWa, "*");
+  if (profileResult.error) {
+    profileResult = await supa.from("seller_profiles").select("*").eq("wa", cleanWa).maybeSingle();
+  }
+  const profile = profileResult?.data;
+  if (!profile) {
+    return { ok: false, notFound: true, message: "Nomor WhatsApp belum terdaftar di Kampus Kita." };
+  }
+
+  if (!profile.pin) {
+    return { ok: false, noPin: true, message: "Akun belum memiliki kata sandi. Silakan gunakan opsi OTP." };
+  }
+
+  const isMatch = verifyPin(pin, profile.pin);
+  if (!isMatch) {
+    return { ok: false, invalidPin: true, message: "Kata sandi salah." };
+  }
+
+  const { error: linkError } = await supa.from("ig_seller_links").upsert(
+    {
+      ig_sender_id: cleanSender,
+      wa: profile.wa,
+      campus: campus || profile.campus || "Semua",
+      linked_at: new Date().toISOString(),
+    },
+    { onConflict: "ig_sender_id" }
+  );
+
+  if (linkError) {
+    return { ok: false, message: "Gagal menautkan akun ke database. Coba lagi nanti." };
+  }
+
+  if (process.env.NODE_ENV === "test") {
+    fallbackLinks.set(cleanSender, {
+      ig_sender_id: cleanSender,
+      wa: formatWa(profile.phone_wa || profile.wa),
+      profileWa: profile.wa,
+      campus: campus || "Semua",
+      profile,
+    });
+  }
+
+  return {
+    ok: true,
+    igSenderId: cleanSender,
+    wa: formatWa(profile.phone_wa || profile.wa),
+    profileWa: profile.wa,
+    profileName: profile.name || "Penjual Kampus",
+    campus: campus || profile.campus || "Semua",
+    hasPin: true,
+  };
 }

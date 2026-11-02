@@ -392,10 +392,10 @@ describe("Tahap 1 & 3 - Conversational Router & Pipeline Moderasi", () => {
     const stepDesc = await handleInstagramDmEvent({ senderId: freshSender, text: "Mulus, COD di Pintu 2" });
     expect(stepDesc.step).toBe("jual_confirm");
 
-    // 9. Konfirmasi tayang
+    // 9. Konfirmasi tayang langsung tanpa moderasi
     const stepConfirm = await handleInstagramDmEvent({ senderId: freshSender, quickReplyPayload: "ACTION_CONFIRM_PUBLISH" });
     expect(stepConfirm.ok).toBe(true);
-    expect(stepConfirm.action).toBe("submitted_for_review");
+    expect(stepConfirm.action).toBe("published_live");
   });
 
   it("blocks prohibited item (e.g. vape/pod/joki) during Jual flow", async () => {
@@ -517,5 +517,67 @@ describe("Tahap 1 & 3 - Conversational Router & Pipeline Moderasi", () => {
     });
     expect(stepDonePhotos.ok).toBe(true);
     expect(stepDonePhotos.step).toBe("jual_ask_title");
+  });
+
+  it("recognizes existing registered phone number and authenticates via password directly", async () => {
+    const existingSender = "existing_user_" + Date.now();
+    const existingWa = "081233445566";
+    const passwordText = "rahasia123";
+    const hashed = (await import("@/lib/pin")).hashPin(passwordText);
+
+    // Daftarkan profile di mock database
+    mockTables.seller_profiles.push({
+      wa: existingWa,
+      name: "Budi Mahasiswa",
+      pin: hashed,
+      campus: "USU / POLMED",
+    });
+
+    // 1. Ketik jual
+    const step1 = await handleInstagramDmEvent({ senderId: existingSender, text: "jual" });
+    expect(step1.step).toBe("jual_ask_wa");
+
+    // 2. Masukkan nomor WhatsApp yang sudah terdaftar
+    const step2 = await handleInstagramDmEvent({ senderId: existingSender, text: existingWa });
+    expect(step2.ok).toBe(true);
+    expect(step2.step).toBe("jual_auth_existing");
+
+    // 3. Masukkan password yang salah
+    const stepWrongPw = await handleInstagramDmEvent({ senderId: existingSender, text: "salahsandi" });
+    expect(stepWrongPw.ok).toBe(false);
+    expect(stepWrongPw.error).toBe("invalid_password");
+
+    // 4. Masukkan password yang benar
+    const stepCorrectPw = await handleInstagramDmEvent({ senderId: existingSender, text: passwordText });
+    expect(stepCorrectPw.ok).toBe(true);
+    expect(stepCorrectPw.step).toBe("jual_ask_photo");
+  });
+
+  it("recognizes existing registered phone number and allows fallback to OTP", async () => {
+    const existingSenderOtp = "existing_otp_user_" + Date.now();
+    const existingWa = "081233449988";
+    const hashed = (await import("@/lib/pin")).hashPin("sandiAsli123");
+
+    mockTables.seller_profiles.push({
+      wa: existingWa,
+      name: "Siti Mahasiswi",
+      pin: hashed,
+      campus: "USU / POLMED",
+    });
+
+    // 1. Ketik jual
+    await handleInstagramDmEvent({ senderId: existingSenderOtp, text: "jual" });
+
+    // 2. Masukkan nomor terdaftar
+    const step2 = await handleInstagramDmEvent({ senderId: existingSenderOtp, text: existingWa });
+    expect(step2.step).toBe("jual_auth_existing");
+
+    // 3. Minta kirim OTP
+    const stepOtpReq = await handleInstagramDmEvent({
+      senderId: existingSenderOtp,
+      quickReplyPayload: "ACTION_REQUEST_OTP",
+    });
+    expect(stepOtpReq.ok).toBe(true);
+    expect(stepOtpReq.step).toBe("jual_ask_otp");
   });
 });
