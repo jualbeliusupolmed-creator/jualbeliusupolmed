@@ -4,16 +4,36 @@ import { useEffect, useMemo, useState } from "react";
 import { Check, LoaderCircle, Pencil, Plus, Search, ShieldCheck, UserRound, UserRoundX, Users, X } from "lucide-react";
 import { useAdmin } from "./AdminProvider";
 
-const EMPTY = { account: "", displayName: "", scopes: [], marketplace: [], reports: [], po: [], users: [], finance: [], analytics: [], content: [], whatsapp: [] };
+const EMPTY = {
+  account: "",
+  displayName: "",
+  scopes: [],
+  marketplace: [],
+  reports: [],
+  po: [],
+  users: [],
+  finance: [],
+  analytics: [],
+  content: [],
+  whatsapp: [],
+  social: [],
+  distribution: [],
+  organization: [],
+  admin_requests: [],
+};
 const MODULES = [
   { key: "marketplace", label: "Marketplace", actions: [["read", "Lihat data cakupan"], ["review", "Review iklan pending"], ["manage", "Tangguhkan atau pulihkan"]] },
   { key: "users", label: "Pengguna", actions: [["read", "Lihat akun tersamarkan"], ["manage", "Batasi akun"]] },
   { key: "reports", label: "Laporan", actions: [["read", "Lihat laporan cakupan"], ["manage", "Tandai laporan selesai"]] },
   { key: "po", label: "Open PO", actions: [["read", "Lihat batch cakupan"], ["manage", "Kelola batch dan pesanan"]] },
-  { key: "finance", label: "Keuangan", actions: [["read", "Lihat transaksi cakupan"]] },
+  { key: "finance", label: "Keuangan", actions: [["read", "Lihat transaksi cakupan"], ["manage", "Kelola saldo & pencairan"]] },
   { key: "analytics", label: "Analitik", actions: [["read", "Lihat ringkasan cakupan"]] },
   { key: "content", label: "Konten", actions: [["read", "Lihat artikel cakupan"], ["review", "Review artikel cakupan"], ["manage", "Sunting artikel cakupan"]] },
   { key: "whatsapp", label: "WhatsApp", actions: [["read", "Lihat status dan antrean"], ["manage", "Kelola antrean operasional"]] },
+  { key: "social", label: "Instagram & Sosmed", actions: [["read", "Lihat akun sosial"], ["manage", "Kelola akun & siaran"]] },
+  { key: "distribution", label: "Distribusi Omnichannel", actions: [["read", "Lihat status distribusi"], ["manage", "Kelola siaran produk"]] },
+  { key: "organization", label: "Struktur Wilayah", actions: [["read", "Lihat struktur wilayah"], ["manage", "Kelola kampus & unit"]] },
+  { key: "admin_requests", label: "Permintaan Admin Kampus", actions: [["read", "Lihat permintaan"], ["manage", "Setujui/tolak permintaan"]] },
 ];
 
 function requestJson(url, options) {
@@ -59,8 +79,24 @@ export default function OwnersWorkspace() {
       analytics: Array.isArray(modules.analytics) ? modules.analytics : [],
       content: Array.isArray(modules.content) ? modules.content : [],
       whatsapp: Array.isArray(modules.whatsapp) ? modules.whatsapp : [],
+      social: Array.isArray(modules.social) ? modules.social : [],
+      distribution: Array.isArray(modules.distribution) ? modules.distribution : [],
+      organization: Array.isArray(modules.organization) ? modules.organization : [],
+      admin_requests: Array.isArray(modules.admin_requests) ? modules.admin_requests : [],
     });
     setMessage(null);
+  }
+
+  function applyProvincePreset() {
+    const fullPermissions = Object.fromEntries(
+      MODULES.map(({ key, actions }) => [key, actions.map(([action]) => action)])
+    );
+    setForm((current) => ({ ...current, ...fullPermissions }));
+  }
+
+  function resetPermissions() {
+    const emptyPermissions = Object.fromEntries(MODULES.map(({ key }) => [key, []]));
+    setForm((current) => ({ ...current, ...emptyPermissions }));
   }
 
   function toggleScope(value) {
@@ -132,7 +168,31 @@ export default function OwnersWorkspace() {
 
           <fieldset className="rounded-xl border border-slate-200 p-3"><legend className="px-1 text-xs font-extrabold">Wilayah kerja</legend><p className="mb-3 text-[10px] leading-relaxed text-slate-500">Pilih provinsi untuk mengatur seluruh universitas di wilayah itu. Pilih universitas tertentu jika admin hanya mengelola satu atau beberapa kampus.</p><div className="space-y-3">{data.provinces.length ? <div><p className="mb-1.5 text-[10px] font-extrabold uppercase tracking-wide text-slate-400">Admin provinsi</p>{data.provinces.map((province) => { const value = `province:${province.id}`; return <label key={value} className="flex min-h-9 cursor-pointer items-center gap-2 text-xs font-semibold"><input type="checkbox" checked={form.scopes.includes(value)} onChange={() => toggleScope(value)} className="h-4 w-4 accent-emerald-700" />{province.name}</label>; })}</div> : null}<div><p className="mb-1.5 text-[10px] font-extrabold uppercase tracking-wide text-slate-400">Admin universitas tertentu</p><div className="grid gap-x-3 sm:grid-cols-2">{data.campuses.map((campus) => { const value = `campus:${campus.id.toLowerCase()}`; const province = data.provinces.find((item) => item.id === campus.provinceId); const parent = campus.parentCampusId ? data.campuses.find((item) => item.id === campus.parentCampusId) : null; return <label key={value} className="flex min-h-9 cursor-pointer items-start gap-2 py-1 text-xs font-semibold"><input type="checkbox" checked={form.scopes.includes(value)} onChange={() => toggleScope(value)} className="mt-0.5 h-4 w-4 shrink-0 accent-emerald-700" /><span><span className="block">{campus.shortName} · {campus.name}</span><span className="mt-0.5 block text-[10px] font-medium text-slate-400">{province?.name || "Provinsi tidak diketahui"}{parent ? ` · Cabang ${parent.shortName}` : " · Kampus induk"}</span></span></label>; })}</div></div></div></fieldset>
 
-          <fieldset className="rounded-xl border border-slate-200 p-3"><legend className="px-1 text-xs font-extrabold">Izin modul</legend><p className="mb-3 text-[10px] leading-relaxed text-slate-500">Akses data mengikuti kampus dan provinsi yang dipilih. Pengaturan platform tetap khusus superadmin; WhatsApp dapat diberikan kepada operator terpercaya.</p><div className="grid gap-3 sm:grid-cols-2">{MODULES.map(({ key, label, actions }) => <div key={key} className="rounded-lg bg-slate-50 p-3"><p className="text-xs font-extrabold">{label}</p>{actions.map(([action, description], index) => <label key={action} className={`flex min-h-8 cursor-pointer items-center gap-2 text-xs font-medium ${index === 0 ? "mt-2" : ""}`}><input type="checkbox" checked={form[key].includes(action)} onChange={() => toggleModule(key, action)} className="h-4 w-4 accent-emerald-700" />{description}</label>)}</div>)}</div></fieldset>
+          <fieldset className="rounded-xl border border-slate-200 p-3">
+            <legend className="px-1 text-xs font-extrabold">Izin modul</legend>
+            <p className="mb-2 text-[10px] leading-relaxed text-slate-500">Akses data mengikuti kampus dan provinsi yang dipilih. Pengaturan platform tetap khusus superadmin; WhatsApp dapat diberikan kepada operator terpercaya.</p>
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <button type="button" onClick={applyProvincePreset} className="rounded-lg bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-800 transition hover:bg-emerald-100">
+                Pilih Semua Standar Admin Provinsi
+              </button>
+              <button type="button" onClick={resetPermissions} className="rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600 transition hover:bg-slate-200">
+                Kosongkan Izin
+              </button>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {MODULES.map(({ key, label, actions }) => (
+                <div key={key} className="rounded-lg bg-slate-50 p-3">
+                  <p className="text-xs font-extrabold">{label}</p>
+                  {actions.map(([action, description], index) => (
+                    <label key={action} className={`flex min-h-8 cursor-pointer items-center gap-2 text-xs font-medium ${index === 0 ? "mt-2" : ""}`}>
+                      <input type="checkbox" checked={form[key].includes(action)} onChange={() => toggleModule(key, action)} className="h-4 w-4 accent-emerald-700" />
+                      {description}
+                    </label>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </fieldset>
 
           <div className="flex gap-2 pt-1"><button disabled={saving} className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-full bg-emerald-800 px-4 text-xs font-extrabold text-white hover:bg-emerald-900 disabled:opacity-60">{saving ? <LoaderCircle className="h-4 w-4 animate-spin" /> : editing ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}{saving ? "Menyimpan…" : editing ? "Simpan perubahan" : "Tambah admin"}</button></div>
         </form>

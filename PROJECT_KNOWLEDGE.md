@@ -2,10 +2,118 @@
 
 Dokumen ini berisi peta pemahaman sistem, alur bisnis, daftar masalah, dan riwayat audit untuk proyek **Jual Beli USU Polmed**.
 
+## Arah Produk & Ambisi Nasional
+
+Bagian ini adalah acuan produk tingkat tinggi. Ia menjelaskan tujuan dan kebijakan yang harus mengarahkan pekerjaan berikutnya; ia **bukan** bukti bahwa semua fitur sudah dibangun atau aktif di produksi. Untuk setiap fitur, bedakan selalu: **visi**, **sudah ada di kode**, **sudah diterapkan ke layanan**, dan **sudah diverifikasi melalui alur nyata**.
+
+### Visi
+
+**JualBeliDiKampus** adalah jaringan social commerce nasional yang menghubungkan komunitas perguruan tinggi Indonesia. Marketplace web menjadi sumber utama data barang dan transaksi; Instagram dan WhatsApp menjadi pintu masuk, kanal penemuan, komunitas, serta distribusi yang mengarahkan orang kembali ke listing web.
+
+Tujuannya bukan sekadar menyalin marketplace umum ke banyak kampus. Produk harus membuat kegiatan jual-beli di sekitar kampus lebih mudah ditemukan, dipercaya, dan dikelola, sambil memberi setiap wilayah kemampuan membangun komunitas serta identitas kanalnya sendiri.
+
+### Struktur wilayah dan kewenangan
+
+- Struktur kanonis: **Indonesia → Provinsi → Universitas/Kampus → Unit atau cabang opsional**.
+- Universitas dan kampus adalah satu entitas organisasi. Jangan membuat lapisan universitas dan kampus sebagai dua level organisasi yang bersaing. Cabang, fakultas, atau titik kegiatan menjadi unit di bawah universitas bila memang diperlukan.
+- Provinsi menaungi semua universitas/kampus dan unitnya di wilayah tersebut. Provinsi juga menjadi cakupan kurasi FYP dan koordinasi ekspansi wilayah.
+- **Superadmin nasional** mengelola katalog organisasi, kebijakan global, penugasan, integrasi, audit, dan seluruh wilayah.
+- **Admin provinsi** mengelola operasi dan kanal yang ditugaskan dalam provinsinya, membantu pengelolaan admin kampus, serta mengurasi FYP provinsi.
+- **Admin kampus** mengelola listing, akun sosial, konten, dan komunitas kampus yang ditugaskan kepadanya.
+- Satu orang dapat memiliki beberapa penugasan kampus atau provinsi. Akses harus berasal dari assignment eksplisit dan diperiksa di server untuk setiap operasi; pemilihan scope di UI bukan bukti kewenangan.
+
+### Kebijakan akun pengguna
+
+- Pengguna memakai **satu akun nasional** untuk membeli, menjual, memakai Open PO, dan berpindah kampus. Perubahan kampus tidak membuat identitas baru.
+- Login Google dan nomor WhatsApp yang diverifikasi adalah metode identitas yang dapat ditautkan ke akun yang sama. Instagram DM menjadi kanal jualan yang ditautkan ke akun pengguna, bukan akun marketplace terpisah.
+- **Email kampus tidak wajib** untuk mendaftar, menjelajah, atau bertransaksi. Pengguna dapat memilih kampus/afiliasi untuk personalisasi. Status afiliasi yang belum diverifikasi harus dibedakan dari identitas mahasiswa terverifikasi; verifikasi tidak boleh disamakan dengan login atau kewenangan admin.
+- Afiliasi kampus, identitas autentikasi, profil penjual, dan role admin adalah konsep berbeda. Pilihan kampus pengguna tidak otomatis memberinya hak mengelola kampus tersebut.
+- Penautan akun lama harus memakai bukti kepemilikan dan pemetaan yang tidak ambigu. Jangan menggabungkan akun hanya berdasarkan nama tampilan; jangan mengubah pemilik listing ketika identitas sedang dipadankan.
+- Kebijakan alur IG DM yang dipilih pemilik: DM dipakai untuk **menjual barang**. OTP dikirim ke WhatsApp lalu dimasukkan kembali di DM; pengguna juga ingin dapat mengatur atau memasukkan password akun web melalui DM. Catatan implementasi harus mempertahankan kebijakan produk ini secara akurat.
+
+### Perjalanan jual-beli dan sumber data
+
+1. Pengguna menemukan barang melalui web, FYP wilayah, Instagram kampus, WhatsApp Channel, grup komunitas, atau Open PO.
+2. Listing yang sama menjadi sumber kebenaran untuk judul, foto, harga, kondisi, kampus, ketersediaan, biaya, dan status publikasi. Kanal sosial menampilkan materi dan tautan kembali ke listing tersebut.
+3. Penjual dapat memasang barang dari web atau memulai alur jual dari Instagram DM. DM saat ini berfokus pada jualan; pencarian barang dan menfess tetap diarahkan ke layanan web/kanal yang memang mendukungnya.
+4. AI membantu memahami foto/teks, mengusulkan kategori dan detail, serta memeriksa kelengkapan sesuai kemampuan produk. Pengguna tetap melihat pratinjau dan mengonfirmasi data barang sebelum listing dibuat.
+5. Pada mode berbayar, sistem menampilkan tagihan dan QRIS yang tersedia, menghubungkan pembayaran ke listing, lalu memublikasikan sesuai status pembayaran dan aturan produk. Status dibuat jelas: menunggu pembayaran, terbayar, tayang, ditolak/dinonaktifkan, atau gagal.
+6. Pembeli dan penjual menyepakati pemenuhan pesanan melalui alur yang tersedia. Marketplace reguler dan Open PO harus memiliki status yang eksplisit; status listing “terjual” sendiri tidak boleh dipakai sebagai bukti pembayaran atau GMV yang sudah tervalidasi.
+
+### Jaringan Instagram dan FYP
+
+- Setiap universitas/kampus dapat memiliki akun resmi dengan pola nama **`jualbelidikampus.<identitas-kampus>`**. Akun ini membangun identitas lokal dan menampilkan barang yang memang relevan untuk kampus tersebut.
+- Kanal provinsi menjadi lapisan lintas kampus: menampilkan pilihan/unggulan dari universitas dalam provinsi, pengumuman jaringan, serta konten yang dipilih untuk **FYP Kampus Kita tingkat provinsi**.
+- Superadmin menetapkan aturan nasional dan memantau jaringan; admin provinsi mengkurasi FYP wilayah; admin kampus mengusulkan atau mengelola konten lokal sesuai kewenangannya.
+- Alur publikasi ideal: listing → pilih/resolve kanal yang cocok → pratinjau materi → antrekan atau persetujuan yang sesuai kebijakan → publikasi → simpan hasil dan tautan balik. Status “masuk antrean” harus berbeda dari “benar-benar tayang”.
+- DM Instagram digunakan untuk interaksi masuk yang dimulai pengguna dan alur pemasangan barang. Jangan menjadikan DM promosi massal sebagai mekanisme pertumbuhan.
+- FYP bukan nama lain untuk iklan otomatis. Ia perlu aturan editorial, alasan rekomendasi yang dapat dipahami, batas promosi, tombol laporan, serta kendali per provinsi.
+
+### Peran kanal WhatsApp
+
+- **WhatsApp Business/Baileys** untuk komunikasi privat dan transaksional: OTP, pemberitahuan status, serta komunikasi yang memang ditujukan kepada satu pengguna.
+- **WhatsApp Channel kampus** untuk katalog dan pengumuman yang relevan bagi satu universitas.
+- **WhatsApp Channel provinsi** untuk pilihan lintas kampus dan pengumuman tingkat wilayah.
+- **Grup WhatsApp** untuk komunitas dan diskusi terbuka; siaran listing ke grup mengikuti pengaturan tujuan yang eksplisit dan kebijakan grup.
+- Kampus dan provinsi adalah tujuan distribusi berbeda. Sistem tidak boleh memilih grup/channel pertama secara global sebagai fallback untuk listing yang wilayahnya tidak diketahui.
+
+### Open PO, AI, dan pendapatan
+
+- Open PO adalah bagian dari satu pengalaman akun dan platform: pengguna dapat membuat PO sebagai penjual, memesan sebagai pembeli, serta melihat progres dan kewajiban dengan identitas akun yang sama.
+- Backend Open PO diarahkan untuk berada di proyek utama. Sesuai keputusan pemilik, Open PO lama memulai data baru di sistem ini; data lama tetap berada di proyek PO terdahulu sampai ada keputusan migrasi terpisah.
+- AI membantu proses yang mengurangi pekerjaan pengguna—membaca foto dan teks barang, merapikan data, memberi rekomendasi, serta membantu analisis—dengan hasil dan tindakan yang tetap terlihat oleh pengguna/operator.
+- Fokus awal monetisasi adalah **penjualan barang** dan mode listing berbayar yang dapat dibayar memakai QRIS. Jangan menambah komisi, langganan, atau model pendapatan lain sebagai kewajiban produk tanpa keputusan bisnis berikutnya.
+
+### Ukuran keberhasilan jaringan
+
+Dashboard nasional harus membedakan angka yang benar-benar terkonfirmasi dari estimasi. Ukuran yang perlu dikembangkan meliputi:
+
+- cakupan provinsi, universitas/kampus, dan unit yang benar-benar aktif;
+- jumlah akun pengguna aktif, afiliasi kampus terverifikasi, penjual aktif, serta pembeli berulang;
+- listing dibuat, disetujui/ditayangkan, terjual yang terkonfirmasi, dan transaksi Open PO menurut statusnya;
+- pembayaran berhasil dan nilai transaksi terkonfirmasi; label estimasi hanya digunakan jika sumbernya memang perkiraan;
+- waktu dari mulai memasang sampai tayang, rasio listing selesai, kegagalan pembayaran, pembatalan, laporan, serta penyelesaian masalah;
+- publikasi per akun/channel, status kirim aktual, jangkauan/klik yang tersedia, dan kontribusi kanal terhadap kunjungan listing;
+- kesiapan rollout berdasarkan bukti operasional nyata, bukan checklist yang dapat ditandai massal tanpa catatan atau audit.
+
+### Prinsip implementasi
+
+- Satu katalog organisasi relasional menjadi acuan provinsi, universitas, unit, assignment admin, akun sosial, listing, FYP, dan distribusi. Field teks lama hanya dipertahankan sebagai kompatibilitas selama migrasi.
+- Penentuan kanal dan akses selalu dilakukan server-side dari identitas listing, scope admin, dan akun yang tersimpan. Browser tidak dapat menentukan sendiri JID, provinsi, kampus, atau penerima yang boleh dikelola.
+- Setiap publikasi harus idempoten, memiliki status dan riwayat yang benar, serta mencegah pengiriman ulang akibat retry atau proses bersamaan.
+- Perubahan data skema dilakukan melalui migrasi berurutan yang dapat ditinjau; RLS, grants, dan otorisasi server harus cocok dengan model akses.
+- Perluasan nasional dilakukan bertahap: validasi pilot → satu provinsi tambahan → beberapa provinsi → perluasan nasional. Provinsi baru tidak dianggap aktif hanya karena sudah tercantum di katalog.
+- Panel admin adalah ruang kendali operasional: ringkas, dapat ditelusuri, menjelaskan scope aktif, menampilkan status nyata, dan menyediakan riwayat tindakan. UI yang menampilkan tombol tidak membuktikan backend telah mengizinkan tindakan dengan benar.
+
+### Snapshot implementasi yang perlu dibaca bersama visi
+
+- Per 2 November 2026, kode nasional mencakup workspace admin wilayah, akun sosial, kanal WhatsApp, distribusi omnichannel, dan dashboard rollout. Deployment Vercel terbaru yang diperiksa berstatus `READY` pada commit `b1a2951`.
+- Ini belum sama dengan jaringan nasional yang beroperasi penuh. Pengujian admin lintas provinsi/kampus, publikasi nyata per akun, atribusi FYP, integrasi akun pengguna kanonikal, dan proses Open PO yang menyatu harus dinilai menurut bukti alur masing-masing.
+- Catatan status migrasi dan pengujian historis berada di bagian riwayat di bawah. Jika status produksi berubah, perbarui bagian tersebut dengan tanggal dan bukti verifikasi—jangan mengubah visi menjadi klaim implementasi.
+
+### Pembaruan 2 November 2026 — Standardisasi Nasional Otoritas Setara Admin Seluruh Provinsi
+
+- **Standarisasi Otoritas Otomatis Admin Provinsi Nasional**:
+  - Diterapkan arsitektur akses seragam di `src/lib/admin-access.js` (`PROVINCE_ADMIN_MODULES`).
+  - Setiap admin yang ditugaskan sebagai `province_admin` (baik untuk Sumatera Utara, DKI Jakarta, Jawa Barat, DI Yogyakarta, Jawa Timur, Bali, dll.) otomatis memperoleh hak akses operasional dan manajerial penuh ke seluruh 13 modul workspace:
+    - `overview`, `marketplace`, `users`, `reports`, `po`, `finance`, `analytics`, `content`, `whatsapp`, `social`, `distribution`, `organization`, dan `admin_requests`.
+  - Otoritas berlaku secara otomatis berbasis peran relasional (`admin_role_assignments`), tanpa ketergantungan pada konfigurasi JSON permission manual di basis data.
+- **Isolasi Multi-Tenant Wilayah yang Aman**:
+  - Setiap data kueri (produk, pengguna, laporan, PO, keuangan, akun sosial, saluran WhatsApp, dll.) tetap terisolasi secara ketat ke provinsi dan kampus masing-masing melalui resolver cakupan kanonis `getAdminCampusScope(actor)`.
+  - Admin DKI Jakarta hanya melihat dan mengelola kampus DKI (UI, UNJ, Trisakti); Admin Jawa Barat hanya melihat ITB, UNPAD, IPB; dst.
+  - Endpoint `/api/admin/social/accounts` kini memverifikasi cakupan provinsi pada aksi `GET` dan `upsert_account` guna mencegah kebocoran atau modifikasi akun sosial lintas provinsi.
+- **Penyempurnaan Antarmuka & API Pengelolaan Admin (`/admin/owners`)**:
+  - Endpoint `PUT /api/admin/owners` (`owners/route.js`) kini menyertakan `DEFAULT_PROVINCE_PERMISSIONS` yang otomatis melengkapi seluruh izin 13 modul saat admin berlingkup provinsi didaftarkan.
+  - Komponen `OwnersWorkspace.jsx` diperluas dengan tombol aksi cepat *"Pilih Semua Standar Admin Provinsi"* dan mendukung modul `social`, `distribution`, `organization`, serta `admin_requests`.
+- **Verifikasi Kualitas**:
+  - Berkas pengujian `src/lib/admin-access.test.js` diperkaya dengan pengujian otorisasi setara lintas admin provinsi (DKI, Jabar, Jatim).
+  - 100% tes vitest lulus (57 berkas, 281 tes lulus tanpa error).
+  - Production build Next.js (`npm run build`) sukses 100% (95/95 rute terkompilasi optimal).
+
 ### Pembaruan 2 November 2026 — Integrasi Penuh Admin Wilayah Sumatera Utara (USU & POLMED)
 
 - **Otoritas Regional Resmi Sumatera Utara**:
-  - Ditetapkan akun `ridhorobbipasi@gmail.com` (nama tampilan: `obi`, ID pengguna: `72065eca-3c8d-49df-b925-2b2f1bc8ae5c`) sebagai Admin Provinsi resmi Sumatera Utara dengan wewenang regional penuh.
+  - Ditetapkan satu akun operasional sebagai Admin Provinsi resmi Sumatera Utara. Identitas akun dan ID Auth disimpan di Supabase, tidak dicatat di dokumen proyek.
   - Memegang penugasan peran aktif (`admin_role_assignments`) bertingkat:
     - `province_admin` untuk Provinsi Sumatera Utara (`sumatera-utara`).
     - `university_admin` untuk Universitas Sumatera Utara (`usu`).
@@ -17,7 +125,7 @@ Dokumen ini berisi peta pemahaman sistem, alur bisnis, daftar masalah, dan riway
     - Instagram Kampus POLMED: `@polmed.menfes` (scope: `university:polmed`).
     - WhatsApp Channel Provinsi: `https://whatsapp.com/channel/0029Vausu` (scope: `province:sumatera-utara`).
     - WhatsApp Channel Kampus POLMED: `https://whatsapp.com/channel/0029Vapolmed` (scope: `university:polmed`).
-    - WhatsApp Group Komunitas: `Bursa Mahasiswa USU-POLMED` (`120363028192837192@g.us`, scope: `province:sumatera-utara`).
+    - WhatsApp Group Komunitas: Bursa Mahasiswa USU-POLMED (scope: `province:sumatera-utara`; JID operasional disimpan di konfigurasi kanal, bukan dokumen proyek).
   - Pembaruan catatan resmi pada checklist SOP peluncuran provinsi (`provincial_rollout_checklists` untuk `sumatera-utara`).
 - **Penyempurnaan Navigasi Workspace & Hak Akses Admin (`OwnerWorkspaceShell` & Otorisasi)**:
   - Pembaharuan `src/lib/admin-access.js`: fungsi `hasAdminPermission` memperbolehkan `province_admin` mengakses dan mengelola modul `organization`.
@@ -156,7 +264,7 @@ Dokumen ini berisi peta pemahaman sistem, alur bisnis, daftar masalah, dan riway
 
 ### Review lanjutan 2 November 2026 — perbaikan lokal setelah audit
 
-- OTP yang diminta penjual dikirim ke WA lalu diketik di DM IG. Password JB tidak diminta atau disimpan lewat chat. OTP hanya boleh menautkan nomor ke profil JB yang sudah ada; pembuatan/password akun dilakukan di situs resmi.
+- OTP yang diminta penjual dikirim ke WhatsApp lalu diketik di DM Instagram. Sesuai keputusan pemilik, pengguna juga dapat mengatur atau memasukkan password akun web melalui DM. Penautan mengaitkan Instagram dengan profil JB pengguna yang ada; keputusan alur ini adalah kebijakan produk.
 - Secret OTP bawaan, fallback tantangan/tautan memori di production, dan laporan sukses saat pengiriman WA gagal sudah dihapus. Upaya verifikasi salah memakai pembaruan bersyarat agar percobaan bersamaan tidak melewati batas.
 - Webhook menggunakan RPC atomik `hit_rate_limit` dengan key berprefix `ig_webhook:`; klaim dilepas saat handler gagal, dan respons gagal meminta retry Meta. Fungsi ini bergantung pada migrasi `rate_limit_hits`; penerapannya ke Supabase production belum diverifikasi.
 - Listing berbayar tidak dibuat aktif sebelum pembayaran. Approval pembayaran untuk DM hanya menandai tagihan lunas; moderator masih harus menyetujui iklan. Persetujuan moderasi juga ditolak selama tagihan biaya tayang masih pending.
@@ -933,13 +1041,10 @@ cuma server.
    - Perbaikan ReferenceError (`fetchGroups` di `GroupBroadcastPanel.jsx`) dan penataan styling tab Baileys di `/admin/wabot` agar responsive dan berpenampilan modern dengan Tailwind pills.
 
 
-### 2 November 2026 — Visi jaringan admin kampus nasional (belum lengkap)
+### Catatan visi jaringan nasional — 2 November 2026
 
-- Model organisasi yang disepakati: **Indonesia → Provinsi → Kampus/Universitas**. Universitas dan kampus adalah satu entitas; jangan membuat lapisan admin universitas terpisah. Satu provinsi menampung semua universitas/kampus dan cabangnya di wilayah itu.
-- Setiap kampus dapat memiliki kanal Instagram resmi `jualbelidikampus.<identitas-kampus>`. Superadmin mengelola seluruh provinsi/kampus; admin provinsi mengelola kampus dalam provinsinya sekaligus kurasi FYP provinsi; admin kampus mengelola kanal dan konten yang ditugaskan. Satu orang boleh mendapat beberapa cakupan.
-- Alur jualan: listing marketplace menjadi sumber data utama. Penjual dapat mengajukan promosi listing ke kanal Instagram kampus; materi ditinjau/diantrekan, tautan kembali ke listing. Kiriman dari Instagram dapat menjadi draft listing untuk dikonfirmasi dan ditinjau sebelum tayang. Integrasi DM hanya untuk alur jualan yang dimulai oleh pengguna; hindari DM promosi massal.
-- Fondasi parsial yang sudah ada: `/admin/owners` mengatur akun Auth, izin modul, dan scope `province`/`campus`; provinsi saat ini diturunkan dari `settings.campuses`. Pengaturan Instagram dan penerbitan konten/listing yang ada masih berlingkup global, belum menjadi direktori kanal per kampus. Belum ada konsol master provinsi/kampus, kurasi FYP per provinsi, antrean promosi lintas akun kampus, atau atribusi klik/kunjungan per kanal.
-- Ini adalah pekerjaan produk berikutnya, bukan fitur yang boleh dianggap selesai hanya karena scope owner dasar tersedia. Tahapan: (1) konsol organisasi dan penugasan admin, (2) direktori kanal Instagram kampus dan status integrasi, (3) antrean/moderasi/publikasi listing per kanal, (4) FYP yang dikurasi per provinsi, (5) atribusi kinerja. Perubahan skema Supabase harus dibuat sebagai migrasi SQL terurut dan ditinjau sebelum diterapkan ke produksi.
+- Visi awal jaringan administrasi nasional kini diperluas dan dirapikan pada bagian **Arah Produk & Ambisi Nasional** di awal dokumen.
+- Catatan implementasi lama pada dokumen ini tetap menjadi riwayat bertanggal. Jika bertentangan dengan keputusan produk terbaru, gunakan arah produk terbaru dan koreksi bagian status pada pekerjaan yang relevan.
 
 ### 2 November 2026 — Konsol struktur wilayah superadmin (lokal, belum dirilis)
 

@@ -65,7 +65,13 @@ export async function GET(req) {
             c.toLowerCase() === acc.universities?.code?.toLowerCase()
         );
       }
-      // Jika scope provinsi, tampilkan jika ada kampus di provinsi tersebut yang masuk izin
+      if (acc.scope_type === "province") {
+        if (actor.role === "superadmin") return true;
+        const actorProvinceIds = (actor.scopes || [])
+          .filter((s) => s.scope_type === "province")
+          .map((s) => String(s.scope_id || "").toLowerCase());
+        return actorProvinceIds.includes(String(acc.province_id || "").toLowerCase());
+      }
       return true;
     });
 
@@ -193,6 +199,15 @@ export async function POST(req) {
 
     if (!provinceId && !universityId) {
       return NextResponse.json({ error: "Provinsi atau Universitas tujuan wajib dipilih." }, { status: 400 });
+    }
+
+    if (actor.role !== "superadmin") {
+      const actorProvinceIds = (actor.scopes || [])
+        .filter((s) => s.scope_type === "province")
+        .map((s) => String(s.scope_id || "").toLowerCase());
+      if (provinceId && !actorProvinceIds.includes(String(provinceId).toLowerCase())) {
+        return NextResponse.json({ error: "Anda tidak memiliki wewenang untuk wilayah provinsi ini." }, { status: 403 });
+      }
     }
 
     try {

@@ -72,6 +72,33 @@ describe("otorisasi workspace owner", () => {
     ], campuses)).toEqual(["USU", "POLMED", "UGM"]);
   });
 
+  it("memberikan akses operasional setara ke seluruh admin provinsi nasional", () => {
+    const dkiAdmin = { role: "province_admin", roles: [{ role_code: "province_admin", province_id: "dki-jakarta" }], permissions: {} };
+    const jabarAdmin = { role: "province_admin", roles: [{ role_code: "province_admin", province_id: "jawa-barat" }], permissions: {} };
+    const jatimAdmin = { role: "province_admin", roles: [{ role_code: "province_admin", province_id: "jawa-timur" }], permissions: {} };
+
+    for (const actor of [dkiAdmin, jabarAdmin, jatimAdmin]) {
+      expect(hasAdminPermission(actor, "overview", "read")).toBe(true);
+      expect(hasAdminPermission(actor, "marketplace", "manage")).toBe(true);
+      expect(hasAdminPermission(actor, "users", "manage")).toBe(true);
+      expect(hasAdminPermission(actor, "reports", "manage")).toBe(true);
+      expect(hasAdminPermission(actor, "po", "manage")).toBe(true);
+      expect(hasAdminPermission(actor, "finance", "manage")).toBe(true);
+      expect(hasAdminPermission(actor, "analytics", "read")).toBe(true);
+      expect(hasAdminPermission(actor, "content", "manage")).toBe(true);
+      expect(hasAdminPermission(actor, "whatsapp", "manage")).toBe(true);
+      expect(hasAdminPermission(actor, "social", "manage")).toBe(true);
+      expect(hasAdminPermission(actor, "distribution", "manage")).toBe(true);
+      expect(hasAdminPermission(actor, "organization", "manage")).toBe(true);
+      expect(hasAdminPermission(actor, "admin_requests", "review")).toBe(true);
+
+      // Keamanan platform: Settings platform, manajemen owner dan audit sistem tetap khusus superadmin
+      expect(hasAdminPermission(actor, "settings", "manage")).toBe(false);
+      expect(hasAdminPermission(actor, "owners", "manage")).toBe(false);
+      expect(hasAdminPermission(actor, "audit", "read")).toBe(false);
+    }
+  });
+
   it("menggunakan provinceId eksplisit dan fallback legacy yang sama", () => {
     expect(getCampusProvinceId({ id: "kampus-baru", shortName: "BARU", provinceId: "Jawa-Barat" })).toBe("jawa-barat");
     expect(getCampusProvinceId({ id: "usu", shortName: "USU" })).toBe("sumatera-utara");
