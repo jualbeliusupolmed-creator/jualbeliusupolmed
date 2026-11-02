@@ -590,3 +590,4 @@ export default function NationalAnalyticsWorkspace({ superadmin = false }) {
     </div>
   );
 }
+

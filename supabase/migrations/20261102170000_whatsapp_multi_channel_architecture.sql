@@ -10,3 +10,4 @@ alter table public.organization_social_accounts
 
 comment on constraint organization_social_accounts_provider_check on public.organization_social_accounts
   is 'Supported social and multi-channel communication providers: Instagram, WhatsApp Channels (Broadcast/Newsletter), WhatsApp Business Gateway (Transaksional/OTP), and WhatsApp Community Groups.';
+

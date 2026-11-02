@@ -50,12 +50,14 @@ Dokumen ini berisi peta pemahaman sistem, alur bisnis, daftar masalah, dan riway
   - Endpoint `GET` & `POST` di `/api/admin/distribution/route.js`:
     - Mengambil matriks target produk atau antrean pekerjaan distribusi sistem per cakupan scope admin.
     - Aksi `publish_channels`, `schedule_channels`, `retry_job`, `cancel_job`, dan `process_scheduled`.
-- **Integrasi Antarmuka Admin (UI)**:
-  - Modal interaktif `OmnichannelPublishModal.jsx` yang dipasang langsung pada etalase admin `MarketplaceWorkspace.jsx` (tombol *Distribusi*).
+- **Integrasi Antarmuka Admin (UI) & Visual Poster Studio**:
+  - Modal interaktif `OmnichannelPublishModal.jsx` terintegrasi langsung pada `MarketplaceWorkspace.jsx` dan antrean `ModerasiClient.jsx` (tombol *Distribusi*).
+  - Dilengkapi tab studio visual mandiri dengan generator poster Instagram Story (9:16 · 1080×1920) dan Feed Potret (4:5 · 1080×1350) bertenaga Sharp MozJPEG, dilengkapi branding kampus dinamis, preview live, tombol "Unduh HD", dan "Salin Link".
   - Tab ke-4 `/admin/social` (`SocialWorkspace.jsx`) diperluas menjadi **Central Distribution Manager (Omnichannel Dispatcher)** dengan ringkasan metrik live, filter status, dan tombol eksekusi antrean terjadwal.
 - **Verifikasi Kualitas**:
-  - Ditambahkan berkas pengujian `__tests__/omnichannelDistribution.test.js` (8 tes lulus).
-  - 100% tes vitest lulus (56 berkas, 273 pengujian lulus tanpa regresi).
+  - Ditambahkan berkas pengujian `__tests__/omnichannelDistribution.test.js` dan unit test poster di `src/lib/listingInstagramImage.test.js`.
+  - 100% tes vitest lulus (57 berkas, 278 pengujian lulus tanpa regresi).
+  - Next.js build lulus 100% (95/95 rute static & dynamic terkompilasi optimal).
 
 ### Pembaruan 2 November 2026 — Fase 4: WhatsApp Multi-Channel Architecture (3-Tier Pemisahan Saluran, Bisnis, & Komunitas)
 
