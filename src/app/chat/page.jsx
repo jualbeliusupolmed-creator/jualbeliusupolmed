@@ -63,6 +63,7 @@ function ChatContent() {
 
   // Swipe Deck state (Profil Riil Teman Kampus)
   const [temanDeck, setTemanDeck] = useState([]);
+  const [myTemanProfile, setMyTemanProfile] = useState(null);
   const [temanLoading, setTemanLoading] = useState(false);
   const [swipeIndex, setSwipeIndex] = useState(0);
 
@@ -122,10 +123,13 @@ function ChatContent() {
 
   // Sync desktopMode when URL changes
   useEffect(() => {
-    if (roomQuery || anonView) {
+    const mode = searchParams.get("mode");
+    if (mode === "teman") {
+      setDesktopMode("swipe");
+    } else if (roomQuery || anonView || !mode) {
       setDesktopMode("chat");
     }
-  }, [roomQuery, anonView]);
+  }, [searchParams, roomQuery, anonView]);
 
   // Muat profil teman kampus riil dari database saat mode swipe aktif
   const fetchTemanDeck = useCallback(async () => {
@@ -135,6 +139,7 @@ function ChatContent() {
       const data = await res.json();
       if (data.ok && Array.isArray(data.profiles)) {
         setTemanDeck(data.profiles);
+        if (data.myProfile) setMyTemanProfile(data.myProfile);
       } else {
         setTemanDeck([]);
       }
@@ -594,19 +599,43 @@ function ChatContent() {
   // Swipe Action (Profil Riil)
   const currentSwipeProfile = temanDeck.length > 0 ? temanDeck[swipeIndex % temanDeck.length] : null;
 
-  const handleNextSwipe = (action = "pass") => {
+  const handleNextSwipe = async (action = "pass") => {
     if (!currentSwipeProfile) return;
+    const target = currentSwipeProfile;
+    setSwipeIndex((prev) => (prev + 1) % (temanDeck.length || 1));
+
     if (action === "super") {
-      toast.success(`Menyimpan kontak ${currentSwipeProfile.display_name}! 🌟`);
+      toast.success(`Menyimpan kontak ${target.display_name}! 🌟`);
       playChatSound();
       hapticSuccess();
     } else if (action === "like") {
-      toast.success(`Kamu menyapa ${currentSwipeProfile.display_name}! 🙌`);
+      toast.success(`Ajakan kenalan terkirim ke ${target.display_name}! 🙌`);
+      playChatSound();
       hapticSuccess();
     } else {
       hapticLight();
     }
-    setSwipeIndex((prev) => (prev + 1) % (temanDeck.length || 1));
+
+    if (myTemanProfile?.id && target.id) {
+      try {
+        const res = await fetch("/api/teman/swipe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            swiper_id: myTemanProfile.id,
+            target_id: target.id,
+            action: action === "super" ? "superlike" : action,
+          }),
+        });
+        const data = await res.json();
+        if (data.matched) {
+          toast.success(`Kalian MATCH dengan ${target.display_name}! 🎉 Ruang chat dibuka di Kotak Masuk.`);
+          fetchInboxRooms();
+        }
+      } catch (err) {
+        console.warn("Gagal merekam swipe:", err);
+      }
+    }
   };
 
   // Filtered rooms in sidebar
@@ -616,10 +645,12 @@ function ChatContent() {
       const isUser1 = r.user1_id === myWa;
       const partnerAlias = (isUser1 ? r.user2_alias : r.user1_alias) || "";
       const listingTitle = r.listings?.title || "";
+      const isPo = Boolean(r.listings?.is_po || r.listings?.type === "po");
 
       // Match category
-      if (sidebarFilter === "teman" && !isDirect) return false;
-      if (sidebarFilter === "market" && isDirect) return false;
+      if (sidebarFilter === "market" && (isDirect || isPo)) return false;
+      if (sidebarFilter === "po" && !isPo) return false;
+      if (sidebarFilter === "direct" && !isDirect) return false;
 
       // Match search
       if (searchFilter.trim()) {
@@ -663,26 +694,28 @@ function ChatContent() {
             <button
               onClick={() => {
                 setDesktopMode("chat");
-                if (searchParams.get("mode")) router.push("/chat");
+                router.push("/chat");
               }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-all ${
-                desktopMode === "chat"
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-all ${
+                desktopMode === "chat" || roomQuery || anonView
                   ? "bg-[#047857] text-white shadow-xs"
                   : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               <Icon.MessageCircle className="w-4 h-4" />
               <span>Obrolan Transaksi</span>
-              <span className="px-1.5 py-0.2 rounded-full bg-white/20 text-white text-[10px] font-black">
-                {inboxRooms.length + (ringkasAnon?.ada ? 1 : 0)}
-              </span>
+              {inboxRooms.length > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full bg-white/20 text-white text-[10px] font-black">
+                  {inboxRooms.length}
+                </span>
+              )}
             </button>
             <button
               onClick={() => {
                 setDesktopMode("swipe");
-                if (roomQuery || anonView) router.push("/chat?mode=teman");
+                router.push("/chat?mode=teman");
               }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-all ${
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition-all ${
                 desktopMode === "swipe" && !roomQuery && !anonView
                   ? "bg-[#047857] text-white shadow-xs"
                   : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
@@ -719,489 +752,491 @@ function ChatContent() {
         </div>
       </div>
 
-      {/* ── MAIN 2-COLUMN SPLIT CONTAINER ── */}
-      <div className="flex-1 max-w-[1400px] w-full mx-auto flex flex-col md:flex-row overflow-hidden relative h-[calc(100dvh-6.5rem)]">
-        {/* ══════════════════════════════════════════════════════════════════
-            PANEL KIRI (SIDEBAR): DAFTAR PESAN & MATCH BARU
-            Visible on desktop; on mobile hidden if a room is actively open
-            ══════════════════════════════════════════════════════════════════ */}
-        <aside
-          className={`w-full md:w-[350px] lg:w-[370px] shrink-0 bg-white dark:bg-[#121214] flex flex-col h-full overflow-hidden border-r border-slate-200 dark:border-slate-800 ${
-            (roomQuery || anonView) ? "hidden md:flex" : "flex"
-          }`}
-        >
-          {/* Header & Search */}
-          <div className="p-3.5 pb-2.5 flex flex-col gap-2.5 bg-white dark:bg-[#121214] border-b border-slate-100 dark:border-slate-800 shrink-0">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-base font-extrabold text-slate-900 dark:text-white tracking-tight">
-                  Pesan &amp; Kontak
-                </span>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 text-[10px] font-bold">
-                  {inboxRooms.length + 1} Aktif
+      {/* ── MAIN CONTAINER ── */}
+      {desktopMode === "swipe" && !roomQuery && !anonView ? (
+        /* ══════════════════════════════════════════════════════════════════
+            TAB 2: TEMAN KAMPUS (KENALAN MAHASISWA & OBROLAN ANONIM)
+           ══════════════════════════════════════════════════════════════════ */
+        <div className="flex-1 max-w-[1400px] w-full mx-auto flex flex-col overflow-hidden relative h-[calc(100dvh-6.5rem)]">
+          {/* Header Atas: Swipe & Cari Teman Kampus */}
+          <header className="px-4 md:px-6 py-3 bg-white dark:bg-[#121214] shadow-xs flex items-center justify-between gap-3 shrink-0 border-b border-slate-200 dark:border-slate-800 z-10">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-emerald-700 to-teal-500 text-white flex items-center justify-center shadow-xs shrink-0">
+                <Icon.Users className="w-5 h-5 text-emerald-200" />
+              </div>
+              <div className="min-w-0 flex flex-col">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm font-extrabold text-slate-900 dark:text-white truncate">
+                    Cari Teman &amp; Swipe Kenalan Kampus
+                  </h2>
+                  <span className="px-2 py-0.2 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 text-[10px] font-bold flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                    <span>Live {labelKampus}</span>
+                  </span>
+                </div>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                  Temukan partner nugas, praktikum, teman nongkrong, atau tim lomba
                 </span>
               </div>
-              <button
-                onClick={handleFindPartner}
-                disabled={searching}
-                title="Mulai Obrolan Baru"
-                className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-emerald-700 transition-colors"
-              >
-                <Icon.Plus className="w-4 h-4" />
-              </button>
             </div>
 
-            {/* Search Input */}
-            <div className="flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-800/80 rounded-xl text-slate-500 focus-within:bg-white dark:focus-within:bg-slate-800 focus-within:ring-2 focus-within:ring-emerald-500/30 transition-all border border-transparent focus-within:border-emerald-500/40">
-              <Icon.Search className="w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                value={searchFilter}
-                onChange={(e) => setSearchFilter(e.target.value)}
-                placeholder="Cari teman, pesan, stambuk..."
-                className="w-full bg-transparent border-0 outline-none text-xs text-slate-900 dark:text-white placeholder:text-slate-400"
-              />
-              {searchFilter && (
-                <button onClick={() => setSearchFilter("")} className="text-slate-400 hover:text-slate-600">
-                  <Icon.X className="w-3.5 h-3.5" />
-                </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="hidden lg:flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs">
+                <Icon.Compass className="w-3.5 h-3.5 text-emerald-700" />
+                <span className="font-bold text-slate-900 dark:text-white">Kampus: {labelKampus}</span>
+              </div>
+              <button
+                onClick={() => handleNextSwipe("pass")}
+                className="px-3 py-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 hover:bg-emerald-200 text-emerald-800 dark:text-emerald-300 text-xs font-bold flex items-center gap-1.5 transition-colors"
+              >
+                <Icon.ArrowRight className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Lewati Profil</span>
+              </button>
+            </div>
+          </header>
+
+          {/* Main Swipe Viewport */}
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col xl:flex-row gap-6 items-start justify-center scrollbar-none [scrollbar-width:none]">
+            {/* Kartu Swipe Utama (Pusat Perhatian) */}
+            <div className="flex-1 flex flex-col items-center justify-center max-w-xl mx-auto w-full">
+              {temanLoading ? (
+                <div className="w-full bg-white dark:bg-[#1c1c1e] rounded-3xl border border-slate-200 dark:border-slate-800 shadow-md p-8 flex flex-col items-center justify-center text-center animate-pulse min-h-[380px]">
+                  <div className="w-20 h-20 rounded-2xl bg-slate-100 dark:bg-slate-800 mb-4" />
+                  <div className="h-5 bg-slate-100 dark:bg-slate-800 rounded w-1/2 mb-2" />
+                  <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded w-1/3 mb-4" />
+                  <div className="h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl w-full max-w-sm" />
+                </div>
+              ) : !currentSwipeProfile || temanDeck.length === 0 ? (
+                <div className="w-full bg-white dark:bg-[#1c1c1e] rounded-3xl border border-slate-200 dark:border-slate-800 shadow-md p-8 flex flex-col items-center justify-center text-center min-h-[380px]">
+                  <div className="w-16 h-16 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center mb-4">
+                    <Icon.Users className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-base font-black text-slate-900 dark:text-white mb-2">
+                    Belum Ada Profil Teman di Sekitarmu
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-sm mb-6">
+                    Belum ada mahasiswa yang memasang profil Teman Kampus. Pasang profilmu sekarang agar teman sefakultas atau seangkatan bisa mengajakmu kolaborasi atau belajar bareng!
+                  </p>
+                  <Link
+                    href="/dashboard"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#047857] hover:bg-emerald-800 text-white text-xs font-black shadow-md shadow-emerald-700/25 transition-all"
+                  >
+                    <Icon.Plus className="w-4 h-4" />
+                    <span>Pasang Profil Teman Kampus</span>
+                  </Link>
+                </div>
+              ) : (
+                <div className="w-full bg-white dark:bg-[#1c1c1e] rounded-3xl border border-emerald-500/20 shadow-md p-6 flex flex-col justify-between transition-all relative overflow-hidden">
+                  {/* Top verified banner */}
+                  <div className="flex items-center justify-between gap-2 pb-4 border-b border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 text-xs font-bold flex items-center gap-1">
+                        <Icon.CheckCircle className="w-3.5 h-3.5" />
+                        Mahasiswa {currentSwipeProfile.campus || "Kampus"}
+                      </span>
+                      {currentSwipeProfile.intent && (
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold">
+                          {currentSwipeProfile.intent}
+                        </span>
+                      )}
+                    </div>
+                    {currentSwipeProfile.batch && (
+                      <span className="text-xs text-slate-400 font-medium">
+                        Stambuk {currentSwipeProfile.batch}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Profile body */}
+                  <div className="py-5 flex flex-col md:flex-row items-center md:items-start gap-5">
+                    <div className="relative shrink-0">
+                      {currentSwipeProfile.photo_url ? (
+                        <img
+                          src={currentSwipeProfile.photo_url}
+                          alt={currentSwipeProfile.display_name}
+                          className="w-24 h-24 rounded-2xl object-cover shadow-md"
+                        />
+                      ) : (
+                        <div className="w-24 h-24 rounded-2xl bg-gradient-to-tr from-emerald-700 to-teal-500 text-white flex items-center justify-center text-3xl font-black shadow-md">
+                          {(currentSwipeProfile.display_name || "AK").slice(0, 2).toUpperCase()}
+                        </div>
+                      )}
+                      <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#047857] ring-2 ring-white dark:ring-black flex items-center justify-center text-[12px] text-white font-bold">
+                        ✓
+                      </span>
+                    </div>
+
+                    <div className="flex-1 text-center md:text-left min-w-0">
+                      <h3 className="text-xl font-black text-slate-900 dark:text-white">
+                        {currentSwipeProfile.display_name}
+                      </h3>
+                      <p className="text-xs text-[#047857] dark:text-emerald-400 font-bold flex items-center justify-center md:justify-start gap-1 mb-3 mt-0.5">
+                        <Icon.BookOpen className="w-3.5 h-3.5" />
+                        <span>
+                          {currentSwipeProfile.faculty || "Umum"} · {currentSwipeProfile.campus || "Kampus"}
+                        </span>
+                      </p>
+
+                      <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl mb-3 border border-slate-100 dark:border-slate-800">
+                        <p className="text-xs text-slate-700 dark:text-slate-300 italic leading-relaxed">
+                          “{currentSwipeProfile.bio || "Mencari teman untuk belajar bareng, nugas, atau diskusi santai di kampus."}”
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-center md:justify-start gap-1.5">
+                        <span className="px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-[11px] font-bold flex items-center gap-1 border border-emerald-200/60 dark:border-emerald-800/60">
+                          <Icon.MapPin className="w-3.5 h-3.5 text-emerald-600" />
+                          Kampus: {currentSwipeProfile.campus || "Kampus"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action buttons panel */}
+                  <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-center gap-4">
+                    <button
+                      onClick={() => handleNextSwipe("pass")}
+                      className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-slate-400 hover:text-rose-500 flex items-center justify-center transition-all shadow-xs active:scale-90"
+                      title="Lewati (Next Profil)"
+                    >
+                      <Icon.X className="w-6 h-6" />
+                    </button>
+                    <button
+                      onClick={() => handleNextSwipe("super")}
+                      className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-600 hover:text-white flex items-center justify-center transition-all shadow-xs active:scale-90"
+                      title="Simpan Teman"
+                    >
+                      <Icon.StarFilled className="w-6 h-6 text-emerald-600 group-hover:text-white" />
+                    </button>
+                    <button
+                      onClick={() => handleNextSwipe("like")}
+                      className="px-6 py-3 rounded-full bg-[#047857] hover:bg-emerald-800 text-white text-xs font-black flex items-center gap-2 shadow-md shadow-emerald-700/25 transition-all active:scale-95"
+                      title="Ajak Kenalan Sekarang"
+                    >
+                      <Icon.HeartFilled className="w-4 h-4 text-emerald-200" />
+                      <span>Ajak Kenalan &amp; Mulai Chat</span>
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
 
-            {/* Horizontal Story / Match Baru Avatars sengaja dihilangkan untuk menjaga kejujuran data — hanya obrolan riil yang ditampilkan */}
+            {/* Sisi Kanan: Obrolan Anonim, Panduan Kenalan Aman & Basecamp Favorit */}
+            <div className="w-full xl:w-80 shrink-0 flex flex-col gap-4">
+              {/* Card 1: Obrolan Anonim 1-on-1 */}
+              <div className="bg-white dark:bg-[#1c1c1e] rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4 shadow-xs">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-[#047857] dark:text-emerald-300 flex items-center justify-center">
+                    <Icon.MessageCircle className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-slate-900 dark:text-white">
+                      Obrolan Anonim 1-on-1
+                    </h4>
+                    <p className="text-[10px] text-slate-400">Ngobrol rahasia &amp; santai</p>
+                  </div>
+                </div>
+                <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed mb-3">
+                  Mau curhat atau ngobrol seru tanpa memperlihatkan nama dan profilmu ke mahasiswa lain?
+                </p>
+                {ringkasAnon?.partnerAktif ? (
+                  <button
+                    onClick={() => router.push("/chat?anon=1")}
+                    className="w-full py-2.5 rounded-xl bg-[#047857] hover:bg-emerald-800 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-xs"
+                  >
+                    <Icon.MessageCircle className="w-3.5 h-3.5" />
+                    <span>Lanjut Sesi ({ringkasAnon.partnerAktif})</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleFindPartner}
+                    disabled={searching}
+                    className="w-full py-2.5 rounded-xl bg-[#047857] hover:bg-emerald-800 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-xs disabled:opacity-50"
+                  >
+                    {searching ? (
+                      <span>Mencari Teman...</span>
+                    ) : (
+                      <>
+                        <Icon.Sparkles className="w-3.5 h-3.5" />
+                        <span>Mulai Chat Anonim</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
 
-            {/* Segmented Filter Pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 scrollbar-none [scrollbar-width:none]">
-              {[
-                { id: "semua", label: "Semua" },
-                { id: "teman", label: "Teman Kampus" },
-                { id: "po", label: "Open PO" },
-                { id: "market", label: "Marketplace" },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setSidebarFilter(tab.id)}
-                  className={`px-2.5 py-1 rounded-full text-xs font-bold transition-all shrink-0 ${
-                    sidebarFilter === tab.id
-                      ? "bg-[#047857] text-white shadow-xs"
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
+              {/* Card 2: Panduan Kenalan Aman */}
+              <div className="bg-white dark:bg-[#1c1c1e] rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4 shadow-xs">
+                <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <Icon.ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  Panduan Kenalan Aman
+                </h4>
+                <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed mb-2.5">
+                  Teman Kampus menghubungkan sesama mahasiswa aktif untuk partner belajar, tugas kelompok, atau kolaborasi lomba.
+                </p>
+                <ul className="text-[10px] text-slate-500 dark:text-slate-400 space-y-1.5">
+                  <li className="flex items-start gap-1.5">
+                    <span className="text-emerald-600 font-bold">•</span>
+                    <span>Selalu janjian bertemu di area publik kampus yang ramai.</span>
+                  </li>
+                  <li className="flex items-start gap-1.5">
+                    <span className="text-emerald-600 font-bold">•</span>
+                    <span>Jangan membagikan data pribadi sensitif atau rekening bank.</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Card 3: Basecamp & Titik Temu Favorit */}
+              <div className="bg-slate-100 dark:bg-slate-900/60 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4">
+                <h4 className="text-xs font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5 mb-1.5">
+                  <Icon.MapPin className="w-4 h-4 text-emerald-600" />
+                  Titik Temu &amp; Basecamp Favorit
+                </h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-2.5 leading-relaxed">
+                  Rekomendasi spot aman dan nyaman untuk ketemuan pertama kali:
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {BASECAMP_SPOTS.map((spot, idx) => (
+                    <span
+                      key={idx}
+                      className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-semibold border border-slate-200 dark:border-slate-700 shadow-2xs"
+                    >
+                      {spot}
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
-
-          {/* Chat List Scroll Area */}
-          <div className="flex-1 overflow-y-auto divide-y-0 p-2 space-y-1.5 scrollbar-none [scrollbar-width:none]">
-            {/* Pinned Item: Cari Teman & Swipe (hanya tampil jika memilih filter teman atau mode teman aktif) */}
-            {(sidebarFilter === "teman" || desktopMode === "swipe") && (
-              <article
-                onClick={() => {
-                  setDesktopMode("swipe");
-                  router.push("/chat?mode=teman");
-                }}
-                className={`p-2.5 rounded-xl border flex items-start gap-3 cursor-pointer transition-all relative ${
-                  desktopMode === "swipe" && !roomQuery && !anonView
-                    ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 shadow-sm"
-                    : "bg-white dark:bg-slate-900/60 border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40"
-                }`}
-              >
-                <div className="relative shrink-0">
-                  <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-emerald-700 to-teal-500 text-white flex items-center justify-center font-bold text-sm shadow-xs">
-                    <Icon.Users className="w-5 h-5 text-emerald-200" />
-                  </div>
-                  <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-black animate-pulse" />
+        </div>
+      ) : (
+        /* ══════════════════════════════════════════════════════════════════
+            TAB 1: OBROLAN TRANSAKSI (MURNI WHATSAPP WEB STYLE)
+           ══════════════════════════════════════════════════════════════════ */
+        <div className="flex-1 max-w-[1400px] w-full mx-auto flex flex-col md:flex-row overflow-hidden relative h-[calc(100dvh-6.5rem)]">
+          {/* PANEL KIRI (SIDEBAR): DAFTAR PESAN & MATCH BARU */}
+          <aside
+            className={`w-full md:w-[350px] lg:w-[380px] shrink-0 bg-white dark:bg-[#121214] flex flex-col h-full overflow-hidden border-r border-slate-200 dark:border-slate-800 ${
+              (roomQuery || anonView) ? "hidden md:flex" : "flex"
+            }`}
+          >
+            {/* Header & Search */}
+            <div className="p-3.5 pb-2.5 flex flex-col gap-2.5 bg-white dark:bg-[#121214] border-b border-slate-100 dark:border-slate-800 shrink-0">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-base font-extrabold text-slate-900 dark:text-white tracking-tight">
+                    Kotak Masuk
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 text-[10px] font-bold">
+                    {filteredRooms.length} Obrolan
+                  </span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-1 mb-0.5">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="text-xs font-black text-emerald-800 dark:text-emerald-300 truncate">
-                        Cari Teman &amp; Kenalan
-                      </span>
-                      <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-[#047857] text-white truncate shrink-0">
-                        Mode Aktif ⚡
-                      </span>
-                    </div>
-                    <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 shrink-0">Online</span>
-                  </div>
-                  <div className="flex items-center gap-1 mb-1">
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold">
-                      <Icon.Flame className="w-3 h-3" />
-                      <span className="truncate max-w-[130px]">Teman Kampus</span>
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-[11px] text-slate-600 dark:text-slate-400 truncate">
-                      Buka untuk mencari partner nugas atau teman nongkrong
-                    </p>
-                  </div>
-                </div>
-              </article>
-            )}
-
-            {/* Pinned Label */}
-            <div className="px-2 pt-2 pb-0.5 flex items-center justify-between text-slate-400">
-              <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-slate-400">
-                <Icon.Clock className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Obrolan Kamu</span>
+                <Link
+                  href="/jual-beli"
+                  className="text-[11px] font-bold text-[#047857] dark:text-emerald-400 hover:underline flex items-center gap-1"
+                >
+                  <span>Marketplace</span>
+                  <Icon.ArrowRight className="w-3 h-3" />
+                </Link>
               </div>
-              <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold">
-                {filteredRooms.length} Percakapan
-              </span>
-            </div>
 
-            {/* Anonim Chat Room Item */}
-            {ringkasAnon && (
-              <article
-                onClick={() => {
-                  setDesktopMode("chat");
-                  router.push("/chat?anon=1");
-                }}
-                className={`p-2.5 rounded-xl flex items-start gap-3 cursor-pointer transition-all border ${
-                  anonView
-                    ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 shadow-sm"
-                    : "bg-white dark:bg-slate-900/60 border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40"
-                }`}
-              >
-                <div className="relative shrink-0">
-                  <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-emerald-700 to-teal-500 text-white flex items-center justify-center font-bold shadow-xs">
-                    <Icon.MessageCircle className="w-5 h-5" />
-                  </div>
-                  {ringkasAnon.partnerAktif && (
-                    <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-black" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-1 mb-0.5">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                        {ringkasAnon.partnerAktif ? ringkasAnon.partnerAktif : "Obrolan Anonim Kampus"}
-                      </span>
-                      <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 truncate shrink-0">
-                        Anon 1-on-1
-                      </span>
-                    </div>
-                    <span className="text-[10px] text-slate-400 shrink-0 font-medium">
-                      {waktuRelatif(ringkasAnon.updatedAt)}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                    {ringkasAnon.pesanTerakhir?.teks || (ringkasAnon.menunggu ? "Sedang mencari teman..." : "Ketuk untuk mengobrol")}
-                  </p>
-                </div>
-              </article>
-            )}
-
-            {/* Real Marketplace & Direct DM Rooms */}
-            {inboxLoading ? (
-              <div className="py-6 text-center text-xs text-slate-400">Memuat percakapan...</div>
-            ) : filteredRooms.length === 0 && !ringkasAnon ? (
-              <div className="p-6 text-center space-y-2">
-                <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 mx-auto flex items-center justify-center">
-                  <Icon.MessageCircle className="w-5 h-5" />
-                </div>
-                <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Belum ada obrolan aktif</p>
-                <p className="text-[10px] text-slate-500">Mulai chat dengan menekan tombol + di atas atau swipe teman!</p>
+              {/* Search Input */}
+              <div className="flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-800/80 rounded-xl text-slate-500 focus-within:bg-white dark:focus-within:bg-slate-800 focus-within:ring-2 focus-within:ring-emerald-500/30 transition-all border border-transparent focus-within:border-emerald-500/40">
+                <Icon.Search className="w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchFilter}
+                  onChange={(e) => setSearchFilter(e.target.value)}
+                  placeholder="Cari pesan, penjual, barang..."
+                  className="w-full bg-transparent border-0 outline-none text-xs text-slate-900 dark:text-white placeholder:text-slate-400"
+                />
+                {searchFilter && (
+                  <button onClick={() => setSearchFilter("")} className="text-slate-400 hover:text-slate-600">
+                    <Icon.X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
-            ) : (
-              filteredRooms.map((room) => {
-                const isDirect = room.type === "direct";
-                const isUser1 = room.user1_id === myWa;
-                const partnerAlias = (isUser1 ? room.user2_alias : room.user1_alias) || "Anak Kampus";
-                const partnerFaculty = (isUser1 ? room.user2_faculty : room.user1_faculty) || "Umum";
-                const listing = room.listings;
-                const isSelected = roomQuery === room.id;
 
-                return (
-                  <article
-                    key={room.id}
-                    onClick={() => {
-                      setDesktopMode("chat");
-                      router.push(`/chat?room=${room.id}`);
-                    }}
-                    className={`p-2.5 rounded-xl flex items-start gap-3 cursor-pointer transition-all border ${
-                      isSelected
-                        ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 shadow-sm"
-                        : "bg-white dark:bg-slate-900/60 border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40"
+              {/* Segmented Filter Pills */}
+              <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 scrollbar-none [scrollbar-width:none]">
+                {[
+                  { id: "semua", label: "Semua" },
+                  { id: "market", label: "Marketplace" },
+                  { id: "po", label: "Open PO" },
+                  { id: "direct", label: "Pribadi" },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setSidebarFilter(tab.id)}
+                    className={`px-3 py-1 rounded-full text-xs font-bold transition-all shrink-0 ${
+                      sidebarFilter === tab.id
+                        ? "bg-[#047857] text-white shadow-xs"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900"
                     }`}
                   >
-                    <div className="relative shrink-0">
-                      {isDirect ? (
-                        <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold text-sm shadow-xs">
-                          {partnerAlias[0]?.toUpperCase() || "T"}
-                        </div>
-                      ) : listing?.image_url ? (
-                        <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden border border-slate-200 dark:border-slate-700">
-                          <img src={listing.image_url} alt={listing.title} className="w-full h-full object-cover" />
-                        </div>
-                      ) : (
-                        <div className="w-11 h-11 rounded-xl bg-[#047857]/10 text-[#047857] flex items-center justify-center font-bold text-sm">
-                          <Icon.Package className="w-5 h-5" />
-                        </div>
-                      )}
-                      {room.status === "active" && (
-                        <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-black" />
-                      )}
-                    </div>
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-1 mb-0.5">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                            {partnerAlias}
-                          </span>
-                          <span className="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 truncate shrink-0">
-                            {partnerFaculty}
-                          </span>
-                        </div>
-                        <span className="text-[10px] text-slate-400 shrink-0 font-medium">
-                          {waktuRelatif(room.updated_at)}
+            {/* Chat List Scroll Area */}
+            <div className="flex-1 overflow-y-auto divide-y-0 p-2 space-y-1.5 scrollbar-none [scrollbar-width:none]">
+              {/* Pinned Label */}
+              <div className="px-2 pt-2 pb-0.5 flex items-center justify-between text-slate-400">
+                <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-slate-400">
+                  <Icon.Clock className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Daftar Percakapan</span>
+                </div>
+                <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold">
+                  {filteredRooms.length} Pesan
+                </span>
+              </div>
+
+              {/* Anonim Active Chat Room Item */}
+              {ringkasAnon?.partnerAktif && (
+                <article
+                  onClick={() => {
+                    setDesktopMode("chat");
+                    router.push("/chat?anon=1");
+                  }}
+                  className={`p-2.5 rounded-xl flex items-start gap-3 cursor-pointer transition-all border ${
+                    anonView
+                      ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 shadow-sm"
+                      : "bg-white dark:bg-slate-900/60 border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                  }`}
+                >
+                  <div className="relative shrink-0">
+                    <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-emerald-700 to-teal-500 text-white flex items-center justify-center font-bold shadow-xs">
+                      <Icon.MessageCircle className="w-5 h-5" />
+                    </div>
+                    <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-black" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-1 mb-0.5">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                          {ringkasAnon.partnerAktif}
+                        </span>
+                        <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 truncate shrink-0">
+                          Anon 1-on-1
                         </span>
                       </div>
-
-                      {listing?.title && (
-                        <div className="flex items-center gap-1 mb-1">
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 text-[9.5px] font-bold">
-                            <Icon.Tag className="w-3 h-3" />
-                            <span className="truncate max-w-[130px]">{listing.title}</span>
-                          </span>
-                        </div>
-                      )}
-
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                        {isDirect ? "Obrolan personal mahasiswa" : `Transaksi produk: ${listing?.title || "Barang"}`}
-                      </p>
-                    </div>
-                  </article>
-                );
-              })
-            )}
-          </div>
-        </aside>
-
-        {/* ══════════════════════════════════════════════════════════════════
-            PANEL KANAN (CENTER & RIGHT): 
-            MODE A: CARI TEMAN & SWIPE DECK (from 16.html)
-            MODE B: ACTIVE CHAT ROOM (?room=<id> or ?anon=1)
-            ══════════════════════════════════════════════════════════════════ */}
-        <section
-          className={`flex-1 flex flex-col h-full bg-slate-50 dark:bg-black relative min-w-0 overflow-hidden ${
-            (!roomQuery && !anonView) ? "flex" : "flex"
-          }`}
-        >
-          {/* ── SUB-VIEW A: CARI TEMAN & SWIPE DECK (from 16.html) ── */}
-          {desktopMode === "swipe" && !roomQuery && !anonView && (
-            <div className="flex-1 flex flex-col h-full overflow-hidden">
-              {/* Header Atas: Swipe & Cari Teman Kampus */}
-              <header className="px-4 md:px-6 py-3 bg-white dark:bg-[#121214] shadow-xs flex items-center justify-between gap-3 shrink-0 border-b border-slate-200 dark:border-slate-800 z-10">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-emerald-700 to-teal-500 text-white flex items-center justify-center shadow-xs shrink-0">
-                    <Icon.Users className="w-5 h-5 text-emerald-200" />
-                  </div>
-                  <div className="min-w-0 flex flex-col">
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-sm font-extrabold text-slate-900 dark:text-white truncate">
-                        Cari Teman &amp; Swipe Kenalan Kampus
-                      </h2>
-                      <span className="px-2 py-0.2 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 text-[10px] font-bold flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
-                        <span>Live {labelKampus}</span>
+                      <span className="text-[10px] text-slate-400 shrink-0 font-medium">
+                        {waktuRelatif(ringkasAnon.updatedAt)}
                       </span>
                     </div>
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                      Temukan partner nugas, praktikum, teman nongkrong, atau tim lomba
-                    </span>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                      {ringkasAnon.pesanTerakhir?.teks || "Sesi obrolan anonim aktif"}
+                    </p>
                   </div>
-                </div>
+                </article>
+              )}
 
-                <div className="flex items-center gap-2 shrink-0">
-                  <div className="hidden lg:flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs">
-                    <Icon.Compass className="w-3.5 h-3.5 text-emerald-700" />
-                    <span className="font-bold text-slate-900 dark:text-white">Kampus: {labelKampus}</span>
+              {/* Real Marketplace & Direct DM Rooms */}
+              {inboxLoading ? (
+                <div className="py-8 text-center text-xs text-slate-400">Memuat percakapan...</div>
+              ) : filteredRooms.length === 0 && !ringkasAnon?.partnerAktif ? (
+                <div className="p-8 text-center space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-[#047857] dark:text-emerald-400 mx-auto flex items-center justify-center">
+                    <Icon.MessageCircle className="w-6 h-6" />
                   </div>
-                  <button
-                    onClick={() => handleNextSwipe("pass")}
-                    className="px-3 py-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 hover:bg-emerald-200 text-emerald-800 dark:text-emerald-300 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                  <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Belum ada obrolan aktif</p>
+                  <p className="text-[11px] text-slate-500 max-w-[220px] mx-auto leading-relaxed">
+                    Mulai percakapan dengan menekan tombol "Chat Penjual" pada iklan barang di Marketplace.
+                  </p>
+                  <Link
+                    href="/jual-beli"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#047857] text-white text-xs font-bold shadow-xs hover:bg-emerald-800 transition-colors"
                   >
-                    <Icon.ArrowRight className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Lewati Profil</span>
-                  </button>
+                    <Icon.ShoppingBag className="w-3.5 h-3.5" />
+                    <span>Jelajahi Marketplace</span>
+                  </Link>
                 </div>
-              </header>
+              ) : (
+                filteredRooms.map((room) => {
+                  const isDirect = room.type === "direct";
+                  const isUser1 = room.user1_id === myWa;
+                  const partnerAlias = (isUser1 ? room.user2_alias : room.user1_alias) || "Anak Kampus";
+                  const partnerFaculty = (isUser1 ? room.user2_faculty : room.user1_faculty) || "Umum";
+                  const listing = room.listings;
+                  const isSelected = roomQuery === room.id;
 
-              {/* Main Swipe Viewport */}
-              <div className="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col xl:flex-row gap-6 items-stretch justify-center scrollbar-none [scrollbar-width:none]">
-                {/* Kartu Swipe Utama (Pusat Perhatian) */}
-                <div className="flex-1 flex flex-col items-center justify-center max-w-xl mx-auto w-full">
-                  {temanLoading ? (
-                    <div className="w-full bg-white dark:bg-[#1c1c1e] rounded-3xl border border-slate-200 dark:border-slate-800 shadow-md p-8 flex flex-col items-center justify-center text-center animate-pulse min-h-[380px]">
-                      <div className="w-20 h-20 rounded-2xl bg-slate-100 dark:bg-slate-800 mb-4" />
-                      <div className="h-5 bg-slate-100 dark:bg-slate-800 rounded w-1/2 mb-2" />
-                      <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded w-1/3 mb-4" />
-                      <div className="h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl w-full max-w-sm" />
-                    </div>
-                  ) : !currentSwipeProfile || temanDeck.length === 0 ? (
-                    <div className="w-full bg-white dark:bg-[#1c1c1e] rounded-3xl border border-slate-200 dark:border-slate-800 shadow-md p-8 flex flex-col items-center justify-center text-center min-h-[380px]">
-                      <div className="w-16 h-16 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center mb-4">
-                        <Icon.Users className="w-8 h-8" />
-                      </div>
-                      <h3 className="text-base font-black text-slate-900 dark:text-white mb-2">
-                        Belum Ada Profil Teman di Sekitarmu
-                      </h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-sm mb-6">
-                        Belum ada mahasiswa yang memasang profil Teman Kampus. Pasang profilmu sekarang agar teman sefakultas atau seangkatan bisa mengajakmu kolaborasi atau belajar bareng!
-                      </p>
-                      <Link
-                        href="/dashboard"
-                        className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#047857] hover:bg-emerald-800 text-white text-xs font-black shadow-md shadow-emerald-700/25 transition-all"
-                      >
-                        <Icon.Plus className="w-4 h-4" />
-                        <span>Pasang Profil Teman Kampus</span>
-                      </Link>
-                    </div>
-                  ) : (
-                    <div className="w-full bg-white dark:bg-[#1c1c1e] rounded-3xl border border-emerald-500/20 shadow-md p-6 flex flex-col justify-between transition-all relative overflow-hidden">
-                      {/* Top verified banner */}
-                      <div className="flex items-center justify-between gap-2 pb-4 border-b border-slate-100 dark:border-slate-800">
-                        <div className="flex items-center gap-2">
-                          <span className="px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 text-xs font-bold flex items-center gap-1">
-                            <Icon.CheckCircle className="w-3.5 h-3.5" />
-                            Mahasiswa {currentSwipeProfile.campus || "Kampus"}
-                          </span>
-                          {currentSwipeProfile.intent && (
-                            <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold">
-                              {currentSwipeProfile.intent}
-                            </span>
-                          )}
-                        </div>
-                        {currentSwipeProfile.batch && (
-                          <span className="text-xs text-slate-400 font-medium">
-                            Stambuk {currentSwipeProfile.batch}
-                          </span>
+                  return (
+                    <article
+                      key={room.id}
+                      onClick={() => {
+                        setDesktopMode("chat");
+                        router.push(`/chat?room=${room.id}`);
+                      }}
+                      className={`p-2.5 rounded-xl flex items-start gap-3 cursor-pointer transition-all border ${
+                        isSelected
+                          ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 shadow-sm"
+                          : "bg-white dark:bg-slate-900/60 border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                      }`}
+                    >
+                      <div className="relative shrink-0">
+                        {isDirect ? (
+                          <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center font-bold text-sm shadow-xs">
+                            {partnerAlias[0]?.toUpperCase() || "T"}
+                          </div>
+                        ) : listing?.image_url ? (
+                          <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden border border-slate-200 dark:border-slate-700">
+                            <img src={listing.image_url} alt={listing.title} className="w-full h-full object-cover" />
+                          </div>
+                        ) : (
+                          <div className="w-11 h-11 rounded-xl bg-[#047857]/10 text-[#047857] flex items-center justify-center font-bold text-sm">
+                            <Icon.Package className="w-5 h-5" />
+                          </div>
+                        )}
+                        {room.status === "active" && (
+                          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-black" />
                         )}
                       </div>
 
-                      {/* Profile body */}
-                      <div className="py-5 flex flex-col md:flex-row items-center md:items-start gap-5">
-                        <div className="relative shrink-0">
-                          {currentSwipeProfile.photo_url ? (
-                            <img
-                              src={currentSwipeProfile.photo_url}
-                              alt={currentSwipeProfile.display_name}
-                              className="w-24 h-24 rounded-2xl object-cover shadow-md"
-                            />
-                          ) : (
-                            <div className="w-24 h-24 rounded-2xl bg-gradient-to-tr from-emerald-700 to-teal-500 text-white flex items-center justify-center text-3xl font-black shadow-md">
-                              {(currentSwipeProfile.display_name || "AK").slice(0, 2).toUpperCase()}
-                            </div>
-                          )}
-                          <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#047857] ring-2 ring-white dark:ring-black flex items-center justify-center text-[12px] text-white font-bold">
-                            ✓
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1 mb-0.5">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                              {partnerAlias}
+                            </span>
+                            <span className="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 truncate shrink-0">
+                              {partnerFaculty}
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-slate-400 shrink-0 font-medium">
+                            {waktuRelatif(room.updated_at)}
                           </span>
                         </div>
 
-                        <div className="flex-1 text-center md:text-left min-w-0">
-                          <h3 className="text-xl font-black text-slate-900 dark:text-white">
-                            {currentSwipeProfile.display_name}
-                          </h3>
-                          <p className="text-xs text-[#047857] dark:text-emerald-400 font-bold flex items-center justify-center md:justify-start gap-1 mb-3 mt-0.5">
-                            <Icon.BookOpen className="w-3.5 h-3.5" />
-                            <span>
-                              {currentSwipeProfile.faculty || "Umum"} · {currentSwipeProfile.campus || "Kampus"}
-                            </span>
-                          </p>
-
-                          <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl mb-3 border border-slate-100 dark:border-slate-800">
-                            <p className="text-xs text-slate-700 dark:text-slate-300 italic leading-relaxed">
-                              “{currentSwipeProfile.bio || "Mencari teman untuk belajar bareng, nugas, atau diskusi santai di kampus."}”
-                            </p>
-                          </div>
-
-                          <div className="flex flex-wrap items-center justify-center md:justify-start gap-1.5">
-                            <span className="px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-[11px] font-bold flex items-center gap-1 border border-emerald-200/60 dark:border-emerald-800/60">
-                              <Icon.MapPin className="w-3.5 h-3.5 text-emerald-600" />
-                              Kampus: {currentSwipeProfile.campus || "Kampus"}
+                        {listing?.title && (
+                          <div className="flex items-center gap-1 mb-1">
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 text-[9.5px] font-bold">
+                              <Icon.Tag className="w-3 h-3" />
+                              <span className="truncate max-w-[130px]">{listing.title}</span>
                             </span>
                           </div>
-                        </div>
+                        )}
+
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                          {isDirect ? "Obrolan personal mahasiswa" : `Transaksi produk: ${listing?.title || "Barang"}`}
+                        </p>
                       </div>
-
-                      {/* Action buttons panel */}
-                      <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-center gap-4">
-                        <button
-                          onClick={() => handleNextSwipe("pass")}
-                          className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-slate-400 hover:text-rose-500 flex items-center justify-center transition-all shadow-xs active:scale-90"
-                          title="Lewati (Next Profil)"
-                        >
-                          <Icon.X className="w-6 h-6" />
-                        </button>
-                        <button
-                          onClick={() => handleNextSwipe("super")}
-                          className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-600 hover:text-white flex items-center justify-center transition-all shadow-xs active:scale-90"
-                          title="Simpan Teman"
-                        >
-                          <Icon.StarFilled className="w-6 h-6 text-emerald-600 group-hover:text-white" />
-                        </button>
-                        <button
-                          onClick={() => handleNextSwipe("like")}
-                          className="px-6 py-3 rounded-full bg-[#047857] hover:bg-emerald-800 text-white text-xs font-black flex items-center gap-2 shadow-md shadow-emerald-700/25 transition-all active:scale-95"
-                          title="Ajak Kenalan Sekarang"
-                        >
-                          <Icon.HeartFilled className="w-4 h-4 text-emerald-200" />
-                          <span>Ajak Kenalan &amp; Mulai Chat</span>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Sisi Kanan: Match Hari Ini & Basecamp Favorit (from 16.html) */}
-                <div className="w-full xl:w-72 shrink-0 flex flex-col gap-4">
-                  <div className="bg-white dark:bg-[#1c1c1e] rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4 shadow-xs">
-                    <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                      <Icon.ShieldCheck className="w-4 h-4 text-emerald-600" />
-                      Panduan Kenalan Aman
-                    </h4>
-                    <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed mb-2.5">
-                      Teman Kampus menghubungkan sesama mahasiswa aktif untuk partner belajar, tugas kelompok, atau kolaborasi lomba.
-                    </p>
-                    <ul className="text-[10px] text-slate-500 dark:text-slate-400 space-y-1.5">
-                      <li className="flex items-start gap-1.5">
-                        <span className="text-emerald-600 font-bold">•</span>
-                        <span>Selalu janjian bertemu di area publik kampus yang ramai.</span>
-                      </li>
-                      <li className="flex items-start gap-1.5">
-                        <span className="text-emerald-600 font-bold">•</span>
-                        <span>Jangan membagikan data pribadi sensitif atau rekening bank.</span>
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div className="bg-slate-100 dark:bg-slate-900/60 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4">
-                    <h4 className="text-xs font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5 mb-1.5">
-                      <Icon.MapPin className="w-4 h-4 text-emerald-600" />
-                      Titik Temu &amp; Basecamp Favorit
-                    </h4>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-2.5 leading-relaxed">
-                      Rekomendasi spot aman dan nyaman untuk ketemuan pertama kali:
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {BASECAMP_SPOTS.map((spot, idx) => (
-                        <span
-                          key={idx}
-                          className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-semibold border border-slate-200 dark:border-slate-700 shadow-2xs"
-                        >
-                          {spot}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
+                    </article>
+                  );
+                })
+              )}
             </div>
-          )}
+          </aside>
+
+          {/* ══════════════════════════════════════════════════════════════════
+              PANEL KANAN (CHAT AREA): ACTIVE ROOM OR WHATSAPP EMPTY STATE
+              ══════════════════════════════════════════════════════════════════ */}
+          <section
+            className={`flex-1 flex flex-col h-full bg-slate-50 dark:bg-black relative min-w-0 overflow-hidden ${
+              (!roomQuery && !anonView) ? "hidden md:flex" : "flex"
+            }`}
+          >
 
           {/* ── SUB-VIEW B: UTAS ANONIM (?anon=1) ── */}
           {anonView && (
@@ -1667,6 +1702,7 @@ function ChatContent() {
           )}
         </section>
       </div>
+    )}
 
       {/* LIGHTBOX PREVIEW FOTO */}
       {previewImage && (
