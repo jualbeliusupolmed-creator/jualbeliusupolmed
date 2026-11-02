@@ -389,8 +389,8 @@ app.use(express.json());
 // Formulir masuk mengirim application/x-www-form-urlencoded, bukan JSON —
 // tanpa ini req.body-nya undefined dan sandi yang benar pun ditolak.
 app.use(express.urlencoded({ extended: false, limit: '16kb' }));
-// Berkas tampilan bersama (/assets/ui.css, /assets/ui.js) dipakai SEMUA halaman,
-// jadi ia sebaiknya cuma diunduh sekali per kunjungan, bukan sekali per halaman.
+// Bundle tampilan panel baru (/assets/bot-panel-content-v3.css/js) dipakai
+// lintas halaman, jadi ia sebaiknya cuma diunduh sekali per kunjungan.
 // Satu jam saja: cukup untuk berpindah-pindah halaman, cukup pendek supaya
 // perbaikan tampilan tidak tertahan lama di peramban yang sudah terlanjur.
 app.use('/assets', express.static(path.join(__dirname, 'public', 'assets'), { maxAge: '1h' }));

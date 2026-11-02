@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { tolakCron } from "@/lib/cronAuth";
-import { sendWa, daftarGrup } from "@/lib/fonnte";
+import { sendWa, sendChannelWa, daftarGrup } from "@/lib/fonnte";
 import { buildSlug } from "@/lib/slug";
 import { getSettings } from "@/lib/settings";
 import { jawabGalat } from "@/lib/jawabGalat";
@@ -57,9 +57,10 @@ export async function GET(req) {
 
   // Kirim ke grup utama (dan grup tambahan jika ada)
   const tujuanGrup = daftarGrup(settings?.admin);
+  const channelJid = String(settings?.admin?.channelJid || "").trim();
   
-  if (tujuanGrup.length === 0) {
-    return NextResponse.json({ sent: 0, message: "Tidak ada grup tujuan yang di-set (FONNTE_WA_GROUP_ID kosong)" });
+  if (tujuanGrup.length === 0 && !channelJid) {
+    return NextResponse.json({ sent: 0, message: "Belum ada grup atau saluran tujuan katalog yang diatur." });
   }
 
   let successCount = 0;
@@ -69,9 +70,13 @@ export async function GET(req) {
     await new Promise(r => setTimeout(r, 1000));
   }
 
+  const channelResult = channelJid ? await sendChannelWa(channelJid, digestMsg, { jenis: "katalog_harian" }) : null;
+
   return NextResponse.json({ 
     processed: listings.length, 
     groups_targeted: tujuanGrup.length, 
-    groups_success: successCount 
+    groups_success: successCount,
+    channels_targeted: channelJid ? 1 : 0,
+    channels_success: channelResult?.ok ? 1 : 0,
   });
 }

@@ -120,7 +120,7 @@ module.exports = function pasangRuteHalaman(app, ctx) {
     // Daftar tombol ke semua halaman & endpoint. Halamannya sendiri publik; data
     // yang butuh token tetap diambil lewat fetch ber-Authorization dari browser.
     app.get('/home', requireAuthPage, (req, res) => {
-        res.sendFile(path.join(AKAR, 'halaman', 'home.html'));
+        res.redirect(302, '/?view=overview');
     });
 
     // ── Halaman catatan proyek (public) ──────────────────────────────────────────
@@ -129,11 +129,20 @@ module.exports = function pasangRuteHalaman(app, ctx) {
     // keandalan. Sengaja disajikan dari bot, bukan dari situs utama — halaman yang
     // menceritakan bot ini pantas dilayani oleh bot itu sendiri.
     app.get('/projek', requireAuthPage, (req, res) => {
-        res.sendFile(path.join(AKAR, 'halaman', 'projek.html'));
+        res.sendFile(path.join(AKAR, 'halaman', 'projek-v3.html'));
     });
 
     app.get('/update', requireAuthPage, (req, res) => {
-        res.sendFile(path.join(AKAR, 'halaman', 'update.html'));
+        res.sendFile(path.join(AKAR, 'halaman', 'update-v3.html'));
+    });
+
+    // Halaman operasional internal: informasi infrastruktur dan arah pengembangan.
+    app.get('/infrastruktur', requireAuthPage, (req, res) => {
+        res.sendFile(path.join(AKAR, 'halaman', 'infrastruktur-v2.html'));
+    });
+
+    app.get('/future', requireAuthPage, (req, res) => {
+        res.sendFile(path.join(AKAR, 'halaman', 'future-v3.html'));
     });
 
     // ── Halaman audit (butuh sandi) ──────────────────────────────────────────────
@@ -142,17 +151,17 @@ module.exports = function pasangRuteHalaman(app, ctx) {
     // dijaga dan kredensial yang belum dirotasi. Daftar seperti itu adalah peta
     // serangan yang sudah jadi.
     //
-    // progres.html sempat tinggal di public/ pada 21 Agustus 2026 — dan express.static
+    // Halaman audit pernah tinggal di public/ pada 21 Agustus 2026 — dan express.static
     // melayani apa pun di sana tanpa gerbang, jadi selama beberapa menit halaman itu
     // menyajikan sandi admin ke siapa saja yang mengetik alamatnya. Berkasnya
     // dipindah ke halaman/, yang tidak disajikan static. Jangan pernah menaruh berkas
     // bergerbang di public/.
     app.get('/progres', requireAuthPage, (req, res) => {
-        res.sendFile(path.join(AKAR, 'halaman', 'progres.html'));
+        res.sendFile(path.join(AKAR, 'halaman', 'progres-v3.html'));
     });
 
     app.get('/progres-claude', requireAuthPage, (req, res) => {
-        res.sendFile(path.join(AKAR, 'halaman', 'progres-claude.html'));
+        res.sendFile(path.join(AKAR, 'halaman', 'progres-claude-v3.html'));
     });
 
     // Temuan keamanannya TIDAK ditulis di dalam HTML-nya: berkas HTML ikut git, dan
@@ -174,9 +183,15 @@ module.exports = function pasangRuteHalaman(app, ctx) {
         res.sendFile(path.join(AKAR, 'public', 'demo.html'));
     });
 
-    // ── Panel bot versi demo (standalone mock dashboard) ─────────────────────────
+    app.get('/tutor', (req, res) => {
+        res.sendFile(path.join(AKAR, 'public', 'tutor.html'));
+    });
+
+    // ── Alias demo publik ───────────────────────────────────────────────────────
+    // Endpoint ini sebelumnya menyajikan dashboard operasional langsung tanpa gerbang.
+    // Demo publik sebenarnya ada di halaman simulator, jadi arahkan alias ke sana.
     app.get('/bot-demo', (req, res) => {
-        res.sendFile(path.join(AKAR, 'halaman', 'dashboard.html'));
+        res.redirect(302, '/demo#simulator');
     });
 
     // ── Migrasi database, siap salin (butuh token) ───────────────────────────────
@@ -195,11 +210,11 @@ module.exports = function pasangRuteHalaman(app, ctx) {
     // peta yang mempersingkat pekerjaan siapa pun yang mencari celah. Token, dan
     // tetap noindex.
     app.get('/jalankan', requireAuthPage, (req, res) => {
-        res.sendFile(path.join(AKAR, 'jalankan.html'));
+        res.sendFile(path.join(AKAR, 'halaman', 'jalankan-v2.html'));
     });
 
     app.get('/antrean', requireAuthPage, (req, res) => {
-        res.sendFile(path.join(AKAR, 'antrean.html'));
+        res.sendFile(path.join(AKAR, 'halaman', 'antrean-v2.html'));
     });
 
     // ── Broadcast japri ke anggota grup (butuh sandi) ─────────────────────────────
@@ -230,18 +245,23 @@ module.exports = function pasangRuteHalaman(app, ctx) {
         res.json({ ...data, dariCache: false });
     });
 
+    // Rapor publik yang boleh dibagikan, dengan dua bentuk URL yang umum dipakai.
+    const kirimRaporPublik = (req, res) => res.sendFile(path.join(AKAR, 'laporan-publik-v3.html'));
+    app.get('/laporan/publik', kirimRaporPublik);
+    app.get('/laporan-publik', kirimRaporPublik);
+
     // Versi lengkap — admin saja.
     app.get('/laporan/penuh', requireAuthPage, (req, res) => {
-        res.sendFile(path.join(AKAR, 'laporan.html'));
+        res.sendFile(path.join(AKAR, 'halaman', 'laporan-v3.html'));
     });
 
-    // Versi publik — tanpa token, boleh dibagikan.
+    // Alias laporan utama tetap dijaga login; laporan publik punya route terpisah.
     app.get('/laporan', requireAuthPage, (req, res) => {
         // Dulu di sini ada percabangan tamu/admin, karena halamannya publik. Sejak
         // seluruh panel butuh sandi, siapa pun yang sampai ke baris ini SUDAH admin —
         // percabangan itu tinggal jebakan: sesi berkuki lolos gerbang lalu gagal di
         // pemeriksaan token dan disuguhi versi publik seolah ia orang asing.
-        res.sendFile(path.join(AKAR, 'laporan.html'));
+        res.sendFile(path.join(AKAR, 'halaman', 'laporan-v3.html'));
     });
 
     // Menebak '/laporan.html' itu refleks yang wajar — dan tanpa ini jawabannya cuma

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Riwayat perubahan — Bot WhatsApp</title>
+  <link rel="stylesheet" href="/assets/bot-panel-content-v3.css?v=4">
+  <script src="/assets/bot-panel-content-v3.js?v=4" defer></script>
+  <script src="/assets/bot-panel-content-pages-v3.js?v=4" defer></script>
+</head>
+<body data-panel-shell="true" data-content-page="history">
+<main class="content-document">
+  <header class="document-hero">
+    <p class="kicker">Riwayat kerja</p>
+    <h1>Perubahan sistem</h1>
+    <p class="lead">Catatan diambil dari endpoint riwayat yang sudah digunakan panel. Pilih sumber untuk mempersempit daftar.</p>
+  </header>
+  <section aria-labelledby="linimasa">
+    <div class="section-head"><h2 id="linimasa">Linimasa</h2><button type="button" id="muat-riwayat">Muat ulang</button></div>
+    <div class="filter" role="group" aria-label="Saring sumber riwayat">
+      <button type="button" data-riwayat-filter="semua" aria-pressed="true">Semua</button>
+      <button type="button" data-riwayat-filter="bot" aria-pressed="false">Bot</button>
+      <button type="button" data-riwayat-filter="situs" aria-pressed="false">Situs</button>
+    </div>
+    <p id="status-riwayat" role="status" aria-live="polite">Memuat riwayat…</p>
+    <div id="daftar-riwayat" class="history-list"></div>
+  </section>
+</main>
+</body>
+</html>

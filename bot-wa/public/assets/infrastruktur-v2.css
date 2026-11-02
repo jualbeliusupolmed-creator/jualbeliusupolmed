@@ -1,0 +1,15 @@
+.service-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; margin-bottom: 16px; }
+.service-card { min-width: 0; }
+.service-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 16px 17px; border-bottom: 1px solid var(--line); }
+.service-head h3 { margin: 0; font-size: 13px; font-weight: 800; }
+.service-head p { margin: 5px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.service-body { padding: 15px 17px; }
+.service-state { display: flex; align-items: center; gap: 9px; color: var(--ink); font-size: 12px; font-weight: 800; }
+.service-details { display: grid; gap: 8px; margin-top: 14px; }
+.service-detail { display: flex; justify-content: space-between; gap: 14px; padding-top: 8px; border-top: 1px solid #f0f3f1; color: var(--muted); font-size: 10px; }
+.service-detail strong { color: var(--ink-soft); text-align: right; font-weight: 700; }
+.infrastructure-note { margin-top: 16px; }
+.infrastructure-note ul { display: grid; gap: 10px; margin: 0; padding-left: 19px; }
+.infrastructure-note li { color: var(--muted); font-size: 11px; line-height: 1.65; }
+.service-error { padding: 15px; color: var(--red); font-size: 11px; }
+@media (max-width: 720px) { .service-grid { grid-template-columns: 1fr; } }

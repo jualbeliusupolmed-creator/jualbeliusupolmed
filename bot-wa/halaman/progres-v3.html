@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Progres audit — Bot WhatsApp</title>
+  <link rel="stylesheet" href="/assets/bot-panel-content-v3.css?v=4">
+  <script src="/assets/bot-panel-content-v3.js?v=4" defer></script>
+</head>
+<body data-panel-shell="true">
+<main class="content-document">
+  <header class="document-hero">
+    <p class="kicker">Catatan internal</p>
+    <h1>Progres pembenahan panel</h1>
+    <p class="lead">Ringkasan pekerjaan panel yang sudah dipasang dan batas pemeriksaan yang masih berlaku.</p>
+  </header>
+  <section aria-labelledby="selesai"><h2 id="selesai">Sudah diterapkan</h2>
+    <ul>
+      <li>Dashboard panel dan pengaturan bot menggunakan tampilan mandiri.</li>
+      <li>Broadcast Grup mempertahankan pemilihan grup, penerima, impor XLSX, antrean, progres, dan riwayat.</li>
+      <li>Antrean situs dan antrean lokal bot dikelola dari halaman baru.</li>
+      <li>Perangkat dan alat migrasi memakai halaman baru dengan endpoint yang sudah tersedia.</li>
+      <li>Shell bersama lama dan duplikat halaman yang tidak lagi dipakai sudah dilepas dari lokasi aktif.</li>
+    </ul>
+  </section>
+  <section aria-labelledby="batas"><h2 id="batas">Batas audit</h2>
+    <ul>
+      <li>Endpoint hanya diperiksa tanpa sesi dan untuk memastikan gerbang akses; alur login penuh perlu diperiksa melalui browser pemilik.</li>
+      <li>Tidak ada pesan WhatsApp yang dikirim, antrean produksi yang dibatalkan, atau SQL yang dijalankan selama pembaruan ini.</li>
+      <li>Status koneksi dan ketersediaan layanan berubah dari waktu ke waktu; halaman ini bukan pemantau real-time.</li>
+    </ul>
+  </section>
+  <nav class="links" aria-label="Lanjutkan audit">
+    <a href="/progres-claude"><span class="t">Temuan teknis</span><span class="d">Buka catatan audit rinci dengan akses panel.</span></a>
+    <a href="/laporan/penuh"><span class="t">Laporan internal</span><span class="d">Lihat ringkasan teknis dan operasional.</span></a>
+  </nav>
+</main>
+</body>
+</html>

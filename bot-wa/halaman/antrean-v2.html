@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8fafc">
+  <meta name="robots" content="noindex">
+  <title>Antrean · Kampus Kita</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/bot-panel-v2.css?v=3">
+  <link rel="stylesheet" href="/assets/antrean-v2.css?v=2">
+  <script src="/assets/antrean-v2.js?v=2" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <div id="mobile-scrim" class="mobile-scrim" hidden></div>
+    <aside id="sidebar" class="sidebar" aria-label="Navigasi panel bot">
+      <a class="sidebar-brand" href="/" aria-label="Kembali ke ringkasan bot">
+        <span class="brand-mark">KK</span><span class="brand-copy"><strong>Kampus Kita</strong><small>BOT CONSOLE</small></span>
+        <button id="mobile-close" class="icon-button close-nav" type="button" aria-label="Tutup navigasi">×</button>
+      </a>
+      <nav class="side-nav">
+        <p class="nav-heading">KONTROL</p>
+        <a class="nav-item shortcut-link" href="/?view=overview"><span class="nav-icon">⌂</span>Ringkasan bot</a>
+        <a class="nav-item shortcut-link active" href="/antrean" aria-current="page"><span class="nav-icon">≡</span>Antrean situs & bot</a>
+        <a class="nav-item shortcut-link" href="/broadcast_grup"><span class="nav-icon">↗</span>Broadcast grup</a>
+        <p class="nav-heading nav-heading-spaced">PINTASAN</p>
+        <a class="nav-item shortcut-link" href="/laporan/penuh"><span class="nav-icon">▧</span>Laporan penuh</a>
+        <a class="nav-item shortcut-link" href="/infrastruktur"><span class="nav-icon">⌁</span>Infrastruktur</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="sidebar-status"><span id="sidebar-dot" class="status-dot"></span><span id="sidebar-status-text">Memeriksa antrean</span></div>
+        <a class="nav-item shortcut-link logout-button" href="/keluar"><span class="nav-icon">↪</span>Keluar</a>
+      </div>
+    </aside>
+    <main class="main-area">
+      <header class="topbar">
+        <button id="mobile-menu" class="icon-button mobile-menu" type="button" aria-label="Buka navigasi" aria-expanded="false">☰</button>
+        <div class="topbar-title"><p class="topbar-kicker">Kampus Kita · Operasional</p><h1>Antrean pengiriman</h1></div>
+        <div class="topbar-actions"><span id="connection-pill" class="connection-pill is-checking"><span class="status-dot"></span><span>Memeriksa</span></span><a class="site-link" href="/">Panel utama <span aria-hidden="true">↗</span></a></div>
+      </header>
+      <div class="page-content">
+        <header class="page-heading"><div><h2>Antrean situs dan bot</h2><p>Periksa notifikasi yang menunggu di situs, pesan lokal bot, serta catatan pesan yang gagal.</p></div><button class="button" type="button" data-action="refresh-all">Muat ulang</button></header>
+        <nav class="queue-tabs" aria-label="Jenis antrean" role="tablist">
+          <button type="button" class="queue-tab active" role="tab" aria-selected="true" data-view="site">Antrean situs</button>
+          <button type="button" class="queue-tab" role="tab" aria-selected="false" data-view="local">Antrean bot</button>
+          <button type="button" class="queue-tab" role="tab" aria-selected="false" data-view="discarded">Pesan gagal</button>
+        </nav>
+        <section id="queue-panel" aria-live="polite"></section>
+      </div>
+    </main>
+  </div>
+  <div id="toast-region" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+</body>
+</html>

@@ -100,7 +100,9 @@ module.exports = function pasangRutePanel(app, K) {
             phone: K.connectedPhone || null,
             connectedAt: K.connectedAt || null,
             hasQR: !!K.currentQR,
-            qr: K.currentQR, // Tambahkan raw QR string agar bisa di-debug jika perlu
+            // The new panel only needs the boolean state and the separate /qr image.
+            // Keep the raw string for legacy pages that still depend on /status.
+            ...(req.query.panel === '1' ? {} : { qr: K.currentQR }),
             uptime: Math.floor(process.uptime()),
             webhookUrl: WEBHOOK_URL,
             queueLength: messageQueue.length,
@@ -156,8 +158,8 @@ module.exports = function pasangRutePanel(app, K) {
             try {
                 const pn = await K.waSocket.signalRepository?.lidMapping?.getPNForLID?.(lidJid);
                 if (pn && pn.endsWith('@s.whatsapp.net')) phone = pn;
-            } catch (e) {
-                return res.status(500).json({ error: e.message });
+            } catch {
+                return res.status(500).json({ error: 'Pemetaan nomor belum dapat diperiksa.' });
             }
         }
         if (phone && !K.lidResolutionMap.has(lidJid)) { K.lidResolutionMap.set(lidJid, phone); saveLidResolutionMap(); }
@@ -240,7 +242,7 @@ module.exports = function pasangRutePanel(app, K) {
             hasil[kunci] = nomor;
         }
         saveSettings();
-        console.log(`[settings] Nomor penting diubah dari dashboard: ${JSON.stringify(hasil)}`);
+        console.log(`[settings] Pengaturan nomor diperbarui dari dashboard (${Object.keys(hasil).join(', ') || 'tanpa perubahan'}).`);
         res.json({ ok: true, ownerNumber: nomorAlarm(), backupAdmin: nomorCadangan() });
     });
 
@@ -307,6 +309,76 @@ module.exports = function pasangRutePanel(app, K) {
         res.json({ ok: true, greeting: K.greetingText });
     });
 
+    // Tujuan katalog yang dipakai situs saat listing berhasil aktif. Nilainya
+    // hidup di proses bot agar bisa diatur dari panel bot dan dibaca situs
+    // melalui gateway yang sudah memakai token server-ke-server.
+    app.get('/settings/catalog-distribution', requireAuth, (req, res) => {
+        const saved = K.settings.catalogDistribution || {};
+        res.set('Cache-Control', 'no-store');
+        res.json({
+            configured: !!saved.configured,
+            enabled: saved.enabled !== false,
+            groupsConfigured: saved.groupsConfigured === true,
+            groups: Array.isArray(saved.groups) ? saved.groups : [],
+            channels: Array.isArray(saved.channels) ? saved.channels : [],
+        });
+    });
+
+    app.post('/settings/catalog-distribution', requireAuth, async (req, res) => {
+        const masuk = req.body || {};
+        if (typeof masuk.enabled !== 'boolean' || !Array.isArray(masuk.channels) || masuk.channels.length > 20) {
+            return res.status(400).json({ error: 'Isi status dan daftar saluran tidak sah (maksimal 20 saluran).' });
+        }
+        if (masuk.groups !== undefined && (!Array.isArray(masuk.groups) || masuk.groups.length > 100 || masuk.groups.some((item) => typeof item !== 'string' || !/^[0-9-]{1,128}@g\.us$/.test(item.trim())))) {
+            return res.status(400).json({ error: 'Daftar grup tidak sah. Pilih grup dari daftar grup WhatsApp yang tersedia.' });
+        }
+        if (masuk.groupsConfigured !== undefined && typeof masuk.groupsConfigured !== 'boolean') {
+            return res.status(400).json({ error: 'Status pengaturan grup tidak sah.' });
+        }
+        if (masuk.groupsConfigured === true && !Array.isArray(masuk.groups)) {
+            return res.status(400).json({ error: 'Daftar grup tujuan wajib dikirim.' });
+        }
+        if (masuk.channels.some((item) => typeof item !== 'string' || item.trim().length > 500)) {
+            return res.status(400).json({ error: 'Setiap saluran harus berupa JID atau tautan undangan yang valid.' });
+        }
+
+        const channels = [];
+        try {
+            for (const raw of masuk.channels) {
+                const input = raw.trim();
+                if (!input) continue;
+                let jid = input;
+                let name = '';
+                if (!/^[a-zA-Z0-9._-]{1,128}@newsletter$/.test(input)) {
+                    const url = new URL(input);
+                    const match = url.pathname.match(/^\/channel\/([a-zA-Z0-9_-]+)\/?$/);
+                    if (url.protocol !== 'https:' || !['whatsapp.com', 'www.whatsapp.com'].includes(url.hostname) || !match) {
+                        return res.status(400).json({ error: 'Gunakan JID berakhiran @newsletter atau tautan https://whatsapp.com/channel/….' });
+                    }
+                    if (!botSiap()) return res.status(503).json({ error: 'Bot harus tersambung untuk memeriksa tautan saluran.' });
+                    const meta = await K.waSocket.newsletterMetadata('invite', match[1]);
+                    if (!meta?.id || !/^[a-zA-Z0-9._-]{1,128}@newsletter$/.test(meta.id)) throw new Error('Tautan saluran tidak ditemukan atau bot tidak memiliki akses.');
+                    jid = meta.id;
+                    name = meta.name || '';
+                    saveNewsletter({ jid, name: name || 'Tanpa Nama', description: meta.description?.text || meta.description || '', subscribers: meta.subscribers || 0, addedAt: new Date().toISOString() });
+                }
+                if (!channels.some((channel) => channel.jid === jid)) channels.push({ jid, name });
+            }
+        } catch (error) {
+            return res.status(400).json({ error: error?.message || 'Tautan saluran tidak dapat diperiksa.' });
+        }
+
+        const previous = K.settings.catalogDistribution || {};
+        const groupsConfigured = masuk.groupsConfigured === true || (masuk.groupsConfigured === undefined && previous.groupsConfigured === true);
+        const groups = masuk.groupsConfigured === true
+            ? [...new Set(masuk.groups.map((jid) => jid.trim()))].map((jid) => ({ jid, name: K.groupsCache?.data?.find((group) => group.jid === jid)?.name || jid }))
+            : (Array.isArray(previous.groups) ? previous.groups : []);
+        K.settings.catalogDistribution = { configured: true, enabled: masuk.enabled, groupsConfigured, groups, channels };
+        saveSettings();
+        console.log(`[settings] Tujuan katalog diperbarui (aktif: ${masuk.enabled}, grup: ${groupsConfigured ? groups.length : 'situs'}, saluran: ${channels.length}).`);
+        res.json({ ok: true, configured: true, enabled: masuk.enabled, groupsConfigured, groups, channels });
+    });
+
     app.get('/newsletters', requireAuth, async (req, res) => {
         if (!botSiap()) return res.status(503).json({ error: 'Bot not connected' });
         res.json({ newsletters: getSavedNewsletters() });
@@ -332,8 +404,8 @@ module.exports = function pasangRutePanel(app, K) {
             };
             saveNewsletter(data);
             res.json({ success: true, data });
-        } catch (err) {
-            res.status(500).json({ error: err.message });
+        } catch {
+            res.status(500).json({ error: 'Tautan saluran tidak dapat diproses. Periksa tautan dan akses bot.' });
         }
     });
 
@@ -411,7 +483,7 @@ a{color:inherit}
 code{font-size:.85em;background:var(--bg);padding:1px 5px;border-radius:4px}
 </style></head>
 <body><div class="kartu ${nada}">
-  <div class="atas">Bot WhatsApp · Kampus Kita</div>
+  <div class="atas">Bot WhatsApp · jualbeliusupolmed</div>
   <h1><span class="titik"></span>${judul}</h1>
   <p class="jelas">${jelas}</p>
   <dl>

@@ -77,7 +77,7 @@ module.exports = function pasangRuteSesi(app, K) {
     });
 
     app.get('/perangkat2/status', requireAuth, async (req, res) => {
-        const hasil = await teruskanKeBot2('/status');
+        const hasil = await teruskanKeBot2(req.query.panel === '1' ? '/status?panel=1' : '/status');
         res.status(hasil.status).json({ ...hasil.body, adaBot2: !!BOT2_TOKEN });
     });
 

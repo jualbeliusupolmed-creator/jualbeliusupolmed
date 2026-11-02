@@ -718,6 +718,13 @@ cuma server.
 - Publikasi listing yang diaktifkan dan katalog harian kini dapat mengirim teks + tautan produk ke saluran melalui endpoint bot `/channel/send`. Pengiriman gambar ke saluran belum didukung route bot; pengiriman grup tetap memakai dukungan gambar yang ada. Kegagalan saluran ditampung di `wa_outbox` dan retry satu-per-satu menggunakan endpoint saluran.
 - Perubahan ini hanya ada di checkout web saat ini; belum dideploy atau diuji dengan pengiriman nyata. Tidak perlu migrasi database karena pengaturan disimpan dalam JSON `settings`; bot harus terhubung dan memiliki akses mengikuti saluran.
 
+### 2 November 2026 — Pengaturan saluran katalog di panel bot
+
+- Tab **Katalog otomatis** pada halaman Broadcast Grup menyimpan status kirim dan daftar hingga 20 saluran ke `settings.json` bot melalui endpoint bertoken `/settings/catalog-distribution`. Form menerima JID `@newsletter` atau tautan undangan WhatsApp; tautan diperiksa oleh koneksi bot sebelum disimpan.
+- Saat listing diaktifkan, `postToGroup` membaca pengaturan dari bot dan mengirim katalog ke semua saluran aktif; jika bot belum pernah dikonfigurasi, pengiriman memakai `admin.channelJid` lama sebagai fallback. Pengiriman grup situs tetap berjalan.
+- Perubahan web dicatat dalam commit `a770f7e` di `main` dan aktif di Vercel production pada 2 November 2026. Bot VPS `/home/ubuntu/wa-bot-usu` mendapat patch aditif dengan backup di `/home/ubuntu/wa-bot-panel-backups/catalog-dist-20261102`, lalu `wa-bot-usu` direstart; health kembali 200. Panel mengunci endpoint tanpa autentikasi (401), halaman tanpa sesi (302), dan aset baru merespons 200.
+- Build situs: deployment `dpl_G3QUAnHYvspwNKwF3PsQNve57Qq1` berstatus READY dan domain `www.kampuskita.my.id` terpasang. Build production lulus compile dan pemeriksaan tipe. Tidak ada migrasi database atau pengiriman pesan WhatsApp uji. Admin perlu mengisi JID/tautan saluran di tab **Katalog otomatis** agar pengumuman listing mulai masuk ke tujuan tersebut.
+
 ### 2 November 2026 — Pembaruan Aplikasi Meta Developer & Webhook Instagram DM
 
 - Aplikasi Meta Developer dibuat ulang (Type: Bisnis) dengan nama **KampusKita** (`3682182505281187`) tanpa mengaktifkan Marketing API yang mewajibkan verifikasi NIB.
@@ -748,4 +755,23 @@ cuma server.
 - Pemeriksaan visual terautentikasi kemudian dilakukan di Chrome pada dashboard, pengaturan, Broadcast Grup, serta formulir impor Excel. Tab broadcast lama yang masih terbuka menampilkan versi lama sampai reload biasa; sesudah reload versi baru tampil dan daftar grup termuat. Tidak ada pengaturan diubah atau pesan dikirim. Layar ponsel dan halaman yang dapat menampilkan chat/antrean pelanggan tidak diperiksa.
 - Pada audit visual tersebut, tautan brand sidebar tampak memakai warna ungu/garis bawah bawaan browser. Style brand diperbaiki pada `bot-panel-v2.css`, cache asset dinaikkan ke v3, lima template operasional disinkronkan ke VPS dengan backup, lalu tampilan dicek ulang: nama brand tampil tanpa garis bawah dan serasi dengan shell.
 - Verifikasi penutup: `npm test` pada bot lulus 7 dari 7. Rute privat tetap mengarahkan ke login tanpa sesi; rute publik dan asset v3 memberi 200, aset lama `ui.css`/`ui.js` memberi 404. `wa-bot-usu` online dengan 21 restart kumulatif dan 0 unstable restarts.
+
+### 2 November 2026 — Otomasi Siaran Katalog, Notifikasi Penjual & Integrasi Saluran WA
+
+1. **Auto-Broadcast Iklan**:
+   - Saat iklan baru tayang (baik via Instagram DM maupun diaktifkan via Admin Web), sistem secara otomatis menyiarkan iklan ke:
+     - Grup WhatsApp (`daftarGrup(adminSettings)`) dan Saluran WhatsApp (`@newsletter`) jika toggle `broadcastToWa` aktif.
+     - Instagram Feed/Story `@jualbelidikampus` jika toggle `broadcastToInstagram` aktif.
+     - WhatsApp Penjual via `notifySellerListingLive(listing)` jika toggle `notifySellerOnPublish` aktif.
+2. **Pengaturan di Dashboard Admin (`/admin/pengaturan`)**:
+   - Ditambahkan field input konfigurasi untuk Saluran WhatsApp (`channelJid` atau link undangan `https://whatsapp.com/channel/...`).
+   - Ditambahkan toggle kontrol:
+     - *Otomatis siarkan iklan ke Grup & Saluran WhatsApp saat tayang* (`broadcastToWa`, default: true).
+     - *Otomatis terbitkan iklan ke Story / Feed Instagram (@jualbelidikampus)* (`broadcastToInstagram`, default: true).
+     - *Kirim notifikasi WhatsApp ke Penjual saat iklannya resmi tayang* (`notifySellerOnPublish`, default: true).
+3. **Penyempurnaan Bot Panel v3 & Pengujian**:
+   - Seluruh perubahan panel v3 pada `bot-wa/` dirapikan.
+   - Seluruh 51 test files (246 tests) di Next.js dan 7 tests di `bot-wa` lulus 100%.
+   - Build produksi Next.js sukses tanpa error.
+
 

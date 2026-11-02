@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
+  <meta name="theme-color" content="#f8fafc"><title>Infrastruktur · Kampus Kita</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/bot-panel-v2.css?v=3"><link rel="stylesheet" href="/assets/infrastruktur-v2.css?v=2">
+  <script src="/assets/infrastruktur-v2.js?v=2" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <div id="mobile-scrim" class="mobile-scrim" hidden></div>
+    <aside id="sidebar" class="sidebar" aria-label="Navigasi panel bot">
+      <a class="sidebar-brand" href="/" aria-label="Ringkasan bot"><span class="brand-mark">KK</span><span class="brand-copy"><strong>Kampus Kita</strong><small>BOT CONSOLE</small></span><button id="mobile-close" class="icon-button close-nav" type="button" aria-label="Tutup navigasi">×</button></a>
+      <nav class="side-nav"><p class="nav-heading">KONTROL</p><a class="nav-item shortcut-link" href="/"><span class="nav-icon">⌂</span>Ringkasan bot</a><a class="nav-item shortcut-link" href="/antrean"><span class="nav-icon">≡</span>Antrean situs & bot</a><a class="nav-item shortcut-link" href="/broadcast_grup"><span class="nav-icon">↗</span>Broadcast grup</a><p class="nav-heading nav-heading-spaced">PINTASAN</p><a class="nav-item shortcut-link" href="/laporan/penuh"><span class="nav-icon">▧</span>Laporan penuh</a><a class="nav-item shortcut-link active" href="/infrastruktur" aria-current="page"><span class="nav-icon">⌁</span>Infrastruktur</a></nav>
+      <div class="sidebar-bottom"><div class="sidebar-status"><span id="sidebar-dot" class="status-dot"></span><span id="sidebar-status-text">Memeriksa layanan</span></div><a class="nav-item shortcut-link logout-button" href="/keluar"><span class="nav-icon">↪</span>Keluar</a></div>
+    </aside>
+    <main class="main-area">
+      <header class="topbar"><button id="mobile-menu" class="icon-button mobile-menu" type="button" aria-label="Buka navigasi" aria-expanded="false">☰</button><div class="topbar-title"><p class="topbar-kicker">Kampus Kita · Operasional</p><h1>Infrastruktur</h1></div><div class="topbar-actions"><span id="connection-pill" class="connection-pill is-checking"><span class="status-dot"></span><span>Memeriksa</span></span><a class="site-link" href="/">Panel utama <span aria-hidden="true">↗</span></a></div></header>
+      <div class="page-content">
+        <header class="page-heading"><div><h2>Status layanan</h2><p>Pantau koneksi perangkat bot dan ketersediaan layanan. Informasi rahasia server tidak ditampilkan di halaman ini.</p></div><button id="refresh-status" class="button" type="button">Perbarui status</button></header>
+        <section id="service-status" class="service-grid" aria-live="polite"><div class="surface service-card"><div class="empty-state">Memeriksa layanan…</div></div></section>
+        <section class="surface infrastructure-note"><div class="surface-head"><div><h3>Pengelolaan akses server</h3><p>Untuk menjaga akses produksi tetap aman.</p></div><span class="badge warn">Ringkasan saja</span></div><div class="surface-body"><ul><li>Kunci SSH dan nilai rahasia disimpan di secret manager, bukan di halaman web.</li><li>Perubahan Nginx, PM2, firewall, atau jadwal server dilakukan melalui proses operasional yang memiliki backup dan rencana pemulihan.</li><li>Halaman ini hanya membaca status API bot; tidak mengubah server atau menampilkan kredensial.</li></ul><div class="inline-actions"><a class="button button-primary" href="/">Buka ringkasan bot</a><a class="button" href="/antrean">Periksa antrean</a></div></div></section>
+      </div>
+    </main>
+  </div>
+  <div id="toast-region" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+</body>
+</html>

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { sendWa } from "@/lib/fonnte";
+import { sendChannelWa, sendWa } from "@/lib/fonnte";
 import { tokenBotSah } from "@/lib/botTokens";
 
 export const dynamic = "force-dynamic";
@@ -155,9 +155,11 @@ export async function POST(req) {
   for (const row of antre) {
     // jangan_tampung: barisnya sudah ada. Tanpa ini tiap penekanan tombol saat
     // bot masih mati akan menambah baris baru untuk pesan yang sama.
-    const hasil = await sendWa(row.target, row.message, row.image_url || null, row.ttl_detik || null, {
-      jangan_tampung: true,
-    }).catch((e) => ({ ok: false, error: e?.message }));
+    const hasil = String(row.target || "").endsWith("@newsletter")
+      ? await sendChannelWa(row.target, row.message, { jangan_tampung: true, listingId: row.listing_id }).catch((e) => ({ ok: false, error: e?.message }))
+      : await sendWa(row.target, row.message, row.image_url || null, row.ttl_detik || null, {
+        jangan_tampung: true,
+      }).catch((e) => ({ ok: false, error: e?.message }));
 
     if (hasil?.ok) {
       terkirim++;
