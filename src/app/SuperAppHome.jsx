@@ -76,6 +76,19 @@ export default function SuperAppHome({
   const [listingSort, setListingSort] = useState("terbaru"); // 'terbaru' | 'termurah'
   const [visibleListingCount, setVisibleListingCount] = useState(12);
 
+  // FYP & Regional Preferences
+  const [provinces, setProvinces] = useState([]);
+  const [fypScope, setFypScope] = useState("campus"); // 'campus' | 'province' | 'all' | 'custom'
+  const [fypProvince, setFypProvince] = useState("sumatera-utara");
+  const [fypUniversities, setFypUniversities] = useState([]);
+  const [fypDropdownOpen, setFypDropdownOpen] = useState(false);
+
+  // Onboarding (Wajib isi kampus & daerah acuan jual beli)
+  const [onboardingProvince, setOnboardingProvince] = useState("sumatera-utara");
+  const [onboardingCampus, setOnboardingCampus] = useState("");
+  const [onboardingScope, setOnboardingScope] = useState("campus");
+  const [savingOnboarding, setSavingOnboarding] = useState(false);
+
   // UI Modals & Dropdowns
   const [showCreateSheet, setShowCreateSheet] = useState(false);
   const [showOtpModal, setShowOtpModal] = useState(false);
@@ -87,10 +100,38 @@ export default function SuperAppHome({
       setWtbIndex((prev) => (prev + 1) % 5);
     }, 3200);
 
+    try {
+      const savedScope = localStorage.getItem("fyp_scope");
+      if (savedScope) setFypScope(savedScope);
+      const savedProv = localStorage.getItem("preferred_province");
+      if (savedProv) {
+        setFypProvince(savedProv);
+        setOnboardingProvince(savedProv);
+      }
+      const savedUnivs = localStorage.getItem("fyp_universities");
+      if (savedUnivs) {
+        try {
+          const parsed = JSON.parse(savedUnivs);
+          if (Array.isArray(parsed)) setFypUniversities(parsed);
+        } catch {}
+      }
+    } catch {}
+
     const onCampus = (e) => {
       if (e.detail?.campus) {
         setSelectedCampus(e.detail.campus);
         setListingCampus(e.detail.campus);
+        setOnboardingCampus(e.detail.campus);
+      }
+      if (e.detail?.province) {
+        setFypProvince(e.detail.province);
+        setOnboardingProvince(e.detail.province);
+      }
+      if (e.detail?.scope) {
+        setFypScope(e.detail.scope);
+      }
+      if (Array.isArray(e.detail?.universities)) {
+        setFypUniversities(e.detail.universities);
       }
     };
     fetch("/api/kampus", { cache: "no-store" })
@@ -98,6 +139,9 @@ export default function SuperAppHome({
       .then((data) => {
         if (Array.isArray(data?.campuses)) {
           setCampuses(data.campuses);
+          if (Array.isArray(data?.provinces)) {
+            setProvinces(data.provinces);
+          }
 
           // 1. Prioritaskan URL Query Parameter (?campus=ui atau ?univ=itb)
           const urlParams = new URLSearchParams(window.location.search);
@@ -114,6 +158,11 @@ export default function SuperAppHome({
             if (matchedFromUrl) {
               initialCampus = matchedFromUrl.shortName;
               localStorage.setItem("preferred_campus", initialCampus);
+              if (matchedFromUrl.provinceId) {
+                localStorage.setItem("preferred_province", matchedFromUrl.provinceId);
+                setFypProvince(matchedFromUrl.provinceId);
+                setOnboardingProvince(matchedFromUrl.provinceId);
+              }
               toast.success(`Kampus aktif: ${matchedFromUrl.shortName} (${matchedFromUrl.name})`);
             }
           }
@@ -130,6 +179,7 @@ export default function SuperAppHome({
           if (initialCampus) {
             setSelectedCampus(initialCampus);
             setListingCampus(initialCampus);
+            setOnboardingCampus(initialCampus);
           }
         }
       })
@@ -283,20 +333,131 @@ export default function SuperAppHome({
   const [compressingImage, setCompressingImage] = useState(false);
   const [requireLoginMenfess, setRequireLoginMenfess] = useState(true);
 
-  // Onboarding
+  // Sinkronkan preferensi pengguna terdaftar dari profil
+  useEffect(() => {
+    if (!userWa) return;
+    fetch("/api/profil", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.ok && data?.profil) {
+          if (!data.profil.campus || data.profil.campus === "Semua") {
+            // Wajib isi jika baru daftar / belum ada kampus acuan
+            setShowOnboarding(true);
+          } else {
+            if (data.profil.campus) {
+              setSelectedCampus(data.profil.campus);
+              setListingCampus(data.profil.campus);
+              setOnboardingCampus(data.profil.campus);
+              try { localStorage.setItem("preferred_campus", data.profil.campus); } catch {}
+            }
+            if (data.profil.fyp_province_id) {
+              setFypProvince(data.profil.fyp_province_id);
+              setOnboardingProvince(data.profil.fyp_province_id);
+              try { localStorage.setItem("preferred_province", data.profil.fyp_province_id); } catch {}
+            }
+            if (data.profil.fyp_scope) {
+              setFypScope(data.profil.fyp_scope);
+              try { localStorage.setItem("fyp_scope", data.profil.fyp_scope); } catch {}
+            }
+            if (Array.isArray(data.profil.fyp_universities)) {
+              setFypUniversities(data.profil.fyp_universities);
+              try { localStorage.setItem("fyp_universities", JSON.stringify(data.profil.fyp_universities)); } catch {}
+            }
+          }
+        }
+      })
+      .catch(() => {});
+  }, [userWa]);
+
+  // Onboarding (wajib diisi karena acuan jual beli)
   const [showOnboarding, setShowOnboarding] = useState(false);
   useEffect(() => {
     try {
-      if (typeof window !== "undefined" && !localStorage.getItem("onboarding_seen")) {
-        setShowOnboarding(true);
+      if (typeof window !== "undefined") {
+        const savedCamp = localStorage.getItem("preferred_campus");
+        const seen = localStorage.getItem("onboarding_seen");
+        if (!savedCamp || savedCamp === "null" || savedCamp === "Semua" || !seen) {
+          setShowOnboarding(true);
+        }
       }
     } catch {}
   }, []);
-  const dismissOnboarding = () => {
-    setShowOnboarding(false);
+
+  const simpanOnboarding = async () => {
+    if (!onboardingCampus) {
+      toast.error("Silakan pilih kampus acuan terlebih dahulu.");
+      return;
+    }
     try {
+      setSavingOnboarding(true);
+      localStorage.setItem("preferred_campus", onboardingCampus);
+      localStorage.setItem("preferred_province", onboardingProvince);
+      localStorage.setItem("fyp_scope", onboardingScope);
       localStorage.setItem("onboarding_seen", "1");
+
+      setSelectedCampus(onboardingCampus);
+      setListingCampus(onboardingCampus);
+      setFypProvince(onboardingProvince);
+      setFypScope(onboardingScope);
+
+      window.dispatchEvent(
+        new CustomEvent("campus:change", {
+          detail: {
+            campus: onboardingCampus,
+            province: onboardingProvince,
+            scope: onboardingScope,
+            universities: [],
+          },
+        })
+      );
+
+      if (userWa) {
+        try {
+          await fetch("/api/profil", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              campus: onboardingCampus,
+              fyp_province_id: onboardingProvince,
+              fyp_scope: onboardingScope,
+            }),
+          });
+        } catch {}
+      }
+
+      setShowOnboarding(false);
+      toast.success(`Kampus ${onboardingCampus} berhasil disetel sebagai acuan transaksi!`);
+    } catch (err) {
+      toast.error(err.message || "Gagal menyimpan acuan kampus.");
+    } finally {
+      setSavingOnboarding(false);
+    }
+  };
+
+  const switchFypScope = (newScope) => {
+    setFypScope(newScope);
+    setFypDropdownOpen(false);
+    try {
+      localStorage.setItem("fyp_scope", newScope);
+      window.dispatchEvent(
+        new CustomEvent("campus:change", {
+          detail: {
+            campus: selectedCampus,
+            province: fypProvince,
+            scope: newScope,
+            universities: fypUniversities,
+          },
+        })
+      );
     } catch {}
+    if (userWa) {
+      fetch("/api/profil", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fyp_scope: newScope }),
+      }).catch(() => {});
+    }
+    toast.success(`Jangkauan FYP diubah ke: ${newScope === "campus" ? "Kampus Utama" : newScope === "province" ? "Satu Daerah" : newScope === "custom" ? "Kampus Pilihan" : "Seluruh Indonesia"}`);
   };
 
   // Restore Menfess Draft on mount
@@ -572,9 +733,10 @@ export default function SuperAppHome({
     return true;
   });
 
-  // Filtered Marketplace Listings for Center Column
+  // Filtered Marketplace Listings for Center Column with FYP Scoping
   const filteredListings = latestListings
     .filter((ad) => {
+      // 1. Filter FYP / Kampus
       if (listingCampus !== "Semua") {
         const target = listingCampus.toLowerCase();
         const matchCampus = String(ad.campus || "").toLowerCase() === target;
@@ -584,7 +746,50 @@ export default function SuperAppHome({
         if (!matchCampus && !matchUnivId && !matchProfileUniv && !isAll) {
           return false;
         }
+      } else {
+        // listingCampus === "Semua", maka terapkan kurasi preferensi FYP Scope
+        if (fypScope === "campus" && selectedCampus && selectedCampus !== "Semua") {
+          const target = selectedCampus.toLowerCase();
+          const matchCampus = String(ad.campus || "").toLowerCase() === target;
+          const matchUnivId = String(ad.university_id || "").toLowerCase() === target;
+          const matchProfileUniv = String(ad.seller_profiles?.home_university_id || "").toLowerCase() === target;
+          const isAll = String(ad.campus || "").toLowerCase() === "semua";
+          if (!matchCampus && !matchUnivId && !matchProfileUniv && !isAll) {
+            return false;
+          }
+        } else if (fypScope === "province" && fypProvince) {
+          const provCampuses = campuses
+            .filter((c) => (c.provinceId || "sumatera-utara") === fypProvince)
+            .flatMap((c) => [c.id.toLowerCase(), c.shortName.toLowerCase()]);
+          const adCampus = String(ad.campus || "").toLowerCase();
+          const adUnivId = String(ad.university_id || "").toLowerCase();
+          const adProfUniv = String(ad.seller_profiles?.home_university_id || "").toLowerCase();
+          const matchProv =
+            provCampuses.includes(adCampus) ||
+            provCampuses.includes(adUnivId) ||
+            provCampuses.includes(adProfUniv) ||
+            adCampus === "semua";
+          if (!matchProv) {
+            return false;
+          }
+        } else if (fypScope === "custom" && Array.isArray(fypUniversities) && fypUniversities.length > 0) {
+          const customKeys = fypUniversities.map((k) => String(k).toLowerCase());
+          const adCampus = String(ad.campus || "").toLowerCase();
+          const adUnivId = String(ad.university_id || "").toLowerCase();
+          const adProfUniv = String(ad.seller_profiles?.home_university_id || "").toLowerCase();
+          const matchCustom =
+            customKeys.includes(adCampus) ||
+            customKeys.includes(adUnivId) ||
+            customKeys.includes(adProfUniv) ||
+            adCampus === "semua";
+          if (!matchCustom) {
+            return false;
+          }
+        }
+        // fypScope === 'all' menampilkan seluruh barang dari semua kampus
       }
+
+      // 2. Filter Kategori
       if (listingCategory !== "Semua") {
         const combined = `${ad.category || ""} ${ad.title || ""} ${ad.description || ""}`.toLowerCase();
         if (!combined.includes(listingCategory.toLowerCase())) return false;
@@ -602,39 +807,126 @@ export default function SuperAppHome({
 
   return (
     <div className="min-h-screen bg-[#fbfbfa] dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 font-sans antialiased selection:bg-emerald-100 selection:text-emerald-900 pb-20 md:pb-8">
-      {/* ── ONBOARDING OVERLAY ── */}
+      {/* ── ONBOARDING OVERLAY (WAJIB PILIH KAMPUS & DAERAH ACUAN) ── */}
       {showOnboarding && (
-        <div data-mobile-overlay="onboarding" className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-[#1c1c1e] rounded-[28px] w-full max-w-sm p-6 shadow-2xl border border-black/[0.06] dark:border-white/[0.08]">
-            <div className="w-14 h-14 rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-400 flex items-center justify-center mx-auto mb-4">
-              <Icon.Store className="w-7 h-7" />
+        <div data-mobile-overlay="onboarding" className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in">
+          <div className="bg-white dark:bg-[#1c1c1e] rounded-[28px] w-full max-w-md p-6 shadow-2xl border border-black/[0.06] dark:border-white/[0.08] animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-14 h-14 rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-400 flex items-center justify-center mx-auto mb-3 shadow-inner">
+              <Icon.Landmark className="w-7 h-7" />
             </div>
-            <h2 className="text-xl font-extrabold text-center text-slate-900 dark:text-white mb-1">Selamat Datang! 👋</h2>
-            <p className="text-xs text-center text-slate-500 dark:text-slate-400 mb-5">Komunitas mahasiswa lintas kampus — semua dalam satu tempat</p>
-            <div className="space-y-3 mb-5">
-              {[
-                { icon: Icon.ShoppingBag, label: "Marketplace", desc: "Jual &amp; beli barang bekas kampus" },
-                { icon: Icon.Coffee, label: "Open PO", desc: "Pre-order makanan, minuman &amp; merchandise" },
-                { icon: Icon.Heart, label: "Menfess", desc: "Suara anonim &amp; curhat mahasiswa" },
-                { icon: Icon.Search, label: "Barang Dicari (WTB)", desc: "Papan kebutuhan mahasiswa" },
-              ].map((f) => (
-                <div key={f.label} className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                    <f.icon className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <p className="text-[13px] font-bold text-slate-900 dark:text-white">{f.label}</p>
-                    <p className="text-[11px] text-slate-500" dangerouslySetInnerHTML={{ __html: f.desc }} />
-                  </div>
+            <h2 className="text-xl font-extrabold text-center text-slate-900 dark:text-white mb-1">
+              Tentukan Kampus & Wilayahmu 🎓
+            </h2>
+            <p className="text-xs text-center text-slate-500 dark:text-slate-400 mb-5 leading-relaxed">
+              <strong>Wajib ditentukan</strong> sebagai patokan utama transaksi jual-beli, COD hemat di sekitarmu, dan rekomendasi feed belanja (FYP).
+            </p>
+
+            <div className="space-y-3.5 mb-5">
+              {/* 1. Pilih Provinsi / Wilayah */}
+              <div>
+                <label className="block text-[12px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  1. Provinsi / Wilayah Acuan
+                </label>
+                <select
+                  value={onboardingProvince}
+                  onChange={(e) => {
+                    const pId = e.target.value;
+                    setOnboardingProvince(pId);
+                    const matching = campuses.filter((c) => (c.provinceId || "sumatera-utara") === pId);
+                    if (matching.length > 0) {
+                      setOnboardingCampus(matching[0].shortName);
+                    }
+                  }}
+                  className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/80 px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  {provinces.length > 0 ? (
+                    provinces.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))
+                  ) : (
+                    <>
+                      <option value="sumatera-utara">Sumatera Utara</option>
+                      <option value="dki-jakarta">DKI Jakarta</option>
+                      <option value="jawa-barat">Jawa Barat</option>
+                      <option value="di-yogyakarta">DI Yogyakarta</option>
+                      <option value="jawa-timur">Jawa Timur</option>
+                    </>
+                  )}
+                </select>
+              </div>
+
+              {/* 2. Pilih Kampus Utama */}
+              <div>
+                <label className="block text-[12px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  2. Kampus Utama
+                </label>
+                <select
+                  value={onboardingCampus}
+                  onChange={(e) => setOnboardingCampus(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/80 px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="" disabled>-- Pilih Kampus Kamu --</option>
+                  {(campuses.filter((c) => (c.provinceId || "sumatera-utara") === onboardingProvince).length > 0
+                    ? campuses.filter((c) => (c.provinceId || "sumatera-utara") === onboardingProvince)
+                    : campuses
+                  ).map((k) => (
+                    <option key={k.id} value={k.shortName}>
+                      {k.shortName} — {k.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 3. Jangkauan Feed Beranda (FYP) */}
+              <div>
+                <label className="block text-[12px] font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                  3. Jangkauan Feed Jual Beli (FYP)
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { id: "campus", label: "🎯 Kampus", desc: "Hanya kampus saya" },
+                    { id: "province", label: "📍 Daerah", desc: "Satu provinsi" },
+                    { id: "all", label: "🌐 Nasional", desc: "Semua kampus" },
+                  ].map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setOnboardingScope(opt.id)}
+                      className={`flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-all ${
+                        onboardingScope === opt.id
+                          ? "border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 font-bold ring-2 ring-emerald-500/20"
+                          : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-medium"
+                      }`}
+                    >
+                      <span className="text-xs">{opt.label}</span>
+                      <span className="text-[10px] opacity-75 mt-0.5">{opt.desc}</span>
+                    </button>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
-            <button
-              onClick={dismissOnboarding}
-              className="w-full bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-sm py-3.5 rounded-2xl transition-colors shadow-md"
-            >
-              Mulai Jelajahi 🚀
-            </button>
+
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={simpanOnboarding}
+                disabled={!onboardingCampus || savingOnboarding}
+                className="w-full bg-emerald-800 hover:bg-emerald-900 active:scale-98 text-white font-bold text-sm py-3.5 rounded-2xl transition-all shadow-md disabled:opacity-50 disabled:pointer-events-none"
+              >
+                {savingOnboarding ? "Menyimpan Acuan..." : "Simpan Acuan & Mulai Belanja 🚀"}
+              </button>
+              {typeof window !== "undefined" && Boolean(localStorage.getItem("preferred_campus")) && (
+                <button
+                  type="button"
+                  onClick={() => setShowOnboarding(false)}
+                  className="w-full text-center text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 py-1"
+                >
+                  Gunakan acuan sebelumnya
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -936,6 +1228,110 @@ export default function SuperAppHome({
 
             {/* 3. Marketplace Grid (Diletakkan di bawah PO & WTB) */}
             <section id="marketplace-section" className="space-y-4">
+              {/* FYP Feed Kurasi Bar */}
+              <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-xs dark:border-white/10 dark:bg-slate-800/80 sm:px-4 sm:py-3">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white shadow-xs">
+                    <Icon.Sparkles className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                        FYP Feed Jual Beli
+                      </span>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500">•</span>
+                      <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 truncate">
+                        {fypScope === "campus"
+                          ? `🎯 Kampus: ${selectedCampus || "Kampus Saya"}`
+                          : fypScope === "province"
+                          ? `📍 Daerah: ${provinces.find((p) => p.id === fypProvince)?.name || "Provinsi"}`
+                          : fypScope === "custom"
+                          ? `⚙️ Kustom: ${fypUniversities.join(", ") || "Pilihan"}`
+                          : "🌐 Seluruh Indonesia"}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                      {fypScope === "campus"
+                        ? "Rekomendasi barang difokuskan di kampusmu (COD cepat & aman)"
+                        : fypScope === "province"
+                        ? "Barang dari seluruh kampus dalam satu provinsi acuan"
+                        : fypScope === "custom"
+                        ? `Memantau ${fypUniversities.length} kampus pilihanmu`
+                        : "Menampilkan barang aktif dari berbagai kampus se-Indonesia"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setFypDropdownOpen(!fypDropdownOpen)}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 shadow-xs transition hover:bg-slate-100 dark:border-white/10 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
+                    >
+                      <span>
+                        {fypScope === "campus"
+                          ? "🎯 Kampus"
+                          : fypScope === "province"
+                          ? "📍 Daerah"
+                          : fypScope === "custom"
+                          ? "⚙️ Kustom"
+                          : "🌐 Nasional"}
+                      </span>
+                      <svg className="h-3.5 w-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+                      </svg>
+                    </button>
+                    {fypDropdownOpen && (
+                      <div className="absolute right-0 z-40 mt-1.5 w-56 rounded-2xl border border-slate-200/80 bg-white p-1.5 shadow-xl dark:border-white/10 dark:bg-slate-800">
+                        <button
+                          type="button"
+                          onClick={() => switchFypScope("campus")}
+                          className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700/50"
+                        >
+                          <span>🎯 Kampus Saya ({selectedCampus || "Kampus"})</span>
+                          {fypScope === "campus" && <span className="font-bold text-emerald-700">✓</span>}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => switchFypScope("province")}
+                          className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700/50"
+                        >
+                          <span>📍 Satu Daerah ({provinces.find((p) => p.id === fypProvince)?.name || "Provinsi"})</span>
+                          {fypScope === "province" && <span className="font-bold text-emerald-700">✓</span>}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => switchFypScope("all")}
+                          className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700/50"
+                        >
+                          <span>🌐 Seluruh Indonesia</span>
+                          {fypScope === "all" && <span className="font-bold text-emerald-700">✓</span>}
+                        </button>
+                        {fypUniversities.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => switchFypScope("custom")}
+                            className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700/50"
+                          >
+                            <span>⚙️ Kustom ({fypUniversities.length} Kampus)</span>
+                            {fypScope === "custom" && <span className="font-bold text-emerald-700">✓</span>}
+                          </button>
+                        )}
+                        <div className="my-1 border-t border-slate-100 dark:border-white/5" />
+                        <Link
+                          href="/dashboard/profil"
+                          className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[11px] font-semibold text-emerald-800 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                        >
+                          <span>⚙️ Atur Preferensi di Profil</span>
+                          <span>→</span>
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               <div className="flex items-center justify-between">
                 <Link
                   href="/dicari"

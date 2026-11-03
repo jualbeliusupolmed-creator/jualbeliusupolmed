@@ -148,7 +148,7 @@ export default function JualPage() {
           seller_wa: savedWa || f.seller_wa,
           seller_name: savedName || f.seller_name,
         }));
-        // Cek status distributor dari WA tersimpan
+        // Cek status distributor dan preferensi profil dari WA tersimpan
         if (savedWa) {
           fetch(`/api/listings?seller_wa=${encodeURIComponent(savedWa)}`)
             .then((r) => r.json())
@@ -157,7 +157,21 @@ export default function JualPage() {
               setSellerPunyaToko(!!d.punyaToko);
             })
             .catch(() => {});
+
+          fetch("/api/profil", { cache: "no-store" })
+            .then((r) => (r.ok ? r.json() : null))
+            .then((d) => {
+              if (d?.ok && d?.profil?.campus) {
+                setForm((f) => ({ ...f, campus: f.campus === "Semua" ? d.profil.campus : f.campus }));
+              }
+            })
+            .catch(() => {});
         }
+      }
+
+      const prefCampus = localStorage.getItem("preferred_campus");
+      if (prefCampus && prefCampus !== "Semua") {
+        setForm((f) => ({ ...f, campus: f.campus === "Semua" ? prefCampus : f.campus }));
       }
     }
 

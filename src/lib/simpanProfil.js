@@ -80,8 +80,15 @@ export async function simpanProfil(wa, body, { supa = getAdminClient() } = {}) {
       );
       if (matched?.id) {
         isian.home_university_id = matched.id;
+        if (!isian.fyp_province_id && matched.provinceId) {
+          isian.fyp_province_id = matched.provinceId;
+        }
       }
     }
+  }
+
+  if (!sekarang?.fyp_scope && !isian.fyp_scope) {
+    isian.fyp_scope = "campus";
   }
 
   if (!sekarang?.affiliation_status && !isian.affiliation_status) {

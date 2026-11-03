@@ -100,6 +100,20 @@ describe("normalisasiIsian — satu aturan untuk /api/profil dan /api/toko", () 
     expect(normalisasiIsian({ store_open: false }).store_open).toBe(false);
     expect(normalisasiIsian({ store_open: undefined }).store_open).toBeUndefined();
   });
+
+  it("menormalisasi preferensi FYP (fyp_scope, fyp_province_id, fyp_universities)", () => {
+    const hasil = normalisasiIsian({
+      fyp_scope: "province",
+      fyp_province_id: "SUMATERA-UTARA",
+      fyp_universities: ["USU", "POLMED", 123, "   "],
+    });
+    expect(hasil.fyp_scope).toBe("province");
+    expect(hasil.fyp_province_id).toBe("sumatera-utara");
+    expect(hasil.fyp_universities).toEqual(["usu", "polmed", "123"]);
+
+    // Invalid fyp_scope jatuh kembali ke 'campus'
+    expect(normalisasiIsian({ fyp_scope: "invalid_scope" }).fyp_scope).toBe("campus");
+  });
 });
 
 describe("bentukProfil — nomor yang tidak bisa dihubungi tidak disodorkan", () => {

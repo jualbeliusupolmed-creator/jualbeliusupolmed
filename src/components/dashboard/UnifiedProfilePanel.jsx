@@ -242,6 +242,9 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
           home_university_id: data.profil.home_university_id || "",
           home_unit_id: data.profil.home_unit_id || "",
           faculty: data.profil.faculty || "",
+          fyp_province_id: data.profil.fyp_province_id || "sumatera-utara",
+          fyp_scope: data.profil.fyp_scope || "campus",
+          fyp_universities: Array.isArray(data.profil.fyp_universities) ? data.profil.fyp_universities : [],
           store_name: data.profil.store_name || "",
           tagline: data.profil.tagline || "",
           store_area: data.profil.store_area || "",
@@ -286,20 +289,22 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
           setF((current) => {
             const activeCampusName = current?.campus;
             const matchedCampus = data.campuses.find((c) => c.shortName === activeCampusName || c.id === current?.home_university_id);
-            if (matchedCampus?.provinceId) {
-              setSelectedProvince(matchedCampus.provinceId);
-            }
+            const provId = current?.fyp_province_id || matchedCampus?.provinceId || data.campuses[0]?.provinceId || "sumatera-utara";
+            setSelectedProvince(provId);
             if (!activeCampusName || !data.campuses.some((campus) => campus.shortName === activeCampusName)) {
               const defaultCampus = data.campuses[0];
-              if (defaultCampus.provinceId) setSelectedProvince(defaultCampus.provinceId);
               return {
                 ...current,
                 campus: defaultCampus.shortName,
                 home_university_id: defaultCampus.id,
+                fyp_province_id: defaultCampus.provinceId || provId,
                 faculty: "",
               };
             }
-            return current;
+            return {
+              ...current,
+              fyp_province_id: provId,
+            };
           });
         }
       })
@@ -352,7 +357,25 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
 
       setProfil(data.profil);
       onProfileUpdated?.(data.profil);
-      toast.success("Profil tersimpan dan tersebar ke semua fitur.");
+      try {
+        const provToSave = f.fyp_province_id || selectedProvince || "sumatera-utara";
+        localStorage.setItem("preferred_campus", f.campus);
+        localStorage.setItem("preferred_province", provToSave);
+        localStorage.setItem("fyp_scope", f.fyp_scope || "campus");
+        localStorage.setItem("fyp_universities", JSON.stringify(f.fyp_universities || []));
+        localStorage.setItem("onboarding_seen", "1");
+        window.dispatchEvent(
+          new CustomEvent("campus:change", {
+            detail: {
+              campus: f.campus,
+              province: provToSave,
+              scope: f.fyp_scope || "campus",
+              universities: f.fyp_universities || [],
+            },
+          })
+        );
+      } catch {}
+      toast.success("Profil & preferensi FYP berhasil disimpan.");
     } catch (err) {
       toast.error(err.message || "Gagal menyimpan profil");
     } finally {
@@ -505,28 +528,44 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
           <Baris label="Nama anonim">
             <Teks nilai={f.anonymous_name} ubah={(v) => set("anonymous_name", v)} placeholder="Dipakai di Menfess" />
           </Baris>
-          <Baris label="Provinsi">
+          <div className="px-4 py-3">
+            <label className="mb-1.5 block text-[15px] text-[#1d1d1f] dark:text-white">Bio</label>
+            <textarea rows={3} value={f.bio} onChange={(e) => set("bio", e.target.value)} placeholder="Ceritakan singkat tentangmu" className="w-full resize-none rounded-lg bg-black/[0.03] p-3 text-[15px] outline-none dark:bg-white/[0.06] dark:text-slate-300" />
+          </div>
+        </Kartu>
+
+        <Kartu
+          judul="Acuan Wilayah & Preferensi FYP Feed"
+          catatan="Wajib ditentukan sebagai patokan lokasi jual-beli, COD, dan kurasi feed beranda FYP kamu."
+        >
+          {(!f.campus || f.campus === "Semua") && (
+            <div className="mx-4 my-3 flex items-start gap-2.5 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-xs text-amber-800 dark:text-amber-300">
+              <Icon.AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
+              <div>
+                <strong className="font-bold">Wajib Diisi!</strong> Tentukan kampus dan daerah acuanmu agar calon pembeli dan penjual mengetahui lokasi transaksi COD & pengiriman.
+              </div>
+            </div>
+          )}
+
+          <Baris label="Provinsi / Daerah">
             <Pilih
-              nilai={selectedProvince || "semua"}
+              nilai={f.fyp_province_id || selectedProvince || "sumatera-utara"}
               ubah={(pId) => {
                 setSelectedProvince(pId);
-                if (pId !== "semua") {
-                  const filtered = kampusTersedia.filter((k) => (k.provinceId || "sumatera-utara") === pId);
-                  if (filtered.length > 0 && !filtered.some((k) => k.shortName === f.campus)) {
-                    const first = filtered[0];
-                    set("campus", first.shortName);
-                    set("home_university_id", first.id);
-                    set("faculty", "");
-                  }
+                set("fyp_province_id", pId);
+                const filtered = kampusTersedia.filter((k) => (k.provinceId || "sumatera-utara") === pId);
+                if (filtered.length > 0 && !filtered.some((k) => k.shortName === f.campus)) {
+                  const first = filtered[0];
+                  set("campus", first.shortName);
+                  set("home_university_id", first.id);
+                  set("faculty", "");
                 }
               }}
-              opsi={[
-                { id: "semua", label: "Semua Wilayah / Provinsi" },
-                ...provinsiTersedia.map((p) => ({ id: p.id, label: p.name })),
-              ]}
+              opsi={provinsiTersedia.map((p) => ({ id: p.id, label: p.name }))}
             />
           </Baris>
-          <Baris label="Universitas / Kampus">
+
+          <Baris label="Kampus Utama">
             <Pilih
               nilai={f.campus}
               ubah={(v) => {
@@ -535,12 +574,17 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
                 const target = kampusTersedia.find((k) => k.shortName === v || k.id === v);
                 if (target?.id) {
                   set("home_university_id", target.id);
-                  if (target.provinceId) setSelectedProvince(target.provinceId);
+                  if (target.provinceId) {
+                    setSelectedProvince(target.provinceId);
+                    set("fyp_province_id", target.provinceId);
+                  }
                 }
               }}
-              opsi={(selectedProvince && selectedProvince !== "semua"
-                ? kampusTersedia.filter((k) => (k.provinceId || "sumatera-utara") === selectedProvince)
-                : kampusTersedia
+              opsi={(
+                kampusTersedia.filter((k) => (k.provinceId || "sumatera-utara") === (f.fyp_province_id || selectedProvince || "sumatera-utara"))
+                .length > 0
+                  ? kampusTersedia.filter((k) => (k.provinceId || "sumatera-utara") === (f.fyp_province_id || selectedProvince || "sumatera-utara"))
+                  : kampusTersedia
               ).map((kampus) => ({
                 id: kampus.shortName,
                 label: kampus.name && kampus.name !== kampus.shortName
@@ -549,12 +593,95 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
               }))}
             />
           </Baris>
-          <Baris label="Fakultas">
+
+          <Baris label="Fakultas / Prodi">
             <Teks nilai={f.faculty} ubah={(v) => set("faculty", v)} placeholder="Fakultas / program studi" />
           </Baris>
-          <div className="px-4 py-3">
-            <label className="mb-1.5 block text-[15px] text-[#1d1d1f] dark:text-white">Bio</label>
-            <textarea rows={3} value={f.bio} onChange={(e) => set("bio", e.target.value)} placeholder="Ceritakan singkat tentangmu" className="w-full resize-none rounded-lg bg-black/[0.03] p-3 text-[15px] outline-none dark:bg-white/[0.06] dark:text-slate-300" />
+
+          <div className="border-t border-black/[0.05] p-4 dark:border-white/[0.08]">
+            <label className="mb-1.5 block text-[14px] font-bold text-[#1d1d1f] dark:text-white">
+              Jangkauan Feed FYP Beranda
+            </label>
+            <p className="mb-3 text-[12px] text-gray-500 dark:text-slate-400">
+              Pilih cakupan barang jual-beli yang kamu prioritaskan muncul di beranda:
+            </p>
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+              {[
+                {
+                  id: "campus",
+                  title: "🎯 Kampus Utama",
+                  desc: `Fokus barang di ${f.campus || "kampusmu"} (Paling aman & hemat COD)`,
+                },
+                {
+                  id: "province",
+                  title: "📍 Satu Daerah / Provinsi",
+                  desc: `Semua kampus di ${provinsiTersedia.find((p) => p.id === (f.fyp_province_id || selectedProvince))?.name || "Provinsi"}`,
+                },
+                {
+                  id: "all",
+                  title: "🌐 Seluruh Indonesia",
+                  desc: "Jelajahi barang dari seluruh kampus se-Nusantara",
+                },
+                {
+                  id: "custom",
+                  title: "⚙️ Kustom Beberapa Kampus",
+                  desc: "Pilih kampus mana saja yang ingin kamu pantau di feed",
+                },
+              ].map((opt) => {
+                const aktif = (f.fyp_scope || "campus") === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => set("fyp_scope", opt.id)}
+                    className={`flex flex-col text-left rounded-xl border p-3 transition-all ${
+                      aktif
+                        ? "border-emerald-600 bg-emerald-50/60 ring-2 ring-emerald-500/20 dark:border-emerald-500 dark:bg-emerald-950/30"
+                        : "border-black/[0.08] bg-black/[0.01] hover:border-black/20 dark:border-white/[0.08] dark:bg-white/[0.02] dark:hover:border-white/20"
+                    }`}
+                  >
+                    <span className="text-[13px] font-bold text-[#1d1d1f] dark:text-white">{opt.title}</span>
+                    <span className="mt-0.5 text-[11px] text-gray-500 dark:text-slate-400">{opt.desc}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {f.fyp_scope === "custom" && (
+              <div className="mt-4 rounded-xl border border-black/[0.06] bg-black/[0.02] p-3 dark:border-white/[0.08] dark:bg-white/[0.02]">
+                <p className="text-[12px] font-semibold text-slate-700 dark:text-slate-200 mb-2">
+                  Pilih kampus yang ingin kamu sertakan di feed FYP:
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {kampusTersedia.map((k) => {
+                    const dipilih = (f.fyp_universities || []).includes(k.shortName) || (f.fyp_universities || []).includes(k.id);
+                    return (
+                      <button
+                        key={k.id}
+                        type="button"
+                        onClick={() => {
+                          const list = f.fyp_universities || [];
+                          const targetKey = k.shortName;
+                          if (dipilih) {
+                            set("fyp_universities", list.filter((item) => item !== targetKey && item !== k.id));
+                          } else {
+                            set("fyp_universities", [...list, targetKey]);
+                          }
+                        }}
+                        className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-all ${
+                          dipilih
+                            ? "bg-emerald-700 text-white font-bold shadow-xs"
+                            : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:border-white/10"
+                        }`}
+                      >
+                        <span>{dipilih ? "✓" : "+"}</span>
+                        <span>{k.shortName}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </Kartu>
 
