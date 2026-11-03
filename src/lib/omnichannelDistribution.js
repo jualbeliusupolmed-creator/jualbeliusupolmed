@@ -22,7 +22,7 @@ export function buildOmnichannelCaption(listing, channelType, { origin = "https:
   const cleanProvTag = provName.replace(/[^a-zA-Z0-9]/g, "");
   const tags = `#JualBeliDiKampus #${cleanUnivTag} #${cleanProvTag} #JualBeli${cleanUnivTag} #MarketplaceKampus`;
 
-  if (channelType === "instagram_university" || channelType === "instagram_province") {
+  if (channelType === "instagram_university" || channelType === "instagram_province" || channelType === "instagram_national") {
     return [
       `📢 ${listing.title}`,
       "",
@@ -99,7 +99,7 @@ export async function resolveOmnichannelTargets(listing, { origin = "https://www
   let socialAccounts = [];
   if (supa) {
     try {
-      const orClauses = [];
+      const orClauses = ["scope_type.eq.national"];
       if (university?.id) orClauses.push(`university_id.eq.${university.id}`);
       if (province?.id) orClauses.push(`province_id.eq.${province.id}`);
 
@@ -156,6 +156,7 @@ export async function resolveOmnichannelTargets(listing, { origin = "https://www
   if (igProv) {
     const instagramReady = igProv.status === "connected" && /^\d{5,40}$/.test(String(igProv.external_account_id || "")) &&
       Boolean(await getInstagramAccountToken(supa, igProv));
+    const shouldDefault = instagramReady && !igUniv;
     channels.push({
       channelType: "instagram_province",
       name: `Instagram Provinsi (@${igProv.handle.replace(/^@/, "")})`,
@@ -164,8 +165,27 @@ export async function resolveOmnichannelTargets(listing, { origin = "https://www
       socialAccountId: igProv.id,
       available: instagramReady,
       availabilityReason: instagramReady ? null : "Akun ini belum terhubung ke antrean publikasi Instagram yang aktif.",
-      defaultSelected: false, // opsional/produk unggulan
+      defaultSelected: shouldDefault,
       caption: buildOmnichannelCaption(listing, "instagram_province", { origin, university, province }),
+    });
+  }
+
+  // Instagram Nasional (Fallback atau Distribusi Utama Nasional)
+  const igNat = socialAccounts.find((a) => a.provider === "instagram" && a.scope_type === "national");
+  if (igNat) {
+    const instagramReady = igNat.status === "connected" && /^\d{5,40}$/.test(String(igNat.external_account_id || "")) &&
+      Boolean(await getInstagramAccountToken(supa, igNat));
+    const shouldDefault = instagramReady && !igUniv && !igProv;
+    channels.push({
+      channelType: "instagram_national",
+      name: `Instagram Nasional (@${igNat.handle.replace(/^@/, "")})`,
+      scope: "national",
+      targetDestination: igNat.handle,
+      socialAccountId: igNat.id,
+      available: instagramReady,
+      availabilityReason: instagramReady ? null : "Akun ini belum terhubung ke antrean publikasi Instagram yang aktif.",
+      defaultSelected: shouldDefault,
+      caption: buildOmnichannelCaption(listing, "instagram_national", { origin, university, province }),
     });
   }
 
@@ -314,8 +334,10 @@ export async function executeOmnichannelPublish(distributionId, { origin = "http
     const expectedProvider = job.channel_type.startsWith("instagram") ? "instagram" :
       job.channel_type.startsWith("whatsapp_channel") ? "whatsapp_channel" : "whatsapp_group";
     if (account.provider !== expectedProvider) throw new Error("Jenis akun sosial tidak cocok dengan pekerjaan distribusi.");
-    if ((account.scope_type === "province" && account.scope_id !== job.province_id) ||
-        (account.scope_type === "university" && account.scope_id !== job.university_id)) {
+    if (account.scope_type !== "national" && (
+        (account.scope_type === "province" && account.scope_id !== job.province_id) ||
+        (account.scope_type === "university" && account.scope_id !== job.university_id)
+    )) {
       throw new Error("Cakupan akun sosial tidak cocok dengan pekerjaan distribusi.");
     }
     const canonicalDestination = expectedProvider === "instagram"
@@ -372,7 +394,11 @@ export async function executeOmnichannelPublish(distributionId, { origin = "http
         throw new Error(res?.galat || res?.error || "Gagal mengirim ke WhatsApp Group");
       }
       externalRef = res?.id || res?.key?.id || "wa_grp_ok";
-    } else if (job.channel_type === "instagram_university" || job.channel_type === "instagram_province") {
+    } else if (
+      job.channel_type === "instagram_university" ||
+      job.channel_type === "instagram_province" ||
+      job.channel_type === "instagram_national"
+    ) {
       const token = await getInstagramAccountToken(supa, account);
       if (!token) throw new Error("Token Meta belum disiapkan untuk akun Instagram ini.");
       const caption = job.caption_snapshot || buildOmnichannelCaption(listing, job.channel_type, { origin });
@@ -480,9 +506,9 @@ export async function processScheduledOmnichannelJobs({ origin = "https://www.ka
   const { data: dueJobs, error } = await supa
     .from("omnichannel_distributions")
     .select("id")
-    .eq("status", "scheduled")
-    .lte("scheduled_at", now)
-    .order("scheduled_at", { ascending: true })
+    .in("status", ["scheduled", "approved"])
+    .or(`scheduled_at.is.null,scheduled_at.lte.${now}`)
+    .order("created_at", { ascending: true })
     .limit(limit);
   if (error) throw new Error("Gagal membaca antrean distribusi terjadwal.");
 

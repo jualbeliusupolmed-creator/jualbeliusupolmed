@@ -192,9 +192,36 @@ export default function SuperAppHome({
     };
   }, []);
 
-  // Realtime Open PO Batches
+  // Realtime Open PO Batches with FYP Scoping
   const [poBatches, setPoBatches] = useState(Array.isArray(initialPoBatches) ? initialPoBatches : []);
-  const activeBatches = poBatches;
+
+  const activeBatches = useMemo(() => {
+    if (!Array.isArray(poBatches) || poBatches.length === 0) return [];
+    const filtered = poBatches.filter((batch) => {
+      if (fypScope === "campus" && selectedCampus && selectedCampus !== "Semua") {
+        const target = selectedCampus.toLowerCase();
+        const matchCampus = String(batch.campus || "").toLowerCase() === target;
+        const isAll = String(batch.campus || "").toLowerCase() === "semua" || !batch.campus;
+        return matchCampus || isAll;
+      }
+      if (fypScope === "province" && fypProvince) {
+        const provCampuses = campuses
+          .filter((c) => (c.provinceId || "sumatera-utara") === fypProvince)
+          .flatMap((c) => [c.id.toLowerCase(), c.shortName.toLowerCase()]);
+        const batchCampus = String(batch.campus || "").toLowerCase();
+        return provCampuses.includes(batchCampus) || batchCampus === "semua" || !batchCampus;
+      }
+      if (fypScope === "custom" && Array.isArray(fypUniversities) && fypUniversities.length > 0) {
+        const customKeys = fypUniversities.map((k) => String(k).toLowerCase());
+        const batchCampus = String(batch.campus || "").toLowerCase();
+        return customKeys.includes(batchCampus) || batchCampus === "semua" || !batchCampus;
+      }
+      return true;
+    });
+
+    // Fallback ke seluruh batch jika di kampus/daerah belum ada PO aktif agar beranda tetap informatif
+    return filtered.length > 0 ? filtered : poBatches;
+  }, [poBatches, fypScope, selectedCampus, fypProvince, fypUniversities, campuses]);
 
   useEffect(() => {
     let mounted = true;
@@ -1044,7 +1071,9 @@ export default function SuperAppHome({
             <section id="po-section" className="flex min-w-0 items-center gap-2 overflow-hidden rounded-xl border border-emerald-100 bg-white px-3 py-2 shadow-xs dark:border-emerald-900/50 dark:bg-slate-800/90">
               <div className="flex shrink-0 items-center gap-1.5 text-xs font-bold text-emerald-900 dark:text-emerald-300">
                 <Icon.Coffee className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
-                <span>Open PO</span>
+                <span className="truncate">
+                  {fypScope === "campus" && selectedCampus && selectedCampus !== "Semua" ? `PO ${selectedCampus}` : "Open PO"}
+                </span>
                 {activeBatches.length > 0 && (
                   <span className="rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
                     {activeBatches.length}

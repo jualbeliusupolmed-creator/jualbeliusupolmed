@@ -857,6 +857,23 @@ cuma server.
     - **Performa & Sinkronisasi Favorit:** Mengalihkan revalidasi favorit pengguna di `/favorit` dari query client-side langsung ke endpoint batch `/api/listings/batch` dengan preservasi urutan lokal dan Zero Layout Shift.
     - **Typography & Icon Token:** Membersihkan artefak UTF-8 BOM pada `globals.css` serta mendefinisikan token skala teks padat (`.text-badge`, `.text-meta`, `.text-caption`) dan standardisasi dimensi ikon UI (`h-4 w-4`).
 
+*   **3 November 2026 — Kurasi FYP Open PO Berdasarkan Preferensi Kampus & Penyempurnaan Distribusi Otomatis Instagram Per Wilayah**
+    - **Latar Belakang & Kebutuhan:** Mengintegrasikan kurasi Open PO ke dalam sistem preferensi wilayah (FYP) pengguna serta menyempurnakan distribusi otomatis katalog iklan yang disetujui admin ke akun Instagram per kampus, provinsi, atau nasional.
+    - **Kurasi FYP Open PO (`SuperAppHome.jsx` & `OpenPoClient.jsx`):**
+      - Pada `SuperAppHome.jsx`, daftar `activeBatches` kini dihitung menggunakan `useMemo` yang menyaring batch Open PO sesuai `fypScope` (`campus`, `province`, `custom`, atau `all`), dengan fallback cerdas ke seluruh batch aktif jika belum ada batch lokal agar beranda tidak kosong.
+      - Header badge seksi Open PO beranda menyesuaikan secara dinamis (misal `"PO USU"`, `"PO POLMED"`, atau `"Open PO"`).
+      - Pada `OpenPoClient.jsx`, filter kampus (`campusFilter`) otomatis mengadopsi preferensi kampus lokal (`localStorage.preferred_campus`) dan mendengarkan event lintas-tab `campus:change`. Serta menyediakan tombol fallback interaktif *"Tampilkan Semua Kampus 🌐"* jika filter lokal sedang kosong.
+      - Pada `src/app/api/open-po/route.js`, pembuatan produk Open PO otomatis mengisi `campus` dari profil penjual jika formulir tidak menyertakannya.
+    - **Penyempurnaan Distribusi Otomatis Instagram Per Wilayah/Kampus (`omnichannelDistribution.js` & `api/admin/marketplace`):**
+      - Memperluas target omnichannel dengan akun Instagram Nasional (`channelType: "instagram_national"`, `scope: "national"`).
+      - Pemilihan target default cerdas: Jika kampus terkait belum memiliki akun Instagram terhubung, sistem otomatis memilih akun Instagram Provinsi atau Nasional sebagai tujuan default.
+      - Penyesuaian pemeriksaan cakupan sosial pada `executeOmnichannelPublish` dan pemrosesan antrean di `processScheduledOmnichannelJobs` untuk job berstatus `scheduled` maupun `approved`.
+      - Pada `src/app/api/admin/marketplace/route.js`, aksi persetujuan iklan (`action === "approve"`) langsung memicu pembuatan rencana distribusi omnichannel dan penerbitan otomatis ke akun Instagram kampus terkait tanpa memerlukan langkah manual admin.
+    - **Verifikasi & Build:**
+      - Seluruh 63 berkas pengujian Vitest (309 tes) lulus 100%.
+      - Validasi ESLint 0 warning / 0 error.
+      - Next.js production build berhasil menghasilkan 96/96 halaman statis dengan exit code 0.
+
 *   **3 November 2026 — Preferensi FYP Kampus & Daerah di Profil, Onboarding Wajib Jual-Beli, dan Kurasi Feed Beranda**
     - **Latar Belakang & Kebutuhan Bisnis:** Pengguna membutuhkan acuan wilayah dan kampus yang jelas sebagai patokan transaksi jual-beli dan kurasi konten FYP (For You Page) di `https://www.kampuskita.my.id/`. Bagi pengguna baru mendaftar, pemilihan kampus dan daerah diwajibkan karena menjadi acuan titik temu COD, ongkir hemat, serta jangkauan pasar penjual.
     - **Skema Database & Migrasi (`20261103141500_user_fyp_preferences.sql`):**

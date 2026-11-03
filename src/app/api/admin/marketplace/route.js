@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { getAdminActor, getAdminCampusScope, hasAdminPermission } from "@/lib/admin-access";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getSettings } from "@/lib/settings";
+import {
+  resolveOmnichannelTargets,
+  createOmnichannelDistributionPlans,
+  executeOmnichannelPublish,
+} from "@/lib/omnichannelDistribution";
 
 export const dynamic = "force-dynamic";
 
@@ -170,9 +175,41 @@ export async function PATCH(req) {
   }
   let updateQuery = supa.from("listings").update(change).eq("id", id).eq("status", target.status);
   if (actor.role !== "superadmin") updateQuery = updateQuery.in("campus", campuses);
-  const { data: updated, error } = await updateQuery.select("id, status").maybeSingle();
+  const { data: updated, error } = await updateQuery
+    .select("id, status, title, description, price, category, condition, campus, university_id, image_url")
+    .maybeSingle();
   if (error || !updated) return NextResponse.json({ error: "Iklan berubah saat diproses. Segarkan daftar lalu coba kembali." }, { status: 409 });
 
   await supa.from("admin_audit_events").insert({ actor_id: actor.userId, action: `marketplace_${action}`, target_id: id, metadata: { campus: target.campus } });
+
+  // Distribusi otomatis ke Akun Instagram Kampus/Wilayah terkait saat iklan disetujui
+  if (action === "approve") {
+    try {
+      const origin = req.headers.get("origin") || process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id";
+      const { channels } = await resolveOmnichannelTargets(updated, { origin });
+      const defaultPlans = (channels || [])
+        .filter((c) => c.available && c.defaultSelected)
+        .map((c) => ({
+          channelType: c.channelType,
+          socialAccountId: c.socialAccountId,
+          targetDestination: c.targetDestination,
+          caption: c.caption,
+          publishNow: true,
+        }));
+      if (defaultPlans.length > 0) {
+        const createdJobs = await createOmnichannelDistributionPlans(id, defaultPlans, {
+          actorId: actor.userId,
+        });
+        for (const job of createdJobs) {
+          executeOmnichannelPublish(job.id, { origin }).catch((err) => {
+            console.warn(`[admin/marketplace] Background auto-publish job ${job.id} non-fatal:`, err?.message);
+          });
+        }
+      }
+    } catch (distErr) {
+      console.warn("[admin/marketplace] Auto-distribution plan error (non-fatal):", distErr?.message);
+    }
+  }
+
   return NextResponse.json({ ok: true, item: updated });
 }
