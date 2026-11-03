@@ -857,6 +857,24 @@ cuma server.
     - **Performa & Sinkronisasi Favorit:** Mengalihkan revalidasi favorit pengguna di `/favorit` dari query client-side langsung ke endpoint batch `/api/listings/batch` dengan preservasi urutan lokal dan Zero Layout Shift.
     - **Typography & Icon Token:** Membersihkan artefak UTF-8 BOM pada `globals.css` serta mendefinisikan token skala teks padat (`.text-badge`, `.text-meta`, `.text-caption`) dan standardisasi dimensi ikon UI (`h-4 w-4`).
 
+*   **3 November 2026 — Preferensi FYP Kampus & Daerah di Profil, Onboarding Wajib Jual-Beli, dan Kurasi Feed Beranda**
+    - **Latar Belakang & Kebutuhan Bisnis:** Pengguna membutuhkan acuan wilayah dan kampus yang jelas sebagai patokan transaksi jual-beli dan kurasi konten FYP (For You Page) di `https://www.kampuskita.my.id/`. Bagi pengguna baru mendaftar, pemilihan kampus dan daerah diwajibkan karena menjadi acuan titik temu COD, ongkir hemat, serta jangkauan pasar penjual.
+    - **Skema Database & Migrasi (`20261103141500_user_fyp_preferences.sql`):**
+      - Menambahkan kolom `fyp_province_id` (FK ke `public.provinces(id)`), `fyp_scope` (`'campus'`, `'province'`, `'all'`, `'custom'`), dan `fyp_universities` (`jsonb` array) ke tabel `public.seller_profiles`.
+      - Migrasi berhasil diaplikasikan dan divalidasi ke Supabase Remote Production (`npx supabase db push --remote`).
+    - **Panel Profil Satu Pintu (`UnifiedProfilePanel.jsx`):**
+      - Menambahkan seksi kartu terdedikasi *"Acuan Wilayah & Preferensi FYP Feed"* dengan banner peringatan jika kampus belum ditentukan.
+      - Pilihan jangkauan FYP interaktif: 🎯 Kampus Utama (`campus`), 📍 Satu Daerah / Provinsi (`province`), 🌐 Seluruh Indonesia (`all`), dan ⚙️ Kustom Beberapa Kampus (`custom`) dengan multi-select chips kampus.
+      - Normalisasi isian di `src/lib/profil.js` dan `src/lib/simpanProfil.js` yang menjamin sanitasi slug, proteksi hak akses, dan sinkronisasi otomatis ke profil penjual.
+    - **Modal Onboarding Wajib (`SuperAppHome.jsx`):**
+      - Pengguna baru mendaftar atau pengunjung yang belum memiliki kampus acuan diwajibkan memilih Provinsi dan Kampus Utama sebelum menjelajah atau bertransaksi.
+      - Preferensi otomatis tersinkronisasi ke `localStorage` dan langsung disimpan ke database (`PUT /api/profil`) jika sesi pengguna aktif.
+    - **Kurasi Feed Beranda & FYP Quick Switcher (`SuperAppHome.jsx`):**
+      - Filter `filteredListings` memprioritaskan kurasi barang sesuai preferensi `fyp_scope` pengguna (hanya kampus utama, satu provinsi, kustom beberapa kampus, atau seluruh nusantara).
+      - Menambahkan bar kurasi FYP modern dengan dropdown quick-switcher langsung pada header bagian Marketplace untuk kemudahan berganti jangkauan feed secara instan.
+    - **Otomasi Default Formulir Jual (`JualClient.jsx`):**
+      - Halaman `/jual` otomatis mengisikan pilihan kampus barang berdasarkan preferensi kampus utama pengguna, memastikan iklan langsung mengarah ke target komunitas kampus yang tepat.
+
 *   **2 November 2026 — Kebijakan Nasionalisasi Identitas Pengguna & Sanitasi Keamanan Log DM**
     - **Sanitasi Kredensial Instagram DM (Security Fix):** Memperbaiki celah pencatatan teks mentah pada log DM di `src/lib/instagramDmRouter.js` dan `src/lib/instagramDmLogger.js`. Menambahkan `sanitizeDmMessageText` yang secara otomatis menyamarkan password, PIN, dan kode OTP (baik berbasis session step `jual_ask_password`, `jual_ask_otp`, `jual_set_password`, maupun deteksi digit OTP 4–8 angka). Seluruh pengujian otomatis di `__tests__/instagramDmLogger.test.js` (6 pengujian) lulus 100%, dan data log historis sensitif di database produksi telah dibersihkan.
     - **Adopsi 7 Pilar Kebijakan Nasionalisasi Identitas Pengguna (`docs/kebijakan-nasionalisasi-identitas-pengguna.md`):**
