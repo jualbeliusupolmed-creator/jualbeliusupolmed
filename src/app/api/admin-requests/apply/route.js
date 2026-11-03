@@ -3,6 +3,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimitDistributed, getClientIp } from "@/lib/rateLimit";
 import { logger } from "@/lib/logger";
 import { sendWa, nomorAdmin } from "@/lib/fonnte";
+import { getSellerSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -21,10 +22,16 @@ export async function POST(request) {
   }
 
   try {
+    const sessionWa = getSellerSession();
+    if (!sessionWa) {
+      return NextResponse.json({ error: "Masuk ke akun Jual Beli Kampus Kita sebelum mengajukan diri." }, { status: 401 });
+    }
+
     const body = await request.json().catch(() => ({}));
     const name = typeof body.name === "string" ? body.name.trim().slice(0, 100) : "";
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase().slice(0, 254) : "";
-    const wa = typeof body.wa === "string" ? body.wa.trim().replace(/\D/g, "").slice(0, 20) : "";
+    const submittedWa = typeof body.wa === "string" ? body.wa.trim().replace(/\D/g, "").slice(0, 20) : "";
+    const wa = String(sessionWa).replace(/\D/g, "").slice(0, 20);
     const instagram = typeof body.instagram === "string" ? body.instagram.trim().replace(/^@/, "").slice(0, 100) : "";
     const provinceId = typeof body.provinceId === "string" ? body.provinceId.trim().toLowerCase() : "";
     const universityId = typeof body.universityId === "string" ? body.universityId.trim().toLowerCase() : "";
@@ -36,8 +43,8 @@ export async function POST(request) {
     if (!email || !validEmail(email)) {
       return NextResponse.json({ error: "Format alamat email tidak valid." }, { status: 400 });
     }
-    if (!wa || wa.length < 9) {
-      return NextResponse.json({ error: "Nomor WhatsApp aktif wajib diisi." }, { status: 400 });
+    if (!wa || wa.length < 9 || (submittedWa && submittedWa !== wa)) {
+      return NextResponse.json({ error: "Gunakan nomor WhatsApp yang terhubung ke akun Jual Beli Kampus Kita." }, { status: 400 });
     }
     if (!provinceId || !universityId) {
       return NextResponse.json({ error: "Pilih provinsi dan universitas yang ingin kamu kelola." }, { status: 400 });
@@ -75,18 +82,19 @@ export async function POST(request) {
       );
     }
 
-    // Dapatkan ID Superadmin sebagai requester anchor sistem
-    const { data: superadminRow } = await admin
-      .from("admin_memberships")
+    // Kaitkan permohonan dengan identitas pengguna yang sedang login,
+    // bukan menempelkan semua pengajuan publik ke akun admin internal.
+    const { data: applicantProfiles, error: applicantError } = await admin
+      .from("seller_profiles")
       .select("user_id")
-      .order("created_at", { ascending: true })
-      .limit(1)
-      .maybeSingle();
+      .or(`wa.eq.${wa},phone_wa.eq.${wa}`)
+      .not("user_id", "is", null)
+      .limit(2);
 
-    if (!superadminRow?.user_id) {
+    if (applicantError || applicantProfiles?.length !== 1 || !applicantProfiles[0]?.user_id) {
       return NextResponse.json(
-        { error: "Sistem administrasi nasional sedang dalam pemeliharaan." },
-        { status: 503 }
+        { error: "Akun ini belum memiliki identitas pengguna nasional yang tertaut. Lengkapi profil akun terlebih dahulu." },
+        { status: 409 }
       );
     }
 
@@ -95,7 +103,7 @@ export async function POST(request) {
     const { data: inserted, error: insertError } = await admin
       .from("university_admin_requests")
       .insert({
-        requested_by: superadminRow.user_id,
+        requested_by: applicantProfiles[0].user_id,
         province_id: provinceId,
         university_id: universityId,
         requested_email: email,

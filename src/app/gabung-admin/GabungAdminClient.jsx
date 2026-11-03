@@ -34,6 +34,19 @@ export default function GabungAdminClient() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [successInfo, setSuccessInfo] = useState(null);
+  const [sessionChecked, setSessionChecked] = useState(false);
+  const [userLoggedIn, setUserLoggedIn] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth/me", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        setUserLoggedIn(Boolean(data?.loggedIn));
+        if (data?.loggedIn && data?.wa) setForm((prev) => ({ ...prev, wa: data.wa }));
+      })
+      .catch(() => setUserLoggedIn(false))
+      .finally(() => setSessionChecked(true));
+  }, []);
 
   useEffect(() => {
     fetch("/api/kampus", { cache: "no-store" })
@@ -75,6 +88,7 @@ export default function GabungAdminClient() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!userLoggedIn) return toast.error("Masuk ke akun Jual Beli Kampus Kita terlebih dahulu.");
     if (!form.name.trim()) return toast.error("Nama lengkap wajib diisi.");
     if (!form.email.trim()) return toast.error("Alamat email wajib diisi.");
     if (!form.wa.trim()) return toast.error("Nomor WhatsApp wajib diisi.");
@@ -207,6 +221,14 @@ export default function GabungAdminClient() {
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
               Terbuka untuk pengurus BEM, HIMA, aktivis kampus, maupun mahasiswa kreatif yang ingin membangun bursa kampus mandiri.
             </p>
+            {sessionChecked && !userLoggedIn && (
+              <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-950 sm:flex-row sm:items-center sm:justify-between">
+                <p>Masuk ke akun Jual Beli Kampus Kita dulu agar pengajuan tercatat atas identitasmu sendiri.</p>
+                <Link href="/masuk?next=%2Fgabung-admin" className="inline-flex min-h-9 shrink-0 items-center justify-center gap-2 rounded-xl bg-amber-900 px-4 font-bold text-white hover:bg-amber-800">
+                  Masuk akun <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            )}
           </div>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-6">
@@ -286,12 +308,16 @@ export default function GabungAdminClient() {
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-200">
                   Nomor WhatsApp Aktif <span className="text-rose-500">*</span>
                 </label>
+                <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                  Masuk terlebih dahulu. Nomor ini harus sama dengan WhatsApp yang terhubung ke akunmu.
+                </p>
                 <input
                   type="tel"
                   required
                   placeholder="081234567890"
                   value={form.wa}
                   onChange={(e) => setForm((prev) => ({ ...prev, wa: e.target.value }))}
+                  readOnly={userLoggedIn}
                   className="mt-1.5 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 text-xs font-semibold text-slate-800 outline-none transition focus:border-emerald-600 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 dark:border-white/10 dark:bg-slate-900 dark:text-white"
                 />
               </div>
@@ -327,7 +353,7 @@ export default function GabungAdminClient() {
             <div className="pt-2">
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || !sessionChecked || !userLoggedIn}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-800 py-3.5 text-xs font-black text-white shadow-md transition hover:bg-emerald-700 active:scale-[0.99] disabled:opacity-50"
               >
                 {submitting ? (

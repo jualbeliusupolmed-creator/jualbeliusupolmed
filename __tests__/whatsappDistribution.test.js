@@ -272,11 +272,24 @@ describe("Phase 4: WhatsApp Multi-Channel Architecture & Dynamic Distribution", 
       });
 
       const mockSupabase = {
-        from: vi.fn(() => ({
-          insert: vi.fn().mockResolvedValue({ error: null }),
-          update: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockResolvedValue({ error: null }),
-        })),
+        from: vi.fn((table) => {
+          if (table === "universities") {
+            const query = {
+              select: vi.fn(() => query),
+              eq: vi.fn(() => query),
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: { id: "univ-usu-uuid", code: "USU", province_id: "sumatera-utara" },
+                error: null,
+              }),
+            };
+            return query;
+          }
+          return {
+            insert: vi.fn().mockResolvedValue({ error: null }),
+            update: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockResolvedValue({ error: null }),
+          };
+        }),
       };
 
       vi.mocked(getAdminClient).mockReturnValue(mockSupabase);

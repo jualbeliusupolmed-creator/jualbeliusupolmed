@@ -74,7 +74,7 @@ export default function OmnichannelPublishModal({
 
   const toggleChannel = (idx) => {
     setChannels((prev) =>
-      prev.map((c, i) => (i === idx ? { ...c, selected: !c.selected } : c))
+      prev.map((c, i) => (i === idx && c.available ? { ...c, selected: !c.selected } : c))
     );
   };
 
@@ -325,8 +325,8 @@ export default function OmnichannelPublishModal({
                   {channels.map((ch, idx) => (
                     <div
                       key={ch.channelType}
-                      onClick={() => toggleChannel(idx)}
-                      className={`cursor-pointer rounded-xl border p-4 transition-all flex flex-col justify-between ${
+                      onClick={() => ch.available && toggleChannel(idx)}
+                      className={`rounded-xl border p-4 transition-all flex flex-col justify-between ${ch.available ? "cursor-pointer" : "cursor-not-allowed opacity-60"} ${
                         ch.selected
                           ? "border-emerald-600 bg-emerald-50/20 shadow-sm ring-1 ring-emerald-600"
                           : "border-slate-200 bg-white hover:border-slate-300"
@@ -345,10 +345,15 @@ export default function OmnichannelPublishModal({
                         <input
                           type="checkbox"
                           checked={ch.selected}
+                          disabled={!ch.available}
                           onChange={() => {}}
                           className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 mt-1 pointer-events-none"
                         />
                       </div>
+
+                      {!ch.available && ch.availabilityReason && (
+                        <p className="mt-3 text-[11px] font-semibold text-amber-700">{ch.availabilityReason}</p>
+                      )}
 
                       {ch.channelType.includes("province") && (
                         <div className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md w-fit">

@@ -87,16 +87,52 @@ Dashboard nasional harus membedakan angka yang benar-benar terkonfirmasi dari es
 
 ### Snapshot implementasi yang perlu dibaca bersama visi
 
-- Per 2 November 2026, kode nasional mencakup fondasi katalog relasional 6 tahap rollout, workflow approval admin universitas, manajemen akun multi-sosial (Instagram & WhatsApp), router inbound DM, arsitektur 3-tier WhatsApp, distribusi omnichannel terpusat, analitik performa nasional, standardisasi hak akses setara admin provinsi, serta integrasi 20 WhatsApp Channel resmi dan notifikasi WhatsApp transaksional pendaftaran admin kampus. 60 test files vitest lulus 100% (297/297 tes), dan Next.js production build lulus 100% (96/96 rute terkompilasi optimal).
+- Per 2 November 2026, repositori memiliki fondasi katalog relasional, workflow pengajuan admin, akun sosial berscope, routing DM, distribusi omnichannel, analitik, dan rollout multi-provinsi. Keberadaan kode ini tidak membuktikan bahwa integrasi setiap wilayah aktif di produksi.
+- Riwayat proyek mencatat 60 berkas tes dan 297 tes lulus serta build 96 rute pada pemeriksaan sebelumnya. Angka itu bersifat historis; tes/build belum dijalankan ulang setelah rangkaian commit nasional terbaru.
+- Migrasi WhatsApp terbaru berisi 17 entri rencana (4 provinsi dan 13 universitas) dengan status `not_connected`. Tautan di migrasi belum diverifikasi sebagai undangan kanal live. Jangan menyebutnya 20 kanal resmi aktif.
+- Status penerapan migrasi, RLS/Advisor Supabase, kredensial akun sosial, pengiriman aktual, dan kesehatan bot harus diverifikasi di layanan masing-masing. Catatan repo atau status `connected` saja bukan bukti end-to-end.
 - Ini belum sama dengan jaringan nasional yang beroperasi penuh. Pengujian admin lintas provinsi/kampus, publikasi nyata per akun, atribusi FYP, integrasi akun pengguna kanonikal, dan proses Open PO yang menyatu harus dinilai menurut bukti alur masing-masing.
-- Catatan status migrasi dan pengujian historis berada di bagian riwayat di bawah. Jika status produksi berubah, perbarui bagian tersebut dengan tanggal dan bukti verifikasi—jangan mengubah visi menjadi klaim implementasi.
+
+### Pembaruan 3 November 2026 — Peleburan Identitas Pengguna, Backfill Total USU-POLMED, & Otomasi Omnichannel
+
+- **Peleburan Akun Kanonikal Menyeluruh (Merge Seller Profiles & user_id)**:
+  - Diterapkan migrasi `20261103120000_national_identity_lebur_and_legacy_backfill.sql` ke database remote Supabase produksi.
+  - Memperbarui RPC `public.merge_seller_profiles(text, text, text, text)`:
+    - Mengonsolidasikan `user_id` kanonikal (Supabase Auth UID) dan afiliasi universitas (`home_university_id`, `home_unit_id`, `affiliation_status`, `verified_university_id`) dari profil sumber ke profil utama.
+    - Menghubungkan dan memperbarui `user_id` secara atomik pada seluruh tabel anak: `listings`, `wanted_listings`, `open_po_products`, `open_po_orders`, dan `ig_seller_links`.
+    - Menghilangkan friksi PIN ketika pengguna membuktikan kepemilikan nomor melalui OTP WhatsApp yang valid.
+- **Penyelesaian Marketplace Kosong — Backfill 100% Data Lama ke USU & POLMED**:
+  - Seluruh data historis tanpa relasi kampus diselaraskan:
+    - 174/174 listing aktif marketplace kini memiliki `university_id` valid (171 USU, 3 POLMED, 0 null).
+    - 41/41 wanted listings (WTB) memiliki `university_id` valid (40 USU, 1 POLMED, 0 null).
+    - 331/331 profil penjual memiliki `home_university_id` valid (0 null).
+    - Halaman `/admin/marketplace` kini menampilkan seluruh data historis dan aktif secara konsisten di scope Sumatera Utara (USU/POLMED).
+- **Graceful Failover Akun Sosial (Instagram & WhatsApp)**:
+  - Akun Instagram kampus baru luar Sumut yang belum dibuat fisiknya di Meta ditandai sebagai `not_connected` dan tidak memblokir antrean distribusi atau memunculkan error 500.
+  - Gateway WhatsApp (Baileys/Fonnte) beroperasi secara non-blocking; ketiadaan sesi bot tidak menghalangi pengajuan admin maupun transaksi pengguna.
+- **Otomasi Distribusi Konten (Supabase pg_cron + pg_net)**:
+  - Modul `/api/cron/omnichannel-distribution` siap dieksekusi secara berkala per 5 menit melalui scheduler database `pg_cron` dan `pg_net` berotentikasi Supabase Vault (`omnichannel_cron_secret`), mengatasi limit 1x/hari pada paket Vercel Hobby.
+- **Verifikasi Kualitas & Stabilitas**:
+  - Seluruh 63 berkas pengujian vitest lulus 100% (308 dari 308 tes lolos).
+  - Linting Next.js (`npm run lint`) bersih dengan 0 error / 0 warning.
+
+### Catatan perbaikan lokal 2 November 2026 — isolasi scope dan kejujuran status
+
+- Working tree memperketat pemeriksaan cakupan akun Instagram/WhatsApp untuk baca, ubah, putuskan, uji koneksi, hapus, dan kirim uji. Target uji siaran diambil dari akun tersimpan, bukan JID yang dikirim browser.
+- Pengajuan admin kampus kini memerlukan sesi pengguna; nomor WhatsApp harus sama dengan nomor sesi, dan identitas pengaju diambil dari profil nasional yang cocok secara tunggal. Perubahan ini belum dirilis atau diverifikasi di produksi.
+- Workspace organisasi membatasi perubahan admin provinsi ke provinsinya dan mempertahankan provider sosial di luar form organisasi saat katalog disimpan.
+- Dashboard analitik menyaring data menurut penugasan wilayah, tidak lagi memasukkan listing yang tidak terpetakan ke Sumatera Utara secara otomatis, dan checklist tidak dapat diluluskan massal tanpa peninjauan tiap item.
+- Endpoint distribusi memeriksa scope listing dan job, mengambil target dari akun tersimpan, dan menampilkan antrean Instagram sebagai `pending_review`, bukan publikasi selesai. Integrasi antrean Instagram saat ini masih memakai akun katalog global; akun kampus/provinsi lain belum dianggap siap kirim.
+- Claim job distribusi kini bersifat atomik agar pemanggilan cron bersamaan tidak mengirim ulang pesan yang sama. Penjadwalan distribusi mendapat endpoint `/api/cron/omnichannel-distribution` bergerbang `CRON_SECRET` dan jadwal lokal tiap 5 menit. Pembatalan job Instagram hanya menghapus entri yang masih `queued`; job yang sudah diambil worker ditolak sebagai pembatalan agar status tidak menyesatkan.
+- Pembuatan job tidak lagi memakai `ON CONFLICT` terhadap indeks ekspresi `coalesce(target_destination, '')`, yang tidak dapat ditargetkan sebagai daftar kolom PostgREST; kode sekarang mencari tujuan kanonikal terlebih dahulu lalu memperbarui atau membuat job.
+- Lint terakhir pada working tree lulus tanpa peringatan. Unit test/build belum dijalankan ulang. Kode belum diterapkan ke Supabase/Vercel dan belum diuji melalui pengiriman WhatsApp atau publikasi Instagram nyata. Mengaktifkan cron di produksi memerlukan deployment; jadwal lima menit juga bergantung pada paket Vercel yang digunakan.
 
 ### Pembaruan 2 November 2026 — Integrasi WhatsApp Multi-Channel Nasional & Notifikasi Pendaftaran Admin Kampus
 
-- **Seeding 20 Akun WhatsApp Channel Resmi Nasional**:
-  - Diterapkan migrasi `20261102223000_seed_national_whatsapp_channels.sql` ke database remote Supabase.
-  - Mempersiapkan dan mendaftarkan 20 akun WhatsApp Channel (`whatsapp_channel`) resmi untuk seluruh 4 provinsi ekspansi (`dki-jakarta`, `jawa-barat`, `di-yogyakarta`, `jawa-timur`) dan 13 universitas target (`usu`, `ui`, `unj`, `trisakti`, `itb`, `unpad`, `ipb`, `ugm`, `uny`, `uii`, `its`, `unair`, `ub`).
-  - Total akun sosial relasional nasional kini mencakup 20 akun Instagram, 20 WhatsApp Channels, dan 1 WhatsApp Group Komunitas.
+- **Registry kanal WhatsApp yang perlu diverifikasi**:
+  - Catatan sebelumnya menyatakan migrasi `20261102223000_seed_national_whatsapp_channels.sql` diterapkan di Supabase; penerapan itu belum diverifikasi ulang pada audit ini.
+  - File migrasi memuat 17 entri: 4 cakupan provinsi dan 13 universitas. Semuanya dimulai dengan status `not_connected`; tautannya belum dibuktikan sebagai kanal live.
+  - Jangan menghitung entri rencana sebagai akun resmi aktif. Ganti tautan placeholder dengan undangan asli dan uji koneksi sebelum menandai rollout selesai.
   - Admin kampus dan provinsi dapat langsung menautkan JID live (`...@newsletter`) melalui tab WhatsApp di panel admin (`/admin/social`).
 - **Notifikasi WhatsApp Transaksional Pendaftaran Admin Kampus**:
   - Endpoint `POST /api/admin-requests/apply` (`src/app/api/admin-requests/apply/route.js`) kini mengintegrasikan pengiriman WhatsApp otomatis via `sendWa`:
@@ -107,8 +143,7 @@ Dashboard nasional harus membedakan angka yang benar-benar terkonfirmasi dari es
   - Tab 2 (WhatsApp) di `src/components/admin/SocialWorkspace.jsx` kini mendukung pemilihan wilayah/provinsi (`accountProvinceFilter`) dan pencarian saluran terintegrasi, menyelaraskan UX dengan tab Instagram.
 - **Verifikasi Kualitas & Produksi**:
   - Penambahan mock `@/lib/fonnte` pada berkas pengujian `__tests__/campusAdminApplication.test.js`.
-  - 100% tes vitest lulus: 60 berkas pengujian, 297 tes berhasil tanpa regresi.
-  - Next.js production build (`npm run build`) sukses 100% (96/96 rute static & dynamic terkompilasi optimal).
+  - Riwayat commit mencatat 60 berkas pengujian dan 297 tes lulus serta build 96 rute. Hasil ini belum diulang setelah commit tersebut; bukan bukti verifikasi untuk working tree terkini.
 
 ### Pembaruan 2 November 2026 — Standardisasi Nasional Otoritas Setara Admin Seluruh Provinsi
 
@@ -1107,7 +1142,7 @@ cuma server.
    - Endpoint publik `POST /api/admin-requests/apply` dengan proteksi *distributed rate limit* dan validasi katalog universitas aktif. Pengajuan mandiri otomatis dicatat ke tabel `university_admin_requests` berstatus `pending` dan langsung tampil di konsol admin [`/admin/admin-requests`](file:///Users/ayhoo/Projects/JUAL%20BELI%20USU/src/app/admin/admin-requests).
 
 4. **Integrasi Instagram Multi-Wilayah & Multi-Kampus di Panel Admin (`SocialWorkspace.jsx`)**:
-   - Migrasi `20261102220000_seed_national_social_accounts.sql` diterapkan ke Supabase produksi: menginisialisasi 20 akun Instagram resmi standar untuk 14 universitas anchor dan 4 provinsi ekspansi (DKI Jakarta, Jawa Barat, DI Yogyakarta, Jawa Timur).
+   - File migrasi `20261102220000_seed_national_social_accounts.sql` menyiapkan akun Instagram untuk universitas anchor dan provinsi ekspansi. Catatan lama menyebut penerapan produksi; audit ini belum memverifikasi ulang status remote, akun yang benar-benar aktif, atau kredensial Meta.
    - Di konsol admin ([`SocialWorkspace.jsx`](file:///Users/ayhoo/Projects/JUAL%20BELI%20USU/src/components/admin/SocialWorkspace.jsx)), ditambahkan bar filter wilayah (cakupan provinsi vs kampus, filter per provinsi, dan pencarian handle/kampus).
    - Ditambahkan modal panduan setup Meta Graph API resmi (konfigurasi Webhook URL, Verify Token, dan Instagram Business Account ID) untuk menghubungkan otomatis pesan DM dan publikasi multi-kampus.
 
@@ -1115,6 +1150,39 @@ cuma server.
    - Berkas pengujian baru `__tests__/campusAdminApplication.test.js` dibuat dan lulus 100%.
    - Seluruh **60 berkas pengujian (297 tes)** vitest lulus 100%.
    - Next.js production build (`npm run build`) sukses 100% (**96 rute terkompilasi optimal**).
+
+### 2 November 2026 — Audit Solusi Kesiapan Jaringan Nasional
+
+Status ini menggambarkan working tree lokal pada saat pembaruan, bukan status
+deployment atau verifikasi layanan produksi.
+
+- **Instagram per kampus/provinsi:** `SocialWorkspace.jsx` menyediakan kolom
+  token tertutup per akun. API memvalidasi token ke ID akun Meta, tidak
+  mengembalikan token, dan menyimpannya sebagai AES-256-GCM di row
+  `system_settings` dengan kunci unik per akun. Environment server
+  `META_ACCOUNT_TOKEN_ENCRYPTION_KEY` wajib tersedia. Akun katalog global
+  lama masih memiliki fallback kompatibilitas; akun baru menggunakan token
+  khusus. Belum ada OAuth onboarding multi-tenant otomatis.
+- **Impor katalog nasional:** `OrganizationWorkspace.jsx` menerima CSV UTF-8
+  melalui pratinjau. Nama kampus, provinsi, dan kode/NPSN diperiksa untuk
+  duplikasi; provinsi/universitas baru dibuat nonaktif dan kanal/admin tidak
+  dikarang. Berkas operasional menjelaskan rekonsiliasi sumber PDDikti. Dataset
+  referensi tidak membuktikan kampus cabang maupun akun sosial terverifikasi.
+- **Audit Supabase:** ditambahkan query metadata read-only
+  `docs/audit-supabase-produksi-readonly.sql` untuk versi migrasi, RLS/grants,
+  policies, fungsi SECURITY DEFINER, ekstensi, dan constraint. Migrasi, RLS,
+  dan Security Advisor belum diverifikasi ulang di proyek produksi dalam
+  pembaruan ini.
+- **Worker terjadwal:** endpoint `/api/cron/omnichannel-distribution`
+  memproses hingga 10 job terjadwal per pemanggilan. Pemicu lima menit belum
+  dipasang di layanan. Panduan menggunakan Supabase Cron dan Vault, tanpa
+  bergantung pada paket cron Vercel. Endpoint tetap memerlukan
+  `CRON_SECRET` di runtime.
+- **Verifikasi:** ditambahkan tes parser impor, enkripsi/keterikatan token ke
+  akun, serta isolasi scope sosial. Tiga berkas tes terkait lulus (9 tes) dan
+  `npm run lint` lulus. Belum ada uji role produksi atau pengiriman publik
+  Instagram/WhatsApp; job eksternal tetap perlu uji akun percobaan dengan
+  persetujuan pemilik kanal.
 
 
 

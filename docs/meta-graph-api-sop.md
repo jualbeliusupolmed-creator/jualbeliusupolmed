@@ -1,84 +1,51 @@
-# Panduan Konfigurasi Meta Graph API (Instagram & Facebook)
+# SOP Meta Graph API untuk Instagram kampus dan provinsi
 
-Dokumen ini berisi panduan langkah-demi-langkah (SOP) untuk mendapatkan **Meta Access Token**, **Facebook Page ID**, dan **Instagram User ID** agar fitur Auto-Posting Jual Beli USU dapat berjalan.
+Sistem publikasi saat ini menggunakan Facebook Login dan Instagram Graph API
+di `graph.facebook.com`. Setiap tujuan memerlukan akun Instagram Professional
+yang terhubung ke Facebook Page dan kredensial yang berwenang mengakses
+Instagram Account ID tersebut.
 
-## 📝 Prasyarat
-1. Akun Facebook Pribadi (sebagai pengelola halaman).
-2. Halaman (Page) Facebook Jual Beli USU.
-3. Akun Instagram Bisnis/Kreator Jual Beli USU.
-4. Akun Instagram **wajib** ditautkan ke Halaman Facebook tersebut.
+## Menyiapkan satu akun
 
----
+1. Ubah akun Instagram tujuan menjadi Professional (Business atau Creator).
+2. Hubungkan akun Instagram itu ke Facebook Page resmi milik kampus atau
+   provinsi yang bersangkutan.
+3. Pada aplikasi Meta yang disetujui, buat token Page/User melalui alur Facebook
+   Login dengan izin yang digunakan integrasi ini:
+   `pages_show_list`, `instagram_basic`, `instagram_content_publish`, dan
+   `pages_read_engagement`. Pastikan tingkat akses aplikasi memenuhi mode
+   penggunaan dan akun yang dihubungkan.
+4. Ambil Instagram Business Account ID numerik dari Page yang ditautkan.
+5. Di panel web buka **Admin → Sosial → Instagram → Hubungkan/Sunting akun**.
+   Pilih scope kampus atau provinsi, masukkan handle, Business Account ID, dan
+   token untuk akun yang sama. Simpan. Server memeriksa token ke Graph API dan
+   hanya menampilkan status koneksi; token tidak dikembalikan ke browser.
+6. Periksa status **Token tersimpan** dan jalankan **Uji koneksi**. Ini tidak
+   menerbitkan konten.
 
-## TAHAP 1: Menautkan Instagram ke Facebook Page
-Jika belum tertaut, ikuti langkah ini:
-1. Buka Facebook dan masuk ke **Halaman (Page)** Jual Beli USU.
-2. Buka menu **Pengaturan Halaman** (Settings).
-3. Cari menu **Akun Tertaut** (Linked Accounts) -> Pilih **Instagram**.
-4. Klik **Hubungkan Akun** dan login ke akun Instagram Jual Beli USU.
-5. Pastikan statusnya "Terhubung".
+Token dimasukkan hanya melalui HTTPS pada panel admin. Token disimpan
+terenkripsi per akun menggunakan `META_ACCOUNT_TOKEN_ENCRYPTION_KEY` yang
+tersedia hanya di runtime server. Jangan menyalin token ke tiket, chat, source,
+URL, atau screenshot. Bila token pernah terekspos, cabut di Meta dan ganti
+melalui panel. Jangan menganggap token tidak pernah kedaluwarsa: pantau
+validitas serta izin secara berkala dan rotasi sesuai status token di Meta.
 
----
+## Mengapa akun global lama masih ada
 
-## TAHAP 2: Membuat Aplikasi di Meta Developer Portal
-1. Buka [https://developers.facebook.com/](https://developers.facebook.com/) dan login menggunakan akun Facebook Pribadi Abang.
-2. Klik **My Apps** (Aplikasi Saya) di pojok kanan atas, lalu klik tombol **Create App** (Buat Aplikasi).
-3. Pilih opsi **Other** (Lainnya) -> klik Next.
-4. Pilih **Business** (Bisnis) -> klik Next.
-5. Masukkan Nama Aplikasi (misal: `Bot Jual Beli USU`) dan masukkan email kontak. Klik **Create App**.
-6. Abang akan masuk ke *Dashboard* Aplikasi. Scroll ke bawah, cari kotak **Instagram Graph API** dan klik **Set Up**. Ulangi untuk **Facebook Graph API** jika tersedia.
+`META_KATALOG_IG_USER_ID` dan konfigurasi katalog lama dipertahankan sebagai
+fallback kompatibilitas untuk akun katalog global yang sudah dikenal. Akun
+kampus/provinsi baru tidak memakai token global tersebut. Untuk menghindari
+fallback, setiap akun baru harus memakai ID Meta yang berbeda dan kredensial
+per-akun.
 
----
+## Batas dan pemulihan
 
-## TAHAP 3: Mendapatkan FB Page ID dan IG User ID
-1. Di Dashboard Meta Developer (menu kiri), klik menu **Graph API Explorer** (berada di bawah menu Tools).
-2. Di sebelah kanan (kolom *Meta App*), pastikan aplikasi yang Abang buat terpilih.
-3. Di bagian **User or Page**, klik dropdown dan ganti menjadi **Get Page Access Token**. Nanti akan muncul popup login FB, izinkan semuanya (centang Page & IG yang bersangkutan).
-4. Setelah itu, pilih nama Halaman Facebook Jual Beli USU di dropdown tersebut.
-5. Sekarang, di kolom URL API (yang ada tombol *Submit*), masukkan query ini:
-   `me?fields=id,name,instagram_business_account`
-6. Klik **Submit**.
-7. Di kotak respons JSON di bawahnya, Abang akan mendapatkan hasil mirip seperti ini:
-   ```json
-   {
-     "id": "123456789012345", <--- INI ADALAH FB_PAGE_ID
-     "name": "Jual Beli USU",
-     "instagram_business_account": {
-       "id": "17841400000000000" <--- INI ADALAH IG_USER_ID
-     }
-   }
-   ```
-8. **Simpan** `FB_PAGE_ID` dan `IG_USER_ID` tersebut.
-
----
-
-## TAHAP 4: Generate Token Permanen (Never Expire)
-Token yang didapat dari *Graph API Explorer* biasanya hanya bertahan 1 jam. Kita butuh token permanen agar admin tidak repot mengganti token setiap hari.
-
-1. Buka [Access Token Debugger](https://developers.facebook.com/tools/debug/accesstoken/).
-2. Tempel (Paste) token sementara yang Abang dapat dari Graph API Explorer tadi ke kotak input, lalu klik **Debug**.
-3. Scroll ke bawah dan klik tombol **Extend Access Token** (Perpanjang Access Token).
-4. Meta akan memberikan token baru yang berlaku selama **60 Hari**. Salin token 60 hari tersebut.
-5. **MEMBUAT TOKEN PERMANEN:**
-   Buka URL ini di *browser* Abang (ganti teks di dalam kurung kurawal):
-   ```text
-   https://graph.facebook.com/v19.0/{FB_PAGE_ID}?fields=access_token&access_token={TOKEN_60_HARI_YANG_BARU_DISALIN}
-   ```
-6. Browser akan menampilkan teks JSON seperti ini:
-   ```json
-   {
-     "access_token": "EAAI...", <--- INI ADALAH TOKEN PERMANEN (NEVER EXPIRE)
-     "id": "123456789012345"
-   }
-   ```
-7. Selamat! `EAAI...` tersebut adalah **Meta Page Access Token** yang tidak akan kedaluwarsa selama password FB Abang tidak diganti.
-
----
-
-## TAHAP 5: Memasukkan Data ke Panel Admin
-1. Buka Website Jual Beli USU -> Masuk ke menu **Admin**.
-2. Buka tab **Pengaturan**.
-3. Cari kotak **Konfigurasi Meta (Instagram & Facebook)**.
-4. Masukkan **Meta Page Access Token**, **Facebook Page ID**, dan **Instagram User ID** yang sudah Abang dapatkan.
-5. Klik **Simpan Konfigurasi Meta**.
-6. Selesai! Silakan coba perintah `POST IG [KODE_IKLAN]` di WhatsApp untuk melakukan pengetesan.
+- Setup token di panel belum berarti posting sudah aktif di production:
+  environment key harus tersedia, kode harus terdeploy, dan koneksi harus
+  diverifikasi.
+- Jika ID akun, Page link, token, izin, media publik, atau status aplikasi Meta
+  tidak sesuai, publikasi akan gagal dan job harus ditinjau sebelum retry.
+- Publikasi yang berhasil pada Meta tetapi gagal dicatat ke sistem memiliki
+  hasil ambigu. Periksa profil Instagram tujuan sebelum mengulang job.
+- Webhook DM dan hak publikasi konten adalah izin/alur berbeda; token yang
+  mendukung posting belum tentu mengaktifkan DM webhook.

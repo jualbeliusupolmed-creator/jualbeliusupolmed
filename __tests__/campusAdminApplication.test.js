@@ -18,6 +18,10 @@ vi.mock("@/lib/fonnte", () => ({
   nomorAdmin: vi.fn(() => Promise.resolve("6281234567890")),
 }));
 
+vi.mock("@/lib/auth", () => ({
+  getSellerSession: vi.fn(() => "081234567890"),
+}));
+
 const mockSingle = vi.fn();
 const mockMaybeSingle = vi.fn();
 const mockSelect = vi.fn(() => ({
@@ -55,19 +59,13 @@ const mockSupa = {
         insert: mockInsert,
       };
     }
-    if (table === "admin_memberships") {
-      return {
-        select: vi.fn(() => ({
-          order: vi.fn().mockReturnThis(),
-          limit: vi.fn().mockReturnThis(),
-          maybeSingle: vi.fn(() =>
-            Promise.resolve({
-              data: { user_id: "d06fd157-84e2-48c3-b816-c01e71231ec8" },
-              error: null,
-            })
-          ),
-        })),
+    if (table === "seller_profiles") {
+      const query = {
+        or: vi.fn(() => query),
+        not: vi.fn(() => query),
+        limit: vi.fn(() => Promise.resolve({ data: [{ user_id: "user-1" }], error: null })),
       };
+      return { select: vi.fn(() => query) };
     }
     if (table === "provinces") {
       return {

@@ -55,6 +55,13 @@ export async function POST(req) {
   const body = await req.json().catch(() => ({}));
   const { action, provinceId, itemKey, value, status } = body;
   const supa = getAdminClient();
+  const requestedProvince = typeof provinceId === "string" ? provinceId.trim().toLowerCase() : "";
+  const provinceAllowed = actor.role === "superadmin" || (actor.scopes || []).some((scope) =>
+    scope.scope_type === "province" && String(scope.scope_id || "").toLowerCase() === requestedProvince
+  );
+  if (!requestedProvince || !provinceAllowed) {
+    return NextResponse.json({ error: "Provinsi tidak ditemukan atau berada di luar cakupan Anda." }, { status: 404 });
+  }
 
   try {
     if (action === "update_checklist") {
@@ -74,6 +81,9 @@ export async function POST(req) {
 
       if (!allowedFields.includes(itemKey)) {
         return NextResponse.json({ error: "Field checklist tidak valid." }, { status: 400 });
+      }
+      if (typeof value !== "boolean") {
+        return NextResponse.json({ error: "Nilai checklist harus true atau false." }, { status: 400 });
       }
 
       const updateData = {
@@ -96,38 +106,13 @@ export async function POST(req) {
       if (!provinceId || !status) {
         return NextResponse.json({ error: "Province ID dan status wajib disertakan." }, { status: 400 });
       }
+      if (!["draft", "onboarding", "pilot_active", "fully_launched"].includes(status)) {
+        return NextResponse.json({ error: "Status peluncuran tidak valid." }, { status: 400 });
+      }
 
       const updateData = {
         status,
         launched_at: status === "fully_launched" ? new Date().toISOString() : null,
-        updated_at: new Date().toISOString(),
-      };
-
-      const { data, error } = await supa
-        .from("provincial_rollout_checklists")
-        .update(updateData)
-        .eq("province_id", provinceId)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return NextResponse.json({ ok: true, checklist: data });
-    }
-
-    if (action === "mark_all_sop") {
-      if (!provinceId) {
-        return NextResponse.json({ error: "Province ID wajib disertakan." }, { status: 400 });
-      }
-
-      const markValue = Boolean(value);
-      const updateData = {
-        instagram_setup: markValue,
-        whatsapp_channel_setup: markValue,
-        admin_assigned: markValue,
-        first_university_verified: markValue,
-        dm_routing_tested: markValue,
-        channel_posting_tested: markValue,
-        bursa_transaction_tested: markValue,
         updated_at: new Date().toISOString(),
       };
 
@@ -149,7 +134,7 @@ export async function POST(req) {
 
       const { data, error } = await supa
         .from("provincial_rollout_checklists")
-        .update({ notes: body.notes || null, updated_at: new Date().toISOString() })
+        .update({ notes: typeof body.notes === "string" ? body.notes.trim().slice(0, 2000) || null : null, updated_at: new Date().toISOString() })
         .eq("province_id", provinceId)
         .select()
         .single();

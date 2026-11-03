@@ -21,6 +21,106 @@ function canAccessOrganization(actor) {
   );
 }
 
+function canManageProvince(actor, provinceId) {
+  return actor?.role === "superadmin" || (actor?.scopes || []).some((scope) =>
+    scope.scope_type === "province" && String(scope.scope_id || "").toLowerCase() === String(provinceId || "").toLowerCase()
+  );
+}
+
+function stable(value) {
+  return JSON.stringify(value);
+}
+
+function existingAccountsForScope(rows, scopeType, scopeId) {
+  return (rows || [])
+    .filter((row) => row.scope_type === scopeType && row.scope_id === scopeId && ["instagram", "whatsapp_channel"].includes(row.provider))
+    .map((row) => ({ provider: row.provider, handle: row.handle }))
+    .sort((a, b) => `${a.provider}:${a.handle}`.localeCompare(`${b.provider}:${b.handle}`));
+}
+
+function incomingAccountsForScope(accounts, scopeType, scopeId) {
+  return accounts
+    .filter((row) => row.scope_type === scopeType && row.scope_id === scopeId)
+    .map((row) => ({ provider: row.provider, handle: row.handle }))
+    .sort((a, b) => `${a.provider}:${a.handle}`.localeCompare(`${b.provider}:${b.handle}`));
+}
+
+function assertProvinceScope(actor, catalog, current) {
+  if (actor.role === "superadmin") return;
+  if (!actor.roles?.some((role) => role.role_code === "province_admin")) {
+    throw new Error("Hanya superadmin atau admin provinsi yang dapat mengubah katalog wilayah.");
+  }
+
+  const incomingProvinces = new Map(catalog.provinces.map((row) => [row.id, row]));
+  const incomingUniversities = new Map(catalog.universities.map((row) => [row.id, row]));
+  const incomingUnits = new Map(catalog.universities.flatMap((university) => university.units.map((unit) => [unit.id, { ...unit, universityId: university.id }])));
+  const incomingAccounts = [
+    ...catalog.provinces.flatMap((row) => [
+      row.accounts.instagram && { provider: "instagram", scope_type: "province", scope_id: row.id, handle: row.accounts.instagram },
+      row.accounts.whatsapp && { provider: "whatsapp_channel", scope_type: "province", scope_id: row.id, handle: row.accounts.whatsapp },
+    ].filter(Boolean)),
+    ...catalog.universities.flatMap((row) => [
+      row.accounts.instagram && { provider: "instagram", scope_type: "university", scope_id: row.id, handle: row.accounts.instagram },
+      row.accounts.whatsapp && { provider: "whatsapp_channel", scope_type: "university", scope_id: row.id, handle: row.accounts.whatsapp },
+    ].filter(Boolean)),
+  ];
+  const currentProvinceIds = new Set(current.provinces.map((row) => row.id));
+  if (catalog.provinces.some((row) => !currentProvinceIds.has(row.id))) {
+    throw new Error("Penambahan provinsi baru hanya dapat dilakukan superadmin nasional.");
+  }
+
+  for (const previous of current.provinces) {
+    const next = incomingProvinces.get(previous.id);
+    if (!next) throw new Error("Provinsi yang sudah terdaftar tidak dapat dihapus.");
+    if (!canManageProvince(actor, previous.id)) {
+      const currentValue = { name: previous.name, active: previous.status === "active", accounts: existingAccountsForScope(current.accounts, "province", previous.id) };
+      const nextValue = { name: next.name, active: next.active, accounts: incomingAccountsForScope(incomingAccounts, "province", previous.id) };
+      if (stable(currentValue) !== stable(nextValue)) throw new Error("Admin provinsi hanya dapat mengubah data di provinsinya sendiri.");
+    }
+  }
+
+  const currentUniversities = new Map(current.universities.map((row) => [row.id, row]));
+  for (const university of catalog.universities) {
+    const previous = currentUniversities.get(university.id);
+    if (!previous) {
+      if (!canManageProvince(actor, university.provinceId)) throw new Error("Universitas baru hanya boleh ditambahkan pada provinsi yang Anda kelola.");
+      continue;
+    }
+    if (previous.province_id !== university.provinceId &&
+        (!canManageProvince(actor, previous.province_id) || !canManageProvince(actor, university.provinceId))) {
+      throw new Error("Universitas hanya boleh dipindahkan di antara provinsi yang Anda kelola.");
+    }
+    if (!canManageProvince(actor, previous.province_id)) {
+      const currentValue = {
+        code: previous.code, name: previous.name, provinceId: previous.province_id,
+        active: previous.status === "active", emailDomains: previous.email_domains || [],
+        units: current.units.filter((unit) => unit.university_id === previous.id).map((unit) => ({ id: unit.id, code: unit.code, name: unit.name, active: unit.status === "active" })).sort((a, b) => a.id.localeCompare(b.id)),
+        accounts: existingAccountsForScope(current.accounts, "university", previous.id),
+      };
+      const nextValue = {
+        code: university.code, name: university.name, provinceId: university.provinceId,
+        active: university.active, emailDomains: university.emailDomains,
+        units: university.units.map((unit) => ({ ...unit })).sort((a, b) => a.id.localeCompare(b.id)),
+        accounts: incomingAccountsForScope(incomingAccounts, "university", previous.id),
+      };
+      if (stable(currentValue) !== stable(nextValue)) throw new Error("Admin provinsi hanya dapat mengubah universitas di provinsinya sendiri.");
+    }
+  }
+  for (const previous of current.universities) {
+    if (!incomingUniversities.has(previous.id)) throw new Error("Universitas yang sudah terdaftar tidak dapat dihapus.");
+  }
+
+  for (const unit of incomingUnits.values()) {
+    const previousUniversity = currentUniversities.get(unit.universityId);
+    if (!previousUniversity && !canManageProvince(actor, incomingUniversities.get(unit.universityId)?.provinceId)) {
+      throw new Error("Unit baru hanya boleh ditambahkan di provinsi yang Anda kelola.");
+    }
+    if (previousUniversity && !canManageProvince(actor, previousUniversity.province_id) && !current.units.some((row) => row.id === unit.id && row.university_id === unit.universityId && row.code === unit.code && row.name === unit.name && row.status === (unit.active ? "active" : "inactive"))) {
+      throw new Error("Admin provinsi hanya dapat mengubah unit di provinsinya sendiri.");
+    }
+  }
+}
+
 function legacyCatalog(settings) {
   const campuses = Array.isArray(settings.campuses) ? settings.campuses : [];
   const derived = [...new Map(campuses.map((campus) => {
@@ -157,6 +257,13 @@ export async function PUT(request) {
   catch (error) { return NextResponse.json({ error: error.message || "Struktur nasional tidak valid." }, { status: 400 }); }
 
   const admin = getAdminClient();
+  if (actor.role !== "superadmin" && !actor.roles?.some((role) => role.role_code === "province_admin")) {
+    return NextResponse.json({ error: "Katalog wilayah hanya dapat diubah superadmin atau admin provinsi." }, { status: 403 });
+  }
+  const { data: preservedSocialAccounts, error: socialAccountsError } = await admin
+    .from("organization_social_accounts")
+    .select("provider,scope_type,scope_id,handle");
+  if (socialAccountsError) return NextResponse.json({ error: "Akun sosial gagal diperiksa sebelum katalog disimpan." }, { status: 503 });
   const provinces = catalog.provinces.map(({ id, name, active, accounts }) => ({
     id, name, active,
     instagramHandle: accounts.instagram,
@@ -176,7 +283,35 @@ export async function PUT(request) {
       university.accounts.whatsapp ? { provider: "whatsapp_channel", scope_type: "university", scope_id: university.id, handle: university.accounts.whatsapp } : null,
     ]),
   ].filter(Boolean);
+  const supportedProviders = new Set(["instagram", "whatsapp_channel"]);
+  const desiredAccountKeys = new Set(accounts.map((row) => `${row.provider}:${row.scope_type}:${row.scope_id}:${row.handle}`));
+  for (const existing of preservedSocialAccounts || []) {
+    const key = `${existing.provider}:${existing.scope_type}:${existing.scope_id}:${existing.handle}`;
+    if (!supportedProviders.has(existing.provider) && !desiredAccountKeys.has(key)) {
+      accounts.push(existing);
+      desiredAccountKeys.add(key);
+    }
+  }
   const campuses = legacyUniversities(catalog.universities);
+  if (actor.role !== "superadmin") {
+    const [provinceResult, universityResult, unitResult, accountResult] = await Promise.all([
+      admin.from("provinces").select("id,name,status"),
+      admin.from("universities").select("id,code,province_id,name,status,email_domains"),
+      admin.from("university_units").select("id,university_id,code,name,status"),
+    ]);
+    const readError = [provinceResult.error, universityResult.error, unitResult.error].find(Boolean);
+    if (readError) return NextResponse.json({ error: "Tidak dapat memeriksa cakupan katalog yang tersimpan." }, { status: 503 });
+    try {
+      assertProvinceScope(actor, catalog, {
+        provinces: provinceResult.data || [],
+        universities: universityResult.data || [],
+        units: unitResult.data || [],
+        accounts: preservedSocialAccounts || [],
+      });
+    } catch (error) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
+  }
   const { error } = await admin.rpc("replace_national_organization", {
     p_provinces: provinces,
     p_universities: universities,

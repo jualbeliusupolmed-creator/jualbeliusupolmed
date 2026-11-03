@@ -20,9 +20,19 @@ vi.mock("@/lib/listingInstagram", () => ({
   queueListingInstagram: vi.fn(async () => ({ queued: true })),
 }));
 
+vi.mock("@/lib/instagramAccountCredentials", () => ({
+  getInstagramAccountToken: vi.fn(async () => "test-meta-token"),
+}));
+
+vi.mock("@/lib/meta", () => ({
+  postToInstagram: vi.fn(async () => ({ id: "meta-publication-1" })),
+}));
+
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { sendWa, sendChannelWa } from "@/lib/fonnte";
 import { getAdminActor } from "@/lib/admin-access";
+import { getInstagramAccountToken } from "@/lib/instagramAccountCredentials";
+import { postToInstagram } from "@/lib/meta";
 import {
   buildOmnichannelCaption,
   resolveOmnichannelTargets,
@@ -147,14 +157,46 @@ describe("Phase 5: Central Distribution Manager (Omnichannel Product Publishing)
   });
 
   describe("executeOmnichannelPublish", () => {
+    function executeMock(job, { publishResult = { id: "published-job" } } = {}) {
+      let writeCount = 0;
+      return {
+        from: vi.fn((table) => {
+          if (table !== "omnichannel_distributions") return {};
+          const query = {
+            select: vi.fn(() => query),
+            eq: vi.fn(() => query),
+            in: vi.fn(() => query),
+            update: vi.fn(() => { writeCount += 1; return query; }),
+            maybeSingle: vi.fn(async () => ({ data: { id: job.id }, error: null })),
+            single: vi.fn(async () => ({
+              data: writeCount === 0 ? job : publishResult,
+              error: null,
+            })),
+          };
+          return query;
+        }),
+      };
+    }
+
     it("publishes to WhatsApp Channel successfully and updates status to published", async () => {
       const mockJob = {
         id: "job-1",
         channel_type: "whatsapp_channel_university",
         target_destination: "120363111@newsletter",
+        university_id: "usu",
         caption_snapshot: "Test Caption",
         attempts: 0,
         max_attempts: 3,
+        organization_social_accounts: {
+          id: "acc-wa-chan-usu",
+          provider: "whatsapp_channel",
+          status: "connected",
+          scope_type: "university",
+          scope_id: "usu",
+          university_id: "usu",
+          handle: "Kanal USU",
+          external_account_id: "120363111@newsletter",
+        },
         listings: {
           id: "listing-abc",
           title: "Sepeda Lipat",
@@ -162,21 +204,7 @@ describe("Phase 5: Central Distribution Manager (Omnichannel Product Publishing)
         },
       };
 
-      const mockSupabase = {
-        from: vi.fn((table) => {
-          if (table === "omnichannel_distributions") {
-            return {
-              select: vi.fn().mockReturnThis(),
-              eq: vi.fn().mockReturnThis(),
-              single: vi.fn().mockResolvedValue({ data: mockJob, error: null }),
-              update: vi.fn().mockReturnThis(),
-            };
-          }
-          return {};
-        }),
-      };
-
-      vi.mocked(getAdminClient).mockReturnValue(mockSupabase);
+      vi.mocked(getAdminClient).mockReturnValue(executeMock(mockJob));
 
       const res = await executeOmnichannelPublish("job-1");
 
@@ -191,9 +219,20 @@ describe("Phase 5: Central Distribution Manager (Omnichannel Product Publishing)
         id: "job-fail-1",
         channel_type: "whatsapp_channel_university",
         target_destination: "120363111@newsletter",
+        university_id: "usu",
         caption_snapshot: "Test Caption",
         attempts: 1,
         max_attempts: 3,
+        organization_social_accounts: {
+          id: "acc-wa-chan-usu",
+          provider: "whatsapp_channel",
+          status: "connected",
+          scope_type: "university",
+          scope_id: "usu",
+          university_id: "usu",
+          handle: "Kanal USU",
+          external_account_id: "120363111@newsletter",
+        },
         listings: {
           id: "listing-abc",
           title: "Sepeda Lipat",
@@ -202,26 +241,51 @@ describe("Phase 5: Central Distribution Manager (Omnichannel Product Publishing)
 
       vi.mocked(sendChannelWa).mockResolvedValueOnce({ ok: false, error: "Connection Timeout" });
 
-      const mockSupabase = {
-        from: vi.fn((table) => {
-          if (table === "omnichannel_distributions") {
-            return {
-              select: vi.fn().mockReturnThis(),
-              eq: vi.fn().mockReturnThis(),
-              single: vi.fn().mockResolvedValue({ data: { ...mockJob, status: "failed", attempts: 2 }, error: null }),
-              update: vi.fn().mockReturnThis(),
-            };
-          }
-          return {};
-        }),
-      };
-
-      vi.mocked(getAdminClient).mockReturnValue(mockSupabase);
+      vi.mocked(getAdminClient).mockReturnValue(executeMock(mockJob, {
+        publishResult: { ...mockJob, status: "failed", attempts: 2 },
+      }));
 
       const res = await executeOmnichannelPublish("job-fail-1");
 
       expect(res.ok).toBe(false);
       expect(res.error).toContain("Connection Timeout");
+    });
+
+    it("publishes an Instagram job with that account's own token and Meta ID", async () => {
+      const mockJob = {
+        id: "job-ig-1",
+        channel_type: "instagram_university",
+        target_destination: "jualbelidikampus.usu",
+        university_id: "usu",
+        caption_snapshot: "Test listing caption",
+        attempts: 0,
+        max_attempts: 3,
+        organization_social_accounts: {
+          id: "acc-ig-usu",
+          provider: "instagram",
+          status: "connected",
+          scope_type: "university",
+          scope_id: "usu",
+          university_id: "usu",
+          handle: "jualbelidikampus.usu",
+          external_account_id: "17841400000000001",
+        },
+        listings: { id: "listing-ig", title: "Buku kuliah", image_url: "https://media.example.test/item.jpg" },
+      };
+      vi.mocked(getAdminClient).mockReturnValue(executeMock(mockJob, {
+        publishResult: { id: "job-ig-1", status: "published" },
+      }));
+
+      const result = await executeOmnichannelPublish("job-ig-1");
+
+      expect(getInstagramAccountToken).toHaveBeenCalledWith(expect.anything(), mockJob.organization_social_accounts);
+      expect(postToInstagram).toHaveBeenCalledWith(
+        "17841400000000001",
+        "test-meta-token",
+        expect.stringContaining("/api/listings/listing-ig/instagram-image"),
+        "Test listing caption",
+      );
+      expect(result.ok).toBe(true);
     });
   });
 
@@ -238,33 +302,56 @@ describe("Phase 5: Central Distribution Manager (Omnichannel Product Publishing)
         role: "superadmin",
       });
 
+      let distributionQueryNumber = 0;
+      const listing = { id: "prod-1", title: "Kamera Sony", campus: "Semua", status: "active" };
+      const createdJob = {
+        id: "job-created-1",
+        listing_id: "prod-1",
+        channel_type: "website",
+        target_destination: "https://www.kampuskita.my.id/produk/kamera-sony-prod-1",
+        status: "approved",
+        listings: listing,
+      };
       const mockSupabase = {
         from: vi.fn((table) => {
           if (table === "omnichannel_distributions") {
-            return {
-              upsert: vi.fn().mockReturnThis(),
-              select: vi.fn().mockReturnThis(),
-              maybeSingle: vi.fn().mockResolvedValue({
-                data: { id: "job-created-1", channel_type: "website" },
-                error: null,
+            const queryNumber = ++distributionQueryNumber;
+            const query = {
+              select: vi.fn(() => query),
+              eq: vi.fn(() => query),
+              is: vi.fn(() => query),
+              in: vi.fn(() => query),
+              insert: vi.fn(() => query),
+              update: vi.fn(() => query),
+              maybeSingle: vi.fn(async () => {
+                if (queryNumber === 1) return { data: null, error: null };
+                if (queryNumber === 2) return { data: createdJob, error: null };
+                return { data: { id: "job-created-1" }, error: null };
               }),
-              eq: vi.fn().mockReturnThis(),
-              single: vi.fn().mockResolvedValue({
-                data: {
-                  id: "job-created-1",
-                  channel_type: "website",
-                  listings: { id: "prod-1", title: "Kamera Sony" },
-                },
+              single: vi.fn(async () => ({
+                data: queryNumber === 3 ? createdJob : { ...createdJob, status: "published" },
                 error: null,
-              }),
-              update: vi.fn().mockReturnThis(),
+              })),
             };
+            return query;
           }
           if (table === "listings") {
-            return {
-              update: vi.fn().mockReturnThis(),
-              eq: vi.fn().mockResolvedValue({ error: null }),
+            const query = {
+              select: vi.fn(() => query),
+              update: vi.fn(() => query),
+              eq: vi.fn(() => query),
+              maybeSingle: vi.fn(async () => ({ data: listing, error: null })),
+              then(resolve, reject) { return Promise.resolve({ data: null, error: null }).then(resolve, reject); },
             };
+            return query;
+          }
+          if (table === "organization_social_accounts") {
+            const query = {
+              select: vi.fn(() => query),
+              neq: vi.fn(() => query),
+              then(resolve, reject) { return Promise.resolve({ data: [], error: null }).then(resolve, reject); },
+            };
+            return query;
           }
           return {};
         }),
@@ -286,7 +373,7 @@ describe("Phase 5: Central Distribution Manager (Omnichannel Product Publishing)
       const res = await POST(
         new Request("http://localhost/api/admin/distribution", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", origin: "https://www.kampuskita.my.id" },
           body: JSON.stringify(payload),
         })
       );

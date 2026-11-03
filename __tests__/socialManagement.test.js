@@ -51,6 +51,7 @@ describe("Social & Communication Management API (/api/admin/social/accounts)", (
     mocks.getAdminActor.mockResolvedValueOnce({
       id: "admin-1",
       role: "university_admin",
+      scopes: [{ scope_type: "university", scope_id: "usu" }],
       roles: [{ role_code: "university_admin" }],
     });
     mocks.hasAdminPermission.mockReturnValue(true);
@@ -79,13 +80,18 @@ describe("Social & Communication Management API (/api/admin/social/accounts)", (
       },
     ];
 
-    const fakeQuery = {
+    const accountsQuery = {
       select: vi.fn().mockReturnThis(),
       order: vi.fn().mockResolvedValue({ data: mockAccounts, error: null }),
     };
+    const settingsQuery = {
+      select: vi.fn().mockReturnThis(),
+      gte: vi.fn().mockReturnThis(),
+      lt: vi.fn().mockResolvedValue({ data: [], error: null }),
+    };
 
     mocks.getAdminClient.mockReturnValue({
-      from: vi.fn().mockReturnValue(fakeQuery),
+      from: vi.fn((table) => table === "system_settings" ? settingsQuery : accountsQuery),
     });
 
     const req = new Request("http://localhost:3000/api/admin/social/accounts");
@@ -93,7 +99,7 @@ describe("Social & Communication Management API (/api/admin/social/accounts)", (
     const json = await res.json();
 
     expect(res.status).toBe(200);
-    expect(json.ok).toBe(true);
+    expect(json).toEqual(expect.objectContaining({ ok: true }));
     // Hanya akun USU yang lolos filter scope admin
     expect(json.accounts).toHaveLength(1);
     expect(json.accounts[0].handle).toBe("usu.menfes");
@@ -101,17 +107,46 @@ describe("Social & Communication Management API (/api/admin/social/accounts)", (
   });
 
   it("menguji koneksi Meta Graph API via test_connection", async () => {
-    mocks.getAdminActor.mockResolvedValueOnce({ role: "superadmin" });
+    mocks.getAdminActor.mockResolvedValueOnce({ role: "superadmin", userId: "admin-1" });
     mocks.hasAdminPermission.mockReturnValue(true);
     mocks.resolveInstagramToken.mockResolvedValueOnce("valid-meta-token");
+    vi.stubEnv("META_KATALOG_IG_USER_ID", "17841430423153964");
 
-    const updateMock = vi.fn().mockReturnThis();
-    const eqMock = vi.fn().mockResolvedValue({ error: null });
-    updateMock.mockReturnValue({ eq: eqMock });
+    const account = {
+      id: "acc-1",
+      provider: "instagram",
+      scope_type: "university",
+      scope_id: "usu",
+      university_id: "usu",
+      external_account_id: "17841430423153964",
+      status: "pending",
+    };
+    const accountQuery = {
+      select: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockImplementation(() => accountQuery),
+      maybeSingle: vi.fn().mockResolvedValue({ data: account, error: null }),
+    };
+    const updateQuery = {
+      update: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockResolvedValue({ error: null }),
+    };
+    const settingsQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+    };
 
     mocks.getAdminClient.mockReturnValue({
-      from: vi.fn().mockReturnValue({ update: updateMock }),
+      from: vi.fn((table) => {
+        if (table === "organization_social_accounts") return accountQuery;
+        if (table === "system_settings") return settingsQuery;
+        return updateQuery;
+      }),
     });
+
+    vi.stubEnv("META_KATALOG_IG_USER_ID", "17841430423153964");
+    mocks.resolveInstagramToken.mockReturnValue("mock-token-xyz");
 
     // Mock fetch ke Meta Graph API
     const originalFetch = global.fetch;

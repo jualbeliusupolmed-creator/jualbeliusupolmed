@@ -222,32 +222,13 @@ describe("Phase 6: National Analytics & Multi-Provincial Rollout", () => {
       expect(json.checklist.instagram_setup).toBe(true);
     });
 
-    it("POST mark_all_sop marks all 7 checklist items true or false", async () => {
+    it("POST mark_all_sop rejects bulk completion to preserve verified rollout data", async () => {
       vi.mocked(getAdminActor).mockResolvedValueOnce({
         role: "superadmin",
         id: "admin-super",
       });
 
-      const mockSupabase = {
-        from: vi.fn(() => ({
-          update: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockReturnThis(),
-          select: vi.fn().mockReturnThis(),
-          single: vi.fn().mockResolvedValue({
-            data: {
-              province_id: "jawa-barat",
-              instagram_setup: true,
-              whatsapp_channel_setup: true,
-              admin_assigned: true,
-              first_university_verified: true,
-              dm_routing_tested: true,
-              channel_posting_tested: true,
-              bursa_transaction_tested: true,
-            },
-            error: null,
-          }),
-        })),
-      };
+      const mockSupabase = { from: vi.fn() };
 
       vi.mocked(getAdminClient).mockReturnValue(mockSupabase);
 
@@ -264,9 +245,9 @@ describe("Phase 6: National Analytics & Multi-Provincial Rollout", () => {
       );
 
       const json = await res.json();
-      expect(res.status).toBe(200);
-      expect(json.ok).toBe(true);
-      expect(json.checklist.first_university_verified).toBe(true);
+      expect(res.status).toBe(400);
+      expect(json.error).toBeDefined();
+      expect(mockSupabase.from).not.toHaveBeenCalled();
     });
 
     it("POST update_notes updates notes on provincial rollout stage", async () => {
