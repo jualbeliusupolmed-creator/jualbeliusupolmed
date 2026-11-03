@@ -18,7 +18,6 @@ import {
   Sparkles,
   Check,
   FileText,
-  CheckCheck,
   Filter,
   Printer,
 } from "lucide-react";
@@ -104,29 +103,6 @@ export default function NationalAnalyticsWorkspace({ superadmin = false }) {
     }
   };
 
-  const handleMarkAllSop = async (provinceId, value) => {
-    try {
-      const res = await fetch("/api/admin/analytics/national", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "mark_all_sop",
-          provinceId,
-          value,
-        }),
-      });
-      const json = await res.json();
-      if (json.ok) {
-        toast.success(value ? "Semua SOP berhasil ditandai terpenuhi." : "Status SOP berhasil direset.");
-        loadData();
-      } else {
-        toast.error(json.error || "Gagal mengubah status SOP.");
-      }
-    } catch {
-      toast.error("Gagal terhubung ke server.");
-    }
-  };
-
   const handleSaveNotes = async (provinceId) => {
     try {
       const res = await fetch("/api/admin/analytics/national", {
@@ -204,6 +180,12 @@ export default function NationalAnalyticsWorkspace({ superadmin = false }) {
         </button>
       </div>
 
+      {(data.coverage?.listingSampleMayBeIncomplete || data.coverage?.distributionSampleMayBeIncomplete) && (
+        <div role="status" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-900">
+          Analitik saat ini menghitung hingga {data.coverage.listingLimit.toLocaleString("id-ID")} listing dan pekerjaan distribusi terbaru. Angka total dapat belum lengkap.
+        </div>
+      )}
+
       {/* KPI Cards Ringkasan Nasional */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-6">
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -215,7 +197,7 @@ export default function NationalAnalyticsWorkspace({ superadmin = false }) {
             {summary.totalProvinces || 0}{" "}
             <span className="text-xs font-normal text-slate-400">Provinsi</span>
           </p>
-          <p className="mt-1 text-[11px] font-medium text-emerald-600">8 Terdaftar di Sistem</p>
+          <p className="mt-1 text-[11px] font-medium text-emerald-600">Dalam cakupan aktif</p>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -227,7 +209,7 @@ export default function NationalAnalyticsWorkspace({ superadmin = false }) {
             {summary.totalUniversities || 0}{" "}
             <span className="text-xs font-normal text-slate-400">Kampus</span>
           </p>
-          <p className="mt-1 text-[11px] font-medium text-indigo-600">Tersebar di 6 Wilayah</p>
+          <p className="mt-1 text-[11px] font-medium text-indigo-600">Universitas dalam cakupan</p>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -264,7 +246,7 @@ export default function NationalAnalyticsWorkspace({ superadmin = false }) {
           <p className="mt-2 text-2xl font-black text-slate-900">
             {summary.healthyAccountsCount || 0} / {summary.socialAccountsCount || 0}
           </p>
-          <p className="mt-1 text-[11px] font-medium text-teal-600">Akun IG & WA Terhubung</p>
+          <p className="mt-1 text-[11px] font-medium text-teal-600">Akun berstatus terhubung</p>
         </div>
 
         <div className="col-span-2 lg:col-span-1 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -725,25 +707,6 @@ export default function NationalAnalyticsWorkspace({ superadmin = false }) {
                           </select>
                         </div>
 
-                        {/* Superadmin Bulk SOP Action */}
-                        {superadmin && (
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => handleMarkAllSop(stage.province_id, true)}
-                              className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-800 hover:bg-emerald-100 transition shadow-xs"
-                            >
-                              <CheckCheck className="h-3.5 w-3.5" /> Semua Lolos
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleMarkAllSop(stage.province_id, false)}
-                              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-bold text-slate-600 hover:bg-slate-100 transition"
-                            >
-                              Reset
-                            </button>
-                          </div>
-                        )}
                       </div>
                     </div>
 

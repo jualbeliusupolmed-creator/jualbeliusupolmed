@@ -52,6 +52,7 @@ export default function SocialWorkspace() {
   const [formUniversityId, setFormUniversityId] = useState("usu");
   const [formHandle, setFormHandle] = useState("");
   const [formExternalId, setFormExternalId] = useState("");
+  const [formAccessToken, setFormAccessToken] = useState("");
   const [provincesList, setProvincesList] = useState([]);
   const [universitiesList, setUniversitiesList] = useState([]);
   const [resolvingChannel, setResolvingChannel] = useState(false);
@@ -295,6 +296,8 @@ export default function SocialWorkspace() {
         body: JSON.stringify({
           action: "resolve_channel_link",
           invite: formHandle.trim(),
+          provinceId: formScopeType === "province" ? formProvinceId : null,
+          universityId: formScopeType === "university" ? formUniversityId : null,
         }),
       });
       const json = await res.json();
@@ -322,8 +325,7 @@ export default function SocialWorkspace() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "test_broadcast",
-          targetJid: broadcastModalTarget.external_account_id || broadcastModalTarget.handle,
-          provider: broadcastModalTarget.provider,
+          accountId: broadcastModalTarget.id,
           message: broadcastMsg.trim() || undefined,
         }),
       });
@@ -350,6 +352,7 @@ export default function SocialWorkspace() {
     setFormUniversityId(universitiesList[0]?.id || "usu");
     setFormHandle("");
     setFormExternalId("");
+    setFormAccessToken("");
     setIsModalOpen(true);
   };
 
@@ -361,6 +364,7 @@ export default function SocialWorkspace() {
     setFormUniversityId(acc.university_id || universitiesList[0]?.id || "usu");
     setFormHandle(acc.handle || "");
     setFormExternalId(acc.external_account_id || "");
+    setFormAccessToken("");
     setIsModalOpen(true);
   };
 
@@ -374,7 +378,7 @@ export default function SocialWorkspace() {
     startTransition(async () => {
       try {
         const payload = {
-          action: "upsert_channel",
+          action: formProvider.startsWith("whatsapp") ? "upsert_channel" : "upsert_account",
           id: editingAccount?.id,
           provider: formProvider,
           provinceId: formScopeType === "province" ? formProvinceId : null,
@@ -382,6 +386,7 @@ export default function SocialWorkspace() {
           handle: formHandle.trim(),
           externalAccountId: formExternalId.trim() || null,
         };
+        if (formProvider === "instagram" && formAccessToken.trim()) payload.accessToken = formAccessToken.trim();
 
         const endpoint = formProvider.startsWith("whatsapp")
           ? "/api/admin/whatsapp/channels"
@@ -394,7 +399,8 @@ export default function SocialWorkspace() {
         });
         const json = await res.json();
         if (json.ok) {
-          toast.success("Akun / Kanal sosial berhasil disimpan.");
+          toast.success(json.message || "Akun / Kanal sosial berhasil disimpan.");
+          setFormAccessToken("");
           setIsModalOpen(false);
           fetchAccounts();
           if (activeTab === "whatsapp") fetchWhatsAppChannels();
@@ -661,6 +667,14 @@ export default function SocialWorkspace() {
                             {acc.external_account_id || "(Belum Disetel)"}
                           </span>
                         </div>
+                        {isIg && (
+                          <div className="mt-2 flex items-center justify-between border-t border-slate-200 pt-2 text-slate-500">
+                            <span>Akses publikasi</span>
+                            <span className={acc.has_access_token ? "font-bold text-emerald-700" : "font-bold text-amber-700"}>
+                              {acc.has_access_token ? "Token tersimpan" : "Perlu setup"}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -1466,19 +1480,42 @@ export default function SocialWorkspace() {
                 </label>
                 <input
                   type="text"
-                  placeholder="contoh: 1203633...@newsletter atau 120363...@g.us"
+                  placeholder={formProvider === "instagram" ? "Meta Instagram Business Account ID" : "contoh: 1203633...@newsletter atau 120363...@g.us"}
                   value={formExternalId}
                   onChange={(e) => setFormExternalId(e.target.value)}
                   className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 font-mono text-slate-800"
                 />
                 <p className="mt-1 text-[11px] text-slate-400">
-                  {formProvider === "whatsapp_channel"
+                  {formProvider === "instagram"
+                    ? "ID numerik yang dipakai Meta Graph API untuk akun profesional ini."
+                    : formProvider === "whatsapp_channel"
                     ? "JID @newsletter untuk pengiriman pengumuman katalog."
                     : formProvider === "whatsapp_group"
                     ? "JID @g.us untuk pengiriman bursa komunitas."
                     : "ID akun eksternal / nomor bot."}
                 </p>
               </div>
+
+              {formProvider === "instagram" && (
+                <div className="rounded-2xl border border-pink-100 bg-pink-50/60 p-4">
+                  <label htmlFor="instagram-account-token" className="block font-bold text-slate-800">
+                    Token Meta untuk akun ini
+                  </label>
+                  <input
+                    id="instagram-account-token"
+                    type="password"
+                    autoComplete="new-password"
+                    value={formAccessToken}
+                    onChange={(event) => setFormAccessToken(event.target.value)}
+                    placeholder={editingAccount?.has_access_token ? "Token sudah tersimpan; isi hanya untuk mengganti" : "Tempel access token Meta"}
+                    className="mt-1.5 w-full rounded-xl border border-pink-200 bg-white px-3 py-2.5 font-mono text-xs outline-none focus:border-pink-500 focus:ring-4 focus:ring-pink-500/10"
+                  />
+                  <p className="mt-2 leading-relaxed text-slate-600">
+                    Token diuji terhadap ID akun, lalu disimpan terenkripsi di server. Token tidak ditampilkan lagi setelah disimpan.
+                    Buat access token dengan izin Instagram Basic dan Content Publishing di Meta Developers.
+                  </p>
+                </div>
+              )}
 
               <div className="mt-6 flex justify-end gap-3 pt-2">
                 <button

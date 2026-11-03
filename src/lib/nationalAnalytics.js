@@ -1,5 +1,5 @@
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { getAdminCampusScope } from "@/lib/admin-access";
+import { canManageSocialAccount, canManageSocialScope } from "@/lib/socialAccountAccess";
 
 /**
  * Mengambil analitik nasional atau regional berdasarkan cakupan peran admin.
@@ -9,7 +9,6 @@ export async function getNationalAnalyticsData(actor) {
   if (!supa) throw new Error("Database client not available");
 
   const isSuperadmin = actor?.role === "superadmin";
-  const campusScopes = isSuperadmin ? ["all"] : await getAdminCampusScope(actor);
 
   // 1. Ambil data provinsi dan universitas
   const [provincesRes, universitiesRes, socialAccountsRes, rolloutRes] = await Promise.all([
@@ -17,7 +16,7 @@ export async function getNationalAnalyticsData(actor) {
     supa.from("universities").select("id, code, name, province_id, status").order("name"),
     supa
       .from("organization_social_accounts")
-      .select("id, provider, handle, scope_type, scope_id, status, last_checked_at, provinces(name), universities(code, name)")
+      .select("id, provider, handle, scope_type, scope_id, province_id, university_id, status, last_checked_at, provinces(name), universities(code, name, province_id)")
       .order("created_at", { ascending: false }),
     supa
       .from("provincial_rollout_checklists")
@@ -25,30 +24,43 @@ export async function getNationalAnalyticsData(actor) {
       .order("stage_number", { ascending: true }),
   ]);
 
-  const provinces = provincesRes.data || [];
-  const universities = universitiesRes.data || [];
-  const socialAccounts = socialAccountsRes.data || [];
-  const rolloutChecklists = rolloutRes.data || [];
+  const allProvinces = provincesRes.data || [];
+  const allUniversities = universitiesRes.data || [];
+  const universities = isSuperadmin ? allUniversities : allUniversities.filter((university) => canManageSocialScope(actor, {
+    scope_type: "university",
+    university_id: university.id,
+    university_code: university.code,
+    university_province_id: university.province_id,
+  }));
+  const accessibleProvinceIds = new Set([
+    ...(actor?.scopes || []).filter((scope) => scope.scope_type === "province").map((scope) => String(scope.scope_id).toLowerCase()),
+    ...universities.map((university) => String(university.province_id).toLowerCase()),
+  ]);
+  const provinces = isSuperadmin ? allProvinces : allProvinces.filter((province) => accessibleProvinceIds.has(String(province.id).toLowerCase()));
+  const allowedUniversityIds = new Set(universities.map((university) => String(university.id).toLowerCase()));
+  const allowedUniversityCodes = new Set(universities.map((university) => String(university.code).toLowerCase()));
+  const campusScopes = isSuperadmin ? ["all"] : [...allowedUniversityCodes];
+  const accessibleListing = (listing) => isSuperadmin || allowedUniversityIds.has(String(listing?.university_id || "").toLowerCase()) || allowedUniversityCodes.has(String(listing?.campus || "").toLowerCase());
+  const socialAccounts = (socialAccountsRes.data || []).filter((account) => canManageSocialAccount(actor, account));
+  const rolloutChecklists = (rolloutRes.data || []).filter((row) => isSuperadmin || accessibleProvinceIds.has(String(row.province_id).toLowerCase()));
 
   // 2. Ambil data listing
+  const listingLimit = 3000;
   let listingQuery = supa
     .from("listings")
     .select("id, title, price, status, campus, university_id, category, created_at")
     .order("created_at", { ascending: false })
-    .limit(3000);
-
-  if (!isSuperadmin && campusScopes.length > 0 && !campusScopes.includes("all")) {
-    listingQuery = listingQuery.in("campus", campusScopes);
-  }
+    .limit(listingLimit);
 
   const { data: rawListings } = await listingQuery;
-  const listings = rawListings || [];
+  const listings = (rawListings || []).filter(accessibleListing);
 
   // 3. Ambil data distribusi omnichannel untuk metrik konversi per kanal
-  const { data: distributions } = await supa
+  const { data: rawDistributions } = await supa
     .from("omnichannel_distributions")
-    .select("id, channel_type, status, created_at, published_at")
-    .limit(3000);
+    .select("id, channel_type, status, created_at, published_at, listings(university_id,campus)")
+    .limit(listingLimit);
+  const distributions = (rawDistributions || []).filter((row) => accessibleListing(row.listings));
 
   // 4. Hitung metrik agregat nasional & regional
   const activeProvincesCount = provinces.filter((p) => p.status === "active").length;
@@ -105,7 +117,8 @@ export async function getNationalAnalyticsData(actor) {
   for (const l of listings) {
     const campusKey = (l.campus || "").toUpperCase();
     const univId = (l.university_id || "").toLowerCase();
-    const provId = univToProvMap.get(univId) || univToProvMap.get(campusKey.toLowerCase()) || "sumatera-utara";
+    const provId = univToProvMap.get(univId) || univToProvMap.get(campusKey.toLowerCase());
+    if (!provId) continue;
 
     const pStat = provinceStatsMap.get(provId);
     if (pStat) {
@@ -247,6 +260,12 @@ export async function getNationalAnalyticsData(actor) {
   return {
     isSuperadmin,
     campusScopes,
+    coverage: {
+      listingLimit,
+      listingSampleMayBeIncomplete: (rawListings || []).length >= listingLimit,
+      distributionLimit: listingLimit,
+      distributionSampleMayBeIncomplete: (rawDistributions || []).length >= listingLimit,
+    },
     summary: {
       totalProvinces: activeProvincesCount,
       totalUniversities: activeUniversitiesCount,

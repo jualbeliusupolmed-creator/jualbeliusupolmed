@@ -3,6 +3,7 @@ import { getAdminActor, hasAdminPermission, getAdminCampusScope } from "@/lib/ad
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { tokenBotUtama } from "@/lib/botTokens";
 import { sendChannelWa, sendWa } from "@/lib/fonnte";
+import { canManageSocialAccount, canManageSocialScope, getSocialAccount, getSocialScope } from "@/lib/socialAccountAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -53,7 +54,7 @@ export async function GET(req) {
         last_checked_at,
         created_at,
         provinces(id, name),
-        universities(id, code, name)
+        universities(id, code, name, province_id)
       `)
       .in("provider", ["whatsapp_channel", "whatsapp_business", "whatsapp_group"])
       .order("created_at", { ascending: true });
@@ -61,19 +62,7 @@ export async function GET(req) {
     if (error) throw error;
 
     // Filter sesuai scope admin
-    const filteredAccounts = (accounts || []).filter((acc) => {
-      if (activeCampuses.length === 0 || activeCampuses.includes("all")) {
-        return true;
-      }
-      if (acc.scope_type === "university") {
-        return activeCampuses.some(
-          (c) =>
-            c.toLowerCase() === acc.university_id?.toLowerCase() ||
-            c.toLowerCase() === acc.universities?.code?.toLowerCase()
-        );
-      }
-      return true;
-    });
+    const filteredAccounts = (accounts || []).filter((acc) => canManageSocialAccount(actor, acc));
 
     // Coba ambil metadata live dari Baileys gateway
     let liveNewsletters = [];
@@ -185,8 +174,17 @@ export async function POST(req) {
 
   // 1. Resolve tautan invite menjadi JID
   if (action === "resolve_channel_link") {
-    const { invite } = body;
-    if (!invite || !String(invite).includes("whatsapp.com/channel/")) {
+    const { invite, provinceId, universityId } = body;
+    const targetScope = await getSocialScope(supa, { provinceId, universityId });
+    if (!targetScope) {
+      return NextResponse.json({ error: "Pilih cakupan provinsi atau universitas yang valid." }, { status: 400 });
+    }
+    if (!canManageSocialScope(actor, targetScope)) {
+      return NextResponse.json({ error: "Anda tidak memiliki wewenang untuk cakupan tujuan ini." }, { status: 403 });
+    }
+    let parsedInvite;
+    try { parsedInvite = new URL(String(invite || "")); } catch {}
+    if (!parsedInvite || parsedInvite.protocol !== "https:" || !["whatsapp.com", "www.whatsapp.com"].includes(parsedInvite.hostname) || !parsedInvite.pathname.startsWith("/channel/")) {
       return NextResponse.json({ error: "Masukkan link channel WhatsApp yang valid (https://whatsapp.com/channel/...)" }, { status: 400 });
     }
 
@@ -225,24 +223,50 @@ export async function POST(req) {
   // 2. Simpan atau perbarui akun/saluran
   if (action === "upsert_channel") {
     const { id, provider, provinceId, universityId, handle, externalAccountId } = body;
+    const providers = new Set(["whatsapp_channel", "whatsapp_group", "whatsapp_business"]);
 
     const cleanHandle = String(handle || "").trim();
     if (!cleanHandle) {
       return NextResponse.json({ error: "Nama atau tautan saluran wajib diisi." }, { status: 400 });
     }
 
-    if (!provinceId && !universityId) {
+    const targetScope = await getSocialScope(supa, { provinceId, universityId });
+    if (!targetScope) {
       return NextResponse.json({ error: "Pilih cakupan Provinsi atau Universitas." }, { status: 400 });
+    }
+    if (!canManageSocialScope(actor, targetScope)) {
+      return NextResponse.json({ error: "Anda tidak memiliki wewenang untuk cakupan tujuan ini." }, { status: 403 });
+    }
+    if (!providers.has(provider || "whatsapp_channel")) {
+      return NextResponse.json({ error: "Jenis akun WhatsApp tidak valid." }, { status: 400 });
+    }
+    const normalizedProvider = provider || "whatsapp_channel";
+    const normalizedExternalId = externalAccountId ? String(externalAccountId).trim() : "";
+    if (normalizedExternalId && normalizedProvider === "whatsapp_channel" && !/^\d{5,40}@newsletter$/.test(normalizedExternalId)) {
+      return NextResponse.json({ error: "ID saluran harus berupa JID WhatsApp Channel yang valid." }, { status: 400 });
+    }
+    if (normalizedExternalId && normalizedProvider === "whatsapp_group" && !/^\d{5,40}(?:-\d{1,30})?@g\.us$/.test(normalizedExternalId)) {
+      return NextResponse.json({ error: "ID grup harus berupa JID WhatsApp Group yang valid." }, { status: 400 });
+    }
+    if (normalizedExternalId && normalizedProvider === "whatsapp_business" && !/^\+?\d{8,20}(?:@s\.whatsapp\.net)?$/.test(normalizedExternalId)) {
+      return NextResponse.json({ error: "ID WhatsApp Business harus berupa nomor WhatsApp yang valid." }, { status: 400 });
+    }
+    if (id) {
+      const { account, error } = await getSocialAccount(supa, id);
+      if (error) return NextResponse.json({ error: "Gagal memeriksa akun WhatsApp." }, { status: 500 });
+      if (!account || !canManageSocialAccount(actor, account)) {
+        return NextResponse.json({ error: "Akun yang akan diubah tidak ditemukan atau di luar cakupan Anda." }, { status: 404 });
+      }
     }
 
     try {
       const payload = {
-        provider: provider || "whatsapp_channel",
+        provider: normalizedProvider,
         province_id: provinceId || null,
         university_id: universityId || null,
         handle: cleanHandle,
-        external_account_id: externalAccountId ? String(externalAccountId).trim() : null,
-        status: externalAccountId ? "connected" : "not_connected",
+        external_account_id: normalizedExternalId || null,
+        status: normalizedExternalId ? "connected" : "not_connected",
         updated_at: new Date().toISOString(),
       };
 
@@ -253,7 +277,7 @@ export async function POST(req) {
           .eq("id", id);
         if (updErr) throw updErr;
       } else {
-        payload.created_by = actor.id;
+        payload.created_by = actor.userId;
         const { error: insErr } = await supa
           .from("organization_social_accounts")
           .insert(payload);
@@ -269,16 +293,28 @@ export async function POST(req) {
 
   // 3. Uji coba pengiriman pesan ke Saluran atau Grup
   if (action === "test_broadcast") {
-    const { targetJid, provider, message } = body;
-    const cleanJid = String(targetJid || "").trim();
-    const testMsg = message || `🔔 *Uji Coba Siaran Kampus Kita*\nKanal: ${cleanJid}\nWaktu: ${new Date().toLocaleString("id-ID")}\nPesan uji coba sistem multi-channel nasional berhasil terkirim.`;
-
-    if (!cleanJid) {
-      return NextResponse.json({ error: "Target JID belum diisi." }, { status: 400 });
+    const { accountId, message } = body;
+    const { account, error } = await getSocialAccount(supa, accountId);
+    if (error) return NextResponse.json({ error: "Gagal memeriksa target siaran." }, { status: 500 });
+    if (!account || !canManageSocialAccount(actor, account)) {
+      return NextResponse.json({ error: "Target siaran tidak ditemukan atau di luar cakupan Anda." }, { status: 404 });
     }
+    if (!["whatsapp_channel", "whatsapp_group", "whatsapp_business"].includes(account.provider)) {
+      return NextResponse.json({ error: "Target bukan akun WhatsApp." }, { status: 400 });
+    }
+    if (account.status !== "connected") {
+      return NextResponse.json({ error: "Hubungkan target WhatsApp terlebih dahulu." }, { status: 409 });
+    }
+    const cleanJid = String(account.external_account_id || (String(account.handle).includes("@") ? account.handle : "")).trim();
+    if (!cleanJid || (account.provider === "whatsapp_channel" && !cleanJid.endsWith("@newsletter")) || (account.provider === "whatsapp_group" && !cleanJid.endsWith("@g.us"))) {
+      return NextResponse.json({ error: "Target belum memiliki JID WhatsApp yang valid dan tersimpan." }, { status: 409 });
+    }
+    const testMsg = typeof message === "string" && message.trim()
+      ? message.trim().slice(0, 1000)
+      : `🔔 *Uji Coba Siaran Kampus Kita*\nKanal: ${account.handle}\nWaktu: ${new Date().toLocaleString("id-ID")}\nPesan uji coba sistem multi-channel berhasil terkirim.`;
 
     try {
-      if (provider === "whatsapp_channel" || cleanJid.endsWith("@newsletter")) {
+      if (account.provider === "whatsapp_channel") {
         const res = await sendChannelWa(cleanJid, testMsg);
         if (!res.ok) {
           return NextResponse.json({ ok: false, error: res.error || "Gagal mengirim ke saluran." });
@@ -286,7 +322,7 @@ export async function POST(req) {
         return NextResponse.json({ ok: true, message: "Pesan berhasil dipublikasikan ke WhatsApp Channel!" });
       }
 
-      if (provider === "whatsapp_group" || cleanJid.endsWith("@g.us")) {
+      if (account.provider === "whatsapp_group") {
         const res = await sendWa(cleanJid, testMsg, null, null, { jenis: "grup" });
         if (!res.ok) {
           return NextResponse.json({ ok: false, error: res.galat || res.error || "Gagal mengirim ke grup." });
@@ -306,6 +342,12 @@ export async function POST(req) {
   if (action === "delete_channel") {
     const { id } = body;
     if (!id) return NextResponse.json({ error: "ID Saluran wajib disertakan." }, { status: 400 });
+
+    const { account, error: accountError } = await getSocialAccount(supa, id);
+    if (accountError) return NextResponse.json({ error: "Gagal memeriksa akun WhatsApp." }, { status: 500 });
+    if (!account || !canManageSocialAccount(actor, account)) {
+      return NextResponse.json({ error: "Akun tidak ditemukan atau di luar cakupan akses Anda." }, { status: 404 });
+    }
 
     try {
       const { error } = await supa

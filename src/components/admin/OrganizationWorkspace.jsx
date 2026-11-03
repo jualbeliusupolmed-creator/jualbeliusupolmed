@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Building2, Check, CircleAlert, Camera, LoaderCircle, MapPin, Plus, Search,
   ShieldCheck, X, Pencil, Layers, Radio, ExternalLink, ChevronRight, CheckCircle2,
-  AlertCircle, School, Eye
+  AlertCircle, School, Eye, FileUp
 } from "lucide-react";
 
 const EMPTY_CATALOG = { provinces: [], universities: [], catalogSource: "relational" };
@@ -33,6 +33,106 @@ function connectionStatus(account) {
   return "Belum diatur";
 }
 
+function parseCsvRows(text) {
+  const rows = [];
+  let row = [];
+  let cell = "";
+  let quoted = false;
+  const source = String(text || "").replace(/^\uFEFF/, "");
+  const firstLine = source.split(/[\r\n]/, 1)[0] || "";
+  const delimiter = (firstLine.match(/;/g) || []).length > (firstLine.match(/,/g) || []).length ? ";" : ",";
+  for (let index = 0; index < source.length; index += 1) {
+    const char = source[index];
+    if (char === '"') {
+      if (quoted && source[index + 1] === '"') { cell += '"'; index += 1; }
+      else quoted = !quoted;
+    } else if (char === delimiter && !quoted) {
+      row.push(cell.trim()); cell = "";
+    } else if ((char === "\n" || char === "\r") && !quoted) {
+      if (char === "\r" && source[index + 1] === "\n") index += 1;
+      row.push(cell.trim());
+      if (row.some(Boolean)) rows.push(row);
+      row = []; cell = "";
+    } else cell += char;
+  }
+  row.push(cell.trim());
+  if (row.some(Boolean)) rows.push(row);
+  return rows;
+}
+
+function normalizeHeader(value) {
+  return String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+export function previewNationalCatalogCsv(text, currentCatalog) {
+  const rows = parseCsvRows(text);
+  if (rows.length < 2) throw new Error("CSV kosong atau hanya berisi judul kolom.");
+  const headers = rows[0].map(normalizeHeader);
+  const findColumn = (aliases) => headers.findIndex((header) => aliases.includes(header));
+  const codeIndex = findColumn(["npsn", "kode pt", "kode perguruan tinggi", "kode"]);
+  const nameIndex = findColumn(["nama perguruan tinggi", "nama pt", "nama institusi", "nama perguruan tinggi negeri"]);
+  const provinceIndex = findColumn(["provinsi", "nama provinsi", "province"]);
+  if (nameIndex < 0 || provinceIndex < 0) throw new Error("Kolom wajib belum ditemukan. CSV harus memiliki kolom Nama Perguruan Tinggi dan Provinsi; NPSN disarankan.");
+
+  const provincesById = new Map((currentCatalog.provinces || []).map((item) => [item.id, item]));
+  const existingUniversities = new Set((currentCatalog.universities || []).map((item) => {
+    const provinceName = provincesById.get(item.provinceId)?.name || item.provinceId || "";
+    return `${normalizeHeader(item.name)}|${normalizeHeader(provinceName)}`;
+  }));
+  const existingIds = new Set((currentCatalog.universities || []).map((item) => String(item.id || "").toLowerCase()));
+  const provinceIds = new Map((currentCatalog.provinces || []).map((item) => [item.id, normalizeHeader(item.name)]));
+  const existingCodes = new Set((currentCatalog.universities || []).map((item) => String(item.code || "").toLowerCase()));
+  const existingProvinces = new Map((currentCatalog.provinces || []).map((item) => [normalizeHeader(item.name), item]));
+  const additions = [];
+  const newProvinces = new Map();
+  const skipped = [];
+  const seenRows = new Set();
+
+  for (const row of rows.slice(1)) {
+    const name = String(row[nameIndex] || "").trim();
+    const provinceName = String(row[provinceIndex] || "").trim();
+    const sourceCode = codeIndex >= 0 ? String(row[codeIndex] || "").trim() : "";
+    if (!name || !provinceName) { skipped.push("Baris tanpa nama institusi atau provinsi"); continue; }
+    const nameKey = normalizeHeader(name);
+    const provinceKey = normalizeHeader(provinceName);
+    const identityKey = sourceCode ? `code:${sourceCode.toLowerCase()}` : `name:${nameKey}|${provinceKey}`;
+    const nameLocationKey = `${nameKey}|${provinceKey}`;
+    if (seenRows.has(identityKey) || existingUniversities.has(nameLocationKey)) { skipped.push(`${name} (duplikat)`); continue; }
+    if (sourceCode && existingCodes.has(sourceCode.toLowerCase())) { skipped.push(`${name} (kode sudah dipakai)`); continue; }
+    const slugBase = sourceCode ? `pt-${slugify(sourceCode)}` : `pt-${slugify(provinceName)}-${slugify(name)}`;
+    if (!slugBase || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slugBase)) { skipped.push(`${name} (kode tidak valid)`); continue; }
+    let province = existingProvinces.get(provinceKey) || newProvinces.get(provinceKey);
+    if (!province) {
+      const provinceId = slugify(provinceName);
+      if (!provinceId) { skipped.push(`${name} (provinsi tidak valid)`); continue; }
+      if (provinceIds.has(provinceId) && provinceIds.get(provinceId) !== provinceKey) {
+        skipped.push(`${name} (ID provinsi bentrok)`);
+        continue;
+      }
+      province = { id: provinceId, name: provinceName, active: false, accounts: { instagram: "", whatsapp_channel: "" } };
+      newProvinces.set(provinceKey, province);
+      existingProvinces.set(provinceKey, province);
+      provinceIds.set(provinceId, provinceKey);
+    }
+    if (existingIds.has(slugBase)) {
+      skipped.push(`${name} (ID kampus bentrok)`);
+      continue;
+    }
+    const codeBase = (sourceCode || name.split(/\s+/).map((part) => part[0]).join("")).toUpperCase().replace(/[^A-Z0-9_-]/g, "").slice(0, 32);
+    if (!codeBase || existingCodes.has(codeBase.toLowerCase())) { skipped.push(`${name} (kode singkat bentrok)`); continue; }
+    additions.push({
+      id: slugBase, code: codeBase, name, provinceId: province.id, active: false,
+      accounts: { instagram: "", whatsapp_channel: "" }, units: [], emailDomains: [],
+    });
+    seenRows.add(identityKey);
+    existingUniversities.add(nameLocationKey);
+    existingIds.add(slugBase);
+    existingCodes.add(codeBase.toLowerCase());
+  }
+  if (additions.length > 10_000) throw new Error("Impor ini melebihi batas 10.000 universitas per sekali proses. Pecah sumber datanya per bagian.");
+  return { additions, provinces: [...newProvinces.values()], skipped };
+}
+
 async function requestJson(url, options) {
   const response = await fetch(url, options);
   const body = await response.json().catch(() => ({}));
@@ -46,6 +146,8 @@ export default function OrganizationWorkspace() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [catalogImport, setCatalogImport] = useState(null);
+  const [catalogImportError, setCatalogImportError] = useState("");
 
   // Tabs: "overview" (Ringkasan Hierarki), "campuses" (Universitas & Cabang), "provinces" (Provinsi)
   const [activeTab, setActiveTab] = useState("overview");
@@ -57,6 +159,31 @@ export default function OrganizationWorkspace() {
   // Modal State: null | { type: "add_campus" | "edit_campus" | "add_province" | "edit_province" | "manage_units", payload }
   const [modal, setModal] = useState(null);
   const [modalError, setModalError] = useState("");
+
+  async function readNationalCatalogFile(file) {
+    setCatalogImportError("");
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith(".csv") || file.size > 3_000_000) {
+      setCatalogImportError("Pilih berkas CSV UTF-8 maksimal 3 MB. Dari XLSX, ekspor lembar data sebagai CSV terlebih dahulu.");
+      return;
+    }
+    try {
+      const preview = previewNationalCatalogCsv(await file.text(), data);
+      setCatalogImport(preview);
+    } catch (err) {
+      setCatalogImportError(err.message);
+    }
+  }
+
+  async function applyNationalCatalogImport() {
+    if (!catalogImport) return;
+    const saved = await persistCatalog(
+      [...data.provinces, ...catalogImport.provinces],
+      [...data.universities, ...catalogImport.additions],
+      `${catalogImport.additions.length} universitas ditambahkan sebagai nonaktif untuk verifikasi.`,
+    );
+    if (saved) setCatalogImport(null);
+  }
 
   async function loadData() {
     setLoading(true);
@@ -150,12 +277,14 @@ export default function OrganizationWorkspace() {
       setNotice(successMsg);
       setModal(null);
       await loadData();
+      return true;
     } catch (err) {
       if (modal) {
         setModalError(err.message);
       } else {
         setError(err.message);
       }
+      return false;
     } finally {
       setSaving(false);
     }
@@ -193,12 +322,63 @@ export default function OrganizationWorkspace() {
             untuk penempatan produk, multi-account Instagram, dan routing komunikasi.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => { setCatalogImport(null); setCatalogImportError(""); document.getElementById("national-catalog-csv")?.click(); }}
+            className="inline-flex min-h-9 items-center gap-2 rounded-xl border border-emerald-200 bg-white px-3 text-xs font-extrabold text-emerald-900 hover:bg-emerald-50"
+          >
+            <FileUp className="h-4 w-4" /> Impor katalog nasional
+          </button>
+          <input
+            id="national-catalog-csv"
+            type="file"
+            accept=".csv,text/csv"
+            className="hidden"
+            onChange={(event) => { readNationalCatalogFile(event.target.files?.[0]); event.target.value = ""; }}
+          />
           <span className="inline-flex min-h-8 items-center gap-1.5 rounded-full bg-emerald-50 px-3 text-xs font-extrabold text-emerald-900 border border-emerald-200/60">
             <ShieldCheck className="h-3.5 w-3.5 text-emerald-700" /> Superadmin Pusat
           </span>
         </div>
       </header>
+
+      {catalogImportError && <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-bold text-rose-800">{catalogImportError}</div>}
+      {catalogImport && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/50 p-4">
+          <section role="dialog" aria-modal="true" aria-labelledby="catalog-import-title" className="max-h-[88vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 id="catalog-import-title" className="text-lg font-black text-slate-900">Pratinjau impor katalog kampus</h2>
+                <p className="mt-1 text-xs leading-relaxed text-slate-600">Data baru akan masuk sebagai nonaktif. Verifikasi identitas, akun sosial, dan kanal sebelum mengaktifkan.</p>
+              </div>
+              <button type="button" aria-label="Tutup" onClick={() => setCatalogImport(null)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"><X className="h-4 w-4" /></button>
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+              <div className="rounded-xl bg-emerald-50 p-3"><strong className="block text-lg text-emerald-900">{catalogImport.additions.length}</strong><span className="text-[10px] font-bold text-emerald-800">Universitas baru</span></div>
+              <div className="rounded-xl bg-amber-50 p-3"><strong className="block text-lg text-amber-900">{catalogImport.provinces.length}</strong><span className="text-[10px] font-bold text-amber-800">Provinsi baru nonaktif</span></div>
+              <div className="rounded-xl bg-slate-100 p-3"><strong className="block text-lg text-slate-900">{catalogImport.skipped.length}</strong><span className="text-[10px] font-bold text-slate-600">Baris dilewati</span></div>
+            </div>
+            <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
+              <div className="grid grid-cols-[1fr_1fr_90px] gap-2 bg-slate-50 px-3 py-2 text-[10px] font-black uppercase text-slate-500"><span>Universitas</span><span>Provinsi</span><span>Status</span></div>
+              <div className="max-h-60 overflow-y-auto divide-y divide-slate-100">
+                {catalogImport.additions.slice(0, 100).map((item) => (
+                  <div key={item.id} className="grid grid-cols-[1fr_1fr_90px] gap-2 px-3 py-2 text-xs">
+                    <span className="font-semibold text-slate-800">{item.name}</span><span className="text-slate-600">{data.provinces.find((p) => p.id === item.provinceId)?.name || catalogImport.provinces.find((p) => p.id === item.provinceId)?.name}</span><span className="font-bold text-amber-700">Nonaktif</span>
+                  </div>
+                ))}
+                {catalogImport.additions.length > 100 && <p className="px-3 py-2 text-xs text-slate-500">Tampilan dibatasi 100 baris; seluruh baris valid akan diimpor.</p>}
+                {!catalogImport.additions.length && <p className="px-3 py-5 text-center text-xs text-slate-500">Tidak ada baris baru yang lolos pemeriksaan awal.</p>}
+              </div>
+            </div>
+            {catalogImport.skipped.length > 0 && <p className="mt-3 text-xs text-slate-600">Sejumlah baris dilewati karena duplikat atau data belum lengkap. Jumlah: {catalogImport.skipped.length}.</p>}
+            <div className="mt-5 flex justify-end gap-2">
+              <button type="button" onClick={() => setCatalogImport(null)} className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-700">Batal</button>
+              <button type="button" disabled={saving || !catalogImport.additions.length} onClick={applyNationalCatalogImport} className="rounded-xl bg-emerald-800 px-4 py-2 text-xs font-extrabold text-white disabled:opacity-50">{saving ? "Menyimpan..." : "Tambahkan sebagai nonaktif"}</button>
+            </div>
+          </section>
+        </div>
+      )}
 
       {/* ── STATS RINGKAS ── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

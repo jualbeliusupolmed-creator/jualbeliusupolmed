@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminActor, hasAdminPermission, getAdminCampusScope } from "@/lib/admin-access";
 import { getAdminClient } from "@/lib/supabaseAdmin";
+import { canManageSocialScope } from "@/lib/socialAccountAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -29,9 +30,10 @@ export async function GET(req) {
     const activeCampuses = await getAdminCampusScope(actor);
 
     const { searchParams } = new URL(req.url);
-    const limit = Math.min(parseInt(searchParams.get("limit") || "50", 10), 100);
+    const parsedLimit = Number.parseInt(searchParams.get("limit") || "50", 10);
+    const limit = Number.isFinite(parsedLimit) ? Math.max(1, Math.min(parsedLimit, 100)) : 50;
     const actionFilter = searchParams.get("action");
-    const search = searchParams.get("q");
+    const search = String(searchParams.get("q") || "").trim().slice(0, 80).replace(/[^\p{L}\p{N}\s@.-]/gu, " ");
 
     let query = supa
       .from("instagram_dm_logs")
@@ -56,12 +58,25 @@ export async function GET(req) {
       .order("created_at", { ascending: false })
       .limit(limit);
 
-    // Filter berdasarkan scope admin jika bukan "all"
-    if (activeCampuses.length > 0 && !activeCampuses.includes("all")) {
-      const universityCodes = activeCampuses.map((c) => c.toLowerCase());
-      query = query.or(
-        `university_id.in.(${universityCodes.join(",")}),provinces.name.ilike.%sumatera%`
-      );
+    // Scope nasional superadmin menggunakan null; admin lain hanya menerima
+    // log provinsi/kampus yang memiliki assignment eksplisit.
+    if (actor.role !== "superadmin") {
+      const [provinceIds, universityResult] = [
+        (actor.scopes || []).filter((scope) => scope.scope_type === "province").map((scope) => String(scope.scope_id || "").toLowerCase()),
+        await supa.from("universities").select("id,code,province_id"),
+      ];
+      if (universityResult.error) throw universityResult.error;
+      const universityIds = (universityResult.data || []).filter((university) => canManageSocialScope(actor, {
+        scope_type: "university",
+        university_id: university.id,
+        university_code: university.code,
+        university_province_id: university.province_id,
+      })).map((university) => university.id);
+      const filters = [];
+      if (provinceIds.length) filters.push(`province_id.in.(${provinceIds.join(",")})`);
+      if (universityIds.length) filters.push(`university_id.in.(${universityIds.join(",")})`);
+      if (!filters.length) return NextResponse.json({ ok: true, logs: [], total: 0, activeCampuses: [] });
+      query = query.or(filters.join(","));
     }
 
     if (actionFilter && actionFilter !== "all") {

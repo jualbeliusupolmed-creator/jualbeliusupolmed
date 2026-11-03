@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { getAdminActor, hasAdminPermission, getAdminCampusScope } from "@/lib/admin-access";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { resolveInstagramToken, getInstagramUserId } from "@/lib/instagramDm";
+import { resolveInstagramToken } from "@/lib/instagramDm";
+import { canManageSocialAccount, canManageSocialScope, getSocialAccount, getSocialScope } from "@/lib/socialAccountAccess";
+import { assertInstagramTokenEncryptionReady, deleteInstagramAccountToken, getInstagramAccountToken, hasInstagramAccountToken, listInstagramAccountTokenIds, saveInstagramAccountToken } from "@/lib/instagramAccountCredentials";
 
 export const dynamic = "force-dynamic";
 
@@ -47,33 +49,30 @@ export async function GET(req) {
         last_error_code,
         created_at,
         provinces(id, name),
-        universities(id, code, name)
+        universities(id, code, name, province_id)
       `)
       .order("created_at", { ascending: true });
 
     if (error) throw error;
 
-    // Filter akun berdasarkan scope admin jika bukan "all"
-    const filteredAccounts = (accounts || []).filter((acc) => {
-      if (activeCampuses.length === 0 || activeCampuses.includes("all")) {
-        return true;
-      }
-      if (acc.scope_type === "university") {
-        return activeCampuses.some(
-          (c) =>
-            c.toLowerCase() === acc.university_id?.toLowerCase() ||
-            c.toLowerCase() === acc.universities?.code?.toLowerCase()
-        );
-      }
-      if (acc.scope_type === "province") {
-        if (actor.role === "superadmin") return true;
-        const actorProvinceIds = (actor.scopes || [])
-          .filter((s) => s.scope_type === "province")
-          .map((s) => String(s.scope_id || "").toLowerCase());
-        return actorProvinceIds.includes(String(acc.province_id || "").toLowerCase());
-      }
-      return true;
-    });
+    const tokenAccountIds = await listInstagramAccountTokenIds(supa);
+    const legacyCatalogId = String(process.env.META_KATALOG_IG_USER_ID || "").trim();
+    let legacyCatalogTokenAvailable = false;
+    if (legacyCatalogId && (accounts || []).some((account) =>
+      account.provider === "instagram" && String(account.external_account_id || "") === legacyCatalogId
+    )) {
+      try { legacyCatalogTokenAvailable = Boolean(await resolveInstagramToken(legacyCatalogId)); } catch {}
+    }
+
+    // Jangan memakai scope kosong sebagai akses global. null hanya berarti
+    // superadmin memilih cakupan nasional; admin lain harus cocok dengan assignment.
+    const filteredAccounts = (accounts || []).filter((acc) => canManageSocialAccount(actor, acc)).map((acc) => ({
+      ...acc,
+      has_access_token: tokenAccountIds.has(acc.id) || (
+        acc.provider === "instagram" && legacyCatalogTokenAvailable &&
+        String(acc.external_account_id || "") === legacyCatalogId
+      ),
+    }));
 
     const stats = {
       total: filteredAccounts.length,
@@ -125,11 +124,26 @@ export async function POST(req) {
   const supa = getAdminClient();
 
   if (action === "test_connection") {
-    const { accountId, externalAccountId, provider = "instagram" } = body;
+    const { accountId } = body;
+    const { account, error: accountError } = await getSocialAccount(supa, accountId);
+    if (accountError) return NextResponse.json({ error: "Gagal memeriksa akun sosial." }, { status: 500 });
+    if (!account || !canManageSocialAccount(actor, account)) {
+      return NextResponse.json({ error: "Akun tidak ditemukan atau di luar cakupan akses Anda." }, { status: 404 });
+    }
+    if (account.provider !== "instagram") {
+      return NextResponse.json({ error: "Uji koneksi hanya tersedia untuk akun Instagram." }, { status: 400 });
+    }
 
-    if (provider === "instagram") {
-      const targetId = externalAccountId || getInstagramUserId("katalog");
-      const token = await resolveInstagramToken(externalAccountId || "katalog");
+    {
+      const externalAccountId = account.external_account_id;
+      if (!externalAccountId) {
+        return NextResponse.json({ error: "ID akun Instagram belum disimpan. Lengkapi pengaturan akun terlebih dahulu." }, { status: 409 });
+      }
+      if (!/^\d{5,40}$/.test(externalAccountId)) {
+        return NextResponse.json({ error: "ID akun Instagram tidak valid." }, { status: 400 });
+      }
+      const targetId = externalAccountId;
+      const token = await getInstagramAccountToken(supa, account);
 
       if (!token) {
         return NextResponse.json({
@@ -144,11 +158,17 @@ export async function POST(req) {
         const res = await fetch(url, {
           headers: { Authorization: `Bearer ${token}` },
           cache: "no-store",
+          signal: AbortSignal.timeout(12000),
         });
         const data = await res.json().catch(() => ({}));
 
         if (!res.ok || data.error) {
           const errMsg = data.error?.message || `HTTP ${res.status}`;
+          await supa.from("organization_social_accounts").update({
+            status: "error",
+            last_checked_at: new Date().toISOString(),
+            last_error_code: String(data.error?.code || res.status).slice(0, 80),
+          }).eq("id", accountId);
           return NextResponse.json({
             ok: false,
             error: `Gagal memverifikasi akun Instagram (${errMsg})`,
@@ -158,7 +178,7 @@ export async function POST(req) {
 
         // Jika berhasil, perbarui status akun di database
         if (accountId) {
-          await supa
+          const { error: updateError } = await supa
             .from("organization_social_accounts")
             .update({
               status: "connected",
@@ -166,6 +186,7 @@ export async function POST(req) {
               last_error_code: null,
             })
             .eq("id", accountId);
+          if (updateError) throw updateError;
         }
 
         return NextResponse.json({
@@ -186,41 +207,88 @@ export async function POST(req) {
       }
     }
 
-    return NextResponse.json({ ok: true, message: "Koneksi WhatsApp valid." });
   }
 
   if (action === "upsert_account") {
-    const { id, provider, provinceId, universityId, handle, externalAccountId, status } = body;
+    const { id, provider, provinceId, universityId, handle, externalAccountId, accessToken } = body;
+    const providers = new Set(["instagram", "whatsapp_channel", "whatsapp_group", "whatsapp_business"]);
 
     const cleanHandle = String(handle || "").trim().replace(/^@/, "");
     if (!cleanHandle) {
       return NextResponse.json({ error: "Handle atau username akun wajib diisi." }, { status: 400 });
     }
 
-    if (!provinceId && !universityId) {
+    const targetScope = await getSocialScope(supa, { provinceId, universityId });
+    if (!targetScope) {
       return NextResponse.json({ error: "Provinsi atau Universitas tujuan wajib dipilih." }, { status: 400 });
     }
+    if (!canManageSocialScope(actor, targetScope)) {
+      return NextResponse.json({ error: "Anda tidak memiliki wewenang untuk cakupan tujuan ini." }, { status: 403 });
+    }
+    if (!providers.has(provider || "instagram")) {
+      return NextResponse.json({ error: "Jenis akun sosial tidak valid." }, { status: 400 });
+    }
+    const normalizedProvider = provider || "instagram";
+    const cleanExternalAccountId = externalAccountId ? String(externalAccountId).trim() : "";
+    if (cleanExternalAccountId && normalizedProvider === "instagram" && !/^\d{5,40}$/.test(cleanExternalAccountId)) {
+      return NextResponse.json({ error: "ID akun Instagram harus berupa ID numerik yang valid." }, { status: 400 });
+    }
+    if (accessToken && (normalizedProvider !== "instagram" || !cleanExternalAccountId)) {
+      return NextResponse.json({ error: "Token hanya dapat disimpan pada akun Instagram yang sudah memiliki ID akun Meta." }, { status: 400 });
+    }
+    if (accessToken && (typeof accessToken !== "string" || accessToken.trim().length < 20 || accessToken.trim().length > 10000)) {
+      return NextResponse.json({ error: "Token Instagram tidak valid." }, { status: 400 });
+    }
+    let previousAccount = null;
+    if (id) {
+      const { account, error } = await getSocialAccount(supa, id);
+      if (error) return NextResponse.json({ error: "Gagal memeriksa akun sosial." }, { status: 500 });
+      if (!account || !canManageSocialAccount(actor, account)) {
+        return NextResponse.json({ error: "Akun yang akan diubah tidak ditemukan atau di luar cakupan Anda." }, { status: 404 });
+      }
+      previousAccount = account;
+    }
 
-    if (actor.role !== "superadmin") {
-      const actorProvinceIds = (actor.scopes || [])
-        .filter((s) => s.scope_type === "province")
-        .map((s) => String(s.scope_id || "").toLowerCase());
-      if (provinceId && !actorProvinceIds.includes(String(provinceId).toLowerCase())) {
-        return NextResponse.json({ error: "Anda tidak memiliki wewenang untuk wilayah provinsi ini." }, { status: 403 });
+    let suppliedToken = "";
+    if (normalizedProvider === "instagram" && accessToken) {
+      try {
+        assertInstagramTokenEncryptionReady();
+      } catch {
+        return NextResponse.json({ error: "Penyimpanan token belum siap. Operator perlu mengatur kunci enkripsi server sebelum menghubungkan Instagram." }, { status: 503 });
+      }
+      suppliedToken = accessToken.trim();
+      try {
+        const checkUrl = `https://graph.facebook.com/v24.0/${cleanExternalAccountId}?fields=id,username,name`;
+        const response = await fetch(checkUrl, {
+          headers: { Authorization: `Bearer ${suppliedToken}` },
+          cache: "no-store",
+          signal: AbortSignal.timeout(12000),
+        });
+        const meta = await response.json().catch(() => ({}));
+        if (!response.ok || meta.error || String(meta.id || "") !== cleanExternalAccountId) {
+          return NextResponse.json({
+            error: "Meta tidak dapat memverifikasi token untuk akun Instagram yang dipilih. Periksa Business Account ID, token, dan izin publikasi.",
+          }, { status: 422 });
+        }
+      } catch {
+        return NextResponse.json({ error: "Tidak dapat memverifikasi token ke Meta saat ini. Perubahan akun belum disimpan; coba lagi." }, { status: 503 });
       }
     }
 
     try {
       const payload = {
-        provider: provider || "instagram",
+        provider: normalizedProvider,
         province_id: provinceId || null,
         university_id: universityId || null,
         handle: cleanHandle,
-        external_account_id: externalAccountId ? String(externalAccountId).trim() : null,
-        status: status || "connected",
+        external_account_id: cleanExternalAccountId || null,
+        status: normalizedProvider === "instagram"
+          ? cleanExternalAccountId ? "pending" : "not_connected"
+          : cleanExternalAccountId ? "connected" : "not_connected",
         updated_at: new Date().toISOString(),
       };
 
+      let savedAccountId = id;
       if (id) {
         const { error: updErr } = await supa
           .from("organization_social_accounts")
@@ -228,14 +296,43 @@ export async function POST(req) {
           .eq("id", id);
         if (updErr) throw updErr;
       } else {
-        payload.created_by = actor.id;
-        const { error: insErr } = await supa
+        payload.created_by = actor.userId;
+        const { data: inserted, error: insErr } = await supa
           .from("organization_social_accounts")
-          .insert(payload);
+          .insert(payload)
+          .select("id")
+          .single();
         if (insErr) throw insErr;
+        savedAccountId = inserted.id;
       }
 
-      return NextResponse.json({ ok: true, message: "Akun sosial berhasil disimpan." });
+      const credentialChanged = Boolean(previousAccount?.provider === "instagram" && (
+        normalizedProvider !== "instagram" || previousAccount.external_account_id !== cleanExternalAccountId
+      ));
+      if (credentialChanged && !accessToken) await deleteInstagramAccountToken(supa, savedAccountId);
+
+      let tokenReady = false;
+      if (normalizedProvider === "instagram" && suppliedToken) {
+        await saveInstagramAccountToken(supa, savedAccountId, cleanExternalAccountId, suppliedToken);
+        tokenReady = true;
+      } else if (normalizedProvider === "instagram" && cleanExternalAccountId && id && !credentialChanged) {
+        tokenReady = await hasInstagramAccountToken(supa, savedAccountId, cleanExternalAccountId);
+        if (!tokenReady && cleanExternalAccountId === String(process.env.META_KATALOG_IG_USER_ID || "").trim()) {
+          tokenReady = Boolean(await resolveInstagramToken(cleanExternalAccountId));
+        }
+      }
+
+      if (normalizedProvider === "instagram") {
+        const { error: statusError } = await supa.from("organization_social_accounts").update({
+          status: tokenReady ? "connected" : cleanExternalAccountId ? "pending" : "not_connected",
+          last_checked_at: tokenReady ? new Date().toISOString() : null,
+          last_error_code: null,
+          updated_at: new Date().toISOString(),
+        }).eq("id", savedAccountId);
+        if (statusError) throw statusError;
+      }
+
+      return NextResponse.json({ ok: true, accountId: savedAccountId, message: tokenReady ? "Akun tersimpan dan koneksi Meta berhasil diuji." : "Akun tersimpan. Tambahkan token Meta untuk mengaktifkan publikasi." });
     } catch (err) {
       console.error("[upsert_account] Error:", err);
       return NextResponse.json({ error: "Gagal menyimpan akun: " + err.message }, { status: 500 });
@@ -246,7 +343,14 @@ export async function POST(req) {
     const { id } = body;
     if (!id) return NextResponse.json({ error: "ID Akun wajib disertakan." }, { status: 400 });
 
+    const { account, error: accountError } = await getSocialAccount(supa, id);
+    if (accountError) return NextResponse.json({ error: "Gagal memeriksa akun sosial." }, { status: 500 });
+    if (!account || !canManageSocialAccount(actor, account)) {
+      return NextResponse.json({ error: "Akun tidak ditemukan atau di luar cakupan akses Anda." }, { status: 404 });
+    }
+
     try {
+      if (account.provider === "instagram") await deleteInstagramAccountToken(supa, id);
       const { error } = await supa
         .from("organization_social_accounts")
         .update({
