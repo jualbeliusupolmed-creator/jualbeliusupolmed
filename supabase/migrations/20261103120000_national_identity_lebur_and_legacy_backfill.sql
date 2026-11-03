@@ -208,3 +208,4 @@ set home_university_id = case
   else 'usu'
 end
 where home_university_id is null;
+

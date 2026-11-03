@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { ArrowRight, CalendarClock, Check, CircleAlert, LoaderCircle, MapPin, Package, Search, ShoppingBag, Users } from "lucide-react";
+import { useMemo, useState, useEffect } from "react";
+import { ArrowRight, CalendarClock, Check, CircleAlert, LoaderCircle, MapPin, Package, Search, ShoppingBag, Sparkles, Users } from "lucide-react";
 import { rupiah } from "@/lib/fees";
 
 const CATEGORIES = ["Semua", "Makanan", "Minuman", "Merchandise", "Jastip", "Lainnya"];
@@ -23,6 +23,28 @@ export default function OpenPoClient({ initialBatches = [], isAuthenticated = fa
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(initialError);
   const [success, setSuccess] = useState(null);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("preferred_campus");
+      if (saved && saved !== "Semua") {
+        const match = initialBatches.find(
+          (b) => String(b.campus || "").toLowerCase() === saved.toLowerCase()
+        );
+        if (match) {
+          setCampusFilter(match.campus);
+        }
+      }
+    } catch {}
+
+    const onCampus = (e) => {
+      if (e.detail?.campus && e.detail.campus !== "Semua") {
+        setCampusFilter(e.detail.campus);
+      }
+    };
+    window.addEventListener("campus:change", onCampus);
+    return () => window.removeEventListener("campus:change", onCampus);
+  }, [initialBatches]);
 
   const campuses = useMemo(() => ["Semua kampus", ...new Set(initialBatches.map((batch) => batch.campus).filter(Boolean))], [initialBatches]);
   const filtered = useMemo(() => {
@@ -80,7 +102,7 @@ export default function OpenPoClient({ initialBatches = [], isAuthenticated = fa
         {initialError ? <div className="grid min-h-52 place-items-center rounded-2xl border border-dashed border-amber-300 bg-amber-50/50 p-6 text-center"><div><CircleAlert className="mx-auto h-7 w-7 text-amber-600" /><p className="mt-3 text-sm font-extrabold text-slate-800">Etalase PO belum siap</p><p className="mx-auto mt-1 max-w-md text-xs leading-relaxed text-slate-500">Database Open PO baru belum tersedia. Jalankan migrasi proyek ini sebelum batch dapat dipublikasikan.</p><Link href={nextPath} className="mt-4 inline-flex min-h-9 items-center rounded-full bg-emerald-800 px-4 text-xs font-extrabold text-white">Buka dashboard PO</Link></div></div> : filtered.length ? <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{filtered.map((batch) => {
           const remaining = Math.max(0, batch.quota - batch.reserved);
           return <article key={batch.id} className="group overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_4px_18px_-16px_rgba(15,23,42,.28)] transition hover:-translate-y-0.5 hover:shadow-lg"><div className="relative h-44 bg-emerald-50">{batch.photo ? <img src={batch.photo} alt={batch.title} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.02]" /> : <div className="grid h-full place-items-center text-emerald-700/30"><Package className="h-10 w-10" /></div>}<span className="absolute left-3 top-3 rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-extrabold text-emerald-900 shadow-sm">{batch.category}</span><span className="absolute right-3 top-3 rounded-full bg-slate-950/70 px-3 py-1.5 text-[10px] font-extrabold text-white">Sisa {remaining} slot</span></div><div className="p-4"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><h3 className="line-clamp-1 text-base font-black tracking-tight">{batch.title}</h3><p className="mt-1 text-xs font-semibold text-slate-500">{batch.seller_name}{batch.faculty ? ` · ${batch.faculty}` : ""}</p></div><div className="shrink-0 text-right"><p className="text-sm font-black text-emerald-800">{rupiah(batch.price)}</p><p className="text-[10px] text-slate-400">/ {batch.unit}</p></div></div>{batch.description ? <p className="mt-3 line-clamp-2 min-h-9 text-xs leading-relaxed text-slate-500">{batch.description}</p> : <p className="mt-3 min-h-9 text-xs text-slate-400">Detail produk tersedia dari penjual.</p>}<div className="mt-3 space-y-1.5 border-t border-slate-100 pt-3 text-[10px] font-semibold text-slate-500"><p className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-emerald-700" />{batch.campus} · {batch.pickup_point}</p><p className="flex items-center gap-1.5"><CalendarClock className="h-3.5 w-3.5 text-emerald-700" />Tutup {dateLabel(batch.closes_at)}</p></div><button onClick={() => { setSelected(batch); setError(""); setSuccess(null); }} disabled={remaining < 1} className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-full bg-emerald-800 px-4 text-xs font-extrabold text-white transition hover:bg-emerald-900 disabled:cursor-not-allowed disabled:bg-slate-300">Pesan slot <ArrowRight className="h-3.5 w-3.5" /></button></div></article>;
-        })}</div> : <div className="grid min-h-52 place-items-center rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center"><div><ShoppingBag className="mx-auto h-7 w-7 text-slate-300" /><p className="mt-3 text-sm font-extrabold text-slate-700">Belum ada batch yang cocok</p><p className="mt-1 text-xs text-slate-400">Coba ubah kata pencarian atau filter kampus.</p><Link href={nextPath} className="mt-4 inline-flex min-h-9 items-center rounded-full bg-emerald-800 px-4 text-xs font-extrabold text-white">Buat batch PO</Link></div></div>}
+        })}</div> : <div className="grid min-h-52 place-items-center rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center"><div><ShoppingBag className="mx-auto h-7 w-7 text-slate-300" /><p className="mt-3 text-sm font-extrabold text-slate-700">Belum ada batch yang cocok</p><p className="mt-1 text-xs text-slate-400">{campusFilter !== "Semua kampus" ? `Belum ada Open PO di kampus ${campusFilter}.` : "Coba ubah kata pencarian atau filter kategori."}</p><div className="mt-4 flex flex-wrap items-center justify-center gap-2">{campusFilter !== "Semua kampus" && <button type="button" onClick={() => setCampusFilter("Semua kampus")} className="inline-flex min-h-9 items-center rounded-full border border-emerald-200 bg-emerald-50 px-4 text-xs font-extrabold text-emerald-800 hover:bg-emerald-100">Tampilkan Semua Kampus 🌐</button>}<Link href={nextPath} className="inline-flex min-h-9 items-center rounded-full bg-emerald-800 px-4 text-xs font-extrabold text-white">Buat batch PO</Link></div></div></div>}
       </div>
 
       {selected ? <div className="fixed inset-0 z-[70] grid place-items-center bg-slate-950/45 p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelected(null); }}><form onSubmit={reserve} className="w-full max-w-md rounded-3xl bg-white p-5 shadow-2xl sm:p-6"><div className="flex items-start justify-between gap-3"><div><p className="text-[10px] font-extrabold uppercase tracking-[.15em] text-emerald-700">Reservasi slot</p><h2 className="mt-1 text-lg font-black">{selected.title}</h2><p className="mt-1 text-xs text-slate-500">{rupiah(selected.price)} / {selected.unit}</p></div><button type="button" onClick={() => setSelected(null)} className="grid h-9 w-9 place-items-center rounded-xl text-slate-400 hover:bg-slate-100">×</button></div>{!isAuthenticated ? <div className="mt-5 rounded-xl bg-amber-50 p-3 text-xs leading-relaxed text-amber-900">Masuk dengan akun JB untuk memesan. Akun marketplace yang sama digunakan untuk semua aktivitas.</div> : <div className="mt-5 space-y-3"><label className="block text-xs font-bold">Nama pemesan<input required minLength={2} maxLength={80} value={buyerName} onChange={(event) => setBuyerName(event.target.value)} className="mt-1.5 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:border-emerald-600" placeholder="Nama yang dapat dikenali penjual" /></label><label className="block text-xs font-bold">Jumlah<input required type="number" min="1" max={Math.max(1, selected.quota - selected.reserved)} value={quantity} onChange={(event) => setQuantity(Number(event.target.value))} className="mt-1.5 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm outline-none focus:border-emerald-600" /></label><p className="rounded-xl bg-slate-50 px-3 py-2.5 text-xs font-bold text-slate-700">Total: {rupiah(selected.price * quantity)}</p><label className="flex cursor-pointer items-start gap-2 rounded-xl bg-emerald-50 p-3 text-[11px] leading-relaxed text-emerald-950"><input required type="checkbox" checked={contactConsent} onChange={(event) => setContactConsent(event.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 accent-emerald-700" /><span>Saya setuju nomor WhatsApp akun JB saya dibagikan kepada penjual untuk kebutuhan reservasi ini.</span></label></div>}{error ? <p role="alert" className="mt-3 text-xs font-semibold text-rose-700">{error}</p> : null}<button disabled={submitting} className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-emerald-800 text-xs font-extrabold text-white hover:bg-emerald-900 disabled:opacity-60">{submitting ? <LoaderCircle className="h-4 w-4 animate-spin" /> : null}{!isAuthenticated ? "Masuk untuk memesan" : submitting ? "Menyimpan reservasi…" : "Buat reservasi"}</button></form></div> : null}

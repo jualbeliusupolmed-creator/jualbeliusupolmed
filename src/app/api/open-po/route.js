@@ -46,10 +46,20 @@ export async function POST(req) {
   if (pickupPoint.length < 2) return NextResponse.json({ error: "Titik pengambilan wajib diisi." }, { status: 400 });
   if (!/^https:\/\//i.test(imageUrl) && imageUrl && !imageUrl.startsWith("/")) return NextResponse.json({ error: "Foto harus memakai URL HTTPS atau path gambar situs." }, { status: 400 });
 
-  const settings = await getSettings();
-  if (!isAllowedCampus(campus, settings)) return NextResponse.json({ error: "Pilih kampus aktif dari daftar." }, { status: 400 });
-
   const admin = getAdminClient();
+  let resolvedCampus = campus;
+  if (!resolvedCampus) {
+    const { data: prof } = await admin
+      .from("seller_profiles")
+      .select("campus, home_university_id")
+      .eq("wa", sellerWa)
+      .maybeSingle();
+    resolvedCampus = prof?.campus || "";
+  }
+
+  const settings = await getSettings();
+  if (!isAllowedCampus(resolvedCampus, settings)) return NextResponse.json({ error: "Pilih kampus aktif dari daftar." }, { status: 400 });
+
   const { data, error } = await admin.rpc("create_open_po_batch", {
     p_seller_wa: sellerWa,
     p_name: name,
@@ -57,7 +67,7 @@ export async function POST(req) {
     p_category: category,
     p_unit: unit,
     p_image_url: imageUrl || null,
-    p_campus: campus,
+    p_campus: resolvedCampus,
     p_title: title,
     p_price_idr: price,
     p_quota: quota,
