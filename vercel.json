@@ -31,10 +31,6 @@
     {
       "path": "/api/cron/instagram-menfess",
       "schedule": "0 3 * * *"
-    },
-    {
-      "path": "/api/cron/omnichannel-distribution",
-      "schedule": "*/10 * * * *"
     }
   ]
 }

@@ -90,11 +90,11 @@ di atas.
 ## 4. Jadwal worker dan batas paket
 
 Pemicu omnichannel masih belum siap produksi. Pemeriksaan Supabase pada
-4 November 2026 tidak menemukan ekstensi `pg_cron`/`pg_net` maupun job
-`omnichannel-distribution-every-5m`. `vercel.json` di working tree menjadwalkan
-endpoint setiap 10 menit, tetapi status deployment dan paket Vercel tidak
-dapat diperiksa dari sesi ini. Jadwal lokal bukan bukti bahwa production
-worker berjalan.
+4 November 2026 tidak menemukan ekstensi `pg_cron`/`pg_net`, job
+`omnichannel-distribution-every-5m`, atau rahasia di Vault. Vercel menolak
+deployment `83831f3` karena jadwal `*/10` melampaui batas Hobby; jadwal itu kini
+dihapus dari `vercel.json`. Deployment perbaikan dan aktivasi Supabase Cron
+belum diverifikasi.
 
 Pastikan `CRON_SECRET` tersedia pada runtime Vercel dan nilai yang sama berada
 di Supabase Vault dengan nama `omnichannel_cron_secret`. Setelah memasang
@@ -144,7 +144,7 @@ API eksternal yang tidak menyediakan kunci idempotensi bagi operasi tersebut.
   `SECURITY DEFINER` yang harus terus ditinjau.
 - Uji unit/lint lokal dapat dijalankan di repo. Uji isolasi lintas akun
   provinsi/kampus dan publikasi nyata belum dilakukan.
-- Deployment Vercel, rahasia runtime, verifikasi paket, dan riwayat cron belum
-  dapat diperiksa dari sesi ini.
+- Deployment Vercel setelah penghapusan jadwal cepat, rahasia runtime, dan
+  riwayat cron belum dapat diperiksa dari sesi ini.
 - Catat hasil aktual di sini setelah langkah produksi diselesaikan; jangan
   mengubah status menjadi “siap nasional” hanya karena kampus ada di katalog.
