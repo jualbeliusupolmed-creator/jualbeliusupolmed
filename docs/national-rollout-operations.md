@@ -57,7 +57,7 @@ dicabut atau kedaluwarsa, jadi indikator **Terhubung** perlu diuji ulang
 berkala. UI saat ini menyediakan koneksi per akun tetapi belum memakai OAuth
 multi-tenant otomatis; operator memasukkan token yang dibuat di Meta.
 
-## 3. Preflight database produksi
+## 3. Status keamanan database produksi
 
 Gunakan berkas [audit-supabase-produksi-readonly.sql](./audit-supabase-produksi-readonly.sql)
 di SQL Editor Supabase. Jalankan hanya query metadata yang sesuai dengan
@@ -65,21 +65,36 @@ ekstensi terpasang. Jangan jalankan migrasi berdasarkan selisih daftar saja.
 Bandingkan versi migrasi remote dengan file lokal; periksa RLS, grants,
 policies, fungsi SECURITY DEFINER, serta Security Advisor.
 
-Security Advisor dibuka dari Supabase Dashboard → **Advisors → Security**.
-Simpan finding dan status tindak lanjut. Setelah perubahan, jalankan kembali
-Advisor. Untuk bukti produksi, catat waktu pemeriksaan, project ref, jumlah
-finding per tingkat, dan versi migrasi; jangan mencatat isi baris pelanggan.
-Session ini tidak memiliki hasil verifikasi produksi terbaru, sehingga status
-migrasi/RLS/Advisor tetap **belum diverifikasi** sampai pemilik menjalankan
-preflight tersebut.
+Pada 4 November 2026, project Supabase `autgrnrqeqdpqwkbolyh` diperiksa melalui
+MCP. Migrasi `20261104114446_lock_prohibited_keywords_to_server_role` tercatat
+di produksi. Tabel `prohibited_keywords` kini memakai RLS dan tidak memberi
+akses tabel langsung kepada `anon`/`authenticated`; operasi server dengan
+`service_role` tetap diizinkan.
+
+Security Advisor terbaru tidak lagi melaporkan tabel dengan RLS mati. Advisor
+melaporkan 63 tabel RLS aktif tanpa policy. Untuk tabel yang sengaja hanya
+diakses API server, ini menutup akses langsung melalui Data API; tetap tinjau
+per tabel agar tabel yang memang harus dipakai klien mendapat policy sempit
+berdasarkan pemilik/scope. Advisor juga melaporkan 7 fungsi Open PO
+`SECURITY DEFINER` yang dapat dipanggil `authenticated`. Fungsi tersebut
+memeriksa `auth.uid()` dan kepemilikan sebelum membaca/mengubah data, tetapi
+perlu pemeriksaan kode dan uji negatif lintas akun sebelum menyatakan isolasi
+produksi tuntas. Jangan mencabut izin atau mengganti mode keamanan tanpa uji
+alur pemesanan.
+
+Fitur perlindungan kata sandi bocor masih nonaktif di konfigurasi Supabase Auth.
+Temuan ini perlu diaktifkan dan dicek dari dashboard Auth. Audit Advisor tidak
+membuktikan seluruh aplikasi bebas risiko; hasil berlaku pada waktu pemeriksaan
+di atas.
 
 ## 4. Jadwal worker dan batas paket
 
-Pemicu omnichannel lima menit menggunakan Supabase Cron sesuai
-[docs/cron-setup.md](./cron-setup.md). Dokumentasi Vercel menyatakan Hobby
-membatasi cron paling sering sekali sehari, sedangkan Pro/Enterprise mendukung
-per menit. Paket proyek belum diverifikasi langsung. Dengan scheduler di
-Supabase, worker ini tidak memerlukan cron lima menit dari Vercel.
+Pemicu omnichannel masih belum siap produksi. Pemeriksaan Supabase pada
+4 November 2026 tidak menemukan ekstensi `pg_cron`/`pg_net` maupun job
+`omnichannel-distribution-every-5m`. `vercel.json` di working tree menjadwalkan
+endpoint setiap 10 menit, tetapi status deployment dan paket Vercel tidak
+dapat diperiksa dari sesi ini. Jadwal lokal bukan bukti bahwa production
+worker berjalan.
 
 Pastikan `CRON_SECRET` tersedia pada runtime Vercel dan nilai yang sama berada
 di Supabase Vault dengan nama `omnichannel_cron_secret`. Setelah memasang
@@ -112,9 +127,24 @@ API eksternal yang tidak menyediakan kunci idempotensi bagi operasi tersebut.
 
 ## Bukti dan batas status saat dokumen ini ditulis
 
-- Setup per akun dan impor CSV tersedia di working tree lokal.
-- Pemasangan Supabase Cron, pengaturan environment produksi, migrasi, security
-  advisor, uji role produksi, dan pengiriman publik belum dilakukan oleh
-  perubahan ini.
+- Pemeriksaan 4 November 2026: 10 provinsi dan 14 universitas aktif di katalog;
+  universitas hanya terpetakan pada 5 provinsi. Lima provinsi belum memiliki
+  entri universitas.
+- Cakupan akun sosial: 41 entri (3 Instagram terhubung dari 20; 17 belum
+  terhubung; 2 WhatsApp Channel terhubung dari 20; 18 belum; 1 grup WhatsApp
+  terhubung). Status database belum membuktikan percobaan kirim berhasil.
+- Checklist rollout: 1 berstatus `fully_launched`, 2 `onboarding`, dan 3
+  `draft`; ini belum membuktikan kesiapan nasional.
+- Relasi akun: 9 dari 334 profil penjual memiliki `user_id`; 325 belum tertaut.
+  Pautan WhatsApp/Google ber-OTP tersedia. Backfill otomatis dari nama/nomor
+  tidak aman tanpa bukti verifikasi.
+- Migrasi penguncian `prohibited_keywords` tercatat di Supabase produksi;
+  migrasi tidak mengubah isi tabel. Advisor tidak lagi menemukan tabel RLS
+  mati, tetapi masih melaporkan 63 tabel tanpa policy dan 7 RPC Open PO
+  `SECURITY DEFINER` yang harus terus ditinjau.
+- Uji unit/lint lokal dapat dijalankan di repo. Uji isolasi lintas akun
+  provinsi/kampus dan publikasi nyata belum dilakukan.
+- Deployment Vercel, rahasia runtime, verifikasi paket, dan riwayat cron belum
+  dapat diperiksa dari sesi ini.
 - Catat hasil aktual di sini setelah langkah produksi diselesaikan; jangan
   mengubah status menjadi “siap nasional” hanya karena kampus ada di katalog.

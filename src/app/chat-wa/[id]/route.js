@@ -30,7 +30,7 @@ async function contactListing(request, params, requestedMessage, isPost) {
     const routeParams = await params;
     const listingId = routeParams?.id;
     if (!listingId) {
-      return NextResponse.redirect(new URL("/jual-beli", request.url), { status: isPost ? 303 : 307 });
+      return new NextResponse("Tautan produk tidak valid. Buka kembali produk dari marketplace.", { status: 400 });
     }
 
     // Rate limiting: cegah crawler/bot memanen atau membombardir redirect WA
@@ -58,24 +58,16 @@ async function contactListing(request, params, requestedMessage, isPost) {
     }
 
     if (!listing) {
-      return NextResponse.redirect(new URL("/jual-beli?pesan=Barang+tidak+ditemukan", request.url), {
-        status: isPost ? 303 : 307,
-      });
+      return new NextResponse("Produk tidak ditemukan atau sudah tidak tersedia.", { status: 404 });
     }
 
     if (!isListingAvailable(listing)) {
-      return NextResponse.redirect(
-        new URL("/jual-beli?pesan=Barang+sudah+terjual+atau+tidak+tersedia", request.url),
-        { status: isPost ? 303 : 307 }
-      );
+      return new NextResponse("Produk ini sudah terjual atau tidak tersedia. Buka halaman produk untuk melihat statusnya.", { status: 410 });
     }
 
     const normalizedWa = normalisasiNomorWa(listing.seller_wa);
     if (!normalizedWa || normalizedWa.length < 10) {
-      return NextResponse.redirect(
-        new URL(`/produk/${listing.id}?error=Kontak+penjual+tidak+valid`, request.url),
-        { status: isPost ? 303 : 307 }
-      );
+      return new NextResponse("Kontak WhatsApp penjual belum valid. Silakan gunakan obrolan dalam aplikasi atau laporkan produk ini.", { status: 409 });
     }
 
     // Ambil opsi titik COD jika ada dalam query param
@@ -106,9 +98,15 @@ async function contactListing(request, params, requestedMessage, isPost) {
     }
 
     const targetWaUrl = `https://wa.me/${normalizedWa}?text=${encodeURIComponent(pesanText)}`;
-    return NextResponse.redirect(targetWaUrl, { status: isPost ? 303 : 307 });
+    const redirect = NextResponse.redirect(targetWaUrl, { status: isPost ? 303 : 302 });
+    redirect.headers.set("Referrer-Policy", "no-referrer");
+    redirect.headers.set("Cache-Control", "no-store");
+    return redirect;
   } catch (err) {
-    console.error("/chat-wa/[id] error:", err);
-    return NextResponse.redirect(new URL("/jual-beli", request.url), { status: isPost ? 303 : 307 });
+    console.error("/chat-wa/[id] failed:", err?.code || "unexpected_error");
+    return new NextResponse("WhatsApp belum dapat dibuka. Coba lagi sebentar, atau buka halaman produk untuk menghubungi penjual.", {
+      status: 503,
+      headers: { "Cache-Control": "no-store" },
+    });
   }
 }
