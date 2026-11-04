@@ -49,11 +49,13 @@ describe("GET /chat-wa/[id] - WhatsApp Contact Proxy", () => {
     const req = new Request("http://localhost/chat-wa/prod-1");
     const res = await GET(req, { params: { id: "prod-1" } });
 
-    expect(res.status).toBe(307);
+    expect(res.status).toBe(302);
     const redirectLocation = res.headers.get("location");
     expect(redirectLocation).toContain("https://wa.me/6281234567890");
     expect(redirectLocation).toContain("Kalkulator");
     expect(redirectLocation).toContain("CALC1");
+    expect(res.headers.get("referrer-policy")).toBe("no-referrer");
+    expect(res.headers.get("cache-control")).toBe("no-store");
     expect(select).toHaveBeenCalledWith("id, title, seller_wa, seller_name, status, stock, listing_code");
     expect(insert).toHaveBeenCalled();
   });
@@ -77,7 +79,7 @@ describe("GET /chat-wa/[id] - WhatsApp Contact Proxy", () => {
     const req = new Request("http://localhost/chat-wa/prod-async");
     const res = await GET(req, { params: Promise.resolve({ id: "prod-async" }) });
 
-    expect(res.status).toBe(307);
+    expect(res.status).toBe(302);
     expect(mocks.getAdminClient).toHaveBeenCalled();
     expect(res.headers.get("location")).toContain("https://wa.me/6281234567890");
   });
@@ -101,7 +103,7 @@ describe("GET /chat-wa/[id] - WhatsApp Contact Proxy", () => {
     const req = new Request("http://localhost/chat-wa/prod-2?cod=Pendopo+USU");
     const res = await GET(req, { params: { id: "prod-2" } });
 
-    expect(res.status).toBe(307);
+    expect(res.status).toBe(302);
     const redirectLocation = res.headers.get("location");
     expect(redirectLocation).toContain("Pendopo");
   });
@@ -138,7 +140,7 @@ describe("GET /chat-wa/[id] - WhatsApp Contact Proxy", () => {
     }
   });
 
-  it("redirects safely to marketplace when listing is sold", async () => {
+  it("keeps the buyer in context with a clear unavailable response when listing is sold", async () => {
     const maybeSingle = vi.fn().mockResolvedValue({
       data: {
         id: "prod-3",
@@ -155,7 +157,24 @@ describe("GET /chat-wa/[id] - WhatsApp Contact Proxy", () => {
     const req = new Request("http://localhost/chat-wa/prod-3");
     const res = await GET(req, { params: { id: "prod-3" } });
 
-    expect(res.status).toBe(307);
-    expect(res.headers.get("location")).toContain("/jual-beli?pesan=Barang+sudah+terjual");
+    expect(res.status).toBe(410);
+    expect(res.headers.get("location")).toBeNull();
+    expect(await res.text()).toContain("sudah terjual");
+  });
+
+  it("does not redirect to the home page when an unexpected failure occurs", async () => {
+    mocks.getAdminClient.mockImplementation(() => { throw new Error("temporary failure"); });
+    const logError = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    try {
+      const req = new Request("http://localhost/chat-wa/prod-1");
+      const res = await GET(req, { params: { id: "prod-1" } });
+
+      expect(res.status).toBe(503);
+      expect(res.headers.get("location")).toBeNull();
+      expect(await res.text()).toContain("WhatsApp belum dapat dibuka");
+    } finally {
+      logError.mockRestore();
+    }
   });
 });

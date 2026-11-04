@@ -24,13 +24,13 @@ const nextConfig = {
     deviceSizes: [390, 640, 750, 828, 1080],
     imageSizes: [16, 32, 48, 64, 96, 128, 256],
   },
+  outputFileTracingIncludes: {
+    "/api/mading/[id]/instagram-image": [
+      "./src/assets/fonts/plus-jakarta-sans/*.ttf",
+    ],
+  },
   experimental: {
     optimizePackageImports: ["sonner", "embla-carousel-react"],
-    outputFileTracingIncludes: {
-      "/api/mading/[id]/instagram-image": [
-        "./src/assets/fonts/plus-jakarta-sans/*.ttf",
-      ],
-    },
   },
   async headers() {
     return [
