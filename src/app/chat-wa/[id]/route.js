@@ -5,6 +5,8 @@ import { isListingAvailable } from "@/lib/listingAvailability";
 
 export const dynamic = "force-dynamic";
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function normalisasiNomorWa(wa) {
   if (!wa || typeof wa !== "string") return null;
   const digits = wa.replace(/\D/g, "");
@@ -29,8 +31,11 @@ async function contactListing(request, params, requestedMessage, isPost) {
   try {
     const routeParams = await params;
     const listingId = routeParams?.id;
-    if (!listingId) {
-      return new NextResponse("Tautan produk tidak valid. Buka kembali produk dari marketplace.", { status: 400 });
+    if (typeof listingId !== "string" || !UUID_PATTERN.test(listingId)) {
+      return new NextResponse("Produk tidak ditemukan. Buka kembali produk dari marketplace.", {
+        status: 404,
+        headers: { "Cache-Control": "no-store" },
+      });
     }
 
     // Rate limiting: cegah crawler/bot memanen atau membombardir redirect WA
