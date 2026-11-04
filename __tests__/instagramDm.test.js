@@ -214,6 +214,41 @@ describe("Tahap 0 - Webhook Security & Idempotency", () => {
 
     expect(verifyMetaSignature(body, header, secret)).toBe(true);
     expect(verifyMetaSignature(body, "sha256=invalid", secret)).toBe(false);
+    expect(verifyMetaSignature(body, header, "")).toBe(false);
+    expect(verifyMetaSignature(body, "", secret)).toBe(false);
+  });
+
+  it("does not return raw Meta error payloads from Instagram DM sends", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 403,
+      json: async () => ({
+        error: {
+          message: "Sensitive provider detail",
+          code: 10,
+          fbtrace_id: "private-trace",
+        },
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const result = await dmApi.sendInstagramMessage("recipient-id", { text: "Hello" }, {
+      token: "private-token",
+      apiBase: "https://graph.instagram.com",
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      error: "meta_request_rejected",
+      status: 403,
+      code: 10,
+    });
+    expect(JSON.stringify(result)).not.toContain("Sensitive provider detail");
+    expect(JSON.stringify(result)).not.toContain("private-trace");
+    expect(fetchMock.mock.calls[0][0]).not.toContain("private-token");
+    warn.mockRestore();
+    vi.unstubAllGlobals();
   });
 
   it("GET rejects missing or incorrect verify token", async () => {
@@ -236,7 +271,9 @@ describe("Tahap 0 - Webhook Security & Idempotency", () => {
 
   it("POST rejects missing secret or missing/invalid signature", async () => {
     const oldSecret = process.env.META_APP_SECRET;
+    const oldInstagramSecret = process.env.META_INSTAGRAM_APP_SECRET;
     delete process.env.META_APP_SECRET;
+    delete process.env.META_INSTAGRAM_APP_SECRET;
 
     // Secret belum dikonfigurasi
     const reqNoSecret = new Request("https://test.com/api/webhook/instagram", {
@@ -247,7 +284,7 @@ describe("Tahap 0 - Webhook Security & Idempotency", () => {
     expect(resNoSecret.status).toBe(503);
 
     // Set secret, tapi signature salah
-    process.env.META_APP_SECRET = secret;
+    process.env.META_INSTAGRAM_APP_SECRET = secret;
     const reqInvalidSig = new Request("https://test.com/api/webhook/instagram", {
       method: "POST",
       headers: { "x-hub-signature-256": "sha256=bad" },
@@ -257,6 +294,42 @@ describe("Tahap 0 - Webhook Security & Idempotency", () => {
     expect(resInvalidSig.status).toBe(401);
 
     process.env.META_APP_SECRET = oldSecret;
+    process.env.META_INSTAGRAM_APP_SECRET = oldInstagramSecret;
+  });
+
+  it("fails closed when durable webhook idempotency is unavailable in production", async () => {
+    const oldNodeEnv = process.env.NODE_ENV;
+    const oldSecret = process.env.META_APP_SECRET;
+    process.env.NODE_ENV = "production";
+    process.env.META_APP_SECRET = secret;
+    const body = JSON.stringify({
+      object: "instagram",
+      entry: [{
+        messaging: [{
+          sender: { id: "sender-1" },
+          recipient: { id: "recipient-1" },
+          timestamp: Date.now(),
+          message: { mid: "mid-1", text: "hello" },
+        }],
+      }],
+    });
+    const signature = require("crypto")
+      .createHmac("sha256", secret)
+      .update(body)
+      .digest("hex");
+
+    try {
+      const response = await webhookPost(new Request("https://test.com/api/webhook/instagram", {
+        method: "POST",
+        headers: { "x-hub-signature-256": `sha256=${signature}` },
+        body,
+      }));
+      expect(response.status).toBe(500);
+      expect(await response.json()).toMatchObject({ status: "EVENT_PROCESSING_FAILED" });
+    } finally {
+      process.env.NODE_ENV = oldNodeEnv;
+      process.env.META_APP_SECRET = oldSecret;
+    }
   });
 });
 
@@ -303,6 +376,7 @@ describe("Tahap 1 & 3 - Conversational Router & Pipeline Moderasi", () => {
     await dmSession.clearDmSession(senderId);
     const result = await handleInstagramDmEvent({
       senderId,
+      recipientId: "17841400000000001",
       text: "halo min",
     });
 
@@ -314,7 +388,8 @@ describe("Tahap 1 & 3 - Conversational Router & Pipeline Moderasi", () => {
       expect.arrayContaining([
         expect.objectContaining({ title: "🛍️ Jual Barang" }),
         expect.objectContaining({ title: "🛡️ Panduan COD" }),
-      ])
+      ]),
+      { accountId: "17841400000000001" }
     );
   });
 

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   deleteInstagramAccountToken,
+  getInstagramAccountCredentials,
   getInstagramAccountToken,
   listInstagramAccountTokenIds,
   saveInstagramAccountToken,
@@ -37,7 +38,10 @@ function memorySettingsClient() {
 }
 
 describe("per-account Instagram credentials", () => {
-  afterEach(() => vi.unstubAllEnvs());
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+  });
 
   it("stores ciphertext and decrypts only for the account it belongs to", async () => {
     vi.stubEnv("META_ACCOUNT_TOKEN_ENCRYPTION_KEY", Buffer.alloc(32, 7).toString("base64"));
@@ -65,6 +69,48 @@ describe("per-account Instagram credentials", () => {
 
     expect(supa.rows.has("meta_ig_account_token:account-a")).toBe(false);
     expect(supa.rows.has("meta_ig_account_token:account-b")).toBe(true);
+  });
+
+  it("preserves the Instagram Login API host and expiry metadata", async () => {
+    vi.stubEnv("META_ACCOUNT_TOKEN_ENCRYPTION_KEY", Buffer.alloc(32, 4).toString("base64"));
+    const supa = memorySettingsClient();
+    const account = { id: "account-ig-login", provider: "instagram", external_account_id: "17841400000000003" };
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    await saveInstagramAccountToken(supa, account.id, account.external_account_id, "instagram-login-token", {
+      apiBase: "https://graph.instagram.com",
+      expiresAt,
+    });
+
+    const credentials = await getInstagramAccountCredentials(supa, account);
+    expect(credentials).toEqual({
+      token: "instagram-login-token",
+      apiBase: "https://graph.instagram.com",
+      expiresAt,
+    });
+  });
+
+  it("refreshes a long-lived Instagram Login token before its expiry window", async () => {
+    vi.stubEnv("META_ACCOUNT_TOKEN_ENCRYPTION_KEY", Buffer.alloc(32, 5).toString("base64"));
+    const supa = memorySettingsClient();
+    const account = { id: "refresh-account", provider: "instagram", external_account_id: "17841400000000004" };
+    const expiresAt = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString();
+    await saveInstagramAccountToken(supa, account.id, account.external_account_id, "old-long-token", {
+      apiBase: "https://graph.instagram.com",
+      expiresAt,
+    });
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ access_token: "refreshed-long-token", expires_in: 60 * 24 * 60 * 60 }),
+    }));
+
+    const credentials = await getInstagramAccountCredentials(supa, account);
+
+    expect(credentials.token).toBe("refreshed-long-token");
+    expect(credentials.apiBase).toBe("https://graph.instagram.com");
+    expect(Date.parse(credentials.expiresAt)).toBeGreaterThan(Date.now() + 50 * 24 * 60 * 60 * 1000);
+    expect(supa.rows.get("meta_ig_account_token:refresh-account").value.ciphertext).not.toContain("refreshed-long-token");
   });
 
   it("fails closed when the encryption key is missing", async () => {

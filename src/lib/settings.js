@@ -144,6 +144,15 @@ export const DEFAULT_SETTINGS = {
   },
   mading: {
     requireLogin: true,
+    instagramDmEnabled: false,
+    instagramAccountId: "",
+    instagramDmTriggers: ["menfess", "curhat"],
+    instagramDmMinChars: 5,
+    instagramDmMaxChars: 1000,
+    instagramDmQuotaPerHour: 5,
+    instagramDmBlockedWords: [],
+    instagramDmWelcomeMessage: "",
+    instagramDmSuccessMessage: "",
   },
 };
 

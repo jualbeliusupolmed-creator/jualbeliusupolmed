@@ -1,0 +1,84 @@
+name: Update Anthony Fu Agent Skills
+
+on:
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: update-antfu-skills
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "24"
+
+      - name: Update installed Anthony Fu skills
+        run: >-
+          npx --yes skills@1.7.6 update
+          antfu antfu-create-pr antfu-issue-triage antfu-query
+          antfu-simplify nitro nuxt pinia pnpm unocss vite vitepress vitest vue
+          --project --yes
+
+      - name: Record upstream revision when skill content changed
+        shell: bash
+        run: |
+          skill_paths=(
+            .agents/skills/antfu
+            .agents/skills/antfu-create-pr
+            .agents/skills/antfu-issue-triage
+            .agents/skills/antfu-query
+            .agents/skills/antfu-simplify
+            .agents/skills/nitro
+            .agents/skills/nuxt
+            .agents/skills/pinia
+            .agents/skills/pnpm
+            .agents/skills/unocss
+            .agents/skills/vite
+            .agents/skills/vitepress
+            .agents/skills/vitest
+            .agents/skills/vue
+          )
+          if [[ -z "$(git status --porcelain -- "${skill_paths[@]}")" ]]; then
+            exit 0
+          fi
+
+          source_commit="$(git ls-remote https://github.com/antfu/skills.git refs/heads/main | cut -f1)"
+          if [[ ! "$source_commit" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Could not resolve the upstream commit for antfu/skills."
+            exit 1
+          fi
+          jq --arg sourceCommit "$source_commit" '.sourceCommit = $sourceCommit' \
+            .agents/skills/antfu-source.json > "$RUNNER_TEMP/antfu-source.json"
+          cp "$RUNNER_TEMP/antfu-source.json" .agents/skills/antfu-source.json
+
+      - name: Create or update review pull request
+        uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
+        with:
+          branch: automation/update-antfu-skills
+          delete-branch: true
+          base: main
+          add-paths: |
+            .agents/skills
+            skills-lock.json
+          commit-message: "chore(skills): update Anthony Fu agent skills"
+          title: "chore(skills): update Anthony Fu agent skills"
+          body: |
+            Refreshes the workspace copy of the skills in [antfu/skills](https://github.com/antfu/skills).
+
+            Review the changed skill instructions and bundled references before merging. These are agent instructions, not application code.
+            The upstream project describes itself as a proof of concept.
+
+            This PR is generated weekly or by manual workflow dispatch; updates are not auto-merged.

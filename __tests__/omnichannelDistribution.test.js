@@ -21,7 +21,10 @@ vi.mock("@/lib/listingInstagram", () => ({
 }));
 
 vi.mock("@/lib/instagramAccountCredentials", () => ({
-  getInstagramAccountToken: vi.fn(async () => "test-meta-token"),
+  getInstagramAccountCredentials: vi.fn(async () => ({
+    token: "test-meta-token",
+    apiBase: "https://graph.facebook.com",
+  })),
 }));
 
 vi.mock("@/lib/meta", () => ({
@@ -31,7 +34,7 @@ vi.mock("@/lib/meta", () => ({
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { sendWa, sendChannelWa } from "@/lib/fonnte";
 import { getAdminActor } from "@/lib/admin-access";
-import { getInstagramAccountToken } from "@/lib/instagramAccountCredentials";
+import { getInstagramAccountCredentials } from "@/lib/instagramAccountCredentials";
 import { postToInstagram } from "@/lib/meta";
 import {
   buildOmnichannelCaption,
@@ -201,6 +204,7 @@ describe("Phase 5: Central Distribution Manager (Omnichannel Product Publishing)
           id: "listing-abc",
           title: "Sepeda Lipat",
           price: 1200000,
+          status: "active",
         },
       };
 
@@ -236,6 +240,7 @@ describe("Phase 5: Central Distribution Manager (Omnichannel Product Publishing)
         listings: {
           id: "listing-abc",
           title: "Sepeda Lipat",
+          status: "active",
         },
       };
 
@@ -249,6 +254,42 @@ describe("Phase 5: Central Distribution Manager (Omnichannel Product Publishing)
 
       expect(res.ok).toBe(false);
       expect(res.error).toContain("Connection Timeout");
+    });
+
+    it("does not publish a listing that became inactive after a job was queued", async () => {
+      const mockJob = {
+        id: "job-inactive",
+        channel_type: "whatsapp_channel_university",
+        target_destination: "120363111@newsletter",
+        university_id: "usu",
+        caption_snapshot: "Test Caption",
+        attempts: 0,
+        max_attempts: 3,
+        organization_social_accounts: {
+          id: "acc-wa-chan-usu",
+          provider: "whatsapp_channel",
+          status: "connected",
+          scope_type: "university",
+          scope_id: "usu",
+          university_id: "usu",
+          handle: "Kanal USU",
+          external_account_id: "120363111@newsletter",
+        },
+        listings: {
+          id: "listing-pending",
+          title: "Barang menunggu moderasi",
+          status: "pending",
+        },
+      };
+      vi.mocked(getAdminClient).mockReturnValue(executeMock(mockJob, {
+        publishResult: { ...mockJob, status: "failed", attempts: 1 },
+      }));
+
+      const result = await executeOmnichannelPublish("job-inactive");
+
+      expect(result.ok).toBe(false);
+      expect(result.error).toContain("Listing tidak lagi aktif");
+      expect(sendChannelWa).not.toHaveBeenCalled();
     });
 
     it("publishes an Instagram job with that account's own token and Meta ID", async () => {
@@ -270,7 +311,7 @@ describe("Phase 5: Central Distribution Manager (Omnichannel Product Publishing)
           handle: "jualbelidikampus.usu",
           external_account_id: "17841400000000001",
         },
-        listings: { id: "listing-ig", title: "Buku kuliah", image_url: "https://media.example.test/item.jpg" },
+        listings: { id: "listing-ig", title: "Buku kuliah", status: "active", image_url: "https://media.example.test/item.jpg" },
       };
       vi.mocked(getAdminClient).mockReturnValue(executeMock(mockJob, {
         publishResult: { id: "job-ig-1", status: "published" },
@@ -278,12 +319,13 @@ describe("Phase 5: Central Distribution Manager (Omnichannel Product Publishing)
 
       const result = await executeOmnichannelPublish("job-ig-1");
 
-      expect(getInstagramAccountToken).toHaveBeenCalledWith(expect.anything(), mockJob.organization_social_accounts);
+      expect(getInstagramAccountCredentials).toHaveBeenCalledWith(expect.anything(), mockJob.organization_social_accounts);
       expect(postToInstagram).toHaveBeenCalledWith(
         "17841400000000001",
         "test-meta-token",
         expect.stringContaining("/api/listings/listing-ig/instagram-image"),
         "Test listing caption",
+        { apiBase: "https://graph.facebook.com" },
       );
       expect(result.ok).toBe(true);
     });
@@ -294,6 +336,38 @@ describe("Phase 5: Central Distribution Manager (Omnichannel Product Publishing)
       vi.mocked(getAdminActor).mockResolvedValueOnce(null);
       const res = await GET(new Request("http://localhost/api/admin/distribution"));
       expect(res.status).toBe(401);
+    });
+
+    it("refuses direct publishing when a listing has not passed moderation", async () => {
+      vi.mocked(getAdminActor).mockResolvedValueOnce({
+        id: "admin-123",
+        role: "superadmin",
+      });
+      const listingQuery = {
+        select: vi.fn(() => listingQuery),
+        eq: vi.fn(() => listingQuery),
+        maybeSingle: vi.fn(async () => ({
+          data: { id: "pending-listing", campus: "USU", status: "pending" },
+          error: null,
+        })),
+      };
+      const mockSupabase = { from: vi.fn(() => listingQuery) };
+      vi.mocked(getAdminClient).mockReturnValue(mockSupabase);
+
+      const res = await POST(new Request("http://localhost/api/admin/distribution", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "publish_channels",
+          listingId: "pending-listing",
+          channels: [{ channelType: "website" }],
+        }),
+      }));
+
+      expect(res.status).toBe(409);
+      expect(await res.json()).toMatchObject({
+        error: "Hanya iklan aktif yang dapat dipublikasikan atau dijadwalkan.",
+      });
     });
 
     it("POST publish_channels handles batch omnichannel publishing", async () => {
@@ -385,4 +459,3 @@ describe("Phase 5: Central Distribution Manager (Omnichannel Product Publishing)
     });
   });
 });
-

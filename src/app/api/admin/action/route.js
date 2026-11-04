@@ -475,6 +475,47 @@ export async function POST(req) {
         if (!key || value == null || typeof value !== "object") {
           return NextResponse.json({ error: "key/value tidak valid" }, { status: 400 });
         }
+        if (key === "mading") {
+          const triggers = (Array.isArray(value.instagramDmTriggers)
+            ? value.instagramDmTriggers
+            : String(value.instagramDmTriggers || "").split(/[\n,]+/))
+            .map((item) => String(item).trim().toLowerCase())
+            .filter(Boolean);
+          const blockedWords = (Array.isArray(value.instagramDmBlockedWords)
+            ? value.instagramDmBlockedWords
+            : String(value.instagramDmBlockedWords || "").split(/[\n,]+/))
+            .map((item) => String(item).trim().toLowerCase())
+            .filter(Boolean);
+          const minChars = Number(value.instagramDmMinChars ?? 5);
+          const maxChars = Number(value.instagramDmMaxChars ?? 1000);
+          const quotaPerHour = Number(value.instagramDmQuotaPerHour ?? 5);
+          if (triggers.length < 1 || triggers.length > 5 ||
+              triggers.some((trigger) => !/^[a-z0-9_-]{2,24}$/.test(trigger))) {
+            return NextResponse.json({ error: "Gunakan 1–5 trigger Menfess, masing-masing 2–24 karakter alfanumerik." }, { status: 400 });
+          }
+          if (new Set(triggers).size !== triggers.length) {
+            return NextResponse.json({ error: "Trigger Menfess tidak boleh duplikat." }, { status: 400 });
+          }
+          if (!Number.isInteger(minChars) || minChars < 5 || minChars > 200 ||
+              !Number.isInteger(maxChars) || maxChars < minChars || maxChars > 1000 ||
+              !Number.isInteger(quotaPerHour) || quotaPerHour < 1 || quotaPerHour > 20) {
+            return NextResponse.json({ error: "Batas panjang atau kuota Menfess tidak valid." }, { status: 400 });
+          }
+          if (blockedWords.length > 50 || blockedWords.some((word) => word.length < 2 || word.length > 60)) {
+            return NextResponse.json({ error: "Filter kata maksimal 50 kata; setiap kata harus 2–60 karakter." }, { status: 400 });
+          }
+          value = {
+            ...value,
+            instagramDmEnabled: value.instagramDmEnabled === true,
+            instagramDmTriggers: [...new Set(triggers)],
+            instagramDmMinChars: minChars,
+            instagramDmMaxChars: maxChars,
+            instagramDmQuotaPerHour: quotaPerHour,
+            instagramDmBlockedWords: [...new Set(blockedWords)],
+            instagramDmWelcomeMessage: String(value.instagramDmWelcomeMessage || "").trim().slice(0, 900),
+            instagramDmSuccessMessage: String(value.instagramDmSuccessMessage || "").trim().slice(0, 900),
+          };
+        }
         if (key === "admin" && Object.hasOwn(value, "channelJid")) {
           value = { ...value, channelJid: await resolveWhatsAppChannelJid(value.channelJid) };
         }

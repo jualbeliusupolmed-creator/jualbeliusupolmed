@@ -4,8 +4,9 @@ import { useState, useEffect, useTransition, useMemo } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { TabInstagram } from "@/components/admin/TabInstagram";
+import InstagramMenfessAnalytics from "@/components/admin/InstagramMenfessAnalytics";
 import { Icon } from "@/components/Icons";
-import { HelpCircle, CheckCircle, ExternalLink, ShieldCheck, Sparkles, X, Filter, Search } from "lucide-react";
+import { HelpCircle, CheckCircle, ExternalLink, ShieldCheck, Sparkles, X, Filter, Search, BarChart3 } from "lucide-react";
 
 function formatRelativeTime(dateString) {
   if (!dateString) return "-";
@@ -24,6 +25,9 @@ export default function SocialWorkspace() {
   const [accounts, setAccounts] = useState([]);
   const [stats, setStats] = useState({ total: 0, instagram: 0, whatsapp: 0, connected: 0 });
   const [loadingAccounts, setLoadingAccounts] = useState(true);
+  const [madingAccountId, setMadingAccountId] = useState(null);
+  const [canSelectMadingAccount, setCanSelectMadingAccount] = useState(false);
+  const [settingMadingAccountId, setSettingMadingAccountId] = useState(null);
 
   // WhatsApp Multi-Channel state
   const [waAccounts, setWaAccounts] = useState([]);
@@ -73,6 +77,7 @@ export default function SocialWorkspace() {
   const [accountProvinceFilter, setAccountProvinceFilter] = useState("all");
   const [searchAccountQuery, setSearchAccountQuery] = useState("");
   const [showMetaGuideModal, setShowMetaGuideModal] = useState(false);
+  const [connectingInstagramId, setConnectingInstagramId] = useState(null);
 
   const filteredDisplayAccounts = useMemo(() => {
     return accounts.filter((acc) => {
@@ -99,6 +104,29 @@ export default function SocialWorkspace() {
   }, []);
 
   useEffect(() => {
+    const url = new URL(window.location.href);
+    const result = url.searchParams.get("instagram_oauth");
+    if (!result) return;
+    const messages = {
+      success: ["Akun Instagram berhasil dihubungkan melalui OAuth.", "success"],
+      cancelled: ["Proses OAuth Instagram dibatalkan.", "error"],
+      state_error: ["Sesi OAuth tidak valid atau kedaluwarsa. Mulai ulang proses hubungkan akun.", "error"],
+      session_error: ["Sesi admin berubah. Masuk kembali lalu hubungkan akun.", "error"],
+      scope_error: ["Akun sosial tidak ditemukan atau di luar cakupan admin.", "error"],
+      account_error: ["Akun Instagram yang diotorisasi tidak cocok dengan respons Meta.", "error"],
+      exchange_error: ["Meta gagal menyelesaikan OAuth. Periksa konfigurasi aplikasi dan izin Instagram.", "error"],
+      save_error: ["Instagram terotorisasi, tetapi kredensial gagal disimpan. Coba hubungkan ulang.", "error"],
+      webhook_error: ["Instagram terhubung, tetapi langganan webhook DM gagal. Periksa callback dan field messages di Meta, lalu hubungkan ulang.", "error"],
+    };
+    const [message, type] = messages[result] || ["Proses OAuth Instagram gagal.", "error"];
+    if (type === "success") toast.success(message);
+    else toast.error(message);
+    url.searchParams.delete("instagram_oauth");
+    window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+    fetchAccounts();
+  }, []);
+
+  useEffect(() => {
     if (activeTab === "inbox") {
       fetchDmLogs();
     } else if (activeTab === "whatsapp") {
@@ -117,6 +145,8 @@ export default function SocialWorkspace() {
       if (json.ok) {
         setAccounts(json.accounts || []);
         setStats(json.stats || {});
+        setMadingAccountId(json.madingAccountId || null);
+        setCanSelectMadingAccount(json.canSelectMadingAccount === true);
       } else {
         toast.error(json.error || "Gagal memuat akun sosial.");
       }
@@ -280,6 +310,25 @@ export default function SocialWorkspace() {
       toast.error("Gagal menghubungi Meta API.");
     } finally {
       setTestingId(null);
+    }
+  };
+
+  const handleSetMadingAccount = async (account) => {
+    setSettingMadingAccountId(account.id);
+    try {
+      const res = await fetch("/api/admin/social/accounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "set_mading_account", accountId: account.id }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error(json.error || "Gagal memilih akun Mading.");
+      setMadingAccountId(account.id);
+      toast.success(`@${account.handle} dipilih sebagai akun publikasi Mading.`);
+    } catch (error) {
+      toast.error(error.message || "Gagal memilih akun Mading.");
+    } finally {
+      setSettingMadingAccountId(null);
     }
   };
 
@@ -450,7 +499,7 @@ export default function SocialWorkspace() {
         </div>
       </div>
 
-      {/* Navigation Tabs (4 Pillars) */}
+      {/* Navigation Tabs */}
       <div className="flex overflow-x-auto border-b border-slate-200">
         <button
           onClick={() => setActiveTab("accounts")}
@@ -490,6 +539,18 @@ export default function SocialWorkspace() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
           Instagram DM Inbox & Routing
+        </button>
+
+        <button
+          onClick={() => setActiveTab("menfess-analytics")}
+          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold whitespace-nowrap transition-all ${
+            activeTab === "menfess-analytics"
+              ? "border-indigo-600 text-indigo-600"
+              : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700"
+          }`}
+        >
+          <BarChart3 className="h-4 w-4" aria-hidden="true" />
+          Analitik Menfess
         </button>
 
         <button
@@ -678,15 +739,42 @@ export default function SocialWorkspace() {
                       </div>
                     </div>
 
-                    <div className="mt-6 flex items-center gap-2 border-t border-slate-100 pt-4">
+                    <div className="mt-6 flex flex-col gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:items-center">
                       {isIg ? (
-                        <button
-                          onClick={() => handleTestConnection(acc)}
-                          disabled={testingId === acc.id}
-                          className="flex-1 rounded-xl bg-slate-100 px-3 py-2 text-center text-xs font-bold text-slate-700 transition hover:bg-slate-200 disabled:opacity-50"
-                        >
-                          {testingId === acc.id ? "Memeriksa..." : "Uji Koneksi Meta"}
-                        </button>
+                        <>
+                          {canSelectMadingAccount && (
+                            <button
+                              onClick={() => handleSetMadingAccount(acc)}
+                              disabled={!acc.has_access_token || settingMadingAccountId === acc.id}
+                              className={`flex-1 rounded-xl px-3 py-2 text-center text-xs font-bold transition disabled:opacity-50 ${
+                                madingAccountId === acc.id
+                                  ? "bg-emerald-100 text-emerald-800"
+                                  : "bg-violet-50 text-violet-700 hover:bg-violet-100"
+                              }`}
+                            >
+                              {settingMadingAccountId === acc.id
+                                ? "Menyimpan..."
+                                : madingAccountId === acc.id ? "Akun Mading Terpilih" : "Jadikan Akun Mading"}
+                            </button>
+                          )}
+                          <button
+                            onClick={() => {
+                              setConnectingInstagramId(acc.id);
+                              window.location.assign(`/api/admin/social/instagram/oauth/start?accountId=${encodeURIComponent(acc.id)}`);
+                            }}
+                            disabled={connectingInstagramId === acc.id}
+                            className="flex-1 rounded-xl bg-pink-600 px-3 py-2 text-center text-xs font-bold text-white transition hover:bg-pink-700 disabled:opacity-50"
+                          >
+                            {connectingInstagramId === acc.id ? "Membuka Instagram..." : "Hubungkan / Perbarui OAuth"}
+                          </button>
+                          <button
+                            onClick={() => handleTestConnection(acc)}
+                            disabled={testingId === acc.id}
+                            className="flex-1 rounded-xl bg-slate-100 px-3 py-2 text-center text-xs font-bold text-slate-700 transition hover:bg-slate-200 disabled:opacity-50"
+                          >
+                            {testingId === acc.id ? "Memeriksa..." : "Uji Koneksi"}
+                          </button>
+                        </>
                       ) : (
                         <button
                           onClick={() => setBroadcastModalTarget(acc)}
@@ -1009,6 +1097,8 @@ export default function SocialWorkspace() {
           )}
         </div>
       )}
+
+      {activeTab === "menfess-analytics" && <InstagramMenfessAnalytics />}
 
       {/* Tab 4: Central Distribution Manager (Omnichannel Dispatcher) */}
       {activeTab === "queue" && (

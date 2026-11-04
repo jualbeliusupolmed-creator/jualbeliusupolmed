@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   getAdminClient: vi.fn(),
   resolveInstagramToken: vi.fn(),
   getInstagramUserId: vi.fn(),
+  getInstagramAccountCredentials: vi.fn(),
 }));
 
 vi.mock("@/lib/admin-access", () => ({
@@ -20,8 +21,18 @@ vi.mock("@/lib/supabaseAdmin", () => ({
 }));
 
 vi.mock("@/lib/instagramDm", () => ({
+  getMetaApiVersion: vi.fn(() => "v26.0"),
   resolveInstagramToken: mocks.resolveInstagramToken,
   getInstagramUserId: mocks.getInstagramUserId,
+}));
+
+vi.mock("@/lib/instagramAccountCredentials", () => ({
+  assertInstagramTokenEncryptionReady: vi.fn(),
+  deleteInstagramAccountToken: vi.fn(),
+  getInstagramAccountCredentials: mocks.getInstagramAccountCredentials,
+  hasInstagramAccountToken: vi.fn().mockResolvedValue(false),
+  listInstagramAccountTokenIds: vi.fn().mockResolvedValue(new Set()),
+  saveInstagramAccountToken: vi.fn(),
 }));
 
 import { GET, POST } from "@/app/api/admin/social/accounts/route";
@@ -109,7 +120,10 @@ describe("Social & Communication Management API (/api/admin/social/accounts)", (
   it("menguji koneksi Meta Graph API via test_connection", async () => {
     mocks.getAdminActor.mockResolvedValueOnce({ role: "superadmin", userId: "admin-1" });
     mocks.hasAdminPermission.mockReturnValue(true);
-    mocks.resolveInstagramToken.mockResolvedValueOnce("valid-meta-token");
+    mocks.getInstagramAccountCredentials.mockResolvedValueOnce({
+      token: "valid-meta-token",
+      apiBase: "https://graph.facebook.com",
+    });
     vi.stubEnv("META_KATALOG_IG_USER_ID", "17841430423153964");
 
     const account = {
@@ -146,8 +160,6 @@ describe("Social & Communication Management API (/api/admin/social/accounts)", (
     });
 
     vi.stubEnv("META_KATALOG_IG_USER_ID", "17841430423153964");
-    mocks.resolveInstagramToken.mockReturnValue("mock-token-xyz");
-
     // Mock fetch ke Meta Graph API
     const originalFetch = global.fetch;
     global.fetch = vi.fn().mockResolvedValueOnce({
@@ -175,7 +187,7 @@ describe("Social & Communication Management API (/api/admin/social/accounts)", (
 
     expect(json.ok).toBe(true);
     expect(json.account.username).toBe("usu.menfes");
-
+    global.fetch = originalFetch;
     global.fetch = originalFetch;
   });
 
@@ -189,4 +201,3 @@ describe("Social & Communication Management API (/api/admin/social/accounts)", (
     expect(logId).toBe("test-log-id");
   });
 });
-

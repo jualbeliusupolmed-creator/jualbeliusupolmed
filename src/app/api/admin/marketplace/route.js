@@ -174,7 +174,12 @@ export async function PATCH(req) {
     change = { status: "suspended", moderated_at: new Date().toISOString(), moderated_by: actor.userId, moderation_reason: reason || "Ditangguhkan melalui workspace baru." };
   }
   let updateQuery = supa.from("listings").update(change).eq("id", id).eq("status", target.status);
-  if (actor.role !== "superadmin") updateQuery = updateQuery.in("campus", campuses);
+  if (actor.role !== "superadmin") {
+    const campusesLower = campuses.map((campus) => campus.toLowerCase());
+    updateQuery = updateQuery.or(
+      `campus.in.(${campuses.join(",")}),university_id.in.(${campusesLower.join(",")})`
+    );
+  }
   const { data: updated, error } = await updateQuery
     .select("id, status, title, description, price, category, condition, campus, university_id, image_url")
     .maybeSingle();

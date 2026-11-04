@@ -37,12 +37,21 @@ async function claimEvent(eventId) {
       if (!error && Number.isInteger(Number(data))) {
         return { ok: true, duplicate: Number(data) > 1, key };
       }
+      if (error) {
+        console.error("[Instagram Webhook] Durable event claim failed.", {
+          code: error.code || "database_error",
+        });
+      } else {
+        console.error("[Instagram Webhook] Durable event claim returned an invalid result.");
+      }
     }
-  } catch {
-    // Graceful fallback ke in-memory cache bila RPC database tidak tersedia
+  } catch (error) {
+    console.error("[Instagram Webhook] Durable event claim is unavailable.", {
+      name: error instanceof Error ? error.name : "UnknownError",
+    });
   }
 
-  return claimInMemory(eventId);
+  return { ok: false, duplicate: false, key };
 }
 
 async function completeEvent(claim) {
@@ -128,17 +137,17 @@ export async function GET(req) {
 
 /**
  * POST: Penerima event pesan masuk dari Meta Instagram Messaging API
- * Wajib memvalidasi tanda tangan HMAC-SHA256 menggunakan `META_APP_SECRET`.
+ * Wajib memvalidasi tanda tangan HMAC-SHA256 menggunakan App Secret Meta.
  */
 export async function POST(req) {
   try {
     const rawBody = await req.text();
     const signature = req.headers.get("x-hub-signature-256");
-    const appSecret = process.env.META_APP_SECRET;
+    const appSecret = process.env.META_APP_SECRET || process.env.META_INSTAGRAM_APP_SECRET;
 
     // Gerbang Keamanan: Tolak jika secret server belum disetel
     if (!appSecret) {
-      console.error("[Instagram Webhook POST] META_APP_SECRET belum dikonfigurasi di server.");
+      console.error("[Instagram Webhook POST] App Secret Meta belum dikonfigurasi di server.");
       return NextResponse.json({ error: "Server webhook configuration missing" }, { status: 503 });
     }
 

@@ -1,5 +1,5 @@
 /**
- * Moderation Engine untuk Jual Beli USU Polmed
+ * Moderation Engine untuk Kampus Kita
  * 
  * 2 Lapisan Moderasi:
  * 1. Aturan Deterministik Cepat & Hemat (Tanpa AI):
@@ -191,7 +191,7 @@ export async function checkAiModeration({ title, description, price, category, i
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = `
-      Anda adalah sistem moderasi konten profesional untuk marketplace komunitas mahasiswa (Jual Beli USU Polmed).
+      Anda adalah sistem moderasi konten profesional untuk marketplace komunitas mahasiswa (Kampus Kita).
       Tugas Anda: Evaluasi iklan berikut untuk mendeteksi pelanggaran barang terlarang dan penipuan.
 
       Data Iklan:

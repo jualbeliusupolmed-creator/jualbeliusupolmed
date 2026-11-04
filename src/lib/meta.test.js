@@ -65,6 +65,29 @@ describe("Meta Instagram publisher", () => {
     expect(fetchMock.mock.calls[0][0]).toContain("existing-container?fields=status_code");
   });
 
+  it("uses Instagram Graph API for Business Login credentials through every publishing request", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ id: "ig-login-container" }))
+      .mockResolvedValueOnce(jsonResponse({ status_code: "FINISHED" }))
+      .mockResolvedValueOnce(jsonResponse({ id: "ig-login-media" }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await postToInstagram(
+      "instagram-user",
+      "instagram-login-token",
+      "https://example.test/ig-login.jpg",
+      "OAuth caption",
+      { apiBase: "https://graph.instagram.com", pollIntervalMs: 0 },
+    );
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    for (const [url] of fetchMock.mock.calls) {
+      expect(url).toContain("https://graph.instagram.com/v");
+      expect(url).not.toContain("instagram-login-token");
+    }
+  });
+
   it("returns a bounded Meta error without exposing credentials", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce(jsonResponse({
       error: { message: "Permission denied", code: 10 },
@@ -134,4 +157,3 @@ describe("Meta Instagram Caption Generators", () => {
     expect(caption).toContain("https://www.kampuskita.my.id/produk/buku-kalkulus-purcell-item-1");
   });
 });
-

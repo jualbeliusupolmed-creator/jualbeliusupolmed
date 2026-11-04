@@ -3,7 +3,7 @@ import { sendWa, sendChannelWa } from "@/lib/fonnte";
 import { formatInstagramPrice } from "@/lib/listingInstagramImage";
 import { buildSlug } from "@/lib/slug";
 import { postToInstagram } from "@/lib/meta";
-import { getInstagramAccountToken } from "@/lib/instagramAccountCredentials";
+import { getInstagramAccountCredentials } from "@/lib/instagramAccountCredentials";
 
 /**
  * Pembuat template caption dinamis berdasarkan kanal, universitas, provinsi, dan kategori.
@@ -367,13 +367,11 @@ export async function executeOmnichannelPublish(distributionId, { origin = "http
   try {
     let externalRef = null;
 
+    if (listing.status !== "active") {
+      throw new Error("Listing tidak lagi aktif; distribusi dihentikan.");
+    }
+
     if (job.channel_type === "website") {
-      // Pastikan status listing aktif
-      const { error: listingError } = await supa
-        .from("listings")
-        .update({ status: "active", updated_at: new Date().toISOString() })
-        .eq("id", listing.id);
-      if (listingError) throw new Error("Listing gagal diaktifkan di website.");
       externalRef = listing.id;
     } else if (job.channel_type === "whatsapp_channel_university" || job.channel_type === "whatsapp_channel_province") {
       const jid = target;
@@ -399,11 +397,13 @@ export async function executeOmnichannelPublish(distributionId, { origin = "http
       job.channel_type === "instagram_province" ||
       job.channel_type === "instagram_national"
     ) {
-      const token = await getInstagramAccountToken(supa, account);
-      if (!token) throw new Error("Token Meta belum disiapkan untuk akun Instagram ini.");
+      const credentials = await getInstagramAccountCredentials(supa, account);
+      if (!credentials?.token) throw new Error("Token Meta belum disiapkan untuk akun Instagram ini.");
       const caption = job.caption_snapshot || buildOmnichannelCaption(listing, job.channel_type, { origin });
       const mediaUrl = `${origin}/api/listings/${listing.id}/instagram-image`;
-      const result = await postToInstagram(target, token, mediaUrl, caption);
+      const result = await postToInstagram(target, credentials.token, mediaUrl, caption, {
+        apiBase: credentials.apiBase,
+      });
       externalRef = result?.id || result?.creation_id || null;
       if (!externalRef) throw new Error("Meta tidak mengembalikan ID publikasi Instagram.");
     }
@@ -524,4 +524,3 @@ export async function processScheduledOmnichannelJobs({ origin = "https://www.ka
 
   return { processed: dueJobs.length, results };
 }
-

@@ -59,14 +59,14 @@
       "sizes": "1080x1920",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Tampilan Mobile Jual Beli USU Polmed"
+      "label": "Tampilan Mobile Kampus Kita"
     },
     {
       "src": "/screenshot-desktop.png",
       "sizes": "1920x1080",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "Tampilan Desktop Jual Beli USU Polmed"
+      "label": "Tampilan Desktop Kampus Kita"
     }
   ],
   "shortcuts": [

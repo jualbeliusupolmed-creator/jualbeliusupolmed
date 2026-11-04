@@ -75,7 +75,7 @@ export async function getSocialScope(supa, { provinceId, universityId } = {}) {
 export async function getSocialAccount(supa, id) {
   if (!id) return { account: null, error: null };
   const { data, error } = await supa.from("organization_social_accounts")
-    .select("id,provider,province_id,university_id,scope_type,scope_id,handle,external_account_id,status,universities(id,code,province_id)")
+    .select("id,provider,province_id,university_id,scope_type,scope_id,handle,external_account_id,status,last_checked_at,last_error_code,universities(id,code,province_id)")
     .eq("id", id)
     .maybeSingle();
   return { account: data || null, error };

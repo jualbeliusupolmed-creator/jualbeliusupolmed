@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { getAdminActor, hasAdminPermission, getAdminCampusScope } from "@/lib/admin-access";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { resolveInstagramToken } from "@/lib/instagramDm";
+import { getMetaApiVersion, resolveInstagramToken } from "@/lib/instagramDm";
 import { canManageSocialAccount, canManageSocialScope, getSocialAccount, getSocialScope } from "@/lib/socialAccountAccess";
-import { assertInstagramTokenEncryptionReady, deleteInstagramAccountToken, getInstagramAccountToken, hasInstagramAccountToken, listInstagramAccountTokenIds, saveInstagramAccountToken } from "@/lib/instagramAccountCredentials";
+import { assertInstagramTokenEncryptionReady, deleteInstagramAccountToken, getInstagramAccountCredentials, hasInstagramAccountToken, listInstagramAccountTokenIds, saveInstagramAccountToken } from "@/lib/instagramAccountCredentials";
 
 export const dynamic = "force-dynamic";
 
@@ -73,6 +73,16 @@ export async function GET(req) {
         String(acc.external_account_id || "") === legacyCatalogId
       ),
     }));
+    let madingAccountId = null;
+    if (actor.role === "superadmin") {
+      const { data: madingSettings, error: settingsError } = await supa
+        .from("settings")
+        .select("value")
+        .eq("key", "mading")
+        .maybeSingle();
+      if (settingsError) throw settingsError;
+      madingAccountId = String(madingSettings?.value?.instagramAccountId || "") || null;
+    }
 
     const stats = {
       total: filteredAccounts.length,
@@ -85,6 +95,8 @@ export async function GET(req) {
     return NextResponse.json({
       ok: true,
       activeCampuses,
+      madingAccountId,
+      canSelectMadingAccount: actor.role === "superadmin",
       stats,
       accounts: filteredAccounts,
     });
@@ -123,6 +135,37 @@ export async function POST(req) {
   const { action } = body;
   const supa = getAdminClient();
 
+  if (action === "set_mading_account") {
+    if (actor.role !== "superadmin") {
+      return NextResponse.json({ error: "Hanya superadmin yang dapat memilih akun publikasi Mading." }, { status: 403 });
+    }
+    const { account, error: accountError } = await getSocialAccount(supa, body.accountId);
+    if (accountError) return NextResponse.json({ error: "Gagal memeriksa akun sosial." }, { status: 500 });
+    if (!account || account.provider !== "instagram" || !canManageSocialAccount(actor, account)) {
+      return NextResponse.json({ error: "Akun Instagram tidak ditemukan." }, { status: 404 });
+    }
+    const credentials = await getInstagramAccountCredentials(supa, account);
+    if (!credentials?.token) {
+      return NextResponse.json({ error: "Hubungkan dan uji akun Instagram sebelum memilihnya untuk Mading." }, { status: 409 });
+    }
+    const { data: currentSettings, error: settingsError } = await supa
+      .from("settings")
+      .select("value")
+      .eq("key", "mading")
+      .maybeSingle();
+    if (settingsError) return NextResponse.json({ error: "Gagal membaca pengaturan Mading." }, { status: 500 });
+    const currentValue = currentSettings?.value && typeof currentSettings.value === "object"
+      ? currentSettings.value
+      : {};
+    const { error: saveError } = await supa.from("settings").upsert({
+      key: "mading",
+      value: { ...currentValue, instagramAccountId: account.id },
+      updated_at: new Date().toISOString(),
+    }, { onConflict: "key" });
+    if (saveError) return NextResponse.json({ error: "Gagal menyimpan akun publikasi Mading." }, { status: 500 });
+    return NextResponse.json({ ok: true, accountId: account.id });
+  }
+
   if (action === "test_connection") {
     const { accountId } = body;
     const { account, error: accountError } = await getSocialAccount(supa, accountId);
@@ -143,9 +186,10 @@ export async function POST(req) {
         return NextResponse.json({ error: "ID akun Instagram tidak valid." }, { status: 400 });
       }
       const targetId = externalAccountId;
-      const token = await getInstagramAccountToken(supa, account);
+      const credentials = await getInstagramAccountCredentials(supa, account);
+      const token = credentials?.token;
 
-      if (!token) {
+      if (!credentials?.token) {
         return NextResponse.json({
           ok: false,
           error: "Token Meta API belum dikonfigurasi di server.",
@@ -154,7 +198,12 @@ export async function POST(req) {
 
       try {
         // Cek langsung node target Instagram Account di Meta Graph API
-        const url = `https://graph.facebook.com/v24.0/${targetId}?fields=id,username,name,profile_picture_url`;
+        const apiBase = credentials.apiBase;
+        const version = getMetaApiVersion();
+        const endpoint = apiBase === "https://graph.instagram.com"
+          ? "me?fields=user_id,username,name,profile_picture_url"
+          : `${targetId}?fields=id,username,name,profile_picture_url`;
+        const url = `${apiBase}/${version}/${endpoint}`;
         const res = await fetch(url, {
           headers: { Authorization: `Bearer ${token}` },
           cache: "no-store",
@@ -162,17 +211,21 @@ export async function POST(req) {
         });
         const data = await res.json().catch(() => ({}));
 
-        if (!res.ok || data.error) {
-          const errMsg = data.error?.message || `HTTP ${res.status}`;
+        const verifiedId = String(data.user_id || data.id || "");
+        if (!res.ok || data.error || verifiedId !== targetId) {
+          const errorCode = data.error?.code;
           await supa.from("organization_social_accounts").update({
             status: "error",
             last_checked_at: new Date().toISOString(),
-            last_error_code: String(data.error?.code || res.status).slice(0, 80),
+            last_error_code: String(errorCode || res.status).slice(0, 80),
           }).eq("id", accountId);
           return NextResponse.json({
             ok: false,
-            error: `Gagal memverifikasi akun Instagram (${errMsg})`,
-            meta: data,
+            error: verifiedId && verifiedId !== targetId
+              ? "Respons Meta tidak cocok dengan ID akun yang tersimpan."
+              : "Meta menolak pemeriksaan koneksi Instagram.",
+            errorCode: Number.isFinite(Number(errorCode)) ? Number(errorCode) : null,
+            status: res.status,
           });
         }
 
@@ -199,10 +252,12 @@ export async function POST(req) {
           },
         });
       } catch (err) {
+        console.warn("[api/admin/social/accounts] Instagram connection check failed.", {
+          name: err instanceof Error ? err.name : "UnknownError",
+        });
         return NextResponse.json({
           ok: false,
           error: "Kendala jaringan saat menghubungi Meta Graph API.",
-          details: err.message,
         });
       }
     }
@@ -258,7 +313,7 @@ export async function POST(req) {
       }
       suppliedToken = accessToken.trim();
       try {
-        const checkUrl = `https://graph.facebook.com/v24.0/${cleanExternalAccountId}?fields=id,username,name`;
+        const checkUrl = `https://graph.facebook.com/${getMetaApiVersion()}/${cleanExternalAccountId}?fields=id,username,name`;
         const response = await fetch(checkUrl, {
           headers: { Authorization: `Bearer ${suppliedToken}` },
           cache: "no-store",
@@ -368,4 +423,3 @@ export async function POST(req) {
 
   return NextResponse.json({ error: "Aksi tidak dikenali." }, { status: 400 });
 }
-

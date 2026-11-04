@@ -583,6 +583,89 @@ cuma server.
 
 ## 5. Log & Riwayat Audit
 
+### Pembaruan 3 November 2026 — koreksi audit marketplace nasional
+
+- Distribusi omnichannel hanya menerima listing aktif. Endpoint menolak
+  publikasi/penjadwalan listing nonaktif, dan worker memeriksa ulang status
+  setelah mengklaim job agar perubahan status setelah penjadwalan tidak
+  melewati moderasi. Publikasi kanal website tidak lagi mengaktifkan listing.
+- Pilihan kampus eksplisit `Semua` pada listing dan barang dicari tetap lintas
+  kampus (`university_id = null`) alih-alih ditimpa kampus profil.
+- Aksi moderasi admin memakai cakupan kampus **atau** `university_id` yang sama
+  saat mencari dan memperbarui listing.
+- Merge profil kini memindahkan tautan Instagram dan menyelaraskan kembali
+  `user_id` seluruh aset kanonis, termasuk nilai lama yang sudah terisi.
+- Migrasi korektif `20261103151304_fix_identity_merge_and_ambiguous_campus_backfill.sql`
+  memperbaiki fungsi merge dan hanya mempertahankan atribusi kampus yang dapat
+  dicocokkan; data generik/tidak dikenal tidak ditebak sebagai USU. Migrasi
+  disiapkan untuk ditinjau dan **belum diterapkan ke database**.
+- Onboarding memeriksa status HTTP dan payload `/api/profil` sebelum menyimpan
+  preferensi lokal atau menampilkan sukses.
+
+### Pembaruan 3 November 2026 — Instagram Business Login & DM Menfess
+
+- Dokumentasi dan memory operasional khusus integrasi Meta dipusatkan di
+  [`docs/meta.md`](./docs/meta.md); versi HTML statis tersedia di
+  [`docs/meta.html`](./docs/meta.html). Dokumen tersebut mencatat status per
+  4 November 2026, riwayat, batas kemampuan, prasyarat Supabase, dan checklist
+  produksi. Verifikasi lokal (334 test, lint, build) tidak dianggap bukti
+  kesiapan live. Markdown menjadi sumber tunggal; skrip sinkronisasi
+  menghasilkan HTML saat development/build, memeriksa konsistensi, dan
+  menyediakan watcher. Jangan menyunting HTML hasil generator secara langsung.
+- Panel **Admin → Sosial** dapat menghubungkan akun Instagram profesional lewat
+  OAuth Business Login. Admin harus lebih dulu mendaftarkan akun dan scope; start
+  maupun callback memeriksa sesi, izin, dan scope akun di server.
+- OAuth meminta izin `instagram_business_basic`,
+  `instagram_business_content_publish`, dan
+  `instagram_business_manage_messages`; tidak meminta komentar/insights dan
+  tidak mengintegrasikan Threads.
+- Token long-lived disimpan terenkripsi di `system_settings` menggunakan
+  `META_ACCOUNT_TOKEN_ENCRYPTION_KEY`, beserta host API dan masa kedaluwarsanya.
+  Token Instagram Login memakai `graph.instagram.com`; token Graph API lama
+  tetap memakai `graph.facebook.com`. Token OAuth diperbarui saat mendekati
+  kedaluwarsa ketika akun dipakai. Superadmin memilih tujuan publikasi Mading
+  secara eksplisit; ID akun terpilih disimpan pada setting `mading`, bukan
+  ditebak dari akun yang tersedia.
+- DM Menfess Instagram tersedia dengan pengaturan admin, nonaktif secara
+  default. Pesan teks memakai moderasi Mading, filter doxxing/kata admin, hash
+  identitas anonim, dan kuota per pengirim; DM berbentuk lampiran belum didukung.
+- OAuth dan DM tidak diuji terhadap aplikasi Meta/akun produksi. Pengaktifan
+  masih memerlukan App ID, App Secret, callback terdaftar, kunci enkripsi,
+  konfigurasi webhook, dan hak akses Meta yang sesuai. Belum ada migrasi atau
+  perubahan konfigurasi produksi.
+- OAuth callback kini mencoba subscribe akun ke webhook `messages` dan
+  `messaging_postbacks`; kegagalan subscription tidak membatalkan kredensial
+  publikasi, tetapi ditandai ke admin sebagai `webhook_error`. Meta App Dashboard
+  tetap harus mengaktifkan callback/fields serta Advanced Access dan izin
+  produksi.
+- Verifikasi signature webhook bersifat fail-closed. Klaim deduplikasi
+  production juga fail-closed bila RPC durable tidak tersedia; migrasi
+  `202610260002_rate_limit_hits.sql` dan
+  `20261102163100_harden_rate_limit_rpc.sql` harus ada di Supabase.
+- `META_INSTAGRAM_APP_SECRET` dapat dipakai bersama untuk OAuth dan webhook;
+  `META_APP_SECRET` tetap diterima sebagai alias kompatibilitas. Error API
+  koneksi/DM dibatasi dan tidak mengembalikan payload error mentah Meta.
+- Versi Graph API default dinaikkan ke `v26.0` mengikuti dokumentasi Meta yang
+  dipakai untuk setup webhook; override tetap tersedia melalui
+  `META_GRAPH_API_VERSION`. Endpoint diagnostik lama `/api/admin/instagram-setup`
+  dihapus karena menerima secret hardcoded/query token dan mengembalikan raw
+  payload yang dapat berisi access token.
+
+### Pembaruan 3 November 2026 — Analitik Menfess Instagram
+
+- Workspace Sosial menyediakan analitik Menfess berdasarkan event
+  `instagram_dm_logs.action_taken = 'menfess_created'`: total event, pengirim
+  aktif/baru/berulang, tren harian, dan pola jam/hari dalam zona Asia/Jakarta.
+- Endpoint membatasi akun Instagram dengan assignment admin di server dan
+  hanya mengirim agregat; ID pengirim serta isi pesan tidak dikirim ke browser.
+  Rentang kustom maksimal 90 hari dan hasil dibatasi 5.000 event.
+- Skema antrean Mading yang tersedia belum menyediakan relasi akun/scope yang
+  cukup untuk agregat tenant-safe. Karena itu dashboard tidak menghitung
+  publikasi antrean lintas scope. Data ini hanya mencakup Menfess yang berhasil
+  tercatat dari DM Instagram, bukan semua posting Mading atau kanal Threads.
+- Implementasi memakai tabel yang sudah ada; tidak menambah atau menerapkan
+  migrasi maupun mengubah konfigurasi produksi.
+
 ### Canonical Bot Source of Truth
 
 - **Repo bot**: `jualbeliusupolmed-creator/wa-bot-usu` (terpisah dari repo web ini)
@@ -1219,8 +1302,45 @@ deployment atau verifikasi layanan produksi.
   Instagram/WhatsApp; job eksternal tetap perlu uji akun percobaan dengan
   persetujuan pemilik kanal.
 
+### 4 November 2026 — instalasi dan pemeliharaan Agent Skills
 
+- Empat belas skill dari `antfu/skills` diinstal sebagai salinan workspace
+  untuk GitHub Copilot pada `.agents/skills/`; tidak ada instalasi profil global.
+  Source MIT dan revisi yang dipakai tercatat di
+  `.agents/skills/antfu-source.json`.
+- Perintah upgrade pasca-instalasi dijalankan untuk seluruh 16 skill workspace;
+  CLI memperbarui dua skill Supabase dan melaporkan 14 skill antfu sudah terbaru.
+- Workflow `.github/workflows/update-antfu-skills.yml` memeriksa/memperbarui
+  skill antfu setiap minggu dan dapat dijalankan manual. Ia memasang skill baru
+  dari upstream dan membuat/memperbarui PR untuk review, tidak auto-merge
+  instruksi agent. Periksa isi skill dan referensi sebelum merge.
+- Panduan penggunaan dan daftar skill: `docs/agent-skills.md`. Skill Vite/Vue/
+  Nuxt/pnpm/UnoCSS adalah rujukan on-demand; instalasinya tidak mengubah stack
+  aplikasi Next.js/npm.
 
+### 4 November 2026 — quality gate dan peningkatan Next.js
 
-
-
+- Menyatukan pemeriksaan dokumentasi Meta, lint, test, dan production build
+  dalam `npm run ci`; workflow GitHub Actions web menjalankan gate yang sama.
+- ESLint dipindahkan dari `next lint` yang deprecated ke ESLint CLI pada
+  direktori aplikasi, test, scripts, dan konfigurasi yang dipelihara.
+  `dev:clean` sekarang lintas platform dan tetap memakai wrapper sinkronisasi
+  dokumentasi.
+- Next.js dinaikkan dari 14.2.35 ke 15.5.29 (patch jalur 15 yang tersedia saat
+  upgrade) untuk melepas advisori kritis yang ditemukan audit dependensi.
+  React tetap 18.3.1; Next 15 masih mendukung React 18. Perubahan cache/API
+  Next 15 harus tetap diuji oleh full test dan build sebelum rilis.
+- Audit awal `npm audit --omit=dev` sebelum upgrade melaporkan 1 critical dan
+  beberapa high; setelah upgrade critical Next.js hilang, tetapi advisori
+  transitive PWA/Workbox dan paket lain masih tersisa. Jangan memakai
+  `npm audit fix --force` atau mengganti PWA tanpa validasi regresi offline.
+- `knip` dijalankan sebagai audit tanpa mengubah source: laporan 54 file dan
+  33 export tidak terpakai didominasi bot, route Next dinamis, dan utilitas yang
+  diakses melalui pola tidak terdeteksi; tidak dipakai sebagai CI gate agar
+  tidak mendorong penghapusan kode yang masih aktif.
+- Vitest V8 coverage ditambahkan sebagai perintah opsional `npm run
+  test:coverage`, dengan cakupan eksplisit seluruh `src/`. Pengukuran awal
+  lengkap pada 338 test: 10.88% statements, 9.66% branches, 6.86% functions,
+  dan 11.61% lines. Angka ini mengungkap area belum teruji; belum dipasang
+  threshold supaya tidak memberi kesan cakupan tinggi dari subset file yang
+  kebetulan diimpor test.

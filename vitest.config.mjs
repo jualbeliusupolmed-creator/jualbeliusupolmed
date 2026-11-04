@@ -23,7 +23,8 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],
-      exclude: ['node_modules/', '.next/', 'vitest.config.js'],
+      include: ['src/**/*.{js,jsx,mjs,cjs}'],
+      exclude: ['node_modules/', '.next/', '**/*.test.{js,jsx,mjs,cjs}', 'vitest.config.mjs'],
     },
   },
 });

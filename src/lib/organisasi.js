@@ -1,6 +1,6 @@
 /**
  * organisasi.js — Logika & Master Data Akun Khusus UKM & Organisasi Mahasiswa
- * Platform Jual Beli & Komunitas Mahasiswa USU & POLMED.
+ * Platform jual-beli dan komunitas mahasiswa Indonesia.
  */
 
 export const UKM_CATEGORIES = [

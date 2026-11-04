@@ -89,9 +89,19 @@ export default function PengaturanClient({ initialSettings = {} }) {
   const [popupAd, setPopupAd] = useState(initialSettings.popupAd || { enabled: false, title: "", imageUrl: "", targetUrl: "", buttonText: "Lihat Selengkapnya" });
   const [aiCfg, setAiCfg] = useState(initialSettings.ai_config || { model: "gemini-2.0-flash", memory: "", personality: "" });
   const [botKeywords, setBotKeywords] = useState(initialSettings.bot_keywords || { enabled: true, greeting_enabled: false, greeting: "", triggers: "", min_price_digits: 4 });
-  const [ukmInviteCode, setUkmInviteCode] = useState(initialSettings.ukmInviteCode || "KAMPUS_USU_POLMED_2026");
+  const [ukmInviteCode, setUkmInviteCode] = useState(initialSettings.ukmInviteCode || "KAMPUS_KITA_2026");
   const [autoExpire, setAutoExpire] = useState(!!initialSettings.autoExpire);
-  const [madingCfg, setMadingCfg] = useState(initialSettings.mading || { requireLogin: true });
+  const [madingCfg, setMadingCfg] = useState(initialSettings.mading || {
+    requireLogin: true,
+    instagramDmEnabled: false,
+    instagramDmTriggers: ["menfess", "curhat"],
+    instagramDmMinChars: 5,
+    instagramDmMaxChars: 1000,
+    instagramDmQuotaPerHour: 5,
+    instagramDmBlockedWords: [],
+    instagramDmWelcomeMessage: "",
+    instagramDmSuccessMessage: "",
+  });
 
   const [kadaluarsa, setKadaluarsa] = useState(null);
   const [memuatKadaluarsa, setMemuatKadaluarsa] = useState(false);
@@ -598,6 +608,110 @@ export default function PengaturanClient({ initialSettings = {} }) {
                     {madingCfg.requireLogin !== false ? "ON" : "OFF"}
                   </span>
                 </div>
+              </div>
+              <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h4 className="text-sm font-bold text-gray-900 dark:text-white">Menfess dari DM Instagram</h4>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      Saat aktif, pengguna bisa mengirim “menfess isi pesan” atau trigger di bawah. Postingan masuk ke Mading dan antrean Instagram. Tidak ada Threads.
+                    </p>
+                  </div>
+                  <label className="inline-flex items-center gap-2 text-xs font-bold">
+                    <input
+                      type="checkbox"
+                      checked={madingCfg.instagramDmEnabled === true}
+                      onChange={(e) => setMadingCfg({ ...madingCfg, instagramDmEnabled: e.target.checked })}
+                    />
+                    Aktifkan
+                  </label>
+                </div>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <Field label="Trigger (pisahkan koma)">
+                    <input
+                      className="g-field w-full"
+                      value={(madingCfg.instagramDmTriggers || ["menfess", "curhat"]).join(", ")}
+                      onChange={(e) => setMadingCfg({
+                        ...madingCfg,
+                        instagramDmTriggers: e.target.value.split(",").map((item) => item.trim()).filter(Boolean),
+                      })}
+                      placeholder="menfess, curhat"
+                    />
+                  </Field>
+                  <Field label="Kata yang diblokir (pisahkan koma)">
+                    <textarea
+                      className="g-field w-full min-h-16"
+                      value={(madingCfg.instagramDmBlockedWords || []).join(", ")}
+                      onChange={(e) => setMadingCfg({
+                        ...madingCfg,
+                        instagramDmBlockedWords: e.target.value.split(",").map((item) => item.trim()).filter(Boolean),
+                      })}
+                      placeholder="kata1, kata2"
+                    />
+                  </Field>
+                  <Field label="Minimal karakter">
+                    <input
+                      type="number"
+                      min="5"
+                      max="200"
+                      className="g-field w-full"
+                      value={madingCfg.instagramDmMinChars ?? 5}
+                      onChange={(e) => setMadingCfg({ ...madingCfg, instagramDmMinChars: Number(e.target.value) })}
+                    />
+                  </Field>
+                  <Field label="Maksimal karakter">
+                    <input
+                      type="number"
+                      min="5"
+                      max="1000"
+                      className="g-field w-full"
+                      value={madingCfg.instagramDmMaxChars ?? 1000}
+                      onChange={(e) => setMadingCfg({ ...madingCfg, instagramDmMaxChars: Number(e.target.value) })}
+                    />
+                  </Field>
+                  <Field label="Kuota per akun Instagram pengirim per jam">
+                    <input
+                      type="number"
+                      min="1"
+                      max="20"
+                      className="g-field w-full"
+                      value={madingCfg.instagramDmQuotaPerHour ?? 5}
+                      onChange={(e) => setMadingCfg({ ...madingCfg, instagramDmQuotaPerHour: Number(e.target.value) })}
+                    />
+                  </Field>
+                  <Field label="Pesan bantuan (kosong = default)">
+                    <textarea
+                      className="g-field w-full min-h-16"
+                      maxLength={900}
+                      value={madingCfg.instagramDmWelcomeMessage || ""}
+                      onChange={(e) => setMadingCfg({ ...madingCfg, instagramDmWelcomeMessage: e.target.value })}
+                      placeholder="Kirim menfess isi pesan"
+                    />
+                  </Field>
+                  <Field label="Pesan sukses (gunakan {{url}} untuk tautan)">
+                    <textarea
+                      className="g-field w-full min-h-16"
+                      maxLength={900}
+                      value={madingCfg.instagramDmSuccessMessage || ""}
+                      onChange={(e) => setMadingCfg({ ...madingCfg, instagramDmSuccessMessage: e.target.value })}
+                      placeholder="Menfess terkirim: {{url}}"
+                    />
+                  </Field>
+                </div>
+                <p className="mt-2 text-[11px] text-slate-500">
+                  Filter doxxing, kata kasar, dan konten terlarang tetap berlaku. Akun pengirim dibatasi sesuai kuota; pengecekan followers/mutual dan pembayaran per menfess belum diaktifkan.
+                </p>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => action(
+                    { action: "save_settings", key: "mading", value: madingCfg },
+                    "Pengaturan Menfess Instagram berhasil disimpan"
+                  )}
+                  className="g-btn g-btn-primary mt-4 w-full sm:w-auto sm:px-8"
+                >
+                  Simpan Pengaturan Menfess
+                </button>
               </div>
             </div>
           </Card>

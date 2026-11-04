@@ -3,8 +3,12 @@
  * Token dikirim melalui Authorization header agar tidak masuk URL/log.
  */
 
-const DEFAULT_META_API_VERSION = "v24.0";
+const DEFAULT_META_API_VERSION = "v26.0";
 const TERMINAL_CONTAINER_ERRORS = new Set(["ERROR", "EXPIRED"]);
+const ALLOWED_GRAPH_API_BASES = new Set([
+  "https://graph.facebook.com",
+  "https://graph.instagram.com",
+]);
 
 function metaApiVersion() {
   const configured = String(process.env.META_GRAPH_API_VERSION || "").trim();
@@ -12,8 +16,9 @@ function metaApiVersion() {
     ? configured
     : DEFAULT_META_API_VERSION;
 }
-function metaUrl(pathname) {
-  return `https://graph.facebook.com/${metaApiVersion()}/${String(pathname).replace(/^\//, "")}`;
+function metaUrl(pathname, apiBase = "https://graph.facebook.com") {
+  const base = ALLOWED_GRAPH_API_BASES.has(apiBase) ? apiBase : "https://graph.facebook.com";
+  return `${base}/${metaApiVersion()}/${String(pathname).replace(/^\//, "")}`;
 }
 
 function safeMetaMessage(data, fallback) {
@@ -30,6 +35,7 @@ async function graphRequest(pathname, {
   method = "GET",
   body,
   stage = "Meta API",
+  apiBase,
 } = {}) {
   const cleanToken = String(token || "").trim();
   const cleanPath = String(pathname || "").replace(/^\//, "").trim();
@@ -51,7 +57,7 @@ async function graphRequest(pathname, {
     options.signal = AbortSignal.timeout(45_000);
   }
 
-  const targetUrl = `https://graph.facebook.com/${metaApiVersion()}/${cleanPath}`;
+  const targetUrl = metaUrl(cleanPath, apiBase);
   let response;
   try {
     response = await fetch(targetUrl, options);
@@ -82,12 +88,13 @@ function delay(ms) {
 export async function waitForInstagramContainer(
   creationId,
   token,
-  { maxPolls = 12, pollIntervalMs = 1_000 } = {},
+  { maxPolls = 12, pollIntervalMs = 1_000, apiBase } = {},
 ) {
   for (let poll = 0; poll < maxPolls; poll += 1) {
     const data = await graphRequest(`${creationId}?fields=status_code`, {
       token,
       stage: "Pemeriksaan media Instagram",
+      apiBase,
     });
     const status = String(data.status_code || "IN_PROGRESS").toUpperCase();
 
@@ -126,6 +133,7 @@ export async function postToInstagram(
     onContainerCreated,
     maxPolls,
     pollIntervalMs,
+    apiBase,
   } = {},
 ) {
   const cleanUserId = String(igUserId || "").trim();
@@ -161,6 +169,7 @@ export async function postToInstagram(
           token: cleanToken,
           method: "POST",
           stage: "Pembuatan item carousel Instagram",
+          apiBase,
           body: { image_url: url, is_carousel_item: "true" },
         });
         if (!item.id) throw new Error("Gagal membuat item carousel.");
@@ -169,7 +178,7 @@ export async function postToInstagram(
 
       // 2. Tunggu semua child container selesai diproses Meta sebelum digabung ke CAROUSEL
       for (const childId of childrenIds) {
-        await waitForInstagramContainer(childId, cleanToken, { maxPolls: 15, pollIntervalMs: 1500 });
+        await waitForInstagramContainer(childId, cleanToken, { maxPolls: 15, pollIntervalMs: 1500, apiBase });
       }
 
       // 3. Buat container utama CAROUSEL
@@ -177,6 +186,7 @@ export async function postToInstagram(
         token: cleanToken,
         method: "POST",
         stage: "Pembuatan container carousel Instagram",
+        apiBase,
         body: { media_type: "CAROUSEL", children: childrenIds.join(","), caption },
       });
       creationId = created.id;
@@ -186,6 +196,7 @@ export async function postToInstagram(
         token: cleanToken,
         method: "POST",
         stage: "Pembuatan media Instagram",
+        apiBase,
         body: { image_url: imageUrl, caption },
       });
       creationId = created.id;
@@ -200,6 +211,7 @@ export async function postToInstagram(
   const containerStatus = await waitForInstagramContainer(creationId, cleanToken, {
     maxPolls: maxPolls || (isCarousel ? 18 : 12), // Carousel bisa lebih lama
     pollIntervalMs,
+    apiBase,
   });
 
   if (containerStatus === "PUBLISHED") {
@@ -211,6 +223,7 @@ export async function postToInstagram(
       token: cleanToken,
       method: "POST",
       stage: "Publikasi Instagram",
+      apiBase,
       body: { creation_id: creationId },
     });
     return { ...published, creation_id: creationId };
@@ -220,6 +233,7 @@ export async function postToInstagram(
     const status = await waitForInstagramContainer(creationId, cleanToken, {
       maxPolls: 2,
       pollIntervalMs: 250,
+      apiBase,
     }).catch(() => null);
     if (status === "PUBLISHED") {
       return { id: null, creation_id: creationId, already_published: true };

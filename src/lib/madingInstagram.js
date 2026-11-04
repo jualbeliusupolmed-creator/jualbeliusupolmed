@@ -1,14 +1,41 @@
 import { getAdminClient } from "@/lib/supabaseAdmin";
+import { getInstagramAccountCredentials } from "@/lib/instagramAccountCredentials";
 import { processInstagramQueue, siteOriginFromRequest } from "@/lib/instagramQueue";
 import { layoutMadingInstagramPost } from "@/lib/madingInstagramImage";
 import { waitUntil } from "@vercel/functions";
 
 export { siteOriginFromRequest };
 
-function menfessCredentials() {
+export async function resolveMadingInstagramCredentials() {
+  const supa = getAdminClient();
+  const { data: settingsRow, error: settingsError } = await supa
+    .from("settings")
+    .select("value")
+    .eq("key", "mading")
+    .maybeSingle();
+  if (settingsError) throw new Error("Pengaturan akun Instagram Mading gagal dimuat.");
+
+  const selectedAccountId = String(settingsRow?.value?.instagramAccountId || "").trim();
+  if (selectedAccountId) {
+    const { data: account, error: accountError } = await supa
+      .from("organization_social_accounts")
+      .select("id,provider,external_account_id")
+      .eq("id", selectedAccountId)
+      .eq("provider", "instagram")
+      .maybeSingle();
+    if (accountError || !account) throw new Error("Akun Instagram Mading tidak ditemukan.");
+    const credentials = await getInstagramAccountCredentials(supa, account);
+    if (!credentials?.token) throw new Error("Kredensial akun Instagram Mading tidak tersedia.");
+    return {
+      userId: account.external_account_id,
+      accessToken: credentials.token,
+      apiBase: credentials.apiBase,
+    };
+  }
+
   const accessToken = String(process.env.META_MENFESS_IG_ACCESS_TOKEN || process.env.META_IG_ACCESS_TOKEN || "").trim();
   const userId = String(process.env.META_MENFESS_IG_USER_ID || process.env.META_IG_USER_ID || "").trim();
-  return { accessToken, userId };
+  return { accessToken, userId, apiBase: "https://graph.facebook.com" };
 }
 
 export function captionForMading(post) {
@@ -71,7 +98,7 @@ export async function publishQueuedMadingInstagram({
     targetId: postId,
     limit,
     origin,
-    credentials: menfessCredentials(),
+    credentials: await resolveMadingInstagramCredentials(),
     loadTarget: async (supa, id) => {
       const { data } = await supa
         .from("mading_posts")
