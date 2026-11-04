@@ -7,9 +7,22 @@ const nextConfig = {
   },
   images: {
     remotePatterns: [
+      // Supabase Storage
+      { protocol: "https", hostname: "*.supabase.co", pathname: "/storage/v1/object/**" },
+      // Meta / Instagram CDN
+      { protocol: "https", hostname: "*.cdninstagram.com" },
+      { protocol: "https", hostname: "*.fbcdn.net" },
+      // Google user content (foto profil)
+      { protocol: "https", hostname: "*.googleusercontent.com" },
+      // Domain utama
+      { protocol: "https", hostname: "kampuskita.my.id" },
+      { protocol: "https", hostname: "www.kampuskita.my.id" },
+      // Fallback eksternal — bisa dipersempit setelah semua CDN terdata
       { protocol: "https", hostname: "**" },
     ],
     formats: ["image/avif", "image/webp"],
+    deviceSizes: [390, 640, 750, 828, 1080],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256],
   },
   experimental: {
     optimizePackageImports: ["sonner", "embla-carousel-react"],

@@ -32,8 +32,7 @@ describe("GET /chat-wa/[id] - WhatsApp Contact Proxy", () => {
         seller_wa: "081234567890",
         seller_name: "Dinda",
         status: "active",
-        is_sold: false,
-        is_hidden: false,
+        stock: 1,
         listing_code: "CALC1",
       },
     });
@@ -55,7 +54,32 @@ describe("GET /chat-wa/[id] - WhatsApp Contact Proxy", () => {
     expect(redirectLocation).toContain("https://wa.me/6281234567890");
     expect(redirectLocation).toContain("Kalkulator");
     expect(redirectLocation).toContain("CALC1");
+    expect(select).toHaveBeenCalledWith("id, title, seller_wa, seller_name, status, stock, listing_code");
     expect(insert).toHaveBeenCalled();
+  });
+
+  it("supports async route params used by Next.js 15", async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({
+      data: {
+        id: "prod-async",
+        title: "Buku Catatan",
+        seller_wa: "081234567890",
+        seller_name: "Dina",
+        status: "active",
+        stock: 1,
+      },
+    });
+    const eq = vi.fn(() => ({ maybeSingle }));
+    const select = vi.fn(() => ({ eq }));
+    const from = vi.fn(() => ({ select }));
+    mocks.getAdminClient.mockReturnValue({ from });
+
+    const req = new Request("http://localhost/chat-wa/prod-async");
+    const res = await GET(req, { params: Promise.resolve({ id: "prod-async" }) });
+
+    expect(res.status).toBe(307);
+    expect(mocks.getAdminClient).toHaveBeenCalled();
+    expect(res.headers.get("location")).toContain("https://wa.me/6281234567890");
   });
 
   it("includes COD spot in prefilled message if provided", async () => {
@@ -66,8 +90,7 @@ describe("GET /chat-wa/[id] - WhatsApp Contact Proxy", () => {
         seller_wa: "628987654321",
         seller_name: "Rafi",
         status: "active",
-        is_sold: false,
-        is_hidden: false,
+        stock: 1,
       },
     });
     const eq = vi.fn(() => ({ maybeSingle }));
@@ -93,13 +116,36 @@ describe("GET /chat-wa/[id] - WhatsApp Contact Proxy", () => {
     expect(res.headers.get("Retry-After")).toBe("45");
   });
 
+  it("reports listing lookup errors instead of claiming the listing is missing", async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({
+      data: null,
+      error: { code: "42703" },
+    });
+    const eq = vi.fn(() => ({ maybeSingle }));
+    const select = vi.fn(() => ({ eq }));
+    mocks.getAdminClient.mockReturnValue({ from: vi.fn(() => ({ select })) });
+    const logError = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    try {
+      const req = new Request("http://localhost/chat-wa/prod-1");
+      const res = await GET(req, { params: { id: "prod-1" } });
+
+      expect(res.status).toBe(503);
+      expect(await res.text()).toContain("Kontak penjual sementara tidak dapat dibuka");
+      expect(logError).toHaveBeenCalledWith("[chat-wa] Listing lookup failed:", "42703");
+    } finally {
+      logError.mockRestore();
+    }
+  });
+
   it("redirects safely to marketplace when listing is sold", async () => {
     const maybeSingle = vi.fn().mockResolvedValue({
       data: {
         id: "prod-3",
         title: "Buku Bekas",
         seller_wa: "081234567890",
-        is_sold: true,
+        status: "sold",
+        stock: 0,
       },
     });
     mocks.getAdminClient.mockReturnValue({

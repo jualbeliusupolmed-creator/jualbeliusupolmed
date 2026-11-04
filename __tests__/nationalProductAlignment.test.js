@@ -178,7 +178,7 @@ describe("Fase 3 & 4: Penyelarasan Transaksi & Katalog Produk Nasional", () => {
     expect(inserted.seller_name).toBe("Budi Santoso");
   });
 
-  it("mewarisi home_university_id penjual jika kampus dikirim sebagai 'Semua'", async () => {
+  it("mempertahankan pilihan lintas kampus dan tidak mewarisi home_university_id", async () => {
     const payload = {
       seller_name: "Budi Santoso",
       seller_wa: "081234567890",
@@ -201,9 +201,33 @@ describe("Fase 3 & 4: Penyelarasan Transaksi & Katalog Produk Nasional", () => {
 
     expect(mockInsertedListings.length).toBe(1);
     const inserted = mockInsertedListings[0];
-    // Karena profil penjual memiliki home_university_id = 'ui', listing mewarisi university_id tersebut
-    expect(inserted.university_id).toBe("ui");
+    expect(inserted.campus).toBe("Semua");
+    expect(inserted.university_id).toBeNull();
     expect(inserted.user_id).toBe("auth-user-uuid-1234");
+  });
+
+  it("mempertahankan pilihan lintas kampus pada postingan barang dicari", async () => {
+    const payload = {
+      buyer_name: "Budi Santoso",
+      buyer_wa: "081234567890",
+      title: "Dicari buku lintas kampus",
+      description: "Bisa COD",
+      budget: 150000,
+      category: "Buku",
+      campus: "Semua",
+      area: "Kampus",
+    };
+
+    const req = new Request("https://test.com/api/wanted", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+
+    const res = await wantedPost(req);
+    expect(res.status).toBe(200);
+    expect(mockInsertedWanted).toHaveLength(1);
+    expect(mockInsertedWanted[0].campus).toBe("Semua");
+    expect(mockInsertedWanted[0].university_id).toBeNull();
   });
 
   it("menetapkan university_id dan user_id pada postingan barang dicari (WTB/Wanted)", async () => {
@@ -234,4 +258,3 @@ describe("Fase 3 & 4: Penyelarasan Transaksi & Katalog Produk Nasional", () => {
     expect(inserted.buyer_name).toBe("Budi Santoso");
   });
 });
-

@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 
-const DEFAULT_META_API_VERSION = "v24.0";
+const DEFAULT_META_API_VERSION = "v26.0";
 
 let cachedCredentials = null;
 let lastCacheTime = 0;
@@ -104,26 +104,19 @@ export function getInstagramUserId(accountId = "katalog") {
  * Validasi cryptographic signature dari Meta webhook payload (HMAC-SHA256)
  */
 export function verifyMetaSignature(rawBody, signatureHeader, appSecret) {
-  if (!signatureHeader || !appSecret) return true; // Lewatkan jika belum dikonfigurasi di dev
+  if (!signatureHeader || !appSecret) return false;
   try {
-    const [algorithm, signature] = signatureHeader.split("=");
-    if (algorithm !== "sha256" || !signature) return false;
+    const match = /^sha256=([a-f0-9]{64})$/i.exec(String(signatureHeader));
+    if (!match) return false;
 
     const expected = crypto
       .createHmac("sha256", appSecret)
       .update(typeof rawBody === "string" ? rawBody : JSON.stringify(rawBody))
-      .digest("hex");
+      .digest();
 
-    const bufSignature = Buffer.from(signature, "hex");
-    const bufExpected = Buffer.from(expected, "hex");
-
-    if (bufSignature.length !== bufExpected.length) {
-      return false;
-    }
-
-    return crypto.timingSafeEqual(bufSignature, bufExpected);
-  } catch (err) {
-    console.error("Gagal verifikasi signature Meta:", err?.message);
+    const supplied = Buffer.from(match[1], "hex");
+    return supplied.length === expected.length && crypto.timingSafeEqual(supplied, expected);
+  } catch {
     return false;
   }
 }
@@ -132,7 +125,25 @@ export function verifyMetaSignature(rawBody, signatureHeader, appSecret) {
  * Kirim payload pesan langsung ke Meta Instagram Send API
  */
 export async function sendInstagramMessage(recipientId, messagePayload, options = {}) {
-  const token = options.token || (await resolveInstagramToken(options.account || "katalog"));
+  let token = options.token;
+  let apiBase = options.apiBase || "https://graph.facebook.com";
+  if (!token && options.accountId) {
+    const accountId = String(options.accountId);
+    const { getInstagramAccountCredentialsByExternalId } = await import("@/lib/instagramAccountCredentials");
+    const credentials = await getInstagramAccountCredentialsByExternalId(getAdminClient(), accountId);
+    if (credentials) {
+      token = credentials.token;
+      apiBase = credentials.apiBase;
+    } else {
+      const menfessId = await resolveInstagramUserId("menfess");
+      const catalogId = await resolveInstagramUserId("katalog");
+      const matchingLegacyAccount = accountId === String(menfessId || "")
+        ? "menfess"
+        : accountId === String(catalogId || "") ? "katalog" : null;
+      if (matchingLegacyAccount) token = await resolveInstagramToken(matchingLegacyAccount);
+    }
+  }
+  if (!token && !options.accountId) token = await resolveInstagramToken(options.account || "katalog");
   if (!token) {
     console.warn("sendInstagramMessage: token Meta belum diset, pesan diabaikan.");
     return { ok: false, skipped: true, error: "token_missing" };
@@ -146,14 +157,16 @@ export async function sendInstagramMessage(recipientId, messagePayload, options 
   const version = getMetaApiVersion();
   // Gunakan 'me/messages' secara default untuk Page Access Token, atau custom endpoint jika dispesifikasikan
   const endpointPath = options.endpoint || "me/messages";
-  const url = `https://graph.facebook.com/${version}/${endpointPath}`;
+  const allowedApiBases = new Set(["https://graph.facebook.com", "https://graph.instagram.com"]);
+  const safeApiBase = allowedApiBases.has(apiBase) ? apiBase : "https://graph.facebook.com";
+  const url = `${safeApiBase}/${version}/${endpointPath}`;
 
   const body = {
     recipient: { id: cleanRecipient },
     message: messagePayload,
   };
 
-  const response = await fetch(url, {
+  const requestOptions = {
     method: "POST",
     headers: {
       "Content-Type": "application/json; charset=utf-8",
@@ -161,12 +174,20 @@ export async function sendInstagramMessage(recipientId, messagePayload, options 
     },
     body: JSON.stringify(body),
     cache: "no-store",
-  });
+    signal: AbortSignal.timeout(15000),
+  };
+  let response;
+  try {
+    response = await fetch(url, requestOptions);
+  } catch (error) {
+    const timedOut = error?.name === "TimeoutError" || error?.name === "AbortError";
+    return { ok: false, error: timedOut ? "meta_request_timeout" : "meta_network_error" };
+  }
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok || data.error) {
     // Coba fallback ke graph.instagram.com jika endpoint facebook Graph gagal
-    if (data?.error?.code === 100 && url.includes("/me/messages")) {
+    if (safeApiBase === "https://graph.facebook.com" && data?.error?.code === 100 && url.includes("/me/messages")) {
       const fallbackUrl = `https://graph.instagram.com/${version}/me/messages`;
       const fallbackRes = await fetch(fallbackUrl, {
         method: "POST",
@@ -176,6 +197,7 @@ export async function sendInstagramMessage(recipientId, messagePayload, options 
         },
         body: JSON.stringify(body),
         cache: "no-store",
+        signal: AbortSignal.timeout(15000),
       }).catch(() => null);
 
       const fallbackData = await fallbackRes?.json()?.catch(() => ({}));
@@ -184,9 +206,17 @@ export async function sendInstagramMessage(recipientId, messagePayload, options 
       }
     }
 
-    const errorMsg = data?.error?.message || `HTTP ${response.status}`;
-    console.error("Meta Instagram Send API Error:", errorMsg, data);
-    return { ok: false, error: errorMsg, data };
+    const errorCode = data?.error?.code;
+    console.warn("[instagram-dm] Meta Send API rejected request.", {
+      status: response.status,
+      code: Number.isFinite(Number(errorCode)) ? Number(errorCode) : null,
+    });
+    return {
+      ok: false,
+      error: "meta_request_rejected",
+      status: response.status,
+      code: Number.isFinite(Number(errorCode)) ? Number(errorCode) : null,
+    };
   }
 
   return { ok: true, recipientId: cleanRecipient, messageId: data.message_id || null };

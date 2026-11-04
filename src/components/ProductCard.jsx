@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { rupiah } from "@/lib/fees";
 import CartButton from "@/components/CartButton";
 import { buildSlug } from "@/lib/slug";

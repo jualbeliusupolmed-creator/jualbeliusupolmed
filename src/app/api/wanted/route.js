@@ -134,7 +134,8 @@ export async function POST(req) {
 
     const activeCampuses = getActiveCampuses(settings);
     let resolvedCampus = "Semua";
-    let resolvedUniversityId = buyerProfile?.home_university_id || null;
+    const explicitAllCampuses = String(campus || "").trim().toLowerCase() === "semua";
+    let resolvedUniversityId = explicitAllCampuses ? null : buyerProfile?.home_university_id || null;
 
     if (campus && campus !== "Semua") {
       const targetUni = activeCampuses.find(
@@ -147,7 +148,7 @@ export async function POST(req) {
       } else {
         resolvedCampus = campus;
       }
-    } else if (resolvedUniversityId) {
+    } else if (!explicitAllCampuses && resolvedUniversityId) {
       const matchingUni = activeCampuses.find((c) => c.id === resolvedUniversityId);
       if (matchingUni) {
         resolvedCampus = matchingUni.shortName;

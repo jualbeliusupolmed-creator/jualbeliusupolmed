@@ -170,7 +170,7 @@ export default function SuperAppHome({
           // 2. Fallback ke savedCampus di localStorage
           if (!initialCampus) {
             const savedCampus = localStorage.getItem("preferred_campus");
-            const validCampus = savedCampus === "Semua" || data.campuses.some((campus) => campus.shortName === savedCampus);
+            const validCampus = data.campuses.some((campus) => campus.shortName === savedCampus);
             if (validCampus && savedCampus) {
               initialCampus = savedCampus;
             }
@@ -180,6 +180,8 @@ export default function SuperAppHome({
             setSelectedCampus(initialCampus);
             setListingCampus(initialCampus);
             setOnboardingCampus(initialCampus);
+            localStorage.setItem("onboarding_seen", "1");
+            setShowOnboarding(false);
           }
         }
       })
@@ -368,9 +370,14 @@ export default function SuperAppHome({
       .then((data) => {
         if (data?.ok && data?.profil) {
           if (!data.profil.campus || data.profil.campus === "Semua") {
-            // Wajib isi jika baru daftar / belum ada kampus acuan
-            setShowOnboarding(true);
+            const savedCampus = localStorage.getItem("preferred_campus");
+            const onboardingSeen = localStorage.getItem("onboarding_seen") === "1";
+            if ((!savedCampus || savedCampus === "null" || savedCampus === "Semua") && !onboardingSeen) {
+              setShowOnboarding(true);
+            }
           } else {
+            localStorage.setItem("onboarding_seen", "1");
+            setShowOnboarding(false);
             if (data.profil.campus) {
               setSelectedCampus(data.profil.campus);
               setListingCampus(data.profil.campus);
@@ -402,8 +409,11 @@ export default function SuperAppHome({
     try {
       if (typeof window !== "undefined") {
         const savedCamp = localStorage.getItem("preferred_campus");
-        const seen = localStorage.getItem("onboarding_seen");
-        if (!savedCamp || savedCamp === "null" || savedCamp === "Semua" || !seen) {
+        const hasSavedCampus = savedCamp && savedCamp !== "null" && savedCamp !== "Semua";
+        const seen = localStorage.getItem("onboarding_seen") === "1";
+        if (hasSavedCampus) {
+          localStorage.setItem("onboarding_seen", "1");
+        } else if (!seen) {
           setShowOnboarding(true);
         }
       }
@@ -417,16 +427,30 @@ export default function SuperAppHome({
     }
     try {
       setSavingOnboarding(true);
+      if (userWa) {
+        const response = await fetch("/api/profil", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            campus: onboardingCampus,
+            fyp_province_id: onboardingProvince,
+            fyp_scope: onboardingScope,
+          }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || "Preferensi kampus belum berhasil disimpan ke profil.");
+        }
+      }
+
       localStorage.setItem("preferred_campus", onboardingCampus);
       localStorage.setItem("preferred_province", onboardingProvince);
       localStorage.setItem("fyp_scope", onboardingScope);
       localStorage.setItem("onboarding_seen", "1");
-
       setSelectedCampus(onboardingCampus);
       setListingCampus(onboardingCampus);
       setFypProvince(onboardingProvince);
       setFypScope(onboardingScope);
-
       window.dispatchEvent(
         new CustomEvent("campus:change", {
           detail: {
@@ -437,21 +461,6 @@ export default function SuperAppHome({
           },
         })
       );
-
-      if (userWa) {
-        try {
-          await fetch("/api/profil", {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              campus: onboardingCampus,
-              fyp_province_id: onboardingProvince,
-              fyp_scope: onboardingScope,
-            }),
-          });
-        } catch {}
-      }
-
       setShowOnboarding(false);
       toast.success(`Kampus ${onboardingCampus} berhasil disetel sebagai acuan transaksi!`);
     } catch (err) {
@@ -944,15 +953,26 @@ export default function SuperAppHome({
               >
                 {savingOnboarding ? "Menyimpan Acuan..." : "Simpan Acuan & Mulai Belanja 🚀"}
               </button>
-              {typeof window !== "undefined" && Boolean(localStorage.getItem("preferred_campus")) && (
+              {typeof window !== "undefined" &&
+                Boolean(localStorage.getItem("preferred_campus")) &&
+                !["null", "Semua"].includes(localStorage.getItem("preferred_campus")) && (
                 <button
                   type="button"
-                  onClick={() => setShowOnboarding(false)}
+                  onClick={() => {
+                    localStorage.setItem("onboarding_seen", "1");
+                    setShowOnboarding(false);
+                  }}
                   className="w-full text-center text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 py-1"
                 >
                   Gunakan acuan sebelumnya
                 </button>
               )}
+              <p className="text-center text-[11px] text-slate-400">
+                Acuan kampus dan jangkauan FYP bisa diubah kapan saja di{" "}
+                <Link href="/dashboard?tab=profil" className="font-semibold text-emerald-700 hover:underline dark:text-emerald-400">
+                  Dashboard &gt; Profil
+                </Link>.
+              </p>
             </div>
           </div>
         </div>

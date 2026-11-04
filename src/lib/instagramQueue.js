@@ -89,6 +89,7 @@ export async function processInstagramQueue({
         captionFor(target, origin),
         {
           creationId: item.instagram_container_id,
+          apiBase: credentials.apiBase,
           onContainerCreated: async (containerId) => {
             const { error: containerError } = await supa
               .from(table)
@@ -153,4 +154,3 @@ export async function processInstagramQueue({
   }
   return results;
 }
-

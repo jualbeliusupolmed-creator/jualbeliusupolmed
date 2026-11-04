@@ -11,8 +11,15 @@ export function encodeSellerSlug(phone) {
   if (!phone) return "";
   const normalized = formatWa(phone) || String(phone).replace(/\D/g, "");
   if (!normalized) return "";
-  const secret = process.env.SESSION_SECRET || process.env.ADMIN_PASSWORD || "jb_usu_seller_salt_2026";
-  const hash = crypto.createHmac("sha256", secret).update(normalized).digest("hex").slice(0, 10);
+  const secret = process.env.SESSION_SECRET || process.env.ADMIN_PASSWORD;
+  if (!secret && process.env.NODE_ENV === "production") {
+    throw new Error("SESSION_SECRET harus dikonfigurasi untuk membuat slug penjual.");
+  }
+  const hash = crypto
+    .createHmac("sha256", secret || "dev-only-seller-slug-secret")
+    .update(normalized)
+    .digest("hex")
+    .slice(0, 10);
   return `p_${hash}`;
 }
 

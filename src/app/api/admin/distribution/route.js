@@ -178,6 +178,12 @@ export async function POST(req) {
       const supa = getAdminClient();
       const { listing, scope, response } = await loadAuthorizedListing(supa, actor, listingId);
       if (response) return response;
+      if (listing.status !== "active") {
+        return NextResponse.json(
+          { error: "Hanya iklan aktif yang dapat dipublikasikan atau dijadwalkan." },
+          { status: 409 }
+        );
+      }
       const { channels: availableChannels } = await resolveOmnichannelTargets(listing, { origin });
       const canonicalPlans = [];
       for (const requested of channels) {
@@ -295,4 +301,3 @@ export async function POST(req) {
     return NextResponse.json({ error: "Gagal memproses distribusi: " + err.message }, { status: 500 });
   }
 }
-

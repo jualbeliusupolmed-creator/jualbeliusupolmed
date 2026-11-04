@@ -11,9 +11,10 @@ import { tokoAktif } from "@/lib/toko";
 import { findSellerProfileByPhone } from "@/lib/seller-profile-identity";
 import { postToGroup, notifySellerListingLive } from "@/lib/fonnte";
 import { autoPublishListingInstagram } from "@/lib/listingInstagram";
+import { handleInstagramMenfess } from "@/lib/instagramMenfess";
 import {
-  sendInstagramQuickReplies,
-  sendInstagramText,
+  sendInstagramQuickReplies as sendInstagramQuickRepliesApi,
+  sendInstagramText as sendInstagramTextApi,
 } from "@/lib/instagramDm";
 import {
   getDmSession,
@@ -161,6 +162,17 @@ export async function handleInstagramDmEvent({
 }) {
   const cleanSender = String(senderId || "").trim();
   if (!cleanSender) return { ok: false, error: "sender_missing" };
+  const instagramAccountOptions = recipientId ? { accountId: recipientId } : {};
+  const sendInstagramQuickReplies = (to, message, replies = [], options = {}) => {
+    if (!recipientId && !Object.keys(options).length) {
+      return sendInstagramQuickRepliesApi(to, message, replies);
+    }
+    return sendInstagramQuickRepliesApi(to, message, replies, { ...options, ...instagramAccountOptions });
+  };
+  const sendInstagramText = (to, message, options = {}) => {
+    if (!recipientId && !Object.keys(options).length) return sendInstagramTextApi(to, message);
+    return sendInstagramTextApi(to, message, { ...options, ...instagramAccountOptions });
+  };
 
   const rawText = String(text || "").trim();
   const lowerText = rawText.toLowerCase();
@@ -215,6 +227,25 @@ export async function handleInstagramDmEvent({
   }
 
   // ── 2. PENGALIHAN FITUR DI LUAR FASE JUAL (MENFESS & CARI BARANG) ──
+  const menfessResult = await handleInstagramMenfess({
+    senderId: cleanSender,
+    recipientId,
+    text: rawText,
+    quickReplyPayload: payload,
+    attachments,
+  });
+  if (menfessResult.handled) {
+    logInstagramDmMessage({
+      recipientAccountId: recipientId,
+      senderId: cleanSender,
+      direction: "inbound",
+      messageText: safeMessageText,
+      quickReplyPayload: payload || null,
+      actionTaken: menfessResult.action,
+    }).catch(() => {});
+    return { ok: true, ...menfessResult };
+  }
+
   if (
     payload === "ACTION_MENFESS" ||
     payload === "ACTION_SEARCH" ||

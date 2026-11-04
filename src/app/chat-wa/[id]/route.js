@@ -27,7 +27,8 @@ export async function POST(request, { params }) {
 
 async function contactListing(request, params, requestedMessage, isPost) {
   try {
-    const listingId = params?.id;
+    const routeParams = await params;
+    const listingId = routeParams?.id;
     if (!listingId) {
       return NextResponse.redirect(new URL("/jual-beli", request.url), { status: isPost ? 303 : 307 });
     }
@@ -45,11 +46,18 @@ async function contactListing(request, params, requestedMessage, isPost) {
     const supa = getAdminClient();
     const { data: listing, error } = await supa
       .from("listings")
-      .select("id, title, seller_wa, seller_name, status, is_sold, is_hidden, listing_code")
+      .select("id, title, seller_wa, seller_name, status, stock, listing_code")
       .eq("id", listingId)
       .maybeSingle();
 
-    if (error || !listing) {
+    if (error) {
+      console.error("[chat-wa] Listing lookup failed:", error.code || "unknown database error");
+      return new NextResponse("Kontak penjual sementara tidak dapat dibuka. Coba lagi nanti.", {
+        status: 503,
+      });
+    }
+
+    if (!listing) {
       return NextResponse.redirect(new URL("/jual-beli?pesan=Barang+tidak+ditemukan", request.url), {
         status: isPost ? 303 : 307,
       });
@@ -104,4 +112,3 @@ async function contactListing(request, params, requestedMessage, isPost) {
     return NextResponse.redirect(new URL("/jual-beli", request.url), { status: isPost ? 303 : 307 });
   }
 }
-

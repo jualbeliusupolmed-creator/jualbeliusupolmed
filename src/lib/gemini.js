@@ -236,7 +236,7 @@ export async function parseIntentWithAI(text, aiConfig = {}, history = [], image
     : "";
 
   const prompt = `
-    Anda adalah asisten cerdas untuk marketplace kampus (Jual Beli USU/Polmed).
+    Anda adalah asisten cerdas untuk marketplace mahasiswa Indonesia (Kampus Kita).
     Tugas Anda adalah merespons chat dari pengguna WhatsApp dan menentukan NIAT (intent) mereka.
     ${memoryContext}
     ${personalityContext}
