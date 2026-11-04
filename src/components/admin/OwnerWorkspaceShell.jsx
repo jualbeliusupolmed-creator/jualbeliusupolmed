@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFocusTrap } from "@/lib/useFocusTrap";
 import ScopeSwitcher from "@/components/admin/ScopeSwitcher";
 import {
-  ArrowUpRight, Boxes, ChartNoAxesCombined, Clock, Flag, LayoutDashboard, LogOut, Megaphone, Menu, MessageCircle, MessagesSquare,
+  ArrowUpRight, Boxes, ChartNoAxesCombined, Clock, Flag, LayoutDashboard, LogOut, Megaphone, Menu, MessageCircle, MessagesSquare, Sparkles,
   PanelLeftClose, Settings2, ShieldCheck, ShoppingBag, Smartphone, Users, WalletCards, BookOpen, X, MapPinned, ClipboardList,
 } from "lucide-react";
 
@@ -14,13 +14,14 @@ const iconByKey = {
   overview: LayoutDashboard, marketplace: ShoppingBag, reports: Flag, po: Boxes, owners: ShieldCheck, organization: MapPinned, admin_requests: ClipboardList,
   users: Users, finance: WalletCards, analytics: ChartNoAxesCombined, content: BookOpen, settings: Settings2, audit: ShieldCheck,
   wabot: Smartphone, antrean: Clock, notifikasi: MessageCircle, broadcast: Megaphone,
-  broadcast_grup: MessagesSquare, grouppost: MessagesSquare,
+  broadcast_grup: MessagesSquare, grouppost: MessagesSquare, fyp: Sparkles,
 };
 
 const ADMIN_GROUPS = [
   { label: "Workspace", items: [{ key: "overview", label: "Ringkasan", href: "/admin/overview" }] },
   { label: "Operasional", items: [
     { key: "marketplace", label: "Marketplace", href: "/admin/marketplace", permission: "marketplace" },
+    { key: "fyp", label: "Kurasi FYP provinsi", href: "/admin/fyp", roles: ["province_admin"] },
     { key: "users", label: "Pengguna", href: "/admin/users", permission: "users" },
     { key: "reports", label: "Laporan pengguna", href: "/admin/reports", permission: "reports" },
     { key: "po", label: "Open PO", href: "/admin/po", permission: "po" },

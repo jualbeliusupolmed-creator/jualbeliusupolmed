@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 function moduleForPath(pathname) {
   if (pathname === "/admin" || pathname === "/admin/overview") return "overview";
   if (pathname === "/admin/marketplace" || pathname.startsWith("/admin/marketplace/")) return "marketplace";
+  if (pathname === "/admin/fyp" || pathname.startsWith("/admin/fyp/")) return "fyp";
   if (pathname === "/admin/users" || pathname.startsWith("/admin/users/")) return "users";
   if (pathname === "/admin/finance" || pathname.startsWith("/admin/finance/")) return "finance";
   if (pathname === "/admin/analytics" || pathname.startsWith("/admin/analytics/")) return "analytics";
@@ -43,7 +44,9 @@ export default async function AdminLayout({ children }) {
 
   const pathname = headers().get("x-admin-path") || "/admin/overview";
   const moduleName = moduleForPath(pathname);
-  const allowed = moduleName !== "legacy" && hasAdminPermission(actor, moduleName, "read");
+  const allowed = moduleName === "fyp"
+    ? actor.role === "superadmin" || actor.roles?.some((role) => role.role_code === "province_admin") === true
+    : moduleName !== "legacy" && hasAdminPermission(actor, moduleName, "read");
 
   return (
     <div className="g-admin min-h-screen font-sans">
