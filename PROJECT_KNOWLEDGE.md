@@ -595,10 +595,11 @@ cuma server.
   saat mencari dan memperbarui listing.
 - Merge profil kini memindahkan tautan Instagram dan menyelaraskan kembali
   `user_id` seluruh aset kanonis, termasuk nilai lama yang sudah terisi.
-- Migrasi korektif `20261103151304_fix_identity_merge_and_ambiguous_campus_backfill.sql`
+- Migrasi korektif
+  `20261104105751_fix_identity_merge_and_ambiguous_campus_backfill.sql`
   memperbaiki fungsi merge dan hanya mempertahankan atribusi kampus yang dapat
-  dicocokkan; data generik/tidak dikenal tidak ditebak sebagai USU. Migrasi
-  disiapkan untuk ditinjau dan **belum diterapkan ke database**.
+  dicocokkan; data generik/tidak dikenal tidak ditebak sebagai USU. Diterapkan
+  ke Supabase produksi pada 4 November 2026.
 - Onboarding memeriksa status HTTP dan payload `/api/profil` sebelum menyimpan
   preferensi lokal atau menampilkan sukses.
 
