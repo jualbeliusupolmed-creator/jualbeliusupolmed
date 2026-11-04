@@ -26,12 +26,14 @@ export default function OfflinePage() {
         Tidak ada koneksi internet. Periksa jaringanmu, lalu coba muat ulang —
         barang jualan, menfess, dan info kampus akan kembali begitu kamu online.
       </p>
-      <a
-        href="/"
-        className="px-5 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-colors"
-      >
-        Coba Lagi
-      </a>
+      <form action="/" method="get">
+        <button
+          type="submit"
+          className="px-5 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-colors"
+        >
+          Coba Lagi
+        </button>
+      </form>
     </div>
   );
 }
