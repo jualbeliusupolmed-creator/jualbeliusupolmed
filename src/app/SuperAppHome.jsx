@@ -17,6 +17,7 @@ import ProductCard from "@/components/ProductCard";
 import CreateSheet from "@/components/CreateSheet";
 import OTPModal from "@/components/OTPModal";
 import { cn } from "@/lib/utils";
+import { itemMatchesFypScope, sortFypItems } from "@/lib/fypScope";
 
 // Haptic feedback for tactile feel on mobile devices
 function triggerHaptic(type = "light") {
@@ -82,6 +83,7 @@ export default function SuperAppHome({
   const [fypProvince, setFypProvince] = useState("sumatera-utara");
   const [fypUniversities, setFypUniversities] = useState([]);
   const [fypDropdownOpen, setFypDropdownOpen] = useState(false);
+  const [provinceCuratedListings, setProvinceCuratedListings] = useState([]);
 
   // Onboarding (Wajib isi kampus & daerah acuan jual beli)
   const [onboardingProvince, setOnboardingProvince] = useState("sumatera-utara");
@@ -197,32 +199,30 @@ export default function SuperAppHome({
   // Realtime Open PO Batches with FYP Scoping
   const [poBatches, setPoBatches] = useState(Array.isArray(initialPoBatches) ? initialPoBatches : []);
 
+  useEffect(() => {
+    if (fypScope !== "province" || !fypProvince) {
+      setProvinceCuratedListings([]);
+      return undefined;
+    }
+    const controller = new AbortController();
+    fetch(`/api/fyp/curation?provinceId=${encodeURIComponent(fypProvince)}`, { cache: "no-store", signal: controller.signal })
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => setProvinceCuratedListings(Array.isArray(data?.items) ? data.items : []))
+      .catch((error) => {
+        if (error?.name !== "AbortError") setProvinceCuratedListings([]);
+      });
+    return () => controller.abort();
+  }, [fypScope, fypProvince]);
+
   const activeBatches = useMemo(() => {
     if (!Array.isArray(poBatches) || poBatches.length === 0) return [];
-    const filtered = poBatches.filter((batch) => {
-      if (fypScope === "campus" && selectedCampus && selectedCampus !== "Semua") {
-        const target = selectedCampus.toLowerCase();
-        const matchCampus = String(batch.campus || "").toLowerCase() === target;
-        const isAll = String(batch.campus || "").toLowerCase() === "semua" || !batch.campus;
-        return matchCampus || isAll;
-      }
-      if (fypScope === "province" && fypProvince) {
-        const provCampuses = campuses
-          .filter((c) => (c.provinceId || "sumatera-utara") === fypProvince)
-          .flatMap((c) => [c.id.toLowerCase(), c.shortName.toLowerCase()]);
-        const batchCampus = String(batch.campus || "").toLowerCase();
-        return provCampuses.includes(batchCampus) || batchCampus === "semua" || !batchCampus;
-      }
-      if (fypScope === "custom" && Array.isArray(fypUniversities) && fypUniversities.length > 0) {
-        const customKeys = fypUniversities.map((k) => String(k).toLowerCase());
-        const batchCampus = String(batch.campus || "").toLowerCase();
-        return customKeys.includes(batchCampus) || batchCampus === "semua" || !batchCampus;
-      }
-      return true;
-    });
-
-    // Fallback ke seluruh batch jika di kampus/daerah belum ada PO aktif agar beranda tetap informatif
-    return filtered.length > 0 ? filtered : poBatches;
+    return poBatches.filter((batch) => itemMatchesFypScope(batch, {
+      scope: fypScope,
+      campus: selectedCampus,
+      provinceId: fypProvince,
+      universities: fypUniversities,
+      campuses,
+    }));
   }, [poBatches, fypScope, selectedCampus, fypProvince, fypUniversities, campuses]);
 
   useEffect(() => {
@@ -770,69 +770,25 @@ export default function SuperAppHome({
   });
 
   // Filtered Marketplace Listings for Center Column with FYP Scoping
-  const filteredListings = latestListings
+  const scopedListings = latestListings
+    .filter((ad) => itemMatchesFypScope(ad, listingCampus !== "Semua"
+      ? { scope: "campus", campus: listingCampus }
+      : { scope: fypScope, campus: selectedCampus, provinceId: fypProvince, universities: fypUniversities, campuses }))
     .filter((ad) => {
-      // 1. Filter FYP / Kampus
-      if (listingCampus !== "Semua") {
-        const target = listingCampus.toLowerCase();
-        const matchCampus = String(ad.campus || "").toLowerCase() === target;
-        const matchUnivId = String(ad.university_id || "").toLowerCase() === target;
-        const matchProfileUniv = String(ad.seller_profiles?.home_university_id || "").toLowerCase() === target;
-        const isAll = String(ad.campus || "").toLowerCase() === "semua";
-        if (!matchCampus && !matchUnivId && !matchProfileUniv && !isAll) {
-          return false;
-        }
-      } else {
-        // listingCampus === "Semua", maka terapkan kurasi preferensi FYP Scope
-        if (fypScope === "campus" && selectedCampus && selectedCampus !== "Semua") {
-          const target = selectedCampus.toLowerCase();
-          const matchCampus = String(ad.campus || "").toLowerCase() === target;
-          const matchUnivId = String(ad.university_id || "").toLowerCase() === target;
-          const matchProfileUniv = String(ad.seller_profiles?.home_university_id || "").toLowerCase() === target;
-          const isAll = String(ad.campus || "").toLowerCase() === "semua";
-          if (!matchCampus && !matchUnivId && !matchProfileUniv && !isAll) {
-            return false;
-          }
-        } else if (fypScope === "province" && fypProvince) {
-          const provCampuses = campuses
-            .filter((c) => (c.provinceId || "sumatera-utara") === fypProvince)
-            .flatMap((c) => [c.id.toLowerCase(), c.shortName.toLowerCase()]);
-          const adCampus = String(ad.campus || "").toLowerCase();
-          const adUnivId = String(ad.university_id || "").toLowerCase();
-          const adProfUniv = String(ad.seller_profiles?.home_university_id || "").toLowerCase();
-          const matchProv =
-            provCampuses.includes(adCampus) ||
-            provCampuses.includes(adUnivId) ||
-            provCampuses.includes(adProfUniv) ||
-            adCampus === "semua";
-          if (!matchProv) {
-            return false;
-          }
-        } else if (fypScope === "custom" && Array.isArray(fypUniversities) && fypUniversities.length > 0) {
-          const customKeys = fypUniversities.map((k) => String(k).toLowerCase());
-          const adCampus = String(ad.campus || "").toLowerCase();
-          const adUnivId = String(ad.university_id || "").toLowerCase();
-          const adProfUniv = String(ad.seller_profiles?.home_university_id || "").toLowerCase();
-          const matchCustom =
-            customKeys.includes(adCampus) ||
-            customKeys.includes(adUnivId) ||
-            customKeys.includes(adProfUniv) ||
-            adCampus === "semua";
-          if (!matchCustom) {
-            return false;
-          }
-        }
-        // fypScope === 'all' menampilkan seluruh barang dari semua kampus
-      }
-
       // 2. Filter Kategori
       if (listingCategory !== "Semua") {
         const combined = `${ad.category || ""} ${ad.title || ""} ${ad.description || ""}`.toLowerCase();
         if (!combined.includes(listingCategory.toLowerCase())) return false;
       }
       return true;
-    })
-    .sort((a, b) => {
+    });
+  const curatedForScope = fypScope === "province" && listingCampus === "Semua"
+    ? provinceCuratedListings.filter((item) => itemMatchesFypScope(item, {
+      scope: "province", provinceId: fypProvince, campuses,
+    }) && (listingCategory === "Semua" || `${item.category || ""} ${item.title || ""}`.toLowerCase().includes(listingCategory.toLowerCase())))
+    : [];
+  const scopedById = new Map([...scopedListings, ...curatedForScope].map((item) => [String(item.id), item]));
+  const naturallySortedListings = [...scopedById.values()].sort((a, b) => {
       if (listingSort === "termurah") {
         const pA = typeof a.price === "number" ? a.price : parseFloat(String(a.price).replace(/[^0-9]/g, "")) || 0;
         const pB = typeof b.price === "number" ? b.price : parseFloat(String(b.price).replace(/[^0-9]/g, "")) || 0;
@@ -840,6 +796,8 @@ export default function SuperAppHome({
       }
       return new Date(b.created_at || b.bumped_at || 0) - new Date(a.created_at || a.bumped_at || 0);
     });
+  const filteredListings = sortFypItems(naturallySortedListings,
+    fypScope === "province" && listingCampus === "Semua" ? curatedForScope.map((item) => item.id) : []);
 
   return (
     <div className="min-h-screen bg-[#fbfbfa] dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 font-sans antialiased selection:bg-emerald-100 selection:text-emerald-900 pb-20 md:pb-8">
@@ -1303,7 +1261,9 @@ export default function SuperAppHome({
                       {fypScope === "campus"
                         ? "Rekomendasi barang difokuskan di kampusmu (COD cepat & aman)"
                         : fypScope === "province"
-                        ? "Barang dari seluruh kampus dalam satu provinsi acuan"
+                        ? provinceCuratedListings.length
+                          ? "Pilihan admin provinsi tampil lebih dulu, lalu listing wilayah lainnya"
+                          : "Barang aktif dari seluruh kampus dalam satu provinsi acuan"
                         : fypScope === "custom"
                         ? `Memantau ${fypUniversities.length} kampus pilihanmu`
                         : "Menampilkan barang aktif dari berbagai kampus se-Indonesia"}

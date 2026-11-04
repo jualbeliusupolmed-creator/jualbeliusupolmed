@@ -9,7 +9,7 @@ export async function fetchOpenPoBatches({ sellerWa } = {}) {
   const supa = getAdminClient();
   let query = supa
     .from("open_po_batches")
-    .select("id,seller_wa,title,price_idr,quota,reserved_count,closes_at,pickup_point,pickup_note,status,created_at,product:open_po_products(name,description,category,unit,image_url,campus,active)")
+    .select("id,seller_wa,title,price_idr,quota,reserved_count,closes_at,pickup_point,pickup_note,status,created_at,product:open_po_products(name,description,category,unit,image_url,campus,university_id,active)")
     .eq("status", "open")
     .gt("closes_at", new Date().toISOString())
     .order("closes_at", { ascending: true })
@@ -45,6 +45,7 @@ export async function fetchOpenPoBatches({ sellerWa } = {}) {
       faculty: seller?.faculty || "",
       photo: labelPhoto(batch.product?.image_url),
       campus: batch.product?.campus || "",
+      university_id: batch.product?.university_id || "",
       status: batch.status,
       url: `/open-po?batch=${encodeURIComponent(batch.id)}`,
     };
