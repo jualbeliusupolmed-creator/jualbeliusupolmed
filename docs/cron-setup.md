@@ -11,10 +11,12 @@ yang waktunya sudah tiba dalam satu pemanggilan. Endpoint memerlukan
 `Authorization: Bearer <CRON_SECRET>`. Kode endpoint sudah tersedia, tetapi
 belum otomatis berjalan sampai pemicu berikut dipasang dan aplikasi dideploy.
 
-Gunakan Supabase Cron untuk interval lima menit. Dokumentasi Vercel saat ini
-membatasi jadwal Hobby menjadi paling sering sekali sehari; Pro dan Enterprise
-mendukung jadwal per menit. Karena paket proyek belum diverifikasi, cron
-Supabase menghindari ketergantungan worker ini pada tingkat paket Vercel.
+Gunakan Supabase Cron untuk interval lima menit. Deployment Production terbaru
+gagal karena jadwal `*/10` di `vercel.json` melampaui batas akun Hobby. Jadwal
+worker tersebut sudah dihapus dari konfigurasi Vercel agar build tidak ditolak;
+jangan tambahkan kembali kecuali paket Vercel mendukungnya. Supabase Cron belum
+diaktifkan dan belum ada rahasia `omnichannel_cron_secret` di Vault, jadi antrean
+belum berjalan berkala sampai setup di bawah diselesaikan.
 
 ### Setup
 
