@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, BadgeCheck, BarChart3, BookOpenCheck, CircleAlert, ClipboardCheck, Instagram, MapPinned, MessageCircle, ShieldCheck } from "lucide-react";
+import { ArrowUpRight, BadgeCheck, BarChart3, BookOpenCheck, Camera, CircleAlert, ClipboardCheck, MapPinned, MessageCircle, ShieldCheck } from "lucide-react";
 import SumutOperationalReadiness from "@/components/admin/SumutOperationalReadiness";
 
 export const metadata = {
@@ -66,7 +66,7 @@ export default function OperationalGuidePage() {
       <LinkRow href="/admin/owners" icon={ShieldCheck} title="Akses owner" detail="Tetapkan operator, cakupan, dan izin kerja." />
       <LinkRow href="/admin/marketplace" icon={ClipboardCheck} title="Marketplace" detail="Review, aktifkan, atau tindak lanjuti listing." />
       <LinkRow href="/admin/fyp" icon={BadgeCheck} title="Kurasi FYP provinsi" detail="Atur pilihan listing unggulan Sumut." />
-      <LinkRow href="/admin/social" icon={Instagram} title="Instagram dan kanal sosial" detail="Periksa akun, antrean, dan hasil distribusi." />
+      <LinkRow href="/admin/social" icon={Camera} title="Instagram dan kanal sosial" detail="Periksa akun, antrean, dan hasil distribusi." />
       <LinkRow href="/admin/wabot" icon={MessageCircle} title="Status WhatsApp" detail="Periksa sambungan dan operasional bot." />
     </section>
   </main>;
