@@ -140,5 +140,6 @@ Halaman panduan dalam panel: **Admin → Panduan operasional Sumut**. Kartu
 dan ringkasan jualan dari API panel. Jika sebagian sumber gagal, tampilkan
 “belum tersedia” dan jangan menafsirkannya sebagai nol. Kontak dan konfirmasi
 penjual dihitung dari kolom agregat saja; data nomor telepon dan nama tidak
-dikirim ke tampilan analitik. Angka 30 hari dibatasi pada maksimal 20.000
-listing untuk menjaga beban kueri dan akan diberi tanda jika batas tercapai.
+dikirim ke tampilan analitik. Hitungan kontak memakai relasi listing yang sama
+dengan filter kampus/universitas, sehingga hasil tidak bergantung pada daftar
+ID listing yang dipotong di aplikasi.

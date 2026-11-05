@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Activity, ArrowUpRight, RefreshCw, ShieldCheck } from "lucide-react";
+import { countSumutOwners, summarizeSumutAccounts } from "@/lib/sumutOperationalReadiness";
 
-const PROVINCE_ID = "sumatera-utara";
 const endpoints = [
   ["owners", "/api/admin/owners"],
   ["social", "/api/admin/social/accounts"],
@@ -42,33 +42,17 @@ export default function SumutOperationalReadiness() {
   useEffect(() => { refresh(); }, [refresh]);
 
   const data = useMemo(() => {
-    const universityIds = new Set(responses.commerce?.universityScopeIds || []);
-    const isSumutAccount = (account) =>
-      String(account.province_id || account.provinces?.id || "").toLowerCase() === PROVINCE_ID ||
-      String(account.universities?.province_id || "").toLowerCase() === PROVINCE_ID ||
-      (account.scope_type === "province" && String(account.scope_id || "").toLowerCase() === PROVINCE_ID) ||
-      (account.scope_type === "university" && universityIds.has(String(account.scope_id || "").toLowerCase()));
-    const socialAccounts = (responses.social?.accounts || []).filter(isSumutAccount);
-    const whatsappAccounts = (responses.whatsapp?.accounts || []).filter(isSumutAccount);
-    const activeSocial = socialAccounts.filter((account) => account.status === "connected" && (account.provider !== "instagram" || account.has_access_token)).length;
-    const liveWhatsapp = whatsappAccounts.filter((account) => account.liveName).length;
-    const owners = (responses.owners?.owners || []).filter((owner) => (owner.scopes || []).some((scope) =>
-      (scope.scope_type === "province" && String(scope.scope_id || "").toLowerCase() === PROVINCE_ID) ||
-      (scope.scope_type === "campus" && universityIds.has(String(scope.scope_id || "").toLowerCase()))
-    ));
+    const scopeIds = responses.commerce?.universityScopeIds || [];
+    const accounts = summarizeSumutAccounts(responses.social?.accounts, responses.whatsapp?.accounts, scopeIds);
     const metrics = responses.commerce?.counts || {};
     return {
       provinceName: responses.commerce?.provinceName || "Sumatera Utara",
       universities: responses.commerce?.universityCount,
-      owners: owners.filter((owner) => owner.status === "active").length,
+      owners: countSumutOwners(responses.owners?.owners, scopeIds),
       ownerCountAvailable: Boolean(responses.owners),
-      socialTotal: socialAccounts.length,
-      activeSocial,
-      whatsappTotal: whatsappAccounts.length,
-      liveWhatsapp,
+      ...accounts,
       gatewayOnline: Boolean(responses.whatsapp?.stats?.gatewayOnline),
       metrics,
-      contactCoverage: responses.commerce?.coverage || "unavailable",
     };
   }, [responses]);
 
@@ -85,8 +69,8 @@ export default function SumutOperationalReadiness() {
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       <Card label="Universitas dalam cakupan" value={responses.commerce ? data.universities : "—"} detail={responses.commerce ? "Universitas aktif sesuai akses" : "Data katalog belum tersedia"} />
       <Card label="Admin/owner aktif" value={data.ownerCountAvailable ? data.owners : ownerRestricted ? "Terbatas" : "—"} detail={data.ownerCountAvailable ? "Scope Sumut cocok" : ownerRestricted ? "Daftar nama khusus superadmin" : "Data owner belum tersedia"} tone="blue" />
-      <Card label="Akun Instagram" value={responses.social ? `${data.activeSocial}/${data.socialTotal}` : "—"} detail={responses.social ? "Terhubung dan token tersedia" : "Data akun sosial belum tersedia"} />
-      <Card label="Grup/kanal WhatsApp" value={responses.whatsapp ? `${data.liveWhatsapp}/${data.whatsappTotal}` : "—"} detail={responses.whatsapp ? data.gatewayOnline ? "Terdeteksi pada gateway" : "Gateway belum tersambung" : "Data WhatsApp belum tersedia"} tone={data.gatewayOnline ? "emerald" : "amber"} />
+      <Card label="Akun Instagram" value={responses.social ? `${data.instagramConnected}/${data.instagramTotal}` : "—"} detail={responses.social ? "Terhubung dan token tersedia / akun aktif" : "Data akun sosial belum tersedia"} />
+      <Card label="Grup/kanal WhatsApp" value={responses.whatsapp ? `${data.whatsappLive}/${data.whatsappTotal}` : "—"} detail={responses.whatsapp ? data.gatewayOnline ? "Ditemukan di gateway / akun aktif" : "Gateway belum tersambung" : "Data WhatsApp belum tersedia"} tone={data.gatewayOnline ? "emerald" : "amber"} />
     </div>
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       <Card label="Kontak tercatat · 30 hari" value={commerceError ? "—" : data.metrics.contactAttempts ?? "—"} detail="Permintaan kontak, bukan chat terbukti" tone="blue" />
@@ -94,7 +78,6 @@ export default function SumutOperationalReadiness() {
       <Card label="Konfirmasi GAGAL" value={commerceError ? "—" : data.metrics.sellerReportedFailed ?? "—"} detail="Dilaporkan penjual lewat WA" tone="amber" />
       <Card label="Listing terjual" value={commerceError ? "—" : data.metrics.soldListings ?? "—"} detail="Status listing; bukan bukti pembayaran" />
     </div>
-    {data.contactCoverage === "capped" && <p className="text-[11px] leading-relaxed text-amber-900">Data kontak dibatasi karena jumlah listing besar; angka kontak/DEAL/GAGAL dapat kurang dari jumlah sebenarnya.</p>}
     <div className="flex flex-wrap gap-2 border-t border-emerald-200 pt-3">
       <Link href="/admin/organization" className="inline-flex min-h-9 items-center gap-1 rounded-lg bg-white px-3 text-xs font-bold text-emerald-900">Katalog wilayah <ArrowUpRight className="h-3.5 w-3.5" /></Link>
       <Link href="/admin/owners" className="inline-flex min-h-9 items-center gap-1 rounded-lg bg-white px-3 text-xs font-bold text-emerald-900"><ShieldCheck className="h-3.5 w-3.5" />Kelola admin <ArrowUpRight className="h-3.5 w-3.5" /></Link>

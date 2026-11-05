@@ -7,21 +7,15 @@ import { applyListingScope, buildListingScopeValues } from "@/lib/adminListingSc
 export const dynamic = "force-dynamic";
 
 const PROVINCE_ID = "sumatera-utara";
-const LISTING_ID_CAP = 20000;
-const CONTACT_BATCH_SIZE = 250;
 
-async function countContacts(supa, listingIds, since, status) {
-  let total = 0;
-  for (let offset = 0; offset < listingIds.length; offset += CONTACT_BATCH_SIZE) {
-    let query = supa.from("buyer_contacts").select("id", { count: "exact", head: true })
-      .in("listing_id", listingIds.slice(offset, offset + CONTACT_BATCH_SIZE))
-      .gte("created_at", since);
-    if (status) query = query.eq("deal_status", status);
-    const { count, error } = await query;
-    if (error) throw error;
-    total += count || 0;
-  }
-  return total;
+async function countContacts(supa, scope, since, status) {
+  let query = supa.from("buyer_contacts")
+    .select("id,listings!inner(id)", { count: "exact", head: true })
+    .gte("created_at", since);
+  if (status) query = query.eq("deal_status", status);
+  const { count, error } = await applyListingScope(query, scope, "listings");
+  if (error) throw error;
+  return count || 0;
 }
 
 export async function GET() {
@@ -53,22 +47,13 @@ export async function GET() {
       return count || 0;
     }));
 
-    // Ambil ID listing saja; buyer_contacts dibaca hanya dalam bentuk jumlah/status,
-    // tanpa nomor telepon, nama pembeli, atau kontak penjual.
-    const listingIds = [];
-    for (let offset = 0; offset < LISTING_ID_CAP; offset += 1000) {
-      const query = applyListingScope(supa.from("listings").select("id").order("id").range(offset, offset + 999), scope);
-      const { data, error } = await query;
-      if (error) throw error;
-      listingIds.push(...(data || []).map((row) => row.id));
-      if (!data || data.length < 1000) break;
-    }
-    const listingIdsCapped = listingIds.length >= LISTING_ID_CAP;
+    // Filter melalui relasi listing dan ambil jumlah saja; nomor telepon dan nama
+    // pada buyer_contacts tidak pernah dikirim ke analitik atau browser.
     const since = new Date(Date.now() - 30 * 864e5).toISOString();
     const [contactAttempts, sellerReportedDeal, sellerReportedFailed] = await Promise.all([
-      countContacts(supa, listingIds, since, null),
-      countContacts(supa, listingIds, since, "deal"),
-      countContacts(supa, listingIds, since, "gagal"),
+      countContacts(supa, scope, since, null),
+      countContacts(supa, scope, since, "deal"),
+      countContacts(supa, scope, since, "gagal"),
     ]);
 
     return NextResponse.json({
@@ -77,7 +62,6 @@ export async function GET() {
       universityCount: scopedCampuses.length,
       universityScopeIds: scopedCampuses.flatMap((campus) => [campus.id, campus.shortName].filter(Boolean).map((value) => String(value).toLowerCase())),
       windowDays: 30,
-      coverage: listingIdsCapped ? "capped" : "complete",
       counts: {
         listings: listingCounts[0],
         activeListings: listingCounts[1],
