@@ -72,9 +72,10 @@ export async function getOverviewStats() {
 }
 
 export async function getWorkspaceOverview(actor) {
-  const [{ getAdminClient }, { getAdminCampusScope }] = await Promise.all([
+  const [{ getAdminClient }, { getAdminCampusScope }, { applyListingScope, buildListingScopeValues }] = await Promise.all([
     import("@/lib/supabaseAdmin"),
     import("@/lib/admin-access"),
+    import("@/lib/adminListingScope"),
   ]);
 
   if (actor?.role === "superadmin") {
@@ -102,17 +103,19 @@ export async function getWorkspaceOverview(actor) {
     }
 
     const campusNames = scopedCampuses.map((campus) => campus.shortName).filter(Boolean);
+    const listingScope = buildListingScopeValues(campusNames, scopedCampuses);
     if (!campusNames.length) {
       return { listingsTotal: 0, activeTotal: 0, pendingTotal: 0, soldTotal: 0, campuses: [], scopeLabel };
     }
 
     const supa = getAdminClient();
     const [total, active, pending, sold] = await Promise.all([
-      supa.from("listings").select("id", { count: "exact", head: true }).in("campus", campusNames),
-      supa.from("listings").select("id", { count: "exact", head: true }).eq("status", "active").in("campus", campusNames),
-      supa.from("listings").select("id", { count: "exact", head: true }).eq("status", "pending").in("campus", campusNames),
-      supa.from("listings").select("id", { count: "exact", head: true }).eq("status", "sold").in("campus", campusNames),
+      applyListingScope(supa.from("listings").select("id", { count: "exact", head: true }), listingScope),
+      applyListingScope(supa.from("listings").select("id", { count: "exact", head: true }).eq("status", "active"), listingScope),
+      applyListingScope(supa.from("listings").select("id", { count: "exact", head: true }).eq("status", "pending"), listingScope),
+      applyListingScope(supa.from("listings").select("id", { count: "exact", head: true }).eq("status", "sold"), listingScope),
     ]);
+    if ([total, active, pending, sold].some((result) => result.error)) throw new Error("Scoped overview query failed.");
     return {
       listingsTotal: total.count || 0,
       activeTotal: active.count || 0,
@@ -126,13 +129,17 @@ export async function getWorkspaceOverview(actor) {
   const campuses = await getAdminCampusScope(actor);
   if (!campuses?.length) return { activeTotal: 0, pendingTotal: 0, soldTotal: 0, listingsTotal: 0, campuses: [], scopeLabel: "Belum ada cakupan" };
 
+  const { getSettings, getActiveCampuses } = await import("@/lib/settings");
+  const catalog = getActiveCampuses(await getSettings());
+  const listingScope = buildListingScopeValues(campuses, catalog);
   const supa = getAdminClient();
   const [total, active, pending, sold] = await Promise.all([
-    supa.from("listings").select("id", { count: "exact", head: true }).in("campus", campuses),
-    supa.from("listings").select("id", { count: "exact", head: true }).eq("status", "active").in("campus", campuses),
-    supa.from("listings").select("id", { count: "exact", head: true }).eq("status", "pending").in("campus", campuses),
-    supa.from("listings").select("id", { count: "exact", head: true }).eq("status", "sold").in("campus", campuses),
+    applyListingScope(supa.from("listings").select("id", { count: "exact", head: true }), listingScope),
+    applyListingScope(supa.from("listings").select("id", { count: "exact", head: true }).eq("status", "active"), listingScope),
+    applyListingScope(supa.from("listings").select("id", { count: "exact", head: true }).eq("status", "pending"), listingScope),
+    applyListingScope(supa.from("listings").select("id", { count: "exact", head: true }).eq("status", "sold"), listingScope),
   ]);
+  if ([total, active, pending, sold].some((result) => result.error)) throw new Error("Scoped overview query failed.");
   return {
     listingsTotal: total.count || 0,
     activeTotal: active.count || 0,

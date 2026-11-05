@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowUpRight, BadgeCheck, BarChart3, BookOpenCheck, CircleAlert, ClipboardCheck, Instagram, MapPinned, MessageCircle, ShieldCheck } from "lucide-react";
+import SumutOperationalReadiness from "@/components/admin/SumutOperationalReadiness";
 
 export const metadata = {
   title: "Panduan Operasional Sumut | Admin Kampus Kita",
@@ -18,7 +19,7 @@ const metrics = [
   ["Menunggu review", "Jumlah listing pending dan lamanya menunggu; status tersedia, tetapi umur antrean perlu dihitung dari created_at."],
   ["Tayangan produk", "Jumlah views pada listing; views bukan orang unik dan bukan bukti minat beli."],
   ["Distribusi sosial", "Jumlah pekerjaan berhasil/gagal per kanal; status antrean tidak sama dengan publikasi yang terlihat oleh audiens."],
-  ["Kontak menjadi transaksi", "Belum dapat dihitung andal: klik WhatsApp, percakapan, dan konfirmasi transaksi belum menjadi satu corong analitik."],
+  ["Kontak dan hasil penjualan", "Panel menampilkan permintaan kontak tercatat dan konfirmasi DEAL/GAGAL yang dikirim penjual lewat WhatsApp. Angka ini bukan bukti chat dibuka, pembayaran diterima, atau transaksi selesai."],
 ];
 
 function LinkRow({ href, icon: Icon, title, detail }) {
@@ -33,6 +34,8 @@ export default function OperationalGuidePage() {
         <div className="rounded-2xl border border-white/15 bg-white/10 p-4"><p className="text-xs font-extrabold text-emerald-100">Status wilayah</p><p className="mt-1 text-lg font-black">Admin Sumut disiapkan</p><p className="mt-1 text-xs leading-relaxed text-emerald-50/80">Superadmin dapat menambah provinsi, owner, scope, dan kanal kapan pun. Wilayah baru berstatus persiapan sampai operator dan alur pengirimannya diverifikasi.</p></div>
       </div>
     </header>
+
+    <SumutOperationalReadiness />
 
     <div className="grid gap-6 lg:grid-cols-[1.2fr_.8fr]">
       <section className="rounded-2xl border border-slate-200 bg-white">
