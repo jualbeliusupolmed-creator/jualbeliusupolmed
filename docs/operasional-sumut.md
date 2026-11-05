@@ -71,7 +71,8 @@ Gunakan periode dan cakupan kampus yang sama untuk setiap rekap.
 | Waktu review | Waktu dari dibuat sampai keputusan pertama | Belum ada metrik keputusan pertama yang tervalidasi; jangan klaim SLA dari hitungan manual tanpa catatan |
 | Views | Jumlah views listing | Tersedia; bukan pengguna unik atau minat beli |
 | Distribusi sosial | Jumlah job berhasil/gagal per penyedia dan scope | Log job tersedia; status job tidak membuktikan jangkauan/engagement audiens |
-| Kontak WhatsApp | Klik atau chat yang berasal dari listing | Belum tersedia sebagai corong analitik terhubung yang dapat dipakai untuk konversi |
+| Kontak tercatat | Permintaan kontak dari halaman listing/minat yang tercatat di `buyer_contacts` | Dapat direkap per listing Sumut untuk 30 hari terakhir; menunjukkan upaya kontak, bukan bukti halaman WA dibuka atau chat berlangsung |
+| Konfirmasi penjual | Balasan `DEAL` atau `GAGAL` dari penjual melalui bot WhatsApp | Tersedia sebagai laporan mandiri penjual; belum diverifikasi dengan bukti pembayaran atau pembeli |
 | Transaksi dan pendapatan | Pesanan selesai dan jumlah yang benar-benar dibayar | Perlu bukti status transaksi/pembayaran; jangan menyamakan dengan listing sold atau nilai barang |
 
 Rekap mingguan minimal: tanggal awal/akhir, kampus, listing baru, aktif,
@@ -134,6 +135,10 @@ Keputusan untuk menjalankan operasi di luar Sumut tetap dibuat oleh pemilik.
 Dengan demikian superadmin dapat menyiapkan lebih dulu, sementara wilayah
 tersebut tetap berstatus persiapan sampai prasyarat operasional diverifikasi.
 
-Halaman panduan dalam panel: **Admin → Panduan operasional Sumut**. Perubahan
-skema pencatatan klik, kontak, atau transaksi memerlukan desain terpisah dan
-migrasi SQL yang ditinjau sebelum diterapkan.
+Halaman panduan dalam panel: **Admin → Panduan operasional Sumut**. Kartu
+“Kesiapan live” mengambil katalog, penanggung jawab, akun sosial, grup/kanal,
+dan ringkasan jualan dari API panel. Jika sebagian sumber gagal, tampilkan
+“belum tersedia” dan jangan menafsirkannya sebagai nol. Kontak dan konfirmasi
+penjual dihitung dari kolom agregat saja; data nomor telepon dan nama tidak
+dikirim ke tampilan analitik. Angka 30 hari dibatasi pada maksimal 20.000
+listing untuk menjaga beban kueri dan akan diberi tanda jika batas tercapai.
