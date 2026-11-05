@@ -12,6 +12,7 @@ const ENABLE_MOBILE_REDIRECT = false;
 
 const ADMIN_WORKSPACE_PATHS = [
   "/admin/overview",
+  "/admin/operasional-sumut",
   "/admin/marketplace",
   "/admin/users",
   "/admin/finance",
@@ -50,6 +51,10 @@ const ADMIN_LEGACY_REDIRECTS = [
 
 function matchesAdminPath(pathname, paths) {
   return paths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+}
+
+export function isAdminWorkspacePath(pathname) {
+  return pathname === "/admin" || matchesAdminPath(pathname, ADMIN_WORKSPACE_PATHS);
 }
 
 export async function middleware(request) {
@@ -107,7 +112,7 @@ export async function middleware(request) {
   }
 
   if (pathname === "/admin" || pathname.startsWith("/admin/")) {
-    const isWorkspacePage = pathname === "/admin" || matchesAdminPath(pathname, ADMIN_WORKSPACE_PATHS);
+    const isWorkspacePage = isAdminWorkspacePath(pathname);
     const isWhatsAppPage = matchesAdminPath(pathname, ADMIN_WHATSAPP_PATHS);
     if (!isWorkspacePage && !isWhatsAppPage) {
       const legacy = ADMIN_LEGACY_REDIRECTS.find(([path]) => pathname === path || pathname.startsWith(`${path}/`));
