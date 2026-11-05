@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Boxes, CircleDollarSign, ClipboardCheck, Plus, ShieldCheck, ShoppingBag, Users } from "lucide-react";
+import { ArrowRight, BookOpenCheck, Boxes, CircleDollarSign, ClipboardCheck, Plus, ShieldCheck, ShoppingBag, Users } from "lucide-react";
 import { rupiah } from "@/lib/fees";
 
 function Metric({ label, value, detail, href, icon: Icon, accent = "emerald" }) {
@@ -30,7 +30,7 @@ export default function OverviewView({ stats = {}, actor, legacyNotice = false }
     { label: "Menunggu review", value: stats.pendingTotal, detail: "Perlu ditinjau", href: "/admin/marketplace", icon: ClipboardCheck, accent: "amber" },
     { label: "Iklan terjual", value: stats.soldTotal, detail: "Dalam cakupan kerja", href: "/admin/marketplace", icon: CircleDollarSign, accent: "blue" },
   ];
-  if (isSuperadmin) metrics.push({ label: "Laporan terbuka", value: stats.openReportsTotal, detail: "Perlu ditindaklanjuti", href: "/admin/reports", icon: ShieldCheck, accent: "violet" });
+  if (isSuperadmin && stats.openReportsTotal !== undefined) metrics.push({ label: "Laporan terbuka", value: stats.openReportsTotal, detail: "Perlu ditindaklanjuti", href: "/admin/reports", icon: ShieldCheck, accent: "violet" });
 
   const quickLinks = isSuperadmin
     ? [
@@ -38,12 +38,14 @@ export default function OverviewView({ stats = {}, actor, legacyNotice = false }
       { title: "Review marketplace", detail: "Tinjau iklan yang menunggu persetujuan.", href: "/admin/marketplace", icon: ClipboardCheck },
       { title: "Laporan pengguna", detail: "Tinjau laporan yang perlu ditindaklanjuti.", href: "/admin/reports", icon: ShieldCheck },
       { title: "Kelola Open PO", detail: "Pantau batch, kuota, dan reservasi baru.", href: "/admin/po", icon: Boxes },
+      { title: "Panduan operasional Sumut", detail: "Alur kerja, metrik, dan batas pilot saat ini.", href: "/admin/operasional-sumut", icon: BookOpenCheck },
       { title: "WhatsApp", detail: "Buka status bot dan operasional pesan.", href: "/admin/wabot", icon: ShieldCheck },
     ]
     : [
       { title: "Marketplace wilayah saya", detail: `${stats.campuses?.join(", ") || "Cakupan kampus belum diatur"}.`, href: "/admin/marketplace", icon: ShoppingBag },
       ...(canReports ? [{ title: "Laporan pengguna", detail: "Tindak lanjuti laporan dari kampus dalam cakupan Anda.", href: "/admin/reports", icon: ShieldCheck }] : []),
       ...(canPo ? [{ title: "Open PO", detail: "Kelola batch dan reservasi pada cakupan Anda.", href: "/admin/po", icon: Boxes }] : []),
+      { title: "Panduan operasional Sumut", detail: "Ikuti alur kerja dan catat hasil operasi harian.", href: "/admin/operasional-sumut", icon: BookOpenCheck },
     ];
 
   return (
@@ -51,10 +53,12 @@ export default function OverviewView({ stats = {}, actor, legacyNotice = false }
       {legacyNotice ? <div role="status" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-900">Halaman admin yang lama sudah tidak digunakan. Pilih fitur yang tersedia pada menu workspace.</div> : null}
       <section className="overflow-hidden rounded-[26px] bg-[linear-gradient(118deg,#064e3b_0%,#047857_58%,#10a46b_100%)] p-5 text-white shadow-lg shadow-emerald-950/10 sm:p-7">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-          <div className="max-w-2xl"><p className="text-[10px] font-extrabold uppercase tracking-[.18em] text-emerald-100/75">{isSuperadmin ? "Kontrol proyek" : "Ruang kerja owner"}</p><h2 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">Selamat datang, {isSuperadmin ? "Superadmin" : actor?.label?.split(" ")[0] || "Owner"}</h2><p className="mt-2 text-sm leading-relaxed text-emerald-50/85">{isSuperadmin ? "Pantau operasional platform dan buka area kerja yang perlu ditangani." : `Cakupan kerja: ${stats.campuses?.join(", ") || "belum ditetapkan"}. Ringkasan hanya memuat data di wilayah yang diberikan.`}</p></div>
+          <div className="max-w-2xl"><p className="text-[10px] font-extrabold uppercase tracking-[.18em] text-emerald-100/75">{isSuperadmin ? "Kontrol proyek" : "Ruang kerja owner"}</p><h2 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">Selamat datang, {isSuperadmin ? "Superadmin" : actor?.label?.split(" ")[0] || "Owner"}</h2><p className="mt-2 text-sm leading-relaxed text-emerald-50/85">{isSuperadmin ? `Cakupan ringkasan: ${stats.scopeLabel || "seluruh platform"}. Fokus operasi saat ini Sumatera Utara.` : `Cakupan kerja: ${stats.scopeLabel || stats.campuses?.join(", ") || "belum ditetapkan"}. Ringkasan hanya memuat data di wilayah yang diberikan.`}</p></div>
           {isSuperadmin ? <Link href="/admin/owners" className="inline-flex min-h-11 items-center justify-center gap-2 self-start rounded-full bg-white px-5 text-xs font-extrabold text-emerald-950 transition hover:bg-emerald-50 sm:self-auto"><Plus className="h-4 w-4" />Tambah akses owner</Link> : null}
         </div>
       </section>
+
+      {isSuperadmin ? <section className="flex flex-col gap-3 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"><p className="text-xs leading-relaxed text-sky-950">Operasional yang sedang dijalankan berfokus di Sumatera Utara. Gunakan pemilih cakupan di bagian atas untuk melihat angka wilayah; pilihan “Semua Kampus” menampilkan angka seluruh platform.</p><Link href="/admin/operasional-sumut" className="inline-flex min-h-9 shrink-0 items-center gap-2 self-start rounded-full bg-white px-3.5 text-xs font-extrabold text-sky-900 ring-1 ring-sky-200 hover:bg-sky-100 sm:self-auto">Buka panduan <BookOpenCheck className="h-3.5 w-3.5" /></Link></section> : null}
 
       <section aria-label="Ringkasan kinerja" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {metrics.map((metric) => <Metric key={metric.label} {...metric} />)}
