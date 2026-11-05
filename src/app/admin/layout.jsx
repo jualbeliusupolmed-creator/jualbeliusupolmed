@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 
 function moduleForPath(pathname) {
   if (pathname === "/admin" || pathname === "/admin/overview") return "overview";
+  if (pathname === "/admin/operasional-sumut" || pathname.startsWith("/admin/operasional-sumut/")) return "overview";
   if (pathname === "/admin/marketplace" || pathname.startsWith("/admin/marketplace/")) return "marketplace";
   if (pathname === "/admin/fyp" || pathname.startsWith("/admin/fyp/")) return "fyp";
   if (pathname === "/admin/users" || pathname.startsWith("/admin/users/")) return "users";

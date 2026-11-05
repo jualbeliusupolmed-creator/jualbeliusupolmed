@@ -66,18 +66,65 @@ export async function getOverviewStats() {
     paidPayments,
     perCat,
     avgRating,
-    totalRatings: ratings.length
+    totalRatings: ratings.length,
+    scopeLabel: "Seluruh platform",
   };
 }
 
 export async function getWorkspaceOverview(actor) {
-  if (actor?.role === "superadmin") return getOverviewStats();
   const [{ getAdminClient }, { getAdminCampusScope }] = await Promise.all([
     import("@/lib/supabaseAdmin"),
     import("@/lib/admin-access"),
   ]);
+
+  if (actor?.role === "superadmin") {
+    const { cookies } = await import("next/headers");
+    const activeScope = cookies().get("kk_admin_active_scope")?.value || "all";
+    if (!activeScope || activeScope === "all") return getOverviewStats();
+
+    const { getSettings, getActiveCampuses, getCampusProvinceId } = await import("@/lib/settings");
+    const allCampuses = getActiveCampuses(await getSettings());
+    let scopedCampuses = [];
+    let scopeLabel = "Cakupan tidak ditemukan";
+
+    if (activeScope.startsWith("province:")) {
+      const provinceId = activeScope.slice("province:".length).toLowerCase();
+      scopedCampuses = allCampuses.filter((campus) => getCampusProvinceId(campus) === provinceId);
+      scopeLabel = scopedCampuses.length
+        ? `${scopedCampuses.map((campus) => campus.shortName).join(", ")} · ${provinceId.replaceAll("-", " ")}`
+        : `${provinceId.replaceAll("-", " ")} · belum ada universitas aktif`;
+    } else if (activeScope.startsWith("campus:") || activeScope.startsWith("university:")) {
+      const wanted = activeScope.split(":").slice(1).join(":").toLowerCase();
+      scopedCampuses = allCampuses.filter((campus) =>
+        [campus.id, campus.shortName, campus.name].some((value) => String(value || "").toLowerCase() === wanted)
+      );
+      scopeLabel = scopedCampuses[0]?.name || "Universitas tidak ditemukan";
+    }
+
+    const campusNames = scopedCampuses.map((campus) => campus.shortName).filter(Boolean);
+    if (!campusNames.length) {
+      return { listingsTotal: 0, activeTotal: 0, pendingTotal: 0, soldTotal: 0, campuses: [], scopeLabel };
+    }
+
+    const supa = getAdminClient();
+    const [total, active, pending, sold] = await Promise.all([
+      supa.from("listings").select("id", { count: "exact", head: true }).in("campus", campusNames),
+      supa.from("listings").select("id", { count: "exact", head: true }).eq("status", "active").in("campus", campusNames),
+      supa.from("listings").select("id", { count: "exact", head: true }).eq("status", "pending").in("campus", campusNames),
+      supa.from("listings").select("id", { count: "exact", head: true }).eq("status", "sold").in("campus", campusNames),
+    ]);
+    return {
+      listingsTotal: total.count || 0,
+      activeTotal: active.count || 0,
+      pendingTotal: pending.count || 0,
+      soldTotal: sold.count || 0,
+      campuses: campusNames,
+      scopeLabel,
+    };
+  }
+
   const campuses = await getAdminCampusScope(actor);
-  if (!campuses?.length) return { activeTotal: 0, pendingTotal: 0, soldTotal: 0, listingsTotal: 0, campuses: [] };
+  if (!campuses?.length) return { activeTotal: 0, pendingTotal: 0, soldTotal: 0, listingsTotal: 0, campuses: [], scopeLabel: "Belum ada cakupan" };
 
   const supa = getAdminClient();
   const [total, active, pending, sold] = await Promise.all([
@@ -92,5 +139,6 @@ export async function getWorkspaceOverview(actor) {
     pendingTotal: pending.count || 0,
     soldTotal: sold.count || 0,
     campuses,
+    scopeLabel: campuses.join(", "),
   };
 }
