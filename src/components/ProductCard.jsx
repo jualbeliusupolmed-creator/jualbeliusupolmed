@@ -71,27 +71,27 @@ function ProductCard({ listing, tanpaPenjual = false }) {
           )}
 
           <div className="absolute left-2 top-2 flex flex-col items-start gap-1">
-            <span className="rounded-full bg-slate-900/75 px-2 py-0.5 text-[9px] font-semibold text-white shadow-sm backdrop-blur-sm">
+            <span className="rounded-full bg-slate-900/80 px-2 py-0.5 text-[10px] font-semibold text-white shadow-xs backdrop-blur-sm">
               {condLabel}
             </span>
             {isStudentVerified && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-800/95 px-2 py-0.5 text-[9px] font-semibold text-white shadow-sm">
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-800/95 px-2 py-0.5 text-[10px] font-semibold text-white shadow-xs">
                 <Icon.Check className="h-2.5 w-2.5" />
-                KTM Valid
+                KTM valid
               </span>
             )}
             {!isAvailable && (
-              <span className="rounded-full bg-slate-900/85 px-2 py-0.5 text-[9px] font-bold text-white shadow-sm">
+              <span className="rounded-full bg-slate-900/90 px-2 py-0.5 text-[10px] font-semibold text-white shadow-xs">
                 {unavailableLabel}
               </span>
             )}
             {listing.type === "sewa" && (
-              <span className="rounded-full bg-teal-800/95 px-2 py-0.5 text-[9px] font-bold text-white shadow-sm">
+              <span className="rounded-full bg-teal-800/95 px-2 py-0.5 text-[10px] font-semibold text-white shadow-xs">
                 Sewa
               </span>
             )}
             {listing.featured && isAvailable && (
-              <span className="rounded-full bg-emerald-900/90 px-2 py-0.5 text-[9px] font-bold text-white shadow-sm">
+              <span className="rounded-full bg-emerald-900/95 px-2 py-0.5 text-[10px] font-semibold text-white shadow-xs">
                 Unggulan
               </span>
             )}
@@ -100,33 +100,30 @@ function ProductCard({ listing, tanpaPenjual = false }) {
 
         <div className="space-y-1 px-2 py-2 sm:space-y-1.5 sm:px-3.5 sm:py-3">
           {!tanpaPenjual && (
-            <div className="flex min-w-0 items-center gap-1 text-[9px] leading-none sm:text-[10px]">
+            <div className="flex min-w-0 items-center gap-1.5 text-[10px] leading-none sm:text-[11px]">
               <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[8px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 sm:h-[18px] sm:w-[18px] sm:text-[9px]">
                 {sellerInitial}
               </span>
-              <span className="min-w-0 truncate font-bold text-slate-800 dark:text-slate-100">
+              <span className="min-w-0 truncate font-semibold text-slate-800 dark:text-slate-100">
                 {sellerName}
               </span>
               {sellerMeta && (
-                <>
-                  <span className="shrink-0 text-slate-300">•</span>
-                  <span className="min-w-0 truncate text-slate-500 dark:text-slate-400">
-                    {sellerMeta}
-                  </span>
-                </>
+                <span className="min-w-0 truncate text-slate-400 dark:text-slate-500">
+                  ({sellerMeta})
+                </span>
               )}
             </div>
           )}
 
           <div className="space-y-0.5">
             <h3
-              className="line-clamp-1 text-xs font-bold leading-tight tracking-tight text-slate-900 transition-colors group-hover:text-emerald-700 dark:text-white dark:group-hover:text-emerald-400 sm:text-sm"
+              className="line-clamp-1 text-xs font-bold leading-tight tracking-tight text-slate-900 transition-colors duration-150 group-hover:text-emerald-700 dark:text-white dark:group-hover:text-emerald-400 sm:text-sm"
               title={listing.title}
             >
               {listing.title}
             </h3>
             {listing.description && (
-              <p className="line-clamp-1 text-[9px] leading-3 text-slate-500 dark:text-slate-400 sm:text-[10px]">
+              <p className="line-clamp-1 text-[10px] leading-3 text-slate-500 dark:text-slate-400 sm:text-[11px]">
                 {listing.description}
               </p>
             )}
@@ -138,19 +135,19 @@ function ProductCard({ listing, tanpaPenjual = false }) {
                 {rupiah(listing.price)}
               </span>
               {listing.type === "sewa" && listing.rental_period && (
-                <span className="block text-[9px] leading-tight text-slate-400">
+                <span className="block text-[9.5px] leading-tight text-slate-400">
                   per {listing.rental_period}
                 </span>
               )}
             </div>
             {isNegotiable && (
-              <span className="shrink-0 rounded-md bg-blue-50 px-1.5 py-1 text-[9px] font-bold leading-none text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
-                Bisa Nego
+              <span className="shrink-0 rounded-md bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
+                Bisa nego
               </span>
             )}
           </div>
 
-          <div className="flex min-w-0 items-center gap-1.5 rounded-lg bg-slate-50 px-1.5 py-1 text-[9px] font-medium leading-tight text-slate-600 dark:bg-slate-800 dark:text-slate-300 sm:text-[10px]">
+          <div className="flex min-w-0 items-center gap-1.5 text-[10px] font-medium leading-tight text-slate-500 dark:text-slate-400 sm:text-[11px]">
             <Icon.MapPin className="h-3 w-3 shrink-0 text-emerald-700 dark:text-emerald-400 sm:h-3.5 sm:w-3.5" />
             <span className="truncate">{listing.area || (listing.campus === "Semua" ? "Sekitar Kampus" : listing.campus) || "Sekitar Kampus"}</span>
           </div>
@@ -160,7 +157,7 @@ function ProductCard({ listing, tanpaPenjual = false }) {
         <Link
           href={detailUrl}
           className={cn(
-            "inline-flex min-h-7 items-center justify-center gap-1 rounded-lg bg-slate-100 px-1.5 text-[9px] font-bold text-slate-700 transition hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 sm:min-h-9 sm:px-2 sm:text-[11px]",
+            "inline-flex min-h-8 items-center justify-center gap-1 rounded-lg bg-slate-100 px-2 text-[10px] font-semibold text-slate-700 transition-colors duration-150 hover:bg-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 sm:min-h-9 sm:text-[11px]",
             !isAvailable ? "col-span-2" : ""
           )}
         >
@@ -172,7 +169,7 @@ function ProductCard({ listing, tanpaPenjual = false }) {
             href={`/chat-wa/${listing.id}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex min-h-7 items-center justify-center gap-1 rounded-lg bg-emerald-800 px-1.5 text-[9px] font-bold text-white transition hover:bg-emerald-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 sm:min-h-9 sm:px-2 sm:text-[11px]"
+            className="inline-flex min-h-8 items-center justify-center gap-1 rounded-lg bg-emerald-800 px-2 text-[10px] font-bold text-white transition-colors duration-150 hover:bg-emerald-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 sm:min-h-9 sm:text-[11px]"
           >
             <Icon.WhatsApp className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
             Chat WA

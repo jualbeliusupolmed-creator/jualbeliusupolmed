@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Icon } from "@/components/Icons";
 
 /*
  * Antrean yang tersimpan DI DALAM bot (outbox.json), bukan di wa_outbox.
@@ -92,8 +93,8 @@ export function AntreanBot() {
         <div className="min-w-0">
           <h2 className="g-card-title">Antrean di dalam bot</h2>
           <p className="g-card-desc">
-            Pesan yang sudah diterima bot tapi belum bisa dikirim karena WhatsApp-nya putus.
-            Berangkat <b>otomatis</b> begitu tersambung — tidak perlu ditekan.
+            Pesan yang sudah diterima bot tapi belum bisa dikirim karena WhatsApp terputus.
+            Berangkat <b>otomatis</b> begitu tersambung (tidak perlu ditekan manual).
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
@@ -106,12 +107,11 @@ export function AntreanBot() {
               aksi({ hapus_semua: true }, "semua");
             }}
             disabled={sibuk !== null || (jumlah === 0 && !data?.broadcastTertunda)}
-            className="g-btn g-btn-sm"
-            style={{ background: "#dc2626", color: "#fff" }}
+            className="g-btn g-btn-sm bg-rose-600 hover:bg-rose-700 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 active:scale-[0.98] disabled:opacity-50"
           >
             {sibuk === "semua" ? "Menghapus…" : "Hapus Semua"}
           </button>
-          <button onClick={ambil} disabled={muat} className="g-btn g-btn-sm g-btn-text">
+          <button onClick={ambil} disabled={muat} className="g-btn g-btn-sm g-btn-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 active:scale-[0.98]">
             {muat ? "Memuat…" : "Muat ulang"}
           </button>
         </div>
@@ -131,15 +131,16 @@ export function AntreanBot() {
 
         {data && data.siap && (jumlah > 0 || data?.broadcastTertunda > 0) ? (
           <div className="g-notice mb-4">
-            WhatsApp tersambung — {jumlah > 0 ? `${jumlah} pesan user diproses prioritas.` : `${data?.broadcastTertunda} broadcast berjalan di latar belakang.`}
+            WhatsApp tersambung: {jumlah > 0 ? `${jumlah} pesan user diproses prioritas.` : `${data?.broadcastTertunda} broadcast berjalan di latar belakang.`}
           </div>
         ) : null}
 
         {/* ── Sub-Bagian 1: Pesan Pengguna VIP ───────────────────────── */}
         <div className="mb-6">
           <div className="mb-2 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
-              💬 Pesan Pengguna & Transaksional ({jumlah})
+            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+              <Icon.MessageCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>Pesan Pengguna &amp; Transaksional ({jumlah})</span>
             </h3>
             {jumlah > 0 && (
               <button
@@ -148,7 +149,7 @@ export function AntreanBot() {
                   aksi({ hapus_user: true }, "user");
                 }}
                 disabled={sibuk !== null}
-                className="g-btn g-btn-sm g-btn-text text-rose-600"
+                className="g-btn g-btn-sm g-btn-text text-rose-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 active:scale-[0.98]"
               >
                 {sibuk === "user" ? "Mengosongkan…" : "Kosongkan Pesan User"}
               </button>
@@ -161,14 +162,14 @@ export function AntreanBot() {
 
           <div className="space-y-3">
             {(data?.items || []).map((it) => (
-              <div key={it.id} className="g-card g-card-pad">
-                <div className="mb-2 flex flex-wrap items-center gap-2">
+              <div key={it.id} className="rounded-xl border border-slate-200 dark:border-slate-800 p-3 bg-white dark:bg-slate-900/60 space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="font-mono text-sm font-medium">{it.jid}</span>
                   <span className={`g-badge${it.grup ? " is-info" : ""}`}>{it.grup ? "grup" : "pribadi"}</span>
                   <span className="g-badge is-ok">user VIP</span>
                   {it.url ? <span className="g-badge">bergambar</span> : null}
                   {it.percobaan ? <span className="g-badge is-warn">{it.percobaan}× dicoba</span> : null}
-                  <span className="ml-auto text-xs" style={{ color: "var(--g-ink-faint)" }}>
+                  <span className="ml-auto text-xs text-slate-400 dark:text-slate-500">
                     {it.ts ? new Date(it.ts).toLocaleString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}
                     {" · "}
                     {sisaUmur(it.kedaluwarsa)}
@@ -186,8 +187,7 @@ export function AntreanBot() {
                         href={waUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="g-btn g-btn-sm"
-                        style={{ background: "#16a34a", color: "#fff" }}
+                        className="g-btn g-btn-sm bg-emerald-700 hover:bg-emerald-800 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 active:scale-[0.98]"
                         title="Buka WhatsApp untuk kirim manual"
                       >
                         Chat WA Manual ↗
@@ -198,7 +198,7 @@ export function AntreanBot() {
                   <button
                     onClick={() => aksi({ hapus: it.id }, it.id)}
                     disabled={sibuk !== null}
-                    className="g-btn g-btn-sm g-btn-danger"
+                    className="g-btn g-btn-sm g-btn-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 active:scale-[0.98]"
                   >
                     {sibuk === it.id ? "Menghapus…" : "Hapus"}
                   </button>
@@ -209,10 +209,11 @@ export function AntreanBot() {
         </div>
 
         {/* ── Sub-Bagian 2: Broadcast Massal ────────────────────────── */}
-        <div className="mb-6 border-t pt-4" style={{ borderColor: "var(--g-divider)" }}>
+        <div className="mb-6 border-t pt-4 border-slate-200 dark:border-slate-800">
           <div className="mb-2 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
-              📢 Siaran Massal / Broadcast ({data?.broadcastTertunda || 0})
+            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+              <Icon.Sparkles className="w-4 h-4 text-indigo-600 shrink-0" />
+              <span>Siaran Massal &amp; Broadcast ({data?.broadcastTertunda || 0})</span>
             </h3>
             {(data?.broadcastTertunda > 0 || data?.broadcastAktif) && (
               <button
@@ -221,10 +222,9 @@ export function AntreanBot() {
                   aksi({ hapus_broadcast: true }, "bc");
                 }}
                 disabled={sibuk !== null}
-                className="g-btn g-btn-sm g-btn-danger"
-                style={{ background: "#ef4444", color: "#fff" }}
+                className="g-btn g-btn-sm bg-rose-600 hover:bg-rose-700 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 active:scale-[0.98]"
               >
-                {sibuk === "bc" ? "Membatalkan…" : "🛑 Batalkan Broadcast"}
+                {sibuk === "bc" ? "Membatalkan…" : "Batalkan Broadcast"}
               </button>
             )}
           </div>
@@ -238,13 +238,13 @@ export function AntreanBot() {
 
           <div className="space-y-3">
             {(data?.broadcastItems || []).map((it) => (
-              <div key={it.id} className="g-card g-card-pad">
-                <div className="mb-2 flex flex-wrap items-center gap-2">
+              <div key={it.id} className="rounded-xl border border-slate-200 dark:border-slate-800 p-3 bg-white dark:bg-slate-900/60 space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="font-mono text-sm font-medium">{it.jid}</span>
                   <span className={`g-badge${it.grup ? " is-info" : ""}`}>{it.grup ? "grup" : "pribadi"}</span>
                   <span className="g-badge is-warn">broadcast</span>
                   {it.percobaan ? <span className="g-badge is-warn">{it.percobaan}× dicoba</span> : null}
-                  <span className="ml-auto text-xs" style={{ color: "var(--g-ink-faint)" }}>
+                  <span className="ml-auto text-xs text-slate-400 dark:text-slate-500">
                     jeda {it.delayMs / 1000}s
                   </span>
                 </div>
@@ -253,7 +253,7 @@ export function AntreanBot() {
                   <button
                     onClick={() => aksi({ hapus: it.id }, it.id)}
                     disabled={sibuk !== null}
-                    className="g-btn g-btn-sm g-btn-danger"
+                    className="g-btn g-btn-sm g-btn-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 active:scale-[0.98]"
                   >
                     {sibuk === it.id ? "Menghapus…" : "Hapus"}
                   </button>
@@ -265,51 +265,48 @@ export function AntreanBot() {
 
         {/*
           Bukan antrean: pesan yang sudah TIDAK akan berangkat sendiri karena
-          kedaluwarsa (72 jam) atau gagal tiga kali berturut-turut. Dulu
-          pembuangan itu cuma mendarat di log server, jadi pesan yang benar-benar
-          hilang tidak meninggalkan jejak yang bisa dilihat siapa pun.
+          kedaluwarsa (72 jam) atau gagal tiga kali berturut-turut.
         */}
         {dibuang.length > 0 && (
-          <div className="mt-6 border-t pt-5" style={{ borderColor: "var(--g-divider)" }}>
+          <div className="mt-6 border-t pt-5 border-slate-200 dark:border-slate-800">
             <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
               <h3 className="g-card-title">Dibuang bot ({data?.dibuangTotal || dibuang.length})</h3>
               <button
                 onClick={() => aksi({ bersihkan_catatan: true }, "bersih")}
                 disabled={sibuk !== null}
-                className="g-btn g-btn-sm g-btn-text"
+                className="g-btn g-btn-sm g-btn-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 active:scale-[0.98]"
               >
                 Bersihkan catatan
               </button>
             </div>
             <p className="g-card-desc mb-3">
               Kedaluwarsa setelah menunggu 72 jam, atau gagal tiga kali berturut-turut.
-              Catatan disimpan 14 hari. <b>Kirim ulang</b> memasukkannya kembali sebagai pesan baru —
-              periksa dulu apakah isinya masih pantas dikirim.
+              Catatan disimpan 14 hari. <b>Kirim ulang</b> memasukkannya kembali sebagai pesan baru (periksa dulu apakah isinya masih pantas dikirim).
             </p>
             <div className="space-y-3">
               {dibuang.map((d) => (
-                <div key={d.id} className="g-card g-card-pad">
-                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                <div key={d.id} className="rounded-xl border border-slate-200 dark:border-slate-800 p-3 bg-white dark:bg-slate-900/60 space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="font-mono text-sm font-medium">{d.jid}</span>
                     <span className="g-badge is-bad">dibuang</span>
-                    <span className="ml-auto text-xs" style={{ color: "var(--g-ink-faint)" }}>
+                    <span className="ml-auto text-xs text-slate-400 dark:text-slate-500">
                       {d.dibuangAt ? new Date(d.dibuangAt).toLocaleString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}
                     </span>
                   </div>
                   <pre className="g-pre">{d.message}</pre>
                   <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <span className="flex-1 text-xs" style={{ color: "var(--g-red)" }}>{d.sebab}</span>
+                    <span className="flex-1 text-xs text-rose-600">{d.sebab}</span>
                     <button
                       onClick={() => aksi({ ulang: d.id }, d.id)}
                       disabled={sibuk !== null}
-                      className="g-btn g-btn-sm g-btn-outlined"
+                      className="g-btn g-btn-sm g-btn-outlined focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 active:scale-[0.98]"
                     >
                       {sibuk === d.id ? "Memproses…" : "Kirim ulang"}
                     </button>
                     <button
                       onClick={() => aksi({ hapus_catatan: d.id }, d.id)}
                       disabled={sibuk !== null}
-                      className="g-btn g-btn-sm g-btn-text"
+                      className="g-btn g-btn-sm g-btn-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 active:scale-[0.98]"
                     >
                       Lupakan
                     </button>

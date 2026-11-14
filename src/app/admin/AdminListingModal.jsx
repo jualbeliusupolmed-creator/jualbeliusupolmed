@@ -229,13 +229,13 @@ export default function AdminListingModal({ listing, categories, onSave, onClose
         </div>
 
         <div className="mt-5 flex flex-col sm:flex-row gap-2">
-          <button onClick={save} disabled={busy} className="btn-primary flex-1">
+          <button onClick={save} disabled={busy} className="btn-primary flex-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 active:scale-[0.99] disabled:opacity-50">
             {busy ? "Menyimpan…" : "Simpan"}
           </button>
-          <button onClick={postMeta} disabled={busy || f.status !== "active"} className="btn-outline flex-1 bg-gradient-to-r from-pink-50 to-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100">
+          <button onClick={postMeta} disabled={busy || f.status !== "active"} className="btn-outline flex-1 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 active:scale-[0.99] disabled:opacity-50">
             Post ke IG/FB
           </button>
-          <button onClick={onClose} className="btn-outline sm:flex-none">
+          <button onClick={onClose} className="btn-outline sm:flex-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 active:scale-[0.99]">
             Batal
           </button>
         </div>
