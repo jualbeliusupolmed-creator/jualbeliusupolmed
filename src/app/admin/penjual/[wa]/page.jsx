@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { isAdmin } from "@/lib/auth";
+import { getAdminActor } from "@/lib/admin-access";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { formatWa } from "@/lib/constants";
 import AdminLogin from "../../AdminLogin";
@@ -52,15 +52,19 @@ async function getSellerData(wa) {
 }
 
 export async function generateMetadata({ params }) {
-  if (!isAdmin()) return { title: "Admin" };
-  const decodedWa = formatWa(decodeURIComponent(params.wa)) || decodeURIComponent(params.wa);
+  const actor = await getAdminActor();
+  if (!actor) return { title: "Admin" };
+  const resolvedParams = await params;
+  const decodedWa = formatWa(decodeURIComponent(resolvedParams?.wa || "")) || decodeURIComponent(resolvedParams?.wa || "");
   return { title: `${decodedWa} — Edit Penjual` };
 }
 
 export default async function AdminSellerPage({ params }) {
-  if (!isAdmin()) return <AdminLogin />;
+  const actor = await getAdminActor();
+  if (!actor) return <AdminLogin />;
 
-  const data = await getSellerData(params.wa);
+  const resolvedParams = await params;
+  const data = await getSellerData(resolvedParams?.wa);
   // It's possible that data.profile is null (if the seller isn't registered yet), 
   // but we can still edit them and create the profile!
   if (!data) notFound();
@@ -75,8 +79,8 @@ export default async function AdminSellerPage({ params }) {
           Admin
         </Link>
         <span>/</span>
-        <Link href="/admin/penjual" className="hover:text-gray-700 dark:hover:text-slate-200">
-          Penjual
+        <Link href="/admin/users" className="hover:text-gray-700 dark:hover:text-slate-200">
+          Pengguna
         </Link>
         <span>/</span>
         <span className="truncate text-gray-700 dark:text-slate-200">

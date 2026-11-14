@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { isAdmin } from "@/lib/auth";
+import { getAdminActor } from "@/lib/admin-access";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getShortIdFromSlug, isUUID } from "@/lib/slug";
 import AdminLogin from "../../AdminLogin";
@@ -104,16 +104,20 @@ async function getData(slug) {
 }
 
 export async function generateMetadata({ params }) {
-  if (!isAdmin()) return { title: "Admin" };
-  const result = await getData(params.slug);
+  const actor = await getAdminActor();
+  if (!actor) return { title: "Admin" };
+  const resolvedParams = await params;
+  const result = await getData(resolvedParams?.slug);
   const title = result?.listing?.title || "Listing";
   return { title: `${title} — Admin Kampus Kita` };
 }
 
 export default async function AdminListingPage({ params }) {
-  if (!isAdmin()) return <AdminLogin />;
+  const actor = await getAdminActor();
+  if (!actor) return <AdminLogin />;
 
-  const result = await getData(params.slug);
+  const resolvedParams = await params;
+  const result = await getData(resolvedParams?.slug);
   if (!result) notFound();
 
   const { listing, payments, reports, ratings, categories, instagramPublication } = result;
