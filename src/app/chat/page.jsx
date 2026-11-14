@@ -1125,7 +1125,7 @@ function ChatContent() {
                     setDesktopMode("chat");
                     router.push("/chat?anon=1");
                   }}
-                  className={`p-3 rounded-2xl flex items-start gap-3 cursor-pointer transition-all border relative select-none ${
+                  className={`p-3 rounded-2xl flex items-start gap-3 cursor-pointer transition-colors duration-150 border relative select-none ${
                     anonView
                       ? "bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-transparent dark:from-emerald-950/50 dark:via-teal-950/30 border-emerald-500 shadow-sm ring-1 ring-emerald-500/30"
                       : "bg-white dark:bg-slate-900/80 border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-800 hover:bg-emerald-50/30 dark:hover:bg-slate-800/40"
@@ -1150,24 +1150,26 @@ function ChatContent() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-1 mb-0.5">
                       <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="text-xs font-black text-slate-900 dark:text-white truncate flex items-center gap-1">
+                        <span className="text-xs font-bold text-slate-900 dark:text-white truncate flex items-center gap-1.5">
                           <span>Chat Anonim Kampus</span>
-                          <span className="text-[10px] text-amber-500" title="Disematkan">📌</span>
+                          <span className="text-[10px] font-medium text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.2 rounded">Semat</span>
                         </span>
                       </div>
-                      <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 uppercase tracking-wider shrink-0 border border-indigo-200/50 dark:border-indigo-800/40">
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 shrink-0 border border-indigo-200/50 dark:border-indigo-800/40">
                         {ringkasAnon?.partnerAktif ? "Terhubung" : "Bot"}
                       </span>
                     </div>
 
                     <p className="text-[10.5px] font-medium text-slate-500 dark:text-slate-400 truncate mb-1">
                       {ringkasAnon?.partnerAktif ? (
-                        <span className="text-emerald-700 dark:text-emerald-400 font-bold">
-                          💬 {ringkasAnon.partnerAktif}: {ringkasAnon.pesanTerakhir?.teks || "Sesi aktif"}
+                        <span className="text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1">
+                          <Icon.MessageCircle className="w-3 h-3 shrink-0" />
+                          <span>{ringkasAnon.partnerAktif}: {ringkasAnon.pesanTerakhir?.teks || "Sesi aktif"}</span>
                         </span>
                       ) : searching || isWaiting ? (
-                        <span className="text-amber-700 dark:text-amber-400 font-semibold animate-pulse motion-reduce:animate-none">
-                          ⏳ Sedang mencari partner obrolan...
+                        <span className="text-amber-700 dark:text-amber-400 font-semibold animate-pulse motion-reduce:animate-none flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                          <span>Sedang mencari partner obrolan...</span>
                         </span>
                       ) : (
                         <span>Obrolan 1-on-1 rahasia ala Telegram Bot</span>
