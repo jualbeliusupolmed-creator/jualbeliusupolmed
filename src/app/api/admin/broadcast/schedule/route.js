@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 // POST — jadwalkan broadcast baru
 export async function POST(req) {
-  if (!isAdmin()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await isAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
     const { message, imageUrl, scheduledAt, targetType = "all" } = await req.json();
@@ -38,7 +38,7 @@ export async function POST(req) {
 
 // GET — daftar broadcast terjadwal
 export async function GET(req) {
-  if (!isAdmin()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await isAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const supa = getAdminClient();
   const { data, error } = await supa
@@ -53,7 +53,7 @@ export async function GET(req) {
 
 // DELETE — batalkan jadwal
 export async function DELETE(req) {
-  if (!isAdmin()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await isAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await req.json();
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });

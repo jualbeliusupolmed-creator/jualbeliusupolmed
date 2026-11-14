@@ -50,7 +50,7 @@ function tautanNomor(nomor, teks) {
 }
 
 export async function POST(req) {
-  if (!isAdmin()) {
+  if (!(await isAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -14,7 +14,7 @@ const BAILEYS_URL = rawBaileysUrl.replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
 const BAILEYS_TOKEN = tokenBotUtama();
 
 export async function GET(req) {
-  if (!isAdmin()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await isAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { searchParams } = new URL(req.url);
   const endpoint = searchParams.get("endpoint") || "status";
 
@@ -67,7 +67,7 @@ export async function GET(req) {
 }
 
 export async function DELETE(req) {
-  if (!isAdmin()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await isAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { searchParams } = new URL(req.url);
   const endpoint = searchParams.get("endpoint") || "";
   const body = await req.json().catch(() => ({}));
@@ -89,7 +89,7 @@ export async function DELETE(req) {
 }
 
 export async function POST(req) {
-  if (!isAdmin()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await isAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { searchParams } = new URL(req.url);
   const endpoint = searchParams.get("endpoint") || "send";
   const body = await req.json().catch(() => ({}));

@@ -6,7 +6,7 @@ import BlogEditor from "./BlogEditor";
 export const dynamic = "force-dynamic";
 
 export default async function AdminBlogEditPage({ params }) {
-  if (!isAdmin()) notFound();
+  if (!(await isAdmin())) notFound();
 
   const { id } = params;
   let blog = null;

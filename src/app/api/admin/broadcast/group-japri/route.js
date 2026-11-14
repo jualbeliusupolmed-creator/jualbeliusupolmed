@@ -9,7 +9,7 @@ const BAILEYS_URL = (process.env.BAILEYS_API_URL || "").replace(/[\u200B-\u200D\
 const BAILEYS_TOKEN = tokenBotUtama();   // lihat catatan di lib/botTokens.js
 
 export async function POST(req) {
-  if (!isAdmin()) {
+  if (!(await isAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

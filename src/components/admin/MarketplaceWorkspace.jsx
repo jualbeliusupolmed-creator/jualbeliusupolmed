@@ -53,6 +53,8 @@ export default function MarketplaceWorkspace({ initialMode = "listings", initial
   const [notice, setNotice] = useState("");
   const [publishListing, setPublishListing] = useState(null);
   const [editingListing, setEditingListing] = useState(null);
+  const [inspectListing, setInspectListing] = useState(null);
+  const [inspectForm, setInspectForm] = useState({ price: "", stock: "", category: "" });
   const [editForm, setEditForm] = useState({
     title: "",
     price: "",
@@ -66,6 +68,7 @@ export default function MarketplaceWorkspace({ initialMode = "listings", initial
     description: "",
   });
   const [savingEdit, setSavingEdit] = useState(false);
+  const [savingInspect, setSavingInspect] = useState(false);
 
   const load = useCallback(async (offset = 0, append = false) => {
     setLoading(true);
@@ -215,6 +218,43 @@ export default function MarketplaceWorkspace({ initialMode = "listings", initial
       setError(cause.message);
     } finally {
       setSavingEdit(false);
+    }
+  }
+
+  async function saveInspect() {
+    if (!inspectListing) return;
+    setSavingInspect(true);
+    setError("");
+    setNotice("");
+    try {
+      const updates = {};
+      if (inspectForm.price !== undefined && inspectForm.price !== "") {
+        updates.price = Math.max(0, parseInt(inspectForm.price, 10) || 0);
+      }
+      if (inspectForm.stock !== undefined && inspectForm.stock !== "") {
+        updates.stock = Math.max(0, parseInt(inspectForm.stock, 10) || 0);
+      }
+      if (inspectForm.category !== undefined && inspectForm.category !== "") {
+        updates.category = String(inspectForm.category).trim().slice(0, 60);
+      }
+      if (Object.keys(updates).length === 0) {
+        setInspectListing(null);
+        return;
+      }
+      const response = await fetch("/api/admin/marketplace", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: inspectListing.id, action: "edit", ...updates }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Gagal menyimpan perubahan.");
+      setNotice("Iklan berhasil diperbarui.");
+      setInspectListing(null);
+      await load(0);
+    } catch (cause) {
+      setError(cause.message);
+    } finally {
+      setSavingInspect(false);
     }
   }
 
@@ -402,25 +442,23 @@ export default function MarketplaceWorkspace({ initialMode = "listings", initial
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="truncate text-sm font-extrabold">
-                    {mode === "listings" ? (
-                      <Link
-                        href={`/admin/listings/${item.slug || item.id}`}
-                        className="hover:text-emerald-800 hover:underline"
-                        title="Buka detail & kelola di admin"
-                      >
-                        {item.title}
-                      </Link>
-                    ) : (
-                      item.title
-                    )}
-                  </h3>
+                  {mode === "listings" ? (
+                    <span
+                      onClick={() => setInspectListing(item)}
+                      className="truncate text-sm font-extrabold text-slate-900 cursor-pointer hover:text-emerald-800 hover:underline"
+                      title="Klik untuk Quick Inspect"
+                    >
+                      {item.title}
+                    </span>
+                  ) : (
+                    item.title
+                  )}
                   {mode === "listings" && (
                     <a
-                      href={`/produk/${item.slug || item.id}`}
+                      href={`/admin/listings/${item.slug || item.id}`}
                       target="_blank"
                       rel="noreferrer"
-                      title="Lihat halaman publik produk (tab baru)"
+                      title="Buka detail & kelola di admin (tab baru)"
                       className="inline-flex text-slate-400 hover:text-emerald-700"
                     >
                       <ExternalLink className="h-3.5 w-3.5" />
@@ -660,6 +698,128 @@ export default function MarketplaceWorkspace({ initialMode = "listings", initial
         onClose={() => setPublishListing(null)}
         onSuccess={() => load(0)}
       />
+
+      {/* Quick Inspect Drawer */}
+      {inspectListing && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/45 backdrop-blur-sm" onClick={() => setInspectListing(null)}>
+          <div className="h-full w-full max-w-lg overflow-y-auto bg-white p-6 shadow-2xl animate-in slide-in-from-right duration-200" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div>
+                <h3 className="text-base font-black text-slate-900">Quick Inspect</h3>
+                <p className="text-xs text-slate-400 font-mono mt-0.5">ID: {inspectListing.id}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setInspectListing(null)}
+                className="grid h-8 w-8 place-items-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-4 text-xs">
+              {/* Galeri foto */}
+              <div>
+                <h4 className="font-bold text-slate-700 mb-2">Galeri Foto</h4>
+                <div className="grid grid-cols-3 gap-2">
+                  {(inspectListing.images && Array.isArray(inspectListing.images) ? inspectListing.images : [inspectListing.image_url].filter(Boolean)).map((img, i) => (
+                    <div key={i} className="aspect-square rounded-xl border border-slate-200 overflow-hidden bg-slate-50">
+                      <img src={img} alt="" className="h-full w-full object-cover" loading="lazy" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Riwayat moderasi */}
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <h4 className="font-bold text-slate-700 mb-2">Status & Moderasi</h4>
+                <div className="flex items-center gap-2 mb-1">
+                  <span
+                    className={`rounded-full px-2 py-1 text-[10px] font-bold ${inspectListing.status === "pending" ? "bg-amber-50 text-amber-800" : inspectListing.status === "active" ? "bg-emerald-50 text-emerald-800" : "bg-slate-100 text-slate-600"}`}
+                  >
+                    {inspectListing.status}
+                  </span>
+                  {inspectListing.risk_score != null && (
+                    <span className="text-slate-400">Risiko: {(Number(inspectListing.risk_score) * 100).toFixed(0)}%</span>
+                  )}
+                </div>
+                {inspectListing.moderation_reason && (
+                  <p className="text-[10px] text-slate-500">{inspectListing.moderation_reason}</p>
+                )}
+              </div>
+
+              {/* Penjual & WA */}
+              <div className="rounded-xl border border-slate-200 bg-white p-3">
+                <h4 className="font-bold text-slate-700 mb-2">Penjual</h4>
+                <p className="text-sm font-bold text-slate-900">{inspectListing.seller_name || "—"}</p>
+                <p className="text-[10px] text-slate-500 truncate">{inspectListing.seller_wa || "—"}</p>
+                {inspectListing.seller_wa ? (
+                  <button
+                    onClick={() => {
+                      const wa = String(inspectListing.seller_wa).replace(/\D/g, "");
+                      const msg = `Halo, saya admin Kampus Kita. Saya ingin menawarkan bantuan terkait iklan Anda: "${inspectListing.title}". Apakah barang ini masih tersedia?`;
+                      window.open(`https://wa.me/${wa}?text=${encodeURIComponent(msg)}`, "_blank");
+                    }}
+                    className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-full bg-emerald-800 px-3 text-[11px] font-extrabold text-white hover:bg-emerald-900 active:opacity-85"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" /> Chat Admin ke Penjual
+                  </button>
+                ) : null}
+              </div>
+
+              {/* Quick edit */}
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <h4 className="font-bold text-slate-700 mb-2">Edit Cepat</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="mb-1 block font-bold text-slate-700">Harga (Rp)</label>
+                    <input
+                      type="number"
+                      value={inspectForm.price}
+                      onChange={(e) => setInspectForm((f) => ({ ...f, price: e.target.value }))}
+                      className="h-9 w-full rounded-lg border border-slate-200 px-2.5 text-[11px] outline-none focus:border-emerald-600"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block font-bold text-slate-700">Stok</label>
+                    <input
+                      type="number"
+                      value={inspectForm.stock}
+                      onChange={(e) => setInspectForm((f) => ({ ...f, stock: e.target.value }))}
+                      className="h-9 w-full rounded-lg border border-slate-200 px-2.5 text-[11px] outline-none focus:border-emerald-600"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="mb-1 block font-bold text-slate-700">Kategori</label>
+                    <input
+                      type="text"
+                      value={inspectForm.category}
+                      onChange={(e) => setInspectForm((f) => ({ ...f, category: e.target.value }))}
+                      className="h-9 w-full rounded-lg border border-slate-200 px-2.5 text-[11px] outline-none focus:border-emerald-600"
+                    />
+                  </div>
+                </div>
+                <div className="mt-3 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setInspectListing(null)}
+                    className="min-h-8 rounded-full border border-slate-200 px-3 font-bold text-slate-600 hover:bg-slate-50"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={saveInspect}
+                    disabled={savingInspect}
+                    className="inline-flex min-h-8 items-center gap-1.5 rounded-full bg-emerald-800 px-3 font-extrabold text-white hover:bg-emerald-900 active:opacity-85 disabled:opacity-50"
+                  >
+                    {savingInspect ? <LoaderCircle className="h-3 w-3 motion-safe:animate-spin" /> : null} Simpan
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -49,8 +49,8 @@ export async function getOverviewStats() {
   }
 
   const ratings = ratingsRes.data || [];
-  const avgRating = ratings.length > 0 
-    ? (ratings.reduce((s, r) => s + (r.rating || 0), 0) / ratings.length).toFixed(1) 
+  const avgRating = ratings.length > 0
+    ? (ratings.reduce((s, r) => s + (r.rating || 0), 0) / ratings.length).toFixed(1)
     : "–";
 
   return {

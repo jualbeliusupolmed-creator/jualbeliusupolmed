@@ -6,7 +6,7 @@ import { jawabGalat } from "@/lib/jawabGalat";
 export const dynamic = "force-dynamic";
 
 export async function GET(req) {
-  if (!isAdmin()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await isAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const days = Math.min(90, Math.max(1, parseInt(req.nextUrl.searchParams.get("days") || "30")));
   const cutoff = new Date(Date.now() - days * 864e5).toISOString();

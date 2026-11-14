@@ -11,7 +11,7 @@ const getBaileysUrl = () =>
     .replace(/\/+$/, "");
 
 export async function GET(request) {
-  if (!isAdmin()) {
+  if (!(await isAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -51,7 +51,7 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  if (!isAdmin()) {
+  if (!(await isAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

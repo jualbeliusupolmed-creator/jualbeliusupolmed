@@ -151,9 +151,10 @@ export function clearAdminCookie() {
   cookies().set(LEGACY_COOKIE, "", { path: "/", maxAge: 0, httpOnly: true, sameSite: "lax" });
 }
 
-export function isAdmin() {
-  const session = bacaSesiAdmin(cookies().get(COOKIE)?.value);
-  return !!session && !!process.env.SUPERADMIN_AUTH_USER_ID && session.sub === process.env.SUPERADMIN_AUTH_USER_ID.toLowerCase();
+export async function isAdmin() {
+  const { getAdminActor } = await import("@/lib/admin-access");
+  const actor = await getAdminActor();
+  return !!actor;
 }
 
 export function getAdminSession() {

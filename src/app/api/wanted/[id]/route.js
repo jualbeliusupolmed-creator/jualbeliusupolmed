@@ -18,7 +18,7 @@ export async function PATCH(req, { params }) {
     if (errCurrent || !current) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const sessionWa = await getSellerSessionAsync();
-    if (!isAdmin() && sessionWa !== current.buyer_wa) {
+    if (!(await isAdmin()) && sessionWa !== current.buyer_wa) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -49,7 +49,7 @@ export async function DELETE(req, { params }) {
     if (errCurrent || !current) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const sessionWa = await getSellerSessionAsync();
-    if (!isAdmin() && sessionWa !== current.buyer_wa) {
+    if (!(await isAdmin()) && sessionWa !== current.buyer_wa) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

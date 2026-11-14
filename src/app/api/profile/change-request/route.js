@@ -18,7 +18,7 @@ export async function GET(req) {
 
   // Hanya pemilik (sesi) atau admin — seller_wa itu publik, jangan dipercaya mentah.
   const sessionWa = await getSellerSessionAsync();
-  if (!isAdmin() && (!sessionWa || sessionWa !== sellerWa)) {
+    if (!(await isAdmin()) && (!sessionWa || sessionWa !== sellerWa)) {
     return NextResponse.json({ error: "Tidak diizinkan" }, { status: 403 });
   }
 
@@ -52,7 +52,7 @@ export async function POST(req) {
     // profilnya sendiri. Tanpa ini, siapa pun bisa spam permintaan + notif admin
     // atas nama penjual lain (social-engineering admin agar menyetujui).
     const sessionWa = await getSellerSessionAsync();
-    if (!isAdmin() && (!sessionWa || sessionWa !== sellerWa)) {
+  if (!(await isAdmin()) && (!sessionWa || sessionWa !== sellerWa)) {
       return NextResponse.json({ error: "Tidak diizinkan" }, { status: 403 });
     }
     if (!["name", "bio"].includes(field)) return NextResponse.json({ error: "field harus 'name' atau 'bio'" }, { status: 400 });

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Check, CircleAlert, LoaderCircle, RefreshCw, Search, ShieldAlert, ShieldCheck, Store, Users, X, MessageCircle, ExternalLink } from "lucide-react";
+import { Check, CircleAlert, LoaderCircle, RefreshCw, Search, ShieldAlert, ShieldCheck, Store, Users, X, MessageCircle, ExternalLink, ChevronRight } from "lucide-react";
 import { useAdmin } from "./AdminProvider";
 
 async function readJson(response) {
@@ -78,6 +78,8 @@ export default function UsersWorkspace({ canManage = false, initialView = "users
   const [reason, setReason] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [viewingProfile, setViewingProfile] = useState(null);
+  const [togglingTrustId, setTogglingTrustId] = useState("");
 
   const load = useCallback(async (start = 0, append = false) => {
     setLoading(true);
@@ -125,6 +127,28 @@ export default function UsersWorkspace({ canManage = false, initialView = "users
     execute();
   }
 
+  async function toggleTrust(item) {
+    setTogglingTrustId(item.id);
+    setError("");
+    setNotice("");
+    try {
+      const response = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userToken: item.id, action: "trust_toggle" }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Gagal mengubah status trusted seller.");
+      setNotice(item.trustedSeller ? "Status trusted seller dicabut." : "Akun ditandai sebagai trusted seller (centang hijau).");
+      setViewingProfile(null);
+      await load(0);
+    } catch (cause) {
+      setError(cause.message);
+    } finally {
+      setTogglingTrustId("");
+    }
+  }
+
   return <div className="space-y-5">
     <div className="flex gap-1 rounded-full bg-slate-100 p-1 sm:w-fit" role="tablist" aria-label="Bagian pengguna">
       {[["users", "Direktori pengguna"], ["profile-requests", "Perubahan profil"]].map(([key, label]) => <button key={key} role="tab" aria-selected={view === key} onClick={() => setView(key)} className={`min-h-9 rounded-full px-4 text-xs font-extrabold ${view === key ? "bg-white text-emerald-900 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}>{label}</button>)}
@@ -155,12 +179,13 @@ export default function UsersWorkspace({ canManage = false, initialView = "users
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <Link
-                  href={`/admin/penjual/${encodeURIComponent(sellerProfileKey)}`}
-                  className="truncate text-sm font-extrabold text-slate-900 hover:text-emerald-800 hover:underline"
+                <span
+                  onClick={() => setViewingProfile(item)}
+                  className="truncate text-sm font-extrabold text-slate-900 cursor-pointer hover:text-emerald-800 hover:underline"
+                  title="Klik untuk profil lengkap"
                 >
                   {item.name}
-                </Link>
+                </span>
                 {item.trustedSeller ? <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-800"><ShieldCheck className="h-3 w-3" />Tepercaya</span> : null}
                 {item.restricted ? <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-extrabold text-rose-700">Dibatasi</span> : null}
               </div>
@@ -250,5 +275,129 @@ export default function UsersWorkspace({ canManage = false, initialView = "users
       {nextOffset !== null ? <div className="border-t border-slate-100 p-3 text-center"><button onClick={() => load(nextOffset, true)} disabled={loading} className="inline-flex min-h-9 items-center justify-center gap-2 rounded-full bg-slate-100 px-4 text-xs font-bold text-slate-700 hover:bg-slate-200 disabled:opacity-50">{loading ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : null}Muat pengguna berikutnya</button></div> : null}
     </section>
     </div>}
+
+    {/* Modal Profil Terpadu */}
+    {viewingProfile && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 backdrop-blur-sm" onClick={() => setViewingProfile(null)}>
+        <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl p-6 animate-in zoom-in duration-200" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+            <div>
+              <h2 className="text-lg font-black text-slate-900">{viewingProfile.name}</h2>
+              <p className="text-xs text-slate-500 font-mono">{viewingProfile.maskedPhone}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setViewingProfile(null)}
+              className="grid h-8 w-8 place-items-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="md:col-span-2 space-y-3">
+              <div className="rounded-xl border border-slate-200 p-4">
+                <h3 className="font-bold text-slate-700 mb-2">Informasi Profil</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Kampus</span>
+                    <span className="font-medium">{viewingProfile.campus || "—"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Fakultas</span>
+                    <span className="font-medium">{viewingProfile.faculty || "—"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Status KTM Mahasiswa</span>
+                    <span className={`font-medium ${viewingProfile.studentVerification ? "text-emerald-700" : "text-rose-600"}`}>
+                      {viewingProfile.studentVerification ? "Terverifikasi" : "Belum diverifikasi"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Bergabung</span>
+                    <span className="font-medium">{viewingProfile.createdAt ? new Date(viewingProfile.createdAt).toLocaleDateString("id-ID") : "—"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Toko</span>
+                    <span className="font-medium">{viewingProfile.storeName || "—"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Langganan</span>
+                    <span className="font-medium">{viewingProfile.subscriptionTier || "free"}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 p-4">
+                <h3 className="font-bold text-slate-700 mb-2">Statistik Iklan</h3>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="bg-slate-50 p-3 rounded-xl">
+                    <p className="text-[10px] text-slate-500">Total Iklan</p>
+                    <p className="text-2xl font-black">{viewingProfile.listings?.total || 0}</p>
+                  </div>
+                  <div className="bg-emerald-50 p-3 rounded-xl">
+                    <p className="text-[10px] text-emerald-700">Aktif</p>
+                    <p className="text-2xl font-black text-emerald-900">{viewingProfile.listings?.active || 0}</p>
+                  </div>
+                  <div className="bg-slate-50 p-3 rounded-xl">
+                    <p className="text-[10px] text-slate-500">Rating</p>
+                    <p className="text-2xl font-black">★ 5.0</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 p-4">
+                <h3 className="font-bold text-slate-700 mb-2">Aksi Admin</h3>
+                <button
+                  onClick={() => toggleTrust(viewingProfile)}
+                  disabled={togglingTrustId === viewingProfile.id}
+                  className={`min-h-10 w-full flex items-center justify-center gap-2 rounded-full px-4 font-bold text-[11px] active:opacity-85 disabled:opacity-50 ${
+                    viewingProfile.trustedSeller
+                      ? "border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
+                      : "bg-emerald-800 text-white hover:bg-emerald-900"
+                  }`}
+                >
+                  {togglingTrustId === viewingProfile.id ? <LoaderCircle className="h-4 w-4 motion-safe:animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+                  {viewingProfile.trustedSeller ? "Cabut Trusted Seller" : "Tandai Trusted Seller"}
+                </button>
+                <p className="mt-2 text-[10px] text-slate-500">
+                  Trusted seller akan muncul dengan centang hijau di daftar pengguna dan kartu iklan.
+                </p>
+                <Link
+                  href={`/admin/penjual/${encodeURIComponent(viewingProfile.id)}`}
+                  className="min-h-9 w-full inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-[11px] font-bold text-slate-700 hover:border-emerald-300 hover:text-emerald-800"
+                >
+                  <ChevronRight className="h-3 w-3" /> Lihat Semua Iklan & Toko
+                </Link>
+              </div>
+            </div>
+
+            <div className="md:col-span-1">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <h3 className="font-bold text-slate-700 mb-2">Ringkasan</h3>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Trusted Seller</span>
+                    <span className={`font-bold ${viewingProfile.trustedSeller ? "text-emerald-700" : "text-slate-600"}`}>
+                      {viewingProfile.trustedSeller ? "Aktif" : "Nonaktif"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Dibatasi</span>
+                    <span className={`font-bold ${viewingProfile.restricted ? "text-rose-700" : "text-slate-600"}`}>
+                      {viewingProfile.restricted ? "Ya" : "Tidak"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Omset Est. Terjual</span>
+                    <span className="font-bold text-slate-700">—</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
   </div>;
 }

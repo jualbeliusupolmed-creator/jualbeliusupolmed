@@ -11,7 +11,9 @@ async function readJson(response) {
 }
 
 function roleLabel(code) {
-  return code === "province_admin" ? "Admin Provinsi" : "Admin Kampus";
+  if (code === "superadmin") return "Superadmin";
+  if (code === "province_admin") return "Admin Provinsi";
+  return "Admin Kampus";
 }
 
 function scopeLabel(a) {
@@ -26,7 +28,7 @@ export default function RolesPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [assigning, setAssigning] = useState(false);
-  const [form, setForm] = useState({ account: "", roleCode: "province_admin", provinceId: "sumatera-utara", universityId: "usu" });
+  const [form, setForm] = useState({ account: "", roleCode: "superadmin", provinceId: "", universityId: "" });
   const [removingId, setRemovingId] = useState("");
 
   const load = useCallback(async () => {
@@ -74,7 +76,7 @@ export default function RolesPage() {
       };
       await readJson(await fetch("/api/admin/roles", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }));
       setNotice(`Role ${roleLabel(form.roleCode)} berhasil diberikan kepada ${form.account}.`);
-      setForm({ account: "", roleCode: "province_admin", provinceId: "sumatera-utara", universityId: "usu" });
+      setForm({ account: "", roleCode: "superadmin", provinceId: "", universityId: "" });
       await load();
     } catch (cause) {
       setError(cause.message);
@@ -131,9 +133,10 @@ export default function RolesPage() {
               <label className="block text-xs font-bold text-slate-700 mb-1">Pilihan Role</label>
               <select
                 value={form.roleCode}
-                onChange={(e) => setForm({ ...form, roleCode: e.target.value })}
+                onChange={(e) => setForm({ ...form, roleCode: e.target.value, provinceId: "", universityId: "" })}
                 className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs outline-none focus:border-emerald-600"
               >
+                <option value="superadmin">Superadmin (Kuasa Penuh Nasional)</option>
                 <option value="province_admin">Admin Provinsi (Operasional & Kurasi FYP)</option>
                 <option value="university_admin">Admin Kampus (Universitas)</option>
               </select>
@@ -149,7 +152,7 @@ export default function RolesPage() {
                   required
                 />
               </div>
-            ) : (
+            ) : form.roleCode === "university_admin" ? (
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">ID Universitas</label>
                 <input
@@ -160,7 +163,7 @@ export default function RolesPage() {
                   required
                 />
               </div>
-            )}
+            ) : null}
             <button
               type="submit"
               disabled={assigning || !form.account.trim()}

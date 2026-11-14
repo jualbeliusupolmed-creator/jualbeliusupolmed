@@ -20,7 +20,7 @@ export async function GET(req) {
   // wajib cocok dengan sesi penjual, atau admin. Tanpa ini nomor semua pembeli
   // yang menawar bisa dipanen massal.
   const sessionWa = await getSellerSessionAsync();
-  if (!isAdmin() && (!sessionWa || sessionWa !== seller_wa)) {
+  if (!(await isAdmin()) && (!sessionWa || sessionWa !== seller_wa)) {
     return NextResponse.json({ error: "Tidak diizinkan" }, { status: 403 });
   }
 

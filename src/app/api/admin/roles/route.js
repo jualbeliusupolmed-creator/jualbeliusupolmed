@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminActor } from "@/lib/admin-access";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 
-const ROLE_CODES = new Set(["province_admin", "university_admin"]);
+const ROLE_CODES = new Set(["superadmin", "province_admin", "university_admin"]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 async function requireSuperadmin() {
@@ -86,7 +86,7 @@ export async function POST(req) {
   }
 
   if (!UUID.test(String(targetUserId || ""))) return NextResponse.json({ error: "userId atau email tidak valid." }, { status: 400 });
-  if (!ROLE_CODES.has(roleCode)) return NextResponse.json({ error: "role_code harus province_admin atau university_admin." }, { status: 400 });
+  if (!ROLE_CODES.has(roleCode)) return NextResponse.json({ error: "role_code harus superadmin, province_admin, atau university_admin." }, { status: 400 });
 
   if (roleCode === "province_admin" && (!provinceId || typeof provinceId !== "string")) {
     return NextResponse.json({ error: "province_id wajib diisi untuk role province_admin." }, { status: 400 });

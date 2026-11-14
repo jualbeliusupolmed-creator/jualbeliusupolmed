@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 // berubah: sejak BAGIAN 25 migrasi, setiap pengunjung boleh berlangganan tanpa
 // punya akun, jadi daftar tujuannya memang dirancang untuk tumbuh.
 export async function POST(req) {
-  if (!isAdmin()) {
+  if (!(await isAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {

@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 // untuk memanggil VPS dan layanan pihak ketiga. Sejak 21 Agustus 2026 ia
 // bergerbang admin, sama seperti rute operasional lainnya.
 export async function GET() {
-  if (!isAdmin()) {
+  if (!(await isAdmin())) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
