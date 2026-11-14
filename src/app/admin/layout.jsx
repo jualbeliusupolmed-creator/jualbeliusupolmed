@@ -59,7 +59,10 @@ function moduleForPath(pathname) {
     pathname === "/admin/obrolan" || pathname.startsWith("/admin/obrolan/")
   ) return "reports";
   if (["/admin/wabot", "/admin/antrean", "/admin/notifikasi", "/admin/broadcast", "/admin/broadcast_grup", "/admin/grouppost"].some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) return "whatsapp";
-  return "legacy";
+  if (pathname === "/admin/roles" || pathname.startsWith("/admin/roles/")) return "roles";
+  if (pathname === "/admin/emergency" || pathname.startsWith("/admin/emergency/")) return "emergency";
+  if (pathname === "/admin/vouchers" || pathname.startsWith("/admin/vouchers/")) return "finance";
+  return "all";
 }
 
 function AccessNotice({ actor }) {

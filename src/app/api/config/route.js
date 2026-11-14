@@ -18,6 +18,8 @@ export async function GET() {
       {
         pricing: settings.pricing,
         site: settings.site,
+        emergencyBanner: settings.emergencyBanner || null,
+        platformLockdown: settings.platformLockdown || null,
         // Satu-satunya tempat pengalihan ini dipasang: /api/config adalah hulu
         // kontak untuk footer, dashboard, halaman jual/jasa/dicari sekaligus.
         contact: await kontakDenganCadangan(settings.contact),

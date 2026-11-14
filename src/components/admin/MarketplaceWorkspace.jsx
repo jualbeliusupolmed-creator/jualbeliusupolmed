@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Check, Clock3, LoaderCircle, PackageSearch, RefreshCw, Search, X, SearchCheck, Trash2, Store, Layers, Pencil, ExternalLink, MessageCircle } from "lucide-react";
+import { Check, Clock3, LoaderCircle, PackageSearch, RefreshCw, Search, X, SearchCheck, Trash2, Store, Layers, Pencil, ExternalLink, MessageCircle, ArrowUp, Sparkles } from "lucide-react";
 import { rupiah } from "@/lib/fees";
 import { useAdmin } from "./AdminProvider";
 import OmnichannelPublishModal from "./OmnichannelPublishModal";
@@ -247,6 +247,27 @@ export default function MarketplaceWorkspace({ initialMode = "listings", initial
     );
   }
 
+  async function handleVipAction(item, action) {
+    setBusyId(String(item.id));
+    setNotice("");
+    setError("");
+    try {
+      const response = await fetch("/api/admin/marketplace", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entityType: "listings", id: item.id, action }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Aksi VIP gagal diterapkan.");
+      setNotice(data.message || (action === "force_bump" ? "Iklan berhasil di-bump ke posisi teratas!" : "Iklan disematkan ke FYP!"));
+      await load(0);
+    } catch (cause) {
+      setError(cause.message);
+    } finally {
+      setBusyId("");
+    }
+  }
+
   return (
     <div className="space-y-5">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -345,6 +366,12 @@ export default function MarketplaceWorkspace({ initialMode = "listings", initial
             ? <>{canManage && ["active", "pending"].includes(item.status) ? <ActionButton busy={busy} onClick={() => handleWanted(item, "resolve")} label="Tandai selesai" icon={Check} tone="primary" /> : null}{superadmin ? <ActionButton busy={busy} onClick={() => handleWanted(item, "remove")} label="Hapus" icon={Trash2} tone="danger" /> : null}</>
             : <div className="flex flex-wrap items-center gap-1.5">
                 {canManage && <ActionButton busy={busy} onClick={() => openEditModal(item)} label="Edit" icon={Pencil} tone="neutral" />}
+                {(canManage || superadmin) && item.status === "active" && (
+                  <>
+                    <ActionButton busy={busy} onClick={() => handleVipAction(item, "force_bump")} label="Bump" icon={ArrowUp} tone="primary" />
+                    <ActionButton busy={busy} onClick={() => handleVipAction(item, "pin_fyp")} label="Pin FYP" icon={Sparkles} tone="neutral" />
+                  </>
+                )}
                 {canManage && <ActionButton busy={busy} onClick={() => setPublishListing(item)} label="Distribusi" icon={Layers} tone="neutral" />}
                 {item.status === "pending" && canReview && (
                   <>
@@ -475,14 +502,14 @@ export default function MarketplaceWorkspace({ initialMode = "listings", initial
         {nextOffset !== null ? <div className="flex flex-col items-center gap-2 border-t border-slate-100 p-3"><p className="text-[10px] text-slate-400">Menampilkan {items.length.toLocaleString("id-ID")} dari {total.toLocaleString("id-ID")}</p><button onClick={() => load(nextOffset, true)} disabled={loading} className="inline-flex min-h-9 items-center justify-center gap-2 rounded-full bg-slate-100 px-4 text-xs font-bold text-slate-700 hover:bg-slate-200 active:opacity-85 disabled:opacity-50">{loading ? <LoaderCircle className="h-3.5 w-3.5 motion-safe:animate-spin" /> : null}Muat berikutnya</button></div> : null}
       </section>
 
-      {/* Modal Edit Listing */}
+      {/* Slide-over Drawer Edit Listing */}
       {editingListing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
-          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/45 backdrop-blur-sm" onClick={() => setEditingListing(null)}>
+          <div className="h-full w-full max-w-lg overflow-y-auto bg-white p-6 shadow-2xl animate-in slide-in-from-right duration-200" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
-                <h3 className="text-base font-black text-slate-900">Edit Iklan Listing</h3>
-                <p className="text-xs text-slate-500">ID: {editingListing.id}</p>
+                <h3 className="text-base font-black text-slate-900">Edit Cepat Listing</h3>
+                <p className="text-xs text-slate-400 font-mono mt-0.5">ID: {editingListing.id}</p>
               </div>
               <button
                 type="button"

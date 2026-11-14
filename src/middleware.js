@@ -51,6 +51,10 @@ const ADMIN_WORKSPACE_PATHS = [
   "/admin/approve-unlock",
   "/admin/approve-toko",
   "/admin/pengaturan",
+  "/admin/roles",
+  "/admin/fyp",
+  "/admin/emergency",
+  "/admin/vouchers",
 ];
 const ADMIN_WHATSAPP_PATHS = ["/admin/wabot", "/admin/antrean", "/admin/notifikasi", "/admin/broadcast", "/admin/broadcast_grup", "/admin/grouppost"];
 const ADMIN_LEGACY_REDIRECTS = [
@@ -129,11 +133,9 @@ export async function middleware(request) {
   }
 
   if (pathname === "/admin" || pathname.startsWith("/admin/")) {
-    const isWorkspacePage = isAdminWorkspacePath(pathname);
-    const isWhatsAppPage = matchesAdminPath(pathname, ADMIN_WHATSAPP_PATHS);
-    if (!isWorkspacePage && !isWhatsAppPage) {
-      const legacy = ADMIN_LEGACY_REDIRECTS.find(([path]) => pathname === path || pathname.startsWith(`${path}/`));
-      const workspaceUrl = new URL(legacy?.[1] || "/admin/overview?panel=legacy-disabled", request.url);
+    const legacy = ADMIN_LEGACY_REDIRECTS.find(([path]) => pathname === path || pathname.startsWith(`${path}/`));
+    if (legacy) {
+      const workspaceUrl = new URL(legacy[1], request.url);
       if (workspaceUrl.pathname === "/admin/finance") {
         const orderId = request.nextUrl.searchParams.get("orderId") || request.nextUrl.searchParams.get("payment_id");
         if (orderId) workspaceUrl.searchParams.set("orderId", orderId.slice(0, 120));
