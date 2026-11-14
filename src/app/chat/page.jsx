@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { playChatSound, playSentSound } from "@/lib/sound";
 import { hapticLight, hapticSuccess } from "@/lib/haptics";
 import Link from "next/link";
+import { useSesi } from "@/components/SesiProvider";
 
 function waktuRelatif(iso) {
   if (!iso) return "";
@@ -57,6 +58,9 @@ function ChatContent() {
   const [desktopMode, setDesktopMode] = useState(
     searchParams.get("mode") === "teman" ? "swipe" : "chat"
   );
+  const { profil } = useSesi();
+  const [preferredCampus, setPreferredCampus] = useState("");
+  const [preferredProvince, setPreferredProvince] = useState("");
   const [sidebarFilter, setSidebarFilter] = useState("semua"); // "semua" | "teman" | "po" | "market"
   const [searchFilter, setSearchFilter] = useState("");
   const [kampusTersedia, setKampusTersedia] = useState([]);
@@ -119,6 +123,20 @@ function ChatContent() {
         if (Array.isArray(data?.campuses) && data.campuses.length) setKampusTersedia(data.campuses);
       })
       .catch(() => {});
+
+    try {
+      const camp = localStorage.getItem("preferred_campus");
+      const prov = localStorage.getItem("preferred_province");
+      if (camp) setPreferredCampus(camp);
+      if (prov) setPreferredProvince(prov);
+    } catch {}
+
+    const onCampusSync = (e) => {
+      if (e.detail?.campus) setPreferredCampus(e.detail.campus);
+      if (e.detail?.province) setPreferredProvince(e.detail.province);
+    };
+    window.addEventListener("campus:change", onCampusSync);
+    return () => window.removeEventListener("campus:change", onCampusSync);
   }, []);
 
   // Sync desktopMode when URL changes
@@ -682,7 +700,9 @@ function ChatContent() {
     (m) => m.sender_id !== "system" || m.message?.startsWith("system:")
   );
   const realMsgCount = activeMessages.filter((m) => !m.sender_id.startsWith("system")).length;
-  const labelKampus = kampusTersedia.map((kampus) => kampus.shortName).join(" • ");
+  const activeCampusName = profil?.campus || profil?.marketplace_campus || preferredCampus || "";
+  const isSemuaOrEmpty = !activeCampusName || activeCampusName === "Semua";
+  const labelKampus = isSemuaOrEmpty ? "Semua Kampus" : activeCampusName;
 
   return (
     <div className="w-full flex-1 flex flex-col bg-surface font-sans antialiased text-slate-800 dark:text-slate-100">
@@ -739,7 +759,7 @@ function ChatContent() {
             )}
             <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-xs font-semibold border border-emerald-200/60 dark:border-emerald-800/60">
               <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse motion-reduce:animate-none" />
-              <span>Mahasiswa aktif di {labelKampus}</span>
+              <span>{isSemuaOrEmpty ? "Komunitas Lintas Kampus" : `Mahasiswa aktif di ${activeCampusName}`}</span>
             </span>
             <Link
               href="/dashboard"
@@ -1137,21 +1157,14 @@ function ChatContent() {
               {inboxLoading ? (
                 <div className="py-8 text-center text-xs text-slate-400">Memuat percakapan...</div>
               ) : filteredRooms.length === 0 && !ringkasAnon?.partnerAktif ? (
-                <div className="p-8 text-center space-y-3">
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 dark:text-emerald-400 mx-auto flex items-center justify-center">
-                    <Icon.MessageCircle className="w-6 h-6" />
+                <div className="py-12 px-4 text-center space-y-2">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800/80 text-slate-400 dark:text-slate-500 mx-auto flex items-center justify-center">
+                    <Icon.MessageCircle className="w-5 h-5" />
                   </div>
-                  <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Belum ada obrolan aktif</p>
-                  <p className="text-[11px] text-slate-500 max-w-[220px] mx-auto leading-relaxed">
-                    Mulai percakapan dengan menekan tombol "Chat Penjual" pada iklan barang di Marketplace.
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Belum ada obrolan</p>
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 max-w-[200px] mx-auto leading-relaxed">
+                    Percakapan dengan penjual atau pembeli akan masuk di sini.
                   </p>
-                  <Link
-                    href="/jual-beli"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-700 text-white text-xs font-bold shadow-xs hover:bg-emerald-800 transition-colors"
-                  >
-                    <Icon.ShoppingBag className="w-3.5 h-3.5" />
-                    <span>Jelajahi Marketplace</span>
-                  </Link>
                 </div>
               ) : (
                 filteredRooms.map((room) => {
@@ -1681,20 +1694,21 @@ function ChatContent() {
                     <p className="text-xs font-bold text-emerald-950 dark:text-emerald-200">
                       {inboxRooms.length > 0
                         ? `Ada ${inboxRooms.length} percakapan aktif di kotak masukmu`
-                        : "Belum ada obrolan transaksi aktif"}
+                        : "Mulai transaksi atau cari teman"}
                     </p>
                     <p className="text-[11px] text-emerald-800/80 dark:text-emerald-300/80">
                       {inboxRooms.length > 0
                         ? "Pilih salah satu percakapan di bilah sisi kiri untuk membaca dan membalas pesan."
-                        : "Untuk memulai obrolan baru dengan penjual, tekan tombol 'Chat Penjual' pada iklan barang di Marketplace."}
+                        : `Jelajahi barang di ${isSemuaOrEmpty ? "berbagai kampus" : activeCampusName} dan hubungi penjual via tombol Chat.`}
                     </p>
                   </div>
 
                   <Link
                     href="/jual-beli"
-                    className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shrink-0 transition-colors shadow-xs"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shrink-0 transition-colors shadow-xs active:translate-y-px"
                   >
-                    Buka Marketplace
+                    <Icon.ShoppingBag className="w-3.5 h-3.5" />
+                    <span>Buka Marketplace</span>
                   </Link>
                 </div>
               </div>
