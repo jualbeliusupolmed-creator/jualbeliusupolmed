@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAdminActor, getAdminCampusScope, hasAdminPermission } from "@/lib/admin-access";
+import { getAdminActor, getAdminCampusScope, getAdminScopeFilter, hasAdminPermission } from "@/lib/admin-access";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { hashAdminUserAuditTarget, openAdminUserToken, sealAdminUserToken } from "@/lib/admin-user-token";
 
@@ -10,8 +10,7 @@ export async function GET(req) {
   if (!hasAdminPermission(actor, "users", "read")) return NextResponse.json({ error: "Tidak berwenang." }, { status: 403 });
 
   const supa = getAdminClient();
-  const campuses = await getAdminCampusScope(actor);
-  if (actor.role !== "superadmin" && !campuses.length) return NextResponse.json({ items: [], campuses: [], total: 0, nextOffset: null });
+  const scopeFilter = await getAdminScopeFilter(actor);
 
   const params = new URL(req.url).searchParams;
   const requestedOffset = Number.parseInt(params.get("offset") || "0", 10);
@@ -21,7 +20,16 @@ export async function GET(req) {
     .select("wa,name,campus,faculty,created_at,trusted_seller,subscription_tier,store_name,store_status,student_verification_status", { count: "exact" })
     .order("created_at", { ascending: false })
     .range(offset, offset + pageSize - 1);
-  if (actor.role !== "superadmin") query = query.in("campus", campuses);
+  if (!scopeFilter.isAll) {
+    if (scopeFilter.campusCodes?.length > 0) {
+      const lower = scopeFilter.campusCodes.map((c) => c.toLowerCase());
+      const uniIds = scopeFilter.universityIds || [];
+      const allCodes = [...new Set([...scopeFilter.campusCodes, ...lower, ...uniIds])];
+      query = query.in("campus", allCodes);
+    } else {
+      query = query.eq("campus", "__NONE__");
+    }
+  }
   const { data: profiles, count, error } = await query;
   if (error) return NextResponse.json({ error: "Daftar pengguna belum dapat dimuat." }, { status: 503 });
 
@@ -60,7 +68,14 @@ export async function GET(req) {
     listings: listingsByWa.get(profile.wa) || { total: 0, active: 0 },
   }));
   const nextOffset = count > offset + items.length ? offset + items.length : null;
-  return NextResponse.json({ items, campuses: actor.role === "superadmin" ? [] : campuses, total: count || 0, nextOffset, listingSummaryTruncated: (listingRowsCount || 0) > (listings || []).length });
+  return NextResponse.json({
+    items,
+    campuses: scopeFilter.campusCodes,
+    scopeLabel: scopeFilter.label,
+    total: count || 0,
+    nextOffset,
+    listingSummaryTruncated: (listingRowsCount || 0) > (listings || []).length,
+  });
 }
 
 export async function PATCH(req) {

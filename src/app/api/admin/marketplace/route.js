@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAdminActor, getAdminCampusScope, hasAdminPermission } from "@/lib/admin-access";
+import { getAdminActor, getAdminCampusScope, getAdminScopeFilter, hasAdminPermission } from "@/lib/admin-access";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getSettings } from "@/lib/settings";
 import {
@@ -24,10 +24,38 @@ export async function GET(req) {
   const requestedOffset = Number.parseInt(params.get("offset") || "0", 10);
   const offset = Number.isSafeInteger(requestedOffset) && requestedOffset > 0 ? Math.min(requestedOffset, 1_000_000_000) : 0;
   const supa = getAdminClient();
-  const campuses = await getAdminCampusScope(actor);
-  if (actor.role !== "superadmin" && !campuses.length) return NextResponse.json({ items: [], campuses: [], total: 0, statusCounts: {}, nextOffset: null });
+  const scopeFilter = await getAdminScopeFilter(actor);
 
-  const allowedCampuses = actor.role === "superadmin" ? null : [...new Set([...campuses, "Semua", "semua"])];
+  function applyWantedScope(baseQuery) {
+    if (scopeFilter.isAll) return baseQuery;
+    if (scopeFilter.campusCodes?.length > 0) {
+      const lower = scopeFilter.campusCodes.map((c) => c.toLowerCase());
+      const uniIds = scopeFilter.universityIds || [];
+      const allCodes = [...new Set([...scopeFilter.campusCodes, ...lower, ...uniIds])];
+      return baseQuery.or(`campus.in.(${allCodes.join(",")}),university_id.in.(${allCodes.join(",")})`);
+    }
+    return baseQuery.eq("id", "00000000-0000-0000-0000-000000000000");
+  }
+
+  function applyListingScope(baseQuery) {
+    if (scopeFilter.isAll) return baseQuery;
+    if (scopeFilter.scopeType === "province" && scopeFilter.provinceId) {
+      if (scopeFilter.campusCodes?.length > 0) {
+        const lower = scopeFilter.campusCodes.map((c) => c.toLowerCase());
+        const uniIds = scopeFilter.universityIds || [];
+        const allCodes = [...new Set([...scopeFilter.campusCodes, ...lower, ...uniIds])];
+        return baseQuery.or(`seller_province_id.eq.${scopeFilter.provinceId},campus.in.(${allCodes.join(",")}),university_id.in.(${allCodes.join(",")})`);
+      }
+      return baseQuery.eq("seller_province_id", scopeFilter.provinceId);
+    }
+    if (scopeFilter.campusCodes?.length > 0) {
+      const lower = scopeFilter.campusCodes.map((c) => c.toLowerCase());
+      const uniIds = scopeFilter.universityIds || [];
+      const allCodes = [...new Set([...scopeFilter.campusCodes, ...lower, ...uniIds])];
+      return baseQuery.or(`campus.in.(${allCodes.join(",")}),university_id.in.(${allCodes.join(",")})`);
+    }
+    return baseQuery.eq("id", "00000000-0000-0000-0000-000000000000");
+  }
 
   if (mode === "wanted") {
     let wantedQuery = supa.from("wanted_listings")
@@ -36,16 +64,10 @@ export async function GET(req) {
       .range(offset, offset + 99);
     if (status !== "all") wantedQuery = wantedQuery.eq("status", status);
     if (q) wantedQuery = wantedQuery.ilike("title", `%${q.replace(/[%_,]/g, " ")}%`);
-    if (allowedCampuses) {
-      const allowedLower = allowedCampuses.map((c) => c.toLowerCase());
-      wantedQuery = wantedQuery.or(`campus.in.(${allowedCampuses.join(",")}),university_id.in.(${allowedLower.join(",")})`);
-    }
+    wantedQuery = applyWantedScope(wantedQuery);
 
     let countsQuery = supa.from("wanted_listings").select("status");
-    if (allowedCampuses) {
-      const allowedLower = allowedCampuses.map((c) => c.toLowerCase());
-      countsQuery = countsQuery.or(`campus.in.(${allowedCampuses.join(",")}),university_id.in.(${allowedLower.join(",")})`);
-    }
+    countsQuery = applyWantedScope(countsQuery);
 
     const [{ data, count, error }, { data: statusRows }] = await Promise.all([
       wantedQuery,
@@ -57,7 +79,7 @@ export async function GET(req) {
     for (const r of statusRows || []) statusCounts[r.status] = (statusCounts[r.status] || 0) + 1;
 
     const items = data || [];
-    return NextResponse.json({ items, campuses, mode, total: count || 0, statusCounts, nextOffset: count > offset + items.length ? offset + items.length : null });
+    return NextResponse.json({ items, campuses: scopeFilter.campusCodes, scopeLabel: scopeFilter.label, mode, total: count || 0, statusCounts, nextOffset: count > offset + items.length ? offset + items.length : null });
   }
 
   let query = supa.from("listings")
@@ -66,16 +88,10 @@ export async function GET(req) {
     .range(offset, offset + 99);
   if (status !== "all") query = query.eq("status", status);
   if (q) query = query.ilike("title", `%${q.replace(/[%_,]/g, " ")}%`);
-  if (allowedCampuses) {
-    const allowedLower = allowedCampuses.map((c) => c.toLowerCase());
-    query = query.or(`campus.in.(${allowedCampuses.join(",")}),university_id.in.(${allowedLower.join(",")})`);
-  }
+  query = applyListingScope(query);
 
   let countsQuery = supa.from("listings").select("status");
-  if (allowedCampuses) {
-    const allowedLower = allowedCampuses.map((c) => c.toLowerCase());
-    countsQuery = countsQuery.or(`campus.in.(${allowedCampuses.join(",")}),university_id.in.(${allowedLower.join(",")})`);
-  }
+  countsQuery = applyListingScope(countsQuery);
 
   const [{ data, count, error }, { data: statusRows }] = await Promise.all([
     query,
@@ -87,7 +103,7 @@ export async function GET(req) {
   for (const r of statusRows || []) statusCounts[r.status] = (statusCounts[r.status] || 0) + 1;
 
   const items = data || [];
-  return NextResponse.json({ items, campuses, mode, total: count || 0, statusCounts, nextOffset: count > offset + items.length ? offset + items.length : null });
+  return NextResponse.json({ items, campuses: scopeFilter.campusCodes, scopeLabel: scopeFilter.label, mode, total: count || 0, statusCounts, nextOffset: count > offset + items.length ? offset + items.length : null });
 }
 
 export async function PATCH(req) {

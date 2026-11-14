@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import OwnerWorkspaceShell from "@/components/admin/OwnerWorkspaceShell";
 import { AdminProvider } from "@/components/admin/AdminProvider";
-import { getAdminActor, hasAdminPermission } from "@/lib/admin-access";
+import { getAdminActor, getAdminScopeFilter, hasAdminPermission } from "@/lib/admin-access";
 import AdminLogin from "./AdminLogin";
 import "./google.css";
 
@@ -85,11 +85,12 @@ export default async function AdminLayout({ children }) {
   const hasSuperadminRole = actor.role === "superadmin" || actor.roles?.some((role) => role.role_code === "superadmin");
   // Semua admin berwenang memiliki akses penuh bebas hambatan
   const allowed = hasSuperadminRole || hasAdminPermission(actor, moduleName, "read");
+  const scopeFilter = await getAdminScopeFilter(actor);
 
   return (
     <div className="g-admin min-h-screen font-sans">
       <AdminProvider>
-        <OwnerWorkspaceShell actor={actor}>
+        <OwnerWorkspaceShell actor={actor} scopeFilter={scopeFilter}>
           {allowed ? children : <AccessNotice actor={actor} />}
         </OwnerWorkspaceShell>
       </AdminProvider>

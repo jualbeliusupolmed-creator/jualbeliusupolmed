@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAdminActor, getAdminCampusScope, hasAdminPermission } from "@/lib/admin-access";
+import { getAdminActor, getAdminCampusScope, getAdminScopeFilter, hasAdminPermission } from "@/lib/admin-access";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { openAdminUserToken, sealAdminUserToken, hashAdminUserAuditTarget } from "@/lib/admin-user-token";
 import { formatWa } from "@/lib/constants";
@@ -26,12 +26,13 @@ export async function GET(request) {
   const status = STORE_STATUSES.has(params.get("status")) ? params.get("status") : "aktif";
   const offset = offsetFrom(request.url);
   const q = String(params.get("q") || "").trim().slice(0, 80).replace(/[%_,]/g, " ");
-  const campuses = await getAdminCampusScope(actor);
-  if (actor.role !== "superadmin" && !campuses.length) {
-    return NextResponse.json({ items: [], total: 0, nextOffset: null, statusCounts: { all: 0, aktif: 0, menunggu: 0, ditolak: 0 } });
-  }
+  const scopeFilter = await getAdminScopeFilter(actor);
 
-  const allowedCampuses = actor.role === "superadmin" ? null : [...new Set([...campuses, "Semua", "semua"])];
+  const allowedCampuses = scopeFilter.isAll
+    ? null
+    : scopeFilter.campusCodes?.length > 0
+    ? [...new Set([...scopeFilter.campusCodes, ...scopeFilter.campusCodes.map((c) => c.toLowerCase()), ...(scopeFilter.universityIds || [])])]
+    : ["__NONE__"];
 
   let query = getAdminClient().from("seller_profiles")
     .select("wa,name,slug,store_name,store_area,store_hours,store_status,store_requested_at,store_reject_note,bio,campus", { count: "exact" })

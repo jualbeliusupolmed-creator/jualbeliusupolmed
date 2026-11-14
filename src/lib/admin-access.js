@@ -167,49 +167,125 @@ export async function authorizeAdmin(module, action = "read") {
   return actor && hasAdminPermission(actor, module, action) ? { actor, ok: true } : { actor: null, ok: false };
 }
 
-export async function getAdminCampusScope(actor) {
-  if (!actor) return [];
+export async function getAdminScopeFilter(actor) {
+  if (!actor) {
+    return { isAll: true, scopeType: "all", provinceId: null, campusCodes: [], universityIds: [], label: "Semua Kampus" };
+  }
 
   let activeScope = "all";
   try {
     const { cookies } = await import("next/headers");
-    activeScope = cookies().get("kk_admin_active_scope")?.value || "all";
+    const cookieStore = await cookies();
+    activeScope = cookieStore.get("kk_admin_active_scope")?.value || "all";
   } catch {
     activeScope = "all";
   }
 
-  const settings = await getSettings();
-  const allCampuses = getActiveCampuses(settings);
-
-  if (actor.role === "superadmin" && (!activeScope || activeScope === "all")) {
-    return null;
+  const isSuper = actor.role === "superadmin" || actor.roles?.some((r) => r.role_code === "superadmin");
+  if (isSuper && (!activeScope || activeScope === "all")) {
+    return { isAll: true, scopeType: "all", provinceId: null, campusCodes: [], universityIds: [], label: "Semua Kampus (Nasional)" };
   }
 
-  const permittedCampuses = actor.role === "superadmin"
-    ? allCampuses.map((c) => c.shortName)
-    : resolveAdminCampusScope(actor.scopes, allCampuses);
+  // Ambil daftar provinsi & universitas langsung dari database relasional
+  let provinces = [];
+  let universities = [];
+  try {
+    const { getAdminClient } = await import("@/lib/supabaseAdmin");
+    const admin = getAdminClient();
+    const [provRes, uniRes] = await Promise.all([
+      admin.from("provinces").select("id, name, status").eq("status", "active"),
+      admin.from("universities").select("id, code, name, province_id, status").eq("status", "active"),
+    ]);
+    if (!provRes.error && provRes.data?.length) provinces = provRes.data;
+    if (!uniRes.error && uniRes.data?.length) universities = uniRes.data;
+  } catch {
+    // fallback
+  }
 
-  if (activeScope && activeScope !== "all") {
-    if (activeScope.startsWith("province:")) {
-      const provinceId = activeScope.slice("province:".length).toLowerCase();
-      const matched = allCampuses
-        .filter((c) => getCampusProvinceId(c) === provinceId && (actor.role === "superadmin" || permittedCampuses.includes(c.shortName)))
-        .map((c) => c.shortName);
-      return matched.length ? matched : (actor.role === "superadmin" ? null : permittedCampuses);
-    }
+  if (!provinces.length || !universities.length) {
+    const settings = await getSettings();
+    const campuses = getActiveCampuses(settings);
+    universities = campuses.map((c) => ({
+      id: c.id || c.shortName.toLowerCase(),
+      code: c.shortName,
+      name: c.name,
+      province_id: c.provinceId || "sumatera-utara",
+    }));
+    provinces = [{ id: "sumatera-utara", name: "Sumatera Utara" }];
+  }
 
-    if (activeScope.startsWith("campus:") || activeScope.startsWith("university:")) {
-      const wanted = activeScope.split(":")[1].toLowerCase();
-      const target = allCampuses.find(
-        (c) => [c.id, c.shortName, c.name].some((v) => String(v || "").toLowerCase() === wanted)
-      );
-      if (target && (actor.role === "superadmin" || permittedCampuses.includes(target.shortName))) {
-        return [target.shortName];
+  if (activeScope && activeScope.startsWith("province:")) {
+    const provinceId = activeScope.slice("province:".length).toLowerCase();
+    const prov = provinces.find((p) => p.id.toLowerCase() === provinceId);
+    const provinceUnis = universities.filter((u) => (u.province_id || "").toLowerCase() === provinceId);
+    const campusCodes = provinceUnis.map((u) => u.code).filter(Boolean);
+    const universityIds = provinceUnis.map((u) => u.id).filter(Boolean);
+    return {
+      isAll: false,
+      scopeType: "province",
+      provinceId,
+      provinceName: prov?.name || provinceId.toUpperCase(),
+      campusCodes,
+      universityIds,
+      label: `Provinsi ${prov?.name || provinceId.toUpperCase()}`,
+    };
+  }
+
+  if (activeScope && (activeScope.startsWith("campus:") || activeScope.startsWith("university:"))) {
+    const targetUni = activeScope.split(":")[1].toLowerCase();
+    const uni = universities.find(
+      (u) => (u.id || "").toLowerCase() === targetUni || (u.code || "").toLowerCase() === targetUni
+    );
+    return {
+      isAll: false,
+      scopeType: "campus",
+      provinceId: uni?.province_id || null,
+      campusCodes: uni?.code ? [uni.code] : [],
+      universityIds: uni?.id ? [uni.id] : [targetUni],
+      label: uni?.code || uni?.name || targetUni.toUpperCase(),
+    };
+  }
+
+  // Jika bukan superadmin, hitung cakupan dari penugasan (actor.scopes)
+  if (!isSuper) {
+    const permittedCampusCodes = [];
+    const permittedUniIds = [];
+    let provinceId = null;
+
+    for (const scope of actor.scopes || []) {
+      if (scope.scope_type === "province") {
+        provinceId = String(scope.scope_id || "").toLowerCase();
+        const provinceUnis = universities.filter((u) => (u.province_id || "").toLowerCase() === provinceId);
+        provinceUnis.forEach((u) => {
+          if (u.code) permittedCampusCodes.push(u.code);
+          if (u.id) permittedUniIds.push(u.id);
+        });
+      } else if (scope.scope_type === "campus" || scope.scope_type === "university") {
+        const id = String(scope.scope_id || "").toLowerCase();
+        const uni = universities.find((u) => (u.id || "").toLowerCase() === id || (u.code || "").toLowerCase() === id);
+        if (uni?.code) permittedCampusCodes.push(uni.code);
+        if (uni?.id) permittedUniIds.push(uni.id);
       }
     }
+
+    return {
+      isAll: false,
+      scopeType: provinceId ? "province" : "campus",
+      provinceId,
+      campusCodes: [...new Set(permittedCampusCodes)],
+      universityIds: [...new Set(permittedUniIds)],
+      label: "Cakupan Ditugaskan",
+    };
   }
 
-  return actor.role === "superadmin" ? null : permittedCampuses;
+  return { isAll: true, scopeType: "all", provinceId: null, campusCodes: [], universityIds: [], label: "Semua Kampus (Nasional)" };
+}
+
+export async function getAdminCampusScope(actor) {
+  const filter = await getAdminScopeFilter(actor);
+  if (filter.isAll) return null;
+  if (filter.campusCodes.length > 0) return filter.campusCodes;
+  return ["__NONE__"];
 }
 
 export async function isActiveAdminSession() {

@@ -8,7 +8,7 @@ import ScopeSwitcher from "@/components/admin/ScopeSwitcher";
 import {
   ArrowUpRight, BookOpenCheck, Boxes, ChartNoAxesCombined, Clock, Flag, LayoutDashboard, LogOut, Megaphone, Menu, MessageCircle, MessagesSquare, Sparkles,
   PanelLeftClose, Settings2, ShieldCheck, ShoppingBag, Smartphone, Users, WalletCards, BookOpen, X, MapPinned, ClipboardList, Layers,
-  ShieldAlert, Ticket, Search, Command, ArrowRight
+  ShieldAlert, Ticket, Search, Command, ArrowRight, Globe
 } from "lucide-react";
 
 const iconByKey = {
@@ -68,7 +68,7 @@ function canShow(actor, item) {
   return Array.isArray(grant) ? grant.includes("read") || grant.includes("manage") : !!grant?.read || !!grant?.manage;
 }
 
-export default function OwnerWorkspaceShell({ actor, children }) {
+export default function OwnerWorkspaceShell({ actor, scopeFilter, children }) {
   const pathname = usePathname() || "/admin/overview";
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -223,7 +223,53 @@ export default function OwnerWorkspaceShell({ actor, children }) {
           <Link href="/" target="_blank" className="inline-flex min-h-10 items-center gap-1.5 rounded-full border border-slate-200 px-3 text-xs font-bold text-slate-600 transition hover:border-emerald-300 hover:text-emerald-800 sm:px-4">Lihat web <ArrowUpRight className="h-3.5 w-3.5" /></Link>
         </header>
 
-        <div className="mx-auto max-w-[1480px] px-4 py-5 sm:px-7 sm:py-7">{children}</div>
+        <div className="mx-auto max-w-[1480px] px-4 py-5 sm:px-7 sm:py-7">
+          {scopeFilter && !scopeFilter.isAll ? (
+            <div className="mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-emerald-200/90 bg-gradient-to-r from-emerald-50/90 via-teal-50/60 to-white p-3.5 text-xs shadow-xs animate-in fade-in slide-in-from-top-1">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-emerald-700 text-white shadow-xs">
+                  <MapPinned className="h-4 w-4" />
+                </span>
+                <div className="min-w-0">
+                  <p className="font-extrabold text-emerald-950 truncate">
+                    Konteks Wilayah Aktif: <span className="underline decoration-emerald-500/60 decoration-2">{scopeFilter.label}</span>
+                  </p>
+                  <p className="text-[11px] text-emerald-800/80 truncate">
+                    Marketplace, pengguna, transaksi, kurasi FYP &amp; ringkasan difokuskan pada daerah ini.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                {scopeFilter.provinceId ? (
+                  <Link
+                    href={`/admin/organization?province=${scopeFilter.provinceId}`}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-white px-3 py-1.5 text-xs font-bold text-emerald-900 shadow-2xs hover:bg-emerald-50 transition"
+                  >
+                    <Settings2 className="h-3.5 w-3.5 text-emerald-700" />
+                    Pengaturan Wilayah {scopeFilter.label.replace("Provinsi ", "")}
+                  </Link>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await fetch("/api/admin/scope-context", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ scope: "all" }),
+                    });
+                    window.location.reload();
+                  }}
+                  className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white/90 px-2.5 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
+                  title="Kembalikan ke tampilan nasional"
+                >
+                  <X className="h-3.5 w-3.5 text-slate-400" />
+                  Semua Kampus
+                </button>
+              </div>
+            </div>
+          ) : null}
+          {children}
+        </div>
       </main>
 
       {/* Global Command Palette Modal (Cmd + K) */}

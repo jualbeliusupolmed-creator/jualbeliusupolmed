@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAdminActor, getAdminCampusScope, hasAdminPermission } from "@/lib/admin-access";
+import { getAdminActor, getAdminCampusScope, getAdminScopeFilter, hasAdminPermission } from "@/lib/admin-access";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 
 export const dynamic = "force-dynamic";
@@ -13,18 +13,26 @@ export async function GET(req) {
   const params = new URL(req.url).searchParams;
   const status = STATUSES.has(params.get("status")) ? params.get("status") : "open";
   const supa = getAdminClient();
-  const campuses = await getAdminCampusScope(actor);
-  if (actor.role !== "superadmin" && !campuses.length) return NextResponse.json({ items: [], campuses: [] });
+  const scopeFilter = await getAdminScopeFilter(actor);
 
   let query = supa.from("reports")
     .select("id,listing_id,reason,detail,status,created_at,listing:listings!inner(title,campus,status)")
     .order("created_at", { ascending: false })
     .limit(200);
   if (status !== "all") query = query.eq("status", status);
-  if (actor.role !== "superadmin") query = query.in("listing.campus", campuses);
+  if (!scopeFilter.isAll) {
+    if (scopeFilter.campusCodes?.length > 0) {
+      const lower = scopeFilter.campusCodes.map((c) => c.toLowerCase());
+      const uniIds = scopeFilter.universityIds || [];
+      const allCodes = [...new Set([...scopeFilter.campusCodes, ...lower, ...uniIds])];
+      query = query.in("listing.campus", allCodes);
+    } else {
+      query = query.eq("id", "00000000-0000-0000-0000-000000000000");
+    }
+  }
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: "Daftar laporan belum dapat dimuat." }, { status: 503 });
-  return NextResponse.json({ items: data || [], campuses });
+  return NextResponse.json({ items: data || [], campuses: scopeFilter.campusCodes, scopeLabel: scopeFilter.label });
 }
 
 export async function PATCH(req) {

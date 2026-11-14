@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, Globe, MapPin, School, Check, LoaderCircle } from "lucide-react";
+import { ChevronDown, Globe, MapPin, School, Check, LoaderCircle, Settings2, Sparkles } from "lucide-react";
 
 export default function ScopeSwitcher({ actor }) {
   const router = useRouter();
@@ -57,10 +57,8 @@ export default function ScopeSwitcher({ actor }) {
       });
       setData((prev) => ({ ...prev, activeScope: targetScopeId }));
       setOpen(false);
-      router.refresh();
+      window.location.reload();
     } catch {
-      // ignore
-    } finally {
       setLoading(false);
     }
   }
@@ -152,6 +150,25 @@ export default function ScopeSwitcher({ actor }) {
               );
             })}
           </div>
+
+          {data.activeScope && data.activeScope.startsWith("province:") ? (
+            <div className="mt-1.5 border-t border-slate-100 pt-2 px-1 space-y-1">
+              <a
+                href={`/admin/organization?province=${data.activeScope.replace("province:", "")}`}
+                className="flex items-center gap-2 rounded-xl px-2.5 py-1.5 text-[11px] font-bold text-emerald-900 bg-emerald-50/70 hover:bg-emerald-100 transition"
+              >
+                <Settings2 className="h-3.5 w-3.5 text-emerald-700 shrink-0" />
+                <span>Pengaturan Wilayah {currentOption.label.replace("Provinsi ", "")}</span>
+              </a>
+              <a
+                href={`/admin/fyp?provinceId=${data.activeScope.replace("province:", "")}`}
+                className="flex items-center gap-2 rounded-xl px-2.5 py-1.5 text-[11px] font-bold text-teal-900 hover:bg-teal-50 transition"
+              >
+                <Sparkles className="h-3.5 w-3.5 text-teal-600 shrink-0" />
+                <span>Kurasi FYP Wilayah Ini</span>
+              </a>
+            </div>
+          ) : null}
         </div>
       )}
     </div>

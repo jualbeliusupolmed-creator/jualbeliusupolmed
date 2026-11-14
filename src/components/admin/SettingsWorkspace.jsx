@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { CircleAlert, LoaderCircle, Save, Settings2 } from "lucide-react";
+import { CircleAlert, LoaderCircle, Save, Settings2, MapPin } from "lucide-react";
 
 const EMPTY = {
   admin: {
@@ -35,6 +35,7 @@ export default function SettingsWorkspace() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [activeScopeInfo, setActiveScopeInfo] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -47,6 +48,18 @@ export default function SettingsWorkspace() {
     finally { setLoading(false); }
   }, []);
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    fetch("/api/admin/scope-context")
+      .then((res) => res.json())
+      .then((res) => {
+        if (res.activeScope && res.activeScope !== "all") {
+          const match = (res.availableScopes || []).find((s) => s.id === res.activeScope);
+          setActiveScopeInfo({ id: res.activeScope, label: match?.label || res.activeScope });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   async function save(event) {
     event.preventDefault();
@@ -86,6 +99,27 @@ export default function SettingsWorkspace() {
   const inputClass = "mt-1.5 h-10 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm outline-none transition focus:border-emerald-600 focus:bg-white focus:ring-4 focus:ring-emerald-500/10";
   return <form onSubmit={save} className="space-y-5">
     <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><h2 className="text-2xl font-black tracking-tight">Pengaturan platform</h2><p className="mt-1 max-w-2xl text-sm leading-relaxed text-slate-500">Atur tampilan beranda, informasi pencarian, biaya, dan area layanan. Pengaturan ini berlaku untuk semua kampus.</p></div><span className="inline-flex min-h-9 items-center gap-2 self-start rounded-full bg-emerald-50 px-3 text-xs font-extrabold text-emerald-900"><Settings2 className="h-4 w-4" />Superadmin</span></header>
+    {activeScopeInfo ? (
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 text-xs">
+        <div className="space-y-0.5">
+          <p className="font-extrabold text-emerald-950">
+            💡 Anda sedang berada dalam cakupan wilayah: <u className="decoration-emerald-500/80 font-black">{activeScopeInfo.label}</u>
+          </p>
+          <p className="text-emerald-800/80 text-[11px]">
+            Formulir di bawah mengatur platform pusat secara nasional. Untuk mengatur perguruan tinggi, unit cabang, dan akun resmi wilayah {activeScopeInfo.label.replace("Provinsi ", "")}, buka menu Struktur Wilayah.
+          </p>
+        </div>
+        {activeScopeInfo.id.startsWith("province:") ? (
+          <a
+            href={`/admin/organization?province=${activeScopeInfo.id.replace("province:", "")}`}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-white px-3 py-1.5 text-xs font-bold text-emerald-900 shadow-2xs hover:bg-emerald-100 shrink-0 transition"
+          >
+            <MapPin className="h-3.5 w-3.5 text-emerald-700" />
+            Buka Pengaturan Wilayah {activeScopeInfo.label.replace("Provinsi ", "")}
+          </a>
+        ) : null}
+      </div>
+    ) : null}
     {notice ? <div role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-bold text-emerald-800">{notice}</div> : null}
     {error ? <div role="alert" className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-bold text-rose-800"><CircleAlert className="h-4 w-4 shrink-0" />{error}</div> : null}
     {loading ? <div className="grid min-h-64 place-items-center text-slate-400"><LoaderCircle className="h-5 w-5 animate-spin" /></div> : <>
