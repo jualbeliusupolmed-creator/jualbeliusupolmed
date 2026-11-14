@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:mobile="http://www.google.com/schemas/sitemap-mobile/1.0" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
-<url><loc>https://www.kampuskita.my.id/icon.svg</loc><lastmod>2026-11-14T01:37:47.630Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://www.kampuskita.my.id/robots.txt</loc><lastmod>2026-11-14T01:37:47.631Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://www.kampuskita.my.id/faq</loc><lastmod>2026-11-14T01:37:47.631Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://www.kampuskita.my.id/jasa/tawarkan</loc><lastmod>2026-11-14T01:37:47.631Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://www.kampuskita.my.id/cara-bergabung</loc><lastmod>2026-11-14T01:37:47.631Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://www.kampuskita.my.id/offline</loc><lastmod>2026-11-14T01:37:47.631Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://www.kampuskita.my.id/cari-teman</loc><lastmod>2026-11-14T01:37:47.631Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://www.kampuskita.my.id/organisasi/daftar</loc><lastmod>2026-11-14T01:37:47.631Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://www.kampuskita.my.id/favorit</loc><lastmod>2026-11-14T01:37:47.631Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://www.kampuskita.my.id/jual</loc><lastmod>2026-11-14T01:37:47.631Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://www.kampuskita.my.id/dashboard</loc><lastmod>2026-11-14T01:37:47.631Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://www.kampuskita.my.id/keranjang</loc><lastmod>2026-11-14T01:37:47.631Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://www.kampuskita.my.id/chat</loc><lastmod>2026-11-14T01:37:47.631Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://www.kampuskita.my.id/icon.svg</loc><lastmod>2026-11-14T01:56:21.470Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://www.kampuskita.my.id/robots.txt</loc><lastmod>2026-11-14T01:56:21.473Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://www.kampuskita.my.id/cari-teman</loc><lastmod>2026-11-14T01:56:21.473Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://www.kampuskita.my.id/faq</loc><lastmod>2026-11-14T01:56:21.473Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://www.kampuskita.my.id/panduan-aman</loc><lastmod>2026-11-14T01:56:21.473Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://www.kampuskita.my.id/offline</loc><lastmod>2026-11-14T01:56:21.473Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://www.kampuskita.my.id/sosial</loc><lastmod>2026-11-14T01:56:21.473Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://www.kampuskita.my.id/refund-policy</loc><lastmod>2026-11-14T01:56:21.473Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://www.kampuskita.my.id/chat</loc><lastmod>2026-11-14T01:56:21.473Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://www.kampuskita.my.id/jual</loc><lastmod>2026-11-14T01:56:21.473Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://www.kampuskita.my.id/dashboard</loc><lastmod>2026-11-14T01:56:21.473Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://www.kampuskita.my.id/favorit</loc><lastmod>2026-11-14T01:56:21.473Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://www.kampuskita.my.id/keranjang</loc><lastmod>2026-11-14T01:56:21.473Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
 </urlset>

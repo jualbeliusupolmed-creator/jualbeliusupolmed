@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/Icons";
 import { toast } from "sonner";
@@ -10,6 +10,7 @@ import ProductPeekSheet from "@/components/ProductPeekSheet";
 import { rupiah } from "@/lib/fees";
 import UnduhMenfessModal from "@/components/mading/UnduhMenfessModal";
 import MenfessReplySection from "@/components/mading/MenfessReplySection";
+import { cn } from "@/lib/utils";
 
 export default function MadingClient({ initialPosts = [] }) {
   const [activeTab, setActiveTab] = useState("all"); // 'all' | 'menfess' | 'info' | 'organisasi' | 'blog'
@@ -29,15 +30,45 @@ export default function MadingClient({ initialPosts = [] }) {
   // Post yang sedang dibuka modal unduh gambar-nya.
   const [unduhPost, setUnduhPost] = useState(null);
   const [campuses, setCampuses] = useState([]);
+  const [provinces, setProvinces] = useState([]);
+  const [scopeMode, setScopeMode] = useState("daerah"); // 'daerah' | 'nasional'
+  const [selectedProvince, setSelectedProvince] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("preferred_province") || "sumatera-utara";
+    }
+    return "sumatera-utara";
+  });
 
   useEffect(() => {
     fetch("/api/kampus", { cache: "no-store" })
-      .then((res) => res.ok ? res.json() : null)
+      .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (Array.isArray(data?.campuses)) setCampuses(data.campuses);
+        if (Array.isArray(data?.provinces)) setProvinces(data.provinces);
       })
       .catch(() => {});
+
+    const onCampusSync = (e) => {
+      if (e.detail?.province) {
+        setSelectedProvince(e.detail.province);
+      }
+      if (e.detail?.campus) {
+        setSelectedFaculty(e.detail.campus);
+      }
+    };
+    window.addEventListener("campus:change", onCampusSync);
+    return () => window.removeEventListener("campus:change", onCampusSync);
   }, []);
+
+  const availableCampuses = useMemo(() => {
+    if (scopeMode === "nasional") {
+      return campuses;
+    }
+    const filtered = campuses.filter(
+      (c) => (c.provinceId || "sumatera-utara") === selectedProvince
+    );
+    return filtered.length > 0 ? filtered : campuses;
+  }, [campuses, scopeMode, selectedProvince]);
 
   // Dibuka dari tombol "Buat" atau "Promosikan di Menfess": /mading?tulis=1&tag=<id>
   useEffect(() => {
@@ -157,7 +188,13 @@ export default function MadingClient({ initialPosts = [] }) {
       params.set("page", String(page));
       params.set("limit", String(PAGE_LIMIT));
       if (activeTab !== "all" && activeTab !== "blog") params.set("type", activeTab);
-      if (selectedFaculty !== "Semua") params.set("faculty", selectedFaculty);
+      if (selectedFaculty !== "Semua") {
+        params.set("faculty", selectedFaculty);
+      } else if (scopeMode === "daerah" && selectedProvince) {
+        params.set("province", selectedProvince);
+      } else if (scopeMode === "nasional") {
+        params.set("province", "nasional");
+      }
 
       if (activeTab === "blog") {
         const res = await fetch(`/api/blog`);
@@ -209,7 +246,7 @@ export default function MadingClient({ initialPosts = [] }) {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [activeTab, selectedFaculty]);
+  }, [activeTab, selectedFaculty, scopeMode, selectedProvince]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -516,45 +553,122 @@ export default function MadingClient({ initialPosts = [] }) {
         <div className="max-w-2xl mx-auto px-4 py-4 space-y-3.5">
           {/* CAMPUS & QUICK CATEGORY FILTER PILLS (Hide on Blog tab) */}
           {activeTab !== "blog" && (
-            <div className="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar py-0.5">
-              {/* Campus Selector */}
-              <div className="flex items-center gap-1 shrink-0">
-                {["Semua", ...campuses.map((campus) => campus.shortName), "Bebas"].map((f) => (
+            <div className="space-y-2.5">
+              {/* Lingkup: Nasional vs Per Daerah */}
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-slate-100/70 dark:bg-slate-800/60 p-1.5 border border-slate-200/60 dark:border-white/5">
+                <div className="inline-flex items-center gap-1 bg-white/80 dark:bg-slate-900/80 p-0.5 rounded-xl border border-slate-200/50 dark:border-white/5">
                   <button
-                    key={f}
-                    onClick={() => setSelectedFaculty(f)}
-                    className={`px-3 py-1 rounded-full text-xs font-bold shrink-0 transition-all active:scale-95 ${
-                      selectedFaculty === f
-                        ? "bg-primary text-white shadow-xs"
-                        : "bg-white dark:bg-[#1c1c1e] text-slate-600 dark:text-slate-400 border border-black/[0.06] dark:border-white/[0.08] hover:bg-slate-50 dark:hover:bg-slate-800"
-                    }`}
+                    type="button"
+                    onClick={() => {
+                      setScopeMode("nasional");
+                      setSelectedFaculty("Semua");
+                    }}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95",
+                      scopeMode === "nasional"
+                        ? "bg-emerald-800 text-white shadow-xs dark:bg-emerald-700"
+                        : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
+                    )}
                   >
-                    {f}
+                    <span>🌐</span>
+                    <span>Nasional</span>
                   </button>
-                ))}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setScopeMode("daerah");
+                      setSelectedFaculty("Semua");
+                    }}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all active:scale-95",
+                      scopeMode === "daerah"
+                        ? "bg-emerald-800 text-white shadow-xs dark:bg-emerald-700"
+                        : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
+                    )}
+                  >
+                    <span>📍</span>
+                    <span>Per Daerah</span>
+                  </button>
+                </div>
+
+                {scopeMode === "daerah" ? (
+                  <div className="flex items-center gap-1.5 pr-1">
+                    <label htmlFor="mading-prov-select" className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                      Daerah:
+                    </label>
+                    <select
+                      id="mading-prov-select"
+                      aria-label="Pilih daerah provinsi"
+                      value={selectedProvince}
+                      onChange={(e) => {
+                        const newProv = e.target.value;
+                        setSelectedProvince(newProv);
+                        setSelectedFaculty("Semua");
+                        try { localStorage.setItem("preferred_province", newProv); } catch {}
+                      }}
+                      className="text-xs font-bold bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 border border-slate-200/80 dark:border-white/10 rounded-xl px-2.5 py-1 outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer shadow-xs"
+                    >
+                      {provinces.length > 0 ? (
+                        provinces.map((prov) => (
+                          <option key={prov.id} value={prov.id}>
+                            {prov.name}
+                          </option>
+                        ))
+                      ) : (
+                        <option value="sumatera-utara">Sumatera Utara</option>
+                      )}
+                    </select>
+                  </div>
+                ) : (
+                  <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 pr-2">
+                    Menfess dari seluruh kampus se-Indonesia
+                  </span>
+                )}
               </div>
 
-              {/* Sub-Filters */}
-              <div className="flex items-center gap-1 shrink-0">
-                {[
-                  { id: "all", label: "Semua" },
-                  { id: "popular", label: "Populer" },
-                  { id: "photo", label: "Foto" },
-                ].map((st) => (
-                  <button
-                    key={st.id}
-                    onClick={() => setFilterType(st.id)}
-                    className={`px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0 transition-all active:scale-95 ${
-                      filterType === st.id
-                        ? "bg-primary/10 text-primary dark:bg-emerald-400/15 dark:text-emerald-300 border border-primary/20"
-                        : "text-slate-500 hover:text-slate-700 dark:text-slate-400 bg-white/70 dark:bg-white/[0.04] border border-black/[0.04] dark:border-white/[0.04]"
-                    }`}
-                  >
-                    {st.id === "popular" ? <Icon.Flame className="h-3.5 w-3.5" /> : null}
-                    {st.id === "photo" ? <Icon.Camera className="h-3.5 w-3.5" /> : null}
-                    {st.label}
-                  </button>
-                ))}
+              {/* Campus Selector & Sub-Filters */}
+              <div className="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar py-0.5">
+                {/* Campus Selector */}
+                <div className="flex items-center gap-1 shrink-0">
+                  {["Semua", ...availableCampuses.map((campus) => campus.shortName), "Bebas"].map((f) => (
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={() => setSelectedFaculty(f)}
+                      className={`px-3 py-1 rounded-full text-xs font-bold shrink-0 transition-all active:scale-95 ${
+                        selectedFaculty === f
+                          ? "bg-primary text-white shadow-xs"
+                          : "bg-white dark:bg-[#1c1c1e] text-slate-600 dark:text-slate-400 border border-black/[0.06] dark:border-white/[0.08] hover:bg-slate-50 dark:hover:bg-slate-800"
+                      }`}
+                    >
+                      {f}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Sub-Filters */}
+                <div className="flex items-center gap-1 shrink-0">
+                  {[
+                    { id: "all", label: "Semua" },
+                    { id: "popular", label: "Populer" },
+                    { id: "photo", label: "Foto" },
+                  ].map((st) => (
+                    <button
+                      key={st.id}
+                      type="button"
+                      onClick={() => setFilterType(st.id)}
+                      className={`px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0 transition-all active:scale-95 ${
+                        filterType === st.id
+                          ? "bg-primary/10 text-primary dark:bg-emerald-400/15 dark:text-emerald-300 border border-primary/20"
+                          : "text-slate-500 hover:text-slate-700 dark:text-slate-400 bg-white/70 dark:bg-white/[0.04] border border-black/[0.04] dark:border-white/[0.04]"
+                      }`}
+                    >
+                      {st.id === "popular" ? <Icon.Flame className="h-3.5 w-3.5" /> : null}
+                      {st.id === "photo" ? <Icon.Camera className="h-3.5 w-3.5" /> : null}
+                      {st.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -1039,7 +1153,7 @@ export default function MadingClient({ initialPosts = [] }) {
                     onChange={(e) => setFormData({ ...formData, faculty: e.target.value })}
                     className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none"
                   >
-                    {["Bebas", ...campuses.map((campus) => campus.shortName)].map((fac) => (
+                    {["Bebas", ...availableCampuses.map((campus) => campus.shortName)].map((fac) => (
                       <option key={fac} value={fac}>
                         {fac}
                       </option>

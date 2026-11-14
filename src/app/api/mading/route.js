@@ -31,10 +31,20 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type") || "all"; // 'all' | 'menfess' | 'info' | 'organisasi'
     const faculty = searchParams.get("faculty");
+    const province = searchParams.get("province"); // 'nasional' | 'sumatera-utara' | dll.
     const q = (searchParams.get("q") || "").trim(); // keyword search
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") || "15", 10)));
     const offset = (page - 1) * limit;
+
+    let provinceCampuses = [];
+    if (province && province !== "nasional") {
+      const settings = await getSettings();
+      provinceCampuses = (Array.isArray(settings.campuses) ? settings.campuses : [])
+        .filter((c) => (c.provinceId || c.province_id || getCampusProvinceId(c) || "sumatera-utara") === province)
+        .map((c) => c.shortName)
+        .filter(Boolean);
+    }
 
     const supa = getAdminClient();
 
@@ -59,7 +69,11 @@ export async function GET(request) {
         .order("created_at", { ascending: false })
         .range(offset, offset + limit - 1);
       if (type && type !== "all") query = query.eq("type", type);
-      if (faculty && faculty !== "Semua") query = query.eq("faculty", faculty);
+      if (faculty && faculty !== "Semua") {
+        query = query.eq("faculty", faculty);
+      } else if (province && province !== "nasional" && provinceCampuses.length > 0) {
+        query = query.in("faculty", [...provinceCampuses, "Bebas", "Semua"]);
+      }
       // Server-side full-text keyword search across title, content, sender_name
       if (q) {
         query = query.or(`title.ilike.%${q}%,content.ilike.%${q}%,sender_name.ilike.%${q}%`);

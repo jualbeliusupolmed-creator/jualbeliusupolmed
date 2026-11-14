@@ -36,18 +36,34 @@ export default function DicariPage({ initialItems = [] }) {
   // Dibuka dari tombol "Buat" di dock bawah: /rute?tulis=1 langsung
   // membuka form, jadi pengguna tidak perlu mencari tombolnya di halaman.
   useEffect(() => {
+    let allCampuses = [];
+
+    const filterByProv = (rawCampuses, targetProv) => {
+      const prefProv = targetProv || (typeof window !== "undefined" ? localStorage.getItem("preferred_province") : null);
+      const prefCamp = typeof window !== "undefined" ? localStorage.getItem("preferred_campus") : null;
+      const matchedProv = prefProv || (prefCamp && rawCampuses.find((c) => c.shortName?.toLowerCase() === prefCamp.toLowerCase())?.provinceId) || "sumatera-utara";
+      const filtered = rawCampuses.filter((c) => (c.provinceId || "sumatera-utara") === matchedProv);
+      return filtered.length > 0 ? filtered : rawCampuses;
+    };
+
     fetch("/api/kampus", { cache: "no-store" })
       .then((r) => r.ok ? r.json() : null)
       .then((d) => {
         if (Array.isArray(d?.campuses)) {
-          const prefProv = typeof window !== "undefined" ? localStorage.getItem("preferred_province") : null;
-          const prefCamp = typeof window !== "undefined" ? localStorage.getItem("preferred_campus") : null;
-          const matchedProv = prefProv || (prefCamp && d.campuses.find((c) => c.shortName?.toLowerCase() === prefCamp.toLowerCase())?.provinceId) || "sumatera-utara";
-          const filtered = d.campuses.filter((c) => (c.provinceId || "sumatera-utara") === matchedProv);
-          setCampuses(filtered.length > 0 ? filtered : d.campuses);
+          allCampuses = d.campuses;
+          setCampuses(filterByProv(allCampuses));
         }
       })
       .catch(() => {});
+
+    const onCampusSync = (e) => {
+      if (allCampuses.length > 0) {
+        setCampuses(filterByProv(allCampuses, e.detail?.province));
+      }
+      if (e.detail?.campus) setCampus(e.detail.campus);
+    };
+    window.addEventListener("campus:change", onCampusSync);
+    return () => window.removeEventListener("campus:change", onCampusSync);
   }, []);
 
   useEffect(() => {

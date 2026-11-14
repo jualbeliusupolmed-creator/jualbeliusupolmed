@@ -176,31 +176,14 @@ export default function Navbar({ config }) {
     (typeof window !== "undefined" ? localStorage.getItem("preferred_province") : null) ||
     "sumatera-utara";
 
-  // Hanya universitas dari kampus yang di-set di profil
+  // Universitas dari provinsi yang aktif
   const displayCampuses = useMemo(() => {
-    const targetCampus = profileCampus || (selectedCampus !== "Semua" ? selectedCampus : "");
-    if (targetCampus) {
-      const target = targetCampus.toLowerCase().trim();
-      const matched = campuses.filter((c) => {
-        const shortLower = c.shortName?.toLowerCase() || "";
-        const idLower = c.id?.toLowerCase() || "";
-        const nameLower = c.name?.toLowerCase() || "";
-        return (
-          shortLower === target ||
-          idLower === target ||
-          nameLower === target ||
-          target.includes(shortLower) ||
-          (nameLower && target.includes(nameLower))
-        );
-      });
-      if (matched.length > 0) return matched;
-    }
     const scoped = campuses.filter((c) => {
       const cProv = c.provinceId || c.province_id || "sumatera-utara";
       return cProv === activeProvince;
     });
     return scoped.length > 0 ? scoped : campuses.filter((c) => (c.provinceId || c.province_id || "") === "sumatera-utara");
-  }, [profileCampus, selectedCampus, campuses, activeProvince]);
+  }, [campuses, activeProvince]);
 
   const sortedCampuses = [...displayCampuses].sort((a, b) => {
     const aIsPrimary = primaryCampus && a.shortName?.toLowerCase() === primaryCampus.toLowerCase();
@@ -221,8 +204,14 @@ export default function Navbar({ config }) {
   const changeCampus = (camp) => {
     setSelectedCampus(camp);
     localStorage.setItem("preferred_campus", camp);
+    const matched = campuses.find((c) => c.shortName === camp);
+    const nextProv = matched?.provinceId || activeProvince;
+    if (nextProv) {
+      setProfileProvince(nextProv);
+      localStorage.setItem("preferred_province", nextProv);
+    }
     setCampusDropdownOpen(false);
-    window.dispatchEvent(new CustomEvent("campus:change", { detail: { campus: camp } }));
+    window.dispatchEvent(new CustomEvent("campus:change", { detail: { campus: camp, province: nextProv } }));
     toast.success(`Kampus aktif: ${camp}`);
   };
 
