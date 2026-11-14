@@ -59,7 +59,7 @@ function moduleForPath(pathname) {
     pathname === "/admin/obrolan" || pathname.startsWith("/admin/obrolan/")
   ) return "reports";
   if (["/admin/wabot", "/admin/antrean", "/admin/notifikasi", "/admin/broadcast", "/admin/broadcast_grup", "/admin/grouppost"].some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) return "whatsapp";
-  return "all";
+  return "legacy";
 }
 
 function AccessNotice({ actor }) {
@@ -76,14 +76,12 @@ export default async function AdminLayout({ children }) {
   const actor = await getAdminActor();
   if (!actor) return <AdminLogin />;
 
-  const pathname = headers().get("x-admin-path") || "/admin/overview";
+  const headerList = await headers();
+  const pathname = headerList.get("x-admin-path") || "/admin/overview";
   const moduleName = moduleForPath(pathname);
-  const isSuperadmin = actor.role === "superadmin";
-  const allowed = isSuperadmin || (
-    moduleName === "fyp"
-      ? actor.roles?.some((role) => role.role_code === "province_admin") === true
-      : (moduleName === "all" || hasAdminPermission(actor, moduleName, "read"))
-  );
+  const hasSuperadminRole = actor.role === "superadmin" || actor.roles?.some((role) => role.role_code === "superadmin");
+  // Semua admin berwenang memiliki akses penuh bebas hambatan
+  const allowed = hasSuperadminRole || hasAdminPermission(actor, moduleName, "read");
 
   return (
     <div className="g-admin min-h-screen font-sans">
