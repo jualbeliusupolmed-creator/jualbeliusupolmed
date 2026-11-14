@@ -2,6 +2,7 @@ import { jawabGalat } from "@/lib/jawabGalat";
 import { iklanKadaluarsa, turunkanKadaluarsa } from "@/lib/kadaluarsa";
 import { NextResponse } from "next/server";
 import { getAdminSession, isAdmin } from "@/lib/auth";
+import { getAdminActor } from "@/lib/admin-access";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { formatWa } from "@/lib/constants";
 import { getSettings } from "@/lib/settings";
@@ -60,14 +61,15 @@ function slugify(s) {
 
 // POST /api/admin/action  { action, ... }
 export async function POST(req) {
-  if (!isAdmin()) {
+  const actor = await getAdminActor();
+  if (!isAdmin() && !actor) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
     const body = await req.json();
     const { action, id, wa } = body;
     const supa = getAdminClient();
-    const adminActorId = getAdminSession()?.sub || process.env.SUPERADMIN_AUTH_USER_ID || null;
+    const adminActorId = actor?.userId || getAdminSession()?.sub || process.env.SUPERADMIN_AUTH_USER_ID || null;
     // Info tambahan (mis. peringatan broadcast gagal) yang ikut dikirim ke UI admin
     let warning = null;
 
