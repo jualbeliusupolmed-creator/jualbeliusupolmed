@@ -23,15 +23,15 @@ const faqs = [
   },
   {
     q: "Apa itu fitur Sundul (Bump) dan Sundul Otomatis (Auto-Bump)?",
-    a: "Naikkan Barang (Bump) menaikkan posisi barang jualanmu ke baris paling atas beranda seketika — biayanya Rp 1.000 per penggunaan. Naikkan Otomatis (Auto-Bump) menaikkan barangmu secara otomatis setiap hari selama 7 hari. Keduanya bisa diaktifkan dari Dashboard penjual.",
+    a: "Naikkan Barang (Bump) menaikkan posisi barang jualanmu ke baris paling atas beranda seketika, dengan biaya Rp 1.000 per penggunaan. Naikkan Otomatis (Auto-Bump) menaikkan barangmu secara otomatis setiap hari selama 7 hari. Keduanya bisa diaktifkan dari Dashboard penjual.",
   },
   {
     q: "Bagaimana cara tahu barang jualan saya sudah tampil?",
-    a: "Setelah pembayaran berhasil, barang otomatis berstatus Aktif dan muncul di beranda — biasanya kurang dari 1 menit. Kamu bisa memastikannya lewat Dashboard (status badge hijau \"active\") atau mencari barangmu di beranda. Admin juga akan membantu membagikan barangmu ke grup WhatsApp komunitas.",
+    a: "Setelah pembayaran berhasil, barang otomatis berstatus Aktif dan muncul di beranda, biasanya kurang dari 1 menit. Kamu bisa memastikannya lewat Dashboard (status badge hijau \"active\") atau mencari barangmu di beranda. Admin juga akan membantu membagikan barangmu ke grup WhatsApp komunitas.",
   },
   {
     q: "Bagaimana cara melakukan pembayaran?",
-    a: "Pembayaran dilakukan via QRIS statis — scan kode QR yang tampil di halaman pembayaran, transfer sesuai nominal, lalu upload foto struk. Barang akan aktif setelah struk diverifikasi oleh AI kami, biasanya dalam hitungan detik.",
+    a: "Pembayaran dilakukan via QRIS statis: pindai kode QR yang tampil di halaman pembayaran, transfer sesuai nominal, lalu unggah foto struk transfer. Iklan jualan akan aktif segera setelah pembayaran diverifikasi otomatis oleh sistem, biasanya dalam hitungan detik.",
   },
   {
     q: "Bagaimana penjual tahu kalau ada yang minat dengan barangnya?",
@@ -47,7 +47,7 @@ const faqs = [
   },
   {
     q: "Bagaimana jika barang yang saya terima tidak sesuai?",
-    a: "Karena transaksi COD dilakukan langsung antara pembeli dan penjual, perselisihan kualitas barang berada di luar tanggung jawab platform. Selalu periksa barang dengan teliti sebelum menyerahkan uang. Jika menemukan penjual yang menipu, laporkan lewat tombol Lapor di halaman produk — pelanggar akan di-blacklist.",
+    a: "Karena transaksi COD dilakukan langsung antara pembeli dan penjual, perselisihan kualitas barang berada di luar tanggung jawab platform. Selalu periksa barang dengan teliti sebelum menyerahkan uang. Jika menemukan penjual yang menipu, laporkan lewat tombol Lapor di halaman produk: pelanggar akan ditindak tegas dan diblacklist.",
   },
   {
     q: "Apakah saya bisa membatalkan penjualan barang dan meminta refund?",
@@ -55,7 +55,7 @@ const faqs = [
   },
 ];
 
-// JSON-LD FAQPage — agar FAQ bisa muncul sebagai rich result di Google.
+// JSON-LD FAQPage: agar FAQ bisa muncul sebagai rich result di Google.
 const faqJsonLd = {
   "@context": "https://schema.org",
   "@type": "FAQPage",
@@ -83,8 +83,8 @@ export default function FaqPage() {
           <details key={index} className="group border border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg">
             <summary className="flex cursor-pointer items-center justify-between p-4 font-semibold text-gray-900 dark:text-slate-100">
               {faq.q}
-              <span className="ml-4 flex-shrink-0 transition-transform duration-300 group-open:-rotate-180">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <span className="ml-4 flex-shrink-0 transition-transform duration-200 motion-reduce:transition-none group-open:-rotate-180">
+                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                 </svg>
               </span>
@@ -97,10 +97,10 @@ export default function FaqPage() {
       </div>
 
       <div className="mt-10 flex flex-wrap justify-center gap-3 text-center">
-        <Link href="/jual" className="btn-primary px-6">
+        <Link href="/jual" className="btn-primary px-6 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600">
           Jual Barang Sekarang
         </Link>
-        <Link href="/" className="btn bg-gray-200 text-gray-700 hover:bg-gray-300">
+        <Link href="/" className="btn-outline px-6 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600">
           Kembali ke Beranda
         </Link>
       </div>

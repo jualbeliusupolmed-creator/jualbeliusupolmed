@@ -1,4 +1,4 @@
-import { getUserSession } from "@/lib/auth";
+import { getUserSessionAsync } from "@/lib/auth";
 import { hashIdentitas } from "@/lib/identitasHash";
 import { formatWa } from "@/lib/constants";
 
@@ -30,8 +30,8 @@ import { formatWa } from "@/lib/constants";
 // Aturannya sekarang satu kalimat: kalau ada sesi, sesi yang menentukan dan
 // klaim klien diabaikan. Kalau tidak ada sesi, barulah id anonim dipakai.
 // Klaim klien tidak pernah bisa MENGGESER identitas yang sudah punya sesi.
-export function identitasTeman(request, { idKlien = null } = {}) {
-  const waSesi = formatWa(getUserSession() || "");
+export async function identitasTeman(request, { idKlien = null } = {}) {
+  const waSesi = formatWa(await getUserSessionAsync() || "");
   if (waSesi) {
     return { userId: hashIdentitas(waSesi), wa: waSesi, bersesi: true };
   }

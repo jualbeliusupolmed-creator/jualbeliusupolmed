@@ -31,9 +31,8 @@ function moduleForPath(pathname) {
 function AccessNotice({ actor }) {
   return (
     <div className="mx-auto max-w-xl rounded-3xl border border-amber-200 bg-white p-7 text-slate-900 shadow-sm">
-      <p className="text-xs font-black uppercase tracking-[.15em] text-amber-700">Akses belum diberikan</p>
-      <h1 className="mt-2 text-xl font-black">{actor.role === "superadmin" ? "Bagian ini belum tersedia di workspace baru." : "Halaman ini tidak termasuk izin akun Anda."}</h1>
-      <p className="mt-2 text-sm leading-relaxed text-slate-600">{actor.role === "superadmin" ? "Gunakan Ringkasan, Marketplace, Open PO, atau akses WhatsApp yang tersedia di menu." : "Minta superadmin memperbarui izin workspace atau cakupan kampus Anda."}</p>
+      <h1 className="text-xl font-black text-amber-900">{actor.role === "superadmin" ? "Bagian ini belum tersedia di workspace baru." : "Akses belum diberikan"}</h1>
+      <p className="mt-2 text-sm leading-relaxed text-slate-600">{actor.role === "superadmin" ? "Gunakan Ringkasan, Marketplace, Open PO, atau akses WhatsApp yang tersedia di menu." : "Halaman ini tidak termasuk izin akun Anda. Minta superadmin memperbarui izin workspace atau cakupan kampus Anda."}</p>
       {actor.role !== "superadmin" ? <p className="mt-5 break-all text-xs font-semibold text-slate-400">{actor.email}</p> : null}
     </div>
   );

@@ -97,11 +97,31 @@ erDiagram
 
 ---
 
-## 5. Rencana Penerapan Bertahap (Roadmap)
+## 5. Status Penerapan
 
-1. **Fase 1 (Selesai)**: Struktur data organisasi nasional (`provinces`, `universities`, `university_units`, `admin_role_assignments`) dan sanitasi keamanan log DM.
-2. **Fase 2 (Berikutnya)**: Penambahan kolom kanonikal `user_id uuid references auth.users(id)` dan `home_university_id text references public.universities(id)` pada `seller_profiles` secara non-breaking.
-3. **Fase 3**: Pemutakhiran alur login Google dan verifikasi nomor WhatsApp untuk menautkan `user_id` secara deterministik ke `seller_profiles`.
-4. **Fase 4**: Penyelarasan modul verifikasi mahasiswa (`src/lib/studentVerification.js` & `/api/student/verify`) agar mencatat `verified_university_id` resmi dari katalog.
-5. **Fase 5**: Pemutakhiran UI profil pengguna (`UnifiedProfilePanel.jsx`) untuk menampilkan pemilihan kampus berbasis katalog nasional dengan pencarian cerdas.
+Pemeriksaan produksi 4 November 2026 menemukan 334 profil penjual; 9 sudah
+memiliki `user_id`, sedangkan 325 belum tertaut. Ini bukan kegagalan yang aman
+diselesaikan dengan pencocokan nama atau backfill otomatis. Setiap profil
+warisan harus ditautkan oleh pemiliknya melalui sesi akun dan verifikasi
+WhatsApp satu kali.
+
+Alur penautan tersedia pada **Dashboard → Pengaturan akun → Metode masuk**:
+
+1. Pemilik masuk ke akun web yang hendak dipakai sebagai akun kanonikal.
+2. Dari metode masuk, minta kode verifikasi ke nomor WhatsApp yang sudah
+   terdaftar pada profil penjual lama.
+3. Masukkan OTP yang diterima di WhatsApp. Server memeriksa kepemilikan nomor,
+   masa berlaku kode, batas percobaan, dan konflik akun sebelum menautkan.
+4. Untuk akun Google-only atau menggabungkan metode Google, gunakan alur
+   verifikasi WhatsApp dan OAuth Google pada panel yang sama.
+
+Profil yang masih berkonflik atau tidak lagi memiliki akses ke nomor terkait
+perlu ditinjau dukungan secara manual dengan bukti kepemilikan; jangan
+mengungkapkan data profil lain atau memindahkan listing tanpa pemeriksaan.
+
+Kolom identitas kanonikal dan alur OTP/Google sudah tersedia. Penyelesaian
+nasionalisasi identitas tetap menunggu pemilik menautkan 325 profil yang
+tersisa, rekonsiliasi afiliasi kampus dari katalog resmi, dan uji konflik akun
+serta lintas pengguna. Data afiliasi pilihan sendiri tetap bukan bukti status
+mahasiswa.
 

@@ -12,6 +12,7 @@ const mockTables = {
   ig_seller_links: [],
   ig_link_challenges: [],
   seller_profiles: [],
+  universities: [],
   system_settings: [],
 };
 
@@ -429,7 +430,14 @@ describe("Tahap 1 & 3 - Conversational Router & Pipeline Moderasi", () => {
 
   it("walks through complete Jual flow from unlinked to OTP, details, and review submission", async () => {
     const freshSender = "fresh_user_ig_" + Date.now();
-    mockTables.seller_profiles.push({ wa: "081234567888", phone_wa: null, name: "Tester DM" });
+    mockTables.universities.push({ id: "usu", code: "USU", name: "Universitas Sumatera Utara", province_id: "sumatera-utara", status: "active" });
+    mockTables.seller_profiles.push({
+      wa: "081234567888",
+      phone_wa: null,
+      name: "Tester DM",
+      home_university_id: "usu",
+      affiliation_status: "self_selected",
+    });
     await dmSession.clearDmSession(freshSender);
 
     // 1. Mulai jual
@@ -482,6 +490,11 @@ describe("Tahap 1 & 3 - Conversational Router & Pipeline Moderasi", () => {
     const stepConfirm = await handleInstagramDmEvent({ senderId: freshSender, quickReplyPayload: "ACTION_CONFIRM_PUBLISH" });
     expect(stepConfirm.ok).toBe(true);
     expect(stepConfirm.action).toBe("published_live");
+    expect(mockTables.listings.at(-1)).toMatchObject({
+      university_id: "usu",
+      seller_university_id: "usu",
+      seller_province_id: "sumatera-utara",
+    });
   });
 
   it("blocks prohibited item (e.g. vape/pod/joki) during Jual flow", async () => {

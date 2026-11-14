@@ -1,0 +1,22 @@
+{
+  "source": "https://github.com/antfu/skills",
+  "sourceCommit": "7de210b51c8d48cc405a4eac3e17cbb1396c653b",
+  "license": "MIT",
+  "installedAt": "2026-11-04",
+  "skills": [
+    "antfu",
+    "antfu-create-pr",
+    "antfu-issue-triage",
+    "antfu-query",
+    "antfu-simplify",
+    "nitro",
+    "nuxt",
+    "pinia",
+    "pnpm",
+    "unocss",
+    "vite",
+    "vitepress",
+    "vitest",
+    "vue"
+  ]
+}

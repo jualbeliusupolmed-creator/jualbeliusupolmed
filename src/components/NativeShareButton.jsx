@@ -30,11 +30,13 @@ export default function NativeShareButton({ listing }) {
 
   return (
     <button
+      type="button"
       onClick={handleShare}
-      className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-xs font-semibold text-gray-700 shadow-sm hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition-colors"
+      className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-750 transition-colors"
+      aria-label="Bagikan informasi barang ini"
     >
-      <Icon.Share className="h-4 w-4" />
-      Bagikan
+      <Icon.Share className="h-4 w-4" aria-hidden="true" />
+      <span>Bagikan</span>
     </button>
   );
 }

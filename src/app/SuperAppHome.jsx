@@ -1,23 +1,30 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo, useTransition } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Icon } from "@/components/Icons";
 import { rupiah } from "@/lib/fees";
 import { buildSlug } from "@/lib/slug";
 import { toast } from "sonner";
-import TagProdukPicker from "@/components/TagProdukPicker";
-import ProductPeekSheet from "@/components/ProductPeekSheet";
 import { useSesi } from "@/components/SesiProvider";
-import UnduhMenfessModal from "@/components/mading/UnduhMenfessModal";
 import { compressImage } from "@/lib/image";
 import ProductCard from "@/components/ProductCard";
-import CreateSheet from "@/components/CreateSheet";
-import OTPModal from "@/components/OTPModal";
 import { cn } from "@/lib/utils";
 import { itemMatchesFypScope, sortFypItems } from "@/lib/fypScope";
+import { fetchCampusesCached } from "@/lib/cachedKampus";
+
+// Lazy-load modal berat agar tidak membebani initial bundle pendaratan
+const TagProdukPicker = dynamic(() => import("@/components/TagProdukPicker"), { ssr: false });
+const ProductPeekSheet = dynamic(() => import("@/components/ProductPeekSheet"), { ssr: false });
+const UnduhMenfessModal = dynamic(() => import("@/components/mading/UnduhMenfessModal"), { ssr: false });
+const CreateSheet = dynamic(() => import("@/components/CreateSheet"), { ssr: false });
+const OTPModal = dynamic(() => import("@/components/OTPModal"), { ssr: false });
+
+const normalizeMarketplaceFypScope = (scope) =>
+  ["campus", "province", "custom"].includes(scope) ? scope : "province";
 
 // Haptic feedback for tactile feel on mobile devices
 function triggerHaptic(type = "light") {
@@ -69,20 +76,38 @@ export default function SuperAppHome({
   const [debouncedQuery, setDebouncedQuery] = useState("");
 
   const router = useRouter();
-  const { wa: userWa } = useSesi();
+  const { wa: userWa, profil } = useSesi();
+  const [, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (profil) {
+      const camp = profil.campus || profil.marketplace_campus;
+      if (camp) {
+        setSelectedCampus(camp);
+        setListingCampus(camp);
+        setOnboardingCampus(camp);
+        try { localStorage.setItem("preferred_campus", camp); } catch {}
+      }
+      const prov = profil.marketplace_province_id || profil.fyp_province_id;
+      if (prov) {
+        setFypProvince(prov);
+        setOnboardingProvince(prov);
+        try { localStorage.setItem("preferred_province", prov); } catch {}
+      }
+    }
+  }, [profil]);
 
   // Marketplace states
   const [listingCampus, setListingCampus] = useState("Semua");
   const [listingCategory, setListingCategory] = useState("Semua");
   const [listingSort, setListingSort] = useState("terbaru"); // 'terbaru' | 'termurah'
-  const [visibleListingCount, setVisibleListingCount] = useState(12);
+  const [visibleListingCount, setVisibleListingCount] = useState(30);
 
   // FYP & Regional Preferences
   const [provinces, setProvinces] = useState([]);
   const [fypScope, setFypScope] = useState("campus"); // 'campus' | 'province' | 'all' | 'custom'
   const [fypProvince, setFypProvince] = useState("sumatera-utara");
   const [fypUniversities, setFypUniversities] = useState([]);
-  const [fypDropdownOpen, setFypDropdownOpen] = useState(false);
   const [provinceCuratedListings, setProvinceCuratedListings] = useState([]);
 
   // Onboarding (Wajib isi kampus & daerah acuan jual beli)
@@ -104,7 +129,7 @@ export default function SuperAppHome({
 
     try {
       const savedScope = localStorage.getItem("fyp_scope");
-      if (savedScope) setFypScope(savedScope);
+      if (savedScope) setFypScope(normalizeMarketplaceFypScope(savedScope));
       const savedProv = localStorage.getItem("preferred_province");
       if (savedProv) {
         setFypProvince(savedProv);
@@ -130,14 +155,13 @@ export default function SuperAppHome({
         setOnboardingProvince(e.detail.province);
       }
       if (e.detail?.scope) {
-        setFypScope(e.detail.scope);
+        setFypScope(normalizeMarketplaceFypScope(e.detail.scope));
       }
       if (Array.isArray(e.detail?.universities)) {
         setFypUniversities(e.detail.universities);
       }
     };
-    fetch("/api/kampus", { cache: "no-store" })
-      .then((res) => res.ok ? res.json() : null)
+    fetchCampusesCached()
       .then((data) => {
         if (Array.isArray(data?.campuses)) {
           setCampuses(data.campuses);
@@ -207,12 +231,23 @@ export default function SuperAppHome({
     const controller = new AbortController();
     fetch(`/api/fyp/curation?provinceId=${encodeURIComponent(fypProvince)}`, { cache: "no-store", signal: controller.signal })
       .then((response) => response.ok ? response.json() : null)
-      .then((data) => setProvinceCuratedListings(Array.isArray(data?.items) ? data.items : []))
+      .then((data) => {
+        if (data?.provinceId && data.provinceId !== fypProvince) setFypProvince(data.provinceId);
+        setProvinceCuratedListings(Array.isArray(data?.items) ? data.items : []);
+      })
       .catch((error) => {
         if (error?.name !== "AbortError") setProvinceCuratedListings([]);
       });
     return () => controller.abort();
   }, [fypScope, fypProvince]);
+
+  const fypUniversitiesInProvince = useMemo(() => {
+    const allowed = new Set(campuses
+      .filter((campus) => String(campus.provinceId || campus.province_id || "").toLowerCase() === String(fypProvince || "").toLowerCase())
+      .flatMap((campus) => [campus.id, campus.shortName])
+      .map((value) => String(value || "").toLowerCase()));
+    return fypUniversities.filter((university) => allowed.has(String(university || "").toLowerCase()));
+  }, [campuses, fypProvince, fypUniversities]);
 
   const activeBatches = useMemo(() => {
     if (!Array.isArray(poBatches) || poBatches.length === 0) return [];
@@ -220,10 +255,10 @@ export default function SuperAppHome({
       scope: fypScope,
       campus: selectedCampus,
       provinceId: fypProvince,
-      universities: fypUniversities,
+      universities: fypUniversitiesInProvince,
       campuses,
     }));
-  }, [poBatches, fypScope, selectedCampus, fypProvince, fypUniversities, campuses]);
+  }, [poBatches, fypScope, selectedCampus, fypProvince, fypUniversitiesInProvince, campuses]);
 
   useEffect(() => {
     let mounted = true;
@@ -369,7 +404,8 @@ export default function SuperAppHome({
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data?.ok && data?.profil) {
-          if (!data.profil.campus || data.profil.campus === "Semua") {
+          const marketplaceCampus = data.profil.marketplace_campus || data.profil.campus;
+          if (!marketplaceCampus || marketplaceCampus === "Semua") {
             const savedCampus = localStorage.getItem("preferred_campus");
             const onboardingSeen = localStorage.getItem("onboarding_seen") === "1";
             if ((!savedCampus || savedCampus === "null" || savedCampus === "Semua") && !onboardingSeen) {
@@ -378,20 +414,22 @@ export default function SuperAppHome({
           } else {
             localStorage.setItem("onboarding_seen", "1");
             setShowOnboarding(false);
-            if (data.profil.campus) {
-              setSelectedCampus(data.profil.campus);
-              setListingCampus(data.profil.campus);
-              setOnboardingCampus(data.profil.campus);
-              try { localStorage.setItem("preferred_campus", data.profil.campus); } catch {}
+            if (marketplaceCampus) {
+              setSelectedCampus(marketplaceCampus);
+              setListingCampus(marketplaceCampus);
+              setOnboardingCampus(marketplaceCampus);
+              try { localStorage.setItem("preferred_campus", marketplaceCampus); } catch {}
             }
-            if (data.profil.fyp_province_id) {
-              setFypProvince(data.profil.fyp_province_id);
-              setOnboardingProvince(data.profil.fyp_province_id);
-              try { localStorage.setItem("preferred_province", data.profil.fyp_province_id); } catch {}
+            const accountProvince = data.profil.marketplace_province_id || data.profil.fyp_province_id;
+            if (accountProvince) {
+              setFypProvince(accountProvince);
+              setOnboardingProvince(accountProvince);
+              try { localStorage.setItem("preferred_province", accountProvince); } catch {}
             }
             if (data.profil.fyp_scope) {
-              setFypScope(data.profil.fyp_scope);
-              try { localStorage.setItem("fyp_scope", data.profil.fyp_scope); } catch {}
+              const safeScope = normalizeMarketplaceFypScope(data.profil.fyp_scope);
+              setFypScope(safeScope);
+              try { localStorage.setItem("fyp_scope", safeScope); } catch {}
             }
             if (Array.isArray(data.profil.fyp_universities)) {
               setFypUniversities(data.profil.fyp_universities);
@@ -450,13 +488,14 @@ export default function SuperAppHome({
       setSelectedCampus(onboardingCampus);
       setListingCampus(onboardingCampus);
       setFypProvince(onboardingProvince);
-      setFypScope(onboardingScope);
+      const safeScope = normalizeMarketplaceFypScope(onboardingScope);
+      setFypScope(safeScope);
       window.dispatchEvent(
         new CustomEvent("campus:change", {
           detail: {
             campus: onboardingCampus,
             province: onboardingProvince,
-            scope: onboardingScope,
+            scope: safeScope,
             universities: [],
           },
         })
@@ -470,9 +509,9 @@ export default function SuperAppHome({
     }
   };
 
-  const switchFypScope = (newScope) => {
+  const switchFypScope = (requestedScope) => {
+    const newScope = normalizeMarketplaceFypScope(requestedScope);
     setFypScope(newScope);
-    setFypDropdownOpen(false);
     try {
       localStorage.setItem("fyp_scope", newScope);
       window.dispatchEvent(
@@ -493,7 +532,7 @@ export default function SuperAppHome({
         body: JSON.stringify({ fyp_scope: newScope }),
       }).catch(() => {});
     }
-    toast.success(`Jangkauan FYP diubah ke: ${newScope === "campus" ? "Kampus Utama" : newScope === "province" ? "Satu Daerah" : newScope === "custom" ? "Kampus Pilihan" : "Seluruh Indonesia"}`);
+    toast.success(`Jangkauan FYP diubah ke: ${newScope === "campus" ? "Kampus Utama" : newScope === "province" ? "Satu Daerah" : "Kampus Pilihan"} dalam provinsi acuanmu.`);
   };
 
   // Restore Menfess Draft on mount
@@ -772,9 +811,15 @@ export default function SuperAppHome({
   // Filtered Marketplace Listings for Center Column with FYP Scoping
   const scopedListings = latestListings
     .filter((ad) => itemMatchesFypScope(ad, listingCampus !== "Semua"
-      ? { scope: "campus", campus: listingCampus }
-      : { scope: fypScope, campus: selectedCampus, provinceId: fypProvince, universities: fypUniversities, campuses }))
+      ? { scope: "campus", campus: listingCampus, campuses }
+      : { scope: fypScope, campus: selectedCampus, provinceId: fypProvince, universities: fypUniversitiesInProvince, campuses }))
     .filter((ad) => {
+      // 1. Filter Kata Kunci Pencarian
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const combined = `${ad.title || ""} ${ad.category || ""} ${ad.description || ""} ${ad.seller_name || ""}`.toLowerCase();
+        if (!combined.includes(q)) return false;
+      }
       // 2. Filter Kategori
       if (listingCategory !== "Semua") {
         const combined = `${ad.category || ""} ${ad.title || ""} ${ad.description || ""}`.toLowerCase();
@@ -783,9 +828,22 @@ export default function SuperAppHome({
       return true;
     });
   const curatedForScope = fypScope === "province" && listingCampus === "Semua"
-    ? provinceCuratedListings.filter((item) => itemMatchesFypScope(item, {
-      scope: "province", provinceId: fypProvince, campuses,
-    }) && (listingCategory === "Semua" || `${item.category || ""} ${item.title || ""}`.toLowerCase().includes(listingCategory.toLowerCase())))
+    ? provinceCuratedListings.filter((item) => {
+        const matchesScope = itemMatchesFypScope(item, {
+          scope: "province", provinceId: fypProvince, campuses,
+        });
+        if (!matchesScope) return false;
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase().trim();
+          const combined = `${item.title || ""} ${item.category || ""} ${item.description || ""} ${item.seller_name || ""}`.toLowerCase();
+          if (!combined.includes(q)) return false;
+        }
+        if (listingCategory !== "Semua") {
+          const combined = `${item.category || ""} ${item.title || ""}`.toLowerCase();
+          if (!combined.includes(listingCategory.toLowerCase())) return false;
+        }
+        return true;
+      })
     : [];
   const scopedById = new Map([...scopedListings, ...curatedForScope].map((item) => [String(item.id), item]));
   const naturallySortedListings = [...scopedById.values()].sort((a, b) => {
@@ -800,16 +858,16 @@ export default function SuperAppHome({
     fypScope === "province" && listingCampus === "Semua" ? curatedForScope.map((item) => item.id) : []);
 
   return (
-    <div className="min-h-screen bg-[#fbfbfa] dark:bg-[#0f172a] text-slate-800 dark:text-slate-100 font-sans antialiased selection:bg-emerald-100 selection:text-emerald-900 pb-20 md:pb-8">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans antialiased selection:bg-emerald-100 selection:text-emerald-900 pb-20 md:pb-8">
       {/* ── ONBOARDING OVERLAY (WAJIB PILIH KAMPUS & DAERAH ACUAN) ── */}
       {showOnboarding && (
-        <div data-mobile-overlay="onboarding" className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in">
-          <div className="bg-white dark:bg-[#1c1c1e] rounded-[28px] w-full max-w-md p-6 shadow-2xl border border-black/[0.06] dark:border-white/[0.08] animate-in fade-in zoom-in-95 duration-200">
+        <div data-mobile-overlay="onboarding" className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 p-4 animate-fade-in motion-reduce:animate-none">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md p-6 shadow-lg border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200 motion-reduce:animate-none">
             <div className="w-14 h-14 rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-400 flex items-center justify-center mx-auto mb-3 shadow-inner">
               <Icon.Landmark className="w-7 h-7" />
             </div>
             <h2 className="text-xl font-extrabold text-center text-slate-900 dark:text-white mb-1">
-              Tentukan Kampus & Wilayahmu 🎓
+              Tentukan Kampus &amp; Wilayahmu
             </h2>
             <p className="text-xs text-center text-slate-500 dark:text-slate-400 mb-5 leading-relaxed">
               <strong>Wajib ditentukan</strong> sebagai patokan utama transaksi jual-beli, COD hemat di sekitarmu, dan rekomendasi feed belanja (FYP).
@@ -867,7 +925,7 @@ export default function SuperAppHome({
                     : campuses
                   ).map((k) => (
                     <option key={k.id} value={k.shortName}>
-                      {k.shortName} — {k.name}
+                      {k.shortName}: {k.name}
                     </option>
                   ))}
                 </select>
@@ -880,15 +938,15 @@ export default function SuperAppHome({
                 </label>
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { id: "campus", label: "🎯 Kampus", desc: "Hanya kampus saya" },
-                    { id: "province", label: "📍 Daerah", desc: "Satu provinsi" },
-                    { id: "all", label: "🌐 Nasional", desc: "Semua kampus" },
+                    { id: "campus", label: "Kampus", desc: "Hanya kampus saya" },
+                    { id: "province", label: "Daerah", desc: "Satu provinsi" },
+                    { id: "all", label: "Nasional", desc: "Semua kampus" },
                   ].map((opt) => (
                     <button
                       key={opt.id}
                       type="button"
                       onClick={() => setOnboardingScope(opt.id)}
-                      className={`flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-all ${
+                      className={`flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-colors ${
                         onboardingScope === opt.id
                           ? "border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 font-bold ring-2 ring-emerald-500/20"
                           : "border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-medium"
@@ -907,9 +965,9 @@ export default function SuperAppHome({
                 type="button"
                 onClick={simpanOnboarding}
                 disabled={!onboardingCampus || savingOnboarding}
-                className="w-full bg-emerald-800 hover:bg-emerald-900 active:scale-98 text-white font-bold text-sm py-3.5 rounded-2xl transition-all shadow-md disabled:opacity-50 disabled:pointer-events-none"
+                className="w-full bg-emerald-800 hover:bg-emerald-900 active:scale-98 text-white font-bold text-sm py-3.5 rounded-2xl transition-colors shadow-md disabled:opacity-50 disabled:pointer-events-none"
               >
-                {savingOnboarding ? "Menyimpan Acuan..." : "Simpan Acuan & Mulai Belanja 🚀"}
+                {savingOnboarding ? "Menyimpan Acuan..." : "Simpan Acuan & Mulai Belanja"}
               </button>
               {typeof window !== "undefined" &&
                 Boolean(localStorage.getItem("preferred_campus")) &&
@@ -940,16 +998,16 @@ export default function SuperAppHome({
       <main className="max-w-[1440px] mx-auto w-full flex-1 px-3 py-3 sm:px-6 sm:py-5">
         {/* Dynamic multi-category notification ticker */}
         <div className="mb-2 flex flex-col items-center justify-between gap-2 sm:mb-4 sm:flex-row sm:gap-3">
-          <div className="w-full py-1.5 px-2.5 bg-gradient-to-r from-emerald-50/90 via-white to-slate-50 dark:from-slate-800/80 dark:via-slate-800/40 dark:to-slate-900/80 text-slate-800 dark:text-slate-200 rounded-xl text-[11px] flex items-center justify-between gap-1.5 border border-emerald-100 dark:border-emerald-950/40 shadow-xs transition-all duration-300 sm:rounded-2xl sm:py-2.5 sm:px-4 sm:text-xs sm:gap-2">
+          <div className="w-full py-1.5 px-2.5 bg-gradient-to-r from-emerald-50/90 via-white to-slate-50 dark:from-slate-800/80 dark:via-slate-800/40 dark:to-slate-900/80 text-slate-800 dark:text-slate-200 rounded-xl text-[11px] flex items-center justify-between gap-1.5 border border-emerald-100 dark:border-emerald-950/40 shadow-xs transition-colors duration-300 sm:rounded-2xl sm:py-2.5 sm:px-4 sm:text-xs sm:gap-2">
             <div className="flex items-center gap-1.5 flex-1 min-w-0 sm:gap-2.5">
               <span className="flex h-2 w-2 relative shrink-0">
-                <span className={cn("animate-ping absolute inline-flex h-full w-full rounded-full opacity-75", currentTicker?.pingColor || "bg-emerald-400")} />
+                <span className={cn("animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 motion-reduce:animate-none", currentTicker?.pingColor || "bg-emerald-400")} />
                 <span className={cn("relative inline-flex rounded-full h-2 w-2", currentTicker?.dotColor || "bg-emerald-600")} />
               </span>
               <span className={cn("font-bold shrink-0 text-xs tracking-tight", currentTicker?.textColor || "text-emerald-900 dark:text-emerald-300")}>
                 {currentTicker?.label}
               </span>
-              <span key={tickerIndex} className="truncate text-slate-600 dark:text-slate-300 min-w-0 font-normal animate-fade-in">
+              <span key={tickerIndex} className="truncate text-slate-600 dark:text-slate-300 min-w-0 font-normal animate-fade-in motion-reduce:animate-none">
                 {currentTicker?.text}
               </span>
             </div>
@@ -963,7 +1021,6 @@ export default function SuperAppHome({
                 className="text-emerald-800 dark:text-emerald-300 hover:text-emerald-950 font-bold hover:underline shrink-0 flex items-center gap-1 text-xs px-2.5 py-1 bg-white dark:bg-slate-800 rounded-full border border-emerald-200/70 dark:border-emerald-800/40 shadow-xs cursor-pointer"
               >
                 <span>Buka</span>
-                <span>→</span>
               </a>
             ) : (
               <Link
@@ -971,74 +1028,53 @@ export default function SuperAppHome({
                 className="text-emerald-800 dark:text-emerald-300 hover:text-emerald-950 font-bold hover:underline shrink-0 flex items-center gap-1 text-xs px-2.5 py-1 bg-white dark:bg-slate-800 rounded-full border border-emerald-200/70 dark:border-emerald-800/40 shadow-xs cursor-pointer"
               >
                 <span>Buka</span>
-                <span>→</span>
               </Link>
             )}
           </div>
         </div>
 
-        {/* Search, filters, and direct WTB access */}
-        <div className="hidden">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-            <div className="flex min-w-0 flex-1 items-center gap-2">
-            </div>
+        {/* Minimalist Search & Quick Actions Hub (Jual & WTB) */}
+        <div className="mb-4 flex items-center gap-2 sm:gap-2.5">
+          <div className="relative flex flex-1 items-center rounded-2xl border border-slate-200/90 bg-white px-3.5 py-2.5 shadow-xs transition-colors focus-within:border-emerald-700 focus-within:ring-2 focus-within:ring-emerald-600/15 dark:border-slate-800 dark:bg-slate-800/90">
+            <Icon.Search className="mr-2.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Cari barang preloved, buku kuliah, kuliner PO, kost, atau jasa di kampusmu..."
+              className="w-full bg-transparent text-xs text-slate-800 placeholder:text-slate-400 outline-none dark:text-slate-100 sm:text-sm"
+              aria-label="Cari barang dan kebutuhan kampus"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                aria-label="Hapus kata kunci pencarian"
+                className="shrink-0 px-1 text-xs font-semibold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              >
+                ✕
+              </button>
+            )}
           </div>
 
-          <div className="hidden items-center gap-2 overflow-x-auto py-1 text-xs [scrollbar-width:none]">
-            <span className="text-emerald-800 dark:text-emerald-400 font-bold text-[11px] uppercase tracking-wider shrink-0 flex items-center gap-1.5">
-              <svg className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path d="M13 10V3L4 14h7v7l9-11h-7z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-              </svg>
-              Jelajah Kampus:
-            </span>
-            <button
-              type="button"
-              onClick={() => setListingCategory("Kos")}
-              className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-emerald-50/50 dark:hover:bg-slate-700 border border-slate-200 dark:border-white/10 hover:border-emerald-300 rounded-full text-slate-700 dark:text-slate-200 hover:text-emerald-900 transition font-medium text-xs shadow-xs"
-            >
-              <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-              </svg>
-              <span>Cari Kos Sekitar Kampus</span>
-            </button>
-            <Link
-              href="/mading?tab=oprec"
-              className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-emerald-50/50 dark:hover:bg-slate-700 border border-slate-200 dark:border-white/10 hover:border-emerald-300 rounded-full text-slate-700 dark:text-slate-200 hover:text-emerald-900 transition font-medium text-xs shadow-xs"
-            >
-              <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-              </svg>
-              <span>Oprec &amp; Kepanitiaan</span>
-            </Link>
-            <Link
-              href="/mading?tab=komunitas"
-              className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-emerald-50/50 dark:hover:bg-slate-700 border border-slate-200 dark:border-white/10 hover:border-emerald-300 rounded-full text-slate-700 dark:text-slate-200 hover:text-emerald-900 transition font-medium text-xs shadow-xs"
-            >
-              <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-              </svg>
-              <span>Komunitas &amp; UKM</span>
-            </Link>
-            <button
-              type="button"
-              onClick={() => setListingCategory("Buku")}
-              className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-emerald-50/50 dark:hover:bg-slate-700 border border-slate-200 dark:border-white/10 hover:border-emerald-300 rounded-full text-slate-700 dark:text-slate-200 hover:text-emerald-900 transition font-medium text-xs shadow-xs"
-            >
-              <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-              </svg>
-              <span>Bank Soal &amp; Diktat</span>
-            </button>
-            <Link
-              href="/dicari"
-              className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-emerald-900 hover:bg-slate-900 border border-emerald-950 rounded-full text-white transition font-medium text-xs shadow-xs"
-            >
-              <svg className="w-3.5 h-3.5 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-              </svg>
-              <span>Papan Barang Dicari (WTB)</span>
-            </Link>
-          </div>
+          <Link
+            href="/jual"
+            className="inline-flex shrink-0 items-center justify-center gap-1 rounded-2xl bg-emerald-800 px-3 py-2.5 text-xs font-bold text-white shadow-xs transition-colors hover:bg-emerald-900 active:translate-y-px sm:gap-1.5 sm:px-4 sm:text-sm"
+            aria-label="Jual barang preloved atau pasang iklan gratis"
+          >
+            <Icon.Plus className="h-3.5 w-3.5 stroke-[2.5] text-emerald-300 sm:h-4 sm:w-4" aria-hidden="true" />
+            <span>Jual</span>
+          </Link>
+
+          <Link
+            href="/dicari?tulis=1"
+            className="inline-flex shrink-0 items-center justify-center gap-1 rounded-2xl border border-emerald-600/25 bg-emerald-50 px-3 py-2.5 text-xs font-bold text-emerald-800 shadow-xs transition-colors hover:bg-emerald-100 active:translate-y-px dark:border-emerald-700/50 dark:bg-emerald-950/60 dark:text-emerald-300 dark:hover:bg-emerald-900/60 sm:gap-1.5 sm:px-4 sm:text-sm"
+            aria-label="Pasang barang dicari (WTB - Want To Buy)"
+            title="Pasang barang dicari (WTB)"
+          >
+            <Icon.Plus className="h-3.5 w-3.5 stroke-[2.5] text-emerald-600 dark:text-emerald-400 sm:h-4 sm:w-4" aria-hidden="true" />
+            <span>WTB</span>
+          </Link>
         </div>
 
         {/* Reorganized 2-Column Desktop Grid */}
@@ -1086,7 +1122,7 @@ export default function SuperAppHome({
                   {activeBatches.length} aktif
                 </span>
               </span>
-              <span aria-hidden="true">Lihat →</span>
+              <span aria-hidden="true">Lihat</span>
             </Link>}
             <section className="hidden">
               <div className="flex items-center justify-between mb-4">
@@ -1110,7 +1146,7 @@ export default function SuperAppHome({
                     rel="noopener noreferrer"
                     className="text-xs font-semibold text-emerald-800 dark:text-emerald-300 hover:text-emerald-950 flex items-center gap-1 ml-2 transition-colors"
                   >
-                    Lihat Semua →
+                    Lihat Semua
                   </a>
                 </div>
               </div>
@@ -1126,27 +1162,31 @@ export default function SuperAppHome({
                   return (
                     <div
                       key={item.id || idx}
-                      className="w-60 shrink-0 border border-slate-200/80 dark:border-white/10 rounded-2xl overflow-hidden hover:shadow-md transition-all duration-200 bg-white dark:bg-slate-900 flex flex-col group"
+                      className="w-60 shrink-0 border border-slate-200/80 dark:border-white/10 rounded-2xl overflow-hidden hover:shadow-md transition-colors duration-200 bg-white dark:bg-slate-900 flex flex-col group"
                     >
                       <div className="relative h-36 w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                         {item.photo ? (
                           <img
                             alt={item.name || item.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                            className="w-full h-full object-cover transition-opacity duration-300"
                             src={item.photo}
+                            loading={idx === 0 ? "eager" : "lazy"}
+                            fetchPriority={idx === 0 ? "high" : "auto"}
+                            width={180}
+                            height={144}
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-slate-400">
-                            <Icon.Coffee className="w-8 h-8 opacity-40" />
+                            <Icon.Coffee className="w-8 h-8 opacity-40" aria-hidden="true" />
                           </div>
                         )}
-                        <span className="absolute top-2.5 left-2.5 bg-emerald-900/90 text-white text-[9px] font-bold px-2 py-0.5 rounded-full backdrop-blur-xs shadow-xs">
+                        <span className="absolute top-2.5 left-2.5 bg-emerald-900/90 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-2xs">
                           {item.badge || "Batch Aktif"}
                         </span>
-                        <span className="absolute top-2.5 right-2.5 bg-black/60 backdrop-blur-xs text-white text-[9px] font-medium px-2 py-0.5 rounded-full">
+                        <span className="absolute top-2.5 right-2.5 bg-slate-900/85 text-white text-[9px] font-medium px-2 py-0.5 rounded-full shadow-2xs">
                           {item.closing_time || "Tutup Segera"}
                         </span>
-                        <div className="absolute bottom-2 left-2 right-2 bg-black/60 backdrop-blur-xs text-white text-[9px] font-medium px-2 py-0.5 rounded-lg truncate">
+                        <div className="absolute bottom-2 left-2 right-2 bg-slate-900/85 text-white text-[9px] font-medium px-2 py-0.5 rounded-lg truncate shadow-2xs">
                           {item.pickup_point || "Kantin / Selasar Kampus"}
                         </div>
                       </div>
@@ -1166,7 +1206,7 @@ export default function SuperAppHome({
                             <span className="font-bold text-emerald-700 dark:text-emerald-400">{pct}%</span>
                           </div>
                           <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                            <div className="bg-emerald-600 h-full rounded-full transition-all duration-300" style={{ width: `${pct}%` }} />
+                            <div className="bg-emerald-600 h-full rounded-full transition-transform duration-300 motion-reduce:transition-none" style={{ width: `${pct}%` }} />
                           </div>
                           <a
                             href={item.url || "/open-po"}
@@ -1199,7 +1239,7 @@ export default function SuperAppHome({
                 </div>
               </div>
 
-              {/* Auto-scrolling Marquee Track (Seamless Loop & Pause on Hover) */}
+              {/* Auto-scrolling Marquee Track (Continuous Loop & Pause on Hover) */}
               <div className="wtb-marquee-container flex-1 overflow-hidden relative min-w-0">
                 <div className="wtb-marquee-track flex items-center gap-2.5 py-0.5">
                   {[...WTB_ITEMS, ...WTB_ITEMS].map((wtb, idx) => (
@@ -1218,7 +1258,7 @@ export default function SuperAppHome({
                         {wtb.faculty}
                       </span>
                       <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 ml-0.5 shrink-0 whitespace-nowrap">
-                        Tawarkan →
+                        Tawarkan
                       </span>
                     </Link>
                   ))}
@@ -1235,130 +1275,23 @@ export default function SuperAppHome({
 
             {/* 3. Marketplace Grid (Diletakkan di bawah PO & WTB) */}
             <section id="marketplace-section" className="space-y-4">
-              {/* FYP Feed Kurasi Bar */}
-              <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-xs dark:border-white/10 dark:bg-slate-800/80 sm:px-4 sm:py-3">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white shadow-xs">
-                    <Icon.Sparkles className="h-4 w-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-                        FYP Feed Jual Beli
-                      </span>
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500">•</span>
-                      <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 truncate">
-                        {fypScope === "campus"
-                          ? `🎯 Kampus: ${selectedCampus || "Kampus Saya"}`
-                          : fypScope === "province"
-                          ? `📍 Daerah: ${provinces.find((p) => p.id === fypProvince)?.name || "Provinsi"}`
-                          : fypScope === "custom"
-                          ? `⚙️ Kustom: ${fypUniversities.join(", ") || "Pilihan"}`
-                          : "🌐 Seluruh Indonesia"}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                      {fypScope === "campus"
-                        ? "Rekomendasi barang difokuskan di kampusmu (COD cepat & aman)"
-                        : fypScope === "province"
-                        ? provinceCuratedListings.length
-                          ? "Pilihan admin provinsi tampil lebih dulu, lalu listing wilayah lainnya"
-                          : "Barang aktif dari seluruh kampus dalam satu provinsi acuan"
-                        : fypScope === "custom"
-                        ? `Memantau ${fypUniversities.length} kampus pilihanmu`
-                        : "Menampilkan barang aktif dari berbagai kampus se-Indonesia"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1.5 shrink-0 ml-auto">
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setFypDropdownOpen(!fypDropdownOpen)}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 shadow-xs transition hover:bg-slate-100 dark:border-white/10 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
-                    >
-                      <span>
-                        {fypScope === "campus"
-                          ? "🎯 Kampus"
-                          : fypScope === "province"
-                          ? "📍 Daerah"
-                          : fypScope === "custom"
-                          ? "⚙️ Kustom"
-                          : "🌐 Nasional"}
-                      </span>
-                      <svg className="h-3.5 w-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-                      </svg>
-                    </button>
-                    {fypDropdownOpen && (
-                      <div className="absolute right-0 z-40 mt-1.5 w-56 rounded-2xl border border-slate-200/80 bg-white p-1.5 shadow-xl dark:border-white/10 dark:bg-slate-800">
-                        <button
-                          type="button"
-                          onClick={() => switchFypScope("campus")}
-                          className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700/50"
-                        >
-                          <span>🎯 Kampus Saya ({selectedCampus || "Kampus"})</span>
-                          {fypScope === "campus" && <span className="font-bold text-emerald-700">✓</span>}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => switchFypScope("province")}
-                          className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700/50"
-                        >
-                          <span>📍 Satu Daerah ({provinces.find((p) => p.id === fypProvince)?.name || "Provinsi"})</span>
-                          {fypScope === "province" && <span className="font-bold text-emerald-700">✓</span>}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => switchFypScope("all")}
-                          className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700/50"
-                        >
-                          <span>🌐 Seluruh Indonesia</span>
-                          {fypScope === "all" && <span className="font-bold text-emerald-700">✓</span>}
-                        </button>
-                        {fypUniversities.length > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => switchFypScope("custom")}
-                            className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700/50"
-                          >
-                            <span>⚙️ Kustom ({fypUniversities.length} Kampus)</span>
-                            {fypScope === "custom" && <span className="font-bold text-emerald-700">✓</span>}
-                          </button>
-                        )}
-                        <div className="my-1 border-t border-slate-100 dark:border-white/5" />
-                        <Link
-                          href="/dashboard/profil"
-                          className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[11px] font-semibold text-emerald-800 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
-                        >
-                          <span>⚙️ Atur Preferensi di Profil</span>
-                          <span>→</span>
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
               <div className="flex items-center justify-between">
                 <Link
                   href="/dicari"
                   aria-label={`WTB: ${currentWtbItem?.title || "Buka papan barang dicari"}`}
-                  className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden rounded-xl border border-emerald-100 bg-gradient-to-r from-emerald-50/90 via-white to-slate-50 px-2 py-1.5 text-[10px] text-slate-700 shadow-xs transition hover:border-emerald-300 dark:border-emerald-900/50 dark:from-slate-800 dark:via-slate-800/80 dark:to-slate-900 dark:text-slate-200 sm:gap-2 sm:rounded-2xl sm:px-3"
+                  className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden rounded-xl border border-emerald-200/80 bg-emerald-50/70 px-2 py-1.5 text-[10px] text-slate-800 shadow-2xs transition-colors hover:border-emerald-300 dark:border-emerald-800/60 dark:bg-slate-800 dark:text-slate-200 sm:gap-2 sm:rounded-2xl sm:px-3"
                 >
                   <span className="relative flex h-2 w-2 shrink-0">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-600" />
                   </span>
                   <span className="shrink-0 font-bold text-emerald-900 dark:text-emerald-300">WTB:</span>
-                  <span key={wtbIndex} className="min-w-0 truncate font-medium animate-fade-in">
+                  <span key={wtbIndex} className="min-w-0 truncate font-medium animate-fade-in motion-reduce:animate-none">
                     {currentWtbItem?.title}
                   </span>
                   <span className="hidden shrink-0 text-slate-500 dark:text-slate-400 sm:inline">
-                    · {currentWtbItem?.price}
+                    ({currentWtbItem?.price})
                   </span>
-                  <span aria-hidden="true" className="shrink-0 font-bold text-emerald-800 dark:text-emerald-300">→</span>
                 </Link>
                 <div className="flex shrink-0 items-center gap-1">
                   <div className="relative">
@@ -1374,13 +1307,13 @@ export default function SuperAppHome({
                       </svg>
                     </button>
                     {categoryDropdownOpen && (
-                      <div className="absolute right-0 z-30 mt-1 w-44 rounded-2xl border border-slate-200/80 bg-white py-1.5 shadow-xl dark:border-white/10 dark:bg-slate-800">
+                      <div className="absolute right-0 z-30 mt-1 w-44 rounded-2xl border border-slate-200/80 bg-white py-1.5 shadow-lg dark:border-white/10 dark:bg-slate-800">
                         {["Semua", "Elektronik", "Buku", "Fashion", "Kos", "Jasa", "Makanan"].map((cat) => (
                           <button
                             key={cat}
                             type="button"
                             onClick={() => {
-                              setListingCategory(cat);
+                              startTransition(() => setListingCategory(cat));
                               setCategoryDropdownOpen(false);
                             }}
                             className="flex w-full items-center justify-between px-3.5 py-2 text-left text-xs font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700/50"
@@ -1394,7 +1327,7 @@ export default function SuperAppHome({
                   </div>
                   <button
                     type="button"
-                    onClick={() => setListingSort("termurah")}
+                    onClick={() => startTransition(() => setListingSort("termurah"))}
                     className={cn(
                       "rounded-full px-2 py-1 text-[11px] transition shadow-xs",
                       listingSort === "termurah"
@@ -1406,7 +1339,7 @@ export default function SuperAppHome({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setListingSort("terbaru")}
+                    onClick={() => startTransition(() => setListingSort("terbaru"))}
                     className={cn(
                       "rounded-full px-2 py-1 text-[11px] transition shadow-xs",
                       listingSort === "terbaru"
@@ -1422,17 +1355,24 @@ export default function SuperAppHome({
               {filteredListings.length === 0 ? (
                 <div className="bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-white/10 rounded-2xl p-8 text-center space-y-2">
                   <Icon.Package className="w-10 h-10 mx-auto text-slate-400" />
-                  <p className="text-sm font-bold text-slate-800 dark:text-white">Belum ada barang di filter ini</p>
-                  <p className="text-xs text-slate-500">Coba ganti kategori atau kampus, atau reset filter.</p>
+                  <p className="text-sm font-bold text-slate-800 dark:text-white">
+                    {searchQuery ? `Tidak ada barang untuk "${searchQuery}"` : "Belum ada barang di filter ini"}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {searchQuery ? "Coba gunakan kata kunci yang lebih umum atau reset pencarian." : "Coba ganti kategori atau kampus, atau reset filter."}
+                  </p>
                   <button
                     type="button"
                     onClick={() => {
-                      setListingCategory("Semua");
-                      setListingCampus("Semua");
+                      setSearchQuery("");
+                      startTransition(() => {
+                        setListingCategory("Semua");
+                        setListingCampus("Semua");
+                      });
                     }}
-                    className="mt-2 px-4 py-1.5 rounded-full bg-emerald-800 text-white text-xs font-bold"
+                    className="mt-2 px-4 py-1.5 rounded-full bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold active:translate-y-px transition-colors whitespace-nowrap focus-visible:outline-2 focus-visible:outline-emerald-600"
                   >
-                    Reset Filter
+                    Reset Filter &amp; Pencarian
                   </button>
                 </div>
               ) : (
@@ -1443,17 +1383,28 @@ export default function SuperAppHome({
                 </div>
               )}
 
-              {filteredListings.length > visibleListingCount && (
-                <div className="pt-2 text-center">
+              {filteredListings.length > visibleListingCount ? (
+                <div className="pt-3 text-center">
                   <button
                     type="button"
-                    onClick={() => setVisibleListingCount((prev) => prev + 12)}
-                    className="w-full py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-800 dark:text-slate-200 text-[12px] font-semibold flex items-center justify-center gap-1.5 border border-slate-200/80 dark:border-white/10 shadow-xs transition active:scale-[0.99]"
+                    onClick={() => setVisibleListingCount((prev) => prev + 30)}
+                    className="w-full py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 border border-slate-200/80 dark:border-white/10 shadow-xs transition-colors active:translate-y-px"
                   >
-                    <Icon.RefreshCcw className="w-3.5 h-3.5" />
-                    Muat Lebih Banyak Barang
+                    <Icon.ChevronDown className="w-4 h-4" />
+                    <span>Lihat Lainnya</span>
                   </button>
                 </div>
+              ) : (
+                filteredListings.length > 0 && (
+                  <div className="pt-4 text-center">
+                    <Link
+                      href="/jual-beli"
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:underline"
+                    >
+                      <span>Buka Seluruh Katalog Marketplace</span>
+                    </Link>
+                  </div>
+                )
               )}
             </section>
           </div>
@@ -1463,7 +1414,7 @@ export default function SuperAppHome({
             <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-white/10">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-2xl bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-100 dark:border-emerald-800 shadow-xs">
-                  <svg className="w-4 h-4 fill-emerald-600" viewBox="0 0 24 24">
+                  <svg aria-hidden="true" className="w-4 h-4 fill-emerald-600" viewBox="0 0 24 24">
                     <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
                   </svg>
                 </div>
@@ -1492,21 +1443,21 @@ export default function SuperAppHome({
               <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-700/60 p-0.5 rounded-full text-[11px] font-semibold">
                 <button
                   type="button"
-                  onClick={() => setActiveTab("all")}
+                  onClick={() => startTransition(() => setActiveTab("all"))}
                   className={`px-3 py-0.5 rounded-full transition ${activeTab === "all" ? "bg-white dark:bg-slate-800 text-emerald-950 dark:text-white font-bold shadow-xs" : "text-slate-600 dark:text-slate-300 hover:text-slate-900"}`}
                 >
                   Semua
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveTab("menfess")}
+                  onClick={() => startTransition(() => setActiveTab("menfess"))}
                   className={`px-2.5 py-0.5 rounded-full transition ${activeTab === "menfess" ? "bg-white dark:bg-slate-800 text-emerald-950 dark:text-white font-bold shadow-xs" : "text-slate-600 dark:text-slate-300 hover:text-slate-900"}`}
                 >
                   Menfess
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveTab("info")}
+                  onClick={() => startTransition(() => setActiveTab("info"))}
                   className={`px-2.5 py-0.5 rounded-full transition ${activeTab === "info" ? "bg-white dark:bg-slate-800 text-emerald-950 dark:text-white font-bold shadow-xs" : "text-slate-600 dark:text-slate-300 hover:text-slate-900"}`}
                 >
                   Info
@@ -1558,7 +1509,7 @@ export default function SuperAppHome({
                         onClick={() => handleLike(post.id)}
                         className="flex items-center gap-1 hover:text-rose-500 cursor-pointer transition active:scale-95"
                       >
-                        <svg className="w-3.5 h-3.5 fill-rose-500" viewBox="0 0 24 24">
+                        <svg aria-hidden="true" className="w-3.5 h-3.5 fill-rose-500" viewBox="0 0 24 24">
                           <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
                         </svg>
                         <span>{post.likes_count || 0}</span>
@@ -1591,15 +1542,15 @@ export default function SuperAppHome({
                 type="button"
                 onClick={loadMorePosts}
                 disabled={isLoadingMore}
-                className="w-full py-2 bg-slate-50 dark:bg-slate-700/60 hover:bg-emerald-50 dark:hover:bg-slate-700 text-emerald-900 dark:text-emerald-300 font-semibold rounded-2xl text-xs transition border border-slate-200/80 dark:border-white/10 flex items-center justify-center gap-1.5 shadow-xs"
+                className="w-full py-2 bg-slate-50 dark:bg-slate-700/60 hover:bg-emerald-50 dark:hover:bg-slate-700 text-emerald-900 dark:text-emerald-300 font-semibold rounded-2xl text-xs transition-colors border border-slate-200/80 dark:border-white/10 flex items-center justify-center gap-1.5 shadow-xs active:translate-y-px motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50 whitespace-nowrap"
               >
                 {isLoadingMore ? (
                   <>
-                    <Icon.RefreshCcw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Memuat obrolan...</span>
+                    <Icon.RefreshCcw className="w-3.5 h-3.5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                    <span>Memuat obrolan…</span>
                   </>
                 ) : (
-                  <span>Muat obrolan lainnya...</span>
+                  <span>Muat obrolan lainnya</span>
                 )}
               </button>
             </div>
@@ -1626,19 +1577,21 @@ export default function SuperAppHome({
 
       {/* ── 6. WRITE POST MODAL ── */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-[#1c1c1e] rounded-t-[32px] sm:rounded-[24px] w-full max-w-md p-5 sm:p-6 pb-8 sm:pb-6 shadow-2xl border-t sm:border border-black/[0.06] dark:border-white/[0.08] relative max-h-[95vh] overflow-y-auto animate-in slide-in-from-bottom-8 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 animate-in fade-in duration-200 motion-reduce:animate-none">
+          <div className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-2xl w-full max-w-md p-5 sm:p-6 pb-8 sm:pb-6 shadow-lg border-t sm:border border-slate-200 dark:border-slate-800 relative max-h-[95vh] overflow-y-auto animate-in slide-in-from-bottom-8 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300 motion-reduce:animate-none">
             {/* Mobile Drag Handle */}
             <div className="w-10 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-5 sm:hidden" />
 
             <button
+              type="button"
               onClick={() => setShowModal(false)}
-              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full font-bold bg-slate-100 dark:bg-slate-800 sm:bg-transparent"
+              aria-label="Tutup modal"
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full font-bold bg-slate-100 dark:bg-slate-800 sm:bg-transparent active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600"
             >
-              <Icon.X className="h-4 w-4" />
+              <Icon.X className="h-4 w-4" aria-hidden="true" />
             </button>
 
-            <h2 className="text-lg font-bold text-[#1d1d1f] dark:text-white tracking-tight mb-4">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight mb-4">
               Kirim Menfess &amp; Info Kampus
             </h2>
 
@@ -1670,7 +1623,7 @@ export default function SuperAppHome({
                       <button
                         type="button"
                         onClick={() => updateFormData({ type: "menfess" })}
-                        className={`py-2 rounded-xl text-xs font-bold transition-all ${
+                        className={`py-2 rounded-xl text-xs font-bold transition-colors ${
                           formData.type === "menfess"
                             ? "bg-white dark:bg-slate-700 text-amber-600 shadow-xs"
                             : "text-slate-500"
@@ -1681,7 +1634,7 @@ export default function SuperAppHome({
                       <button
                         type="button"
                         onClick={() => updateFormData({ type: "info" })}
-                        className={`py-2 rounded-xl text-xs font-bold transition-all ${
+                        className={`py-2 rounded-xl text-xs font-bold transition-colors ${
                           formData.type === "info"
                             ? "bg-white dark:bg-slate-700 text-fuchsia-600 shadow-xs"
                             : "text-slate-500"
@@ -1790,7 +1743,7 @@ export default function SuperAppHome({
                     <button
                       type="submit"
                       disabled={submitting || compressingImage || formLocked}
-                      className="w-full bg-emerald-800 hover:bg-emerald-900 text-white disabled:opacity-50 py-3 rounded-full text-[13px] font-bold transition-all shadow-md active:scale-98"
+                      className="w-full bg-emerald-800 hover:bg-emerald-900 text-white disabled:opacity-50 py-3 rounded-full text-[13px] font-bold transition-colors shadow-md active:scale-98"
                     >
                       {submitting ? "Mengirimkan…" : compressingImage ? "Menyiapkan foto…" : formLocked ? "Login dulu untuk kirim" : "Terbitkan Sekarang"}
                     </button>

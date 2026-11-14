@@ -64,16 +64,20 @@ export default function QRButton({ listing }) {
 
   return (
     <>
-      <button onClick={openModal} className="btn-outline">
+      <button
+        type="button"
+        onClick={openModal}
+        className="btn-outline transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
+      >
         <span className="inline-flex items-center gap-2">
-          <Icon.QrCode className="h-4 w-4" />
+          <Icon.QrCode className="h-4 w-4" aria-hidden="true" />
           QR Poster
         </span>
       </button>
 
       {open && mounted && createPortal(
         <div
-          className="fixed inset-0 z-[100] grid place-items-center bg-black/60 p-4"
+          className="fixed inset-0 z-[100] grid place-items-center bg-slate-950/70 p-4"
           onClick={() => setOpen(false)}
           role="dialog"
           aria-modal="true"
@@ -92,8 +96,8 @@ export default function QRButton({ listing }) {
                 Kampus Kita
               </p>
               {listing.listing_code && (
-                <p className="mt-1 text-xs font-semibold uppercase tracking-[0.24em] text-gray-500">
-                  Kode {listing.listing_code}
+                <p className="mt-0.5 text-xs font-medium text-slate-500">
+                  Kode: {listing.listing_code}
                 </p>
               )}
               <p className="mt-3 line-clamp-2 text-base font-bold text-gray-900">
@@ -114,33 +118,38 @@ export default function QRButton({ listing }) {
               </div>
               <p className="mt-2 text-xs font-medium text-gray-500">
                 <span className="inline-flex items-center gap-1">
-                  <Icon.Smartphone className="h-3.5 w-3.5" />
-                  Scan untuk lihat & beli
+                  <Icon.Smartphone className="h-3.5 w-3.5" aria-hidden="true" />
+                  Scan untuk lihat &amp; beli
                 </span>
               </p>
             </div>
 
             <div className="mt-4 flex gap-2">
               <button
+                type="button"
                 onClick={downloadPoster}
                 disabled={busy || !qr}
-                className="btn-primary flex-1"
+                className="btn-primary flex-1 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
               >
                 <span className="inline-flex items-center justify-center gap-2">
                   {busy ? (
                     <>
-                      <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                      <span className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none rounded-full border-2 border-white/30 border-t-white" aria-hidden="true" />
                       Membuat…
                     </>
                   ) : (
                     <>
-                      <Icon.Download className="h-4 w-4" />
+                      <Icon.Download className="h-4 w-4" aria-hidden="true" />
                       Download Poster
                     </>
                   )}
                 </span>
               </button>
-              <button onClick={() => setOpen(false)} className="btn-outline">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="btn-outline transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
+              >
                 Tutup
               </button>
             </div>

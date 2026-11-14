@@ -1,0 +1,13 @@
+{
+  "buys": true,
+  "purchases_first_month": 2,
+  "reason_code": "convenience",
+  "reason": "Katalog web terstruktur jauh lebih gampang dicari daripada nyekrol ribuan chat di grup WA angkatan yang tenggelam.",
+  "objection": "Takut iklannya lama di-approve admin",
+  "would_change_my_mind": "",
+  "price_too_cheap": 2000,
+  "price_cheap": 4000,
+  "price_expensive": 7000,
+  "price_too_expensive": 12000,
+  "id": "P002"
+}

@@ -18,7 +18,7 @@ export async function GET(request) {
     // Identitas dari sesi bila ada; `?userId=` hanya untuk pemakai anonim.
     // Header `x-seller-wa` dan `?wa=` sengaja TIDAK lagi dipercaya — lihat
     // penjelasannya di lib/identitasTeman.js.
-    const { userId, wa: sessionWa } = identitasTeman(request, { idKlien: searchParams.get("userId") });
+    const { userId, wa: sessionWa } = await identitasTeman(request, { idKlien: searchParams.get("userId") });
 
     if (!userId) {
       return NextResponse.json({ error: "Identitas pengguna diperlukan" }, { status: 400 });
@@ -131,7 +131,7 @@ export async function POST(request) {
 
     // `whatsapp` dari body TIDAK boleh jadi identitas — dulu bisa, dan itu
     // berarti mengirim nomor orang lain menimpa profil orang itu.
-    const { userId, wa: sessionWa } = identitasTeman(request, { idKlien: customUserId });
+    const { userId, wa: sessionWa } = await identitasTeman(request, { idKlien: customUserId });
 
     if (!userId) {
       return NextResponse.json({ error: "Identitas pengguna diperlukan" }, { status: 400 });
@@ -250,7 +250,7 @@ export async function PATCH(request) {
     const body = await request.json();
     const { userId: customUserId, is_active } = body;
 
-    const { userId } = identitasTeman(request, { idKlien: customUserId });
+    const { userId } = await identitasTeman(request, { idKlien: customUserId });
 
     if (!userId) {
       return NextResponse.json({ error: "Identitas pengguna diperlukan" }, { status: 400 });

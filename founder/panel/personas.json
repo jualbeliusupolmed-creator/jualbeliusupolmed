@@ -1,0 +1,222 @@
+[
+ {
+  "id": "P001",
+  "name": "Gabriel",
+  "age": 23,
+  "segment": "Mahasiswa Kos Hemat",
+  "income": 1201000,
+  "behaviour": "Seller Lapak Musiman",
+  "behaviour_how": "Mau jual barang semester lalu atau buka Open PO makanan/snack buat nambah uang jajan.",
+  "objection": "Rp 5.000 buat boost iklan kemahalan kalau barangnya cuma Rp 20.000",
+  "habit": "Selalu cek WhatsApp dan Instagram Story tiap 15 menit"
+ },
+ {
+  "id": "P002",
+  "name": "Harper",
+  "age": 22,
+  "segment": "Mahasiswa Kos Hemat",
+  "income": 1357000,
+  "behaviour": "Pemburu Barang Bekas Murah",
+  "behaviour_how": "Cari buku kuliah bekas, dispenser, kipas angin, atau meja lipat kos murah.",
+  "objection": "Udah ada grup WA angkatan, ngapain bayar platform?",
+  "habit": "Selalu cek WhatsApp dan Instagram Story tiap 15 menit"
+ },
+ {
+  "id": "P003",
+  "name": "Adrian",
+  "age": 18,
+  "segment": "Mahasiswa Wirausaha / Seller",
+  "income": 1834000,
+  "behaviour": "Anti-Ribet COD Kampus",
+  "behaviour_how": "Hanya mau transaksi yang bisa ketemuan langsung di kampus tanpa bayar ongkir.",
+  "objection": "Takut nomor WhatsApp tersebar ke orang aneh",
+  "habit": "Selalu cek WhatsApp dan Instagram Story tiap 15 menit"
+ },
+ {
+  "id": "P004",
+  "name": "Dana",
+  "age": 22,
+  "segment": "Mahasiswa Kos Hemat",
+  "income": 1078000,
+  "behaviour": "Pencari Jastip / Open PO",
+  "behaviour_how": "Suka jajan camilan viral atau merch kampus pas ada acara wisuda/festival.",
+  "objection": "Takut di-ghosting pembeli pas udah janjian di kampus",
+  "habit": "Selalu cek WhatsApp dan Instagram Story tiap 15 menit"
+ },
+ {
+  "id": "P005",
+  "name": "Jasper",
+  "age": 18,
+  "segment": "Mahasiswa Wirausaha / Seller",
+  "income": 1609000,
+  "behaviour": "Seller Lapak Musiman",
+  "behaviour_how": "Mau jual barang semester lalu atau buka Open PO makanan/snack buat nambah uang jajan.",
+  "objection": "Takut nomor WhatsApp tersebar ke orang aneh",
+  "habit": "Selalu cek WhatsApp dan Instagram Story tiap 15 menit"
+ },
+ {
+  "id": "P006",
+  "name": "Leila",
+  "age": 22,
+  "segment": "Mahasiswa Wirausaha / Seller",
+  "income": 2988000,
+  "behaviour": "Anti-Ribet COD Kampus",
+  "behaviour_how": "Hanya mau transaksi yang bisa ketemuan langsung di kampus tanpa bayar ongkir.",
+  "objection": "Takut di-ghosting pembeli pas udah janjian di kampus",
+  "habit": "Pernah beli barang bekas dari kating pas masuk semester baru"
+ },
+ {
+  "id": "P007",
+  "name": "Fatima",
+  "age": 18,
+  "segment": "Mahasiswa Kos Hemat",
+  "income": 967000,
+  "behaviour": "Korban Ghosting COD",
+  "behaviour_how": "Pernah ditipu atau di-ghosting pembeli di FB/WA dan sangat waspada soal keamanan.",
+  "objection": "Takut nomor WhatsApp tersebar ke orang aneh",
+  "habit": "Jalan kaki atau naik motor di sekitar Pintu 1 - Pintu 3 USU"
+ },
+ {
+  "id": "P008",
+  "name": "Julian",
+  "age": 21,
+  "segment": "Mahasiswa Kos Hemat",
+  "income": 1304000,
+  "behaviour": "Anti-Ribet COD Kampus",
+  "behaviour_how": "Hanya mau transaksi yang bisa ketemuan langsung di kampus tanpa bayar ongkir.",
+  "objection": "Takut nomor WhatsApp tersebar ke orang aneh",
+  "habit": "Pernah beli barang bekas dari kating pas masuk semester baru"
+ },
+ {
+  "id": "P009",
+  "name": "Ivy",
+  "age": 24,
+  "segment": "Mahasiswa Wirausaha / Seller",
+  "income": 2828000,
+  "behaviour": "Seller Lapak Musiman",
+  "behaviour_how": "Mau jual barang semester lalu atau buka Open PO makanan/snack buat nambah uang jajan.",
+  "objection": "Takut di-ghosting pembeli pas udah janjian di kampus",
+  "habit": "Pernah beli barang bekas dari kating pas masuk semester baru"
+ },
+ {
+  "id": "P010",
+  "name": "Diego",
+  "age": 19,
+  "segment": "Mahasiswa Wirausaha / Seller",
+  "income": 2672000,
+  "behaviour": "Pemburu Barang Bekas Murah",
+  "behaviour_how": "Cari buku kuliah bekas, dispenser, kipas angin, atau meja lipat kos murah.",
+  "objection": "Gimana kalau penjualnya penipu atau bukan anak kampus?",
+  "habit": "Nongkrong di kantin FISIP atau Gelanggang USU"
+ },
+ {
+  "id": "P011",
+  "name": "Rosa",
+  "age": 24,
+  "segment": "Mahasiswa Kos Hemat",
+  "income": 1442000,
+  "behaviour": "Pemburu Barang Bekas Murah",
+  "behaviour_how": "Cari buku kuliah bekas, dispenser, kipas angin, atau meja lipat kos murah.",
+  "objection": "Males kalau harus download aplikasi baru lagi",
+  "habit": "Nongkrong di kantin FISIP atau Gelanggang USU"
+ },
+ {
+  "id": "P012",
+  "name": "Sana",
+  "age": 18,
+  "segment": "Mahasiswa Kos Hemat",
+  "income": 1045000,
+  "behaviour": "Anti-Ribet COD Kampus",
+  "behaviour_how": "Hanya mau transaksi yang bisa ketemuan langsung di kampus tanpa bayar ongkir.",
+  "objection": "Gimana kalau penjualnya penipu atau bukan anak kampus?",
+  "habit": "Nongkrong di kantin FISIP atau Gelanggang USU"
+ },
+ {
+  "id": "P013",
+  "name": "Poppy",
+  "age": 20,
+  "segment": "Mahasiswa Wirausaha / Seller",
+  "income": 2681000,
+  "behaviour": "Korban Ghosting COD",
+  "behaviour_how": "Pernah ditipu atau di-ghosting pembeli di FB/WA dan sangat waspada soal keamanan.",
+  "objection": "Gimana kalau penjualnya penipu atau bukan anak kampus?",
+  "habit": "Nongkrong di kantin FISIP atau Gelanggang USU"
+ },
+ {
+  "id": "P014",
+  "name": "Emma",
+  "age": 19,
+  "segment": "Mahasiswa Kos Hemat",
+  "income": 1405000,
+  "behaviour": "Pemburu Barang Bekas Murah",
+  "behaviour_how": "Cari buku kuliah bekas, dispenser, kipas angin, atau meja lipat kos murah.",
+  "objection": "Udah ada grup WA angkatan, ngapain bayar platform?",
+  "habit": "Selalu cek WhatsApp dan Instagram Story tiap 15 menit"
+ },
+ {
+  "id": "P015",
+  "name": "Grace",
+  "age": 18,
+  "segment": "Anak Sultan Kampus",
+  "income": 4625000,
+  "behaviour": "Korban Ghosting COD",
+  "behaviour_how": "Pernah ditipu atau di-ghosting pembeli di FB/WA dan sangat waspada soal keamanan.",
+  "objection": "Gimana kalau penjualnya penipu atau bukan anak kampus?",
+  "habit": "Pernah beli barang bekas dari kating pas masuk semester baru"
+ },
+ {
+  "id": "P016",
+  "name": "Min",
+  "age": 23,
+  "segment": "Mahasiswa Kos Hemat",
+  "income": 1178000,
+  "behaviour": "Pencari Jastip / Open PO",
+  "behaviour_how": "Suka jajan camilan viral atau merch kampus pas ada acara wisuda/festival.",
+  "objection": "Udah ada grup WA angkatan, ngapain bayar platform?",
+  "habit": "Selalu cek WhatsApp dan Instagram Story tiap 15 menit"
+ },
+ {
+  "id": "P017",
+  "name": "Hugo",
+  "age": 24,
+  "segment": "Mahasiswa Kos Hemat",
+  "income": 1019000,
+  "behaviour": "Pemburu Barang Bekas Murah",
+  "behaviour_how": "Cari buku kuliah bekas, dispenser, kipas angin, atau meja lipat kos murah.",
+  "objection": "Udah ada grup WA angkatan, ngapain bayar platform?",
+  "habit": "Pernah beli barang bekas dari kating pas masuk semester baru"
+ },
+ {
+  "id": "P018",
+  "name": "Theo",
+  "age": 23,
+  "segment": "Anak Sultan Kampus",
+  "income": 3077000,
+  "behaviour": "Pemburu Barang Bekas Murah",
+  "behaviour_how": "Cari buku kuliah bekas, dispenser, kipas angin, atau meja lipat kos murah.",
+  "objection": "Takut nomor WhatsApp tersebar ke orang aneh",
+  "habit": "Pernah beli barang bekas dari kating pas masuk semester baru"
+ },
+ {
+  "id": "P019",
+  "name": "Mira",
+  "age": 18,
+  "segment": "Anak Sultan Kampus",
+  "income": 3832000,
+  "behaviour": "Seller Lapak Musiman",
+  "behaviour_how": "Mau jual barang semester lalu atau buka Open PO makanan/snack buat nambah uang jajan.",
+  "objection": "Males kalau harus download aplikasi baru lagi",
+  "habit": "Jalan kaki atau naik motor di sekitar Pintu 1 - Pintu 3 USU"
+ },
+ {
+  "id": "P020",
+  "name": "Isla",
+  "age": 21,
+  "segment": "Anak Sultan Kampus",
+  "income": 3099000,
+  "behaviour": "Seller Lapak Musiman",
+  "behaviour_how": "Mau jual barang semester lalu atau buka Open PO makanan/snack buat nambah uang jajan.",
+  "objection": "Males kalau harus download aplikasi baru lagi",
+  "habit": "Nongkrong di kantin FISIP atau Gelanggang USU"
+ }
+]

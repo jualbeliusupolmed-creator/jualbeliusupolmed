@@ -1,0 +1,81 @@
+{
+ "n": 20,
+ "seed": 448495,
+ "customer": {
+  "business": "Kampus Kita (Jual Beli USU Polmed)",
+  "target": "Mahasiswa aktif dan perantau kos di lingkungan USU dan Polmed Medan",
+  "where": "Medan, sekitar Jl. Dr. Mansyur, Padang Bulan, Pintu 1-4 USU",
+  "age": [
+   18,
+   24
+  ],
+  "segments": [
+   {
+    "name": "Mahasiswa Kos Hemat",
+    "share": 0.5,
+    "income": [
+     800000,
+     1500000
+    ]
+   },
+   {
+    "name": "Mahasiswa Wirausaha / Seller",
+    "share": 0.3,
+    "income": [
+     1500000,
+     3000000
+    ]
+   },
+   {
+    "name": "Anak Sultan Kampus",
+    "share": 0.2,
+    "income": [
+     3000000,
+     5000000
+    ]
+   }
+  ],
+  "behaviours": [
+   {
+    "name": "Pemburu Barang Bekas Murah",
+    "share": 0.3,
+    "how": "Cari buku kuliah bekas, dispenser, kipas angin, atau meja lipat kos murah."
+   },
+   {
+    "name": "Seller Lapak Musiman",
+    "share": 0.25,
+    "how": "Mau jual barang semester lalu atau buka Open PO makanan/snack buat nambah uang jajan."
+   },
+   {
+    "name": "Anti-Ribet COD Kampus",
+    "share": 0.2,
+    "how": "Hanya mau transaksi yang bisa ketemuan langsung di kampus tanpa bayar ongkir."
+   },
+   {
+    "name": "Korban Ghosting COD",
+    "share": 0.15,
+    "how": "Pernah ditipu atau di-ghosting pembeli di FB/WA dan sangat waspada soal keamanan."
+   },
+   {
+    "name": "Pencari Jastip / Open PO",
+    "share": 0.1,
+    "how": "Suka jajan camilan viral atau merch kampus pas ada acara wisuda/festival."
+   }
+  ],
+  "objections": [
+   "Takut di-ghosting pembeli pas udah janjian di kampus",
+   "Udah ada grup WA angkatan, ngapain bayar platform?",
+   "Rp 5.000 buat boost iklan kemahalan kalau barangnya cuma Rp 20.000",
+   "Males kalau harus download aplikasi baru lagi",
+   "Gimana kalau penjualnya penipu atau bukan anak kampus?",
+   "Takut nomor WhatsApp tersebar ke orang aneh"
+  ],
+  "habits": [
+   "Nongkrong di kantin FISIP atau Gelanggang USU",
+   "Selalu cek WhatsApp dan Instagram Story tiap 15 menit",
+   "Pernah beli barang bekas dari kating pas masuk semester baru",
+   "Jalan kaki atau naik motor di sekitar Pintu 1 - Pintu 3 USU"
+  ]
+ },
+ "pitch": "# Kampus Kita (Jual Beli USU Polmed)\n\nButuh jual barang kos atau buku kuliah bekas hari ini juga tanpa ribet?\nAtau lagi cari perlengkapan kuliah murah meriah yang bisa COD langsung di kampus tanpa bayar ongkir sepeserpun?\n\n**Kampus Kita** adalah wadah jual beli resmi khusus mahasiswa USU & Polmed:\n- **Tanpa Aplikasi:** Cukup kirim foto dan deskripsi lewat WhatsApp Bot atau DM Instagram kami, iklanmu langsung tayang di katalog web terstruktur.\n- **COD Aman Sekampus:** Ketemuan langsung di spot aman (Perpus USU, Biro Rektor, Kantin Polmed).\n- **Gratis Pasang Iklan:** Iklan reguler 100% gratis selamanya.\n- **Fitur Lapak Prioritas:** Cuma Rp 5.000, iklanmu kami broadcast langsung ke seluruh grup info WhatsApp kampus terverifikasi dan dipin di halaman utama web."
+}

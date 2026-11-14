@@ -26,23 +26,23 @@ const TABS = [
 ];
 
 const TAB_LABELS = {
-  status:      "⚡ Status",
-  statistik:   "📊 Statistik",
-  sapaan:      "💬 Sapaan & Nomor",
-  aksi:        "⚙️ Aksi Cepat",
-  antrean:     "⏳ Antrean",
-  kapabilitas: "🧩 Kemampuan",
-  profil:      "👤 Profil Bot",
-  story:       "📸 Status WA",
-  chat:        "✉️ Percakapan",
-  grup:        "👥 Grup",
-  saluran:     "📣 Saluran",
-  kirim:       "📤 Kirim Pesan",
-  broadcast:   "📢 Broadcast",
-  blocklist:   "🚫 Blocklist",
-  lid:         "📇 LID Map",
-  konteks:     "🔄 Sesi Aktif",
-  log:         "📜 Log Sistem",
+  status:      "Status",
+  statistik:   "Statistik",
+  sapaan:      "Sapaan & Nomor",
+  aksi:        "Aksi Cepat",
+  antrean:     "Antrean",
+  kapabilitas: "Kemampuan",
+  profil:      "Profil Bot",
+  story:       "Status WA",
+  chat:        "Percakapan",
+  grup:        "Grup",
+  saluran:     "Saluran",
+  kirim:       "Kirim Pesan",
+  broadcast:   "Broadcast",
+  blocklist:   "Blocklist",
+  lid:         "LID Map",
+  konteks:     "Sesi Aktif",
+  log:         "Log Sistem",
 };
 
 export default function BaileysDashboard() {
@@ -50,9 +50,9 @@ export default function BaileysDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Tab Navigasi Bot Responsif & Modern */}
-      <div className="border-b border-slate-200/80 pb-3 dark:border-white/10">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
+      {/* Tab Navigasi Bot Responsif */}
+      <div className="border-b border-slate-200/80 pb-3 dark:border-slate-800">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {TABS.map((t) => {
             const isActive = tab === t;
             return (
@@ -60,9 +60,9 @@ export default function BaileysDashboard() {
                 key={t}
                 type="button"
                 onClick={() => setTab(t)}
-                className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-bold transition-all ${
+                className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50 ${
                   isActive
-                    ? "bg-emerald-800 text-white shadow-md shadow-emerald-950/15"
+                    ? "bg-emerald-800 text-white shadow-xs"
                     : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                 }`}
               >

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSellerSession } from "@/lib/auth";
+import { getSellerSessionAsync } from "@/lib/auth";
 import { formatWa } from "@/lib/constants";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimitDistributed, getClientIp } from "@/lib/rateLimit";
@@ -20,7 +20,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Permintaan tidak valid." }, { status: 403 });
   }
 
-  const phone = formatWa(getSellerSession() || "");
+  const phone = formatWa(await getSellerSessionAsync() || "");
   if (!phone) {
     return NextResponse.json({ error: "Masuk dengan akun WhatsApp terlebih dahulu." }, { status: 403 });
   }

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { getUserSession } from "@/lib/auth";
+import { getUserSessionAsync } from "@/lib/auth";
 import { hashIdentitas } from "@/lib/identitasHash";
 import { cariWaDariHash } from "@/lib/chatIdentity";
 import { siarkanPesanBaru } from "@/lib/chatRealtime";
@@ -17,7 +17,7 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: "Room ID diperlukan" }, { status: 400 });
     }
 
-    const wa = getUserSession();
+    const wa = await getUserSessionAsync();
     if (!wa) {
       return NextResponse.json({ error: "Silakan login terlebih dahulu" }, { status: 401 });
     }

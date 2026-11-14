@@ -3,7 +3,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { formatWa } from "@/lib/constants";
 import { sendWa } from "@/lib/fonnte";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
-import { getSellerSession, isAdmin } from "@/lib/auth";
+import { getSellerSessionAsync, isAdmin } from "@/lib/auth";
 import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +17,7 @@ export async function GET(req) {
   if (!sellerWa) return NextResponse.json({ error: "seller_wa wajib" }, { status: 400 });
 
   // Hanya pemilik (sesi) atau admin — seller_wa itu publik, jangan dipercaya mentah.
-  const sessionWa = getSellerSession();
+  const sessionWa = await getSellerSessionAsync();
   if (!isAdmin() && (!sessionWa || sessionWa !== sellerWa)) {
     return NextResponse.json({ error: "Tidak diizinkan" }, { status: 403 });
   }
@@ -51,7 +51,7 @@ export async function POST(req) {
     // Otorisasi: hanya pemilik akun (sesi) yang boleh mengajukan perubahan
     // profilnya sendiri. Tanpa ini, siapa pun bisa spam permintaan + notif admin
     // atas nama penjual lain (social-engineering admin agar menyetujui).
-    const sessionWa = getSellerSession();
+    const sessionWa = await getSellerSessionAsync();
     if (!isAdmin() && (!sessionWa || sessionWa !== sellerWa)) {
       return NextResponse.json({ error: "Tidak diizinkan" }, { status: 403 });
     }

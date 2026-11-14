@@ -2,7 +2,7 @@
 // (lihat `fallbacks.document` di next.config.mjs) dan disajikan menggantikan
 // halaman apa pun yang diminta saat tidak ada koneksi.
 export const metadata = {
-  title: "Sedang Offline — Kampus Kita",
+  title: "Sedang Offline | Kampus Kita",
 };
 
 export default function OfflinePage() {
@@ -23,13 +23,13 @@ export default function OfflinePage() {
         Kamu Sedang Offline
       </h1>
       <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs mb-6">
-        Tidak ada koneksi internet. Periksa jaringanmu, lalu coba muat ulang —
+        Tidak ada koneksi internet. Periksa jaringanmu, lalu coba muat ulang:
         barang jualan, menfess, dan info kampus akan kembali begitu kamu online.
       </p>
       <form action="/" method="get">
         <button
           type="submit"
-          className="px-5 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-colors"
+          className="px-5 py-2.5 rounded-xl bg-emerald-700 text-white text-sm font-semibold transition-colors hover:bg-emerald-800 active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
         >
           Coba Lagi
         </button>

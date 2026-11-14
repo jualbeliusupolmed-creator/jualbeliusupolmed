@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { censorProfanity } from "@/lib/profanity";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
-import { getUserSession } from "@/lib/auth";
+import { getUserSessionAsync } from "@/lib/auth";
 import { hashIdentitas } from "@/lib/identitasHash";
 import { catatIdentitasWa, cariWaDariHash } from "@/lib/chatIdentity";
 import { pushToWa } from "@/lib/webpush";
@@ -31,7 +31,7 @@ export const revalidate = 0;
 // membuka tab supaya terasa seketika tanpa menunggu push.
 export async function POST(request) {
   try {
-    const wa = getUserSession();
+    const wa = await getUserSessionAsync();
     if (!wa) {
       return NextResponse.json({ error: "Silakan login terlebih dahulu untuk mencari teman chat." }, { status: 401 });
     }

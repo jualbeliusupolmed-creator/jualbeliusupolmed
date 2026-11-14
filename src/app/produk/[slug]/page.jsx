@@ -26,6 +26,13 @@ import { formatListingSpecs } from "@/lib/listingSpecs";
 import ProductDetailInteractive from "@/components/ProductDetailInteractive";
 import { isListingAvailable } from "@/lib/listingAvailability";
 import { selectProductRecommendations } from "@/lib/productRecommendations";
+import { getSellerSessionAsync } from "@/lib/auth";
+import {
+  applyMarketplaceProvinceScope,
+  loadMarketplaceRegion,
+  loadListingSellerProvince,
+  loadProvinceMarketplaceScope,
+} from "@/lib/marketplaceRegion";
 
 export const revalidate = 300; // ISR 5 menit
 
@@ -35,7 +42,7 @@ export const revalidate = 300; // ISR 5 menit
  *   - New format:  "laptop-asus-vivobook-3f2a8c1e"  (extracts 8-char prefix)
  *   - Legacy:      "3f2a8c1e-d9b4-4e7f-8b23-a1b2c3d4e5f6"  (full UUID)
  */
-async function getData(slug) {
+async function getData(slug, sessionIdentity = null) {
   try {
     const supa = getAdminClient();
     let listing = null;
@@ -91,6 +98,17 @@ async function getData(slug) {
 
     if (!listing) return { listing: null, related: [] };
 
+    let provinceScope = null;
+    if (sessionIdentity) {
+      const region = await loadMarketplaceRegion(supa, sessionIdentity);
+      if (!region.province) return { listing: null, related: [] };
+      const sellerProvince = await loadListingSellerProvince(supa, listing);
+      if (!sellerProvince || sellerProvince !== region.province) {
+        return { listing: null, related: [] };
+      }
+      provinceScope = await loadProvinceMarketplaceScope(supa, region.province);
+    }
+
     const minPrice = listing.price ? Math.floor(listing.price * 0.5) : 0;
     const maxPrice = listing.price ? Math.ceil(listing.price * 2.0) : 0;
 
@@ -107,8 +125,11 @@ async function getData(slug) {
     } else {
       queryRelated = queryRelated.eq("price", 0);
     }
+    if (provinceScope) queryRelated = applyMarketplaceProvinceScope(queryRelated, provinceScope);
     
-    const { data: rawRelated } = await fetchListingsWithProfiles(queryRelated);
+    const { data: rawRelated } = provinceScope && !queryRelated
+      ? { data: [] }
+      : await fetchListingsWithProfiles(queryRelated);
     let related = selectProductRecommendations(listing, rawRelated || []);
 
     if (related.length < 4) {
@@ -121,7 +142,10 @@ async function getData(slug) {
           .neq("id", listing.id)
           .order("created_at", { ascending: false, nullsFirst: false })
           .limit(24);
-        const { data: fallbackListings } = await fetchListingsWithProfiles(queryFallback);
+        if (provinceScope) queryFallback = applyMarketplaceProvinceScope(queryFallback, provinceScope);
+        const { data: fallbackListings } = provinceScope && !queryFallback
+          ? { data: [] }
+          : await fetchListingsWithProfiles(queryFallback);
         related = selectProductRecommendations(
           listing,
           [...(rawRelated || []), ...(fallbackListings || [])]
@@ -140,7 +164,7 @@ async function getData(slug) {
 
 // ── SEO: generateMetadata ────────────────────────────────────────────────────
 export async function generateMetadata({ params }) {
-  const { listing } = await getData(params.slug);
+  const { listing } = await getData(params.slug, await getSellerSessionAsync());
   if (!listing) {
     return { title: "Produk tidak ditemukan" };
   }
@@ -196,7 +220,7 @@ export async function generateMetadata({ params }) {
 // ────────────────────────────────────────────────────────────────────────────
 
 export default async function ProdukPage({ params }) {
-  const { listing, related } = await getData(params.slug);
+  const { listing, related } = await getData(params.slug, await getSellerSessionAsync());
   if (!listing) notFound();
 
   // If someone visits old UUID link or numeric listing code, redirect to clean canonical slug URL
@@ -277,14 +301,14 @@ export default async function ProdukPage({ params }) {
       <ViewTracker listingId={listing.id} />
       <RecentlyViewedSaver listing={listing} slug={params.slug} />
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 min-w-0 text-[13px] text-[#6e6e73] dark:text-slate-400">
+      <nav className="flex items-center gap-1.5 min-w-0 text-[13px] text-slate-500 dark:text-slate-400">
         <Link href="/" className="hover:text-primary shrink-0">Beranda</Link>
         <span className="shrink-0">/</span>
         <Link href={`/?cat=${listing.category}`} className="hover:text-primary shrink-0">
           {listing.category}
         </Link>
         <span className="shrink-0">/</span>
-        <span className="truncate text-gray-500">{listing.title}</span>
+        <span className="truncate text-slate-500">{listing.title}</span>
       </nav>
 
       {/* 12-Column Grid Matching 12.html blueprint */}
@@ -312,10 +336,7 @@ export default async function ProdukPage({ params }) {
       <section className="mt-12 mb-20 md:mb-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-400">
-              Pilihan untukmu
-            </p>
-            <h2 className="mt-1 text-lg font-bold text-slate-900 dark:text-white">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
               {listing.type === "jasa"
                 ? "Jasa Serupa & Rekomendasi"
                 : "Produk Serupa & Rekomendasi"}

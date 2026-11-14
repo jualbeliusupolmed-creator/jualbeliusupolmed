@@ -82,9 +82,9 @@ function GambarToko({ label, nilai, ubah, bulat = false }) {
   }
   return (
     <div className="flex-1 space-y-1.5">
-      <p className="text-[13px] text-[#1d1d1f] dark:text-white">{label}</p>
+      <p className="text-[13px] text-slate-900 dark:text-white">{label}</p>
       <div onClick={() => rujuk.current?.click()}
-        className={`relative cursor-pointer overflow-hidden bg-black/[0.05] transition-all hover:opacity-80 dark:bg-white/[0.1] ${bulat ? "h-16 w-16 rounded-full" : "h-16 w-full rounded-lg"}`}>
+        className={`relative cursor-pointer overflow-hidden bg-black/[0.05] transition-opacity hover:opacity-80 dark:bg-white/[0.1] ${bulat ? "h-16 w-16 rounded-full" : "h-16 w-full rounded-lg"}`}>
         {nilai
           ? <Image src={nilai} alt={label} fill className="object-cover" />
           : <div className="flex h-full w-full items-center justify-center text-[11px] text-gray-400">{sibuk ? "…" : "Pilih"}</div>}
@@ -109,7 +109,7 @@ function StatusToko({ profil }) {
   const rupa = {
     draf:     { warna: "text-gray-500 dark:text-slate-400", teks: "Belum diajukan" },
     menunggu: { warna: "text-amber-600 dark:text-amber-400", teks: "Menunggu ditinjau admin" },
-    aktif:    { warna: "text-emerald-600 dark:text-emerald-400", teks: "Aktif — tokomu tayang" },
+    aktif:    { warna: "text-emerald-600 dark:text-emerald-400", teks: "Aktif: tokomu tayang" },
     ditolak:  { warna: "text-red-600 dark:text-red-400", teks: "Ditolak" },
   }[status] || { warna: "text-gray-500", teks: status };
 
@@ -145,13 +145,13 @@ function StatusToko({ profil }) {
           )}
           {profil?.slug && status === "aktif" && (
             <Link href={`/toko/${profil.slug}`} target="_blank" className="text-[11px] font-semibold text-primary underline">
-              Lihat halaman tokomu →
+              Lihat halaman tokomu
             </Link>
           )}
         </div>
         {status !== "menunggu" && status !== "aktif" && (
           <button type="button" onClick={ajukan} disabled={mengajukan || !siap}
-            className="shrink-0 rounded-full bg-primary px-4 py-2 text-xs font-bold text-white transition-all hover:brightness-105 active:scale-95 disabled:opacity-50">
+            className="shrink-0 rounded-full bg-primary px-4 py-2 text-xs font-bold text-white transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50">
             {mengajukan ? "Mengajukan…" : "Ajukan toko"}
           </button>
         )}
@@ -165,10 +165,10 @@ function Kartu({ judul, catatan, children }) {
   return (
     <section className="space-y-2">
       <div className="px-1">
-        <h3 className="text-[13px] font-bold uppercase tracking-wide text-[#86868b] dark:text-slate-400">{judul}</h3>
+        <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400">{judul}</h3>
         {catatan && <p className="mt-0.5 text-[11px] leading-relaxed text-gray-400 dark:text-slate-500">{catatan}</p>}
       </div>
-      <div className="overflow-hidden rounded-[12px] border border-black/[0.05] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.02)] dark:border-white/[0.08] dark:bg-[#1c1c1e]">
+      <div className="overflow-hidden rounded-[12px] border border-black/[0.05] bg-white shadow-xs dark:border-white/[0.08] dark:bg-slate-900">
         {children}
       </div>
     </section>
@@ -178,22 +178,22 @@ function Kartu({ judul, catatan, children }) {
 function Baris({ label, children }) {
   return (
     <div className="flex items-center gap-3 border-b border-black/[0.05] px-4 py-3 last:border-b-0 dark:border-white/[0.08]">
-      <label className="w-1/3 shrink-0 text-[15px] text-[#1d1d1f] dark:text-white">{label}</label>
+      <label className="w-1/3 shrink-0 text-[15px] text-slate-900 dark:text-white">{label}</label>
       {children}
     </div>
   );
 }
 
 const gayaInput =
-  "flex-1 min-w-0 bg-transparent text-[15px] text-[#86868b] text-right outline-none dark:text-slate-400 placeholder:text-gray-300 dark:placeholder:text-gray-600";
+  "flex-1 min-w-0 bg-transparent text-[15px] text-slate-500 text-right outline-none dark:text-slate-400 placeholder:text-gray-300 dark:placeholder:text-gray-600";
 
 function Teks({ nilai, ubah, ...sisa }) {
   return <input type="text" value={nilai ?? ""} onChange={(e) => ubah(e.target.value)} className={gayaInput} {...sisa} />;
 }
 
-function Pilih({ nilai, ubah, opsi }) {
+function Pilih({ nilai, ubah, opsi, disabled = false }) {
   return (
-    <select value={nilai ?? ""} onChange={(e) => ubah(e.target.value)} className={gayaInput}>
+    <select value={nilai ?? ""} onChange={(e) => ubah(e.target.value)} disabled={disabled} className={`${gayaInput} disabled:cursor-not-allowed disabled:opacity-60`}>
       {opsi.map((o) => (
         <option key={o.id ?? o} value={o.id ?? o}>{o.label ?? o}</option>
       ))}
@@ -205,6 +205,8 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
   const [profil, setProfil] = useState(null);
   const [f, setF] = useState(null);
   const [memuat, setMemuat] = useState(true);
+  const [galatMuatProfil, setGalatMuatProfil] = useState("");
+  const [ulangMuatProfil, setUlangMuatProfil] = useState(0);
   const [menyimpan, setMenyimpan] = useState(false);
   const [memampatkan, setMemampatkan] = useState(false);
   const [bukaToko, setBukaToko] = useState(false);
@@ -220,6 +222,8 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
 
   useEffect(() => {
     let hidup = true;
+    setMemuat(true);
+    setGalatMuatProfil("");
     (async () => {
       try {
         // Tanpa `?wa=` dan tanpa header identitas: sesi yang menentukan siapa
@@ -228,7 +232,7 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
         const res = await fetch("/api/profil", { cache: "no-store" });
         const data = await res.json();
         if (!hidup) return;
-        if (!res.ok || !data.ok) throw new Error(data.error || "Gagal memuat profil");
+        if (!res.ok || !data.ok || !data.profil) throw new Error(data.error || "Profil belum tersedia untuk sesi ini.");
         setProfil(data.profil);
         setKampusTersedia((current) => current.length || !data.profil.campus
           ? current
@@ -242,8 +246,8 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
           home_university_id: data.profil.home_university_id || "",
           home_unit_id: data.profil.home_unit_id || "",
           faculty: data.profil.faculty || "",
-          fyp_province_id: data.profil.fyp_province_id || "sumatera-utara",
-          fyp_scope: data.profil.fyp_scope || "campus",
+          fyp_province_id: data.profil.marketplace_province_id || data.profil.fyp_province_id || "sumatera-utara",
+          fyp_scope: data.profil.fyp_scope === "all" ? "province" : (data.profil.fyp_scope || "campus"),
           fyp_universities: Array.isArray(data.profil.fyp_universities) ? data.profil.fyp_universities : [],
           store_name: data.profil.store_name || "",
           tagline: data.profil.tagline || "",
@@ -269,13 +273,13 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
           },
         });
       } catch (e) {
-        toast.error(e.message || "Gagal memuat profil");
+        if (hidup) setGalatMuatProfil(e.message || "Gagal memuat profil");
       } finally {
         if (hidup) setMemuat(false);
       }
     })();
     return () => { hidup = false; };
-  }, []);
+  }, [ulangMuatProfil]);
 
   useEffect(() => {
     fetch("/api/kampus", { cache: "no-store" })
@@ -287,6 +291,7 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
             setProvinsiTersedia(data.provinces);
           }
           setF((current) => {
+            if (!current) return current;
             const activeCampusName = current?.campus;
             const matchedCampus = data.campuses.find((c) => c.shortName === activeCampusName || c.id === current?.home_university_id);
             const provId = current?.fyp_province_id || matchedCampus?.provinceId || data.campuses[0]?.provinceId || "sumatera-utara";
@@ -353,7 +358,7 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
       // Galatnya diperiksa. Versi lama menelan kegagalan sinkronisasi lalu tetap
       // menampilkan tanda centang — profil tidak pernah tersimpan dan tidak ada
       // yang tahu.
-      if (!res.ok || !data.ok) throw new Error(data.error || "Gagal menyimpan profil");
+      if (!res.ok || !data.ok || !data.profil) throw new Error(data.error || "Profil tidak dapat disimpan.");
 
       setProfil(data.profil);
       onProfileUpdated?.(data.profil);
@@ -383,32 +388,46 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
     }
   }
 
-  if (memuat || !f) {
+  if (memuat) {
     return (
-      <div className="space-y-6 animate-pulse">
-        <div className="h-24 rounded-[22px] border border-black/[0.06] bg-white dark:border-white/[0.08] dark:bg-[#1c1c1e]" />
-        <div className="h-96 rounded-[22px] border border-black/[0.06] bg-white dark:border-white/[0.08] dark:bg-[#1c1c1e]" />
+      <div className="space-y-6 motion-safe:animate-pulse motion-reduce:animate-none">
+        <div className="h-24 rounded-[22px] border border-black/[0.06] bg-white dark:border-white/[0.08] dark:bg-slate-900" />
+        <div className="h-96 rounded-[22px] border border-black/[0.06] bg-white dark:border-white/[0.08] dark:bg-slate-900" />
       </div>
     );
   }
 
-  const peran = profil.peran;
+  if (!profil || !f) {
+    return (
+      <section role="alert" className="rounded-[22px] border border-amber-200 bg-amber-50 p-5 text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/20 dark:text-amber-100">
+        <h2 className="text-base font-extrabold">Profil belum bisa dimuat</h2>
+        <p className="mt-2 text-sm leading-relaxed">{galatMuatProfil || "Masuk ke akunmu untuk membuka dan mengubah profil."}</p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link href="/dashboard/login?next=%2Fdashboard%3Ftab%3Dprofil" className="inline-flex min-h-10 items-center rounded-full bg-primary px-4 text-sm font-bold text-white">Masuk</Link>
+          <button type="button" onClick={() => setUlangMuatProfil((value) => value + 1)} className="inline-flex min-h-10 items-center rounded-full border border-amber-300 px-4 text-sm font-bold hover:bg-amber-100 dark:border-amber-800 dark:hover:bg-amber-900/30">Coba lagi</button>
+        </div>
+      </section>
+    );
+  }
+
+  const wilayahTerverifikasi = (profil.affiliation_status === "verified_student" || profil.student_verified) && Boolean(profil.verified_university_id);
+  const peran = profil.peran || { organisasi: false, toko: false, tanpaNomor: false };
   const hasToko = Boolean(profil.store_name);
   // Sebuah lembaga tidak punya angkatan dan tidak sedang mencari teman nongkrong.
   const tawarkanCariTeman = !peran.organisasi && !daftarOrg;
 
   return (
     <div className="space-y-6">
-      <div className="overflow-hidden rounded-[28px] border border-black/[0.06] bg-white shadow-[0_12px_30px_rgba(15,23,42,0.06)] dark:border-white/[0.08] dark:bg-[#1c1c1e]">
-        <div className="bg-gradient-to-r from-primary/[0.08] via-white to-emerald-500/[0.06] px-5 py-4 dark:from-primary/15 dark:via-[#1c1c1e] dark:to-emerald-500/10">
+      <div className="overflow-hidden rounded-[28px] border border-black/[0.06] bg-white shadow-sm dark:border-white/[0.08] dark:bg-slate-900">
+        <div className="bg-gradient-to-r from-primary/[0.08] via-white to-emerald-500/[0.06] px-5 py-4 dark:from-primary/15 dark:via-slate-900 dark:to-emerald-500/10">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-start gap-3">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-primary shadow-sm ring-1 ring-black/[0.05] dark:bg-white/[0.08] dark:ring-white/[0.08]">
-                <Icon.Sparkles className="h-6 w-6" />
+                <Icon.User className="h-6 w-6" aria-hidden="true" />
               </div>
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-lg font-black tracking-tight text-[#1d1d1f] dark:text-white">Profil Satu Pintu</h2>
+                  <h2 className="text-lg font-black tracking-tight text-slate-900 dark:text-white">Profil Satu Pintu</h2>
                   {peran.organisasi && (
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
                       <Icon.Landmark className="h-3.5 w-3.5" />
@@ -446,7 +465,7 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
                         <button
                           type="button"
                           onClick={() => setModalVerifikasi(true)}
-                          className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1 text-[10px] font-bold text-white shadow-xs transition-all"
+                          className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1 text-[10px] font-bold text-white shadow-xs transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600"
                         >
                           <Icon.CheckCircle className="h-3.5 w-3.5" />
                           + Verifikasi Mahasiswa (Centang Biru)
@@ -472,7 +491,7 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
                 </span>
               )}
               {hasToko && profil.slug && (
-                <Link href={`/toko/${profil.slug}`} target="_blank" className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-bold text-white shadow-xs transition-all hover:brightness-105 active:scale-95">
+                <Link href={`/toko/${profil.slug}`} target="_blank" className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-bold text-white shadow-xs transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600">
                   <Icon.Store className="h-4 w-4" />
                   <span>Lihat Toko</span>
                   <Icon.ArrowRight className="h-3.5 w-3.5" />
@@ -485,14 +504,14 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
 
       <form onSubmit={simpan} className="space-y-6">
         <div className="flex flex-col items-center justify-center space-y-3 pb-2">
-          <div onClick={() => inputFoto.current?.click()} className="relative h-24 w-24 cursor-pointer overflow-hidden rounded-full bg-black/[0.05] ring-4 ring-white shadow-lg transition-all hover:opacity-80 dark:bg-white/[0.1] dark:ring-[#1c1c1e]">
+          <div onClick={() => inputFoto.current?.click()} className="relative h-24 w-24 cursor-pointer overflow-hidden rounded-full bg-black/[0.05] ring-4 ring-white shadow-lg transition-opacity hover:opacity-80 dark:bg-white/[0.1] dark:ring-slate-900">
             {f.avatar_url
               ? <Image src={f.avatar_url} alt="Foto profil" fill className="object-cover" />
               : <div className="flex h-full w-full items-center justify-center text-slate-500 dark:text-slate-300">{peran.organisasi ? <Icon.Landmark className="h-10 w-10" /> : <Icon.User className="h-10 w-10" />}</div>}
             <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-[11px] font-bold text-white opacity-0 transition-opacity hover:opacity-100">Edit</div>
           </div>
           <button type="button" onClick={() => inputFoto.current?.click()} disabled={memampatkan} className="text-[15px] font-medium text-primary transition-colors hover:text-primary/80">
-            {memampatkan ? "Menyiapkan..." : f.avatar_url ? "Ganti Foto" : "Tambah Foto"}
+            {memampatkan ? "Menyiapkan…" : f.avatar_url ? "Ganti Foto" : "Tambah Foto"}
           </button>
           <input ref={inputFoto} type="file" accept="image/*" className="hidden" onChange={unggahFoto} />
         </div>
@@ -504,7 +523,7 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
             <Teks nilai={f.name} ubah={(v) => set("name", v)} required placeholder="Nama lengkap" />
           </Baris>
           <Baris label="Username">
-            <div className="flex flex-1 items-center justify-end gap-1 text-[15px] text-[#86868b] dark:text-slate-400">
+            <div className="flex flex-1 items-center justify-end gap-1 text-[15px] text-slate-500 dark:text-slate-400">
               <span className="shrink-0 font-mono text-gray-400">@</span>
               <input
                 type="text"
@@ -529,7 +548,7 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
             <Teks nilai={f.anonymous_name} ubah={(v) => set("anonymous_name", v)} placeholder="Dipakai di Menfess" />
           </Baris>
           <div className="px-4 py-3">
-            <label className="mb-1.5 block text-[15px] text-[#1d1d1f] dark:text-white">Bio</label>
+            <label className="mb-1.5 block text-[15px] text-slate-900 dark:text-white">Bio</label>
             <textarea rows={3} value={f.bio} onChange={(e) => set("bio", e.target.value)} placeholder="Ceritakan singkat tentangmu" className="w-full resize-none rounded-lg bg-black/[0.03] p-3 text-[15px] outline-none dark:bg-white/[0.06] dark:text-slate-300" />
           </div>
         </Kartu>
@@ -550,6 +569,7 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
           <Baris label="Provinsi / Daerah">
             <Pilih
               nilai={f.fyp_province_id || selectedProvince || "sumatera-utara"}
+              disabled={wilayahTerverifikasi}
               ubah={(pId) => {
                 setSelectedProvince(pId);
                 set("fyp_province_id", pId);
@@ -564,6 +584,11 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
               opsi={provinsiTersedia.map((p) => ({ id: p.id, label: p.name }))}
             />
           </Baris>
+          {wilayahTerverifikasi ? (
+            <p className="px-4 pb-3 text-[11px] leading-relaxed text-emerald-800 dark:text-emerald-300">
+              Wilayah transaksi mengikuti provinsi kampus terverifikasi: pilihan FYP tidak dapat memperluas jangkauan ke provinsi lain.
+            </p>
+          ) : null}
 
           <Baris label="Kampus Utama">
             <Pilih
@@ -588,7 +613,7 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
               ).map((kampus) => ({
                 id: kampus.shortName,
                 label: kampus.name && kampus.name !== kampus.shortName
-                  ? `${kampus.shortName} — ${kampus.name}`
+                  ? `${kampus.shortName} · ${kampus.name}`
                   : kampus.shortName,
               }))}
             />
@@ -599,7 +624,7 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
           </Baris>
 
           <div className="border-t border-black/[0.05] p-4 dark:border-white/[0.08]">
-            <label className="mb-1.5 block text-[14px] font-bold text-[#1d1d1f] dark:text-white">
+            <label className="mb-1.5 block text-[14px] font-bold text-slate-900 dark:text-white">
               Jangkauan Feed FYP Beranda
             </label>
             <p className="mb-3 text-[12px] text-gray-500 dark:text-slate-400">
@@ -609,23 +634,18 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
               {[
                 {
                   id: "campus",
-                  title: "🎯 Kampus Utama",
+                  title: "Kampus Utama",
                   desc: `Fokus barang di ${f.campus || "kampusmu"} (Paling aman & hemat COD)`,
                 },
                 {
                   id: "province",
-                  title: "📍 Satu Daerah / Provinsi",
+                  title: "Satu Daerah / Provinsi",
                   desc: `Semua kampus di ${provinsiTersedia.find((p) => p.id === (f.fyp_province_id || selectedProvince))?.name || "Provinsi"}`,
                 },
                 {
-                  id: "all",
-                  title: "🌐 Seluruh Indonesia",
-                  desc: "Jelajahi barang dari seluruh kampus se-Nusantara",
-                },
-                {
                   id: "custom",
-                  title: "⚙️ Kustom Beberapa Kampus",
-                  desc: "Pilih kampus mana saja yang ingin kamu pantau di feed",
+                  title: "Kustom Beberapa Kampus",
+                  desc: "Pilih kampus di provinsi acuanmu untuk feed yang lebih fokus",
                 },
               ].map((opt) => {
                 const aktif = (f.fyp_scope || "campus") === opt.id;
@@ -634,13 +654,13 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
                     key={opt.id}
                     type="button"
                     onClick={() => set("fyp_scope", opt.id)}
-                    className={`flex flex-col text-left rounded-xl border p-3 transition-all ${
+                    className={`flex flex-col text-left rounded-xl border p-3 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 ${
                       aktif
                         ? "border-emerald-600 bg-emerald-50/60 ring-2 ring-emerald-500/20 dark:border-emerald-500 dark:bg-emerald-950/30"
                         : "border-black/[0.08] bg-black/[0.01] hover:border-black/20 dark:border-white/[0.08] dark:bg-white/[0.02] dark:hover:border-white/20"
                     }`}
                   >
-                    <span className="text-[13px] font-bold text-[#1d1d1f] dark:text-white">{opt.title}</span>
+                    <span className="text-[13px] font-bold text-slate-900 dark:text-white">{opt.title}</span>
                     <span className="mt-0.5 text-[11px] text-gray-500 dark:text-slate-400">{opt.desc}</span>
                   </button>
                 );
@@ -653,7 +673,7 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
                   Pilih kampus yang ingin kamu sertakan di feed FYP:
                 </p>
                 <div className="flex flex-wrap gap-1.5">
-                  {kampusTersedia.map((k) => {
+                  {kampusTersedia.filter((k) => (k.provinceId || "sumatera-utara") === (f.fyp_province_id || selectedProvince || "sumatera-utara")).map((k) => {
                     const dipilih = (f.fyp_universities || []).includes(k.shortName) || (f.fyp_universities || []).includes(k.id);
                     return (
                       <button
@@ -668,7 +688,7 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
                             set("fyp_universities", [...list, targetKey]);
                           }
                         }}
-                        className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-all ${
+                        className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50 ${
                           dipilih
                             ? "bg-emerald-700 text-white font-bold shadow-xs"
                             : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:border-white/10"
@@ -717,7 +737,7 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
                 <Teks nilai={f.store_name} ubah={(v) => set("store_name", v)} placeholder="Nama yang dibaca pembeli" />
               </Baris>
               <Baris label="Alamat">
-                <div className="flex flex-1 items-center justify-end gap-1 text-[15px] text-[#86868b] dark:text-slate-400">
+                <div className="flex flex-1 items-center justify-end gap-1 text-[15px] text-slate-500 dark:text-slate-400">
                   <span className="shrink-0 text-gray-400">/toko/</span>
                   <input type="text" value={f.slug} onChange={(e) => set("slug", e.target.value)} placeholder="warung-ridho" className="w-full min-w-0 bg-transparent text-right outline-none placeholder:text-gray-300 dark:placeholder:text-gray-600" />
                 </div>
@@ -743,7 +763,7 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
                 </div>
               </Baris>
               <div className="px-4 py-3">
-                <label className="mb-1.5 block text-[15px] text-[#1d1d1f] dark:text-white">Pengumuman</label>
+                <label className="mb-1.5 block text-[15px] text-slate-900 dark:text-white">Pengumuman</label>
                 <textarea rows={2} value={f.store_announcement} onChange={(e) => set("store_announcement", e.target.value)} placeholder="mis. Libur Lebaran 3 hari" className="w-full resize-none rounded-lg bg-black/[0.03] p-3 text-[15px] outline-none dark:bg-white/[0.06] dark:text-slate-300" />
               </div>
             </Kartu>
@@ -754,11 +774,11 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
                 <GambarToko label="Sampul" nilai={f.banner_url} ubah={(v) => set("banner_url", v)} />
               </div>
               <div className="px-4 py-3">
-                <label className="mb-2 block text-[15px] text-[#1d1d1f] dark:text-white">Warna</label>
+                <label className="mb-2 block text-[15px] text-slate-900 dark:text-white">Warna</label>
                 <div className="flex flex-wrap gap-2">
                   {Object.entries(AKSEN).map(([kunci, a]) => (
                     <button key={kunci} type="button" onClick={() => set("store_accent", kunci)}
-                      className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${f.store_accent === kunci ? "ring-2 ring-offset-1 dark:ring-offset-[#1c1c1e]" : "opacity-70 hover:opacity-100"}`}
+                      className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50 ${f.store_accent === kunci ? "ring-2 ring-offset-1 dark:ring-offset-slate-900" : "opacity-70 hover:opacity-100"}`}
                       style={{ background: a.muda, color: a.teks, ringColor: a.utama }}>
                       <span className="h-2.5 w-2.5 rounded-full" style={{ background: a.utama }} />
                       {a.nama}
@@ -784,7 +804,7 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
                 semua barang jualanmu berkumpul di satu alamat yang bisa dibagikan.
               </p>
               <button type="button" onClick={() => setBukaToko(true)}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-black/[0.08] px-4 py-2 text-center text-xs font-bold text-[#1d1d1f] transition-all hover:bg-black/[0.03] active:scale-95 dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06]">
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-black/[0.08] px-4 py-2 text-center text-xs font-bold text-slate-900 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06]">
                 <Icon.Store className="h-4 w-4" />
                 Buka Toko
               </button>
@@ -800,7 +820,7 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
                 direktori dan bisa membuka oprec atas namanya.
               </p>
               <button type="button" onClick={() => setDaftarOrg(true)}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-black/[0.08] px-4 py-2 text-center text-xs font-bold text-[#1d1d1f] transition-all hover:bg-black/[0.03] active:scale-95 dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06]">
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-black/[0.08] px-4 py-2 text-center text-xs font-bold text-slate-900 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 dark:border-white/[0.12] dark:text-white dark:hover:bg-white/[0.06]">
                 <Icon.Landmark className="h-4 w-4" />
                 Daftarkan Organisasi
               </button>
@@ -818,8 +838,8 @@ export default function UnifiedProfilePanel({ onProfileUpdated }) {
         )}
 
         <div className="flex justify-end gap-3 pb-2">
-          <button type="submit" disabled={menyimpan} className="rounded-full bg-primary px-6 py-2.5 text-sm font-bold text-white shadow-xs transition-all hover:brightness-105 active:scale-95 disabled:opacity-60">
-            {menyimpan ? "Menyimpan..." : "Simpan Profil"}
+          <button type="submit" disabled={menyimpan} className="rounded-full bg-primary px-6 py-2.5 text-sm font-bold text-white shadow-xs transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-60">
+            {menyimpan ? "Menyimpan…" : "Simpan Profil"}
           </button>
         </div>
       </form>

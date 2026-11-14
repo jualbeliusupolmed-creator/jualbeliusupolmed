@@ -113,6 +113,8 @@ describe("normalisasiIsian — satu aturan untuk /api/profil dan /api/toko", () 
 
     // Invalid fyp_scope jatuh kembali ke 'campus'
     expect(normalisasiIsian({ fyp_scope: "invalid_scope" }).fyp_scope).toBe("campus");
+    // Konfigurasi nasional lama tidak lagi memperluas pasar melewati provinsi.
+    expect(normalisasiIsian({ fyp_scope: "all" }).fyp_scope).toBe("province");
   });
 });
 

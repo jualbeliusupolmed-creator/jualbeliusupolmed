@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({
   sendWa: vi.fn(),
 }));
 
-vi.mock("@/lib/auth", () => ({ getSellerSession: mocks.getSellerSession }));
+vi.mock("@/lib/auth", () => ({ getSellerSession: mocks.getSellerSession, getSellerSessionAsync: mocks.getSellerSession }));
 vi.mock("@/lib/supabaseAdmin", () => ({ getAdminClient: mocks.getAdminClient }));
 vi.mock("@/lib/rateLimit", () => ({
   rateLimitDistributed: mocks.rateLimitDistributed,

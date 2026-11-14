@@ -30,7 +30,7 @@ export async function POST(request) {
     // membuka aplikasinya.
     //
     // Sekarang penyapunya harus membuktikan bahwa profil itu miliknya.
-    const { userId } = identitasTeman(request, { idKlien });
+    const { userId } = await identitasTeman(request, { idKlien });
     if (!userId) {
       return NextResponse.json({ error: "Identitas pengguna diperlukan" }, { status: 400 });
     }

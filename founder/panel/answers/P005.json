@@ -1,0 +1,13 @@
+{
+  "buys": true,
+  "purchases_first_month": 4,
+  "reason_code": "need",
+  "reason": "Saya wirausaha kampus yang sering buka Open PO dessert box, butuh blast WA resmi biar pesanan cepat tembus kuota.",
+  "objection": "Takut bot WA sering disconnect atau lambat",
+  "would_change_my_mind": "",
+  "price_too_cheap": 3000,
+  "price_cheap": 5000,
+  "price_expensive": 10000,
+  "price_too_expensive": 20000,
+  "id": "P005"
+}

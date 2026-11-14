@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Marketplace resmi mahasiswa USU dan Polmed untuk jual beli barang dan Open PO tanpa ongkir.">
+  <title>Kampus Kita · Jual Beli Mahasiswa USU &amp; Polmed</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+/* Hallmark: brutal · editorial · signature: live-catalog-board · floor: v2.0.0
+   critique: High-contrast campus trade sheet; engineered 3px rules, zero radius, no decorative gradient slop.
+   waivers: none */
+
+:root {
+  --color-paper: oklch(98% 0.005 95);
+  --color-paper-2: oklch(93.5% 0.007 95);
+  --color-paper-3: oklch(89% 0.008 95);
+  --color-ink: oklch(12% 0.005 95);
+  --color-ink-2: oklch(18% 0.005 95);
+  --color-muted: oklch(42% 0.008 95);
+  --color-rule: oklch(12% 0.005 95);
+  --color-accent: oklch(88% 0.18 95);
+  --color-accent-ink: oklch(12% 0.005 95);
+  --color-focus: oklch(45% 0.1 95);
+
+  --font-display: "Libre Franklin", ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-display);
+
+  --radius-card: 0px;
+  --radius-pill: 0px;
+  --rule-hair: 1px;
+  --rule-bar: 3px;
+  --tracking-display: -0.03em;
+  --max-width: 1240px;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+::selection {
+  background-color: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+
+html {
+  scrollbar-color: var(--color-rule) var(--color-paper-2);
+}
+
+html, body {
+  overflow-x: clip;
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button, a.btn {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  padding: 16px 28px;
+  border: var(--rule-bar) solid var(--color-rule);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+button:focus-visible, a:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+button:active, a.btn:active {
+  transform: translateY(1px);
+}
+
+button:disabled, a.btn[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+
+.btn-secondary {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-ink);
+  color: var(--color-paper);
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-paper-2);
+}
+
+.container {
+  width: 100%;
+  max-width: var(--max-width);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+/* Header */
+header {
+  border-bottom: var(--rule-bar) solid var(--color-rule);
+  background-color: var(--color-paper);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 72px;
+}
+
+.brand-title {
+  font-size: 1.35rem;
+  font-weight: 900;
+  letter-spacing: var(--tracking-display);
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brand-badge {
+  background-color: var(--color-ink);
+  color: var(--color-paper);
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.nav-links {
+  display: flex;
+  gap: 24px;
+  list-style: none;
+}
+
+.nav-links a {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--color-ink-2);
+}
+
+.nav-links a:hover {
+  color: var(--color-muted);
+}
+
+/* Hero Section */
+.hero {
+  border-bottom: var(--rule-bar) solid var(--color-rule);
+  padding-top: 56px;
+  padding-bottom: 56px;
+  background-color: var(--color-paper);
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 48px;
+  align-items: stretch;
+}
+
+.hero-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.hero-headline {
+  font-size: clamp(2.4rem, 5vw, 4.2rem);
+  font-weight: 900;
+  line-height: 0.98;
+  letter-spacing: var(--tracking-display);
+  text-transform: uppercase;
+  margin-bottom: 24px;
+  overflow-wrap: break-word;
+  min-width: 0;
+}
+
+.hero-sentence {
+  font-size: 1.15rem;
+  color: var(--color-ink-2);
+  margin-bottom: 32px;
+  max-width: 580px;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.hero-box {
+  border: var(--rule-bar) solid var(--color-rule);
+  background-color: var(--color-paper-2);
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-box-header {
+  background-color: var(--color-ink);
+  color: var(--color-paper);
+  padding: 12px 16px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+}
+
+.hero-box-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex-grow: 1;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+  padding-bottom: 12px;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: var(--color-muted);
+}
+
+.stat-value {
+  font-weight: 900;
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Ticker Bar */
+.ticker-band {
+  background-color: var(--color-ink);
+  color: var(--color-paper);
+  padding: 12px 0;
+  border-bottom: var(--rule-bar) solid var(--color-rule);
+  font-size: 0.85rem;
+  font-weight: 700;
+  overflow: hidden;
+}
+
+.ticker-content {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+/* Catalog Grid Section */
+.section {
+  padding-top: 64px;
+  padding-bottom: 64px;
+  border-bottom: var(--rule-bar) solid var(--color-rule);
+}
+
+.section-head {
+  margin-bottom: 36px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.section-title {
+  font-size: 2.2rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-display);
+  overflow-wrap: break-word;
+  min-width: 0;
+}
+
+.section-subtitle {
+  font-size: 0.95rem;
+  color: var(--color-muted);
+}
+
+.catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(0, 280px));
+  border: var(--rule-bar) solid var(--color-rule);
+}
+
+.item-card {
+  background-color: var(--color-paper);
+  border-right: var(--rule-hair) solid var(--color-rule);
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.item-name {
+  font-size: 1.15rem;
+  font-weight: 900;
+  line-height: 1.25;
+  margin-bottom: 8px;
+}
+
+.item-meta-row {
+  display: flex;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: var(--color-muted);
+  margin-bottom: 8px;
+}
+
+.item-location {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  margin-bottom: 16px;
+}
+
+.item-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: var(--rule-hair) solid var(--color-rule);
+  padding-top: 12px;
+}
+
+.item-price {
+  font-size: 1.2rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.item-chat-btn {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 8px 16px;
+  background-color: transparent;
+  color: var(--color-ink);
+  border: var(--rule-hair) solid var(--color-rule);
+}
+
+.item-chat-btn:hover {
+  background-color: var(--color-paper-2);
+}
+
+/* Pricing Offer Section */
+.offer-section {
+  background-color: var(--color-paper-2);
+}
+
+.pricing-table-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: var(--rule-bar) solid var(--color-rule);
+  background-color: var(--color-paper);
+}
+
+.pricing-column {
+  padding: 36px 28px;
+  border-right: var(--rule-bar) solid var(--color-rule);
+  display: flex;
+  flex-direction: column;
+}
+
+.pricing-column:last-child {
+  border-right: none;
+}
+
+.pricing-column.featured {
+  background-color: var(--color-accent);
+}
+
+.tier-name {
+  font-size: 1.1rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  margin-bottom: 8px;
+}
+
+.tier-price {
+  font-size: 2.6rem;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 24px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tier-price span {
+  font-size: 0.95rem;
+  font-weight: 400;
+  color: var(--color-muted);
+}
+
+.tier-features {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 32px;
+  flex-grow: 1;
+}
+
+.tier-features li {
+  font-size: 0.92rem;
+  line-height: 1.4;
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+  padding-bottom: 8px;
+}
+
+/* Safe Zones Section */
+.zones-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  border: var(--rule-bar) solid var(--color-rule);
+  background-color: var(--color-paper);
+}
+
+.zone-cell {
+  padding: 24px;
+  border-right: var(--rule-hair) solid var(--color-rule);
+  text-align: center;
+}
+
+.zone-cell:last-child {
+  border-right: none;
+}
+
+.zone-num {
+  font-size: 1.8rem;
+  font-weight: 900;
+  margin-bottom: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.zone-name {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.zone-desc {
+  font-size: 0.78rem;
+  color: var(--color-muted);
+}
+
+/* Footer */
+footer {
+  padding: 48px 0;
+  background-color: var(--color-ink);
+  color: var(--color-paper);
+}
+
+.footer-layout {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 32px;
+}
+
+.footer-brand {
+  max-width: 400px;
+}
+
+.footer-copy {
+  font-size: 0.85rem;
+  color: var(--color-paper-3);
+  margin-top: 12px;
+}
+
+.footer-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+@media (max-width: 900px) {
+  .hero-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pricing-table-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pricing-column {
+    border-right: none;
+    border-bottom: var(--rule-bar) solid var(--color-rule);
+  }
+  .zones-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .footer-actions {
+    align-items: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="container nav-bar">
+      <div class="brand-title">
+        Kampus Kita
+        <span class="brand-badge">USU &amp; Polmed</span>
+      </div>
+      <ul class="nav-links">
+        <li><a href="#katalog">Katalog</a></li>
+        <li><a href="#paket-sultan">Lapak Sultan</a></li>
+        <li><a href="#titik-cod">Titik COD</a></li>
+      </ul>
+      <a href="https://wa.me/6281234567890?text=Halo%20Kampus%20Kita%2C%20saya%20mau%20jual%20barang" class="btn btn-primary" style="padding: 8px 16px; font-size: 0.82rem;">Post via WhatsApp</a>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-content">
+          <h1 class="hero-headline">Beli Dekat. Jual Cepat. Aman Sekampus.</h1>
+          <p class="hero-sentence">
+            Marketplace mahasiswa USU dan Polmed dengan bot WhatsApp instan dan COD sekampus.
+          </p>
+          <div class="hero-actions">
+            <a href="https://wa.me/6281234567890?text=JUAL" class="btn btn-primary">Jual Barang via Bot WA</a>
+            <a href="#katalog" class="btn btn-secondary">Jelajahi Katalog</a>
+          </div>
+        </div>
+
+        <div class="hero-box">
+          <div class="hero-box-header">
+            <span>Status sistem</span>
+            <span>Uptime 99.8%</span>
+          </div>
+          <div class="hero-box-body">
+            <div class="stat-row">
+              <span class="stat-label">Radius transaksi</span>
+              <span class="stat-value">0 - 3 KM (COD)</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Biaya kirim</span>
+              <span class="stat-value">Rp 0 (Gratis)</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Rata-rata waktu deal</span>
+              <span class="stat-value">&lt; 24 Jam</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Kanal input</span>
+              <span class="stat-value">WA Bot &amp; IG DM</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Ticker Band -->
+    <div class="ticker-band">
+      <div class="container ticker-content">
+        <span>Khusus mahasiswa &amp; perantau kos</span>
+        <span>Verifikasi identitas KTM anti-ghosting</span>
+        <span>5 titik pertemuan resmi terpantau satpam</span>
+        <span>Tanpa potongan komisi penjual</span>
+      </div>
+    </div>
+
+    <!-- Catalog Section -->
+    <section id="katalog" class="section">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">Katalog Kampus Terkini</h2>
+            <p class="section-subtitle">Listing riil hari ini di sekitar Padang Bulan &amp; Dr. Mansyur.</p>
+          </div>
+          <a href="https://wa.me/6281234567890?text=CARI" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.8rem;">Cari via Bot</a>
+        </div>
+
+        <div class="catalog-grid">
+          <div class="item-card">
+            <div>
+              <h3 class="item-name">Buku Ajar Anatomi Sobotta Ed. 23</h3>
+              <div class="item-meta-row">
+                <span>Buku &amp; modul</span>
+                <span>12 menit lalu</span>
+              </div>
+              <p class="item-location">Fakultas Kedokteran USU</p>
+            </div>
+            <div class="item-footer">
+              <span class="item-price">Rp 120.000</span>
+              <button class="item-chat-btn" onclick="alert('Membuka chat WhatsApp penjual...')">Chat</button>
+            </div>
+          </div>
+
+          <div class="item-card">
+            <div>
+              <h3 class="item-name">Kipas Angin Berdiri Miyako 16 Inch</h3>
+              <div class="item-meta-row">
+                <span>Perabot kos</span>
+                <span>35 menit lalu</span>
+              </div>
+              <p class="item-location">Jl. Dr. Mansyur Pintu 1</p>
+            </div>
+            <div class="item-footer">
+              <span class="item-price">Rp 85.000</span>
+              <button class="item-chat-btn" onclick="alert('Membuka chat WhatsApp penjual...')">Chat</button>
+            </div>
+          </div>
+
+          <div class="item-card">
+            <div>
+              <h3 class="item-name">Kalkulator Scientific Casio FX-991EX</h3>
+              <div class="item-meta-row">
+                <span>Alat praktikum</span>
+                <span>1 jam lalu</span>
+              </div>
+              <p class="item-location">Gedung Teknik Sipil Polmed</p>
+            </div>
+            <div class="item-footer">
+              <span class="item-price">Rp 160.000</span>
+              <button class="item-chat-btn" onclick="alert('Membuka chat WhatsApp penjual...')">Chat</button>
+            </div>
+          </div>
+
+          <div class="item-card">
+            <div>
+              <h3 class="item-name">Dispenser Hot &amp; Normal Miyako</h3>
+              <div class="item-meta-row">
+                <span>Elektronik</span>
+                <span>2 jam lalu</span>
+              </div>
+              <p class="item-location">Pintu 3 USU Padang Bulan</p>
+            </div>
+            <div class="item-footer">
+              <span class="item-price">Rp 65.000</span>
+              <button class="item-chat-btn" onclick="alert('Membuka chat WhatsApp penjual...')">Chat</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing / Offer Section -->
+    <section id="paket-sultan" class="section offer-section">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">Pilihan Paket Lapak</h2>
+            <p class="section-subtitle">Dirancang berdasarkan riset harga Van Westendorp untuk mahasiswa.</p>
+          </div>
+        </div>
+
+        <div class="pricing-table-grid">
+          <!-- Tier 1 -->
+          <div class="pricing-column">
+            <h3 class="tier-name">Mahasiswa Santai</h3>
+            <div class="tier-price">Rp 0 <span>/ gratis</span></div>
+            <ul class="tier-features">
+              <li>Posting tak terbatas via WhatsApp Bot</li>
+              <li>Terindeks permanen di pencarian web</li>
+              <li>Tombol chat direct ke WA penjual</li>
+              <li>Cocok untuk barang santai &lt; Rp 30.000</li>
+            </ul>
+            <a href="https://wa.me/6281234567890?text=JUAL_GRATIS" class="btn btn-secondary">Pasang Gratis</a>
+          </div>
+
+          <!-- Tier 2 -->
+          <div class="pricing-column">
+            <h3 class="tier-name">Kilat Kampus</h3>
+            <div class="tier-price">Rp 5.000 <span>/ boost</span></div>
+            <ul class="tier-features">
+              <li>1x Broadcast instan ke seluruh grup WA info</li>
+              <li>Badge prioritas di katalog selama 48 jam</li>
+              <li>Respon pembeli 3x lebih cepat</li>
+              <li>Ideal untuk buku semester &amp; modul praktikum</li>
+            </ul>
+            <a href="https://wa.me/6281234567890?text=BOOST_5000" class="btn btn-secondary">Pilih Kilat</a>
+          </div>
+
+          <!-- Tier 3: Featured -->
+          <div class="pricing-column featured">
+            <h3 class="tier-name">Sultan Lapak</h3>
+            <div class="tier-price">Rp 12.000 <span>/ paket</span></div>
+            <ul class="tier-features">
+              <li>3x broadcast terjadwal (pagi, siang, malam)</li>
+              <li>Centang hijau verified student anti-ghosting</li>
+              <li>Auto-bump 12 jam selama 7 hari</li>
+              <li>Garansi laku 48 jam atau saldo kembali 100%</li>
+            </ul>
+            <a href="https://wa.me/6281234567890?text=PAKET_SULTAN" class="btn btn-primary">Ambil Paket Sultan</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Safe COD Zones Section -->
+    <section id="titik-cod" class="section">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">5 Titik COD Resmi Aman</h2>
+            <p class="section-subtitle">Lokasi publik resmi yang selalu dipantau satpam kampus.</p>
+          </div>
+        </div>
+
+        <div class="zones-grid">
+          <div class="zone-cell">
+            <div class="zone-num">01</div>
+            <h3 class="zone-name">Perpustakaan Pusat</h3>
+            <p class="zone-desc">Area lobi ber-AC dan ada CCTV 24 jam.</p>
+          </div>
+          <div class="zone-cell">
+            <div class="zone-num">02</div>
+            <h3 class="zone-name">Biro Rektor USU</h3>
+            <p class="zone-desc">Dekat pos satpam gerbang utama.</p>
+          </div>
+          <div class="zone-cell">
+            <div class="zone-num">03</div>
+            <h3 class="zone-name">Pendopo Polmed</h3>
+            <p class="zone-desc">Titik temu terbuka ramai mahasiswa.</p>
+          </div>
+          <div class="zone-cell">
+            <div class="zone-num">04</div>
+            <h3 class="zone-name">Gelanggang Mahasiswa</h3>
+            <p class="zone-desc">Mudah diakses mobil dan sepeda motor.</p>
+          </div>
+          <div class="zone-cell">
+            <div class="zone-num">05</div>
+            <h3 class="zone-name">Kantin FISIP USU</h3>
+            <p class="zone-desc">Bisa sambil santai dan cek fisik barang.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container footer-layout">
+      <div class="footer-brand">
+        <div class="brand-title" style="color: var(--color-paper);">Kampus Kita</div>
+        <p class="footer-copy">
+          Platform perdagangan mikro mahasiswa Universitas Sumatera Utara &amp; Politeknik Negeri Medan. Dikelola mandiri di atas cloud Azure VPS dan Supabase.
+        </p>
+      </div>
+      <div class="footer-actions">
+        <a href="https://wa.me/6281234567890" class="btn btn-primary" style="padding: 10px 20px; font-size: 0.85rem;">Hubungi Bot WhatsApp</a>
+        <span style="font-size: 0.78rem; color: var(--color-paper-3);">Domain: kampuskita.my.id · 2026</span>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

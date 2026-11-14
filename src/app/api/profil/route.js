@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { getSellerSession } from "@/lib/auth";
+import { getSellerSessionAsync } from "@/lib/auth";
 import { jawabGalat } from "@/lib/jawabGalat";
 import { simpanProfil, muatProfil } from "@/lib/simpanProfil";
 import { findSellerProfileBySession } from "@/lib/seller-profile-identity";
+import { loadMarketplaceRegion } from "@/lib/marketplaceRegion";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -31,13 +32,22 @@ export const fetchCache = "force-no-store";
 // lain. Itu persis yang terjadi pada /api/teman/profiles sebelum hari ini.
 export async function GET() {
   try {
-    const identity = getSellerSession();
+    const identity = await getSellerSessionAsync();
     if (!identity) return NextResponse.json({ error: "Belum masuk." }, { status: 401 });
     const supa = getAdminClient();
     const { data: seller, error } = await findSellerProfileBySession(supa, identity, "wa");
     if (error) return jawabGalat(error, { pesan: "Gagal memuat profil." });
     const profileWa = seller?.wa || identity;
-    return NextResponse.json({ ok: true, profil: await muatProfil(supa, profileWa) });
+    const [profil, region] = await Promise.all([
+      muatProfil(supa, profileWa),
+      loadMarketplaceRegion(supa, identity).catch(() => ({ province: null, university: null })),
+    ]);
+    return NextResponse.json({ ok: true, profil: {
+      ...profil,
+      marketplace_province_id: region.province,
+      marketplace_university_id: region.university?.id || null,
+      marketplace_campus: region.university?.code || null,
+    } });
   } catch (e) {
     return jawabGalat(e);
   }
@@ -49,7 +59,7 @@ export async function GET() {
 // field lebih tetap bekerja, tanpa pernah bisa menembus batas perannya.
 export async function PUT(req) {
   try {
-    const identity = getSellerSession();
+    const identity = await getSellerSessionAsync();
     if (!identity) return NextResponse.json({ error: "Belum masuk." }, { status: 401 });
 
     let body;

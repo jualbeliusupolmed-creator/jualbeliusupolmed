@@ -8,6 +8,7 @@ import { buildSlug } from "@/lib/slug";
 import ProductCard from "@/components/ProductCard";
 import { Icon } from "@/components/Icons";
 import { cn } from "@/lib/utils";
+import { fetchCampusesCached } from "@/lib/cachedKampus";
 
 const QUICK_CATEGORIES = [
   { id: "all", label: "Semua", filterVal: "all" },
@@ -30,7 +31,6 @@ export default function MarketplaceBrowser({
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
-  // State filtering & search
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const [selectedCampus, setSelectedCampus] = useState(
     searchParams.get("campus") || "all"
@@ -43,13 +43,15 @@ export default function MarketplaceBrowser({
 
   useEffect(() => {
     let active = true;
-    fetch("/api/kampus", { cache: "no-store" })
-      .then((response) => {
-        if (!response.ok) throw new Error("Gagal memuat daftar kampus.");
-        return response.json();
-      })
+    fetchCampusesCached()
       .then((data) => {
-        if (active && Array.isArray(data?.campuses)) setCampuses(data.campuses);
+        if (active && Array.isArray(data?.campuses)) {
+          const prefProv = typeof window !== "undefined" ? localStorage.getItem("preferred_province") : null;
+          const prefCamp = typeof window !== "undefined" ? localStorage.getItem("preferred_campus") : null;
+          const matchedProv = prefProv || (prefCamp && data.campuses.find((c) => c.shortName?.toLowerCase() === prefCamp.toLowerCase())?.provinceId) || "sumatera-utara";
+          const filtered = data.campuses.filter((c) => (c.provinceId || "sumatera-utara") === matchedProv);
+          setCampuses(filtered.length > 0 ? filtered : data.campuses);
+        }
       })
       .catch((error) => console.error("[Marketplace] Gagal memuat daftar kampus:", error));
 
@@ -128,14 +130,14 @@ export default function MarketplaceBrowser({
         selectedCampusInfo?.id,
       ].filter(Boolean).map((value) => value.toLowerCase());
       result = result.filter((item) => {
-        const itemCampuses = [
-          item.campus,
-          item.university_id,
-          item.seller_profiles?.student_campus,
-          item.seller_profiles?.home_university_id,
-        ].filter(Boolean).map((value) => String(value).toLowerCase());
-        if (itemCampuses.includes("semua")) return true;
-        return itemCampuses.some((campus) => campusValues.includes(campus));
+        const profile = item.seller_profiles;
+        const verified = profile?.affiliation_status === "verified_student" || profile?.student_verified;
+        const sellerUniversity = verified && profile?.verified_university_id
+          ? profile.verified_university_id
+          : profile?.home_university_id;
+        const sellerOrigin = [sellerUniversity, profile?.campus, profile?.student_campus]
+          .filter(Boolean).map((value) => String(value).toLowerCase());
+        return sellerOrigin.some((value) => campusValues.includes(value));
       });
     }
 
@@ -228,10 +230,10 @@ export default function MarketplaceBrowser({
       <div className="w-full bg-slate-100/90 dark:bg-slate-800/60 rounded-xl px-2.5 py-1.5 mb-2.5 flex items-center justify-between gap-2 border border-slate-200/80 dark:border-white/10 shadow-xs">
         <div className="flex items-center gap-1.5 shrink-0">
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 font-extrabold text-[10px] border border-amber-200 dark:border-amber-800/60">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 motion-safe:animate-ping"></span>
             WTB
           </span>
-          <span className="hidden sm:inline font-bold text-[10px] text-slate-500 uppercase tracking-wider">
+          <span className="hidden sm:inline font-semibold text-xs text-slate-500">
             Cari Cepat:
           </span>
         </div>
@@ -294,7 +296,7 @@ export default function MarketplaceBrowser({
         <div className="bg-white dark:bg-slate-900 p-2 sm:p-2.5 rounded-xl border border-slate-200/80 dark:border-white/10 shadow-xs flex flex-col gap-2">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1.5 sm:gap-2">
             {/* Search Input */}
-            <div className="relative flex-1 flex items-center bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1.5 focus-within:border-emerald-600 focus-within:bg-white dark:focus-within:bg-slate-800 transition-all">
+            <div className="relative flex-1 flex items-center bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1.5 focus-within:border-emerald-600 focus-within:bg-white dark:focus-within:bg-slate-800 transition-colors">
               <span className="material-symbols-outlined text-slate-400 mr-1.5 text-[17px]">
                 search
               </span>
@@ -390,7 +392,7 @@ export default function MarketplaceBrowser({
                   key={chip.id}
                   onClick={() => handleQuickCategory(chip.filterVal)}
                   className={cn(
-                    "px-2.5 py-1 rounded-full text-xs font-semibold shrink-0 transition-all",
+                    "px-2.5 py-1 rounded-full text-xs font-semibold shrink-0 transition-colors",
                     active
                       ? "bg-emerald-800 text-white shadow-xs"
                       : "bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300"
@@ -507,7 +509,7 @@ export default function MarketplaceBrowser({
       <div className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] right-3.5 z-40 md:hidden">
         <Link
           href="/jual"
-          className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-800 text-white font-bold text-xs rounded-full shadow-lg hover:shadow-xl active:scale-95 transition-all border border-emerald-700/60"
+          className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-800 text-white font-bold text-xs rounded-full shadow-lg hover:shadow-xl active:translate-y-px transition-colors border border-emerald-700/60"
         >
           <span className="material-symbols-outlined text-[17px]">add_shopping_cart</span>
           <span>+ Jual Cepat</span>

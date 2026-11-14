@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { getUserSession } from "@/lib/auth";
+import { getUserSessionAsync } from "@/lib/auth";
 import { sendWa } from "@/lib/fonnte";
 import { buildSlug } from "@/lib/slug";
 import { censorProfanity } from "@/lib/profanity";
@@ -8,12 +8,13 @@ import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { siarkanPesanBaru } from "@/lib/chatRealtime";
 import { jawabGalat } from "@/lib/jawabGalat";
 import { isListingAvailable } from "@/lib/listingAvailability";
+import { loadListingSellerProvince, loadMarketplaceRegion } from "@/lib/marketplaceRegion";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req) {
   try {
-    const buyerWa = getUserSession();
+    const buyerWa = await getUserSessionAsync();
     if (!buyerWa) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -67,7 +68,7 @@ export async function POST(req) {
     // memanggil PostgREST langsung memakai kueri persis ini, 23 Agu 2026 malam.
     const { data: listing, error: listingError } = await supa
       .from("listings")
-      .select("*, seller_profiles(name)")
+      .select("*, seller_profiles(name,home_university_id,verified_university_id,affiliation_status,student_verified)")
       .eq("id", listingId)
       .single();
 
@@ -80,6 +81,15 @@ export async function POST(req) {
         { error: "Barang sudah tidak tersedia atau stoknya habis." },
         { status: 409 }
       );
+    }
+
+    const buyerRegion = await loadMarketplaceRegion(supa, buyerWa);
+    if (!buyerRegion.province) {
+      return NextResponse.json({ error: "Pilih universitas acuan di profil sebelum menghubungi penjual." }, { status: 409 });
+    }
+    const sellerProvince = await loadListingSellerProvince(supa, listing);
+    if (!sellerProvince || sellerProvince !== buyerRegion.province) {
+      return NextResponse.json({ error: "Transaksi marketplace hanya tersedia untuk pengguna dari provinsi yang sama." }, { status: 403 });
     }
 
     const sellerWa = listing.seller_wa;

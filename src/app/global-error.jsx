@@ -24,17 +24,21 @@ export default function GlobalError({ error, reset }) {
   }, [error, isChunkError]);
 
   return (
-    <html lang="id">
-      <body>
-        <div style={{ display: "flex", minHeight: "100vh", alignItems: "center", justifyContent: "center", padding: "2rem", textAlign: "center", fontFamily: "sans-serif" }}>
+    <html lang="id" className="overflow-x-clip">
+      <body className="min-h-screen bg-white text-slate-900 font-sans antialiased overflow-x-clip">
+        <div className="flex min-h-screen items-center justify-center p-8 text-center">
           {isChunkError ? (
-            <p style={{ color: "#9ca3af", fontSize: "0.875rem" }}>Memuat versi terbaru…</p>
+            <p className="text-sm text-slate-400">Memuat versi terbaru…</p>
           ) : (
-            <div>
-              <h2 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "1rem" }}>Terjadi kesalahan</h2>
+            <div className="max-w-sm space-y-4">
+              <h2 className="text-base font-bold text-slate-900">Terjadi kesalahan</h2>
+              <p className="text-xs text-slate-500">
+                Aplikasi mengalami kendala saat memuat. Silakan muat ulang halaman.
+              </p>
               <button
+                type="button"
                 onClick={reset}
-                style={{ background: "#111", color: "#fff", border: "none", borderRadius: "9999px", padding: "0.5rem 1.25rem", fontSize: "0.75rem", cursor: "pointer" }}
+                className="rounded-full bg-slate-900 px-5 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-800 active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
               >
                 Coba lagi
               </button>

@@ -14,16 +14,23 @@ export async function GET() {
       getSettings(),
       getCategories(),
     ]);
-    return NextResponse.json({
-      pricing: settings.pricing,
-      site: settings.site,
-      // Satu-satunya tempat pengalihan ini dipasang: /api/config adalah hulu
-      // kontak untuk footer, dashboard, halaman jual/jasa/dicari sekaligus.
-      contact: await kontakDenganCadangan(settings.contact),
-      categories,
-      popupAd: settings.popupAd,
-      mading: settings.mading,
-    });
+    return NextResponse.json(
+      {
+        pricing: settings.pricing,
+        site: settings.site,
+        // Satu-satunya tempat pengalihan ini dipasang: /api/config adalah hulu
+        // kontak untuk footer, dashboard, halaman jual/jasa/dicari sekaligus.
+        contact: await kontakDenganCadangan(settings.contact),
+        categories,
+        popupAd: settings.popupAd,
+        mading: settings.mading,
+      },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+        },
+      }
+    );
   } catch (e) {
     return jawabGalat(e);
   }

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { getUserSession } from "@/lib/auth";
+import { getUserSessionAsync } from "@/lib/auth";
 import { sendWa } from "@/lib/fonnte";
 import { jawabGalat } from "@/lib/jawabGalat";
 
@@ -28,7 +28,7 @@ export async function GET(req, { params }) {
     }
 
     // Verifikasi pemilik
-    const wa = getUserSession();
+    const wa = await getUserSessionAsync();
     if (!wa || wa !== oprec.ukm_wa) {
       return NextResponse.json({ error: "Hanya pengurus organisasi yang dapat melihat data pendaftar." }, { status: 403 });
     }
@@ -64,7 +64,7 @@ export async function GET(req, { params }) {
 // PATCH /api/oprec/[id] — Update status submission atau oprec
 export async function PATCH(req, { params }) {
   try {
-    const wa = getUserSession();
+    const wa = await getUserSessionAsync();
     if (!wa) {
       return NextResponse.json({ error: "Silakan login terlebih dahulu." }, { status: 401 });
     }
@@ -155,7 +155,7 @@ export async function PATCH(req, { params }) {
 // DELETE /api/oprec/[id] — Tutup / Hapus formulir Oprec
 export async function DELETE(req, { params }) {
   try {
-    const wa = getUserSession();
+    const wa = await getUserSessionAsync();
     if (!wa) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

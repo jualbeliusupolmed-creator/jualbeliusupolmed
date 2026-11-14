@@ -8,8 +8,16 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     testTimeout: 30000,
+    poolOptions: {
+      forks: {
+        maxForks: 4,
+        minForks: 1,
+      },
+    },
     setupFiles: ['./vitest.setup.mjs'],
     exclude: [
+      '**/node_modules/**',
+      'OPEN PO/**',
       'bot-wa/**',
       'node_modules/**',
       '.next/**',

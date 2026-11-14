@@ -29,7 +29,7 @@ export const KOLOM_PROFIL =
   "slug, store_name, tagline, logo_url, banner_url, store_area, store_hours, " +
   "store_instagram, store_gmaps, store_accent, store_open, store_announcement, " +
   "store_status, store_requested_at, store_approved_at, store_reject_note, " +
-  "store_updated_at, trusted_seller, distributor, subscription_tier, " +
+  "store_updated_at, trusted_seller, student_verified, distributor, subscription_tier, " +
   "subscription_expires_at, referral_code, free_bumps, email, email_google, auth_provider, " +
   "user_id, home_university_id, home_unit_id, affiliation_status, verified_university_id, " +
   "fyp_province_id, fyp_scope, fyp_universities, created_at";
@@ -173,7 +173,7 @@ export function normalisasiIsian(isian) {
     if (k === "store_accent") { out[k] = aksenAman(v); continue; }
     if (GAMBAR.includes(k)) { out[k] = bersihkanGambar(v); continue; }
     if (k === "fyp_scope") {
-      out[k] = ["campus", "province", "all", "custom"].includes(v) ? v : "campus";
+      out[k] = v === "all" ? "province" : ["campus", "province", "custom"].includes(v) ? v : "campus";
       continue;
     }
     if (k === "fyp_province_id") {

@@ -299,7 +299,6 @@ export default function MadingClient({ initialPosts = [] }) {
     }
   };
 
-  // Handle Submit Comment
   const handleSendComment = async (postId) => {
     if (!newCommentText.trim()) return;
     setSubmittingComment(true);
@@ -377,7 +376,6 @@ export default function MadingClient({ initialPosts = [] }) {
     );
   };
 
-  // Handle Submit New Post
   const handleCreatePost = async (e) => {
     e.preventDefault();
     if (!formData.content.trim()) {

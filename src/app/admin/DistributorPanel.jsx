@@ -17,22 +17,18 @@ export default function DistributorPanel({ settings: initialSettings, categories
   const [toast, setToast] = useState(null);
   const [busy, setBusy] = useState(false);
 
-  // State: daftar distributor
   const [distributors, setDistributors] = useState([]);
   const [loadingDist, setLoadingDist] = useState(true);
 
-  // State: generate invite
   const [inviteWa, setInviteWa] = useState("");
   const [generatedLink, setGeneratedLink] = useState("");
   const [recentInvites, setRecentInvites] = useState([]);
 
-  // State: fee rules
   const distCfg = initialSettings?.distributor || {};
   const [autoAddPrice, setAutoAddPrice] = useState(distCfg.autoAddPrice !== false);
   const [digestEnabled, setDigestEnabled] = useState(distCfg.digestEnabled !== false);
   const [feeRules, setFeeRules] = useState(distCfg.rules ?? DEFAULT_FEE_RULES);
 
-  // State: edit distributor categories
   const [editingCat, setEditingCat] = useState(null); // seller_wa
   const [editCatList, setEditCatList] = useState([]);
 

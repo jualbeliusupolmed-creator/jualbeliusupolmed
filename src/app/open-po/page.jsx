@@ -1,6 +1,6 @@
 import { fetchOpenPoBatches } from "@/lib/openPo";
 import OpenPoClient from "./OpenPoClient";
-import { getSellerSession } from "@/lib/auth";
+import { getSellerSessionAsync } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -34,5 +34,5 @@ export default async function OpenPoPage() {
     initialError = "Open PO belum tersedia karena database baru belum disiapkan.";
   }
 
-  return <OpenPoClient initialBatches={batches || []} isAuthenticated={!!getSellerSession()} initialError={initialError} />;
+  return <OpenPoClient initialBatches={batches || []} isAuthenticated={!!await getSellerSessionAsync()} initialError={initialError} />;
 }

@@ -21,9 +21,9 @@ export default function NotFound() {
       
       <Link 
         href="/"
-        className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-full font-bold shadow-md shadow-primary/25 hover:bg-primary/95 active:scale-95 transition-all"
+        className="inline-flex items-center gap-2 bg-emerald-800 text-white px-6 py-2.5 rounded-full text-sm font-semibold shadow-xs hover:bg-emerald-900 active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
       >
-        <Icon.Home className="w-5 h-5" />
+        <Icon.Home className="w-4 h-4" aria-hidden="true" />
         <span>Kembali ke Beranda</span>
       </Link>
     </div>

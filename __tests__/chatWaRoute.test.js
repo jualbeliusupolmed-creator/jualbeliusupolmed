@@ -15,6 +15,8 @@ vi.mock("@/lib/rateLimit", () => ({
   getClientIp: mocks.getClientIp,
 }));
 
+vi.mock("@/lib/auth", () => ({ getSellerSessionAsync: vi.fn(() => null) }));
+
 import { GET } from "@/app/chat-wa/[id]/route";
 
 const LISTING_ID_1 = "11111111-1111-4111-8111-111111111111";
@@ -61,7 +63,7 @@ describe("GET /chat-wa/[id] - WhatsApp Contact Proxy", () => {
     expect(redirectLocation).toContain("CALC1");
     expect(res.headers.get("referrer-policy")).toBe("no-referrer");
     expect(res.headers.get("cache-control")).toBe("no-store");
-    expect(select).toHaveBeenCalledWith("id, title, seller_wa, seller_name, status, stock, listing_code");
+    expect(select).toHaveBeenCalledWith("id, title, seller_wa, seller_name, status, stock, listing_code, university_id");
     expect(insert).toHaveBeenCalled();
   });
 

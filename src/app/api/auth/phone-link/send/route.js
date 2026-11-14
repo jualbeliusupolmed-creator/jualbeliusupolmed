@@ -1,6 +1,6 @@
 import { randomInt } from "node:crypto";
 import { NextResponse } from "next/server";
-import { getSellerSession } from "@/lib/auth";
+import { getSellerSessionAsync } from "@/lib/auth";
 import { formatWa } from "@/lib/constants";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimitDistributed, getClientIp } from "@/lib/rateLimit";
@@ -17,7 +17,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Permintaan tidak valid." }, { status: 403 });
   }
 
-  const identity = getSellerSession();
+  const identity = await getSellerSessionAsync();
   if (!identity || formatWa(identity)) {
     return NextResponse.json({ error: "Masuk dengan akun Google yang belum memiliki WhatsApp." }, { status: 403 });
   }

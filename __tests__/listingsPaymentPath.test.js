@@ -65,13 +65,25 @@ vi.mock("@/lib/supabaseAdmin", () => ({
         };
       }
       if (table === "seller_profiles") {
+        const profile = { wa: "081234567890", name: "Ahmad Dani", store_status: "draf", home_university_id: "ui" };
         return {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
-              maybeSingle: vi.fn(() => Promise.resolve({ data: { wa: "081234567890", name: "Ahmad Dani", store_status: "draf" }, error: null })),
+              maybeSingle: vi.fn(() => Promise.resolve({ data: profile, error: null })),
             })),
+            or: vi.fn(() => ({ maybeSingle: vi.fn(() => Promise.resolve({ data: profile, error: null })) })),
           })),
           upsert: vi.fn(() => Promise.resolve({ data: null, error: null })),
+        };
+      }
+      if (table === "universities") {
+        const university = { id: "ui", code: "UI", name: "Universitas Indonesia", province_id: "dki-jakarta", status: "active" };
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn((column) => column === "id"
+              ? { maybeSingle: vi.fn(() => Promise.resolve({ data: university, error: null })) }
+              : { eq: vi.fn(() => ({ limit: vi.fn(() => Promise.resolve({ data: [university], error: null })) })) }),
+          })),
         };
       }
       return {
@@ -116,13 +128,14 @@ describe("Tahap 4 - Listing Route Paid vs Free Path Integrity", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockPayments.length = 0;
-    vi.spyOn(authLib, "getSellerSession").mockReturnValue("081234567890");
+    vi.spyOn(authLib, "getSellerSessionAsync").mockResolvedValue("081234567890");
   });
 
   it("handles paid mode correctly without dead code: creates payment record and returns paymentUrl", async () => {
     mockSettingsPricing = { freeMode: false, adFee: 5000, listingDays: 14 };
     vi.mocked(settingsLib.getSettings).mockResolvedValue({
       pricing: { freeMode: false, adFee: 5000, listingDays: 14 },
+      campuses: [{ id: "ui", shortName: "UI", name: "Universitas Indonesia", provinceId: "dki-jakarta", active: true }],
     });
 
     const payload = {
@@ -164,6 +177,7 @@ describe("Tahap 4 - Listing Route Paid vs Free Path Integrity", () => {
     mockSettingsPricing = { freeMode: true, adFee: 0, listingDays: 14 };
     vi.mocked(settingsLib.getSettings).mockResolvedValue({
       pricing: { freeMode: true, adFee: 0, listingDays: 14 },
+      campuses: [{ id: "ui", shortName: "UI", name: "Universitas Indonesia", provinceId: "dki-jakarta", active: true }],
     });
 
     const payload = {

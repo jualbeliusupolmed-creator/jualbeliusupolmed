@@ -10,10 +10,13 @@ import { decodeSellerSlug, encodeSellerSlug, maskPhone, parseSellerParam } from 
 import { Icon } from "@/components/Icons";
 import { fetchOpenPoBatches } from "@/lib/openPo";
 import { toPublicListing } from "@/lib/dbHelpers";
+import { getSellerSessionAsync } from "@/lib/auth";
+import { loadMarketplaceRegion, loadSellerMarketplaceRegion } from "@/lib/marketplaceRegion";
 
-export const revalidate = 300; // ISR 5 menit — cukup segar untuk marketplace
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
-async function getSellerData(wa) {
+async function getSellerData(wa, sessionIdentity = null) {
   try {
     const raw = decodeURIComponent(String(wa || "")).trim();
     const supa = getAdminClient();
@@ -70,20 +73,34 @@ async function getSellerData(wa) {
 
     if (!targetWa) return null;
 
+    let viewerProvince = null;
+    if (sessionIdentity) {
+      const [viewerRegion, sellerRegion] = await Promise.all([
+        loadMarketplaceRegion(supa, sessionIdentity),
+        loadSellerMarketplaceRegion(supa, targetWa),
+      ]);
+      if (!viewerRegion.province || sellerRegion.province !== viewerRegion.province) return null;
+      viewerProvince = viewerRegion.province;
+    }
+
     // Ambil semua iklan aktif penjual
-    const { data: listings } = await supa
+    let listingsQuery = supa
       .from("listings")
       .select("*, seller_wa")
       .eq("seller_wa", targetWa)
       .eq("status", "active")
       .order("bumped_at", { ascending: false });
+    if (viewerProvince) listingsQuery = listingsQuery.eq("seller_province_id", viewerProvince);
+    const { data: listings } = await listingsQuery;
 
     // Ambil total terjual + views dari semua iklan
-    const { data: allListings } = await supa
+    let allListingsQuery = supa
       .from("listings")
       .select("status, views, created_at, seller_name")
       .eq("seller_wa", targetWa)
       .order("created_at", { ascending: true });
+    if (viewerProvince) allListingsQuery = allListingsQuery.eq("seller_province_id", viewerProvince);
+    const { data: allListings } = await allListingsQuery;
 
     if ((!allListings || allListings.length === 0) && !profile) {
       return null;
@@ -129,13 +146,15 @@ async function getSellerData(wa) {
     });
 
     // Ambil iklan terjual (sold)
-    const { data: soldListings } = await supa
+    let soldListingsQuery = supa
       .from("listings")
       .select("*, seller_wa")
       .eq("seller_wa", targetWa)
       .eq("status", "sold")
       .order("bumped_at", { ascending: false })
       .limit(12); // Batasi 12 terbaru
+    if (viewerProvince) soldListingsQuery = soldListingsQuery.eq("seller_province_id", viewerProvince);
+    const { data: soldListings } = await soldListingsQuery;
 
     // Apply profiles manually
     if (listings && listings.length > 0) {
@@ -192,7 +211,8 @@ async function getSellerData(wa) {
 }
 
 export async function generateMetadata({ params }) {
-  const data = await getSellerData(params.wa);
+  const sessionIdentity = await getSellerSessionAsync();
+  const data = await getSellerData(params.wa, sessionIdentity);
   if (!data) return { title: "Penjual tidak ditemukan" };
   const name = data.seller.seller_name;
   const username = data.seller.slug || encodeSellerSlug(data.seller.seller_wa);
@@ -229,9 +249,10 @@ function StarDisplay({ value }) {
       {[1, 2, 3, 4, 5].map((s) => (
         <svg
           key={s}
+          aria-hidden="true"
           viewBox="0 0 20 20"
           fill="currentColor"
-          className={`w-4 h-4 ${s <= Math.round(value) ? "text-amber-400" : "text-gray-200"}`}
+          className={`w-4 h-4 ${s <= Math.round(value) ? "text-amber-400" : "text-slate-200 dark:text-slate-700"}`}
         >
           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
         </svg>
@@ -322,18 +343,14 @@ export default async function SellerProfilePage({ params }) {
                 </span>
               )}
               {isDistributor && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 dark:bg-orange-900/40 px-2.5 py-0.5 text-xs font-bold text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-800/50" title="Distributor Resmi">
-                   DISTRIBUTOR
-                </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-950/40 px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-800" title="Distributor Resmi">Distributor Resmi</span>
               )}
               {seller.subscription_tier === "pro" && new Date(seller.subscription_expires_at) > new Date() && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-xs font-bold text-amber-700 dark:text-amber-400" title="Penjual Pro">
-                  ⭐ PRO
-                </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-950/40 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 dark:text-emerald-300" title="Penjual Pro">Penjual Pro</span>
               )}
               {seller.trusted_seller && (
                 <span className="inline-flex items-center justify-center rounded-full bg-blue-100 p-1 text-blue-500 dark:bg-blue-900/40 dark:text-blue-400" title="Penjual Terpercaya">
-                  <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                 </span>
@@ -346,17 +363,17 @@ export default async function SellerProfilePage({ params }) {
             )}
           </div>
           {/* Identitas Kampus & Fakultas */}
-          <p className="mt-1 text-sm font-medium text-gray-600 dark:text-slate-300 flex items-center gap-2 flex-wrap">
-            <span>🎓 Mahasiswa {seller.campus || "Kampus"}</span>
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600 dark:text-slate-300">
+            <span>Mahasiswa {seller.campus || "Kampus"}</span>
             {seller.faculty && (
-              <span className="text-gray-400 dark:text-slate-500">· Fakultas {seller.faculty}</span>
+              <span className="text-slate-400 dark:text-slate-500">Fakultas {seller.faculty}</span>
             )}
             {memberSince && (
-              <span className="text-gray-400 dark:text-slate-500">
-                · Bergabung {new Date(memberSince).toLocaleDateString("id-ID", { month: "long", year: "numeric" })}
+              <span className="text-slate-400 dark:text-slate-500">
+                Bergabung {new Date(memberSince).toLocaleDateString("id-ID", { month: "long", year: "numeric" })}
               </span>
             )}
-          </p>
+          </div>
 
           {/* Lencana Verifikasi Transparan */}
           <div className="mt-3 flex flex-wrap gap-2">
@@ -384,9 +401,9 @@ export default async function SellerProfilePage({ params }) {
             <div className="mt-2.5">
               <Link
                 href={`/toko/${seller.slug}`}
-                className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 px-3 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-300 transition-all hover:bg-emerald-100"
+                className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 px-3 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-300 transition-colors hover:bg-emerald-100 active:translate-y-px"
               >
-                🏪 Kunjungi Toko Resmi: {seller.store_name} →
+                <span>Kunjungi Toko Resmi: {seller.store_name}</span>
               </Link>
             </div>
           )}
@@ -477,7 +494,7 @@ export default async function SellerProfilePage({ params }) {
             </>
           ) : (
             <>
-              <p className="text-2xl font-extrabold text-gray-300 dark:text-slate-700">—</p>
+              <p className="text-2xl font-extrabold text-slate-300 dark:text-slate-700">-</p>
               <p className="text-xs text-gray-400 mt-0.5">Belum ada rating</p>
             </>
           )}
@@ -499,7 +516,7 @@ export default async function SellerProfilePage({ params }) {
             </svg>
           </p>
           <p className="mt-2">Penjual ini belum punya barang aktif.</p>
-          <Link href="/" className="btn-outline mt-4">
+          <Link href="/" className="btn-outline mt-4 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600">
             Jelajahi Marketplace
           </Link>
         </div>
@@ -514,7 +531,7 @@ export default async function SellerProfilePage({ params }) {
       {/* Riwayat barang terjual — list kompak, tidak mengganggu barang aktif */}
       {soldListings.length > 0 && (
         <div className="mt-8 border-t border-gray-100 dark:border-slate-800 pt-6">
-          <p className="text-sm font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wide mb-3">
+          <p className="text-xs font-semibold text-slate-500 mb-2">
             Riwayat Terjual ({soldCount})
           </p>
           <ul className="space-y-1.5">
@@ -553,7 +570,7 @@ export default async function SellerProfilePage({ params }) {
                     </span>
                   </div>
                   {r.buyer_name && (
-                    <span className="text-xs text-gray-400">— {r.buyer_name}</span>
+                    <span className="text-xs text-slate-400">oleh {r.buyer_name}</span>
                   )}
                 </div>
                 {r.comment && (
@@ -583,7 +600,7 @@ export default async function SellerProfilePage({ params }) {
               rel="noopener noreferrer"
               className="text-xs font-bold text-primary hover:underline"
             >
-              Buka di OpenPO ↗
+              Buka di OpenPO
             </a>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
@@ -593,11 +610,11 @@ export default async function SellerProfilePage({ params }) {
                 href={b.url || "/open-po"}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="card p-2.5 sm:p-4 hover:border-primary/40 hover:shadow-md transition-all flex flex-col justify-between group rounded-xl sm:rounded-2xl"
+                className="card p-2.5 sm:p-4 hover:border-emerald-600/40 hover:shadow-md transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 flex flex-col justify-between group rounded-xl sm:rounded-2xl"
               >
                 <div>
                   <div className="flex items-center justify-between text-[9px] sm:text-xs text-gray-500 mb-1 sm:mb-1.5">
-                    <span className="font-bold text-emerald-600 uppercase tracking-wider text-[8px] sm:text-[10px]">
+                    <span className="font-semibold text-emerald-600 text-[9px] sm:text-xs">
                       {b.emoji} {b.category}
                     </span>
                     <span className="text-[8px] sm:text-[10px]">Sisa {b.quota - b.reserved}</span>
@@ -615,7 +632,7 @@ export default async function SellerProfilePage({ params }) {
                 </div>
                 <div className="mt-2 sm:mt-3 pt-1.5 sm:pt-2.5 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between text-[10px] sm:text-xs font-bold text-emerald-600">
                   <span>Pesan Slot</span>
-                  <span>→</span>
+                  <span aria-hidden="true">→</span>
                 </div>
               </a>
             ))}

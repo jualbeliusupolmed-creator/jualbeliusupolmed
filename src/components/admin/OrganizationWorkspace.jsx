@@ -64,6 +64,24 @@ function normalizeHeader(value) {
   return String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 }
 
+function normalizeProvinceKey(value) {
+  return normalizeHeader(value)
+    .replace(/^prov(?:insi)?\s+/, "")
+    .replace(/^d\s+k\s+i\s+/, "dki ")
+    .replace(/^d\s+i\s+/, "di ")
+    .replace(/^bangka\s+belitung$/, "kepulauan bangka belitung")
+    .replace(/^kep\s+bangka\s+belitung$/, "kepulauan bangka belitung");
+}
+
+function canonicalProvinceName(value) {
+  const sourceName = String(value || "").trim().replace(/^prov(?:insi)?\.?\s*/i, "");
+  const key = normalizeProvinceKey(sourceName);
+  if (key === "dki jakarta") return "DKI Jakarta";
+  if (key === "di yogyakarta") return "DI Yogyakarta";
+  if (key === "kepulauan bangka belitung") return "Kepulauan Bangka Belitung";
+  return sourceName;
+}
+
 export function previewNationalCatalogCsv(text, currentCatalog) {
   const rows = parseCsvRows(text);
   if (rows.length < 2) throw new Error("CSV kosong atau hanya berisi judul kolom.");
@@ -71,18 +89,18 @@ export function previewNationalCatalogCsv(text, currentCatalog) {
   const findColumn = (aliases) => headers.findIndex((header) => aliases.includes(header));
   const codeIndex = findColumn(["npsn", "kode pt", "kode perguruan tinggi", "kode"]);
   const nameIndex = findColumn(["nama perguruan tinggi", "nama pt", "nama institusi", "nama perguruan tinggi negeri"]);
-  const provinceIndex = findColumn(["provinsi", "nama provinsi", "province"]);
+  const provinceIndex = findColumn(["provinsi", "nama provinsi", "province", "provinsi pt", "prov pt"]);
   if (nameIndex < 0 || provinceIndex < 0) throw new Error("Kolom wajib belum ditemukan. CSV harus memiliki kolom Nama Perguruan Tinggi dan Provinsi; NPSN disarankan.");
 
   const provincesById = new Map((currentCatalog.provinces || []).map((item) => [item.id, item]));
   const existingUniversities = new Set((currentCatalog.universities || []).map((item) => {
     const provinceName = provincesById.get(item.provinceId)?.name || item.provinceId || "";
-    return `${normalizeHeader(item.name)}|${normalizeHeader(provinceName)}`;
+    return `${normalizeHeader(item.name)}|${normalizeProvinceKey(provinceName)}`;
   }));
   const existingIds = new Set((currentCatalog.universities || []).map((item) => String(item.id || "").toLowerCase()));
   const provinceIds = new Map((currentCatalog.provinces || []).map((item) => [item.id, normalizeHeader(item.name)]));
   const existingCodes = new Set((currentCatalog.universities || []).map((item) => String(item.code || "").toLowerCase()));
-  const existingProvinces = new Map((currentCatalog.provinces || []).map((item) => [normalizeHeader(item.name), item]));
+  const existingProvinces = new Map((currentCatalog.provinces || []).map((item) => [normalizeProvinceKey(item.name), item]));
   const additions = [];
   const newProvinces = new Map();
   const skipped = [];
@@ -90,11 +108,11 @@ export function previewNationalCatalogCsv(text, currentCatalog) {
 
   for (const row of rows.slice(1)) {
     const name = String(row[nameIndex] || "").trim();
-    const provinceName = String(row[provinceIndex] || "").trim();
+    const provinceName = canonicalProvinceName(row[provinceIndex]);
     const sourceCode = codeIndex >= 0 ? String(row[codeIndex] || "").trim() : "";
     if (!name || !provinceName) { skipped.push("Baris tanpa nama institusi atau provinsi"); continue; }
     const nameKey = normalizeHeader(name);
-    const provinceKey = normalizeHeader(provinceName);
+    const provinceKey = normalizeProvinceKey(provinceName);
     const identityKey = sourceCode ? `code:${sourceCode.toLowerCase()}` : `name:${nameKey}|${provinceKey}`;
     const nameLocationKey = `${nameKey}|${provinceKey}`;
     if (seenRows.has(identityKey) || existingUniversities.has(nameLocationKey)) { skipped.push(`${name} (duplikat)`); continue; }

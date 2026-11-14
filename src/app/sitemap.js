@@ -10,7 +10,7 @@ export default async function sitemap() {
   const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").trim();
 
   // Catatan: `/blog` SENGAJA tidak ada di sini. Indeks blog pindah ke
-  // `/mading?tab=blog` dan `/blog` cuma menjawab 307 ke sana — alamat yang
+  // `/mading?tab=blog` dan `/blog` cuma menjawab 307 ke sana: alamat yang
   // mengalihkan di dalam peta situs berarti mesin pencari mengantre satu
   // permintaan untuk tidak menemukan apa pun, lalu menghitungnya sebagai
   // duplikat dari `/mading` yang sudah terdaftar di bawah. Tulisan blognya

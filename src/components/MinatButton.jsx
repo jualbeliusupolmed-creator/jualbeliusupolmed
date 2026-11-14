@@ -96,19 +96,20 @@ export default function MinatButton({ listing, className, children }) {
       {/* Template Picker Modal */}
       {showPicker && (
         <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-950/70 p-4"
           onClick={(e) => e.target === e.currentTarget && setShowPicker(false)}
         >
-          <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 shadow-2xl overflow-hidden animate-fade-in">
+          <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 shadow-xl overflow-hidden motion-safe:animate-fade-in motion-reduce:animate-none">
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-slate-800">
-              <p className="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-1.5">
-                {isWaMode ? " Chat WhatsApp Penjual" : " Pilih Pesan ke Penjual"}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800">
+              <p className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
+                {isWaMode ? "Chat WhatsApp Penjual" : "Pilih Pesan ke Penjual"}
               </p>
               <button
+                type="button"
                 onClick={() => setShowPicker(false)}
                 aria-label="Tutup pilihan pesan"
-                className="text-gray-400 hover:text-gray-600 text-lg leading-none"
+                className="text-slate-400 hover:text-slate-600 text-lg leading-none transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
               >
                 <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
               </button>
@@ -121,8 +122,9 @@ export default function MinatButton({ listing, className, children }) {
                 return (
                   <button
                     key={i}
+                    type="button"
                     onClick={() => sendMinat(msg)}
-                    className="w-full text-left rounded-xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-800/50 px-4 py-3 text-sm text-gray-800 dark:text-slate-200 hover:bg-emerald-50 hover:border-emerald-200 dark:hover:bg-emerald-950/30 dark:hover:border-emerald-800 transition-all"
+                    className="w-full text-left rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 px-4 py-3 text-sm text-slate-800 dark:text-slate-200 hover:bg-emerald-50 hover:border-emerald-200 dark:hover:bg-emerald-950/30 dark:hover:border-emerald-800 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
                   >
                     {msg}
                   </button>
@@ -131,7 +133,7 @@ export default function MinatButton({ listing, className, children }) {
 
               {/* Custom message */}
               <div className="pt-1">
-                <p className="text-xs text-gray-400 dark:text-slate-500 mb-1.5 px-1">
+                <p className="text-xs text-slate-400 dark:text-slate-500 mb-1.5 px-1">
                   Atau ketik pesan sendiri:
                 </p>
                 <div className="flex gap-2">
@@ -142,13 +144,14 @@ export default function MinatButton({ listing, className, children }) {
                     onKeyDown={(e) =>
                       e.key === "Enter" && customMsg.trim() && sendMinat(customMsg.trim())
                     }
-                    placeholder="Tulis pesan..."
+                    placeholder="Tulis pesan…"
                     className="input flex-1 text-sm py-2"
                   />
                   <button
+                    type="button"
                     onClick={() => customMsg.trim() && sendMinat(customMsg.trim())}
                     disabled={!customMsg.trim()}
-                    className="btn-wa px-3 text-sm disabled:opacity-40"
+                    className="btn-wa px-3 text-sm disabled:opacity-40 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600"
                   >
                     Kirim
                   </button>

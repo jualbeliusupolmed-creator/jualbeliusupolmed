@@ -32,7 +32,7 @@ export async function POST(req) {
     if (!listing)
       return NextResponse.json({ error: "Listing tidak ada" }, { status: 404 });
 
-    const tolak = tolakBukanPemilik(listing.seller_wa, { aksi: "menyundul iklan" });
+    const tolak = await tolakBukanPemilik(listing.seller_wa, { aksi: "menyundul iklan" });
     if (tolak) return tolak;
 
     // Check if seller has unpaid sold fees (Account locked - Cara 2)

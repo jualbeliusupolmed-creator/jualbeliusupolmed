@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { getUserSession } from "@/lib/auth";
+import { getUserSessionAsync } from "@/lib/auth";
 import { hashIdentitas } from "@/lib/identitasHash";
 
 export const dynamic = "force-dynamic";
@@ -33,7 +33,7 @@ const SAPAAN_TERHUBUNG = " Kalian telah terhubung!";
 // dengan partner sebelumnya.
 export async function GET() {
   try {
-    const wa = getUserSession();
+    const wa = await getUserSessionAsync();
     if (!wa) {
       return NextResponse.json({ error: "Silakan login terlebih dahulu." }, { status: 401 });
     }

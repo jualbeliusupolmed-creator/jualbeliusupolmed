@@ -20,6 +20,7 @@ vi.mock("@/lib/fonnte", () => ({
 
 vi.mock("@/lib/auth", () => ({
   getSellerSession: vi.fn(() => "081234567890"),
+  getSellerSessionAsync: vi.fn(() => "081234567890"),
 }));
 
 const mockSingle = vi.fn();

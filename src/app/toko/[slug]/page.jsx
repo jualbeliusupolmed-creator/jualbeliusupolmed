@@ -7,10 +7,14 @@ import ProductCard from "@/components/ProductCard";
 import TokoHero from "@/components/TokoHero";
 import TokoKatalog from "@/components/TokoKatalog";
 import { toPublicListing } from "@/lib/dbHelpers";
+import { getSellerSessionAsync } from "@/lib/auth";
+import { loadMarketplaceRegion, loadSellerMarketplaceRegion } from "@/lib/marketplaceRegion";
+import { cn } from "@/lib/utils";
 
-export const revalidate = 300; // ISR 5 menit, sama dengan halaman penjual
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
-async function ambilToko(slug) {
+async function ambilToko(slug, sessionIdentity = null) {
   try {
     const supa = getAdminClient();
 
@@ -28,11 +32,28 @@ async function ambilToko(slug) {
     // untuk umum — persis seperti sebelum ia mengajukan.
     if (!tokoAktif(profil)) return null;
 
+    let viewerProvince = null;
+    if (sessionIdentity) {
+      const [viewerRegion, sellerRegion] = await Promise.all([
+        loadMarketplaceRegion(supa, sessionIdentity),
+        loadSellerMarketplaceRegion(supa, profil.wa),
+      ]);
+      if (!viewerRegion.province || sellerRegion.province !== viewerRegion.province) return null;
+      viewerProvince = viewerRegion.province;
+    }
+
+    let aktifQuery = supa.from("listings").select("*").eq("seller_wa", profil.wa)
+      .eq("status", "active").order("bumped_at", { ascending: false });
+    let terjualQuery = supa.from("listings").select("*").eq("seller_wa", profil.wa)
+      .eq("status", "sold").order("created_at", { ascending: false }).limit(6);
+    if (viewerProvince) {
+      aktifQuery = aktifQuery.eq("seller_province_id", viewerProvince);
+      terjualQuery = terjualQuery.eq("seller_province_id", viewerProvince);
+    }
+
     const [{ data: aktif }, { data: terjual }, { data: ulasan }] = await Promise.all([
-      supa.from("listings").select("*").eq("seller_wa", profil.wa)
-        .eq("status", "active").order("bumped_at", { ascending: false }),
-      supa.from("listings").select("*").eq("seller_wa", profil.wa)
-        .eq("status", "sold").order("created_at", { ascending: false }).limit(6),
+      aktifQuery,
+      terjualQuery,
       // Tabelnya `seller_ratings` dengan kolom `rating` (bukan `stars`) — nama
       // yang beda tipis ini sudah pernah membuat penilaian tidak muncul.
       supa.from("seller_ratings").select("rating, comment, buyer_name, created_at")
@@ -44,9 +65,11 @@ async function ambilToko(slug) {
     // kartu menanyakannya lagi ke basis data.
     for (const l of [...(aktif || []), ...(terjual || [])]) l.seller_profiles = profil;
 
-    const { count: jumlahTerjual } = await supa
+    let soldCountQuery = supa
       .from("listings").select("id", { count: "exact", head: true })
       .eq("seller_wa", profil.wa).eq("status", "sold");
+    if (viewerProvince) soldCountQuery = soldCountQuery.eq("seller_province_id", viewerProvince);
+    const { count: jumlahTerjual } = await soldCountQuery;
 
     const daftarUlasan = ulasan || [];
     const rata = daftarUlasan.length
@@ -79,7 +102,7 @@ export async function generateMetadata({ params }) {
     || `${aktif.length} barang siap dibeli dari ${nama}. Pesan langsung lewat WhatsApp.`;
 
   return {
-    title: `${nama} — Toko Online`,
+    title: `${nama}: Toko Online`,
     description: ringkas,
     alternates: { canonical: alamat },
     openGraph: {
@@ -105,8 +128,11 @@ function Judul({ children, jumlah, warna, redup }) {
   return (
     <div className="mb-4 flex items-center gap-2.5">
       <span
-        className="h-5 w-1.5 shrink-0 rounded-full"
-        style={{ background: redup ? "#cbd5e1" : warna.utama }}
+        className={cn(
+          "h-5 w-1.5 shrink-0 rounded-full",
+          redup ? "bg-slate-300 dark:bg-slate-600" : ""
+        )}
+        style={redup ? undefined : { background: warna.utama }}
       />
       <h2 className="text-[17px] font-extrabold tracking-tight sm:text-lg">{children}</h2>
       {jumlah != null && (
@@ -123,9 +149,9 @@ function Info({ ikon, label, children }) {
   if (!children) return null;
   return (
     <div className="flex gap-3 py-2.5">
-      <span className="w-5 shrink-0 text-center text-sm" aria-hidden>{ikon}</span>
+      <span className="w-5 shrink-0 text-center text-sm" aria-hidden="true">{ikon}</span>
       <div className="min-w-0">
-        <p className="text-[11px] uppercase tracking-wide text-gray-400">{label}</p>
+        <p className="text-xs text-gray-500 dark:text-slate-400">{label}</p>
         <p className="mt-0.5 whitespace-pre-line text-sm text-gray-700 dark:text-slate-300">{children}</p>
       </div>
     </div>
@@ -133,7 +159,8 @@ function Info({ ikon, label, children }) {
 }
 
 export default async function HalamanToko({ params }) {
-  const data = await ambilToko(params.slug);
+  const sessionIdentity = await getSellerSessionAsync();
+  const data = await ambilToko(params.slug, sessionIdentity);
   if (!data) notFound();
 
   const { profil, aktif, terjual, jumlahTerjual, ulasan, rataUlasan } = data;
@@ -176,10 +203,10 @@ export default async function HalamanToko({ params }) {
             style={{ background: warna.utama }}
             aria-hidden
           >
-            <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z"/></svg>
+            <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z" /><path d="M5 17l.75 2.25L8 20l-2.25.75L5 23l-.75-2.25L2 20l2.25-.75L5 17z" /></svg>
           </span>
           <div className="min-w-0">
-            <p className="text-[11px] font-bold uppercase tracking-wide" style={{ color: warna.utama }}>
+            <p className="text-xs font-bold" style={{ color: warna.utama }}>
               Pengumuman toko
             </p>
             <p className="mt-0.5 whitespace-pre-line text-sm leading-relaxed" style={{ color: warna.teks }}>
@@ -206,7 +233,7 @@ export default async function HalamanToko({ params }) {
                   href={waLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-4 inline-block rounded-xl px-5 py-2.5 text-sm font-semibold text-white"
+                  className="mt-4 inline-block rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-xs transition-colors hover:opacity-90 active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600"
                   style={{ background: warna.utama }}
                 >
                   Tanya penjualnya
@@ -224,7 +251,7 @@ export default async function HalamanToko({ params }) {
           keterangan tokonya, dan cara membeli di sini. */}
       <section className="mt-8 grid gap-3 lg:grid-cols-2">
         <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="text-sm font-extrabold uppercase tracking-wide text-gray-500 dark:text-slate-400">
+          <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200">
             Tentang toko
           </h2>
           <div className="mt-2 divide-y divide-gray-100 dark:divide-slate-800">
@@ -232,8 +259,8 @@ export default async function HalamanToko({ params }) {
             <Info ikon="COD" label="Wilayah / COD">{profil.store_area}</Info>
             {profil.store_gmaps && (
               <Info ikon="MapPin" label="Lokasi Maps">
-                <a href={profil.store_gmaps} target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: warna.utama }}>
-                  Buka Peta ↗
+                <a href={profil.store_gmaps} target="_blank" rel="noopener noreferrer" className="hover:underline focus-visible:outline-2 focus-visible:outline-emerald-600 rounded-sm" style={{ color: warna.utama }}>
+                  Buka di Google Maps
                 </a>
               </Info>
             )}
@@ -243,13 +270,13 @@ export default async function HalamanToko({ params }) {
         </div>
 
         <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="text-sm font-extrabold uppercase tracking-wide text-gray-500 dark:text-slate-400">
+          <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200">
             Cara belanja di sini
           </h2>
           <ol className="mt-3 space-y-3">
             {[
               ["Pilih barangnya", "Ketuk barang di atas untuk melihat foto, harga, dan keterangan lengkapnya."],
-              ["Chat penjualnya", "Tombol WhatsApp membuka chat langsung ke penjual — tanya stok, nego, atau janjian."],
+              ["Chat penjualnya", "Tombol WhatsApp membuka chat langsung ke penjual: tanya stok, nego, atau janjian."],
               ["COD di kampus", "Ketemuan di titik yang disepakati. Kalau ada masalah, admin bisa dimintai tolong."],
             ].map(([judul, isi], i) => (
               <li key={judul} className="flex gap-3">
@@ -298,7 +325,7 @@ export default async function HalamanToko({ params }) {
         <section className="mt-8">
           <Judul warna={warna} redup>Pernah terjual</Judul>
           <p className="-mt-2 mb-4 pl-4 text-xs text-gray-500 dark:text-slate-400">
-            Bukan untuk dibeli — ini jejak transaksi yang sudah selesai.
+            Bukan untuk dibeli: ini jejak transaksi yang sudah selesai.
           </p>
           <div className="grid grid-cols-2 gap-2.5 xs:gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 opacity-70">
             {terjual.map((l) => (
@@ -327,14 +354,14 @@ export default async function HalamanToko({ params }) {
         <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
           <Link
             href="/dashboard?tab=profil"
-            className="rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+            className="rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-xs transition-colors hover:opacity-90 active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600"
             style={{ background: warna.utama }}
           >
             Buat toko punyamu
           </Link>
           <Link
             href="/"
-            className="rounded-xl border border-white/60 bg-white px-5 py-2.5 text-sm font-semibold shadow-sm transition hover:opacity-90"
+            className="rounded-xl border border-white/60 bg-white px-5 py-2.5 text-sm font-semibold shadow-xs transition-colors hover:opacity-90 active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600"
             style={{ color: warna.teks }}
           >
             Lihat barang lain
@@ -345,8 +372,8 @@ export default async function HalamanToko({ params }) {
       {/* Bilah lekat khusus ponsel: nomor penjual tidak boleh hilang di atas
           layar begitu orang menggulir katalognya. Dibuat melayang ala iOS. */}
       {waLink && (
-        <div className="fixed bottom-[80px] left-4 right-4 z-40 md:hidden flex justify-center pointer-events-none animate-fade-in-up">
-          <div className="pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-full bg-white/90 p-2 pl-3 shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-xl border border-gray-100 dark:bg-slate-900/90 dark:border-slate-800 dark:shadow-black/50">
+        <div className="fixed bottom-[80px] left-4 right-4 z-40 md:hidden flex justify-center pointer-events-none motion-safe:animate-fade-in-up motion-reduce:opacity-100">
+          <div className="pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-full bg-white/95 p-2 pl-3 shadow-lg border border-slate-200/80 dark:bg-slate-900/95 dark:border-slate-800">
             <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full ring-1 ring-black/5 dark:ring-white/10">
               {profil.logo_url ? (
                 // eslint-disable-next-line @next/next/no-img-element

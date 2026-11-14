@@ -113,11 +113,12 @@ export default async function DaftarHargaPage() {
       {/* Jual barang: 100% Gratis untuk mahasiswa */}
       <section className="mt-10">
         <h2 className="text-xl font-bold text-gray-900 border-b pb-2">1. Jual Barang &amp; Tawarkan Jasa Mahasiswa</h2>
-        <div className="mt-3 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 p-4 text-emerald-900">
-          <div className="flex items-center gap-2 font-bold text-base text-emerald-800">
-            <span>🎉 Gratis untuk Mahasiswa</span>
+        <div className="mt-3 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 p-4 text-emerald-900">
+          <div className="flex items-center gap-2 font-bold text-base text-emerald-900">
+            <span className="inline-block h-2 w-2 rounded-full bg-emerald-600" aria-hidden="true" />
+            <span>Gratis untuk Mahasiswa</span>
           </div>
-          <p className="mt-1 text-sm text-emerald-700 leading-relaxed">
+          <p className="mt-1 text-sm text-emerald-800 leading-relaxed">
             Tidak ada biaya tayang barang (Rp 0), bebas komisi transaksi antar-mahasiswa (0%), dan pembayaran langsung ke tangan penjual via COD atau transfer/QRIS pribadi.
           </p>
         </div>
@@ -131,16 +132,18 @@ export default async function DaftarHargaPage() {
             <div
               key={idx}
               className={`card flex flex-col justify-between p-5 relative ${
-                s.popular ? "border-primary ring-2 ring-primary/20" : ""
+                s.popular ? "border-emerald-600 ring-2 ring-emerald-600/20" : ""
               }`}
             >
-              {s.popular && (
-                <span className="badge absolute -top-3 right-4 bg-primary text-white text-[10px]">
-                  Terpopuler
-                </span>
-              )}
               <div>
-                <h3 className="font-bold text-gray-900">{s.title}</h3>
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="font-bold text-gray-900">{s.title}</h3>
+                  {s.popular && (
+                    <span className="rounded-full bg-emerald-800 px-2 py-0.5 text-[10px] font-semibold text-white">
+                      Paling Populer
+                    </span>
+                  )}
+                </div>
                 <div className="mt-2 flex items-baseline gap-1">
                   <span className="text-2xl font-extrabold text-primary">{rupiah(s.price)}</span>
                   <span className="text-xs text-gray-400">/{s.unit}</span>

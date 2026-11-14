@@ -5,13 +5,21 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getSettings, isAllowedCampus } from "@/lib/settings";
 import { rateLimit } from "@/lib/rateLimit";
 import { sendWa } from "@/lib/fonnte";
+import { loadMarketplaceRegion, loadUniversityProvince } from "@/lib/marketplaceRegion";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export async function GET() {
   try {
-    const batches = await fetchOpenPoBatches();
+    const session = await getOpenPoSession();
+    let provinceId;
+    if (session.wa) {
+      const region = await loadMarketplaceRegion(getAdminClient(), session.wa);
+      if (!region.province) return NextResponse.json({ success: true, batches: [] }, { headers: { "Cache-Control": "no-store" } });
+      provinceId = region.province;
+    }
+    const batches = await fetchOpenPoBatches({ provinceId });
     return NextResponse.json({ success: true, source: "main-project", realCount: batches.length, batches }, { headers: { "Cache-Control": "no-store" } });
   } catch {
     return NextResponse.json({ success: false, batches: [], error: "Open PO sedang tidak tersedia." }, { status: 503, headers: { "Cache-Control": "no-store" } });
@@ -19,7 +27,7 @@ export async function GET() {
 }
 
 export async function POST(req) {
-  const session = getOpenPoSession();
+  const session = await getOpenPoSession();
   if (!session.wa) return NextResponse.json({ error: session.error }, { status: session.status });
   const sellerWa = session.wa;
   const limit = rateLimit(`open-po-create:${sellerWa}`, { limit: 8, windowMs: 60 * 60 * 1000 });
@@ -47,18 +55,23 @@ export async function POST(req) {
   if (!/^https:\/\//i.test(imageUrl) && imageUrl && !imageUrl.startsWith("/")) return NextResponse.json({ error: "Foto harus memakai URL HTTPS atau path gambar situs." }, { status: 400 });
 
   const admin = getAdminClient();
-  let resolvedCampus = campus;
-  if (!resolvedCampus) {
-    const { data: prof } = await admin
-      .from("seller_profiles")
-      .select("campus, home_university_id")
-      .eq("wa", sellerWa)
-      .maybeSingle();
-    resolvedCampus = prof?.campus || "";
-  }
-
+  const region = await loadMarketplaceRegion(admin, sellerWa);
+  if (!region.province) return NextResponse.json({ error: "Pilih universitas acuan di profil sebelum membuat batch PO." }, { status: 409 });
+  const { data: sellerProfile } = await admin.from("seller_profiles")
+    .select("campus, home_university_id")
+    .eq("wa", sellerWa)
+    .maybeSingle();
+  const resolvedCampus = campus || sellerProfile?.campus || "";
   const settings = await getSettings();
   if (!isAllowedCampus(resolvedCampus, settings)) return NextResponse.json({ error: "Pilih kampus aktif dari daftar." }, { status: 400 });
+  const targetUni = (settings.campuses || []).find((item) =>
+    String(item.shortName || "").trim().toLowerCase() === resolvedCampus.toLowerCase() ||
+    String(item.id || "").trim().toLowerCase() === resolvedCampus.toLowerCase()
+  );
+  const targetRegion = await loadUniversityProvince(admin, targetUni?.id);
+  if (!targetUni || targetRegion?.province_id !== region.province) {
+    return NextResponse.json({ error: "Batch PO hanya bisa dibuat untuk kampus di provinsi acuanmu." }, { status: 403 });
+  }
 
   const { data, error } = await admin.rpc("create_open_po_batch", {
     p_seller_wa: sellerWa,
@@ -83,19 +96,6 @@ export async function POST(req) {
 
   // Tautkan user_id kanonikal dan university_id ke produk Open PO
   try {
-    const { data: sellerProfile } = await admin
-      .from("seller_profiles")
-      .select("user_id, home_university_id")
-      .eq("wa", sellerWa)
-      .maybeSingle();
-
-    const activeCampuses = settings.campuses || [];
-    const matchedUni = activeCampuses.find(
-      (c) => String(c.shortName || "").trim().toLowerCase() === campus.toLowerCase() ||
-             String(c.id || "").trim().toLowerCase() === campus.toLowerCase()
-    );
-    const resolvedUniId = matchedUni?.id || sellerProfile?.home_university_id || null;
-
     const { data: batchRow } = await admin
       .from("open_po_batches")
       .select("product_id")
@@ -105,7 +105,7 @@ export async function POST(req) {
     if (batchRow?.product_id) {
       await admin.from("open_po_products").update({
         user_id: sellerProfile?.user_id || null,
-        university_id: resolvedUniId,
+        university_id: targetUni.id,
       }).eq("id", batchRow.product_id);
     }
   } catch (err) {

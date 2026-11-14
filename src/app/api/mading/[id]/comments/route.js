@@ -3,7 +3,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { censorProfanity } from "@/lib/profanity";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { hashIdentitas } from "@/lib/identitasHash";
-import { getUserSession } from "@/lib/auth";
+import { getUserSessionAsync } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -83,7 +83,7 @@ export async function POST(request, { params }) {
     const postId = params.id;
     const body = await request.json();
     let { faculty, content, parent_id: parentId } = body;
-    const wa = getUserSession();
+    const wa = await getUserSessionAsync();
     if (!wa) return NextResponse.json({ error: "Silakan masuk untuk berkomentar." }, { status: 401 });
 
     if (!postId || !content || typeof content !== "string" || content.trim().length < 2) {

@@ -1,8 +1,8 @@
-import { getSellerSession } from "@/lib/auth";
+import { getSellerSessionAsync } from "@/lib/auth";
 import { formatWa } from "@/lib/constants";
 
-export function getOpenPoSession() {
-  const identifier = getSellerSession();
+export async function getOpenPoSession() {
+  const identifier = await getSellerSessionAsync();
   if (!identifier) {
     return {
       wa: "",

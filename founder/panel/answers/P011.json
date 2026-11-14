@@ -1,0 +1,13 @@
+{
+  "buys": true,
+  "purchases_first_month": 3,
+  "reason_code": "need",
+  "reason": "Anak Polmed butuh platform lokal karena selama ini grup terpecah-pecah dan susah cari sparepart atau alat lab.",
+  "objection": "Jangan sampai dominan anak USU aja, anak Polmed harus diakomodir",
+  "would_change_my_mind": "",
+  "price_too_cheap": 2000,
+  "price_cheap": 5000,
+  "price_expensive": 8000,
+  "price_too_expensive": 15000,
+  "id": "P011"
+}

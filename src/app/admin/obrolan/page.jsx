@@ -245,14 +245,14 @@ export default async function AuditCariTemanPage({ searchParams }) {
       {totalPages > 1 && (
         <nav className="mt-6 flex items-center justify-between font-sans" aria-label="Pagination audit chat">
           {page > 1 ? (
-            <Link href={`/admin/obrolan?page=${page - 1}&type=${typeFilter}${q ? `&q=${encodeURIComponent(q)}` : ""}`} className="px-4 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 text-slate-700 dark:text-slate-200">
-              ← Sebelumnya
+            <Link href={`/admin/obrolan?page=${page - 1}&type=${typeFilter}${q ? `&q=${encodeURIComponent(q)}` : ""}`} className="px-4 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 text-slate-700 dark:text-slate-200 active:translate-y-px transition-colors">
+              Sebelumnya
             </Link>
           ) : <span />}
           <span className="text-xs text-slate-500 font-semibold">Halaman {page} dari {totalPages}</span>
           {page < totalPages ? (
-            <Link href={`/admin/obrolan?page=${page + 1}&type=${typeFilter}${q ? `&q=${encodeURIComponent(q)}` : ""}`} className="px-4 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 text-slate-700 dark:text-slate-200">
-              Berikutnya →
+            <Link href={`/admin/obrolan?page=${page + 1}&type=${typeFilter}${q ? `&q=${encodeURIComponent(q)}` : ""}`} className="px-4 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 text-slate-700 dark:text-slate-200 active:translate-y-px transition-colors">
+              Berikutnya
             </Link>
           ) : <span />}
         </nav>

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { getSellerSession } from "@/lib/auth";
+import { getSellerSessionAsync } from "@/lib/auth";
 import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +26,7 @@ export async function POST(req) {
       return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
     }
 
-    const sesiWa = getSellerSession();
+    const sesiWa = await getSellerSessionAsync();
     if (!sesiWa) {
       return NextResponse.json(
         { error: "Sesi sudah habis. Masuk lagi untuk melanjutkan pembayaran." },

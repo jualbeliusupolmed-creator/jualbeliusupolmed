@@ -6,7 +6,6 @@ import Image from "next/image";
 import { adFeeFrom, rupiah } from "@/lib/fees";
 import { uploadMedia } from "@/lib/upload";
 import MediaUploader from "@/components/MediaUploader";
-import CampusSelect from "@/components/CampusSelect";
 import QRISModal from "@/components/QRISModal";
 import { CATEGORIES, MARKETPLACE_WA, formatWa } from "@/lib/constants";
 import { buildSlug } from "@/lib/slug";
@@ -42,7 +41,6 @@ export default function JasaClient() {
     price: "",
     category: JASA_CATEGORIES[0],
     type: "jasa",
-    campus: "Semua",
     area: "",
   });
   const [media, setMedia] = useState([]);
@@ -205,10 +203,6 @@ export default function JasaClient() {
               </select>
             </div>
             <div>
-              <label htmlFor="jasa-campus" className="label">Target Area</label>
-              <CampusSelect id="jasa-campus" ariaLabel="Target Area" className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.campus} onChange={(value) => setForm((current) => ({ ...current, campus: value }))} />
-            </div>
-            <div>
               <label htmlFor="jasa-work-system" className="label">Sistem Kerja</label>
               <select
                 id="jasa-work-system"
@@ -350,17 +344,17 @@ export default function JasaClient() {
 
       {/* Modal Preview */}
       {showPreviewModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="card w-full max-w-2xl bg-white p-6 shadow-2xl dark:bg-slate-900/95 dark:border-slate-800 animate-fade-in max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4" onClick={() => setShowPreviewModal(false)}>
+          <div className="card w-full max-w-2xl bg-white p-6 shadow-xl dark:bg-slate-900 dark:border-slate-800 motion-safe:animate-fade-in motion-reduce:animate-none max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-start mb-4">
-              <h2 className="text-xl font-extrabold text-gray-900 dark:text-white">
+              <h2 className="text-xl font-extrabold text-slate-900 dark:text-white">
                 Preview Jasa
               </h2>
               <button 
                 type="button" 
                 onClick={() => setShowPreviewModal(false)}
                 aria-label="Tutup preview jasa"
-                className="text-gray-500 hover:bg-gray-100 p-2 rounded-full dark:hover:bg-slate-800"
+                className="text-slate-500 hover:bg-slate-100 p-2 rounded-full dark:hover:bg-slate-800 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
               >
                 <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
               </button>
@@ -388,7 +382,7 @@ export default function JasaClient() {
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <span className="badge badge-primary">{form.category}</span>
-                  <span className="badge badge-outline">{form.campus}</span>
+                  <span className="badge badge-outline">Provinsi sesuai profil</span>
                 </div>
               </div>
             </div>

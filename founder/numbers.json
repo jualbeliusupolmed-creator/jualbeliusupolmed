@@ -1,0 +1,26 @@
+{
+  "business": "Kampus Kita (Jual Beli USU Polmed)",
+  "unit": "paid listing package",
+  "price": 12000,
+  "variable": [
+    {"label": "QRIS payment gateway fee (0.7%)", "cost": 84},
+    {"label": "Azure VPS & Supabase marginal compute", "cost": 150},
+    {"label": "WhatsApp delivery buffer & network", "cost": 200},
+    {"label": "Guarantee & refund reserve (2%)", "cost": 240}
+  ],
+  "fixed_monthly": [
+    {"label": "Azure Linux VPS (PM2 worker)", "cost": 250000},
+    {"label": "Supabase PostgreSQL Database", "cost": 380000},
+    {"label": "Domain kampuskita.my.id & SSL", "cost": 25000},
+    {"label": "Part-time student moderator stipend", "cost": 500000}
+  ],
+  "startup": [
+    {"label": "Domain registration & legal trademark search", "cost": 350000},
+    {"label": "Campus poster & initial Instagram promo", "cost": 600000},
+    {"label": "Emergency cash reserve", "cost": 500000}
+  ],
+  "days_per_month": 30,
+  "capacity_per_day": 100,
+  "plan_per_day": 15,
+  "ramp_per_day": [3, 5, 8, 12, 15, 18, 22, 25, 28, 30, 32, 35]
+}

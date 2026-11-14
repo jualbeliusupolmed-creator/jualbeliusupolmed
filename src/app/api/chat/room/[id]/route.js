@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { censorProfanity } from "@/lib/profanity";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
-import { getUserSession } from "@/lib/auth";
+import { getUserSessionAsync } from "@/lib/auth";
 import { hashIdentitas } from "@/lib/identitasHash";
 import { siarkanPesanBaru } from "@/lib/chatRealtime";
 import { sendWa } from "@/lib/fonnte";
@@ -21,7 +21,7 @@ async function ambilRoomUntuk(supa, roomId, userId) {
     .eq("id", roomId)
     .single();
   if (error || !room) return { error: "Ruangan obrolan tidak ditemukan", status: 404 };
-  const wa = getUserSession();
+  const wa = await getUserSessionAsync();
   if (!wa) return { error: "Unauthorized", status: 401 };
 
   if (room.type === "marketplace" || room.type === "direct") {

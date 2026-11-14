@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { getSellerSession } from "@/lib/auth";
+import { getSellerSessionAsync } from "@/lib/auth";
 import { formatWa } from "@/lib/constants";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { isSameOriginOrLocalEquivalent } from "@/lib/admin-google-oauth";
@@ -20,7 +20,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Permintaan tidak valid." }, { status: 403 });
   }
 
-  const wa = formatWa(getSellerSession() || "");
+  const wa = formatWa(await getSellerSessionAsync() || "");
   if (!wa) {
     return NextResponse.json(
       { error: "Masuk dengan akun WhatsApp terlebih dahulu untuk menautkan Google." },

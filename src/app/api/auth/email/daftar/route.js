@@ -85,7 +85,7 @@ export async function POST(req) {
     }
 
     // 5. Set Sesi Cookie Login (30 Hari)
-    setSellerCookie(identifierWa);
+    await setSellerCookie(identifierWa);
 
     return NextResponse.json({
       success: true,

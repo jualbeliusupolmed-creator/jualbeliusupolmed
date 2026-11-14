@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSellerSession } from "@/lib/auth";
+import { getSellerSessionAsync } from "@/lib/auth";
 
 // Satu jawaban untuk "apakah pemanggil ini benar-benar pemiliknya?".
 //
@@ -20,8 +20,8 @@ import { getSellerSession } from "@/lib/auth";
 // dari kuki bertanda tangan — nilai yang tidak bisa dikarang pengirim.
 //
 // Mengembalikan NextResponse bila harus ditolak, atau null bila boleh lanjut.
-export function tolakBukanPemilik(pemilikWa, { aksi = "melakukan ini" } = {}) {
-  const wa = getSellerSession();
+export async function tolakBukanPemilik(pemilikWa, { aksi = "melakukan ini" } = {}) {
+  const wa = await getSellerSessionAsync();
   if (!wa) {
     return NextResponse.json({ error: `Login dulu untuk ${aksi}.` }, { status: 401 });
   }

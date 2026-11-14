@@ -2,15 +2,18 @@
 
 import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { Icon } from "./Icons";
 import { cn } from "@/lib/utils";
 import { hapticLight, hapticMedium } from "@/lib/haptics";
 import { useHideOnScroll } from "@/lib/useHideOnScroll";
 import { useSesi } from "./SesiProvider";
-import QuickSearchSheet from "./QuickSearchSheet";
-import CreateSheet from "./CreateSheet";
-import OTPModal from "./OTPModal";
+
+// Dynamic import untuk komponen modal agar bundle awal tetap ringan
+const QuickSearchSheet = dynamic(() => import("./QuickSearchSheet"), { ssr: false });
+const CreateSheet = dynamic(() => import("./CreateSheet"), { ssr: false });
+const OTPModal = dynamic(() => import("./OTPModal"), { ssr: false });
 
 const BERANDA = { name: "Beranda", href: "/", icon: Icon.Home };
 const MARKET = {
@@ -44,15 +47,16 @@ function ItemNav({ n, pathname, badge = 0 }) {
     <>
       <div
         className={cn(
-          "relative flex items-center justify-center rounded-full p-1 transition-all duration-200",
-          isActive ? "bg-emerald-50 dark:bg-emerald-950/60 text-[#126B49] dark:text-emerald-400" : "bg-transparent text-slate-500 dark:text-slate-400"
+          "relative flex items-center justify-center rounded-full p-1 transition-colors duration-200",
+          isActive ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400" : "bg-transparent text-slate-500 dark:text-slate-400"
         )}
       >
         <IconComp
           className={cn(
-            "h-[19px] w-[19px] transition-transform duration-200",
+            "h-[19px] w-[19px] motion-safe:transition-transform motion-reduce:transition-none duration-200",
             isActive ? "scale-105 stroke-[2.3px]" : "scale-100 stroke-[1.8px]"
           )}
+          aria-hidden="true"
         />
         {badge > 0 && (
           <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-3.5 bg-rose-500 text-white text-[8px] font-extrabold rounded-full flex items-center justify-center px-0.5 shadow">
@@ -67,8 +71,8 @@ function ItemNav({ n, pathname, badge = 0 }) {
       </div>
       <span
         className={cn(
-          "text-[10px] leading-tight transition-all duration-200 truncate max-w-full tracking-tight",
-          isActive ? "font-extrabold text-[#126B49] dark:text-emerald-400" : "font-semibold text-slate-500 dark:text-slate-400"
+          "text-[10px] leading-tight transition-colors duration-200 truncate max-w-full tracking-tight",
+          isActive ? "font-extrabold text-emerald-700 dark:text-emerald-400" : "font-semibold text-slate-500 dark:text-slate-400"
         )}
       >
         {n.name}
@@ -77,9 +81,9 @@ function ItemNav({ n, pathname, badge = 0 }) {
   );
 
   const buttonClasses = cn(
-    "group relative flex w-12 xs:w-14 flex-col items-center justify-center gap-0.5 py-1 transition-all duration-200 active:scale-[0.92] touch-manipulation",
+    "group relative flex w-12 xs:w-14 flex-col items-center justify-center gap-0.5 py-1 transition-colors duration-150 active:translate-y-px touch-manipulation focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50",
     isActive
-      ? "text-[#126B49] dark:text-emerald-400 font-bold"
+      ? "text-emerald-700 dark:text-emerald-400 font-bold"
       : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white font-semibold"
   );
 
@@ -117,6 +121,7 @@ function ItemNav({ n, pathname, badge = 0 }) {
   return (
     <Link
       href={n.href}
+      prefetch={true}
       onClick={() => hapticLight()}
       aria-current={isActive ? "page" : undefined}
       className={buttonClasses}
@@ -183,7 +188,7 @@ function BottomNavbarInner() {
         <nav
           aria-label="Navigasi bawah mobile"
           className={cn(
-            "fixed bottom-0 inset-x-0 z-40 lg:hidden bg-white/95 dark:bg-[#18181b]/95 backdrop-blur-md border-t border-slate-200/90 dark:border-white/[0.08] shadow-[0_-2px_10px_rgba(0,0,0,0.03)] transition-all duration-300",
+            "fixed bottom-0 inset-x-0 z-40 lg:hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/90 dark:border-white/[0.08] shadow-xs transform-gpu motion-safe:transition-[transform,opacity] motion-reduce:transition-none duration-300",
             menyingkir ? "translate-y-full opacity-0 pointer-events-none" : "translate-y-0 opacity-100"
           )}
           style={{ paddingBottom: "max(6px, env(safe-area-inset-bottom, 0px))" }}

@@ -35,7 +35,7 @@ export async function generateMetadata() {
   const configuredKeywords = typeof site.metaKeywords === "string" ? site.metaKeywords.trim() : "";
   const baseTitle = configuredTitle && !isCampusSpecific(configuredTitle)
     ? configuredTitle
-    : "Kampus Kita — Marketplace dan Komunitas Mahasiswa Indonesia";
+    : "Kampus Kita: Marketplace dan Komunitas Mahasiswa Indonesia";
   const baseDesc = configuredDescription && !isCampusSpecific(configuredDescription)
     ? configuredDescription
     : "Platform digital untuk mahasiswa lintas kampus di Indonesia: jual-beli, Open PO, komunitas, dan transaksi COD di lokasi yang disepakati.";
@@ -50,7 +50,7 @@ export async function generateMetadata() {
   const metadataObj = {
     title: {
       default: baseTitle,
-      template: `%s — ${siteName}`,
+      template: `%s | ${siteName}`,
     },
     description: baseDesc,
     keywords: keywords,
@@ -106,8 +106,8 @@ export const viewport = {
 export default async function RootLayout({ children }) {
   const settings = await getSettings();
   const site = settings.site || {};
-  const baseTitle = site.metaTitle || "Kampus Kita — Marketplace dan Komunitas Mahasiswa Indonesia";
-  const siteName = baseTitle.split("—")[0].trim();
+  const baseTitle = site.metaTitle || "Kampus Kita: Marketplace dan Komunitas Mahasiswa Indonesia";
+  const siteName = (baseTitle.includes(":") ? baseTitle.split(":")[0] : baseTitle.split("—")[0]).trim();
   const logoUrl = site.logoUrl || `${BASE_URL}/icons/icon-512x512.png`;
 
   const siteJsonLd = {
@@ -138,7 +138,7 @@ export default async function RootLayout({ children }) {
   };
 
   return (
-    <html lang="id" className={cn("font-sans", jakartaSans.variable)} suppressHydrationWarning>
+    <html lang="id" className={cn("font-sans overflow-x-clip", jakartaSans.variable)} suppressHydrationWarning>
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -168,7 +168,7 @@ export default async function RootLayout({ children }) {
           })();
         ` }} />
       </head>
-      <body className={cn(jakartaSans.className, "min-h-screen flex flex-col font-sans antialiased overflow-x-hidden")}>
+      <body className={cn(jakartaSans.className, "min-h-screen flex flex-col font-sans antialiased overflow-x-clip")}>
         <AdSenseScript />
         <Script
           strategy="lazyOnload"
@@ -225,11 +225,27 @@ export default async function RootLayout({ children }) {
           dangerouslySetInnerHTML={{
             __html: `
               if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js').catch(function(err) {
-                    console.warn('SW reg failed: ', err);
+                var isDev = window.location.hostname === 'localhost' ||
+                            window.location.hostname === '127.0.0.1' ||
+                            window.location.port === '3000' ||
+                            /^(\\d{1,3}\\.){3}\\d{1,3}$/.test(window.location.hostname) ||
+                            window.location.hostname.endsWith('.local');
+                if (isDev) {
+                  navigator.serviceWorker.getRegistrations().then(function(regs) {
+                    for (var r of regs) { r.unregister(); }
                   });
-                });
+                  if ('caches' in window) {
+                    caches.keys().then(function(keys) {
+                      for (var k of keys) { caches.delete(k); }
+                    });
+                  }
+                } else {
+                  window.addEventListener('load', function() {
+                    navigator.serviceWorker.register('/sw.js').catch(function(err) {
+                      console.warn('SW reg failed: ', err);
+                    });
+                  });
+                }
               }
             `,
           }}

@@ -4,7 +4,7 @@ import { censorProfanity, detectDoxxingRisk } from "@/lib/profanity";
 import { rateLimit, rateLimitDistributed, getClientIp } from "@/lib/rateLimit";
 import { hashIdentitas } from "@/lib/identitasHash";
 import { catatIdentitasWa } from "@/lib/chatIdentity";
-import { getUserSession } from "@/lib/auth";
+import { getUserSessionAsync } from "@/lib/auth";
 import { autoPublishMadingInstagram, publishQueuedMadingInstagram, siteOriginFromRequest } from "@/lib/madingInstagram";
 import { getSettings, isAllowedCampus } from "@/lib/settings";
 import { waitUntil } from "@vercel/functions";
@@ -86,12 +86,19 @@ export async function GET(request) {
       return NextResponse.json({ posts: [], total: 0, page, totalPages: 0 });
     }
 
-    return NextResponse.json({
-      posts: data || [],
-      total: count || 0,
-      page,
-      totalPages: Math.ceil((count || 0) / limit),
-    });
+    return NextResponse.json(
+      {
+        posts: data || [],
+        total: count || 0,
+        page,
+        totalPages: Math.ceil((count || 0) / limit),
+      },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=30, stale-while-revalidate=120",
+        },
+      }
+    );
   } catch (err) {
     console.error("GET /api/mading error:", err);
     return NextResponse.json({ error: "Gagal memuat postingan." }, { status: 500 });
@@ -110,7 +117,7 @@ export async function POST(request) {
 
     let { type, sender_name, faculty, title, content, image_url, listing_id } = body;
 
-    const wa = getUserSession();
+    const wa = await getUserSessionAsync();
     const ip = getClientIp(request);
     const settings = await getSettings().catch(() => null);
     const requireLogin = settings?.mading?.requireLogin !== false;

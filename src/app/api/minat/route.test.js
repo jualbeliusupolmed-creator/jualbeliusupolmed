@@ -9,6 +9,8 @@ vi.mock("@/lib/fonnte", () => ({
   sendWa: vi.fn().mockResolvedValue({ ok: true }),
 }));
 
+vi.mock("@/lib/auth", () => ({ getSellerSessionAsync: vi.fn(() => null) }));
+
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { sendWa } from "@/lib/fonnte";
 

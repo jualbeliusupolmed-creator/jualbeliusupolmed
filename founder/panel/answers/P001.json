@@ -1,0 +1,13 @@
+{
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "price",
+  "reason": "Kalau barang jualan saya cuma Rp 20.000, bayar Rp 5.000 itu 25% dari harga jual. Terlalu motong untung.",
+  "objection": "Rp 5.000 kemahalan untuk barang receh",
+  "would_change_my_mind": "Gratis untuk barang di bawah Rp 30.000, atau bayar hanya kalau barang laku",
+  "price_too_cheap": 1000,
+  "price_cheap": 2500,
+  "price_expensive": 5000,
+  "price_too_expensive": 10000,
+  "id": "P001"
+}

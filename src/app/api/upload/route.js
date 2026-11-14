@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
-import { getSellerSession } from "@/lib/auth";
+import { getSellerSessionAsync } from "@/lib/auth";
 import sharp from "sharp";
 import { jawabGalat } from "@/lib/jawabGalat";
 import { uploadMedia } from "@/lib/mediaStorage";
@@ -57,7 +57,7 @@ function validateMagicBytes(buffer) {
  * Returns: { url: string }
  */
 export async function POST(req) {
-  const sessionWa = getSellerSession();
+  const sessionWa = await getSellerSessionAsync();
   if (!sessionWa) {
     return NextResponse.json({ error: "Sesi tidak valid. Silakan login kembali." }, { status: 401 });
   }

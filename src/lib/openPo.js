@@ -1,12 +1,24 @@
 import { getAdminClient } from "@/lib/supabaseAdmin";
+import { applyMarketplaceProvinceScope, loadProvinceMarketplaceScope } from "@/lib/marketplaceRegion";
 
 function labelPhoto(url) {
   const value = String(url || "").trim();
   return /^https:\/\//i.test(value) || value.startsWith("/") ? value : "";
 }
 
-export async function fetchOpenPoBatches({ sellerWa } = {}) {
+export async function fetchOpenPoBatches({ sellerWa, provinceId } = {}) {
   const supa = getAdminClient();
+  let productIds = null;
+  if (provinceId) {
+    const scope = await loadProvinceMarketplaceScope(supa, provinceId);
+    let productQuery = supa.from("open_po_products").select("id").eq("active", true);
+    productQuery = applyMarketplaceProvinceScope(productQuery, scope);
+    if (!productQuery) return [];
+    const { data: products, error: productError } = await productQuery;
+    if (productError) throw new Error("Open PO provinsi belum dapat dimuat.");
+    productIds = (products || []).map((product) => product.id).filter(Boolean);
+    if (!productIds.length) return [];
+  }
   let query = supa
     .from("open_po_batches")
     .select("id,seller_wa,title,price_idr,quota,reserved_count,closes_at,pickup_point,pickup_note,status,created_at,product:open_po_products(name,description,category,unit,image_url,campus,university_id,active)")
@@ -15,6 +27,7 @@ export async function fetchOpenPoBatches({ sellerWa } = {}) {
     .order("closes_at", { ascending: true })
     .limit(60);
   if (sellerWa) query = query.eq("seller_wa", sellerWa);
+  if (productIds) query = query.in("product_id", productIds);
   const { data, error } = await query;
   if (error) throw new Error("Open PO belum dapat dimuat. Pastikan migrasi PO di proyek utama sudah diterapkan.");
 

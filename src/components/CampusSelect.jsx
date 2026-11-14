@@ -46,14 +46,18 @@ export default function CampusSelect({
       {!known && value && value !== "Semua" && <option value={value}>{value}</option>}
       {campuses.map((campus) => (
         <option key={campus.shortName} value={campus.shortName}>
-          {campus.shortName} — {campus.name}
+          {campus.name} ({campus.shortName})
         </option>
       ))}
       </select>
       {error && (
         <div className="flex items-center justify-between gap-2 text-xs text-rose-600 dark:text-rose-400">
           <span>{error}</span>
-          <button type="button" onClick={loadCampuses} className="font-bold underline underline-offset-2">
+          <button
+            type="button"
+            onClick={loadCampuses}
+            className="font-semibold underline underline-offset-2 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
+          >
             Coba lagi
           </button>
         </div>

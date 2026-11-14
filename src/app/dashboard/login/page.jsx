@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getSellerSession } from "@/lib/auth";
+import { getSellerSessionAsync } from "@/lib/auth";
 import LoginClient from "./LoginClient";
 
 /*
@@ -32,7 +32,7 @@ function tujuanAman(next) {
   return t;
 }
 
-export default function DashboardLoginPage({ searchParams }) {
-  if (getSellerSession()) redirect(tujuanAman(searchParams?.next));
+export default async function DashboardLoginPage({ searchParams }) {
+  if (await getSellerSessionAsync()) redirect(tujuanAman(searchParams?.next));
   return <LoginClient />;
 }

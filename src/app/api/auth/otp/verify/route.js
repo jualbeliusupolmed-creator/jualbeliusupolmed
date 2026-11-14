@@ -46,7 +46,7 @@ export async function POST(req) {
       const testWa = process.env.TEST_ACCOUNT_WA || "";
       const testOtp = process.env.TEST_ACCOUNT_OTP || "";
       if (testWa && testOtp && normalizedWa === testWa && otp === testOtp) {
-        setSellerCookie(normalizedWa);
+        await setSellerCookie(normalizedWa);
         return NextResponse.json({ success: true, message: "Login berhasil (Test Account)!" });
       }
     }
@@ -134,7 +134,7 @@ export async function POST(req) {
       await tulisProfil(supa, updatePayload, profile.wa);
     }
 
-    setSellerCookie(normalizedWa);
+    await setSellerCookie(normalizedWa);
 
     return NextResponse.json({ success: true, message: "Login berhasil dan PIN telah diset!" });
   } catch (e) {
