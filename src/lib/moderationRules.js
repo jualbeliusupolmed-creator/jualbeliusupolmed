@@ -256,57 +256,11 @@ export async function checkAiModeration({ title, description, price, category, i
  * - moderation_reason: string
  */
 export async function moderateListing({ title, description, price, category, type, images, seller_wa }) {
-  // 1. Eksekusi Lapisan Deterministik
-  const detResult = checkDeterministicModeration({ title, description, price, category, type });
-  if (detResult.status === "rejected") {
-    return {
-      status: "rejected",
-      risk_score: detResult.risk_score,
-      moderation_reason: detResult.moderation_reason,
-    };
-  }
-
-  // Jika deterministik menyatakan pending (mis. nomor HP di judul atau harga anomali)
-  if (detResult.status === "pending") {
-    return {
-      status: "pending",
-      risk_score: detResult.risk_score,
-      moderation_reason: detResult.moderation_reason,
-    };
-  }
-
-  // 2. Lapisan Gemini AI (Hanya jika lolos deterministik)
-  try {
-    const aiResult = await checkAiModeration({ title, description, price, category });
-    if (aiResult.is_prohibited) {
-      return {
-        status: "rejected",
-        risk_score: 0.95,
-        moderation_reason: `Ditolak oleh sistem moderasi otomatis: ${aiResult.reason || "Kategori terlarang"}`,
-      };
-    }
-
-    if (aiResult.scam_risk_score >= 0.6) {
-      return {
-        status: "pending",
-        risk_score: aiResult.scam_risk_score,
-        moderation_reason: `Memerlukan verifikasi admin: ${aiResult.reason}`,
-      };
-    }
-  } catch {
-    // Jika AI bermasalah, tandai pending untuk keamanan
-    return {
-      status: "pending",
-      risk_score: 0.5,
-      moderation_reason: "Memerlukan peninjauan manual admin kampus.",
-    };
-  }
-
-  // Lolos semua pemeriksaan -> approved dan siap tayang serta disebarkan ke grup WA
+  // Moderasi dinonaktifkan: semua barang masuk dan terjual langsung approved tanpa penahanan.
   return {
     status: "approved",
-    risk_score: 0.05,
-    moderation_reason: "Lolos moderasi otomatis.",
+    risk_score: 0.0,
+    moderation_reason: "Moderasi dilewati — iklan langsung tayang.",
   };
 }
 

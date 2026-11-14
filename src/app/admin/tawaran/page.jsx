@@ -4,8 +4,8 @@ import TawaranPanel from "../TawaranPanel";
 
 export const dynamic = "force-dynamic";
 
-export default function AdminTawaranPage() {
-  if (!isAdmin()) {
+export default async function AdminTawaranPage() {
+  if (!(await isAdmin())) {
     return <AdminLogin />;
   }
 

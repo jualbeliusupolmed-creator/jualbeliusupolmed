@@ -17,7 +17,7 @@ function generateToken(wa) {
 
 // POST /api/distributor/invite  { wa }  → buat link undangan
 export async function POST(req) {
-  if (!isAdmin()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await isAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { wa } = await req.json();
   const normalizedWa = formatWa(wa);
   if (!normalizedWa) return NextResponse.json({ error: "Nomor WA tidak valid" }, { status: 400 });
@@ -52,7 +52,7 @@ export async function POST(req) {
 
 // GET /api/distributor/invite?wa=...  → daftar invite untuk WA tertentu
 export async function GET(req) {
-  if (!isAdmin()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await isAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const wa = formatWa(req.nextUrl.searchParams.get("wa") || "");
   const supa = getAdminClient();
   const query = supa.from("distributor_invites").select("*").order("created_at", { ascending: false });

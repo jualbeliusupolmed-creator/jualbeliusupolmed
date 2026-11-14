@@ -6,7 +6,7 @@ import { jawabGalat } from "@/lib/jawabGalat";
 export const dynamic = "force-dynamic";
 
 export async function PATCH(req) {
-  if (!isAdmin()) {
+  if (!(await isAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -30,7 +30,7 @@ export async function PATCH(req) {
 }
 
 export async function DELETE(req) {
-  if (!isAdmin()) {
+  if (!(await isAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

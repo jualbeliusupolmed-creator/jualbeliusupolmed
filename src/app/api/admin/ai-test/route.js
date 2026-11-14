@@ -6,7 +6,7 @@ import { jawabGalat } from "@/lib/jawabGalat";
 export const dynamic = "force-dynamic";
 
 export async function POST(req) {
-  if (!isAdmin()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await isAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const { text, aiConfig } = await req.json();
     if (!text) return NextResponse.json({ error: "Text is required" }, { status: 400 });

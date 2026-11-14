@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 // GET /api/admin/buyer-contacts
 // Query params: page, limit, deal_status, seller_wa, listing_id, q (search)
 export async function GET(req) {
-  if (!isAdmin()) {
+  if (!(await isAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

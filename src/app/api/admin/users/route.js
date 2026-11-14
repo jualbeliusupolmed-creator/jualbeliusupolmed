@@ -82,7 +82,7 @@ export async function PATCH(req) {
   const actor = await getAdminActor();
   if (!hasAdminPermission(actor, "users", "manage")) return NextResponse.json({ error: "Izin pengelolaan pengguna tidak diberikan." }, { status: 403 });
   const body = await req.json().catch(() => ({}));
-  if (!["restrict", "restore"].includes(body.action)) return NextResponse.json({ error: "Aksi pengguna tidak valid." }, { status: 400 });
+  if (!["restrict", "restore", "trust_toggle"].includes(body.action)) return NextResponse.json({ error: "Aksi pengguna tidak valid." }, { status: 400 });
 
   let wa;
   try { wa = openAdminUserToken(body.userToken); }
@@ -104,6 +104,21 @@ export async function PATCH(req) {
   } else {
     const { error } = await supa.from("blacklist").delete().eq("wa", wa);
     if (error) return NextResponse.json({ error: "Pembatasan akun gagal dihapus." }, { status: 503 });
+  }
+
+  if (body.action === "trust_toggle") {
+    const { data: profile2, error: pErr } = await supa.from("seller_profiles").select("trusted_seller").eq("wa", wa).maybeSingle();
+    if (pErr || !profile2) return NextResponse.json({ error: "Akun tidak ditemukan." }, { status: 404 });
+    const next = !profile2.trusted_seller;
+    const { error: tErr } = await supa.from("seller_profiles").update({ trusted_seller: next }).eq("wa", wa);
+    if (tErr) return NextResponse.json({ error: "Gagal mengubah status trusted seller." }, { status: 503 });
+    await supa.from("admin_audit_events").insert({
+      actor_id: actor.userId,
+      action: next ? "user_trusted" : "user_untrusted",
+      target_id: hashAdminUserAuditTarget(wa),
+      metadata: { trusted_seller: next, campus: profile.campus || "" },
+    });
+    return NextResponse.json({ ok: true, trusted_seller: next });
   }
 
   const targetId = hashAdminUserAuditTarget(wa);

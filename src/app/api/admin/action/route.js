@@ -62,7 +62,7 @@ function slugify(s) {
 // POST /api/admin/action  { action, ... }
 export async function POST(req) {
   const actor = await getAdminActor();
-  if (!isAdmin() && !actor) {
+  if (!(await isAdmin()) && !actor) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {

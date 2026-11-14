@@ -7,7 +7,7 @@ import { LoadError } from "@/components/admin/ui";
 export const dynamic = "force-dynamic";
 
 export default async function AdminProfilRequestPage() {
-  if (!isAdmin()) {
+  if (!(await isAdmin())) {
     return <AdminLogin />;
   }
 

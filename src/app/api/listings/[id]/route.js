@@ -25,7 +25,7 @@ export async function GET(req, { params }) {
     // penjual dan status internal) tidak boleh menjadi API publik hanya karena
     // ID iklan dapat ditemukan dari URL produk.
     const sessionWa = await getSellerSessionAsync();
-    if (!isAdmin() && sessionWa !== data.seller_wa) {
+    if (!(await isAdmin()) && sessionWa !== data.seller_wa) {
       return NextResponse.json({ error: "Kamu tidak berhak melihat detail iklan ini." }, { status: 403 });
     }
     return NextResponse.json({ listing: data });
@@ -43,7 +43,7 @@ export async function PATCH(req, { params }) {
 
     // -- Auth check -----------------------------------------------------------
     const sessionWa = await getSellerSessionAsync();
-    const isAd = isAdmin();
+    const isAd = await isAdmin();
 
     const { data: currentListing, error: currentError } = await supa
       .from("listings")

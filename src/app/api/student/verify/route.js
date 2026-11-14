@@ -69,7 +69,7 @@ export async function POST(req) {
 
     // Aksi admin (Setujui / Tolak KTM)
     if (admin_action) {
-      if (!isAdmin()) {
+      if (!(await isAdmin())) {
         return NextResponse.json({ error: "Akses admin diperlukan" }, { status: 403 });
       }
       if (!target_wa) {

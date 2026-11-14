@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 // token hardcoded — token itu ikut ter-bundle & terbaca publik. Di sini token
 // tetap di server dan endpoint dijaga isAdmin().
 export async function POST(req) {
-  if (!isAdmin()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await isAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { jid, message } = await req.json().catch(() => ({}));
   const text = String(message || "").trim();

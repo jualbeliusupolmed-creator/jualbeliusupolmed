@@ -4,8 +4,8 @@ import ReferralClient from "./ReferralClient";
 
 export const dynamic = "force-dynamic";
 
-export default function AdminReferralPage() {
-  if (!isAdmin()) {
+export default async function AdminReferralPage() {
+  if (!(await isAdmin())) {
     return <AdminLogin />;
   }
 

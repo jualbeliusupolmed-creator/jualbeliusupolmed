@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 // GET /api/admin/distributors → semua penjual + info distributor
 export async function GET() {
-  if (!isAdmin()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await isAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const supa = getAdminClient();
 

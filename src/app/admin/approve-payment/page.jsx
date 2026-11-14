@@ -6,7 +6,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 export const dynamic = "force-dynamic";
 
 export default async function ApprovePaymentPage({ searchParams }) {
-  if (!isAdmin()) {
+  if (!(await isAdmin())) {
     return <AdminLogin />;
   }
 

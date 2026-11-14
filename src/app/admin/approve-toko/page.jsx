@@ -19,7 +19,7 @@ export const metadata = { title: "Aktivasi Toko — Admin" };
  * tetap menuntut satu tombol ditekan dengan sadar.
  */
 export default async function ApproveTokoPage({ searchParams }) {
-  if (!isAdmin()) return <AdminLogin />;
+  if (!(await isAdmin())) return <AdminLogin />;
 
   const waMentah = searchParams?.wa || "";
   const wa = formatWa(waMentah) || waMentah;

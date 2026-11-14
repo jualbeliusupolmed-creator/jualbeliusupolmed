@@ -32,7 +32,7 @@ export async function PATCH(req, { params }) {
     // menerima/menolak atas nama penjual + memicu notifikasi ke pembeli.
     const sessionWa = await getSellerSessionAsync();
     const sellerWa = formatWa(offer.listings?.seller_wa || "");
-    if (!isAdmin() && (!sessionWa || sessionWa !== sellerWa)) {
+    if (!(await isAdmin()) && (!sessionWa || sessionWa !== sellerWa)) {
       return NextResponse.json({ error: "Tidak diizinkan" }, { status: 403 });
     }
 

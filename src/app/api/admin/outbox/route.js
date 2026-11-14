@@ -16,8 +16,8 @@ export const dynamic = "force-dynamic";
  * Karena itu penjaganya menerima DUA identitas: cookie admin situs, atau token
  * bot — token yang sama yang sudah dipakai bot untuk menembak webhook.
  */
-function boleh(req) {
-  if (isAdmin()) return true;
+async function boleh(req) {
+  if (await isAdmin()) return true;
   // Token perangkat MANA PUN yang terdaftar — sejak 22 Agu 2026 ada dua bot, dan
   // keduanya memakai proxy antrean ini. tokenBotSah() sudah fail-closed sendiri
   // kalau BAILEYS_API_TOKEN kosong, dan sudah menerima bentuk "Bearer <token>".
@@ -43,7 +43,7 @@ function jawabGalat(e) {
 
 // GET /api/admin/outbox?status=tertunda&limit=100
 export async function GET(req) {
-  if (!boleh(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await boleh(req))) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const url = new URL(req.url);
   const status = url.searchParams.get("status") || "tertunda";
@@ -88,7 +88,7 @@ export async function GET(req) {
 
 // POST /api/admin/outbox  { id }  atau  { semua: true }  atau  { batal: id }
 export async function POST(req) {
-  if (!boleh(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await boleh(req))) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json().catch(() => ({}));
   const supa = getAdminClient();

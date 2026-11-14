@@ -4,8 +4,8 @@ import BuyerContactsPanel from "../BuyerContactsPanel";
 
 export const dynamic = "force-dynamic";
 
-export default function AdminKontakPembeliPage() {
-  if (!isAdmin()) {
+export default async function AdminKontakPembeliPage() {
+  if (!(await isAdmin())) {
     return <AdminLogin />;
   }
 

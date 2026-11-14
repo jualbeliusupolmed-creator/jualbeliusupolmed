@@ -33,7 +33,7 @@ export async function GET() {
 // Mengubah mode transaksi (khusus admin)
 export async function POST(req) {
   try {
-    if (!isAdmin()) {
+    if (!(await isAdmin())) {
       return NextResponse.json({ error: "Akses ditolak. Sesi admin diperlukan." }, { status: 401 });
     }
 

@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req) {
   try {
-    if (!isAdmin()) {
+    if (!(await isAdmin())) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
