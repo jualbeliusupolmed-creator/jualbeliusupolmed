@@ -1410,8 +1410,11 @@ export default function SuperAppHome({
           </div>
 
           {/* RIGHT COMPANION COLUMN: Curhat & Menfess Feed (Sejajar ke atas langsung) (4 cols) */}
-          <aside id="menfess-section" className="lg:col-span-4 bg-white dark:bg-slate-800/90 border border-slate-200/80 dark:border-white/10 rounded-3xl p-5 shadow-xs sticky top-20">
-            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-white/10">
+          <aside
+            id="menfess-section"
+            className="lg:col-span-4 bg-white dark:bg-slate-800/90 border border-slate-200/80 dark:border-white/10 rounded-3xl p-4 sm:p-5 shadow-xs lg:sticky lg:top-20 flex flex-col max-h-[580px] lg:max-h-[calc(100vh-6rem)] min-h-[420px]"
+          >
+            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-white/10 shrink-0">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-2xl bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-100 dark:border-emerald-800 shadow-xs">
                   <svg aria-hidden="true" className="w-4 h-4 fill-emerald-600" viewBox="0 0 24 24">
@@ -1438,7 +1441,7 @@ export default function SuperAppHome({
               </button>
             </div>
 
-            <div className="flex items-center justify-between text-xs py-2.5 border-b border-slate-100 dark:border-white/10 text-slate-500">
+            <div className="flex items-center justify-between text-xs py-2.5 border-b border-slate-100 dark:border-white/10 text-slate-500 shrink-0">
               <span className="text-[11px] font-medium text-slate-400">Filter feed:</span>
               <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-700/60 p-0.5 rounded-full text-[11px] font-semibold">
                 <button
@@ -1465,8 +1468,20 @@ export default function SuperAppHome({
               </div>
             </div>
 
-            <div className="divide-y divide-slate-100 dark:divide-white/10 text-xs mt-1">
-              {filteredPosts.slice(0, 10).map((post) => (
+            <div
+              tabIndex={0}
+              role="region"
+              aria-label="Feed Menfess Mahasiswa"
+              className="flex-1 overflow-y-auto overscroll-contain pr-1.5 mt-1 divide-y divide-slate-100 dark:divide-white/10 text-xs custom-scrollbar [scrollbar-width:thin] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500/30 rounded-xl"
+            >
+              {filteredPosts.length === 0 ? (
+                <div className="py-12 text-center text-slate-400 dark:text-slate-500 text-xs space-y-1">
+                  <Icon.MessageCircle className="w-8 h-8 mx-auto opacity-40 text-slate-400" />
+                  <p className="font-semibold text-slate-600 dark:text-slate-400">Belum ada suara di sini</p>
+                  <p className="text-[11px]">Jadilah yang pertama menuliskan curhat atau info!</p>
+                </div>
+              ) : (
+                filteredPosts.slice(0, 30).map((post) => (
                 <article key={post.id} className="py-3.5">
                   <div className="flex items-center justify-between text-slate-400 text-[11px] mb-1.5">
                     <div className="flex items-center gap-1.5">
@@ -1534,25 +1549,25 @@ export default function SuperAppHome({
                     </button>
                   </div>
                 </article>
-              ))}
-            </div>
+              )))}
 
-            <div className="pt-3.5 text-center">
-              <button
-                type="button"
-                onClick={loadMorePosts}
-                disabled={isLoadingMore}
-                className="w-full py-2 bg-slate-50 dark:bg-slate-700/60 hover:bg-emerald-50 dark:hover:bg-slate-700 text-emerald-900 dark:text-emerald-300 font-semibold rounded-2xl text-xs transition-colors border border-slate-200/80 dark:border-white/10 flex items-center justify-center gap-1.5 shadow-xs active:translate-y-px motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50 whitespace-nowrap"
-              >
-                {isLoadingMore ? (
-                  <>
-                    <Icon.RefreshCcw className="w-3.5 h-3.5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
-                    <span>Memuat obrolan…</span>
-                  </>
-                ) : (
-                  <span>Muat obrolan lainnya</span>
-                )}
-              </button>
+              <div className="pt-3.5 pb-2 text-center shrink-0">
+                <button
+                  type="button"
+                  onClick={loadMorePosts}
+                  disabled={isLoadingMore}
+                  className="w-full py-2 bg-slate-50 dark:bg-slate-700/60 hover:bg-emerald-50 dark:hover:bg-slate-700 text-emerald-900 dark:text-emerald-300 font-semibold rounded-2xl text-xs transition-colors border border-slate-200/80 dark:border-white/10 flex items-center justify-center gap-1.5 shadow-xs active:translate-y-px motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50 whitespace-nowrap"
+                >
+                  {isLoadingMore ? (
+                    <>
+                      <Icon.RefreshCcw className="w-3.5 h-3.5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                      <span>Memuat obrolan…</span>
+                    </>
+                  ) : (
+                    <span>Muat obrolan lainnya</span>
+                  )}
+                </button>
+              </div>
             </div>
           </aside>
         </div>
