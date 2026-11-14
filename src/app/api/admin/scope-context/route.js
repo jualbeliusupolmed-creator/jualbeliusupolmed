@@ -12,9 +12,10 @@ export async function GET() {
   const actor = await getAdminActor();
   if (!actor) return NextResponse.json({ error: "Sesi admin tidak valid." }, { status: 401 });
 
-  const activeScope = cookies().get(SCOPE_COOKIE)?.value || "all";
+  const cookieStore = await cookies();
+  const activeScope = cookieStore.get(SCOPE_COOKIE)?.value || "all";
   const admin = getAdminClient();
-  const isSuper = actor.role === "superadmin";
+  const isSuper = actor.role === "superadmin" || actor.roles?.some((r) => r.role_code === "superadmin");
 
   let provinces = [];
   let universities = [];
@@ -100,7 +101,7 @@ export async function POST(request) {
   const body = await request.json().catch(() => ({}));
   const requestedScope = String(body.scope || "all").trim().toLowerCase();
 
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   cookieStore.set(SCOPE_COOKIE, requestedScope, {
     path: "/",
     sameSite: "lax",
@@ -110,4 +111,3 @@ export async function POST(request) {
 
   return NextResponse.json({ ok: true, activeScope: requestedScope });
 }
-

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAdminActor, getAdminCampusScope, hasAdminPermission } from "@/lib/admin-access";
+import { getAdminActor, getAdminCampusScope, getAdminScopeFilter, hasAdminPermission } from "@/lib/admin-access";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { approveWantedContactUnlock, updateAdminPayment } from "@/lib/admin-finance-actions";
 
@@ -14,19 +14,27 @@ export async function GET(req) {
   const days = allowedDays.has(requestedDays) ? requestedDays : 30;
   const cutoff = new Date(Date.now() - days * 864e5).toISOString();
   const supa = getAdminClient();
-  const campuses = await getAdminCampusScope(actor);
-  if (actor.role !== "superadmin" && !campuses.length) return NextResponse.json({ payments: [], campuses: [], days, total: 0, summary: { paidAmount: 0, paidCount: 0 } });
+  const scopeFilter = await getAdminScopeFilter(actor);
 
-  const listingSelection = actor.role === "superadmin" ? "listing:listings(title,campus)" : "listing:listings!inner(title,campus)";
+  const listingSelection = scopeFilter.isAll ? "listing:listings(title,campus)" : "listing:listings!inner(title,campus)";
   let query = supa.from("payments")
     .select(`id,midtrans_order_id,amount,type,status,meta,created_at,${listingSelection}`, { count: "exact" })
     .gte("created_at", cutoff)
     .order("created_at", { ascending: false })
     .limit(200);
-  if (actor.role !== "superadmin") query = query.in("listing.campus", campuses);
+  if (!scopeFilter.isAll) {
+    if (scopeFilter.campusCodes?.length > 0) {
+      const lower = scopeFilter.campusCodes.map((c) => c.toLowerCase());
+      const uniIds = scopeFilter.universityIds || [];
+      const allCodes = [...new Set([...scopeFilter.campusCodes, ...lower, ...uniIds])];
+      query = query.in("listing.campus", allCodes);
+    } else {
+      query = query.eq("id", "00000000-0000-0000-0000-000000000000");
+    }
+  }
   const { data, count, error } = await query;
   if (error) return NextResponse.json({ error: "Riwayat transaksi belum dapat dimuat." }, { status: 503 });
-  const payments = (data || []).filter((payment) => actor.role === "superadmin" || campuses.includes(payment.listing?.campus));
+  const payments = (data || []).filter((payment) => scopeFilter.isAll || !scopeFilter.campusCodes?.length || scopeFilter.campusCodes.includes(payment.listing?.campus));
   const paid = payments.filter((payment) => payment.status === "paid");
   return NextResponse.json({
     payments: payments.map((payment) => ({
@@ -39,7 +47,8 @@ export async function GET(req) {
       listing: payment.listing,
       requiresUnlockApproval: !!(payment.meta?.unlock_wanted_id && payment.meta?.requester_wa),
     })),
-    campuses: actor.role === "superadmin" ? [] : campuses,
+    campuses: scopeFilter.campusCodes,
+    scopeLabel: scopeFilter.label,
     days,
     total: count || 0,
     summary: { paidAmount: paid.reduce((sum, payment) => sum + payment.amount, 0), paidCount: paid.length },

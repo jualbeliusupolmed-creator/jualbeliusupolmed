@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAdminActor } from "@/lib/admin-access";
+import { getAdminActor, getAdminScopeFilter } from "@/lib/admin-access";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import {
   findProvinceListings,
@@ -19,8 +19,18 @@ async function resolveProvince(actor, supa, requestedId) {
   if (allowed && (!allowed.length || (provinceId && !allowed.includes(provinceId)))) return null;
   if (!provinceId && allowed) provinceId = allowed[0];
   if (!provinceId && actor?.role === "superadmin") {
-    const { data } = await supa.from("provinces").select("id").eq("status", "active").order("name").limit(1).maybeSingle();
-    provinceId = normalizeProvinceId(data?.id);
+    try {
+      const scopeFilter = await getAdminScopeFilter(actor);
+      if (scopeFilter.provinceId) {
+        provinceId = normalizeProvinceId(scopeFilter.provinceId);
+      }
+    } catch {
+      // fallback
+    }
+    if (!provinceId) {
+      const { data } = await supa.from("provinces").select("id").eq("status", "active").order("name").limit(1).maybeSingle();
+      provinceId = normalizeProvinceId(data?.id);
+    }
   }
   return provinceId ? loadProvinceContext(supa, provinceId) : null;
 }

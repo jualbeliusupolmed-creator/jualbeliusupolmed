@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Building2, Check, CircleAlert, Camera, LoaderCircle, MapPin, Plus, Search,
   ShieldCheck, X, Pencil, Layers, Radio, ExternalLink, ChevronRight, CheckCircle2,
@@ -159,6 +160,9 @@ async function requestJson(url, options) {
 }
 
 export default function OrganizationWorkspace() {
+  const searchParams = useSearchParams();
+  const queryProvince = searchParams?.get("province");
+
   const [data, setData] = useState(EMPTY_CATALOG);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -168,11 +172,18 @@ export default function OrganizationWorkspace() {
   const [catalogImportError, setCatalogImportError] = useState("");
 
   // Tabs: "overview" (Ringkasan Hierarki), "campuses" (Universitas & Cabang), "provinces" (Provinsi)
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState(queryProvince ? "campuses" : "overview");
 
   // Filters & Search
   const [campusQuery, setCampusQuery] = useState("");
-  const [provinceFilter, setProvinceFilter] = useState("all");
+  const [provinceFilter, setProvinceFilter] = useState(queryProvince || "all");
+
+  useEffect(() => {
+    if (queryProvince) {
+      setProvinceFilter(queryProvince);
+      setActiveTab("campuses");
+    }
+  }, [queryProvince]);
 
   // Modal State: null | { type: "add_campus" | "edit_campus" | "add_province" | "edit_province" | "manage_units", payload }
   const [modal, setModal] = useState(null);
@@ -683,7 +694,7 @@ export default function OrganizationWorkspace() {
                         id: "",
                         code: "",
                         name: "",
-                        provinceId: activeProvinces[0]?.id || "",
+                        provinceId: provinceFilter !== "all" ? provinceFilter : (activeProvinces[0]?.id || ""),
                         active: true,
                         accounts: { instagram: "", whatsapp_channel: "" },
                         emailDomains: [],
@@ -696,6 +707,24 @@ export default function OrganizationWorkspace() {
                   <Plus className="h-3.5 w-3.5" /> Tambah Universitas
                 </button>
               </div>
+
+              {provinceFilter !== "all" ? (
+                <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50/80 px-3.5 py-2 text-xs">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-emerald-700 shrink-0" />
+                    <span className="font-bold text-emerald-950">
+                      Menampilkan perguruan tinggi &amp; cabang wilayah: <strong className="underline decoration-emerald-500/70">{data.provinces.find((p) => p.id === provinceFilter)?.name || provinceFilter}</strong>
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setProvinceFilter("all")}
+                    className="text-[11px] font-bold text-emerald-800 hover:text-emerald-950 underline shrink-0"
+                  >
+                    Tampilkan Semua Provinsi
+                  </button>
+                </div>
+              ) : null}
 
               {/* List Kartu Universitas Terbungkus */}
               <div className="grid grid-cols-1 gap-3">

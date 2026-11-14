@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAdminActor, getAdminCampusScope, hasAdminPermission } from "@/lib/admin-access";
+import { getAdminActor, getAdminCampusScope, getAdminScopeFilter, hasAdminPermission } from "@/lib/admin-access";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { hashAdminUserAuditTarget } from "@/lib/admin-user-token";
 import { sendWa } from "@/lib/fonnte";
@@ -24,18 +24,18 @@ export async function GET(request) {
   const params = new URL(request.url).searchParams;
   const status = ["pending", "approved", "rejected", "all"].includes(params.get("status")) ? params.get("status") : "pending";
   const offset = safeOffset(request.url);
-  const campuses = await getAdminCampusScope(actor);
-  if (actor.role !== "superadmin" && !campuses.length) {
-    return NextResponse.json({ items: [], total: 0, nextOffset: null });
-  }
+  const scopeFilter = await getAdminScopeFilter(actor);
 
   const supa = getAdminClient();
   let campusByPhone = new Map();
-  if (actor.role !== "superadmin") {
+  if (!scopeFilter.isAll) {
+    const campusTargets = scopeFilter.campusCodes?.length > 0
+      ? [...new Set([...scopeFilter.campusCodes, ...scopeFilter.campusCodes.map((c) => c.toLowerCase()), ...(scopeFilter.universityIds || [])])]
+      : ["__NONE__"];
     const { data: profiles, error: profileError } = await supa
       .from("seller_profiles")
       .select("wa,campus")
-      .in("campus", campuses);
+      .in("campus", campusTargets);
     if (profileError) return NextResponse.json({ error: "Cakupan permintaan profil belum dapat diperiksa." }, { status: 503 });
     campusByPhone = new Map((profiles || []).map((item) => [item.wa, item.campus || ""]));
     if (!campusByPhone.size) return NextResponse.json({ items: [], total: 0, nextOffset: null });
@@ -46,12 +46,12 @@ export async function GET(request) {
     .order("requested_at", { ascending: false })
     .range(offset, offset + PAGE_SIZE - 1);
   if (status !== "all") query = query.eq("status", status);
-  if (actor.role !== "superadmin") query = query.in("seller_wa", [...campusByPhone.keys()]);
+  if (!scopeFilter.isAll) query = query.in("seller_wa", [...campusByPhone.keys()]);
   const { data: requests, count, error } = await query;
   if (error) return NextResponse.json({ error: "Permintaan perubahan profil belum dapat dimuat." }, { status: 503 });
 
   const phones = [...new Set((requests || []).map((item) => item.seller_wa).filter(Boolean))];
-  if (phones.length && actor.role === "superadmin") {
+  if (phones.length && scopeFilter.isAll) {
     const { data: profiles, error: profileError } = await supa.from("seller_profiles").select("wa,campus").in("wa", phones);
     if (profileError) return NextResponse.json({ error: "Cakupan permintaan profil belum dapat diperiksa." }, { status: 503 });
     campusByPhone = new Map((profiles || []).map((item) => [item.wa, item.campus || ""]));
