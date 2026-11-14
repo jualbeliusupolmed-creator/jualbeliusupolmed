@@ -102,7 +102,8 @@ export const listingInputSchema = z.object({
   seller_wa: z
     .string()
     .trim()
-    .regex(/^(?:\+62|62|0)8[0-9]{8,12}$/, "Format nomor WhatsApp tidak valid (contoh: 081234567890)."),
+    .optional()
+    .default(""),
   title: z
     .string()
     .trim()

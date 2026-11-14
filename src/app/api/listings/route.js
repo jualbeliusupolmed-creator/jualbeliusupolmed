@@ -57,7 +57,7 @@ export async function GET(req) {
   const { data, error } = await supa
     .from("listings")
     .select("*")
-    .eq("seller_wa", wa)
+    .or(`seller_wa.eq.${wa},seller_wa.eq.${sessionWa}${profile?.user_id ? `,user_id.eq.${profile.user_id}` : ""}`)
     .order("created_at", { ascending: false });
   if (error) return jawabGalat(error);
 
@@ -137,13 +137,15 @@ export async function POST(req) {
     const normalizedWa = formatWa(seller_wa);
     const sessionWa = await getSellerSessionAsync();
 
-    if (!sessionWa || sessionWa !== normalizedWa) {
+    if (!sessionWa) {
       return NextResponse.json({ error: "Sesi tidak valid atau telah berakhir. Silakan login kembali." }, { status: 401 });
     }
 
-    // Rate limit per nomor WA (maks 5 iklan per hari)
+    const effectiveWa = normalizedWa || sessionWa;
+
+    // Rate limit per nomor WA akun (maks 5 iklan per hari)
     const maxAdsPerDay = Number(process.env.RATE_LIMIT_ADS_PER_DAY || 5);
-    const waRl = await rateLimitDistributed(`listing:wa:${normalizedWa}`, {
+    const waRl = await rateLimitDistributed(`listing:wa:${sessionWa}`, {
       limit: maxAdsPerDay,
       windowMs: 86_400_000,
     });
@@ -214,11 +216,11 @@ export async function POST(req) {
       );
     }
 
-    // Cek status distributor
+    // Cek status distributor & profil akun yang sedang login
     const { data: profileCheck } = await supa
       .from("seller_profiles")
       .select("distributor, name, subscription_tier, subscription_expires_at, user_id, home_university_id, verified_university_id, affiliation_status, campus")
-      .eq("wa", normalizedWa)
+      .eq("wa", sessionWa)
       .maybeSingle();
     const region = await loadMarketplaceRegion(supa, sessionWa);
     const sellerUniversityId = (region.profile?.affiliation_status === "verified_student" || region.profile?.student_verified) && region.profile?.verified_university_id
@@ -230,7 +232,7 @@ export async function POST(req) {
     const isDistributor = !!profileCheck?.distributor;
 
     // Check if seller has unpaid sold fees (Account locked - Cara 2)
-    const locked = await hasUnpaidSoldFees(supa, normalizedWa);
+    const locked = await hasUnpaidSoldFees(supa, sessionWa) || (effectiveWa !== sessionWa && await hasUnpaidSoldFees(supa, effectiveWa));
     if (locked) {
       return NextResponse.json(
         { error: "Akun Anda terkunci karena memiliki tagihan komisi (Sold Fee) yang belum dibayar. Silakan lunasi tagihan tersebut di Dashboard." },
@@ -238,40 +240,48 @@ export async function POST(req) {
       );
     }
 
-    // cek blacklist — bandingkan dalam format normalized
-    const { data: bl } = await supa
+    // cek blacklist — bandingkan nomor akun dan nomor kontak
+    let bl = null;
+    const { data: blSession } = await supa
       .from("blacklist")
       .select("id")
-      .eq("wa", normalizedWa)
+      .eq("wa", sessionWa)
       .maybeSingle();
+    bl = blSession;
+    if (!bl && effectiveWa !== sessionWa) {
+      const { data: blEffective } = await supa
+        .from("blacklist")
+        .select("id")
+        .eq("wa", effectiveWa)
+        .maybeSingle();
+      bl = blEffective;
+    }
     if (bl) {
       return NextResponse.json(
-        { error: "Nomor WA ini diblokir admin." },
+        { error: "Nomor ini diblokir admin." },
         { status: 403 }
       );
     }
 
     // Enforce name from seller_profiles
-    // Pastikan profil penjual tersimpan agar tidak melanggar foreign key constraint
     let profile = profileCheck;
     if (!profile) {
-      const defaultSlug = generateDefaultSlug(seller_name, normalizedWa);
+      const defaultSlug = generateDefaultSlug(seller_name, sessionWa);
       let { error: profErr } = await supa.from("seller_profiles").upsert(
-        { wa: normalizedWa, name: seller_name, slug: defaultSlug },
+        { wa: sessionWa, name: seller_name, slug: defaultSlug },
         { onConflict: "wa", ignoreDuplicates: true }
       );
       if (profErr) {
-        // Fallback jika slug mengalami konflik unik
-        const uniqueSlug = `user-${normalizedWa.replace(/\D/g, "").slice(-4)}-${Math.random().toString(36).slice(2, 6)}`;
+        const uniqueSlug = `user-${sessionWa.replace(/\D/g, "").slice(-4)}-${Math.random().toString(36).slice(2, 6)}`;
         await supa.from("seller_profiles").upsert(
-          { wa: normalizedWa, name: seller_name, slug: uniqueSlug },
+          { wa: sessionWa, name: seller_name, slug: uniqueSlug },
           { onConflict: "wa", ignoreDuplicates: true }
         );
       }
       const { data: refreshedProfile } = await supa
         .from("seller_profiles")
         .select("distributor, name, subscription_tier, subscription_expires_at, slug, user_id, home_university_id, verified_university_id, affiliation_status, campus")
-        .eq("wa", normalizedWa)
+        .eq("wa", sessionWa)
         .maybeSingle();
       profile = refreshedProfile;
     }
@@ -375,7 +385,7 @@ export async function POST(req) {
       seller_university_id: region.university.id,
       seller_province_id: region.province,
       seller_name: enforcedName,
-      seller_wa: normalizedWa,
+      seller_wa: effectiveWa,
       title: cleanedTitle,
       description: description || "",
       price: finalPrice,
@@ -389,7 +399,7 @@ export async function POST(req) {
       moderation_reason: modReason,
       risk_score: moderation.risk_score || 0.0,
       campus: resolvedCampus,
-      area: area || "Sekitar Kampus",
+      area: (area && area.trim()) || (resolvedCampus ? `Sekitar Kampus ${resolvedCampus}` : "Sekitar Kampus"),
       condition: condition === "new" ? "new" : "used",
       specs: safeSpecs,
       bumped_at: new Date().toISOString(),
