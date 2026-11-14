@@ -15,7 +15,7 @@ const iconByKey = {
   users: Users, finance: WalletCards, analytics: ChartNoAxesCombined, content: BookOpen, settings: Settings2, audit: ShieldCheck,
   wabot: Smartphone, antrean: Clock, notifikasi: MessageCircle, broadcast: Megaphone,
   broadcast_grup: MessagesSquare, grouppost: MessagesSquare, fyp: Sparkles,
-  kategori: Layers, transaksi: WalletCards, mading: MessagesSquare, rating: Sparkles, listings: ShoppingBag,
+  kategori: Layers, transaksi: WalletCards, mading: MessagesSquare, rating: Sparkles, listings: ShoppingBag, roles: ShieldCheck,
 };
 
 const ADMIN_GROUPS = [
@@ -45,6 +45,7 @@ const ADMIN_GROUPS = [
     { key: "admin_requests", label: "Permintaan admin kampus", href: "/admin/admin-requests", superadmin: true, roles: ["province_admin"] },
     { key: "settings", label: "Pengaturan platform", href: "/admin/settings", permission: "settings" },
     { key: "audit", label: "Jejak perubahan", href: "/admin/audit", superadmin: true },
+    { key: "roles", label: "Role & Akses Admin", href: "/admin/roles", superadmin: true },
   ] },
   { label: "Saluran & Komunikasi", items: [
     { key: "social", label: "Instagram & Sosmed", href: "/admin/social", roles: ["province_admin", "university_admin"], permission: "social" },
@@ -102,7 +103,7 @@ export default function OwnerWorkspaceShell({ actor, children }) {
                 const active = current?.key === item.key;
                 return (
                   <Link key={item.key} href={item.href} onClick={onNavigate} aria-current={active ? "page" : undefined}
-                    className={`flex min-h-10 items-center gap-3 rounded-xl px-3 text-[13px] font-semibold transition ${active ? "bg-emerald-50 text-emerald-900" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"}`}>
+                    className={`flex min-h-10 items-center gap-3 rounded-xl px-3 text-[13px] font-semibold transition focus-visible:outline-2 focus-visible:outline-emerald-600 active:opacity-85 ${active ? "bg-emerald-50 text-emerald-900" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"}`}>
                     <Icon className="h-[17px] w-[17px] shrink-0" strokeWidth={1.8} />
                     <span className="min-w-0 flex-1 truncate">{item.label}</span>
                     {active ? <span className="h-1.5 w-1.5 rounded-full bg-emerald-700" /> : null}

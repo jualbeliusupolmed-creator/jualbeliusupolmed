@@ -26,15 +26,23 @@ export async function getAdminActor() {
       ? { scope_type: "province", scope_id: assignment.province_id }
       : { scope_type: "campus", scope_id: assignment.university_id });
 
-    if (SUPERADMIN_ID() && userId === SUPERADMIN_ID()) {
+    const isSuperadminEmail = String(authUser.email || "").toLowerCase() === "jualbeliusupolmed@gmail.com";
+    const hasSuperadminRole = assignments.some((assignment) => assignment.role_code === "superadmin");
+    const isEnvSuperadmin = Boolean(SUPERADMIN_ID()) && userId === SUPERADMIN_ID();
+    const isSuperadmin = isSuperadminEmail || hasSuperadminRole || isEnvSuperadmin;
+
+    if (isSuperadmin) {
       return {
         userId,
         email: authUser.email || "",
         label: authUser.user_metadata?.display_name || authUser.email || "Superadmin",
         role: "superadmin",
-        roles: [{ role_code: "superadmin", province_id: null, university_id: null }, ...assignments],
+        roles: [
+          { role_code: "superadmin", province_id: null, university_id: null },
+          ...assignments.filter((assignment) => assignment.role_code !== "superadmin"),
+        ],
         permissions: { "*": ["read", "manage", "review"] },
-        scopes: assignmentScopes,
+        scopes: assignmentScopes.length ? assignmentScopes : [{ scope_type: "province", scope_id: "sumatera-utara" }],
       };
     }
 
@@ -100,6 +108,7 @@ export const UNIVERSITY_ADMIN_MODULES = [
 export function hasAdminPermission(actor, module, action = "read") {
   if (!actor) return false;
   if (actor.role === "superadmin") return true;
+  if (actor.roles?.some((role) => role.role_code === "superadmin")) return true;
 
   // Standar Otoritas Admin Provinsi Nasional:
   // Semua admin provinsi otomatis memegang otoritas operasional, analitik, komunikasi & struktur wilayah untuk provinsinya
