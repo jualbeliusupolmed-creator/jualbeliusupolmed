@@ -355,12 +355,13 @@ export async function POST(req) {
     const isFreeMode = amount === 0 || settings.pricing?.freeMode !== false;
     const requiresPayment = !isFreeMode && amount > 0 && !isPro && !isJasaFree && !punyaToko;
 
-    // Iklan berbayar tidak boleh terlihat aktif sebelum tagihan dibuat dan lunas.
-    const isAutoApproved = moderation.status === "approved";
-    const initialStatus = isAutoApproved && !requiresPayment ? "active" : "pending";
+    // Iklan langsung AKTIF seketika tanpa perlu persetujuan manual admin.
+    // Hanya berstatus pending bila ada biaya tayang QRIS yang menunggu dibayar.
+    // Barang terlarang sudah otomatis ditolak di atas (status: rejected, HTTP 422).
+    const initialStatus = requiresPayment ? "pending" : "active";
     const modReason = requiresPayment
-      ? (isAutoApproved ? "Menunggu pembayaran biaya tayang." : moderation.moderation_reason)
-      : (isAutoApproved ? "Lolos moderasi otomatis" : moderation.moderation_reason);
+      ? "Menunggu pembayaran biaya tayang."
+      : "Lolos moderasi otomatis & langsung aktif";
     const safeSpecs = sanitizeListingSpecs(category || "Elektronik", specs);
 
     // Hitung fee bagi hasil untuk distributor
