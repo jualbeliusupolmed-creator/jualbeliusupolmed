@@ -43,8 +43,10 @@ export async function GET(req) {
 
   const items = (profiles || []).map((profile) => ({
     id: sealAdminUserToken(profile.wa),
+    rawWa: profile.wa,
+    phone: profile.wa,
     name: profile.name || profile.store_name || "Pengguna",
-    maskedPhone: "••••" + String(profile.wa || "").slice(-4),
+    maskedPhone: profile.wa || ("••••" + String(profile.wa || "").slice(-4)),
     campus: profile.campus || "Belum diatur",
     faculty: profile.faculty || "",
     createdAt: profile.created_at,

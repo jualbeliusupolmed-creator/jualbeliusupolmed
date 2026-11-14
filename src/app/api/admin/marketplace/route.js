@@ -31,7 +31,7 @@ export async function GET(req) {
 
   if (mode === "wanted") {
     let wantedQuery = supa.from("wanted_listings")
-      .select("id,buyer_name,title,description,budget,category,campus,university_id,area,status,created_at", { count: "exact" })
+      .select("id,buyer_name,title,description,budget,category,campus,university_id,area,status,created_at,buyer_wa,contact_wa", { count: "exact" })
       .order("created_at", { ascending: false })
       .range(offset, offset + 99);
     if (status !== "all") wantedQuery = wantedQuery.eq("status", status);
@@ -61,7 +61,7 @@ export async function GET(req) {
   }
 
   let query = supa.from("listings")
-    .select("id, title, description, price, category, campus, university_id, area, image_url, status, created_at", { count: "exact" })
+    .select("id, slug, title, description, price, category, condition, stock, campus, university_id, area, image_url, images, status, seller_name, seller_wa, created_at", { count: "exact" })
     .order("created_at", { ascending: false })
     .range(offset, offset + 99);
   if (status !== "all") query = query.eq("status", status);
@@ -120,9 +120,10 @@ export async function PATCH(req) {
   }
   const reviewAction = ["approve", "reject"].includes(action);
   const manageAction = ["suspend", "restore"].includes(action);
-  if (!id || (!reviewAction && !manageAction)) return NextResponse.json({ error: "Aksi marketplace tidak valid." }, { status: 400 });
+  const editAction = action === "edit";
+  if (!id || (!reviewAction && !manageAction && !editAction)) return NextResponse.json({ error: "Aksi marketplace tidak valid." }, { status: 400 });
   if (reviewAction && !hasAdminPermission(actor, "marketplace", "review")) return NextResponse.json({ error: "Izin review tidak diberikan." }, { status: 403 });
-  if (manageAction && !hasAdminPermission(actor, "marketplace", "manage")) return NextResponse.json({ error: "Izin pengelolaan iklan tidak diberikan." }, { status: 403 });
+  if ((manageAction || editAction) && !hasAdminPermission(actor, "marketplace", "manage")) return NextResponse.json({ error: "Izin pengelolaan iklan tidak diberikan." }, { status: 403 });
 
   const supa = getAdminClient();
   const campuses = await getAdminCampusScope(actor);
@@ -139,6 +140,42 @@ export async function PATCH(req) {
   const { data: target, error: targetError } = await targetQuery.maybeSingle();
   if (targetError) return NextResponse.json({ error: "Data iklan belum dapat diperiksa." }, { status: 503 });
   if (!target) return NextResponse.json({ error: "Iklan tidak ditemukan dalam cakupan akun atau statusnya sudah berubah." }, { status: 404 });
+
+  if (editAction) {
+    const updates = {};
+    if (body.title !== undefined) updates.title = String(body.title).trim().slice(0, 150);
+    if (body.price !== undefined) updates.price = Math.max(0, parseInt(body.price, 10) || 0);
+    if (body.description !== undefined) updates.description = String(body.description).trim().slice(0, 3000);
+    if (body.category !== undefined) updates.category = String(body.category).trim().slice(0, 60);
+    if (body.condition !== undefined) updates.condition = body.condition === "Baru" ? "Baru" : "Bekas";
+    if (body.stock !== undefined) updates.stock = Math.max(0, parseInt(body.stock, 10) || 0);
+    if (body.area !== undefined) updates.area = String(body.area).trim().slice(0, 100);
+    if (body.campus !== undefined) updates.campus = String(body.campus).trim().slice(0, 50);
+    if (body.seller_name !== undefined) updates.seller_name = String(body.seller_name).trim().slice(0, 100);
+    if (body.seller_wa !== undefined) updates.seller_wa = String(body.seller_wa).trim().replace(/\D/g, "").slice(0, 20);
+    if (body.status !== undefined && ["active", "pending", "sold", "rejected", "suspended", "hidden"].includes(body.status)) {
+      updates.status = body.status;
+    }
+
+    let updateQuery = supa.from("listings").update(updates).eq("id", id);
+    if (actor.role !== "superadmin") {
+      const campusesLower = campuses.map((c) => c.toLowerCase());
+      updateQuery = updateQuery.or(`campus.in.(${campuses.join(",")}),university_id.in.(${campusesLower.join(",")})`);
+    }
+    const { data: updated, error: updateErr } = await updateQuery
+      .select("id, slug, status, title, description, price, category, condition, campus, university_id, image_url, images, area, stock, seller_name, seller_wa")
+      .maybeSingle();
+    if (updateErr || !updated) {
+      return NextResponse.json({ error: "Gagal memperbarui listing." }, { status: 409 });
+    }
+    await supa.from("admin_audit_events").insert({
+      actor_id: actor.userId,
+      action: "marketplace_edit",
+      target_id: id,
+      metadata: { updates, campus: target.campus }
+    });
+    return NextResponse.json({ ok: true, item: updated });
+  }
 
   if (action === "approve") {
     const { data: unpaidPayments, error: paymentLookupError } = await supa
@@ -217,4 +254,46 @@ export async function PATCH(req) {
   }
 
   return NextResponse.json({ ok: true, item: updated });
+}
+
+export async function DELETE(req) {
+  const actor = await getAdminActor();
+  if (!hasAdminPermission(actor, "marketplace", "manage")) {
+    return NextResponse.json({ error: "Tidak berwenang menghapus iklan." }, { status: 403 });
+  }
+  const params = new URL(req.url).searchParams;
+  const id = String(params.get("id") || "").trim().slice(0, 100);
+  const entityType = params.get("entityType") || "listings";
+  if (!id) return NextResponse.json({ error: "ID tidak valid." }, { status: 400 });
+
+  const supa = getAdminClient();
+  const campuses = await getAdminCampusScope(actor);
+  if (actor.role !== "superadmin" && !campuses.length) {
+    return NextResponse.json({ error: "Cakupan kampus belum ditetapkan." }, { status: 403 });
+  }
+
+  const table = entityType === "wanted" ? "wanted_listings" : "listings";
+  let targetQuery = supa.from(table).select("id, campus, university_id").eq("id", id);
+  if (actor.role !== "superadmin") {
+    const campusesLower = campuses.map((c) => c.toLowerCase());
+    targetQuery = targetQuery.or(`campus.in.(${campuses.join(",")}),university_id.in.(${campusesLower.join(",")})`);
+  }
+  const { data: target, error: targetError } = await targetQuery.maybeSingle();
+  if (targetError || !target) {
+    return NextResponse.json({ error: "Item tidak ditemukan dalam cakupan wewenang." }, { status: 404 });
+  }
+
+  const { error: delErr } = await supa.from(table).delete().eq("id", id);
+  if (delErr) {
+    return NextResponse.json({ error: "Gagal menghapus item dari basis data." }, { status: 409 });
+  }
+
+  await supa.from("admin_audit_events").insert({
+    actor_id: actor.userId,
+    action: `marketplace_delete_${table}`,
+    target_id: id,
+    metadata: { campus: target.campus || "" }
+  });
+
+  return NextResponse.json({ ok: true, deletedId: id });
 }

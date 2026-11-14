@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, Clock3, LoaderCircle, PackageSearch, RefreshCw, Search, X, SearchCheck, Trash2, Store, Layers } from "lucide-react";
+import Link from "next/link";
+import { Check, Clock3, LoaderCircle, PackageSearch, RefreshCw, Search, X, SearchCheck, Trash2, Store, Layers, Pencil, ExternalLink, MessageCircle } from "lucide-react";
 import { rupiah } from "@/lib/fees";
 import { useAdmin } from "./AdminProvider";
 import OmnichannelPublishModal from "./OmnichannelPublishModal";
@@ -33,7 +34,7 @@ function ActionButton({ busy, onClick, label, icon: Icon, tone = "neutral" }) {
     danger: "border border-rose-200 text-rose-700 hover:bg-rose-50",
     primary: "bg-emerald-800 text-white hover:bg-emerald-900",
   };
-  return <button disabled={busy} onClick={onClick} className={`inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-[11px] font-extrabold disabled:opacity-50 ${colors[tone]}`}>{busy ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <Icon className="h-3.5 w-3.5" />}{label}</button>;
+  return <button disabled={busy} onClick={onClick} className={`inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-[11px] font-extrabold active:opacity-85 disabled:opacity-50 ${colors[tone]}`}>{busy ? <LoaderCircle className="h-3.5 w-3.5 motion-safe:animate-spin" /> : <Icon className="h-3.5 w-3.5" />}{label}</button>;
 }
 
 export default function MarketplaceWorkspace({ initialMode = "listings", initialStatus = "active", canReview = false, canManage = false, superadmin = false }) {
@@ -51,6 +52,20 @@ export default function MarketplaceWorkspace({ initialMode = "listings", initial
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [publishListing, setPublishListing] = useState(null);
+  const [editingListing, setEditingListing] = useState(null);
+  const [editForm, setEditForm] = useState({
+    title: "",
+    price: "",
+    category: "",
+    condition: "Bekas",
+    stock: 1,
+    area: "",
+    campus: "",
+    seller_name: "",
+    seller_wa: "",
+    description: "",
+  });
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const load = useCallback(async (offset = 0, append = false) => {
     setLoading(true);
@@ -159,6 +174,79 @@ export default function MarketplaceWorkspace({ initialMode = "listings", initial
     }
   }
 
+  function openEditModal(item) {
+    setEditingListing(item);
+    setEditForm({
+      title: item.title || "",
+      price: item.price || 0,
+      category: item.category || "",
+      condition: item.condition || "Bekas",
+      stock: item.stock ?? 1,
+      area: item.area || "",
+      campus: item.campus || "",
+      seller_name: item.seller_name || "",
+      seller_wa: item.seller_wa || "",
+      description: item.description || "",
+    });
+  }
+
+  async function handleSaveEdit(e) {
+    if (e) e.preventDefault();
+    if (!editingListing) return;
+    setSavingEdit(true);
+    setError("");
+    setNotice("");
+    try {
+      const response = await fetch("/api/admin/marketplace", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: editingListing.id,
+          action: "edit",
+          ...editForm,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Gagal menyimpan perubahan iklan.");
+      setNotice("Iklan berhasil diperbarui.");
+      setEditingListing(null);
+      await load(0);
+    } catch (cause) {
+      setError(cause.message);
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
+  async function handleDeleteListing(item) {
+    confirmThen(
+      {
+        title: "Hapus iklan permanen?",
+        message: `Hapus iklan “${item.title}” secara permanen? Data akan terhapus dari basis data dan tidak dapat dikembalikan.`,
+        danger: true,
+        confirmLabel: "Hapus permanen",
+      },
+      async () => {
+        setBusyId(String(item.id));
+        setNotice("");
+        setError("");
+        try {
+          const response = await fetch(`/api/admin/marketplace?id=${encodeURIComponent(item.id)}&entityType=listings`, {
+            method: "DELETE",
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(data.error || "Iklan gagal dihapus.");
+          setNotice("Iklan berhasil dihapus secara permanen.");
+          await load(0);
+        } catch (cause) {
+          setError(cause.message);
+        } finally {
+          setBusyId("");
+        }
+      }
+    );
+  }
+
   return (
     <div className="space-y-5">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -247,7 +335,7 @@ export default function MarketplaceWorkspace({ initialMode = "listings", initial
             />
           </label>
         </div>
-        {loading ? <div className="grid min-h-56 place-items-center text-slate-400"><LoaderCircle className="h-5 w-5 animate-spin" /></div> : items.length ? <div className="divide-y divide-slate-100">{items.map((item) => {
+        {loading ? <div className="grid min-h-56 place-items-center text-slate-400"><LoaderCircle className="h-5 w-5 motion-safe:animate-spin" /></div> : items.length ? <div className="divide-y divide-slate-100">{items.map((item) => {
           if (mode === "stores") {
             const busy = busyId === item.storeToken;
             return <article key={item.storeToken} className="flex flex-col gap-4 p-4 sm:flex-row sm:items-start sm:px-5"><div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-emerald-50 text-emerald-800"><Store className="h-6 w-6" /></div><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h3 className="truncate text-sm font-extrabold">{item.storeName}</h3><span className={`rounded-full px-2 py-1 text-[10px] font-extrabold ${item.status === "menunggu" ? "bg-amber-50 text-amber-800" : item.status === "aktif" ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-700"}`}>{item.status}</span></div><p className="mt-1 text-xs text-slate-500">{item.name} · {item.campus || "Kampus tidak diisi"} · {item.maskedPhone}</p><p className="mt-1 text-[10px] font-semibold text-slate-400">{item.area || "Lokasi belum diisi"}{item.hours ? ` · ${item.hours}` : ""}{item.requestedAt ? ` · Diajukan ${new Date(item.requestedAt).toLocaleDateString("id-ID")}` : ""}</p>{item.bio ? <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-slate-600">{item.bio}</p> : null}{item.rejectNote ? <p className="mt-2 text-xs text-rose-700">Alasan sebelumnya: {item.rejectNote}</p> : null}{item.slug ? <a href={`/toko/${encodeURIComponent(item.slug)}`} target="_blank" rel="noreferrer" className="mt-2 inline-flex text-[11px] font-bold text-emerald-800 underline">Lihat toko ↗</a> : null}</div>{item.status === "menunggu" && canReview ? <div className="flex shrink-0 gap-2 self-end sm:self-auto"><ActionButton busy={busy} onClick={() => reviewStore(item, "reject")} label="Tolak" icon={X} tone="danger" /><ActionButton busy={busy} onClick={() => reviewStore(item, "approve")} label="Aktifkan" icon={Check} tone="primary" /></div> : null}</article>;
@@ -256,6 +344,7 @@ export default function MarketplaceWorkspace({ initialMode = "listings", initial
           const buttons = mode === "wanted"
             ? <>{canManage && ["active", "pending"].includes(item.status) ? <ActionButton busy={busy} onClick={() => handleWanted(item, "resolve")} label="Tandai selesai" icon={Check} tone="primary" /> : null}{superadmin ? <ActionButton busy={busy} onClick={() => handleWanted(item, "remove")} label="Hapus" icon={Trash2} tone="danger" /> : null}</>
             : <div className="flex flex-wrap items-center gap-1.5">
+                {canManage && <ActionButton busy={busy} onClick={() => openEditModal(item)} label="Edit" icon={Pencil} tone="neutral" />}
                 {canManage && <ActionButton busy={busy} onClick={() => setPublishListing(item)} label="Distribusi" icon={Layers} tone="neutral" />}
                 {item.status === "pending" && canReview && (
                   <>
@@ -269,11 +358,273 @@ export default function MarketplaceWorkspace({ initialMode = "listings", initial
                 {canManage && ["suspended", "hidden", "rejected"].includes(item.status) && (
                   <ActionButton busy={busy} onClick={() => review(item, "restore")} label="Pulihkan" icon={Check} tone="primary" />
                 )}
+                {(canManage || superadmin) && (
+                  <ActionButton busy={busy} onClick={() => handleDeleteListing(item)} label="Hapus" icon={Trash2} tone="danger" />
+                )}
               </div>;
-          return <article key={item.id} className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:px-5"><div className="grid h-20 w-24 shrink-0 place-items-center overflow-hidden rounded-xl bg-slate-100 text-emerald-800">{mode === "wanted" ? <SearchCheck className="h-6 w-6" /> : item.image_url ? <img src={item.image_url} alt="" loading="lazy" className="h-full w-full object-cover" /> : <PackageSearch className="h-6 w-6 text-slate-300" />}</div><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h3 className="truncate text-sm font-extrabold">{item.title}</h3><span className={`rounded-full px-2 py-1 text-[10px] font-extrabold ${item.status === "pending" ? "bg-amber-50 text-amber-800" : item.status === "active" ? "bg-emerald-50 text-emerald-800" : "bg-slate-100 text-slate-600"}`}>{item.status}</span></div><p className="mt-1 text-xs font-bold text-slate-700">{mode === "wanted" ? "Anggaran " + rupiah(item.budget || 0) : rupiah(item.price || 0)} <span className="font-medium text-slate-400">· {item.category || "Tanpa kategori"}</span></p><p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-500">{item.description || "Tidak ada deskripsi."}</p><div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-semibold text-slate-400"><span>{item.campus || "Kampus tidak diisi"}</span>{item.area ? <span>{item.area}</span> : null}{mode === "wanted" && item.buyer_name ? <span>{item.buyer_name}</span> : null}<span>{new Date(item.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</span></div></div>{buttons ? <div className="flex shrink-0 gap-2 self-end sm:self-auto">{buttons}</div> : null}</article>;
+          return (
+            <article key={item.id} className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:px-5">
+              <div className="grid h-20 w-24 shrink-0 place-items-center overflow-hidden rounded-xl bg-slate-100 text-emerald-800">
+                {mode === "wanted" ? (
+                  <SearchCheck className="h-6 w-6" />
+                ) : item.image_url ? (
+                  <img src={item.image_url} alt="" loading="lazy" className="h-full w-full object-cover" />
+                ) : (
+                  <PackageSearch className="h-6 w-6 text-slate-300" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="truncate text-sm font-extrabold">
+                    {mode === "listings" ? (
+                      <Link
+                        href={`/admin/listings/${item.slug || item.id}`}
+                        className="hover:text-emerald-800 hover:underline"
+                        title="Buka detail & kelola di admin"
+                      >
+                        {item.title}
+                      </Link>
+                    ) : (
+                      item.title
+                    )}
+                  </h3>
+                  {mode === "listings" && (
+                    <a
+                      href={`/produk/${item.slug || item.id}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      title="Lihat halaman publik produk (tab baru)"
+                      className="inline-flex text-slate-400 hover:text-emerald-700"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  )}
+                  <span
+                    className={`rounded-full px-2 py-1 text-[10px] font-extrabold ${
+                      item.status === "pending"
+                        ? "bg-amber-50 text-amber-800"
+                        : item.status === "active"
+                        ? "bg-emerald-50 text-emerald-800"
+                        : "bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    {item.status}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs font-bold text-slate-700">
+                  {mode === "wanted" ? "Anggaran " + rupiah(item.budget || 0) : rupiah(item.price || 0)}{" "}
+                  <span className="font-medium text-slate-400">· {item.category || "Tanpa kategori"}</span>
+                  {item.condition ? <span className="font-medium text-slate-400"> · {item.condition}</span> : null}
+                  {typeof item.stock === "number" ? <span className="font-medium text-slate-400"> · Stok {item.stock}</span> : null}
+                </p>
+                <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-500">
+                  {item.description || "Tidak ada deskripsi."}
+                </p>
+                {/* Info Penjual / Pemesan */}
+                {mode === "listings" && (item.seller_name || item.seller_wa) && (
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs">
+                    <span className="font-semibold text-slate-500">Penjual:</span>
+                    {item.seller_wa ? (
+                      <Link
+                        href={`/admin/penjual/${encodeURIComponent(item.seller_wa)}`}
+                        className="font-bold text-emerald-800 hover:underline"
+                        title="Buka rekap toko penjual"
+                      >
+                        {item.seller_name || "Tanpa nama"} ({item.seller_wa})
+                      </Link>
+                    ) : (
+                      <span className="font-medium text-slate-700">{item.seller_name || "—"}</span>
+                    )}
+                    {item.seller_wa && (
+                      <a
+                        href={`https://wa.me/${item.seller_wa.replace(/\D/g, "")}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-800 hover:bg-emerald-100"
+                        title="Chat WhatsApp dengan penjual"
+                      >
+                        <MessageCircle className="h-3 w-3" /> WhatsApp
+                      </a>
+                    )}
+                  </div>
+                )}
+                {mode === "wanted" && (item.contact_wa || item.buyer_wa) && (
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs">
+                    <span className="font-semibold text-slate-500">Kontak:</span>
+                    <span className="font-medium text-slate-700">{item.buyer_name || "Pembeli"} ({item.contact_wa || item.buyer_wa})</span>
+                    <a
+                      href={`https://wa.me/${(item.contact_wa || item.buyer_wa).replace(/\D/g, "")}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-800 hover:bg-emerald-100"
+                    >
+                      <MessageCircle className="h-3 w-3" /> WhatsApp
+                    </a>
+                  </div>
+                )}
+                <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-semibold text-slate-400">
+                  <span>{item.campus || "Kampus tidak diisi"}</span>
+                  {item.area ? <span>{item.area}</span> : null}
+                  <span>{new Date(item.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</span>
+                </div>
+              </div>
+              {buttons ? <div className="flex shrink-0 gap-2 self-end sm:self-auto">{buttons}</div> : null}
+            </article>
+          );
         })}</div> : <div className="grid min-h-56 place-items-center px-5 text-center"><div><PackageSearch className="mx-auto h-7 w-7 text-slate-300" /><p className="mt-3 text-sm font-bold text-slate-600">Tidak ada iklan pada filter ini</p><p className="mt-1 text-xs text-slate-400">Coba ubah status atau kata pencarian.</p></div></div>}
-        {nextOffset !== null ? <div className="flex flex-col items-center gap-2 border-t border-slate-100 p-3"><p className="text-[10px] text-slate-400">Menampilkan {items.length.toLocaleString("id-ID")} dari {total.toLocaleString("id-ID")}</p><button onClick={() => load(nextOffset, true)} disabled={loading} className="inline-flex min-h-9 items-center justify-center gap-2 rounded-full bg-slate-100 px-4 text-xs font-bold text-slate-700 hover:bg-slate-200 disabled:opacity-50">{loading ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : null}Muat berikutnya</button></div> : null}
+        {nextOffset !== null ? <div className="flex flex-col items-center gap-2 border-t border-slate-100 p-3"><p className="text-[10px] text-slate-400">Menampilkan {items.length.toLocaleString("id-ID")} dari {total.toLocaleString("id-ID")}</p><button onClick={() => load(nextOffset, true)} disabled={loading} className="inline-flex min-h-9 items-center justify-center gap-2 rounded-full bg-slate-100 px-4 text-xs font-bold text-slate-700 hover:bg-slate-200 active:opacity-85 disabled:opacity-50">{loading ? <LoaderCircle className="h-3.5 w-3.5 motion-safe:animate-spin" /> : null}Muat berikutnya</button></div> : null}
       </section>
+
+      {/* Modal Edit Listing */}
+      {editingListing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="text-base font-black text-slate-900">Edit Iklan Listing</h3>
+                <p className="text-xs text-slate-500">ID: {editingListing.id}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingListing(null)}
+                className="grid h-8 w-8 place-items-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEdit} className="mt-4 space-y-3.5 text-xs">
+              <div>
+                <label className="mb-1 block font-bold text-slate-700">Judul Barang</label>
+                <input
+                  type="text"
+                  required
+                  value={editForm.title}
+                  onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))}
+                  className="h-10 w-full rounded-xl border border-slate-200 px-3 text-xs outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/10"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block font-bold text-slate-700">Harga (Rp)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    value={editForm.price}
+                    onChange={(e) => setEditForm((f) => ({ ...f, price: e.target.value }))}
+                    className="h-10 w-full rounded-xl border border-slate-200 px-3 text-xs outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/10"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block font-bold text-slate-700">Stok</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editForm.stock}
+                    onChange={(e) => setEditForm((f) => ({ ...f, stock: e.target.value }))}
+                    className="h-10 w-full rounded-xl border border-slate-200 px-3 text-xs outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/10"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block font-bold text-slate-700">Kategori</label>
+                  <input
+                    type="text"
+                    value={editForm.category}
+                    onChange={(e) => setEditForm((f) => ({ ...f, category: e.target.value }))}
+                    className="h-10 w-full rounded-xl border border-slate-200 px-3 text-xs outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/10"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block font-bold text-slate-700">Kondisi</label>
+                  <select
+                    value={editForm.condition}
+                    onChange={(e) => setEditForm((f) => ({ ...f, condition: e.target.value }))}
+                    className="h-10 w-full rounded-xl border border-slate-200 px-3 text-xs outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/10"
+                  >
+                    <option value="Bekas">Bekas</option>
+                    <option value="Baru">Baru</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block font-bold text-slate-700">Nama Penjual</label>
+                  <input
+                    type="text"
+                    value={editForm.seller_name}
+                    onChange={(e) => setEditForm((f) => ({ ...f, seller_name: e.target.value }))}
+                    className="h-10 w-full rounded-xl border border-slate-200 px-3 text-xs outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/10"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block font-bold text-slate-700">Nomor WhatsApp</label>
+                  <input
+                    type="text"
+                    value={editForm.seller_wa}
+                    onChange={(e) => setEditForm((f) => ({ ...f, seller_wa: e.target.value }))}
+                    className="h-10 w-full rounded-xl border border-slate-200 px-3 text-xs outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/10"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block font-bold text-slate-700">Kampus</label>
+                  <input
+                    type="text"
+                    value={editForm.campus}
+                    onChange={(e) => setEditForm((f) => ({ ...f, campus: e.target.value }))}
+                    className="h-10 w-full rounded-xl border border-slate-200 px-3 text-xs outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/10"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block font-bold text-slate-700">Lokasi / Titik COD</label>
+                  <input
+                    type="text"
+                    value={editForm.area}
+                    onChange={(e) => setEditForm((f) => ({ ...f, area: e.target.value }))}
+                    className="h-10 w-full rounded-xl border border-slate-200 px-3 text-xs outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/10"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1 block font-bold text-slate-700">Deskripsi Barang</label>
+                <textarea
+                  rows={4}
+                  value={editForm.description}
+                  onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
+                  className="w-full rounded-xl border border-slate-200 p-3 text-xs outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/10"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setEditingListing(null)}
+                  className="min-h-9 rounded-full border border-slate-200 px-4 font-bold text-slate-600 hover:bg-slate-50"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingEdit}
+                  className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-emerald-800 px-5 font-extrabold text-white hover:bg-emerald-900 active:opacity-85 disabled:opacity-50"
+                >
+                  {savingEdit ? <LoaderCircle className="h-3.5 w-3.5 motion-safe:animate-spin" /> : null}
+                  Simpan Perubahan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Modal Omnichannel Distribution */}
       <OmnichannelPublishModal
