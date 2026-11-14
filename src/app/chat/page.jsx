@@ -816,9 +816,9 @@ function ChatContent() {
           </header>
 
           {/* Main Swipe Viewport */}
-          <div className="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col xl:flex-row gap-6 items-start justify-center scrollbar-none [scrollbar-width:none]">
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col lg:flex-row gap-6 items-start justify-start lg:justify-center scrollbar-none [scrollbar-width:none] pb-24 md:pb-8">
             {/* Kartu Swipe Utama (Pusat Perhatian) */}
-            <div className="flex-1 flex flex-col items-center justify-center max-w-xl mx-auto w-full">
+            <div className="flex-1 flex flex-col items-center justify-start max-w-xl mx-auto w-full pt-1">
               {temanLoading ? (
                 <div className="w-full bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-md p-8 flex flex-col items-center justify-center text-center animate-pulse motion-reduce:animate-none min-h-[380px]">
                   <div className="w-20 h-20 rounded-2xl bg-slate-100 dark:bg-slate-800 mb-4" />
@@ -942,7 +942,7 @@ function ChatContent() {
             </div>
 
             {/* Sisi Kanan: Obrolan Anonim, Panduan Kenalan Aman & Basecamp Favorit */}
-            <div className="w-full xl:w-80 shrink-0 flex flex-col gap-4">
+            <div className="w-full lg:w-80 xl:w-96 shrink-0 flex flex-col gap-4 pb-12 lg:pb-0">
               {/* Card 1: Obrolan Anonim 1-on-1 */}
               <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4 shadow-xs">
                 <div className="flex items-center gap-2 mb-2">
