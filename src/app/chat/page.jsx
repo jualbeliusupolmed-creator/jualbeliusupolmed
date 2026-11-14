@@ -705,7 +705,7 @@ function ChatContent() {
   const labelKampus = isSemuaOrEmpty ? "Semua Kampus" : activeCampusName;
 
   return (
-    <div className="w-full flex-1 flex flex-col bg-surface font-sans antialiased text-slate-800 dark:text-slate-100">
+    <div className="w-full flex-1 flex flex-col bg-surface font-sans antialiased text-slate-800 dark:text-slate-100 min-h-0 overflow-hidden">
       {/* ── TOP SUB-HEADER: MODE SWITCHER BANNER (from 16.html) ── */}
       <div className="w-full border-b border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-3 sm:px-6 py-2 shrink-0 z-30">
         <div className="max-w-[1400px] mx-auto flex flex-wrap items-center justify-between gap-2.5">
@@ -777,7 +777,7 @@ function ChatContent() {
         /* ══════════════════════════════════════════════════════════════════
             TAB 2: TEMAN KAMPUS (KENALAN MAHASISWA & OBROLAN ANONIM)
            ══════════════════════════════════════════════════════════════════ */
-        <div className="flex-1 max-w-[1400px] w-full mx-auto flex flex-col overflow-hidden relative h-[calc(100dvh-6.5rem)]">
+        <div className="flex-1 max-w-[1400px] w-full mx-auto flex flex-col overflow-hidden relative min-h-0 h-full">
           {/* Header Atas: Swipe & Cari Teman Kampus */}
           <header className="px-4 md:px-6 py-3 bg-white dark:bg-slate-900 shadow-xs flex items-center justify-between gap-3 shrink-0 border-b border-slate-200 dark:border-slate-800 z-10">
             <div className="flex items-center gap-3 min-w-0">
@@ -1033,10 +1033,10 @@ function ChatContent() {
         /* ══════════════════════════════════════════════════════════════════
             TAB 1: OBROLAN TRANSAKSI (MURNI WHATSAPP WEB STYLE)
            ══════════════════════════════════════════════════════════════════ */
-        <div className="flex-1 max-w-[1400px] w-full mx-auto flex flex-col md:flex-row overflow-hidden relative h-[calc(100dvh-6.5rem)]">
+        <div className="flex-1 max-w-[1400px] w-full mx-auto flex flex-col md:flex-row overflow-hidden relative min-h-0 h-full">
           {/* PANEL KIRI (SIDEBAR): DAFTAR PESAN & MATCH BARU */}
           <aside
-            className={`w-full md:w-[350px] lg:w-[380px] shrink-0 bg-white dark:bg-slate-900 flex flex-col h-full overflow-hidden border-r border-slate-200 dark:border-slate-800 ${
+            className={`w-full md:w-[350px] lg:w-[380px] flex-1 md:flex-initial md:shrink-0 bg-white dark:bg-slate-900 flex flex-col h-full min-h-0 overflow-hidden border-r border-slate-200 dark:border-slate-800 ${
               (roomQuery || anonView) ? "hidden md:flex" : "flex"
             }`}
           >
@@ -1101,7 +1101,7 @@ function ChatContent() {
             </div>
 
             {/* Chat List Scroll Area */}
-            <div className="flex-1 overflow-y-auto divide-y-0 p-2 space-y-1.5 scrollbar-none [scrollbar-width:none]">
+            <div className="flex-1 overflow-y-auto divide-y-0 p-2 pb-20 md:pb-2 space-y-1.5 scrollbar-none [scrollbar-width:none]">
               {/* Pinned Label */}
               <div className="px-2 pt-2 pb-0.5 flex items-center justify-between text-slate-400">
                 <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
@@ -1246,7 +1246,7 @@ function ChatContent() {
               PANEL KANAN (CHAT AREA): ACTIVE ROOM OR WHATSAPP EMPTY STATE
               ══════════════════════════════════════════════════════════════════ */}
           <section
-            className={`flex-1 flex flex-col h-full bg-slate-50 dark:bg-black relative min-w-0 overflow-hidden ${
+            className={`flex-1 flex flex-col h-full min-h-0 bg-slate-50 dark:bg-black relative min-w-0 overflow-hidden ${
               (!roomQuery && !anonView) ? "hidden md:flex" : "flex"
             }`}
           >

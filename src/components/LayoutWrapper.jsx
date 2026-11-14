@@ -96,14 +96,17 @@ export default function LayoutWrapper({ children }) {
       {isAdmin ? (
         children
       ) : (
-        <div className="w-full min-h-screen relative overflow-x-clip bg-[#F8FAFC] dark:bg-[#0f172a] text-[#0F172A] dark:text-slate-100 flex flex-col justify-between font-sans">
+        <div className={cn(
+          "w-full relative overflow-x-clip bg-[#F8FAFC] dark:bg-[#0f172a] text-[#0F172A] dark:text-slate-100 flex flex-col justify-between font-sans",
+          isChat ? "h-screen h-dvh overflow-hidden" : "min-h-screen"
+        )}>
           {/* Universal Sticky Top Navbar (Desktop 64px h-16, Mobile 56px h-14) */}
           <Navbar config={config} />
 
           {/* Main Content Area without vertical sidebar constraints */}
-          <div className="w-full min-w-0 flex-1 flex flex-col">
+          <div className="w-full min-w-0 flex-1 flex flex-col min-h-0">
             <main className={cn(
-              "flex-1 flex flex-col w-full",
+              "flex-1 flex flex-col w-full min-h-0",
               !isChat && !isTeman ? "pb-24 lg:pb-0" : ""
             )}>
               {children}
