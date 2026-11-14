@@ -120,7 +120,7 @@ export async function POST(req) {
     }
     if (galat) return jawabGalat(galat);
 
-    setSellerCookie(normalizedWa);
+    await setSellerCookie(normalizedWa);
     return NextResponse.json({
       success: true,
       wa: normalizedWa,

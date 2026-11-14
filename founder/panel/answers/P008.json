@@ -1,0 +1,13 @@
+{
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "Takut yang jualan bukan anak kampus beneran tapi penipu luar yang nyamar.",
+  "objection": "Identitas seller belum terverifikasi resmi",
+  "would_change_my_mind": "Wajib verifikasi email kampus @usu.ac.id atau akun SIA",
+  "price_too_cheap": 2000,
+  "price_cheap": 4000,
+  "price_expensive": 7000,
+  "price_too_expensive": 15000,
+  "id": "P008"
+}

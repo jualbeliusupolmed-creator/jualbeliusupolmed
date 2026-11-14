@@ -31,7 +31,7 @@ export async function POST(req) {
       const testWa = process.env.TEST_ACCOUNT_WA || "";
       const testPin = process.env.TEST_ACCOUNT_PIN || "";
       if (testWa && testPin && normalizedWa === testWa && pin === testPin) {
-        setSellerCookie(normalizedWa);
+        await setSellerCookie(normalizedWa);
         return NextResponse.json({ success: true, message: "Login berhasil (Test Account)!" });
       }
     }
@@ -53,7 +53,7 @@ export async function POST(req) {
     // plaintext tidak akan pernah sampai ke baris ini. Seluruh 41 PIN yang ada
     // di-bcrypt sekali jalan lewat BAGIAN 28 migrasi.
 
-    setSellerCookie(normalizedWa);
+    await setSellerCookie(normalizedWa);
 
     return NextResponse.json({ success: true, message: "Login berhasil!" });
   } catch (err) {

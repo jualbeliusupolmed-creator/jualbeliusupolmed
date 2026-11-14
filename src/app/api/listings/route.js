@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimit, rateLimitDistributed, getClientIp } from "@/lib/rateLimit";
-import { getSettings, DEFAULT_SETTINGS, adFeeFrom, listingExpiresAt, hasUnpaidSoldFees, isAllowedCampus, getActiveCampuses } from "@/lib/settings";
+import { getSettings, DEFAULT_SETTINGS, adFeeFrom, listingExpiresAt, hasUnpaidSoldFees } from "@/lib/settings";
 import { formatWa } from "@/lib/constants";
 import { postToGroup, notifyCategorySubscribers } from "@/lib/fonnte";
 import { pushListingBaru } from "@/lib/webpush";
 import { getDistributorSettings, calcDistributorFee, effectivePrice } from "@/lib/distributor";
 import { tokoAktif, generateDefaultSlug } from "@/lib/toko";
-import { getSellerSession } from "@/lib/auth";
+import { getSellerSessionAsync } from "@/lib/auth";
 import { autoPublishListingInstagram } from "@/lib/listingInstagram";
 import { notifyKeywordSubscribers } from "@/lib/keywordSubs";
 import { siteOriginFromRequest } from "@/lib/instagramQueue";
@@ -16,6 +16,7 @@ import { sanitizeListingSpecs } from "@/lib/listingSpecs";
 import { checkProhibitedListing } from "@/lib/profanity";
 import { moderateListing } from "@/lib/moderationRules";
 import { listingInputSchema, normalizePriceInput, sanitizeListingTitle, validateElectronicsSpecs } from "@/lib/listingSchema";
+import { loadMarketplaceRegion } from "@/lib/marketplaceRegion";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -29,7 +30,7 @@ export async function GET(req) {
   // pembayaran pemilik. Nomor WA di query string bukan bukti kepemilikan;
   // sebelum 24 Agustus 2026 siapa pun dapat menggantinya dan membaca data
   // dashboard penjual lain. Identitas harus selalu berasal dari kuki sesi.
-  const sessionWa = formatWa(getSellerSession() || "");
+  const sessionWa = formatWa(await getSellerSessionAsync() || "");
   if (!sessionWa) {
     return NextResponse.json({ error: "Silakan masuk terlebih dahulu." }, { status: 401 });
   }
@@ -127,7 +128,6 @@ export async function POST(req) {
       type,
       image_url,
       images,
-      campus,
       area,
       condition,
       rental_period,
@@ -135,7 +135,7 @@ export async function POST(req) {
     } = body;
 
     const normalizedWa = formatWa(seller_wa);
-    const sessionWa = getSellerSession();
+    const sessionWa = await getSellerSessionAsync();
 
     if (!sessionWa || sessionWa !== normalizedWa) {
       return NextResponse.json({ error: "Sesi tidak valid atau telah berakhir. Silakan login kembali." }, { status: 401 });
@@ -217,9 +217,16 @@ export async function POST(req) {
     // Cek status distributor
     const { data: profileCheck } = await supa
       .from("seller_profiles")
-      .select("distributor, name, subscription_tier, subscription_expires_at, user_id, home_university_id")
+      .select("distributor, name, subscription_tier, subscription_expires_at, user_id, home_university_id, verified_university_id, affiliation_status, campus")
       .eq("wa", normalizedWa)
       .maybeSingle();
+    const region = await loadMarketplaceRegion(supa, sessionWa);
+    const sellerUniversityId = (region.profile?.affiliation_status === "verified_student" || region.profile?.student_verified) && region.profile?.verified_university_id
+      ? region.profile.verified_university_id
+      : profileCheck?.home_university_id;
+    if (!sellerUniversityId || !region.province) {
+      return NextResponse.json({ error: "Pilih universitas acuan di profil sebelum memasang barang. Barang hanya tayang di provinsi kampusmu." }, { status: 409 });
+    }
     const isDistributor = !!profileCheck?.distributor;
 
     // Check if seller has unpaid sold fees (Account locked - Cara 2)
@@ -263,7 +270,7 @@ export async function POST(req) {
       }
       const { data: refreshedProfile } = await supa
         .from("seller_profiles")
-        .select("distributor, name, subscription_tier, subscription_expires_at, slug, user_id, home_university_id")
+        .select("distributor, name, subscription_tier, subscription_expires_at, slug, user_id, home_university_id, verified_university_id, affiliation_status, campus")
         .eq("wa", normalizedWa)
         .maybeSingle();
       profile = refreshedProfile;
@@ -302,9 +309,6 @@ export async function POST(req) {
     }
     const settings = await getSettings();
     settings.pricing = { ...DEFAULT_SETTINGS.pricing, ...(pricingRow?.value || {}) };
-    if (!isAllowedCampus(campus || "Semua", settings, { allowAll: true })) {
-      return NextResponse.json({ error: "Kampus iklan tidak valid atau sudah tidak tersedia." }, { status: 400 });
-    }
     const distSettings = isDistributor ? await getDistributorSettings(supa) : null;
     const isJasa = type === "jasa";
     let isJasaFree = false;
@@ -357,32 +361,19 @@ export async function POST(req) {
       finalPrice = effectivePrice(finalPrice, distributorFee, distSettings.autoAddPrice);
     }
 
-    const activeCampuses = getActiveCampuses(settings);
-    let resolvedCampus = "Semua";
-    const explicitAllCampuses = String(campus || "").trim().toLowerCase() === "semua";
-    let resolvedUniversityId = explicitAllCampuses ? null : profile?.home_university_id || null;
-
-    if (campus && campus !== "Semua") {
-      const targetUni = activeCampuses.find(
-        (c) => String(c.shortName || "").trim().toLowerCase() === String(campus).trim().toLowerCase() ||
-               String(c.id || "").trim().toLowerCase() === String(campus).trim().toLowerCase()
-      );
-      if (targetUni) {
-        resolvedCampus = targetUni.shortName;
-        resolvedUniversityId = targetUni.id;
-      } else {
-        resolvedCampus = campus;
-      }
-    } else if (!explicitAllCampuses && resolvedUniversityId) {
-      const matchingUni = activeCampuses.find((c) => c.id === resolvedUniversityId);
-      if (matchingUni) {
-        resolvedCampus = matchingUni.shortName;
-      }
+    // Penjual tidak memilih kampus tujuan. Wilayah listing selalu mengikuti
+    // universitas kanonikal akun; pembeli satu provinsi dapat menemukannya.
+    const resolvedCampus = region.university.code || profileCheck?.campus || "";
+    const resolvedUniversityId = region.university.id;
+    if (!resolvedCampus || !resolvedUniversityId) {
+      return NextResponse.json({ error: "Kampus acuan akun belum lengkap. Lengkapi profil sebelum memasang barang." }, { status: 409 });
     }
 
     const insertPayload = {
       user_id: profile?.user_id || null,
       university_id: resolvedUniversityId,
+      seller_university_id: region.university.id,
+      seller_province_id: region.province,
       seller_name: enforcedName,
       seller_wa: normalizedWa,
       title: cleanedTitle,
@@ -460,19 +451,24 @@ export async function POST(req) {
 
     // HANYA disebarkan ke grup WA & notifikasi jika sudah AKTIF (approved)
     if (initialStatus === "active") {
-      try {
-        await postToGroup(listing);
+      const origin = siteOriginFromRequest(req);
+      // Background notifications (non-blocking) sesuai pola Background Jobs backend-patterns
+      void (async () => {
+        try {
+          await postToGroup(listing);
+        } catch (err) {
+          console.error("Fonnte postToGroup error:", err?.message);
+        }
         notifyCategorySubscribers(supa, listing).catch(() => {});
         notifyKeywordSubscribers(supa, listing).catch(() => {});
         pushListingBaru(supa, listing).catch(() => {});
-        await autoPublishListingInstagram({
-          origin: siteOriginFromRequest(req),
+        autoPublishListingInstagram({
+          origin,
           listingId: listing.id,
           timeoutMs: 0,
         }).catch((err) => console.error("[POST /api/listings] IG publish error:", err?.message));
-      } catch (err) {
-        console.error("Fonnte postToGroup error:", err?.message);
-      }
+      })();
+
       return NextResponse.json({
         listing,
         paymentUrl: null,

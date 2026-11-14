@@ -26,7 +26,7 @@ export async function POST(req) {
     if (!listing)
       return NextResponse.json({ error: "Listing tidak ada" }, { status: 404 });
 
-    const tolak = tolakBukanPemilik(listing.seller_wa, { aksi: "mengaktifkan auto-bump" });
+    const tolak = await tolakBukanPemilik(listing.seller_wa, { aksi: "mengaktifkan auto-bump" });
     if (tolak) return tolak;
 
     const amount = FEES.autobump_7_days;

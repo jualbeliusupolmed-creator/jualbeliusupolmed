@@ -5,6 +5,8 @@ import { fetchListingsWithProfiles } from "@/lib/dbHelpers";
 import { buildSlug } from "@/lib/slug";
 import JasaBrowser from "./JasaBrowser";
 import { skripJsonLd } from "@/lib/jsonLd";
+import { getSellerSessionAsync } from "@/lib/auth";
+import { applyMarketplaceProvinceScope, loadSessionMarketplaceScope } from "@/lib/marketplaceRegion";
 
 // Client service-role memakai fetch no-store agar data marketplace tidak basi.
 // Tandai halaman dynamic supaya kontrak cache Next.js sesuai dengan implementasi.
@@ -38,10 +40,15 @@ const JASA_CATEGORIES = [
   { slug: "lainnya", name: "Lainnya", icon: "more-horizontal" },
 ];
 
-async function getInitialData() {
+function applyViewerScope(query, marketplaceScope) {
+  if (!marketplaceScope?.authenticated) return query;
+  return marketplaceScope.scope ? applyMarketplaceProvinceScope(query, marketplaceScope.scope) : null;
+}
+
+async function getInitialData(marketplaceScope) {
   try {
     const supa = getAdminClient();
-    const query = supa
+    let query = supa
       .from("listings")
       .select("*, seller_wa", { count: "exact" })
       .eq("status", "active")
@@ -49,6 +56,8 @@ async function getInitialData() {
       .order("featured", { ascending: false, nullsFirst: false })
       .order("bumped_at", { ascending: false, nullsFirst: false })
       .range(0, PAGE_SIZE - 1);
+    query = applyViewerScope(query, marketplaceScope);
+    if (!query) return { listings: [], total: 0 };
       
     const { data, count } = await fetchListingsWithProfiles(query);
     return { listings: data || [], total: count || 0 };
@@ -58,10 +67,10 @@ async function getInitialData() {
   }
 }
 
-async function getFeatured() {
+async function getFeatured(marketplaceScope) {
   try {
     const supa = getAdminClient();
-    const query = supa
+    let query = supa
       .from("listings")
       .select("id,title,price,image_url,seller_wa")
       .eq("status", "active")
@@ -69,6 +78,8 @@ async function getFeatured() {
       .eq("featured", true)
       .order("bumped_at", { ascending: false, nullsFirst: false })
       .limit(6);
+    query = applyViewerScope(query, marketplaceScope);
+    if (!query) return [];
       
     const { data } = await fetchListingsWithProfiles(query);
     return data || [];
@@ -77,10 +88,10 @@ async function getFeatured() {
   }
 }
 
-async function getTrending() {
+async function getTrending(marketplaceScope) {
   try {
     const supa = getAdminClient();
-    const query = supa
+    let query = supa
       .from("listings")
       .select("id,title,price,image_url,views,seller_wa")
       .eq("status", "active")
@@ -88,6 +99,8 @@ async function getTrending() {
       .gt("views", 0)
       .order("views", { ascending: false, nullsFirst: false })
       .limit(8);
+    query = applyViewerScope(query, marketplaceScope);
+    if (!query) return [];
       
     const { data } = await fetchListingsWithProfiles(query);
     return data || [];
@@ -97,11 +110,15 @@ async function getTrending() {
 }
 
 export default async function JasaPage() {
+  const sessionIdentity = await getSellerSessionAsync();
+  const marketplaceScope = sessionIdentity
+    ? await loadSessionMarketplaceScope(getAdminClient(), sessionIdentity).catch(() => ({ authenticated: true, scope: null }))
+    : { authenticated: false, scope: null };
   const [{ listings, total }, featured, trending, settings] =
     await Promise.all([
-      getInitialData(),
-      getFeatured(),
-      getTrending(),
+      getInitialData(marketplaceScope),
+      getFeatured(marketplaceScope),
+      getTrending(marketplaceScope),
       getSettings(),
     ]);
 

@@ -6,7 +6,6 @@ import { CATEGORIES } from "@/lib/constants";
 import { rupiah } from "@/lib/fees";
 import { uploadMedia } from "@/lib/upload";
 import MediaUploader from "@/components/MediaUploader";
-import CampusSelect from "@/components/CampusSelect";
 import { useSesi } from "@/components/SesiProvider";
 
 export default function EditPage() {
@@ -51,7 +50,6 @@ export default function EditPage() {
           price: l.price || "",
           stock: l.stock || 1,
           category: l.category || CATEGORIES[0].name,
-          campus: l.campus || "Semua",
           area: l.area || "",
         });
         const existing = l.images?.length
@@ -96,7 +94,6 @@ export default function EditPage() {
           price: Number(form.price),
           stock: Number(form.stock),
           category: form.category,
-          campus: form.campus,
           area: form.area,
           image_url,
           images,
@@ -168,9 +165,8 @@ export default function EditPage() {
                 ))}
               </select>
             </div>
-            <div>
-              <label className="label">Target Area</label>
-              <CampusSelect className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.campus} onChange={(value) => setForm((current) => ({ ...current, campus: value }))} />
+            <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2.5 text-xs text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-200">
+              Jangkauan jual mengikuti provinsi kampus pada profilmu.
             </div>
             <div>
               <label className="label">Lokasi COD</label>

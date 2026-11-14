@@ -1,0 +1,13 @@
+{
+  "buys": true,
+  "purchases_first_month": 2,
+  "reason_code": "convenience",
+  "reason": "Bisa kirim foto via DM Instagram langsung jadi iklan itu jenius, simpel banget.",
+  "objection": "Respon bot DM IG harus selalu online",
+  "would_change_my_mind": "",
+  "price_too_cheap": 2500,
+  "price_cheap": 5000,
+  "price_expensive": 9000,
+  "price_too_expensive": 17000,
+  "id": "P018"
+}

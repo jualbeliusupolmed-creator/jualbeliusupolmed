@@ -18,31 +18,45 @@ export function itemMatchesFypScope(item, {
   campuses = [],
 } = {}) {
   if (!item) return false;
-  if (scope === "all") return true;
+  // Client preferences must never grant a national feed to a student account.
+  if (scope === "all") return false;
 
-  if (scope === "campus" && ["", "semua", "all"].includes(normalize(campus))) return true;
+  if (scope === "campus" && ["", "semua", "all"].includes(normalize(campus))) return false;
 
-  const itemCampus = normalize(item.campus || item.product?.campus);
-  const itemUniversity = normalize(item.university_id || item.product?.university_id);
-  const profileUniversity = normalize(item.seller_profiles?.home_university_id);
-  const keys = [itemCampus, itemUniversity, profileUniversity].filter(Boolean);
-
-  // Explicitly national listings can appear in any regional feed. Missing
-  // campus metadata is not considered national: it must not leak across scopes.
-  if (itemCampus === "semua") return true;
+  const sellerProfile = item.seller_profiles || item.product?.seller_profiles || null;
+  const verified = sellerProfile?.affiliation_status === "verified_student" || sellerProfile?.student_verified;
+  const sellerUniversity = normalize(
+    (verified && sellerProfile?.verified_university_id) ||
+    sellerProfile?.home_university_id ||
+    item.seller_university_id ||
+    item.product?.seller_university_id
+  );
 
   if (scope === "province") {
+    const itemProvince = normalize(item.seller_province_id || item.product?.seller_province_id);
+    if (itemProvince) return itemProvince === normalize(provinceId);
+    // Listing lama tanpa provinsi tersimpan hanya boleh masuk berdasarkan
+    // profil penjual. Metadata target listing tidak menentukan asal penjual.
+    if (!sellerUniversity) return false;
     const allowed = universityKeysForProvince(provinceId, campuses);
-    return keys.some((key) => allowed.has(key));
+    return allowed.has(sellerUniversity);
   }
 
   if (scope === "custom") {
     const allowed = new Set((universities || []).map(normalize).filter(Boolean));
-    return keys.some((key) => allowed.has(key));
+    return sellerUniversity ? allowed.has(sellerUniversity) : false;
   }
 
   const selected = normalize(campus);
-  return Boolean(selected && keys.includes(selected));
+  const selectedCampus = (campuses || []).find((entry) =>
+    normalize(entry.id) === selected || normalize(entry.shortName) === selected
+  );
+  const profileCampus = normalize(sellerProfile?.campus || sellerProfile?.student_campus);
+  return Boolean(selected && (
+    sellerUniversity === selected ||
+    (selectedCampus && sellerUniversity === normalize(selectedCampus.id)) ||
+    profileCampus === selected
+  ));
 }
 
 export function sortFypItems(items, preferredIds = []) {

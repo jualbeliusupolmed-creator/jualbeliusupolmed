@@ -29,7 +29,7 @@ function StatusBadge({ s }) {
   };
   const d = map[s] || { color: "text-gray-700", bg: "bg-gray-100", label: s };
   return (
-    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${d.bg} ${d.color}`}>
+    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${d.bg} ${d.color}`}>
       {d.label}
     </span>
   );
@@ -39,8 +39,12 @@ function MenuAksi({ items }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="relative">
-      <button onClick={() => setOpen(!open)} className="g-icon-btn h-8 w-8" aria-label="Aksi">
-        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg>
+      <button
+        onClick={() => setOpen(!open)}
+        className="g-icon-btn min-h-10 min-w-10 sm:min-h-9 sm:min-w-9 p-2 touch-manipulation active:translate-y-px transition-colors"
+        aria-label="Aksi menu listing"
+      >
+        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg>
       </button>
       {open && (
         <div className="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border border-slate-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-800" onMouseLeave={() => setOpen(false)}>
@@ -192,7 +196,7 @@ export default function ListingsClient({ initialListings = [] }) {
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="g-searchbar" style={{ height: 40, maxWidth: 360 }}>
-          <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
             <path d="M21 21l-4.3-4.3M11 18a7 7 0 100-14 7 7 0 000 14z" />
           </svg>
           <input
@@ -266,7 +270,7 @@ export default function ListingsClient({ initialListings = [] }) {
                       <img src={l.image_url} alt="" className="h-10 w-10 shrink-0 rounded object-cover" style={{ background: "var(--g-surface-2)" }} loading="lazy" />
                     ) : (
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded" style={{ background: "var(--g-surface-2)", color: "var(--g-ink-faint)" }}>
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                       </div>
                     )}
                     <div className="min-w-0 max-w-[240px]">

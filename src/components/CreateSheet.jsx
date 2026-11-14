@@ -11,7 +11,7 @@ import { Icon } from "./Icons";
 const PILIHAN = [
   {
     href: "/jual",
-    ikon: <Icon.ShoppingBag className="w-5 h-5" />,
+    ikon: <Icon.ShoppingBag className="w-5 h-5" aria-hidden="true" />,
     ikonBg: "bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300",
     judul: "Jual Barang / Jasa",
     desc: "Jual barang di marketplace",
@@ -19,7 +19,7 @@ const PILIHAN = [
   },
   {
     href: "/dashboard?tab=open-po",
-    ikon: <Icon.Coffee className="w-5 h-5" />,
+    ikon: <Icon.Coffee className="w-5 h-5" aria-hidden="true" />,
     ikonBg: "bg-emerald-50 text-[#126B49] dark:bg-emerald-950/40 dark:text-emerald-300",
     judul: "Buka Open PO",
     desc: "Buka pesanan makanan, merchandise & jastip",
@@ -28,7 +28,7 @@ const PILIHAN = [
   },
   {
     href: "/dicari?tulis=1",
-    ikon: <Icon.MapPin className="w-5 h-5" />,
+    ikon: <Icon.MapPin className="w-5 h-5" aria-hidden="true" />,
     ikonBg: "bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300",
     judul: "Pasang Kebutuhan",
     desc: "Cari barang yang kamu butuhkan",
@@ -36,7 +36,7 @@ const PILIHAN = [
   },
   {
     href: "/mading?tulis=1",
-    ikon: <Icon.Mail className="w-5 h-5" />,
+    ikon: <Icon.Mail className="w-5 h-5" aria-hidden="true" />,
     ikonBg: "bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300",
     judul: "Tulis Menfess",
     desc: "Curhat, info, atau pengumuman",
@@ -44,7 +44,7 @@ const PILIHAN = [
   },
   {
     href: "/oprec?tulis=1",
-    ikon: <Icon.Megaphone className="w-5 h-5" />,
+    ikon: <Icon.Megaphone className="w-5 h-5" aria-hidden="true" />,
     ikonBg: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300",
     judul: "Buka Oprec",
     desc: "Rekrut anggota organisasi / panitia",
@@ -52,7 +52,7 @@ const PILIHAN = [
   },
   {
     href: "/chat?mode=teman",
-    ikon: <Icon.Users className="w-5 h-5" />,
+    ikon: <Icon.Users className="w-5 h-5" aria-hidden="true" />,
     ikonBg: "bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300",
     judul: "Cari Teman Kampus",
     desc: "Kenalan dengan mahasiswa lintas kampus",
@@ -79,7 +79,7 @@ export default function CreateSheet({ isOpen, onClose }) {
     <BottomSheet isOpen={isOpen} onClose={onClose} title="Buat baru">
       {grup.map((g) => (
         <div key={g}>
-          <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-gray-400">
+          <p className="mb-2 text-xs font-bold text-slate-500 dark:text-slate-400">
             {g}
           </p>
           <div className="space-y-2">
@@ -88,16 +88,16 @@ export default function CreateSheet({ isOpen, onClose }) {
                 key={p.href}
                 type="button"
                 onClick={() => buka(p)}
-                className="flex w-full items-center gap-3 rounded-2xl border border-black/[0.06] bg-black/[0.03] p-3 text-left transition-all active:scale-[0.98] dark:border-white/[0.08] dark:bg-white/[0.06]"
+                className="flex w-full items-center gap-3 rounded-2xl border border-slate-200/80 bg-slate-50/80 p-3 text-left transition-colors active:translate-y-px motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-emerald-600 dark:border-white/10 dark:bg-slate-800/80"
               >
-                <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl shadow-sm ${p.ikonBg}`}>
+                <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl shadow-xs ${p.ikonBg}`}>
                   {p.ikon}
                 </span>
                 <span className="min-w-0">
-                  <span className="block text-sm font-bold text-[#1d1d1f] dark:text-white">
+                  <span className="block text-sm font-bold text-slate-900 dark:text-white">
                     {p.judul}
                   </span>
-                  <span className="block text-xs text-gray-500 dark:text-slate-400">
+                  <span className="block text-xs text-slate-500 dark:text-slate-400">
                     {p.desc}
                   </span>
                 </span>

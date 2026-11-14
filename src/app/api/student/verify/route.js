@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSellerSession, isAdmin } from "@/lib/auth";
+import { getSellerSessionAsync, isAdmin } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { detectCampusFromEmail, resolveUniversityFromEmail, validateNim } from "@/lib/studentVerification";
 import { logger } from "@/lib/logger";
@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
  * GET: Ambil status verifikasi mahasiswa untuk pengguna aktif
  */
 export async function GET() {
-  const wa = getSellerSession();
+  const wa = await getSellerSessionAsync();
   if (!wa) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -58,7 +58,7 @@ export async function POST(req) {
     );
   }
 
-  const wa = getSellerSession();
+  const wa = await getSellerSessionAsync();
   if (!wa) {
     return NextResponse.json({ error: "Harap masuk terlebih dahulu." }, { status: 401 });
   }

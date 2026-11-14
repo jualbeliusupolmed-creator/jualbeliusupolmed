@@ -124,7 +124,7 @@ export default function NotifPrompt() {
     <div data-mobile-overlay="notification" className="fixed inset-x-3 bottom-[calc(5.25rem+env(safe-area-inset-bottom,0px))] z-[60] mx-auto max-w-md sm:inset-x-auto sm:right-5 sm:bottom-5">
       <div className="flex items-start gap-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-lg dark:border-slate-700 dark:bg-slate-900">
         <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M15 17h5l-1.4-1.4A1 1 0 0118 15v-5a6 6 0 00-5-5.9V4a1 1 0 00-2 0v.1A6 6 0 006 10v5a1 1 0 01-.6.9L4 17h5m6 0a3 3 0 01-6 0" />
           </svg>
         </span>
@@ -132,7 +132,7 @@ export default function NotifPrompt() {
         <div className="min-w-0 flex-1">
           {selesai ? (
             <>
-              <p className="text-sm font-bold text-gray-900 dark:text-white">Notifikasi aktif </p>
+              <p className="text-sm font-bold text-gray-900 dark:text-white">Notifikasi aktif</p>
               <p className="mt-0.5 text-xs text-gray-500 dark:text-slate-400">
                 Kamu akan dikabari tiap ada barang baru tayang.
               </p>
@@ -144,17 +144,33 @@ export default function NotifPrompt() {
                 Notifikasi langsung ke HP kamu tiap ada barang baru. Tanpa akun, bisa dimatikan kapan saja.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
-                <button onClick={aktifkan} disabled={sibuk} className="btn-primary px-4 py-2 text-xs">
+                <button
+                  type="button"
+                  onClick={aktifkan}
+                  disabled={sibuk}
+                  className="btn-primary px-4 py-2 text-xs active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
+                >
                   {sibuk ? "Menyalakan…" : "Aktifkan"}
                 </button>
-                <button onClick={nanti} className="btn-outline px-4 py-2 text-xs">Nanti saja</button>
+                <button
+                  type="button"
+                  onClick={nanti}
+                  className="btn-outline px-4 py-2 text-xs active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600"
+                >
+                  Nanti saja
+                </button>
               </div>
             </>
           )}
         </div>
 
-        <button onClick={nanti} aria-label="Tutup" className="-mr-1 -mt-1 rounded-full p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800">
-          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+        <button
+          type="button"
+          onClick={nanti}
+          aria-label="Tutup"
+          className="-mr-1 -mt-1 rounded-full p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600"
+        >
+          <svg className="h-4 w-4" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
             <path d="M18 6L6 18M6 6l12 12" />
           </svg>
         </button>

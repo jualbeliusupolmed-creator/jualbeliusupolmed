@@ -5,7 +5,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const session = getOpenPoSession();
+  const session = await getOpenPoSession();
   if (!session.wa) return NextResponse.json({ error: session.error }, { status: session.status });
   const wa = session.wa;
   const supa = getAdminClient();
@@ -58,7 +58,7 @@ export async function GET() {
 }
 
 export async function PATCH(req) {
-  const session = getOpenPoSession();
+  const session = await getOpenPoSession();
   if (!session.wa) return NextResponse.json({ error: session.error }, { status: session.status });
   const wa = session.wa;
   const body = await req.json().catch(() => ({}));

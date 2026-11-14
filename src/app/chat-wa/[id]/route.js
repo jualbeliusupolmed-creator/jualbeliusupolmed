@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { isListingAvailable } from "@/lib/listingAvailability";
+import { getSellerSessionAsync } from "@/lib/auth";
+import { loadListingSellerProvince, loadMarketplaceRegion } from "@/lib/marketplaceRegion";
 
 export const dynamic = "force-dynamic";
 
@@ -51,7 +53,7 @@ async function contactListing(request, params, requestedMessage, isPost) {
     const supa = getAdminClient();
     const { data: listing, error } = await supa
       .from("listings")
-      .select("id, title, seller_wa, seller_name, status, stock, listing_code")
+      .select("id, title, seller_wa, seller_name, status, stock, listing_code, university_id")
       .eq("id", listingId)
       .maybeSingle();
 
@@ -68,6 +70,18 @@ async function contactListing(request, params, requestedMessage, isPost) {
 
     if (!isListingAvailable(listing)) {
       return new NextResponse("Produk ini sudah terjual atau tidak tersedia. Buka halaman produk untuk melihat statusnya.", { status: 410 });
+    }
+
+    const sessionIdentity = await getSellerSessionAsync();
+    if (sessionIdentity) {
+      const buyerRegion = await loadMarketplaceRegion(supa, sessionIdentity);
+      if (!buyerRegion.province) {
+        return new NextResponse("Pilih universitas acuan di profil sebelum menghubungi penjual.", { status: 409 });
+      }
+      const sellerProvince = await loadListingSellerProvince(supa, listing);
+      if (!sellerProvince || sellerProvince !== buyerRegion.province) {
+        return new NextResponse("Kontak transaksi hanya tersedia untuk pengguna dari provinsi yang sama.", { status: 403 });
+      }
     }
 
     const normalizedWa = normalisasiNomorWa(listing.seller_wa);

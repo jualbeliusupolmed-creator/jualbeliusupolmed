@@ -5,11 +5,12 @@ import { rateLimit } from "@/lib/rateLimit";
 import { sendWa } from "@/lib/fonnte";
 import { rupiah } from "@/lib/fees";
 import { formatWa } from "@/lib/constants";
+import { loadMarketplaceRegion, loadUniversityProvince } from "@/lib/marketplaceRegion";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req) {
-  const session = getOpenPoSession();
+  const session = await getOpenPoSession();
   if (!session.wa) return NextResponse.json({ error: session.error }, { status: session.status });
   const buyerWa = session.wa;
   const limit = rateLimit(`open-po-order:${buyerWa}`, { limit: 20, windowMs: 60 * 60 * 1000 });
@@ -25,6 +26,28 @@ export async function POST(req) {
   if (body.contactConsent !== true) return NextResponse.json({ error: "Setujui pembagian nomor WhatsApp kepada penjual agar reservasi dapat diproses." }, { status: 400 });
 
   const supa = getAdminClient();
+  const buyerRegion = await loadMarketplaceRegion(supa, buyerWa);
+  if (!buyerRegion.province) {
+    return NextResponse.json({ error: "Pilih universitas acuan di profil sebelum memesan." }, { status: 409 });
+  }
+  const { data: targetBatch } = await supa.from("open_po_batches")
+    .select("seller_wa, product:open_po_products(university_id)")
+    .eq("id", batchId)
+    .maybeSingle();
+  if (!targetBatch) return NextResponse.json({ error: "Batch PO tidak ditemukan." }, { status: 404 });
+  let productUniversityId = targetBatch.product?.university_id;
+  if (!productUniversityId) {
+    const { data: sellerProfile } = await supa.from("seller_profiles")
+      .select("home_university_id")
+      .eq("wa", targetBatch.seller_wa)
+      .maybeSingle();
+    productUniversityId = sellerProfile?.home_university_id;
+  }
+  const productRegion = await loadUniversityProvince(supa, productUniversityId);
+  if (!productRegion?.province_id || productRegion.province_id !== buyerRegion.province) {
+    return NextResponse.json({ error: "Reservasi Open PO hanya tersedia untuk pengguna dari provinsi yang sama." }, { status: 403 });
+  }
+
   const { data: reserved, error } = await supa.rpc("reserve_open_po_order", {
     p_batch_id: batchId,
     p_buyer_wa: buyerWa,
@@ -124,7 +147,7 @@ export async function POST(req) {
 }
 
 export async function PATCH(req) {
-  const session = getOpenPoSession();
+  const session = await getOpenPoSession();
   if (!session.wa) return NextResponse.json({ error: session.error }, { status: session.status });
   const actorWa = session.wa;
   const body = await req.json().catch(() => ({}));

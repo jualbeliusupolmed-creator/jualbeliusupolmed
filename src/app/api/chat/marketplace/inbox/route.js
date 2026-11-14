@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { getUserSession } from "@/lib/auth";
+import { getUserSessionAsync } from "@/lib/auth";
 import { jawabGalat } from "@/lib/jawabGalat";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req) {
   try {
-    const wa = getUserSession();
+    const wa = await getUserSessionAsync();
     if (!wa) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

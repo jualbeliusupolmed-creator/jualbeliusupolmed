@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminActor } from "@/lib/admin-access";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { getSettings } from "@/lib/settings";
+import { getSettings, invalidateSettingsCache } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -178,6 +178,7 @@ export async function PUT(req) {
   const supa = getAdminClient();
   const { error } = await supa.from("settings").upsert(rows, { onConflict: "key" });
   if (error) return NextResponse.json({ error: "Pengaturan gagal disimpan." }, { status: 503 });
+  invalidateSettingsCache();
   await supa.from("admin_audit_events").insert({ actor_id: actor.userId, action: "platform_settings_updated", target_id: "settings", metadata: { keys: rows.map((row) => row.key) } });
   return NextResponse.json({ ok: true });
 }

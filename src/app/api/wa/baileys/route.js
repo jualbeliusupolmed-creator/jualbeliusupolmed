@@ -25,6 +25,7 @@ import { cariAman } from "@/lib/cariAman";
 import { jawabGalat } from "@/lib/jawabGalat";
 import { loadConversationMemory, mergeConversationHistory } from "@/lib/botMemory";
 import { aiActionNeedsClarification, isFastPathCommand } from "@/lib/botIntent";
+import { loadMarketplaceRegion } from "@/lib/marketplaceRegion";
 
 export const dynamic = "force-dynamic";
 // Loop kirim WA berjeda (anti-ban) mudah melewati batas default 10-15 detik —
@@ -3193,7 +3194,10 @@ export async function POST(req) {
       }
 
       // Cek Distributor
-      const { data: profile } = await supa.from("seller_profiles").select("name, distributor").eq("wa", normalizedWa).maybeSingle();
+      const { data: profile } = await supa.from("seller_profiles")
+        .select("name, distributor, campus, home_university_id, verified_university_id, affiliation_status, student_verified")
+        .eq("wa", normalizedWa)
+        .maybeSingle();
       
       let profileName = profile?.name || profileNameFromBot || "Pengguna WA";
       let isNewWaUser = false;
@@ -3203,6 +3207,12 @@ export async function POST(req) {
       } else if (profileNameFromBot && profile.name === "Pengguna WA") {
         await supa.from("seller_profiles").update({ name: profileNameFromBot }).eq("wa", normalizedWa);
         profileName = profileNameFromBot;
+      }
+
+      const sellerRegion = await loadMarketplaceRegion(supa, normalizedWa).catch(() => null);
+      if (!sellerRegion?.province || !sellerRegion.university?.id || !sellerRegion.university.code) {
+        await sendWa(senderJid, "Untuk memasang barang, lengkapi universitas asal di profil jualbeli dulu. Barang otomatis ditampilkan di provinsimu.");
+        return NextResponse.json({ ok: true, state: "seller_university_required" });
       }
       
       const isDistributor = profile?.distributor === true;
@@ -3293,7 +3303,10 @@ export async function POST(req) {
           category: item.category || "Lainnya",
           type: "barang",
           condition: item.condition === "new" ? "new" : "used",
-          campus: ["USU", "POLMED", "Semua"].includes(item.campus) ? item.campus : "Semua",
+          campus: sellerRegion.university.code,
+          university_id: sellerRegion.university.id,
+          seller_university_id: sellerRegion.university.id,
+          seller_province_id: sellerRegion.province,
           image_url: fileMimeType.startsWith("image/") ? publicUrl : null,
           images: fileMimeType.startsWith("image/") ? uploadedUrls : [],
           status: initialStatus,

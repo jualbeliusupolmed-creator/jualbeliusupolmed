@@ -35,7 +35,7 @@ export async function POST(req) {
       return NextResponse.json({ error: "Iklan tidak ditemukan" }, { status: 404 });
     }
 
-    const tolak = tolakBukanPemilik(listing.seller_wa, { aksi: "memperpanjang iklan" });
+    const tolak = await tolakBukanPemilik(listing.seller_wa, { aksi: "memperpanjang iklan" });
     if (tolak) return tolak;
 
     if (listing.status !== "expired") {

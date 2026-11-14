@@ -5,13 +5,14 @@ import { createPortal } from "react-dom";
 import { rupiah } from "@/lib/fees";
 import { buildSlug } from "@/lib/slug";
 import { Icon } from "@/components/Icons";
+import { toast } from "sonner";
 
 const PLATFORMS = [
-  { id: "ig-feed",  label: "IG Feed",  IconComponent: Icon.Camera, action: "download", format: "feed",  desc: "1:1 — Download" },
+  { id: "ig-feed", label: "IG Feed", IconComponent: Icon.Camera, action: "download", format: "feed", desc: "1:1 — Download" },
   { id: "ig-story", label: "IG Story", IconComponent: Icon.Smartphone, action: "download", format: "story", desc: "9:16 — Download" },
-  { id: "tiktok",   label: "TikTok",   IconComponent: Icon.Music, action: "download", format: "story", desc: "9:16 — Download" },
-  { id: "wa",       label: "WhatsApp", IconComponent: Icon.MessageCircle, action: "share", format: null, desc: "Kirim teks + link" },
-  { id: "fb",       label: "Facebook", IconComponent: Icon.Share, action: "share", format: null, desc: "Bagikan link" },
+  { id: "tiktok", label: "TikTok", IconComponent: Icon.Music, action: "download", format: "story", desc: "9:16 — Download" },
+  { id: "wa", label: "WhatsApp", IconComponent: Icon.MessageCircle, action: "share", format: null, desc: "Kirim teks + link" },
+  { id: "fb", label: "Facebook", IconComponent: Icon.Share, action: "share", format: null, desc: "Bagikan link" },
 ];
 
 export default function ShareModal({ listing, isIconOnly = false }) {
@@ -19,12 +20,37 @@ export default function ShareModal({ listing, isIconOnly = false }) {
   const [tab, setTab] = useState("story");
   const [busy, setBusy] = useState(null);
   const [mounted, setMounted] = useState(false);
+  const [shareError, setShareError] = useState("");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const feedRef  = useRef(null);
+  const copyLink = async () => {
+    try {
+      const url = getUrl();
+      if (typeof navigator !== "undefined" && navigator.clipboard) {
+        await navigator.clipboard.writeText(url);
+      }
+      setCopied(true);
+      toast.success("Tautan produk berhasil disalin!");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Gagal menyalin tautan");
+    }
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
+  const feedRef = useRef(null);
   const storyRef = useRef(null);
 
   function getUrl() {
@@ -36,10 +62,11 @@ export default function ShareModal({ listing, isIconOnly = false }) {
 
   async function downloadTemplate(format, platformId) {
     setBusy(platformId);
+    setShareError("");
     try {
       const { toPng } = await import("html-to-image");
       const el = format === "feed" ? feedRef.current : storyRef.current;
-      const dataUrl = await toPng(el, { 
+      const dataUrl = await toPng(el, {
         cacheBust: true,
         pixelRatio: 2,
         style: {
@@ -52,7 +79,7 @@ export default function ShareModal({ listing, isIconOnly = false }) {
       link.href = dataUrl;
       link.click();
     } catch (e) {
-      alert("Gagal membuat gambar: " + e.message);
+      setShareError("Gagal membuat gambar: " + (e.message || "kesalahan internal"));
     } finally {
       setBusy(null);
     }
@@ -78,16 +105,16 @@ export default function ShareModal({ listing, isIconOnly = false }) {
   return (
     <>
       {isIconOnly ? (
-        <button 
-          onClick={() => setOpen(true)} 
-          className="flex h-11 w-full items-center justify-center rounded-full bg-black/[0.04] text-[#1d1d1f] hover:bg-black/[0.08] active:scale-95 transition-all dark:bg-white/[0.08] dark:text-white"
-          aria-label="Bagikan"
+        <button
+          onClick={() => setOpen(true)}
+          className="flex h-11 w-full items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-800 hover:bg-slate-200 dark:text-slate-100 dark:hover:bg-slate-700 active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600"
+          aria-label="Bagikan produk ini"
         >
-          <Icon.Share className="h-5 w-5" />
+          <Icon.Share className="h-5 w-5" aria-hidden="true" />
         </button>
       ) : (
-        <button onClick={() => setOpen(true)} className="btn-outline w-full">
-          <span className="inline-flex items-center justify-center gap-2"><Icon.Sparkles className="h-4 w-4" />Buat Template Share</span>
+        <button onClick={() => setOpen(true)} className="btn-outline w-full active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600">
+          <span className="inline-flex items-center justify-center gap-2"><Icon.Share className="h-4 w-4" aria-hidden="true" />Buat Template Share</span>
         </button>
       )}
 
@@ -100,33 +127,44 @@ export default function ShareModal({ listing, isIconOnly = false }) {
         >
           {/* Overlay frosted glass */}
           <div className="absolute inset-0 bg-black/40 backdrop-blur-[6px]" />
-          
+
           <div
-            className="relative w-full max-w-md rounded-[28px] bg-white/95 backdrop-blur-xl overflow-hidden shadow-[0_32px_64px_rgba(0,0,0,0.2)] dark:bg-[#1c1c1e]/95 border border-black/[0.05] dark:border-white/[0.08] animate-slide-up"
+            className="relative w-full max-w-md rounded-3xl bg-white dark:bg-slate-900 overflow-hidden shadow-md border border-slate-200 dark:border-slate-800 animate-slide-up motion-reduce:animate-none"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.06] dark:border-white/[0.08]">
-              <h3 className="font-bold tracking-tight text-[17px] text-[#1d1d1f] dark:text-white">Buat Template</h3>
-              <button onClick={() => setOpen(false)} className="flex h-7 w-7 items-center justify-center rounded-full bg-black/[0.05] text-[#1d1d1f] hover:bg-black/[0.09] active:scale-90 transition-all dark:bg-white/[0.08] dark:text-white">
-                <Icon.X className="h-3.5 w-3.5" />
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200/80 dark:border-slate-800">
+              <h3 className="font-bold tracking-tight text-[17px] text-slate-900 dark:text-white">Buat Template</h3>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label="Tutup modal"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600"
+              >
+                <Icon.X className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
 
             <div className="p-5 space-y-5">
-              {/* Segmented Control iOS Style */}
-              <div className="flex gap-1 rounded-xl bg-black/[0.04] dark:bg-white/[0.08] p-1">
+              {shareError && (
+                <div role="alert" className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-xs font-semibold text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60">
+                  {shareError}
+                </div>
+              )}
+
+              {/* Segmented Control */}
+              <div className="flex gap-1 rounded-xl bg-slate-100 dark:bg-slate-800 p-1">
                 {["feed", "story"].map((t) => (
                   <button
                     key={t}
+                    type="button"
                     onClick={() => setTab(t)}
-                    className={`flex-1 rounded-[10px] py-2 text-[13px] font-semibold transition-all ${
-                      tab === t 
-                        ? "bg-white dark:bg-[#2c2c2e] text-[#1d1d1f] dark:text-white shadow-sm" 
-                        : "text-[#6e6e73] dark:text-slate-400 hover:text-[#1d1d1f] dark:hover:text-white"
-                    }`}
+                    className={`flex-1 rounded-lg py-2 text-[13px] font-semibold active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600 ${tab === t
+                      ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs"
+                      : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                      }`}
                   >
-                    <span className="inline-flex items-center justify-center gap-1.5">{t === "feed" ? <Icon.Camera className="h-3.5 w-3.5" /> : <Icon.Smartphone className="h-3.5 w-3.5" />}{t === "feed" ? "Feed (1:1)" : "Story (9:16)"}</span>
+                    <span className="inline-flex items-center justify-center gap-1.5">{t === "feed" ? <Icon.Camera className="h-3.5 w-3.5" aria-hidden="true" /> : <Icon.Smartphone className="h-3.5 w-3.5" aria-hidden="true" />}{t === "feed" ? "Feed (1:1)" : "Story (9:16)"}</span>
                   </button>
                 ))}
               </div>
@@ -152,10 +190,10 @@ export default function ShareModal({ listing, isIconOnly = false }) {
                   <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80" />
                   {/* Top brand */}
                   <div className="absolute inset-x-0 top-0 px-4 pt-4 flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-[#111] flex items-center justify-center">
+                    <div className="w-6 h-6 rounded-full bg-slate-950 flex items-center justify-center">
                       <span className="text-white text-[10px] font-black">JB</span>
                     </div>
-                    <span className="text-white text-xs font-bold tracking-wide drop-shadow">KAMPUS KITA</span>
+                    <span className="text-white text-xs font-bold drop-shadow">Kampus Kita</span>
                   </div>
                   {/* Bottom info */}
                   <div className="absolute inset-x-0 bottom-0 p-4">
@@ -171,7 +209,7 @@ export default function ShareModal({ listing, isIconOnly = false }) {
                   style={{ width: 180, height: 320 }}
                   className={`relative overflow-hidden rounded-2xl flex-shrink-0 ${tab !== "story" ? "hidden" : ""}`}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#111] via-black to-slate-900" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-black to-slate-900" />
                   {listing.image_url && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -183,17 +221,49 @@ export default function ShareModal({ listing, isIconOnly = false }) {
                   )}
                   {/* Top brand */}
                   <div className="absolute inset-x-0 top-0 px-4 pt-4 text-center">
-                    <span className="text-white text-xs font-extrabold tracking-widest uppercase drop-shadow">KAMPUS KITA</span>
+                    <span className="text-white text-xs font-extrabold drop-shadow">Kampus Kita</span>
                   </div>
                   {/* Bottom info */}
                   <div className="absolute inset-x-0 bottom-0 p-4 text-center">
                     <p className="line-clamp-2 text-sm font-bold text-white drop-shadow">{listing.title}</p>
                     <p className="mt-1 text-lg font-extrabold text-white drop-shadow">{priceLabel}</p>
                     <div className="mt-3 mx-auto inline-block rounded-full bg-white px-4 py-1.5">
-                      <span className="text-[10px] font-bold text-[#111]">kampuskita.my.id</span>
+                      <span className="text-[10px] font-bold text-slate-950">kampuskita.my.id</span>
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Salin Tautan Cepat (Pola make-interfaces-feel-better: High feedback, tactile active state) */}
+              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-1.5 dark:border-white/10 dark:bg-slate-800/80">
+                <input
+                  type="text"
+                  readOnly
+                  value={getUrl()}
+                  aria-label="Tautan produk"
+                  className="flex-1 truncate bg-transparent px-2 text-xs text-slate-700 outline-none dark:text-slate-300"
+                />
+                <button
+                  type="button"
+                  onClick={copyLink}
+                  className={`inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold shadow-xs transition-colors active:scale-[0.96] motion-reduce:transform-none focus-visible:outline-2 focus-visible:outline-emerald-600 ${
+                    copied
+                      ? "bg-emerald-600 text-white"
+                      : "bg-emerald-800 hover:bg-emerald-900 text-white"
+                  }`}
+                >
+                  {copied ? (
+                    <>
+                      <Icon.Check className="h-3.5 w-3.5 stroke-[2.5]" aria-hidden="true" />
+                      <span>Tersalin!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Icon.Copy className="h-3.5 w-3.5" aria-hidden="true" />
+                      <span>Salin Link</span>
+                    </>
+                  )}
+                </button>
               </div>
 
               {/* Platform buttons */}
@@ -203,13 +273,14 @@ export default function ShareModal({ listing, isIconOnly = false }) {
                   return (
                     <button
                       key={p.id}
+                      type="button"
                       onClick={() => handlePlatform(p)}
                       disabled={busy === p.id}
-                      className={`flex flex-col items-center gap-1.5 rounded-xl p-2.5 transition-all text-center ${isActive ? "bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700" : "opacity-50 bg-gray-50 dark:bg-slate-800"}`}
+                      className={`flex flex-col items-center gap-1.5 rounded-xl p-2.5 active:scale-[0.95] active:translate-y-px transition-colors text-center disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-emerald-600 motion-reduce:transform-none ${isActive ? "bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700" : "opacity-50 bg-slate-100 dark:bg-slate-800"}`}
                     >
-                      <p.IconComponent className={`h-6 w-6 ${busy === p.id ? "animate-pulse" : ""}`} />
-                      <span className="text-[10px] font-semibold text-gray-700 dark:text-slate-300">{p.label}</span>
-                      <span className="text-[9px] text-gray-400 dark:text-slate-500 leading-tight">{p.desc}</span>
+                      <p.IconComponent className={`h-6 w-6 ${busy === p.id ? "motion-safe:animate-pulse" : ""}`} aria-hidden="true" />
+                      <span className="text-[10px] font-semibold text-slate-700 dark:text-slate-300">{p.label}</span>
+                      <span className="text-[9px] text-slate-400 dark:text-slate-500 leading-tight">{p.desc}</span>
                     </button>
                   );
                 })}

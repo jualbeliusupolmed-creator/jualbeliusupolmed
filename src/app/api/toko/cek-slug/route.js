@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { getSellerSession } from "@/lib/auth";
+import { getSellerSessionAsync } from "@/lib/auth";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { periksaSlug } from "@/lib/toko";
 
@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 // Dipanggil sambil penjual mengetik. Butuh sesi: tanpa itu endpoint ini jadi
 // alat murah untuk memetakan semua nama toko yang sudah ada.
 export async function GET(req) {
-  const wa = getSellerSession();
+  const wa = await getSellerSessionAsync();
   if (!wa) return NextResponse.json({ error: "Belum masuk" }, { status: 401 });
 
   const rl = rateLimit(getClientIp(req), { limit: 60, windowMs: 60_000 });

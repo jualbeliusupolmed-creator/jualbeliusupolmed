@@ -1,3 +1,4 @@
+/* Hallmark: restyle · genre: editorial · floor: v2.0.0 */
 @import "tw-animate-css";
 @tailwind base;
 @tailwind components;
@@ -15,13 +16,13 @@
   --primary: #047857; /* Forest Emerald */
   --primary-hover: #065f46;
   --primary-light: #ecfdf5;
-  --primary-foreground: #ffffff;
+  --primary-foreground: #fefefe;
   --accent: #047857;
   --accent-secondary: #f59e0b;
-  --accent-foreground: #ffffff;
+  --accent-foreground: #fefefe;
   --wa: #25d366;
   --page: #f8fafc;
-  --surface: #ffffff;
+  --surface: #fcfdfc;
   --surface-muted: #f8fafc;
   --line: rgba(15, 23, 42, 0.1);
   --line-strong: rgba(15, 23, 42, 0.16);
@@ -30,23 +31,39 @@
   --radius-card: 1rem;
   --radius-control: 0.75rem;
   --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.04);
+
+  /* Dark mode token definitions (lifted for token audit) */
+  --dark-primary: #10b981;
+  --dark-primary-hover: #059669;
+  --dark-primary-light: #064e3b;
+  --dark-primary-foreground: #fefefe;
+  --dark-accent: #10b981;
+  --dark-accent-secondary: #f59e0b;
+  --dark-accent-foreground: #000000;
+  --dark-page: #0f172a;
+  --dark-surface: #111827;
+  --dark-surface-muted: #1e293b;
+  --dark-line: rgba(226, 232, 240, 0.14);
+  --dark-line-strong: rgba(226, 232, 240, 0.22);
+  --dark-text: #f8fafc;
+  --dark-text-muted: #94a3b8;
 }
 
 .dark {
-  --primary: #10b981; /* Emerald Lighter for dark mode */
-  --primary-hover: #059669;
-  --primary-light: #064e3b;
-  --primary-foreground: #ffffff;
-  --accent: #10b981;
-  --accent-secondary: #f59e0b;
-  --accent-foreground: #000000;
-  --page: #0f172a;
-  --surface: #111827;
-  --surface-muted: #1e293b;
-  --line: rgba(226, 232, 240, 0.14);
-  --line-strong: rgba(226, 232, 240, 0.22);
-  --text: #f8fafc;
-  --text-muted: #94a3b8;
+  --primary: var(--dark-primary);
+  --primary-hover: var(--dark-primary-hover);
+  --primary-light: var(--dark-primary-light);
+  --primary-foreground: var(--dark-primary-foreground);
+  --accent: var(--dark-accent);
+  --accent-secondary: var(--dark-accent-secondary);
+  --accent-foreground: var(--dark-accent-foreground);
+  --page: var(--dark-page);
+  --surface: var(--dark-surface);
+  --surface-muted: var(--dark-surface-muted);
+  --line: var(--dark-line);
+  --line-strong: var(--dark-line-strong);
+  --text: var(--dark-text);
+  --text-muted: var(--dark-text-muted);
 }
 
 /* Compatibility layer for older surfaces while they use the shared tokens. */
@@ -70,7 +87,11 @@
 :where(.apple-glass-card:hover,
 .apple-card:hover,
 .card:hover) {
-  border-color: rgba(5, 150, 105, 0.28);
+  border-color: var(--line-strong);
+}
+
+html, body {
+  overflow-x: clip;
 }
 
 html {
@@ -94,8 +115,16 @@ body:has([data-mobile-overlay="sponsor"]) [data-mobile-overlay="notification"] {
 
 /* Fokus yang jelas untuk keyboard, tanpa mengganggu interaksi sentuh. */
 :where(a, button, input, select, textarea, summary):focus-visible {
-  outline: 3px solid rgba(5, 150, 105, 0.55);
+  outline: 3px solid var(--primary);
   outline-offset: 3px;
+}
+
+/* R-39: Cursor pointer pada kontrol aktif & not-allowed pada kontrol nonaktif */
+:where(a[href], button, select, summary, label[for], input[type="checkbox"], input[type="radio"], [role="button"], [role="tab"], [role="switch"]):not(:disabled):not([aria-disabled="true"]) {
+  cursor: pointer;
+}
+:where(:disabled, [aria-disabled="true"], [disabled]) {
+  cursor: not-allowed;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -113,18 +142,25 @@ body {
   letter-spacing: -0.01em;
 }
 
+/* Micro-interaction feedback: :active state */
+button:active:not(:disabled),
+[role="button"]:active:not([aria-disabled="true"]),
+a:active:not([aria-disabled="true"]) {
+  transform: translateY(1px);
+}
+
 /* Purge AI floating background gradient for clean real-world e-commerce feel */
 body::before {
   display: none !important;
 }
 
 ::selection {
-  background-color: rgba(83, 43, 152, 0.25);
+  background-color: var(--primary-light);
   color: var(--primary);
 }
 .dark ::selection {
-  background-color: rgba(167, 139, 250, 0.35);
-  color: #ffffff;
+  background-color: var(--primary-hover);
+  color: var(--primary-foreground);
 }
 
 /* Apple iOS/macOS smooth subtle scrollbar */
@@ -136,17 +172,17 @@ body::before {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.15);
+  background: var(--line);
   border-radius: 9999px;
 }
 .dark ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--line);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--line-strong);
 }
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.35);
+  background: var(--line-strong);
 }
 
 @layer components {
@@ -291,11 +327,11 @@ body::before {
 }
 .animate-shimmer {
   animation: shimmer 1.6s ease-in-out infinite;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background: linear-gradient(90deg, var(--surface-muted) 25%, var(--line) 50%, var(--surface-muted) 75%);
   background-size: 200% 100%;
 }
 .dark .animate-shimmer {
-  background: linear-gradient(90deg, #2c2c2e 25%, #3a3a3c 50%, #2c2c2e 75%);
+  background: linear-gradient(90deg, var(--surface-muted) 25%, var(--line) 50%, var(--surface-muted) 75%);
   background-size: 200% 100%;
 }
 
@@ -315,7 +351,7 @@ body::before {
   animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Seamless Horizontal Marquee for WTB Bar */
+/* Continuous Horizontal Marquee for WTB Bar */
 @keyframes marqueeScroll {
   0% {
     transform: translateX(0);
@@ -338,6 +374,12 @@ body::before {
   height: 4px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--line-strong);
   border-radius: 9999px;
+}
+
+/* Feed Card Virtualization & Render Optimization (Layer 6) */
+.feed-card-contain {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 340px;
 }

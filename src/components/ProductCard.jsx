@@ -1,3 +1,4 @@
+import { memo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { rupiah } from "@/lib/fees";
@@ -9,20 +10,21 @@ import { isListingAvailable } from "@/lib/listingAvailability";
 
 /**
  * ProductCard: Kartu produk marketplace yang ultra-efisien, ringkas, padat, dan cepat di-scroll.
- * Mengeliminasi tombol berlebihan dan kotak kosong agar layar mobile bisa menampilkan banyak produk sekaligus.
+ * Dioptimasi dengan React.memo, unoptimized direct CDN images (tanpa bottleneck CPU server),
+ * dan CSS content-visibility virtualization.
  *
  * @param {object} listing - Objek data iklan produk
  * @param {boolean} tanpaPenjual - Sembunyikan nama penjual jika di halaman profil toko
  */
-export default function ProductCard({ listing, tanpaPenjual = false }) {
+function ProductCard({ listing, tanpaPenjual = false }) {
   if (!listing) return null;
 
   const isAvailable = isListingAvailable(listing);
-  const unavailableLabel =
-    listing.status === "sold" ||
-    (listing.stock !== null && listing.stock !== undefined && Number(listing.stock) <= 0)
-      ? "STOK HABIS"
-      : "TIDAK AKTIF";
+  const unavailableLabel = listing.status === "sold"
+    ? "SUDAH TERJUAL"
+    : listing.stock !== null && listing.stock !== undefined && Number(listing.stock) <= 0
+    ? "STOK HABIS"
+    : "TIDAK AKTIF";
   const condLabel = listing.condition === "new" ? "Baru" : "Preloved";
   const detailUrl = `/produk/${buildSlug(listing.title, listing.id)}`;
   const sellerName =
@@ -41,16 +43,21 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
   const isNegotiable = /nego/i.test(listing.description || "");
 
   return (
-    <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white transition-all hover:border-emerald-500/40 hover:shadow-md active:scale-[0.99] dark:border-white/10 dark:bg-slate-900">
+    <article
+      className="feed-card-contain group relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white transition-colors duration-150 hover:border-emerald-500/40 hover:shadow-md active:scale-[0.985] motion-reduce:transform-none dark:border-white/10 dark:bg-slate-900"
+    >
       <Link href={detailUrl} className="rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-inset">
         <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
           {listing.image_url ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
+            <Image
               src={listing.image_url}
               alt={listing.title}
+              fill
+              unoptimized
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 250px"
               loading="lazy"
-              className="h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
+              decoding="async"
+              className="h-full w-full object-cover object-top"
             />
           ) : (
             <div className="flex h-full w-full flex-col items-center justify-center text-slate-400">
@@ -172,10 +179,14 @@ export default function ProductCard({ listing, tanpaPenjual = false }) {
           </a>
         )}
       </div>
-      <CartButton
-        listing={listing}
-        className="!absolute !right-2 !top-2 !z-10 !flex !h-8 !w-8 !items-center !justify-center !shadow-sm text-slate-700 backdrop-blur-sm transition-all active:scale-95 [&_svg]:!h-4 [&_svg]:!w-4"
-      />
+      {isAvailable && (
+        <CartButton
+          listing={listing}
+          className="!absolute !right-2 !top-2 !z-10 !flex !h-8 !w-8 !items-center !justify-center !shadow-sm text-slate-700 backdrop-blur-sm transition-transform duration-150 motion-reduce:transition-none active:scale-95 [&_svg]:!h-4 [&_svg]:!w-4"
+        />
+      )}
     </article>
   );
 }
+
+export default memo(ProductCard);

@@ -1,0 +1,13 @@
+{
+  "buys": true,
+  "purchases_first_month": 3,
+  "reason_code": "need",
+  "reason": "Sangat butuh untuk cari buku ajar kedokteran dan hukum yang barunya mahal banget.",
+  "objection": "Fitur pencarian harus akurat per fakultas",
+  "would_change_my_mind": "",
+  "price_too_cheap": 2500,
+  "price_cheap": 5000,
+  "price_expensive": 10000,
+  "price_too_expensive": 20000,
+  "id": "P020"
+}

@@ -4,8 +4,9 @@ import { notifySellerNewOffer } from "@/lib/fonnte";
 import { formatWa } from "@/lib/constants";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { pushToWa } from "@/lib/webpush";
-import { getSellerSession, isAdmin } from "@/lib/auth";
+import { getSellerSessionAsync, isAdmin } from "@/lib/auth";
 import { jawabGalat } from "@/lib/jawabGalat";
+import { loadListingSellerProvince, loadMarketplaceRegion } from "@/lib/marketplaceRegion";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,7 @@ export async function GET(req) {
   // publik (tampil di tiap iklan), jadi TIDAK boleh dipercaya dari query —
   // wajib cocok dengan sesi penjual, atau admin. Tanpa ini nomor semua pembeli
   // yang menawar bisa dipanen massal.
-  const sessionWa = getSellerSession();
+  const sessionWa = await getSellerSessionAsync();
   if (!isAdmin() && (!sessionWa || sessionWa !== seller_wa)) {
     return NextResponse.json({ error: "Tidak diizinkan" }, { status: 403 });
   }
@@ -63,7 +64,7 @@ export async function POST(req) {
     }
 
     const normalizedWa = formatWa(buyer_wa);
-    const sessionWa = getSellerSession();
+    const sessionWa = await getSellerSessionAsync();
     
     if (!sessionWa || sessionWa !== normalizedWa) {
       return NextResponse.json({ error: "Sesi tidak valid atau telah berakhir. Silakan login kembali." }, { status: 401 });
@@ -74,12 +75,19 @@ export async function POST(req) {
     const supa = getAdminClient();
     const { data: listing } = await supa
       .from("listings")
-      .select("id, title, price, seller_wa, seller_name, status")
+      .select("id, title, price, seller_wa, seller_name, status, university_id")
       .eq("id", listing_id)
       .single();
 
     if (!listing) return NextResponse.json({ error: "Iklan tidak ditemukan" }, { status: 404 });
     if (listing.status !== "active") return NextResponse.json({ error: "Iklan tidak aktif" }, { status: 400 });
+
+    const buyerRegion = await loadMarketplaceRegion(supa, sessionWa);
+    if (!buyerRegion.province) return NextResponse.json({ error: "Pilih universitas acuan di profil sebelum mengirim tawaran." }, { status: 409 });
+    const sellerProvince = await loadListingSellerProvince(supa, listing);
+    if (!sellerProvince || sellerProvince !== buyerRegion.province) {
+      return NextResponse.json({ error: "Tawaran hanya dapat dikirim ke penjual dari provinsi yang sama." }, { status: 403 });
+    }
 
     const { data: offer, error } = await supa
       .from("price_offers")

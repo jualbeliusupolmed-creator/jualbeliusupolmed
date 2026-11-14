@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/auth", () => ({
   getUserSession: mocks.getUserSession,
+  getUserSessionAsync: mocks.getUserSession,
 }));
 
 vi.mock("@/lib/supabaseAdmin", () => ({

@@ -30,8 +30,17 @@ const nextConfig = {
     ],
   },
   experimental: {
-    optimizePackageImports: ["sonner", "embla-carousel-react"],
+    optimizePackageImports: [
+      "sonner",
+      "embla-carousel-react",
+      "lucide-react",
+      "clsx",
+      "tailwind-merge",
+      "@supabase/supabase-js",
+    ],
   },
+  compress: true,
+  poweredByHeader: false,
   async headers() {
     return [
       {

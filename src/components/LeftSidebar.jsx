@@ -67,9 +67,9 @@ export default function LeftSidebar() {
     <div className="hidden md:flex flex-col w-[250px] sticky top-0 h-screen bg-transparent px-4 py-6 overflow-y-auto z-20">
       <div className="flex items-center justify-between mb-6 px-2">
         <Link href="/" className="flex items-center gap-2.5 group">
-          <Icon.Store className="w-8 h-8 text-[#126B49] shrink-0 transition-transform duration-300 group-hover:scale-105" />
+          <Icon.Store className="w-8 h-8 text-emerald-700 shrink-0 transition-colors group-hover:text-emerald-800" aria-hidden="true" />
           <div className="flex flex-col">
-            <span className="font-extrabold text-xl leading-none tracking-tight text-[#1d1d1f] dark:text-[#f5f5f7]">
+            <span className="font-extrabold text-xl leading-none tracking-tight text-slate-900 dark:text-white">
               Kampus Kita
             </span>
             <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mt-1">
@@ -80,16 +80,17 @@ export default function LeftSidebar() {
 
         {/* Theme toggle desktop */}
         <button
+          type="button"
           onClick={toggleTheme}
           aria-label="Ganti mode terang/gelap"
           title={dark ? "Mode Terang" : "Mode Gelap"}
-          className="rounded-full p-2 text-gray-500 transition-all duration-200 hover:bg-black/[0.05] hover:text-[#1d1d1f] active:scale-90 dark:text-gray-400 dark:hover:bg-white/[0.08] dark:hover:text-white"
+          className="rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
         >
           <div className="relative h-4.5 w-4.5 overflow-hidden">
-            <svg className={`absolute inset-0 h-4.5 w-4.5 transform transition-transform duration-500 ${dark ? 'translate-y-full opacity-0' : 'translate-y-0 opacity-100'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <svg aria-hidden="true" className={`absolute inset-0 h-4.5 w-4.5 transform transition-transform duration-300 motion-reduce:transition-none ${dark ? 'translate-y-full opacity-0' : 'translate-y-0 opacity-100'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
             </svg>
-            <svg className={`absolute inset-0 h-4.5 w-4.5 transform transition-transform duration-500 ${dark ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <svg aria-hidden="true" className={`absolute inset-0 h-4.5 w-4.5 transform transition-transform duration-300 motion-reduce:transition-none ${dark ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
             </svg>
           </div>
@@ -106,9 +107,9 @@ export default function LeftSidebar() {
                   href={link.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3.5 px-4 py-2.5 rounded-lg transition-all group text-emerald-800 dark:text-emerald-300 bg-emerald-50/70 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-950 font-bold"
+                  className="flex items-center gap-3.5 px-4 py-2.5 rounded-lg transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 group text-emerald-800 dark:text-emerald-300 bg-emerald-50/70 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-950 font-bold"
                 >
-                  <link.icon className="w-5 h-5 text-[#126B49] dark:text-emerald-400" />
+                  <link.icon className="w-5 h-5 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
                   <span className="text-[14.5px]">{link.label}</span>
                   <span className="ml-auto text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-600 text-white">
                     PO
@@ -121,17 +122,18 @@ export default function LeftSidebar() {
               <Link
                 key={link.href}
                 href={link.href}
+                prefetch={true}
                 className={cn(
-                  "flex items-center gap-3.5 px-4 py-2.5 rounded-lg transition-all group",
+                  "flex items-center gap-3.5 px-4 py-2.5 rounded-lg transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 group",
                   isActive 
-                    ? "bg-slate-100 dark:bg-white/[0.08] font-bold text-slate-900 dark:text-white" 
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] font-medium"
+                    ? "bg-slate-100 dark:bg-slate-800 font-bold text-slate-900 dark:text-white" 
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 font-medium"
                 )}
               >
                 <span className="relative shrink-0">
-                  <link.icon className={cn("w-5 h-5", isActive && "text-[#126B49] dark:text-emerald-400")} />
+                  <link.icon className={cn("w-5 h-5", isActive ? "text-emerald-700 dark:text-emerald-400" : "text-slate-400")} aria-hidden="true" />
                   {link.badge > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[16px] h-4 bg-rose-500 text-white text-[9px] font-extrabold rounded-full flex items-center justify-center px-0.5 shadow-sm">
+                    <span className="absolute -top-1 -right-1 min-w-[16px] h-4 bg-rose-500 text-white text-[9px] font-extrabold rounded-full flex items-center justify-center px-0.5 shadow-xs">
                       {link.badge > 99 ? "99+" : link.badge}
                     </span>
                   )}
@@ -142,9 +144,9 @@ export default function LeftSidebar() {
           })}
         </div>
 
-        <div className="pt-2 border-t border-black/[0.06] dark:border-white/[0.06]">
-          <p className="px-4 pb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-            Jelajah Kampus
+        <div className="pt-2 border-t border-slate-200/80 dark:border-slate-800">
+          <p className="px-4 pb-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
+            Layanan &amp; Komunitas
           </p>
           <div className="space-y-1 mt-1">
             {exploreLinks.map((link) => {
@@ -155,9 +157,9 @@ export default function LeftSidebar() {
                     href={link.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-3.5 px-4 py-2 rounded-full transition-all group text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 font-medium"
+                    className="flex items-center gap-3.5 px-4 py-2 rounded-full transition-colors active:translate-y-px group text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 font-medium"
                   >
-                    <link.icon className="w-4 h-4 shrink-0 text-emerald-500" />
+                    <link.icon className="w-4 h-4 shrink-0 text-emerald-500" aria-hidden="true" />
                     <span className="text-[14px]">{link.label}</span>
                   </a>
                 );
@@ -167,14 +169,15 @@ export default function LeftSidebar() {
                 <Link
                   key={link.href}
                   href={link.href}
+                  prefetch={true}
                   className={cn(
-                    "flex items-center gap-3.5 px-4 py-2 rounded-full transition-all group",
+                    "flex items-center gap-3.5 px-4 py-2 rounded-full transition-colors active:translate-y-px group",
                     isActive 
-                      ? "bg-black/[0.05] dark:bg-white/[0.08] font-bold text-[#1d1d1f] dark:text-white" 
-                      : "text-gray-500 dark:text-gray-400 hover:bg-black/[0.03] dark:hover:bg-white/[0.04] font-medium"
+                      ? "bg-slate-100 dark:bg-slate-800 font-bold text-slate-900 dark:text-white" 
+                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 font-medium"
                   )}
                 >
-                  <link.icon className={cn("w-4 h-4 shrink-0", isActive && "text-primary")} />
+                  <link.icon className={cn("w-4 h-4 shrink-0", isActive ? "text-primary dark:text-emerald-400" : "text-slate-400")} aria-hidden="true" />
                   <span className="text-[14px]">{link.label}</span>
                 </Link>
               );
@@ -187,7 +190,7 @@ export default function LeftSidebar() {
 
         {!siap ? (
           /* Skeleton netral saat hydration — sama antara server & client */
-          <div className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-black/[0.03] dark:bg-white/[0.04] animate-pulse">
+          <div className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-black/[0.03] dark:bg-white/[0.04] motion-safe:animate-pulse motion-reduce:animate-none">
             <div className="w-8 h-8 rounded-full bg-black/[0.08] dark:bg-white/[0.08] shrink-0" />
             <div className="flex-1 space-y-1.5">
               <div className="h-3 w-20 rounded-full bg-black/[0.07] dark:bg-white/[0.07]" />
@@ -199,38 +202,38 @@ export default function LeftSidebar() {
             href={`/dashboard?wa=${encodeURIComponent(wa)}`}
             className={cn(
               "flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-black/[0.03] dark:bg-white/[0.04]",
-              "hover:bg-black/[0.06] dark:hover:bg-white/[0.07] transition-colors group"
+              "hover:bg-black/[0.06] dark:hover:bg-white/[0.07] transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 group"
             )}
           >
             <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold text-sm">
               {(nama || wa).charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[12px] font-bold text-[#1d1d1f] dark:text-white truncate">{nama || "Toko Saya"}</p>
+              <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{nama || "Toko Saya"}</p>
               <p className="text-[10px] text-slate-400 truncate">Lihat dashboard</p>
             </div>
-            <Icon.ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-primary shrink-0" />
+            <Icon.ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-primary shrink-0" aria-hidden="true" />
           </Link>
         ) : (
           <button
             type="button"
             onClick={() => setShowOtp(true)}
-            className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-primary/5 hover:bg-primary/10 transition-colors text-left w-full cursor-pointer"
+            className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-primary/5 hover:bg-primary/10 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50 text-left w-full cursor-pointer"
           >
             <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
-              <Icon.User className="w-4 h-4" />
+              <Icon.User className="w-4 h-4" aria-hidden="true" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[12px] font-bold text-primary">Login / Daftar</p>
+              <p className="text-xs font-bold text-primary">Login / Daftar</p>
               <p className="text-[10px] text-slate-400">Jual beli di kampus</p>
             </div>
           </button>
         )}
         <Link 
           href="/jual"
-          className="w-full btn-primary text-[17px] py-4 rounded-full shadow-lg flex items-center justify-center gap-2"
+          className="w-full btn-primary text-base py-3.5 rounded-full shadow-md flex items-center justify-center gap-2 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600"
         >
-          <Icon.Plus className="w-5 h-5" />
+          <Icon.Plus className="w-5 h-5" aria-hidden="true" />
           Jual Barang
         </Link>
       </div>

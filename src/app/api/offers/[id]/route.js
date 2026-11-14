@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { notifyBuyerOfferResult } from "@/lib/fonnte";
 import { pushToWa } from "@/lib/webpush";
-import { getSellerSession, isAdmin } from "@/lib/auth";
+import { getSellerSessionAsync, isAdmin } from "@/lib/auth";
 import { formatWa } from "@/lib/constants";
 import { jawabGalat } from "@/lib/jawabGalat";
 
@@ -30,7 +30,7 @@ export async function PATCH(req, { params }) {
     // Otorisasi: hanya PENJUAL pemilik iklan (dari sesi) atau admin yang boleh
     // terima/tolak. Tanpa ini, siapa pun yang menebak id tawaran bisa
     // menerima/menolak atas nama penjual + memicu notifikasi ke pembeli.
-    const sessionWa = getSellerSession();
+    const sessionWa = await getSellerSessionAsync();
     const sellerWa = formatWa(offer.listings?.seller_wa || "");
     if (!isAdmin() && (!sessionWa || sessionWa !== sellerWa)) {
       return NextResponse.json({ error: "Tidak diizinkan" }, { status: 403 });

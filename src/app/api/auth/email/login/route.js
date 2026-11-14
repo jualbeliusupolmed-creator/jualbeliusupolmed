@@ -34,7 +34,7 @@ export async function POST(req) {
       const testPassword = process.env.TEST_ACCOUNT_PASSWORD || "";
       const testWa = process.env.TEST_ACCOUNT_WA || "";
       if (testEmail && testPassword && testWa && cleanEmail === testEmail && password === testPassword) {
-        setSellerCookie(testWa);
+        await setSellerCookie(testWa);
         return NextResponse.json({
           success: true,
           wa: testWa,
@@ -74,7 +74,7 @@ export async function POST(req) {
     }
 
     // 4. Set kuki sesi login (HMAC 30 hari)
-    setSellerCookie(user.phone_wa || user.wa);
+    await setSellerCookie(user.phone_wa || user.wa);
 
     return NextResponse.json({
       success: true,

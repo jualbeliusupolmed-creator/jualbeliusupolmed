@@ -13,7 +13,7 @@ export async function GET(request) {
     // Sesi menang atas `?userId=`. Dulu keduanya setara, dan karena feed
     // Cari Teman membagikan `user_id` setiap kandidat, siapa pun bisa
     // menempelkan id orang lain di sini dan membaca daftar match mereka.
-    const { userId } = identitasTeman(request, { idKlien: customUserId });
+    const { userId } = await identitasTeman(request, { idKlien: customUserId });
 
     if (!userId) {
       return NextResponse.json({ error: "Identitas pengguna diperlukan" }, { status: 400 });

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { getUserSession } from "@/lib/auth";
+import { getUserSessionAsync } from "@/lib/auth";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { formatWa } from "@/lib/constants";
 import { jawabGalat } from "@/lib/jawabGalat";
@@ -112,7 +112,7 @@ export async function POST(req) {
       return NextResponse.json({ error: "Terlalu banyak request. Tunggu sebentar." }, { status: 429 });
     }
 
-    const wa = getUserSession();
+    const wa = await getUserSessionAsync();
     if (!wa) {
       return NextResponse.json({ error: "Silakan login dengan akun Organisasi / UKM terlebih dahulu." }, { status: 401 });
     }

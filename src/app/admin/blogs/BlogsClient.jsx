@@ -64,7 +64,7 @@ export default function BlogsClient({ blogs = [], penulisBadge = [] }) {
       <span className="inline-flex items-center gap-1">
         <span>{b.author || "Penjual"}</span>
         {badgeWa.has(b.author_wa) && (
-          <span title="Penulis berbadge — tulisannya terbit tanpa antre" className="text-[var(--g-primary)]"><Icon.PencilSquare className="h-3.5 w-3.5" /></span>
+          <span title="Penulis terverifikasi: tulisan terbit langsung" className="text-[var(--g-primary)]"><Icon.PencilSquare className="h-3.5 w-3.5" aria-hidden="true" /></span>
         )}
       </span>
     ) : (
@@ -135,7 +135,7 @@ export default function BlogsClient({ blogs = [], penulisBadge = [] }) {
               {tolakArtikel === b.id && (
                 <div className="mt-3 rounded-lg border border-rose-200 bg-white p-3 dark:border-rose-900 dark:bg-slate-900">
                   <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300">
-                    Alasan penolakan — dikirim ke WhatsApp penulisnya
+                    Alasan penolakan (dikirim ke WhatsApp penulis)
                   </label>
                   <textarea
                     value={catatanTolak}
@@ -152,14 +152,14 @@ export default function BlogsClient({ blogs = [], penulisBadge = [] }) {
                         if (ok) { setTolakArtikel(null); setCatatanTolak(""); }
                       }}
                       disabled={busy}
-                      className="g-btn g-btn-primary bg-rose-600 hover:bg-rose-700 border-rose-600 text-xs"
+                      className="g-btn g-btn-primary bg-rose-600 hover:bg-rose-700 border-rose-600 text-xs active:translate-y-px transition-colors"
                     >
                       Kirim penolakan
                     </button>
-                    <button onClick={() => setTolakArtikel(null)} className="g-btn g-btn-outlined text-xs">Batal</button>
+                    <button onClick={() => setTolakArtikel(null)} className="g-btn g-btn-outlined text-xs active:translate-y-px transition-colors">Batal</button>
                   </div>
                   <p className="mt-2 text-[11px] text-gray-400">
-                    Tulisannya tidak dihapus — ia kembali jadi draf milik penulisnya supaya bisa diperbaiki.
+                    Tulisan tidak dihapus: kembali menjadi draf milik penulis agar dapat diperbaiki.
                   </p>
                 </div>
               )}

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSellerSession, setSellerCookie } from "@/lib/auth";
+import { getSellerSessionAsync, setSellerCookie } from "@/lib/auth";
 import { formatWa } from "@/lib/constants";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimitDistributed, getClientIp } from "@/lib/rateLimit";
@@ -16,7 +16,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Permintaan tidak valid." }, { status: 403 });
   }
 
-  const identity = getSellerSession();
+  const identity = await getSellerSessionAsync();
   if (!identity || formatWa(identity)) {
     return NextResponse.json({ error: "Masuk dengan akun Google yang belum memiliki WhatsApp." }, { status: 403 });
   }
@@ -127,7 +127,7 @@ export async function POST(request) {
       console.error("[phone-link] Failed to clean up verified OTP record.", deleteError.code || "database_error");
     }
 
-    setSellerCookie(phone);
+    await setSellerCookie(phone);
     return NextResponse.json({ ok: true }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     return jawabGalat(error);

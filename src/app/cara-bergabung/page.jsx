@@ -3,16 +3,12 @@ import { getSettings } from "@/lib/settings";
 import { kontakDenganCadangan } from "@/lib/kontakAdmin";
 
 export const metadata = {
-  title: "Cara Bergabung — Komunitas Jual Beli Mahasiswa",
+  title: "Cara Bergabung: Komunitas Jual Beli Mahasiswa",
   description: "Panduan bergabung di komunitas jual-beli mahasiswa: cara menjual, membeli, memahami biaya, dan menjaga keamanan transaksi.",
   keywords: ["cara bergabung marketplace mahasiswa", "komunitas mahasiswa", "jual beli kampus", "aturan jual beli mahasiswa"],
   alternates: { canonical: "/cara-bergabung" },
-  // Tanpa daftar images sendiri: halaman ini mewarisi gambar pratinjau dari
-  // src/app/opengraph-image.jsx. Sebelumnya di sini ditulis "/og-image.png",
-  // berkas yang tidak pernah ada di public/ — hasilnya 404, dan tautan halaman
-  // ini muncul polos tanpa gambar setiap kali dibagikan di WhatsApp.
   openGraph: {
-    title: "Cara Bergabung — Kampus Kita",
+    title: "Cara Bergabung: Kampus Kita",
     description: "Gabung grup WhatsApp komunitas, jual barang gratis, dan transaksi aman dibantu admin.",
     url: "/cara-bergabung",
     siteName: "Kampus Kita",
@@ -21,7 +17,7 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Cara Bergabung — Kampus Kita",
+    title: "Cara Bergabung: Kampus Kita",
     description: "Gabung grup WhatsApp komunitas, jual barang gratis, dan transaksi aman dibantu admin.",
   },
 };
@@ -42,10 +38,10 @@ const buySteps = [
 ];
 
 const rules = [
-  "Harga & kondisi barang harus jujur (real pict).",
-  "Dilarang menjual barang ilegal / palsu.",
+  "Harga & kondisi barang harus jujur (foto asli).",
+  "Dilarang menjual barang ilegal atau palsu.",
   "Fee admin dibayar sesuai ketentuan.",
-  "No spam, no penipuan — pelanggar di-blacklist.",
+  "Tertib dan bebas penipuan: pelanggar ditindak tegas dan diblacklist.",
 ];
 
 function Fee({ label, value }) {
@@ -72,16 +68,16 @@ export default async function CaraBergabungPage() {
           Komunitas jual-beli untuk mahasiswa lintas kampus
         </p>
         <a href={WA_GROUP_LINK} target="_blank" rel="noreferrer" className="btn mt-5 bg-white text-primary hover:bg-white/90">
-          <span aria-hidden="true"></span> Gabung Grup WhatsApp
+          Gabung Grup WhatsApp
         </a>
         <p className="mt-2 text-sm text-white/70">
-          Gratis, langsung diterima — untuk umum &amp; warga kampus
+          Gratis dan langsung diterima: terbuka untuk umum &amp; warga kampus
         </p>
       </div>
 
       <div className="mt-8 grid gap-6 md:grid-cols-2">
         <div className="card p-6">
-          <h2 className="text-lg font-bold"><span aria-hidden="true"></span> Cara Menjual</h2>
+          <h2 className="text-lg font-bold">Cara Menjual</h2>
           <ol className="mt-4 space-y-3">
             {sellSteps.map((s, i) => (
               <li key={i} className="flex gap-3">
@@ -94,7 +90,7 @@ export default async function CaraBergabungPage() {
           </ol>
         </div>
         <div className="card p-6">
-          <h2 className="text-lg font-bold"><span aria-hidden="true"></span> Cara Membeli</h2>
+          <h2 className="text-lg font-bold">Cara Membeli</h2>
           <ol className="mt-4 space-y-3">
             {buySteps.map((s, i) => (
               <li key={i} className="flex gap-3">
@@ -110,7 +106,7 @@ export default async function CaraBergabungPage() {
 
       <div className="mt-6 grid gap-6 md:grid-cols-2">
         <div className="card p-6">
-          <h2 className="text-lg font-bold"><span aria-hidden="true">🏷️</span> Transparansi Biaya Layanan</h2>
+          <h2 className="text-lg font-bold">Transparansi Biaya Layanan</h2>
           <p className="mt-1 text-sm text-gray-500">Pasar Bebas Mahasiswa</p>
           <div className="mt-2 space-y-2">
             <Fee label="Jual Barang & Tawarkan Jasa Mahasiswa" value="100% GRATIS (Rp 0)" />
@@ -126,11 +122,11 @@ export default async function CaraBergabungPage() {
           </div>
         </div>
         <div className="card p-6">
-          <h2 className="text-lg font-bold"><span aria-hidden="true"></span> Aturan &amp; Keamanan</h2>
+          <h2 className="text-lg font-bold">Aturan &amp; Keamanan</h2>
           <ul className="mt-4 space-y-3">
             {rules.map((r, i) => (
               <li key={i} className="flex gap-2 text-sm text-gray-600">
-                <span className="text-primary"></span> {r}
+                <span className="text-primary" aria-hidden="true">•</span> {r}
               </li>
             ))}
           </ul>
@@ -158,9 +154,9 @@ export default async function CaraBergabungPage() {
         </div>
         <a
           href="/gabung-admin"
-          className="shrink-0 rounded-full bg-white px-5 py-2.5 text-xs font-black text-emerald-900 shadow transition hover:bg-emerald-50 active:scale-95"
+          className="shrink-0 rounded-full bg-white px-5 py-2.5 text-xs font-black text-emerald-900 shadow-xs transition-colors hover:bg-emerald-50 active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600"
         >
-          Daftar Jadi Admin Kampus →
+          Daftar Jadi Admin Kampus
         </a>
       </div>
     </div>

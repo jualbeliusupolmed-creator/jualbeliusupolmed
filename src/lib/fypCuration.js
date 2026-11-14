@@ -1,5 +1,4 @@
 import { getActiveCampuses, getCampusProvinceId, getSettings } from "@/lib/settings";
-import { itemMatchesFypScope } from "@/lib/fypScope";
 
 const MAX_FEATURED = 12;
 
@@ -57,40 +56,37 @@ export async function loadProvinceContext(supa, provinceId) {
 }
 
 export function matchesProvince(item, context) {
-  return itemMatchesFypScope(item, {
-    scope: "province",
-    provinceId: context.province.id,
-    campuses: [
-      ...context.universities.map((university) => ({
-        id: university.id,
-        shortName: university.code,
-        provinceId: university.province_id,
-      })),
-      ...context.campuses,
-    ],
-  });
+  return String(item?.seller_province_id || "") === String(context?.province?.id || "");
 }
 
 export async function findProvinceListings(supa, context, { ids, query, limit = 80 } = {}) {
-  const union = context.campusCodes.length && context.universityIds.length
-    ? `campus.in.(${context.campusCodes.join(",")}),university_id.in.(${context.universityIds.join(",")})`
-    : "";
   let request = supa.from("listings")
-    .select("id,title,price,category,campus,university_id,image_url,created_at,status")
+    .select("id,title,price,category,campus,university_id,seller_province_id,image_url,created_at,status")
     .eq("status", "active")
     .order("created_at", { ascending: false })
     .limit(Math.min(MAX_FEATURED * 10, Math.max(1, Number(limit) || 80)));
 
   if (ids) request = request.in("id", ids);
   if (query) request = request.ilike("title", `%${String(query).replace(/[%_,]/g, " ").slice(0, 80)}%`);
-  if (union) request = request.or(union);
-  else if (context.universityIds.length) request = request.in("university_id", context.universityIds);
-  else if (context.campusCodes.length) request = request.in("campus", context.campusCodes);
-  else return [];
+  request = request.eq("seller_province_id", context.province.id);
 
   const { data, error } = await request;
   if (error) throw new Error("Listing provinsi belum dapat dimuat.");
   return (data || []).filter((item) => matchesProvince(item, context));
+}
+
+export async function findRecentSoldProvinceListings(supa, context, { limit = 8 } = {}) {
+  let request = supa.from("listings")
+    .select("id,title,price,category,campus,university_id,seller_province_id,image_url,created_at,status")
+    .eq("status", "sold")
+    .order("created_at", { ascending: false })
+    .limit(Math.min(12, Math.max(1, Number(limit) || 8)));
+
+  request = request.eq("seller_province_id", context.province.id);
+
+  const { data, error } = await request;
+  if (error) throw new Error("Riwayat barang terjual di provinsi ini belum dapat dimuat.");
+  return (data || []).filter((item) => matchesProvince(item, context)).slice(0, limit);
 }
 
 export async function readProvinceCuration(supa, context) {

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { getUserSession } from "@/lib/auth";
+import { getUserSessionAsync } from "@/lib/auth";
 import { formatWa } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +21,7 @@ export async function POST(request) {
     }
 
     // Ambil identitas user yang sedang login (WA number dari session cookie)
-    const sessionWa = formatWa(getUserSession() || "");
+    const sessionWa = formatWa(await getUserSessionAsync() || "");
     if (!sessionWa) {
       return NextResponse.json({ error: "Kamu perlu masuk / punya akun jual-beli untuk membuka DM web" }, { status: 401 });
     }

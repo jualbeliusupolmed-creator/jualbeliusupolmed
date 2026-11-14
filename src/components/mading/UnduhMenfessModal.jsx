@@ -40,7 +40,7 @@ export default function UnduhMenfessModal({ post, onClose }) {
   async function handleDownload() {
     setDownloading(true);
     try {
-      // Fetch as blob to ensure seamless mobile & desktop download
+      // Unduh langsung sebagai blob biner untuk kompatibilitas lintas peramban
       const res = await fetch(downloadUrl);
       if (!res.ok) throw new Error("Gagal mengunduh gambar");
       const blob = await res.blob();
@@ -71,21 +71,21 @@ export default function UnduhMenfessModal({ post, onClose }) {
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200" role="dialog" aria-modal="true">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      
-      <div className="relative w-full max-w-lg rounded-3xl bg-white p-5 sm:p-6 shadow-2xl dark:bg-slate-900 border border-black/[0.06] dark:border-white/[0.08] z-10 space-y-4 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200 motion-reduce:animate-none" role="dialog" aria-modal="true">
+      <div className="absolute inset-0 bg-slate-950/70" onClick={onClose} aria-hidden="true" />
+
+      <div className="relative w-full max-w-lg rounded-2xl bg-white p-5 sm:p-6 shadow-xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 z-10 space-y-4 max-h-[90vh] overflow-y-auto">
         {/* HEADER */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <Icon.Download className="h-5 w-5" />
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400">
+              <Icon.Download className="h-5 w-5" aria-hidden="true" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-gray-900 dark:text-white">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
                 Unduh Gambar Menfess
               </h3>
-              <p className="text-[11px] text-gray-500 dark:text-slate-400">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Pilih format Potrait untuk Feed atau Story / Status WA
               </p>
             </div>
@@ -93,45 +93,45 @@ export default function UnduhMenfessModal({ post, onClose }) {
           <button
             onClick={onClose}
             aria-label="Tutup modal unduh"
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-slate-800 dark:text-slate-400"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition-colors hover:bg-slate-200 active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
           >
-            <Icon.X className="h-4 w-4" />
+            <Icon.X className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
 
         {/* RATIO SELECTOR TABS */}
-        <div className="grid grid-cols-2 gap-2 rounded-2xl bg-gray-100 p-1 dark:bg-slate-800">
+        <div className="grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
           <button
             type="button"
             onClick={() => setRatio("portrait")}
-            className={`flex flex-col items-center justify-center py-2 px-3 rounded-xl text-xs font-bold transition-all ${
+            className={`flex flex-col items-center justify-center py-2 px-3 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50 ${
               ratio === "portrait"
-                ? "bg-white text-gray-900 shadow-sm dark:bg-slate-900 dark:text-white"
-                : "text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white"
+                ? "bg-white text-slate-900 shadow-xs dark:bg-slate-900 dark:text-white"
+                : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
             }`}
           >
-            <span> Potrait 1080 × 1350</span>
-            <span className="text-[10px] font-medium text-gray-400 dark:text-slate-500">Feed / Postingan (4:5)</span>
+            <span>Potrait 1080 × 1350</span>
+            <span className="text-[10px] font-normal text-slate-400 dark:text-slate-500">Feed / Postingan (4:5)</span>
           </button>
 
           <button
             type="button"
             onClick={() => setRatio("story")}
-            className={`flex flex-col items-center justify-center py-2 px-3 rounded-xl text-xs font-bold transition-all ${
+            className={`flex flex-col items-center justify-center py-2 px-3 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50 ${
               ratio === "story"
-                ? "bg-white text-gray-900 shadow-sm dark:bg-slate-900 dark:text-white"
-                : "text-gray-500 hover:text-gray-900 dark:text-slate-400 dark:hover:text-white"
+                ? "bg-white text-slate-900 shadow-xs dark:bg-slate-900 dark:text-white"
+                : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
             }`}
           >
-            <span> Potrait 9 : 16</span>
-            <span className="text-[10px] font-medium text-gray-400 dark:text-slate-500">Story IG & Status WA</span>
+            <span>Potrait 9 : 16</span>
+            <span className="text-[10px] font-normal text-slate-400 dark:text-slate-500">Story IG &amp; Status WA</span>
           </button>
         </div>
 
         {/* LIVE PREVIEW CONTAINER */}
-        <div className="relative overflow-hidden rounded-2xl bg-slate-950/5 p-2 dark:bg-black/30 border border-slate-200 dark:border-slate-800 flex items-center justify-center min-h-[280px]">
+        <div className="relative overflow-hidden rounded-xl bg-slate-100 p-2 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-center min-h-[280px]">
           <div
-            className={`relative transition-all duration-300 shadow-lg rounded-xl overflow-hidden ${
+            className={`relative transition-opacity duration-200 shadow-md rounded-lg overflow-hidden ${
               ratio === "story"
                 ? "aspect-[9/16] w-full max-w-[210px]"
                 : "aspect-[4/5] w-full max-w-[260px]"
@@ -147,10 +147,10 @@ export default function UnduhMenfessModal({ post, onClose }) {
           </div>
         </div>
 
-        <div className="text-center text-[11px] text-gray-400">
+        <div className="text-center text-xs text-slate-400 dark:text-slate-500">
           {ratio === "story"
-            ? "Format 9:16 Fullscreen Potrait • Pas untuk Story IG, Status WA & TikTok"
-            : "Format 4:5 Potrait Feed • Pas untuk postingan Feed Instagram tanpa terpotong"}
+            ? "Format 9:16 Fullscreen Potrait — Pas untuk Story IG, Status WA & TikTok"
+            : "Format 4:5 Potrait Feed — Pas untuk postingan Feed Instagram tanpa terpotong"}
         </div>
 
         {/* ACTION BUTTONS */}
@@ -159,18 +159,18 @@ export default function UnduhMenfessModal({ post, onClose }) {
             type="button"
             onClick={handleDownload}
             disabled={downloading}
-            className="btn-primary py-3 text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-800 px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-900 active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50 disabled:pointer-events-none"
           >
-            <Icon.Download className="h-4 w-4" />
-            <span>{downloading ? "Menyiapkan File..." : "Unduh Gambar (HD)"}</span>
+            <Icon.Download className="h-4 w-4" aria-hidden="true" />
+            <span>{downloading ? "Menyiapkan File…" : "Unduh Gambar (HD)"}</span>
           </button>
 
           <button
             type="button"
             onClick={handleCopyLink}
-            className="btn-outline py-3 text-xs font-bold flex items-center justify-center gap-2"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-750"
           >
-            <Icon.Link className="h-4 w-4" />
+            <Icon.Link className="h-4 w-4" aria-hidden="true" />
             <span>Salin Tautan Gambar</span>
           </button>
         </div>

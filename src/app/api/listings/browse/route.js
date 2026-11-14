@@ -5,6 +5,13 @@ import { cariAman } from "@/lib/cariAman";
 import { jawabGalat } from "@/lib/jawabGalat";
 import { normalizeListingCode } from "@/lib/listingCode";
 import { getAllListingSpecKeys, parseSpecFilterToken } from "@/lib/listingSpecs";
+import { getSellerSessionAsync } from "@/lib/auth";
+import {
+  applyMarketplaceProvinceScope,
+  isCampusInMarketplaceScope,
+  loadMarketplaceRegion,
+  loadProvinceMarketplaceScope,
+} from "@/lib/marketplaceRegion";
 
 export const dynamic = "force-dynamic";
 
@@ -57,7 +64,7 @@ export async function GET(req) {
       .from("listings")
       // SECURITY: We fetch seller_wa internally to map profiles, then delete it before returning
       .select(
-        "id, listing_code, title, description, price, stock, category, type, campus, university_id, area, status, featured, bumped_at, created_at, views, image_url, images, seller_name, seller_wa, condition, sponsored_until, rental_period, distributor_fee, specs",
+        "id, listing_code, title, description, price, stock, category, type, campus, university_id, seller_university_id, seller_province_id, area, status, featured, bumped_at, created_at, views, image_url, images, seller_name, seller_wa, condition, sponsored_until, rental_period, distributor_fee, specs",
         { count: "exact" }
       )
       .eq("status", "active");
@@ -73,20 +80,62 @@ export async function GET(req) {
     const provinceId = sp.get("province_id") || sp.get("province");
     const universityId = sp.get("university_id");
 
-    if (provinceId && provinceId !== "all" && provinceId !== "Semua") {
-      const { data: provUnis } = await supa
-        .from("universities")
-        .select("id, code")
-        .eq("province_id", provinceId);
-      if (provUnis && provUnis.length > 0) {
-        const uniIds = provUnis.map((u) => u.id);
-        const uniCodes = provUnis.map((u) => u.code);
-        query = query.or(`university_id.in.(${uniIds.join(",")}),campus.in.(${uniCodes.join(",")})`);
+    const sessionIdentity = await getSellerSessionAsync();
+    if (sessionIdentity) {
+      const region = await loadMarketplaceRegion(supa, sessionIdentity);
+      if (!region.province) {
+        return NextResponse.json({ error: "Pilih universitas acuan di profil agar marketplace bisa menampilkan wilayah yang tepat." }, { status: 409 });
       }
-    } else if (universityId && universityId !== "all" && universityId !== "Semua") {
-      query = query.or(`university_id.eq.${universityId},campus.ilike.${universityId}`);
-    } else if (campus && campus !== "Semua" && campus !== "all") {
-      query = query.or(`campus.ilike.${campus},university_id.ilike.${campus}`);
+      const scope = await loadProvinceMarketplaceScope(supa, region.province);
+      const scopedQuery = applyMarketplaceProvinceScope(query, scope);
+      if (!scopedQuery) {
+        return NextResponse.json({ listings: [], total: 0, page, limit, hasMore: false });
+      }
+      query = scopedQuery;
+
+      if (universityId && universityId !== "all" && universityId !== "Semua") {
+        if (!isCampusInMarketplaceScope(universityId, scope)) {
+          return NextResponse.json({ listings: [], total: 0, page, limit, hasMore: false });
+        }
+        const targetUniversity = scope.universities.find((item) =>
+          String(item.id).toLowerCase() === universityId.toLowerCase() ||
+          String(item.code).toLowerCase() === universityId.toLowerCase()
+        );
+        if (!targetUniversity) return NextResponse.json({ listings: [], total: 0, page, limit, hasMore: false });
+        query = query.eq("seller_university_id", targetUniversity.id);
+      } else if (campus && campus !== "Semua" && campus !== "all") {
+        if (!isCampusInMarketplaceScope(campus, scope)) {
+          return NextResponse.json({ listings: [], total: 0, page, limit, hasMore: false });
+        }
+        const targetUniversity = scope.universities.find((item) =>
+          String(item.id).toLowerCase() === campus.toLowerCase() ||
+          String(item.code).toLowerCase() === campus.toLowerCase()
+        );
+        if (!targetUniversity) return NextResponse.json({ listings: [], total: 0, page, limit, hasMore: false });
+        query = query.eq("seller_university_id", targetUniversity.id);
+      }
+    } else if (provinceId && provinceId !== "all" && provinceId !== "Semua") {
+      query = query.eq("seller_province_id", provinceId);
+    } else if (
+      (universityId && universityId !== "all" && universityId !== "Semua") ||
+      (campus && campus !== "Semua" && campus !== "all")
+    ) {
+      const requestedUniversity = universityId && universityId !== "all" && universityId !== "Semua"
+        ? universityId
+        : campus;
+      const { data: byId } = await supa.from("universities")
+        .select("id")
+        .eq("id", requestedUniversity)
+        .maybeSingle();
+      const { data: byCode } = byId ? { data: null } : await supa.from("universities")
+        .select("id")
+        .eq("code", requestedUniversity)
+        .maybeSingle();
+      const targetUniversityId = byId?.id || byCode?.id;
+      if (!targetUniversityId) {
+        return NextResponse.json({ listings: [], total: 0, page, limit, hasMore: false });
+      }
+      query = query.eq("seller_university_id", targetUniversityId);
     }
     if (exactCode.length >= 6) {
       query = query.eq("listing_code", exactCode);
@@ -151,7 +200,7 @@ export async function GET(req) {
     if (sellerWas.length > 0) {
       const { data: profiles } = await supa
         .from("seller_profiles")
-        .select("wa, trusted_seller, distributor, subscription_tier, subscription_expires_at, home_university_id, affiliation_status")
+        .select("wa, trusted_seller, distributor, subscription_tier, subscription_expires_at, home_university_id, verified_university_id, affiliation_status, student_verified")
         .in("wa", sellerWas);
       
       const profileMap = new Map((profiles || []).map((p) => [p.wa, p]));
@@ -165,13 +214,20 @@ export async function GET(req) {
       delete d.seller_wa;
     });
 
-    return NextResponse.json({
-      listings: data || [],
-      total: specFilters.length > 0 ? filteredBySpecs.length : (count || 0),
-      page,
-      limit,
-      hasMore: from + limit < (specFilters.length > 0 ? filteredBySpecs.length : (count || 0)),
-    });
+    return NextResponse.json(
+      {
+        listings: data || [],
+        total: specFilters.length > 0 ? filteredBySpecs.length : (count || 0),
+        page,
+        limit,
+        hasMore: from + limit < (specFilters.length > 0 ? filteredBySpecs.length : (count || 0)),
+      },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=30, stale-while-revalidate=120",
+        },
+      }
+    );
   } catch (e) {
     return jawabGalat(e);
   }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { getSellerSession, setAdminCookieOnResponse, setSellerCookie } from "@/lib/auth";
+import { getSellerSessionAsync, setAdminCookieOnResponse, setSellerCookie } from "@/lib/auth";
 import { formatWa } from "@/lib/constants";
 import { isGoogleAuthIdentity, resolveAdminLoginRole } from "@/lib/admin-auth-policy";
 import {
@@ -280,7 +280,7 @@ export async function GET(request) {
     return handleAdminGoogleCallback(request);
   }
   const googleLinkToken = request.cookies?.get(SELLER_GOOGLE_LINK_COOKIE)?.value;
-  const googleLinkWa = formatWa(getSellerSession() || "");
+  const googleLinkWa = formatWa(await getSellerSessionAsync() || "");
   const isGoogleLinkFlow = isSellerGoogleLinkFlow(searchParams, googleLinkToken);
   if (
     isGoogleLinkFlow &&
@@ -404,7 +404,7 @@ export async function POST(request) {
     const googleLinkToken = request.cookies?.get(SELLER_GOOGLE_LINK_COOKIE)?.value;
     const isGoogleLinkFlow = Boolean(requestedGoogleLinkFlow || googleLinkToken);
     if (isGoogleLinkFlow) {
-      const wa = formatWa(getSellerSession() || "");
+      const wa = formatWa(await getSellerSessionAsync() || "");
       if (!googleLinkToken || !wa || !verifySellerGoogleLinkToken(googleLinkToken, wa)) {
         return googleLinkJson(
           { success: false, redirectUrl: `${origin}/dashboard?tab=profil&google_link=failed` },
@@ -539,7 +539,7 @@ async function syncUserAndSetSession(user, origin, next) {
   }
 
   const sessionWa = formatWa(existing?.phone_wa || waIdentifier) || waIdentifier;
-  setSellerCookie(sessionWa);
+  await setSellerCookie(sessionWa);
 
   const redirectUrl = new URL(`${origin}${next || "/"}`);
   redirectUrl.searchParams.set("_gwa", sessionWa);

@@ -1,5 +1,5 @@
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { getSettings } from "@/lib/settings";
+import { getCampusProvinceId, getSettings } from "@/lib/settings";
 import { periksaSlug } from "@/lib/toko";
 import {
   KOLOM_PROFIL, peranProfil, saringIsian, normalisasiIsian, bentukProfil, userIdTeman,
@@ -63,27 +63,37 @@ export async function simpanProfil(wa, body, { supa = getAdminClient() } = {}) {
 
   const isian = normalisasiIsian(saringIsian(body, peranEfektif));
 
-  if ("campus" in isian) {
+  if ("campus" in isian || "home_university_id" in isian || "fyp_province_id" in isian) {
     const campuses = (await getSettings()).campuses || [];
-    const allowed = campuses
+    const activeCampuses = campuses
       .filter((campus) => campus?.active !== false)
-      .map((campus) => String(campus.shortName || "").trim().toLowerCase())
-      .filter(Boolean);
-    const selectedCampus = String(isian.campus).trim().toLowerCase();
-    if (!allowed.includes(selectedCampus)) {
+      .filter((campus) => String(campus.shortName || "").trim());
+    const selectedCampus = String(isian.campus ?? sekarang?.campus ?? "").trim().toLowerCase();
+    const matched = activeCampuses.find(
+      (campus) => String(campus.shortName || "").trim().toLowerCase() === selectedCampus ||
+        String(campus.id || "").trim().toLowerCase() === selectedCampus
+    );
+    if ("campus" in isian && !matched) {
       return { pesanPengguna: "Pilihan kampus sudah tidak tersedia. Pilih kampus yang masih aktif.", status: 400 };
     }
-    if (!isian.home_university_id) {
-      const matched = campuses.find(
-        (c) => String(c.shortName || "").trim().toLowerCase() === selectedCampus ||
-               String(c.id || "").trim().toLowerCase() === selectedCampus
-      );
-      if (matched?.id) {
-        isian.home_university_id = matched.id;
-        if (!isian.fyp_province_id && matched.provinceId) {
-          isian.fyp_province_id = matched.provinceId;
-        }
+    if (matched?.id) isian.home_university_id = matched.id;
+
+    const verifiedCampus = (sekarang?.affiliation_status === "verified_student" || sekarang?.student_verified)
+      ? activeCampuses.find((campus) => campus.id === sekarang?.verified_university_id)
+      : null;
+    const homeCampus = activeCampuses.find((campus) => campus.id === (isian.home_university_id || sekarang?.home_university_id));
+    const canonicalProvince = verifiedCampus
+      ? getCampusProvinceId(verifiedCampus)
+      : homeCampus
+      ? getCampusProvinceId(homeCampus)
+      : matched
+      ? getCampusProvinceId(matched)
+      : "";
+    if (canonicalProvince) {
+      if (verifiedCampus && "campus" in isian && matched && getCampusProvinceId(matched) !== canonicalProvince) {
+        return { pesanPengguna: "Akun mahasiswa terverifikasi hanya dapat memakai marketplace di provinsi kampus terverifikasinya.", status: 403 };
       }
+      isian.fyp_province_id = canonicalProvince;
     }
   }
 

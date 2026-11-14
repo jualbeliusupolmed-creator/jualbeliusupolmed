@@ -200,8 +200,9 @@ function verifySellerToken(token) {
   }
 }
 
-export function setSellerCookie(wa) {
-  cookies().set(SELLER_COOKIE, signSellerToken(wa), {
+export async function setSellerCookie(wa) {
+  const cookieStore = await cookies();
+  cookieStore.set(SELLER_COOKIE, signSellerToken(wa), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
@@ -210,8 +211,9 @@ export function setSellerCookie(wa) {
   });
 }
 
-export function clearSellerCookie() {
-  cookies().set(SELLER_COOKIE, "", { path: "/", maxAge: 0 });
+export async function clearSellerCookie() {
+  const cookieStore = await cookies();
+  cookieStore.set(SELLER_COOKIE, "", { path: "/", maxAge: 0 });
 }
 
 export function getSellerSession() {
@@ -219,6 +221,16 @@ export function getSellerSession() {
   return verifySellerToken(c);
 }
 
+export async function getSellerSessionAsync() {
+  const cookieStore = await cookies();
+  const c = cookieStore.get(SELLER_COOKIE)?.value;
+  return verifySellerToken(c);
+}
+
 export function getUserSession() {
   return getSellerSession();
+}
+
+export async function getUserSessionAsync() {
+  return getSellerSessionAsync();
 }

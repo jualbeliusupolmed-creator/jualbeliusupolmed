@@ -56,7 +56,7 @@ export const DEFAULT_SETTINGS = {
       "Marketplace mahasiswa lintas kampus. Jual-beli aman, dibantu admin.",
     logoUrl: "",
     faviconUrl: "",
-    metaTitle: "Kampus Kita — Marketplace Mahasiswa",
+    metaTitle: "Kampus Kita: Marketplace Mahasiswa",
     metaDescription:
       "Marketplace jual-beli mahasiswa lintas kampus: laptop bekas, HP, buku, fashion, makanan, kos, dan jasa. Transaksi aman dan praktis, dibantu admin.",
     metaKeywords:
@@ -160,8 +160,23 @@ function clone(obj) {
   return JSON.parse(JSON.stringify(obj));
 }
 
+// In-memory cache untuk memangkas latency database pada setiap HTTP request
+let cachedSettings = null;
+let lastSettingsFetch = 0;
+const SETTINGS_CACHE_TTL = 60 * 1000; // 60 detik
+
+export function invalidateSettingsCache() {
+  cachedSettings = null;
+  lastSettingsFetch = 0;
+}
+
 // Baca semua settings dari DB, merge dengan default (shallow per-key).
 export async function getSettings() {
+  // Return dari cache memori jika masih valid (0ms latency)
+  if (cachedSettings && Date.now() - lastSettingsFetch < SETTINGS_CACHE_TTL) {
+    return clone(cachedSettings);
+  }
+
   try {
     const supa = getAdminClient();
     const { data } = await supa.from("settings").select("key, value");
@@ -202,7 +217,9 @@ export async function getSettings() {
       }
     } catch { }
 
-    return merged;
+    cachedSettings = merged;
+    lastSettingsFetch = Date.now();
+    return clone(merged);
   } catch {
     return clone(DEFAULT_SETTINGS);
   }

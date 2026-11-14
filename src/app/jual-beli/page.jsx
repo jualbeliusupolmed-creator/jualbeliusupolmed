@@ -5,6 +5,8 @@ import { fetchListingsWithProfiles } from "@/lib/dbHelpers";
 import { buildSlug } from "@/lib/slug";
 import MarketplaceBrowser from "./MarketplaceBrowser";
 import { skripJsonLd } from "@/lib/jsonLd";
+import { getSellerSessionAsync } from "@/lib/auth";
+import { applyMarketplaceProvinceScope, loadSessionMarketplaceScope } from "@/lib/marketplaceRegion";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -36,10 +38,16 @@ export const metadata = {
 };
 const PAGE_SIZE = 20;
 
-async function getInitialData() {
+async function scopedQuery(supa, query, sessionIdentity) {
+  if (!sessionIdentity) return query;
+  const { scope } = await loadSessionMarketplaceScope(supa, sessionIdentity);
+  return scope ? applyMarketplaceProvinceScope(query, scope) : null;
+}
+
+async function getInitialData(sessionIdentity) {
   try {
     const supa = getAdminClient();
-    const query = supa
+    let query = supa
       .from("listings")
       .select("*, seller_wa", { count: "exact" })
       .eq("status", "active")
@@ -47,6 +55,8 @@ async function getInitialData() {
       .order("featured", { ascending: false, nullsFirst: false })
       .order("bumped_at", { ascending: false, nullsFirst: false })
       .range(0, PAGE_SIZE - 1);
+    query = await scopedQuery(supa, query, sessionIdentity);
+    if (!query) return { listings: [], total: 0 };
       
     const { data, count } = await fetchListingsWithProfiles(query);
     return { listings: data || [], total: count || 0 };
@@ -56,10 +66,10 @@ async function getInitialData() {
   }
 }
 
-async function getFeatured() {
+async function getFeatured(sessionIdentity) {
   try {
     const supa = getAdminClient();
-    const query = supa
+    let query = supa
       .from("listings")
       .select("id,title,price,image_url,seller_wa")
       .eq("status", "active")
@@ -67,6 +77,8 @@ async function getFeatured() {
       .eq("featured", true)
       .order("bumped_at", { ascending: false, nullsFirst: false })
       .limit(6);
+    query = await scopedQuery(supa, query, sessionIdentity);
+    if (!query) return [];
       
     const { data } = await fetchListingsWithProfiles(query);
     return data || [];
@@ -75,10 +87,10 @@ async function getFeatured() {
   }
 }
 
-async function getTrending() {
+async function getTrending(sessionIdentity) {
   try {
     const supa = getAdminClient();
-    const query = supa
+    let query = supa
       .from("listings")
       .select("id,title,price,image_url,views,seller_wa")
       .eq("status", "active")
@@ -86,6 +98,8 @@ async function getTrending() {
       .gt("views", 0)
       .order("views", { ascending: false, nullsFirst: false })
       .limit(8);
+    query = await scopedQuery(supa, query, sessionIdentity);
+    if (!query) return [];
       
     const { data } = await fetchListingsWithProfiles(query);
     return data || [];
@@ -125,12 +139,13 @@ async function getStats() {
 async function getWantedItems() {
   try {
     const supa = getAdminClient();
-    const { data } = await supa
+    let query = supa
       .from("wanted_listings")
       .select("id, title, budget, campus, area")
       .eq("status", "active")
       .order("created_at", { ascending: false })
       .limit(8);
+    const { data } = await query;
     return data || [];
   } catch {
     return [];
@@ -138,11 +153,12 @@ async function getWantedItems() {
 }
 
 export default async function HomePage() {
+  const sessionIdentity = await getSellerSessionAsync();
   const [{ listings, total }, featured, trending, settings, categories, stats, wantedItems] =
     await Promise.all([
-      getInitialData(),
-      getFeatured(),
-      getTrending(),
+      getInitialData(sessionIdentity),
+      getFeatured(sessionIdentity),
+      getTrending(sessionIdentity),
       getSettings(),
       getCategories(),
       getStats(),

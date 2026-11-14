@@ -5,18 +5,32 @@ import { buildSlug } from "@/lib/slug";
 import { fetchOpenPoBatches } from "@/lib/openPo";
 import SuperAppHome from "./SuperAppHome";
 import { skripJsonLd } from "@/lib/jsonLd";
+import { getSellerSessionAsync } from "@/lib/auth";
+import { applyMarketplaceProvinceScope, loadSessionMarketplaceScope } from "@/lib/marketplaceRegion";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata = {
-  title: "Kampus Kita — Ekosistem Digital Mahasiswa",
+  title: "Kampus Kita: Ekosistem Digital Mahasiswa",
   description:
     "Ekosistem digital mahasiswa lintas kampus: marketplace preloved, open PO, suara menfess anonim, dan janjian COD aman.",
-  keywords: ["Kampus Kita", "marketplace mahasiswa", "jual beli kampus", "open PO kampus", "menfess mahasiswa", "marketplace mahasiswa"],
+  keywords: [
+    "Kampus Kita",
+    "marketplace mahasiswa",
+    "jual beli usu",
+    "jual beli polmed",
+    "jual beli kampus",
+    "open PO mahasiswa",
+    "menfess mahasiswa",
+    "preloved mahasiswa",
+    "barang bekas kampus",
+    "wtb mahasiswa",
+    "COD kampus"
+  ],
   alternates: { canonical: "/" },
   openGraph: {
-    title: "Kampus Kita — Ekosistem Digital Mahasiswa",
+    title: "Kampus Kita: Ekosistem Digital Mahasiswa",
     description: "Ekosistem digital mahasiswa lintas kampus: marketplace preloved, open PO, suara menfess anonim, dan janjian COD aman.",
     url: "/",
     siteName: "Kampus Kita",
@@ -25,24 +39,33 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Kampus Kita — Ekosistem Digital Mahasiswa",
+    title: "Kampus Kita: Ekosistem Digital Mahasiswa",
     description: "Ekosistem digital mahasiswa lintas kampus dengan marketplace, open PO, mading, dan chat.",
   },
 };
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 36;
 
-async function getInitialData() {
+async function getInitialData(sessionIdentity) {
   try {
     const supa = getAdminClient();
-    const query = supa
+    let provinceId;
+    let query = supa
       .from("listings")
-      .select("*, seller_wa")
+      .select("id, listing_code, title, description, price, image_url, images, campus, area, category, type, status, featured, bumped_at, created_at, condition, seller_name, seller_wa, views, stock, rental_period")
       .eq("status", "active")
       .in("type", ["barang", "poster"])
       .order("featured", { ascending: false, nullsFirst: false })
       .order("bumped_at", { ascending: false, nullsFirst: false })
       .range(0, PAGE_SIZE - 1);
+
+    if (sessionIdentity) {
+      const { scope, region } = await loadSessionMarketplaceScope(supa, sessionIdentity);
+      if (!scope) return { listings: [], total: 0 };
+      provinceId = region.province;
+      query = applyMarketplaceProvinceScope(query, scope);
+      if (!query) return { listings: [], total: 0 };
+    }
       
     const [listingsResult, madingResult, poBatches] = await Promise.all([
       fetchListingsWithProfiles(query),
@@ -52,7 +75,7 @@ async function getInitialData() {
         .eq("status", "active")
         .order("created_at", { ascending: false })
         .limit(15),
-      fetchOpenPoBatches().catch(() => []),
+      fetchOpenPoBatches({ provinceId }).catch(() => []),
     ]);
 
     return {
@@ -66,8 +89,9 @@ async function getInitialData() {
 }
 
 export default async function HomePage() {
+  const sessionIdentity = await getSellerSessionAsync();
   const [{ listings, madingPosts, poBatches }, settings] = await Promise.all([
-    getInitialData(),
+    getInitialData(sessionIdentity),
     getSettings(),
   ]);
 
@@ -75,10 +99,13 @@ export default async function HomePage() {
   const itemListJsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
+    "numberOfItems": listings.length,
     "itemListElement": listings.map((l, index) => ({
       "@type": "ListItem",
       "position": index + 1,
-      "url": `${baseUrl}/produk/${buildSlug(l.title, l.id)}`
+      "name": l.title,
+      "url": `${baseUrl}/produk/${buildSlug(l.title, l.id)}`,
+      ...(l.image_url ? { "image": l.image_url } : {}),
     }))
   };
 

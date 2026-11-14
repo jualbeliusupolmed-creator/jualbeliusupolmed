@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Icon } from "@/components/Icons";
-import CampusSelect from "@/components/CampusSelect";
 import Image from "next/image";
 import { adFeeFrom, rupiah } from "@/lib/fees";
 import { uploadMedia } from "@/lib/upload";
@@ -31,7 +30,6 @@ const INITIAL_FORM = {
   stock: 1,
   category: CATEGORIES[0].name,
   type: "barang",
-  campus: "Semua",
   area: "",
   condition: "used",
   rental_period: "harian",
@@ -158,20 +156,7 @@ export default function JualPage() {
             })
             .catch(() => {});
 
-          fetch("/api/profil", { cache: "no-store" })
-            .then((r) => (r.ok ? r.json() : null))
-            .then((d) => {
-              if (d?.ok && d?.profil?.campus) {
-                setForm((f) => ({ ...f, campus: f.campus === "Semua" ? d.profil.campus : f.campus }));
-              }
-            })
-            .catch(() => {});
         }
-      }
-
-      const prefCampus = localStorage.getItem("preferred_campus");
-      if (prefCampus && prefCampus !== "Semua") {
-        setForm((f) => ({ ...f, campus: f.campus === "Semua" ? prefCampus : f.campus }));
       }
     }
 
@@ -577,9 +562,9 @@ export default function JualPage() {
             <div>
               <label htmlFor="form-type" className="label">Jenis Jual Barang</label>
               <select id="form-type" className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.type} onChange={set("type")}>
-                <option value="barang">Barang — {rupiah(adFeeFor("barang", form.price))}</option>
-                <option value="sewa">Sewa — {rupiah(adFeeFor("barang", form.price))}</option>
-                <option value="poster">Poster — {rupiah(adFeeFor("poster"))}</option>
+                <option value="barang">Barang: {rupiah(adFeeFor("barang", form.price))}</option>
+                <option value="sewa">Sewa: {rupiah(adFeeFor("barang", form.price))}</option>
+                <option value="poster">Poster: {rupiah(adFeeFor("poster"))}</option>
               </select>
             </div>
             {form.type === "sewa" && (
@@ -599,16 +584,16 @@ export default function JualPage() {
                   <button
                     type="button"
                     onClick={() => setForm((f) => ({ ...f, condition: "used" }))}
-                    className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${form.condition === "used" ? "bg-white text-gray-900 shadow-sm dark:bg-slate-700 dark:text-white" : "text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-300"}`}
+                    className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors active:translate-y-px ${form.condition === "used" ? "bg-white text-gray-900 shadow-sm dark:bg-slate-700 dark:text-white" : "text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-300"}`}
                   >
                     Bekas
                   </button>
                   <button
                     type="button"
                     onClick={() => setForm((f) => ({ ...f, condition: "new" }))}
-                    className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${form.condition === "new" ? "bg-white text-gray-900 shadow-sm dark:bg-slate-700 dark:text-white" : "text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-300"}`}
+                    className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors active:translate-y-px ${form.condition === "new" ? "bg-white text-gray-900 shadow-sm dark:bg-slate-700 dark:text-white" : "text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-300"}`}
                   >
-                    <span className="inline-flex items-center justify-center gap-1.5"><Icon.Sparkles className="h-4 w-4" /> Baru</span>
+                    <span className="inline-flex items-center justify-center gap-1.5"><Icon.Sparkles className="h-4 w-4" aria-hidden="true" /> Baru</span>
                   </button>
                 </div>
               </div>
@@ -623,9 +608,8 @@ export default function JualPage() {
                 ))}
               </select>
             </div>
-            <div>
-              <label htmlFor="form-campus" className="label">Target Area</label>
-              <CampusSelect id="form-campus" ariaLabel="Target Area" className="input focus:ring-4 focus:ring-accent/10 focus:border-accent" value={form.campus} onChange={(value) => setForm((current) => ({ ...current, campus: value }))} />
+            <div className="rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 py-2.5 text-xs text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-200">
+              Jangkauan jual otomatis mengikuti provinsi kampus pada profilmu.
             </div>
             <div>
               <label className="label">Lokasi COD</label>
@@ -699,12 +683,12 @@ export default function JualPage() {
             </div>
             {form.price && Number(form.price) > 0 && Number(form.price) < 1000 && (
               <div className="sm:col-span-2 -mt-2 flex items-center gap-2 text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-3.5 py-2 rounded-xl border border-amber-300 dark:border-amber-700/50">
-                <span>💡</span>
+                <Icon.Sparkles className="h-4 w-4 text-amber-600 shrink-0" aria-hidden="true" />
                 <span>Maksud kamu <strong>Rp {(Number(form.price) * 1000).toLocaleString("id-ID")}</strong>?</span>
                 <button
                   type="button"
                   onClick={() => setForm((f) => ({ ...f, price: String(Number(f.price) * 1000) }))}
-                  className="ml-auto text-xs font-bold text-primary dark:text-emerald-400 underline hover:opacity-80"
+                  className="ml-auto text-xs font-bold text-primary dark:text-emerald-400 underline hover:opacity-80 active:translate-y-px"
                 >
                   Terapkan Otomatis
                 </button>
@@ -756,12 +740,12 @@ export default function JualPage() {
               <div className="sm:col-span-2 rounded-3xl border border-black/[0.06] bg-black/[0.02] p-4 dark:border-white/[0.08] dark:bg-white/[0.03]">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-bold text-gray-900 dark:text-white">Spesifikasi Tambahan ({form.category}) — Opsional</p>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white">Spesifikasi Tambahan ({form.category}) (Opsional)</p>
                     <p className="mt-1 text-xs text-gray-500 dark:text-slate-400">
                       Khusus kategori {form.category}. Boleh dikosongkan jika tidak ada info detail.
                     </p>
                   </div>
-                  <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 shadow-sm dark:bg-slate-900 dark:text-slate-400">
+                  <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-gray-500 shadow-xs dark:bg-slate-900 dark:text-slate-400">
                     Opsional
                   </span>
                 </div>
@@ -860,10 +844,10 @@ export default function JualPage() {
           <div className="card p-4 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                <Icon.Eye className="w-3.5 h-3.5 text-[#047857]" />
+                <Icon.Eye className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
                 Pratinjau Kartu Produk
               </span>
-              <span className="text-[10px] font-bold text-[#047857] bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full">
+              <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full">
                 Live Preview
               </span>
             </div>
@@ -878,7 +862,7 @@ export default function JualPage() {
                   />
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 gap-1.5">
-                    <Icon.Camera className="w-7 h-7 opacity-40" />
+                    <Icon.Camera className="w-7 h-7 opacity-40" aria-hidden="true" />
                     <span className="text-[11px] font-medium">Belum ada foto (opsional)</span>
                   </div>
                 )}
@@ -892,7 +876,7 @@ export default function JualPage() {
                   {form.title.trim() || "Nama / Judul Barang Kamu"}
                 </span>
                 <div className="flex items-baseline gap-2 mt-1">
-                  <span className="text-sm sm:text-base font-extrabold text-[#047857] dark:text-emerald-400">
+                  <span className="text-sm sm:text-base font-extrabold text-emerald-700 dark:text-emerald-400">
                     {form.price ? rupiah(Number(form.price)) : "Rp 0"}
                   </span>
                   {form.type === "sewa" && (
@@ -902,10 +886,9 @@ export default function JualPage() {
                   )}
                 </div>
                 <div className="flex items-center gap-1.5 mt-2 text-[10.5px] text-slate-500">
-                  <Icon.MapPin className="w-3 h-3 text-[#047857]" />
+                  <Icon.MapPin className="w-3 h-3 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
                   <span className="truncate">
-                    {form.campus === "Semua" ? "Semua Kampus" : form.campus}
-                    {form.area ? ` · ${form.area}` : ""}
+                    {form.area || "Lokasi COD"}
                   </span>
                 </div>
               </div>
@@ -1000,7 +983,7 @@ export default function JualPage() {
       {/* Modal Preview */}
       {showPreviewModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="card w-full max-w-2xl bg-white p-6 shadow-2xl dark:bg-slate-900/95 dark:border-slate-800 animate-fade-in max-h-[90vh] overflow-y-auto">
+          <div className="card w-full max-w-2xl bg-white p-6 shadow-2xl dark:bg-slate-900/95 dark:border-slate-800 motion-safe:animate-fade-in motion-reduce:animate-none max-h-[90dvh] overflow-y-auto">
             <div className="flex justify-between items-start mb-4">
               <h2 className="text-xl font-extrabold text-gray-900 dark:text-white">
                 Preview Barang
@@ -1009,7 +992,7 @@ export default function JualPage() {
                 type="button" 
                 onClick={() => setShowPreviewModal(false)}
                 aria-label="Tutup preview barang"
-                className="text-gray-500 hover:bg-gray-100 p-2 rounded-full dark:hover:bg-slate-800"
+                className="text-gray-500 hover:bg-gray-100 p-2 rounded-full dark:hover:bg-slate-800 active:translate-y-px"
               >
                 <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
               </button>
@@ -1037,11 +1020,11 @@ export default function JualPage() {
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <span className="badge badge-primary">{form.category}</span>
-                  <span className="badge badge-outline">{form.campus}</span>
+                  <span className="badge badge-outline">Provinsi akun</span>
                 </div>
                 {specPreview.length > 0 && (
                   <div className="mt-4 rounded-2xl bg-gray-50 p-3 dark:bg-slate-800/60">
-                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-gray-500 dark:text-slate-400">
+                    <p className="text-xs font-semibold text-gray-500 dark:text-slate-400">
                       Spesifikasi
                     </p>
                     <dl className="mt-2 space-y-1.5">

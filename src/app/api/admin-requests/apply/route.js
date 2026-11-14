@@ -3,7 +3,7 @@ import { getAdminClient } from "@/lib/supabaseAdmin";
 import { rateLimitDistributed, getClientIp } from "@/lib/rateLimit";
 import { logger } from "@/lib/logger";
 import { sendWa, nomorAdmin } from "@/lib/fonnte";
-import { getSellerSession } from "@/lib/auth";
+import { getSellerSessionAsync } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +22,7 @@ export async function POST(request) {
   }
 
   try {
-    const sessionWa = getSellerSession();
+    const sessionWa = await getSellerSessionAsync();
     if (!sessionWa) {
       return NextResponse.json({ error: "Masuk ke akun Jual Beli Kampus Kita sebelum mengajukan diri." }, { status: 401 });
     }

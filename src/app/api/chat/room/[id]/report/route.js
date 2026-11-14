@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { getUserSession } from "@/lib/auth";
+import { getUserSessionAsync } from "@/lib/auth";
 import { hashIdentitas } from "@/lib/identitasHash";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
@@ -16,7 +16,7 @@ const BLOKIR_HARI = 7;
 // POST /api/chat/room/[id]/report { reason? } — laporkan lawan bicara di room ini.
 export async function POST(request, { params }) {
   try {
-    const wa = getUserSession();
+    const wa = await getUserSessionAsync();
     if (!wa) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const laju = rateLimit(`chat-lapor:${getClientIp(request)}`, { limit: 5, windowMs: 5 * 60_000 });

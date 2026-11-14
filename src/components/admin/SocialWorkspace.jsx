@@ -469,7 +469,7 @@ export default function SocialWorkspace() {
         <div>
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
-              <svg className="h-3.5 w-3.5 fill-current" viewBox="0 0 24 24">
+              <svg className="h-3.5 w-3.5 fill-current" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14H7l4-8 4 6-2-2-2 4z" />
               </svg>
               Social & Communication Management
@@ -489,9 +489,9 @@ export default function SocialWorkspace() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => handleOpenAddModal(activeTab === "whatsapp" ? "whatsapp_channel" : "instagram")}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-700 active:scale-[0.98]"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-indigo-700 active:translate-y-px"
           >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
             </svg>
             Hubungkan Kanal Baru
@@ -503,13 +503,13 @@ export default function SocialWorkspace() {
       <div className="flex overflow-x-auto border-b border-slate-200">
         <button
           onClick={() => setActiveTab("accounts")}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold whitespace-nowrap transition-all ${
+          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold whitespace-nowrap transition-colors ${
             activeTab === "accounts"
               ? "border-indigo-600 text-indigo-600"
               : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700"
           }`}
         >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
           </svg>
           Semua Akun Sosmed ({stats.total || 0})
@@ -517,7 +517,7 @@ export default function SocialWorkspace() {
 
         <button
           onClick={() => setActiveTab("whatsapp")}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold whitespace-nowrap transition-all ${
+          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold whitespace-nowrap transition-colors ${
             activeTab === "whatsapp"
               ? "border-emerald-600 text-emerald-600"
               : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700"
@@ -529,13 +529,13 @@ export default function SocialWorkspace() {
 
         <button
           onClick={() => setActiveTab("inbox")}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold whitespace-nowrap transition-all ${
+          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold whitespace-nowrap transition-colors ${
             activeTab === "inbox"
               ? "border-indigo-600 text-indigo-600"
               : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700"
           }`}
         >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
           Instagram DM Inbox & Routing
@@ -543,7 +543,7 @@ export default function SocialWorkspace() {
 
         <button
           onClick={() => setActiveTab("menfess-analytics")}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold whitespace-nowrap transition-all ${
+          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold whitespace-nowrap transition-colors ${
             activeTab === "menfess-analytics"
               ? "border-indigo-600 text-indigo-600"
               : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700"
@@ -555,13 +555,13 @@ export default function SocialWorkspace() {
 
         <button
           onClick={() => setActiveTab("queue")}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold whitespace-nowrap transition-all ${
+          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold whitespace-nowrap transition-colors ${
             activeTab === "queue"
               ? "border-indigo-600 text-indigo-600"
               : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700"
           }`}
         >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
           </svg>
           Central Distribution Manager (Omnichannel)
@@ -641,9 +641,9 @@ export default function SocialWorkspace() {
             <button
               type="button"
               onClick={() => setShowMetaGuideModal(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-indigo-500/10 border border-pink-200 px-3.5 py-2 text-xs font-extrabold text-pink-700 transition hover:bg-pink-100/50 shadow-xs"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-pink-50 border border-pink-200 px-3.5 py-2 text-xs font-bold text-pink-800 transition-colors hover:bg-pink-100 active:translate-y-px shadow-xs"
             >
-              <Icon.Instagram className="h-4 w-4 text-pink-600" />
+              <Icon.Instagram className="h-4 w-4 text-pink-600" aria-hidden="true" />
               Panduan Setup Meta Graph API
             </button>
           </div>
@@ -829,7 +829,7 @@ export default function SocialWorkspace() {
           {/* Explanation 3 Tier Card */}
           <div className="rounded-3xl border border-emerald-200/80 bg-emerald-50/40 p-6 backdrop-blur-sm">
             <h3 className="text-sm font-black text-emerald-950 flex items-center gap-2">
-              <svg className="h-4 w-4 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="h-4 w-4 text-emerald-600" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
               </svg>
               Standar Pemisahan Arsitektur 3 Tier WhatsApp
@@ -964,8 +964,8 @@ export default function SocialWorkspace() {
                         </div>
 
                         <div className="mt-3 rounded-xl bg-slate-50 p-3 text-xs">
-                          <p className="font-mono text-slate-600 break-all">
-                            JID: {acc.external_account_id || acc.handle}
+                          <p className="text-slate-600 break-all">
+                            JID: <span className="font-mono">{acc.external_account_id || acc.handle}</span>
                           </p>
                         </div>
                       </div>
@@ -1063,7 +1063,7 @@ export default function SocialWorkspace() {
                   >
                     <div className="flex items-start gap-3">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-pink-100 text-pink-700">
-                        <svg className="h-5 w-5 fill-current" viewBox="0 0 24 24">
+                        <svg className="h-5 w-5 fill-current" viewBox="0 0 24 24" aria-hidden="true">
                           <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
                         </svg>
                       </div>
@@ -1134,7 +1134,7 @@ export default function SocialWorkspace() {
                 disabled={processingScheduled}
                 className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 active:scale-95 disabled:opacity-50"
               >
-                <svg className={`h-3.5 w-3.5 ${processingScheduled ? "animate-spin" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className={`h-3.5 w-3.5 ${processingScheduled ? "motion-safe:animate-spin" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
                 <span>{processingScheduled ? "Memproses..." : "Eksekusi Antrean Terjadwal"}</span>
@@ -1226,17 +1226,17 @@ export default function SocialWorkspace() {
                       const getChannelBadge = (type) => {
                         switch (type) {
                           case "website":
-                            return <span className="rounded-lg bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-blue-700">🌐 Website</span>;
+                            return <span className="rounded-lg bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-blue-700">Website</span>;
                           case "instagram_university":
-                            return <span className="rounded-lg bg-pink-50 px-2 py-0.5 text-[11px] font-bold text-pink-700">📸 IG Kampus</span>;
+                            return <span className="rounded-lg bg-pink-50 px-2 py-0.5 text-[11px] font-bold text-pink-700">IG Kampus</span>;
                           case "instagram_province":
-                            return <span className="rounded-lg bg-purple-50 px-2 py-0.5 text-[11px] font-bold text-purple-700">📸 IG Provinsi</span>;
+                            return <span className="rounded-lg bg-purple-50 px-2 py-0.5 text-[11px] font-bold text-purple-700">IG Provinsi</span>;
                           case "whatsapp_channel_university":
-                            return <span className="rounded-lg bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700">📢 WA Chan Kampus</span>;
+                            return <span className="rounded-lg bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700">WA Chan Kampus</span>;
                           case "whatsapp_channel_province":
-                            return <span className="rounded-lg bg-teal-50 px-2 py-0.5 text-[11px] font-bold text-teal-700">📢 WA Chan Prov</span>;
+                            return <span className="rounded-lg bg-teal-50 px-2 py-0.5 text-[11px] font-bold text-teal-700">WA Chan Prov</span>;
                           case "whatsapp_group_community":
-                            return <span className="rounded-lg bg-green-50 px-2 py-0.5 text-[11px] font-bold text-green-700">👥 WA Group</span>;
+                            return <span className="rounded-lg bg-green-50 px-2 py-0.5 text-[11px] font-bold text-green-700">WA Group</span>;
                           default:
                             return <span className="rounded-lg bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-600">{type}</span>;
                         }
@@ -1247,9 +1247,9 @@ export default function SocialWorkspace() {
                           case "published":
                             return <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700">✓ Terbit</span>;
                           case "scheduled":
-                            return <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-700">🕒 Terjadwal</span>;
+                            return <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-700">Terjadwal</span>;
                           case "publishing":
-                            return <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-700 animate-pulse">⚙️ Menerbitkan</span>;
+                            return <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-700 motion-safe:animate-pulse">Menerbitkan</span>;
                           case "failed":
                             return <span className="rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-bold text-rose-700">✕ Gagal</span>;
                           default:
@@ -1280,7 +1280,7 @@ export default function SocialWorkspace() {
                               </p>
                               {job.last_error && (
                                 <p className="mt-1 text-[11px] font-medium text-rose-600">
-                                  ⚠️ {job.last_error} (Percobaan: {job.attempts}/{job.max_attempts})
+                                  <span className="font-bold text-rose-700">Error:</span> {job.last_error} (Percobaan: {job.attempts}/{job.max_attempts})
                                 </p>
                               )}
                               <p className="mt-0.5 text-[10px] text-slate-400">
@@ -1506,7 +1506,7 @@ export default function SocialWorkspace() {
                   >
                     {universitiesList.map((u) => (
                       <option key={u.id} value={u.id}>
-                        {u.code} — {u.name}
+                        {u.code}: {u.name}
                       </option>
                     ))}
                   </select>
@@ -1692,7 +1692,7 @@ export default function SocialWorkspace() {
                   Buka tombol <strong>Sunting</strong> pada kartu akun di bawah, lalu masukkan <strong>Instagram Business Account ID</strong> (angka 17 digit) ke kolom <em>Identifier / External ID</em>.
                 </p>
                 <p className="text-slate-500 text-[11px]">
-                  💡 <strong>Otomasi Multi-Kampus:</strong> Saat pesan DM masuk dari pengguna, router inbound sistem secara otomatis membaca akun tujuan dan mengaitkan listing ke universitas yang bersangkutan tanpa salah wilayah.
+                  <span className="font-bold text-amber-700">Otomasi Multi-Kampus:</span> Saat pesan DM masuk dari pengguna, router inbound sistem secara otomatis membaca akun tujuan dan mengaitkan listing ke universitas yang bersangkutan tanpa salah wilayah.
                 </p>
               </div>
             </div>

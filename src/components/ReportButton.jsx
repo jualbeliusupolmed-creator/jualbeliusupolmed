@@ -5,12 +5,12 @@ import { useState } from "react";
 import Link from "next/link";
 
 const REASONS = [
-  ["penipuan", "🚨 Penipuan / Scam"],
-  ["barang_terlarang", "🚫 Barang Terlarang (Vape/Rokok/Alkohol/Obat)"],
-  ["sengketa_cod", "⚖️ Sengketa COD / Barang Tidak Sesuai"],
-  ["blokir", "⛔ Blokir & Laporkan Pengguna Ini"],
-  ["spam", "🔁 Spam / Barang Duplikat"],
-  ["lainnya", "📝 Lainnya"],
+  ["penipuan", "Penipuan / Scam"],
+  ["barang_terlarang", "Barang Terlarang (Vape/Rokok/Alkohol/Obat)"],
+  ["sengketa_cod", "Sengketa COD / Barang Tidak Sesuai"],
+  ["blokir", "Blokir & Laporkan Pengguna Ini"],
+  ["spam", "Spam / Barang Duplikat"],
+  ["lainnya", "Lainnya"],
 ];
 
 // Tombol laporan untuk pembeli. Mengirim ke /api/report.
@@ -56,8 +56,9 @@ export default function ReportButton({ listing, className = "" }) {
     <div className={`text-center ${className}`}>
       {!open ? (
         <button
+          type="button"
           onClick={() => setOpen(true)}
-          className="text-xs text-gray-400 transition-colors hover:text-rose-600 hover:underline"
+          className="text-xs text-gray-400 transition-colors hover:text-rose-600 hover:underline active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600"
         >
           Laporkan barang atau minta mediasi
         </button>
@@ -91,26 +92,28 @@ export default function ReportButton({ listing, className = "" }) {
 
           {/* Jalur Mediasi Tertulis */}
           <div className="rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 p-2.5 text-[11px] text-amber-800 dark:text-amber-300 space-y-1">
-            <p className="font-bold">⚖️ Jalur Mediasi Resmi Komunitas</p>
+            <p className="font-bold">Jalur Mediasi Resmi Komunitas</p>
             <p className="leading-relaxed">
               Semua laporan ditindaklanjuti oleh tim moderator kampus dalam 1×24 jam. Jika terjadi perselisihan transaksi COD, tim kami siap memfasilitasi musyawarah.
             </p>
-            <Link href="/panduan-aman#mediasi" target="_blank" className="font-bold underline text-amber-900 dark:text-amber-200 block pt-0.5">
-              Baca Prosedur Mediasi &amp; Titik COD Aman →
+            <Link href="/panduan-aman#mediasi" target="_blank" className="font-bold underline text-amber-900 dark:text-amber-200 block pt-0.5 focus-visible:outline-2 focus-visible:outline-emerald-600">
+              Baca Prosedur Mediasi &amp; Titik COD Aman
             </Link>
           </div>
 
           <div className="flex gap-2">
             <button
+              type="button"
               onClick={submit}
               disabled={busy}
-              className="btn-primary flex-1 text-xs py-2 bg-rose-600 hover:bg-rose-700"
+              className="btn-primary flex-1 text-xs py-2 bg-rose-600 hover:bg-rose-700 active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
             >
               {busy ? "Mengirim Laporan…" : "Kirim Laporan"}
             </button>
             <button
+              type="button"
               onClick={() => setOpen(false)}
-              className="btn-outline text-xs py-2"
+              className="btn-outline text-xs py-2 active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600"
             >
               Batal
             </button>

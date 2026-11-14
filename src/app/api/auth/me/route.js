@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSellerSession, setSellerCookie } from "@/lib/auth";
+import { getSellerSessionAsync, setSellerCookie } from "@/lib/auth";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { findSellerProfileBySession } from "@/lib/seller-profile-identity";
 import { formatWa } from "@/lib/constants";
@@ -7,7 +7,7 @@ import { formatWa } from "@/lib/constants";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const wa = getSellerSession();
+  const wa = await getSellerSessionAsync();
   if (!wa) {
     return NextResponse.json({ loggedIn: false, wa: null, name: "" });
   }
@@ -20,9 +20,9 @@ export async function GET() {
 
     profile = data;
     name = profile?.name || profile?.store_name || "";
-    if (profile) setSellerCookie(formatWa(profile.phone_wa || profile.wa) || profile.wa);
+    if (profile) await setSellerCookie(formatWa(profile.phone_wa || profile.wa) || profile.wa);
   } catch (_) {}
-  if (!profile) setSellerCookie(wa);
+  if (!profile) await setSellerCookie(wa);
 
   return NextResponse.json({ loggedIn: true, wa: profile?.phone_wa || profile?.wa || wa, name, profile });
 }

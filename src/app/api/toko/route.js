@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { getSellerSession } from "@/lib/auth";
+import { getSellerSessionAsync } from "@/lib/auth";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { simpanProfil } from "@/lib/simpanProfil";
 import { statusToko, namaToko } from "@/lib/toko";
@@ -37,7 +37,7 @@ async function ambilProfil(supa, wa) {
 // endpoint yang menerima nomor dari peramban akan selalu menggoda seseorang
 // untuk mencoba nomor orang lain.
 export async function GET() {
-  const wa = getSellerSession();
+  const wa = await getSellerSessionAsync();
   if (!wa) return NextResponse.json({ error: "Belum masuk" }, { status: 401 });
 
   const supa = getAdminClient();
@@ -51,7 +51,7 @@ export async function GET() {
 
 // PUT /api/toko — simpan identitas toko.
 export async function PUT(req) {
-  const wa = getSellerSession();
+  const wa = await getSellerSessionAsync();
   if (!wa) return NextResponse.json({ error: "Belum masuk" }, { status: 401 });
 
   const rl = rateLimit(getClientIp(req), { limit: 20, windowMs: 300_000 });

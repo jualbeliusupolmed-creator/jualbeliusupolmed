@@ -37,6 +37,22 @@ Urutan verifikasi sebelum aktivasi:
 Angka nasional di dashboard harus dihitung dari sumber dan tanggal snapshot
 yang sama. Sebuah baris katalog nonaktif bukan kampus yang sudah beroperasi.
 
+### Kandidat impor resmi
+
+Portal Data Kemdiktisaintek mencantumkan dataset publikasi 2025, diterbitkan
+21 Juli 2026. Salinan XLSX yang diubah menjadi CSV untuk pratinjau admin ada di
+[`docs/data/katalog-pt-kandidat-2025.csv`](./data/katalog-pt-kandidat-2025.csv).
+File itu memuat 3.568 NPSN unik dari 34 nama provinsi. Gunakan sebagai bahan
+rekonsiliasi dan impor nonaktif; jangan anggap sebagai katalog nasional siap
+operasi karena dataset tahun 2025 tidak menyediakan pemetaan kampus cabang dan
+tidak mencakup seluruh provinsi baru di Papua. Sumber: [dataset resmi
+Kemdiktisaintek](https://data.kemdiktisaintek.go.id/dataset/data-jumlah-perguruan-tinggi-dan-status-akreditasi-pada-tahun-2025).
+
+Sebelum impor, cocokkan data baru dengan PDDikti terbaru, cek perubahan nama,
+status aktif, bentuk perguruan tinggi, provinsi dan kabupaten/kota, lalu
+masukkan kampus cabang sebagai unit pada perguruan tinggi induk. Pertahankan
+semua baris baru dalam keadaan nonaktif sampai ditinjau operator.
+
 ## 2. Setup Instagram terpisah untuk tiap akun
 
 Setiap kampus/provinsi memasukkan Instagram Professional Account ID dan token
@@ -49,6 +65,15 @@ semua environment yang akan menjalankan API/cron; jangan masukkan ke
 `NEXT_PUBLIC_*`, source, atau dokumen. Rotasi kunci harus didahului rencana
 dekripsi dan enkripsi ulang seluruh kredensial; mengganti kunci begitu saja
 akan membuat token lama tidak dapat dibaca.
+
+### Prasyarat enkripsi token produksi
+
+Pada audit environment Vercel Production 4 November 2026, nama
+`META_ACCOUNT_TOKEN_ENCRYPTION_KEY` belum terdaftar. Setup multi-akun Instagram
+tidak siap menyimpan token terenkripsi sampai pemilik menambahkan kunci 32 byte
+Base64 tersebut di secret manager Vercel untuk Production dan deployment baru
+siap. Jangan membuat kunci pengganti tanpa rencana rotasi yang dapat membaca
+kembali token lama.
 
 Alur menggunakan integrasi Graph API Facebook Login yang sudah ada di kode:
 akun harus Professional dan tertaut ke Facebook Page. Gunakan izin Meta yang
@@ -90,11 +115,12 @@ di atas.
 ## 4. Jadwal worker dan batas paket
 
 Pemicu omnichannel masih belum siap produksi. Pemeriksaan Supabase pada
-4 November 2026 tidak menemukan ekstensi `pg_cron`/`pg_net`, job
-`omnichannel-distribution-every-5m`, atau rahasia di Vault. Vercel menolak
+4 November 2026 menemukan bahwa ekstensi `pg_cron`/`pg_net` tersedia tetapi
+belum diaktifkan, belum ada job `omnichannel-distribution-every-5m`, dan Vault
+kosong. Nama environment `CRON_SECRET` tersedia di Vercel Production, tetapi
+nilainya tersembunyi dan belum bisa dipadankan dengan Vault. Vercel menolak
 deployment `83831f3` karena jadwal `*/10` melampaui batas Hobby; jadwal itu kini
-dihapus dari `vercel.json`. Deployment perbaikan dan aktivasi Supabase Cron
-belum diverifikasi.
+dihapus dari `vercel.json` dan perbaikannya telah dideploy.
 
 Pastikan `CRON_SECRET` tersedia pada runtime Vercel dan nilai yang sama berada
 di Supabase Vault dengan nama `omnichannel_cron_secret`. Setelah memasang

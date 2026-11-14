@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getSellerSession } from "@/lib/auth";
+import { getSellerSessionAsync } from "@/lib/auth";
 
 // Satu pintu "Profil" untuk navbar bawah (dan tautan mana pun yang butuh
 // "bawa saya ke akunku"): sesi diperiksa DI SERVER, lalu pengunjung diarahkan
@@ -21,6 +21,6 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function ProfilPage() {
-  redirect(getSellerSession() ? "/dashboard?tab=profil" : "/dashboard/login?next=/dashboard%3Ftab%3Dprofil");
+export default async function ProfilPage() {
+  redirect(await getSellerSessionAsync() ? "/dashboard?tab=profil" : "/dashboard/login?next=/dashboard%3Ftab%3Dprofil");
 }

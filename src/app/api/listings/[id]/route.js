@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { getSettings, soldFeeFrom } from "@/lib/settings";
-import { getSellerSession, isAdmin } from "@/lib/auth";
+import { getSellerSessionAsync, isAdmin } from "@/lib/auth";
 import { jawabGalat } from "@/lib/jawabGalat";
 import { sanitizeListingSpecs } from "@/lib/listingSpecs";
+import { loadMarketplaceRegion, loadUniversityProvince } from "@/lib/marketplaceRegion";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,7 @@ export async function GET(req, { params }) {
     // Endpoint ini hanya dipakai editor iklan. Data lengkap (termasuk nomor
     // penjual dan status internal) tidak boleh menjadi API publik hanya karena
     // ID iklan dapat ditemukan dari URL produk.
-    const sessionWa = getSellerSession();
+    const sessionWa = await getSellerSessionAsync();
     if (!isAdmin() && sessionWa !== data.seller_wa) {
       return NextResponse.json({ error: "Kamu tidak berhak melihat detail iklan ini." }, { status: 403 });
     }
@@ -41,12 +42,12 @@ export async function PATCH(req, { params }) {
     const supa = getAdminClient();
 
     // -- Auth check -----------------------------------------------------------
-    const sessionWa = getSellerSession();
+    const sessionWa = await getSellerSessionAsync();
     const isAd = isAdmin();
 
     const { data: currentListing, error: currentError } = await supa
       .from("listings")
-      .select("seller_wa, title, seller_name, price")
+      .select("seller_wa, title, seller_name, price, university_id, campus")
       .eq("id", id)
       .single();
 
@@ -62,6 +63,13 @@ export async function PATCH(req, { params }) {
 
     // ── Edit iklan ─────────────────────────────────────────────────────────
     if (body.action === "edit") {
+      let sellerRegion = null;
+      if (!isAd) {
+        sellerRegion = await loadMarketplaceRegion(supa, sessionWa);
+        if (!sellerRegion.province) {
+          return NextResponse.json({ error: "Pilih universitas acuan di profil sebelum mengubah iklan." }, { status: 409 });
+        }
+      }
       const updates = {};
       let titleChangedToDigital = false;
       let categoryChangedToDigital = false;
@@ -96,19 +104,36 @@ export async function PATCH(req, { params }) {
       if (body.stock !== undefined) updates.stock = Math.min(9999, Math.max(0, Number(body.stock) || 0));
       if (body.seller_name !== undefined) updates.seller_name = String(body.seller_name).trim();
       if (body.image_url !== undefined) updates.image_url = body.image_url || null;
-      if (body.campus !== undefined) {
-        updates.campus = body.campus;
-        if (body.campus && body.campus !== "Semua") {
-          const settings = await getSettings();
-          const targetUni = (settings?.campuses || []).find(
+      if (!isAd) {
+        if (!sellerRegion?.university?.id || !sellerRegion.university.code) {
+          return NextResponse.json({ error: "Kampus acuan akun belum lengkap. Lengkapi profil sebelum mengubah iklan." }, { status: 409 });
+        }
+        // Koreksi metadata target lama otomatis saat listing diedit. Penjual
+        // tidak dapat memindahkan jangkauan listing ke provinsi/kampus lain.
+        updates.university_id = sellerRegion.university.id;
+        updates.campus = sellerRegion.university.code;
+        updates.seller_university_id = sellerRegion.university.id;
+        updates.seller_province_id = sellerRegion.province;
+      } else if (body.campus !== undefined) {
+        const settings = await getSettings();
+        const activeCampuses = settings?.campuses || [];
+        const isGeneralCampus = !body.campus || String(body.campus).trim().toLowerCase() === "semua";
+        const anchorUniversityId = sellerRegion?.university?.id || currentListing.university_id;
+        const targetUni = isGeneralCampus
+          ? activeCampuses.find((campus) => campus.id === anchorUniversityId)
+          : activeCampuses.find(
             (c) => String(c.shortName || "").trim().toLowerCase() === String(body.campus).trim().toLowerCase() ||
                    String(c.id || "").trim().toLowerCase() === String(body.campus).trim().toLowerCase()
           );
-          if (targetUni?.id) {
-            updates.university_id = targetUni.id;
-            updates.campus = targetUni.shortName;
+        if (!isAd) {
+          const targetRegion = await loadUniversityProvince(supa, targetUni?.id);
+          if (!targetUni || targetRegion?.province_id !== sellerRegion.province) {
+            return NextResponse.json({ error: "Iklan hanya dapat dipindahkan ke kampus di provinsi acuanmu." }, { status: 403 });
           }
         }
+        if (!targetUni?.id) return NextResponse.json({ error: "Kampus iklan tidak valid." }, { status: 400 });
+        updates.university_id = targetUni.id;
+        updates.campus = targetUni.shortName;
       }
       if (body.area !== undefined) updates.area = String(body.area || "").trim();
       if (body.specs !== undefined) {
@@ -231,7 +256,7 @@ export async function DELETE(req, { params }) {
   try {
     const { id } = params;
     const supa = getAdminClient();
-    const sessionWa = getSellerSession();
+    const sessionWa = await getSellerSessionAsync();
 
     if (!sessionWa) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 

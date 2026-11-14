@@ -132,7 +132,7 @@ export async function POST(req) {
 
     // Set kuki sesi login langsung
     try {
-      setSellerCookie(formattedWa);
+      await setSellerCookie(formattedWa);
     } catch (e) {
       console.warn("Set cookie note:", e.message);
     }

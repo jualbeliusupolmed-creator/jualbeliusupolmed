@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
 import { formatWa } from "@/lib/constants";
-import { getSellerSession } from "@/lib/auth";
+import { getSellerSessionAsync } from "@/lib/auth";
 import { loadLidPhoneMap, migrateLidToPhone } from "@/lib/lidMigrate";
 import { jawabGalat } from "@/lib/jawabGalat";
 
@@ -71,7 +71,7 @@ export async function POST(req) {
     // — hanya saja tidak ada salinan WA untuk mereka: kontaknya tampil di layar
     // begitu struknya lolos. Nomor yang mereka ketik tetap dicatat sebagai
     // `requester_wa_diklaim`, untuk jejak, tidak pernah sebagai tujuan kirim.
-    const waSesi = getSellerSession();
+    const waSesi = await getSellerSessionAsync();
     const formattedRequesterWa = waSesi ? formatWa(waSesi) : null;
     const waDiklaim = !waSesi ? formatWa(requester_wa) || null : null;
 

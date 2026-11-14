@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { getUserSession } from "@/lib/auth";
+import { getUserSessionAsync } from "@/lib/auth";
 import { getClientIp, rateLimit } from "@/lib/rateLimit";
 import { hashIdentitas } from "@/lib/identitasHash";
 
 export const dynamic = "force-dynamic";
 
-function visitorKey(request, clientId) {
-  const wa = getUserSession();
+async function visitorKey(request, clientId) {
+  const wa = await getUserSessionAsync();
   if (wa) return hashIdentitas(`mading:${wa}`);
   return hashIdentitas(`mading:${getClientIp(request)}:${clientId}`);
 }
@@ -31,7 +31,7 @@ export async function POST(request, { params }) {
   let dataResult = null;
   const { data, error } = await getAdminClient().rpc("record_mading_engagement", {
     target_post_id: params.id,
-    target_visitor_hash: visitorKey(request, clientId),
+    target_visitor_hash: await visitorKey(request, clientId),
     event_type: action,
   });
 

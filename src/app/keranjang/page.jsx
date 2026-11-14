@@ -138,59 +138,59 @@ export default function KeranjangPage() {
   const inactiveItems = items.filter((item) => !isListingAvailable(item));
 
   return (
-    <main className="mx-auto min-h-[70vh] max-w-7xl px-4 pb-28 pt-6 md:px-6 md:pb-12">
+    <main className="mx-auto min-h-[70dvh] max-w-7xl px-4 pb-28 pt-6 md:px-6 md:pb-12">
       <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-[#1d1d1f] dark:text-white sm:text-3xl">Keranjang Saya</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-3xl">Keranjang Saya</h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Barang yang kamu simpan dan perkembangan pesanan Open PO.</p>
         </div>
-        <Link href="/open-po" className="inline-flex min-h-10 items-center gap-2 self-start rounded-full border border-emerald-200 bg-white px-4 text-xs font-extrabold text-emerald-800 hover:bg-emerald-50 dark:border-emerald-900 dark:bg-slate-900 dark:text-emerald-300">
-          <Icon.Coffee className="h-4 w-4" />
+        <Link href="/open-po" className="inline-flex min-h-10 items-center gap-2 self-start rounded-full border border-emerald-200 bg-white px-4 text-xs font-extrabold text-emerald-800 hover:bg-emerald-50 active:translate-y-px dark:border-emerald-900 dark:bg-slate-900 dark:text-emerald-300 focus-visible:outline-2 focus-visible:outline-emerald-600">
+          <Icon.Coffee className="h-4 w-4" aria-hidden="true" />
           Cari Open PO
         </Link>
       </header>
 
       <div className="mb-5 flex gap-2 overflow-x-auto" role="tablist" aria-label="Isi keranjang">
-        <button type="button" role="tab" aria-selected={tab === "items"} onClick={() => selectTab("items")} className={`inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full px-4 text-xs font-extrabold ${tab === "items" ? "bg-emerald-800 text-white" : "border border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"}`}>
-          <Icon.ShoppingCart className="h-4 w-4" />Barang disimpan ({items.length})
+        <button type="button" role="tab" aria-selected={tab === "items"} onClick={() => selectTab("items")} className={`inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full px-4 text-xs font-extrabold active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 ${tab === "items" ? "bg-emerald-800 text-white" : "border border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"}`}>
+          <Icon.ShoppingCart className="h-4 w-4" aria-hidden="true" />Barang disimpan ({items.length})
         </button>
-        <button type="button" role="tab" aria-selected={tab === "po"} onClick={() => selectTab("po")} className={`inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full px-4 text-xs font-extrabold ${tab === "po" ? "bg-emerald-800 text-white" : "border border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"}`}>
-          <Icon.Coffee className="h-4 w-4" />Pesanan Open PO
+        <button type="button" role="tab" aria-selected={tab === "po"} onClick={() => selectTab("po")} className={`inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full px-4 text-xs font-extrabold active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 ${tab === "po" ? "bg-emerald-800 text-white" : "border border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"}`}>
+          <Icon.Coffee className="h-4 w-4" aria-hidden="true" />Pesanan Open PO
         </button>
       </div>
 
       {tab === "items" ? (
         loadingItems && items.length === 0 ? (
-          <div className="flex justify-center py-24"><span className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-primary dark:border-slate-700" /></div>
+          <div className="flex justify-center py-24"><span className="h-8 w-8 motion-safe:animate-spin motion-reduce:opacity-75 rounded-full border-4 border-slate-200 border-t-emerald-700 dark:border-slate-700" /></div>
         ) : items.length === 0 ? (
-          <section className="flex min-h-[40vh] flex-col items-center justify-center rounded-3xl border border-black/[0.05] bg-white p-6 text-center shadow-xs dark:border-white/[0.06] dark:bg-slate-900">
-            <div className="mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-emerald-500/10 text-emerald-700"><Icon.ShoppingCart className="h-8 w-8" /></div>
-            <h2 className="text-lg font-bold text-[#1d1d1f] dark:text-white">Keranjangmu masih kosong</h2>
+          <section className="flex min-h-[40dvh] flex-col items-center justify-center rounded-3xl border border-black/[0.05] bg-white p-6 text-center shadow-xs dark:border-white/[0.06] dark:bg-slate-900">
+            <div className="mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-emerald-500/10 text-emerald-700"><Icon.ShoppingCart className="h-8 w-8" aria-hidden="true" /></div>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">Keranjangmu masih kosong</h2>
             <p className="mt-1 max-w-xs text-xs leading-relaxed text-slate-500 dark:text-slate-400">Tekan ikon keranjang pada barang untuk menyimpannya dan melihatnya lagi di sini.</p>
-            <Link href="/jual-beli" className="btn-primary mt-5 inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold shadow-md"><Icon.ShoppingBag className="h-4 w-4" />Jelajahi Marketplace</Link>
+            <Link href="/jual-beli" className="btn-primary mt-5 inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold shadow-md focus-visible:outline-2 focus-visible:outline-emerald-600"><Icon.ShoppingBag className="h-4 w-4" aria-hidden="true" />Jelajahi Marketplace</Link>
           </section>
         ) : (
           <div className="space-y-8">
-            {activeItems.length > 0 && <section><h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Masih tersedia ({activeItems.length})</h2><div className="grid grid-cols-2 gap-2.5 xs:gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">{activeItems.map((item) => <ProductCard key={item.id} listing={item} />)}</div></section>}
-            {inactiveItems.length > 0 && <section className="border-t border-slate-200 pt-6 dark:border-slate-800"><h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Terjual / tidak aktif ({inactiveItems.length})</h2><div className="grid grid-cols-2 gap-2.5 opacity-60 xs:gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">{inactiveItems.map((item) => <div key={item.id} className="relative"><ProductCard listing={item} /><button type="button" onClick={() => removeItem(item)} aria-label="Hapus dari keranjang" className="absolute right-2 top-2 z-20 rounded-full bg-black/75 px-2.5 py-1 text-[10px] font-bold text-white transition-colors hover:bg-rose-600">Hapus</button></div>)}</div></section>}
+            {activeItems.length > 0 && <section><h2 className="mb-3 text-xs font-semibold text-slate-500 dark:text-slate-400">Masih tersedia ({activeItems.length})</h2><div className="grid grid-cols-2 gap-2.5 xs:gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">{activeItems.map((item) => <ProductCard key={item.id} listing={item} />)}</div></section>}
+            {inactiveItems.length > 0 && <section className="border-t border-slate-200 pt-6 dark:border-slate-800"><h2 className="mb-3 text-xs font-semibold text-slate-500 dark:text-slate-400">Terjual atau tidak aktif ({inactiveItems.length})</h2><div className="grid grid-cols-2 gap-2.5 opacity-60 xs:gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">{inactiveItems.map((item) => <div key={item.id} className="relative"><ProductCard listing={item} /><button type="button" onClick={() => removeItem(item)} aria-label="Hapus dari keranjang" className="absolute right-2 top-2 z-20 rounded-full bg-black/75 px-2.5 py-1 text-[10px] font-bold text-white transition-colors hover:bg-rose-600 focus-visible:outline-2 focus-visible:outline-emerald-600">Hapus</button></div>)}</div></section>}
           </div>
         )
       ) : !siap ? (
-        <div className="flex justify-center py-20"><span className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-primary" /></div>
+        <div className="flex justify-center py-20"><span className="h-8 w-8 motion-safe:animate-spin motion-reduce:opacity-75 rounded-full border-4 border-slate-200 border-t-emerald-700" /></div>
       ) : !wa ? (
         <section className="rounded-3xl border border-slate-200 bg-white p-8 text-center dark:border-slate-800 dark:bg-slate-900">
-          <Icon.Coffee className="mx-auto h-10 w-10 text-emerald-700" />
+          <Icon.Coffee className="mx-auto h-10 w-10 text-emerald-700" aria-hidden="true" />
           <h2 className="mt-4 text-lg font-extrabold text-slate-900 dark:text-white">Masuk untuk melihat pesanan PO</h2>
           <p className="mt-1 text-sm text-slate-500">Pesanan tersimpan pada akun yang digunakan saat reservasi.</p>
-          <Link href={`/dashboard/login?next=${encodeURIComponent("/keranjang?tab=po")}`} className="mt-5 inline-flex min-h-10 items-center justify-center rounded-full bg-emerald-800 px-5 text-xs font-extrabold text-white">Masuk ke akun</Link>
+          <Link href={`/dashboard/login?next=${encodeURIComponent("/keranjang?tab=po")}`} className="mt-5 inline-flex min-h-10 items-center justify-center rounded-full bg-emerald-800 px-5 text-xs font-extrabold text-white focus-visible:outline-2 focus-visible:outline-emerald-600">Masuk ke akun</Link>
         </section>
       ) : (
         <section className="space-y-3">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div><h2 className="text-lg font-extrabold text-slate-900 dark:text-white">Progres pesanan Open PO</h2><p className="mt-1 text-xs text-slate-500">Status reservasi dari penjual akan muncul di sini.</p></div>
             <div className="flex items-center gap-4">
-              <button type="button" onClick={refreshOrders} disabled={loadingOrders} className="inline-flex min-h-9 items-center gap-1.5 text-xs font-bold text-emerald-800 disabled:opacity-50 dark:text-emerald-300"><RefreshCw className={`h-3.5 w-3.5 ${loadingOrders ? "animate-spin" : ""}`} />Perbarui</button>
-              <Link href="/dashboard?tab=open-po" className="text-xs font-bold text-emerald-800 underline dark:text-emerald-300">Buka dashboard PO</Link>
+              <button type="button" onClick={refreshOrders} disabled={loadingOrders} className="inline-flex min-h-9 items-center gap-1.5 text-xs font-bold text-emerald-800 disabled:opacity-50 dark:text-emerald-300 focus-visible:outline-2 focus-visible:outline-emerald-600"><RefreshCw className={`h-3.5 w-3.5 ${loadingOrders ? "motion-safe:animate-spin" : ""}`} aria-hidden="true" />Perbarui</button>
+              <Link href="/dashboard?tab=open-po" className="text-xs font-bold text-emerald-800 underline dark:text-emerald-300 focus-visible:outline-2 focus-visible:outline-emerald-600">Buka dashboard PO</Link>
             </div>
           </div>
           {ordersError ? <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800"><p>{ordersError}</p><button type="button" onClick={refreshOrders} className="mt-2 font-bold underline">Coba lagi</button></div> : null}

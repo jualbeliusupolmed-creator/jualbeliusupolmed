@@ -4,6 +4,6 @@ import { clearSellerCookie } from "@/lib/auth";
 export const dynamic = "force-dynamic";
 
 export async function POST() {
-  clearSellerCookie();
+  await clearSellerCookie();
   return NextResponse.json({ success: true });
 }

@@ -6,6 +6,8 @@ import { buildSlug } from "@/lib/slug";
 import { formatWaForBaileys, MARKETPLACE_WA } from "@/lib/constants";
 import { rupiah } from "@/lib/fees";
 import { jawabGalat } from "@/lib/jawabGalat";
+import { getSellerSessionAsync } from "@/lib/auth";
+import { loadListingSellerProvince, loadMarketplaceRegion } from "@/lib/marketplaceRegion";
 
 export const dynamic = "force-dynamic";
 
@@ -51,12 +53,22 @@ export async function POST(req) {
     const supa = getAdminClient();
     const { data: listing } = await supa
       .from("listings")
-      .select("id, title, listing_code, seller_wa, seller_name, price")
+      .select("id, title, listing_code, seller_wa, seller_name, price, university_id")
       .eq("id", listing_id)
       .single();
 
     if (!listing) {
       return NextResponse.json({ error: "Listing tidak ada" }, { status: 404 });
+    }
+
+    const sessionIdentity = await getSellerSessionAsync();
+    if (sessionIdentity) {
+      const buyerRegion = await loadMarketplaceRegion(supa, sessionIdentity);
+      if (!buyerRegion.province) return NextResponse.json({ error: "Pilih universitas acuan di profil sebelum menghubungi penjual." }, { status: 409 });
+      const sellerProvince = await loadListingSellerProvince(supa, listing);
+      if (!sellerProvince || sellerProvince !== buyerRegion.province) {
+        return NextResponse.json({ error: "Transaksi hanya dapat dilakukan dengan pengguna dari provinsi yang sama." }, { status: 403 });
+      }
     }
 
     // Catat ke log buyer_contacts

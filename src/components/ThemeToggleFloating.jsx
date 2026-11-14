@@ -43,22 +43,22 @@ export default function ThemeToggleFloating() {
         className={cn(
           "flex items-center gap-2 px-3 py-2 rounded-full",
           "border border-slate-200/90 dark:border-white/15",
-          "bg-white/95 dark:bg-[#18181b]/95 backdrop-blur-xl",
+          "bg-white dark:bg-slate-900",
           "text-slate-800 dark:text-white",
-          "shadow-[0_4px_16px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)]",
-          "hover:scale-105 active:scale-95 transition-all duration-200 group no-tap-highlight cursor-pointer"
+          "shadow-md",
+          "hover:bg-slate-50 dark:hover:bg-slate-800 active:translate-y-px transition-colors duration-150 group no-tap-highlight cursor-pointer focus-visible:outline-2 focus-visible:outline-emerald-600"
         )}
       >
         <div
           className={cn(
-            "w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:rotate-12",
+            "w-6 h-6 rounded-full flex items-center justify-center shrink-0 motion-safe:transition-transform duration-200 group-hover:rotate-12 motion-reduce:transition-none",
             dark ? "bg-violet-500/20 text-amber-300" : "bg-amber-500/15 text-amber-600"
           )}
         >
           {dark ? (
-            <Icon.Sun className="w-3.5 h-3.5" />
+            <Icon.Sun className="w-3.5 h-3.5" aria-hidden="true" />
           ) : (
-            <Icon.Moon className="w-3.5 h-3.5" />
+            <Icon.Moon className="w-3.5 h-3.5" aria-hidden="true" />
           )}
         </div>
         <span className="text-[11.5px] font-bold tracking-tight pr-1 select-none">

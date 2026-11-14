@@ -19,6 +19,7 @@ export default function CartButton({ listing, className = "", size = "md" }) {
     e.preventDefault();
     e.stopPropagation();
     const nextState = !inCart;
+    setInCart(nextState);
     if (nextState) {
       hapticSuccess();
     } else {

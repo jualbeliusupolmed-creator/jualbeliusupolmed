@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { getSellerSession } from "@/lib/auth";
+import { getSellerSessionAsync } from "@/lib/auth";
 import { statusToko } from "@/lib/toko";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
  * orang lain.
  */
 export async function GET() {
-  const wa = getSellerSession();
+  const wa = await getSellerSessionAsync();
   if (!wa) return NextResponse.json({ error: "Belum masuk" }, { status: 401 });
 
   const supa = getAdminClient();

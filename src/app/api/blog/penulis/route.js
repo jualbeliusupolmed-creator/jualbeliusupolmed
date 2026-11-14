@@ -1,7 +1,7 @@
 import { jawabGalat } from "@/lib/jawabGalat";
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { getSellerSession } from "@/lib/auth";
+import { getSellerSessionAsync } from "@/lib/auth";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { sendWa, nomorAdmin } from "@/lib/fonnte";
 import {
@@ -20,7 +20,7 @@ const KOLOM = "id, slug, title, excerpt, keywords, image_url, content_markdown, 
 
 /** Profil penulis yang sedang masuk, atau null. */
 async function penulisSekarang(supa) {
-  const wa = getSellerSession();
+  const wa = await getSellerSessionAsync();
   if (!wa) return null;
   const { data } = await supa
     .from("seller_profiles")

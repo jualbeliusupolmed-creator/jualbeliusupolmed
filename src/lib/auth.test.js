@@ -36,14 +36,14 @@ afterEach(() => {
 });
 
 describe("seller session cookie", () => {
-  it("accepts legacy cookies after SESSION_SECRET is configured and can migrate them", () => {
+  it("accepts legacy cookies after SESSION_SECRET is configured and can migrate them", async () => {
     process.env.SESSION_SECRET = "new-dedicated-session-secret";
     process.env.ADMIN_PASSWORD = "legacy-admin-password";
     cookieJar.value = tokenFor("seller-id", process.env.ADMIN_PASSWORD);
 
     expect(getSellerSession()).toBe("seller-id");
 
-    setSellerCookie("seller-id");
+    await setSellerCookie("seller-id");
     const [payload, signature] = cookieJar.value.split(".");
     const expectedSignature = crypto
       .createHmac("sha256", process.env.SESSION_SECRET)

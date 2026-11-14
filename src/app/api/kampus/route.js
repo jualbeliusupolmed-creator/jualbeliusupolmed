@@ -42,5 +42,12 @@ export async function GET() {
             { id: "jawa-timur", name: "Jawa Timur" },
           ]);
 
-  return NextResponse.json({ ok: true, campuses, provinces });
+  return NextResponse.json(
+    { ok: true, campuses, provinces },
+    {
+      headers: {
+        "Cache-Control": "public, s-maxage=120, stale-while-revalidate=600",
+      },
+    }
+  );
 }

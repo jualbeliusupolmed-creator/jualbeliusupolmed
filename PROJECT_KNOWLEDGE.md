@@ -1345,3 +1345,140 @@ deployment atau verifikasi layanan produksi.
   dan 11.61% lines. Angka ini mengungkap area belum teruji; belum dipasang
   threshold supaya tidak memberi kesan cakupan tinggi dari subset file yang
   kebetulan diimpor test.
+
+### 4 November 2026 — rekonsiliasi rollout nasional
+
+- Security Advisor Supabase produksi diperiksa ulang pada 4 November 2026:
+  masih ada 63 tabel RLS aktif tanpa policy (peringatan informasi), 7 RPC
+  Open PO lama `SECURITY DEFINER` yang dapat dipanggil `authenticated`, serta
+  perlindungan kata sandi bocor Auth yang nonaktif. Belum ada SQL atau perubahan
+  Auth yang diterapkan pada sesi audit ini. Grant SELECT langsung yang
+  teridentifikasi hanya mengenai tabel legacy `po_batches`, `po_products`,
+  `po_orders`, dan `instagram_dm_logs`; review dan migrasi pencabutan akses
+  harus mengikuti prosedur persetujuan produksi.
+- Audit agregat katalog/akun: 10 provinsi aktif, 14 universitas aktif pada 5
+  provinsi; 3 dari 20 akun Instagram serta 2 dari 20 WhatsApp Channel
+  berstatus terhubung. Status koneksi belum membuktikan publikasi sukses.
+- Profil penjual: 9 dari 334 memiliki `user_id`; sisa 325 perlu penautan oleh
+  pemilik lewat OTP WhatsApp dan tidak boleh di-backfill lewat tebakan identitas.
+- Dataset resmi Pusdatin/Kemdiktisaintek 2025 disimpan sebagai file kandidat
+  `docs/data/katalog-pt-kandidat-2025.csv` untuk pratinjau impor. Dataset
+  berisi 3.568 NPSN unik dari 34 nama provinsi; belum memetakan unit/kampus
+  cabang atau empat provinsi baru di Papua. Semua penambahan melalui importer
+  dibuat nonaktif dan harus direkonsiliasi sebelum aktivasi.
+- Importer katalog menerima header resmi `npsn,nama_pt,provinsi_pt` dan
+  menormalkan prefix `Prov.` serta nama DKI/DI/Bangka Belitung untuk mencegah
+  duplikasi wilayah. Tes fixture penuh katalog lulus (3.568 institusi, 34
+  provinsi); tes parser terkait 7/7 lulus dan lint lulus.
+- Pemicu omnichannel belum aktif: `CRON_SECRET` ada di Vercel Production
+  (nilainya tidak dapat dibaca), tetapi Vault belum memiliki
+  `omnichannel_cron_secret`; `pg_cron`/`pg_net` tersedia namun belum aktif dan
+  belum ada job terjadwal. Panduan setup di `docs/cron-setup.md` diperbarui;
+  sebelum penjadwalan, pemilik perlu menyetel nilai baru yang sama langsung di
+  secret manager Vercel dan Supabase Vault.
+- Environment Vercel Production belum mencantumkan
+  `META_ACCOUNT_TOKEN_ENCRYPTION_KEY`, sehingga koneksi multi-akun Instagram
+  belum siap menerima token terenkripsi. Jalur OAuth/admin tersedia, namun
+  perlu kunci server, akun resmi dengan izin Meta, lalu uji publikasi
+  nonpublik/terkendali.
+- Belum dilakukan uji produksi lintas admin provinsi/kampus atau pengiriman
+  publikasi nyata. Data produksi tidak diubah dan tidak ada pesan yang dikirim.
+
+### 4 November 2026 — FYP editorial tingkat provinsi
+
+- FYP kini memiliki workspace **Admin → Kurasi FYP provinsi** untuk superadmin
+  dan admin provinsi. Assignment provinsi diperiksa ulang di server pada setiap
+  baca/simpan; admin kampus dan owner biasa tidak dapat mengubah provinsi lain.
+- Kurator dapat memilih maksimal 12 listing aktif dari provinsinya dan
+  mengurutkannya. Pilihan disimpan pada baris `settings` per provinsi dan
+  perubahan dicatat dalam `admin_audit_events`; tidak perlu migrasi skema.
+- Saat pengguna memilih FYP provinsi, listing kurasi muncul lebih dulu,
+  kemudian feed wilayah lainnya. Item yang tidak lagi aktif otomatis diabaikan.
+  Aturan, lokasi menu, dan pemeliharaan dijelaskan dalam
+  `docs/kurasi-fyp-provinsi.md`.
+- Open PO kini memakai filter wilayah yang sama dan tidak lagi menampilkan
+  batch semua provinsi ketika tidak ada batch yang cocok. Item tanpa metadata
+  wilayah tidak dianggap nasional; hanya entri bertanda `Semua` yang boleh
+  tampil lintas wilayah.
+- Tes baru meliputi cakupan provinsi, isolasi admin, penanganan data wilayah
+  kosong, dan urutan editorial. Perubahan ini masih lokal dan belum
+  dideploy; uji produksi lintas akun masih perlu dilakukan.
+
+### 5 November 2026 — operasi dipusatkan di Sumatera Utara
+
+- Keputusan pemilik saat ini: operasi yang sudah disiapkan berfokus di
+  Sumatera Utara, sedangkan kesiapan ekspansi operasional nasional belum
+  dinyatakan. Superadmin nasional memiliki kendali bebas untuk menyiapkan
+  provinsi, admin, scope, katalog, dan kanal mana pun. Menyiapkan wilayah tidak
+  otomatis mengaktifkan operasi publik di wilayah tersebut. Pemilik
+  menyatakan admin Sumut sudah disiapkan.
+- Ditambahkan `docs/operasional-sumut.md` dan halaman panel **Panduan
+  operasional Sumut**. Keduanya menyatukan batas cakupan, daftar bukti owner
+  dan kanal, alur listing hingga konfirmasi hasil, ritme harian/mingguan,
+  metrik yang tersedia/belum tersedia, eskalasi, dan gerbang ekspansi.
+- Ringkasan admin kini menghormati scope yang dipilih superadmin. Scope
+  provinsi/universitas menghitung listing sesuai kampus aktif; cakupan kosong
+  menghasilkan nol dan tidak jatuh kembali ke statistik seluruh platform.
+  Mode “Semua Kampus” tetap menampilkan statistik global. Metrik laporan,
+  pendapatan, dan engagement sosial tidak ditampilkan pada ringkasan scope
+  sempit karena belum difilter di query yang sama.
+- Klik WhatsApp, percakapan yang berlanjut, transaksi selesai, dan pendapatan
+  belum tersedia sebagai corong analitik yang tervalidasi. Views, status
+  listing, dan hasil job distribusi tidak boleh dipakai sebagai pengganti
+  konversi atau GMV. Instrumentasi baru membutuhkan rancangan serta migrasi
+  terpisah.
+- Nama operator, owner, tujuan grup/channel, dan hasil uji nyata belum direkam
+  dalam register; detail penugasan perlu dicocokkan dengan workspace produksi
+  dan bukti kanal. Tidak ada data produksi, role, secret, atau skema database
+  yang diubah.
+
+### 5 November 2026 — wilayah marketplace mengikuti provinsi akun
+
+- Aturan lokal baru membatasi pengguna yang masuk berdasarkan provinsi
+  universitas acuannya; afiliasi mahasiswa yang terverifikasi mengalahkan
+  pilihan universitas mandiri. Tanpa acuan universitas/provinsi, pengguna tidak
+  dapat membuat listing, permintaan barang, atau batch Open PO.
+- Batas provinsi diterapkan pada feed/curation FYP, pencarian produk, halaman
+  produk, percakapan, kontak WhatsApp, dan penawaran. Produk terjual boleh
+  menjadi bukti sosial di FYP provinsinya, tetap diberi status terjual dan tidak
+  dapat dibeli.
+- Listing baru dari web, WhatsApp, dan Instagram menyimpan universitas serta
+  provinsi asal penjual. Target kampus lama tetap menjadi metadata kompatibilitas
+  dan tidak lagi menentukan akses antarprovinsi. Listing tanpa asal yang dapat
+  dipastikan tidak masuk ke feed provinsi.
+- Migrasi `20261106020141_listing_seller_origin_province.sql` menambah indeks dan
+  mengisi asal listing lama dari afiliasi profil penjual; metadata target listing
+  tidak dipakai sebagai tebakan. Migrasi sudah diterapkan ke Supabase produksi.
+  Validasi agregat setelah backfill menunjukkan seluruh 137 listing aktif/terjual
+  kini memiliki provinsi asal.
+- Perubahan ini belum dideploy dan belum diverifikasi dengan akun produksi lintas
+  provinsi. Barang dicari dan Open PO masih memiliki alur wilayah terpisah dan
+  tidak termasuk dalam perbaikan listing marketplace ini.
+- Pembacaan dan penulisan sesi marketplace mengikuti API cookie async Next.js
+  15 pada jalur autentikasi, supaya penguncian server memakai sesi nyata.
+
+### 6 November 2026 — asal penjual menjadi batas visibilitas listing
+
+- Audit menemukan akar kebocoran: filter lama membaca `listings.campus` dan
+  `university_id` yang pernah dipakai sebagai tujuan listing, serta satu filter
+  klien menganggap nilai `Semua` cocok dengan setiap kampus.
+- Feed, pencarian, FYP termasuk barang terjual, halaman produk, jasa, etalase
+  penjual/toko, chat, WhatsApp, dan penawaran kini memakai afiliasi asal
+  penjual. Form barang dan jasa tidak meminta target kampus. Jalur posting web,
+  WhatsApp, dan Instagram menetapkan provinsi dari profil server.
+- Migrasi asal penjual `20261106020141_listing_seller_origin_province.sql` sudah
+  diterapkan. Migrasi itu juga melonggarkan batas lama `listings.campus` yang
+  hanya menerima USU/POLMED/Semua agar kode universitas seluruh provinsi dapat
+  disimpan sebagai label asal. Seluruh 137 listing aktif/terjual kini memiliki
+  provinsi asal dari profil penjual.
+- Verifikasi lokal: 368 tes lulus dan lint lulus. Build Vercel produksi
+  `dpl_AEyzQgTbaoF7uzqhFLnZE3F9nsGL` berstatus READY pada 6 November 2026 dan
+  memasang alias `www.kampuskita.my.id`. Beranda dan `/jual-beli` merespons HTTP
+  200; `/progres` menampilkan ringkasan publik yang tidak membaca brief internal.
+- Rilis berasal dari snapshot terisolasi berisi perubahan marketplace terpilih;
+  bot, migrasi lokal, dan perubahan workspace lain tidak ikut. Deployment ini
+  tidak membuat commit/push Git; perubahan lokal tetap perlu direview dan
+  disinkronkan dengan `main` sebelum rilis berikutnya.
+- Belum ada uji produksi dengan akun Sumut dan Jakarta. Open PO dan barang dicari
+  masih mengikuti alur wilayah tersendiri; halaman SEO/akses anonim juga tetap
+  publik.

@@ -15,7 +15,6 @@ import {
   MapPin,
   ChevronRight,
   Layers,
-  Sparkles,
   Check,
   FileText,
   Filter,
@@ -162,8 +161,8 @@ export default function NationalAnalyticsWorkspace({ superadmin = false }) {
             </span>
             <span className="text-xs font-semibold text-slate-400">v2.0 Social Commerce</span>
           </div>
-          <h2 className="mt-1 text-2xl font-black text-slate-900 tracking-tight">
-            Dashboard Analitik Nasional JualBeliDiKampus
+          <h2 className="mt-1 text-2xl font-black text-slate-900 tracking-tight break-words min-w-0">
+            Dashboard Analitik Nasional Jual Beli Di Kampus
           </h2>
           <p className="mt-0.5 text-xs text-slate-500 font-medium">
             Pusat kendali metrik pertumbuhan sosial commerce kampus, konversi omnichannel, dan rollout multi-provinsi.
@@ -252,7 +251,7 @@ export default function NationalAnalyticsWorkspace({ superadmin = false }) {
         <div className="col-span-2 lg:col-span-1 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between text-slate-500">
             <span className="text-xs font-bold">Kesiapan Rollout</span>
-            <Sparkles className="h-4 w-4 text-purple-600" />
+            <CheckCircle2 className="h-4 w-4 text-purple-600" aria-hidden="true" />
           </div>
           <p className="mt-2 text-2xl font-black text-purple-700">
             {summary.nationalRolloutReadiness || 0}%
@@ -348,8 +347,8 @@ export default function NationalAnalyticsWorkspace({ superadmin = false }) {
                   {/* Progress Bar */}
                   <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-200">
                     <div
-                      className="h-full rounded-full bg-emerald-600 transition-all duration-500"
-                      style={{ width: `${ch.successRate}%` }}
+                      className="h-full w-full rounded-full bg-emerald-600 origin-left transition-transform duration-500 motion-reduce:transition-none"
+                      style={{ transform: `scaleX(${Math.min(1, Math.max(0, (ch.successRate || 0) / 100))})` }}
                     />
                   </div>
 
@@ -425,7 +424,7 @@ export default function NationalAnalyticsWorkspace({ superadmin = false }) {
               <div className="mt-5 overflow-x-auto">
                 <table className="w-full text-left text-xs">
                   <thead>
-                    <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider">
+                    <tr className="border-b border-slate-200 text-slate-500 font-semibold">
                       <th className="py-3 px-4">Provinsi</th>
                       <th className="py-3 px-4">Status</th>
                       <th className="py-3 px-4 text-center">Kampus</th>
@@ -553,7 +552,7 @@ export default function NationalAnalyticsWorkspace({ superadmin = false }) {
                   <div>
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-bold text-slate-800">{acc.handle}</p>
-                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 uppercase">
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
                         {acc.provider}
                       </span>
                     </div>
@@ -598,7 +597,7 @@ export default function NationalAnalyticsWorkspace({ superadmin = false }) {
               </div>
 
               <div className="flex items-center gap-2 self-start sm:self-auto bg-purple-50 px-3.5 py-1.5 rounded-xl border border-purple-200">
-                <Sparkles className="h-4 w-4 text-purple-700" />
+                <CheckCircle2 className="h-4 w-4 text-purple-700" aria-hidden="true" />
                 <span className="text-xs font-bold text-purple-900">
                   Kesiapan Nasional: {summary.nationalRolloutReadiness || 0}%
                 </span>
@@ -640,7 +639,7 @@ export default function NationalAnalyticsWorkspace({ superadmin = false }) {
                             {stage.provinces?.name || stage.province_id}
                           </h4>
                           <span
-                            className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                               isFullyLaunched
                                 ? "bg-emerald-100 text-emerald-800"
                                 : isPilotActive
@@ -678,14 +677,14 @@ export default function NationalAnalyticsWorkspace({ superadmin = false }) {
                           </div>
                           <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
                             <div
-                              className={`h-full rounded-full transition-all duration-300 ${
+                              className={`h-full w-full rounded-full origin-left transition-transform duration-300 motion-reduce:transition-none ${
                                 readinessPct === 100
                                   ? "bg-emerald-600"
                                   : readinessPct >= 50
                                   ? "bg-indigo-600"
                                   : "bg-amber-500"
                               }`}
-                              style={{ width: `${readinessPct}%` }}
+                              style={{ transform: `scaleX(${Math.min(1, Math.max(0, readinessPct / 100))})` }}
                             />
                           </div>
                         </div>

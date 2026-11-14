@@ -2,16 +2,16 @@
 
 import { useEffect, useState } from "react";
 
-function StarIcon({ filled, half }) {
+function StarIcon({ filled }) {
   if (filled) {
     return (
-      <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-amber-400">
+      <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-amber-400">
         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
       </svg>
     );
   }
   return (
-    <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-gray-200">
+    <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-slate-200 dark:text-slate-700">
       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
     </svg>
   );
@@ -95,7 +95,7 @@ export default function RatingWidget({ listing, className = "" }) {
 
   return (
     <div className={`card p-4 ${className}`}>
-      <h3 className="font-semibold text-gray-800">⭐ Rating Penjual</h3>
+      <h3 className="font-semibold text-slate-800 dark:text-white">Rating Penjual</h3>
 
       {/* Sudah ada rating */}
       {existing ? (
@@ -105,23 +105,23 @@ export default function RatingWidget({ listing, className = "" }) {
             <span className="text-sm font-bold text-amber-500">{existing.rating}/5</span>
           </div>
           {existing.buyer_name && (
-            <p className="mt-1 text-xs text-gray-400">oleh {existing.buyer_name}</p>
+            <p className="mt-1 text-xs text-slate-400">oleh {existing.buyer_name}</p>
           )}
           {existing.comment && (
-            <p className="mt-2 text-sm text-gray-600 italic">
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 italic">
               &ldquo;{existing.comment}&rdquo;
             </p>
           )}
           {success && (
-            <p className="mt-2 text-xs text-green-600 font-medium">
-               Rating berhasil disimpan!
+            <p className="mt-2 text-xs text-emerald-600 font-medium">
+              Rating berhasil disimpan!
             </p>
           )}
         </div>
       ) : (
         /* Form rating baru */
         <div className="mt-3 space-y-3">
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             Barang ini sudah terjual. Bagaimana pengalaman kamu?
           </p>
 
@@ -134,16 +134,17 @@ export default function RatingWidget({ listing, className = "" }) {
                 onClick={() => setSelected(s)}
                 onMouseEnter={() => setHovered(s)}
                 onMouseLeave={() => setHovered(0)}
-                className="transition-transform hover:scale-110 focus:outline-none"
+                className="transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
                 aria-label={`${s} bintang`}
               >
                 <svg
+                  aria-hidden="true"
                   viewBox="0 0 20 20"
                   fill="currentColor"
                   className={`w-7 h-7 transition-colors ${
                     s <= (hovered || selected)
                       ? "text-amber-400"
-                      : "text-gray-200"
+                      : "text-slate-200 dark:text-slate-700"
                   }`}
                 >
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -177,7 +178,7 @@ export default function RatingWidget({ listing, className = "" }) {
             type="button"
             onClick={submit}
             disabled={busy || !selected}
-            className="btn-primary w-full"
+            className="btn-primary w-full transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
           >
             {busy ? "Menyimpan…" : "Kirim Rating"}
           </button>

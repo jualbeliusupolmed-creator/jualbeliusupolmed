@@ -66,37 +66,41 @@ export default function MediaUploader({
             <button
               type="button"
               onClick={() => remove(i)}
-              className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-black/60 text-xs text-white"
+              className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-black/60 text-xs text-white hover:bg-black/80 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600"
               aria-label="Hapus foto"
             >
               <svg aria-hidden="true" viewBox="0 0 24 24" className="inline-block h-[1em] w-[1em] shrink-0 align-[-0.125em] fill-none stroke-current" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
-            <div className="absolute inset-x-0 bottom-0 flex justify-between bg-black/30 px-1 opacity-0 transition group-hover:opacity-100">
+            <div className="absolute inset-x-0 bottom-0 flex justify-between bg-black/40 px-1.5 py-0.5 opacity-0 transition-opacity group-hover:opacity-100">
               <button
                 type="button"
                 onClick={() => move(i, -1)}
                 disabled={i === 0}
-                className="text-white disabled:opacity-30"
-                aria-label="Geser kiri"
+                className="text-white disabled:opacity-30 p-0.5 hover:text-emerald-300 transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600"
+                aria-label="Geser ke kiri"
               >
-                ‹
+                <svg aria-hidden="true" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M15 18l-6-6 6-6" />
+                </svg>
               </button>
               <button
                 type="button"
                 onClick={() => move(i, 1)}
                 disabled={i === media.length - 1}
-                className="text-white disabled:opacity-30"
-                aria-label="Geser kanan"
+                className="text-white disabled:opacity-30 p-0.5 hover:text-emerald-300 transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600"
+                aria-label="Geser ke kanan"
               >
-                ›
+                <svg aria-hidden="true" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 18l6-6-6-6" />
+                </svg>
               </button>
             </div>
           </div>
         ))}
 
         {media.length < max && (
-          <label className="grid aspect-square cursor-pointer place-items-center rounded-xl border-2 border-dashed border-gray-300 text-center hover:border-primary">
-            <span className="text-xs text-gray-400"> Tambah</span>
+          <label className="grid aspect-square cursor-pointer place-items-center rounded-xl border-2 border-dashed border-gray-300 text-center hover:border-emerald-600 transition-colors focus-within:ring-2 focus-within:ring-emerald-600 focus-within:ring-offset-2">
+            <span className="text-xs text-gray-500 font-semibold">+ Tambah</span>
             <input
               type="file"
               accept="image/*"
@@ -108,8 +112,8 @@ export default function MediaUploader({
         )}
       </div>
       {error && <p className="mt-2 text-xs text-rose-600">{error}</p>}
-      <p className="mt-1.5 text-xs text-gray-400">
-        Hingga {max} foto · foto pertama jadi sampul · otomatis dikecilkan ke WebP
+      <p className="mt-1.5 text-xs text-gray-500">
+        Maksimal {max} foto (foto pertama jadi sampul). Otomatis dioptimalkan ke format WebP.
       </p>
     </div>
   );

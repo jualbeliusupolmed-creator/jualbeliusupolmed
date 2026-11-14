@@ -175,11 +175,11 @@ export default async function BlogPost({ params }) {
       <div className="rounded-2xl bg-primary/10 p-6 text-center dark:bg-primary/5">
         <h3 className="mb-2 text-xl font-bold dark:text-white">Mau Jual atau Cari Barang?</h3>
         <p className="mb-4 text-gray-600 dark:text-slate-300">
-          Banyak mahasiswa dari berbagai kampus sudah jual & beli di sini — giliran kamu?
+          Banyak mahasiswa dari berbagai kampus sudah jual & beli di sini, sekarang giliran kamu!
         </p>
         <div className="flex justify-center gap-3">
-          <Link href="/" className="btn-primary inline-flex px-6">Mulai Belanja</Link>
-          <Link href="/jual" className="btn-outline inline-flex px-6">Pasang Iklan</Link>
+          <Link href="/" className="btn-primary inline-flex px-6 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600">Mulai Belanja</Link>
+          <Link href="/jual" className="btn-outline inline-flex px-6 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600">Pasang Iklan</Link>
         </div>
       </div>
     </article>

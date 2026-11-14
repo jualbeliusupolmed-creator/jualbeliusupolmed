@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabaseAdmin";
-import { getUserSession } from "@/lib/auth";
+import { getUserSessionAsync } from "@/lib/auth";
 import { censorProfanity } from "@/lib/profanity";
 import { hashIdentitas } from "@/lib/identitasHash";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
@@ -38,7 +38,7 @@ export async function GET(req, { params }) {
 // POST /api/mading/[id]/reply — Tambah reply anonim ke menfess
 export async function POST(req, { params }) {
   try {
-    const wa = getUserSession();
+    const wa = await getUserSessionAsync();
     if (!wa) {
       return NextResponse.json({ error: "Silakan login untuk membalas menfess." }, { status: 401 });
     }

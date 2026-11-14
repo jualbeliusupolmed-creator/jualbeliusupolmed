@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import Image from "next/image";
 import useEmblaCarousel from "embla-carousel-react";
 import { hapticLight } from "@/lib/haptics";
 import { Icon } from "@/components/Icons";
@@ -53,16 +54,19 @@ export default function ProductGallery({ images = [], title }) {
   if (imgs.length === 1) {
     return (
       <div className="relative overflow-hidden bg-black/[0.03] dark:bg-black/40 sm:rounded-[24px] aspect-square">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
           src={imgs[0]}
           alt={title}
-          className="h-full w-full object-cover transition-all duration-500 hover:scale-105 cursor-zoom-in"
+          fill
+          priority
+          unoptimized
+          sizes="(max-width: 1024px) 100vw, 550px"
+          className="h-full w-full object-cover transition-transform duration-300 hover:scale-105 cursor-zoom-in"
           data-zoom
           data-zoom-alt={title}
         />
         <span className="pointer-events-none absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white opacity-60 backdrop-blur-sm transition-opacity group-hover:opacity-100">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4" aria-hidden="true">
             <circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35M11 8v6M8 11h6"/>
           </svg>
         </span>
@@ -77,17 +81,20 @@ export default function ProductGallery({ images = [], title }) {
         <div className="flex h-full touch-pan-y">
           {imgs.map((src, i) => (
             <div className="relative min-w-0 flex-[0_0_100%] h-full" key={i}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={src}
                 alt={imgs.length > 1 ? `${title} — foto ${i + 1} dari ${imgs.length}` : title}
-                className="h-full w-full object-cover transition-all duration-500 hover:scale-105 cursor-zoom-in"
+                fill
+                unoptimized
+                priority={i === 0}
+                sizes="(max-width: 1024px) 100vw, 550px"
+                className="h-full w-full object-cover transition-transform duration-300 hover:scale-105 cursor-zoom-in"
                 data-zoom
                 data-zoom-alt={imgs.length > 1 ? `${title} — foto ${i + 1} dari ${imgs.length}` : title}
               />
               {/* Hint ikon zoom di sudut — hilang saat foto di-hover */}
               <span className="pointer-events-none absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white opacity-60 backdrop-blur-sm transition-opacity group-hover:opacity-100">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4" aria-hidden="true">
                   <circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35M11 8v6M8 11h6"/>
                 </svg>
               </span>
@@ -98,19 +105,19 @@ export default function ProductGallery({ images = [], title }) {
           <>
             <button
               onClick={handlePrev}
-              className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 text-gray-800 opacity-0 shadow-md transition-all hover:bg-white hover:scale-105 group-hover:opacity-100 dark:bg-slate-900/80 dark:text-white dark:hover:bg-slate-900"
+              className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 text-gray-800 opacity-0 shadow-md transition-colors duration-150 hover:bg-white group-hover:opacity-100 dark:bg-slate-900/80 dark:text-white dark:hover:bg-slate-900"
               aria-label="Previous image"
             >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <button
               onClick={handleNext}
-              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 text-gray-800 opacity-0 shadow-md transition-all hover:bg-white hover:scale-105 group-hover:opacity-100 dark:bg-slate-900/80 dark:text-white dark:hover:bg-slate-900"
+              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 text-gray-800 opacity-0 shadow-md transition-colors duration-150 hover:bg-white group-hover:opacity-100 dark:bg-slate-900/80 dark:text-white dark:hover:bg-slate-900"
               aria-label="Next image"
             >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </button>
@@ -123,7 +130,7 @@ export default function ProductGallery({ images = [], title }) {
             {imgs.map((_, i) => (
               <span
                 key={i}
-                className={`h-1.5 w-1.5 rounded-full transition-all duration-300 ${
+                className={`h-1.5 w-1.5 rounded-full transition-colors duration-300 ${
                   i === active ? "w-3 bg-white" : "bg-white/50"
                 }`}
               />
@@ -140,14 +147,13 @@ export default function ProductGallery({ images = [], title }) {
               key={i}
               onClick={() => scrollTo(i)}
               aria-label={`Lihat foto ${i + 1}`}
-              className={`h-16 w-16 shrink-0 overflow-hidden rounded-[14px] border-[2.5px] transition-all no-tap-highlight ${
+              className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-[14px] border-[2.5px] transition-transform duration-150 no-tap-highlight ${
                 i === active
-                  ? "border-[#1d1d1f] dark:border-white scale-[0.96]"
+                  ? "border-slate-900 dark:border-white scale-[0.96]"
                   : "border-transparent opacity-60 hover:opacity-100"
               }`}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt="" className="h-full w-full object-cover" />
+              <Image src={src} alt="" fill unoptimized sizes="64px" loading="lazy" className="object-cover" />
             </button>
           ))}
         </div>

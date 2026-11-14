@@ -20,22 +20,17 @@ vi.mock("@/lib/supabaseAdmin", () => ({
         };
       }
       if (table === "seller_profiles") {
+        const profile = {
+          name: "Budi Santoso",
+          wa: "081234567890",
+          user_id: "auth-user-uuid-1234",
+          home_university_id: "usu",
+          subscription_tier: "free",
+        };
         return {
           select: vi.fn(() => ({
-            eq: vi.fn(() => ({
-              maybeSingle: vi.fn(() =>
-                Promise.resolve({
-                  data: {
-                    name: "Budi Santoso",
-                    wa: "081234567890",
-                    user_id: "auth-user-uuid-1234",
-                    home_university_id: "ui",
-                    subscription_tier: "free",
-                  },
-                  error: null,
-                })
-              ),
-            })),
+            eq: vi.fn(() => ({ maybeSingle: vi.fn(() => Promise.resolve({ data: profile, error: null })) })),
+            or: vi.fn(() => ({ maybeSingle: vi.fn(() => Promise.resolve({ data: profile, error: null })) })),
           })),
         };
       }
@@ -96,17 +91,17 @@ vi.mock("@/lib/supabaseAdmin", () => ({
         };
       }
       if (table === "universities") {
+        const universities = [
+          { id: "usu", code: "USU", name: "Universitas Sumatera Utara", province_id: "sumatera-utara", status: "active" },
+          { id: "ui", code: "UI", name: "Universitas Indonesia", province_id: "dki-jakarta", status: "active" },
+          { id: "unj", code: "UNJ", name: "Universitas Negeri Jakarta", province_id: "dki-jakarta", status: "active" },
+          { id: "itb", code: "ITB", name: "Institut Teknologi Bandung", province_id: "jawa-barat", status: "active" },
+        ];
         return {
           select: vi.fn(() => ({
-            eq: vi.fn(() =>
-              Promise.resolve({
-                data: [
-                  { id: "ui", code: "UI" },
-                  { id: "unj", code: "UNJ" },
-                ],
-                error: null,
-              })
-            ),
+            eq: vi.fn((column, value) => column === "id"
+              ? { maybeSingle: vi.fn(() => Promise.resolve({ data: universities.find((item) => item.id === value) || null, error: null })) }
+              : { eq: vi.fn(() => ({ limit: vi.fn(() => Promise.resolve({ data: universities.filter((item) => item.province_id === value), error: null })) })) }),
           })),
         };
       }
@@ -136,7 +131,7 @@ describe("Fase 3 & 4: Penyelarasan Transaksi & Katalog Produk Nasional", () => {
     vi.clearAllMocks();
     mockInsertedListings.length = 0;
     mockInsertedWanted.length = 0;
-    vi.spyOn(authLib, "getSellerSession").mockReturnValue("081234567890");
+    vi.spyOn(authLib, "getSellerSessionAsync").mockResolvedValue("081234567890");
     vi.spyOn(settingsLib, "getSettings").mockResolvedValue({
       pricing: { freeMode: true, adFee: 0, listingDays: 14 },
       campuses: [
@@ -147,17 +142,17 @@ describe("Fase 3 & 4: Penyelarasan Transaksi & Katalog Produk Nasional", () => {
     });
   });
 
-  it("menetapkan university_id dan user_id secara otomatis saat membuat listing di kampus nasional (UI)", async () => {
+  it("menetapkan university_id dan user_id saat membuat listing di kampus sendiri", async () => {
     const payload = {
       seller_name: "Budi Santoso",
       seller_wa: "081234567890",
-      title: "MacBook Air M2 2023 Mulus Kampus UI",
-      description: "Laptop kuliah, COD di sekitar Perpustakaan UI Depok",
+      title: "Laptop kuliah kampus USU",
+      description: "Laptop kuliah, COD di sekitar kampus USU",
       price: "12000000",
       stock: 1,
       category: "Elektronik",
       type: "barang",
-      campus: "UI",
+      campus: "USU",
     };
 
     const req = new Request("https://test.com/api/listings", {
@@ -172,13 +167,40 @@ describe("Fase 3 & 4: Penyelarasan Transaksi & Katalog Produk Nasional", () => {
     // Verifikasi payload yang masuk ke database
     expect(mockInsertedListings.length).toBe(1);
     const inserted = mockInsertedListings[0];
-    expect(inserted.campus).toBe("UI");
-    expect(inserted.university_id).toBe("ui");
+    expect(inserted.campus).toBe("USU");
+    expect(inserted.university_id).toBe("usu");
     expect(inserted.user_id).toBe("auth-user-uuid-1234");
     expect(inserted.seller_name).toBe("Budi Santoso");
   });
 
-  it("mempertahankan pilihan lintas kampus dan tidak mewarisi home_university_id", async () => {
+  it("mengabaikan kampus tujuan dari klien dan menetapkan provinsi asal penjual", async () => {
+    const req = new Request("https://test.com/api/listings", {
+      method: "POST",
+      body: JSON.stringify({
+        seller_name: "Budi Santoso",
+        seller_wa: "081234567890",
+        title: "Barang di luar provinsi",
+        description: "Tidak boleh dipasang lintas provinsi",
+        price: "250000",
+        stock: 1,
+        category: "Elektronik",
+        type: "barang",
+        campus: "UI",
+      }),
+    });
+
+    const res = await listingsPost(req);
+    expect(res.status).toBe(200);
+    expect(mockInsertedListings).toHaveLength(1);
+    expect(mockInsertedListings[0]).toMatchObject({
+      campus: "USU",
+      university_id: "usu",
+      seller_university_id: "usu",
+      seller_province_id: "sumatera-utara",
+    });
+  });
+
+  it("mengubah pilihan Semua menjadi kampus acuan lokal", async () => {
     const payload = {
       seller_name: "Budi Santoso",
       seller_wa: "081234567890",
@@ -201,12 +223,12 @@ describe("Fase 3 & 4: Penyelarasan Transaksi & Katalog Produk Nasional", () => {
 
     expect(mockInsertedListings.length).toBe(1);
     const inserted = mockInsertedListings[0];
-    expect(inserted.campus).toBe("Semua");
-    expect(inserted.university_id).toBeNull();
+    expect(inserted.campus).toBe("USU");
+    expect(inserted.university_id).toBe("usu");
     expect(inserted.user_id).toBe("auth-user-uuid-1234");
   });
 
-  it("mempertahankan pilihan lintas kampus pada postingan barang dicari", async () => {
+  it("mengubah pilihan Semua barang dicari menjadi kampus acuan lokal", async () => {
     const payload = {
       buyer_name: "Budi Santoso",
       buyer_wa: "081234567890",
@@ -226,11 +248,11 @@ describe("Fase 3 & 4: Penyelarasan Transaksi & Katalog Produk Nasional", () => {
     const res = await wantedPost(req);
     expect(res.status).toBe(200);
     expect(mockInsertedWanted).toHaveLength(1);
-    expect(mockInsertedWanted[0].campus).toBe("Semua");
-    expect(mockInsertedWanted[0].university_id).toBeNull();
+    expect(mockInsertedWanted[0].campus).toBe("USU");
+    expect(mockInsertedWanted[0].university_id).toBe("usu");
   });
 
-  it("menetapkan university_id dan user_id pada postingan barang dicari (WTB/Wanted)", async () => {
+  it("menolak barang dicari di kampus luar provinsi akun", async () => {
     const payload = {
       buyer_name: "Budi Santoso",
       buyer_wa: "081234567890",
@@ -248,13 +270,7 @@ describe("Fase 3 & 4: Penyelarasan Transaksi & Katalog Produk Nasional", () => {
     });
 
     const res = await wantedPost(req);
-    expect(res.status).toBe(200);
-
-    expect(mockInsertedWanted.length).toBe(1);
-    const inserted = mockInsertedWanted[0];
-    expect(inserted.campus).toBe("ITB");
-    expect(inserted.university_id).toBe("itb");
-    expect(inserted.user_id).toBe("auth-user-uuid-1234");
-    expect(inserted.buyer_name).toBe("Budi Santoso");
+    expect(res.status).toBe(403);
+    expect(mockInsertedWanted).toHaveLength(0);
   });
 });

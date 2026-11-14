@@ -1,25 +1,31 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Icon } from "@/components/Icons";
-import OTPModal from "@/components/OTPModal";
 import { useSesi } from "@/components/SesiProvider";
-import NotificationCenter from "@/components/NotificationCenter";
-import QuickSearchSheet from "@/components/QuickSearchSheet";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getCartItems } from "@/lib/cart";
+import { fetchCampusesCached } from "@/lib/cachedKampus";
+
+// Dynamic imports untuk memangkas bundle navigasi desktop & mobile
+const OTPModal = dynamic(() => import("@/components/OTPModal"), { ssr: false });
+const NotificationCenter = dynamic(() => import("@/components/NotificationCenter"), { ssr: false });
+const QuickSearchSheet = dynamic(() => import("@/components/QuickSearchSheet"), { ssr: false });
 
 export default function Navbar({ config }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { wa: sesiWa, nama: sesiNama, siap, segarkan, keluar } = useSesi();
+  const { wa: sesiWa, nama: sesiNama, siap, segarkan, keluar, profil } = useSesi();
   const session = { wa: sesiWa, name: sesiNama || sesiWa };
   
   const [selectedCampus, setSelectedCampus] = useState("Semua");
   const [campuses, setCampuses] = useState([]);
+  const [profileCampus, setProfileCampus] = useState("");
+  const [profileProvince, setProfileProvince] = useState("");
   const [campusDropdownOpen, setCampusDropdownOpen] = useState(false);
   const [unreadChat, setUnreadChat] = useState(0);
   const [cartCount, setCartCount] = useState(0);
@@ -42,8 +48,7 @@ export default function Navbar({ config }) {
   }, []);
 
   useEffect(() => {
-    fetch("/api/kampus", { cache: "no-store" })
-      .then((res) => res.ok ? res.json() : null)
+    fetchCampusesCached()
       .then((data) => {
         if (Array.isArray(data?.campuses)) {
           setCampuses(data.campuses);
@@ -71,6 +76,7 @@ export default function Navbar({ config }) {
 
     const onCampusSync = (e) => {
       if (e.detail?.campus) setSelectedCampus(e.detail.campus);
+      if (e.detail?.province) setProfileProvince(e.detail.province);
     };
     window.addEventListener("campus:change", onCampusSync);
 
@@ -93,6 +99,124 @@ export default function Navbar({ config }) {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  useEffect(() => {
+    if (profil) {
+      const camp = profil.campus || profil.marketplace_campus;
+      if (camp) {
+        setProfileCampus(camp);
+        setSelectedCampus(camp);
+        try { localStorage.setItem("preferred_campus", camp); } catch {}
+      }
+      const prov = profil.marketplace_province_id || profil.fyp_province_id;
+      if (prov) {
+        setProfileProvince(prov);
+        try { localStorage.setItem("preferred_province", prov); } catch {}
+      }
+    }
+  }, [profil]);
+
+  useEffect(() => {
+    if (!sesiWa) {
+      try {
+        const savedCamp = localStorage.getItem("preferred_campus");
+        const savedProv = localStorage.getItem("preferred_province");
+        if (savedCamp) {
+          setProfileCampus(savedCamp);
+          setSelectedCampus(savedCamp);
+        }
+        if (savedProv) setProfileProvince(savedProv);
+      } catch {}
+      return;
+    }
+
+    fetch("/api/profil", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.ok && data.profil) {
+          const camp = data.profil.campus || data.profil.marketplace_campus;
+          if (camp) {
+            setProfileCampus(camp);
+            setSelectedCampus(camp);
+            try { localStorage.setItem("preferred_campus", camp); } catch {}
+          }
+          const prov = data.profil.marketplace_province_id || data.profil.fyp_province_id;
+          if (prov) {
+            setProfileProvince(prov);
+            try { localStorage.setItem("preferred_province", prov); } catch {}
+          }
+        }
+      })
+      .catch(() => {});
+  }, [sesiWa]);
+
+  const activeProvince =
+    profileProvince ||
+    (profileCampus &&
+      campuses.find((c) => {
+        const p = profileCampus.toLowerCase().trim();
+        return (
+          c.shortName?.toLowerCase() === p ||
+          c.id?.toLowerCase() === p ||
+          c.name?.toLowerCase() === p ||
+          p.includes(c.shortName?.toLowerCase()) ||
+          (c.name && p.includes(c.name.toLowerCase()))
+        );
+      })?.provinceId) ||
+    (selectedCampus &&
+      selectedCampus !== "Semua" &&
+      campuses.find((c) => {
+        const s = selectedCampus.toLowerCase().trim();
+        return (
+          c.shortName?.toLowerCase() === s ||
+          c.id?.toLowerCase() === s ||
+          c.name?.toLowerCase() === s
+        );
+      })?.provinceId) ||
+    (typeof window !== "undefined" ? localStorage.getItem("preferred_province") : null) ||
+    "sumatera-utara";
+
+  // Hanya universitas dari kampus yang di-set di profil
+  const displayCampuses = useMemo(() => {
+    const targetCampus = profileCampus || (selectedCampus !== "Semua" ? selectedCampus : "");
+    if (targetCampus) {
+      const target = targetCampus.toLowerCase().trim();
+      const matched = campuses.filter((c) => {
+        const shortLower = c.shortName?.toLowerCase() || "";
+        const idLower = c.id?.toLowerCase() || "";
+        const nameLower = c.name?.toLowerCase() || "";
+        return (
+          shortLower === target ||
+          idLower === target ||
+          nameLower === target ||
+          target.includes(shortLower) ||
+          (nameLower && target.includes(nameLower))
+        );
+      });
+      if (matched.length > 0) return matched;
+    }
+    const scoped = campuses.filter((c) => {
+      const cProv = c.provinceId || c.province_id || "sumatera-utara";
+      return cProv === activeProvince;
+    });
+    return scoped.length > 0 ? scoped : campuses.filter((c) => (c.provinceId || c.province_id || "") === "sumatera-utara");
+  }, [profileCampus, selectedCampus, campuses, activeProvince]);
+
+  const sortedCampuses = [...displayCampuses].sort((a, b) => {
+    const aIsPrimary = primaryCampus && a.shortName?.toLowerCase() === primaryCampus.toLowerCase();
+    const bIsPrimary = primaryCampus && b.shortName?.toLowerCase() === primaryCampus.toLowerCase();
+    if (aIsPrimary && !bIsPrimary) return -1;
+    if (!aIsPrimary && bIsPrimary) return 1;
+    return (a.name || "").localeCompare(b.name || "");
+  });
+
+  const campusOptions = [
+    ...sortedCampuses.map((camp) => ({
+      key: camp.shortName,
+      label: `${camp.name} (${camp.shortName})`,
+    })),
+    { key: "Semua", label: "Semua Kampus" },
+  ];
 
   const changeCampus = (camp) => {
     setSelectedCampus(camp);
@@ -121,15 +245,15 @@ export default function Navbar({ config }) {
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-white/80 dark:bg-[#0f172a]/90 backdrop-blur-md border-b border-slate-200/70 dark:border-white/[0.08] shadow-xs">
+    <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200/70 dark:border-white/[0.08] shadow-xs">
       {/* ── DESKTOP NAVBAR (Tinggi 64px — max-w-[1440px]) ── */}
       <div className="hidden lg:block max-w-[1440px] mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16 gap-3">
           {/* Brand Identity (Kiri) */}
           <div className="flex items-center gap-3 shrink-0">
-            <Link href="/" className="flex items-center gap-3 group">
+            <Link href="/" className="flex items-center gap-3 group focus-visible:outline-2 focus-visible:outline-emerald-600">
               <div className="w-9 h-9 rounded-xl bg-emerald-800 text-white flex items-center justify-center shadow-xs group-hover:bg-emerald-900 transition-colors">
-                <svg className="w-5 h-5 text-emerald-300 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-emerald-300 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" strokeLinecap="round" strokeLinejoin="round" />
                   <path d="M9 22V12h6v10" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
@@ -145,14 +269,15 @@ export default function Navbar({ config }) {
             {/* Beranda */}
             <Link
               href="/"
+              prefetch={true}
               className={cn(
-                "flex items-center gap-2 px-3.5 py-1.5 text-xs rounded-full transition-colors shrink-0",
+                "flex items-center gap-2 px-3.5 py-1.5 text-xs rounded-full transition-colors shrink-0 focus-visible:outline-2 focus-visible:outline-emerald-600",
                 pathname === "/"
                   ? "font-bold text-emerald-900 dark:text-emerald-300 bg-white dark:bg-slate-700 shadow-xs"
                   : "font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60"
               )}
             >
-              <svg className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
               </svg>
               <span>Beranda</span>
@@ -161,14 +286,15 @@ export default function Navbar({ config }) {
             {/* Marketplace */}
             <Link
               href="/jual-beli"
+              prefetch={true}
               className={cn(
-                "flex items-center gap-2 px-3 py-1.5 text-xs rounded-full transition-colors shrink-0",
+                "flex items-center gap-2 px-3 py-1.5 text-xs rounded-full transition-colors shrink-0 focus-visible:outline-2 focus-visible:outline-emerald-600",
                 pathname?.startsWith("/jual-beli") || pathname?.startsWith("/produk/")
                   ? "font-bold text-emerald-900 dark:text-emerald-300 bg-white dark:bg-slate-700 shadow-xs"
                   : "font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60"
               )}
             >
-              <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
               </svg>
               <span>Marketplace</span>
@@ -177,14 +303,15 @@ export default function Navbar({ config }) {
             {/* Open PO */}
             <Link
               href="/open-po"
+              prefetch={true}
               className={cn(
-                "flex items-center gap-2 px-3 py-1.5 text-xs rounded-full transition-colors shrink-0",
+                "flex items-center gap-2 px-3 py-1.5 text-xs rounded-full transition-colors shrink-0 focus-visible:outline-2 focus-visible:outline-emerald-600",
                 pathname?.startsWith("/open-po")
                   ? "font-bold text-emerald-900 dark:text-emerald-300 bg-white dark:bg-slate-700 shadow-xs"
                   : "font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60"
               )}
             >
-              <svg className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
               </svg>
               <span>Open PO</span>
@@ -196,14 +323,15 @@ export default function Navbar({ config }) {
             {/* Menfess */}
             <Link
               href="/mading"
+              prefetch={true}
               className={cn(
-                "flex items-center gap-2 px-3 py-1.5 text-xs rounded-full transition-colors shrink-0",
+                "flex items-center gap-2 px-3 py-1.5 text-xs rounded-full transition-colors shrink-0 focus-visible:outline-2 focus-visible:outline-emerald-600",
                 pathname?.startsWith("/mading")
                   ? "font-bold text-emerald-900 dark:text-emerald-300 bg-white dark:bg-slate-700 shadow-xs"
                   : "font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60"
               )}
             >
-              <svg className="w-3.5 h-3.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
               </svg>
               <span>Menfess</span>
@@ -212,14 +340,15 @@ export default function Navbar({ config }) {
             {/* Obrolan */}
             <Link
               href="/chat"
+              prefetch={true}
               className={cn(
-                "flex items-center gap-2 px-3 py-1.5 text-xs rounded-full transition-colors shrink-0 relative",
+                "flex items-center gap-2 px-3 py-1.5 text-xs rounded-full transition-colors shrink-0 relative focus-visible:outline-2 focus-visible:outline-emerald-600",
                 pathname?.startsWith("/chat")
                   ? "font-bold text-emerald-900 dark:text-emerald-300 bg-white dark:bg-slate-700 shadow-xs"
                   : "font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60"
               )}
             >
-              <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
               </svg>
               <span>Obrolan</span>
@@ -238,33 +367,33 @@ export default function Navbar({ config }) {
               <button
                 type="button"
                 onClick={() => setCampusDropdownOpen(!campusDropdownOpen)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/60 rounded-full transition-colors border border-slate-200 dark:border-white/10 shadow-xs whitespace-nowrap"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/60 rounded-full transition-colors border border-slate-200 dark:border-white/10 shadow-xs whitespace-nowrap focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
               >
                 <span className="w-2 h-2 rounded-full bg-emerald-600" />
                 <span>
                   Kampus: <strong className="font-bold text-slate-900 dark:text-white">{selectedCampus}</strong>
                 </span>
-                <svg className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 motion-safe:transition-transform motion-reduce:transition-none group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
                 </svg>
               </button>
 
               {campusDropdownOpen && (
-                <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200/80 dark:border-white/10 py-1.5 z-50">
-                  {[...campuses.map((camp) => ({ key: camp.shortName, label: `${camp.name} (${camp.shortName})` })), { key: "Semua", label: "Semua Kampus" }].map((camp) => (
+                <div className="absolute right-0 mt-1 w-52 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200/80 dark:border-white/10 py-1.5 z-50">
+                  {campusOptions.map((camp) => (
                     <button
                       key={camp.key}
                       type="button"
                       onClick={() => changeCampus(camp.key)}
                       className={cn(
-                        "w-full flex items-center justify-between px-3.5 py-2 text-xs transition-colors text-left",
+                        "w-full flex items-center justify-between px-3.5 py-2 text-xs transition-colors active:translate-y-px text-left",
                         selectedCampus === camp.key
                           ? "font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50/80 dark:bg-emerald-950/40"
                           : "font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50"
                       )}
                     >
-                      <span>{camp.label}</span>
-                      {selectedCampus === camp.key && <span>✓</span>}
+                      <span className="truncate pr-2">{camp.label}</span>
+                      {selectedCampus === camp.key && <span className="shrink-0 text-emerald-600 dark:text-emerald-400 font-bold">✓</span>}
                     </button>
                   ))}
                 </div>
@@ -310,10 +439,10 @@ export default function Navbar({ config }) {
               <button
                 type="button"
                 onClick={() => setShowOtp(true)}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 whitespace-nowrap text-slate-700 dark:text-slate-200 cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 whitespace-nowrap text-slate-700 dark:text-slate-200 cursor-pointer focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
               >
                 <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 shrink-0 border border-slate-200/80 dark:border-white/10">
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
                   </svg>
                 </div>
@@ -326,9 +455,9 @@ export default function Navbar({ config }) {
             {/* Primary Action Button: + Jual Barang */}
             <Link
               href="/jual"
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-800 hover:bg-emerald-900 text-white font-semibold text-xs rounded-full shadow-xs hover:shadow transition duration-150 shrink-0 whitespace-nowrap"
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-800 hover:bg-emerald-900 text-white font-semibold text-xs rounded-full shadow-xs hover:shadow transition duration-150 shrink-0 whitespace-nowrap focus-visible:outline-2 focus-visible:outline-emerald-600"
             >
-              <svg className="w-3.5 h-3.5 text-emerald-300 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5 text-emerald-300 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M12 4v16m8-8H4" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               <span>+ Jual Barang</span>
@@ -346,11 +475,11 @@ export default function Navbar({ config }) {
               type="button"
               onClick={() => router.back()}
               aria-label="Kembali"
-              className="w-9 h-9 rounded-full flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-90 transition-all shrink-0"
+              className="w-9 h-9 rounded-full flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 active:translate-y-px transition-colors shrink-0 focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
             >
-              <Icon.ArrowLeft className="w-5 h-5" />
+              <Icon.ArrowLeft className="w-5 h-5" aria-hidden="true" />
             </button>
-            <h1 className="text-sm font-bold text-[#0F172A] dark:text-white truncate flex-1 text-center">
+            <h1 className="text-sm font-bold text-slate-900 dark:text-white truncate flex-1 text-center">
               {getSubPageTitle()}
             </h1>
             <div className="flex items-center gap-1 shrink-0">
@@ -358,24 +487,24 @@ export default function Navbar({ config }) {
                 type="button"
                 onClick={() => setCariTerbuka(true)}
                 aria-label="Cari"
-                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
               >
-                <Icon.Search className="w-4 h-4" />
+                <Icon.Search className="w-4 h-4" aria-hidden="true" />
               </button>
               <Link
                 href="/keranjang"
                 aria-label={`Keranjang${cartCount ? `, ${cartCount} barang` : ""}`}
-                className="relative w-8 h-8 rounded-full flex items-center justify-center text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/40 transition-colors"
+                className="relative w-8 h-8 rounded-full flex items-center justify-center text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/40 active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600"
               >
-                <Icon.ShoppingCart className="w-4 h-4" />
-                {cartCount > 0 && <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[9px] font-extrabold leading-none text-white shadow-sm">{cartCount > 99 ? "99+" : cartCount}</span>}
+                <Icon.ShoppingCart className="w-4 h-4" aria-hidden="true" />
+                {cartCount > 0 && <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[9px] font-extrabold leading-none text-white shadow-xs">{cartCount > 99 ? "99+" : cartCount}</span>}
               </Link>
               <Link
                 href="/jual"
                 aria-label="Jual Barang"
-                className="w-8 h-8 rounded-full bg-[#047857] text-white flex items-center justify-center shadow-xs active:scale-90 transition-all"
+                className="w-8 h-8 rounded-full bg-emerald-700 text-white flex items-center justify-center shadow-xs active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600"
               >
-                <Icon.Plus className="w-4 h-4 stroke-[2.5]" />
+                <Icon.Plus className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />
               </Link>
             </div>
           </>
@@ -383,11 +512,11 @@ export default function Navbar({ config }) {
           /* Root Pages: Brand + campus selector + actions */
           <>
             <div className="flex items-center gap-2 min-w-0">
-              <Link href="/" aria-label="Kampus Kita - Beranda" className="w-8 h-8 rounded-xl bg-[#047857] text-white flex items-center justify-center shrink-0 shadow-xs">
-                <Icon.GraduationCap className="w-4.5 h-4.5 text-emerald-200" />
+              <Link href="/" aria-label="Kampus Kita - Beranda" className="w-8 h-8 rounded-xl bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-xs focus-visible:outline-2 focus-visible:outline-emerald-600">
+                <Icon.GraduationCap className="w-4.5 h-4.5 text-emerald-200" aria-hidden="true" />
               </Link>
               <div className="flex min-w-0 items-center gap-1.5">
-                <span className="flex flex-col text-sm font-extrabold leading-[0.95] tracking-tight text-[#0F172A] dark:text-white">
+                <span className="flex flex-col text-sm font-extrabold leading-[0.95] tracking-tight text-slate-900 dark:text-white">
                   <span>Kampus</span>
                   <span>Kita</span>
                 </span>
@@ -397,26 +526,29 @@ export default function Navbar({ config }) {
                     onClick={() => setCampusDropdownOpen(!campusDropdownOpen)}
                     aria-label={`Pilih kampus, saat ini ${selectedCampus === "Semua" ? "Semua kampus" : selectedCampus}`}
                     aria-expanded={campusDropdownOpen}
-                    className="inline-flex items-center gap-1 rounded-full border border-emerald-600/20 bg-[#ECFDF5] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#047857] dark:bg-emerald-950/80 dark:text-emerald-300"
+                    className="inline-flex items-center gap-1 rounded-full border border-emerald-600/20 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300 active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
                   >
-                    {selectedCampus === "Semua" ? "Semua" : selectedCampus} ▾
+                    <span>{selectedCampus === "Semua" ? "Semua" : selectedCampus}</span>
+                    <svg className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" />
+                    </svg>
                   </button>
                   {campusDropdownOpen && (
-                    <div className="absolute left-0 top-full z-[60] mt-1 w-48 rounded-2xl border border-slate-200/80 bg-white py-1.5 shadow-xl dark:border-white/10 dark:bg-slate-800">
-                      {[...campuses.map((camp) => ({ key: camp.shortName, label: `${camp.name} (${camp.shortName})` })), { key: "Semua", label: "Semua Kampus" }].map((camp) => (
+                    <div className="absolute left-0 top-full z-[60] mt-1 w-52 rounded-2xl border border-slate-200/80 bg-white py-1.5 shadow-xl dark:border-white/10 dark:bg-slate-800">
+                      {campusOptions.map((camp) => (
                         <button
                           key={camp.key}
                           type="button"
                           onClick={() => changeCampus(camp.key)}
                           className={cn(
-                            "flex w-full items-center justify-between px-3.5 py-2 text-left text-xs transition-colors",
+                            "flex w-full items-center justify-between px-3.5 py-2 text-left text-xs transition-colors active:translate-y-px",
                             selectedCampus === camp.key
                               ? "bg-emerald-50/80 font-bold text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
                               : "font-semibold text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700/50"
                           )}
                         >
-                          <span>{camp.label}</span>
-                          {selectedCampus === camp.key && <span>✓</span>}
+                          <span className="truncate pr-2">{camp.label}</span>
+                          {selectedCampus === camp.key && <span className="shrink-0 text-emerald-600 dark:text-emerald-400 font-bold">✓</span>}
                         </button>
                       ))}
                     </div>
@@ -430,33 +562,33 @@ export default function Navbar({ config }) {
                 type="button"
                 onClick={() => setCariTerbuka(true)}
                 aria-label="Cari"
-                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-95"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
               >
-                <Icon.Search className="w-4 h-4" />
+                <Icon.Search className="w-4 h-4" aria-hidden="true" />
               </button>
               <Link
                 href="/keranjang"
                 aria-label={`Keranjang${cartCount ? `, ${cartCount} barang` : ""}`}
-                className="relative w-8 h-8 rounded-full flex items-center justify-center text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/40 transition-colors active:scale-95"
+                className="relative w-8 h-8 rounded-full flex items-center justify-center text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/40 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600"
               >
-                <Icon.ShoppingCart className="w-4 h-4" />
-                {cartCount > 0 && <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[9px] font-extrabold leading-none text-white shadow-sm">{cartCount > 99 ? "99+" : cartCount}</span>}
+                <Icon.ShoppingCart className="w-4 h-4" aria-hidden="true" />
+                {cartCount > 0 && <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[9px] font-extrabold leading-none text-white shadow-xs">{cartCount > 99 ? "99+" : cartCount}</span>}
               </Link>
               <Link
                 href="/chat"
                 aria-label="Pesan & Obrolan"
-                className="relative w-8 h-8 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-95"
+                className="relative w-8 h-8 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600"
               >
-                <Icon.MessageCircle className="w-4 h-4" />
+                <Icon.MessageCircle className="w-4 h-4" aria-hidden="true" />
                 {unreadChat > 0 && Boolean(session?.wa) && (
-                  <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#047857] ring-2 ring-white dark:ring-[#0f172a]" />
+                  <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-600 ring-2 ring-white dark:ring-slate-900" />
                 )}
               </Link>
               {siap && session.wa ? (
                 <Link
                   href="/dashboard"
                   aria-label="Dashboard Akun"
-                  className="w-7 h-7 rounded-full bg-[#047857] text-white flex items-center justify-center text-xs font-bold shadow-xs active:scale-95"
+                  className="w-7 h-7 rounded-full bg-emerald-700 text-white flex items-center justify-center text-xs font-bold shadow-xs active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600"
                 >
                   {session.name ? session.name[0].toUpperCase() : "U"}
                 </Link>
@@ -465,9 +597,9 @@ export default function Navbar({ config }) {
                   type="button"
                   onClick={() => setShowOtp(true)}
                   aria-label="Masuk Akun"
-                  className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-[#E2E8F0] dark:border-white/[0.08] flex items-center justify-center active:scale-95"
+                  className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 flex items-center justify-center active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50"
                 >
-                  <Icon.User className="w-3.5 h-3.5" />
+                  <Icon.User className="w-3.5 h-3.5" aria-hidden="true" />
                 </button>
               )}
             </div>

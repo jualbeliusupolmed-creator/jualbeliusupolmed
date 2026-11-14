@@ -35,7 +35,7 @@ export async function POST(req) {
     if (!listing)
       return NextResponse.json({ error: "Listing tidak ada" }, { status: 404 });
 
-    const tolak = tolakBukanPemilik(listing.seller_wa, { aksi: "menyorot iklan" });
+    const tolak = await tolakBukanPemilik(listing.seller_wa, { aksi: "menyorot iklan" });
     if (tolak) return tolak;
 
     const orderId = `FEATURED-${listing_id.slice(0, 8)}-${Date.now()}`;

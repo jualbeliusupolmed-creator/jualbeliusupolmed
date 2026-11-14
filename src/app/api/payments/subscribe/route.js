@@ -19,7 +19,7 @@ export async function POST(req) {
     const { seller_wa } = await req.json();
     if (!seller_wa) return NextResponse.json({ error: "seller_wa wajib" }, { status: 400 });
 
-    const tolak = tolakBukanPemilik(seller_wa, { aksi: "berlangganan" });
+    const tolak = await tolakBukanPemilik(seller_wa, { aksi: "berlangganan" });
     if (tolak) return tolak;
 
     const supa = getAdminClient();

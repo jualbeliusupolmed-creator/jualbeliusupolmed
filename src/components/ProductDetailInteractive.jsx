@@ -82,39 +82,39 @@ export default function ProductDetailInteractive({
             <button
               type="button"
               onClick={() => setActiveTab("specs")}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors active:translate-y-px shrink-0 flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50 whitespace-nowrap ${
                 activeTab === "specs"
-                  ? "bg-[#047857] text-white shadow-xs"
+                  ? "bg-emerald-700 text-white shadow-xs"
                   : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200"
               }`}
             >
-              <Icon.Cpu className="w-4 h-4" />
+              <Icon.Cpu className="w-4 h-4" aria-hidden="true" />
               <span>Data Teknis &amp; Spesifikasi</span>
             </button>
 
             <button
               type="button"
               onClick={() => setActiveTab("usage")}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors active:translate-y-px shrink-0 flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50 whitespace-nowrap ${
                 activeTab === "usage"
-                  ? "bg-[#047857] text-white shadow-xs"
+                  ? "bg-emerald-700 text-white shadow-xs"
                   : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200"
               }`}
             >
-              <Icon.FileText className="w-4 h-4" />
+              <Icon.FileText className="w-4 h-4" aria-hidden="true" />
               <span>Catatan Pemakaian</span>
             </button>
 
             <button
               type="button"
               onClick={() => setActiveTab("diagnostic")}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-colors active:translate-y-px shrink-0 flex items-center gap-1.5 focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50 whitespace-nowrap ${
                 activeTab === "diagnostic"
-                  ? "bg-[#047857] text-white shadow-xs"
+                  ? "bg-emerald-700 text-white shadow-xs"
                   : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200"
               }`}
             >
-              <Icon.CheckCircle className="w-4 h-4" />
+              <Icon.CheckCircle className="w-4 h-4" aria-hidden="true" />
               <span>Panduan Cek Fisik COD</span>
             </button>
           </div>
@@ -128,7 +128,7 @@ export default function ProductDetailInteractive({
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5 flex flex-col gap-1">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                     Kondisi Unit
                   </span>
                   <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
@@ -140,7 +140,7 @@ export default function ProductDetailInteractive({
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5 flex flex-col gap-1">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                     Kampus &amp; Wilayah
                   </span>
                   <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
@@ -156,7 +156,7 @@ export default function ProductDetailInteractive({
                     key={spec.key}
                     className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5 flex flex-col gap-1"
                   >
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                       {spec.label}
                     </span>
                     <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
@@ -178,14 +178,14 @@ export default function ProductDetailInteractive({
 
           {/* TAB 2: CATATAN PEMAKAIAN & ALASAN DIJUAL */}
           {activeTab === "usage" && (
-            <div className="space-y-4 animate-fade-in">
+            <div className="space-y-4 motion-safe:animate-fade-in motion-reduce:animate-none">
               <h3 className="text-base font-bold text-slate-900 dark:text-white">
                 Catatan Pemakaian &amp; Riwayat Barang
               </h3>
               
               <div className="p-4 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/60 dark:border-emerald-800/40 flex flex-col gap-1.5">
-                <span className="text-xs font-bold text-[#047857] dark:text-emerald-400 flex items-center gap-1.5">
-                  <Icon.Info className="w-4 h-4" />
+                <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+                  <Icon.Info className="w-4 h-4" aria-hidden="true" />
                   Alasan Dijual &amp; Riwayat
                 </span>
                 <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
@@ -210,12 +210,12 @@ export default function ProductDetailInteractive({
 
           {/* TAB 3: PANDUAN CEK FISIK MANDIRI SAAT COD */}
           {activeTab === "diagnostic" && (
-            <div className="space-y-4 animate-fade-in">
+            <div className="space-y-4 motion-safe:animate-fade-in motion-reduce:animate-none">
               <div className="flex items-center justify-between">
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
                   Panduan Periksa Mandiri saat COD
                 </h3>
-                <span className="text-[11px] text-[#047857] dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full">
+                <span className="text-[11px] text-emerald-700 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full">
                   Panduan Pembeli
                 </span>
               </div>
@@ -233,7 +233,7 @@ export default function ProductDetailInteractive({
                     key={idx}
                     className="flex items-center gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-white/5 text-xs font-medium"
                   >
-                    <Icon.CheckCircle className="w-4 h-4 text-[#047857] shrink-0" />
+                    <Icon.CheckCircle className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" aria-hidden="true" />
                     <div>
                       <span className="text-slate-900 dark:text-white font-bold block text-[11px]">
                         {item.label}
@@ -252,8 +252,8 @@ export default function ProductDetailInteractive({
 
         {/* PANDUAN AMAN TRANSAKSI MAHASISWA (COD) (12.html blueprint) */}
         <div className="rounded-2xl p-6 bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-white/10 flex flex-col sm:flex-row gap-5 items-center">
-          <div className="w-14 h-14 rounded-2xl bg-[#047857] text-white flex items-center justify-center shrink-0 shadow-sm">
-            <Icon.ShieldCheck className="w-7 h-7 text-emerald-100" />
+          <div className="w-14 h-14 rounded-2xl bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-sm">
+            <Icon.ShieldCheck className="w-7 h-7 text-emerald-100" aria-hidden="true" />
           </div>
           <div className="flex flex-col gap-1.5 text-center sm:text-left">
             <h3 className="text-base font-bold text-slate-900 dark:text-white">
@@ -263,18 +263,18 @@ export default function ProductDetailInteractive({
               Prioritaskan keselamatan dan transparansi. Jangan pernah mengirimkan uang panjar/DP sebelum memeriksa kondisi fisik barang secara langsung di titik jemput kampus resmi.
             </p>
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 pt-1">
-              <span className="text-[11px] text-[#047857] dark:text-emerald-400 font-bold flex items-center gap-1">
-                <Icon.Users className="w-3.5 h-3.5" />
+              <span className="text-[11px] text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1">
+                <Icon.Users className="w-3.5 h-3.5" aria-hidden="true" />
                 Pilih Tempat Ramai
               </span>
-              <span className="text-slate-300 dark:text-slate-700">•</span>
-              <span className="text-[11px] text-[#047857] dark:text-emerald-400 font-bold flex items-center gap-1">
-                <Icon.Check className="w-3.5 h-3.5" />
+              <span className="text-slate-300 dark:text-slate-700">|</span>
+              <span className="text-[11px] text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1">
+                <Icon.Check className="w-3.5 h-3.5" aria-hidden="true" />
                 Cek Fisik &amp; Fungsi
               </span>
-              <span className="text-slate-300 dark:text-slate-700">•</span>
-              <span className="text-[11px] text-[#047857] dark:text-emerald-400 font-bold flex items-center gap-1">
-                <Icon.QrCode className="w-3.5 h-3.5" />
+              <span className="text-slate-300 dark:text-slate-700">|</span>
+              <span className="text-[11px] text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1">
+                <Icon.QrCode className="w-3.5 h-3.5" aria-hidden="true" />
                 Bayar saat Cocok
               </span>
             </div>
@@ -302,14 +302,14 @@ export default function ProductDetailInteractive({
             </h1>
 
             {listing.listing_code && (
-              <div className="mt-2 inline-flex items-center gap-1.5 text-xs font-mono font-medium text-slate-500 bg-slate-50 dark:bg-slate-800/80 px-2.5 py-1 rounded-lg">
-                <Icon.Hash className="w-3.5 h-3.5 text-[#047857]" />
+              <div className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 bg-slate-50 dark:bg-slate-800/80 px-2.5 py-1 rounded-lg">
+                <Icon.Hash className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
                 <span>Kode: #{listing.listing_code}</span>
               </div>
             )}
 
             <div className="flex items-baseline gap-3 pt-3">
-              <span className="text-2xl sm:text-3xl font-extrabold text-[#047857] dark:text-emerald-400">
+              <span className="text-2xl sm:text-3xl font-extrabold text-emerald-700 dark:text-emerald-400">
                 {rupiah(listing.price)}
               </span>
               <span className="text-xs font-semibold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-full">
@@ -320,11 +320,11 @@ export default function ProductDetailInteractive({
 
           {/* Bebas Ongkir & Temu di Kampus Banner */}
           <div className="rounded-xl p-3.5 bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200/70 dark:border-emerald-800/50 flex items-center gap-3 lg:hidden">
-            <div className="w-9 h-9 rounded-xl bg-[#047857] text-white flex items-center justify-center shrink-0 shadow-xs">
-              <Icon.ShoppingBag className="w-4 h-4 text-emerald-100" />
+            <div className="w-9 h-9 rounded-xl bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Icon.ShoppingBag className="w-4 h-4 text-emerald-100" aria-hidden="true" />
             </div>
             <div className="flex flex-col">
-              <span className="text-xs font-bold text-[#047857] dark:text-emerald-400 leading-tight">
+              <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 leading-tight">
                 Bebas Ongkir &amp; Janjian di Kampus
               </span>
               <span className="text-[11px] text-slate-600 dark:text-slate-400">
@@ -337,7 +337,7 @@ export default function ProductDetailInteractive({
           <div className="flex flex-col gap-2.5 lg:gap-1">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                <Icon.MapPin className="w-3.5 h-3.5 text-[#047857]" />
+                <Icon.MapPin className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
                 Pilih Titik Kumpul COD Favorit:
               </span>
               <span className="text-[10px] text-slate-400 font-semibold lg:hidden">Klik untuk pilih</span>
@@ -354,16 +354,17 @@ export default function ProductDetailInteractive({
                       setSelectedCodPoint(point);
                       toast.success(`Titik COD dipilih: ${point.title}`);
                     }}
-                    className={`text-left p-3 rounded-xl border transition-all flex items-start gap-2.5 lg:p-2 ${
+                    className={`text-left p-3 rounded-xl border transition-colors active:translate-y-px flex items-start gap-2.5 lg:p-2 focus-visible:outline-2 focus-visible:outline-emerald-600 disabled:opacity-50 ${
                       isSelected
-                        ? "bg-emerald-50/70 dark:bg-emerald-950/40 border-[#047857] shadow-xs"
+                        ? "bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-700 shadow-xs"
                         : "bg-slate-50 dark:bg-slate-800/50 border-slate-200/70 dark:border-white/5 hover:border-slate-300"
                     }`}
                   >
                     <Icon.MapPin
                       className={`w-4 h-4 mt-0.5 shrink-0 ${
-                        isSelected ? "text-[#047857]" : "text-slate-400"
+                        isSelected ? "text-emerald-700 dark:text-emerald-400" : "text-slate-400"
                       }`}
+                      aria-hidden="true"
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
@@ -373,7 +374,7 @@ export default function ProductDetailInteractive({
                         <span
                           className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full ${
                             isSelected
-                              ? "bg-[#047857] text-white"
+                              ? "bg-emerald-700 text-white"
                               : "bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
                           }`}
                         >
@@ -395,7 +396,7 @@ export default function ProductDetailInteractive({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="relative">
-                  <div className="w-11 h-11 rounded-full bg-[#047857] text-white flex items-center justify-center font-bold text-sm shadow-xs">
+                  <div className="w-11 h-11 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-sm shadow-xs">
                     {(listing.seller_name?.[0] || "M").toUpperCase()}
                   </div>
                   <span className="w-3 h-3 rounded-full bg-emerald-400 border-2 border-white dark:border-slate-900 absolute bottom-0 right-0"></span>
@@ -406,18 +407,18 @@ export default function ProductDetailInteractive({
                       {listing.seller_name || "Mahasiswa Kampus"}
                     </span>
                     {isStudentVerified && (
-                      <Icon.CheckCircle className="w-3.5 h-3.5 text-[#047857]" title="KTM Terverifikasi" />
+                      <Icon.CheckCircle className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" title="KTM Terverifikasi" aria-hidden="true" />
                     )}
                   </div>
                   <span className="text-[11px] text-slate-500">
-                    {sellerCampus} {sellerFaculty ? `• ${sellerFaculty}` : ""} {sellerNIM ? `• ${sellerNIM}` : ""}
+                    {sellerCampus} {sellerFaculty ? `, ${sellerFaculty}` : ""} {sellerNIM ? `, ${sellerNIM}` : ""}
                   </span>
                 </div>
               </div>
 
               <Link
                 href={`/penjual/${sellerUsername}`}
-                className="px-3 py-1 rounded-full bg-white dark:bg-slate-900 text-[#047857] hover:bg-[#047857] hover:text-white text-xs font-semibold border border-slate-200 dark:border-white/10 transition-colors shadow-2xs"
+                className="px-3 py-1 rounded-full bg-white dark:bg-slate-900 text-emerald-700 hover:bg-emerald-700 hover:text-white text-xs font-semibold border border-slate-200 dark:border-white/10 transition-colors shadow-2xs focus-visible:outline-2 focus-visible:outline-emerald-600"
               >
                 Lihat Profil
               </Link>
@@ -425,7 +426,7 @@ export default function ProductDetailInteractive({
 
             <div className="grid grid-cols-2 gap-2 pt-1">
               <div className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 lg:gap-1.5 lg:p-1.5">
-                <Icon.Star className="w-4 h-4 text-amber-500 fill-amber-500 shrink-0" />
+                <Icon.Star className="w-4 h-4 text-amber-500 fill-amber-500 shrink-0" aria-hidden="true" />
                 <div className="flex flex-col">
                   <span className="text-xs font-bold text-slate-900 dark:text-white leading-none">
                     {sellerRating} / 5.0
@@ -435,7 +436,7 @@ export default function ProductDetailInteractive({
               </div>
 
               <div className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 lg:gap-1.5 lg:p-1.5">
-                <Icon.Clock className="w-4 h-4 text-[#047857] shrink-0" />
+                <Icon.Clock className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" aria-hidden="true" />
                 <div className="flex flex-col">
                   <span className="text-xs font-bold text-slate-900 dark:text-white leading-none">
                     {sellerResponse}
@@ -459,15 +460,15 @@ export default function ProductDetailInteractive({
                 href={waUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full py-3 px-5 rounded-xl bg-[#047857] hover:bg-[#065F46] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition active:scale-[0.99] lg:py-2.5"
+                className="w-full py-3 px-5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-xs transition-colors active:translate-y-px lg:py-2.5 focus-visible:outline-2 focus-visible:outline-emerald-600"
               >
-                <Icon.MessageCircle className="w-4 h-4" />
+                <Icon.MessageCircle className="w-4 h-4" aria-hidden="true" />
                 <span>Janjian COD via WhatsApp</span>
               </a>
 
               <OfferButton
                 listing={listing}
-                className="w-full py-2.5 px-4 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-xs flex items-center justify-center gap-2 transition"
+                className="w-full py-2.5 px-4 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-xs flex items-center justify-center gap-2 transition-colors active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600"
               >
                 <span>Tawar Harga Mahasiswa</span>
               </OfferButton>
@@ -488,10 +489,10 @@ export default function ProductDetailInteractive({
 
           {/* Reporting & Security link */}
           <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-400">
-            <Link href="/panduan-aman" className="hover:text-[#047857] transition-colors">
+            <Link href="/panduan-aman" className="hover:text-emerald-700 transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600">
               Panduan COD Aman
             </Link>
-            <span>•</span>
+            <span>|</span>
             <ReportButton listing={listing} />
           </div>
         </div>
@@ -499,12 +500,13 @@ export default function ProductDetailInteractive({
 
       {/* MOBILE STICKY BOTTOM BAR (Sync with selected COD point) */}
       {available && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white/95 dark:bg-[#121214]/95 backdrop-blur-2xl border-t border-slate-200/80 dark:border-white/10 px-4 py-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-lg flex items-center justify-between gap-3 animate-fade-in">
+        <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border-t border-slate-200/80 dark:border-white/10 px-4 py-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-lg flex items-center justify-between gap-3 motion-safe:animate-fade-in motion-reduce:animate-none">
           <div className="min-w-0 flex-1">
-            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block leading-tight truncate">
-              📍 {selectedCodPoint.title.split("(")[0]}
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold flex items-center leading-tight truncate">
+              <Icon.MapPin className="inline w-3 h-3 text-emerald-700 dark:text-emerald-400 mr-1 shrink-0" aria-hidden="true" />
+              <span className="truncate">{selectedCodPoint.title.split("(")[0]}</span>
             </span>
-            <span className="text-base font-extrabold text-[#047857] dark:text-emerald-400 tracking-tight leading-tight block truncate">
+            <span className="text-base font-extrabold text-emerald-700 dark:text-emerald-400 tracking-tight leading-tight block truncate">
               {rupiah(listing.price)}
             </span>
           </div>
@@ -512,7 +514,7 @@ export default function ProductDetailInteractive({
           <div className="shrink-0 flex items-center gap-2">
             <OfferButton
               listing={listing}
-              className="!w-auto !px-3 !py-2 !text-xs !rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-bold bg-slate-50 dark:bg-slate-900"
+              className="!w-auto !px-3 !py-2 !text-xs !rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-bold bg-slate-50 dark:bg-slate-900 active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600"
             >
               Nego
             </OfferButton>
@@ -521,9 +523,9 @@ export default function ProductDetailInteractive({
               href={waUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="!w-auto px-4 py-2 text-xs rounded-xl shadow-md bg-[#047857] hover:bg-[#065F46] text-white font-bold flex items-center gap-1.5 active:scale-95 transition-all"
+              className="!w-auto px-4 py-2 text-xs rounded-xl shadow-xs bg-emerald-700 hover:bg-emerald-800 text-white font-bold flex items-center gap-1.5 active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600"
             >
-              <Icon.MessageCircle className="w-3.5 h-3.5" />
+              <Icon.MessageCircle className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Janjian COD</span>
             </a>
           </div>

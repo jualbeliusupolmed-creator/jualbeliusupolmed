@@ -63,14 +63,13 @@ export default function AdminDemoLayout({ children }) {
             <div className="mx-auto w-full max-w-[1280px]">
               <div className="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
                 <p className="text-sm font-bold text-amber-900 dark:text-amber-300">
-                  Ini salinan demo — semua isinya karangan
+                  Ini salinan demo: semua isinya simulasi
                 </p>
                 <p className="mt-1 text-[13px] leading-relaxed text-amber-800 dark:text-amber-200/90">
                   Tampilannya sama persis dengan panel admin yang sungguhan, dan komponennya memang
                   komponen yang sama. Yang berbeda cuma dua: datanya dibuat-buat (nama, nomor, harga,
-                  semuanya), dan tombolnya tidak mengerjakan apa pun — tekan saja, ia akan bilang
-                  begitu. Dibuat supaya cara kerja sistem ini bisa dipelajari tanpa membuka data
-                  seorang pun.
+                  semuanya), dan tombolnya tidak memproses data nyata (tekan saja untuk simulasi antarmuka).
+                  Dibuat supaya cara kerja sistem ini bisa dipelajari tanpa membuka data seorang pun.
                 </p>
               </div>
               {children}

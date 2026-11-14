@@ -11,24 +11,27 @@ yang waktunya sudah tiba dalam satu pemanggilan. Endpoint memerlukan
 `Authorization: Bearer <CRON_SECRET>`. Kode endpoint sudah tersedia, tetapi
 belum otomatis berjalan sampai pemicu berikut dipasang dan aplikasi dideploy.
 
-Gunakan Supabase Cron untuk interval lima menit. Deployment Production terbaru
-gagal karena jadwal `*/10` di `vercel.json` melampaui batas akun Hobby. Jadwal
-worker tersebut sudah dihapus dari konfigurasi Vercel agar build tidak ditolak;
-jangan tambahkan kembali kecuali paket Vercel mendukungnya. Supabase Cron belum
-diaktifkan dan belum ada rahasia `omnichannel_cron_secret` di Vault, jadi antrean
-belum berjalan berkala sampai setup di bawah diselesaikan.
+Gunakan Supabase Cron untuk interval lima menit. Jadwal worker sudah dihapus
+dari konfigurasi Vercel agar build akun Hobby berhasil. Pada pemeriksaan
+produksi 4 November 2026, nama environment `CRON_SECRET` tersedia di Vercel
+Production (nilainya tersembunyi), tetapi Vault Supabase belum berisi
+`omnichannel_cron_secret`; `pg_cron` dan `pg_net` tersedia namun belum
+diaktifkan. Jadi antrean publikasi masih belum berjalan berkala.
 
 ### Setup
 
-1. Tetapkan nilai acak kuat sebagai `CRON_SECRET` di Vercel Project Settings
-   untuk Production, lalu deploy versi aplikasi yang memuat endpoint.
-2. Di Supabase Dashboard → **Vault**, simpan nilai yang sama sebagai secret
-   bernama `omnichannel_cron_secret`. Jangan menaruh nilainya ke SQL editor,
-   repositori, atau catatan.
-3. Pastikan ekstensi **pg_cron** dan **pg_net** tersedia pada proyek.
-4. Jalankan SQL berikut di SQL Editor setelah mengganti hanya domain aplikasi
-   jika domain produksi berbeda. SQL membaca rahasia dari Vault dan tidak
-   menyimpan token di definisi jadwal.
+1. Buat nilai acak kuat yang baru dan simpan langsung pada Vercel Project
+   Settings → Environment Variables sebagai `CRON_SECRET` untuk Production.
+   Karena nilai lama tersembunyi dan belum bisa dibandingkan dengan Vault,
+   rotasi menghindari asumsi bahwa nilai yang sama sudah tersimpan.
+2. Simpan nilai yang sama langsung di Supabase Dashboard → **Vault** dengan
+   nama `omnichannel_cron_secret`. Jangan menaruh nilainya ke SQL editor,
+   repositori, log, atau chat.
+3. Setelah Vault menampilkan nama secret tersebut, aktifkan ekstensi
+   **pg_cron** dan **pg_net** dari Database → Extensions.
+4. Jalankan SQL berikut di SQL Editor setelah memeriksa belum ada job dengan
+   nama yang sama. SQL membaca rahasia dari Vault dan tidak menyimpan token
+   dalam definisi jadwal.
 
 ```sql
 select cron.schedule(

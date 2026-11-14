@@ -79,10 +79,11 @@ export default function MenfessReplySection({ postId, initialCount = 0 }) {
     <div className="mt-2">
       {/* Toggle Button */}
       <button
+        type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-500 dark:text-slate-400 hover:text-primary dark:hover:text-emerald-400 transition-colors"
+        className="flex items-center gap-1.5 text-[11px] font-semibold text-gray-500 dark:text-slate-400 hover:text-primary dark:hover:text-emerald-400 active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600"
       >
-        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+        <svg aria-hidden="true" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
         </svg>
         <span>
@@ -101,13 +102,13 @@ export default function MenfessReplySection({ postId, initialCount = 0 }) {
           {/* Existing Replies */}
           {loading ? (
             <div className="flex items-center gap-2 py-2 text-xs text-gray-400">
-              <div className="w-3 h-3 border border-gray-300 border-t-transparent rounded-full animate-spin" />
+              <div className="w-3 h-3 border border-gray-300 border-t-transparent rounded-full animate-spin motion-reduce:animate-none" />
               Memuat balasan...
             </div>
           ) : replies.length > 0 ? (
             <div className="space-y-2">
               {replies.map((r) => (
-                <div key={r.id} className="flex items-start gap-2 animate-in slide-in-from-left-2 duration-200">
+                <div key={r.id} className="flex items-start gap-2 animate-in slide-in-from-left-2 duration-200 motion-reduce:animate-none">
                   <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-purple-400/10 text-[10px] font-black text-primary dark:text-emerald-400">
                     {(r.sender_name || "A").charAt(0).toUpperCase()}
                   </div>
@@ -128,7 +129,7 @@ export default function MenfessReplySection({ postId, initialCount = 0 }) {
               ))}
             </div>
           ) : loaded ? (
-            <p className="text-[11px] text-gray-400 py-1">Belum ada balasan. Jadilah yang pertama! </p>
+            <p className="text-[11px] text-gray-400 py-1">Belum ada balasan. Jadilah yang pertama!</p>
           ) : null}
 
           {/* Reply Input */}
@@ -140,17 +141,17 @@ export default function MenfessReplySection({ postId, initialCount = 0 }) {
               onChange={(e) => setReplyText(e.target.value)}
               placeholder="Balas secara anonim..."
               maxLength={500}
-              className="flex-1 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 px-3 py-1.5 text-[11px] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+              className="flex-1 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 px-3 py-1.5 text-[11px] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
             />
             <button
               type="submit"
               disabled={submitting || !replyText.trim()}
-              className="flex items-center justify-center h-7 w-7 rounded-xl bg-primary text-white disabled:opacity-40 hover:bg-primary/90 transition-all shrink-0"
+              className="flex items-center justify-center h-7 w-7 rounded-xl bg-primary text-white disabled:opacity-40 hover:bg-primary/90 active:translate-y-px transition-colors focus-visible:outline-2 focus-visible:outline-emerald-600 shrink-0"
             >
               {submitting ? (
-                <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />
+                <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin motion-reduce:animate-none" />
               ) : (
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <svg aria-hidden="true" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                 </svg>
               )}

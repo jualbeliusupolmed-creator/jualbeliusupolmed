@@ -3,12 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { CATEGORIES, formatWa, MARKETPLACE_WA } from "@/lib/constants";
 import { rupiah } from "@/lib/fees";
 import { Icon } from "@/components/Icons";
-import QRISModal from "@/components/QRISModal";
 import { toast } from "sonner";
 import { useSesi } from "@/components/SesiProvider";
+
+const QRISModal = dynamic(() => import("@/components/QRISModal"), { ssr: false });
 
 export default function DicariPage({ initialItems = [] }) {
   const { wa: sesiWa } = useSesi();
@@ -37,7 +39,13 @@ export default function DicariPage({ initialItems = [] }) {
     fetch("/api/kampus", { cache: "no-store" })
       .then((r) => r.ok ? r.json() : null)
       .then((d) => {
-        if (Array.isArray(d?.campuses)) setCampuses(d.campuses);
+        if (Array.isArray(d?.campuses)) {
+          const prefProv = typeof window !== "undefined" ? localStorage.getItem("preferred_province") : null;
+          const prefCamp = typeof window !== "undefined" ? localStorage.getItem("preferred_campus") : null;
+          const matchedProv = prefProv || (prefCamp && d.campuses.find((c) => c.shortName?.toLowerCase() === prefCamp.toLowerCase())?.provinceId) || "sumatera-utara";
+          const filtered = d.campuses.filter((c) => (c.provinceId || "sumatera-utara") === matchedProv);
+          setCampuses(filtered.length > 0 ? filtered : d.campuses);
+        }
       })
       .catch(() => {});
   }, []);
@@ -221,42 +229,35 @@ export default function DicariPage({ initialItems = [] }) {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 pb-[calc(7rem+env(safe-area-inset-bottom))]">
-      {/* Header Section with Heroic Micro-Stats (14.html blueprint) */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 sm:p-8 shadow-xs border border-slate-200/80 dark:border-white/10 mb-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <span className="px-3 py-1 rounded-full bg-emerald-50 text-[#047857] dark:bg-emerald-950/60 dark:text-emerald-400 text-xs font-bold inline-flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-[#047857] animate-pulse"></span>
-              WTB Hub • Permintaan Barang Kampus
-            </span>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-              Dicari Mahasiswa (WTB Hub)
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-2xl leading-relaxed">
-              Lagi butuh barang mendesak untuk kuliah, praktikum, atau kosan? Pasang permintaanmu di sini — penjual mahasiswa yang punya barang langsung menghubungi kamu tanpa perantara calo.
-            </p>
-          </div>
-
-          <button
-            onClick={() => {
-              const savedWa = sesiWa || "";
-              setForm((f) => ({ ...f, buyer_wa: savedWa }));
-              setShowModal(true);
-            }}
-            className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#047857] hover:bg-[#065F46] text-white text-xs sm:text-sm font-bold shadow-sm transition active:scale-95 shrink-0"
-          >
-            <Icon.PlusCircle className="w-4 h-4" />
-            <span>+ Posting Kebutuhan WTB</span>
-          </button>
+      {/* Compact Minimalist Header */}
+      <div className="mb-4 flex flex-col gap-3 pb-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200/80 dark:border-slate-800">
+        <div>
+          <nav aria-label="Breadcrumb" className="mb-1 flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
+            <Link href="/" className="transition-colors hover:text-emerald-700 dark:hover:text-emerald-400 focus-visible:outline-2 focus-visible:outline-emerald-600">Beranda</Link>
+            <span>/</span>
+            <span className="font-semibold text-slate-700 dark:text-slate-300">Barang Dicari (WTB)</span>
+          </nav>
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+            Barang Dicari (WTB)
+          </h1>
+          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+            Daftar kebutuhan barang &amp; jasa mahasiswa. Tawarkan langsung jika kamu memiliki barangnya.
+          </p>
         </div>
 
-        {/* Live Alert Banner */}
-        <div className="mt-6 flex items-center gap-3 p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/40 text-amber-900 dark:text-amber-200 text-xs">
-          <Icon.AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
-          <span>
-            <strong>Musim Laprak &amp; Sidang:</strong> WTB perlengkapan praktikum dan modul buku kuliah meningkat minggu ini. Cek barang tak terpakai di kosanmu untuk ditawarkan!
-          </span>
-        </div>
+        <button
+          type="button"
+          onClick={() => {
+            const savedWa = sesiWa || "";
+            setForm((f) => ({ ...f, buyer_wa: savedWa }));
+            setShowModal(true);
+          }}
+          className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full bg-emerald-800 px-4 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-emerald-900 active:translate-y-px focus-visible:outline-2 focus-visible:outline-emerald-600 self-start sm:self-auto"
+          aria-label="Pasang kebutuhan barang yang sedang dicari"
+        >
+          <Icon.Plus className="h-3.5 w-3.5 stroke-[2.5] text-emerald-300" aria-hidden="true" />
+          <span>Pasang WTB</span>
+        </button>
       </div>
 
       {/* Filter Bar */}
@@ -264,6 +265,7 @@ export default function DicariPage({ initialItems = [] }) {
         {/* Search */}
         <div className="relative min-w-0 flex-1">
           <svg
+            aria-hidden="true"
             className="absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"
             viewBox="0 0 24 24"
             fill="none"
@@ -322,7 +324,7 @@ export default function DicariPage({ initialItems = [] }) {
                 Daftar Kebutuhan Mahasiswa
               </span>
               {!loading && (
-                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-[#047857] dark:bg-emerald-950/60 dark:text-emerald-400 font-bold text-[11px]">
+                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 font-bold text-[11px]">
                   {items.length} Menunggu Penawaran
                 </span>
               )}
@@ -333,7 +335,7 @@ export default function DicariPage({ initialItems = [] }) {
           {loading ? (
             <div className="grid grid-cols-2 gap-2 sm:gap-3">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="card animate-pulse p-2.5 sm:p-4 space-y-2 sm:space-y-3 bg-white dark:border-slate-800 dark:bg-slate-900/30 rounded-xl sm:rounded-2xl">
+                <div key={i} className="card animate-pulse motion-reduce:animate-none p-2.5 sm:p-4 space-y-2 sm:space-y-3 bg-white dark:border-slate-800 dark:bg-slate-900/30 rounded-xl sm:rounded-2xl">
                   <div className="h-3 w-1/3 rounded bg-gray-100 dark:bg-slate-800" />
                   <div className="h-4 w-3/4 rounded bg-gray-100 dark:bg-slate-800" />
                   <div className="h-2.5 w-5/6 rounded bg-gray-100 dark:bg-slate-800" />
@@ -350,7 +352,7 @@ export default function DicariPage({ initialItems = [] }) {
                 Belum ada kebutuhan di filter ini.
               </p>
               <p className="mt-1 max-w-sm text-xs text-gray-400 dark:text-slate-500">
-                Posting kebutuhanmu sekarang — gratis dan langsung dilihat oleh penjual mahasiswa lainnya.
+                Posting kebutuhanmu sekarang: gratis dan langsung dilihat oleh penjual mahasiswa lainnya.
               </p>
               <button
                 onClick={() => {
@@ -358,9 +360,9 @@ export default function DicariPage({ initialItems = [] }) {
                   setForm((f) => ({ ...f, buyer_wa: savedWa }));
                   setShowModal(true);
                 }}
-                className="mt-4 px-5 py-2.5 rounded-full bg-[#047857] hover:bg-[#065F46] text-white text-xs font-bold shadow-sm transition active:scale-95"
+                className="mt-4 whitespace-nowrap px-5 py-2.5 rounded-full bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-semibold shadow-xs transition-colors active:translate-y-px"
               >
-                + Posting Kebutuhan Pertama
+                + Posting Kebutuhan
               </button>
             </div>
           ) : (
@@ -374,7 +376,7 @@ export default function DicariPage({ initialItems = [] }) {
                 return (
                   <article
                     key={item.id}
-                    className={`card flex flex-col justify-between p-3 sm:p-4 bg-white dark:bg-slate-900/40 rounded-2xl border border-slate-200/80 dark:border-white/10 hover:shadow-md transition-all relative overflow-hidden ${
+                    className={`card flex flex-col justify-between p-3 sm:p-4 bg-white dark:bg-slate-900/40 rounded-2xl border border-slate-200/80 dark:border-white/10 hover:border-slate-300 dark:hover:border-slate-700 transition-colors active:translate-y-px relative overflow-hidden ${
                       isUrgent ? "border-l-3 border-l-rose-500" : ""
                     } ${item.status === "resolved" ? "opacity-60 grayscale-[30%]" : ""}`}
                   >
@@ -384,14 +386,14 @@ export default function DicariPage({ initialItems = [] }) {
                         <div className="flex items-center gap-1 flex-wrap min-w-0">
                           {isUrgent && (
                             <span className="inline-flex items-center px-1.5 py-0.2 rounded-full bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 text-[8px] font-bold shrink-0">
-                              🚨 Mendesak
+                              Mendesak
                             </span>
                           )}
-                          <span className="badge bg-emerald-50 text-[#047857] dark:bg-emerald-950/40 dark:text-emerald-400 font-bold text-[8px] px-1 py-0.2 shrink-0">
+                          <span className="badge bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 font-bold text-[8px] px-1 py-0.2 shrink-0">
                             {item.category}
                           </span>
                         </div>
-                        <span className="font-extrabold text-[#047857] dark:text-emerald-400 text-[10px] sm:text-xs shrink-0 tracking-tight">
+                        <span className="font-extrabold text-emerald-700 dark:text-emerald-400 text-[10px] sm:text-xs shrink-0 tracking-tight">
                           {item.budget > 0 ? rupiah(item.budget) : "Nego"}
                         </span>
                       </div>
@@ -401,7 +403,7 @@ export default function DicariPage({ initialItems = [] }) {
                       </h3>
 
                       <div className="mt-2 flex items-center gap-1 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
-                        <Icon.MapPin className="h-2.5 w-2.5 shrink-0 text-[#047857]" />
+                        <Icon.MapPin className="h-2.5 w-2.5 shrink-0 text-emerald-700 dark:text-emerald-400" />
                         <span className="truncate">{item.campus} · {item.area || "Kampus"}</span>
                       </div>
 
@@ -426,7 +428,7 @@ export default function DicariPage({ initialItems = [] }) {
                           .then(({ ok, d }) => { if (!ok) setManualError(d.error || "Kontak postingan ini belum bisa dibuka."); })
                           .catch(() => {});
                       }}
-                      className="w-full mt-2 py-1 px-1.5 rounded-lg bg-slate-100 hover:bg-[#047857] text-slate-700 hover:text-white dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-[#047857] dark:hover:text-white text-[10px] sm:text-xs font-bold transition flex items-center justify-center gap-1 active:scale-95"
+                      className="w-full mt-2 py-1 px-1.5 rounded-lg bg-slate-100 hover:bg-emerald-800 text-slate-700 hover:text-white dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-emerald-800 dark:hover:text-white text-[10px] sm:text-xs font-semibold transition-colors active:translate-y-px flex items-center justify-center gap-1"
                     >
                       <Icon.MessageCircle className="h-3 w-3 shrink-0" />
                       <span className="truncate">Tawari Barang</span>
@@ -442,7 +444,7 @@ export default function DicariPage({ initialItems = [] }) {
         <aside className="hidden lg:flex lg:col-span-4 flex-col gap-4 sticky top-20">
           {/* CTA Box */}
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-xs border border-slate-200/80 dark:border-white/10 flex flex-col gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#ECFDF5] dark:bg-emerald-950/60 text-[#047857] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">
               <Icon.ShoppingBag className="w-5 h-5" />
             </div>
             <div>
@@ -459,16 +461,16 @@ export default function DicariPage({ initialItems = [] }) {
                 setForm((f) => ({ ...f, buyer_wa: savedWa }));
                 setShowModal(true);
               }}
-              className="w-full py-2.5 rounded-xl bg-[#047857] hover:bg-[#065F46] text-white text-xs font-bold shadow-xs transition active:scale-95 text-center"
+              className="w-full whitespace-nowrap py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-semibold shadow-xs transition-colors active:translate-y-px text-center"
             >
-              + Posting Kebutuhan (100% Gratis)
+              + Posting Kebutuhan
             </button>
           </div>
 
           {/* Tips COD Aman */}
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-xs border border-slate-200/80 dark:border-white/10 flex flex-col gap-2.5">
             <div className="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white">
-              <Icon.ShieldCheck className="w-4 h-4 text-[#047857]" />
+              <Icon.ShieldCheck className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
               <span>Protokol Keamanan WTB</span>
             </div>
             <ul className="text-xs text-slate-500 dark:text-slate-400 space-y-1.5 list-disc list-inside">
@@ -603,7 +605,7 @@ export default function DicariPage({ initialItems = [] }) {
                   >
                     <option value="Semua">Semua Kampus</option>
                     {campuses.map((item) => (
-                      <option key={item.shortName} value={item.shortName}>{item.shortName} — {item.name}</option>
+                      <option key={item.shortName} value={item.shortName}>{item.shortName} ({item.name})</option>
                     ))}
                   </select>
                 </div>
@@ -719,7 +721,7 @@ export default function DicariPage({ initialItems = [] }) {
             ) : (
               <div className="mt-4 text-center">
                 <p className="text-xs text-gray-500 dark:text-slate-400">
-                  Scan QR Code di bawah untuk membayar Rp 2.000, lalu upload struk transfernya — AI kami langsung verifikasi otomatis.
+                  Scan QR Code di bawah untuk membayar Rp 2.000, lalu upload struk transfernya (AI kami langsung verifikasi otomatis).
                 </p>
 
                 <div className="mt-4 flex justify-center">
@@ -734,7 +736,7 @@ export default function DicariPage({ initialItems = [] }) {
                 </div>
 
                 <div className="mt-4 bg-gray-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-gray-100 dark:border-slate-800">
-                  <p className="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-0.5">Total Pembayaran</p>
+                  <p className="text-xs text-gray-500 font-medium mb-0.5">Total Pembayaran</p>
                   <p className="text-xl font-black text-emerald-600 dark:text-emerald-400">Rp 2.000</p>
                 </div>
 
@@ -823,12 +825,12 @@ export default function DicariPage({ initialItems = [] }) {
                       }
                     }}
                     disabled={!manualFile || manualLoading}
-                    className="btn-primary w-full py-2.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="btn-primary w-full whitespace-nowrap py-2.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-xs flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {manualLoading ? (
                       <>
                         <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                        AI Sedang Membaca Struk...
+                        AI Sedang Membaca Struk…
                       </>
                     ) : (
                       <span className="inline-flex items-center gap-1.5"><Icon.Rocket className="h-4 w-4" /> Kirim &amp; Verifikasi AI</span>

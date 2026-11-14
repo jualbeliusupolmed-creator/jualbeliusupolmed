@@ -27,9 +27,9 @@ import {
   verifyLinkChallenge,
   linkSellerWithPassword,
   resolveInstagramCampus,
-  resolveInstagramOrganizationScope,
 } from "@/lib/instagramDmAuth";
 import { logInstagramDmMessage } from "@/lib/instagramDmLogger";
+import { loadProfileMarketplaceRegion } from "@/lib/marketplaceRegion";
 
 function siteBaseUrl() {
   return (
@@ -969,39 +969,13 @@ export async function handleInstagramDmEvent({
         const primaryImage = finalImages[0] || item.image_url || null;
 
         const targetRecipientId = recipientId || item.recipient_id || null;
-        let orgScope = null;
-        if (targetRecipientId) {
-          try {
-            orgScope = await resolveInstagramOrganizationScope(targetRecipientId);
-          } catch {
-            // graceful fallback
-          }
-        }
-
-        const candidateCampus = String(orgScope?.campus || item.campus || linked.campus || "Semua").trim();
-        const campusLower = candidateCampus.toLowerCase();
-        let resolvedUnivId = orgScope?.universityId || null;
-        let resolvedCampus = candidateCampus;
-
-        if (!resolvedUnivId && resolvedCampus && resolvedCampus !== "Semua") {
-          if (["usu", "polmed"].includes(campusLower)) {
-            resolvedUnivId = campusLower;
-            resolvedCampus = campusLower.toUpperCase();
-          } else {
-            try {
-              const { data: matchedUniv } = await supa
-                .from("universities")
-                .select("id, code")
-                .or(`id.eq.${campusLower},code.ilike.${campusLower}`)
-                .maybeSingle();
-              if (matchedUniv?.id) {
-                resolvedUnivId = matchedUniv.id;
-                resolvedCampus = matchedUniv.code;
-              }
-            } catch {
-              // fallback
-            }
-          }
+        const sellerRegion = await loadProfileMarketplaceRegion(supa, linked.profile);
+        const resolvedUnivId = sellerRegion.university?.id || null;
+        const resolvedProvinceId = sellerRegion.province || null;
+        const resolvedCampus = sellerRegion.university?.code || "";
+        if (!resolvedUnivId || !resolvedProvinceId || !resolvedCampus) {
+          await sendInstagramText(cleanSender, "⚠️ Lengkapi universitas asal di profil jualbeli dulu. Barang akan otomatis masuk ke provinsimu.");
+          return { ok: false, error: "seller_home_university_required" };
         }
 
         const insertPayload = {
@@ -1019,6 +993,8 @@ export async function handleInstagramDmEvent({
           type: "barang",
           campus: resolvedCampus,
           university_id: resolvedUnivId,
+          seller_university_id: resolvedUnivId,
+          seller_province_id: resolvedProvinceId,
           area: "Sekitar Kampus",
           condition: "used",
           moderation_reason: modReason,
@@ -1033,12 +1009,12 @@ export async function handleInstagramDmEvent({
           .select()
           .single();
 
-        // Fallback jika skema database produksi belum punya kolom moderasi, university_id, atau images (PGRST204)
+        // Origin columns are required for province visibility. Do not drop them
+        // in a schema fallback or the listing could become nationally visible.
         if (insertErr && (insertErr.code === "PGRST204" || String(insertErr.message || "").includes("column"))) {
           delete insertPayload.moderation_reason;
           delete insertPayload.risk_score;
           delete insertPayload.images;
-          delete insertPayload.university_id;
           const retry = await supa.from("listings").insert(insertPayload).select().single();
           newListing = retry.data;
           insertErr = retry.error;
@@ -1147,6 +1123,7 @@ export async function handleInstagramDmEvent({
             title: item.title,
             campus: resolvedCampus,
             university_id: resolvedUnivId,
+            seller_province_id: resolvedProvinceId,
           },
         }).catch(() => {});
 
