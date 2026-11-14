@@ -24,6 +24,7 @@ export default function Navbar({ config }) {
   
   const [selectedCampus, setSelectedCampus] = useState("Semua");
   const [campuses, setCampuses] = useState([]);
+  const [provinces, setProvinces] = useState([]);
   const [profileCampus, setProfileCampus] = useState("");
   const [profileProvince, setProfileProvince] = useState("");
   const [campusDropdownOpen, setCampusDropdownOpen] = useState(false);
@@ -52,6 +53,7 @@ export default function Navbar({ config }) {
       .then((data) => {
         if (Array.isArray(data?.campuses)) {
           setCampuses(data.campuses);
+          if (Array.isArray(data?.provinces)) setProvinces(data.provinces);
           const urlParams = new URLSearchParams(window.location.search);
           const urlCampus = urlParams.get("campus") || urlParams.get("univ");
           let initial = null;
@@ -370,7 +372,33 @@ export default function Navbar({ config }) {
               </button>
 
               {campusDropdownOpen && (
-                <div className="absolute right-0 mt-1 w-52 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200/80 dark:border-white/10 py-1.5 z-50">
+                <div className="absolute right-0 mt-1 w-56 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200/80 dark:border-white/10 py-1.5 z-50 overflow-hidden">
+                  {provinces.length > 0 && (
+                    <div className="px-3 py-2 border-b border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-slate-900/50 flex items-center justify-between gap-1.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Daerah</span>
+                      <select
+                        aria-label="Pilih daerah provinsi"
+                        value={activeProvince}
+                        onChange={(e) => {
+                          const newProv = e.target.value;
+                          setProfileProvince(newProv);
+                          localStorage.setItem("preferred_province", newProv);
+                          const firstCamp = campuses.find((c) => (c.provinceId || "sumatera-utara") === newProv);
+                          const nextCamp = firstCamp ? firstCamp.shortName : "Semua";
+                          setSelectedCampus(nextCamp);
+                          localStorage.setItem("preferred_campus", nextCamp);
+                          window.dispatchEvent(new CustomEvent("campus:change", { detail: { campus: nextCamp, province: newProv } }));
+                        }}
+                        className="text-[11px] font-bold bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-0.5 outline-none cursor-pointer"
+                      >
+                        {provinces.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                   {campusOptions.map((camp) => (
                     <button
                       key={camp.key}
@@ -525,7 +553,33 @@ export default function Navbar({ config }) {
                     </svg>
                   </button>
                   {campusDropdownOpen && (
-                    <div className="absolute left-0 top-full z-[60] mt-1 w-52 rounded-2xl border border-slate-200/80 bg-white py-1.5 shadow-xl dark:border-white/10 dark:bg-slate-800">
+                    <div className="absolute left-0 top-full z-[60] mt-1 w-56 rounded-2xl border border-slate-200/80 bg-white py-1.5 shadow-xl dark:border-white/10 dark:bg-slate-800 overflow-hidden">
+                      {provinces.length > 0 && (
+                        <div className="px-3 py-2 border-b border-slate-100 dark:border-white/5 bg-slate-50/70 dark:bg-slate-900/50 flex items-center justify-between gap-1.5">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Daerah</span>
+                          <select
+                            aria-label="Pilih daerah provinsi"
+                            value={activeProvince}
+                            onChange={(e) => {
+                              const newProv = e.target.value;
+                              setProfileProvince(newProv);
+                              localStorage.setItem("preferred_province", newProv);
+                              const firstCamp = campuses.find((c) => (c.provinceId || "sumatera-utara") === newProv);
+                              const nextCamp = firstCamp ? firstCamp.shortName : "Semua";
+                              setSelectedCampus(nextCamp);
+                              localStorage.setItem("preferred_campus", nextCamp);
+                              window.dispatchEvent(new CustomEvent("campus:change", { detail: { campus: nextCamp, province: newProv } }));
+                            }}
+                            className="text-[11px] font-bold bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-0.5 outline-none cursor-pointer"
+                          >
+                            {provinces.map((p) => (
+                              <option key={p.id} value={p.id}>
+                                {p.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
                       {campusOptions.map((camp) => (
                         <button
                           key={camp.key}
