@@ -666,6 +666,7 @@ function ChatContent() {
       const isPo = Boolean(r.listings?.is_po || r.listings?.type === "po");
 
       // Match category
+      if (sidebarFilter === "anon") return false;
       if (sidebarFilter === "market" && (isDirect || isPo)) return false;
       if (sidebarFilter === "po" && !isPo) return false;
       if (sidebarFilter === "direct" && !isDirect) return false;
@@ -1081,6 +1082,7 @@ function ChatContent() {
               <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 scrollbar-none [scrollbar-width:none]">
                 {[
                   { id: "semua", label: "Semua" },
+                  { id: "anon", label: "🎭 Anonim" },
                   { id: "market", label: "Marketplace" },
                   { id: "po", label: "Open PO" },
                   { id: "direct", label: "Pribadi" },
@@ -1109,46 +1111,78 @@ function ChatContent() {
                   <span>Daftar Percakapan</span>
                 </div>
                 <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold">
-                  {filteredRooms.length} Pesan
+                  {filteredRooms.length + (sidebarFilter === "semua" || sidebarFilter === "anon" ? 1 : 0)} Pesan
                 </span>
               </div>
 
-              {/* Anonim Active Chat Room Item */}
-              {ringkasAnon?.partnerAktif && (
+              {/* ── PERMANENT TELEGRAM-STYLE ANONYMOUS BOT CHAT CARD ── */}
+              {(sidebarFilter === "semua" || sidebarFilter === "anon") &&
+                (!searchFilter.trim() ||
+                  "chat anonim obrolan rahasia bot telegram partner".includes(searchFilter.toLowerCase()) ||
+                  ringkasAnon?.partnerAktif?.toLowerCase().includes(searchFilter.toLowerCase())) && (
                 <article
                   onClick={() => {
                     setDesktopMode("chat");
                     router.push("/chat?anon=1");
                   }}
-                  className={`p-2.5 rounded-xl flex items-start gap-3 cursor-pointer transition-colors border ${
+                  className={`p-3 rounded-2xl flex items-start gap-3 cursor-pointer transition-all border relative select-none ${
                     anonView
-                      ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 shadow-sm"
-                      : "bg-white dark:bg-slate-900/60 border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                      ? "bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-transparent dark:from-emerald-950/50 dark:via-teal-950/30 border-emerald-500 shadow-sm ring-1 ring-emerald-500/30"
+                      : "bg-white dark:bg-slate-900/80 border-slate-200/90 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-800 hover:bg-emerald-50/30 dark:hover:bg-slate-800/40"
                   }`}
                 >
+                  {/* Bot Avatar Icon */}
                   <div className="relative shrink-0">
-                    <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-emerald-700 to-teal-500 text-white flex items-center justify-center font-bold shadow-xs">
-                      <Icon.MessageCircle className="w-5 h-5" />
+                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-600 to-indigo-600 text-white flex items-center justify-center font-black shadow-md shadow-emerald-600/20">
+                      <Icon.Bot className="w-6 h-6" />
                     </div>
-                    <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-black" />
+                    {/* Status Pulse Indicator */}
+                    {ringkasAnon?.partnerAktif ? (
+                      <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900 animate-pulse motion-reduce:animate-none" />
+                    ) : searching || isWaiting ? (
+                      <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-amber-400 ring-2 ring-white dark:ring-slate-900 animate-ping motion-reduce:animate-none" />
+                    ) : (
+                      <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-400/80 ring-2 ring-white dark:ring-slate-900" />
+                    )}
                   </div>
+
+                  {/* Content & Status */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-1 mb-0.5">
                       <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                          {ringkasAnon.partnerAktif}
-                        </span>
-                        <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 truncate shrink-0">
-                          Anon 1-on-1
+                        <span className="text-xs font-black text-slate-900 dark:text-white truncate flex items-center gap-1">
+                          <span>Chat Anonim Kampus</span>
+                          <span className="text-[10px] text-amber-500" title="Disematkan">📌</span>
                         </span>
                       </div>
-                      <span className="text-[10px] text-slate-400 shrink-0 font-medium">
-                        {waktuRelatif(ringkasAnon.updatedAt)}
+                      <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 uppercase tracking-wider shrink-0 border border-indigo-200/50 dark:border-indigo-800/40">
+                        {ringkasAnon?.partnerAktif ? "Terhubung" : "Bot"}
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                      {ringkasAnon.pesanTerakhir?.teks || "Sesi obrolan anonim aktif"}
+
+                    <p className="text-[10.5px] font-medium text-slate-500 dark:text-slate-400 truncate mb-1">
+                      {ringkasAnon?.partnerAktif ? (
+                        <span className="text-emerald-700 dark:text-emerald-400 font-bold">
+                          💬 {ringkasAnon.partnerAktif}: {ringkasAnon.pesanTerakhir?.teks || "Sesi aktif"}
+                        </span>
+                      ) : searching || isWaiting ? (
+                        <span className="text-amber-700 dark:text-amber-400 font-semibold animate-pulse motion-reduce:animate-none">
+                          ⏳ Sedang mencari partner obrolan...
+                        </span>
+                      ) : (
+                        <span>Obrolan 1-on-1 rahasia ala Telegram Bot</span>
+                      )}
                     </p>
+
+                    <div className="flex items-center justify-between text-[9.5px]">
+                      <span className="text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                        <Icon.ShieldCheck className="w-3 h-3 text-emerald-600" />
+                        <span>Identitas &amp; WA rahasia</span>
+                      </span>
+                      <span className="text-emerald-700 dark:text-emerald-400 font-bold hover:underline">
+                        {anonView ? "Sedang aktif" : "Mulai Chat →"}
+                      </span>
+                    </div>
                   </div>
                 </article>
               )}
@@ -1156,14 +1190,21 @@ function ChatContent() {
               {/* Real Marketplace & Direct DM Rooms */}
               {inboxLoading ? (
                 <div className="py-8 text-center text-xs text-slate-400">Memuat percakapan...</div>
-              ) : filteredRooms.length === 0 && !ringkasAnon?.partnerAktif ? (
+              ) : filteredRooms.length === 0 && sidebarFilter !== "semua" && sidebarFilter !== "anon" ? (
                 <div className="py-12 px-4 text-center space-y-2">
                   <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800/80 text-slate-400 dark:text-slate-500 mx-auto flex items-center justify-center">
                     <Icon.MessageCircle className="w-5 h-5" />
                   </div>
                   <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Belum ada obrolan</p>
                   <p className="text-[11px] text-slate-400 dark:text-slate-500 max-w-[200px] mx-auto leading-relaxed">
-                    Percakapan dengan penjual atau pembeli akan masuk di sini.
+                    Percakapan pada filter ini akan masuk di sini.
+                  </p>
+                </div>
+              ) : filteredRooms.length === 0 && sidebarFilter === "semua" ? (
+                <div className="py-8 px-4 text-center space-y-1.5 border-t border-slate-100 dark:border-slate-800/60 mt-2">
+                  <p className="text-xs font-bold text-slate-600 dark:text-slate-400">Belum ada obrolan transaksi</p>
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 max-w-[220px] mx-auto leading-relaxed">
+                    Chat dari pembeli atau penjual marketplace akan muncul di bawah sini.
                   </p>
                 </div>
               ) : (
