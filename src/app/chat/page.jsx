@@ -1646,72 +1646,16 @@ function ChatContent() {
 
           {/* ── SUB-VIEW D: KOTAK MASUK OBROLAN TRANSAKSI (Default saat buka /chat) ── */}
           {desktopMode === "chat" && !roomQuery && !anonView && (
-            <div className="flex-1 flex flex-col h-full overflow-y-auto bg-slate-50 dark:bg-black p-4 sm:p-8">
-              <div className="max-w-xl mx-auto w-full my-auto flex flex-col items-center text-center space-y-5">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-700 to-teal-500 text-white flex items-center justify-center shadow-lg shadow-emerald-700/20">
-                  <Icon.MessageCircle className="w-7 h-7" />
-                </div>
-
-                <div className="space-y-1.5">
-                  <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
-                    Obrolan Transaksi &amp; COD Kampus
-                  </h2>
-                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-md mx-auto leading-relaxed">
-                    Hubungi penjual langsung dari iklan barang di Marketplace. Tawar harga secara wajar dan sepakati titik temu COD yang aman.
-                  </p>
-                </div>
-
-                {/* 3 Panduan Transaksi Aman */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full text-left">
-                  <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1 shadow-xs">
-                    <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 dark:text-emerald-400 flex items-center justify-center">
-                      <Icon.ShieldCheck className="w-4 h-4" />
-                    </div>
-                    <p className="text-xs font-bold text-slate-900 dark:text-white">Privasi Terjaga</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Nomor WhatsApp kamu tidak dibocorkan di antarmuka obrolan.</p>
-                  </div>
-
-                  <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1 shadow-xs">
-                    <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 dark:text-emerald-400 flex items-center justify-center">
-                      <Icon.MapPin className="w-4 h-4" />
-                    </div>
-                    <p className="text-xs font-bold text-slate-900 dark:text-white">COD Tempat Ramai</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Sepakati ketemuan di Pendopo, Pintu 1-4, atau Kantin kampus.</p>
-                  </div>
-
-                  <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1 shadow-xs">
-                    <div className="w-7 h-7 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 flex items-center justify-center">
-                      <Icon.AlertTriangle className="w-4 h-4" />
-                    </div>
-                    <p className="text-xs font-bold text-slate-900 dark:text-white">Dilarang Transfer DP</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Jangan kirim uang muka sebelum melihat fisik barang langsung.</p>
-                  </div>
-                </div>
-
-                {/* Status Percakapan / Tombol CTA */}
-                <div className="p-4 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 w-full flex flex-col sm:flex-row items-center justify-between gap-3 text-left">
-                  <div className="space-y-0.5">
-                    <p className="text-xs font-bold text-emerald-950 dark:text-emerald-200">
-                      {inboxRooms.length > 0
-                        ? `Ada ${inboxRooms.length} percakapan aktif di kotak masukmu`
-                        : "Mulai transaksi atau cari teman"}
-                    </p>
-                    <p className="text-[11px] text-emerald-800/80 dark:text-emerald-300/80">
-                      {inboxRooms.length > 0
-                        ? "Pilih salah satu percakapan di bilah sisi kiri untuk membaca dan membalas pesan."
-                        : `Jelajahi barang di ${isSemuaOrEmpty ? "berbagai kampus" : activeCampusName} dan hubungi penjual via tombol Chat.`}
-                    </p>
-                  </div>
-
-                  <Link
-                    href="/jual-beli"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shrink-0 transition-colors shadow-xs active:translate-y-px"
-                  >
-                    <Icon.ShoppingBag className="w-3.5 h-3.5" />
-                    <span>Buka Marketplace</span>
-                  </Link>
-                </div>
+            <div className="flex-1 flex flex-col items-center justify-center h-full bg-slate-50/50 dark:bg-black/30 p-8 text-center select-none">
+              <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800/60 flex items-center justify-center text-slate-300 dark:text-slate-600 mb-3">
+                <Icon.MessageCircle className="w-7 h-7" />
               </div>
+              <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                Pilih percakapan
+              </h3>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 max-w-xs leading-relaxed">
+                Pilih salah satu obrolan di bilah sisi kiri untuk mulai membaca dan membalas pesan.
+              </p>
             </div>
           )}
         </section>
