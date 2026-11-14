@@ -777,7 +777,7 @@ export default function JualPage() {
 
             <div className="rounded-xl border border-emerald-200/80 bg-emerald-50/70 p-3 text-xs text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-200">
               {gratis
-                ? "Iklan langsung diproses tayang setelah lolos verifikasi otomatis sistem."
+                ? "Iklan langsung aktif dan tayang seketika di marketplace tanpa menunggu persetujuan admin."
                 : "Selesaikan pembayaran QRIS agar iklanmu langsung aktif di katalog."}
             </div>
 
