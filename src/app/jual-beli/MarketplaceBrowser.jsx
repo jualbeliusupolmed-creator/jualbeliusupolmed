@@ -43,21 +43,32 @@ export default function MarketplaceBrowser({
 
   useEffect(() => {
     let active = true;
+    let allCampuses = [];
+
+    const filterByProv = (rawCampuses, targetProv) => {
+      const prefProv = targetProv || (typeof window !== "undefined" ? localStorage.getItem("preferred_province") : null);
+      const prefCamp = typeof window !== "undefined" ? localStorage.getItem("preferred_campus") : null;
+      const matchedProv = prefProv || (prefCamp && rawCampuses.find((c) => c.shortName?.toLowerCase() === prefCamp.toLowerCase())?.provinceId) || "sumatera-utara";
+      const filtered = rawCampuses.filter((c) => (c.provinceId || "sumatera-utara") === matchedProv);
+      return filtered.length > 0 ? filtered : rawCampuses;
+    };
+
     fetchCampusesCached()
       .then((data) => {
         if (active && Array.isArray(data?.campuses)) {
-          const prefProv = typeof window !== "undefined" ? localStorage.getItem("preferred_province") : null;
-          const prefCamp = typeof window !== "undefined" ? localStorage.getItem("preferred_campus") : null;
-          const matchedProv = prefProv || (prefCamp && data.campuses.find((c) => c.shortName?.toLowerCase() === prefCamp.toLowerCase())?.provinceId) || "sumatera-utara";
-          const filtered = data.campuses.filter((c) => (c.provinceId || "sumatera-utara") === matchedProv);
-          setCampuses(filtered.length > 0 ? filtered : data.campuses);
+          allCampuses = data.campuses;
+          setCampuses(filterByProv(allCampuses));
         }
       })
       .catch((error) => console.error("[Marketplace] Gagal memuat daftar kampus:", error));
 
     const handleCampusChange = (event) => {
       const campus = event.detail?.campus;
+      const prov = event.detail?.province;
       setSelectedCampus(!campus || campus === "Semua" ? "all" : String(campus).toLowerCase());
+      if (allCampuses.length > 0) {
+        setCampuses(filterByProv(allCampuses, prov));
+      }
     };
     window.addEventListener("campus:change", handleCampusChange);
 

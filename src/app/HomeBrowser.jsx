@@ -90,18 +90,40 @@ export default function HomeBrowser({
 
   useEffect(() => {
     let active = true;
+    let allCampuses = [];
+
+    const filterByProvince = (rawCampuses) => {
+      const prefProv = typeof window !== "undefined" ? localStorage.getItem("preferred_province") : null;
+      const prefCamp = typeof window !== "undefined" ? localStorage.getItem("preferred_campus") : null;
+      const matchedProv = prefProv || (prefCamp && rawCampuses.find((c) => c.shortName?.toLowerCase() === prefCamp.toLowerCase())?.provinceId) || "sumatera-utara";
+      const filtered = rawCampuses.filter((c) => (c.provinceId || "sumatera-utara") === matchedProv);
+      return filtered.length > 0 ? filtered : rawCampuses;
+    };
+
     fetch("/api/kampus", { cache: "no-store" })
       .then((response) => {
         if (!response.ok) throw new Error("Gagal memuat daftar kampus.");
         return response.json();
       })
       .then((data) => {
-        if (active && Array.isArray(data?.campuses)) setCampuses(data.campuses);
+        if (active && Array.isArray(data?.campuses)) {
+          allCampuses = data.campuses;
+          setCampuses(filterByProvince(allCampuses));
+        }
       })
       .catch((error) => console.error("[Home] Gagal memuat daftar kampus:", error));
 
+    const onCampusSync = (e) => {
+      if (allCampuses.length > 0) {
+        setCampuses(filterByProvince(allCampuses));
+      }
+      if (e.detail?.campus) setCampusFilter(e.detail.campus);
+    };
+    window.addEventListener("campus:change", onCampusSync);
+
     return () => {
       active = false;
+      window.removeEventListener("campus:change", onCampusSync);
     };
   }, []);
 
