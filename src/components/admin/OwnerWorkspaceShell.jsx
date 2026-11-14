@@ -7,7 +7,7 @@ import { useFocusTrap } from "@/lib/useFocusTrap";
 import ScopeSwitcher from "@/components/admin/ScopeSwitcher";
 import {
   ArrowUpRight, BookOpenCheck, Boxes, ChartNoAxesCombined, Clock, Flag, LayoutDashboard, LogOut, Megaphone, Menu, MessageCircle, MessagesSquare, Sparkles,
-  PanelLeftClose, Settings2, ShieldCheck, ShoppingBag, Smartphone, Users, WalletCards, BookOpen, X, MapPinned, ClipboardList,
+  PanelLeftClose, Settings2, ShieldCheck, ShoppingBag, Smartphone, Users, WalletCards, BookOpen, X, MapPinned, ClipboardList, Layers,
 } from "lucide-react";
 
 const iconByKey = {
@@ -15,6 +15,7 @@ const iconByKey = {
   users: Users, finance: WalletCards, analytics: ChartNoAxesCombined, content: BookOpen, settings: Settings2, audit: ShieldCheck,
   wabot: Smartphone, antrean: Clock, notifikasi: MessageCircle, broadcast: Megaphone,
   broadcast_grup: MessagesSquare, grouppost: MessagesSquare, fyp: Sparkles,
+  kategori: Layers, transaksi: WalletCards, mading: MessagesSquare, rating: Sparkles, listings: ShoppingBag,
 };
 
 const ADMIN_GROUPS = [
@@ -23,9 +24,13 @@ const ADMIN_GROUPS = [
     { key: "operational_guide", label: "Panduan operasional Sumut", href: "/admin/operasional-sumut" },
   ] },
   { label: "Operasional", items: [
-    { key: "marketplace", label: "Marketplace", href: "/admin/marketplace", permission: "marketplace" },
+    { key: "marketplace", label: "Marketplace & Listing", href: "/admin/marketplace", permission: "marketplace" },
+    { key: "kategori", label: "Kategori & Tarif", href: "/admin/kategori", permission: "marketplace" },
+    { key: "users", label: "Pengguna & Penjual", href: "/admin/users", permission: "users" },
+    { key: "transaksi", label: "Transaksi QRIS", href: "/admin/transaksi", permission: "finance" },
+    { key: "mading", label: "Moderasi Mading", href: "/admin/mading", permission: "content" },
+    { key: "rating", label: "Ulasan & Rating", href: "/admin/rating", permission: "marketplace" },
     { key: "fyp", label: "Kurasi FYP provinsi", href: "/admin/fyp", roles: ["province_admin"] },
-    { key: "users", label: "Pengguna", href: "/admin/users", permission: "users" },
     { key: "reports", label: "Laporan pengguna", href: "/admin/reports", permission: "reports" },
     { key: "po", label: "Open PO", href: "/admin/po", permission: "po" },
     { key: "finance", label: "Keuangan", href: "/admin/finance", permission: "finance" },
@@ -90,7 +95,7 @@ export default function OwnerWorkspaceShell({ actor, children }) {
       <nav aria-label="Navigasi admin" className="space-y-5 pb-5">
         {groups.map((group) => (
           <section key={group.label}>
-            <h2 className="mb-2 px-3 text-[10px] font-extrabold uppercase tracking-[.16em] text-slate-400">{group.label}</h2>
+            <h2 className="mb-2 px-3 text-xs font-bold text-slate-500">{group.label}</h2>
             <div className="space-y-1">
               {group.items.map((item) => {
                 const Icon = iconByKey[item.key] || LayoutDashboard;
@@ -112,13 +117,13 @@ export default function OwnerWorkspaceShell({ actor, children }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f8f6] text-slate-950">
-      <aside className={`fixed inset-y-0 left-0 z-40 hidden flex-col border-r border-slate-200/80 bg-white transition-[width] duration-200 lg:flex ${collapsed ? "w-[84px]" : "w-[268px]"}`}>
+    <div className="min-h-screen bg-slate-50 text-slate-950">
+      <aside className={`fixed inset-y-0 left-0 z-40 hidden flex-col border-r border-slate-200/80 bg-white lg:flex ${collapsed ? "w-[84px]" : "w-[268px]"}`}>
         <div className={`flex h-[76px] items-center border-b border-slate-100 ${collapsed ? "justify-center px-3" : "gap-3 px-5"}`}>
           <Link href="/admin/overview" aria-label="Kampus Kita workspace" className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-emerald-800 text-white shadow-lg shadow-emerald-900/15">
             <span className="text-sm font-black tracking-tight">KK</span>
           </Link>
-          {!collapsed ? <div className="min-w-0 flex-1"><p className="truncate text-sm font-black tracking-tight">Kampus Kita</p><p className="mt-0.5 text-[10px] font-bold text-slate-400">ADMIN WORKSPACE</p></div> : null}
+          {!collapsed ? <div className="min-w-0 flex-1"><p className="truncate text-sm font-black tracking-tight">Kampus Kita</p><p className="mt-0.5 text-xs font-semibold text-slate-400">Admin Workspace</p></div> : null}
           {!collapsed ? <button type="button" onClick={() => setCollapsed(true)} aria-label="Ciutkan menu" title="Ciutkan menu" className="rounded-lg p-2 text-slate-400 hover:bg-slate-50 hover:text-slate-800"><PanelLeftClose className="h-4 w-4" /></button> : null}
         </div>
         {collapsed ? <button type="button" onClick={() => setCollapsed(false)} aria-label="Perluas menu" title="Perluas menu" className="mx-auto mt-3 rounded-lg p-2 text-slate-400 hover:bg-slate-50"><Menu className="h-4 w-4" /></button> : null}
@@ -139,10 +144,10 @@ export default function OwnerWorkspaceShell({ actor, children }) {
         </aside>
       </div>
 
-      <main className={`min-h-screen transition-[padding] duration-200 ${collapsed ? "lg:pl-[84px]" : "lg:pl-[268px]"}`}>
+      <main className={`min-h-screen ${collapsed ? "lg:pl-[84px]" : "lg:pl-[268px]"}`}>
         <header className="sticky top-0 z-30 flex h-[72px] items-center gap-3 border-b border-slate-200/70 bg-white/90 px-4 backdrop-blur-xl sm:px-7">
           <button type="button" onClick={() => setMobileOpen(true)} className="grid h-10 w-10 place-items-center rounded-xl text-slate-600 hover:bg-slate-100 lg:hidden" aria-label="Buka navigasi admin" aria-haspopup="dialog" aria-expanded={mobileOpen} aria-controls="admin-mobile-navigation"><Menu className="h-5 w-5" /></button>
-          <div className="min-w-0 flex-1"><p className="hidden text-[10px] font-extrabold uppercase tracking-[.14em] text-emerald-700 sm:block">Kampus Kita Workspace</p><h1 className="truncate text-base font-black tracking-tight sm:mt-0.5 sm:text-lg">{currentTitle}</h1></div>
+          <div className="min-w-0 flex-1"><h1 className="truncate text-base font-black tracking-tight sm:text-lg">{currentTitle}</h1></div>
           <ScopeSwitcher actor={actor} />
           <Link href="/" target="_blank" className="inline-flex min-h-10 items-center gap-1.5 rounded-full border border-slate-200 px-3 text-xs font-bold text-slate-600 transition hover:border-emerald-300 hover:text-emerald-800 sm:px-4">Lihat web <ArrowUpRight className="h-3.5 w-3.5" /></Link>
         </header>
