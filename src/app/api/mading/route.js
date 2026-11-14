@@ -6,7 +6,7 @@ import { hashIdentitas } from "@/lib/identitasHash";
 import { catatIdentitasWa } from "@/lib/chatIdentity";
 import { getUserSessionAsync } from "@/lib/auth";
 import { autoPublishMadingInstagram, publishQueuedMadingInstagram, siteOriginFromRequest } from "@/lib/madingInstagram";
-import { getSettings, isAllowedCampus } from "@/lib/settings";
+import { getSettings, isAllowedCampus, getCampusProvinceId } from "@/lib/settings";
 import { waitUntil } from "@vercel/functions";
 import { evaluateModerationRules } from "@/lib/moderationRules";
 import { sendWa } from "@/lib/fonnte";

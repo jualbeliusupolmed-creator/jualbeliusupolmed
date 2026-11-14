@@ -185,6 +185,8 @@ export default function Navbar({ config }) {
     return scoped.length > 0 ? scoped : campuses.filter((c) => (c.provinceId || c.province_id || "") === "sumatera-utara");
   }, [campuses, activeProvince]);
 
+  const primaryCampus = profileCampus || config?.primary_campus || "";
+
   const sortedCampuses = [...displayCampuses].sort((a, b) => {
     const aIsPrimary = primaryCampus && a.shortName?.toLowerCase() === primaryCampus.toLowerCase();
     const bIsPrimary = primaryCampus && b.shortName?.toLowerCase() === primaryCampus.toLowerCase();

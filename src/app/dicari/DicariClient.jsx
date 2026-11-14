@@ -209,7 +209,6 @@ export default function DicariPage({ initialItems = [] }) {
 
       // Reset & close
       setBudgetRaw("");
-      setAreaMode("dropdown");
       setForm({
         buyer_name: "",
         buyer_wa: formattedWa, // Keep WA for next time
