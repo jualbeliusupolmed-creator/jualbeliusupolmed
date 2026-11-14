@@ -6,7 +6,8 @@ import { normalizeListingCode } from "@/lib/listingCode";
 export const dynamic = "force-dynamic";
 
 export default async function ListingCodePage({ params }) {
-  const code = normalizeListingCode(params.code);
+  const { code: rawCode } = await params;
+  const code = normalizeListingCode(rawCode);
   if (!code) notFound();
 
   const supa = getAdminClient();

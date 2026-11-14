@@ -211,8 +211,9 @@ async function getSellerData(wa, sessionIdentity = null) {
 }
 
 export async function generateMetadata({ params }) {
+  const { wa } = await params;
   const sessionIdentity = await getSellerSessionAsync();
-  const data = await getSellerData(params.wa, sessionIdentity);
+  const data = await getSellerData(wa, sessionIdentity);
   if (!data) return { title: "Penjual tidak ditemukan" };
   const name = data.seller.seller_name;
   const username = data.seller.slug || encodeSellerSlug(data.seller.seller_wa);
@@ -262,20 +263,21 @@ function StarDisplay({ value }) {
 }
 
 export default async function SellerProfilePage({ params }) {
+  const { wa } = await params;
   // Navbar bawah pernah menautkan "Profil" ke /penjual/login — halaman ini,
   // dengan wa="login", memajang profil penjual yang tidak pernah ada. Tautan
   // dan bookmark lama masih bisa membawanya, jadi slug cadangan itu diantar ke
   // pintu tunggal /profil alih-alih dirender sebagai penjual.
-  if (["login", "profil", "masuk"].includes(params.wa?.toLowerCase())) {
+  if (["login", "profil", "masuk"].includes(wa?.toLowerCase())) {
     redirect("/profil");
   }
 
-  const data = await getSellerData(params.wa);
+  const data = await getSellerData(wa);
   if (!data) notFound();
 
   // Redirect 301 jika diakses lewat URL legacy nomor HP (08/62/u-) atau jika slug canonical berbeda
   const canonicalSlug = data.seller.slug || encodeSellerSlug(data.seller.seller_wa);
-  if (params.wa !== canonicalSlug) {
+  if (wa !== canonicalSlug) {
     permanentRedirect(`/penjual/${canonicalSlug}`);
   }
 

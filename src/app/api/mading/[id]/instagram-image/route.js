@@ -70,6 +70,7 @@ async function fetchSafeMadingPhoto(url, ratio = "portrait") {
 
 // Gambar JPEG publik untuk Menfess & Instagram. Mendukung rasio Portrait 4:5 (1080x1350) & Story 9:16 (1080x1920)
 export async function GET(request, { params }) {
+  const { id } = await params;
   const { searchParams } = new URL(request.url);
   const rawRatio = searchParams.get("ratio") || "portrait";
   const ratio = rawRatio === "story" || rawRatio === "9:16" ? "story" : rawRatio === "landscape" ? "landscape" : "portrait";
@@ -81,7 +82,7 @@ export async function GET(request, { params }) {
   const { data: post, error } = await getAdminClient()
     .from("mading_posts")
     .select("id, type, sender_name, faculty, title, content, image_url, status")
-    .eq("id", params.id)
+    .eq("id", id)
     .eq("status", "active")
     .maybeSingle();
 
@@ -116,7 +117,7 @@ export async function GET(request, { params }) {
   };
 
   if (isDownload) {
-    const filename = `menfess-usu-${params.id}-${ratio === "story" ? "9-16" : ratio === "portrait" ? "1080x1350" : ratio}-p${pageIndex + 1}.jpg`;
+    const filename = `menfess-usu-${id}-${ratio === "story" ? "9-16" : ratio === "portrait" ? "1080x1350" : ratio}-p${pageIndex + 1}.jpg`;
     headers["Content-Disposition"] = `attachment; filename="${filename}"`;
   }
 

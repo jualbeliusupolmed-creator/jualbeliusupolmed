@@ -27,7 +27,7 @@ export async function POST(request) {
       { status: 403 }
     );
   }
-  const proof = cookies().get(SELLER_GOOGLE_OTP_PROOF_COOKIE)?.value;
+  const proof = (await cookies()).get(SELLER_GOOGLE_OTP_PROOF_COOKIE)?.value;
   if (!verifySellerGoogleLinkToken(proof, wa)) {
     return NextResponse.json({ error: "Verifikasi WhatsApp dulu dengan kode OTP." }, { status: 403 });
   }

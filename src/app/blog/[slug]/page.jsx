@@ -25,7 +25,8 @@ async function getBlog(slug) {
 }
 
 export async function generateMetadata({ params }) {
-  const blog = await getBlog(params.slug);
+  const { slug } = await params;
+  const blog = await getBlog(slug);
   if (!blog) return { title: "Artikel tidak ditemukan" };
 
   const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").trim();
@@ -75,7 +76,8 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function BlogPost({ params }) {
-  const blog = await getBlog(params.slug);
+  const { slug } = await params;
+  const blog = await getBlog(slug);
   if (!blog || blog.status !== "published") notFound();
 
   const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").trim();

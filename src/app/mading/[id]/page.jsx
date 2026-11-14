@@ -32,7 +32,8 @@ async function getPost(id) {
 }
 
 export async function generateMetadata({ params }) {
-  const post = await getPost(params.id);
+  const { id } = await params;
+  const post = await getPost(id);
   if (!post) {
     return {
       title: "Postingan Tidak Ditemukan — Mading Mahasiswa",
@@ -78,7 +79,8 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function MadingDetailPage({ params }) {
-  const post = await getPost(params.id);
+  const { id } = await params;
+  const post = await getPost(id);
   if (!post) notFound();
 
   const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.kampuskita.my.id").trim();

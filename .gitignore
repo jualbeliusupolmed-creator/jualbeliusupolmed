@@ -80,6 +80,9 @@ __read_lighthouse.mjs
 .npm-cache/
 bot-panel-rebuild/
 
+# Worktree Agent Manager — checkout penuh repo ini, bukan kode aplikasi.
+/.kilo/
+
 # Arsip salinan env lama — berisi kredensial, jangan pernah di-commit.
 arsip-env/
 

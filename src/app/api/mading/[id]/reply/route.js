@@ -9,12 +9,13 @@ export const dynamic = "force-dynamic";
 
 // GET /api/mading/[id]/reply — Fetch replies untuk 1 menfess
 export async function GET(req, { params }) {
+  const { id } = await params;
   try {
     const supa = getAdminClient();
     const { data: replies, error } = await supa
       .from("mading_replies")
       .select("id, sender_name, content, likes_count, created_at")
-      .eq("post_id", params.id)
+      .eq("post_id", id)
       .eq("status", "active")
       .order("created_at", { ascending: true })
       .limit(50);
@@ -37,6 +38,7 @@ export async function GET(req, { params }) {
 
 // POST /api/mading/[id]/reply — Tambah reply anonim ke menfess
 export async function POST(req, { params }) {
+  const { id } = await params;
   try {
     const wa = await getUserSessionAsync();
     if (!wa) {
@@ -68,7 +70,7 @@ export async function POST(req, { params }) {
     const { data: post } = await supa
       .from("mading_posts")
       .select("id, status")
-      .eq("id", params.id)
+      .eq("id", id)
       .maybeSingle();
 
     if (!post || post.status !== "active") {
@@ -88,7 +90,7 @@ export async function POST(req, { params }) {
     const { data: reply, error: insertErr } = await supa
       .from("mading_replies")
       .insert({
-        post_id: params.id,
+        post_id: id,
         sender_name: senderName,
         content: cleanContent,
         author_ip_hash: hashIdentitas(wa),
@@ -110,12 +112,12 @@ export async function POST(req, { params }) {
     }
 
     // Increment comments_count di post
-    await supa.rpc("increment_comments_count", { post_id: params.id }).catch(() => {
+    await supa.rpc("increment_comments_count", { post_id: id }).catch(() => {
       // Fallback manual update jika RPC belum ada
       supa
         .from("mading_posts")
         .update({ comments_count: (post.comments_count || 0) + 1 })
-        .eq("id", params.id)
+        .eq("id", id)
         .then(() => {});
     });
 

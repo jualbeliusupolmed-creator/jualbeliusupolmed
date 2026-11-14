@@ -125,8 +125,9 @@ function bacaSesiAdmin(nilai) {
   }
 }
 
-export function setAdminCookie(userId) {
-  cookies().set(COOKIE, buatTokenAdmin(userId), {
+export async function setAdminCookie(userId) {
+  const cookieStore = await cookies();
+  cookieStore.set(COOKIE, buatTokenAdmin(userId), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
@@ -146,9 +147,10 @@ export function setAdminCookieOnResponse(response, userId) {
   return response;
 }
 
-export function clearAdminCookie() {
-  cookies().set(COOKIE, "", { path: "/", maxAge: 0, httpOnly: true, sameSite: "lax" });
-  cookies().set(LEGACY_COOKIE, "", { path: "/", maxAge: 0, httpOnly: true, sameSite: "lax" });
+export async function clearAdminCookie() {
+  const cookieStore = await cookies();
+  cookieStore.set(COOKIE, "", { path: "/", maxAge: 0, httpOnly: true, sameSite: "lax" });
+  cookieStore.set(LEGACY_COOKIE, "", { path: "/", maxAge: 0, httpOnly: true, sameSite: "lax" });
 }
 
 export async function isAdmin() {
@@ -157,8 +159,13 @@ export async function isAdmin() {
   return !!actor;
 }
 
-export function getAdminSession() {
-  return bacaSesiAdmin(cookies().get(COOKIE)?.value);
+export async function getAdminSession() {
+  try {
+    const cookieStore = await cookies();
+    return bacaSesiAdmin(cookieStore.get(COOKIE)?.value);
+  } catch {
+    return null;
+  }
 }
 
 // --- USER AUTH (Unified) ---

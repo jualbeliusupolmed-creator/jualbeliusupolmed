@@ -11,8 +11,9 @@ const AMBANG_SEMBUNYI = 3;
 
 // POST /api/mading/[id]/report - Laporkan postingan mading/menfess
 export async function POST(request, { params }) {
+  const { id } = await params;
   try {
-    const postId = params.id;
+    const postId = id;
     const body = await request.json().catch(() => ({}));
     const userIdentifier = String(body.user_identifier || "").slice(0, 100);
 

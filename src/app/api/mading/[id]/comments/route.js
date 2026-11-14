@@ -9,8 +9,9 @@ export const dynamic = "force-dynamic";
 
 // GET /api/mading/[id]/comments - Ambil komentar dari suatu postingan
 export async function GET(request, { params }) {
+  const { id } = await params;
   try {
-    const postId = params.id;
+    const postId = id;
     if (!postId) {
       return NextResponse.json({ error: "ID postingan tidak valid" }, { status: 400 });
     }
@@ -79,8 +80,9 @@ export async function GET(request, { params }) {
 
 // POST /api/mading/[id]/comments - Tambah komentar baru
 export async function POST(request, { params }) {
+  const { id } = await params;
   try {
-    const postId = params.id;
+    const postId = id;
     const body = await request.json();
     let { faculty, content, parent_id: parentId } = body;
     const wa = await getUserSessionAsync();

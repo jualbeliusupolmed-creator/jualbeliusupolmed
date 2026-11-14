@@ -15,6 +15,7 @@ const BLOKIR_HARI = 7;
 
 // POST /api/chat/room/[id]/report { reason? } — laporkan lawan bicara di room ini.
 export async function POST(request, { params }) {
+  const { id } = await params;
   try {
     const wa = await getUserSessionAsync();
     if (!wa) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -27,7 +28,7 @@ export async function POST(request, { params }) {
       );
     }
 
-    const roomId = params.id;
+    const roomId = id;
     const body = await request.json().catch(() => ({}));
     const reason = String(body.reason || "").slice(0, 200) || null;
 

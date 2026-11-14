@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 
 // POST /api/oprec/[id]/submit — Submit formulir pendaftaran Oprec oleh Mahasiswa
 export async function POST(req, { params }) {
+  const { id } = await params;
   try {
     const rl = rateLimit(`submit_oprec:${getClientIp(req)}`, { limit: 10, windowMs: 300_000 });
     if (!rl.ok) {
@@ -48,7 +49,7 @@ export async function POST(req, { params }) {
     const { data: oprec, error: oprecErr } = await supa
       .from("oprec_events")
       .select("id, deadline, status, wa_group_link, ukm_name")
-      .eq("id", params.id)
+      .eq("id", id)
       .maybeSingle();
 
     // Dulu cabang ini menjawab "Pendaftaran berhasil diterima!" untuk oprec yang
@@ -57,7 +58,7 @@ export async function POST(req, { params }) {
     // yang tidak akan pernah datang: tak sebaris pun tersimpan. Lebih baik
     // ditolak sekarang daripada dipercaya sia-sia sampai acaranya lewat.
     if (oprecErr || !oprec) {
-      const contoh = String(params.id || "").startsWith("demo-oprec");
+      const contoh = String(id || "").startsWith("demo-oprec");
       return NextResponse.json(
         {
           error: contoh
@@ -73,7 +74,7 @@ export async function POST(req, { params }) {
     }
 
     const insertData = {
-      oprec_id: params.id,
+      oprec_id: id,
       applicant_wa: formattedWa,
       applicant_name: applicant_name.trim(),
       nim: nim ? nim.trim() : null,

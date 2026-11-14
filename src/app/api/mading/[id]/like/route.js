@@ -5,8 +5,9 @@ import { rateLimit, getClientIp } from "@/lib/rateLimit";
 export const dynamic = "force-dynamic";
 
 export async function POST(request, { params }) {
+  const { id } = await params;
   try {
-    const postId = params.id;
+    const postId = id;
     const body = await request.json();
     const { user_identifier } = body;
 

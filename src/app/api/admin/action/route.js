@@ -69,7 +69,8 @@ export async function POST(req) {
     const body = await req.json();
     const { action, id, wa } = body;
     const supa = getAdminClient();
-    const adminActorId = actor?.userId || getAdminSession()?.sub || process.env.SUPERADMIN_AUTH_USER_ID || null;
+    const adminSession = await getAdminSession();
+    const adminActorId = actor?.userId || adminSession?.sub || process.env.SUPERADMIN_AUTH_USER_ID || null;
     // Info tambahan (mis. peringatan broadcast gagal) yang ikut dikirim ke UI admin
     let warning = null;
 

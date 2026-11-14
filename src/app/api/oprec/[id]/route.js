@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 
 // GET /api/oprec/[id] — Detail formulir Oprec + submissions (untuk pengurus)
 export async function GET(req, { params }) {
+  const { id } = await params;
   try {
     const supa = getAdminClient();
     const { searchParams } = new URL(req.url);
@@ -16,7 +17,7 @@ export async function GET(req, { params }) {
     const { data: oprec, error } = await supa
       .from("oprec_events")
       .select("*")
-      .eq("id", params.id)
+      .eq("id", id)
       .maybeSingle();
 
     if (error || !oprec) {
@@ -37,7 +38,7 @@ export async function GET(req, { params }) {
     const { data: submissions, error: subErr } = await supa
       .from("oprec_submissions")
       .select("*")
-      .eq("oprec_id", params.id)
+      .eq("oprec_id", id)
       .order("created_at", { ascending: false });
 
     if (subErr) {
@@ -63,6 +64,7 @@ export async function GET(req, { params }) {
 
 // PATCH /api/oprec/[id] — Update status submission atau oprec
 export async function PATCH(req, { params }) {
+  const { id } = await params;
   try {
     const wa = await getUserSessionAsync();
     if (!wa) {
@@ -77,7 +79,7 @@ export async function PATCH(req, { params }) {
     const { data: oprec } = await supa
       .from("oprec_events")
       .select("id, ukm_wa, title, ukm_name")
-      .eq("id", params.id)
+      .eq("id", id)
       .maybeSingle();
 
     if (!oprec || oprec.ukm_wa !== wa) {
@@ -99,7 +101,7 @@ export async function PATCH(req, { params }) {
           updated_at: new Date().toISOString(),
         })
         .eq("id", submission_id)
-        .eq("oprec_id", params.id)
+        .eq("oprec_id", id)
         .select()
         .single();
 
@@ -129,7 +131,7 @@ export async function PATCH(req, { params }) {
       const { error } = await supa
         .from("oprec_events")
         .update({ status: "closed", updated_at: new Date().toISOString() })
-        .eq("id", params.id);
+        .eq("id", id);
 
       if (error) return NextResponse.json({ error: "Gagal menutup Oprec." }, { status: 500 });
       return NextResponse.json({ success: true, message: "Formulir Oprec berhasil ditutup." });
@@ -139,7 +141,7 @@ export async function PATCH(req, { params }) {
       const { error } = await supa
         .from("oprec_events")
         .update({ status: "active", updated_at: new Date().toISOString() })
-        .eq("id", params.id);
+        .eq("id", id);
 
       if (error) return NextResponse.json({ error: "Gagal membuka kembali Oprec." }, { status: 500 });
       return NextResponse.json({ success: true, message: "Formulir Oprec berhasil dibuka kembali." });
@@ -154,6 +156,7 @@ export async function PATCH(req, { params }) {
 
 // DELETE /api/oprec/[id] — Tutup / Hapus formulir Oprec
 export async function DELETE(req, { params }) {
+  const { id } = await params;
   try {
     const wa = await getUserSessionAsync();
     if (!wa) {
@@ -164,7 +167,7 @@ export async function DELETE(req, { params }) {
     const { error } = await supa
       .from("oprec_events")
       .delete()
-      .eq("id", params.id)
+      .eq("id", id)
       .eq("ukm_wa", wa);
 
     if (error) {

@@ -48,7 +48,7 @@ export async function POST(req) {
       }
     }
 
-    setAdminCookie(userId);
+    await setAdminCookie(userId);
     try {
       await getAdminClient().from("admin_audit_events").insert({ actor_id: userId, action: "admin_login", target_id: userId, metadata: { role: isSuperadmin ? "superadmin" : "owner" } });
     } catch {
@@ -62,7 +62,7 @@ export async function POST(req) {
 }
 
 export async function DELETE() {
-  const session = getAdminSession();
+  const session = await getAdminSession();
   if (session?.sub) {
     try {
       await getAdminClient().from("admin_audit_events").insert({ actor_id: session.sub, action: "admin_logout", target_id: session.sub, metadata: {} });
@@ -70,6 +70,6 @@ export async function DELETE() {
       // Logout remains available when the audit migration is not installed.
     }
   }
-  clearAdminCookie();
+  await clearAdminCookie();
   return NextResponse.json({ ok: true });
 }

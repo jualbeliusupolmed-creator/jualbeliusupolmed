@@ -164,7 +164,8 @@ async function getData(slug, sessionIdentity = null) {
 
 // ── SEO: generateMetadata ────────────────────────────────────────────────────
 export async function generateMetadata({ params }) {
-  const { listing } = await getData(params.slug, await getSellerSessionAsync());
+  const { slug } = await params;
+  const { listing } = await getData(slug, await getSellerSessionAsync());
   if (!listing) {
     return { title: "Produk tidak ditemukan" };
   }
@@ -220,11 +221,12 @@ export async function generateMetadata({ params }) {
 // ────────────────────────────────────────────────────────────────────────────
 
 export default async function ProdukPage({ params }) {
-  const { listing, related } = await getData(params.slug, await getSellerSessionAsync());
+  const { slug } = await params;
+  const { listing, related } = await getData(slug, await getSellerSessionAsync());
   if (!listing) notFound();
 
   // If someone visits old UUID link or numeric listing code, redirect to clean canonical slug URL
-  if (isUUID(params.slug) || looksLikeListingCode(params.slug)) {
+  if (isUUID(slug) || looksLikeListingCode(slug)) {
     redirect(`/produk/${buildSlug(listing.title, listing.id)}`);
   }
 
@@ -299,7 +301,7 @@ export default async function ProdukPage({ params }) {
         dangerouslySetInnerHTML={{ __html: skripJsonLd(breadcrumbJsonLd) }}
       />
       <ViewTracker listingId={listing.id} />
-      <RecentlyViewedSaver listing={listing} slug={params.slug} />
+      <RecentlyViewedSaver listing={listing} slug={slug} />
       {/* Breadcrumb */}
       <nav className="flex items-center gap-1.5 min-w-0 text-[13px] text-slate-500 dark:text-slate-400">
         <Link href="/" className="hover:text-primary shrink-0">Beranda</Link>
