@@ -8,6 +8,7 @@ import ScopeSwitcher from "@/components/admin/ScopeSwitcher";
 import {
   ArrowUpRight, BookOpenCheck, Boxes, ChartNoAxesCombined, Clock, Flag, LayoutDashboard, LogOut, Megaphone, Menu, MessageCircle, MessagesSquare, Sparkles,
   PanelLeftClose, Settings2, ShieldCheck, ShoppingBag, Smartphone, Users, WalletCards, BookOpen, X, MapPinned, ClipboardList, Layers,
+  ShieldAlert, Ticket, Search, Command, ArrowRight
 } from "lucide-react";
 
 const iconByKey = {
@@ -16,6 +17,7 @@ const iconByKey = {
   wabot: Smartphone, antrean: Clock, notifikasi: MessageCircle, broadcast: Megaphone,
   broadcast_grup: MessagesSquare, grouppost: MessagesSquare, fyp: Sparkles,
   kategori: Layers, transaksi: WalletCards, mading: MessagesSquare, rating: Sparkles, listings: ShoppingBag, roles: ShieldCheck,
+  emergency: ShieldAlert, vouchers: Ticket,
 };
 
 const ADMIN_GROUPS = [
@@ -28,6 +30,7 @@ const ADMIN_GROUPS = [
     { key: "kategori", label: "Kategori & Tarif", href: "/admin/kategori", permission: "marketplace" },
     { key: "users", label: "Pengguna & Penjual", href: "/admin/users", permission: "users" },
     { key: "transaksi", label: "Transaksi QRIS", href: "/admin/transaksi", permission: "finance" },
+    { key: "vouchers", label: "Voucher & Kas", href: "/admin/vouchers", permission: "finance" },
     { key: "mading", label: "Moderasi Mading", href: "/admin/mading", permission: "content" },
     { key: "rating", label: "Ulasan & Rating", href: "/admin/rating", permission: "marketplace" },
     { key: "fyp", label: "Kurasi FYP provinsi", href: "/admin/fyp", roles: ["province_admin"] },
@@ -40,6 +43,7 @@ const ADMIN_GROUPS = [
     { key: "content", label: "Konten", href: "/admin/content", permission: "content" },
   ] },
   { label: "Administrasi", items: [
+    { key: "emergency", label: "Pusat Darurat & Blacklist", href: "/admin/emergency", superadmin: true },
     { key: "organization", label: "Struktur wilayah", href: "/admin/organization", superadmin: true, roles: ["province_admin"] },
     { key: "owners", label: "Akses owner", href: "/admin/owners", superadmin: true },
     { key: "admin_requests", label: "Permintaan admin kampus", href: "/admin/admin-requests", superadmin: true, roles: ["province_admin"] },
@@ -69,18 +73,51 @@ export default function OwnerWorkspaceShell({ actor, children }) {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [commandOpen, setCommandOpen] = useState(false);
+  const [commandSearch, setCommandSearch] = useState("");
   const mobileNavigationRef = useRef(null);
+  const commandInputRef = useRef(null);
+
   const closeMobileNavigation = useCallback(() => setMobileOpen(false), []);
   useFocusTrap({ isOpen: mobileOpen, onClose: closeMobileNavigation, containerRef: mobileNavigationRef });
+
   useEffect(() => {
     setMobileOpen(false);
+    setCommandOpen(false);
   }, [pathname]);
+
+  // Keyboard shortcut listener untuk Cmd+K / Ctrl+K
+  useEffect(() => {
+    function handleKeyDown(e) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setCommandOpen((prev) => !prev);
+      }
+      if (e.key === "Escape") {
+        setCommandOpen(false);
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  useEffect(() => {
+    if (commandOpen) {
+      setTimeout(() => commandInputRef.current?.focus(), 50);
+    } else {
+      setCommandSearch("");
+    }
+  }, [commandOpen]);
+
   const groups = useMemo(() => ADMIN_GROUPS.map((group) => ({
     ...group,
     items: group.items.filter((item) => canShow(actor, item)),
   })).filter((group) => group.items.length), [actor]);
-  const current = groups.flatMap((group) => group.items).find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`));
+
+  const allItems = useMemo(() => groups.flatMap((group) => group.items), [groups]);
+  const current = allItems.find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`));
   const currentTitle = current?.label || "Workspace";
+
   const scopeText = actor.role === "superadmin"
     ? "Seluruh platform"
     : (actor.scopes || []).map((scope) => String(scope.scope_id || "").replaceAll("-", " ")).filter(Boolean).join(", ") || "Belum ada cakupan";
@@ -90,6 +127,12 @@ export default function OwnerWorkspaceShell({ actor, children }) {
     router.replace("/admin");
     router.refresh();
   }
+
+  const filteredCommands = useMemo(() => {
+    if (!commandSearch.trim()) return allItems;
+    const query = commandSearch.toLowerCase();
+    return allItems.filter((item) => item.label.toLowerCase().includes(query) || item.href.toLowerCase().includes(query));
+  }, [allItems, commandSearch]);
 
   function navContent(onNavigate) {
     return (
@@ -129,7 +172,7 @@ export default function OwnerWorkspaceShell({ actor, children }) {
         </div>
         {collapsed ? <button type="button" onClick={() => setCollapsed(false)} aria-label="Perluas menu" title="Perluas menu" className="mx-auto mt-3 rounded-lg p-2 text-slate-400 hover:bg-slate-50"><Menu className="h-4 w-4" /></button> : null}
         <div id="admin-desktop-navigation" className={`mt-4 min-h-0 flex-1 overflow-y-auto ${collapsed ? "px-2" : "px-3"}`}>
-          {collapsed ? <div className="space-y-2">{groups.flatMap((group) => group.items).map((item) => { const Icon = iconByKey[item.key] || LayoutDashboard; return <Link key={item.key} title={item.label} aria-label={item.label} aria-current={current?.key === item.key ? "page" : undefined} href={item.href} className={`mx-auto grid h-11 w-11 place-items-center rounded-xl ${current?.key === item.key ? "bg-emerald-50 text-emerald-800" : "text-slate-500 hover:bg-slate-50"}`}><Icon className="h-[18px] w-[18px]" /></Link>; })}</div> : navContent()}
+          {collapsed ? <div className="space-y-2">{allItems.map((item) => { const Icon = iconByKey[item.key] || LayoutDashboard; return <Link key={item.key} title={item.label} aria-label={item.label} aria-current={current?.key === item.key ? "page" : undefined} href={item.href} className={`mx-auto grid h-11 w-11 place-items-center rounded-xl ${current?.key === item.key ? "bg-emerald-50 text-emerald-800" : "text-slate-500 hover:bg-slate-50"}`}><Icon className="h-[18px] w-[18px]" /></Link>; })}</div> : navContent()}
         </div>
         <div className={`border-t border-slate-100 py-3 ${collapsed ? "px-2" : "px-3"}`}>
           {!collapsed ? <div className="mb-2 rounded-xl bg-emerald-50/70 px-3 py-2.5"><p className="truncate text-xs font-extrabold text-emerald-950">{actor.role === "superadmin" ? "Superadmin" : actor.label}</p><p className="mt-0.5 truncate text-[10px] font-medium text-emerald-800/70">{scopeText}</p></div> : null}
@@ -148,12 +191,97 @@ export default function OwnerWorkspaceShell({ actor, children }) {
       <main className={`min-h-screen ${collapsed ? "lg:pl-[84px]" : "lg:pl-[268px]"}`}>
         <header className="sticky top-0 z-30 flex h-[72px] items-center gap-3 border-b border-slate-200/70 bg-white/90 px-4 backdrop-blur-xl sm:px-7">
           <button type="button" onClick={() => setMobileOpen(true)} className="grid h-10 w-10 place-items-center rounded-xl text-slate-600 hover:bg-slate-100 lg:hidden" aria-label="Buka navigasi admin" aria-haspopup="dialog" aria-expanded={mobileOpen} aria-controls="admin-mobile-navigation"><Menu className="h-5 w-5" /></button>
-          <div className="min-w-0 flex-1"><h1 className="truncate text-base font-black tracking-tight sm:text-lg">{currentTitle}</h1></div>
+          
+          <div className="min-w-0 flex-1 flex items-center gap-3">
+            <h1 className="truncate text-base font-black tracking-tight sm:text-lg">{currentTitle}</h1>
+            
+            {/* Command Palette Trigger Button */}
+            <button
+              type="button"
+              onClick={() => setCommandOpen(true)}
+              className="hidden sm:inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50/80 px-3 py-1.5 text-xs text-slate-500 hover:border-emerald-400 hover:text-slate-800 focus-visible:outline-2 focus-visible:outline-emerald-600 active:opacity-85"
+            >
+              <Search className="h-3.5 w-3.5 text-slate-400" />
+              <span>Cari fitur...</span>
+              <kbd className="rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-mono font-bold text-slate-400">⌘K</kbd>
+            </button>
+          </div>
+
+          {/* Quick Cockpit Shortcuts */}
+          {actor.role === "superadmin" ? (
+            <Link
+              href="/admin/emergency"
+              title="Pusat Kendali Darurat"
+              className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50/70 px-3 py-1.5 text-xs font-bold text-rose-800 transition hover:bg-rose-100"
+            >
+              <ShieldAlert className="h-3.5 w-3.5 text-rose-600" />
+              <span className="hidden md:inline">Pusat Darurat</span>
+            </Link>
+          ) : null}
+
           <ScopeSwitcher actor={actor} />
           <Link href="/" target="_blank" className="inline-flex min-h-10 items-center gap-1.5 rounded-full border border-slate-200 px-3 text-xs font-bold text-slate-600 transition hover:border-emerald-300 hover:text-emerald-800 sm:px-4">Lihat web <ArrowUpRight className="h-3.5 w-3.5" /></Link>
         </header>
+
         <div className="mx-auto max-w-[1480px] px-4 py-5 sm:px-7 sm:py-7">{children}</div>
       </main>
+
+      {/* Global Command Palette Modal (Cmd + K) */}
+      {commandOpen ? (
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-slate-950/45 p-4 pt-[15vh] backdrop-blur-sm" onClick={() => setCommandOpen(false)}>
+          <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-100" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-3">
+              <Search className="h-4 w-4 text-slate-400" />
+              <input
+                ref={commandInputRef}
+                type="text"
+                value={commandSearch}
+                onChange={(e) => setCommandSearch(e.target.value)}
+                placeholder="Lompat ke menu atau ketik nama modul..."
+                className="w-full text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none"
+              />
+              <kbd className="rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-mono text-slate-400">ESC</kbd>
+            </div>
+
+            <div className="max-h-[360px] overflow-y-auto p-2">
+              <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                Menu Workspace ({filteredCommands.length})
+              </div>
+              {filteredCommands.length === 0 ? (
+                <div className="p-4 text-center text-xs text-slate-400">Modul tidak ditemukan</div>
+              ) : (
+                filteredCommands.map((item) => {
+                  const Icon = iconByKey[item.key] || LayoutDashboard;
+                  return (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => {
+                        router.push(item.href);
+                        setCommandOpen(false);
+                      }}
+                      className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-xs font-semibold text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-950 focus:bg-emerald-50 focus:outline-none"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="grid h-7 w-7 place-items-center rounded-lg bg-slate-100 text-slate-600">
+                          <Icon className="h-4 w-4" />
+                        </span>
+                        <span>{item.label}</span>
+                      </div>
+                      <ArrowRight className="h-3.5 w-3.5 text-slate-300" />
+                    </button>
+                  );
+                })
+              )}
+            </div>
+
+            <div className="border-t border-slate-100 bg-slate-50 px-4 py-2 text-[11px] text-slate-400 flex items-center justify-between">
+              <span>Navigasi instan Founder & Superadmin</span>
+              <span><kbd className="font-mono">↵</kbd> pilih</span>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

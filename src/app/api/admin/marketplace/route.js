@@ -120,10 +120,11 @@ export async function PATCH(req) {
   }
   const reviewAction = ["approve", "reject"].includes(action);
   const manageAction = ["suspend", "restore"].includes(action);
+  const vipAction = ["force_bump", "pin_fyp"].includes(action);
   const editAction = action === "edit";
-  if (!id || (!reviewAction && !manageAction && !editAction)) return NextResponse.json({ error: "Aksi marketplace tidak valid." }, { status: 400 });
+  if (!id || (!reviewAction && !manageAction && !editAction && !vipAction)) return NextResponse.json({ error: "Aksi marketplace tidak valid." }, { status: 400 });
   if (reviewAction && !hasAdminPermission(actor, "marketplace", "review")) return NextResponse.json({ error: "Izin review tidak diberikan." }, { status: 403 });
-  if ((manageAction || editAction) && !hasAdminPermission(actor, "marketplace", "manage")) return NextResponse.json({ error: "Izin pengelolaan iklan tidak diberikan." }, { status: 403 });
+  if ((manageAction || editAction || vipAction) && !hasAdminPermission(actor, "marketplace", "manage")) return NextResponse.json({ error: "Izin pengelolaan iklan tidak diberikan." }, { status: 403 });
 
   const supa = getAdminClient();
   const campuses = await getAdminCampusScope(actor);
@@ -140,6 +141,25 @@ export async function PATCH(req) {
   const { data: target, error: targetError } = await targetQuery.maybeSingle();
   if (targetError) return NextResponse.json({ error: "Data iklan belum dapat diperiksa." }, { status: 503 });
   if (!target) return NextResponse.json({ error: "Iklan tidak ditemukan dalam cakupan akun atau statusnya sudah berubah." }, { status: 404 });
+
+  if (vipAction) {
+    const nowIso = new Date().toISOString();
+    const updates = action === "force_bump"
+      ? { created_at: nowIso, updated_at: nowIso, status: "active" }
+      : { is_featured: true, featured_until: new Date(Date.now() + 7 * 86400000).toISOString(), status: "active" };
+
+    const { data: updated, error: vipErr } = await supa.from("listings").update(updates).eq("id", id).select("id, title, status").maybeSingle();
+    if (vipErr) return NextResponse.json({ error: "Gagal menerapkan aksi VIP pada iklan." }, { status: 500 });
+
+    await supa.from("admin_audit_events").insert({
+      actor_id: actor.userId,
+      action: action === "force_bump" ? "marketplace_vip_bump" : "marketplace_vip_pin_fyp",
+      target_id: id,
+      metadata: { action, campus: target.campus },
+    }).catch(() => null);
+
+    return NextResponse.json({ ok: true, item: updated, message: action === "force_bump" ? "Iklan berhasil di-bump ke posisi teratas!" : "Iklan disematkan ke FYP selama 7 hari!" });
+  }
 
   if (editAction) {
     const updates = {};

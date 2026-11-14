@@ -4,8 +4,8 @@ import OverviewView from "@/components/admin/OverviewView";
 
 export const dynamic = "force-dynamic";
 
-export default async function OverviewPage({ searchParams }) {
+export default async function OverviewPage() {
   const actor = await getAdminActor();
   const stats = await getWorkspaceOverview(actor);
-  return <OverviewView stats={stats} actor={actor} legacyNotice={searchParams?.panel === "legacy-disabled"} />;
+  return <OverviewView stats={stats} actor={actor} />;
 }

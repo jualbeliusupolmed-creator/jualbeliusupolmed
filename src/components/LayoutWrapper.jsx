@@ -100,6 +100,34 @@ export default function LayoutWrapper({ children }) {
           "w-full relative overflow-x-clip bg-[#F8FAFC] dark:bg-[#0f172a] text-[#0F172A] dark:text-slate-100 flex flex-col justify-between font-sans",
           isChat ? "h-screen h-dvh overflow-hidden" : "min-h-screen"
         )}>
+          {/* Emergency Alert Banner */}
+          {config?.emergencyBanner?.active && config.emergencyBanner.text ? (
+            <aside
+              role="alert"
+              className={cn(
+                "w-full px-4 py-2 text-center text-xs font-bold transition flex items-center justify-center gap-2 z-50",
+                config.emergencyBanner.level === "danger"
+                  ? "bg-rose-700 text-white shadow-sm"
+                  : config.emergencyBanner.level === "info"
+                  ? "bg-sky-700 text-white shadow-sm"
+                  : "bg-amber-600 text-white shadow-sm"
+              )}
+            >
+              <span className="shrink-0">⚠️</span>
+              <span className="truncate max-w-2xl">{config.emergencyBanner.text}</span>
+              {config.emergencyBanner.link ? (
+                <a
+                  href={config.emergencyBanner.link}
+                  className="underline font-black hover:opacity-85 shrink-0 ml-1"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Selengkapnya ↗
+                </a>
+              ) : null}
+            </aside>
+          ) : null}
+
           {/* Universal Sticky Top Navbar (Desktop 64px h-16, Mobile 56px h-14) */}
           <Navbar config={config} />
 
