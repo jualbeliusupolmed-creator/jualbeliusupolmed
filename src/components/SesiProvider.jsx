@@ -87,10 +87,9 @@ function ambilSesi({ paksa = false } = {}) {
 }
 
 export function SesiProvider({ children }) {
-  // Tebakan awal dari cermin supaya formulir tidak berkedip kosong. Ia
-  // dikoreksi begitu server menjawab — termasuk dikosongkan kalau ternyata
-  // kukinya sudah tidak sah.
-  const [sesi, setSesi] = useState(() => ({ ...bacaCermin(), siap: false, profil: null }));
+  // Selalu mulai dengan kondisi kosong yang konsisten antara SSR dan client hydration,
+  // lalu sinkronkan dengan cermin localStorage segera setelah komponen mount.
+  const [sesi, setSesi] = useState({ wa: "", nama: "", siap: false, profil: null });
 
   const terapkan = useCallback((data) => {
     if (data?.loggedIn && data.wa) {
@@ -106,6 +105,12 @@ export function SesiProvider({ children }) {
   useEffect(() => {
     let hidup = true;
     let pemeriksaanTerakhir = Date.now();
+
+    const cermin = bacaCermin();
+    if (cermin.wa) {
+      setSesi((prev) => (prev.siap ? prev : { ...prev, wa: cermin.wa, nama: cermin.nama }));
+    }
+
     ambilSesi().then((d) => {
       if (hidup) terapkan(d);
     });

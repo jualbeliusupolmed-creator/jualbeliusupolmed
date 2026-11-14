@@ -13,10 +13,11 @@ async function visitorKey(request, clientId) {
 }
 
 export async function POST(request, { params }) {
+  const { id } = await params;
   const body = await request.json().catch(() => ({}));
   const action = body.action;
   const clientId = typeof body.clientId === "string" ? body.clientId : "";
-  if (!params.id || !["view", "share"].includes(action) || !/^[a-zA-Z0-9_-]{8,100}$/.test(clientId)) {
+  if (!id || !["view", "share"].includes(action) || !/^[a-zA-Z0-9_-]{8,100}$/.test(clientId)) {
     return NextResponse.json({ error: "Data engagement tidak valid." }, { status: 400 });
   }
 
@@ -30,7 +31,7 @@ export async function POST(request, { params }) {
 
   let dataResult = null;
   const { data, error } = await getAdminClient().rpc("record_mading_engagement", {
-    target_post_id: params.id,
+    target_post_id: id,
     target_visitor_hash: await visitorKey(request, clientId),
     event_type: action,
   });
@@ -50,7 +51,7 @@ export async function POST(request, { params }) {
     const { data: post, error: fetchErr } = await admin
       .from("mading_posts")
       .select("views_count, shares_count")
-      .eq("id", params.id)
+      .eq("id", id)
       .single();
 
     if (post && !fetchErr) {
@@ -63,7 +64,7 @@ export async function POST(request, { params }) {
           views_count: newViews,
           shares_count: newShares,
         })
-        .eq("id", params.id);
+        .eq("id", id);
 
       return NextResponse.json({
         success: true,

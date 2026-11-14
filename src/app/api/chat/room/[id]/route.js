@@ -41,7 +41,8 @@ async function ambilRoomUntuk(supa, roomId, userId) {
 // GET /api/chat/room/[id]?userId=... - Ambil data ruangan & pesan
 export async function GET(request, { params }) {
   try {
-    const roomId = params.id;
+    const resolvedParams = await params;
+    const roomId = resolvedParams?.id;
     const userId = new URL(request.url).searchParams.get("userId");
 
     const supa = getAdminClient();
@@ -68,7 +69,8 @@ export async function GET(request, { params }) {
 // POST /api/chat/room/[id] - Kirim pesan ke ruangan
 export async function POST(request, { params }) {
   try {
-    const roomId = params.id;
+    const resolvedParams = await params;
+    const roomId = resolvedParams?.id;
     const body = await request.json();
     const { message } = body;
 
@@ -134,7 +136,8 @@ export async function POST(request, { params }) {
 // DELETE /api/chat/room/[id]?userId=... - Tinggalkan / akhiri obrolan
 export async function DELETE(request, { params }) {
   try {
-    const roomId = params.id;
+    const resolvedParams = await params;
+    const roomId = resolvedParams?.id;
     const userId = new URL(request.url).searchParams.get("userId");
 
     const supa = getAdminClient();

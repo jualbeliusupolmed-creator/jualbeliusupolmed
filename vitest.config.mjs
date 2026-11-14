@@ -8,13 +8,10 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     testTimeout: 30000,
-    poolOptions: {
-      forks: {
-        maxForks: 4,
-        minForks: 1,
-      },
-    },
     setupFiles: ['./vitest.setup.mjs'],
+    pool: 'forks',
+    maxWorkers: 4,
+    minWorkers: 1,
     exclude: [
       '**/node_modules/**',
       'OPEN PO/**',
@@ -23,6 +20,7 @@ export default defineConfig({
       '.next/**',
       '.npm-cache/**',
       '.worktrees/**',
+      '.kilo/**',
       'scratch/**',
     ],
     alias: {

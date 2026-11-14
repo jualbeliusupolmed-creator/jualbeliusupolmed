@@ -7,7 +7,7 @@ const isMissingRoleAssignments = (error) => ["42P01", "PGRST205"].includes(error
 
 export async function getAdminActor() {
   try {
-    const session = getAdminSession();
+    const session = await getAdminSession();
     if (!session) return null;
 
     const admin = getAdminClient();

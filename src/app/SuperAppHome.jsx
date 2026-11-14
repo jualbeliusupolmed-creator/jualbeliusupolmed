@@ -78,6 +78,11 @@ export default function SuperAppHome({
   const router = useRouter();
   const { wa: userWa, profil } = useSesi();
   const [, startTransition] = useTransition();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     if (profil) {
@@ -969,7 +974,7 @@ export default function SuperAppHome({
               >
                 {savingOnboarding ? "Menyimpan Acuan..." : "Simpan Acuan & Mulai Belanja"}
               </button>
-              {typeof window !== "undefined" &&
+              {isMounted &&
                 Boolean(localStorage.getItem("preferred_campus")) &&
                 !["null", "Semua"].includes(localStorage.getItem("preferred_campus")) && (
                 <button
@@ -1495,7 +1500,7 @@ export default function SuperAppHome({
                         {post.faculty || "Mahasiswa"}
                       </span>
                     </div>
-                    <time className="text-[10px] text-slate-400">{waktuLalu(post.created_at)}</time>
+                    <time suppressHydrationWarning className="text-[10px] text-slate-400">{waktuLalu(post.created_at)}</time>
                   </div>
 
                   {post.title && (

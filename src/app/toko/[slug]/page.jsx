@@ -90,7 +90,8 @@ async function ambilToko(slug, sessionIdentity = null) {
 }
 
 export async function generateMetadata({ params }) {
-  const data = await ambilToko(params.slug);
+  const { slug } = await params;
+  const data = await ambilToko(slug);
   if (!data) return { title: "Toko tidak ditemukan" };
 
   const { profil, aktif } = data;
@@ -159,8 +160,9 @@ function Info({ ikon, label, children }) {
 }
 
 export default async function HalamanToko({ params }) {
+  const { slug } = await params;
   const sessionIdentity = await getSellerSessionAsync();
-  const data = await ambilToko(params.slug, sessionIdentity);
+  const data = await ambilToko(slug, sessionIdentity);
   if (!data) notFound();
 
   const { profil, aktif, terjual, jumlahTerjual, ulasan, rataUlasan } = data;

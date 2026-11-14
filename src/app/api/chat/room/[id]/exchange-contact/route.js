@@ -11,8 +11,9 @@ export const dynamic = "force-dynamic";
 // POST /api/chat/room/[id]/exchange-contact
 // Fitur Saling Setuju Lanjut DM Pribadi di Website (Mutual Consent Direct Message)
 export async function POST(request, { params }) {
+  const { id } = await params;
   try {
-    const roomId = params.id;
+    const roomId = id;
     if (!roomId) {
       return NextResponse.json({ error: "Room ID diperlukan" }, { status: 400 });
     }

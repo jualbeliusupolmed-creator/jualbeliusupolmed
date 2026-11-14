@@ -56,6 +56,7 @@ async function fetchSafeListingPhoto(url, isStory = false) {
 
 // JPEG publik & admin untuk Meta Story / Feed. Data privat penjual tidak pernah dirender.
 export async function GET(request, { params }) {
+  const { id } = await params;
   const { searchParams } = new URL(request.url);
   const ratio = searchParams.get("ratio") === "story" ? "story" : "portrait";
   const isDownload = searchParams.get("download") === "1";
@@ -63,7 +64,7 @@ export async function GET(request, { params }) {
   const { data: listing, error } = await getAdminClient()
     .from("listings")
     .select("id, title, price, category, type, campus, area, image_url, images, status")
-    .eq("id", params.id)
+    .eq("id", id)
     .in("status", ["active", "pending", "sold"])
     .maybeSingle();
 
