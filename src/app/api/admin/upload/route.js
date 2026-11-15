@@ -7,7 +7,7 @@ import { uploadMedia } from "@/lib/mediaStorage";
 
 export const dynamic = "force-dynamic";
 
-const MAX_SIZE = 5 * 1024 * 1024;
+const MAX_SIZE = 50 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"];
 
 export async function POST(req) {
@@ -34,7 +34,9 @@ export async function POST(req) {
     }
 
     const webpBuffer = await sharp(Buffer.from(arrayBuffer))
-      .webp({ quality: 82 })
+      .rotate()
+      .resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true })
+      .webp({ quality: 82, effort: 3 })
       .toBuffer();
 
     const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;

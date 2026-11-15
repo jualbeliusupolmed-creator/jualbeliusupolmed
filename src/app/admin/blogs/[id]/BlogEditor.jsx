@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import { useBasisAdmin, useModeDemo } from "@/components/admin/basis";
+import { compressImage } from "@/lib/image";
 
 function autoSlug(val) {
   return val
@@ -70,11 +71,11 @@ export default function BlogEditor({ initialBlog }) {
   async function handleImageUpload(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) return alert("Ukuran gambar maksimal 5MB");
     setUploading(true);
     try {
+      const compressed = await compressImage(file);
       const fd = new FormData();
-      fd.append("file", file);
+      fd.append("file", compressed);
       fd.append("bucket", "blog-images");
       const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
       const data = await res.json();
@@ -213,7 +214,7 @@ export default function BlogEditor({ initialBlog }) {
                     <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
                   </svg>
                   <span className="text-sm font-medium text-gray-600 dark:text-slate-300">Klik untuk upload gambar sampul</span>
-                  <span className="text-xs text-gray-400">JPG, PNG, WebP — maks 5MB · Otomatis dikonversi ke WebP</span>
+                  <span className="text-xs text-gray-400">JPG, PNG, WebP · Otomatis dioptimalkan ke WebP</span>
                 </>
               )}
               <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />

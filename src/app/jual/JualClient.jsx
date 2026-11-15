@@ -57,7 +57,7 @@ export default function JualPage() {
   const [sellerIsDistributor, setSellerIsDistributor] = useState(false);
   const [sellerPunyaToko, setSellerPunyaToko] = useState(false);
 
-  const { wa: sesiWa, nama: sesiNama, siap: sesiSiap, segarkan: segarkanSesi, tunggu: tungguSesi } = useSesi();
+  const { wa: sesiWa, nama: sesiNama, siap: sesiSiap, profil, segarkan: segarkanSesi, tunggu: tungguSesi } = useSesi();
 
   useEffect(() => {
     try {
@@ -266,13 +266,17 @@ export default function JualPage() {
     try {
       const images = await uploadMedia(media);
       const image_url = images[0] || null;
-      const effectiveArea = form.area?.trim() || (form.campus && form.campus !== "Semua" ? `Sekitar Kampus ${form.campus}` : "Sekitar Kampus");
+      const effectiveCampus = profil?.campus || (typeof window !== "undefined" ? localStorage.getItem("preferred_campus") : "") || "USU";
+      const effectiveUnivId = profil?.home_university_id || (typeof window !== "undefined" ? localStorage.getItem("preferred_university_id") : "") || "usu";
+      const effectiveArea = form.area?.trim() || (effectiveCampus && effectiveCampus !== "Semua" ? `Sekitar Kampus ${effectiveCampus}` : "Sekitar Kampus");
 
       const res = await fetch("/api/listings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
+          campus: effectiveCampus,
+          home_university_id: effectiveUnivId,
           area: effectiveArea,
           seller_wa: formattedWa,
           image_url,

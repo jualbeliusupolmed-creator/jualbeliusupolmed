@@ -9,6 +9,7 @@ import { playChatSound, playSentSound } from "@/lib/sound";
 import { hapticLight, hapticSuccess } from "@/lib/haptics";
 import Link from "next/link";
 import { useSesi } from "@/components/SesiProvider";
+import { compressImage } from "@/lib/image";
 
 function waktuRelatif(iso) {
   if (!iso) return "";
@@ -509,17 +510,13 @@ function ChatContent() {
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("Ukuran foto maksimal 10 MB.");
-      return;
-    }
-
     setUploadingImg(true);
-    const toastId = toast.loading("Mengunggah foto...");
+    const toastId = toast.loading("Mengompres & mengunggah foto...");
 
     try {
+      const compressed = await compressImage(file);
       const fd = new FormData();
-      fd.append("file", file);
+      fd.append("file", compressed);
       const res = await fetch("/api/upload", {
         method: "POST",
         body: fd,

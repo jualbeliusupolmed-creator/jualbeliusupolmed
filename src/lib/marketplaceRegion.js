@@ -49,25 +49,84 @@ export async function loadProfileMarketplaceRegion(supa, profile) {
       item.shortName.toLowerCase() === String(legacyCampusValue).trim().toLowerCase() ||
       String(item.id || "").trim().toLowerCase() === String(legacyCampusValue).trim().toLowerCase()
     );
-    universityId = legacyCampus?.id || null;
+    universityId = legacyCampus?.id || String(legacyCampusValue).trim().toLowerCase();
   }
-  if (!universityId) return { profile, province: null, university: null };
+
+  const profileProvince = profile?.marketplace_province_id || profile?.fyp_province_id;
+
+  if (!universityId) {
+    if (profileProvince) {
+      return { profile, province: profileProvince, university: null };
+    }
+    return { profile, province: null, university: null };
+  }
 
   const university = await loadUniversityProvince(supa, universityId);
-  if (!university || !university.province_id) return { profile, province: null, university: null };
+  if (!university || !university.province_id) {
+    if (profileProvince) {
+      return { profile, province: profileProvince, university: university || null };
+    }
+    return { profile, province: null, university: null };
+  }
 
   return { profile, province: university.province_id, university };
 }
 
 export async function loadUniversityProvince(supa, universityId) {
   if (!universityId) return null;
-  const { data, error } = await supa
-    .from("universities")
-    .select("id, code, name, province_id, status")
-    .eq("id", universityId)
-    .maybeSingle();
-  if (error) throw new Error("Provinsi kampus akun belum dapat diperiksa.");
-  return data || null;
+  const cleanId = String(universityId).trim();
+  const lowerId = cleanId.toLowerCase();
+
+  // 1. Coba pencarian langsung berdasarkan ID huruf kecil di tabel universities
+  try {
+    const { data } = await supa
+      .from("universities")
+      .select("id, code, name, province_id, status")
+      .eq("id", lowerId)
+      .maybeSingle();
+    if (data?.province_id) return data;
+  } catch {}
+
+  // 2. Coba pencarian berdasarkan code (misal "USU", "POLMED")
+  try {
+    const { data: byCode } = await supa
+      .from("universities")
+      .select("id, code, name, province_id, status")
+      .eq("code", cleanId.toUpperCase())
+      .maybeSingle();
+    if (byCode?.province_id) return byCode;
+  } catch {}
+
+  // 3. Fallback ke settings.campuses jika di database belum tersinkron
+  try {
+    const settings = await getSettings();
+    const activeCampuses = getActiveCampuses(settings);
+    const matched = activeCampuses.find(
+      (c) =>
+        c.id?.toLowerCase() === lowerId ||
+        c.shortName?.toLowerCase() === lowerId ||
+        c.name?.toLowerCase() === lowerId
+    );
+    if (matched?.provinceId) {
+      return {
+        id: matched.id?.toLowerCase() || lowerId,
+        code: matched.shortName || cleanId.toUpperCase(),
+        name: matched.name,
+        province_id: matched.provinceId,
+        status: "active",
+      };
+    }
+  } catch {}
+
+  // 4. Fallback aman kampus bawaan (Sumatera Utara)
+  if (lowerId === "usu" || cleanId.toUpperCase() === "USU") {
+    return { id: "usu", code: "USU", name: "Universitas Sumatera Utara", province_id: "sumatera-utara", status: "active" };
+  }
+  if (lowerId === "polmed" || cleanId.toUpperCase() === "POLMED") {
+    return { id: "polmed", code: "POLMED", name: "Politeknik Negeri Medan", province_id: "sumatera-utara", status: "active" };
+  }
+
+  return null;
 }
 
 export async function loadProvinceMarketplaceScope(supa, provinceId) {
