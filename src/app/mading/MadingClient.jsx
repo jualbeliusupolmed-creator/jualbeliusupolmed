@@ -11,6 +11,7 @@ import { rupiah } from "@/lib/fees";
 import UnduhMenfessModal from "@/components/mading/UnduhMenfessModal";
 import MenfessReplySection from "@/components/mading/MenfessReplySection";
 import { cn } from "@/lib/utils";
+import { compressImage } from "@/lib/image";
 
 export default function MadingClient({ initialPosts = [] }) {
   const [activeTab, setActiveTab] = useState("all"); // 'all' | 'menfess' | 'info' | 'organisasi' | 'blog'
@@ -1191,7 +1192,7 @@ export default function MadingClient({ initialPosts = [] }) {
                     <label htmlFor="mading-image" className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
                       Foto (opsional)
                     </label>
-                    <span className="text-[10px] text-slate-400">JPG, PNG, WebP, atau GIF · maks. 5 MB</span>
+                    <span className="text-[10px] text-slate-400">JPG, PNG, WebP · Otomatis dioptimalkan</span>
                   </div>
                   {imagePreview ? (
                     <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
@@ -1214,16 +1215,17 @@ export default function MadingClient({ initialPosts = [] }) {
                     type="file"
                     accept="image/jpeg,image/png,image/webp,image/gif"
                     className="sr-only"
-                    onChange={(event) => {
+                    onChange={async (event) => {
                       const file = event.target.files?.[0];
                       if (!file) return;
-                      if (file.size > 5 * 1024 * 1024) {
-                        toast.error("Foto maksimal 5 MB.");
-                        event.target.value = "";
-                        return;
+                      try {
+                        const compressed = await compressImage(file);
+                        setImageFile(compressed);
+                        setImagePreview(URL.createObjectURL(compressed));
+                      } catch {
+                        setImageFile(file);
+                        setImagePreview(URL.createObjectURL(file));
                       }
-                      setImageFile(file);
-                      setImagePreview(URL.createObjectURL(file));
                     }}
                   />
                 </div>

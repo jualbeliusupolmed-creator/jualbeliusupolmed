@@ -214,7 +214,7 @@ export default function BroadcastPanel({ sellers }) {
                 <p className="text-sm font-medium dark:text-gray-300">
                   {imageFile ? imageFile.name : "Klik untuk pilih gambar"}
                 </p>
-                <p className="text-xs text-gray-400">JPG, PNG, WebP · Maks 5 MB · Otomatis dikonversi ke WebP</p>
+                <p className="text-xs text-gray-400">JPG, PNG, WebP · Otomatis dikonversi ke WebP</p>
               </div>
               <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
             </label>

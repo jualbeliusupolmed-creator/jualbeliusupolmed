@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { compressImage, validateImageFile } from "@/lib/image";
 
 // Uploader multi-foto terkontrol. Parent memegang array `media` berisi item
@@ -11,29 +12,49 @@ export default function MediaUploader({
   error,
   setError,
 }) {
+  const [compressing, setCompressing] = useState(false);
+
   async function onPick(e) {
     const files = Array.from(e.target.files || []);
     e.target.value = "";
     setError?.("");
-    const next = [...media];
-    for (const f of files) {
-      if (next.length >= max) {
-        setError?.(`Maksimal ${max} foto.`);
-        break;
-      }
-      const err = validateImageFile(f);
-      if (err) {
-        setError?.(err);
-        continue;
-      }
-      try {
-        const c = await compressImage(f);
-        next.push({ file: c, preview: URL.createObjectURL(c) });
-      } catch {
-        next.push({ file: f, preview: URL.createObjectURL(f) });
-      }
+    if (!files.length) return;
+
+    const remainingSlots = max - media.length;
+    if (remainingSlots <= 0) {
+      setError?.(`Maksimal ${max} foto.`);
+      return;
     }
-    setMedia(next);
+
+    const filesToProcess = files.slice(0, remainingSlots);
+    if (files.length > remainingSlots) {
+      setError?.(`Hanya ${remainingSlots} foto lagi yang dapat ditambahkan (maksimal ${max}).`);
+    }
+
+    setCompressing(true);
+    try {
+      const processed = await Promise.all(
+        filesToProcess.map(async (f) => {
+          const err = validateImageFile(f);
+          if (err) {
+            setError?.(err);
+            return null;
+          }
+          try {
+            const c = await compressImage(f);
+            return { file: c, preview: URL.createObjectURL(c) };
+          } catch {
+            return { file: f, preview: URL.createObjectURL(f) };
+          }
+        })
+      );
+      const valid = processed.filter(Boolean);
+      if (valid.length) {
+        setMedia([...media, ...valid]);
+      }
+    } finally {
+      setCompressing(false);
+    }
   }
 
   function remove(i) {
@@ -99,12 +120,22 @@ export default function MediaUploader({
         ))}
 
         {media.length < max && (
-          <label className="grid aspect-square cursor-pointer place-items-center rounded-xl border-2 border-dashed border-gray-300 text-center hover:border-emerald-600 transition-colors focus-within:ring-2 focus-within:ring-emerald-600 focus-within:ring-offset-2">
-            <span className="text-xs text-gray-500 font-semibold">+ Tambah</span>
+          <label className={`grid aspect-square cursor-pointer place-items-center rounded-xl border-2 border-dashed border-gray-300 text-center transition-colors focus-within:ring-2 focus-within:ring-emerald-600 focus-within:ring-offset-2 ${
+            compressing ? "bg-emerald-50/50 border-emerald-300 cursor-wait" : "hover:border-emerald-600"
+          }`}>
+            {compressing ? (
+              <div className="flex flex-col items-center gap-1">
+                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
+                <span className="text-[10px] text-emerald-700 font-semibold">Mengompres…</span>
+              </div>
+            ) : (
+              <span className="text-xs text-gray-500 font-semibold">+ Tambah</span>
+            )}
             <input
               type="file"
               accept="image/*"
               multiple
+              disabled={compressing}
               onChange={onPick}
               className="hidden"
             />

@@ -217,17 +217,54 @@ export async function POST(req) {
     }
 
     // Cek status distributor & profil akun yang sedang login
-    const { data: profileCheck } = await supa
-      .from("seller_profiles")
-      .select("distributor, name, subscription_tier, subscription_expires_at, user_id, home_university_id, verified_university_id, affiliation_status, campus")
-      .eq("wa", sessionWa)
-      .maybeSingle();
     const region = await loadMarketplaceRegion(supa, sessionWa);
-    const sellerUniversityId = (region.profile?.affiliation_status === "verified_student" || region.profile?.student_verified) && region.profile?.verified_university_id
-      ? region.profile.verified_university_id
-      : profileCheck?.home_university_id;
-    if (!sellerUniversityId || !region.province) {
+    const profileCheck = region.profile || (await findSellerProfileBySession(
+      supa,
+      sessionWa,
+      "wa, phone_wa, distributor, name, subscription_tier, subscription_expires_at, user_id, home_university_id, verified_university_id, affiliation_status, campus, fyp_province_id"
+    ))?.data;
+
+    let sellerUniversityId = (profileCheck?.affiliation_status === "verified_student" || profileCheck?.student_verified) && profileCheck?.verified_university_id
+      ? profileCheck.verified_university_id
+      : (profileCheck?.home_university_id || region.university?.id);
+
+    let sellerProvince = region.province || profileCheck?.fyp_province_id;
+
+    // Fallback jika profil belum memiliki kampus tapi dikirimkan lewat form (campus / home_university_id)
+    if ((!sellerUniversityId || !sellerProvince) && (body.campus || body.home_university_id)) {
+      const fallbackUniv = await loadUniversityProvince(supa, body.home_university_id || body.campus);
+      if (fallbackUniv) {
+        sellerUniversityId = sellerUniversityId || fallbackUniv.id;
+        sellerProvince = sellerProvince || fallbackUniv.province_id;
+      }
+    }
+
+    // Default darurat jika pengguna memiliki kampus tertera (misal USU / Polmed)
+    if (!sellerUniversityId || !sellerProvince) {
+      const fallbackCampus = profileCheck?.campus || body.campus || "USU";
+      const fallbackUniv = await loadUniversityProvince(supa, fallbackCampus);
+      if (fallbackUniv) {
+        sellerUniversityId = sellerUniversityId || fallbackUniv.id;
+        sellerProvince = sellerProvince || fallbackUniv.province_id;
+      }
+    }
+
+    if (!sellerUniversityId || !sellerProvince) {
       return NextResponse.json({ error: "Pilih universitas acuan di profil sebelum memasang barang. Barang hanya tayang di provinsi kampusmu." }, { status: 409 });
+    }
+
+    // Auto-heal profil di database jika home_university_id / fyp_province_id masih kosong
+    if (profileCheck && (!profileCheck.home_university_id || !profileCheck.fyp_province_id)) {
+      try {
+        const query = supa.from("seller_profiles");
+        if (typeof query?.update === "function") {
+          query.update({
+            home_university_id: profileCheck.home_university_id || sellerUniversityId,
+            fyp_province_id: profileCheck.fyp_province_id || sellerProvince,
+            campus: profileCheck.campus || region.university?.code || body.campus || "USU",
+          }).eq("wa", profileCheck.wa || sessionWa).then?.(() => {}).catch?.(() => {});
+        }
+      } catch {}
     }
     const isDistributor = !!profileCheck?.distributor;
 
@@ -374,17 +411,15 @@ export async function POST(req) {
 
     // Penjual tidak memilih kampus tujuan. Wilayah listing selalu mengikuti
     // universitas kanonikal akun; pembeli satu provinsi dapat menemukannya.
-    const resolvedCampus = region.university.code || profileCheck?.campus || "";
-    const resolvedUniversityId = region.university.id;
-    if (!resolvedCampus || !resolvedUniversityId) {
-      return NextResponse.json({ error: "Kampus acuan akun belum lengkap. Lengkapi profil sebelum memasang barang." }, { status: 409 });
-    }
+    const resolvedCampus = region.university?.code || profileCheck?.campus || body.campus || "USU";
+    const resolvedUniversityId = sellerUniversityId || region.university?.id || "usu";
+    const resolvedProvinceId = sellerProvince || region.province || "sumatera-utara";
 
     const insertPayload = {
-      user_id: profile?.user_id || null,
+      user_id: profileCheck?.user_id || null,
       university_id: resolvedUniversityId,
-      seller_university_id: region.university.id,
-      seller_province_id: region.province,
+      seller_university_id: resolvedUniversityId,
+      seller_province_id: resolvedProvinceId,
       seller_name: enforcedName,
       seller_wa: effectiveWa,
       title: cleanedTitle,

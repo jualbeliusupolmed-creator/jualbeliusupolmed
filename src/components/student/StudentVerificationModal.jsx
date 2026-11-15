@@ -5,6 +5,7 @@ import { Icon } from "@/components/Icons";
 import { toast } from "sonner";
 import { detectCampusFromEmail } from "@/lib/studentVerification";
 import { useFocusTrap } from "@/lib/useFocusTrap";
+import { compressImage } from "@/lib/image";
 
 export default function StudentVerificationModal({ isOpen, onClose, onVerified, initialData = null }) {
   const [campus, setCampus] = useState(initialData?.student_campus || "");
@@ -39,15 +40,11 @@ export default function StudentVerificationModal({ isOpen, onClose, onVerified, 
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Ukuran foto maksimal 5 MB");
-      return;
-    }
-
     try {
       setUploading(true);
+      const compressed = await compressImage(file);
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", compressed);
 
       const res = await fetch("/api/upload", {
         method: "POST",

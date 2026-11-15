@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Icon } from "@/components/Icons";
 import { toast } from "sonner";
 import imageCompression from "browser-image-compression";
+import { compressImage } from "@/lib/image";
 import { AKSEN, statusToko } from "@/lib/toko";
 import { normalizeTemanIntent } from "@/lib/temanIntents";
 import StudentVerificationModal from "@/components/student/StudentVerificationModal";
@@ -49,12 +50,15 @@ const KATEGORI_UKM = [
   { id: "sosial_lingkungan", label: "Sosial & Lingkungan" },
 ];
 
-// Satu jalur unggah untuk foto profil, logo, dan sampul. Dipampatkan di
-// peramban lebih dulu: foto kamera ponsel rutin 4–8 MB, dan mengunggahnya utuh
-// lewat kuota mahasiswa adalah cara paling cepat membuat orang menyerah di
-// tengah jalan.
+// Satu jalur unggah cepat untuk foto profil, logo, dan sampul. Dipampatkan di
+// peramban lebih dulu dengan hardware-accelerated canvas ke format WebP.
 async function unggahGambar(berkas, { maks = 0.4, sisi = 900 } = {}) {
-  const kecil = await imageCompression(berkas, { maxSizeMB: maks, maxWidthOrHeight: sisi, useWebWorker: true });
+  let kecil;
+  try {
+    kecil = await compressImage(berkas, { maxSizePx: sisi, quality: 0.8 });
+  } catch {
+    kecil = await imageCompression(berkas, { maxSizeMB: maks, maxWidthOrHeight: sisi, useWebWorker: true });
+  }
   const fd = new FormData();
   fd.append("file", kecil, berkas.name);
   const res = await fetch("/api/upload", { method: "POST", body: fd });

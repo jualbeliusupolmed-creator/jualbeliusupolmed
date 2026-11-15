@@ -12,8 +12,8 @@ function secret() {
     if (process.env.NODE_ENV === "production" && process.env.VERCEL === "1") {
       throw new Error(
         "ADMIN_PASSWORD environment variable is not set. " +
-          "This is a critical security issue. " +
-          "Please set ADMIN_PASSWORD in your environment variables."
+        "This is a critical security issue. " +
+        "Please set ADMIN_PASSWORD in your environment variables."
       );
     }
     if (process.env.NODE_ENV !== "test") {
@@ -28,13 +28,13 @@ function secret() {
     if (process.env.NODE_ENV === "production" && process.env.VERCEL === "1") {
       throw new Error(
         "ADMIN_PASSWORD harus minimal 16 karakter. " +
-          "Gunakan: openssl rand -base64 24"
+        "Gunakan: openssl rand -base64 24"
       );
     }
     if (process.env.NODE_ENV !== "test") {
       console.warn(
         "[SECURITY WARNING] ADMIN_PASSWORD terlalu pendek (< 16 karakter). " +
-          "Gunakan: openssl rand -base64 24"
+        "Gunakan: openssl rand -base64 24"
       );
     }
   }
@@ -125,9 +125,8 @@ function bacaSesiAdmin(nilai) {
   }
 }
 
-export async function setAdminCookie(userId) {
-  const cookieStore = await cookies();
-  cookieStore.set(COOKIE, buatTokenAdmin(userId), {
+export function setAdminCookie(userId) {
+  cookies().set(COOKIE, buatTokenAdmin(userId), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",

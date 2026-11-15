@@ -24,7 +24,7 @@ const ALLOWED_TYPES = {
   ],
 };
 
-const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+const MAX_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB (tanpa pembatasan ketat, kompres otomatis)
 
 /**
  * Validates file magic bytes to ensure it's actually an image.
@@ -101,9 +101,11 @@ export async function POST(req) {
       );
     }
 
-    // Convert to WebP using sharp
+    // Convert to WebP using sharp with auto-resize to max 1600px for speed & quality
     const processedBuffer = await sharp(Buffer.from(arrayBuffer))
-      .webp({ quality: 80 })
+      .rotate()
+      .resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true })
+      .webp({ quality: 80, effort: 3 })
       .toBuffer();
 
     const path = `listings/${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
