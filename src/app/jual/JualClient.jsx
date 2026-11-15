@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Icon } from "@/components/Icons";
 import { adFeeFrom, rupiah } from "@/lib/fees";
 import { uploadMedia } from "@/lib/upload";
 import MediaUploader from "@/components/MediaUploader";
-import { CATEGORIES, formatWa } from "@/lib/constants";
+import { CATEGORIES, formatWa, parseWaInput } from "@/lib/constants";
 import { buildSlug } from "@/lib/slug";
 import {
   buildListingDescriptionTemplate,
@@ -35,6 +35,12 @@ const INITIAL_FORM = {
   specs: {},
 };
 
+function getCategoryFeeLabel(category, pricing, isFreeMode, sellerIsDistributor, sellerPunyaToko) {
+  if (isFreeMode || sellerIsDistributor || sellerPunyaToko) return "GRATIS";
+  const fee = adFeeFrom(pricing, "barang", 0);
+  return fee > 0 ? `Rp ${fee.toLocaleString("id-ID")}` : "GRATIS";
+}
+
 export default function JualPage() {
   const router = useRouter();
   const [form, setForm] = useState(() => ({ ...INITIAL_FORM, specs: {} }));
@@ -52,12 +58,20 @@ export default function JualPage() {
   const [draftReady, setDraftReady] = useState(false);
   const [draftStatus, setDraftStatus] = useState("");
   const [hasRecoveredDraft, setHasRecoveredDraft] = useState(false);
+  const [showCampusWarning, setShowCampusWarning] = useState(false);
 
   const [cfg, setCfg] = useState(null);
   const [sellerIsDistributor, setSellerIsDistributor] = useState(false);
   const [sellerPunyaToko, setSellerPunyaToko] = useState(false);
 
   const { wa: sesiWa, nama: sesiNama, siap: sesiSiap, profil, segarkan: segarkanSesi, tunggu: tungguSesi } = useSesi();
+
+  // Auto-format WA input as user types
+  const handleWaChange = useCallback((e) => {
+    const raw = e.target.value;
+    const formatted = parseWaInput(raw);
+    setForm((f) => ({ ...f, seller_wa: formatted }));
+  }, []);
 
   useEffect(() => {
     try {
@@ -139,6 +153,12 @@ export default function JualPage() {
       .catch(() => {});
   }, [sesiSiap, sesiWa, sesiNama]);
 
+  // Check campus requirement
+  useEffect(() => {
+    const hasCampus = profil?.campus || (typeof window !== "undefined" ? localStorage.getItem("preferred_campus") : "");
+    setShowCampusWarning(!hasCampus || hasCampus === "Semua");
+  }, [profil]);
+
   const cats = cfg?.categories?.length ? cfg.categories : CATEGORIES;
   const adFeeFor = (type, price = 0) => adFeeFrom(cfg?.pricing, type, price);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -176,7 +196,7 @@ export default function JualPage() {
     }
     const formatted = formatWa(form.seller_wa);
     if (!formatted && !sesiWa) {
-      toast.error("Masukkan nomor WhatsApp yang valid (contoh: 081234567890).");
+      toast.error("Format: 0812-3456-7890 atau 6281234567890");
       return false;
     }
     return true;
@@ -236,27 +256,23 @@ export default function JualPage() {
 
     if (!validateListingDetails()) return;
 
+    // Fix #1: Auto-multiply price < 1000 instead of confirm dialog
     const numPrice = Number(form.price);
     if (form.type !== "gratis" && form.category !== "Hibah" && numPrice > 0 && numPrice < 1000) {
-      const autoCorrect = confirm(
-        `Harga tertera Rp ${numPrice.toLocaleString("id-ID")}. Apakah maksud kamu Rp ${(numPrice * 1000).toLocaleString("id-ID")}? Klik OK untuk menyesuaikan otomatis, atau Cancel jika memang Rp ${numPrice}.`
-      );
-      if (autoCorrect) {
-        setForm((f) => ({ ...f, price: String(numPrice * 1000) }));
-        form.price = String(numPrice * 1000);
-      }
+      const correctedPrice = numPrice * 1000;
+      setForm((f) => ({ ...f, price: String(correctedPrice) }));
+      toast.info(`Harga otomatis disesuaikan: Rp ${correctedPrice.toLocaleString("id-ID")}`);
+      // Continue with corrected price
     }
 
     const waSesi = sesiSiap ? sesiWa : await tungguSesi();
 
-    // Jika belum login, buka modal autentikasi
     if (!waSesi) {
       setAuthIntent("submit");
       setShowAuthModal(true);
       return;
     }
 
-    // Jika sudah login, langsung tayangkan atas nama akun aktif
     const targetWa = formatWa(form.seller_wa) || waSesi;
     await processListing(targetWa);
   }
@@ -285,16 +301,31 @@ export default function JualPage() {
       });
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error || "Gagal membuat listing");
+      if (!res.ok) {
+        // Fix #6: Specific error messages
+        const errorMsg = data.error || "Gagal membuat listing";
+        if (errorMsg.includes("universitas") || errorMsg.includes("kampus") || errorMsg.includes("provinsi")) {
+          toast.error("Pilih kampus di Profil terlebih dahulu", { duration: 5000 });
+          setShowCampusWarning(true);
+        } else if (errorMsg.includes("session") || errorMsg.includes("login")) {
+          toast.error("Sesi berakhir, silakan login lagi");
+          setShowAuthModal(true);
+        } else {
+          throw new Error(errorMsg);
+        }
+        return;
+      }
 
       clearSavedDraft();
       localStorage.setItem("seller_wa", formattedWa);
       localStorage.setItem("seller_name", form.seller_name);
 
+      // Fix #4: Redirect to /produk/{slug} after successful posting
+      const productSlug = buildSlug(data.listing?.title || form.title, data.listing?.id);
+      const goToProduct = (data.listing?.id) ? `/produk/${productSlug}` : `/dashboard?wa=${encodeURIComponent(sesiWa || formattedWa)}`;
+
       if (data.pending_review || data.listing?.status === "pending") {
-        toast.success(
-          data.message || "Iklan dikirim dan sedang menunggu peninjauan. Pantau statusnya di Dashboard."
-        );
+        toast.success(data.message || "Iklan dikirim dan sedang menunggu peninjauan. Pantau statusnya di Dashboard.");
         router.push(`/dashboard?wa=${encodeURIComponent(sesiWa || formattedWa)}`);
         return;
       }
@@ -302,24 +333,19 @@ export default function JualPage() {
       if (data.isDistributor) {
         const feeInfo = data.distributorFee > 0 ? ` Fee bagi hasil: ${rupiah(data.distributorFee)}` : "";
         toast.success(`Barang berhasil ditayangkan! (Gratis via Distributor)${feeInfo}`);
-        router.push(`/dashboard?wa=${encodeURIComponent(sesiWa || formattedWa)}`);
+        router.push(goToProduct);
         return;
       }
 
       if (data.punyaToko) {
         toast.success("Barang langsung ditayangkan — gratis karena kamu punya toko!");
-        router.push(`/dashboard?wa=${encodeURIComponent(sesiWa || formattedWa)}`);
+        router.push(goToProduct);
         return;
       }
 
       if (data.isPro || data.isFreeMode || gratis) {
         toast.success("Barang berhasil ditayangkan! (100% Gratis - Pasar Bebas)");
-        const productSlug = buildSlug(data.listing?.title || form.title, data.listing?.id);
-        if (data.listing?.id) {
-          router.push(`/produk/${productSlug}`);
-        } else {
-          router.push(`/dashboard?wa=${encodeURIComponent(sesiWa || formattedWa)}`);
-        }
+        router.push(goToProduct);
         return;
       }
 
@@ -368,30 +394,46 @@ export default function JualPage() {
             {draftReady ? draftStatus || "Draft tersimpan otomatis di browser ini." : "Menyiapkan draft…"}
           </p>
           {draftReady && hasRecoveredDraft && (
-            <button
-              type="button"
-              onClick={() => {
-                try {
-                  localStorage.removeItem(DRAFT_KEY);
-                  setForm((current) => ({
-                    ...INITIAL_FORM,
-                    seller_name: current.seller_name,
-                    seller_wa: current.seller_wa,
-                    specs: {},
-                  }));
-                  setMedia([]);
-                  setHasRecoveredDraft(false);
-                  setDraftStatus("Draft sebelumnya dibersihkan.");
-                } catch (error) {
-                  console.error("Gagal menghapus draft iklan:", error);
-                }
-              }}
-              className="text-xs font-semibold text-slate-500 underline hover:text-slate-800 dark:hover:text-white active:opacity-70"
-            >
-              Hapus draft
-            </button>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">✓ Draft dipulihkan</span>
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    localStorage.removeItem(DRAFT_KEY);
+                    setForm((current) => ({
+                      ...INITIAL_FORM,
+                      seller_name: current.seller_name,
+                      seller_wa: current.seller_wa,
+                      specs: {},
+                    }));
+                    setMedia([]);
+                    setHasRecoveredDraft(false);
+                    setDraftStatus("Draft sebelumnya dibersihkan.");
+                  } catch (error) {
+                    console.error("Gagal menghapus draft iklan:", error);
+                  }
+                }}
+                className="text-xs font-semibold text-slate-500 underline hover:text-slate-800 dark:hover:text-white active:opacity-70"
+              >
+                Hapus draft
+              </button>
+            </div>
           )}
         </div>
+
+        {/* Fix #2: Campus warning banner */}
+        {showCampusWarning && (
+          <div className="mt-3 p-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300">
+            <div className="flex items-center gap-2">
+              <Icon.AlertTriangle className="h-5 w-5 shrink-0" />
+              <div>
+                <p className="text-sm font-semibold">Kampus belum dipilih</p>
+                <p className="text-xs mt-0.5">Iklan tidak bisa dipasang tanpa kampus acuan. Isi di <Link href="/dashboard?tab=profil" className="underline hover:opacity-80">Profil → Pilih Kampus</Link>.</p>
+              </div>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Main Single-Flow Form */}
@@ -492,7 +534,10 @@ export default function JualPage() {
               >
                 {cats.map((c) => (
                   <option key={c.slug} value={c.name}>
-                    {c.name}
+                    {c.name} {(() => {
+                      const feeLabel = getCategoryFeeLabel(c.name, cfg?.pricing, isFreeMode, sellerIsDistributor, sellerPunyaToko);
+                      return feeLabel === "GRATIS" ? "✓ GRATIS" : feeLabel;
+                    })()}
                   </option>
                 ))}
               </select>
@@ -577,17 +622,11 @@ export default function JualPage() {
               <label htmlFor="form-stock" className="floating-label">Stok Barang</label>
             </div>
 
+            {/* Auto-corrected price notice (Fix #1) */}
             {form.price && Number(form.price) > 0 && Number(form.price) < 1000 && (
-              <div className="sm:col-span-2 flex items-center gap-2 text-xs text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 px-3.5 py-2 rounded-xl border border-amber-200 dark:border-amber-800/50">
-                <Icon.Sparkles className="h-4 w-4 text-amber-600 shrink-0" aria-hidden="true" />
-                <span>Maksud kamu <strong>Rp {(Number(form.price) * 1000).toLocaleString("id-ID")}</strong>?</span>
-                <button
-                  type="button"
-                  onClick={() => setForm((f) => ({ ...f, price: String(Number(f.price) * 1000) }))}
-                  className="ml-auto text-xs font-bold text-emerald-700 dark:text-emerald-400 underline hover:opacity-80"
-                >
-                  Sesuaikan Otomatis
-                </button>
+              <div className="sm:col-span-2 flex items-center gap-2 text-xs text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/30 px-3.5 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800/50">
+                <Icon.Sparkles className="h-4 w-4 text-emerald-600 shrink-0" aria-hidden="true" />
+                <span>Harga otomatis disesuaikan ke <strong>Rp {(Number(form.price) * 1000).toLocaleString("id-ID")}</strong></span>
               </div>
             )}
           </section>
@@ -622,6 +661,7 @@ export default function JualPage() {
               <label htmlFor="form-seller-name" className="floating-label">Nama Penjual</label>
             </div>
 
+            {/* Fix #7: WA input with format preview */}
             <div className="floating-group">
               <input
                 id="form-seller-wa"
@@ -629,13 +669,14 @@ export default function JualPage() {
                 inputMode="tel"
                 className="floating-input peer"
                 value={form.seller_wa}
-                onChange={set("seller_wa")}
+                onChange={handleWaChange}
                 placeholder=" "
                 required
+                maxLength={15}
               />
               <label htmlFor="form-seller-wa" className="floating-label">Nomor WhatsApp Kontak</label>
               <p className="mt-1 text-[11px] text-slate-400">
-                Nomor ini akan dihubungi pembeli untuk bertransaksi.
+                Format: 0812-3456-7890 atau 6281234567890 (otomatis diformat)
               </p>
             </div>
           </section>
@@ -691,7 +732,7 @@ export default function JualPage() {
             </button>
             <p className="text-center text-xs text-slate-500 dark:text-slate-400">
               Dengan menayangkan iklan, kamu menyetujui{" "}
-              <Link href="/syarat-ketentuan" className="font-semibold underline">Ketentuan</Link> &amp;{" "}
+              <Link href="/syarat-ketentuan" className="font-semibold underline">Ketentuan</Link> &{" "}
               <Link href="/kebijakan-privasi" className="font-semibold underline">Privasi</Link>.
             </p>
             {msg && <p className="text-center text-sm text-rose-600">{msg}</p>}
@@ -767,7 +808,7 @@ export default function JualPage() {
               <div className="flex justify-between">
                 <dt className="text-slate-500 dark:text-slate-400">Biaya Tayang</dt>
                 <dd className="font-bold text-slate-900 dark:text-white">
-                  {gratis ? "Rp 0 (Gratis)" : rupiah(totalBiaya)}
+                  {gratis ? "Rp 0 (GRATIS)" : rupiah(totalBiaya)}
                 </dd>
               </div>
               <div className="my-2 border-t border-slate-100 dark:border-slate-800" />
@@ -799,7 +840,7 @@ export default function JualPage() {
 
             <p className="text-center text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
               Dengan menayangkan iklan, kamu menyetujui{" "}
-              <Link href="/syarat-ketentuan" className="font-semibold underline">Ketentuan Komunitas</Link> &amp;{" "}
+              <Link href="/syarat-ketentuan" className="font-semibold underline">Ketentuan Komunitas</Link> &{" "}
               <Link href="/kebijakan-privasi" className="font-semibold underline">Privasi</Link>. Calon pembeli akan menghubungimu via WhatsApp.
             </p>
 
