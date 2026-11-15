@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Keamanan & RLS - KampusKita</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 p-8">
+    <a href="index.html" class="text-blue-600 underline">&larr; Kembali ke Index</a>
+    <h1 class="text-3xl font-bold my-6 text-slate-800">Lapisan Keamanan & Row Level Security (RLS)</h1>
+
+    <div class="max-w-2xl mx-auto space-y-6">
+        <div class="p-4 bg-white rounded-lg shadow border-l-4 border-red-500">
+            <h2 class="font-semibold text-red-600">1. Next.js Middleware</h2>
+            <p class="text-sm text-slate-600 mt-1">File <code>src/middleware.js</code> menambahkan header keamanan (<code>X-Content-Type-Options</code>, <code>X-Frame-Options</code>, <code>X-XSS-Protection</code>) untuk semua request API. Juga memblokir akses admin workspace bila belum terautentikasi.</p>
+        </div>
+        <div class="text-center font-bold text-slate-400">&darr;</div>
+        <div class="p-4 bg-white rounded-lg shadow border-l-4 border-green-500">
+            <h2 class="font-semibold text-green-600">2. Auth Token (HMAC)</h2>
+            <p class="text-sm text-slate-600 mt-1">Token admin dan seller disimpan di cookie HTTP‑only, ditandatangani HMAC dengan <code>ADMIN_SESSION_SECRET</code> atau <code>SUPABASE_SERVICE_ROLE_KEY</code>. Verifikasi dilakukan di <code>src/lib/auth.js</code> (fungsi <code>openAdminUserToken</code>, <code>verifySellerToken</code>).</p>
+        </div>
+        <div class="text-center font-bold text-slate-400">&darr;</div>
+        <div class="p-4 bg-white rounded-lg shadow border-l-4 border-yellow-500">
+            <h2 class="font-semibold text-yellow-600">3. Supabase Service Role vs Anon Key</h2>
+            <p class="text-sm text-slate-600 mt-1">- <strong>Anon Key</strong> (client) hanya dapat mengakses tabel yang di‑allow via RLS (misal <code>listings</code> dengan status <code>active</code>, <code>seller_profiles</code> publik).<br>
+               - <strong>Service Role Key</strong> (server) dipakai di <code>src/lib/supabaseAdmin.js</code> untuk operasi CRUD tanpa RLS, misalnya menulis log audit, meng‑insert listing, meng‑update pembayaran.</p>
+        </div>
+        <div class="text-center font-bold text-slate-400">&darr;</div>
+        <div class="p-4 bg-white rounded-lg shadow border-l-4 border-indigo-500">
+            <h2 class="font-semibold text-indigo-600">4. Row Level Security (RLS) – SQL Migration</h2>
+            <p class="text-sm text-slate-600 mt-1">File <code>supabase/migration_rls.sql</code> mendefinisikan policy per tabel. Contoh:<br>
+                <code>CREATE POLICY "anon_read_active_listings" ON listings FOR SELECT TO anon USING (status IN ('active','sold'));</code><br>
+                Setiap tabel sensitif (payments, reports, blacklist) tidak memiliki policy SELECT untuk <code>anon</code>, sehingga hanya admin (service_role) yang dapat mengakses.
+            </p>
+        </div>
+        <div class="text-center font-bold text-slate-400">&darr;</div>
+        <div class="p-4 bg-white rounded-lg shadow border-l-4 border-pink-500">
+            <h2 class="font-semibold text-pink-600">5. Rate Limiting & Abuse Prevention</h2>
+            <p class="text-sm text-slate-600 mt-1">- IP‑based limiter (fungsi <code>rateLimitDistributed</code>) pada endpoint <code>/api/listings</code> (max 10 per 10 menit).<br>
+               - Honeypot fields (<code>website</code>, <code>honeypot</code>) pada payload iklan.<br>
+               - Pemeriksaan blacklist WA di <code>src/app/api/listings/route.js</code> sebelum menyimpan.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

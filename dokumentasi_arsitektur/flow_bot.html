@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Arsitektur Bot WhatsApp - KampusKita</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 p-8">
+    <a href="index.html" class="text-blue-600 underline">&larr; Kembali ke Index</a>
+    <h1 class="text-3xl font-bold my-6 text-slate-800">Arsitektur Bot WhatsApp & VPS</h1>
+
+    <div class="space-y-4 max-w-2xl mx-auto">
+        <div class="p-4 bg-white rounded-lg shadow border-l-4 border-amber-500">
+            <span class="font-bold text-amber-600">Lingkungan Eksekusi (VPS)</span>
+            <p class="text-sm text-slate-600 mt-1">Bot berjalan sebagai proses PM2 di balik Nginx pada server VPS terpisah dari web Vercel.</p>
+        </div>
+        <div class="text-center font-bold text-slate-400">&darr;</div>
+        <div class="p-4 bg-white rounded-lg shadow border-l-4 border-amber-500">
+            <span class="font-bold text-amber-600">Mesin Baileys WhatsApp</span>
+            <p class="text-sm text-slate-600 mt-1">Mengelola koneksi multi-device, sesi auth lokal (di direktori bot), dan menangani pesan masuk dari pengguna.</p>
+        </div>
+        <div class="text-center font-bold text-slate-400">&darr;</div>
+        <div class="p-4 bg-white rounded-lg shadow border-l-4 border-amber-500">
+            <span class="font-bold text-amber-600">Sinkronisasi Database (Supabase)</span>
+            <p class="text-sm text-slate-600 mt-1">Bot melakukan query dan mutasi langsung ke database Supabase untuk mencatat pesanan, verifikasi status, dan mengirim broadcast.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Arsitektur Sistem KampusKita</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 p-8">
+    <h1 class="text-3xl font-bold text-center mb-10 text-slate-800">Master Arsitektur KampusKita</h1>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <a href="flow_posting.html" class="block p-6 bg-white rounded-xl shadow hover:shadow-lg transition">
+            <h2 class="text-xl font-semibold text-blue-600">1. Flow Pasang Iklan</h2>
+            <p class="text-slate-600 mt-2">Alur lengkap dari Form -> Moderasi -> DB -> Distribusi.</p>
+        </a>
+        <a href="flow_bot.html" class="block p-6 bg-white rounded-xl shadow hover:shadow-lg transition">
+            <h2 class="text-xl font-semibold text-blue-600">2. Arsitektur Bot WA & Sinkronisasi</h2>
+            <p class="text-slate-600 mt-2">Integrasi antara VPS (Bot) dan Supabase.</p>
+        </a>
+        <a href="flow_keamanan.html" class="block p-6 bg-white rounded-xl shadow hover:shadow-lg transition">
+            <h2 class="text-xl font-semibold text-blue-600">3. Keamanan & RLS</h2>
+            <p class="text-slate-600 mt-2">Lapisan keamanan Next.js Middleware dan Supabase RLS.</p>
+        </a>
+    </div>
+</body>
+</html>
