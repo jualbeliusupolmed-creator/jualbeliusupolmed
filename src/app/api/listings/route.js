@@ -354,21 +354,28 @@ export async function POST(req) {
     if (pricingError) {
       return NextResponse.json({ error: "Pengaturan biaya iklan belum dapat diperiksa. Coba lagi nanti." }, { status: 503 });
     }
-    const settings = await getSettings();
+    
+    // Ambil settings dengan fallback yang robust
+    let settings;
+    try {
+      settings = await getSettings();
+    } catch {
+      settings = { pricing: DEFAULT_SETTINGS.pricing };
+    }
     settings.pricing = { ...DEFAULT_SETTINGS.pricing, ...(pricingRow?.value || {}) };
-    const distSettings = isDistributor ? await getDistributorSettings(supa) : null;
+    const distSettings = isDistributor ? await getDistributorSettings(supa).catch(() => null) : null;
     const isJasa = type === "jasa";
     let isJasaFree = false;
 
     if (isJasa) {
       // Cek apakah dia pernah posting jasa sebelumnya
-      const { count } = await supa
+      const { count, error: countError } = await supa
         .from("listings")
         .select("*", { count: "exact", head: true })
         .eq("seller_wa", normalizedWa)
         .eq("type", "jasa");
       
-      if (count === 0) {
+      if (!countError && count === 0) {
         isJasaFree = true;
       }
     }
@@ -411,6 +418,7 @@ export async function POST(req) {
 
     // Penjual tidak memilih kampus tujuan. Wilayah listing selalu mengikuti
     // universitas kanonikal akun; pembeli satu provinsi dapat menemukannya.
+    // Gunakan fallback yang lebih robust untuk universitas/provinsi
     const resolvedCampus = region.university?.code || profileCheck?.campus || body.campus || "USU";
     const resolvedUniversityId = sellerUniversityId || region.university?.id || "usu";
     const resolvedProvinceId = sellerProvince || region.province || "sumatera-utara";
