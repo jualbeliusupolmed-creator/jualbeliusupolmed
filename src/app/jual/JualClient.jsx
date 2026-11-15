@@ -196,7 +196,7 @@ export default function JualPage() {
     }
     const formatted = formatWa(form.seller_wa);
     if (!formatted && !sesiWa) {
-      toast.error("Format: 0812-3456-7890 atau 6281234567890");
+      toast.error("Masukkan nomor WhatsApp yang valid (contoh: 081234567890).");
       return false;
     }
     return true;
@@ -254,15 +254,30 @@ export default function JualPage() {
     setMsg("");
     setFileError("");
 
+    // Blokir submit jika kampus acuan belum dipilih. Banner peringatan
+    // saja tidak cukup — user bisa mengabaikannya dan tetap submit,
+    // lalu server mengembalikan 409. Tombol dinonaktifkan + toast
+    // memberitahu ke mana harus pergi.
+    if (showCampusWarning) {
+      toast.error("Pilih kampus di Profil terlebih dahulu sebelum memasang iklan.", { duration: 5000 });
+      return;
+    }
+
     if (!validateListingDetails()) return;
 
-    // Fix #1: Auto-multiply price < 1000 instead of confirm dialog
+    // Auto-multiply price < 1000 — tawarkan pilihan, bukan paksa.
+    // User kadang memang maksud ongkir Rp 50 atau biaya kecil; tanpa
+    // opsi Cancel, angka yang dijanjikan dan yang dikasih tidak sama.
     const numPrice = Number(form.price);
     if (form.type !== "gratis" && form.category !== "Hibah" && numPrice > 0 && numPrice < 1000) {
       const correctedPrice = numPrice * 1000;
-      setForm((f) => ({ ...f, price: String(correctedPrice) }));
-      toast.info(`Harga otomatis disesuaikan: Rp ${correctedPrice.toLocaleString("id-ID")}`);
-      // Continue with corrected price
+      const ok = confirm(
+        `Harga tertera Rp ${numPrice.toLocaleString("id-ID")}. Apakah maksud kamu Rp ${(correctedPrice).toLocaleString("id-ID")}? Klik OK untuk menyesuaikan otomatis, atau Cancel jika memang Rp ${numPrice}.`
+      );
+      if (ok) {
+        setForm((f) => ({ ...f, price: String(correctedPrice) }));
+        form.price = String(correctedPrice);
+      }
     }
 
     const waSesi = sesiSiap ? sesiWa : await tungguSesi();
@@ -721,11 +736,13 @@ export default function JualPage() {
           <div className="lg:hidden space-y-3 pt-2">
             <button
               type="submit"
-              disabled={busy || !!fileError}
+              disabled={busy || !!fileError || showCampusWarning}
               className="btn-primary w-full min-h-12 text-base font-bold shadow-md disabled:cursor-not-allowed disabled:opacity-50 active:opacity-85"
             >
               {busy
                 ? "Memproses…"
+                : showCampusWarning
+                ? "Pilih Kampus Dulu"
                 : gratis
                 ? "Tayangkan Iklan Sekarang"
                 : `Bayar & Tayangkan (${rupiah(totalBiaya)})`}
@@ -828,11 +845,13 @@ export default function JualPage() {
 
             <button
               type="submit"
-              disabled={busy || !!fileError}
+              disabled={busy || !!fileError || showCampusWarning}
               className="btn-primary w-full min-h-12 text-sm font-bold shadow-md disabled:cursor-not-allowed disabled:opacity-50 active:opacity-85"
             >
               {busy
                 ? "Memproses…"
+                : showCampusWarning
+                ? "Pilih Kampus Dulu"
                 : gratis
                 ? "Tayangkan Iklan Sekarang"
                 : `Bayar & Tayangkan (${rupiah(totalBiaya)})`}

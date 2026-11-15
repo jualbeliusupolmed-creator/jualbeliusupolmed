@@ -86,15 +86,19 @@ export function formatWaForBaileys(num) {
 /**
  * Format WA input as user types: "081234567890" → "0812-3456-7890"
  * Non-digit characters are stripped, then grouped.
+ *
+ * Panjang didorong mengikuti formatWa (10–13 digit). Nomor 14+ digit
+ * (misal 628123456789012) ditinggal utuh tanpa dipotong agar user
+ * menyadari ada kelebihan digit, bukan diam-diam kehilangan angka.
  */
 export function parseWaInput(raw) {
   if (!raw) return "";
   const digits = String(raw).replace(/\D/g, "");
   if (!digits) return "";
-  // Group as 0812-3456-7890 (4-4-4) for readability
   if (digits.length <= 4) return digits;
   if (digits.length <= 8) return `${digits.slice(0, 4)}-${digits.slice(4)}`;
-  return `${digits.slice(0, 4)}-${digits.slice(4, 8)}-${digits.slice(8, 12)}`;
+  if (digits.length <= 13) return `${digits.slice(0, 4)}-${digits.slice(4, 8)}-${digits.slice(8)}`;
+  return digits; // 14+ digit: tahan utuh, user yang periksa
 }
 
 /**
