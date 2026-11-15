@@ -84,6 +84,20 @@ export function formatWaForBaileys(num) {
 }
 
 /**
+ * Format WA input as user types: "081234567890" → "0812-3456-7890"
+ * Non-digit characters are stripped, then grouped.
+ */
+export function parseWaInput(raw) {
+  if (!raw) return "";
+  const digits = String(raw).replace(/\D/g, "");
+  if (!digits) return "";
+  // Group as 0812-3456-7890 (4-4-4) for readability
+  if (digits.length <= 4) return digits;
+  if (digits.length <= 8) return `${digits.slice(0, 4)}-${digits.slice(4)}`;
+  return `${digits.slice(0, 4)}-${digits.slice(4, 8)}-${digits.slice(8, 12)}`;
+}
+
+/**
  * Mengembalikan domain dasar yang valid, bersih, dan bebas dari domain lama (jualbeliusupolmed).
  */
 export function getCleanBaseUrl() {
