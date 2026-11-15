@@ -143,19 +143,6 @@ export async function POST(req) {
 
     const effectiveWa = normalizedWa || sessionWa;
 
-    // Rate limit per nomor WA akun (maks 5 iklan per hari)
-    const maxAdsPerDay = Number(process.env.RATE_LIMIT_ADS_PER_DAY || 5);
-    const waRl = await rateLimitDistributed(`listing:wa:${sessionWa}`, {
-      limit: maxAdsPerDay,
-      windowMs: 86_400_000,
-    });
-    if (!waRl.ok) {
-      return NextResponse.json(
-        { error: `Batas harian tercapai: maksimal ${maxAdsPerDay} iklan per nomor WhatsApp per hari.` },
-        { status: 429 }
-      );
-    }
-
     // 1. Validasi Zod schema bersama
     const parsedInput = listingInputSchema.safeParse(body);
     if (!parsedInput.success) {
