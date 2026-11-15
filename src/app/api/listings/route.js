@@ -461,7 +461,7 @@ export async function POST(req) {
 
     // Simpan galeri (kolom `images`) — non-fatal jika migration belum dijalankan.
     if (Array.isArray(images) && images.length) {
-      await supa.from("listings").update({ images }).eq("id", listing.id);
+      await supa.from("listings").update({ images }).eq("id", listing.id).catch(() => {});
     }
 
     if (requiresPayment) {
@@ -476,7 +476,7 @@ export async function POST(req) {
       });
       if (paymentError) {
         console.error("[POST /api/listings] Payment record creation failed:", paymentError.code || "database_error");
-        await supa.from("listings").delete().eq("id", listing.id);
+        await supa.from("listings").delete().eq("id", listing.id).catch(() => {});
         return NextResponse.json({ error: "Tagihan belum dapat dibuat. Coba kirim iklan lagi nanti." }, { status: 503 });
       }
 
@@ -529,6 +529,32 @@ export async function POST(req) {
       isFreeMode: true,
     });
   } catch (e) {
-    return jawabGalat(e);
+    // Specific error handling for common failures
+    const msg = e?.message || String(e);
+    
+    if (msg.includes("moderation") || msg.includes("terlarang") || msg.includes("prohibited")) {
+      return NextResponse.json({ error: "Iklan tidak lolos moderasi: " + msg }, { status: 422 });
+    }
+    if (msg.includes("universitas") || msg.includes("kampus") || msg.includes("provinsi") || msg.includes("region")) {
+      return NextResponse.json({ error: "Pilih kampus di Profil terlebih dahulu sebelum memasang iklan." }, { status: 409 });
+    }
+    if (msg.includes("session") || msg.includes("auth") || msg.includes("unauthorized")) {
+      return NextResponse.json({ error: "Sesi berakhir. Silakan login kembali." }, { status: 401 });
+    }
+    if (msg.includes("R2") || msg.includes("Cloudflare") || msg.includes("S3") || msg.includes("storage") || msg.includes("upload")) {
+      return NextResponse.json({ error: "Upload foto gagal. Coba kompres foto atau coba lagi nanti." }, { status: 500 });
+    }
+    if (msg.includes("settings") || msg.includes("pricing") || msg.includes("biaya")) {
+      return NextResponse.json({ error: "Sistem biaya iklan sedang diperbarui. Coba lagi sebentar." }, { status: 503 });
+    }
+    if (msg.includes("payment") || msg.includes("midtrans") || msg.includes("QRIS")) {
+      return NextResponse.json({ error: "Sistem pembayaran bermasalah. Coba lagi nanti." }, { status: 503 });
+    }
+    if (msg.includes("supabase") || msg.includes("Supabase") || msg.includes("database") || msg.includes("PGRST")) {
+      return NextResponse.json({ error: "Koneksi database bermasalah. Coba lagi dalam beberapa saat." }, { status: 503 });
+    }
+    
+    console.error("[POST /api/listings] Unhandled error:", e?.stack || msg);
+    return NextResponse.json({ error: "Terjadi kesalahan tidak terduga. Coba lagi atau hubungi bantuan." }, { status: 500 });
   }
 }
