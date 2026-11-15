@@ -256,11 +256,37 @@ export async function checkAiModeration({ title, description, price, category, i
  * - moderation_reason: string
  */
 export async function moderateListing({ title, description, price, category, type, images, seller_wa }) {
-  // Moderasi dinonaktifkan: semua barang masuk dan terjual langsung approved tanpa penahanan.
+  // Lapisan 1: Deterministik
+  const deterministic = checkDeterministicModeration({ title, description, price, category, type });
+  if (deterministic.status !== "clean") {
+    return {
+      status: deterministic.status,
+      risk_score: deterministic.risk_score,
+      moderation_reason: deterministic.moderation_reason,
+    };
+  }
+
+  // Lapisan 2: AI (Gemini) - optional, fallback ke pending jika gagal
+  const ai = await checkAiModeration({ title, description, price, category, imageUrl: images?.[0] || null });
+  if (ai.is_prohibited) {
+    return {
+      status: "rejected",
+      risk_score: ai.scam_risk_score || 1.0,
+      moderation_reason: ai.reason || `Barang terlarang: ${ai.prohibited_category}`,
+    };
+  }
+  if (ai.scam_risk_score > 0.7) {
+    return {
+      status: "pending",
+      risk_score: ai.scam_risk_score,
+      moderation_reason: `Perlu peninjauan manual: ${ai.reason || "Risiko penipuan tinggi"}`,
+    };
+  }
+
   return {
     status: "approved",
-    risk_score: 0.0,
-    moderation_reason: "Moderasi dilewati — iklan langsung tayang.",
+    risk_score: Math.max(deterministic.risk_score, ai.scam_risk_score || 0.1),
+    moderation_reason: "Lolos moderasi otomatis & langsung aktif",
   };
 }
 

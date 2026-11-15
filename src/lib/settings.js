@@ -163,7 +163,8 @@ function clone(obj) {
 // In-memory cache untuk memangkas latency database pada setiap HTTP request
 let cachedSettings = null;
 let lastSettingsFetch = 0;
-const SETTINGS_CACHE_TTL = 60 * 1000; // 60 detik
+const SETTINGS_CACHE_TTL = 5 * 60 * 1000; // 5 menit
+const SETTINGS_CACHE_STALE_TTL = 30 * 60 * 1000; // 30 menit stale-while-revalidate
 
 export function invalidateSettingsCache() {
   cachedSettings = null;
@@ -172,18 +173,22 @@ export function invalidateSettingsCache() {
 
 // Baca semua settings dari DB, merge dengan default (shallow per-key).
 export async function getSettings() {
-  // Return dari cache memori jika masih valid (0ms latency)
-  if (cachedSettings && Date.now() - lastSettingsFetch < SETTINGS_CACHE_TTL) {
+  const now = Date.now();
+  // Return dari cache memori jika masih fresh (0ms latency)
+  if (cachedSettings && now - lastSettingsFetch < SETTINGS_CACHE_TTL) {
     return clone(cachedSettings);
   }
+  // Return stale cache jika DB gagal (stale-while-revalidate)
+  const serveStale = cachedSettings && now - lastSettingsFetch < SETTINGS_CACHE_STALE_TTL;
 
   try {
     const supa = getAdminClient();
-    const { data } = await supa.from("settings").select("key, value");
+    const { data, error } = await supa.from("settings").select("key, value");
+    if (error) throw error;
+    
     const merged = clone(DEFAULT_SETTINGS);
     for (const row of data || []) {
       if (Array.isArray(row.value) || Array.isArray(merged[row.key])) {
-        // Arrays (e.g. areas) are replaced entirely, not merged
         merged[row.key] = row.value;
       } else if (merged[row.key] && typeof merged[row.key] === "object") {
         merged[row.key] = { ...merged[row.key], ...row.value };
@@ -218,9 +223,13 @@ export async function getSettings() {
     } catch { }
 
     cachedSettings = merged;
-    lastSettingsFetch = Date.now();
+    lastSettingsFetch = now;
     return clone(merged);
-  } catch {
+  } catch (err) {
+    console.error("[getSettings] DB error, menggunakan cache/default:", err.message);
+    if (serveStale && cachedSettings) {
+      return clone(cachedSettings);
+    }
     return clone(DEFAULT_SETTINGS);
   }
 }
