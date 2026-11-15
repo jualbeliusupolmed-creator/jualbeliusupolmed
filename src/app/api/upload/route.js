@@ -7,6 +7,7 @@ import { jawabGalat } from "@/lib/jawabGalat";
 import { uploadMedia } from "@/lib/mediaStorage";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60; // Allow longer for sharp processing
 
 // Allowed MIME types and their magic bytes (hex prefixes)
 const ALLOWED_TYPES = {
@@ -24,7 +25,7 @@ const ALLOWED_TYPES = {
   ],
 };
 
-const MAX_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB (tanpa pembatasan ketat, kompres otomatis)
+const MAX_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
 
 /**
  * Validates file magic bytes to ensure it's actually an image.
@@ -102,16 +103,38 @@ export async function POST(req) {
     }
 
     // Convert to WebP using sharp with auto-resize to max 1600px for speed & quality
-    const processedBuffer = await sharp(Buffer.from(arrayBuffer))
-      .rotate()
-      .resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true })
-      .webp({ quality: 80, effort: 3 })
-      .toBuffer();
+    let processedBuffer;
+    try {
+      processedBuffer = await sharp(Buffer.from(arrayBuffer))
+        .rotate()
+        .resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true })
+        .webp({ quality: 80, effort: 3 })
+        .toBuffer();
+    } catch (sharpErr) {
+      console.error("[api/upload] Sharp processing failed:", sharpErr);
+      return NextResponse.json(
+        { error: "Gagal memproses gambar. Coba foto dengan format JPG/PNG." },
+        { status: 400 }
+      );
+    }
 
     const path = `listings/${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
-    const { url, provider } = await uploadMedia(processedBuffer, path, "image/webp");
+    
+    // Upload with retry logic for transient failures
+    let uploadResult;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        uploadResult = await uploadMedia(processedBuffer, path, "image/webp");
+        break;
+      } catch (uploadErr) {
+        console.error(`[api/upload] Upload attempt ${attempt} failed:`, uploadErr.message);
+        if (attempt === 2) throw uploadErr;
+        // Wait briefly before retry
+        await new Promise(r => setTimeout(r, 500));
+      }
+    }
 
-    return NextResponse.json({ url, provider });
+    return NextResponse.json({ url: uploadResult.url, provider: uploadResult.provider });
   } catch (e) {
     return jawabGalat(e);
   }
