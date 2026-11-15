@@ -173,6 +173,18 @@ export function invalidateSettingsCache() {
 
 // Baca semua settings dari DB, merge dengan default (shallow per-key).
 export async function getSettings() {
+  // During static generation (build time), return defaults immediately
+  // to avoid "Dynamic server usage" errors from Next.js
+  if (typeof window === "undefined" && !process.env.NEXT_RUNTIME) {
+    // Check if we're in a static generation context by trying to access cookies/headers
+    try {
+      const { cookies } = await import("next/headers");
+      await cookies(); // Will throw during static generation
+    } catch {
+      return clone(DEFAULT_SETTINGS);
+    }
+  }
+
   const now = Date.now();
   // Return dari cache memori jika masih fresh (0ms latency)
   if (cachedSettings && now - lastSettingsFetch < SETTINGS_CACHE_TTL) {
