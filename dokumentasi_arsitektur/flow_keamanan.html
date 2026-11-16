@@ -2,45 +2,538 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Keamanan & RLS - KampusKita</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50: '#f0fdf4', 100: '#dcfce7', 200: '#bbf7d0', 300: '#86efac', 400: '#4ade80', 500: '#22c55e', 600: '#16a34a', 700: '#15803d', 800: '#166534', 900: '#14532d', 950: '#052e16' },
+                        accent: { 50: '#fdf4ff', 100: '#fae8ff', 200: '#f5d0fe', 300: '#f0abfc', 400: '#e879f9', 500: '#d946ef', 600: '#c026d3', 700: '#a21caf', 800: '#86198f', 900: '#701a75', 950: '#4a044e' },
+                        surface: { light: '#ffffff', dark: '#0f172a', 'light-muted': '#f8fafc', 'dark-muted': '#1e293b', 'light-border': '#e2e8f0', 'dark-border': '#334155' }
+                    },
+                    fontFamily: { display: ['Space Grotesk', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+                    animation: { 'fade-in': 'fadeIn 0.6s ease-out forwards', 'slide-up': 'slideUp 0.6s ease-out forwards', 'slide-in-left': 'slideInLeft 0.5s ease-out forwards', 'scale-in': 'scaleIn 0.4s ease-out forwards', 'pulse-glow': 'pulseGlow 2s ease-in-out infinite', 'float': 'float 6s ease-in-out infinite', 'gradient-shift': 'gradientShift 8s ease infinite', 'shimmer': 'shimmer 2s ease-in-out infinite' },
+                    keyframes: { fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } }, slideUp: { '0%': { opacity: '0', transform: 'translateY(30px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }, slideInLeft: { '0%': { opacity: '0', transform: 'translateX(-30px)' }, '100%': { opacity: '1', transform: 'translateX(0)' } }, scaleIn: { '0%': { opacity: '0', transform: 'scale(0.9)' }, '100%': { opacity: '1', transform: 'scale(1)' } }, pulseGlow: { '0%, 100%': { boxShadow: '0 0 20px rgba(34, 197, 94, 0.3)' }, '50%': { boxShadow: '0 0 40px rgba(34, 197, 94, 0.5)' } }, float: { '0%, 100%': { transform: 'translateY(0px)' }, '50%': { transform: 'translateY(-10px)' } }, gradientShift: { '0%': { backgroundPosition: '0% 50%' }, '50%': { backgroundPosition: '100% 50%' }, '100%': { backgroundPosition: '0% 50%' } }, shimmer: { '0%': { backgroundPosition: '-200% 0' }, '100%': { backgroundPosition: '200% 0' } } }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root { --bg: #f8fafc; --text: #0f172a; --card: #ffffff; --border: #e2e8f0; --muted: #64748b; }
+        .dark { --bg: #0f172a; --text: #f8fafc; --card: #1e293b; --border: #334155; --muted: #94a3b8; }
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Space Grotesk', sans-serif; background: var(--bg); color: var(--text); transition: background 0.4s ease, color 0.4s ease; }
+        .bg-mesh { background: linear-gradient(135deg, var(--bg) 0%, #e0f2fe 50%, #fce7f3 100%); }
+        .dark .bg-mesh { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #4c1d95 100%); }
+        .glass { background: rgba(255,255,255,0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.3); }
+        .dark .glass { background: rgba(30,41,59,0.7); border: 1px solid rgba(148,163,184,0.1); }
+        .card-hover { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .card-hover:hover { transform: translateY(-8px); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15); }
+        .dark .card-hover:hover { box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4); }
+        .btn-primary { background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%); transition: all 0.3s ease; position: relative; overflow: hidden; }
+        .btn-primary::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, #22c55e 0%, #4ade80 100%); opacity: 0; transition: opacity 0.3s; }
+        .btn-primary:hover::before { opacity: 1; }
+        .btn-primary span { position: relative; z-index: 1; }
+        .code-block { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; line-height: 1.7; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; overflow-x: auto; }
+        .gradient-text { background: linear-gradient(135deg, #16a34a, #22c55e, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; background-size: 200% auto; animation: gradient-shift 6s ease infinite; }
+        .stagger-1 { animation-delay: 0.1s; } .stagger-2 { animation-delay: 0.2s; } .stagger-3 { animation-delay: 0.3s; } .stagger-4 { animation-delay: 0.4s; }
+        .stagger-5 { animation-delay: 0.5s; } .stagger-6 { animation-delay: 0.6s; }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+        .shimmer-bg { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); background-size: 200% 100%; animation: shimmer 2s infinite; }
+        .dark .shimmer-bg { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent); background-size: 200% 100%; }
+    </style>
 </head>
-<body class="bg-slate-50 p-8">
-    <a href="index.html" class="text-blue-600 underline">&larr; Kembali ke Index</a>
-    <h1 class="text-3xl font-bold my-6 text-slate-800">Lapisan Keamanan & Row Level Security (RLS)</h1>
-
-    <div class="max-w-2xl mx-auto space-y-6">
-        <div class="p-4 bg-white rounded-lg shadow border-l-4 border-red-500">
-            <h2 class="font-semibold text-red-600">1. Next.js Middleware</h2>
-            <p class="text-sm text-slate-600 mt-1">File <code>src/middleware.js</code> menambahkan header keamanan (<code>X-Content-Type-Options</code>, <code>X-Frame-Options</code>, <code>X-XSS-Protection</code>) untuk semua request API. Juga memblokir akses admin workspace bila belum terautentikasi.</p>
-        </div>
-        <div class="text-center font-bold text-slate-400">&darr;</div>
-        <div class="p-4 bg-white rounded-lg shadow border-l-4 border-green-500">
-            <h2 class="font-semibold text-green-600">2. Auth Token (HMAC)</h2>
-            <p class="text-sm text-slate-600 mt-1">Token admin dan seller disimpan di cookie HTTP‑only, ditandatangani HMAC dengan <code>ADMIN_SESSION_SECRET</code> atau <code>SUPABASE_SERVICE_ROLE_KEY</code>. Verifikasi dilakukan di <code>src/lib/auth.js</code> (fungsi <code>openAdminUserToken</code>, <code>verifySellerToken</code>).</p>
-        </div>
-        <div class="text-center font-bold text-slate-400">&darr;</div>
-        <div class="p-4 bg-white rounded-lg shadow border-l-4 border-yellow-500">
-            <h2 class="font-semibold text-yellow-600">3. Supabase Service Role vs Anon Key</h2>
-            <p class="text-sm text-slate-600 mt-1">- <strong>Anon Key</strong> (client) hanya dapat mengakses tabel yang di‑allow via RLS (misal <code>listings</code> dengan status <code>active</code>, <code>seller_profiles</code> publik).<br>
-               - <strong>Service Role Key</strong> (server) dipakai di <code>src/lib/supabaseAdmin.js</code> untuk operasi CRUD tanpa RLS, misalnya menulis log audit, meng‑insert listing, meng‑update pembayaran.</p>
-        </div>
-        <div class="text-center font-bold text-slate-400">&darr;</div>
-        <div class="p-4 bg-white rounded-lg shadow border-l-4 border-indigo-500">
-            <h2 class="font-semibold text-indigo-600">4. Row Level Security (RLS) – SQL Migration</h2>
-            <p class="text-sm text-slate-600 mt-1">File <code>supabase/migration_rls.sql</code> mendefinisikan policy per tabel. Contoh:<br>
-                <code>CREATE POLICY "anon_read_active_listings" ON listings FOR SELECT TO anon USING (status IN ('active','sold'));</code><br>
-                Setiap tabel sensitif (payments, reports, blacklist) tidak memiliki policy SELECT untuk <code>anon</code>, sehingga hanya admin (service_role) yang dapat mengakses.
-            </p>
-        </div>
-        <div class="text-center font-bold text-slate-400">&darr;</div>
-        <div class="p-4 bg-white rounded-lg shadow border-l-4 border-pink-500">
-            <h2 class="font-semibold text-pink-600">5. Rate Limiting & Abuse Prevention</h2>
-            <p class="text-sm text-slate-600 mt-1">- IP‑based limiter (fungsi <code>rateLimitDistributed</code>) pada endpoint <code>/api/listings</code> (max 10 per 10 menit).<br>
-               - Honeypot fields (<code>website</code>, <code>honeypot</code>) pada payload iklan.<br>
-               - Pemeriksaan blacklist WA di <code>src/app/api/listings/route.js</code> sebelum menyimpan.
-            </p>
-        </div>
+<body class="bg-mesh min-h-screen">
+    <div class="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+        <div class="absolute w-4 h-4 bg-brand-400/10 rounded-full top-10 left-10 animate-float" style="animation-delay: 0s;"></div>
+        <div class="absolute w-6 h-6 bg-accent-400/10 rounded-full top-20 right-20 animate-float" style="animation-delay: 1s;"></div>
+        <div class="absolute w-2 h-2 bg-brand-500/20 rounded-full bottom-30 left-1/4 animate-float" style="animation-delay: 2s;"></div>
+        <div class="absolute w-4 h-4 bg-accent-500/10 rounded-full bottom-10 right-1/3 animate-float" style="animation-delay: 3s;"></div>
+        <div class="absolute w-3 h-3 bg-brand-300/15 rounded-full top-1/2 left-5 animate-float" style="animation-delay: 1.5s;"></div>
+        <div class="absolute w-5 h-5 bg-accent-300/10 rounded-full top-1/3 right-10 animate-float" style="animation-delay: 2.5s;"></div>
     </div>
+
+    <nav class="fixed top-0 left-0 right-0 z-50 glass border-b border-surface-light-border dark:border-surface-dark-border">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="index.html" class="font-display font-bold text-xl gradient-text flex items-center gap-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                KampusKita.arch
+            </a>
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-slate-500 dark:text-slate-400 hidden sm:block">Security & RLS</span>
+                <button id="themeToggle" class="p-2 rounded-xl glass hover:bg-brand-100 dark:hover:bg-brand-900/30 transition-all" aria-label="Toggle theme">
+                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-300 sun-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-300 moon-icon hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-24 pb-20 px-6">
+        <div class="max-w-4xl mx-auto">
+            <header class="text-center py-12 animate-fade-in">
+                <a href="index.html" class="inline-flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors mb-6 animate-slide-in-left stagger-1">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                    Kembali ke Overview
+                </a>
+                <div class="inline-flex items-center gap-3 px-6 py-3 rounded-full glass border border-surface-light-border dark:border-surface-dark-border mb-6 animate-slide-up stagger-2">
+                    <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse-glow"></span>
+                    <span class="text-sm font-medium text-slate-600 dark:text-slate-300">Lapisan Perlindungan</span>
+                </div>
+                <h1 class="font-display text-4xl md:text-6xl font-bold tracking-tight mb-4 animate-slide-up stagger-3">
+                    Keamanan & <span class="gradient-text">RLS</span>
+                </h1>
+                <p class="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto animate-slide-up stagger-4 leading-relaxed">
+                    Model keamanan berlapis (defense in depth) — dari edge middleware, autentikasi HMAC, isolasi service role, hingga Row Level Security di tingkat database.
+                </p>
+            </header>
+
+            <!-- Security Layers Overview -->
+            <section id="layers" class="mb-16 animate-slide-up stagger-1">
+                <h2 class="font-display text-2xl font-bold mb-6">5 Lapisan Keamanan</h2>
+                <div class="space-y-4">
+                    <!-- Layer 1 -->
+                    <div class="glass rounded-2xl border border-surface-light-border dark:border-surface-dark-border p-6 card-hover relative overflow-hidden group">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-500 to-cyan-500"></div>
+                        <div class="flex items-start gap-6">
+                            <div class="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform">
+                                <span class="text-white font-bold text-2xl">1</span>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-display text-xl font-bold mb-2">Edge Middleware (Next.js)</h3>
+                                <p class="text-slate-600 dark:text-slate-300 mb-4">File <code class="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">src/middleware.js</code> dijalankan di Edge Runtime Vercel sebelum request mencapai server.</p>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                    <div class="glass p-3 rounded-xl border border-surface-light-border dark:border-surface-dark-border">
+                                        <h4 class="font-semibold text-slate-700 dark:text-slate-200 mb-1">Header Keamanan</h4>
+                                        <ul class="text-slate-600 dark:text-slate-300 space-y-1 code-block">
+                                            <li>• <code>X-Content-Type-Options: nosniff</code></li>
+                                            <li>• <code>X-Frame-Options: DENY</code></li>
+                                            <li>• <code>X-XSS-Protection: 1; mode=block</code></li>
+                                        </ul>
+                                    </div>
+                                    <div class="glass p-3 rounded-xl border border-surface-light-border dark:border-surface-dark-border">
+                                        <h4 class="font-semibold text-slate-700 dark:text-slate-200 mb-1">Proteksi Rute</h4>
+                                        <ul class="text-slate-600 dark:text-slate-300 space-y-1 code-block">
+                                            <li>• Canonical domain redirect (301)</li>
+                                            <li>• Admin workspace guard</li>
+                                            <li>• Legacy route redirect mapping</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Layer 2 -->
+                    <div class="glass rounded-2xl border border-surface-light-border dark:border-surface-dark-border p-6 card-hover relative overflow-hidden group">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-purple-500 to-violet-500"></div>
+                        <div class="flex items-start gap-6">
+                            <div class="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-violet-500 flex items-center justify-center shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform">
+                                <span class="text-white font-bold text-2xl">2</span>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-display text-xl font-bold mb-2">Autentikasi HMAC Token</h3>
+                                <p class="text-slate-600 dark:text-slate-300 mb-4">Cookie HTTP-only ditandatangani HMAC SHA-256. Verifikasi di <code class="px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">src/lib/auth.js</code>.</p>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                    <div class="glass p-3 rounded-xl border border-surface-light-border dark:border-surface-dark-border">
+                                        <h4 class="font-semibold text-slate-700 dark:text-slate-200 mb-1">Admin Session</h4>
+                                        <ul class="text-slate-600 dark:text-slate-300 space-y-1 code-block">
+                                            <li>• Cookie: <code>kk_admin_session</code></li>
+                                            <li>• TTL: 1 jam (rotasi izin cepat)</li>
+                                            <li>• Secret: <code>ADMIN_SESSION_SECRET</code> (min 32 char)</li>
+                                            <li>• Payload: <code>{nonce, sub, exp}</code></li>
+                                        </ul>
+                                    </div>
+                                    <div class="glass p-3 rounded-xl border border-surface-light-border dark:border-surface-dark-border">
+                                        <h4 class="font-semibold text-slate-700 dark:text-slate-200 mb-1">Seller Session</h4>
+                                        <ul class="text-slate-600 dark:text-slate-300 space-y-1 code-block">
+                                            <li>• Cookie: <code>seller_session</code></li>
+                                            <li>• TTL: 30 hari</li>
+                                            <li>• Secret: <code>SESSION_SECRET</code> (pisah dari admin)</li>
+                                            <li>• Rotasi: <code>SESSION_SECRET_PREVIOUS</code> untuk transisi</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="code-block shimmer-bg mt-4">
+// src/lib/auth.js - HMAC verification (timing-safe)
+function samaAman(a, b) {
+  const ha = crypto.createHash('sha256').update(String(a)).digest();
+  const hb = crypto.createHash('sha256').update(String(b)).digest();
+  return crypto.timingSafeEqual(ha, hb);
+}
+
+function verifySellerToken(token) {
+  const parts = token.split('.');
+  const [payloadB64, signature] = parts;
+  const validSignature = kunciVerifikasiPenjual().some((key) => {
+    const expectedSig = crypto.createHmac('sha256', key).update(payloadB64).digest('base64url');
+    return samaAman(signature, expectedSig);
+  });
+  // ... validasi exp, format WA
+}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Layer 3 -->
+                    <div class="glass rounded-2xl border border-surface-light-border dark:border-surface-dark-border p-6 card-hover relative overflow-hidden group" id="supabase">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-green-500 to-emerald-500"></div>
+                        <div class="flex items-start gap-6">
+                            <div class="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-green-500/30 group-hover:scale-110 transition-transform">
+                                <span class="text-white font-bold text-2xl">3</span>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-display text-xl font-bold mb-2">Isolasi Service Role vs Anon Key</h3>
+                                <p class="text-slate-600 dark:text-slate-300 mb-4">Dua klien Supabase terpisah di <code class="px-2 py-0.5 rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">src/lib/supabase.js</code> & <code class="px-2 py-0.5 rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">src/lib/supabaseAdmin.js</code>.</p>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-sm">
+                                        <thead>
+                                            <tr class="border-b border-surface-light-border dark:border-surface-dark-border">
+                                                <th class="text-left p-3 font-semibold">Aspek</th>
+                                                <th class="text-left p-3 font-semibold">Anon Key (Client)</th>
+                                                <th class="text-left p-3 font-semibold">Service Role (Server)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-surface-light-border dark:divide-surface-dark-border">
+                                            <tr class="hover:bg-brand-50 dark:hover:bg-brand-900/20">
+                                                <td class="p-3 font-medium code-block">Digunakan di</td>
+                                                <td class="p-3">Browser, React components</td>
+                                                <td class="p-3">API Routes, Server Actions</td>
+                                            </tr>
+                                            <tr class="hover:bg-brand-50 dark:hover:bg-brand-900/20">
+                                                <td class="p-3 font-medium code-block">RLS</td>
+                                                <td class="p-3"><span class="px-2 py-0.5 rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs">AKTIF</span> — Policy terbatas</td>
+                                                <td class="p-3"><span class="px-2 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-xs">BYPASS</span> — Full access</td>
+                                            </tr>
+                                            <tr class="hover:bg-brand-50 dark:hover:bg-brand-900/20">
+                                                <td class="p-3 font-medium code-block">Akses Tabel</td>
+                                                <td class="p-3">Hanya yang di-allow policy (active listings, public profiles)</td>
+                                                <td class="p-3">Semua tabel (payments, blacklist, audit, dll)</td>
+                                            </tr>
+                                            <tr class="hover:bg-brand-50 dark:hover:bg-brand-900/20">
+                                                <td class="p-3 font-medium code-block">Kunci</td>
+                                                <td class="p-3"><code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code></td>
+                                                <td class="p-3"><code>SUPABASE_SERVICE_ROLE_KEY</code> (secret!)</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="code-block shimmer.bg mt-4">
+// src/lib/supabaseAdmin.js - Server-only client
+let _adminClient = null;
+export function getAdminClient() {
+  if (_adminClient) return _adminClient;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !serviceKey) throw new Error('Supabase service-role env belum di-set');
+  _adminClient = createClient(url, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { fetch: (url, options = {}) => fetch(url, { ...options, cache: 'no-store' }) },
+  });
+  return _adminClient;
+}
+// JANGAN IMPORT ini di Client Components!
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Layer 4 -->
+                    <div class="glass rounded-2xl border border-surface-light-border dark:border-surface-dark-border p-6 card-hover relative overflow-hidden group">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-amber-500 to-orange-500"></div>
+                        <div class="flex items-start gap-6">
+                            <div class="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30 group-hover:scale-110 transition-transform">
+                                <span class="text-white font-bold text-2xl">4</span>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-display text-xl font-bold mb-2">Row Level Security (RLS) Policies</h3>
+                                <p class="text-slate-600 dark:text-slate-300 mb-4">Didefinisikan di <code class="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">supabase/migration_rls.sql</code>. Setiap tabel sensitif memiliki policy eksplisit.</p>
+                                <div class="space-y-3 text-sm">
+                                    <div class="glass p-4 rounded-xl border border-surface-light-border dark:border-surface-dark-border">
+                                        <h4 class="font-semibold text-slate-700 dark:text-slate-200 mb-2">Contoh Policy (Public Read)</h4>
+                                        <div class="code-block shimmer.bg">
+-- listings: publik hanya baca active/sold
+ALTER TABLE listings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "anon_read_active_listings"
+  ON listings FOR SELECT TO anon
+  USING (status IN ('active', 'sold'));
+
+-- seller_profiles: publik baca semua
+ALTER TABLE seller_profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "anon_read_seller_profiles"
+  ON seller_profiles FOR SELECT TO anon USING (true);
+                                        </div>
+                                    </div>
+                                    <div class="glass p-4 rounded-xl border border-surface-light-border dark:border-surface-dark-border">
+                                        <h4 class="font-semibold text-slate-700 dark:text-slate-200 mb-2">Tabel Sensitif (Tidak Ada Policy Anon)</h4>
+                                        <div class="flex flex-wrap gap-2">
+                                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">payments</span>
+                                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">reports</span>
+                                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">blacklist</span>
+                                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">price_offers</span>
+                                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">category_subscriptions</span>
+                                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">settings</span>
+                                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">push_subscriptions</span>
+                                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">otps</span>
+                                        </div>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">Akses hanya via Service Role (API Routes) atau policy authenticated khusus.</p>
+                                    </div>
+                                    <div class="glass p-4 rounded-xl border border-surface-light-border dark:border-surface-dark-border">
+                                        <h4 class="font-semibold text-slate-700 dark:text-slate-200 mb-2">Admin Access Pattern</h4>
+                                        <div class="code-block shimmer-bg">
+// API Route (src/app/api/admin/...) - Service Role
+const supa = getAdminClient(); // bypass RLS
+const { data } = await supa.from('payments').select('*').eq('status', 'pending');
+
+// Client Component - Anon Key + RLS
+const supa = getSupabase(); // RLS aktif
+const { data } = await supa.from('listings').select('*').eq('status', 'active');
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Layer 5 -->
+                    <div class="glass rounded-2xl border border-surface-light-border dark:border-surface-dark-border p-6 card-hover relative overflow-hidden group">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-red-500 to-pink-500"></div>
+                        <div class="flex items-start gap-6">
+                            <div class="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-red-500 to-pink-500 flex items-center justify-center shadow-lg shadow-red-500/30 group-hover:scale-110 transition-transform">
+                                <span class="text-white font-bold text-2xl">5</span>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-display text-xl font-bold mb-2">Rate Limiting, Honeypot & Abuse Prevention</h3>
+                                <p class="text-slate-600 dark:text-slate-300 mb-4">Lapisan aplikasi untuk mencegah spam, brute force, dan bot.</p>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div class="glass p-4 rounded-xl border border-surface-light-border dark:border-surface-dark-border">
+                                        <h4 class="font-semibold text-slate-700 dark:text-slate-200 mb-2 flex items-center gap-2"><svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>Rate Limit</h4>
+                                        <ul class="text-sm text-slate-600 dark:text-slate-300 space-y-1 code-block">
+                                            <li>• <code>rateLimitDistributed</code> (Upstash/Redis)</li>
+                                            <li>• IP-based: 10 req/10min (POST /listings)</li>
+                                            <li>• Admin login: 5 req/60sec per IP</li>
+                                            <li>• Key: <code>listing:ip:{ip}</code></li>
+                                        </ul>
+                                    </div>
+                                    <div class="glass p-4 rounded-xl border border-surface-light-border dark:border-surface-dark-border">
+                                        <h4 class="font-semibold text-slate-700 dark:text-slate-200 mb-2 flex items-center gap-2"><svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>Honeypot Fields</h4>
+                                        <ul class="text-sm text-slate-600 dark:text-slate-300 space-y-1 code-block">
+                                            <li>• Field tersembunyi: <code>website</code>, <code>honeypot</code></li>
+                                            <li>• Bot otomatis mengisi semua field</li>
+                                            <li>• Request ditolak 400 jika terisi</li>
+                                            <li>• Zero false positive untuk user asli</li>
+                                        </ul>
+                                    </div>
+                                    <div class="glass p-4 rounded-xl border border-surface-light-border dark:border-surface-dark-border">
+                                        <h4 class="font-semibold text-slate-700 dark:text-slate-200 mb-2 flex items-center gap-2"><svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>Blacklist & Validation</h4>
+                                        <ul class="text-sm text-slate-600 dark:text-slate-300 space-y-1 code-block">
+                                            <li>• Tabel <code>blacklist</code> (WA terblokir)</li>
+                                            <li>• Cek WA session & WA form</li>
+                                            <li>• Validasi format WA ketat (10-13 digit)</li>
+                                            <li>• Reject ID sintetis (email_*, google_*)</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="code-block shimmer.bg mt-4">
+// src/app/api/listings/route.js - Blacklist check
+let bl = null;
+const { data: blSession } = await supa.from('blacklist').select('id').eq('wa', sessionWa).maybeSingle();
+bl = blSession;
+if (!bl && effectiveWa !== sessionWa) {
+  const { data: blEffective } = await supa.from('blacklist').select('id').eq('wa', effectiveWa).maybeSingle();
+  bl = blEffective;
+}
+if (bl) return NextResponse.json({ error: 'Nomor ini diblokir admin.' }, { status: 403 });
+
+// src/lib/constants.js - Synthetic ID rejection
+export function formatWa(num) {
+  const lokal = s.split('@')[0];
+  if (adalahIdSintetis(lokal)) return ''; // Reject email_0812345_1234, google_*, etc.
+  // ...
+}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Admin RBAC -->
+            <section class="mb-16 animate-slide-up stagger-2">
+                <h2 class="font-display text-2xl font-bold mb-6">Admin RBAC (Role-Based Access Control)</h2>
+                <div class="glass rounded-2xl border border-surface-light-border dark:border-surface-dark-border p-6 card-hover">
+                    <p class="text-slate-600 dark:text-slate-300 mb-6">Sistem hak akses admin berbasis peran dan cakupan wilayah, didefinisikan di <code class="px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">src/lib/admin-access.js</code>.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div class="glass p-5 rounded-xl border border-surface-light-border dark:border-surface-dark-border text-center">
+                            <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-red-500 to-pink-500 flex items-center justify-center">
+                                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                            </div>
+                            <h4 class="font-display font-bold text-lg">Superadmin</h4>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">Akses penuh semua modul & wilayah</p>
+                            <ul class="text-xs text-slate-500 dark:text-slate-400 mt-2 space-y-1 text-left">
+                                <li>• email: jualbeliusupolmed@gmail.com</li>
+                                <li>• role: superadmin di admin_role_assignments</li>
+                                <li>• ENV: SUPERADMIN_AUTH_USER_ID</li>
+                            </ul>
+                        </div>
+                        <div class="glass p-5 rounded-xl border border-surface-light-border dark:border-surface-dark-border text-center">
+                            <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+                                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                            </div>
+                            <h4 class="font-display font-bold text-lg">Province Admin</h4>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">Kelola provinsi yang ditugaskan</p>
+                            <ul class="text-xs text-slate-500 dark:text-slate-400 mt-2 space-y-1 text-left">
+                                <li>• Modul: marketplace, users, reports, finance, analytics, content, whatsapp, social, distribution, organization</li>
+                                <li>• Cakupan: semua kampus di provinsi</li>
+                            </ul>
+                        </div>
+                        <div class="glass p-5 rounded-xl border border-surface-light-border dark:border-surface-dark-border text-center">
+                            <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
+                                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                            </div>
+                            <h4 class="font-display font-bold text-lg">University Admin</h4>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">Kelola kampus tunggal</p>
+                            <ul class="text-xs text-slate-500 dark:text-slate-400 mt-2 space-y-1 text-left">
+                                <li>• Modul: marketplace, users, reports, content, social</li>
+                                <li>• Cakupan: kampus yang ditugaskan saja</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="code-block shimmer.bg">
+// src/lib/admin-access.js - Permission check
+export function hasAdminPermission(actor, module, action = 'read') {
+  if (!actor) return false;
+  if (actor.role === 'superadmin') return true;
+
+  // Province Admin modules
+  if (actor.roles?.some(r => r.role_code === 'province_admin')) {
+    const provinceModules = ['overview','marketplace','users','reports','finance','analytics','content','whatsapp','social','distribution','organization','admin_requests'];
+    if (provinceModules.includes(module)) return true;
+  }
+
+  // University Admin modules
+  if (actor.roles?.some(r => r.role_code === 'university_admin')) {
+    const uniModules = ['overview','marketplace','users','reports','content','social'];
+    if (uniModules.includes(module)) return true;
+  }
+
+  // Owner fallback (explicit permissions)
+  const permissions = actor.permissions?.[module];
+  if (Array.isArray(permissions)) return permissions.includes(action) || permissions.includes('manage');
+  if (permissions && typeof permissions === 'object') return permissions[action] === true || permissions.manage === true;
+  return false;
+}
+                    </div>
+                </div>
+            </section>
+
+            <!-- Security Best Practices -->
+            <section class="mb-16 animate-slide-up stagger-3">
+                <h2 class="font-display text-2xl font-bold mb-6">Praktik Keamanan & Checklist</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="glass rounded-2xl border border-surface-light-border dark:border-surface-dark-border p-6 card-hover">
+                        <h3 class="font-display text-lg font-bold mb-4 flex items-center gap-2"><span class="w-8 h-8 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center text-white text-sm">✓</span> Sudah Diterapkan</h3>
+                        <ul class="space-y-3 text-sm text-slate-600 dark:text-slate-300">
+                            <li class="flex items-center gap-2"><span class="w-5 h-5 rounded border border-green-500 flex items-center justify-center text-green-500 text-xs">✓</span> HMAC tokens dengan timing-safe comparison</li>
+                            <li class="flex items-center gap-2"><span class="w-5 h-5 rounded border border-green-500 flex items-center justify-center text-green-500 text-xs">✓</span> Service Role tidak pernah terekspos ke client</li>
+                            <li class="flex items-center gap-2"><span class="w-5 h-5 rounded border border-green-500 flex items-center justify-center text-green-500 text-xs">✓</span> RLS aktif di semua tabel (migration_rls.sql)</li>
+                            <li class="flex items-center gap-2"><span class="w-5 h-5 rounded border border-green-500 flex items-center justify-center text-green-500 text-xs">✓</span> Rate limiting di Edge & API level</li>
+                            <li class="flex items-center gap-2"><span class="w-5 h-5 rounded border border-green-500 flex items-center justify-center text-green-500 text-xs">✓</span> Honeypot anti-bot di form publik</li>
+                            <li class="flex items-center gap-2"><span class="w-5 h-5 rounded border border-green-500 flex items-center justify-center text-green-500 text-xs">✓</span> Blacklist WA dengan cek ganda (session + form)</li>
+                            <li class="flex items-center gap-2"><span class="w-5 h-5 rounded border border-green-500 flex items-center justify-center text-green-500 text-xs">✓</span> Reject synthetic IDs (email_*, google_*)</li>
+                            <li class="flex items-center gap-2"><span class="w-5 h-5 rounded border border-green-500 flex items-center justify-center text-green-500 text-xs">✓</span> Admin session TTL pendek (1 jam) + rotasi izin real-time</li>
+                            <li class="flex items-center gap-2"><span class="w-5 h-5 rounded border border-green-500 flex items-center justify-center text-green-500 text-xs">✓</span> Cookie flags: HttpOnly, Secure, SameSite=Lax</li>
+                            <li class="flex items-center gap-2"><span class="w-5 h-5 rounded border border-green-500 flex items-center justify-center text-green-500 text-xs">✓</span> CSP & security headers via Middleware</li>
+                        </ul>
+                    </div>
+                    <div class="glass rounded-2xl border border-surface-light-border dark:border-surface-dark-border p-6 card-hover">
+                        <h3 class="font-display text-lg font-bold mb-4 flex items-center gap-2"><span class="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white text-sm">!</span> Perlu Perhatian</h3>
+                        <ul class="space-y-3 text-sm text-slate-600 dark:text-slate-300">
+                            <li class="flex items-center gap-2"><span class="w-5 h-5 rounded border border-amber-500 flex items-center justify-center text-amber-500 text-xs">!</span> Rotasi <code>SESSION_SECRET</code> & <code>ADMIN_SESSION_SECRET</code> berkala (90 hari)</li>
+                            <li class="flex items-center gap-2"><span class="w-5 h-5 rounded border border-amber-500 flex items-center justify-center text-amber-500 text-xs">!</span> Audit log <code>admin_audit_events</code> perlu retention policy</li>
+                            <li class="flex items-center gap-2"><span class="w-5 h-5 rounded border border-amber-500 flex items-center justify-center text-amber-500 text-xs">!</span> Bot WA session (VPS) butuh backup otomatis harian</li>
+                            <li class="flex items-center gap-2"><span class="w-5 h-5 rounded border border-amber-500 flex items-center justify-center text-amber-500 text-xs">!</span> Supabase RLS policy test otomatis (pgTAP / jest)</li>
+                            <li class="flex items-center gap-2"><span class="w-5 h-5 rounded border border-amber-500 flex items-center justify-center text-amber-500 text-xs">!</span> Rate limit distribusi (Upstash) butuh monitoring quota</li>
+                            <li class="flex items-center gap-2"><span class="w-5 h-5 rounded border border-amber-500 flex items-center justify-center text-amber-500 text-xs">!</span> CORS policy ketat untuk API routes publik</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Environment Variables Security -->
+            <section class="animate-fade-in stagger-4">
+                <h2 class="font-display text-2xl font-bold mb-6">Manajemen Secret & Environment</h2>
+                <div class="glass rounded-2xl border border-surface-light-border dark:border-surface-dark-border p-6 card-hover">
+                    <p class="text-slate-600 dark:text-slate-300 mb-6">Semua secret dikelola via Vercel Environment Variables & Supabase Dashboard. <strong>Tidak ada secret di source code.</strong></p>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-surface-light-border dark:border-surface-dark-border">
+                                    <th class="text-left p-3 font-semibold">Variabel</th>
+                                    <th class="text-left p-3 font-semibold">Lokasi</th>
+                                    <th class="text-left p-3 font-semibold">Kritis</th>
+                                    <th class="text-left p-3 font-semibold">Rotasi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-surface-light-border dark:divide-surface-dark-border">
+                                <tr class="hover:bg-brand-50 dark:hover:bg-brand-900/20"><td class="p-3 code-block">SUPABASE_SERVICE_ROLE_KEY</td><td class="p-3">Vercel (Server)</td><td class="p-3"><span class="px-2 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-xs">YA</span></td><td class="p-3">90 hari</td></tr>
+                                <tr class="hover:bg-brand-50 dark:hover:bg-brand-900/20"><td class="p-3 code-block">ADMIN_SESSION_SECRET</td><td class="p-3">Vercel (Server)</td><td class="p-3"><span class="px-2 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-xs">YA</span></td><td class="p-3">90 hari</td></tr>
+                                <tr class="hover:bg-brand-50 dark:hover:bg-brand-900/20"><td class="p-3 code-block">SESSION_SECRET</td><td class="p-3">Vercel (Server)</td><td class="p-3"><span class="px-2 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-xs">YA</span></td><td class="p-3">90 hari</td></tr>
+                                <tr class="hover:bg-brand-50 dark:hover:bg-brand-900/20"><td class="p-3 code-block">GEMINI_API_KEY</td><td class="p-3">Vercel (Server)</td><td class="p-3"><span class="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs">SEDANG</span></td><td class="p-3">180 hari</td></tr>
+                                <tr class="hover:bg-brand-50 dark:hover:bg-brand-900/20"><td class="p-3 code-block">FONNTE_TOKEN</td><td class="p-3">Vercel + VPS</td><td class="p-3"><span class="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs">SEDANG</span></td><td class="p-3">180 hari</td></tr>
+                                <tr class="hover:bg-brand-50 dark:hover:bg-brand-900/20"><td class="p-3 code-block">MIDTRANS_SERVER_KEY</td><td class="p-3">Vercel (Server)</td><td class="p-3"><span class="px-2 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-xs">YA</span></td><td class="p-3">Per kebijakan Midtrans</td></tr>
+                                <tr class="hover:bg-brand-50 dark:hover:bg-brand-900/20"><td class="p-3 code-block">NEXT_PUBLIC_SUPABASE_ANON_KEY</td><td class="p-3">Vercel (Client + Server)</td><td class="p-3"><span class="px-2 py-0.5 rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs">PUBLIK</span></td><td class="p-3">Tidak perlu (anon)</td></tr>
+                                <tr class="hover:bg-brand-50 dark:hover:bg-brand-900/20"><td class="p-3 code-block">NEXT_PUBLIC_SUPABASE_URL</td><td class="p-3">Vercel (Client + Server)</td><td class="p-3"><span class="px-2 py-0.5 rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs">PUBLIK</span></td><td class="p-3">Tidak perlu</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                        <p class="text-sm text-red-700 dark:text-red-300"><strong>⚠️ Peringatan:</strong> File <code>.env.local</code>, <code>.env.production.local</code>, <code>.env.vercel-secrets</code> ada di <code>.gitignore</code>. <strong>Jangan pernah commit file .env apapun.</strong> Gunakan <code>.env.example</code> sebagai template.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Navigation -->
+            <div class="mt-16 flex flex-wrap justify-center gap-4 animate-fade-in">
+                <a href="flow_bot.html" class="px-6 py-3 rounded-xl glass border border-surface-light-border dark:border-surface-dark-border font-semibold text-slate-700 dark:text-slate-200 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-all">
+                    ← Bot WhatsApp
+                </a>
+                <a href="index.html" class="btn-primary px-6 py-3 rounded-xl font-semibold text-white shadow-lg shadow-brand-500/30">
+                    Overview →
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="border-t border-surface-light-border dark:border-surface-dark-border py-8 px-6">
+        <div class="max-w-7xl mx-auto text-center text-sm text-slate-500 dark:text-slate-400">
+            <p class="font-display font-bold gradient-text">KampusKita.arch</p>
+            <p>Dokumentasi Arsitektur v1.0.0 — Keamanan & Row Level Security</p>
+        </div>
+    </footer>
+
+    <script>
+        const themeToggle = document.getElementById('themeToggle');
+        const sunIcon = themeToggle.querySelector('.sun-icon');
+        const moonIcon = themeToggle.querySelector('.moon-icon');
+        const html = document.documentElement;
+        function applyTheme(theme) { if (theme === 'dark') { html.classList.add('dark'); sunIcon.classList.add('hidden'); moonIcon.classList.remove('hidden'); } else { html.classList.remove('dark'); sunIcon.classList.remove('hidden'); moonIcon.classList.add('hidden'); } }
+        const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        applyTheme(savedTheme);
+        themeToggle.addEventListener('click', () => { const newTheme = html.classList.contains('dark') ? 'light' : 'dark'; localStorage.setItem('theme', newTheme); applyTheme(newTheme); });
+        const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) { entry.target.style.animationPlayState = 'running'; observer.unobserve(entry.target); } }); }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+        document.querySelectorAll('[class*="animate-"]').forEach(el => { el.style.animationPlayState = 'paused'; observer.observe(el); });
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => { anchor.addEventListener('click', function(e) { e.preventDefault(); const target = document.querySelector(this.getAttribute('href')); if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'd' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); themeToggle.click(); } });
+    </script>
 </body>
 </html>

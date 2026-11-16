@@ -2,28 +2,492 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Arsitektur Bot WhatsApp - KampusKita</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50: '#f0fdf4', 100: '#dcfce7', 200: '#bbf7d0', 300: '#86efac', 400: '#4ade80', 500: '#22c55e', 600: '#16a34a', 700: '#15803d', 800: '#166534', 900: '#14532d', 950: '#052e16' },
+                        accent: { 50: '#fdf4ff', 100: '#fae8ff', 200: '#f5d0fe', 300: '#f0abfc', 400: '#e879f9', 500: '#d946ef', 600: '#c026d3', 700: '#a21caf', 800: '#86198f', 900: '#701a75', 950: '#4a044e' },
+                        surface: { light: '#ffffff', dark: '#0f172a', 'light-muted': '#f8fafc', 'dark-muted': '#1e293b', 'light-border': '#e2e8f0', 'dark-border': '#334155' }
+                    },
+                    fontFamily: { display: ['Space Grotesk', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+                    animation: { 'fade-in': 'fadeIn 0.6s ease-out forwards', 'slide-up': 'slideUp 0.6s ease-out forwards', 'slide-in-left': 'slideInLeft 0.5s ease-out forwards', 'scale-in': 'scaleIn 0.4s ease-out forwards', 'pulse-glow': 'pulseGlow 2s ease-in-out infinite', 'float': 'float 6s ease-in-out infinite', 'gradient-shift': 'gradientShift 8s ease infinite', 'shimmer': 'shimmer 2s ease-in-out infinite' },
+                    keyframes: { fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } }, slideUp: { '0%': { opacity: '0', transform: 'translateY(30px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }, slideInLeft: { '0%': { opacity: '0', transform: 'translateX(-30px)' }, '100%': { opacity: '1', transform: 'translateX(0)' } }, scaleIn: { '0%': { opacity: '0', transform: 'scale(0.9)' }, '100%': { opacity: '1', transform: 'scale(1)' } }, pulseGlow: { '0%, 100%': { boxShadow: '0 0 20px rgba(34, 197, 94, 0.3)' }, '50%': { boxShadow: '0 0 40px rgba(34, 197, 94, 0.5)' } }, float: { '0%, 100%': { transform: 'translateY(0px)' }, '50%': { transform: 'translateY(-10px)' } }, gradientShift: { '0%': { backgroundPosition: '0% 50%' }, '50%': { backgroundPosition: '100% 50%' }, '100%': { backgroundPosition: '0% 50%' } }, shimmer: { '0%': { backgroundPosition: '-200% 0' }, '100%': { backgroundPosition: '200% 0' } } }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root { --bg: #f8fafc; --text: #0f172a; --card: #ffffff; --border: #e2e8f0; --muted: #64748b; }
+        .dark { --bg: #0f172a; --text: #f8fafc; --card: #1e293b; --border: #334155; --muted: #94a3b8; }
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Space Grotesk', sans-serif; background: var(--bg); color: var(--text); transition: background 0.4s ease, color 0.4s ease; }
+        .bg-mesh { background: linear-gradient(135deg, var(--bg) 0%, #e0f2fe 50%, #fce7f3 100%); }
+        .dark .bg-mesh { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #4c1d95 100%); }
+        .glass { background: rgba(255,255,255,0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.3); }
+        .dark .glass { background: rgba(30,41,59,0.7); border: 1px solid rgba(148,163,184,0.1); }
+        .card-hover { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .card-hover:hover { transform: translateY(-8px); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15); }
+        .dark .card-hover:hover { box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4); }
+        .btn-primary { background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%); transition: all 0.3s ease; position: relative; overflow: hidden; }
+        .btn-primary::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, #22c55e 0%, #4ade80 100%); opacity: 0; transition: opacity 0.3s; }
+        .btn-primary:hover::before { opacity: 1; }
+        .btn-primary span { position: relative; z-index: 1; }
+        .code-block { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; line-height: 1.7; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; overflow-x: auto; }
+        .gradient-text { background: linear-gradient(135deg, #16a34a, #22c55e, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; background-size: 200% auto; animation: gradient-shift 6s ease infinite; }
+        .stagger-1 { animation-delay: 0.1s; } .stagger-2 { animation-delay: 0.2s; } .stagger-3 { animation-delay: 0.3s; } .stagger-4 { animation-delay: 0.4s; }
+        .stagger-5 { animation-delay: 0.5s; } .stagger-6 { animation-delay: 0.6s; }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+        .shimmer-bg { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); background-size: 200% 100%; animation: shimmer 2s infinite; }
+        .dark .shimmer-bg { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent); background-size: 200% 100%; }
+    </style>
 </head>
-<body class="bg-slate-50 p-8">
-    <a href="index.html" class="text-blue-600 underline">&larr; Kembali ke Index</a>
-    <h1 class="text-3xl font-bold my-6 text-slate-800">Arsitektur Bot WhatsApp & VPS</h1>
-
-    <div class="space-y-4 max-w-2xl mx-auto">
-        <div class="p-4 bg-white rounded-lg shadow border-l-4 border-amber-500">
-            <span class="font-bold text-amber-600">Lingkungan Eksekusi (VPS)</span>
-            <p class="text-sm text-slate-600 mt-1">Bot berjalan sebagai proses PM2 di balik Nginx pada server VPS terpisah dari web Vercel.</p>
-        </div>
-        <div class="text-center font-bold text-slate-400">&darr;</div>
-        <div class="p-4 bg-white rounded-lg shadow border-l-4 border-amber-500">
-            <span class="font-bold text-amber-600">Mesin Baileys WhatsApp</span>
-            <p class="text-sm text-slate-600 mt-1">Mengelola koneksi multi-device, sesi auth lokal (di direktori bot), dan menangani pesan masuk dari pengguna.</p>
-        </div>
-        <div class="text-center font-bold text-slate-400">&darr;</div>
-        <div class="p-4 bg-white rounded-lg shadow border-l-4 border-amber-500">
-            <span class="font-bold text-amber-600">Sinkronisasi Database (Supabase)</span>
-            <p class="text-sm text-slate-600 mt-1">Bot melakukan query dan mutasi langsung ke database Supabase untuk mencatat pesanan, verifikasi status, dan mengirim broadcast.</p>
-        </div>
+<body class="bg-mesh min-h-screen">
+    <div class="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+        <div class="absolute w-4 h-4 bg-brand-400/10 rounded-full top-10 left-10 animate-float" style="animation-delay: 0s;"></div>
+        <div class="absolute w-6 h-6 bg-accent-400/10 rounded-full top-20 right-20 animate-float" style="animation-delay: 1s;"></div>
+        <div class="absolute w-2 h-2 bg-brand-500/20 rounded-full bottom-30 left-1/4 animate-float" style="animation-delay: 2s;"></div>
+        <div class="absolute w-4 h-4 bg-accent-500/10 rounded-full bottom-10 right-1/3 animate-float" style="animation-delay: 3s;"></div>
+        <div class="absolute w-3 h-3 bg-brand-300/15 rounded-full top-1/2 left-5 animate-float" style="animation-delay: 1.5s;"></div>
+        <div class="absolute w-5 h-5 bg-accent-300/10 rounded-full top-1/3 right-10 animate-float" style="animation-delay: 2.5s;"></div>
     </div>
+
+    <nav class="fixed top-0 left-0 right-0 z-50 glass border-b border-surface-light-border dark:border-surface-dark-border">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="index.html" class="font-display font-bold text-xl gradient-text flex items-center gap-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                KampusKita.arch
+            </a>
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-slate-500 dark:text-slate-400 hidden sm:block">WhatsApp Bot Architecture</span>
+                <button id="themeToggle" class="p-2 rounded-xl glass hover:bg-brand-100 dark:hover:bg-brand-900/30 transition-all" aria-label="Toggle theme">
+                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-300 sun-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-300 moon-icon hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-24 pb-20 px-6">
+        <div class="max-w-4xl mx-auto">
+            <header class="text-center py-12 animate-fade-in">
+                <a href="index.html" class="inline-flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors mb-6 animate-slide-in-left stagger-1">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                    Kembali ke Overview
+                </a>
+                <div class="inline-flex items-center gap-3 px-6 py-3 rounded-full glass border border-surface-light-border dark:border-surface-dark-border mb-6 animate-slide-up stagger-2">
+                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse-glow"></span>
+                    <span class="text-sm font-medium text-slate-600 dark:text-slate-300">Infrastruktur Bot</span>
+                </div>
+                <h1 class="font-display text-4xl md:text-6xl font-bold tracking-tight mb-4 animate-slide-up stagger-3">
+                    Bot <span class="gradient-text">WhatsApp</span>
+                </h1>
+                <p class="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto animate-slide-up stagger-4 leading-relaxed">
+                    Arsitektur bot Baileys multi-device yang berjalan di VPS terpisah, terintegrasi dengan Supabase untuk sinkronisasi real-time data transaksi, broadcast, dan manajemen sesi.
+                </p>
+            </header>
+
+            <!-- Architecture Overview -->
+            <section class="mb-16 animate-slide-up stagger-1">
+                <div class="glass rounded-3xl border border-surface-light-border dark:border-surface-dark-border p-8 md:p-10 card-hover relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-72 h-72 bg-gradient-to-bl from-green-500/10 to-transparent rounded-full blur-3xl"></div>
+                    <h2 class="font-display text-2xl font-bold mb-6">Topologi Deployment</h2>
+                    <div class="relative">
+                        <svg viewBox="0 0 800 400" class="w-full h-auto" preserveAspectRatio="xMidYMid meet">
+                            <defs>
+                                <linearGradient id="vpsGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#16a34a" stop-opacity="0.15"/>
+                                    <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.15"/>
+                                </linearGradient>
+                                <linearGradient id="supaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.15"/>
+                                    <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.15"/>
+                                </linearGradient>
+                                <linearGradient id="vercelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#000000" stop-opacity="0.15"/>
+                                    <stop offset="100%" stop-color="#6366f1" stop-opacity="0.15"/>
+                                </linearGradient>
+                                <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                                    <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+                                    <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                                </filter>
+                            </defs>
+
+                            <!-- VPS Box -->
+                            <rect x="30" y="50" width="280" height="300" rx="20" fill="url(#vpsGrad)" stroke="#16a34a" stroke-width="2" stroke-opacity="0.3" filter="url(#glow)"/>
+                            <text x="170" y="85" font-family="Space Grotesk" font-size="18" font-weight="700" fill="var(--text)" text-anchor="middle">VPS (PM2 + Nginx)</text>
+
+                            <!-- Bot Process -->
+                            <rect x="50" y="110" width="240" height="100" rx="12" fill="#16a34a" fill-opacity="0.1" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="5,5"/>
+                            <text x="170" y="135" font-family="Space Grotesk" font-size="14" font-weight="600" fill="#16a34a" text-anchor="middle">Baileys WhatsApp Bot</text>
+                            <text x="170" y="155" font-family="JetBrains Mono" font-size="11" fill="var(--muted)" text-anchor="middle">Multi-device Session</text>
+                            <text x="170" y="175" font-family="JetBrains Mono" font-size="11" fill="var(--muted)" text-anchor="middle">Auth State: ./auth_info</text>
+                            <text x="170" y="195" font-family="JetBrains Mono" font-size="11" fill="var(--muted)" text-anchor="middle">index.js (main handler)</text>
+
+                            <!-- Nginx -->
+                            <rect x="50" y="230" width="240" height="50" rx="12" fill="#06b6d4" fill-opacity="0.1" stroke="#06b6d4" stroke-width="1.5"/>
+                            <text x="170" y="255" font-family="Space Grotesk" font-size="13" font-weight="600" fill="#06b6d4" text-anchor="middle">Nginx Reverse Proxy</text>
+                            <text x="170" y="272" font-family="JetBrains Mono" font-size="10" fill="var(--muted)" text-anchor="middle">Port 80/443 → Bot Internal</text>
+
+                            <!-- PM2 -->
+                            <rect x="50" y="300" width="240" height="40" rx="12" fill="#f59e0b" fill-opacity="0.1" stroke="#f59e0b" stroke-width="1.5"/>
+                            <text x="170" y="322" font-family="Space Grotesk" font-size="13" font-weight="600" fill="#f59e0b" text-anchor="middle">PM2 Process Manager</text>
+                            <text x="170" y="337" font-family="JetBrains Mono" font-size="10" fill="var(--muted)" text-anchor="middle">Auto-restart • Logs • Monitoring</text>
+
+                            <!-- Arrow VPS -> Supabase -->
+                            <path d="M 310 180 Q 380 180 400 160" stroke="#22c55e" stroke-width="3" fill="none" marker-end="url(#arrowhead)" stroke-dasharray="10,5" opacity="0.6"/>
+                            <text x="350" y="150" font-family="Space Grotesk" font-size="11" fill="#22c55e" text-anchor="middle">Supabase Client (JS)</text>
+
+                            <!-- Supabase Box -->
+                            <rect x="420" y="80" width="280" height="220" rx="20" fill="url(#supaGrad)" stroke="#3b82f6" stroke-width="2" stroke-opacity="0.3" filter="url(#glow)"/>
+                            <text x="560" y="115" font-family="Space Grotesk" font-size="18" font-weight="700" fill="var(--text)" text-anchor="middle">Supabase Cloud</text>
+
+                            <!-- Tables -->
+                            <rect x="440" y="140" width="240" height="140" rx="12" fill="#3b82f6" fill-opacity="0.08" stroke="#3b82f6" stroke-width="1" stroke-dasharray="4,4"/>
+                            <text x="560" y="165" font-family="Space Grotesk" font-size="13" font-weight="600" fill="#3b82f6" text-anchor="middle">PostgreSQL Database</text>
+                            <text x="560" y="185" font-family="JetBrains Mono" font-size="10" fill="var(--muted)" text-anchor="middle">• listings (status, campus)</text>
+                            <text x="560" y="200" font-family="JetBrains Mono" font-size="10" fill="var(--muted)" text-anchor="middle">• payments (QRIS, sold_fee)</text>
+                            <text x="560" y="215" font-family="JetBrains Mono" font-size="10" fill="var(--muted)" text-anchor="middle">• seller_profiles (WA, campus)</text>
+                            <text x="560" y="230" font-family="JetBrains Mono" font-size="10" fill="var(--muted)" text-anchor="middle">• wa_outbox (broadcast queue)</text>
+                            <text x="560" y="245" font-family="JetBrains Mono" font-size="10" fill="var(--muted)" text-anchor="middle">• admin_audit_events</text>
+
+                            <!-- Arrow Supabase -> Vercel -->
+                            <path d="M 560 80 Q 560 30 580 10" stroke="#8b5cf6" stroke-width="3" fill="none" marker-end="url(#arrowhead)" stroke-dasharray="10,5" opacity="0.6"/>
+                            <text x="590" y="35" font-family="Space Grotesk" font-size="11" fill="#8b5cf6" text-anchor="middle">REST/Realtime</text>
+
+                            <!-- Vercel Box -->
+                            <rect x="600" y="10" width="150" height="60" rx="15" fill="url(#vercelGrad)" stroke="#000" stroke-width="2" stroke-opacity="0.3" fill-opacity="0.2"/>
+                            <text x="675" y="38" font-family="Space Grotesk" font-size="14" font-weight="700" fill="var(--text)" text-anchor="middle">Vercel (Next.js)</text>
+                            <text x="675" y="56" font-family="JetBrains Mono" font-size="10" fill="var(--muted)" text-anchor="middle">API Routes • Web</text>
+
+                            <!-- Arrow markers -->
+                            <defs>
+                                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                    <polygon points="0 0, 10 3.5, 0 7" fill="#22c55e" />
+                                </marker>
+                            </defs>
+
+                            <!-- WhatsApp Server -->
+                            <rect x="30" y="360" width="280" height="30" rx="8" fill="#25D366" fill-opacity="0.1" stroke="#25D366" stroke-width="2" stroke-dasharray="8,4"/>
+                            <text x="170" y="379" font-family="Space Grotesk" font-size="13" font-weight="600" fill="#25D366" text-anchor="middle">WhatsApp Servers (Multi-device API)</text>
+
+                            <!-- Connection VPS -> WA -->
+                            <line x1="170" y1="350" x2="170" y2="360" stroke="#25D366" stroke-width="2" stroke-dasharray="5,5" opacity="0.5"/>
+                        </svg>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Core Components -->
+            <section class="mb-16 animate-slide-up stagger-2">
+                <h2 class="font-display text-2xl font-bold mb-6">Komponen Inti Bot</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="glass rounded-2xl border border-surface-light-border dark:border-surface-dark-border p-6 card-hover">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-teal-500 flex items-center justify-center">
+                                <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.472.099-.174.05-.372-.025-.52-.075-.149-.667-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.42.01-.643.078-.223.068-.482.149-.767.373-.297.223-1.024.823-.94 1.149.078.297.273.649.075 1.024-.207.373-.343.97-.14 1.44.197.44.74 1.666 1.048 2.627.309.962.678 2.123 1.002 3.066.232.67.376 1.14 1.37 1.256.456.055 1.052-.025 1.553-.346.383-.245.756-.755 1.107-1.64.277-.696.375-1.286.346-1.418-.03-.131-1.314-1.13-2.375-2.372z"/></svg>
+                            </div>
+                            <h3 class="font-display text-xl font-bold">Baileys Core (index.js)</h3>
+                        </div>
+                        <ul class="space-y-3 text-sm text-slate-600 dark:text-slate-300 code-block">
+                            <li>• <strong>Multi-device support</strong> — tidak perlu HP utama online</li>
+                            <li>• <strong>Event-driven</strong> — message.upsert, connection.update, creds.update</li>
+                            <li>• <strong>Signal Protocol</strong> — enkripsi end-to-end native</li>
+                            <li>• <strong>QR Pairing</strong> — kode pairing + QR code fallback</li>
+                            <li>• <strong>Reconnection logic</strong> — exponential backoff + offline queue</li>
+                        </ul>
+                    </div>
+                    <div class="glass rounded-2xl border border-surface-light-border dark:border-surface-dark-border p-6 card-hover">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            </div>
+                            <h3 class="font-display text-xl font-bold">PM2 Process Manager</h3>
+                        </div>
+                        <ul class="space-y-3 text-sm text-slate-600 dark:text-slate-300 code-block">
+                            <li>• <strong>Auto-restart</strong> — crash recovery, memory limit restart</li>
+                            <li>• <strong>Cluster mode</strong> — opsional untuk scaling horizontal</li>
+                            <li>• <strong>Log rotation</strong> — pm2-logrotate, retain 30 hari</li>
+                            <li>• <strong>Monitoring</strong> — `pm2 monit`, `pm2 list`, metrics endpoint</li>
+                            <li>• <strong>Startup script</strong> — `pm2 startup systemd` untuk persist reboot</li>
+                        </ul>
+                    </div>
+                    <div class="glass rounded-2xl border border-surface-light-border dark:border-surface-dark-border p-6 card-hover">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                            </div>
+                            <h3 class="font-display text-xl font-bold">Nginx Reverse Proxy</h3>
+                        </div>
+                        <ul class="space-y-3 text-sm text-slate-600 dark:text-slate-300 code-block">
+                            <li>• <strong>SSL Termination</strong> — Let's Encrypt / Certbot auto-renew</li>
+                            <li>• <strong>Rate Limiting</strong> — `limit_req_zone` per IP untuk webhook</li>
+                            <li>• <strong>WebSocket Proxy</strong> — Baileys butuh WS upgrade untuk realtime</li>
+                            <li>• <strong>Health Check</strong> — endpoint `/health` untuk load balancer</li>
+                            <li>• <strong>Access Log</strong> — format JSON untuk parsing analitik</li>
+                        </ul>
+                    </div>
+                    <div class="glass rounded-2xl border border-surface-light-border dark:border-surface-dark-border p-6 card-hover">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-violet-500 flex items-center justify-center">
+                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                            </div>
+                            <h3 class="font-display text-xl font-bold">Session Persistence</h3>
+                        </div>
+                        <ul class="space-y-3 text-sm text-slate-600 dark:text-slate-300 code-block">
+                            <li>• <strong>Auth State</strong> — `./auth_info` (creds, keys, signedPreKey)</li>
+                            <li>• <strong>Backup Cron</strong> — `0 3 * * * tar -czf backup/auth_$(date).tar.gz auth_info`</li>
+                            <li>• <strong>Multi-session</strong> — support multi-nomor (bot utama + notifikasi)</li>
+                            <li>• <strong>Migration Ready</strong> — script `cadangkan-sesi.sh` untuk pindah VPS</li>
+                            <li>• <strong>Conflict Resolution</strong> — `conflict: delete` strategy saat pair ulang</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Integration Patterns -->
+            <section class="mb-16 animate-slide-up stagger-3">
+                <h2 class="font-display text-2xl font-bold mb-6">Pola Integrasi Bot ↔ Supabase</h2>
+                <div class="space-y-4">
+                    <div class="glass rounded-2xl border border-surface-light-border dark:border-surface-dark-border p-6 card-hover">
+                        <h3 class="font-display text-lg font-bold mb-4 flex items-center gap-2"><span class="w-8 h-8 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center text-white text-sm">1</span> Broadcast Queue (wa_outbox)</h3>
+                        <p class="text-slate-600 dark:text-slate-300 mb-4">Web menuliskan ke tabel `wa_outbox`, bot mem-polling atau menggunakan Realtime untuk mengirim pesan ke grup/nomor target.</p>
+                        <div class="code-block shimmer.bg">
+// Web (src/lib/fonnte.js) - Enqueue broadcast
+await supa.from('wa_outbox').insert({
+  target_type: 'group',        // 'group' | 'contact' | 'broadcast'
+  target_id: '120363...@g.us', // JID grup / nomor
+  message: { text: '📦 Iklan baru: MacBook Pro M3...' },
+  media_url: 'https://...',    // optional
+  priority: 1,                 // 1=high, 5=low
+  retry_count: 0,
+  status: 'pending'
+});
+
+// Bot (index.js) - Polling worker
+setInterval(async () => {
+  const { data: queue } = await supa.from('wa_outbox')
+    .select('*').eq('status', 'pending').lte('retry_count', 3)
+    .order('priority').order('created_at').limit(10);
+  for (const msg of queue) {
+    await sendMessage(msg.target_id, msg.message);
+    await supa.from('wa_outbox').update({ status: 'sent', sent_at: new Date() }).eq('id', msg.id);
+  }
+}, 5000);
+                        </div>
+                    </div>
+                    <div class="glass rounded-2xl border border-surface-light-border dark:border-surface-dark-border p-6 card-hover">
+                        <h3 class="font-display text-lg font-bold mb-4 flex items-center gap-2"><span class="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white text-sm">2</span> Transaction Sync (Real-time)</h3>
+                        <p class="text-slate-600 dark:text-slate-300 mb-4">Bot mendengarkan perubahan pada tabel `payments` dan `listings` via Supabase Realtime untuk notifikasi instan ke penjual/pembeli.</p>
+                        <div class="code-block shimmer-bg">
+// Bot (index.js) - Realtime subscription
+supa.channel('payments_changes')
+  .on('postgres_changes', {
+    event: 'INSERT', schema: 'public', table: 'payments',
+    filter: 'type=eq.iklan'
+  }, payload => {
+    const payment = payload.new;
+    notifySeller(payment.seller_wa, `💰 Pembayaran iklan diterima: ${payment.amount}`);
+  })
+  .subscribe();
+
+supa.channel('listing_status')
+  .on('postgres_changes', {
+    event: 'UPDATE', schema: 'public', table: 'listings',
+    filter: 'status=in.(active,sold,rejected)'
+  }, payload => {
+    const listing = payload.new;
+    notifyOwner(listing.seller_wa, `📢 Iklan "${listing.title}" sekarang ${listing.status}`);
+  })
+  .subscribe();
+                        </div>
+                    </div>
+                    <div class="glass rounded-2xl border border-surface-light-border dark:border-surface-dark-border p-6 card-hover">
+                        <h3 class="font-display text-lg font-bold mb-4 flex items-center gap-2"><span class="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-violet-500 flex items-center justify-center text-white text-sm">3</span> Admin Commands via WA</h3>
+                        <p class="text-slate-600 dark:text-slate-300 mb-4">Admin bisa mengelola sistem lewat WhatsApp dengan command terstruktur (prefix `!` atau `/`).</p>
+                        <div class="code-block shimmer-bg">
+// Bot (index.js) - Command handler
+const adminCommands = {
+  'stats': async (msg) => {
+    const { count: users } = await supa.from('seller_profiles').select('*', { count: 'exact', head: true });
+    const { count: listings } = await supa.from('listings').select('*', { count: 'exact', head: true });
+    return `📊 Stats: ${users} users, ${listings} listings`;
+  },
+  'broadcast': async (msg, args) => {
+    const text = args.join(' ');
+    await supa.from('wa_outbox').insert({ target_type: 'broadcast', message: { text }, priority: 1, status: 'pending' });
+    return `📢 Broadcast dikirim ke semua grup`;
+  },
+  'ban': async (msg, args) => {
+    const wa = formatWa(args[0]);
+    await supa.from('blacklist').insert({ wa, reason: args.slice(1).join(' ') || 'Manual ban' });
+    return `🚫 ${wa} dibanned`;
+  },
+  'unban': async (msg, args) => {
+    const wa = formatWa(args[0]);
+    await supa.from('blacklist').delete().eq('wa', wa);
+    return `✅ ${wa} unbanned`;
+  }
+};
+
+// Message handler
+sock.ev.on('messages.upsert', async ({ messages }) => {
+  for (const msg of messages) {
+    if (!msg.message?.conversation) continue;
+    const text = msg.message.conversation.trim();
+    if (text.startsWith('!') && isAdmin(msg.key.remoteJid)) {
+      const [cmd, ...args] = text.slice(1).split(' ');
+      if (adminCommands[cmd]) {
+        const reply = await adminCommands[cmd](msg, args);
+        await sock.sendMessage(msg.key.remoteJid, { text: reply });
+      }
+    }
+  }
+});
+                        </div>
+                    </div>
+                    <div class="glass rounded-2xl border border-surface-light-border dark:border-surface-dark-border p-6 card-hover">
+                        <h3 class="font-display text-lg font-bold mb-4 flex items-center gap-2"><span class="w-8 h-8 rounded-xl bg-gradient-to-br from-red-500 to-pink-500 flex items-center justify-center text-white text-sm">4</span> Health Monitoring & Alerting</h3>
+                        <p class="text-slate-600 dark:text-slate-300 mb-4">Bot mengirim heartbeat berkala dan alert ke admin jika terjadi anomali (koneksi putus, error berulang, memory tinggi).</p>
+                        <div class="code-block shimmer-bg">
+// Bot - Heartbeat & Health Check
+setInterval(async () => {
+  // 1. Update status bot di DB
+  await supa.from('bot_status').upsert({
+    id: 'main_bot',
+    status: 'online',
+    last_seen: new Date(),
+    memory_mb: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+    uptime_sec: Math.round(process.uptime()),
+    version: require('./package.json').version
+  });
+
+  // 2. Check Supabase connectivity
+  try { await supa.from('bot_status').select('id').limit(1); }
+  catch { await alertAdmin('🚨 Bot tidak bisa konek ke Supabase!'); }
+
+  // 3. Alert jika memory > 500MB
+  if (process.memoryUsage().heapUsed > 500 * 1024 * 1024) {
+    await alertAdmin(`⚠️ Memory tinggi: ${Math.round(process.memoryUsage().heapUsed/1024/1024)}MB`);
+  }
+}, 60000); // setiap 1 menit
+
+// Admin alert via WA
+async function alertAdmin(text) {
+  const adminWa = process.env.ADMIN_WA || '6281234567890@s.whatsapp.net';
+  await sock.sendMessage(adminWa, { text: `[ALERT] ${text}` });
+}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- File Structure -->
+            <section class="mb-16 animate-slide-up stagger-4">
+                <h2 class="font-display text-2xl font-bold mb-6">Struktur Direktori Bot (VPS)</h2>
+                <div class="glass rounded-2xl border border-surface-light-border dark:border-surface-dark-border p-6 card-hover overflow-x-auto">
+                    <div class="code-block shimmer.bg">
+bot-wa/
+├── index.js                 # Entry point utama (167KB+)
+├── package.json             # Dependencies: @whiskeysockets/baileys, @supabase/supabase-js, pino
+├── package-lock.json
+├── .gitignore
+├── auth_info/               # Session Baileys (CREDS, KEYS, SIGNED_PRE_KEY)
+│   ├── creds.json
+│   ├── pre-key-*.json
+│   └── ...
+├── media/                   # Cache media sementara
+├── logs/                    # PM2 logs + custom logs
+├── scripts/
+│   ├── cadangkan-sesi.sh    # Backup session ke tar.gz
+│   ├── restore-sesi.sh      # Restore dari backup
+│   └── health-check.sh      # Cron job monitoring
+├── config/
+│   ├── groups.json          # Daftar grup target broadcast
+│   ├── commands.json        # Definisi command admin
+│   └── settings.json        # Konfigurasi runtime
+└── lib/
+    ├── supabase.js          # Client Supabase (service_role)
+    ├── messageHandler.js    # Router pesan masuk
+    ├── commandParser.js     # Parser command admin (!stats, !ban, dll)
+    ├── broadcastWorker.js   # Worker polling wa_outbox
+    ├── realtimeListener.js  # Supabase Realtime subscriptions
+    └── healthMonitor.js     # Heartbeat & alerting
+                    </div>
+                </div>
+            </section>
+
+            <!-- Deployment Checklist -->
+            <section class="animate-fade-in stagger-5">
+                <h2 class="font-display text-2xl font-bold mb-6">Checklist Deployment VPS</h2>
+                <div class="glass rounded-2xl border border-surface-light-border dark:border-surface-dark-border p-6 card-hover">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="font-semibold text-slate-700 dark:text-slate-200 mb-4 flex items-center gap-2"><svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Prasyarat</h3>
+                            <ul class="space-y-2 text-sm text-slate-600 dark:text-slate-300">
+                                <li class="flex items-center gap-2"><span class="w-5 h-5 rounded border border-green-500 flex items-center justify-center text-green-500 text-xs">✓</span> Ubuntu 22.04+ / Debian 12</li>
+                                <li class="flex items-center gap-2"><span class="w-5 h-5 rounded border border-green-500 flex items-center justify-center text-green-500 text-xs">✓</span> Node.js 20+ (LTS)</li>
+                                <li class="flex items-center gap-2"><span class="w-5 h-5 rounded border border-green-500 flex items-center justify-center text-green-500 text-xs">✓</span> PM2 global (`npm i -g pm2`)</li>
+                                <li class="flex items-center gap-2"><span class="w-5 h-5 rounded border border-green-500 flex items-center justify-center text-green-500 text-xs">✓</span> Nginx + Certbot</li>
+                                <li class="flex items-center gap-2"><span class="w-5 h-5 rounded border border-green-500 flex items-center justify-center text-green-500 text-xs">✓</span> Git + SSH key access</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-slate-700 dark:text-slate-200 mb-4 flex items-center gap-2"><svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>Environment Variables</h3>
+                            <ul class="space-y-2 text-sm text-slate-600 dark:text-slate-300 code-block">
+                                <li>SUPABASE_URL=</li>
+                                <li>SUPABASE_SERVICE_ROLE_KEY=</li>
+                                <li>BAILEYS_API_TOKEN=</li>
+                                <li>FONNTE_TOKEN=</li>
+                                <li>ADMIN_WA=628xxxxxxxxxx</li>
+                                <li>NODE_ENV=production</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Navigation -->
+            <div class="mt-16 flex flex-wrap justify-center gap-4 animate-fade-in">
+                <a href="flow_posting.html" class="px-6 py-3 rounded-xl glass border border-surface-light-border dark:border-surface-dark-border font-semibold text-slate-700 dark:text-slate-200 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-all">
+                    ← Flow Posting
+                </a>
+                <a href="flow_keamanan.html" class="btn-primary px-6 py-3 rounded-xl font-semibold text-white shadow-lg shadow-brand-500/30">
+                    Keamanan & RLS →
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="border-t border-surface-light-border dark:border-surface-dark-border py-8 px-6">
+        <div class="max-w-7xl mx-auto text-center text-sm text-slate-500 dark:text-slate-400">
+            <p class="font-display font-bold gradient-text">KampusKita.arch</p>
+            <p>Dokumentasi Arsitektur v1.0.0 — Bot WhatsApp Architecture</p>
+        </div>
+    </footer>
+
+    <script>
+        const themeToggle = document.getElementById('themeToggle');
+        const sunIcon = themeToggle.querySelector('.sun-icon');
+        const moonIcon = themeToggle.querySelector('.moon-icon');
+        const html = document.documentElement;
+        function applyTheme(theme) { if (theme === 'dark') { html.classList.add('dark'); sunIcon.classList.add('hidden'); moonIcon.classList.remove('hidden'); } else { html.classList.remove('dark'); sunIcon.classList.remove('hidden'); moonIcon.classList.add('hidden'); } }
+        const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        applyTheme(savedTheme);
+        themeToggle.addEventListener('click', () => { const newTheme = html.classList.contains('dark') ? 'light' : 'dark'; localStorage.setItem('theme', newTheme); applyTheme(newTheme); });
+        const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) { entry.target.style.animationPlayState = 'running'; observer.unobserve(entry.target); } }); }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+        document.querySelectorAll('[class*="animate-"]').forEach(el => { el.style.animationPlayState = 'paused'; observer.observe(el); });
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => { anchor.addEventListener('click', function(e) { e.preventDefault(); const target = document.querySelector(this.getAttribute('href')); if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'd' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); themeToggle.click(); } });
+    </script>
 </body>
 </html>
