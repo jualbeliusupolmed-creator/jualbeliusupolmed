@@ -3,7 +3,7 @@ name: antfu-create-pr
 description: Create a reviewable GitHub pull request from the current branch with a Conventional Commits title, a concise evidence-based body, and before/after screenshots for UI changes. Use when asked to open, create, publish, or prepare a PR.
 metadata:
   author: Anthony Fu
-  version: "2026.10.09"
+  version: "2026.11.16"
 ---
 
 # Create Pull Request
@@ -19,25 +19,9 @@ Open a PR that a reviewer can understand from the body alone. Explain the change
 5. Run the checks that match the changed surfaces (focused tests, typecheck, lint). Record the exact commands and results.
 6. If the diff changes user-visible UI, capture before/after evidence. See [visual-evidence](references/visual-evidence.md).
 7. Review the commit history and reshape it into atomic Conventional Commits. See [Commits](#commits).
-8. Write the body to a temporary file. Push the branch. Create the PR with `gh pr create --title ... --body-file ...` (add `--attach` for each screenshot; newer `gh` can upload local images and videos from the CLI, see [Attaching files with GitHub CLI](https://docs.github.com/en/github-cli/github-cli/attaching-files-with-github-cli)). Use `--draft` when checks are still running or the work is not review-ready.
+8. Write the title and body (see [Title](#title) and [Body](#body)) to a temporary file. Push the branch. Create the PR with `gh pr create --title ... --body-file ...` (add `--attach` for each screenshot; newer `gh` can upload local images and videos from the CLI, see [Attaching files with GitHub CLI](https://docs.github.com/en/github-cli/github-cli/attaching-files-with-github-cli)). Use `--draft` when checks are still running or the work is not review-ready.
 9. Open the created PR and verify title, base, head, rendered tables, diagrams, and images.
-10. Address review comments: fix each confirmed issue, run focused checks, push, reply with evidence, and resolve the thread.
-
-## Title
-
-Use Conventional Commits, matching how the repo already writes commit messages:
-
-```text
-feat(scope): add retry to upload client
-fix(scope): avoid double submit on enter
-refactor: extract diff parsing from cli
-chore(deps): update vite to v8
-docs: clarify worktree setup
-```
-
-- Lowercase, imperative, no trailing period, under ~70 characters.
-- Scope is the package, module, or feature name the repo already uses. Omit it when the change is repo-wide.
-- Squash-merge repos turn the title into the commit message; write it as the commit you want in history.
+10. Get the PR mergeable and green: resolve conflicts, watch CI, fix failures, address review comments. See [After creating](#after-creating).
 
 ## Commits
 
@@ -58,13 +42,30 @@ feat: add task feature, fix sidebar, update deps, refactor utils
 - Before pushing, review the history and split or squash local commits (`git rebase -i <base>`) until each one stands alone and builds.
 - Do not rewrite commits that are already pushed and under review; add new commits instead.
 
+## Title
+
+Use Conventional Commits, matching how the repo already writes commit messages:
+
+```text
+feat(scope): add retry to upload client
+fix(scope): avoid double submit on enter
+refactor: extract diff parsing from cli
+chore(deps): update vite to v8
+docs: clarify worktree setup
+```
+
+- Lowercase, imperative, no trailing period, under ~70 characters.
+- Scope is the package, module, or feature name the repo already uses. Omit it when the change is repo-wide.
+- Squash-merge repos turn the title into the commit message; write it as the commit you want in history.
+
 ## Body
 
 Required in every PR:
 
 - `## Summary`: the problem or capability first, then what changed and why this approach. Mention if the PR is stacked and on what.
-- Linked issues: `closes #123` / `fixes #123` / `refs #123` so GitHub links and auto-closes.
-- `## Verification`: exact commands run and their results, plus anything left unverified.
+- Linked issues: one per line as a list item, e.g. `- close #123`, `- close #456`, so GitHub renders each as a pretty issue card and auto-closes it. Use `- refs #789` for issues that should stay open.
+- `## User prompts`: the model and harness in use, then a short summary of what the user asked for during the session, facts only. See [pr-body](references/pr-body.md#user-prompts).
+- `## Verification`: exact commands run and their results, plus anything left unverified. Show proof matched to the change type (bug: same input before and after; perf: same workload measured both sides; CLI: real output). See [Evidence by change type](references/pr-body.md#evidence-by-change-type).
 
 Optional, only when it helps the reviewer:
 
@@ -85,4 +86,22 @@ If the repo has a PR template, keep its headings and fill them; add sections abo
 - No filler ("This PR aims to...", "comprehensive", "robust"). Start sentences with the fact.
 - Do not paste tokens, secrets, user records, or full payloads into the body.
 - Do not commit screenshots or other PR-only artifacts to the repo; attach them with `gh --attach` (supported by newer `gh`, no manual upload needed).
-- If the PR was written with the help of an agent, say so in one line at the end of the body.
+- A description conveys belief, not proof. Show the change working instead of only saying it works.
+- "Before" is what is live (base branch or production), never a faked revert. Check every capture; agents can screenshot the wrong page. Use demo or sanitized data only.
+- Security fixes: keep the description short and delay exploit details until release.
+- If the PR was written with the help of an agent, say so in one line at the end of the body: what the human contributed (gave the task, wrote the spec, shaped the solution) and whether they have reviewed the diff yet. If not, the reviewer is the first human to look.
+
+## After creating
+
+Do not stop at `gh pr create`. Get the PR to a mergeable, green state.
+
+1. **Conflicts.** Check `mergeable` / `mergeStateStatus`. If `CONFLICTING` or `DIRTY`, bring the base branch in (`git fetch` then `git merge origin/<base>`; rebase only if the repo prefers it and the branch is not yet under review), resolve each conflict by keeping the intent of both sides, rerun the focused checks, and push. Never resolve by discarding the base side's changes without saying so.
+2. **CI.** Find the run for the pushed head (`gh run list --branch <head> --limit 1`), then `gh run watch <run-id> --exit-status`. If no run starts (workflows need approval or none apply), say so in the final report.
+3. **Failures.** On a failed run, read the failing logs (`gh run view <run-id> --log-failed`), reproduce locally with the same command, fix the root cause, and push a follow-up commit (Conventional Commits, e.g. `fix(scope): ...`). Do not amend or force-push commits already pushed. Then watch the new run.
+4. **Stop conditions.** Repeat for at most 3 fix rounds. Stop and report if the failure is flaky or unrelated to the diff (rerun once with `gh run rerun --failed`), needs secrets or access you do not have, or the fix would change the PR's scope. Never disable, skip, or weaken tests or lint rules just to get green.
+5. **Review comments.** Fix each confirmed issue with a follow-up commit, run focused checks, push, reply with evidence, and resolve the thread.
+6. Update the `Verification` section if follow-up commits change what was verified.
+
+## Credits
+
+Evidence-by-type, honesty rules, and review-status disclosure are adapted from Hugo Richard's [What my pull requests look like now](https://hugorcd.com/writing/what-my-pull-requests-look-like-now).

@@ -12,14 +12,14 @@
       "source": "antfu/skills",
       "sourceType": "github",
       "skillPath": "skills/antfu-create-pr/SKILL.md",
-      "computedHash": "19fc3e48bd3d2adcdb374416e7b6dac0102b4579b6ea7eed247d7e7f014c3015",
+      "computedHash": "f2d928b3a293ab699f3b9c77483620cc4cbecb314b4f97f2086b0d10568621c3",
       "installMode": "copy"
     },
     "antfu-issue-triage": {
       "source": "antfu/skills",
       "sourceType": "github",
       "skillPath": "skills/antfu-issue-triage/SKILL.md",
-      "computedHash": "efba543cad37aebdcfe00422cce3db46a232d470bc7f54781cc4b96351ce0cd9",
+      "computedHash": "34f50f30effac696d1bc4111c7cb21dc46da76aee1732b24207b930899e6acfa",
       "installMode": "copy"
     },
     "antfu-query": {
@@ -47,7 +47,7 @@
       "source": "antfu/skills",
       "sourceType": "github",
       "skillPath": "skills/nuxt/SKILL.md",
-      "computedHash": "03fc229d7c6a300b2ded6d9f984b45d8a554c2c991199c54760893e627c91371",
+      "computedHash": "7a5e619a337b2b67b4db73e9b6c3cb820f5bd1a6ade21da5891fa28faa67055f",
       "installMode": "copy"
     },
     "pinia": {
@@ -61,7 +61,7 @@
       "source": "antfu/skills",
       "sourceType": "github",
       "skillPath": "skills/pnpm/SKILL.md",
-      "computedHash": "d1bd6f4fd38ff1ba33b857223c58a832d1cd5b488163ba0d389db449be472603",
+      "computedHash": "71fd67de7ced43ff8eab87b46183fa10f09428bb3d9ae44418b506bac858583e",
       "installMode": "copy"
     },
     "supabase": {
@@ -87,7 +87,7 @@
       "source": "antfu/skills",
       "sourceType": "github",
       "skillPath": "skills/vite/SKILL.md",
-      "computedHash": "88ee465fd10f711efecc76e91e96accae2b229dda371614dcf219099c264a486",
+      "computedHash": "2dc52cad867c2673ab37f83fe992c25610d19f60587a308a262d091d0f36c1ad",
       "installMode": "copy"
     },
     "vitepress": {
