@@ -2,36 +2,501 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flow Pasang Iklan - KampusKita</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50: '#f0fdf4', 100: '#dcfce7', 200: '#bbf7d0', 300: '#86efac', 400: '#4ade80', 500: '#22c55e', 600: '#16a34a', 700: '#15803d', 800: '#166534', 900: '#14532d', 950: '#052e16' },
+                        accent: { 50: '#fdf4ff', 100: '#fae8ff', 200: '#f5d0fe', 300: '#f0abfc', 400: '#e879f9', 500: '#d946ef', 600: '#c026d3', 700: '#a21caf', 800: '#86198f', 900: '#701a75', 950: '#4a044e' },
+                        surface: { light: '#ffffff', dark: '#0f172a', 'light-muted': '#f8fafc', 'dark-muted': '#1e293b', 'light-border': '#e2e8f0', 'dark-border': '#334155' }
+                    },
+                    fontFamily: { display: ['Space Grotesk', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+                    animation: { 'fade-in': 'fadeIn 0.6s ease-out forwards', 'slide-up': 'slideUp 0.6s ease-out forwards', 'slide-in-left': 'slideInLeft 0.5s ease-out forwards', 'scale-in': 'scaleIn 0.4s ease-out forwards', 'pulse-glow': 'pulseGlow 2s ease-in-out infinite', 'float': 'float 6s ease-in-out infinite', 'gradient-shift': 'gradientShift 8s ease infinite', 'shimmer': 'shimmer 2s ease-in-out infinite' },
+                    keyframes: { fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } }, slideUp: { '0%': { opacity: '0', transform: 'translateY(30px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } }, slideInLeft: { '0%': { opacity: '0', transform: 'translateX(-30px)' }, '100%': { opacity: '1', transform: 'translateX(0)' } }, scaleIn: { '0%': { opacity: '0', transform: 'scale(0.9)' }, '100%': { opacity: '1', transform: 'scale(1)' } }, pulseGlow: { '0%, 100%': { boxShadow: '0 0 20px rgba(34, 197, 94, 0.3)' }, '50%': { boxShadow: '0 0 40px rgba(34, 197, 94, 0.5)' } }, float: { '0%, 100%': { transform: 'translateY(0px)' }, '50%': { transform: 'translateY(-10px)' } }, gradientShift: { '0%': { backgroundPosition: '0% 50%' }, '50%': { backgroundPosition: '100% 50%' }, '100%': { backgroundPosition: '0% 50%' } }, shimmer: { '0%': { backgroundPosition: '-200% 0' }, '100%': { backgroundPosition: '200% 0' } } }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root { --bg: #f8fafc; --text: #0f172a; --card: #ffffff; --border: #e2e8f0; --muted: #64748b; }
+        .dark { --bg: #0f172a; --text: #f8fafc; --card: #1e293b; --border: #334155; --muted: #94a3b8; }
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Space Grotesk', sans-serif; background: var(--bg); color: var(--text); transition: background 0.4s ease, color 0.4s ease; }
+        .bg-mesh { background: linear-gradient(135deg, var(--bg) 0%, #e0f2fe 50%, #fce7f3 100%); }
+        .dark .bg-mesh { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #4c1d95 100%); }
+        .glass { background: rgba(255,255,255,0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.3); }
+        .dark .glass { background: rgba(30,41,59,0.7); border: 1px solid rgba(148,163,184,0.1); }
+        .card-hover { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .card-hover:hover { transform: translateY(-8px); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15); }
+        .dark .card-hover:hover { box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4); }
+        .btn-primary { background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%); transition: all 0.3s ease; position: relative; overflow: hidden; }
+        .btn-primary::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, #22c55e 0%, #4ade80 100%); opacity: 0; transition: opacity 0.3s; }
+        .btn-primary:hover::before { opacity: 1; }
+        .btn-primary span { position: relative; z-index: 1; }
+        .code-block { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; line-height: 1.7; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; overflow-x: auto; }
+        .gradient-text { background: linear-gradient(135deg, #16a34a, #22c55e, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; background-size: 200% auto; animation: gradient-shift 6s ease infinite; }
+        .stagger-1 { animation-delay: 0.1s; } .stagger-2 { animation-delay: 0.2s; } .stagger-3 { animation-delay: 0.3s; } .stagger-4 { animation-delay: 0.4s; }
+        .stagger-5 { animation-delay: 0.5s; } .stagger-6 { animation-delay: 0.6s; }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+        .step-connector { position: relative; }
+        .step-connector::before { content: ''; position: absolute; left: 50%; top: 100%; bottom: -2rem; width: 3px; background: linear-gradient(to bottom, var(--border), transparent); transform: translateX(-50%); }
+        .step-connector::after { content: ''; position: absolute; left: 50%; bottom: -1.5rem; width: 12px; height: 12px; border-radius: 50%; background: linear-gradient(135deg, #16a34a, #22c55e); border: 3px solid var(--bg); transform: translateX(-50%); box-shadow: 0 0 0 2px #16a34a; }
+        .timeline-dot { width: 20px; height: 20px; border-radius: 50%; border: 3px solid var(--bg); box-shadow: 0 0 0 2px currentColor; flex-shrink: 0; }
+        .toc-link { transition: all 0.2s ease; } .toc-link:hover { color: #22c55e; transform: translateX(4px); }
+        .toc-link.active { color: #16a34a; font-weight: 600; border-left-color: #22c55e; }
+        .shimmer-bg { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); background-size: 200% 100%; animation: shimmer 2s infinite; }
+        .dark .shimmer-bg { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent); background-size: 200% 100%; }
+    </style>
 </head>
-<body class="bg-slate-50 p-8">
-    <a href="index.html" class="text-blue-600 underline">&larr; Kembali ke Index</a>
-    <h1 class="text-3xl font-bold my-6 text-slate-800">Flow Detail: Pasang Iklan & Moderasi</h1>
-
-    <div class="space-y-4 max-w-2xl mx-auto">
-        <div class="p-4 bg-white rounded-lg shadow border-l-4 border-blue-500">
-            <span class="font-bold text-blue-600">Langkah 1: Client (JualClient.jsx)</span>
-            <p class="text-sm text-slate-600 mt-1">User mengisi formulir iklan & mengunggah gambar. Validasi frontend memeriksa nomor WA dan kelengkapan data.</p>
-        </div>
-        <div class="text-center font-bold text-slate-400">&darr;</div>
-        <div class="p-4 bg-white rounded-lg shadow border-l-4 border-indigo-500">
-            <span class="font-bold text-indigo-600">Langkah 2: API Route (POST /api/listings)</span>
-            <p class="text-sm text-slate-600 mt-1">Menerima payload. Sesi diverifikasi lewat kuki (HMAC). Rate limiter memeriksa IP untuk mencegah spam.</p>
-        </div>
-        <div class="text-center font-bold text-slate-400">&darr;</div>
-        <div class="p-4 bg-white rounded-lg shadow border-l-4 border-purple-500">
-            <span class="font-bold text-purple-600">Langkah 3: Engine Moderasi (moderationRules.js)</span>
-            <p class="text-sm text-slate-600 mt-1">
-                1. <strong>Deterministik:</strong> Cek kata kunci terlarang.<br>
-                2. <strong>AI (Gemini):</strong> Pengecekan skema & risiko penipuan (timeout 6s).
-            </p>
-        </div>
-        <div class="text-center font-bold text-slate-400">&darr;</div>
-        <div class="p-4 bg-white rounded-lg shadow border-l-4 border-emerald-500">
-            <span class="font-bold text-emerald-600">Langkah 4: Penyimpanan & Distribusi (Supabase)</span>
-            <p class="text-sm text-slate-600 mt-1">Data disimpan ke tabel <code>listings</code>. Jika berstatus aktif, background job memicu <code>postToGroup</code> (Fonnte WhatsApp) dan auto-publish Instagram.</p>
-        </div>
+<body class="bg-mesh min-h-screen">
+    <div class="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+        <div class="absolute w-4 h-4 bg-brand-400/10 rounded-full top-10 left-10 animate-float" style="animation-delay: 0s;"></div>
+        <div class="absolute w-6 h-6 bg-accent-400/10 rounded-full top-20 right-20 animate-float" style="animation-delay: 1s;"></div>
+        <div class="absolute w-2 h-2 bg-brand-500/20 rounded-full bottom-30 left-1/4 animate-float" style="animation-delay: 2s;"></div>
+        <div class="absolute w-4 h-4 bg-accent-500/10 rounded-full bottom-10 right-1/3 animate-float" style="animation-delay: 3s;"></div>
+        <div class="absolute w-3 h-3 bg-brand-300/15 rounded-full top-1/2 left-5 animate-float" style="animation-delay: 1.5s;"></div>
+        <div class="absolute w-5 h-5 bg-accent-300/10 rounded-full top-1/3 right-10 animate-float" style="animation-delay: 2.5s;"></div>
     </div>
+
+    <nav class="fixed top-0 left-0 right-0 z-50 glass border-b border-surface-light-border dark:border-surface-dark-border">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="index.html" class="font-display font-bold text-xl gradient-text flex items-center gap-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                KampusKita.arch
+            </a>
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-slate-500 dark:text-slate-400 hidden sm:block">Flow Pasang Iklan</span>
+                <button id="themeToggle" class="p-2 rounded-xl glass hover:bg-brand-100 dark:hover:bg-brand-900/30 transition-all" aria-label="Toggle theme">
+                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-300 sun-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-300 moon-icon hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-24 pb-20 px-6">
+        <div class="max-w-4xl mx-auto">
+            <header class="text-center py-12 animate-fade-in">
+                <a href="index.html" class="inline-flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors mb-6 animate-slide-in-left stagger-1">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                    Kembali ke Overview
+                </a>
+                <div class="inline-flex items-center gap-3 px-6 py-3 rounded-full glass border border-surface-light-border dark:border-surface-dark-border mb-6 animate-slide-up stagger-2">
+                    <span class="w-2 h-2 rounded-full bg-brand-500 animate-pulse-glow"></span>
+                    <span class="text-sm font-medium text-slate-600 dark:text-slate-300">Alur End-to-End</span>
+                </div>
+                <h1 class="font-display text-4xl md:text-6xl font-bold tracking-tight mb-4 animate-slide-up stagger-3">
+                    Flow <span class="gradient-text">Pasang Iklan</span>
+                </h1>
+                <p class="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto animate-slide-up stagger-4 leading-relaxed">
+                    Dari input pengguna hingga distribusi otomatis ke WhatsApp & Instagram — setiap langkah dirancang untuk kecepatan, keamanan, dan pengalaman pengguna yang mulus.
+                </p>
+            </header>
+
+            <!-- Progress Indicator -->
+            <div class="hidden lg:block mb-12 animate-fade-in stagger-5">
+                <div class="glass rounded-2xl border border-surface-light-border dark:border-surface-dark-border p-4">
+                    <div class="flex items-center justify-between relative">
+                        <div class="absolute top-1/2 left-0 right-0 h-1 bg-gradient-to-r, var(--border), transparent) -translate-y-1/2"></div>
+                        <div class="relative flex items-center gap-2 z-10">
+                            <div class="timeline-dot bg-blue-500" data-step="1" title="Client Input"></div>
+                            <div class="timeline-dot bg-indigo-500" data-step="2" title="API Gateway"></div>
+                            <div class="timeline-dot bg-purple-500" data-step="3" title="Moderasi AI"></div>
+                            <div class="timeline-dot bg-green-500" data-step="4" title="Persistensi"></div>
+                            <div class="timeline-dot bg-amber-500" data-step="5" title="Distribusi"></div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between mt-4 text-xs text-slate-500 dark:text-slate-400 font-medium">
+                        <span>Client</span><span>API</span><span>AI</span><span>DB</span><span>Distribusi</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 1: Client Input -->
+            <section id="step1" class="mb-16 animate-slide-up stagger-1">
+                <div class="glass rounded-3xl border border-surface-light-border dark:border-surface-dark-border p-8 md:p-10 card-hover relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-72 h-72 bg-gradient-to-bl from-blue-500/10 to-transparent rounded-full blur-3xl"></div>
+                    <div class="flex items-start gap-6 relative">
+                        <div class="flex-shrink-0 w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                            <span class="text-white font-bold text-3xl">1</span>
+                        </div>
+                        <div class="flex-1 pt-2">
+                            <h2 class="font-display text-2xl font-bold mb-3">Input & Validasi Client</h2>
+                            <p class="text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
+                                Pengguna mengakses halaman <code class="px-2 py-0.5 rounded bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300">/jual</code> dan mengisi formulir multi-step yang dibangun dengan <code>JualClient.jsx</code>. Setiap input divalidasi secara real-time.
+                            </p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                <div class="glass p-4 rounded-xl border border-surface-light-border dark:border-surface-dark-border">
+                                    <h4 class="font-semibold text-slate-700 dark:text-slate-200 mb-2 flex items-center gap-2"><svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Formulir</h4>
+                                    <ul class="text-sm text-slate-600 dark:text-slate-300 space-y-1 code-block">
+                                        <li>• Judul, deskripsi, harga, stok</li>
+                                        <li>• Kategori & tipe (barang/jasa/sewa)</li>
+                                        <li>• Spesifikasi dinamis per kategori</li>
+                                        <li>• Upload gambar (max 10, drag-drop)</li>
+                                    </ul>
+                                </div>
+                                <div class="glass p-4 rounded-xl border border-surface-light-border dark:border-surface-dark-border">
+                                    <h4 class="font-semibold text-slate-700 dark:text-slate-200 mb-2 flex items-center gap-2"><svg class="w-5 h-5 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>Validasi & Keamanan</h4>
+                                    <ul class="text-sm text-slate-600 dark:text-slate-300 space-y-1 code-block">
+                                        <li>• Schema Zod (src/lib/listingSchema.js)</li>
+                                        <li>• Format WA otomatis (parseWaInput)</li>
+                                        <li>• Kompresi gambar client-side (Sharp WASM)</li>
+                                        <li>• Honeypot anti-bot</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="code-block shimmer-bg">
+// src/app/jual/JualClient.jsx - Validasi submit
+const formatted = formatWa(form.seller_wa);
+if (!formatted && !sesiWa) {
+  toast.error("Masukkan nomor WhatsApp yang valid...");
+  return false;
+}
+
+// Auto-correct harga < 1000 dengan konfirmasi
+if (numPrice > 0 && numPrice < 1000) {
+  const ok = confirm(`Maksud kamu Rp ${(numPrice*1000).toLocaleString()}?`);
+  if (ok) setForm(f => ({...f, price: String(numPrice*1000)}));
+}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Step 2: API Gateway -->
+            <section id="step2" class="mb-16 animate-slide-up stagger-2">
+                <div class="glass rounded-3xl border border-surface-light-border dark:border-surface-dark-border p-8 md:p-10 card-hover relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-72 h-72 bg-gradient-to-bl from-indigo-500/10 to-transparent rounded-full blur-3xl"></div>
+                    <div class="flex items-start gap-6 relative">
+                        <div class="flex-shrink-0 w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                            <span class="text-white font-bold text-3xl">2</span>
+                        </div>
+                        <div class="flex-1 pt-2">
+                            <h2 class="font-display text-2xl font-bold mb-3">API Gateway & Autentikasi</h2>
+                            <p class="text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
+                                Request POST dikirim ke <code class="px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300">/api/listings</code>. Middleware dan handler melakukan serangkaian pemeriksaan keamanan sebelum memproses data.
+                            </p>
+                            <div class="space-y-3 mb-6">
+                                <div class="flex items-start gap-4 glass p-4 rounded-xl border border-surface-light-border dark:border-surface-dark-border">
+                                    <div class="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0"><svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg></div>
+                                    <div>
+                                        <h4 class="font-semibold">Rate Limiting</h4>
+                                        <p class="text-sm text-slate-600 dark:text-slate-300"><code>rateLimitDistributed</code> — 10 request per 10 menit per IP. Mencegah spam & brute force.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-4 glass p-4 rounded-xl border border-surface-light-border dark:border-surface-dark-border">
+                                    <div class="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0"><svg class="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg></div>
+                                    <div>
+                                        <h4 class="font-semibold">Verifikasi Sesi HMAC</h4>
+                                        <p class="text-sm text-slate-600 dark:text-slate-300"><code>getSellerSessionAsync()</code> — Cookie <code>seller_session</code> diverifikasi dengan HMAC SHA-256.</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-4 glass p-4 rounded-xl border border-surface-light-border dark:border-surface-dark-border">
+                                    <div class="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0"><svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg></div>
+                                    <div>
+                                        <h4 class="font-semibold">Honeypot & Sanitasi</h4>
+                                        <p class="text-sm text-slate-600 dark:text-slate-300">Field tersembunyi <code>website</code>/<code>honeypot</code> mendeteksi bot. Input disanitasi Zod.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="code-block shimmer-bg">
+// src/app/api/listings/route.js - POST handler (ringkasan)
+export async function POST(req) {
+  const ip = getClientIp(req);
+  const ipRl = await rateLimitDistributed(`listing:ip:${ip}`, { limit: 10, windowMs: 600_000 });
+  if (!ipRl.ok) return rateLimitResponse(ipRl);
+
+  const body = await req.json();
+  if (body.website || body.honeypot) return honeypotResponse();
+
+  const sessionWa = await getSellerSessionAsync();
+  if (!sessionWa) return unauthorizedResponse();
+
+  const parsedInput = listingInputSchema.safeParse(body);
+  if (!parsedInput.success) return validationErrorResponse(parsedInput.error);
+
+  // ... lanjut ke moderasi
+}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Step 3: AI Moderation -->
+            <section id="step3" class="mb-16 animate-slide-up stagger-3">
+                <div class="glass rounded-3xl border border-surface-light-border dark:border-surface-dark-border p-8 md:p-10 card-hover relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-72 h-72 bg-gradient-to-bl from-purple-500/10 to-transparent rounded-full blur-3xl"></div>
+                    <div class="flex items-start gap-6 relative">
+                        <div class="flex-shrink-0 w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-violet-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
+                            <span class="text-white font-bold text-3xl">3</span>
+                        </div>
+                        <div class="flex-1 pt-2">
+                            <h2 class="font-display text-2xl font-bold mb-3">Moderasi Konten (AI + Deterministik)</h2>
+                            <p class="text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
+                                Setiap iklan melewati pipeline moderasi dua lapisan di <code class="px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">src/lib/moderationRules.js</code> sebelum masuk database.
+                            </p>
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                                <div class="glass p-6 rounded-2xl border border-surface-light-border dark:border-surface-dark-border relative">
+                                    <div class="absolute top-3 right-3 w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 opacity-20"></div>
+                                    <h4 class="font-semibold text-slate-700 dark:text-slate-200 mb-4 flex items-center gap-2"><svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Lapisan 1: Deterministik</h4>
+                                    <ul class="text-sm text-slate-600 dark:text-slate-300 space-y-2 code-block">
+                                        <li>• Cek kata kunci terlarang (vape, judi, senjata, dll)</li>
+                                        <li>• Validasi harga per kategori (CATEGORY_PRICE_LIMITS)</li>
+                                        <li>• Cek duplikasi judul/deskripsi</li>
+                                        <li>• Deteksi pola penipuan (harga terlalu murah, dsb)</li>
+                                        <li>• <strong>Instant</strong>, zero latency, zero cost</li>
+                                    </ul>
+                                </div>
+                                <div class="glass p-6 rounded-2xl border border-surface-light-border dark:border-surface-dark-border relative">
+                                    <div class="absolute top-3 right-3 w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-violet-500 opacity-20"></div>
+                                    <h4 class="font-semibold text-slate-700 dark:text-slate-200 mb-4 flex items-center gap-2"><svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>Lapisan 2: Gemini AI</h4>
+                                    <ul class="text-sm text-slate-600 dark:text-slate-300 space-y-2 code-block">
+                                        <li>• Model: <code>gemini-2.5-flash</code> (Vertex AI)</li>
+                                        <li>• Prompt terstruktur: JSON strict output</li>
+                                        <li>• Kategori terlarang: 8 kategori (vape, alkohol, narkoba, senjata, joki, akun game, pornografi, penipuan)</li>
+                                        <li>• Skor risiko: 0.0 (aman) – 1.0 (berbahaya)</li>
+                                        <li>• Timeout <strong>6 detik</strong> + fallback ke <code>pending</code></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="code-block shimmer-bg">
+// src/lib/moderationRules.js - Pipeline moderasi
+export async function moderateListing({ title, description, price, category, type, images, seller_wa }) {
+  // 1. Deterministik (cepat, gratis)
+  const deterministic = checkDeterministicModeration({ title, description, price, category, type });
+  if (deterministic.status !== 'clean') return deterministic;
+
+  // 2. AI Moderation (Gemini)
+  const ai = await checkAiModeration({ title, description, price, category, imageUrl: images?.[0] });
+  if (ai.is_prohibited) return { status: 'rejected', risk_score: ai.scam_risk_score, moderation_reason: ai.reason };
+  if (ai.scam_risk_score > 0.7) return { status: 'pending', risk_score: ai.scam_risk_score, moderation_reason: 'Perlu review manual' };
+
+  return { status: 'approved', risk_score: Math.max(deterministic.risk_score, ai.scam_risk_score || 0.1), moderation_reason: 'Lolos moderasi otomatis' };
+}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Step 4: Persistence -->
+            <section id="step4" class="mb-16 animate-slide-up stagger-4">
+                <div class="glass rounded-3xl border border-surface-light-border dark:border-surface-dark-border p-8 md:p-10 card-hover relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-72 h-72 bg-gradient-to-bl from-green-500/10 to-transparent rounded-full blur-3xl"></div>
+                    <div class="flex items-start gap-6 relative">
+                        <div class="flex-shrink-0 w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-green-500/30">
+                            <span class="text-white font-bold text-3xl">4</span>
+                        </div>
+                        <div class="flex-1 pt-2">
+                            <h2 class="font-display text-2xl font-bold mb-3">Persistensi Database & Logika Bisnis</h2>
+                            <p class="text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
+                                Data yang lolos moderasi disimpan ke tabel <code>listings</code> via <code>service_role</code>. Logika bisnis kompleks dieksekusi: harga, campus, distributor, toko, pembayaran.
+                            </p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                <div class="glass p-4 rounded-xl border border-surface-light-border dark:border-surface-dark-border">
+                                    <h4 class="font-semibold text-slate-700 dark:text-slate-200 mb-3">Logika Harga & Gratis</h4>
+                                    <ul class="text-sm text-slate-600 dark:text-slate-300 space-y-1 code-block">
+                                        <li>• <code>adFeeFrom()</code> hitung biaya tayang</li>
+                                        <li>• Mode gratis: <code>freeMode</code>, Pro, Distributor, Punya Toko</li>
+                                        <li>• Distributor: fee bagi hasil <code>calcDistributorFee()</code></li>
+                                        <li>• Auto-heal profil kampus jika kosong</li>
+                                    </ul>
+                                </div>
+                                <div class="glass p-4 rounded-xl border border-surface-light-border dark:border-surface-dark-border">
+                                    <h4 class="font-semibold text-slate-700 dark:text-slate-200 mb-3">Status & Pembayaran</h4>
+                                    <ul class="text-sm text-slate-600 dark:text-slate-300 space-y-1 code-block">
+                                        <li>• <code>active</code> jika gratis / sudah bayar</li>
+                                        <li>• <code>pending</code> jika butuh QRIS</li>
+                                        <li>• Tabel <code>payments</code> untuk tracking</li>
+                                        <li>• Cek tagihan <code>sold_fee</code> belum bayar (blokir akun)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="code-block shimmer.bg">
+// src/app/api/listings/route.js - Insert listing
+const insertPayload = {
+  user_id: profileCheck?.user_id || null,
+  university_id: resolvedUniversityId,
+  seller_university_id: resolvedUniversityId,
+  seller_province_id: resolvedProvinceId,
+  seller_name: enforcedName,
+  seller_wa: effectiveWa,
+  title: cleanedTitle,
+  description: description || "",
+  price: finalPrice,
+  distributor_fee: distributorFee || null,
+  stock: Math.max(1, Number(stock) || 1),
+  category: category || "Elektronik",
+  type: ["poster","jasa","sewa"].includes(type) ? type : "barang",
+  status: requiresPayment ? "pending" : "active",
+  moderation_reason: modReason,
+  risk_score: moderation.risk_score || 0.0,
+  campus: resolvedCampus,
+  area: area || `Sekitar Kampus ${resolvedCampus}`,
+  expires_at: expiresAt,
+};
+
+const { data: listing, error } = await supa.from("listings").insert(insertPayload).select().single();
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Step 5: Distribution -->
+            <section id="step5" class="mb-16 animate-slide-up stagger-5">
+                <div class="glass rounded-3xl border border-surface-light-border dark:border-surface-dark-border p-8 md:p-10 card-hover relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-72 h-72 bg-gradient-to-bl from-amber-500/10 to-transparent rounded-full blur-3xl"></div>
+                    <div class="flex items-start gap-6 relative">
+                        <div class="flex-shrink-0 w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
+                            <span class="text-white font-bold text-3xl">5</span>
+                        </div>
+                        <div class="flex-1 pt-2">
+                            <h2 class="font-display text-2xl font-bold mb-3">Distribusi Otomatis (Async & Non-blocking)</h2>
+                            <p class="text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
+                                Jika status <code>active</code>, fungsi <code>void (async () => { ... })()</code> memicu distribusi paralel tanpa memblokir response ke user.
+                            </p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                                <a href="flow_bot.html" class="glass p-5 rounded-2xl border border-surface-light-border dark:border-surface-dark-border card-hover group">
+                                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-teal-500 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.472.099-.174.05-.372-.025-.52-.075-.149-.667-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.42.01-.643.078-.223.068-.482.149-.767.373-.297.223-1.024.823-.94 1.149.078.297.273.649.075 1.024-.207.373-.343.97-.14 1.44.197.44.74 1.666 1.048 2.627.309.962.678 2.123 1.002 3.066.232.67.376 1.14 1.37 1.256.456.055 1.052-.025 1.553-.346.383-.245.756-.755 1.107-1.64.277-.696.375-1.286.346-1.418-.03-.131-1.314-1.13-2.375-2.372z"/></svg>
+                                    </div>
+                                    <h4 class="font-semibold mb-1">WhatsApp Broadcast</h4>
+                                    <p class="text-sm text-slate-600 dark:text-slate-300"><code>postToGroup()</code> via Fonnte API</p>
+                                </a>
+                                <a href="#" class="glass p-5 rounded-2xl border border-surface-light-border dark:border-surface-dark-border card-hover group">
+                                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.772-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-3.583-.069-4.849-.149-3.227-1.664-4.771-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                                    </div>
+                                    <h4 class="font-semibold mb-1">Instagram Auto-Publish</h4>
+                                    <p class="text-sm text-slate-600 dark:text-slate-300"><code>autoPublishListingInstagram()</code></p>
+                                </a>
+                                <a href="#" class="glass p-5 rounded-2xl border border-surface-light-border dark:border-surface-dark-border card-hover group">
+                                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 15v3m0 0v3m0-3h3m-3 0h-3m3-5v3m0-6v3m0 9v3m0-3h3m-3 0h-3m3-2v3m0-3v3"/></svg>
+                                    </div>
+                                    <h4 class="font-semibold mb-1">Push Notifikasi</h4>
+                                    <p class="text-sm text-slate-600 dark:text-slate-300"><code>pushListingBaru()</code> Web Push API</p>
+                                </a>
+                                <a href="#" class="glass p-5 rounded-2xl border border-surface-light-border dark:border-surface-dark-border card-hover group">
+                                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-violet-500 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                    </div>
+                                    <h4 class="font-semibold mb-1">Notifikasi Subscriber</h4>
+                                    <p class="text-sm text-slate-600 dark:text-slate-300"><code>notifyCategorySubscribers()</code></p>
+                                </a>
+                            </div>
+                            <div class="code-block shimmer-bg">
+// src/app/api/listings/route.js - Background distribution (non-blocking)
+if (initialStatus === "active") {
+  const origin = siteOriginFromRequest(req);
+  void (async () => {
+    try {
+      await postToGroup(listing);                    // WhatsApp grup
+    } catch (err) { console.error("Fonnte error:", err?.message); }
+
+    notifyCategorySubscribers(supa, listing).catch(() => {});  // Kategori subscriber
+    notifyKeywordSubscribers(supa, listing).catch(() => {});   // Keyword subscriber
+    pushListingBaru(supa, listing).catch(() => {});            // Web Push
+
+    autoPublishListingInstagram({                      // Instagram
+      origin, listingId: listing.id, timeoutMs: 0
+    }).catch(err => console.error("IG publish error:", err?.message));
+  })();
+}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Summary Card -->
+            <section class="animate-fade-in stagger-6">
+                <div class="glass rounded-3xl border border-surface-light-border dark:border-surface-dark-border p-8 md:p-10 bg-gradient-to-r from-brand-500/10 to-accent-500/10">
+                    <h2 class="font-display text-2xl font-bold mb-6 text-center">Ringkasan Alur Data</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 text-center">
+                        <div class="p-4">
+                            <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center"><span class="text-white font-bold text-2xl">1</span></div>
+                            <h4 class="font-semibold">Client</h4>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">Form + Validasi + Kompresi</p>
+                        </div>
+                        <div class="p-4">
+                            <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center"><span class="text-white font-bold text-2xl">2</span></div>
+                            <h4 class="font-semibold">API</h4>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">Rate Limit + Auth + Sanitasi</p>
+                        </div>
+                        <div class="p-4">
+                            <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-purple-500 to-violet-500 flex items-center justify-center"><span class="text-white font-bold text-2xl">3</span></div>
+                            <h4 class="font-semibold">AI</h4>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">Deterministik + Gemini</p>
+                        </div>
+                        <div class="p-4">
+                            <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center"><span class="text-white font-bold text-2xl">4</span></div>
+                            <h4 class="font-semibold">DB</h4>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">Insert + Logika Bisnis</p>
+                        </div>
+                        <div class="p-4">
+                            <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center"><span class="text-white font-bold text-2xl">5</span></div>
+                            <h4 class="font-semibold">Distribusi</h4>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">WA + IG + Push + Subscriber</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Navigation -->
+            <div class="mt-16 flex flex-wrap justify-center gap-4 animate-fade-in">
+                <a href="index.html" class="px-6 py-3 rounded-xl glass border border-surface-light-border dark:border-surface-dark-border font-semibold text-slate-700 dark:text-slate-200 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-all">
+                    ← Overview
+                </a>
+                <a href="flow_bot.html" class="btn-primary px-6 py-3 rounded-xl font-semibold text-white shadow-lg shadow-brand-500/30">
+                    Flow Bot WA →
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="border-t border-surface-light-border dark:border-surface-dark-border py-8 px-6">
+        <div class="max-w-7xl mx-auto text-center text-sm text-slate-500 dark:text-slate-400">
+            <p class="font-display font-bold gradient-text">KampusKita.arch</p>
+            <p>Dokumentasi Arsitektur v1.0.0 — Flow Pasang Iklan</p>
+        </div>
+    </footer>
+
+    <script>
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const sunIcon = themeToggle.querySelector('.sun-icon');
+        const moonIcon = themeToggle.querySelector('.moon-icon');
+        const html = document.documentElement;
+        function applyTheme(theme) {
+            if (theme === 'dark') { html.classList.add('dark'); sunIcon.classList.add('hidden'); moonIcon.classList.remove('hidden'); }
+            else { html.classList.remove('dark'); sunIcon.classList.remove('hidden'); moonIcon.classList.add('hidden'); }
+        }
+        const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        applyTheme(savedTheme);
+        themeToggle.addEventListener('click', () => { const newTheme = html.classList.contains('dark') ? 'light' : 'dark'; localStorage.setItem('theme', newTheme); applyTheme(newTheme); });
+
+        // Scroll animations
+        const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) { entry.target.style.animationPlayState = 'running'; observer.unobserve(entry.target); } }); }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+        document.querySelectorAll('[class*="animate-"]').forEach(el => { el.style.animationPlayState = 'paused'; observer.observe(el); });
+
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => { anchor.addEventListener('click', function(e) { e.preventDefault(); const target = document.querySelector(this.getAttribute('href')); if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }); });
+
+        // Keyboard shortcut
+        document.addEventListener('keydown', (e) => { if (e.key === 'd' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); themeToggle.click(); } });
+    </script>
 </body>
 </html>

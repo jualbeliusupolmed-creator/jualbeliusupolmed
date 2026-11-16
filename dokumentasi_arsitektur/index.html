@@ -2,24 +2,739 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Arsitektur Sistem KampusKita</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4', 100: '#dcfce7', 200: '#bbf7d0', 300: '#86efac',
+                            400: '#4ade80', 500: '#22c55e', 600: '#16a34a', 700: '#15803d',
+                            800: '#166534', 900: '#14532d', 950: '#052e16',
+                        },
+                        accent: {
+                            50: '#fdf4ff', 100: '#fae8ff', 200: '#f5d0fe', 300: '#f0abfc',
+                            400: '#e879f9', 500: '#d946ef', 600: '#c026d3', 700: '#a21caf',
+                            800: '#86198f', 900: '#701a75', 950: '#4a044e',
+                        },
+                        surface: {
+                            light: '#ffffff', dark: '#0f172a',
+                            'light-muted': '#f8fafc', 'dark-muted': '#1e293b',
+                            'light-border': '#e2e8f0', 'dark-border': '#334155',
+                        }
+                    },
+                    fontFamily: {
+                        display: ['Space Grotesk', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.6s ease-out forwards',
+                        'slide-up': 'slideUp 0.6s ease-out forwards',
+                        'slide-in-left': 'slideInLeft 0.5s ease-out forwards',
+                        'slide-in-right': 'slideInRight 0.5s ease-out forwards',
+                        'scale-in': 'scaleIn 0.4s ease-out forwards',
+                        'pulse-glow': 'pulseGlow 2s ease-in-out infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'gradient-shift': 'gradientShift 8s ease infinite',
+                    },
+                    keyframes: {
+                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+                        slideUp: { '0%': { opacity: '0', transform: 'translateY(30px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+                        slideInLeft: { '0%': { opacity: '0', transform: 'translateX(-30px)' }, '100%': { opacity: '1', transform: 'translateX(0)' } },
+                        slideInRight: { '0%': { opacity: '0', transform: 'translateX(30px)' }, '100%': { opacity: '1', transform: 'translateX(0)' } },
+                        scaleIn: { '0%': { opacity: '0', transform: 'scale(0.9)' }, '100%': { opacity: '1', transform: 'scale(1)' } },
+                        pulseGlow: { '0%, 100%': { boxShadow: '0 0 20px rgba(34, 197, 94, 0.3)' }, '50%': { boxShadow: '0 0 40px rgba(34, 197, 94, 0.5)' } },
+                        float: { '0%, 100%': { transform: 'translateY(0px)' }, '50%': { transform: 'translateY(-10px)' } },
+                        gradientShift: { '0%': { backgroundPosition: '0% 50%' }, '50%': { backgroundPosition: '100% 50%' }, '100%': { backgroundPosition: '0% 50%' } },
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root { --bg: #f8fafc; --text: #0f172a; --card: #ffffff; --border: #e2e8f0; }
+        .dark { --bg: #0f172a; --text: #f8fafc; --card: #1e293b; --border: #334155; }
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            transition: background 0.4s ease, color 0.4s ease;
+        }
+        .bg-mesh { background: linear-gradient(135deg, var(--bg) 0%, #e0f2fe 50%, #fce7f3 100%); }
+        .dark .bg-mesh { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #4c1d95 100%); }
+        .glass { background: rgba(255,255,255,0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.3); }
+        .dark .glass { background: rgba(30,41,59,0.7); border: 1px solid rgba(148,163,184,0.1); }
+        .card-hover { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .card-hover:hover { transform: translateY(-8px); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15); }
+        .dark .card-hover:hover { box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4); }
+        .btn-primary {
+            background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+            transition: all 0.3s ease;
+            position: relative; overflow: hidden;
+        }
+        .btn-primary::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, #22c55e 0%, #4ade80 100%); opacity: 0; transition: opacity 0.3s; }
+        .btn-primary:hover::before { opacity: 1; }
+        .btn-primary span { position: relative; z-index: 1; }
+        .code-block { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; line-height: 1.7; }
+        .flow-line { position: relative; }
+        .flow-line::before { content: ''; position: absolute; left: 50%; top: 100%; bottom: -2rem; width: 2px; background: linear-gradient(to bottom, var(--border), transparent); transform: translateX(-50%); }
+        .particle { position: absolute; border-radius: 50%; pointer-events: none; animation: float 8s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0) translateX(0); } 25% { transform: translateY(-20px) translateX(10px); } 50% { transform: translateY(-10px) translateX(-10px); } 75% { transform: translateY(-30px) translateX(5px); } }
+        .gradient-text { background: linear-gradient(135deg, #16a34a, #22c55e, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; background-size: 200% auto; animation: gradient-shift 6s ease infinite; }
+        .stagger-1 { animation-delay: 0.1s; } .stagger-2 { animation-delay: 0.2s; } .stagger-3 { animation-delay: 0.3s; } .stagger-4 { animation-delay: 0.4s; }
+        .stagger-5 { animation-delay: 0.5s; } .stagger-6 { animation-delay: 0.6s; }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+        .scrollbar-hide::-webkit-scrollbar { display: none; } .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        .toc-link { transition: all 0.2s ease; } .toc-link:hover { color: #22c55e; transform: translateX(4px); }
+        .toc-link.active { color: #16a34a; font-weight: 600; border-left-color: #22c55e; }
+    </style>
 </head>
-<body class="bg-slate-50 p-8">
-    <h1 class="text-3xl font-bold text-center mb-10 text-slate-800">Master Arsitektur KampusKita</h1>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <a href="flow_posting.html" class="block p-6 bg-white rounded-xl shadow hover:shadow-lg transition">
-            <h2 class="text-xl font-semibold text-blue-600">1. Flow Pasang Iklan</h2>
-            <p class="text-slate-600 mt-2">Alur lengkap dari Form -> Moderasi -> DB -> Distribusi.</p>
-        </a>
-        <a href="flow_bot.html" class="block p-6 bg-white rounded-xl shadow hover:shadow-lg transition">
-            <h2 class="text-xl font-semibold text-blue-600">2. Arsitektur Bot WA & Sinkronisasi</h2>
-            <p class="text-slate-600 mt-2">Integrasi antara VPS (Bot) dan Supabase.</p>
-        </a>
-        <a href="flow_keamanan.html" class="block p-6 bg-white rounded-xl shadow hover:shadow-lg transition">
-            <h2 class="text-xl font-semibold text-blue-600">3. Keamanan & RLS</h2>
-            <p class="text-slate-600 mt-2">Lapisan keamanan Next.js Middleware dan Supabase RLS.</p>
-        </a>
+<body class="bg-mesh min-h-screen">
+    <!-- Background Particles -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+        <div class="particle w-2 h-2 bg-brand-400/20 top-10 left-10" style="animation-delay: 0s;"></div>
+        <div class="particle w-3 h-3 bg-accent-400/15 top-20 right-20" style="animation-delay: 1s;"></div>
+        <div class="particle w-1 h-1 bg-brand-500/30 bottom-30 left-1/4" style="animation-delay: 2s;"></div>
+        <div class="particle w-2 h-2 bg-accent-500/20 bottom-10 right-1/3" style="animation-delay: 3s;"></div>
+        <div class="particle w-1.5 h-1.5 bg-brand-300/25 top-1/2 left-5" style="animation-delay: 1.5s;"></div>
+        <div class="particle w-2.5 h-2.5 bg-accent-300/15 top-1/3 right-10" style="animation-delay: 2.5s;"></div>
     </div>
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass border-b border-surface-light-border dark:border-surface-dark-border">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="#" class="font-display font-bold text-xl gradient-text">KampusKita<span class="text-slate-600 dark:text-slate-300 font-normal">.arch</span></a>
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-slate-500 dark:text-slate-400 hidden sm:block">v1.0.0</span>
+                <button id="themeToggle" class="p-2 rounded-xl glass hover:bg-brand-100 dark:hover:bg-brand-900/30 transition-all" aria-label="Toggle theme">
+                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-300 sun-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    <svg class="w-5 h-5 text-slate-600 dark:text-slate-300 moon-icon hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-24 pb-20 px-6">
+        <div class="max-w-7xl mx-auto">
+            <!-- Hero Section -->
+            <header class="text-center py-16 md:py-24 animate-fade-in">
+                <div class="inline-flex items-center gap-3 px-6 py-3 rounded-full glass border border-surface-light-border dark:border-surface-dark-border mb-8 animate-slide-up stagger-1">
+                    <span class="w-2 h-2 rounded-full bg-brand-500 animate-pulse-glow"></span>
+                    <span class="text-sm font-medium text-slate-600 dark:text-slate-300">Arsitektur Sistem Lengkap</span>
+                </div>
+                <h1 class="font-display text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-6 animate-slide-up stagger-2">
+                    Arsitektur <span class="gradient-text">KampusKita</span>
+                </h1>
+                <p class="text-lg md:text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto mb-10 animate-slide-up stagger-3 leading-relaxed">
+                    Dokumentasi teknis mendalam untuk marketplace mahasiswa Indonesia — mencakup alur data, keamanan, integrasi AI, dan orkestrasi mikro-servis.
+                </p>
+                <div class="flex flex-wrap items-center justify-center gap-4 animate-slide-up stagger-4">
+                    <a href="#overview" class="btn-primary px-8 py-4 rounded-2xl font-semibold text-white shadow-lg shadow-brand-500/30">
+                        <span>Mulai Jelajahi</span>
+                    </a>
+                    <a href="flow_posting.html" class="px-8 py-4 rounded-2xl font-semibold text-slate-700 dark:text-slate-200 glass border border-surface-light-border dark:border-surface-dark-border hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-all">
+                        Lihat Flow Posting
+                    </a>
+                </div>
+            </header>
+
+            <!-- Stats Bar -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16 animate-slide-up stagger-5">
+                <div class="glass p-6 rounded-2xl border border-surface-light-border dark:border-surface-dark-border text-center card-hover">
+                    <div class="text-3xl md:text-4xl font-bold gradient-text">4</div>
+                    <div class="text-sm text-slate-500 dark:text-slate-400 mt-1">Modul Utama</div>
+                </div>
+                <div class="glass p-6 rounded-2xl border border-surface-light-border dark:border-surface-dark-border text-center card-hover">
+                    <div class="text-3xl md:text-4xl font-bold gradient-text">12+</div>
+                    <div class="text-sm text-slate-500 dark:text-slate-400 mt-1">Layanan Terintegrasi</div>
+                </div>
+                <div class="glass p-6 rounded-2xl border border-surface-light-border dark:border-surface-dark-border text-center card-hover">
+                    <div class="text-3xl md:text-4xl font-bold gradient-text">99.9%</div>
+                    <div class="text-sm text-slate-500 dark:text-slate-400 mt-1">Uptime Target</div>
+                </div>
+                <div class="glass p-6 rounded-2xl border border-surface-light-border dark:border-surface-dark-border text-center card-hover">
+                    <div class="text-3xl md:text-4xl font-bold gradient-text">< 100ms</div>
+                    <div class="text-sm text-slate-500 dark:text-slate-400 mt-1">Latency P95</div>
+                </div>
+            </div>
+
+            <!-- Architecture Overview -->
+            <section id="overview" class="mb-24 animate-fade-in">
+                <div class="flex items-center gap-3 mb-10">
+                    <div class="w-1 h-10 bg-gradient-to-b from-brand-500 to-accent-500 rounded-full"></div>
+                    <h2 class="font-display text-3xl md:text-4xl font-bold">Arsitektur <span class="gradient-text">High-Level</span></h2>
+                </div>
+
+                <!-- Interactive System Diagram -->
+                <div class="glass rounded-3xl border border-surface-light-border dark:border-surface-dark-border p-8 md:p-12 relative overflow-hidden card-hover">
+                    <svg class="absolute inset-0 -z-10 opacity-5" viewBox="0 0 800 600" preserveAspectRatio="none">
+                        <defs>
+                            <linearGradient id="gridGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#16a34a" stop-opacity="0.1"/>
+                                <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.1"/>
+                            </linearGradient>
+                        </defs>
+                        <rect width="100%" height="100%" fill="url(#gridGrad)"/>
+                        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" stroke-width="0.5" stroke-opacity="0.1"/>
+                        </pattern>
+                        <rect width="100%" height="100%" fill="url(#grid)"/>
+                    </svg>
+
+                    <div class="relative z-10">
+                        <!-- Central Node -->
+                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 md:w-64 md:h-64 rounded-3xl glass border-2 border-brand-400/50 flex items-center justify-center animate-pulse-glow z-20">
+                            <div class="text-center">
+                                <div class="w-16 h-16 md:w-20 md:h-20 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center shadow-lg shadow-brand-500/30">
+                                    <svg class="w-10 h-10 md:w-12 md:h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                                </div>
+                                <p class="font-display font-bold text-lg md:text-xl">Next.js 14<br><span class="text-sm font-normal text-slate-500 dark:text-slate-400">App Router • Vercel</span></p>
+                            </div>
+                        </div>
+
+                        <!-- Orbiting Services -->
+                        <div class="service-orbit">
+                            <!-- Supabase -->
+                            <a href="flow_keamanan.html#supabase" class="orbit-node orbit-1 group" data-tooltip="Supabase (PostgreSQL, Auth, Storage, Realtime)">
+                                <div class="node-content">
+                                    <div class="node-icon bg-gradient-to-br from-green-500 to-emerald-600"><svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg></div>
+                                    <span class="node-label">Supabase</span>
+                                    <span class="node-desc">Database, Auth, Storage, Realtime</span>
+                                </div>
+                                <div class="node-ring"></div>
+                            </a>
+
+                            <!-- Gemini AI -->
+                            <a href="flow_posting.html#moderation" class="orbit-node orbit-2 group" data-tooltip="Google Gemini AI (Moderasi Konten)">
+                                <div class="node-content">
+                                    <div class="node-icon bg-gradient-to-br from-purple-500 to-violet-600"><svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg></div>
+                                    <span class="node-label">Gemini AI</span>
+                                    <span class="node-desc">Moderasi & Analisis Risiko</span>
+                                </div>
+                                <div class="node-ring"></div>
+                            </a>
+
+                            <!-- WhatsApp Bot -->
+                            <a href="flow_bot.html" class="orbit-node orbit-3 group" data-tooltip="WhatsApp Bot (Baileys di VPS)">
+                                <div class="node-content">
+                                    <div class="node-icon bg-gradient-to-br from-green-600 to-teal-600"><svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.472.099-.174.05-.372-.025-.52-.075-.149-.667-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.42.01-.643.078-.223.068-.482.149-.767.373-.297.223-1.024.823-.94 1.149.078.297.273.649.075 1.024-.207.373-.343.97-.14 1.44.197.44.74 1.666 1.048 2.627.309.962.678 2.123 1.002 3.066.232.67.376 1.14 1.37 1.256.456.055 1.052-.025 1.553-.346.383-.245.756-.755 1.107-1.64.277-.696.375-1.286.346-1.418-.03-.131-1.314-1.13-2.375-2.372z"/></svg></div>
+                                    <span class="node-label">WA Bot</span>
+                                    <span class="node-desc">Broadcast & Transaksi (VPS)</span>
+                                </div>
+                                <div class="node-ring"></div>
+                            </a>
+
+                            <!-- Instagram -->
+                            <a href="#" class="orbit-node orbit-4 group" data-tooltip="Instagram Graph API (Katalog & Menfess)">
+                                <div class="node-content">
+                                    <div class="node-icon bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500"><svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.772-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg></div>
+                                    <span class="node-label">Instagram</span>
+                                    <span class="node-desc">Katalog & Menfess Auto</span>
+                                </div>
+                                <div class="node-ring"></div>
+                            </a>
+
+                            <!-- Edge Functions -->
+                            <a href="#" class="orbit-node orbit-5 group" data-tooltip="Vercel Edge Functions (Rate Limit, Middleware)">
+                                <div class="node-content">
+                                    <div class="node-icon bg-gradient-to-br from-orange-500 to-amber-600"><svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div>
+                                    <span class="node-label">Edge Fn</span>
+                                    <span class="node-desc">Middleware, Rate Limit, SEO</span>
+                                </div>
+                                <div class="node-ring"></div>
+                            </a>
+
+                            <!-- Monitoring -->
+                            <a href="#" class="orbit-node orbit-6 group" data-tooltip="Observabilitas (Vercel Analytics, Supabase Logs)">
+                                <div class="node-content">
+                                    <div class="node-icon bg-gradient-to-br from-cyan-500 to-blue-600"><svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg></div>
+                                    <span class="node-label">Observability</span>
+                                    <span class="node-desc">Logs, Metrics, Traces</span>
+                                </div>
+                                <div class="node-ring"></div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Legend -->
+                <div class="flex flex-wrap justify-center gap-3 mt-10 animate-slide-up stagger-6">
+                    <span class="px-4 py-2 rounded-full glass text-sm font-medium border border-surface-light-border dark:border-surface-dark-border">Next.js Core</span>
+                    <span class="px-4 py-2 rounded-full glass text-sm font-medium border border-surface-light-border dark:border-surface-dark-border">Supabase</span>
+                    <span class="px-4 py-2 rounded-full glass text-sm font-medium border border-surface-light-border dark:border-surface-dark-border">AI/ML</span>
+                    <span class="px-4 py-2 rounded-full glass text-sm font-medium border border-surface-light-border dark:border-surface-dark-border">Messaging</span>
+                    <span class="px-4 py-2 rounded-full glass text-sm font-medium border border-surface-light-border dark:border-surface-dark-border">Social</span>
+                    <span class="px-4 py-2 rounded-full glass text-sm font-medium border border-surface-light-border dark:border-surface-dark-border">Edge</span>
+                    <span class="px-4 py-2 rounded-full glass text-sm font-medium border border-surface-light-border dark:border-surface-dark-border">Observability</span>
+                </div>
+            </section>
+
+            <!-- Module Cards Grid -->
+            <section class="mb-24 animate-fade-in">
+                <div class="flex items-center gap-3 mb-10">
+                    <div class="w-1 h-10 bg-gradient-to-b from-brand-500 to-accent-500 rounded-full"></div>
+                    <h2 class="font-display text-3xl md:text-4xl font-bold">Modul <span class="gradient-text">Utama</span></h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <a href="flow_posting.html" class="module-card card-hover glass p-6 rounded-2xl border border-surface-light-border dark:border-surface-dark-border group">
+                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        </div>
+                        <h3 class="font-display text-xl font-bold mb-2">Pasang Iklan</h3>
+                        <p class="text-slate-600 dark:text-slate-300 text-sm mb-4 leading-relaxed">Form multi-step, validasi Zod, upload gambar paralel, kompresi client-side.</p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300">Zod</span>
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">Sharp</span>
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">Gemini</span>
+                        </div>
+                    </a>
+
+                    <a href="flow_keamanan.html" class="module-card card-hover glass p-6 rounded-2xl border border-surface-light-border dark:border-surface-dark-border group">
+                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-500 to-pink-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        </div>
+                        <h3 class="font-display text-xl font-bold mb-2">Keamanan & RLS</h3>
+                        <p class="text-slate-600 dark:text-slate-300 text-sm mb-4 leading-relaxed">HMAC tokens, Service Role isolation, Row Level Security per tabel, Rate limiting.</p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">HMAC</span>
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">RLS</span>
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300">Rate Limit</span>
+                        </div>
+                    </a>
+
+                    <a href="flow_bot.html" class="module-card card-hover glass p-6 rounded-2xl border border-surface-light-border dark:border-surface-dark-border group">
+                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-500 to-teal-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.472.099-.174.05-.372-.025-.52-.075-.149-.667-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.42.01-.643.078-.223.068-.482.149-.767.373-.297.223-1.024.823-.94 1.149.078.297.273.649.075 1.024-.207.373-.343.97-.14 1.44.197.44.74 1.666 1.048 2.627.309.962.678 2.123 1.002 3.066.232.67.376 1.14 1.37 1.256.456.055 1.052-.025 1.553-.346.383-.245.756-.755 1.107-1.64.277-.696.375-1.286.346-1.418-.03-.131-1.314-1.13-2.375-2.372z"/></svg>
+                        </div>
+                        <h3 class="font-display text-xl font-bold mb-2">WhatsApp Bot</h3>
+                        <p class="text-slate-600 dark:text-slate-300 text-sm mb-4 leading-relaxed">Baileys multi-device, PM2 process manager, Nginx reverse proxy, session persistence.</p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">Baileys</span>
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300">PM2</span>
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">Nginx</span>
+                        </div>
+                    </a>
+
+                    <a href="#" class="module-card card-hover glass p-6 rounded-2xl border border-surface-light-border dark:border-surface-dark-border group">
+                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-violet-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        </div>
+                        <h3 class="font-display text-xl font-bold mb-2">AI Moderasi</h3>
+                        <p class="text-slate-600 dark:text-slate-300 text-sm mb-4 leading-relaxed">Gemini 2.5 Flash, deterministic pre-filter, 6s timeout, fallback ke pending review.</p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">Gemini</span>
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300">Zod</span>
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300">Fallback</span>
+                        </div>
+                    </a>
+                </div>
+            </section>
+
+            <!-- Data Flow Visualization -->
+            <section id="dataflow" class="mb-24 animate-fade-in">
+                <div class="flex items-center gap-3 mb-10">
+                    <div class="w-1 h-10 bg-gradient-to-b from-brand-500 to-accent-500 rounded-full"></div>
+                    <h2 class="font-display text-3xl md:text-4xl font-bold">Alur <span class="gradient-text">Data End-to-End</span></h2>
+                </div>
+                <div class="glass rounded-3xl border border-surface-light-border dark:border-surface-dark-border p-8 overflow-x-auto">
+                    <div class="flex items-start gap-4 min-w-max pb-8" role="img" aria-label="Data flow diagram from user to database to distribution">
+                        <!-- Step 1 -->
+                        <div class="flow-step flex-shrink-0 w-72">
+                            <div class="step-card glass p-5 rounded-2xl border border-surface-light-border dark:border-surface-dark-border relative">
+                                <div class="flex items-center gap-3 mb-4">
+                                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+                                        <span class="text-white font-bold text-xl">1</span>
+                                    </div>
+                                    <h4 class="font-display font-bold">Client Input</h4>
+                                </div>
+                                <ul class="space-y-2 text-sm text-slate-600 dark:text-slate-300 code-block">
+                                    <li>• Form multi-step (JualClient.jsx)</li>
+                                    <li>• Validasi real-time (Zod)</li>
+                                    <li>• Kompresi gambar (Sharp WASM)</li>
+                                    <li>• Format WA otomatis</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-center text-brand-500 hidden md:block">→</div>
+
+                        <!-- Step 2 -->
+                        <div class="flow-step flex-shrink-0 w-72">
+                            <div class="step-card glass p-5 rounded-2xl border border-surface-light-border dark:border-surface-dark-border relative">
+                                <div class="flex items-center gap-3 mb-4">
+                                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+                                        <span class="text-white font-bold text-xl">2</span>
+                                    </div>
+                                    <h4 class="font-display font-bold">API Gateway</h4>
+                                </div>
+                                <ul class="space-y-2 text-sm text-slate-600 dark:text-slate-300 code-block">
+                                    <li>• POST /api/listings</li>
+                                    <li>• Rate limit (10/10min/IP)</li>
+                                    <li>• HMAC session verify</li>
+                                    <li>• Honeypot anti-spam</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-center text-brand-500 hidden md:block">→</div>
+
+                        <!-- Step 3 -->
+                        <div class="flow-step flex-shrink-0 w-72">
+                            <div class="step-card glass p-5 rounded-2xl border border-surface-light-border dark:border-surface-dark-border relative">
+                                <div class="flex items-center gap-3 mb-4">
+                                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-violet-500 flex items-center justify-center">
+                                        <span class="text-white font-bold text-xl">3</span>
+                                    </div>
+                                    <h4 class="font-display font-bold">Moderasi AI</h4>
+                                </div>
+                                <ul class="space-y-2 text-sm text-slate-600 dark:text-slate-300 code-block">
+                                    <li>• Deterministik (keyword)</li>
+                                    <li>• Gemini 2.5 Flash</li>
+                                    <li>• Skema JSON strict</li>
+                                    <li>• Timeout 6s + fallback</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-center text-brand-500 hidden md:block">→</div>
+
+                        <!-- Step 4 -->
+                        <div class="flow-step flex-shrink-0 w-72">
+                            <div class="step-card glass p-5 rounded-2xl border border-surface-light-border dark:border-surface-dark-border relative">
+                                <div class="flex items-center gap-3 mb-4">
+                                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
+                                        <span class="text-white font-bold text-xl">4</span>
+                                    </div>
+                                    <h4 class="font-display font-bold">Persistensi</h4>
+                                </div>
+                                <ul class="space-y-2 text-sm text-slate-600 dark:text-slate-300 code-block">
+                                    <li>• Service Role insert</li>
+                                    <li>• Transaksi DB</li>
+                                    <li>• Auto-heal profil</li>
+                                    <li>• Audit log</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-center text-brand-500 hidden md:block">→</div>
+
+                        <!-- Step 5 -->
+                        <div class="flow-step flex-shrink-0 w-72">
+                            <div class="step-card glass p-5 rounded-2xl border border-surface-light-border dark:border-surface-dark-border relative">
+                                <div class="flex items-center gap-3 mb-4">
+                                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+                                        <span class="text-white font-bold text-xl">5</span>
+                                    </div>
+                                    <h4 class="font-display font-bold">Distribusi</h4>
+                                </div>
+                                <ul class="space-y-2 text-sm text-slate-600 dark:text-slate-300 code-block">
+                                    <li>• WA Bot broadcast</li>
+                                    <li>• Push notifikasi</li>
+                                    <li>• Instagram auto-publish</li>
+                                    <li>• Subscriber notify</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tech Stack -->
+            <section class="mb-24 animate-fade-in">
+                <div class="flex items-center gap-3 mb-10">
+                    <div class="w-1 h-10 bg-gradient-to-b from-brand-500 to-accent-500 rounded-full"></div>
+                    <h2 class="font-display text-3xl md:text-4xl font-bold">Tech <span class="gradient-text">Stack</span></h2>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="glass p-6 rounded-2xl border border-surface-light-border dark:border-surface-dark-border card-hover">
+                        <h3 class="font-display text-lg font-bold mb-4 flex items-center gap-2"><span class="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white text-sm">FE</span> Frontend</h3>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="tech-tag">Next.js 14</span>
+                            <span class="tech-tag">App Router</span>
+                            <span class="tech-tag">React 18</span>
+                            <span class="tech-tag">Tailwind CSS</span>
+                            <span class="tech-tag">TypeScript</span>
+                            <span class="tech-tag">Zod</span>
+                        </div>
+                    </div>
+                    <div class="glass p-6 rounded-2xl border border-surface-light-border dark:border-surface-dark-border card-hover">
+                        <h3 class="font-display text-lg font-bold mb-4 flex items-center gap-2"><span class="w-8 h-8 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center text-white text-sm">BE</span> Backend</h3>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="tech-tag">Supabase</span>
+                            <span class="tech-tag">PostgreSQL</span>
+                            <span class="tech-tag">PostgREST</span>
+                            <span class="tech-tag">Realtime</span>
+                            <span class="tech-tag">Storage</span>
+                            <span class="tech-tag">Edge Functions</span>
+                        </div>
+                    </div>
+                    <div class="glass p-6 rounded-2xl border border-surface-light-border dark:border-surface-dark-border card-hover">
+                        <h3 class="font-display text-lg font-bold mb-4 flex items-center gap-2"><span class="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-violet-500 flex items-center justify-center text-white text-sm">AI</span> Intelligence</h3>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="tech-tag">Gemini 2.5 Flash</span>
+                            <span class="tech-tag">Vertex AI</span>
+                            <span class="tech-tag">Structured Output</span>
+                            <span class="tech-tag">Moderation</span>
+                        </div>
+                    </div>
+                    <div class="glass p-6 rounded-2xl border border-surface-light-border dark:border-surface-dark-border card-hover">
+                        <h3 class="font-display text-lg font-bold mb-4 flex items-center gap-2"><span class="w-8 h-8 rounded-xl bg-gradient-to-br from-green-500 to-teal-500 flex items-center justify-center text-white text-sm">MSG</span> Messaging</h3>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="tech-tag">Baileys</span>
+                            <span class="tech-tag">WhatsApp Web</span>
+                            <span class="tech-tag">PM2</span>
+                            <span class="tech-tag">Nginx</span>
+                            <span class="tech-tag">Fonnte API</span>
+                        </div>
+                    </div>
+                    <div class="glass p-6 rounded-2xl border border-surface-light-border dark:border-surface-dark-border card-hover">
+                        <h3 class="font-display text-lg font-bold mb-4 flex items-center gap-2"><span class="w-8 h-8 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center text-white text-sm">SOC</span> Social</h3>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="tech-tag">Instagram Graph</span>
+                            <span class="tech-tag">OAuth 2.0</span>
+                            <span class="tech-tag">Catalog API</span>
+                            <span class="tech-tag">Webhooks</span>
+                        </div>
+                    </div>
+                    <div class="glass p-6 rounded-2xl border border-surface-light-border dark:border-surface-dark-border card-hover">
+                        <h3 class="font-display text-lg font-bold mb-4 flex items-center gap-2"><span class="w-8 h-8 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white text-sm">OPS</span> Operations</h3>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="tech-tag">Vercel</span>
+                            <span class="tech-tag">Analytics</span>
+                            <span class="tech-tag">Speed Insights</span>
+                            <span class="tech-tag">PWA</span>
+                            <span class="tech-tag">Sentry</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Quick Links -->
+            <section class="animate-fade-in">
+                <div class="flex items-center gap-3 mb-10">
+                    <div class="w-1 h-10 bg-gradient-to-b from-brand-500 to-accent-500 rounded-full"></div>
+                    <h2 class="font-display text-3xl md:text-4xl font-bold">Navigasi <span class="gradient-text">Cepat</span></h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <a href="flow_posting.html" class="quick-link glass p-6 rounded-2xl border border-surface-light-border dark:border-surface-dark-border card-hover group">
+                        <div class="flex items-center gap-4">
+                            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center group-hover:rotate-6 transition-transform">
+                                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                            </div>
+                            <div>
+                                <h3 class="font-display font-bold text-lg">Flow Pasang Iklan</h3>
+                                <p class="text-sm text-slate-500 dark:text-slate-400">Validasi → Moderasi → DB → Distribusi</p>
+                            </div>
+                        </div>
+                        <span class="absolute bottom-4 right-4 text-brand-500 font-medium group-hover:translate-x-1 transition-transform">Buka →</span>
+                    </a>
+                    <a href="flow_bot.html" class="quick-link glass p-6 rounded-2xl border border-surface-light-border dark:border-surface-dark-border card-hover group">
+                        <div class="flex items-center gap-4">
+                            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500 to-teal-500 flex items-center justify-center group-hover:rotate-6 transition-transform">
+                                <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.472.099-.174.05-.372-.025-.52-.075-.149-.667-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.42.01-.643.078-.223.068-.482.149-.767.373-.297.223-1.024.823-.94 1.149.078.297.273.649.075 1.024-.207.373-.343.97-.14 1.44.197.44.74 1.666 1.048 2.627.309.962.678 2.123 1.002 3.066.232.67.376 1.14 1.37 1.256.456.055 1.052-.025 1.553-.346.383-.245.756-.755 1.107-1.64.277-.696.375-1.286.346-1.418-.03-.131-1.314-1.13-2.375-2.372z"/></svg>
+                            </div>
+                            <div>
+                                <h3 class="font-display font-bold text-lg">WhatsApp Bot</h3>
+                                <p class="text-sm text-slate-500 dark:text-slate-400">VPS + Baileys + Sinkronisasi</p>
+                            </div>
+                        </div>
+                        <span class="absolute bottom-4 right-4 text-brand-500 font-medium group-hover:translate-x-1 transition-transform">Buka →</span>
+                    </a>
+                    <a href="flow_keamanan.html" class="quick-link glass p-6 rounded-2xl border border-surface-light-border dark:border-surface-dark-border card-hover group">
+                        <div class="flex items-center gap-4">
+                            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-pink-500 flex items-center justify-center group-hover:rotate-6 transition-transform">
+                                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                            </div>
+                            <div>
+                                <h3 class="font-display font-bold text-lg">Keamanan & RLS</h3>
+                                <p class="text-sm text-slate-500 dark:text-slate-400">HMAC + Service Role + Policies</p>
+                            </div>
+                        </div>
+                        <span class="absolute bottom-4 right-4 text-brand-500 font-medium group-hover:translate-x-1 transition-transform">Buka →</span>
+                    </a>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-surface-light-border dark:border-surface-dark-border py-12 px-6">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="text-center md:text-left">
+                <p class="font-display font-bold gradient-text">KampusKita.arch</p>
+                <p class="text-sm text-slate-500 dark:text-slate-400">Dokumentasi Arsitektur v1.0.0</p>
+            </div>
+            <div class="flex items-center gap-6 text-sm text-slate-500 dark:text-slate-400">
+                <span>Next.js 14</span>
+                <span>Supabase</span>
+                <span>Gemini AI</span>
+                <span>Baileys</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const sunIcon = themeToggle.querySelector('.sun-icon');
+        const moonIcon = themeToggle.querySelector('.moon-icon');
+        const html = document.documentElement;
+
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                html.classList.add('dark');
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            } else {
+                html.classList.remove('dark');
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            }
+        }
+
+        const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        applyTheme(savedTheme);
+
+        themeToggle.addEventListener('click', () => {
+            const newTheme = html.classList.contains('dark') ? 'light' : 'dark';
+            localStorage.setItem('theme', newTheme);
+            applyTheme(newTheme);
+        });
+
+        // Scroll animations
+        const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animationPlayState = 'running';
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('[class*="animate-"]').forEach(el => {
+            el.style.animationPlayState = 'paused';
+            observer.observe(el);
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Parallax effect on hero particles
+        document.addEventListener('mousemove', (e) => {
+            const particles = document.querySelectorAll('.particle');
+            const x = e.clientX / window.innerWidth;
+            const y = e.clientY / window.innerHeight;
+            particles.forEach((particle, i) => {
+                const speed = (i + 1) * 0.5;
+                particle.style.transform = `translate(${x * 20 * speed}px, ${y * 20 * speed}px)`;
+            });
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'd' && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                themeToggle.click();
+            }
+        });
+    </script>
+    <style>
+        /* Orbit Animation Styles */
+        .service-orbit { position: relative; width: 100%; height: 320px; }
+        .orbit-node {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            text-decoration: none;
+            z-index: 10;
+        }
+        .orbit-node.orbit-1 { animation: orbit1 20s linear infinite; }
+        .orbit-node.orbit-2 { animation: orbit2 25s linear infinite reverse; }
+        .orbit-node.orbit-3 { animation: orbit3 18s linear infinite; }
+        .orbit-node.orbit-4 { animation: orbit4 22s linear infinite reverse; }
+        .orbit-node.orbit-5 { animation: orbit5 28s linear infinite; }
+        .orbit-node.orbit-6 { animation: orbit6 24s linear infinite reverse; }
+
+        @keyframes orbit1 { 0% { transform: translate(-50%, -50%) rotate(0deg) translateX(180px) rotate(0deg); } 100% { transform: translate(-50%, -50%) rotate(360deg) translateX(180px) rotate(-360deg); } }
+        @keyframes orbit2 { 0% { transform: translate(-50%, -50%) rotate(60deg) translateX(220px) rotate(-60deg); } 100% { transform: translate(-50%, -50%) rotate(420deg) translateX(220px) rotate(-420deg); } }
+        @keyframes orbit3 { 0% { transform: translate(-50%, -50%) rotate(120deg) translateX(160px) rotate(-120deg); } 100% { transform: translate(-50%, -50%) rotate(480deg) translateX(160px) rotate(-480deg); } }
+        @keyframes orbit4 { 0% { transform: translate(-50%, -50%) rotate(180deg) translateX(200px) rotate(-180deg); } 100% { transform: translate(-50%, -50%) rotate(540deg) translateX(200px) rotate(-540deg); } }
+        @keyframes orbit5 { 0% { transform: translate(-50%, -50%) rotate(240deg) translateX(170px) rotate(-240deg); } 100% { transform: translate(-50%, -50%) rotate(600deg) translateX(170px) rotate(-600deg); } }
+        @keyframes orbit6 { 0% { transform: translate(-50%, -50%) rotate(300deg) translateX(190px) rotate(-300deg); } 100% { transform: translate(-50%, -50%) rotate(660deg) translateX(190px) rotate(-660deg); } }
+
+        .node-content {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 12px 16px;
+            min-width: 180px;
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+        }
+        .dark .node-content { box-shadow: 0 10px 30px -10px rgba(0,0,0,0.3); }
+        .orbit-node:hover .node-content { opacity: 1; transform: scale(1); pointer-events: auto; }
+        .node-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; }
+        .node-label { display: block; font-weight: 700; font-size: 0.95rem; color: var(--text); }
+        .node-desc { display: block; font-size: 0.75rem; color: #64748b; margin-top: 2px; }
+        .dark .node-desc { color: #94a3b8; }
+        .node-ring { position: absolute; inset: -8px; border-radius: 50%; border: 2px solid transparent; transition: border-color 0.3s; }
+        .orbit-node:hover .node-ring { border-color: currentColor; opacity: 0.3; }
+
+        .step-card { position: relative; }
+        .step-card::after { content: ''; position: absolute; top: 50%; right: -24px; width: 48px; height: 2px; background: linear-gradient(90deg, var(--border), transparent); }
+        .flow-step:last-child .step-card::after { display: none; }
+
+        .tech-tag { display: inline-block; padding: 4px 10px; border-radius: 9999px; font-size: 0.7rem; font-weight: 500; background: var(--bg); border: 1px solid var(--border); color: var(--text); transition: all 0.2s; }
+        .tech-tag:hover { background: #16a34a; border-color: #16a34a; color: white; }
+
+        .quick-link { position: relative; overflow: hidden; }
+        .quick-link::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(34,197,94,0.05), transparent); opacity: 0; transition: opacity 0.3s; }
+        .quick-link:hover::before { opacity: 1; }
+
+        @media (max-width: 768px) {
+            .service-orbit { height: 400px; }
+            .orbit-node.orbit-1 { animation: orbit1 20s linear infinite; transform-origin: center center; }
+            .orbit-node.orbit-2 { animation: orbit2 25s linear infinite reverse; }
+            .orbit-node.orbit-3 { animation: orbit3 18s linear infinite; }
+            .orbit-node.orbit-4 { animation: orbit4 22s linear infinite reverse; }
+            .orbit-node.orbit-5 { animation: orbit5 28s linear infinite; }
+            .orbit-node.orbit-6 { animation: orbit6 24s linear infinite reverse; }
+            @keyframes orbit1 { 0% { transform: translate(-50%, -50%) rotate(0deg) translateX(140px) rotate(0deg); } 100% { transform: translate(-50%, -50%) rotate(360deg) translateX(140px) rotate(-360deg); } }
+            @keyframes orbit2 { 0% { transform: translate(-50%, -50%) rotate(60deg) translateX(170px) rotate(-60deg); } 100% { transform: translate(-50%, -50%) rotate(420deg) translateX(170px) rotate(-420deg); } }
+            @keyframes orbit3 { 0% { transform: translate(-50%, -50%) rotate(120deg) translateX(120px) rotate(-120deg); } 100% { transform: translate(-50%, -50%) rotate(480deg) translateX(120px) rotate(-480deg); } }
+            @keyframes orbit4 { 0% { transform: translate(-50%, -50%) rotate(180deg) translateX(150px) rotate(-180deg); } 100% { transform: translate(-50%, -50%) rotate(540deg) translateX(150px) rotate(-540deg); } }
+            @keyframes orbit5 { 0% { transform: translate(-50%, -50%) rotate(240deg) translateX(130px) rotate(-240deg); } 100% { transform: translate(-50%, -50%) rotate(600deg) translateX(130px) rotate(-600deg); } }
+            @keyframes orbit6 { 0% { transform: translate(-50%, -50%) rotate(300deg) translateX(145px) rotate(-300deg); } 100% { transform: translate(-50%, -50%) rotate(660deg) translateX(145px) rotate(-660deg); } }
+            .node-content { min-width: 150px; padding: 10px 12px; }
+            .node-icon { width: 36px; height: 36px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .orbit-node { animation: none !important; }
+            .orbit-node.orbit-1 { transform: translate(-50%, -50%) rotate(0deg) translateX(180px) rotate(0deg); }
+            .orbit-node.orbit-2 { transform: translate(-50%, -50%) rotate(60deg) translateX(220px) rotate(-60deg); }
+            .orbit-node.orbit-3 { transform: translate(-50%, -50%) rotate(120deg) translateX(160px) rotate(-120deg); }
+            .orbit-node.orbit-4 { transform: translate(-50%, -50%) rotate(180deg) translateX(200px) rotate(-180deg); }
+            .orbit-node.orbit-5 { transform: translate(-50%, -50%) rotate(240deg) translateX(170px) rotate(-240deg); }
+            .orbit-node.orbit-6 { transform: translate(-50%, -50%) rotate(300deg) translateX(190px) rotate(-300deg); }
+        }
+    </style>
 </body>
 </html>
