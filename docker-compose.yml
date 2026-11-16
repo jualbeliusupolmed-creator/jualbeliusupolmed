@@ -1,0 +1,186 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database (Supabase-compatible)
+  postgres:
+    image: postgres:15-alpine
+    container_name: kampuskita-postgres
+    environment:
+      POSTGRES_DB: kampuskita
+      POSTGRES_USER: kampuskita
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kampuskita_dev}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Mount migrations for auto-initialization
+      - ./supabase/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./supabase/migration_semua_sekali_jalan.sql:/docker-entrypoint-initdb.d/02_migrations.sql:ro
+      - ./supabase/migration_rls_kunci_publik.sql:/docker-entrypoint-initdb.d/03_rls.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kampuskita -d kampuskita"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - kampuskita-network
+
+  # PostgREST (Supabase API Gateway)
+  postgrest:
+    image: postgrest/postgrest:v12
+    container_name: kampuskita-postgrest
+    environment:
+      PGRST_DB_URI: postgres://kampuskita:${POSTGRES_PASSWORD:-kampuskita_dev}@postgres:5432/kampuskita
+      PGRST_DB_SCHEMA: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+      PGRST_JWT_SECRET: ${SUPABASE_JWT_SECRET:-your-super-secret-jwt-token-with-at-least-32-characters}
+    ports:
+      - "3001:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - kampuskita-network
+
+  # GoTrue (Supabase Auth)
+  gotrue:
+    image: supabase/gotrue:v2
+    container_name: kampuskita-gotrue
+    environment:
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://kampuskita:${POSTGRES_PASSWORD:-kampuskita_dev}@postgres:5432/kampuskita
+      GOTRUE_SITE_URL: http://localhost:3000
+      GOTRUE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-your-super-secret-jwt-token-with-at-least-32-characters}
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
+      GOTRUE_MAILER_AUTOCONFIRM: "true"
+      GOTRUE_DISABLE_SIGNUP: "false"
+    ports:
+      - "9999:9999"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - kampuskita-network
+
+  # Storage API (Supabase Storage)
+  storage:
+    image: supabase/storage-api:v1
+    container_name: kampuskita-storage
+    environment:
+      ANON_KEY: ${SUPABASE_ANON_KEY:-your-anon-key}
+      SERVICE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-your-service-role-key}
+      POSTGREST_URL: http://postgrest:3000
+      STORAGE_BACKEND: file
+      FILE_SIZE_LIMIT: 52428800
+      TENANT_ID: kampuskita
+      REGION: local
+      GLOBAL_S3_BUCKET: kampuskita-storage
+    volumes:
+      - storage_data:/var/lib/storage
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgrest
+    networks:
+      - kampuskita-network
+
+  # Realtime (Supabase Realtime)
+  realtime:
+    image: supabase/realtime:v2
+    container_name: kampuskita-realtime
+    environment:
+      PORT: 4000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: kampuskita
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-kampuskita_dev}
+      DB_NAME: kampuskita
+      DB_AFTER_CONNECT_QUERY: "SET search_path TO _realtime, public;"
+      SECURE_CHANNELS: "true"
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE:-your-secret-key-base-min-32-chars}
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - kampuskita-network
+
+  # Next.js Web App
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    container_name: kampuskita-web
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_SUPABASE_URL=http://localhost:3001
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-your-anon-key}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-your-service-role-key}
+      - NEXT_PUBLIC_BASE_URL=http://localhost:3000
+      - SUPERADMIN_AUTH_USER_ID=${SUPERADMIN_AUTH_USER_ID}
+      - ADMIN_SESSION_SECRET=${ADMIN_SESSION_SECRET}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - BAILEYS_API_URL=http://bot:3000
+      - BAILEYS_API_TOKEN=${BAILEYS_API_TOKEN}
+      - FONNTE_TOKEN=${FONNTE_TOKEN}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - CRON_SECRET=${CRON_SECRET}
+      - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}
+      - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY}
+      - NEXT_PUBLIC_VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}
+      - VAPID_EMAIL=${VAPID_EMAIL}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgrest
+      - gotrue
+      - storage
+      - realtime
+    networks:
+      - kampuskita-network
+    volumes:
+      - ./src:/app/src:ro
+      - ./public:/app/public:ro
+      - ./next.config.mjs:/app/next.config.mjs:ro
+      - ./package.json:/app/package.json:ro
+
+  # WhatsApp Bot
+  bot:
+    build:
+      context: ./bot-wa
+      dockerfile: Dockerfile
+    container_name: kampuskita-bot
+    environment:
+      - NODE_ENV=development
+      - SUPABASE_URL=http://postgrest:3000
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-your-service-role-key}
+      - BAILEYS_API_TOKEN=${BAILEYS_API_TOKEN}
+      - FONNTE_TOKEN=${FONNTE_TOKEN}
+      - ADMIN_WA=${ADMIN_WA}
+      - PORT=3000
+    ports:
+      - "3002:3000"
+    volumes:
+      - bot_auth:/app/auth_info_baileys
+      - ./bot-wa/index.js:/app/index.js:ro
+      - ./bot-wa/package.json:/app/package.json:ro
+    depends_on:
+      - postgrest
+    networks:
+      - kampuskita-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  storage_data:
+  bot_auth:
+
+networks:
+  kampuskita-network:
+    driver: bridge
+    name: kampuskita-local

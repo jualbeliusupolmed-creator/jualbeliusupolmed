@@ -1,0 +1,58 @@
+name: Question / Support
+description: Ask a question about usage, setup, or architecture
+title: "[Question]: "
+labels: ["question", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have a question? Check the docs first:
+        - [README](../README.md) — Setup, env vars, deployment
+        - [CONTRIBUTING](../CONTRIBUTING.md) — Development workflow
+        - [SECURITY](../SECURITY.md) — Security model
+        - [docs/](../docs/) — Architecture, database, bot, self-hosting
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: What do you need help with?
+      placeholder: How do I add a new campus to the multi-campus config?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - Setup / Installation
+        - Configuration / Env vars
+        - Development workflow
+        - Architecture / Codebase structure
+        - Deployment (Vercel / VPS / Supabase)
+        - Database / Migrations
+        - WhatsApp Bot
+        - Payments / QRIS
+        - Moderation / AI
+        - Multi-campus / Forking
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context (optional)
+      description | What have you tried? What's your environment?
+      placeholder: |
+        - OS: Ubuntu 22.04
+        - Node: 22.12
+        - Deploy: Local dev
+        - Error: ...
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        **Maintainers or community will respond.** For urgent security questions, see [SECURITY.md](../SECURITY.md).

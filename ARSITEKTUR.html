@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Arsitektur Sistem KampusKita</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+            color: #333;
+        }
+
+        .box {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+
+        .flow {
+            font-weight: bold;
+            color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Arsitektur Marketplace: KampusKita</h1>
+
+    <div class="box">
+        <h2>1. High-Level Stack</h2>
+        <ul>
+            <li><strong>Frontend:</strong> Next.js 14 (App Router) di Vercel.</li>
+            <li><strong>Backend:</strong> Supabase (PostgreSQL, Auth, Storage, Edge Functions).</li>
+            <li><strong>AI:</strong> Google Gemini (untuk moderasi konten iklan).</li>
+            <li><strong>WhatsApp Integration:</strong> Baileys (running di VPS via PM2).</li>
+        </ul>
+    </div>
+
+    <div class="box">
+        <h2>2. Alur Utama: Pasang Iklan</h2>
+        <ol>
+            <li><span class="flow">Form Submit:</span> User isi data di `JualClient.jsx`.</li>
+            <li><span class="flow">Validasi:</span> Schema validation (Zod) -> Moderasi Deterministik -> AI Moderation
+                (Gemini).</li>
+            <li><span class="flow">Database:</span> Data masuk ke tabel `listings` (status: `pending` atau `active`).
+            </li>
+            <li><span class="flow">Distribusi:</span> Jika aktif, fungsi `postToGroup` memicu bot WA untuk menyebar ke
+                grup-grup relevan.</li>
+        </ol>
+    </div>
+
+    <div class="box">
+        <h2>3. Integrasi Detail</h2>
+        <ul>
+            <li><strong>Supabase:</strong> Menjadi satu-satunya sumber kebenaran (Source of Truth). API Routes (Server
+                Side) selalu menggunakan <code>service_role</code> untuk bypass RLS, sedangkan Client menggunakan Anon
+                Key dengan RLS policy yang ketat.</li>
+            <li><strong>WhatsApp Bot (VPS):</strong> Bot memantau chat/grup, menyimpan session di VPS, dan berkomunikasi
+                dengan Supabase untuk sinkronisasi iklan/status.</li>
+            <li><strong>Instagram (OAuth):</strong> Menggunakan API OAuth untuk integrasi katalog otomatis dan analitik
+                menfess.</li>
+        </ul>
+    </div>
+
+    <div class="box">
+        <h2>4. Penjelasan Komponen</h2>
+        <p><strong>Security Layer:</strong> Middleware Next.js menangani proteksi rute admin, sementara Supabase RLS
+            mengamankan data pengguna di level database.</p>
+        <p><strong>Scalability:</strong> Menggunakan Vercel Edge Runtime untuk API ringan dan serverless functions untuk
+            pemrosesan gambar/moderasi.</p>
+    </div>
+</body>
+
+</html>

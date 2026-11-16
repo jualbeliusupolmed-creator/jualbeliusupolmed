@@ -1,0 +1,85 @@
+name: Feature Request
+description: Suggest a new feature or improvement
+title: "[Feature]: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature! Please describe the problem and proposed solution.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem does this solve? Who is affected?
+      placeholder: Users cannot filter listings by campus, so they see irrelevant items from other universities.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: How should this work? Include user flows if possible.
+      placeholder: Add a campus filter dropdown on /jual-beli that filters listings by seller's campus.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Other approaches you've thought of
+      placeholder: Could also add campus tags to listing cards...
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Affected Area
+      options:
+        - Web: Listing creation
+        - Web: Marketplace / browsing
+        - Web: Dashboard / seller
+        - Web: Admin panel
+        - Web: Chat / messaging
+        - API: Listings / Payments / Auth
+        - Bot: Commands / Broadcast / Sync
+        - Database / Migrations
+        - Infrastructure / CI/CD
+        - Documentation
+        - Multi-campus config
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope & Impact
+      options:
+        - label: New user-facing feature
+        - label: Admin/internal tool
+        - label: Developer experience (DX)
+        - label: Performance optimization
+        - label: Security hardening
+        - label: Multi-campus / forkability
+        - label: Breaking change (requires migration)
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: How will we know this is done?
+      placeholder: |
+        - [ ] Campus filter appears on /jual-beli
+        - [ ] Filtering works for all listing types
+        - [ ] URL updates with ?campus=usu
+        - [ ] Test coverage added
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        **Maintainers will triage within 48h.** May be labeled `good-first-issue` if scope is small and well-defined.

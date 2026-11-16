@@ -1,0 +1,97 @@
+%% Posting Flow Diagram
+%% Source: dokumentasi_arsitektur/assets/diagrams/posting-flow.mmd
+
+flowchart TB
+    subgraph Step1["1️⃣ Client Input & Validation"]
+        User["👤 User\n/jual page"]
+        Form["📝 Multi-step Form\nJualClient.jsx"]
+        Validation["✅ Client Validation\n• Zod Schema\n• WA Format (parseWaInput)\n• Image Compress (Sharp WASM)\n• Honeypot Field"]
+        User --> Form --> Validation
+    end
+
+    subgraph Step2["2️⃣ API Gateway & Auth"]
+        POST["POST /api/listings"]
+        RateLimit["🛡️ Rate Limit\n10 req / 10 min / IP\n(rateLimitDistributed)"]
+        HMAC["🔐 HMAC Session Verify\nseller_session cookie\nSHA-256 timing-safe"]
+        Sanitize["🧹 Sanitize & Honeypot\nZod parse + hidden field check"]
+        POST --> RateLimit --> HMAC --> Sanitize
+    end
+
+    subgraph Step3["3️⃣ Moderation Pipeline"]
+        ModStart["Moderation Entry"]
+        Det["🔍 Deterministic (Instant, Free)\n• Forbidden keywords (vape, judi, senjata...)\n• Category price limits\n• Duplicate title/desc check\n• Scam patterns (too cheap)"]
+        AI["🤖 Gemini 2.5 Flash (Vertex AI)\n• 8 prohibited categories\n• Structured JSON output\n• Risk score 0.0-1.0\n• Timeout: 6s + fallback"]
+        ModDecision{"Decision"}
+        Det --> ModDecision
+        ModDecision -->|Clean| AI
+        ModDecision -->|Reject| Reject["❌ Rejected\nReason: keyword/price/duplicate"]
+        AI -->|Prohibited| Reject
+        AI -->|High Risk >0.7| Pending["⏳ Pending Review\nRisk score stored"]
+        AI -->|Safe| Approved["✅ Approved\nRisk score stored"]
+    end
+
+    subgraph Step4["4️⃣ Persistence & Business Logic"]
+        Insert["💾 Insert to listings\nService Role (bypass RLS)"]
+        BizLogic["⚙️ Business Logic\n• adFeeFrom() - calc fee\n• Free modes: freeMode, Pro, Distributor, Own Store\n• calcDistributorFee() - revenue share\n• Auto-heal campus profile\n• sold_fee check (block if unpaid)"]
+        Status{"Status"}
+        Insert --> BizLogic --> Status
+        Status -->|Free/Paid| Active["🟢 Status: active"]
+        Status -->|Needs Payment| PendingPay["🟡 Status: pending\nQRIS generated"]
+        Payments["💳 payments table\n• type: iklan\n• status tracking"]
+    end
+
+    subgraph Step5["5️⃣ Async Distribution (Non-blocking)"]
+        Async["⚡ void (async () => {...})()\nFire & forget"]
+        WABroadcast["📱 WhatsApp Broadcast\npostToGroup() via Fonnte API\nTarget: campus groups"]
+        Push["🔔 Push Notification\npushListingBaru()\nWeb Push API (VAPID)"]
+        Subscriber["👥 Subscriber Notify\n• Category subscribers\n• Keyword subscribers"]
+        Instagram["📸 Instagram Auto-publish\nautoPublishListingInstagram()\nCatalog API + Container"]
+        Audit["📝 Audit Log\nadmin_audit_events"]
+        Async --> WABroadcast
+        Async --> Push
+        Async --> Subscriber
+        Async --> Instagram
+        Async --> Audit
+    end
+
+    %% Flow connections
+    Validation --> POST
+    Sanitize --> ModStart
+    Approved --> Insert
+    Pending --> Insert
+    Active --> Async
+    PendingPay -.-> Payments
+
+    %% Failure paths
+    Reject -.->|User sees error toast| User
+    Pending -.->|Admin reviews in dashboard| Admin["👨‍💼 Admin Dashboard"]
+    Admin -.->|Approve/Reject| Approved
+
+    %% SLA annotations
+    SLA1["⏱️ < 500ms"]
+    SLA2["⏱️ < 200ms"]
+    SLA3["⏱️ < 6s (AI)\n< 50ms (Det)"]
+    SLA4["⏱️ < 300ms"]
+    SLA5["⏱️ Background\n(non-blocking)"]
+
+    Validation -.-> SLA1
+    Sanitize -.-> SLA2
+    ModStart -.-> SLA3
+    Insert -.-> SLA4
+    Async -.-> SLA5
+
+    classDef step1 fill:#dbeafe,stroke:#2563eb,color:#1e3a5f;
+    classDef step2 fill:#fef3c7,stroke:#d97706,color:#92400e;
+    classDef step3 fill:#fce7f3,stroke:#ec4899,color:#831843;
+    classDef step4 fill:#f0fdf4,stroke:#16a34a,color:#14532d;
+    classDef step5 fill:#ecfeff,stroke:#06b6d4,color:#164e63;
+    classDef sla fill:#f1f5f9,stroke:#64748b,color:#334155,stroke-dasharray: 5 5;
+    classDef fail fill:#fef2f2,stroke:#ef4444,color:#991b1b;
+
+    class User,Form,Validation step1;
+    class POST,RateLimit,HMAC,Sanitize step2;
+    class ModStart,Det,AI,ModDecision,Reject,Pending,Approved step3;
+    class Insert,BizLogic,Status,Active,PendingPay,Payments step4;
+    class Async,WABroadcast,Push,Subscriber,Instagram,Audit step5;
+    class SLA1,SLA2,SLA3,SLA4,SLA5 sla;
+    class Reject,Pending fail;

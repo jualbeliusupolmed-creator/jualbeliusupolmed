@@ -1,0 +1,45 @@
+# CodeQL Configuration
+# Custom queries and paths to include/exclude
+
+name: "Kampus Kita CodeQL Config"
+
+queries:
+  - uses: security-and-quality
+  - uses: javascript
+
+paths-ignore:
+  - "node_modules"
+  - ".next"
+  - "coverage"
+  - "bot-wa/node_modules"
+  - "bot-wa/auth_info_baileys"
+  - "*.config.js"
+  - "*.config.mjs"
+  - "next.config.mjs"
+  - "tailwind.config.js"
+  - "vitest.config.mjs"
+  - "postcss.config.js"
+  - "eslint.config.js"
+  - "prettier.config.js"
+  - "scripts/"
+  - "docs/"
+  - "dokumentasi_arsitektur/"
+  - "public/"
+  - "supabase/"
+  - "OPEN PO/"
+  - "founder/"
+  - "scratch/"
+  - "__tests__/setup/"
+  - "**/*.test.*"
+  - "**/*.spec.*"
+
+paths:
+  - "src/"
+  - "bot-wa/index.js"
+  - "bot-wa/src/"
+
+# Custom query suites can be added here
+# query-filters:
+#   - exclude:
+#       id: "js/unsafe-regex"
+#       reason: "Known false positive in our validation logic"

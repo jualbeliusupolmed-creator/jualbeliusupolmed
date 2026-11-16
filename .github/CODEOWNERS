@@ -1,0 +1,49 @@
+# CODEOWNERS
+# These users/teams will be automatically requested for review on matching files.
+# See https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global owners (fallback for everything)
+* @jualbeliusupolmed-creator/maintainers
+
+# Security-sensitive paths - require maintainer review
+/src/lib/auth.js @jualbeliusupolmed-creator/security
+/src/lib/supabaseAdmin.js @jualbeliusupolmed-creator/security
+/src/middleware.js @jualbeliusupolmed-creator/security
+/src/app/api/auth/ @jualbeliusupolmed-creator/security
+/src/app/api/admin/ @jualbeliusupolmed-creator/security
+/src/app/api/payments/ @jualbeliusupolmed-creator/security
+/src/app/api/webhook/ @jualbeliusupolmed-creator/security
+/supabase/migration_rls*.sql @jualbeliusupolmed-creator/security
+
+# Campus configuration - critical for multi-campus forkability
+/src/config/campus.ts @jualbeliusupolmed-creator/maintainers
+
+# Payment flows
+/src/lib/fees.js @jualbeliusupolmed-creator/payments
+/src/lib/distributor.js @jualbeliusupolmed-creator/payments
+/src/app/api/listings/route.js @jualbeliusupolmed-creator/payments
+
+# Moderation & AI
+/src/lib/moderationRules.js @jualbeliusupolmed-creator/moderation
+/src/lib/gemini.js @jualbeliusupolmed-creator/moderation
+
+# WhatsApp Bot
+/bot-wa/index.js @jualbeliusupolmed-creator/bot
+/bot-wa/src/ @jualbeliusupolmed-creator/bot
+/bot-wa/package.json @jualbeliusupolmed-creator/bot
+
+# Database migrations
+/supabase/*.sql @jualbeliusupolmed-creator/database
+
+# CI/CD & Infrastructure
+/.github/workflows/ @jualbeliusupolmed-creator/devops
+/vercel.json @jualbeliusupolmed-creator/devops
+/docker-compose.yml @jualbeliusupolmed-creator/devops
+/Dockerfile @jualbeliusupolmed-creator/devops
+
+# Documentation
+/README.md @jualbeliusupolmed-creator/docs
+/README.id.md @jualbeliusupolmed-creator/docs
+/docs/ @jualbeliusupolmed-creator/docs
+/SECURITY.md @jualbeliusupolmed-creator/security
+/CONTRIBUTING.md @jualbeliusupolmed-creator/maintainers

@@ -1,0 +1,118 @@
+name: Bug Report
+description: Report a bug or unexpected behavior
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please fill in as much detail as possible.
+
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: Prerequisites
+      options:
+        - label: I have searched existing issues and this is not a duplicate
+          required: true
+        - label: I am using the latest version of the codebase
+          required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: Clear and concise description of the bug
+      placeholder: When I do X, Y happens instead of Z
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Minimal steps to reproduce the bug
+      placeholder: |
+        1. Go to /jual
+        2. Fill form with...
+        3. Click submit
+        4. Error appears: ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should happen instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happens (error messages, screenshots, logs)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Affected Component
+      options:
+        - Web: Listing creation (jual)
+        - Web: Dashboard / seller profile
+        - Web: Marketplace / browsing
+        - Web: Admin panel
+        - Web: Chat / messaging
+        - API: Listings CRUD
+        - API: Payments / QRIS
+        - API: Auth / sessions
+        - API: Moderation / AI
+        - Bot: WhatsApp commands
+        - Bot: Broadcast / notifications
+        - Bot: Realtime sync
+        - Database: Migrations / RLS
+        - Infrastructure: Vercel / VPS / Supabase
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Where does this happen?
+      placeholder: |
+        - OS: macOS / Linux / Windows
+        - Node: 22.x
+        - Browser: Chrome 120 / Safari / Firefox
+        - Deploy: Local / Vercel Preview / Production
+        - Supabase: Project ID (optional)
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Screenshots
+      description: Paste relevant logs, error messages, or screenshots
+      render: shell
+
+  - type: checkboxes
+    id: impact
+    attributes:
+      label: Impact Assessment
+      options:
+        - label: Blocks user from core action (posting, paying, messaging)
+        - label: Affects admin operations
+        - label: Security implication (data exposure, auth bypass)
+        - label: Performance degradation
+        - label: Visual/UI only
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        **Maintainers will triage within 48h.** Labels will be added: `priority:high/medium/low`, `good-first-issue` if applicable.

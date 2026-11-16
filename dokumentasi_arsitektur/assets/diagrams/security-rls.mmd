@@ -1,0 +1,85 @@
+%% Security & RLS Architecture Diagram
+%% Source: dokumentasi_arsitektur/assets/diagrams/security-rls.mmd
+
+flowchart TB
+    subgraph Layer1["🛡️ Layer 1: Edge Middleware (Next.js)"]
+        MW["src/middleware.js\nEdge Runtime (Vercel)"]
+        Headers["Security Headers\n• X-Content-Type-Options: nosniff\n• X-Frame-Options: DENY\n• X-XSS-Protection: 1; mode=block\n• Referrer-Policy: strict-origin-when-cross-origin"]
+        Routes["Route Protection\n• Canonical domain (301)\n• Admin workspace guard\n• Legacy route redirects"]
+        MW --> Headers
+        MW --> Routes
+    end
+
+    subgraph Layer2["🔐 Layer 2: HMAC Authentication"]
+        AdminSession["Admin Session\n• Cookie: kk_admin_session\n• TTL: 1 hour\n• Secret: ADMIN_SESSION_SECRET (32+ chars)\n• Payload: {nonce, sub, exp}\n• Rotation: real-time permission check"]
+        SellerSession["Seller Session\n• Cookie: seller_session\n• TTL: 30 days\n• Secret: SESSION_SECRET\n• Rotation: SESSION_SECRET_PREVIOUS\n• Format: WA number validated"]
+        HMACVerify["Timing-Safe Verify\ncrypto.timingSafeEqual\nSHA-256 HMAC\nMulti-key rotation support"]
+        AdminSession --> HMACVerify
+        SellerSession --> HMACVerify
+    end
+
+    subgraph Layer3["🗄️ Layer 3: Service Role Isolation"]
+        AnonClient["Anon Key Client\n• Browser / React Components\n• RLS: ACTIVE\n• Access: Public data only"]
+        ServiceClient["Service Role Server\n• API Routes / Server Actions\n• RLS: BYPASS\n• Access: All tables\n• Key: SUPABASE_SERVICE_ROLE_KEY"]
+        Tables["Table Access Matrix"]
+        AnonClient --> Tables
+        ServiceClient --> Tables
+    end
+
+    subgraph Layer4["📋 Layer 4: Row Level Security (RLS)"]
+        PublicTables["Public Read (anon policy)\n• listings (status IN active,sold)\n• seller_profiles (all)\n• categories, universities"]
+        PrivateTables["No Anon Policy (service_role only)\n• payments\n• reports\n• blacklist\n• price_offers\n• category_subscriptions\n• settings\n• push_subscriptions\n• otps\n• admin_audit_events"]
+        OwnerTables["Authenticated Owner Policies\n• listings: seller_wa = auth.uid()\n• seller_profiles: own profile\n• payments: own payments"]
+        AdminPattern["Admin Access Pattern\n• API Route → Service Role → Full Access\n• Client → Anon Key → RLS Enforced"]
+        PublicTables --> OwnerTables
+        PrivateTables --> AdminPattern
+    end
+
+    subgraph Layer5["🚫 Layer 5: Abuse Prevention"]
+        RateLimit["Distributed Rate Limit\n• Upstash Redis\n• IP-based: 10/10min (POST /listings)\n• Admin login: 5/60sec/IP\n• Key: listing:ip:{ip}"]
+        Honeypot["Honeypot Fields\n• Hidden: website, honeypot\n• Auto-fill detection\n• 400 if populated\n• Zero false positives"]
+        Blacklist["Blacklist System\n• Table: blacklist (wa, reason)\n• Dual check: session WA + form WA\n• WA format validation (10-13 digits)\n• Synthetic ID rejection (email_*, google_*)"]
+        RateLimit --> Honeypot --> Blacklist
+    end
+
+    subgraph RBAC["👑 Admin RBAC (src/lib/admin-access.js)"]
+        Superadmin["Superadmin\n• Full access all modules\n• Email: jualbeliusupolmed@gmail.com\n• ENV: SUPERADMIN_AUTH_USER_ID\n• Role: superadmin in DB"]
+        ProvinceAdmin["Province Admin\n• Modules: 11 (marketplace, users, reports...\n• Scope: All campuses in province\n• Role: province_admin"]
+        UniversityAdmin["University Admin\n• Modules: 6 (marketplace, users, reports...\n• Scope: Assigned campus only\n• Role: university_admin"]
+        PermissionFn["hasAdminPermission(actor, module, action)\n• Superadmin bypass\n• Role-based module list\n• Explicit permissions fallback"]
+        Superadmin --> PermissionFn
+        ProvinceAdmin --> PermissionFn
+        UniversityAdmin --> PermissionFn
+    end
+
+    %% Connections
+    Layer1 --> Layer2
+    Layer2 --> Layer3
+    Layer3 --> Layer4
+    Layer4 --> Layer5
+    Layer5 --> RBAC
+
+    %% Secrets Management
+    Secrets["🔐 Secret Management (Vercel Env)"]
+    Critical["Critical (90-day rotation)\n• SUPABASE_SERVICE_ROLE_KEY\n• ADMIN_SESSION_SECRET\n• SESSION_SECRET\n• MIDTRANS_SERVER_KEY"]
+    Medium["Medium (180-day rotation)\n• GEMINI_API_KEY\n• FONNTE_TOKEN"]
+    Public["Public (No rotation)\n• NEXT_PUBLIC_SUPABASE_ANON_KEY\n• NEXT_PUBLIC_SUPABASE_URL"]
+    Secrets --> Critical
+    Secrets --> Medium
+    Secrets --> Public
+
+    classDef l1 fill:#dbeafe,stroke:#2563eb,color:#1e3a5f;
+    classDef l2 fill:#f3e8ff,stroke:#9333ea,color:#581c87;
+    classDef l3 fill:#f0fdf4,stroke:#16a34a,color:#14532d;
+    classDef l4 fill:#fef3c7,stroke:#d97706,color:#92400e;
+    classDef l5 fill:#fce7f3,stroke:#ec4899,color:#831843;
+    classDef rbac fill:#ecfeff,stroke:#06b6d4,color:#164e63;
+    classDef sec fill:#fef2f2,stroke:#ef4444,color:#991b1b;
+
+    class Layer1,MW,Headers,Routes l1;
+    class Layer2,AdminSession,SellerSession,HMACVerify l2;
+    class Layer3,AnonClient,ServiceClient,Tables l3;
+    class Layer4,PublicTables,PrivateTables,OwnerTables,AdminPattern l4;
+    class Layer5,RateLimit,Honeypot,Blacklist l5;
+    class RBAC,Superadmin,ProvinceAdmin,UniversityAdmin,PermissionFn rbac;
+    class Secrets,Critical,Medium,Public sec;

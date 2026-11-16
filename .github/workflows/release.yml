@@ -1,0 +1,61 @@
+# Release Workflow
+# Creates semantic version tags and GitHub Releases on push to main
+# Triggered by conventional commit messages (feat:, fix:, BREAKING CHANGE:)
+
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e # v4.0.4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Run semantic-release
+        uses: cycjimmy/semantic-release-action@9b5a5e5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b # v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        with:
+          extra_plugins: |
+            @semantic-release/changelog
+            @semantic-release/git
+            @semantic-release/github
+            conventional-changelog-conventionalcommits
+
+      - name: Upload release assets
+        if: success()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e9274886f13407ee32 # v4.6.0
+        with:
+          name: release-notes
+          path: |
+            CHANGELOG.md
+          retention-days: 30

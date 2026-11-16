@@ -1,0 +1,61 @@
+%% WhatsApp Bot Architecture Diagram
+%% Source: dokumentasi_arsitektur/assets/diagrams/bot-architecture.mmd
+
+flowchart TB
+    subgraph VPS["🖥️ VPS (Ubuntu 22.04+)\nPM2 + Nginx"]
+        subgraph BotProcess["Baileys WhatsApp Bot\nNode.js 20+ • index.js (167KB)"]
+            Core["Core Handler\n• message.upsert\n• connection.update\n• creds.update"]
+            Session["Session Manager\n• Multi-device\n• QR Pairing\n• Reconnection + Backoff"]
+            Commands["Command Parser\n• !stats • !broadcast\n• !ban • !unban\n• Prefix: ! or /"]
+            Broadcast["Broadcast Worker\n• Poll wa_outbox (5s)\n• Priority queue\n• Retry logic (max 3)"]
+            Realtime["Realtime Listener\n• payments INSERT\n• listings UPDATE\n• wa_outbox changes"]
+            Health["Health Monitor\n• Heartbeat 60s\n• Memory check (>500MB)\n• Supabase connectivity\n• Admin alert via WA"]
+        end
+
+        Nginx["Nginx Reverse Proxy\n• SSL Termination (Let's Encrypt)\n• Rate Limiting (limit_req_zone)\n• WebSocket Proxy (Baileys WS)\n• Health Endpoint /health\n• JSON Access Logs"]
+        PM2["PM2 Process Manager\n• Auto-restart (crash/memory)\n• Cluster mode (optional)\n• Log rotation (30 days)\n• pm2 startup systemd\n• Metrics endpoint"]
+        AuthInfo["📁 ./auth_info/\n• creds.json\n• pre-key-*.json\n• signedPreKey\n• ⚠️ NEVER COMMIT"]
+        Scripts["📁 scripts/\n• cadangkan-sesi.sh\n• restore-sesi.sh\n• health-check.sh (cron)"]
+        Config["📁 config/\n• groups.json\n• commands.json\n• settings.json"]
+    end
+
+    subgraph External["☁️ External Services"]
+        WA["WhatsApp Servers\nMulti-device API\nWebSocket Connection"]
+        Supabase["Supabase Cloud\n• PostgreSQL\n• Realtime\n• Auth (service_role)"]
+        Fonnte["Fonnte API\n• Group Broadcast\n• Template Messages"]
+    end
+
+    %% Connections
+    Nginx --> BotProcess
+    PM2 --> BotProcess
+    BotProcess --> AuthInfo
+    Scripts --> AuthInfo
+    BotProcess --> Config
+
+    Core --> WA
+    Session --> WA
+    Broadcast --> Fonnte
+    Realtime --> Supabase
+    Commands --> Supabase
+    Health --> Supabase
+    Health --> Fonnte
+
+    %% Backup cron
+    Cron["⏰ Cron: 0 3 * * *\ntar -czf backup/auth_$(date).tar.gz auth_info"]
+    Cron --> AuthInfo
+
+    classDef vps fill:#f0fdf4,stroke:#16a34a,color:#14532d;
+    classDef bot fill:#dcfce7,stroke:#16a34a,color:#14532d;
+    classDef infra fill:#fef3c7,stroke:#d97706,color:#92400e;
+    classDef data fill:#faf5ff,stroke:#9333ea,color:#581c87;
+    classDef ext fill:#ecfeff,stroke:#06b6d4,color:#164e63;
+    classDef warn fill:#fef2f2,stroke:#ef4444,color:#991b1b;
+
+    class VPS vps;
+    class BotProcess,Core,Session,Commands,Broadcast,Realtime,Health bot;
+    class Nginx,PM2,Scripts,Config infra;
+    class AuthInfo data;
+    class WA,Fonnte ext;
+    class Supabase data;
+    class Cron infra;
+    class AuthInfo warn;

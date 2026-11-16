@@ -1,0 +1,100 @@
+%% Overview Architecture Diagram
+%% Source: dokumentasi_arsitektur/assets/diagrams/overview.mmd
+%% Render with: mermaid-cli or mermaid.js
+
+flowchart TB
+    subgraph Client["🌐 Client Layer"]
+        Browser["Browser / PWA\nNext.js 14 App Router"]
+        Mobile["Mobile Browser\nResponsive + PWA"]
+    end
+
+    subgraph Edge["⚡ Edge Layer (Vercel)"]
+        Middleware["Middleware\n• Security Headers\n• Canonical Redirect\n• Admin Guard\n• Legacy Routes"]
+        EdgeFn["Edge Functions\n• Rate Limiting\n• OG Image Gen\n• SEO Rewrite"]
+    end
+
+    subgraph App["🏗️ Application Layer (Next.js Server)"]
+        API["API Routes\n• /api/listings\n• /api/admin/*\n• /api/auth/*"]
+        ServerActions["Server Actions\n• Mutations\n• Revalidation"]
+        Components["React Components\n• Client/Server\n• Streaming SSR"]
+    end
+
+    subgraph Data["🗄️ Data Layer (Supabase)"]
+        Postgres[("PostgreSQL\n• Listings\n• Payments\n• Profiles\n• Audit Logs")]
+        Auth["Auth\n• JWT + HMAC\n• Anon / Service Role"]
+        Storage["Storage\n• Images\n• Documents"]
+        Realtime["Realtime\n• Broadcast Queue\n• Live Updates"]
+    end
+
+    subgraph AI["🤖 Intelligence Layer"]
+        Gemini["Gemini 2.5 Flash\n• Content Moderation\n• Risk Scoring\n• Structured JSON"]
+        Deterministic["Deterministic Rules\n• Keywords\n• Price Limits\n• Duplicate Check"]
+    end
+
+    subgraph Messaging["💬 Messaging Layer"]
+        WABot["WhatsApp Bot (VPS)\n• Baileys Multi-device\n• PM2 + Nginx\n• Session Persistence"]
+        Fonnte["Fonnte API\n• Group Broadcast\n• Template Messages"]
+        Push["Web Push\n• VAPID\n• Subscriber Notify"]
+    end
+
+    subgraph Social["📱 Social Layer"]
+        Instagram["Instagram Graph API\n• Catalog Sync\n• Menfess Auto-publish\n• OAuth 2.0"]
+    end
+
+    subgraph Observability["📊 Observability"]
+        VercelAnalytics["Vercel Analytics\n• Speed Insights\n• Web Vitals"]
+        SupabaseLogs["Supabase Logs\n• Postgres Logs\n• Realtime Metrics"]
+        Sentry["Sentry (Optional)\n• Error Tracking\n• Performance"]
+    end
+
+    %% Connections
+    Browser --> Middleware
+    Mobile --> Middleware
+    Middleware --> EdgeFn
+    EdgeFn --> API
+    Middleware --> Components
+
+    API --> Postgres
+    API --> Auth
+    API --> Storage
+    API --> Realtime
+    ServerActions --> Postgres
+    ServerActions --> Auth
+
+    API --> Deterministic
+    Deterministic --> Gemini
+    Gemini --> API
+
+    API --> WABot
+    WABot --> Fonnte
+    WABot --> Realtime
+    Realtime --> WABot
+
+    API --> Push
+    API --> Instagram
+
+    WABot --> Postgres
+    WABot --> Auth
+
+    VercelAnalytics -.-> EdgeFn
+    SupabaseLogs -.-> Postgres
+    Sentry -.-> API
+
+    %% Styling
+    classDef client fill:#dbeafe,stroke:#2563eb,color:#1e3a5f;
+    classDef edge fill:#fef3c7,stroke:#d97706,color:#92400e;
+    classDef app fill:#f0fdf4,stroke:#16a34a,color:#14532d;
+    classDef data fill:#faf5ff,stroke:#9333ea,color:#581c87;
+    classDef ai fill:#fce7f3,stroke:#ec4899,color:#831843;
+    classDef msg fill:#ecfeff,stroke:#06b6d4,color:#164e63;
+    classDef social fill:#ffe4e6,stroke:#f43f5e,color:#9f1239;
+    classDef obs fill:#f1f5f9,stroke:#64748b,color:#334155;
+
+    class Browser,Mobile client;
+    class Middleware,EdgeFn edge;
+    class API,ServerActions,Components app;
+    class Postgres,Auth,Storage,Realtime data;
+    class Gemini,Deterministic ai;
+    class WABot,Fonnte,Push msg;
+    class Instagram social;
+    class VercelAnalytics,SupabaseLogs,Sentry obs;

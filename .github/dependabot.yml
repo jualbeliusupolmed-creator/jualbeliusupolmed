@@ -1,0 +1,107 @@
+# Dependabot Configuration
+# Automatically update dependencies and create PRs
+# See https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # Main web app dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Asia/Jakarta"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "jualbeliusupolmed-creator/maintainers"
+    assignees:
+      - "jualbeliusupolmed-creator"
+    labels:
+      - "dependencies"
+      - "automated"
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+    groups:
+      # Group related packages together
+      development-dependencies:
+        patterns:
+          - "@types/*"
+          - "eslint*"
+          - "prettier*"
+          - "@vitest/*"
+          - "vitest"
+        update-types:
+          - "minor"
+          - "patch"
+      react-ecosystem:
+        patterns:
+          - "react*"
+          - "@testing-library/*"
+        update-types:
+          - "minor"
+          - "patch"
+      nextjs:
+        patterns:
+          - "next*"
+        update-types:
+          - "minor"
+          - "patch"
+      supabase:
+        patterns:
+          - "@supabase/*"
+        update-types:
+          - "minor"
+          - "patch"
+      tailwind:
+        patterns:
+          - "tailwind*"
+          - "postcss*"
+          - "autoprefixer"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # WhatsApp Bot dependencies
+  - package-ecosystem: "npm"
+    directory: "/bot-wa"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:30"
+      timezone: "Asia/Jakarta"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "jualbeliusupolmed-creator/bot"
+    assignees:
+      - "jualbeliusupolmed-creator"
+    labels:
+      - "dependencies"
+      - "bot"
+      - "automated"
+    commit-message:
+      prefix: "chore(bot): deps"
+    groups:
+      baileys:
+        patterns:
+          - "@whiskeysockets/baileys*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "07:00"
+      timezone: "Asia/Jakarta"
+    reviewers:
+      - "jualbeliusupolmed-creator/devops"
+    labels:
+      - "github-actions"
+      - "automated"
+    commit-message:
+      prefix: "ci(deps)"

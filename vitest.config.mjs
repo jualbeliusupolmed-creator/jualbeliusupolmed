@@ -22,15 +22,35 @@ export default defineConfig({
       '.worktrees/**',
       '.kilo/**',
       'scratch/**',
+      'dokumentasi_arsitektur/**',
     ],
     alias: {
       '@': resolve(import.meta.dirname, './src'),
     },
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'html'],
-      include: ['src/**/*.{js,jsx,mjs,cjs}'],
-      exclude: ['node_modules/', '.next/', '**/*.test.{js,jsx,mjs,cjs}', 'vitest.config.mjs'],
+      reporter: ['text', 'html', 'lcov'],
+      include: ['src/**/*.{js,jsx,mjs,cjs,ts,tsx}'],
+      exclude: [
+        'node_modules/',
+        '.next/',
+        '**/*.test.{js,jsx,mjs,cjs,ts,tsx}',
+        '**/*.spec.{js,jsx,mjs,cjs,ts,tsx}',
+        'vitest.config.mjs',
+        'vitest.setup.mjs',
+        'src/app/**/*.tsx', // Page components - tested via integration
+        'src/components/**/*.tsx', // UI components - tested via integration
+      ],
+      thresholds: {
+        statements: 50,
+        branches: 40,
+        functions: 50,
+        lines: 50,
+      },
+    },
+    // TypeScript support
+    typecheck: {
+      tsconfig: './tsconfig.json',
     },
   },
 });
